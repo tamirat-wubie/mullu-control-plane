@@ -14,10 +14,26 @@ Invariants:
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from collections import deque
+from dataclasses import dataclass
 from hashlib import sha256
 from typing import Any, Callable
 import json
+
+
+# Default cap on the completed-trace ring. Trace bodies can be large
+# (per-frame input/output dicts), so the cap is tighter than e.g. the
+# CorrelationManager's. Operators wanting longer history persist
+# externally.
+DEFAULT_MAX_COMPLETED_TRACES = 1_000
+
+
+def _classify_replay_exception(exc: Exception) -> str:
+    """Return a bounded replay failure reason."""
+    exc_type = type(exc).__name__
+    if isinstance(exc, TimeoutError):
+        return f"replay operation timeout ({exc_type})"
+    return f"replay operation error ({exc_type})"
 
 
 @dataclass(frozen=True, slots=True)
@@ -47,17 +63,27 @@ class ReplayTrace:
 class ReplayRecorder:
     """Records execution traces for replay."""
 
-    def __init__(self, *, clock: Callable[[], str], max_frames: int = 1000) -> None:
+    def __init__(
+        self,
+        *,
+        clock: Callable[[], str],
+        max_frames: int = 1000,
+        max_completed: int = DEFAULT_MAX_COMPLETED_TRACES,
+    ) -> None:
         self._clock = clock
         self._max_frames = max_frames
         self._traces: dict[str, list[ReplayFrame]] = {}
-        self._completed: list[ReplayTrace] = []
+        # Bounded ring — see DEFAULT_MAX_COMPLETED_TRACES. Old traces
+        # evict in O(1) when the cap is hit; list_traces wraps the
+        # deque in list() before slicing because deque does not
+        # support slice indexing.
+        self._completed: deque[ReplayTrace] = deque(maxlen=max_completed)
         self._frame_counter = 0
 
     def start_trace(self, trace_id: str) -> None:
         """Start recording a new trace."""
         if trace_id in self._traces:
-            raise ValueError(f"trace already started: {trace_id}")
+            raise ValueError("trace already started")
         self._traces[trace_id] = []
 
     def record_frame(
@@ -71,9 +97,9 @@ class ReplayRecorder:
         """Record a single frame in a trace."""
         frames = self._traces.get(trace_id)
         if frames is None:
-            raise ValueError(f"trace not started: {trace_id}")
+            raise ValueError("trace not started")
         if len(frames) >= self._max_frames:
-            raise ValueError(f"trace {trace_id} exceeded max frames ({self._max_frames})")
+            raise ValueError("trace exceeded max frames")
 
         self._frame_counter += 1
         content = json.dumps(
@@ -98,7 +124,7 @@ class ReplayRecorder:
         """Finalize a trace — makes it immutable."""
         frames = self._traces.pop(trace_id, None)
         if frames is None:
-            raise ValueError(f"trace not found: {trace_id}")
+            raise ValueError("trace not found")
 
         total_duration = sum(f.duration_ms for f in frames)
         all_hashes = "".join(f.frame_hash for f in frames)
@@ -114,6 +140,10 @@ class ReplayRecorder:
         self._completed.append(trace)
         return trace
 
+    def discard_trace(self, trace_id: str) -> bool:
+        """Discard an active trace after non-fatal recording failure."""
+        return self._traces.pop(trace_id, None) is not None
+
     def get_trace(self, trace_id: str) -> ReplayTrace | None:
         """Get a completed trace by ID."""
         for trace in self._completed:
@@ -122,7 +152,10 @@ class ReplayRecorder:
         return None
 
     def list_traces(self, limit: int = 50) -> list[ReplayTrace]:
-        return self._completed[-limit:]
+        # deque doesn't support slice indexing; materialize then slice.
+        # Fine in practice — the deque is bounded so the temporary list
+        # cannot exceed max_completed in size.
+        return list(self._completed)[-limit:]
 
     @property
     def completed_count(self) -> int:
@@ -158,7 +191,7 @@ class ReplayExecutor:
                 results.append({
                     "frame_id": frame.frame_id,
                     "matched": False,
-                    "reason": f"unknown operation: {frame.operation}",
+                    "reason": "unknown operation",
                 })
                 continue
 
@@ -182,7 +215,7 @@ class ReplayExecutor:
                 results.append({
                     "frame_id": frame.frame_id,
                     "matched": False,
-                    "reason": str(exc),
+                    "reason": _classify_replay_exception(exc),
                 })
 
         return results

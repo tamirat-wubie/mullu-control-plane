@@ -50,7 +50,7 @@ class ApprovalEngine:
     def submit_request(self, request: ApprovalRequest) -> ApprovalRequest:
         """Register an approval request."""
         if request.request_id in self._requests:
-            raise ValueError(f"approval request already exists: {request.request_id}")
+            raise ValueError("approval request already exists")
         self._requests[request.request_id] = request
         return request
 
@@ -81,7 +81,9 @@ class ApprovalEngine:
 
         request = self._requests.get(request_id)
         if request is None:
-            raise ValueError(f"approval request not found: {request_id}")
+            raise ValueError("approval request unavailable")
+        if self._decision_for_request(request_id) is not None:
+            raise ValueError("approval request already decided")
 
         # Check expiry
         if request.expires_at and self._is_expired(request.expires_at):
@@ -95,6 +97,11 @@ class ApprovalEngine:
             )
             self._decisions[decision.decision_id] = decision
             return decision
+
+        if request.requester_id.strip() == approver_id.strip():
+            raise ValueError("requester cannot approve own request")
+        if request.allowed_approver_ids and approver_id.strip() not in request.allowed_approver_ids:
+            raise ValueError("approver not authorized for request")
 
         status = ApprovalStatus.APPROVED if approved else ApprovalStatus.REJECTED
         decision = ApprovalDecisionRecord(
@@ -208,3 +215,9 @@ class ApprovalEngine:
             "count": len(self._decisions) + len(self._overrides),
             "time": self._clock(),
         })
+
+    def _decision_for_request(self, request_id: str) -> ApprovalDecisionRecord | None:
+        for decision in self._decisions.values():
+            if decision.request_id == request_id:
+                return decision
+        return None

@@ -58,6 +58,25 @@ class TestChatEndpoint:
         assert resp.status_code == 200
         assert len(resp.json()["messages"]) >= 2
 
+    def test_chat_exception_is_sanitized(self, client, monkeypatch):
+        from mcoi_runtime.app.routers.deps import deps
+
+        def boom(*args, **kwargs):
+            raise RuntimeError("chat-provider-secret")
+
+        monkeypatch.setattr(deps.llm_bridge, "chat", boom)
+        resp = client.post("/api/v1/chat", json={
+            "conversation_id": "chat-fail",
+            "message": "fail",
+            "tenant_id": "chat-tenant",
+            "actor_id": "chat-actor",
+        })
+        assert resp.status_code == 503
+        data = resp.json()["detail"]
+        assert data["error"] == "LLM service unavailable"
+        assert data["error_code"] == "llm_service_unavailable"
+        assert "chat-provider-secret" not in str(resp.json())
+
 
 class TestPromptEndpoints:
     def test_list_templates(self, client):
@@ -107,6 +126,26 @@ class TestPromptEndpoints:
         resp = client.get("/api/v1/prompts", params={"category": "analysis"})
         data = resp.json()
         assert all(t["category"] == "analysis" for t in data["templates"])
+
+    def test_render_execute_exception_is_sanitized(self, client, monkeypatch):
+        from mcoi_runtime.app.routers.deps import deps
+
+        def boom(*args, **kwargs):
+            raise RuntimeError("prompt-provider-secret")
+
+        monkeypatch.setattr(deps.llm_bridge, "complete", boom)
+        resp = client.post("/api/v1/prompts/render", json={
+            "template_id": "summarize",
+            "variables": {"text": "Some long text"},
+            "execute": True,
+            "tenant_id": "prompt-tenant",
+        })
+        assert resp.status_code == 503
+        data = resp.json()["detail"]
+        assert data["error"] == "LLM service unavailable"
+        assert data["error_code"] == "llm_service_unavailable"
+        assert data["governed"] is True
+        assert "prompt-provider-secret" not in str(resp.json())
 
 
 class TestCostAnalyticsEndpoints:

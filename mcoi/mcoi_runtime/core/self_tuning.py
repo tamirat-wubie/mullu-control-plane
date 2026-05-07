@@ -134,7 +134,7 @@ class SelfTuningEngine:
     ) -> LearningSignal:
         """Register a learning signal."""
         if signal_id in self._signals:
-            raise RuntimeCoreInvariantError(f"Duplicate signal_id: {signal_id}")
+            raise RuntimeCoreInvariantError("Duplicate signal_id")
         now = self._now()
         sig = LearningSignal(
             signal_id=signal_id,
@@ -155,7 +155,7 @@ class SelfTuningEngine:
     def get_signal(self, signal_id: str) -> LearningSignal:
         s = self._signals.get(signal_id)
         if s is None:
-            raise RuntimeCoreInvariantError(f"Unknown signal_id: {signal_id}")
+            raise RuntimeCoreInvariantError("Unknown signal_id")
         return s
 
     def signals_for_tenant(self, tenant_id: str) -> tuple[LearningSignal, ...]:
@@ -184,7 +184,7 @@ class SelfTuningEngine:
     ) -> ImprovementProposal:
         """Propose an improvement. LOW risk auto-applies; CONSTITUTIONAL always CRITICAL."""
         if proposal_id in self._proposals:
-            raise RuntimeCoreInvariantError(f"Duplicate proposal_id: {proposal_id}")
+            raise RuntimeCoreInvariantError("Duplicate proposal_id")
         now = self._now()
 
         # CONSTITUTIONAL scope is always CRITICAL
@@ -234,7 +234,7 @@ class SelfTuningEngine:
     def get_proposal(self, proposal_id: str) -> ImprovementProposal:
         p = self._proposals.get(proposal_id)
         if p is None:
-            raise RuntimeCoreInvariantError(f"Unknown proposal_id: {proposal_id}")
+            raise RuntimeCoreInvariantError("Unknown proposal_id")
         return p
 
     def proposals_for_tenant(self, tenant_id: str) -> tuple[ImprovementProposal, ...]:
@@ -252,13 +252,9 @@ class SelfTuningEngine:
     ) -> ImprovementProposal:
         old = self.get_proposal(proposal_id)
         if old.status in _PROPOSAL_TERMINAL:
-            raise RuntimeCoreInvariantError(
-                f"Proposal {proposal_id} is in terminal state {old.status.value}"
-            )
+            raise RuntimeCoreInvariantError("Proposal is in terminal state")
         if old.status not in valid_from:
-            raise RuntimeCoreInvariantError(
-                f"Cannot transition from {old.status.value} to {new_status.value}"
-            )
+            raise RuntimeCoreInvariantError("Cannot transition proposal from current state")
         updated = ImprovementProposal(
             proposal_id=old.proposal_id,
             tenant_id=old.tenant_id,
@@ -355,9 +351,7 @@ class SelfTuningEngine:
         """Validate a proposal is in APPROVED or APPLIED (auto-applied LOW risk) state."""
         prop = self.get_proposal(proposal_ref)
         if prop.status not in (ImprovementStatus.APPROVED, ImprovementStatus.APPLIED):
-            raise RuntimeCoreInvariantError(
-                f"Proposal {proposal_ref} must be APPROVED or APPLIED (auto-applied) to apply changes, got {prop.status.value}"
-            )
+            raise RuntimeCoreInvariantError("Proposal is not eligible for application")
         return prop
 
     def _mark_proposal_applied(self, proposal_ref: str) -> None:
@@ -391,7 +385,7 @@ class SelfTuningEngine:
     ) -> ParameterAdjustment:
         """Apply a parameter adjustment from an approved proposal."""
         if adj_id in self._adjustments:
-            raise RuntimeCoreInvariantError(f"Duplicate adjustment_id: {adj_id}")
+            raise RuntimeCoreInvariantError("Duplicate adjustment_id")
         self._validate_proposal_applicable(proposal_ref)
         now = self._now()
         adj = ParameterAdjustment(
@@ -423,7 +417,7 @@ class SelfTuningEngine:
     ) -> PolicyTuningRecord:
         """Apply a policy tuning from an approved proposal."""
         if tuning_id in self._policy_tunings:
-            raise RuntimeCoreInvariantError(f"Duplicate tuning_id: {tuning_id}")
+            raise RuntimeCoreInvariantError("Duplicate tuning_id")
         self._validate_proposal_applicable(proposal_ref)
         now = self._now()
         pt = PolicyTuningRecord(
@@ -455,7 +449,7 @@ class SelfTuningEngine:
     ) -> ExecutionTuningRecord:
         """Apply an execution tuning from an approved proposal."""
         if tuning_id in self._execution_tunings:
-            raise RuntimeCoreInvariantError(f"Duplicate tuning_id: {tuning_id}")
+            raise RuntimeCoreInvariantError("Duplicate tuning_id")
         self._validate_proposal_applicable(proposal_ref)
         now = self._now()
         et = ExecutionTuningRecord(
@@ -483,9 +477,7 @@ class SelfTuningEngine:
         """Roll back an APPLIED improvement."""
         old = self.get_proposal(proposal_id)
         if old.status != ImprovementStatus.APPLIED:
-            raise RuntimeCoreInvariantError(
-                f"Can only rollback APPLIED proposals, got {old.status.value}"
-            )
+            raise RuntimeCoreInvariantError("Can only rollback applied proposals")
         updated = ImprovementProposal(
             proposal_id=old.proposal_id,
             tenant_id=old.tenant_id,
@@ -509,7 +501,7 @@ class SelfTuningEngine:
             proposal_ref=proposal_id,
             disposition=ApprovalDisposition.REJECTED,
             decided_by="self_tuning_engine",
-            reason=f"Rolled back improvement {proposal_id}",
+            reason="Improvement rolled back",
             decided_at=now,
         )
         self._decisions[dec_id] = dec
@@ -608,7 +600,7 @@ class SelfTuningEngine:
                             violation_id=vid,
                             tenant_id=tenant_id,
                             operation="unapproved_high_risk",
-                            reason=f"Proposal {prop.proposal_id} is {prop.risk_level.value} risk and APPLIED without APPROVED decision",
+                            reason="High-risk proposal applied without approval",
                             detected_at=now,
                         )
                         self._violations[vid] = v
@@ -632,7 +624,7 @@ class SelfTuningEngine:
                         violation_id=vid,
                         tenant_id=tenant_id,
                         operation="conflicting_proposals",
-                        reason=f"Multiple active proposals for target {target}: {', '.join(sorted(prop_ids))}",
+                        reason="Multiple active proposals for target",
                         detected_at=now,
                     )
                     self._violations[vid] = v
@@ -650,7 +642,7 @@ class SelfTuningEngine:
                     violation_id=vid,
                     tenant_id=tenant_id,
                     operation="excessive_rollbacks",
-                    reason=f"More rollbacks ({rolled_back}) than applied ({applied})",
+                    reason="Rollback count exceeds applied count",
                     detected_at=now,
                 )
                 self._violations[vid] = v

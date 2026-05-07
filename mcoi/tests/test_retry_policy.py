@@ -39,7 +39,7 @@ class TestRetryPolicyEngine:
         assert result.outcome == RetryOutcome.EXHAUSTED
         assert result.attempts == 3  # 1 + 2 retries
         assert value is None
-        assert "fail" in result.last_error
+        assert result.last_error == "operation failed (RuntimeError)"
 
     def test_budget_exceeded(self):
         engine = RetryPolicyEngine(RetryPolicy(

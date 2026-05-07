@@ -140,6 +140,15 @@ class TestCreateSettlement:
         with pytest.raises(RuntimeCoreInvariantError, match="already has a settlement"):
             engine.create_settlement("sett-2", "inv-1", "acct-1", 500.0)
 
+    def test_create_settlement_same_invoice_message_is_bounded(self, engine):
+        engine.create_settlement("sett-1", "inv-secret", "acct-1", 500.0)
+        with pytest.raises(RuntimeCoreInvariantError, match="already has a settlement") as exc_info:
+            engine.create_settlement("sett-2", "inv-secret", "acct-1", 500.0)
+        message = str(exc_info.value)
+        assert "already has a settlement" in message
+        assert "inv-secret" not in message
+        assert "sett-1" not in message
+
     def test_create_multiple_settlements_different_invoices(self, engine):
         engine.create_settlement("sett-1", "inv-1", "acct-1", 500.0)
         engine.create_settlement("sett-2", "inv-2", "acct-1", 300.0)
@@ -611,17 +620,17 @@ class TestResumeCollection:
         assert es.event_count > initial
 
     def test_resume_not_paused_raises(self, collection_engine):
-        with pytest.raises(RuntimeCoreInvariantError, match="Can only resume PAUSED"):
+        with pytest.raises(RuntimeCoreInvariantError, match="resume paused"):
             collection_engine.resume_collection("case-1")
 
     def test_resume_escalated_raises(self, collection_engine):
         collection_engine.escalate_collection("case-1")
-        with pytest.raises(RuntimeCoreInvariantError, match="Can only resume PAUSED"):
+        with pytest.raises(RuntimeCoreInvariantError, match="resume paused"):
             collection_engine.resume_collection("case-1")
 
     def test_resume_resolved_raises(self, collection_engine):
         collection_engine.resolve_collection("case-1")
-        with pytest.raises(RuntimeCoreInvariantError, match="Can only resume PAUSED"):
+        with pytest.raises(RuntimeCoreInvariantError, match="resume paused"):
             collection_engine.resume_collection("case-1")
 
 
@@ -1178,6 +1187,15 @@ class TestDetectSettlementViolations:
         # Should produce escalation decision + no_payment decision
         escalation_decisions = [d for d in result if "dunning" in d.description.lower()]
         assert len(escalation_decisions) == 1
+
+    def test_detect_violation_descriptions_are_bounded(self, collection_engine):
+        for i in range(3):
+            collection_engine.issue_dunning_notice(f"dn-{i}", "case-1", "acct-1")
+        result = collection_engine.detect_settlement_violations()
+        descriptions = {d.description for d in result}
+        assert "Collection case requires dunning escalation" in descriptions
+        assert "Settlement has no payments applied" in descriptions
+        assert all("case-1" not in description for description in descriptions)
 
     def test_detect_violations_auto_escalates_collection(self, collection_engine):
         for i in range(3):

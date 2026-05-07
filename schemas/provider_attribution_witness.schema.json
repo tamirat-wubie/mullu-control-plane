@@ -1,0 +1,94 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:provider-attribution-witness:1",
+  "title": "Provider Attribution Witness",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "witness_id",
+    "operation_id",
+    "provider_attribution_count",
+    "receipt_attributed_provider_operation_count",
+    "routing_attributed_provider_operation_count",
+    "plane_attributed_provider_operation_count",
+    "generated_at"
+  ],
+  "properties": {
+    "witness_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "operation_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "provider_attribution_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "receipt_attributed_provider_operation_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "routing_attributed_provider_operation_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "plane_attributed_provider_operation_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "provider_attributions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "provider_id",
+          "provider_class",
+          "source",
+          "source_ref_id",
+          "evidence_id"
+        ],
+        "properties": {
+          "provider_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "provider_class": {
+            "type": "string",
+            "enum": [
+              "integration",
+              "communication",
+              "model"
+            ]
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "healthy_plane_resolution",
+              "routing_decision",
+              "execution_receipt"
+            ]
+          },
+          "source_ref_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "evidence_id": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "generated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  }
+}

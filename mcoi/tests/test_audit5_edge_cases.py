@@ -268,14 +268,19 @@ class TestGoalExecutionStateDuplicates:
     def test_overlap_completed_and_failed(self) -> None:
         from mcoi_runtime.contracts.goal import GoalExecutionState, GoalStatus
 
-        with pytest.raises(ValueError, match="both completed and failed"):
+        with pytest.raises(ValueError) as exc_info:
             GoalExecutionState(
                 goal_id="g1",
                 status=GoalStatus.FAILED,
                 updated_at=self.TS,
-                completed_sub_goals=("sg1", "sg2"),
-                failed_sub_goals=("sg2", "sg3"),
+                completed_sub_goals=("sg-secret-1", "sg-secret-2"),
+                failed_sub_goals=("sg-secret-2", "sg-secret-3"),
             )
+        message = str(exc_info.value)
+        assert message == "sub-goal IDs appear in both completed and failed"
+        assert "sg-secret-1" not in message
+        assert "sg-secret-2" not in message
+        assert "sg-secret-3" not in message
 
     def test_disjoint_completed_and_failed_ok(self) -> None:
         from mcoi_runtime.contracts.goal import GoalExecutionState, GoalStatus

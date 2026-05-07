@@ -3062,3 +3062,28 @@ class TestFallbackRouteWithMixedStatuses:
         r = engine.choose_fallback_route("m1")
         assert r.route_id == "r2"
         assert r.status == ProviderStatus.DEGRADED
+
+
+class TestBoundedContracts:
+    def test_duplicate_model_message_hides_model_id(self, engine):
+        _seed_model(engine, "model-secret")
+        with pytest.raises(RuntimeCoreInvariantError, match="duplicate model_id") as exc_info:
+            _seed_model(engine, "model-secret")
+        assert "model-secret" not in str(exc_info.value)
+
+    def test_llm_violation_reasons_hide_ids_and_budget_values(self, engine):
+        _seed_model(engine, "model-secret")
+        _seed_template(engine, "tpl-secret")
+        _seed_pack(engine, "pack-secret", "tpl-secret", "model-secret")
+        engine.request_generation(
+            "req-secret", "t1", "model-secret", "pack-secret", token_budget=1, cost_budget=1.0
+        )
+        engine.record_generation_result(
+            "res-secret", "req-secret", "t1", tokens_used=9, cost_incurred=3.5
+        )
+        violations = tuple(engine._violations.values())
+        assert any(v["reason"] == "budget exceeded" for v in violations)
+        for violation in violations:
+            assert "req-secret" not in violation["reason"]
+            assert "9" not in violation["reason"]
+            assert "3.5" not in violation["reason"]

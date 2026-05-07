@@ -420,6 +420,13 @@ class UtilityEngine:
         else:
             rationale_parts.append("verdict: approved")
 
+        if feasibility_reasons:
+            rationale = "tradeoff recorded with budget constraints and rejected verdict"
+        elif verdict.approved:
+            rationale = "tradeoff recorded with approved verdict"
+        else:
+            rationale = "tradeoff recorded with rejected verdict"
+
         now = self._clock()
         tradeoff_id = stable_identifier("util-tradeoff", {
             "comparison_id": comparison.comparison_id,
@@ -433,7 +440,7 @@ class UtilityEngine:
             chosen_option_id=chosen_id,
             rejected_option_ids=rejected_ids,
             tradeoff_direction=profile.tradeoff_direction,
-            rationale="; ".join(rationale_parts),
+            rationale=rationale,
             recorded_at=now,
         )
 

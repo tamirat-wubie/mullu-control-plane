@@ -40,7 +40,8 @@ class TestDeepHealthChecker:
         checker.register("broken", lambda: (_ for _ in ()).throw(RuntimeError("boom")))
         result = checker.run()
         assert result.overall == HealthStatus.UNHEALTHY
-        assert "boom" in result.components[0].detail["error"]
+        assert result.components[0].detail["error"] == "health check error (RuntimeError)"
+        assert "boom" not in result.components[0].detail["error"]
 
     def test_latency_tracked(self):
         checker = DeepHealthChecker(clock=FIXED_CLOCK)

@@ -1,6 +1,6 @@
 """Phase 152 — Sovereign / Public-Sector Market Entry & Reference Program."""
 from __future__ import annotations
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any
 
 # ---------------------------------------------------------------------------
@@ -82,7 +82,7 @@ PROCUREMENT_PACKAGE: dict[str, dict[str, Any]] = {
         "sections": ("allowed_connectors", "restricted_connectors", "blocked_connectors", "offline_alternatives", "approval_process"),
     },
     "copilot_restrictions": {
-        "title": "AI Copilot Governance and Restrictions",
+        "title": "Symbolic Intelligence Copilot Governance and Restrictions",
         "sections": ("copilot_modes", "generation_restrictions", "explain_only_mode", "disabled_mode", "override_tracking"),
     },
     "support_model": {

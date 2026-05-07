@@ -221,6 +221,27 @@ class TestExecuteNextSubGoal:
         with pytest.raises(RuntimeCoreInvariantError, match="no plan assigned"):
             engine.execute_next_sub_goal(state, plan, _SuccessExecutor())
 
+    def test_non_executable_state_is_bounded(self):
+        engine = GoalReasoningEngine(clock=_make_clock([_T0]))
+        plan = GoalPlan(
+            plan_id="plan-001",
+            goal_id="goal-001",
+            sub_goals=(_sub_goal(),),
+            created_at=_T0,
+        )
+        state = GoalExecutionState(
+            goal_id="goal-001",
+            status=GoalStatus.FAILED,
+            current_plan_id="plan-001",
+            updated_at=_T0,
+        )
+        with pytest.raises(
+            RuntimeCoreInvariantError,
+            match="^goal is not executable in current state; cannot execute sub-goals$",
+        ) as exc_info:
+            engine.execute_next_sub_goal(state, plan, _SuccessExecutor())
+        assert "failed" not in str(exc_info.value).lower()
+
 
 # --- Failed sub-goal triggers replanning path ---
 
@@ -397,8 +418,12 @@ class TestReplan:
             current_plan_id="plan-001",
             updated_at=_T0,
         )
-        with pytest.raises(RuntimeCoreInvariantError, match="reason"):
+        with pytest.raises(
+            RuntimeCoreInvariantError,
+            match="^reason must be a non-empty string$",
+        ) as exc_info:
             engine.replan(state, old_plan, (_sub_goal(sub_goal_id="sg-x"),), "")
+        assert str(exc_info.value) == "reason must be a non-empty string"
 
 
 # --- Clock injection determinism ---

@@ -98,6 +98,26 @@ def test_relation_rejects_dangling() -> None:
         ))
 
 
+def test_entity_and_relation_errors_are_bounded() -> None:
+    engine = WorldStateEngine()
+    engine.add_entity(_entity("entity-secret"))
+    with pytest.raises(RuntimeCoreInvariantError) as duplicate_entity:
+        engine.add_entity(_entity("entity-secret"))
+    with pytest.raises(RuntimeCoreInvariantError) as missing_target:
+        engine.add_relation(EntityRelation(
+            relation_id="rel-secret",
+            source_entity_id="entity-secret",
+            target_entity_id="missing-target",
+            relation_type="depends_on",
+            evidence_ids=("ev-1",),
+        ))
+
+    assert str(duplicate_entity.value) == "entity already exists"
+    assert str(missing_target.value) == "target entity not found"
+    assert "entity-secret" not in str(duplicate_entity.value)
+    assert "missing-target" not in str(missing_target.value)
+
+
 def test_self_referential_relation_rejected() -> None:
     with pytest.raises(ValueError, match="self-referential"):
         EntityRelation(

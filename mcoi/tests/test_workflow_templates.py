@@ -34,21 +34,24 @@ class TestWorkflowTemplates:
 
     def test_missing_param(self):
         reg = _registry()
-        with pytest.raises(ValueError, match="missing parameters"):
+        with pytest.raises(ValueError, match="^missing required workflow parameters$") as exc_info:
             reg.instantiate("summarize-refine", {"topic": "AI"})
+        assert "audience" not in str(exc_info.value)
 
     def test_unknown_template(self):
         reg = _registry()
-        with pytest.raises(ValueError, match="unknown template"):
+        with pytest.raises(ValueError, match="^template unavailable$") as exc_info:
             reg.instantiate("nonexistent", {})
+        assert "nonexistent" not in str(exc_info.value)
 
     def test_duplicate_register(self):
         reg = _registry()
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="^template already registered$") as exc_info:
             reg.register(WorkflowTemplate(
                 template_id="summarize-refine", name="X", description="X",
                 steps=(), parameters=(),
             ))
+        assert "summarize-refine" not in str(exc_info.value)
 
     def test_list_by_category(self):
         reg = _registry()

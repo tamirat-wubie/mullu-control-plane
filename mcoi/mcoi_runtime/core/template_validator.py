@@ -16,6 +16,34 @@ from .invariants import RuntimeCoreInvariantError, freeze_mapping
 
 
 _FIELD_PATTERN = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
+_TEMPLATE_VALIDATION_SUMMARIES = {
+    "malformed_template": "template is malformed",
+    "unsupported_template_field": "template contains unsupported fields",
+    "unsupported_action_type": "template action type is not supported",
+    "missing_parameter": "required parameters are missing",
+    "malformed_bindings": "bindings are malformed",
+    "missing_binding": "binding resolution failed",
+    "unsupported_binding_expression": "binding expression is not supported",
+}
+_TEMPLATE_TEXT_REQUIREMENTS = {
+    "template_id": "template_id must be a non-empty string",
+    "action_type": "action_type must be a non-empty string",
+    "command_argv item": "command_argv items must be non-empty strings",
+    "cwd": "cwd must be a non-empty string",
+    "environment key": "environment keys must be non-empty strings",
+    "environment value": "environment values must be non-empty strings",
+    "binding name": "binding names must be non-empty strings",
+    "binding value": "binding values must be non-empty strings",
+    "bound value": "bound value must be a non-empty string",
+}
+_TEMPLATE_SEQUENCE_REQUIREMENTS = {
+    "required_parameters": "required_parameters must be a sequence of strings",
+    "declared_effects": "declared_effects must be a sequence of strings",
+    "forbidden_effects": "forbidden_effects must be a sequence of strings",
+}
+_TEMPLATE_NON_EMPTY_SEQUENCE_REQUIREMENTS = {
+    "required_parameters": "required_parameters must contain at least one item",
+}
 
 
 class ExecutionActionType(StrEnum):
@@ -38,9 +66,9 @@ class ValidatedTemplate:
             raise RuntimeCoreInvariantError("action_type must be an ExecutionActionType value")
         if not self.command_argv:
             raise RuntimeCoreInvariantError("command_argv must contain at least one item")
-        for index, item in enumerate(self.command_argv):
+        for item in self.command_argv:
             if not isinstance(item, str) or not item.strip():
-                raise RuntimeCoreInvariantError(f"command_argv[{index}] must be a non-empty string")
+                raise RuntimeCoreInvariantError("command_argv items must be non-empty strings")
         if self.cwd is not None and (not isinstance(self.cwd, str) or not self.cwd.strip()):
             raise RuntimeCoreInvariantError("cwd must be a non-empty string when provided")
         environment = dict(self.environment)
@@ -60,6 +88,16 @@ class TemplateValidationError(ValueError):
         super().__init__(message)
 
 
+def summarize_template_validation_error(exc: TemplateValidationError) -> str:
+    """Return a bounded summary for template validation failures."""
+    return _TEMPLATE_VALIDATION_SUMMARIES.get(exc.code, "template validation failed")
+
+
+def format_template_validation_error(exc: TemplateValidationError) -> str:
+    """Return a stable code-prefixed validation summary."""
+    return f"{exc.code}:{summarize_template_validation_error(exc)}"
+
+
 class TemplateValidator:
     _allowed_keys = {
         "template_id",
@@ -67,7 +105,9 @@ class TemplateValidator:
         "command_argv",
         "required_parameters",
         "cwd",
+        "declared_effects",
         "environment",
+        "forbidden_effects",
         "timeout_seconds",
     }
 
@@ -79,7 +119,7 @@ class TemplateValidator:
         if unknown_keys:
             raise TemplateValidationError(
                 "unsupported_template_field",
-                f"template contains unsupported fields: {', '.join(unknown_keys)}",
+                "template contains unsupported fields",
             )
 
         template_id = self._required_text(template.get("template_id"), "template_id")
@@ -100,13 +140,23 @@ class TemplateValidator:
             field_name="required_parameters",
             allow_empty=True,
         )
+        self._sequence_of_text(
+            template.get("declared_effects", ()),
+            field_name="declared_effects",
+            allow_empty=True,
+        )
+        self._sequence_of_text(
+            template.get("forbidden_effects", ()),
+            field_name="forbidden_effects",
+            allow_empty=True,
+        )
         normalized_bindings = self._normalized_bindings(bindings)
 
         missing_parameters = [name for name in required_parameters if name not in normalized_bindings]
         if missing_parameters:
             raise TemplateValidationError(
                 "missing_parameter",
-                f"missing required parameters: {', '.join(sorted(missing_parameters))}",
+                "required parameters are missing",
             )
 
         command_argv = tuple(
@@ -123,7 +173,7 @@ class TemplateValidator:
             raise TemplateValidationError("malformed_template", "environment must be a mapping")
         environment = {
             self._required_text(key, "environment key"): self._bind_text(
-                self._required_text(value, f"environment[{key}]"),
+                self._required_text(value, "environment value"),
                 normalized_bindings,
             )
             for key, value in environment_raw.items()
@@ -153,7 +203,7 @@ class TemplateValidator:
         normalized: dict[str, str] = {}
         for key, value in bindings.items():
             binding_name = self._required_text(key, "binding name")
-            normalized[binding_name] = self._required_text(value, f"binding[{binding_name}]")
+            normalized[binding_name] = self._required_text(value, "binding value")
         return normalized
 
     def _bind_text(self, value: str, bindings: Mapping[str, str]) -> str:
@@ -161,7 +211,7 @@ class TemplateValidator:
             if field_name not in bindings:
                 raise TemplateValidationError(
                     "missing_binding",
-                    f"missing binding for field: {field_name}",
+                    "binding resolution failed",
                 )
         return self._required_text(value.format_map(bindings), "bound value")
 
@@ -173,7 +223,7 @@ class TemplateValidator:
             if not _FIELD_PATTERN.fullmatch(field_name):
                 raise TemplateValidationError(
                     "unsupported_binding_expression",
-                    f"unsupported binding expression: {field_name}",
+                    "binding expression is not supported",
                 )
             fields.append(field_name)
         return tuple(fields)
@@ -181,14 +231,23 @@ class TemplateValidator:
     @staticmethod
     def _required_text(value: Any, field_name: str) -> str:
         if not isinstance(value, str) or not value.strip():
-            raise TemplateValidationError("malformed_template", f"{field_name} must be a non-empty string")
+            raise TemplateValidationError(
+                "malformed_template",
+                _TEMPLATE_TEXT_REQUIREMENTS.get(field_name, "value must be a non-empty string"),
+            )
         return value
 
     @staticmethod
     def _sequence_of_text(value: Any, *, field_name: str, allow_empty: bool) -> tuple[str, ...]:
         if not isinstance(value, Sequence) or isinstance(value, (str, bytes)):
-            raise TemplateValidationError("malformed_template", f"{field_name} must be a sequence of strings")
+            raise TemplateValidationError(
+                "malformed_template",
+                _TEMPLATE_SEQUENCE_REQUIREMENTS.get(field_name, "value must be a sequence of strings"),
+            )
         values = tuple(TemplateValidator._required_text(item, field_name) for item in value)
         if not allow_empty and not values:
-            raise TemplateValidationError("malformed_template", f"{field_name} must contain at least one item")
+            raise TemplateValidationError(
+                "malformed_template",
+                _TEMPLATE_NON_EMPTY_SEQUENCE_REQUIREMENTS.get(field_name, "value must contain at least one item"),
+            )
         return values

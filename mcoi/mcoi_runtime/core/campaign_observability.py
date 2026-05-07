@@ -334,7 +334,7 @@ class CampaignObservabilityEngine:
             scope=MemoryScope.GLOBAL,
             scope_ref_id=campaign_id,
             trust_level=MemoryTrustLevel.VERIFIED,
-            title=f"Campaign lineage: {campaign_id}",
+            title="Campaign lineage",
             content={
                 "campaign_id": lineage["campaign_id"],
                 "name": lineage["name"],

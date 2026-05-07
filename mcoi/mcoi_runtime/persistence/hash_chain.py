@@ -27,6 +27,10 @@ from .errors import (
 GENESIS_PREVIOUS_HASH = "0" * 64  # 64 hex zeros for the genesis entry
 
 
+def _bounded_store_error(summary: str, exc: BaseException) -> str:
+    return f"{summary} ({type(exc).__name__})"
+
+
 def _atomic_write(path: Path, content: str) -> None:
     """Write content to a file atomically via temp-file-then-rename."""
     parent = path.parent
@@ -45,7 +49,63 @@ def _atomic_write(path: Path, content: str) -> None:
                 os.unlink(tmp_path)
             raise
     except OSError as exc:
-        raise PersistenceWriteError(f"failed to write {path}: {exc}") from exc
+        raise PersistenceWriteError(_bounded_store_error("hash chain write failed", exc)) from exc
+
+
+def _atomic_write_exclusive(path: Path, content: str) -> bool:
+    """Write content atomically, failing if the destination already exists.
+
+    The destination either doesn't exist or has the full serialized
+    content. Concurrent ``HashChainStore.latest`` readers never see a
+    half-written entry. Returns ``True`` on successful write, ``False``
+    if the file already exists (collision — caller may retry with a
+    new sequence).
+
+    Implementation (v4.40.0 — closes empty-file race observed in the
+    50-thread test on slow CI runners):
+
+      1. Write content to a temp file in the same directory.
+      2. ``os.link`` the temp file to the target path. ``link`` is
+         atomic and raises ``FileExistsError`` if the target exists,
+         giving us O_EXCL semantics with the content already on disk.
+      3. Unlink the temp file. The target keeps the content via its
+         own inode reference.
+
+    Pre-v4.40 used ``O_CREAT | O_EXCL`` then ``os.write``. That left a
+    visibility window between the syscall that created the (empty)
+    file and the syscall that wrote bytes. A concurrent ``latest()``
+    that ran in that window would see an empty entry, fail JSON
+    parsing, and raise ``CorruptedDataError`` — surfacing as a flake
+    in tests where 50 threads append simultaneously.
+    """
+    parent = path.parent
+    parent.mkdir(parents=True, exist_ok=True)
+
+    fd, tmp_path = tempfile.mkstemp(dir=str(parent), suffix=".tmp")
+    try:
+        try:
+            os.write(fd, content.encode("utf-8"))
+        finally:
+            os.close(fd)
+        # Atomic link: target either doesn't exist (link succeeds) or
+        # already exists (FileExistsError → collision).
+        try:
+            os.link(tmp_path, str(path))
+        except FileExistsError:
+            return False
+        return True
+    except OSError as exc:
+        raise PersistenceWriteError(
+            _bounded_store_error("hash chain write failed", exc)
+        ) from exc
+    finally:
+        # Always remove the temp file. After a successful link the
+        # target inherits the inode; after FileExistsError it's
+        # garbage. Best-effort cleanup either way.
+        try:
+            os.unlink(tmp_path)
+        except OSError:
+            pass
 
 
 def compute_chain_hash(sequence_number: int, content_hash: str, previous_hash: str) -> str:
@@ -84,17 +144,13 @@ class HashChainStore:
     def _safe_path(self, id_value: str, suffix: str = "") -> Path:
         """Construct a path from *id_value* and validate it stays inside _base_path."""
         if "\0" in id_value:
-            raise PathTraversalError(f"ID contains null byte: {id_value!r}")
+            raise PathTraversalError("identifier contains null byte")
         if "/" in id_value or "\\" in id_value or ".." in id_value:
-            raise PathTraversalError(
-                f"ID contains forbidden characters: {id_value!r}"
-            )
+            raise PathTraversalError("identifier contains forbidden characters")
         candidate = (self._base_path / f"{id_value}{suffix}").resolve()
         base_resolved = self._base_path.resolve()
         if not candidate.is_relative_to(base_resolved):
-            raise PathTraversalError(
-                f"path escapes base directory: {id_value!r}"
-            )
+            raise PathTraversalError("path escapes base directory")
         return candidate
 
     def _entry_path(self, sequence_number: int) -> Path:
@@ -114,11 +170,19 @@ class HashChainStore:
 
         return self._load_entry(files[0])
 
-    def append(self, content_hash: str) -> HashChainEntry:
-        """Append a new entry to the chain and return it.
+    def try_append(self, content_hash: str) -> HashChainEntry | None:
+        """Atomic append primitive (audit F15).
 
-        Reads the latest entry to determine the next sequence number and
-        previous_hash, then computes the chain_hash deterministically.
+        Reads the latest entry, computes the next entry, and writes it
+        with ``O_CREAT | O_EXCL``. Returns the written entry on
+        success, or ``None`` if another writer claimed the same
+        sequence (the OS rejected the destination). Callers either
+        retry (see ``append``) or surface the conflict.
+
+        Single-atomic-attempt by design — separating the primitive
+        from the retry strategy keeps the contract testable: tests
+        can simulate a collision by writing to the entry path
+        directly, then verify ``try_append`` returns ``None``.
         """
         if not isinstance(content_hash, str) or not content_hash.strip():
             raise PersistenceError("content_hash must be a non-empty string")
@@ -145,8 +209,40 @@ class HashChainStore:
         )
 
         content = serialize_record(entry)
-        _atomic_write(self._entry_path(seq), content)
+        if not _atomic_write_exclusive(self._entry_path(seq), content):
+            return None
         return entry
+
+    def append(self, content_hash: str) -> HashChainEntry:
+        """Append a new entry to the chain and return it.
+
+        Calls ``try_append`` in a bounded retry loop — on collision,
+        re-reads ``latest`` and tries again with the next sequence.
+        Closes the F15 TOCTOU: pre-v4.30 two concurrent writers could
+        both arrive at the same sequence and both succeed (the
+        ``os.replace`` in the original write helper overwrote rather
+        than rejected). Now the OS rejects the second write at the
+        ``O_EXCL`` syscall, the loser re-reads, and the chain stays
+        linear.
+        """
+        max_attempts = 64
+        last_exc: Exception | None = None
+        for _attempt in range(max_attempts):
+            try:
+                entry = self.try_append(content_hash)
+            except PersistenceWriteError as exc:
+                # Non-collision write failure (disk full, permissions,
+                # etc.) — surface immediately. Do not retry.
+                raise exc
+            except (CorruptedDataError, PathTraversalError) as exc:
+                last_exc = exc
+                raise
+            if entry is not None:
+                return entry
+            # Collision: another writer claimed this sequence. Loop.
+        raise PersistenceWriteError(
+            f"hash chain append failed after {max_attempts} contention retries"
+        )
 
     def load_all(self) -> tuple[HashChainEntry, ...]:
         """Load all chain entries in sequence order."""
@@ -186,7 +282,7 @@ class HashChainStore:
                     entries_checked=i + 1,
                     valid=False,
                     first_broken_sequence=i,
-                    detail=f"expected sequence {i}, found {entry.sequence_number}",
+                    detail="sequence continuity failure",
                 )
 
             # Check previous_hash linkage
@@ -201,7 +297,7 @@ class HashChainStore:
                     entries_checked=i + 1,
                     valid=False,
                     first_broken_sequence=i,
-                    detail=f"previous_hash mismatch at sequence {i}",
+                    detail="previous hash mismatch",
                 )
 
             # Recompute and verify chain_hash
@@ -214,7 +310,7 @@ class HashChainStore:
                     entries_checked=i + 1,
                     valid=False,
                     first_broken_sequence=i,
-                    detail=f"chain_hash mismatch at sequence {i}",
+                    detail="chain hash mismatch",
                 )
 
         return HashChainValidationResult(
@@ -222,7 +318,7 @@ class HashChainStore:
             entries_checked=len(entries),
             valid=True,
             first_broken_sequence=None,
-            detail=f"all {len(entries)} entries valid",
+            detail="chain valid",
         )
 
     def _load_entry(self, path: Path) -> HashChainEntry:
@@ -230,11 +326,9 @@ class HashChainStore:
         try:
             raw_text = path.read_text(encoding="utf-8")
         except OSError as exc:
-            raise CorruptedDataError(f"cannot read chain file {path.name}: {exc}") from exc
+            raise CorruptedDataError(_bounded_store_error("hash chain read failed", exc)) from exc
 
         try:
             return deserialize_record(raw_text, HashChainEntry)
         except (CorruptedDataError, TypeError, ValueError) as exc:
-            raise CorruptedDataError(
-                f"invalid chain entry in {path.name}: {exc}"
-            ) from exc
+            raise CorruptedDataError(_bounded_store_error("invalid hash chain entry", exc)) from exc

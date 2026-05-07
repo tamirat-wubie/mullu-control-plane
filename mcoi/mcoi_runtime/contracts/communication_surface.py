@@ -482,7 +482,7 @@ class ChannelCapabilityManifest(ContractRecord):
             raise ValueError("channel_type must be a ChannelType value")
         for f in ("supports_attachments", "supports_threading", "supports_rich_text", "supports_read_receipts"):
             if not isinstance(getattr(self, f), bool):
-                raise ValueError(f"{f} must be a boolean")
+                raise ValueError("value must be a boolean flag")
         if self.max_body_length is not None:
             if not isinstance(self.max_body_length, int) or self.max_body_length < 1:
                 raise ValueError("max_body_length must be a positive integer")

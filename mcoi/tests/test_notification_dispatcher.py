@@ -2,7 +2,7 @@
 from __future__ import annotations
 import pytest
 from mcoi_runtime.core.notification_dispatcher import (
-    Notification, NotificationChannel, NotificationDispatcher, NotificationPriority,
+    Notification, NotificationChannel, NotificationDispatcher,
 )
 
 
@@ -53,7 +53,8 @@ class TestNotificationDispatcher:
         n = Notification("n1", NotificationChannel.WEBHOOK, "hook-url", "Test", "body")
         record = d.send(n)
         assert not record.delivered
-        assert "fail" in record.error
+        assert record.error == "notification handler error (RuntimeError)"
+        assert "fail" not in record.error
 
     def test_handler_returns_false(self):
         d = NotificationDispatcher()
@@ -61,6 +62,8 @@ class TestNotificationDispatcher:
         n = Notification("n1", NotificationChannel.WEBHOOK, "hook-url", "Test", "body")
         record = d.send(n)
         assert not record.delivered
+        assert record.error == "notification handler returned false"
+        assert d.summary()["total_failed"] == 1
 
     def test_different_channels_no_dedup(self, dispatcher):
         n1 = Notification("n1", NotificationChannel.WEBHOOK, "url", "Alert", "body")

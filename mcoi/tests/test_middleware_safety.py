@@ -1,0 +1,361 @@
+"""Middleware and governance-guard safety tests."""
+
+from __future__ import annotations
+
+import pytest
+
+try:
+    from fastapi import FastAPI
+    from fastapi.testclient import TestClient
+    FASTAPI_AVAILABLE = True
+except ImportError:  # pragma: no cover - environment-dependent
+    FASTAPI_AVAILABLE = False
+
+from mcoi_runtime.app.middleware import (
+    GovernanceMiddleware,
+    _extract_content_safety_fields,
+    _extract_temporal_action_field,
+)
+from mcoi_runtime.contracts.temporal_runtime import TemporalActionRequest, TemporalRiskLevel
+from mcoi_runtime.core.event_spine import EventSpineEngine
+from mcoi_runtime.core.temporal_runtime import TemporalRuntimeEngine
+from mcoi_runtime.governance.guards.chain import (
+    GuardResult,
+    GovernanceGuard,
+    GovernanceGuardChain,
+    create_temporal_guard,
+)
+
+
+def _client_with_chain(
+    chain: GovernanceGuardChain,
+    **middleware_kwargs: object,
+) -> TestClient:
+    if not FASTAPI_AVAILABLE:
+        pytest.skip("FastAPI not installed")
+    app = FastAPI()
+
+    @app.post("/api/v1/echo")
+    def echo():
+        return {"ok": True}
+
+    app.add_middleware(GovernanceMiddleware, guard_chain=chain, **middleware_kwargs)
+    return TestClient(app)
+
+
+def test_guard_exception_is_sanitized_at_http_boundary() -> None:
+    chain = GovernanceGuardChain()
+
+    def boom(_context: dict[str, object]) -> GuardResult:
+        raise RuntimeError("guard-secret-detail")
+
+    chain.add(GovernanceGuard("boom", boom))
+    client = _client_with_chain(chain)
+
+    resp = client.post("/api/v1/echo", json={"prompt": "hello"})
+
+    assert resp.status_code == 403
+    body = resp.json()
+    assert body["error"] == "guard error (RuntimeError)"
+    assert body["guard"] == "boom"
+    assert body["governed"] is True
+    assert "guard-secret-detail" not in str(body)
+
+
+def test_middleware_skips_malformed_json_content_extraction() -> None:
+    chain = GovernanceGuardChain()
+
+    def verify_context(context: dict[str, object]) -> GuardResult:
+        assert context.get("prompt") is None
+        assert context.get("content") is None
+        return GuardResult(allowed=True, guard_name="verify")
+
+    chain.add(GovernanceGuard("verify", verify_context))
+    client = _client_with_chain(chain)
+
+    resp = client.post(
+        "/api/v1/echo",
+        content=b"{",
+        headers={"content-type": "application/json"},
+    )
+
+    assert resp.status_code == 200
+    assert resp.json()["ok"] is True
+
+
+def test_extract_content_safety_fields_rejects_malformed_json() -> None:
+    assert _extract_content_safety_fields(b"{") == {}
+
+
+def test_extract_content_safety_fields_only_keeps_strings() -> None:
+    extracted = _extract_content_safety_fields(
+        b'{"prompt":"safe","content":["not-text"],"ignored":true}'
+    )
+
+    assert extracted == {"prompt": "safe"}
+
+
+def test_extract_temporal_action_field_builds_contract() -> None:
+    extracted = _extract_temporal_action_field(
+        b"""{
+            "temporal_action": {
+                "action_id": "act-1",
+                "tenant_id": "t1",
+                "actor_id": "user-1",
+                "action_type": "payment",
+                "risk": "high",
+                "requested_at": "2026-05-04T13:00:00+00:00",
+                "approval_expires_at": "2026-05-04T15:00:00+00:00"
+            }
+        }"""
+    )
+
+    action = extracted["temporal_action"]
+    assert isinstance(action, TemporalActionRequest)
+    assert action.risk == TemporalRiskLevel.HIGH
+    assert action.action_type == "payment"
+
+
+def test_extract_temporal_action_field_preserves_invalid_for_fail_closed_guard() -> None:
+    extracted = _extract_temporal_action_field(
+        b'{"temporal_action":{"action_id":"act-1","unexpected":"field"}}'
+    )
+
+    assert extracted["temporal_action"] == {"action_id": "act-1", "unexpected": "field"}
+
+
+def test_middleware_threads_temporal_action_to_guard_context() -> None:
+    chain = GovernanceGuardChain()
+
+    def verify_context(context: dict[str, object]) -> GuardResult:
+        action = context.get("temporal_action")
+        assert isinstance(action, TemporalActionRequest)
+        assert action.action_id == "act-1"
+        assert action.risk == TemporalRiskLevel.LOW
+        return GuardResult(allowed=True, guard_name="verify")
+
+    chain.add(GovernanceGuard("verify", verify_context))
+    client = _client_with_chain(chain)
+
+    resp = client.post(
+        "/api/v1/echo",
+        json={
+            "temporal_action": {
+                "action_id": "act-1",
+                "tenant_id": "t1",
+                "actor_id": "user-1",
+                "action_type": "reminder",
+                "risk": "low",
+                "requested_at": "2026-05-04T13:00:00+00:00",
+            },
+        },
+    )
+
+    assert resp.status_code == 200
+    assert resp.json()["ok"] is True
+
+
+def test_middleware_invalid_temporal_action_fails_closed_with_temporal_guard() -> None:
+    chain = GovernanceGuardChain()
+    temporal_runtime = TemporalRuntimeEngine(
+        EventSpineEngine(),
+        clock=lambda: "2026-05-04T13:00:00+00:00",
+    )
+    chain.add(create_temporal_guard(temporal_runtime))
+    client = _client_with_chain(chain)
+
+    resp = client.post(
+        "/api/v1/echo",
+        json={"temporal_action": {"action_id": "act-1", "unexpected": "field"}},
+    )
+
+    assert resp.status_code == 403
+    body = resp.json()
+    assert body["guard"] == "temporal"
+    assert body["error"] == "invalid temporal action"
+
+
+def test_middleware_expired_temporal_action_blocks_endpoint_execution() -> None:
+    if not FASTAPI_AVAILABLE:
+        pytest.skip("FastAPI not installed")
+
+    calls: list[str] = []
+    chain = GovernanceGuardChain()
+    temporal_runtime = TemporalRuntimeEngine(
+        EventSpineEngine(),
+        clock=lambda: "2026-05-04T15:01:00+00:00",
+    )
+    chain.add(create_temporal_guard(temporal_runtime))
+
+    app = FastAPI()
+
+    @app.post("/api/v1/payment")
+    def payment() -> dict[str, bool]:
+        calls.append("executed")
+        return {"executed": True}
+
+    app.add_middleware(GovernanceMiddleware, guard_chain=chain)
+    client = TestClient(app)
+
+    resp = client.post(
+        "/api/v1/payment",
+        json={
+            "temporal_action": {
+                "action_id": "pay-1",
+                "tenant_id": "tenant-a",
+                "actor_id": "user-a",
+                "action_type": "payment",
+                "risk": "high",
+                "requested_at": "2026-05-04T13:00:00+00:00",
+                "approval_expires_at": "2026-05-04T15:00:00+00:00",
+            },
+        },
+    )
+
+    assert resp.status_code == 403
+    assert resp.json()["guard"] == "temporal"
+    assert resp.json()["error"] == "approval_expired"
+    assert calls == []
+
+
+def test_middleware_temporal_detail_reaches_decision_log_and_proof() -> None:
+    if not FASTAPI_AVAILABLE:
+        pytest.skip("FastAPI not installed")
+
+    class CapturingDecisionLog:
+        def __init__(self) -> None:
+            self.calls: list[dict[str, object]] = []
+
+        def record(self, **kwargs: object) -> None:
+            self.calls.append(kwargs)
+
+    class CapturingProofBridge:
+        def __init__(self) -> None:
+            self.calls: list[dict[str, object]] = []
+
+        def certify_governance_decision(self, **kwargs: object) -> None:
+            self.calls.append(kwargs)
+
+    decision_log = CapturingDecisionLog()
+    proof_bridge = CapturingProofBridge()
+    chain = GovernanceGuardChain()
+    temporal_runtime = TemporalRuntimeEngine(
+        EventSpineEngine(),
+        clock=lambda: "2026-05-04T15:01:00+00:00",
+    )
+    chain.add(create_temporal_guard(temporal_runtime))
+
+    app = FastAPI()
+
+    @app.post("/api/v1/payment")
+    def payment() -> dict[str, bool]:
+        return {"executed": True}
+
+    app.add_middleware(
+        GovernanceMiddleware,
+        guard_chain=chain,
+        decision_log=decision_log,
+        proof_bridge=proof_bridge,
+    )
+    client = TestClient(app)
+
+    resp = client.post(
+        "/api/v1/payment",
+        json={
+            "temporal_action": {
+                "action_id": "pay-1",
+                "tenant_id": "tenant-a",
+                "actor_id": "user-a",
+                "action_type": "payment",
+                "risk": "high",
+                "requested_at": "2026-05-04T13:00:00+00:00",
+                "approval_expires_at": "2026-05-04T15:00:00+00:00",
+            },
+        },
+    )
+
+    assert resp.status_code == 403
+    logged_guard = decision_log.calls[0]["guards"][0]  # type: ignore[index]
+    proof_guard = proof_bridge.calls[0]["guard_results"][0]  # type: ignore[index]
+    assert logged_guard.guard_name == "temporal"
+    assert logged_guard.detail["verdict"] == "deny"
+    assert logged_guard.detail["decision_id"].startswith("dec-temp-action")
+    assert proof_guard["detail"]["verdict"] == "deny"
+    assert proof_guard["detail"]["decision_id"] == logged_guard.detail["decision_id"]
+
+
+def test_middleware_witnesses_proof_bridge_failures() -> None:
+    chain = GovernanceGuardChain()
+    metric_calls: list[tuple[str, int]] = []
+
+    class BrokenProofBridge:
+        def certify_governance_decision(self, **_kwargs: object) -> None:
+            raise RuntimeError("secret-proof-failure")
+
+    def allow(_context: dict[str, object]) -> GuardResult:
+        return GuardResult(allowed=True, guard_name="allow")
+
+    chain.add(GovernanceGuard("allow", allow))
+    client = _client_with_chain(
+        chain,
+        metrics_fn=lambda name, value: metric_calls.append((name, value)),
+        proof_bridge=BrokenProofBridge(),
+    )
+
+    resp = client.post("/api/v1/echo", json={"prompt": "hello"})
+
+    assert resp.status_code == 200
+    assert resp.json()["ok"] is True
+    assert ("proof_bridge_certification_failures", 1) in metric_calls
+
+
+def test_middleware_witnesses_decision_log_failures() -> None:
+    chain = GovernanceGuardChain()
+    metric_calls: list[tuple[str, int]] = []
+
+    class BrokenDecisionLog:
+        def record(self, **_kwargs: object) -> None:
+            raise RuntimeError("secret-decision-log-failure")
+
+    def allow(_context: dict[str, object]) -> GuardResult:
+        return GuardResult(allowed=True, guard_name="allow")
+
+    chain.add(GovernanceGuard("allow", allow))
+    client = _client_with_chain(
+        chain,
+        metrics_fn=lambda name, value: metric_calls.append((name, value)),
+        decision_log=BrokenDecisionLog(),
+    )
+
+    resp = client.post("/api/v1/echo", json={"prompt": "hello"})
+
+    assert resp.status_code == 200
+    assert resp.json()["ok"] is True
+    assert ("decision_log_record_failures", 1) in metric_calls
+    assert "secret-decision-log-failure" not in str(resp.json())
+
+
+def test_middleware_witnesses_request_analytics_failures() -> None:
+    chain = GovernanceGuardChain()
+    metric_calls: list[tuple[str, int]] = []
+
+    class BrokenRequestAnalytics:
+        def record(self, *_args: object, **_kwargs: object) -> None:
+            raise RuntimeError("secret-analytics-failure")
+
+    def allow(_context: dict[str, object]) -> GuardResult:
+        return GuardResult(allowed=True, guard_name="allow")
+
+    chain.add(GovernanceGuard("allow", allow))
+    client = _client_with_chain(
+        chain,
+        metrics_fn=lambda name, value: metric_calls.append((name, value)),
+        request_analytics=BrokenRequestAnalytics(),
+    )
+
+    resp = client.post("/api/v1/echo", json={"prompt": "hello"})
+
+    assert resp.status_code == 200
+    assert resp.json()["ok"] is True
+    assert ("request_analytics_record_failures", 1) in metric_calls
+    assert "secret-analytics-failure" not in str(resp.json())

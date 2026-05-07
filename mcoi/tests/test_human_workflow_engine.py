@@ -646,7 +646,7 @@ class TestCompleteReview:
     def test_task_not_in_packet_raises(self, engine):
         _make_review_packet(engine, "p1")
         _make_task(engine, "standalone", scope_ref_id="other")
-        with pytest.raises(RuntimeCoreInvariantError, match="not assigned to packet"):
+        with pytest.raises(RuntimeCoreInvariantError, match="review packet"):
             engine.complete_review("p1", "standalone")
 
     def test_unknown_packet_raises(self, engine):
@@ -915,7 +915,7 @@ class TestRecordVote:
         _make_board(engine, "b1")
         _make_board(engine, "b2")
         engine.add_board_member("m1", "b1", "alice")
-        with pytest.raises(RuntimeCoreInvariantError, match="not on board"):
+        with pytest.raises(RuntimeCoreInvariantError, match="approval board"):
             engine.record_vote("v1", "b2", "m1")
 
     def test_duplicate_vote_same_member_same_scope_raises(self, engine):
@@ -1447,7 +1447,7 @@ class TestDetectWorkflowViolations:
         violations = engine.detect_workflow_violations()
         assert len(violations) == 1
         assert violations[0].operation == "board_no_members"
-        assert "b1" in violations[0].reason
+        assert violations[0].reason == "approval board has no members"
 
     def test_board_with_members_no_violation(self, engine):
         _make_board(engine, "b1")
@@ -1484,7 +1484,7 @@ class TestDetectWorkflowViolations:
         violations = engine.detect_workflow_violations()
         esc_violations = [v for v in violations if v.operation == "stale_escalation"]
         assert len(esc_violations) == 1
-        assert "t1" in esc_violations[0].reason
+        assert esc_violations[0].reason == "escalated task is not reassigned"
 
     def test_escalated_then_reassigned_no_violation(self, engine):
         _make_task(engine, "t1")
@@ -2186,7 +2186,7 @@ class TestGoldenMissedSLAEscalation:
         violations = engine.detect_workflow_violations()
         esc_violations = [v for v in violations if v.operation == "stale_escalation"]
         assert len(esc_violations) == 1
-        assert "sla-task" in esc_violations[0].reason
+        assert esc_violations[0].reason == "escalated task is not reassigned"
 
         # Reassign clears future detection
         engine.assign_task("sla-task", "manager-2")
@@ -2546,3 +2546,53 @@ class TestUnknownEntityLookups:
     def test_get_handoff_unknown(self, engine):
         with pytest.raises(RuntimeCoreInvariantError):
             engine.get_handoff("x")
+
+
+class TestBoundedHumanWorkflowContracts:
+    def test_task_lookup_and_terminal_messages_are_bounded(self, engine):
+        _make_task(engine, "task-secret")
+        engine.complete_task("task-secret")
+        with pytest.raises(RuntimeCoreInvariantError, match="Cannot assign task in current status") as terminal_exc:
+            engine.assign_task("task-secret", "user-2")
+        with pytest.raises(RuntimeCoreInvariantError, match="Unknown task_id") as unknown_exc:
+            engine.get_task("task-secret-missing")
+        assert "task-secret" not in str(terminal_exc.value)
+        assert "completed" not in str(terminal_exc.value).lower()
+        assert "task-secret-missing" not in str(unknown_exc.value)
+
+    def test_review_and_vote_contracts_are_bounded(self, engine):
+        _make_review_packet(engine, "packet-secret")
+        _make_task(engine, "task-secret")
+        with pytest.raises(RuntimeCoreInvariantError, match="Task is not assigned to review packet") as packet_exc:
+            engine.complete_review("packet-secret", "task-secret")
+
+        _make_board(engine, "board-a")
+        _make_board(engine, "board-b")
+        engine.add_board_member("member-secret", "board-a", "alice")
+        with pytest.raises(RuntimeCoreInvariantError, match="Member is not assigned to approval board") as board_exc:
+            engine.record_vote("vote-1", "board-b", "member-secret")
+
+        engine.record_vote("vote-2", "board-a", "member-secret", scope_ref_id="scope-secret")
+        with pytest.raises(RuntimeCoreInvariantError, match="Member already voted on scope") as duplicate_exc:
+            engine.record_vote("vote-3", "board-a", "member-secret", scope_ref_id="scope-secret")
+
+        assert "packet-secret" not in str(packet_exc.value)
+        assert "task-secret" not in str(packet_exc.value)
+        assert "board-a" not in str(board_exc.value)
+        assert "board-b" not in str(board_exc.value)
+        assert "member-secret" not in str(board_exc.value)
+        assert "scope-secret" not in str(duplicate_exc.value)
+
+    def test_violation_reasons_are_bounded(self, engine):
+        _make_board(engine, "board-secret")
+        _make_task(engine, "task-secret")
+        engine.escalate_task("task-secret")
+        _make_board(engine, "decision-board")
+        engine.add_board_member("member-1", "decision-board", "alice")
+        engine.resolve_board_decision("decision-secret", "decision-board")
+
+        reasons = {violation.reason for violation in engine.detect_workflow_violations()}
+        assert "approval board has no members" in reasons
+        assert "pending decision has no votes" in reasons
+        assert "escalated task is not reassigned" in reasons
+        assert all("secret" not in reason for reason in reasons)

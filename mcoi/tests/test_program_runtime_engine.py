@@ -1171,3 +1171,59 @@ class TestGoldenScenario6FullLifecycle:
         h2 = engine.state_hash()
         assert h1 == h2
         assert len(h1) == 64
+
+
+class TestBoundedContracts:
+    def test_objective_and_program_contracts_do_not_reflect_ids(
+        self, engine: ProgramRuntimeEngine
+    ) -> None:
+        engine.register_objective("obj-secret", "Revenue")
+        with pytest.raises(RuntimeCoreInvariantError) as dup_obj_exc:
+            engine.register_objective("obj-secret", "Revenue Again")
+        dup_obj_message = str(dup_obj_exc.value)
+        assert dup_obj_message == "objective already exists"
+        assert "obj-secret" not in dup_obj_message
+        assert "already exists" in dup_obj_message
+
+        with pytest.raises(RuntimeCoreInvariantError) as missing_obj_exc:
+            engine.update_objective_value("obj-missing", 42.0)
+        missing_obj_message = str(missing_obj_exc.value)
+        assert missing_obj_message == "objective not found"
+        assert "obj-missing" not in missing_obj_message
+        assert "not found" in missing_obj_message
+
+        engine.register_program("prog-secret", "Launch")
+        with pytest.raises(RuntimeCoreInvariantError) as dup_prog_exc:
+            engine.register_program("prog-secret", "Launch Again")
+        dup_prog_message = str(dup_prog_exc.value)
+        assert dup_prog_message == "program already exists"
+        assert "prog-secret" not in dup_prog_message
+        assert "already exists" in dup_prog_message
+
+    def test_initiative_milestone_and_decision_contracts_do_not_reflect_ids(
+        self, engine: ProgramRuntimeEngine
+    ) -> None:
+        _seed_program(engine, obj_id="obj-secret", prog_id="prog-secret")
+        engine.register_initiative("ini-secret", "prog-secret", "Initiative", objective_id="obj-secret")
+
+        with pytest.raises(RuntimeCoreInvariantError) as dup_ini_exc:
+            engine.register_initiative("ini-secret", "prog-secret", "Again", objective_id="obj-secret")
+        dup_ini_message = str(dup_ini_exc.value)
+        assert dup_ini_message == "initiative already exists"
+        assert "ini-secret" not in dup_ini_message
+        assert "already exists" in dup_ini_message
+
+        with pytest.raises(RuntimeCoreInvariantError) as missing_ms_exc:
+            engine.record_milestone_progress("ms-missing", 50.0)
+        missing_ms_message = str(missing_ms_exc.value)
+        assert missing_ms_message == "milestone not found"
+        assert "ms-missing" not in missing_ms_message
+        assert "not found" in missing_ms_message
+
+        engine.record_decision("dec-secret", "Ship")
+        with pytest.raises(RuntimeCoreInvariantError) as dup_dec_exc:
+            engine.record_decision("dec-secret", "Ship Again")
+        dup_dec_message = str(dup_dec_exc.value)
+        assert dup_dec_message == "decision already exists"
+        assert "dec-secret" not in dup_dec_message
+        assert "already exists" in dup_dec_message

@@ -126,7 +126,7 @@ class LogicRuntimeEngine:
     ) -> LogicalStatement:
         """Register a new logical statement. Duplicate statement_id raises."""
         if statement_id in self._statements:
-            raise RuntimeCoreInvariantError(f"Duplicate statement_id: {statement_id}")
+            raise RuntimeCoreInvariantError("Duplicate statement_id")
         now = self._now()
         stmt = LogicalStatement(
             statement_id=statement_id,
@@ -156,7 +156,7 @@ class LogicRuntimeEngine:
     ) -> InferenceRule:
         """Register an inference rule. Duplicate rule_id raises."""
         if rule_id in self._rules:
-            raise RuntimeCoreInvariantError(f"Duplicate rule_id: {rule_id}")
+            raise RuntimeCoreInvariantError("Duplicate rule_id")
         now = self._now()
         rule = InferenceRule(
             rule_id=rule_id,
@@ -189,16 +189,14 @@ class LogicRuntimeEngine:
         """
         rule = self._rules.get(rule_id)
         if rule is None:
-            raise RuntimeCoreInvariantError(f"Unknown rule_id: {rule_id}")
+            raise RuntimeCoreInvariantError("Unknown rule_id")
         premise = self._statements.get(premise_id)
         if premise is None:
-            raise RuntimeCoreInvariantError(f"Unknown premise statement_id: {premise_id}")
+            raise RuntimeCoreInvariantError("Unknown premise statement_id")
         if premise.status not in (LogicalStatus.ASSERTED, LogicalStatus.DERIVED):
-            raise RuntimeCoreInvariantError(f"Premise {premise_id} is not ASSERTED or DERIVED")
+            raise RuntimeCoreInvariantError("Premise is not ASSERTED or DERIVED")
         if premise.content != rule.antecedent:
-            raise RuntimeCoreInvariantError(
-                f"Premise content '{premise.content}' does not match rule antecedent '{rule.antecedent}'"
-            )
+            raise RuntimeCoreInvariantError("Premise does not match rule antecedent")
 
         now = self._now()
         stmt_id = stable_identifier("stmt-derived", {
@@ -248,7 +246,7 @@ class LogicRuntimeEngine:
     ) -> ProofRecord:
         """Record a proof. Duplicate proof_id raises."""
         if proof_id in self._proofs:
-            raise RuntimeCoreInvariantError(f"Duplicate proof_id: {proof_id}")
+            raise RuntimeCoreInvariantError("Duplicate proof_id")
         now = self._now()
         proof = ProofRecord(
             proof_id=proof_id,
@@ -278,7 +276,7 @@ class LogicRuntimeEngine:
     ) -> AssumptionRecord:
         """Register an assumption as ACTIVE. Duplicate assumption_id raises."""
         if assumption_id in self._assumptions:
-            raise RuntimeCoreInvariantError(f"Duplicate assumption_id: {assumption_id}")
+            raise RuntimeCoreInvariantError("Duplicate assumption_id")
         now = self._now()
         assumption = AssumptionRecord(
             assumption_id=assumption_id,
@@ -298,7 +296,7 @@ class LogicRuntimeEngine:
         """Retract an assumption. Also retracts dependent conclusions."""
         old = self._assumptions.get(assumption_id)
         if old is None:
-            raise RuntimeCoreInvariantError(f"Unknown assumption_id: {assumption_id}")
+            raise RuntimeCoreInvariantError("Unknown assumption_id")
         now = self._now()
         retracted = AssumptionRecord(
             assumption_id=old.assumption_id,
@@ -406,9 +404,9 @@ class LogicRuntimeEngine:
         """Process a contradiction into a revision and truth-maintenance decision."""
         contradiction = self._contradictions.get(contradiction_id)
         if contradiction is None:
-            raise RuntimeCoreInvariantError(f"Unknown contradiction_id: {contradiction_id}")
+            raise RuntimeCoreInvariantError("Unknown contradiction_id")
         if revision_id in self._revisions:
-            raise RuntimeCoreInvariantError(f"Duplicate revision_id: {revision_id}")
+            raise RuntimeCoreInvariantError("Duplicate revision_id")
 
         now = self._now()
 
@@ -559,7 +557,7 @@ class LogicRuntimeEngine:
                         "violation_id": vid,
                         "tenant_id": tenant_id,
                         "operation": "unresolved_contradiction",
-                        "reason": f"Contradiction {cid} is unresolved",
+                        "reason": "Contradiction is unresolved",
                         "detected_at": now,
                     }
                     self._violations[vid] = v
@@ -580,7 +578,7 @@ class LogicRuntimeEngine:
                             "violation_id": vid,
                             "tenant_id": tenant_id,
                             "operation": "retracted_proof_still_used",
-                            "reason": f"Proof {pid} retracted but conclusion {proof.conclusion_ref} still active",
+                            "reason": "Retracted proof still has active conclusion",
                             "detected_at": now,
                         }
                         self._violations[vid] = v
@@ -598,7 +596,7 @@ class LogicRuntimeEngine:
                             "violation_id": vid,
                             "tenant_id": tenant_id,
                             "operation": "assumption_no_justification",
-                            "reason": f"Assumption {aid} has no justification",
+                            "reason": "Assumption has no justification",
                             "detected_at": now,
                         }
                         self._violations[vid] = v

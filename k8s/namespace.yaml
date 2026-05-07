@@ -3,5 +3,5 @@ kind: Namespace
 metadata:
   name: mullu
   labels:
-    app: mullu-platform
+    app: mullu-control-plane
     governed: "true"

@@ -130,6 +130,7 @@ class ProcurementRequest(ContractRecord):
     currency: str = ""
     requested_by: str = ""
     requested_at: str = ""
+    cancelled_by: str = ""
     metadata: Mapping[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
@@ -142,6 +143,14 @@ class ProcurementRequest(ContractRecord):
         object.__setattr__(self, "currency", require_non_empty_text(self.currency, "currency"))
         object.__setattr__(self, "requested_by", require_non_empty_text(self.requested_by, "requested_by"))
         require_datetime_text(self.requested_at, "requested_at")
+        normalized_cancelled_by = self.cancelled_by.strip()
+        if normalized_cancelled_by:
+            normalized_cancelled_by = require_non_empty_text(normalized_cancelled_by, "cancelled_by")
+            if normalized_cancelled_by == "system":
+                raise ValueError("cancelled_by must exclude system")
+        object.__setattr__(self, "cancelled_by", normalized_cancelled_by)
+        if self.status == ProcurementRequestStatus.CANCELLED and not normalized_cancelled_by:
+            raise ValueError("cancelled requests must declare cancelled_by")
         object.__setattr__(self, "metadata", freeze_value(dict(self.metadata)))
 
 

@@ -94,11 +94,9 @@ class EventObligationBridge:
         )
         obl = obligation_engine.get_obligation(obligation_id)
         if obl is None:
-            raise RuntimeCoreInvariantError(f"obligation {obligation_id} not found after close")
+            raise RuntimeCoreInvariantError("obligation not found after close")
         if obl.state != final_state:
-            raise RuntimeCoreInvariantError(
-                f"obligation {obligation_id} state is {obl.state}, expected {final_state}"
-            )
+            raise RuntimeCoreInvariantError("obligation state mismatch after close")
 
         event_type = (
             EventType.OBLIGATION_EXPIRED
@@ -125,11 +123,9 @@ class EventObligationBridge:
         obligation_engine.transfer(obligation_id, to_owner=to_owner, reason=reason)
         obl = obligation_engine.get_obligation(obligation_id)
         if obl is None:
-            raise RuntimeCoreInvariantError(f"obligation {obligation_id} not found after transfer")
+            raise RuntimeCoreInvariantError("obligation not found after transfer")
         if obl.owner != to_owner:
-            raise RuntimeCoreInvariantError(
-                f"obligation {obligation_id} owner is {obl.owner.owner_id}, expected {to_owner.owner_id}"
-            )
+            raise RuntimeCoreInvariantError("obligation owner mismatch after transfer")
         evt = obligation_engine.obligation_event(obl, EventType.OBLIGATION_TRANSFERRED)
         spine.emit(evt)
         return (obl, evt)
@@ -156,11 +152,9 @@ class EventObligationBridge:
         )
         obl = obligation_engine.get_obligation(obligation_id)
         if obl is None:
-            raise RuntimeCoreInvariantError(f"obligation {obligation_id} not found after escalate")
+            raise RuntimeCoreInvariantError("obligation not found after escalate")
         if obl.state != ObligationState.ESCALATED:
-            raise RuntimeCoreInvariantError(
-                f"obligation {obligation_id} state is {obl.state}, expected escalated"
-            )
+            raise RuntimeCoreInvariantError("obligation state mismatch after escalate")
         evt = obligation_engine.obligation_event(obl, EventType.OBLIGATION_ESCALATED)
         spine.emit(evt)
         return (obl, evt)

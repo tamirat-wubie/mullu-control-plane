@@ -90,7 +90,7 @@ class PartnerEngine:
 
     def onboard_partner(self, partner_id: str, company_name: str, partner_type: str, certification: str = "none") -> PartnerRecord:
         if partner_id in self._partners:
-            raise ValueError(f"Partner {partner_id} already exists")
+            raise ValueError("partner already exists")
         record = PartnerRecord(partner_id, company_name, partner_type, certification)
         self._partners[partner_id] = record
         self._economics[partner_id] = PartnerEconomics(partner_id, partner_type)
@@ -98,14 +98,14 @@ class PartnerEngine:
 
     def certify_partner(self, partner_id: str, level: str) -> PartnerRecord:
         if partner_id not in self._partners:
-            raise ValueError(f"Unknown partner: {partner_id}")
+            raise ValueError("unknown partner")
         p = self._partners[partner_id]
         self._partners[partner_id] = PartnerRecord(p.partner_id, p.company_name, p.partner_type, level, p.active, p.quality_score)
         return self._partners[partner_id]
 
     def record_deal(self, partner_id: str, revenue: float, closed: bool = False) -> PartnerEconomics:
         if partner_id not in self._economics:
-            raise ValueError(f"Unknown partner: {partner_id}")
+            raise ValueError("unknown partner")
         econ = self._economics[partner_id]
         econ.deals_sourced += 1
         econ.total_revenue_influenced += revenue
@@ -118,7 +118,7 @@ class PartnerEngine:
 
     def update_quality(self, partner_id: str, score: float) -> PartnerRecord:
         if partner_id not in self._partners:
-            raise ValueError(f"Unknown partner: {partner_id}")
+            raise ValueError("unknown partner")
         p = self._partners[partner_id]
         self._partners[partner_id] = PartnerRecord(p.partner_id, p.company_name, p.partner_type, p.certification_level, p.active, score)
         return self._partners[partner_id]

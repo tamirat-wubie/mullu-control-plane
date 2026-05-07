@@ -129,7 +129,7 @@ class PartnerRuntimeEngine:
         status: PartnerStatus = PartnerStatus.ACTIVE,
     ) -> PartnerRecord:
         if partner_id in self._partners:
-            raise RuntimeCoreInvariantError(f"partner already registered: {partner_id}")
+            raise RuntimeCoreInvariantError("partner already registered")
         now = _now_iso()
         record = PartnerRecord(
             partner_id=partner_id,
@@ -147,15 +147,15 @@ class PartnerRuntimeEngine:
 
     def get_partner(self, partner_id: str) -> PartnerRecord:
         if partner_id not in self._partners:
-            raise RuntimeCoreInvariantError(f"unknown partner: {partner_id}")
+            raise RuntimeCoreInvariantError("unknown partner")
         return self._partners[partner_id]
 
     def update_partner_status(self, partner_id: str, status: PartnerStatus) -> PartnerRecord:
         if partner_id not in self._partners:
-            raise RuntimeCoreInvariantError(f"unknown partner: {partner_id}")
+            raise RuntimeCoreInvariantError("unknown partner")
         old = self._partners[partner_id]
         if old.status in _PARTNER_TERMINAL:
-            raise RuntimeCoreInvariantError(f"partner is in terminal state: {old.status.value}")
+            raise RuntimeCoreInvariantError("partner is in terminal state")
         updated = PartnerRecord(
             partner_id=old.partner_id,
             tenant_id=old.tenant_id,
@@ -186,12 +186,12 @@ class PartnerRuntimeEngine:
         role: EcosystemRole = EcosystemRole.INTERMEDIARY,
     ) -> PartnerAccountLink:
         if link_id in self._links:
-            raise RuntimeCoreInvariantError(f"link already exists: {link_id}")
+            raise RuntimeCoreInvariantError("link already exists")
         if partner_id not in self._partners:
-            raise RuntimeCoreInvariantError(f"unknown partner: {partner_id}")
+            raise RuntimeCoreInvariantError("unknown partner")
         partner = self._partners[partner_id]
         if partner.status in _PARTNER_TERMINAL:
-            raise RuntimeCoreInvariantError(f"partner is in terminal state: {partner.status.value}")
+            raise RuntimeCoreInvariantError("partner is in terminal state")
         now = _now_iso()
         link = PartnerAccountLink(
             link_id=link_id,
@@ -237,9 +237,9 @@ class PartnerRuntimeEngine:
         revenue_share_pct: float = 0.0,
     ) -> EcosystemAgreement:
         if agreement_id in self._agreements:
-            raise RuntimeCoreInvariantError(f"agreement already exists: {agreement_id}")
+            raise RuntimeCoreInvariantError("agreement already exists")
         if partner_id not in self._partners:
-            raise RuntimeCoreInvariantError(f"unknown partner: {partner_id}")
+            raise RuntimeCoreInvariantError("unknown partner")
         now = _now_iso()
         agreement = EcosystemAgreement(
             agreement_id=agreement_id,
@@ -256,7 +256,7 @@ class PartnerRuntimeEngine:
 
     def get_agreement(self, agreement_id: str) -> EcosystemAgreement:
         if agreement_id not in self._agreements:
-            raise RuntimeCoreInvariantError(f"unknown agreement: {agreement_id}")
+            raise RuntimeCoreInvariantError("unknown agreement")
         return self._agreements[agreement_id]
 
     def agreements_for_partner(self, partner_id: str) -> tuple[EcosystemAgreement, ...]:
@@ -275,11 +275,11 @@ class PartnerRuntimeEngine:
         gross_amount: float,
     ) -> RevenueShareRecord:
         if share_id in self._revenue_shares:
-            raise RuntimeCoreInvariantError(f"revenue share already exists: {share_id}")
+            raise RuntimeCoreInvariantError("revenue share already exists")
         if partner_id not in self._partners:
-            raise RuntimeCoreInvariantError(f"unknown partner: {partner_id}")
+            raise RuntimeCoreInvariantError("unknown partner")
         if agreement_id not in self._agreements:
-            raise RuntimeCoreInvariantError(f"unknown agreement: {agreement_id}")
+            raise RuntimeCoreInvariantError("unknown agreement")
         agreement = self._agreements[agreement_id]
         share_pct = agreement.revenue_share_pct
         share_amount = round(gross_amount * share_pct, 2)
@@ -301,10 +301,10 @@ class PartnerRuntimeEngine:
 
     def settle_revenue_share(self, share_id: str) -> RevenueShareRecord:
         if share_id not in self._revenue_shares:
-            raise RuntimeCoreInvariantError(f"unknown revenue share: {share_id}")
+            raise RuntimeCoreInvariantError("unknown revenue share")
         old = self._revenue_shares[share_id]
         if old.status in _REVENUE_SHARE_TERMINAL:
-            raise RuntimeCoreInvariantError(f"revenue share is in terminal state: {old.status.value}")
+            raise RuntimeCoreInvariantError("revenue share is in terminal state")
         updated = RevenueShareRecord(
             share_id=old.share_id,
             partner_id=old.partner_id,
@@ -322,10 +322,10 @@ class PartnerRuntimeEngine:
 
     def dispute_revenue_share(self, share_id: str) -> RevenueShareRecord:
         if share_id not in self._revenue_shares:
-            raise RuntimeCoreInvariantError(f"unknown revenue share: {share_id}")
+            raise RuntimeCoreInvariantError("unknown revenue share")
         old = self._revenue_shares[share_id]
         if old.status in _REVENUE_SHARE_TERMINAL:
-            raise RuntimeCoreInvariantError(f"revenue share is in terminal state: {old.status.value}")
+            raise RuntimeCoreInvariantError("revenue share is in terminal state")
         updated = RevenueShareRecord(
             share_id=old.share_id,
             partner_id=old.partner_id,
@@ -358,9 +358,9 @@ class PartnerRuntimeEngine:
         actual_value: float = 0.0,
     ) -> PartnerCommitment:
         if commitment_id in self._commitments:
-            raise RuntimeCoreInvariantError(f"commitment already exists: {commitment_id}")
+            raise RuntimeCoreInvariantError("commitment already exists")
         if partner_id not in self._partners:
-            raise RuntimeCoreInvariantError(f"unknown partner: {partner_id}")
+            raise RuntimeCoreInvariantError("unknown partner")
         now = _now_iso()
         met = actual_value >= target_value
         commitment = PartnerCommitment(
@@ -395,9 +395,9 @@ class PartnerRuntimeEngine:
         commitment_failures: int = 0,
     ) -> PartnerHealthSnapshot:
         if snapshot_id in self._health_snapshots:
-            raise RuntimeCoreInvariantError(f"health snapshot already exists: {snapshot_id}")
+            raise RuntimeCoreInvariantError("health snapshot already exists")
         if partner_id not in self._partners:
-            raise RuntimeCoreInvariantError(f"unknown partner: {partner_id}")
+            raise RuntimeCoreInvariantError("unknown partner")
         now = _now_iso()
         score = 1.0
         score -= sla_breaches * 0.15
@@ -431,7 +431,7 @@ class PartnerRuntimeEngine:
                     tenant_id=tenant_id,
                     partner_id=partner_id,
                     disposition=PartnerDisposition.ESCALATED,
-                    reason=f"partner health critical: score={score}",
+                    reason="partner health critical",
                     decided_at=now,
                 )
                 self._decisions[dec_id] = decision
@@ -481,7 +481,7 @@ class PartnerRuntimeEngine:
                             tenant_id=tenant_id,
                             partner_id=p.partner_id,
                             operation="no_agreement",
-                            reason=f"active partner {p.partner_id} has no ecosystem agreement",
+                            reason="active partner has no ecosystem agreement",
                             detected_at=now,
                         )
                         self._violations[vid] = v
@@ -497,7 +497,7 @@ class PartnerRuntimeEngine:
                         tenant_id=tenant_id,
                         partner_id=rs.partner_id,
                         operation="disputed_revenue",
-                        reason=f"revenue share {rs.share_id} is disputed",
+                        reason="revenue share is disputed",
                         detected_at=now,
                     )
                     self._violations[vid] = v
@@ -513,7 +513,7 @@ class PartnerRuntimeEngine:
                         tenant_id=tenant_id,
                         partner_id=c.partner_id,
                         operation="unmet_commitment",
-                        reason=f"commitment {c.commitment_id} unmet: {c.actual_value}/{c.target_value}",
+                        reason="commitment unmet",
                         detected_at=now,
                     )
                     self._violations[vid] = v

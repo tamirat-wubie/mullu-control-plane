@@ -32,12 +32,17 @@ class TestAPIBoundary:
         api = APIBoundary()
         resp = api.handle(_req(), lambda r: (_ for _ in ()).throw(ValueError("bad")))
         assert resp.status_code == 400
-        assert "bad" in resp.body["error"]
+        assert resp.body["error"] == "invalid_request"
+        assert resp.body["error_code"] == "invalid_request"
+        assert "bad" not in str(resp.body)
 
     def test_handle_permission_error_returns_403(self):
         api = APIBoundary()
         resp = api.handle(_req(), lambda r: (_ for _ in ()).throw(PermissionError("denied")))
         assert resp.status_code == 403
+        assert resp.body["error"] == "forbidden"
+        assert resp.body["error_code"] == "forbidden"
+        assert "denied" not in str(resp.body)
 
     def test_error_rate(self):
         api = APIBoundary()
@@ -68,8 +73,9 @@ class TestAuthGate:
         auth.create_session("s1", "a1", "t1")
         auth.revoke("s1")
         assert auth.active_sessions == 0
-        with pytest.raises(PermissionError):
+        with pytest.raises(PermissionError, match="^invalid or expired session$") as exc_info:
             auth.validate("s1")
+        assert "s1" not in str(exc_info.value)
 
     def test_denied_count(self):
         auth = AuthGate()
@@ -77,6 +83,12 @@ class TestAuthGate:
             with pytest.raises(PermissionError):
                 auth.validate("nonexistent")
         assert auth.denied_count == 3
+
+    def test_validate_bounds_unknown_session_message(self):
+        auth = AuthGate()
+        with pytest.raises(PermissionError, match="^invalid or expired session$") as exc_info:
+            auth.validate("secret-session-id")
+        assert "secret-session-id" not in str(exc_info.value)
 
 
 # ═══ 196C — Persistence Configuration ═══
@@ -180,3 +192,4 @@ class TestProductionSurfaceGolden:
 
         assert resp.status_code == 401
         assert resp.body["error"] == "unauthorized"
+        assert resp.body["error_code"] == "unauthorized"

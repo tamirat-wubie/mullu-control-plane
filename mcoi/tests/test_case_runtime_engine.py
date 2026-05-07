@@ -126,8 +126,9 @@ class TestOpenCase:
 
     def test_duplicate_case_id_raises(self, engine: CaseRuntimeEngine):
         engine.open_case("c1", "t1", "First")
-        with pytest.raises(RuntimeCoreInvariantError, match="Duplicate case_id"):
+        with pytest.raises(RuntimeCoreInvariantError, match="Duplicate case_id") as exc_info:
             engine.open_case("c1", "t2", "Second")
+        assert "c1" not in str(exc_info.value)
 
     def test_case_count_increments(self, engine: CaseRuntimeEngine):
         engine.open_case("c1", "t1", "A")
@@ -147,8 +148,9 @@ class TestGetCase:
         assert c.case_id == "c1"
 
     def test_get_missing_raises(self, engine: CaseRuntimeEngine):
-        with pytest.raises(RuntimeCoreInvariantError, match="Unknown case_id"):
+        with pytest.raises(RuntimeCoreInvariantError, match="Unknown case_id") as exc_info:
             engine.get_case("nonexistent")
+        assert "nonexistent" not in str(exc_info.value)
 
 
 class TestCasesForTenant:
@@ -332,8 +334,9 @@ class TestGetEvidence:
         assert e.evidence_id == "e1"
 
     def test_get_missing_raises(self, engine: CaseRuntimeEngine):
-        with pytest.raises(RuntimeCoreInvariantError, match="Unknown evidence_id"):
+        with pytest.raises(RuntimeCoreInvariantError, match="Unknown evidence_id") as exc_info:
             engine.get_evidence("nope")
+        assert "nope" not in str(exc_info.value)
 
 
 class TestEvidenceForCase:
@@ -363,14 +366,18 @@ class TestAdmitEvidence:
     def test_cannot_admit_non_pending(self, engine_with_case: CaseRuntimeEngine):
         engine_with_case.add_evidence("e1", "c1", "log", "s1")
         engine_with_case.admit_evidence("e1")
-        with pytest.raises(RuntimeCoreInvariantError, match="Can only admit PENDING"):
+        with pytest.raises(RuntimeCoreInvariantError) as exc_info:
             engine_with_case.admit_evidence("e1")
+        assert str(exc_info.value) == "can only admit pending evidence from current status"
+        assert "admitted" not in str(exc_info.value)
 
     def test_cannot_admit_excluded(self, engine_with_case: CaseRuntimeEngine):
         engine_with_case.add_evidence("e1", "c1", "log", "s1")
         engine_with_case.exclude_evidence("e1")
-        with pytest.raises(RuntimeCoreInvariantError, match="Can only admit PENDING"):
+        with pytest.raises(RuntimeCoreInvariantError) as exc_info:
             engine_with_case.admit_evidence("e1")
+        assert str(exc_info.value) == "can only admit pending evidence from current status"
+        assert "excluded" not in str(exc_info.value)
 
     def test_unknown_evidence_raises(self, engine: CaseRuntimeEngine):
         with pytest.raises(RuntimeCoreInvariantError, match="Unknown evidence_id"):
@@ -431,8 +438,9 @@ class TestCollectEvidence:
 
     def test_validates_evidence_ids_exist(self, engine_with_case: CaseRuntimeEngine):
         engine_with_case.add_evidence("e1", "c1", "log", "s1")
-        with pytest.raises(RuntimeCoreInvariantError, match="Unknown evidence_id"):
+        with pytest.raises(RuntimeCoreInvariantError, match="Unknown evidence_id") as exc_info:
             engine_with_case.collect_evidence("col1", "c1", ("e1", "nonexistent"))
+        assert "nonexistent" not in str(exc_info.value)
 
     def test_unknown_case_raises(self, engine: CaseRuntimeEngine):
         with pytest.raises(RuntimeCoreInvariantError, match="Unknown case_id"):
@@ -841,6 +849,9 @@ class TestDetectCaseViolations:
         violations = engine_with_case.detect_case_violations()
         ops = [v.operation for v in violations]
         assert "unreviewed_evidence_on_closure" in ops
+        violation = next(v for v in violations if v.operation == "unreviewed_evidence_on_closure")
+        assert violation.reason == "pending evidence on closed case"
+        assert "e1" not in violation.reason
 
     def test_no_violations_on_clean_close(self, engine_with_case: CaseRuntimeEngine):
         engine_with_case.close_case("c1")

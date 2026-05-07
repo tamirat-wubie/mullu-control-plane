@@ -7,7 +7,7 @@ Invariants: request handling is single-step, ordered, deterministic, and never m
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Mapping
+from typing import Mapping
 
 from mcoi_runtime.adapters.observer_base import ObservationResult, ObservationStatus
 from mcoi_runtime.contracts._base import thaw_value
@@ -30,11 +30,15 @@ from mcoi_runtime.core.errors import (
 )
 from mcoi_runtime.core.dispatcher import DispatchRequest
 from mcoi_runtime.core.evidence_merger import EvidenceInput, EvidenceState
-from mcoi_runtime.app.governed_execution import governed_operator_dispatch
+from mcoi_runtime.app.governed_execution import governed_operator_mil_dispatch_with_trace
 from mcoi_runtime.core.invariants import RuntimeCoreInvariantError, stable_identifier
 from mcoi_runtime.core.planning_boundary import PlanningBoundaryResult
-from mcoi_runtime.core.policy_engine import PolicyInput
-from mcoi_runtime.core.template_validator import TemplateValidationError
+from mcoi_runtime.governance.policy.engine import PolicyInput
+from mcoi_runtime.core.template_validator import (
+    TemplateValidationError,
+    format_template_validation_error,
+    summarize_template_validation_error,
+)
 
 from .bootstrap import BootstrappedRuntime, build_policy_decision
 from .operator_models import (
@@ -168,7 +172,7 @@ class OperatorLoop:
                 structured_errors=(
                     policy_error(
                         error_code=f"policy_{policy_decision.status.value}",
-                        message=f"policy gate returned {policy_decision.status.value}",
+                        message="policy gate blocked operator request",
                         recoverability=(
                             Recoverability.APPROVAL_REQUIRED
                             if policy_decision.status is PolicyDecisionStatus.ESCALATE
@@ -190,19 +194,27 @@ class OperatorLoop:
                 merged_state=merged_state,
                 planning_result=planning_result,
                 policy_decision=policy_decision,
-                validation_error_text=f"{exc.code}:{exc}",
+                validation_error_text=format_template_validation_error(exc),
                 structured_errors=(
                     validation_error(
                         error_code=exc.code,
-                        message=str(exc),
+                        message=summarize_template_validation_error(exc),
                         source_plane=SourcePlane.EXECUTION,
                     ),
                 ),
                 runtime_state_fields=runtime_state_fields,
             )
 
+        mil_program_id: str | None = None
+        mil_instruction_count = 0
+        mil_verification_passed: bool | None = None
+        mil_verification_issues: tuple[str, ...] = ()
+        mil_instruction_trace: tuple[str, ...] = ()
+        mil_audit_record_id: str | None = None
+        mil_trace_ids: tuple[str, ...] = ()
+
         if hasattr(self.runtime, 'governed_dispatcher') and self.runtime.governed_dispatcher is not None:
-            execution_result = governed_operator_dispatch(
+            mil_dispatch = governed_operator_mil_dispatch_with_trace(
                 self.runtime.governed_dispatcher,
                 DispatchRequest(
                     goal_id=request.goal_id,
@@ -210,8 +222,31 @@ class OperatorLoop:
                     template=request.template,
                     bindings=request.bindings,
                 ),
+                policy_decision=policy_decision,
+                issued_at=self.runtime.clock(),
                 actor_id="operator_main",
             )
+            execution_result = mil_dispatch.execution_result
+            mil_program_id = mil_dispatch.program.program_id
+            mil_instruction_count = len(mil_dispatch.program.instructions)
+            mil_verification_passed = mil_dispatch.verification.passed
+            mil_verification_issues = tuple(issue.code for issue in mil_dispatch.verification.issues)
+            mil_instruction_trace = mil_dispatch.instruction_trace
+            if self.runtime.mil_audit_store is not None:
+                mil_audit = self.runtime.mil_audit_store.append(
+                    program=mil_dispatch.program,
+                    verification=mil_dispatch.verification,
+                    execution_id=execution_result.execution_id,
+                    instruction_trace=mil_dispatch.instruction_trace,
+                    recorded_at=self.runtime.clock(),
+                )
+                mil_audit_record_id = mil_audit.record.record_id
+                if self.runtime.trace_store is not None:
+                    trace_projection = self.runtime.mil_audit_store.persist_trace_spine(
+                        mil_audit_record_id,
+                        self.runtime.trace_store,
+                    )
+                    mil_trace_ids = trace_projection.persisted_trace_ids
         else:
             execution_result = self.runtime.dispatcher.dispatch(
                 DispatchRequest(
@@ -246,9 +281,23 @@ class OperatorLoop:
             errors.append(entity_registration_error)
 
         self._update_capability_confidence(route, execution_result, verification_closure)
+        provider_attributions = self.runtime.provider_attribution_ledger.attribute_execution_result_receipt(
+            request_id=request.request_id,
+            operation_id=execution_result.execution_id,
+            execution_result=execution_result,
+            provider_registry=self.runtime.provider_registry,
+        )
+        if not provider_attributions:
+            provider_attributions = self.runtime.provider_attribution_ledger.attribute_healthy_planes(
+                request_id=request.request_id,
+                operation_id=execution_result.execution_id,
+                execution_id=execution_result.execution_id,
+                provider_registry=self.runtime.provider_registry,
+            )
 
         world_state = self.runtime.world_state
         meta_reasoning = self.runtime.meta_reasoning
+        provider_attribution_counters = self.runtime.provider_attribution_ledger.witness_counters()
 
         return OperatorRunReport(
             request_id=request.request_id,
@@ -293,7 +342,16 @@ class OperatorLoop:
                 in (ProviderHealthStatus.DEGRADED, ProviderHealthStatus.UNAVAILABLE)
             ),
             execution_route=route,
+            provider_attributions=provider_attributions,
+            **provider_attribution_counters,
             autonomy_mode=self.runtime.autonomy.mode.value,
+            mil_program_id=mil_program_id,
+            mil_instruction_count=mil_instruction_count,
+            mil_verification_passed=mil_verification_passed,
+            mil_verification_issues=mil_verification_issues,
+            mil_instruction_trace=mil_instruction_trace,
+            mil_audit_record_id=mil_audit_record_id,
+            mil_trace_ids=mil_trace_ids,
             **self._resolve_provider_ids(),
         )
 
@@ -339,6 +397,15 @@ class OperatorLoop:
             integration_provider_id=runtime_state_fields.get("integration_provider_id"),
             communication_provider_id=runtime_state_fields.get("communication_provider_id"),
             model_provider_id=runtime_state_fields.get("model_provider_id"),
+            provider_attributions=(),
+            provider_attribution_count=runtime_state_fields["provider_attribution_count"],
+            receipt_attributed_provider_operation_count=runtime_state_fields[
+                "receipt_attributed_provider_operation_count"
+            ],
+            routing_attributed_provider_operation_count=runtime_state_fields[
+                "routing_attributed_provider_operation_count"
+            ],
+            plane_attributed_provider_operation_count=runtime_state_fields["plane_attributed_provider_operation_count"],
         )
 
     def run_skill(self, request: SkillRequest) -> SkillRunReport:
@@ -433,6 +500,7 @@ class OperatorLoop:
                 in (ProviderHealthStatus.DEGRADED, ProviderHealthStatus.UNAVAILABLE)
             ),
             "autonomy_mode": self.runtime.autonomy.mode.value,
+            **self.runtime.provider_attribution_ledger.witness_counters(),
             **self._resolve_provider_ids(),
         }
 
@@ -498,7 +566,7 @@ class OperatorLoop:
         except (RuntimeCoreInvariantError, ValueError) as exc:
             return execution_error(
                 error_code="entity_registration_warning",
-                message=f"best-effort entity registration failed: {type(exc).__name__}: {exc}",
+                message="best-effort entity registration failed",
                 recoverability=Recoverability.RETRYABLE,
                 related_ids=(execution_result.execution_id,),
                 context={"entity_id": entity_id, "exception_type": type(exc).__name__},

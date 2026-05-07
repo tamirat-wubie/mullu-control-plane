@@ -269,6 +269,9 @@ class TestMemoryMeshAttachment:
         mem = b.attach_records_to_memory_mesh("scope-1")
 
         assert isinstance(mem, MemoryRecord)
+        assert mem.title == "Records state"
+        assert "scope-1" not in mem.title
+        assert mem.scope_ref_id == "scope-1"
         assert "records" in mem.tags
         assert "retention" in mem.tags
         assert "legal_hold" in mem.tags
@@ -351,6 +354,8 @@ class TestEndToEndGoldenPath:
         # Attach to memory mesh.
         mem = b.attach_records_to_memory_mesh("golden-scope")
         assert isinstance(mem, MemoryRecord)
+        assert mem.title == "Records state"
+        assert "golden-scope" not in mem.title
         assert set(mem.tags) == {"records", "retention", "legal_hold"}
 
         # Attach to graph.

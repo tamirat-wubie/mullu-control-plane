@@ -8,15 +8,52 @@ from __future__ import annotations
 from typing import Any
 
 from fastapi import APIRouter, HTTPException, Header
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from mcoi_runtime.app.routers.deps import deps
 from mcoi_runtime.core.agent_protocol import AgentCapability
 from mcoi_runtime.core.batch_pipeline import PipelineStep
+from mcoi_runtime.core.tool_use import certify_tool_capability_policy_receipt
 
 import hashlib
 
 router = APIRouter()
+
+
+def _workflow_error_detail(error: str, error_code: str) -> dict[str, object]:
+    return {"error": error, "error_code": error_code, "governed": True}
+
+
+def _certify_action_proof(
+    *,
+    endpoint: str,
+    tenant_id: str,
+    actor_id: str,
+    action: str,
+    succeeded: bool,
+) -> dict[str, object]:
+    """Certify a workflow action response with a proof bridge receipt."""
+    proof = deps.proof_bridge.certify_governance_decision(
+        tenant_id=tenant_id or "system",
+        endpoint=endpoint,
+        guard_results=[
+            {
+                "guard_name": "workflow_action_closure",
+                "allowed": True,
+                "reason": "workflow action reached response boundary",
+            }
+        ],
+        decision="allowed",
+        actor_id=actor_id or "anonymous",
+        reason="workflow action response certified",
+    )
+    return {
+        "endpoint": endpoint,
+        "action": action,
+        "succeeded": succeeded,
+        "proof_receipt_id": proof.capsule.receipt.receipt_id,
+        "proof_hash": proof.receipt_hash,
+    }
 
 
 # ── Pydantic request models ──────────────────────────────────────────────
@@ -27,14 +64,14 @@ class ExecuteRequest(BaseModel):
     action: str
     tenant_id: str
     actor_id: str = "anonymous"
-    body: dict[str, Any] = {}
+    body: dict[str, Any] = Field(default_factory=dict)
 
 
 class WorkflowRequest(BaseModel):
     task_id: str
     description: str
     capability: str = "llm.completion"
-    payload: dict[str, Any] = {}
+    payload: dict[str, Any] = Field(default_factory=dict)
     tenant_id: str = "system"
     actor_id: str = "anonymous"
     budget_id: str = "default"
@@ -115,7 +152,7 @@ def execute_workflow(req: WorkflowRequest):
     try:
         cap = AgentCapability(req.capability)
     except ValueError:
-        raise HTTPException(400, detail=f"unknown capability: {req.capability}")
+        raise HTTPException(400, detail=_workflow_error_detail("invalid capability", "invalid_capability"))
 
     result = deps.workflow_engine.execute(
         task_id=req.task_id, description=req.description,
@@ -131,6 +168,13 @@ def execute_workflow(req: WorkflowRequest):
         "steps": [{"name": s.step_name, "status": s.status, "detail": s.detail} for s in result.steps],
         "output": result.output,
         "error": result.error,
+        "action_proof": _certify_action_proof(
+            endpoint="/api/v1/workflow/execute",
+            tenant_id=req.tenant_id,
+            actor_id=req.actor_id,
+            action="workflow.execute",
+            succeeded=result.status == "completed",
+        ),
     }
 
 
@@ -156,7 +200,7 @@ def execute_traced_workflow(req: WorkflowRequest):
     try:
         cap = AgentCapability(req.capability)
     except ValueError:
-        raise HTTPException(400, detail=f"unknown capability: {req.capability}")
+        raise HTTPException(400, detail=_workflow_error_detail("invalid capability", "invalid_capability"))
 
     result, trace = deps.traced_workflow.execute(
         task_id=req.task_id, description=req.description,
@@ -171,6 +215,13 @@ def execute_traced_workflow(req: WorkflowRequest):
         "trace_id": trace.trace_id if trace else None,
         "trace_frames": len(trace.frames) if trace else 0,
         "trace_hash": trace.trace_hash[:16] if trace else None,
+        "action_proof": _certify_action_proof(
+            endpoint="/api/v1/workflow/traced",
+            tenant_id=req.tenant_id,
+            actor_id=req.actor_id,
+            action="workflow.traced",
+            succeeded=result.status == "completed",
+        ),
     }
 
 
@@ -193,12 +244,27 @@ def tool_augmented_workflow(req: ToolWorkflowRequest):
         "content": result.content,
         "tool_calls": [
             {"tool_id": tc.tool_id, "arguments": tc.arguments,
-             "succeeded": tc.result.succeeded, "output": tc.result.output}
+             "succeeded": tc.result.succeeded, "output": tc.result.output,
+             "capability_policy_receipt": certify_tool_capability_policy_receipt(
+                 tool=deps.tool_registry.get(tc.tool_id),
+                 tool_id=tc.tool_id,
+                 arguments=tc.arguments,
+                 tenant_id=req.tenant_id,
+                 invocation_id=tc.result.invocation_id,
+                 execution_succeeded=tc.result.succeeded,
+             )}
             for tc in result.tool_calls
         ],
         "total_tool_calls": result.total_tool_calls,
         "all_succeeded": result.all_succeeded,
         "governed": True,
+        "action_proof": _certify_action_proof(
+            endpoint="/api/v1/workflow/tools",
+            tenant_id=req.tenant_id,
+            actor_id="api",
+            action="workflow.tools",
+            succeeded=result.all_succeeded,
+        ),
     }
 
 
@@ -236,6 +302,13 @@ def execute_pipeline(req: PipelineRequest):
         "total_cost": result.total_cost,
         "total_tokens": result.total_tokens,
         "error": result.error,
+        "action_proof": _certify_action_proof(
+            endpoint="/api/v1/pipeline/execute",
+            tenant_id=req.tenant_id,
+            actor_id="api",
+            action="pipeline.execute",
+            succeeded=result.succeeded,
+        ),
     }
 
 
@@ -274,8 +347,8 @@ def execute_workflow_template(req: TemplateExecuteRequest):
     deps.metrics.inc("requests_governed")
     try:
         steps = deps.wf_templates.instantiate(req.template_id, req.params)
-    except ValueError as e:
-        raise HTTPException(400, detail=str(e))
+    except ValueError:
+        raise HTTPException(400, detail={"error": "invalid template request", "error_code": "validation_error", "governed": True})
 
     result = deps.agent_chain.execute(steps, initial_input=req.initial_input)
     return {

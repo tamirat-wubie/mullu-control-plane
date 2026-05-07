@@ -114,6 +114,9 @@ class TestMemoryMesh:
         bridge.pack_from_regulated_operations("t1", "reg-1")
         record = bridge.attach_pack_state_to_memory_mesh("scope-1")
         assert isinstance(record, MemoryRecord)
+        assert record.title == "Industry pack state"
+        assert "scope-1" not in record.title
+        assert record.scope_ref_id == "scope-1"
         assert "industry_pack" in record.tags
         assert "deployment" in record.tags
         assert "operations" in record.tags

@@ -63,7 +63,7 @@ class DeploymentOrchestrator:
 
     def start_deployment(self, customer_id: str, bundle_type: str) -> list[DeploymentStep]:
         if bundle_type not in BUNDLE_DEPLOYMENT_PLANS:
-            raise ValueError(f"Unknown bundle: {bundle_type}")
+            raise ValueError("unknown bundle")
         # Deep copy steps
         steps = [DeploymentStep(s.step, s.name, s.category, s.estimated_hours) for s in BUNDLE_DEPLOYMENT_PLANS[bundle_type]]
         self._active[customer_id] = steps
@@ -71,12 +71,12 @@ class DeploymentOrchestrator:
 
     def complete_step(self, customer_id: str, step_num: int) -> DeploymentStep:
         if customer_id not in self._active:
-            raise ValueError(f"No active deployment for {customer_id}")
+            raise ValueError("deployment is not active")
         for s in self._active[customer_id]:
             if s.step == step_num:
                 s.completed = True
                 return s
-        raise ValueError(f"Step {step_num} not found")
+        raise ValueError("deployment step not found")
 
     def progress(self, customer_id: str) -> dict[str, Any]:
         steps = self._active.get(customer_id, [])

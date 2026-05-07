@@ -128,7 +128,7 @@ class AdversarialRuntimeEngine:
         target_runtime: str = "default",
     ) -> AttackScenario:
         if scenario_id in self._scenarios:
-            raise RuntimeCoreInvariantError(f"duplicate scenario_id: {scenario_id}")
+            raise RuntimeCoreInvariantError("duplicate scenario_id")
         now = self._now()
         scenario = AttackScenario(
             scenario_id=scenario_id, tenant_id=tenant_id,
@@ -142,14 +142,14 @@ class AdversarialRuntimeEngine:
 
     def _get_scenario(self, scenario_id: str) -> AttackScenario:
         if scenario_id not in self._scenarios:
-            raise RuntimeCoreInvariantError(f"unknown scenario_id: {scenario_id}")
+            raise RuntimeCoreInvariantError("unknown scenario_id")
         return self._scenarios[scenario_id]
 
     def _transition_scenario(self, scenario_id: str, target: AttackStatus) -> AttackScenario:
         scenario = self._get_scenario(scenario_id)
         if scenario.status in _ATTACK_TERMINAL:
             raise RuntimeCoreInvariantError(
-                f"scenario {scenario_id} is in terminal state {scenario.status.value}"
+                "scenario is in terminal state"
             )
         now = self._now()
         updated = AttackScenario(
@@ -184,7 +184,7 @@ class AdversarialRuntimeEngine:
         description: str = "Unspecified vulnerability",
     ) -> VulnerabilityRecord:
         if vulnerability_id in self._vulnerabilities:
-            raise RuntimeCoreInvariantError(f"duplicate vulnerability_id: {vulnerability_id}")
+            raise RuntimeCoreInvariantError("duplicate vulnerability_id")
         now = self._now()
         vuln = VulnerabilityRecord(
             vulnerability_id=vulnerability_id, tenant_id=tenant_id,
@@ -197,14 +197,14 @@ class AdversarialRuntimeEngine:
 
     def _get_vulnerability(self, vulnerability_id: str) -> VulnerabilityRecord:
         if vulnerability_id not in self._vulnerabilities:
-            raise RuntimeCoreInvariantError(f"unknown vulnerability_id: {vulnerability_id}")
+            raise RuntimeCoreInvariantError("unknown vulnerability_id")
         return self._vulnerabilities[vulnerability_id]
 
     def _transition_vulnerability(self, vulnerability_id: str, target: VulnerabilityStatus) -> VulnerabilityRecord:
         vuln = self._get_vulnerability(vulnerability_id)
         if vuln.status in _VULNERABILITY_TERMINAL:
             raise RuntimeCoreInvariantError(
-                f"vulnerability {vulnerability_id} is in terminal state {vuln.status.value}"
+                "vulnerability is in terminal state"
             )
         now = self._now()
         updated = VulnerabilityRecord(
@@ -238,7 +238,7 @@ class AdversarialRuntimeEngine:
         success: bool = False,
     ) -> ExploitPath:
         if path_id in self._exploits:
-            raise RuntimeCoreInvariantError(f"duplicate path_id: {path_id}")
+            raise RuntimeCoreInvariantError("duplicate path_id")
         now = self._now()
         ep = ExploitPath(
             path_id=path_id, tenant_id=tenant_id,
@@ -262,7 +262,7 @@ class AdversarialRuntimeEngine:
         mitigation: str = "Applied mitigation",
     ) -> DefenseRecord:
         if defense_id in self._defenses:
-            raise RuntimeCoreInvariantError(f"duplicate defense_id: {defense_id}")
+            raise RuntimeCoreInvariantError("duplicate defense_id")
         now = self._now()
         defense = DefenseRecord(
             defense_id=defense_id, tenant_id=tenant_id,
@@ -286,7 +286,7 @@ class AdversarialRuntimeEngine:
         outcome: str = "pass",
     ) -> StressTestRecord:
         if test_id in self._stress_tests:
-            raise RuntimeCoreInvariantError(f"duplicate test_id: {test_id}")
+            raise RuntimeCoreInvariantError("duplicate test_id")
         now = self._now()
         st = StressTestRecord(
             test_id=test_id, tenant_id=tenant_id,
@@ -374,7 +374,7 @@ class AdversarialRuntimeEngine:
                     viol = AdversarialViolation(
                         violation_id=vid, tenant_id=tenant_id,
                         operation="open_critical_vulnerability",
-                        reason=f"critical vulnerability {v.vulnerability_id} is still open",
+                        reason="critical vulnerability remains open",
                         detected_at=now,
                     )
                     self._violations[vid] = viol
@@ -394,10 +394,10 @@ class AdversarialRuntimeEngine:
                     vid = stable_identifier("viol-adv", {"path_id": ep.path_id, "reason": "unmitigated_exploit"})
                     if vid not in self._violations:
                         viol = AdversarialViolation(
-                            violation_id=vid, tenant_id=tenant_id,
-                            operation="unmitigated_exploit",
-                            reason=f"exploit path {ep.path_id} succeeded without effective defense",
-                            detected_at=now,
+                        violation_id=vid, tenant_id=tenant_id,
+                        operation="unmitigated_exploit",
+                        reason="exploit path succeeded without effective defense",
+                        detected_at=now,
                         )
                         self._violations[vid] = viol
                         new_violations.append(viol)
@@ -412,7 +412,7 @@ class AdversarialRuntimeEngine:
                     viol = AdversarialViolation(
                         violation_id=vid, tenant_id=tenant_id,
                         operation="untested_defense",
-                        reason=f"defense {d.defense_id} is untested",
+                        reason="defense is untested",
                         detected_at=now,
                     )
                     self._violations[vid] = viol

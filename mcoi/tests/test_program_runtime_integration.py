@@ -351,6 +351,8 @@ class TestMemoryMeshAttachment:
         record = bridge.attach_program_state_to_memory_mesh("scope-m1")
         assert isinstance(record, MemoryRecord)
         assert record.scope_ref_id == "scope-m1"
+        assert record.title == "Program state"
+        assert "scope-m1" not in record.title
         assert "program" in record.tags
         assert record.content["total_programs"] == 1
         assert record.content["total_objectives"] == 1

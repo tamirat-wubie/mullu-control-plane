@@ -35,11 +35,28 @@ from ._base import (
 )
 
 
+def _parse_datetime_text(value: str, field_name: str) -> datetime:
+    """Parse a validated datetime text deterministically."""
+    require_datetime_text(value, field_name)
+    return datetime.fromisoformat(value.replace("Z", "+00:00"))
+
+
+_HOUR_VALIDATION_MESSAGES = {
+    "weekday_start_hour": "weekday_start_hour must be 0-23",
+    "weekday_end_hour": "weekday_end_hour must be 0-23",
+    "quiet_start_hour": "quiet_start_hour must be 0-23",
+    "quiet_end_hour": "quiet_end_hour must be 0-23",
+}
+_POSITIVE_INT_VALIDATION_MESSAGES = {
+    "duration_minutes": "duration_minutes must be >= 1",
+}
+
+
 def _require_hour(value: int, field_name: str) -> int:
     """Validate that an hour value is in range 0-23."""
     v = require_non_negative_int(value, field_name)
     if v > 23:
-        raise ValueError(f"{field_name} must be 0-23, got {v}")
+        raise ValueError(_HOUR_VALIDATION_MESSAGES.get(field_name, "hour must be 0-23"))
     return v
 
 
@@ -47,23 +64,16 @@ def _require_positive_int(value: int, field_name: str) -> int:
     """Validate that an integer is strictly positive (>= 1)."""
     v = require_non_negative_int(value, field_name)
     if v < 1:
-        raise ValueError(f"{field_name} must be >= 1, got {v}")
+        raise ValueError(_POSITIVE_INT_VALIDATION_MESSAGES.get(field_name, "value must be >= 1"))
     return v
 
 
 def _require_starts_before_ends(starts_at: str, ends_at: str) -> None:
     """Validate that starts_at is chronologically before ends_at."""
-    try:
-        s = datetime.fromisoformat(starts_at.replace("Z", "+00:00"))
-        e = datetime.fromisoformat(ends_at.replace("Z", "+00:00"))
-        if s >= e:
-            raise ValueError(
-                f"starts_at ({starts_at}) must be before ends_at ({ends_at})"
-            )
-    except (ValueError, TypeError) as exc:
-        if "must be before" in str(exc):
-            raise
-        # datetime parsing errors are caught by require_datetime_text
+    s = _parse_datetime_text(starts_at, "starts_at")
+    e = _parse_datetime_text(ends_at, "ends_at")
+    if s >= e:
+        raise ValueError("starts_at must be before ends_at")
 
 
 # ---------------------------------------------------------------------------
@@ -234,9 +244,7 @@ class SchedulingWindow(ContractRecord):
             require_non_negative_int(self.reserved, "reserved"),
         )
         if self.reserved > self.capacity:
-            raise ValueError(
-                f"reserved ({self.reserved}) must not exceed capacity ({self.capacity})"
-            )
+            raise ValueError("reserved must not exceed capacity")
         object.__setattr__(
             self, "metadata",
             freeze_value(dict(self.metadata)),
@@ -284,10 +292,7 @@ class BusinessHoursProfile(ContractRecord):
             _require_hour(self.weekday_end_hour, "weekday_end_hour"),
         )
         if self.weekday_start_hour >= self.weekday_end_hour:
-            raise ValueError(
-                f"weekday_start_hour ({self.weekday_start_hour}) must be < "
-                f"weekday_end_hour ({self.weekday_end_hour})"
-            )
+            raise ValueError("weekday_start_hour must be before weekday_end_hour")
         if not isinstance(self.weekend_available, bool):
             raise ValueError("weekend_available must be a boolean")
         object.__setattr__(
@@ -341,6 +346,7 @@ class MeetingRecord(ContractRecord):
             raise ValueError("status must be a MeetingStatus")
         require_datetime_text(self.starts_at, "starts_at")
         require_datetime_text(self.ends_at, "ends_at")
+        _require_starts_before_ends(self.starts_at, self.ends_at)
         object.__setattr__(
             self, "timezone",
             require_non_empty_text(self.timezone, "timezone"),
@@ -467,10 +473,7 @@ class ResponseSLA(ContractRecord):
             require_non_negative_int(self.escalation_after_seconds, "escalation_after_seconds"),
         )
         if self.escalation_after_seconds > self.max_response_seconds:
-            raise ValueError(
-                f"escalation_after_seconds ({self.escalation_after_seconds}) "
-                f"must not exceed max_response_seconds ({self.max_response_seconds})"
-            )
+            raise ValueError("escalation_after_seconds must not exceed max_response_seconds")
         if self.escalation_after_seconds > 0 and not self.escalation_target.strip():
             raise ValueError(
                 "escalation_target must be non-empty when escalation_after_seconds > 0"

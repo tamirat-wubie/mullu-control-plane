@@ -166,8 +166,9 @@ class TestClassifyData:
     def test_duplicate_raises(self) -> None:
         eng = _make_engine()
         eng.classify_data("d-1", "t-1")
-        with pytest.raises(RuntimeCoreInvariantError, match="Duplicate data_id"):
+        with pytest.raises(RuntimeCoreInvariantError, match="Duplicate data_id") as exc_info:
             eng.classify_data("d-1", "t-1")
+        assert "d-1" not in str(exc_info.value)
 
     def test_classify_with_secret(self) -> None:
         eng = _make_engine()
@@ -199,8 +200,9 @@ class TestGetRecord:
 
     def test_unknown_raises(self) -> None:
         eng = _make_engine()
-        with pytest.raises(RuntimeCoreInvariantError, match="Unknown data_id"):
+        with pytest.raises(RuntimeCoreInvariantError, match="Unknown data_id") as exc_info:
             eng.get_record("no-such")
+        assert "no-such" not in str(exc_info.value)
 
     def test_frozen(self) -> None:
         eng = _make_engine()
@@ -279,8 +281,9 @@ class TestRegisterPolicy:
     def test_duplicate_raises(self) -> None:
         eng = _make_engine()
         eng.register_policy("pol-1", "t-1")
-        with pytest.raises(RuntimeCoreInvariantError, match="Duplicate policy_id"):
+        with pytest.raises(RuntimeCoreInvariantError, match="Duplicate policy_id") as exc_info:
             eng.register_policy("pol-1", "t-1")
+        assert "pol-1" not in str(exc_info.value)
 
     def test_redact_disposition(self) -> None:
         eng = _make_engine()
@@ -325,8 +328,9 @@ class TestRegisterResidencyConstraint:
     def test_duplicate_raises(self) -> None:
         eng = _make_engine()
         eng.register_residency_constraint("rc-1", "t-1")
-        with pytest.raises(RuntimeCoreInvariantError, match="Duplicate constraint_id"):
+        with pytest.raises(RuntimeCoreInvariantError, match="Duplicate constraint_id") as exc_info:
             eng.register_residency_constraint("rc-1", "t-1")
+        assert "rc-1" not in str(exc_info.value)
 
 
 # ===================================================================
@@ -367,8 +371,9 @@ class TestRegisterPrivacyRule:
     def test_duplicate_raises(self) -> None:
         eng = _make_engine()
         eng.register_privacy_rule("pr-1", "t-1")
-        with pytest.raises(RuntimeCoreInvariantError, match="Duplicate privacy rule_id"):
+        with pytest.raises(RuntimeCoreInvariantError, match="Duplicate privacy rule_id") as exc_info:
             eng.register_privacy_rule("pr-1", "t-1")
+        assert "pr-1" not in str(exc_info.value)
 
 
 # ===================================================================
@@ -410,8 +415,9 @@ class TestRegisterRedactionRule:
     def test_duplicate_raises(self) -> None:
         eng = _make_engine()
         eng.register_redaction_rule("rr-1", "t-1")
-        with pytest.raises(RuntimeCoreInvariantError, match="Duplicate redaction rule_id"):
+        with pytest.raises(RuntimeCoreInvariantError, match="Duplicate redaction rule_id") as exc_info:
             eng.register_redaction_rule("rr-1", "t-1")
+        assert "rr-1" not in str(exc_info.value)
 
     def test_tokenize_redaction_level(self) -> None:
         eng = _make_engine()
@@ -458,8 +464,9 @@ class TestRegisterRetentionRule:
     def test_duplicate_raises(self) -> None:
         eng = _make_engine()
         eng.register_retention_rule("ret-1", "t-1")
-        with pytest.raises(RuntimeCoreInvariantError, match="Duplicate retention rule_id"):
+        with pytest.raises(RuntimeCoreInvariantError, match="Duplicate retention rule_id") as exc_info:
             eng.register_retention_rule("ret-1", "t-1")
+        assert "ret-1" not in str(exc_info.value)
 
     def test_archive_disposition(self) -> None:
         eng = _make_engine()
@@ -480,8 +487,9 @@ class TestEvaluateHandlingBasic:
 
     def test_unknown_data_id_raises(self) -> None:
         eng = _make_engine()
-        with pytest.raises(RuntimeCoreInvariantError, match="Unknown data_id"):
+        with pytest.raises(RuntimeCoreInvariantError, match="Unknown data_id") as exc_info:
             eng.evaluate_handling("no-such", "read")
+        assert "no-such" not in str(exc_info.value)
 
     def test_decision_fields_populated(self) -> None:
         eng = _engine_with_record()
@@ -1152,8 +1160,9 @@ class TestGovernanceSnapshot:
     def test_duplicate_snapshot_id_raises(self) -> None:
         eng = _make_engine()
         eng.governance_snapshot("snap-1")
-        with pytest.raises(RuntimeCoreInvariantError, match="Duplicate snapshot_id"):
+        with pytest.raises(RuntimeCoreInvariantError, match="Duplicate snapshot_id") as exc_info:
             eng.governance_snapshot("snap-1")
+        assert "snap-1" not in str(exc_info.value)
 
     def test_frozen(self) -> None:
         eng = _make_engine()

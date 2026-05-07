@@ -60,6 +60,16 @@ def _emit(es: EventSpineEngine, action: str, payload: dict, cid: str) -> EventRe
     return event
 
 
+def _classify_campaign_exception(exc: Exception) -> str:
+    """Return a bounded campaign step failure message."""
+    exc_type = type(exc).__name__
+    if isinstance(exc, TimeoutError):
+        return f"campaign step timeout ({exc_type})"
+    if isinstance(exc, (ValueError, TypeError)):
+        return f"campaign step validation error ({exc_type})"
+    return f"campaign step handler error ({exc_type})"
+
+
 # Step handler type: receives step + context, returns (success, output_payload)
 StepHandler = Callable[
     [CampaignStep, dict[str, Any]],
@@ -126,10 +136,10 @@ class WorkCampaignEngine:
         tags: tuple[str, ...] = (),
         dependencies: list[CampaignDependency] | None = None,
         metadata: dict[str, Any] | None = None,
-    ) -> CampaignDescriptor:
+        ) -> CampaignDescriptor:
         if campaign_id in self._campaigns:
             raise RuntimeCoreInvariantError(
-                f"campaign '{campaign_id}' already registered"
+                "campaign already registered"
             )
         now = _now_iso()
         desc = CampaignDescriptor(
@@ -162,14 +172,14 @@ class WorkCampaignEngine:
     def get_campaign(self, campaign_id: str) -> CampaignDescriptor:
         if campaign_id not in self._campaigns:
             raise RuntimeCoreInvariantError(
-                f"campaign '{campaign_id}' not found"
+                "campaign not found"
             )
         return self._campaigns[campaign_id]
 
     def get_steps(self, campaign_id: str) -> tuple[CampaignStep, ...]:
         if campaign_id not in self._steps:
             raise RuntimeCoreInvariantError(
-                f"campaign '{campaign_id}' not found"
+                "campaign not found"
             )
         return tuple(self._steps[campaign_id])
 
@@ -182,15 +192,13 @@ class WorkCampaignEngine:
     ) -> CampaignRun:
         """Start a new run of a campaign."""
         if campaign_id not in self._campaigns:
-            raise RuntimeCoreInvariantError(
-                f"campaign '{campaign_id}' not found"
-            )
+            raise RuntimeCoreInvariantError("campaign not found")
         now = _now_iso()
         rid = run_id or stable_identifier("run", {
             "cid": campaign_id, "ts": now,
         })
         if rid in self._runs:
-            raise RuntimeCoreInvariantError(f"run '{rid}' already exists")
+            raise RuntimeCoreInvariantError("run already exists")
 
         run = CampaignRun(
             run_id=rid,
@@ -239,7 +247,7 @@ class WorkCampaignEngine:
 
     def get_run(self, run_id: str) -> CampaignRun:
         if run_id not in self._runs:
-            raise RuntimeCoreInvariantError(f"run '{run_id}' not found")
+            raise RuntimeCoreInvariantError("run not found")
         return self._runs[run_id]
 
     # ------------------------------------------------------------------
@@ -345,7 +353,7 @@ class WorkCampaignEngine:
                 # Track counters
                 self._track_counters(run_id, step.step_type, success)
             except Exception as exc:
-                error_msg = str(exc)
+                error_msg = _classify_campaign_exception(exc)
                 success = False
         else:
             # Default: auto-succeed for unhandled step types
@@ -473,7 +481,7 @@ class WorkCampaignEngine:
             self._escalate(
                 run_id, step,
                 CampaignEscalationReason.STEP_FAILURE,
-                f"Step '{step.name}' failed: {step.error_message}",
+                "campaign step failed and requires escalation",
             )
         else:
             # Fail the campaign
@@ -551,7 +559,7 @@ class WorkCampaignEngine:
         run = self.get_run(run_id)
         if run.status in _TERMINAL_STATUSES:
             raise RuntimeCoreInvariantError(
-                f"cannot pause run in terminal status '{run.status.value}'"
+                "cannot pause run in terminal status"
             )
         now = _now_iso()
         paused = CampaignRun(
@@ -579,7 +587,7 @@ class WorkCampaignEngine:
         if run.status not in (CampaignStatus.PAUSED, CampaignStatus.WAITING,
                                CampaignStatus.ESCALATED):
             raise RuntimeCoreInvariantError(
-                f"cannot resume run in status '{run.status.value}'"
+                "cannot resume run in current status"
             )
         resumed = CampaignRun(
             run_id=run.run_id,
@@ -603,7 +611,7 @@ class WorkCampaignEngine:
         run = self.get_run(run_id)
         if run.status in _TERMINAL_STATUSES:
             raise RuntimeCoreInvariantError(
-                f"cannot abort run in terminal status '{run.status.value}'"
+                "cannot abort run in terminal status"
             )
         now = _now_iso()
         aborted = CampaignRun(
@@ -638,10 +646,10 @@ class WorkCampaignEngine:
         run = self.get_run(run_id)
         step = self._run_steps[run_id].get(step_id)
         if step is None:
-            raise RuntimeCoreInvariantError(f"step '{step_id}' not found in run")
+            raise RuntimeCoreInvariantError("step not found in run")
         if step.status not in (CampaignStepStatus.FAILED, CampaignStepStatus.RETRYING):
             raise RuntimeCoreInvariantError(
-                f"cannot retry step in status '{step.status.value}'"
+                "cannot retry step in current status"
             )
         # Reset step to pending with incremented retry count
         reset_step = CampaignStep(
@@ -776,7 +784,7 @@ class WorkCampaignEngine:
             messages_sent=counters.get("messages_sent", 0),
             artifacts_processed=counters.get("artifacts_processed", 0),
             connector_calls=counters.get("connector_calls", 0),
-            summary=f"Campaign {run.campaign_id}: {verdict.value} ({completed}/{total} steps)",
+            summary=f"campaign completed with {verdict.value} verdict",
             step_summaries=step_summaries,
             created_at=now,
         )
@@ -836,9 +844,9 @@ class WorkCampaignEngine:
         self, run_id: str, step_id: str,
     ) -> CampaignStep:
         if run_id not in self._run_steps:
-            raise RuntimeCoreInvariantError(f"run '{run_id}' not found")
+            raise RuntimeCoreInvariantError("run not found")
         if step_id not in self._run_steps[run_id]:
-            raise RuntimeCoreInvariantError(f"step '{step_id}' not in run")
+            raise RuntimeCoreInvariantError("step not found in run")
         return self._run_steps[run_id][step_id]
 
     @property

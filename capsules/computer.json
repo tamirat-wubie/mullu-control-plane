@@ -1,0 +1,24 @@
+{
+  "capsule_id": "computer.sandbox_ops.v0",
+  "domain": "computer",
+  "version": "0.1.0",
+  "ontology_refs": ["ontologies/computer/sandbox_ops.json"],
+  "capability_refs": [
+    "computer.filesystem.observe",
+    "computer.code.patch",
+    "computer.command.run"
+  ],
+  "policy_refs": ["policies/computer/sandbox_ops.policy.json"],
+  "evidence_rules": ["evidence/computer/sandbox_ops.evidence.json"],
+  "approval_rules": ["approval/computer/sandbox_ops.approval.json"],
+  "recovery_rules": ["recovery/computer/sandbox_ops.recovery.json"],
+  "test_fixture_refs": ["tests/fixtures/computer/sandbox_ops"],
+  "read_model_refs": ["read_models/computer/sandbox_ops.json"],
+  "operator_view_refs": ["operator_views/computer/sandbox_ops.json"],
+  "owner_team": "platform-ops",
+  "certification_status": "certified",
+  "metadata": {
+    "purpose": "Certified computer capabilities constrained to workspace observation, patching, and sandboxed command execution"
+  },
+  "extensions": {}
+}

@@ -18,25 +18,42 @@ _APP_CONFIG_KEYS = frozenset(
         "autonomy_mode",
         "policy_pack_id",
         "policy_pack_version",
+        "effect_assurance_required",
+        "shell_sandbox_enabled",
+        "shell_sandbox_id",
+        "shell_allowed_cwd_roots",
+        "shell_allowed_environment_keys",
+        "shell_allow_inherited_environment",
+        "shell_require_cwd",
     }
 )
 
 
-def _require_text(value: Any, field_name: str) -> str:
+def _require_text(value: Any, _field_name: str) -> str:
     if not isinstance(value, str) or not value.strip():
-        raise ValueError(f"{field_name} must be a non-empty string")
+        raise ValueError("config values must be non-empty strings")
     return value
 
 
-def _require_text_tuple(value: Any, field_name: str) -> tuple[str, ...]:
+def _require_text_tuple(value: Any, _field_name: str) -> tuple[str, ...]:
     if not isinstance(value, (tuple, list)):
-        raise ValueError(f"{field_name} must be a sequence of strings")
+        raise ValueError("config values must be sequences of non-empty strings")
     items = tuple(value)
     if not items:
-        raise ValueError(f"{field_name} must contain at least one item")
-    for index, item in enumerate(items):
+        raise ValueError("config values must contain at least one item")
+    for item in items:
         if not isinstance(item, str) or not item.strip():
-            raise ValueError(f"{field_name}[{index}] must be a non-empty string")
+            raise ValueError("config values must contain non-empty strings")
+    return items
+
+
+def _optional_text_tuple(value: Any, _field_name: str) -> tuple[str, ...]:
+    if not isinstance(value, (tuple, list)):
+        raise ValueError("config values must be sequences of non-empty strings")
+    items = tuple(value)
+    for item in items:
+        if not isinstance(item, str) or not item.strip():
+            raise ValueError("config values must contain non-empty strings")
     return items
 
 
@@ -48,6 +65,13 @@ class AppConfig:
     autonomy_mode: str = "bounded_autonomous"
     policy_pack_id: str | None = None
     policy_pack_version: str | None = None
+    effect_assurance_required: bool = False
+    shell_sandbox_enabled: bool = False
+    shell_sandbox_id: str = "local"
+    shell_allowed_cwd_roots: tuple[str, ...] = ()
+    shell_allowed_environment_keys: tuple[str, ...] = ()
+    shell_allow_inherited_environment: bool = True
+    shell_require_cwd: bool = False
 
     def __post_init__(self) -> None:
         object.__setattr__(
@@ -74,6 +98,28 @@ class AppConfig:
                 "policy_pack_version",
                 _require_text(self.policy_pack_version, "policy_pack_version"),
             )
+        if not isinstance(self.effect_assurance_required, bool):
+            raise ValueError("effect_assurance_required must be a boolean")
+        if not isinstance(self.shell_sandbox_enabled, bool):
+            raise ValueError("shell_sandbox_enabled must be a boolean")
+        object.__setattr__(self, "shell_sandbox_id", _require_text(self.shell_sandbox_id, "shell_sandbox_id"))
+        object.__setattr__(
+            self,
+            "shell_allowed_cwd_roots",
+            _optional_text_tuple(self.shell_allowed_cwd_roots, "shell_allowed_cwd_roots"),
+        )
+        object.__setattr__(
+            self,
+            "shell_allowed_environment_keys",
+            _optional_text_tuple(
+                self.shell_allowed_environment_keys,
+                "shell_allowed_environment_keys",
+            ),
+        )
+        if not isinstance(self.shell_allow_inherited_environment, bool):
+            raise ValueError("shell_allow_inherited_environment must be a boolean")
+        if not isinstance(self.shell_require_cwd, bool):
+            raise ValueError("shell_require_cwd must be a boolean")
 
     @classmethod
     def from_mapping(cls, values: Mapping[str, Any] | None = None) -> AppConfig:
@@ -86,8 +132,7 @@ class AppConfig:
 
         unknown_keys = sorted(set(normalized) - _APP_CONFIG_KEYS)
         if unknown_keys:
-            joined = ", ".join(unknown_keys)
-            raise ValueError(f"unknown config keys: {joined}")
+            raise ValueError("unknown config keys")
 
         return cls(
             allowed_planning_classes=tuple(
@@ -102,4 +147,16 @@ class AppConfig:
             autonomy_mode=normalized.get("autonomy_mode", "bounded_autonomous"),
             policy_pack_id=normalized.get("policy_pack_id"),
             policy_pack_version=normalized.get("policy_pack_version"),
+            effect_assurance_required=normalized.get("effect_assurance_required", False),
+            shell_sandbox_enabled=normalized.get("shell_sandbox_enabled", False),
+            shell_sandbox_id=normalized.get("shell_sandbox_id", "local"),
+            shell_allowed_cwd_roots=tuple(normalized.get("shell_allowed_cwd_roots", ())),
+            shell_allowed_environment_keys=tuple(
+                normalized.get("shell_allowed_environment_keys", ())
+            ),
+            shell_allow_inherited_environment=normalized.get(
+                "shell_allow_inherited_environment",
+                True,
+            ),
+            shell_require_cwd=normalized.get("shell_require_cwd", False),
         )

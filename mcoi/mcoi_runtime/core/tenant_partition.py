@@ -63,7 +63,7 @@ class TenantPartitionManager:
     def get_or_create(self, tenant_id: str) -> TenantPartition:
         if tenant_id not in self._partitions:
             if len(self._partitions) >= self._max_partitions:
-                raise ValueError(f"Max partitions ({self._max_partitions}) exceeded")
+                raise ValueError("max partitions exceeded")
             self._partitions[tenant_id] = TenantPartition(
                 tenant_id=tenant_id,
                 partition_id=f"part_{tenant_id}",

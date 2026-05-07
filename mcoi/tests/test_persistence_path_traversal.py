@@ -91,8 +91,15 @@ class TestSnapshotStorePathTraversal:
     @pytest.mark.parametrize("bad_id", MALICIOUS_IDS)
     def test_malicious_id_rejected_on_save(self, tmp_path: Path, bad_id: str) -> None:
         store = SnapshotStore(tmp_path / "snapshots")
-        with pytest.raises(PathTraversalError):
+        with pytest.raises(PathTraversalError) as excinfo:
             store.save_snapshot(bad_id, {"key": "value"})
+        expected = (
+            "identifier contains null byte"
+            if "\0" in bad_id
+            else "identifier contains forbidden characters"
+        )
+        assert str(excinfo.value) == expected
+        assert bad_id not in str(excinfo.value)
 
     @pytest.mark.parametrize("bad_id", MALICIOUS_IDS)
     def test_malicious_id_rejected_on_load(self, tmp_path: Path, bad_id: str) -> None:
@@ -130,8 +137,15 @@ class TestTraceStorePathTraversal:
     @pytest.mark.parametrize("bad_id", MALICIOUS_IDS)
     def test_malicious_id_rejected_on_load(self, tmp_path: Path, bad_id: str) -> None:
         store = TraceStore(tmp_path / "traces")
-        with pytest.raises(PathTraversalError):
+        with pytest.raises(PathTraversalError) as excinfo:
             store.load_trace(bad_id)
+        expected = (
+            "identifier contains null byte"
+            if "\0" in bad_id
+            else "identifier contains forbidden characters"
+        )
+        assert str(excinfo.value) == expected
+        assert bad_id not in str(excinfo.value)
 
 
 # ---------------------------------------------------------------------------
@@ -157,8 +171,15 @@ class TestReplayStorePathTraversal:
     @pytest.mark.parametrize("bad_id", MALICIOUS_IDS)
     def test_malicious_id_rejected_on_load(self, tmp_path: Path, bad_id: str) -> None:
         store = ReplayStore(tmp_path / "replays")
-        with pytest.raises(PathTraversalError):
+        with pytest.raises(PathTraversalError) as excinfo:
             store.load(bad_id)
+        expected = (
+            "identifier contains null byte"
+            if "\0" in bad_id
+            else "identifier contains forbidden characters"
+        )
+        assert str(excinfo.value) == expected
+        assert bad_id not in str(excinfo.value)
 
 
 # ---------------------------------------------------------------------------
@@ -170,5 +191,12 @@ class TestSkillStorePathTraversal:
     @pytest.mark.parametrize("bad_id", MALICIOUS_IDS)
     def test_malicious_id_rejected_on_load(self, tmp_path: Path, bad_id: str) -> None:
         store = SkillStore(tmp_path / "skills")
-        with pytest.raises(PathTraversalError):
+        with pytest.raises(PathTraversalError) as excinfo:
             store.load(bad_id)
+        expected = (
+            "identifier contains null byte"
+            if "\0" in bad_id
+            else "identifier contains forbidden characters"
+        )
+        assert str(excinfo.value) == expected
+        assert bad_id not in str(excinfo.value)

@@ -88,9 +88,23 @@ class TestDomainPackDescriptor:
         with pytest.raises(ValueError):
             self._make(status="flying")
 
+    def test_invalid_status_error_is_bounded(self):
+        with pytest.raises(ValueError, match="DomainPackStatus") as excinfo:
+            self._make(status="flying")
+        assert "flying" not in str(excinfo.value)
+        assert "<class" not in str(excinfo.value)
+        assert "str" not in str(excinfo.value)
+
     def test_invalid_scope(self):
         with pytest.raises(ValueError):
             self._make(scope="cosmic")
+
+    def test_invalid_scope_error_is_bounded(self):
+        with pytest.raises(ValueError, match="PackScope") as excinfo:
+            self._make(scope="cosmic")
+        assert "cosmic" not in str(excinfo.value)
+        assert "<class" not in str(excinfo.value)
+        assert "str" not in str(excinfo.value)
 
     def test_tags_frozen(self):
         d = self._make(tags=["a", "b"])

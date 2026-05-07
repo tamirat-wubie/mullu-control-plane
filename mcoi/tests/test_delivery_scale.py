@@ -25,6 +25,13 @@ class TestCustomerSuccess:
         assert rec.health_status == "champion"
         assert rec.renewal_risk == "low"
 
+    def test_unknown_customer_error_is_bounded(self):
+        engine = CustomerSuccessEngine()
+        with pytest.raises(ValueError, match="unknown customer") as excinfo:
+            engine.update_health("cust-404", adoption_score=5.0)
+        assert str(excinfo.value) == "unknown customer"
+        assert "cust-404" not in str(excinfo.value)
+
     def test_at_risk(self):
         engine = CustomerSuccessEngine()
         engine.register_customer("c1", "regulated_ops")
@@ -65,6 +72,13 @@ class TestSupportAnalytics:
         assert engine.open_count() == 1
         engine.resolve_ticket("t1")
         assert engine.open_count() == 0
+
+    def test_unknown_ticket_error_is_bounded(self):
+        engine = SupportAnalyticsEngine()
+        with pytest.raises(ValueError, match="unknown ticket") as excinfo:
+            engine.resolve_ticket("ticket-404")
+        assert str(excinfo.value) == "unknown ticket"
+        assert "ticket-404" not in str(excinfo.value)
 
     def test_by_category(self):
         engine = SupportAnalyticsEngine()

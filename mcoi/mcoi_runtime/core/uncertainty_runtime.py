@@ -131,7 +131,7 @@ class UncertaintyRuntimeEngine:
     ) -> BeliefRecord:
         """Register a new belief as PROVISIONAL."""
         if belief_id in self._beliefs:
-            raise RuntimeCoreInvariantError(f"Duplicate belief_id: {belief_id}")
+            raise RuntimeCoreInvariantError("Duplicate belief_id")
         now = self._clock()
         belief = BeliefRecord(
             belief_id=belief_id, tenant_id=tenant_id,
@@ -148,7 +148,7 @@ class UncertaintyRuntimeEngine:
         """Get a belief by ID."""
         b = self._beliefs.get(belief_id)
         if b is None:
-            raise RuntimeCoreInvariantError(f"Unknown belief_id: {belief_id}")
+            raise RuntimeCoreInvariantError("Unknown belief_id")
         return b
 
     # ------------------------------------------------------------------
@@ -167,9 +167,9 @@ class UncertaintyRuntimeEngine:
     ) -> UncertaintyHypothesis:
         """Register a hypothesis linked to a belief."""
         if hypothesis_id in self._hypotheses:
-            raise RuntimeCoreInvariantError(f"Duplicate hypothesis_id: {hypothesis_id}")
+            raise RuntimeCoreInvariantError("Duplicate hypothesis_id")
         if belief_ref not in self._beliefs:
-            raise RuntimeCoreInvariantError(f"Unknown belief_ref: {belief_ref}")
+            raise RuntimeCoreInvariantError("Unknown belief_ref")
         now = self._clock()
         hyp = UncertaintyHypothesis(
             hypothesis_id=hypothesis_id, tenant_id=tenant_id,
@@ -199,9 +199,9 @@ class UncertaintyRuntimeEngine:
     ) -> EvidenceWeightRecord:
         """Register evidence weight for a belief, auto-updating belief confidence."""
         if weight_id in self._weights:
-            raise RuntimeCoreInvariantError(f"Duplicate weight_id: {weight_id}")
+            raise RuntimeCoreInvariantError("Duplicate weight_id")
         if belief_ref not in self._beliefs:
-            raise RuntimeCoreInvariantError(f"Unknown belief_ref: {belief_ref}")
+            raise RuntimeCoreInvariantError("Unknown belief_ref")
         delta = _EVIDENCE_WEIGHT_DELTA[weight]
         impact = delta
         now = self._clock()
@@ -247,11 +247,9 @@ class UncertaintyRuntimeEngine:
     ) -> ConfidenceInterval:
         """Register a confidence interval. Validates lower <= upper."""
         if interval_id in self._intervals:
-            raise RuntimeCoreInvariantError(f"Duplicate interval_id: {interval_id}")
+            raise RuntimeCoreInvariantError("Duplicate interval_id")
         if lower > upper:
-            raise RuntimeCoreInvariantError(
-                f"Confidence interval lower ({lower}) must be <= upper ({upper})"
-            )
+            raise RuntimeCoreInvariantError("Confidence interval lower must be <= upper")
         now = self._clock()
         ci = ConfidenceInterval(
             interval_id=interval_id, tenant_id=tenant_id,
@@ -279,9 +277,9 @@ class UncertaintyRuntimeEngine:
     ) -> BeliefUpdate:
         """Update a belief's confidence and create a BeliefUpdate record."""
         if update_id in self._updates:
-            raise RuntimeCoreInvariantError(f"Duplicate update_id: {update_id}")
+            raise RuntimeCoreInvariantError("Duplicate update_id")
         if belief_ref not in self._beliefs:
-            raise RuntimeCoreInvariantError(f"Unknown belief_ref: {belief_ref}")
+            raise RuntimeCoreInvariantError("Unknown belief_ref")
         old_belief = self._beliefs[belief_ref]
         prior = old_belief.confidence
         now = self._clock()
@@ -320,12 +318,12 @@ class UncertaintyRuntimeEngine:
     ) -> CompetingHypothesisSet:
         """Create a set of competing hypotheses."""
         if set_id in self._sets:
-            raise RuntimeCoreInvariantError(f"Duplicate set_id: {set_id}")
+            raise RuntimeCoreInvariantError("Duplicate set_id")
         if not hypothesis_ids:
             raise RuntimeCoreInvariantError("hypothesis_ids must not be empty")
         for hid in hypothesis_ids:
             if hid not in self._hypotheses:
-                raise RuntimeCoreInvariantError(f"Unknown hypothesis_id: {hid}")
+                raise RuntimeCoreInvariantError("Unknown hypothesis_id")
         # Find leading hypothesis (highest posterior_confidence)
         ranked = sorted(
             hypothesis_ids,
@@ -398,7 +396,7 @@ class UncertaintyRuntimeEngine:
     ) -> UncertaintySnapshot:
         """Capture a point-in-time uncertainty snapshot."""
         if snapshot_id in self._snapshot_ids:
-            raise RuntimeCoreInvariantError(f"Duplicate snapshot_id: {snapshot_id}")
+            raise RuntimeCoreInvariantError("Duplicate snapshot_id")
         now = self._clock()
         snap = UncertaintySnapshot(
             snapshot_id=snapshot_id, tenant_id=tenant_id,
@@ -462,7 +460,7 @@ class UncertaintyRuntimeEngine:
                         "interval_id": ci.interval_id,
                         "tenant_id": ci.tenant_id,
                         "operation": "inverted_interval",
-                        "reason": f"Confidence interval {ci.interval_id} has lower ({ci.lower}) > upper ({ci.upper})",
+                        "reason": "confidence interval bounds are inverted",
                         "detected_at": now,
                     }
                     self._violations[vid] = v
@@ -484,7 +482,7 @@ class UncertaintyRuntimeEngine:
                             "belief_id": b.belief_id,
                             "tenant_id": b.tenant_id,
                             "operation": "zero_evidence_high_confidence",
-                            "reason": f"Belief {b.belief_id} has confidence {b.confidence} > 0.8 but no evidence weights",
+                            "reason": "belief has high confidence without evidence",
                             "detected_at": now,
                         }
                         self._violations[vid] = v
@@ -505,7 +503,7 @@ class UncertaintyRuntimeEngine:
                         "belief_id": b.belief_id,
                         "tenant_id": b.tenant_id,
                         "operation": "stale_belief",
-                        "reason": f"Belief {b.belief_id} has no updates",
+                        "reason": "belief has no updates",
                         "detected_at": now,
                     }
                     self._violations[vid] = v

@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "schemas/creative/data_analyze.input.schema.json",
+  "type": "object",
+  "anyOf": [
+    {"required": ["csv"]},
+    {"required": ["data"]}
+  ],
+  "properties": {
+    "csv": {"type": "string", "minLength": 1},
+    "data": {"type": "object"}
+  },
+  "additionalProperties": true
+}

@@ -104,19 +104,19 @@ class ConfigDriftDetector:
                     drift = DriftItem(
                         key=key, expected="<not set>", actual=actual_val,
                         severity=DriftSeverity.INFO,
-                        message=f"Unexpected key: {key}",
+                        message="Unexpected configuration key",
                     )
                 elif key not in actual:
                     drift = DriftItem(
                         key=key, expected=expected_val, actual="<missing>",
                         severity=self._classify(key),
-                        message=f"Missing key: {key}",
+                        message="Missing configuration key",
                     )
                 else:
                     drift = DriftItem(
                         key=key, expected=expected_val, actual=actual_val,
                         severity=self._classify(key),
-                        message=f"Value changed: {key}",
+                        message="Configuration value changed",
                     )
                 drifts.append(drift)
 

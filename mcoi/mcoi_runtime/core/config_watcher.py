@@ -40,6 +40,10 @@ class FileState:
     last_reload_at: float = 0.0
 
 
+def _bounded_watch_error(exc: Exception) -> str:
+    return f"watch error ({type(exc).__name__})"
+
+
 class ConfigFileWatcher:
     """Polls config files for changes and triggers reload callbacks."""
 
@@ -77,13 +81,14 @@ class ConfigFileWatcher:
             items = list(self._watched.items())
 
         for path, watched in items:
+            state: FileState | None = None
             try:
                 if not os.path.exists(path):
                     continue
-                mtime = os.path.getmtime(path)
                 state = self._states.get(path)
                 if not state:
                     continue
+                mtime = os.path.getmtime(path)
                 if mtime == state.last_mtime:
                     continue
 
@@ -101,10 +106,10 @@ class ConfigFileWatcher:
                     self._total_reloads += 1
 
                 reloaded.append(path)
-            except Exception as e:
+            except Exception as exc:
                 with self._lock:
                     if state:
-                        state.last_error = str(e)
+                        state.last_error = _bounded_watch_error(exc)
                     self._total_errors += 1
 
         return reloaded

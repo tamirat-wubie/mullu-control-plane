@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "schemas/enterprise/task_schedule.input.schema.json",
+  "type": "object",
+  "required": ["title"],
+  "properties": {
+    "title": {"type": "string", "minLength": 1},
+    "due_at": {"type": "string"},
+    "assignee": {"type": "string"},
+    "action": {"type": "string"}
+  },
+  "additionalProperties": true
+}

@@ -1,0 +1,114 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:finance-approval-live-handoff-plan:1",
+  "title": "Finance Approval Live Handoff Plan",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "plan_id",
+    "readiness_level",
+    "ready",
+    "action_count",
+    "blockers",
+    "actions"
+  ],
+  "properties": {
+    "plan_id": {
+      "type": "string",
+      "pattern": "^finance-live-handoff-plan-[0-9a-f]{16}$"
+    },
+    "readiness_level": {
+      "type": "string",
+      "enum": [
+        "not-ready",
+        "proof-pilot-ready",
+        "live-email-handoff-ready"
+      ]
+    },
+    "ready": {
+      "type": "boolean"
+    },
+    "action_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "blockers": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "email_calendar_dependency_missing:EMAIL_CALENDAR_CONNECTOR_TOKEN",
+          "email_calendar_live_evidence_missing",
+          "email_calendar_evidence_not_closed"
+        ]
+      }
+    },
+    "actions": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/finance_live_handoff_action"
+      }
+    }
+  },
+  "$defs": {
+    "finance_live_handoff_action": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "action_id",
+        "blocker",
+        "action_type",
+        "command",
+        "verification_command",
+        "receipt_validator",
+        "evidence_required",
+        "approval_required"
+      ],
+      "properties": {
+        "action_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "blocker": {
+          "type": "string",
+          "enum": [
+            "email_calendar_dependency_missing:EMAIL_CALENDAR_CONNECTOR_TOKEN",
+            "email_calendar_live_evidence_missing",
+            "email_calendar_evidence_not_closed"
+          ]
+        },
+        "action_type": {
+          "type": "string",
+          "enum": [
+            "credential",
+            "live-receipt",
+            "manual-review"
+          ]
+        },
+        "command": {
+          "type": "string",
+          "minLength": 1
+        },
+        "verification_command": {
+          "type": "string",
+          "minLength": 1
+        },
+        "receipt_validator": {
+          "type": "string",
+          "minLength": 1
+        },
+        "evidence_required": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "approval_required": {
+          "type": "boolean"
+        }
+      }
+    }
+  }
+}

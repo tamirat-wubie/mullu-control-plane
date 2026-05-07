@@ -200,6 +200,100 @@ class TestAllTargetKinds:
 
 
 # ---------------------------------------------------------------------------
+# Close / transfer witnesses
+# ---------------------------------------------------------------------------
+
+
+class TestDispatchReasonContracts:
+    def test_dispatch_close_uses_bounded_reason(self) -> None:
+        spine = EventSpineEngine(clock=CLOCK)
+        obl_eng = ObligationRuntimeEngine(clock=CLOCK)
+        eng = ReactionEngine(clock=CLOCK)
+
+        rule = ReactionRule(
+            rule_id="rule-close",
+            name="close obligation",
+            event_type="approval_requested",
+            conditions=(_cond(),),
+            target=ReactionTarget(
+                target_id="tgt-close",
+                kind=ReactionTargetKind.CLOSE_OBLIGATION,
+                target_ref_id="obl-close",
+                parameters={},
+            ),
+            created_at=NOW,
+        )
+        eng.register_rule(rule)
+        obl_eng.create_obligation(
+            obligation_id="obl-close",
+            trigger=ObligationTrigger.APPROVAL_REQUEST,
+            trigger_ref_id="approval-1",
+            owner=_owner(),
+            deadline=_deadline(),
+            description="close me",
+            correlation_id="cor-close",
+        )
+        obl_eng.activate("obl-close")
+
+        evt = _event("evt-close", corr="cor-close")
+        spine.emit(evt)
+        decision = eng.react(evt)
+
+        closed = ReactionBridge.dispatch_close_reactions(decision, spine, obl_eng)
+        assert len(closed) == 1
+        closure = obl_eng.closure_for("obl-close")
+        assert closure is not None
+        assert closure.reason == "reactive closure"
+        assert "rule-close" not in closure.reason
+
+    def test_dispatch_transfer_uses_bounded_reason(self) -> None:
+        spine = EventSpineEngine(clock=CLOCK)
+        obl_eng = ObligationRuntimeEngine(clock=CLOCK)
+        eng = ReactionEngine(clock=CLOCK)
+
+        rule = ReactionRule(
+            rule_id="rule-transfer",
+            name="transfer obligation",
+            event_type="approval_requested",
+            conditions=(_cond(),),
+            target=ReactionTarget(
+                target_id="tgt-transfer",
+                kind=ReactionTargetKind.TRANSFER_OBLIGATION,
+                target_ref_id="obl-transfer",
+                parameters={},
+            ),
+            created_at=NOW,
+        )
+        eng.register_rule(rule)
+        obl_eng.create_obligation(
+            obligation_id="obl-transfer",
+            trigger=ObligationTrigger.APPROVAL_REQUEST,
+            trigger_ref_id="approval-2",
+            owner=_owner(),
+            deadline=_deadline(),
+            description="transfer me",
+            correlation_id="cor-transfer",
+        )
+        obl_eng.activate("obl-transfer")
+
+        evt = _event("evt-transfer", corr="cor-transfer")
+        spine.emit(evt)
+        decision = eng.react(evt)
+
+        transferred = ReactionBridge.dispatch_transfer_reactions(
+            decision,
+            spine,
+            obl_eng,
+            transfer_to=_owner("o2"),
+        )
+        assert len(transferred) == 1
+        history = obl_eng.transfer_history("obl-transfer")
+        assert len(history) == 1
+        assert history[0].reason == "reactive transfer"
+        assert "rule-transfer" not in history[0].reason
+
+
+# ---------------------------------------------------------------------------
 # Cascading reactions
 # ---------------------------------------------------------------------------
 

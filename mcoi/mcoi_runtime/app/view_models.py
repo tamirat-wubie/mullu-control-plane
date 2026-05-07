@@ -9,21 +9,20 @@ Invariants:
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from typing import Any, Mapping, TYPE_CHECKING
+from dataclasses import dataclass
+from typing import Mapping, TYPE_CHECKING
 
 from mcoi_runtime.app.operator_loop import GoalRunReport, OperatorRunReport, SkillRunReport, WorkflowRunReport
-from mcoi_runtime.contracts.job import JobDescriptor, JobState, JobStatus, JobPriority, SlaStatus
+from mcoi_runtime.contracts.job import JobDescriptor, JobState
 from mcoi_runtime.contracts.roles import TeamQueueState, WorkloadSnapshot
 from mcoi_runtime.core.coordination import CoordinationEngine
-from mcoi_runtime.contracts.temporal import TemporalTask, StateTransition, ResumeCheckpoint
+from mcoi_runtime.contracts.temporal import TemporalTask
 from mcoi_runtime.core.errors import StructuredError
-from mcoi_runtime.core.memory import MemoryTier, PromotionResult
 from mcoi_runtime.core.persisted_replay import PersistedReplayResult
-from mcoi_runtime.core.replay_engine import ReplayVerdict
-from mcoi_runtime.core.runbook import RunbookAdmissionResult, RunbookEntry
+from mcoi_runtime.core.runbook import RunbookAdmissionResult
 
 from mcoi_runtime.contracts.simulation import SimulationComparison, SimulationVerdict
+from mcoi_runtime.contracts.provider_attribution import ProviderAttribution
 
 if TYPE_CHECKING:
     from mcoi_runtime.core.operational_graph import OperationalGraph
@@ -60,8 +59,20 @@ class RunSummaryView:
     integration_provider_id: str | None = None
     communication_provider_id: str | None = None
     model_provider_id: str | None = None
+    provider_attributions: tuple[ProviderAttribution, ...] = ()
+    provider_attribution_count: int = 0
+    receipt_attributed_provider_operation_count: int = 0
+    routing_attributed_provider_operation_count: int = 0
+    plane_attributed_provider_operation_count: int = 0
     autonomy_mode: str | None = None
     autonomy_decision: str | None = None
+    mil_program_id: str | None = None
+    mil_instruction_count: int = 0
+    mil_verification_passed: bool | None = None
+    mil_verification_issues: tuple[str, ...] = ()
+    mil_instruction_trace: tuple[str, ...] = ()
+    mil_audit_record_id: str | None = None
+    mil_trace_ids: tuple[str, ...] = ()
 
     @staticmethod
     def from_report(report: OperatorRunReport) -> RunSummaryView:
@@ -89,8 +100,20 @@ class RunSummaryView:
             integration_provider_id=report.integration_provider_id,
             communication_provider_id=report.communication_provider_id,
             model_provider_id=report.model_provider_id,
+            provider_attributions=report.provider_attributions,
+            provider_attribution_count=report.provider_attribution_count,
+            receipt_attributed_provider_operation_count=report.receipt_attributed_provider_operation_count,
+            routing_attributed_provider_operation_count=report.routing_attributed_provider_operation_count,
+            plane_attributed_provider_operation_count=report.plane_attributed_provider_operation_count,
             autonomy_mode=report.autonomy_mode,
             autonomy_decision=report.autonomy_decision,
+            mil_program_id=report.mil_program_id,
+            mil_instruction_count=report.mil_instruction_count,
+            mil_verification_passed=report.mil_verification_passed,
+            mil_verification_issues=report.mil_verification_issues,
+            mil_instruction_trace=report.mil_instruction_trace,
+            mil_audit_record_id=report.mil_audit_record_id,
+            mil_trace_ids=report.mil_trace_ids,
         )
 
 
@@ -170,6 +193,7 @@ class ReplaySummaryView:
     ready: bool
     trace_found: bool
     trace_hash_matches: bool | None
+    trace_lookup_reason: str
     reasons: tuple[str, ...]
 
     @staticmethod
@@ -181,6 +205,7 @@ class ReplaySummaryView:
             ready=result.validation.ready,
             trace_found=result.trace_found,
             trace_hash_matches=result.trace_hash_matches,
+            trace_lookup_reason=result.trace_lookup_reason,
             reasons=result.validation.reasons,
         )
 
@@ -289,6 +314,7 @@ class SkillSummaryView:
     step_count: int
     failed_step: str | None
     structured_errors: tuple[ErrorView, ...]
+    lifecycle_transition_warning: str
 
     @staticmethod
     def from_report(report: SkillRunReport) -> SkillSummaryView:
@@ -313,6 +339,7 @@ class SkillSummaryView:
             step_count=step_count,
             failed_step=failed_step,
             structured_errors=tuple(ErrorView.from_error(e) for e in report.structured_errors),
+            lifecycle_transition_warning=report.lifecycle_transition_warning,
         )
 
 

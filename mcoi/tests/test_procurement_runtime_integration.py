@@ -53,7 +53,7 @@ def _create_po(procurement_engine: ProcurementRuntimeEngine) -> str:
     """Helper: create a PO via the full request lifecycle. Returns po_id."""
     procurement_engine.create_request("req-po", "v1", "t1", 5000.0)
     procurement_engine.submit_request("req-po")
-    procurement_engine.approve_request("req-po")
+    procurement_engine.approve_request("req-po", decided_by="approver-1")
     procurement_engine.issue_po("po-1", "req-po")
     return "po-1"
 
@@ -155,6 +155,19 @@ class TestProcurementFromBudgetNeed:
         )
         assert result["source_type"] == "budget_need"
 
+    def test_description_is_bounded(
+        self,
+        integration: ProcurementRuntimeIntegration,
+        procurement_engine: ProcurementRuntimeEngine,
+    ) -> None:
+        result = integration.procurement_from_budget_need(
+            "req-bounded", "v1", "t1", "budget-ref-secret", 1000.0
+        )
+        request = procurement_engine.get_request(result["request_id"])
+        assert request.description == "Budget need"
+        assert "budget-ref-secret" not in request.description
+        assert request.request_id == "req-bounded"
+
 
 # ---------------------------------------------------------------------------
 # procurement_from_contract_renewal
@@ -240,6 +253,19 @@ class TestProcurementFromConnectorRequirement:
         )
         assert result["estimated_amount"] == 1234.56
 
+    def test_description_is_bounded(
+        self,
+        integration: ProcurementRuntimeIntegration,
+        procurement_engine: ProcurementRuntimeEngine,
+    ) -> None:
+        result = integration.procurement_from_connector_requirement(
+            "req-connector-bounded", "v1", "t1", "conn-ref-secret", 800.0
+        )
+        request = procurement_engine.get_request(result["request_id"])
+        assert request.description == "Connector requirement"
+        assert "conn-ref-secret" not in request.description
+        assert request.request_id == "req-connector-bounded"
+
 
 # ---------------------------------------------------------------------------
 # procurement_from_asset_need
@@ -279,6 +305,19 @@ class TestProcurementFromAssetNeed:
             "req-a1", "v1", "t1", "asset-ref-1", 999.99
         )
         assert result["estimated_amount"] == 999.99
+
+    def test_description_is_bounded(
+        self,
+        integration: ProcurementRuntimeIntegration,
+        procurement_engine: ProcurementRuntimeEngine,
+    ) -> None:
+        result = integration.procurement_from_asset_need(
+            "req-asset-bounded", "v1", "t1", "asset-ref-secret", 600.0
+        )
+        request = procurement_engine.get_request(result["request_id"])
+        assert request.description == "Asset need"
+        assert "asset-ref-secret" not in request.description
+        assert request.request_id == "req-asset-bounded"
 
 
 # ---------------------------------------------------------------------------
@@ -480,11 +519,13 @@ class TestAttachProcurementToMemoryMesh:
         assert isinstance(mem.tags, tuple)
         assert mem.tags == ("procurement", "vendor", "purchasing")
 
-    def test_title_contains_scope_ref_id(
+    def test_title_is_bounded(
         self, integration: ProcurementRuntimeIntegration
     ) -> None:
         mem = integration.attach_procurement_to_memory_mesh("my-scope")
-        assert "my-scope" in mem.title
+        assert mem.title == "Procurement state"
+        assert "my-scope" not in mem.title
+        assert mem.scope_ref_id == "my-scope"
 
     def test_memory_id_is_string(self, integration: ProcurementRuntimeIntegration) -> None:
         mem = integration.attach_procurement_to_memory_mesh("scope-1")
@@ -712,7 +753,7 @@ class TestGoldenPathFullLifecycle:
         # 6. Create a PO and bind to financial runtime
         procurement_engine.create_request("req-po", "v1", "t1", 5000.0)
         procurement_engine.submit_request("req-po")
-        procurement_engine.approve_request("req-po")
+        procurement_engine.approve_request("req-po", decided_by="approver-1")
         procurement_engine.issue_po("po-1", "req-po")
         po_bind = integration.bind_po_to_financial_runtime("po-1", "inv-ref-1")
         assert po_bind["binding_type"] == "financial"

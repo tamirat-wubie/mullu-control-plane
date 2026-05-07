@@ -258,7 +258,7 @@ class CausalRuntimeIntegration:
         record = MemoryRecord(
             memory_id=mid,
             scope_ref_id=scope_ref_id,
-            title=f"Causal state for {scope_ref_id}",
+            title="Causal state",
             memory_type=MemoryType.OBSERVATION,
             scope=MemoryScope.GLOBAL,
             trust_level=MemoryTrustLevel.VERIFIED,

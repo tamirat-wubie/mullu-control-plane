@@ -347,20 +347,30 @@ class TestEnforceGuardedTransition:
     def test_denied_by_guard(self):
         registry = TransitionGuardRegistry()
         registry.register("owner_changes", lambda ctx: ctx.get("new_owner") != ctx.get("old_owner"))
-        with pytest.raises(RuntimeCoreInvariantError, match="guard failed"):
+        with pytest.raises(
+            RuntimeCoreInvariantError,
+            match="^guard failed$",
+        ) as exc_info:
             enforce_guarded_transition(
                 OBLIGATION_MACHINE, "active", "active", "transfer",
                 guard_registry=registry,
                 guard_context={"new_owner": "A", "old_owner": "A"},
             )
+        assert "owner_changes" not in str(exc_info.value)
+        assert "active" not in str(exc_info.value)
 
     def test_illegal_edge_still_caught(self):
         registry = TransitionGuardRegistry()
-        with pytest.raises(RuntimeCoreInvariantError, match="illegal transition"):
+        with pytest.raises(
+            RuntimeCoreInvariantError,
+            match="^illegal transition$",
+        ) as exc_info:
             enforce_guarded_transition(
                 OBLIGATION_MACHINE, "pending", "cancelled", "activate",
                 guard_registry=registry,
             )
+        assert "cancelled" not in str(exc_info.value)
+        assert "activate" not in str(exc_info.value)
 
 
 # ══════════════════════════════════════════════════════════════════
@@ -443,6 +453,25 @@ class TestTransitionAuditor:
         records = auditor2.all_records()
         assert records[0].entity_id == "obl-1"
         assert records[1].from_state == "active"
+
+    def test_snapshot_restore_inconsistent_allowed_record_is_bounded(self):
+        auditor = TransitionAuditor(clock=_clock)
+        rec = auditor.audit_transition(
+            OBLIGATION_MACHINE, "obl-1", "pending", "active", "activate",
+        )
+        snap = auditor.snapshot()
+        snap["records"][0]["action"] = "close"
+
+        auditor2 = TransitionAuditor(clock=_clock)
+        with pytest.raises(
+            RuntimeCoreInvariantError,
+            match="^audit record is inconsistent with machine definition$",
+        ) as exc_info:
+            auditor2.restore(snap)
+        message = str(exc_info.value)
+        assert rec.audit_id not in message
+        assert "pending" not in message
+        assert "close" not in message
 
     def test_metadata_captured(self):
         auditor = TransitionAuditor(clock=_clock)
@@ -563,8 +592,12 @@ class TestEnforceTransition:
             enforce_transition(OBLIGATION_MACHINE, "completed", "active", "reopen")
 
     def test_terminal_raises(self):
-        with pytest.raises(RuntimeCoreInvariantError, match="terminal"):
+        with pytest.raises(
+            RuntimeCoreInvariantError,
+            match="^illegal transition$",
+        ) as exc_info:
             enforce_transition(OBLIGATION_MACHINE, "cancelled", "pending", "reopen")
+        assert "cancelled" not in str(exc_info.value)
 
 
 # ══════════════════════════════════════════════════════════════════
@@ -637,6 +670,9 @@ class TestReplayStateContinuity:
         assert verdict == "divergence_detected"
         assert results[0]["match"] == REPLAY_MATCH
         assert results[1]["match"] == REPLAY_DIVERGED
+        assert results[1]["detail"] == "state continuity mismatch"
+        assert "pending" not in results[1]["detail"]
+        assert "active" not in results[1]["detail"]
 
     def test_replay_valid_sequence_passes(self):
         """A properly ordered sequence should replay successfully."""

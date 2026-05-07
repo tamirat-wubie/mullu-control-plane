@@ -552,8 +552,9 @@ class TestCheckpointMismatch:
 
         # Restoring with verification should fail because post-restore
         # hash will not match the corrupted composite_hash
-        with pytest.raises(RuntimeCoreInvariantError):
+        with pytest.raises(RuntimeCoreInvariantError, match="^restore verification failed$") as exc_info:
             plane.restore_checkpoint(corrupted, "op-1", verify=True)
+        assert "CORRUPTED-HASH" not in str(exc_info.value)
 
 
 class TestPauseResumeHaltUnderLoad:

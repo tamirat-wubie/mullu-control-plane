@@ -133,7 +133,7 @@ class PublicApiEngine:
         target_action: str = "unknown",
     ) -> EndpointDescriptor:
         if endpoint_id in self._endpoints:
-            raise RuntimeCoreInvariantError(f"duplicate endpoint_id: {endpoint_id}")
+            raise RuntimeCoreInvariantError("duplicate endpoint_id")
         now = self._now()
         ep = EndpointDescriptor(
             endpoint_id=endpoint_id,
@@ -152,13 +152,13 @@ class PublicApiEngine:
 
     def get_endpoint(self, endpoint_id: str) -> EndpointDescriptor:
         if endpoint_id not in self._endpoints:
-            raise RuntimeCoreInvariantError(f"unknown endpoint_id: {endpoint_id}")
+            raise RuntimeCoreInvariantError("unknown endpoint_id")
         return self._endpoints[endpoint_id]
 
     def deprecate_endpoint(self, endpoint_id: str) -> EndpointDescriptor:
         ep = self.get_endpoint(endpoint_id)
         if ep.status in _ENDPOINT_TERMINAL:
-            raise RuntimeCoreInvariantError(f"endpoint {endpoint_id} is retired")
+            raise RuntimeCoreInvariantError("endpoint is retired")
         now = self._now()
         updated = EndpointDescriptor(
             endpoint_id=ep.endpoint_id, tenant_id=ep.tenant_id, path=ep.path,
@@ -172,7 +172,7 @@ class PublicApiEngine:
     def disable_endpoint(self, endpoint_id: str) -> EndpointDescriptor:
         ep = self.get_endpoint(endpoint_id)
         if ep.status in _ENDPOINT_TERMINAL:
-            raise RuntimeCoreInvariantError(f"endpoint {endpoint_id} is retired")
+            raise RuntimeCoreInvariantError("endpoint is retired")
         now = self._now()
         updated = EndpointDescriptor(
             endpoint_id=ep.endpoint_id, tenant_id=ep.tenant_id, path=ep.path,
@@ -186,7 +186,7 @@ class PublicApiEngine:
     def retire_endpoint(self, endpoint_id: str) -> EndpointDescriptor:
         ep = self.get_endpoint(endpoint_id)
         if ep.status == ApiStatus.RETIRED:
-            raise RuntimeCoreInvariantError(f"endpoint {endpoint_id} already retired")
+            raise RuntimeCoreInvariantError("endpoint already retired")
         now = self._now()
         updated = EndpointDescriptor(
             endpoint_id=ep.endpoint_id, tenant_id=ep.tenant_id, path=ep.path,
@@ -215,7 +215,7 @@ class PublicApiEngine:
         caller_tenant_id: str = "",
     ) -> ApiRequest:
         if request_id in self._requests:
-            raise RuntimeCoreInvariantError(f"duplicate request_id: {request_id}")
+            raise RuntimeCoreInvariantError("duplicate request_id")
 
         now = self._now()
         ep = self._endpoints.get(endpoint_id)
@@ -256,7 +256,7 @@ class PublicApiEngine:
                 idempotency_key=idempotency_key or "none", received_at=now,
             )
             self._requests[request_id] = req
-            self._record_error(request_id, tenant_id, "ENDPOINT_UNAVAILABLE", f"endpoint {endpoint_id} is {ep.status.value}", 503)
+            self._record_error(request_id, tenant_id, "ENDPOINT_UNAVAILABLE", f"endpoint is {ep.status.value}", 503)
             _emit(self._events, "process_request_unavailable", {"request_id": request_id}, request_id, now=self._now())
             return req
 
@@ -304,7 +304,7 @@ class PublicApiEngine:
 
     def get_request(self, request_id: str) -> ApiRequest:
         if request_id not in self._requests:
-            raise RuntimeCoreInvariantError(f"unknown request_id: {request_id}")
+            raise RuntimeCoreInvariantError("unknown request_id")
         return self._requests[request_id]
 
     def requests_for_tenant(self, tenant_id: str) -> tuple[ApiRequest, ...]:
@@ -321,9 +321,9 @@ class PublicApiEngine:
         payload_ref: str = "ok",
     ) -> ApiResponse:
         if response_id in self._responses:
-            raise RuntimeCoreInvariantError(f"duplicate response_id: {response_id}")
+            raise RuntimeCoreInvariantError("duplicate response_id")
         if request_id not in self._requests:
-            raise RuntimeCoreInvariantError(f"unknown request_id: {request_id}")
+            raise RuntimeCoreInvariantError("unknown request_id")
         req = self._requests[request_id]
         now = self._now()
         resp = ApiResponse(
@@ -348,7 +348,7 @@ class PublicApiEngine:
 
     def get_response(self, response_id: str) -> ApiResponse:
         if response_id not in self._responses:
-            raise RuntimeCoreInvariantError(f"unknown response_id: {response_id}")
+            raise RuntimeCoreInvariantError("unknown response_id")
         return self._responses[response_id]
 
     def responses_for_request(self, request_id: str) -> tuple[ApiResponse, ...]:
@@ -405,7 +405,7 @@ class PublicApiEngine:
 
     def api_assessment(self, assessment_id: str, tenant_id: str) -> ApiAssessment:
         if assessment_id in self._assessments:
-            raise RuntimeCoreInvariantError(f"duplicate assessment_id: {assessment_id}")
+            raise RuntimeCoreInvariantError("duplicate assessment_id")
         now = self._now()
         endpoints = self.endpoints_for_tenant(tenant_id)
         active = self.active_endpoints_for_tenant(tenant_id)
@@ -447,7 +447,7 @@ class PublicApiEngine:
                         v = ApiViolation(
                             violation_id=vid, tenant_id=tenant_id,
                             operation="disabled_endpoint_hit",
-                            reason=f"disabled endpoint {ep.endpoint_id} received requests",
+                            reason="disabled endpoint received requests",
                             detected_at=now,
                         )
                         self._violations[vid] = v
@@ -461,7 +461,7 @@ class PublicApiEngine:
                 v = ApiViolation(
                     violation_id=vid, tenant_id=tenant_id,
                     operation="cross_tenant_attempt",
-                    reason=f"cross-tenant access attempts detected for tenant {tenant_id}",
+                    reason="cross-tenant access attempts detected",
                     detected_at=now,
                 )
                 self._violations[vid] = v
@@ -476,7 +476,7 @@ class PublicApiEngine:
                 v = ApiViolation(
                     violation_id=vid, tenant_id=tenant_id,
                     operation="high_error_rate",
-                    reason=f"error rate above 50% for tenant {tenant_id}",
+                    reason="error rate above threshold",
                     detected_at=now,
                 )
                 self._violations[vid] = v

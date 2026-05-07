@@ -83,7 +83,7 @@ class WorldStateStore:
     ) -> StoredSnapshot:
         """Store a world-state snapshot."""
         if snapshot_id in self._snapshots:
-            raise ValueError(f"snapshot already exists: {snapshot_id}")
+            raise ValueError("snapshot already exists")
 
         stored = StoredSnapshot(
             snapshot_id=snapshot_id,
@@ -122,7 +122,7 @@ class WorldStateStore:
     ) -> StoredDelta:
         """Store a delta between two snapshots."""
         if delta_id in self._deltas:
-            raise ValueError(f"delta already exists: {delta_id}")
+            raise ValueError("delta already exists")
 
         stored = StoredDelta(
             delta_id=delta_id,

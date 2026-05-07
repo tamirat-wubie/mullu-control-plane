@@ -408,19 +408,34 @@ impl StateMachineSpec {
     ///
     /// This is the core substrate certification function. Every governed
     /// transition should go through this rather than raw `is_legal()`.
+    ///
+    /// Behavior:
+    ///   * Illegal transition → returns `Err(TransitionVerdict::Denied*)`.
+    ///     No receipt is produced because there is no legal edge to prove.
+    ///   * Legal transition, all guards passing → `Ok(ProofCapsule)` with
+    ///     `verdict = Allowed`.
+    ///   * Legal transition, one or more failed guards → `Ok(ProofCapsule)`
+    ///     with `verdict = DeniedGuardFailed`, including the full guard
+    ///     list (passing AND failing). The receipt IS the proof of the
+    ///     denial; stripping failed guards would erase the audit trail of
+    ///     the rejected decision.
+    ///
+    /// Callers that previously matched on `Err(DeniedGuardFailed)` should
+    /// instead inspect `capsule.receipt.verdict`.
     pub fn certify_transition(
         &self,
         p: &CertifyParams<'_>,
     ) -> Result<ProofCapsule, TransitionVerdict> {
-        // Check legality
-        let verdict = self.is_legal(p.from_state, p.to_state, p.action);
+        // Check legality (always Err for illegal edges; no receipt to emit).
+        let mut verdict = self.is_legal(p.from_state, p.to_state, p.action);
         if verdict != TransitionVerdict::Allowed {
             return Err(verdict);
         }
 
-        // Check all guards passed
+        // Failed guards downgrade verdict to DeniedGuardFailed but the
+        // receipt is still produced with the full guard list.
         if p.guards.iter().any(|g| !g.passed) {
-            return Err(TransitionVerdict::DeniedGuardFailed);
+            verdict = TransitionVerdict::DeniedGuardFailed;
         }
 
         // Build receipt
@@ -480,19 +495,16 @@ impl StateMachineSpec {
     }
 }
 
-/// Compute SHA-256 hex digest (substrate-level, no external dependency).
+/// Compute SHA-256 hex digest of the input string. Matches Python's
+/// `hashlib.sha256(input.encode()).hexdigest()` byte-for-byte: this equality
+/// is the cross-language receipt-hash contract enforced by
+/// `receipt_hash_matches_python_sha256` in this crate's tests and
+/// `tests/test_proof_hash_contract.py` on the Python side.
 fn sha256_hex(input: &str) -> String {
-    use std::collections::hash_map::DefaultHasher;
-    use std::hash::{Hash, Hasher};
-    // Deterministic hash for substrate proof — not cryptographic SHA-256,
-    // but sufficient for content-addressed receipts in the type layer.
-    // Production deployments should wire a real SHA-256 via a trait.
-    let mut hasher = DefaultHasher::new();
-    input.hash(&mut hasher);
-    let h1 = hasher.finish();
-    input.len().hash(&mut hasher);
-    let h2 = hasher.finish();
-    format!("{:016x}{:016x}", h1, h2)
+    use sha2::{Digest, Sha256};
+    let mut hasher = Sha256::new();
+    hasher.update(input.as_bytes());
+    format!("{:x}", hasher.finalize())
 }
 
 // ---------------------------------------------------------------------------
@@ -2509,8 +2521,13 @@ mod tests {
         assert_eq!(result.unwrap_err(), TransitionVerdict::DeniedTerminalState);
     }
 
+    /// A failed guard does NOT return Err. Instead, certify_transition
+    /// emits Ok(ProofCapsule) with verdict=DeniedGuardFailed that contains
+    /// the full guard list (passing AND failing). The receipt IS the
+    /// proof of the denial — stripping failed verdicts would erase the
+    /// audit-trail reason for the rejection.
     #[test]
-    fn certify_with_failed_guard_returns_error() {
+    fn certify_with_failed_guard_emits_denied_receipt() {
         let m = example_machine();
         let guards = vec![
             GuardVerdict {
@@ -2537,8 +2554,63 @@ mod tests {
             causal_parent: "genesis",
             timestamp: "2026-03-27T12:00:00Z",
         });
-        assert!(result.is_err());
-        assert_eq!(result.unwrap_err(), TransitionVerdict::DeniedGuardFailed);
+        let capsule = result.expect("failed-guard transition emits a receipt, not Err");
+        assert_eq!(
+            capsule.receipt.verdict,
+            TransitionVerdict::DeniedGuardFailed
+        );
+        assert_eq!(
+            capsule.audit_record.verdict,
+            TransitionVerdict::DeniedGuardFailed
+        );
+        // Full guard list preserved on receipt — both pass and fail entries.
+        assert_eq!(capsule.receipt.guard_verdicts.len(), 2);
+        assert_eq!(capsule.receipt.guard_verdicts[0].guard_id, "budget");
+        assert!(capsule.receipt.guard_verdicts[0].passed);
+        assert_eq!(capsule.receipt.guard_verdicts[1].guard_id, "auth");
+        assert!(!capsule.receipt.guard_verdicts[1].passed);
+        assert_eq!(capsule.receipt.guard_verdicts[1].reason, "unauthorized");
+    }
+
+    /// Cross-language contract: the Rust receipt_hash MUST equal the Python
+    /// receipt_hash for the same canonical inputs. Both sides hash the same
+    /// `entity:from:to:action:before:after:causal` content with SHA-256.
+    /// The mirror test lives at `mcoi/tests/test_proof_hash_contract.py`.
+    /// If you change the canonical-content recipe on either side, both tests
+    /// must be updated in lockstep.
+    #[test]
+    fn receipt_hash_matches_python_sha256() {
+        // SHA-256 of "contract-test-entity:idle:running:start:before-h:after-h:genesis"
+        const EXPECTED: &str = "27bf13eff30cd9fd5fc334eff381e9b2349037bd0ef9dc88c2ca15d114a77fe5";
+        let m = example_machine();
+        let capsule = m
+            .certify_transition(&CertifyParams {
+                entity_id: "contract-test-entity",
+                from_state: "idle",
+                to_state: "running",
+                action: "start",
+                before_state_hash: "before-h",
+                after_state_hash: "after-h",
+                guards: &[],
+                actor_id: "actor",
+                reason: "contract test",
+                causal_parent: "genesis",
+                timestamp: "2026-04-27T00:00:00Z",
+            })
+            .unwrap();
+        assert_eq!(capsule.receipt.receipt_hash, EXPECTED);
+        assert_eq!(
+            capsule.receipt.receipt_id,
+            format!("rcpt-{}", &EXPECTED[..16])
+        );
+        assert_eq!(
+            capsule.audit_record.audit_id,
+            format!("audit-{}", &EXPECTED[..12])
+        );
+        // replay_token is sha256(content + ":" + timestamp)[..16] on both sides.
+        // Locking it in addition to receipt_hash catches any drift in the
+        // replay-token derivation that the receipt_hash alone wouldn't surface.
+        assert_eq!(capsule.receipt.replay_token, "replay-4c4180b2fd61031d");
     }
 
     #[test]
@@ -2602,6 +2674,34 @@ mod tests {
         let json = serde_json::to_string(&capsule).unwrap();
         let restored: ProofCapsule = serde_json::from_str(&json).unwrap();
         assert_eq!(capsule, restored);
+    }
+
+    #[test]
+    fn python_denied_guard_fixture_deserializes_to_rust_proof_capsule() {
+        let json =
+            include_str!("../../../../../tests/fixtures/python_proof_capsule_denied_guard.json");
+        let restored: ProofCapsule = serde_json::from_str(json).unwrap();
+
+        assert_eq!(
+            restored.receipt.verdict,
+            TransitionVerdict::DeniedGuardFailed
+        );
+        assert_eq!(
+            restored.audit_record.verdict,
+            TransitionVerdict::DeniedGuardFailed
+        );
+        assert_eq!(restored.receipt.guard_verdicts.len(), 2);
+        assert_eq!(restored.receipt.guard_verdicts[0].guard_id, "budget");
+        assert!(restored.receipt.guard_verdicts[0].passed);
+        assert_eq!(restored.receipt.guard_verdicts[1].guard_id, "auth");
+        assert!(!restored.receipt.guard_verdicts[1].passed);
+        assert_eq!(restored.receipt.guard_verdicts[1].reason, "unauthorized");
+        assert_eq!(
+            restored.receipt.receipt_hash,
+            "9edcb9a064faccb74122fd9612deecad6fb2868df2d90aaf7f2a51f283097ea1"
+        );
+        assert_eq!(restored.receipt.replay_token, "replay-0506f724eeee49e2");
+        assert_eq!(restored.lineage_depth, 0);
     }
 
     #[test]

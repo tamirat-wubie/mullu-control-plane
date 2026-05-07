@@ -1,12 +1,14 @@
 """Purpose: temporal reasoning runtime contracts.
 Governance scope: typed descriptors for temporal events, intervals, constraints,
     persistence records, sequences, decisions, assessments, violations,
-    snapshots, and closure reports.
+    snapshots, action policy decisions, clock samples, and closure reports.
 Dependencies: _base contract utilities.
 Invariants:
   - Intervals auto-derive disposition from start/end.
   - Constraints relate temporal events.
   - Persistence tracks fact validity windows.
+  - Temporal action policy fields preserve UTC audit surfaces and bounded
+    optional windows.
   - All outputs are frozen.
 """
 
@@ -81,6 +83,14 @@ class TemporalRiskLevel(Enum):
     MEDIUM = "medium"
     HIGH = "high"
     CRITICAL = "critical"
+
+
+class TemporalPolicyVerdict(Enum):
+    """Verdict produced by temporal policy checks."""
+    ALLOW = "allow"
+    DENY = "deny"
+    DEFER = "defer"
+    ESCALATE = "escalate"
 
 
 # ---------------------------------------------------------------------------
@@ -186,6 +196,100 @@ class PersistenceRecord(ContractRecord):
         if self.valid_until:
             require_datetime_text(self.valid_until, "valid_until")
         require_datetime_text(self.created_at, "created_at")
+        object.__setattr__(self, "metadata", freeze_value(dict(self.metadata)))
+
+
+@dataclass(frozen=True, slots=True)
+class TemporalClockSample(ContractRecord):
+    """Runtime-owned time sample for user-facing temporal resolution."""
+
+    sample_id: str = ""
+    tenant_id: str = ""
+    utc_now: str = ""
+    user_timezone: str = "UTC"
+    local_user_time: str = ""
+    original_text: str = ""
+    resolved_at: str = ""
+    monotonic_ns: int = 0
+    metadata: Mapping[str, Any] = field(default_factory=dict)
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "sample_id", require_non_empty_text(self.sample_id, "sample_id"))
+        object.__setattr__(self, "tenant_id", require_non_empty_text(self.tenant_id, "tenant_id"))
+        require_datetime_text(self.utc_now, "utc_now")
+        object.__setattr__(self, "user_timezone", require_non_empty_text(self.user_timezone, "user_timezone"))
+        require_datetime_text(self.local_user_time, "local_user_time")
+        if self.original_text:
+            object.__setattr__(self, "original_text", require_non_empty_text(self.original_text, "original_text"))
+        require_datetime_text(self.resolved_at, "resolved_at")
+        object.__setattr__(self, "monotonic_ns", require_non_negative_int(self.monotonic_ns, "monotonic_ns"))
+        object.__setattr__(self, "metadata", freeze_value(dict(self.metadata)))
+
+
+@dataclass(frozen=True, slots=True)
+class TemporalActionRequest(ContractRecord):
+    """Action request with explicit temporal authorization windows."""
+
+    action_id: str = ""
+    tenant_id: str = ""
+    actor_id: str = ""
+    action_type: str = ""
+    risk: TemporalRiskLevel = TemporalRiskLevel.LOW
+    requested_at: str = ""
+    execute_at: str = ""
+    not_before: str = ""
+    expires_at: str = ""
+    approval_expires_at: str = ""
+    evidence_fresh_until: str = ""
+    retry_after: str = ""
+    max_attempts: int = 0
+    attempt_count: int = 0
+    metadata: Mapping[str, Any] = field(default_factory=dict)
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "action_id", require_non_empty_text(self.action_id, "action_id"))
+        object.__setattr__(self, "tenant_id", require_non_empty_text(self.tenant_id, "tenant_id"))
+        object.__setattr__(self, "actor_id", require_non_empty_text(self.actor_id, "actor_id"))
+        object.__setattr__(self, "action_type", require_non_empty_text(self.action_type, "action_type"))
+        if not isinstance(self.risk, TemporalRiskLevel):
+            raise ValueError("risk must be a TemporalRiskLevel")
+        require_datetime_text(self.requested_at, "requested_at")
+        for field_name in (
+            "execute_at",
+            "not_before",
+            "expires_at",
+            "approval_expires_at",
+            "evidence_fresh_until",
+            "retry_after",
+        ):
+            value = getattr(self, field_name)
+            if value:
+                require_datetime_text(value, field_name)
+        object.__setattr__(self, "max_attempts", require_non_negative_int(self.max_attempts, "max_attempts"))
+        object.__setattr__(self, "attempt_count", require_non_negative_int(self.attempt_count, "attempt_count"))
+        object.__setattr__(self, "metadata", freeze_value(dict(self.metadata)))
+
+
+@dataclass(frozen=True, slots=True)
+class TemporalActionDecision(ContractRecord):
+    """Temporal policy decision for an action request."""
+
+    decision_id: str = ""
+    tenant_id: str = ""
+    action_ref: str = ""
+    verdict: TemporalPolicyVerdict = TemporalPolicyVerdict.ALLOW
+    reason: str = ""
+    decided_at: str = ""
+    metadata: Mapping[str, Any] = field(default_factory=dict)
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "decision_id", require_non_empty_text(self.decision_id, "decision_id"))
+        object.__setattr__(self, "tenant_id", require_non_empty_text(self.tenant_id, "tenant_id"))
+        object.__setattr__(self, "action_ref", require_non_empty_text(self.action_ref, "action_ref"))
+        if not isinstance(self.verdict, TemporalPolicyVerdict):
+            raise ValueError("verdict must be a TemporalPolicyVerdict")
+        object.__setattr__(self, "reason", require_non_empty_text(self.reason, "reason"))
+        require_datetime_text(self.decided_at, "decided_at")
         object.__setattr__(self, "metadata", freeze_value(dict(self.metadata)))
 
 

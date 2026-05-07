@@ -1,9 +1,15 @@
 """Phase 207D — Execution replay tests."""
 
 import pytest
-from mcoi_runtime.core.execution_replay import ReplayExecutor, ReplayRecorder
+from mcoi_runtime.core.execution_replay import (
+    DEFAULT_MAX_COMPLETED_TRACES,
+    ReplayExecutor,
+    ReplayRecorder,
+)
 
-FIXED_CLOCK = lambda: "2026-03-26T12:00:00Z"
+
+def FIXED_CLOCK():
+    return "2026-03-26T12:00:00Z"
 
 
 class TestReplayRecorder:
@@ -25,16 +31,28 @@ class TestReplayRecorder:
         assert trace.trace_hash
         assert trace.total_duration_ms >= 0
 
+    def test_discard_trace_removes_active_trace_without_completion(self):
+        rec = ReplayRecorder(clock=FIXED_CLOCK)
+        rec.start_trace("t1")
+        rec.record_frame("t1", "a", {"x": 1}, {"y": 2})
+        assert rec.active_count == 1
+        assert rec.discard_trace("t1") is True
+        assert rec.active_count == 0
+        assert rec.completed_count == 0
+        assert rec.discard_trace("missing") is False
+
     def test_duplicate_start(self):
         rec = ReplayRecorder(clock=FIXED_CLOCK)
         rec.start_trace("t1")
-        with pytest.raises(ValueError, match="already started"):
+        with pytest.raises(ValueError, match="^trace already started$") as excinfo:
             rec.start_trace("t1")
+        assert "t1" not in str(excinfo.value)
 
     def test_record_without_start(self):
         rec = ReplayRecorder(clock=FIXED_CLOCK)
-        with pytest.raises(ValueError, match="not started"):
+        with pytest.raises(ValueError, match="^trace not started$") as excinfo:
             rec.record_frame("t1", "a", {}, {})
+        assert "t1" not in str(excinfo.value)
 
     def test_max_frames(self):
         rec = ReplayRecorder(clock=FIXED_CLOCK, max_frames=3)
@@ -42,8 +60,16 @@ class TestReplayRecorder:
         rec.record_frame("t1", "a", {}, {})
         rec.record_frame("t1", "b", {}, {})
         rec.record_frame("t1", "c", {}, {})
-        with pytest.raises(ValueError, match="exceeded max frames"):
+        with pytest.raises(ValueError, match="^trace exceeded max frames$") as excinfo:
             rec.record_frame("t1", "d", {}, {})
+        assert "t1" not in str(excinfo.value)
+        assert "3" not in str(excinfo.value)
+
+    def test_complete_missing_trace_is_bounded(self):
+        rec = ReplayRecorder(clock=FIXED_CLOCK)
+        with pytest.raises(ValueError, match="^trace not found$") as excinfo:
+            rec.complete_trace("t1")
+        assert "t1" not in str(excinfo.value)
 
     def test_get_trace(self):
         rec = ReplayRecorder(clock=FIXED_CLOCK)
@@ -85,6 +111,60 @@ class TestReplayRecorder:
         assert summary["total_frames"] == 1
 
 
+class TestCompletedTraceCap:
+    """The completed-trace ring is bounded — cannot OOM in long-running prod."""
+
+    def test_default_cap_is_set(self):
+        rec = ReplayRecorder(clock=FIXED_CLOCK)
+        assert rec._completed.maxlen == DEFAULT_MAX_COMPLETED_TRACES
+
+    def test_custom_cap_respected(self):
+        rec = ReplayRecorder(clock=FIXED_CLOCK, max_completed=4)
+        assert rec._completed.maxlen == 4
+
+    def test_completed_capped_at_maxlen(self):
+        """Once the cap is hit, oldest traces evict. Regression guard
+        for the unbounded list_traces was prior to the deque conversion."""
+        rec = ReplayRecorder(clock=FIXED_CLOCK, max_completed=3)
+        for i in range(7):
+            tid = f"t{i}"
+            rec.start_trace(tid)
+            rec.record_frame(tid, "op", {"i": i}, {"r": i * 2})
+            rec.complete_trace(tid)
+        assert rec.completed_count == 3
+        # The 3 most recent traces survived
+        survivors = [t.trace_id for t in rec._completed]
+        assert survivors == ["t4", "t5", "t6"]
+
+    def test_list_traces_after_cap_eviction(self):
+        """list_traces must still work when the underlying deque has
+        evicted older entries — slicing is now via list() materialization."""
+        rec = ReplayRecorder(clock=FIXED_CLOCK, max_completed=2)
+        for i in range(5):
+            tid = f"t{i}"
+            rec.start_trace(tid)
+            rec.record_frame(tid, "op", {}, {})
+            rec.complete_trace(tid)
+        recent = rec.list_traces(limit=10)  # ask for more than survived
+        assert len(recent) == 2
+        assert [t.trace_id for t in recent] == ["t3", "t4"]
+
+    def test_get_trace_after_eviction_returns_none(self):
+        """An evicted trace is no longer findable — caller's contract:
+        once outside the bounded window, the trace is gone. That's the
+        whole point of bounding."""
+        rec = ReplayRecorder(clock=FIXED_CLOCK, max_completed=1)
+        rec.start_trace("oldest")
+        rec.record_frame("oldest", "x", {}, {})
+        rec.complete_trace("oldest")
+        rec.start_trace("newest")
+        rec.record_frame("newest", "x", {}, {})
+        rec.complete_trace("newest")
+
+        assert rec.get_trace("oldest") is None  # evicted
+        assert rec.get_trace("newest") is not None
+
+
 class TestReplayExecutor:
     def test_replay_match(self):
         rec = ReplayRecorder(clock=FIXED_CLOCK)
@@ -119,6 +199,8 @@ class TestReplayExecutor:
         executor = ReplayExecutor(operations={})
         results = executor.replay(trace)
         assert results[0]["matched"] is False
+        assert results[0]["reason"] == "unknown operation"
+        assert "unknown_op" not in results[0]["reason"]
 
     def test_verify(self):
         rec = ReplayRecorder(clock=FIXED_CLOCK)
@@ -133,3 +215,17 @@ class TestReplayExecutor:
         assert all_ok is True
         assert matched == 1
         assert total == 1
+
+    def test_replay_exception_is_sanitized(self):
+        rec = ReplayRecorder(clock=FIXED_CLOCK)
+        rec.start_trace("t1")
+        rec.record_frame("t1", "explode", {"msg": "hi"}, {"msg": "hi"})
+        trace = rec.complete_trace("t1")
+
+        executor = ReplayExecutor(operations={
+            "explode": lambda data: (_ for _ in ()).throw(RuntimeError("secret replay failure")),
+        })
+        results = executor.replay(trace)
+        assert results[0]["matched"] is False
+        assert results[0]["reason"] == "replay operation error (RuntimeError)"
+        assert "secret replay failure" not in results[0]["reason"]

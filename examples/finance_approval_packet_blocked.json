@@ -1,0 +1,25 @@
+{
+  "case_id": "case-inv-blocked-001",
+  "tenant_id": "tenant-demo",
+  "actor_id": "user-requester",
+  "vendor_id": "vendor-acme",
+  "invoice_id": "INV-BLOCKED-001",
+  "amount": {
+    "currency": "USD",
+    "minor_units": 1200000
+  },
+  "source_evidence_ref": "evidence:invoice:INV-BLOCKED-001",
+  "state": "budget_checked",
+  "risk": "high",
+  "policy_context": {
+    "actor_limit_minor_units": 500000,
+    "tenant_limit_minor_units": 5000000,
+    "vendor_evidence_status": "stale",
+    "approval_status": "absent",
+    "expected_reasons": [
+      "budget_exceeded_actor_limit",
+      "vendor_evidence_stale",
+      "approval_required"
+    ]
+  }
+}

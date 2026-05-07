@@ -1,0 +1,253 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:temporal-sla-receipt:1",
+  "title": "Temporal SLA Receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "receipt_id",
+    "request_id",
+    "case_id",
+    "policy_id",
+    "tenant_id",
+    "actor_id",
+    "owner_id",
+    "action_type",
+    "severity",
+    "status",
+    "temporal_violations",
+    "temporal_warnings",
+    "breach_reasons",
+    "escalation_reasons",
+    "required_controls",
+    "runtime_now_utc",
+    "timezone_name",
+    "local_now",
+    "business_window_status",
+    "active_business_window_start",
+    "active_business_window_end",
+    "next_business_window_start",
+    "opened_at",
+    "response_deadline_at",
+    "resolution_deadline_at",
+    "response_satisfied_at",
+    "resolved_at",
+    "response_seconds_remaining",
+    "resolution_seconds_remaining",
+    "target_response_seconds",
+    "target_resolution_seconds",
+    "warning_seconds",
+    "count_business_time_only",
+    "requires_business_window",
+    "holidays",
+    "evidence_refs",
+    "escalation_contacts",
+    "receipt_schema_ref",
+    "terminal_closure_required",
+    "receipt_hash",
+    "metadata"
+  ],
+  "properties": {
+    "receipt_id": {
+      "type": "string",
+      "pattern": "^temporal-sla-receipt-[0-9a-f]{16}$"
+    },
+    "request_id": {"type": "string", "minLength": 1},
+    "case_id": {"type": "string", "minLength": 1},
+    "policy_id": {"type": "string", "minLength": 1},
+    "tenant_id": {"type": "string", "minLength": 1},
+    "actor_id": {"type": "string", "minLength": 1},
+    "owner_id": {"type": "string", "minLength": 1},
+    "action_type": {"type": "string", "minLength": 1},
+    "severity": {
+      "type": "string",
+      "enum": ["low", "medium", "high", "critical"]
+    },
+    "status": {
+      "type": "string",
+      "enum": ["on_track", "warning", "breached", "blocked", "outside_business_window"]
+    },
+    "temporal_violations": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1}
+    },
+    "temporal_warnings": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1}
+    },
+    "breach_reasons": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1}
+    },
+    "escalation_reasons": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1}
+    },
+    "required_controls": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"type": "string", "minLength": 1}
+    },
+    "runtime_now_utc": {"type": "string", "format": "date-time"},
+    "timezone_name": {"type": "string", "minLength": 1},
+    "local_now": {"type": "string", "format": "date-time"},
+    "business_window_status": {
+      "type": "string",
+      "enum": ["inside", "outside"]
+    },
+    "active_business_window_start": {"type": "string"},
+    "active_business_window_end": {"type": "string"},
+    "next_business_window_start": {"type": "string"},
+    "opened_at": {"type": "string", "format": "date-time"},
+    "response_deadline_at": {"type": "string", "format": "date-time"},
+    "resolution_deadline_at": {"type": "string", "format": "date-time"},
+    "response_satisfied_at": {"type": "string"},
+    "resolved_at": {"type": "string"},
+    "response_seconds_remaining": {"type": "integer", "minimum": 0},
+    "resolution_seconds_remaining": {"type": "integer", "minimum": 0},
+    "target_response_seconds": {"type": "integer", "minimum": 1},
+    "target_resolution_seconds": {"type": "integer", "minimum": 1},
+    "warning_seconds": {"type": "integer", "minimum": 0},
+    "count_business_time_only": {"type": "boolean"},
+    "requires_business_window": {"type": "boolean"},
+    "holidays": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1}
+    },
+    "evidence_refs": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1}
+    },
+    "escalation_contacts": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1}
+    },
+    "receipt_schema_ref": {
+      "type": "string",
+      "const": "urn:mullusi:schema:temporal-sla-receipt:1"
+    },
+    "terminal_closure_required": {"type": "boolean", "const": true},
+    "receipt_hash": {"type": "string", "minLength": 1},
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "receipt_is_not_terminal_closure",
+        "runtime_owns_time_truth",
+        "deadline_calculation",
+        "dispatch_allowed",
+        "escalation_required",
+        "business_window_checked"
+      ],
+      "properties": {
+        "receipt_is_not_terminal_closure": {"type": "boolean", "const": true},
+        "runtime_owns_time_truth": {"type": "boolean", "const": true},
+        "deadline_calculation": {
+          "type": "string",
+          "enum": ["business_time", "wall_clock"]
+        },
+        "dispatch_allowed": {"type": "boolean"},
+        "escalation_required": {"type": "boolean"},
+        "business_window_checked": {"type": "boolean", "const": true}
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {"status": {"const": "on_track"}},
+        "required": ["status"]
+      },
+      "then": {
+        "properties": {
+          "temporal_violations": {"maxItems": 0},
+          "temporal_warnings": {"maxItems": 0},
+          "breach_reasons": {"maxItems": 0},
+          "escalation_reasons": {"maxItems": 0},
+          "metadata": {
+            "properties": {
+              "dispatch_allowed": {"const": true},
+              "escalation_required": {"const": false}
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {"status": {"const": "warning"}},
+        "required": ["status"]
+      },
+      "then": {
+        "properties": {
+          "temporal_violations": {"maxItems": 0},
+          "temporal_warnings": {"minItems": 1},
+          "breach_reasons": {"maxItems": 0},
+          "escalation_reasons": {"minItems": 1},
+          "metadata": {
+            "properties": {
+              "dispatch_allowed": {"const": true},
+              "escalation_required": {"const": true}
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {"status": {"const": "breached"}},
+        "required": ["status"]
+      },
+      "then": {
+        "properties": {
+          "temporal_violations": {"maxItems": 0},
+          "breach_reasons": {"minItems": 1},
+          "escalation_reasons": {"minItems": 1},
+          "metadata": {
+            "properties": {
+              "dispatch_allowed": {"const": true},
+              "escalation_required": {"const": true}
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {"status": {"const": "blocked"}},
+        "required": ["status"]
+      },
+      "then": {
+        "properties": {
+          "temporal_violations": {"minItems": 1},
+          "metadata": {
+            "properties": {
+              "dispatch_allowed": {"const": false}
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {"status": {"const": "outside_business_window"}},
+        "required": ["status"]
+      },
+      "then": {
+        "properties": {
+          "temporal_violations": {"maxItems": 0},
+          "temporal_warnings": {"maxItems": 0},
+          "breach_reasons": {"maxItems": 0},
+          "escalation_reasons": {"maxItems": 0},
+          "business_window_status": {"const": "outside"},
+          "metadata": {
+            "properties": {
+              "dispatch_allowed": {"const": false},
+              "escalation_required": {"const": false}
+            }
+          }
+        }
+      }
+    }
+  ]
+}

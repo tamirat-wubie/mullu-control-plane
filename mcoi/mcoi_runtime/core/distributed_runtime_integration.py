@@ -145,7 +145,7 @@ class DistributedRuntimeIntegration:
         record = MemoryRecord(
             memory_id=mid,
             scope_ref_id=scope_ref_id,
-            title=f"Distributed runtime state for {scope_ref_id}",
+            title="Distributed runtime state",
             memory_type=MemoryType.OBSERVATION,
             scope=MemoryScope.GLOBAL,
             trust_level=MemoryTrustLevel.VERIFIED,

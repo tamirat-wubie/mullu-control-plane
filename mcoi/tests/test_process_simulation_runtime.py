@@ -236,21 +236,27 @@ class TestPhysicalParameterContract:
         assert p.value == -42.5
 
     def test_bool_value_rejected(self):
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError) as exc_info:
             PhysicalParameter(
                 parameter_id="p1", tenant_id="t1", model_ref="m1",
                 name="x", value=True, unit="m", created_at=DT,
             )
+        message = str(exc_info.value)
+        assert message == "numeric value must be a number"
+        assert "bool" not in message
 
     def test_inf_value_rejected(self):
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError) as exc_info:
             PhysicalParameter(
                 parameter_id="p1", tenant_id="t1", model_ref="m1",
                 name="x", value=float("inf"), unit="m", created_at=DT,
             )
+        message = str(exc_info.value)
+        assert message == "numeric value must be finite"
+        assert "inf" not in message
 
     def test_nan_value_rejected(self):
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="numeric value must be finite"):
             PhysicalParameter(
                 parameter_id="p1", tenant_id="t1", model_ref="m1",
                 name="x", value=float("nan"), unit="m", created_at=DT,
@@ -324,12 +330,15 @@ class TestSimulationResultContract:
         assert sr.deviation == -5.0
 
     def test_bool_expected_rejected(self):
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError) as exc_info:
             SimulationResult(
                 result_id="sr1", tenant_id="t1", run_ref="r1",
                 outcome=SimulationOutcomeKind.PASS,
                 expected_value=True, actual_value=1.0, deviation=0.0, created_at=DT,
             )
+        message = str(exc_info.value)
+        assert message == "numeric value must be a number"
+        assert "bool" not in message
 
 
 class TestConstraintEnvelopeContract:
@@ -1017,8 +1026,20 @@ class TestIntegrationMemoryMesh:
         integration.simulation_from_factory_runtime("t1", "f1")
         record = integration.attach_process_state_to_memory_mesh("scope-1")
         assert record.memory_id
+        assert record.title == "Process simulation state"
+        assert "scope-1" not in record.title
         assert record.tags == ("process_simulation", "physics", "engineering")
+        assert record.scope_ref_id == "scope-1"
         assert mem.memory_count >= 1
+
+    def test_factory_scenario_description_is_bounded(self):
+        integration, engine, _, _ = _make_integration()
+        result = integration.simulation_from_factory_runtime("t1", "f1")
+        scenario = engine.get_scenario(result["scenario_id"])
+        assert scenario.description == "Process simulation scenario"
+        assert "factory_runtime" not in scenario.description
+        assert "f1" not in scenario.description
+        assert scenario.model_ref == result["model_id"]
 
     def test_memory_content_has_counts(self):
         integration, engine, _, _ = _make_integration()
@@ -1045,3 +1066,64 @@ class TestIntegrationGraph:
         graph = integration.attach_process_state_to_graph("scope-1")
         assert graph["total_models"] == 2
         assert graph["total_scenarios"] == 2
+
+
+class TestBoundedContractWitnesses:
+    def test_invariant_messages_do_not_reflect_ids_or_states(self):
+        engine, _, _ = _make_engine()
+        engine.register_process_model("m-secret", "t1", "Test", ProcessModelKind.THERMAL)
+
+        with pytest.raises(RuntimeCoreInvariantError) as duplicate_exc:
+            engine.register_process_model("m-secret", "t1", "Again", ProcessModelKind.THERMAL)
+        duplicate_message = str(duplicate_exc.value)
+        assert duplicate_message == "Duplicate model_id"
+        assert "m-secret" not in duplicate_message
+        assert "model_id" in duplicate_message
+
+        engine.register_simulation_scenario("s-secret", "t1", "m-secret")
+        engine.run_simulation("r-secret", "t1", "s-secret")
+        engine.complete_simulation("r-secret", 10.0)
+        with pytest.raises(RuntimeCoreInvariantError) as terminal_exc:
+            engine.fail_simulation("r-secret")
+        terminal_message = str(terminal_exc.value)
+        assert terminal_message == "Run is in terminal state"
+        assert "r-secret" not in terminal_message
+        assert "completed" not in terminal_message
+
+        with pytest.raises(RuntimeCoreInvariantError) as envelope_exc:
+            engine.compare_actual_to_model("p-secret", 9.0)
+        envelope_message = str(envelope_exc.value)
+        assert envelope_message == "Unknown parameter_id"
+        assert "p-secret" not in envelope_message
+        assert "parameter_id" in envelope_message
+
+    def test_violation_reasons_are_bounded(self):
+        engine, _, _ = _make_engine()
+        engine.register_process_model("m1", "t1", "Test", ProcessModelKind.THERMAL)
+        engine.register_physical_parameter("p-secret", "t1", "m1", "temp", 150.0, "C")
+        engine.register_constraint_envelope("e-secret", "t1", "p-secret", 0.0, 100.0, 50.0)
+        engine.register_simulation_scenario("s1", "t1", "m1")
+        engine.run_simulation("run-secret", "t1", "s1")
+        engine.fail_simulation("run-secret")
+        engine.run_simulation("run-unsafe", "t1", "s1")
+        engine.record_simulation_result(
+            "result-secret",
+            "t1",
+            "run-unsafe",
+            SimulationOutcomeKind.UNSAFE,
+            1.0,
+            99.0,
+        )
+
+        violations = {v.operation: v.reason for v in engine.detect_process_violations("t1")}
+        assert violations["envelope_breach"] == "Parameter value outside envelope"
+        assert "p-secret" not in violations["envelope_breach"]
+        assert "150.0" not in violations["envelope_breach"]
+
+        assert violations["failed_run_no_result"] == "Failed run has no result recorded"
+        assert "run-secret" not in violations["failed_run_no_result"]
+        assert "FAILED" not in violations["failed_run_no_result"]
+
+        assert violations["unsafe_outcome"] == "Result has unsafe outcome"
+        assert "result-secret" not in violations["unsafe_outcome"]
+        assert "UNSAFE" not in violations["unsafe_outcome"]

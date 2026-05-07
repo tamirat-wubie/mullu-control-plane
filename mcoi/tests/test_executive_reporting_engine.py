@@ -99,8 +99,9 @@ class TestRegisterKPI:
     def test_duplicate_kpi_id_raises(self):
         _, eng = _engine()
         eng.register_kpi("kpi-dup", "First", KPIKind.CUSTOM)
-        with pytest.raises(RuntimeCoreInvariantError, match="already exists"):
+        with pytest.raises(RuntimeCoreInvariantError, match="^KPI already exists$") as excinfo:
             eng.register_kpi("kpi-dup", "Second", KPIKind.CUSTOM)
+        assert "kpi-dup" not in str(excinfo.value)
 
     def test_default_window(self):
         _, eng = _engine()
@@ -247,13 +248,15 @@ class TestRecordMetric:
         _, eng = _engine()
         eng.register_kpi("k1", "K1", KPIKind.CUSTOM)
         eng.record_metric("v1", "k1", 1.0, DT, DT2)
-        with pytest.raises(RuntimeCoreInvariantError, match="already exists"):
+        with pytest.raises(RuntimeCoreInvariantError, match="^metric value already exists$") as excinfo:
             eng.record_metric("v1", "k1", 2.0, DT2, DT3)
+        assert "v1" not in str(excinfo.value)
 
     def test_unknown_kpi_raises(self):
         _, eng = _engine()
-        with pytest.raises(RuntimeCoreInvariantError, match="not found"):
+        with pytest.raises(RuntimeCoreInvariantError, match="^KPI not found$") as excinfo:
             eng.record_metric("v1", "unknown-kpi", 1.0, DT, DT2)
+        assert "unknown-kpi" not in str(excinfo.value)
 
     def test_default_window(self):
         _, eng = _engine()
@@ -378,8 +381,9 @@ class TestRollup:
 
     def test_rollup_unknown_kpi_raises(self):
         _, eng = _engine()
-        with pytest.raises(RuntimeCoreInvariantError, match="not found"):
+        with pytest.raises(RuntimeCoreInvariantError, match="^KPI not found$") as excinfo:
             eng.rollup("nonexistent", DT, DT2)
+        assert "nonexistent" not in str(excinfo.value)
 
     def test_rollup_no_values(self):
         _, eng = _engine()
@@ -536,8 +540,9 @@ class TestComputeTrend:
 
     def test_unknown_kpi_raises(self):
         _, eng = _engine()
-        with pytest.raises(RuntimeCoreInvariantError, match="not found"):
+        with pytest.raises(RuntimeCoreInvariantError, match="^KPI not found$") as excinfo:
             eng.compute_trend("nonexistent")
+        assert "nonexistent" not in str(excinfo.value)
 
     def test_emits_event_when_sufficient_data(self):
         es, eng = _engine()
@@ -1087,8 +1092,9 @@ class TestEvaluateKPIStatus:
 
     def test_unknown_kpi_raises(self):
         _, eng = _engine()
-        with pytest.raises(RuntimeCoreInvariantError, match="not found"):
+        with pytest.raises(RuntimeCoreInvariantError, match="^KPI not found$") as excinfo:
             eng.evaluate_kpi_status("nonexistent")
+        assert "nonexistent" not in str(excinfo.value)
 
     def test_uses_latest_value(self):
         _, eng = _engine()

@@ -1,0 +1,640 @@
+{
+  "schema_version": 1,
+  "protocol_id": "mullu-governance-protocol",
+  "protocol_name": "Mullu Governance Protocol",
+  "protocol_uri_scheme": "mgp://",
+  "claim_boundary": {
+    "open_surface": "schemas_and_wire_contracts",
+    "closed_surface": "runtime_implementation",
+    "reference_runtime": "mullu-control-plane",
+    "third_party_implementation_allowed": true
+  },
+  "compatibility": {
+    "json_schema_draft": "2020-12",
+    "breaking_change_requires_major_version": true,
+    "additive_fields_require_metadata_or_extensions": true,
+    "runtime_private_modules_are_not_protocol_contracts": true
+  },
+  "schemas": [
+    {
+      "schema_id": "audit-verification-endpoint",
+      "path": "schemas/audit_verification_endpoint.schema.json",
+      "urn": "urn:mullusi:schema:audit-verification-endpoint:1",
+      "surface": "audit"
+    },
+    {
+      "schema_id": "capability-adapter-closure-plan",
+      "path": "schemas/capability_adapter_closure_plan.schema.json",
+      "urn": "urn:mullusi:schema:capability-adapter-closure-plan:1",
+      "surface": "promotion"
+    },
+    {
+      "schema_id": "agent-identity",
+      "path": "schemas/agent_identity.schema.json",
+      "urn": "urn:mullusi:schema:agent-identity:1",
+      "surface": "identity"
+    },
+    {
+      "schema_id": "agent-runtime-snapshot",
+      "path": "schemas/agent_runtime_snapshot.schema.json",
+      "urn": "urn:mullusi:schema:agent-runtime-snapshot:1",
+      "surface": "runtime"
+    },
+    {
+      "schema_id": "autonomous-test-generation-plan",
+      "path": "schemas/autonomous_test_generation_plan.schema.json",
+      "urn": "urn:mullusi:schema:autonomous-test-generation-plan:1",
+      "surface": "testing"
+    },
+    {
+      "schema_id": "capability-upgrade-plan",
+      "path": "schemas/capability_upgrade_plan.schema.json",
+      "urn": "urn:mullusi:schema:capability-upgrade-plan:1",
+      "surface": "capability"
+    },
+    {
+      "schema_id": "capability-candidate",
+      "path": "schemas/capability_candidate.schema.json",
+      "urn": "urn:mullusi:schema:capability-candidate:1",
+      "surface": "capability"
+    },
+    {
+      "schema_id": "capability-evidence-endpoint",
+      "path": "schemas/capability_evidence_endpoint.schema.json",
+      "urn": "urn:mullusi:schema:capability-evidence-endpoint:1",
+      "surface": "capability"
+    },
+    {
+      "schema_id": "capability-maturity",
+      "path": "schemas/capability_maturity.schema.json",
+      "urn": "urn:mullusi:schema:capability-maturity:1",
+      "surface": "capability"
+    },
+    {
+      "schema_id": "capability-descriptor",
+      "path": "schemas/capability_descriptor.schema.json",
+      "urn": "urn:mullusi:schema:capability-descriptor:1",
+      "surface": "capability"
+    },
+    {
+      "schema_id": "capability-registry-entry",
+      "path": "schemas/capability_registry_entry.schema.json",
+      "urn": "urn:mullusi:schema:capability-registry-entry:1",
+      "surface": "capability"
+    },
+    {
+      "schema_id": "claim-verification-report",
+      "path": "schemas/claim_verification_report.schema.json",
+      "urn": "urn:mullusi:schema:claim-verification-report:1",
+      "surface": "claim"
+    },
+    {
+      "schema_id": "collaboration-case",
+      "path": "schemas/collaboration_case.schema.json",
+      "urn": "urn:mullusi:schema:collaboration-case:1",
+      "surface": "collaboration"
+    },
+    {
+      "schema_id": "commercial-metering-snapshot",
+      "path": "schemas/commercial_metering_snapshot.schema.json",
+      "urn": "urn:mullusi:schema:commercial-metering-snapshot:1",
+      "surface": "commercial"
+    },
+    {
+      "schema_id": "economic-intelligence-snapshot",
+      "path": "schemas/economic_intelligence_snapshot.schema.json",
+      "urn": "urn:mullusi:schema:economic-intelligence-snapshot:1",
+      "surface": "commercial"
+    },
+    {
+      "schema_id": "operational-case",
+      "path": "schemas/operational_case.schema.json",
+      "urn": "urn:mullusi:schema:operational-case:1",
+      "surface": "case_management"
+    },
+    {
+      "schema_id": "operator-control-tower-snapshot",
+      "path": "schemas/operator_control_tower_snapshot.schema.json",
+      "urn": "urn:mullusi:schema:operator-control-tower-snapshot:1",
+      "surface": "operator"
+    },
+    {
+      "schema_id": "communication-message",
+      "path": "schemas/communication_message.schema.json",
+      "urn": "urn:mullusi:schema:communication-message:1",
+      "surface": "communication"
+    },
+    {
+      "schema_id": "connector-descriptor",
+      "path": "schemas/connector_descriptor.schema.json",
+      "urn": "urn:mullusi:schema:connector-descriptor:1",
+      "surface": "connector"
+    },
+    {
+      "schema_id": "connector-certification-registry",
+      "path": "schemas/connector_certification_registry.schema.json",
+      "urn": "urn:mullusi:schema:connector-certification-registry:1",
+      "surface": "connector"
+    },
+    {
+      "schema_id": "connector-result",
+      "path": "schemas/connector_result.schema.json",
+      "urn": "urn:mullusi:schema:connector-result:1",
+      "surface": "connector"
+    },
+    {
+      "schema_id": "connector-self-healing-receipt",
+      "path": "schemas/connector_self_healing_receipt.schema.json",
+      "urn": "urn:mullusi:schema:connector-self-healing-receipt:1",
+      "surface": "connector"
+    },
+    {
+      "schema_id": "data-governance-snapshot",
+      "path": "schemas/data_governance_snapshot.schema.json",
+      "urn": "urn:mullusi:schema:data-governance-snapshot:1",
+      "surface": "data_governance"
+    },
+    {
+      "schema_id": "delivery-result",
+      "path": "schemas/delivery_result.schema.json",
+      "urn": "urn:mullusi:schema:delivery-result:1",
+      "surface": "communication"
+    },
+    {
+      "schema_id": "deployment-orchestration-receipt",
+      "path": "schemas/deployment_orchestration_receipt.schema.json",
+      "urn": "urn:mullusi:schema:deployment-orchestration-receipt:1",
+      "surface": "deployment"
+    },
+    {
+      "schema_id": "deployment-orchestration-receipt-validation",
+      "path": "schemas/deployment_orchestration_receipt_validation.schema.json",
+      "urn": "urn:mullusi:schema:deployment-orchestration-receipt-validation:1",
+      "surface": "deployment"
+    },
+    {
+      "schema_id": "deployment-publication-closure-validation",
+      "path": "schemas/deployment_publication_closure_validation.schema.json",
+      "urn": "urn:mullusi:schema:deployment-publication-closure-validation:1",
+      "surface": "deployment"
+    },
+    {
+      "schema_id": "deployment-witness",
+      "path": "schemas/deployment_witness.schema.json",
+      "urn": "urn:mullusi:schema:deployment-witness:1",
+      "surface": "deployment"
+    },
+    {
+      "schema_id": "domain-capsule",
+      "path": "schemas/domain_capsule.schema.json",
+      "urn": "urn:mullusi:schema:domain-capsule:1",
+      "surface": "domain"
+    },
+    {
+      "schema_id": "domain-operating-pack",
+      "path": "schemas/domain_operating_pack.schema.json",
+      "urn": "urn:mullusi:schema:domain-operating-pack:1",
+      "surface": "domain"
+    },
+    {
+      "schema_id": "effect-assurance",
+      "path": "schemas/effect_assurance.schema.json",
+      "urn": "urn:mullusi:schema:effect-assurance:1",
+      "surface": "effect_assurance"
+    },
+    {
+      "schema_id": "environment-fingerprint",
+      "path": "schemas/environment_fingerprint.schema.json",
+      "urn": "urn:mullusi:schema:environment-fingerprint:1",
+      "surface": "environment"
+    },
+    {
+      "schema_id": "enterprise-authority",
+      "path": "schemas/enterprise_authority.schema.json",
+      "urn": "urn:mullusi:schema:enterprise-authority:1",
+      "surface": "identity"
+    },
+    {
+      "schema_id": "general-agent-promotion-closure-plan",
+      "path": "schemas/general_agent_promotion_closure_plan.schema.json",
+      "urn": "urn:mullusi:schema:general-agent-promotion-closure-plan:1",
+      "surface": "promotion"
+    },
+    {
+      "schema_id": "general-agent-promotion-environment-bindings",
+      "path": "schemas/general_agent_promotion_environment_bindings.schema.json",
+      "urn": "urn:mullusi:schema:general-agent-promotion-environment-bindings:1",
+      "surface": "promotion"
+    },
+    {
+      "schema_id": "general-agent-promotion-environment-binding-receipt",
+      "path": "schemas/general_agent_promotion_environment_binding_receipt.schema.json",
+      "urn": "urn:mullusi:schema:general-agent-promotion-environment-binding-receipt:1",
+      "surface": "promotion"
+    },
+    {
+      "schema_id": "general-agent-promotion-handoff-packet",
+      "path": "schemas/general_agent_promotion_handoff_packet.schema.json",
+      "urn": "urn:mullusi:schema:general-agent-promotion-handoff-packet:1",
+      "surface": "promotion"
+    },
+    {
+      "schema_id": "gateway-publication-readiness",
+      "path": "schemas/gateway_publication_readiness.schema.json",
+      "urn": "urn:mullusi:schema:gateway-publication-readiness:1",
+      "surface": "deployment"
+    },
+    {
+      "schema_id": "gateway-observability-snapshot",
+      "path": "schemas/gateway_observability_snapshot.schema.json",
+      "urn": "urn:mullusi:schema:gateway-observability-snapshot:1",
+      "surface": "observability"
+    },
+    {
+      "schema_id": "gateway-publication-receipt-validation",
+      "path": "schemas/gateway_publication_receipt_validation.schema.json",
+      "urn": "urn:mullusi:schema:gateway-publication-receipt-validation:1",
+      "surface": "deployment"
+    },
+    {
+      "schema_id": "goal",
+      "path": "schemas/goal.schema.json",
+      "urn": "urn:mullusi:schema:goal:1",
+      "surface": "planning"
+    },
+    {
+      "schema_id": "execution-result",
+      "path": "schemas/execution_result.schema.json",
+      "urn": "urn:mullusi:schema:execution-result:1",
+      "surface": "execution"
+    },
+    {
+      "schema_id": "eval-run",
+      "path": "schemas/eval_run.schema.json",
+      "urn": "urn:mullusi:schema:eval-run:1",
+      "surface": "testing"
+    },
+    {
+      "schema_id": "finance-approval-packet-proof",
+      "path": "schemas/finance_approval_packet_proof.schema.json",
+      "urn": "urn:mullusi:schema:finance-approval-packet-proof:1",
+      "surface": "finance"
+    },
+    {
+      "schema_id": "finance-approval-live-handoff-plan",
+      "path": "schemas/finance_approval_live_handoff_plan.schema.json",
+      "urn": "urn:mullusi:schema:finance-approval-live-handoff-plan:1",
+      "surface": "finance"
+    },
+    {
+      "schema_id": "finance-approval-live-handoff-closure-run",
+      "path": "schemas/finance_approval_live_handoff_closure_run.schema.json",
+      "urn": "urn:mullusi:schema:finance-approval-live-handoff-closure-run:1",
+      "surface": "finance"
+    },
+    {
+      "schema_id": "finance-approval-live-handoff-chain-validation",
+      "path": "schemas/finance_approval_live_handoff_chain_validation.schema.json",
+      "urn": "urn:mullusi:schema:finance-approval-live-handoff-chain-validation:1",
+      "surface": "finance"
+    },
+    {
+      "schema_id": "finance-approval-live-handoff-preflight",
+      "path": "schemas/finance_approval_live_handoff_preflight.schema.json",
+      "urn": "urn:mullusi:schema:finance-approval-live-handoff-preflight:1",
+      "surface": "finance"
+    },
+    {
+      "schema_id": "finance-approval-operator-summary",
+      "path": "schemas/finance_approval_operator_summary.schema.json",
+      "urn": "urn:mullusi:schema:finance-approval-operator-summary:1",
+      "surface": "finance"
+    },
+    {
+      "schema_id": "finance-approval-email-calendar-binding-receipt",
+      "path": "schemas/finance_approval_email_calendar_binding_receipt.schema.json",
+      "urn": "urn:mullusi:schema:finance-approval-email-calendar-binding-receipt:1",
+      "surface": "finance"
+    },
+    {
+      "schema_id": "finance-approval-email-calendar-live-receipt",
+      "path": "schemas/finance_approval_email_calendar_live_receipt.schema.json",
+      "urn": "urn:mullusi:schema:finance-approval-email-calendar-live-receipt:1",
+      "surface": "finance"
+    },
+    {
+      "schema_id": "finance-approval-handoff-packet",
+      "path": "schemas/finance_approval_handoff_packet.schema.json",
+      "urn": "urn:mullusi:schema:finance-approval-handoff-packet:1",
+      "surface": "finance"
+    },
+    {
+      "schema_id": "learning-admission",
+      "path": "schemas/learning_admission.schema.json",
+      "urn": "urn:mullusi:schema:learning-admission:1",
+      "surface": "learning"
+    },
+    {
+      "schema_id": "low-code-builder-catalog",
+      "path": "schemas/low_code_builder_catalog.schema.json",
+      "urn": "urn:mullusi:schema:low-code-builder-catalog:1",
+      "surface": "builder"
+    },
+    {
+      "schema_id": "marketplace-sdk-catalog",
+      "path": "schemas/marketplace_sdk_catalog.schema.json",
+      "urn": "urn:mullusi:schema:marketplace-sdk-catalog:1",
+      "surface": "marketplace"
+    },
+    {
+      "schema_id": "memory-lattice",
+      "path": "schemas/memory_lattice.schema.json",
+      "urn": "urn:mullusi:schema:memory-lattice:1",
+      "surface": "memory"
+    },
+    {
+      "schema_id": "lineage-query",
+      "path": "schemas/lineage_query.schema.json",
+      "urn": "urn:mullusi:schema:lineage-query:1",
+      "surface": "lineage"
+    },
+    {
+      "schema_id": "model-invocation",
+      "path": "schemas/model_invocation.schema.json",
+      "urn": "urn:mullusi:schema:model-invocation:1",
+      "surface": "model"
+    },
+    {
+      "schema_id": "model-response",
+      "path": "schemas/model_response.schema.json",
+      "urn": "urn:mullusi:schema:model-response:1",
+      "surface": "model"
+    },
+    {
+      "schema_id": "multimodal-operation-receipt",
+      "path": "schemas/multimodal_operation_receipt.schema.json",
+      "urn": "urn:mullusi:schema:multimodal-operation-receipt:1",
+      "surface": "multimodal"
+    },
+    {
+      "schema_id": "plan",
+      "path": "schemas/plan.schema.json",
+      "urn": "urn:mullusi:schema:plan:1",
+      "surface": "coordination"
+    },
+    {
+      "schema_id": "policy-decision",
+      "path": "schemas/policy_decision.schema.json",
+      "urn": "urn:mullusi:schema:policy-decision:1",
+      "surface": "policy"
+    },
+    {
+      "schema_id": "policy-proof-report",
+      "path": "schemas/policy_proof_report.schema.json",
+      "urn": "urn:mullusi:schema:policy-proof-report:1",
+      "surface": "policy"
+    },
+    {
+      "schema_id": "policy-studio-session",
+      "path": "schemas/policy_studio_session.schema.json",
+      "urn": "urn:mullusi:schema:policy-studio-session:1",
+      "surface": "policy"
+    },
+    {
+      "schema_id": "physical-action-receipt",
+      "path": "schemas/physical_action_receipt.schema.json",
+      "urn": "urn:mullusi:schema:physical-action-receipt:1",
+      "surface": "safety"
+    },
+    {
+      "schema_id": "physical-capability-promotion-receipt",
+      "path": "schemas/physical_capability_promotion_receipt.schema.json",
+      "urn": "urn:mullusi:schema:physical-capability-promotion-receipt:1",
+      "surface": "safety"
+    },
+    {
+      "schema_id": "production-evidence-witness",
+      "path": "schemas/production_evidence_witness.schema.json",
+      "urn": "urn:mullusi:schema:production-evidence-witness:1",
+      "surface": "deployment"
+    },
+    {
+      "schema_id": "proof-verification-endpoint",
+      "path": "schemas/proof_verification_endpoint.schema.json",
+      "urn": "urn:mullusi:schema:proof-verification-endpoint:1",
+      "surface": "proof"
+    },
+    {
+      "schema_id": "provider-attribution-witness",
+      "path": "schemas/provider_attribution_witness.schema.json",
+      "urn": "urn:mullusi:schema:provider-attribution-witness:1",
+      "surface": "provider"
+    },
+    {
+      "schema_id": "reflex-deployment-witness-envelope",
+      "path": "schemas/reflex_deployment_witness_envelope.schema.json",
+      "urn": "urn:mullusi:schema:reflex-deployment-witness-envelope:1",
+      "surface": "deployment"
+    },
+    {
+      "schema_id": "reflex-deployment-witness-validator-receipt",
+      "path": "schemas/reflex_deployment_witness_validator_receipt.schema.json",
+      "urn": "urn:mullusi:schema:reflex-deployment-witness-validator-receipt:1",
+      "surface": "deployment"
+    },
+    {
+      "schema_id": "replay-record",
+      "path": "schemas/replay_record.schema.json",
+      "urn": "urn:mullusi:schema:replay-record:1",
+      "surface": "replay"
+    },
+    {
+      "schema_id": "risk-compliance-mapping-snapshot",
+      "path": "schemas/risk_compliance_mapping_snapshot.schema.json",
+      "urn": "urn:mullusi:schema:risk-compliance-mapping-snapshot:1",
+      "surface": "compliance"
+    },
+    {
+      "schema_id": "runtime-conformance-certificate",
+      "path": "schemas/runtime_conformance_certificate.schema.json",
+      "urn": "urn:mullusi:schema:runtime-conformance-certificate:1",
+      "surface": "conformance"
+    },
+    {
+      "schema_id": "simulation-receipt",
+      "path": "schemas/simulation_receipt.schema.json",
+      "urn": "urn:mullusi:schema:simulation-receipt:1",
+      "surface": "simulation"
+    },
+    {
+      "schema_id": "streaming-budget-enforcement",
+      "path": "schemas/streaming_budget_enforcement.schema.json",
+      "urn": "urn:mullusi:schema:streaming-budget-enforcement:1",
+      "surface": "budget"
+    },
+    {
+      "schema_id": "temporal-operation-receipt",
+      "path": "schemas/temporal_operation_receipt.schema.json",
+      "urn": "urn:mullusi:schema:temporal-operation-receipt:1",
+      "surface": "temporal"
+    },
+    {
+      "schema_id": "temporal-evidence-freshness-receipt",
+      "path": "schemas/temporal_evidence_freshness_receipt.schema.json",
+      "urn": "urn:mullusi:schema:temporal-evidence-freshness-receipt:1",
+      "surface": "temporal"
+    },
+    {
+      "schema_id": "temporal-reapproval-receipt",
+      "path": "schemas/temporal_reapproval_receipt.schema.json",
+      "urn": "urn:mullusi:schema:temporal-reapproval-receipt:1",
+      "surface": "temporal"
+    },
+    {
+      "schema_id": "temporal-dispatch-window-receipt",
+      "path": "schemas/temporal_dispatch_window_receipt.schema.json",
+      "urn": "urn:mullusi:schema:temporal-dispatch-window-receipt:1",
+      "surface": "temporal"
+    },
+    {
+      "schema_id": "temporal-budget-window-receipt",
+      "path": "schemas/temporal_budget_window_receipt.schema.json",
+      "urn": "urn:mullusi:schema:temporal-budget-window-receipt:1",
+      "surface": "temporal"
+    },
+    {
+      "schema_id": "temporal-causal-order-receipt",
+      "path": "schemas/temporal_causal_order_receipt.schema.json",
+      "urn": "urn:mullusi:schema:temporal-causal-order-receipt:1",
+      "surface": "temporal"
+    },
+    {
+      "schema_id": "temporal-monotonic-duration-receipt",
+      "path": "schemas/temporal_monotonic_duration_receipt.schema.json",
+      "urn": "urn:mullusi:schema:temporal-monotonic-duration-receipt:1",
+      "surface": "temporal"
+    },
+    {
+      "schema_id": "temporal-accepted-risk-expiry-receipt",
+      "path": "schemas/temporal_accepted_risk_expiry_receipt.schema.json",
+      "urn": "urn:mullusi:schema:temporal-accepted-risk-expiry-receipt:1",
+      "surface": "temporal"
+    },
+    {
+      "schema_id": "temporal-credential-expiry-receipt",
+      "path": "schemas/temporal_credential_expiry_receipt.schema.json",
+      "urn": "urn:mullusi:schema:temporal-credential-expiry-receipt:1",
+      "surface": "temporal"
+    },
+    {
+      "schema_id": "temporal-memory-receipt",
+      "path": "schemas/temporal_memory_receipt.schema.json",
+      "urn": "urn:mullusi:schema:temporal-memory-receipt:1",
+      "surface": "temporal"
+    },
+    {
+      "schema_id": "temporal-memory-refresh-receipt",
+      "path": "schemas/temporal_memory_refresh_receipt.schema.json",
+      "urn": "urn:mullusi:schema:temporal-memory-refresh-receipt:1",
+      "surface": "temporal"
+    },
+    {
+      "schema_id": "temporal-scheduler-receipt",
+      "path": "schemas/temporal_scheduler_receipt.schema.json",
+      "urn": "urn:mullusi:schema:temporal-scheduler-receipt:1",
+      "surface": "temporal"
+    },
+    {
+      "schema_id": "temporal-sla-receipt",
+      "path": "schemas/temporal_sla_receipt.schema.json",
+      "urn": "urn:mullusi:schema:temporal-sla-receipt:1",
+      "surface": "temporal"
+    },
+    {
+      "schema_id": "terminal-closure-certificate",
+      "path": "schemas/terminal_closure_certificate.schema.json",
+      "urn": "urn:mullusi:schema:terminal-closure-certificate:1",
+      "surface": "closure"
+    },
+    {
+      "schema_id": "trust-ledger-bundle",
+      "path": "schemas/trust_ledger_bundle.schema.json",
+      "urn": "urn:mullusi:schema:trust-ledger-bundle:1",
+      "surface": "evidence"
+    },
+    {
+      "schema_id": "trust-ledger-anchor-receipt",
+      "path": "schemas/trust_ledger_anchor_receipt.schema.json",
+      "urn": "urn:mullusi:schema:trust-ledger-anchor-receipt:1",
+      "surface": "evidence"
+    },
+    {
+      "schema_id": "trace-entry",
+      "path": "schemas/trace_entry.schema.json",
+      "urn": "urn:mullusi:schema:trace-entry:1",
+      "surface": "trace"
+    },
+    {
+      "schema_id": "universal-construct",
+      "path": "schemas/universal_construct.schema.json",
+      "urn": "urn:mullusi:schema:universal-construct:1",
+      "surface": "construct"
+    },
+    {
+      "schema_id": "verification-result",
+      "path": "schemas/verification_result.schema.json",
+      "urn": "urn:mullusi:schema:verification-result:1",
+      "surface": "verification"
+    },
+    {
+      "schema_id": "workflow",
+      "path": "schemas/workflow.schema.json",
+      "urn": "urn:mullusi:schema:workflow:1",
+      "surface": "coordination"
+    },
+    {
+      "schema_id": "workflow-mining-report",
+      "path": "schemas/workflow_mining_report.schema.json",
+      "urn": "urn:mullusi:schema:workflow-mining-report:1",
+      "surface": "workflow"
+    },
+    {
+      "schema_id": "workflow-run",
+      "path": "schemas/workflow_run.schema.json",
+      "urn": "urn:mullusi:schema:workflow-run:1",
+      "surface": "workflow"
+    },
+    {
+      "schema_id": "worker-mesh",
+      "path": "schemas/worker_mesh.schema.json",
+      "urn": "urn:mullusi:schema:worker-mesh:1",
+      "surface": "worker"
+    },
+    {
+      "schema_id": "world-state",
+      "path": "schemas/world_state.schema.json",
+      "urn": "urn:mullusi:schema:world-state:1",
+      "surface": "world"
+    }
+  ],
+  "uri_schemes": [
+    {
+      "scheme": "lineage://",
+      "purpose": "stable causal lineage permalink"
+    },
+    {
+      "scheme": "proof://",
+      "purpose": "proof and audit evidence reference"
+    },
+    {
+      "scheme": "mgp://",
+      "purpose": "Mullu Governance Protocol artifact reference"
+    }
+  ],
+  "non_contract_paths": [
+    "mcoi/mcoi_runtime/core",
+    "mcoi/mcoi_runtime/app",
+    "gateway",
+    "scripts"
+  ]
+}

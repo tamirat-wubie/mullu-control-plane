@@ -123,6 +123,13 @@ class TestControlFromReporting:
         assert result["directive_issued"] is True
         assert result["directive_id"] == "dir-rpt-obj-2"
         assert result["gap_pct"] == pytest.approx(20.0)
+        directive = eng.get_directive("dir-rpt-obj-2")
+        assert directive is not None
+        assert directive.title == "KPI degraded"
+        assert directive.reason == "objective gap exceeds tolerance"
+        assert "obj-2" not in directive.title
+        assert "20.0" not in directive.reason
+        assert "5.0" not in directive.reason
 
     def test_repeated_off_track_does_not_fail(self, integration_with_engines):
         """Second call catches RuntimeCoreInvariantError for duplicate directive."""
@@ -357,6 +364,8 @@ class TestMemoryMeshAttachment:
     def test_returns_memory_record(self, integration):
         record = integration.attach_control_decisions_to_memory_mesh("scope-ref-1")
         assert isinstance(record, MemoryRecord)
+        assert record.title == "Control tower state"
+        assert "scope-ref-1" not in record.title
         assert record.scope_ref_id == "scope-ref-1"
         assert "executive" in record.tags
 

@@ -1,0 +1,26 @@
+{
+  "capsule_id": "financial.effect_ops.v0",
+  "domain": "financial",
+  "version": "0.1.0",
+  "ontology_refs": ["ontologies/financial/effect_ops.json"],
+  "capability_refs": [
+    "financial.balance_check",
+    "financial.transaction_history",
+    "financial.spending_insights",
+    "financial.send_payment",
+    "financial.refund"
+  ],
+  "policy_refs": ["policies/financial/effect_ops.policy.json"],
+  "evidence_rules": ["evidence/financial/effect_ops.evidence.json"],
+  "approval_rules": ["approval/financial/effect_ops.approval.json"],
+  "recovery_rules": ["recovery/financial/effect_ops.recovery.json"],
+  "test_fixture_refs": ["tests/fixtures/financial/effect_ops"],
+  "read_model_refs": ["read_models/financial/effect_ops.json"],
+  "operator_view_refs": ["operator_views/financial/effect_ops.json"],
+  "owner_team": "finance-ops",
+  "certification_status": "certified",
+  "metadata": {
+    "purpose": "Certified financial capabilities with read-only account views separated from approval-bound effects"
+  },
+  "extensions": {}
+}

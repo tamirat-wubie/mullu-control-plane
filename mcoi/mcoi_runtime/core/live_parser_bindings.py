@@ -350,9 +350,7 @@ class LiveParserBindingEngine:
 
     def get_live_parser(self, parser_id: str) -> _LiveParser:
         if parser_id not in self._live_parsers:
-            raise RuntimeCoreInvariantError(
-                f"live parser '{parser_id}' not found"
-            )
+            raise RuntimeCoreInvariantError("live parser not found")
         return self._live_parsers[parser_id]
 
     def list_live_parsers(self) -> tuple[str, ...]:

@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:trust-ledger-bundle:1",
+  "title": "Trust Ledger Bundle",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "bundle_id",
+    "tenant_id",
+    "command_id",
+    "terminal_certificate_id",
+    "deployment_id",
+    "commit_sha",
+    "hash_chain_root",
+    "evidence_refs",
+    "issued_at",
+    "external_anchor_ref",
+    "external_anchor_status",
+    "bundle_hash",
+    "signature_key_id",
+    "signature"
+  ],
+  "properties": {
+    "bundle_id": {"type": "string", "minLength": 1},
+    "tenant_id": {"type": "string", "minLength": 1},
+    "command_id": {"type": "string", "minLength": 1},
+    "terminal_certificate_id": {"type": "string", "minLength": 1},
+    "deployment_id": {"type": "string", "minLength": 1},
+    "commit_sha": {"type": "string", "minLength": 1},
+    "hash_chain_root": {"type": "string", "minLength": 1},
+    "evidence_refs": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+    "issued_at": {"type": "string", "format": "date-time"},
+    "external_anchor_ref": {"type": "string"},
+    "external_anchor_status": {"type": "string", "enum": ["not_requested", "pending", "anchored", "failed"]},
+    "bundle_hash": {"type": "string", "minLength": 1},
+    "signature_key_id": {"type": "string", "minLength": 1},
+    "signature": {"type": "string", "pattern": "^hmac-sha256:.+"},
+    "metadata": {"type": "object", "additionalProperties": true}
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"external_anchor_status": {"const": "anchored"}}, "required": ["external_anchor_status"]},
+      "then": {"properties": {"external_anchor_ref": {"type": "string", "minLength": 1}}}
+    }
+  ]
+}

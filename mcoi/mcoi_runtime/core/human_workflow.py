@@ -138,7 +138,7 @@ class HumanWorkflowEngine:
     ) -> HumanTaskRecord:
         """Create a human task."""
         if task_id in self._tasks:
-            raise RuntimeCoreInvariantError(f"Duplicate task_id: {task_id}")
+            raise RuntimeCoreInvariantError("Duplicate task_id")
         now = _now_iso()
         task = HumanTaskRecord(
             task_id=task_id, tenant_id=tenant_id,
@@ -158,16 +158,14 @@ class HumanWorkflowEngine:
         """Get a task by ID."""
         t = self._tasks.get(task_id)
         if t is None:
-            raise RuntimeCoreInvariantError(f"Unknown task_id: {task_id}")
+            raise RuntimeCoreInvariantError("Unknown task_id")
         return t
 
     def assign_task(self, task_id: str, assignee_ref: str) -> HumanTaskRecord:
         """Assign or reassign a task."""
         old = self.get_task(task_id)
         if old.status in _TASK_TERMINAL:
-            raise RuntimeCoreInvariantError(
-                f"Cannot assign task in {old.status.value} status"
-            )
+            raise RuntimeCoreInvariantError("Cannot assign task in current status")
         updated = HumanTaskRecord(
             task_id=old.task_id, tenant_id=old.tenant_id,
             assignee_ref=assignee_ref,
@@ -187,9 +185,7 @@ class HumanWorkflowEngine:
         """Mark a task as in progress."""
         old = self.get_task(task_id)
         if old.status in _TASK_TERMINAL:
-            raise RuntimeCoreInvariantError(
-                f"Cannot start task in {old.status.value} status"
-            )
+            raise RuntimeCoreInvariantError("Cannot start task in current status")
         updated = HumanTaskRecord(
             task_id=old.task_id, tenant_id=old.tenant_id,
             assignee_ref=old.assignee_ref,
@@ -207,9 +203,7 @@ class HumanWorkflowEngine:
         """Complete a task."""
         old = self.get_task(task_id)
         if old.status in _TASK_TERMINAL:
-            raise RuntimeCoreInvariantError(
-                f"Cannot complete task in {old.status.value} status"
-            )
+            raise RuntimeCoreInvariantError("Cannot complete task in current status")
         updated = HumanTaskRecord(
             task_id=old.task_id, tenant_id=old.tenant_id,
             assignee_ref=old.assignee_ref,
@@ -227,9 +221,7 @@ class HumanWorkflowEngine:
         """Cancel a task."""
         old = self.get_task(task_id)
         if old.status in _TASK_TERMINAL:
-            raise RuntimeCoreInvariantError(
-                f"Cannot cancel task in {old.status.value} status"
-            )
+            raise RuntimeCoreInvariantError("Cannot cancel task in current status")
         updated = HumanTaskRecord(
             task_id=old.task_id, tenant_id=old.tenant_id,
             assignee_ref=old.assignee_ref,
@@ -247,9 +239,7 @@ class HumanWorkflowEngine:
         """Escalate a task."""
         old = self.get_task(task_id)
         if old.status in _TASK_TERMINAL:
-            raise RuntimeCoreInvariantError(
-                f"Cannot escalate task in {old.status.value} status"
-            )
+            raise RuntimeCoreInvariantError("Cannot escalate task in current status")
         updated = HumanTaskRecord(
             task_id=old.task_id, tenant_id=old.tenant_id,
             assignee_ref=old.assignee_ref,
@@ -285,7 +275,7 @@ class HumanWorkflowEngine:
     ) -> ReviewPacket:
         """Create a review packet."""
         if packet_id in self._review_packets:
-            raise RuntimeCoreInvariantError(f"Duplicate packet_id: {packet_id}")
+            raise RuntimeCoreInvariantError("Duplicate packet_id")
         now = _now_iso()
         packet = ReviewPacket(
             packet_id=packet_id, tenant_id=tenant_id,
@@ -304,7 +294,7 @@ class HumanWorkflowEngine:
         """Get a review packet by ID."""
         p = self._review_packets.get(packet_id)
         if p is None:
-            raise RuntimeCoreInvariantError(f"Unknown packet_id: {packet_id}")
+            raise RuntimeCoreInvariantError("Unknown packet_id")
         return p
 
     def assign_reviewer(
@@ -350,9 +340,7 @@ class HumanWorkflowEngine:
         packet = self.get_review_packet(packet_id)
         task = self.get_task(task_id)
         if task.scope_ref_id != packet_id:
-            raise RuntimeCoreInvariantError(
-                f"Task {task_id} is not assigned to packet {packet_id}"
-            )
+            raise RuntimeCoreInvariantError("Task is not assigned to review packet")
         # Complete the task
         self.complete_task(task_id)
         # Update packet counts
@@ -392,7 +380,7 @@ class HumanWorkflowEngine:
     ) -> ApprovalBoard:
         """Create an approval board."""
         if board_id in self._boards:
-            raise RuntimeCoreInvariantError(f"Duplicate board_id: {board_id}")
+            raise RuntimeCoreInvariantError("Duplicate board_id")
         now = _now_iso()
         board = ApprovalBoard(
             board_id=board_id, tenant_id=tenant_id, name=name,
@@ -411,7 +399,7 @@ class HumanWorkflowEngine:
         """Get a board by ID."""
         b = self._boards.get(board_id)
         if b is None:
-            raise RuntimeCoreInvariantError(f"Unknown board_id: {board_id}")
+            raise RuntimeCoreInvariantError("Unknown board_id")
         return b
 
     def add_board_member(
@@ -424,7 +412,7 @@ class HumanWorkflowEngine:
     ) -> BoardMember:
         """Add a member to an approval board."""
         if member_id in self._members:
-            raise RuntimeCoreInvariantError(f"Duplicate member_id: {member_id}")
+            raise RuntimeCoreInvariantError("Duplicate member_id")
         board = self.get_board(board_id)
         now = _now_iso()
         member = BoardMember(
@@ -468,22 +456,18 @@ class HumanWorkflowEngine:
     ) -> BoardVote:
         """Record a vote from a board member."""
         if vote_id in self._votes:
-            raise RuntimeCoreInvariantError(f"Duplicate vote_id: {vote_id}")
+            raise RuntimeCoreInvariantError("Duplicate vote_id")
         board = self.get_board(board_id)
         member = self._members.get(member_id)
         if member is None:
-            raise RuntimeCoreInvariantError(f"Unknown member_id: {member_id}")
+            raise RuntimeCoreInvariantError("Unknown member_id")
         if member.board_id != board_id:
-            raise RuntimeCoreInvariantError(
-                f"Member {member_id} is not on board {board_id}"
-            )
+            raise RuntimeCoreInvariantError("Member is not assigned to approval board")
         # Check for duplicate votes by same member on same scope
         for v in self._votes.values():
             if (v.board_id == board_id and v.member_id == member_id
                     and v.scope_ref_id == scope_ref_id):
-                raise RuntimeCoreInvariantError(
-                    f"Member {member_id} already voted on {scope_ref_id}"
-                )
+                raise RuntimeCoreInvariantError("Member already voted on scope")
         now = _now_iso()
         vote = BoardVote(
             vote_id=vote_id, board_id=board_id,
@@ -517,7 +501,7 @@ class HumanWorkflowEngine:
     ) -> CollaborativeDecision:
         """Resolve a board decision based on votes and approval mode."""
         if decision_id in self._decisions:
-            raise RuntimeCoreInvariantError(f"Duplicate decision_id: {decision_id}")
+            raise RuntimeCoreInvariantError("Duplicate decision_id")
         board = self.get_board(board_id)
         votes = self.votes_for_board(board_id, scope_ref_id)
         total_votes = len(votes)
@@ -573,11 +557,9 @@ class HumanWorkflowEngine:
         """Escalate a pending decision."""
         old = self._decisions.get(decision_id)
         if old is None:
-            raise RuntimeCoreInvariantError(f"Unknown decision_id: {decision_id}")
+            raise RuntimeCoreInvariantError("Unknown decision_id")
         if old.status in _DECISION_TERMINAL:
-            raise RuntimeCoreInvariantError(
-                f"Cannot escalate {old.status.value} decision"
-            )
+            raise RuntimeCoreInvariantError("Cannot escalate decision in current status")
         updated = CollaborativeDecision(
             decision_id=old.decision_id, board_id=old.board_id,
             scope_ref_id=old.scope_ref_id,
@@ -597,7 +579,7 @@ class HumanWorkflowEngine:
         """Get a decision by ID."""
         d = self._decisions.get(decision_id)
         if d is None:
-            raise RuntimeCoreInvariantError(f"Unknown decision_id: {decision_id}")
+            raise RuntimeCoreInvariantError("Unknown decision_id")
         return d
 
     def decisions_for_board(self, board_id: str) -> tuple[CollaborativeDecision, ...]:
@@ -621,7 +603,7 @@ class HumanWorkflowEngine:
     ) -> HandoffPacket:
         """Hand off work from runtime to a human."""
         if handoff_id in self._handoffs:
-            raise RuntimeCoreInvariantError(f"Duplicate handoff_id: {handoff_id}")
+            raise RuntimeCoreInvariantError("Duplicate handoff_id")
         now = _now_iso()
         handoff = HandoffPacket(
             handoff_id=handoff_id, tenant_id=tenant_id,
@@ -649,7 +631,7 @@ class HumanWorkflowEngine:
     ) -> HandoffPacket:
         """Hand off work from a human back to the runtime."""
         if handoff_id in self._handoffs:
-            raise RuntimeCoreInvariantError(f"Duplicate handoff_id: {handoff_id}")
+            raise RuntimeCoreInvariantError("Duplicate handoff_id")
         now = _now_iso()
         handoff = HandoffPacket(
             handoff_id=handoff_id, tenant_id=tenant_id,
@@ -668,7 +650,7 @@ class HumanWorkflowEngine:
         """Get a handoff by ID."""
         h = self._handoffs.get(handoff_id)
         if h is None:
-            raise RuntimeCoreInvariantError(f"Unknown handoff_id: {handoff_id}")
+            raise RuntimeCoreInvariantError("Unknown handoff_id")
         return h
 
     def handoffs_for_tenant(self, tenant_id: str) -> tuple[HandoffPacket, ...]:
@@ -695,7 +677,7 @@ class HumanWorkflowEngine:
                         violation_id=vid, tenant_id=board.tenant_id,
                         scope_ref_id=board.board_id,
                         operation="board_no_members",
-                        reason=f"Board {board.board_id} has no members",
+                        reason="approval board has no members",
                         detected_at=now,
                     )
                     self._violations[vid] = v
@@ -714,7 +696,7 @@ class HumanWorkflowEngine:
                         violation_id=vid, tenant_id=tenant,
                         scope_ref_id=decision.decision_id,
                         operation="pending_no_votes",
-                        reason=f"Decision {decision.decision_id} is pending with no votes",
+                        reason="pending decision has no votes",
                         detected_at=now,
                     )
                     self._violations[vid] = v
@@ -731,7 +713,7 @@ class HumanWorkflowEngine:
                         violation_id=vid, tenant_id=task.tenant_id,
                         scope_ref_id=task.task_id,
                         operation="stale_escalation",
-                        reason=f"Task {task.task_id} is escalated but not reassigned",
+                        reason="escalated task is not reassigned",
                         detected_at=now,
                     )
                     self._violations[vid] = v
@@ -750,7 +732,7 @@ class HumanWorkflowEngine:
     def workflow_snapshot(self, snapshot_id: str) -> HumanWorkflowSnapshot:
         """Capture a point-in-time workflow snapshot."""
         if snapshot_id in self._snapshot_ids:
-            raise RuntimeCoreInvariantError(f"Duplicate snapshot_id: {snapshot_id}")
+            raise RuntimeCoreInvariantError("Duplicate snapshot_id")
         now = _now_iso()
         snap = HumanWorkflowSnapshot(
             snapshot_id=snapshot_id,

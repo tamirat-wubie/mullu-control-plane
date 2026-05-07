@@ -58,6 +58,19 @@ def test_memory_entry_freezes_content_and_source_ids() -> None:
         entry.content["new"] = True  # type: ignore[index]
 
 
+def test_memory_entry_rejects_blank_source_ids_under_bounded_contract() -> None:
+    with pytest.raises(RuntimeCoreInvariantError, match="^source_ids must contain non-empty strings$") as exc_info:
+        MemoryEntry(
+            entry_id="w-bad-source",
+            tier=MemoryTier.WORKING,
+            category="observation",
+            content={"key": "value"},
+            source_ids=("src-1", " "),
+        )
+
+    assert "[1]" not in str(exc_info.value)
+
+
 def test_working_memory_rejects_episodic_tier() -> None:
     wm = WorkingMemory()
     with pytest.raises(RuntimeCoreInvariantError, match="working-tier"):
@@ -148,8 +161,12 @@ def test_episodic_memory_rejects_working_tier() -> None:
 def test_episodic_memory_rejects_duplicates() -> None:
     em = EpisodicMemory()
     em.admit(_episodic_entry("e-1"))
-    with pytest.raises(RuntimeCoreInvariantError, match="already exists"):
+    with pytest.raises(
+        RuntimeCoreInvariantError,
+        match="^entry_id already exists in episodic memory$",
+    ) as exc_info:
         em.admit(_episodic_entry("e-1"))
+    assert "e-1" not in str(exc_info.value)
 
 
 def test_episodic_memory_preserves_temporal_order() -> None:

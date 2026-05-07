@@ -20,6 +20,11 @@ from hashlib import sha256
 import json
 
 
+def _classify_subscriber_exception(exc: Exception) -> str:
+    """Return a bounded subscriber failure message without payload leakage."""
+    return f"subscriber error ({type(exc).__name__})"
+
+
 @dataclass(frozen=True, slots=True)
 class GovernedEvent:
     """Typed, immutable event on the governed bus."""
@@ -40,6 +45,9 @@ class EventBus:
     Subscriber errors are isolated — one failing subscriber doesn't
     block others.
     """
+
+    _MAX_HISTORY = 100_000
+    _MAX_ERRORS = 10_000
 
     def __init__(self, *, clock: Callable[[], str]) -> None:
         self._clock = clock
@@ -89,6 +97,8 @@ class EventBus:
             published_at=now,
         )
         self._history.append(event)
+        if len(self._history) > self._MAX_HISTORY:
+            self._history = self._history[-self._MAX_HISTORY:]
 
         # Deliver to type-specific subscribers
         for handler in self._subscribers.get(event_type, []):
@@ -98,7 +108,7 @@ class EventBus:
                 self._errors.append({
                     "event_id": event.event_id,
                     "event_type": event_type,
-                    "error": str(exc),
+                    "error": _classify_subscriber_exception(exc),
                     "at": now,
                 })
 
@@ -110,9 +120,12 @@ class EventBus:
                 self._errors.append({
                     "event_id": event.event_id,
                     "event_type": event_type,
-                    "error": str(exc),
+                    "error": _classify_subscriber_exception(exc),
                     "at": now,
                 })
+
+        if len(self._errors) > self._MAX_ERRORS:
+            self._errors = self._errors[-self._MAX_ERRORS:]
 
         return event
 

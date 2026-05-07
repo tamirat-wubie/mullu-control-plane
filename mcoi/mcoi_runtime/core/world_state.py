@@ -75,7 +75,7 @@ class WorldStateEngine:
 
     def add_entity(self, entity: StateEntity) -> StateEntity:
         if entity.entity_id in self._entities:
-            raise RuntimeCoreInvariantError(f"entity already exists: {entity.entity_id}")
+            raise RuntimeCoreInvariantError("entity already exists")
         self._entities[entity.entity_id] = entity
         return entity
 
@@ -94,11 +94,11 @@ class WorldStateEngine:
 
     def add_relation(self, relation: EntityRelation) -> EntityRelation:
         if relation.relation_id in self._relations:
-            raise RuntimeCoreInvariantError(f"relation already exists: {relation.relation_id}")
+            raise RuntimeCoreInvariantError("relation already exists")
         if relation.source_entity_id not in self._entities:
-            raise RuntimeCoreInvariantError(f"source entity not found: {relation.source_entity_id}")
+            raise RuntimeCoreInvariantError("source entity not found")
         if relation.target_entity_id not in self._entities:
-            raise RuntimeCoreInvariantError(f"target entity not found: {relation.target_entity_id}")
+            raise RuntimeCoreInvariantError("target entity not found")
         self._relations[relation.relation_id] = relation
         return relation
 
@@ -137,9 +137,7 @@ class WorldStateEngine:
 
     def record_contradiction(self, contradiction: ContradictionRecord) -> ContradictionRecord:
         if contradiction.contradiction_id in self._contradictions:
-            raise RuntimeCoreInvariantError(
-                f"contradiction already recorded: {contradiction.contradiction_id}"
-            )
+            raise RuntimeCoreInvariantError("contradiction already recorded")
         self._contradictions[contradiction.contradiction_id] = contradiction
         return contradiction
 
@@ -154,10 +152,10 @@ class WorldStateEngine:
     def add_derived_fact(self, fact: DerivedFact) -> DerivedFact:
         """Register a derived fact. Source entities must exist."""
         if fact.fact_id in self._derived_facts:
-            raise RuntimeCoreInvariantError(f"derived fact already exists: {fact.fact_id}")
+            raise RuntimeCoreInvariantError("derived fact already exists")
         for src_id in fact.source_entity_ids:
             if src_id not in self._entities:
-                raise RuntimeCoreInvariantError(f"source entity not found: {src_id}")
+                raise RuntimeCoreInvariantError("source entity not found")
         self._derived_facts[fact.fact_id] = fact
         return fact
 
@@ -173,13 +171,9 @@ class WorldStateEngine:
     def record_resolution(self, resolution: ResolutionRecord) -> ResolutionRecord:
         """Record a contradiction resolution. The contradiction must exist."""
         if resolution.resolution_id in self._resolutions:
-            raise RuntimeCoreInvariantError(
-                f"resolution already exists: {resolution.resolution_id}"
-            )
+            raise RuntimeCoreInvariantError("resolution already exists")
         if resolution.contradiction_id not in self._contradictions:
-            raise RuntimeCoreInvariantError(
-                f"contradiction not found: {resolution.contradiction_id}"
-            )
+            raise RuntimeCoreInvariantError("contradiction not found")
         self._resolutions[resolution.resolution_id] = resolution
         return resolution
 
@@ -191,9 +185,7 @@ class WorldStateEngine:
     def add_expected_state(self, expected: ExpectedState) -> ExpectedState:
         """Register an expected state projection."""
         if expected.expectation_id in self._expected_states:
-            raise RuntimeCoreInvariantError(
-                f"expected state already exists: {expected.expectation_id}"
-            )
+            raise RuntimeCoreInvariantError("expected state already exists")
         self._expected_states[expected.expectation_id] = expected
         return expected
 
@@ -217,7 +209,7 @@ class WorldStateEngine:
         ensure_non_empty_text("expectation_id", expectation_id)
         expected = self._expected_states.get(expectation_id)
         if expected is None:
-            raise RuntimeCoreInvariantError(f"expected state not found: {expectation_id}")
+            raise RuntimeCoreInvariantError("expected state not found")
 
         entity = self._entities.get(expected.entity_id)
         if entity is None:
@@ -311,7 +303,7 @@ class WorldStateEngine:
 
         entity = self._entities.get(entity_id)
         if entity is None:
-            raise RuntimeCoreInvariantError(f"entity not found: {entity_id}")
+            raise RuntimeCoreInvariantError("entity not found")
 
         point = self.effective_confidence(entity_id)
         evidence_count = len(entity.evidence_ids)
@@ -411,7 +403,7 @@ class WorldStateEngine:
                 delta_id=_next_id(),
                 kind=DeltaKind.ENTITY_ADDED,
                 target_id=eid,
-                description=f"entity added: {eid}",
+                description="entity added",
                 computed_at=now,
             ))
 
@@ -421,7 +413,7 @@ class WorldStateEngine:
                 delta_id=_next_id(),
                 kind=DeltaKind.ENTITY_REMOVED,
                 target_id=eid,
-                description=f"entity removed: {eid}",
+                description="entity removed",
                 computed_at=now,
             ))
 
@@ -434,7 +426,7 @@ class WorldStateEngine:
                     delta_id=_next_id(),
                     kind=DeltaKind.ENTITY_MODIFIED,
                     target_id=eid,
-                    description=f"entity modified: {eid}",
+                    description="entity modified",
                     previous_value=str(dict(prev_e.attributes)),
                     new_value=str(dict(curr_e.attributes)),
                     computed_at=now,
@@ -449,7 +441,7 @@ class WorldStateEngine:
                 delta_id=_next_id(),
                 kind=DeltaKind.RELATION_ADDED,
                 target_id=rid,
-                description=f"relation added: {rid}",
+                description="relation added",
                 computed_at=now,
             ))
 
@@ -458,7 +450,7 @@ class WorldStateEngine:
                 delta_id=_next_id(),
                 kind=DeltaKind.RELATION_REMOVED,
                 target_id=rid,
-                description=f"relation removed: {rid}",
+                description="relation removed",
                 computed_at=now,
             ))
 
@@ -470,7 +462,7 @@ class WorldStateEngine:
                 delta_id=_next_id(),
                 kind=DeltaKind.FACT_DERIVED,
                 target_id=fid,
-                description=f"fact derived: {fid}",
+                description="fact derived",
                 computed_at=now,
             ))
 

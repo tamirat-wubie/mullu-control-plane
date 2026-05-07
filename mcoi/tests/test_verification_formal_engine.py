@@ -662,3 +662,37 @@ class TestGoldenScenarios:
             eng.add_property("p1", _T1, "sp1")
             eng.register_invariant("inv1", _T1, "default")
         assert eng1.state_hash() == eng2.state_hash()
+
+
+class TestBoundedFormalVerificationContracts:
+    def test_duplicate_unknown_and_terminal_messages_are_bounded(self):
+        eng, _ = _make_engine()
+        eng.register_specification("spec-secret", _T1, "Spec")
+        with pytest.raises(RuntimeCoreInvariantError, match="duplicate spec_id") as duplicate_exc:
+            eng.register_specification("spec-secret", _T1, "Spec")
+        with pytest.raises(RuntimeCoreInvariantError, match="unknown invariant_id") as unknown_exc:
+            eng.check_invariant("inv-missing")
+        eng.start_verification_run("run-secret", _T1, "spec-secret")
+        eng.complete_run("run-secret")
+        with pytest.raises(RuntimeCoreInvariantError, match="terminal state") as terminal_exc:
+            eng.timeout_run("run-secret")
+
+        assert "spec-secret" not in str(duplicate_exc.value)
+        assert "inv-missing" not in str(unknown_exc.value)
+        assert "run-secret" not in str(terminal_exc.value)
+        assert "proven" not in str(terminal_exc.value).lower()
+
+    def test_violation_reasons_are_bounded(self):
+        eng, _ = _make_engine()
+        eng.register_invariant("inv-secret", _T1, "default", expression="x > 0")
+        eng.check_invariant("inv-secret")
+        eng.register_specification("spec-secret", _T1, "Spec")
+        eng.add_property("prop-secret", _T1, "spec-secret", kind=PropertyKind.SAFETY)
+        eng.start_verification_run("run-secret", _T1, "spec-secret")
+        eng.timeout_run("run-secret")
+
+        reasons = {violation.reason for violation in eng.detect_verification_violations(_T1)}
+        assert "formal invariant is violated" in reasons
+        assert "safety property is not proven" in reasons
+        assert "verification run timed out" in reasons
+        assert all("secret" not in reason for reason in reasons)

@@ -1,0 +1,27 @@
+{
+  "capsule_id": "connector.data_saas_ops.v0",
+  "domain": "connector",
+  "version": "0.1.0",
+  "ontology_refs": ["ontologies/connector/data_saas_ops.json"],
+  "capability_refs": [
+    "connector.google_drive.read",
+    "connector.google_drive.write.with_approval",
+    "connector.github.read",
+    "connector.github.write.with_approval",
+    "connector.postgres.query",
+    "connector.postgres.write.with_approval"
+  ],
+  "policy_refs": ["policies/connector/data_saas_ops.policy.json"],
+  "evidence_rules": ["evidence/connector/data_saas_ops.evidence.json"],
+  "approval_rules": ["approval/connector/data_saas_ops.approval.json"],
+  "recovery_rules": ["recovery/connector/data_saas_ops.recovery.json"],
+  "test_fixture_refs": ["tests/fixtures/connector/data_saas_ops"],
+  "read_model_refs": ["read_models/connector/data_saas_ops.json"],
+  "operator_view_refs": ["operator_views/connector/data_saas_ops.json"],
+  "owner_team": "platform-ops",
+  "certification_status": "certified",
+  "metadata": {
+    "purpose": "Certified data and SaaS connector capability declarations for OAuth, service-account, and database scoped worker execution"
+  },
+  "extensions": {}
+}

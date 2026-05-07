@@ -1,0 +1,274 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:temporal-reapproval-receipt:1",
+  "title": "Temporal Reapproval Receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "receipt_id",
+    "request_id",
+    "tenant_id",
+    "actor_id",
+    "command_id",
+    "action_type",
+    "risk_level",
+    "status",
+    "execution_scope",
+    "required_approver_roles",
+    "minimum_approval_count",
+    "approval_ids",
+    "valid_approval_ids",
+    "expired_approval_ids",
+    "revoked_approval_ids",
+    "future_approval_ids",
+    "blocked_approval_ids",
+    "missing_approver_roles",
+    "approved_role_count",
+    "valid_approval_count",
+    "reapproval_reasons",
+    "blocked_reasons",
+    "required_controls",
+    "approval_states",
+    "runtime_now_utc",
+    "earliest_approval_expiry_at",
+    "reapproval_due_at",
+    "max_approval_age_seconds",
+    "reapproval_window_seconds",
+    "source_schedule_receipt_id",
+    "source_temporal_receipt_id",
+    "receipt_schema_ref",
+    "terminal_closure_required",
+    "receipt_hash",
+    "metadata"
+  ],
+  "properties": {
+    "receipt_id": {
+      "type": "string",
+      "pattern": "^temporal-reapproval-receipt-[0-9a-f]{16}$"
+    },
+    "request_id": {"type": "string", "minLength": 1},
+    "tenant_id": {"type": "string", "minLength": 1},
+    "actor_id": {"type": "string", "minLength": 1},
+    "command_id": {"type": "string", "minLength": 1},
+    "action_type": {"type": "string", "minLength": 1},
+    "risk_level": {
+      "type": "string",
+      "enum": ["low", "medium", "high", "critical"]
+    },
+    "status": {
+      "type": "string",
+      "enum": ["not_required", "approved", "reapproval_required", "blocked"]
+    },
+    "execution_scope": {"type": "string", "minLength": 1},
+    "required_approver_roles": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1}
+    },
+    "minimum_approval_count": {"type": "integer", "minimum": 0},
+    "approval_ids": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1}
+    },
+    "valid_approval_ids": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1}
+    },
+    "expired_approval_ids": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1}
+    },
+    "revoked_approval_ids": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1}
+    },
+    "future_approval_ids": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1}
+    },
+    "blocked_approval_ids": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1}
+    },
+    "missing_approver_roles": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1}
+    },
+    "approved_role_count": {"type": "integer", "minimum": 0},
+    "valid_approval_count": {"type": "integer", "minimum": 0},
+    "reapproval_reasons": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1}
+    },
+    "blocked_reasons": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1}
+    },
+    "required_controls": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"type": "string", "minLength": 1}
+    },
+    "approval_states": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "approval_id",
+          "approver_id",
+          "approver_role",
+          "status",
+          "granted_at",
+          "expires_at",
+          "age_seconds",
+          "seconds_until_expiry",
+          "reasons"
+        ],
+        "properties": {
+          "approval_id": {"type": "string", "minLength": 1},
+          "approver_id": {"type": "string", "minLength": 1},
+          "approver_role": {"type": "string", "minLength": 1},
+          "status": {
+            "type": "string",
+            "enum": ["valid", "expired", "revoked", "future", "wrong_scope", "blocked"]
+          },
+          "granted_at": {"type": "string"},
+          "expires_at": {"type": "string"},
+          "age_seconds": {"type": "integer", "minimum": 0},
+          "seconds_until_expiry": {"type": "integer", "minimum": 0},
+          "reasons": {
+            "type": "array",
+            "items": {"type": "string", "minLength": 1}
+          }
+        }
+      }
+    },
+    "runtime_now_utc": {"type": "string", "format": "date-time"},
+    "earliest_approval_expiry_at": {"type": "string"},
+    "reapproval_due_at": {"type": "string"},
+    "max_approval_age_seconds": {"type": "integer", "minimum": 0},
+    "reapproval_window_seconds": {"type": "integer", "minimum": 0},
+    "source_schedule_receipt_id": {"type": "string"},
+    "source_temporal_receipt_id": {"type": "string"},
+    "receipt_schema_ref": {
+      "type": "string",
+      "const": "urn:mullusi:schema:temporal-reapproval-receipt:1"
+    },
+    "terminal_closure_required": {"type": "boolean", "const": true},
+    "receipt_hash": {"type": "string", "minLength": 1},
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "receipt_is_not_terminal_closure",
+        "runtime_owns_time_truth",
+        "dispatch_allowed",
+        "reapproval_required",
+        "high_risk_reapproval_checked",
+        "source_schedule_bound",
+        "approval_state_count"
+      ],
+      "properties": {
+        "receipt_is_not_terminal_closure": {"type": "boolean", "const": true},
+        "runtime_owns_time_truth": {"type": "boolean", "const": true},
+        "dispatch_allowed": {"type": "boolean"},
+        "reapproval_required": {"type": "boolean"},
+        "high_risk_reapproval_checked": {"type": "boolean"},
+        "source_schedule_bound": {"type": "boolean"},
+        "approval_state_count": {"type": "integer", "minimum": 0}
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {"status": {"const": "not_required"}},
+        "required": ["status"]
+      },
+      "then": {
+        "properties": {
+          "required_approver_roles": {"maxItems": 0},
+          "approval_ids": {"maxItems": 0},
+          "valid_approval_ids": {"maxItems": 0},
+          "expired_approval_ids": {"maxItems": 0},
+          "revoked_approval_ids": {"maxItems": 0},
+          "future_approval_ids": {"maxItems": 0},
+          "blocked_approval_ids": {"maxItems": 0},
+          "missing_approver_roles": {"maxItems": 0},
+          "reapproval_reasons": {"maxItems": 0},
+          "blocked_reasons": {"maxItems": 0},
+          "approval_states": {"maxItems": 0},
+          "metadata": {
+            "properties": {
+              "dispatch_allowed": {"const": true},
+              "reapproval_required": {"const": false},
+              "high_risk_reapproval_checked": {"const": false}
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {"status": {"const": "approved"}},
+        "required": ["status"]
+      },
+      "then": {
+        "properties": {
+          "valid_approval_ids": {"minItems": 1},
+          "expired_approval_ids": {"maxItems": 0},
+          "revoked_approval_ids": {"maxItems": 0},
+          "future_approval_ids": {"maxItems": 0},
+          "blocked_approval_ids": {"maxItems": 0},
+          "missing_approver_roles": {"maxItems": 0},
+          "reapproval_reasons": {"maxItems": 0},
+          "blocked_reasons": {"maxItems": 0},
+          "earliest_approval_expiry_at": {"minLength": 1},
+          "reapproval_due_at": {"maxLength": 0},
+          "metadata": {
+            "properties": {
+              "dispatch_allowed": {"const": true},
+              "reapproval_required": {"const": false}
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {"status": {"const": "reapproval_required"}},
+        "required": ["status"]
+      },
+      "then": {
+        "properties": {
+          "reapproval_reasons": {"minItems": 1},
+          "blocked_reasons": {"maxItems": 0},
+          "metadata": {
+            "properties": {
+              "dispatch_allowed": {"const": false},
+              "reapproval_required": {"const": true}
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {"status": {"const": "blocked"}},
+        "required": ["status"]
+      },
+      "then": {
+        "properties": {
+          "blocked_reasons": {"minItems": 1},
+          "reapproval_due_at": {"maxLength": 0},
+          "metadata": {
+            "properties": {
+              "dispatch_allowed": {"const": false},
+              "reapproval_required": {"const": false}
+            }
+          }
+        }
+      }
+    }
+  ]
+}

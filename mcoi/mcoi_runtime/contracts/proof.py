@@ -37,11 +37,13 @@ class GuardVerdict(ContractRecord):
     guard_id: str
     passed: bool
     reason: str
+    detail: Mapping[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "guard_id", require_non_empty_text(self.guard_id, "guard_id"))
         if not isinstance(self.passed, bool):
             raise ValueError("passed must be a boolean")
+        object.__setattr__(self, "detail", freeze_value(dict(self.detail)))
 
 
 # ---------------------------------------------------------------------------
@@ -151,18 +153,33 @@ def certify_transition(
 ) -> ProofCapsule:
     """Certify a transition: check legality, evaluate guards, produce receipt.
 
-    Raises ValueError if the transition is illegal or a guard fails.
+    Behavior:
+      - Illegal transition → raises ValueError("transition denied"). No
+        receipt is produced because there is no legal transition to prove.
+      - Legal transition with all guards passing → receipt with
+        verdict=ALLOWED.
+      - Legal transition with one or more failed guards → receipt with
+        verdict=DENIED_GUARD_FAILED, including the full guard list (passing
+        AND failing) so the receipt is a complete proof of the denial.
+
+    The receipt IS the cryptographic record of the decision — including
+    denials. Stripping failed guards from the receipt would erase the
+    audit-trail reason for denial. Callers that previously caught the
+    "guard failed" ValueError should instead inspect
+    capsule.receipt.verdict.
+
     This is the Python equivalent of MAF's StateMachineSpec.certify_transition().
     """
-    # Check legality
+    # Check legality (always raise for illegal transitions; no receipt
+    # to emit when the state machine forbids the edge).
     verdict = spec.is_legal(from_state, to_state, action)
     if verdict != TransitionVerdict.ALLOWED:
-        raise ValueError(f"Transition denied: {verdict.value}")
+        raise ValueError("transition denied")
 
-    # Check all guards
-    failed = [g for g in guards if not g.passed]
-    if failed:
-        raise ValueError(f"Guard failed: {failed[0].guard_id} — {failed[0].reason}")
+    # Failed guards downgrade verdict to DENIED_GUARD_FAILED but the
+    # receipt is still produced with the full guard list.
+    if any(not g.passed for g in guards):
+        verdict = TransitionVerdict.DENIED_GUARD_FAILED
 
     # Build receipt
     content = f"{entity_id}:{from_state}:{to_state}:{action}:{before_state_hash}:{after_state_hash}:{causal_parent}"

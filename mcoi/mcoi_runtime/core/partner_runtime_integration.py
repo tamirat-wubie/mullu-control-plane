@@ -95,7 +95,7 @@ class PartnerRuntimeIntegration:
             agreement_id=agr_id,
             partner_id=partner_id,
             tenant_id=tenant_id,
-            title=f"{display_name} - Partner Agreement",
+            title="Partner agreement",
             contract_ref=contract_ref,
             revenue_share_pct=revenue_share_pct,
         )

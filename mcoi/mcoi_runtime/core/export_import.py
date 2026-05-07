@@ -35,6 +35,11 @@ def _content_hash(content: str) -> str:
     return sha256(content.encode("utf-8")).hexdigest()
 
 
+def _bounded_bundle_read_error(exc: Exception) -> str:
+    """Return a stable bundle-read failure without raw filesystem detail."""
+    return f"cannot read bundle ({type(exc).__name__})"
+
+
 class ExportEngine:
     """Exports platform artifacts to a JSON bundle with manifest."""
 
@@ -133,7 +138,7 @@ class ImportEngine:
         if not bundle_path.exists():
             return ImportValidationResult(
                 status=ImportStatus.MISSING_ARTIFACTS,
-                error_message=f"bundle file not found: {bundle_path}",
+                error_message="bundle file not found",
             )
 
         try:
@@ -141,7 +146,7 @@ class ImportEngine:
         except (json.JSONDecodeError, OSError) as exc:
             return ImportValidationResult(
                 status=ImportStatus.INVALID_MANIFEST,
-                error_message=f"cannot read bundle: {exc}",
+                error_message=_bounded_bundle_read_error(exc),
             )
 
         if not isinstance(raw, dict) or "manifest" not in raw or "artifacts" not in raw:

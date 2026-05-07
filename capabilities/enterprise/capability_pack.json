@@ -1,0 +1,142 @@
+{
+  "capabilities": [
+    {
+      "capability_id": "enterprise.knowledge_search",
+      "domain": "enterprise",
+      "version": "0.1.0",
+      "input_schema_ref": "schemas/enterprise/knowledge_search.input.schema.json",
+      "output_schema_ref": "schemas/enterprise/knowledge_search.output.schema.json",
+      "effect_model": {
+        "expected_effects": ["knowledge_chunks_read"],
+        "forbidden_effects": ["cross_tenant_read", "file_written", "payment_created"],
+        "reconciliation_required": true
+      },
+      "evidence_model": {
+        "required_evidence": ["total_chunks_searched"],
+        "terminal_certificate_required": true
+      },
+      "authority_policy": {
+        "required_roles": ["operator"],
+        "approval_chain": [],
+        "separation_of_duty": false
+      },
+      "isolation_profile": {
+        "execution_plane": "gateway_process",
+        "network_allowlist": [],
+        "secret_scope": "enterprise_knowledge"
+      },
+      "recovery_plan": {
+        "rollback_capability": "",
+        "compensation_capability": "enterprise.knowledge_search_correction",
+        "review_required_on_failure": true
+      },
+      "cost_model": {
+        "budget_class": "standard",
+        "max_estimated_cost": 0.02
+      },
+      "obligation_model": {
+        "owner_team": "enterprise-ops",
+        "failure_due_seconds": 3600,
+        "escalation_route": "support@mullusi.com"
+      },
+      "certification_status": "certified",
+      "metadata": {
+        "display_name": "Search knowledge",
+        "risk_tier": "low"
+      },
+      "extensions": {}
+    },
+    {
+      "capability_id": "enterprise.notification_send",
+      "domain": "enterprise",
+      "version": "0.1.0",
+      "input_schema_ref": "schemas/enterprise/notification_send.input.schema.json",
+      "output_schema_ref": "schemas/enterprise/notification_send.output.schema.json",
+      "effect_model": {
+        "expected_effects": ["notification_sent"],
+        "forbidden_effects": ["payment_created", "file_written", "cross_tenant_message"],
+        "reconciliation_required": true
+      },
+      "evidence_model": {
+        "required_evidence": ["receipt_status"],
+        "terminal_certificate_required": true
+      },
+      "authority_policy": {
+        "required_roles": ["operator"],
+        "approval_chain": [],
+        "separation_of_duty": false
+      },
+      "isolation_profile": {
+        "execution_plane": "gateway_process",
+        "network_allowlist": [],
+        "secret_scope": "enterprise_notifications"
+      },
+      "recovery_plan": {
+        "rollback_capability": "",
+        "compensation_capability": "enterprise.notification_correction",
+        "review_required_on_failure": true
+      },
+      "cost_model": {
+        "budget_class": "standard",
+        "max_estimated_cost": 0.05
+      },
+      "obligation_model": {
+        "owner_team": "enterprise-ops",
+        "failure_due_seconds": 3600,
+        "escalation_route": "support@mullusi.com"
+      },
+      "certification_status": "certified",
+      "metadata": {
+        "display_name": "Send notification",
+        "risk_tier": "medium"
+      },
+      "extensions": {}
+    },
+    {
+      "capability_id": "enterprise.task_schedule",
+      "domain": "enterprise",
+      "version": "0.1.0",
+      "input_schema_ref": "schemas/enterprise/task_schedule.input.schema.json",
+      "output_schema_ref": "schemas/enterprise/task_schedule.output.schema.json",
+      "effect_model": {
+        "expected_effects": ["task_scheduled"],
+        "forbidden_effects": ["payment_created", "external_email_sent", "cross_tenant_write"],
+        "reconciliation_required": true
+      },
+      "evidence_model": {
+        "required_evidence": ["task_id"],
+        "terminal_certificate_required": true
+      },
+      "authority_policy": {
+        "required_roles": ["operator"],
+        "approval_chain": [],
+        "separation_of_duty": false
+      },
+      "isolation_profile": {
+        "execution_plane": "gateway_process",
+        "network_allowlist": [],
+        "secret_scope": "enterprise_tasks"
+      },
+      "recovery_plan": {
+        "rollback_capability": "enterprise.task_cancel",
+        "compensation_capability": "",
+        "review_required_on_failure": true
+      },
+      "cost_model": {
+        "budget_class": "standard",
+        "max_estimated_cost": 0.05
+      },
+      "obligation_model": {
+        "owner_team": "enterprise-ops",
+        "failure_due_seconds": 3600,
+        "escalation_route": "support@mullusi.com"
+      },
+      "certification_status": "certified",
+      "metadata": {
+        "display_name": "Schedule task",
+        "risk_tier": "medium"
+      },
+      "extensions": {}
+    }
+  ]
+}

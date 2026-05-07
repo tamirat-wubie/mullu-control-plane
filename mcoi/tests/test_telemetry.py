@@ -42,8 +42,9 @@ class TestRunMetrics:
         assert m.verification_closure_rate == 0.0
 
     def test_negative_rejected(self):
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="^run metric count must be a non-negative integer$") as exc_info:
             RunMetrics(total_runs=-1)
+        assert "total_runs" not in str(exc_info.value)
 
 
 class TestSkillMetrics:
@@ -158,8 +159,8 @@ class TestAlerting:
         snap = c.snapshot()
         assert len(snap.active_alerts) == 1
         assert snap.active_alerts[0].severity is AlertSeverity.WARNING
-        # Alert triggers after first failure (100% at that point)
-        assert "exceeds" in snap.active_alerts[0].message
+        assert snap.active_alerts[0].message == "telemetry threshold exceeded"
+        assert "%" not in snap.active_alerts[0].message
 
     def test_no_alert_below_threshold(self):
         c = _collector()
@@ -213,6 +214,22 @@ class TestAlerting:
         c.record_provider_invocation("prov-flaky", succeeded=False)
         c.record_provider_invocation("prov-flaky", succeeded=True)
         assert c.active_alert_count == 1  # 50% > 30%
+
+    def test_static_alert_message_is_preserved(self):
+        c = _collector()
+        c.add_threshold(AlertThreshold(
+            metric_name="failure_rate",
+            source="runs",
+            threshold=0.0,
+            severity=AlertSeverity.INFO,
+            message_template="high failure rate",
+        ))
+        c.record_run(succeeded=False, dispatched=True, verification_closed=False)
+
+        snap = c.snapshot()
+
+        assert len(snap.active_alerts) == 1
+        assert snap.active_alerts[0].message == "high failure rate"
 
 
 # --- Run history ---

@@ -7,6 +7,13 @@ on:
     branches: [main]
   workflow_dispatch:
 
+# v4.22.0: opt into Node.js 24 for the deprecated actions/* runtime.
+# Silences the deprecation warning that fires on every job until
+# Node.js 24 becomes default (June 2026).
+# See: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
 jobs:
   python-tests:
     name: Python Tests (${{ matrix.os }}, Python ${{ matrix.python-version }})
@@ -98,19 +105,154 @@ jobs:
       - name: Validate schemas
         run: python scripts/validate_schemas.py
 
+      - name: Validate protocol manifest
+        run: python scripts/validate_protocol_manifest.py
+
+      - name: Validate logic governance application
+        run: python scripts/validate_logic_governance_application.py
+
+      - name: Validate terminal closure certificate
+        run: python scripts/validate_terminal_closure_certificate.py --json
+
       - name: Validate shipped artifacts
         run: python scripts/validate_artifacts.py
 
+      - name: Validate public repository surface
+        run: python scripts/validate_public_repository_surface.py
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+
+      - name: Validate deployment publication closure
+        run: |
+          mkdir -p .change_assurance
+          test -f schemas/deployment_publication_closure_validation.schema.json
+          python scripts/validate_deployment_publication_closure.py --output .change_assurance/deployment_publication_closure_validation.json
+
+      - name: Upload deployment publication closure validation
+        uses: actions/upload-artifact@v4
+        with:
+          name: deployment-publication-closure-validation
+          path: .change_assurance/deployment_publication_closure_validation.json
+
+      - name: Validate Reflex deployment witness replay
+        run: |
+          mkdir -p .change_assurance
+          test -f schemas/reflex_deployment_witness_validator_receipt.schema.json
+          python -m pytest tests/test_validate_reflex_deployment_witness.py -q --junitxml=.change_assurance/reflex_deployment_witness_validator_junit.xml
+          python scripts/emit_reflex_deployment_witness_validator_receipt.py --junit .change_assurance/reflex_deployment_witness_validator_junit.xml --output .change_assurance/reflex_deployment_witness_validator_receipt.json --json
+
+      - name: Upload Reflex deployment witness validator receipt
+        uses: actions/upload-artifact@v4
+        with:
+          name: reflex-deployment-witness-validator-receipt
+          path: |
+            .change_assurance/reflex_deployment_witness_validator_junit.xml
+            .change_assurance/reflex_deployment_witness_validator_receipt.json
+
+      - name: Validate general-agent promotion closure plan
+        run: |
+          python scripts/validate_general_agent_promotion_handoff_packet.py --packet examples/general_agent_promotion_handoff_packet.json --json
+          python scripts/validate_general_agent_promotion_operator_checklist.py --checklist examples/general_agent_promotion_operator_checklist.json --json
+          python scripts/validate_general_agent_promotion_environment_bindings.py --contract examples/general_agent_promotion_environment_bindings.json --json
+          MULLU_BROWSER_SANDBOX_EVIDENCE=ci-placeholder MULLU_VOICE_PROBE_AUDIO=ci-placeholder MULLU_GATEWAY_URL=ci-placeholder MULLU_RUNTIME_WITNESS_SECRET=ci-placeholder MULLU_RUNTIME_CONFORMANCE_SECRET=ci-placeholder MULLU_DEPLOYMENT_WITNESS_SECRET=ci-placeholder MULLU_AUTHORITY_OPERATOR_SECRET=ci-placeholder python scripts/emit_general_agent_promotion_environment_binding_receipt.py --output .change_assurance/general_agent_promotion_environment_binding_receipt.json --json
+          python scripts/validate_general_agent_promotion_environment_binding_receipt.py --receipt .change_assurance/general_agent_promotion_environment_binding_receipt.json --require-ready --json
+          python scripts/collect_capability_adapter_evidence.py --output .change_assurance/capability_adapter_evidence.json
+          python scripts/validate_general_agent_promotion.py --output .change_assurance/general_agent_promotion_readiness.json
+          python scripts/validate_governed_runtime_promotion.py --output .change_assurance/governed_runtime_promotion_readiness.json
+          python scripts/plan_capability_adapter_closure.py --output .change_assurance/capability_adapter_closure_plan.json
+          python scripts/validate_capability_adapter_closure_plan_schema.py --output .change_assurance/capability_adapter_closure_plan_schema_validation.json --strict
+          python scripts/plan_deployment_publication_closure.py --output .change_assurance/deployment_publication_closure_plan.json
+          python scripts/plan_general_agent_promotion_closure.py --output .change_assurance/general_agent_promotion_closure_plan.json
+          python scripts/validate_general_agent_promotion_closure_plan_schema.py --output .change_assurance/general_agent_promotion_closure_plan_schema_validation.json --strict
+          python scripts/validate_general_agent_promotion_closure_plan.py --output .change_assurance/general_agent_promotion_closure_plan_validation.json --strict
+          MULLU_BROWSER_SANDBOX_EVIDENCE=ci-placeholder MULLU_VOICE_PROBE_AUDIO=ci-placeholder MULLU_GATEWAY_URL=ci-placeholder MULLU_RUNTIME_WITNESS_SECRET=ci-placeholder MULLU_RUNTIME_CONFORMANCE_SECRET=ci-placeholder MULLU_DEPLOYMENT_WITNESS_SECRET=ci-placeholder MULLU_AUTHORITY_OPERATOR_SECRET=ci-placeholder python scripts/preflight_general_agent_promotion_handoff.py --output .change_assurance/general_agent_promotion_handoff_preflight.json --strict --json
+          python scripts/validate_general_agent_promotion_handoff_preflight.py --report .change_assurance/general_agent_promotion_handoff_preflight.json --require-ready --json
+
+      - name: Validate MIL audit runbook workflow
+        run: |
+          python scripts/validate_mil_audit_runbook_operator_checklist.py --checklist examples/mil_audit_runbook_operator_checklist.json --json
+          python -m pytest tests/test_preflight_mil_audit_runbook_workflow.py tests/test_validate_mil_audit_runbook_operator_checklist.py -q
+
       - name: Validate release status
         run: python scripts/validate_release_status.py
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+
+  gateway-closure:
+    name: Gateway Closure and Witness Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.13
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install dependencies
+        run: python -m pip install --upgrade pip && python -m pip install -e "mcoi[dev]"
+
+      - name: Run gateway closure tests
+        run: python -m pytest tests/test_gateway tests/test_pilot_proof_slice.py -q
+
+      - name: Emit pilot proof-slice witness
+        run: python scripts/pilot_proof_slice.py --output .change_assurance/pilot_proof_slice_witness.json
+
+      - name: Validate gateway deployment environment
+        run: python scripts/validate_gateway_deployment_env.py --strict
+
+      - name: Validate gateway ingress manifest
+        run: python scripts/validate_gateway_ingress_manifest.py --allow-placeholder
+
+  reflective-contract-guard:
+    name: Reflective Contract Guard
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.13
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Validate outward-facing contract strings
+        run: python scripts/validate_reflective_contracts.py
+
+  red-team-release-gate:
+    name: Red-Team Release Gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.13
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install dependencies
+        run: python -m pip install --upgrade pip && python -m pip install -e "mcoi[dev]"
+
+      - name: Run deterministic red-team harness
+        run: python scripts/run_red_team_harness.py --output .change_assurance/red_team_harness.json --min-pass-rate 1.0
+
+      - name: Upload red-team harness witness
+        uses: actions/upload-artifact@v4
+        with:
+          name: red-team-harness-witness
+          path: .change_assurance/red_team_harness.json
 
   build-verification:
     name: Build Verification
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    needs: [python-tests, rust-tests, schema-validation]
+    needs: [python-tests, rust-tests, schema-validation, gateway-closure, reflective-contract-guard, red-team-release-gate]
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Python 3.13
         uses: actions/setup-python@v5
@@ -130,11 +272,56 @@ jobs:
       - name: Contract-schema parity check
         run: python scripts/validate_schemas.py --strict
 
+      - name: Protocol manifest check
+        run: python scripts/validate_protocol_manifest.py
+
       - name: Artifact validation check
         run: python scripts/validate_artifacts.py --strict
 
       - name: Release status check
         run: python scripts/validate_release_status.py --strict
+
+      - name: Public repository surface check
+        run: python scripts/validate_public_repository_surface.py --local-only
+
+      - name: Deployment publication closure check
+        run: |
+          mkdir -p .change_assurance
+          python scripts/validate_deployment_publication_closure.py --output .change_assurance/deployment_publication_closure_validation.json
+
+      - name: Upload build verification deployment publication closure validation
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-verification-deployment-publication-closure-validation
+          path: .change_assurance/deployment_publication_closure_validation.json
+
+      - name: General-agent promotion closure plan check
+        run: |
+          python scripts/validate_general_agent_promotion_handoff_packet.py --packet examples/general_agent_promotion_handoff_packet.json --json
+          python scripts/validate_general_agent_promotion_operator_checklist.py --checklist examples/general_agent_promotion_operator_checklist.json --json
+          python scripts/validate_general_agent_promotion_environment_bindings.py --contract examples/general_agent_promotion_environment_bindings.json --json
+          MULLU_BROWSER_SANDBOX_EVIDENCE=ci-placeholder MULLU_VOICE_PROBE_AUDIO=ci-placeholder MULLU_GATEWAY_URL=ci-placeholder MULLU_RUNTIME_WITNESS_SECRET=ci-placeholder MULLU_RUNTIME_CONFORMANCE_SECRET=ci-placeholder MULLU_DEPLOYMENT_WITNESS_SECRET=ci-placeholder MULLU_AUTHORITY_OPERATOR_SECRET=ci-placeholder python scripts/emit_general_agent_promotion_environment_binding_receipt.py --output .change_assurance/general_agent_promotion_environment_binding_receipt.json --json
+          python scripts/validate_general_agent_promotion_environment_binding_receipt.py --receipt .change_assurance/general_agent_promotion_environment_binding_receipt.json --require-ready --json
+          python scripts/collect_capability_adapter_evidence.py --output .change_assurance/capability_adapter_evidence.json
+          python scripts/validate_general_agent_promotion.py --output .change_assurance/general_agent_promotion_readiness.json
+          python scripts/validate_governed_runtime_promotion.py --output .change_assurance/governed_runtime_promotion_readiness.json
+          python scripts/plan_capability_adapter_closure.py --output .change_assurance/capability_adapter_closure_plan.json
+          python scripts/validate_capability_adapter_closure_plan_schema.py --output .change_assurance/capability_adapter_closure_plan_schema_validation.json --strict
+          python scripts/plan_deployment_publication_closure.py --output .change_assurance/deployment_publication_closure_plan.json
+          python scripts/plan_general_agent_promotion_closure.py --output .change_assurance/general_agent_promotion_closure_plan.json
+          python scripts/validate_general_agent_promotion_closure_plan_schema.py --output .change_assurance/general_agent_promotion_closure_plan_schema_validation.json --strict
+          python scripts/validate_general_agent_promotion_closure_plan.py --output .change_assurance/general_agent_promotion_closure_plan_validation.json --strict
+          MULLU_BROWSER_SANDBOX_EVIDENCE=ci-placeholder MULLU_VOICE_PROBE_AUDIO=ci-placeholder MULLU_GATEWAY_URL=ci-placeholder MULLU_RUNTIME_WITNESS_SECRET=ci-placeholder MULLU_RUNTIME_CONFORMANCE_SECRET=ci-placeholder MULLU_DEPLOYMENT_WITNESS_SECRET=ci-placeholder MULLU_AUTHORITY_OPERATOR_SECRET=ci-placeholder python scripts/preflight_general_agent_promotion_handoff.py --output .change_assurance/general_agent_promotion_handoff_preflight.json --strict --json
+          python scripts/validate_general_agent_promotion_handoff_preflight.py --report .change_assurance/general_agent_promotion_handoff_preflight.json --require-ready --json
+
+      - name: Gateway deployment environment check
+        run: python scripts/validate_gateway_deployment_env.py --strict
+
+      - name: Gateway ingress manifest check
+        run: python scripts/validate_gateway_ingress_manifest.py --allow-placeholder
+
+      - name: Governed evolution certification
+        run: python scripts/certify_change.py --base HEAD^ --head HEAD --strict --approval-id ci-governance --rollback-plan-ref RELEASE_CHECKLIST_v0.1.md
 
       - name: Print summary
         run: |
@@ -144,4 +331,5 @@ jobs:
           echo "Schemas: OK"
           echo "Artifacts: OK"
           echo "Release status: OK"
+          echo "Change assurance: OK"
           echo "=================================="

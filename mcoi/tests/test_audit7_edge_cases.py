@@ -68,7 +68,7 @@ class TestPlanItemValidation:
         assert plan.items[0].item_id == "item-1"
 
     def test_plan_rejects_dict_in_items(self) -> None:
-        with pytest.raises(ValueError, match="must be a PlanItem instance"):
+        with pytest.raises(ValueError, match="^items must contain only PlanItem instances$") as exc_info:
             Plan(
                 plan_id="p-1",
                 goal_id="g-1",
@@ -76,9 +76,11 @@ class TestPlanItemValidation:
                 registry_hash="def456",
                 items=({"item_id": "fake", "description": "nope"},),  # type: ignore[arg-type]
             )
+        assert "fake" not in str(exc_info.value)
+        assert "[0]" not in str(exc_info.value)
 
     def test_plan_rejects_string_in_items(self) -> None:
-        with pytest.raises(ValueError, match="must be a PlanItem instance"):
+        with pytest.raises(ValueError, match="^items must contain only PlanItem instances$") as exc_info:
             Plan(
                 plan_id="p-1",
                 goal_id="g-1",
@@ -86,9 +88,11 @@ class TestPlanItemValidation:
                 registry_hash="def456",
                 items=("not-a-plan-item",),  # type: ignore[arg-type]
             )
+        assert "not-a-plan-item" not in str(exc_info.value)
+        assert "[0]" not in str(exc_info.value)
 
     def test_plan_rejects_none_in_items(self) -> None:
-        with pytest.raises(ValueError, match="must be a PlanItem instance"):
+        with pytest.raises(ValueError, match="^items must contain only PlanItem instances$") as exc_info:
             Plan(
                 plan_id="p-1",
                 goal_id="g-1",
@@ -96,9 +100,11 @@ class TestPlanItemValidation:
                 registry_hash="def456",
                 items=(None,),  # type: ignore[arg-type]
             )
+        assert "None" not in str(exc_info.value)
+        assert "[0]" not in str(exc_info.value)
 
     def test_plan_rejects_mixed_valid_invalid(self) -> None:
-        with pytest.raises(ValueError, match="must be a PlanItem instance"):
+        with pytest.raises(ValueError, match="^items must contain only PlanItem instances$") as exc_info:
             Plan(
                 plan_id="p-1",
                 goal_id="g-1",
@@ -106,6 +112,8 @@ class TestPlanItemValidation:
                 registry_hash="def456",
                 items=(_make_plan_item(), "bad"),  # type: ignore[arg-type]
             )
+        assert "bad" not in str(exc_info.value)
+        assert "[1]" not in str(exc_info.value)
 
 
 # =====================================================================

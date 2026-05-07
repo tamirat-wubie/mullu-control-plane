@@ -919,3 +919,51 @@ class TestDispositionSerialization:
         )
         result = fi.budget_gate_for_governance("b1", 200.0)
         assert result["disposition"] == "pending_approval"
+
+
+class TestBoundedContracts:
+    def test_campaign_step_reservation_reason_redacts_step_ref(self):
+        fi, fe, es, mm = _setup(limit=1000.0)
+        result = fi.reserve_for_campaign_step("b1", "camp-1", "step-secret", 100.0)
+        reservation = fe.get_active_reservations("b1")[0]
+        assert result["step_ref"] == "step-secret"
+        assert reservation.reason == "campaign step budget reservation"
+        assert "step-secret" not in reservation.reason
+
+    def test_connector_reservation_reason_redacts_connector_ref(self):
+        fi, fe, es, mm = _setup_with_connector_profile(limit=1000.0, connector_ref="conn-secret")
+        result = fi.reserve_for_connector_call("b1", "conn-secret", units=2)
+        reservation = fe.get_active_reservations("b1")[0]
+        assert result["connector_ref"] == "conn-secret"
+        assert reservation.reason == "connector call budget reservation"
+        assert "conn-secret" not in reservation.reason
+
+    def test_communication_reservation_reason_redacts_channel(self):
+        fi, fe, es, mm = _setup(limit=1000.0)
+        result = fi.reserve_for_communication("b1", "slack-secret", 10.0)
+        reservation = fe.get_active_reservations("b1")[0]
+        assert result["channel"] == "slack-secret"
+        assert reservation.reason == "communication budget reservation"
+        assert "slack-secret" not in reservation.reason
+
+    def test_artifact_reservation_reason_redacts_artifact_ref(self):
+        fi, fe, es, mm = _setup(limit=1000.0)
+        result = fi.reserve_for_artifact_parsing("b1", "artifact-secret", 10.0)
+        reservation = fe.get_active_reservations("b1")[0]
+        assert result["artifact_ref"] == "artifact-secret"
+        assert reservation.reason == "artifact parsing budget reservation"
+        assert "artifact-secret" not in reservation.reason
+
+    def test_provider_reservation_reason_redacts_provider_ref(self):
+        fi, fe, es, mm = _setup(limit=1000.0)
+        result = fi.reserve_for_provider_routing("b1", "provider-secret", 10.0)
+        reservation = fe.get_active_reservations("b1")[0]
+        assert result["provider_ref"] == "provider-secret"
+        assert reservation.reason == "provider routing budget reservation"
+        assert "provider-secret" not in reservation.reason
+
+    def test_memory_title_redacts_budget_id(self):
+        fi, fe, es, mm = _setup(limit=1000.0, budget_id="budget-secret")
+        mem = fi.attach_financial_record_to_memory_mesh("budget-secret")
+        assert mem.title == "Financial state"
+        assert "budget-secret" not in mem.title

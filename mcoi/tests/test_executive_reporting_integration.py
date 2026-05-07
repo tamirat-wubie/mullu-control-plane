@@ -929,10 +929,12 @@ class TestAttachToMemoryMesh:
         ri.attach_reports_to_memory_mesh("scope-evt")
         assert es.event_count > initial
 
-    def test_memory_title_contains_scope(self):
+    def test_memory_title_is_bounded(self):
         ri, re, es, mm = _setup()
         mem = ri.attach_reports_to_memory_mesh("my-scope-id")
-        assert "my-scope-id" in mem.title
+        assert mem.title == "Reporting state"
+        assert "my-scope-id" not in mem.title
+        assert mem.scope_ref_id == "my-scope-id"
 
 
 # ===================================================================

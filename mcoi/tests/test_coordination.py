@@ -140,19 +140,43 @@ def test_duplicate_delegation_rejected() -> None:
         delegate_id="b", goal_id="g-1", action_scope="s",
     )
     engine.request_delegation(req)
-    with pytest.raises(RuntimeCoreInvariantError, match="already exists"):
+    with pytest.raises(RuntimeCoreInvariantError, match="delegation already exists") as exc_info:
         engine.request_delegation(req)
+    assert "del-1" not in str(exc_info.value)
 
 
 def test_resolve_unknown_delegation_rejected() -> None:
     engine = CoordinationEngine()
-    with pytest.raises(RuntimeCoreInvariantError, match="not found"):
+    with pytest.raises(RuntimeCoreInvariantError, match="delegation not found") as exc_info:
         engine.resolve_delegation(DelegationResult(
             delegation_id="nonexistent",
             status=DelegationStatus.REJECTED,
             reason="nope",
             resolved_at=_CLOCK,
         ))
+    assert "nonexistent" not in str(exc_info.value)
+
+
+def test_resolve_duplicate_delegation_result_rejected() -> None:
+    engine = CoordinationEngine()
+    req = DelegationRequest(
+        delegation_id="del-1",
+        delegator_id="a",
+        delegate_id="b",
+        goal_id="g-1",
+        action_scope="scope",
+    )
+    engine.request_delegation(req)
+    result = DelegationResult(
+        delegation_id="del-1",
+        status=DelegationStatus.ACCEPTED,
+        reason="available",
+        resolved_at=_CLOCK,
+    )
+    engine.resolve_delegation(result)
+    with pytest.raises(RuntimeCoreInvariantError, match="delegation already resolved") as exc_info:
+        engine.resolve_delegation(result)
+    assert "del-1" not in str(exc_info.value)
 
 
 def test_handoff_recorded() -> None:
@@ -170,6 +194,22 @@ def test_handoff_recorded() -> None:
     assert engine.get_handoff("ho-1").context_ids == ("exec-1", "ver-1")
 
 
+def test_duplicate_handoff_rejected() -> None:
+    engine = CoordinationEngine()
+    handoff = HandoffRecord(
+        handoff_id="ho-1",
+        from_party="agent-a",
+        to_party="agent-b",
+        goal_id="g-1",
+        context_ids=("ctx-1",),
+        handed_off_at=_CLOCK,
+    )
+    engine.record_handoff(handoff)
+    with pytest.raises(RuntimeCoreInvariantError, match="handoff already recorded") as exc_info:
+        engine.record_handoff(handoff)
+    assert "ho-1" not in str(exc_info.value)
+
+
 def test_merge_recorded() -> None:
     engine = CoordinationEngine()
     merge = MergeDecision(
@@ -182,6 +222,22 @@ def test_merge_recorded() -> None:
     )
     engine.record_merge(merge)
     assert engine.get_merge("m-1") is not None
+
+
+def test_duplicate_merge_rejected() -> None:
+    engine = CoordinationEngine()
+    merge = MergeDecision(
+        merge_id="m-1",
+        goal_id="g-1",
+        source_ids=("res-a", "res-b"),
+        outcome=MergeOutcome.MERGED,
+        reason="no conflicts",
+        resolved_at=_CLOCK,
+    )
+    engine.record_merge(merge)
+    with pytest.raises(RuntimeCoreInvariantError, match="merge already recorded") as exc_info:
+        engine.record_merge(merge)
+    assert "m-1" not in str(exc_info.value)
 
 
 def test_conflict_recorded_and_listed() -> None:
@@ -208,3 +264,18 @@ def test_conflict_recorded_and_listed() -> None:
     unresolved_list = engine.list_unresolved_conflicts()
     assert len(unresolved_list) == 1
     assert unresolved_list[0].conflict_id == "c-1"
+
+
+def test_duplicate_conflict_rejected() -> None:
+    engine = CoordinationEngine()
+    conflict = ConflictRecord(
+        conflict_id="c-1",
+        goal_id="g-1",
+        conflicting_ids=("a", "b"),
+        strategy=ConflictStrategy.ESCALATE,
+        resolved=False,
+    )
+    engine.record_conflict(conflict)
+    with pytest.raises(RuntimeCoreInvariantError, match="conflict already recorded") as exc_info:
+        engine.record_conflict(conflict)
+    assert "c-1" not in str(exc_info.value)

@@ -268,6 +268,12 @@ class TestMemoryMeshAttachment:
         assert mem.scope_ref_id == "scope-1"
         assert mem.confidence == 1.0
 
+    def test_title_is_bounded(self, seeded: DataGovernanceIntegration) -> None:
+        mem = seeded.attach_data_governance_to_memory_mesh("scope-title")
+        assert mem.title == "Data governance state"
+        assert "scope-title" not in mem.title
+        assert mem.scope_ref_id == "scope-title"
+
 
 # ---------------------------------------------------------------------------
 # Graph attachment (1 test)

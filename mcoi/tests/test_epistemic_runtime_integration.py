@@ -140,6 +140,14 @@ class TestBridgeMethods:
         expected = {"claim_id", "source_type", "tenant_id", "status", "trust_level"}
         assert set(result.keys()) == expected
 
+    def test_bridge_claim_content_is_bounded(self):
+        integ, ep, _, _ = _make_integration()
+        result = integ.epistemic_from_logic(_T1, "logic-ref-1")
+        claim = ep.get_claim(result["claim_id"])
+        assert claim.content == "epistemic source claim"
+        assert "logic-ref-1" not in claim.content
+        assert "logic" not in claim.content
+
     def test_multiple_same_bridge(self):
         integ, ep, _, _ = _make_integration()
         for i in range(5):
@@ -171,10 +179,12 @@ class TestMemoryMeshAttachment:
         record = integ.attach_epistemic_state_to_memory_mesh("scope-1")
         assert record.content["total_claims"] == 1
 
-    def test_title(self):
+    def test_title_is_bounded(self):
         integ, _, _, _ = _make_integration()
         record = integ.attach_epistemic_state_to_memory_mesh("scope-1")
-        assert "scope-1" in record.title
+        assert record.title == "Epistemic state"
+        assert "scope-1" not in record.title
+        assert record.scope_ref_id == "scope-1"
 
     def test_tags(self):
         integ, _, _, _ = _make_integration()

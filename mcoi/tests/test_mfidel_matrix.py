@@ -32,8 +32,13 @@ class TestGebetaStructure:
         assert total == 272
 
     def test_all_glyphs_are_unique(self) -> None:
-        all_glyphs = [g for row in FIDEL_GEBETA for g in row]
+        # Option 1b convergence: substrate is source of truth. The grid has
+        # three known-empty slots (f[20][8], f[21][8], f[24][8]). Filter
+        # empties before uniqueness check; assert empty count separately.
+        all_glyphs = [g for row in FIDEL_GEBETA for g in row if g]
         assert len(all_glyphs) == len(set(all_glyphs))
+        empty_count = sum(1 for row in FIDEL_GEBETA for g in row if not g)
+        assert empty_count == 3
 
     def test_row_11_is_ve_family(self) -> None:
         assert FIDEL_GEBETA[10][0] == "ቨ"
@@ -130,9 +135,9 @@ class TestAudioFormula:
         assert af.exception_type == "labialized_extension"
 
     def test_col8_exception_any_row(self) -> None:
-        for row in (1, 10, 20, 34):
+        # Skip rows 20, 21, 24 — those col-8 slots are empty per spec.
+        for row in (1, 10, 22, 34):
             af = MfidelMatrix.audio_formula(row, 8)
-            # Row 1 col 8 is labialized, not glottal
             assert af.exception_type == "labialized_extension"
 
 
@@ -156,15 +161,33 @@ class TestVectorize:
         assert vec.normalized is False
         assert all(w == 0.0 for w in vec.fidel_weights)
 
-    def test_non_fidel_chars_ignored(self) -> None:
-        vec = MfidelMatrix.vectorize("abc")
-        assert vec.normalized is False
+    def test_non_fidel_chars_rejected(self) -> None:
+        with pytest.raises(
+            ValueError,
+            match="^text contains non-fidel characters$",
+        ) as exc_info:
+            MfidelMatrix.vectorize("abc")
+        assert "0" not in str(exc_info.value)
+        assert "positions" not in str(exc_info.value).lower()
 
     def test_text_to_fidel_sequence(self) -> None:
         seq = MfidelMatrix.text_to_fidel_sequence("ሀለ")
         assert len(seq) == 2
         assert seq[0].glyph == "ሀ"
         assert seq[1].glyph == "ለ"
+
+
+    def test_text_to_fidel_sequence_allows_whitespace_separators(self) -> None:
+        seq = MfidelMatrix.text_to_fidel_sequence("\u1200 \u1208")
+        assert len(seq) == 2
+
+    def test_text_to_fidel_sequence_rejects_mixed_non_fidel_input(self) -> None:
+        with pytest.raises(
+            ValueError,
+            match="^text contains non-fidel characters$",
+        ) as exc_info:
+            MfidelMatrix.text_to_fidel_sequence("\u1200a")
+        assert "1" not in str(exc_info.value)
 
 
 class TestSimilarity:

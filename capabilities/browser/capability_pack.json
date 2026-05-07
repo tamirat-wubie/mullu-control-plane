@@ -1,0 +1,343 @@
+{
+  "capabilities": [
+    {
+      "capability_id": "browser.open",
+      "domain": "browser",
+      "version": "0.1.0",
+      "input_schema_ref": "schemas/browser/open.input.schema.json",
+      "output_schema_ref": "schemas/browser/open.output.schema.json",
+      "effect_model": {
+        "expected_effects": ["browser_page_opened"],
+        "forbidden_effects": ["external_form_submitted", "payment_created", "credential_submitted"],
+        "reconciliation_required": true
+      },
+      "evidence_model": {
+        "required_evidence": ["url_after", "screenshot_after_ref"],
+        "terminal_certificate_required": true
+      },
+      "authority_policy": {
+        "required_roles": ["browser_operator"],
+        "approval_chain": [],
+        "separation_of_duty": false
+      },
+      "isolation_profile": {
+        "execution_plane": "browser_worker",
+        "network_allowlist": ["docs.mullusi.com", "learn.mullusi.com", "api.mullusi.com"],
+        "secret_scope": "none"
+      },
+      "recovery_plan": {
+        "rollback_capability": "",
+        "compensation_capability": "",
+        "review_required_on_failure": true
+      },
+      "cost_model": {
+        "budget_class": "standard",
+        "max_estimated_cost": 0.02
+      },
+      "obligation_model": {
+        "owner_team": "platform-ops",
+        "failure_due_seconds": 1800,
+        "escalation_route": "support@mullusi.com"
+      },
+      "certification_status": "certified",
+      "metadata": {
+        "display_name": "Open browser page",
+        "risk_tier": "low"
+      },
+      "extensions": {
+        "governed_record": {
+          "read_only": true,
+          "world_mutating": false,
+          "requires_approval": false,
+          "requires_sandbox": true,
+          "allowed_roles": ["browser_operator"],
+          "allowed_tools": ["browser_worker.open"],
+          "allowed_networks": ["docs.mullusi.com", "learn.mullusi.com", "api.mullusi.com"]
+        }
+      }
+    },
+    {
+      "capability_id": "browser.screenshot",
+      "domain": "browser",
+      "version": "0.1.0",
+      "input_schema_ref": "schemas/browser/screenshot.input.schema.json",
+      "output_schema_ref": "schemas/browser/screenshot.output.schema.json",
+      "effect_model": {
+        "expected_effects": ["browser_screenshot_captured"],
+        "forbidden_effects": ["external_form_submitted", "payment_created", "credential_submitted"],
+        "reconciliation_required": true
+      },
+      "evidence_model": {
+        "required_evidence": ["screenshot_after_ref"],
+        "terminal_certificate_required": true
+      },
+      "authority_policy": {
+        "required_roles": ["browser_operator"],
+        "approval_chain": [],
+        "separation_of_duty": false
+      },
+      "isolation_profile": {
+        "execution_plane": "browser_worker",
+        "network_allowlist": ["docs.mullusi.com", "learn.mullusi.com", "api.mullusi.com"],
+        "secret_scope": "none"
+      },
+      "recovery_plan": {
+        "rollback_capability": "",
+        "compensation_capability": "",
+        "review_required_on_failure": true
+      },
+      "cost_model": {
+        "budget_class": "standard",
+        "max_estimated_cost": 0.02
+      },
+      "obligation_model": {
+        "owner_team": "platform-ops",
+        "failure_due_seconds": 1800,
+        "escalation_route": "support@mullusi.com"
+      },
+      "certification_status": "certified",
+      "metadata": {
+        "display_name": "Capture browser screenshot",
+        "risk_tier": "low"
+      },
+      "extensions": {
+        "governed_record": {
+          "read_only": true,
+          "world_mutating": false,
+          "requires_approval": false,
+          "requires_sandbox": true,
+          "allowed_roles": ["browser_operator"],
+          "allowed_tools": ["browser_worker.screenshot"],
+          "allowed_networks": ["docs.mullusi.com", "learn.mullusi.com", "api.mullusi.com"]
+        }
+      }
+    },
+    {
+      "capability_id": "browser.extract_text",
+      "domain": "browser",
+      "version": "0.1.0",
+      "input_schema_ref": "schemas/browser/extract_text.input.schema.json",
+      "output_schema_ref": "schemas/browser/extract_text.output.schema.json",
+      "effect_model": {
+        "expected_effects": ["browser_text_extracted"],
+        "forbidden_effects": ["external_form_submitted", "payment_created", "credential_submitted"],
+        "reconciliation_required": true
+      },
+      "evidence_model": {
+        "required_evidence": ["url_after", "text_hash"],
+        "terminal_certificate_required": true
+      },
+      "authority_policy": {
+        "required_roles": ["browser_operator"],
+        "approval_chain": [],
+        "separation_of_duty": false
+      },
+      "isolation_profile": {
+        "execution_plane": "browser_worker",
+        "network_allowlist": ["docs.mullusi.com", "learn.mullusi.com", "api.mullusi.com"],
+        "secret_scope": "none"
+      },
+      "recovery_plan": {
+        "rollback_capability": "",
+        "compensation_capability": "",
+        "review_required_on_failure": true
+      },
+      "cost_model": {
+        "budget_class": "standard",
+        "max_estimated_cost": 0.02
+      },
+      "obligation_model": {
+        "owner_team": "platform-ops",
+        "failure_due_seconds": 1800,
+        "escalation_route": "support@mullusi.com"
+      },
+      "certification_status": "certified",
+      "metadata": {
+        "display_name": "Extract browser text",
+        "risk_tier": "low"
+      },
+      "extensions": {
+        "governed_record": {
+          "read_only": true,
+          "world_mutating": false,
+          "requires_approval": false,
+          "requires_sandbox": true,
+          "allowed_roles": ["browser_operator"],
+          "allowed_tools": ["browser_worker.extract_text"],
+          "allowed_networks": ["docs.mullusi.com", "learn.mullusi.com", "api.mullusi.com"]
+        }
+      }
+    },
+    {
+      "capability_id": "browser.click",
+      "domain": "browser",
+      "version": "0.1.0",
+      "input_schema_ref": "schemas/browser/click.input.schema.json",
+      "output_schema_ref": "schemas/browser/click.output.schema.json",
+      "effect_model": {
+        "expected_effects": ["browser_element_clicked"],
+        "forbidden_effects": ["external_form_submitted", "payment_created", "credential_submitted"],
+        "reconciliation_required": true
+      },
+      "evidence_model": {
+        "required_evidence": ["url_before", "url_after", "element_selector_hash"],
+        "terminal_certificate_required": true
+      },
+      "authority_policy": {
+        "required_roles": ["browser_operator"],
+        "approval_chain": [],
+        "separation_of_duty": false
+      },
+      "isolation_profile": {
+        "execution_plane": "browser_worker",
+        "network_allowlist": ["docs.mullusi.com", "learn.mullusi.com", "api.mullusi.com"],
+        "secret_scope": "none"
+      },
+      "recovery_plan": {
+        "rollback_capability": "",
+        "compensation_capability": "",
+        "review_required_on_failure": true
+      },
+      "cost_model": {
+        "budget_class": "standard",
+        "max_estimated_cost": 0.03
+      },
+      "obligation_model": {
+        "owner_team": "platform-ops",
+        "failure_due_seconds": 1800,
+        "escalation_route": "support@mullusi.com"
+      },
+      "certification_status": "certified",
+      "metadata": {
+        "display_name": "Click browser element",
+        "risk_tier": "medium"
+      },
+      "extensions": {
+        "governed_record": {
+          "read_only": false,
+          "world_mutating": true,
+          "requires_approval": false,
+          "requires_sandbox": true,
+          "allowed_roles": ["browser_operator"],
+          "allowed_tools": ["browser_worker.click"],
+          "allowed_networks": ["docs.mullusi.com", "learn.mullusi.com", "api.mullusi.com"],
+          "rollback_or_compensation_required": true
+        }
+      }
+    },
+    {
+      "capability_id": "browser.type",
+      "domain": "browser",
+      "version": "0.1.0",
+      "input_schema_ref": "schemas/browser/type.input.schema.json",
+      "output_schema_ref": "schemas/browser/type.output.schema.json",
+      "effect_model": {
+        "expected_effects": ["browser_text_typed"],
+        "forbidden_effects": ["external_form_submitted", "payment_created", "credential_submitted"],
+        "reconciliation_required": true
+      },
+      "evidence_model": {
+        "required_evidence": ["url_before", "url_after", "element_selector_hash"],
+        "terminal_certificate_required": true
+      },
+      "authority_policy": {
+        "required_roles": ["browser_operator"],
+        "approval_chain": [],
+        "separation_of_duty": false
+      },
+      "isolation_profile": {
+        "execution_plane": "browser_worker",
+        "network_allowlist": ["docs.mullusi.com", "learn.mullusi.com", "api.mullusi.com"],
+        "secret_scope": "none"
+      },
+      "recovery_plan": {
+        "rollback_capability": "",
+        "compensation_capability": "",
+        "review_required_on_failure": true
+      },
+      "cost_model": {
+        "budget_class": "standard",
+        "max_estimated_cost": 0.03
+      },
+      "obligation_model": {
+        "owner_team": "platform-ops",
+        "failure_due_seconds": 1800,
+        "escalation_route": "support@mullusi.com"
+      },
+      "certification_status": "certified",
+      "metadata": {
+        "display_name": "Type into browser element",
+        "risk_tier": "medium"
+      },
+      "extensions": {
+        "governed_record": {
+          "read_only": false,
+          "world_mutating": true,
+          "requires_approval": false,
+          "requires_sandbox": true,
+          "allowed_roles": ["browser_operator"],
+          "allowed_tools": ["browser_worker.type"],
+          "allowed_networks": ["docs.mullusi.com", "learn.mullusi.com", "api.mullusi.com"],
+          "rollback_or_compensation_required": true
+        }
+      }
+    },
+    {
+      "capability_id": "browser.submit",
+      "domain": "browser",
+      "version": "0.1.0",
+      "input_schema_ref": "schemas/browser/submit.input.schema.json",
+      "output_schema_ref": "schemas/browser/submit.output.schema.json",
+      "effect_model": {
+        "expected_effects": ["browser_form_submitted"],
+        "forbidden_effects": ["credential_submitted", "payment_created", "irreversible_external_submission"],
+        "reconciliation_required": true
+      },
+      "evidence_model": {
+        "required_evidence": ["url_before", "url_after", "element_selector_hash", "approval_id"],
+        "terminal_certificate_required": true
+      },
+      "authority_policy": {
+        "required_roles": ["browser_operator"],
+        "approval_chain": ["platform_approver"],
+        "separation_of_duty": true
+      },
+      "isolation_profile": {
+        "execution_plane": "browser_worker",
+        "network_allowlist": ["docs.mullusi.com", "learn.mullusi.com", "api.mullusi.com"],
+        "secret_scope": "none"
+      },
+      "recovery_plan": {
+        "rollback_capability": "",
+        "compensation_capability": "",
+        "review_required_on_failure": true
+      },
+      "cost_model": {
+        "budget_class": "browser_effect",
+        "max_estimated_cost": 0.05
+      },
+      "obligation_model": {
+        "owner_team": "platform-ops",
+        "failure_due_seconds": 900,
+        "escalation_route": "support@mullusi.com"
+      },
+      "certification_status": "certified",
+      "metadata": {
+        "display_name": "Submit browser form",
+        "risk_tier": "high"
+      },
+      "extensions": {
+        "governed_record": {
+          "read_only": false,
+          "world_mutating": true,
+          "requires_approval": true,
+          "requires_sandbox": true,
+          "allowed_roles": ["browser_operator"],
+          "allowed_tools": ["browser_worker.submit"],
+          "allowed_networks": ["docs.mullusi.com", "learn.mullusi.com", "api.mullusi.com"],
+          "rollback_or_compensation_required": true
+        }
+      }
+    }
+  ]
+}

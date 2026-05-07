@@ -30,6 +30,11 @@ from mcoi_runtime.contracts.browser import (
 from .invariants import ensure_non_empty_text, stable_identifier
 
 
+def _bounded_browser_error(prefix: str, exc: Exception) -> str:
+    """Return a bounded browser error without backend detail."""
+    return f"{prefix}:{type(exc).__name__}"
+
+
 class BrowserBackend(Protocol):
     """Protocol for browser backend implementations."""
 
@@ -160,7 +165,7 @@ class BrowserEngine:
             except Exception as exc:
                 result = BrowserActionResult(
                     action_id=action.action_id, succeeded=False,
-                    error_message=f"navigate_error:{exc}",
+                    error_message=_bounded_browser_error("navigate_error", exc),
                 )
             self._action_results.append(result)
             return result
@@ -256,8 +261,7 @@ class BrowserEngine:
                 return BrowserVerificationResult(
                     verification_id=verification_id, action_id=action_id,
                     status=BrowserVerificationStatus.VALUE_MISMATCH,
-                    expected_value=expected_title, actual_value=page.title,
-                    reason=f"title mismatch: expected '{expected_title}', got '{page.title}'",
+                    reason="title mismatch",
                 )
 
         # Element check
@@ -267,8 +271,7 @@ class BrowserEngine:
                 return BrowserVerificationResult(
                     verification_id=verification_id, action_id=action_id,
                     status=BrowserVerificationStatus.ELEMENT_MISSING,
-                    expected_selector=expected_selector,
-                    reason=f"expected element not found: {expected_selector.selector_value}",
+                    reason="expected element not found",
                 )
             if expected_value is not None:
                 actual = match.element_value or match.element_text or ""
@@ -276,9 +279,7 @@ class BrowserEngine:
                     return BrowserVerificationResult(
                         verification_id=verification_id, action_id=action_id,
                         status=BrowserVerificationStatus.VALUE_MISMATCH,
-                        expected_selector=expected_selector,
-                        expected_value=expected_value, actual_value=actual,
-                        reason=f"value mismatch: expected '{expected_value}', got '{actual}'",
+                        reason="value mismatch",
                     )
 
         return BrowserVerificationResult(

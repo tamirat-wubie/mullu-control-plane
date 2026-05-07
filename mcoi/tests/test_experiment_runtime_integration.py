@@ -145,7 +145,9 @@ class TestMemoryMeshAttachment:
         integ, eng, _, _ = _make_integration()
         eng.register_design("d1", "t1", "h1", "Design 1")
         record = integ.attach_experiment_to_memory_mesh("scope-1")
-        assert record.title.startswith("Experiment state:")
+        assert record.title == "Experiment state"
+        assert "scope-1" not in record.title
+        assert record.scope_ref_id == "scope-1"
 
     def test_emits_event(self):
         integ, eng, es, _ = _make_integration()

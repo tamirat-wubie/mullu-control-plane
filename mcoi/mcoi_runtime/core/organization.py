@@ -46,7 +46,7 @@ class OrgDirectory:
 
     def register_person(self, person: Person) -> Person:
         if person.person_id in self._persons:
-            raise ValueError(f"person already registered: {person.person_id}")
+            raise ValueError("person already registered")
         self._persons[person.person_id] = person
         return person
 
@@ -57,7 +57,7 @@ class OrgDirectory:
 
     def register_team(self, team: Team) -> Team:
         if team.team_id in self._teams:
-            raise ValueError(f"team already registered: {team.team_id}")
+            raise ValueError("team already registered")
         self._teams[team.team_id] = team
         return team
 
@@ -78,7 +78,7 @@ class OrgDirectory:
 
     def register_ownership(self, mapping: OwnershipMapping) -> OwnershipMapping:
         if mapping.resource_id in self._ownership:
-            raise ValueError(f"ownership already registered: {mapping.resource_id}")
+            raise ValueError("ownership already registered")
         self._ownership[mapping.resource_id] = mapping
         return mapping
 
@@ -103,7 +103,7 @@ class OrgDirectory:
 
     def register_escalation_chain(self, chain: EscalationChain) -> EscalationChain:
         if chain.chain_id in self._chains:
-            raise ValueError(f"escalation chain already registered: {chain.chain_id}")
+            raise ValueError("escalation chain already registered")
         self._chains[chain.chain_id] = chain
         return chain
 
@@ -129,7 +129,7 @@ class EscalationManager:
         ensure_non_empty_text("chain_id", chain_id)
         chain = self._directory.find_escalation_chain(chain_id)
         if chain is None:
-            raise ValueError(f"escalation chain not found: {chain_id}")
+            raise ValueError("escalation chain not found")
         now = self._clock()
         return EscalationState(
             chain_id=chain_id,
@@ -185,7 +185,7 @@ class EscalationManager:
 
         chain = self._directory.find_escalation_chain(state.chain_id)
         if chain is None:
-            raise ValueError(f"escalation chain not found: {state.chain_id}")
+            raise ValueError("escalation chain not found")
 
         max_step = max(s.step_order for s in chain.steps)
         if state.current_step >= max_step:

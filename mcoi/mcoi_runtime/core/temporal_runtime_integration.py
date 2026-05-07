@@ -265,7 +265,7 @@ class TemporalRuntimeIntegration:
             scope=MemoryScope.GLOBAL,
             scope_ref_id=scope_ref_id,
             trust_level=MemoryTrustLevel.VERIFIED,
-            title=f"Temporal state: {scope_ref_id}",
+            title="Temporal state",
             content=content,
             source_ids=(scope_ref_id,),
             tags=("temporal", "reasoning", "constraints"),

@@ -1,0 +1,185 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:streaming-budget-enforcement:1",
+  "title": "Streaming Budget Enforcement Event",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "event_type",
+    "reservation_id",
+    "request_id",
+    "tenant_id",
+    "budget_id",
+    "policy_version",
+    "proof_id",
+    "timestamp"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "event_type": {
+      "type": "string",
+      "enum": [
+        "reservation_created",
+        "chunk_debited",
+        "cutoff_emitted",
+        "settled"
+      ]
+    },
+    "reservation_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "request_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "tenant_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "budget_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "policy_version": {
+      "type": "string",
+      "minLength": 1
+    },
+    "estimated_input_tokens": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "reserved_output_tokens": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "reserved_total_tokens": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "emitted_output_tokens": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "actual_input_tokens": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "actual_output_tokens": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "reserved_cost": {
+      "type": "number",
+      "minimum": 0
+    },
+    "actual_cost": {
+      "type": "number",
+      "minimum": 0
+    },
+    "delta_tokens": {
+      "type": "integer"
+    },
+    "delta_cost": {
+      "type": "number"
+    },
+    "cutoff_semantic": {
+      "type": "string",
+      "enum": [
+        "graceful",
+        "abrupt",
+        "retry_eligible"
+      ]
+    },
+    "retry_eligible": {
+      "type": "boolean"
+    },
+    "proof_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "extensions": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "event_type": {
+            "const": "reservation_created"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "estimated_input_tokens",
+          "reserved_output_tokens",
+          "reserved_total_tokens",
+          "reserved_cost"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "event_type": {
+            "const": "chunk_debited"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "emitted_output_tokens"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "event_type": {
+            "const": "cutoff_emitted"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "emitted_output_tokens",
+          "reserved_output_tokens",
+          "cutoff_semantic",
+          "retry_eligible"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "event_type": {
+            "const": "settled"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "actual_input_tokens",
+          "actual_output_tokens",
+          "actual_cost",
+          "delta_tokens",
+          "delta_cost"
+        ]
+      }
+    }
+  ]
+}

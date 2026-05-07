@@ -7,6 +7,10 @@ from mcoi_runtime.pilot.tenant_bootstrap import PilotTenantBootstrap
 from mcoi_runtime.pilot.data_import import PilotDataImporter, ImportResult
 from mcoi_runtime.pilot.customer_profile import PilotCustomerProfile
 
+
+def _bounded_deployment_error(summary: str, exc: Exception) -> str:
+    return f"{summary} ({type(exc).__name__})"
+
 @dataclass
 class DeploymentReport:
     tenant_id: str
@@ -43,9 +47,9 @@ class LivePilotDeployment:
             report.connectors_activated = len(result.get("connectors_activated", []))
             report.personas_created = len(result.get("personas", []))
             report.governance_rules = len(result.get("governance_rules", []))
-        except Exception as e:
+        except Exception as exc:
             report.bootstrap_status = "failed"
-            report.issues.append(f"Bootstrap failed: {e}")
+            report.issues.append(_bounded_deployment_error("bootstrap failed", exc))
 
         return report
 

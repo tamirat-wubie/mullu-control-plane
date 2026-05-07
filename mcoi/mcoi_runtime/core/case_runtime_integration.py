@@ -96,7 +96,7 @@ class CaseRuntimeIntegration:
         ev_id = stable_identifier("ev", {"case": case_id, "src": source_id})
         self._cases.add_evidence(
             ev_id, case_id, source_type, source_id,
-            title=f"{source_type} evidence: {source_id}",
+            title="Case evidence",
         )
         _emit(self._events, action_name, {
             "case_id": case_id, "source_type": source_type,
@@ -299,7 +299,7 @@ class CaseRuntimeIntegration:
             scope=MemoryScope.GLOBAL,
             scope_ref_id=scope_ref_id,
             trust_level=MemoryTrustLevel.VERIFIED,
-            title=f"Case state: {scope_ref_id}",
+            title="Case state",
             content=content,
             source_ids=(scope_ref_id,),
             tags=("case", "investigation", "evidence"),

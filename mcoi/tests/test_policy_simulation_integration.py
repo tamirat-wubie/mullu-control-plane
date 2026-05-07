@@ -12,7 +12,7 @@ import pytest
 from mcoi_runtime.core.event_spine import EventSpineEngine
 from mcoi_runtime.core.invariants import RuntimeCoreInvariantError
 from mcoi_runtime.core.memory_mesh import MemoryMeshEngine
-from mcoi_runtime.core.policy_simulation import PolicySimulationEngine
+from mcoi_runtime.governance.policy.simulation import PolicySimulationEngine
 from mcoi_runtime.core.policy_simulation_integration import PolicySimulationIntegration
 from mcoi_runtime.contracts.policy_simulation import PolicyImpactLevel
 from mcoi_runtime.contracts.memory_mesh import MemoryRecord
@@ -423,7 +423,9 @@ class TestAttachSimulationStateToMemoryMesh:
 
     def test_title_contains_scope_ref_id(self, bridge: PolicySimulationIntegration) -> None:
         mem = bridge.attach_simulation_state_to_memory_mesh("abc-scope")
-        assert "abc-scope" in mem.title
+        assert mem.title == "Policy simulation state"
+        assert "abc-scope" not in mem.title
+        assert mem.scope_ref_id == "abc-scope"
 
 
 # ---------------------------------------------------------------------------

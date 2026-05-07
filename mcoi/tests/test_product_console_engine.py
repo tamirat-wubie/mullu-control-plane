@@ -525,8 +525,11 @@ class TestStartConsoleSession:
 
     def test_cross_tenant_session_denied(self):
         es, eng, s = _engine_with_surface()  # surface tenant is t-001
-        with pytest.raises(RuntimeCoreInvariantError, match="cross-tenant access denied"):
+        with pytest.raises(RuntimeCoreInvariantError, match="^cross-tenant access denied$") as exc_info:
             eng.start_console_session("sess-001", "t-002", "id-001", "surf-001")
+        assert "sess-001" not in str(exc_info.value)
+        assert "t-002" not in str(exc_info.value)
+        assert "t-001" not in str(exc_info.value)
 
     def test_cross_tenant_session_creates_violation(self):
         es, eng, s = _engine_with_surface()
@@ -535,6 +538,7 @@ class TestStartConsoleSession:
         except RuntimeCoreInvariantError:
             pass
         assert eng.violation_count >= 1
+        assert any(v.reason == "cross-tenant access denied" for v in eng._violations.values())
 
     def test_cross_tenant_session_emits_denial_event(self):
         es, eng, s = _engine_with_surface()
@@ -567,8 +571,9 @@ class TestEndSession:
 
     def test_end_unknown_raises(self):
         es, eng = _make_engine()
-        with pytest.raises(RuntimeCoreInvariantError, match="unknown session"):
+        with pytest.raises(RuntimeCoreInvariantError, match="^unknown session$") as exc_info:
             eng.end_session("missing")
+        assert "missing" not in str(exc_info.value)
 
     def test_end_already_closed_raises(self):
         es, eng, s, sess = _engine_with_session()
@@ -597,8 +602,9 @@ class TestLockSession:
 
     def test_lock_unknown_raises(self):
         es, eng = _make_engine()
-        with pytest.raises(RuntimeCoreInvariantError, match="unknown session"):
+        with pytest.raises(RuntimeCoreInvariantError, match="^unknown session$") as exc_info:
             eng.lock_session("missing")
+        assert "missing" not in str(exc_info.value)
 
     def test_lock_closed_raises(self):
         es, eng, s, sess = _engine_with_session()
@@ -645,9 +651,12 @@ class TestRecordAdminAction:
     def test_unknown_session_raises_and_creates_violation(self):
         es, eng, s = _engine_with_surface()
         eng.register_panel("p1", "t-001", "surf-001", "P", "rt")
-        with pytest.raises(RuntimeCoreInvariantError, match="unknown session"):
+        with pytest.raises(RuntimeCoreInvariantError, match="^unknown session$") as exc_info:
             eng.record_admin_action("act-001", "t-001", "missing-sess", "p1", "op")
         assert eng.violation_count >= 1
+        assert "missing-sess" not in str(exc_info.value)
+        assert any(v.reason == "action has no active session" for v in eng._violations.values())
+        assert all("missing-sess" not in v.reason for v in eng._violations.values())
 
     def test_closed_session_raises(self):
         es, eng, act = _engine_with_action()
@@ -660,8 +669,11 @@ class TestRecordAdminAction:
         eng.register_panel("p1", "t-001", "surf-001", "P", "rt")
         eng.start_console_session("sess-001", "t-001", "id-001", "surf-001")
         # Try to record action with different tenant than session
-        with pytest.raises(RuntimeCoreInvariantError, match="cross-tenant access denied"):
+        with pytest.raises(RuntimeCoreInvariantError, match="^cross-tenant access denied$") as exc_info:
             eng.record_admin_action("act-001", "t-002", "sess-001", "p1", "op")
+        assert "act-001" not in str(exc_info.value)
+        assert "t-002" not in str(exc_info.value)
+        assert "t-001" not in str(exc_info.value)
 
     def test_cross_tenant_action_creates_violation(self):
         es, eng, s = _engine_with_surface()
@@ -672,6 +684,7 @@ class TestRecordAdminAction:
         except RuntimeCoreInvariantError:
             pass
         assert eng.violation_count >= 1
+        assert any(v.reason == "cross-tenant access denied" for v in eng._violations.values())
 
     def test_cross_tenant_action_emits_event(self):
         es, eng, s = _engine_with_surface()
@@ -1015,14 +1028,18 @@ class TestDetectConsoleViolations:
         # Now active session on closed surface
         result = eng.detect_console_violations("t-001")
         assert len(result) >= 1
-        assert any("closed surface" in v.reason for v in result)
+        assert any(v.reason == "active session on closed surface" for v in result)
+        assert all("sess-001" not in v.reason for v in result)
+        assert all("surf-001" not in v.reason for v in result)
 
     def test_action_no_session_detected(self):
         es, eng, act = _engine_with_action()
         eng.end_session("sess-001")
         result = eng.detect_console_violations("t-001")
         assert len(result) >= 1
-        assert any("no active session" in v.reason for v in result)
+        assert any(v.reason == "action has no active session" for v in result)
+        assert all("act-001" not in v.reason for v in result)
+        assert all("sess-001" not in v.reason for v in result)
 
     def test_idempotent_detection(self):
         es, eng, s = _engine_with_surface()
@@ -1574,3 +1591,17 @@ class TestEdgeCases:
         assert snap["actions"] == {}
         assert snap["decisions"] == {}
         assert snap["violations"] == {}
+
+
+class TestBoundedContracts:
+    def test_activate_surface_message_hides_current_status(self):
+        es, eng, s = _engine_with_surface()
+        with pytest.raises(RuntimeCoreInvariantError, match="activate_surface requires SUSPENDED state") as exc_info:
+            eng.activate_surface("surf-001")
+        assert "ACTIVE" not in str(exc_info.value)
+
+    def test_unknown_action_message_hides_action_id(self):
+        es, eng = _make_engine()
+        with pytest.raises(RuntimeCoreInvariantError, match="unknown action") as exc_info:
+            eng.execute_action("action-secret")
+        assert "action-secret" not in str(exc_info.value)

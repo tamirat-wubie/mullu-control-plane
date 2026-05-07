@@ -201,13 +201,13 @@ class SovereignPartnerPipeline:
 
     def onboard(self, record: SovereignPartnerRecord) -> SovereignPartnerRecord:
         if record.partner_id in self._partners:
-            raise ValueError(f"Partner {record.partner_id} already exists")
+            raise ValueError("partner already exists")
         self._partners[record.partner_id] = record
         return record
 
     def certify(self, partner_id: str, level: str) -> SovereignPartnerRecord:
         if partner_id not in self._partners:
-            raise ValueError(f"Unknown partner: {partner_id}")
+            raise ValueError("unknown partner")
         p = self._partners[partner_id]
         p_new = SovereignPartnerRecord(
             p.partner_id, p.company_name, p.partner_type, level,
@@ -218,7 +218,7 @@ class SovereignPartnerPipeline:
 
     def update_quality(self, partner_id: str, score: float) -> SovereignPartnerRecord:
         if partner_id not in self._partners:
-            raise ValueError(f"Unknown partner: {partner_id}")
+            raise ValueError("unknown partner")
         p = self._partners[partner_id]
         p_new = SovereignPartnerRecord(
             p.partner_id, p.company_name, p.partner_type, p.certification_level,
@@ -238,7 +238,7 @@ class SovereignPartnerPipeline:
 
     def get_partner(self, partner_id: str) -> SovereignPartnerRecord:
         if partner_id not in self._partners:
-            raise ValueError(f"Unknown partner: {partner_id}")
+            raise ValueError("unknown partner")
         return self._partners[partner_id]
 
     @property

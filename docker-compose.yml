@@ -1,9 +1,16 @@
 version: "3.9"
 
+networks:
+  mullu-net:
+    driver: bridge
+  browser-worker-net:
+    driver: bridge
+
 services:
   # PostgreSQL production database
   postgres:
     image: postgres:16-alpine
+    restart: unless-stopped
     environment:
       POSTGRES_DB: mullu
       POSTGRES_USER: mullu
@@ -12,36 +19,331 @@ services:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+    networks:
+      - mullu-net
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U mullu -d mullu"]
       interval: 5s
       timeout: 3s
       retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "1.0"
 
   # Mullu Platform API server
   mullu:
     build: .
+    restart: unless-stopped
     ports:
       - "8000:8000"
     environment:
       MULLU_ENV: pilot
+      MULLU_API_AUTH_REQUIRED: "true"
       MULLU_DB_BACKEND: postgresql
       MULLU_DB_URL: "postgresql://mullu:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@postgres:5432/mullu"
+      MULLU_CORS_ORIGINS: "${MULLU_CORS_ORIGINS:?Set MULLU_CORS_ORIGINS in .env}"
       MULLU_LLM_BACKEND: stub
       MULLU_LLM_MODEL: "claude-sonnet-4-20250514"
       MULLU_LLM_BUDGET_MAX_COST: "100.0"
       MULLU_LLM_BUDGET_MAX_CALLS: "10000"
+      MULLU_PII_SCAN: "true"
+      MULLU_CERT_ENABLED: "true"
+      MULLU_CERT_INTERVAL: "300"
+      MULLU_STATE_DIR: "/data/state"
+      MULLU_ENCRYPTION_KEY: "${MULLU_ENCRYPTION_KEY:?Set MULLU_ENCRYPTION_KEY in .env}"
       # Set these to enable real LLM backends:
       # ANTHROPIC_API_KEY: ""
       # OPENAI_API_KEY: ""
+      # Additional providers (optional):
+      # GROQ_API_KEY: ""
+      # GEMINI_API_KEY: ""
+      # DEEPSEEK_API_KEY: ""
+      # XAI_API_KEY: ""
+      # MISTRAL_API_KEY: ""
+      # OPENROUTER_API_KEY: ""
+      # Governance (optional):
+      # MULLU_JWT_SECRET: ""  # base64-encoded 32-byte key for JWT auth
+      # MULLU_JWT_ISSUER: "mullu"
+      # MULLU_JWT_AUDIENCE: "mullu-api"
+      # MULLU_ENCRYPTION_KEY: ""  # base64-encoded 32-byte AES key for field encryption
     depends_on:
       postgres:
         condition: service_healthy
+    volumes:
+      - state-data:/data/state
+    networks:
+      - mullu-net
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      test: ["CMD", "curl", "-sf", "http://localhost:8000/health"]
       interval: 15s
       timeout: 5s
       retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: "1.0"
+
+  # Mullu Gateway - channel webhook server
+  gateway:
+    build: .
+    restart: unless-stopped
+    command: ["python", "-m", "uvicorn", "gateway.server:app", "--host", "0.0.0.0", "--port", "8001"]
+    ports:
+      - "8001:8001"
+    environment:
+      MULLU_ENV: pilot
+      MULLU_API_AUTH_REQUIRED: "true"
+      MULLU_DB_BACKEND: postgresql
+      MULLU_DB_URL: "postgresql://mullu:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@postgres:5432/mullu"
+      MULLU_CORS_ORIGINS: "${MULLU_CORS_ORIGINS:?Set MULLU_CORS_ORIGINS in .env}"
+      MULLU_ENCRYPTION_KEY: "${MULLU_ENCRYPTION_KEY:?Set MULLU_ENCRYPTION_KEY in .env}"
+      MULLU_STATE_DIR: "/data/state"
+      MULLU_COMMAND_LEDGER_BACKEND: postgresql
+      MULLU_COMMAND_LEDGER_DB_URL: "postgresql://mullu:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@postgres:5432/mullu"
+      MULLU_TENANT_IDENTITY_BACKEND: postgresql
+      MULLU_REQUIRE_PERSISTENT_TENANT_IDENTITY: "true"
+      MULLU_GATEWAY_DEFER_APPROVED_EXECUTION: "true"
+      MULLU_COMMAND_ANCHOR_KEY_ID: "compose-local"
+      MULLU_COMMAND_ANCHOR_SECRET: "${MULLU_COMMAND_ANCHOR_SECRET:?Set MULLU_COMMAND_ANCHOR_SECRET in .env}"
+      MULLU_REQUIRE_COMMAND_ANCHOR: "true"
+      MULLU_GATEWAY_APPROVAL_SECRET: "${MULLU_GATEWAY_APPROVAL_SECRET:?Set MULLU_GATEWAY_APPROVAL_SECRET in .env}"
+      MULLU_RUNTIME_WITNESS_SECRET: "${MULLU_RUNTIME_WITNESS_SECRET:?Set MULLU_RUNTIME_WITNESS_SECRET in .env}"
+      MULLU_RUNTIME_CONFORMANCE_SECRET: "${MULLU_RUNTIME_CONFORMANCE_SECRET:?Set MULLU_RUNTIME_CONFORMANCE_SECRET in .env}"
+      MULLU_CAPABILITY_WORKER_URL: "http://capability-worker:8010/capability/execute"
+      MULLU_CAPABILITY_WORKER_SECRET: "${MULLU_CAPABILITY_WORKER_SECRET:?Set MULLU_CAPABILITY_WORKER_SECRET in .env}"
+      MULLU_BROWSER_WORKER_URL: "${MULLU_BROWSER_WORKER_URL:-}"
+      MULLU_BROWSER_WORKER_SECRET: "${MULLU_BROWSER_WORKER_SECRET:-}"
+      MULLU_DOCUMENT_WORKER_URL: "${MULLU_DOCUMENT_WORKER_URL:-}"
+      MULLU_DOCUMENT_WORKER_SECRET: "${MULLU_DOCUMENT_WORKER_SECRET:-}"
+      MULLU_VOICE_WORKER_URL: "${MULLU_VOICE_WORKER_URL:-}"
+      MULLU_VOICE_WORKER_SECRET: "${MULLU_VOICE_WORKER_SECRET:-}"
+      MULLU_EMAIL_CALENDAR_WORKER_URL: "${MULLU_EMAIL_CALENDAR_WORKER_URL:-}"
+      MULLU_EMAIL_CALENDAR_WORKER_SECRET: "${MULLU_EMAIL_CALENDAR_WORKER_SECRET:-}"
+      MULLU_LLM_BACKEND: stub
+      MULLU_PII_SCAN: "true"
+      # Channel credentials (set in .env):
+      # WHATSAPP_PHONE_NUMBER_ID: ""
+      # WHATSAPP_ACCESS_TOKEN: ""
+      # WHATSAPP_VERIFY_TOKEN: ""
+      # WHATSAPP_APP_SECRET: ""
+      # TELEGRAM_BOT_TOKEN: ""
+      # SLACK_BOT_TOKEN: ""
+      # SLACK_SIGNING_SECRET: ""
+      # DISCORD_BOT_TOKEN: ""
+      # DISCORD_PUBLIC_KEY: ""
+    depends_on:
+      mullu:
+        condition: service_healthy
+      capability-worker:
+        condition: service_healthy
+    networks:
+      - mullu-net
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:8001/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "0.5"
+
+  # Mullu Capability Worker - restricted dangerous-capability execution plane
+  capability-worker:
+    build: .
+    restart: unless-stopped
+    command: ["python", "-m", "uvicorn", "gateway.capability_worker:app", "--host", "0.0.0.0", "--port", "8010"]
+    environment:
+      MULLU_ENV: pilot
+      MULLU_DB_BACKEND: postgresql
+      MULLU_DB_URL: "postgresql://mullu:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@postgres:5432/mullu"
+      MULLU_CAPABILITY_WORKER_SECRET: "${MULLU_CAPABILITY_WORKER_SECRET:?Set MULLU_CAPABILITY_WORKER_SECRET in .env}"
+      MULLU_LLM_BACKEND: stub
+      MULLU_PII_SCAN: "true"
+      # Provider credentials for dangerous capabilities belong here, not in gateway:
+      # STRIPE_API_KEY: ""
+      # PAYMENT_PROVIDER_API_KEY: ""
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - mullu-net
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:8010/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "0.5"
+
+  # Mullu Browser Worker - restricted Playwright browser execution plane
+  browser-worker:
+    profiles: ["adapter-workers"]
+    build: .
+    restart: unless-stopped
+    command: ["python", "-m", "uvicorn", "gateway.browser_worker:app", "--host", "0.0.0.0", "--port", "8020"]
+    environment:
+      MULLU_ENV: pilot
+      MULLU_BROWSER_WORKER_SECRET: "${MULLU_BROWSER_WORKER_SECRET:?Set MULLU_BROWSER_WORKER_SECRET in .env}"
+      PLAYWRIGHT_BROWSERS_PATH: "/ms-playwright"
+    networks:
+      - browser-worker-net
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:8020/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: "1.0"
+
+  # Mullu Document Worker - restricted PDF/Office parsing and generation plane
+  document-worker:
+    profiles: ["adapter-workers"]
+    build: .
+    restart: unless-stopped
+    command: ["python", "-m", "uvicorn", "gateway.document_worker:app", "--host", "0.0.0.0", "--port", "8030"]
+    environment:
+      MULLU_ENV: pilot
+      MULLU_DOCUMENT_WORKER_SECRET: "${MULLU_DOCUMENT_WORKER_SECRET:?Set MULLU_DOCUMENT_WORKER_SECRET in .env}"
+      MULLU_DOCUMENT_WORKER_ADAPTER: "production"
+    networks:
+      - mullu-net
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:8030/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "0.5"
+
+  # Mullu Voice Worker - restricted speech-to-text and text-to-speech plane
+  voice-worker:
+    profiles: ["adapter-workers"]
+    build: .
+    restart: unless-stopped
+    command: ["python", "-m", "uvicorn", "gateway.voice_worker:app", "--host", "0.0.0.0", "--port", "8040"]
+    environment:
+      MULLU_ENV: pilot
+      MULLU_VOICE_WORKER_SECRET: "${MULLU_VOICE_WORKER_SECRET:?Set MULLU_VOICE_WORKER_SECRET in .env}"
+      MULLU_VOICE_WORKER_ADAPTER: "openai"
+      OPENAI_API_KEY: "${OPENAI_API_KEY:?Set OPENAI_API_KEY in .env for voice worker}"
+    networks:
+      - mullu-net
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:8040/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "0.5"
+
+  # Mullu Email/Calendar Worker - restricted communication connector plane
+  email-calendar-worker:
+    profiles: ["adapter-workers"]
+    build: .
+    restart: unless-stopped
+    command: ["python", "-m", "uvicorn", "gateway.email_calendar_worker:app", "--host", "0.0.0.0", "--port", "8050"]
+    environment:
+      MULLU_ENV: pilot
+      MULLU_EMAIL_CALENDAR_WORKER_SECRET: "${MULLU_EMAIL_CALENDAR_WORKER_SECRET:?Set MULLU_EMAIL_CALENDAR_WORKER_SECRET in .env}"
+      MULLU_EMAIL_CALENDAR_WORKER_ADAPTER: "production"
+      EMAIL_CALENDAR_CONNECTOR_TOKEN: "${EMAIL_CALENDAR_CONNECTOR_TOKEN:-}"
+      EMAIL_CALENDAR_CONNECTOR_ID: "${EMAIL_CALENDAR_CONNECTOR_ID:-gmail}"
+      EMAIL_CALENDAR_CONNECTOR_SCOPE_ID: "${EMAIL_CALENDAR_CONNECTOR_SCOPE_ID:-governed:gmail}"
+      GMAIL_ACCESS_TOKEN: "${GMAIL_ACCESS_TOKEN:-}"
+      GOOGLE_CALENDAR_ACCESS_TOKEN: "${GOOGLE_CALENDAR_ACCESS_TOKEN:-}"
+      MICROSOFT_GRAPH_ACCESS_TOKEN: "${MICROSOFT_GRAPH_ACCESS_TOKEN:-}"
+    networks:
+      - mullu-net
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:8050/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "0.5"
+
+  # Mullu Gateway Worker - command-spine continuation worker
+  gateway-worker:
+    build: .
+    restart: unless-stopped
+    command: ["python", "-m", "gateway.worker"]
+    environment:
+      MULLU_ENV: pilot
+      MULLU_API_AUTH_REQUIRED: "true"
+      MULLU_DB_BACKEND: postgresql
+      MULLU_DB_URL: "postgresql://mullu:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@postgres:5432/mullu"
+      MULLU_CORS_ORIGINS: "${MULLU_CORS_ORIGINS:?Set MULLU_CORS_ORIGINS in .env}"
+      MULLU_ENCRYPTION_KEY: "${MULLU_ENCRYPTION_KEY:?Set MULLU_ENCRYPTION_KEY in .env}"
+      MULLU_STATE_DIR: "/data/state"
+      MULLU_COMMAND_LEDGER_BACKEND: postgresql
+      MULLU_COMMAND_LEDGER_DB_URL: "postgresql://mullu:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@postgres:5432/mullu"
+      MULLU_TENANT_IDENTITY_BACKEND: postgresql
+      MULLU_REQUIRE_PERSISTENT_TENANT_IDENTITY: "true"
+      MULLU_GATEWAY_WORKER_ID: "gateway-worker-1"
+      MULLU_GATEWAY_WORKER_BATCH_SIZE: "10"
+      MULLU_GATEWAY_WORKER_LEASE_SECONDS: "300"
+      MULLU_GATEWAY_WORKER_POLL_SECONDS: "2.0"
+      MULLU_COMMAND_ANCHOR_KEY_ID: "compose-local"
+      MULLU_COMMAND_ANCHOR_SECRET: "${MULLU_COMMAND_ANCHOR_SECRET:?Set MULLU_COMMAND_ANCHOR_SECRET in .env}"
+      MULLU_REQUIRE_COMMAND_ANCHOR: "true"
+      MULLU_GATEWAY_APPROVAL_SECRET: "${MULLU_GATEWAY_APPROVAL_SECRET:?Set MULLU_GATEWAY_APPROVAL_SECRET in .env}"
+      MULLU_RUNTIME_WITNESS_SECRET: "${MULLU_RUNTIME_WITNESS_SECRET:?Set MULLU_RUNTIME_WITNESS_SECRET in .env}"
+      MULLU_RUNTIME_CONFORMANCE_SECRET: "${MULLU_RUNTIME_CONFORMANCE_SECRET:?Set MULLU_RUNTIME_CONFORMANCE_SECRET in .env}"
+      MULLU_CAPABILITY_WORKER_URL: "http://capability-worker:8010/capability/execute"
+      MULLU_CAPABILITY_WORKER_SECRET: "${MULLU_CAPABILITY_WORKER_SECRET:?Set MULLU_CAPABILITY_WORKER_SECRET in .env}"
+      MULLU_BROWSER_WORKER_URL: "${MULLU_BROWSER_WORKER_URL:-}"
+      MULLU_BROWSER_WORKER_SECRET: "${MULLU_BROWSER_WORKER_SECRET:-}"
+      MULLU_DOCUMENT_WORKER_URL: "${MULLU_DOCUMENT_WORKER_URL:-}"
+      MULLU_DOCUMENT_WORKER_SECRET: "${MULLU_DOCUMENT_WORKER_SECRET:-}"
+      MULLU_VOICE_WORKER_URL: "${MULLU_VOICE_WORKER_URL:-}"
+      MULLU_VOICE_WORKER_SECRET: "${MULLU_VOICE_WORKER_SECRET:-}"
+      MULLU_EMAIL_CALENDAR_WORKER_URL: "${MULLU_EMAIL_CALENDAR_WORKER_URL:-}"
+      MULLU_EMAIL_CALENDAR_WORKER_SECRET: "${MULLU_EMAIL_CALENDAR_WORKER_SECRET:-}"
+      MULLU_LLM_BACKEND: stub
+      MULLU_PII_SCAN: "true"
+      # Channel credentials are needed only if worker sends final responses through adapters:
+      # WHATSAPP_PHONE_NUMBER_ID: ""
+      # WHATSAPP_ACCESS_TOKEN: ""
+      # WHATSAPP_VERIFY_TOKEN: ""
+      # WHATSAPP_APP_SECRET: ""
+      # TELEGRAM_BOT_TOKEN: ""
+      # SLACK_BOT_TOKEN: ""
+      # SLACK_SIGNING_SECRET: ""
+      # DISCORD_BOT_TOKEN: ""
+      # DISCORD_PUBLIC_KEY: ""
+    depends_on:
+      postgres:
+        condition: service_healthy
+      capability-worker:
+        condition: service_healthy
+    networks:
+      - mullu-net
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "0.5"
 
 volumes:
   pgdata:
+  state-data:

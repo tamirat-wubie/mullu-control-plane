@@ -54,6 +54,8 @@ class TestEventBus:
         bus.publish("x", payload={})
         assert len(good_log) == 1  # Good subscriber still called
         assert bus.error_count == 1
+        assert bus._errors[0]["error"] == "subscriber error (RuntimeError)"
+        assert "boom" not in bus._errors[0]["error"]
 
     def test_history(self):
         bus = EventBus(clock=FIXED_CLOCK)

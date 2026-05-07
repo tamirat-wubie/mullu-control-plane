@@ -27,6 +27,9 @@ class TestTenantIsolationAuditor:
         assert not result.is_clean
         assert len(result.violations) == 1
         assert result.violations[0].violation_type == IsolationViolationType.CROSS_TENANT_READ
+        assert result.violations[0].description == "cross-tenant operation detected"
+        assert "t1" not in result.violations[0].description
+        assert "t2" not in result.violations[0].description
 
     def test_cross_tenant_write(self, auditor):
         ops = [TenantOperation("o1", "t1", "t2", "docs", "write")]

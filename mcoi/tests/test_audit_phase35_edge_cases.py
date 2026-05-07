@@ -576,7 +576,7 @@ class TestObligationCloseRejectsNonTerminal:
     ])
     def test_close_with_non_terminal_state_raises(self, bad_state: ObligationState) -> None:
         engine, oid = _make_obligation_engine()
-        with pytest.raises(RuntimeCoreInvariantError, match="terminal state"):
+        with pytest.raises(RuntimeCoreInvariantError, match="must be terminal"):
             engine.close(oid, final_state=bad_state, reason="test", closed_by="tester")
 
     @pytest.mark.parametrize("good_state", [

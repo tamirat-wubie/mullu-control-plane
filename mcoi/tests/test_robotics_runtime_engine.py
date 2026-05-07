@@ -588,3 +588,42 @@ class TestGoldenScenarios:
         eng.trigger_interlock("il1")
         assert eng._get_task("t1").status == TaskExecutionStatus.ABORTED
         assert eng._get_task("t2").status == TaskExecutionStatus.ABORTED
+
+
+class TestBoundedContractWitnesses:
+    def test_invariant_messages_do_not_reflect_ids_or_statuses(self):
+        eng, _ = _make_engine()
+        eng.register_workcell("cell-secret", "t1", "Cell A")
+
+        with pytest.raises(RuntimeCoreInvariantError) as duplicate_exc:
+            eng.register_workcell("cell-secret", "t1", "Cell A")
+        duplicate_message = str(duplicate_exc.value)
+        assert duplicate_message == "Duplicate cell_id"
+        assert "cell-secret" not in duplicate_message
+        assert "cell_id" in duplicate_message
+
+        eng.create_control_task("task-secret", "t1", "Task A", "c1")
+        eng.start_task("task-secret")
+        eng.complete_task("task-secret")
+        with pytest.raises(RuntimeCoreInvariantError) as terminal_exc:
+            eng.abort_task("task-secret")
+        terminal_message = str(terminal_exc.value)
+        assert terminal_message == "Cannot transition task in terminal status"
+        assert "completed" not in terminal_message
+        assert "task-secret" not in terminal_message
+
+    def test_violation_reasons_are_bounded(self):
+        eng, _ = _make_engine()
+        eng.register_workcell("c1", "t1", "Cell A")
+        eng.create_control_task("task-no-seq", "t1", "Task A", "c1")
+        eng.arm_interlock("il-secret", "t1", "c1", "Safety")
+        eng.bypass_interlock("il-secret")
+
+        violations = {v["operation"]: v["reason"] for v in eng.detect_robotics_violations()}
+        assert violations["task_without_sequence"] == "Task has no sequences"
+        assert "task-no-seq" not in violations["task_without_sequence"]
+        assert "sequences" in violations["task_without_sequence"]
+
+        assert violations["bypassed_interlock"] == "Interlock bypassed"
+        assert "il-secret" not in violations["bypassed_interlock"]
+        assert "bypassed" in violations["bypassed_interlock"]

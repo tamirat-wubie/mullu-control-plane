@@ -1,0 +1,158 @@
+name: Gateway Publication Orchestration
+
+on:
+  workflow_dispatch:
+    inputs:
+      gateway_host:
+        description: "Gateway DNS host, for example gateway.mullusi.com"
+        required: true
+        type: string
+      gateway_url:
+        description: "Optional gateway base URL; defaults to https://<gateway_host>"
+        required: false
+        type: string
+      expected_environment:
+        description: "Expected runtime environment reported by /gateway/witness"
+        required: true
+        default: "pilot"
+        type: choice
+        options:
+          - pilot
+          - production
+      apply_ingress:
+        description: "Apply the rendered ingress with kubectl"
+        required: true
+        default: false
+        type: boolean
+      dispatch_witness:
+        description: "Dispatch the deployment witness workflow after preflight"
+        required: true
+        default: false
+        type: boolean
+      skip_preflight_endpoint_probes:
+        description: "Skip /health, /gateway/witness, and /runtime/conformance probes during preflight"
+        required: true
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+  actions: write
+
+# v4.22.0: opt into Node.js 24 for the deprecated actions/* runtime.
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
+jobs:
+  publish-gateway:
+    name: Publish Gateway With Witness Gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.13
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Verify runtime witness secrets are mounted
+        env:
+          MULLU_RUNTIME_WITNESS_SECRET: ${{ secrets.MULLU_RUNTIME_WITNESS_SECRET }}
+          MULLU_RUNTIME_CONFORMANCE_SECRET: ${{ secrets.MULLU_RUNTIME_CONFORMANCE_SECRET }}
+          MULLU_DEPLOYMENT_WITNESS_SECRET: ${{ secrets.MULLU_DEPLOYMENT_WITNESS_SECRET }}
+        run: |
+          if [ -z "$MULLU_RUNTIME_WITNESS_SECRET" ]; then
+            echo "MULLU_RUNTIME_WITNESS_SECRET is required for gateway publication"
+            exit 1
+          fi
+          if [ -z "$MULLU_RUNTIME_CONFORMANCE_SECRET" ]; then
+            echo "MULLU_RUNTIME_CONFORMANCE_SECRET is required for gateway publication"
+            exit 1
+          fi
+          if [ -z "$MULLU_DEPLOYMENT_WITNESS_SECRET" ]; then
+            echo "MULLU_DEPLOYMENT_WITNESS_SECRET is required for gateway publication"
+            exit 1
+          fi
+
+      - name: Set up kubectl
+        if: ${{ inputs.apply_ingress }}
+        uses: azure/setup-kubectl@v4
+
+      - name: Configure kubeconfig
+        if: ${{ inputs.apply_ingress }}
+        env:
+          MULLU_KUBECONFIG_B64: ${{ secrets.MULLU_KUBECONFIG_B64 }}
+        run: |
+          if [ -z "$MULLU_KUBECONFIG_B64" ]; then
+            echo "MULLU_KUBECONFIG_B64 is required when apply_ingress is true"
+            exit 1
+          fi
+          printf "%s" "$MULLU_KUBECONFIG_B64" | base64 -d > "$RUNNER_TEMP/kubeconfig"
+          chmod 600 "$RUNNER_TEMP/kubeconfig"
+          echo "KUBECONFIG=$RUNNER_TEMP/kubeconfig" >> "$GITHUB_ENV"
+
+      - name: Run self-gating publication orchestration
+        env:
+          GH_TOKEN: ${{ github.token }}
+          MULLU_RUNTIME_WITNESS_SECRET: ${{ secrets.MULLU_RUNTIME_WITNESS_SECRET }}
+          MULLU_RUNTIME_CONFORMANCE_SECRET: ${{ secrets.MULLU_RUNTIME_CONFORMANCE_SECRET }}
+          MULLU_DEPLOYMENT_WITNESS_SECRET: ${{ secrets.MULLU_DEPLOYMENT_WITNESS_SECRET }}
+        run: |
+          args=(
+            --gateway-host "${{ inputs.gateway_host }}"
+            --expected-environment "${{ inputs.expected_environment }}"
+            --require-preflight
+            --require-mcp-operator-checklist
+            --accept-runtime-secret-env
+            --accept-conformance-secret-env
+            --accept-deployment-witness-secret-env
+            --preflight-output .change_assurance/deployment_witness_preflight.json
+            --orchestration-output .change_assurance/deployment_witness_orchestration.json
+          )
+          if [ -n "${{ inputs.gateway_url }}" ]; then
+            args+=(--gateway-url "${{ inputs.gateway_url }}")
+          fi
+          if [ "${{ inputs.apply_ingress }}" = "true" ]; then
+            args+=(--apply-ingress)
+          fi
+          if [ "${{ inputs.dispatch_witness }}" = "true" ]; then
+            args+=(--dispatch)
+          fi
+          if [ "${{ inputs.skip_preflight_endpoint_probes }}" = "true" ]; then
+            args+=(--skip-preflight-endpoint-probes)
+          fi
+          python scripts/orchestrate_deployment_witness.py "${args[@]}"
+
+      - name: Validate deployment orchestration receipt
+        run: |
+          args=(
+            --receipt .change_assurance/deployment_witness_orchestration.json
+            --output .change_assurance/deployment_witness_orchestration_validation.json
+            --require-preflight
+            --require-mcp-operator-checklist
+            --expected-environment "${{ inputs.expected_environment }}"
+          )
+          if [ "${{ inputs.dispatch_witness }}" = "true" ]; then
+            args+=(--require-dispatch)
+          fi
+          if [ -n "${{ inputs.gateway_host }}" ]; then
+            args+=(--expected-gateway-host "${{ inputs.gateway_host }}")
+          fi
+          if [ -n "${{ inputs.gateway_url }}" ]; then
+            args+=(--expected-gateway-url "${{ inputs.gateway_url }}")
+          fi
+          python scripts/validate_deployment_orchestration_receipt.py "${args[@]}"
+
+      - name: Upload gateway publication witness
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gateway-publication-witness
+          path: |
+            .change_assurance/deployment_witness_preflight.json
+            .change_assurance/deployment_witness_orchestration.json
+            .change_assurance/deployment_witness_orchestration_validation.json
+            .change_assurance/mullu-gateway-ingress.rendered.yaml
+            .change_assurance/deployment-witness-artifact/**
+          if-no-files-found: ignore

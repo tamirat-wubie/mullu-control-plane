@@ -52,8 +52,18 @@ PILOT_PROD = ShellCommandPolicy(
     allow_absolute_paths=False,
 )
 
+PILOT_PROD_DISABLED = ShellCommandPolicy(
+    policy_id="shell-pilot-prod-disabled",
+    allowed_executables=("echo",),
+    denied_patterns=_COMMON_DENIED_PATTERNS,
+    enabled=False,
+    max_argv_length=50,
+    max_single_arg_bytes=32768,
+    allow_absolute_paths=False,
+)
+
 BUILTIN_SHELL_POLICIES: dict[str, ShellCommandPolicy] = {
-    p.policy_id: p for p in (SANDBOXED, LOCAL_DEV, PILOT_PROD)
+    p.policy_id: p for p in (SANDBOXED, LOCAL_DEV, PILOT_PROD, PILOT_PROD_DISABLED)
 }
 
 

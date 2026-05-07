@@ -124,6 +124,9 @@ class TestRecoveryAutonomyGovernance:
         d = engine.decide("inc-1", RecoveryAction.RETRY, autonomy_mode="observe_only")
         assert not d.is_approved
         assert d.status is RecoveryDecisionStatus.BLOCKED_AUTONOMY
+        assert d.reason == "recovery action blocked by autonomy mode"
+        assert "retry" not in d.reason
+        assert "observe_only" not in d.reason
 
     def test_suggest_only_blocks_retry(self):
         engine = _engine()
@@ -136,12 +139,17 @@ class TestRecoveryAutonomyGovernance:
         engine.register_incident(_incident())
         d = engine.decide("inc-1", RecoveryAction.RETRY, autonomy_mode="approval_required")
         assert d.status is RecoveryDecisionStatus.BLOCKED_AUTONOMY
+        assert d.reason == "approval required for recovery action"
+        assert "retry" not in d.reason
+        assert "approval_required" not in d.reason
 
     def test_approval_required_allows_retry_with_approval(self):
         engine = _engine()
         engine.register_incident(_incident())
         d = engine.decide("inc-1", RecoveryAction.RETRY, autonomy_mode="approval_required", has_approval=True)
         assert d.is_approved
+        assert d.reason == "recovery action approved by operator"
+        assert "retry" not in d.reason
 
     def test_bounded_autonomous_allows_retry(self):
         engine = _engine()
@@ -154,6 +162,9 @@ class TestRecoveryAutonomyGovernance:
         engine.register_incident(_incident())
         d = engine.decide("inc-1", RecoveryAction.REPLAN, autonomy_mode="bounded_autonomous")
         assert d.is_approved
+        assert d.reason == "recovery action permitted"
+        assert "replan" not in d.reason
+        assert "bounded_autonomous" not in d.reason
 
     def test_rollback_always_needs_approval(self):
         engine = _engine()
@@ -191,7 +202,8 @@ class TestRetryLimits:
         d = engine.decide("inc-1", RecoveryAction.RETRY, autonomy_mode="bounded_autonomous")
         assert not d.is_approved
         assert d.status is RecoveryDecisionStatus.BLOCKED_POLICY
-        assert "retry limit" in d.reason
+        assert d.reason == "retry limit reached"
+        assert str(MAX_RETRY_ATTEMPTS) not in d.reason
 
     def test_escalation_always_available_after_limit(self):
         engine = _engine()

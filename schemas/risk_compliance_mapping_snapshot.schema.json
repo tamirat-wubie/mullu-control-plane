@@ -1,0 +1,224 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:risk-compliance-mapping-snapshot:1",
+  "title": "RiskComplianceMappingSnapshot",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "snapshot_id",
+    "inventory",
+    "mappings",
+    "evidence",
+    "risks",
+    "reports",
+    "open_gap_count",
+    "high_or_critical_risk_count",
+    "snapshot_hash"
+  ],
+  "properties": {
+    "snapshot_id": {"type": "string", "minLength": 1},
+    "inventory": {"type": "array", "items": {"$ref": "#/$defs/inventory_item"}},
+    "mappings": {"type": "array", "items": {"$ref": "#/$defs/mapping"}},
+    "evidence": {"type": "array", "items": {"$ref": "#/$defs/evidence"}},
+    "risks": {"type": "array", "items": {"$ref": "#/$defs/risk"}},
+    "reports": {"type": "array", "items": {"$ref": "#/$defs/report"}},
+    "open_gap_count": {"type": "integer", "minimum": 0},
+    "high_or_critical_risk_count": {"type": "integer", "minimum": 0},
+    "snapshot_hash": {"type": "string", "minLength": 32}
+  },
+  "$defs": {
+    "framework": {
+      "type": "string",
+      "enum": ["SOC2", "HIPAA", "EU_ACT", "ISO_IEC_42001", "NIST_RMF"]
+    },
+    "evidence_kind": {
+      "type": "string",
+      "enum": [
+        "policy_decision",
+        "approval_record",
+        "eval_run",
+        "terminal_certificate",
+        "incident_case",
+        "capability_evidence",
+        "deployment_witness",
+        "learning_admission_decision",
+        "data_governance",
+        "commercial_metering"
+      ]
+    },
+    "severity": {
+      "type": "string",
+      "enum": ["low", "medium", "high", "critical"]
+    },
+    "disposition": {
+      "type": "string",
+      "enum": ["mapped", "gap", "review"]
+    },
+    "inventory_item": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "item_id",
+        "item_type",
+        "tenant_id",
+        "owner",
+        "risk_tier",
+        "evidence_refs",
+        "item_hash",
+        "metadata"
+      ],
+      "properties": {
+        "item_id": {"type": "string", "minLength": 1},
+        "item_type": {"type": "string", "minLength": 1},
+        "tenant_id": {"type": "string", "minLength": 1},
+        "owner": {"type": "string", "minLength": 1},
+        "risk_tier": {"$ref": "#/$defs/severity"},
+        "evidence_refs": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+        "item_hash": {"type": "string", "minLength": 32},
+        "metadata": {"type": "object"}
+      }
+    },
+    "mapping": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "mapping_id",
+        "framework",
+        "control_id",
+        "control_area",
+        "mullu_evidence_surface",
+        "required_evidence_kinds",
+        "owner",
+        "mapping_hash",
+        "metadata"
+      ],
+      "properties": {
+        "mapping_id": {"type": "string", "minLength": 1},
+        "framework": {"$ref": "#/$defs/framework"},
+        "control_id": {"type": "string", "minLength": 1},
+        "control_area": {"type": "string", "minLength": 1},
+        "mullu_evidence_surface": {"type": "string", "minLength": 1},
+        "required_evidence_kinds": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"$ref": "#/$defs/evidence_kind"}
+        },
+        "owner": {"type": "string", "minLength": 1},
+        "mapping_hash": {"type": "string", "minLength": 32},
+        "metadata": {"type": "object"}
+      }
+    },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "evidence_id",
+        "tenant_id",
+        "kind",
+        "source_ref",
+        "observed_at",
+        "passed",
+        "evidence_hash",
+        "metadata"
+      ],
+      "properties": {
+        "evidence_id": {"type": "string", "minLength": 1},
+        "tenant_id": {"type": "string", "minLength": 1},
+        "kind": {"$ref": "#/$defs/evidence_kind"},
+        "source_ref": {"type": "string", "minLength": 1},
+        "observed_at": {"type": "string", "minLength": 1},
+        "passed": {"type": "boolean"},
+        "evidence_hash": {"type": "string", "minLength": 32},
+        "metadata": {"type": "object"}
+      }
+    },
+    "risk": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "risk_id",
+        "tenant_id",
+        "title",
+        "severity",
+        "control_ids",
+        "mitigation_refs",
+        "owner",
+        "status",
+        "risk_hash",
+        "metadata"
+      ],
+      "properties": {
+        "risk_id": {"type": "string", "minLength": 1},
+        "tenant_id": {"type": "string", "minLength": 1},
+        "title": {"type": "string", "minLength": 1},
+        "severity": {"$ref": "#/$defs/severity"},
+        "control_ids": {"type": "array", "items": {"type": "string", "minLength": 1}},
+        "mitigation_refs": {"type": "array", "items": {"type": "string", "minLength": 1}},
+        "owner": {"type": "string", "minLength": 1},
+        "status": {"type": "string", "minLength": 1},
+        "risk_hash": {"type": "string", "minLength": 32},
+        "metadata": {"type": "object"}
+      }
+    },
+    "result": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "mapping_id",
+        "framework",
+        "control_id",
+        "disposition",
+        "present_evidence_kinds",
+        "missing_evidence_kinds",
+        "evidence_refs",
+        "result_hash"
+      ],
+      "properties": {
+        "mapping_id": {"type": "string", "minLength": 1},
+        "framework": {"$ref": "#/$defs/framework"},
+        "control_id": {"type": "string", "minLength": 1},
+        "disposition": {"$ref": "#/$defs/disposition"},
+        "present_evidence_kinds": {"type": "array", "items": {"$ref": "#/$defs/evidence_kind"}},
+        "missing_evidence_kinds": {"type": "array", "items": {"$ref": "#/$defs/evidence_kind"}},
+        "evidence_refs": {"type": "array", "items": {"type": "string", "minLength": 1}},
+        "result_hash": {"type": "string", "minLength": 32}
+      }
+    },
+    "report": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "report_id",
+        "tenant_id",
+        "framework",
+        "generated_at",
+        "certification_claimed",
+        "external_publication_review_required",
+        "mapped_control_count",
+        "gap_control_count",
+        "review_control_count",
+        "evidence_coverage_percent",
+        "high_or_critical_risk_count",
+        "publication_allowed",
+        "results",
+        "report_hash"
+      ],
+      "properties": {
+        "report_id": {"type": "string", "minLength": 1},
+        "tenant_id": {"type": "string", "minLength": 1},
+        "framework": {"$ref": "#/$defs/framework"},
+        "generated_at": {"type": "string", "minLength": 1},
+        "certification_claimed": {"type": "boolean", "const": false},
+        "external_publication_review_required": {"type": "boolean", "const": true},
+        "mapped_control_count": {"type": "integer", "minimum": 0},
+        "gap_control_count": {"type": "integer", "minimum": 0},
+        "review_control_count": {"type": "integer", "minimum": 0},
+        "evidence_coverage_percent": {"type": "number", "minimum": 0, "maximum": 100},
+        "high_or_critical_risk_count": {"type": "integer", "minimum": 0},
+        "publication_allowed": {"type": "boolean", "const": false},
+        "results": {"type": "array", "items": {"$ref": "#/$defs/result"}},
+        "report_hash": {"type": "string", "minLength": 32}
+      }
+    }
+  }
+}

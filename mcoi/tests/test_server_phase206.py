@@ -67,6 +67,10 @@ class TestPipelineEndpoints:
         assert data["succeeded"] is True
         assert len(data["steps"]) == 2
         assert data["final_output"]
+        assert data["action_proof"]["action"] == "pipeline.execute"
+        assert data["action_proof"]["succeeded"] is True
+        assert data["action_proof"]["proof_hash"]
+        assert data["action_proof"]["proof_receipt_id"]
 
     def test_single_step_pipeline(self, client):
         resp = client.post("/api/v1/pipeline/execute", json={

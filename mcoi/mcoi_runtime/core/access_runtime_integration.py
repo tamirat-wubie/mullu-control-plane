@@ -31,7 +31,7 @@ from ..contracts.memory_mesh import (
 from .event_spine import EventSpineEngine
 from .invariants import RuntimeCoreInvariantError, stable_identifier
 from .memory_mesh import MemoryMeshEngine
-from .access_runtime import AccessRuntimeEngine
+from mcoi_runtime.governance.guards.access import AccessRuntimeEngine
 
 
 def _now_iso() -> str:
@@ -265,7 +265,7 @@ class AccessRuntimeIntegration:
             scope=MemoryScope.GLOBAL,
             scope_ref_id=scope_ref_id,
             trust_level=MemoryTrustLevel.VERIFIED,
-            title=f"Access audit state: {scope_ref_id}",
+            title="Access audit state",
             content=content,
             source_ids=(scope_ref_id,),
             tags=("access", "identity", "authorization"),

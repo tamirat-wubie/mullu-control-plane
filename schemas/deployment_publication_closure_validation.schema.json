@@ -1,0 +1,74 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:deployment-publication-closure-validation:1",
+  "title": "Deployment Publication Closure Validation",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "deployment_status_path",
+    "witness_path",
+    "valid",
+    "errors"
+  ],
+  "properties": {
+    "deployment_status_path": {
+      "type": "string",
+      "enum": [
+        "DEPLOYMENT_STATUS.md",
+        "provided_deployment_status"
+      ]
+    },
+    "witness_path": {
+      "type": "string",
+      "enum": [
+        ".change_assurance/deployment_witness.json",
+        "provided_witness"
+      ]
+    },
+    "valid": {
+      "type": "boolean"
+    },
+    "errors": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 1024
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "valid": {
+            "const": true
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "errors": {
+            "maxItems": 0
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "valid": {
+            "const": false
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "errors": {
+            "minItems": 1
+          }
+        }
+      }
+    }
+  ]
+}

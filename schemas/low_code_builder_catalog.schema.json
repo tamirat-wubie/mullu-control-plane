@@ -1,0 +1,125 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:low-code-builder-catalog:1",
+  "title": "BuilderCatalogSnapshot",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "catalog_id",
+    "compilations",
+    "total_apps",
+    "activation_blocked_count",
+    "certified_count",
+    "canonical_artifact_count",
+    "snapshot_hash"
+  ],
+  "properties": {
+    "catalog_id": {"type": "string", "minLength": 1},
+    "compilations": {"type": "array", "items": {"$ref": "#/$defs/compilation"}},
+    "total_apps": {"type": "integer", "minimum": 0},
+    "activation_blocked_count": {"type": "integer", "minimum": 0},
+    "certified_count": {"type": "integer", "minimum": 0},
+    "canonical_artifact_count": {"type": "integer", "minimum": 0},
+    "snapshot_hash": {"type": "string", "minLength": 32}
+  },
+  "$defs": {
+    "artifact_kind": {
+      "type": "string",
+      "enum": [
+        "agent.yaml",
+        "workflow.yaml",
+        "policy.yaml",
+        "capability.yaml",
+        "eval_suite.yaml",
+        "approval_chain.yaml"
+      ]
+    },
+    "status": {
+      "type": "string",
+      "enum": ["draft", "candidate", "certified", "blocked"]
+    },
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "artifact_id",
+        "kind",
+        "path",
+        "content",
+        "artifact_hash"
+      ],
+      "properties": {
+        "artifact_id": {"type": "string", "minLength": 1},
+        "kind": {"$ref": "#/$defs/artifact_kind"},
+        "path": {"$ref": "#/$defs/artifact_kind"},
+        "content": {
+          "type": "object",
+          "required": [
+            "app_id",
+            "display_name",
+            "domain",
+            "owner_team",
+            "risk",
+            "manifest_version",
+            "generated_by",
+            "declarative_only"
+          ],
+          "properties": {
+            "app_id": {"type": "string", "minLength": 1},
+            "display_name": {"type": "string", "minLength": 1},
+            "domain": {"type": "string", "minLength": 1},
+            "owner_team": {"type": "string", "minLength": 1},
+            "risk": {"type": "string", "enum": ["low", "medium", "high", "critical"]},
+            "manifest_version": {"type": "integer", "const": 1},
+            "generated_by": {"type": "string", "const": "mullu_low_code_builder"},
+            "declarative_only": {"type": "boolean", "const": true}
+          }
+        },
+        "artifact_hash": {"type": "string", "minLength": 32}
+      }
+    },
+    "compilation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "compilation_id",
+        "app_id",
+        "status",
+        "artifacts",
+        "activation_blocked",
+        "blocked_reasons",
+        "certification_evidence_refs",
+        "compiled_hash",
+        "metadata"
+      ],
+      "properties": {
+        "compilation_id": {"type": "string", "minLength": 1},
+        "app_id": {"type": "string", "minLength": 1},
+        "status": {"$ref": "#/$defs/status"},
+        "artifacts": {
+          "type": "array",
+          "minItems": 6,
+          "maxItems": 6,
+          "items": {"$ref": "#/$defs/artifact"}
+        },
+        "activation_blocked": {"type": "boolean"},
+        "blocked_reasons": {"type": "array", "items": {"type": "string", "minLength": 1}},
+        "certification_evidence_refs": {"type": "array", "items": {"type": "string", "minLength": 1}},
+        "compiled_hash": {"type": "string", "minLength": 32},
+        "metadata": {
+          "type": "object",
+          "required": [
+            "compiled_from",
+            "builder_is_declarative_only",
+            "side_effect_execution_allowed"
+          ],
+          "properties": {
+            "compiled_from": {"type": "string", "const": "builder_app_spec"},
+            "builder_is_declarative_only": {"type": "boolean", "const": true},
+            "side_effect_execution_allowed": {"type": "boolean", "const": false}
+          }
+        }
+      }
+    }
+  }
+}

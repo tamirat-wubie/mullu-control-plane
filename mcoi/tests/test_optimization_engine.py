@@ -252,7 +252,7 @@ class TestOptimizeConnectors:
             {"connector_ref": "conn-a", "success_rate": 0.85, "cost_per_call": 0.5, "latency_seconds": 1.0},
         ])
         assert len(recs) == 1
-        assert "conn-a" in recs[0].title
+        assert "degraded connector" in recs[0].title.lower()
 
     def test_success_rate_at_09_no_rec(self, engine):
         _make_request(engine)
@@ -740,7 +740,7 @@ class TestOptimizeDomainPackSelection:
             {"domain_pack_id": "dp-1", "fault_rate": 0.2},
         ])
         assert len(recs) == 1
-        assert "dp-1" in recs[0].title
+        assert "domain pack" in recs[0].title.lower()
 
     def test_fault_rate_at_01_no_rec(self, engine):
         _make_request(engine, target=OptimizationTarget.DOMAIN_PACK_SELECTION)
@@ -1803,3 +1803,95 @@ class TestEdgeCases:
                                            RecommendationDisposition.ACCEPTED)
         with pytest.raises(AttributeError):
             dec.decision_id = "changed"
+
+
+class TestBoundedContracts:
+    def test_duplicate_request_redacts_request_id(self, engine):
+        _make_request(engine, rid="dup-secret")
+        with pytest.raises(RuntimeCoreInvariantError) as excinfo:
+            _make_request(engine, rid="dup-secret")
+        assert "already exists" in str(excinfo.value)
+        assert "dup-secret" not in str(excinfo.value)
+
+    def test_missing_constraint_request_redacts_request_id(self, engine):
+        with pytest.raises(RuntimeCoreInvariantError) as excinfo:
+            engine.add_constraint("c1", "missing-secret", "limit")
+        assert "not found" in str(excinfo.value)
+        assert "missing-secret" not in str(excinfo.value)
+
+    def test_connector_recommendation_redacts_ref_and_rate(self, engine):
+        _make_request(engine)
+        rec = engine.optimize_connectors("req-1", [
+            {"connector_ref": "connector-secret", "success_rate": 0.41, "cost_per_call": 2.5, "latency_seconds": 1.0},
+        ])[0]
+        combined = " ".join((rec.title, rec.description, rec.rationale))
+        assert "connector-secret" not in combined
+        assert "41%" not in combined
+
+    def test_portfolio_recommendation_redacts_counts(self, engine):
+        _make_request(engine, target=OptimizationTarget.PORTFOLIO_BALANCE)
+        rec = engine.optimize_portfolio("req-1", [
+            {"campaign_id": f"blocked-{i}", "blocked": True, "overdue": False}
+            for i in range(4)
+        ])[0]
+        combined = " ".join((rec.title, rec.description, rec.rationale))
+        assert "4 blocked" not in combined
+        assert "4 campaigns" not in combined
+
+    def test_budget_recommendation_redacts_id_and_values(self, engine):
+        _make_request(engine, target=OptimizationTarget.BUDGET_ALLOCATION)
+        rec = engine.optimize_budget_allocation("req-1", [
+            {"budget_id": "budget-secret", "burn_rate": 0.97, "cost_per_completion": 500, "utilization": 0.8},
+        ])[0]
+        combined = " ".join((rec.title, rec.description, rec.rationale))
+        assert "budget-secret" not in combined
+        assert "97%" not in combined
+        assert "500.00" not in combined
+
+    def test_campaign_recommendation_redacts_id_and_wait_value(self, engine):
+        _make_request(engine, target=OptimizationTarget.CAMPAIGN_DURATION)
+        rec = engine.optimize_campaigns("req-1", [
+            {"campaign_id": "campaign-secret", "waiting_on_human_seconds": 7200, "escalation_count": 0, "cost": 100},
+        ])[0]
+        combined = " ".join((rec.title, rec.description, rec.rationale))
+        assert "campaign-secret" not in combined
+        assert "2.0h" not in combined
+
+    def test_schedule_recommendation_redacts_identity_and_count(self, engine):
+        _make_request(engine, target=OptimizationTarget.CHANNEL_ROUTING)
+        rec = engine.optimize_schedule("req-1", [
+            {"identity_ref": "identity-secret", "available_hours": 8, "utilized_hours": 4, "contact_attempts": 10, "quiet_hours_violations": 4},
+        ])[0]
+        combined = " ".join((rec.title, rec.description, rec.rationale))
+        assert "identity-secret" not in combined
+        assert "4 quiet hours" not in combined
+
+    def test_escalation_recommendation_redacts_policy_and_rate(self, engine):
+        _make_request(engine, target=OptimizationTarget.ESCALATION_POLICY)
+        rec = engine.optimize_escalation("req-1", [
+            {"policy_ref": "policy-secret", "total_escalations": 10, "resolved_count": 6, "avg_resolution_seconds": 100, "false_positive_count": 5},
+        ])[0]
+        combined = " ".join((rec.title, rec.description, rec.rationale))
+        assert "policy-secret" not in combined
+        assert "50%" not in combined
+
+    def test_domain_pack_recommendation_redacts_pack_and_rate(self, engine):
+        _make_request(engine, target=OptimizationTarget.FAULT_AVOIDANCE)
+        rec = engine.optimize_domain_pack_selection("req-1", [
+            {"domain_pack_id": "pack-secret", "success_rate": 0.6, "cost": 50, "latency_seconds": 1.0, "fault_rate": 0.45},
+        ])[0]
+        combined = " ".join((rec.title, rec.description, rec.rationale))
+        assert "pack-secret" not in combined
+        assert "45%" not in combined
+
+    def test_estimate_impact_redacts_recommendation_id(self, engine):
+        with pytest.raises(RuntimeCoreInvariantError) as excinfo:
+            engine.estimate_impact("bad-rec-secret", "m", 1.0, 2.0)
+        assert "not found" in str(excinfo.value)
+        assert "bad-rec-secret" not in str(excinfo.value)
+
+    def test_decide_recommendation_redacts_recommendation_id(self, engine):
+        with pytest.raises(RuntimeCoreInvariantError) as excinfo:
+            engine.decide_recommendation("d1", "bad-rec-secret", RecommendationDisposition.ACCEPTED)
+        assert "not found" in str(excinfo.value)
+        assert "bad-rec-secret" not in str(excinfo.value)

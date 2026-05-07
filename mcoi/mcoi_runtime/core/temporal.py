@@ -55,7 +55,7 @@ class TemporalEngine:
 
     def schedule(self, task: TemporalTask) -> TemporalTask:
         if task.task_id in self._tasks:
-            raise RuntimeCoreInvariantError(f"task already scheduled: {task.task_id}")
+            raise RuntimeCoreInvariantError("task already scheduled")
         if task.state is not TemporalState.PENDING:
             raise RuntimeCoreInvariantError("new tasks must start in pending state")
         self._tasks[task.task_id] = task
@@ -78,7 +78,7 @@ class TemporalEngine:
 
         task = self._tasks.get(task_id)
         if task is None:
-            raise RuntimeCoreInvariantError(f"task not found: {task_id}")
+            raise RuntimeCoreInvariantError("task unavailable")
 
         transition = StateTransition(
             task_id=task_id,
@@ -116,10 +116,10 @@ class TemporalEngine:
             return DueEvaluation(task_id=task_id, is_due=False, reason="task_not_found")
 
         if task.state in TERMINAL_STATES:
-            return DueEvaluation(task_id=task_id, is_due=False, reason=f"terminal_state:{task.state}")
+            return DueEvaluation(task_id=task_id, is_due=False, reason="terminal_state")
 
         if task.state not in (TemporalState.PENDING, TemporalState.WAITING):
-            return DueEvaluation(task_id=task_id, is_due=False, reason=f"not_evaluable:{task.state}")
+            return DueEvaluation(task_id=task_id, is_due=False, reason="not_evaluable")
 
         # Sample clock once for deterministic evaluation
         now = self._clock()
@@ -149,7 +149,7 @@ class TemporalEngine:
 
     def save_checkpoint(self, checkpoint: ResumeCheckpoint) -> ResumeCheckpoint:
         if checkpoint.task_id not in self._tasks:
-            raise RuntimeCoreInvariantError(f"cannot checkpoint unknown task: {checkpoint.task_id}")
+            raise RuntimeCoreInvariantError("cannot checkpoint unknown task")
         self._checkpoints[checkpoint.checkpoint_id] = checkpoint
         return checkpoint
 

@@ -101,11 +101,15 @@ class LearningEngine:
         self._confidences[knowledge_id] = new_value
 
         now = self._clock()
-        direction = "increase" if outcome_success else "decrease"
+        reason = (
+            "outcome-based confidence increase"
+            if outcome_success
+            else "outcome-based confidence decrease"
+        )
 
         return ConfidenceLevel(
             value=round(new_value, 6),
-            reason=f"outcome-based {direction}: weight={weight}",
+            reason=reason,
             assessed_at=now,
         )
 

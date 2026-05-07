@@ -179,7 +179,7 @@ class SupplyChainDemoGenerator:
 
         # Seed remediations linked to first 5 cases
         rems = [
-            {"remediation_id": f"sc-rem-{i:03d}", "case_ref": f"sc-case-{i:03d}", "title": f"Remediate: {cases[i]['title']}"}
+            {"remediation_id": f"sc-rem-{i:03d}", "case_ref": f"sc-case-{i:03d}", "title": "Supply chain remediation"}
             for i in range(5)
         ]
         rem_result = self._importer.import_remediations(tenant_id, rems)

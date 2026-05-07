@@ -231,8 +231,12 @@ class TestIntegrationBase:
     def test_rejects_wrong_engine_type(self):
         es = EventSpineEngine()
         mm = MemoryMeshEngine()
-        with pytest.raises(RuntimeCoreInvariantError):
+        with pytest.raises(
+            RuntimeCoreInvariantError,
+            match="^engine must match required engine type$",
+        ) as exc_info:
             IntegrationBase("bad", ConcreteEngine, es, mm)
+        assert "ConcreteEngine" not in str(exc_info.value)
 
     def test_rejects_wrong_event_spine(self):
         es = EventSpineEngine()

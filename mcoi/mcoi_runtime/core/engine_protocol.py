@@ -206,9 +206,7 @@ class IntegrationBase:
         from mcoi_runtime.core.memory_mesh import MemoryMeshEngine
 
         if not isinstance(engine, engine_type):
-            raise RuntimeCoreInvariantError(
-                f"engine must be a {engine_type.__name__}"
-            )
+            raise RuntimeCoreInvariantError("engine must match required engine type")
         if not isinstance(event_spine, EventSpineEngine):
             raise RuntimeCoreInvariantError("event_spine must be an EventSpineEngine")
         if not isinstance(memory_engine, MemoryMeshEngine):

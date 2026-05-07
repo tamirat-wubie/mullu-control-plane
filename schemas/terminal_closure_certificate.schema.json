@@ -1,0 +1,210 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:terminal-closure-certificate:1",
+  "title": "Terminal Closure Certificate",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "certificate_id",
+    "command_id",
+    "execution_id",
+    "disposition",
+    "verification_result_id",
+    "effect_reconciliation_id",
+    "evidence_refs",
+    "closed_at"
+  ],
+  "properties": {
+    "certificate_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "command_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "execution_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "disposition": {
+      "type": "string",
+      "enum": [
+        "committed",
+        "compensated",
+        "accepted_risk",
+        "requires_review"
+      ]
+    },
+    "verification_result_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "effect_reconciliation_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "evidence_refs": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "closed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "response_closure_ref": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "minLength": 1
+    },
+    "memory_entry_id": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "minLength": 1
+    },
+    "compensation_outcome_id": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "minLength": 1
+    },
+    "accepted_risk_id": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "minLength": 1
+    },
+    "case_id": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "minLength": 1
+    },
+    "graph_refs": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "disposition": {
+            "const": "committed"
+          }
+        }
+      },
+      "then": {
+        "not": {
+          "anyOf": [
+            {
+              "required": [
+                "compensation_outcome_id"
+              ],
+              "properties": {
+                "compensation_outcome_id": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              }
+            },
+            {
+              "required": [
+                "accepted_risk_id"
+              ],
+              "properties": {
+                "accepted_risk_id": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "disposition": {
+            "const": "compensated"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "compensation_outcome_id"
+        ],
+        "properties": {
+          "compensation_outcome_id": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "disposition": {
+            "const": "accepted_risk"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "accepted_risk_id",
+          "case_id"
+        ],
+        "properties": {
+          "accepted_risk_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "case_id": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "disposition": {
+            "const": "requires_review"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "case_id"
+        ],
+        "properties": {
+          "case_id": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    }
+  ]
+}

@@ -242,9 +242,11 @@ class TestAttachToMemoryMesh:
         mem_rec = integration.attach_data_quality_to_memory_mesh("scope1")
         assert mem_rec.memory_id != ""
 
-    def test_title_contains_scope(self, integration):
+    def test_title_is_bounded(self, integration):
         mem_rec = integration.attach_data_quality_to_memory_mesh("scope1")
-        assert "scope1" in mem_rec.title
+        assert mem_rec.title == "Data quality state"
+        assert "scope1" not in mem_rec.title
+        assert mem_rec.scope_ref_id == "scope1"
 
     def test_tags_include_data_quality(self, integration):
         mem_rec = integration.attach_data_quality_to_memory_mesh("scope1")

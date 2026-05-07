@@ -44,7 +44,7 @@ class RegistryStore(Generic[EntryT]):
 
     def add(self, entry: RegistryEntry[EntryT]) -> RegistryEntry[EntryT]:
         if entry.entry_id in self._entries:
-            raise RuntimeCoreInvariantError(f"entry_id already exists: {entry.entry_id}")
+            raise RuntimeCoreInvariantError("entry_id already exists")
         self._entries[entry.entry_id] = copied(entry)
         return copied(self._entries[entry.entry_id])
 

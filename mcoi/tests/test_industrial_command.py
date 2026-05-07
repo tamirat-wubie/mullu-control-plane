@@ -58,11 +58,26 @@ class TestDashboard:
         with pytest.raises(KeyError):
             dash.add_kpi("MISSING", "oee", 50.0)
 
+    def test_add_kpi_unknown_plant_error_is_bounded(self):
+        dash = self._make_dashboard()
+        with pytest.raises(KeyError) as excinfo:
+            dash.add_kpi("MISSING", "oee", 50.0)
+        assert excinfo.value.args[0] == "plant not registered"
+        assert "MISSING" not in excinfo.value.args[0]
+
     def test_add_kpi_unknown_kpi_raises(self):
         dash = self._make_dashboard()
         dash.register_plant("P1", "Plant Alpha")
         with pytest.raises(ValueError):
             dash.add_kpi("P1", "not_a_kpi", 0.0)
+
+    def test_add_kpi_unknown_kpi_error_is_bounded(self):
+        dash = self._make_dashboard()
+        dash.register_plant("P1", "Plant Alpha")
+        with pytest.raises(ValueError, match="unknown KPI") as excinfo:
+            dash.add_kpi("P1", "not_a_kpi", 0.0)
+        assert str(excinfo.value) == "unknown KPI"
+        assert "not_a_kpi" not in str(excinfo.value)
 
     def test_get_plant_status(self):
         dash = self._make_dashboard()
@@ -72,6 +87,13 @@ class TestDashboard:
         status = dash.get_plant_status("P1")
         assert status["kpi_count"] == 2
         assert status["kpis"]["oee"] == 90.0
+
+    def test_get_plant_status_unknown_plant_error_is_bounded(self):
+        dash = self._make_dashboard()
+        with pytest.raises(KeyError) as excinfo:
+            dash.get_plant_status("PLANT-404")
+        assert excinfo.value.args[0] == "plant not registered"
+        assert "PLANT-404" not in excinfo.value.args[0]
 
     def test_aggregate_status(self):
         dash = self._make_dashboard()

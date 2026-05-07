@@ -132,7 +132,7 @@ class RoboticsRuntimeEngine:
     ) -> WorkcellRecord:
         """Register a workcell."""
         if cell_id in self._cells:
-            raise RuntimeCoreInvariantError(f"Duplicate cell_id: {cell_id}")
+            raise RuntimeCoreInvariantError("Duplicate cell_id")
         now = self._clock()
         cell = WorkcellRecord(
             cell_id=cell_id,
@@ -175,9 +175,9 @@ class RoboticsRuntimeEngine:
     ) -> ActuatorRecord:
         """Register an actuator (increments cell actuator_count)."""
         if actuator_id in self._actuators:
-            raise RuntimeCoreInvariantError(f"Duplicate actuator_id: {actuator_id}")
+            raise RuntimeCoreInvariantError("Duplicate actuator_id")
         if cell_ref not in self._cells:
-            raise RuntimeCoreInvariantError(f"Unknown cell_ref: {cell_ref}")
+            raise RuntimeCoreInvariantError("Unknown cell_ref")
         now = self._clock()
         act = ActuatorRecord(
             actuator_id=actuator_id,
@@ -207,9 +207,9 @@ class RoboticsRuntimeEngine:
     ) -> SensorRecord:
         """Register a sensor (increments cell sensor_count)."""
         if sensor_id in self._sensors:
-            raise RuntimeCoreInvariantError(f"Duplicate sensor_id: {sensor_id}")
+            raise RuntimeCoreInvariantError("Duplicate sensor_id")
         if cell_ref not in self._cells:
-            raise RuntimeCoreInvariantError(f"Unknown cell_ref: {cell_ref}")
+            raise RuntimeCoreInvariantError("Unknown cell_ref")
         now = self._clock()
         sen = SensorRecord(
             sensor_id=sensor_id,
@@ -241,7 +241,7 @@ class RoboticsRuntimeEngine:
     ) -> ControlTask:
         """Create a control task (QUEUED)."""
         if task_id in self._tasks:
-            raise RuntimeCoreInvariantError(f"Duplicate task_id: {task_id}")
+            raise RuntimeCoreInvariantError("Duplicate task_id")
         now = self._clock()
         task = ControlTask(
             task_id=task_id,
@@ -262,14 +262,12 @@ class RoboticsRuntimeEngine:
     def _get_task(self, task_id: str) -> ControlTask:
         t = self._tasks.get(task_id)
         if t is None:
-            raise RuntimeCoreInvariantError(f"Unknown task_id: {task_id}")
+            raise RuntimeCoreInvariantError("Unknown task_id")
         return t
 
     def _guard_terminal(self, task: ControlTask) -> None:
         if task.status in _TASK_TERMINAL:
-            raise RuntimeCoreInvariantError(
-                f"Cannot transition task in terminal status {task.status.value}"
-            )
+            raise RuntimeCoreInvariantError("Cannot transition task in terminal status")
 
     def _transition_task(self, task_id: str, new_status: TaskExecutionStatus) -> ControlTask:
         old = self._get_task(task_id)
@@ -348,9 +346,9 @@ class RoboticsRuntimeEngine:
     ) -> SafetyInterlock:
         """Arm a safety interlock (ARMED)."""
         if interlock_id in self._interlocks:
-            raise RuntimeCoreInvariantError(f"Duplicate interlock_id: {interlock_id}")
+            raise RuntimeCoreInvariantError("Duplicate interlock_id")
         if cell_ref not in self._cells:
-            raise RuntimeCoreInvariantError(f"Unknown cell_ref: {cell_ref}")
+            raise RuntimeCoreInvariantError("Unknown cell_ref")
         now = self._clock()
         il = SafetyInterlock(
             interlock_id=interlock_id,
@@ -371,7 +369,7 @@ class RoboticsRuntimeEngine:
     ) -> SafetyInterlock:
         old = self._interlocks.get(interlock_id)
         if old is None:
-            raise RuntimeCoreInvariantError(f"Unknown interlock_id: {interlock_id}")
+            raise RuntimeCoreInvariantError("Unknown interlock_id")
         updated = SafetyInterlock(
             interlock_id=old.interlock_id,
             tenant_id=old.tenant_id,
@@ -417,7 +415,7 @@ class RoboticsRuntimeEngine:
     ) -> ControlSequence:
         """Create a control sequence linked to a task."""
         if sequence_id in self._sequences:
-            raise RuntimeCoreInvariantError(f"Duplicate sequence_id: {sequence_id}")
+            raise RuntimeCoreInvariantError("Duplicate sequence_id")
         self._get_task(task_ref)  # ensure task exists
         now = self._clock()
         seq = ControlSequence(
@@ -452,7 +450,7 @@ class RoboticsRuntimeEngine:
         """Advance a control sequence by one step."""
         old = self._sequences.get(sequence_id)
         if old is None:
-            raise RuntimeCoreInvariantError(f"Unknown sequence_id: {sequence_id}")
+            raise RuntimeCoreInvariantError("Unknown sequence_id")
         if old.completed_steps >= old.step_count:
             raise RuntimeCoreInvariantError("Sequence already fully completed")
         updated = ControlSequence(
@@ -504,7 +502,7 @@ class RoboticsRuntimeEngine:
     def robotics_snapshot(self, snapshot_id: str, tenant_id: str) -> RoboticsSnapshot:
         """Capture a tenant-scoped point-in-time robotics snapshot."""
         if snapshot_id in self._snapshot_ids:
-            raise RuntimeCoreInvariantError(f"Duplicate snapshot_id: {snapshot_id}")
+            raise RuntimeCoreInvariantError("Duplicate snapshot_id")
         now = self._clock()
         snap = RoboticsSnapshot(
             snapshot_id=snapshot_id,
@@ -574,7 +572,7 @@ class RoboticsRuntimeEngine:
                         "violation_id": vid,
                         "tenant_id": act.tenant_id,
                         "operation": "faulted_actuator_in_active_cell",
-                        "reason": f"Actuator {act.actuator_id} is faulted in active cell {act.cell_ref}",
+                        "reason": "Faulted actuator in active cell",
                         "detected_at": now,
                     }
                     self._violations[vid] = v
@@ -591,7 +589,7 @@ class RoboticsRuntimeEngine:
                         "violation_id": vid,
                         "tenant_id": il.tenant_id,
                         "operation": "bypassed_interlock",
-                        "reason": f"Interlock {il.interlock_id} is bypassed",
+                        "reason": "Interlock bypassed",
                         "detected_at": now,
                     }
                     self._violations[vid] = v
@@ -608,7 +606,7 @@ class RoboticsRuntimeEngine:
                         "violation_id": vid,
                         "tenant_id": task.tenant_id,
                         "operation": "task_without_sequence",
-                        "reason": f"Task {task.task_id} has no sequences",
+                        "reason": "Task has no sequences",
                         "detected_at": now,
                     }
                     self._violations[vid] = v

@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:capability-maturity:1",
+  "title": "Capability Maturity Assessment",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "assessment_id",
+    "capability_id",
+    "maturity_level",
+    "production_ready",
+    "autonomy_ready",
+    "blockers",
+    "evidence_refs",
+    "assessment_hash",
+    "metadata"
+  ],
+  "properties": {
+    "assessment_id": {"type": "string", "minLength": 1},
+    "capability_id": {"type": "string", "minLength": 1},
+    "maturity_level": {"type": "string", "enum": ["C0", "C1", "C2", "C3", "C4", "C5", "C6", "C7"]},
+    "production_ready": {"type": "boolean"},
+    "autonomy_ready": {"type": "boolean"},
+    "blockers": {"type": "array", "items": {"type": "string", "minLength": 1}},
+    "evidence_refs": {"type": "array", "items": {"type": "string", "minLength": 1}},
+    "assessment_hash": {"type": "string", "minLength": 1},
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["assessment_is_not_promotion"],
+      "properties": {
+        "assessment_is_not_promotion": {"type": "boolean", "const": true},
+        "effect_bearing": {"type": "boolean"}
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"production_ready": {"const": true}}, "required": ["production_ready"]},
+      "then": {"properties": {"maturity_level": {"enum": ["C6", "C7"]}}}
+    },
+    {
+      "if": {"properties": {"autonomy_ready": {"const": true}}, "required": ["autonomy_ready"]},
+      "then": {
+        "properties": {
+          "maturity_level": {"const": "C7"},
+          "production_ready": {"const": true}
+        }
+      }
+    }
+  ]
+}

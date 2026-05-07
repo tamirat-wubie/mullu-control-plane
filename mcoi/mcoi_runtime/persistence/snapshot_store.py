@@ -44,6 +44,10 @@ class SnapshotMetadata:
             raise PersistenceError("description must be a string")
 
 
+def _bounded_store_error(summary: str, exc: BaseException) -> str:
+    return f"{summary} ({type(exc).__name__})"
+
+
 def _deterministic_json(data: Any) -> str:
     """Produce deterministic JSON for hashing and storage."""
     return json.dumps(data, sort_keys=True, ensure_ascii=True, separators=(",", ":"))
@@ -73,7 +77,7 @@ def _atomic_write(path: Path, content: str) -> None:
                 os.unlink(tmp_path)
             raise
     except OSError as exc:
-        raise PersistenceWriteError(f"failed to write {path}: {exc}") from exc
+        raise PersistenceWriteError(_bounded_store_error("snapshot store write failed", exc)) from exc
 
 
 class SnapshotStore:
@@ -98,17 +102,13 @@ class SnapshotStore:
         escapes the base directory.
         """
         if "\0" in id_value:
-            raise PathTraversalError(f"ID contains null byte: {id_value!r}")
+            raise PathTraversalError("identifier contains null byte")
         if "/" in id_value or "\\" in id_value or ".." in id_value:
-            raise PathTraversalError(
-                f"ID contains forbidden characters: {id_value!r}"
-            )
+            raise PathTraversalError("identifier contains forbidden characters")
         candidate = (self._base_path / f"{id_value}{suffix}").resolve()
         base_resolved = self._base_path.resolve()
         if not candidate.is_relative_to(base_resolved):
-            raise PathTraversalError(
-                f"path escapes base directory: {id_value!r}"
-            )
+            raise PathTraversalError("path escapes base directory")
         return candidate
 
     def _snapshot_dir(self, snapshot_id: str) -> Path:
@@ -158,15 +158,15 @@ class SnapshotStore:
         data_path = snap_dir / "data.json"
 
         if not meta_path.exists() or not data_path.exists():
-            raise SnapshotNotFoundError(f"snapshot not found: {snapshot_id}")
+            raise SnapshotNotFoundError("snapshot not found")
 
         try:
             meta_raw = json.loads(meta_path.read_text(encoding="utf-8"))
         except (json.JSONDecodeError, OSError) as exc:
-            raise CorruptedDataError(f"malformed metadata for snapshot {snapshot_id}: {exc}") from exc
+            raise CorruptedDataError(_bounded_store_error("malformed snapshot metadata", exc)) from exc
 
         if not isinstance(meta_raw, dict):
-            raise CorruptedDataError(f"metadata for snapshot {snapshot_id} is not a JSON object")
+            raise CorruptedDataError("snapshot metadata must be a JSON object")
 
         try:
             metadata = SnapshotMetadata(
@@ -176,25 +176,20 @@ class SnapshotStore:
                 content_hash=meta_raw["content_hash"],
             )
         except (KeyError, TypeError, PersistenceError) as exc:
-            raise CorruptedDataError(
-                f"malformed metadata fields for snapshot {snapshot_id}: {exc}"
-            ) from exc
+            raise CorruptedDataError(_bounded_store_error("invalid snapshot metadata", exc)) from exc
 
         try:
             data_raw = json.loads(data_path.read_text(encoding="utf-8"))
         except (json.JSONDecodeError, OSError) as exc:
-            raise CorruptedDataError(f"malformed data for snapshot {snapshot_id}: {exc}") from exc
+            raise CorruptedDataError(_bounded_store_error("malformed snapshot data", exc)) from exc
 
         if not isinstance(data_raw, dict):
-            raise CorruptedDataError(f"data for snapshot {snapshot_id} is not a JSON object")
+            raise CorruptedDataError("snapshot data must be a JSON object")
 
         # Verify content hash to detect corruption
         actual_hash = _content_hash(_deterministic_json(data_raw))
         if actual_hash != metadata.content_hash:
-            raise CorruptedDataError(
-                f"snapshot {snapshot_id} content hash mismatch: "
-                f"expected {metadata.content_hash}, got {actual_hash}"
-            )
+            raise CorruptedDataError("snapshot content hash mismatch")
 
         return metadata, data_raw
 
@@ -220,7 +215,7 @@ class SnapshotStore:
                     )
                 )
             except (json.JSONDecodeError, KeyError, TypeError, OSError, PersistenceError):
-                raise CorruptedDataError(f"malformed metadata in {entry.name}")
+                raise CorruptedDataError("malformed snapshot metadata")
 
         return tuple(results)
 

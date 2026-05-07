@@ -21,7 +21,7 @@ from mcoi_runtime.adapters.executor_base import (
     utc_now_text,
 )
 
-from .template_validator import TemplateValidationError, TemplateValidator
+from .template_validator import TemplateValidationError, TemplateValidator, summarize_template_validation_error
 
 
 @dataclass(frozen=True, slots=True)
@@ -58,7 +58,7 @@ class Dispatcher:
                 goal_id=request.goal_id,
                 started_at=started_at,
                 finished_at=finished_at,
-                failure=ExecutionFailure(code=exc.code, message=str(exc)),
+                failure=ExecutionFailure(code=exc.code, message=summarize_template_validation_error(exc)),
                 effect_name="validation_rejected",
                 metadata={"route": request.route},
             )

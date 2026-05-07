@@ -34,9 +34,9 @@ class ExecutionRequest:
             raise RuntimeCoreInvariantError("goal_id must be a non-empty string")
         if not self.argv:
             raise RuntimeCoreInvariantError("argv must contain at least one item")
-        for index, item in enumerate(self.argv):
+        for item in self.argv:
             if not isinstance(item, str) or not item.strip():
-                raise RuntimeCoreInvariantError(f"argv[{index}] must be a non-empty string")
+                raise RuntimeCoreInvariantError("argv items must be non-empty strings")
         if self.cwd is not None and (not isinstance(self.cwd, str) or not self.cwd.strip()):
             raise RuntimeCoreInvariantError("cwd must be a non-empty string when provided")
         environment = dict(self.environment)

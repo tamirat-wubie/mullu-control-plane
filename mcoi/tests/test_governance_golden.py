@@ -250,6 +250,9 @@ class TestScenarioGovernanceGate:
         gate = GovernanceBridge.build_governance_gate(evaluator, bundle, CLOCK)
         result = gate(_event(), _reaction_rule())
         assert result.verdict == ReactionVerdict.PROCEED
+        assert result.reason == "governance decision"
+        assert "allow" not in result.reason
+        assert "rules fired" not in result.reason
 
     def test_governance_gate_denies_reaction(self) -> None:
         rules = (
@@ -275,6 +278,9 @@ class TestScenarioGovernanceGate:
         result = gate(_event(), _reaction_rule())
         assert result.verdict == ReactionVerdict.REJECT
         assert result.simulation_safe is False
+        assert result.reason == "governance decision"
+        assert "deny" not in result.reason
+        assert "rules fired" not in result.reason
 
     def test_governance_gate_requires_approval(self) -> None:
         rules = (
@@ -299,6 +305,9 @@ class TestScenarioGovernanceGate:
         gate = GovernanceBridge.build_governance_gate(evaluator, bundle, CLOCK)
         result = gate(_event(), _reaction_rule())
         assert result.verdict == ReactionVerdict.REQUIRES_APPROVAL
+        assert result.reason == "governance decision"
+        assert "approval" not in result.reason
+        assert "rules fired" not in result.reason
 
 
 # ---------------------------------------------------------------------------

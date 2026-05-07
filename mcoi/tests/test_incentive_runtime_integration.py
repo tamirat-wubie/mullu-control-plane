@@ -141,11 +141,13 @@ class TestMemoryMeshAttachment:
         assert record.memory_id
         assert mem.memory_count >= 1
 
-    def test_memory_content(self):
+    def test_memory_title_is_bounded(self):
         integ, eng, _, _ = _make_integration()
         eng.register_incentive("i1", "t1", "Reward A")
         record = integ.attach_incentive_to_memory_mesh("scope-1")
-        assert record.title.startswith("Incentive state:")
+        assert record.title == "Incentive state"
+        assert "scope-1" not in record.title
+        assert record.scope_ref_id == "scope-1"
 
     def test_emits_event(self):
         integ, eng, es, _ = _make_integration()

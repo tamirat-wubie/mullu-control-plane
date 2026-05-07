@@ -138,7 +138,7 @@ class CustomerRuntimeEngine:
         status: CustomerStatus = CustomerStatus.ACTIVE,
     ) -> CustomerRecord:
         if customer_id in self._customers:
-            raise RuntimeCoreInvariantError(f"customer already registered: {customer_id}")
+            raise RuntimeCoreInvariantError("customer already registered")
         now = self._now()
         record = CustomerRecord(
             customer_id=customer_id,
@@ -155,15 +155,15 @@ class CustomerRuntimeEngine:
 
     def get_customer(self, customer_id: str) -> CustomerRecord:
         if customer_id not in self._customers:
-            raise RuntimeCoreInvariantError(f"unknown customer: {customer_id}")
+            raise RuntimeCoreInvariantError("unknown customer")
         return self._customers[customer_id]
 
     def update_customer_status(self, customer_id: str, status: CustomerStatus) -> CustomerRecord:
         if customer_id not in self._customers:
-            raise RuntimeCoreInvariantError(f"unknown customer: {customer_id}")
+            raise RuntimeCoreInvariantError("unknown customer")
         old = self._customers[customer_id]
         if old.status in _CUSTOMER_TERMINAL:
-            raise RuntimeCoreInvariantError(f"customer is in terminal state: {old.status.value}")
+            raise RuntimeCoreInvariantError("customer is in terminal state")
         updated = CustomerRecord(
             customer_id=old.customer_id,
             tenant_id=old.tenant_id,
@@ -194,12 +194,12 @@ class CustomerRuntimeEngine:
         status: AccountStatus = AccountStatus.ACTIVE,
     ) -> AccountRecord:
         if account_id in self._accounts:
-            raise RuntimeCoreInvariantError(f"account already registered: {account_id}")
+            raise RuntimeCoreInvariantError("account already registered")
         if customer_id not in self._customers:
-            raise RuntimeCoreInvariantError(f"unknown customer: {customer_id}")
+            raise RuntimeCoreInvariantError("unknown customer")
         cust = self._customers[customer_id]
         if cust.status in _CUSTOMER_TERMINAL:
-            raise RuntimeCoreInvariantError(f"customer is in terminal state: {cust.status.value}")
+            raise RuntimeCoreInvariantError("customer is in terminal state")
         now = self._now()
         record = AccountRecord(
             account_id=account_id,
@@ -228,15 +228,15 @@ class CustomerRuntimeEngine:
 
     def get_account(self, account_id: str) -> AccountRecord:
         if account_id not in self._accounts:
-            raise RuntimeCoreInvariantError(f"unknown account: {account_id}")
+            raise RuntimeCoreInvariantError("unknown account")
         return self._accounts[account_id]
 
     def update_account_status(self, account_id: str, status: AccountStatus) -> AccountRecord:
         if account_id not in self._accounts:
-            raise RuntimeCoreInvariantError(f"unknown account: {account_id}")
+            raise RuntimeCoreInvariantError("unknown account")
         old = self._accounts[account_id]
         if old.status in _ACCOUNT_TERMINAL:
-            raise RuntimeCoreInvariantError(f"account is in terminal state: {old.status.value}")
+            raise RuntimeCoreInvariantError("account is in terminal state")
         updated = AccountRecord(
             account_id=old.account_id,
             customer_id=old.customer_id,
@@ -271,7 +271,7 @@ class CustomerRuntimeEngine:
         status: ProductStatus = ProductStatus.ACTIVE,
     ) -> ProductRecord:
         if product_id in self._products:
-            raise RuntimeCoreInvariantError(f"product already registered: {product_id}")
+            raise RuntimeCoreInvariantError("product already registered")
         now = self._now()
         record = ProductRecord(
             product_id=product_id,
@@ -288,15 +288,15 @@ class CustomerRuntimeEngine:
 
     def get_product(self, product_id: str) -> ProductRecord:
         if product_id not in self._products:
-            raise RuntimeCoreInvariantError(f"unknown product: {product_id}")
+            raise RuntimeCoreInvariantError("unknown product")
         return self._products[product_id]
 
     def deprecate_product(self, product_id: str) -> ProductRecord:
         if product_id not in self._products:
-            raise RuntimeCoreInvariantError(f"unknown product: {product_id}")
+            raise RuntimeCoreInvariantError("unknown product")
         old = self._products[product_id]
         if old.status in _PRODUCT_TERMINAL:
-            raise RuntimeCoreInvariantError(f"product is in terminal state: {old.status.value}")
+            raise RuntimeCoreInvariantError("product is in terminal state")
         updated = ProductRecord(
             product_id=old.product_id,
             tenant_id=old.tenant_id,
@@ -312,10 +312,10 @@ class CustomerRuntimeEngine:
 
     def retire_product(self, product_id: str) -> ProductRecord:
         if product_id not in self._products:
-            raise RuntimeCoreInvariantError(f"unknown product: {product_id}")
+            raise RuntimeCoreInvariantError("unknown product")
         old = self._products[product_id]
         if old.status in _PRODUCT_TERMINAL:
-            raise RuntimeCoreInvariantError(f"product already retired: {product_id}")
+            raise RuntimeCoreInvariantError("product already retired")
         updated = ProductRecord(
             product_id=old.product_id,
             tenant_id=old.tenant_id,
@@ -347,17 +347,17 @@ class CustomerRuntimeEngine:
         end_at: str = "",
     ) -> SubscriptionRecord:
         if subscription_id in self._subscriptions:
-            raise RuntimeCoreInvariantError(f"subscription already registered: {subscription_id}")
+            raise RuntimeCoreInvariantError("subscription already registered")
         if account_id not in self._accounts:
-            raise RuntimeCoreInvariantError(f"unknown account: {account_id}")
+            raise RuntimeCoreInvariantError("unknown account")
         if product_id not in self._products:
-            raise RuntimeCoreInvariantError(f"unknown product: {product_id}")
+            raise RuntimeCoreInvariantError("unknown product")
         acct = self._accounts[account_id]
         if acct.status in _ACCOUNT_TERMINAL:
-            raise RuntimeCoreInvariantError(f"account is in terminal state: {acct.status.value}")
+            raise RuntimeCoreInvariantError("account is in terminal state")
         prod = self._products[product_id]
         if prod.status in _PRODUCT_TERMINAL:
-            raise RuntimeCoreInvariantError(f"product is in terminal state: {prod.status.value}")
+            raise RuntimeCoreInvariantError("product is in terminal state")
         now = self._now()
         effective_start = start_at if start_at else now
         effective_end = end_at if end_at else now
@@ -380,7 +380,7 @@ class CustomerRuntimeEngine:
 
     def get_subscription(self, subscription_id: str) -> SubscriptionRecord:
         if subscription_id not in self._subscriptions:
-            raise RuntimeCoreInvariantError(f"unknown subscription: {subscription_id}")
+            raise RuntimeCoreInvariantError("unknown subscription")
         return self._subscriptions[subscription_id]
 
     def subscriptions_for_account(self, account_id: str) -> tuple[SubscriptionRecord, ...]:
@@ -402,12 +402,12 @@ class CustomerRuntimeEngine:
         expires_at: str = "",
     ) -> EntitlementRecord:
         if entitlement_id in self._entitlements:
-            raise RuntimeCoreInvariantError(f"entitlement already exists: {entitlement_id}")
+            raise RuntimeCoreInvariantError("entitlement already exists")
         if account_id not in self._accounts:
-            raise RuntimeCoreInvariantError(f"unknown account: {account_id}")
+            raise RuntimeCoreInvariantError("unknown account")
         acct = self._accounts[account_id]
         if acct.status in _ACCOUNT_TERMINAL:
-            raise RuntimeCoreInvariantError(f"account is in terminal state: {acct.status.value}")
+            raise RuntimeCoreInvariantError("account is in terminal state")
         now = self._now()
         effective_expires = expires_at if expires_at else now
         record = EntitlementRecord(
@@ -439,10 +439,10 @@ class CustomerRuntimeEngine:
 
     def revoke_entitlement(self, entitlement_id: str) -> EntitlementRecord:
         if entitlement_id not in self._entitlements:
-            raise RuntimeCoreInvariantError(f"unknown entitlement: {entitlement_id}")
+            raise RuntimeCoreInvariantError("unknown entitlement")
         old = self._entitlements[entitlement_id]
         if old.status in _ENTITLEMENT_INACTIVE:
-            raise RuntimeCoreInvariantError(f"entitlement is already inactive: {old.status.value}")
+            raise RuntimeCoreInvariantError("entitlement already inactive")
         now = self._now()
         updated = EntitlementRecord(
             entitlement_id=old.entitlement_id,
@@ -459,7 +459,7 @@ class CustomerRuntimeEngine:
 
     def get_entitlement(self, entitlement_id: str) -> EntitlementRecord:
         if entitlement_id not in self._entitlements:
-            raise RuntimeCoreInvariantError(f"unknown entitlement: {entitlement_id}")
+            raise RuntimeCoreInvariantError("unknown entitlement")
         return self._entitlements[entitlement_id]
 
     def check_entitlement(self, account_id: str, service_ref: str) -> bool:
@@ -492,9 +492,9 @@ class CustomerRuntimeEngine:
         billing_issues: int = 0,
     ) -> AccountHealthSnapshot:
         if snapshot_id in self._health_snapshots:
-            raise RuntimeCoreInvariantError(f"health snapshot already exists: {snapshot_id}")
+            raise RuntimeCoreInvariantError("health snapshot already exists")
         if account_id not in self._accounts:
-            raise RuntimeCoreInvariantError(f"unknown account: {account_id}")
+            raise RuntimeCoreInvariantError("unknown account")
         now = self._now()
         entitlement_count = len(self.active_entitlements_for_account(account_id))
 
@@ -535,7 +535,7 @@ class CustomerRuntimeEngine:
                     customer_id=acct.customer_id,
                     account_id=account_id,
                     disposition=CustomerDisposition.ESCALATED,
-                    reason=f"account health critical: score={score}",
+                    reason="account health critical",
                     decided_at=now,
                 )
                 self._decisions[dec_id] = decision
@@ -544,7 +544,7 @@ class CustomerRuntimeEngine:
 
     def get_health_snapshot(self, snapshot_id: str) -> AccountHealthSnapshot:
         if snapshot_id not in self._health_snapshots:
-            raise RuntimeCoreInvariantError(f"unknown health snapshot: {snapshot_id}")
+            raise RuntimeCoreInvariantError("unknown health snapshot")
         return self._health_snapshots[snapshot_id]
 
     def health_snapshots_for_account(self, account_id: str) -> tuple[AccountHealthSnapshot, ...]:
@@ -589,7 +589,7 @@ class CustomerRuntimeEngine:
                             violation_id=vid,
                             tenant_id=tenant_id,
                             operation="no_entitlements",
-                            reason=f"active account {a.account_id} has no active entitlements",
+                            reason="active account has no active entitlements",
                             detected_at=now,
                         )
                         self._violations[vid] = v
@@ -604,7 +604,7 @@ class CustomerRuntimeEngine:
                         violation_id=vid,
                         tenant_id=tenant_id,
                         operation="delinquent_account",
-                        reason=f"account {a.account_id} is delinquent",
+                        reason="account is delinquent",
                         detected_at=now,
                     )
                     self._violations[vid] = v
@@ -621,7 +621,7 @@ class CustomerRuntimeEngine:
                             violation_id=vid,
                             tenant_id=tenant_id,
                             operation="retired_product_subscription",
-                            reason=f"subscription {s.subscription_id} on retired product {s.product_id}",
+                            reason="subscription on retired product",
                             detected_at=now,
                         )
                         self._violations[vid] = v

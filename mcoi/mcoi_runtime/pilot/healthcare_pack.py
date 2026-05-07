@@ -180,7 +180,7 @@ class HealthcareDemoGenerator:
 
         # Seed remediations linked to first 5 cases
         rems = [
-            {"remediation_id": f"hc-rem-{i:03d}", "case_ref": f"hc-case-{i:03d}", "title": f"Remediate: {cases[i]['title']}"}
+            {"remediation_id": f"hc-rem-{i:03d}", "case_ref": f"hc-case-{i:03d}", "title": "Healthcare remediation"}
             for i in range(5)
         ]
         rem_result = self._importer.import_remediations(tenant_id, rems)

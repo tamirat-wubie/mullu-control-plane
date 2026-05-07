@@ -138,21 +138,21 @@ class InternalOpsEngine:
                 c.assigned_to = assignee
                 c.status = "in_progress"
                 return c
-        raise ValueError(f"Unknown case: {case_id}")
+        raise ValueError("unknown support case")
 
     def resolve_case(self, case_id: str) -> SupportCase:
         for c in self._support_cases:
             if c.case_id == case_id:
                 c.status = "resolved"
                 return c
-        raise ValueError(f"Unknown case: {case_id}")
+        raise ValueError("unknown support case")
 
     def escalate_case(self, case_id: str) -> SupportCase:
         for c in self._support_cases:
             if c.case_id == case_id:
                 c.escalated = True
                 return c
-        raise ValueError(f"Unknown case: {case_id}")
+        raise ValueError("unknown support case")
 
     # Success milestones
     def create_milestones(self, customer_id: str) -> list[SuccessMilestone]:
@@ -170,7 +170,7 @@ class InternalOpsEngine:
                 ms.completed = True
                 ms.completed_at = datetime.now(timezone.utc).isoformat()
                 return ms
-        raise ValueError(f"Unknown milestone: {milestone_id}")
+        raise ValueError("unknown success milestone")
 
     # Dashboard
     def operating_state(self) -> CompanyOperatingState:

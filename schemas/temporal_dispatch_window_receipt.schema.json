@@ -1,0 +1,225 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:temporal-dispatch-window-receipt:1",
+  "title": "Temporal Dispatch Window Receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "receipt_id",
+    "request_id",
+    "tenant_id",
+    "actor_id",
+    "command_id",
+    "action_type",
+    "risk_level",
+    "policy_id",
+    "status",
+    "timezone_name",
+    "runtime_now_utc",
+    "local_now",
+    "local_date",
+    "allowed_window_required",
+    "allowed_window_status",
+    "holiday_status",
+    "active_allowed_window_start",
+    "active_allowed_window_end",
+    "next_allowed_window_start",
+    "next_allowed_window_end",
+    "defer_until",
+    "active_blackout_ids",
+    "deferral_reasons",
+    "blocked_reasons",
+    "required_controls",
+    "evidence_refs",
+    "holidays",
+    "source_schedule_receipt_id",
+    "source_reapproval_receipt_id",
+    "source_temporal_receipt_id",
+    "receipt_schema_ref",
+    "terminal_closure_required",
+    "receipt_hash",
+    "metadata"
+  ],
+  "properties": {
+    "receipt_id": {
+      "type": "string",
+      "pattern": "^temporal-dispatch-window-receipt-[0-9a-f]{16}$"
+    },
+    "request_id": {"type": "string", "minLength": 1},
+    "tenant_id": {"type": "string", "minLength": 1},
+    "actor_id": {"type": "string", "minLength": 1},
+    "command_id": {"type": "string", "minLength": 1},
+    "action_type": {"type": "string", "minLength": 1},
+    "risk_level": {
+      "type": "string",
+      "enum": ["low", "medium", "high", "critical"]
+    },
+    "policy_id": {"type": "string", "minLength": 1},
+    "status": {
+      "type": "string",
+      "enum": ["within_window", "deferred", "blocked", "not_required"]
+    },
+    "timezone_name": {"type": "string", "minLength": 1},
+    "runtime_now_utc": {"type": "string", "format": "date-time"},
+    "local_now": {"type": "string", "minLength": 1},
+    "local_date": {"type": "string", "minLength": 1},
+    "allowed_window_required": {"type": "boolean"},
+    "allowed_window_status": {
+      "type": "string",
+      "enum": ["inside", "outside", "not_required"]
+    },
+    "holiday_status": {
+      "type": "string",
+      "enum": ["open", "closed"]
+    },
+    "active_allowed_window_start": {"type": "string"},
+    "active_allowed_window_end": {"type": "string"},
+    "next_allowed_window_start": {"type": "string"},
+    "next_allowed_window_end": {"type": "string"},
+    "defer_until": {"type": "string"},
+    "active_blackout_ids": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1}
+    },
+    "deferral_reasons": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1}
+    },
+    "blocked_reasons": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1}
+    },
+    "required_controls": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"type": "string", "minLength": 1}
+    },
+    "evidence_refs": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1}
+    },
+    "holidays": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1}
+    },
+    "source_schedule_receipt_id": {"type": "string"},
+    "source_reapproval_receipt_id": {"type": "string"},
+    "source_temporal_receipt_id": {"type": "string"},
+    "receipt_schema_ref": {
+      "type": "string",
+      "const": "urn:mullusi:schema:temporal-dispatch-window-receipt:1"
+    },
+    "terminal_closure_required": {"type": "boolean", "const": true},
+    "receipt_hash": {"type": "string", "minLength": 1},
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "receipt_is_not_terminal_closure",
+        "runtime_owns_time_truth",
+        "dispatch_allowed",
+        "defer_required",
+        "window_policy_checked",
+        "blackout_window_checked",
+        "high_risk_window_checked"
+      ],
+      "properties": {
+        "receipt_is_not_terminal_closure": {"type": "boolean", "const": true},
+        "runtime_owns_time_truth": {"type": "boolean", "const": true},
+        "dispatch_allowed": {"type": "boolean"},
+        "defer_required": {"type": "boolean"},
+        "window_policy_checked": {"type": "boolean", "const": true},
+        "blackout_window_checked": {"type": "boolean", "const": true},
+        "high_risk_window_checked": {"type": "boolean"}
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {"status": {"const": "within_window"}},
+        "required": ["status"]
+      },
+      "then": {
+        "properties": {
+          "allowed_window_required": {"const": true},
+          "allowed_window_status": {"const": "inside"},
+          "holiday_status": {"const": "open"},
+          "active_allowed_window_start": {"minLength": 1},
+          "active_allowed_window_end": {"minLength": 1},
+          "active_blackout_ids": {"maxItems": 0},
+          "deferral_reasons": {"maxItems": 0},
+          "blocked_reasons": {"maxItems": 0},
+          "defer_until": {"maxLength": 0},
+          "metadata": {
+            "properties": {
+              "dispatch_allowed": {"const": true},
+              "defer_required": {"const": false}
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {"status": {"const": "deferred"}},
+        "required": ["status"]
+      },
+      "then": {
+        "properties": {
+          "deferral_reasons": {"minItems": 1},
+          "blocked_reasons": {"maxItems": 0},
+          "defer_until": {"minLength": 1},
+          "metadata": {
+            "properties": {
+              "dispatch_allowed": {"const": false},
+              "defer_required": {"const": true}
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {"status": {"const": "blocked"}},
+        "required": ["status"]
+      },
+      "then": {
+        "properties": {
+          "blocked_reasons": {"minItems": 1},
+          "metadata": {
+            "properties": {
+              "dispatch_allowed": {"const": false},
+              "defer_required": {"const": false}
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {"status": {"const": "not_required"}},
+        "required": ["status"]
+      },
+      "then": {
+        "properties": {
+          "allowed_window_required": {"const": false},
+          "allowed_window_status": {"const": "not_required"},
+          "active_allowed_window_start": {"maxLength": 0},
+          "active_allowed_window_end": {"maxLength": 0},
+          "active_blackout_ids": {"maxItems": 0},
+          "deferral_reasons": {"maxItems": 0},
+          "blocked_reasons": {"maxItems": 0},
+          "defer_until": {"maxLength": 0},
+          "metadata": {
+            "properties": {
+              "dispatch_allowed": {"const": true},
+              "defer_required": {"const": false},
+              "high_risk_window_checked": {"const": false}
+            }
+          }
+        }
+      }
+    }
+  ]
+}

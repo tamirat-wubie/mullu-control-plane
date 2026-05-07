@@ -70,7 +70,7 @@ class DomainPackEngine:
             raise RuntimeCoreInvariantError("descriptor must be a DomainPackDescriptor")
         if descriptor.pack_id in self._packs:
             raise RuntimeCoreInvariantError(
-                f"pack_id '{descriptor.pack_id}' already registered"
+                "pack already registered"
             )
         self._packs[descriptor.pack_id] = descriptor
         return descriptor
@@ -80,11 +80,11 @@ class DomainPackEngine:
         pack = self._get_pack_or_raise(pack_id)
         if pack.status == DomainPackStatus.ACTIVE:
             raise RuntimeCoreInvariantError(
-                f"pack '{pack_id}' is already ACTIVE"
+                "pack already active"
             )
         if pack.status == DomainPackStatus.DEPRECATED:
             raise RuntimeCoreInvariantError(
-                f"pack '{pack_id}' is DEPRECATED and cannot be activated"
+                "deprecated pack cannot be activated"
             )
         now = _now_iso()
         activation = DomainPackActivation(
@@ -118,7 +118,7 @@ class DomainPackEngine:
         pack = self._get_pack_or_raise(pack_id)
         if pack.status != DomainPackStatus.ACTIVE:
             raise RuntimeCoreInvariantError(
-                f"pack '{pack_id}' must be ACTIVE to deprecate, is {pack.status}"
+                "pack must be active before deprecation"
             )
         now = _now_iso()
         activation = DomainPackActivation(
@@ -151,7 +151,7 @@ class DomainPackEngine:
         pack = self._get_pack_or_raise(pack_id)
         if pack.status != DomainPackStatus.ACTIVE:
             raise RuntimeCoreInvariantError(
-                f"pack '{pack_id}' must be ACTIVE to disable, is {pack.status}"
+                "pack must be active before disable"
             )
         now = _now_iso()
         activation = DomainPackActivation(
@@ -224,7 +224,7 @@ class DomainPackEngine:
         self._get_pack_or_raise(rule.pack_id)
         if rule.rule_id in self._extraction_rules:
             raise RuntimeCoreInvariantError(
-                f"extraction rule '{rule.rule_id}' already exists"
+                "duplicate extraction rule"
             )
         self._extraction_rules[rule.rule_id] = rule
 
@@ -235,7 +235,7 @@ class DomainPackEngine:
         self._get_pack_or_raise(rule.pack_id)
         if rule.rule_id in self._routing_rules:
             raise RuntimeCoreInvariantError(
-                f"routing rule '{rule.rule_id}' already exists"
+                "duplicate routing rule"
             )
         self._routing_rules[rule.rule_id] = rule
 
@@ -246,7 +246,7 @@ class DomainPackEngine:
         self._get_pack_or_raise(rule.pack_id)
         if rule.rule_id in self._memory_rules:
             raise RuntimeCoreInvariantError(
-                f"memory rule '{rule.rule_id}' already exists"
+                "duplicate memory rule"
             )
         self._memory_rules[rule.rule_id] = rule
 
@@ -257,7 +257,7 @@ class DomainPackEngine:
         self._get_pack_or_raise(profile.pack_id)
         if profile.profile_id in self._simulation_profiles:
             raise RuntimeCoreInvariantError(
-                f"simulation profile '{profile.profile_id}' already exists"
+                "duplicate simulation profile"
             )
         self._simulation_profiles[profile.profile_id] = profile
 
@@ -268,7 +268,7 @@ class DomainPackEngine:
         self._get_pack_or_raise(profile.pack_id)
         if profile.profile_id in self._utility_profiles:
             raise RuntimeCoreInvariantError(
-                f"utility profile '{profile.profile_id}' already exists"
+                "duplicate utility profile"
             )
         self._utility_profiles[profile.profile_id] = profile
 
@@ -279,7 +279,7 @@ class DomainPackEngine:
         self._get_pack_or_raise(profile.pack_id)
         if profile.profile_id in self._benchmark_profiles:
             raise RuntimeCoreInvariantError(
-                f"benchmark profile '{profile.profile_id}' already exists"
+                "duplicate benchmark profile"
             )
         self._benchmark_profiles[profile.profile_id] = profile
 
@@ -290,7 +290,7 @@ class DomainPackEngine:
         self._get_pack_or_raise(profile.pack_id)
         if profile.profile_id in self._escalation_profiles:
             raise RuntimeCoreInvariantError(
-                f"escalation profile '{profile.profile_id}' already exists"
+                "duplicate escalation profile"
             )
         self._escalation_profiles[profile.profile_id] = profile
 
@@ -301,7 +301,7 @@ class DomainPackEngine:
         self._get_pack_or_raise(entry.pack_id)
         if entry.entry_id in self._vocabulary:
             raise RuntimeCoreInvariantError(
-                f"vocabulary entry '{entry.entry_id}' already exists"
+                "duplicate vocabulary entry"
             )
         self._vocabulary[entry.entry_id] = entry
 
@@ -637,7 +637,7 @@ class DomainPackEngine:
     def _get_pack_or_raise(self, pack_id: str) -> DomainPackDescriptor:
         if pack_id not in self._packs:
             raise RuntimeCoreInvariantError(
-                f"pack '{pack_id}' not found"
+                "pack not found"
             )
         return self._packs[pack_id]
 
@@ -659,7 +659,7 @@ class DomainPackEngine:
                 pack_id_b=b,
                 rule_kind=rule_kind,
                 scope=scope,
-                description=f"Conflicting {rule_kind} rules from packs {a} and {b} at {scope} scope",
+                description="Conflicting domain pack rules",
                 detected_at=_now_iso(),
             )
             self._conflicts[cid] = conflict

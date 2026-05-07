@@ -2667,3 +2667,27 @@ class TestTerminalStateGuards:
         engine.cancel_plan("p1")
         with pytest.raises(RuntimeCoreInvariantError):
             engine.advance_execution("p1")
+
+
+class TestBoundedContracts:
+    def test_duplicate_plan_error_is_bounded(self, engine):
+        engine.register_plan("plan-secret", "tenant-secret", "Sensitive Plan")
+
+        with pytest.raises(RuntimeCoreInvariantError) as excinfo:
+            engine.register_plan("plan-secret", "tenant-secret", "Sensitive Plan")
+
+        message = str(excinfo.value)
+        assert message == "duplicate plan_id"
+        assert "plan-secret" not in message
+        assert "tenant-secret" not in message
+
+    def test_empty_plan_violation_reason_is_bounded(self, engine):
+        engine.register_plan("plan-secret", "tenant-secret", "Draft Plan")
+
+        violations = engine.detect_orchestration_violations("tenant-secret")
+        empty_plan = [violation for violation in violations if violation.operation == "empty_plan"]
+
+        assert len(empty_plan) == 1
+        assert empty_plan[0].reason == "plan has no steps"
+        assert "plan-secret" not in empty_plan[0].reason
+        assert "tenant-secret" not in empty_plan[0].reason

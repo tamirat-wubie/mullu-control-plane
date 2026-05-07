@@ -2051,3 +2051,32 @@ class TestEndToEnd:
 
         h = engine.state_hash()
         assert len(h) == 64
+
+
+class TestBoundedContracts:
+    def test_duplicate_offering_message_hides_offering_id(self, engine):
+        _off(engine, "offering-secret")
+        with pytest.raises(RuntimeCoreInvariantError, match="offering already registered") as exc_info:
+            _off(engine, "offering-secret")
+        assert "offering-secret" not in str(exc_info.value)
+
+    def test_marketplace_violation_reasons_hide_ids_and_statuses(self, engine):
+        _off(engine, "offering-noprice")
+        engine.activate_offering("offering-noprice")
+        _off(engine, "offering-secret")
+        engine.activate_offering("offering-secret")
+        _off(engine, "offering-bundle-secret")
+        engine.retire_offering("offering-bundle-secret")
+        _pkg(engine, "package-secret")
+        engine.add_to_bundle("bundle-secret", "package-secret", "offering-bundle-secret", "t1")
+        engine.create_listing("listing-secret", "offering-secret", "t1")
+        engine.retire_offering("offering-secret")
+        violations = engine.detect_marketplace_violations("t1")
+        assert any(v.reason == "active offering has no pricing binding" for v in violations)
+        assert any(v.reason == "bundle has invalid disposition" for v in violations)
+        assert any(v.reason == "listing is active on non-active offering" for v in violations)
+        for violation in violations:
+            assert "offering-secret" not in violation.reason
+            assert "bundle-secret" not in violation.reason
+            assert "listing-secret" not in violation.reason
+            assert "RETIRED" not in violation.reason

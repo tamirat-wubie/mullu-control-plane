@@ -476,6 +476,14 @@ class TestAttachToMemoryMesh:
         result = bridge.attach_observability_to_memory_mesh("scope-9")
         assert result.scope_ref_id == "scope-9"
 
+    def test_title_is_bounded(
+        self, bridge: ObservabilityRuntimeIntegration
+    ) -> None:
+        result = bridge.attach_observability_to_memory_mesh("scope-9")
+        assert result.title == "Observability state"
+        assert "scope-9" not in result.title
+        assert result.scope_ref_id == "scope-9"
+
 
 # ===================================================================
 # attach_observability_to_graph (9 tests)

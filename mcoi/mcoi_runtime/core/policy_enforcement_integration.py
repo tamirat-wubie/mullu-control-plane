@@ -30,7 +30,7 @@ from ..contracts.memory_mesh import (
 from .event_spine import EventSpineEngine
 from .invariants import RuntimeCoreInvariantError, stable_identifier
 from .memory_mesh import MemoryMeshEngine
-from .policy_enforcement import PolicyEnforcementEngine
+from mcoi_runtime.governance.policy.enforcement import PolicyEnforcementEngine
 
 
 def _now_iso() -> str:
@@ -258,7 +258,7 @@ class PolicyEnforcementIntegration:
             scope=MemoryScope.GLOBAL,
             scope_ref_id=scope_ref_id,
             trust_level=MemoryTrustLevel.VERIFIED,
-            title=f"Session enforcement state: {scope_ref_id}",
+            title="Session enforcement state",
             content=content,
             source_ids=(scope_ref_id,),
             tags=("session", "enforcement", "policy"),

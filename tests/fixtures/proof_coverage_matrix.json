@@ -1,0 +1,3740 @@
+{
+  "closure_actions": [
+    {
+      "action_id": "bind_tool_arguments_to_capability_policy_receipts",
+      "status": "closed",
+      "surfaces": [
+        "tool_invocation",
+        "gateway_capability_fabric"
+      ]
+    },
+    {
+      "action_id": "bind_mcp_capabilities_to_authority_obligation_records",
+      "status": "closed",
+      "surfaces": [
+        "tool_invocation",
+        "authority_obligation_mesh"
+      ]
+    },
+    {
+      "action_id": "publish_validated_mcp_capability_manifest_contract",
+      "status": "closed",
+      "surfaces": [
+        "tool_invocation",
+        "authority_obligation_mesh"
+      ]
+    },
+    {
+      "action_id": "normalize_gateway_request_receipt_envelopes",
+      "status": "closed",
+      "surfaces": [
+        "gateway_capability_fabric"
+      ]
+    },
+    {
+      "action_id": "bound_authority_read_models_to_paginated_windows",
+      "status": "closed",
+      "surfaces": [
+        "gateway_approval_resolution",
+        "authority_obligation_mesh"
+      ]
+    },
+    {
+      "action_id": "classify_authority_operator_controls",
+      "status": "closed",
+      "surfaces": [
+        "authority_operator_controls",
+        "authority_obligation_mesh"
+      ]
+    },
+    {
+      "action_id": "implement_lineage_query_routes_and_schema",
+      "status": "closed",
+      "surfaces": [
+        "lineage_query_api"
+      ]
+    },
+    {
+      "action_id": "connect_pilot_scaffold_to_hosted_provisioning_endpoint",
+      "status": "closed",
+      "surfaces": [
+        "pilot_provisioning"
+      ]
+    },
+    {
+      "action_id": "publish_hosted_demo_sandbox_read_models",
+      "status": "closed",
+      "surfaces": [
+        "hosted_demo_sandbox"
+      ]
+    },
+    {
+      "action_id": "publish_federated_control_plane_read_model",
+      "status": "closed",
+      "surfaces": [
+        "federated_control_plane"
+      ]
+    },
+    {
+      "action_id": "classify_finance_approval_packet_routes",
+      "status": "closed",
+      "surfaces": [
+        "finance_approval_packets"
+      ]
+    },
+    {
+      "action_id": "classify_data_governance_routes",
+      "status": "closed",
+      "surfaces": [
+        "data_governance_controls"
+      ]
+    },
+    {
+      "action_id": "classify_compliance_evidence_exports",
+      "status": "closed",
+      "surfaces": [
+        "compliance_evidence_exports"
+      ]
+    },
+    {
+      "action_id": "classify_audit_chain_api",
+      "status": "closed",
+      "surfaces": [
+        "audit_chain_api"
+      ]
+    },
+    {
+      "action_id": "classify_runbook_learning_routes",
+      "status": "closed",
+      "surfaces": [
+        "runbook_learning_lifecycle"
+      ]
+    },
+    {
+      "action_id": "publish_runtime_conformance_attestation",
+      "status": "closed",
+      "surfaces": [
+        "runtime_conformance_attestation"
+      ]
+    },
+    {
+      "action_id": "publish_production_evidence_plane",
+      "status": "closed",
+      "surfaces": [
+        "production_evidence_plane",
+        "gateway_runtime_witness"
+      ]
+    },
+    {
+      "action_id": "publish_capability_plan_evidence_bundles",
+      "status": "closed",
+      "surfaces": [
+        "capability_plan_evidence_bundle",
+        "runtime_conformance_attestation"
+      ]
+    },
+    {
+      "action_id": "publish_deployment_orchestration_receipt_contract",
+      "status": "closed",
+      "surfaces": [
+        "gateway_runtime_witness"
+      ]
+    },
+    {
+      "action_id": "publish_runtime_reflex_engine_read_models",
+      "status": "closed",
+      "surfaces": [
+        "runtime_reflex_engine",
+        "runtime_conformance_attestation"
+      ]
+    },
+    {
+      "action_id": "publish_governed_operational_intelligence_witnesses",
+      "status": "closed",
+      "surfaces": [
+        "governed_operational_intelligence"
+      ]
+    },
+    {
+      "action_id": "publish_capability_forge_candidate_contract",
+      "status": "closed",
+      "surfaces": [
+        "capability_forge"
+      ]
+    },
+    {
+      "action_id": "publish_capability_maturity_assessment_contract",
+      "status": "closed",
+      "surfaces": [
+        "capability_maturity_assessment"
+      ]
+    },
+    {
+      "action_id": "publish_networked_worker_mesh_contract",
+      "status": "closed",
+      "surfaces": [
+        "networked_worker_mesh"
+      ]
+    },
+    {
+      "action_id": "publish_agent_identity_contract",
+      "status": "closed",
+      "surfaces": [
+        "agent_identity"
+      ]
+    },
+    {
+      "action_id": "publish_claim_verification_report_contract",
+      "status": "closed",
+      "surfaces": [
+        "claim_verification"
+      ]
+    },
+    {
+      "action_id": "publish_connector_self_healing_receipt_contract",
+      "status": "closed",
+      "surfaces": [
+        "connector_self_healing"
+      ]
+    },
+    {
+      "action_id": "publish_collaboration_case_contract",
+      "status": "closed",
+      "surfaces": [
+        "collaboration_cases"
+      ]
+    },
+    {
+      "action_id": "publish_capability_maturity_contract",
+      "status": "closed",
+      "surfaces": [
+        "capability_maturity"
+      ]
+    },
+    {
+      "action_id": "publish_policy_prover_counterexample_contract",
+      "status": "closed",
+      "surfaces": [
+        "policy_prover"
+      ]
+    },
+    {
+      "action_id": "publish_memory_lattice_admission_contract",
+      "status": "closed",
+      "surfaces": [
+        "memory_lattice"
+      ]
+    },
+    {
+      "action_id": "publish_workflow_mining_draft_contract",
+      "status": "closed",
+      "surfaces": [
+        "workflow_mining"
+      ]
+    },
+    {
+      "action_id": "publish_domain_operating_pack_contract",
+      "status": "closed",
+      "surfaces": [
+        "domain_operating_pack"
+      ]
+    },
+    {
+      "action_id": "publish_multimodal_operation_receipt_contract",
+      "status": "closed",
+      "surfaces": [
+        "multimodal_operating_layer"
+      ]
+    },
+    {
+      "action_id": "publish_physical_action_receipt_contract",
+      "status": "closed",
+      "surfaces": [
+        "physical_action_boundary"
+      ]
+    },
+    {
+      "action_id": "publish_temporal_operation_receipt_contract",
+      "status": "closed",
+      "surfaces": [
+        "temporal_kernel"
+      ]
+    },
+    {
+      "action_id": "publish_temporal_evidence_freshness_receipt_contract",
+      "status": "closed",
+      "surfaces": [
+        "temporal_evidence_freshness"
+      ]
+    },
+    {
+      "action_id": "publish_temporal_reapproval_receipt_contract",
+      "status": "closed",
+      "surfaces": [
+        "temporal_reapproval"
+      ]
+    },
+    {
+      "action_id": "publish_temporal_dispatch_window_receipt_contract",
+      "status": "closed",
+      "surfaces": [
+        "temporal_dispatch_window"
+      ]
+    },
+    {
+      "action_id": "publish_temporal_budget_window_receipt_contract",
+      "status": "closed",
+      "surfaces": [
+        "temporal_budget_window"
+      ]
+    },
+    {
+      "action_id": "publish_temporal_causal_order_receipt_contract",
+      "status": "closed",
+      "surfaces": [
+        "temporal_causal_order"
+      ]
+    },
+    {
+      "action_id": "publish_temporal_monotonic_duration_receipt_contract",
+      "status": "closed",
+      "surfaces": [
+        "temporal_monotonic_duration"
+      ]
+    },
+    {
+      "action_id": "publish_temporal_accepted_risk_expiry_receipt_contract",
+      "status": "closed",
+      "surfaces": [
+        "temporal_accepted_risk_expiry"
+      ]
+    },
+    {
+      "action_id": "publish_temporal_credential_expiry_receipt_contract",
+      "status": "closed",
+      "surfaces": [
+        "temporal_credential_expiry"
+      ]
+    },
+    {
+      "action_id": "publish_temporal_memory_receipt_contract",
+      "status": "closed",
+      "surfaces": [
+        "temporal_memory"
+      ]
+    },
+    {
+      "action_id": "publish_temporal_memory_refresh_receipt_contract",
+      "status": "closed",
+      "surfaces": [
+        "temporal_memory_refresh"
+      ]
+    },
+    {
+      "action_id": "classify_temporal_scheduler_routes",
+      "status": "closed",
+      "surfaces": [
+        "temporal_kernel"
+      ]
+    },
+    {
+      "action_id": "publish_temporal_scheduler_receipt_contract",
+      "status": "closed",
+      "surfaces": [
+        "temporal_scheduler"
+      ]
+    },
+    {
+      "action_id": "publish_policy_proof_report_contract",
+      "status": "closed",
+      "surfaces": [
+        "policy_proof_report"
+      ]
+    },
+    {
+      "action_id": "publish_capability_upgrade_plan_contract",
+      "status": "closed",
+      "surfaces": [
+        "autonomous_capability_upgrade"
+      ]
+    },
+    {
+      "action_id": "publish_autonomous_test_generation_plan_contract",
+      "status": "closed",
+      "surfaces": [
+        "autonomous_test_generation"
+      ]
+    },
+    {
+      "action_id": "publish_trust_ledger_bundle_contract",
+      "status": "closed",
+      "surfaces": [
+        "trust_ledger"
+      ]
+    },
+    {
+      "action_id": "publish_trust_ledger_anchor_receipt_contract",
+      "status": "closed",
+      "surfaces": [
+        "trust_ledger"
+      ]
+    }
+  ],
+  "coverage_levels": [
+    "gap",
+    "read_model",
+    "request_proof",
+    "action_proof",
+    "audit_chain"
+  ],
+  "coverage_states": [
+    "proven",
+    "witnessed",
+    "unproven"
+  ],
+  "coverage_summary": {
+    "by_action_proof": {
+      "action_proof": 50,
+      "audit_chain": 0,
+      "gap": 0,
+      "read_model": 8,
+      "request_proof": 2
+    },
+    "by_audit": {
+      "action_proof": 0,
+      "audit_chain": 56,
+      "gap": 0,
+      "read_model": 4,
+      "request_proof": 0
+    },
+    "by_coverage_state": {
+      "proven": 1,
+      "unproven": 0,
+      "witnessed": 59
+    },
+    "by_request_proof": {
+      "action_proof": 0,
+      "audit_chain": 0,
+      "gap": 0,
+      "read_model": 10,
+      "request_proof": 50
+    },
+    "surface_count": 60
+  },
+  "generated_by": "scripts/proof_coverage_matrix.py",
+  "route_coverage": {
+    "by_coverage_state": {
+      "proven": 5,
+      "unproven": 199,
+      "witnessed": 109
+    },
+    "route_count": 313,
+    "routes": [
+      {
+        "coverage_state": "witnessed",
+        "route": "/anchors/latest",
+        "surface_id": "gateway_runtime_witness"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/ab-test",
+        "surface_id": "model_experiment_control"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/ab-test/summary",
+        "surface_id": "model_experiment_control"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/agent/action-request",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/agent/action-result",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/agent/adapter/summary",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/agent/checkpoint",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/agent/heartbeat",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/agent/register",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/agent/restore",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/agents",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/agents/{agent_id}/tasks",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/analytics/{tenant_id}",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/api-keys",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/api-keys/{key_id}",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/audit",
+        "surface_id": "audit_chain_api"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/audit/anchor",
+        "surface_id": "audit_chain_api"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/audit/anchor/{anchor_id}/verify",
+        "surface_id": "audit_chain_api"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/audit/anchors",
+        "surface_id": "audit_chain_api"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/audit/summary",
+        "surface_id": "audit_chain_api"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/audit/verify",
+        "surface_id": "audit_chain_api"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/backpressure",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/bootstrap",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/budget",
+        "surface_id": "cost_budget_read_models"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/cache/stats",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/canary",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/capabilities",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/certify",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/certify/history",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/chain/execute",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/chain/history",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/chat",
+        "surface_id": "llm_chat_workflow"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/chat/stream",
+        "surface_id": "llm_streaming"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/chat/workflow",
+        "surface_id": "llm_chat_workflow"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/chat/workflow/history",
+        "surface_id": "llm_chat_workflow"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/circuit-breaker",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/circuits/dashboard",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/complete",
+        "surface_id": "llm_completion"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/complete/auto",
+        "surface_id": "llm_completion"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/complete/safe",
+        "surface_id": "llm_completion"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/compliance/audit-package",
+        "surface_id": "compliance_evidence_exports"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/compliance/incident-package",
+        "surface_id": "compliance_evidence_exports"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/compliance/mapping",
+        "surface_id": "compliance_evidence_exports"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/compliance/summary",
+        "surface_id": "compliance_evidence_exports"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/compression/summary",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/config",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/config/drift",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/config/history",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/config/rollback",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/config/update",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/config/watcher",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/connectors",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/connectors/history",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/connectors/invoke",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/connectors/register",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/connectors/summary",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/connectors/{connector_id}/disable",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/connectors/{connector_id}/enable",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/console",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/console/audit",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/console/checkpoints",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/console/home",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/console/providers",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/console/runs",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/console/scheduler",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/context/summary",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/conversation/message",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/conversation/{conversation_id}",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/conversations",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/coordination/checkpoint",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/coordination/restore",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/correlation/active",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/costs",
+        "surface_id": "cost_budget_read_models"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/costs/by-model",
+        "surface_id": "cost_budget_read_models"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/costs/top-spenders",
+        "surface_id": "cost_budget_read_models"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/costs/{tenant_id}",
+        "surface_id": "cost_budget_read_models"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/costs/{tenant_id}/projection",
+        "surface_id": "cost_budget_read_models"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/daemon/force",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/daemon/status",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/daemon/tick",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/dashboard",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/data-governance/classify",
+        "surface_id": "data_governance_controls"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/data-governance/evaluate",
+        "surface_id": "data_governance_controls"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/data-governance/policies",
+        "surface_id": "data_governance_controls"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/data-governance/privacy-rules",
+        "surface_id": "data_governance_controls"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/data-governance/redaction-rules",
+        "surface_id": "data_governance_controls"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/data-governance/residency-constraints",
+        "surface_id": "data_governance_controls"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/data-governance/retention-rules",
+        "surface_id": "data_governance_controls"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/data-governance/summary",
+        "surface_id": "data_governance_controls"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/dedup/summary",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/dependencies",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/dependencies/{name}/impact",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/deploy/readiness",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/events",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/events/publish",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/events/store/summary",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/events/summary",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/execute",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/explain/action",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/explain/audit/{entry_index}",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/explain/summary",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/export",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/export/sources",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/federation/summary",
+        "surface_id": "federated_control_plane"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/finance/approval-packets",
+        "surface_id": "finance_approval_packets"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/finance/approval-packets/operator/read-model",
+        "surface_id": "finance_approval_packets"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/finance/approval-packets/{case_id}",
+        "surface_id": "finance_approval_packets"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/finance/approval-packets/{case_id}/approval",
+        "surface_id": "finance_approval_packets"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/finance/approval-packets/{case_id}/proof",
+        "surface_id": "finance_approval_packets"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/flags",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/flags/{flag_id}",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/grafana/dashboard",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/guards",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/health/deep",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/health/score",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/health/v2",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/health/v3",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/idempotency/summary",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/isolation/summary",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/isolation/verify",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/knowledge/contradictions",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/knowledge/contradictions/unresolved",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/knowledge/entities",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/knowledge/entities/{entity_id}/links",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/knowledge/links",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/knowledge/summary",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/ledger",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/lineage/command/{command_id}",
+        "surface_id": "lineage_query_api"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/lineage/output/{output_id}",
+        "surface_id": "lineage_query_api"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/lineage/resolve",
+        "surface_id": "lineage_query_api"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/lineage/{trace_id}",
+        "surface_id": "lineage_query_api"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/llm/history",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/logs",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/memory/search",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/memory/store",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/memory/summary",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/metrics",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/migrations/summary",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/mil-audit/admit-runbook",
+        "surface_id": "runbook_learning_lifecycle"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/mil-audit/runbooks",
+        "surface_id": "runbook_learning_lifecycle"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/mil-audit/runbooks/{runbook_id}",
+        "surface_id": "runbook_learning_lifecycle"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/models",
+        "surface_id": "model_experiment_control"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/monitor",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/multi-agent/conflict",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/multi-agent/conflicts/unresolved",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/multi-agent/delegate",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/multi-agent/delegate/resolve",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/multi-agent/handoff",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/multi-agent/merge",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/multi-agent/summary",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/notifications/summary",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/ops/benchmarks",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/ops/imports",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/ops/proof-bridge",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/orchestration",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/orchestration/handoff",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/orchestration/plans",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/orchestration/plans/{plan_id}",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/output/parse",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/output/schemas",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/partitions",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/pilots/provision",
+        "surface_id": "pilot_provisioning"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/pilots/provisions",
+        "surface_id": "pilot_provisioning"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/pilots/provisions/{pilot_id}",
+        "surface_id": "pilot_provisioning"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/pipeline/execute",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/pipeline/history",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/plugins",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/policies/{policy_id}/diff",
+        "surface_id": "policy_version_registry"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/policies/{policy_id}/rollback",
+        "surface_id": "policy_version_registry"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/policies/{policy_id}/shadow/{shadow_version}",
+        "surface_id": "policy_version_registry"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/policies/{policy_id}/versions",
+        "surface_id": "policy_version_registry"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/policies/{policy_id}/versions/{version}",
+        "surface_id": "policy_version_registry"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/policies/{policy_id}/versions/{version}/promote",
+        "surface_id": "policy_version_registry"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/prompts",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/prompts/render",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/queue/process",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/queue/result/{task_id}",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/queue/status",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/queue/submit",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/quotas/summary",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/quotas/{tenant_id}",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/rate-limit/status",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/rate-limits/{client_id}",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/rbac/bindings",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/rbac/identities",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/rbac/roles",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/rbac/summary",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/readiness",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/regions",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/release",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/release/latest",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/replay/traces",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/replay/{trace_id}/determinism",
+        "surface_id": "replay_determinism"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/retries/summary",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/runbooks",
+        "surface_id": "runbook_learning_lifecycle"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/runbooks/analyze",
+        "surface_id": "runbook_learning_lifecycle"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/runbooks/approve",
+        "surface_id": "runbook_learning_lifecycle"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/runbooks/patterns",
+        "surface_id": "runbook_learning_lifecycle"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/runbooks/promote",
+        "surface_id": "runbook_learning_lifecycle"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/runbooks/summary",
+        "surface_id": "runbook_learning_lifecycle"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/runbooks/{runbook_id}/activate",
+        "surface_id": "runbook_learning_lifecycle"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/runbooks/{runbook_id}/retire",
+        "surface_id": "runbook_learning_lifecycle"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/sandbox/lineage/{trace_id}",
+        "surface_id": "hosted_demo_sandbox"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/sandbox/policy-evaluations",
+        "surface_id": "hosted_demo_sandbox"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/sandbox/summary",
+        "surface_id": "hosted_demo_sandbox"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/sandbox/traces",
+        "surface_id": "hosted_demo_sandbox"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/scheduler/execute",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/scheduler/history",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/scheduler/jobs",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/scheduler/jobs/{job_id}",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/scheduler/jobs/{job_id}/disable",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/scheduler/jobs/{job_id}/enable",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/scheduler/summary",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/schemas",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/schemas/validate",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/search",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/search/stats",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/secrets/summary",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/session",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/shutdown/info",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/simulate",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/simulate/history",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/simulate/summary",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/sla",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/sla/violations",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/snapshot",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/snapshots",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/state",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/state/save",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/state/{state_type}",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/stream",
+        "surface_id": "llm_streaming"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/templates",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/templates/execute",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/temporal/schedules",
+        "surface_id": "temporal_kernel"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/temporal/schedules/{schedule_id}",
+        "surface_id": "temporal_kernel"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/temporal/schedules/{schedule_id}/cancel",
+        "surface_id": "temporal_kernel"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/temporal/summary",
+        "surface_id": "temporal_kernel"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/temporal/worker/tick",
+        "surface_id": "temporal_kernel"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/tenant-isolation",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/tenant-isolation/audits",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/tenant/budget",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/tenant/gates",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/tenant/register",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/tenant/{tenant_id}/budget",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/tenant/{tenant_id}/gate",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/tenant/{tenant_id}/ledger",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/tenant/{tenant_id}/status",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/tenant/{tenant_id}/summary",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/tenants",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/tools",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/tools/history",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/tools/invoke",
+        "surface_id": "tool_invocation"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/tools/llm-format",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/traces",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/traces/slow",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/traces/summary",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/traces/{trace_id}",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/usage/{tenant_id}",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/validation/schemas",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/version",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/webhooks",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/webhooks/deliveries",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/webhooks/retry/dead-letters",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/webhooks/retry/summary",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/webhooks/subscribe",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/workflow/execute",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/workflow/history",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/workflow/tools",
+        "surface_id": "tool_invocation"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/workflow/traced",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/authority/approval-chains",
+        "surface_id": "gateway_approval_resolution"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/authority/approval-chains/expire-overdue",
+        "surface_id": "authority_operator_controls"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/authority/escalations",
+        "surface_id": "authority_obligation_mesh"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/authority/obligations",
+        "surface_id": "authority_obligation_mesh"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/authority/obligations/escalate-overdue",
+        "surface_id": "authority_operator_controls"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/authority/obligations/{obligation_id}/satisfy",
+        "surface_id": "authority_operator_controls"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/authority/operator",
+        "surface_id": "authority_operator_controls"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/authority/operator-audit",
+        "surface_id": "authority_operator_controls"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/authority/ownership",
+        "surface_id": "authority_operator_controls"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/authority/policies",
+        "surface_id": "authority_operator_controls"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/authority/responsibility",
+        "surface_id": "authority_obligation_mesh"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/authority/witness",
+        "surface_id": "authority_obligation_mesh"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/capability-fabric/admission-audits",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/capability-fabric/capsule-admission-receipts",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/capability-fabric/capsule-admissions",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "proven",
+        "route": "/capability-fabric/read-model",
+        "surface_id": "gateway_capability_fabric"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/capability-plans/read-model",
+        "surface_id": "capability_plan_evidence_bundle"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/capability-plans/{plan_id}/closure",
+        "surface_id": "capability_plan_evidence_bundle"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/capability-plans/{plan_id}/recover",
+        "surface_id": "capability_plan_evidence_bundle"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/capability/execute",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/commands/{command_id}/authority",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/commands/{command_id}/capability-admission",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "proven",
+        "route": "/commands/{command_id}/closure",
+        "surface_id": "gateway_capability_fabric"
+      },
+      {
+        "coverage_state": "proven",
+        "route": "/commands/{command_id}/universal-action-proof",
+        "surface_id": "gateway_capability_fabric"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/evidence/bundles/{command_id}",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/gateway/status",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/gateway/witness",
+        "surface_id": "gateway_runtime_witness"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/runtime/conformance",
+        "surface_id": "runtime_conformance_attestation"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/runtime/self/certify",
+        "surface_id": "runtime_reflex_engine"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/runtime/self/deployment-witnesses",
+        "surface_id": "runtime_reflex_engine"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/runtime/self/diagnose",
+        "surface_id": "runtime_reflex_engine"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/runtime/self/evaluate",
+        "surface_id": "runtime_reflex_engine"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/runtime/self/health",
+        "surface_id": "runtime_reflex_engine"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/runtime/self/inspect",
+        "surface_id": "runtime_reflex_engine"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/runtime/self/promote",
+        "surface_id": "runtime_reflex_engine"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/runtime/self/propose-upgrade",
+        "surface_id": "runtime_reflex_engine"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/runtime/self/witness",
+        "surface_id": "runtime_reflex_engine"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/runtime/witness",
+        "surface_id": "gateway_runtime_witness"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/webhook/approve/{request_id}",
+        "surface_id": "gateway_approval_resolution"
+      },
+      {
+        "coverage_state": "proven",
+        "route": "/webhook/discord",
+        "surface_id": "gateway_capability_fabric"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/webhook/slack",
+        "surface_id": "gateway_webhook_ingress"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/webhook/telegram",
+        "surface_id": "gateway_webhook_ingress"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/webhook/web",
+        "surface_id": "gateway_webhook_ingress"
+      },
+      {
+        "coverage_state": "proven",
+        "route": "/webhook/whatsapp",
+        "surface_id": "gateway_capability_fabric"
+      }
+    ],
+    "unclassified_route_count": 199
+  },
+  "schema_version": 1,
+  "surfaces": [
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "proven",
+      "evidence_files": [
+        "gateway/server.py",
+        "gateway/capability_fabric.py",
+        "gateway/capability_capsule_installer.py",
+        "gateway/command_spine.py",
+        "mcoi/mcoi_runtime/app/governed_execution.py",
+        "mcoi/mcoi_runtime/core/command_capability_admission.py",
+        "mcoi/mcoi_runtime/core/domain_capsule_compiler.py",
+        "tests/test_gateway/test_capability_capsule_installer.py",
+        "tests/test_gateway/test_webhooks.py",
+        "tests/test_governed_capability_fabric.py"
+      ],
+      "notes": "Gateway command admission, request receipt envelopes, terminal closure, universal action proof replay, capsule compiler certification-evidence manifests, and the capsule admission installer receipt expose runtime witnesses.",
+      "representative_paths": [
+        "/webhook/*",
+        "/capability-fabric/read-model",
+        "/commands/{command_id}/closure",
+        "/commands/{command_id}/universal-action-proof",
+        "/operator/universal-actions/read-model",
+        "/operator/universal-actions",
+        "DomainCapsuleCompiler.compile",
+        "install_certified_capsule_with_handoff_evidence"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "command_lifecycle_events_are_hash_linked",
+        "terminal_closure_requires_evidence_refs",
+        "successful_response_is_bound_to_response_evidence_closure",
+        "universal_action_proof_replays_from_command_events",
+        "operator_universal_action_read_model_filters_command_proofs",
+        "operator_universal_action_console_renders_replay_state",
+        "capsule_compiler_emits_certification_evidence_manifest",
+        "capsule_installer_stamps_admission_receipt",
+        "physical_capsule_admission_runs_promotion_preflight"
+      ],
+      "surface_id": "gateway_capability_fabric"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "mcoi/mcoi_runtime/app/routers/llm.py",
+        "mcoi/mcoi_runtime/app/streaming.py",
+        "mcoi/tests/test_streaming.py",
+        "mcoi/tests/test_server_phase200.py",
+        "schemas/streaming_budget_enforcement.schema.json",
+        "docs/41_streaming_budget_enforcement.md"
+      ],
+      "notes": "SSE responses include precharge, first-byte, chunk-debit, and final-reconcile proof identifiers.",
+      "representative_paths": [
+        "/api/v1/stream",
+        "/api/v1/chat/stream"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [],
+      "surface_id": "llm_streaming"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "mcoi/mcoi_runtime/app/routers/llm.py",
+        "mcoi/mcoi_runtime/core/proof_bridge.py"
+      ],
+      "notes": "Completion routes are governed through budget, model routing, and proof bridge checks.",
+      "representative_paths": [
+        "/api/v1/complete",
+        "/api/v1/complete/safe",
+        "/api/v1/complete/auto"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [],
+      "surface_id": "llm_completion"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "mcoi/mcoi_runtime/app/routers/llm.py",
+        "mcoi/mcoi_runtime/core/proof_bridge.py"
+      ],
+      "notes": "Chat and workflow routes preserve governed request and action proof boundaries.",
+      "representative_paths": [
+        "/api/v1/chat",
+        "/api/v1/chat/workflow",
+        "/api/v1/chat/workflow/history"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [],
+      "surface_id": "llm_chat_workflow"
+    },
+    {
+      "action_proof": "read_model",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "mcoi/mcoi_runtime/app/routers/llm.py",
+        "mcoi/mcoi_runtime/governance/guards/budget.py"
+      ],
+      "notes": "Budget and cost surfaces expose bounded read models over governed spend state.",
+      "representative_paths": [
+        "/api/v1/budget",
+        "/api/v1/costs",
+        "/api/v1/costs/by-model",
+        "/api/v1/costs/top-spenders",
+        "/api/v1/costs/{tenant_id}",
+        "/api/v1/costs/{tenant_id}/projection"
+      ],
+      "request_proof": "read_model",
+      "runtime_witnesses": [],
+      "surface_id": "cost_budget_read_models"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "mcoi/mcoi_runtime/app/routers/llm.py"
+      ],
+      "notes": "Model catalog and experiment control routes are declared as governed control surfaces.",
+      "representative_paths": [
+        "/api/v1/models",
+        "/api/v1/ab-test",
+        "/api/v1/ab-test/summary"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [],
+      "surface_id": "model_experiment_control"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "mcoi/mcoi_runtime/app/routers/policy_versions.py",
+        "mcoi/mcoi_runtime/governance/policy/versioning.py",
+        "mcoi/tests/test_policy_version_endpoints.py",
+        "mcoi/tests/test_policy_versioning.py"
+      ],
+      "notes": "Policy version routes expose immutable artifact registration, promotion, rollback, diff, and shadow evaluation.",
+      "representative_paths": [
+        "/api/v1/policies/{policy_id}/versions",
+        "/api/v1/policies/{policy_id}/versions/{version}",
+        "/api/v1/policies/{policy_id}/versions/{version}/promote",
+        "/api/v1/policies/{policy_id}/rollback",
+        "/api/v1/policies/{policy_id}/diff",
+        "/api/v1/policies/{policy_id}/shadow/{shadow_version}"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [],
+      "surface_id": "policy_version_registry"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "mcoi/mcoi_runtime/app/routers/pilot.py",
+        "mcoi/mcoi_runtime/app/pilot_init.py",
+        "mcoi/tests/test_pilot_init.py",
+        "docs/47_one_command_pilot_bringup.md"
+      ],
+      "notes": "Pilot provisioning returns deterministic scaffold artifacts, persists accepted provision records, and exposes bounded operator history read models.",
+      "representative_paths": [
+        "/api/v1/pilots/provision",
+        "/api/v1/pilots/provisions",
+        "/api/v1/pilots/provisions/{pilot_id}"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [],
+      "surface_id": "pilot_provisioning"
+    },
+    {
+      "action_proof": "read_model",
+      "audit": "read_model",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "mcoi/mcoi_runtime/app/routers/sandbox.py",
+        "mcoi/mcoi_runtime/core/hosted_demo_sandbox.py",
+        "mcoi/tests/test_hosted_demo_sandbox.py",
+        "docs/48_hosted_demo_sandbox.md"
+      ],
+      "notes": "Hosted demo sandbox exposes deterministic read-only traces, lineage projections, and policy evaluations without runtime mutation.",
+      "representative_paths": [
+        "/api/v1/sandbox/summary",
+        "/api/v1/sandbox/traces",
+        "/api/v1/sandbox/lineage/{trace_id}",
+        "/api/v1/sandbox/policy-evaluations"
+      ],
+      "request_proof": "read_model",
+      "runtime_witnesses": [],
+      "surface_id": "hosted_demo_sandbox"
+    },
+    {
+      "action_proof": "read_model",
+      "audit": "read_model",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "mcoi/mcoi_runtime/app/routers/federation.py",
+        "mcoi/mcoi_runtime/core/federated_control_plane.py",
+        "mcoi/tests/test_federated_control_plane.py",
+        "docs/51_federated_control_plane.md"
+      ],
+      "notes": "Federated control-plane summary exposes signed policy distribution and local enforcement receipts without tenant data replication.",
+      "representative_paths": [
+        "/api/v1/federation/summary"
+      ],
+      "request_proof": "read_model",
+      "runtime_witnesses": [],
+      "surface_id": "federated_control_plane"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "mcoi/mcoi_runtime/app/routers/finance_approval.py",
+        "mcoi/mcoi_runtime/contracts/finance_approval_packet.py",
+        "mcoi/mcoi_runtime/core/finance_approval/policy.py",
+        "mcoi/mcoi_runtime/core/finance_approval/state_machine.py",
+        "mcoi/mcoi_runtime/core/finance_approval/proof.py",
+        "mcoi/tests/test_finance_approval_packet.py",
+        "mcoi/tests/test_finance_approval_router.py",
+        "examples/finance_approval_packet_blocked.json",
+        "examples/finance_approval_packet_success.json"
+      ],
+      "notes": "Finance approval packet routes create policy-evaluated packet read models, expose a bounded operator read model, record explicit approval/effect receipts, and export bounded packet proofs for review-bound or closed cases.",
+      "representative_paths": [
+        "/api/v1/finance/approval-packets",
+        "/api/v1/finance/approval-packets/operator/read-model",
+        "/api/v1/finance/approval-packets/{case_id}",
+        "/api/v1/finance/approval-packets/{case_id}/approval",
+        "/api/v1/finance/approval-packets/{case_id}/proof"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "finance_packet_policy_reasons_explicit",
+        "blocked_packet_emits_no_effect",
+        "approval_action_binds_approval_effect_and_closure_refs",
+        "packet_proof_requires_policy_evidence_and_closure_for_closed_states",
+        "operator_read_model_bounds_visible_packets_and_counts"
+      ],
+      "surface_id": "finance_approval_packets"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "mcoi/mcoi_runtime/app/routers/data.py",
+        "mcoi/mcoi_runtime/core/data_governance.py",
+        "mcoi/mcoi_runtime/contracts/data_governance.py",
+        "mcoi/tests/test_data_governance_endpoints.py",
+        "mcoi/tests/test_data_governance_engine.py",
+        "mcoi/tests/test_data_governance_integration.py"
+      ],
+      "notes": "Data governance routes bind classification, policy, residency, privacy, redaction, retention, and handling evaluation decisions to governed responses with action proof receipts and state-hash posture witnesses.",
+      "representative_paths": [
+        "/api/v1/data-governance/summary",
+        "/api/v1/data-governance/classify",
+        "/api/v1/data-governance/policies",
+        "/api/v1/data-governance/residency-constraints",
+        "/api/v1/data-governance/privacy-rules",
+        "/api/v1/data-governance/redaction-rules",
+        "/api/v1/data-governance/retention-rules",
+        "/api/v1/data-governance/evaluate"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "data_governance_state_hash",
+        "data_governance_action_proof",
+        "tenant_visible_violation_read_model"
+      ],
+      "surface_id": "data_governance_controls"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "mcoi/mcoi_runtime/app/routers/compliance.py",
+        "mcoi/tests/test_compliance_export.py",
+        "mcoi/tests/test_compliance_alignment_matrix.py",
+        "scripts/compliance_alignment_matrix.py",
+        "docs/50_compliance_alignment_mapping.md"
+      ],
+      "notes": "Compliance export routes emit bounded evidence packages with package hashes, audit-chain verification, supported-framework boundaries, and self-audited export events.",
+      "representative_paths": [
+        "/api/v1/compliance/audit-package",
+        "/api/v1/compliance/incident-package",
+        "/api/v1/compliance/mapping",
+        "/api/v1/compliance/summary"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "compliance_package_hash",
+        "audit_chain_verification",
+        "self_audited_export_event"
+      ],
+      "surface_id": "compliance_evidence_exports"
+    },
+    {
+      "action_proof": "request_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "mcoi/mcoi_runtime/app/routers/audit.py",
+        "mcoi/mcoi_runtime/governance/audit/trail.py",
+        "mcoi/mcoi_runtime/governance/audit/anchor.py",
+        "mcoi/tests/test_audit_trail.py",
+        "mcoi/tests/test_v4_28_audit_checkpoint.py",
+        "mcoi/tests/test_server_phase202.py",
+        "mcoi/tests/test_production_truth.py"
+      ],
+      "notes": "Audit routes expose bounded audit entries, chain verification, summaries, checkpoint anchoring, anchor verification, and anchor history with hash-chain witnesses.",
+      "representative_paths": [
+        "/api/v1/audit",
+        "/api/v1/audit/verify",
+        "/api/v1/audit/summary",
+        "/api/v1/audit/anchor",
+        "/api/v1/audit/anchor/{anchor_id}/verify",
+        "/api/v1/audit/anchors"
+      ],
+      "request_proof": "read_model",
+      "runtime_witnesses": [
+        "audit_chain_verify_endpoint",
+        "audit_summary_read_model",
+        "audit_anchor_checkpoint_created",
+        "audit_anchor_verification_endpoint",
+        "audit_anchor_history_read_model",
+        "audit_chain_hash_linked"
+      ],
+      "surface_id": "audit_chain_api"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "mcoi/mcoi_runtime/app/routers/runbooks.py",
+        "mcoi/mcoi_runtime/app/routers/mil_audit.py",
+        "mcoi/mcoi_runtime/core/runbook_learning.py",
+        "mcoi/mcoi_runtime/app/server_http.py",
+        "mcoi/tests/test_mil_audit_router.py",
+        "mcoi/tests/test_runbook_learning.py",
+        "examples/mil_audit_runbook_operator_checklist.json",
+        "scripts/validate_mil_audit_runbook_operator_checklist.py",
+        "scripts/preflight_mil_audit_runbook_workflow.py",
+        "tests/test_validate_mil_audit_runbook_operator_checklist.py",
+        "tests/test_preflight_mil_audit_runbook_workflow.py"
+      ],
+      "notes": "Runbook learning lifecycle routes derive candidate runbooks from audit-trail patterns and MIL audit replay bundles, require explicit promotion and operator approval before activation, gate retirement by active state, emit governed sanitized errors, expose bounded read models for runbooks, patterns, and summaries, and provide a checklist-backed MIL audit runbook preflight.",
+      "representative_paths": [
+        "/api/v1/runbooks",
+        "/api/v1/runbooks/analyze",
+        "/api/v1/runbooks/approve",
+        "/api/v1/runbooks/patterns",
+        "/api/v1/runbooks/promote",
+        "/api/v1/runbooks/summary",
+        "/api/v1/runbooks/{runbook_id}/activate",
+        "/api/v1/runbooks/{runbook_id}/retire",
+        "/api/v1/mil-audit/admit-runbook",
+        "/api/v1/mil-audit/runbooks",
+        "/api/v1/mil-audit/runbooks/{runbook_id}"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "patterns_detected_from_audit_trail",
+        "promotion_requires_detected_pattern",
+        "approval_required_before_activation",
+        "retirement_requires_active_runbook",
+        "promote_and_approve_audit_records",
+        "mil_audit_replay_admits_runbook",
+        "mil_audit_operator_checklist_validated",
+        "mil_audit_runbook_preflight_ready",
+        "sanitized_runbook_error_details",
+        "runbook_pattern_read_models_bounded",
+        "runbook_responses_governed"
+      ],
+      "surface_id": "runbook_learning_lifecycle"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "gateway/server.py",
+        "gateway/router.py",
+        "tests/test_gateway/test_webhooks.py"
+      ],
+      "notes": "Webhook ingress binds tenant resolution, command ledger, and event-log evidence.",
+      "representative_paths": [
+        "/webhook/web",
+        "/webhook/slack",
+        "/webhook/telegram"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [],
+      "surface_id": "gateway_webhook_ingress"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "gateway/server.py",
+        "gateway/approval.py",
+        "tests/test_gateway/test_webhooks.py"
+      ],
+      "notes": "Approval resolution exposes protected operator paths and audited chain state.",
+      "representative_paths": [
+        "/webhook/approve/{request_id}",
+        "/authority/approval-chains"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [],
+      "surface_id": "gateway_approval_resolution"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "gateway/server.py",
+        "gateway/authority_obligation_mesh.py",
+        "tests/test_gateway/test_authority_obligation_mesh.py"
+      ],
+      "notes": "Authority and obligation surfaces expose unresolved responsibility state.",
+      "representative_paths": [
+        "/authority/witness",
+        "/authority/responsibility",
+        "/authority/obligations",
+        "/authority/escalations"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "pending_approval_chain_count",
+        "open_obligation_count",
+        "overdue_obligation_count",
+        "escalated_obligation_count"
+      ],
+      "surface_id": "authority_obligation_mesh"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "gateway/server.py",
+        "gateway/authority_obligation_mesh.py",
+        "gateway/tenant_identity.py",
+        "scripts/collect_runtime_conformance.py",
+        "tests/test_gateway/test_webhooks.py",
+        "tests/test_gateway/test_authority_obligation_mesh.py"
+      ],
+      "notes": "Authority operator controls bind guarded operator access, audit events, ownership and policy read models, overdue approval expiration, and obligation satisfaction/escalation controls.",
+      "representative_paths": [
+        "/authority/operator",
+        "/authority/operator-audit",
+        "/authority/ownership",
+        "/authority/policies",
+        "/authority/approval-chains/expire-overdue",
+        "/authority/obligations/{obligation_id}/satisfy",
+        "/authority/obligations/escalate-overdue"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "operator_access_guard",
+        "operator_audit_events",
+        "ownership_policy_read_models",
+        "approval_expiration_witness",
+        "obligation_satisfaction_escalation_witness"
+      ],
+      "surface_id": "authority_operator_controls"
+    },
+    {
+      "action_proof": "read_model",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "gateway/server.py",
+        ".github/workflows/gateway-publication.yml",
+        "scripts/orchestrate_deployment_witness.py",
+        "scripts/preflight_deployment_witness.py",
+        "scripts/collect_deployment_witness.py",
+        "scripts/validate_deployment_publication_closure.py",
+        "scripts/validate_mcp_capability_manifest.py",
+        "scripts/validate_mcp_operator_checklist.py",
+        "scripts/validate_gateway_publication_receipt.py",
+        "scripts/validate_deployment_orchestration_receipt.py",
+        "schemas/deployment_publication_closure_validation.schema.json",
+        "schemas/deployment_orchestration_receipt.schema.json",
+        "schemas/deployment_orchestration_receipt_validation.schema.json",
+        "schemas/gateway_publication_readiness.schema.json",
+        "schemas/gateway_publication_receipt_validation.schema.json",
+        "schemas/deployment_witness.schema.json",
+        "schemas/mullu_governance_protocol.manifest.json",
+        "tests/test_orchestrate_deployment_witness.py",
+        "tests/test_report_gateway_publication_readiness.py",
+        "tests/test_validate_gateway_publication_receipt.py",
+        "tests/test_validate_deployment_orchestration_receipt.py",
+        "tests/test_validate_deployment_publication_closure.py",
+        "tests/test_validate_protocol_manifest.py",
+        "tests/test_preflight_deployment_witness.py",
+        "tests/test_collect_deployment_witness.py",
+        "tests/test_validate_deployment_publication_closure.py"
+      ],
+      "notes": "Runtime witness surfaces publish bounded operational and responsibility debt state; deployment witnesses require raw runtime and authority debt-clear evidence before publication closure, and orchestration receipts bind ingress render, MCP checklist validation, preflight, dispatch evidence, schema contract validation, and post-run receipt validation before deployment witness readiness.",
+      "representative_paths": [
+        "/gateway/witness",
+        "/runtime/witness",
+        "/anchors/latest"
+      ],
+      "request_proof": "read_model",
+      "runtime_witnesses": [
+        "latest_command_event_hash",
+        "latest_terminal_certificate_id",
+        "responsibility_debt_clear",
+        "runtime_responsibility_debt_clear",
+        "open_obligation_count",
+        "overdue_obligation_count",
+        "authority_responsibility_debt_clear",
+        "authority_overdue_approval_chain_count",
+        "authority_overdue_obligation_count",
+        "authority_escalated_obligation_count",
+        "authority_unowned_high_risk_capability_count",
+        "deployment_witness_orchestration_receipt",
+        "deployment_publication_closure_validation_schema",
+        "deployment_orchestration_validation_schema",
+        "gateway_publication_readiness_schema",
+        "gateway_publication_receipt_validation_schema"
+      ],
+      "surface_id": "gateway_runtime_witness"
+    },
+    {
+      "action_proof": "read_model",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "gateway/server.py",
+        "gateway/conformance.py",
+        "gateway/physical_worker_canary.py",
+        "scripts/collect_runtime_conformance.py",
+        "scripts/produce_physical_worker_canary.py",
+        "scripts/validate_mcp_capability_manifest.py",
+        "schemas/runtime_conformance_certificate.schema.json",
+        "tests/test_gateway/test_conformance.py",
+        "tests/test_collect_runtime_conformance.py",
+        "tests/test_produce_physical_worker_canary.py"
+      ],
+      "notes": "Runtime conformance certificate binds live witness, closure, fabric, isolation, lineage, authority, physical worker canary proof, MCP manifest validity, proof-matrix route classification summary, document-drift checks, issuer schema self-validation, and collector schema validation into one signed attestation.",
+      "representative_paths": [
+        "/runtime/conformance"
+      ],
+      "request_proof": "read_model",
+      "runtime_witnesses": [
+        "gateway_witness_valid",
+        "runtime_witness_valid",
+        "runtime_conformance_certificate_schema_valid",
+        "runtime_conformance_collector_schema_valid",
+        "proof_coverage_unclassified_routes_reported",
+        "command_closure_canary_passed",
+        "capability_admission_canary_passed",
+        "dangerous_capability_isolation_canary_passed",
+        "lineage_query_canary_passed",
+        "authority_responsibility_debt_clear",
+        "authority_directory_sync_receipt_valid",
+        "capability_plan_bundle_canary_passed",
+        "physical_worker_canary_passed",
+        "physical_worker_canary_artifact_hash_bound"
+      ],
+      "surface_id": "runtime_conformance_attestation"
+    },
+    {
+      "action_proof": "read_model",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "gateway/server.py",
+        "scripts/collect_deployment_witness.py",
+        ".github/workflows/deployment-witness.yml",
+        "schemas/production_evidence_witness.schema.json",
+        "schemas/capability_evidence_endpoint.schema.json",
+        "schemas/audit_verification_endpoint.schema.json",
+        "schemas/proof_verification_endpoint.schema.json",
+        "tests/test_gateway/test_production_evidence.py",
+        "tests/test_collect_deployment_witness.py"
+      ],
+      "notes": "Production evidence endpoints expose signed deployment posture, capability evidence, audit verification, and proof verification; deployment witness collection can require the whole plane before publication, derives live physical safety evidence only from certified registry extensions, and blocks live physical capability claims without explicit safety evidence while allowing sandbox-only physical canary evidence.",
+      "representative_paths": [
+        "/deployment/witness",
+        "/capabilities/evidence",
+        "/audit/verify",
+        "/proof/verify"
+      ],
+      "request_proof": "read_model",
+      "runtime_witnesses": [
+        "signed_production_evidence_witness",
+        "capability_evidence_schema_valid",
+        "audit_verification_schema_valid",
+        "proof_verification_schema_valid",
+        "deployment_collection_requires_production_evidence",
+        "live_physical_safety_evidence_derived_from_registry",
+        "live_physical_capability_requires_safety_evidence",
+        "sandbox_physical_capability_remains_non_production",
+        "missing_production_evidence_fails_closed"
+      ],
+      "surface_id": "production_evidence_plane"
+    },
+    {
+      "action_proof": "request_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "gateway/server.py",
+        "mcoi/mcoi_runtime/contracts/reflex.py",
+        "mcoi/mcoi_runtime/core/reflex.py",
+        "schemas/reflex_deployment_witness_envelope.schema.json",
+        "schemas/reflex_deployment_witness_validator_receipt.schema.json",
+        "scripts/emit_reflex_deployment_witness_validator_receipt.py",
+        "scripts/validate_reflex_deployment_witness.py",
+        "tests/test_reflex_engine.py",
+        "tests/test_gateway/test_reflex_endpoints.py",
+        "tests/test_emit_reflex_deployment_witness_validator_receipt.py",
+        "tests/test_validate_reflex_deployment_witness.py",
+        "tests/test_gateway/test_webhooks.py"
+      ],
+      "notes": "Runtime Reflex surfaces expose operator-gated health, anomaly, diagnosis, eval, proposal, certification handoff, promotion decision, signed witness projections, schema-backed offline witness replay, and CI receipt artifacts without direct runtime mutation.",
+      "representative_paths": [
+        "/runtime/self/health",
+        "/runtime/self/inspect",
+        "/runtime/self/diagnose",
+        "/runtime/self/evaluate",
+        "/runtime/self/propose-upgrade",
+        "/runtime/self/certify",
+        "/runtime/self/promote",
+        "/runtime/self/deployment-witnesses",
+        "/runtime/self/witness"
+      ],
+      "request_proof": "read_model",
+      "runtime_witnesses": [
+        "operator_only_access",
+        "mutation_applied_false",
+        "certification_handoff_required",
+        "protected_surfaces_auto_promote_false",
+        "signed_reflex_witness",
+        "reflex_deployment_witness_schema",
+        "reflex_validator_receipt_schema",
+        "offline_reflex_witness_replay",
+        "reflex_validator_receipt_artifact"
+      ],
+      "surface_id": "runtime_reflex_engine"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "docs/62_governed_operational_intelligence.md",
+        "gateway/world_state.py",
+        "gateway/goal_compiler.py",
+        "gateway/causal_simulator.py",
+        "schemas/world_state.schema.json",
+        "schemas/goal.schema.json",
+        "schemas/simulation_receipt.schema.json",
+        "tests/test_gateway/test_world_state.py",
+        "tests/test_gateway/test_goal_compiler.py",
+        "tests/test_gateway/test_causal_simulator.py"
+      ],
+      "notes": "Governed operational intelligence binds sourced world-state admission, compiled goal-plan certificates, and deterministic causal simulation receipts before effect-bearing execution.",
+      "representative_paths": [
+        "WorldStateStore.add_entity",
+        "GoalCompiler.compile",
+        "CausalSimulator.simulate"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "world_assertions_require_source_evidence",
+        "goal_plan_certificate_hash_bound",
+        "simulation_receipt_schema_valid",
+        "open_world_contradictions_block_execution",
+        "high_risk_controls_projected_before_execution"
+      ],
+      "surface_id": "governed_operational_intelligence"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "docs/62_governed_operational_intelligence.md",
+        "gateway/capability_forge.py",
+        "schemas/capability_candidate.schema.json",
+        "tests/test_gateway/test_capability_forge.py"
+      ],
+      "notes": "Capability forge emits schema-backed candidate packages and maturity-ready certification handoffs only, keeps promotion blocked, validates approval, sandbox, receipt, eval, live-write, physical safety, and recovery evidence before certification handoff, installs certified handoffs as certification and physical safety evidence without direct maturity overrides, and batches handoff evidence with exact capsule-entry coverage before registry admission.",
+      "representative_paths": [
+        "CapabilityForge.create_candidate",
+        "CapabilityForge.validate",
+        "CapabilityForge.build_certification_handoff",
+        "install_certification_handoff_evidence",
+        "install_certification_handoff_evidence_batch"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "candidate_promotion_blocked",
+        "candidate_schema_valid",
+        "candidate_certification_handoff_emits_maturity_bundle",
+        "certification_handoff_installs_evidence_without_maturity_claim",
+        "certification_handoff_batch_preserves_capsule_admission_gate",
+        "physical_candidate_declares_live_safety_evidence_requirements",
+        "physical_handoff_installs_live_safety_evidence",
+        "high_risk_approval_policy_required",
+        "effect_bearing_candidate_requires_sandbox",
+        "effect_bearing_candidate_requires_recovery_path"
+      ],
+      "surface_id": "capability_forge"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "capabilities/connector/capability_pack.json",
+        "capabilities/financial/capability_pack.json",
+        "docs/39_governed_capability_fabric.md",
+        "gateway/capability_fabric.py",
+        "gateway/capability_maturity.py",
+        "gateway/operator_capability_console.py",
+        "schemas/capability_maturity.schema.json",
+        "schemas/README.md",
+        "tests/test_gateway/test_capability_fabric.py",
+        "tests/test_gateway/test_capability_maturity.py",
+        "tests/test_gateway/test_operator_capability_console.py"
+      ],
+      "notes": "Capability maturity assessment derives C0-C7 readiness from explicit evidence, synthesizes maturity extensions from certification evidence bundles, projects maturity onto capability fabric read models, includes read-only and effect-bearing default-pack C6 examples, blocks production overclaims until live and recovery evidence are complete, and blocks autonomy overclaims until bounded autonomy controls are present.",
+      "representative_paths": [
+        "CapabilityMaturityEvidenceSynthesizer.materialize_extension",
+        "CapabilityMaturityAssessor.assess",
+        "CapabilityRegistryMaturityProjector.decorate_read_model",
+        "MaturityProjectingCapabilityAdmissionGate.read_model"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "certification_evidence_synthesizes_maturity_extension",
+        "maturity_derived_from_evidence",
+        "registry_read_model_exposes_maturity",
+        "default_pack_C6_examples_projected",
+        "effect_bearing_production_requires_live_write",
+        "production_requires_worker_deployment_recovery",
+        "autonomy_requires_C7_controls",
+        "capability_maturity_schema_valid"
+      ],
+      "surface_id": "capability_maturity_assessment"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "docs/62_governed_operational_intelligence.md",
+        "gateway/physical_action_boundary.py",
+        "gateway/physical_worker_canary.py",
+        "gateway/worker_mesh.py",
+        "scripts/produce_physical_worker_canary.py",
+        "schemas/physical_action_receipt.schema.json",
+        "schemas/worker_mesh.schema.json",
+        "tests/test_gateway/test_physical_action_boundary.py",
+        "tests/test_gateway/test_physical_worker_canary.py",
+        "tests/test_gateway/test_worker_mesh.py",
+        "tests/test_produce_physical_worker_canary.py"
+      ],
+      "notes": "Networked worker mesh dispatches only through active leases, rejects tenant/capability/operation/budget violations before handler execution, requires admitted physical action receipts for physical workers, and emits schema-backed receipts that explicitly require terminal closure.",
+      "representative_paths": [
+        "NetworkedWorkerMesh.register_worker",
+        "NetworkedWorkerMesh.dispatch",
+        "NetworkedWorkerMesh.read_model"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "active_lease_required",
+        "tenant_capability_operation_budget_checked",
+        "forbidden_operations_override_allowed",
+        "physical_action_receipt_required_for_physical_workers",
+        "physical_worker_canary_blocks_without_receipt",
+        "physical_worker_canary_passed",
+        "physical_worker_canary_uses_sandbox_handler",
+        "worker_evidence_refs_required",
+        "worker_receipt_not_terminal_closure",
+        "worker_mesh_schema_valid"
+      ],
+      "surface_id": "networked_worker_mesh"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "docs/62_governed_operational_intelligence.md",
+        "gateway/agent_identity.py",
+        "schemas/agent_identity.schema.json",
+        "tests/test_gateway/test_agent_identity.py"
+      ],
+      "notes": "Agent identity binds user-owned agents to owner, tenant, role, capability scopes, budget, memory scope, approval scope, delegation scope, evidence history, and reputation.",
+      "representative_paths": [
+        "AgentIdentityRegistry.register",
+        "AgentIdentityRegistry.evaluate",
+        "AgentIdentityRegistry.record_outcome",
+        "AgentIdentity"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "owner_tenant_identity_required",
+        "capability_scope_conflict_denied",
+        "self_approval_forbidden",
+        "policy_mutation_forbidden",
+        "delegation_requires_lease",
+        "agent_budget_enforced",
+        "reputation_update_requires_evidence",
+        "agent_identity_schema_valid"
+      ],
+      "surface_id": "agent_identity"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "gateway/claim_verification.py",
+        "schemas/claim_verification_report.schema.json",
+        "tests/test_gateway/test_claim_verification.py"
+      ],
+      "notes": "Claim verification reports distinguish observed facts, user claims, model inferences, external source claims, verified results, stale results, and contradicted results before planning or execution use.",
+      "representative_paths": [
+        "ClaimVerificationEngine.verify",
+        "ClaimNode",
+        "ClaimVerificationReport"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "claim_type_declared",
+        "source_evidence_required",
+        "contradictions_block_execution",
+        "stale_claims_block_execution",
+        "high_risk_requires_independent_support",
+        "claim_verification_schema_valid"
+      ],
+      "surface_id": "claim_verification"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "gateway/connector_self_healing.py",
+        "schemas/connector_self_healing_receipt.schema.json",
+        "tests/test_gateway/test_connector_self_healing.py"
+      ],
+      "notes": "Connector self-healing emits bounded non-terminal recovery receipts for provider failures, retries, fallback providers, read-only degradation, incident opening, and capability revocation.",
+      "representative_paths": [
+        "ConnectorSelfHealingEngine.evaluate",
+        "ConnectorFailure",
+        "ConnectorHealingReceipt"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "provider_success_not_assumed",
+        "write_failures_require_operator_review",
+        "missing_receipt_revokes_capability",
+        "fallback_provider_requires_certification",
+        "read_only_degradation_bounded",
+        "connector_self_healing_schema_valid"
+      ],
+      "surface_id": "connector_self_healing"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "gateway/collaboration_cases.py",
+        "schemas/collaboration_case.schema.json",
+        "tests/test_gateway/test_collaboration_cases.py"
+      ],
+      "notes": "Collaboration cases bind requester separation, approval controls, decider authority, evidence hashing, and non-terminal case closure into governed operational casework.",
+      "representative_paths": [
+        "CollaborationCaseManager.open_case",
+        "CollaborationCaseManager.close_case",
+        "CollaborationControl"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "approval_separation_required",
+        "pending_controls_block_case_closure",
+        "decider_authority_required",
+        "case_closure_not_terminal_command_closure",
+        "collaboration_case_schema_valid"
+      ],
+      "surface_id": "collaboration_cases"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "gateway/capability_maturity.py",
+        "schemas/capability_maturity.schema.json",
+        "tests/test_gateway/test_capability_maturity.py"
+      ],
+      "notes": "Capability maturity derives production and autonomy readiness from explicit evidence, reports missing C6/C7 proof, and rejects overclaimed autonomy states.",
+      "representative_paths": [
+        "CapabilityMaturityAssessor.assess",
+        "CapabilityMaturityAssessment"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "maturity_derived_from_evidence",
+        "effect_bearing_c6_requires_live_write",
+        "production_requires_c6_or_c7",
+        "autonomy_requires_c7",
+        "capability_maturity_schema_valid"
+      ],
+      "surface_id": "capability_maturity"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "gateway/policy_prover.py",
+        "schemas/policy_proof_report.schema.json",
+        "tests/test_gateway/test_policy_prover.py"
+      ],
+      "notes": "Policy prover evaluates modeled execution paths against named safety properties and emits schema-backed counterexamples for reachable bypasses.",
+      "representative_paths": [
+        "PolicyProver.prove",
+        "PolicyProofReport"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "payment_requires_approval_counterexample",
+        "tenant_isolation_counterexample",
+        "shell_requires_sandbox_counterexample",
+        "provider_url_approved_counterexample",
+        "memory_requires_admission_counterexample",
+        "unknown_property_fails_closed",
+        "policy_proof_report_schema_valid"
+      ],
+      "surface_id": "policy_prover"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "docs/62_governed_operational_intelligence.md",
+        "gateway/memory_lattice.py",
+        "schemas/memory_lattice.schema.json",
+        "tests/test_gateway/test_memory_lattice.py"
+      ],
+      "notes": "Memory lattice admission derives planning and execution use from evidence, learning admission, policy authority, freshness, scope, and contradiction state.",
+      "representative_paths": [
+        "MemoryLatticeGate.assess",
+        "MemoryLatticeAdmission"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "raw_event_memory_not_directly_admitted",
+        "semantic_memory_requires_learning_admission",
+        "policy_memory_requires_authority_ref",
+        "preference_memory_tenant_owner_scoped",
+        "contradiction_and_stale_memory_block_execution",
+        "memory_lattice_schema_valid"
+      ],
+      "surface_id": "memory_lattice"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "docs/62_governed_operational_intelligence.md",
+        "gateway/workflow_mining.py",
+        "schemas/workflow_mining_report.schema.json",
+        "tests/test_gateway/test_workflow_mining.py"
+      ],
+      "notes": "Workflow mining detects repeated human traces and emits governed draft templates that remain blocked until sandbox replay and operator review.",
+      "representative_paths": [
+        "WorkflowMiningEngine.mine",
+        "WorkflowMiningReport",
+        "WorkflowDraft"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "repeated_trace_pattern_required",
+        "workflow_draft_activation_blocked",
+        "operator_review_required",
+        "sandbox_replay_required",
+        "risky_pattern_requires_approval_rules",
+        "workflow_mining_report_schema_valid"
+      ],
+      "surface_id": "workflow_mining"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "docs/62_governed_operational_intelligence.md",
+        "gateway/evidence_bundle.py",
+        "gateway/trust_ledger.py",
+        "scripts/verify_evidence_bundle.py",
+        "schemas/trust_ledger_anchor_receipt.schema.json",
+        "schemas/trust_ledger_bundle.schema.json",
+        "tests/test_gateway/test_evidence_bundle_endpoint.py",
+        "tests/test_gateway/test_trust_ledger_anchor_receipt.py",
+        "tests/test_gateway/test_trust_ledger.py"
+      ],
+      "notes": "Trust ledger signs terminal-closure evidence bundles, exposes operator bundle export, verifies exported bundle files offline, and emits external anchor receipts that bind typed artifact roots, tenant, command, deployment, commit, hash-chain root, and external anchor state.",
+      "representative_paths": [
+        "TrustLedger.issue",
+        "TrustLedger.verify",
+        "TrustLedger.anchor_bundle",
+        "TrustLedger.verify_anchor_receipt",
+        "GET /evidence/bundles/{command_id}",
+        "scripts/verify_evidence_bundle.py",
+        "TrustLedgerBundle",
+        "ExternalProofAnchorReceipt"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "terminal_certificate_id_required",
+        "evidence_refs_required",
+        "evidence_bundle_endpoint_requires_terminal_certificate",
+        "offline_bundle_verifier_validates_schema_hash_and_signature",
+        "bundle_hash_tamper_detection",
+        "hmac_signature_verification",
+        "anchored_bundle_requires_external_anchor_ref",
+        "typed_artifact_root_required",
+        "anchor_receipt_hmac_verification",
+        "anchor_receipt_schema_valid",
+        "anchor_receipt_non_terminal_marker_required",
+        "trust_ledger_bundle_schema_valid"
+      ],
+      "surface_id": "trust_ledger"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "docs/62_governed_operational_intelligence.md",
+        "gateway/domain_operating_pack.py",
+        "schemas/domain_operating_pack.schema.json",
+        "tests/test_gateway/test_domain_operating_pack.py"
+      ],
+      "notes": "Domain operating packs compile governed buyer-facing solution bundles that remain activation-blocked until certification evidence is present.",
+      "representative_paths": [
+        "DomainOperatingPackCompiler.compile",
+        "DomainOperatingPackCompiler.validate",
+        "DomainOperatingPackCatalog"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "builtin_domain_pack_catalog_complete",
+        "finance_ops_pack_declares_governed_artifacts",
+        "high_risk_pack_requires_approval_roles",
+        "certified_pack_requires_evidence_refs",
+        "domain_operating_pack_schema_valid"
+      ],
+      "surface_id": "domain_operating_pack"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "gateway/multimodal_operating_layer.py",
+        "schemas/multimodal_operation_receipt.schema.json",
+        "tests/test_gateway/test_multimodal_operating_layer.py"
+      ],
+      "notes": "Multimodal operating layer emits source-bound pre-dispatch receipts and blocks unsafe modality worker effects before execution.",
+      "representative_paths": [
+        "MultimodalOperatingLayer.evaluate",
+        "MultimodalOperationReceipt"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "multimodal_receipt_schema_valid",
+        "external_send_blocked_by_default",
+        "sensitive_voice_requires_redaction_evidence",
+        "unknown_modality_fails_closed"
+      ],
+      "surface_id": "multimodal_operating_layer"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "capsules/physical.json",
+        "capabilities/physical/capability_pack.json",
+        "gateway/capability_capsule_installer.py",
+        "gateway/server.py",
+        "gateway/physical_action_boundary.py",
+        "gateway/physical_capability_promotion_receipt.py",
+        "gateway/physical_worker_canary.py",
+        "scripts/emit_physical_capability_promotion_receipt.py",
+        "scripts/preflight_physical_capability_promotion.py",
+        "scripts/produce_physical_worker_canary.py",
+        "schemas/physical_action_receipt.schema.json",
+        "schemas/physical_capability_promotion_receipt.schema.json",
+        "tests/test_emit_physical_capability_promotion_receipt.py",
+        "tests/test_gateway/test_capability_capsule_installer.py",
+        "tests/test_gateway/test_physical_action_boundary.py",
+        "tests/test_gateway/test_physical_capability_pack.py",
+        "tests/test_gateway/test_physical_capability_promotion_receipt.py",
+        "tests/test_gateway/test_physical_worker_canary.py",
+        "tests/test_preflight_physical_capability_promotion.py",
+        "tests/test_produce_physical_worker_canary.py"
+      ],
+      "notes": "Physical action boundary emits schema-backed pre-dispatch receipts that block physical-world side effects unless hardware identity, safety envelope, manual override, emergency stop, simulation, operator approval, sensor confirmation, and safe-state controls are present; checked-in physical capability fixtures stay outside default loading, admit sandbox replay only when production readiness is not required, reject live physical promotion by default, and require promotion preflight evidence before any live production claim.",
+      "representative_paths": [
+        "/operator/physical-capability-promotion-receipts",
+        "PhysicalActionBoundary.evaluate",
+        "PhysicalActionRequest",
+        "PhysicalActionReceipt"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "physical_action_receipt_schema_valid",
+        "physical_capability_pack_fixture_not_default_loaded",
+        "physical_sandbox_replay_admitted_without_production_gate",
+        "live_physical_capability_rejected_by_production_gate",
+        "physical_pack_projects_sandbox_only_evidence",
+        "physical_promotion_preflight_blocks_fixture_live_claim",
+        "physical_promotion_preflight_requires_live_safety_evidence",
+        "physical_promotion_preflight_accepts_full_evidence",
+        "physical_promotion_preflight_allows_sandbox_only_pack",
+        "physical_capsule_admission_runs_promotion_preflight",
+        "physical_capsule_admission_keeps_registry_unmutated_on_preflight_failure",
+        "physical_promotion_receipt_binds_forge_handoff_registry_preflight",
+        "physical_promotion_receipt_schema_valid",
+        "physical_promotion_receipt_cli_emits_schema_valid_bundle",
+        "physical_promotion_receipt_cli_blocks_missing_live_refs",
+        "physical_promotion_receipt_operator_endpoint_emits_bundle",
+        "physical_promotion_receipt_operator_endpoint_blocks_missing_live_refs",
+        "hardware_identity_required",
+        "safety_envelope_required",
+        "manual_override_required",
+        "emergency_stop_required",
+        "simulation_pass_required",
+        "operator_approval_required",
+        "sensor_confirmation_required",
+        "physical_dispatch_blocked_until_controls_complete",
+        "physical_worker_canary_uses_sandbox_handler",
+        "physical_worker_canary_artifact_hash_bound"
+      ],
+      "surface_id": "physical_action_boundary"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "gateway/temporal_kernel.py",
+        "mcoi/mcoi_runtime/app/routers/temporal_scheduler.py",
+        "mcoi/mcoi_runtime/core/temporal_scheduler.py",
+        "mcoi/mcoi_runtime/core/temporal_scheduler_worker.py",
+        "mcoi/mcoi_runtime/persistence/temporal_scheduler_store.py",
+        "schemas/temporal_operation_receipt.schema.json",
+        "tests/test_gateway/test_temporal_kernel.py",
+        "mcoi/tests/test_temporal_scheduler_router.py"
+      ],
+      "notes": "Temporal kernel owns runtime time truth for schedules, expiry, approval validity, evidence freshness, budget windows, causal prerequisites, temporal schedule APIs, and monotonic duration witnesses before dispatch.",
+      "representative_paths": [
+        "/api/v1/temporal/schedules",
+        "/api/v1/temporal/schedules/{schedule_id}",
+        "/api/v1/temporal/schedules/{schedule_id}/cancel",
+        "/api/v1/temporal/worker/tick",
+        "/api/v1/temporal/summary",
+        "TemporalKernel.evaluate",
+        "TrustedClock.now_utc",
+        "TrustedClock.monotonic_ns"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "runtime_clock_injected",
+        "monotonic_duration_measured",
+        "future_schedule_defers",
+        "approval_expiry_denies",
+        "stale_evidence_escalates",
+        "budget_window_checked",
+        "causal_preconditions_required",
+        "temporal_scheduler_routes_governed",
+        "schedule_read_models_persisted",
+        "worker_tick_certifies_proofs",
+        "cancel_emits_terminal_receipt",
+        "temporal_receipt_schema_valid",
+        "receipt_not_terminal_closure"
+      ],
+      "surface_id": "temporal_kernel"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "gateway/temporal_evidence_freshness.py",
+        "schemas/temporal_evidence_freshness_receipt.schema.json",
+        "tests/test_gateway/test_temporal_evidence_freshness.py"
+      ],
+      "notes": "Temporal evidence freshness rechecks required evidence age, freshness windows, tenant scope, high-risk verification, revoked evidence, missing evidence, and expiring evidence before dispatch.",
+      "representative_paths": [
+        "TemporalEvidenceFreshness.evaluate",
+        "EvidenceFreshnessClaim",
+        "TemporalEvidenceFreshnessReceipt"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "evidence_age_computed_from_runtime_clock",
+        "freshness_window_required_for_dispatch",
+        "stale_required_evidence_triggers_refresh",
+        "missing_required_evidence_blocks_dispatch",
+        "revoked_or_unverified_high_risk_evidence_blocks",
+        "expiring_evidence_warns_before_dispatch",
+        "temporal_evidence_freshness_receipt_schema_valid",
+        "receipt_not_terminal_closure"
+      ],
+      "surface_id": "temporal_evidence_freshness"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "gateway/temporal_reapproval.py",
+        "schemas/temporal_reapproval_receipt.schema.json",
+        "tests/test_gateway/test_temporal_reapproval.py"
+      ],
+      "notes": "Temporal reapproval rechecks high-risk and critical approval grants at execution time for expiry, revocation, scope, tenant, approver role coverage, approval age, evidence refs, and source schedule binding before dispatch.",
+      "representative_paths": [
+        "TemporalReapproval.evaluate",
+        "ReapprovalRequest",
+        "TemporalReapprovalReceipt"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "runtime_clock_owns_reapproval_time",
+        "high_risk_approval_roles_required",
+        "expired_approval_requires_reapproval",
+        "revoked_or_out_of_scope_approval_blocks_dispatch",
+        "missing_approval_role_requires_reapproval",
+        "low_risk_action_does_not_require_reapproval",
+        "temporal_reapproval_receipt_schema_valid",
+        "receipt_not_terminal_closure"
+      ],
+      "surface_id": "temporal_reapproval"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "gateway/temporal_dispatch_window.py",
+        "schemas/temporal_dispatch_window_receipt.schema.json",
+        "tests/test_gateway/test_temporal_dispatch_window.py"
+      ],
+      "notes": "Temporal dispatch window rechecks tenant-local dispatch admission at runtime through allowed windows, blackout windows, holidays, evidence refs, and high-risk source schedule plus reapproval binding before worker execution.",
+      "representative_paths": [
+        "TemporalDispatchWindow.evaluate",
+        "DispatchWindowRequest",
+        "TemporalDispatchWindowReceipt"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "runtime_clock_owns_dispatch_window_time",
+        "tenant_timezone_resolved",
+        "allowed_window_required_for_high_risk_dispatch",
+        "outside_allowed_window_defers_dispatch",
+        "active_blackout_defers_dispatch",
+        "holiday_closure_defers_dispatch",
+        "source_reapproval_bound_for_high_risk_dispatch",
+        "temporal_dispatch_window_receipt_schema_valid",
+        "receipt_not_terminal_closure"
+      ],
+      "surface_id": "temporal_dispatch_window"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "gateway/temporal_budget_window.py",
+        "schemas/temporal_budget_window_receipt.schema.json",
+        "tests/test_gateway/test_temporal_budget_window.py"
+      ],
+      "notes": "Temporal budget window rechecks tenant-local daily, weekly, monthly, or custom reset periods against active spend snapshots, reserved spend, projected spend, evidence refs, and high-risk source receipts before worker execution.",
+      "representative_paths": [
+        "TemporalBudgetWindow.evaluate",
+        "BudgetWindowRequest",
+        "TemporalBudgetWindowReceipt"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "runtime_clock_owns_budget_window_time",
+        "tenant_timezone_resolves_budget_period",
+        "daily_weekly_monthly_budget_resets_computed",
+        "spend_snapshot_period_matches_active_window",
+        "projected_spend_blocks_over_limit_dispatch",
+        "future_budget_window_defers_dispatch",
+        "source_reapproval_bound_for_high_risk_budget_window",
+        "temporal_budget_window_receipt_schema_valid",
+        "receipt_not_terminal_closure"
+      ],
+      "surface_id": "temporal_budget_window"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "gateway/temporal_causal_order.py",
+        "schemas/temporal_causal_order_receipt.schema.json",
+        "tests/test_gateway/test_temporal_causal_order.py"
+      ],
+      "notes": "Temporal causal order rechecks required timestamped events, tenant and command scope, predecessor edges, source receipts, missing events, and out-of-order events before worker execution.",
+      "representative_paths": [
+        "TemporalCausalOrder.evaluate",
+        "TemporalCausalOrderRequest",
+        "TemporalCausalOrderReceipt"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "runtime_clock_owns_causal_order_time",
+        "required_events_must_be_present",
+        "tenant_and_command_scope_checked",
+        "predecessor_edges_checked",
+        "out_of_order_events_block_dispatch",
+        "future_events_block_dispatch",
+        "high_risk_source_receipts_bound",
+        "temporal_causal_order_receipt_schema_valid",
+        "receipt_not_terminal_closure"
+      ],
+      "surface_id": "temporal_causal_order"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "gateway/temporal_monotonic_duration.py",
+        "schemas/temporal_monotonic_duration_receipt.schema.json",
+        "tests/test_gateway/test_temporal_monotonic_duration.py"
+      ],
+      "notes": "Temporal monotonic duration rechecks timeout, latency, cooldown, retry-delay, and watchdog elapsed time from monotonic clock readings before dispatch.",
+      "representative_paths": [
+        "TemporalMonotonicDuration.evaluate",
+        "TemporalMonotonicDurationRequest",
+        "TemporalMonotonicDurationReceipt"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "runtime_monotonic_clock_owns_duration_truth",
+        "wall_clock_not_used_for_duration",
+        "duration_limit_exceeded_blocks_dispatch",
+        "cooldown_lower_bound_defers_dispatch",
+        "monotonic_clock_regression_blocks_dispatch",
+        "high_risk_source_receipts_bound",
+        "temporal_monotonic_duration_receipt_schema_valid",
+        "receipt_not_terminal_closure"
+      ],
+      "surface_id": "temporal_monotonic_duration"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "gateway/temporal_accepted_risk_expiry.py",
+        "schemas/temporal_accepted_risk_expiry_receipt.schema.json",
+        "tests/test_gateway/test_temporal_accepted_risk_expiry.py"
+      ],
+      "notes": "Temporal accepted-risk expiry rechecks active accepted-risk records for expiry, lifecycle disposition, tenant and command scope, review obligation, owner, evidence refs, and source receipts before dispatch reuse.",
+      "representative_paths": [
+        "TemporalAcceptedRiskExpiry.evaluate",
+        "TemporalAcceptedRiskRequest",
+        "TemporalAcceptedRiskExpiryReceipt"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "runtime_clock_owns_accepted_risk_expiry",
+        "expired_accepted_risk_blocks_dispatch",
+        "revoked_or_closed_accepted_risk_blocks_dispatch",
+        "tenant_command_and_action_scope_checked",
+        "review_obligation_required",
+        "accepted_risk_evidence_refs_required",
+        "high_risk_source_receipts_bound",
+        "temporal_accepted_risk_expiry_receipt_schema_valid",
+        "receipt_not_terminal_closure"
+      ],
+      "surface_id": "temporal_accepted_risk_expiry"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "gateway/temporal_credential_expiry.py",
+        "schemas/temporal_credential_expiry_receipt.schema.json",
+        "tests/test_gateway/test_temporal_credential_expiry.py"
+      ],
+      "notes": "Temporal credential expiry rechecks connector credential descriptors for expiry, lifecycle disposition, provider and credential scope, rotation warning windows, owner, evidence refs, source binding receipts, and no-secret serialization before dispatch.",
+      "representative_paths": [
+        "TemporalCredentialExpiry.evaluate",
+        "TemporalCredentialRequest",
+        "TemporalCredentialExpiryReceipt"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "runtime_clock_owns_credential_expiry",
+        "expired_credentials_block_dispatch",
+        "revoked_credentials_block_dispatch",
+        "provider_and_credential_scope_checked",
+        "rotation_pending_warns_before_dispatch",
+        "rotation_overdue_blocks_dispatch",
+        "credential_evidence_refs_required",
+        "secret_value_absence_verified",
+        "high_risk_source_receipts_bound",
+        "temporal_credential_expiry_receipt_schema_valid",
+        "receipt_not_terminal_closure"
+      ],
+      "surface_id": "temporal_credential_expiry"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "gateway/temporal_memory.py",
+        "schemas/temporal_memory_receipt.schema.json",
+        "tests/test_gateway/test_temporal_memory.py"
+      ],
+      "notes": "Temporal memory gates memory use through runtime-owned age, evidence freshness, validity windows, confidence decay, tenant-owner scope, allowed use, and supersession checks before memory can guide action.",
+      "representative_paths": [
+        "TemporalMemory.evaluate",
+        "TemporalMemoryRecord",
+        "TemporalMemoryReceipt"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "memory_age_computed_from_runtime_clock",
+        "stale_memory_requires_refresh",
+        "validity_window_blocks_expired_memory",
+        "superseded_memory_not_usable",
+        "confidence_decay_blocks_weak_memory",
+        "tenant_owner_scope_checked",
+        "allowed_use_checked",
+        "temporal_memory_receipt_schema_valid",
+        "receipt_not_terminal_closure"
+      ],
+      "surface_id": "temporal_memory"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "gateway/temporal_memory_refresh.py",
+        "schemas/temporal_memory_refresh_receipt.schema.json",
+        "tests/test_gateway/test_temporal_memory_refresh.py"
+      ],
+      "notes": "Temporal memory refresh converts stale or refresh-required memory receipts into bounded refresh tasks with required evidence coverage, owner scope, review readiness, due windows, and activation blocks before refreshed memory can guide action.",
+      "representative_paths": [
+        "TemporalMemoryRefresh.evaluate",
+        "MemoryRefreshRequest",
+        "TemporalMemoryRefreshReceipt"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "usable_memory_does_not_create_refresh_task",
+        "stale_memory_creates_bounded_refresh_task",
+        "evidence_type_coverage_gates_review_readiness",
+        "invalid_refresh_policy_blocks_task_creation",
+        "superseded_memory_blocks_reactivation",
+        "temporal_memory_refresh_receipt_schema_valid",
+        "receipt_not_terminal_closure"
+      ],
+      "surface_id": "temporal_memory_refresh"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "gateway/temporal_scheduler.py",
+        "schemas/temporal_scheduler_receipt.schema.json",
+        "tests/test_gateway/test_temporal_scheduler.py"
+      ],
+      "notes": "Temporal scheduler gates scheduled command wakeups with idempotency, due checks, retry windows, missed-run receipts, lease acquisition, recurrence declaration, and high-risk approval plus temporal recheck evidence before dispatch.",
+      "representative_paths": [
+        "TemporalScheduler.evaluate",
+        "ScheduledCommand",
+        "TemporalSchedulerReceipt"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "scheduled_command_requires_execute_at",
+        "idempotency_required",
+        "lease_acquired_before_dispatch",
+        "future_schedule_defers",
+        "missed_run_receipt_emitted",
+        "retry_window_checked",
+        "high_risk_reapproval_required",
+        "active_lease_blocks_duplicate_execution",
+        "temporal_scheduler_receipt_schema_valid",
+        "receipt_not_terminal_closure"
+      ],
+      "surface_id": "temporal_scheduler"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "gateway/policy_prover.py",
+        "schemas/policy_proof_report.schema.json",
+        "schemas/README.md",
+        "tests/test_gateway/test_policy_prover.py"
+      ],
+      "notes": "Policy proof reports evaluate explicit invariants over bounded cases, emit concrete counterexamples, and forbid policy weakening as a proof strategy.",
+      "representative_paths": [
+        "PolicyProver.prove"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "bounded_policy_cases_required",
+        "empty_invariants_rejected",
+        "counterexamples_are_concrete",
+        "proved_report_has_no_counterexamples",
+        "policy_weakening_forbidden",
+        "policy_proof_schema_valid"
+      ],
+      "surface_id": "policy_proof_report"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "gateway/autonomous_capability_upgrade.py",
+        "schemas/capability_upgrade_plan.schema.json",
+        "tests/test_gateway/test_autonomous_capability_upgrade.py"
+      ],
+      "notes": "Autonomous capability upgrade converts health signals into activation-blocked proposals that require evals, sandbox tests, ChangeCommand, ChangeCertificate, canary, terminal closure, and learning admission before promotion.",
+      "representative_paths": [
+        "AutonomousCapabilityUpgradeLoop.propose",
+        "CapabilityHealthSignal",
+        "CapabilityUpgradePlan"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "health_signal_requires_evidence_refs",
+        "upgrade_candidates_are_promotion_blocked",
+        "critical_governance_changes_require_second_approval",
+        "capability_upgrade_plan_schema_valid"
+      ],
+      "surface_id": "autonomous_capability_upgrade"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "gateway/autonomous_test_generation.py",
+        "schemas/autonomous_test_generation_plan.schema.json",
+        "tests/test_gateway/test_autonomous_test_generation.py"
+      ],
+      "notes": "Autonomous test generation converts certified failure traces into activation-blocked, operator-review-required replay, policy, tenant, approval, budget, and sandbox test proposals.",
+      "representative_paths": [
+        "AutonomousTestGenerationEngine.generate",
+        "FailureTrace",
+        "TestGenerationPlan"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "failure_trace_requires_evidence_refs",
+        "high_risk_failures_generate_governance_variants",
+        "plans_are_activation_blocked",
+        "autonomous_test_generation_plan_schema_valid"
+      ],
+      "surface_id": "autonomous_test_generation"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "gateway/server.py",
+        "gateway/plan.py",
+        "gateway/plan_executor.py",
+        "gateway/plan_ledger.py",
+        "tests/test_gateway/test_plan.py",
+        "tests/test_gateway/test_webhooks.py"
+      ],
+      "notes": "Capability plan surfaces expose plan terminal certificates, plan evidence bundles, failure witnesses, and recovery-attempt audit records.",
+      "representative_paths": [
+        "/capability-plans/read-model",
+        "/capability-plans/{plan_id}/closure",
+        "/capability-plans/{plan_id}/recover"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "plan_terminal_certificate",
+        "plan_evidence_bundle",
+        "plan_witnesses",
+        "plan_recovery_attempts"
+      ],
+      "surface_id": "capability_plan_evidence_bundle"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "mcoi/mcoi_runtime/app/routers/replay.py",
+        "mcoi/mcoi_runtime/core/replay_determinism_harness.py",
+        "mcoi/tests/test_replay_determinism_endpoints.py",
+        "mcoi/tests/test_replay_determinism_harness.py",
+        "docs/03_trace_and_replay.md"
+      ],
+      "notes": "Replay determinism route emits governed reports over completed traces with bounded operation specs.",
+      "representative_paths": [
+        "/api/v1/replay/{trace_id}/determinism"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [],
+      "surface_id": "replay_determinism"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "mcoi/mcoi_runtime/app/routers/data.py",
+        "mcoi/mcoi_runtime/app/routers/workflow.py",
+        "mcoi/mcoi_runtime/core/tool_use.py",
+        "mcoi/mcoi_runtime/mcp/capability_bridge.py",
+        "gateway/mcp_operator_read_model.py",
+        "gateway/mcp_capability_fabric.py",
+        "gateway/mcp_capabilities.py",
+        "scripts/validate_mcp_capability_manifest.py",
+        "scripts/validate_mcp_operator_checklist.py",
+        "examples/mcp_capability_manifest.json",
+        "examples/mcp_operator_handoff_checklist.json",
+        "docs/55_mcp_capability_manifest.md",
+        "tests/test_gateway/test_mcp_capability_fabric.py",
+        "tests/test_validate_mcp_capability_manifest.py",
+        "tests/test_validate_mcp_operator_checklist.py"
+      ],
+      "notes": "Tool invocation and MCP capability import bind action proof ids, capability policy receipts, authority-obligation ownership records, validated operator manifests, and machine-readable handoff checklists.",
+      "representative_paths": [
+        "/api/v1/tools/invoke",
+        "/api/v1/workflow/tools"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [],
+      "surface_id": "tool_invocation"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "mcoi/mcoi_runtime/core/governed_session.py",
+        "mcoi/mcoi_runtime/core/proof_bridge.py",
+        "mcoi/tests/test_governed_session.py"
+      ],
+      "notes": "Session entry points return request-envelope proofs and retain action proof lineage.",
+      "representative_paths": [
+        "GovernedSession.llm",
+        "GovernedSession.execute",
+        "GovernedSession.query"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [],
+      "surface_id": "governed_session"
+    },
+    {
+      "action_proof": "read_model",
+      "audit": "read_model",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "gateway/server.py"
+      ],
+      "notes": "Operational liveness and documentation surfaces are outside the proof-critical path.",
+      "representative_paths": [
+        "/health",
+        "/docs",
+        "/openapi.json",
+        "/redoc"
+      ],
+      "request_proof": "read_model",
+      "runtime_witnesses": [],
+      "surface_id": "health_docs_exempt"
+    },
+    {
+      "action_proof": "read_model",
+      "audit": "read_model",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "mcoi/mcoi_runtime/app/routers/lineage.py",
+        "mcoi/mcoi_runtime/core/lineage_query.py",
+        "docs/42_lineage_query_api.md",
+        "schemas/lineage_query.schema.json",
+        "schemas/trace_entry.schema.json",
+        "schemas/replay_record.schema.json"
+      ],
+      "notes": "Lineage query API resolves read-only lineage:// URIs with bounded output, command, graph, and policy-version read models.",
+      "representative_paths": [
+        "/api/v1/lineage/resolve",
+        "/api/v1/lineage/{trace_id}",
+        "/api/v1/lineage/output/{output_id}",
+        "/api/v1/lineage/command/{command_id}"
+      ],
+      "request_proof": "read_model",
+      "runtime_witnesses": [],
+      "surface_id": "lineage_query_api"
+    }
+  ]
+}

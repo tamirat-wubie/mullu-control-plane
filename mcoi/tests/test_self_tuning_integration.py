@@ -295,6 +295,9 @@ class TestAttachToMemoryMesh:
         record = integration.attach_improvement_state_to_memory_mesh("scope-1")
         assert record is not None
         assert record.memory_id != ""
+        assert record.title == "Self-tuning state"
+        assert "scope-1" not in record.title
+        assert record.scope_ref_id == "scope-1"
 
     def test_attach_adds_to_memory_engine(self, integration, mem):
         integration.improvement_from_observability(TENANT, "anom-1")

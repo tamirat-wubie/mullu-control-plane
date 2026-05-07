@@ -1835,3 +1835,45 @@ class TestToDict:
         rev = eng.submit_review("rev-1", "r-1", "reviewer-1", decision=DisposalDisposition.ARCHIVE)
         d = rev.to_dict()
         assert d["decision"] is DisposalDisposition.ARCHIVE
+
+
+class TestBoundedContractWitnesses:
+    def test_invariant_messages_do_not_reflect_ids(self) -> None:
+        eng = _engine_with_record(record_id="r-secret")
+
+        with pytest.raises(RuntimeCoreInvariantError) as duplicate_exc:
+            eng.register_record("r-secret", "t-1", "Again")
+        duplicate_message = str(duplicate_exc.value)
+        assert duplicate_message == "Duplicate record_id"
+        assert "r-secret" not in duplicate_message
+        assert "record_id" in duplicate_message
+
+        with pytest.raises(RuntimeCoreInvariantError) as unknown_hold_exc:
+            eng.release_hold("hold-secret")
+        unknown_hold_message = str(unknown_hold_exc.value)
+        assert unknown_hold_message == "Unknown hold_id"
+        assert "hold-secret" not in unknown_hold_message
+        assert "hold_id" in unknown_hold_message
+
+    def test_release_hold_message_does_not_reflect_status(self) -> None:
+        eng = _engine_with_record(record_id="r-secret")
+        eng.place_hold("hold-secret", "r-secret", "t-1")
+        eng.release_hold("hold-secret")
+
+        with pytest.raises(RuntimeCoreInvariantError) as released_exc:
+            eng.release_hold("hold-secret")
+        released_message = str(released_exc.value)
+        assert released_message == "Cannot release hold in current status"
+        assert "released" not in released_message
+        assert "current status" in released_message
+
+    def test_snapshot_message_does_not_reflect_snapshot_id(self) -> None:
+        eng = _engine_with_record(record_id="r-secret")
+        eng.records_snapshot("snap-secret")
+
+        with pytest.raises(RuntimeCoreInvariantError) as snapshot_exc:
+            eng.records_snapshot("snap-secret")
+        snapshot_message = str(snapshot_exc.value)
+        assert snapshot_message == "Duplicate snapshot_id"
+        assert "snap-secret" not in snapshot_message
+        assert "snapshot_id" in snapshot_message

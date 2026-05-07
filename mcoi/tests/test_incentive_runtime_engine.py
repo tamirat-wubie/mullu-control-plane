@@ -492,3 +492,38 @@ class TestGoldenScenarios:
         eng2.suspend_incentive("i1")
         snap2 = eng2.snapshot()
         assert snap1["_state_hash"] == snap2["_state_hash"]
+
+
+class TestBoundedIncentiveContracts:
+    def test_duplicate_unknown_and_terminal_messages_are_bounded(self):
+        eng, _ = _make_engine()
+        eng.register_incentive("inc-secret", "t1", "Reward")
+        with pytest.raises(RuntimeCoreInvariantError, match="Duplicate incentive_id") as duplicate_exc:
+            eng.register_incentive("inc-secret", "t1", "Reward")
+        with pytest.raises(RuntimeCoreInvariantError, match="Unknown incentive_id") as unknown_exc:
+            eng.get_incentive("inc-missing")
+        eng.expire_incentive("inc-secret")
+        with pytest.raises(RuntimeCoreInvariantError, match="terminal status") as terminal_exc:
+            eng.suspend_incentive("inc-secret")
+
+        assert "inc-secret" not in str(duplicate_exc.value)
+        assert "inc-missing" not in str(unknown_exc.value)
+        assert "inc-secret" not in str(terminal_exc.value)
+        assert "expired" not in str(terminal_exc.value).lower()
+
+    def test_violation_reasons_are_bounded(self):
+        eng, _ = _make_engine()
+        eng.register_incentive("inc-secret", "t1", "Reward")
+        eng.record_behavior_observation(
+            "obs-secret", "t1", "actor1", "inc-secret", disposition=BehaviorDisposition.GAMING,
+        )
+        eng.detect_gaming("det-secret", "t1", "actor1", "inc-secret")
+        eng.record_policy_effect("eff-secret", "t1", "policy-1", kind=PolicyEffectKind.PERVERSE)
+        eng.bind_incentive_to_contract("bind-secret", "t1", "contract-1", "inc-secret")
+        eng.retire_incentive("inc-secret")
+
+        reasons = {violation.reason for violation in eng.detect_incentive_violations()}
+        assert "gaming detection has no decision recorded" in reasons
+        assert "policy effect is perverse and unresolved" in reasons
+        assert "terminal incentive remains bound to contract" in reasons
+        assert all("secret" not in reason for reason in reasons)

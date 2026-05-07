@@ -40,8 +40,9 @@ class TestOrchestrator:
 
     def test_register_unknown_role_fails(self):
         orch = MultiAgentOrchestrator()
-        with pytest.raises(ValueError, match="Unknown role"):
+        with pytest.raises(ValueError, match=r"^unknown role$") as excinfo:
             orch.register_agent("nonexistent")
+        assert "nonexistent" not in str(excinfo.value)
 
     def test_propose_action(self):
         orch = MultiAgentOrchestrator()
@@ -52,8 +53,10 @@ class TestOrchestrator:
     def test_propose_action_bad_runtime(self):
         orch = MultiAgentOrchestrator()
         orch.register_agent("investigator")
-        with pytest.raises(ValueError, match="not allowed"):
+        with pytest.raises(ValueError, match=r"^runtime not allowed for role$") as excinfo:
             orch.propose_action("a1", "investigator", "ledger", "collect_data")
+        assert "investigator" not in str(excinfo.value)
+        assert "ledger" not in str(excinfo.value)
 
     def test_approve_and_execute(self):
         orch = MultiAgentOrchestrator()
@@ -67,8 +70,9 @@ class TestOrchestrator:
         orch = MultiAgentOrchestrator()
         orch.register_agent("investigator")
         orch.propose_action("a1", "investigator", "evidence", "collect_data")
-        with pytest.raises(ValueError, match="must be approved"):
+        with pytest.raises(ValueError, match=r"^action must be approved before execution$") as excinfo:
             orch.execute_action("a1")
+        assert "a1" not in str(excinfo.value)
 
     def test_deny_action(self):
         orch = MultiAgentOrchestrator()
@@ -99,8 +103,10 @@ class TestOrchestrator:
         orch = MultiAgentOrchestrator()
         orch.register_agent("investigator")
         orch.register_agent("planner")
-        with pytest.raises(ValueError, match="No delegation rule"):
+        with pytest.raises(ValueError, match=r"^delegation rule unavailable$") as excinfo:
             orch.delegate("investigator", "planner", "invalid task")
+        assert "investigator" not in str(excinfo.value)
+        assert "planner" not in str(excinfo.value)
 
     def test_summary_counts(self):
         orch = MultiAgentOrchestrator()

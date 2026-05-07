@@ -8,7 +8,7 @@ from __future__ import annotations
 from typing import Any
 
 from fastapi import APIRouter
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from mcoi_runtime.app.routers.deps import deps
 from mcoi_runtime.core.structured_logging import LogLevel
@@ -82,7 +82,7 @@ class EventPublishRequest(BaseModel):
     event_type: str
     tenant_id: str = ""
     source: str = "api"
-    payload: dict[str, Any] = {}
+    payload: dict[str, Any] = Field(default_factory=dict)
 
 
 @router.post("/api/v1/events/publish")
@@ -118,5 +118,62 @@ def get_logs(count: int = 50, min_level: str = "INFO"):
     return {
         "logs": [e.to_dict() for e in entries],
         "summary": deps.platform_logger.summary(),
+        "governed": True,
+    }
+
+
+# ═══ Audit Chain Anchoring ═══════════════════════════════════════════════
+
+
+@router.post("/api/v1/audit/anchor")
+def create_audit_anchor(limit: int = 1000):
+    """Create an external anchor checkpoint from current audit entries."""
+    deps.metrics.inc("requests_governed")
+    entries = deps.audit_trail.query(limit=limit)
+    if not entries:
+        return {"error": "no audit entries to anchor", "governed": True}
+    anchor = deps.audit_anchor.create_anchor(entries)
+    deps.audit_trail.record(
+        action="audit.anchor.create",
+        actor_id="api",
+        tenant_id="system",
+        target=anchor.anchor_id,
+        outcome="success",
+        detail={"entry_count": anchor.entry_count, "merkle_root": anchor.merkle_root[:16]},
+    )
+    return {
+        "anchor_id": anchor.anchor_id,
+        "entry_count": anchor.entry_count,
+        "merkle_root": anchor.merkle_root[:16],
+        "anchored_at": anchor.anchored_at,
+        "governed": True,
+    }
+
+
+@router.post("/api/v1/audit/anchor/{anchor_id}/verify")
+def verify_audit_anchor(anchor_id: str, limit: int = 1000):
+    """Verify current audit chain against a stored anchor."""
+    deps.metrics.inc("requests_governed")
+    entries = deps.audit_trail.query(limit=limit)
+    result = deps.audit_anchor.verify_anchor(anchor_id, entries)
+    return {**result, "governed": True}
+
+
+@router.get("/api/v1/audit/anchors")
+def list_audit_anchors(limit: int = 20):
+    """List recent audit chain anchors."""
+    deps.metrics.inc("requests_governed")
+    anchors = deps.audit_anchor.list_anchors(limit=limit)
+    return {
+        "anchors": [
+            {
+                "anchor_id": a.anchor_id,
+                "entry_count": a.entry_count,
+                "merkle_root": a.merkle_root[:16],
+                "anchored_at": a.anchored_at,
+            }
+            for a in anchors
+        ],
+        "count": len(anchors),
         "governed": True,
     }

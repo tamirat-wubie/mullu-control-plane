@@ -120,8 +120,10 @@ class TestSkillRegistry:
     def test_duplicate_registration_rejected(self):
         reg = SkillRegistry()
         reg.register(_make_skill())
-        with pytest.raises(RuntimeCoreInvariantError, match="already registered"):
+        with pytest.raises(RuntimeCoreInvariantError, match="already registered") as excinfo:
             reg.register(_make_skill())
+        assert str(excinfo.value) == "skill already registered"
+        assert "sk-1" not in str(excinfo.value)
 
     def test_get_nonexistent_returns_none(self):
         reg = SkillRegistry()
@@ -170,13 +172,18 @@ class TestSkillRegistry:
     def test_transition_invalid(self):
         reg = SkillRegistry()
         reg.register(_make_skill("a"))
-        with pytest.raises(RuntimeCoreInvariantError, match="invalid lifecycle transition"):
+        with pytest.raises(RuntimeCoreInvariantError, match="invalid lifecycle transition") as excinfo:
             reg.transition("a", SkillLifecycle.TRUSTED)  # candidate -> trusted not allowed
+        assert str(excinfo.value) == "invalid lifecycle transition"
+        assert "candidate" not in str(excinfo.value).lower()
+        assert "trusted" not in str(excinfo.value).lower()
 
     def test_transition_not_found(self):
         reg = SkillRegistry()
-        with pytest.raises(RuntimeCoreInvariantError, match="not found"):
+        with pytest.raises(RuntimeCoreInvariantError, match="not found") as excinfo:
             reg.transition("missing", SkillLifecycle.PROVISIONAL)
+        assert str(excinfo.value) == "skill not found"
+        assert "missing" not in str(excinfo.value)
 
     def test_transition_blocked_is_terminal(self):
         reg = SkillRegistry()
@@ -196,6 +203,13 @@ class TestSkillRegistry:
         reg.register(_make_skill("a"))
         with pytest.raises(RuntimeCoreInvariantError, match="confidence"):
             reg.update_confidence("a", 2.0)
+
+    def test_update_confidence_not_found(self):
+        reg = SkillRegistry()
+        with pytest.raises(RuntimeCoreInvariantError, match="not found") as excinfo:
+            reg.update_confidence("missing", 0.5)
+        assert str(excinfo.value) == "skill not found"
+        assert "missing" not in str(excinfo.value)
 
 
 # --- SkillSelector ---

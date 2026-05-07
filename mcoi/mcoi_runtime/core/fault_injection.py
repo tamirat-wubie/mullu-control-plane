@@ -61,7 +61,7 @@ class FaultInjectionEngine:
             raise RuntimeCoreInvariantError("spec must be a FaultSpec")
         if spec.spec_id in self._specs:
             raise RuntimeCoreInvariantError(
-                f"fault spec '{spec.spec_id}' already registered"
+                "fault spec already registered"
             )
         self._specs[spec.spec_id] = spec
         self._injection_counts[spec.spec_id] = 0
@@ -70,7 +70,7 @@ class FaultInjectionEngine:
     def get_spec(self, spec_id: str) -> FaultSpec:
         """Get a spec by ID."""
         if spec_id not in self._specs:
-            raise RuntimeCoreInvariantError(f"fault spec '{spec_id}' not found")
+            raise RuntimeCoreInvariantError("fault spec not found")
         return self._specs[spec_id]
 
     def list_specs(
@@ -100,11 +100,11 @@ class FaultInjectionEngine:
             raise RuntimeCoreInvariantError("window must be a FaultWindow")
         if window.spec_id not in self._specs:
             raise RuntimeCoreInvariantError(
-                f"fault spec '{window.spec_id}' not found"
+                "fault spec not found"
             )
         if window.window_id in self._windows:
             raise RuntimeCoreInvariantError(
-                f"window '{window.window_id}' already exists"
+                "window already exists"
             )
         self._windows[window.window_id] = window
         return window
@@ -200,7 +200,7 @@ class FaultInjectionEngine:
         # Verify the injection record exists
         if not any(r.record_id == record_id for r in self._records):
             raise RuntimeCoreInvariantError(
-                f"injection record '{record_id}' not found"
+                "injection record not found"
             )
         now = _now_iso()
         obs = FaultObservation(
@@ -241,7 +241,7 @@ class FaultInjectionEngine:
         """Assess whether the system recovered from a fault."""
         if not any(r.record_id == record_id for r in self._records):
             raise RuntimeCoreInvariantError(
-                f"injection record '{record_id}' not found"
+                "injection record not found"
             )
         now = _now_iso()
         assessment = FaultRecoveryAssessment(
@@ -281,7 +281,7 @@ class FaultInjectionEngine:
         """Start an adversarial campaign session."""
         for sid in spec_ids:
             if sid not in self._specs:
-                raise RuntimeCoreInvariantError(f"fault spec '{sid}' not found")
+                raise RuntimeCoreInvariantError("fault spec not found")
 
         target_kinds = tuple(sorted({
             self._specs[sid].target_kind.value for sid in spec_ids
@@ -302,7 +302,7 @@ class FaultInjectionEngine:
         """Complete a session and produce an outcome."""
         if session_id not in self._sessions:
             raise RuntimeCoreInvariantError(
-                f"session '{session_id}' not found"
+                "session not found"
             )
         session = self._sessions[session_id]
 
@@ -393,13 +393,13 @@ class FaultInjectionEngine:
     def get_session(self, session_id: str) -> AdversarialSession:
         """Get an adversarial session by ID."""
         if session_id not in self._sessions:
-            raise RuntimeCoreInvariantError(f"session '{session_id}' not found")
+            raise RuntimeCoreInvariantError("session not found")
         return self._sessions[session_id]
 
     def get_outcome(self, outcome_id: str) -> AdversarialOutcome:
         """Get an adversarial outcome by ID."""
         if outcome_id not in self._outcomes:
-            raise RuntimeCoreInvariantError(f"outcome '{outcome_id}' not found")
+            raise RuntimeCoreInvariantError("outcome not found")
         return self._outcomes[outcome_id]
 
     def get_outcomes_for_session(
@@ -429,7 +429,7 @@ class FaultInjectionEngine:
                 severity=severity,
                 injection_mode=InjectionMode.REPEATED,
                 repeat_count=count,
-                description=f"Provider {ft.value} storm ({count}x)",
+                description="provider failure storm",
                 tags=("provider-storm",),
                 created_at=now,
             )
@@ -451,7 +451,7 @@ class FaultInjectionEngine:
                 severity=severity,
                 injection_mode=InjectionMode.REPEATED,
                 repeat_count=count,
-                description=f"Event {ft.value} flood ({count}x)",
+                description="event flood",
                 tags=("event-flood",),
                 created_at=now,
             )
@@ -473,7 +473,7 @@ class FaultInjectionEngine:
                 severity=severity,
                 injection_mode=InjectionMode.SINGLE,
                 repeat_count=1,
-                description=f"Checkpoint {ft.value}",
+                description="checkpoint corruption",
                 tags=("checkpoint-corruption",),
                 created_at=now,
             )
@@ -495,7 +495,7 @@ class FaultInjectionEngine:
                 severity=severity,
                 injection_mode=InjectionMode.REPEATED,
                 repeat_count=count,
-                description=f"Communication {ft.value} ({count}x)",
+                description="communication failure",
                 tags=("communication-failure",),
                 created_at=now,
             )
@@ -517,7 +517,7 @@ class FaultInjectionEngine:
                 severity=severity,
                 injection_mode=InjectionMode.SINGLE,
                 repeat_count=1,
-                description=f"Artifact {ft.value}",
+                description="artifact corruption",
                 tags=("artifact-corruption",),
                 created_at=now,
             )
@@ -539,7 +539,7 @@ class FaultInjectionEngine:
                 severity=severity,
                 injection_mode=InjectionMode.REPEATED,
                 repeat_count=count,
-                description=f"Obligation escalation {ft.value} ({count}x)",
+                description="obligation escalation stress",
                 tags=("obligation-stress",),
                 created_at=now,
             )
@@ -561,7 +561,7 @@ class FaultInjectionEngine:
                 severity=severity,
                 injection_mode=InjectionMode.REPEATED,
                 repeat_count=3,
-                description=f"Governance {ft.value} storm",
+                description="governance conflict storm",
                 tags=("governance-storm",),
                 created_at=now,
             )
@@ -583,7 +583,7 @@ class FaultInjectionEngine:
                 severity=severity,
                 injection_mode=InjectionMode.REPEATED,
                 repeat_count=3,
-                description=f"Domain pack {ft.value} stress",
+                description="domain pack conflict stress",
                 tags=("domain-pack-stress",),
                 created_at=now,
             )

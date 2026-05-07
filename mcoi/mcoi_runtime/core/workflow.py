@@ -205,9 +205,7 @@ class WorkflowEngine:
         """
         errors = self.validate_workflow(descriptor)
         if errors:
-            raise RuntimeCoreInvariantError(
-                f"workflow validation failed: {'; '.join(errors)}"
-            )
+            raise RuntimeCoreInvariantError("workflow validation failed")
 
         execution_id = stable_identifier("wf-exec", {
             "workflow_id": descriptor.workflow_id,
@@ -280,10 +278,7 @@ class WorkflowEngine:
                     binding_failure = StageExecutionResult(
                         stage_id=stage.stage_id,
                         status=StageStatus.FAILED,
-                        error=(
-                            f"binding '{binding.binding_id}' source stage "
-                            f"'{binding.source_stage_id}' has no completed result"
-                        ),
+                        error="binding source stage has no completed result",
                         started_at=self._clock(),
                         completed_at=self._clock(),
                     )
@@ -301,10 +296,7 @@ class WorkflowEngine:
                     binding_failure = StageExecutionResult(
                         stage_id=stage.stage_id,
                         status=StageStatus.FAILED,
-                        error=(
-                            f"binding '{binding.binding_id}' missing source output "
-                            f"'{binding.source_output_key}' from stage '{binding.source_stage_id}'"
-                        ),
+                        error="binding source output is unavailable",
                         started_at=self._clock(),
                         completed_at=self._clock(),
                     )
@@ -389,9 +381,7 @@ class WorkflowEngine:
     ) -> WorkflowExecutionRecord:
         """Suspend a running workflow. Preserves partial results."""
         if record.status is not WorkflowStatus.RUNNING:
-            raise RuntimeCoreInvariantError(
-                f"cannot suspend workflow in status {record.status.value}"
-            )
+            raise RuntimeCoreInvariantError("cannot suspend workflow in current status")
 
         result = WorkflowExecutionRecord(
             workflow_id=record.workflow_id,

@@ -70,7 +70,7 @@ class SLAMonitor:
     def check(self, sla_id: str, value: float, **context: Any) -> bool:
         target = self._targets.get(sla_id)
         if not target:
-            raise ValueError(f"Unknown SLA: {sla_id}")
+            raise ValueError("unknown SLA")
         self._check_counts[sla_id] = self._check_counts.get(sla_id, 0) + 1
         if target.is_met(value):
             self._pass_counts[sla_id] = self._pass_counts.get(sla_id, 0) + 1

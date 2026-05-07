@@ -122,6 +122,7 @@ class TestImportEngine:
         importer = ImportEngine()
         result = importer.validate_bundle(tmp_path / "nonexistent.json")
         assert result.status is ImportStatus.MISSING_ARTIFACTS
+        assert result.error_message == "bundle file not found"
 
     def test_validate_malformed_json(self, tmp_path: Path):
         bad = tmp_path / "bad.json"
@@ -129,6 +130,27 @@ class TestImportEngine:
         importer = ImportEngine()
         result = importer.validate_bundle(bad)
         assert result.status is ImportStatus.INVALID_MANIFEST
+        assert result.error_message == "cannot read bundle (JSONDecodeError)"
+        assert "Expecting value" not in result.error_message
+
+    def test_validate_unreadable_bundle_is_bounded(self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path):
+        bad = tmp_path / "bad.json"
+        bad.write_text("{}", encoding="utf-8")
+        original_read_text = Path.read_text
+
+        def crashing_read_text(self: Path, *args, **kwargs):
+            if self == bad:
+                raise OSError("secret bundle read failure")
+            return original_read_text(self, *args, **kwargs)
+
+        monkeypatch.setattr(Path, "read_text", crashing_read_text)
+
+        importer = ImportEngine()
+        result = importer.validate_bundle(bad)
+
+        assert result.status is ImportStatus.INVALID_MANIFEST
+        assert result.error_message == "cannot read bundle (OSError)"
+        assert "secret bundle read failure" not in result.error_message
 
     def test_validate_missing_manifest_section(self, tmp_path: Path):
         bad = tmp_path / "bad.json"

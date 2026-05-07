@@ -483,3 +483,45 @@ class TestMemoryMeshEngine:
         h = e.state_hash()
         assert isinstance(h, str)
         assert len(h) == 64
+
+
+class TestBoundedContractWitnesses:
+    def test_invariant_messages_do_not_reflect_ids(self):
+        e = MemoryMeshEngine()
+        e.add_memory(_mem("m-secret"))
+
+        with pytest.raises(RuntimeCoreInvariantError) as duplicate_exc:
+            e.add_memory(_mem("m-secret"))
+        duplicate_message = str(duplicate_exc.value)
+        assert duplicate_message == "duplicate memory_id"
+        assert "m-secret" not in duplicate_message
+        assert "memory_id" in duplicate_message
+
+        lnk = MemoryLink(
+            link_id="lnk-secret",
+            from_memory_id="ghost-from",
+            to_memory_id="m-secret",
+            relation=MemoryLinkRelation.SUPPORTS,
+            created_at=NOW,
+        )
+        with pytest.raises(RuntimeCoreInvariantError) as from_exc:
+            e.link_memories(lnk)
+        from_message = str(from_exc.value)
+        assert from_message == "from_memory_id not found"
+        assert "ghost-from" not in from_message
+        assert "from_memory_id" in from_message
+
+        e.add_metadata_node(_node("n-secret"))
+        edge = MetadataEdge(
+            edge_id="edge-secret",
+            from_node_id="n-secret",
+            to_node_id="ghost-node",
+            relation=MetadataEdgeRelation.RELATED_TO,
+            created_at=NOW,
+        )
+        with pytest.raises(RuntimeCoreInvariantError) as edge_exc:
+            e.add_metadata_edge(edge)
+        edge_message = str(edge_exc.value)
+        assert edge_message == "to_node_id not found"
+        assert "ghost-node" not in edge_message
+        assert "to_node_id" in edge_message

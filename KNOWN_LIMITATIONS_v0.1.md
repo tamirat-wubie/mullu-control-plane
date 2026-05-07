@@ -1,7 +1,7 @@
 # Mullu Platform MCOI Runtime -- Known Limitations v0.2.0
 
-**Version:** 0.3.0 (v3.10.2)
-**Date:** 2026-03-27
+**Version:** 0.4.3 (v3.13.3)
+**Date:** 2026-05-06
 
 This document lists known limitations, incomplete features, and areas where the
 runtime does not yet behave as intended by the architecture specification.
@@ -28,17 +28,39 @@ runtime does not yet behave as intended by the architecture specification.
 - **No real SMTP testing in CI:** SMTP connector logic is unit-tested with mocks.
   Sending actual email requires a live SMTP server (e.g. containerized MailHog),
   which is not part of the CI environment.
-- **No browser adapter:** No Selenium, Playwright, or CDP integration.
-- **No document adapter:** No PDF, Office, or structured-document manipulation.
-- **No voice adapter:** No speech-to-text or text-to-speech integration.
+- **Governed capability fabric is present, but live production evidence remains
+  the promotion boundary:** Browser, document, voice, email/calendar, connector,
+  sandboxed computer, operator capability UI, multi-agent delegation, and
+  deployment-witness publication entries are now represented as governed
+  capability families. Production claims still require live receipts,
+  dependency probes, signed worker responses, and deployment witness evidence.
+- **Browser adapter not production-closed:** A restricted Playwright adapter
+  exists, but browser runtime dependencies, browser binaries, sandboxed worker
+  packaging, and live evidence are not yet published.
+- **Document parser adapter evidence closed for parser-first scope:** Optional
+  PDF/Office parser implementations, dependency probes, and live parser receipt
+  evidence are represented through the adapter evidence collector. External
+  document send, sign, and submit effects remain approval-gated and require
+  separate effect receipts before any production claim.
+- **Voice adapter not production-closed:** An OpenAI-compatible voice adapter
+  exists, but provider credentials, live STT/TTS checks, and deployment evidence
+  are not yet published.
+- **Email/calendar adapter not production-closed:** A signed email/calendar worker
+  contract and bounded Gmail, Google Calendar, and Microsoft Graph HTTP adapter
+  exist for draft/send/read/schedule policy enforcement, but provider credentials,
+  live read-only connector receipts, and deployment receipts are not yet
+  published.
 
 ## Provider Identity
 
 - Aggregate provider counts appear in operator reports.
 - Per-run route tracking is present (the report shows which executor route was used).
-- Per-plane `provider_id` attribution is not yet implemented -- you can see how many
-  providers are registered and which are unhealthy, but individual plane operations
-  do not tag which provider serviced them.
+- Per-plane `provider_id` attribution is implemented for runtime run reports through
+  a provider attribution ledger. Records bind request/execution identity, provider
+  class, provider id, attribution source, evidence id, and timestamp.
+- Current attribution distinguishes healthy-plane resolution from routing or execution
+  receipts. Communication and integration effect-result adapters now promote
+  receipt-level provider ids into execution-receipt attribution metadata.
 
 ## Memory
 
@@ -49,17 +71,27 @@ runtime does not yet behave as intended by the architecture specification.
 
 ## Coordination
 
-- **Coordination persistence is partial and explicit.** Delegation, handoff,
-  worker registry, worker load-state, workforce assignment request, workforce
-  assignment decision records, goal descriptors, goal execution state, goal
-  plans, goal replan records, job descriptors, and job lifecycle state carriers
-  can be saved and restored through explicit persistence stores. Workflow
-  descriptors and execution records also persist and can be restored explicitly.
-  Aggregate team queue-state witnesses and work queue entry carriers can be
-  restored explicitly, but live coordination still does not auto-save or
-  auto-restore. Restarting the runtime still loses in-flight coordination
-  context outside explicitly persisted records, and workflow resume remains
-  caller-driven.
+- **Coordination state persistence is explicit and opt-in.** The runtime supports
+  deterministic checkpoint/restore for coordination state (delegations, handoffs,
+  merges, conflicts), but it does not auto-save or auto-restore. A caller must
+  configure a coordination store and request checkpoint/restore explicitly. Restore
+  is governed: expired leases are rejected, policy pack drift triggers review, and
+  retry counts are tracked to prevent zombie workflows.
+- **Specialist delegation is bounded, not a networked runtime.** The gateway now
+  supports controlled specialist-worker delegation with role allowlists,
+  capability checks, budget ceilings, timeouts, leases, and receipts. This is not
+  a distributed multi-process agent runtime; external agents still require the
+  agent adapter protocol or a separate worker deployment.
+
+## Authority And Obligations
+
+- Gateway authority includes ownership, approval-chain, obligation, escalation,
+  ownership read-model, and policy read-model surfaces.
+- External directory sync is specified in `docs/54_authority_directory_sync.md`
+  and implemented for SCIM export, LDAP export, SAML group export, GitHub Teams,
+  Google Workspace groups, and static workspace group sources through normalized
+  batch adapters and sync receipt tooling. Remaining production work is
+  credentialed scheduling/webhook ingestion and organization-management UI.
 
 ## Replay
 
@@ -73,9 +105,15 @@ runtime does not yet behave as intended by the architecture specification.
 The following features are described in architecture documents but have no runtime
 implementation in this release:
 
-- **Autonomous background scheduling daemon:** Temporal plane defines task and
-  deadline contracts, but no background process monitors or fires scheduled tasks.
-- **Multi-agent live runtime:** Coordination plane defines delegation and handoff
-  contracts, but no multi-process or networked agent execution exists.
-- **Web UI:** All operator interaction is through the CLI and console renderer.
-  No browser-based dashboard or monitoring interface.
+- **Networked multi-agent runtime:** Coordination plane defines delegation and
+  handoff contracts, and the gateway has bounded specialist leases, but no
+  multi-process or networked agent execution fabric exists. External agents can
+  connect via the agent adapter protocol.
+- **Full operator web UI:** Operator console provides structured JSON dashboard
+  views and a minimal browser-based capability read model. Full approval queues,
+  audit/proof exploration, organization management, and credentialed directory
+  scheduling UI are not yet implemented.
+- **RBAC / human governance:** API key auth with scopes, JWT auth, per-session
+  RBAC checks, gateway authority resolution, and authority-obligation read
+  models exist. Full organization-management UI and credentialed directory
+  scheduling UI are not yet implemented.

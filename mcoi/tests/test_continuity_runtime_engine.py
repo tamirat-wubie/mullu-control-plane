@@ -244,8 +244,9 @@ class TestGetPlan:
         assert plan.plan_id == "p-1"
 
     def test_unknown_raises(self, engine: ContinuityRuntimeEngine) -> None:
-        with pytest.raises(RuntimeCoreInvariantError, match="Unknown plan_id"):
+        with pytest.raises(RuntimeCoreInvariantError, match="Unknown plan_id") as exc_info:
             engine.get_plan("no-exist")
+        assert "no-exist" not in str(exc_info.value)
 
     def test_returns_immutable(self, engine: ContinuityRuntimeEngine) -> None:
         _make_plan(engine)
@@ -269,8 +270,9 @@ class TestActivatePlan:
     def test_activate_retired_raises(self, engine: ContinuityRuntimeEngine) -> None:
         _make_plan(engine)
         engine.retire_plan("plan-1")
-        with pytest.raises(RuntimeCoreInvariantError, match="Cannot activate"):
+        with pytest.raises(RuntimeCoreInvariantError, match="plan unavailable for activation") as exc_info:
             engine.activate_plan("plan-1")
+        assert "retired" not in str(exc_info.value)
 
     def test_activate_preserves_name(self, engine: ContinuityRuntimeEngine) -> None:
         _make_plan(engine, name="Alpha")
@@ -319,8 +321,9 @@ class TestSuspendPlan:
     def test_suspend_retired_raises(self, engine: ContinuityRuntimeEngine) -> None:
         _make_plan(engine)
         engine.retire_plan("plan-1")
-        with pytest.raises(RuntimeCoreInvariantError, match="Cannot suspend"):
+        with pytest.raises(RuntimeCoreInvariantError, match="plan unavailable for suspension") as exc_info:
             engine.suspend_plan("plan-1")
+        assert "retired" not in str(exc_info.value)
 
     def test_suspend_unknown_raises(self, engine: ContinuityRuntimeEngine) -> None:
         with pytest.raises(RuntimeCoreInvariantError, match="Unknown plan_id"):
@@ -619,8 +622,9 @@ class TestGetDisruption:
         assert d.disruption_id == "d-1"
 
     def test_unknown_raises(self, engine: ContinuityRuntimeEngine) -> None:
-        with pytest.raises(RuntimeCoreInvariantError, match="Unknown disruption_id"):
+        with pytest.raises(RuntimeCoreInvariantError, match="Unknown disruption_id") as exc_info:
             engine.get_disruption("no-d")
+        assert "no-d" not in str(exc_info.value)
 
 
 class TestResolveDisruption:
@@ -768,8 +772,9 @@ class TestTriggerFailover:
         _make_plan(engine)
         engine.retire_plan("plan-1")
         _make_disruption(engine)
-        with pytest.raises(RuntimeCoreInvariantError, match="retired"):
+        with pytest.raises(RuntimeCoreInvariantError, match="plan unavailable for failover") as exc_info:
             engine.trigger_failover("fo-1", "plan-1", "dis-1")
+        assert "retired" not in str(exc_info.value)
 
     def test_unknown_disruption_raises(self, engine: ContinuityRuntimeEngine) -> None:
         _make_plan(engine)
@@ -821,20 +826,24 @@ class TestCompleteFailover:
     def test_already_completed_raises(self, engine: ContinuityRuntimeEngine) -> None:
         _setup_failover(engine)
         engine.complete_failover("fo-1")
-        with pytest.raises(RuntimeCoreInvariantError, match="INITIATED"):
+        with pytest.raises(RuntimeCoreInvariantError, match="failover cannot be completed") as exc_info:
             engine.complete_failover("fo-1")
+        assert "INITIATED" not in str(exc_info.value)
+        assert "got" not in str(exc_info.value)
 
     def test_failed_raises(self, engine: ContinuityRuntimeEngine) -> None:
         _setup_failover(engine)
         engine.fail_failover("fo-1")
-        with pytest.raises(RuntimeCoreInvariantError, match="INITIATED"):
+        with pytest.raises(RuntimeCoreInvariantError, match="failover cannot be completed") as exc_info:
             engine.complete_failover("fo-1")
+        assert "failed" not in str(exc_info.value)
 
     def test_rolled_back_raises(self, engine: ContinuityRuntimeEngine) -> None:
         _setup_failover(engine)
         engine.rollback_failover("fo-1")
-        with pytest.raises(RuntimeCoreInvariantError, match="INITIATED"):
+        with pytest.raises(RuntimeCoreInvariantError, match="failover cannot be completed") as exc_info:
             engine.complete_failover("fo-1")
+        assert "rolled_back" not in str(exc_info.value)
 
     def test_unknown_raises(self, engine: ContinuityRuntimeEngine) -> None:
         with pytest.raises(RuntimeCoreInvariantError, match="Unknown failover_id"):
@@ -861,14 +870,17 @@ class TestFailFailover:
     def test_already_failed_raises(self, engine: ContinuityRuntimeEngine) -> None:
         _setup_failover(engine)
         engine.fail_failover("fo-1")
-        with pytest.raises(RuntimeCoreInvariantError, match="INITIATED"):
+        with pytest.raises(RuntimeCoreInvariantError, match="failover cannot be failed") as exc_info:
             engine.fail_failover("fo-1")
+        assert "INITIATED" not in str(exc_info.value)
+        assert "got" not in str(exc_info.value)
 
     def test_completed_raises(self, engine: ContinuityRuntimeEngine) -> None:
         _setup_failover(engine)
         engine.complete_failover("fo-1")
-        with pytest.raises(RuntimeCoreInvariantError, match="INITIATED"):
+        with pytest.raises(RuntimeCoreInvariantError, match="failover cannot be failed") as exc_info:
             engine.fail_failover("fo-1")
+        assert "completed" not in str(exc_info.value)
 
     def test_unknown_raises(self, engine: ContinuityRuntimeEngine) -> None:
         with pytest.raises(RuntimeCoreInvariantError, match="Unknown failover_id"):
@@ -896,14 +908,16 @@ class TestRollbackFailover:
     def test_rolled_back_raises(self, engine: ContinuityRuntimeEngine) -> None:
         _setup_failover(engine)
         engine.rollback_failover("fo-1")
-        with pytest.raises(RuntimeCoreInvariantError, match="Cannot roll back"):
+        with pytest.raises(RuntimeCoreInvariantError, match="failover cannot be rolled back") as exc_info:
             engine.rollback_failover("fo-1")
+        assert "rolled_back" not in str(exc_info.value)
 
     def test_failed_raises(self, engine: ContinuityRuntimeEngine) -> None:
         _setup_failover(engine)
         engine.fail_failover("fo-1")
-        with pytest.raises(RuntimeCoreInvariantError, match="Cannot roll back"):
+        with pytest.raises(RuntimeCoreInvariantError, match="failover cannot be rolled back") as exc_info:
             engine.rollback_failover("fo-1")
+        assert "failed" not in str(exc_info.value)
 
     def test_unknown_raises(self, engine: ContinuityRuntimeEngine) -> None:
         with pytest.raises(RuntimeCoreInvariantError, match="Unknown failover_id"):
@@ -1051,24 +1065,28 @@ class TestCompleteRecovery:
     def test_already_completed_raises(self, engine: ContinuityRuntimeEngine) -> None:
         _setup_execution(engine)
         engine.complete_recovery("exe-1")
-        with pytest.raises(RuntimeCoreInvariantError, match="terminal"):
+        with pytest.raises(RuntimeCoreInvariantError, match="recovery already finished") as exc_info:
             engine.complete_recovery("exe-1")
+        assert "completed" not in str(exc_info.value)
 
     def test_already_failed_raises(self, engine: ContinuityRuntimeEngine) -> None:
         _setup_execution(engine)
         engine.fail_recovery("exe-1")
-        with pytest.raises(RuntimeCoreInvariantError, match="terminal"):
+        with pytest.raises(RuntimeCoreInvariantError, match="recovery already finished") as exc_info:
             engine.complete_recovery("exe-1")
+        assert "failed" not in str(exc_info.value)
 
     def test_already_cancelled_raises(self, engine: ContinuityRuntimeEngine) -> None:
         _setup_execution(engine)
         engine.cancel_recovery("exe-1")
-        with pytest.raises(RuntimeCoreInvariantError, match="terminal"):
+        with pytest.raises(RuntimeCoreInvariantError, match="recovery already finished") as exc_info:
             engine.complete_recovery("exe-1")
+        assert "cancelled" not in str(exc_info.value)
 
     def test_unknown_raises(self, engine: ContinuityRuntimeEngine) -> None:
-        with pytest.raises(RuntimeCoreInvariantError, match="Unknown execution_id"):
+        with pytest.raises(RuntimeCoreInvariantError, match="Unknown execution_id") as exc_info:
             engine.complete_recovery("no-exe")
+        assert "no-exe" not in str(exc_info.value)
 
     def test_emits_event(self, spine: EventSpineEngine, engine: ContinuityRuntimeEngine) -> None:
         _setup_execution(engine)
@@ -1091,20 +1109,23 @@ class TestFailRecovery:
     def test_already_completed_raises(self, engine: ContinuityRuntimeEngine) -> None:
         _setup_execution(engine)
         engine.complete_recovery("exe-1")
-        with pytest.raises(RuntimeCoreInvariantError, match="terminal"):
+        with pytest.raises(RuntimeCoreInvariantError, match="recovery already finished") as exc_info:
             engine.fail_recovery("exe-1")
+        assert "completed" not in str(exc_info.value)
 
     def test_already_failed_raises(self, engine: ContinuityRuntimeEngine) -> None:
         _setup_execution(engine)
         engine.fail_recovery("exe-1")
-        with pytest.raises(RuntimeCoreInvariantError, match="terminal"):
+        with pytest.raises(RuntimeCoreInvariantError, match="recovery already finished") as exc_info:
             engine.fail_recovery("exe-1")
+        assert "failed" not in str(exc_info.value)
 
     def test_already_cancelled_raises(self, engine: ContinuityRuntimeEngine) -> None:
         _setup_execution(engine)
         engine.cancel_recovery("exe-1")
-        with pytest.raises(RuntimeCoreInvariantError, match="terminal"):
+        with pytest.raises(RuntimeCoreInvariantError, match="recovery already finished") as exc_info:
             engine.fail_recovery("exe-1")
+        assert "cancelled" not in str(exc_info.value)
 
     def test_unknown_raises(self, engine: ContinuityRuntimeEngine) -> None:
         with pytest.raises(RuntimeCoreInvariantError, match="Unknown execution_id"):
@@ -1126,20 +1147,23 @@ class TestCancelRecovery:
     def test_already_completed_raises(self, engine: ContinuityRuntimeEngine) -> None:
         _setup_execution(engine)
         engine.complete_recovery("exe-1")
-        with pytest.raises(RuntimeCoreInvariantError, match="terminal"):
+        with pytest.raises(RuntimeCoreInvariantError, match="recovery already finished") as exc_info:
             engine.cancel_recovery("exe-1")
+        assert "completed" not in str(exc_info.value)
 
     def test_already_failed_raises(self, engine: ContinuityRuntimeEngine) -> None:
         _setup_execution(engine)
         engine.fail_recovery("exe-1")
-        with pytest.raises(RuntimeCoreInvariantError, match="terminal"):
+        with pytest.raises(RuntimeCoreInvariantError, match="recovery already finished") as exc_info:
             engine.cancel_recovery("exe-1")
+        assert "failed" not in str(exc_info.value)
 
     def test_already_cancelled_raises(self, engine: ContinuityRuntimeEngine) -> None:
         _setup_execution(engine)
         engine.cancel_recovery("exe-1")
-        with pytest.raises(RuntimeCoreInvariantError, match="terminal"):
+        with pytest.raises(RuntimeCoreInvariantError, match="recovery already finished") as exc_info:
             engine.cancel_recovery("exe-1")
+        assert "cancelled" not in str(exc_info.value)
 
     def test_unknown_raises(self, engine: ContinuityRuntimeEngine) -> None:
         with pytest.raises(RuntimeCoreInvariantError, match="Unknown execution_id"):
@@ -1491,6 +1515,13 @@ class TestDetectContinuityViolations:
         violations = engine.detect_continuity_violations()
         assert violations[0].tenant_id == "t-x"
 
+    def test_activated_no_recovery_reason_bounded(self, engine: ContinuityRuntimeEngine) -> None:
+        _make_plan(engine, "plan-secret")
+        engine.activate_plan("plan-secret")
+        violations = engine.detect_continuity_violations()
+        assert violations[0].reason == "activated plan missing recovery plan"
+        assert "plan-secret" not in violations[0].reason
+
     def test_activated_with_recovery_no_violation(self, engine: ContinuityRuntimeEngine) -> None:
         _make_plan(engine)
         _make_recovery(engine)
@@ -1512,6 +1543,15 @@ class TestDetectContinuityViolations:
         violations = engine.detect_continuity_violations()
         fo_violations = [v for v in violations if v.operation == "failed_failover_no_recovery"]
         assert len(fo_violations) == 1
+
+    def test_failed_failover_no_recovery_reason_bounded(self, engine: ContinuityRuntimeEngine) -> None:
+        _setup_failover(engine)
+        engine.fail_failover("fo-1")
+        violations = engine.detect_continuity_violations()
+        fo_violations = [v for v in violations if v.operation == "failed_failover_no_recovery"]
+        assert fo_violations[0].reason == "failed failover missing recovery"
+        assert "fo-1" not in fo_violations[0].reason
+        assert "dis-1" not in fo_violations[0].reason
 
     def test_failed_failover_with_recovery_no_violation(self, engine: ContinuityRuntimeEngine) -> None:
         _make_plan(engine)
@@ -1542,7 +1582,8 @@ class TestDetectContinuityViolations:
         engine.fail_recovery("exe-1")
         violations = engine.detect_continuity_violations()
         all_failed = [v for v in violations if v.operation == "all_recoveries_failed"]
-        assert "1 recovery" in all_failed[0].reason
+        assert all_failed[0].reason == "all recoveries failed"
+        assert "exe-1" not in all_failed[0].reason
 
     def test_one_recovery_succeeded_no_all_failed(self, engine: ContinuityRuntimeEngine) -> None:
         _make_plan(engine)
@@ -1638,7 +1679,7 @@ class TestDetectContinuityViolations:
         violations = engine.detect_continuity_violations()
         all_failed = [v for v in violations if v.operation == "all_recoveries_failed"]
         assert len(all_failed) == 1
-        assert "2 recovery" in all_failed[0].reason
+        assert all_failed[0].reason == "all recoveries failed"
 
 
 class TestViolationsForPlan:
@@ -2188,7 +2229,7 @@ class TestGoldenScenario2AllRecoveriesFail:
         violations = engine.detect_continuity_violations()
         all_failed = [v for v in violations if v.operation == "all_recoveries_failed"]
         assert len(all_failed) == 1
-        assert "dis-env" in all_failed[0].reason
+        assert all_failed[0].reason == "all recoveries failed"
 
     def test_violation_tenant_matches(self, engine: ContinuityRuntimeEngine) -> None:
         engine.register_continuity_plan("plan-env", "Env DR", "tenant-b")

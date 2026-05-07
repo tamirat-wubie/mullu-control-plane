@@ -2294,3 +2294,20 @@ class TestActionTerminalMatrix:
         engine.fail_action("a1")
         with pytest.raises(RuntimeCoreInvariantError):
             engine.fail_action("a1")
+
+
+class TestBoundedContracts:
+    def test_unknown_queue_message_hides_queue_id(self, engine: OperatorWorkspaceEngine):
+        with pytest.raises(RuntimeCoreInvariantError, match="unknown queue_id") as exc_info:
+            engine.assign_queue_item("queue-secret", "op1")
+        assert "queue-secret" not in str(exc_info.value)
+
+    def test_workspace_violation_reasons_hide_runtime_ids(self, engine_with_panel: OperatorWorkspaceEngine):
+        engine_with_panel.record_action("action-secret", "t1", "op1", "target", "runtime", "do_thing")
+        engine_with_panel.fail_action("action-secret")
+        violations = engine_with_panel.detect_workspace_violations("t1")
+        assert any(v.reason == "active panel has no items" for v in violations)
+        assert any(v.reason == "failed action has no decision record" for v in violations)
+        for violation in violations:
+            assert "action-secret" not in violation.reason
+            assert "p1" not in violation.reason

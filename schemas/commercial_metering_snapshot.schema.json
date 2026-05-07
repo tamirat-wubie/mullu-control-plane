@@ -1,0 +1,234 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:commercial-metering-snapshot:1",
+  "title": "CommercialMeteringSnapshot",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "snapshot_id",
+    "plans",
+    "accounts",
+    "usage_records",
+    "provider_costs",
+    "decisions",
+    "tenant_summaries",
+    "total_revenue_usd",
+    "total_provider_cost_usd",
+    "gross_margin_percent",
+    "invoice_ready_count",
+    "snapshot_hash"
+  ],
+  "properties": {
+    "snapshot_id": {"type": "string", "minLength": 1},
+    "plans": {"type": "array", "items": {"$ref": "#/$defs/plan"}},
+    "accounts": {"type": "array", "items": {"$ref": "#/$defs/account"}},
+    "usage_records": {"type": "array", "items": {"$ref": "#/$defs/usage_record"}},
+    "provider_costs": {"type": "array", "items": {"$ref": "#/$defs/provider_cost"}},
+    "decisions": {"type": "array", "items": {"$ref": "#/$defs/decision"}},
+    "tenant_summaries": {"type": "array", "items": {"$ref": "#/$defs/tenant_summary"}},
+    "total_revenue_usd": {"$ref": "#/$defs/money"},
+    "total_provider_cost_usd": {"$ref": "#/$defs/money"},
+    "gross_margin_percent": {"$ref": "#/$defs/money"},
+    "invoice_ready_count": {"type": "integer", "minimum": 0},
+    "snapshot_hash": {"type": "string", "minLength": 32}
+  },
+  "$defs": {
+    "money": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]{2}$"
+    },
+    "usage_dimension": {
+      "type": "string",
+      "enum": [
+        "governed_action",
+        "certified_capability",
+        "connector_invocation",
+        "workflow_run",
+        "approval_case",
+        "audit_export",
+        "provider_cost_pass_through"
+      ]
+    },
+    "verdict": {
+      "type": "string",
+      "enum": ["allow", "deny", "review"]
+    },
+    "plan_limit": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "dimension",
+        "included_quantity",
+        "overage_unit_price_usd"
+      ],
+      "properties": {
+        "dimension": {"$ref": "#/$defs/usage_dimension"},
+        "included_quantity": {"$ref": "#/$defs/money"},
+        "overage_unit_price_usd": {"$ref": "#/$defs/money"}
+      }
+    },
+    "plan": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "plan_id",
+        "name",
+        "base_price_monthly_usd",
+        "limits",
+        "minimum_gross_margin_percent",
+        "plan_hash",
+        "metadata"
+      ],
+      "properties": {
+        "plan_id": {"type": "string", "minLength": 1},
+        "name": {"type": "string", "minLength": 1},
+        "base_price_monthly_usd": {"$ref": "#/$defs/money"},
+        "limits": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/plan_limit"}},
+        "minimum_gross_margin_percent": {"$ref": "#/$defs/money"},
+        "plan_hash": {"type": "string", "minLength": 32},
+        "metadata": {"type": "object"}
+      }
+    },
+    "account": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "account_id",
+        "tenant_id",
+        "plan_id",
+        "billing_currency",
+        "billing_period_start",
+        "billing_period_end",
+        "account_hash",
+        "metadata"
+      ],
+      "properties": {
+        "account_id": {"type": "string", "minLength": 1},
+        "tenant_id": {"type": "string", "minLength": 1},
+        "plan_id": {"type": "string", "minLength": 1},
+        "billing_currency": {"type": "string", "const": "USD"},
+        "billing_period_start": {"type": "string", "minLength": 1},
+        "billing_period_end": {"type": "string", "minLength": 1},
+        "account_hash": {"type": "string", "minLength": 32},
+        "metadata": {"type": "object"}
+      }
+    },
+    "usage_record": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "usage_id",
+        "tenant_id",
+        "dimension",
+        "quantity",
+        "source_ref",
+        "occurred_at",
+        "usage_hash",
+        "metadata"
+      ],
+      "properties": {
+        "usage_id": {"type": "string", "minLength": 1},
+        "tenant_id": {"type": "string", "minLength": 1},
+        "dimension": {"$ref": "#/$defs/usage_dimension"},
+        "quantity": {"$ref": "#/$defs/money"},
+        "source_ref": {"type": "string", "minLength": 1},
+        "occurred_at": {"type": "string", "minLength": 1},
+        "usage_hash": {"type": "string", "minLength": 32},
+        "metadata": {"type": "object"}
+      }
+    },
+    "provider_cost": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "cost_id",
+        "tenant_id",
+        "provider",
+        "capability",
+        "amount_usd",
+        "source_ref",
+        "incurred_at",
+        "cost_hash",
+        "metadata"
+      ],
+      "properties": {
+        "cost_id": {"type": "string", "minLength": 1},
+        "tenant_id": {"type": "string", "minLength": 1},
+        "provider": {"type": "string", "minLength": 1},
+        "capability": {"type": "string", "minLength": 1},
+        "amount_usd": {"$ref": "#/$defs/money"},
+        "source_ref": {"type": "string", "minLength": 1},
+        "incurred_at": {"type": "string", "minLength": 1},
+        "cost_hash": {"type": "string", "minLength": 32},
+        "metadata": {"type": "object"}
+      }
+    },
+    "decision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "decision_id",
+        "tenant_id",
+        "verdict",
+        "reason",
+        "dimension",
+        "current_quantity",
+        "limit_quantity",
+        "revenue_usd",
+        "provider_cost_usd",
+        "gross_margin_percent",
+        "required_actions",
+        "decision_hash",
+        "metadata"
+      ],
+      "properties": {
+        "decision_id": {"type": "string", "minLength": 1},
+        "tenant_id": {"type": "string", "minLength": 1},
+        "verdict": {"$ref": "#/$defs/verdict"},
+        "reason": {"type": "string", "minLength": 1},
+        "dimension": {
+          "anyOf": [
+            {"$ref": "#/$defs/usage_dimension"},
+            {"type": "null"}
+          ]
+        },
+        "current_quantity": {"$ref": "#/$defs/money"},
+        "limit_quantity": {"$ref": "#/$defs/money"},
+        "revenue_usd": {"$ref": "#/$defs/money"},
+        "provider_cost_usd": {"$ref": "#/$defs/money"},
+        "gross_margin_percent": {"$ref": "#/$defs/money"},
+        "required_actions": {"type": "array", "items": {"type": "string", "minLength": 1}},
+        "decision_hash": {"type": "string", "minLength": 32},
+        "metadata": {"type": "object"}
+      }
+    },
+    "tenant_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "tenant_id",
+        "plan_id",
+        "usage_revenue_usd",
+        "base_revenue_usd",
+        "total_revenue_usd",
+        "provider_cost_usd",
+        "gross_margin_percent",
+        "invoice_ready",
+        "exceeded_dimensions",
+        "summary_hash"
+      ],
+      "properties": {
+        "tenant_id": {"type": "string", "minLength": 1},
+        "plan_id": {"type": "string", "minLength": 1},
+        "usage_revenue_usd": {"$ref": "#/$defs/money"},
+        "base_revenue_usd": {"$ref": "#/$defs/money"},
+        "total_revenue_usd": {"$ref": "#/$defs/money"},
+        "provider_cost_usd": {"$ref": "#/$defs/money"},
+        "gross_margin_percent": {"$ref": "#/$defs/money"},
+        "invoice_ready": {"type": "boolean"},
+        "exceeded_dimensions": {"type": "array", "items": {"$ref": "#/$defs/usage_dimension"}},
+        "summary_hash": {"type": "string", "minLength": 32}
+      }
+    }
+  }
+}

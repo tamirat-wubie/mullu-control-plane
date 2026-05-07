@@ -116,7 +116,9 @@ class TestReadTimeoutEnforcement:
         )
         desc = _make_descriptor()
 
-        # Mock the opener to bypass SSRF and return a slow body
+        # Mock the opener to bypass SSRF and return a slow body.
+        # v4.29.0 (audit F10): also mock _resolve_and_check + the
+        # per-request pinned-opener factory.
         fake_response = mock.MagicMock()
         fake_response.status = 200
         fake_response.headers = {"Content-Type": "text/plain"}
@@ -124,7 +126,18 @@ class TestReadTimeoutEnforcement:
         fake_response.__enter__ = lambda s: s
         fake_response.__exit__ = mock.MagicMock(return_value=False)
 
-        with mock.patch.object(connector._opener, "open", return_value=fake_response):
+        fake_opener = mock.MagicMock()
+        fake_opener.open = mock.MagicMock(return_value=fake_response)
+        with (
+            mock.patch(
+                "mcoi_runtime.adapters.http_connector._resolve_and_check",
+                return_value=(False, "93.184.216.34"),
+            ),
+            mock.patch(
+                "mcoi_runtime.adapters.http_connector._build_pinned_opener",
+                return_value=fake_opener,
+            ),
+        ):
             start = time.monotonic()
             result = connector.invoke(desc, {"url": "https://example.com/slow"})
             elapsed = time.monotonic() - start

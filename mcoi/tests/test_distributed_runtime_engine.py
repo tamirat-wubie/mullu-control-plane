@@ -100,8 +100,10 @@ class TestRegisterWorker:
 
     def test_duplicate_raises(self, engine):
         engine.register_worker("w1", "t1", "W1")
-        with pytest.raises(RuntimeCoreInvariantError, match="duplicate"):
+        with pytest.raises(RuntimeCoreInvariantError, match="duplicate") as exc_info:
             engine.register_worker("w1", "t1", "W1")
+        assert str(exc_info.value) == "duplicate worker_id"
+        assert "w1" not in str(exc_info.value)
 
     def test_custom_capacity(self, engine):
         w = engine.register_worker("w1", "t1", "W", capacity=50)
@@ -149,12 +151,16 @@ class TestWorkerDrain:
     def test_drain_terminated_raises(self, engine):
         engine.register_worker("w1", "t1", "W")
         engine.terminate_worker("w1")
-        with pytest.raises(RuntimeCoreInvariantError, match="TERMINATED"):
+        with pytest.raises(RuntimeCoreInvariantError, match="TERMINATED") as exc_info:
             engine.drain_worker("w1")
+        assert str(exc_info.value) == "worker is TERMINATED"
+        assert "w1" not in str(exc_info.value)
 
     def test_drain_unknown_raises(self, engine):
-        with pytest.raises(RuntimeCoreInvariantError, match="unknown"):
+        with pytest.raises(RuntimeCoreInvariantError, match="unknown") as exc_info:
             engine.drain_worker("no-such")
+        assert str(exc_info.value) == "unknown worker_id"
+        assert "no-such" not in str(exc_info.value)
 
     def test_drain_emits_event(self, engine, spine):
         engine.register_worker("w1", "t1", "W")
@@ -320,8 +326,10 @@ class TestCloseQueue:
     def test_close_already_closed_raises(self, engine):
         engine.create_queue("q1", "t1", "Q")
         engine.close_queue("q1")
-        with pytest.raises(RuntimeCoreInvariantError, match="already CLOSED"):
+        with pytest.raises(RuntimeCoreInvariantError, match="already CLOSED") as exc_info:
             engine.close_queue("q1")
+        assert str(exc_info.value) == "queue is already CLOSED"
+        assert "q1" not in str(exc_info.value)
 
     def test_close_unknown_raises(self, engine):
         with pytest.raises(RuntimeCoreInvariantError):
@@ -392,8 +400,11 @@ class TestReleaseLease:
     def test_release_already_released_raises(self, engine):
         engine.acquire_lease("l1", "t1", "w1", "task-1")
         engine.release_lease("l1")
-        with pytest.raises(RuntimeCoreInvariantError, match="terminal"):
+        with pytest.raises(RuntimeCoreInvariantError, match="terminal") as exc_info:
             engine.release_lease("l1")
+        assert str(exc_info.value) == "lease is in terminal state"
+        assert "l1" not in str(exc_info.value)
+        assert LeaseStatus.RELEASED.value not in str(exc_info.value)
 
     def test_release_unknown_raises(self, engine):
         with pytest.raises(RuntimeCoreInvariantError, match="unknown"):
@@ -509,8 +520,10 @@ class TestMigrateShard:
             engine.migrate_shard("s1")
 
     def test_migrate_unknown_raises(self, engine):
-        with pytest.raises(RuntimeCoreInvariantError, match="unknown"):
+        with pytest.raises(RuntimeCoreInvariantError, match="unknown") as exc_info:
             engine.migrate_shard("no-such")
+        assert str(exc_info.value) == "unknown shard_id"
+        assert "no-such" not in str(exc_info.value)
 
 
 class TestCompleteMigration:
@@ -708,8 +721,11 @@ class TestIncrementRetry:
     def test_exhaust_raises(self, engine):
         engine.create_retry_schedule("rs1", "t1", "task-1", max_retries=2)
         engine.increment_retry("rs1")
-        with pytest.raises(RuntimeCoreInvariantError, match="exceeded max_retries"):
+        with pytest.raises(RuntimeCoreInvariantError, match="exceeded max_retries") as exc_info:
             engine.increment_retry("rs1")
+        assert str(exc_info.value) == "retry schedule exceeded max_retries"
+        assert "rs1" not in str(exc_info.value)
+        assert "2" not in str(exc_info.value)
 
     def test_exhaust_max_one(self, engine):
         engine.create_retry_schedule("rs1", "t1", "task-1", max_retries=1)
@@ -954,6 +970,9 @@ class TestDetectViolations:
         assert len(result) >= 1
         ops = [v.operation for v in result]
         assert "orphaned_shard" in ops
+        violation = next(v for v in result if v.operation == "orphaned_shard")
+        assert violation.reason == "orphaned shard"
+        assert "s1" not in violation.reason
 
     def test_held_lease_violation(self, engine):
         engine.acquire_lease("l1", "t1", "w1", "task-1")
@@ -961,6 +980,9 @@ class TestDetectViolations:
         assert len(result) >= 1
         ops = [v.operation for v in result]
         assert "expired_lease_held" in ops
+        violation = next(v for v in result if v.operation == "expired_lease_held")
+        assert violation.reason == "held lease may be expired"
+        assert "l1" not in violation.reason
 
     def test_critical_backpressure_violation(self, engine):
         engine.create_queue("q1", "t1", "Q", max_depth=100)
@@ -978,6 +1000,9 @@ class TestDetectViolations:
         assert len(result) >= 1
         ops = [v.operation for v in result]
         assert "queue_critical_backpressure" in ops
+        violation = next(v for v in result if v.operation == "queue_critical_backpressure")
+        assert violation.reason == "queue has critical backpressure"
+        assert "q1" not in violation.reason
 
     def test_idempotent_second_call_empty(self, engine):
         engine.acquire_lease("l1", "t1", "w1", "task-1")
@@ -1243,8 +1268,11 @@ class TestGoldenScenario5RetryExhaustion:
         rs2 = engine.increment_retry("rs1")
         assert rs2.retry_count == 2
 
-        with pytest.raises(RuntimeCoreInvariantError, match="exceeded max_retries"):
+        with pytest.raises(RuntimeCoreInvariantError, match="exceeded max_retries") as exc_info:
             engine.increment_retry("rs1")
+        assert str(exc_info.value) == "retry schedule exceeded max_retries"
+        assert "rs1" not in str(exc_info.value)
+        assert "3" not in str(exc_info.value)
 
         assert spine.event_count >= 3
 

@@ -78,8 +78,18 @@ class TestTenantPartition:
         mgr = TenantPartitionManager(max_partitions=2)
         mgr.put("t1", "k", "v")
         mgr.put("t2", "k", "v")
-        with pytest.raises(ValueError, match="Max partitions"):
+        with pytest.raises(ValueError, match="max partitions"):
             mgr.put("t3", "k", "v")
+
+    def test_max_partitions_error_is_bounded(self):
+        from mcoi_runtime.core.tenant_partition import TenantPartitionManager
+        mgr = TenantPartitionManager(max_partitions=2)
+        mgr.put("t1", "k", "v")
+        mgr.put("t2", "k", "v")
+        with pytest.raises(ValueError, match="max partitions") as excinfo:
+            mgr.put("t3", "k", "v")
+        assert str(excinfo.value) == "max partitions exceeded"
+        assert "2" not in str(excinfo.value)
 
     def test_summary(self):
         from mcoi_runtime.core.tenant_partition import TenantPartitionManager

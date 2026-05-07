@@ -479,6 +479,13 @@ class TestChannelCapabilityManifest:
         with pytest.raises(TypeError):
             m.capabilities["new"] = "val"
 
+    def test_non_boolean_support_flag_is_bounded(self):
+        with pytest.raises(ValueError) as exc:
+            self._make(supports_attachments="yes")
+        assert str(exc.value) == "value must be a boolean flag"
+        assert "supports_attachments" not in str(exc.value)
+        assert "yes" not in str(exc.value)
+
 
 # ---------------------------------------------------------------------------
 # Enum coverage

@@ -262,10 +262,10 @@ def verify_extraction(
 
     reason = None
     if missing:
-        reason = f"missing fields: {', '.join(missing)}"
+        reason = "missing required fields"
     if mismatched:
-        mismatch_msg = f"mismatched fields: {', '.join(mismatched)}"
-        reason = f"{reason}; {mismatch_msg}" if reason else mismatch_msg
+        mismatch_msg = "field values did not match expectations"
+        reason = reason + "; " + mismatch_msg if reason else mismatch_msg
 
     return DocumentVerificationResult(
         verification_id=verification_id,

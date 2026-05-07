@@ -46,8 +46,26 @@ class FilesystemObservationRequest:
 
 
 class FilesystemObserver:
+    def __init__(self, *, allowed_root: Path | None = None) -> None:
+        self._allowed_root = allowed_root.resolve() if allowed_root else None
+
     def observe(self, request: FilesystemObservationRequest) -> ObservationResult:
         target = Path(request.path)
+        resolved = target.resolve()
+
+        # Path traversal guard: reject paths outside allowed root
+        if self._allowed_root is not None and not resolved.is_relative_to(self._allowed_root):
+            return ObservationResult(
+                status=ObservationStatus.FAILED,
+                failures=(
+                    ObservationFailure(
+                        code="path_traversal",
+                        message="target path is outside allowed root",
+                        details={"path": request.path},
+                    ),
+                ),
+            )
+
         if not target.exists():
             return ObservationResult(
                 status=ObservationStatus.FAILED,

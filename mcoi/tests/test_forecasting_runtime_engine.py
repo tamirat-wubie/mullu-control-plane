@@ -2373,20 +2373,47 @@ class TestViolationTenantId:
 
 
 class TestViolationReasonText:
-    def test_no_signals_reason_includes_forecast_id(self, engine: ForecastingRuntimeEngine) -> None:
+    def test_no_signals_reason_bounded(self, engine: ForecastingRuntimeEngine) -> None:
         engine.build_forecast("fc-xyz", "tenant-a")
         violations = engine.detect_forecast_violations()
-        assert "fc-xyz" in violations[0]["reason"]
+        assert violations[0]["reason"] == "active forecast has no demand signals"
+        assert "fc-xyz" not in violations[0]["reason"]
 
-    def test_budget_reason_includes_amounts(self, engine: ForecastingRuntimeEngine) -> None:
+    def test_budget_reason_bounded(self, engine: ForecastingRuntimeEngine) -> None:
         engine.project_budget("bf-1", "tenant-a", projected_spend=200.0, budget_limit=100.0)
         violations = engine.detect_forecast_violations()
         budget_v = [v for v in violations if v["operation"] == "budget_breach"][0]
-        assert "200.0" in budget_v["reason"]
-        assert "100.0" in budget_v["reason"]
+        assert budget_v["reason"] == "budget forecast exceeds budget limit"
+        assert "200.0" not in budget_v["reason"]
+        assert "100.0" not in budget_v["reason"]
 
-    def test_capacity_reason_includes_utilization(self, engine: ForecastingRuntimeEngine) -> None:
+    def test_capacity_reason_bounded(self, engine: ForecastingRuntimeEngine) -> None:
         engine.project_capacity("cf-1", "tenant-a", projected_utilization=0.95)
         violations = engine.detect_forecast_violations()
         cap_v = [v for v in violations if v["operation"] == "capacity_pressure"][0]
-        assert "0.95" in cap_v["reason"]
+        assert cap_v["reason"] == "capacity forecast exceeds utilization threshold"
+        assert "0.95" not in cap_v["reason"]
+
+
+class TestBoundedForecastingContracts:
+    def test_duplicate_signal_message_bounded(self, engine: ForecastingRuntimeEngine) -> None:
+        engine.register_signal("sig-secret", "tenant-a", value=10.0)
+
+        with pytest.raises(RuntimeCoreInvariantError) as excinfo:
+            engine.register_signal("sig-secret", "tenant-a", value=10.0)
+
+        assert str(excinfo.value) == "Duplicate signal_id"
+        assert "sig-secret" not in str(excinfo.value)
+
+    def test_terminal_recommendation_transition_message_bounded(
+        self,
+        engine_with_forecast: ForecastingRuntimeEngine,
+    ) -> None:
+        engine_with_forecast.recommend_allocation("rec-1", "fc-1", "tenant-a")
+        engine_with_forecast.accept_recommendation("rec-1")
+
+        with pytest.raises(RuntimeCoreInvariantError) as excinfo:
+            engine_with_forecast.reject_recommendation("rec-1")
+
+        assert str(excinfo.value) == "Can only reject RECOMMENDED"
+        assert "ACCEPTED" not in str(excinfo.value)

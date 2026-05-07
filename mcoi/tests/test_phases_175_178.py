@@ -108,8 +108,20 @@ class TestAgentSwarmOrchestrator:
 
     def test_unknown_agent_raises(self):
         orch = AgentSwarmOrchestrator(SWARM_CONFIGS["standard"])
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError) as exc_info:
             orch.propose_action("x", "ghost", "t")
+        message = str(exc_info.value)
+        assert message == "unknown agent"
+        assert "ghost" not in message
+
+    def test_unknown_action_message_is_bounded(self):
+        orch = AgentSwarmOrchestrator(SWARM_CONFIGS["standard"])
+        orch.register_agent("a1")
+        with pytest.raises(ValueError) as exc_info:
+            orch.approve_and_execute("act-secret")
+        message = str(exc_info.value)
+        assert message == "unknown action"
+        assert "act-secret" not in message
 
     def test_summary(self):
         orch = AgentSwarmOrchestrator(SWARM_CONFIGS["advanced"])

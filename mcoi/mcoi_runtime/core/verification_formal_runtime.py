@@ -131,7 +131,7 @@ class FormalVerificationEngine:
         target_runtime: str = "default",
     ) -> FormalSpecification:
         if spec_id in self._specs:
-            raise RuntimeCoreInvariantError(f"duplicate spec_id: {spec_id}")
+            raise RuntimeCoreInvariantError("duplicate spec_id")
         now = self._now()
         spec = FormalSpecification(
             spec_id=spec_id, tenant_id=tenant_id,
@@ -156,9 +156,9 @@ class FormalVerificationEngine:
         expression: str = "true",
     ) -> FormalProperty:
         if property_id in self._properties:
-            raise RuntimeCoreInvariantError(f"duplicate property_id: {property_id}")
+            raise RuntimeCoreInvariantError("duplicate property_id")
         if spec_ref not in self._specs:
-            raise RuntimeCoreInvariantError(f"unknown spec_ref: {spec_ref}")
+            raise RuntimeCoreInvariantError("unknown spec_ref")
         now = self._now()
         prop = FormalProperty(
             property_id=property_id, tenant_id=tenant_id,
@@ -191,7 +191,7 @@ class FormalVerificationEngine:
         method: ProofMethod = ProofMethod.MODEL_CHECK,
     ) -> VerificationRun:
         if run_id in self._runs:
-            raise RuntimeCoreInvariantError(f"duplicate run_id: {run_id}")
+            raise RuntimeCoreInvariantError("duplicate run_id")
         now = self._now()
         run = VerificationRun(
             run_id=run_id, tenant_id=tenant_id,
@@ -205,15 +205,13 @@ class FormalVerificationEngine:
 
     def _get_run(self, run_id: str) -> VerificationRun:
         if run_id not in self._runs:
-            raise RuntimeCoreInvariantError(f"unknown run_id: {run_id}")
+            raise RuntimeCoreInvariantError("unknown run_id")
         return self._runs[run_id]
 
     def complete_run(self, run_id: str, duration_ms: float = 0.0) -> VerificationRun:
         run = self._get_run(run_id)
         if run.status in _RUN_TERMINAL:
-            raise RuntimeCoreInvariantError(
-                f"run {run_id} is in terminal state {run.status.value}"
-            )
+            raise RuntimeCoreInvariantError("run is in terminal state")
         # Determine if PROVEN or DISPROVEN based on properties
         spec_props = [p for p in self._properties.values() if p.spec_ref == run.spec_ref]
         all_holds = all(p.status == AssertionStatus.HOLDS for p in spec_props) if spec_props else True
@@ -238,9 +236,7 @@ class FormalVerificationEngine:
     def timeout_run(self, run_id: str, duration_ms: float = 0.0) -> VerificationRun:
         run = self._get_run(run_id)
         if run.status in _RUN_TERMINAL:
-            raise RuntimeCoreInvariantError(
-                f"run {run_id} is in terminal state {run.status.value}"
-            )
+            raise RuntimeCoreInvariantError("run is in terminal state")
         now = self._now()
         updated = VerificationRun(
             run_id=run.run_id, tenant_id=run.tenant_id,
@@ -266,7 +262,7 @@ class FormalVerificationEngine:
         witness: str = "auto-generated",
     ) -> ProofCertificate:
         if cert_id in self._certificates:
-            raise RuntimeCoreInvariantError(f"duplicate cert_id: {cert_id}")
+            raise RuntimeCoreInvariantError("duplicate cert_id")
         now = self._now()
         cert = ProofCertificate(
             cert_id=cert_id, tenant_id=tenant_id,
@@ -301,7 +297,7 @@ class FormalVerificationEngine:
         trace: str = "counter-example trace",
     ) -> CounterExample:
         if example_id in self._counterexamples:
-            raise RuntimeCoreInvariantError(f"duplicate example_id: {example_id}")
+            raise RuntimeCoreInvariantError("duplicate example_id")
         now = self._now()
         ce = CounterExample(
             example_id=example_id, tenant_id=tenant_id,
@@ -334,7 +330,7 @@ class FormalVerificationEngine:
         expression: str = "true",
     ) -> InvariantRecord:
         if invariant_id in self._invariants:
-            raise RuntimeCoreInvariantError(f"duplicate invariant_id: {invariant_id}")
+            raise RuntimeCoreInvariantError("duplicate invariant_id")
         now = self._now()
         inv = InvariantRecord(
             invariant_id=invariant_id, tenant_id=tenant_id,
@@ -347,7 +343,7 @@ class FormalVerificationEngine:
 
     def check_invariant(self, invariant_id: str) -> InvariantRecord:
         if invariant_id not in self._invariants:
-            raise RuntimeCoreInvariantError(f"unknown invariant_id: {invariant_id}")
+            raise RuntimeCoreInvariantError("unknown invariant_id")
         inv = self._invariants[invariant_id]
         # Evaluate: expression is "true"-like if it looks truthy
         expr_lower = inv.expression.strip().lower()
@@ -441,7 +437,7 @@ class FormalVerificationEngine:
                     v = FormalVerificationViolation(
                         violation_id=vid, tenant_id=tenant_id,
                         operation="violated_invariant",
-                        reason=f"invariant {inv.invariant_id} is violated",
+                        reason="formal invariant is violated",
                         detected_at=now,
                     )
                     self._violations[vid] = v
@@ -457,7 +453,7 @@ class FormalVerificationEngine:
                     v = FormalVerificationViolation(
                         violation_id=vid, tenant_id=tenant_id,
                         operation="unproven_safety_property",
-                        reason=f"safety property {p.property_id} is not proven (status: {p.status.value})",
+                        reason="safety property is not proven",
                         detected_at=now,
                     )
                     self._violations[vid] = v
@@ -473,7 +469,7 @@ class FormalVerificationEngine:
                     v = FormalVerificationViolation(
                         violation_id=vid, tenant_id=tenant_id,
                         operation="timeout_critical_spec",
-                        reason=f"verification run {r.run_id} timed out",
+                        reason="verification run timed out",
                         detected_at=now,
                     )
                     self._violations[vid] = v

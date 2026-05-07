@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "schemas/enterprise/notification_send.output.schema.json",
+  "type": "object",
+  "required": ["receipt_status"],
+  "properties": {
+    "notification_ids": {"type": "array", "items": {"type": "string"}},
+    "notification_title": {"type": "string"},
+    "notification_body": {"type": "string"},
+    "receipt_status": {"enum": ["sent", "prepared"]}
+  },
+  "additionalProperties": true
+}

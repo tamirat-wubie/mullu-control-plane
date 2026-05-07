@@ -96,7 +96,7 @@ class ExecutiveControlEngine:
         metadata: dict[str, Any] | None = None,
     ) -> StrategicObjective:
         if objective_id in self._objectives:
-            raise RuntimeCoreInvariantError(f"objective '{objective_id}' already exists")
+            raise RuntimeCoreInvariantError("objective already exists")
         now = _now_iso()
         obj = StrategicObjective(
             objective_id=objective_id,
@@ -131,7 +131,7 @@ class ExecutiveControlEngine:
         current_value: float,
     ) -> StrategicObjective:
         if objective_id not in self._objectives:
-            raise RuntimeCoreInvariantError(f"objective '{objective_id}' not found")
+            raise RuntimeCoreInvariantError("objective not found")
         old = self._objectives[objective_id]
         now = _now_iso()
         updated = StrategicObjective(
@@ -164,7 +164,7 @@ class ExecutiveControlEngine:
         status: ObjectiveStatus,
     ) -> StrategicObjective:
         if objective_id not in self._objectives:
-            raise RuntimeCoreInvariantError(f"objective '{objective_id}' not found")
+            raise RuntimeCoreInvariantError("objective not found")
         old = self._objectives[objective_id]
         now = _now_iso()
         updated = StrategicObjective(
@@ -193,7 +193,7 @@ class ExecutiveControlEngine:
     def check_objective_health(self, objective_id: str) -> dict[str, Any]:
         """Check if an objective's KPI is on track."""
         if objective_id not in self._objectives:
-            raise RuntimeCoreInvariantError(f"objective '{objective_id}' not found")
+            raise RuntimeCoreInvariantError("objective not found")
         obj = self._objectives[objective_id]
         if obj.target_value == 0:
             gap_pct = 0.0
@@ -228,7 +228,7 @@ class ExecutiveControlEngine:
         metadata: dict[str, Any] | None = None,
     ) -> StrategicDirective:
         if directive_id in self._directives:
-            raise RuntimeCoreInvariantError(f"directive '{directive_id}' already exists")
+            raise RuntimeCoreInvariantError("directive already exists")
         now = _now_iso()
         directive = StrategicDirective(
             directive_id=directive_id,
@@ -257,10 +257,10 @@ class ExecutiveControlEngine:
 
     def acknowledge_directive(self, directive_id: str) -> StrategicDirective:
         if directive_id not in self._directives:
-            raise RuntimeCoreInvariantError(f"directive '{directive_id}' not found")
+            raise RuntimeCoreInvariantError("directive not found")
         old = self._directives[directive_id]
         if old.status != DirectiveStatus.ISSUED:
-            raise RuntimeCoreInvariantError(f"directive '{directive_id}' is not in ISSUED state")
+            raise RuntimeCoreInvariantError("directive is not in ISSUED state")
         updated = StrategicDirective(
             directive_id=old.directive_id,
             objective_id=old.objective_id,
@@ -283,10 +283,10 @@ class ExecutiveControlEngine:
 
     def execute_directive(self, directive_id: str) -> StrategicDirective:
         if directive_id not in self._directives:
-            raise RuntimeCoreInvariantError(f"directive '{directive_id}' not found")
+            raise RuntimeCoreInvariantError("directive not found")
         old = self._directives[directive_id]
         if old.status not in (DirectiveStatus.ISSUED, DirectiveStatus.ACKNOWLEDGED):
-            raise RuntimeCoreInvariantError(f"directive '{directive_id}' cannot be executed from {old.status.value}")
+            raise RuntimeCoreInvariantError("directive cannot be executed from current state")
         updated = StrategicDirective(
             directive_id=old.directive_id,
             objective_id=old.objective_id,
@@ -310,7 +310,7 @@ class ExecutiveControlEngine:
 
     def reject_directive(self, directive_id: str, *, reason: str = "") -> StrategicDirective:
         if directive_id not in self._directives:
-            raise RuntimeCoreInvariantError(f"directive '{directive_id}' not found")
+            raise RuntimeCoreInvariantError("directive not found")
         old = self._directives[directive_id]
         updated = StrategicDirective(
             directive_id=old.directive_id,
@@ -385,7 +385,7 @@ class ExecutiveControlEngine:
         metadata: dict[str, Any] | None = None,
     ) -> ScenarioPlan:
         if scenario_id in self._scenarios:
-            raise RuntimeCoreInvariantError(f"scenario '{scenario_id}' already exists")
+            raise RuntimeCoreInvariantError("scenario already exists")
         now = _now_iso()
         scenario = ScenarioPlan(
             scenario_id=scenario_id,
@@ -409,10 +409,10 @@ class ExecutiveControlEngine:
 
     def run_scenario(self, scenario_id: str) -> ScenarioPlan:
         if scenario_id not in self._scenarios:
-            raise RuntimeCoreInvariantError(f"scenario '{scenario_id}' not found")
+            raise RuntimeCoreInvariantError("scenario not found")
         old = self._scenarios[scenario_id]
         if old.status != ScenarioStatus.DRAFT:
-            raise RuntimeCoreInvariantError(f"scenario '{scenario_id}' is not in DRAFT state")
+            raise RuntimeCoreInvariantError("scenario is not in DRAFT state")
         now = _now_iso()
         updated = ScenarioPlan(
             scenario_id=old.scenario_id,
@@ -442,10 +442,10 @@ class ExecutiveControlEngine:
         risk_score: float | None = None,
     ) -> ScenarioPlan:
         if scenario_id not in self._scenarios:
-            raise RuntimeCoreInvariantError(f"scenario '{scenario_id}' not found")
+            raise RuntimeCoreInvariantError("scenario not found")
         old = self._scenarios[scenario_id]
         if old.status != ScenarioStatus.RUNNING:
-            raise RuntimeCoreInvariantError(f"scenario '{scenario_id}' is not RUNNING")
+            raise RuntimeCoreInvariantError("scenario is not RUNNING")
         now = _now_iso()
         updated = ScenarioPlan(
             scenario_id=old.scenario_id,
@@ -481,7 +481,7 @@ class ExecutiveControlEngine:
         metadata: dict[str, Any] | None = None,
     ) -> ScenarioOutcome:
         if scenario_id not in self._scenarios:
-            raise RuntimeCoreInvariantError(f"scenario '{scenario_id}' not found")
+            raise RuntimeCoreInvariantError("scenario not found")
         now = _now_iso()
         outcome = ScenarioOutcome(
             outcome_id=outcome_id,
@@ -525,7 +525,7 @@ class ExecutiveControlEngine:
         metadata: dict[str, Any] | None = None,
     ) -> ExecutiveIntervention:
         if intervention_id in self._interventions:
-            raise RuntimeCoreInvariantError(f"intervention '{intervention_id}' already exists")
+            raise RuntimeCoreInvariantError("intervention already exists")
         now = _now_iso()
         intervention = ExecutiveIntervention(
             intervention_id=intervention_id,
@@ -549,7 +549,7 @@ class ExecutiveControlEngine:
 
     def resolve_intervention(self, intervention_id: str) -> ExecutiveIntervention:
         if intervention_id not in self._interventions:
-            raise RuntimeCoreInvariantError(f"intervention '{intervention_id}' not found")
+            raise RuntimeCoreInvariantError("intervention not found")
         old = self._interventions[intervention_id]
         now = _now_iso()
         updated = ExecutiveIntervention(
@@ -590,7 +590,7 @@ class ExecutiveControlEngine:
         metadata: dict[str, Any] | None = None,
     ) -> StrategicDecision:
         if decision_id in self._decisions:
-            raise RuntimeCoreInvariantError(f"decision '{decision_id}' already exists")
+            raise RuntimeCoreInvariantError("decision already exists")
         now = _now_iso()
         decision = StrategicDecision(
             decision_id=decision_id,
@@ -629,7 +629,7 @@ class ExecutiveControlEngine:
         effect: str = "",
     ) -> PortfolioDirectiveBinding:
         if directive_id not in self._directives:
-            raise RuntimeCoreInvariantError(f"directive '{directive_id}' not found")
+            raise RuntimeCoreInvariantError("directive not found")
         now = _now_iso()
         binding = PortfolioDirectiveBinding(
             binding_id=binding_id,

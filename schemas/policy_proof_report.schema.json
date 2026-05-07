@@ -1,0 +1,83 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:policy-proof-report:1",
+  "title": "Policy Proof Report",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "report_id",
+    "policy_id",
+    "status",
+    "invariant_count",
+    "case_count",
+    "counterexample_count",
+    "proven_invariants",
+    "counterexamples",
+    "evidence_refs",
+    "report_hash",
+    "metadata"
+  ],
+  "properties": {
+    "report_id": {"type": "string", "minLength": 1},
+    "policy_id": {"type": "string", "minLength": 1},
+    "status": {"type": "string", "enum": ["proved", "counterexample_found"]},
+    "invariant_count": {"type": "integer", "minimum": 1},
+    "case_count": {"type": "integer", "minimum": 1},
+    "counterexample_count": {"type": "integer", "minimum": 0},
+    "proven_invariants": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1}
+    },
+    "counterexamples": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/counterexample"}
+    },
+    "evidence_refs": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1}
+    },
+    "report_hash": {"type": "string", "minLength": 1},
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["proof_is_bounded", "policy_weakening_allowed"],
+      "properties": {
+        "proof_is_bounded": {"type": "boolean", "const": true},
+        "policy_weakening_allowed": {"type": "boolean", "const": false}
+      }
+    }
+  },
+  "$defs": {
+    "counterexample": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "invariant_id",
+        "case_id",
+        "subject_id",
+        "reason",
+        "evidence_refs"
+      ],
+      "properties": {
+        "invariant_id": {"type": "string", "minLength": 1},
+        "case_id": {"type": "string", "minLength": 1},
+        "subject_id": {"type": "string", "minLength": 1},
+        "reason": {"type": "string", "minLength": 1},
+        "evidence_refs": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1}
+        }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"status": {"const": "proved"}}, "required": ["status"]},
+      "then": {"properties": {"counterexample_count": {"const": 0}, "counterexamples": {"maxItems": 0}}}
+    },
+    {
+      "if": {"properties": {"status": {"const": "counterexample_found"}}, "required": ["status"]},
+      "then": {"properties": {"counterexample_count": {"minimum": 1}, "counterexamples": {"minItems": 1}}}
+    }
+  ]
+}

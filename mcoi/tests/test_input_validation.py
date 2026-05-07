@@ -36,6 +36,9 @@ class TestInputValidator:
         assert not result.valid
         errors = [e for e in result.errors if e.rule == "required"]
         assert any(e.field == "name" for e in errors)
+        name_error = next(e for e in errors if e.field == "name")
+        assert name_error.message == "required field is missing"
+        assert "name" not in name_error.message
 
     def test_empty_string_required(self, validator):
         result = validator.validate("user", {"name": "  ", "email": "a@b.com"})
@@ -44,34 +47,52 @@ class TestInputValidator:
     def test_type_check(self, validator):
         result = validator.validate("user", {"name": 123, "email": "a@b.com"})
         assert not result.valid
-        assert any(e.rule == "type_check" for e in result.errors)
+        error = next(e for e in result.errors if e.rule == "type_check")
+        assert error.message == "field has invalid type"
+        assert error.actual_value is None
+        assert "int" not in error.message
 
     def test_min_length(self, validator):
         result = validator.validate("user", {"name": "A", "email": "a@b.com"})
         assert not result.valid
-        assert any(e.rule == "min_length" for e in result.errors)
+        error = next(e for e in result.errors if e.rule == "min_length")
+        assert error.message == "field is shorter than allowed"
+        assert "2" not in error.message
 
     def test_max_length(self, validator):
         result = validator.validate("user", {"name": "A" * 51, "email": "a@b.com"})
         assert not result.valid
+        error = next(e for e in result.errors if e.rule == "max_length")
+        assert error.message == "field is longer than allowed"
+        assert "50" not in error.message
 
     def test_pattern(self, validator):
         result = validator.validate("user", {"name": "Bob", "email": "not-an-email"})
         assert not result.valid
-        assert any(e.rule == "pattern" for e in result.errors)
+        error = next(e for e in result.errors if e.rule == "pattern")
+        assert error.message == "field has invalid format"
+        assert "[^@]" not in error.message
 
     def test_min_value(self, validator):
         result = validator.validate("user", {"name": "Bob", "email": "a@b.com", "age": -1})
         assert not result.valid
+        error = next(e for e in result.errors if e.rule == "min_value")
+        assert error.message == "field is below minimum"
+        assert "0" not in error.message
 
     def test_max_value(self, validator):
         result = validator.validate("user", {"name": "Bob", "email": "a@b.com", "age": 200})
         assert not result.valid
+        error = next(e for e in result.errors if e.rule == "max_value")
+        assert error.message == "field exceeds maximum"
+        assert "150" not in error.message
 
     def test_enum(self, validator):
         result = validator.validate("user", {"name": "Bob", "email": "a@b.com", "role": "superadmin"})
         assert not result.valid
-        assert any(e.rule == "enum" for e in result.errors)
+        error = next(e for e in result.errors if e.rule == "enum")
+        assert error.message == "field has unsupported value"
+        assert "admin" not in error.message
 
     def test_custom_validator(self):
         v = InputValidator()
@@ -82,8 +103,9 @@ class TestInputValidator:
         assert not v.validate("test", {"value": 3}).valid
 
     def test_unknown_schema(self, validator):
-        with pytest.raises(ValueError, match="Unknown schema"):
+        with pytest.raises(ValueError, match="^unknown schema$") as exc_info:
             validator.validate("nonexistent", {})
+        assert "nonexistent" not in str(exc_info.value)
 
     def test_to_dict(self, validator):
         result = validator.validate("user", {})

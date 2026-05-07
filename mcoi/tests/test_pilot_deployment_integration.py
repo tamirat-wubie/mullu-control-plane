@@ -123,6 +123,9 @@ class TestMemoryMeshAttachment:
         bridge.deploy_regulated_ops_pilot("t1", "b1", "p1")
         mem = bridge.attach_pilot_state_to_memory_mesh("t1")
         assert isinstance(mem, MemoryRecord)
+        assert mem.title == "Pilot deployment state"
+        assert "t1" not in mem.title
+        assert mem.scope_ref_id == "t1"
         assert mem.tags == ("pilot", "deployment", "bootstrap")
         assert memory.memory_count >= 1
 

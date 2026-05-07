@@ -1,0 +1,166 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:connector-certification-registry:1",
+  "title": "ConnectorCertificationRegistrySnapshot",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "registry_id",
+    "manifests",
+    "evidence",
+    "certifications",
+    "decisions",
+    "snapshot_hash"
+  ],
+  "properties": {
+    "registry_id": {"type": "string", "minLength": 1},
+    "manifests": {"type": "array", "items": {"$ref": "#/$defs/manifest"}},
+    "evidence": {"type": "array", "items": {"$ref": "#/$defs/evidence"}},
+    "certifications": {"type": "array", "items": {"$ref": "#/$defs/certification"}},
+    "decisions": {"type": "array", "items": {"$ref": "#/$defs/decision"}},
+    "snapshot_hash": {"type": "string", "minLength": 32}
+  },
+  "$defs": {
+    "level": {
+      "type": "string",
+      "enum": [
+        "L0_contract_defined",
+        "L1_mock_tested",
+        "L2_sandbox_tested",
+        "L3_live_read_only_tested",
+        "L4_live_write_tested",
+        "L5_production_certified"
+      ]
+    },
+    "risk": {
+      "type": "string",
+      "enum": ["low", "medium", "high", "critical"]
+    },
+    "verdict": {
+      "type": "string",
+      "enum": ["allow", "deny", "escalate"]
+    },
+    "manifest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "connector_id",
+        "provider",
+        "action",
+        "version",
+        "risk",
+        "side_effects",
+        "oauth_scopes",
+        "requires_approval",
+        "requires_receipt",
+        "requires_idempotency",
+        "requires_tenant_binding",
+        "eval_suites",
+        "evidence_required",
+        "owner_team",
+        "manifest_hash",
+        "metadata"
+      ],
+      "properties": {
+        "connector_id": {"type": "string", "minLength": 1},
+        "provider": {"type": "string", "minLength": 1},
+        "action": {"type": "string", "minLength": 1},
+        "version": {"type": "string", "minLength": 1},
+        "risk": {"$ref": "#/$defs/risk"},
+        "side_effects": {"type": "array", "items": {"type": "string", "minLength": 1}},
+        "oauth_scopes": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+        "requires_approval": {"type": "boolean"},
+        "requires_receipt": {"type": "boolean"},
+        "requires_idempotency": {"type": "boolean"},
+        "requires_tenant_binding": {"type": "boolean", "const": true},
+        "eval_suites": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+        "evidence_required": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+        "owner_team": {"type": "string", "minLength": 1},
+        "manifest_hash": {"type": "string", "minLength": 32},
+        "metadata": {"type": "object"}
+      }
+    },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "evidence_id",
+        "connector_id",
+        "evidence_type",
+        "evidence_ref",
+        "observed_at",
+        "passed",
+        "evidence_hash",
+        "metadata"
+      ],
+      "properties": {
+        "evidence_id": {"type": "string", "minLength": 1},
+        "connector_id": {"type": "string", "minLength": 1},
+        "evidence_type": {"type": "string", "minLength": 1},
+        "evidence_ref": {"type": "string", "minLength": 1},
+        "observed_at": {"type": "string", "minLength": 1},
+        "passed": {"type": "boolean"},
+        "evidence_hash": {"type": "string", "minLength": 32},
+        "metadata": {"type": "object"}
+      }
+    },
+    "certification": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "certification_id",
+        "connector_id",
+        "level",
+        "certified_by",
+        "certified_at",
+        "evidence_ids",
+        "revoked_at",
+        "revocation_reason",
+        "certification_hash",
+        "metadata"
+      ],
+      "properties": {
+        "certification_id": {"type": "string", "minLength": 1},
+        "connector_id": {"type": "string", "minLength": 1},
+        "level": {"$ref": "#/$defs/level"},
+        "certified_by": {"type": "string", "minLength": 1},
+        "certified_at": {"type": "string", "minLength": 1},
+        "evidence_ids": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+        "revoked_at": {"type": "string"},
+        "revocation_reason": {"type": "string"},
+        "certification_hash": {"type": "string", "minLength": 32},
+        "metadata": {"type": "object"}
+      }
+    },
+    "decision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "decision_id",
+        "connector_id",
+        "requested_level",
+        "verdict",
+        "reason",
+        "missing_evidence",
+        "missing_evals",
+        "required_controls",
+        "evidence_refs",
+        "decision_hash",
+        "metadata"
+      ],
+      "properties": {
+        "decision_id": {"type": "string", "minLength": 1},
+        "connector_id": {"type": "string", "minLength": 1},
+        "requested_level": {"$ref": "#/$defs/level"},
+        "verdict": {"$ref": "#/$defs/verdict"},
+        "reason": {"type": "string", "minLength": 1},
+        "missing_evidence": {"type": "array", "items": {"type": "string", "minLength": 1}},
+        "missing_evals": {"type": "array", "items": {"type": "string", "minLength": 1}},
+        "required_controls": {"type": "array", "items": {"type": "string", "minLength": 1}},
+        "evidence_refs": {"type": "array", "items": {"type": "string", "minLength": 1}},
+        "decision_hash": {"type": "string", "minLength": 32},
+        "metadata": {"type": "object"}
+      }
+    }
+  }
+}

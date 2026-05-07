@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "schemas/creative/data_analyze.output.schema.json",
+  "type": "object",
+  "required": ["row_count", "column_count", "receipt_status"],
+  "properties": {
+    "row_count": {"type": "integer", "minimum": 0},
+    "column_count": {"type": "integer", "minimum": 0},
+    "insights": {"type": "array", "items": {"type": "string"}},
+    "receipt_status": {"const": "analyzed"}
+  },
+  "additionalProperties": true
+}

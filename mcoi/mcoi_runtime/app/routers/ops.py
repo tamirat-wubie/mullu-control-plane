@@ -8,9 +8,9 @@ from __future__ import annotations
 
 from typing import Any
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter
 from fastapi.responses import PlainTextResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from mcoi_runtime.app.routers.deps import deps
 
@@ -34,7 +34,7 @@ class ConfigRollbackRequest(BaseModel):
 class CreateSnapshotRequest(BaseModel):
     snapshot_id: str
     name: str
-    state: dict[str, Any] = {}
+    state: dict[str, Any] = Field(default_factory=dict)
 
 
 # ═══ Governance Metrics ═══
@@ -175,7 +175,7 @@ def list_plugins():
 @router.get("/api/v1/guards")
 def list_guards():
     """List governance guard chain."""
-    from mcoi_runtime.core.governance_guard import (
+    from mcoi_runtime.governance.guards.chain import (
         GovernanceGuardChain, create_rate_limit_guard,
         create_budget_guard, create_tenant_guard,
     )
@@ -613,3 +613,126 @@ def get_traces_summary():
     """Return OpenTelemetry trace exporter summary."""
     deps.metrics.inc("requests_governed")
     return {"traces": deps.otel_exporter.summary(), "governed": True}
+
+
+# ═══ Coordination Checkpoint / Restore ═══
+
+
+class CoordinationCheckpointRequest(BaseModel):
+    checkpoint_id: str
+    lease_duration_seconds: int = 3600
+
+
+class CoordinationRestoreRequest(BaseModel):
+    checkpoint_id: str
+    current_policy_pack_id: str = ""
+
+
+@router.post("/api/v1/coordination/checkpoint")
+def save_coordination_checkpoint(req: CoordinationCheckpointRequest):
+    """Save a coordination engine checkpoint with governed lease."""
+    deps.metrics.inc("requests_governed")
+    checkpoint = deps.coordination_engine.save_checkpoint(
+        req.checkpoint_id,
+        lease_duration_seconds=req.lease_duration_seconds,
+    )
+    deps.audit_trail.record(
+        action="coordination.checkpoint.save",
+        actor_id="api",
+        tenant_id="system",
+        target=req.checkpoint_id,
+        outcome="success",
+        detail={
+            "lease_expires_at": checkpoint.lease_expires_at,
+            "delegations": len(checkpoint.delegations),
+            "handoffs": len(checkpoint.handoffs),
+        },
+    )
+    return {
+        "checkpoint_id": checkpoint.checkpoint_id,
+        "created_at": checkpoint.created_at,
+        "lease_expires_at": checkpoint.lease_expires_at,
+        "delegations": len(checkpoint.delegations),
+        "handoffs": len(checkpoint.handoffs),
+        "merges": len(checkpoint.merges),
+        "conflicts": len(checkpoint.conflicts),
+        "governed": True,
+    }
+
+
+@router.post("/api/v1/coordination/restore")
+def restore_coordination_checkpoint(req: CoordinationRestoreRequest):
+    """Restore coordination engine state from a governed checkpoint."""
+    from mcoi_runtime.persistence.errors import PersistenceError
+    deps.metrics.inc("requests_governed")
+    try:
+        outcome = deps.coordination_engine.restore_checkpoint(
+            req.checkpoint_id,
+            current_policy_pack_id=req.current_policy_pack_id or None,
+        )
+    except PersistenceError:
+        from fastapi import HTTPException
+        raise HTTPException(404, detail={
+            "error": "checkpoint not found",
+            "error_code": "checkpoint_not_found",
+            "governed": True,
+        })
+    deps.audit_trail.record(
+        action="coordination.checkpoint.restore",
+        actor_id="api",
+        tenant_id="system",
+        target=req.checkpoint_id,
+        outcome=outcome.status.value,
+        detail={"reason": outcome.reason},
+    )
+    return {
+        "checkpoint_id": outcome.checkpoint_id,
+        "status": outcome.status.value,
+        "reason": outcome.reason,
+        "restored_at": outcome.restored_at,
+        "governed": True,
+    }
+
+
+# ═══ Governance Benchmarks ═══
+
+
+@router.post("/api/v1/ops/benchmarks")
+def run_benchmarks():
+    """Run governance performance benchmarks and return results."""
+    from mcoi_runtime.core.governance_bench import run_governance_benchmarks
+    suite = run_governance_benchmarks()
+    return {"governed": True, **suite.summary()}
+
+
+# ═══ Import Analysis ═══
+
+
+@router.get("/api/v1/ops/imports")
+def analyze_imports():
+    """Analyze import dependencies and check for cycles.
+
+    Note: This endpoint performs full AST analysis of all Python files.
+    May take 500ms-2s on large codebases. Use sparingly.
+    """
+    import os as _os
+    from mcoi_runtime.core.import_analyzer import ImportAnalyzer
+    import mcoi_runtime
+    runtime_dir = _os.path.dirname(_os.path.dirname(mcoi_runtime.__file__))
+    mcoi_dir = _os.path.join(runtime_dir, "mcoi_runtime")
+    analyzer = ImportAnalyzer(root_package="mcoi_runtime")
+    result = analyzer.analyze_directory(mcoi_dir)
+    summary = analyzer.dependency_summary(result)
+    return {"governed": True, **summary}
+
+
+# ═══ Proof Bridge Status ═══
+
+
+@router.get("/api/v1/ops/proof-bridge")
+def proof_bridge_status():
+    """Get proof bridge certification status."""
+    bridge = deps.get("proof_bridge")
+    if bridge is None:
+        return {"governed": True, "status": "not_initialized"}
+    return {"governed": True, **bridge.summary()}

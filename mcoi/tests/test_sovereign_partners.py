@@ -87,8 +87,12 @@ class TestSovereignPipeline:
             "sovereign_aware", "none",
         )
         pipeline.onboard(rec)
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError) as exc_info:
             pipeline.onboard(rec)
+        message = str(exc_info.value)
+        assert message == "partner already exists"
+        assert "sp-dup" not in message
+        assert "Dup Corp" not in message
 
     def test_reference_increments_count(self):
         pipeline = SovereignPartnerPipeline()
@@ -112,6 +116,15 @@ class TestSovereignPipeline:
         )
         pipeline.onboard(rec)
         assert len(pipeline.gold_partners()) == 1
+
+    def test_unknown_partner_message_is_bounded(self):
+        pipeline = SovereignPartnerPipeline()
+        with pytest.raises(ValueError) as exc_info:
+            pipeline.certify("sp-secret-missing", "sovereign_implementation_certified")
+        message = str(exc_info.value)
+        assert message == "unknown partner"
+        assert "sp-secret-missing" not in message
+        assert ":" not in message
 
 
 # ---------------------------------------------------------------------------

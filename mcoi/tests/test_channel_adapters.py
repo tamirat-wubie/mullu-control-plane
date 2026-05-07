@@ -64,8 +64,9 @@ class TestRegistration:
 
     def test_reject_duplicate(self, registry: ChannelAdapterRegistry) -> None:
         registry.register(SmsTestAdapter())
-        with pytest.raises(RuntimeCoreInvariantError, match="already registered"):
+        with pytest.raises(RuntimeCoreInvariantError, match="already registered") as exc_info:
             registry.register(SmsTestAdapter())
+        assert "test-sms" not in str(exc_info.value)
 
     def test_reject_non_channel_adapter(self, registry: ChannelAdapterRegistry) -> None:
         with pytest.raises(RuntimeCoreInvariantError, match="must be a ChannelAdapter"):
@@ -95,16 +96,19 @@ class TestRetrieval:
         assert manifest.adapter_id == "test-sms"
 
     def test_missing_adapter_raises(self, registry: ChannelAdapterRegistry) -> None:
-        with pytest.raises(RuntimeCoreInvariantError, match="not found"):
+        with pytest.raises(RuntimeCoreInvariantError, match="not found") as exc_info:
             registry.get_adapter("nonexistent")
+        assert "nonexistent" not in str(exc_info.value)
 
     def test_missing_descriptor_raises(self, registry: ChannelAdapterRegistry) -> None:
-        with pytest.raises(RuntimeCoreInvariantError, match="not found"):
+        with pytest.raises(RuntimeCoreInvariantError, match="not found") as exc_info:
             registry.get_descriptor("nonexistent")
+        assert "nonexistent" not in str(exc_info.value)
 
     def test_missing_manifest_raises(self, registry: ChannelAdapterRegistry) -> None:
-        with pytest.raises(RuntimeCoreInvariantError, match="not found"):
+        with pytest.raises(RuntimeCoreInvariantError, match="not found") as exc_info:
             registry.get_manifest("nonexistent")
+        assert "nonexistent" not in str(exc_info.value)
 
 
 # ---- listing ----------------------------------------------------------------

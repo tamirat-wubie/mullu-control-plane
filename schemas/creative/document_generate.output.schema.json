@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "schemas/creative/document_generate.output.schema.json",
+  "type": "object",
+  "required": ["document_id", "content_hash", "receipt_status"],
+  "properties": {
+    "document_id": {"type": "string", "minLength": 1},
+    "content_hash": {"type": "string", "minLength": 1},
+    "receipt_status": {"const": "generated"},
+    "artifact": {"type": "object"}
+  },
+  "additionalProperties": true
+}

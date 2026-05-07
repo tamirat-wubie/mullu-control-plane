@@ -138,14 +138,14 @@ class KnowledgeExtractor:
 
         confidence = ConfidenceLevel(
             value=confidence_value,
-            reason=f"completeness-based: {len(steps)} steps, {len(missing_parts)} gaps",
+            reason="completeness-based extraction assessment",
             assessed_at=now,
         )
 
         return ProcedureCandidate(
             candidate_id=candidate_id,
             source_id=source.source_id,
-            name=f"procedure from {source.source_id}",
+            name="procedure candidate",
             steps=tuple(steps),
             missing_parts=tuple(missing_parts),
             confidence=confidence,
@@ -192,14 +192,14 @@ class KnowledgeExtractor:
 
         confidence = ConfidenceLevel(
             value=confidence_value,
-            reason=f"trigger frequency: {trigger_counts[common_trigger]}/{len(incidents)}",
+            reason="trigger frequency assessment",
             assessed_at=now,
         )
 
         return FailurePattern(
             pattern_id=pattern_id,
             source_ids=(source.source_id,),
-            name=f"failure pattern: {common_trigger}",
+            name="failure pattern",
             trigger_conditions=(common_trigger,),
             failure_mode=common_mode,
             recommended_response=common_response,
@@ -240,15 +240,15 @@ class KnowledgeExtractor:
 
         confidence = ConfidenceLevel(
             value=confidence_value,
-            reason=f"step match: {match_count}/{len(successful_runs)} runs",
+            reason="step match assessment",
             assessed_at=now,
         )
 
         return MethodPattern(
             pattern_id=pattern_id,
             source_ids=(source.source_id,),
-            name=f"method pattern from {source.source_id}",
-            description=f"common steps across {len(successful_runs)} runs",
+            name="method pattern",
+            description="common steps across successful runs",
             applicability="general",
             steps=common_seq if common_seq else ("unknown",),
             confidence=confidence,
@@ -274,7 +274,7 @@ class KnowledgeRegistry:
         """Register a knowledge artifact. The artifact must have a unique identifying id attribute."""
         knowledge_id = self._extract_id(artifact)
         if knowledge_id in self._artifacts:
-            raise RuntimeCoreInvariantError(f"knowledge already registered: {knowledge_id}")
+            raise RuntimeCoreInvariantError("knowledge already registered")
         self._artifacts[knowledge_id] = artifact
         # Use artifact's lifecycle if present, otherwise default to CANDIDATE
         lifecycle = getattr(artifact, "lifecycle", KnowledgeLifecycle.CANDIDATE)
@@ -324,13 +324,11 @@ class KnowledgeRegistry:
 
         current = self._lifecycles.get(knowledge_id)
         if current is None:
-            raise RuntimeCoreInvariantError(f"knowledge not found: {knowledge_id}")
+            raise RuntimeCoreInvariantError("knowledge not found")
 
         allowed = _VALID_KNOWLEDGE_TRANSITIONS.get(current, frozenset())
         if to_lifecycle not in allowed:
-            raise RuntimeCoreInvariantError(
-                f"invalid lifecycle transition: {current.value} -> {to_lifecycle.value}"
-            )
+            raise RuntimeCoreInvariantError("invalid lifecycle transition")
 
         self._lifecycles[knowledge_id] = to_lifecycle
 
@@ -356,7 +354,7 @@ class KnowledgeRegistry:
         ensure_non_empty_text("method", method)
 
         if knowledge_id not in self._artifacts:
-            raise RuntimeCoreInvariantError(f"knowledge not found: {knowledge_id}")
+            raise RuntimeCoreInvariantError("knowledge not found")
 
         result = KnowledgeVerificationResult(
             knowledge_id=knowledge_id,

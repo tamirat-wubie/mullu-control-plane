@@ -1,0 +1,27 @@
+{
+  "capsule_id": "browser.restricted_ops.v0",
+  "domain": "browser",
+  "version": "0.1.0",
+  "ontology_refs": ["ontologies/browser/restricted_ops.json"],
+  "capability_refs": [
+    "browser.open",
+    "browser.screenshot",
+    "browser.extract_text",
+    "browser.click",
+    "browser.type",
+    "browser.submit"
+  ],
+  "policy_refs": ["policies/browser/restricted_ops.policy.json"],
+  "evidence_rules": ["evidence/browser/restricted_ops.evidence.json"],
+  "approval_rules": ["approval/browser/restricted_ops.approval.json"],
+  "recovery_rules": ["recovery/browser/restricted_ops.recovery.json"],
+  "test_fixture_refs": ["tests/fixtures/browser/restricted_ops"],
+  "read_model_refs": ["read_models/browser/restricted_ops.json"],
+  "operator_view_refs": ["operator_views/browser/restricted_ops.json"],
+  "owner_team": "platform-ops",
+  "certification_status": "certified",
+  "metadata": {
+    "purpose": "Certified browser capability declarations for restricted worker execution; live Playwright adapter required before runtime enablement"
+  },
+  "extensions": {}
+}

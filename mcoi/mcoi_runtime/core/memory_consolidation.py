@@ -127,7 +127,7 @@ class MemoryConsolidationEngine:
     ) -> MemoryCandidate:
         """Register a new memory candidate. Duplicate candidate_id raises."""
         if candidate_id in self._candidates:
-            raise RuntimeCoreInvariantError(f"Duplicate candidate_id: {candidate_id}")
+            raise RuntimeCoreInvariantError("Duplicate candidate_id")
         now = self._now()
         candidate = MemoryCandidate(
             candidate_id=candidate_id,
@@ -149,7 +149,7 @@ class MemoryConsolidationEngine:
     def get_candidate(self, candidate_id: str) -> MemoryCandidate:
         c = self._candidates.get(candidate_id)
         if c is None:
-            raise RuntimeCoreInvariantError(f"Unknown candidate_id: {candidate_id}")
+            raise RuntimeCoreInvariantError("Unknown candidate_id")
         return c
 
     def candidates_for_tenant(self, tenant_id: str) -> tuple[MemoryCandidate, ...]:
@@ -212,7 +212,7 @@ class MemoryConsolidationEngine:
         CRITICAL/HIGH -> PROMOTED, LOW with occurrence_count==1 -> DEMOTED.
         Others stay CANDIDATE."""
         if batch_id in self._batches:
-            raise RuntimeCoreInvariantError(f"Duplicate batch_id: {batch_id}")
+            raise RuntimeCoreInvariantError("Duplicate batch_id")
         now = self._now()
         tenant_candidates = [
             c for c in self._candidates.values()
@@ -233,7 +233,7 @@ class MemoryConsolidationEngine:
                     tenant_id=tenant_id,
                     candidate_ref=candidate.candidate_id,
                     disposition=ConsolidationStatus.PROMOTED,
-                    reason=f"Importance {candidate.importance.value} qualifies for promotion",
+                    reason="Importance qualifies for promotion",
                     decided_at=now,
                 )
                 self._decisions[decision_id] = decision
@@ -283,7 +283,7 @@ class MemoryConsolidationEngine:
     ) -> MemoryConflict:
         """Register a memory conflict. Resolved=False initially."""
         if conflict_id in self._conflicts:
-            raise RuntimeCoreInvariantError(f"Duplicate conflict_id: {conflict_id}")
+            raise RuntimeCoreInvariantError("Duplicate conflict_id")
         now = self._now()
         conflict = MemoryConflict(
             conflict_id=conflict_id,
@@ -304,9 +304,9 @@ class MemoryConsolidationEngine:
         """Complete a conflict resolution. Sets resolved=True."""
         old = self._conflicts.get(conflict_id)
         if old is None:
-            raise RuntimeCoreInvariantError(f"Unknown conflict_id: {conflict_id}")
+            raise RuntimeCoreInvariantError("Unknown conflict_id")
         if old.resolved:
-            raise RuntimeCoreInvariantError(f"Conflict {conflict_id} is already resolved")
+            raise RuntimeCoreInvariantError("Conflict already resolved")
         now = self._now()
         updated = MemoryConflict(
             conflict_id=old.conflict_id,
@@ -338,7 +338,7 @@ class MemoryConsolidationEngine:
     ) -> RetentionRule:
         """Apply a retention rule."""
         if rule_id in self._rules:
-            raise RuntimeCoreInvariantError(f"Duplicate rule_id: {rule_id}")
+            raise RuntimeCoreInvariantError("Duplicate rule_id")
         now = self._now()
         rule = RetentionRule(
             rule_id=rule_id,
@@ -357,7 +357,7 @@ class MemoryConsolidationEngine:
     def get_rule(self, rule_id: str) -> RetentionRule:
         r = self._rules.get(rule_id)
         if r is None:
-            raise RuntimeCoreInvariantError(f"Unknown rule_id: {rule_id}")
+            raise RuntimeCoreInvariantError("Unknown rule_id")
         return r
 
     def rules_for_tenant(self, tenant_id: str) -> tuple[RetentionRule, ...]:
@@ -378,7 +378,7 @@ class MemoryConsolidationEngine:
         preference_count = count of PROMOTED candidates for tenant.
         confidence = promoted / (promoted + demoted) or 1.0."""
         if profile_id in self._profiles:
-            raise RuntimeCoreInvariantError(f"Duplicate profile_id: {profile_id}")
+            raise RuntimeCoreInvariantError("Duplicate profile_id")
         now = self._now()
         tenant_candidates = [c for c in self._candidates.values() if c.tenant_id == tenant_id]
         promoted = sum(1 for c in tenant_candidates if c.status == ConsolidationStatus.PROMOTED)
@@ -403,7 +403,7 @@ class MemoryConsolidationEngine:
     def get_profile(self, profile_id: str) -> PersonalizationProfile:
         p = self._profiles.get(profile_id)
         if p is None:
-            raise RuntimeCoreInvariantError(f"Unknown profile_id: {profile_id}")
+            raise RuntimeCoreInvariantError("Unknown profile_id")
         return p
 
     def profiles_for_tenant(self, tenant_id: str) -> tuple[PersonalizationProfile, ...]:
@@ -485,7 +485,7 @@ class MemoryConsolidationEngine:
                         violation_id=vid,
                         tenant_id=tenant_id,
                         operation="unresolved_conflict",
-                        reason=f"Conflict {conflict.conflict_id} is not resolved",
+                        reason="Conflict unresolved",
                         detected_at=now,
                     )
                     self._violations[vid] = v
@@ -511,7 +511,7 @@ class MemoryConsolidationEngine:
                             violation_id=vid,
                             tenant_id=tenant_id,
                             operation="candidate_no_decision",
-                            reason=f"Candidate {candidate.candidate_id} has occurrence_count>={candidate.occurrence_count} with no consolidation decision",
+                            reason="High-occurrence candidate lacks consolidation decision",
                             detected_at=now,
                         )
                         self._violations[vid] = v
@@ -528,7 +528,7 @@ class MemoryConsolidationEngine:
                         violation_id=vid,
                         tenant_id=tenant_id,
                         operation="profile_low_confidence",
-                        reason=f"Profile {profile.profile_id} has confidence {profile.confidence} < 0.3",
+                        reason="Profile confidence below threshold",
                         detected_at=now,
                     )
                     self._violations[vid] = v

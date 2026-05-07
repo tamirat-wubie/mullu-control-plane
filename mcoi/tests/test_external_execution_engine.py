@@ -512,10 +512,12 @@ class TestCrossTenantBlocking:
         assert len(viols) == 1
         assert viols[0].operation == "cross_tenant_blocked"
 
-    def test_cross_tenant_violation_reason_mentions_owner(self, seeded: ExternalExecutionEngine) -> None:
+    def test_cross_tenant_violation_reason_is_bounded(self, seeded: ExternalExecutionEngine) -> None:
         seeded.request_execution("req-1", "T2", "tgt-1")
         viols = seeded.violations_for_tenant("T2")
-        assert "T1" in viols[0].reason
+        assert viols[0].reason == "cross-tenant access denied"
+        assert "T1" not in viols[0].reason
+        assert "tgt-1" not in viols[0].reason
 
     def test_cross_tenant_request_still_stored(self, seeded: ExternalExecutionEngine) -> None:
         seeded.request_execution("req-1", "T2", "tgt-1")
@@ -554,11 +556,22 @@ class TestRiskPolicyBlocking:
         viols = seeded_with_policy.violations_for_tenant("T1")
         assert viols[0].operation == "risk_exceeded"
 
-    def test_risk_exceeds_violation_reason(self, seeded_with_policy: ExternalExecutionEngine) -> None:
+    def test_risk_exceeds_violation_reason_is_bounded(self, seeded_with_policy: ExternalExecutionEngine) -> None:
         seeded_with_policy.request_execution("req-1", "T1", "tgt-1", risk_level=ExecutionRiskLevel.CRITICAL)
         viols = seeded_with_policy.violations_for_tenant("T1")
-        assert "critical" in viols[0].reason
-        assert "high" in viols[0].reason
+        assert viols[0].reason == "risk exceeds policy threshold"
+        assert "critical" not in viols[0].reason
+        assert "high" not in viols[0].reason
+
+    def test_circuit_breaker_violation_reason_is_bounded(self, seeded: ExternalExecutionEngine) -> None:
+        seeded._consecutive_failures["tgt-1"] = 3
+        seeded.request_execution("req-1", "T1", "tgt-1")
+        viols = seeded.violations_for_tenant("T1")
+        assert len(viols) == 1
+        assert viols[0].operation == "circuit_breaker_open"
+        assert viols[0].reason == "circuit breaker open"
+        assert "tgt-1" not in viols[0].reason
+        assert "3" not in viols[0].reason
 
     def test_risk_equal_threshold_allowed(self, seeded_with_policy: ExternalExecutionEngine) -> None:
         req = seeded_with_policy.request_execution("req-1", "T1", "tgt-1", risk_level=ExecutionRiskLevel.HIGH)
@@ -1548,9 +1561,22 @@ class TestDetectExecutionViolations:
         with pytest.raises(dataclasses.FrozenInstanceError):
             viols[0].operation = "changed"  # type: ignore[misc]
 
-    def test_violation_reason_mentions_request(self, running_request: ExternalExecutionEngine) -> None:
+    def test_violation_reason_is_bounded_for_running_request(self, running_request: ExternalExecutionEngine) -> None:
         viols = running_request.detect_execution_violations("T1")
-        assert "req-1" in viols[0].reason
+        assert viols[0].reason == "running request has no traces"
+        assert "req-1" not in viols[0].reason
+
+    def test_failed_violation_reason_is_bounded(self, running_request: ExternalExecutionEngine) -> None:
+        running_request.fail_execution("req-1")
+        viols = running_request.detect_execution_violations("T1")
+        assert viols[0].reason == "failed request missing failure record"
+        assert "req-1" not in viols[0].reason
+
+    def test_completed_violation_reason_is_bounded(self, running_request: ExternalExecutionEngine) -> None:
+        running_request.complete_execution("req-1")
+        viols = running_request.detect_execution_violations("T1")
+        assert viols[0].reason == "completed request missing result"
+        assert "req-1" not in viols[0].reason
 
     def test_emits_event_on_new_violations(
         self, es: EventSpineEngine, running_request: ExternalExecutionEngine
@@ -2726,3 +2752,32 @@ class TestComprehensiveEndToEnd:
         # State hash
         h = eng.state_hash()
         assert len(h) == 64
+
+
+class TestBoundedExecutionContracts:
+    def test_duplicate_target_message_bounded(self, engine: ExternalExecutionEngine) -> None:
+        engine.register_target("tgt-secret", "T1", "Tool Alpha")
+
+        with pytest.raises(RuntimeCoreInvariantError) as excinfo:
+            engine.register_target("tgt-secret", "T1", "Tool Alpha")
+
+        assert str(excinfo.value) == "duplicate target_id"
+        assert "tgt-secret" not in str(excinfo.value)
+
+    def test_terminal_request_message_bounded(self, seeded_with_request: ExternalExecutionEngine) -> None:
+        seeded_with_request.start_execution("req-1")
+        seeded_with_request.complete_execution("req-1")
+
+        with pytest.raises(RuntimeCoreInvariantError) as excinfo:
+            seeded_with_request.approve_execution("req-1")
+
+        assert str(excinfo.value) == "request is terminal"
+        assert "req-1" not in str(excinfo.value)
+        assert "COMPLETED" not in str(excinfo.value)
+
+    def test_retry_message_bounded(self, seeded_with_request: ExternalExecutionEngine) -> None:
+        with pytest.raises(RuntimeCoreInvariantError) as excinfo:
+            seeded_with_request.retry_execution("req-1")
+
+        assert str(excinfo.value) == "request must be FAILED or TIMED_OUT to retry"
+        assert "req-1" not in str(excinfo.value)

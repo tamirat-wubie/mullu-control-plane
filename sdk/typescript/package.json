@@ -1,0 +1,13 @@
+{
+  "name": "@mullusi/client",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "generate": "npx @hey-api/openapi-ts -i ../openapi/mullu.openapi.json -o ./src -c ./openapi-ts.config.ts"
+  },
+  "devDependencies": {
+    "@hey-api/openapi-ts": "^0.78.0",
+    "@hey-api/client-fetch": "^0.10.0"
+  }
+}

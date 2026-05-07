@@ -88,7 +88,7 @@ class ProductOpsIntegration:
         )
         gate = self._ops.evaluate_gate(
             gate_id=gate_id, release_id=release_id, tenant_id=tenant_id,
-            gate_name="assurance", passed=passed, reason=f"assurance_ref={assurance_ref}",
+            gate_name="assurance", passed=passed, reason="assurance gate",
         )
         _emit(self._events, "release_from_assurance", {
             "release_id": release_id, "assurance_ref": assurance_ref, "passed": passed,
@@ -120,7 +120,7 @@ class ProductOpsIntegration:
         )
         gate = self._ops.evaluate_gate(
             gate_id=gate_id, release_id=release_id, tenant_id=tenant_id,
-            gate_name="continuity", passed=passed, reason=f"continuity_ref={continuity_ref}",
+            gate_name="continuity", passed=passed, reason="continuity gate",
         )
         _emit(self._events, "release_from_continuity", {
             "release_id": release_id, "continuity_ref": continuity_ref,
@@ -152,7 +152,7 @@ class ProductOpsIntegration:
         )
         gate = self._ops.evaluate_gate(
             gate_id=gate_id, release_id=release_id, tenant_id=tenant_id,
-            gate_name="service_health", passed=passed, reason=f"service_ref={service_ref}",
+            gate_name="service_health", passed=passed, reason="service health gate",
         )
         _emit(self._events, "release_from_service_health", {
             "release_id": release_id, "service_ref": service_ref,
@@ -210,7 +210,7 @@ class ProductOpsIntegration:
         )
         gate = self._ops.evaluate_gate(
             gate_id=gate_id, release_id=release_id, tenant_id=tenant_id,
-            gate_name="change_approval", passed=passed, reason=f"change_ref={change_ref}",
+            gate_name="change_approval", passed=passed, reason="change approval gate",
         )
         _emit(self._events, "release_from_change_runtime", {
             "release_id": release_id, "change_ref": change_ref,

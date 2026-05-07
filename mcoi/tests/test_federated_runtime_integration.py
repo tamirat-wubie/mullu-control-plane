@@ -123,6 +123,13 @@ class TestBridgeMethods:
         expected_keys = {"node_id", "claim_id", "tenant_id", "node_status", "claim_sync", "source_type"}
         assert set(result.keys()) == expected_keys
 
+    def test_bridge_claim_content_is_bounded(self):
+        integ, fed, _, _ = _make_integration()
+        result = integ.federated_from_partner(_T1)
+        claim = fed._claims[result["claim_id"]]
+        assert claim.content == "federated bridge claim"
+        assert "partner" not in claim.content
+
     def test_multiple_bridges_same_tenant(self):
         integ, fed, _, _ = _make_integration()
         for _ in range(5):
@@ -157,10 +164,12 @@ class TestMemoryMeshAttachment:
         assert content["total_nodes"] == 1
         assert content["total_claims"] == 1
 
-    def test_memory_title(self):
+    def test_memory_title_is_bounded(self):
         integ, _, _, _ = _make_integration()
         record = integ.attach_federated_state_to_memory_mesh("scope-1")
-        assert "scope-1" in record.title
+        assert record.title == "Federated runtime state"
+        assert "scope-1" not in record.title
+        assert record.scope_ref_id == "scope-1"
 
     def test_memory_tags(self):
         integ, _, _, _ = _make_integration()

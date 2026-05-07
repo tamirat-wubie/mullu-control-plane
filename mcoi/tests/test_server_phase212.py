@@ -38,6 +38,32 @@ class TestToolEndpoints:
         data = resp.json()
         assert data["succeeded"] is True
         assert data["output"]["result"] == "5"
+        assert data["action_proof"]["proof_receipt_id"]
+        assert data["action_proof"]["proof_hash"]
+        assert data["action_proof"]["proof_phase"] == "tool.invoke"
+        receipt = data["capability_policy_receipt"]
+        assert receipt["policy_id"] == "tool_argument_capability_policy_v1"
+        assert receipt["tool_id"] == "calculator"
+        assert receipt["provided_parameters"] == ["expression"]
+        assert receipt["required_parameters"] == ["expression"]
+        assert receipt["missing_required"] == []
+        assert receipt["policy_allowed"] is True
+        assert receipt["execution_succeeded"] is True
+        assert receipt["argument_hash"]
+
+    def test_invoke_tool_rejects_unsafe_expression(self, client):
+        resp = client.post("/api/v1/tools/invoke", json={
+            "tool_id": "calculator",
+            "arguments": {"expression": "__import__('os').system('whoami')"},
+        })
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["succeeded"] is False
+        assert data["error"] == "tool validation error (SafeArithmeticError)"
+        assert "unsupported expression node" not in data["error"]
+        assert data["capability_policy_receipt"]["policy_allowed"] is True
+        assert data["capability_policy_receipt"]["execution_succeeded"] is False
+        assert data["capability_policy_receipt"]["argument_hash"]
 
     def test_invoke_unknown_tool(self, client):
         resp = client.post("/api/v1/tools/invoke", json={
@@ -45,6 +71,9 @@ class TestToolEndpoints:
         })
         data = resp.json()
         assert data["succeeded"] is False
+        assert data["capability_policy_receipt"]["policy_allowed"] is False
+        assert data["capability_policy_receipt"]["missing_required"] == []
+        assert data["capability_policy_receipt"]["receipt_id"].startswith("tool-policy-")
 
     def test_invoke_get_time(self, client):
         resp = client.post("/api/v1/tools/invoke", json={
@@ -85,6 +114,25 @@ class TestStateEndpoints:
         })
         resp = client.get("/api/v1/state")
         assert resp.status_code == 200
+
+    def test_save_rejects_invalid_state_type(self, client):
+        resp = client.post("/api/v1/state/save", json={
+            "state_type": "../../etc/passwd",
+            "data": {"key": "value"},
+        })
+        assert resp.status_code == 400
+        data = resp.json()["detail"]
+        assert data["error"] == "invalid state_type"
+        assert data["error_code"] == "invalid_state_type"
+        assert data["governed"] is True
+
+    def test_load_rejects_invalid_state_type(self, client):
+        resp = client.get("/api/v1/state/..%5C..%5Cwindows%5Csystem32")
+        assert resp.status_code == 400
+        data = resp.json()["detail"]
+        assert data["error"] == "invalid state_type"
+        assert data["error_code"] == "invalid_state_type"
+        assert data["governed"] is True
 
 
 class TestStructuredOutputEndpoints:

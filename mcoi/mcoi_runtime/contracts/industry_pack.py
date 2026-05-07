@@ -118,9 +118,9 @@ class IndustryPack(ContractRecord):
         require_non_empty_text(self.tenant_id, "tenant_id")
         require_non_empty_text(self.display_name, "display_name")
         if not isinstance(self.domain, PackDomain):
-            raise ValueError(f"domain must be PackDomain, got {type(self.domain)}")
+            raise ValueError("domain must be a PackDomain value")
         if not isinstance(self.status, IndustryPackStatus):
-            raise ValueError(f"status must be IndustryPackStatus, got {type(self.status)}")
+            raise ValueError("status must be an IndustryPackStatus value")
         require_non_negative_int(self.capability_count, "capability_count")
         require_datetime_text(self.created_at, "created_at")
         object.__setattr__(self, "metadata", freeze_value(self.metadata))
@@ -149,10 +149,10 @@ class PackCapability(ContractRecord):
         require_non_empty_text(self.tenant_id, "tenant_id")
         require_non_empty_text(self.pack_ref, "pack_ref")
         if not isinstance(self.kind, PackCapabilityKind):
-            raise ValueError(f"kind must be PackCapabilityKind, got {type(self.kind)}")
+            raise ValueError("kind must be a PackCapabilityKind value")
         require_non_empty_text(self.target_runtime, "target_runtime")
         if not isinstance(self.enabled, bool):
-            raise ValueError(f"enabled must be bool, got {type(self.enabled)}")
+            raise ValueError("enabled must be a boolean value")
         require_datetime_text(self.created_at, "created_at")
         object.__setattr__(self, "metadata", freeze_value(self.metadata))
 
@@ -235,7 +235,7 @@ class PackAssessment(ContractRecord):
         require_non_empty_text(self.tenant_id, "tenant_id")
         require_non_empty_text(self.pack_ref, "pack_ref")
         if not isinstance(self.readiness, PackReadiness):
-            raise ValueError(f"readiness must be PackReadiness, got {type(self.readiness)}")
+            raise ValueError("readiness must be a PackReadiness value")
         require_non_negative_int(self.total_capabilities, "total_capabilities")
         require_non_negative_int(self.enabled_capabilities, "enabled_capabilities")
         require_unit_float(self.readiness_score, "readiness_score")
@@ -265,7 +265,7 @@ class PackDecision(ContractRecord):
         require_non_empty_text(self.tenant_id, "tenant_id")
         require_non_empty_text(self.pack_ref, "pack_ref")
         if not isinstance(self.disposition, DeploymentDisposition):
-            raise ValueError(f"disposition must be DeploymentDisposition, got {type(self.disposition)}")
+            raise ValueError("disposition must be a DeploymentDisposition value")
         require_non_empty_text(self.reason, "reason")
         require_datetime_text(self.decided_at, "decided_at")
         object.__setattr__(self, "metadata", freeze_value(self.metadata))
@@ -348,7 +348,7 @@ class PackDeploymentRecord(ContractRecord):
         require_non_empty_text(self.tenant_id, "tenant_id")
         require_non_empty_text(self.pack_ref, "pack_ref")
         if not isinstance(self.disposition, DeploymentDisposition):
-            raise ValueError(f"disposition must be DeploymentDisposition, got {type(self.disposition)}")
+            raise ValueError("disposition must be a DeploymentDisposition value")
         require_datetime_text(self.deployed_at, "deployed_at")
         object.__setattr__(self, "metadata", freeze_value(self.metadata))
 

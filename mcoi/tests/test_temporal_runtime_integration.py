@@ -82,6 +82,9 @@ class TestMemoryMeshAndGraph:
         integration.temporal_from_contracts_sla("e-1", "t-1", "ct-1", NOW)
         mem = integration.attach_temporal_to_memory_mesh("scope-1")
         assert mem.memory_id
+        assert mem.title == "Temporal state"
+        assert "scope-1" not in mem.title
+        assert mem.scope_ref_id == "scope-1"
         assert "temporal" in mem.tags
 
     def test_attach_to_graph(self, integration: TemporalRuntimeIntegration) -> None:

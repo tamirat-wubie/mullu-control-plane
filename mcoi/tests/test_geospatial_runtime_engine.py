@@ -503,3 +503,43 @@ class TestGoldenScenarios:
         snap2 = eng2.snapshot()
         # State hashes should match since same operations
         assert eng1.state_hash() == eng2.state_hash()
+
+
+class TestBoundedGeospatialContracts:
+    def test_duplicate_feature_message_bounded(self):
+        eng, _ = _make_engine()
+        eng.register_feature("feature-secret", "t1", GeoFeatureKind.POINT, "HQ", 40.7, -74.0)
+
+        with pytest.raises(RuntimeCoreInvariantError) as excinfo:
+            eng.register_feature("feature-secret", "t1", GeoFeatureKind.POINT, "HQ", 40.7, -74.0)
+
+        assert str(excinfo.value) == "Duplicate feature_id"
+        assert "feature-secret" not in str(excinfo.value)
+
+    def test_unknown_feature_ref_message_bounded(self):
+        eng, _ = _make_engine()
+
+        with pytest.raises(RuntimeCoreInvariantError) as excinfo:
+            eng.register_depot("dep-1", "t1", "Depot", "feature-secret", 10)
+
+        assert str(excinfo.value) == "Unknown feature_ref"
+        assert "feature-secret" not in str(excinfo.value)
+
+    def test_violation_reasons_bounded(self):
+        eng, _ = _make_engine()
+        eng.register_feature("f1", "t1", GeoFeatureKind.POINT, "HQ", 40.7, -74.0)
+        eng.register_feature("f2", "t1", GeoFeatureKind.POINT, "Remote", 41.0, -73.8)
+        eng.register_territory("territory-secret", "t1", "Zone A")
+        eng.register_depot("dep-secret", "t1", "Depot", "f1", 5)
+        eng.update_depot_load("dep-secret", 8)
+        eng.register_route("route-secret", "t1", "Route", "f1", "f2", 100.0)
+        eng.block_route("route-secret")
+        eng.register_site("site-1", "t1", "Site", "f1", "territory-secret")
+
+        violations = eng.detect_geo_violations()
+        reasons = {v["reason"] for v in violations}
+
+        assert "depot load exceeds capacity" in reasons
+        assert "blocked route endpoints remain in use" in reasons
+        assert "territory is unassigned" in reasons
+        assert all("secret" not in reason for reason in reasons)

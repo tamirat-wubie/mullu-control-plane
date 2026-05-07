@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+from pathlib import Path
 import pytest
 
 from mcoi_runtime.contracts.state_machine import (
@@ -10,6 +11,12 @@ from mcoi_runtime.contracts.state_machine import (
 from mcoi_runtime.contracts.proof import (
     GuardVerdict, TransitionReceipt, CausalLineage, ProofCapsule,
     certify_transition,
+)
+
+
+REPO_ROOT = Path(__file__).resolve().parents[2]
+PYTHON_DENIED_GUARD_FIXTURE = (
+    REPO_ROOT / "tests" / "fixtures" / "python_proof_capsule_denied_guard.json"
 )
 
 
@@ -56,35 +63,57 @@ class TestCertifyTransition:
 
     def test_illegal_transition_raises(self):
         m = _machine()
-        with pytest.raises(ValueError, match="denied_illegal_edge"):
+        with pytest.raises(ValueError) as exc_info:
             certify_transition(
                 m, entity_id="e1", from_state="idle", to_state="done",
                 action="skip", before_state_hash="h1", after_state_hash="h2",
                 actor_id="actor", reason="skip", timestamp="2026-03-27T12:00:00Z",
             )
+        message = str(exc_info.value)
+        assert message == "transition denied"
+        assert "denied_illegal_edge" not in message
 
     def test_terminal_state_raises(self):
         m = _machine()
-        with pytest.raises(ValueError, match="denied_terminal_state"):
+        with pytest.raises(ValueError) as exc_info:
             certify_transition(
                 m, entity_id="e1", from_state="done", to_state="idle",
                 action="reset", before_state_hash="h1", after_state_hash="h2",
                 actor_id="actor", reason="reset", timestamp="2026-03-27T12:00:00Z",
             )
+        message = str(exc_info.value)
+        assert message == "transition denied"
+        assert "denied_terminal_state" not in message
 
-    def test_failed_guard_raises(self):
+    def test_failed_guard_emits_denied_receipt(self):
+        """A failed guard does NOT raise. Instead, certify_transition
+        emits a receipt with verdict=DENIED_GUARD_FAILED that contains
+        the full guard list (passing AND failing). The receipt IS the
+        proof of the denial — stripping failed verdicts would erase the
+        audit-trail reason for the rejection."""
         m = _machine()
         guards = (
             GuardVerdict(guard_id="budget", passed=True, reason="ok"),
             GuardVerdict(guard_id="auth", passed=False, reason="unauthorized"),
         )
-        with pytest.raises(ValueError, match="auth"):
-            certify_transition(
-                m, entity_id="e1", from_state="idle", to_state="running",
-                action="start", before_state_hash="h1", after_state_hash="h2",
-                guards=guards, actor_id="actor", reason="start",
-                timestamp="2026-03-27T12:00:00Z",
-            )
+        capsule = certify_transition(
+            m, entity_id="e1", from_state="idle", to_state="running",
+            action="start", before_state_hash="h1", after_state_hash="h2",
+            guards=guards, actor_id="actor", reason="start",
+            timestamp="2026-03-27T12:00:00Z",
+        )
+        # Receipt is emitted, not raised.
+        assert capsule.receipt.verdict == TransitionVerdict.DENIED_GUARD_FAILED
+        # Audit record carries the same verdict.
+        assert capsule.audit_record.verdict == TransitionVerdict.DENIED_GUARD_FAILED
+        # Full guard list is preserved on the receipt — both passing AND
+        # failing entries, in original order.
+        assert len(capsule.receipt.guard_verdicts) == 2
+        assert capsule.receipt.guard_verdicts[0].guard_id == "budget"
+        assert capsule.receipt.guard_verdicts[0].passed is True
+        assert capsule.receipt.guard_verdicts[1].guard_id == "auth"
+        assert capsule.receipt.guard_verdicts[1].passed is False
+        assert capsule.receipt.guard_verdicts[1].reason == "unauthorized"
 
     def test_receipt_hash_deterministic(self):
         m = _machine()
@@ -191,3 +220,95 @@ class TestCrossLanguageSerialization:
         expected = {"lineage_id", "entity_id", "receipt_chain", "root_receipt_id", "current_state", "depth"}
         actual = {f.name for f in lineage.__dataclass_fields__.values()}
         assert expected == actual
+
+    def test_python_denied_guard_fixture_matches_certified_capsule(self):
+        """F1 direct witness: Python emits the fixture Rust deserializes."""
+        guards = (
+            GuardVerdict(guard_id="budget", passed=True, reason="ok"),
+            GuardVerdict(guard_id="auth", passed=False, reason="unauthorized"),
+        )
+        capsule = certify_transition(
+            _machine(),
+            entity_id="e1",
+            from_state="idle",
+            to_state="running",
+            action="start",
+            before_state_hash="h1",
+            after_state_hash="h2",
+            guards=guards,
+            actor_id="actor",
+            reason="start",
+            timestamp="2026-03-27T12:00:00Z",
+        )
+        expected = json.loads(PYTHON_DENIED_GUARD_FIXTURE.read_text(encoding="utf-8"))
+
+        assert capsule.to_json_dict() == expected
+        assert capsule.receipt.verdict == TransitionVerdict.DENIED_GUARD_FAILED
+        assert [guard.passed for guard in capsule.receipt.guard_verdicts] == [True, False]
+        assert capsule.receipt.guard_verdicts[1].reason == "unauthorized"
+
+
+# ═══════════════════════════════════════════
+# CORE_STRUCTURE.md — Type-asymmetry boundary checks
+# ═══════════════════════════════════════════
+
+class TestLineageDepthBoundary:
+    """`ProofCapsule.lineage_depth` is `u32` in Rust (`maf-kernel/src/lib.rs:387`)
+    and `int` in Python (`mcoi/contracts/proof.py:122`). The Python-side
+    validation in `__post_init__` enforces non-negative values, making the
+    Python type effectively `u32` at the boundary. These tests ensure that
+    boundary check stays load-bearing.
+
+    See docs/CORE_STRUCTURE.md §"Known gaps" entry for `lineage_depth`.
+    A future PR should align both sides to a bounded type; until then
+    this test guards against the validation being silently removed.
+    """
+
+    def test_negative_lineage_depth_rejected(self):
+        """Boundary: validation must reject negative values."""
+        m = _machine()
+        capsule = certify_transition(
+            m, entity_id="e1", from_state="idle", to_state="running",
+            action="start", before_state_hash="h1", after_state_hash="h2",
+            actor_id="actor", reason="start", timestamp="2026-03-27T12:00:00Z",
+        )
+        with pytest.raises(ValueError, match="lineage_depth"):
+            ProofCapsule(
+                receipt=capsule.receipt,
+                audit_record=capsule.audit_record,
+                lineage_depth=-1,
+            )
+
+    def test_zero_lineage_depth_accepted(self):
+        """Boundary: zero is the genesis depth and must be accepted."""
+        m = _machine()
+        capsule = certify_transition(
+            m, entity_id="e1", from_state="idle", to_state="running",
+            action="start", before_state_hash="h1", after_state_hash="h2",
+            actor_id="actor", reason="start", timestamp="2026-03-27T12:00:00Z",
+        )
+        # Reconstructing with depth=0 must not raise
+        rebuilt = ProofCapsule(
+            receipt=capsule.receipt,
+            audit_record=capsule.audit_record,
+            lineage_depth=0,
+        )
+        assert rebuilt.lineage_depth == 0
+
+    def test_large_lineage_depth_accepted(self):
+        """Boundary: any non-negative int is accepted Python-side. Rust
+        u32 max is 4_294_967_295. Python accepts larger; if a future
+        refactor tightens to match Rust, this test will need updating."""
+        m = _machine()
+        capsule = certify_transition(
+            m, entity_id="e1", from_state="idle", to_state="running",
+            action="start", before_state_hash="h1", after_state_hash="h2",
+            actor_id="actor", reason="start", timestamp="2026-03-27T12:00:00Z",
+        )
+        # u32 max value
+        rebuilt = ProofCapsule(
+            receipt=capsule.receipt,
+            audit_record=capsule.audit_record,
+            lineage_depth=4_294_967_295,
+        )
+        assert rebuilt.lineage_depth == 4_294_967_295

@@ -317,7 +317,7 @@ class CommunicationSurfaceIntegration:
         """
         message = self._comm.get_inbound(message_id)
         if message is None:
-            raise RuntimeCoreInvariantError(f"inbound message not found: {message_id}")
+            raise RuntimeCoreInvariantError("inbound message not found")
 
         created = []
         for obl_spec in obligations:
@@ -354,7 +354,7 @@ class CommunicationSurfaceIntegration:
         """
         message = self._comm.get_inbound(message_id)
         if message is None:
-            raise RuntimeCoreInvariantError(f"inbound message not found: {message_id}")
+            raise RuntimeCoreInvariantError("inbound message not found")
 
         created = []
         for idx, commit_spec in enumerate(commitments):

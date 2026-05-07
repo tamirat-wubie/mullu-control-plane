@@ -59,7 +59,9 @@ class TestRetentionEvaluator:
         status = ev.evaluate((_candidate(age=60),))
         assert status.pruned_count == 1
         assert status.results[0].status is PruneStatus.PRUNED
-        assert "age 60d" in status.results[0].reason
+        assert status.results[0].reason == "age exceeds retention limit"
+        assert "60" not in status.results[0].reason
+        assert "30" not in status.results[0].reason
 
     def test_compliance_hold_never_pruned(self):
         ev = RetentionEvaluator()
@@ -87,6 +89,8 @@ class TestRetentionEvaluator:
         # No policy set for REPLAY
         status = ev.evaluate((_candidate(cls=ArtifactClass.REPLAY, age=999),))
         assert status.pruned_count == 0
+        assert status.results[0].reason == "no retention policy"
+        assert "replay" not in status.results[0].reason.lower()
 
     def test_count_exceeded_prunes_oldest(self):
         ev = RetentionEvaluator()
@@ -100,6 +104,10 @@ class TestRetentionEvaluator:
         assert status.pruned_count == 1
         pruned_ids = [r.artifact_id for r in status.results if r.status is PruneStatus.PRUNED]
         assert "old" in pruned_ids
+        pruned = [r for r in status.results if r.status is PruneStatus.PRUNED][0]
+        assert pruned.reason == "count exceeds retention limit"
+        assert "3" not in pruned.reason
+        assert "2" not in pruned.reason
 
     def test_mixed_classes(self):
         ev = RetentionEvaluator()

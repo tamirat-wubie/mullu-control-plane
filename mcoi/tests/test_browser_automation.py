@@ -254,6 +254,18 @@ class TestBoundedMutations:
         assert result.succeeded
         assert result.page_after.title == "Dashboard"
 
+    def test_navigate_failure_is_bounded(self):
+        engine, backend = _make_engine()
+        engine.open_session("https://app.example.com/login")
+        backend.open_page = lambda url: (_ for _ in ()).throw(RuntimeError("secret backend navigation detail"))
+        result = engine.execute_action(BrowserAction(
+            action_id="n-2", action_type=BrowserActionType.NAVIGATE,
+            url="https://app.example.com/dashboard",
+        ))
+        assert not result.succeeded
+        assert result.error_message == "navigate_error:RuntimeError"
+        assert "secret backend navigation detail" not in result.error_message
+
 
 # --- Verification ---
 
@@ -271,6 +283,9 @@ class TestBrowserVerification:
         v = engine.verify_state("a-1", expected_title="Dashboard")
         assert not v.passed
         assert v.status is BrowserVerificationStatus.VALUE_MISMATCH
+        assert v.reason == "title mismatch"
+        assert v.expected_value is None
+        assert v.actual_value is None
 
     def test_verify_element_exists(self):
         engine, _ = _make_engine()
@@ -283,6 +298,8 @@ class TestBrowserVerification:
         engine.open_session("https://app.example.com/login")
         v = engine.verify_state("a-1", expected_selector=_selector("css", "#status"))
         assert v.status is BrowserVerificationStatus.ELEMENT_MISSING
+        assert v.reason == "expected element not found"
+        assert v.expected_selector is None
 
     def test_verify_element_value(self):
         engine, _ = _make_engine()
@@ -303,6 +320,10 @@ class TestBrowserVerification:
             expected_value="inactive",
         )
         assert v.status is BrowserVerificationStatus.VALUE_MISMATCH
+        assert v.reason == "value mismatch"
+        assert v.expected_selector is None
+        assert v.expected_value is None
+        assert v.actual_value is None
 
     def test_verify_no_session(self):
         engine, _ = _make_engine()

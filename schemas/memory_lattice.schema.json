@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:memory-lattice:1",
+  "title": "Memory Lattice Admission",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "memory_id",
+    "memory_class",
+    "trust_class",
+    "allowed_for_planning",
+    "allowed_for_execution",
+    "blocked_reasons",
+    "missing_requirements",
+    "evidence_refs",
+    "assessment_hash"
+  ],
+  "properties": {
+    "memory_id": {"type": "string", "minLength": 1},
+    "memory_class": {
+      "type": "string",
+      "enum": [
+        "raw_event_memory",
+        "episodic_closure_memory",
+        "semantic_fact_memory",
+        "procedural_runbook_memory",
+        "policy_memory",
+        "preference_memory",
+        "risk_memory",
+        "contradiction_memory",
+        "supersession_memory"
+      ]
+    },
+    "trust_class": {
+      "type": "string",
+      "enum": ["untrusted", "observed", "admitted", "trusted", "authority", "revoked"]
+    },
+    "allowed_for_planning": {"type": "boolean"},
+    "allowed_for_execution": {"type": "boolean"},
+    "blocked_reasons": {"type": "array", "items": {"type": "string", "minLength": 1}},
+    "missing_requirements": {"type": "array", "items": {"type": "string", "minLength": 1}},
+    "evidence_refs": {"type": "array", "items": {"type": "string", "minLength": 1}},
+    "assessment_hash": {"type": "string", "minLength": 1},
+    "metadata": {"type": "object", "additionalProperties": true}
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"allowed_for_execution": {"const": true}}, "required": ["allowed_for_execution"]},
+      "then": {"properties": {"allowed_for_planning": {"const": true}}}
+    },
+    {
+      "if": {"properties": {"memory_class": {"const": "raw_event_memory"}}, "required": ["memory_class"]},
+      "then": {
+        "properties": {
+          "allowed_for_planning": {"const": false},
+          "allowed_for_execution": {"const": false}
+        }
+      }
+    },
+    {
+      "if": {"properties": {"memory_class": {"const": "contradiction_memory"}}, "required": ["memory_class"]},
+      "then": {
+        "properties": {
+          "allowed_for_planning": {"const": false},
+          "allowed_for_execution": {"const": false}
+        }
+      }
+    }
+  ]
+}

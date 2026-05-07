@@ -37,7 +37,7 @@ class ProviderRegistry:
         scope: CredentialScope,
     ) -> ProviderDescriptor:
         if descriptor.provider_id in self._providers:
-            raise RuntimeCoreInvariantError(f"provider already registered: {descriptor.provider_id}")
+            raise RuntimeCoreInvariantError("provider already registered")
         if scope.provider_id != descriptor.provider_id:
             raise RuntimeCoreInvariantError("credential scope provider_id must match descriptor")
         if scope.scope_id != descriptor.credential_scope_id:

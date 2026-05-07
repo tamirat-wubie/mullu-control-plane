@@ -36,7 +36,7 @@ class Snapshot:
             "checksum": self.checksum,
             "created_at": self.created_at,
             "state_keys": sorted(self.state.keys()),
-            "metadata": self.metadata,
+            "metadata": copy.deepcopy(self.metadata),
         }
 
 
@@ -48,6 +48,21 @@ class RollbackResult:
     restored_keys: list[str] = field(default_factory=list)
     error: str = ""
     timestamp: float = field(default_factory=time.time)
+
+
+def _clone_snapshot(snapshot: Snapshot) -> Snapshot:
+    return Snapshot(
+        snapshot_id=snapshot.snapshot_id,
+        name=snapshot.name,
+        state=copy.deepcopy(snapshot.state),
+        checksum=snapshot.checksum,
+        created_at=snapshot.created_at,
+        metadata=copy.deepcopy(snapshot.metadata),
+    )
+
+
+def _bounded_rollback_error(exc: Exception) -> str:
+    return f"rollback apply failed ({type(exc).__name__})"
 
 
 class SnapshotManager:
@@ -82,15 +97,18 @@ class SnapshotManager:
             state=frozen_state,
             checksum=checksum,
             created_at=time.time(),
-            metadata=metadata,
+            metadata=copy.deepcopy(metadata),
         )
         self._snapshots[snapshot_id] = snapshot
         self._order.append(snapshot_id)
         self._total_snapshots += 1
-        return snapshot
+        return _clone_snapshot(snapshot)
 
     def get_snapshot(self, snapshot_id: str) -> Snapshot | None:
-        return self._snapshots.get(snapshot_id)
+        snapshot = self._snapshots.get(snapshot_id)
+        if snapshot is None:
+            return None
+        return _clone_snapshot(snapshot)
 
     def rollback(self, snapshot_id: str,
                  apply_fn: Callable[[dict[str, Any]], None] | None = None) -> RollbackResult:
@@ -99,7 +117,7 @@ class SnapshotManager:
         if not snapshot:
             result = RollbackResult(
                 snapshot_id=snapshot_id, success=False,
-                error=f"Snapshot not found: {snapshot_id}",
+                error="snapshot not found",
             )
             self._rollback_history.append(result)
             return result
@@ -113,9 +131,11 @@ class SnapshotManager:
                 success=True,
                 restored_keys=sorted(restored_state.keys()),
             )
-        except Exception as e:
+        except Exception as exc:
             result = RollbackResult(
-                snapshot_id=snapshot_id, success=False, error=str(e),
+                snapshot_id=snapshot_id,
+                success=False,
+                error=_bounded_rollback_error(exc),
             )
 
         self._rollback_history.append(result)
@@ -123,7 +143,7 @@ class SnapshotManager:
         return result
 
     def list_snapshots(self, limit: int = 10) -> list[Snapshot]:
-        return [self._snapshots[sid] for sid in reversed(self._order[-limit:])]
+        return [_clone_snapshot(self._snapshots[sid]) for sid in reversed(self._order[-limit:])]
 
     def delete_snapshot(self, snapshot_id: str) -> bool:
         if snapshot_id in self._snapshots:

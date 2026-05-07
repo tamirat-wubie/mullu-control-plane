@@ -40,6 +40,37 @@ class ProfileLoadResult:
 class ProfileLoadError(ValueError):
     """Raised when a profile cannot be loaded."""
 
+    def __init__(self, message: str, *, public_message: str | None = None) -> None:
+        self.public_message = public_message or message
+        super().__init__(message)
+
+
+class UnknownProfileError(ProfileLoadError):
+    """Raised when a requested named profile does not exist."""
+
+    def __init__(self, profile_name: str) -> None:
+        self.profile_name = profile_name
+        message = "unknown profile"
+        super().__init__(message, public_message=message)
+
+
+class UnknownProfileOverrideError(ProfileLoadError):
+    """Raised when a profile override targets an unknown config key."""
+
+    def __init__(self, key: str) -> None:
+        self.key = key
+        message = "unknown config key in overrides"
+        super().__init__(message, public_message=message)
+
+
+class ProtectedProfileOverrideError(ProfileLoadError):
+    """Raised when an override attempts to weaken a protected profile invariant."""
+
+    def __init__(self, key: str) -> None:
+        self.key = key
+        message = "protected profile invariant cannot be overridden"
+        super().__init__(message, public_message=message)
+
 
 def load_profile(
     name: str,
@@ -53,7 +84,7 @@ def load_profile(
     """
     deployment_profile = BUILTIN_PROFILES.get(name)
     if deployment_profile is None:
-        raise ProfileLoadError(f"unknown profile: {name}")
+        raise UnknownProfileError(name)
 
     base = deployment_profile.to_config_dict()
     override_count = 0
@@ -61,10 +92,16 @@ def load_profile(
     if overrides:
         for key, value in overrides.items():
             if key in base:
+                if (
+                    key == "effect_assurance_required"
+                    and deployment_profile.effect_assurance_required
+                    and value is not True
+                ):
+                    raise ProtectedProfileOverrideError(key)
                 base[key] = value
                 override_count += 1
             else:
-                raise ProfileLoadError(f"unknown config key in overrides: {key}")
+                raise UnknownProfileOverrideError(key)
 
     config = AppConfig.from_mapping(base)
 

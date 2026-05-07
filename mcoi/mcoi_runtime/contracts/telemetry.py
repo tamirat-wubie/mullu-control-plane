@@ -54,7 +54,7 @@ class RunMetrics(ContractRecord):
                       "verification_closed", "verification_open", "dispatched", "not_dispatched"):
             val = getattr(self, attr)
             if not isinstance(val, int) or val < 0:
-                raise ValueError(f"{attr} must be a non-negative integer")
+                raise ValueError("run metric count must be a non-negative integer")
 
     @property
     def success_rate(self) -> float:

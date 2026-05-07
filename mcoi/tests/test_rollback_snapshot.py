@@ -26,6 +26,10 @@ class TestSnapshotManager:
         snap = mgr.get_snapshot("s1")
         assert snap is not None
         assert snap.state["a"] == 1
+        snap.state["a"] = 2
+        fresh = mgr.get_snapshot("s1")
+        assert fresh is not None
+        assert fresh.state["a"] == 1
 
     def test_get_nonexistent(self):
         mgr = SnapshotManager()
@@ -53,7 +57,7 @@ class TestSnapshotManager:
             raise RuntimeError("apply failed")
         result = mgr.rollback("s1", apply_fn=bad_apply)
         assert not result.success
-        assert "apply failed" in result.error
+        assert result.error == "rollback apply failed (RuntimeError)"
 
     def test_eviction_when_full(self):
         mgr = SnapshotManager(max_snapshots=2)

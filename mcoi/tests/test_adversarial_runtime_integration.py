@@ -136,6 +136,13 @@ class TestBridgeMethods:
         integ.adversarial_from_constitutional(_T2)
         assert adv.scenario_count == 2
 
+    def test_bridge_vulnerability_description_redacts_source_type(self):
+        integ, adv, _, _ = _make_integration()
+        result = integ.adversarial_from_external_execution(_T1)
+        vuln = adv._get_vulnerability(result["vulnerability_id"])
+        assert vuln.description == "bridge vulnerability scan"
+        assert "external_execution" not in vuln.description
+
 
 # ---------------------------------------------------------------------------
 # Memory mesh attachment
@@ -159,7 +166,8 @@ class TestMemoryMeshAttachment:
     def test_title(self):
         integ, _, _, _ = _make_integration()
         record = integ.attach_adversarial_state_to_memory_mesh("scope-1")
-        assert "scope-1" in record.title
+        assert record.title == "Adversarial runtime state"
+        assert "scope-1" not in record.title
 
     def test_tags(self):
         integ, _, _, _ = _make_integration()

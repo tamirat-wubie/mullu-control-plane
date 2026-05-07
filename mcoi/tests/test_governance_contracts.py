@@ -124,8 +124,11 @@ class TestPolicyCondition:
             PolicyCondition(field_path="", operator="eq", expected_value="x")
 
     def test_invalid_operator_rejected(self) -> None:
-        with pytest.raises(ValueError, match="operator"):
+        with pytest.raises(ValueError) as exc_info:
             PolicyCondition(field_path="x", operator="bad_op", expected_value="x")
+        assert str(exc_info.value) == "operator has unsupported value"
+        assert "bad_op" not in str(exc_info.value)
+        assert "eq" not in str(exc_info.value)
 
     def test_expected_value_frozen(self) -> None:
         c = PolicyCondition(field_path="x", operator="eq", expected_value={"a": [1]})

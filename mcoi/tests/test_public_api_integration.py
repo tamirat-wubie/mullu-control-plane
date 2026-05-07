@@ -425,6 +425,8 @@ class TestAttachApiStateToMemoryMesh:
     def test_scope_ref_id_preserved(self, bridge):
         result = bridge.attach_api_state_to_memory_mesh("scope-10")
         assert result.scope_ref_id == "scope-10"
+        assert result.title == "Public API state"
+        assert "scope-10" not in result.title
 
     def test_snapshot_reflects_registered_endpoints(self, bridge):
         bridge.endpoint_for_service_request("ep-snap-1", "scope-11")

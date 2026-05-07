@@ -146,7 +146,7 @@ class ForecastingRuntimeEngine:
     ) -> DemandSignal:
         """Ingest a demand signal."""
         if signal_id in self._signals:
-            raise RuntimeCoreInvariantError(f"Duplicate signal_id: {signal_id}")
+            raise RuntimeCoreInvariantError("Duplicate signal_id")
         now = _now_iso()
         signal = DemandSignal(
             signal_id=signal_id, tenant_id=tenant_id,
@@ -163,7 +163,7 @@ class ForecastingRuntimeEngine:
         """Get a signal by ID."""
         s = self._signals.get(signal_id)
         if s is None:
-            raise RuntimeCoreInvariantError(f"Unknown signal_id: {signal_id}")
+            raise RuntimeCoreInvariantError("Unknown signal_id")
         return s
 
     def signals_for_tenant(self, tenant_id: str) -> tuple[DemandSignal, ...]:
@@ -186,7 +186,7 @@ class ForecastingRuntimeEngine:
     ) -> ForecastRecord:
         """Build a forecast from demand signals."""
         if forecast_id in self._forecasts:
-            raise RuntimeCoreInvariantError(f"Duplicate forecast_id: {forecast_id}")
+            raise RuntimeCoreInvariantError("Duplicate forecast_id")
         # Count signals for this tenant/scope
         signal_count = sum(
             1 for s in self._signals.values()
@@ -213,16 +213,14 @@ class ForecastingRuntimeEngine:
         """Get a forecast by ID."""
         f = self._forecasts.get(forecast_id)
         if f is None:
-            raise RuntimeCoreInvariantError(f"Unknown forecast_id: {forecast_id}")
+            raise RuntimeCoreInvariantError("Unknown forecast_id")
         return f
 
     def supersede_forecast(self, forecast_id: str) -> ForecastRecord:
         """Mark a forecast as superseded."""
         old = self.get_forecast(forecast_id)
         if old.status in _FORECAST_TERMINAL:
-            raise RuntimeCoreInvariantError(
-                f"Cannot supersede {old.status.value} forecast"
-            )
+            raise RuntimeCoreInvariantError("Cannot supersede terminal forecast")
         updated = ForecastRecord(
             forecast_id=old.forecast_id, tenant_id=old.tenant_id,
             status=ForecastStatus.SUPERSEDED, horizon=old.horizon,
@@ -239,9 +237,7 @@ class ForecastingRuntimeEngine:
         """Expire a forecast."""
         old = self.get_forecast(forecast_id)
         if old.status in _FORECAST_TERMINAL:
-            raise RuntimeCoreInvariantError(
-                f"Forecast already in terminal status {old.status.value}"
-            )
+            raise RuntimeCoreInvariantError("Forecast already in terminal status")
         updated = ForecastRecord(
             forecast_id=old.forecast_id, tenant_id=old.tenant_id,
             status=ForecastStatus.EXPIRED, horizon=old.horizon,
@@ -258,9 +254,7 @@ class ForecastingRuntimeEngine:
         """Cancel a forecast."""
         old = self.get_forecast(forecast_id)
         if old.status in _FORECAST_TERMINAL:
-            raise RuntimeCoreInvariantError(
-                f"Forecast already in terminal status {old.status.value}"
-            )
+            raise RuntimeCoreInvariantError("Forecast already in terminal status")
         updated = ForecastRecord(
             forecast_id=old.forecast_id, tenant_id=old.tenant_id,
             status=ForecastStatus.CANCELLED, horizon=old.horizon,
@@ -292,7 +286,7 @@ class ForecastingRuntimeEngine:
     ) -> ScenarioModel:
         """Build a scenario model."""
         if scenario_id in self._scenarios:
-            raise RuntimeCoreInvariantError(f"Duplicate scenario_id: {scenario_id}")
+            raise RuntimeCoreInvariantError("Duplicate scenario_id")
         now = _now_iso()
         scenario = ScenarioModel(
             scenario_id=scenario_id, tenant_id=tenant_id, name=name,
@@ -309,7 +303,7 @@ class ForecastingRuntimeEngine:
         """Get a scenario by ID."""
         s = self._scenarios.get(scenario_id)
         if s is None:
-            raise RuntimeCoreInvariantError(f"Unknown scenario_id: {scenario_id}")
+            raise RuntimeCoreInvariantError("Unknown scenario_id")
         return s
 
     def evaluate_scenario(self, scenario_id: str) -> ScenarioModel:
@@ -362,11 +356,11 @@ class ForecastingRuntimeEngine:
     ) -> ScenarioProjection:
         """Create a projection from a scenario and forecast."""
         if projection_id in self._projections:
-            raise RuntimeCoreInvariantError(f"Duplicate projection_id: {projection_id}")
+            raise RuntimeCoreInvariantError("Duplicate projection_id")
         if scenario_id not in self._scenarios:
-            raise RuntimeCoreInvariantError(f"Unknown scenario_id: {scenario_id}")
+            raise RuntimeCoreInvariantError("Unknown scenario_id")
         if forecast_id not in self._forecasts:
-            raise RuntimeCoreInvariantError(f"Unknown forecast_id: {forecast_id}")
+            raise RuntimeCoreInvariantError("Unknown forecast_id")
         now = _now_iso()
         proj = ScenarioProjection(
             projection_id=projection_id, scenario_id=scenario_id,
@@ -402,7 +396,7 @@ class ForecastingRuntimeEngine:
     ) -> CapacityForecast:
         """Project capacity pressure."""
         if forecast_id in self._capacity_forecasts:
-            raise RuntimeCoreInvariantError(f"Duplicate capacity forecast_id: {forecast_id}")
+            raise RuntimeCoreInvariantError("Duplicate capacity forecast_id")
         now = _now_iso()
         cf = CapacityForecast(
             forecast_id=forecast_id, tenant_id=tenant_id,
@@ -434,7 +428,7 @@ class ForecastingRuntimeEngine:
     ) -> BudgetForecast:
         """Project budget burn."""
         if forecast_id in self._budget_forecasts:
-            raise RuntimeCoreInvariantError(f"Duplicate budget forecast_id: {forecast_id}")
+            raise RuntimeCoreInvariantError("Duplicate budget forecast_id")
         now = _now_iso()
         bf = BudgetForecast(
             forecast_id=forecast_id, tenant_id=tenant_id,
@@ -465,7 +459,7 @@ class ForecastingRuntimeEngine:
     ) -> RiskForecast:
         """Project risk pressure."""
         if forecast_id in self._risk_forecasts:
-            raise RuntimeCoreInvariantError(f"Duplicate risk forecast_id: {forecast_id}")
+            raise RuntimeCoreInvariantError("Duplicate risk forecast_id")
         now = _now_iso()
         rf = RiskForecast(
             forecast_id=forecast_id, tenant_id=tenant_id,
@@ -498,7 +492,7 @@ class ForecastingRuntimeEngine:
     ) -> AllocationRecommendation:
         """Recommend a resource allocation based on a forecast."""
         if recommendation_id in self._recommendations:
-            raise RuntimeCoreInvariantError(f"Duplicate recommendation_id: {recommendation_id}")
+            raise RuntimeCoreInvariantError("Duplicate recommendation_id")
         forecast = self.get_forecast(forecast_id)
         # Low confidence blocks aggressive allocation
         if forecast.confidence_band == ForecastConfidenceBand.VERY_LOW:
@@ -524,11 +518,9 @@ class ForecastingRuntimeEngine:
         """Accept an allocation recommendation."""
         old = self._recommendations.get(recommendation_id)
         if old is None:
-            raise RuntimeCoreInvariantError(f"Unknown recommendation_id: {recommendation_id}")
+            raise RuntimeCoreInvariantError("Unknown recommendation_id")
         if old.disposition != AllocationDisposition.RECOMMENDED:
-            raise RuntimeCoreInvariantError(
-                f"Can only accept RECOMMENDED, got {old.disposition.value}"
-            )
+            raise RuntimeCoreInvariantError("Can only accept RECOMMENDED")
         updated = AllocationRecommendation(
             recommendation_id=old.recommendation_id, forecast_id=old.forecast_id,
             tenant_id=old.tenant_id, disposition=AllocationDisposition.ACCEPTED,
@@ -546,11 +538,9 @@ class ForecastingRuntimeEngine:
         """Reject an allocation recommendation."""
         old = self._recommendations.get(recommendation_id)
         if old is None:
-            raise RuntimeCoreInvariantError(f"Unknown recommendation_id: {recommendation_id}")
+            raise RuntimeCoreInvariantError("Unknown recommendation_id")
         if old.disposition != AllocationDisposition.RECOMMENDED:
-            raise RuntimeCoreInvariantError(
-                f"Can only reject RECOMMENDED, got {old.disposition.value}"
-            )
+            raise RuntimeCoreInvariantError("Can only reject RECOMMENDED")
         updated = AllocationRecommendation(
             recommendation_id=old.recommendation_id, forecast_id=old.forecast_id,
             tenant_id=old.tenant_id, disposition=AllocationDisposition.REJECTED,
@@ -568,11 +558,9 @@ class ForecastingRuntimeEngine:
         """Defer an allocation recommendation."""
         old = self._recommendations.get(recommendation_id)
         if old is None:
-            raise RuntimeCoreInvariantError(f"Unknown recommendation_id: {recommendation_id}")
+            raise RuntimeCoreInvariantError("Unknown recommendation_id")
         if old.disposition != AllocationDisposition.RECOMMENDED:
-            raise RuntimeCoreInvariantError(
-                f"Can only defer RECOMMENDED, got {old.disposition.value}"
-            )
+            raise RuntimeCoreInvariantError("Can only defer RECOMMENDED")
         updated = AllocationRecommendation(
             recommendation_id=old.recommendation_id, forecast_id=old.forecast_id,
             tenant_id=old.tenant_id, disposition=AllocationDisposition.DEFERRED,
@@ -613,7 +601,7 @@ class ForecastingRuntimeEngine:
                         "forecast_id": fc.forecast_id,
                         "tenant_id": fc.tenant_id,
                         "operation": "no_signals",
-                        "reason": f"Forecast {fc.forecast_id} is active but has zero demand signals",
+                        "reason": "active forecast has no demand signals",
                         "detected_at": now,
                     }
                     self._violations[vid] = v
@@ -631,7 +619,7 @@ class ForecastingRuntimeEngine:
                         "forecast_id": bf.forecast_id,
                         "tenant_id": bf.tenant_id,
                         "operation": "budget_breach",
-                        "reason": f"Budget forecast {bf.forecast_id} projects spend {bf.projected_spend} exceeding limit {bf.budget_limit}",
+                        "reason": "budget forecast exceeds budget limit",
                         "detected_at": now,
                     }
                     self._violations[vid] = v
@@ -649,7 +637,7 @@ class ForecastingRuntimeEngine:
                         "forecast_id": cf.forecast_id,
                         "tenant_id": cf.tenant_id,
                         "operation": "capacity_pressure",
-                        "reason": f"Capacity forecast {cf.forecast_id} projects utilization {cf.projected_utilization} above 0.9 threshold",
+                        "reason": "capacity forecast exceeds utilization threshold",
                         "detected_at": now,
                     }
                     self._violations[vid] = v
@@ -668,7 +656,7 @@ class ForecastingRuntimeEngine:
     def forecast_snapshot(self, snapshot_id: str) -> ForecastSnapshot:
         """Capture a point-in-time forecast snapshot."""
         if snapshot_id in self._snapshot_ids:
-            raise RuntimeCoreInvariantError(f"Duplicate snapshot_id: {snapshot_id}")
+            raise RuntimeCoreInvariantError("Duplicate snapshot_id")
         now = _now_iso()
         snap = ForecastSnapshot(
             snapshot_id=snapshot_id,

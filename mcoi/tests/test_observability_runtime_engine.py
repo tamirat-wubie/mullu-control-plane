@@ -2550,7 +2550,9 @@ class TestViolationDetails:
         vs = eng.detect_observability_violations(T)
         stale = [v for v in vs if v.operation == "stale_open_trace"]
         assert len(stale) == 1
-        assert "tr-1" in stale[0].reason
+        assert stale[0].reason == "trace is open but all spans are closed"
+        assert "tr-1" not in stale[0].reason
+        assert T not in stale[0].reason
 
     def test_critical_no_debug_reason(self, env):
         _, eng = env
@@ -2558,7 +2560,9 @@ class TestViolationDetails:
         vs = eng.detect_observability_violations(T)
         cnd = [v for v in vs if v.operation == "critical_no_debug"]
         assert len(cnd) == 1
-        assert "an-1" in cnd[0].reason
+        assert cnd[0].reason == "critical anomaly has no debug session"
+        assert "an-1" not in cnd[0].reason
+        assert T not in cnd[0].reason
 
     def test_high_error_rate_reason(self, env):
         _, eng = env
@@ -2568,7 +2572,9 @@ class TestViolationDetails:
         vs = eng.detect_observability_violations(T)
         her = [v for v in vs if v.operation == "high_trace_error_rate"]
         assert len(her) == 1
-        assert T in her[0].reason
+        assert her[0].reason == "trace error rate above threshold"
+        assert T not in her[0].reason
+        assert "tr-hr-0" not in her[0].reason
 
     def test_violation_detected_at_populated(self, env):
         _, eng = env
@@ -2581,3 +2587,39 @@ class TestViolationDetails:
         _anomaly(eng, severity=AnomalySeverity.CRITICAL)
         vs = eng.detect_observability_violations(T)
         assert all(v.tenant_id == T for v in vs)
+
+
+class TestBoundedContracts:
+    def test_duplicate_metric_error_is_bounded(self, env):
+        _, eng = env
+        _metric(eng, mid="metric-secret", tid="tenant-secret")
+
+        with pytest.raises(RuntimeCoreInvariantError) as excinfo:
+            _metric(eng, mid="metric-secret", tid="tenant-secret")
+
+        message = str(excinfo.value)
+        assert message == "duplicate metric_id"
+        assert "metric-secret" not in message
+        assert "tenant-secret" not in message
+
+    def test_violation_reasons_are_bounded(self, env):
+        _, eng = env
+        _trace(eng, trid="trace-secret", tid="tenant-secret")
+        _span(eng, sid="span-secret", trid="trace-secret", tid="tenant-secret")
+        eng.close_span("span-secret")
+        _anomaly(eng, aid="anomaly-secret", tid="tenant-secret", severity=AnomalySeverity.CRITICAL)
+        for index in range(5):
+            trace_id = f"rate-trace-{index}"
+            _trace(eng, trid=trace_id, tid="tenant-secret")
+            eng.error_trace(trace_id)
+
+        violations = eng.detect_observability_violations("tenant-secret")
+        reasons = {violation.operation: violation.reason for violation in violations}
+        joined = " ".join(reasons.values())
+
+        assert reasons["stale_open_trace"] == "trace is open but all spans are closed"
+        assert reasons["critical_no_debug"] == "critical anomaly has no debug session"
+        assert reasons["high_trace_error_rate"] == "trace error rate above threshold"
+        assert "trace-secret" not in joined
+        assert "anomaly-secret" not in joined
+        assert "tenant-secret" not in joined

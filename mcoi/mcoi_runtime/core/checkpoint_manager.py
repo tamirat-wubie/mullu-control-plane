@@ -134,7 +134,7 @@ class CheckpointManager:
                 first_sequence=first_seq,
                 last_sequence=last_seq,
                 verdict=JournalValidationVerdict.EPOCH_MISMATCH,
-                detail=f"{len(mismatched)} entries have mismatched epoch_id",
+                detail="journal epoch mismatch detected",
             )
 
         # Check monotonic ordering
@@ -147,7 +147,7 @@ class CheckpointManager:
                     first_sequence=first_seq,
                     last_sequence=last_seq,
                     verdict=JournalValidationVerdict.ORDERING_VIOLATION,
-                    detail=f"sequence {self._journal[i].sequence} <= {self._journal[i-1].sequence} at position {i}",
+                    detail="journal ordering violation detected",
                 )
 
         # Check for gaps (consecutive sequence numbers with no gaps)
@@ -167,7 +167,7 @@ class CheckpointManager:
                 last_sequence=last_seq,
                 verdict=JournalValidationVerdict.SEQUENCE_GAP,
                 gap_positions=tuple(gaps),
-                detail=f"{len(gaps)} gap(s) detected in journal sequence",
+                detail="journal sequence gap detected",
             )
 
         return JournalValidationResult(
@@ -360,11 +360,7 @@ class CheckpointManager:
             if verification.verdict != RestoreVerdict.VERIFIED:
                 # Hash mismatch — rollback all three subsystems
                 _rollback_all()
-                raise RuntimeCoreInvariantError(
-                    f"restore verification failed: {verification.verdict.value} — "
-                    f"expected composite hash {verification.expected_composite_hash}, "
-                    f"got {verification.actual_composite_hash}"
-                )
+                raise RuntimeCoreInvariantError("restore verification failed")
 
         # Journal the restoration
         self.append_journal(

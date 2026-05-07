@@ -50,7 +50,8 @@ class TestHealthCheckAggregator:
         a.register(HealthCheckDef("broken", lambda: (_ for _ in ()).throw(RuntimeError("boom")), weight=1.0))
         result = a.run()
         assert result.status == HealthStatus.UNHEALTHY
-        assert "boom" in result.checks[0].message
+        assert result.checks[0].message == "health check error (RuntimeError)"
+        assert "boom" not in result.checks[0].message
 
     def test_empty_aggregator(self):
         a = HealthCheckAggregator()

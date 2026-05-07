@@ -1,0 +1,124 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:connector-self-healing-receipt:1",
+  "title": "Connector Self-Healing Receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "receipt_id",
+    "connector_id",
+    "tenant_id",
+    "failure_id",
+    "action",
+    "status",
+    "safe_to_continue",
+    "retry_after_seconds",
+    "fallback_provider",
+    "required_controls",
+    "evidence_refs",
+    "receipt_is_terminal_closure",
+    "receipt_hash",
+    "metadata"
+  ],
+  "properties": {
+    "receipt_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "connector_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "tenant_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "failure_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "action": {
+      "type": "string",
+      "enum": [
+        "retry",
+        "switch_provider",
+        "degrade_read_only",
+        "open_incident",
+        "revoke_capability",
+        "require_review"
+      ]
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "retry_scheduled",
+        "provider_switch_required",
+        "degraded_read_only",
+        "incident_opened",
+        "capability_revoked",
+        "requires_review"
+      ]
+    },
+    "safe_to_continue": {
+      "type": "boolean"
+    },
+    "retry_after_seconds": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "fallback_provider": {
+      "type": "string"
+    },
+    "required_controls": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "evidence_refs": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "receipt_is_terminal_closure": {
+      "type": "boolean",
+      "const": false
+    },
+    "receipt_hash": {
+      "type": "string",
+      "minLength": 32
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "provider_success_not_assumed",
+        "policy_declared_recovery_action",
+        "verification_required_after_recovery",
+        "healing_receipt_is_not_terminal_closure"
+      ],
+      "properties": {
+        "provider_success_not_assumed": {
+          "type": "boolean",
+          "const": true
+        },
+        "policy_declared_recovery_action": {
+          "type": "boolean",
+          "const": true
+        },
+        "verification_required_after_recovery": {
+          "type": "boolean",
+          "const": true
+        },
+        "healing_receipt_is_not_terminal_closure": {
+          "type": "boolean",
+          "const": true
+        }
+      }
+    }
+  }
+}

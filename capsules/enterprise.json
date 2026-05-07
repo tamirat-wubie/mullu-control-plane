@@ -1,0 +1,24 @@
+{
+  "capsule_id": "enterprise.general_ops.v0",
+  "domain": "enterprise",
+  "version": "0.1.0",
+  "ontology_refs": ["ontologies/enterprise/general_ops.json"],
+  "capability_refs": [
+    "enterprise.knowledge_search",
+    "enterprise.notification_send",
+    "enterprise.task_schedule"
+  ],
+  "policy_refs": ["policies/enterprise/general_ops.policy.json"],
+  "evidence_rules": ["evidence/enterprise/general_ops.evidence.json"],
+  "approval_rules": ["approval/enterprise/general_ops.approval.json"],
+  "recovery_rules": ["recovery/enterprise/general_ops.recovery.json"],
+  "test_fixture_refs": ["tests/fixtures/enterprise/general_ops"],
+  "read_model_refs": ["read_models/enterprise/general_ops.json"],
+  "operator_view_refs": ["operator_views/enterprise/general_ops.json"],
+  "owner_team": "enterprise-ops",
+  "certification_status": "certified",
+  "metadata": {
+    "purpose": "Certified general operations capabilities for knowledge, notification, and task workflows"
+  },
+  "extensions": {}
+}

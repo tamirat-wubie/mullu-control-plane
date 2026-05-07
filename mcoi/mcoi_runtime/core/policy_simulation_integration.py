@@ -30,7 +30,7 @@ from ..contracts.memory_mesh import (
 from .event_spine import EventSpineEngine
 from .invariants import RuntimeCoreInvariantError, stable_identifier
 from .memory_mesh import MemoryMeshEngine
-from .policy_simulation import PolicySimulationEngine
+from mcoi_runtime.governance.policy.simulation import PolicySimulationEngine
 
 
 def _now_iso() -> str:
@@ -322,7 +322,7 @@ class PolicySimulationIntegration:
         mem = MemoryRecord(
             memory_id=stable_identifier("mem-psim", {"scope": scope_ref_id, "seq": str(self._memory.memory_count)}),
             scope_ref_id=scope_ref_id,
-            title=f"Policy simulation state for {scope_ref_id}",
+            title="Policy simulation state",
             memory_type=MemoryType.OBSERVATION,
             scope=MemoryScope.GLOBAL,
             trust_level=MemoryTrustLevel.VERIFIED,

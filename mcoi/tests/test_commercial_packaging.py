@@ -34,6 +34,24 @@ class TestDemoGenerator:
         assert result["total_seeded_items"] >= 20
         assert "bootstrap" in result["sections"]
         assert "cases" in result["sections"]
+
+    def test_demo_remediation_titles_are_bounded(self, monkeypatch):
+        gen = DemoTenantGenerator()
+        captured: dict[str, list[dict[str, str]]] = {}
+        original_import = gen.importer.import_remediations
+
+        def _capture(tenant_id: str, remediations: list[dict[str, str]]):
+            captured["remediations"] = remediations
+            return original_import(tenant_id, remediations)
+
+        monkeypatch.setattr(gen.importer, "import_remediations", _capture)
+
+        result = gen.generate("demo-bounded")
+
+        assert result["remediations"]["imported"] == 5
+        assert {item["title"] for item in captured["remediations"]} == {"Demo remediation"}
+        assert "Annual compliance review - Q4 findings" not in captured["remediations"][0]["title"]
+
     def test_demo_has_cases(self):
         gen = DemoTenantGenerator()
         result = gen.generate("demo-test-2")

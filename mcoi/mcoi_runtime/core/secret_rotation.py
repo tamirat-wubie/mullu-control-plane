@@ -99,7 +99,7 @@ class SecretRotationEngine:
         """Rotate a secret. Old secret enters grace period."""
         old = self._secrets.get(secret_id)
         if not old:
-            raise ValueError(f"Secret not found: {secret_id}")
+            raise ValueError("secret not found")
 
         policy = self._policies.get(secret_id, RotationPolicy())
 

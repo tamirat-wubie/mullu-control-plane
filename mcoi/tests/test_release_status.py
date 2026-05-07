@@ -16,7 +16,7 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from scripts import validate_release_status
+from scripts import validate_release_status  # noqa: E402
 
 
 def test_discover_release_status_summary_exposes_live_inventory() -> None:
@@ -751,8 +751,34 @@ def test_validate_release_status_strictly() -> None:
     assert len(summary.maf_runtime_fixtures) >= 89
     assert len(summary.mcoi_runtime_fixtures) >= 151
     assert summary.ci_workflow_present is True
-    assert summary.release_version == "0.3.0 (v3.10.2)"
-    assert summary.release_date == "2026-03-27"
+    assert summary.release_version == "0.4.3 (v3.13.3)"
+    assert summary.release_date == "2026-05-06"
+
+
+def test_validate_deployment_matrix_requires_scaling_boundary() -> None:
+    content = (REPO_ROOT / "DEPLOYMENT.md").read_text(encoding="utf-8")
+
+    errors = validate_release_status.validate_deployment_matrix_text(content)
+
+    assert errors == []
+    assert "## Scaling Boundary" in content
+    assert "ReadWriteOnce state volume must run a single gateway replica" in content
+    assert "PostgreSQL audit store with atomic append" in content
+    assert "File snapshots are derived recovery artifacts" in content
+
+
+def test_validate_deployment_matrix_rejects_missing_scaling_boundary() -> None:
+    errors = validate_release_status.validate_deployment_matrix_text(
+        "# Deployment Matrix\n\n"
+        "| Profile | DB Backend |\n"
+        "|---|---|\n"
+        "| production | PostgreSQL |\n"
+    )
+
+    assert len(errors) == 1
+    assert "DEPLOYMENT.md missing required scaling-boundary anchors" in errors[0]
+    assert "## Scaling Boundary" in errors[0]
+    assert "MULLU_STATE_DIR" in errors[0]
 
 
 def test_validate_ci_workflow_text_rejects_missing_release_gate() -> None:
@@ -768,6 +794,34 @@ python scripts/validate_artifacts.py --strict
     assert len(errors) == 1
     assert "python scripts/validate_release_status.py --strict" in errors[0]
     assert "cargo test" in errors[0]
+
+
+def test_validate_status_document_text_rejects_missing_public_anchors() -> None:
+    errors = validate_release_status.validate_status_document_text(
+        "# Repository Status Witness\n\n"
+        "## Reflection Summary\n\n"
+        "| Branch witness | Reflected |\n"
+    )
+
+    assert len(errors) == 1
+    assert "Release witness" in errors[0]
+    assert "Governance witness" in errors[0]
+    assert "python scripts/validate_release_status.py --strict" in errors[0]
+
+
+def test_validate_public_surface_document_texts_rejects_missing_anchor() -> None:
+    errors = validate_release_status.validate_public_surface_document_texts(
+        {
+            "GITHUB_SURFACE.md": "# GitHub Surface Witness\n",
+            "DEPLOYMENT_STATUS.md": "# Deployment Status Witness\n",
+        }
+    )
+
+    assert len(errors) == 3
+    assert any("GITHUB_SURFACE.md missing required public-surface anchors" in error for error in errors)
+    assert any("DEPLOYMENT_STATUS.md missing required public-surface anchors" in error for error in errors)
+    assert any("docs/PRODUCT_BOUNDARY.md missing from public-surface documents" in error for error in errors)
+    assert any("symbolic intelligence" in error for error in errors)
 
 
 def test_validate_release_metadata_texts_rejects_mismatch() -> None:

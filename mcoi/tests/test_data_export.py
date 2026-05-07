@@ -72,8 +72,15 @@ class TestDataExportPipeline:
 
     def test_unknown_source(self, pipeline):
         req = ExportRequest(source="nonexistent", format=ExportFormat.JSON)
-        with pytest.raises(ValueError, match="Unknown export source"):
+        with pytest.raises(ValueError, match="Unknown export source") as exc_info:
             pipeline.export(req)
+        assert "nonexistent" not in str(exc_info.value)
+
+    def test_unsupported_format_is_bounded(self, pipeline):
+        req = ExportRequest(source="audit", format="yaml")  # type: ignore[arg-type]
+        with pytest.raises(ValueError, match="Unsupported export format") as exc_info:
+            pipeline.export(req)
+        assert "yaml" not in str(exc_info.value)
 
     def test_empty_source(self):
         p = DataExportPipeline()

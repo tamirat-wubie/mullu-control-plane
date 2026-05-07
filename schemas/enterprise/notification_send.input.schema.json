@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "schemas/enterprise/notification_send.input.schema.json",
+  "type": "object",
+  "required": ["body"],
+  "properties": {
+    "title": {"type": "string"},
+    "body": {"type": "string", "minLength": 1},
+    "recipient": {"type": "string"}
+  },
+  "additionalProperties": true
+}

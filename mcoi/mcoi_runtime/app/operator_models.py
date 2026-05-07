@@ -15,6 +15,7 @@ from mcoi_runtime.adapters.process_observer import ProcessObservationRequest
 from mcoi_runtime.contracts.execution import ExecutionResult
 from mcoi_runtime.contracts.goal import GoalStatus
 from mcoi_runtime.contracts.policy import PolicyDecision
+from mcoi_runtime.contracts.provider_attribution import ProviderAttribution
 from mcoi_runtime.contracts.skill import (
     SkillExecutionRecord,
     SkillOutcomeStatus,
@@ -73,7 +74,7 @@ class OperatorRequest:
         for field_name in ("request_id", "subject_id", "goal_id"):
             value = getattr(self, field_name)
             if not isinstance(value, str) or not value.strip():
-                raise RuntimeCoreInvariantError(f"{field_name} must be a non-empty string")
+                raise RuntimeCoreInvariantError("request identity fields must be non-empty strings")
         if not isinstance(self.template, Mapping):
             raise RuntimeCoreInvariantError("template must be a mapping")
         if not isinstance(self.bindings, Mapping):
@@ -109,7 +110,7 @@ class SkillRequest:
         for field_name in ("request_id", "subject_id", "goal_id"):
             value = getattr(self, field_name)
             if not isinstance(value, str) or not value.strip():
-                raise RuntimeCoreInvariantError(f"{field_name} must be a non-empty string")
+                raise RuntimeCoreInvariantError("request identity fields must be non-empty strings")
 
 
 @dataclass(frozen=True, slots=True)
@@ -315,6 +316,7 @@ class SkillRunReport:
     status: SkillOutcomeStatus
     completed: bool
     structured_errors: tuple[StructuredError, ...] = ()
+    lifecycle_transition_warning: str = ""
 
     @property
     def succeeded(self) -> bool:
@@ -530,8 +532,20 @@ class OperatorRunReport:
     integration_provider_id: str | None = None
     communication_provider_id: str | None = None
     model_provider_id: str | None = None
+    provider_attributions: tuple[ProviderAttribution, ...] = ()
+    provider_attribution_count: int = 0
+    receipt_attributed_provider_operation_count: int = 0
+    routing_attributed_provider_operation_count: int = 0
+    plane_attributed_provider_operation_count: int = 0
     autonomy_mode: str | None = None
     autonomy_decision: str | None = None
+    mil_program_id: str | None = None
+    mil_instruction_count: int = 0
+    mil_verification_passed: bool | None = None
+    mil_verification_issues: tuple[str, ...] = ()
+    mil_instruction_trace: tuple[str, ...] = ()
+    mil_audit_record_id: str | None = None
+    mil_trace_ids: tuple[str, ...] = ()
 
 
 __all__ = [

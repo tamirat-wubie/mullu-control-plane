@@ -409,9 +409,11 @@ class TestAttachExecutionStateToMemoryMesh:
         rec = b.attach_execution_state_to_memory_mesh("scope-mm-8")
         assert rec.content["total_requests"] == ee.request_count
 
-    def test_title_contains_scope(self, bridge):
+    def test_title_is_bounded(self, bridge):
         rec = bridge.attach_execution_state_to_memory_mesh("scope-mm-9")
-        assert "scope-mm-9" in rec.title
+        assert rec.title == "External execution state"
+        assert "scope-mm-9" not in rec.title
+        assert rec.scope_ref_id == "scope-mm-9"
 
 
 # ---------------------------------------------------------------------------

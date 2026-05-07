@@ -11,6 +11,7 @@ from __future__ import annotations
 
 from typing import Callable
 
+import hashlib
 import json
 import os
 import tempfile
@@ -21,7 +22,44 @@ from mcoi_runtime.contracts.communication import (
     DeliveryResult,
     DeliveryStatus,
 )
+from mcoi_runtime.contracts.file_effects import FileEffectOperation, FileWriteReceipt
 from mcoi_runtime.core.invariants import stable_identifier
+
+
+def _sha256_text(text: str) -> str:
+    return hashlib.sha256(text.encode("utf-8", errors="replace")).hexdigest()
+
+
+def _build_file_write_receipt(
+    *,
+    delivery_id: str,
+    message_id: str,
+    file_path: Path,
+    content: str,
+    written_at: str,
+) -> FileWriteReceipt:
+    content_hash = _sha256_text(content)
+    path_hash = _sha256_text(str(file_path.resolve()))
+    receipt_id = stable_identifier(
+        "file-write-receipt",
+        {
+            "delivery_id": delivery_id,
+            "message_id": message_id,
+            "path_hash": path_hash,
+            "content_hash": content_hash,
+        },
+    )
+    return FileWriteReceipt(
+        receipt_id=receipt_id,
+        operation=FileEffectOperation.WRITE,
+        target_path_hash=path_hash,
+        content_hash=content_hash,
+        bytes_written=len(content.encode("utf-8")),
+        atomic_replace=True,
+        evidence_ref=f"file-write:{message_id}:{receipt_id}",
+        written_at=written_at,
+        metadata={"delivery_id": delivery_id, "message_id": message_id},
+    )
 
 
 class FileCommunicationAdapter:
@@ -64,13 +102,24 @@ class FileCommunicationAdapter:
                     os.unlink(tmp_path)
                 raise
 
+            delivered_at = self._clock()
+            receipt = _build_file_write_receipt(
+                delivery_id=delivery_id,
+                message_id=message.message_id,
+                file_path=file_path,
+                content=content,
+                written_at=delivered_at,
+            )
             return DeliveryResult(
                 delivery_id=delivery_id,
                 message_id=message.message_id,
                 status=DeliveryStatus.DELIVERED,
                 channel=message.channel,
-                delivered_at=self._clock(),
-                metadata={"file_path": str(file_path)},
+                delivered_at=delivered_at,
+                metadata={
+                    "file_path": str(file_path),
+                    "file_write_receipt": receipt.to_json_dict(),
+                },
             )
         except OSError as exc:
             return DeliveryResult(

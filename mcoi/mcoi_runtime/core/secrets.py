@@ -49,7 +49,7 @@ class SecretStore:
         if not isinstance(value, str) or not value:
             raise ValueError("value must be a non-empty string")
         if descriptor.secret_id in self._descriptors:
-            raise ValueError(f"secret already registered: {descriptor.secret_id}")
+            raise ValueError("secret already registered")
 
         self._descriptors[descriptor.secret_id] = descriptor
         self._values[descriptor.secret_id] = MaskedValue(value)
@@ -81,9 +81,9 @@ class SecretStore:
         if desc.scope_id != reference.scope_id:
             raise ValueError("scope_id mismatch")
         if desc.status is SecretStatus.REVOKED:
-            raise ValueError(f"secret has been revoked: {reference.secret_id}")
+            raise ValueError("secret unavailable")
         if reference.secret_id not in self._values:
-            raise ValueError(f"secret value not available: {reference.secret_id}")
+            raise ValueError("secret unavailable")
         return self._values[reference.secret_id]
 
     def is_expired(self, reference: SecretReference, now: datetime | None = None) -> bool:
@@ -118,7 +118,7 @@ class SecretStore:
         try:
             return self._descriptors[secret_id]
         except KeyError:
-            raise ValueError(f"unknown secret_id: {secret_id}") from None
+            raise ValueError("secret reference unavailable") from None
 
 
 # ---------------------------------------------------------------------------

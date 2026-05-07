@@ -5,11 +5,12 @@ circuit-breaker status, A/B testing, and bootstrap info.
 """
 from __future__ import annotations
 
+from typing import NoReturn
 from typing import Any
 
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from mcoi_runtime.app.routers.deps import deps
 from mcoi_runtime.core.agent_protocol import AgentCapability
@@ -64,7 +65,7 @@ class AutoCompleteRequest(BaseModel):
 
 class ABTestRequest(BaseModel):
     prompt: str
-    model_ids: list[str] = []
+    model_ids: list[str] = Field(default_factory=list)
     criteria: str = "cost"
 
 
@@ -80,6 +81,87 @@ def _validate_or_raise(schema_id: str, data: dict[str, Any]) -> None:
             "validation_errors": result.to_dict()["errors"],
             "governed": True,
         })
+
+
+def _raise_llm_service_unavailable(
+    *,
+    action: str,
+    actor_id: str,
+    tenant_id: str,
+    target: str,
+    exc: Exception,
+) -> NoReturn:
+    """Record internal LLM route failures and raise a sanitized HTTP error."""
+    deps.llm_circuit.record_failure()
+    deps.metrics.inc("errors_total")
+    deps.audit_trail.record(
+        action=action,
+        actor_id=actor_id,
+        tenant_id=tenant_id,
+        target=target,
+        outcome="error",
+        detail={
+            "error_type": type(exc).__name__,
+            "reason": "llm_service_unavailable",
+        },
+    )
+    raise HTTPException(
+        503,
+        detail={
+            "error": "LLM service unavailable",
+            "error_code": "llm_service_unavailable",
+            "governed": True,
+        },
+    )
+
+
+def _raise_governed_http_error(
+    *,
+    status_code: int,
+    error: str,
+    error_code: str,
+) -> NoReturn:
+    """Raise a structured governed HTTP error."""
+    raise HTTPException(
+        status_code,
+        detail={
+            "error": error,
+            "error_code": error_code,
+            "governed": True,
+        },
+    )
+
+
+def _certify_action_proof(
+    *,
+    endpoint: str,
+    tenant_id: str,
+    actor_id: str,
+    action: str,
+    succeeded: bool,
+) -> dict[str, str]:
+    """Create a bounded response proof for a completed LLM action."""
+    proof = deps.proof_bridge.certify_governance_decision(
+        tenant_id=tenant_id or "system",
+        endpoint=endpoint,
+        guard_results=[
+            {
+                "guard_name": "llm_action_result",
+                "allowed": succeeded,
+                "reason": "llm action reached response boundary",
+            }
+        ],
+        decision="allowed" if succeeded else "denied",
+        actor_id=actor_id or "anonymous",
+        reason="llm action response certified",
+    )
+    return {
+        "proof_receipt_id": proof.capsule.receipt.receipt_id,
+        "proof_hash": proof.receipt_hash,
+        "proof_phase": action,
+        "action": action,
+        "succeeded": succeeded,
+    }
 
 
 # ═══ Phase 199A — LLM Completion Endpoint ═══
@@ -116,13 +198,21 @@ def complete(req: CompletionRequest):
             )
         else:
             deps.llm_circuit.record_failure()
-            raise HTTPException(status_code=503, detail={"error": result.error, "governed": True})
+            _raise_governed_http_error(
+                status_code=503,
+                error=result.error or "LLM completion failed",
+                error_code="llm_completion_failed",
+            )
     except HTTPException:
         raise
     except Exception as exc:
-        deps.llm_circuit.record_failure()
-        deps.metrics.inc("errors_total")
-        raise HTTPException(503, detail={"error": str(exc), "governed": True})
+        _raise_llm_service_unavailable(
+            action="llm.complete",
+            actor_id=req.actor_id,
+            tenant_id=req.tenant_id,
+            target=req.model_name,
+            exc=exc,
+        )
     return {
         "content": result.content,
         "model": result.model_name,
@@ -132,6 +222,13 @@ def complete(req: CompletionRequest):
         "cost": result.cost,
         "circuit_state": deps.llm_circuit.state.value,
         "governed": True,
+        "action_proof": _certify_action_proof(
+            endpoint="/api/v1/complete",
+            tenant_id=req.tenant_id,
+            actor_id=req.actor_id,
+            action="llm.complete",
+            succeeded=True,
+        ),
     }
 
 
@@ -184,11 +281,22 @@ def stream_completion(req: CompletionRequest):
         else:
             deps.llm_circuit.record_failure()
     except Exception as exc:
-        deps.llm_circuit.record_failure()
-        deps.metrics.inc("errors_total")
-        raise HTTPException(503, detail={"error": str(exc), "governed": True})
+        _raise_llm_service_unavailable(
+            action="llm.stream",
+            actor_id=req.actor_id,
+            tenant_id=req.tenant_id,
+            target=req.model_name,
+            exc=exc,
+        )
     return StreamingResponse(
-        deps.streaming_adapter.stream_to_sse(result, request_id=f"stream-{id(req)}"),
+        deps.streaming_adapter.stream_to_sse(
+            result,
+            request_id=f"stream-{id(req)}",
+            tenant_id=req.tenant_id,
+            budget_id=req.budget_id,
+            estimated_input_tokens=result.input_tokens,
+            estimated_output_tokens=req.max_tokens,
+        ),
         media_type="text/event-stream",
         headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
     )
@@ -205,6 +313,9 @@ def bootstrap_info():
         "available_backends": list(deps.llm_bootstrap_result.backends.keys()),
         "registered_models": deps.llm_bootstrap_result.registered_models,
         "registered_providers": deps.llm_bootstrap_result.registered_providers,
+        "skipped_model_registrations": deps.llm_bootstrap_result.skipped_model_registrations,
+        "model_registration_failures": deps.llm_bootstrap_result.model_registration_failures,
+        "field_encryption": deps.field_encryption_bootstrap,
         "config": {
             "default_model": deps.llm_bootstrap_result.config.default_model,
             "default_budget_max_cost": deps.llm_bootstrap_result.config.default_budget_max_cost,
@@ -232,12 +343,21 @@ def chat_completion(req: ChatRequest):
     conv.add_user(req.message)
 
     # Call LLM with full conversation history
-    result = deps.llm_bridge.chat(
-        conv.to_chat_messages(),
-        model_name=req.model_name,
-        budget_id=req.budget_id,
-        tenant_id=req.tenant_id,
-    )
+    try:
+        result = deps.llm_bridge.chat(
+            conv.to_chat_messages(),
+            model_name=req.model_name,
+            budget_id=req.budget_id,
+            tenant_id=req.tenant_id,
+        )
+    except Exception as exc:
+        _raise_llm_service_unavailable(
+            action="llm.chat",
+            actor_id=req.actor_id,
+            tenant_id=req.tenant_id,
+            target=req.model_name,
+            exc=exc,
+        )
 
     if result.succeeded:
         conv.add_assistant(result.content)
@@ -278,10 +398,19 @@ def streaming_chat(req: ChatRequest):
     conv.add_user(req.message)
 
     # Get completion (non-streaming internally, streamed to client)
-    result = deps.llm_bridge.chat(
-        conv.to_chat_messages(), model_name=req.model_name,
-        budget_id=req.budget_id, tenant_id=req.tenant_id,
-    )
+    try:
+        result = deps.llm_bridge.chat(
+            conv.to_chat_messages(), model_name=req.model_name,
+            budget_id=req.budget_id, tenant_id=req.tenant_id,
+        )
+    except Exception as exc:
+        _raise_llm_service_unavailable(
+            action="llm.chat.stream",
+            actor_id=req.actor_id,
+            tenant_id=req.tenant_id,
+            target=req.model_name,
+            exc=exc,
+        )
 
     if result.succeeded:
         conv.add_assistant(result.content)
@@ -289,7 +418,13 @@ def streaming_chat(req: ChatRequest):
 
     # Stream as SSE
     return StreamingResponse(
-        deps.streaming_adapter.stream_to_sse(result, request_id=f"chat-{req.conversation_id}"),
+        deps.streaming_adapter.stream_to_sse(
+            result,
+            request_id=f"chat-{req.conversation_id}",
+            tenant_id=req.tenant_id,
+            budget_id=req.budget_id,
+            estimated_input_tokens=result.input_tokens,
+        ),
         media_type="text/event-stream",
         headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
     )
@@ -305,16 +440,29 @@ def chat_workflow_endpoint(req: ChatWorkflowRequest):
     try:
         cap = AgentCapability(req.capability)
     except ValueError:
-        raise HTTPException(400, detail=f"unknown capability: {req.capability}")
+        _raise_governed_http_error(
+            status_code=400,
+            error="Unknown agent capability",
+            error_code="invalid_capability",
+        )
 
-    result = deps.chat_workflow.execute(
-        conversation_id=req.conversation_id,
-        message=req.message,
-        tenant_id=req.tenant_id,
-        capability=cap,
-        system_prompt=req.system_prompt,
-        budget_id=req.budget_id,
-    )
+    try:
+        result = deps.chat_workflow.execute(
+            conversation_id=req.conversation_id,
+            message=req.message,
+            tenant_id=req.tenant_id,
+            capability=cap,
+            system_prompt=req.system_prompt,
+            budget_id=req.budget_id,
+        )
+    except Exception as exc:
+        _raise_llm_service_unavailable(
+            action="llm.chat.workflow",
+            actor_id=req.actor_id,
+            tenant_id=req.tenant_id,
+            target=req.capability,
+            exc=exc,
+        )
     return {
         "conversation_id": result.conversation_id,
         "workflow_id": result.workflow_id,
@@ -438,11 +586,22 @@ def safe_completion(req: CompletionRequest):
             "provider": result.provider.value, "tokens": result.total_tokens,
             "cost": result.cost, "succeeded": result.succeeded,
             "circuit_state": deps.llm_circuit.state.value, "governed": True,
+            "action_proof": _certify_action_proof(
+                endpoint="/api/v1/complete/safe",
+                tenant_id=req.tenant_id,
+                actor_id=req.actor_id,
+                action="llm.complete.safe",
+                succeeded=result.succeeded,
+            ),
         }
     except Exception as exc:
-        deps.llm_circuit.record_failure()
-        deps.metrics.inc("errors_total")
-        raise HTTPException(503, detail={"error": str(exc), "governed": True})
+        _raise_llm_service_unavailable(
+            action="llm.complete.safe",
+            actor_id=req.actor_id,
+            tenant_id=req.tenant_id,
+            target=req.model_name,
+            exc=exc,
+        )
 
 
 # ═══ Phase 214A — Auto-Routed Completion ═══
@@ -458,13 +617,26 @@ def auto_routed_completion(req: AutoCompleteRequest):
         force_model=req.force_model,
     )
     if not decision.model_id:
-        raise HTTPException(503, detail="no models available for routing")
+        _raise_governed_http_error(
+            status_code=503,
+            error="No models available for routing",
+            error_code="no_routable_model",
+        )
 
-    result = deps.llm_bridge.complete(
-        req.prompt, model_name=decision.model_id,
-        max_tokens=req.max_tokens, tenant_id=req.tenant_id,
-        budget_id=req.budget_id,
-    )
+    try:
+        result = deps.llm_bridge.complete(
+            req.prompt, model_name=decision.model_id,
+            max_tokens=req.max_tokens, tenant_id=req.tenant_id,
+            budget_id=req.budget_id,
+        )
+    except Exception as exc:
+        _raise_llm_service_unavailable(
+            action="llm.complete.auto",
+            actor_id=req.actor_id,
+            tenant_id=req.tenant_id,
+            target=decision.model_id,
+            exc=exc,
+        )
     if result.succeeded:
         deps.cost_analytics.record(req.tenant_id, decision.model_id, result.cost, result.total_tokens)
 
@@ -481,6 +653,13 @@ def auto_routed_completion(req: AutoCompleteRequest):
         "cost": result.cost,
         "succeeded": result.succeeded,
         "governed": True,
+        "action_proof": _certify_action_proof(
+            endpoint="/api/v1/complete/auto",
+            tenant_id=req.tenant_id,
+            actor_id=req.actor_id,
+            action="llm.complete.auto",
+            succeeded=result.succeeded,
+        ),
     }
 
 

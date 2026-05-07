@@ -7,10 +7,11 @@ from __future__ import annotations
 
 from typing import Any
 
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
-from mcoi_runtime.core.tenant_budget import TenantBudgetPolicy, TenantBudgetReport
+from mcoi_runtime.governance.guards.budget import TenantBudgetPolicy, TenantBudgetReport
+from mcoi_runtime.governance.guards.tenant_gating import TenantGatingError, TenantStatus
 from mcoi_runtime.app.routers.deps import deps
 
 router = APIRouter()
@@ -19,10 +20,29 @@ router = APIRouter()
 # ── Helpers & request models ─────────────────────────────────────────────
 
 
+def _tenant_error_detail(error: str, error_code: str) -> dict[str, Any]:
+    return {"error": error, "error_code": error_code, "governed": True}
+
+
+def _tenant_error_response(exc: TenantGatingError) -> tuple[int, dict[str, Any]]:
+    return exc.http_status_code, _tenant_error_detail(exc.public_error, exc.error_code)
+
+
 class TenantBudgetRequest(BaseModel):
     tenant_id: str
     max_cost: float = 10.0
     max_calls: int = 1000
+
+
+class TenantRegisterRequest(BaseModel):
+    tenant_id: str
+    status: str = "onboarding"
+    reason: str = ""
+
+
+class TenantStatusUpdateRequest(BaseModel):
+    status: str
+    reason: str = ""
 
 
 def _budget_report(r: TenantBudgetReport) -> dict[str, Any]:
@@ -31,6 +51,38 @@ def _budget_report(r: TenantBudgetReport) -> dict[str, Any]:
         "spent": r.spent, "remaining": r.remaining, "calls_made": r.calls_made,
         "max_calls": r.max_calls, "exhausted": r.exhausted, "enabled": r.enabled,
         "utilization_pct": r.utilization_pct,
+    }
+
+
+def _certify_action_proof(
+    *,
+    endpoint: str,
+    tenant_id: str,
+    actor_id: str,
+    action: str,
+    succeeded: bool = True,
+) -> dict[str, str]:
+    """Create a bounded response proof for a tenant governance action."""
+    proof = deps.proof_bridge.certify_governance_decision(
+        tenant_id=tenant_id or "system",
+        endpoint=endpoint,
+        guard_results=[
+            {
+                "guard_name": "tenant_action_result",
+                "allowed": succeeded,
+                "reason": "tenant action reached response boundary",
+            }
+        ],
+        decision="allowed" if succeeded else "denied",
+        actor_id=actor_id or "anonymous",
+        reason="tenant action response certified",
+    )
+    return {
+        "proof_receipt_id": proof.capsule.receipt.receipt_id,
+        "proof_hash": proof.receipt_hash,
+        "proof_phase": action,
+        "action": action,
+        "succeeded": succeeded,
     }
 
 
@@ -43,13 +95,20 @@ def create_tenant_budget(req: TenantBudgetRequest):
     deps.tenant_budget_mgr.set_policy(TenantBudgetPolicy(
         tenant_id=req.tenant_id, max_cost=req.max_cost, max_calls=req.max_calls,
     ))
-    budget = deps.tenant_budget_mgr.ensure_budget(req.tenant_id)
+    deps.tenant_budget_mgr.ensure_budget(req.tenant_id)
     deps.audit_trail.record(
         action="tenant.budget.create", actor_id="system",
         tenant_id=req.tenant_id, target=req.tenant_id, outcome="success",
     )
     deps.metrics.inc("requests_governed")
-    return _budget_report(deps.tenant_budget_mgr.report(req.tenant_id))
+    report = _budget_report(deps.tenant_budget_mgr.report(req.tenant_id))
+    report["action_proof"] = _certify_action_proof(
+        endpoint="/api/v1/tenant/budget",
+        tenant_id=req.tenant_id,
+        actor_id="system",
+        action="tenant.budget.create",
+    )
+    return report
 
 
 @router.get("/api/v1/tenant/{tenant_id}/budget")
@@ -209,5 +268,121 @@ def get_partitions():
     return {
         "partitions": deps.tenant_partitions.summary(),
         "tenants": [p.to_dict() for p in deps.tenant_partitions.list_partitions()],
+        "governed": True,
+    }
+
+
+# ── Tenant gating / lifecycle ──────────────────────────────────────────
+
+
+def _require_gating():
+    """Get tenant gating registry or raise 503."""
+    gating = deps.get("tenant_gating")
+    if gating is None:
+        raise HTTPException(
+            503,
+            detail=_tenant_error_detail("tenant gating not initialized", "tenant_gating_unavailable"),
+        )
+    return gating
+
+
+@router.post("/api/v1/tenant/register")
+def register_tenant(req: TenantRegisterRequest):
+    """Register a new tenant with initial lifecycle status."""
+    gating = _require_gating()
+    try:
+        status = TenantStatus(req.status)
+    except ValueError:
+        raise HTTPException(422, detail=_tenant_error_detail("invalid status", "invalid_status")) from None
+    try:
+        gate = gating.register(req.tenant_id, status=status, reason=req.reason)
+    except TenantGatingError as exc:
+        status_code, detail = _tenant_error_response(exc)
+        raise HTTPException(status_code, detail=detail) from exc
+    except ValueError as exc:
+        status_code, detail = 400, _tenant_error_detail("tenant lifecycle request failed", "tenant_lifecycle_error")
+        raise HTTPException(status_code, detail=detail) from exc
+    deps.audit_trail.record(
+        action="tenant.register", actor_id="api",
+        tenant_id=req.tenant_id, target=req.tenant_id,
+        outcome="success", detail={"status": gate.status.value},
+    )
+    return {
+        "tenant_id": gate.tenant_id,
+        "status": gate.status.value,
+        "reason": gate.reason,
+        "gated_at": gate.gated_at,
+        "governed": True,
+        "action_proof": _certify_action_proof(
+            endpoint="/api/v1/tenant/register",
+            tenant_id=req.tenant_id,
+            actor_id="api",
+            action="tenant.register",
+        ),
+    }
+
+
+@router.patch("/api/v1/tenant/{tenant_id}/status")
+def update_tenant_status(tenant_id: str, req: TenantStatusUpdateRequest):
+    """Update tenant lifecycle status (suspend, terminate, reactivate)."""
+    gating = _require_gating()
+    try:
+        new_status = TenantStatus(req.status)
+    except ValueError:
+        raise HTTPException(422, detail=_tenant_error_detail("invalid status", "invalid_status")) from None
+    try:
+        gate = gating.update_status(tenant_id, new_status, reason=req.reason)
+    except TenantGatingError as exc:
+        status_code, detail = _tenant_error_response(exc)
+        raise HTTPException(status_code, detail=detail) from exc
+    except ValueError as exc:
+        status_code, detail = 400, _tenant_error_detail("tenant lifecycle request failed", "tenant_lifecycle_error")
+        raise HTTPException(status_code, detail=detail) from exc
+    deps.audit_trail.record(
+        action="tenant.status.update", actor_id="api",
+        tenant_id=tenant_id, target=tenant_id,
+        outcome="success", detail={"new_status": gate.status.value, "reason": gate.reason},
+    )
+    return {
+        "tenant_id": gate.tenant_id,
+        "status": gate.status.value,
+        "reason": gate.reason,
+        "gated_at": gate.gated_at,
+        "governed": True,
+        "action_proof": _certify_action_proof(
+            endpoint="/api/v1/tenant/{tenant_id}/status",
+            tenant_id=tenant_id,
+            actor_id="api",
+            action="tenant.status.update",
+        ),
+    }
+
+
+@router.get("/api/v1/tenant/{tenant_id}/gate")
+def get_tenant_gate(tenant_id: str):
+    """Get tenant lifecycle gating status."""
+    gating = _require_gating()
+    gate = gating.get_status(tenant_id)
+    if gate is None:
+        return {"tenant_id": tenant_id, "status": "unknown", "governed": True}
+    return {
+        "tenant_id": gate.tenant_id,
+        "status": gate.status.value,
+        "reason": gate.reason,
+        "gated_at": gate.gated_at,
+        "governed": True,
+    }
+
+
+@router.get("/api/v1/tenant/gates")
+def list_tenant_gates():
+    """List all tenant lifecycle gates."""
+    gating = _require_gating()
+    return {
+        "gates": [
+            {"tenant_id": g.tenant_id, "status": g.status.value, "reason": g.reason}
+            for g in gating.all_gates()
+        ],
+        "summary": gating.summary(),
         "governed": True,
     }

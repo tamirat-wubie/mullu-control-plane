@@ -283,3 +283,115 @@ class TestMemoryMeshIntegration:
         )
         assert r1.memory_id != r2.memory_id
         assert engine.memory_count == 2
+
+
+class TestBoundedContracts:
+    def _make(self) -> MemoryMeshIntegration:
+        return MemoryMeshIntegration(MemoryMeshEngine())
+
+    def test_event_title_redacts_event_type(self):
+        bridge = self._make()
+        rec = bridge.remember_event(
+            event_id="evt-secret",
+            event_type="operator.secret.event",
+            scope=MemoryScope.DOMAIN,
+            scope_ref_id="domain-1",
+            content={},
+        )
+        assert rec.title == "Event"
+        assert "operator.secret.event" not in rec.title
+
+    def test_obligation_title_redacts_state(self):
+        bridge = self._make()
+        rec = bridge.remember_obligation(
+            obligation_id="obl-secret",
+            state="escalated-secret",
+            scope=MemoryScope.FUNCTION,
+            scope_ref_id="fn-1",
+            content={},
+        )
+        assert rec.title == "Obligation state"
+        assert "escalated-secret" not in rec.title
+
+    def test_job_title_redacts_state(self):
+        bridge = self._make()
+        rec = bridge.remember_job(
+            job_id="job-secret",
+            job_state="halted-secret",
+            scope=MemoryScope.TEAM,
+            scope_ref_id="team-1",
+            content={},
+        )
+        assert rec.title == "Job state"
+        assert "halted-secret" not in rec.title
+
+    def test_workflow_title_redacts_stage(self):
+        bridge = self._make()
+        rec = bridge.remember_workflow(
+            workflow_id="wfl-secret",
+            stage="stage-secret",
+            scope=MemoryScope.WORKFLOW,
+            scope_ref_id="wfl-1",
+            content={},
+        )
+        assert rec.title == "Workflow stage"
+        assert "stage-secret" not in rec.title
+
+    def test_simulation_title_redacts_verdict(self):
+        bridge = self._make()
+        rec = bridge.remember_simulation(
+            simulation_id="sim-secret",
+            verdict="reject-secret",
+            scope=MemoryScope.GOAL,
+            scope_ref_id="goal-1",
+            content={},
+        )
+        assert rec.title == "Simulation outcome"
+        assert "reject-secret" not in rec.title
+
+    def test_utility_title_redacts_option(self):
+        bridge = self._make()
+        rec = bridge.remember_utility(
+            decision_id="dec-secret",
+            chosen_option="option-secret",
+            scope=MemoryScope.FUNCTION,
+            scope_ref_id="fn-1",
+            content={},
+        )
+        assert rec.title == "Utility decision"
+        assert "option-secret" not in rec.title
+
+    def test_meta_snapshot_title_redacts_snapshot_id(self):
+        bridge = self._make()
+        rec = bridge.remember_meta_snapshot(
+            snapshot_id="snap-secret",
+            scope=MemoryScope.GLOBAL,
+            scope_ref_id="runtime",
+            content={},
+        )
+        assert rec.title == "Meta snapshot"
+        assert "snap-secret" not in rec.title
+
+    def test_operator_override_title_redacts_action(self):
+        bridge = self._make()
+        rec = bridge.remember_operator_override(
+            override_id="ovr-secret",
+            action="force-secret",
+            scope=MemoryScope.OPERATOR,
+            scope_ref_id="op-1",
+            content={},
+        )
+        assert rec.title == "Operator override"
+        assert "force-secret" not in rec.title
+
+    def test_benchmark_title_redacts_category(self):
+        bridge = self._make()
+        rec = bridge.remember_benchmark(
+            run_id="bench-secret",
+            category="category-secret",
+            scope=MemoryScope.GLOBAL,
+            scope_ref_id="runtime",
+            content={},
+        )
+        assert rec.title == "Benchmark"
+        assert "category-secret" not in rec.title

@@ -76,7 +76,7 @@ class CommunicationSurfaceEngine:
         if not isinstance(identity, ChannelIdentity):
             raise RuntimeCoreInvariantError("identity must be a ChannelIdentity")
         if identity.identity_id in self._identities:
-            raise RuntimeCoreInvariantError(f"duplicate identity_id: {identity.identity_id}")
+            raise RuntimeCoreInvariantError("duplicate identity_id")
         self._identities[identity.identity_id] = identity
         return identity
 
@@ -95,7 +95,7 @@ class CommunicationSurfaceEngine:
         if not isinstance(handle, ConversationHandle):
             raise RuntimeCoreInvariantError("handle must be a ConversationHandle")
         if handle.conversation_id in self._conversations:
-            raise RuntimeCoreInvariantError(f"duplicate conversation_id: {handle.conversation_id}")
+            raise RuntimeCoreInvariantError("duplicate conversation_id")
         self._conversations[handle.conversation_id] = handle
         return handle
 
@@ -111,7 +111,7 @@ class CommunicationSurfaceEngine:
         if not isinstance(message, InboundMessage):
             raise RuntimeCoreInvariantError("message must be an InboundMessage")
         if message.message_id in self._inbound:
-            raise RuntimeCoreInvariantError(f"duplicate inbound message_id: {message.message_id}")
+            raise RuntimeCoreInvariantError("duplicate inbound message_id")
         self._inbound[message.message_id] = message
         return message
 
@@ -130,7 +130,7 @@ class CommunicationSurfaceEngine:
         if not isinstance(message, OutboundMessage):
             raise RuntimeCoreInvariantError("message must be an OutboundMessage")
         if message.message_id in self._outbound:
-            raise RuntimeCoreInvariantError(f"duplicate outbound message_id: {message.message_id}")
+            raise RuntimeCoreInvariantError("duplicate outbound message_id")
         self._outbound[message.message_id] = message
         # Track timestamp for rate limiting
         ts_list = self._outbound_timestamps.setdefault(message.channel_type, [])
@@ -152,9 +152,9 @@ class CommunicationSurfaceEngine:
         if not isinstance(receipt, DeliveryReceipt):
             raise RuntimeCoreInvariantError("receipt must be a DeliveryReceipt")
         if receipt.message_id not in self._outbound:
-            raise RuntimeCoreInvariantError(f"outbound message_id not found: {receipt.message_id}")
+            raise RuntimeCoreInvariantError("outbound message_id not found")
         if receipt.receipt_id in self._receipts:
-            raise RuntimeCoreInvariantError(f"duplicate receipt_id: {receipt.receipt_id}")
+            raise RuntimeCoreInvariantError("duplicate receipt_id")
         self._receipts[receipt.receipt_id] = receipt
         return receipt
 
@@ -200,7 +200,7 @@ class CommunicationSurfaceEngine:
         if not isinstance(session, CallSession):
             raise RuntimeCoreInvariantError("session must be a CallSession")
         if session.session_id in self._call_sessions:
-            raise RuntimeCoreInvariantError(f"duplicate session_id: {session.session_id}")
+            raise RuntimeCoreInvariantError("duplicate session_id")
         self._call_sessions[session.session_id] = session
         return session
 
@@ -214,9 +214,9 @@ class CommunicationSurfaceEngine:
         """Complete a call session with final state."""
         existing = self._call_sessions.get(session_id)
         if existing is None:
-            raise RuntimeCoreInvariantError(f"session_id not found: {session_id}")
+            raise RuntimeCoreInvariantError("session_id not found")
         if existing.state in (CallSessionState.COMPLETED, CallSessionState.FAILED, CallSessionState.MISSED):
-            raise RuntimeCoreInvariantError(f"session already terminal: {existing.state}")
+            raise RuntimeCoreInvariantError("session already terminal")
         completed = CallSession(
             session_id=existing.session_id,
             conversation_id=existing.conversation_id,
@@ -239,9 +239,9 @@ class CommunicationSurfaceEngine:
         if not isinstance(transcript, CallTranscript):
             raise RuntimeCoreInvariantError("transcript must be a CallTranscript")
         if transcript.session_id not in self._call_sessions:
-            raise RuntimeCoreInvariantError(f"session_id not found: {transcript.session_id}")
+            raise RuntimeCoreInvariantError("session_id not found")
         if transcript.transcript_id in self._transcripts:
-            raise RuntimeCoreInvariantError(f"duplicate transcript_id: {transcript.transcript_id}")
+            raise RuntimeCoreInvariantError("duplicate transcript_id")
         self._transcripts[transcript.transcript_id] = transcript
         return transcript
 
@@ -276,7 +276,7 @@ class CommunicationSurfaceEngine:
                 policy_id=policy_id,
                 channel_type=channel_type,
                 effect=CommunicationPolicyEffect.DENY,
-                reason="No policy found — fail-closed deny",
+                reason="no policy found",
                 evaluated_at=_now_iso(),
             )
             self._policy_decisions.append(decision)
@@ -291,7 +291,7 @@ class CommunicationSurfaceEngine:
                 policy_id=policy_id,
                 channel_type=channel_type,
                 effect=CommunicationPolicyEffect.DENY,
-                reason=f"Channel {channel_type} is denied by policy {policy.name}",
+                reason="channel denied",
                 evaluated_at=now,
             )
             self._policy_decisions.append(decision)
@@ -304,7 +304,7 @@ class CommunicationSurfaceEngine:
                 policy_id=policy_id,
                 channel_type=channel_type,
                 effect=CommunicationPolicyEffect.REQUIRE_APPROVAL,
-                reason=f"Channel {channel_type} requires approval under policy {policy.name}",
+                reason="channel requires approval",
                 evaluated_at=now,
             )
             self._policy_decisions.append(decision)
@@ -325,7 +325,7 @@ class CommunicationSurfaceEngine:
                     policy_id=policy_id,
                     channel_type=channel_type,
                     effect=CommunicationPolicyEffect.RATE_LIMITED,
-                    reason=f"Rate limit exceeded: {len(recent)}/{policy.max_outbound_per_hour} per hour",
+                    reason="rate limit exceeded",
                     evaluated_at=now,
                 )
                 self._policy_decisions.append(decision)
@@ -338,7 +338,7 @@ class CommunicationSurfaceEngine:
                 policy_id=policy_id,
                 channel_type=channel_type,
                 effect=CommunicationPolicyEffect.ALLOW,
-                reason=f"Channel {channel_type} is allowed by policy {policy.name}",
+                reason="channel allowed",
                 evaluated_at=now,
             )
             self._policy_decisions.append(decision)
@@ -350,7 +350,7 @@ class CommunicationSurfaceEngine:
             policy_id=policy_id,
             channel_type=channel_type,
             effect=CommunicationPolicyEffect.DENY,
-            reason=f"Channel {channel_type} not in allowed list — fail-closed deny",
+            reason="channel denied",
             evaluated_at=now,
         )
         self._policy_decisions.append(decision)

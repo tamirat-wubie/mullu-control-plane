@@ -8,12 +8,16 @@ from __future__ import annotations
 from typing import Any
 
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from mcoi_runtime.app.routers.deps import deps
-from mcoi_runtime.core.webhook_system import WebhookSubscription
+from mcoi_runtime.governance.network.webhook import WebhookSubscription
 
 router = APIRouter()
+
+
+def _agent_error_detail(error: str, error_code: str) -> dict[str, object]:
+    return {"error": error, "error_code": error_code, "governed": True}
 
 
 # ── Pydantic request models ──────────────────────────────────────────────
@@ -42,7 +46,7 @@ class ChainRequest(BaseModel):
 
 class QueueSubmitRequest(BaseModel):
     task_id: str
-    payload: dict[str, Any] = {}
+    payload: dict[str, Any] = Field(default_factory=dict)
     priority: int = 0
     tenant_id: str = ""
 
@@ -71,8 +75,8 @@ class OrchestrationPlanRequest(BaseModel):
 class HandoffRequest(BaseModel):
     from_agent: str
     to_agent: str
-    required_capabilities: list[str] = []
-    payload: dict[str, Any] = {}
+    required_capabilities: list[str] = Field(default_factory=list)
+    payload: dict[str, Any] = Field(default_factory=dict)
 
 
 # ═══ Agent Registry ══════════════════════════════════════════════════════
@@ -292,7 +296,7 @@ def get_trace(trace_id: str):
     deps.metrics.inc("requests_governed")
     spans = deps.request_tracer.get_trace(trace_id)
     if not spans:
-        raise HTTPException(404, detail=f"Trace not found: {trace_id}")
+        raise HTTPException(404, detail={"error": "trace not found", "error_code": "trace_not_found", "governed": True})
     return {
         "trace_id": trace_id,
         "spans": [s.to_dict() for s in spans],
@@ -323,8 +327,8 @@ def create_orchestration_plan(req: OrchestrationPlanRequest):
     deps.metrics.inc("requests_governed")
     try:
         plan = deps.agent_orchestrator.create_plan(req.initiator_id, req.goal)
-    except ValueError as e:
-        raise HTTPException(400, detail=str(e))
+    except ValueError:
+        raise HTTPException(400, detail={"error": "invalid orchestration request", "error_code": "invalid_request", "governed": True})
     return {"plan": plan.to_dict(), "governed": True}
 
 
@@ -334,7 +338,7 @@ def get_orchestration_plan(plan_id: str):
     deps.metrics.inc("requests_governed")
     plan = deps.agent_orchestrator.get_plan(plan_id)
     if not plan:
-        raise HTTPException(404, detail=f"Plan not found: {plan_id}")
+        raise HTTPException(404, detail=_agent_error_detail("plan not found", "plan_not_found"))
     return {"plan": plan.to_dict(), "governed": True}
 
 

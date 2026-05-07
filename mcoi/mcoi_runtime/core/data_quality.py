@@ -178,7 +178,7 @@ class DataQualityEngine:
     ) -> DataQualityRecord:
         """Register a data quality record."""
         if record_id in self._records:
-            raise RuntimeCoreInvariantError(f"Duplicate record_id: {record_id}")
+            raise RuntimeCoreInvariantError("Duplicate record_id")
         now = _now_iso()
         trust = compute_trust_score(error_count)
         record = DataQualityRecord(
@@ -201,7 +201,7 @@ class DataQualityEngine:
         """Get a quality record by ID."""
         r = self._records.get(record_id)
         if r is None:
-            raise RuntimeCoreInvariantError(f"Unknown record_id: {record_id}")
+            raise RuntimeCoreInvariantError("Unknown record_id")
         return r
 
     def records_for_tenant(self, tenant_id: str) -> tuple[DataQualityRecord, ...]:
@@ -223,7 +223,7 @@ class DataQualityEngine:
     ) -> SchemaVersion:
         """Register a schema version. Raises on duplicate."""
         if version_id in self._schemas:
-            raise RuntimeCoreInvariantError(f"Duplicate version_id: {version_id}")
+            raise RuntimeCoreInvariantError("Duplicate version_id")
         now = _now_iso()
         schema = SchemaVersion(
             version_id=version_id,
@@ -245,7 +245,7 @@ class DataQualityEngine:
         """Transition a schema to DEPRECATED."""
         schema = self._schemas.get(version_id)
         if schema is None:
-            raise RuntimeCoreInvariantError(f"Unknown version_id: {version_id}")
+            raise RuntimeCoreInvariantError("Unknown version_id")
         if schema.status == SchemaEvolutionStatus.RETIRED:
             raise RuntimeCoreInvariantError("Cannot transition from RETIRED (terminal state)")
         updated = SchemaVersion(
@@ -268,7 +268,7 @@ class DataQualityEngine:
         """Transition a schema to RETIRED (terminal)."""
         schema = self._schemas.get(version_id)
         if schema is None:
-            raise RuntimeCoreInvariantError(f"Unknown version_id: {version_id}")
+            raise RuntimeCoreInvariantError("Unknown version_id")
         if schema.status == SchemaEvolutionStatus.RETIRED:
             raise RuntimeCoreInvariantError("Cannot transition from RETIRED (terminal state)")
         updated = SchemaVersion(
@@ -302,7 +302,7 @@ class DataQualityEngine:
     ) -> DriftDetection:
         """Create a drift detection with auto-computed severity."""
         if detection_id in self._drifts:
-            raise RuntimeCoreInvariantError(f"Duplicate detection_id: {detection_id}")
+            raise RuntimeCoreInvariantError("Duplicate detection_id")
         severity = _auto_drift_severity(expected_type, actual_type, field_name)
         now = _now_iso()
         drift = DriftDetection(
@@ -337,7 +337,7 @@ class DataQualityEngine:
     ) -> LineageRecord:
         """Register a lineage record."""
         if lineage_id in self._lineages:
-            raise RuntimeCoreInvariantError(f"Duplicate lineage_id: {lineage_id}")
+            raise RuntimeCoreInvariantError("Duplicate lineage_id")
         now = _now_iso()
         lineage = LineageRecord(
             lineage_id=lineage_id,
@@ -359,14 +359,14 @@ class DataQualityEngine:
         """Get a lineage record by ID."""
         lr = self._lineages.get(lineage_id)
         if lr is None:
-            raise RuntimeCoreInvariantError(f"Unknown lineage_id: {lineage_id}")
+            raise RuntimeCoreInvariantError("Unknown lineage_id")
         return lr
 
     def verify_lineage(self, lineage_id: str, verified: bool = True) -> LineageRecord:
         """Mark a lineage as VERIFIED or BROKEN."""
         lr = self._lineages.get(lineage_id)
         if lr is None:
-            raise RuntimeCoreInvariantError(f"Unknown lineage_id: {lineage_id}")
+            raise RuntimeCoreInvariantError("Unknown lineage_id")
         new_disp = LineageDisposition.VERIFIED if verified else LineageDisposition.BROKEN
         updated = LineageRecord(
             lineage_id=lr.lineage_id,
@@ -399,7 +399,7 @@ class DataQualityEngine:
     ) -> DuplicateRecord:
         """Register a suspected duplicate."""
         if duplicate_id in self._duplicates:
-            raise RuntimeCoreInvariantError(f"Duplicate duplicate_id: {duplicate_id}")
+            raise RuntimeCoreInvariantError("Duplicate duplicate_id")
         now = _now_iso()
         dup = DuplicateRecord(
             duplicate_id=duplicate_id,
@@ -420,7 +420,7 @@ class DataQualityEngine:
         """Transition CONFIRMED -> MERGED."""
         dup = self._duplicates.get(duplicate_id)
         if dup is None:
-            raise RuntimeCoreInvariantError(f"Unknown duplicate_id: {duplicate_id}")
+            raise RuntimeCoreInvariantError("Unknown duplicate_id")
         if dup.disposition != DuplicateDisposition.CONFIRMED:
             raise RuntimeCoreInvariantError("Only CONFIRMED duplicates can be MERGED")
         updated = DuplicateRecord(
@@ -443,7 +443,7 @@ class DataQualityEngine:
         """Dismiss a suspected duplicate -> UNIQUE."""
         dup = self._duplicates.get(duplicate_id)
         if dup is None:
-            raise RuntimeCoreInvariantError(f"Unknown duplicate_id: {duplicate_id}")
+            raise RuntimeCoreInvariantError("Unknown duplicate_id")
         updated = DuplicateRecord(
             duplicate_id=dup.duplicate_id,
             tenant_id=dup.tenant_id,
@@ -464,7 +464,7 @@ class DataQualityEngine:
         """Confirm a suspected duplicate -> CONFIRMED (internal)."""
         dup = self._duplicates.get(duplicate_id)
         if dup is None:
-            raise RuntimeCoreInvariantError(f"Unknown duplicate_id: {duplicate_id}")
+            raise RuntimeCoreInvariantError("Unknown duplicate_id")
         updated = DuplicateRecord(
             duplicate_id=dup.duplicate_id,
             tenant_id=dup.tenant_id,
@@ -493,7 +493,7 @@ class DataQualityEngine:
     ) -> ReconciliationRecord:
         """Create a reconciliation record."""
         if reconciliation_id in self._reconciliations:
-            raise RuntimeCoreInvariantError(f"Duplicate reconciliation_id: {reconciliation_id}")
+            raise RuntimeCoreInvariantError("Duplicate reconciliation_id")
         now = _now_iso()
         rec = ReconciliationRecord(
             reconciliation_id=reconciliation_id,
@@ -524,7 +524,7 @@ class DataQualityEngine:
     ) -> SourceQualityPolicy:
         """Register a source quality policy."""
         if policy_id in self._policies:
-            raise RuntimeCoreInvariantError(f"Duplicate policy_id: {policy_id}")
+            raise RuntimeCoreInvariantError("Duplicate policy_id")
         now = _now_iso()
         policy = SourceQualityPolicy(
             policy_id=policy_id,
@@ -551,7 +551,7 @@ class DataQualityEngine:
     ) -> DataQualitySnapshot:
         """Capture a tenant-scoped snapshot."""
         if snapshot_id in self._snapshot_ids:
-            raise RuntimeCoreInvariantError(f"Duplicate snapshot_id: {snapshot_id}")
+            raise RuntimeCoreInvariantError("Duplicate snapshot_id")
         now = _now_iso()
         tenant_records = sum(1 for r in self._records.values() if r.tenant_id == tenant_id)
         tenant_schemas = sum(1 for s in self._schemas.values() if s.tenant_id == tenant_id)
@@ -606,7 +606,7 @@ class DataQualityEngine:
                     violation_id=vid,
                     tenant_id=tenant_id,
                     operation="dirty_no_quarantine",
-                    reason=f"Record {rec.record_id} is DIRTY but not quarantined",
+                    reason="dirty record not quarantined",
                     detected_at=now,
                 )
                 self._violations[vid] = violation
@@ -624,7 +624,7 @@ class DataQualityEngine:
                     violation_id=vid,
                     tenant_id=tenant_id,
                     operation="breaking_drift_unresolved",
-                    reason=f"Breaking drift {drift.detection_id} on field {drift.field_name}",
+                    reason="breaking drift unresolved",
                     detected_at=now,
                 )
                 self._violations[vid] = violation
@@ -642,7 +642,7 @@ class DataQualityEngine:
                     violation_id=vid,
                     tenant_id=tenant_id,
                     operation="broken_lineage",
-                    reason=f"Lineage {lin.lineage_id} is BROKEN",
+                    reason="lineage is broken",
                     detected_at=now,
                 )
                 self._violations[vid] = violation

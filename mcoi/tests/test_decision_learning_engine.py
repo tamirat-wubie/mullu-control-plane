@@ -275,6 +275,9 @@ class TestGenerateSignals:
         assert len(signals) == 4  # One per factor
         assert all(s.direction == "strengthen" for s in signals)
         assert all(s.magnitude == 0.1 for s in signals)
+        assert signals[0].reason == "outcome quality signal detected"
+        assert outcome.quality.value not in signals[0].reason
+        assert signals[0].factor_kind not in signals[0].reason
 
     def test_failure_generates_weaken(self) -> None:
         engine = _make_engine()
@@ -425,6 +428,9 @@ class TestComputeAdjustments:
         assert adjustments[0].adjustment_type == AdjustmentType.WEIGHT_INCREASE
         assert adjustments[0].target_factor_kind == "risk"
         assert adjustments[0].delta > 0
+        assert adjustments[0].reason == "aggregated learning signal"
+        assert adjustments[0].target_factor_kind not in adjustments[0].reason
+        assert f"{adjustments[0].delta:+.6f}" not in adjustments[0].reason
 
     def test_weaken_signals_decrease_weight(self) -> None:
         engine = _make_engine()

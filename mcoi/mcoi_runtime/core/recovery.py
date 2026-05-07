@@ -114,7 +114,7 @@ class RecoveryEngine:
                     incident_id=incident_id,
                     action=action,
                     status=RecoveryDecisionStatus.BLOCKED_POLICY,
-                    reason=f"retry limit reached ({MAX_RETRY_ATTEMPTS})",
+                    reason="retry limit reached",
                     autonomy_mode=autonomy_mode,
                     profile_id=profile_id,
                 )
@@ -128,13 +128,13 @@ class RecoveryEngine:
         if autonomy_mode == "approval_required" and action in _APPROVAL_GATED_ACTIONS:
             if has_approval:
                 status = RecoveryDecisionStatus.APPROVED
-                reason = f"{action.value} approved by operator"
+                reason = "recovery action approved by operator"
             else:
                 status = RecoveryDecisionStatus.BLOCKED_AUTONOMY
-                reason = f"{action.value} requires approval in approval_required mode"
+                reason = "approval required for recovery action"
         elif action in allowed:
             status = RecoveryDecisionStatus.APPROVED
-            reason = f"{action.value} permitted in {autonomy_mode} mode"
+            reason = "recovery action permitted"
         elif action is RecoveryAction.ROLLBACK:
             # Rollback always needs explicit approval
             if has_approval:
@@ -145,7 +145,7 @@ class RecoveryEngine:
                 reason = "rollback requires explicit approval"
         else:
             status = RecoveryDecisionStatus.BLOCKED_AUTONOMY
-            reason = f"{action.value} not permitted in {autonomy_mode} mode"
+            reason = "recovery action blocked by autonomy mode"
 
         decision = RecoveryDecision(
             decision_id=self._make_id("recovery-decision"),

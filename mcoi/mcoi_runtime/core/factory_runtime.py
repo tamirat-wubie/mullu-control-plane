@@ -133,7 +133,7 @@ class FactoryRuntimeEngine:
     ) -> PlantRecord:
         """Register a factory plant."""
         if plant_id in self._plants:
-            raise RuntimeCoreInvariantError(f"Duplicate plant_id: {plant_id}")
+            raise RuntimeCoreInvariantError("Duplicate plant_id")
         now = _now_iso()
         plant = PlantRecord(
             plant_id=plant_id,
@@ -153,7 +153,7 @@ class FactoryRuntimeEngine:
         """Get a plant by ID."""
         p = self._plants.get(plant_id)
         if p is None:
-            raise RuntimeCoreInvariantError(f"Unknown plant_id: {plant_id}")
+            raise RuntimeCoreInvariantError("Unknown plant_id")
         return p
 
     def plants_for_tenant(self, tenant_id: str) -> tuple[PlantRecord, ...]:
@@ -173,7 +173,7 @@ class FactoryRuntimeEngine:
     ) -> LineRecord:
         """Register a production line, incrementing the parent plant line_count."""
         if line_id in self._lines:
-            raise RuntimeCoreInvariantError(f"Duplicate line_id: {line_id}")
+            raise RuntimeCoreInvariantError("Duplicate line_id")
         old_plant = self.get_plant(plant_id)
         now = _now_iso()
         line = LineRecord(
@@ -205,7 +205,7 @@ class FactoryRuntimeEngine:
         """Get a line by ID."""
         ln = self._lines.get(line_id)
         if ln is None:
-            raise RuntimeCoreInvariantError(f"Unknown line_id: {line_id}")
+            raise RuntimeCoreInvariantError("Unknown line_id")
         return ln
 
     # ------------------------------------------------------------------
@@ -222,7 +222,7 @@ class FactoryRuntimeEngine:
     ) -> StationRecord:
         """Register a station, incrementing the parent line station_count."""
         if station_id in self._stations:
-            raise RuntimeCoreInvariantError(f"Duplicate station_id: {station_id}")
+            raise RuntimeCoreInvariantError("Duplicate station_id")
         old_line = self.get_line(line_id)
         now = _now_iso()
         station = StationRecord(
@@ -263,7 +263,7 @@ class FactoryRuntimeEngine:
     ) -> MachineRecord:
         """Register a machine."""
         if machine_id in self._machines:
-            raise RuntimeCoreInvariantError(f"Duplicate machine_id: {machine_id}")
+            raise RuntimeCoreInvariantError("Duplicate machine_id")
         now = _now_iso()
         machine = MachineRecord(
             machine_id=machine_id,
@@ -294,7 +294,7 @@ class FactoryRuntimeEngine:
     ) -> WorkOrder:
         """Create a work order in DRAFT status."""
         if order_id in self._orders:
-            raise RuntimeCoreInvariantError(f"Duplicate order_id: {order_id}")
+            raise RuntimeCoreInvariantError("Duplicate order_id")
         self.get_plant(plant_id)  # ensure plant exists
         now = _now_iso()
         order = WorkOrder(
@@ -315,10 +315,10 @@ class FactoryRuntimeEngine:
     def _transition_order(self, order_id: str, target: WorkOrderStatus) -> WorkOrder:
         old = self._orders.get(order_id)
         if old is None:
-            raise RuntimeCoreInvariantError(f"Unknown order_id: {order_id}")
+            raise RuntimeCoreInvariantError("Unknown order_id")
         if old.status in _ORDER_TERMINAL:
             raise RuntimeCoreInvariantError(
-                f"Cannot transition order in terminal status {old.status.value}"
+                "Cannot transition order in terminal status"
             )
         updated = WorkOrder(
             order_id=old.order_id,
@@ -340,7 +340,7 @@ class FactoryRuntimeEngine:
         """Release a DRAFT order."""
         old = self._orders.get(order_id)
         if old is None:
-            raise RuntimeCoreInvariantError(f"Unknown order_id: {order_id}")
+            raise RuntimeCoreInvariantError("Unknown order_id")
         if old.status != WorkOrderStatus.DRAFT:
             raise RuntimeCoreInvariantError("Can only release DRAFT orders")
         return self._transition_order(order_id, WorkOrderStatus.RELEASED)
@@ -349,7 +349,7 @@ class FactoryRuntimeEngine:
         """Start a RELEASED order."""
         old = self._orders.get(order_id)
         if old is None:
-            raise RuntimeCoreInvariantError(f"Unknown order_id: {order_id}")
+            raise RuntimeCoreInvariantError("Unknown order_id")
         if old.status != WorkOrderStatus.RELEASED:
             raise RuntimeCoreInvariantError("Can only start RELEASED orders")
         return self._transition_order(order_id, WorkOrderStatus.IN_PROGRESS)
@@ -358,7 +358,7 @@ class FactoryRuntimeEngine:
         """Complete an IN_PROGRESS order."""
         old = self._orders.get(order_id)
         if old is None:
-            raise RuntimeCoreInvariantError(f"Unknown order_id: {order_id}")
+            raise RuntimeCoreInvariantError("Unknown order_id")
         if old.status != WorkOrderStatus.IN_PROGRESS:
             raise RuntimeCoreInvariantError("Can only complete IN_PROGRESS orders")
         return self._transition_order(order_id, WorkOrderStatus.COMPLETED)
@@ -380,11 +380,11 @@ class FactoryRuntimeEngine:
     ) -> BatchRecord:
         """Start a batch linked to a work order."""
         if batch_id in self._batches:
-            raise RuntimeCoreInvariantError(f"Duplicate batch_id: {batch_id}")
+            raise RuntimeCoreInvariantError("Duplicate batch_id")
         # Ensure order exists
         self._orders.get(order_id)
         if self._orders.get(order_id) is None:
-            raise RuntimeCoreInvariantError(f"Unknown order_id: {order_id}")
+            raise RuntimeCoreInvariantError("Unknown order_id")
         now = _now_iso()
         batch = BatchRecord(
             batch_id=batch_id,
@@ -404,7 +404,7 @@ class FactoryRuntimeEngine:
     def _get_batch(self, batch_id: str) -> BatchRecord:
         b = self._batches.get(batch_id)
         if b is None:
-            raise RuntimeCoreInvariantError(f"Unknown batch_id: {batch_id}")
+            raise RuntimeCoreInvariantError("Unknown batch_id")
         return b
 
     def complete_batch(self, batch_id: str) -> BatchRecord:
@@ -412,7 +412,7 @@ class FactoryRuntimeEngine:
         old = self._get_batch(batch_id)
         if old.status in _BATCH_TERMINAL:
             raise RuntimeCoreInvariantError(
-                f"Cannot complete batch in terminal status {old.status.value}"
+                "Cannot complete batch in terminal status"
             )
         # Compute yield_rate from QC
         checks = self.checks_for_batch(batch_id)
@@ -442,7 +442,7 @@ class FactoryRuntimeEngine:
         old = self._get_batch(batch_id)
         if old.status in _BATCH_TERMINAL:
             raise RuntimeCoreInvariantError(
-                f"Cannot reject batch in terminal status {old.status.value}"
+                "Cannot reject batch in terminal status"
             )
         updated = BatchRecord(
             batch_id=old.batch_id,
@@ -465,7 +465,7 @@ class FactoryRuntimeEngine:
         old = self._get_batch(batch_id)
         if old.status in _BATCH_TERMINAL:
             raise RuntimeCoreInvariantError(
-                f"Cannot scrap batch in terminal status {old.status.value}"
+                "Cannot scrap batch in terminal status"
             )
         updated = BatchRecord(
             batch_id=old.batch_id,
@@ -502,7 +502,7 @@ class FactoryRuntimeEngine:
     ) -> QualityCheck:
         """Record a quality check for a batch."""
         if check_id in self._checks:
-            raise RuntimeCoreInvariantError(f"Duplicate check_id: {check_id}")
+            raise RuntimeCoreInvariantError("Duplicate check_id")
         self._get_batch(batch_id)  # ensure batch exists
         now = _now_iso()
         qc = QualityCheck(
@@ -535,9 +535,9 @@ class FactoryRuntimeEngine:
     ) -> DowntimeEvent:
         """Record a downtime event for a machine."""
         if event_id in self._downtime:
-            raise RuntimeCoreInvariantError(f"Duplicate event_id: {event_id}")
+            raise RuntimeCoreInvariantError("Duplicate event_id")
         if machine_id not in self._machines:
-            raise RuntimeCoreInvariantError(f"Unknown machine_id: {machine_id}")
+            raise RuntimeCoreInvariantError("Unknown machine_id")
         now = _now_iso()
         dt = DowntimeEvent(
             event_id=event_id,
@@ -565,7 +565,7 @@ class FactoryRuntimeEngine:
     def factory_snapshot(self, snapshot_id: str, tenant_id: str) -> FactorySnapshot:
         """Capture a tenant-scoped point-in-time factory snapshot."""
         if snapshot_id in self._snapshot_ids:
-            raise RuntimeCoreInvariantError(f"Duplicate snapshot_id: {snapshot_id}")
+            raise RuntimeCoreInvariantError("Duplicate snapshot_id")
         now = _now_iso()
         snap = FactorySnapshot(
             snapshot_id=snapshot_id,
@@ -615,7 +615,7 @@ class FactoryRuntimeEngine:
                             "violation_id": vid,
                             "tenant_id": order.tenant_id,
                             "operation": "order_no_batches",
-                            "reason": f"Completed order {order.order_id} has 0 batches",
+                            "reason": "completed order has no batches",
                             "detected_at": now,
                         }
                         self._violations[vid] = v
@@ -636,7 +636,7 @@ class FactoryRuntimeEngine:
                             "violation_id": vid,
                             "tenant_id": batch.tenant_id,
                             "operation": "batch_no_qc",
-                            "reason": f"Completed batch {batch.batch_id} has 0 QC checks",
+                            "reason": "completed batch has no quality checks",
                             "detected_at": now,
                         }
                         self._violations[vid] = v
@@ -653,12 +653,12 @@ class FactoryRuntimeEngine:
                 })
                 if vid not in self._violations:
                     v = {
-                        "violation_id": vid,
-                        "tenant_id": machine.tenant_id,
-                        "operation": "machine_excessive_downtime",
-                        "reason": f"Machine {machine.machine_id} has {dt_count} downtime events",
-                        "detected_at": now,
-                    }
+                            "violation_id": vid,
+                            "tenant_id": machine.tenant_id,
+                            "operation": "machine_excessive_downtime",
+                            "reason": "machine has excessive downtime",
+                            "detected_at": now,
+                        }
                     self._violations[vid] = v
                     new_violations.append(v)
 

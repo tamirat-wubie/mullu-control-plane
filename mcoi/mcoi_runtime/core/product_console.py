@@ -128,7 +128,7 @@ class ProductConsoleEngine:
         disposition: SurfaceDisposition = SurfaceDisposition.VISIBLE,
     ) -> ConsoleSurface:
         if surface_id in self._surfaces:
-            raise RuntimeCoreInvariantError(f"surface already registered: {surface_id}")
+            raise RuntimeCoreInvariantError("surface already registered")
         now = self._now()
         record = ConsoleSurface(
             surface_id=surface_id,
@@ -145,7 +145,7 @@ class ProductConsoleEngine:
 
     def get_surface(self, surface_id: str) -> ConsoleSurface:
         if surface_id not in self._surfaces:
-            raise RuntimeCoreInvariantError(f"unknown surface: {surface_id}")
+            raise RuntimeCoreInvariantError("unknown surface")
         return self._surfaces[surface_id]
 
     def surfaces_for_tenant(self, tenant_id: str) -> tuple[ConsoleSurface, ...]:
@@ -153,10 +153,10 @@ class ProductConsoleEngine:
 
     def suspend_surface(self, surface_id: str) -> ConsoleSurface:
         if surface_id not in self._surfaces:
-            raise RuntimeCoreInvariantError(f"unknown surface: {surface_id}")
+            raise RuntimeCoreInvariantError("unknown surface")
         old = self._surfaces[surface_id]
         if old.status in _SURFACE_TERMINAL:
-            raise RuntimeCoreInvariantError(f"surface is in terminal state: {old.status.value}")
+            raise RuntimeCoreInvariantError("surface is in terminal state")
         updated = ConsoleSurface(
             surface_id=old.surface_id,
             tenant_id=old.tenant_id,
@@ -172,10 +172,10 @@ class ProductConsoleEngine:
 
     def close_surface(self, surface_id: str) -> ConsoleSurface:
         if surface_id not in self._surfaces:
-            raise RuntimeCoreInvariantError(f"unknown surface: {surface_id}")
+            raise RuntimeCoreInvariantError("unknown surface")
         old = self._surfaces[surface_id]
         if old.status in _SURFACE_TERMINAL:
-            raise RuntimeCoreInvariantError(f"surface already closed: {surface_id}")
+            raise RuntimeCoreInvariantError("surface already closed")
         updated = ConsoleSurface(
             surface_id=old.surface_id,
             tenant_id=old.tenant_id,
@@ -191,12 +191,12 @@ class ProductConsoleEngine:
 
     def activate_surface(self, surface_id: str) -> ConsoleSurface:
         if surface_id not in self._surfaces:
-            raise RuntimeCoreInvariantError(f"unknown surface: {surface_id}")
+            raise RuntimeCoreInvariantError("unknown surface")
         old = self._surfaces[surface_id]
         if old.status in _SURFACE_TERMINAL:
-            raise RuntimeCoreInvariantError(f"surface is in terminal state: {old.status.value}")
+            raise RuntimeCoreInvariantError("surface is in terminal state")
         if old.status != ConsoleStatus.SUSPENDED:
-            raise RuntimeCoreInvariantError(f"activate_surface requires SUSPENDED state, got {old.status.value}")
+            raise RuntimeCoreInvariantError("activate_surface requires SUSPENDED state")
         updated = ConsoleSurface(
             surface_id=old.surface_id,
             tenant_id=old.tenant_id,
@@ -225,7 +225,7 @@ class ProductConsoleEngine:
         order: int = 0,
     ) -> NavigationNode:
         if node_id in self._nodes:
-            raise RuntimeCoreInvariantError(f"node already registered: {node_id}")
+            raise RuntimeCoreInvariantError("node already registered")
         now = self._now()
         record = NavigationNode(
             node_id=node_id,
@@ -243,7 +243,7 @@ class ProductConsoleEngine:
 
     def get_node(self, node_id: str) -> NavigationNode:
         if node_id not in self._nodes:
-            raise RuntimeCoreInvariantError(f"unknown node: {node_id}")
+            raise RuntimeCoreInvariantError("unknown node")
         return self._nodes[node_id]
 
     def nodes_for_surface(self, surface_ref: str) -> tuple[NavigationNode, ...]:
@@ -265,7 +265,7 @@ class ProductConsoleEngine:
         view_mode: ViewMode = ViewMode.FULL,
     ) -> AdminPanel:
         if panel_id in self._panels:
-            raise RuntimeCoreInvariantError(f"panel already registered: {panel_id}")
+            raise RuntimeCoreInvariantError("panel already registered")
         now = self._now()
         record = AdminPanel(
             panel_id=panel_id,
@@ -282,7 +282,7 @@ class ProductConsoleEngine:
 
     def get_panel(self, panel_id: str) -> AdminPanel:
         if panel_id not in self._panels:
-            raise RuntimeCoreInvariantError(f"unknown panel: {panel_id}")
+            raise RuntimeCoreInvariantError("unknown panel")
         return self._panels[panel_id]
 
     def panels_for_surface(self, surface_ref: str) -> tuple[AdminPanel, ...]:
@@ -300,13 +300,13 @@ class ProductConsoleEngine:
         surface_ref: str,
     ) -> ConsoleSession:
         if session_id in self._sessions:
-            raise RuntimeCoreInvariantError(f"session already registered: {session_id}")
+            raise RuntimeCoreInvariantError("session already registered")
         # Validate surface exists and not CLOSED
         if surface_ref not in self._surfaces:
-            raise RuntimeCoreInvariantError(f"unknown surface: {surface_ref}")
+            raise RuntimeCoreInvariantError("unknown surface")
         surface = self._surfaces[surface_ref]
         if surface.status in _SURFACE_TERMINAL:
-            raise RuntimeCoreInvariantError(f"surface is in terminal state: {surface.status.value}")
+            raise RuntimeCoreInvariantError("surface is in terminal state")
         # Cross-tenant check
         if surface.tenant_id != tenant_id:
             vid = stable_identifier("viol-console", {"session_id": session_id, "tenant_id": tenant_id, "surface_tenant": surface.tenant_id})
@@ -315,12 +315,12 @@ class ProductConsoleEngine:
                 violation_id=vid,
                 tenant_id=tenant_id,
                 operation="start_console_session",
-                reason=f"cross-tenant access denied: session tenant {tenant_id} != surface tenant {surface.tenant_id}",
+                reason="cross-tenant access denied",
                 detected_at=now,
             )
             self._violations[vid] = violation
             _emit(self._events, "cross_tenant_session_denied", {"session_id": session_id, "tenant_id": tenant_id}, session_id, now)
-            raise RuntimeCoreInvariantError(f"cross-tenant access denied for session {session_id}")
+            raise RuntimeCoreInvariantError("cross-tenant access denied")
         now = self._now()
         record = ConsoleSession(
             session_id=session_id,
@@ -336,10 +336,10 @@ class ProductConsoleEngine:
 
     def end_session(self, session_id: str) -> ConsoleSession:
         if session_id not in self._sessions:
-            raise RuntimeCoreInvariantError(f"unknown session: {session_id}")
+            raise RuntimeCoreInvariantError("unknown session")
         old = self._sessions[session_id]
         if old.status != ConsoleStatus.ACTIVE:
-            raise RuntimeCoreInvariantError(f"session not active: {old.status.value}")
+            raise RuntimeCoreInvariantError("session not active")
         updated = ConsoleSession(
             session_id=old.session_id,
             tenant_id=old.tenant_id,
@@ -354,10 +354,10 @@ class ProductConsoleEngine:
 
     def lock_session(self, session_id: str) -> ConsoleSession:
         if session_id not in self._sessions:
-            raise RuntimeCoreInvariantError(f"unknown session: {session_id}")
+            raise RuntimeCoreInvariantError("unknown session")
         old = self._sessions[session_id]
         if old.status != ConsoleStatus.ACTIVE:
-            raise RuntimeCoreInvariantError(f"session not active: {old.status.value}")
+            raise RuntimeCoreInvariantError("session not active")
         updated = ConsoleSession(
             session_id=old.session_id,
             tenant_id=old.tenant_id,
@@ -383,7 +383,7 @@ class ProductConsoleEngine:
         operation: str,
     ) -> AdminActionRecord:
         if action_id in self._actions:
-            raise RuntimeCoreInvariantError(f"action already registered: {action_id}")
+            raise RuntimeCoreInvariantError("action already registered")
         # Validate session exists and is ACTIVE
         if session_ref not in self._sessions:
             vid = stable_identifier("viol-action", {"action_id": action_id, "session_ref": session_ref})
@@ -392,14 +392,14 @@ class ProductConsoleEngine:
                 violation_id=vid,
                 tenant_id=tenant_id,
                 operation="record_admin_action",
-                reason=f"action_no_session: session {session_ref} not found",
+                reason="action has no active session",
                 detected_at=now,
             )
             self._violations[vid] = violation
-            raise RuntimeCoreInvariantError(f"unknown session: {session_ref}")
+            raise RuntimeCoreInvariantError("unknown session")
         session = self._sessions[session_ref]
         if session.status != ConsoleStatus.ACTIVE:
-            raise RuntimeCoreInvariantError(f"session not active: {session.status.value}")
+            raise RuntimeCoreInvariantError("session not active")
         # Cross-tenant check
         if session.tenant_id != tenant_id:
             vid = stable_identifier("viol-xtenant-action", {"action_id": action_id, "tenant_id": tenant_id, "session_tenant": session.tenant_id})
@@ -408,12 +408,12 @@ class ProductConsoleEngine:
                 violation_id=vid,
                 tenant_id=tenant_id,
                 operation="record_admin_action",
-                reason=f"cross_tenant_access: action tenant {tenant_id} != session tenant {session.tenant_id}",
+                reason="cross-tenant access denied",
                 detected_at=now,
             )
             self._violations[vid] = violation
             _emit(self._events, "cross_tenant_action_denied", {"action_id": action_id, "tenant_id": tenant_id}, action_id, now)
-            raise RuntimeCoreInvariantError(f"cross-tenant access denied for action {action_id}")
+            raise RuntimeCoreInvariantError("cross-tenant access denied")
         now = self._now()
         record = AdminActionRecord(
             action_id=action_id,
@@ -430,10 +430,10 @@ class ProductConsoleEngine:
 
     def execute_action(self, action_id: str) -> AdminActionRecord:
         if action_id not in self._actions:
-            raise RuntimeCoreInvariantError(f"unknown action: {action_id}")
+            raise RuntimeCoreInvariantError("unknown action")
         old = self._actions[action_id]
         if old.status != AdminActionStatus.PENDING:
-            raise RuntimeCoreInvariantError(f"action not pending: {old.status.value}")
+            raise RuntimeCoreInvariantError("action not pending")
         updated = AdminActionRecord(
             action_id=old.action_id,
             tenant_id=old.tenant_id,
@@ -449,10 +449,10 @@ class ProductConsoleEngine:
 
     def deny_action(self, action_id: str) -> AdminActionRecord:
         if action_id not in self._actions:
-            raise RuntimeCoreInvariantError(f"unknown action: {action_id}")
+            raise RuntimeCoreInvariantError("unknown action")
         old = self._actions[action_id]
         if old.status != AdminActionStatus.PENDING:
-            raise RuntimeCoreInvariantError(f"action not pending: {old.status.value}")
+            raise RuntimeCoreInvariantError("action not pending")
         updated = AdminActionRecord(
             action_id=old.action_id,
             tenant_id=old.tenant_id,
@@ -468,10 +468,10 @@ class ProductConsoleEngine:
 
     def rollback_action(self, action_id: str) -> AdminActionRecord:
         if action_id not in self._actions:
-            raise RuntimeCoreInvariantError(f"unknown action: {action_id}")
+            raise RuntimeCoreInvariantError("unknown action")
         old = self._actions[action_id]
         if old.status != AdminActionStatus.EXECUTED:
-            raise RuntimeCoreInvariantError(f"action not executed: {old.status.value}")
+            raise RuntimeCoreInvariantError("action not executed")
         updated = AdminActionRecord(
             action_id=old.action_id,
             tenant_id=old.tenant_id,
@@ -498,7 +498,7 @@ class ProductConsoleEngine:
         reason: str,
     ) -> ConsoleDecision:
         if decision_id in self._decisions:
-            raise RuntimeCoreInvariantError(f"decision already registered: {decision_id}")
+            raise RuntimeCoreInvariantError("decision already registered")
         now = self._now()
         record = ConsoleDecision(
             decision_id=decision_id,
@@ -584,7 +584,7 @@ class ProductConsoleEngine:
                             violation_id=vid,
                             tenant_id=tenant_id,
                             operation="session_on_closed_surface",
-                            reason=f"session {s.session_id} active on closed surface {s.surface_ref}",
+                            reason="active session on closed surface",
                             detected_at=now,
                         )
                         self._violations[vid] = v
@@ -601,7 +601,7 @@ class ProductConsoleEngine:
                         violation_id=vid,
                         tenant_id=tenant_id,
                         operation="action_no_session",
-                        reason=f"action {a.action_id} has no active session {a.session_ref}",
+                        reason="action has no active session",
                         detected_at=now,
                     )
                     self._violations[vid] = v
@@ -620,7 +620,7 @@ class ProductConsoleEngine:
                             violation_id=vid,
                             tenant_id=tenant_id,
                             operation="cross_tenant_access",
-                            reason=f"action {a.action_id} tenant {a.tenant_id} != session tenant {session.tenant_id}",
+                            reason="cross-tenant access denied",
                             detected_at=now,
                         )
                         self._violations[vid] = v

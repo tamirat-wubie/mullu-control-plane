@@ -12,6 +12,7 @@ class TestBackpressure:
         assert state.level == PressureLevel.NORMAL
         assert state.should_shed is False
         assert state.delay_ms == 0.0
+        assert state.reason == "normal load"
 
     def test_elevated(self):
         bp = BackpressureEngine()
@@ -19,6 +20,8 @@ class TestBackpressure:
         state = bp.evaluate()
         assert state.level == PressureLevel.ELEVATED
         assert state.delay_ms > 0
+        assert state.reason == "elevated load"
+        assert "70" not in state.reason
 
     def test_high(self):
         bp = BackpressureEngine()

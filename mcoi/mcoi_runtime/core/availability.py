@@ -65,9 +65,7 @@ _VALID_PRIORITIES = frozenset(_PRIORITY_RANK.keys())
 def _validate_priority(priority: str) -> int:
     """Validate and return priority rank. Raises on invalid priority."""
     if priority not in _VALID_PRIORITIES:
-        raise RuntimeCoreInvariantError(
-            f"unknown priority: '{priority}' — must be one of {sorted(_VALID_PRIORITIES)}"
-        )
+        raise RuntimeCoreInvariantError("priority has unsupported value")
     return _PRIORITY_RANK[priority]
 
 
@@ -153,9 +151,7 @@ class AvailabilityEngine:
         reason: str = "",
     ) -> AvailabilityRecord:
         if record_id in self._availability_records:
-            raise RuntimeCoreInvariantError(
-                f"availability record '{record_id}' already exists"
-            )
+            raise RuntimeCoreInvariantError("availability record already exists")
         now = _now_iso()
         record = AvailabilityRecord(
             record_id=record_id,
@@ -209,13 +205,9 @@ class AvailabilityEngine:
         """Deactivate an availability record (set active=False)."""
         record = self._availability_records.get(record_id)
         if record is None:
-            raise RuntimeCoreInvariantError(
-                f"availability record '{record_id}' not found"
-            )
+            raise RuntimeCoreInvariantError("availability record not found")
         if not record.active:
-            raise RuntimeCoreInvariantError(
-                f"availability record '{record_id}' is already inactive"
-            )
+            raise RuntimeCoreInvariantError("availability record already inactive")
         deactivated = AvailabilityRecord(
             record_id=record.record_id,
             identity_ref=record.identity_ref,
@@ -265,7 +257,7 @@ class AvailabilityEngine:
                         decision_id=stable_identifier("avd", {"id": identity_ref, "ts": now_str}),
                         identity_ref=identity_ref,
                         resolution=AvailabilityResolution.UNAVAILABLE,
-                        reason=f"temporarily unavailable: {record.reason}",
+                        reason="temporarily unavailable",
                         priority_used=priority,
                         decided_at=now_str,
                     )
@@ -319,7 +311,7 @@ class AvailabilityEngine:
                     identity_ref=identity_ref,
                     resolution=AvailabilityResolution.UNAVAILABLE,
                     channel_chosen=channel,
-                    reason=f"channel {channel} blocked",
+                    reason="channel blocked",
                     priority_used=priority,
                     decided_at=now_str,
                 )
@@ -580,9 +572,9 @@ class AvailabilityEngine:
         """Cancel a meeting by replacing it with a CANCELLED-status copy."""
         meeting = self._meetings.get(meeting_id)
         if meeting is None:
-            raise RuntimeCoreInvariantError(f"meeting '{meeting_id}' not found")
+            raise RuntimeCoreInvariantError("meeting not found")
         if meeting.status == MeetingStatus.CANCELLED:
-            raise RuntimeCoreInvariantError(f"meeting '{meeting_id}' is already cancelled")
+            raise RuntimeCoreInvariantError("meeting already cancelled")
 
         cancelled = MeetingRecord(
             meeting_id=meeting.meeting_id,
@@ -711,7 +703,7 @@ class AvailabilityEngine:
                             identity_ref=identity_ref,
                             kind=SchedulingConflictKind.DOUBLE_BOOKING,
                             conflicting_window_ids=(m1.meeting_id, m2.meeting_id),
-                            description=f"Meetings '{m1.title}' and '{m2.title}' overlap",
+                            description="meetings overlap",
                             detected_at=now,
                         )
                         conflicts.append(conflict)
@@ -737,9 +729,7 @@ class AvailabilityEngine:
         capacity: int = 1,
     ) -> AvailabilityWindow:
         if window_id in self._windows:
-            raise RuntimeCoreInvariantError(
-                f"window '{window_id}' already exists"
-            )
+            raise RuntimeCoreInvariantError("window already exists")
         window = AvailabilityWindow(
             window_id=window_id,
             identity_ref=identity_ref,

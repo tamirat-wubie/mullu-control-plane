@@ -124,7 +124,7 @@ class GeometryRuntimeEngine:
     ) -> GeometryPoint:
         """Register a new geometry point. Duplicate point_id raises."""
         if point_id in self._points:
-            raise RuntimeCoreInvariantError(f"Duplicate point_id: {point_id}")
+            raise RuntimeCoreInvariantError("Duplicate point_id")
         now = self._now()
         point = GeometryPoint(
             point_id=point_id,
@@ -144,7 +144,7 @@ class GeometryRuntimeEngine:
     def get_point(self, point_id: str) -> GeometryPoint:
         p = self._points.get(point_id)
         if p is None:
-            raise RuntimeCoreInvariantError(f"Unknown point_id: {point_id}")
+            raise RuntimeCoreInvariantError("Unknown point_id")
         return p
 
     def points_for_tenant(self, tenant_id: str) -> tuple[GeometryPoint, ...]:
@@ -167,7 +167,7 @@ class GeometryRuntimeEngine:
     ) -> GeometryShape:
         """Register a new shape. Auto-computes area for BOX/POLYGON."""
         if shape_id in self._shapes:
-            raise RuntimeCoreInvariantError(f"Duplicate shape_id: {shape_id}")
+            raise RuntimeCoreInvariantError("Duplicate shape_id")
         if kind in (GeometryKind.BOX, GeometryKind.POLYGON):
             area = abs((x_max - x_min) * (y_max - y_min))
         else:
@@ -194,7 +194,7 @@ class GeometryRuntimeEngine:
     def get_shape(self, shape_id: str) -> GeometryShape:
         s = self._shapes.get(shape_id)
         if s is None:
-            raise RuntimeCoreInvariantError(f"Unknown shape_id: {shape_id}")
+            raise RuntimeCoreInvariantError("Unknown shape_id")
         return s
 
     def shapes_for_tenant(self, tenant_id: str) -> tuple[GeometryShape, ...]:
@@ -214,7 +214,7 @@ class GeometryRuntimeEngine:
     ) -> SpatialRegion:
         """Register a new spatial region."""
         if region_id in self._regions:
-            raise RuntimeCoreInvariantError(f"Duplicate region_id: {region_id}")
+            raise RuntimeCoreInvariantError("Duplicate region_id")
         now = self._now()
         region = SpatialRegion(
             region_id=region_id,
@@ -233,7 +233,7 @@ class GeometryRuntimeEngine:
     def get_region(self, region_id: str) -> SpatialRegion:
         r = self._regions.get(region_id)
         if r is None:
-            raise RuntimeCoreInvariantError(f"Unknown region_id: {region_id}")
+            raise RuntimeCoreInvariantError("Unknown region_id")
         return r
 
     def regions_for_tenant(self, tenant_id: str) -> tuple[SpatialRegion, ...]:
@@ -254,7 +254,7 @@ class GeometryRuntimeEngine:
     ) -> SpatialPath:
         """Register a new spatial path."""
         if path_id in self._paths:
-            raise RuntimeCoreInvariantError(f"Duplicate path_id: {path_id}")
+            raise RuntimeCoreInvariantError("Duplicate path_id")
         now = self._now()
         path = SpatialPath(
             path_id=path_id,
@@ -274,7 +274,7 @@ class GeometryRuntimeEngine:
     def get_path(self, path_id: str) -> SpatialPath:
         p = self._paths.get(path_id)
         if p is None:
-            raise RuntimeCoreInvariantError(f"Unknown path_id: {path_id}")
+            raise RuntimeCoreInvariantError("Unknown path_id")
         return p
 
     def paths_for_tenant(self, tenant_id: str) -> tuple[SpatialPath, ...]:
@@ -295,7 +295,7 @@ class GeometryRuntimeEngine:
     ) -> SpatialConstraint:
         """Register a new spatial constraint."""
         if constraint_id in self._constraints:
-            raise RuntimeCoreInvariantError(f"Duplicate constraint_id: {constraint_id}")
+            raise RuntimeCoreInvariantError("Duplicate constraint_id")
         now = self._now()
         constraint = SpatialConstraint(
             constraint_id=constraint_id,
@@ -405,7 +405,7 @@ class GeometryRuntimeEngine:
                 if sa is not None and sb is not None:
                     if self.check_overlap(constraint.target_a_ref, constraint.target_b_ref):
                         passed = False
-                        reason = f"Shapes {constraint.target_a_ref} and {constraint.target_b_ref} overlap"
+                        reason = "shapes overlap"
                 else:
                     reason = "one or both shape targets not found"
 
@@ -416,7 +416,7 @@ class GeometryRuntimeEngine:
                 if sh is not None and pt is not None:
                     if not self.check_containment(constraint.target_b_ref, constraint.target_a_ref):
                         passed = False
-                        reason = f"Point {constraint.target_b_ref} not inside shape {constraint.target_a_ref}"
+                        reason = "point is outside shape"
                 else:
                     reason = "shape or point target not found"
 
@@ -427,7 +427,7 @@ class GeometryRuntimeEngine:
                     dist = self.compute_distance(constraint.target_a_ref, constraint.target_b_ref)
                     if dist > constraint.threshold:
                         passed = False
-                        reason = f"Distance {dist:.4f} exceeds threshold {constraint.threshold}"
+                        reason = "distance exceeds threshold"
                 else:
                     reason = "one or both point targets not found"
 
@@ -551,7 +551,7 @@ class GeometryRuntimeEngine:
                             violation_id=vid,
                             tenant_id=tenant_id,
                             operation="overlap_detected",
-                            reason=f"Shapes {sa.shape_id} and {sb.shape_id} have overlapping bounding boxes",
+                            reason="shapes overlap",
                             detected_at=now,
                         )
                         self._violations[vid] = v
@@ -573,7 +573,7 @@ class GeometryRuntimeEngine:
                         violation_id=vid,
                         tenant_id=tenant_id,
                         operation="containment_breach",
-                        reason=f"Point {pt.point_id} is not contained in any shape",
+                        reason="point is not contained in any shape",
                         detected_at=now,
                     )
                     self._violations[vid] = v
@@ -590,7 +590,7 @@ class GeometryRuntimeEngine:
                         violation_id=vid,
                         tenant_id=tenant_id,
                         operation="route_blocked",
-                        reason=f"Path {path.path_id} has BLOCKED routing disposition",
+                        reason="path routing is blocked",
                         detected_at=now,
                     )
                     self._violations[vid] = v

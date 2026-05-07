@@ -1398,3 +1398,55 @@ class TestDuplicateIDRejection:
         populated.record_break_glass("x", "t-1", "id-1", "r", "a")
         with pytest.raises(RuntimeCoreInvariantError, match="duplicate"):
             populated.record_break_glass("x", "t-1", "id-1", "r2", "a")
+
+
+class TestBoundedIdentitySecurityContracts:
+    def test_identity_and_credential_messages_are_bounded(self, engine) -> None:
+        engine.register_identity("id-secret", "t-1", "Alice")
+        with pytest.raises(RuntimeCoreInvariantError, match="duplicate identity_id") as duplicate_identity_exc:
+            engine.register_identity("id-secret", "t-1", "Alice 2")
+        with pytest.raises(RuntimeCoreInvariantError, match="unknown identity_id") as unknown_identity_exc:
+            engine.get_identity("id-missing")
+
+        engine.register_credential("cred-secret", "t-1", "id-secret")
+        engine.revoke_credential("cred-secret")
+        with pytest.raises(RuntimeCoreInvariantError, match="credential is in terminal state") as terminal_credential_exc:
+            engine.expire_credential("cred-secret")
+
+        assert "id-secret" not in str(duplicate_identity_exc.value)
+        assert "id-missing" not in str(unknown_identity_exc.value)
+        assert "cred-secret" not in str(terminal_credential_exc.value)
+        assert "revoked" not in str(terminal_credential_exc.value).lower()
+
+    def test_session_and_recert_messages_are_bounded(self, engine) -> None:
+        engine.create_session("session-secret", "t-1", "id-1")
+        engine.terminate_session("session-secret")
+        with pytest.raises(RuntimeCoreInvariantError, match="session is in terminal state") as session_exc:
+            engine.lock_session("session-secret")
+
+        engine.request_recertification("recert-secret", "t-1", "id-1", "rev-1")
+        engine.approve_recertification("recert-secret")
+        with pytest.raises(RuntimeCoreInvariantError, match="recertification is in terminal state") as recert_exc:
+            engine.deny_recertification("recert-secret")
+
+        assert "session-secret" not in str(session_exc.value)
+        assert "terminated" not in str(session_exc.value).lower()
+        assert "recert-secret" not in str(recert_exc.value)
+        assert "approved" not in str(recert_exc.value).lower()
+
+    def test_violation_reasons_are_bounded(self, engine) -> None:
+        engine.register_identity("id-secret", "t-1", "Alice")
+        engine.register_credential("cred-secret", "t-1", "id-secret")
+        engine.expire_credential("cred-secret")
+        engine.create_session("session-secret", "t-1", "id-missing")
+        engine.request_elevation("elev-secret", "t-1", "id-secret", PrivilegeLevel.ELEVATED, "policy")
+        engine.record_break_glass("bg-secret", "t-1", "id-secret", "fire", "ceo")
+
+        engine.detect_security_violations("t-1")
+        reasons = {violation["reason"] for violation in engine._violations.values()}
+        assert "break-glass access active" in reasons
+        assert "expired credential remains active on identity" in reasons
+        assert "active session has no valid identity" in reasons
+        assert "elevation has no approval" in reasons
+        assert "break-glass access remains active" in reasons
+        assert all("secret" not in reason for reason in reasons)

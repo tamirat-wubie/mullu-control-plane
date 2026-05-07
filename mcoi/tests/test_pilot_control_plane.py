@@ -16,6 +16,13 @@ import pytest
 
 from mcoi_runtime.contracts.event import EventRecord, EventSource, EventType
 from mcoi_runtime.contracts.obligation import ObligationDeadline, ObligationOwner, ObligationTrigger
+from mcoi_runtime.contracts.pilot import (
+    CheckpointImportResult,
+    CheckpointImportVerdict,
+    OperatorAuthority,
+    StartupValidationResult,
+    StartupVerdict,
+)
 from mcoi_runtime.contracts.supervisor import LivelockStrategy, SupervisorPolicy
 from mcoi_runtime.core.event_spine import EventSpineEngine
 from mcoi_runtime.core.invariants import RuntimeCoreInvariantError
@@ -424,3 +431,65 @@ class TestOperatorAuditTrail:
         canary_actions = [a for a in actions if a.action == "set_canary_mode"]
         assert len(canary_actions) == 1
         assert canary_actions[0].target == "shadow"
+
+
+class TestBoundedPublicErrors:
+    def test_unregistered_operator_error_is_bounded(self):
+        plane = _make_plane()
+        plane.register_operator("admin-1", OperatorAuthority.ADMIN)
+        with pytest.raises(RuntimeCoreInvariantError) as exc_info:
+            plane.start("ghost-operator")
+        assert str(exc_info.value) == "operator is not registered"
+        assert "ghost-operator" not in str(exc_info.value)
+
+    def test_insufficient_authority_error_is_bounded(self):
+        plane = _make_plane()
+        plane.register_operator("viewer-1", OperatorAuthority.VIEWER)
+        with pytest.raises(RuntimeCoreInvariantError) as exc_info:
+            plane.start("viewer-1")
+        assert str(exc_info.value) == "operator lacks authority for requested action"
+        assert "viewer" not in str(exc_info.value)
+        assert "start" not in str(exc_info.value)
+
+    def test_startup_validation_failure_is_bounded(self):
+        plane = _make_plane()
+        plane.validate_startup = lambda: StartupValidationResult(  # type: ignore[method-assign]
+            validation_id="val-1",
+            verdict=StartupVerdict.FAILED_INVALID_POLICY,
+            checks_passed=("supervisor_present",),
+            checks_failed=("policy_thresholds_positive",),
+            detail="bad policy",
+            validated_at=_TS,
+        )
+        with pytest.raises(RuntimeCoreInvariantError) as exc_info:
+            plane.start("op-1")
+        assert str(exc_info.value) == "startup validation failed"
+        assert "failed_invalid_policy" not in str(exc_info.value)
+        assert "policy_thresholds_positive" not in str(exc_info.value)
+
+    def test_checkpoint_import_rejection_is_bounded(self):
+        plane = _make_plane()
+        plane.start("op-1")
+        plane.tick()
+        cp = plane.create_checkpoint("op-1")
+        plane.verify_checkpoint_import = lambda checkpoint: CheckpointImportResult(  # type: ignore[method-assign]
+            import_id="imp-1",
+            checkpoint_id=checkpoint.checkpoint_id,
+            verdict=CheckpointImportVerdict.REJECTED_EPOCH_MISMATCH,
+            checks_passed=("hashes_present",),
+            checks_failed=("epoch_match",),
+            verified_at=_TS,
+        )
+        with pytest.raises(RuntimeCoreInvariantError) as exc_info:
+            plane.import_checkpoint(cp, "op-1")
+        assert str(exc_info.value) == "checkpoint import rejected"
+        assert "rejected_epoch_mismatch" not in str(exc_info.value)
+        assert "epoch_match" not in str(exc_info.value)
+
+    def test_runbook_canary_promote_terminal_error_is_bounded(self):
+        plane = _make_plane()
+        plane.set_canary_mode(CanaryMode.ACTIVE, "op-1", "promote")
+        with pytest.raises(RuntimeCoreInvariantError) as exc_info:
+            plane.runbook_canary_promote("op-1", "promote again")
+        assert str(exc_info.value) == "cannot promote canary mode beyond terminal stage"
+        assert "active" not in str(exc_info.value)

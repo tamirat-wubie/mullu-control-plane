@@ -139,7 +139,7 @@ class CaseRuntimeEngine:
     ) -> CaseRecord:
         """Open a new case or investigation."""
         if case_id in self._cases:
-            raise RuntimeCoreInvariantError(f"Duplicate case_id: {case_id}")
+            raise RuntimeCoreInvariantError("Duplicate case_id")
         now = _now_iso()
         case = CaseRecord(
             case_id=case_id,
@@ -162,7 +162,7 @@ class CaseRuntimeEngine:
         """Get a case by ID."""
         c = self._cases.get(case_id)
         if c is None:
-            raise RuntimeCoreInvariantError(f"Unknown case_id: {case_id}")
+            raise RuntimeCoreInvariantError("Unknown case_id")
         return c
 
     def cases_for_tenant(self, tenant_id: str) -> tuple[CaseRecord, ...]:
@@ -173,7 +173,7 @@ class CaseRuntimeEngine:
         """Update a case's status."""
         old = self._cases.get(case_id)
         if old is None:
-            raise RuntimeCoreInvariantError(f"Unknown case_id: {case_id}")
+            raise RuntimeCoreInvariantError("Unknown case_id")
         if old.status == CaseStatus.CLOSED:
             raise RuntimeCoreInvariantError("Cannot update a closed case")
         if not isinstance(status, CaseStatus):
@@ -201,7 +201,7 @@ class CaseRuntimeEngine:
         """Escalate a case's severity."""
         old = self._cases.get(case_id)
         if old is None:
-            raise RuntimeCoreInvariantError(f"Unknown case_id: {case_id}")
+            raise RuntimeCoreInvariantError("Unknown case_id")
         if old.status == CaseStatus.CLOSED:
             raise RuntimeCoreInvariantError("Cannot escalate a closed case")
         updated = CaseRecord(
@@ -237,9 +237,9 @@ class CaseRuntimeEngine:
     ) -> CaseAssignment:
         """Assign an investigator or reviewer to a case."""
         if assignment_id in self._assignments:
-            raise RuntimeCoreInvariantError(f"Duplicate assignment_id: {assignment_id}")
+            raise RuntimeCoreInvariantError("Duplicate assignment_id")
         if case_id not in self._cases:
-            raise RuntimeCoreInvariantError(f"Unknown case_id: {case_id}")
+            raise RuntimeCoreInvariantError("Unknown case_id")
         now = _now_iso()
         assignment = CaseAssignment(
             assignment_id=assignment_id,
@@ -277,9 +277,9 @@ class CaseRuntimeEngine:
     ) -> EvidenceItem:
         """Add an evidence item to a case."""
         if evidence_id in self._evidence:
-            raise RuntimeCoreInvariantError(f"Duplicate evidence_id: {evidence_id}")
+            raise RuntimeCoreInvariantError("Duplicate evidence_id")
         if case_id not in self._cases:
-            raise RuntimeCoreInvariantError(f"Unknown case_id: {case_id}")
+            raise RuntimeCoreInvariantError("Unknown case_id")
         now = _now_iso()
         item = EvidenceItem(
             evidence_id=evidence_id,
@@ -303,7 +303,7 @@ class CaseRuntimeEngine:
         """Get an evidence item by ID."""
         e = self._evidence.get(evidence_id)
         if e is None:
-            raise RuntimeCoreInvariantError(f"Unknown evidence_id: {evidence_id}")
+            raise RuntimeCoreInvariantError("Unknown evidence_id")
         return e
 
     def evidence_for_case(self, case_id: str) -> tuple[EvidenceItem, ...]:
@@ -314,10 +314,10 @@ class CaseRuntimeEngine:
         """Admit an evidence item (PENDING → ADMITTED)."""
         old = self._evidence.get(evidence_id)
         if old is None:
-            raise RuntimeCoreInvariantError(f"Unknown evidence_id: {evidence_id}")
+            raise RuntimeCoreInvariantError("Unknown evidence_id")
         if old.status != EvidenceStatus.PENDING:
             raise RuntimeCoreInvariantError(
-                f"Can only admit PENDING evidence, got {old.status.value}"
+                "can only admit pending evidence from current status"
             )
         updated = EvidenceItem(
             evidence_id=old.evidence_id,
@@ -341,7 +341,7 @@ class CaseRuntimeEngine:
         """Exclude an evidence item from a case."""
         old = self._evidence.get(evidence_id)
         if old is None:
-            raise RuntimeCoreInvariantError(f"Unknown evidence_id: {evidence_id}")
+            raise RuntimeCoreInvariantError("Unknown evidence_id")
         if old.source_type == "legal_hold":
             raise RuntimeCoreInvariantError(
                 "Cannot exclude legal-hold evidence from case"
@@ -379,12 +379,12 @@ class CaseRuntimeEngine:
     ) -> EvidenceCollection:
         """Group evidence items into a collection."""
         if collection_id in self._collections:
-            raise RuntimeCoreInvariantError(f"Duplicate collection_id: {collection_id}")
+            raise RuntimeCoreInvariantError("Duplicate collection_id")
         if case_id not in self._cases:
-            raise RuntimeCoreInvariantError(f"Unknown case_id: {case_id}")
+            raise RuntimeCoreInvariantError("Unknown case_id")
         for eid in evidence_ids:
             if eid not in self._evidence:
-                raise RuntimeCoreInvariantError(f"Unknown evidence_id: {eid}")
+                raise RuntimeCoreInvariantError("Unknown evidence_id")
         now = _now_iso()
         collection = EvidenceCollection(
             collection_id=collection_id,
@@ -420,11 +420,11 @@ class CaseRuntimeEngine:
     ) -> ReviewRecord:
         """Record a review of evidence."""
         if review_id in self._reviews:
-            raise RuntimeCoreInvariantError(f"Duplicate review_id: {review_id}")
+            raise RuntimeCoreInvariantError("Duplicate review_id")
         if case_id not in self._cases:
-            raise RuntimeCoreInvariantError(f"Unknown case_id: {case_id}")
+            raise RuntimeCoreInvariantError("Unknown case_id")
         if evidence_id not in self._evidence:
-            raise RuntimeCoreInvariantError(f"Unknown evidence_id: {evidence_id}")
+            raise RuntimeCoreInvariantError("Unknown evidence_id")
         now = _now_iso()
         review = ReviewRecord(
             review_id=review_id,
@@ -499,9 +499,9 @@ class CaseRuntimeEngine:
     ) -> FindingRecord:
         """Record a finding discovered during investigation."""
         if finding_id in self._findings:
-            raise RuntimeCoreInvariantError(f"Duplicate finding_id: {finding_id}")
+            raise RuntimeCoreInvariantError("Duplicate finding_id")
         if case_id not in self._cases:
-            raise RuntimeCoreInvariantError(f"Unknown case_id: {case_id}")
+            raise RuntimeCoreInvariantError("Unknown case_id")
         now = _now_iso()
         finding = FindingRecord(
             finding_id=finding_id,
@@ -557,9 +557,9 @@ class CaseRuntimeEngine:
     ) -> CaseDecision:
         """Make a formal decision on a case."""
         if decision_id in self._decisions:
-            raise RuntimeCoreInvariantError(f"Duplicate decision_id: {decision_id}")
+            raise RuntimeCoreInvariantError("Duplicate decision_id")
         if case_id not in self._cases:
-            raise RuntimeCoreInvariantError(f"Unknown case_id: {case_id}")
+            raise RuntimeCoreInvariantError("Unknown case_id")
         now = _now_iso()
         decision = CaseDecision(
             decision_id=decision_id,
@@ -587,7 +587,7 @@ class CaseRuntimeEngine:
         """Close a case and produce a closure report."""
         case = self._cases.get(case_id)
         if case is None:
-            raise RuntimeCoreInvariantError(f"Unknown case_id: {case_id}")
+            raise RuntimeCoreInvariantError("Unknown case_id")
         if case.status == CaseStatus.CLOSED:
             raise RuntimeCoreInvariantError("Case is already closed")
 
@@ -683,7 +683,7 @@ class CaseRuntimeEngine:
                             case_id=case.case_id,
                             tenant_id=case.tenant_id,
                             operation="unreviewed_evidence_on_closure",
-                            reason=f"{len(pending)} evidence items still pending on closed case",
+                            reason="pending evidence on closed case",
                             detected_at=now,
                         )
                         self._violations[vid] = v
@@ -714,7 +714,7 @@ class CaseRuntimeEngine:
     ) -> CaseSnapshot:
         """Capture a point-in-time case state snapshot."""
         if snapshot_id in self._snapshot_ids:
-            raise RuntimeCoreInvariantError(f"Duplicate snapshot_id: {snapshot_id}")
+            raise RuntimeCoreInvariantError("Duplicate snapshot_id")
         now = _now_iso()
         snapshot = CaseSnapshot(
             snapshot_id=snapshot_id,

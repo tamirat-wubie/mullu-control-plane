@@ -86,6 +86,19 @@ class TestScoreProvider:
         s2 = router.score_provider("p2", "ctx", estimated_cost=0.0, health_score=0.5, preference_score=0.5, strategy=RoutingStrategy.BALANCED)
         assert s2 > s1  # zero cost scores higher
 
+    def test_unknown_strategy_is_bounded(self):
+        router = _make_router()
+        with pytest.raises(ValueError, match="^unsupported routing strategy$") as exc_info:
+            router.score_provider(  # type: ignore[arg-type]
+                "p1",
+                "ctx",
+                estimated_cost=0.0,
+                health_score=0.5,
+                preference_score=0.5,
+                strategy="mystery",
+            )
+        assert "mystery" not in str(exc_info.value)
+
 
 # ---------------------------------------------------------------------------
 # rank_providers
@@ -231,7 +244,9 @@ class TestSelectProvider:
         router = _make_router()
         entries = (("prov-a", 100.0, 0.9, 0.7),)
         decision = router.select_provider(entries, "model", _default_constraints(strategy=RoutingStrategy.CHEAPEST))
-        assert "cheapest" in decision.rationale
+        assert decision.rationale == "top-ranked provider selected"
+        assert "cheapest" not in decision.rationale
+        assert "score=" not in decision.rationale
 
 
 # ---------------------------------------------------------------------------

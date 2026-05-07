@@ -135,7 +135,7 @@ class DistributedRuntimeEngine:
         capacity: int = 10,
     ) -> WorkerRecord:
         if worker_id in self._workers:
-            raise RuntimeCoreInvariantError(f"duplicate worker_id: {worker_id}")
+            raise RuntimeCoreInvariantError("duplicate worker_id")
         now = _now_iso()
         worker = WorkerRecord(
             worker_id=worker_id, tenant_id=tenant_id, display_name=display_name,
@@ -148,13 +148,13 @@ class DistributedRuntimeEngine:
 
     def get_worker(self, worker_id: str) -> WorkerRecord:
         if worker_id not in self._workers:
-            raise RuntimeCoreInvariantError(f"unknown worker_id: {worker_id}")
+            raise RuntimeCoreInvariantError("unknown worker_id")
         return self._workers[worker_id]
 
     def drain_worker(self, worker_id: str) -> WorkerRecord:
         worker = self.get_worker(worker_id)
         if worker.status == WorkerStatus.TERMINATED:
-            raise RuntimeCoreInvariantError(f"worker {worker_id} is TERMINATED")
+            raise RuntimeCoreInvariantError("worker is TERMINATED")
         now = _now_iso()
         updated = WorkerRecord(
             worker_id=worker.worker_id, tenant_id=worker.tenant_id,
@@ -169,7 +169,7 @@ class DistributedRuntimeEngine:
     def terminate_worker(self, worker_id: str) -> WorkerRecord:
         worker = self.get_worker(worker_id)
         if worker.status == WorkerStatus.TERMINATED:
-            raise RuntimeCoreInvariantError(f"worker {worker_id} is already TERMINATED")
+            raise RuntimeCoreInvariantError("worker is already TERMINATED")
         now = _now_iso()
         updated = WorkerRecord(
             worker_id=worker.worker_id, tenant_id=worker.tenant_id,
@@ -196,7 +196,7 @@ class DistributedRuntimeEngine:
         max_depth: int = 1000,
     ) -> QueueRecord:
         if queue_id in self._queues:
-            raise RuntimeCoreInvariantError(f"duplicate queue_id: {queue_id}")
+            raise RuntimeCoreInvariantError("duplicate queue_id")
         now = _now_iso()
         queue = QueueRecord(
             queue_id=queue_id, tenant_id=tenant_id, display_name=display_name,
@@ -209,13 +209,13 @@ class DistributedRuntimeEngine:
 
     def get_queue(self, queue_id: str) -> QueueRecord:
         if queue_id not in self._queues:
-            raise RuntimeCoreInvariantError(f"unknown queue_id: {queue_id}")
+            raise RuntimeCoreInvariantError("unknown queue_id")
         return self._queues[queue_id]
 
     def pause_queue(self, queue_id: str) -> QueueRecord:
         queue = self.get_queue(queue_id)
         if queue.status == QueueStatus.CLOSED:
-            raise RuntimeCoreInvariantError(f"queue {queue_id} is CLOSED")
+            raise RuntimeCoreInvariantError("queue is CLOSED")
         now = _now_iso()
         updated = QueueRecord(
             queue_id=queue.queue_id, tenant_id=queue.tenant_id,
@@ -230,7 +230,7 @@ class DistributedRuntimeEngine:
     def resume_queue(self, queue_id: str) -> QueueRecord:
         queue = self.get_queue(queue_id)
         if queue.status == QueueStatus.CLOSED:
-            raise RuntimeCoreInvariantError(f"queue {queue_id} is CLOSED")
+            raise RuntimeCoreInvariantError("queue is CLOSED")
         now = _now_iso()
         updated = QueueRecord(
             queue_id=queue.queue_id, tenant_id=queue.tenant_id,
@@ -245,7 +245,7 @@ class DistributedRuntimeEngine:
     def close_queue(self, queue_id: str) -> QueueRecord:
         queue = self.get_queue(queue_id)
         if queue.status == QueueStatus.CLOSED:
-            raise RuntimeCoreInvariantError(f"queue {queue_id} is already CLOSED")
+            raise RuntimeCoreInvariantError("queue is already CLOSED")
         now = _now_iso()
         updated = QueueRecord(
             queue_id=queue.queue_id, tenant_id=queue.tenant_id,
@@ -273,7 +273,7 @@ class DistributedRuntimeEngine:
         ttl_ms: int = 30000,
     ) -> LeaseRecord:
         if lease_id in self._leases:
-            raise RuntimeCoreInvariantError(f"duplicate lease_id: {lease_id}")
+            raise RuntimeCoreInvariantError("duplicate lease_id")
         now = _now_iso()
         lease = LeaseRecord(
             lease_id=lease_id, tenant_id=tenant_id, worker_id=worker_id,
@@ -286,12 +286,10 @@ class DistributedRuntimeEngine:
 
     def _transition_lease(self, lease_id: str, target: LeaseStatus) -> LeaseRecord:
         if lease_id not in self._leases:
-            raise RuntimeCoreInvariantError(f"unknown lease_id: {lease_id}")
+            raise RuntimeCoreInvariantError("unknown lease_id")
         lease = self._leases[lease_id]
         if lease.status in _LEASE_TERMINAL:
-            raise RuntimeCoreInvariantError(
-                f"lease {lease_id} is in terminal state {lease.status.value}"
-            )
+            raise RuntimeCoreInvariantError("lease is in terminal state")
         now = _now_iso()
         updated = LeaseRecord(
             lease_id=lease.lease_id, tenant_id=lease.tenant_id,
@@ -324,7 +322,7 @@ class DistributedRuntimeEngine:
         record_count: int = 0,
     ) -> ShardRecord:
         if shard_id in self._shards:
-            raise RuntimeCoreInvariantError(f"duplicate shard_id: {shard_id}")
+            raise RuntimeCoreInvariantError("duplicate shard_id")
         now = _now_iso()
         shard = ShardRecord(
             shard_id=shard_id, tenant_id=tenant_id, partition_key=partition_key,
@@ -337,12 +335,10 @@ class DistributedRuntimeEngine:
 
     def _transition_shard(self, shard_id: str, target: ShardStatus) -> ShardRecord:
         if shard_id not in self._shards:
-            raise RuntimeCoreInvariantError(f"unknown shard_id: {shard_id}")
+            raise RuntimeCoreInvariantError("unknown shard_id")
         shard = self._shards[shard_id]
         if shard.status in _SHARD_TERMINAL:
-            raise RuntimeCoreInvariantError(
-                f"shard {shard_id} is in terminal state {shard.status.value}"
-            )
+            raise RuntimeCoreInvariantError("shard is in terminal state")
         now = _now_iso()
         updated = ShardRecord(
             shard_id=shard.shard_id, tenant_id=shard.tenant_id,
@@ -375,7 +371,7 @@ class DistributedRuntimeEngine:
         worker_count: int = 0,
     ) -> DistributedCheckpoint:
         if checkpoint_id in self._checkpoints:
-            raise RuntimeCoreInvariantError(f"duplicate checkpoint_id: {checkpoint_id}")
+            raise RuntimeCoreInvariantError("duplicate checkpoint_id")
         now = _now_iso()
         cp = DistributedCheckpoint(
             checkpoint_id=checkpoint_id, tenant_id=tenant_id,
@@ -389,12 +385,10 @@ class DistributedRuntimeEngine:
 
     def _transition_checkpoint(self, checkpoint_id: str, target: CheckpointDisposition) -> DistributedCheckpoint:
         if checkpoint_id not in self._checkpoints:
-            raise RuntimeCoreInvariantError(f"unknown checkpoint_id: {checkpoint_id}")
+            raise RuntimeCoreInvariantError("unknown checkpoint_id")
         cp = self._checkpoints[checkpoint_id]
         if cp.disposition in _CHECKPOINT_TERMINAL:
-            raise RuntimeCoreInvariantError(
-                f"checkpoint {checkpoint_id} is in terminal state {cp.disposition.value}"
-            )
+            raise RuntimeCoreInvariantError("checkpoint is in terminal state")
         now = _now_iso()
         updated = DistributedCheckpoint(
             checkpoint_id=cp.checkpoint_id, tenant_id=cp.tenant_id,
@@ -427,7 +421,7 @@ class DistributedRuntimeEngine:
         backoff_ms: int = 1000,
     ) -> RetrySchedule:
         if schedule_id in self._retries:
-            raise RuntimeCoreInvariantError(f"duplicate schedule_id: {schedule_id}")
+            raise RuntimeCoreInvariantError("duplicate schedule_id")
         now = _now_iso()
         rs = RetrySchedule(
             schedule_id=schedule_id, tenant_id=tenant_id, task_ref=task_ref,
@@ -440,13 +434,11 @@ class DistributedRuntimeEngine:
 
     def increment_retry(self, schedule_id: str) -> RetrySchedule:
         if schedule_id not in self._retries:
-            raise RuntimeCoreInvariantError(f"unknown schedule_id: {schedule_id}")
+            raise RuntimeCoreInvariantError("unknown schedule_id")
         rs = self._retries[schedule_id]
         new_count = rs.retry_count + 1
         if new_count >= rs.max_retries:
-            raise RuntimeCoreInvariantError(
-                f"retry schedule {schedule_id} exceeded max_retries ({rs.max_retries})"
-            )
+            raise RuntimeCoreInvariantError("retry schedule exceeded max_retries")
         now = _now_iso()
         updated = RetrySchedule(
             schedule_id=rs.schedule_id, tenant_id=rs.tenant_id,
@@ -470,13 +462,11 @@ class DistributedRuntimeEngine:
         holder_ref: str,
     ) -> ConcurrencyLock:
         if lock_id in self._locks:
-            raise RuntimeCoreInvariantError(f"duplicate lock_id: {lock_id}")
+            raise RuntimeCoreInvariantError("duplicate lock_id")
         # Check for duplicate resource_ref
         for existing in self._locks.values():
             if existing.resource_ref == resource_ref:
-                raise RuntimeCoreInvariantError(
-                    f"resource {resource_ref} is already locked by {existing.holder_ref}"
-                )
+                raise RuntimeCoreInvariantError("resource already locked")
         now = _now_iso()
         lock = ConcurrencyLock(
             lock_id=lock_id, tenant_id=tenant_id, resource_ref=resource_ref,
@@ -488,7 +478,7 @@ class DistributedRuntimeEngine:
 
     def release_lock(self, lock_id: str) -> ConcurrencyLock:
         if lock_id not in self._locks:
-            raise RuntimeCoreInvariantError(f"unknown lock_id: {lock_id}")
+            raise RuntimeCoreInvariantError("unknown lock_id")
         lock = self._locks.pop(lock_id)
         _emit(self._events, "release_lock", {"lock_id": lock_id}, lock_id)
         return lock
@@ -565,7 +555,7 @@ class DistributedRuntimeEngine:
                     v = DistributedViolation(
                         violation_id=vid, tenant_id=tenant_id,
                         operation="orphaned_shard",
-                        reason=f"shard {shard.shard_id} is orphaned",
+                        reason="orphaned shard",
                         detected_at=now,
                     )
                     self._violations[vid] = v
@@ -583,7 +573,7 @@ class DistributedRuntimeEngine:
                     v = DistributedViolation(
                         violation_id=vid, tenant_id=tenant_id,
                         operation="expired_lease_held",
-                        reason=f"lease {lease.lease_id} still HELD (may be expired)",
+                        reason="held lease may be expired",
                         detected_at=now,
                     )
                     self._violations[vid] = v
@@ -601,7 +591,7 @@ class DistributedRuntimeEngine:
                     v = DistributedViolation(
                         violation_id=vid, tenant_id=tenant_id,
                         operation="queue_critical_backpressure",
-                        reason=f"queue {queue.queue_id} has critical backpressure",
+                        reason="queue has critical backpressure",
                         detected_at=now,
                     )
                     self._violations[vid] = v

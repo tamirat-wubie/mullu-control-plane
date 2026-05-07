@@ -52,9 +52,23 @@ class TestDMRSContext:
         with pytest.raises(ValueError, match="load must be one of"):
             _ctx(load="extreme")
 
+    def test_invalid_load_error_is_bounded(self) -> None:
+        with pytest.raises(ValueError, match="load must be one of") as excinfo:
+            _ctx(load="extreme")
+        assert "extreme" not in str(excinfo.value)
+        assert "low" not in str(excinfo.value)
+        assert "critical" not in str(excinfo.value)
+
     def test_invalid_flag_rejected(self) -> None:
         with pytest.raises(ValueError, match="invalid flag"):
             _ctx(flags=("nonexistent",))
+
+    def test_invalid_flag_error_is_bounded(self) -> None:
+        with pytest.raises(ValueError, match="invalid flag") as excinfo:
+            _ctx(flags=("nonexistent",))
+        assert "nonexistent" not in str(excinfo.value)
+        assert "trace_enabled" not in str(excinfo.value)
+        assert "priority_route" not in str(excinfo.value)
 
 
 # ---------------------------------------------------------------------------

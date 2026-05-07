@@ -100,8 +100,9 @@ class TestAttackScenarios:
     def test_duplicate_rejected(self):
         eng, _ = _make_engine()
         eng.create_attack_scenario("sc1", _T1, "A1")
-        with pytest.raises(RuntimeCoreInvariantError, match="duplicate"):
+        with pytest.raises(RuntimeCoreInvariantError, match="duplicate") as exc_info:
             eng.create_attack_scenario("sc1", _T1, "A1")
+        assert "sc1" not in str(exc_info.value)
 
     def test_count_increments(self):
         eng, _ = _make_engine()
@@ -159,8 +160,9 @@ class TestScenarioTransitions:
 
     def test_unknown_scenario_rejected(self):
         eng, _ = _make_engine()
-        with pytest.raises(RuntimeCoreInvariantError, match="unknown"):
+        with pytest.raises(RuntimeCoreInvariantError, match="unknown") as exc_info:
             eng.execute_scenario("missing")
+        assert "missing" not in str(exc_info.value)
 
     def test_transition_emits_event(self):
         eng, es = _make_engine()
@@ -196,8 +198,9 @@ class TestVulnerabilities:
     def test_duplicate_rejected(self):
         eng, _ = _make_engine()
         eng.register_vulnerability("v1", _T1, "default")
-        with pytest.raises(RuntimeCoreInvariantError, match="duplicate"):
+        with pytest.raises(RuntimeCoreInvariantError, match="duplicate") as exc_info:
             eng.register_vulnerability("v1", _T1, "default")
+        assert "v1" not in str(exc_info.value)
 
     def test_count_increments(self):
         eng, _ = _make_engine()
@@ -248,8 +251,9 @@ class TestVulnerabilityTransitions:
 
     def test_unknown_vulnerability_rejected(self):
         eng, _ = _make_engine()
-        with pytest.raises(RuntimeCoreInvariantError, match="unknown"):
+        with pytest.raises(RuntimeCoreInvariantError, match="unknown") as exc_info:
             eng.mitigate_vulnerability("missing")
+        assert "missing" not in str(exc_info.value)
 
 
 # ---------------------------------------------------------------------------
@@ -610,3 +614,35 @@ class TestGoldenScenarios:
         eng.mitigate_vulnerability("v1")
         with pytest.raises(RuntimeCoreInvariantError, match="terminal"):
             eng.accept_vulnerability("v1")
+
+
+class TestBoundedAdversarialContracts:
+    def test_terminal_scenario_message_is_bounded(self):
+        eng, _ = _make_engine()
+        eng.create_attack_scenario("scenario-secret", _T1, "Attack")
+        eng.execute_scenario("scenario-secret")
+        eng.complete_scenario("scenario-secret")
+        with pytest.raises(RuntimeCoreInvariantError, match="scenario is in terminal state") as exc:
+            eng.block_scenario("scenario-secret")
+        assert "scenario-secret" not in str(exc.value)
+        assert "completed" not in str(exc.value).lower()
+
+    def test_terminal_vulnerability_message_is_bounded(self):
+        eng, _ = _make_engine()
+        eng.register_vulnerability("vuln-secret", _T1, "default")
+        eng.mitigate_vulnerability("vuln-secret")
+        with pytest.raises(RuntimeCoreInvariantError, match="vulnerability is in terminal state") as exc:
+            eng.accept_vulnerability("vuln-secret")
+        assert "vuln-secret" not in str(exc.value)
+        assert "mitigated" not in str(exc.value).lower()
+
+    def test_violation_reasons_are_bounded(self):
+        eng, _ = _make_engine()
+        eng.register_vulnerability("v-critical", _T1, "default", severity=ExploitSeverity.CRITICAL)
+        eng.record_exploit_path("path-secret", _T1, "scenario-secret", success=True)
+        eng.record_defense("defense-secret", _T1, "v-critical", disposition=DefenseDisposition.UNTESTED)
+        reasons = {v.reason for v in eng.detect_adversarial_violations(_T1)}
+        assert "critical vulnerability remains open" in reasons
+        assert "exploit path succeeded without effective defense" in reasons
+        assert "defense is untested" in reasons
+        assert all("secret" not in reason for reason in reasons)

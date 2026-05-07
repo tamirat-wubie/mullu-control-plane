@@ -6,6 +6,7 @@ Uses FastAPI TestClient when available, falls back to structural tests.
 
 import pytest
 import os
+from types import SimpleNamespace
 
 # Try to import FastAPI test client
 try:
@@ -57,6 +58,9 @@ class TestCompletionEndpoint:
         assert data["governed"] is True
         assert data["cost"] >= 0
         assert data["provider"] == "stub"
+        assert data["action_proof"]["proof_receipt_id"]
+        assert data["action_proof"]["proof_hash"]
+        assert data["action_proof"]["proof_phase"] == "llm.complete"
 
     def test_completion_with_system(self, client):
         resp = client.post("/api/v1/complete", json={
@@ -77,6 +81,48 @@ class TestCompletionEndpoint:
         assert resp.status_code == 200
         data = resp.json()
         assert data["model"] == "custom-model"
+
+    def test_completion_exception_is_sanitized(self, client, monkeypatch):
+        from mcoi_runtime.app.routers.deps import deps
+
+        def boom(*args, **kwargs):
+            raise RuntimeError("secret-provider-detail")
+
+        monkeypatch.setattr(deps.llm_bridge, "complete", boom)
+        resp = client.post("/api/v1/complete", json={
+            "prompt": "boom",
+            "tenant_id": "err-tenant",
+            "actor_id": "err-actor",
+        })
+        assert resp.status_code == 503
+        data = resp.json()["detail"]
+        assert data["error"] == "LLM service unavailable"
+        assert data["error_code"] == "llm_service_unavailable"
+        assert "secret-provider-detail" not in str(resp.json())
+        entries = deps.audit_trail.query(
+            tenant_id="err-tenant",
+            action="llm.complete",
+            outcome="error",
+            limit=5,
+        )
+        assert any(e.detail["error_type"] == "RuntimeError" for e in entries)
+
+    def test_completion_failure_result_is_structured(self, client, monkeypatch):
+        from mcoi_runtime.app.routers.deps import deps
+
+        monkeypatch.setattr(
+            deps.llm_bridge,
+            "complete",
+            lambda *args, **kwargs: SimpleNamespace(
+                succeeded=False,
+                error="provider timeout (TimeoutError)",
+            ),
+        )
+        resp = client.post("/api/v1/complete", json={"prompt": "fail"})
+        assert resp.status_code == 503
+        data = resp.json()["detail"]
+        assert data["error_code"] == "llm_completion_failed"
+        assert data["governed"] is True
 
 
 class TestBudgetEndpoint:
@@ -125,6 +171,9 @@ class TestCertificationEndpoint:
         assert "chain_id" in data
         assert "all_passed" in data
         assert "chain_hash" in data
+        assert data["action_proof"]["proof_receipt_id"]
+        assert data["action_proof"]["proof_hash"]
+        assert data["action_proof"]["proof_phase"] == "certification.run"
         assert "steps" in data
         assert len(data["steps"]) == 5
 

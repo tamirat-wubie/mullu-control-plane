@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import pytest
-
 from mcoi_runtime.contracts.provider import (
     CredentialScope,
     ProviderClass,
@@ -13,7 +11,9 @@ from mcoi_runtime.contracts.provider_routing import (
     RoutingConstraints,
     RoutingStrategy,
 )
+from mcoi_runtime.contracts.provider_attribution import ProviderAttributionSource
 from mcoi_runtime.core.decision_learning import DecisionLearningEngine
+from mcoi_runtime.core.provider_attribution import ProviderAttributionLedger
 from mcoi_runtime.core.provider_cost_routing import ProviderCostRouter
 from mcoi_runtime.core.provider_registry import ProviderRegistry
 from mcoi_runtime.core.provider_routing_integration import ProviderRoutingBridge
@@ -66,6 +66,10 @@ def _make_router() -> ProviderCostRouter:
 
 def _make_learning() -> DecisionLearningEngine:
     return DecisionLearningEngine(clock=_clock)
+
+
+def _make_attribution_ledger() -> ProviderAttributionLedger:
+    return ProviderAttributionLedger(clock=_clock)
 
 
 def _default_constraints(strategy: RoutingStrategy = RoutingStrategy.BALANCED) -> RoutingConstraints:
@@ -216,6 +220,30 @@ class TestSelectBestProvider:
         # prov-a has cost_limit 100, prov-b has 500
         assert decision.selected_provider_id == "prov-a"
 
+    def test_records_routing_decision_attribution_when_ledger_provided(self):
+        registry = _make_registry()
+        router = _make_router()
+        ledger = _make_attribution_ledger()
+
+        decision = ProviderRoutingBridge.select_best_provider(
+            router=router,
+            registry=registry,
+            learning_engine=None,
+            provider_ids=("prov-a", "prov-b"),
+            context_type="model",
+            constraints=_default_constraints(strategy=RoutingStrategy.CHEAPEST),
+            attribution_ledger=ledger,
+            request_id="request-route-1",
+            operation_id="operation-route-1",
+        )
+        records = ledger.list_for_operation("operation-route-1")
+
+        assert len(records) == 1
+        assert records[0].provider_id == decision.selected_provider_id
+        assert records[0].provider_class is ProviderClass.MODEL
+        assert records[0].source is ProviderAttributionSource.ROUTING_DECISION
+        assert records[0].source_ref_id == decision.decision_id
+
 
 # ---------------------------------------------------------------------------
 # Tests: record_and_learn
@@ -283,6 +311,41 @@ class TestRecordAndLearn:
         assert pref is not None
         assert pref.score < 0.5  # should be below neutral
 
+    def test_records_routing_outcome_attribution_when_ledger_provided(self):
+        registry = _make_registry()
+        router = _make_router()
+        learning = _make_learning()
+        ledger = _make_attribution_ledger()
+
+        decision = ProviderRoutingBridge.select_best_provider(
+            router=router,
+            registry=registry,
+            learning_engine=learning,
+            provider_ids=("prov-a",),
+            context_type="model",
+            constraints=_default_constraints(),
+        )
+        outcome = ProviderRoutingBridge.record_and_learn(
+            router=router,
+            learning_engine=learning,
+            decision=decision,
+            actual_cost=80.0,
+            success=True,
+            context_type="model",
+            attribution_ledger=ledger,
+            provider_registry=registry,
+            request_id="request-outcome-1",
+            operation_id="operation-outcome-1",
+            execution_id="execution-outcome-1",
+        )
+        records = ledger.list_for_operation("operation-outcome-1")
+
+        assert outcome.provider_id == decision.selected_provider_id
+        assert len(records) == 1
+        assert records[0].source is ProviderAttributionSource.EXECUTION_RECEIPT
+        assert records[0].source_ref_id == outcome.outcome_id
+        assert records[0].execution_id == "execution-outcome-1"
+
 
 # ---------------------------------------------------------------------------
 # Golden scenario: full routing + learning loop
@@ -306,6 +369,7 @@ class TestGoldenScenario:
             context_type="model",
             constraints=_default_constraints(strategy=RoutingStrategy.LEARNED),
         )
+        assert decision1.selected_provider_id in ("prov-a", "prov-b")
 
         # Record successes for prov-b many times to build preference
         for _ in range(10):

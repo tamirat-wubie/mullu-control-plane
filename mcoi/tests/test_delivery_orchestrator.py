@@ -45,6 +45,31 @@ class TestOrchestrator:
         assert p["steps_total"] == 13
         assert p["hours_remaining"] > 0
 
+    def test_unknown_bundle_message_is_bounded(self):
+        orch = DeploymentOrchestrator()
+        with pytest.raises(ValueError) as exc_info:
+            orch.start_deployment("customer-secret", "classified_bundle")
+        message = str(exc_info.value)
+        assert message == "unknown bundle"
+        assert "classified_bundle" not in message
+
+    def test_inactive_deployment_message_is_bounded(self):
+        orch = DeploymentOrchestrator()
+        with pytest.raises(ValueError) as exc_info:
+            orch.complete_step("customer-secret", 1)
+        message = str(exc_info.value)
+        assert message == "deployment is not active"
+        assert "customer-secret" not in message
+
+    def test_missing_step_message_is_bounded(self):
+        orch = DeploymentOrchestrator()
+        orch.start_deployment("customer-1", "single_pack")
+        with pytest.raises(ValueError) as exc_info:
+            orch.complete_step("customer-1", 99)
+        message = str(exc_info.value)
+        assert message == "deployment step not found"
+        assert "99" not in message
+
 class TestCapacity:
     def test_healthy(self):
         cap = CapacitySnapshot(5, 3, 120.0, 200.0)

@@ -17,17 +17,20 @@ from mcoi_runtime.adapters.executor_base import ExecutorAdapter, utc_now_text
 from mcoi_runtime.adapters.filesystem_observer import FilesystemObserver
 from mcoi_runtime.adapters.observer_base import ObserverAdapter
 from mcoi_runtime.adapters.process_observer import ProcessObserver
-from mcoi_runtime.adapters.shell_executor import ShellExecutor
+from mcoi_runtime.adapters.shell_executor import ShellExecutor, ShellSandboxPolicy
 from mcoi_runtime.contracts.policy import DecisionReason, PolicyDecision, PolicyDecisionStatus
 from mcoi_runtime.contracts.template import TemplateReference
 from mcoi_runtime.core.dispatcher import Dispatcher
+from mcoi_runtime.core.effect_assurance import EffectAssuranceGate
+from mcoi_runtime.core.case_runtime import CaseRuntimeEngine
 from mcoi_runtime.core.evidence_merger import EvidenceMerger
+from mcoi_runtime.core.event_spine import EventSpineEngine
 from mcoi_runtime.core.meta_reasoning import MetaReasoningEngine
 from mcoi_runtime.core.memory import EpisodicMemory, WorkingMemory
-from mcoi_runtime.core.event_spine import EventSpineEngine
 from mcoi_runtime.core.invariants import RuntimeCoreInvariantError
+from mcoi_runtime.core.operational_graph import OperationalGraph
 from mcoi_runtime.core.planning_boundary import PlanningBoundary
-from mcoi_runtime.core.policy_engine import PolicyEngine
+from mcoi_runtime.governance.policy.engine import PolicyEngine
 from mcoi_runtime.core.registry_index import RegistryIndex
 from mcoi_runtime.core.registry_store import RegistryStore
 from mcoi_runtime.core.replay_engine import ReplayEngine
@@ -39,6 +42,7 @@ from mcoi_runtime.core.jobs import JobEngine, WorkQueue
 from mcoi_runtime.core.skills import SkillExecutor, SkillRegistry, SkillSelector
 from mcoi_runtime.core.template_validator import TemplateValidator
 from mcoi_runtime.core.provider_registry import ProviderRegistry
+from mcoi_runtime.core.provider_attribution import ProviderAttributionLedger
 from mcoi_runtime.core.team_runtime import TeamEngine, WorkerRegistry
 from mcoi_runtime.core.verification_engine import VerificationEngine
 from mcoi_runtime.core.workflow import WorkflowEngine
@@ -47,7 +51,9 @@ from mcoi_runtime.core.world_state import WorldStateEngine
 from mcoi_runtime.persistence.goal_store import GoalStore
 from mcoi_runtime.persistence.job_store import JobStore
 from mcoi_runtime.persistence.memory_store import MemoryStore
+from mcoi_runtime.persistence.mil_audit_store import MILAuditStore
 from mcoi_runtime.persistence.team_queue_store import TeamQueueStore
+from mcoi_runtime.persistence.trace_store import TraceStore
 from mcoi_runtime.persistence.work_queue_store import WorkQueueStore
 from mcoi_runtime.persistence.workforce_store import WorkforceStore
 from mcoi_runtime.persistence.workflow_store import WorkflowStore
@@ -73,6 +79,7 @@ class BootstrappedRuntime:
     world_state: WorldStateEngine
     meta_reasoning: MetaReasoningEngine
     provider_registry: ProviderRegistry
+    provider_attribution_ledger: ProviderAttributionLedger
     skill_registry: SkillRegistry
     skill_selector: SkillSelector
     skill_executor: SkillExecutor
@@ -90,11 +97,17 @@ class BootstrappedRuntime:
     team_queue_store: TeamQueueStore | None
     workforce_engine: WorkforceRuntimeEngine
     workforce_store: WorkforceStore | None
+    mil_audit_store: MILAuditStore | None
+    trace_store: TraceStore | None
     working_memory: WorkingMemory
     episodic_memory: EpisodicMemory
     memory_store: MemoryStore | None
     executors: Mapping[str, ExecutorAdapter]
     observers: Mapping[str, ObserverAdapter[object]]
+    effect_assurance: EffectAssuranceGate | None = None
+    operational_graph: OperationalGraph | None = None
+    event_spine: EventSpineEngine | None = None
+    case_runtime: CaseRuntimeEngine | None = None
     governed_dispatcher: object | None = None
 
 
@@ -135,6 +148,8 @@ def bootstrap_runtime(
     work_queue_store: WorkQueueStore | None = None,
     team_queue_store: TeamQueueStore | None = None,
     workforce_store: WorkforceStore | None = None,
+    mil_audit_store: MILAuditStore | None = None,
+    trace_store: TraceStore | None = None,
     memory_store: MemoryStore | None = None,
     restore_memory: bool = False,
     restore_goals: bool = False,
@@ -186,7 +201,21 @@ def bootstrap_runtime(
     if executors is not None:
         executor_map.update(executors)
     elif "shell_command" in app_config.enabled_executor_routes:
-        executor_map["shell_command"] = ShellExecutor(clock=runtime_clock)
+        shell_sandbox_policy = (
+            ShellSandboxPolicy(
+                sandbox_id=app_config.shell_sandbox_id,
+                allowed_cwd_roots=app_config.shell_allowed_cwd_roots,
+                allowed_environment_keys=app_config.shell_allowed_environment_keys,
+                allow_inherited_environment=app_config.shell_allow_inherited_environment,
+                require_cwd=app_config.shell_require_cwd,
+            )
+            if app_config.shell_sandbox_enabled
+            else None
+        )
+        executor_map["shell_command"] = ShellExecutor(
+            clock=runtime_clock,
+            sandbox_policy=shell_sandbox_policy,
+        )
 
     observer_map: dict[str, ObserverAdapter[object]] = {}
     if observers is not None:
@@ -200,19 +229,10 @@ def bootstrap_runtime(
     frozen_executors: Mapping[str, ExecutorAdapter] = MappingProxyType(dict(executor_map))
     frozen_observers: Mapping[str, ObserverAdapter[object]] = MappingProxyType(dict(observer_map))
 
-    dispatcher = Dispatcher(
-        template_validator=template_validator,
-        executors=frozen_executors,
-        clock=runtime_clock,
-    )
-
-    # Phase 195C: create governed dispatcher wrapping the raw one
-    from mcoi_runtime.core.governed_dispatcher import GovernedDispatcher
-    governed = GovernedDispatcher(dispatcher, clock=runtime_clock)
-
     world_state = WorldStateEngine()
     meta_reasoning = MetaReasoningEngine(clock=runtime_clock)
     provider_registry = ProviderRegistry(clock=runtime_clock)
+    provider_attribution_ledger = ProviderAttributionLedger(clock=runtime_clock)
     skill_registry = SkillRegistry()
     skill_selector = SkillSelector()
     skill_executor = SkillExecutor(clock=runtime_clock)
@@ -225,6 +245,36 @@ def bootstrap_runtime(
     team_engine = TeamEngine(registry=team_registry, clock=runtime_clock)
     event_spine = EventSpineEngine(clock=runtime_clock)
     workforce_engine = WorkforceRuntimeEngine(event_spine)
+    operational_graph = (
+        OperationalGraph(clock=runtime_clock)
+        if app_config.effect_assurance_required
+        else None
+    )
+    case_runtime = (
+        CaseRuntimeEngine(event_spine)
+        if app_config.effect_assurance_required
+        else None
+    )
+    effect_assurance = (
+        EffectAssuranceGate(clock=runtime_clock, graph=operational_graph)
+        if operational_graph is not None
+        else None
+    )
+
+    dispatcher = Dispatcher(
+        template_validator=template_validator,
+        executors=frozen_executors,
+        clock=runtime_clock,
+    )
+
+    # Phase 195C: create governed dispatcher wrapping the raw one.
+    from mcoi_runtime.core.governed_dispatcher import GovernedDispatcher
+    governed = GovernedDispatcher(
+        dispatcher,
+        effect_assurance=effect_assurance,
+        case_runtime=case_runtime,
+        clock=runtime_clock,
+    )
 
     if restore_memory and memory_store is not None:
         working_memory, episodic_memory = memory_store.load_all(allow_missing=True)
@@ -266,6 +316,7 @@ def bootstrap_runtime(
         world_state=world_state,
         meta_reasoning=meta_reasoning,
         provider_registry=provider_registry,
+        provider_attribution_ledger=provider_attribution_ledger,
         skill_registry=skill_registry,
         skill_selector=skill_selector,
         skill_executor=skill_executor,
@@ -283,10 +334,16 @@ def bootstrap_runtime(
         team_queue_store=team_queue_store,
         workforce_engine=workforce_engine,
         workforce_store=workforce_store,
+        mil_audit_store=mil_audit_store,
+        trace_store=trace_store,
         working_memory=working_memory,
         episodic_memory=episodic_memory,
         memory_store=memory_store,
         executors=frozen_executors,
         observers=frozen_observers,
+        effect_assurance=effect_assurance,
+        operational_graph=operational_graph,
+        event_spine=event_spine,
+        case_runtime=case_runtime,
         governed_dispatcher=governed,
     )

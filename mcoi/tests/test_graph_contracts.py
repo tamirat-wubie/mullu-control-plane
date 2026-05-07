@@ -659,6 +659,18 @@ class TestGraphQueryResultElementValidation:
                 executed_at=TS,
             )
 
+    def test_non_node_in_matched_nodes_error_is_bounded(self):
+        with pytest.raises(ValueError, match="OperationalNode") as excinfo:
+            GraphQueryResult(
+                query_id="q-1",
+                matched_nodes=("not-a-node",),
+                matched_edges=(),
+                executed_at=TS,
+            )
+        assert "not-a-node" not in str(excinfo.value)
+        assert "str" not in str(excinfo.value)
+        assert "matched_nodes" in str(excinfo.value)
+
     def test_non_edge_in_matched_edges_rejected(self):
         with pytest.raises(ValueError, match="OperationalEdge"):
             GraphQueryResult(
@@ -667,6 +679,18 @@ class TestGraphQueryResultElementValidation:
                 matched_edges=("not-an-edge",),
                 executed_at=TS,
             )
+
+    def test_non_edge_in_matched_edges_error_is_bounded(self):
+        with pytest.raises(ValueError, match="OperationalEdge") as excinfo:
+            GraphQueryResult(
+                query_id="q-1",
+                matched_nodes=(),
+                matched_edges=("not-an-edge",),
+                executed_at=TS,
+            )
+        assert "not-an-edge" not in str(excinfo.value)
+        assert "str" not in str(excinfo.value)
+        assert "matched_edges" in str(excinfo.value)
 
 
 class TestCausalPathElementValidation:

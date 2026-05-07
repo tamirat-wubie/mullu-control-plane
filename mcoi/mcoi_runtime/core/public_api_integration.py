@@ -262,7 +262,7 @@ class PublicApiIntegration:
         mem = MemoryRecord(
             memory_id=stable_identifier("mem-api", {"scope": scope_ref_id, "seq": str(self._memory.memory_count)}),
             scope_ref_id=scope_ref_id,
-            title=f"Public API state for {scope_ref_id}",
+            title="Public API state",
             memory_type=MemoryType.OBSERVATION,
             scope=MemoryScope.GLOBAL,
             trust_level=MemoryTrustLevel.VERIFIED,

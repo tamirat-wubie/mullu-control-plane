@@ -158,9 +158,7 @@ class GoalPlan(ContractRecord):
         for sg in self.sub_goals:
             for pred in sg.predecessors:
                 if pred not in sg_ids:
-                    raise ValueError(
-                        f"sub-goal {sg.sub_goal_id} depends on unknown sub-goal {pred}"
-                    )
+                    raise ValueError("sub-goal dependency references an unknown sub-goal")
         # Topological check via DFS
         visited: set[str] = set()
         in_stack: set[str] = set()
@@ -168,7 +166,7 @@ class GoalPlan(ContractRecord):
 
         def visit(sid: str) -> None:
             if sid in in_stack:
-                raise ValueError(f"circular dependency detected involving sub-goal {sid}")
+                raise ValueError("circular sub-goal dependency detected")
             if sid in visited:
                 return
             in_stack.add(sid)
@@ -211,7 +209,7 @@ class GoalExecutionState(ContractRecord):
         # A sub-goal cannot appear in both completed and failed
         overlap = set(self.completed_sub_goals) & set(self.failed_sub_goals)
         if overlap:
-            raise ValueError(f"sub-goal IDs appear in both completed and failed: {sorted(overlap)}")
+            raise ValueError("sub-goal IDs appear in both completed and failed")
 
 
 @dataclass(frozen=True, slots=True)

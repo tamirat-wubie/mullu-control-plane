@@ -524,7 +524,9 @@ class TestAttachQueryStateToMemoryMesh:
     def test_memory_record_title(self):
         bridge, qe, es, me = _make_bridge()
         result = bridge.attach_query_state_to_memory_mesh("scope-003")
-        assert "scope-003" in result.title
+        assert result.title == "Knowledge query state"
+        assert "scope-003" not in result.title
+        assert result.scope_ref_id == "scope-003"
 
     def test_memory_record_scope_ref_id(self):
         bridge, qe, es, me = _make_bridge()

@@ -139,7 +139,7 @@ class LedgerRuntimeEngine:
     ) -> LedgerAccount:
         """Register a new ledger account."""
         if account_id in self._accounts:
-            raise RuntimeCoreInvariantError(f"Duplicate account_id: {account_id}")
+            raise RuntimeCoreInvariantError("Duplicate account_id")
         now = self._now()
         acct = LedgerAccount(
             account_id=account_id,
@@ -160,7 +160,7 @@ class LedgerRuntimeEngine:
         """Get account by ID."""
         acct = self._accounts.get(account_id)
         if acct is None:
-            raise RuntimeCoreInvariantError(f"Unknown account_id: {account_id}")
+            raise RuntimeCoreInvariantError("Unknown account_id")
         return acct
 
     def accounts_for_tenant(self, tenant_id: str) -> tuple[LedgerAccount, ...]:
@@ -180,7 +180,7 @@ class LedgerRuntimeEngine:
     ) -> WalletRecord:
         """Register a new wallet."""
         if wallet_id in self._wallets:
-            raise RuntimeCoreInvariantError(f"Duplicate wallet_id: {wallet_id}")
+            raise RuntimeCoreInvariantError("Duplicate wallet_id")
         now = self._now()
         w = WalletRecord(
             wallet_id=wallet_id,
@@ -200,16 +200,14 @@ class LedgerRuntimeEngine:
         """Get wallet by ID."""
         w = self._wallets.get(wallet_id)
         if w is None:
-            raise RuntimeCoreInvariantError(f"Unknown wallet_id: {wallet_id}")
+            raise RuntimeCoreInvariantError("Unknown wallet_id")
         return w
 
     def freeze_wallet(self, wallet_id: str) -> WalletRecord:
         """Freeze a wallet."""
         old = self.get_wallet(wallet_id)
         if old.status in _WALLET_TERMINAL:
-            raise RuntimeCoreInvariantError(
-                f"Cannot freeze wallet in terminal status {old.status.value}"
-            )
+            raise RuntimeCoreInvariantError("Cannot freeze wallet in terminal status")
         updated = WalletRecord(
             wallet_id=old.wallet_id,
             tenant_id=old.tenant_id,
@@ -229,9 +227,7 @@ class LedgerRuntimeEngine:
         """Close a wallet."""
         old = self.get_wallet(wallet_id)
         if old.status in _WALLET_TERMINAL:
-            raise RuntimeCoreInvariantError(
-                f"Cannot close wallet in terminal status {old.status.value}"
-            )
+            raise RuntimeCoreInvariantError("Cannot close wallet in terminal status")
         updated = WalletRecord(
             wallet_id=old.wallet_id,
             tenant_id=old.tenant_id,
@@ -251,9 +247,7 @@ class LedgerRuntimeEngine:
         """Mark a wallet as compromised."""
         old = self.get_wallet(wallet_id)
         if old.status in _WALLET_TERMINAL:
-            raise RuntimeCoreInvariantError(
-                f"Cannot mark compromised wallet in terminal status {old.status.value}"
-            )
+            raise RuntimeCoreInvariantError("Cannot mark compromised wallet in terminal status")
         updated = WalletRecord(
             wallet_id=old.wallet_id,
             tenant_id=old.tenant_id,
@@ -288,10 +282,10 @@ class LedgerRuntimeEngine:
     ) -> LedgerTransaction:
         """Create a ledger transaction."""
         if transaction_id in self._transactions:
-            raise RuntimeCoreInvariantError(f"Duplicate transaction_id: {transaction_id}")
+            raise RuntimeCoreInvariantError("Duplicate transaction_id")
         # Validate from_account exists
         if from_account not in self._accounts:
-            raise RuntimeCoreInvariantError(f"Unknown from_account: {from_account}")
+            raise RuntimeCoreInvariantError("Unknown from_account")
         now = self._now()
         tx = LedgerTransaction(
             transaction_id=transaction_id,
@@ -312,7 +306,7 @@ class LedgerRuntimeEngine:
         """Get transaction by ID."""
         tx = self._transactions.get(transaction_id)
         if tx is None:
-            raise RuntimeCoreInvariantError(f"Unknown transaction_id: {transaction_id}")
+            raise RuntimeCoreInvariantError("Unknown transaction_id")
         return tx
 
     def transactions_for_tenant(self, tenant_id: str) -> tuple[LedgerTransaction, ...]:
@@ -332,7 +326,7 @@ class LedgerRuntimeEngine:
     ) -> SettlementProof:
         """Create a settlement proof in PENDING status."""
         if proof_id in self._proofs:
-            raise RuntimeCoreInvariantError(f"Duplicate proof_id: {proof_id}")
+            raise RuntimeCoreInvariantError("Duplicate proof_id")
         now = self._now()
         p = SettlementProof(
             proof_id=proof_id,
@@ -352,11 +346,9 @@ class LedgerRuntimeEngine:
         """Confirm a settlement proof."""
         old = self._proofs.get(proof_id)
         if old is None:
-            raise RuntimeCoreInvariantError(f"Unknown proof_id: {proof_id}")
+            raise RuntimeCoreInvariantError("Unknown proof_id")
         if old.status in _PROOF_TERMINAL:
-            raise RuntimeCoreInvariantError(
-                f"Cannot confirm proof in terminal status {old.status.value}"
-            )
+            raise RuntimeCoreInvariantError("Cannot confirm proof in terminal status")
         if not old.proof_hash.strip():
             raise RuntimeCoreInvariantError("Cannot confirm proof with empty proof_hash")
         now = self._now()
@@ -380,11 +372,9 @@ class LedgerRuntimeEngine:
         """Fail a settlement proof."""
         old = self._proofs.get(proof_id)
         if old is None:
-            raise RuntimeCoreInvariantError(f"Unknown proof_id: {proof_id}")
+            raise RuntimeCoreInvariantError("Unknown proof_id")
         if old.status in _PROOF_TERMINAL:
-            raise RuntimeCoreInvariantError(
-                f"Cannot fail proof in terminal status {old.status.value}"
-            )
+            raise RuntimeCoreInvariantError("Cannot fail proof in terminal status")
         updated = SettlementProof(
             proof_id=old.proof_id,
             tenant_id=old.tenant_id,
@@ -405,11 +395,9 @@ class LedgerRuntimeEngine:
         """Dispute a settlement proof."""
         old = self._proofs.get(proof_id)
         if old is None:
-            raise RuntimeCoreInvariantError(f"Unknown proof_id: {proof_id}")
+            raise RuntimeCoreInvariantError("Unknown proof_id")
         if old.status in _PROOF_TERMINAL:
-            raise RuntimeCoreInvariantError(
-                f"Cannot dispute proof in terminal status {old.status.value}"
-            )
+            raise RuntimeCoreInvariantError("Cannot dispute proof in terminal status")
         updated = SettlementProof(
             proof_id=old.proof_id,
             tenant_id=old.tenant_id,
@@ -440,7 +428,7 @@ class LedgerRuntimeEngine:
     ) -> AnchorRecord:
         """Create an anchor record in PENDING disposition."""
         if anchor_id in self._anchors:
-            raise RuntimeCoreInvariantError(f"Duplicate anchor_id: {anchor_id}")
+            raise RuntimeCoreInvariantError("Duplicate anchor_id")
         now = self._now()
         ar = AnchorRecord(
             anchor_id=anchor_id,
@@ -461,11 +449,9 @@ class LedgerRuntimeEngine:
         """Confirm an anchor (ANCHORED)."""
         old = self._anchors.get(anchor_id)
         if old is None:
-            raise RuntimeCoreInvariantError(f"Unknown anchor_id: {anchor_id}")
+            raise RuntimeCoreInvariantError("Unknown anchor_id")
         if old.disposition in _ANCHOR_TERMINAL:
-            raise RuntimeCoreInvariantError(
-                f"Cannot confirm anchor in terminal disposition {old.disposition.value}"
-            )
+            raise RuntimeCoreInvariantError("Cannot confirm anchor in terminal disposition")
         updated = AnchorRecord(
             anchor_id=old.anchor_id,
             tenant_id=old.tenant_id,
@@ -486,11 +472,9 @@ class LedgerRuntimeEngine:
         """Fail an anchor."""
         old = self._anchors.get(anchor_id)
         if old is None:
-            raise RuntimeCoreInvariantError(f"Unknown anchor_id: {anchor_id}")
+            raise RuntimeCoreInvariantError("Unknown anchor_id")
         if old.disposition in _ANCHOR_TERMINAL:
-            raise RuntimeCoreInvariantError(
-                f"Cannot fail anchor in terminal disposition {old.disposition.value}"
-            )
+            raise RuntimeCoreInvariantError("Cannot fail anchor in terminal disposition")
         updated = AnchorRecord(
             anchor_id=old.anchor_id,
             tenant_id=old.tenant_id,
@@ -511,11 +495,9 @@ class LedgerRuntimeEngine:
         """Revoke an anchor."""
         old = self._anchors.get(anchor_id)
         if old is None:
-            raise RuntimeCoreInvariantError(f"Unknown anchor_id: {anchor_id}")
+            raise RuntimeCoreInvariantError("Unknown anchor_id")
         if old.disposition in _ANCHOR_TERMINAL:
-            raise RuntimeCoreInvariantError(
-                f"Cannot revoke anchor in terminal disposition {old.disposition.value}"
-            )
+            raise RuntimeCoreInvariantError("Cannot revoke anchor in terminal disposition")
         updated = AnchorRecord(
             anchor_id=old.anchor_id,
             tenant_id=old.tenant_id,
@@ -622,7 +604,7 @@ class LedgerRuntimeEngine:
                         tenant_id=tenant_id,
                         kind=LedgerViolationKind.PROOF_FAILED,
                         operation=f"proof:{p.proof_id}",
-                        reason=f"Settlement proof {p.proof_id} failed verification",
+                        reason="Settlement proof failed verification",
                         detected_at=now,
                     )
                     self._violations[vid] = v
@@ -640,7 +622,7 @@ class LedgerRuntimeEngine:
                         tenant_id=tenant_id,
                         kind=LedgerViolationKind.ANCHOR_EXPIRED,
                         operation=f"anchor:{a.anchor_id}",
-                        reason=f"Anchor {a.anchor_id} failed/expired",
+                        reason="Anchor failed or expired",
                         detected_at=now,
                     )
                     self._violations[vid] = v
@@ -658,7 +640,7 @@ class LedgerRuntimeEngine:
                         tenant_id=tenant_id,
                         kind=LedgerViolationKind.WALLET_COMPROMISED,
                         operation=f"wallet:{w.wallet_id}",
-                        reason=f"Wallet {w.wallet_id} is compromised",
+                        reason="Wallet is compromised",
                         detected_at=now,
                     )
                     self._violations[vid] = v

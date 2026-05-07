@@ -73,7 +73,7 @@ class MemoryMeshEngine:
         if not isinstance(record, MemoryRecord):
             raise RuntimeCoreInvariantError("record must be a MemoryRecord")
         if record.memory_id in self._memories:
-            raise RuntimeCoreInvariantError(f"duplicate memory_id: {record.memory_id}")
+            raise RuntimeCoreInvariantError("duplicate memory_id")
         self._memories[record.memory_id] = record
         return record
 
@@ -109,11 +109,11 @@ class MemoryMeshEngine:
         if not isinstance(link, MemoryLink):
             raise RuntimeCoreInvariantError("link must be a MemoryLink")
         if link.from_memory_id not in self._memories:
-            raise RuntimeCoreInvariantError(f"from_memory_id not found: {link.from_memory_id}")
+            raise RuntimeCoreInvariantError("from_memory_id not found")
         if link.to_memory_id not in self._memories:
-            raise RuntimeCoreInvariantError(f"to_memory_id not found: {link.to_memory_id}")
+            raise RuntimeCoreInvariantError("to_memory_id not found")
         if link.link_id in self._links:
-            raise RuntimeCoreInvariantError(f"duplicate link_id: {link.link_id}")
+            raise RuntimeCoreInvariantError("duplicate link_id")
         self._links[link.link_id] = link
         return link
 
@@ -133,9 +133,9 @@ class MemoryMeshEngine:
         if not isinstance(promotion, MemoryPromotionRecord):
             raise RuntimeCoreInvariantError("promotion must be a MemoryPromotionRecord")
         if promotion.memory_id not in self._memories:
-            raise RuntimeCoreInvariantError(f"memory_id not found: {promotion.memory_id}")
+            raise RuntimeCoreInvariantError("memory_id not found")
         if promotion.promotion_id in self._promotions:
-            raise RuntimeCoreInvariantError(f"duplicate promotion_id: {promotion.promotion_id}")
+            raise RuntimeCoreInvariantError("duplicate promotion_id")
         self._promotions[promotion.promotion_id] = promotion
         return promotion
 
@@ -200,11 +200,9 @@ class MemoryMeshEngine:
         must contain old_id (enforced here).
         """
         if old_id not in self._memories:
-            raise RuntimeCoreInvariantError(f"old memory_id not found: {old_id}")
+            raise RuntimeCoreInvariantError("old memory_id not found")
         if old_id not in new_record.supersedes_ids:
-            raise RuntimeCoreInvariantError(
-                f"new_record.supersedes_ids must contain {old_id}"
-            )
+            raise RuntimeCoreInvariantError("new_record.supersedes_ids must contain old memory_id")
         return self.add_memory(new_record)
 
     # ------------------------------------------------------------------
@@ -227,9 +225,9 @@ class MemoryMeshEngine:
             raise RuntimeCoreInvariantError("conflict must be a MemoryConflictRecord")
         for cid in conflict.conflicting_ids:
             if cid not in self._memories:
-                raise RuntimeCoreInvariantError(f"conflicting memory_id not found: {cid}")
+                raise RuntimeCoreInvariantError("conflicting memory_id not found")
         if conflict.conflict_id in self._conflicts:
-            raise RuntimeCoreInvariantError(f"duplicate conflict_id: {conflict.conflict_id}")
+            raise RuntimeCoreInvariantError("duplicate conflict_id")
         self._conflicts[conflict.conflict_id] = conflict
         return conflict
 
@@ -309,7 +307,7 @@ class MemoryMeshEngine:
         if not isinstance(node, MetadataNode):
             raise RuntimeCoreInvariantError("node must be a MetadataNode")
         if node.node_id in self._nodes:
-            raise RuntimeCoreInvariantError(f"duplicate node_id: {node.node_id}")
+            raise RuntimeCoreInvariantError("duplicate node_id")
         self._nodes[node.node_id] = node
         return node
 
@@ -322,11 +320,11 @@ class MemoryMeshEngine:
         if not isinstance(edge, MetadataEdge):
             raise RuntimeCoreInvariantError("edge must be a MetadataEdge")
         if edge.from_node_id not in self._nodes:
-            raise RuntimeCoreInvariantError(f"from_node_id not found: {edge.from_node_id}")
+            raise RuntimeCoreInvariantError("from_node_id not found")
         if edge.to_node_id not in self._nodes:
-            raise RuntimeCoreInvariantError(f"to_node_id not found: {edge.to_node_id}")
+            raise RuntimeCoreInvariantError("to_node_id not found")
         if edge.edge_id in self._edges:
-            raise RuntimeCoreInvariantError(f"duplicate edge_id: {edge.edge_id}")
+            raise RuntimeCoreInvariantError("duplicate edge_id")
         self._edges[edge.edge_id] = edge
         return edge
 

@@ -12,7 +12,7 @@ import pytest
 
 from mcoi_runtime.core.event_spine import EventSpineEngine
 from mcoi_runtime.core.memory_mesh import MemoryMeshEngine
-from mcoi_runtime.core.policy_enforcement import PolicyEnforcementEngine
+from mcoi_runtime.governance.policy.enforcement import PolicyEnforcementEngine
 from mcoi_runtime.core.policy_enforcement_integration import PolicyEnforcementIntegration
 from mcoi_runtime.contracts.policy_enforcement import (
     SessionStatus,
@@ -209,6 +209,9 @@ class TestMemoryMeshAttachment:
         _es, _mm, _eng, bridge = env
         mem = bridge.attach_session_audit_to_memory_mesh("scope-1")
         assert isinstance(mem, MemoryRecord)
+        assert mem.title == "Session enforcement state"
+        assert "scope-1" not in mem.title
+        assert mem.scope_ref_id == "scope-1"
         assert "session" in mem.tags
         assert "enforcement" in mem.tags
         assert "policy" in mem.tags

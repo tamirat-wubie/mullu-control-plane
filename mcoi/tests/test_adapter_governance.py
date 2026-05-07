@@ -28,14 +28,18 @@ class TestAdapterGovernance:
 
     def test_require_authority_none_raises(self):
         guard = AdapterGovernanceGuard()
-        with pytest.raises(AdapterAuthorityError, match="No authority"):
+        with pytest.raises(AdapterAuthorityError, match="No authority") as exc_info:
             guard.require_authority(None, "shell_executor", "run")
+        assert "shell_executor" not in str(exc_info.value)
+        assert "run" not in str(exc_info.value)
 
     def test_require_authority_type_mismatch_raises(self):
         guard = AdapterGovernanceGuard()
         auth = guard.authorize("http_connector", "get", "actor-3")
-        with pytest.raises(AdapterAuthorityError, match="type mismatch"):
+        with pytest.raises(AdapterAuthorityError, match="type mismatch") as exc_info:
             guard.require_authority(auth, "shell_executor", "run")
+        assert "http_connector" not in str(exc_info.value)
+        assert "shell_executor" not in str(exc_info.value)
 
     def test_deny_increments_blocked(self):
         guard = AdapterGovernanceGuard()

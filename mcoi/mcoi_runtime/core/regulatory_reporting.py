@@ -137,7 +137,7 @@ class RegulatoryReportingEngine:
     ) -> ReportingRequirement:
         """Register a reporting requirement."""
         if requirement_id in self._requirements:
-            raise RuntimeCoreInvariantError(f"Duplicate requirement_id: {requirement_id}")
+            raise RuntimeCoreInvariantError("Duplicate requirement_id")
         now = _now_iso()
         req = ReportingRequirement(
             requirement_id=requirement_id,
@@ -160,7 +160,7 @@ class RegulatoryReportingEngine:
         """Get a requirement by ID."""
         r = self._requirements.get(requirement_id)
         if r is None:
-            raise RuntimeCoreInvariantError(f"Unknown requirement_id: {requirement_id}")
+            raise RuntimeCoreInvariantError("Unknown requirement_id")
         return r
 
     def requirements_for_tenant(self, tenant_id: str) -> tuple[ReportingRequirement, ...]:
@@ -180,9 +180,9 @@ class RegulatoryReportingEngine:
     ) -> FilingWindow:
         """Open a filing window for a requirement."""
         if window_id in self._windows:
-            raise RuntimeCoreInvariantError(f"Duplicate window_id: {window_id}")
+            raise RuntimeCoreInvariantError("Duplicate window_id")
         if requirement_id not in self._requirements:
-            raise RuntimeCoreInvariantError(f"Unknown requirement_id: {requirement_id}")
+            raise RuntimeCoreInvariantError("Unknown requirement_id")
         window = FilingWindow(
             window_id=window_id,
             requirement_id=requirement_id,
@@ -200,7 +200,7 @@ class RegulatoryReportingEngine:
         """Get a filing window by ID."""
         w = self._windows.get(window_id)
         if w is None:
-            raise RuntimeCoreInvariantError(f"Unknown window_id: {window_id}")
+            raise RuntimeCoreInvariantError("Unknown window_id")
         return w
 
     def windows_for_requirement(self, requirement_id: str) -> tuple[FilingWindow, ...]:
@@ -222,9 +222,9 @@ class RegulatoryReportingEngine:
     ) -> EvidencePackage:
         """Assemble an evidence package from evidence IDs."""
         if package_id in self._packages:
-            raise RuntimeCoreInvariantError(f"Duplicate package_id: {package_id}")
+            raise RuntimeCoreInvariantError("Duplicate package_id")
         if requirement_id not in self._requirements:
-            raise RuntimeCoreInvariantError(f"Unknown requirement_id: {requirement_id}")
+            raise RuntimeCoreInvariantError("Unknown requirement_id")
 
         count = len(evidence_ids)
         if count == 0:
@@ -258,7 +258,7 @@ class RegulatoryReportingEngine:
         """Get an evidence package by ID."""
         p = self._packages.get(package_id)
         if p is None:
-            raise RuntimeCoreInvariantError(f"Unknown package_id: {package_id}")
+            raise RuntimeCoreInvariantError("Unknown package_id")
         return p
 
     def validate_package(self, package_id: str) -> EvidenceCompleteness:
@@ -284,7 +284,7 @@ class RegulatoryReportingEngine:
     ) -> SubmissionRecord:
         """Submit a report for a filing window."""
         if submission_id in self._submissions:
-            raise RuntimeCoreInvariantError(f"Duplicate submission_id: {submission_id}")
+            raise RuntimeCoreInvariantError("Duplicate submission_id")
 
         # Validate window exists
         window = self.get_window(window_id)
@@ -330,16 +330,14 @@ class RegulatoryReportingEngine:
         """Get a submission by ID."""
         s = self._submissions.get(submission_id)
         if s is None:
-            raise RuntimeCoreInvariantError(f"Unknown submission_id: {submission_id}")
+            raise RuntimeCoreInvariantError("Unknown submission_id")
         return s
 
     def accept_submission(self, submission_id: str) -> SubmissionRecord:
         """Mark a submission as accepted."""
         old = self.get_submission(submission_id)
         if old.status in _SUBMISSION_TERMINAL:
-            raise RuntimeCoreInvariantError(
-                f"Cannot accept submission in status {old.status.value}"
-            )
+            raise RuntimeCoreInvariantError("Cannot accept submission in current status")
         updated = SubmissionRecord(
             submission_id=old.submission_id,
             window_id=old.window_id,
@@ -360,9 +358,7 @@ class RegulatoryReportingEngine:
         """Mark a submission as rejected."""
         old = self.get_submission(submission_id)
         if old.status in _SUBMISSION_TERMINAL:
-            raise RuntimeCoreInvariantError(
-                f"Cannot reject submission in status {old.status.value}"
-            )
+            raise RuntimeCoreInvariantError("Cannot reject submission in current status")
         updated = SubmissionRecord(
             submission_id=old.submission_id,
             window_id=old.window_id,
@@ -383,9 +379,7 @@ class RegulatoryReportingEngine:
         """Withdraw a submission."""
         old = self.get_submission(submission_id)
         if old.status in _SUBMISSION_TERMINAL:
-            raise RuntimeCoreInvariantError(
-                f"Cannot withdraw submission in status {old.status.value}"
-            )
+            raise RuntimeCoreInvariantError("Cannot withdraw submission in current status")
         updated = SubmissionRecord(
             submission_id=old.submission_id,
             window_id=old.window_id,
@@ -422,9 +416,9 @@ class RegulatoryReportingEngine:
     ) -> ReportingReview:
         """Record a review of a submission."""
         if review_id in self._reviews:
-            raise RuntimeCoreInvariantError(f"Duplicate review_id: {review_id}")
+            raise RuntimeCoreInvariantError("Duplicate review_id")
         if submission_id not in self._submissions:
-            raise RuntimeCoreInvariantError(f"Unknown submission_id: {submission_id}")
+            raise RuntimeCoreInvariantError("Unknown submission_id")
         now = _now_iso()
         review = ReportingReview(
             review_id=review_id,
@@ -462,9 +456,9 @@ class RegulatoryReportingEngine:
     ) -> AuditorRequest:
         """Record a request from an auditor."""
         if request_id in self._auditor_requests:
-            raise RuntimeCoreInvariantError(f"Duplicate request_id: {request_id}")
+            raise RuntimeCoreInvariantError("Duplicate request_id")
         if submission_id not in self._submissions:
-            raise RuntimeCoreInvariantError(f"Unknown submission_id: {submission_id}")
+            raise RuntimeCoreInvariantError("Unknown submission_id")
         now = _now_iso()
         if not due_at:
             due_at = now  # default due immediately
@@ -510,9 +504,9 @@ class RegulatoryReportingEngine:
     ) -> AuditorResponse:
         """Record a response to an auditor request."""
         if response_id in self._auditor_responses:
-            raise RuntimeCoreInvariantError(f"Duplicate response_id: {response_id}")
+            raise RuntimeCoreInvariantError("Duplicate response_id")
         if request_id not in self._auditor_requests:
-            raise RuntimeCoreInvariantError(f"Unknown request_id: {request_id}")
+            raise RuntimeCoreInvariantError("Unknown request_id")
         now = _now_iso()
         resp = AuditorResponse(
             response_id=response_id,
@@ -563,7 +557,7 @@ class RegulatoryReportingEngine:
                                 requirement_id=window.requirement_id,
                                 window_id=window.window_id,
                                 operation="missed_filing_window",
-                                reason=f"Filing window {window.window_id} closed at {window.closes_at} without submission",
+                                reason="Filing window closed without submission",
                                 detected_at=now,
                             )
                             self._violations[vid] = v
@@ -588,7 +582,7 @@ class RegulatoryReportingEngine:
     def regulatory_snapshot(self, snapshot_id: str) -> RegulatorySnapshot:
         """Capture a point-in-time regulatory reporting snapshot."""
         if snapshot_id in self._snapshot_ids:
-            raise RuntimeCoreInvariantError(f"Duplicate snapshot_id: {snapshot_id}")
+            raise RuntimeCoreInvariantError("Duplicate snapshot_id")
         now = _now_iso()
         snap = RegulatorySnapshot(
             snapshot_id=snapshot_id,

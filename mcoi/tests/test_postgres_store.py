@@ -217,13 +217,14 @@ class TestCreateStore:
         assert isinstance(store, InMemoryStore)
 
     def test_unsupported_backend_raises(self):
-        with pytest.raises(ValueError, match="unsupported"):
+        with pytest.raises(ValueError, match=r"^unsupported persistence backend$") as excinfo:
             create_store("redis")
+        assert "redis" not in str(excinfo.value)
 
     def test_postgresql_without_psycopg2(self):
         """PostgresStore constructor handles missing psycopg2 gracefully."""
         try:
-            import psycopg2
+            import psycopg2  # noqa: F401
             pytest.skip("psycopg2 is installed — skip missing-driver test")
         except ImportError:
             # psycopg2 not installed — constructor should succeed but conn is None
@@ -255,3 +256,59 @@ class TestPostgresStoreStructure:
 
     def test_save_llm_invocation_method_exists(self):
         assert hasattr(PostgresStore, "save_llm_invocation")
+
+    def test_run_migrations_raises_bounded_failure(self):
+        class BrokenCursor:
+            def __enter__(self):
+                return self
+
+            def __exit__(self, exc_type, exc, tb):
+                return False
+
+            def execute(self, _sql):
+                raise RuntimeError("secret migration backend failure")
+
+        class BrokenConn:
+            def __init__(self) -> None:
+                self.rollback_calls = 0
+                self.commit_calls = 0
+
+            def cursor(self):
+                return BrokenCursor()
+
+            def commit(self):
+                self.commit_calls += 1
+
+            def rollback(self):
+                self.rollback_calls += 1
+
+        store = PostgresStore.__new__(PostgresStore)
+        store._conn = BrokenConn()
+
+        with pytest.raises(RuntimeError, match=r"postgres schema migration 1 failed \(RuntimeError\)") as exc_info:
+            store._run_migrations()
+
+        assert store._conn.rollback_calls == 1
+        assert "RuntimeError" in str(exc_info.value)
+        assert "secret migration backend failure" not in str(exc_info.value)
+
+    def test_close_logs_bounded_warning_and_clears_connection(self, monkeypatch):
+        import mcoi_runtime.persistence.postgres_store as pg
+
+        warnings: list[str] = []
+
+        class BrokenConn:
+            def close(self) -> None:
+                raise RuntimeError("postgres://secret-primary-close")
+
+        monkeypatch.setattr(pg._log, "warning", lambda message, *args: warnings.append(message % args))
+
+        store = PostgresStore.__new__(PostgresStore)
+        store._conn = BrokenConn()
+
+        store.close()
+
+        assert store._conn is None
+        assert warnings
+        assert "RuntimeError" in warnings[0]
+        assert "secret-primary-close" not in warnings[0]

@@ -52,6 +52,6 @@ def score_expansion(customer_id: str, current_pack: str, satisfaction: float, mo
     results = []
     for next_pack in paths:
         score = min(1.0, (satisfaction / 10.0) * 0.6 + min(1.0, months_active / 12.0) * 0.4)
-        reason = f"Satisfaction {satisfaction}/10, {months_active} months active"
+        reason = "expansion opportunity indicators present"
         results.append(ExpansionScore(customer_id, current_pack, next_pack, round(score, 3), reason))
     return sorted(results, key=lambda x: x.score, reverse=True)

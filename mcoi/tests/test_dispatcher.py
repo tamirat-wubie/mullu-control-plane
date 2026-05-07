@@ -63,6 +63,8 @@ def test_dispatcher_validates_before_executor_dispatch() -> None:
 
     assert result.status is ExecutionOutcome.FAILED
     assert result.actual_effects[0].details["code"] == "missing_parameter"
+    assert result.actual_effects[0].details["message"] == "required parameters are missing"
+    assert "message" not in result.actual_effects[0].details["message"]
     assert executor.calls == 0
     assert executor.last_request is None
 

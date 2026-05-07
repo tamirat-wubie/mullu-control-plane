@@ -73,8 +73,9 @@ class TestOrgDirectoryPerson:
     def test_duplicate_person_rejected(self):
         d = _directory()
         d.register_person(_person())
-        with pytest.raises(ValueError, match="already registered"):
+        with pytest.raises(ValueError, match="^person already registered$") as exc_info:
             d.register_person(_person())
+        assert "p-1" not in str(exc_info.value)
 
 
 # --- OrgDirectory: Team ---
@@ -94,8 +95,9 @@ class TestOrgDirectoryTeam:
     def test_duplicate_team_rejected(self):
         d = _directory()
         d.register_team(_team())
-        with pytest.raises(ValueError, match="already registered"):
+        with pytest.raises(ValueError, match="^team already registered$") as exc_info:
             d.register_team(_team())
+        assert "t-1" not in str(exc_info.value)
 
     def test_get_team_members(self):
         d = _directory()
@@ -138,8 +140,9 @@ class TestOrgDirectoryOwnership:
     def test_duplicate_ownership_rejected(self):
         d = _directory()
         d.register_ownership(_ownership())
-        with pytest.raises(ValueError, match="already registered"):
+        with pytest.raises(ValueError, match="^ownership already registered$") as exc_info:
             d.register_ownership(_ownership())
+        assert "repo/mullu" not in str(exc_info.value)
 
 
 # --- OrgDirectory: Approver ---
@@ -202,8 +205,9 @@ class TestOrgDirectoryEscalationChain:
     def test_duplicate_chain_rejected(self):
         d = _directory()
         d.register_escalation_chain(_chain())
-        with pytest.raises(ValueError, match="already registered"):
+        with pytest.raises(ValueError, match="^escalation chain already registered$") as exc_info:
             d.register_escalation_chain(_chain())
+        assert "esc-1" not in str(exc_info.value)
 
 
 # --- EscalationManager ---
@@ -229,8 +233,9 @@ class TestEscalationManager:
     def test_start_missing_chain_raises(self):
         d = _directory()
         mgr = EscalationManager(directory=d, clock=_clock())
-        with pytest.raises(ValueError, match="not found"):
+        with pytest.raises(ValueError, match="^escalation chain not found$") as exc_info:
             mgr.start_escalation("esc-missing")
+        assert "esc-missing" not in str(exc_info.value)
 
     def test_check_no_escalation_before_timeout(self):
         _, mgr = _setup_escalation()
@@ -283,6 +288,14 @@ class TestEscalationManager:
         resolved = mgr.resolve_escalation(state)
         with pytest.raises(ValueError, match="resolved"):
             mgr.advance_escalation(resolved)
+
+    def test_advance_missing_chain_is_bounded(self):
+        d, mgr = _setup_escalation()
+        state = mgr.start_escalation("esc-1")
+        d._chains.pop("esc-1")
+        with pytest.raises(ValueError, match="^escalation chain not found$") as exc_info:
+            mgr.advance_escalation(state)
+        assert "esc-1" not in str(exc_info.value)
 
     def test_resolve_escalation(self):
         _, mgr = _setup_escalation()

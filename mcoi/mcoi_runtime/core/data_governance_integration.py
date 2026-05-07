@@ -214,7 +214,7 @@ class DataGovernanceIntegration:
             scope=MemoryScope.GLOBAL,
             scope_ref_id=scope_ref_id,
             trust_level=MemoryTrustLevel.VERIFIED,
-            title=f"Data governance state: {scope_ref_id}",
+            title="Data governance state",
             content=content,
             source_ids=(scope_ref_id,),
             tags=("data", "governance", "privacy"),

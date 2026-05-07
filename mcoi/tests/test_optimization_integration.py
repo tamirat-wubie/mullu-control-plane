@@ -1012,7 +1012,9 @@ class TestAttachRecommendationsToMemoryMesh:
     ) -> None:
         integration.recommend_from_connectors("req-m9", [_degraded_connector()])
         mem = integration.attach_recommendations_to_memory_mesh("scope-m9")
-        assert "scope-m9" in mem.title
+        assert mem.title == "Optimization state"
+        assert "scope-m9" not in mem.title
+        assert mem.scope_ref_id == "scope-m9"
 
     def test_memory_tags(
         self, integration: OptimizationIntegration,

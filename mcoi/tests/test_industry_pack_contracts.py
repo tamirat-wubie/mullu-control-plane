@@ -102,12 +102,16 @@ class TestIndustryPack:
             IndustryPack(pack_id="p1", tenant_id="", display_name="X", created_at=_NOW)
 
     def test_bad_domain_rejected(self):
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="^domain must be a PackDomain value$") as exc_info:
             IndustryPack(pack_id="p1", tenant_id="t1", display_name="X", domain="bad", created_at=_NOW)
+        assert "str" not in str(exc_info.value)
+        assert "bad" not in str(exc_info.value)
 
     def test_bad_status_rejected(self):
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="^status must be an IndustryPackStatus value$") as exc_info:
             IndustryPack(pack_id="p1", tenant_id="t1", display_name="X", status="bad", created_at=_NOW)
+        assert "<class 'str'>" not in str(exc_info.value)
+        assert "bad" not in str(exc_info.value)
 
     def test_negative_capability_count_rejected(self):
         with pytest.raises(ValueError):
@@ -146,12 +150,13 @@ class TestPackCapability:
         assert c.enabled is True
 
     def test_enabled_must_be_bool(self):
-        with pytest.raises(ValueError, match="enabled must be bool"):
+        with pytest.raises(ValueError, match="^enabled must be a boolean value$") as exc_info:
             PackCapability(
                 capability_id="c1", tenant_id="t1", pack_ref="p1",
                 kind=PackCapabilityKind.INTAKE, target_runtime="rt1",
                 enabled=1, created_at=_NOW,
             )
+        assert "int" not in str(exc_info.value)
 
     def test_enabled_false(self):
         c = PackCapability(
@@ -162,11 +167,12 @@ class TestPackCapability:
         assert c.enabled is False
 
     def test_bad_kind_rejected(self):
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="^kind must be a PackCapabilityKind value$") as exc_info:
             PackCapability(
                 capability_id="c1", tenant_id="t1", pack_ref="p1",
                 kind="bad", target_runtime="rt1", created_at=_NOW,
             )
+        assert "bad" not in str(exc_info.value)
 
 
 # ---------------------------------------------------------------------------
@@ -244,11 +250,12 @@ class TestPackDecision:
         assert d.disposition == DeploymentDisposition.APPROVED
 
     def test_bad_disposition_rejected(self):
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="^disposition must be a DeploymentDisposition value$") as exc_info:
             PackDecision(
                 decision_id="d1", tenant_id="t1", pack_ref="p1",
                 disposition="bad", reason="ok", decided_at=_NOW,
             )
+        assert "bad" not in str(exc_info.value)
 
 
 # ---------------------------------------------------------------------------
@@ -299,11 +306,23 @@ class TestPackDeploymentRecord:
         assert dr.deployment_id == "dr1"
 
     def test_bad_disposition_rejected(self):
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="^disposition must be a DeploymentDisposition value$") as exc_info:
             PackDeploymentRecord(
                 deployment_id="dr1", tenant_id="t1", pack_ref="p1",
                 disposition="bad", deployed_at=_NOW,
             )
+        assert "bad" not in str(exc_info.value)
+
+
+class TestBoundedIndustryPackContractMessages:
+    def test_readiness_type_error_is_bounded(self):
+        with pytest.raises(ValueError, match="^readiness must be a PackReadiness value$") as exc_info:
+            PackAssessment(
+                assessment_id="a1", tenant_id="t1", pack_ref="p1",
+                readiness="secret-readiness", total_capabilities=1,
+                enabled_capabilities=1, readiness_score=1.0, assessed_at=_NOW,
+            )
+        assert "secret-readiness" not in str(exc_info.value)
 
 
 # ---------------------------------------------------------------------------

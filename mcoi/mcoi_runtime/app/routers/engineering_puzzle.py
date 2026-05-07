@@ -47,7 +47,10 @@ def _control_surface() -> EngineeringPuzzleControlSurface:
     try:
         control = deps.get("engineering_puzzle_control")
     except RuntimeError as exc:
-        raise HTTPException(status_code=503, detail=str(exc)) from exc
+        raise HTTPException(
+            status_code=503,
+            detail=f"engineering_puzzle_control dependency not registered: {exc}",
+        ) from exc
     if not isinstance(control, EngineeringPuzzleControlSurface):
         raise HTTPException(
             status_code=500,

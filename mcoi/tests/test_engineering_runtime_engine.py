@@ -95,8 +95,10 @@ class TestQuantities:
 
     def test_duplicate_quantity_raises(self, engine):
         _register_qty(engine)
-        with pytest.raises(RuntimeCoreInvariantError):
+        with pytest.raises(RuntimeCoreInvariantError) as exc_info:
             _register_qty(engine)
+        assert str(exc_info.value) == "Duplicate quantity_id"
+        assert "q-1" not in str(exc_info.value)
 
     def test_get_quantity(self, engine):
         _register_qty(engine)
@@ -104,8 +106,10 @@ class TestQuantities:
         assert q.value == 50.0
 
     def test_get_unknown_raises(self, engine):
-        with pytest.raises(RuntimeCoreInvariantError):
+        with pytest.raises(RuntimeCoreInvariantError) as exc_info:
             engine.get_quantity("nope")
+        assert str(exc_info.value) == "Unknown quantity_id"
+        assert "nope" not in str(exc_info.value)
 
     def test_quantities_for_tenant(self, engine):
         _register_qty(engine, "q-1", "t-1")
@@ -150,8 +154,10 @@ class TestTolerances:
     def test_duplicate_tolerance_raises(self, engine):
         _register_qty(engine, value=100.0)
         engine.check_tolerance("tol-1", "t-1", "q-1", 100.0, 80.0, 120.0)
-        with pytest.raises(RuntimeCoreInvariantError):
+        with pytest.raises(RuntimeCoreInvariantError) as exc_info:
             engine.check_tolerance("tol-1", "t-1", "q-1", 100.0, 80.0, 120.0)
+        assert str(exc_info.value) == "Duplicate tolerance_id"
+        assert "tol-1" not in str(exc_info.value)
 
 
 # ===================================================================
@@ -169,8 +175,10 @@ class TestReliabilityTargets:
 
     def test_duplicate_target_raises(self, engine):
         engine.register_reliability_target("rt-1", "t-1", "c-1", ReliabilityGrade.A, 5000.0, 0.99)
-        with pytest.raises(RuntimeCoreInvariantError):
+        with pytest.raises(RuntimeCoreInvariantError) as exc_info:
             engine.register_reliability_target("rt-1", "t-1", "c-1", ReliabilityGrade.B, 3000.0, 0.95)
+        assert str(exc_info.value) == "Duplicate target_id"
+        assert "rt-1" not in str(exc_info.value)
 
 
 # ===================================================================
@@ -207,8 +215,10 @@ class TestSafetyMargins:
 
     def test_duplicate_margin_raises(self, engine):
         engine.assess_safety_margin("sm-1", "t-1", "c-1", 100.0, 50.0)
-        with pytest.raises(RuntimeCoreInvariantError):
+        with pytest.raises(RuntimeCoreInvariantError) as exc_info:
             engine.assess_safety_margin("sm-1", "t-1", "c-1", 100.0, 50.0)
+        assert str(exc_info.value) == "Duplicate margin_id"
+        assert "sm-1" not in str(exc_info.value)
 
 
 # ===================================================================
@@ -321,18 +331,27 @@ class TestViolationDetection:
         viols = engine.detect_engineering_violations("t-1")
         assert len(viols) == 1
         assert viols[0].operation == "tolerance_exceeded"
+        assert viols[0].reason == "tolerance is exceeded"
+        assert "tol-1" not in viols[0].reason
+        assert "q-1" not in viols[0].reason
 
     def test_safety_margin_insufficient_violation(self, engine):
         engine.assess_safety_margin("sm-1", "t-1", "c-1", 100.0, 95.0)
         viols = engine.detect_engineering_violations("t-1")
         assert len(viols) == 1
         assert viols[0].operation == "safety_margin_insufficient"
+        assert viols[0].reason == "safety margin is insufficient"
+        assert "sm-1" not in viols[0].reason
+        assert "c-1" not in viols[0].reason
 
     def test_load_envelope_failure_violation(self, engine):
         engine.measure_load_envelope("le-1", "t-1", "c-1", 100.0, 100.0)
         viols = engine.detect_engineering_violations("t-1")
         assert len(viols) == 1
         assert viols[0].operation == "load_envelope_failure"
+        assert viols[0].reason == "load envelope is in failure"
+        assert "le-1" not in viols[0].reason
+        assert "c-1" not in viols[0].reason
 
     def test_idempotent_violation_detection(self, engine):
         _register_qty(engine, value=130.0)

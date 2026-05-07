@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "schemas/creative/translate.output.schema.json",
+  "type": "object",
+  "required": ["translation_prompt", "target_lang", "receipt_status"],
+  "properties": {
+    "translation_prompt": {"type": "string", "minLength": 1},
+    "source_lang": {"type": "string"},
+    "target_lang": {"type": "string", "minLength": 1},
+    "receipt_status": {"const": "prepared"}
+  },
+  "additionalProperties": true
+}

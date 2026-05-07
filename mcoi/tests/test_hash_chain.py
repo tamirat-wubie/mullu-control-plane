@@ -19,6 +19,7 @@ from mcoi_runtime.persistence.hash_chain import (
     compute_chain_hash,
     compute_content_hash,
 )
+from mcoi_runtime.persistence.errors import CorruptedDataError, PathTraversalError
 from mcoi_runtime.persistence.trace_store import TraceStore
 from mcoi_runtime.persistence.replay_store import ReplayStore
 from mcoi_runtime.contracts.trace import TraceEntry
@@ -110,6 +111,7 @@ class TestChainValidates:
         assert result.entries_checked == 3
         assert result.first_broken_sequence is None
         assert result.chain_id == "valid-chain"
+        assert result.detail == "chain valid"
 
     def test_chain_linkage(self, tmp_path: Path) -> None:
         store = HashChainStore(tmp_path / "chain")
@@ -144,6 +146,7 @@ class TestTamperedDetected:
         result = store.validate()
         assert result.valid is False
         assert result.first_broken_sequence == 1
+        assert result.detail == "chain hash mismatch"
 
     def test_tampered_chain_hash(self, tmp_path: Path) -> None:
         chain_dir = tmp_path / "chain"
@@ -163,6 +166,7 @@ class TestTamperedDetected:
         result = store.validate()
         assert result.valid is False
         assert result.first_broken_sequence == 0
+        assert result.detail == "chain hash mismatch"
 
 
 class TestDeletedDetected:
@@ -182,6 +186,7 @@ class TestDeletedDetected:
         # After deleting seq 1, file for seq 2 remains. Validation sees
         # seq 0 then seq 2, which breaks expected sequential numbering.
         assert result.first_broken_sequence is not None
+        assert result.detail == "sequence continuity failure"
 
 
 class TestEmptyValidates:
@@ -191,6 +196,24 @@ class TestEmptyValidates:
         assert result.valid is True
         assert result.entries_checked == 0
         assert result.first_broken_sequence is None
+        assert result.detail == "empty chain"
+
+
+class TestPathTraversalBounded:
+    @pytest.mark.parametrize(
+        ("bad_id", "expected"),
+        (
+            ("../escape", "identifier contains forbidden characters"),
+            ("a\0b", "identifier contains null byte"),
+        ),
+    )
+    def test_safe_path_bounds_identifier_message(
+        self, tmp_path: Path, bad_id: str, expected: str
+    ) -> None:
+        store = HashChainStore(tmp_path / "chain")
+        with pytest.raises(PathTraversalError, match=rf"^{expected}$") as excinfo:
+            store._safe_path(bad_id, suffix=".json")
+        assert bad_id not in str(excinfo.value)
 
 
 class TestLoadAll:
@@ -208,6 +231,15 @@ class TestLoadAll:
     def test_load_all_empty(self, tmp_path: Path) -> None:
         store = HashChainStore(tmp_path / "chain")
         assert store.load_all() == ()
+
+    def test_load_all_bounds_malformed_entry_errors(self, tmp_path: Path) -> None:
+        chain_dir = tmp_path / "chain"
+        chain_dir.mkdir(parents=True)
+        (chain_dir / "000000000000.json").write_text("not json", encoding="utf-8")
+
+        store = HashChainStore(chain_dir)
+        with pytest.raises(CorruptedDataError, match=r"^invalid hash chain entry \(CorruptedDataError\)$"):
+            store.load_all()
 
 
 # ---------------------------------------------------------------------------

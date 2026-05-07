@@ -27,7 +27,6 @@ from mcoi_runtime.adapters.llm_adapter import (
     GovernedLLMAdapter,
     LLMBackend,
     LLMBudgetManager,
-    StubLLMBackend,
 )
 
 
@@ -63,9 +62,10 @@ class LLMIntegrationBridge:
         clock: Callable[[], str],
         default_backend: LLMBackend | None = None,
         ledger_sink: Callable[[dict[str, Any]], None] | None = None,
+        budget_manager: LLMBudgetManager | None = None,
     ) -> None:
         self._clock = clock
-        self._budget_manager = LLMBudgetManager()
+        self._budget_manager = budget_manager or LLMBudgetManager()
         self._backends: dict[str, LLMBackend] = {}
         self._adapters: dict[str, GovernedLLMAdapter] = {}
         self._invocation_records: list[LLMInvocationRecord] = []
@@ -93,7 +93,7 @@ class LLMIntegrationBridge:
         self,
         prompt: str,
         *,
-        model_name: str = "claude-sonnet-4-20250514",
+        model_name: str = "",
         backend_name: str = "default",
         system: str = "",
         max_tokens: int = 1024,
@@ -112,11 +112,16 @@ class LLMIntegrationBridge:
                 input_tokens=0,
                 output_tokens=0,
                 cost=0.0,
-                model_name=model_name,
+                model_name=model_name or "unknown",
                 provider=LLMProvider.STUB,
                 finished=False,
                 error=f"unknown backend: {backend_name}",
             )
+
+        # Resolve model name: use backend default when not specified
+        resolved_model = model_name
+        if not resolved_model:
+            resolved_model = getattr(adapter._backend, "_default_model", "claude-sonnet-4-20250514")
 
         messages: list[LLMMessage] = []
         if system:
@@ -124,7 +129,7 @@ class LLMIntegrationBridge:
         messages.append(LLMMessage(role=LLMRole.USER, content=prompt))
 
         params = LLMInvocationParams(
-            model_name=model_name,
+            model_name=resolved_model,
             messages=tuple(messages),
             max_tokens=max_tokens,
             temperature=temperature,

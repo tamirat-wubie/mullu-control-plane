@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import dataclasses
 from types import MappingProxyType
 
 import pytest
@@ -461,6 +460,7 @@ class TestProcurementRequest:
         assert rec.currency == "USD"
         assert rec.requested_by == "user-001"
         assert rec.requested_at == TS
+        assert rec.cancelled_by == ""
 
     def test_frozen(self):
         rec = _procurement_request()
@@ -513,6 +513,20 @@ class TestProcurementRequest:
         with pytest.raises(ValueError):
             _procurement_request(requested_at="not-a-date")
 
+    def test_cancelled_requires_cancelled_by(self):
+        with pytest.raises(ValueError, match="^cancelled requests must declare cancelled_by$") as exc_info:
+            _procurement_request(status=ProcurementRequestStatus.CANCELLED, cancelled_by="")
+        message = str(exc_info.value)
+        assert message == "cancelled requests must declare cancelled_by"
+        assert "req-001" not in message
+
+    def test_system_cancelled_by_rejected(self):
+        with pytest.raises(ValueError, match="^cancelled_by must exclude system$") as exc_info:
+            _procurement_request(status=ProcurementRequestStatus.CANCELLED, cancelled_by="system")
+        message = str(exc_info.value)
+        assert message == "cancelled_by must exclude system"
+        assert "system" in message
+
     def test_to_dict_returns_dict(self):
         rec = _procurement_request()
         d = rec.to_dict()
@@ -530,13 +544,16 @@ class TestProcurementRequest:
         expected_keys = {
             "request_id", "vendor_id", "tenant_id", "status",
             "description", "estimated_amount", "currency",
-            "requested_by", "requested_at", "metadata",
+            "requested_by", "requested_at", "cancelled_by", "metadata",
         }
         assert set(d.keys()) == expected_keys
 
     @pytest.mark.parametrize("status", list(ProcurementRequestStatus))
     def test_all_statuses_accepted(self, status):
-        rec = _procurement_request(status=status)
+        overrides = {"status": status}
+        if status is ProcurementRequestStatus.CANCELLED:
+            overrides["cancelled_by"] = "ops-001"
+        rec = _procurement_request(**overrides)
         assert rec.status is status
 
     def test_empty_description_accepted(self):

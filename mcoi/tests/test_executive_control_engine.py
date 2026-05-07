@@ -112,8 +112,9 @@ class TestObjectiveManagement:
 
     def test_duplicate_raises(self, engine):
         _register_default_objective(engine)
-        with pytest.raises(RuntimeCoreInvariantError, match="already exists"):
+        with pytest.raises(RuntimeCoreInvariantError, match="^objective already exists$") as excinfo:
             _register_default_objective(engine)
+        assert "obj-1" not in str(excinfo.value)
 
     def test_update_kpi(self, engine):
         _register_default_objective(engine)
@@ -123,8 +124,9 @@ class TestObjectiveManagement:
         assert updated.updated_at != ""
 
     def test_update_kpi_missing_raises(self, engine):
-        with pytest.raises(RuntimeCoreInvariantError, match="not found"):
+        with pytest.raises(RuntimeCoreInvariantError, match="^objective not found$") as excinfo:
             engine.update_objective_kpi("nonexistent", 10.0)
+        assert "nonexistent" not in str(excinfo.value)
 
     def test_set_status(self, engine):
         _register_default_objective(engine)
@@ -132,8 +134,9 @@ class TestObjectiveManagement:
         assert updated.status == ObjectiveStatus.PAUSED
 
     def test_set_status_missing_raises(self, engine):
-        with pytest.raises(RuntimeCoreInvariantError, match="not found"):
+        with pytest.raises(RuntimeCoreInvariantError, match="^objective not found$") as excinfo:
             engine.set_objective_status("nonexistent", ObjectiveStatus.PAUSED)
+        assert "nonexistent" not in str(excinfo.value)
 
     def test_register_with_scope_ref_ids(self, engine):
         obj = _register_default_objective(
@@ -171,8 +174,9 @@ class TestObjectiveHealth:
         assert health["on_track"] is True
 
     def test_missing_objective_raises(self, engine):
-        with pytest.raises(RuntimeCoreInvariantError, match="not found"):
+        with pytest.raises(RuntimeCoreInvariantError, match="^objective not found$") as excinfo:
             engine.check_objective_health("nonexistent")
+        assert "nonexistent" not in str(excinfo.value)
 
     def test_exact_tolerance_boundary(self, engine):
         # gap_pct == tolerance_pct => on_track (<=)
@@ -209,8 +213,9 @@ class TestDirectiveLifecycle:
     def test_duplicate_raises(self, engine):
         _register_default_objective(engine)
         _issue_default_directive(engine)
-        with pytest.raises(RuntimeCoreInvariantError, match="already exists"):
+        with pytest.raises(RuntimeCoreInvariantError, match="^directive already exists$") as excinfo:
             _issue_default_directive(engine)
+        assert "dir-1" not in str(excinfo.value)
 
     def test_acknowledge(self, engine):
         _register_default_objective(engine)
@@ -222,8 +227,9 @@ class TestDirectiveLifecycle:
         _register_default_objective(engine)
         _issue_default_directive(engine)
         engine.acknowledge_directive("dir-1")
-        with pytest.raises(RuntimeCoreInvariantError, match="not in ISSUED"):
+        with pytest.raises(RuntimeCoreInvariantError, match="^directive is not in ISSUED state$") as excinfo:
             engine.acknowledge_directive("dir-1")
+        assert "dir-1" not in str(excinfo.value)
 
     def test_execute_from_issued(self, engine):
         _register_default_objective(engine)
@@ -242,8 +248,9 @@ class TestDirectiveLifecycle:
         _register_default_objective(engine)
         _issue_default_directive(engine)
         engine.execute_directive("dir-1")
-        with pytest.raises(RuntimeCoreInvariantError, match="cannot be executed"):
+        with pytest.raises(RuntimeCoreInvariantError, match="^directive cannot be executed from current state$") as excinfo:
             engine.execute_directive("dir-1")
+        assert "dir-1" not in str(excinfo.value)
 
     def test_reject(self, engine):
         _register_default_objective(engine)
@@ -322,8 +329,9 @@ class TestScenarioPlanning:
 
     def test_duplicate_raises(self, engine):
         engine.create_scenario("sc-1", "Budget what-if")
-        with pytest.raises(RuntimeCoreInvariantError, match="already exists"):
+        with pytest.raises(RuntimeCoreInvariantError, match="^scenario already exists$") as excinfo:
             engine.create_scenario("sc-1", "Another")
+        assert "sc-1" not in str(excinfo.value)
 
     def test_run_scenario(self, engine):
         engine.create_scenario("sc-1", "Budget what-if")
@@ -333,8 +341,9 @@ class TestScenarioPlanning:
     def test_run_non_draft_raises(self, engine):
         engine.create_scenario("sc-1", "Budget what-if")
         engine.run_scenario("sc-1")
-        with pytest.raises(RuntimeCoreInvariantError, match="not in DRAFT"):
+        with pytest.raises(RuntimeCoreInvariantError, match="^scenario is not in DRAFT state$") as excinfo:
             engine.run_scenario("sc-1")
+        assert "sc-1" not in str(excinfo.value)
 
     def test_complete_scenario(self, engine):
         engine.create_scenario("sc-1", "Budget what-if")
@@ -353,8 +362,9 @@ class TestScenarioPlanning:
 
     def test_complete_non_running_raises(self, engine):
         engine.create_scenario("sc-1", "Budget what-if")
-        with pytest.raises(RuntimeCoreInvariantError, match="not RUNNING"):
+        with pytest.raises(RuntimeCoreInvariantError, match="^scenario is not RUNNING$") as excinfo:
             engine.complete_scenario("sc-1")
+        assert "sc-1" not in str(excinfo.value)
 
     def test_assess_scenario(self, engine):
         engine.create_scenario("sc-1", "Budget what-if")
@@ -371,8 +381,9 @@ class TestScenarioPlanning:
         assert outcome.projected_improvement_pct == 15.0
 
     def test_assess_missing_scenario_raises(self, engine):
-        with pytest.raises(RuntimeCoreInvariantError, match="not found"):
+        with pytest.raises(RuntimeCoreInvariantError, match="^scenario not found$") as excinfo:
             engine.assess_scenario("out-1", "nonexistent", "BAD")
+        assert "nonexistent" not in str(excinfo.value)
 
     def test_get_scenario(self, engine):
         engine.create_scenario("sc-1", "Budget what-if")
@@ -413,8 +424,9 @@ class TestInterventions:
         _register_default_objective(engine)
         _issue_default_directive(engine)
         engine.intervene("iv-1", "dir-1", "halt_loop")
-        with pytest.raises(RuntimeCoreInvariantError, match="already exists"):
+        with pytest.raises(RuntimeCoreInvariantError, match="^intervention already exists$") as excinfo:
             engine.intervene("iv-1", "dir-1", "halt_loop")
+        assert "iv-1" not in str(excinfo.value)
 
     def test_resolve_intervention(self, engine):
         _register_default_objective(engine)
@@ -424,8 +436,9 @@ class TestInterventions:
         assert resolved.resolved_at != ""
 
     def test_resolve_missing_raises(self, engine):
-        with pytest.raises(RuntimeCoreInvariantError, match="not found"):
+        with pytest.raises(RuntimeCoreInvariantError, match="^intervention not found$") as excinfo:
             engine.resolve_intervention("nonexistent")
+        assert "nonexistent" not in str(excinfo.value)
 
     def test_get_intervention(self, engine):
         _register_default_objective(engine)
@@ -459,8 +472,9 @@ class TestDecisions:
 
     def test_duplicate_raises(self, engine):
         engine.record_decision("dec-1", "First decision")
-        with pytest.raises(RuntimeCoreInvariantError, match="already exists"):
+        with pytest.raises(RuntimeCoreInvariantError, match="^decision already exists$") as excinfo:
             engine.record_decision("dec-1", "Duplicate")
+        assert "dec-1" not in str(excinfo.value)
 
     def test_get_decision(self, engine):
         engine.record_decision("dec-1", "Approve reallocation")
@@ -489,8 +503,9 @@ class TestPortfolioBindings:
         assert binding.bound_at != ""
 
     def test_missing_directive_raises(self, engine):
-        with pytest.raises(RuntimeCoreInvariantError, match="not found"):
+        with pytest.raises(RuntimeCoreInvariantError, match="^directive not found$") as excinfo:
             engine.bind_directive_to_portfolio("bind-1", "nonexistent")
+        assert "nonexistent" not in str(excinfo.value)
 
     def test_get_bindings(self, engine):
         _register_default_objective(engine)

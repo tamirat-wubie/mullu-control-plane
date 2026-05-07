@@ -91,17 +91,17 @@ class SolverDisposition(Enum):
 def _require_any_float(value: float, field_name: str) -> float:
     """Validate that a value is a real number (int or float, not bool). Allows negative and inf."""
     if not isinstance(value, (int, float)) or isinstance(value, bool):
-        raise ValueError(f"{field_name} must be a number")
+        raise ValueError("numeric value must be a number")
     return float(value)
 
 
 def _require_finite_float(value: float, field_name: str) -> float:
     """Validate that a value is a finite real number (rejects inf and nan)."""
     if not isinstance(value, (int, float)) or isinstance(value, bool):
-        raise ValueError(f"{field_name} must be a number")
+        raise ValueError("numeric value must be a number")
     v = float(value)
     if not math.isfinite(v):
-        raise ValueError(f"{field_name} must be finite (got {v!r})")
+        raise ValueError("numeric value must be finite")
     return v
 
 

@@ -159,8 +159,9 @@ class TestSessions:
 
     def test_duplicate_session_id_raises(self, engine):
         _start(engine, "s1")
-        with pytest.raises(RuntimeCoreInvariantError, match="Duplicate"):
+        with pytest.raises(RuntimeCoreInvariantError, match="Duplicate") as exc_info:
             _start(engine, "s1")
+        assert "s1" not in str(exc_info.value)
 
     def test_get_session(self, engine):
         _start(engine)
@@ -168,8 +169,9 @@ class TestSessions:
         assert s.session_id == "s1"
 
     def test_get_session_unknown(self, engine):
-        with pytest.raises(RuntimeCoreInvariantError, match="Unknown"):
+        with pytest.raises(RuntimeCoreInvariantError, match="Unknown") as exc_info:
             engine.get_session("nonexistent")
+        assert "nonexistent" not in str(exc_info.value)
 
     def test_sessions_for_tenant(self, engine):
         _start(engine, "s1", "t1")
@@ -222,8 +224,10 @@ class TestSessions:
     def test_pause_completed_raises(self, engine):
         _start(engine)
         engine.complete_session("s1")
-        with pytest.raises(RuntimeCoreInvariantError, match="terminal"):
+        with pytest.raises(RuntimeCoreInvariantError, match="terminal") as exc_info:
             engine.pause_session("s1")
+        assert "s1" not in str(exc_info.value)
+        assert "completed" not in str(exc_info.value).lower()
 
     def test_pause_terminated_raises(self, engine):
         _start(engine)
@@ -258,8 +262,10 @@ class TestSessions:
     def test_resume_completed_raises(self, engine):
         _start(engine)
         engine.complete_session("s1")
-        with pytest.raises(RuntimeCoreInvariantError, match="terminal"):
+        with pytest.raises(RuntimeCoreInvariantError, match="terminal") as exc_info:
             engine.resume_session("s1")
+        assert "s1" not in str(exc_info.value)
+        assert "completed" not in str(exc_info.value).lower()
 
     def test_resume_terminated_raises(self, engine):
         _start(engine)
@@ -425,8 +431,9 @@ class TestTurns:
     def test_duplicate_turn_id_raises(self, engine):
         _start(engine)
         _turn(engine, "tr1")
-        with pytest.raises(RuntimeCoreInvariantError, match="Duplicate"):
+        with pytest.raises(RuntimeCoreInvariantError, match="Duplicate") as exc_info:
             _turn(engine, "tr1")
+        assert "tr1" not in str(exc_info.value)
 
     def test_turn_on_nonexistent_session_raises(self, engine):
         with pytest.raises(RuntimeCoreInvariantError):
@@ -435,8 +442,10 @@ class TestTurns:
     def test_turn_on_paused_session_raises(self, engine):
         _start(engine)
         engine.pause_session("s1")
-        with pytest.raises(RuntimeCoreInvariantError, match="not ACTIVE"):
+        with pytest.raises(RuntimeCoreInvariantError, match="not ACTIVE") as exc_info:
             _turn(engine)
+        assert "s1" not in str(exc_info.value)
+        assert "paused" not in str(exc_info.value).lower()
 
     def test_turn_on_completed_session_raises(self, engine):
         _start(engine)
@@ -550,8 +559,9 @@ class TestActionPlans:
     def test_duplicate_plan_id_raises(self, engine):
         _start(engine)
         _plan(engine, "p1")
-        with pytest.raises(RuntimeCoreInvariantError, match="Duplicate"):
+        with pytest.raises(RuntimeCoreInvariantError, match="Duplicate") as exc_info:
             _plan(engine, "p1")
+        assert "p1" not in str(exc_info.value)
 
     def test_plan_on_nonexistent_session_raises(self, engine):
         with pytest.raises(RuntimeCoreInvariantError):
@@ -578,6 +588,11 @@ class TestActionPlans:
         _start(engine, "s1", "t1")
         engine.build_action_plan("p1", "t2", "s1", "i1", "rt", "op")
         assert engine.violation_count >= 1
+        violations = list(engine.snapshot()["violations"].values())
+        assert any(v["reason"] == "cross-tenant action attempt" for v in violations)
+        assert all("p1" not in v["reason"] for v in violations)
+        assert all("t1" not in v["reason"] for v in violations)
+        assert all("t2" not in v["reason"] for v in violations)
 
     def test_cross_tenant_violation_has_correct_operation(self, engine):
         _start(engine, "s1", "t1")
@@ -640,8 +655,9 @@ class TestDecisions:
     def test_duplicate_decision_id_raises(self, engine):
         _start(engine)
         _decision(engine, "d1")
-        with pytest.raises(RuntimeCoreInvariantError, match="Duplicate"):
+        with pytest.raises(RuntimeCoreInvariantError, match="Duplicate") as exc_info:
             _decision(engine, "d1")
+        assert "d1" not in str(exc_info.value)
 
     def test_decision_with_evidence_refs(self, engine):
         _start(engine)
@@ -687,8 +703,9 @@ class TestResponses:
     def test_duplicate_response_id_raises(self, engine):
         _start(engine)
         _response(engine, "r1")
-        with pytest.raises(RuntimeCoreInvariantError, match="Duplicate"):
+        with pytest.raises(RuntimeCoreInvariantError, match="Duplicate") as exc_info:
             _response(engine, "r1")
+        assert "r1" not in str(exc_info.value)
 
     def test_response_confidence_zero(self, engine):
         _start(engine)

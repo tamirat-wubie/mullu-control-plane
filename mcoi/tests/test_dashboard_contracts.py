@@ -158,7 +158,7 @@ class TestLearningInsight:
         assert i.cumulative_delta < 0
 
     def test_invalid_direction_raises(self) -> None:
-        with pytest.raises(ValueError, match="direction"):
+        with pytest.raises(ValueError) as exc:
             LearningInsight(
                 insight_id="li-bad",
                 factor_kind="risk",
@@ -167,6 +167,9 @@ class TestLearningInsight:
                 sample_count=0,
                 explanation="bad direction",
             )
+        assert str(exc.value) == "direction has unsupported value"
+        assert "unknown" not in str(exc.value)
+        assert "stable" not in str(exc.value)
 
     def test_nan_delta_raises(self) -> None:
         with pytest.raises(ValueError, match="cumulative_delta"):

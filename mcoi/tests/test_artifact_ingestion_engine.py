@@ -152,6 +152,7 @@ class TestParserDispatch:
         desc = _desc(aid="art-bad", filename="bad.json")
         record = engine.ingest(desc, b"{not json")
         assert record.status == ArtifactParseStatus.MALFORMED
+        assert record.parse_result.reason == "Invalid JSON (JSONDecodeError)"
 
     def test_yaml_valid(self):
         engine = ArtifactIngestionEngine()
@@ -387,8 +388,9 @@ class TestDuplicateRejection:
         engine = ArtifactIngestionEngine()
         desc = _desc(aid="art-dup")
         engine.ingest(desc, b'{"a": 1}')
-        with pytest.raises(RuntimeCoreInvariantError, match="duplicate"):
+        with pytest.raises(RuntimeCoreInvariantError, match="duplicate") as exc_info:
             engine.ingest(desc, b'{"b": 2}')
+        assert "art-dup" not in str(exc_info.value)
 
 
 # ---------------------------------------------------------------------------
@@ -498,3 +500,44 @@ class TestRecordImmutability:
         assert record.parse_result is not None
         assert record.policy_decision is not None
         assert record.ingested_at
+
+
+class TestBoundedArtifactContracts:
+    def test_csv_parse_reason_is_bounded(self):
+        engine = ArtifactIngestionEngine()
+        desc = _desc(aid="art-csv-bounded", filename="data.csv", mime="text/csv")
+        record = engine.ingest(desc, b"name,age\nAlice,30\nBob,25")
+        assert record.parse_result.reason == "CSV parsed successfully"
+        assert record.parse_result.metadata["row_count"] == 3
+        assert record.parse_result.metadata["col_count"] == 2
+        assert "3 rows" not in record.parse_result.reason
+
+    def test_unsupported_format_reason_is_bounded(self):
+        engine = ArtifactIngestionEngine()
+        desc = _desc(aid="art-unsupported", filename="doc.pdf", mime="application/pdf")
+        record = engine.ingest(desc, b"%PDF-1.4 content")
+        assert record.status == ArtifactParseStatus.UNSUPPORTED
+        assert record.parse_result.reason == "format unsupported"
+        assert "pdf" not in record.parse_result.reason.lower()
+
+    def test_policy_reasons_are_bounded(self):
+        size_engine = ArtifactIngestionEngine(max_size_bytes=50)
+        size_record = size_engine.ingest(_desc(aid="art-big", size=100), b"x")
+        format_engine = ArtifactIngestionEngine(allowed_formats=(ArtifactFormat.JSON,))
+        format_record = format_engine.ingest(
+            _desc(aid="art-csv", filename="data.csv", mime="text/csv"),
+            b"a,b\n1,2",
+        )
+        source_engine = ArtifactIngestionEngine(allowed_sources=(ArtifactSourceType.FILE,))
+        source_record = source_engine.ingest(
+            _desc(
+                aid="art-web",
+                source_type=ArtifactSourceType.WEB_UPLOAD,
+                filename="upload.json",
+                mime="application/json",
+            ),
+            b'{"k":"v"}',
+        )
+        assert size_record.policy_decision.reason == "artifact exceeds size limit"
+        assert format_record.policy_decision.reason == "format not allowed"
+        assert source_record.policy_decision.reason == "source type not allowed"

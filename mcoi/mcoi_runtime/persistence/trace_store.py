@@ -27,6 +27,10 @@ if TYPE_CHECKING:
     from .hash_chain import HashChainStore
 
 
+def _bounded_store_error(summary: str, exc: BaseException) -> str:
+    return f"{summary} ({type(exc).__name__})"
+
+
 def _atomic_write(path: Path, content: str) -> None:
     """Write content to a file atomically via temp-file-then-rename."""
     parent = path.parent
@@ -45,7 +49,7 @@ def _atomic_write(path: Path, content: str) -> None:
                 os.unlink(tmp_path)
             raise
     except OSError as exc:
-        raise PersistenceWriteError(f"failed to write {path}: {exc}") from exc
+        raise PersistenceWriteError(_bounded_store_error("trace store write failed", exc)) from exc
 
 
 def _load_trace_file(path: Path) -> TraceEntry:
@@ -53,15 +57,15 @@ def _load_trace_file(path: Path) -> TraceEntry:
     try:
         raw = json.loads(path.read_text(encoding="utf-8"))
     except (json.JSONDecodeError, OSError) as exc:
-        raise CorruptedDataError(f"malformed trace file {path.name}: {exc}") from exc
+        raise CorruptedDataError(_bounded_store_error("malformed trace file", exc)) from exc
 
     if not isinstance(raw, dict):
-        raise CorruptedDataError(f"trace file {path.name} is not a JSON object")
+        raise CorruptedDataError("trace file must be a JSON object")
 
     try:
         return TraceEntry(**raw)
     except (TypeError, ValueError) as exc:
-        raise CorruptedDataError(f"invalid trace entry in {path.name}: {exc}") from exc
+        raise CorruptedDataError(_bounded_store_error("invalid trace entry", exc)) from exc
 
 
 class TraceStore:
@@ -85,17 +89,13 @@ class TraceStore:
     def _safe_path(self, id_value: str, suffix: str = "") -> Path:
         """Construct a path from *id_value* and validate it stays inside _base_path."""
         if "\0" in id_value:
-            raise PathTraversalError(f"ID contains null byte: {id_value!r}")
+            raise PathTraversalError("identifier contains null byte")
         if "/" in id_value or "\\" in id_value or ".." in id_value:
-            raise PathTraversalError(
-                f"ID contains forbidden characters: {id_value!r}"
-            )
+            raise PathTraversalError("identifier contains forbidden characters")
         candidate = (self._base_path / f"{id_value}{suffix}").resolve()
         base_resolved = self._base_path.resolve()
         if not candidate.is_relative_to(base_resolved):
-            raise PathTraversalError(
-                f"path escapes base directory: {id_value!r}"
-            )
+            raise PathTraversalError("path escapes base directory")
         return candidate
 
     def _trace_path(self, trace_id: str) -> Path:
@@ -131,7 +131,7 @@ class TraceStore:
 
         path = self._trace_path(trace_id)
         if not path.exists():
-            raise TraceNotFoundError(f"trace entry not found: {trace_id}")
+            raise TraceNotFoundError("trace entry not found")
 
         return _load_trace_file(path)
 

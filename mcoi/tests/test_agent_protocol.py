@@ -1,5 +1,8 @@
 """Phase 203A — Agent protocol tests."""
 
+import threading
+import time
+
 import pytest
 from mcoi_runtime.core.agent_protocol import (
     AgentCapability, AgentDescriptor, AgentRegistry,
@@ -20,8 +23,9 @@ class TestAgentRegistry:
         reg = AgentRegistry()
         agent = AgentDescriptor(agent_id="a1", name="A1", capabilities=(AgentCapability.LLM_COMPLETION,))
         reg.register(agent)
-        with pytest.raises(ValueError, match="already registered"):
+        with pytest.raises(ValueError, match="^agent already registered$") as exc_info:
             reg.register(agent)
+        assert "a1" not in str(exc_info.value)
 
     def test_find_capable(self):
         reg = AgentRegistry()
@@ -49,6 +53,36 @@ class TestAgentRegistry:
         agents = reg.list_agents()
         assert agents[0].agent_id == "a1"  # Sorted
 
+    def test_list_agents_snapshot_stable_under_concurrent_register(self):
+        iter_started = threading.Event()
+
+        class _CoordinatedAgentDict(dict[str, AgentDescriptor]):
+            def values(self):  # type: ignore[override]
+                first = True
+                for value in super().values():
+                    if first:
+                        first = False
+                        iter_started.set()
+                        time.sleep(0.05)
+                    yield value
+
+        reg = AgentRegistry()
+        reg._agents = _CoordinatedAgentDict()
+        reg.register(AgentDescriptor(agent_id="a1", name="A1", capabilities=(AgentCapability.LLM_COMPLETION,)))
+
+        def _register() -> None:
+            assert iter_started.wait(timeout=1.0)
+            reg.register(AgentDescriptor(agent_id="a2", name="A2", capabilities=(AgentCapability.CODE_EXECUTION,)))
+
+        worker = threading.Thread(target=_register)
+        worker.start()
+        snapshot = reg.list_agents()
+        worker.join(timeout=1.0)
+
+        assert not worker.is_alive()
+        assert [agent.agent_id for agent in snapshot] == ["a1"]
+        assert [agent.agent_id for agent in reg.list_agents()] == ["a1", "a2"]
+
 
 class TestTaskManager:
     def _setup(self):
@@ -74,8 +108,9 @@ class TestTaskManager:
         mgr = self._setup()
         task = TaskSpec(task_id="t1", description="test", required_capability=AgentCapability.LLM_COMPLETION, payload={})
         mgr.submit(task)
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="^task already exists$") as exc_info:
             mgr.submit(task)
+        assert "t1" not in str(exc_info.value)
 
     def test_assign_valid(self):
         mgr = self._setup()
@@ -86,8 +121,10 @@ class TestTaskManager:
     def test_assign_wrong_capability(self):
         mgr = self._setup()
         mgr.submit(TaskSpec(task_id="t1", description="test", required_capability=AgentCapability.LLM_COMPLETION, payload={}))
-        with pytest.raises(ValueError, match="lacks capability"):
+        with pytest.raises(ValueError, match="^assigned agent lacks required capability$") as exc_info:
             mgr.assign("t1", "code-agent")
+        assert "code-agent" not in str(exc_info.value)
+        assert AgentCapability.LLM_COMPLETION.value not in str(exc_info.value)
 
     def test_auto_assign(self):
         mgr = self._setup()
@@ -112,6 +149,25 @@ class TestTaskManager:
         assert result.status == TaskStatus.COMPLETED
         assert result.output["answer"] == "42"
         assert result.result_hash
+
+    def test_assign_unknown_task_is_bounded(self):
+        mgr = self._setup()
+        with pytest.raises(ValueError, match="^task unavailable$") as exc_info:
+            mgr.assign("missing-task", "llm-agent")
+        assert "missing-task" not in str(exc_info.value)
+
+    def test_assign_unknown_agent_is_bounded(self):
+        mgr = self._setup()
+        mgr.submit(TaskSpec(task_id="t1", description="test", required_capability=AgentCapability.LLM_COMPLETION, payload={}))
+        with pytest.raises(ValueError, match="^agent unavailable$") as exc_info:
+            mgr.assign("t1", "ghost-agent")
+        assert "ghost-agent" not in str(exc_info.value)
+
+    def test_complete_unknown_task_is_bounded(self):
+        mgr = self._setup()
+        with pytest.raises(ValueError, match="^task unavailable$") as exc_info:
+            mgr.complete("missing-task", {"answer": "42"})
+        assert "missing-task" not in str(exc_info.value)
 
     def test_fail(self):
         mgr = self._setup()
@@ -145,3 +201,33 @@ class TestTaskManager:
         summary = mgr.summary()
         assert summary["total_tasks"] == 1
         assert summary["agents"] == 2
+
+    def test_pending_tasks_snapshot_stable_under_concurrent_submit(self):
+        iter_started = threading.Event()
+
+        class _CoordinatedStatusDict(dict[str, TaskStatus]):
+            def items(self):  # type: ignore[override]
+                first = True
+                for item in super().items():
+                    if first:
+                        first = False
+                        iter_started.set()
+                        time.sleep(0.05)
+                    yield item
+
+        mgr = self._setup()
+        mgr._statuses = _CoordinatedStatusDict()
+        mgr.submit(TaskSpec(task_id="t1", description="a", required_capability=AgentCapability.LLM_COMPLETION, payload={}))
+
+        def _submit() -> None:
+            assert iter_started.wait(timeout=1.0)
+            mgr.submit(TaskSpec(task_id="t2", description="b", required_capability=AgentCapability.CODE_EXECUTION, payload={}))
+
+        worker = threading.Thread(target=_submit)
+        worker.start()
+        snapshot = mgr.pending_tasks()
+        worker.join(timeout=1.0)
+
+        assert not worker.is_alive()
+        assert [task.task_id for task in snapshot] == ["t1"]
+        assert sorted(task.task_id for task in mgr.pending_tasks()) == ["t1", "t2"]

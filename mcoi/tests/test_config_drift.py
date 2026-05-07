@@ -18,13 +18,16 @@ class TestConfigDriftDetector:
         assert report.has_drift
         assert len(report.drifts) == 1
         assert report.drifts[0].key == "key"
+        assert report.drifts[0].message == "Configuration value changed"
+        assert "key" not in report.drifts[0].message
 
     def test_detects_missing_key(self):
         d = ConfigDriftDetector()
         d.set_expected({"required": "yes"})
         report = d.detect({})
         assert report.has_drift
-        assert "missing" in report.drifts[0].message.lower()
+        assert report.drifts[0].message == "Missing configuration key"
+        assert "required" not in report.drifts[0].message
 
     def test_detects_unexpected_key(self):
         d = ConfigDriftDetector()
@@ -32,6 +35,8 @@ class TestConfigDriftDetector:
         report = d.detect({"extra": "surprise"})
         assert report.has_drift
         assert report.drifts[0].severity == DriftSeverity.INFO
+        assert report.drifts[0].message == "Unexpected configuration key"
+        assert "extra" not in report.drifts[0].message
 
     def test_secret_key_is_critical(self):
         d = ConfigDriftDetector()

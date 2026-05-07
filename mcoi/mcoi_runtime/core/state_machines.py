@@ -552,9 +552,7 @@ class TransitionAuditor:
                 )
                 if live_verdict != TransitionVerdict.ALLOWED:
                     raise RuntimeCoreInvariantError(
-                        f"audit record {record.audit_id} claims ALLOWED for "
-                        f"{record.from_state}→{record.to_state} via {record.action!r}, "
-                        f"but machine {record.machine_id} says {live_verdict.value}"
+                        "audit record is inconsistent with machine definition"
                     )
             restored.append(record)
         # Commit atomically
@@ -628,7 +626,7 @@ class TransitionReplayEngine:
                     "original_verdict": record.verdict.value,
                     "replayed_verdict": TransitionVerdict.DENIED_ILLEGAL_EDGE.value,
                     "match": REPLAY_DIVERGED,
-                    "detail": f"expected from_state={current_state!r}, got {record.from_state!r}",
+                    "detail": "state continuity mismatch",
                 })
                 diverged = True
                 if halt_on_divergence:
@@ -689,10 +687,7 @@ def enforce_transition(
     """
     verdict = machine.is_legal(from_state, to_state, action)
     if verdict != TransitionVerdict.ALLOWED:
-        raise RuntimeCoreInvariantError(
-            f"[{machine.name}] illegal transition: {from_state} → {to_state} "
-            f"via {action!r} ({verdict.value})"
-        )
+        raise RuntimeCoreInvariantError("illegal transition")
     return verdict
 
 
@@ -711,10 +706,7 @@ def enforce_guarded_transition(
     """
     verdict = machine.is_legal(from_state, to_state, action)
     if verdict != TransitionVerdict.ALLOWED:
-        raise RuntimeCoreInvariantError(
-            f"[{machine.name}] illegal transition: {from_state} → {to_state} "
-            f"via {action!r} ({verdict.value})"
-        )
+        raise RuntimeCoreInvariantError("illegal transition")
 
     # Find matching rule and evaluate guard
     for t in machine.transitions:
@@ -722,10 +714,7 @@ def enforce_guarded_transition(
             if t.guard_label:
                 ctx = dict(guard_context) if guard_context else {}
                 if not guard_registry.evaluate(t.guard_label, ctx):
-                    raise RuntimeCoreInvariantError(
-                        f"[{machine.name}] guard failed: {t.guard_label!r} "
-                        f"for {from_state} → {to_state} via {action!r}"
-                    )
+                    raise RuntimeCoreInvariantError("guard failed")
             break
 
     return TransitionVerdict.ALLOWED

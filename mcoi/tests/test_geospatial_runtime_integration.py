@@ -135,11 +135,13 @@ class TestMemoryMeshAttachment:
         assert record.memory_id
         assert mem.memory_count >= 1
 
-    def test_memory_content(self):
+    def test_memory_title_is_bounded(self):
         integ, eng, _, _ = _make_integration()
         eng.register_feature("f1", "t1", GeoFeatureKind.POINT, "HQ", 0.0, 0.0)
         record = integ.attach_geo_state_to_memory_mesh("scope-1")
-        assert record.title.startswith("Geospatial state:")
+        assert record.title == "Geospatial state"
+        assert "scope-1" not in record.title
+        assert record.scope_ref_id == "scope-1"
 
     def test_emits_event(self):
         integ, eng, es, _ = _make_integration()

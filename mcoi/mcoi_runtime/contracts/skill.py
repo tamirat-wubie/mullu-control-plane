@@ -166,16 +166,16 @@ class SkillDescriptor(ContractRecord):
     def __post_init__(self) -> None:
         object.__setattr__(self, "skill_id", require_non_empty_text(self.skill_id, "skill_id"))
         object.__setattr__(self, "name", require_non_empty_text(self.name, "name"))
-        for attr, enum_type in (
-            ("skill_class", SkillClass),
-            ("effect_class", EffectClass),
-            ("determinism_class", DeterminismClass),
-            ("trust_class", TrustClass),
-            ("verification_strength", VerificationStrength),
-            ("lifecycle", SkillLifecycle),
+        for attr, enum_type, error_message in (
+            ("skill_class", SkillClass, "skill_class must be a SkillClass value"),
+            ("effect_class", EffectClass, "effect_class must be an EffectClass value"),
+            ("determinism_class", DeterminismClass, "determinism_class must be a DeterminismClass value"),
+            ("trust_class", TrustClass, "trust_class must be a TrustClass value"),
+            ("verification_strength", VerificationStrength, "verification_strength must be a VerificationStrength value"),
+            ("lifecycle", SkillLifecycle, "lifecycle must be a SkillLifecycle value"),
         ):
             if not isinstance(getattr(self, attr), enum_type):
-                raise ValueError(f"{attr} must be a {enum_type.__name__} value")
+                raise ValueError(error_message)
         object.__setattr__(self, "preconditions", freeze_value(list(self.preconditions)))
         object.__setattr__(self, "postconditions", freeze_value(list(self.postconditions)))
         object.__setattr__(self, "steps", freeze_value(list(self.steps)))
@@ -198,7 +198,7 @@ class SkillDescriptor(ContractRecord):
         for step in self.steps:
             for dep in step.depends_on:
                 if dep not in step_ids:
-                    raise ValueError(f"step {step.step_id} depends on unknown step {dep}")
+                    raise ValueError("step dependency references an unknown step")
         # Topological check via DFS
         visited: set[str] = set()
         in_stack: set[str] = set()
@@ -206,7 +206,7 @@ class SkillDescriptor(ContractRecord):
 
         def visit(sid: str) -> None:
             if sid in in_stack:
-                raise ValueError(f"circular dependency detected involving step {sid}")
+                raise ValueError("circular step dependency detected")
             if sid in visited:
                 return
             in_stack.add(sid)

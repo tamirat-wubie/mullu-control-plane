@@ -72,6 +72,25 @@ class TestPartnerEngine:
         assert d["gold"] == 1
         assert d["total_revenue_influenced"] == 5000.0
 
+    def test_duplicate_onboard_message_is_bounded(self):
+        engine = PartnerEngine()
+        engine.onboard_partner("partner-secret", "Acme Secret", "implementation")
+        with pytest.raises(ValueError) as exc_info:
+            engine.onboard_partner("partner-secret", "Acme Secret", "implementation")
+        message = str(exc_info.value)
+        assert message == "partner already exists"
+        assert "partner-secret" not in message
+        assert "Acme Secret" not in message
+
+    def test_unknown_partner_message_is_bounded(self):
+        engine = PartnerEngine()
+        with pytest.raises(ValueError) as exc_info:
+            engine.record_deal("partner-missing", 1000.0, closed=True)
+        message = str(exc_info.value)
+        assert message == "unknown partner"
+        assert "partner-missing" not in message
+        assert ":" not in message
+
 class TestGoldenProof:
     def test_full_partner_lifecycle(self):
         engine = PartnerEngine()

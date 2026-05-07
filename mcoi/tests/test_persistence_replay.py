@@ -108,7 +108,7 @@ def test_malformed_replay_file_raises(tmp_path: Path) -> None:
     (replay_dir / "bad-replay.json").write_text("not json", encoding="utf-8")
 
     store = ReplayStore(replay_dir)
-    with pytest.raises(CorruptedDataError):
+    with pytest.raises(CorruptedDataError, match=r"^malformed replay file \(JSONDecodeError\)$"):
         store.load("bad-replay")
 
 

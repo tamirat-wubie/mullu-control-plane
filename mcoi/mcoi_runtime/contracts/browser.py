@@ -64,7 +64,7 @@ class BrowserSession(ContractRecord):
         if not isinstance(self.status, BrowserSessionStatus):
             raise ValueError("status must be a BrowserSessionStatus value")
         if self.created_at is not None:
-            require_datetime_text(self.created_at, "created_at")
+            object.__setattr__(self, "created_at", require_datetime_text(self.created_at, "created_at"))
 
     @property
     def is_active(self) -> bool:

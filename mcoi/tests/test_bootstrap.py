@@ -13,7 +13,7 @@ import pytest
 from mcoi_runtime.adapters.filesystem_observer import FilesystemObserver
 from mcoi_runtime.adapters.process_observer import ProcessObserver
 from mcoi_runtime.adapters.shell_executor import ShellExecutor
-from mcoi_runtime.contracts.goal import GoalDescriptor, GoalExecutionState, GoalPlan, GoalPriority, GoalStatus, SubGoal
+from mcoi_runtime.contracts.goal import GoalDescriptor, GoalExecutionState, GoalPriority, GoalStatus, SubGoal
 from mcoi_runtime.app.bootstrap import bootstrap_runtime, build_policy_decision
 from mcoi_runtime.app.config import AppConfig
 from mcoi_runtime.contracts.job import JobDescriptor, JobPriority, JobStatus
@@ -21,7 +21,8 @@ from mcoi_runtime.contracts.policy import PolicyDecisionStatus
 from mcoi_runtime.core.event_spine import EventSpineEngine
 from mcoi_runtime.core.invariants import RuntimeCoreInvariantError
 from mcoi_runtime.core.memory import EpisodicMemory, MemoryEntry, MemoryTier, WorkingMemory
-from mcoi_runtime.core.policy_engine import PolicyInput
+from mcoi_runtime.governance.policy.engine import PolicyInput
+from mcoi_runtime.core.effect_assurance import EffectAssuranceGate
 from mcoi_runtime.core.jobs import JobEngine
 from mcoi_runtime.core.team_runtime import TeamEngine, WorkerRegistry
 from mcoi_runtime.core.verification_engine import VerificationEngine
@@ -65,6 +66,47 @@ def test_bootstrap_runtime_returns_wired_components_without_side_effects() -> No
     assert runtime.team_queue_store is None
     assert runtime.workforce_engine.__class__ is WorkforceRuntimeEngine
     assert runtime.workforce_store is None
+    assert runtime.effect_assurance is None
+    assert runtime.operational_graph is None
+    assert isinstance(runtime.event_spine, EventSpineEngine)
+    assert runtime.case_runtime is None
+
+
+def test_bootstrap_runtime_wires_effect_assurance_when_required() -> None:
+    runtime = bootstrap_runtime(
+        config=AppConfig(effect_assurance_required=True),
+        clock=lambda: "2026-03-18T12:00:00+00:00",
+    )
+
+    assert isinstance(runtime.effect_assurance, EffectAssuranceGate)
+    assert runtime.operational_graph is not None
+    assert runtime.event_spine is not None
+    assert runtime.case_runtime is not None
+    assert runtime.config.effect_assurance_required is True
+
+
+def test_bootstrap_runtime_wires_shell_sandbox_policy_when_configured(tmp_path: Path) -> None:
+    runtime = bootstrap_runtime(
+        config=AppConfig(
+            shell_sandbox_enabled=True,
+            shell_sandbox_id="runtime-sandbox",
+            shell_allowed_cwd_roots=(str(tmp_path),),
+            shell_allowed_environment_keys=("MULLU_TRACE_ID",),
+            shell_allow_inherited_environment=False,
+            shell_require_cwd=True,
+        ),
+        clock=lambda: "2026-03-18T12:00:00+00:00",
+    )
+
+    executor = runtime.executors["shell_command"]
+
+    assert isinstance(executor, ShellExecutor)
+    assert executor.sandbox_policy is not None
+    assert executor.sandbox_policy.sandbox_id == "runtime-sandbox"
+    assert executor.sandbox_policy.allowed_cwd_roots == (str(tmp_path),)
+    assert executor.sandbox_policy.allowed_environment_keys == ("MULLU_TRACE_ID",)
+    assert executor.sandbox_policy.allow_inherited_environment is False
+    assert executor.sandbox_policy.require_cwd is True
 
 
 def test_bootstrap_runtime_respects_explicit_adapter_overrides() -> None:

@@ -68,6 +68,9 @@ class DeployReadinessChecker:
         self._last_report: ReadinessReport | None = None
         self._total_runs = 0
 
+    def _bounded_check_error(self, exc: Exception) -> str:
+        return f"check raised exception ({type(exc).__name__})"
+
     def register_check(self, name: str, check_fn: Callable[[], CheckResult]) -> None:
         self._checks.append((name, check_fn))
 
@@ -80,10 +83,10 @@ class DeployReadinessChecker:
             try:
                 result = check_fn()
                 result.duration_ms = (time.time() - t0) * 1000
-            except Exception as e:
+            except Exception as exc:
                 result = CheckResult(
                     name=name, status=CheckStatus.FAIL,
-                    message=f"Check raised exception: {e}",
+                    message=self._bounded_check_error(exc),
                     duration_ms=(time.time() - t0) * 1000,
                 )
             results.append(result)

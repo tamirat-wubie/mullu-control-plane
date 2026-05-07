@@ -177,7 +177,7 @@ class FinancialControlDemoGenerator:
 
         # Seed remediations linked to first 4 cases
         rems = [
-            {"remediation_id": f"fc-rem-{i:03d}", "case_ref": f"fc-case-{i:03d}", "title": f"Remediate: {cases[i]['title']}"}
+            {"remediation_id": f"fc-rem-{i:03d}", "case_ref": f"fc-case-{i:03d}", "title": "Financial control remediation"}
             for i in range(4)
         ]
         rem_result = self._importer.import_remediations(tenant_id, rems)

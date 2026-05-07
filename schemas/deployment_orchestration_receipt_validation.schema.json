@@ -1,0 +1,185 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:deployment-orchestration-receipt-validation:1",
+  "title": "Deployment Orchestration Receipt Validation",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "receipt_path",
+    "valid",
+    "receipt_id",
+    "steps"
+  ],
+  "properties": {
+    "receipt_path": {
+      "type": "string",
+      "enum": [
+        ".change_assurance/deployment_witness_orchestration.json",
+        "provided_receipt"
+      ]
+    },
+    "valid": {
+      "type": "boolean"
+    },
+    "receipt_id": {
+      "type": "string",
+      "pattern": "^(deployment-witness-orchestration-[0-9a-f]{16}|missing|invalid)$"
+    },
+    "steps": {
+      "type": "array",
+      "minItems": 12,
+      "maxItems": 12,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "name",
+          "passed",
+          "detail"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "enum": [
+              "schema contract",
+              "required fields",
+              "receipt id",
+              "evidence refs",
+              "require preflight",
+              "require mcp operator checklist",
+              "require dispatch",
+              "require success",
+              "expected repository",
+              "expected gateway_host",
+              "expected gateway_url",
+              "expected expected_environment"
+            ]
+          },
+          "passed": {
+            "type": "boolean"
+          },
+          "detail": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512
+          }
+        }
+      },
+      "contains": {
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "properties": {
+          "name": {
+            "const": "schema contract"
+          }
+        }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "properties": {
+        "steps": {
+          "contains": {
+            "type": "object",
+            "required": [
+              "name"
+            ],
+            "properties": {
+              "name": {
+                "const": "required fields"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "properties": {
+        "steps": {
+          "contains": {
+            "type": "object",
+            "required": [
+              "name"
+            ],
+            "properties": {
+              "name": {
+                "const": "evidence refs"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "properties": {
+        "steps": {
+          "contains": {
+            "type": "object",
+            "required": [
+              "name"
+            ],
+            "properties": {
+              "name": {
+                "const": "require preflight"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "properties": {
+        "steps": {
+          "contains": {
+            "type": "object",
+            "required": [
+              "name"
+            ],
+            "properties": {
+              "name": {
+                "const": "require mcp operator checklist"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "properties": {
+        "steps": {
+          "contains": {
+            "type": "object",
+            "required": [
+              "name"
+            ],
+            "properties": {
+              "name": {
+                "const": "require dispatch"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "properties": {
+        "steps": {
+          "contains": {
+            "type": "object",
+            "required": [
+              "name"
+            ],
+            "properties": {
+              "name": {
+                "const": "require success"
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

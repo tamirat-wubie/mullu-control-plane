@@ -37,7 +37,7 @@ from mcoi_runtime.core.errors import (
     validation_error,
 )
 from mcoi_runtime.core.invariants import RuntimeCoreInvariantError, stable_identifier
-from mcoi_runtime.core.policy_engine import PolicyInput
+from mcoi_runtime.governance.policy.engine import PolicyInput
 
 from .bootstrap import build_policy_decision
 from .operator_executors import (
@@ -70,6 +70,11 @@ if TYPE_CHECKING:
     from .operator_loop import OperatorLoop
 
 
+def _bounded_lifecycle_transition_warning(exc: RuntimeCoreInvariantError) -> str:
+    """Return a stable lifecycle warning without exposing registry details."""
+    return f"skill lifecycle transition failed ({type(exc).__name__})"
+
+
 def run_skill(loop: OperatorLoop, request: SkillRequest) -> SkillRunReport:
     """Execute a skill through the governed runtime path."""
     registry = loop.runtime.skill_registry
@@ -93,7 +98,7 @@ def run_skill(loop: OperatorLoop, request: SkillRequest) -> SkillRunReport:
                 structured_errors=(
                     execution_error(
                         error_code="skill_not_found",
-                        message=f"skill not found: {request.skill_id}",
+                        message="skill not found",
                     ),
                 ),
             )
@@ -109,7 +114,7 @@ def run_skill(loop: OperatorLoop, request: SkillRequest) -> SkillRunReport:
                 structured_errors=(
                     policy_error(
                         error_code="skill_blocked",
-                        message=f"skill is blocked: {request.skill_id}",
+                        message="skill is blocked",
                         recoverability=Recoverability.FATAL_FOR_RUN,
                     ),
                 ),
@@ -137,7 +142,7 @@ def run_skill(loop: OperatorLoop, request: SkillRequest) -> SkillRunReport:
 
     autonomy_decision = loop.runtime.autonomy.evaluate(
         ActionClass.EXECUTE_WRITE,
-        action_description=f"skill_execution:{skill.skill_id}",
+        action_description="skill execution",
     )
     if autonomy_decision.status is not AutonomyDecisionStatus.ALLOWED:
         return SkillRunReport(
@@ -151,10 +156,7 @@ def run_skill(loop: OperatorLoop, request: SkillRequest) -> SkillRunReport:
             structured_errors=(
                 policy_error(
                     error_code="autonomy_blocked",
-                    message=(
-                        f"autonomy mode {loop.runtime.autonomy.mode.value} "
-                        f"blocked skill execution: {autonomy_decision.reason}"
-                    ),
+                    message="autonomy blocked skill execution",
                     recoverability=Recoverability.FATAL_FOR_RUN,
                     related_ids=(autonomy_decision.decision_id,),
                     context={
@@ -188,7 +190,7 @@ def run_skill(loop: OperatorLoop, request: SkillRequest) -> SkillRunReport:
             structured_errors=(
                 policy_error(
                     error_code=f"policy_{policy_decision.status.value}",
-                    message=f"policy gate returned {policy_decision.status.value} for skill execution",
+                    message="policy gate blocked skill execution",
                     recoverability=(
                         Recoverability.APPROVAL_REQUIRED
                         if policy_decision.status is PolicyDecisionStatus.ESCALATE
@@ -212,11 +214,12 @@ def run_skill(loop: OperatorLoop, request: SkillRequest) -> SkillRunReport:
     new_confidence = min(1.0, existing + 0.1) if succeeded else max(0.0, existing - 0.1)
     registry.update_confidence(skill.skill_id, round(new_confidence, 4))
 
+    lifecycle_transition_warning = ""
     if succeeded and skill.lifecycle is SkillLifecycle.CANDIDATE:
         try:
             registry.transition(skill.skill_id, SkillLifecycle.PROVISIONAL)
-        except RuntimeCoreInvariantError:
-            pass
+        except RuntimeCoreInvariantError as exc:
+            lifecycle_transition_warning = _bounded_lifecycle_transition_warning(exc)
 
     return SkillRunReport(
         request_id=request.request_id,
@@ -226,6 +229,7 @@ def run_skill(loop: OperatorLoop, request: SkillRequest) -> SkillRunReport:
         execution_record=record,
         status=record.outcome.status,
         completed=succeeded,
+        lifecycle_transition_warning=lifecycle_transition_warning,
     )
 
 
@@ -248,7 +252,7 @@ def run_workflow(
             errors=(
                 validation_error(
                     error_code="workflow_validation_failed",
-                    message=f"workflow validation failed: {'; '.join(validation_errors)}",
+                    message="workflow validation failed",
                     source_plane=SourcePlane.EXECUTION,
                 ),
             ),
@@ -258,7 +262,7 @@ def run_workflow(
 
     autonomy_decision = loop.runtime.autonomy.evaluate(
         ActionClass.EXECUTE_WRITE,
-        action_description=f"workflow_execution:{workflow_descriptor.workflow_id}",
+        action_description="workflow execution",
     )
     if autonomy_decision.status is not AutonomyDecisionStatus.ALLOWED:
         return WorkflowRunReport(
@@ -269,10 +273,7 @@ def run_workflow(
             errors=(
                 policy_error(
                     error_code="autonomy_blocked",
-                    message=(
-                        f"autonomy mode {loop.runtime.autonomy.mode.value} "
-                        f"blocked workflow execution: {autonomy_decision.reason}"
-                    ),
+                    message="autonomy blocked workflow execution",
                     recoverability=Recoverability.FATAL_FOR_RUN,
                     related_ids=(autonomy_decision.decision_id,),
                     context={
@@ -305,10 +306,7 @@ def run_workflow(
             errors=(
                 policy_error(
                     error_code=f"policy_{policy_decision.status.value}",
-                    message=(
-                        f"policy gate returned {policy_decision.status.value} "
-                        "for workflow execution"
-                    ),
+                    message="policy gate blocked workflow execution",
                     recoverability=(
                         Recoverability.APPROVAL_REQUIRED
                         if policy_decision.status is PolicyDecisionStatus.ESCALATE
@@ -829,7 +827,7 @@ def run_goal(
 
     autonomy_decision = loop.runtime.autonomy.evaluate(
         ActionClass.EXECUTE_WRITE,
-        action_description=f"goal_execution:{goal_descriptor.goal_id}",
+        action_description="goal execution",
     )
     if autonomy_decision.status is not AutonomyDecisionStatus.ALLOWED:
         return GoalRunReport(
@@ -839,10 +837,7 @@ def run_goal(
             errors=(
                 policy_error(
                     error_code="autonomy_blocked",
-                    message=(
-                        f"autonomy mode {loop.runtime.autonomy.mode.value} "
-                        f"blocked goal execution: {autonomy_decision.reason}"
-                    ),
+                    message="autonomy blocked goal execution",
                     recoverability=Recoverability.FATAL_FOR_RUN,
                     related_ids=(autonomy_decision.decision_id,),
                     context={
@@ -874,7 +869,7 @@ def run_goal(
             errors=(
                 policy_error(
                     error_code=f"policy_{policy_decision.status.value}",
-                    message=f"policy gate returned {policy_decision.status.value} for goal execution",
+                    message="policy gate blocked goal execution",
                     recoverability=(
                         Recoverability.APPROVAL_REQUIRED
                         if policy_decision.status is PolicyDecisionStatus.ESCALATE

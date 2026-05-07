@@ -98,7 +98,7 @@ class RetentionEvaluator:
             return PruneResult(
                 artifact_id=candidate.artifact_id,
                 status=PruneStatus.SKIPPED_COMPLIANCE,
-                reason=f"no retention policy for {candidate.artifact_class.value}",
+                reason="no retention policy",
             )
 
         # Policy-level compliance hold
@@ -114,7 +114,7 @@ class RetentionEvaluator:
             return PruneResult(
                 artifact_id=candidate.artifact_id,
                 status=PruneStatus.PRUNED,
-                reason=f"age {candidate.age_days}d exceeds max {policy.max_age_days}d",
+                reason="age exceeds retention limit",
             )
 
         # Count-based pruning (prune oldest beyond max_count)
@@ -130,7 +130,7 @@ class RetentionEvaluator:
                     return PruneResult(
                         artifact_id=candidate.artifact_id,
                         status=PruneStatus.PRUNED,
-                        reason=f"count {len(sorted_group)} exceeds max {policy.max_count}",
+                        reason="count exceeds retention limit",
                     )
 
         # Within retention bounds — keep

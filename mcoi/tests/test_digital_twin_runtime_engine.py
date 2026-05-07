@@ -103,8 +103,10 @@ class TestTwinModels:
 
     def test_duplicate_model_rejected(self, engine):
         _register_model(engine)
-        with pytest.raises(RuntimeCoreInvariantError, match="Duplicate model_id"):
+        with pytest.raises(RuntimeCoreInvariantError, match="Duplicate model_id") as exc_info:
             _register_model(engine)
+        assert str(exc_info.value) == "Duplicate model_id"
+        assert "m-1" not in str(exc_info.value)
 
     def test_multiple_models(self, engine):
         _register_model(engine, model_id="m-1")
@@ -133,14 +135,18 @@ class TestTwinObjects:
         assert m.object_count == 2
 
     def test_register_object_unknown_model_rejected(self, engine):
-        with pytest.raises(RuntimeCoreInvariantError, match="Unknown model_id"):
+        with pytest.raises(RuntimeCoreInvariantError, match="Unknown model_id") as exc_info:
             _register_object(engine, model_ref="nonexistent")
+        assert str(exc_info.value) == "Unknown model_id"
+        assert "nonexistent" not in str(exc_info.value)
 
     def test_duplicate_object_rejected(self, engine):
         _register_model(engine)
         _register_object(engine)
-        with pytest.raises(RuntimeCoreInvariantError, match="Duplicate object_id"):
+        with pytest.raises(RuntimeCoreInvariantError, match="Duplicate object_id") as exc_info:
             _register_object(engine)
+        assert str(exc_info.value) == "Duplicate object_id"
+        assert "o-1" not in str(exc_info.value)
 
     def test_object_default_parent_ref(self, engine):
         _register_model(engine)
@@ -418,6 +424,11 @@ class TestViolationDetection:
         assert len(viols) >= 1
         ops = [v.operation for v in viols]
         assert "stale_sync" in ops
+        stale = next(v for v in viols if v.operation == "stale_sync")
+        assert stale.reason == "sync has non-nominal status"
+        assert "sy-1" not in stale.reason
+        assert "o-1" not in stale.reason
+        assert TwinSyncStatus.STALE.value not in stale.reason
 
     def test_diverged_sync_violation(self, engine):
         _register_model(engine)
@@ -436,6 +447,10 @@ class TestViolationDetection:
         viols = engine.detect_twin_violations("t-1")
         ops = [v.operation for v in viols]
         assert "missing_assembly" in ops
+        missing = next(v for v in viols if v.operation == "missing_assembly")
+        assert missing.reason == "object missing assembly record"
+        assert "o-1" not in missing.reason
+        assert "site-1" not in missing.reason
 
     def test_degraded_no_state_violation(self, engine):
         _register_model(engine)
@@ -444,6 +459,10 @@ class TestViolationDetection:
         viols = engine.detect_twin_violations("t-1")
         ops = [v.operation for v in viols]
         assert "degraded_no_state" in ops
+        degraded = next(v for v in viols if v.operation == "degraded_no_state")
+        assert degraded.reason == "degraded object missing state record"
+        assert "o-1" not in degraded.reason
+        assert "TwinStateRecord" not in degraded.reason
 
     def test_no_violation_when_state_exists(self, engine):
         _register_model(engine)

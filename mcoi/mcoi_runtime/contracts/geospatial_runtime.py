@@ -36,10 +36,10 @@ from ._base import (
 def _require_finite_float(value: float, field_name: str) -> float:
     """Validate that a float is finite (may be negative). Rejects bool, inf, nan."""
     if not isinstance(value, (int, float)) or isinstance(value, bool):
-        raise ValueError(f"{field_name} must be a number")
+        raise ValueError("numeric value must be a number")
     fval = float(value)
     if not math.isfinite(fval):
-        raise ValueError(f"{field_name} must be finite")
+        raise ValueError("numeric value must be finite")
     return fval
 
 

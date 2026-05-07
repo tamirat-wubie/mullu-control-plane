@@ -21,7 +21,6 @@ from mcoi_runtime.core.invariants import RuntimeCoreInvariantError
 from mcoi_runtime.contracts.asset_runtime import (
     AssetAssessment,
     AssetAssignment,
-    AssetClosureReport,
     AssetDependency,
     AssetKind,
     AssetRecord,
@@ -227,8 +226,9 @@ class TestRegisterAsset:
 
     def test_duplicate_asset_id_raises(self, engine: AssetRuntimeEngine) -> None:
         _register_default_asset(engine, asset_id="a-dup")
-        with pytest.raises(RuntimeCoreInvariantError, match="Duplicate asset_id"):
+        with pytest.raises(RuntimeCoreInvariantError, match="Duplicate asset_id") as exc_info:
             _register_default_asset(engine, asset_id="a-dup", name="Another")
+        assert "a-dup" not in str(exc_info.value)
 
     def test_multiple_assets_different_ids(self, engine: AssetRuntimeEngine) -> None:
         _register_default_asset(engine, asset_id="a-1")
@@ -246,8 +246,9 @@ class TestGetAsset:
         assert rec.asset_id == "a-1"
 
     def test_unknown_asset_raises(self, engine: AssetRuntimeEngine) -> None:
-        with pytest.raises(RuntimeCoreInvariantError, match="Unknown asset_id"):
+        with pytest.raises(RuntimeCoreInvariantError, match="Unknown asset_id") as exc_info:
             engine.get_asset("nonexistent")
+        assert "nonexistent" not in str(exc_info.value)
 
     def test_get_returns_same_data(self, engine: AssetRuntimeEngine) -> None:
         original = _register_default_asset(engine, asset_id="a-1", name="Alpha", value=100.0)
@@ -342,14 +343,18 @@ class TestMaintainAsset:
     def test_retired_cannot_maintain(self, engine: AssetRuntimeEngine) -> None:
         _register_default_asset(engine)
         engine.retire_asset("a-1")
-        with pytest.raises(RuntimeCoreInvariantError, match="Cannot maintain"):
+        with pytest.raises(RuntimeCoreInvariantError) as exc_info:
             engine.maintain_asset("a-1")
+        assert str(exc_info.value) == "cannot maintain asset from current status"
+        assert "retired" not in str(exc_info.value)
 
     def test_disposed_cannot_maintain(self, engine: AssetRuntimeEngine) -> None:
         _register_default_asset(engine)
         engine.dispose_asset("a-1")
-        with pytest.raises(RuntimeCoreInvariantError, match="Cannot maintain"):
+        with pytest.raises(RuntimeCoreInvariantError) as exc_info:
             engine.maintain_asset("a-1")
+        assert str(exc_info.value) == "cannot maintain asset from current status"
+        assert "disposed" not in str(exc_info.value)
 
     def test_maintain_unknown_raises(self, engine: AssetRuntimeEngine) -> None:
         with pytest.raises(RuntimeCoreInvariantError):
@@ -384,14 +389,18 @@ class TestRetireAsset:
     def test_retired_cannot_retire_again(self, engine: AssetRuntimeEngine) -> None:
         _register_default_asset(engine)
         engine.retire_asset("a-1")
-        with pytest.raises(RuntimeCoreInvariantError, match="already in status"):
+        with pytest.raises(RuntimeCoreInvariantError) as exc_info:
             engine.retire_asset("a-1")
+        assert str(exc_info.value) == "asset already in terminal status"
+        assert "retired" not in str(exc_info.value)
 
     def test_disposed_cannot_retire(self, engine: AssetRuntimeEngine) -> None:
         _register_default_asset(engine)
         engine.dispose_asset("a-1")
-        with pytest.raises(RuntimeCoreInvariantError, match="already in status"):
+        with pytest.raises(RuntimeCoreInvariantError) as exc_info:
             engine.retire_asset("a-1")
+        assert str(exc_info.value) == "asset already in terminal status"
+        assert "disposed" not in str(exc_info.value)
 
     def test_retire_unknown_raises(self, engine: AssetRuntimeEngine) -> None:
         with pytest.raises(RuntimeCoreInvariantError):
@@ -597,15 +606,19 @@ class TestDeprecateConfigItem:
         _register_default_asset(engine)
         engine.register_config_item("ci-1", "a-1", "db-config")
         engine.deprecate_config_item("ci-1")
-        with pytest.raises(RuntimeCoreInvariantError, match="already in status"):
+        with pytest.raises(RuntimeCoreInvariantError) as exc_info:
             engine.deprecate_config_item("ci-1")
+        assert str(exc_info.value) == "config item already in terminal status"
+        assert "deprecated" not in str(exc_info.value)
 
     def test_archived_cannot_deprecate(self, engine: AssetRuntimeEngine) -> None:
         _register_default_asset(engine)
         engine.register_config_item("ci-1", "a-1", "db-config")
         engine.archive_config_item("ci-1")
-        with pytest.raises(RuntimeCoreInvariantError, match="already in status"):
+        with pytest.raises(RuntimeCoreInvariantError) as exc_info:
             engine.deprecate_config_item("ci-1")
+        assert str(exc_info.value) == "config item already in terminal status"
+        assert "archived" not in str(exc_info.value)
 
     def test_deprecate_unknown_raises(self, engine: AssetRuntimeEngine) -> None:
         with pytest.raises(RuntimeCoreInvariantError):
@@ -936,33 +949,46 @@ class TestAssignAsset:
 
     def test_returns_asset_assignment(self, engine: AssetRuntimeEngine) -> None:
         _register_default_asset(engine)
-        aa = engine.assign_asset("asgn-1", "a-1", "campaign-1", "campaign")
+        aa = engine.assign_asset("asgn-1", "a-1", "campaign-1", "campaign", assigned_by="asset-operator-1")
         assert isinstance(aa, AssetAssignment)
 
     def test_assignment_id_preserved(self, engine: AssetRuntimeEngine) -> None:
         _register_default_asset(engine)
-        aa = engine.assign_asset("asgn-42", "a-1", "campaign-1", "campaign")
+        aa = engine.assign_asset("asgn-42", "a-1", "campaign-1", "campaign", assigned_by="asset-operator-1")
         assert aa.assignment_id == "asgn-42"
 
     def test_asset_id_preserved(self, engine: AssetRuntimeEngine) -> None:
         _register_default_asset(engine)
-        aa = engine.assign_asset("asgn-1", "a-1", "campaign-1", "campaign")
+        aa = engine.assign_asset("asgn-1", "a-1", "campaign-1", "campaign", assigned_by="asset-operator-1")
         assert aa.asset_id == "a-1"
 
     def test_scope_ref_id_preserved(self, engine: AssetRuntimeEngine) -> None:
         _register_default_asset(engine)
-        aa = engine.assign_asset("asgn-1", "a-1", "campaign-1", "campaign")
+        aa = engine.assign_asset("asgn-1", "a-1", "campaign-1", "campaign", assigned_by="asset-operator-1")
         assert aa.scope_ref_id == "campaign-1"
 
     def test_scope_ref_type_preserved(self, engine: AssetRuntimeEngine) -> None:
         _register_default_asset(engine)
-        aa = engine.assign_asset("asgn-1", "a-1", "campaign-1", "campaign")
+        aa = engine.assign_asset("asgn-1", "a-1", "campaign-1", "campaign", assigned_by="asset-operator-1")
         assert aa.scope_ref_type == "campaign"
 
-    def test_default_assigned_by(self, engine: AssetRuntimeEngine) -> None:
+    def test_assigned_by_preserved(self, engine: AssetRuntimeEngine) -> None:
         _register_default_asset(engine)
-        aa = engine.assign_asset("asgn-1", "a-1", "campaign-1", "campaign")
-        assert aa.assigned_by == "system"
+        aa = engine.assign_asset("asgn-1", "a-1", "campaign-1", "campaign", assigned_by="asset-operator-1")
+        assert aa.assigned_by == "asset-operator-1"
+
+    def test_missing_assigned_by_rejected(self, engine: AssetRuntimeEngine) -> None:
+        _register_default_asset(engine)
+        with pytest.raises(RuntimeCoreInvariantError, match="assigned_by required for assignment"):
+            engine.assign_asset("asgn-1", "a-1", "campaign-1", "campaign")
+
+    def test_system_assigned_by_rejected(self, engine: AssetRuntimeEngine) -> None:
+        _register_default_asset(engine)
+        with pytest.raises(RuntimeCoreInvariantError, match="assigned_by must exclude system"):
+            engine.assign_asset(
+                "asgn-1", "a-1", "campaign-1", "campaign",
+                assigned_by="system",
+            )
 
     def test_custom_assigned_by(self, engine: AssetRuntimeEngine) -> None:
         _register_default_asset(engine)
@@ -971,48 +997,52 @@ class TestAssignAsset:
 
     def test_assigned_at_populated(self, engine: AssetRuntimeEngine) -> None:
         _register_default_asset(engine)
-        aa = engine.assign_asset("asgn-1", "a-1", "campaign-1", "campaign")
+        aa = engine.assign_asset("asgn-1", "a-1", "campaign-1", "campaign", assigned_by="asset-operator-1")
         assert aa.assigned_at != ""
 
     def test_assignment_count_increments(self, engine: AssetRuntimeEngine) -> None:
         _register_default_asset(engine)
-        engine.assign_asset("asgn-1", "a-1", "campaign-1", "campaign")
+        engine.assign_asset("asgn-1", "a-1", "campaign-1", "campaign", assigned_by="asset-operator-1")
         assert engine.assignment_count == 1
-        engine.assign_asset("asgn-2", "a-1", "campaign-2", "campaign")
+        engine.assign_asset("asgn-2", "a-1", "campaign-2", "campaign", assigned_by="asset-operator-1")
         assert engine.assignment_count == 2
 
     def test_duplicate_assignment_id_raises(self, engine: AssetRuntimeEngine) -> None:
         _register_default_asset(engine)
-        engine.assign_asset("asgn-1", "a-1", "campaign-1", "campaign")
+        engine.assign_asset("asgn-1", "a-1", "campaign-1", "campaign", assigned_by="asset-operator-1")
         with pytest.raises(RuntimeCoreInvariantError, match="Duplicate assignment_id"):
-            engine.assign_asset("asgn-1", "a-1", "campaign-2", "campaign")
+            engine.assign_asset("asgn-1", "a-1", "campaign-2", "campaign", assigned_by="asset-operator-1")
 
     def test_unknown_asset_raises(self, engine: AssetRuntimeEngine) -> None:
         with pytest.raises(RuntimeCoreInvariantError, match="Unknown asset_id"):
-            engine.assign_asset("asgn-1", "nonexistent", "campaign-1", "campaign")
+            engine.assign_asset("asgn-1", "nonexistent", "campaign-1", "campaign", assigned_by="asset-operator-1")
 
     def test_retired_asset_cannot_be_assigned(self, engine: AssetRuntimeEngine) -> None:
         _register_default_asset(engine)
         engine.retire_asset("a-1")
-        with pytest.raises(RuntimeCoreInvariantError, match="Cannot assign"):
-            engine.assign_asset("asgn-1", "a-1", "campaign-1", "campaign")
+        with pytest.raises(RuntimeCoreInvariantError) as exc_info:
+            engine.assign_asset("asgn-1", "a-1", "campaign-1", "campaign", assigned_by="asset-operator-1")
+        assert str(exc_info.value) == "cannot assign asset from current status"
+        assert "retired" not in str(exc_info.value)
 
     def test_disposed_asset_cannot_be_assigned(self, engine: AssetRuntimeEngine) -> None:
         _register_default_asset(engine)
         engine.dispose_asset("a-1")
-        with pytest.raises(RuntimeCoreInvariantError, match="Cannot assign"):
-            engine.assign_asset("asgn-1", "a-1", "campaign-1", "campaign")
+        with pytest.raises(RuntimeCoreInvariantError) as exc_info:
+            engine.assign_asset("asgn-1", "a-1", "campaign-1", "campaign", assigned_by="asset-operator-1")
+        assert str(exc_info.value) == "cannot assign asset from current status"
+        assert "disposed" not in str(exc_info.value)
 
     def test_inactive_asset_can_be_assigned(self, engine: AssetRuntimeEngine) -> None:
         _register_default_asset(engine)
         engine.deactivate_asset("a-1")
-        aa = engine.assign_asset("asgn-1", "a-1", "campaign-1", "campaign")
+        aa = engine.assign_asset("asgn-1", "a-1", "campaign-1", "campaign", assigned_by="asset-operator-1")
         assert aa.asset_id == "a-1"
 
     def test_maintenance_asset_can_be_assigned(self, engine: AssetRuntimeEngine) -> None:
         _register_default_asset(engine)
         engine.maintain_asset("a-1")
-        aa = engine.assign_asset("asgn-1", "a-1", "campaign-1", "campaign")
+        aa = engine.assign_asset("asgn-1", "a-1", "campaign-1", "campaign", assigned_by="asset-operator-1")
         assert aa.asset_id == "a-1"
 
 
@@ -1025,16 +1055,16 @@ class TestAssignmentsForAsset:
 
     def test_returns_tuple(self, engine: AssetRuntimeEngine) -> None:
         _register_default_asset(engine)
-        engine.assign_asset("asgn-1", "a-1", "campaign-1", "campaign")
+        engine.assign_asset("asgn-1", "a-1", "campaign-1", "campaign", assigned_by="asset-operator-1")
         result = engine.assignments_for_asset("a-1")
         assert isinstance(result, tuple)
 
     def test_filters_by_asset(self, engine: AssetRuntimeEngine) -> None:
         _register_default_asset(engine, asset_id="a-1")
         _register_default_asset(engine, asset_id="a-2", name="Beta")
-        engine.assign_asset("asgn-1", "a-1", "campaign-1", "campaign")
-        engine.assign_asset("asgn-2", "a-2", "campaign-2", "campaign")
-        engine.assign_asset("asgn-3", "a-1", "campaign-3", "campaign")
+        engine.assign_asset("asgn-1", "a-1", "campaign-1", "campaign", assigned_by="asset-operator-1")
+        engine.assign_asset("asgn-2", "a-2", "campaign-2", "campaign", assigned_by="asset-operator-1")
+        engine.assign_asset("asgn-3", "a-1", "campaign-3", "campaign", assigned_by="asset-operator-1")
         result = engine.assignments_for_asset("a-1")
         assert len(result) == 2
 
@@ -1044,7 +1074,7 @@ class TestAssignmentsForAsset:
     def test_multiple_assignments_same_asset(self, engine: AssetRuntimeEngine) -> None:
         _register_default_asset(engine)
         for i in range(5):
-            engine.assign_asset(f"asgn-{i}", "a-1", f"scope-{i}", "campaign")
+            engine.assign_asset(f"asgn-{i}", "a-1", f"scope-{i}", "campaign", assigned_by="asset-operator-1")
         assert len(engine.assignments_for_asset("a-1")) == 5
 
 
@@ -1121,8 +1151,9 @@ class TestRegisterDependency:
 
     def test_unknown_depends_on_asset_id_raises(self, engine: AssetRuntimeEngine) -> None:
         _register_default_asset(engine, asset_id="a-1")
-        with pytest.raises(RuntimeCoreInvariantError, match="Unknown depends_on_asset_id"):
+        with pytest.raises(RuntimeCoreInvariantError, match="Unknown depends_on_asset_id") as exc_info:
             engine.register_dependency("dep-1", "a-1", "nonexistent")
+        assert "nonexistent" not in str(exc_info.value)
 
     def test_both_unknown_asset_id_raises(self, engine: AssetRuntimeEngine) -> None:
         with pytest.raises(RuntimeCoreInvariantError):
@@ -1167,65 +1198,80 @@ class TestRecordLifecycleEvent:
 
     def test_returns_lifecycle_event(self, engine: AssetRuntimeEngine) -> None:
         _register_default_asset(engine)
-        le = engine.record_lifecycle_event("le-1", "a-1", LifecycleDisposition.PROVISIONED)
+        le = engine.record_lifecycle_event("le-1", "a-1", LifecycleDisposition.PROVISIONED, performed_by="asset-operator-1")
         assert isinstance(le, LifecycleEvent)
 
     def test_event_id_preserved(self, engine: AssetRuntimeEngine) -> None:
         _register_default_asset(engine)
-        le = engine.record_lifecycle_event("le-42", "a-1", LifecycleDisposition.PROVISIONED)
+        le = engine.record_lifecycle_event("le-42", "a-1", LifecycleDisposition.PROVISIONED, performed_by="asset-operator-1")
         assert le.event_id == "le-42"
 
     def test_asset_id_preserved(self, engine: AssetRuntimeEngine) -> None:
         _register_default_asset(engine)
-        le = engine.record_lifecycle_event("le-1", "a-1", LifecycleDisposition.PROVISIONED)
+        le = engine.record_lifecycle_event("le-1", "a-1", LifecycleDisposition.PROVISIONED, performed_by="asset-operator-1")
         assert le.asset_id == "a-1"
 
     def test_disposition_provisioned(self, engine: AssetRuntimeEngine) -> None:
         _register_default_asset(engine)
-        le = engine.record_lifecycle_event("le-1", "a-1", LifecycleDisposition.PROVISIONED)
+        le = engine.record_lifecycle_event("le-1", "a-1", LifecycleDisposition.PROVISIONED, performed_by="asset-operator-1")
         assert le.disposition == LifecycleDisposition.PROVISIONED
 
     def test_disposition_deployed(self, engine: AssetRuntimeEngine) -> None:
         _register_default_asset(engine)
-        le = engine.record_lifecycle_event("le-1", "a-1", LifecycleDisposition.DEPLOYED)
+        le = engine.record_lifecycle_event("le-1", "a-1", LifecycleDisposition.DEPLOYED, performed_by="asset-operator-1")
         assert le.disposition == LifecycleDisposition.DEPLOYED
 
     def test_disposition_upgraded(self, engine: AssetRuntimeEngine) -> None:
         _register_default_asset(engine)
-        le = engine.record_lifecycle_event("le-1", "a-1", LifecycleDisposition.UPGRADED)
+        le = engine.record_lifecycle_event("le-1", "a-1", LifecycleDisposition.UPGRADED, performed_by="asset-operator-1")
         assert le.disposition == LifecycleDisposition.UPGRADED
 
     def test_disposition_decommissioned(self, engine: AssetRuntimeEngine) -> None:
         _register_default_asset(engine)
-        le = engine.record_lifecycle_event("le-1", "a-1", LifecycleDisposition.DECOMMISSIONED)
+        le = engine.record_lifecycle_event("le-1", "a-1", LifecycleDisposition.DECOMMISSIONED, performed_by="asset-operator-1")
         assert le.disposition == LifecycleDisposition.DECOMMISSIONED
 
     def test_disposition_transferred(self, engine: AssetRuntimeEngine) -> None:
         _register_default_asset(engine)
-        le = engine.record_lifecycle_event("le-1", "a-1", LifecycleDisposition.TRANSFERRED)
+        le = engine.record_lifecycle_event("le-1", "a-1", LifecycleDisposition.TRANSFERRED, performed_by="asset-operator-1")
         assert le.disposition == LifecycleDisposition.TRANSFERRED
 
     def test_disposition_renewed(self, engine: AssetRuntimeEngine) -> None:
         _register_default_asset(engine)
-        le = engine.record_lifecycle_event("le-1", "a-1", LifecycleDisposition.RENEWED)
+        le = engine.record_lifecycle_event("le-1", "a-1", LifecycleDisposition.RENEWED, performed_by="asset-operator-1")
         assert le.disposition == LifecycleDisposition.RENEWED
 
     def test_default_description_empty(self, engine: AssetRuntimeEngine) -> None:
         _register_default_asset(engine)
-        le = engine.record_lifecycle_event("le-1", "a-1", LifecycleDisposition.PROVISIONED)
+        le = engine.record_lifecycle_event("le-1", "a-1", LifecycleDisposition.PROVISIONED, performed_by="asset-operator-1")
         assert le.description == ""
 
     def test_custom_description(self, engine: AssetRuntimeEngine) -> None:
         _register_default_asset(engine)
         le = engine.record_lifecycle_event(
-            "le-1", "a-1", LifecycleDisposition.PROVISIONED, description="Initial provisioning"
+            "le-1", "a-1", LifecycleDisposition.PROVISIONED,
+            description="Initial provisioning",
+            performed_by="asset-operator-1",
         )
         assert le.description == "Initial provisioning"
 
-    def test_default_performed_by(self, engine: AssetRuntimeEngine) -> None:
+    def test_performed_by_preserved(self, engine: AssetRuntimeEngine) -> None:
         _register_default_asset(engine)
-        le = engine.record_lifecycle_event("le-1", "a-1", LifecycleDisposition.PROVISIONED)
-        assert le.performed_by == "system"
+        le = engine.record_lifecycle_event("le-1", "a-1", LifecycleDisposition.PROVISIONED, performed_by="asset-operator-1")
+        assert le.performed_by == "asset-operator-1"
+
+    def test_missing_performed_by_rejected(self, engine: AssetRuntimeEngine) -> None:
+        _register_default_asset(engine)
+        with pytest.raises(RuntimeCoreInvariantError, match="performed_by required for lifecycle event"):
+            engine.record_lifecycle_event("le-1", "a-1", LifecycleDisposition.PROVISIONED)
+
+    def test_system_performed_by_rejected(self, engine: AssetRuntimeEngine) -> None:
+        _register_default_asset(engine)
+        with pytest.raises(RuntimeCoreInvariantError, match="performed_by must exclude system"):
+            engine.record_lifecycle_event(
+                "le-1", "a-1", LifecycleDisposition.PROVISIONED,
+                performed_by="system",
+            )
 
     def test_custom_performed_by(self, engine: AssetRuntimeEngine) -> None:
         _register_default_asset(engine)
@@ -1236,25 +1282,25 @@ class TestRecordLifecycleEvent:
 
     def test_performed_at_populated(self, engine: AssetRuntimeEngine) -> None:
         _register_default_asset(engine)
-        le = engine.record_lifecycle_event("le-1", "a-1", LifecycleDisposition.PROVISIONED)
+        le = engine.record_lifecycle_event("le-1", "a-1", LifecycleDisposition.PROVISIONED, performed_by="asset-operator-1")
         assert le.performed_at != ""
 
     def test_lifecycle_event_count_increments(self, engine: AssetRuntimeEngine) -> None:
         _register_default_asset(engine)
-        engine.record_lifecycle_event("le-1", "a-1", LifecycleDisposition.PROVISIONED)
+        engine.record_lifecycle_event("le-1", "a-1", LifecycleDisposition.PROVISIONED, performed_by="asset-operator-1")
         assert engine.lifecycle_event_count == 1
-        engine.record_lifecycle_event("le-2", "a-1", LifecycleDisposition.DEPLOYED)
+        engine.record_lifecycle_event("le-2", "a-1", LifecycleDisposition.DEPLOYED, performed_by="asset-operator-1")
         assert engine.lifecycle_event_count == 2
 
     def test_duplicate_event_id_raises(self, engine: AssetRuntimeEngine) -> None:
         _register_default_asset(engine)
-        engine.record_lifecycle_event("le-1", "a-1", LifecycleDisposition.PROVISIONED)
+        engine.record_lifecycle_event("le-1", "a-1", LifecycleDisposition.PROVISIONED, performed_by="asset-operator-1")
         with pytest.raises(RuntimeCoreInvariantError, match="Duplicate event_id"):
-            engine.record_lifecycle_event("le-1", "a-1", LifecycleDisposition.DEPLOYED)
+            engine.record_lifecycle_event("le-1", "a-1", LifecycleDisposition.DEPLOYED, performed_by="asset-operator-1")
 
     def test_unknown_asset_raises(self, engine: AssetRuntimeEngine) -> None:
         with pytest.raises(RuntimeCoreInvariantError, match="Unknown asset_id"):
-            engine.record_lifecycle_event("le-1", "nonexistent", LifecycleDisposition.PROVISIONED)
+            engine.record_lifecycle_event("le-1", "nonexistent", LifecycleDisposition.PROVISIONED, performed_by="asset-operator-1")
 
 
 class TestLifecycleEventsForAsset:
@@ -1266,16 +1312,16 @@ class TestLifecycleEventsForAsset:
 
     def test_returns_tuple(self, engine: AssetRuntimeEngine) -> None:
         _register_default_asset(engine)
-        engine.record_lifecycle_event("le-1", "a-1", LifecycleDisposition.PROVISIONED)
+        engine.record_lifecycle_event("le-1", "a-1", LifecycleDisposition.PROVISIONED, performed_by="asset-operator-1")
         result = engine.lifecycle_events_for_asset("a-1")
         assert isinstance(result, tuple)
 
     def test_filters_by_asset(self, engine: AssetRuntimeEngine) -> None:
         _register_default_asset(engine, asset_id="a-1")
         _register_default_asset(engine, asset_id="a-2", name="Beta")
-        engine.record_lifecycle_event("le-1", "a-1", LifecycleDisposition.PROVISIONED)
-        engine.record_lifecycle_event("le-2", "a-2", LifecycleDisposition.DEPLOYED)
-        engine.record_lifecycle_event("le-3", "a-1", LifecycleDisposition.UPGRADED)
+        engine.record_lifecycle_event("le-1", "a-1", LifecycleDisposition.PROVISIONED, performed_by="asset-operator-1")
+        engine.record_lifecycle_event("le-2", "a-2", LifecycleDisposition.DEPLOYED, performed_by="asset-operator-1")
+        engine.record_lifecycle_event("le-3", "a-1", LifecycleDisposition.UPGRADED, performed_by="asset-operator-1")
         result = engine.lifecycle_events_for_asset("a-1")
         assert len(result) == 2
 
@@ -1293,33 +1339,46 @@ class TestAssessAsset:
 
     def test_returns_asset_assessment(self, engine: AssetRuntimeEngine) -> None:
         _register_default_asset(engine)
-        aa = engine.assess_asset("assess-1", "a-1", 0.9, 0.1)
+        aa = engine.assess_asset("assess-1", "a-1", 0.9, 0.1, assessed_by="asset-auditor-1")
         assert isinstance(aa, AssetAssessment)
 
     def test_assessment_id_preserved(self, engine: AssetRuntimeEngine) -> None:
         _register_default_asset(engine)
-        aa = engine.assess_asset("assess-42", "a-1", 0.9, 0.1)
+        aa = engine.assess_asset("assess-42", "a-1", 0.9, 0.1, assessed_by="asset-auditor-1")
         assert aa.assessment_id == "assess-42"
 
     def test_asset_id_preserved(self, engine: AssetRuntimeEngine) -> None:
         _register_default_asset(engine)
-        aa = engine.assess_asset("assess-1", "a-1", 0.9, 0.1)
+        aa = engine.assess_asset("assess-1", "a-1", 0.9, 0.1, assessed_by="asset-auditor-1")
         assert aa.asset_id == "a-1"
 
     def test_health_score_preserved(self, engine: AssetRuntimeEngine) -> None:
         _register_default_asset(engine)
-        aa = engine.assess_asset("assess-1", "a-1", 0.85, 0.1)
+        aa = engine.assess_asset("assess-1", "a-1", 0.85, 0.1, assessed_by="asset-auditor-1")
         assert aa.health_score == 0.85
 
     def test_risk_score_preserved(self, engine: AssetRuntimeEngine) -> None:
         _register_default_asset(engine)
-        aa = engine.assess_asset("assess-1", "a-1", 0.9, 0.42)
+        aa = engine.assess_asset("assess-1", "a-1", 0.9, 0.42, assessed_by="asset-auditor-1")
         assert aa.risk_score == 0.42
 
-    def test_default_assessed_by(self, engine: AssetRuntimeEngine) -> None:
+    def test_assessed_by_preserved(self, engine: AssetRuntimeEngine) -> None:
         _register_default_asset(engine)
-        aa = engine.assess_asset("assess-1", "a-1", 0.9, 0.1)
-        assert aa.assessed_by == "system"
+        aa = engine.assess_asset("assess-1", "a-1", 0.9, 0.1, assessed_by="asset-auditor-1")
+        assert aa.assessed_by == "asset-auditor-1"
+
+    def test_missing_assessed_by_rejected(self, engine: AssetRuntimeEngine) -> None:
+        _register_default_asset(engine)
+        with pytest.raises(RuntimeCoreInvariantError, match="assessed_by required for assessment"):
+            engine.assess_asset("assess-1", "a-1", 0.9, 0.1)
+
+    def test_system_assessed_by_rejected(self, engine: AssetRuntimeEngine) -> None:
+        _register_default_asset(engine)
+        with pytest.raises(RuntimeCoreInvariantError, match="assessed_by must exclude system"):
+            engine.assess_asset(
+                "assess-1", "a-1", 0.9, 0.1,
+                assessed_by="system",
+            )
 
     def test_custom_assessed_by(self, engine: AssetRuntimeEngine) -> None:
         _register_default_asset(engine)
@@ -1328,44 +1387,44 @@ class TestAssessAsset:
 
     def test_assessed_at_populated(self, engine: AssetRuntimeEngine) -> None:
         _register_default_asset(engine)
-        aa = engine.assess_asset("assess-1", "a-1", 0.9, 0.1)
+        aa = engine.assess_asset("assess-1", "a-1", 0.9, 0.1, assessed_by="asset-auditor-1")
         assert aa.assessed_at != ""
 
     def test_assessment_count_increments(self, engine: AssetRuntimeEngine) -> None:
         _register_default_asset(engine)
-        engine.assess_asset("assess-1", "a-1", 0.9, 0.1)
+        engine.assess_asset("assess-1", "a-1", 0.9, 0.1, assessed_by="asset-auditor-1")
         assert engine.assessment_count == 1
-        engine.assess_asset("assess-2", "a-1", 0.8, 0.2)
+        engine.assess_asset("assess-2", "a-1", 0.8, 0.2, assessed_by="asset-auditor-1")
         assert engine.assessment_count == 2
 
     def test_duplicate_assessment_id_raises(self, engine: AssetRuntimeEngine) -> None:
         _register_default_asset(engine)
-        engine.assess_asset("assess-1", "a-1", 0.9, 0.1)
+        engine.assess_asset("assess-1", "a-1", 0.9, 0.1, assessed_by="asset-auditor-1")
         with pytest.raises(RuntimeCoreInvariantError, match="Duplicate assessment_id"):
-            engine.assess_asset("assess-1", "a-1", 0.8, 0.2)
+            engine.assess_asset("assess-1", "a-1", 0.8, 0.2, assessed_by="asset-auditor-1")
 
     def test_unknown_asset_raises(self, engine: AssetRuntimeEngine) -> None:
         with pytest.raises(RuntimeCoreInvariantError, match="Unknown asset_id"):
-            engine.assess_asset("assess-1", "nonexistent", 0.9, 0.1)
+            engine.assess_asset("assess-1", "nonexistent", 0.9, 0.1, assessed_by="asset-auditor-1")
 
     def test_health_score_zero(self, engine: AssetRuntimeEngine) -> None:
         _register_default_asset(engine)
-        aa = engine.assess_asset("assess-1", "a-1", 0.0, 0.5)
+        aa = engine.assess_asset("assess-1", "a-1", 0.0, 0.5, assessed_by="asset-auditor-1")
         assert aa.health_score == 0.0
 
     def test_health_score_one(self, engine: AssetRuntimeEngine) -> None:
         _register_default_asset(engine)
-        aa = engine.assess_asset("assess-1", "a-1", 1.0, 0.5)
+        aa = engine.assess_asset("assess-1", "a-1", 1.0, 0.5, assessed_by="asset-auditor-1")
         assert aa.health_score == 1.0
 
     def test_risk_score_zero(self, engine: AssetRuntimeEngine) -> None:
         _register_default_asset(engine)
-        aa = engine.assess_asset("assess-1", "a-1", 0.5, 0.0)
+        aa = engine.assess_asset("assess-1", "a-1", 0.5, 0.0, assessed_by="asset-auditor-1")
         assert aa.risk_score == 0.0
 
     def test_risk_score_one(self, engine: AssetRuntimeEngine) -> None:
         _register_default_asset(engine)
-        aa = engine.assess_asset("assess-1", "a-1", 0.5, 1.0)
+        aa = engine.assess_asset("assess-1", "a-1", 0.5, 1.0, assessed_by="asset-auditor-1")
         assert aa.risk_score == 1.0
 
 
@@ -1378,16 +1437,16 @@ class TestAssessmentsForAsset:
 
     def test_returns_tuple(self, engine: AssetRuntimeEngine) -> None:
         _register_default_asset(engine)
-        engine.assess_asset("assess-1", "a-1", 0.9, 0.1)
+        engine.assess_asset("assess-1", "a-1", 0.9, 0.1, assessed_by="asset-auditor-1")
         result = engine.assessments_for_asset("a-1")
         assert isinstance(result, tuple)
 
     def test_filters_by_asset(self, engine: AssetRuntimeEngine) -> None:
         _register_default_asset(engine, asset_id="a-1")
         _register_default_asset(engine, asset_id="a-2", name="Beta")
-        engine.assess_asset("assess-1", "a-1", 0.9, 0.1)
-        engine.assess_asset("assess-2", "a-2", 0.8, 0.2)
-        engine.assess_asset("assess-3", "a-1", 0.7, 0.3)
+        engine.assess_asset("assess-1", "a-1", 0.9, 0.1, assessed_by="asset-auditor-1")
+        engine.assess_asset("assess-2", "a-2", 0.8, 0.2, assessed_by="asset-auditor-1")
+        engine.assess_asset("assess-3", "a-1", 0.7, 0.3, assessed_by="asset-auditor-1")
         result = engine.assessments_for_asset("a-1")
         assert len(result) == 2
 
@@ -1409,13 +1468,13 @@ class TestDetectAssetViolations:
 
     def test_no_violations_active_asset(self, engine: AssetRuntimeEngine) -> None:
         _register_default_asset(engine)
-        engine.assign_asset("asgn-1", "a-1", "campaign-1", "campaign")
+        engine.assign_asset("asgn-1", "a-1", "campaign-1", "campaign", assigned_by="asset-operator-1")
         result = engine.detect_asset_violations()
         assert result == ()
 
     def test_retired_with_assignments_violation(self, engine: AssetRuntimeEngine) -> None:
         _register_default_asset(engine)
-        engine.assign_asset("asgn-1", "a-1", "campaign-1", "campaign")
+        engine.assign_asset("asgn-1", "a-1", "campaign-1", "campaign", assigned_by="asset-operator-1")
         engine.retire_asset("a-1")
         result = engine.detect_asset_violations()
         assert len(result) == 1
@@ -1423,7 +1482,7 @@ class TestDetectAssetViolations:
 
     def test_disposed_with_assignments_violation(self, engine: AssetRuntimeEngine) -> None:
         _register_default_asset(engine)
-        engine.assign_asset("asgn-1", "a-1", "campaign-1", "campaign")
+        engine.assign_asset("asgn-1", "a-1", "campaign-1", "campaign", assigned_by="asset-operator-1")
         engine.dispose_asset("a-1")
         result = engine.detect_asset_violations()
         assert len(result) == 1
@@ -1458,7 +1517,7 @@ class TestDetectAssetViolations:
     def test_multiple_violations_at_once(self, engine: AssetRuntimeEngine) -> None:
         _register_default_asset(engine, asset_id="a-1")
         _register_default_asset(engine, asset_id="a-2", name="Beta")
-        engine.assign_asset("asgn-1", "a-1", "campaign-1", "campaign")
+        engine.assign_asset("asgn-1", "a-1", "campaign-1", "campaign", assigned_by="asset-operator-1")
         engine.register_dependency("dep-1", "a-2", "a-1")
         engine.retire_asset("a-1")
         engine.register_inventory("inv-1", "a-2", "t-1", 5)
@@ -1471,7 +1530,7 @@ class TestDetectAssetViolations:
 
     def test_idempotent_second_scan_empty(self, engine: AssetRuntimeEngine) -> None:
         _register_default_asset(engine)
-        engine.assign_asset("asgn-1", "a-1", "campaign-1", "campaign")
+        engine.assign_asset("asgn-1", "a-1", "campaign-1", "campaign", assigned_by="asset-operator-1")
         engine.retire_asset("a-1")
         first = engine.detect_asset_violations()
         assert len(first) >= 1
@@ -1480,35 +1539,35 @@ class TestDetectAssetViolations:
 
     def test_violation_has_asset_id(self, engine: AssetRuntimeEngine) -> None:
         _register_default_asset(engine)
-        engine.assign_asset("asgn-1", "a-1", "campaign-1", "campaign")
+        engine.assign_asset("asgn-1", "a-1", "campaign-1", "campaign", assigned_by="asset-operator-1")
         engine.retire_asset("a-1")
         result = engine.detect_asset_violations()
         assert result[0].asset_id == "a-1"
 
     def test_violation_has_tenant_id(self, engine: AssetRuntimeEngine) -> None:
         _register_default_asset(engine, tenant_id="t-99")
-        engine.assign_asset("asgn-1", "a-1", "campaign-1", "campaign")
+        engine.assign_asset("asgn-1", "a-1", "campaign-1", "campaign", assigned_by="asset-operator-1")
         engine.retire_asset("a-1")
         result = engine.detect_asset_violations()
         assert result[0].tenant_id == "t-99"
 
     def test_violation_has_reason(self, engine: AssetRuntimeEngine) -> None:
         _register_default_asset(engine)
-        engine.assign_asset("asgn-1", "a-1", "campaign-1", "campaign")
+        engine.assign_asset("asgn-1", "a-1", "campaign-1", "campaign", assigned_by="asset-operator-1")
         engine.retire_asset("a-1")
         result = engine.detect_asset_violations()
         assert result[0].reason != ""
 
     def test_violation_has_detected_at(self, engine: AssetRuntimeEngine) -> None:
         _register_default_asset(engine)
-        engine.assign_asset("asgn-1", "a-1", "campaign-1", "campaign")
+        engine.assign_asset("asgn-1", "a-1", "campaign-1", "campaign", assigned_by="asset-operator-1")
         engine.retire_asset("a-1")
         result = engine.detect_asset_violations()
         assert result[0].detected_at != ""
 
     def test_violation_is_asset_violation_type(self, engine: AssetRuntimeEngine) -> None:
         _register_default_asset(engine)
-        engine.assign_asset("asgn-1", "a-1", "campaign-1", "campaign")
+        engine.assign_asset("asgn-1", "a-1", "campaign-1", "campaign", assigned_by="asset-operator-1")
         engine.retire_asset("a-1")
         result = engine.detect_asset_violations()
         assert isinstance(result[0], AssetViolation)
@@ -1535,7 +1594,7 @@ class TestDetectAssetViolations:
 
     def test_violation_count_property_updated(self, engine: AssetRuntimeEngine) -> None:
         _register_default_asset(engine)
-        engine.assign_asset("asgn-1", "a-1", "campaign-1", "campaign")
+        engine.assign_asset("asgn-1", "a-1", "campaign-1", "campaign", assigned_by="asset-operator-1")
         engine.retire_asset("a-1")
         assert engine.violation_count == 0
         engine.detect_asset_violations()
@@ -1551,7 +1610,7 @@ class TestViolationsForAsset:
 
     def test_returns_tuple(self, engine: AssetRuntimeEngine) -> None:
         _register_default_asset(engine)
-        engine.assign_asset("asgn-1", "a-1", "campaign-1", "campaign")
+        engine.assign_asset("asgn-1", "a-1", "campaign-1", "campaign", assigned_by="asset-operator-1")
         engine.retire_asset("a-1")
         engine.detect_asset_violations()
         result = engine.violations_for_asset("a-1")
@@ -1560,8 +1619,8 @@ class TestViolationsForAsset:
     def test_filters_by_asset(self, engine: AssetRuntimeEngine) -> None:
         _register_default_asset(engine, asset_id="a-1")
         _register_default_asset(engine, asset_id="a-2", name="Beta")
-        engine.assign_asset("asgn-1", "a-1", "campaign-1", "campaign")
-        engine.assign_asset("asgn-2", "a-2", "campaign-2", "campaign")
+        engine.assign_asset("asgn-1", "a-1", "campaign-1", "campaign", assigned_by="asset-operator-1")
+        engine.assign_asset("asgn-2", "a-2", "campaign-2", "campaign", assigned_by="asset-operator-1")
         engine.retire_asset("a-1")
         engine.retire_asset("a-2")
         engine.detect_asset_violations()
@@ -1646,7 +1705,7 @@ class TestAssetSnapshot:
 
     def test_total_assignments_matches(self, engine: AssetRuntimeEngine) -> None:
         _register_default_asset(engine)
-        engine.assign_asset("asgn-1", "a-1", "scope-1", "campaign")
+        engine.assign_asset("asgn-1", "a-1", "scope-1", "campaign", assigned_by="asset-operator-1")
         snap = engine.asset_snapshot("snap-1")
         assert snap.total_assignments == 1
 
@@ -1659,7 +1718,7 @@ class TestAssetSnapshot:
 
     def test_total_violations_matches(self, engine: AssetRuntimeEngine) -> None:
         _register_default_asset(engine)
-        engine.assign_asset("asgn-1", "a-1", "scope-1", "campaign")
+        engine.assign_asset("asgn-1", "a-1", "scope-1", "campaign", assigned_by="asset-operator-1")
         engine.retire_asset("a-1")
         engine.detect_asset_violations()
         snap = engine.asset_snapshot("snap-1")
@@ -1728,7 +1787,7 @@ class TestStateHash:
     def test_changes_after_assignment(self, engine: AssetRuntimeEngine) -> None:
         _register_default_asset(engine)
         h1 = engine.state_hash()
-        engine.assign_asset("asgn-1", "a-1", "scope-1", "campaign")
+        engine.assign_asset("asgn-1", "a-1", "scope-1", "campaign", assigned_by="asset-operator-1")
         h2 = engine.state_hash()
         assert h1 != h2
 
@@ -1743,20 +1802,20 @@ class TestStateHash:
     def test_changes_after_lifecycle_event(self, engine: AssetRuntimeEngine) -> None:
         _register_default_asset(engine)
         h1 = engine.state_hash()
-        engine.record_lifecycle_event("le-1", "a-1", LifecycleDisposition.PROVISIONED)
+        engine.record_lifecycle_event("le-1", "a-1", LifecycleDisposition.PROVISIONED, performed_by="asset-operator-1")
         h2 = engine.state_hash()
         assert h1 != h2
 
     def test_changes_after_assessment(self, engine: AssetRuntimeEngine) -> None:
         _register_default_asset(engine)
         h1 = engine.state_hash()
-        engine.assess_asset("assess-1", "a-1", 0.9, 0.1)
+        engine.assess_asset("assess-1", "a-1", 0.9, 0.1, assessed_by="asset-auditor-1")
         h2 = engine.state_hash()
         assert h1 != h2
 
     def test_changes_after_violation_detection(self, engine: AssetRuntimeEngine) -> None:
         _register_default_asset(engine)
-        engine.assign_asset("asgn-1", "a-1", "scope-1", "campaign")
+        engine.assign_asset("asgn-1", "a-1", "scope-1", "campaign", assigned_by="asset-operator-1")
         engine.retire_asset("a-1")
         h1 = engine.state_hash()
         engine.detect_asset_violations()
@@ -1853,7 +1912,7 @@ class TestEventEmission:
     def test_event_after_assign_asset(self, engine: AssetRuntimeEngine, spine: EventSpineEngine) -> None:
         _register_default_asset(engine)
         before = spine.event_count
-        engine.assign_asset("asgn-1", "a-1", "scope-1", "campaign")
+        engine.assign_asset("asgn-1", "a-1", "scope-1", "campaign", assigned_by="asset-operator-1")
         assert spine.event_count > before
 
     def test_event_after_register_dependency(self, engine: AssetRuntimeEngine, spine: EventSpineEngine) -> None:
@@ -1866,18 +1925,18 @@ class TestEventEmission:
     def test_event_after_lifecycle(self, engine: AssetRuntimeEngine, spine: EventSpineEngine) -> None:
         _register_default_asset(engine)
         before = spine.event_count
-        engine.record_lifecycle_event("le-1", "a-1", LifecycleDisposition.PROVISIONED)
+        engine.record_lifecycle_event("le-1", "a-1", LifecycleDisposition.PROVISIONED, performed_by="asset-operator-1")
         assert spine.event_count > before
 
     def test_event_after_assess(self, engine: AssetRuntimeEngine, spine: EventSpineEngine) -> None:
         _register_default_asset(engine)
         before = spine.event_count
-        engine.assess_asset("assess-1", "a-1", 0.9, 0.1)
+        engine.assess_asset("assess-1", "a-1", 0.9, 0.1, assessed_by="asset-auditor-1")
         assert spine.event_count > before
 
     def test_event_after_violation_detection(self, engine: AssetRuntimeEngine, spine: EventSpineEngine) -> None:
         _register_default_asset(engine)
-        engine.assign_asset("asgn-1", "a-1", "scope-1", "campaign")
+        engine.assign_asset("asgn-1", "a-1", "scope-1", "campaign", assigned_by="asset-operator-1")
         engine.retire_asset("a-1")
         before = spine.event_count
         engine.detect_asset_violations()
@@ -1941,7 +2000,7 @@ class TestProperties:
     def test_assignment_count_after_multiple(self, engine: AssetRuntimeEngine) -> None:
         _register_default_asset(engine)
         for i in range(4):
-            engine.assign_asset(f"asgn-{i}", "a-1", f"scope-{i}", "campaign")
+            engine.assign_asset(f"asgn-{i}", "a-1", f"scope-{i}", "campaign", assigned_by="asset-operator-1")
         assert engine.assignment_count == 4
 
     def test_dependency_count_after_multiple(self, engine: AssetRuntimeEngine) -> None:
@@ -1954,15 +2013,15 @@ class TestProperties:
 
     def test_lifecycle_count_after_multiple(self, engine: AssetRuntimeEngine) -> None:
         _register_default_asset(engine)
-        engine.record_lifecycle_event("le-1", "a-1", LifecycleDisposition.PROVISIONED)
-        engine.record_lifecycle_event("le-2", "a-1", LifecycleDisposition.DEPLOYED)
+        engine.record_lifecycle_event("le-1", "a-1", LifecycleDisposition.PROVISIONED, performed_by="asset-operator-1")
+        engine.record_lifecycle_event("le-2", "a-1", LifecycleDisposition.DEPLOYED, performed_by="asset-operator-1")
         assert engine.lifecycle_event_count == 2
 
     def test_assessment_count_after_multiple(self, engine: AssetRuntimeEngine) -> None:
         _register_default_asset(engine)
-        engine.assess_asset("assess-1", "a-1", 0.9, 0.1)
-        engine.assess_asset("assess-2", "a-1", 0.8, 0.2)
-        engine.assess_asset("assess-3", "a-1", 0.7, 0.3)
+        engine.assess_asset("assess-1", "a-1", 0.9, 0.1, assessed_by="asset-auditor-1")
+        engine.assess_asset("assess-2", "a-1", 0.8, 0.2, assessed_by="asset-auditor-1")
+        engine.assess_asset("assess-3", "a-1", 0.7, 0.3, assessed_by="asset-auditor-1")
         assert engine.assessment_count == 3
 
 
@@ -2020,21 +2079,21 @@ class TestGoldenScenarios:
         dep_violations = [v for v in violations if v.operation == "depends_on_retired"]
         assert len(dep_violations) == 1
         assert dep_violations[0].asset_id == "a-app"
-        assert "a-db" in dep_violations[0].reason
+        assert dep_violations[0].reason == "asset depends on terminal dependency"
 
     def test_gs3_retired_with_assignments_violation(
         self, engine: AssetRuntimeEngine,
     ) -> None:
         """GS-3: Register asset, assign to campaign, retire, detect violation."""
         engine.register_asset("a-1", "Campaign Server", "t-1")
-        engine.assign_asset("asgn-1", "a-1", "campaign-x", "campaign")
+        engine.assign_asset("asgn-1", "a-1", "campaign-x", "campaign", assigned_by="asset-operator-1")
         engine.retire_asset("a-1")
 
         violations = engine.detect_asset_violations()
         assign_violations = [v for v in violations if v.operation == "retired_with_assignments"]
         assert len(assign_violations) == 1
         assert assign_violations[0].asset_id == "a-1"
-        assert "1 active assignments" in assign_violations[0].reason
+        assert assign_violations[0].reason == "terminal asset has active assignments"
 
     def test_gs4_depleted_inventory_violation_then_release(
         self, engine: AssetRuntimeEngine,
@@ -2072,8 +2131,10 @@ class TestGoldenScenarios:
         engine.retire_asset("a-1")
         assert engine.get_asset("a-1").status == AssetStatus.RETIRED
 
-        with pytest.raises(RuntimeCoreInvariantError, match="Cannot assign"):
-            engine.assign_asset("asgn-1", "a-1", "scope-1", "campaign")
+        with pytest.raises(RuntimeCoreInvariantError) as exc_info:
+            engine.assign_asset("asgn-1", "a-1", "scope-1", "campaign", assigned_by="asset-operator-1")
+        assert str(exc_info.value) == "cannot assign asset from current status"
+        assert "retired" not in str(exc_info.value)
 
     def test_gs6_multi_tenant_isolation(self, engine: AssetRuntimeEngine) -> None:
         """GS-6: Multi-tenant isolation. Each tenant sees only its own assets."""
@@ -2127,7 +2188,7 @@ class TestImmutability:
 
     def test_assignment_frozen(self, engine: AssetRuntimeEngine) -> None:
         _register_default_asset(engine)
-        aa = engine.assign_asset("asgn-1", "a-1", "scope-1", "campaign")
+        aa = engine.assign_asset("asgn-1", "a-1", "scope-1", "campaign", assigned_by="asset-operator-1")
         with pytest.raises(AttributeError):
             aa.scope_ref_id = "mutated"  # type: ignore[misc]
 
@@ -2140,13 +2201,13 @@ class TestImmutability:
 
     def test_lifecycle_event_frozen(self, engine: AssetRuntimeEngine) -> None:
         _register_default_asset(engine)
-        le = engine.record_lifecycle_event("le-1", "a-1", LifecycleDisposition.PROVISIONED)
+        le = engine.record_lifecycle_event("le-1", "a-1", LifecycleDisposition.PROVISIONED, performed_by="asset-operator-1")
         with pytest.raises(AttributeError):
             le.description = "mutated"  # type: ignore[misc]
 
     def test_assessment_frozen(self, engine: AssetRuntimeEngine) -> None:
         _register_default_asset(engine)
-        aa = engine.assess_asset("assess-1", "a-1", 0.9, 0.1)
+        aa = engine.assess_asset("assess-1", "a-1", 0.9, 0.1, assessed_by="asset-auditor-1")
         with pytest.raises(AttributeError):
             aa.health_score = 0.0  # type: ignore[misc]
 
@@ -2157,7 +2218,7 @@ class TestImmutability:
 
     def test_violation_frozen(self, engine: AssetRuntimeEngine) -> None:
         _register_default_asset(engine)
-        engine.assign_asset("asgn-1", "a-1", "scope-1", "campaign")
+        engine.assign_asset("asgn-1", "a-1", "scope-1", "campaign", assigned_by="asset-operator-1")
         engine.retire_asset("a-1")
         violations = engine.detect_asset_violations()
         with pytest.raises(AttributeError):
@@ -2182,7 +2243,7 @@ class TestImmutability:
 
     def test_assignments_for_asset_returns_tuple(self, engine: AssetRuntimeEngine) -> None:
         _register_default_asset(engine)
-        engine.assign_asset("asgn-1", "a-1", "scope-1", "campaign")
+        engine.assign_asset("asgn-1", "a-1", "scope-1", "campaign", assigned_by="asset-operator-1")
         result = engine.assignments_for_asset("a-1")
         assert isinstance(result, tuple)
 
@@ -2195,19 +2256,19 @@ class TestImmutability:
 
     def test_lifecycle_events_for_asset_returns_tuple(self, engine: AssetRuntimeEngine) -> None:
         _register_default_asset(engine)
-        engine.record_lifecycle_event("le-1", "a-1", LifecycleDisposition.PROVISIONED)
+        engine.record_lifecycle_event("le-1", "a-1", LifecycleDisposition.PROVISIONED, performed_by="asset-operator-1")
         result = engine.lifecycle_events_for_asset("a-1")
         assert isinstance(result, tuple)
 
     def test_assessments_for_asset_returns_tuple(self, engine: AssetRuntimeEngine) -> None:
         _register_default_asset(engine)
-        engine.assess_asset("assess-1", "a-1", 0.9, 0.1)
+        engine.assess_asset("assess-1", "a-1", 0.9, 0.1, assessed_by="asset-auditor-1")
         result = engine.assessments_for_asset("a-1")
         assert isinstance(result, tuple)
 
     def test_violations_for_asset_returns_tuple(self, engine: AssetRuntimeEngine) -> None:
         _register_default_asset(engine)
-        engine.assign_asset("asgn-1", "a-1", "scope-1", "campaign")
+        engine.assign_asset("asgn-1", "a-1", "scope-1", "campaign", assigned_by="asset-operator-1")
         engine.retire_asset("a-1")
         engine.detect_asset_violations()
         result = engine.violations_for_asset("a-1")
@@ -2277,13 +2338,16 @@ class TestEdgeCases:
         _register_default_asset(engine)
         dispositions = list(LifecycleDisposition)
         for i, disp in enumerate(dispositions):
-            engine.record_lifecycle_event(f"le-{i}", "a-1", disp)
+            engine.record_lifecycle_event(f"le-{i}", "a-1", disp, performed_by="asset-operator-1")
         assert len(engine.lifecycle_events_for_asset("a-1")) == len(dispositions)
 
     def test_many_assessments_for_single_asset(self, engine: AssetRuntimeEngine) -> None:
         _register_default_asset(engine)
         for i in range(10):
-            engine.assess_asset(f"assess-{i}", "a-1", i / 10, (10 - i) / 10)
+            engine.assess_asset(
+                f"assess-{i}", "a-1", i / 10, (10 - i) / 10,
+                assessed_by="asset-auditor-1",
+            )
         assert len(engine.assessments_for_asset("a-1")) == 10
 
     def test_snapshot_after_retirement_value_excluded(self, engine: AssetRuntimeEngine) -> None:
@@ -2308,7 +2372,7 @@ class TestEdgeCases:
     def test_multiple_violations_types_all_detected(self, engine: AssetRuntimeEngine) -> None:
         engine.register_asset("a-1", "Server", "t-1")
         engine.register_asset("a-2", "DB", "t-1")
-        engine.assign_asset("asgn-1", "a-1", "scope-1", "campaign")
+        engine.assign_asset("asgn-1", "a-1", "scope-1", "campaign", assigned_by="asset-operator-1")
         engine.register_dependency("dep-1", "a-2", "a-1")
         engine.register_inventory("inv-1", "a-2", "t-1", 1)
         engine.assign_inventory("inv-1", 1)
@@ -2322,9 +2386,9 @@ class TestEdgeCases:
 
     def test_assign_asset_to_different_scope_types(self, engine: AssetRuntimeEngine) -> None:
         _register_default_asset(engine)
-        engine.assign_asset("asgn-1", "a-1", "campaign-1", "campaign")
-        engine.assign_asset("asgn-2", "a-1", "program-1", "program")
-        engine.assign_asset("asgn-3", "a-1", "env-1", "environment")
+        engine.assign_asset("asgn-1", "a-1", "campaign-1", "campaign", assigned_by="asset-operator-1")
+        engine.assign_asset("asgn-2", "a-1", "program-1", "program", assigned_by="asset-operator-1")
+        engine.assign_asset("asgn-3", "a-1", "env-1", "environment", assigned_by="asset-operator-1")
         assignments = engine.assignments_for_asset("a-1")
         types = {a.scope_ref_type for a in assignments}
         assert types == {"campaign", "program", "environment"}
@@ -2375,14 +2439,14 @@ class TestEdgeCases:
 
     def test_retired_asset_multiple_assignments_violation_count(self, engine: AssetRuntimeEngine) -> None:
         _register_default_asset(engine)
-        engine.assign_asset("asgn-1", "a-1", "scope-1", "campaign")
-        engine.assign_asset("asgn-2", "a-1", "scope-2", "campaign")
-        engine.assign_asset("asgn-3", "a-1", "scope-3", "campaign")
+        engine.assign_asset("asgn-1", "a-1", "scope-1", "campaign", assigned_by="asset-operator-1")
+        engine.assign_asset("asgn-2", "a-1", "scope-2", "campaign", assigned_by="asset-operator-1")
+        engine.assign_asset("asgn-3", "a-1", "scope-3", "campaign", assigned_by="asset-operator-1")
         engine.retire_asset("a-1")
         violations = engine.detect_asset_violations()
         v = [x for x in violations if x.operation == "retired_with_assignments"]
         assert len(v) == 1
-        assert "3 active assignments" in v[0].reason
+        assert v[0].reason == "terminal asset has active assignments"
 
     def test_two_engines_independent(self, spine: EventSpineEngine) -> None:
         s1 = EventSpineEngine()
@@ -2468,7 +2532,40 @@ class TestEdgeCases:
     def test_lifecycle_event_all_dispositions_same_asset(self, engine: AssetRuntimeEngine) -> None:
         _register_default_asset(engine)
         for i, disp in enumerate(LifecycleDisposition):
-            engine.record_lifecycle_event(f"le-{i}", "a-1", disp)
+            engine.record_lifecycle_event(f"le-{i}", "a-1", disp, performed_by="asset-operator-1")
         events = engine.lifecycle_events_for_asset("a-1")
         dispositions = {e.disposition for e in events}
         assert dispositions == set(LifecycleDisposition)
+
+
+class TestBoundedAssetContracts:
+    def test_dependency_violation_reason_is_bounded(self, engine: AssetRuntimeEngine) -> None:
+        engine.register_asset("a-app", "App", "t-1")
+        engine.register_asset("a-secret", "Database", "t-1")
+        engine.register_dependency("dep-1", "a-app", "a-secret")
+        engine.retire_asset("a-secret")
+        violations = engine.detect_asset_violations()
+        dependency_violation = next(v for v in violations if v.operation == "depends_on_retired")
+        assert dependency_violation.reason == "asset depends on terminal dependency"
+        assert "a-secret" not in dependency_violation.reason
+        assert "retired" not in dependency_violation.reason.lower()
+
+    def test_assignment_violation_reason_is_bounded(self, engine: AssetRuntimeEngine) -> None:
+        _register_default_asset(engine, asset_id="asset-secret")
+        engine.assign_asset("asgn-1", "asset-secret", "scope-1", "campaign", assigned_by="asset-operator-1")
+        engine.retire_asset("asset-secret")
+        violations = engine.detect_asset_violations()
+        assignment_violation = next(v for v in violations if v.operation == "retired_with_assignments")
+        assert assignment_violation.reason == "terminal asset has active assignments"
+        assert "asset-secret" not in assignment_violation.reason
+        assert "assignments" in assignment_violation.reason
+
+    def test_depleted_inventory_reason_is_bounded(self, engine: AssetRuntimeEngine) -> None:
+        _register_default_asset(engine)
+        engine.register_inventory("inv-secret", "a-1", "t-1", 5)
+        engine.assign_inventory("inv-secret", 5)
+        violations = engine.detect_asset_violations()
+        depleted_violation = next(v for v in violations if v.operation == "depleted_inventory")
+        assert depleted_violation.reason == "inventory is depleted"
+        assert "inv-secret" not in depleted_violation.reason
+        assert "depleted" in depleted_violation.reason

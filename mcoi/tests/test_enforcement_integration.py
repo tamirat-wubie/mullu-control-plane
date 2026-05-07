@@ -128,16 +128,19 @@ class TestGlobalErrorHandler:
 class TestGuardChainComposition:
     """Prove the guard chain has the expected guards."""
 
-    def test_guard_chain_has_four_guards(self):
+    def test_guard_chain_has_expected_governed_guards(self):
         os.environ["MULLU_ENV"] = "local_dev"
         os.environ["MULLU_DB_BACKEND"] = "memory"
         from mcoi_runtime.app.server import guard_chain
         names = guard_chain.guard_names()
-        assert "api_key" in names
         assert "tenant" in names
+        assert "tenant_gating" in names
+        assert "rbac" in names
+        assert "Lambda_input_safety" in names
+        assert "temporal" in names
         assert "rate_limit" in names
         assert "budget" in names
-        assert len(names) == 4
+        assert len(names) == 8
 
     def test_api_key_guard_runs_first(self):
         os.environ["MULLU_ENV"] = "local_dev"

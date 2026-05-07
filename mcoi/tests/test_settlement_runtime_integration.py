@@ -336,11 +336,13 @@ class TestAttachSettlementToMemoryMesh:
         assert isinstance(mem.tags, tuple)
         assert mem.tags == ("settlement", "payments", "collections")
 
-    def test_title_contains_scope_ref_id(
+    def test_title_is_bounded(
         self, integration: SettlementRuntimeIntegration
     ) -> None:
         mem = integration.attach_settlement_to_memory_mesh("my-scope")
-        assert "my-scope" in mem.title
+        assert mem.title == "Settlement state"
+        assert "my-scope" not in mem.title
+        assert mem.scope_ref_id == "my-scope"
 
     def test_memory_id_is_string(self, integration: SettlementRuntimeIntegration) -> None:
         mem = integration.attach_settlement_to_memory_mesh("scope-1")

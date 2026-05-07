@@ -256,7 +256,7 @@ class TenantRuntimeIntegration:
             scope=MemoryScope.GLOBAL,
             scope_ref_id=tenant_id,
             trust_level=MemoryTrustLevel.VERIFIED,
-            title=f"Tenant state: {tenant_id}",
+            title="Tenant state",
             content=content,
             source_ids=(tenant_id,),
             tags=("tenant", "workspace", "environment"),

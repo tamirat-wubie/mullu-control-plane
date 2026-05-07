@@ -78,6 +78,9 @@ class TestMemoryMeshAndGraph:
         integration.uncertainty_from_forecasting("b-1", "t-1", "fc-1")
         mem = integration.attach_uncertainty_to_memory_mesh("scope-1")
         assert mem.memory_id
+        assert mem.title == "Uncertainty state"
+        assert "scope-1" not in mem.title
+        assert mem.scope_ref_id == "scope-1"
         assert "uncertainty" in mem.tags
 
     def test_attach_to_graph(self, integration: UncertaintyRuntimeIntegration) -> None:

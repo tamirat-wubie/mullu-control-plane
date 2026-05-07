@@ -75,7 +75,7 @@ class ContactIdentityEngine:
         if not isinstance(record, IdentityRecord):
             raise RuntimeCoreInvariantError("record must be an IdentityRecord")
         if record.identity_id in self._identities:
-            raise RuntimeCoreInvariantError(f"duplicate identity_id: {record.identity_id}")
+            raise RuntimeCoreInvariantError("duplicate identity_id")
         self._identities[record.identity_id] = record
         return record
 
@@ -108,9 +108,9 @@ class ContactIdentityEngine:
         if not isinstance(handle, ChannelHandle):
             raise RuntimeCoreInvariantError("handle must be a ChannelHandle")
         if handle.handle_id in self._handles:
-            raise RuntimeCoreInvariantError(f"duplicate handle_id: {handle.handle_id}")
+            raise RuntimeCoreInvariantError("duplicate handle_id")
         if handle.identity_id not in self._identities:
-            raise RuntimeCoreInvariantError(f"identity not found: {handle.identity_id}")
+            raise RuntimeCoreInvariantError("identity not found")
         self._handles[handle.handle_id] = handle
         return handle
 
@@ -143,11 +143,11 @@ class ContactIdentityEngine:
         if not isinstance(link, IdentityLink):
             raise RuntimeCoreInvariantError("link must be an IdentityLink")
         if link.link_id in self._links:
-            raise RuntimeCoreInvariantError(f"duplicate link_id: {link.link_id}")
+            raise RuntimeCoreInvariantError("duplicate link_id")
         if link.from_identity_id not in self._identities:
-            raise RuntimeCoreInvariantError(f"from_identity not found: {link.from_identity_id}")
+            raise RuntimeCoreInvariantError("from_identity not found")
         if link.to_identity_id not in self._identities:
-            raise RuntimeCoreInvariantError(f"to_identity not found: {link.to_identity_id}")
+            raise RuntimeCoreInvariantError("to_identity not found")
         self._links[link.link_id] = link
         return link
 
@@ -167,7 +167,7 @@ class ContactIdentityEngine:
         if not isinstance(pref, ContactPreferenceRecord):
             raise RuntimeCoreInvariantError("pref must be a ContactPreferenceRecord")
         if pref.identity_id not in self._identities:
-            raise RuntimeCoreInvariantError(f"identity not found: {pref.identity_id}")
+            raise RuntimeCoreInvariantError("identity not found")
         self._preferences[pref.identity_id] = pref
         return pref
 
@@ -183,7 +183,7 @@ class ContactIdentityEngine:
         if not isinstance(window, AvailabilityWindow):
             raise RuntimeCoreInvariantError("window must be an AvailabilityWindow")
         if window.identity_id not in self._identities:
-            raise RuntimeCoreInvariantError(f"identity not found: {window.identity_id}")
+            raise RuntimeCoreInvariantError("identity not found")
         self._availability[window.identity_id] = window
         return window
 
@@ -199,10 +199,10 @@ class ContactIdentityEngine:
         if not isinstance(chain, EscalationChainRecord):
             raise RuntimeCoreInvariantError("chain must be an EscalationChainRecord")
         if chain.chain_id in self._escalation_chains:
-            raise RuntimeCoreInvariantError(f"duplicate chain_id: {chain.chain_id}")
+            raise RuntimeCoreInvariantError("duplicate chain_id")
         for tid in chain.target_identity_ids:
             if tid not in self._identities:
-                raise RuntimeCoreInvariantError(f"escalation target not found: {tid}")
+                raise RuntimeCoreInvariantError("escalation target not found")
         self._escalation_chains[chain.chain_id] = chain
         return chain
 
@@ -298,7 +298,7 @@ class ContactIdentityEngine:
         fallbacks = tuple(h.handle_id for h in handles[1:])
 
         now = _now_iso()
-        reason = f"Best available handle for {urgency} contact"
+        reason = "contact route selected"
         decision = IdentityRoutingDecision(
             decision_id=stable_identifier("route", {"iid": identity_id, "ts": now}),
             target_identity_id=identity_id,
@@ -346,7 +346,7 @@ class ContactIdentityEngine:
                 decision_id=stable_identifier("esc-route", {"chain": chain_id, "idx": idx, "ts": now}),
                 target_identity_id=tid,
                 selected_handle_id=selected.handle_id,
-                reason=f"Escalation chain '{chain.name}' step {idx + 1} ({chain.mode.value})",
+                reason="escalation route selected",
                 fallback_handle_ids=fallbacks,
                 created_at=now,
             )

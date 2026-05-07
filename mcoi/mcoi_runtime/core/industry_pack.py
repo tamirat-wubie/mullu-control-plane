@@ -165,7 +165,7 @@ class IndustryPackEngine:
     ) -> IndustryPack:
         """Register a new industry pack in DRAFT status."""
         if pack_id in self._packs:
-            raise RuntimeCoreInvariantError(f"Duplicate pack_id: {pack_id}")
+            raise RuntimeCoreInvariantError("Duplicate pack_id")
         now = self._now()
         pack = IndustryPack(
             pack_id=pack_id,
@@ -183,7 +183,7 @@ class IndustryPackEngine:
     def get_pack(self, pack_id: str) -> IndustryPack:
         """Retrieve a pack by ID."""
         if pack_id not in self._packs:
-            raise RuntimeCoreInvariantError(f"Unknown pack_id: {pack_id}")
+            raise RuntimeCoreInvariantError("Unknown pack_id")
         return self._packs[pack_id]
 
     def packs_for_tenant(self, tenant_id: str) -> list[IndustryPack]:
@@ -208,7 +208,7 @@ class IndustryPackEngine:
         """Validate a DRAFT pack. Transitions to VALIDATED if all required capabilities are present and enabled."""
         pack = self.get_pack(pack_id)
         if pack.status != IndustryPackStatus.DRAFT:
-            raise RuntimeCoreInvariantError(f"Only DRAFT packs can be validated, got {pack.status}")
+            raise RuntimeCoreInvariantError("Only DRAFT packs can be validated")
         now = self._now()
         # Check required capabilities for this domain
         required = _REQUIRED_CAPABILITIES.get(pack.domain, frozenset())
@@ -227,9 +227,7 @@ class IndustryPackEngine:
         """Deploy a VALIDATED pack."""
         pack = self.get_pack(pack_id)
         if pack.status != IndustryPackStatus.VALIDATED:
-            raise RuntimeCoreInvariantError(
-                f"Only VALIDATED packs can be deployed, got {pack.status}"
-            )
+            raise RuntimeCoreInvariantError("Only VALIDATED packs can be deployed")
         now = self._now()
         new_pack = self._replace_pack(pack_id, status=IndustryPackStatus.DEPLOYED)
         dep_id = stable_identifier("dep-ipk", {"pack_id": pack_id, "ts": now})
@@ -248,7 +246,7 @@ class IndustryPackEngine:
         """Suspend a pack."""
         pack = self.get_pack(pack_id)
         if pack.status in _TERMINAL:
-            raise RuntimeCoreInvariantError(f"Cannot suspend a {pack.status.value} pack")
+            raise RuntimeCoreInvariantError("Cannot suspend pack in current status")
         now = self._now()
         new_pack = self._replace_pack(pack_id, status=IndustryPackStatus.SUSPENDED)
         _emit(self._events, "suspend_pack", {"pack_id": pack_id}, pack_id, now)
@@ -258,7 +256,7 @@ class IndustryPackEngine:
         """Retire a pack (terminal state)."""
         pack = self.get_pack(pack_id)
         if pack.status in _TERMINAL:
-            raise RuntimeCoreInvariantError(f"Cannot retire a {pack.status.value} pack")
+            raise RuntimeCoreInvariantError("Cannot retire pack in current status")
         now = self._now()
         new_pack = self._replace_pack(pack_id, status=IndustryPackStatus.RETIRED)
         _emit(self._events, "retire_pack", {"pack_id": pack_id}, pack_id, now)
@@ -279,9 +277,9 @@ class IndustryPackEngine:
     ) -> PackCapability:
         """Add a capability to a pack."""
         if capability_id in self._capabilities:
-            raise RuntimeCoreInvariantError(f"Duplicate capability_id: {capability_id}")
+            raise RuntimeCoreInvariantError("Duplicate capability_id")
         if pack_ref not in self._packs:
-            raise RuntimeCoreInvariantError(f"Unknown pack_ref: {pack_ref}")
+            raise RuntimeCoreInvariantError("Unknown pack_ref")
         now = self._now()
         cap = PackCapability(
             capability_id=capability_id,
@@ -315,9 +313,9 @@ class IndustryPackEngine:
     ) -> PackConfiguration:
         """Add a configuration entry to a pack."""
         if config_id in self._configurations:
-            raise RuntimeCoreInvariantError(f"Duplicate config_id: {config_id}")
+            raise RuntimeCoreInvariantError("Duplicate config_id")
         if pack_ref not in self._packs:
-            raise RuntimeCoreInvariantError(f"Unknown pack_ref: {pack_ref}")
+            raise RuntimeCoreInvariantError("Unknown pack_ref")
         now = self._now()
         cfg = PackConfiguration(
             config_id=config_id,
@@ -347,9 +345,9 @@ class IndustryPackEngine:
     ) -> PackBinding:
         """Bind a pack to a runtime component."""
         if binding_id in self._bindings:
-            raise RuntimeCoreInvariantError(f"Duplicate binding_id: {binding_id}")
+            raise RuntimeCoreInvariantError("Duplicate binding_id")
         if pack_ref not in self._packs:
-            raise RuntimeCoreInvariantError(f"Unknown pack_ref: {pack_ref}")
+            raise RuntimeCoreInvariantError("Unknown pack_ref")
         now = self._now()
         binding = PackBinding(
             binding_id=binding_id,
@@ -377,9 +375,9 @@ class IndustryPackEngine:
     ) -> PackAssessment:
         """Assess the readiness of a pack."""
         if assessment_id in self._assessments:
-            raise RuntimeCoreInvariantError(f"Duplicate assessment_id: {assessment_id}")
+            raise RuntimeCoreInvariantError("Duplicate assessment_id")
         if pack_ref not in self._packs:
-            raise RuntimeCoreInvariantError(f"Unknown pack_ref: {pack_ref}")
+            raise RuntimeCoreInvariantError("Unknown pack_ref")
         now = self._now()
         caps = [c for c in self._capabilities.values() if c.pack_ref == pack_ref]
         total = len(caps)
@@ -421,7 +419,7 @@ class IndustryPackEngine:
     ) -> PackDecision:
         """Record a deployment decision."""
         if decision_id in self._decisions:
-            raise RuntimeCoreInvariantError(f"Duplicate decision_id: {decision_id}")
+            raise RuntimeCoreInvariantError("Duplicate decision_id")
         now = self._now()
         decision = PackDecision(
             decision_id=decision_id,
@@ -477,7 +475,7 @@ class IndustryPackEngine:
     ) -> PackSnapshot:
         """Produce a point-in-time snapshot."""
         if snapshot_id in self._snapshot_ids:
-            raise RuntimeCoreInvariantError(f"Duplicate snapshot_id: {snapshot_id}")
+            raise RuntimeCoreInvariantError("Duplicate snapshot_id")
         now = self._now()
         snap = PackSnapshot(
             snapshot_id=snapshot_id,
@@ -519,7 +517,7 @@ class IndustryPackEngine:
         """Detect and record violations. Idempotent — skips already-detected violations."""
         now = self._now()
         new_violations: list[PackViolation] = []
-        existing_reasons = {(v.tenant_id, v.operation, v.reason) for v in self._violations.values()}
+        existing_violation_ids = set(self._violations)
 
         # 1. pack_not_validated: DEPLOYED but never VALIDATED path
         #    We check packs that are DEPLOYED but have no deployment record referencing them
@@ -534,19 +532,21 @@ class IndustryPackEngine:
                     for a in self._assessments.values()
                 )
                 if not assessed:
-                    key = (tenant_id, "pack_not_validated", f"Pack {pack.pack_id} is DEPLOYED without READY assessment")
-                    if key not in existing_reasons:
-                        vid = stable_identifier("viol-ipk", {"t": tenant_id, "op": "pack_not_validated", "p": pack.pack_id})
+                    vid = stable_identifier(
+                        "viol-ipk",
+                        {"t": tenant_id, "op": "pack_not_validated", "p": pack.pack_id},
+                    )
+                    if vid not in existing_violation_ids:
                         v = PackViolation(
                             violation_id=vid,
                             tenant_id=tenant_id,
                             operation="pack_not_validated",
-                            reason=f"Pack {pack.pack_id} is DEPLOYED without READY assessment",
+                            reason="deployed pack has no ready assessment",
                             detected_at=now,
                         )
                         self._violations[vid] = v
                         new_violations.append(v)
-                        existing_reasons.add(key)
+                        existing_violation_ids.add(vid)
 
         # 2. missing_required_capability: pack domain requires certain capabilities
         for pack in self._packs.values():
@@ -559,19 +559,21 @@ class IndustryPackEngine:
             present_kinds = frozenset(c.kind for c in caps)
             missing = required - present_kinds
             for kind in sorted(missing, key=lambda k: k.value):
-                key = (tenant_id, "missing_required_capability", f"Pack {pack.pack_id} missing {kind.value}")
-                if key not in existing_reasons:
-                    vid = stable_identifier("viol-ipk", {"t": tenant_id, "op": "missing_cap", "p": pack.pack_id, "k": kind.value})
+                vid = stable_identifier(
+                    "viol-ipk",
+                    {"t": tenant_id, "op": "missing_cap", "p": pack.pack_id, "k": kind.value},
+                )
+                if vid not in existing_violation_ids:
                     v = PackViolation(
                         violation_id=vid,
                         tenant_id=tenant_id,
                         operation="missing_required_capability",
-                        reason=f"Pack {pack.pack_id} missing {kind.value}",
+                        reason="pack is missing required capability",
                         detected_at=now,
                     )
                     self._violations[vid] = v
                     new_violations.append(v)
-                    existing_reasons.add(key)
+                    existing_violation_ids.add(vid)
 
         # 3. binding_orphan: binding references non-existent runtime
         #    We treat any binding whose runtime_ref doesn't match a pack_id as orphan
@@ -580,19 +582,21 @@ class IndustryPackEngine:
             if binding.tenant_id != tenant_id:
                 continue
             if binding.runtime_ref not in known_runtimes:
-                key = (tenant_id, "binding_orphan", f"Binding {binding.binding_id} references unknown runtime {binding.runtime_ref}")
-                if key not in existing_reasons:
-                    vid = stable_identifier("viol-ipk", {"t": tenant_id, "op": "binding_orphan", "b": binding.binding_id})
+                vid = stable_identifier(
+                    "viol-ipk",
+                    {"t": tenant_id, "op": "binding_orphan", "b": binding.binding_id},
+                )
+                if vid not in existing_violation_ids:
                     v = PackViolation(
                         violation_id=vid,
                         tenant_id=tenant_id,
                         operation="binding_orphan",
-                        reason=f"Binding {binding.binding_id} references unknown runtime {binding.runtime_ref}",
+                        reason="binding references unknown runtime",
                         detected_at=now,
                     )
                     self._violations[vid] = v
                     new_violations.append(v)
-                    existing_reasons.add(key)
+                    existing_violation_ids.add(vid)
 
         if new_violations:
             _emit(self._events, "detect_pack_violations", {

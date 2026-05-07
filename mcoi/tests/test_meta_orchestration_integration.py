@@ -411,6 +411,12 @@ class TestAttachToMemoryMesh:
         mem = bridge.attach_orchestration_to_memory_mesh("scope-1")
         assert mem.scope_ref_id == "scope-1"
 
+    def test_title_is_bounded(self, bridge):
+        mem = bridge.attach_orchestration_to_memory_mesh("scope-1")
+        assert mem.title == "Meta-orchestration state"
+        assert "scope-1" not in mem.title
+        assert mem.scope_ref_id == "scope-1"
+
     def test_tags_meta_orchestration(self, bridge):
         mem = bridge.attach_orchestration_to_memory_mesh("scope-1")
         assert "meta_orchestration" in mem.tags
@@ -468,7 +474,9 @@ class TestAttachToMemoryMesh:
 
     def test_title_contains_scope(self, bridge):
         mem = bridge.attach_orchestration_to_memory_mesh("scope-abc")
-        assert "scope-abc" in mem.title
+        assert mem.title == "Meta-orchestration state"
+        assert "scope-abc" not in mem.title
+        assert mem.scope_ref_id == "scope-abc"
 
     def test_after_plan_total_plans_nonzero(self, bridge):
         bridge.orchestrate_service_to_campaign("px", "t1", "s", "c")

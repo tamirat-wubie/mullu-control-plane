@@ -1,4 +1,4 @@
-"""Phase 200A — LLM Bootstrap Wiring.
+"""Phase 200A - LLM Bootstrap Wiring.
 
 Purpose: Wire LLM backends into the runtime based on environment configuration.
     Registers model adapters with ModelOrchestrationEngine and provider registry.
@@ -6,9 +6,9 @@ Governance scope: LLM wiring at bootstrap time only.
 Dependencies: llm_adapter, llm_integration, model_orchestration, provider_registry.
 Invariants:
   - Backend selection is explicit and environment-driven.
-  - No API calls at bootstrap time — adapters are created but not invoked.
+  - No API calls at bootstrap time - adapters are created but not invoked.
   - Stub backend is always available as fallback.
-  - Budget registration is explicit — no implicit spending authority.
+  - Budget registration is explicit - no implicit spending authority.
 """
 
 from __future__ import annotations
@@ -19,21 +19,40 @@ from typing import Any, Callable
 
 from mcoi_runtime.adapters.llm_adapter import (
     AnthropicBackend,
+    GeminiBackend,
     GovernedLLMAdapter,
     LLMBackend,
     LLMBudgetManager,
+    OllamaBackend,
     OpenAIBackend,
     StubLLMBackend,
 )
-from mcoi_runtime.contracts.llm import LLMBudget, LLMProvider
-from mcoi_runtime.contracts.model import ModelInvocation, ModelResponse
+from mcoi_runtime.adapters.multi_provider import (
+    CerebrasBackend,
+    DeepSeekBackend,
+    DeepInfraBackend,
+    FireworksBackend,
+    FriendliBackend,
+    GrokBackend,
+    GroqBackend,
+    HyperbolicBackend,
+    MistralBackend,
+    NebiusBackend,
+    NovitaBackend,
+    OpenRouterBackend,
+    SambaNovaBackend,
+    TogetherBackend,
+)
+from mcoi_runtime.contracts.llm import LLMBudget
 from mcoi_runtime.contracts.provider import (
     CredentialScope,
     ProviderClass,
     ProviderDescriptor,
 )
+from mcoi_runtime.core.invariants import RuntimeCoreInvariantError
 from mcoi_runtime.core.llm_integration import LLMIntegrationBridge
 from mcoi_runtime.core.model_orchestration import (
+    ModelAlreadyRegisteredError,
     ModelDescriptor,
     ModelOrchestrationEngine,
 )
@@ -44,9 +63,25 @@ from mcoi_runtime.core.provider_registry import ProviderRegistry
 class LLMConfig:
     """Environment-driven LLM configuration."""
 
-    default_backend: str = "stub"  # "anthropic", "openai", "stub"
+    default_backend: str = "stub"
     anthropic_api_key: str = ""
     openai_api_key: str = ""
+    gemini_api_key: str = ""
+    groq_api_key: str = ""
+    deepseek_api_key: str = ""
+    together_api_key: str = ""
+    fireworks_api_key: str = ""
+    friendli_api_key: str = ""
+    novita_api_key: str = ""
+    cerebras_api_key: str = ""
+    deepinfra_api_key: str = ""
+    nebius_api_key: str = ""
+    hyperbolic_api_key: str = ""
+    sambanova_api_key: str = ""
+    grok_api_key: str = ""
+    mistral_api_key: str = ""
+    openrouter_api_key: str = ""
+    ollama_base_url: str = ""
     default_model: str = "claude-sonnet-4-20250514"
     default_budget_max_cost: float = 100.0
     default_budget_max_calls: int = 10000
@@ -54,24 +89,111 @@ class LLMConfig:
 
     @classmethod
     def from_env(cls) -> LLMConfig:
-        """Build LLM config from environment variables."""
+        """Build LLM config from environment variables.
+
+        Fail-closed in pilot/production environments: refuses to boot with
+        the stub backend (which produces deterministic fake responses).
+        """
         anthropic_key = os.environ.get("ANTHROPIC_API_KEY", "")
         openai_key = os.environ.get("OPENAI_API_KEY", "")
+        gemini_key = os.environ.get("GEMINI_API_KEY", "")
+        groq_key = os.environ.get("GROQ_API_KEY", "")
+        deepseek_key = os.environ.get("DEEPSEEK_API_KEY", "")
+        together_key = os.environ.get("TOGETHER_API_KEY", "")
+        fireworks_key = os.environ.get("FIREWORKS_API_KEY", "")
+        friendli_key = os.environ.get("FRIENDLI_TOKEN", "") or os.environ.get("FRIENDLI_API_KEY", "")
+        novita_key = os.environ.get("NOVITA_API_KEY", "")
+        cerebras_key = os.environ.get("CEREBRAS_API_KEY", "")
+        deepinfra_key = os.environ.get("DEEPINFRA_TOKEN", "") or os.environ.get("DEEPINFRA_API_KEY", "")
+        nebius_key = os.environ.get("NEBIUS_API_KEY", "")
+        hyperbolic_key = os.environ.get("HYPERBOLIC_API_KEY", "")
+        sambanova_key = os.environ.get("SAMBANOVA_API_KEY", "")
+        grok_key = os.environ.get("XAI_API_KEY", "")
+        mistral_key = os.environ.get("MISTRAL_API_KEY", "")
+        openrouter_key = os.environ.get("OPENROUTER_API_KEY", "")
+        ollama_url = os.environ.get("OLLAMA_BASE_URL", "")
+        env = os.environ.get("MULLU_ENV", "").lower()
 
-        # Auto-detect default backend from available keys
+        # Auto-detect default backend from available keys (Tier 1 first)
         default_backend = os.environ.get("MULLU_LLM_BACKEND", "")
         if not default_backend:
             if anthropic_key:
                 default_backend = "anthropic"
             elif openai_key:
                 default_backend = "openai"
+            elif gemini_key:
+                default_backend = "gemini"
+            elif groq_key:
+                default_backend = "groq"
+            elif deepseek_key:
+                default_backend = "deepseek"
+            elif together_key:
+                default_backend = "together"
+            elif fireworks_key:
+                default_backend = "fireworks"
+            elif friendli_key:
+                default_backend = "friendli"
+            elif novita_key:
+                default_backend = "novita"
+            elif cerebras_key:
+                default_backend = "cerebras"
+            elif deepinfra_key:
+                default_backend = "deepinfra"
+            elif nebius_key:
+                default_backend = "nebius"
+            elif hyperbolic_key:
+                default_backend = "hyperbolic"
+            elif sambanova_key:
+                default_backend = "sambanova"
+            elif mistral_key:
+                default_backend = "mistral"
+            elif grok_key:
+                default_backend = "grok"
+            elif openrouter_key:
+                default_backend = "openrouter"
+            elif ollama_url:
+                default_backend = "ollama"
             else:
                 default_backend = "stub"
+
+        # Fail-closed: stub backend is forbidden in pilot/production.
+        # The stub returns deterministic fake responses suitable only
+        # for testing — running it under a "production" label is a
+        # silent governance failure (audit trail records "real" calls
+        # that never happened).
+        if default_backend == "stub" and env in ("pilot", "production"):
+            raise RuntimeError(
+                f"MULLU_LLM_BACKEND='stub' is forbidden in {env!r} environment. "
+                "Set MULLU_LLM_BACKEND explicitly or provide an API key "
+                "(ANTHROPIC_API_KEY, OPENAI_API_KEY, GEMINI_API_KEY, "
+                "GROQ_API_KEY, DEEPSEEK_API_KEY, TOGETHER_API_KEY, "
+                "FIREWORKS_API_KEY, FRIENDLI_TOKEN, NOVITA_API_KEY, "
+                "CEREBRAS_API_KEY, DEEPINFRA_TOKEN, NEBIUS_API_KEY, "
+                "HYPERBOLIC_API_KEY, SAMBANOVA_API_KEY, XAI_API_KEY, MISTRAL_API_KEY, "
+                "OPENROUTER_API_KEY) "
+                "or OLLAMA_BASE_URL."
+            )
 
         return cls(
             default_backend=default_backend,
             anthropic_api_key=anthropic_key,
             openai_api_key=openai_key,
+            gemini_api_key=gemini_key,
+            groq_api_key=groq_key,
+            deepseek_api_key=deepseek_key,
+            together_api_key=together_key,
+            fireworks_api_key=fireworks_key,
+            friendli_api_key=friendli_key,
+            novita_api_key=novita_key,
+            cerebras_api_key=cerebras_key,
+            deepinfra_api_key=deepinfra_key,
+            nebius_api_key=nebius_key,
+            hyperbolic_api_key=hyperbolic_key,
+            sambanova_api_key=sambanova_key,
+            grok_api_key=grok_key,
+            mistral_api_key=mistral_key,
+            openrouter_api_key=openrouter_key,
+            ollama_base_url=ollama_url,
             default_model=os.environ.get("MULLU_LLM_MODEL", "claude-sonnet-4-20250514"),
             default_budget_max_cost=float(os.environ.get("MULLU_LLM_BUDGET_MAX_COST", "100.0")),
             default_budget_max_calls=int(os.environ.get("MULLU_LLM_BUDGET_MAX_CALLS", "10000")),
@@ -90,6 +212,24 @@ class LLMBootstrapResult:
     config: LLMConfig
     registered_models: list[str] = field(default_factory=list)
     registered_providers: list[str] = field(default_factory=list)
+    skipped_model_registrations: list[dict[str, str]] = field(default_factory=list)
+    model_registration_failures: list[dict[str, str]] = field(default_factory=list)
+
+
+def _classify_bootstrap_exception(exc: Exception) -> str:
+    """Return a bounded bootstrap wiring failure detail."""
+    exc_type = type(exc).__name__
+    if isinstance(exc, TimeoutError):
+        return f"model registration timeout ({exc_type})"
+    return f"model registration error ({exc_type})"
+
+
+def _select_provider_default_model(default_model: str, markers: tuple[str, ...], fallback: str) -> str:
+    """Select a default model only when it belongs to the target provider."""
+    normalized = default_model.lower()
+    if any(marker in normalized for marker in markers):
+        return default_model
+    return fallback
 
 
 def bootstrap_llm(
@@ -134,16 +274,189 @@ def bootstrap_llm(
         )
         backends["openai"] = openai
 
+    # Register Gemini backend if key available (Tier 2)
+    if llm_config.gemini_api_key:
+        gemini = GeminiBackend(
+            api_key=llm_config.gemini_api_key,
+            default_model=llm_config.default_model if "gemini" in llm_config.default_model else "gemini-2.0-flash",
+        )
+        backends["gemini"] = gemini
+
+    # Register low-cost hosted OpenAI-compatible backends when keys are available
+    if llm_config.groq_api_key:
+        groq = GroqBackend(
+            api_key=llm_config.groq_api_key,
+            model=_select_provider_default_model(
+                llm_config.default_model,
+                ("llama", "qwen", "gpt-oss", "groq/"),
+                GroqBackend.DEFAULT_MODEL,
+            ),
+        )
+        backends["groq"] = groq
+
+    if llm_config.deepseek_api_key:
+        deepseek = DeepSeekBackend(
+            api_key=llm_config.deepseek_api_key,
+            model=_select_provider_default_model(
+                llm_config.default_model,
+                ("deepseek",),
+                DeepSeekBackend.DEFAULT_MODEL,
+            ),
+        )
+        backends["deepseek"] = deepseek
+
+    if llm_config.together_api_key:
+        together = TogetherBackend(
+            api_key=llm_config.together_api_key,
+            model=_select_provider_default_model(
+                llm_config.default_model,
+                ("lfm", "liquid", "qwen", "openai/gpt-oss", "together/"),
+                TogetherBackend.DEFAULT_MODEL,
+            ),
+        )
+        backends["together"] = together
+
+    if llm_config.fireworks_api_key:
+        fireworks = FireworksBackend(
+            api_key=llm_config.fireworks_api_key,
+            model=_select_provider_default_model(
+                llm_config.default_model,
+                ("accounts/fireworks/", "fireworks/", "gpt-oss"),
+                FireworksBackend.DEFAULT_MODEL,
+            ),
+        )
+        backends["fireworks"] = fireworks
+
+    if llm_config.friendli_api_key:
+        friendli = FriendliBackend(
+            api_key=llm_config.friendli_api_key,
+            model=_select_provider_default_model(
+                llm_config.default_model,
+                ("meta-llama", "qwen/", "deepseek-ai/", "friendli/"),
+                FriendliBackend.DEFAULT_MODEL,
+            ),
+        )
+        backends["friendli"] = friendli
+
+    if llm_config.novita_api_key:
+        novita = NovitaBackend(
+            api_key=llm_config.novita_api_key,
+            model=_select_provider_default_model(
+                llm_config.default_model,
+                ("deepseek/", "openai/gpt-oss", "meta-llama/", "zai-org/", "novita/"),
+                NovitaBackend.DEFAULT_MODEL,
+            ),
+        )
+        backends["novita"] = novita
+
+    if llm_config.cerebras_api_key:
+        cerebras = CerebrasBackend(
+            api_key=llm_config.cerebras_api_key,
+            model=_select_provider_default_model(
+                llm_config.default_model,
+                ("llama", "qwen", "gpt-oss", "zai-glm"),
+                CerebrasBackend.DEFAULT_MODEL,
+            ),
+        )
+        backends["cerebras"] = cerebras
+
+    if llm_config.deepinfra_api_key:
+        deepinfra = DeepInfraBackend(
+            api_key=llm_config.deepinfra_api_key,
+            model=_select_provider_default_model(
+                llm_config.default_model,
+                ("meta-llama/", "deepseek-ai/", "qwen/", "mistralai/", "deepinfra/"),
+                DeepInfraBackend.DEFAULT_MODEL,
+            ),
+        )
+        backends["deepinfra"] = deepinfra
+
+    if llm_config.nebius_api_key:
+        nebius = NebiusBackend(
+            api_key=llm_config.nebius_api_key,
+            model=_select_provider_default_model(
+                llm_config.default_model,
+                ("meta-llama/", "deepseek-ai/", "mistralai/", "microsoft/", "nebius/"),
+                NebiusBackend.DEFAULT_MODEL,
+            ),
+        )
+        backends["nebius"] = nebius
+
+    if llm_config.hyperbolic_api_key:
+        hyperbolic = HyperbolicBackend(
+            api_key=llm_config.hyperbolic_api_key,
+            model=_select_provider_default_model(
+                llm_config.default_model,
+                ("meta-llama/", "deepseek-ai/", "qwen/", "moonshotai/", "hyperbolic/"),
+                HyperbolicBackend.DEFAULT_MODEL,
+            ),
+        )
+        backends["hyperbolic"] = hyperbolic
+
+    if llm_config.sambanova_api_key:
+        sambanova = SambaNovaBackend(
+            api_key=llm_config.sambanova_api_key,
+            model=_select_provider_default_model(
+                llm_config.default_model,
+                ("meta-llama", "deepseek", "qwen", "sambanova/"),
+                SambaNovaBackend.DEFAULT_MODEL,
+            ),
+        )
+        backends["sambanova"] = sambanova
+
+    if llm_config.grok_api_key:
+        grok = GrokBackend(
+            api_key=llm_config.grok_api_key,
+            model=_select_provider_default_model(
+                llm_config.default_model,
+                ("grok",),
+                GrokBackend.DEFAULT_MODEL,
+            ),
+        )
+        backends["grok"] = grok
+
+    if llm_config.mistral_api_key:
+        mistral = MistralBackend(
+            api_key=llm_config.mistral_api_key,
+            model=_select_provider_default_model(
+                llm_config.default_model,
+                ("mistral", "magistral", "ministral", "codestral", "devstral"),
+                MistralBackend.DEFAULT_MODEL,
+            ),
+        )
+        backends["mistral"] = mistral
+
+    if llm_config.openrouter_api_key:
+        openrouter_model = (
+            llm_config.default_model
+            if llm_config.default_backend == "openrouter"
+            else OpenRouterBackend.DEFAULT_MODEL
+        )
+        openrouter = OpenRouterBackend(
+            api_key=llm_config.openrouter_api_key,
+            model=openrouter_model,
+        )
+        backends["openrouter"] = openrouter
+
+    # Register Ollama backend if URL configured (Tier 3)
+    if llm_config.ollama_base_url:
+        ollama = OllamaBackend(
+            base_url=llm_config.ollama_base_url,
+            default_model=llm_config.default_model if llm_config.default_backend == "ollama" else "llama3.2",
+        )
+        backends["ollama"] = ollama
+
     # Determine default backend
     default_name = llm_config.default_backend
     if default_name not in backends:
         default_name = "stub"
 
-    # Create bridge with default backend
+    # Create bridge with default backend and shared budget manager
     bridge = LLMIntegrationBridge(
         clock=clock,
         default_backend=backends[default_name],
         ledger_sink=ledger_sink,
+        budget_manager=budget_manager,
     )
 
     # Register all other backends
@@ -160,7 +473,6 @@ def bootstrap_llm(
         max_tokens_per_call=llm_config.max_tokens_per_call,
     )
     bridge.register_budget(default_budget)
-    budget_manager.register(default_budget)
 
     result = LLMBootstrapResult(
         bridge=bridge,
@@ -200,6 +512,102 @@ def _register_providers(
             "base_url": "https://api.openai.com",
             "rate_limit": 60,
             "cost_limit": 1.0,
+        },
+        "gemini": {
+            "name": "Google Gemini",
+            "base_url": "https://generativelanguage.googleapis.com",
+            "rate_limit": 60,
+            "cost_limit": 0.25,
+        },
+        "groq": {
+            "name": "Groq",
+            "base_url": "https://api.groq.com/openai/v1",
+            "rate_limit": 120,
+            "cost_limit": 0.25,
+        },
+        "deepseek": {
+            "name": "DeepSeek",
+            "base_url": "https://api.deepseek.com",
+            "rate_limit": 120,
+            "cost_limit": 0.25,
+        },
+        "together": {
+            "name": "Together",
+            "base_url": "https://api.together.xyz/v1",
+            "rate_limit": 120,
+            "cost_limit": 0.25,
+        },
+        "fireworks": {
+            "name": "Fireworks",
+            "base_url": "https://api.fireworks.ai/inference/v1",
+            "rate_limit": 120,
+            "cost_limit": 0.25,
+        },
+        "friendli": {
+            "name": "Friendli",
+            "base_url": "https://api.friendli.ai/serverless/v1",
+            "rate_limit": 120,
+            "cost_limit": 0.25,
+        },
+        "novita": {
+            "name": "Novita",
+            "base_url": "https://api.novita.ai/openai",
+            "rate_limit": 120,
+            "cost_limit": 0.25,
+        },
+        "cerebras": {
+            "name": "Cerebras",
+            "base_url": "https://api.cerebras.ai/v1",
+            "rate_limit": 120,
+            "cost_limit": 0.25,
+        },
+        "deepinfra": {
+            "name": "DeepInfra",
+            "base_url": "https://api.deepinfra.com/v1/openai",
+            "rate_limit": 120,
+            "cost_limit": 0.25,
+        },
+        "nebius": {
+            "name": "Nebius",
+            "base_url": "https://api.tokenfactory.nebius.com/v1",
+            "rate_limit": 120,
+            "cost_limit": 0.25,
+        },
+        "hyperbolic": {
+            "name": "Hyperbolic",
+            "base_url": "https://api.hyperbolic.xyz/v1",
+            "rate_limit": 120,
+            "cost_limit": 0.25,
+        },
+        "sambanova": {
+            "name": "SambaNova",
+            "base_url": "https://api.sambanova.ai/v1",
+            "rate_limit": 120,
+            "cost_limit": 0.25,
+        },
+        "grok": {
+            "name": "xAI Grok",
+            "base_url": "https://api.x.ai/v1",
+            "rate_limit": 60,
+            "cost_limit": 0.50,
+        },
+        "mistral": {
+            "name": "Mistral",
+            "base_url": "https://api.mistral.ai/v1",
+            "rate_limit": 120,
+            "cost_limit": 0.50,
+        },
+        "openrouter": {
+            "name": "OpenRouter",
+            "base_url": "https://openrouter.ai/api/v1",
+            "rate_limit": 120,
+            "cost_limit": 0.25,
+        },
+        "ollama": {
+            "name": "Ollama",
+            "base_url": config.ollama_base_url or "http://localhost:11434",
+            "rate_limit": 1000,
+            "cost_limit": 0.0,
         },
         "stub": {
             "name": "Stub LLM",
@@ -252,6 +660,34 @@ def _register_models(
         # OpenAI models
         ("gpt-4o", "GPT-4o", "openai", 2.50, 10.0),
         ("gpt-4o-mini", "GPT-4o Mini", "openai", 0.15, 0.60),
+        ("gpt-4.1-mini", "GPT-4.1 Mini", "openai", 0.40, 1.60),
+        ("gpt-4.1-nano", "GPT-4.1 Nano", "openai", 0.10, 0.40),
+        # Google Gemini low-cost models
+        ("gemini-2.0-flash", "Gemini 2.0 Flash", "gemini", 0.10, 0.40),
+        ("gemini-2.0-flash-lite", "Gemini 2.0 Flash-Lite", "gemini", 0.075, 0.30),
+        ("gemini-1.5-flash", "Gemini 1.5 Flash", "gemini", 0.075, 0.30),
+        # OpenAI-compatible low-cost providers
+        ("meta-llama/llama-4-scout-17b-16e-instruct", "Llama 4 Scout 17B", "groq", 0.11, 0.34),
+        ("llama-3.1-8b-instant", "Llama 3.1 8B Instant", "groq", 0.05, 0.08),
+        ("openai/gpt-oss-20b", "GPT OSS 20B", "groq", 0.075, 0.30),
+        ("openai/gpt-oss-120b", "GPT OSS 120B", "groq", 0.15, 0.60),
+        ("deepseek-v4-flash", "DeepSeek V4 Flash", "deepseek", 0.14, 0.28),
+        ("deepseek-reasoner", "DeepSeek Reasoner", "deepseek", 0.14, 0.28),
+        ("LiquidAI/LFM2-24B-A2B", "LFM2 24B A2B", "together", 0.03, 0.12),
+        ("Qwen/Qwen3.5-9B", "Qwen3.5 9B", "together", 0.10, 0.15),
+        ("accounts/fireworks/models/gpt-oss-20b", "GPT OSS 20B via Fireworks", "fireworks", 0.07, 0.30),
+        ("accounts/fireworks/models/llama-v3p1-8b-instruct", "Llama 3.1 8B via Fireworks", "fireworks", 0.10, 0.10),
+        ("meta-llama-3.1-8b-instruct", "Llama 3.1 8B via Friendli", "friendli", 0.10, 0.10),
+        ("deepseek/deepseek-v4-flash", "DeepSeek V4 Flash via Novita", "novita", 0.14, 0.28),
+        ("llama3.1-8b", "Llama 3.1 8B via Cerebras", "cerebras", 0.10, 0.10),
+        ("meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo", "Llama 3.1 8B Turbo via DeepInfra", "deepinfra", 0.02, 0.03),
+        ("meta-llama/Meta-Llama-3.1-8B-Instruct", "Llama 3.1 8B via Nebius", "nebius", 0.02, 0.06),
+        ("Qwen/Qwen2.5-Coder-32B-Instruct", "Qwen2.5 Coder 32B via Hyperbolic", "hyperbolic", 0.20, 0.20),
+        ("Meta-Llama-3.3-70B-Instruct", "Llama 3.3 70B via SambaNova", "sambanova", 0.60, 1.20),
+        ("mistral-small-2506", "Mistral Small 2506", "mistral", 0.10, 0.30),
+        ("mistral-small-2603", "Mistral Small 2603", "mistral", 0.15, 0.60),
+        ("grok-3-mini", "Grok 3 Mini", "grok", 0.30, 0.50),
+        ("meta-llama/llama-4-scout", "Llama 4 Scout via OpenRouter", "openrouter", 0.0, 0.0),
     ]
 
     for model_id, name, provider_name, input_cost, output_cost in model_definitions:
@@ -277,5 +713,20 @@ def _register_models(
         try:
             engine.register(descriptor, adapter, provider_id=provider_id)
             result.registered_models.append(model_id)
-        except Exception:
-            pass  # Model may already be registered — skip silently
+        except ModelAlreadyRegisteredError:
+            result.skipped_model_registrations.append({
+                "model_id": model_id,
+                "provider": provider_name,
+                "error_code": "model_already_registered",
+                "reason": "model already registered",
+            })
+        except RuntimeCoreInvariantError:
+            raise
+        except Exception as exc:
+            result.model_registration_failures.append({
+                "model_id": model_id,
+                "provider": provider_name,
+                "error_code": "model_registration_failed",
+                "error_type": type(exc).__name__,
+                "reason": _classify_bootstrap_exception(exc),
+            })

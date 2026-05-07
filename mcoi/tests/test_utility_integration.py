@@ -212,6 +212,33 @@ class TestUtilityEnhancedSimulation:
         )
         assert verdict.approved is False
 
+    def test_simulation_request_description_is_bounded(self) -> None:
+        _reset_clock()
+        graph = _make_graph()
+        sim_engine = SimulationEngine(graph=graph, clock=_clock)
+        util_engine = UtilityEngine(clock=_clock)
+        policy = _make_policy()
+        captured: dict[str, str] = {}
+        original = sim_engine.full_simulation
+
+        def capture(request, *args, **kwargs):
+            captured["description"] = request.description
+            return original(request, *args, **kwargs)
+
+        sim_engine.full_simulation = capture
+        UtilityBridge.utility_enhanced_simulation(
+            simulation_engine=sim_engine,
+            utility_engine=util_engine,
+            options=(_make_option("opt-a"),),
+            context_type="goal",
+            context_id="goal-1",
+            policy=policy,
+        )
+
+        assert captured["description"] == "Utility-enhanced simulation"
+        assert "goal-1" not in captured["description"]
+        assert "goal" not in captured["description"]
+
 
 # ---------------------------------------------------------------------------
 # evaluate_resource_feasibility

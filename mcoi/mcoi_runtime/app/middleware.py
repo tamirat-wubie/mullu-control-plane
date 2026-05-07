@@ -1,4 +1,4 @@
-"""Phase 208A — Governance Guard Middleware.
+"""Phase 208A - Governance Guard Middleware.
 
 Purpose: FastAPI middleware that runs the governance guard chain
     on every governed request before endpoint logic executes.
@@ -13,6 +13,8 @@ Invariants:
 
 from __future__ import annotations
 
+import json
+import logging
 import time
 from typing import Any, Callable
 
@@ -20,18 +22,95 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import JSONResponse
 
-from mcoi_runtime.core.governance_guard import (
+from mcoi_runtime.contracts.temporal_runtime import TemporalActionRequest, TemporalRiskLevel
+from mcoi_runtime.governance.guards.content_safety import ContentSafetyChain, create_input_safety_guard
+from mcoi_runtime.governance.guards.chain import (
     GovernanceGuardChain,
-    GuardChainResult,
     create_api_key_guard,
     create_budget_guard,
+    create_jwt_guard,
+    create_rbac_guard,
     create_rate_limit_guard,
+    create_temporal_guard,
     create_tenant_guard,
 )
 
+_log = logging.getLogger(__name__)
 
 # Paths exempt from governance guards
 EXEMPT_PATHS = frozenset({"/health", "/ready", "/docs", "/openapi.json", "/redoc"})
+
+# Max body size to parse for content safety (1MB). Larger bodies skip content extraction.
+MAX_BODY_PARSE_SIZE = 1_048_576
+
+
+def _extract_content_safety_fields(body: bytes) -> dict[str, str]:
+    """Extract prompt/content fields for safety checks from a JSON body."""
+    if not body or len(body) > MAX_BODY_PARSE_SIZE:
+        return {}
+    try:
+        parsed = json.loads(body)
+    except (UnicodeDecodeError, json.JSONDecodeError):
+        return {}
+    if not isinstance(parsed, dict):
+        return {}
+
+    extracted: dict[str, str] = {}
+    prompt = parsed.get("prompt")
+    content = parsed.get("content")
+    if isinstance(prompt, str):
+        extracted["prompt"] = prompt
+    if isinstance(content, str):
+        extracted["content"] = content
+    return extracted
+
+
+def _extract_temporal_action_field(body: bytes) -> dict[str, Any]:
+    """Extract a governed temporal action contract from a JSON body."""
+    if not body or len(body) > MAX_BODY_PARSE_SIZE:
+        return {}
+    try:
+        parsed = json.loads(body)
+    except (UnicodeDecodeError, json.JSONDecodeError):
+        return {}
+    if not isinstance(parsed, dict) or "temporal_action" not in parsed:
+        return {}
+
+    action = parsed["temporal_action"]
+    if not isinstance(action, dict):
+        return {"temporal_action": action}
+
+    fields = {
+        "action_id",
+        "tenant_id",
+        "actor_id",
+        "action_type",
+        "risk",
+        "requested_at",
+        "execute_at",
+        "not_before",
+        "expires_at",
+        "approval_expires_at",
+        "evidence_fresh_until",
+        "retry_after",
+        "max_attempts",
+        "attempt_count",
+        "metadata",
+    }
+    if any(key not in fields for key in action):
+        return {"temporal_action": action}
+
+    candidate = dict(action)
+    risk = candidate.get("risk")
+    if isinstance(risk, str):
+        try:
+            candidate["risk"] = TemporalRiskLevel(risk)
+        except ValueError:
+            return {"temporal_action": action}
+    try:
+        return {"temporal_action": TemporalActionRequest(**candidate)}
+    except (TypeError, ValueError):
+        return {"temporal_action": action}
 
 
 class GovernanceMiddleware(BaseHTTPMiddleware):
@@ -44,11 +123,19 @@ class GovernanceMiddleware(BaseHTTPMiddleware):
         guard_chain: GovernanceGuardChain,
         metrics_fn: Callable[[str, int], None] | None = None,
         on_reject: Callable[[dict[str, Any]], None] | None = None,
+        on_allow: Callable[[dict[str, Any]], None] | None = None,
+        proof_bridge: Any | None = None,
+        decision_log: Any | None = None,
+        request_analytics: Any | None = None,
     ) -> None:
         super().__init__(app)
         self._chain = guard_chain
         self._metrics_fn = metrics_fn
         self._on_reject = on_reject
+        self._on_allow = on_allow
+        self._proof_bridge = proof_bridge
+        self._decision_log = decision_log
+        self._request_analytics = request_analytics
 
     async def dispatch(self, request: Request, call_next: Any) -> Any:
         path = request.url.path
@@ -57,19 +144,47 @@ class GovernanceMiddleware(BaseHTTPMiddleware):
         if path in EXEMPT_PATHS or not path.startswith("/api/"):
             return await call_next(request)
 
-        # Build guard context from request
-        tenant_id = ""
-        # Try to extract tenant_id from query params or headers
+        # Build guard context from request.
+        #
+        # v4.35.0 (audit F6): track whether tenant_id was *explicitly*
+        # supplied by the caller (header or query) versus filled from a
+        # default. Downstream JWT / API-key guards use this flag to
+        # decide whether a header/JWT mismatch is a spoofing attempt
+        # (explicit) or a benign default (implicit). Pre-v4.35 the
+        # default fallback "system" was indistinguishable from a real
+        # supplied value, so the spoof check was forced behind a
+        # ``require_auth`` qualifier — leaving a defense gap when
+        # require_auth=False.
+        explicit_tenant = False
         tenant_id = request.query_params.get("tenant_id", "")
-        if not tenant_id:
-            tenant_id = request.headers.get("x-tenant-id", "system")
+        if tenant_id:
+            explicit_tenant = True
+        else:
+            header_tenant = request.headers.get("x-tenant-id", "")
+            if header_tenant:
+                tenant_id = header_tenant
+                explicit_tenant = True
+            else:
+                tenant_id = "system"
 
-        context = {
+        context: dict[str, Any] = {
             "tenant_id": tenant_id,
+            "tenant_id_explicit": explicit_tenant,
             "endpoint": path,
             "method": request.method,
             "authorization": request.headers.get("authorization", ""),
         }
+
+        # Extract prompt/content from request body for content safety guard.
+        # Starlette caches body after first read, so downstream handlers can re-read.
+        content_type = request.headers.get("content-type", "")
+        if "json" in content_type and request.method in ("POST", "PUT", "PATCH"):
+            try:
+                body = await request.body()
+                context.update(_extract_content_safety_fields(body))
+                context.update(_extract_temporal_action_field(body))
+            except (RuntimeError, UnicodeDecodeError, json.JSONDecodeError):
+                pass  # Non-JSON or malformed body - skip content extraction
 
         # Evaluate guard chain
         start = time.monotonic()
@@ -82,6 +197,64 @@ class GovernanceMiddleware(BaseHTTPMiddleware):
                 self._metrics_fn("requests_governed", 1)
             else:
                 self._metrics_fn("requests_rejected", 1)
+
+        # Record to governance decision log
+        if self._decision_log is not None:
+            try:
+                from mcoi_runtime.governance.audit.decision_log import GuardDecisionDetail
+                guards = [
+                    GuardDecisionDetail(
+                        guard_name=r.guard_name,
+                        allowed=r.allowed,
+                        reason=r.reason,
+                        detail=r.detail or {},
+                    )
+                    for r in result.results
+                ]
+                self._decision_log.record(
+                    tenant_id=tenant_id,
+                    identity_id=context.get("authenticated_subject", ""),
+                    endpoint=path,
+                    method=request.method,
+                    allowed=result.allowed,
+                    blocking_guard=result.blocking_guard,
+                    blocking_reason=result.reason,
+                    guards=guards,
+                )
+            except Exception as exc:
+                if self._metrics_fn:
+                    self._metrics_fn("decision_log_record_failures", 1)
+                _log.warning(
+                    "governance decision log record failed (%s)",
+                    type(exc).__name__,
+                )
+
+        # Certify governance decision via proof bridge
+        if self._proof_bridge is not None:
+            try:
+                guard_results = [
+                    {
+                        "guard_name": r.guard_name,
+                        "allowed": r.allowed,
+                        "reason": r.reason,
+                        "detail": r.detail or {},
+                    }
+                    for r in result.results
+                ]
+                self._proof_bridge.certify_governance_decision(
+                    tenant_id=context.get("tenant_id", "system"),
+                    endpoint=path,
+                    guard_results=guard_results,
+                    decision="allowed" if result.allowed else "denied",
+                    reason=result.reason,
+                )
+            except Exception as exc:
+                if self._metrics_fn:
+                    self._metrics_fn("proof_bridge_certification_failures", 1)
+                _log.warning(
+                    "proof bridge certification failed (%s)",
+                    type(exc).__name__,
+                )
 
         if not result.allowed:
             if self._on_reject:
@@ -108,8 +281,36 @@ class GovernanceMiddleware(BaseHTTPMiddleware):
                 },
             )
 
-        # Guards passed — proceed to endpoint
+        # Guards passed - record allowed request for audit completeness
+        if self._on_allow:
+            self._on_allow({
+                "path": path,
+                "tenant_id": context.get("tenant_id", ""),
+                "method": request.method,
+                "latency_ms": round(latency_ms, 2),
+            })
+
+        # Guards passed - proceed to endpoint
         response = await call_next(request)
+
+        # Record request analytics
+        if self._request_analytics is not None:
+            total_latency = (time.monotonic() - start) * 1000
+            status_code = getattr(response, "status_code", 200)
+            try:
+                self._request_analytics.record(
+                    path, latency_ms=total_latency,
+                    success=200 <= status_code < 400,
+                    status_code=status_code,
+                )
+            except Exception as exc:
+                if self._metrics_fn:
+                    self._metrics_fn("request_analytics_record_failures", 1)
+                _log.warning(
+                    "request analytics record failed (%s)",
+                    type(exc).__name__,
+                )
+
         return response
 
 
@@ -118,12 +319,39 @@ def build_guard_chain(
     rate_limiter: Any,
     budget_mgr: Any,
     api_key_mgr: Any | None = None,
+    jwt_authenticator: Any | None = None,
+    tenant_gating_registry: Any | None = None,
+    access_runtime: Any | None = None,
+    content_safety_chain: ContentSafetyChain | None = None,
+    temporal_runtime: Any | None = None,
 ) -> GovernanceGuardChain:
-    """Build the standard governance guard chain."""
+    """Build the standard governance guard chain.
+
+    Guard order:
+    1. API Key / JWT auth (who are you?)
+    2. Tenant validation (is tenant_id valid?)
+    3. Tenant gating (is tenant active?)
+    4. RBAC (does this identity have permission?)
+    5. Lambda_input_safety (is the prompt/content safe?)
+    6. Temporal policy (is this action valid now?)
+    7. Rate limit (within limits?)
+    8. Budget (can you afford this?)
+    """
     chain = GovernanceGuardChain()
     if api_key_mgr is not None:
         chain.add(create_api_key_guard(api_key_mgr))
+    if jwt_authenticator is not None:
+        chain.add(create_jwt_guard(jwt_authenticator))
     chain.add(create_tenant_guard())
+    if tenant_gating_registry is not None:
+        from mcoi_runtime.governance.guards.tenant_gating import create_tenant_gating_guard
+        chain.add(create_tenant_gating_guard(tenant_gating_registry))
+    if access_runtime is not None:
+        chain.add(create_rbac_guard(access_runtime))
+    if content_safety_chain is not None:
+        chain.add(create_input_safety_guard(content_safety_chain))
+    if temporal_runtime is not None:
+        chain.add(create_temporal_guard(temporal_runtime))
     chain.add(create_rate_limit_guard(rate_limiter))
     chain.add(create_budget_guard(budget_mgr))
     return chain

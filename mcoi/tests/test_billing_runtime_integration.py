@@ -254,6 +254,20 @@ class TestBillingFromCampaignCompletion:
         assert isinstance(result["charge_id"], str)
         assert len(result["charge_id"]) > 0
 
+    def test_charge_description_redacts_campaign_id(
+        self,
+        integration: BillingRuntimeIntegration,
+        billing_engine: BillingRuntimeEngine,
+    ) -> None:
+        _create_account(integration)
+        integration.billing_from_campaign_completion(
+            "inv-secret", "acct-1", "camp-secret", 100.0
+        )
+        charges = billing_engine.charges_for_invoice("inv-secret")
+        assert len(charges) == 1
+        assert charges[0].description == "Campaign completion"
+        assert "camp-secret" not in charges[0].description
+
 
 # ---------------------------------------------------------------------------
 # billing_from_reporting_requirement
@@ -309,6 +323,20 @@ class TestBillingFromReportingRequirement:
         assert isinstance(result["charge_id"], str)
         assert len(result["charge_id"]) > 0
 
+    def test_charge_description_redacts_requirement_id(
+        self,
+        integration: BillingRuntimeIntegration,
+        billing_engine: BillingRuntimeEngine,
+    ) -> None:
+        _create_account(integration)
+        integration.billing_from_reporting_requirement(
+            "inv-secret-2", "acct-1", "req-secret", 100.0
+        )
+        charges = billing_engine.charges_for_invoice("inv-secret-2")
+        assert len(charges) == 1
+        assert charges[0].description == "Reporting requirement"
+        assert "req-secret" not in charges[0].description
+
 
 # ---------------------------------------------------------------------------
 # Memory mesh attachment
@@ -339,7 +367,8 @@ class TestAttachBillingToMemoryMesh:
         self, integration: BillingRuntimeIntegration
     ) -> None:
         mem = integration.attach_billing_to_memory_mesh("my-scope")
-        assert "my-scope" in mem.title
+        assert mem.title == "Billing state"
+        assert "my-scope" not in mem.title
 
     def test_memory_id_is_string(self, integration: BillingRuntimeIntegration) -> None:
         mem = integration.attach_billing_to_memory_mesh("scope-1")

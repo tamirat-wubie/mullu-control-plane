@@ -82,6 +82,10 @@ class WebhookDelivery:
         }
 
 
+def _bounded_delivery_error(exc: Exception) -> str:
+    return f"delivery error ({type(exc).__name__})"
+
+
 class WebhookRetryEngine:
     """Manages webhook delivery with retry and dead-letter queue."""
 
@@ -105,8 +109,8 @@ class WebhookRetryEngine:
             start = time.monotonic()
             try:
                 success, status_code, error = send_fn(delivery.webhook_url, delivery.payload)
-            except Exception as e:
-                success, status_code, error = False, None, str(e)
+            except Exception as exc:
+                success, status_code, error = False, None, _bounded_delivery_error(exc)
             duration_ms = (time.monotonic() - start) * 1000
 
             record = DeliveryAttempt(

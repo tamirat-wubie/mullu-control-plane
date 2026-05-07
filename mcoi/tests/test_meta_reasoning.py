@@ -89,6 +89,9 @@ def test_degraded_mode_triggers_on_low_confidence() -> None:
     engine.update_confidence(_confidence("cap-1", success=0.3, verify=0.3, error=0.5))
     assert engine.is_degraded("cap-1") is True
     assert len(engine.list_degraded()) == 1
+    degraded = engine.list_degraded()[0]
+    assert degraded.reason == "confidence below threshold"
+    assert "0." not in degraded.reason
 
 
 def test_degraded_mode_exits_on_recovery() -> None:
@@ -131,8 +134,9 @@ def test_duplicate_uncertainty_rejected() -> None:
         description="d", affected_ids=(), created_at=_CLOCK,
     )
     engine.report_uncertainty(report)
-    with pytest.raises(RuntimeCoreInvariantError, match="already exists"):
+    with pytest.raises(RuntimeCoreInvariantError, match="uncertainty report already exists") as exc_info:
         engine.report_uncertainty(report)
+    assert "u-1" not in str(exc_info.value)
 
 
 # --- Escalation tests ---
@@ -308,7 +312,7 @@ class TestSimulationConfidence:
             _make_verdict(confidence=0.3),
             min_confidence=0.6,
         )
-        assert any("below threshold" in f for f in rel.uncertainty_factors)
+        assert rel.uncertainty_factors == ("low simulation confidence",)
 
 
 # ---------------------------------------------------------------------------
@@ -331,7 +335,7 @@ class TestUtilityAmbiguity:
         engine = _make_engine()
         rel = engine.assess_utility_ambiguity(_make_comparison(spread=0.0))
         assert rel.decision_context == "utility"
-        assert any("spread" in f for f in rel.uncertainty_factors)
+        assert rel.uncertainty_factors == ("utility ambiguity detected",)
 
 
 # ---------------------------------------------------------------------------
@@ -360,7 +364,7 @@ class TestProviderVolatility:
         )
         rel = engine.assess_provider_volatility(outcomes, ("prov-a",))
         assert rel.confidence_envelope.point_estimate < 0.7
-        assert any("prov-a" in f for f in rel.uncertainty_factors)
+        assert rel.uncertainty_factors == ("provider volatility detected",)
 
     def test_no_outcomes_neutral(self):
         engine = _make_engine()
@@ -375,7 +379,7 @@ class TestProviderVolatility:
             _make_routing_outcome("prov-b", False),
         )
         rel = engine.assess_provider_volatility(outcomes, ("prov-a", "prov-b"))
-        assert any("prov-b" in f for f in rel.uncertainty_factors)
+        assert rel.uncertainty_factors == ("provider volatility detected",)
 
 
 # ---------------------------------------------------------------------------
@@ -395,13 +399,14 @@ class TestLearningReliability:
         adjs = tuple(_make_adjustment("risk", 0.5) for _ in range(10))
         rel = engine.assess_learning_reliability(adjs, max_magnitude=0.1)
         assert rel.recommendation != "proceed"
-        assert any("exceeds" in f for f in rel.uncertainty_factors)
+        assert "learning adjustment exceeds limit" in rel.uncertainty_factors
+        assert "learning adjustment instability detected" in rel.uncertainty_factors
 
     def test_few_samples_uncertain(self):
         engine = _make_engine()
         adjs = (_make_adjustment("risk", 0.01),)
         rel = engine.assess_learning_reliability(adjs, min_sample_count=5)
-        assert any("only 1" in f for f in rel.uncertainty_factors)
+        assert "insufficient learning history" in rel.uncertainty_factors
 
     def test_no_adjustments_neutral(self):
         engine = _make_engine()
@@ -429,6 +434,7 @@ class TestReplanRecommendations:
         assert len(recs) >= 1
         assert recs[0].reason == ReplanReason.CONFIDENCE_TOO_LOW
         assert recs[0].affected_entity_id == "goal-1"
+        assert recs[0].description == "replan threshold breached"
 
     def test_replan_maps_context_to_reason(self):
         engine = _make_engine()

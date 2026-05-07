@@ -199,12 +199,14 @@ class TestObligationClosure:
         assert c.final_state == ObligationState.CANCELLED
 
     def test_invalid_final_state_rejected(self) -> None:
-        with pytest.raises(ValueError, match="final_state"):
+        with pytest.raises(ValueError) as exc_info:
             ObligationClosure(
                 closure_id="cls-1", obligation_id="obl-1",
                 final_state=ObligationState.ACTIVE,
                 reason="test", closed_by="x", closed_at=_CLOCK,
             )
+        assert str(exc_info.value) == "final_state must be a terminal closure state"
+        assert "active" not in str(exc_info.value).lower()
 
     def test_pending_state_rejected(self) -> None:
         with pytest.raises(ValueError, match="final_state"):

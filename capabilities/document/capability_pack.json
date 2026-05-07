@@ -1,0 +1,392 @@
+{
+  "capabilities": [
+    {
+      "capability_id": "document.extract_text",
+      "domain": "document",
+      "version": "0.1.0",
+      "input_schema_ref": "schemas/document/extract_text.input.schema.json",
+      "output_schema_ref": "schemas/document/extract_text.output.schema.json",
+      "effect_model": {
+        "expected_effects": ["document_text_extracted"],
+        "forbidden_effects": ["document_sent_external", "document_signed", "source_document_modified"],
+        "reconciliation_required": true
+      },
+      "evidence_model": {
+        "required_evidence": ["document_id", "text_hash", "parser_id"],
+        "terminal_certificate_required": true
+      },
+      "authority_policy": {
+        "required_roles": ["document_operator"],
+        "approval_chain": [],
+        "separation_of_duty": false
+      },
+      "isolation_profile": {
+        "execution_plane": "document_worker",
+        "network_allowlist": [],
+        "secret_scope": "none"
+      },
+      "recovery_plan": {
+        "rollback_capability": "",
+        "compensation_capability": "",
+        "review_required_on_failure": true
+      },
+      "cost_model": {
+        "budget_class": "standard",
+        "max_estimated_cost": 0.02
+      },
+      "obligation_model": {
+        "owner_team": "platform-ops",
+        "failure_due_seconds": 1800,
+        "escalation_route": "support@mullusi.com"
+      },
+      "certification_status": "certified",
+      "metadata": {
+        "display_name": "Extract document text",
+        "risk_tier": "low"
+      },
+      "extensions": {
+        "governed_record": {
+          "read_only": true,
+          "world_mutating": false,
+          "requires_approval": false,
+          "requires_sandbox": true,
+          "allowed_roles": ["document_operator"],
+          "allowed_tools": ["document_worker.extract_text"]
+        }
+      }
+    },
+    {
+      "capability_id": "document.extract_tables",
+      "domain": "document",
+      "version": "0.1.0",
+      "input_schema_ref": "schemas/document/extract_tables.input.schema.json",
+      "output_schema_ref": "schemas/document/extract_tables.output.schema.json",
+      "effect_model": {
+        "expected_effects": ["document_tables_extracted"],
+        "forbidden_effects": ["document_sent_external", "document_signed", "source_document_modified"],
+        "reconciliation_required": true
+      },
+      "evidence_model": {
+        "required_evidence": ["document_id", "table_count", "parser_id"],
+        "terminal_certificate_required": true
+      },
+      "authority_policy": {
+        "required_roles": ["document_operator"],
+        "approval_chain": [],
+        "separation_of_duty": false
+      },
+      "isolation_profile": {
+        "execution_plane": "document_worker",
+        "network_allowlist": [],
+        "secret_scope": "none"
+      },
+      "recovery_plan": {
+        "rollback_capability": "",
+        "compensation_capability": "",
+        "review_required_on_failure": true
+      },
+      "cost_model": {
+        "budget_class": "standard",
+        "max_estimated_cost": 0.02
+      },
+      "obligation_model": {
+        "owner_team": "platform-ops",
+        "failure_due_seconds": 1800,
+        "escalation_route": "support@mullusi.com"
+      },
+      "certification_status": "certified",
+      "metadata": {
+        "display_name": "Extract document tables",
+        "risk_tier": "low"
+      },
+      "extensions": {
+        "governed_record": {
+          "read_only": true,
+          "world_mutating": false,
+          "requires_approval": false,
+          "requires_sandbox": true,
+          "allowed_roles": ["document_operator"],
+          "allowed_tools": ["document_worker.extract_tables"]
+        }
+      }
+    },
+    {
+      "capability_id": "document.summarize",
+      "domain": "document",
+      "version": "0.1.0",
+      "input_schema_ref": "schemas/document/summarize.input.schema.json",
+      "output_schema_ref": "schemas/document/summarize.output.schema.json",
+      "effect_model": {
+        "expected_effects": ["document_summary_generated"],
+        "forbidden_effects": ["document_sent_external", "document_signed", "source_document_modified"],
+        "reconciliation_required": true
+      },
+      "evidence_model": {
+        "required_evidence": ["document_id", "summary_hash", "parser_id"],
+        "terminal_certificate_required": true
+      },
+      "authority_policy": {
+        "required_roles": ["document_operator"],
+        "approval_chain": [],
+        "separation_of_duty": false
+      },
+      "isolation_profile": {
+        "execution_plane": "document_worker",
+        "network_allowlist": [],
+        "secret_scope": "none"
+      },
+      "recovery_plan": {
+        "rollback_capability": "",
+        "compensation_capability": "",
+        "review_required_on_failure": true
+      },
+      "cost_model": {
+        "budget_class": "standard",
+        "max_estimated_cost": 0.03
+      },
+      "obligation_model": {
+        "owner_team": "platform-ops",
+        "failure_due_seconds": 1800,
+        "escalation_route": "support@mullusi.com"
+      },
+      "certification_status": "certified",
+      "metadata": {
+        "display_name": "Summarize document",
+        "risk_tier": "low"
+      },
+      "extensions": {
+        "governed_record": {
+          "read_only": true,
+          "world_mutating": false,
+          "requires_approval": false,
+          "requires_sandbox": true,
+          "allowed_roles": ["document_operator"],
+          "allowed_tools": ["document_worker.summarize"]
+        }
+      }
+    },
+    {
+      "capability_id": "document.generate_docx",
+      "domain": "document",
+      "version": "0.1.0",
+      "input_schema_ref": "schemas/document/generate_docx.input.schema.json",
+      "output_schema_ref": "schemas/document/generate_docx.output.schema.json",
+      "effect_model": {
+        "expected_effects": ["docx_artifact_generated"],
+        "forbidden_effects": ["document_sent_external", "document_signed", "source_document_modified"],
+        "reconciliation_required": true
+      },
+      "evidence_model": {
+        "required_evidence": ["artifact_ref", "artifact_hash"],
+        "terminal_certificate_required": true
+      },
+      "authority_policy": {
+        "required_roles": ["document_operator"],
+        "approval_chain": [],
+        "separation_of_duty": false
+      },
+      "isolation_profile": {
+        "execution_plane": "document_worker",
+        "network_allowlist": [],
+        "secret_scope": "none"
+      },
+      "recovery_plan": {
+        "rollback_capability": "",
+        "compensation_capability": "document.generate_docx",
+        "review_required_on_failure": true
+      },
+      "cost_model": {
+        "budget_class": "standard",
+        "max_estimated_cost": 0.05
+      },
+      "obligation_model": {
+        "owner_team": "platform-ops",
+        "failure_due_seconds": 1800,
+        "escalation_route": "support@mullusi.com"
+      },
+      "certification_status": "certified",
+      "metadata": {
+        "display_name": "Generate DOCX artifact",
+        "risk_tier": "medium"
+      },
+      "extensions": {
+        "governed_record": {
+          "read_only": false,
+          "world_mutating": true,
+          "requires_approval": false,
+          "requires_sandbox": true,
+          "allowed_roles": ["document_operator"],
+          "allowed_tools": ["document_worker.generate_docx"],
+          "rollback_or_compensation_required": true
+        }
+      }
+    },
+    {
+      "capability_id": "document.generate_pdf",
+      "domain": "document",
+      "version": "0.1.0",
+      "input_schema_ref": "schemas/document/generate_pdf.input.schema.json",
+      "output_schema_ref": "schemas/document/generate_pdf.output.schema.json",
+      "effect_model": {
+        "expected_effects": ["pdf_artifact_generated"],
+        "forbidden_effects": ["document_sent_external", "document_signed", "source_document_modified"],
+        "reconciliation_required": true
+      },
+      "evidence_model": {
+        "required_evidence": ["artifact_ref", "artifact_hash"],
+        "terminal_certificate_required": true
+      },
+      "authority_policy": {
+        "required_roles": ["document_operator"],
+        "approval_chain": [],
+        "separation_of_duty": false
+      },
+      "isolation_profile": {
+        "execution_plane": "document_worker",
+        "network_allowlist": [],
+        "secret_scope": "none"
+      },
+      "recovery_plan": {
+        "rollback_capability": "",
+        "compensation_capability": "document.generate_pdf",
+        "review_required_on_failure": true
+      },
+      "cost_model": {
+        "budget_class": "standard",
+        "max_estimated_cost": 0.05
+      },
+      "obligation_model": {
+        "owner_team": "platform-ops",
+        "failure_due_seconds": 1800,
+        "escalation_route": "support@mullusi.com"
+      },
+      "certification_status": "certified",
+      "metadata": {
+        "display_name": "Generate PDF artifact",
+        "risk_tier": "medium"
+      },
+      "extensions": {
+        "governed_record": {
+          "read_only": false,
+          "world_mutating": true,
+          "requires_approval": false,
+          "requires_sandbox": true,
+          "allowed_roles": ["document_operator"],
+          "allowed_tools": ["document_worker.generate_pdf"],
+          "rollback_or_compensation_required": true
+        }
+      }
+    },
+    {
+      "capability_id": "spreadsheet.analyze",
+      "domain": "document",
+      "version": "0.1.0",
+      "input_schema_ref": "schemas/spreadsheet/analyze.input.schema.json",
+      "output_schema_ref": "schemas/spreadsheet/analyze.output.schema.json",
+      "effect_model": {
+        "expected_effects": ["spreadsheet_analysis_generated"],
+        "forbidden_effects": ["document_sent_external", "spreadsheet_modified", "source_document_modified"],
+        "reconciliation_required": true
+      },
+      "evidence_model": {
+        "required_evidence": ["row_count", "column_count", "analysis_hash"],
+        "terminal_certificate_required": true
+      },
+      "authority_policy": {
+        "required_roles": ["document_operator"],
+        "approval_chain": [],
+        "separation_of_duty": false
+      },
+      "isolation_profile": {
+        "execution_plane": "document_worker",
+        "network_allowlist": [],
+        "secret_scope": "none"
+      },
+      "recovery_plan": {
+        "rollback_capability": "",
+        "compensation_capability": "",
+        "review_required_on_failure": true
+      },
+      "cost_model": {
+        "budget_class": "standard",
+        "max_estimated_cost": 0.03
+      },
+      "obligation_model": {
+        "owner_team": "platform-ops",
+        "failure_due_seconds": 1800,
+        "escalation_route": "support@mullusi.com"
+      },
+      "certification_status": "certified",
+      "metadata": {
+        "display_name": "Analyze spreadsheet",
+        "risk_tier": "low"
+      },
+      "extensions": {
+        "governed_record": {
+          "read_only": true,
+          "world_mutating": false,
+          "requires_approval": false,
+          "requires_sandbox": true,
+          "allowed_roles": ["document_operator"],
+          "allowed_tools": ["document_worker.spreadsheet_analyze"]
+        }
+      }
+    },
+    {
+      "capability_id": "spreadsheet.generate",
+      "domain": "document",
+      "version": "0.1.0",
+      "input_schema_ref": "schemas/spreadsheet/generate.input.schema.json",
+      "output_schema_ref": "schemas/spreadsheet/generate.output.schema.json",
+      "effect_model": {
+        "expected_effects": ["spreadsheet_artifact_generated"],
+        "forbidden_effects": ["document_sent_external", "document_signed", "source_document_modified"],
+        "reconciliation_required": true
+      },
+      "evidence_model": {
+        "required_evidence": ["artifact_ref", "artifact_hash"],
+        "terminal_certificate_required": true
+      },
+      "authority_policy": {
+        "required_roles": ["document_operator"],
+        "approval_chain": [],
+        "separation_of_duty": false
+      },
+      "isolation_profile": {
+        "execution_plane": "document_worker",
+        "network_allowlist": [],
+        "secret_scope": "none"
+      },
+      "recovery_plan": {
+        "rollback_capability": "",
+        "compensation_capability": "spreadsheet.generate",
+        "review_required_on_failure": true
+      },
+      "cost_model": {
+        "budget_class": "standard",
+        "max_estimated_cost": 0.05
+      },
+      "obligation_model": {
+        "owner_team": "platform-ops",
+        "failure_due_seconds": 1800,
+        "escalation_route": "support@mullusi.com"
+      },
+      "certification_status": "certified",
+      "metadata": {
+        "display_name": "Generate spreadsheet artifact",
+        "risk_tier": "medium"
+      },
+      "extensions": {
+        "governed_record": {
+          "read_only": false,
+          "world_mutating": true,
+          "requires_approval": false,
+          "requires_sandbox": true,
+          "allowed_roles": ["document_operator"],
+          "allowed_tools": ["document_worker.spreadsheet_generate"],
+          "rollback_or_compensation_required": true
+        }
+      }
+    }
+  ]
+}

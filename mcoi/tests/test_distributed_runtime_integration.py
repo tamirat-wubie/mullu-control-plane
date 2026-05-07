@@ -291,7 +291,9 @@ class TestMemoryMeshAttachment:
     def test_memory_record_title(self, integration):
         di, _, _, _ = integration
         mr = di.attach_distributed_state_to_memory_mesh("scope-1")
-        assert "scope-1" in mr.title
+        assert mr.title == "Distributed runtime state"
+        assert "scope-1" not in mr.title
+        assert mr.scope_ref_id == "scope-1"
 
     def test_memory_record_content_keys(self, integration):
         di, _, _, _ = integration

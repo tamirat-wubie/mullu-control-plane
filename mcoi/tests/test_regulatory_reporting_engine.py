@@ -586,7 +586,7 @@ class TestSubmitReport:
         engine, _ = _make_engine()
         _seed_requirement(engine)
         _seed_window(engine)
-        with pytest.raises(RuntimeCoreInvariantError, match="Unknown"):
+        with pytest.raises(RuntimeCoreInvariantError, match="^Unknown package_id$"):
             _seed_submission(engine, package_id="no-pkg")
 
     def test_increments_count(self) -> None:
@@ -2069,3 +2069,29 @@ class TestGoldenScenario6SnapshotCapturesFullState:
 
         # Event count is positive
         assert es.event_count > 0
+
+
+class TestBoundedContracts:
+    def test_duplicate_requirement_error_is_bounded(self) -> None:
+        engine, _ = _make_engine()
+        engine.register_requirement("requirement-secret", "tenant-secret", "Sensitive")
+
+        with pytest.raises(RuntimeCoreInvariantError) as excinfo:
+            engine.register_requirement("requirement-secret", "tenant-secret", "Sensitive")
+
+        message = str(excinfo.value)
+        assert message == "Duplicate requirement_id"
+        assert "requirement-secret" not in message
+        assert "tenant-secret" not in message
+
+    def test_reporting_violation_reason_is_bounded(self) -> None:
+        engine, _ = _make_engine()
+        _seed_requirement(engine, requirement_id="req-secret", tenant_id="tenant-secret")
+        _seed_window(engine, window_id="window-secret", requirement_id="req-secret", opens_at=_PAST_OPEN, closes_at=_PAST_CLOSE)
+
+        violations = engine.detect_reporting_violations()
+        assert len(violations) == 1
+        assert violations[0].reason == "Filing window closed without submission"
+        assert "window-secret" not in violations[0].reason
+        assert _PAST_CLOSE not in violations[0].reason
+        assert "tenant-secret" not in violations[0].reason

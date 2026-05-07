@@ -134,7 +134,7 @@ class IdentitySecurityEngine:
         privilege_level: PrivilegeLevel = PrivilegeLevel.STANDARD,
     ) -> IdentityDescriptor:
         if identity_id in self._identities:
-            raise RuntimeCoreInvariantError(f"duplicate identity_id: {identity_id}")
+            raise RuntimeCoreInvariantError("duplicate identity_id")
         now = _now_iso()
         identity = IdentityDescriptor(
             identity_id=identity_id, tenant_id=tenant_id,
@@ -148,7 +148,7 @@ class IdentitySecurityEngine:
 
     def get_identity(self, identity_id: str) -> IdentityDescriptor:
         if identity_id not in self._identities:
-            raise RuntimeCoreInvariantError(f"unknown identity_id: {identity_id}")
+            raise RuntimeCoreInvariantError("unknown identity_id")
         return self._identities[identity_id]
 
     def identities_for_tenant(self, tenant_id: str) -> tuple[IdentityDescriptor, ...]:
@@ -165,7 +165,7 @@ class IdentitySecurityEngine:
         expires_at: str = "",
     ) -> CredentialRecord:
         if credential_id in self._credentials:
-            raise RuntimeCoreInvariantError(f"duplicate credential_id: {credential_id}")
+            raise RuntimeCoreInvariantError("duplicate credential_id")
         now = _now_iso()
         if not expires_at:
             expires_at = now
@@ -180,10 +180,10 @@ class IdentitySecurityEngine:
 
     def rotate_credential(self, credential_id: str, new_credential_id: str) -> CredentialRecord:
         if credential_id not in self._credentials:
-            raise RuntimeCoreInvariantError(f"unknown credential_id: {credential_id}")
+            raise RuntimeCoreInvariantError("unknown credential_id")
         old = self._credentials[credential_id]
         if old.status in _CREDENTIAL_TERMINAL:
-            raise RuntimeCoreInvariantError(f"credential {credential_id} is in terminal state {old.status.value}")
+            raise RuntimeCoreInvariantError("credential is in terminal state")
         now = _now_iso()
         # Mark old as ROTATED
         rotated = CredentialRecord(
@@ -195,7 +195,7 @@ class IdentitySecurityEngine:
         self._credentials[credential_id] = rotated
         # Create new credential linked to same identity
         if new_credential_id in self._credentials:
-            raise RuntimeCoreInvariantError(f"duplicate credential_id: {new_credential_id}")
+            raise RuntimeCoreInvariantError("duplicate credential_id")
         new_cred = CredentialRecord(
             credential_id=new_credential_id, tenant_id=old.tenant_id,
             identity_ref=old.identity_ref, status=CredentialStatus.ACTIVE,
@@ -210,10 +210,10 @@ class IdentitySecurityEngine:
 
     def revoke_credential(self, credential_id: str) -> CredentialRecord:
         if credential_id not in self._credentials:
-            raise RuntimeCoreInvariantError(f"unknown credential_id: {credential_id}")
+            raise RuntimeCoreInvariantError("unknown credential_id")
         old = self._credentials[credential_id]
         if old.status in _CREDENTIAL_TERMINAL:
-            raise RuntimeCoreInvariantError(f"credential {credential_id} is in terminal state {old.status.value}")
+            raise RuntimeCoreInvariantError("credential is in terminal state")
         now = _now_iso()
         updated = CredentialRecord(
             credential_id=old.credential_id, tenant_id=old.tenant_id,
@@ -227,10 +227,10 @@ class IdentitySecurityEngine:
 
     def expire_credential(self, credential_id: str) -> CredentialRecord:
         if credential_id not in self._credentials:
-            raise RuntimeCoreInvariantError(f"unknown credential_id: {credential_id}")
+            raise RuntimeCoreInvariantError("unknown credential_id")
         old = self._credentials[credential_id]
         if old.status in _CREDENTIAL_TERMINAL:
-            raise RuntimeCoreInvariantError(f"credential {credential_id} is in terminal state {old.status.value}")
+            raise RuntimeCoreInvariantError("credential is in terminal state")
         now = _now_iso()
         updated = CredentialRecord(
             credential_id=old.credential_id, tenant_id=old.tenant_id,
@@ -254,10 +254,10 @@ class IdentitySecurityEngine:
         depth: int = 0,
     ) -> DelegationChain:
         if chain_id in self._chains:
-            raise RuntimeCoreInvariantError(f"duplicate chain_id: {chain_id}")
+            raise RuntimeCoreInvariantError("duplicate chain_id")
         # Validate delegator exists
         if delegator_ref not in self._identities:
-            raise RuntimeCoreInvariantError(f"unknown delegator identity: {delegator_ref}")
+            raise RuntimeCoreInvariantError("unknown delegator identity")
         now = _now_iso()
         chain = DelegationChain(
             chain_id=chain_id, tenant_id=tenant_id,
@@ -270,7 +270,7 @@ class IdentitySecurityEngine:
 
     def get_chain(self, chain_id: str) -> DelegationChain:
         if chain_id not in self._chains:
-            raise RuntimeCoreInvariantError(f"unknown chain_id: {chain_id}")
+            raise RuntimeCoreInvariantError("unknown chain_id")
         return self._chains[chain_id]
 
     # -- Privilege Elevation --
@@ -285,7 +285,7 @@ class IdentitySecurityEngine:
         approved_by: str = "pending",
     ) -> PrivilegeElevation:
         if elevation_id in self._elevations:
-            raise RuntimeCoreInvariantError(f"duplicate elevation_id: {elevation_id}")
+            raise RuntimeCoreInvariantError("duplicate elevation_id")
         identity = self.get_identity(identity_ref)
         now = _now_iso()
         elevation = PrivilegeElevation(
@@ -300,7 +300,7 @@ class IdentitySecurityEngine:
 
     def approve_elevation(self, elevation_id: str, approved_by: str) -> PrivilegeElevation:
         if elevation_id not in self._elevations:
-            raise RuntimeCoreInvariantError(f"unknown elevation_id: {elevation_id}")
+            raise RuntimeCoreInvariantError("unknown elevation_id")
         old = self._elevations[elevation_id]
         now = _now_iso()
         updated = PrivilegeElevation(
@@ -333,7 +333,7 @@ class IdentitySecurityEngine:
         ip_ref: str = "0.0.0.0",
     ) -> SecuritySession:
         if session_id in self._sessions:
-            raise RuntimeCoreInvariantError(f"duplicate session_id: {session_id}")
+            raise RuntimeCoreInvariantError("duplicate session_id")
         now = _now_iso()
         session = SecuritySession(
             session_id=session_id, tenant_id=tenant_id,
@@ -346,10 +346,10 @@ class IdentitySecurityEngine:
 
     def _update_session_status(self, session_id: str, new_status: SessionSecurityStatus) -> SecuritySession:
         if session_id not in self._sessions:
-            raise RuntimeCoreInvariantError(f"unknown session_id: {session_id}")
+            raise RuntimeCoreInvariantError("unknown session_id")
         old = self._sessions[session_id]
         if old.status in _SESSION_TERMINAL:
-            raise RuntimeCoreInvariantError(f"session {session_id} is in terminal state {old.status.value}")
+            raise RuntimeCoreInvariantError("session is in terminal state")
         now = _now_iso()
         updated = SecuritySession(
             session_id=old.session_id, tenant_id=old.tenant_id,
@@ -385,7 +385,7 @@ class IdentitySecurityEngine:
         operation: VaultOperation = VaultOperation.READ,
     ) -> VaultAccessRecord:
         if access_id in self._vault_accesses:
-            raise RuntimeCoreInvariantError(f"duplicate access_id: {access_id}")
+            raise RuntimeCoreInvariantError("duplicate access_id")
         now = _now_iso()
         record = VaultAccessRecord(
             access_id=access_id, tenant_id=tenant_id,
@@ -406,7 +406,7 @@ class IdentitySecurityEngine:
         reviewer_ref: str,
     ) -> RecertificationRecord:
         if recert_id in self._recertifications:
-            raise RuntimeCoreInvariantError(f"duplicate recert_id: {recert_id}")
+            raise RuntimeCoreInvariantError("duplicate recert_id")
         now = _now_iso()
         record = RecertificationRecord(
             recert_id=recert_id, tenant_id=tenant_id,
@@ -419,10 +419,10 @@ class IdentitySecurityEngine:
 
     def _update_recert_status(self, recert_id: str, new_status: RecertificationStatus) -> RecertificationRecord:
         if recert_id not in self._recertifications:
-            raise RuntimeCoreInvariantError(f"unknown recert_id: {recert_id}")
+            raise RuntimeCoreInvariantError("unknown recert_id")
         old = self._recertifications[recert_id]
         if old.status in _RECERT_TERMINAL:
-            raise RuntimeCoreInvariantError(f"recertification {recert_id} is in terminal state {old.status.value}")
+            raise RuntimeCoreInvariantError("recertification is in terminal state")
         now = _now_iso()
         updated = RecertificationRecord(
             recert_id=old.recert_id, tenant_id=old.tenant_id,
@@ -453,7 +453,7 @@ class IdentitySecurityEngine:
         authorized_by: str,
     ) -> BreakGlassRecord:
         if break_id in self._break_glass:
-            raise RuntimeCoreInvariantError(f"duplicate break_id: {break_id}")
+            raise RuntimeCoreInvariantError("duplicate break_id")
         now = _now_iso()
         record = BreakGlassRecord(
             break_id=break_id, tenant_id=tenant_id,
@@ -489,7 +489,7 @@ class IdentitySecurityEngine:
             self._violations[vid] = {
                 "violation_id": vid, "tenant_id": tenant_id,
                 "identity_ref": identity_ref, "operation": "break_glass",
-                "reason": f"break-glass access by {identity_ref}: {reason}",
+                "reason": "break-glass access active",
             }
 
         _emit(self._events, "record_break_glass", {"break_id": break_id}, break_id)
@@ -535,7 +535,7 @@ class IdentitySecurityEngine:
                                 "credential_id": cred.credential_id,
                                 "identity_ref": cred.identity_ref,
                                 "operation": "expired_credential_active",
-                                "reason": f"credential {cred.credential_id} expired but identity {cred.identity_ref} still ACTIVE",
+                                "reason": "expired credential remains active on identity",
                             }
                             self._violations[vid] = v
                             new_violations.append(v)
@@ -554,7 +554,7 @@ class IdentitySecurityEngine:
                             "violation_id": vid, "tenant_id": tenant_id,
                             "session_id": session.session_id,
                             "operation": "session_without_identity",
-                            "reason": f"active session {session.session_id} has no valid identity",
+                            "reason": "active session has no valid identity",
                         }
                         self._violations[vid] = v
                         new_violations.append(v)
@@ -572,7 +572,7 @@ class IdentitySecurityEngine:
                         "violation_id": vid, "tenant_id": tenant_id,
                         "elevation_id": elev.elevation_id,
                         "operation": "elevation_no_approval",
-                        "reason": f"elevation {elev.elevation_id} has no approval",
+                        "reason": "elevation has no approval",
                     }
                     self._violations[vid] = v
                     new_violations.append(v)
@@ -593,7 +593,7 @@ class IdentitySecurityEngine:
                             "break_id": bg.break_id,
                             "identity_ref": bg.identity_ref,
                             "operation": "break_glass_unresolved",
-                            "reason": f"break-glass {bg.break_id} still active for {bg.identity_ref}",
+                            "reason": "break-glass access remains active",
                         }
                         self._violations[vid] = v
                         new_violations.append(v)

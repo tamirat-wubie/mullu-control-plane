@@ -94,7 +94,7 @@ class SkillRegistry:
 
     def register(self, descriptor: SkillDescriptor) -> SkillDescriptor:
         if descriptor.skill_id in self._skills:
-            raise RuntimeCoreInvariantError(f"skill already registered: {descriptor.skill_id}")
+            raise RuntimeCoreInvariantError("skill already registered")
         self._skills[descriptor.skill_id] = descriptor
         return descriptor
 
@@ -123,12 +123,10 @@ class SkillRegistry:
         ensure_non_empty_text("skill_id", skill_id)
         current = self._skills.get(skill_id)
         if current is None:
-            raise RuntimeCoreInvariantError(f"skill not found: {skill_id}")
+            raise RuntimeCoreInvariantError("skill not found")
         allowed = _VALID_TRANSITIONS.get(current.lifecycle, frozenset())
         if new_lifecycle not in allowed:
-            raise RuntimeCoreInvariantError(
-                f"invalid lifecycle transition: {current.lifecycle.value} -> {new_lifecycle.value}"
-            )
+            raise RuntimeCoreInvariantError("invalid lifecycle transition")
         # Rebuild descriptor with new lifecycle (frozen dataclass)
         updated = SkillDescriptor(
             skill_id=current.skill_id,
@@ -158,7 +156,7 @@ class SkillRegistry:
             raise RuntimeCoreInvariantError("confidence must be in [0.0, 1.0]")
         current = self._skills.get(skill_id)
         if current is None:
-            raise RuntimeCoreInvariantError(f"skill not found: {skill_id}")
+            raise RuntimeCoreInvariantError("skill not found")
         updated = SkillDescriptor(
             skill_id=current.skill_id,
             name=current.name,

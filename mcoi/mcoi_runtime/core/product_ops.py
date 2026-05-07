@@ -129,7 +129,7 @@ class ProductOpsEngine:
         lifecycle_status: LifecycleStatus = LifecycleStatus.ACTIVE,
     ) -> ProductVersionRecord:
         if version_id in self._versions:
-            raise RuntimeCoreInvariantError(f"version already registered: {version_id}")
+            raise RuntimeCoreInvariantError("version already registered")
         now = _now_iso()
         record = ProductVersionRecord(
             version_id=version_id,
@@ -145,7 +145,7 @@ class ProductOpsEngine:
 
     def get_version(self, version_id: str) -> ProductVersionRecord:
         if version_id not in self._versions:
-            raise RuntimeCoreInvariantError(f"unknown version: {version_id}")
+            raise RuntimeCoreInvariantError("unknown version")
         return self._versions[version_id]
 
     def deprecate_version(self, version_id: str, reason: str = "deprecated") -> LifecycleMilestone:
@@ -176,12 +176,12 @@ class ProductOpsEngine:
         target_environment: str = "staging",
     ) -> ReleaseRecord:
         if release_id in self._releases:
-            raise RuntimeCoreInvariantError(f"release already exists: {release_id}")
+            raise RuntimeCoreInvariantError("release already exists")
         if version_id not in self._versions:
-            raise RuntimeCoreInvariantError(f"unknown version: {version_id}")
+            raise RuntimeCoreInvariantError("unknown version")
         ver = self._versions[version_id]
         if ver.lifecycle_status in _LIFECYCLE_TERMINAL:
-            raise RuntimeCoreInvariantError(f"version is retired: {version_id}")
+            raise RuntimeCoreInvariantError("version is retired")
         now = _now_iso()
         record = ReleaseRecord(
             release_id=release_id,
@@ -200,15 +200,15 @@ class ProductOpsEngine:
 
     def get_release(self, release_id: str) -> ReleaseRecord:
         if release_id not in self._releases:
-            raise RuntimeCoreInvariantError(f"unknown release: {release_id}")
+            raise RuntimeCoreInvariantError("unknown release")
         return self._releases[release_id]
 
     def mark_release_ready(self, release_id: str) -> ReleaseRecord:
         if release_id not in self._releases:
-            raise RuntimeCoreInvariantError(f"unknown release: {release_id}")
+            raise RuntimeCoreInvariantError("unknown release")
         old = self._releases[release_id]
         if old.status in _RELEASE_TERMINAL:
-            raise RuntimeCoreInvariantError(f"release is in terminal state: {old.status.value}")
+            raise RuntimeCoreInvariantError("release is in terminal state")
         updated = ReleaseRecord(
             release_id=old.release_id, version_id=old.version_id, tenant_id=old.tenant_id,
             kind=old.kind, status=ReleaseStatus.READY, target_environment=old.target_environment,
@@ -220,10 +220,10 @@ class ProductOpsEngine:
 
     def start_release(self, release_id: str) -> ReleaseRecord:
         if release_id not in self._releases:
-            raise RuntimeCoreInvariantError(f"unknown release: {release_id}")
+            raise RuntimeCoreInvariantError("unknown release")
         old = self._releases[release_id]
         if old.status in _RELEASE_TERMINAL:
-            raise RuntimeCoreInvariantError(f"release is in terminal state: {old.status.value}")
+            raise RuntimeCoreInvariantError("release is in terminal state")
         updated = ReleaseRecord(
             release_id=old.release_id, version_id=old.version_id, tenant_id=old.tenant_id,
             kind=old.kind, status=ReleaseStatus.IN_PROGRESS, target_environment=old.target_environment,
@@ -235,10 +235,10 @@ class ProductOpsEngine:
 
     def complete_release(self, release_id: str) -> ReleaseRecord:
         if release_id not in self._releases:
-            raise RuntimeCoreInvariantError(f"unknown release: {release_id}")
+            raise RuntimeCoreInvariantError("unknown release")
         old = self._releases[release_id]
         if old.status in _RELEASE_TERMINAL:
-            raise RuntimeCoreInvariantError(f"release is in terminal state: {old.status.value}")
+            raise RuntimeCoreInvariantError("release is in terminal state")
         updated = ReleaseRecord(
             release_id=old.release_id, version_id=old.version_id, tenant_id=old.tenant_id,
             kind=old.kind, status=ReleaseStatus.COMPLETED, target_environment=old.target_environment,
@@ -250,10 +250,10 @@ class ProductOpsEngine:
 
     def fail_release(self, release_id: str) -> ReleaseRecord:
         if release_id not in self._releases:
-            raise RuntimeCoreInvariantError(f"unknown release: {release_id}")
+            raise RuntimeCoreInvariantError("unknown release")
         old = self._releases[release_id]
         if old.status in _RELEASE_TERMINAL:
-            raise RuntimeCoreInvariantError(f"release is in terminal state: {old.status.value}")
+            raise RuntimeCoreInvariantError("release is in terminal state")
         updated = ReleaseRecord(
             release_id=old.release_id, version_id=old.version_id, tenant_id=old.tenant_id,
             kind=old.kind, status=ReleaseStatus.FAILED, target_environment=old.target_environment,
@@ -283,12 +283,12 @@ class ProductOpsEngine:
         reason: str = "",
     ) -> ReleaseGate:
         if gate_id in self._gates:
-            raise RuntimeCoreInvariantError(f"gate already evaluated: {gate_id}")
+            raise RuntimeCoreInvariantError("gate already evaluated")
         if release_id not in self._releases:
-            raise RuntimeCoreInvariantError(f"unknown release: {release_id}")
+            raise RuntimeCoreInvariantError("unknown release")
         rel = self._releases[release_id]
         if rel.status in _RELEASE_TERMINAL:
-            raise RuntimeCoreInvariantError(f"release is in terminal state: {rel.status.value}")
+            raise RuntimeCoreInvariantError("release is in terminal state")
         now = _now_iso()
         gate = ReleaseGate(
             gate_id=gate_id,
@@ -318,7 +318,7 @@ class ProductOpsEngine:
     def all_gates_passed(self, release_id: str) -> bool:
         """Check if all gates for a release have passed."""
         if release_id not in self._releases:
-            raise RuntimeCoreInvariantError(f"unknown release: {release_id}")
+            raise RuntimeCoreInvariantError("unknown release")
         rel = self._releases[release_id]
         return rel.gate_count > 0 and rel.gates_passed == rel.gate_count
 
@@ -335,12 +335,12 @@ class ProductOpsEngine:
         to_environment: str,
     ) -> PromotionRecord:
         if promotion_id in self._promotions:
-            raise RuntimeCoreInvariantError(f"promotion already exists: {promotion_id}")
+            raise RuntimeCoreInvariantError("promotion already exists")
         if release_id not in self._releases:
-            raise RuntimeCoreInvariantError(f"unknown release: {release_id}")
+            raise RuntimeCoreInvariantError("unknown release")
         rel = self._releases[release_id]
         if rel.status in _RELEASE_TERMINAL:
-            raise RuntimeCoreInvariantError(f"release is in terminal state: {rel.status.value}")
+            raise RuntimeCoreInvariantError("release is in terminal state")
         now = _now_iso()
 
         # Check if all gates passed
@@ -386,12 +386,12 @@ class ProductOpsEngine:
         reason: str,
     ) -> RollbackRecord:
         if rollback_id in self._rollbacks:
-            raise RuntimeCoreInvariantError(f"rollback already exists: {rollback_id}")
+            raise RuntimeCoreInvariantError("rollback already exists")
         if release_id not in self._releases:
-            raise RuntimeCoreInvariantError(f"unknown release: {release_id}")
+            raise RuntimeCoreInvariantError("unknown release")
         rel = self._releases[release_id]
         if rel.status in _RELEASE_TERMINAL:
-            raise RuntimeCoreInvariantError(f"release is in terminal state: {rel.status.value}")
+            raise RuntimeCoreInvariantError("release is in terminal state")
         now = _now_iso()
         rollback = RollbackRecord(
             rollback_id=rollback_id, release_id=release_id, tenant_id=tenant_id,
@@ -410,10 +410,10 @@ class ProductOpsEngine:
 
     def complete_rollback(self, rollback_id: str) -> RollbackRecord:
         if rollback_id not in self._rollbacks:
-            raise RuntimeCoreInvariantError(f"unknown rollback: {rollback_id}")
+            raise RuntimeCoreInvariantError("unknown rollback")
         old = self._rollbacks[rollback_id]
         if old.status in _ROLLBACK_TERMINAL:
-            raise RuntimeCoreInvariantError(f"rollback is in terminal state: {old.status.value}")
+            raise RuntimeCoreInvariantError("rollback is in terminal state")
         updated = RollbackRecord(
             rollback_id=old.rollback_id, release_id=old.release_id, tenant_id=old.tenant_id,
             reason=old.reason, status=RollbackStatus.COMPLETED, initiated_at=old.initiated_at,
@@ -424,10 +424,10 @@ class ProductOpsEngine:
 
     def fail_rollback(self, rollback_id: str) -> RollbackRecord:
         if rollback_id not in self._rollbacks:
-            raise RuntimeCoreInvariantError(f"unknown rollback: {rollback_id}")
+            raise RuntimeCoreInvariantError("unknown rollback")
         old = self._rollbacks[rollback_id]
         if old.status in _ROLLBACK_TERMINAL:
-            raise RuntimeCoreInvariantError(f"rollback is in terminal state: {old.status.value}")
+            raise RuntimeCoreInvariantError("rollback is in terminal state")
         updated = RollbackRecord(
             rollback_id=old.rollback_id, release_id=old.release_id, tenant_id=old.tenant_id,
             reason=old.reason, status=RollbackStatus.FAILED, initiated_at=old.initiated_at,
@@ -452,9 +452,9 @@ class ProductOpsEngine:
         customer_impact_score: float = 0.0,
     ) -> ReleaseAssessment:
         if assessment_id in self._assessments:
-            raise RuntimeCoreInvariantError(f"assessment already exists: {assessment_id}")
+            raise RuntimeCoreInvariantError("assessment already exists")
         if release_id not in self._releases:
-            raise RuntimeCoreInvariantError(f"unknown release: {release_id}")
+            raise RuntimeCoreInvariantError("unknown release")
         now = _now_iso()
         risk = self._derive_risk_level(readiness_score, customer_impact_score)
         assessment = ReleaseAssessment(
@@ -508,7 +508,7 @@ class ProductOpsEngine:
                         v = ReleaseViolation(
                             violation_id=vid, tenant_id=tenant_id, release_id=r.release_id,
                             operation="failed_gate_in_progress",
-                            reason=f"release {r.release_id} in progress with {len(failed_gates)} failed gate(s)",
+                            reason="release in progress with failed gates",
                             detected_at=now,
                         )
                         self._violations[vid] = v
@@ -522,7 +522,7 @@ class ProductOpsEngine:
                     v = ReleaseViolation(
                         violation_id=vid, tenant_id=tenant_id, release_id=r.release_id,
                         operation="no_gates",
-                        reason=f"release {r.release_id} has no gates evaluated",
+                        reason="release has no gates evaluated",
                         detected_at=now,
                     )
                     self._violations[vid] = v
@@ -537,7 +537,7 @@ class ProductOpsEngine:
                     v = ReleaseViolation(
                         violation_id=vid, tenant_id=tenant_id, release_id=p.release_id,
                         operation="blocked_promotion",
-                        reason=f"promotion {p.promotion_id} blocked for release {p.release_id}",
+                        reason="promotion blocked",
                         detected_at=now,
                     )
                     self._violations[vid] = v
@@ -598,10 +598,10 @@ class ProductOpsEngine:
         self, version_id: str, to_status: LifecycleStatus, reason: str
     ) -> LifecycleMilestone:
         if version_id not in self._versions:
-            raise RuntimeCoreInvariantError(f"unknown version: {version_id}")
+            raise RuntimeCoreInvariantError("unknown version")
         old = self._versions[version_id]
         if old.lifecycle_status in _LIFECYCLE_TERMINAL:
-            raise RuntimeCoreInvariantError(f"version is in terminal state: {old.lifecycle_status.value}")
+            raise RuntimeCoreInvariantError("version is in terminal state")
         now = _now_iso()
         mid = stable_identifier("ms", {"version_id": version_id, "to": to_status.value})
         milestone = LifecycleMilestone(

@@ -1,0 +1,323 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:marketplace-sdk-catalog:1",
+  "title": "Marketplace SDK Catalog",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "catalog_id",
+    "offerings",
+    "listings",
+    "decisions",
+    "published_count",
+    "blocked_count",
+    "review_count",
+    "sdk_contract_count",
+    "raw_execution_surface_exposed",
+    "snapshot_hash"
+  ],
+  "properties": {
+    "catalog_id": {
+      "type": "string",
+      "pattern": "^marketplace-sdk-catalog"
+    },
+    "offerings": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/offering"
+      }
+    },
+    "listings": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/listing"
+      }
+    },
+    "decisions": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/decision"
+      }
+    },
+    "published_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "blocked_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "review_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "sdk_contract_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "raw_execution_surface_exposed": {
+      "type": "boolean",
+      "const": false
+    },
+    "snapshot_hash": {
+      "$ref": "#/$defs/hash"
+    }
+  },
+  "$defs": {
+    "hash": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "text_array": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "offering_kind": {
+      "type": "string",
+      "enum": [
+        "capability",
+        "connector",
+        "domain_pack",
+        "builder_app",
+        "workflow_template"
+      ]
+    },
+    "channel": {
+      "type": "string",
+      "enum": [
+        "internal",
+        "direct",
+        "partner",
+        "public",
+        "sdk"
+      ]
+    },
+    "language": {
+      "type": "string",
+      "enum": [
+        "python",
+        "typescript",
+        "openapi",
+        "mcp"
+      ]
+    },
+    "verdict": {
+      "type": "string",
+      "enum": [
+        "allow",
+        "deny",
+        "review"
+      ]
+    },
+    "sdk_contract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "contract_id",
+        "languages",
+        "schema_refs",
+        "auth_scopes",
+        "rate_limit_ref",
+        "sandbox_base_url",
+        "docs_ref",
+        "contract_hash",
+        "metadata"
+      ],
+      "properties": {
+        "contract_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "languages": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/language"
+          }
+        },
+        "schema_refs": {
+          "$ref": "#/$defs/text_array"
+        },
+        "auth_scopes": {
+          "$ref": "#/$defs/text_array"
+        },
+        "rate_limit_ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sandbox_base_url": {
+          "type": "string",
+          "minLength": 1
+        },
+        "docs_ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "contract_hash": {
+          "$ref": "#/$defs/hash"
+        },
+        "metadata": {
+          "type": "object"
+        }
+      }
+    },
+    "offering": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "offering_id",
+        "display_name",
+        "kind",
+        "version",
+        "owner_team",
+        "risk",
+        "channels",
+        "side_effects",
+        "certification_evidence_refs",
+        "approval_required",
+        "receipt_required",
+        "rollback_required",
+        "sdk_contract",
+        "offering_hash",
+        "metadata"
+      ],
+      "properties": {
+        "offering_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "display_name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "kind": {
+          "$ref": "#/$defs/offering_kind"
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1
+        },
+        "owner_team": {
+          "type": "string",
+          "minLength": 1
+        },
+        "risk": {
+          "type": "string",
+          "minLength": 1
+        },
+        "channels": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/channel"
+          }
+        },
+        "side_effects": {
+          "$ref": "#/$defs/text_array"
+        },
+        "certification_evidence_refs": {
+          "$ref": "#/$defs/text_array"
+        },
+        "approval_required": {
+          "type": "boolean"
+        },
+        "receipt_required": {
+          "type": "boolean"
+        },
+        "rollback_required": {
+          "type": "boolean"
+        },
+        "sdk_contract": {
+          "$ref": "#/$defs/sdk_contract"
+        },
+        "offering_hash": {
+          "$ref": "#/$defs/hash"
+        },
+        "metadata": {
+          "type": "object"
+        }
+      }
+    },
+    "listing": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "listing_id",
+        "offering_id",
+        "channel",
+        "listed_at",
+        "active",
+        "listing_hash"
+      ],
+      "properties": {
+        "listing_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "offering_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "channel": {
+          "$ref": "#/$defs/channel"
+        },
+        "listed_at": {
+          "type": "string",
+          "minLength": 1
+        },
+        "active": {
+          "type": "boolean"
+        },
+        "listing_hash": {
+          "$ref": "#/$defs/hash"
+        }
+      }
+    },
+    "decision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "decision_id",
+        "offering_id",
+        "channel",
+        "verdict",
+        "reason",
+        "missing_controls",
+        "evidence_refs",
+        "decision_hash"
+      ],
+      "properties": {
+        "decision_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "offering_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "channel": {
+          "$ref": "#/$defs/channel"
+        },
+        "verdict": {
+          "$ref": "#/$defs/verdict"
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1
+        },
+        "missing_controls": {
+          "$ref": "#/$defs/text_array"
+        },
+        "evidence_refs": {
+          "$ref": "#/$defs/text_array"
+        },
+        "decision_hash": {
+          "$ref": "#/$defs/hash"
+        }
+      }
+    }
+  }
+}

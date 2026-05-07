@@ -220,7 +220,9 @@ class TestAttachConsolidationStateToMemoryMesh:
 
     def test_memory_record_title(self, integration):
         record = integration.attach_consolidation_state_to_memory_mesh("scope-1")
-        assert "scope-1" in record.title
+        assert record.title == "Memory consolidation state"
+        assert "scope-1" not in record.title
+        assert record.scope_ref_id == "scope-1"
 
     def test_memory_record_added_to_mesh(self, integration, memory_engine):
         before = memory_engine.memory_count

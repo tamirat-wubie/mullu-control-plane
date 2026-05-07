@@ -16,8 +16,6 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 from hashlib import sha256
-from typing import Any
-
 from ..contracts.service_catalog import (
     CatalogAssessment,
     CatalogItemKind,
@@ -32,13 +30,12 @@ from ..contracts.service_catalog import (
     RequestStatus,
     RequestViolation,
     ServiceCatalogItem,
-    ServiceClosureReport,
     ServiceRequest,
     ServiceStatus,
 )
 from ..contracts.event import EventRecord, EventSource, EventType
 from .event_spine import EventSpineEngine
-from .invariants import RuntimeCoreInvariantError, stable_identifier
+from .invariants import RuntimeCoreInvariantError, ensure_non_empty_text, stable_identifier
 
 
 def _now_iso() -> str:
@@ -131,17 +128,19 @@ class ServiceCatalogEngine:
         owner_ref: str = "",
         sla_ref: str = "",
         approval_required: bool = False,
+        approver_refs: tuple[str, ...] = (),
         estimated_cost: float = 0.0,
     ) -> ServiceCatalogItem:
         """Register a service catalog item."""
         if item_id in self._catalog:
-            raise RuntimeCoreInvariantError(f"Duplicate item_id: {item_id}")
+            raise RuntimeCoreInvariantError("Duplicate item_id")
         now = _now_iso()
         item = ServiceCatalogItem(
             item_id=item_id, name=name, tenant_id=tenant_id,
             kind=kind, status=ServiceStatus.ACTIVE,
             owner_ref=owner_ref, sla_ref=sla_ref,
             approval_required=approval_required,
+            approver_refs=approver_refs,
             estimated_cost=estimated_cost, created_at=now,
         )
         self._catalog[item_id] = item
@@ -154,21 +153,20 @@ class ServiceCatalogEngine:
         """Get a catalog item by ID."""
         item = self._catalog.get(item_id)
         if item is None:
-            raise RuntimeCoreInvariantError(f"Unknown item_id: {item_id}")
+            raise RuntimeCoreInvariantError("Unknown item_id")
         return item
 
     def deprecate_catalog_item(self, item_id: str) -> ServiceCatalogItem:
         """Deprecate a catalog item."""
         old = self.get_catalog_item(item_id)
         if old.status != ServiceStatus.ACTIVE:
-            raise RuntimeCoreInvariantError(
-                f"Can only deprecate ACTIVE items, got {old.status.value}"
-            )
+            raise RuntimeCoreInvariantError("Can only deprecate active catalog items")
         updated = ServiceCatalogItem(
             item_id=old.item_id, name=old.name, tenant_id=old.tenant_id,
             kind=old.kind, status=ServiceStatus.DEPRECATED,
             owner_ref=old.owner_ref, sla_ref=old.sla_ref,
             approval_required=old.approval_required,
+            approver_refs=old.approver_refs,
             estimated_cost=old.estimated_cost, created_at=old.created_at,
             metadata=old.metadata,
         )
@@ -186,6 +184,7 @@ class ServiceCatalogEngine:
             kind=old.kind, status=ServiceStatus.RETIRED,
             owner_ref=old.owner_ref, sla_ref=old.sla_ref,
             approval_required=old.approval_required,
+            approver_refs=old.approver_refs,
             estimated_cost=old.estimated_cost, created_at=old.created_at,
             metadata=old.metadata,
         )
@@ -215,12 +214,12 @@ class ServiceCatalogEngine:
     ) -> ServiceRequest:
         """Submit a new service request."""
         if request_id in self._requests:
-            raise RuntimeCoreInvariantError(f"Duplicate request_id: {request_id}")
+            raise RuntimeCoreInvariantError("Duplicate request_id")
         item = self.get_catalog_item(item_id)
         if item.status != ServiceStatus.ACTIVE:
-            raise RuntimeCoreInvariantError(
-                f"Cannot request from {item.status.value} catalog item"
-            )
+            raise RuntimeCoreInvariantError("Cannot request from non-active catalog item")
+        if item.tenant_id != tenant_id:
+            raise RuntimeCoreInvariantError("Catalog item not available for tenant")
         now = _now_iso()
         status = RequestStatus.SUBMITTED
         req = ServiceRequest(
@@ -240,10 +239,17 @@ class ServiceCatalogEngine:
         """Get a request by ID."""
         req = self._requests.get(request_id)
         if req is None:
-            raise RuntimeCoreInvariantError(f"Unknown request_id: {request_id}")
+            raise RuntimeCoreInvariantError("Unknown request_id")
         return req
 
-    def _update_request_status(self, request_id: str, new_status: RequestStatus) -> ServiceRequest:
+    def _update_request_status(
+        self,
+        request_id: str,
+        new_status: RequestStatus,
+        *,
+        cancelled_by: str = "",
+        closed_by: str = "",
+    ) -> ServiceRequest:
         """Internal helper to update request status."""
         old = self.get_request(request_id)
         updated = ServiceRequest(
@@ -252,10 +258,26 @@ class ServiceCatalogEngine:
             status=new_status, priority=old.priority,
             description=old.description, estimated_cost=old.estimated_cost,
             submitted_at=old.submitted_at, due_at=old.due_at,
+            cancelled_by=cancelled_by or old.cancelled_by,
+            closed_by=closed_by or old.closed_by,
             metadata=old.metadata,
         )
         self._requests[request_id] = updated
         return updated
+
+    def _has_active_fulfillment_tasks(self, request_id: str) -> bool:
+        """Return whether any task for the request is still non-terminal."""
+        return any(
+            task.request_id == request_id and task.status not in _TASK_TERMINAL
+            for task in self._tasks.values()
+        )
+
+    def _has_incomplete_fulfillment_tasks(self, request_id: str) -> bool:
+        """Return whether any task for the request is not completed."""
+        return any(
+            task.request_id == request_id and task.status != FulfillmentStatus.COMPLETED
+            for task in self._tasks.values()
+        )
 
     # ------------------------------------------------------------------
     # Entitlement evaluation
@@ -272,12 +294,10 @@ class ServiceCatalogEngine:
     ) -> EntitlementRule:
         """Evaluate entitlement for a request."""
         if rule_id in self._entitlements:
-            raise RuntimeCoreInvariantError(f"Duplicate rule_id: {rule_id}")
+            raise RuntimeCoreInvariantError("Duplicate rule_id")
         req = self.get_request(request_id)
         if req.status in _REQUEST_TERMINAL:
-            raise RuntimeCoreInvariantError(
-                f"Cannot evaluate entitlement for {req.status.value} request"
-            )
+            raise RuntimeCoreInvariantError("Cannot evaluate entitlement for terminal request")
         now = _now_iso()
         rule = EntitlementRule(
             rule_id=rule_id, item_id=req.item_id, tenant_id=req.tenant_id,
@@ -324,27 +344,34 @@ class ServiceCatalogEngine:
         self,
         request_id: str,
         *,
-        approved_by: str = "system",
+        approved_by: str = "",
         reason: str = "",
     ) -> ServiceRequest:
         """Approve a pending-approval request."""
         req = self.get_request(request_id)
         if req.status != RequestStatus.PENDING_APPROVAL:
-            raise RuntimeCoreInvariantError(
-                f"Can only approve PENDING_APPROVAL requests, got {req.status.value}"
-            )
+            raise RuntimeCoreInvariantError("Can only approve pending-approval requests")
+        try:
+            normalized_approved_by = ensure_non_empty_text("approved_by", approved_by)
+        except ValueError as exc:
+            raise RuntimeCoreInvariantError("approved_by required for approval") from exc
+        if req.requester_ref.strip() == normalized_approved_by.strip():
+            raise RuntimeCoreInvariantError("Requester cannot approve own request")
+        item = self.get_catalog_item(req.item_id)
+        if item.approver_refs and normalized_approved_by.strip() not in item.approver_refs:
+            raise RuntimeCoreInvariantError("Approver not authorized for request")
         now = _now_iso()
         dec_id = stable_identifier("dec-appr", {"req": request_id, "ts": now})
         decision = FulfillmentDecision(
             decision_id=dec_id, request_id=request_id,
-            disposition="approved", decided_by=approved_by,
+            disposition="approved", decided_by=normalized_approved_by,
             reason=reason or "Request approved",
             decided_at=now,
         )
         self._decisions[dec_id] = decision
         updated = self._update_request_status(request_id, RequestStatus.APPROVED)
         _emit(self._events, "request_approved", {
-            "request_id": request_id, "approved_by": approved_by,
+            "request_id": request_id, "approved_by": normalized_approved_by,
         }, request_id)
         return updated
 
@@ -352,39 +379,73 @@ class ServiceCatalogEngine:
         self,
         request_id: str,
         *,
-        denied_by: str = "system",
+        denied_by: str = "",
         reason: str = "",
     ) -> ServiceRequest:
         """Deny a request."""
         req = self.get_request(request_id)
         if req.status in _REQUEST_TERMINAL:
-            raise RuntimeCoreInvariantError(
-                f"Cannot deny {req.status.value} request"
-            )
+            raise RuntimeCoreInvariantError("Cannot deny terminal request")
+        try:
+            normalized_denied_by = ensure_non_empty_text("denied_by", denied_by)
+        except ValueError as exc:
+            raise RuntimeCoreInvariantError("denied_by required for denial") from exc
+        if req.requester_ref.strip() == normalized_denied_by.strip():
+            raise RuntimeCoreInvariantError("Requester cannot deny own request")
+        item = self.get_catalog_item(req.item_id)
+        if (
+            item.approval_required
+            and normalized_denied_by.strip() not in item.approver_refs
+            and normalized_denied_by.strip() != item.owner_ref.strip()
+        ):
+            raise RuntimeCoreInvariantError("Denier not authorized for request")
+        if self._has_active_fulfillment_tasks(request_id):
+            raise RuntimeCoreInvariantError("Cannot deny request with active tasks")
         now = _now_iso()
         dec_id = stable_identifier("dec-deny", {"req": request_id, "ts": now})
         decision = FulfillmentDecision(
             decision_id=dec_id, request_id=request_id,
-            disposition="denied", decided_by=denied_by,
+            disposition="denied", decided_by=normalized_denied_by,
             reason=reason or "Request denied",
             decided_at=now,
         )
         self._decisions[dec_id] = decision
         updated = self._update_request_status(request_id, RequestStatus.DENIED)
         _emit(self._events, "request_denied", {
-            "request_id": request_id, "denied_by": denied_by,
+            "request_id": request_id, "denied_by": normalized_denied_by,
         }, request_id)
         return updated
 
-    def cancel_request(self, request_id: str) -> ServiceRequest:
+    def cancel_request(self, request_id: str, *, cancelled_by: str = "") -> ServiceRequest:
         """Cancel a request."""
         req = self.get_request(request_id)
         if req.status in _REQUEST_TERMINAL:
-            raise RuntimeCoreInvariantError(
-                f"Cannot cancel {req.status.value} request"
-            )
-        updated = self._update_request_status(request_id, RequestStatus.CANCELLED)
-        _emit(self._events, "request_cancelled", {"request_id": request_id}, request_id)
+            raise RuntimeCoreInvariantError("Cannot cancel terminal request")
+        try:
+            normalized_cancelled_by = ensure_non_empty_text("cancelled_by", cancelled_by)
+        except ValueError as exc:
+            raise RuntimeCoreInvariantError("cancelled_by required for cancellation") from exc
+        if normalized_cancelled_by == "system":
+            raise RuntimeCoreInvariantError("cancelled_by must exclude system")
+        item = self.get_catalog_item(req.item_id)
+        if (
+            item.approval_required
+            and normalized_cancelled_by != req.requester_ref.strip()
+            and normalized_cancelled_by not in item.approver_refs
+            and normalized_cancelled_by != item.owner_ref.strip()
+        ):
+            raise RuntimeCoreInvariantError("Canceller not authorized for request")
+        if self._has_active_fulfillment_tasks(request_id):
+            raise RuntimeCoreInvariantError("Cannot cancel request with active tasks")
+        updated = self._update_request_status(
+            request_id,
+            RequestStatus.CANCELLED,
+            cancelled_by=normalized_cancelled_by,
+        )
+        _emit(self._events, "request_cancelled", {
+            "request_id": request_id,
+            "cancelled_by": normalized_cancelled_by,
+        }, request_id)
         return updated
 
     # ------------------------------------------------------------------
@@ -397,26 +458,53 @@ class ServiceCatalogEngine:
         request_id: str,
         assignee_ref: str,
         *,
-        assigned_by: str = "system",
+        assigned_by: str = "",
     ) -> RequestAssignment:
         """Assign a request to an assignee."""
         if assignment_id in self._assignments:
-            raise RuntimeCoreInvariantError(f"Duplicate assignment_id: {assignment_id}")
+            raise RuntimeCoreInvariantError("Duplicate assignment_id")
         req = self.get_request(request_id)
         if req.status in _REQUEST_TERMINAL:
-            raise RuntimeCoreInvariantError(
-                f"Cannot assign {req.status.value} request"
+            raise RuntimeCoreInvariantError("Cannot assign terminal request")
+        if req.requester_ref.strip() == assignee_ref.strip():
+            raise RuntimeCoreInvariantError("Requester cannot be assignee for own request")
+        item = self.get_catalog_item(req.item_id)
+        if (
+            item.approval_required
+            and (
+                assignee_ref.strip() == item.owner_ref.strip()
+                or assignee_ref.strip() in item.approver_refs
             )
+        ):
+            raise RuntimeCoreInvariantError("Assignee not eligible for request")
+        try:
+            normalized_assigned_by = ensure_non_empty_text("assigned_by", assigned_by)
+        except ValueError as exc:
+            raise RuntimeCoreInvariantError("assigned_by required for assignment") from exc
+        if normalized_assigned_by == "system":
+            raise RuntimeCoreInvariantError("assigned_by must exclude system")
+        if (
+            item.approval_required
+            and normalized_assigned_by not in item.approver_refs
+            and normalized_assigned_by != item.owner_ref.strip()
+        ):
+            raise RuntimeCoreInvariantError("Assigner not authorized for request")
+        if (
+            item.approval_required
+            and req.status not in (RequestStatus.APPROVED, RequestStatus.IN_FULFILLMENT)
+        ):
+            raise RuntimeCoreInvariantError("Request not approved for assignment")
         now = _now_iso()
         assignment = RequestAssignment(
             assignment_id=assignment_id, request_id=request_id,
-            assignee_ref=assignee_ref, assigned_by=assigned_by,
+            assignee_ref=assignee_ref, assigned_by=normalized_assigned_by,
             assigned_at=now,
         )
         self._assignments[assignment_id] = assignment
         _emit(self._events, "request_assigned", {
             "assignment_id": assignment_id, "request_id": request_id,
             "assignee_ref": assignee_ref,
+            "assigned_by": normalized_assigned_by,
         }, request_id)
         return assignment
 
@@ -434,30 +522,66 @@ class ServiceCatalogEngine:
         request_id: str,
         assignee_ref: str,
         *,
+        created_by: str = "",
         description: str = "",
         dependency_ref: str = "",
     ) -> FulfillmentTask:
         """Create a fulfillment task for a request."""
         if task_id in self._tasks:
-            raise RuntimeCoreInvariantError(f"Duplicate task_id: {task_id}")
+            raise RuntimeCoreInvariantError("Duplicate task_id")
         req = self.get_request(request_id)
         if req.status in _REQUEST_TERMINAL:
-            raise RuntimeCoreInvariantError(
-                f"Cannot create task for {req.status.value} request"
+            raise RuntimeCoreInvariantError("Cannot create task for terminal request")
+        item = self.get_catalog_item(req.item_id)
+        if req.requester_ref.strip() == assignee_ref.strip():
+            raise RuntimeCoreInvariantError("Requester cannot be assignee for own request")
+        if (
+            item.approval_required
+            and (
+                assignee_ref.strip() == item.owner_ref.strip()
+                or assignee_ref.strip() in item.approver_refs
             )
+        ):
+            raise RuntimeCoreInvariantError("Assignee not eligible for request")
+        try:
+            normalized_created_by = ensure_non_empty_text("created_by", created_by)
+        except ValueError as exc:
+            raise RuntimeCoreInvariantError("created_by required for task creation") from exc
+        if normalized_created_by == "system":
+            raise RuntimeCoreInvariantError("created_by must exclude system")
+        if (
+            item.approval_required
+            and normalized_created_by not in item.approver_refs
+            and normalized_created_by != item.owner_ref.strip()
+        ):
+            raise RuntimeCoreInvariantError("Task creator not authorized for request")
+        if (
+            item.approval_required
+            and req.status not in (RequestStatus.APPROVED, RequestStatus.IN_FULFILLMENT)
+        ):
+            raise RuntimeCoreInvariantError("Request not approved for task creation")
+        if item.approval_required:
+            request_assignments = self.assignments_for_request(request_id)
+            if not request_assignments:
+                raise RuntimeCoreInvariantError("Governed request requires assignment before tasks")
+            assigned_refs = {assignment.assignee_ref for assignment in request_assignments}
+            if assignee_ref not in assigned_refs:
+                raise RuntimeCoreInvariantError("Task assignee not assigned to request")
         # Auto-transition to IN_FULFILLMENT if not already
         if req.status not in (RequestStatus.IN_FULFILLMENT, RequestStatus.DENIED, RequestStatus.CANCELLED):
             self._update_request_status(request_id, RequestStatus.IN_FULFILLMENT)
         now = _now_iso()
         task = FulfillmentTask(
             task_id=task_id, request_id=request_id,
-            assignee_ref=assignee_ref, status=FulfillmentStatus.PENDING,
+            assignee_ref=assignee_ref, created_by=normalized_created_by,
+            status=FulfillmentStatus.PENDING,
             description=description, dependency_ref=dependency_ref,
             created_at=now,
         )
         self._tasks[task_id] = task
         _emit(self._events, "fulfillment_task_created", {
             "task_id": task_id, "request_id": request_id,
+            "created_by": normalized_created_by,
         }, request_id)
         return task
 
@@ -465,43 +589,71 @@ class ServiceCatalogEngine:
         """Get a fulfillment task by ID."""
         task = self._tasks.get(task_id)
         if task is None:
-            raise RuntimeCoreInvariantError(f"Unknown task_id: {task_id}")
+            raise RuntimeCoreInvariantError("Unknown task_id")
         return task
 
-    def start_task(self, task_id: str) -> FulfillmentTask:
+    def start_task(self, task_id: str, *, started_by: str = "") -> FulfillmentTask:
         """Start a fulfillment task."""
         old = self.get_task(task_id)
         if old.status != FulfillmentStatus.PENDING:
-            raise RuntimeCoreInvariantError(
-                f"Can only start PENDING tasks, got {old.status.value}"
-            )
+            raise RuntimeCoreInvariantError("Can only start pending tasks")
+        try:
+            normalized_started_by = ensure_non_empty_text("started_by", started_by)
+        except ValueError as exc:
+            raise RuntimeCoreInvariantError("started_by required for task start") from exc
+        if normalized_started_by == "system":
+            raise RuntimeCoreInvariantError("started_by must exclude system")
+        if normalized_started_by != old.assignee_ref.strip():
+            raise RuntimeCoreInvariantError("Task starter not authorized for task")
         updated = FulfillmentTask(
             task_id=old.task_id, request_id=old.request_id,
-            assignee_ref=old.assignee_ref, status=FulfillmentStatus.IN_PROGRESS,
+            assignee_ref=old.assignee_ref, created_by=old.created_by,
+            started_by=normalized_started_by,
+            completed_by=old.completed_by,
+            failed_by=old.failed_by,
+            cancelled_by=old.cancelled_by,
+            status=FulfillmentStatus.IN_PROGRESS,
             description=old.description, dependency_ref=old.dependency_ref,
             created_at=old.created_at, metadata=old.metadata,
         )
         self._tasks[task_id] = updated
-        _emit(self._events, "task_started", {"task_id": task_id}, old.request_id)
+        _emit(self._events, "task_started", {
+            "task_id": task_id,
+            "started_by": normalized_started_by,
+        }, old.request_id)
         return updated
 
-    def complete_task(self, task_id: str) -> FulfillmentTask:
+    def complete_task(self, task_id: str, *, completed_by: str = "") -> FulfillmentTask:
         """Complete a fulfillment task."""
         old = self.get_task(task_id)
         if old.status in _TASK_TERMINAL:
-            raise RuntimeCoreInvariantError(
-                f"Task already in terminal status {old.status.value}"
-            )
+            raise RuntimeCoreInvariantError("Task already in terminal status")
+        try:
+            normalized_completed_by = ensure_non_empty_text("completed_by", completed_by)
+        except ValueError as exc:
+            raise RuntimeCoreInvariantError("completed_by required for task completion") from exc
+        if normalized_completed_by == "system":
+            raise RuntimeCoreInvariantError("completed_by must exclude system")
+        if normalized_completed_by != old.assignee_ref.strip():
+            raise RuntimeCoreInvariantError("Task completer not authorized for task")
         now = _now_iso()
         updated = FulfillmentTask(
             task_id=old.task_id, request_id=old.request_id,
-            assignee_ref=old.assignee_ref, status=FulfillmentStatus.COMPLETED,
+            assignee_ref=old.assignee_ref, created_by=old.created_by,
+            started_by=old.started_by,
+            completed_by=normalized_completed_by,
+            failed_by=old.failed_by,
+            cancelled_by=old.cancelled_by,
+            status=FulfillmentStatus.COMPLETED,
             description=old.description, dependency_ref=old.dependency_ref,
             created_at=old.created_at, completed_at=now,
             metadata=old.metadata,
         )
         self._tasks[task_id] = updated
-        _emit(self._events, "task_completed", {"task_id": task_id}, old.request_id)
+        _emit(self._events, "task_completed", {
+            "task_id": task_id,
+            "completed_by": normalized_completed_by,
+        }, old.request_id)
 
         # Auto-fulfill request if all tasks completed
         request_tasks = [t for t in self._tasks.values() if t.request_id == old.request_id]
@@ -516,40 +668,71 @@ class ServiceCatalogEngine:
 
         return updated
 
-    def fail_task(self, task_id: str) -> FulfillmentTask:
+    def fail_task(self, task_id: str, *, failed_by: str = "") -> FulfillmentTask:
         """Mark a fulfillment task as failed."""
         old = self.get_task(task_id)
         if old.status in _TASK_TERMINAL:
-            raise RuntimeCoreInvariantError(
-                f"Task already in terminal status {old.status.value}"
-            )
+            raise RuntimeCoreInvariantError("Task already in terminal status")
+        try:
+            normalized_failed_by = ensure_non_empty_text("failed_by", failed_by)
+        except ValueError as exc:
+            raise RuntimeCoreInvariantError("failed_by required for task failure") from exc
+        if normalized_failed_by == "system":
+            raise RuntimeCoreInvariantError("failed_by must exclude system")
+        if normalized_failed_by != old.assignee_ref.strip():
+            raise RuntimeCoreInvariantError("Task failure actor not authorized for task")
         now = _now_iso()
         updated = FulfillmentTask(
             task_id=old.task_id, request_id=old.request_id,
-            assignee_ref=old.assignee_ref, status=FulfillmentStatus.FAILED,
+            assignee_ref=old.assignee_ref, created_by=old.created_by,
+            started_by=old.started_by,
+            completed_by=old.completed_by,
+            failed_by=normalized_failed_by,
+            cancelled_by=old.cancelled_by,
+            status=FulfillmentStatus.FAILED,
             description=old.description, dependency_ref=old.dependency_ref,
             created_at=old.created_at, completed_at=now,
             metadata=old.metadata,
         )
         self._tasks[task_id] = updated
-        _emit(self._events, "task_failed", {"task_id": task_id}, old.request_id)
+        _emit(self._events, "task_failed", {
+            "task_id": task_id,
+            "failed_by": normalized_failed_by,
+        }, old.request_id)
         return updated
 
-    def cancel_task(self, task_id: str) -> FulfillmentTask:
+    def cancel_task(self, task_id: str, *, cancelled_by: str = "") -> FulfillmentTask:
         """Cancel a fulfillment task."""
         old = self.get_task(task_id)
         if old.status in _TASK_TERMINAL:
-            raise RuntimeCoreInvariantError(
-                f"Task already in terminal status {old.status.value}"
-            )
+            raise RuntimeCoreInvariantError("Task already in terminal status")
+        try:
+            normalized_cancelled_by = ensure_non_empty_text("cancelled_by", cancelled_by)
+        except ValueError as exc:
+            raise RuntimeCoreInvariantError("cancelled_by required for task cancellation") from exc
+        if normalized_cancelled_by == "system":
+            raise RuntimeCoreInvariantError("cancelled_by must exclude system")
+        if (
+            normalized_cancelled_by != old.assignee_ref.strip()
+            and normalized_cancelled_by != old.created_by.strip()
+        ):
+            raise RuntimeCoreInvariantError("Task canceller not authorized for task")
         updated = FulfillmentTask(
             task_id=old.task_id, request_id=old.request_id,
-            assignee_ref=old.assignee_ref, status=FulfillmentStatus.CANCELLED,
+            assignee_ref=old.assignee_ref, created_by=old.created_by,
+            started_by=old.started_by,
+            completed_by=old.completed_by,
+            failed_by=old.failed_by,
+            cancelled_by=normalized_cancelled_by,
+            status=FulfillmentStatus.CANCELLED,
             description=old.description, dependency_ref=old.dependency_ref,
             created_at=old.created_at, metadata=old.metadata,
         )
         self._tasks[task_id] = updated
-        _emit(self._events, "task_cancelled", {"task_id": task_id}, old.request_id)
+        _emit(self._events, "task_cancelled", {
+            "task_id": task_id,
+            "cancelled_by": normalized_cancelled_by,
+        }, old.request_id)
         return updated
 
     def tasks_for_request(self, request_id: str) -> tuple[FulfillmentTask, ...]:
@@ -560,15 +743,37 @@ class ServiceCatalogEngine:
     # Request closure
     # ------------------------------------------------------------------
 
-    def close_request(self, request_id: str) -> ServiceRequest:
+    def close_request(self, request_id: str, *, closed_by: str = "") -> ServiceRequest:
         """Close a request (mark as fulfilled)."""
         req = self.get_request(request_id)
         if req.status in _REQUEST_TERMINAL:
-            raise RuntimeCoreInvariantError(
-                f"Request already in terminal status {req.status.value}"
-            )
-        updated = self._update_request_status(request_id, RequestStatus.FULFILLED)
-        _emit(self._events, "request_closed", {"request_id": request_id}, request_id)
+            raise RuntimeCoreInvariantError("Request already in terminal status")
+        try:
+            normalized_closed_by = ensure_non_empty_text("closed_by", closed_by)
+        except ValueError as exc:
+            raise RuntimeCoreInvariantError("closed_by required for closure") from exc
+        if normalized_closed_by == "system":
+            raise RuntimeCoreInvariantError("closed_by must exclude system")
+        if req.requester_ref.strip() == normalized_closed_by.strip():
+            raise RuntimeCoreInvariantError("Requester cannot close own request")
+        item = self.get_catalog_item(req.item_id)
+        if (
+            item.approval_required
+            and normalized_closed_by not in item.approver_refs
+            and normalized_closed_by != item.owner_ref.strip()
+        ):
+            raise RuntimeCoreInvariantError("Closer not authorized for request")
+        if self._has_incomplete_fulfillment_tasks(request_id):
+            raise RuntimeCoreInvariantError("Cannot close request with incomplete tasks")
+        updated = self._update_request_status(
+            request_id,
+            RequestStatus.FULFILLED,
+            closed_by=normalized_closed_by,
+        )
+        _emit(self._events, "request_closed", {
+            "request_id": request_id,
+            "closed_by": normalized_closed_by,
+        }, request_id)
         return updated
 
     def requests_for_tenant(self, tenant_id: str) -> tuple[ServiceRequest, ...]:
@@ -586,23 +791,27 @@ class ServiceCatalogEngine:
         fulfillment_rate: float,
         satisfaction_score: float,
         *,
-        assessed_by: str = "system",
+        assessed_by: str = "",
     ) -> CatalogAssessment:
         """Assess a catalog item's health."""
         if assessment_id in self._assessments:
-            raise RuntimeCoreInvariantError(f"Duplicate assessment_id: {assessment_id}")
+            raise RuntimeCoreInvariantError("Duplicate assessment_id")
         if item_id not in self._catalog:
-            raise RuntimeCoreInvariantError(f"Unknown item_id: {item_id}")
+            raise RuntimeCoreInvariantError("Unknown item_id")
+        normalized_assessed_by = ensure_non_empty_text("assessed_by", assessed_by)
+        if normalized_assessed_by == "system":
+            raise RuntimeCoreInvariantError("assessed_by must exclude system")
         now = _now_iso()
         assessment = CatalogAssessment(
             assessment_id=assessment_id, item_id=item_id,
             fulfillment_rate=fulfillment_rate,
             satisfaction_score=satisfaction_score,
-            assessed_by=assessed_by, assessed_at=now,
+            assessed_by=normalized_assessed_by, assessed_at=now,
         )
         self._assessments[assessment_id] = assessment
         _emit(self._events, "catalog_item_assessed", {
             "assessment_id": assessment_id, "item_id": item_id,
+            "assessed_by": normalized_assessed_by,
         }, item_id)
         return assessment
 
@@ -632,7 +841,7 @@ class ServiceCatalogEngine:
                             violation_id=vid, request_id=req.request_id,
                             tenant_id=req.tenant_id,
                             operation="all_tasks_failed",
-                            reason=f"All {len(req_tasks)} fulfillment tasks have failed for request {req.request_id}",
+                            reason="All fulfillment tasks failed",
                             detected_at=now,
                         )
                         self._violations[vid] = v
@@ -654,7 +863,7 @@ class ServiceCatalogEngine:
                             violation_id=vid, request_id=req.request_id,
                             tenant_id=req.tenant_id,
                             operation="no_entitlement",
-                            reason=f"Request {req.request_id} has no entitlement evaluation",
+                            reason="Request lacks entitlement evaluation",
                             detected_at=now,
                         )
                         self._violations[vid] = v
@@ -673,7 +882,7 @@ class ServiceCatalogEngine:
                             violation_id=vid, request_id=req.request_id,
                             tenant_id=req.tenant_id,
                             operation="no_tasks",
-                            reason=f"Request {req.request_id} is in fulfillment but has no tasks",
+                            reason="Request in fulfillment has no tasks",
                             detected_at=now,
                         )
                         self._violations[vid] = v
@@ -696,7 +905,7 @@ class ServiceCatalogEngine:
     def request_snapshot(self, snapshot_id: str) -> RequestSnapshot:
         """Capture a point-in-time request snapshot."""
         if snapshot_id in self._snapshot_ids:
-            raise RuntimeCoreInvariantError(f"Duplicate snapshot_id: {snapshot_id}")
+            raise RuntimeCoreInvariantError("Duplicate snapshot_id")
         now = _now_iso()
         total_cost = sum(
             r.estimated_cost for r in self._requests.values()

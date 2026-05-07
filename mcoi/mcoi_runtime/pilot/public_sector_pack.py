@@ -180,7 +180,7 @@ class PublicSectorDemoGenerator:
 
         # Seed remediations linked to first 5 cases
         rems = [
-            {"remediation_id": f"ps-rem-{i:03d}", "case_ref": f"ps-case-{i:03d}", "title": f"Remediate: {cases[i]['title']}"}
+            {"remediation_id": f"ps-rem-{i:03d}", "case_ref": f"ps-case-{i:03d}", "title": "Public sector remediation"}
             for i in range(5)
         ]
         rem_result = self._importer.import_remediations(tenant_id, rems)

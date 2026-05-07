@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import pytest
 
-from mcoi_runtime.core.api_key_auth import APIKeyManager
+from mcoi_runtime.governance.auth.api_key import APIKeyManager
 
 
 class TestAPIKeyManager:
@@ -39,7 +39,8 @@ class TestAPIKeyManager:
         raw_key, _ = mgr.create_key("t1", frozenset({"read"}))
         result = mgr.authenticate(raw_key, required_scope="admin")
         assert not result.authenticated
-        assert "Missing scope" in result.error
+        assert result.error == "missing required scope"
+        assert "admin" not in result.error
 
     def test_wildcard_scope(self, mgr):
         raw_key, _ = mgr.create_key("t1", frozenset({"*"}))
@@ -51,7 +52,8 @@ class TestAPIKeyManager:
         assert mgr.revoke(api_key.key_id)
         result = mgr.authenticate(raw_key)
         assert not result.authenticated
-        assert "revoked" in result.error
+        assert result.error == "inactive API key"
+        assert "revoked" not in result.error
 
     def test_revoke_nonexistent(self, mgr):
         assert not mgr.revoke("nonexistent")
@@ -60,7 +62,8 @@ class TestAPIKeyManager:
         raw_key, api_key = mgr.create_key("t1", frozenset({"read"}), ttl_seconds=-1)
         result = mgr.authenticate(raw_key)
         assert not result.authenticated
-        assert "expired" in result.error
+        assert result.error == "inactive API key"
+        assert "expired" not in result.error
 
     def test_get_key(self, mgr):
         _, api_key = mgr.create_key("t1", frozenset({"read"}), description="Test key")
@@ -94,3 +97,9 @@ class TestAPIKeyManager:
         assert s["total_keys"] == 2
         assert s["auth_success"] == 1
         assert s["auth_failure"] == 1
+        assert s["allow_wildcard_keys"] is True
+
+    def test_manager_can_disable_wildcard_key_posture(self):
+        mgr = APIKeyManager(allow_wildcard_keys=False)
+        assert mgr.allow_wildcard_keys is False
+        assert mgr.summary()["allow_wildcard_keys"] is False

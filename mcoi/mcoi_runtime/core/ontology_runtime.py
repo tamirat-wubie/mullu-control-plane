@@ -125,7 +125,7 @@ class OntologyRuntimeEngine:
     ) -> ConceptRecord:
         """Register a new ontology concept."""
         if concept_id in self._concepts:
-            raise RuntimeCoreInvariantError(f"Duplicate concept_id: {concept_id}")
+            raise RuntimeCoreInvariantError("Duplicate concept_id")
         now = self._now()
         c = ConceptRecord(
             concept_id=concept_id,
@@ -146,7 +146,7 @@ class OntologyRuntimeEngine:
         """Get a concept by ID."""
         c = self._concepts.get(concept_id)
         if c is None:
-            raise RuntimeCoreInvariantError(f"Unknown concept_id: {concept_id}")
+            raise RuntimeCoreInvariantError("Unknown concept_id")
         return c
 
     def concepts_for_tenant(self, tenant_id: str) -> tuple[ConceptRecord, ...]:
@@ -157,11 +157,9 @@ class OntologyRuntimeEngine:
         """Update a concept's status with terminal-state guard."""
         old = self._concepts.get(concept_id)
         if old is None:
-            raise RuntimeCoreInvariantError(f"Unknown concept_id: {concept_id}")
+            raise RuntimeCoreInvariantError("Unknown concept_id")
         if old.status == OntologyStatus.RETIRED:
-            raise RuntimeCoreInvariantError(
-                f"Cannot transition concept from terminal state {old.status.value}"
-            )
+            raise RuntimeCoreInvariantError("Cannot transition concept from terminal state")
         updated = ConceptRecord(
             concept_id=old.concept_id,
             tenant_id=old.tenant_id,
@@ -201,11 +199,11 @@ class OntologyRuntimeEngine:
     ) -> ConceptRelation:
         """Register a relation between two concepts."""
         if relation_id in self._relations:
-            raise RuntimeCoreInvariantError(f"Duplicate relation_id: {relation_id}")
+            raise RuntimeCoreInvariantError("Duplicate relation_id")
         if parent_ref not in self._concepts:
-            raise RuntimeCoreInvariantError(f"Unknown parent_ref concept: {parent_ref}")
+            raise RuntimeCoreInvariantError("Unknown parent_ref concept")
         if child_ref not in self._concepts:
-            raise RuntimeCoreInvariantError(f"Unknown child_ref concept: {child_ref}")
+            raise RuntimeCoreInvariantError("Unknown child_ref concept")
         now = self._now()
         r = ConceptRelation(
             relation_id=relation_id,
@@ -237,7 +235,7 @@ class OntologyRuntimeEngine:
     ) -> SchemaMapping:
         """Register a schema mapping."""
         if mapping_id in self._mappings:
-            raise RuntimeCoreInvariantError(f"Duplicate mapping_id: {mapping_id}")
+            raise RuntimeCoreInvariantError("Duplicate mapping_id")
         now = self._now()
         m = SchemaMapping(
             mapping_id=mapping_id,
@@ -269,7 +267,7 @@ class OntologyRuntimeEngine:
     ) -> EntityAlignment:
         """Align two entities."""
         if alignment_id in self._alignments:
-            raise RuntimeCoreInvariantError(f"Duplicate alignment_id: {alignment_id}")
+            raise RuntimeCoreInvariantError("Duplicate alignment_id")
         now = self._now()
         a = EntityAlignment(
             alignment_id=alignment_id,
@@ -330,7 +328,7 @@ class OntologyRuntimeEngine:
                                     concept_a_ref=pair[0],
                                     concept_b_ref=pair[1],
                                     status=SemanticConflictStatus.DETECTED,
-                                    reason=f"Concepts share canonical form '{canonical}' but differ in kind: {a.kind.value} vs {b.kind.value}",
+                                    reason="Concept canonical form kind mismatch",
                                     detected_at=now,
                                 )
                                 self._conflicts[cid] = conflict
@@ -365,7 +363,7 @@ class OntologyRuntimeEngine:
                                     concept_a_ref=pair[0],
                                     concept_b_ref=pair[1],
                                     status=SemanticConflictStatus.DETECTED,
-                                    reason=f"Mappings for source '{source}' have conflicting dispositions: {a.disposition.value} vs {b.disposition.value}",
+                                    reason="Mapping disposition conflict",
                                     detected_at=now,
                                 )
                                 self._conflicts[cid] = conflict
@@ -383,11 +381,9 @@ class OntologyRuntimeEngine:
         """Update a conflict's status."""
         old = self._conflicts.get(conflict_id)
         if old is None:
-            raise RuntimeCoreInvariantError(f"Unknown conflict_id: {conflict_id}")
+            raise RuntimeCoreInvariantError("Unknown conflict_id")
         if old.status != SemanticConflictStatus.DETECTED:
-            raise RuntimeCoreInvariantError(
-                f"Cannot transition conflict from {old.status.value} to {new_status.value}"
-            )
+            raise RuntimeCoreInvariantError("Cannot transition conflict from current status")
         updated = SemanticConflict(
             conflict_id=old.conflict_id,
             tenant_id=old.tenant_id,
@@ -465,7 +461,7 @@ class OntologyRuntimeEngine:
     def ontology_snapshot(self, snapshot_id: str, tenant_id: str) -> OntologySnapshot:
         """Capture a point-in-time ontology state snapshot (tenant-scoped counts)."""
         if snapshot_id in self._snapshot_ids:
-            raise RuntimeCoreInvariantError(f"Duplicate snapshot_id: {snapshot_id}")
+            raise RuntimeCoreInvariantError("Duplicate snapshot_id")
         now = self._now()
 
         t_concepts = sum(1 for c in self._concepts.values() if c.tenant_id == tenant_id)
@@ -540,7 +536,7 @@ class OntologyRuntimeEngine:
                         violation_id=vid,
                         tenant_id=tenant_id,
                         operation="unresolved_conflict",
-                        reason=f"Conflict {cf.conflict_id} is unresolved",
+                        reason="Conflict unresolved",
                         detected_at=now,
                     )
                     self._violations[vid] = v
@@ -560,7 +556,7 @@ class OntologyRuntimeEngine:
                             violation_id=vid,
                             tenant_id=tenant_id,
                             operation="orphan_relation",
-                            reason=f"Relation {rel.relation_id} references missing concept via {ref_name}: {ref_val}",
+                            reason="Relation references missing concept",
                             detected_at=now,
                         )
                         self._violations[vid] = v
@@ -578,7 +574,7 @@ class OntologyRuntimeEngine:
                     violation_id=vid,
                     tenant_id=tenant_id,
                     operation="mapping_no_concepts",
-                    reason=f"Tenant {tenant_id} has {len(tenant_mappings)} schema mapping(s) but no aligned concepts",
+                    reason="Mappings registered without aligned concepts",
                     detected_at=now,
                 )
                 self._violations[vid] = v

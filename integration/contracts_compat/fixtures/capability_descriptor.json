@@ -8,6 +8,30 @@
     "argv_only",
     "read_only_environment"
   ],
+  "risk_tier": "low",
+  "declared_effects": [
+    "command_output_created"
+  ],
+  "forbidden_effects": [
+    "unauthorized_state_mutation"
+  ],
+  "evidence_required": [
+    "output_hash"
+  ],
+  "rollback": {
+    "type": "irreversible",
+    "compensation_capability": "create_correction_response"
+  },
+  "graph_projection": {
+    "nodes": [
+      "provider_action",
+      "verification"
+    ],
+    "edges": [
+      "verified_by",
+      "produced"
+    ]
+  },
   "metadata": {
     "owner": "shared-contracts",
     "plane": "execution"

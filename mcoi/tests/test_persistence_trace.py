@@ -78,7 +78,7 @@ def test_malformed_trace_file_raises(tmp_path: Path) -> None:
     (trace_dir / "bad-trace.json").write_text("not json", encoding="utf-8")
 
     store = TraceStore(trace_dir)
-    with pytest.raises(CorruptedDataError):
+    with pytest.raises(CorruptedDataError, match=r"^malformed trace file \(JSONDecodeError\)$"):
         store.load_trace("bad-trace")
 
 

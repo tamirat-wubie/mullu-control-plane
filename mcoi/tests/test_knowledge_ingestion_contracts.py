@@ -244,6 +244,13 @@ class TestProcedureCandidate:
         p = _procedure(steps=(_step(0, "A"), _step(1, "B"), _step(2, "C")))
         assert len(p.steps) == 3
 
+    def test_non_step_element_error_is_bounded(self):
+        with pytest.raises(ValueError) as exc:
+            _procedure(steps=("not-a-step",))
+        assert str(exc.value) == "steps must contain only ProcedureStep instances"
+        assert "steps[0]" not in str(exc.value)
+        assert "not-a-step" not in str(exc.value)
+
     def test_preconditions_and_postconditions(self):
         p = _procedure(
             preconditions=("system is up",),

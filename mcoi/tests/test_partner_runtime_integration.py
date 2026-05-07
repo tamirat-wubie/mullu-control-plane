@@ -140,6 +140,18 @@ class TestPartnerFromContract:
         assert isinstance(result["agreement_id"], str)
         assert len(result["agreement_id"]) > 0
 
+    def test_agreement_title_is_bounded(self, env):
+        _, _, pe, integ = env
+        result = integ.partner_from_contract(
+            partner_id="p1", tenant_id="t1", display_name="Acme",
+            contract_ref="ctr-001",
+        )
+        agreement = pe.get_agreement(result["agreement_id"])
+        assert agreement.title == "Partner agreement"
+        assert "Acme" not in agreement.title
+        assert "ctr-001" not in agreement.title
+        assert agreement.contract_ref == "ctr-001"
+
     def test_agreement_id_deterministic(self, env):
         """Same inputs produce the same agreement_id."""
         _, _, _, integ = env

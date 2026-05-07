@@ -43,7 +43,7 @@ def test_serialize_produces_deterministic_output() -> None:
 
 
 def test_deserialize_malformed_json_raises() -> None:
-    with pytest.raises(CorruptedDataError):
+    with pytest.raises(CorruptedDataError, match=r"^malformed JSON \(JSONDecodeError\)$"):
         deserialize_record("not json", TraceEntry)
 
 
@@ -53,10 +53,14 @@ def test_deserialize_empty_string_raises() -> None:
 
 
 def test_deserialize_wrong_type_raises() -> None:
-    with pytest.raises(CorruptedDataError):
+    with pytest.raises(CorruptedDataError, match=r"^expected JSON object$"):
         deserialize_record("[1, 2, 3]", TraceEntry)
 
 
 def test_serialize_non_dataclass_raises() -> None:
-    with pytest.raises(CorruptedDataError):
+    with pytest.raises(
+        CorruptedDataError,
+        match=r"^serialize_record requires a contract record or dataclass instance$",
+    ) as excinfo:
         serialize_record({"not": "a dataclass"})
+    assert "dict" not in str(excinfo.value)

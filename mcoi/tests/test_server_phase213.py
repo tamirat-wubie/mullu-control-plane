@@ -41,6 +41,20 @@ class TestSafeCompletion:
         resp = client.get("/api/v1/circuit-breaker")
         assert resp.json()["state"] == "closed"
 
+    def test_safe_complete_exception_is_sanitized(self, client, monkeypatch):
+        from mcoi_runtime.app.routers.deps import deps
+
+        def boom(*args, **kwargs):
+            raise RuntimeError("safe-provider-secret")
+
+        monkeypatch.setattr(deps.llm_bridge, "complete", boom)
+        resp = client.post("/api/v1/complete/safe", json={"prompt": "hello"})
+        assert resp.status_code == 503
+        data = resp.json()["detail"]
+        assert data["error"] == "LLM service unavailable"
+        assert data["error_code"] == "llm_service_unavailable"
+        assert "safe-provider-secret" not in str(resp.json())
+
 
 class TestToolWorkflowEndpoint:
     def test_tool_workflow(self, client):
@@ -51,6 +65,9 @@ class TestToolWorkflowEndpoint:
         data = resp.json()
         assert data["content"]
         assert data["governed"] is True
+        assert data["action_proof"]["action"] == "workflow.tools"
+        assert data["action_proof"]["proof_receipt_id"]
+        assert data["action_proof"]["proof_hash"]
 
     def test_tool_workflow_with_filter(self, client):
         resp = client.post("/api/v1/workflow/tools", json={
@@ -65,6 +82,24 @@ class TestToolWorkflowEndpoint:
             "tenant_id": "tool-tenant",
         })
         assert resp.json()["governed"] is True
+
+    def test_tool_workflow_tool_calls_include_policy_receipts(self, client, monkeypatch):
+        from mcoi_runtime.app.routers.deps import deps
+
+        monkeypatch.setattr(
+            deps.tool_agent,
+            "_llm_fn",
+            lambda prompt: "TOOL_CALL: calculator(expression='2+2')",
+        )
+        resp = client.post("/api/v1/workflow/tools", json={"prompt": "calc"})
+        data = resp.json()
+        receipt = data["tool_calls"][0]["capability_policy_receipt"]
+
+        assert resp.status_code == 200
+        assert receipt["tool_id"] == "calculator"
+        assert receipt["policy_allowed"] is True
+        assert receipt["execution_succeeded"] is True
+        assert receipt["argument_hash"]
 
 
 class TestStreamingChat:
@@ -96,6 +131,37 @@ class TestStreamingChat:
             "conversation_id": "stream-gov", "message": "test",
         })
         assert "governed" in resp.text.lower() or resp.status_code == 200
+
+    def test_streaming_chat_contains_budget_witnesses(self, client):
+        resp = client.post("/api/v1/chat/stream", json={
+            "conversation_id": "stream-budget",
+            "message": "test",
+            "tenant_id": "tenant-chat-stream",
+        })
+        body = resp.text
+
+        assert resp.status_code == 200
+        assert '"budget_reservation"' in body
+        assert '"tenant_id": "tenant-chat-stream"' in body
+        assert '"budget_id": "default"' in body
+        assert '"budget_settlement"' in body
+
+    def test_streaming_chat_exception_is_sanitized(self, client, monkeypatch):
+        from mcoi_runtime.app.routers.deps import deps
+
+        def boom(*args, **kwargs):
+            raise RuntimeError("stream-chat-secret")
+
+        monkeypatch.setattr(deps.llm_bridge, "chat", boom)
+        resp = client.post("/api/v1/chat/stream", json={
+            "conversation_id": "stream-fail",
+            "message": "fail",
+        })
+        assert resp.status_code == 503
+        data = resp.json()["detail"]
+        assert data["error"] == "LLM service unavailable"
+        assert data["error_code"] == "llm_service_unavailable"
+        assert "stream-chat-secret" not in str(resp.json())
 
 
 class TestLatestRelease:

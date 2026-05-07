@@ -74,7 +74,7 @@ def test_malformed_metadata_raises_corrupted(tmp_path: Path) -> None:
     (snap_dir / "metadata.json").write_text("not json", encoding="utf-8")
     (snap_dir / "data.json").write_text("{}", encoding="utf-8")
 
-    with pytest.raises(CorruptedDataError):
+    with pytest.raises(CorruptedDataError, match=r"^malformed snapshot metadata \(JSONDecodeError\)$"):
         store.load_snapshot("bad-snap")
 
 
@@ -91,7 +91,7 @@ def test_malformed_data_raises_corrupted(tmp_path: Path) -> None:
     (snap_dir / "metadata.json").write_text(json.dumps(meta), encoding="utf-8")
     (snap_dir / "data.json").write_text("not json", encoding="utf-8")
 
-    with pytest.raises(CorruptedDataError):
+    with pytest.raises(CorruptedDataError, match=r"^malformed snapshot data \(JSONDecodeError\)$"):
         store.load_snapshot("bad-data")
 
 
@@ -104,7 +104,7 @@ def test_tampered_data_raises_corrupted(tmp_path: Path) -> None:
     data_path = tmp_path / "snapshots" / "snap-tamper" / "data.json"
     data_path.write_text(json.dumps({"key": "TAMPERED"}), encoding="utf-8")
 
-    with pytest.raises(CorruptedDataError, match="content hash mismatch"):
+    with pytest.raises(CorruptedDataError, match=r"^snapshot content hash mismatch$"):
         store.load_snapshot("snap-tamper")
 
 

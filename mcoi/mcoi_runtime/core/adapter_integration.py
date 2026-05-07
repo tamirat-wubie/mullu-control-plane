@@ -123,7 +123,7 @@ class AdapterIntegrationBridge:
             scope=MemoryScope.GLOBAL,
             scope_ref_id=normalized.message_id,
             trust_level=MemoryTrustLevel.UNVERIFIED,
-            title=f"Inbound via {normalized.family.value}: {normalized.sender_address}",
+            title="Inbound message",
             content={
                 "message_id": normalized.message_id,
                 "adapter_id": adapter_id,
@@ -271,7 +271,7 @@ class AdapterIntegrationBridge:
             scope=MemoryScope.GLOBAL,
             scope_ref_id=artifact_id,
             trust_level=MemoryTrustLevel.UNVERIFIED,
-            title=f"Parsed {output.family.value}: {filename}",
+            title="Parsed artifact",
             content={
                 "artifact_id": artifact_id,
                 "parser_id": parser_id,
@@ -323,7 +323,7 @@ class AdapterIntegrationBridge:
             scope=MemoryScope.GLOBAL,
             scope_ref_id=artifact_id,
             trust_level=MemoryTrustLevel.UNVERIFIED,
-            title=f"Auto-parsed {output.family.value}: {filename}",
+            title="Auto-parsed artifact",
             content={
                 "artifact_id": artifact_id,
                 "parser_id": output.parser_id,

@@ -91,7 +91,12 @@ class BackpressureEngine:
         return BackpressureState(
             level=level, load_pct=load,
             should_shed=shed, delay_ms=delay_map[level],
-            reason=f"{level.value} load ({load:.1f}%)" if level != PressureLevel.NORMAL else "normal",
+            reason={
+                PressureLevel.NORMAL: "normal load",
+                PressureLevel.ELEVATED: "elevated load",
+                PressureLevel.HIGH: "high load",
+                PressureLevel.CRITICAL: "critical load",
+            }[level],
         )
 
     @property

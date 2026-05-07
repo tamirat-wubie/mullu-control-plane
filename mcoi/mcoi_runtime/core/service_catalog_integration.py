@@ -87,7 +87,7 @@ class ServiceCatalogIntegration:
         req = self._catalog.submit_request(
             request_id, item_id, tenant_id, requester_ref,
             priority=priority,
-            description=f"Campaign need: {campaign_ref}",
+            description="Campaign need",
         )
         _emit(self._events, "request_from_campaign_need", {
             "request_id": request_id, "campaign_ref": campaign_ref,
@@ -116,7 +116,7 @@ class ServiceCatalogIntegration:
         req = self._catalog.submit_request(
             request_id, item_id, tenant_id, requester_ref,
             priority=priority,
-            description=f"Program need: {program_ref}",
+            description="Program need",
         )
         _emit(self._events, "request_from_program_need", {
             "request_id": request_id, "program_ref": program_ref,
@@ -145,7 +145,7 @@ class ServiceCatalogIntegration:
         req = self._catalog.submit_request(
             request_id, item_id, tenant_id, requester_ref,
             priority=priority,
-            description=f"Asset gap: {asset_ref}",
+            description="Asset gap",
         )
         _emit(self._events, "request_from_asset_gap", {
             "request_id": request_id, "asset_ref": asset_ref,
@@ -175,7 +175,7 @@ class ServiceCatalogIntegration:
         req = self._catalog.submit_request(
             request_id, item_id, tenant_id, requester_ref,
             priority=priority, estimated_cost=estimated_cost,
-            description=f"Procurement need: {procurement_ref}",
+            description="Procurement need",
         )
         _emit(self._events, "request_from_procurement_need", {
             "request_id": request_id, "procurement_ref": procurement_ref,
@@ -299,7 +299,7 @@ class ServiceCatalogIntegration:
             scope=MemoryScope.GLOBAL,
             scope_ref_id=scope_ref_id,
             trust_level=MemoryTrustLevel.VERIFIED,
-            title=f"Service catalog state: {scope_ref_id}",
+            title="Service catalog state",
             content=content,
             source_ids=(scope_ref_id,),
             tags=("service_catalog", "request", "fulfillment"),

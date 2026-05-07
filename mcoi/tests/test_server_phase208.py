@@ -42,6 +42,9 @@ class TestTracedWorkflowEndpoint:
         assert data["status"] == "completed"
         assert data["trace_id"] is not None
         assert data["trace_frames"] >= 3
+        assert data["action_proof"]["action"] == "workflow.traced"
+        assert data["action_proof"]["proof_receipt_id"]
+        assert data["action_proof"]["proof_hash"]
 
     def test_traced_workflow_bad_capability(self, client):
         resp = client.post("/api/v1/workflow/traced", json={

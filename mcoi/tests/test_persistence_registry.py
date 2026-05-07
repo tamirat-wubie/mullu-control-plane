@@ -16,6 +16,7 @@ from mcoi_runtime.persistence import (
     CorruptedDataError,
     RegistryBackend,
 )
+from mcoi_runtime.persistence.registry_backend import _entry_value_to_dict
 
 
 @dataclass(frozen=True, slots=True)
@@ -80,6 +81,15 @@ def test_save_empty_registry(tmp_path: Path) -> None:
     assert loaded.list() == ()
 
 
+def test_entry_value_to_dict_bounds_non_dataclass_value_error() -> None:
+    with pytest.raises(
+        CorruptedDataError,
+        match=r"^registry entry value must be a dataclass instance$",
+    ) as excinfo:
+        _entry_value_to_dict({"name": "shell"})
+    assert "dict" not in str(excinfo.value)
+
+
 def test_load_nonexistent_registry_raises(tmp_path: Path) -> None:
     backend = RegistryBackend(tmp_path / "registry")
     with pytest.raises(CorruptedDataError):
@@ -92,7 +102,7 @@ def test_malformed_registry_file_raises(tmp_path: Path) -> None:
     (reg_dir / "registry.json").write_text("not json", encoding="utf-8")
 
     backend = RegistryBackend(reg_dir)
-    with pytest.raises(CorruptedDataError):
+    with pytest.raises(CorruptedDataError, match=r"^malformed registry file \(JSONDecodeError\)$"):
         backend.load_registry()
 
 

@@ -1,0 +1,164 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:deployment-orchestration-receipt:1",
+  "title": "Deployment Orchestration Receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "receipt_id",
+    "gateway_host",
+    "gateway_url",
+    "expected_environment",
+    "repository",
+    "rendered_ingress_output",
+    "ingress_applied",
+    "preflight_required",
+    "preflight_ready",
+    "dispatch_requested",
+    "dispatch_run_id",
+    "dispatch_conclusion",
+    "mcp_operator_checklist_required",
+    "mcp_operator_checklist_valid",
+    "mcp_operator_checklist_path",
+    "evidence_refs"
+  ],
+  "properties": {
+    "receipt_id": {
+      "type": "string",
+      "pattern": "^deployment-witness-orchestration-[0-9a-f]{16}$"
+    },
+    "gateway_host": {
+      "type": "string",
+      "minLength": 1
+    },
+    "gateway_url": {
+      "type": "string",
+      "minLength": 1
+    },
+    "expected_environment": {
+      "type": "string",
+      "enum": [
+        "pilot",
+        "production"
+      ]
+    },
+    "repository": {
+      "type": "string",
+      "minLength": 1
+    },
+    "rendered_ingress_output": {
+      "type": "string",
+      "minLength": 1
+    },
+    "ingress_applied": {
+      "type": "boolean"
+    },
+    "preflight_required": {
+      "type": "boolean"
+    },
+    "preflight_ready": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "dispatch_requested": {
+      "type": "boolean"
+    },
+    "dispatch_run_id": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 0
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "dispatch_conclusion": {
+      "type": "string"
+    },
+    "mcp_operator_checklist_required": {
+      "type": "boolean"
+    },
+    "mcp_operator_checklist_valid": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "mcp_operator_checklist_path": {
+      "type": "string",
+      "minLength": 1
+    },
+    "evidence_refs": {
+      "type": "array",
+      "minItems": 5,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    }
+  },
+  "allOf": [
+    {
+      "properties": {
+        "evidence_refs": {
+          "contains": {
+            "type": "string",
+            "pattern": "^ingress_render:"
+          }
+        }
+      }
+    },
+    {
+      "properties": {
+        "evidence_refs": {
+          "contains": {
+            "type": "string",
+            "pattern": "^deployment_target:"
+          }
+        }
+      }
+    },
+    {
+      "properties": {
+        "evidence_refs": {
+          "contains": {
+            "type": "string",
+            "pattern": "^preflight:"
+          }
+        }
+      }
+    },
+    {
+      "properties": {
+        "evidence_refs": {
+          "contains": {
+            "type": "string",
+            "pattern": "^dispatch:"
+          }
+        }
+      }
+    },
+    {
+      "properties": {
+        "evidence_refs": {
+          "contains": {
+            "type": "string",
+            "pattern": "^mcp_operator_checklist:"
+          }
+        }
+      }
+    }
+  ]
+}

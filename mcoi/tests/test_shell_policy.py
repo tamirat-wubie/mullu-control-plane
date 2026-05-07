@@ -11,7 +11,7 @@ import subprocess
 import pytest
 
 from mcoi_runtime.contracts.shell_policy import ShellCommandPolicy, ShellPolicyVerdict
-from mcoi_runtime.core.shell_policy_engine import ShellPolicyEngine
+from mcoi_runtime.governance.policy.shell import ShellPolicyEngine
 from mcoi_runtime.adapters.executor_base import ExecutionRequest
 from mcoi_runtime.adapters.shell_executor import ShellExecutor
 from mcoi_runtime.contracts.execution import ExecutionOutcome
@@ -26,6 +26,7 @@ def _basic_policy(**overrides: object) -> ShellCommandPolicy:
         policy_id="test-policy",
         allowed_executables=("python3", "echo", "ls"),
         denied_patterns=(r"\brm\s+.*-\s*r\s*f\b",),
+        enabled=True,
         max_argv_length=10,
         max_single_arg_bytes=256,
         allow_absolute_paths=False,
@@ -55,6 +56,7 @@ class TestShellCommandPolicyContract:
         policy = _basic_policy()
         assert policy.policy_id == "test-policy"
         assert "python3" in policy.allowed_executables
+        assert policy.enabled is True
         assert policy.max_argv_length == 10
 
     def test_empty_policy_id_rejected(self) -> None:
@@ -66,8 +68,24 @@ class TestShellCommandPolicyContract:
             _basic_policy(allowed_executables=())
 
     def test_invalid_regex_denied_pattern_rejected(self) -> None:
-        with pytest.raises(ValueError, match="not a valid regex"):
+        with pytest.raises(ValueError, match=r"^denied pattern must be a valid regex$") as exc_info:
             _basic_policy(denied_patterns=("[invalid",))
+        assert "[invalid" not in str(exc_info.value)
+
+    def test_blank_allowed_executable_entry_rejected(self) -> None:
+        with pytest.raises(ValueError, match=r"^allowed executable entry must be a non-empty string$") as exc_info:
+            _basic_policy(allowed_executables=("python3", ""))
+        assert "[1]" not in str(exc_info.value)
+
+    def test_blank_denied_pattern_entry_rejected(self) -> None:
+        with pytest.raises(ValueError, match=r"^denied pattern entry must be a non-empty string$") as exc_info:
+            _basic_policy(denied_patterns=("",))
+        assert "[0]" not in str(exc_info.value)
+
+    def test_non_boolean_enabled_rejected(self) -> None:
+        with pytest.raises(ValueError, match=r"^enabled must be a boolean$") as exc_info:
+            _basic_policy(enabled="yes")
+        assert "yes" not in str(exc_info.value)
 
     def test_frozen(self) -> None:
         policy = _basic_policy()
@@ -80,9 +98,16 @@ class TestShellPolicyVerdictContract:
         v = ShellPolicyVerdict(verdict="allow", matched_rule="ok", argv_summary=("echo", "hi"))
         assert v.verdict == "allow"
 
+    def test_valid_disabled_denial(self) -> None:
+        v = ShellPolicyVerdict(verdict="deny_disabled", matched_rule="shell execution disabled")
+        assert v.verdict == "deny_disabled"
+
     def test_invalid_verdict_rejected(self) -> None:
-        with pytest.raises(ValueError, match="verdict must be one of"):
+        with pytest.raises(ValueError, match="^verdict has unsupported value$") as exc_info:
             ShellPolicyVerdict(verdict="bogus", matched_rule="x")
+        message = str(exc_info.value)
+        assert "bogus" not in message
+        assert "allow" not in message
 
     def test_argv_summary_truncated_to_three(self) -> None:
         v = ShellPolicyVerdict(
@@ -98,6 +123,12 @@ class TestShellPolicyVerdictContract:
 # ---------------------------------------------------------------------------
 
 class TestShellPolicyEngine:
+    def test_disabled_policy_denies_before_other_checks(self) -> None:
+        engine = ShellPolicyEngine(_basic_policy(enabled=False))
+        verdict = engine.evaluate(("echo", "hello"))
+        assert verdict.verdict == "deny_disabled"
+        assert verdict.matched_rule == "shell execution disabled"
+
     def test_allowed_passes(self) -> None:
         engine = ShellPolicyEngine(_basic_policy())
         verdict = engine.evaluate(("echo", "hello"))
@@ -208,10 +239,11 @@ class TestDefaultPolicies:
         from mcoi_runtime.app.shell_policies import list_shell_policies, get_shell_policy
 
         policies = list_shell_policies()
-        assert len(policies) >= 3
+        assert len(policies) >= 4
         assert get_shell_policy("shell-sandboxed") is not None
         assert get_shell_policy("shell-local-dev") is not None
         assert get_shell_policy("shell-pilot-prod") is not None
+        assert get_shell_policy("shell-pilot-prod-disabled") is not None
 
     def test_sandboxed_allows_echo(self) -> None:
         from mcoi_runtime.app.shell_policies import SANDBOXED
@@ -230,6 +262,14 @@ class TestDefaultPolicies:
 
         engine = ShellPolicyEngine(PILOT_PROD)
         assert engine.evaluate(("grep", "foo", "bar")).verdict == "deny_executable"
+
+    def test_pilot_prod_disabled_denies_all_shell_execution(self) -> None:
+        from mcoi_runtime.app.shell_policies import PILOT_PROD_DISABLED
+
+        engine = ShellPolicyEngine(PILOT_PROD_DISABLED)
+        verdict = engine.evaluate(("echo", "test"))
+        assert verdict.verdict == "deny_disabled"
+        assert verdict.matched_rule == "shell execution disabled"
 
     def test_local_dev_allows_grep(self) -> None:
         from mcoi_runtime.app.shell_policies import LOCAL_DEV

@@ -63,6 +63,24 @@ class TestApprovalContracts:
         r = _request()
         assert r.request_id == "req-1"
 
+    def test_request_preserves_allowed_approver_ids(self):
+        r = _request(allowed_approver_ids=("ops-lead", "admin-1"))
+        assert r.allowed_approver_ids == ("ops-lead", "admin-1")
+
+    def test_request_rejects_duplicate_allowed_approver_ids(self):
+        with pytest.raises(ValueError, match="^allowed_approver_ids must not contain duplicates$") as exc_info:
+            _request(allowed_approver_ids=("ops-lead", "ops-lead"))
+        message = str(exc_info.value)
+        assert message == "allowed_approver_ids must not contain duplicates"
+        assert "ops-lead" not in message
+
+    def test_request_rejects_requester_in_allowed_approver_ids(self):
+        with pytest.raises(ValueError, match="^allowed_approver_ids must exclude requester_id$") as exc_info:
+            _request(requester_id="ops-lead", allowed_approver_ids=("ops-lead", "admin-1"))
+        message = str(exc_info.value)
+        assert message == "allowed_approver_ids must exclude requester_id"
+        assert "ops-lead" not in message
+
     def test_decision_active(self):
         d = ApprovalDecisionRecord(
             decision_id="d-1", request_id="req-1", approver_id="op-1",
@@ -104,8 +122,9 @@ class TestApprovalRequestManagement:
     def test_duplicate_request_rejected(self):
         engine = _engine()
         engine.submit_request(_request())
-        with pytest.raises(ValueError, match="already exists"):
+        with pytest.raises(ValueError, match="^approval request already exists$") as exc_info:
             engine.submit_request(_request())
+        assert "req-1" not in str(exc_info.value)
 
     def test_list_pending(self):
         engine = _engine()
@@ -146,8 +165,49 @@ class TestApprovalDecisions:
 
     def test_request_not_found(self):
         engine = _engine()
-        with pytest.raises(ValueError, match="not found"):
+        with pytest.raises(ValueError, match="^approval request unavailable$") as exc_info:
             engine.record_decision(request_id="missing", approver_id="op-1", approved=True)
+        assert "missing" not in str(exc_info.value)
+
+    def test_requester_cannot_approve_own_request(self):
+        engine = _engine()
+        engine.submit_request(_request(requester_id="op-1"))
+        with pytest.raises(ValueError, match="^requester cannot approve own request$"):
+            engine.record_decision(request_id="req-1", approver_id="op-1", approved=True)
+        assert engine.get_request("req-1").requester_id == "op-1"
+        assert len(engine.list_pending()) == 1
+
+    def test_unauthorized_approver_cannot_record_decision(self):
+        engine = _engine()
+        engine.submit_request(_request(allowed_approver_ids=("ops-lead", "admin-1")))
+        with pytest.raises(ValueError, match="^approver not authorized for request$") as exc_info:
+            engine.record_decision(request_id="req-1", approver_id="intern-1", approved=True)
+        message = str(exc_info.value)
+        assert message == "approver not authorized for request"
+        assert "intern-1" not in message
+        assert len(engine.list_pending()) == 1
+
+    def test_authorized_approver_can_record_decision(self):
+        engine = _engine()
+        engine.submit_request(_request(allowed_approver_ids=("ops-lead", "admin-1")))
+        decision = engine.record_decision(
+            request_id="req-1",
+            approver_id="ops-lead",
+            approved=True,
+        )
+        assert decision.status is ApprovalStatus.APPROVED
+        assert decision.approver_id == "ops-lead"
+
+    def test_request_cannot_record_conflicting_second_decision(self):
+        engine = _engine()
+        engine.submit_request(_request())
+        decision = engine.record_decision(request_id="req-1", approver_id="op-1", approved=True)
+        with pytest.raises(ValueError, match="^approval request already decided$") as exc_info:
+            engine.record_decision(request_id="req-1", approver_id="op-2", approved=False)
+        message = str(exc_info.value)
+        assert decision.status is ApprovalStatus.APPROVED
+        assert message == "approval request already decided"
+        assert "req-1" not in message
 
 
 # --- Validation ---

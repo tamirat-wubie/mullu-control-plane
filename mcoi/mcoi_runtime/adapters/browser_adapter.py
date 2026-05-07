@@ -10,7 +10,6 @@ Invariants:
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, Mapping
 
 from mcoi_runtime.contracts.browser import (
     ElementSelector,

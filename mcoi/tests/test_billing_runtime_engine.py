@@ -178,8 +178,9 @@ class TestRegisterAccount:
 
     def test_register_duplicate_raises(self, engine):
         engine.register_account("a1", "t1", "vendor-x")
-        with pytest.raises(RuntimeCoreInvariantError, match="Duplicate account_id"):
+        with pytest.raises(RuntimeCoreInvariantError, match="Duplicate account_id") as exc_info:
             engine.register_account("a1", "t1", "vendor-x")
+        assert "a1" not in str(exc_info.value)
 
     def test_register_multiple_accounts(self, engine):
         engine.register_account("a1", "t1", "vendor-x")
@@ -208,8 +209,9 @@ class TestGetAccount:
         assert isinstance(engine.get_account("a1"), BillingAccount)
 
     def test_get_unknown_raises(self, engine):
-        with pytest.raises(RuntimeCoreInvariantError, match="Unknown account_id"):
+        with pytest.raises(RuntimeCoreInvariantError, match="Unknown account_id") as exc_info:
             engine.get_account("nonexistent")
+        assert "nonexistent" not in str(exc_info.value)
 
     def test_get_preserves_fields(self, engine):
         engine.register_account("a1", "t1", "vendor-x", currency="GBP")
@@ -404,8 +406,9 @@ class TestCreateInvoice:
 
     def test_create_duplicate_raises(self, account_engine):
         account_engine.create_invoice("inv-1", "acct-1")
-        with pytest.raises(RuntimeCoreInvariantError, match="Duplicate invoice_id"):
+        with pytest.raises(RuntimeCoreInvariantError, match="Duplicate invoice_id") as exc_info:
             account_engine.create_invoice("inv-1", "acct-1")
+        assert "inv-1" not in str(exc_info.value)
 
     def test_create_unknown_account_raises(self, engine):
         with pytest.raises(RuntimeCoreInvariantError, match="Unknown account_id"):
@@ -514,13 +517,15 @@ class TestPayInvoice:
 
     def test_pay_already_paid_raises(self, issued_invoice_engine):
         issued_invoice_engine.pay_invoice("inv-1")
-        with pytest.raises(RuntimeCoreInvariantError):
+        with pytest.raises(RuntimeCoreInvariantError, match="cannot pay finalized invoice") as exc_info:
             issued_invoice_engine.pay_invoice("inv-1")
+        assert "paid" not in str(exc_info.value)
 
     def test_pay_voided_raises(self, issued_invoice_engine):
         issued_invoice_engine.void_invoice("inv-1")
-        with pytest.raises(RuntimeCoreInvariantError):
+        with pytest.raises(RuntimeCoreInvariantError, match="cannot pay finalized invoice") as exc_info:
             issued_invoice_engine.pay_invoice("inv-1")
+        assert "voided" not in str(exc_info.value)
 
     def test_pay_draft_succeeds(self, invoice_engine):
         """Draft invoices are not terminal, so pay should work."""
@@ -561,13 +566,15 @@ class TestVoidInvoice:
 
     def test_void_already_voided_raises(self, issued_invoice_engine):
         issued_invoice_engine.void_invoice("inv-1")
-        with pytest.raises(RuntimeCoreInvariantError):
+        with pytest.raises(RuntimeCoreInvariantError, match="cannot void finalized invoice") as exc_info:
             issued_invoice_engine.void_invoice("inv-1")
+        assert "voided" not in str(exc_info.value)
 
     def test_void_already_paid_raises(self, issued_invoice_engine):
         issued_invoice_engine.pay_invoice("inv-1")
-        with pytest.raises(RuntimeCoreInvariantError):
+        with pytest.raises(RuntimeCoreInvariantError, match="cannot void finalized invoice") as exc_info:
             issued_invoice_engine.void_invoice("inv-1")
+        assert "paid" not in str(exc_info.value)
 
     def test_void_unknown_raises(self, engine):
         with pytest.raises(RuntimeCoreInvariantError):
@@ -1022,6 +1029,13 @@ class TestResolveDispute:
         issued_invoice_engine.resolve_dispute("disp-1", accepted=True)
         assert issued_invoice_engine.credit_count == before + 1
 
+    def test_resolve_accepted_credit_reason_bounded(self, issued_invoice_engine):
+        issued_invoice_engine.open_dispute("disp-1", "inv-1", amount=50.0)
+        issued_invoice_engine.resolve_dispute("disp-1", accepted=True)
+        credit = issued_invoice_engine.credits_for_account("acct-1")[0]
+        assert credit.reason == "accepted dispute credit"
+        assert "disp-1" not in credit.reason
+
     def test_resolve_accepted_zero_amount_no_credit(self, issued_invoice_engine):
         issued_invoice_engine.open_dispute("disp-1", "inv-1", amount=0.0)
         before = issued_invoice_engine.credit_count
@@ -1043,18 +1057,21 @@ class TestResolveDispute:
     def test_resolve_terminal_raises_accepted(self, issued_invoice_engine):
         issued_invoice_engine.open_dispute("disp-1", "inv-1", amount=50.0)
         issued_invoice_engine.resolve_dispute("disp-1", accepted=True)
-        with pytest.raises(RuntimeCoreInvariantError):
+        with pytest.raises(RuntimeCoreInvariantError, match="dispute already resolved") as exc_info:
             issued_invoice_engine.resolve_dispute("disp-1", accepted=True)
+        assert "accepted" not in str(exc_info.value)
 
     def test_resolve_terminal_raises_rejected(self, issued_invoice_engine):
         issued_invoice_engine.open_dispute("disp-1", "inv-1")
         issued_invoice_engine.resolve_dispute("disp-1", accepted=False)
-        with pytest.raises(RuntimeCoreInvariantError):
+        with pytest.raises(RuntimeCoreInvariantError, match="dispute already resolved") as exc_info:
             issued_invoice_engine.resolve_dispute("disp-1")
+        assert "rejected" not in str(exc_info.value)
 
     def test_resolve_unknown_raises(self, engine):
-        with pytest.raises(RuntimeCoreInvariantError, match="Unknown dispute_id"):
+        with pytest.raises(RuntimeCoreInvariantError, match="Unknown dispute_id") as exc_info:
             engine.resolve_dispute("nonexistent")
+        assert "nonexistent" not in str(exc_info.value)
 
     def test_resolve_default_rejected(self, issued_invoice_engine):
         issued_invoice_engine.open_dispute("disp-1", "inv-1")
@@ -1225,6 +1242,16 @@ class TestViolationDetection:
         violations = account_engine.detect_billing_violations()
         assert all(v.detected_at != "" for v in violations)
 
+    def test_overdue_violation_reason_bounded(self, account_engine):
+        account_engine.create_invoice("inv-1", "acct-1", due_at=_PAST)
+        account_engine.add_charge("ch-1", "inv-1", 100.0)
+        account_engine.issue_invoice("inv-1")
+        violations = account_engine.detect_billing_violations()
+        overdue = [v for v in violations if v.operation == "overdue_invoice"]
+        assert overdue[0].reason == "invoice overdue"
+        assert "inv-1" not in overdue[0].reason
+        assert _PAST not in overdue[0].reason
+
     def test_future_due_no_violation(self, account_engine):
         account_engine.create_invoice("inv-1", "acct-1", due_at=_FUTURE)
         account_engine.add_charge("ch-1", "inv-1", 100.0)
@@ -1253,6 +1280,19 @@ class TestViolationDetection:
         account_engine.detect_billing_violations()
         acct = account_engine.get_account("acct-1")
         assert acct.status == BillingStatus.DELINQUENT
+
+    def test_delinquent_violation_reason_bounded(self, account_engine):
+        account_engine.create_invoice("inv-1", "acct-1", due_at=_PAST)
+        account_engine.add_charge("ch-1", "inv-1", 100.0)
+        account_engine.issue_invoice("inv-1")
+        account_engine.create_invoice("inv-2", "acct-1", due_at=_PAST2)
+        account_engine.add_charge("ch-2", "inv-2", 50.0)
+        account_engine.issue_invoice("inv-2")
+        violations = account_engine.detect_billing_violations()
+        delinquent = [v for v in violations if v.operation == "delinquent_account"]
+        assert delinquent[0].reason == "account delinquent"
+        assert "acct-1" not in delinquent[0].reason
+        assert "2" not in delinquent[0].reason
 
     def test_single_overdue_no_delinquent(self, account_engine):
         account_engine.create_invoice("inv-1", "acct-1", due_at=_PAST)

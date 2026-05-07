@@ -231,7 +231,7 @@ class ChangeIntegration:
                 executed += 1
         self._change.collect_evidence(
             change_id, ChangeEvidenceKind.LOG_ENTRY,
-            description=f"Applied to portfolio {portfolio_ref_id}: {action}",
+            description="Portfolio change applied",
         )
         _emit(self._events, "change_applied_to_portfolio", {
             "change_id": change_id,
@@ -261,7 +261,7 @@ class ChangeIntegration:
                 executed += 1
         self._change.collect_evidence(
             change_id, ChangeEvidenceKind.LOG_ENTRY,
-            description=f"Applied to availability {identity_ref_id}: {action}",
+            description="Availability change applied",
         )
         _emit(self._events, "change_applied_to_availability", {
             "change_id": change_id,
@@ -291,7 +291,7 @@ class ChangeIntegration:
                 executed += 1
         self._change.collect_evidence(
             change_id, ChangeEvidenceKind.LOG_ENTRY,
-            description=f"Applied to financials {budget_ref_id}: {action}",
+            description="Financial change applied",
         )
         _emit(self._events, "change_applied_to_financials", {
             "change_id": change_id,
@@ -321,7 +321,7 @@ class ChangeIntegration:
                 executed += 1
         self._change.collect_evidence(
             change_id, ChangeEvidenceKind.LOG_ENTRY,
-            description=f"Applied to connector routing {connector_ref_id}: {action}",
+            description="Connector routing change applied",
         )
         _emit(self._events, "change_applied_to_connector_routing", {
             "change_id": change_id,
@@ -351,7 +351,7 @@ class ChangeIntegration:
                 executed += 1
         self._change.collect_evidence(
             change_id, ChangeEvidenceKind.LOG_ENTRY,
-            description=f"Applied to domain pack {domain_pack_ref_id}: {action}",
+            description="Domain pack change applied",
         )
         _emit(self._events, "change_applied_to_domain_pack", {
             "change_id": change_id,
@@ -389,7 +389,7 @@ class ChangeIntegration:
             scope=MemoryScope.GLOBAL,
             scope_ref_id=scope_ref_id,
             trust_level=MemoryTrustLevel.VERIFIED,
-            title=f"Change state: {scope_ref_id}",
+            title="Change state",
             content=content,
             source_ids=(scope_ref_id,),
             tags=("change", "controlled", "state"),

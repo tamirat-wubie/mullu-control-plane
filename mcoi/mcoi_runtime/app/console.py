@@ -11,7 +11,6 @@ from __future__ import annotations
 
 from .view_models import (
     CoordinationSummaryView,
-    ErrorView,
     ExecutionSummaryView,
     GoalSummaryView,
     GraphSummaryView,
@@ -72,10 +71,37 @@ def render_run_summary(view: RunSummaryView) -> str:
         lines.append(f"  communication_prov: {view.communication_provider_id}")
     if view.model_provider_id:
         lines.append(f"  model_prov:         {view.model_provider_id}")
+    if view.provider_attributions:
+        lines.append(f"  provider_attrs:     {len(view.provider_attributions)}")
+        for attribution in view.provider_attributions:
+            lines.append(
+                "    "
+                f"{attribution.provider_class.value}: {attribution.provider_id} "
+                f"({attribution.source.value})"
+            )
+    if view.provider_attribution_count:
+        lines.append(f"  provider_attr_total:{view.provider_attribution_count}")
+        lines.append(f"  provider_attr_receipt:{view.receipt_attributed_provider_operation_count}")
+        lines.append(f"  provider_attr_routing:{view.routing_attributed_provider_operation_count}")
+        lines.append(f"  provider_attr_plane:{view.plane_attributed_provider_operation_count}")
     if view.autonomy_mode:
         lines.append(f"  autonomy_mode:      {view.autonomy_mode}")
     if view.autonomy_decision:
         lines.append(f"  autonomy_decision:  {view.autonomy_decision}")
+    if view.mil_program_id:
+        lines.append(f"  mil_program_id:     {view.mil_program_id}")
+        lines.append(f"  mil_instructions:   {view.mil_instruction_count}")
+        lines.append(f"  mil_verified:       {view.mil_verification_passed}")
+        if view.mil_audit_record_id:
+            lines.append(f"  mil_audit_record:   {view.mil_audit_record_id}")
+        if view.mil_trace_ids:
+            lines.append(f"  mil_trace_count:    {len(view.mil_trace_ids)}")
+        if view.mil_verification_issues:
+            lines.append(f"  mil_issues:         {', '.join(view.mil_verification_issues)}")
+        if view.mil_instruction_trace:
+            lines.append("  mil_trace:")
+            for instruction in view.mil_instruction_trace:
+                lines.append(f"    {instruction}")
     return "\n".join(lines)
 
 
@@ -109,6 +135,8 @@ def render_replay_summary(view: ReplaySummaryView) -> str:
         f"  trace_found:      {view.trace_found}",
         f"  trace_hash_match: {view.trace_hash_matches}",
     ]
+    if view.trace_lookup_reason:
+        lines.append(f"  trace_lookup:     {view.trace_lookup_reason}")
     if view.reasons:
         lines.append("  reasons:")
         for reason in view.reasons:
@@ -172,6 +200,8 @@ def render_skill_summary(view: SkillSummaryView) -> str:
     ]
     if view.failed_step:
         lines.append(f"  failed_step:      {view.failed_step}")
+    if view.lifecycle_transition_warning:
+        lines.append(f"  lifecycle_warning: {view.lifecycle_transition_warning}")
     if view.structured_errors:
         lines.append(f"  errors ({len(view.structured_errors)}):")
         for err in view.structured_errors:

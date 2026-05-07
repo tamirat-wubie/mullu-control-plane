@@ -545,7 +545,9 @@ class TestVerification:
         )
         reopens = engine.reopens_for_remediation("rem-1")
         assert len(reopens) == 1
-        assert "Bad" in reopens[0].reason
+        assert reopens[0].reason == "Verification failed"
+        assert "Bad" not in reopens[0].reason
+        assert "rem-1" not in reopens[0].reason
 
     def test_verify_failed_no_notes_reopen_reason(self, engine):
         _make_remediation(engine)
@@ -1613,3 +1615,38 @@ class TestEdgeCasesViolationDetectionEmpty:
         viols = engine.detect_violations()
         overdue = [v for v in viols if v.operation == "overdue"]
         assert len(overdue) == 0
+
+
+class TestBoundedContracts:
+    def test_duplicate_remediation_error_is_bounded(self, engine):
+        engine.create_remediation("remediation-secret", "tenant-secret", "Sensitive")
+
+        with pytest.raises(RuntimeCoreInvariantError) as excinfo:
+            engine.create_remediation("remediation-secret", "tenant-secret", "Sensitive")
+
+        message = str(excinfo.value)
+        assert message == "Duplicate remediation_id"
+        assert "remediation-secret" not in message
+        assert "tenant-secret" not in message
+
+    def test_reopen_and_overdue_reasons_are_bounded(self, engine):
+        engine.create_remediation("rem-notes", "tenant-secret", "Notes")
+        engine.verify_remediation(
+            "verification-secret",
+            "rem-notes",
+            "verifier",
+            status=RemediationVerificationStatus.FAILED,
+            notes="secret-note",
+        )
+        engine.create_remediation("rem-overdue", "tenant-secret", "Late", deadline=_past_deadline())
+
+        reopens = engine.reopens_for_remediation("rem-notes")
+        violations = engine.detect_violations()
+        overdue = [violation for violation in violations if violation.operation == "overdue"]
+        joined = " ".join([reopens[0].reason] + [violation.reason for violation in overdue])
+
+        assert reopens[0].reason == "Verification failed"
+        assert overdue[0].reason == "Remediation overdue"
+        assert "secret-note" not in joined
+        assert "rem-notes" not in joined
+        assert "rem-overdue" not in joined

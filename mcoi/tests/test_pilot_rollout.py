@@ -1,5 +1,6 @@
 """Phase 126 — Live Pilot Rollout Tests."""
 import pytest
+from unittest.mock import Mock
 from mcoi_runtime.pilot.customer_profile import PilotCustomerProfile, SELECTION_CRITERIA, evaluate_fit
 from mcoi_runtime.pilot.live_deployment import LivePilotDeployment, DeploymentReport
 from mcoi_runtime.pilot.weekly_tracker import WeeklyPilotTracker, WeeklySnapshot, FeedbackEntry
@@ -51,6 +52,15 @@ class TestLiveDeployment:
         deployment = LivePilotDeployment()
         report = deployment.deploy(_good_profile())
         assert report.tenant_id == "cust-001"
+
+    def test_deploy_failure_is_bounded(self):
+        deployment = LivePilotDeployment()
+        deployment._bootstrap.bootstrap = Mock(side_effect=RuntimeError("secret bootstrap failure"))
+
+        report = deployment.deploy(_good_profile())
+
+        assert report.bootstrap_status == "failed"
+        assert report.issues == ["bootstrap failed (RuntimeError)"]
 
     def test_load_data(self):
         deployment = LivePilotDeployment()

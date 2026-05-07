@@ -203,6 +203,143 @@ Providers transition between three states:
 Unhealthy providers appear in the run summary. Use `mcoi status` to check the
 current provider state before executing requests.
 
+## Gateway MCP Capability Imports
+
+Gateway MCP tools are activated through a governed manifest, not by ad-hoc
+runtime registration. The operator procedure is documented in
+[`docs/55_mcp_capability_manifest.md`](docs/55_mcp_capability_manifest.md).
+The machine-readable handoff checklist is
+`examples/mcp_operator_handoff_checklist.json`.
+
+Minimum sequence:
+
+1. Validate the checklist and manifest:
+
+```powershell
+python scripts\validate_mcp_operator_checklist.py --checklist examples\mcp_operator_handoff_checklist.json --json
+python scripts\validate_mcp_capability_manifest.py --manifest examples\mcp_capability_manifest.json --json
+```
+
+2. Start the gateway with the same manifest:
+
+```powershell
+$env:MULLU_MCP_CAPABILITY_MANIFEST_PATH = "examples\mcp_capability_manifest.json"
+python -m gateway.server
+```
+
+3. Inspect `/mcp/operator/read-model` for `mcp_manifest_valid: true`.
+4. Collect `/runtime/conformance` and verify `mcp_capability_manifest_valid: true`.
+5. Verify `/runtime/conformance` also reports `capability_plan_bundle_canary_passed: true`.
+6. Run deployment preflight with the manifest path before witness dispatch.
+7. Persist the deployment orchestration receipt at
+   `$env:MULLU_DEPLOYMENT_ORCHESTRATION_OUTPUT`.
+
+If the manifest is invalid, gateway deployment readiness remains blocked until
+the manifest produces certified capabilities, ownership records, approval
+policies, and an escalation policy. If capability plan evidence bundle export
+is not wired, deployment readiness remains blocked until `/capability-plans/{plan_id}/closure`
+can return the terminal certificate and `plan_evidence_bundle`.
+
+## General-Agent Promotion Handoff
+
+General-agent production promotion is executed from a governed handoff packet,
+not from ad-hoc shell steps. Start with
+[`docs/59_general_agent_promotion_handoff_packet.md`](docs/59_general_agent_promotion_handoff_packet.md).
+
+Minimum sequence:
+
+1. Validate the machine-readable handoff packet:
+
+```powershell
+python scripts\validate_general_agent_promotion_handoff_packet.py --packet examples\general_agent_promotion_handoff_packet.json --json
+python scripts\validate_general_agent_promotion_environment_bindings.py --contract examples\general_agent_promotion_environment_bindings.json --json
+python scripts\emit_general_agent_promotion_environment_binding_receipt.py --output .change_assurance\general_agent_promotion_environment_binding_receipt.json --json
+python scripts\validate_general_agent_promotion_environment_binding_receipt.py --receipt .change_assurance\general_agent_promotion_environment_binding_receipt.json --require-ready --json
+```
+
+2. Validate the machine-readable checklist:
+
+```powershell
+python scripts\validate_general_agent_promotion_operator_checklist.py --checklist examples\general_agent_promotion_operator_checklist.json --json
+```
+
+3. Follow the operator runbook:
+
+```text
+docs/58_general_agent_promotion_operator_runbook.md
+```
+
+4. Validate the aggregate closure plan before approval or execution:
+
+```powershell
+python scripts\validate_general_agent_promotion_closure_plan_schema.py --output .change_assurance\general_agent_promotion_closure_plan_schema_validation.json --strict
+python scripts\validate_general_agent_promotion_closure_plan.py --output .change_assurance\general_agent_promotion_closure_plan_validation.json --strict
+```
+
+5. Run the handoff preflight without printing secret values:
+
+```powershell
+python scripts\preflight_general_agent_promotion_handoff.py --output .change_assurance\general_agent_promotion_handoff_preflight.json --json
+python scripts\validate_general_agent_promotion_handoff_preflight.py --report .change_assurance\general_agent_promotion_handoff_preflight.json --require-ready --json
+```
+
+6. Keep promotion blocked until the final strict validator passes:
+
+```powershell
+python scripts\validate_general_agent_promotion.py --strict --output .change_assurance\general_agent_promotion_readiness.json
+```
+
+The current handoff remains `pilot-governed-core` until live adapter receipts,
+governed credential approvals, deployment witness publication, and public health
+evidence are all closed.
+
+## MIL Audit Runbook Workflow
+
+MIL audit records can be promoted into replay-backed procedural runbooks after
+hash-chain validation, trace persistence, replay persistence, replay validation,
+and learning admission. The full operator procedure is documented in
+[`docs/64_mil_audit_runbook_workflow.md`](docs/64_mil_audit_runbook_workflow.md).
+
+Minimum CLI sequence:
+
+```powershell
+python scripts\validate_mil_audit_runbook_operator_checklist.py --checklist examples\mil_audit_runbook_operator_checklist.json --json
+mcoi mil-audit get --store .mullu\mil-audit --json <record_id>
+mcoi mil-audit replay --store .mullu\mil-audit --json <record_id>
+mcoi mil-audit admit-runbook `
+  --store .mullu\mil-audit `
+  --trace-store .mullu\mil-traces `
+  --replay-store .mullu\mil-replays `
+  --runbook-store .mullu\mil-runbooks `
+  --runbook-id runbook-mil-example-001 `
+  --name "MIL Governed Example Runbook" `
+  --description "Replay-backed runbook admitted from a verified MIL audit record." `
+  --json `
+  <record_id>
+mcoi mil-audit runbook-get --runbook-store .mullu\mil-runbooks --json runbook-mil-example-001
+mcoi mil-audit runbook-list --runbook-store .mullu\mil-runbooks --json
+```
+
+Single-command preflight gate:
+
+```powershell
+python scripts\preflight_mil_audit_runbook_workflow.py `
+  --audit-store .mullu\mil-audit `
+  --trace-store .mullu\mil-traces `
+  --replay-store .mullu\mil-replays `
+  --runbook-store .mullu\mil-runbooks `
+  --record-id <record_id> `
+  --runbook-id runbook-mil-example-001 `
+  --name "MIL Governed Example Runbook" `
+  --description "Replay-backed runbook admitted from a verified MIL audit record." `
+  --strict `
+  --json
+```
+
+The admitted runbook response must include `runbook_status: admitted`, durable
+admission should include `runbook_persisted: true`, and the stored runbook
+`provenance.verification_id` must equal the source MIL audit record id.
+
 ## Limitations
 
 This is an internal alpha with significant limitations. See
@@ -211,12 +348,17 @@ points for operators:
 
 - Working/episodic memory persistence is available, but only when you wire a
   local memory store and request restore explicitly.
-- Coordination persistence is partial: delegation, handoff, worker registry,
-  worker load-state, workforce assignment request/decision records, goal
-  descriptors/execution state/plans/replans, workflow descriptors/execution
-  records, and aggregate queue-state witnesses can be persisted explicitly, but
-  live coordination still does not auto-save or auto-restore, and workflow
-  resume remains caller-driven.
+- Coordination state persistence is available via explicit checkpoint/restore.
+  Set `MULLU_COORDINATION_DIR` to control storage location (defaults to
+  `$MULLU_DATA_DIR/mullu-coordination` or system temp). Checkpoints carry lease
+  expiration (default 1 hour), retry counts (max 3), and policy pack identity.
+  On restore, expired leases are rejected, policy pack drift triggers operator
+  review, and excessive retries cause abort.
+- LLM providers follow a 3-tier stack:
+  - **Tier 1 (certified):** Anthropic (`ANTHROPIC_API_KEY`), OpenAI (`OPENAI_API_KEY`)
+  - **Tier 2 (hosted free-tier):** Gemini (`GEMINI_API_KEY`) — cheap bulk inference, dev/testing
+  - **Tier 3 (local/private):** Ollama (`OLLAMA_BASE_URL`, default `http://localhost:11434`) — offline fallback, private workloads
+  Set `MULLU_LLM_BACKEND` to select default provider (auto-detects from available keys).
 - Policy packs are enforced during evaluation through the runtime policy gate.
 - No web UI -- CLI only.
 - No background scheduling -- temporal contracts exist but no daemon monitors them.

@@ -101,6 +101,11 @@ def _fulfillment_task(**overrides) -> FulfillmentTask:
         task_id="task-001",
         request_id="req-001",
         assignee_ref="eng-001",
+        created_by="mgr-001",
+        started_by="",
+        completed_by="",
+        failed_by="",
+        cancelled_by="",
         status=FulfillmentStatus.PENDING,
         description="Deploy VM",
         dependency_ref="dep-001",
@@ -362,8 +367,53 @@ class TestServiceCatalogItemConstruction:
         assert item.created_at == TS
 
     def test_approval_required_true(self):
-        item = _catalog_item(approval_required=True)
+        item = _catalog_item(approval_required=True, approver_refs=("ops-lead",))
         assert item.approval_required is True
+        assert item.approver_refs == ("ops-lead",)
+
+    def test_duplicate_approver_refs_rejected(self):
+        with pytest.raises(ValueError, match="^approver_refs must not contain duplicates$") as exc_info:
+            _catalog_item(approver_refs=("ops-lead", "ops-lead"))
+        message = str(exc_info.value)
+        assert message == "approver_refs must not contain duplicates"
+        assert "ops-lead" not in message
+
+    def test_system_not_allowed_in_approver_refs(self):
+        with pytest.raises(ValueError, match="^approver_refs must exclude system$") as exc_info:
+            _catalog_item(approver_refs=("system", "ops-lead"))
+        message = str(exc_info.value)
+        assert message == "approver_refs must exclude system"
+        assert "ops-lead" not in message
+        assert "(" not in message
+
+    def test_system_not_allowed_as_owner_ref(self):
+        with pytest.raises(ValueError, match="^owner_ref must exclude system$") as exc_info:
+            _catalog_item(owner_ref="system")
+        message = str(exc_info.value)
+        assert message == "owner_ref must exclude system"
+        assert "owner-001" not in message
+        assert "(" not in message
+
+    def test_owner_ref_not_allowed_in_approver_refs(self):
+        with pytest.raises(ValueError, match="^approver_refs must exclude owner_ref$") as exc_info:
+            _catalog_item(owner_ref="ops-lead", approver_refs=("ops-lead", "cfo"))
+        message = str(exc_info.value)
+        assert message == "approver_refs must exclude owner_ref"
+        assert "ops-lead" not in message
+
+    def test_approval_required_without_owner_ref_rejected(self):
+        with pytest.raises(ValueError, match="^approval_required items must declare owner_ref$") as exc_info:
+            _catalog_item(owner_ref="", approval_required=True, approver_refs=("ops-lead",))
+        message = str(exc_info.value)
+        assert message == "approval_required items must declare owner_ref"
+        assert "owner-001" not in message
+
+    def test_approval_required_without_approver_refs_rejected(self):
+        with pytest.raises(ValueError, match="^approval_required items must declare approver_refs$") as exc_info:
+            _catalog_item(approval_required=True, approver_refs=())
+        message = str(exc_info.value)
+        assert message == "approval_required items must declare approver_refs"
+        assert "item-001" not in message
 
     def test_all_catalog_item_kinds(self):
         for kind in CatalogItemKind:
@@ -401,6 +451,8 @@ class TestServiceRequestConstruction:
         assert req.estimated_cost == 50.0
         assert req.submitted_at == TS
         assert req.due_at == ""
+        assert req.cancelled_by == ""
+        assert req.closed_by == ""
 
     def test_with_due_at(self):
         req = _service_request(due_at=TS2)
@@ -408,7 +460,10 @@ class TestServiceRequestConstruction:
 
     def test_all_request_statuses(self):
         for status in RequestStatus:
-            req = _service_request(status=status)
+            overrides = {}
+            if status == RequestStatus.CANCELLED:
+                overrides["cancelled_by"] = "ops-001"
+            req = _service_request(status=status, **overrides)
             assert req.status == status
 
     def test_all_priorities(self):
@@ -474,6 +529,11 @@ class TestFulfillmentTaskConstruction:
         assert task.task_id == "task-001"
         assert task.request_id == "req-001"
         assert task.assignee_ref == "eng-001"
+        assert task.created_by == "mgr-001"
+        assert task.started_by == ""
+        assert task.completed_by == ""
+        assert task.failed_by == ""
+        assert task.cancelled_by == ""
         assert task.status == FulfillmentStatus.PENDING
         assert task.description == "Deploy VM"
         assert task.dependency_ref == "dep-001"
@@ -486,7 +546,18 @@ class TestFulfillmentTaskConstruction:
 
     def test_all_fulfillment_statuses(self):
         for status in FulfillmentStatus:
-            task = _fulfillment_task(status=status)
+            overrides = {"status": status}
+            if status == FulfillmentStatus.IN_PROGRESS:
+                overrides["started_by"] = "ops-001"
+            if status == FulfillmentStatus.COMPLETED:
+                overrides["completed_by"] = "ops-001"
+                overrides["completed_at"] = TS2
+            if status == FulfillmentStatus.FAILED:
+                overrides["failed_by"] = "ops-001"
+                overrides["completed_at"] = TS2
+            if status == FulfillmentStatus.CANCELLED:
+                overrides["cancelled_by"] = "ops-001"
+            task = _fulfillment_task(**overrides)
             assert task.status == status
 
     def test_is_dataclass(self):
@@ -718,6 +789,27 @@ class TestServiceRequestValidation:
         with pytest.raises(ValueError, match="priority must be a RequestPriority"):
             _service_request(priority="medium")
 
+    def test_system_cancelled_by_rejected(self):
+        with pytest.raises(ValueError, match="^cancelled_by must exclude system$") as exc_info:
+            _service_request(status=RequestStatus.CANCELLED, cancelled_by="system")
+        message = str(exc_info.value)
+        assert message == "cancelled_by must exclude system"
+        assert "system" not in message.replace("system", "", 1)
+
+    def test_system_closed_by_rejected(self):
+        with pytest.raises(ValueError, match="^closed_by must exclude system$") as exc_info:
+            _service_request(status=RequestStatus.FULFILLED, closed_by="system")
+        message = str(exc_info.value)
+        assert message == "closed_by must exclude system"
+        assert "system" not in message.replace("system", "", 1)
+
+    def test_cancelled_requires_cancelled_by(self):
+        with pytest.raises(ValueError, match="^cancelled requests must declare cancelled_by$") as exc_info:
+            _service_request(status=RequestStatus.CANCELLED, cancelled_by="")
+        message = str(exc_info.value)
+        assert message == "cancelled requests must declare cancelled_by"
+        assert "CANCELLED" not in message
+
     def test_negative_estimated_cost(self):
         with pytest.raises(ValueError):
             _service_request(estimated_cost=-10.0)
@@ -771,6 +863,13 @@ class TestRequestAssignmentValidation:
     def test_empty_assigned_by(self):
         with pytest.raises(ValueError):
             _assignment(assigned_by="")
+
+    def test_system_assigned_by_rejected(self):
+        with pytest.raises(ValueError, match="^assigned_by must exclude system$") as exc_info:
+            _assignment(assigned_by="system")
+        message = str(exc_info.value)
+        assert message == "assigned_by must exclude system"
+        assert "mgr-001" not in message
 
     def test_invalid_assigned_at(self):
         with pytest.raises(ValueError):
@@ -835,6 +934,57 @@ class TestFulfillmentTaskValidation:
     def test_empty_assignee_ref(self):
         with pytest.raises(ValueError):
             _fulfillment_task(assignee_ref="")
+
+    def test_empty_created_by(self):
+        with pytest.raises(ValueError):
+            _fulfillment_task(created_by="")
+
+    def test_system_created_by_rejected(self):
+        with pytest.raises(ValueError, match="^created_by must exclude system$") as exc_info:
+            _fulfillment_task(created_by="system")
+        message = str(exc_info.value)
+        assert message == "created_by must exclude system"
+        assert "mgr-001" not in message
+
+    def test_system_started_by_rejected(self):
+        with pytest.raises(ValueError, match="^started_by must exclude system$") as exc_info:
+            _fulfillment_task(status=FulfillmentStatus.IN_PROGRESS, started_by="system")
+        message = str(exc_info.value)
+        assert message == "started_by must exclude system"
+
+    def test_system_completed_by_rejected(self):
+        with pytest.raises(ValueError, match="^completed_by must exclude system$") as exc_info:
+            _fulfillment_task(status=FulfillmentStatus.COMPLETED, completed_by="system", completed_at=TS2)
+        message = str(exc_info.value)
+        assert message == "completed_by must exclude system"
+
+    def test_system_failed_by_rejected(self):
+        with pytest.raises(ValueError, match="^failed_by must exclude system$") as exc_info:
+            _fulfillment_task(status=FulfillmentStatus.FAILED, failed_by="system", completed_at=TS2)
+        message = str(exc_info.value)
+        assert message == "failed_by must exclude system"
+
+    def test_system_cancelled_by_rejected(self):
+        with pytest.raises(ValueError, match="^cancelled_by must exclude system$") as exc_info:
+            _fulfillment_task(status=FulfillmentStatus.CANCELLED, cancelled_by="system")
+        message = str(exc_info.value)
+        assert message == "cancelled_by must exclude system"
+
+    def test_in_progress_requires_started_by(self):
+        with pytest.raises(ValueError, match="^in_progress tasks must declare started_by$"):
+            _fulfillment_task(status=FulfillmentStatus.IN_PROGRESS, started_by="")
+
+    def test_completed_requires_completed_by(self):
+        with pytest.raises(ValueError, match="^completed tasks must declare completed_by$"):
+            _fulfillment_task(status=FulfillmentStatus.COMPLETED, completed_by="", completed_at=TS2)
+
+    def test_failed_requires_failed_by(self):
+        with pytest.raises(ValueError, match="^failed tasks must declare failed_by$"):
+            _fulfillment_task(status=FulfillmentStatus.FAILED, failed_by="", completed_at=TS2)
+
+    def test_cancelled_requires_cancelled_by(self):
+        with pytest.raises(ValueError, match="^cancelled tasks must declare cancelled_by$"):
+            _fulfillment_task(status=FulfillmentStatus.CANCELLED, cancelled_by="")
 
     def test_invalid_status_type(self):
         with pytest.raises(ValueError, match="status must be a FulfillmentStatus"):
@@ -1443,7 +1593,7 @@ class TestServiceCatalogItemToDict:
         d = item.to_dict()
         expected_keys = {
             "item_id", "name", "tenant_id", "kind", "status",
-            "owner_ref", "sla_ref", "approval_required", "estimated_cost",
+            "owner_ref", "sla_ref", "approval_required", "approver_refs", "estimated_cost",
             "created_at", "metadata",
         }
         assert set(d.keys()) == expected_keys
@@ -1467,6 +1617,7 @@ class TestServiceCatalogItemToDict:
         assert d["name"] == "VM Provisioning"
         assert d["estimated_cost"] == 100.0
         assert d["approval_required"] is False
+        assert d["approver_refs"] == []
 
 
 class TestServiceRequestToDict:
@@ -1481,7 +1632,7 @@ class TestServiceRequestToDict:
         expected_keys = {
             "request_id", "item_id", "tenant_id", "requester_ref",
             "status", "priority", "description", "estimated_cost",
-            "submitted_at", "due_at", "metadata",
+            "submitted_at", "due_at", "cancelled_by", "closed_by", "metadata",
         }
         assert set(d.keys()) == expected_keys
 
@@ -1544,7 +1695,8 @@ class TestFulfillmentTaskToDict:
         task = _fulfillment_task()
         d = task.to_dict()
         expected_keys = {
-            "task_id", "request_id", "assignee_ref", "status",
+            "task_id", "request_id", "assignee_ref", "created_by",
+            "started_by", "completed_by", "failed_by", "cancelled_by", "status",
             "description", "dependency_ref", "created_at",
             "completed_at", "metadata",
         }

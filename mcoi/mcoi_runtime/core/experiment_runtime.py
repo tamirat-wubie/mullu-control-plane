@@ -126,7 +126,7 @@ class ExperimentRuntimeEngine:
     ) -> ExperimentDesign:
         """Register a new experiment design."""
         if design_id in self._designs:
-            raise RuntimeCoreInvariantError(f"Duplicate design_id: {design_id}")
+            raise RuntimeCoreInvariantError("Duplicate design_id")
         now = self._now()
         design = ExperimentDesign(
             design_id=design_id,
@@ -147,7 +147,7 @@ class ExperimentRuntimeEngine:
         """Get a design by ID."""
         d = self._designs.get(design_id)
         if d is None:
-            raise RuntimeCoreInvariantError(f"Unknown design_id: {design_id}")
+            raise RuntimeCoreInvariantError("Unknown design_id")
         return d
 
     # ------------------------------------------------------------------
@@ -166,12 +166,12 @@ class ExperimentRuntimeEngine:
     ) -> ExperimentVariable:
         """Add a variable to an experiment design."""
         if variable_id in self._variables:
-            raise RuntimeCoreInvariantError(f"Duplicate variable_id: {variable_id}")
+            raise RuntimeCoreInvariantError("Duplicate variable_id")
         if design_ref not in self._designs:
-            raise RuntimeCoreInvariantError(f"Unknown design_ref: {design_ref}")
+            raise RuntimeCoreInvariantError("Unknown design_ref")
         design = self._designs[design_ref]
         if design.phase in _EXPERIMENT_TERMINAL:
-            raise RuntimeCoreInvariantError(f"Cannot add variable to {design.phase.value} experiment")
+            raise RuntimeCoreInvariantError("Cannot add variable to terminal experiment")
         now = self._now()
         var = ExperimentVariable(
             variable_id=variable_id,
@@ -212,12 +212,12 @@ class ExperimentRuntimeEngine:
     ) -> ControlGroup:
         """Add a control group to an experiment design."""
         if group_id in self._groups:
-            raise RuntimeCoreInvariantError(f"Duplicate group_id: {group_id}")
+            raise RuntimeCoreInvariantError("Duplicate group_id")
         if design_ref not in self._designs:
-            raise RuntimeCoreInvariantError(f"Unknown design_ref: {design_ref}")
+            raise RuntimeCoreInvariantError("Unknown design_ref")
         design = self._designs[design_ref]
         if design.phase in _EXPERIMENT_TERMINAL:
-            raise RuntimeCoreInvariantError(f"Cannot add control group to {design.phase.value} experiment")
+            raise RuntimeCoreInvariantError("Cannot add control group to terminal experiment")
         now = self._now()
         group = ControlGroup(
             group_id=group_id,
@@ -241,9 +241,7 @@ class ExperimentRuntimeEngine:
         """Transition experiment from DESIGN to RUNNING."""
         old = self.get_design(design_id)
         if old.phase != ExperimentPhase.DESIGN:
-            raise RuntimeCoreInvariantError(
-                f"Can only start DESIGN experiments, got {old.phase.value}"
-            )
+            raise RuntimeCoreInvariantError("Can only start DESIGN experiments")
         now = self._now()
         updated = ExperimentDesign(
             design_id=old.design_id, tenant_id=old.tenant_id,
@@ -259,9 +257,7 @@ class ExperimentRuntimeEngine:
         """Transition experiment from RUNNING to ANALYSIS."""
         old = self.get_design(design_id)
         if old.phase != ExperimentPhase.RUNNING:
-            raise RuntimeCoreInvariantError(
-                f"Can only analyze RUNNING experiments, got {old.phase.value}"
-            )
+            raise RuntimeCoreInvariantError("Can only analyze RUNNING experiments")
         now = self._now()
         updated = ExperimentDesign(
             design_id=old.design_id, tenant_id=old.tenant_id,
@@ -277,9 +273,7 @@ class ExperimentRuntimeEngine:
         """Transition experiment from ANALYSIS to COMPLETED."""
         old = self.get_design(design_id)
         if old.phase != ExperimentPhase.ANALYSIS:
-            raise RuntimeCoreInvariantError(
-                f"Can only complete ANALYSIS experiments, got {old.phase.value}"
-            )
+            raise RuntimeCoreInvariantError("Can only complete ANALYSIS experiments")
         now = self._now()
         updated = ExperimentDesign(
             design_id=old.design_id, tenant_id=old.tenant_id,
@@ -295,9 +289,7 @@ class ExperimentRuntimeEngine:
         """Mark an experiment as FAILED."""
         old = self.get_design(design_id)
         if old.phase in _EXPERIMENT_TERMINAL:
-            raise RuntimeCoreInvariantError(
-                f"Experiment already in terminal phase {old.phase.value}"
-            )
+            raise RuntimeCoreInvariantError("Experiment already in terminal phase")
         now = self._now()
         updated = ExperimentDesign(
             design_id=old.design_id, tenant_id=old.tenant_id,
@@ -325,9 +317,9 @@ class ExperimentRuntimeEngine:
     ) -> ExperimentResult:
         """Record a result for an experiment."""
         if result_id in self._results:
-            raise RuntimeCoreInvariantError(f"Duplicate result_id: {result_id}")
+            raise RuntimeCoreInvariantError("Duplicate result_id")
         if design_ref not in self._designs:
-            raise RuntimeCoreInvariantError(f"Unknown design_ref: {design_ref}")
+            raise RuntimeCoreInvariantError("Unknown design_ref")
         now = self._now()
         result = ExperimentResult(
             result_id=result_id,
@@ -360,7 +352,7 @@ class ExperimentRuntimeEngine:
     ) -> FalsificationRecord:
         """Record a falsification attempt for a hypothesis."""
         if record_id in self._falsifications:
-            raise RuntimeCoreInvariantError(f"Duplicate falsification record_id: {record_id}")
+            raise RuntimeCoreInvariantError("Duplicate falsification record_id")
         now = self._now()
         record = FalsificationRecord(
             record_id=record_id,
@@ -392,7 +384,7 @@ class ExperimentRuntimeEngine:
     ) -> ReplicationRecord:
         """Record a replication attempt."""
         if replication_id in self._replications:
-            raise RuntimeCoreInvariantError(f"Duplicate replication_id: {replication_id}")
+            raise RuntimeCoreInvariantError("Duplicate replication_id")
         now = self._now()
         record = ReplicationRecord(
             replication_id=replication_id,
@@ -524,7 +516,7 @@ class ExperimentRuntimeEngine:
                         "violation_id": vid,
                         "tenant_id": design.tenant_id,
                         "operation": "no_control_group",
-                        "reason": f"Design {design.design_id} has no control group",
+                        "reason": "experiment has no control group",
                         "detected_at": now,
                     }
                     self._violations[vid] = v
@@ -541,7 +533,7 @@ class ExperimentRuntimeEngine:
                         "violation_id": vid,
                         "tenant_id": design.tenant_id,
                         "operation": "no_variables",
-                        "reason": f"Design {design.design_id} has no variables defined",
+                        "reason": "experiment has no variables defined",
                         "detected_at": now,
                     }
                     self._violations[vid] = v
@@ -561,7 +553,7 @@ class ExperimentRuntimeEngine:
                         "violation_id": vid,
                         "tenant_id": result.tenant_id,
                         "operation": "result_without_analysis",
-                        "reason": f"Result {result.result_id} recorded for design in {design.phase.value} phase",
+                        "reason": "result recorded before analysis phase",
                         "detected_at": now,
                     }
                     self._violations[vid] = v

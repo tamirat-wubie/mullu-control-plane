@@ -20,6 +20,10 @@ from typing import Any, Callable, TypeVar
 T = TypeVar("T")
 
 
+def _bounded_retry_error(exc: Exception) -> str:
+    return f"operation failed ({type(exc).__name__})"
+
+
 @unique
 class RetryOutcome(Enum):
     SUCCESS = "success"
@@ -110,8 +114,8 @@ class RetryPolicyEngine:
                     attempts=attempt + 1,
                     total_delay_seconds=total_delay,
                 ), result
-            except Exception as e:
-                last_error = str(e)
+            except Exception as exc:
+                last_error = _bounded_retry_error(exc)
                 self._total_retries += 1
                 if operation not in self._budget_tracker:
                     self._budget_tracker[operation] = []

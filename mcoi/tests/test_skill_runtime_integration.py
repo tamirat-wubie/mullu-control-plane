@@ -5,8 +5,6 @@ Proves that skills are first-class in the live operator runtime path.
 
 from __future__ import annotations
 
-from typing import Any, Mapping
-
 import pytest
 
 from mcoi_runtime.app.bootstrap import bootstrap_runtime
@@ -19,12 +17,16 @@ from mcoi_runtime.contracts.skill import (
     EffectClass,
     SkillClass,
     SkillDescriptor,
+    SkillExecutionRecord,
     SkillLifecycle,
+    SkillOutcome,
     SkillOutcomeStatus,
     SkillStep,
+    SkillStepOutcome,
     TrustClass,
     VerificationStrength,
 )
+from mcoi_runtime.core.invariants import RuntimeCoreInvariantError
 
 
 FIXED_CLOCK = "2025-01-15T10:00:00+00:00"
@@ -88,6 +90,8 @@ class TestSkillRuntimeGoldenScenarios:
         assert report.completed is False
         assert len(report.structured_errors) == 1
         assert report.structured_errors[0].error_code == "skill_not_found"
+        assert report.structured_errors[0].message == "skill not found"
+        assert "missing-skill" not in report.structured_errors[0].message
 
     def test_03_blocked_skill_cannot_execute(self):
         """A blocked skill is rejected with a policy error."""
@@ -104,6 +108,8 @@ class TestSkillRuntimeGoldenScenarios:
         assert report.status is SkillOutcomeStatus.POLICY_DENIED
         assert report.completed is False
         assert report.structured_errors[0].error_code == "skill_blocked"
+        assert report.structured_errors[0].message == "skill is blocked"
+        assert "sk-blocked" not in report.structured_errors[0].message
 
     def test_04_skill_selection_deterministic(self):
         """When no skill_id given, selection picks deterministically from registry."""
@@ -230,6 +236,56 @@ class TestSkillRuntimeEdgeCases:
 
         assert report.succeeded is False
 
+    def test_lifecycle_promotion_failure_is_reported_without_leakage(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+    ):
+        """Successful execution still reports bounded lifecycle promotion failure."""
+        loop = _make_loop()
+        _register_skill(loop, "sk-transition-warning", name="shell_command", confidence=0.5)
+
+        def execute_success(skill, **_kwargs):
+            return SkillExecutionRecord(
+                record_id="record-transition-warning",
+                skill_id=skill.skill_id,
+                outcome=SkillOutcome(
+                    skill_id=skill.skill_id,
+                    status=SkillOutcomeStatus.SUCCEEDED,
+                    step_outcomes=(
+                        SkillStepOutcome(
+                            step_id="step-transition-warning",
+                            status=SkillOutcomeStatus.SUCCEEDED,
+                        ),
+                    ),
+                ),
+                started_at=FIXED_CLOCK,
+                finished_at=FIXED_CLOCK,
+            )
+
+        def reject_transition(_skill_id, _new_lifecycle):
+            raise RuntimeCoreInvariantError("secret lifecycle transition detail")
+
+        monkeypatch.setattr(loop.runtime.skill_executor, "execute", execute_success)
+        monkeypatch.setattr(loop.runtime.skill_registry, "transition", reject_transition)
+
+        report = loop.run_skill(SkillRequest(
+            request_id="req-transition-warning",
+            subject_id="operator-1",
+            goal_id="goal-transition-warning",
+            skill_id="sk-transition-warning",
+        ))
+        view = SkillSummaryView.from_report(report)
+        rendered = render_skill_summary(view)
+
+        assert report.succeeded is True
+        assert report.lifecycle_transition_warning == (
+            "skill lifecycle transition failed (RuntimeCoreInvariantError)"
+        )
+        assert "secret lifecycle transition detail" not in report.lifecycle_transition_warning
+        assert view.lifecycle_transition_warning == report.lifecycle_transition_warning
+        assert "lifecycle_warning:" in rendered
+        assert "secret lifecycle transition detail" not in rendered
+
 
 def _make_loop_with_autonomy(mode: str):
     """Build an operator loop with a specific autonomy mode."""
@@ -258,7 +314,12 @@ class TestSkillGovernanceChecks:
         assert report.execution_record is None
         assert len(report.structured_errors) == 1
         assert report.structured_errors[0].error_code == "autonomy_blocked"
-        assert "observe_only" in report.structured_errors[0].message
+        assert report.structured_errors[0].message == "autonomy blocked skill execution"
+        assert "observe_only" not in report.structured_errors[0].message
+        status = loop.runtime.autonomy.get_status()
+        assert len(status.violations) == 1
+        assert status.violations[0].attempted_action == "skill execution"
+        assert "sk-obs-block" not in status.violations[0].attempted_action
 
     def test_skill_blocked_in_suggest_only_mode(self):
         """Skill execution is blocked when autonomy mode is SUGGEST_ONLY."""
@@ -277,7 +338,8 @@ class TestSkillGovernanceChecks:
         assert report.execution_record is None
         assert len(report.structured_errors) == 1
         assert report.structured_errors[0].error_code == "autonomy_blocked"
-        assert "suggest_only" in report.structured_errors[0].message
+        assert report.structured_errors[0].message == "autonomy blocked skill execution"
+        assert "suggest_only" not in report.structured_errors[0].message
 
     def test_skill_blocked_when_policy_denies(self):
         """Skill execution is blocked when the policy engine returns deny."""
@@ -311,6 +373,8 @@ class TestSkillGovernanceChecks:
         assert report.execution_record is None
         assert len(report.structured_errors) == 1
         assert "policy_deny" in report.structured_errors[0].error_code
+        assert report.structured_errors[0].message == "policy gate blocked skill execution"
+        assert "deny" not in report.structured_errors[0].message
 
         # Restore
         loop.runtime.policy_engine.evaluate = original_evaluate
@@ -340,7 +404,8 @@ class TestSkillGovernanceChecks:
         assert report.execution_record is None
         assert len(report.structured_errors) == 1
         assert report.structured_errors[0].error_code == "policy_escalate"
-        assert "escalate" in report.structured_errors[0].message
+        assert report.structured_errors[0].message == "policy gate blocked skill execution"
+        assert "escalate" not in report.structured_errors[0].message
 
     def test_skill_proceeds_when_autonomy_and_policy_allow(self):
         """Skill execution proceeds when both autonomy and policy permit it."""

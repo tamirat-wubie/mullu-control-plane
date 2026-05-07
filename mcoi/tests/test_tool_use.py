@@ -1,6 +1,7 @@
 """Phase 211C — Tool-use contract tests."""
 
 import pytest
+from mcoi_runtime.core.safe_arithmetic import evaluate_expression
 from mcoi_runtime.core.tool_use import (
     ToolDefinition, ToolParameter, ToolRegistry, ToolResult,
 )
@@ -18,7 +19,7 @@ def _registry():
                 ToolParameter(name="expression", param_type="string", description="Math expression"),
             ),
         ),
-        handler=lambda args: {"result": eval(args["expression"])},
+        handler=lambda args: {"result": evaluate_expression(args["expression"])},
     )
     reg.register(
         ToolDefinition(
@@ -47,6 +48,16 @@ class TestToolRegistry:
                 handler=lambda args: {},
             )
 
+    def test_duplicate_register_error_is_bounded(self):
+        reg = _registry()
+        with pytest.raises(ValueError, match="already registered") as excinfo:
+            reg.register(
+                ToolDefinition(tool_id="calculator", name="C2", description="x", parameters=()),
+                handler=lambda args: {},
+            )
+        assert str(excinfo.value) == "tool already registered"
+        assert "calculator" not in str(excinfo.value)
+
     def test_invoke_success(self):
         reg = _registry()
         result = reg.invoke("calculator", {"expression": "2+3"})
@@ -58,13 +69,22 @@ class TestToolRegistry:
         reg = _registry()
         result = reg.invoke("calculator", {})  # Missing "expression"
         assert result.succeeded is False
-        assert "missing required" in result.error
+        assert result.error == "missing required parameter"
+        assert "expression" not in result.error
 
     def test_invoke_unknown_tool(self):
         reg = _registry()
         result = reg.invoke("nonexistent", {})
         assert result.succeeded is False
-        assert "unknown tool" in result.error
+        assert result.error == "unknown tool"
+        assert "nonexistent" not in result.error
+
+    def test_invoke_disallowed_tool(self):
+        reg = _registry()
+        result = reg.invoke("calculator", {"expression": "2+3"}, allowed_tool_ids={"greeting"})
+        assert result.succeeded is False
+        assert result.error == "tool not allowed"
+        assert "calculator" not in result.error
 
     def test_invoke_disabled_tool(self):
         reg = ToolRegistry(clock=FIXED_CLOCK)
@@ -74,7 +94,8 @@ class TestToolRegistry:
         )
         result = reg.invoke("disabled", {})
         assert result.succeeded is False
-        assert "disabled" in result.error
+        assert result.error == "tool disabled"
+        assert "disabled:" not in result.error
 
     def test_invoke_handler_error(self):
         reg = ToolRegistry(clock=FIXED_CLOCK)
@@ -84,7 +105,87 @@ class TestToolRegistry:
         )
         result = reg.invoke("broken", {})
         assert result.succeeded is False
-        assert "boom" in result.error
+        assert result.error == "tool handler error (RuntimeError)"
+        assert "boom" not in result.error
+        assert reg.invocation_history()[-1].error == "tool handler error (RuntimeError)"
+
+    def test_invoke_unsafe_expression_rejected(self):
+        reg = _registry()
+        result = reg.invoke("calculator", {"expression": "__import__('os').system('whoami')"})
+        assert result.succeeded is False
+        assert result.error == "tool validation error (SafeArithmeticError)"
+        assert "unsupported expression node" not in result.error
+        assert reg.invocation_history()[-1].error == "tool validation error (SafeArithmeticError)"
+
+    def test_invoke_handler_timeout_redacted(self):
+        reg = ToolRegistry(clock=FIXED_CLOCK)
+        reg.register(
+            ToolDefinition(tool_id="slow", name="S", description="x", parameters=()),
+            handler=lambda args: (_ for _ in ()).throw(TimeoutError("secret timeout detail")),
+        )
+        result = reg.invoke("slow", {})
+        assert result.succeeded is False
+        assert result.error == "tool timeout (TimeoutError)"
+        assert "secret timeout detail" not in result.error
+
+    def test_url_argument_without_network_allowlist_fails_closed(self):
+        reg = ToolRegistry(clock=FIXED_CLOCK)
+        reg.register(
+            ToolDefinition(
+                tool_id="fetch",
+                name="Fetch",
+                description="Read a URL",
+                parameters=(ToolParameter(name="url", param_type="string"),),
+            ),
+            handler=lambda args: {"body": "should not run"},
+        )
+
+        result = reg.invoke("fetch", {"url": "https://example.com/data"})
+
+        assert result.succeeded is False
+        assert result.output == {}
+        assert result.error == "tool network egress not allowed"
+        assert reg.invocation_history()[-1].error == "tool network egress not allowed"
+
+    def test_url_argument_outside_network_allowlist_fails_closed(self):
+        reg = ToolRegistry(clock=FIXED_CLOCK)
+        reg.register(
+            ToolDefinition(
+                tool_id="fetch",
+                name="Fetch",
+                description="Read a URL",
+                parameters=(ToolParameter(name="url", param_type="string"),),
+                network_allowlist=("docs.mullusi.com",),
+            ),
+            handler=lambda args: {"body": "should not run"},
+        )
+
+        result = reg.invoke("fetch", {"url": "https://example.com/data"})
+
+        assert result.succeeded is False
+        assert result.output == {}
+        assert result.error == "tool network egress not allowed"
+        assert "example.com" not in result.error
+
+    def test_url_argument_to_private_host_fails_ssrf_guard(self):
+        reg = ToolRegistry(clock=FIXED_CLOCK)
+        reg.register(
+            ToolDefinition(
+                tool_id="fetch",
+                name="Fetch",
+                description="Read a URL",
+                parameters=(ToolParameter(name="url", param_type="string"),),
+                network_allowlist=("localhost",),
+            ),
+            handler=lambda args: {"body": "should not run"},
+        )
+
+        result = reg.invoke("fetch", {"url": "http://localhost/admin"})
+
+        assert result.succeeded is False
+        assert result.output == {}
+        assert result.error == "tool network egress blocked"
+        assert "localhost" not in result.error
 
     def test_optional_params(self):
         reg = _registry()

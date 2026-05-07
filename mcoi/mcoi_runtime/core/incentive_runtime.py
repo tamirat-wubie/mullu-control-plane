@@ -129,7 +129,7 @@ class IncentiveRuntimeEngine:
     ) -> IncentiveRecord:
         """Register a new incentive."""
         if incentive_id in self._incentives:
-            raise RuntimeCoreInvariantError(f"Duplicate incentive_id: {incentive_id}")
+            raise RuntimeCoreInvariantError("Duplicate incentive_id")
         now = self._now()
         record = IncentiveRecord(
             incentive_id=incentive_id,
@@ -151,16 +151,14 @@ class IncentiveRuntimeEngine:
         """Get an incentive by ID."""
         inc = self._incentives.get(incentive_id)
         if inc is None:
-            raise RuntimeCoreInvariantError(f"Unknown incentive_id: {incentive_id}")
+            raise RuntimeCoreInvariantError("Unknown incentive_id")
         return inc
 
     def _transition_incentive(self, incentive_id: str, new_status: IncentiveStatus) -> IncentiveRecord:
         """Internal: transition incentive to a new status with terminal guards."""
         old = self.get_incentive(incentive_id)
         if old.status in _INCENTIVE_TERMINAL:
-            raise RuntimeCoreInvariantError(
-                f"Incentive already in terminal status {old.status.value}"
-            )
+            raise RuntimeCoreInvariantError("Incentive already in terminal status")
         now = self._now()
         updated = IncentiveRecord(
             incentive_id=old.incentive_id, tenant_id=old.tenant_id,
@@ -202,9 +200,9 @@ class IncentiveRuntimeEngine:
     ) -> BehaviorObservation:
         """Record an observed behavior relative to an incentive."""
         if observation_id in self._observations:
-            raise RuntimeCoreInvariantError(f"Duplicate observation_id: {observation_id}")
+            raise RuntimeCoreInvariantError("Duplicate observation_id")
         if incentive_ref not in self._incentives:
-            raise RuntimeCoreInvariantError(f"Unknown incentive_ref: {incentive_ref}")
+            raise RuntimeCoreInvariantError("Unknown incentive_ref")
         now = self._now()
         obs = BehaviorObservation(
             observation_id=observation_id,
@@ -239,7 +237,7 @@ class IncentiveRuntimeEngine:
         Returns a GamingDetection if gaming is detected, None otherwise.
         """
         if detection_id in self._detections:
-            raise RuntimeCoreInvariantError(f"Duplicate detection_id: {detection_id}")
+            raise RuntimeCoreInvariantError("Duplicate detection_id")
 
         # Check for GAMING disposition
         gaming_obs = [
@@ -300,7 +298,7 @@ class IncentiveRuntimeEngine:
     ) -> PolicyEffect:
         """Record an observed policy effect."""
         if effect_id in self._effects:
-            raise RuntimeCoreInvariantError(f"Duplicate effect_id: {effect_id}")
+            raise RuntimeCoreInvariantError("Duplicate effect_id")
         now = self._now()
         effect = PolicyEffect(
             effect_id=effect_id,
@@ -329,9 +327,9 @@ class IncentiveRuntimeEngine:
     ) -> ContractIncentiveBinding:
         """Bind an incentive to a contract."""
         if binding_id in self._bindings:
-            raise RuntimeCoreInvariantError(f"Duplicate binding_id: {binding_id}")
+            raise RuntimeCoreInvariantError("Duplicate binding_id")
         if incentive_ref not in self._incentives:
-            raise RuntimeCoreInvariantError(f"Unknown incentive_ref: {incentive_ref}")
+            raise RuntimeCoreInvariantError("Unknown incentive_ref")
         now = self._now()
         binding = ContractIncentiveBinding(
             binding_id=binding_id,
@@ -478,7 +476,7 @@ class IncentiveRuntimeEngine:
                         violation_id=vid,
                         tenant_id=det.tenant_id,
                         operation="gaming_unaddressed",
-                        reason=f"Gaming detection {det.detection_id} has no decision recorded",
+                        reason="gaming detection has no decision recorded",
                         detected_at=now,
                     )
                     self._violations[vid] = v
@@ -497,7 +495,7 @@ class IncentiveRuntimeEngine:
                         violation_id=vid,
                         tenant_id=eff.tenant_id,
                         operation="perverse_effect_unresolved",
-                        reason=f"Policy effect {eff.effect_id} is PERVERSE and unresolved",
+                        reason="policy effect is perverse and unresolved",
                         detected_at=now,
                     )
                     self._violations[vid] = v
@@ -517,7 +515,7 @@ class IncentiveRuntimeEngine:
                         violation_id=vid,
                         tenant_id=binding.tenant_id,
                         operation="expired_incentive_still_bound",
-                        reason=f"Binding {binding.binding_id} references {inc.status.value} incentive {inc.incentive_id}",
+                        reason="terminal incentive remains bound to contract",
                         detected_at=now,
                     )
                     self._violations[vid] = v

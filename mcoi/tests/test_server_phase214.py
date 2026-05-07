@@ -2,6 +2,7 @@
 
 import pytest
 import os
+from types import SimpleNamespace
 
 try:
     from fastapi.testclient import TestClient
@@ -52,6 +53,40 @@ class TestAutoRoutedCompletion:
         ids = [m["id"] for m in data["models"]]
         assert "claude-haiku-4-5" in ids
         assert "claude-opus-4-6" in ids
+        assert "gpt-4.1-nano" in ids
+        assert "gemini-2.0-flash-lite" in ids
+        assert "deepseek-v4-flash" in ids
+        assert "LiquidAI/LFM2-24B-A2B" in ids
+        assert "accounts/fireworks/models/gpt-oss-20b" in ids
+        assert "llama3.1-8b" in ids
+        assert "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo" in ids
+        assert "meta-llama/Meta-Llama-3.1-8B-Instruct" in ids
+        assert "Qwen/Qwen2.5-Coder-32B-Instruct" in ids
+        assert "Meta-Llama-3.3-70B-Instruct" in ids
+
+    def test_auto_complete_exception_is_sanitized(self, client, monkeypatch):
+        from mcoi_runtime.app.routers.deps import deps
+
+        def boom(*args, **kwargs):
+            raise RuntimeError("auto-route-secret")
+
+        monkeypatch.setattr(deps.llm_bridge, "complete", boom)
+        resp = client.post("/api/v1/complete/auto", json={"prompt": "hello"})
+        assert resp.status_code == 503
+        data = resp.json()["detail"]
+        assert data["error"] == "LLM service unavailable"
+        assert data["error_code"] == "llm_service_unavailable"
+        assert "auto-route-secret" not in str(resp.json())
+
+    def test_no_routable_model_returns_structured_error(self, client, monkeypatch):
+        from mcoi_runtime.app.routers.deps import deps
+
+        monkeypatch.setattr(deps.model_router, "route", lambda *args, **kwargs: SimpleNamespace(model_id=""))
+        resp = client.post("/api/v1/complete/auto", json={"prompt": "hello"})
+        assert resp.status_code == 503
+        data = resp.json()["detail"]
+        assert data["error_code"] == "no_routable_model"
+        assert data["governed"] is True
 
 
 class TestCorrelationEndpoint:

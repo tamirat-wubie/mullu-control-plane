@@ -146,7 +146,7 @@ class ProcedureCandidate(ContractRecord):
             raise ValueError("steps must contain at least one ProcedureStep")
         for idx, step in enumerate(frozen_steps):
             if not isinstance(step, ProcedureStep):
-                raise ValueError(f"steps[{idx}] must be a ProcedureStep instance")
+                raise ValueError("steps must contain only ProcedureStep instances")
         object.__setattr__(self, "steps", frozen_steps)
         object.__setattr__(self, "preconditions", freeze_value(list(self.preconditions)))
         object.__setattr__(self, "postconditions", freeze_value(list(self.postconditions)))

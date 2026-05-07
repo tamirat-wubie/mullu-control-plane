@@ -1,7 +1,7 @@
 """Phase 214A — Model router tests."""
 
 import pytest
-from mcoi_runtime.core.model_router import ModelProfile, ModelRouter, TaskComplexity
+from mcoi_runtime.core.model_router import ModelProfile, ModelRouter, ProviderRoutingStatus, TaskComplexity
 
 
 def _router():
@@ -9,6 +9,14 @@ def _router():
     r.register(ModelProfile(model_id="fast", name="Fast", provider="p", cost_per_1k_input=0.1, cost_per_1k_output=0.5, max_context=100000, speed_tier="fast", capability_tier="basic"))
     r.register(ModelProfile(model_id="balanced", name="Balanced", provider="p", cost_per_1k_input=3.0, cost_per_1k_output=15.0, max_context=200000, speed_tier="medium", capability_tier="standard"))
     r.register(ModelProfile(model_id="powerful", name="Powerful", provider="p", cost_per_1k_input=15.0, cost_per_1k_output=75.0, max_context=1000000, speed_tier="slow", capability_tier="advanced"))
+    return r
+
+
+def _provider_router():
+    r = ModelRouter()
+    r.register(ModelProfile(model_id="fast-a", name="Fast A", provider="a", cost_per_1k_input=0.1, cost_per_1k_output=0.5, max_context=100000, speed_tier="fast", capability_tier="basic"))
+    r.register(ModelProfile(model_id="fast-b", name="Fast B", provider="b", cost_per_1k_input=0.1, cost_per_1k_output=0.5, max_context=100000, speed_tier="fast", capability_tier="basic"))
+    r.register(ModelProfile(model_id="power-c", name="Power C", provider="c", cost_per_1k_input=1.0, cost_per_1k_output=2.0, max_context=100000, speed_tier="medium", capability_tier="advanced"))
     return r
 
 
@@ -40,13 +48,21 @@ class TestModelRouter:
         r = _router()
         decision = r.route("hello", force_model="powerful")
         assert decision.model_id == "powerful"
-        assert "forced" in decision.reason
+        assert decision.reason == "forced model override"
+        assert "powerful" not in decision.reason
 
     def test_no_models(self):
         r = ModelRouter()
         decision = r.route("test")
         assert decision.model_id == ""
         assert "no models" in decision.reason
+
+    def test_policy_selected_reason_bounded(self):
+        r = _router()
+        decision = r.route("Implement a recursive function for tree traversal and debug it")
+        assert decision.reason == "selected by routing policy"
+        assert TaskComplexity.COMPLEX.value not in decision.reason
+        assert "Powerful" not in decision.reason
 
     def test_alternatives(self):
         r = _router()
@@ -65,9 +81,60 @@ class TestModelRouter:
         s = r.summary()
         assert s["models"] == 3
         assert s["routing_decisions"] == 1
+        assert s["provider_status_counts"][ProviderRoutingStatus.HEALTHY.value] == 1
 
     def test_disabled_model_excluded(self):
         r = ModelRouter()
         r.register(ModelProfile(model_id="off", name="Off", provider="p", cost_per_1k_input=0.1, cost_per_1k_output=0.1, max_context=100000, speed_tier="fast", capability_tier="basic", enabled=False))
         decision = r.route("test")
         assert decision.model_id == ""  # No enabled models
+
+    def test_unavailable_provider_excluded(self):
+        r = _provider_router()
+        r.set_provider_status("a", ProviderRoutingStatus.UNAVAILABLE.value, reason="outage")
+        decision = r.route("test")
+        assert decision.model_id == "fast-b"
+        assert decision.reason == "selected by routing policy"
+        assert r.provider_health()["a"]["reason"] == "outage"
+
+    def test_degraded_provider_used_only_when_no_healthy_candidate(self):
+        r = _provider_router()
+        r.set_provider_status("a", ProviderRoutingStatus.DEGRADED.value)
+        decision = r.route("test")
+        assert decision.model_id == "fast-b"
+        assert decision.model_id != "fast-a"
+        assert r.provider_status("a") == ProviderRoutingStatus.DEGRADED
+
+    def test_degraded_provider_fallback_when_no_healthy_candidate(self):
+        r = _provider_router()
+        r.set_provider_status("a", ProviderRoutingStatus.DEGRADED.value)
+        r.set_provider_status("b", ProviderRoutingStatus.UNAVAILABLE.value)
+        r.set_provider_status("c", ProviderRoutingStatus.UNAVAILABLE.value)
+        decision = r.route("test")
+        assert decision.model_id == "fast-a"
+        assert decision.estimated_cost > 0
+        assert decision.reason == "selected by routing policy"
+
+    def test_force_model_rejects_unavailable_provider(self):
+        r = _provider_router()
+        r.set_provider_status("c", ProviderRoutingStatus.UNAVAILABLE.value)
+        decision = r.route("implement code", force_model="power-c")
+        assert decision.model_id == ""
+        assert decision.reason == "forced model provider unavailable"
+        assert decision.estimated_cost == 0.0
+
+    def test_summary_reports_provider_health(self):
+        r = _provider_router()
+        r.set_provider_status("a", ProviderRoutingStatus.DEGRADED.value, reason="high latency")
+        r.set_provider_status("b", ProviderRoutingStatus.UNAVAILABLE.value, reason="quota")
+        summary = r.summary()
+        assert summary["providers"]["a"]["status"] == ProviderRoutingStatus.DEGRADED.value
+        assert summary["providers"]["a"]["reason"] == "high latency"
+        assert summary["provider_status_counts"] == {"degraded": 1, "unavailable": 1, "healthy": 1}
+
+    def test_provider_status_rejects_unknown_status(self):
+        r = _provider_router()
+        with pytest.raises(ValueError, match="unknown provider status"):
+            r.set_provider_status("a", "paused")
+        assert r.provider_status("a") == ProviderRoutingStatus.HEALTHY
+        assert r.summary()["provider_status_counts"][ProviderRoutingStatus.HEALTHY.value] == 3

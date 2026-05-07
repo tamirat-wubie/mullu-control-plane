@@ -53,6 +53,8 @@ class TestHealthAggregator:
         result = agg.compute()
         assert result.overall_score == 0.0
         assert result.components[0].status == "unhealthy"
+        assert result.components[0].detail == "health check error (RuntimeError)"
+        assert "boom" not in result.components[0].detail
 
     def test_empty(self):
         agg = HealthAggregator(clock=FIXED_CLOCK)

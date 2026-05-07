@@ -1,0 +1,81 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:finance-approval-live-handoff-preflight:1",
+  "title": "Finance Approval Live Handoff Preflight",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "ready",
+    "checked_at",
+    "readiness_level",
+    "step_count",
+    "steps",
+    "blockers"
+  ],
+  "properties": {
+    "ready": {
+      "type": "boolean"
+    },
+    "checked_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "readiness_level": {
+      "type": "string",
+      "enum": [
+        "not-ready",
+        "proof-pilot-ready",
+        "live-email-handoff-ready"
+      ]
+    },
+    "step_count": {
+      "type": "integer",
+      "minimum": 4,
+      "maximum": 4
+    },
+    "steps": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 4,
+      "items": {
+        "$ref": "#/$defs/preflight_step"
+      }
+    },
+    "blockers": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    }
+  },
+  "$defs": {
+    "preflight_step": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "passed",
+        "detail"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "enum": [
+            "finance handoff plan schema validation",
+            "finance email/calendar binding receipt ready",
+            "finance live handoff closure run schema validation",
+            "finance approval pilot readiness"
+          ]
+        },
+        "passed": {
+          "type": "boolean"
+        },
+        "detail": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    }
+  }
+}

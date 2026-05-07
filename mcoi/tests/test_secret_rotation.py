@@ -38,8 +38,9 @@ class TestSecretRotationEngine:
 
     def test_rotate_nonexistent(self):
         engine = SecretRotationEngine()
-        with pytest.raises(ValueError, match="not found"):
+        with pytest.raises(ValueError, match="^secret not found$") as exc_info:
             engine.rotate("nonexistent")
+        assert "nonexistent" not in str(exc_info.value)
 
     def test_revoke_secret(self):
         engine = SecretRotationEngine()

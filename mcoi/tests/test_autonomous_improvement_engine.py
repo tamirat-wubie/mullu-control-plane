@@ -113,8 +113,9 @@ class TestPolicyManagement:
     def test_duplicate_policy_raises(self):
         engine, _ = _make_engine()
         _register_default_policy(engine, "pol-1")
-        with pytest.raises(RuntimeCoreInvariantError, match="already exists"):
+        with pytest.raises(RuntimeCoreInvariantError, match="already exists") as exc_info:
             _register_default_policy(engine, "pol-1")
+        assert "pol-1" not in str(exc_info.value)
 
     def test_get_missing_policy_returns_none(self):
         engine, _ = _make_engine()
@@ -258,8 +259,9 @@ class TestCandidateEvaluation:
         engine, _ = _make_engine()
         _register_default_policy(engine)
         _auto_promote_candidate(engine, "cand-1")
-        with pytest.raises(RuntimeCoreInvariantError, match="already exists"):
+        with pytest.raises(RuntimeCoreInvariantError, match="already exists") as exc_info:
             _auto_promote_candidate(engine, "cand-1")
+        assert "cand-1" not in str(exc_info.value)
 
 
 # =========================================================================
@@ -287,13 +289,15 @@ class TestSessionManagement:
         _register_default_policy(engine)
         _auto_promote_candidate(engine, "cand-1")
         engine.start_session("sess-1", "cand-1")
-        with pytest.raises(RuntimeCoreInvariantError, match="already exists"):
+        with pytest.raises(RuntimeCoreInvariantError, match="already exists") as exc_info:
             engine.start_session("sess-1", "cand-1")
+        assert "sess-1" not in str(exc_info.value)
 
     def test_missing_candidate_raises(self):
         engine, _ = _make_engine()
-        with pytest.raises(RuntimeCoreInvariantError, match="not found"):
+        with pytest.raises(RuntimeCoreInvariantError, match="not found") as exc_info:
             engine.start_session("sess-1", "no-such-candidate")
+        assert "no-such-candidate" not in str(exc_info.value)
 
 
 # =========================================================================
@@ -348,15 +352,17 @@ class TestLearningWindows:
     def test_duplicate_window_raises(self):
         engine, _ = _make_engine()
         engine.open_learning_window("win-1", "chg-1", "latency_ms", 100.0)
-        with pytest.raises(RuntimeCoreInvariantError, match="already exists"):
+        with pytest.raises(RuntimeCoreInvariantError, match="already exists") as exc_info:
             engine.open_learning_window("win-1", "chg-2", "latency_ms", 100.0)
+        assert "win-1" not in str(exc_info.value)
 
     def test_observe_non_active_window_raises(self):
         engine, _ = _make_engine()
         engine.open_learning_window("win-1", "chg-1", "latency_ms", 100.0)
         engine.close_learning_window("win-1")
-        with pytest.raises(RuntimeCoreInvariantError, match="not active"):
+        with pytest.raises(RuntimeCoreInvariantError, match="not active") as exc_info:
             engine.record_observation("win-1", 110.0)
+        assert "win-1" not in str(exc_info.value)
 
     def test_observe_missing_window_raises(self):
         engine, _ = _make_engine()
@@ -532,8 +538,9 @@ class TestOutcomeAssessment:
 
     def test_missing_session_raises(self):
         engine, _ = _make_engine()
-        with pytest.raises(RuntimeCoreInvariantError, match="not found"):
+        with pytest.raises(RuntimeCoreInvariantError, match="not found") as exc_info:
             engine.assess_outcome("out-1", "no-session")
+        assert "no-session" not in str(exc_info.value)
 
     def test_session_updated_after_assessment(self):
         engine, _ = _make_engine()

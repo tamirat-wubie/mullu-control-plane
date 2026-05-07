@@ -63,7 +63,7 @@ class FunctionRegistry:
         """Register a service function template. Rejects duplicate function_id."""
         if template.function_id in self._functions:
             raise RuntimeCoreInvariantError(
-                f"function already registered: {template.function_id}"
+                "function already registered"
             )
         self._functions[template.function_id] = template
         self._statuses[template.function_id] = FunctionStatus.DRAFT
@@ -89,11 +89,11 @@ class FunctionRegistry:
         """Transition a function to ACTIVE status."""
         ensure_non_empty_text("function_id", function_id)
         if function_id not in self._functions:
-            raise RuntimeCoreInvariantError(f"function not found: {function_id}")
+            raise RuntimeCoreInvariantError("function not found")
         current = self._statuses[function_id]
         if current == FunctionStatus.RETIRED:
             raise RuntimeCoreInvariantError(
-                f"cannot activate a retired function: {function_id}"
+                "cannot activate a retired function"
             )
         self._statuses[function_id] = FunctionStatus.ACTIVE
         return FunctionStatus.ACTIVE
@@ -102,11 +102,11 @@ class FunctionRegistry:
         """Transition an ACTIVE function to PAUSED status."""
         ensure_non_empty_text("function_id", function_id)
         if function_id not in self._functions:
-            raise RuntimeCoreInvariantError(f"function not found: {function_id}")
+            raise RuntimeCoreInvariantError("function not found")
         current = self._statuses[function_id]
         if current != FunctionStatus.ACTIVE:
             raise RuntimeCoreInvariantError(
-                f"can only pause an active function, current: {current.value}"
+                "can only pause an active function"
             )
         self._statuses[function_id] = FunctionStatus.PAUSED
         return FunctionStatus.PAUSED
@@ -115,7 +115,7 @@ class FunctionRegistry:
         """Transition a function to RETIRED status."""
         ensure_non_empty_text("function_id", function_id)
         if function_id not in self._functions:
-            raise RuntimeCoreInvariantError(f"function not found: {function_id}")
+            raise RuntimeCoreInvariantError("function not found")
         self._statuses[function_id] = FunctionStatus.RETIRED
         return FunctionStatus.RETIRED
 
@@ -125,7 +125,7 @@ class FunctionRegistry:
         """Register a policy binding. Rejects duplicate binding_id."""
         if binding.binding_id in self._policy_bindings:
             raise RuntimeCoreInvariantError(
-                f"policy binding already registered: {binding.binding_id}"
+                "policy binding already registered"
             )
         self._policy_bindings[binding.binding_id] = binding
         return binding
@@ -147,7 +147,7 @@ class FunctionRegistry:
         """Register an SLA profile. Keyed by function_id. Rejects duplicate function_id."""
         if profile.function_id in self._sla_profiles:
             raise RuntimeCoreInvariantError(
-                f"SLA profile already registered for function: {profile.function_id}"
+                "SLA profile already registered"
             )
         self._sla_profiles[profile.function_id] = profile
         return profile
@@ -166,7 +166,7 @@ class FunctionRegistry:
         """Register a queue profile. Keyed by function_id. Rejects duplicate function_id."""
         if profile.function_id in self._queue_profiles:
             raise RuntimeCoreInvariantError(
-                f"queue profile already registered for function: {profile.function_id}"
+                "queue profile already registered"
             )
         self._queue_profiles[profile.function_id] = profile
         return profile
@@ -209,12 +209,12 @@ class FunctionEngine:
         ensure_non_empty_text("function_id", function_id)
         template = self._registry.get_function(function_id)
         if template is None:
-            raise RuntimeCoreInvariantError(f"function not found: {function_id}")
+            raise RuntimeCoreInvariantError("function not found")
 
         status = self._registry.get_function_status(function_id)
         if status != FunctionStatus.ACTIVE:
             raise RuntimeCoreInvariantError(
-                f"function is not active (status={status.value if status else 'unknown'}): {function_id}"
+                "function is not active"
             )
 
         now = self._clock()
@@ -437,7 +437,7 @@ class FunctionPlaybook:
         """Register a playbook. Rejects duplicate playbook_id."""
         if descriptor.playbook_id in self._playbooks:
             raise RuntimeCoreInvariantError(
-                f"playbook already registered: {descriptor.playbook_id}"
+                "playbook already registered"
             )
         self._playbooks[descriptor.playbook_id] = descriptor
         return descriptor
@@ -465,5 +465,5 @@ class FunctionPlaybook:
         ensure_non_empty_text("job_id", job_id)
         descriptor = self._playbooks.get(playbook_id)
         if descriptor is None:
-            raise RuntimeCoreInvariantError(f"playbook not found: {playbook_id}")
+            raise RuntimeCoreInvariantError("playbook not found")
         return descriptor

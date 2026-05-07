@@ -22,14 +22,16 @@ class TestObservabilityAggregator:
     def test_collect_unknown(self):
         agg = ObservabilityAggregator(clock=FIXED_CLOCK)
         data = agg.collect("nonexistent")
-        assert "error" in data
+        assert data["error"] == "observability source unavailable"
+        assert "nonexistent" not in data["error"]
 
     def test_collect_error(self):
         agg = ObservabilityAggregator(clock=FIXED_CLOCK)
         agg.register_source("broken", lambda: (_ for _ in ()).throw(RuntimeError("boom")))
         data = agg.collect("broken")
         assert "error" in data
-        assert "boom" in data["error"]
+        assert data["error"] == "observability source error (RuntimeError)"
+        assert "boom" not in data["error"]
 
     def test_collect_all(self):
         agg = ObservabilityAggregator(clock=FIXED_CLOCK)

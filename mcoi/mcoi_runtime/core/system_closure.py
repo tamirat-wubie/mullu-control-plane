@@ -32,7 +32,7 @@ class IngestionValidator:
 
     def ingest(self, record_id: str, source: str, raw_content: str, confidence: float = 0.5) -> IngestionRecord:
         if record_id in self._records:
-            raise ValueError(f"Duplicate ingestion: {record_id}")
+            raise ValueError("Duplicate ingestion")
         content_hash = sha256(raw_content.encode("utf-8")).hexdigest()
         status = "valid" if confidence >= 0.7 else "suspicious" if confidence >= 0.3 else "rejected"
         record = IngestionRecord(record_id, source, content_hash, confidence, status, raw_content.strip(), datetime.now(timezone.utc).isoformat())
@@ -68,7 +68,7 @@ class ExecutionVerificationLoop:
 
     def verify_execution(self, verification_id: str, action_id: str, expected: str, actual: str) -> ExecutionVerification:
         if verification_id in self._verifications:
-            raise ValueError(f"Duplicate verification: {verification_id}")
+            raise ValueError("Duplicate verification")
         verified = expected.strip().lower() == actual.strip().lower()
         ledger_hash = sha256(f"{action_id}:{expected}:{actual}:{verified}".encode()).hexdigest()
         v = ExecutionVerification(verification_id, action_id, expected, actual, verified, ledger_hash, datetime.now(timezone.utc).isoformat())
@@ -111,7 +111,7 @@ class TemporalScheduler:
 
     def schedule(self, task_id: str, target: str, operation: str, scheduled_at: str, deadline_at: str, max_retries: int = 3) -> ScheduledTask:
         if task_id in self._tasks:
-            raise ValueError(f"Duplicate task: {task_id}")
+            raise ValueError("Duplicate task")
         task = ScheduledTask(task_id, target, operation, scheduled_at, deadline_at, max_retries=max_retries)
         self._tasks[task_id] = task
         return task
@@ -119,23 +119,23 @@ class TemporalScheduler:
     def start(self, task_id: str) -> ScheduledTask:
         t = self._tasks.get(task_id)
         if not t:
-            raise ValueError(f"Unknown task: {task_id}")
+            raise ValueError("Unknown task")
         if t.status not in ("pending", "retrying"):
-            raise ValueError(f"Cannot start task in {t.status}")
+            raise ValueError("Cannot start task in current status")
         t.status = "running"
         return t
 
     def complete(self, task_id: str) -> ScheduledTask:
         t = self._tasks.get(task_id)
         if not t or t.status != "running":
-            raise ValueError(f"Cannot complete")
+            raise ValueError("Cannot complete")
         t.status = "completed"
         return t
 
     def fail(self, task_id: str) -> ScheduledTask:
         t = self._tasks.get(task_id)
         if not t or t.status != "running":
-            raise ValueError(f"Cannot fail")
+            raise ValueError("Cannot fail")
         if t.retry_count < t.max_retries:
             t.retry_count += 1
             t.backoff_ms *= 2
@@ -147,7 +147,7 @@ class TemporalScheduler:
     def timeout(self, task_id: str) -> ScheduledTask:
         t = self._tasks.get(task_id)
         if not t:
-            raise ValueError(f"Unknown task")
+            raise ValueError("Unknown task")
         t.status = "timeout"
         return t
 
@@ -175,9 +175,9 @@ class FailureRecoveryEngine:
 
     def register_compensation(self, action_id: str, failed_ref: str, comp_type: str, detail: str = "") -> CompensationAction:
         if action_id in self._compensations:
-            raise ValueError(f"Duplicate: {action_id}")
+            raise ValueError("Duplicate compensation action")
         if comp_type not in ("rollback", "retry", "compensate", "escalate", "accept"):
-            raise ValueError(f"Invalid type: {comp_type}")
+            raise ValueError("Invalid compensation type")
         c = CompensationAction(action_id, failed_ref, comp_type, detail=detail)
         self._compensations[action_id] = c
         return c
@@ -185,14 +185,14 @@ class FailureRecoveryEngine:
     def execute_compensation(self, action_id: str) -> CompensationAction:
         c = self._compensations.get(action_id)
         if not c or c.status != "pending":
-            raise ValueError(f"Cannot execute")
+            raise ValueError("Cannot execute")
         c.status = "executed"
         return c
 
     def fail_compensation(self, action_id: str) -> CompensationAction:
         c = self._compensations.get(action_id)
         if not c or c.status != "pending":
-            raise ValueError(f"Cannot fail")
+            raise ValueError("Cannot fail")
         c.status = "failed"
         return c
 
@@ -221,9 +221,9 @@ class SimRealityBoundary:
 
     def declare_mode(self, declaration_id: str, mode: str, scope: str) -> ModeDeclaration:
         if mode not in ("simulation", "reality", "sandbox", "dry_run"):
-            raise ValueError(f"Invalid mode: {mode}")
+            raise ValueError("Invalid mode")
         if declaration_id in self._declarations:
-            raise ValueError(f"Duplicate: {declaration_id}")
+            raise ValueError("Duplicate mode declaration")
         d = ModeDeclaration(declaration_id, mode, scope, True, datetime.now(timezone.utc).isoformat())
         self._declarations[declaration_id] = d
         self._current_mode = mode
@@ -232,7 +232,7 @@ class SimRealityBoundary:
     def promote_to_reality(self, declaration_id: str, scope: str) -> ModeDeclaration:
         """Safe promotion from simulation to reality -- explicit, auditable."""
         if self._current_mode not in ("simulation", "sandbox", "dry_run"):
-            raise ValueError(f"Cannot promote from {self._current_mode}")
+            raise ValueError("Cannot promote from current mode")
         return self.declare_mode(declaration_id, "reality", scope)
 
     def demote_to_simulation(self, declaration_id: str, scope: str) -> ModeDeclaration:

@@ -11,7 +11,7 @@ import pytest
 
 from mcoi_runtime.core.event_spine import EventSpineEngine
 from mcoi_runtime.core.memory_mesh import MemoryMeshEngine
-from mcoi_runtime.core.access_runtime import AccessRuntimeEngine
+from mcoi_runtime.governance.guards.access import AccessRuntimeEngine
 from mcoi_runtime.core.access_runtime_integration import AccessRuntimeIntegration
 from mcoi_runtime.core.invariants import RuntimeCoreInvariantError
 from mcoi_runtime.contracts.access_runtime import (
@@ -296,6 +296,13 @@ class TestMemoryMeshAttachment:
         assert mem.content["total_roles"] >= 1
         assert mem.content["total_bindings"] >= 1
         assert mem.content["total_evaluations"] >= 1
+
+    def test_memory_title_redacts_scope_ref(self, env):
+        _es, _mm, eng, integ = env
+        _setup_admin(eng)
+        mem = integ.attach_access_audit_to_memory_mesh("tenant-secret")
+        assert mem.title == "Access audit state"
+        assert "tenant-secret" not in mem.title
 
 
 # -----------------------------------------------------------------------

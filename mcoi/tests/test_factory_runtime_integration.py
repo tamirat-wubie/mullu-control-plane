@@ -403,9 +403,11 @@ class TestAttachFactoryStateToMemoryMesh:
         mem = bridge.attach_factory_state_to_memory_mesh("my-scope-ref")
         assert mem.scope_ref_id == "my-scope-ref"
 
-    def test_title_contains_scope(self, bridge):
+    def test_title_is_bounded(self, bridge):
         mem = bridge.attach_factory_state_to_memory_mesh("alpha-scope")
-        assert "alpha-scope" in mem.title
+        assert mem.title == "Factory state"
+        assert "alpha-scope" not in mem.title
+        assert mem.scope_ref_id == "alpha-scope"
 
     def test_content_has_total_plants(self, bridge):
         mem = bridge.attach_factory_state_to_memory_mesh("scope-5")

@@ -1,0 +1,121 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:data-governance-snapshot:1",
+  "title": "DataGovernanceSnapshot",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "snapshot_id",
+    "records",
+    "decisions",
+    "sensitive_record_count",
+    "legal_hold_count",
+    "open_review_count",
+    "snapshot_hash"
+  ],
+  "properties": {
+    "snapshot_id": {"type": "string", "minLength": 1},
+    "records": {"type": "array", "items": {"$ref": "#/$defs/record"}},
+    "decisions": {"type": "array", "items": {"$ref": "#/$defs/decision"}},
+    "sensitive_record_count": {"type": "integer", "minimum": 0},
+    "legal_hold_count": {"type": "integer", "minimum": 0},
+    "open_review_count": {"type": "integer", "minimum": 0},
+    "snapshot_hash": {"type": "string", "minLength": 32}
+  },
+  "$defs": {
+    "classification": {
+      "type": "string",
+      "enum": ["public", "internal", "confidential", "sensitive", "pii", "restricted", "secret"]
+    },
+    "privacy_basis": {
+      "type": "string",
+      "enum": ["consent", "contract", "legal_obligation", "legitimate_interest"]
+    },
+    "action": {
+      "type": "string",
+      "enum": ["persist", "export", "delete", "legal_hold", "release_hold"]
+    },
+    "verdict": {
+      "type": "string",
+      "enum": ["allow", "deny", "review"]
+    },
+    "record": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "data_id",
+        "tenant_id",
+        "classification",
+        "purpose",
+        "source_event_id",
+        "created_at",
+        "retention_until",
+        "delete_after",
+        "privacy_basis",
+        "data_residency",
+        "encrypted",
+        "legal_hold",
+        "consent_ref",
+        "evidence_refs",
+        "record_hash",
+        "metadata"
+      ],
+      "properties": {
+        "data_id": {"type": "string", "minLength": 1},
+        "tenant_id": {"type": "string", "minLength": 1},
+        "classification": {"$ref": "#/$defs/classification"},
+        "purpose": {"type": "string", "minLength": 1},
+        "source_event_id": {"type": "string", "minLength": 1},
+        "created_at": {"type": "string", "minLength": 1},
+        "retention_until": {"type": "string", "minLength": 1},
+        "delete_after": {"type": "string", "minLength": 1},
+        "privacy_basis": {"$ref": "#/$defs/privacy_basis"},
+        "data_residency": {"type": "string", "minLength": 1},
+        "encrypted": {"type": "boolean"},
+        "legal_hold": {"type": "boolean"},
+        "consent_ref": {"type": "string"},
+        "evidence_refs": {"type": "array", "items": {"type": "string", "minLength": 1}},
+        "record_hash": {"type": "string", "minLength": 32},
+        "metadata": {"type": "object"}
+      }
+    },
+    "decision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "decision_id",
+        "request_id",
+        "data_id",
+        "tenant_id",
+        "action",
+        "verdict",
+        "reason",
+        "required_controls",
+        "evidence_refs",
+        "decided_at",
+        "decision_hash",
+        "metadata"
+      ],
+      "properties": {
+        "decision_id": {"type": "string", "minLength": 1},
+        "request_id": {"type": "string", "minLength": 1},
+        "data_id": {"type": "string", "minLength": 1},
+        "tenant_id": {"type": "string", "minLength": 1},
+        "action": {"$ref": "#/$defs/action"},
+        "verdict": {"$ref": "#/$defs/verdict"},
+        "reason": {"type": "string", "minLength": 1},
+        "required_controls": {"type": "array", "items": {"type": "string", "minLength": 1}},
+        "evidence_refs": {"type": "array", "items": {"type": "string", "minLength": 1}},
+        "decided_at": {"type": "string", "minLength": 1},
+        "decision_hash": {"type": "string", "minLength": 32},
+        "metadata": {
+          "type": "object",
+          "required": ["decision_is_not_deletion"],
+          "properties": {
+            "decision_is_not_deletion": {"type": "boolean", "const": true}
+          }
+        }
+      }
+    }
+  }
+}

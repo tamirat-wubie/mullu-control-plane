@@ -35,7 +35,7 @@ class PlaybookEngine:
 
     def register(self, playbook: IncidentPlaybookDescriptor) -> IncidentPlaybookDescriptor:
         if playbook.playbook_id in self._playbooks:
-            raise ValueError(f"playbook already registered: {playbook.playbook_id}")
+            raise ValueError("playbook already registered")
         self._playbooks[playbook.playbook_id] = playbook
         return playbook
 
@@ -101,7 +101,7 @@ class PlaybookEngine:
         if not playbook.is_executable:
             return self._make_record(playbook_id, incident_id, started_at,
                                       PlaybookOutcome.BLOCKED, 0, len(playbook.steps), False, False,
-                                      f"playbook status is {playbook.status.value}")
+                                      "playbook execution blocked by status")
 
         # Review gate
         if playbook.requires_review and not review_satisfied:
@@ -123,7 +123,7 @@ class PlaybookEngine:
                 record = self._make_record(playbook_id, incident_id, started_at,
                                             PlaybookOutcome.FAILED, completed, len(playbook.steps),
                                             review_satisfied, approval_satisfied,
-                                            f"step failed: {step}")
+                                            "playbook step failed")
                 self._executions.append(record)
                 return record
             completed += 1

@@ -33,6 +33,10 @@ if TYPE_CHECKING:
     from .hash_chain import HashChainStore
 
 
+def _bounded_store_error(summary: str, exc: BaseException) -> str:
+    return f"{summary} ({type(exc).__name__})"
+
+
 def _deterministic_json(data: Any) -> str:
     return json.dumps(data, sort_keys=True, ensure_ascii=True, separators=(",", ":"))
 
@@ -54,7 +58,7 @@ def _atomic_write(path: Path, content: str) -> None:
                 os.unlink(tmp_path)
             raise
     except OSError as exc:
-        raise PersistenceWriteError(f"failed to write {path}: {exc}") from exc
+        raise PersistenceWriteError(_bounded_store_error("replay store write failed", exc)) from exc
 
 
 def _serialize_replay_record(record: ReplayRecord) -> str:
@@ -122,7 +126,7 @@ def _deserialize_replay_record(raw: dict[str, Any]) -> ReplayRecord:
             environment_digest=raw.get("environment_digest"),
         )
     except (KeyError, TypeError, ValueError) as exc:
-        raise CorruptedDataError(f"invalid replay record: {exc}") from exc
+        raise CorruptedDataError(_bounded_store_error("invalid replay record", exc)) from exc
 
 
 class ReplayStore:
@@ -146,17 +150,13 @@ class ReplayStore:
     def _safe_path(self, id_value: str, suffix: str = "") -> Path:
         """Construct a path from *id_value* and validate it stays inside _base_path."""
         if "\0" in id_value:
-            raise PathTraversalError(f"ID contains null byte: {id_value!r}")
+            raise PathTraversalError("identifier contains null byte")
         if "/" in id_value or "\\" in id_value or ".." in id_value:
-            raise PathTraversalError(
-                f"ID contains forbidden characters: {id_value!r}"
-            )
+            raise PathTraversalError("identifier contains forbidden characters")
         candidate = (self._base_path / f"{id_value}{suffix}").resolve()
         base_resolved = self._base_path.resolve()
         if not candidate.is_relative_to(base_resolved):
-            raise PathTraversalError(
-                f"path escapes base directory: {id_value!r}"
-            )
+            raise PathTraversalError("path escapes base directory")
         return candidate
 
     def _replay_path(self, replay_id: str) -> Path:
@@ -179,15 +179,15 @@ class ReplayStore:
 
         path = self._replay_path(replay_id)
         if not path.exists():
-            raise PersistenceError(f"replay record not found: {replay_id}")
+            raise PersistenceError("replay record not found")
 
         try:
             raw = json.loads(path.read_text(encoding="utf-8"))
         except (json.JSONDecodeError, OSError) as exc:
-            raise CorruptedDataError(f"malformed replay file {replay_id}: {exc}") from exc
+            raise CorruptedDataError(_bounded_store_error("malformed replay file", exc)) from exc
 
         if not isinstance(raw, dict):
-            raise CorruptedDataError(f"replay file {replay_id} is not a JSON object")
+            raise CorruptedDataError("replay file must be a JSON object")
 
         return _deserialize_replay_record(raw)
 
@@ -209,8 +209,8 @@ class ReplayStore:
                 try:
                     raw = json.loads(file_path.read_text(encoding="utf-8"))
                 except (json.JSONDecodeError, OSError) as exc:
-                    raise CorruptedDataError(f"malformed replay file {file_path.name}: {exc}") from exc
+                    raise CorruptedDataError(_bounded_store_error("malformed replay file", exc)) from exc
                 if not isinstance(raw, dict):
-                    raise CorruptedDataError(f"replay file {file_path.name} is not a JSON object")
+                    raise CorruptedDataError("replay file must be a JSON object")
                 results.append(_deserialize_replay_record(raw))
         return tuple(results)

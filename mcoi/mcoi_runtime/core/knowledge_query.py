@@ -131,7 +131,7 @@ class KnowledgeQueryEngine:
     ) -> KnowledgeQuery:
         """Register a new knowledge query."""
         if query_id in self._queries:
-            raise RuntimeCoreInvariantError(f"Duplicate query_id: {query_id}")
+            raise RuntimeCoreInvariantError("Duplicate query_id")
         now = _now_iso()
         query = KnowledgeQuery(
             query_id=query_id, tenant_id=tenant_id,
@@ -149,16 +149,14 @@ class KnowledgeQueryEngine:
         """Get a query by ID."""
         q = self._queries.get(query_id)
         if q is None:
-            raise RuntimeCoreInvariantError(f"Unknown query_id: {query_id}")
+            raise RuntimeCoreInvariantError("Unknown query_id")
         return q
 
     def cancel_query(self, query_id: str) -> KnowledgeQuery:
         """Cancel a query."""
         old = self.get_query(query_id)
         if old.status in _QUERY_TERMINAL:
-            raise RuntimeCoreInvariantError(
-                f"Cannot cancel query in {old.status.value} status"
-            )
+            raise RuntimeCoreInvariantError("Cannot cancel query in current status")
         updated = KnowledgeQuery(
             query_id=old.query_id, tenant_id=old.tenant_id,
             scope=old.scope, scope_ref_id=old.scope_ref_id,
@@ -189,7 +187,7 @@ class KnowledgeQueryEngine:
     ) -> QueryFilter:
         """Add a filter to a query."""
         if filter_id in self._filters:
-            raise RuntimeCoreInvariantError(f"Duplicate filter_id: {filter_id}")
+            raise RuntimeCoreInvariantError("Duplicate filter_id")
         self.get_query(query_id)  # validate query exists
         now = _now_iso()
         f = QueryFilter(
@@ -224,7 +222,7 @@ class KnowledgeQueryEngine:
     ) -> EvidenceReference:
         """Register a piece of evidence."""
         if reference_id in self._references:
-            raise RuntimeCoreInvariantError(f"Duplicate reference_id: {reference_id}")
+            raise RuntimeCoreInvariantError("Duplicate reference_id")
         now = _now_iso()
         ref = EvidenceReference(
             reference_id=reference_id, source_id=source_id,
@@ -242,7 +240,7 @@ class KnowledgeQueryEngine:
         """Get an evidence reference by ID."""
         r = self._references.get(reference_id)
         if r is None:
-            raise RuntimeCoreInvariantError(f"Unknown reference_id: {reference_id}")
+            raise RuntimeCoreInvariantError("Unknown reference_id")
         return r
 
     def evidence_for_tenant(self, tenant_id: str) -> tuple[EvidenceReference, ...]:
@@ -406,7 +404,7 @@ class KnowledgeQueryEngine:
             v = QueryViolation(
                 violation_id=vid, tenant_id=owner_tenant,
                 query_id=query_id, operation="cross_tenant",
-                reason=f"Query {query_id} owned by {owner_tenant} cannot search tenant {search_tenant}",
+                reason="Cross-tenant search attempt",
                 detected_at=now,
             )
             self._violations[vid] = v
@@ -427,12 +425,10 @@ class KnowledgeQueryEngine:
     ) -> QueryExecutionRecord:
         """Execute a full query pipeline: search, match, rank, record."""
         if execution_id in self._executions:
-            raise RuntimeCoreInvariantError(f"Duplicate execution_id: {execution_id}")
+            raise RuntimeCoreInvariantError("Duplicate execution_id")
         query = self.get_query(query_id)
         if query.status in _QUERY_TERMINAL:
-            raise RuntimeCoreInvariantError(
-                f"Cannot execute query in {query.status.value} status"
-            )
+            raise RuntimeCoreInvariantError("Cannot execute query in current status")
 
         # Mark as executing
         executing = KnowledgeQuery(
@@ -515,7 +511,7 @@ class KnowledgeQueryEngine:
         """Get an execution record by ID."""
         e = self._executions.get(execution_id)
         if e is None:
-            raise RuntimeCoreInvariantError(f"Unknown execution_id: {execution_id}")
+            raise RuntimeCoreInvariantError("Unknown execution_id")
         return e
 
     def results_for_query(self, query_id: str) -> tuple[RankedResult, ...]:
@@ -537,12 +533,10 @@ class KnowledgeQueryEngine:
     ) -> EvidenceBundle:
         """Assemble an evidence bundle from query results."""
         if bundle_id in self._bundles:
-            raise RuntimeCoreInvariantError(f"Duplicate bundle_id: {bundle_id}")
+            raise RuntimeCoreInvariantError("Duplicate bundle_id")
         query = self.get_query(query_id)
         if query.tenant_id != tenant_id:
-            raise RuntimeCoreInvariantError(
-                f"Bundle tenant {tenant_id} does not match query tenant {query.tenant_id}"
-            )
+            raise RuntimeCoreInvariantError("Bundle tenant does not match query tenant")
 
         # Collect results for this query
         results = self.results_for_query(query_id)
@@ -574,7 +568,7 @@ class KnowledgeQueryEngine:
         """Get a bundle by ID."""
         b = self._bundles.get(bundle_id)
         if b is None:
-            raise RuntimeCoreInvariantError(f"Unknown bundle_id: {bundle_id}")
+            raise RuntimeCoreInvariantError("Unknown bundle_id")
         return b
 
     def bundles_for_query(self, query_id: str) -> tuple[EvidenceBundle, ...]:
@@ -603,7 +597,7 @@ class KnowledgeQueryEngine:
                         violation_id=vid, tenant_id=tenant,
                         query_id=exec_rec.query_id,
                         operation="empty_results",
-                        reason=f"Query {exec_rec.query_id} returned zero results",
+                        reason="Query returned zero results",
                         detected_at=now,
                     )
                     self._violations[vid] = v
@@ -620,7 +614,7 @@ class KnowledgeQueryEngine:
                         violation_id=vid, tenant_id=query.tenant_id,
                         query_id=query.query_id,
                         operation="stuck_executing",
-                        reason=f"Query {query.query_id} is stuck in executing status",
+                        reason="Query stuck in executing status",
                         detected_at=now,
                     )
                     self._violations[vid] = v
@@ -639,7 +633,7 @@ class KnowledgeQueryEngine:
     def query_snapshot(self, snapshot_id: str) -> QuerySnapshot:
         """Capture a point-in-time query snapshot."""
         if snapshot_id in self._snapshot_ids:
-            raise RuntimeCoreInvariantError(f"Duplicate snapshot_id: {snapshot_id}")
+            raise RuntimeCoreInvariantError("Duplicate snapshot_id")
         now = _now_iso()
         snap = QuerySnapshot(
             snapshot_id=snapshot_id,

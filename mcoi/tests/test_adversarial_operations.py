@@ -166,6 +166,8 @@ class TestCampaignOrchestration:
         assert eval_result["outcome"].score == 1.0
         assert eval_result["memory"] is not None
         assert "adversarial" in eval_result["memory"].tags
+        assert eval_result["memory"].title == "Adversarial campaign outcome"
+        assert result["session"].name not in eval_result["memory"].title
         assert eval_result["event"] is not None
 
     def test_evaluate_failed_campaign(self):

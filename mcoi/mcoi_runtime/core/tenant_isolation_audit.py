@@ -96,7 +96,7 @@ class TenantIsolationAuditor:
                     source_tenant=op.actor_tenant,
                     target_tenant=op.target_tenant,
                     resource=op.resource,
-                    description=f"Tenant {op.actor_tenant} {op.operation_type} on {op.target_tenant}'s {op.resource}",
+                    description="cross-tenant operation detected",
                     timestamp=time.time(),
                 ))
 

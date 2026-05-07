@@ -1495,3 +1495,75 @@ class TestCollections:
         assert "wallets" in c
         assert "decisions" in c
         assert "violations" in c
+
+
+class TestBoundedContracts:
+    def test_account_contracts_do_not_reflect_ids(self):
+        eng, _ = _make_engine()
+        eng.register_account("acct-secret", "t-1", "Primary")
+
+        with pytest.raises(RuntimeCoreInvariantError) as dup_exc:
+            eng.register_account("acct-secret", "t-1", "Primary")
+        dup_message = str(dup_exc.value)
+        assert dup_message == "Duplicate account_id"
+        assert "acct-secret" not in dup_message
+        assert "Duplicate account_id" in dup_message
+
+        with pytest.raises(RuntimeCoreInvariantError) as missing_exc:
+            eng.get_account("acct-missing")
+        missing_message = str(missing_exc.value)
+        assert missing_message == "Unknown account_id"
+        assert "acct-missing" not in missing_message
+        assert "Unknown account_id" in missing_message
+
+    def test_terminal_contracts_do_not_reflect_status_values(self):
+        eng, _ = _make_engine()
+        eng.register_wallet("wallet-secret", "t-1", "id-1", "pk-1")
+        eng.close_wallet("wallet-secret")
+        with pytest.raises(RuntimeCoreInvariantError) as wallet_exc:
+            eng.freeze_wallet("wallet-secret")
+        wallet_message = str(wallet_exc.value)
+        assert wallet_message == "Cannot freeze wallet in terminal status"
+        assert "CLOSED" not in wallet_message
+        assert "wallet-secret" not in wallet_message
+
+        eng.create_settlement_proof("proof-secret", "t-1", "tx-1", "hash-1")
+        eng.fail_proof("proof-secret")
+        with pytest.raises(RuntimeCoreInvariantError) as proof_exc:
+            eng.confirm_proof("proof-secret")
+        proof_message = str(proof_exc.value)
+        assert proof_message == "Cannot confirm proof in terminal status"
+        assert "FAILED" not in proof_message
+        assert "proof-secret" not in proof_message
+
+        eng.create_anchor("anchor-secret", "t-1", "src-1", "hash-2", "ref-1")
+        eng.confirm_anchor("anchor-secret")
+        with pytest.raises(RuntimeCoreInvariantError) as anchor_exc:
+            eng.revoke_anchor("anchor-secret")
+        anchor_message = str(anchor_exc.value)
+        assert anchor_message == "Cannot revoke anchor in terminal disposition"
+        assert "ANCHORED" not in anchor_message
+        assert "anchor-secret" not in anchor_message
+
+    def test_violation_reasons_do_not_reflect_ids(self):
+        eng, _ = _make_engine()
+        eng.create_settlement_proof("proof-secret", "t-1", "tx-1", "hash-1")
+        eng.fail_proof("proof-secret")
+        eng.create_anchor("anchor-secret", "t-1", "src-1", "hash-2", "ref-1")
+        eng.fail_anchor("anchor-secret")
+        eng.register_wallet("wallet-secret", "t-1", "id-1", "pk-1")
+        eng.mark_compromised("wallet-secret")
+
+        reasons = {
+            violation.kind: violation.reason
+            for violation in eng.detect_ledger_violations("t-1")
+        }
+        assert reasons[LedgerViolationKind.PROOF_FAILED] == "Settlement proof failed verification"
+        assert "proof-secret" not in reasons[LedgerViolationKind.PROOF_FAILED]
+        assert "tx-1" not in reasons[LedgerViolationKind.PROOF_FAILED]
+        assert reasons[LedgerViolationKind.ANCHOR_EXPIRED] == "Anchor failed or expired"
+        assert "anchor-secret" not in reasons[LedgerViolationKind.ANCHOR_EXPIRED]
+        assert "ref-1" not in reasons[LedgerViolationKind.ANCHOR_EXPIRED]
+        assert reasons[LedgerViolationKind.WALLET_COMPROMISED] == "Wallet is compromised"
+        assert "wallet-secret" not in reasons[LedgerViolationKind.WALLET_COMPROMISED]
+        assert "id-1" not in reasons[LedgerViolationKind.WALLET_COMPROMISED]

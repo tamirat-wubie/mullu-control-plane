@@ -66,7 +66,7 @@ class MultiTenantOperations:
 
     def update_health(self, tenant_id: str, **kwargs: Any) -> TenantHealthScore:
         if tenant_id not in self._tenants:
-            raise ValueError(f"Unknown tenant: {tenant_id}")
+            raise ValueError("unknown tenant")
         health = self._tenants[tenant_id]
         for k, v in kwargs.items():
             if hasattr(health, k):

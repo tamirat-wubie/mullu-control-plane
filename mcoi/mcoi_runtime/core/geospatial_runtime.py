@@ -141,7 +141,7 @@ class GeospatialRuntimeEngine:
     ) -> GeoFeature:
         """Register a geospatial feature."""
         if feature_id in self._features:
-            raise RuntimeCoreInvariantError(f"Duplicate feature_id: {feature_id}")
+            raise RuntimeCoreInvariantError("Duplicate feature_id")
         now = self._clock()
         feat = GeoFeature(
             feature_id=feature_id,
@@ -171,7 +171,7 @@ class GeospatialRuntimeEngine:
     ) -> TerritoryRecord:
         """Register a territory (initially UNASSIGNED)."""
         if territory_id in self._territories:
-            raise RuntimeCoreInvariantError(f"Duplicate territory_id: {territory_id}")
+            raise RuntimeCoreInvariantError("Duplicate territory_id")
         now = self._clock()
         terr = TerritoryRecord(
             territory_id=territory_id,
@@ -196,7 +196,7 @@ class GeospatialRuntimeEngine:
         """Assign a territory to a reference."""
         old = self._territories.get(territory_id)
         if old is None:
-            raise RuntimeCoreInvariantError(f"Unknown territory_id: {territory_id}")
+            raise RuntimeCoreInvariantError("Unknown territory_id")
         updated = TerritoryRecord(
             territory_id=old.territory_id,
             tenant_id=old.tenant_id,
@@ -229,7 +229,7 @@ class GeospatialRuntimeEngine:
     ) -> RouteRecord:
         """Register a route between two references."""
         if route_id in self._routes:
-            raise RuntimeCoreInvariantError(f"Duplicate route_id: {route_id}")
+            raise RuntimeCoreInvariantError("Duplicate route_id")
         now = self._clock()
         route = RouteRecord(
             route_id=route_id,
@@ -251,7 +251,7 @@ class GeospatialRuntimeEngine:
     def _transition_route(self, route_id: str, new_status: RouteStatus) -> RouteRecord:
         old = self._routes.get(route_id)
         if old is None:
-            raise RuntimeCoreInvariantError(f"Unknown route_id: {route_id}")
+            raise RuntimeCoreInvariantError("Unknown route_id")
         updated = RouteRecord(
             route_id=old.route_id,
             tenant_id=old.tenant_id,
@@ -292,9 +292,9 @@ class GeospatialRuntimeEngine:
     ) -> DepotRecord:
         """Register a depot linked to a feature."""
         if depot_id in self._depots:
-            raise RuntimeCoreInvariantError(f"Duplicate depot_id: {depot_id}")
+            raise RuntimeCoreInvariantError("Duplicate depot_id")
         if feature_ref not in self._features:
-            raise RuntimeCoreInvariantError(f"Unknown feature_ref: {feature_ref}")
+            raise RuntimeCoreInvariantError("Unknown feature_ref")
         now = self._clock()
         depot = DepotRecord(
             depot_id=depot_id,
@@ -315,7 +315,7 @@ class GeospatialRuntimeEngine:
         """Update the current load of a depot."""
         old = self._depots.get(depot_id)
         if old is None:
-            raise RuntimeCoreInvariantError(f"Unknown depot_id: {depot_id}")
+            raise RuntimeCoreInvariantError("Unknown depot_id")
         updated = DepotRecord(
             depot_id=old.depot_id,
             tenant_id=old.tenant_id,
@@ -346,11 +346,11 @@ class GeospatialRuntimeEngine:
     ) -> SiteRecord:
         """Register a site linked to a feature and territory."""
         if site_id in self._sites:
-            raise RuntimeCoreInvariantError(f"Duplicate site_id: {site_id}")
+            raise RuntimeCoreInvariantError("Duplicate site_id")
         if feature_ref not in self._features:
-            raise RuntimeCoreInvariantError(f"Unknown feature_ref: {feature_ref}")
+            raise RuntimeCoreInvariantError("Unknown feature_ref")
         if territory_ref not in self._territories:
-            raise RuntimeCoreInvariantError(f"Unknown territory_ref: {territory_ref}")
+            raise RuntimeCoreInvariantError("Unknown territory_ref")
         now = self._clock()
         # Increment territory feature count
         terr = self._territories[territory_ref]
@@ -387,10 +387,10 @@ class GeospatialRuntimeEngine:
         """Compute haversine distance (meters) between two features."""
         a = self._features.get(feature_a_id)
         if a is None:
-            raise RuntimeCoreInvariantError(f"Unknown feature_id: {feature_a_id}")
+            raise RuntimeCoreInvariantError("Unknown feature_id")
         b = self._features.get(feature_b_id)
         if b is None:
-            raise RuntimeCoreInvariantError(f"Unknown feature_id: {feature_b_id}")
+            raise RuntimeCoreInvariantError("Unknown feature_id")
         return _haversine(a.latitude, a.longitude, b.latitude, b.longitude)
 
     def find_nearest_feature(self, latitude: float, longitude: float) -> GeoFeature | None:
@@ -447,7 +447,7 @@ class GeospatialRuntimeEngine:
     def geo_snapshot(self, snapshot_id: str, tenant_id: str) -> GeoSnapshot:
         """Capture a tenant-scoped point-in-time geospatial snapshot."""
         if snapshot_id in self._snapshot_ids:
-            raise RuntimeCoreInvariantError(f"Duplicate snapshot_id: {snapshot_id}")
+            raise RuntimeCoreInvariantError("Duplicate snapshot_id")
         now = self._clock()
         snap = GeoSnapshot(
             snapshot_id=snapshot_id,
@@ -509,7 +509,7 @@ class GeospatialRuntimeEngine:
                         "violation_id": vid,
                         "tenant_id": depot.tenant_id,
                         "operation": "overloaded_depot",
-                        "reason": f"Depot {depot.depot_id} load {depot.current_load} exceeds capacity {depot.capacity}",
+                        "reason": "depot load exceeds capacity",
                         "detected_at": now,
                     }
                     self._violations[vid] = v
@@ -537,7 +537,7 @@ class GeospatialRuntimeEngine:
                         "violation_id": vid,
                         "tenant_id": route.tenant_id,
                         "operation": "blocked_route_in_use",
-                        "reason": f"Blocked route {route.route_id} has sites on its endpoints",
+                        "reason": "blocked route endpoints remain in use",
                         "detected_at": now,
                     }
                     self._violations[vid] = v
@@ -554,7 +554,7 @@ class GeospatialRuntimeEngine:
                         "violation_id": vid,
                         "tenant_id": terr.tenant_id,
                         "operation": "unassigned_territory",
-                        "reason": f"Territory {terr.territory_id} is unassigned",
+                        "reason": "territory is unassigned",
                         "detected_at": now,
                     }
                     self._violations[vid] = v

@@ -160,8 +160,9 @@ class TestGetWorker:
         assert w.worker_id == "w1"
 
     def test_unknown_raises(self, engine):
-        with pytest.raises(RuntimeCoreInvariantError, match="unknown worker"):
+        with pytest.raises(RuntimeCoreInvariantError, match="^worker unavailable$") as exc_info:
             engine.get_worker("no-such")
+        assert "no-such" not in str(exc_info.value)
 
     def test_returns_same_data(self, engine):
         original = _register(engine)
@@ -199,14 +200,16 @@ class TestUpdateWorkerStatus:
     def test_offboarded_is_terminal(self, engine):
         _register(engine)
         engine.update_worker_status("w1", WorkerStatus.OFFBOARDED)
-        with pytest.raises(RuntimeCoreInvariantError, match="terminal"):
+        with pytest.raises(RuntimeCoreInvariantError, match="^worker state change denied$") as exc_info:
             engine.update_worker_status("w1", WorkerStatus.ACTIVE)
+        assert WorkerStatus.OFFBOARDED.value not in str(exc_info.value)
 
     def test_offboarded_cannot_go_on_leave(self, engine):
         _register(engine)
         engine.update_worker_status("w1", WorkerStatus.OFFBOARDED)
-        with pytest.raises(RuntimeCoreInvariantError, match="terminal"):
+        with pytest.raises(RuntimeCoreInvariantError, match="^worker state change denied$") as exc_info:
             engine.update_worker_status("w1", WorkerStatus.ON_LEAVE)
+        assert WorkerStatus.OFFBOARDED.value not in str(exc_info.value)
 
     def test_on_leave_to_active(self, engine):
         _register(engine, status=WorkerStatus.ON_LEAVE)
@@ -219,8 +222,9 @@ class TestUpdateWorkerStatus:
         assert updated.status == WorkerStatus.ACTIVE
 
     def test_unknown_worker_raises(self, engine):
-        with pytest.raises(RuntimeCoreInvariantError, match="unknown worker"):
+        with pytest.raises(RuntimeCoreInvariantError, match="^worker unavailable$") as exc_info:
             engine.update_worker_status("nope", WorkerStatus.ACTIVE)
+        assert "nope" not in str(exc_info.value)
 
     def test_preserves_assignments(self, engine):
         _register(engine)
@@ -531,8 +535,9 @@ class TestAssignmentRequest:
         assert req.request_id == "r1"
 
     def test_get_unknown_raises(self, engine):
-        with pytest.raises(RuntimeCoreInvariantError, match="unknown assignment request"):
+        with pytest.raises(RuntimeCoreInvariantError, match="^assignment request unavailable$") as exc_info:
             engine.get_request("nope")
+        assert "nope" not in str(exc_info.value)
 
     def test_requests_for_tenant(self, engine):
         engine.request_assignment("r1", "t1", "s1", "reviewer")
@@ -598,45 +603,52 @@ class TestDecideAssignment:
 
     def test_unknown_request_raises(self, engine):
         _register(engine, "w1")
-        with pytest.raises(RuntimeCoreInvariantError, match="unknown assignment request"):
+        with pytest.raises(RuntimeCoreInvariantError, match="^assignment request unavailable$") as exc_info:
             engine.decide_assignment("d1", "nope", "w1")
+        assert "nope" not in str(exc_info.value)
 
     def test_unknown_worker_raises(self, engine):
         engine.request_assignment("r1", "t1", "s1", "reviewer")
-        with pytest.raises(RuntimeCoreInvariantError, match="unknown worker"):
+        with pytest.raises(RuntimeCoreInvariantError, match="^worker unavailable$") as exc_info:
             engine.decide_assignment("d1", "r1", "ghost")
+        assert "ghost" not in str(exc_info.value)
 
     def test_on_leave_worker_raises(self, engine):
         _register(engine, "w1", status=WorkerStatus.ON_LEAVE)
         engine.request_assignment("r1", "t1", "s1", "reviewer")
-        with pytest.raises(RuntimeCoreInvariantError, match="unavailable"):
+        with pytest.raises(RuntimeCoreInvariantError, match="^worker unavailable$") as exc_info:
             engine.decide_assignment("d1", "r1", "w1")
+        assert WorkerStatus.ON_LEAVE.value not in str(exc_info.value)
 
     def test_suspended_worker_raises(self, engine):
         _register(engine, "w1", status=WorkerStatus.SUSPENDED)
         engine.request_assignment("r1", "t1", "s1", "reviewer")
-        with pytest.raises(RuntimeCoreInvariantError, match="unavailable"):
+        with pytest.raises(RuntimeCoreInvariantError, match="^worker unavailable$") as exc_info:
             engine.decide_assignment("d1", "r1", "w1")
+        assert WorkerStatus.SUSPENDED.value not in str(exc_info.value)
 
     def test_unavailable_worker_raises(self, engine):
         _register(engine, "w1", status=WorkerStatus.UNAVAILABLE)
         engine.request_assignment("r1", "t1", "s1", "reviewer")
-        with pytest.raises(RuntimeCoreInvariantError, match="unavailable"):
+        with pytest.raises(RuntimeCoreInvariantError, match="^worker unavailable$") as exc_info:
             engine.decide_assignment("d1", "r1", "w1")
+        assert "w1" not in str(exc_info.value)
 
     def test_offboarded_worker_raises(self, engine):
         _register(engine, "w1", status=WorkerStatus.OFFBOARDED)
         engine.request_assignment("r1", "t1", "s1", "reviewer")
-        with pytest.raises(RuntimeCoreInvariantError, match="unavailable"):
+        with pytest.raises(RuntimeCoreInvariantError, match="^worker unavailable$") as exc_info:
             engine.decide_assignment("d1", "r1", "w1")
+        assert WorkerStatus.OFFBOARDED.value not in str(exc_info.value)
 
     def test_at_max_raises(self, engine):
         _register(engine, "w1", max_assign=1)
         engine.request_assignment("r1", "t1", "s1", "reviewer")
         engine.decide_assignment("d1", "r1", "w1")
         engine.request_assignment("r2", "t1", "s2", "reviewer")
-        with pytest.raises(RuntimeCoreInvariantError, match="max assignments"):
+        with pytest.raises(RuntimeCoreInvariantError, match="^worker at capacity$") as exc_info:
             engine.decide_assignment("d2", "r2", "w1")
+        assert "1/1" not in str(exc_info.value)
 
     def test_deferred_no_worker(self, engine):
         engine.request_assignment("r1", "t1", "s1", "reviewer")
@@ -758,8 +770,9 @@ class TestAssignToLowestLoad:
             engine.assign_to_lowest_load("d1", "r2")
 
     def test_unknown_request_raises(self, engine):
-        with pytest.raises(RuntimeCoreInvariantError, match="unknown assignment request"):
+        with pytest.raises(RuntimeCoreInvariantError, match="^assignment request unavailable$") as exc_info:
             engine.assign_to_lowest_load("d1", "nope")
+        assert "nope" not in str(exc_info.value)
 
     def test_increments_load_on_assigned(self, engine):
         _register(engine, "w1", max_assign=5)
@@ -1534,8 +1547,9 @@ class TestGoldenScenario3_OverloadedAlternate:
         engine.request_assignment("r1", "t1", "s1", "reviewer")
         engine.decide_assignment("d1", "r1", "w1")
         engine.request_assignment("r2", "t1", "s2", "reviewer")
-        with pytest.raises(RuntimeCoreInvariantError, match="max assignments"):
+        with pytest.raises(RuntimeCoreInvariantError, match="^worker at capacity$") as exc_info:
             engine.decide_assignment("d2", "r2", "w1")
+        assert "1/1" not in str(exc_info.value)
 
     def test_violation_detected_for_overloaded(self, engine):
         _register(engine, "w1", max_assign=1)
@@ -1709,8 +1723,9 @@ class TestGoldenScenario5_RemediationReassignment:
     def test_offboarded_cannot_return(self, engine):
         _register(engine, "w1")
         engine.update_worker_status("w1", WorkerStatus.OFFBOARDED)
-        with pytest.raises(RuntimeCoreInvariantError, match="terminal"):
+        with pytest.raises(RuntimeCoreInvariantError, match="^worker state change denied$") as exc_info:
             engine.update_worker_status("w1", WorkerStatus.ACTIVE)
+        assert WorkerStatus.OFFBOARDED.value not in str(exc_info.value)
         assert len(engine.available_workers_for_role("t1", "reviewer")) == 0
 
     def test_closure_report_after_reassignment(self, engine):
@@ -2254,3 +2269,52 @@ class TestComplexWorkflows:
         # Both w1 (overloaded) and w2 (on leave) contribute to issues
         a = engine.workforce_assessment("a1", "t1")
         assert a.active_workers == 1
+
+
+class TestBoundedContracts:
+    def test_duplicate_worker_redacts_worker_id(self, engine):
+        _register(engine, wid="worker-secret")
+        with pytest.raises(RuntimeCoreInvariantError) as excinfo:
+            _register(engine, wid="worker-secret")
+        assert "already registered" in str(excinfo.value)
+        assert "worker-secret" not in str(excinfo.value)
+
+    def test_unknown_role_capacity_redacts_capacity_id(self, engine):
+        with pytest.raises(RuntimeCoreInvariantError) as excinfo:
+            engine.get_role_capacity("role-cap-secret")
+        assert "unknown role capacity" in str(excinfo.value)
+        assert "role-cap-secret" not in str(excinfo.value)
+
+    def test_unknown_team_capacity_redacts_capacity_id(self, engine):
+        with pytest.raises(RuntimeCoreInvariantError) as excinfo:
+            engine.get_team_capacity("team-cap-secret")
+        assert "unknown team capacity" in str(excinfo.value)
+        assert "team-cap-secret" not in str(excinfo.value)
+
+    def test_duplicate_snapshot_redacts_snapshot_id(self, engine):
+        engine.load_snapshot("snapshot-secret", "t1")
+        with pytest.raises(RuntimeCoreInvariantError) as excinfo:
+            engine.load_snapshot("snapshot-secret", "t1")
+        assert "snapshot already exists" in str(excinfo.value)
+        assert "snapshot-secret" not in str(excinfo.value)
+
+    def test_overloaded_worker_reason_redacts_worker_id_and_counts(self, engine):
+        _register(engine, wid="worker-secret", max_assign=1)
+        engine.request_assignment("r1", "t1", "s1", "reviewer")
+        engine.decide_assignment("d1", "r1", "worker-secret")
+        violation = next(v for v in engine.detect_workforce_violations("t1") if v.operation == "overloaded_worker")
+        assert violation.reason == "worker at assignment capacity"
+        assert "worker-secret" not in violation.reason
+        assert "1/1" not in violation.reason
+
+    def test_unassigned_request_reason_redacts_request_id(self, engine):
+        engine.request_assignment("request-secret", "t1", "s1", "reviewer")
+        violation = next(v for v in engine.detect_workforce_violations("t1") if v.operation == "unassigned_request")
+        assert violation.reason == "request has no decision"
+        assert "request-secret" not in violation.reason
+
+    def test_empty_role_reason_redacts_role_ref(self, engine):
+        engine.request_assignment("r1", "t1", "s1", "ghost-role")
+        violation = next(v for v in engine.detect_workforce_violations("t1") if v.operation == "empty_role")
+        assert violation.reason == "role has requests but no workers"
+        assert "ghost-role" not in violation.reason

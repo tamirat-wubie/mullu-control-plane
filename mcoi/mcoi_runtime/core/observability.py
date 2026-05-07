@@ -16,6 +16,10 @@ from dataclasses import dataclass
 from typing import Any, Callable
 
 
+def _classify_observability_exception(exc: Exception) -> str:
+    return f"observability source error ({type(exc).__name__})"
+
+
 @dataclass(frozen=True, slots=True)
 class DashboardSnapshot:
     """Complete dashboard data snapshot."""
@@ -44,11 +48,11 @@ class ObservabilityAggregator:
         """Collect data from a single named source."""
         fn = self._sources.get(source_name)
         if fn is None:
-            return {"error": f"unknown source: {source_name}"}
+            return {"error": "observability source unavailable"}
         try:
             return fn()
         except Exception as exc:
-            return {"error": str(exc)}
+            return {"error": _classify_observability_exception(exc)}
 
     def collect_all(self) -> dict[str, Any]:
         """Collect data from all registered sources."""

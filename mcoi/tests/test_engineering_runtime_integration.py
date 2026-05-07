@@ -145,6 +145,9 @@ class TestMemoryMeshAttachment:
         )
         record = integration.attach_engineering_state_to_memory_mesh("scope-1")
         assert isinstance(record, MemoryRecord)
+        assert record.title == "Engineering state"
+        assert "scope-1" not in record.title
+        assert record.scope_ref_id == "scope-1"
         assert "engineering" in record.tags
         assert "quantities" in record.tags
         assert "systems" in record.tags

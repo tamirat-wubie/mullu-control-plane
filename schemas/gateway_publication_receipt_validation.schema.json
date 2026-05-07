@@ -1,0 +1,233 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:gateway-publication-receipt-validation:1",
+  "title": "Gateway Publication Receipt Validation",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "receipt_path",
+    "valid",
+    "resolution_state",
+    "steps"
+  ],
+  "properties": {
+    "receipt_path": {
+      "type": "string",
+      "enum": [
+        ".change_assurance/gateway_publication_receipt.json",
+        "provided_receipt"
+      ]
+    },
+    "valid": {
+      "type": "boolean"
+    },
+    "resolution_state": {
+      "type": "string",
+      "enum": [
+        "ready-only",
+        "blocked-not-ready",
+        "dispatched",
+        "not-ready",
+        "missing",
+        "invalid"
+      ]
+    },
+    "steps": {
+      "type": "array",
+      "minItems": 13,
+      "maxItems": 13,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "name",
+          "passed",
+          "detail"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "enum": [
+              "required fields",
+              "resolution state",
+              "readiness consistency",
+              "readiness proof steps",
+              "dispatch consistency",
+              "dispatch proof quality",
+              "expected repository",
+              "expected gateway_host",
+              "expected gateway_url",
+              "expected expected_environment",
+              "require ready",
+              "require dispatched",
+              "require success"
+            ]
+          },
+          "passed": {
+            "type": "boolean"
+          },
+          "detail": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512
+          }
+        }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "properties": {
+        "steps": {
+          "contains": {
+            "type": "object",
+            "required": [
+              "name"
+            ],
+            "properties": {
+              "name": {
+                "const": "required fields"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "properties": {
+        "steps": {
+          "contains": {
+            "type": "object",
+            "required": [
+              "name"
+            ],
+            "properties": {
+              "name": {
+                "const": "resolution state"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "properties": {
+        "steps": {
+          "contains": {
+            "type": "object",
+            "required": [
+              "name"
+            ],
+            "properties": {
+              "name": {
+                "const": "readiness consistency"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "properties": {
+        "steps": {
+          "contains": {
+            "type": "object",
+            "required": [
+              "name"
+            ],
+            "properties": {
+              "name": {
+                "const": "readiness proof steps"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "properties": {
+        "steps": {
+          "contains": {
+            "type": "object",
+            "required": [
+              "name"
+            ],
+            "properties": {
+              "name": {
+                "const": "dispatch consistency"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "properties": {
+        "steps": {
+          "contains": {
+            "type": "object",
+            "required": [
+              "name"
+            ],
+            "properties": {
+              "name": {
+                "const": "dispatch proof quality"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "properties": {
+        "steps": {
+          "contains": {
+            "type": "object",
+            "required": [
+              "name"
+            ],
+            "properties": {
+              "name": {
+                "const": "require ready"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "properties": {
+        "steps": {
+          "contains": {
+            "type": "object",
+            "required": [
+              "name"
+            ],
+            "properties": {
+              "name": {
+                "const": "require dispatched"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "properties": {
+        "steps": {
+          "contains": {
+            "type": "object",
+            "required": [
+              "name"
+            ],
+            "properties": {
+              "name": {
+                "const": "require success"
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

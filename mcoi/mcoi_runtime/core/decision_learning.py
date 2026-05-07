@@ -215,7 +215,7 @@ class DecisionLearningEngine:
                 factor_kind=factor.kind.value,
                 direction=direction,
                 magnitude=magnitude,
-                reason=f"outcome quality {outcome.quality.value} on factor {factor.kind.value}",
+                reason="outcome quality signal detected",
                 observed_at=now,
             ))
 
@@ -348,7 +348,7 @@ class DecisionLearningEngine:
                 old_value=old_weight,
                 new_value=new_weight,
                 delta=round(delta, 6),
-                reason=f"aggregated signals for {kind}: delta={delta:+.6f}",
+                reason="aggregated learning signal",
                 created_at=now,
             )
 

@@ -20,6 +20,10 @@ from mcoi_runtime.core.registry_store import RegistryEntry, RegistryLifecycle, R
 from .errors import CorruptedDataError, PersistenceError, PersistenceWriteError
 
 
+def _bounded_store_error(summary: str, exc: BaseException) -> str:
+    return f"{summary} ({type(exc).__name__})"
+
+
 def _deterministic_json(data: Any) -> str:
     return json.dumps(data, sort_keys=True, ensure_ascii=True, separators=(",", ":"))
 
@@ -42,7 +46,7 @@ def _atomic_write(path: Path, content: str) -> None:
                 os.unlink(tmp_path)
             raise
     except OSError as exc:
-        raise PersistenceWriteError(f"failed to write {path}: {exc}") from exc
+        raise PersistenceWriteError(_bounded_store_error("registry write failed", exc)) from exc
 
 
 def _entry_value_to_dict(value: Any) -> dict[str, Any]:
@@ -52,7 +56,7 @@ def _entry_value_to_dict(value: Any) -> dict[str, Any]:
         for f in dc_fields(value):
             result[f.name] = thaw_value(getattr(value, f.name))
         return result
-    raise CorruptedDataError(f"registry entry value must be a dataclass instance, got {type(value).__name__}")
+    raise CorruptedDataError("registry entry value must be a dataclass instance")
 
 
 def _serialize_entry(entry: RegistryEntry[Any]) -> dict[str, Any]:
@@ -100,12 +104,12 @@ class RegistryBackend:
     def load_registry(self) -> RegistryStore[Any]:
         path = self._registry_path()
         if not path.exists():
-            raise CorruptedDataError(f"registry file not found: {path}")
+            raise CorruptedDataError("registry file not found")
 
         try:
             raw = json.loads(path.read_text(encoding="utf-8"))
         except (json.JSONDecodeError, OSError) as exc:
-            raise CorruptedDataError(f"malformed registry file: {exc}") from exc
+            raise CorruptedDataError(_bounded_store_error("malformed registry file", exc)) from exc
 
         if not isinstance(raw, dict) or "entries" not in raw:
             raise CorruptedDataError("registry file must contain an 'entries' key")
@@ -118,26 +122,24 @@ class RegistryBackend:
 
         for entry_id, entry_data in sorted(entries_raw.items()):
             if not isinstance(entry_data, dict):
-                raise CorruptedDataError(f"entry {entry_id} is not a JSON object")
+                raise CorruptedDataError("registry entry must be a JSON object")
 
             try:
                 lifecycle_str = entry_data["lifecycle"]
                 lifecycle = RegistryLifecycle(lifecycle_str)
             except (KeyError, ValueError) as exc:
-                raise CorruptedDataError(
-                    f"invalid lifecycle for entry {entry_id}: {exc}"
-                ) from exc
+                raise CorruptedDataError(_bounded_store_error("invalid registry lifecycle", exc)) from exc
 
             try:
                 entry_type = entry_data["entry_type"]
                 value_data = entry_data["value"]
             except KeyError as exc:
                 raise CorruptedDataError(
-                    f"missing field in entry {entry_id}: {exc}"
+                    _bounded_store_error("registry entry missing required field", exc)
                 ) from exc
 
             if not isinstance(value_data, dict):
-                raise CorruptedDataError(f"value for entry {entry_id} must be a JSON object")
+                raise CorruptedDataError("registry entry value must be a JSON object")
 
             # Store raw value dict wrapped in a SimpleNamespace-like frozen dataclass
             # so it passes the dataclass check in RegistryEntry.__post_init__.

@@ -109,6 +109,8 @@ class TestScenario1ApprovalToObligation:
         )
         assert len(created) == 1
         assert created[0].state == ObligationState.PENDING
+        assert created[0].description == "reactive obligation"
+        assert "rule-approval-obl" not in created[0].description
         assert obl_engine.obligation_count == 1
 
         # Verify event trail in spine (original + obligation_created)
@@ -174,6 +176,10 @@ class TestScenario2CommunicationEscalation:
         assert len(escalated) == 1
         assert escalated[0].state == ObligationState.ESCALATED
         assert escalated[0].owner.owner_id == "mgr-1"
+        history = obl_engine.escalation_history("obl-comm")
+        assert len(history) == 1
+        assert history[0].reason == "reactive escalation"
+        assert "rule-comm-esc" not in history[0].reason
 
 
 # ---------------------------------------------------------------------------

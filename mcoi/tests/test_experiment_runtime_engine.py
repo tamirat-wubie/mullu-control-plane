@@ -125,7 +125,7 @@ class TestVariables:
         eng.start_experiment("d1")
         eng.analyze_experiment("d1")
         eng.complete_experiment("d1")
-        with pytest.raises(RuntimeCoreInvariantError, match="completed"):
+        with pytest.raises(RuntimeCoreInvariantError, match="terminal experiment"):
             eng.add_variable("v1", "t1", "d1", "Temp")
 
     def test_variable_with_role(self):
@@ -172,7 +172,7 @@ class TestControlGroups:
         eng.start_experiment("d1")
         eng.analyze_experiment("d1")
         eng.complete_experiment("d1")
-        with pytest.raises(RuntimeCoreInvariantError, match="completed"):
+        with pytest.raises(RuntimeCoreInvariantError, match="terminal experiment"):
             eng.add_control_group("g1", "t1", "d1", "Control A")
 
     def test_group_with_sample_size(self):
@@ -554,3 +554,41 @@ class TestGoldenScenarios:
         eng2.start_experiment("d1")
         snap2 = eng2.snapshot()
         assert snap1["_state_hash"] == snap2["_state_hash"]
+
+
+class TestBoundedContracts:
+    def test_duplicate_design_message_bounded(self):
+        eng, _ = _make_engine()
+        eng.register_design("design-secret", "t1", "h1", "Design 1")
+
+        with pytest.raises(RuntimeCoreInvariantError) as excinfo:
+            eng.register_design("design-secret", "t1", "h1", "Design 1")
+
+        assert str(excinfo.value) == "Duplicate design_id"
+        assert "design-secret" not in str(excinfo.value)
+
+    def test_terminal_variable_guard_message_bounded(self):
+        eng, _ = _make_engine()
+        eng.register_design("d1", "t1", "h1", "Design 1")
+        eng.fail_experiment("d1")
+
+        with pytest.raises(RuntimeCoreInvariantError) as excinfo:
+            eng.add_variable("var-1", "t1", "d1", "Temperature")
+
+        assert str(excinfo.value) == "Cannot add variable to terminal experiment"
+        assert "FAILED" not in str(excinfo.value)
+
+    def test_violation_reasons_bounded(self):
+        eng, _ = _make_engine()
+        eng.register_design("design-secret", "t1", "h1", "Design 1")
+        eng.start_experiment("design-secret")
+        eng.record_result("result-secret", "t1", "design-secret")
+
+        violations = eng.detect_experiment_violations("t1")
+        reasons = {v["reason"] for v in violations}
+
+        assert "experiment has no control group" in reasons
+        assert "experiment has no variables defined" in reasons
+        assert "result recorded before analysis phase" in reasons
+        assert all("design-secret" not in reason for reason in reasons)
+        assert all("result-secret" not in reason for reason in reasons)

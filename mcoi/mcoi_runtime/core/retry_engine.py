@@ -21,6 +21,14 @@ from typing import Any, Callable, TypeVar
 T = TypeVar("T")
 
 
+def _classify_retry_exception(exc: Exception) -> str:
+    """Return a bounded retry failure message."""
+    exc_type = type(exc).__name__
+    if isinstance(exc, TimeoutError):
+        return f"retry timeout ({exc_type})"
+    return f"retry execution error ({exc_type})"
+
+
 class CircuitState(StrEnum):
     CLOSED = "closed"  # Normal operation
     OPEN = "open"  # Failing — reject all calls
@@ -74,7 +82,7 @@ class RetryExecutor:
                     attempts=attempt, total_delay_ms=total_delay,
                 )
             except self._policy.retry_on as exc:
-                last_error = str(exc)
+                last_error = _classify_retry_exception(exc)
                 self._total_retries += 1
                 if attempt < self._policy.max_retries:
                     # In real code: time.sleep(delay / 1000)
@@ -153,10 +161,7 @@ class CircuitBreaker:
     def execute(self, fn: Callable[[], Any]) -> Any:
         """Execute with circuit breaker protection."""
         if not self.allow_request():
-            raise RuntimeError(f"circuit breaker is {self.state}")
-
-        if self._state == CircuitState.HALF_OPEN:
-            self._half_open_attempts += 1
+            raise RuntimeError("circuit breaker unavailable")
 
         try:
             result = fn()

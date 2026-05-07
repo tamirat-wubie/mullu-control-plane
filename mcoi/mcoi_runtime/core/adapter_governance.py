@@ -57,10 +57,10 @@ class AdapterGovernanceGuard:
     def require_authority(self, authority: AdapterAuthority | None, adapter_type: str, operation: str) -> None:
         if authority is None:
             self.deny(adapter_type, operation)
-            raise AdapterAuthorityError(f"No authority for {adapter_type}.{operation}")
+            raise AdapterAuthorityError("No authority for adapter operation")
         if authority.adapter_type != adapter_type:
             self.deny(adapter_type, operation, "type_mismatch")
-            raise AdapterAuthorityError(f"Authority type mismatch: {authority.adapter_type} != {adapter_type}")
+            raise AdapterAuthorityError("Authority type mismatch")
 
     @property
     def total_calls(self) -> int:

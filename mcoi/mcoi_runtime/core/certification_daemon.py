@@ -25,6 +25,14 @@ from mcoi_runtime.core.live_path_certification import (
 )
 
 
+def _classify_certification_exception(exc: Exception) -> str:
+    """Return a bounded certification failure message."""
+    exc_type = type(exc).__name__
+    if isinstance(exc, TimeoutError):
+        return f"certification run timeout ({exc_type})"
+    return f"certification run error ({exc_type})"
+
+
 @dataclass(frozen=True, slots=True)
 class CertificationConfig:
     """Configuration for the certification daemon."""
@@ -163,7 +171,7 @@ class CertificationDaemon:
             self._history.append({
                 "chain_id": "error",
                 "all_passed": False,
-                "error": str(exc),
+                "error": _classify_certification_exception(exc),
                 "at": self._clock(),
             })
             self._trim_history()

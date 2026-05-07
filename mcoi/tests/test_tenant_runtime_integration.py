@@ -213,6 +213,8 @@ class TestAttachTenantStateToMemoryMesh:
 
         mem = integ.attach_tenant_state_to_memory_mesh("t-1")
         assert isinstance(mem, MemoryRecord)
+        assert mem.title == "Tenant state"
+        assert "t-1" not in mem.title
         assert "tenant" in mem.tags
         assert "workspace" in mem.tags
         assert "environment" in mem.tags
@@ -599,4 +601,6 @@ class TestMemoryContentKeys:
         _setup_tenant_workspace_env(eng)
 
         mem = integ.attach_tenant_state_to_memory_mesh("t-1")
-        assert "t-1" in mem.title
+        assert mem.title == "Tenant state"
+        assert "t-1" not in mem.title
+        assert mem.scope_ref_id == "t-1"

@@ -62,7 +62,7 @@ class Person(ContractRecord):
         object.__setattr__(self, "roles", freeze_value(list(self.roles)))
         for role in self.roles:
             if not isinstance(role, RoleType):
-                raise ValueError(f"each role must be a RoleType value, got {role!r}")
+                raise ValueError("roles must contain only RoleType values")
         if not isinstance(self.preferred_channel, ContactChannel):
             raise ValueError("preferred_channel must be a ContactChannel value")
         object.__setattr__(self, "metadata", freeze_value(self.metadata))
@@ -158,10 +158,7 @@ class EscalationChain(ContractRecord):
         expected = 1
         for step in sorted(self.steps, key=lambda s: s.step_order):
             if step.step_order != expected:
-                raise ValueError(
-                    f"step_order must be sequential starting at 1; "
-                    f"expected {expected}, got {step.step_order}"
-                )
+                raise ValueError("step order must be sequential starting at 1")
             expected += 1
 
 

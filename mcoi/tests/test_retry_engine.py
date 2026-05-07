@@ -32,6 +32,8 @@ class TestRetryExecutor:
         result = executor.execute(lambda: (_ for _ in ()).throw(RuntimeError("always fail")))
         assert result.succeeded is False
         assert result.attempts == 3
+        assert result.error == "retry execution error (RuntimeError)"
+        assert "always fail" not in result.error
 
     def test_backoff_delay(self):
         executor = RetryExecutor(RetryPolicy(max_retries=3, base_delay_ms=100, backoff_multiplier=2.0))
@@ -76,6 +78,15 @@ class TestCircuitBreaker:
         cb.record_failure()
         with pytest.raises(RuntimeError, match="circuit breaker"):
             cb.execute(lambda: 42)
+
+    def test_open_reject_error_is_bounded(self):
+        cb = CircuitBreaker(failure_threshold=1)
+        cb.record_failure()
+        with pytest.raises(RuntimeError, match="circuit breaker") as excinfo:
+            cb.execute(lambda: 42)
+        assert str(excinfo.value) == "circuit breaker unavailable"
+        assert "open" not in str(excinfo.value)
+        assert "half_open" not in str(excinfo.value)
 
     def test_success_closes_from_half_open(self):
         cb = CircuitBreaker(failure_threshold=1, recovery_timeout_ms=0)

@@ -119,7 +119,7 @@ class MultiAgentOrchestrator:
     # --- Agent registration ---
     def register_agent(self, role_id: str) -> AgentRole:
         if role_id not in PREDEFINED_ROLES:
-            raise ValueError(f"Unknown role: {role_id}")
+            raise ValueError("unknown role")
         role = PREDEFINED_ROLES[role_id]
         self._registered_agents[role_id] = role
         return role
@@ -133,12 +133,10 @@ class MultiAgentOrchestrator:
         operation: str,
     ) -> AgentAction:
         if agent_role not in self._registered_agents:
-            raise ValueError(f"Agent not registered: {agent_role}")
+            raise ValueError("agent not registered")
         role = self._registered_agents[agent_role]
         if target_runtime not in role.allowed_runtimes:
-            raise ValueError(
-                f"Runtime '{target_runtime}' not allowed for role '{agent_role}'"
-            )
+            raise ValueError("runtime not allowed for role")
         action = AgentAction(
             action_id=action_id,
             agent_role=agent_role,
@@ -152,9 +150,9 @@ class MultiAgentOrchestrator:
     def approve_action(self, action_id: str, approver: str) -> AgentAction:
         action = self._actions.get(action_id)
         if action is None:
-            raise ValueError(f"Action not found: {action_id}")
+            raise ValueError("action not found")
         if action.status != "proposed":
-            raise ValueError(f"Action '{action_id}' is not in proposed state")
+            raise ValueError("action is not in proposed state")
         action.status = "approved"
         action.decided_by = approver
         return action
@@ -162,16 +160,16 @@ class MultiAgentOrchestrator:
     def execute_action(self, action_id: str) -> AgentAction:
         action = self._actions.get(action_id)
         if action is None:
-            raise ValueError(f"Action not found: {action_id}")
+            raise ValueError("action not found")
         if action.status != "approved":
-            raise ValueError(f"Action '{action_id}' must be approved before execution")
+            raise ValueError("action must be approved before execution")
         action.status = "executed"
         return action
 
     def deny_action(self, action_id: str, reason: str) -> AgentAction:
         action = self._actions.get(action_id)
         if action is None:
-            raise ValueError(f"Action not found: {action_id}")
+            raise ValueError("action not found")
         action.status = "denied"
         action.evidence_ref = reason
         return action
@@ -179,9 +177,9 @@ class MultiAgentOrchestrator:
     def rollback_action(self, action_id: str) -> AgentAction:
         action = self._actions.get(action_id)
         if action is None:
-            raise ValueError(f"Action not found: {action_id}")
+            raise ValueError("action not found")
         if action.status != "executed":
-            raise ValueError(f"Only executed actions can be rolled back")
+            raise ValueError("only executed actions can be rolled back")
         action.status = "rolled_back"
         return action
 
@@ -190,24 +188,20 @@ class MultiAgentOrchestrator:
         self, from_role: str, to_role: str, task: str
     ) -> dict[str, Any]:
         if from_role not in self._registered_agents:
-            raise ValueError(f"Source agent not registered: {from_role}")
+            raise ValueError("source agent not registered")
         if to_role not in self._registered_agents:
-            raise ValueError(f"Target agent not registered: {to_role}")
+            raise ValueError("target agent not registered")
 
         rule = _DELEGATION_INDEX.get((from_role, to_role))
         if rule is None:
-            raise ValueError(
-                f"No delegation rule from '{from_role}' to '{to_role}'"
-            )
+            raise ValueError("delegation rule unavailable")
 
         # Check chain depth
         current_depth = sum(
             1 for d in self._delegation_chain if d["from_role"] == from_role
         ) + 1
         if current_depth > rule.max_chain_length:
-            raise ValueError(
-                f"Delegation chain depth {current_depth} exceeds max {rule.max_chain_length}"
-            )
+            raise ValueError("delegation chain depth exceeded")
 
         entry = {
             "from_role": from_role,

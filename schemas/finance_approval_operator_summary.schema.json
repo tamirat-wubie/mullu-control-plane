@@ -1,0 +1,156 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:finance-approval-operator-summary:1",
+  "title": "Finance Approval Operator Summary",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "summary_id",
+    "checked_at",
+    "packet_id",
+    "packet_ok",
+    "packet_ready",
+    "packet_status",
+    "chain_ok",
+    "chain_ready",
+    "promotion_mode",
+    "strict_promotion_command",
+    "readiness_blockers",
+    "next_actions",
+    "artifact_statuses",
+    "must_not_claim"
+  ],
+  "properties": {
+    "summary_id": {
+      "type": "string",
+      "pattern": "^finance-operator-summary-[0-9a-f]{16}$"
+    },
+    "checked_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "packet_id": {
+      "type": "string",
+      "pattern": "^finance-handoff-packet-[0-9a-f]{16}$"
+    },
+    "packet_ok": {
+      "type": "boolean"
+    },
+    "packet_ready": {
+      "type": "boolean"
+    },
+    "packet_status": {
+      "type": "string",
+      "enum": [
+        "ready",
+        "blocked"
+      ]
+    },
+    "chain_ok": {
+      "type": "boolean"
+    },
+    "chain_ready": {
+      "type": "boolean"
+    },
+    "promotion_mode": {
+      "type": "string",
+      "enum": [
+        "proof-pilot-blocked",
+        "live-email-handoff"
+      ]
+    },
+    "strict_promotion_command": {
+      "type": "string",
+      "minLength": 1
+    },
+    "readiness_blockers": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "next_actions": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "artifact_statuses": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "pilot_witness",
+        "live_handoff_plan",
+        "email_calendar_binding_receipt",
+        "live_handoff_closure_run",
+        "live_handoff_preflight"
+      ],
+      "properties": {
+        "pilot_witness": {
+          "type": "string",
+          "minLength": 1
+        },
+        "live_handoff_plan": {
+          "type": "string",
+          "minLength": 1
+        },
+        "email_calendar_binding_receipt": {
+          "type": "string",
+          "minLength": 1
+        },
+        "live_handoff_closure_run": {
+          "type": "string",
+          "minLength": 1
+        },
+        "live_handoff_preflight": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "must_not_claim": {
+      "type": "array",
+      "minItems": 5,
+      "maxItems": 5,
+      "items": {
+        "type": "string",
+        "enum": [
+          "autonomous payment execution",
+          "bank settlement",
+          "ERP reconciliation",
+          "live email delivery",
+          "production finance automation"
+        ]
+      },
+      "allOf": [
+        {
+          "contains": {
+            "const": "autonomous payment execution"
+          }
+        },
+        {
+          "contains": {
+            "const": "bank settlement"
+          }
+        },
+        {
+          "contains": {
+            "const": "ERP reconciliation"
+          }
+        },
+        {
+          "contains": {
+            "const": "live email delivery"
+          }
+        },
+        {
+          "contains": {
+            "const": "production finance automation"
+          }
+        }
+      ]
+    }
+  }
+}

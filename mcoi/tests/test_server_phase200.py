@@ -1,5 +1,7 @@
 """Phase 200 — Server endpoint tests for streaming, daemon, bootstrap."""
 
+import base64
+import importlib
 import pytest
 import os
 
@@ -38,12 +40,41 @@ class TestStreamingEndpoint:
         assert "event: done" in body
         assert '"governed": true' in body
 
+    def test_stream_contains_budget_witnesses(self, client):
+        resp = client.post("/api/v1/stream", json={
+            "prompt": "hello",
+            "tenant_id": "tenant-stream",
+            "max_tokens": 12,
+        })
+        body = resp.text
+
+        assert resp.status_code == 200
+        assert '"budget_reservation"' in body
+        assert '"tenant_id": "tenant-stream"' in body
+        assert '"budget_id": "default"' in body
+        assert '"budget_settlement"' in body
+        assert "stream-proof:" in body
+
     def test_stream_with_system(self, client):
         resp = client.post("/api/v1/stream", json={
             "prompt": "hello", "system": "you are helpful"
         })
         assert resp.status_code == 200
         assert "event: done" in resp.text
+
+    def test_stream_exception_is_sanitized(self, client, monkeypatch):
+        from mcoi_runtime.app.routers.deps import deps
+
+        def boom(*args, **kwargs):
+            raise RuntimeError("stream-backend-secret")
+
+        monkeypatch.setattr(deps.llm_bridge, "complete", boom)
+        resp = client.post("/api/v1/stream", json={"prompt": "explode"})
+        assert resp.status_code == 503
+        data = resp.json()["detail"]
+        assert data["error"] == "LLM service unavailable"
+        assert data["error_code"] == "llm_service_unavailable"
+        assert "stream-backend-secret" not in str(resp.json())
 
 
 class TestDaemonEndpoints:
@@ -89,13 +120,52 @@ class TestBootstrapEndpoint:
         assert "default_backend" in data
         assert "available_backends" in data
         assert "stub" in data["available_backends"]
+        assert "skipped_model_registrations" in data
+        assert "model_registration_failures" in data
+        assert "field_encryption" in data
         assert "config" in data
         assert data["config"]["default_model"]
+        assert data["field_encryption"]["configured"] is False
+        assert data["field_encryption"]["enabled"] is False
+        assert data["field_encryption"]["warning"] == ""
 
     def test_bootstrap_has_stub(self, client):
         resp = client.get("/api/v1/bootstrap")
         data = resp.json()
         assert "stub" in data["available_backends"]
+
+    def test_field_encryption_bootstrap_bounds_invalid_key(self, monkeypatch):
+        monkeypatch.setenv("MULLU_ENV", "local_dev")
+        monkeypatch.setenv("MULLU_DB_BACKEND", "memory")
+        monkeypatch.setenv("MULLU_CERT_ENABLED", "false")
+        monkeypatch.setenv(
+            "MULLU_ENCRYPTION_KEY",
+            base64.b64encode(b"short").decode(),
+        )
+
+        from mcoi_runtime.app import server as server_module
+
+        importlib.reload(server_module)
+        try:
+            state = server_module._init_field_encryption_from_env()[1]
+            assert state["configured"] is True
+            assert state["enabled"] is False
+            assert state["aes_available"] is False
+            assert state["warning"] == "field encryption bootstrap failed (ValueError)"
+
+            from mcoi_runtime.app.routers.deps import deps
+
+            wired_state = deps.get("field_encryption_bootstrap")
+            assert wired_state["configured"] is True
+            assert wired_state["enabled"] is False
+            assert wired_state["warning"] == "field encryption bootstrap failed (ValueError)"
+
+            platform = deps.get("platform")
+            assert platform.bootstrap_components["field_encryption"] is False
+            assert "field encryption bootstrap failed (ValueError)" in platform.bootstrap_warnings
+        finally:
+            monkeypatch.delenv("MULLU_ENCRYPTION_KEY", raising=False)
+            importlib.reload(server_module)
 
 
 class TestDockerCompose:

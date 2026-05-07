@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:domain-operating-pack:1",
+  "title": "Domain Operating Pack",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "pack_id",
+    "domain",
+    "version",
+    "owner_team",
+    "schemas",
+    "policies",
+    "workflows",
+    "connectors",
+    "evals",
+    "risk_rules",
+    "approval_roles",
+    "evidence_exports",
+    "dashboard_views",
+    "certification_status",
+    "certification_evidence_refs",
+    "activation_blocked",
+    "blocked_reasons",
+    "pack_hash"
+  ],
+  "properties": {
+    "pack_id": {"type": "string", "minLength": 1},
+    "domain": {
+      "type": "string",
+      "enum": ["finance_ops", "customer_support", "compliance", "research", "healthcare_admin", "education", "manufacturing_ops"]
+    },
+    "version": {"type": "string", "minLength": 1},
+    "owner_team": {"type": "string", "minLength": 1},
+    "schemas": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+    "policies": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+    "workflows": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+    "connectors": {"type": "array", "items": {"type": "string", "minLength": 1}},
+    "evals": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+    "risk_rules": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+    "approval_roles": {"type": "array", "items": {"type": "string", "minLength": 1}},
+    "evidence_exports": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+    "dashboard_views": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+    "certification_status": {"type": "string", "enum": ["draft", "candidate", "certified", "suspended", "retired"]},
+    "certification_evidence_refs": {"type": "array", "items": {"type": "string", "minLength": 1}},
+    "activation_blocked": {"type": "boolean"},
+    "blocked_reasons": {"type": "array", "items": {"type": "string", "minLength": 1}},
+    "pack_hash": {"type": "string", "minLength": 1},
+    "metadata": {"type": "object", "additionalProperties": true}
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"activation_blocked": {"const": false}}, "required": ["activation_blocked"]},
+      "then": {"properties": {"certification_status": {"const": "certified"}}}
+    }
+  ]
+}

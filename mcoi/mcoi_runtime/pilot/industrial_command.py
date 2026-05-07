@@ -65,16 +65,16 @@ class IndustrialCommandDashboard:
     def add_kpi(self, plant_id: str, kpi_name: str, value: float) -> dict[str, Any]:
         """Add or update a KPI value for a plant."""
         if plant_id not in self._plants:
-            raise KeyError(f"Plant {plant_id!r} not registered")
+            raise KeyError("plant not registered")
         if kpi_name not in INDUSTRIAL_KPIS:
-            raise ValueError(f"Unknown KPI {kpi_name!r}")
+            raise ValueError("unknown KPI")
         self._kpis[plant_id][kpi_name] = value
         return {"plant_id": plant_id, "kpi": kpi_name, "value": value, "status": "recorded"}
 
     def get_plant_status(self, plant_id: str) -> dict[str, Any]:
         """Return status and KPIs for a single plant."""
         if plant_id not in self._plants:
-            raise KeyError(f"Plant {plant_id!r} not registered")
+            raise KeyError("plant not registered")
         plant = self._plants[plant_id]
         kpis = self._kpis.get(plant_id, {})
         return {

@@ -77,6 +77,78 @@ def _set_valid_secret(reg: ExternalConnectorRegistry, connector_id: str) -> Secr
     return scope
 
 
+class SecretRaisingConnector(ExternalConnector):
+    """Connector that raises a sensitive provider error for sanitization tests."""
+
+    def __init__(self, connector_id: str = "secret-raising") -> None:
+        self._id = connector_id
+
+    def connector_id(self) -> str:
+        return self._id
+
+    def connector_type(self) -> ExternalConnectorType:
+        return ExternalConnectorType.GENERIC_API
+
+    def auth_mode(self) -> ConnectorAuthMode:
+        return ConnectorAuthMode.NONE
+
+    def descriptor(self) -> ExternalConnectorDescriptor:
+        return ExternalConnectorDescriptor(
+            connector_id=self._id,
+            name="Secret Raising Connector",
+            connector_type=ExternalConnectorType.GENERIC_API,
+            auth_mode=ConnectorAuthMode.NONE,
+            health_state=ConnectorHealthState.HEALTHY,
+            provider_name="secret-test",
+            version="1.0.0",
+            enabled=True,
+            created_at=NOW,
+        )
+
+    def execute(
+        self, operation: str, payload: dict[str, str],
+    ) -> ConnectorExecutionRecord:
+        raise RuntimeError(f"provider-secret-token leaked during {operation}")
+
+    def health_check(self) -> ConnectorHealthSnapshot:
+        return ConnectorHealthSnapshot(
+            snapshot_id="health-secret-raising",
+            connector_id=self._id,
+            health_state=ConnectorHealthState.HEALTHY,
+            reliability_score=1.0,
+            total_executions=0,
+            failed_executions=0,
+            avg_latency_ms=0.0,
+            circuit_breaker_trips=0,
+            consecutive_failures=0,
+            last_success_at=NOW,
+            last_failure_at=NOW,
+            reported_at=NOW,
+        )
+
+
+class TimeoutRaisingConnector(SecretRaisingConnector):
+    """Connector that raises timeout errors for classification tests."""
+
+    def execute(
+        self, operation: str, payload: dict[str, str],
+    ) -> ConnectorExecutionRecord:
+        raise TimeoutError(f"timeout-secret during {operation}")
+
+    def descriptor(self) -> ExternalConnectorDescriptor:
+        return ExternalConnectorDescriptor(
+            connector_id=self._id,
+            name="Timeout Raising Connector",
+            connector_type=ExternalConnectorType.GENERIC_API,
+            auth_mode=ConnectorAuthMode.NONE,
+            health_state=ConnectorHealthState.HEALTHY,
+            provider_name="timeout-test",
+            version="1.0.0",
+            enabled=True,
+            created_at=NOW,
+        )
+
+
 # ===================================================================
 # Registration
 # ===================================================================
@@ -705,6 +777,42 @@ class TestExecution:
         assert record.success is False
         assert "disabled" in record.error_message
 
+    def test_execute_provider_exception_is_sanitized(self):
+        reg = ExternalConnectorRegistry()
+        conn = SecretRaisingConnector()
+        reg.register(conn)
+
+        record = reg.execute(conn.connector_id(), "send", {"body": "hello"})
+
+        assert record.success is False
+        assert record.error_message == "provider error"
+        assert "provider-secret-token" not in record.error_message
+        assert "RuntimeError" not in record.error_message
+
+        failures = reg.get_failures(conn.connector_id())
+        assert len(failures) == 1
+        assert failures[0].category == ConnectorFailureCategory.PROVIDER_ERROR
+        assert failures[0].error_message == "provider error"
+        assert "RuntimeError" not in failures[0].error_message
+
+    def test_execute_timeout_exception_is_classified_and_sanitized(self):
+        reg = ExternalConnectorRegistry()
+        conn = TimeoutRaisingConnector("timeout-raising")
+        reg.register(conn)
+
+        record = reg.execute(conn.connector_id(), "send", {"body": "hello"})
+
+        assert record.success is False
+        assert record.error_message == "connector timeout"
+        assert "timeout-secret" not in record.error_message
+        assert "TimeoutError" not in record.error_message
+
+        failures = reg.get_failures(conn.connector_id())
+        assert len(failures) == 1
+        assert failures[0].category == ConnectorFailureCategory.TIMEOUT
+        assert failures[0].error_message == "connector timeout"
+        assert "TimeoutError" not in failures[0].error_message
+
 
 # ===================================================================
 # Execute with fallback
@@ -989,8 +1097,11 @@ class TestPerTypeConnectors:
 class TestFailingTestConnector:
     def test_always_raises_on_execute(self):
         conn = FailingTestConnector()
-        with pytest.raises(RuntimeError, match="Simulated failure"):
+        with pytest.raises(RuntimeError, match="^simulated failure$") as exc_info:
             conn.execute("send", {"body": "test"})
+        message = str(exc_info.value)
+        assert "send" not in message
+        assert message == "simulated failure"
 
     def test_health_check_unhealthy(self):
         conn = FailingTestConnector()
@@ -1011,3 +1122,18 @@ class TestFailingTestConnector:
     def test_custom_id(self):
         conn = FailingTestConnector("my-failing")
         assert conn.connector_id() == "my-failing"
+
+
+class TestBoundedConnectorContracts:
+    def test_duplicate_registration_does_not_echo_connector_id(self):
+        reg = ExternalConnectorRegistry()
+        reg.register(FailingTestConnector("sensitive-connector"))
+        with pytest.raises(RuntimeCoreInvariantError, match="connector already registered") as exc:
+            reg.register(FailingTestConnector("sensitive-connector"))
+        assert "sensitive-connector" not in str(exc.value)
+
+    def test_missing_fallback_chain_does_not_echo_chain_id(self):
+        reg = ExternalConnectorRegistry()
+        with pytest.raises(RuntimeCoreInvariantError, match="fallback chain not found") as exc:
+            reg.execute_with_fallback("chain-secret", "send", {"body": "test"})
+        assert "chain-secret" not in str(exc.value)

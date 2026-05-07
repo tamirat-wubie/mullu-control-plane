@@ -67,6 +67,12 @@ Rules:
 - Semantic Memory MUST NOT contain unadmitted knowledge.
 - Semantic Memory MUST NOT mutate kernel invariants (Invariant 8).
 - Every Semantic Memory entry MUST reference the episodic source(s) it was derived from.
+- Semantic Memory write paths MUST require a recorded `LearningAdmissionDecision`
+  with `status=admit`.
+- Semantic Memory updates MUST append a new version and preserve the old version.
+- Semantic Memory revocation MUST record the revocation reason, actor, and evidence,
+  preserve every historical version, and remove the revoked knowledge from current
+  planning projection.
 
 ### Tier 4: Procedural Memory
 
@@ -89,6 +95,14 @@ Rules:
 - Procedural Memory entries MUST declare their preconditions and postconditions.
 - A procedural entry MUST NOT be applied if its preconditions are not met in the current world state.
 - Procedural entries MUST be re-validated when the capability registry changes.
+- Procedural Memory write paths MUST require a recorded `LearningAdmissionDecision`
+  with `status=admit`; replay success alone is not sufficient admission.
+- Procedural Memory revocation MUST record the revocation reason, actor, and
+  evidence, preserve the admitted runbook history, and remove the revoked
+  runbook from active selection.
+- MIL-derived procedural runbooks MUST be admitted from hash-anchored MIL audit
+  records through persisted replay validation and explicit learning admission.
+  The operator procedure is documented in `docs/64_mil_audit_runbook_workflow.md`.
 
 ### Tier 5: Archive Memory
 

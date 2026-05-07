@@ -15,6 +15,7 @@ Invariants:
 from __future__ import annotations
 
 import hashlib
+import importlib.util
 import os
 from typing import Any, Callable, Protocol
 
@@ -33,6 +34,36 @@ from mcoi_runtime.contracts.model import (
     ValidationStatus,
 )
 from mcoi_runtime.core.invariants import RuntimeCoreInvariantError, stable_identifier
+
+
+def _classify_provider_exception(exc: Exception) -> str:
+    """Collapse provider exceptions into stable, non-leaking error strings."""
+    error_type = type(exc).__name__
+    normalized_type = error_type.lower()
+    if isinstance(exc, TimeoutError) or "timeout" in normalized_type:
+        return f"provider timeout ({error_type})"
+    if isinstance(exc, PermissionError) or any(
+        token in normalized_type for token in ("auth", "permission", "forbidden", "unauthorized")
+    ):
+        return f"provider access error ({error_type})"
+    if isinstance(exc, ConnectionError) or isinstance(exc, OSError) or any(
+        token in normalized_type for token in ("connect", "network", "request", "transport", "socket", "http", "url")
+    ):
+        return f"provider network error ({error_type})"
+    if isinstance(exc, ValueError):
+        return f"provider validation error ({error_type})"
+    return f"provider error ({error_type})"
+
+
+def _classify_budget_rejection(reason: str) -> str:
+    """Collapse budget-manager detail into stable public denial reasons."""
+    if reason == "unknown budget" or reason.startswith("unknown budget:"):
+        return "unknown budget"
+    if reason == "budget exhausted" or reason.startswith("budget exhausted:"):
+        return "budget exhausted"
+    if reason == "budget limit exceeded" or reason.startswith("would exceed budget:"):
+        return "budget limit exceeded"
+    return "budget rejected"
 
 
 class LLMBackend(Protocol):
@@ -71,18 +102,18 @@ class LLMBudgetManager:
         """Check if an invocation is within budget. Returns (allowed, reason)."""
         budget = self._budgets.get(budget_id)
         if budget is None:
-            return False, f"unknown budget: {budget_id}"
+            return False, "unknown budget"
         if budget.exhausted:
-            return False, f"budget exhausted: spent={budget.spent:.6f}, max={budget.max_cost:.6f}, calls={budget.calls_made}/{budget.max_calls}"
+            return False, "budget exhausted"
         if budget.spent + estimated_cost > budget.max_cost:
-            return False, f"would exceed budget: spent={budget.spent:.6f} + est={estimated_cost:.6f} > max={budget.max_cost:.6f}"
+            return False, "budget limit exceeded"
         return True, "within_budget"
 
     def record_spend(self, budget_id: str, cost: float) -> LLMBudget:
         """Record spending against a budget. Returns updated budget."""
         budget = self._budgets.get(budget_id)
         if budget is None:
-            raise RuntimeCoreInvariantError(f"cannot record spend for unknown budget: {budget_id}")
+            raise RuntimeCoreInvariantError("cannot record spend for unknown budget")
         updated = LLMBudget(
             budget_id=budget.budget_id,
             tenant_id=budget.tenant_id,
@@ -113,12 +144,7 @@ class AnthropicBackend:
         self._api_key = api_key or os.environ.get("ANTHROPIC_API_KEY", "")
         self._default_model = default_model
         self._client: Any = None
-        self._sdk_available = False
-        try:
-            import anthropic
-            self._sdk_available = True
-        except ImportError:
-            pass
+        self._sdk_available = importlib.util.find_spec("anthropic") is not None
 
     @property
     def provider(self) -> LLMProvider:
@@ -202,7 +228,7 @@ class AnthropicBackend:
                 model_name=model,
                 provider=LLMProvider.ANTHROPIC,
                 finished=False,
-                error=f"{type(exc).__name__}: {exc}",
+                error=_classify_provider_exception(exc),
             )
 
     def _estimate_cost(self, model: str, input_tokens: int, output_tokens: int) -> float:
@@ -229,12 +255,7 @@ class OpenAIBackend:
         self._api_key = api_key or os.environ.get("OPENAI_API_KEY", "")
         self._default_model = default_model
         self._client: Any = None
-        self._sdk_available = False
-        try:
-            import openai
-            self._sdk_available = True
-        except ImportError:
-            pass
+        self._sdk_available = importlib.util.find_spec("openai") is not None
 
     @property
     def provider(self) -> LLMProvider:
@@ -305,7 +326,7 @@ class OpenAIBackend:
                 model_name=model,
                 provider=LLMProvider.OPENAI,
                 finished=False,
-                error=f"{type(exc).__name__}: {exc}",
+                error=_classify_provider_exception(exc),
             )
 
     def _estimate_cost(self, model: str, input_tokens: int, output_tokens: int) -> float:
@@ -313,10 +334,216 @@ class OpenAIBackend:
         pricing = {
             "gpt-4o": (2.50, 10.0),
             "gpt-4o-mini": (0.15, 0.60),
+            "gpt-4.1-mini": (0.40, 1.60),
+            "gpt-4.1-nano": (0.10, 0.40),
             "gpt-4-turbo": (10.0, 30.0),
         }
         input_rate, output_rate = pricing.get(model, (2.50, 10.0))
         return (input_tokens * input_rate + output_tokens * output_rate) / 1_000_000
+
+
+# ═══ Gemini Backend (Tier 2 — hosted free-tier) ═══
+
+
+class GeminiBackend:
+    """Google Gemini API backend using the google-generativeai SDK.
+
+    Tier 2 provider: cheap bulk inference, dev/testing, overflow fallback.
+    Resolves API key from GEMINI_API_KEY env var.
+    Falls back gracefully if SDK not installed.
+    """
+
+    def __init__(self, *, api_key: str | None = None, default_model: str = "gemini-2.0-flash") -> None:
+        self._api_key = api_key or os.environ.get("GEMINI_API_KEY", "")
+        self._default_model = default_model
+        self._client: Any = None
+        self._sdk_available = False
+        try:
+            import google.generativeai  # noqa: F401
+            self._sdk_available = True
+        except ImportError:
+            pass
+
+    @property
+    def provider(self) -> LLMProvider:
+        return LLMProvider.GEMINI
+
+    def _get_model(self, model_name: str) -> Any:
+        if not self._sdk_available:
+            raise RuntimeCoreInvariantError("google-generativeai SDK not installed — pip install google-generativeai")
+        if not self._api_key:
+            raise RuntimeCoreInvariantError("GEMINI_API_KEY not set")
+        import google.generativeai as genai
+        genai.configure(api_key=self._api_key)
+        return genai.GenerativeModel(model_name)
+
+    def call(self, params: LLMInvocationParams) -> LLMResult:
+        model_name = params.model_name or self._default_model
+
+        # Build content from messages
+        contents: list[dict[str, Any]] = []
+        system_instruction = ""
+        for msg in params.messages:
+            if msg.role == LLMRole.SYSTEM:
+                system_instruction = msg.content
+            else:
+                role = "model" if msg.role == LLMRole.ASSISTANT else "user"
+                contents.append({"role": role, "parts": [{"text": msg.content}]})
+
+        if not contents:
+            return LLMResult(
+                content="",
+                input_tokens=0,
+                output_tokens=0,
+                cost=0.0,
+                model_name=model_name,
+                provider=LLMProvider.GEMINI,
+                finished=True,
+                error="no user/assistant messages provided",
+            )
+
+        try:
+            model = self._get_model(model_name)
+            gen_config: dict[str, Any] = {"max_output_tokens": params.max_tokens}
+            if params.temperature > 0:
+                gen_config["temperature"] = params.temperature
+
+            response = model.generate_content(
+                contents,
+                generation_config=gen_config,
+                **({"system_instruction": system_instruction} if system_instruction else {}),
+            )
+
+            content = response.text if hasattr(response, "text") else ""
+            usage = getattr(response, "usage_metadata", None)
+            input_tokens = getattr(usage, "prompt_token_count", 0) if usage else 0
+            output_tokens = getattr(usage, "candidates_token_count", 0) if usage else 0
+            cost = self._estimate_cost(model_name, input_tokens, output_tokens)
+
+            return LLMResult(
+                content=content,
+                input_tokens=input_tokens,
+                output_tokens=output_tokens,
+                cost=cost,
+                model_name=model_name,
+                provider=LLMProvider.GEMINI,
+                finished=True,
+            )
+
+        except RuntimeCoreInvariantError:
+            raise
+        except Exception as exc:
+            return LLMResult(
+                content="",
+                input_tokens=0,
+                output_tokens=0,
+                cost=0.0,
+                model_name=model_name,
+                provider=LLMProvider.GEMINI,
+                finished=False,
+                error=_classify_provider_exception(exc),
+            )
+
+    def _estimate_cost(self, model: str, input_tokens: int, output_tokens: int) -> float:
+        """Estimate cost based on Gemini pricing (per million tokens).
+
+        Flash models on the free tier are effectively zero cost.
+        """
+        pricing = {
+            "gemini-2.0-flash": (0.10, 0.40),
+            "gemini-2.0-flash-lite": (0.075, 0.30),
+            "gemini-1.5-flash": (0.075, 0.30),
+            "gemini-1.5-pro": (1.25, 5.0),
+            "gemini-2.5-pro-preview-05-06": (1.25, 10.0),
+        }
+        input_rate, output_rate = pricing.get(model, (0.10, 0.40))
+        return (input_tokens * input_rate + output_tokens * output_rate) / 1_000_000
+
+
+# ═══ Ollama Backend (Tier 3 — local/private fallback) ═══
+
+
+class OllamaBackend:
+    """Ollama local model backend using the HTTP API.
+
+    Tier 3 provider: private/internal workloads, offline fallback, local experiments.
+    No SDK dependency — uses urllib for HTTP requests.
+    Cost is always zero (local inference).
+    """
+
+    def __init__(self, *, base_url: str = "", default_model: str = "llama3.2") -> None:
+        self._base_url = (base_url or os.environ.get("OLLAMA_BASE_URL", "http://localhost:11434")).rstrip("/")
+        self._default_model = default_model
+
+    @property
+    def provider(self) -> LLMProvider:
+        return LLMProvider.OLLAMA
+
+    def call(self, params: LLMInvocationParams) -> LLMResult:
+        model_name = params.model_name or self._default_model
+
+        messages: list[dict[str, str]] = []
+        for msg in params.messages:
+            messages.append({"role": msg.role.value, "content": msg.content})
+
+        if not messages:
+            return LLMResult(
+                content="",
+                input_tokens=0,
+                output_tokens=0,
+                cost=0.0,
+                model_name=model_name,
+                provider=LLMProvider.OLLAMA,
+                finished=True,
+                error="no messages provided",
+            )
+
+        try:
+            import json as _json
+            import urllib.request
+            import urllib.error
+
+            payload = _json.dumps({
+                "model": model_name,
+                "messages": messages,
+                "stream": False,
+                **({"options": {"num_predict": params.max_tokens}} if params.max_tokens else {}),
+                **({"options": {"temperature": params.temperature}} if params.temperature > 0 else {}),
+            }).encode("utf-8")
+
+            req = urllib.request.Request(
+                f"{self._base_url}/api/chat",
+                data=payload,
+                headers={"Content-Type": "application/json"},
+            )
+            resp = urllib.request.urlopen(req, timeout=60)
+            data = _json.loads(resp.read())
+
+            content = data.get("message", {}).get("content", "")
+            input_tokens = data.get("prompt_eval_count", 0)
+            output_tokens = data.get("eval_count", 0)
+
+            return LLMResult(
+                content=content,
+                input_tokens=input_tokens,
+                output_tokens=output_tokens,
+                cost=0.0,
+                model_name=model_name,
+                provider=LLMProvider.OLLAMA,
+                finished=True,
+            )
+
+        except Exception as exc:
+            return LLMResult(
+                content="",
+                input_tokens=0,
+                output_tokens=0,
+                cost=0.0,
+                model_name=model_name,
+                provider=LLMProvider.OLLAMA,
+                finished=False,
+                error=_classify_provider_exception(exc),
+            )
 
 
 # ═══ Stub Backend (for testing without real API) ═══
@@ -387,11 +614,15 @@ class GovernedLLMAdapter:
         budget_manager: LLMBudgetManager,
         clock: Callable[[], str],
         ledger_sink: Callable[[dict[str, Any]], None] | None = None,
+        pii_scanner: Any | None = None,
+        content_safety_chain: Any | None = None,
     ) -> None:
         self._backend = backend
         self._budget_manager = budget_manager
         self._clock = clock
         self._ledger_sink = ledger_sink
+        self._pii_scanner = pii_scanner
+        self._content_safety_chain = content_safety_chain
         self._invocations: list[dict[str, Any]] = []
 
     @property
@@ -419,11 +650,45 @@ class GovernedLLMAdapter:
                     model_name=params.model_name,
                     provider=self._backend.provider,
                     finished=False,
-                    error=f"budget_rejected: {reason}",
+                    error=f"budget_rejected: {_classify_budget_rejection(reason)}",
+                )
+
+        # Content safety gate (pre-call)
+        if self._content_safety_chain is not None:
+            prompt_text = " ".join(
+                m.content if hasattr(m, "content") else m.get("content", "") if isinstance(m, dict) else str(m)
+                for m in params.messages
+            )
+            safety_result = self._content_safety_chain.evaluate(prompt_text)
+            if safety_result.verdict.value == "blocked":
+                return LLMResult(
+                    content="",
+                    input_tokens=0,
+                    output_tokens=0,
+                    cost=0.0,
+                    model_name=params.model_name,
+                    provider=self._backend.provider,
+                    finished=False,
+                    error="content_safety_blocked",
                 )
 
         # Backend call
         result = self._backend.call(params)
+
+        # Lambda_output_safety on output (post-call)
+        if result.succeeded and result.content:
+            from dataclasses import replace
+            from mcoi_runtime.governance.guards.content_safety import evaluate_output_safety
+
+            output_safety = evaluate_output_safety(
+                result.content,
+                chain=self._content_safety_chain,
+                pii_scanner=self._pii_scanner,
+            )
+            if not output_safety.allowed:
+                result = replace(result, content="", error=output_safety.reason)
+            elif output_safety.content != result.content:
+                result = replace(result, content=output_safety.content)
 
         # Record cost
         if params.budget_id and result.succeeded:

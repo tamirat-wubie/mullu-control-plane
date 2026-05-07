@@ -546,9 +546,11 @@ class TestAttachContinuityToMemoryMesh:
         bridge.attach_continuity_to_memory_mesh("scope-evt")
         assert es.event_count > before
 
-    def test_title_contains_scope_ref(self, integration):
+    def test_title_is_bounded(self, integration):
         result = integration.attach_continuity_to_memory_mesh("scope-title-check")
-        assert "scope-title-check" in result.title
+        assert result.title == "Continuity state"
+        assert "scope-title-check" not in result.title
+        assert result.scope_ref_id == "scope-title-check"
 
     def test_confidence_is_one(self, integration):
         result = integration.attach_continuity_to_memory_mesh("scope-conf")

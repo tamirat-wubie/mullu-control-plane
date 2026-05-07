@@ -104,6 +104,8 @@ class TestConfidenceUpdates:
         assert isinstance(result, ConfidenceLevel)
         # 0.5 + 0.1 * (1 - 0.5) = 0.5 + 0.05 = 0.55
         assert abs(result.value - 0.55) < 1e-6
+        assert result.reason == "outcome-based confidence increase"
+        assert "0.1" not in result.reason
 
     def test_confidence_decrease_on_failure(self) -> None:
         engine = LearningEngine(clock=_clock)
@@ -113,6 +115,8 @@ class TestConfidenceUpdates:
 
         # 0.5 - 0.1 * 0.5 = 0.5 - 0.05 = 0.45
         assert abs(result.value - 0.45) < 1e-6
+        assert result.reason == "outcome-based confidence decrease"
+        assert "0.1" not in result.reason
 
     def test_confidence_clamped_at_upper_bound(self) -> None:
         engine = LearningEngine(clock=_clock)

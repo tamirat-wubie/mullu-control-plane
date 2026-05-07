@@ -41,7 +41,7 @@ class TestDeployReadinessChecker:
         checker.register_check("bad", bad_check)
         report = checker.run_all()
         assert not report.ready
-        assert "exception" in report.checks[0].message
+        assert report.checks[0].message == "check raised exception (RuntimeError)"
 
     def test_report_to_dict(self):
         checker = DeployReadinessChecker()

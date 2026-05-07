@@ -52,7 +52,7 @@ def _edge_type_of(edge: AnyEdge) -> EdgeType:
         return EdgeType.DECIDED_BY
     if isinstance(edge, ObligationLink):
         return EdgeType.OBLIGATED_TO
-    raise RuntimeCoreInvariantError(f"unknown edge type: {type(edge)}")
+    raise RuntimeCoreInvariantError("unknown edge type")
 
 
 def _edge_source(edge: AnyEdge) -> str:
@@ -92,7 +92,7 @@ class OperationalGraph:
         ensure_non_empty_text("node_id", node_id)
         ensure_non_empty_text("label", label)
         if node_id in self._nodes:
-            raise RuntimeCoreInvariantError(f"duplicate node: {node_id}")
+            raise RuntimeCoreInvariantError("duplicate node")
         now = self._clock()
         node = OperationalNode(
             node_id=node_id,
@@ -120,11 +120,11 @@ class OperationalGraph:
     def _validate_endpoints(self, source_id: str, target_id: str) -> None:
         """Ensure both endpoint nodes exist and no self-loop."""
         if source_id == target_id:
-            raise RuntimeCoreInvariantError(f"self-loop not permitted: {source_id}")
+            raise RuntimeCoreInvariantError("self-loop not permitted")
         if source_id not in self._nodes:
-            raise RuntimeCoreInvariantError(f"source node not found: {source_id}")
+            raise RuntimeCoreInvariantError("source node not found")
         if target_id not in self._nodes:
-            raise RuntimeCoreInvariantError(f"target node not found: {target_id}")
+            raise RuntimeCoreInvariantError("target node not found")
 
     def _register_edge(self, edge_id: str, source_id: str, target_id: str, edge: AnyEdge) -> None:
         """Insert an edge into the internal indexes."""
@@ -269,11 +269,11 @@ class OperationalGraph:
         ensure_non_empty_text("edge_id", edge_id)
         edge = self._edges.get(edge_id)
         if edge is None:
-            raise RuntimeCoreInvariantError(f"edge not found: {edge_id}")
+            raise RuntimeCoreInvariantError("edge not found")
         if not isinstance(edge, ObligationLink):
-            raise RuntimeCoreInvariantError(f"edge is not an obligation: {edge_id}")
+            raise RuntimeCoreInvariantError("edge is not an obligation")
         if edge.fulfilled:
-            raise RuntimeCoreInvariantError(f"obligation already fulfilled: {edge_id}")
+            raise RuntimeCoreInvariantError("obligation already fulfilled")
         fulfilled = ObligationLink(
             edge_id=edge.edge_id,
             source_node_id=edge.source_node_id,
@@ -319,7 +319,7 @@ class OperationalGraph:
     ) -> StateDelta:
         """Record a field-level change on a node. Values must be strings."""
         if node_id not in self._nodes:
-            raise RuntimeCoreInvariantError(f"node not found: {node_id}")
+            raise RuntimeCoreInvariantError("node not found")
         ensure_non_empty_text("field_name", field_name)
         now = self._clock()
         delta_id = stable_identifier("delta", {
@@ -424,7 +424,7 @@ class OperationalGraph:
                         path_id=path_id,
                         node_ids=tuple(new_node_path),
                         edge_ids=tuple(new_edge_path),
-                        description=f"causal path from {from_node_id} to {to_node_id}",
+                        description="causal path located",
                     )
                 visited.add(neighbor)
                 queue.append((neighbor, new_node_path, new_edge_path))
@@ -445,7 +445,7 @@ class OperationalGraph:
         Returns all reached nodes and traversed edges.
         """
         if node_id not in self._nodes:
-            raise RuntimeCoreInvariantError(f"node not found: {node_id}")
+            raise RuntimeCoreInvariantError("node not found")
 
         reached_nodes: list[OperationalNode] = [self._nodes[node_id]]
         traversed_edges: list[OperationalEdge] = []
@@ -512,10 +512,7 @@ class OperationalGraph:
         existing = self._nodes.get(node_id)
         if existing is not None:
             if existing.node_type != node_type:
-                raise RuntimeCoreInvariantError(
-                    f"node {node_id} already exists as {existing.node_type.value}, "
-                    f"cannot re-type as {node_type.value}"
-                )
+                raise RuntimeCoreInvariantError("node already exists with different type")
             return existing
         return self.add_node(node_id, node_type, label or node_id)
 

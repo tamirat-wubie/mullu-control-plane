@@ -130,7 +130,7 @@ class ProfitabilityEngine:
         e = self._economics.get(customer_id)
         support_risk = "high" if e and e.monthly_support_cost > 500 else "medium" if e and e.monthly_support_cost > 200 else "low"
         profit_aware = support_risk != "high"
-        reason = f"Current margin {e.gross_margin if e else 0}, support risk {support_risk}"
+        reason = "supported expansion indicators present"
         rec = ExpansionRecommendation(customer_id, e.pack if e else "unknown", recommended_pack, expected_mrr, support_risk, profit_aware, reason)
         self._expansions.append(rec)
         return rec

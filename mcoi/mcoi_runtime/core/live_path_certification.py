@@ -20,6 +20,11 @@ from typing import Any, Callable
 from enum import StrEnum
 
 
+def _bounded_certification_failure(prefix: str, exc: Exception) -> str:
+    """Return a bounded certification failure detail."""
+    return f"{prefix}: {type(exc).__name__}"
+
+
 class CertificationStatus(StrEnum):
     PASSED = "passed"
     FAILED = "failed"
@@ -123,7 +128,7 @@ class LivePathCertifier:
                 name="api_boundary",
                 status=CertificationStatus.FAILED,
                 proof_hash="",
-                detail=f"API boundary failed: {type(exc).__name__}: {exc}",
+                detail=_bounded_certification_failure("API boundary failed", exc),
             )
 
     def certify_db_persistence(
@@ -151,7 +156,7 @@ class LivePathCertifier:
                         name="db_persistence",
                         status=CertificationStatus.PASSED,
                         proof_hash=content_hash,
-                        detail=f"Written entry_id={entry_id}, verified on read-back",
+                        detail="Entry verified on read-back",
                     )
                 else:
                     return CertificationStep(
@@ -175,7 +180,7 @@ class LivePathCertifier:
                 name="db_persistence",
                 status=CertificationStatus.FAILED,
                 proof_hash="",
-                detail=f"DB persistence failed: {type(exc).__name__}: {exc}",
+                detail=_bounded_certification_failure("DB persistence failed", exc),
             )
 
     def certify_llm_invocation(
@@ -205,7 +210,7 @@ class LivePathCertifier:
                     name="llm_invocation",
                     status=status,
                     proof_hash=proof_hash,
-                    detail=f"LLM call {'succeeded' if succeeded else 'failed'}, cost={cost:.6f}",
+                    detail="LLM invocation succeeded" if succeeded else "LLM invocation failed",
                 )
             else:
                 return CertificationStep(
@@ -221,7 +226,7 @@ class LivePathCertifier:
                 name="llm_invocation",
                 status=CertificationStatus.FAILED,
                 proof_hash="",
-                detail=f"LLM invocation failed: {type(exc).__name__}: {exc}",
+                detail=_bounded_certification_failure("LLM invocation failed", exc),
             )
 
     def certify_ledger_integrity(
@@ -245,7 +250,7 @@ class LivePathCertifier:
                     name="ledger_integrity",
                     status=status,
                     proof_hash=chain_hash,
-                    detail=f"Verified {len(ledger_entries)} ledger entries, all_hashed={valid}",
+                    detail="Ledger entries verified" if valid else "Ledger entries missing required hashes",
                 )
             else:
                 return CertificationStep(
@@ -261,7 +266,7 @@ class LivePathCertifier:
                 name="ledger_integrity",
                 status=CertificationStatus.FAILED,
                 proof_hash="",
-                detail=f"Ledger integrity check failed: {type(exc).__name__}: {exc}",
+                detail=_bounded_certification_failure("Ledger integrity check failed", exc),
             )
 
     def certify_restart_proof(
@@ -306,7 +311,7 @@ class LivePathCertifier:
                     name="restart_proof",
                     status=status,
                     proof_hash=proof_hash,
-                    detail=f"Pre={pre_count} entries, Post={post_count} entries, preserved={preserved}",
+                    detail="Restart state preserved" if preserved else "Restart state not preserved",
                 )
                 return step, proof
             else:
@@ -324,7 +329,7 @@ class LivePathCertifier:
                 name="restart_proof",
                 status=CertificationStatus.FAILED,
                 proof_hash="",
-                detail=f"Restart proof failed: {type(exc).__name__}: {exc}",
+                detail=_bounded_certification_failure("Restart proof failed", exc),
             )
             return step, None
 

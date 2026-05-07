@@ -8,16 +8,17 @@ Invariants: governed path is opt-in; raw dispatch fallback always works.
 """
 from __future__ import annotations
 
-import pytest
 from dataclasses import dataclass
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
+import pytest
 from mcoi_runtime.adapters.executor_base import ExecutionRequest
-from mcoi_runtime.adapters.filesystem_observer import FilesystemObservationMode, FilesystemObservationRequest
 from mcoi_runtime.app.bootstrap import bootstrap_runtime
-from mcoi_runtime.app.governed_execution import governed_operator_dispatch
-from mcoi_runtime.app.operator_loop import ObservationDirective, OperatorLoop, OperatorRequest
+from mcoi_runtime.app.config import AppConfig
+from mcoi_runtime.app.governed_execution import governed_operator_dispatch, governed_operator_mil_dispatch
+from mcoi_runtime.app.operator_loop import OperatorLoop, OperatorRequest
 from mcoi_runtime.contracts.execution import EffectRecord, ExecutionOutcome, ExecutionResult
+from mcoi_runtime.contracts.policy import DecisionReason, PolicyDecision, PolicyDecisionStatus
 from mcoi_runtime.core.dispatcher import DispatchRequest, Dispatcher
 from mcoi_runtime.core.governed_dispatcher import (
     GovernedDispatchContext,
@@ -28,9 +29,12 @@ from mcoi_runtime.core.governed_dispatcher import (
 from mcoi_runtime.core.evidence_merger import EvidenceInput, EvidenceStateCategory
 from mcoi_runtime.core.planning_boundary import KnowledgeLifecycle, PlanningKnowledge
 from mcoi_runtime.core.template_validator import TemplateValidator
+from mcoi_runtime.persistence.mil_audit_store import MILAuditStore
+from mcoi_runtime.persistence.trace_store import TraceStore
 
 
-FIXED_CLOCK = lambda: "2026-03-26T12:00:00+00:00"
+def FIXED_CLOCK() -> str:
+    return "2026-03-26T12:00:00+00:00"
 
 VALID_TEMPLATE = {
     "template_id": "tpl-gov-op-1",
@@ -77,6 +81,17 @@ def _make_dispatch_request(goal_id: str = "goal-1") -> DispatchRequest:
     )
 
 
+def _policy(status: PolicyDecisionStatus = PolicyDecisionStatus.ALLOW) -> PolicyDecision:
+    return PolicyDecision(
+        decision_id=f"whqr:goal-1:{status.value}",
+        subject_id="operator_test",
+        goal_id="goal-1",
+        status=status,
+        reasons=(DecisionReason(status.value, f"whqr_{status.value}"),),
+        issued_at=FIXED_CLOCK(),
+    )
+
+
 # --- Test 1: happy path ---
 def test_governed_operator_dispatch_happy_path() -> None:
     executor = FakeExecutor()
@@ -118,6 +133,46 @@ def test_governed_operator_dispatch_blocked_returns_failure() -> None:
         for e in result.actual_effects
     )
     assert executor.calls == 0
+
+
+def test_governed_operator_mil_dispatch_happy_path() -> None:
+    executor = FakeExecutor()
+    governed = _build_governed_dispatcher(executor)
+    request = _make_dispatch_request()
+
+    result = governed_operator_mil_dispatch(
+        governed,
+        request,
+        policy_decision=_policy(),
+        issued_at=FIXED_CLOCK(),
+        actor_id="operator_test",
+        intent_id="test-mil-intent-1",
+    )
+
+    assert isinstance(result, ExecutionResult)
+    assert result.status is ExecutionOutcome.SUCCEEDED
+    assert executor.calls == 1
+    assert governed.ledger_count == 1
+
+
+def test_governed_operator_mil_dispatch_blocks_denied_policy() -> None:
+    executor = FakeExecutor()
+    governed = _build_governed_dispatcher(executor)
+    request = _make_dispatch_request()
+
+    result = governed_operator_mil_dispatch(
+        governed,
+        request,
+        policy_decision=_policy(PolicyDecisionStatus.DENY),
+        issued_at=FIXED_CLOCK(),
+        actor_id="operator_test",
+        intent_id="test-mil-denied-1",
+    )
+
+    assert result.status is ExecutionOutcome.FAILED
+    assert executor.calls == 0
+    assert any(effect.details.get("code") == "mil_static_verification_blocked" for effect in result.actual_effects)
+    assert governed.ledger_count == 0
 
 
 # --- Test 3: fallback to raw dispatch when no governed ---
@@ -205,7 +260,7 @@ def test_operator_executors_uses_governed_when_available() -> None:
     assert runtime.governed_dispatcher is not None, "bootstrap_runtime should create governed_dispatcher"
 
     step_executor = _GovernedStepExecutor(runtime=runtime)
-    outcome = step_executor.execute_step(
+    step_executor.execute_step(
         step_id="step-gov-1",
         action_type="shell_command",
         input_bindings={"msg": "governed-hello"},
@@ -256,3 +311,133 @@ def test_operator_loop_uses_governed_when_available() -> None:
     assert report.execution_result.status is ExecutionOutcome.SUCCEEDED
     # governed dispatcher ledger should have entries
     assert runtime.governed_dispatcher.ledger_count >= 1
+
+
+def test_operator_loop_persists_mil_audit_trace_spine_when_stores_available(tmp_path) -> None:
+    executor = FakeExecutor()
+    mil_audit_store = MILAuditStore(tmp_path / "mil-audit")
+    trace_store = TraceStore(tmp_path / "traces")
+    runtime = bootstrap_runtime(
+        clock=FIXED_CLOCK,
+        executors={"shell_command": executor},
+        mil_audit_store=mil_audit_store,
+        trace_store=trace_store,
+    )
+    loop = OperatorLoop(runtime)
+
+    report = loop.run_step(
+        OperatorRequest(
+            request_id="request-mil-trace-1",
+            subject_id="subject-1",
+            goal_id="goal-1",
+            template=VALID_TEMPLATE,
+            bindings={"msg": "trace-me"},
+            knowledge_entries=(
+                PlanningKnowledge("knowledge-1", "constraint", KnowledgeLifecycle.ADMITTED),
+            ),
+            evidence_entries=(
+                EvidenceInput(
+                    evidence_id="evidence-1",
+                    state_key="workspace.seed",
+                    value={"ready": True},
+                    category=EvidenceStateCategory.OBSERVED,
+                ),
+            ),
+        )
+    )
+
+    assert report.mil_audit_record_id is not None
+    assert len(report.mil_trace_ids) == 6
+    assert mil_audit_store.validate_record(report.mil_audit_record_id) is True
+    assert trace_store.load_trace(report.mil_trace_ids[-1]).event_type == "mil_audit_record"
+    assert trace_store.load_trace(report.mil_trace_ids[-1]).parent_trace_id == report.mil_trace_ids[-2]
+
+
+def test_operator_loop_effect_assurance_reconciles_when_required() -> None:
+    """High-risk runtime profiles require successful effect reconciliation."""
+    executor = FakeExecutor()
+    runtime = bootstrap_runtime(
+        config=AppConfig(effect_assurance_required=True),
+        clock=FIXED_CLOCK,
+        executors={"shell_command": executor},
+    )
+    loop = OperatorLoop(runtime)
+
+    report = loop.run_step(
+        OperatorRequest(
+            request_id="request-effect-assurance-1",
+            subject_id="subject-1",
+            goal_id="goal-1",
+            template=VALID_TEMPLATE,
+            bindings={"msg": "observed"},
+            knowledge_entries=(
+                PlanningKnowledge("knowledge-1", "constraint", KnowledgeLifecycle.ADMITTED),
+            ),
+            evidence_entries=(
+                EvidenceInput(
+                    evidence_id="evidence-1",
+                    state_key="workspace.seed",
+                    value={"ready": True},
+                    category=EvidenceStateCategory.OBSERVED,
+                ),
+            ),
+        )
+    )
+
+    assert report.dispatched is True
+    assert report.execution_result is not None
+    assert report.execution_result.status is ExecutionOutcome.SUCCEEDED
+    assert report.execution_result.metadata["effect_assurance"]["reconciliation_status"] == "match"
+    assert runtime.operational_graph is not None
+    graph_snapshot = runtime.operational_graph.capture_snapshot()
+    assert graph_snapshot.node_count >= 4
+    assert graph_snapshot.edge_count >= 3
+
+
+def test_operator_loop_effect_assurance_fails_closed_on_mismatch() -> None:
+    """A successful adapter result cannot pass when declared effects do not match observation."""
+    executor = FakeExecutor()
+    runtime = bootstrap_runtime(
+        config=AppConfig(effect_assurance_required=True),
+        clock=FIXED_CLOCK,
+        executors={"shell_command": executor},
+    )
+    template = {**VALID_TEMPLATE, "declared_effects": ("different_effect",)}
+    loop = OperatorLoop(runtime)
+
+    report = loop.run_step(
+        OperatorRequest(
+            request_id="request-effect-assurance-2",
+            subject_id="subject-1",
+            goal_id="goal-1",
+            template=template,
+            bindings={"msg": "observed"},
+            knowledge_entries=(
+                PlanningKnowledge("knowledge-1", "constraint", KnowledgeLifecycle.ADMITTED),
+            ),
+            evidence_entries=(
+                EvidenceInput(
+                    evidence_id="evidence-1",
+                    state_key="workspace.seed",
+                    value={"ready": True},
+                    category=EvidenceStateCategory.OBSERVED,
+                ),
+            ),
+        )
+    )
+
+    assert report.dispatched is True
+    assert report.execution_result is not None
+    assert report.execution_result.status is ExecutionOutcome.FAILED
+    assert report.execution_result.actual_effects[0].name == "effect_reconciliation_mismatch"
+    assert (
+        report.execution_result.metadata["effect_assurance"]["reconciliation_status"]
+        == "mismatch"
+    )
+    case_id = report.execution_result.metadata["effect_assurance"]["case_id"]
+    assert case_id.startswith("case-op-intent-")
+    assert runtime.case_runtime is not None
+    assert runtime.case_runtime.open_case_count == 1
+    assert runtime.case_runtime.evidence_count == 1
+    assert runtime.case_runtime.finding_count == 1
+    assert runtime.case_runtime.get_case(case_id).opened_by == "effect_assurance"

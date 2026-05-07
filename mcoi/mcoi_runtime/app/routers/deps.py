@@ -23,7 +23,7 @@ class _Deps:
     def get(self, name: str) -> Any:
         v = self._store.get(name)
         if v is None:
-            raise RuntimeError(f"Dependency '{name}' not registered. Was server.py loaded?")
+            raise RuntimeError("dependency not registered")
         return v
 
     def __getattr__(self, name: str) -> Any:

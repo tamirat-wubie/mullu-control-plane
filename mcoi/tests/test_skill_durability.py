@@ -178,7 +178,7 @@ class TestSkillStore:
         store = SkillStore(tmp_path / "skills")
         (tmp_path / "skills").mkdir(parents=True, exist_ok=True)
         (tmp_path / "skills" / "bad.json").write_text("not json!!")
-        with pytest.raises(CorruptedDataError):
+        with pytest.raises(CorruptedDataError, match=r"^malformed JSON \(JSONDecodeError\)$"):
             store.load("bad")
 
     def test_invalid_type_rejected(self, tmp_path: Path):

@@ -33,7 +33,7 @@ from ._base import (
 def _require_bool(value: bool, field_name: str) -> bool:
     """Validate that a value is strictly a bool."""
     if not isinstance(value, bool):
-        raise ValueError(f"{field_name} must be a bool")
+        raise ValueError("value must be a boolean flag")
     return value
 
 

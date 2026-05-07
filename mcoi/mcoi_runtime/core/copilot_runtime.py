@@ -127,7 +127,7 @@ class CopilotRuntimeEngine:
     ) -> ConversationSession:
         """Start a new copilot session."""
         if session_id in self._sessions:
-            raise RuntimeCoreInvariantError(f"Duplicate session_id: {session_id}")
+            raise RuntimeCoreInvariantError("Duplicate session_id")
         now = self._now()
         session = ConversationSession(
             session_id=session_id,
@@ -147,7 +147,7 @@ class CopilotRuntimeEngine:
     def get_session(self, session_id: str) -> ConversationSession:
         s = self._sessions.get(session_id)
         if s is None:
-            raise RuntimeCoreInvariantError(f"Unknown session_id: {session_id}")
+            raise RuntimeCoreInvariantError("Unknown session_id")
         return s
 
     def sessions_for_tenant(self, tenant_id: str) -> tuple[ConversationSession, ...]:
@@ -175,13 +175,9 @@ class CopilotRuntimeEngine:
         """Pause an ACTIVE session."""
         old = self.get_session(session_id)
         if old.status in _SESSION_TERMINAL:
-            raise RuntimeCoreInvariantError(
-                f"Session {session_id} is in terminal state {old.status.value}"
-            )
+            raise RuntimeCoreInvariantError("Session is in terminal state")
         if old.status != CopilotStatus.ACTIVE:
-            raise RuntimeCoreInvariantError(
-                f"Cannot pause session in {old.status.value} state"
-            )
+            raise RuntimeCoreInvariantError("Cannot pause session in current state")
         updated = self._replace_session(session_id, status=CopilotStatus.PAUSED)
         _emit(self._events, "session_paused", {
             "session_id": session_id,
@@ -192,13 +188,9 @@ class CopilotRuntimeEngine:
         """Resume a PAUSED session."""
         old = self.get_session(session_id)
         if old.status in _SESSION_TERMINAL:
-            raise RuntimeCoreInvariantError(
-                f"Session {session_id} is in terminal state {old.status.value}"
-            )
+            raise RuntimeCoreInvariantError("Session is in terminal state")
         if old.status != CopilotStatus.PAUSED:
-            raise RuntimeCoreInvariantError(
-                f"Cannot resume session in {old.status.value} state"
-            )
+            raise RuntimeCoreInvariantError("Cannot resume session in current state")
         updated = self._replace_session(session_id, status=CopilotStatus.ACTIVE)
         _emit(self._events, "session_resumed", {
             "session_id": session_id,
@@ -209,9 +201,7 @@ class CopilotRuntimeEngine:
         """Complete a non-terminal session."""
         old = self.get_session(session_id)
         if old.status in _SESSION_TERMINAL:
-            raise RuntimeCoreInvariantError(
-                f"Session {session_id} is in terminal state {old.status.value}"
-            )
+            raise RuntimeCoreInvariantError("Session is in terminal state")
         updated = self._replace_session(session_id, status=CopilotStatus.COMPLETED)
         _emit(self._events, "session_completed", {
             "session_id": session_id,
@@ -222,9 +212,7 @@ class CopilotRuntimeEngine:
         """Terminate a non-terminal session."""
         old = self.get_session(session_id)
         if old.status in _SESSION_TERMINAL:
-            raise RuntimeCoreInvariantError(
-                f"Session {session_id} is in terminal state {old.status.value}"
-            )
+            raise RuntimeCoreInvariantError("Session is in terminal state")
         updated = self._replace_session(session_id, status=CopilotStatus.TERMINATED)
         _emit(self._events, "session_terminated", {
             "session_id": session_id,
@@ -247,12 +235,10 @@ class CopilotRuntimeEngine:
     ) -> ConversationTurn:
         """Record a conversation turn. Session must be ACTIVE."""
         if turn_id in self._turns:
-            raise RuntimeCoreInvariantError(f"Duplicate turn_id: {turn_id}")
+            raise RuntimeCoreInvariantError("Duplicate turn_id")
         session = self.get_session(session_ref)
         if session.status != CopilotStatus.ACTIVE:
-            raise RuntimeCoreInvariantError(
-                f"Session {session_ref} is not ACTIVE (status: {session.status.value})"
-            )
+            raise RuntimeCoreInvariantError("Session is not ACTIVE")
         now = self._now()
         turn = ConversationTurn(
             turn_id=turn_id,
@@ -286,7 +272,7 @@ class CopilotRuntimeEngine:
     ) -> IntentRecord:
         """Classify user intent. Session must exist."""
         if intent_id in self._intents:
-            raise RuntimeCoreInvariantError(f"Duplicate intent_id: {intent_id}")
+            raise RuntimeCoreInvariantError("Duplicate intent_id")
         self.get_session(session_ref)  # validates existence
         now = self._now()
         intent = IntentRecord(
@@ -325,7 +311,7 @@ class CopilotRuntimeEngine:
         Cross-tenant -> DENIED + violation
         """
         if plan_id in self._plans:
-            raise RuntimeCoreInvariantError(f"Duplicate plan_id: {plan_id}")
+            raise RuntimeCoreInvariantError("Duplicate plan_id")
         session = self.get_session(session_ref)
         now = self._now()
 
@@ -341,7 +327,7 @@ class CopilotRuntimeEngine:
                     violation_id=vid,
                     tenant_id=tenant_id,
                     operation="cross_tenant_action",
-                    reason=f"Plan {plan_id} targets tenant {tenant_id} from session owned by {session.tenant_id}",
+                    reason="cross-tenant action attempt",
                     detected_at=now,
                 )
                 self._violations[vid] = v
@@ -387,7 +373,7 @@ class CopilotRuntimeEngine:
     ) -> CopilotDecision:
         """Record a copilot decision on an action plan."""
         if decision_id in self._decisions:
-            raise RuntimeCoreInvariantError(f"Duplicate decision_id: {decision_id}")
+            raise RuntimeCoreInvariantError("Duplicate decision_id")
         now = self._now()
         dec = CopilotDecision(
             decision_id=decision_id,
@@ -421,7 +407,7 @@ class CopilotRuntimeEngine:
     ) -> EvidenceBackedResponse:
         """Generate an evidence-backed response."""
         if response_id in self._responses:
-            raise RuntimeCoreInvariantError(f"Duplicate response_id: {response_id}")
+            raise RuntimeCoreInvariantError("Duplicate response_id")
         now = self._now()
         resp = EvidenceBackedResponse(
             response_id=response_id,
@@ -518,7 +504,7 @@ class CopilotRuntimeEngine:
                         violation_id=vid,
                         tenant_id=tenant_id,
                         operation="session_no_turns",
-                        reason=f"Session {sess.session_id} is ACTIVE with zero turns",
+                        reason="session active with zero turns",
                         detected_at=now,
                     )
                     self._violations[vid] = v
@@ -539,7 +525,7 @@ class CopilotRuntimeEngine:
                         violation_id=vid,
                         tenant_id=tenant_id,
                         operation="plan_no_decision",
-                        reason=f"Plan {plan.plan_id} has no corresponding decision",
+                        reason="plan has no corresponding decision",
                         detected_at=now,
                     )
                     self._violations[vid] = v
@@ -559,7 +545,7 @@ class CopilotRuntimeEngine:
                         violation_id=vid,
                         tenant_id=tenant_id,
                         operation="high_risk_auto_allowed",
-                        reason=f"Plan {plan.plan_id} is {plan.risk_level.value} risk but has ALLOWED disposition",
+                        reason="high risk plan has allowed disposition",
                         detected_at=now,
                     )
                     self._violations[vid] = v

@@ -1,0 +1,61 @@
+{
+  "capability_id": "crm.update_customer_address",
+  "domain": "customer_ops",
+  "version": "1.0.0",
+  "input_schema_ref": "schemas/customer_ops/update_customer_address.input.schema.json",
+  "output_schema_ref": "schemas/customer_ops/update_customer_address.output.schema.json",
+  "effect_model": {
+    "expected_effects": [
+      "customer_address_updated",
+      "crm_audit_record_created"
+    ],
+    "forbidden_effects": [
+      "billing_account_modified",
+      "unrelated_customer_modified"
+    ],
+    "reconciliation_required": true
+  },
+  "evidence_model": {
+    "required_evidence": [
+      "crm_update_receipt",
+      "before_after_record_hash"
+    ],
+    "terminal_certificate_required": true
+  },
+  "authority_policy": {
+    "required_roles": [
+      "customer_ops_manager"
+    ],
+    "approval_chain": [
+      "customer_ops_manager"
+    ],
+    "separation_of_duty": true
+  },
+  "isolation_profile": {
+    "execution_plane": "connector_worker",
+    "network_allowlist": [
+      "crm.internal.mullusi.com"
+    ],
+    "secret_scope": "tenant:customer_ops:crm"
+  },
+  "recovery_plan": {
+    "rollback_capability": "crm.restore_customer_address",
+    "compensation_capability": "customer_ops.notify_address_update_review",
+    "review_required_on_failure": true
+  },
+  "cost_model": {
+    "budget_class": "customer_ops_mutation",
+    "max_estimated_cost": 0.25
+  },
+  "obligation_model": {
+    "owner_team": "customer_ops",
+    "failure_due_seconds": 86400,
+    "escalation_route": "customer_ops_lead"
+  },
+  "certification_status": "candidate",
+  "metadata": {
+    "purpose": "Governed customer address update fixture",
+    "authority_mesh_required": true
+  },
+  "extensions": {}
+}

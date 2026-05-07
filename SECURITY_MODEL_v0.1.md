@@ -1,7 +1,7 @@
 # Mullu Platform MCOI Runtime -- Security Model v0.1.0
 
-**Version:** 0.3.0 (v3.10.2)
-**Date:** 2026-03-27
+**Version:** 0.4.3 (v3.13.3)
+**Date:** 2026-05-06
 **Audience:** Internal developers and operators evaluating this alpha.
 
 This document describes what security properties the runtime provides today and,
@@ -49,36 +49,57 @@ The runtime fails closed in the following situations:
 In all cases, the run terminates with a structured error rather than proceeding in a
 degraded or permissive state.
 
+### HTTP API Key Authentication
+
+The FastAPI HTTP boundary supports bearer API-key authentication through the
+governance middleware. Invalid keys fail closed, authenticated keys bind the
+request tenant, and stricter deployment profiles can require authentication on
+all `/api/*` routes. By default, `local_dev` and `test` remain permissive for
+developer workflow compatibility, while `pilot` and `production` require auth
+unless explicitly overridden.
+
 ## What Is NOT Implemented
 
-This is an internal alpha. The following security capabilities are absent:
+This is an internal alpha. The following security capabilities are still absent
+or incomplete:
 
-### No Authentication or Authorization
+### RBAC and Identity (Partial)
 
-There is no user authentication, role-based access control, or authorization system.
-Any process that can invoke the CLI or import the runtime module has full access to
-all operations. This is acceptable for single-operator internal use; it is not
-acceptable for shared or production environments.
+API key auth with scopes, JWT auth, and per-session RBAC checks are implemented.
+Gateway authority now includes team ownership, approval chains, obligations, and
+escalation read models for governed gateway actions. Full organization-management
+UI and credentialed directory scheduling remain incomplete.
+Any process that can invoke the CLI or import the runtime module still has full
+local access to all operations. Shared or production environments should front
+the runtime with authenticated gateways and least-privilege OS controls.
 
-### No Encryption at Rest
+### Field-Level Encryption at Rest (Optional)
 
-Persistence stores (traces, snapshots, replay records, registry data) write JSON
-files to the local filesystem with no encryption. Anyone with filesystem access can
-read persisted data.
+Sensitive data fields can be encrypted via `FieldEncryptor` (AES-256-GCM with
+AAD context binding). Requires the `cryptography` library (`pip install
+mcoi-runtime[encryption]`). Without it, encrypt/decrypt operations raise
+`RuntimeError` (fail-closed). General persistence stores (traces, snapshots,
+replay records) still write JSON to the filesystem without field-level
+encryption unless explicitly configured.
 
-### No Audit Log Signing or Tamper Detection
+### No External Audit Log Signing
 
-Trace and replay records are stored as plain JSON. There is no cryptographic signing,
-hash chaining, or tamper-detection mechanism. A modified trace file is
-indistinguishable from an unmodified one.
+The in-memory audit trail is hash-chained and supports integrity verification,
+but persisted JSON snapshots and replay exports are not externally signed or
+anchored in an immutable store. An attacker with filesystem write access can
+still replace persisted files unless the host environment provides stronger
+storage guarantees.
 
 ### Shell Executor Permissions
 
-The shell executor adapter invokes `subprocess.run` and inherits the OS-level
+Legacy shell executor paths invoke `subprocess.run` and inherit the OS-level
 permissions of the Python process. There is no sandboxing, chroot, or capability
-restriction beyond what the operating system provides. A malicious or misconfigured
-template with `action_type: shell_command` can execute arbitrary commands with the
-runtime's privileges.
+restriction beyond what the operating system provides on those legacy paths. The
+gateway capability plane distinguishes those paths from isolated worker execution:
+dangerous computer capabilities are represented through sandboxed worker records
+and fail closed without an isolated worker. A malicious or misconfigured legacy
+template with `action_type: shell_command` can still execute arbitrary commands
+with the runtime's privileges if the caller exposes that legacy adapter.
 
 ## Recommendations for Internal Use
 

@@ -106,6 +106,7 @@ class ServiceCatalogItem(ContractRecord):
     owner_ref: str = ""
     sla_ref: str = ""
     approval_required: bool = False
+    approver_refs: tuple[str, ...] = ()
     estimated_cost: float = 0.0
     created_at: str = ""
     metadata: Mapping[str, Any] = field(default_factory=dict)
@@ -118,6 +119,25 @@ class ServiceCatalogItem(ContractRecord):
             raise ValueError("kind must be a CatalogItemKind")
         if not isinstance(self.status, ServiceStatus):
             raise ValueError("status must be a ServiceStatus")
+        normalized_owner_ref = self.owner_ref.strip()
+        if normalized_owner_ref == "system":
+            raise ValueError("owner_ref must exclude system")
+        approver_refs = freeze_value(list(self.approver_refs))
+        seen_approver_refs: set[str] = set()
+        for index, approver_ref in enumerate(approver_refs):
+            normalized_approver_ref = require_non_empty_text(approver_ref, f"approver_refs[{index}]")
+            if normalized_approver_ref in seen_approver_refs:
+                raise ValueError("approver_refs must not contain duplicates")
+            if normalized_approver_ref == "system":
+                raise ValueError("approver_refs must exclude system")
+            if normalized_owner_ref and normalized_approver_ref == normalized_owner_ref:
+                raise ValueError("approver_refs must exclude owner_ref")
+            seen_approver_refs.add(normalized_approver_ref)
+        object.__setattr__(self, "approver_refs", approver_refs)
+        if self.approval_required and not approver_refs:
+            raise ValueError("approval_required items must declare approver_refs")
+        if self.approval_required and not normalized_owner_ref:
+            raise ValueError("approval_required items must declare owner_ref")
         object.__setattr__(self, "estimated_cost", require_non_negative_float(self.estimated_cost, "estimated_cost"))
         require_datetime_text(self.created_at, "created_at")
         object.__setattr__(self, "metadata", freeze_value(dict(self.metadata)))
@@ -137,6 +157,8 @@ class ServiceRequest(ContractRecord):
     estimated_cost: float = 0.0
     submitted_at: str = ""
     due_at: str = ""
+    cancelled_by: str = ""
+    closed_by: str = ""
     metadata: Mapping[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
@@ -152,6 +174,20 @@ class ServiceRequest(ContractRecord):
         require_datetime_text(self.submitted_at, "submitted_at")
         if self.due_at:
             require_datetime_text(self.due_at, "due_at")
+        normalized_cancelled_by = self.cancelled_by.strip()
+        if normalized_cancelled_by:
+            normalized_cancelled_by = require_non_empty_text(normalized_cancelled_by, "cancelled_by")
+            if normalized_cancelled_by == "system":
+                raise ValueError("cancelled_by must exclude system")
+        object.__setattr__(self, "cancelled_by", normalized_cancelled_by)
+        if self.status == RequestStatus.CANCELLED and not normalized_cancelled_by:
+            raise ValueError("cancelled requests must declare cancelled_by")
+        normalized_closed_by = self.closed_by.strip()
+        if normalized_closed_by:
+            normalized_closed_by = require_non_empty_text(normalized_closed_by, "closed_by")
+            if normalized_closed_by == "system":
+                raise ValueError("closed_by must exclude system")
+        object.__setattr__(self, "closed_by", normalized_closed_by)
         object.__setattr__(self, "metadata", freeze_value(dict(self.metadata)))
 
 
@@ -170,7 +206,10 @@ class RequestAssignment(ContractRecord):
         object.__setattr__(self, "assignment_id", require_non_empty_text(self.assignment_id, "assignment_id"))
         object.__setattr__(self, "request_id", require_non_empty_text(self.request_id, "request_id"))
         object.__setattr__(self, "assignee_ref", require_non_empty_text(self.assignee_ref, "assignee_ref"))
-        object.__setattr__(self, "assigned_by", require_non_empty_text(self.assigned_by, "assigned_by"))
+        normalized_assigned_by = require_non_empty_text(self.assigned_by, "assigned_by")
+        if normalized_assigned_by == "system":
+            raise ValueError("assigned_by must exclude system")
+        object.__setattr__(self, "assigned_by", normalized_assigned_by)
         require_datetime_text(self.assigned_at, "assigned_at")
         object.__setattr__(self, "metadata", freeze_value(dict(self.metadata)))
 
@@ -205,6 +244,11 @@ class FulfillmentTask(ContractRecord):
     task_id: str = ""
     request_id: str = ""
     assignee_ref: str = ""
+    created_by: str = ""
+    started_by: str = ""
+    completed_by: str = ""
+    failed_by: str = ""
+    cancelled_by: str = ""
     status: FulfillmentStatus = FulfillmentStatus.PENDING
     description: str = ""
     dependency_ref: str = ""
@@ -216,8 +260,44 @@ class FulfillmentTask(ContractRecord):
         object.__setattr__(self, "task_id", require_non_empty_text(self.task_id, "task_id"))
         object.__setattr__(self, "request_id", require_non_empty_text(self.request_id, "request_id"))
         object.__setattr__(self, "assignee_ref", require_non_empty_text(self.assignee_ref, "assignee_ref"))
+        normalized_created_by = require_non_empty_text(self.created_by, "created_by")
+        if normalized_created_by == "system":
+            raise ValueError("created_by must exclude system")
+        object.__setattr__(self, "created_by", normalized_created_by)
+        normalized_started_by = self.started_by.strip()
+        if normalized_started_by:
+            normalized_started_by = require_non_empty_text(normalized_started_by, "started_by")
+            if normalized_started_by == "system":
+                raise ValueError("started_by must exclude system")
+        object.__setattr__(self, "started_by", normalized_started_by)
+        normalized_completed_by = self.completed_by.strip()
+        if normalized_completed_by:
+            normalized_completed_by = require_non_empty_text(normalized_completed_by, "completed_by")
+            if normalized_completed_by == "system":
+                raise ValueError("completed_by must exclude system")
+        object.__setattr__(self, "completed_by", normalized_completed_by)
+        normalized_failed_by = self.failed_by.strip()
+        if normalized_failed_by:
+            normalized_failed_by = require_non_empty_text(normalized_failed_by, "failed_by")
+            if normalized_failed_by == "system":
+                raise ValueError("failed_by must exclude system")
+        object.__setattr__(self, "failed_by", normalized_failed_by)
+        normalized_cancelled_by = self.cancelled_by.strip()
+        if normalized_cancelled_by:
+            normalized_cancelled_by = require_non_empty_text(normalized_cancelled_by, "cancelled_by")
+            if normalized_cancelled_by == "system":
+                raise ValueError("cancelled_by must exclude system")
+        object.__setattr__(self, "cancelled_by", normalized_cancelled_by)
         if not isinstance(self.status, FulfillmentStatus):
             raise ValueError("status must be a FulfillmentStatus")
+        if self.status == FulfillmentStatus.IN_PROGRESS and not normalized_started_by:
+            raise ValueError("in_progress tasks must declare started_by")
+        if self.status == FulfillmentStatus.COMPLETED and not normalized_completed_by:
+            raise ValueError("completed tasks must declare completed_by")
+        if self.status == FulfillmentStatus.FAILED and not normalized_failed_by:
+            raise ValueError("failed tasks must declare failed_by")
+        if self.status == FulfillmentStatus.CANCELLED and not normalized_cancelled_by:
+            raise ValueError("cancelled tasks must declare cancelled_by")
         require_datetime_text(self.created_at, "created_at")
         if self.completed_at:
             require_datetime_text(self.completed_at, "completed_at")

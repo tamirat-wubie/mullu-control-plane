@@ -217,9 +217,12 @@ class TestApplicationMethods:
 class TestMemoryIntegration:
     def test_remember_pack_activation(self):
         pe, es, me, integ = _build()
-        _add_active_pack(pe)
+        _add_active_pack(pe, domain_name="finance")
         result = integ.remember_pack_activation("pk-1", "initial activation")
         assert result["memory"] is not None
+        assert result["memory"].title == "Domain pack activation"
+        assert "finance" not in result["memory"].title
+        assert result["memory"].scope_ref_id == "pk-1"
         assert "domain_pack" in result["memory"].tags
         assert result["event"] is not None
 
