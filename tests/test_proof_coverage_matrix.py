@@ -1138,6 +1138,33 @@ def test_temporal_monotonic_duration_surface_rechecks_elapsed_time() -> None:
     assert closure_actions["publish_temporal_monotonic_duration_receipt_contract"]["status"] == "closed"
 
 
+def test_temporal_accepted_risk_expiry_surface_blocks_stale_risk() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    accepted_risk_surface = surfaces["temporal_accepted_risk_expiry"]
+    witnesses = set(accepted_risk_surface["runtime_witnesses"])
+
+    assert accepted_risk_surface["coverage_state"] == "witnessed"
+    assert accepted_risk_surface["request_proof"] == "request_proof"
+    assert accepted_risk_surface["action_proof"] == "action_proof"
+    assert "TemporalAcceptedRiskExpiry.evaluate" in accepted_risk_surface["representative_paths"]
+    assert "TemporalAcceptedRiskRequest" in accepted_risk_surface["representative_paths"]
+    assert "TemporalAcceptedRiskExpiryReceipt" in accepted_risk_surface["representative_paths"]
+    assert "gateway/temporal_accepted_risk_expiry.py" in accepted_risk_surface["evidence_files"]
+    assert "schemas/temporal_accepted_risk_expiry_receipt.schema.json" in accepted_risk_surface["evidence_files"]
+    assert "tests/test_gateway/test_temporal_accepted_risk_expiry.py" in accepted_risk_surface["evidence_files"]
+    assert "runtime_clock_owns_accepted_risk_expiry" in witnesses
+    assert "expired_accepted_risk_blocks_dispatch" in witnesses
+    assert "revoked_or_closed_accepted_risk_blocks_dispatch" in witnesses
+    assert "tenant_command_and_action_scope_checked" in witnesses
+    assert "review_obligation_required" in witnesses
+    assert "accepted_risk_evidence_refs_required" in witnesses
+    assert "high_risk_source_receipts_bound" in witnesses
+    assert "temporal_accepted_risk_expiry_receipt_schema_valid" in witnesses
+    assert closure_actions["publish_temporal_accepted_risk_expiry_receipt_contract"]["status"] == "closed"
+
+
 def test_temporal_memory_surface_blocks_stale_or_superseded_memory() -> None:
     matrix = _load_fixture()
     surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}

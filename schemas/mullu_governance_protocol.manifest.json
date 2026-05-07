@@ -509,6 +509,12 @@
       "surface": "temporal"
     },
     {
+      "schema_id": "temporal-accepted-risk-expiry-receipt",
+      "path": "schemas/temporal_accepted_risk_expiry_receipt.schema.json",
+      "urn": "urn:mullusi:schema:temporal-accepted-risk-expiry-receipt:1",
+      "surface": "temporal"
+    },
+    {
       "schema_id": "temporal-memory-receipt",
       "path": "schemas/temporal_memory_receipt.schema.json",
       "urn": "urn:mullusi:schema:temporal-memory-receipt:1",
