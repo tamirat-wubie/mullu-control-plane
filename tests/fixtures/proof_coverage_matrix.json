@@ -331,10 +331,10 @@
       ]
     },
     {
-      "action_id": "publish_temporal_memory_receipt_contract",
+      "action_id": "publish_temporal_retention_window_receipt_contract",
       "status": "closed",
       "surfaces": [
-        "temporal_memory"
+        "temporal_retention_window"
       ]
     },
     {
@@ -408,7 +408,7 @@
   ],
   "coverage_summary": {
     "by_action_proof": {
-      "action_proof": 51,
+      "action_proof": 52,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 9,
@@ -416,7 +416,7 @@
     },
     "by_audit": {
       "action_proof": 0,
-      "audit_chain": 58,
+      "audit_chain": 59,
       "gap": 0,
       "read_model": 4,
       "request_proof": 0
@@ -424,16 +424,16 @@
     "by_coverage_state": {
       "proven": 1,
       "unproven": 0,
-      "witnessed": 61
+      "witnessed": 62
     },
     "by_request_proof": {
       "action_proof": 0,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 11,
-      "request_proof": 51
+      "request_proof": 52
     },
-    "surface_count": 62
+    "surface_count": 63
   },
   "generated_by": "scripts/proof_coverage_matrix.py",
   "route_coverage": {
@@ -3572,6 +3572,37 @@
         "receipt_not_terminal_closure"
       ],
       "surface_id": "temporal_credential_expiry"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "gateway/temporal_retention_window.py",
+        "schemas/temporal_retention_window_receipt.schema.json",
+        "tests/test_gateway/test_temporal_retention_window.py"
+      ],
+      "notes": "Temporal retention window rechecks data lifecycle actions for retention_until, delete_after, legal hold, tenant scope, owner, retention policy refs, evidence refs, source data decisions, and overdue timing before deletion, archive, anonymization, or retention review.",
+      "representative_paths": [
+        "TemporalRetentionWindow.evaluate",
+        "TemporalRetentionRequest",
+        "TemporalRetentionWindowReceipt"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "runtime_clock_owns_retention_timing",
+        "delete_before_delete_after_defers_action",
+        "archive_and_anonymize_wait_for_retention_until",
+        "legal_hold_blocks_lifecycle_action",
+        "overdue_retention_action_warns",
+        "tenant_scope_checked",
+        "retention_policy_ref_required",
+        "subject_evidence_refs_required",
+        "high_risk_source_receipts_bound",
+        "temporal_retention_window_receipt_schema_valid",
+        "receipt_not_terminal_closure"
+      ],
+      "surface_id": "temporal_retention_window"
     },
     {
       "action_proof": "action_proof",

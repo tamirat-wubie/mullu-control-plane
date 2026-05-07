@@ -1567,6 +1567,37 @@ def proof_coverage_matrix() -> dict[str, Any]:
             ],
         ),
         _surface(
+            "temporal_retention_window",
+            [
+                "TemporalRetentionWindow.evaluate",
+                "TemporalRetentionRequest",
+                "TemporalRetentionWindowReceipt",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "gateway/temporal_retention_window.py",
+                "schemas/temporal_retention_window_receipt.schema.json",
+                "tests/test_gateway/test_temporal_retention_window.py",
+            ],
+            "Temporal retention window rechecks data lifecycle actions for retention_until, delete_after, legal hold, tenant scope, owner, retention policy refs, evidence refs, source data decisions, and overdue timing before deletion, archive, anonymization, or retention review.",
+            [
+                "runtime_clock_owns_retention_timing",
+                "delete_before_delete_after_defers_action",
+                "archive_and_anonymize_wait_for_retention_until",
+                "legal_hold_blocks_lifecycle_action",
+                "overdue_retention_action_warns",
+                "tenant_scope_checked",
+                "retention_policy_ref_required",
+                "subject_evidence_refs_required",
+                "high_risk_source_receipts_bound",
+                "temporal_retention_window_receipt_schema_valid",
+                "receipt_not_terminal_closure",
+            ],
+        ),
+        _surface(
             "temporal_memory_refresh",
             [
                 "TemporalMemoryRefresh.evaluate",
@@ -2044,8 +2075,8 @@ def proof_coverage_matrix() -> dict[str, Any]:
             "status": "closed",
         },
         {
-            "action_id": "publish_temporal_memory_receipt_contract",
-            "surfaces": ["temporal_memory"],
+            "action_id": "publish_temporal_retention_window_receipt_contract",
+            "surfaces": ["temporal_retention_window"],
             "status": "closed",
         },
         {
