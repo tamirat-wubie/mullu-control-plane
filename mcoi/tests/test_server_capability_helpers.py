@@ -49,7 +49,7 @@ def test_bootstrap_capability_services_registers_tools_models_and_flags() -> Non
     }
     assert bootstrap.structured_output.summary()["schemas"] == 1
     model_ids = set(bootstrap.model_router._profiles)
-    assert bootstrap.model_router.summary()["models"] >= 27
+    assert bootstrap.model_router.summary()["models"] >= 29
     assert {
         "gpt-4.1-nano",
         "gemini-2.0-flash-lite",
@@ -68,6 +68,8 @@ def test_bootstrap_capability_services_registers_tools_models_and_flags() -> Non
         "glm-4.5-air",
         "Qwen/Qwen2.5-7B-Instruct",
         "gpt-oss-120b",
+        "Qwen/Qwen3-32B-TEE",
+        "qwen/qwen3-coder-30b-a3b-instruct",
     }.issubset(model_ids)
     assert "meta-llama-3.1-8b-instruct" not in model_ids
     assert bootstrap.feature_flags.summary() == {"total": 4, "enabled": 4, "disabled": 0}

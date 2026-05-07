@@ -4,6 +4,7 @@ import os
 import pytest
 from mcoi_runtime.adapters.multi_provider import (
     CerebrasBackend,
+    ChutesBackend,
     CloudflareBackend,
     DashScopeBackend,
     DeepInfraBackend,
@@ -18,6 +19,7 @@ from mcoi_runtime.adapters.multi_provider import (
     SambaNovaBackend,
     SiliconFlowBackend,
     TogetherBackend,
+    WaveSpeedBackend,
     ZAIBackend,
 )
 from mcoi_runtime.app.llm_bootstrap import (
@@ -60,6 +62,8 @@ LLM_ENV_KEYS = (
     "ZAI_API_KEY",
     "SILICONFLOW_API_KEY",
     "DINFERENCE_API_KEY",
+    "CHUTES_API_KEY",
+    "WAVESPEED_API_KEY",
     "XAI_API_KEY",
     "MISTRAL_API_KEY",
     "OPENROUTER_API_KEY",
@@ -311,6 +315,8 @@ class TestBootstrapLLM:
             zai_api_key="zk",
             siliconflow_api_key="sf",
             dinference_api_key="df",
+            chutes_api_key="ct",
+            wavespeed_api_key="ws",
             grok_api_key="xai",
             mistral_api_key="ms",
             openrouter_api_key="or",
@@ -342,6 +348,8 @@ class TestBootstrapLLM:
             "zai",
             "siliconflow",
             "dinference",
+            "chutes",
+            "wavespeed",
             "grok",
             "mistral",
             "openrouter",
@@ -362,6 +370,8 @@ class TestBootstrapLLM:
         assert isinstance(result.backends["zai"], ZAIBackend)
         assert isinstance(result.backends["siliconflow"], SiliconFlowBackend)
         assert isinstance(result.backends["dinference"], DInferenceBackend)
+        assert isinstance(result.backends["chutes"], ChutesBackend)
+        assert isinstance(result.backends["wavespeed"], WaveSpeedBackend)
         assert "llm-groq" in result.registered_providers
         assert "llm-deepseek" in result.registered_providers
         assert "llm-together" in result.registered_providers
@@ -375,6 +385,8 @@ class TestBootstrapLLM:
         assert "llm-zai" in result.registered_providers
         assert "llm-siliconflow" in result.registered_providers
         assert "llm-dinference" in result.registered_providers
+        assert "llm-chutes" in result.registered_providers
+        assert "llm-wavespeed" in result.registered_providers
         assert "llm-openrouter" in result.registered_providers
         assert "meta-llama/llama-4-scout-17b-16e-instruct" in result.registered_models
         assert "deepseek-v4-flash" in result.registered_models
@@ -393,6 +405,8 @@ class TestBootstrapLLM:
         assert "glm-4.5-air" in result.registered_models
         assert "Qwen/Qwen2.5-7B-Instruct" in result.registered_models
         assert "gpt-oss-120b" in result.registered_models
+        assert "Qwen/Qwen3-32B-TEE" in result.registered_models
+        assert "qwen/qwen3-coder-30b-a3b-instruct" in result.registered_models
         assert "mistral-small-2506" in result.registered_models
         assert "grok-3-mini" in result.registered_models
         assert "meta-llama/llama-4-scout" in result.registered_models

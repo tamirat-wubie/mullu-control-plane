@@ -769,6 +769,70 @@ class DInferenceBackend:
         return self._call_count
 
 
+class ChutesBackend:
+    """Chutes OpenAI-compatible endpoint for inexpensive open-weight models."""
+
+    provider = LLMProvider.CHUTES
+    DEFAULT_MODEL = "Qwen/Qwen3-32B-TEE"
+
+    def __init__(self, *, model: str = "", api_key: str | None = None, api_key_env: str = "CHUTES_API_KEY") -> None:
+        self._model = model or self.DEFAULT_MODEL
+        self._default_model = self._model
+        self._api_key = api_key or ""
+        self._api_key_env = api_key_env
+        self._call_count = 0
+
+    def call(self, params: LLMInvocationParams) -> LLMResult:
+        self._call_count += 1
+        return _openai_compatible_call(
+            base_url="https://llm.chutes.ai/v1",
+            api_key=self._api_key or os.environ.get(self._api_key_env, ""),
+            model=params.model_name or self._model,
+            messages=_params_to_messages(params),
+            max_tokens=params.max_tokens,
+            temperature=0.0,
+            provider=self.provider,
+            cost_per_1m_input=0.08,
+            cost_per_1m_output=0.24,
+        )
+
+    @property
+    def call_count(self) -> int:
+        return self._call_count
+
+
+class WaveSpeedBackend:
+    """WaveSpeed OpenAI-compatible endpoint for inexpensive Qwen coder models."""
+
+    provider = LLMProvider.WAVESPEED
+    DEFAULT_MODEL = "qwen/qwen3-coder-30b-a3b-instruct"
+
+    def __init__(self, *, model: str = "", api_key: str | None = None, api_key_env: str = "WAVESPEED_API_KEY") -> None:
+        self._model = model or self.DEFAULT_MODEL
+        self._default_model = self._model
+        self._api_key = api_key or ""
+        self._api_key_env = api_key_env
+        self._call_count = 0
+
+    def call(self, params: LLMInvocationParams) -> LLMResult:
+        self._call_count += 1
+        return _openai_compatible_call(
+            base_url="https://llm.wavespeed.ai/v1",
+            api_key=self._api_key or os.environ.get(self._api_key_env, ""),
+            model=params.model_name or self._model,
+            messages=_params_to_messages(params),
+            max_tokens=params.max_tokens,
+            temperature=0.0,
+            provider=self.provider,
+            cost_per_1m_input=0.07,
+            cost_per_1m_output=0.27,
+        )
+
+    @property
+    def call_count(self) -> int:
+        return self._call_count
+
+
 # --- xAI Grok (real-time X data) ---
 
 
@@ -908,6 +972,8 @@ ALL_PROVIDERS: dict[str, type] = {
     "zai": ZAIBackend,
     "siliconflow": SiliconFlowBackend,
     "dinference": DInferenceBackend,
+    "chutes": ChutesBackend,
+    "wavespeed": WaveSpeedBackend,
     "grok": GrokBackend,
     "mistral": MistralBackend,
     "openrouter": OpenRouterBackend,
@@ -943,6 +1009,8 @@ def available_providers() -> list[str]:
         "zai": ("ZAI_API_KEY",),
         "siliconflow": ("SILICONFLOW_API_KEY",),
         "dinference": ("DINFERENCE_API_KEY",),
+        "chutes": ("CHUTES_API_KEY",),
+        "wavespeed": ("WAVESPEED_API_KEY",),
         "grok": ("XAI_API_KEY",),
         "mistral": ("MISTRAL_API_KEY",),
         "openrouter": ("OPENROUTER_API_KEY",),

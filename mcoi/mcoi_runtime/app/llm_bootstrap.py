@@ -29,6 +29,7 @@ from mcoi_runtime.adapters.llm_adapter import (
 )
 from mcoi_runtime.adapters.multi_provider import (
     CerebrasBackend,
+    ChutesBackend,
     CloudflareBackend,
     DashScopeBackend,
     DeepSeekBackend,
@@ -47,6 +48,7 @@ from mcoi_runtime.adapters.multi_provider import (
     SambaNovaBackend,
     SiliconFlowBackend,
     TogetherBackend,
+    WaveSpeedBackend,
     ZAIBackend,
 )
 from mcoi_runtime.contracts.llm import LLMBudget
@@ -91,6 +93,8 @@ class LLMConfig:
     zai_api_key: str = ""
     siliconflow_api_key: str = ""
     dinference_api_key: str = ""
+    chutes_api_key: str = ""
+    wavespeed_api_key: str = ""
     grok_api_key: str = ""
     mistral_api_key: str = ""
     openrouter_api_key: str = ""
@@ -128,6 +132,8 @@ class LLMConfig:
         zai_key = os.environ.get("ZAI_API_KEY", "")
         siliconflow_key = os.environ.get("SILICONFLOW_API_KEY", "")
         dinference_key = os.environ.get("DINFERENCE_API_KEY", "")
+        chutes_key = os.environ.get("CHUTES_API_KEY", "")
+        wavespeed_key = os.environ.get("WAVESPEED_API_KEY", "")
         grok_key = os.environ.get("XAI_API_KEY", "")
         mistral_key = os.environ.get("MISTRAL_API_KEY", "")
         openrouter_key = os.environ.get("OPENROUTER_API_KEY", "")
@@ -177,6 +183,10 @@ class LLMConfig:
                 default_backend = "siliconflow"
             elif dinference_key:
                 default_backend = "dinference"
+            elif chutes_key:
+                default_backend = "chutes"
+            elif wavespeed_key:
+                default_backend = "wavespeed"
             elif mistral_key:
                 default_backend = "mistral"
             elif grok_key:
@@ -204,6 +214,7 @@ class LLMConfig:
                 "HYPERBOLIC_API_KEY, SAMBANOVA_API_KEY, CLOUDFLARE_API_TOKEN "
                 "with CLOUDFLARE_ACCOUNT_ID, MOONSHOT_API_KEY, DASHSCOPE_API_KEY, "
                 "ZAI_API_KEY, SILICONFLOW_API_KEY, DINFERENCE_API_KEY, "
+                "CHUTES_API_KEY, WAVESPEED_API_KEY, "
                 "XAI_API_KEY, MISTRAL_API_KEY, "
                 "OPENROUTER_API_KEY) "
                 "or OLLAMA_BASE_URL."
@@ -232,6 +243,8 @@ class LLMConfig:
             zai_api_key=zai_key,
             siliconflow_api_key=siliconflow_key,
             dinference_api_key=dinference_key,
+            chutes_api_key=chutes_key,
+            wavespeed_api_key=wavespeed_key,
             grok_api_key=grok_key,
             mistral_api_key=mistral_key,
             openrouter_api_key=openrouter_key,
@@ -513,6 +526,28 @@ def bootstrap_llm(
         )
         backends["dinference"] = dinference
 
+    if llm_config.chutes_api_key:
+        chutes = ChutesBackend(
+            api_key=llm_config.chutes_api_key,
+            model=_select_provider_default_model(
+                llm_config.default_model,
+                ("qwen/", "deepseek-ai/", "zai-org/", "minimaxai/", "chutes/"),
+                ChutesBackend.DEFAULT_MODEL,
+            ),
+        )
+        backends["chutes"] = chutes
+
+    if llm_config.wavespeed_api_key:
+        wavespeed = WaveSpeedBackend(
+            api_key=llm_config.wavespeed_api_key,
+            model=_select_provider_default_model(
+                llm_config.default_model,
+                ("qwen/", "deepseek/", "llama", "wavespeed/"),
+                WaveSpeedBackend.DEFAULT_MODEL,
+            ),
+        )
+        backends["wavespeed"] = wavespeed
+
     if llm_config.grok_api_key:
         grok = GrokBackend(
             api_key=llm_config.grok_api_key,
@@ -734,6 +769,18 @@ def _register_providers(
             "rate_limit": 120,
             "cost_limit": 0.25,
         },
+        "chutes": {
+            "name": "Chutes",
+            "base_url": "https://llm.chutes.ai/v1",
+            "rate_limit": 120,
+            "cost_limit": 0.25,
+        },
+        "wavespeed": {
+            "name": "WaveSpeed",
+            "base_url": "https://llm.wavespeed.ai/v1",
+            "rate_limit": 120,
+            "cost_limit": 0.25,
+        },
         "grok": {
             "name": "xAI Grok",
             "base_url": "https://api.x.ai/v1",
@@ -839,6 +886,8 @@ def _register_models(
         ("glm-4.5-air", "GLM-4.5 Air via Z.AI", "zai", 0.20, 1.10),
         ("Qwen/Qwen2.5-7B-Instruct", "Qwen2.5 7B via SiliconFlow", "siliconflow", 0.05, 0.05),
         ("gpt-oss-120b", "GPT OSS 120B via DInference", "dinference", 0.09, 0.36),
+        ("Qwen/Qwen3-32B-TEE", "Qwen3 32B TEE via Chutes", "chutes", 0.08, 0.24),
+        ("qwen/qwen3-coder-30b-a3b-instruct", "Qwen3 Coder 30B A3B via WaveSpeed", "wavespeed", 0.07, 0.27),
         ("mistral-small-2506", "Mistral Small 2506", "mistral", 0.10, 0.30),
         ("mistral-small-2603", "Mistral Small 2603", "mistral", 0.15, 0.60),
         ("grok-3-mini", "Grok 3 Mini", "grok", 0.30, 0.50),

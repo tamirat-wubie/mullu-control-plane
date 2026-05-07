@@ -39,6 +39,8 @@ class LLMProvider(StrEnum):
     ZAI = "zai"
     SILICONFLOW = "siliconflow"
     DINFERENCE = "dinference"
+    CHUTES = "chutes"
+    WAVESPEED = "wavespeed"
     GROK = "grok"
     MISTRAL = "mistral"
     OPENROUTER = "openrouter"

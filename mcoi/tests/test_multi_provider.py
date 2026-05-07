@@ -14,6 +14,7 @@ from mcoi_runtime.contracts.llm import LLMInvocationParams, LLMMessage, LLMProvi
 from mcoi_runtime.adapters.multi_provider import (
     ALL_PROVIDERS,
     CerebrasBackend,
+    ChutesBackend,
     CloudflareBackend,
     DashScopeBackend,
     DeepSeekBackend,
@@ -33,6 +34,7 @@ from mcoi_runtime.adapters.multi_provider import (
     SambaNovaBackend,
     SiliconFlowBackend,
     TogetherBackend,
+    WaveSpeedBackend,
     ZAIBackend,
     available_providers,
     create_provider,
@@ -59,6 +61,8 @@ OPENAI_COMPATIBLE_PROVIDER_CLASSES = [
     ZAIBackend,
     SiliconFlowBackend,
     DInferenceBackend,
+    ChutesBackend,
+    WaveSpeedBackend,
     GrokBackend,
     MistralBackend,
     OpenRouterBackend,
@@ -331,6 +335,8 @@ class TestProviderRegistry:
             "zai",
             "siliconflow",
             "dinference",
+            "chutes",
+            "wavespeed",
             "grok",
             "mistral",
             "openrouter",
@@ -360,6 +366,8 @@ class TestProviderRegistry:
             ("zai", ZAIBackend, LLMProvider.ZAI),
             ("siliconflow", SiliconFlowBackend, LLMProvider.SILICONFLOW),
             ("dinference", DInferenceBackend, LLMProvider.DINFERENCE),
+            ("chutes", ChutesBackend, LLMProvider.CHUTES),
+            ("wavespeed", WaveSpeedBackend, LLMProvider.WAVESPEED),
         ],
     )
     def test_new_openai_compatible_providers(self, provider_name, backend_cls, provider):

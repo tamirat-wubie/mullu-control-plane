@@ -296,6 +296,20 @@
       ]
     },
     {
+      "action_id": "publish_temporal_causal_order_receipt_contract",
+      "status": "closed",
+      "surfaces": [
+        "temporal_causal_order"
+      ]
+    },
+    {
+      "action_id": "publish_temporal_monotonic_duration_receipt_contract",
+      "status": "closed",
+      "surfaces": [
+        "temporal_monotonic_duration"
+      ]
+    },
+    {
       "action_id": "publish_temporal_memory_refresh_receipt_contract",
       "status": "closed",
       "surfaces": [
@@ -366,7 +380,7 @@
   ],
   "coverage_summary": {
     "by_action_proof": {
-      "action_proof": 46,
+      "action_proof": 48,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 9,
@@ -374,7 +388,7 @@
     },
     "by_audit": {
       "action_proof": 0,
-      "audit_chain": 53,
+      "audit_chain": 55,
       "gap": 0,
       "read_model": 4,
       "request_proof": 0
@@ -382,16 +396,16 @@
     "by_coverage_state": {
       "proven": 1,
       "unproven": 0,
-      "witnessed": 56
+      "witnessed": 58
     },
     "by_request_proof": {
       "action_proof": 0,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 11,
-      "request_proof": 46
+      "request_proof": 48
     },
-    "surface_count": 57
+    "surface_count": 59
   },
   "generated_by": "scripts/proof_coverage_matrix.py",
   "route_coverage": {
@@ -3361,6 +3375,63 @@
         "receipt_not_terminal_closure"
       ],
       "surface_id": "temporal_memory"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "gateway/temporal_causal_order.py",
+        "schemas/temporal_causal_order_receipt.schema.json",
+        "tests/test_gateway/test_temporal_causal_order.py"
+      ],
+      "notes": "Temporal causal order rechecks required timestamped events, tenant and command scope, predecessor edges, source receipts, missing events, and out-of-order events before worker execution.",
+      "representative_paths": [
+        "TemporalCausalOrder.evaluate",
+        "TemporalCausalOrderRequest",
+        "TemporalCausalOrderReceipt"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "runtime_clock_owns_causal_order_time",
+        "required_events_must_be_present",
+        "tenant_and_command_scope_checked",
+        "predecessor_edges_checked",
+        "out_of_order_events_block_dispatch",
+        "future_events_block_dispatch",
+        "high_risk_source_receipts_bound",
+        "temporal_causal_order_receipt_schema_valid",
+        "receipt_not_terminal_closure"
+      ],
+      "surface_id": "temporal_causal_order"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "gateway/temporal_monotonic_duration.py",
+        "schemas/temporal_monotonic_duration_receipt.schema.json",
+        "tests/test_gateway/test_temporal_monotonic_duration.py"
+      ],
+      "notes": "Temporal monotonic duration rechecks timeout, latency, cooldown, retry-delay, and watchdog elapsed time from monotonic clock readings before dispatch.",
+      "representative_paths": [
+        "TemporalMonotonicDuration.evaluate",
+        "TemporalMonotonicDurationRequest",
+        "TemporalMonotonicDurationReceipt"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "runtime_monotonic_clock_owns_duration_truth",
+        "wall_clock_not_used_for_duration",
+        "duration_limit_exceeded_blocks_dispatch",
+        "cooldown_lower_bound_defers_dispatch",
+        "monotonic_clock_regression_blocks_dispatch",
+        "high_risk_source_receipts_bound",
+        "temporal_monotonic_duration_receipt_schema_valid",
+        "receipt_not_terminal_closure"
+      ],
+      "surface_id": "temporal_monotonic_duration"
     },
     {
       "action_proof": "action_proof",

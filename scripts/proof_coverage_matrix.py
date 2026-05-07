@@ -1397,6 +1397,63 @@ def proof_coverage_matrix() -> dict[str, Any]:
             ],
         ),
         _surface(
+            "temporal_causal_order",
+            [
+                "TemporalCausalOrder.evaluate",
+                "TemporalCausalOrderRequest",
+                "TemporalCausalOrderReceipt",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "gateway/temporal_causal_order.py",
+                "schemas/temporal_causal_order_receipt.schema.json",
+                "tests/test_gateway/test_temporal_causal_order.py",
+            ],
+            "Temporal causal order rechecks required timestamped events, tenant and command scope, predecessor edges, source receipts, missing events, and out-of-order events before worker execution.",
+            [
+                "runtime_clock_owns_causal_order_time",
+                "required_events_must_be_present",
+                "tenant_and_command_scope_checked",
+                "predecessor_edges_checked",
+                "out_of_order_events_block_dispatch",
+                "future_events_block_dispatch",
+                "high_risk_source_receipts_bound",
+                "temporal_causal_order_receipt_schema_valid",
+                "receipt_not_terminal_closure",
+            ],
+        ),
+        _surface(
+            "temporal_monotonic_duration",
+            [
+                "TemporalMonotonicDuration.evaluate",
+                "TemporalMonotonicDurationRequest",
+                "TemporalMonotonicDurationReceipt",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "gateway/temporal_monotonic_duration.py",
+                "schemas/temporal_monotonic_duration_receipt.schema.json",
+                "tests/test_gateway/test_temporal_monotonic_duration.py",
+            ],
+            "Temporal monotonic duration rechecks timeout, latency, cooldown, retry-delay, and watchdog elapsed time from monotonic clock readings before dispatch.",
+            [
+                "runtime_monotonic_clock_owns_duration_truth",
+                "wall_clock_not_used_for_duration",
+                "duration_limit_exceeded_blocks_dispatch",
+                "cooldown_lower_bound_defers_dispatch",
+                "monotonic_clock_regression_blocks_dispatch",
+                "high_risk_source_receipts_bound",
+                "temporal_monotonic_duration_receipt_schema_valid",
+                "receipt_not_terminal_closure",
+            ],
+        ),
+        _surface(
             "temporal_memory_refresh",
             [
                 "TemporalMemoryRefresh.evaluate",
@@ -1846,6 +1903,16 @@ def proof_coverage_matrix() -> dict[str, Any]:
         {
             "action_id": "publish_temporal_memory_receipt_contract",
             "surfaces": ["temporal_memory"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_temporal_causal_order_receipt_contract",
+            "surfaces": ["temporal_causal_order"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_temporal_monotonic_duration_receipt_contract",
+            "surfaces": ["temporal_monotonic_duration"],
             "status": "closed",
         },
         {

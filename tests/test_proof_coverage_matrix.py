@@ -1115,6 +1115,59 @@ def test_temporal_budget_window_surface_rechecks_tenant_budget_periods() -> None
     assert closure_actions["publish_temporal_budget_window_receipt_contract"]["status"] == "closed"
 
 
+def test_temporal_causal_order_surface_rechecks_required_event_order() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    causal_order_surface = surfaces["temporal_causal_order"]
+    witnesses = set(causal_order_surface["runtime_witnesses"])
+
+    assert causal_order_surface["coverage_state"] == "witnessed"
+    assert causal_order_surface["request_proof"] == "request_proof"
+    assert causal_order_surface["action_proof"] == "action_proof"
+    assert "TemporalCausalOrder.evaluate" in causal_order_surface["representative_paths"]
+    assert "TemporalCausalOrderRequest" in causal_order_surface["representative_paths"]
+    assert "TemporalCausalOrderReceipt" in causal_order_surface["representative_paths"]
+    assert "gateway/temporal_causal_order.py" in causal_order_surface["evidence_files"]
+    assert "schemas/temporal_causal_order_receipt.schema.json" in causal_order_surface["evidence_files"]
+    assert "tests/test_gateway/test_temporal_causal_order.py" in causal_order_surface["evidence_files"]
+    assert "runtime_clock_owns_causal_order_time" in witnesses
+    assert "required_events_must_be_present" in witnesses
+    assert "tenant_and_command_scope_checked" in witnesses
+    assert "predecessor_edges_checked" in witnesses
+    assert "out_of_order_events_block_dispatch" in witnesses
+    assert "future_events_block_dispatch" in witnesses
+    assert "high_risk_source_receipts_bound" in witnesses
+    assert "temporal_causal_order_receipt_schema_valid" in witnesses
+    assert closure_actions["publish_temporal_causal_order_receipt_contract"]["status"] == "closed"
+
+
+def test_temporal_monotonic_duration_surface_rechecks_elapsed_time() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    duration_surface = surfaces["temporal_monotonic_duration"]
+    witnesses = set(duration_surface["runtime_witnesses"])
+
+    assert duration_surface["coverage_state"] == "witnessed"
+    assert duration_surface["request_proof"] == "request_proof"
+    assert duration_surface["action_proof"] == "action_proof"
+    assert "TemporalMonotonicDuration.evaluate" in duration_surface["representative_paths"]
+    assert "TemporalMonotonicDurationRequest" in duration_surface["representative_paths"]
+    assert "TemporalMonotonicDurationReceipt" in duration_surface["representative_paths"]
+    assert "gateway/temporal_monotonic_duration.py" in duration_surface["evidence_files"]
+    assert "schemas/temporal_monotonic_duration_receipt.schema.json" in duration_surface["evidence_files"]
+    assert "tests/test_gateway/test_temporal_monotonic_duration.py" in duration_surface["evidence_files"]
+    assert "runtime_monotonic_clock_owns_duration_truth" in witnesses
+    assert "wall_clock_not_used_for_duration" in witnesses
+    assert "duration_limit_exceeded_blocks_dispatch" in witnesses
+    assert "cooldown_lower_bound_defers_dispatch" in witnesses
+    assert "monotonic_clock_regression_blocks_dispatch" in witnesses
+    assert "high_risk_source_receipts_bound" in witnesses
+    assert "temporal_monotonic_duration_receipt_schema_valid" in witnesses
+    assert closure_actions["publish_temporal_monotonic_duration_receipt_contract"]["status"] == "closed"
+
+
 def test_temporal_memory_surface_blocks_stale_or_superseded_memory() -> None:
     matrix = _load_fixture()
     surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
