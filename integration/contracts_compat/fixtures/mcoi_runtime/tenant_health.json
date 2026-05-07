@@ -1,0 +1,14 @@
+{
+  "tenant_id": "tenant-mullu-primary",
+  "total_workspaces": 2,
+  "active_workspaces": 2,
+  "total_environments": 5,
+  "total_bindings": 7,
+  "total_violations": 1,
+  "compliance_pct": 0.96,
+  "assessed_at": "2026-05-07T10:00:00+00:00",
+  "metadata": {
+    "assessment_scope": "daily",
+    "assessor": "tenant-governor-1"
+  }
+}

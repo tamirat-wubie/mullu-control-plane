@@ -1,0 +1,14 @@
+{
+  "promotion_id": "promotion-core-staging-to-prod",
+  "source_environment_id": "env-core-staging",
+  "target_environment_id": "env-core-production",
+  "status": "completed",
+  "compliance_check_passed": true,
+  "promoted_by": "release-manager-1",
+  "requested_at": "2026-05-07T09:00:00+00:00",
+  "completed_at": "2026-05-07T09:25:00+00:00",
+  "metadata": {
+    "change_ref": "change-core-2026-05-07",
+    "verification_ref": "verification-core-2026-05-07"
+  }
+}

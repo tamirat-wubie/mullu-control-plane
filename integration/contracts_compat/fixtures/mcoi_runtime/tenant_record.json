@@ -1,0 +1,17 @@
+{
+  "tenant_id": "tenant-mullu-primary",
+  "name": "Mullu Primary Tenant",
+  "status": "active",
+  "isolation_level": "strict",
+  "owner": "tenant-governor-1",
+  "workspace_ids": [
+    "workspace-governed-core",
+    "workspace-governed-ops"
+  ],
+  "created_at": "2026-05-07T08:00:00+00:00",
+  "updated_at": "2026-05-07T10:30:00+00:00",
+  "metadata": {
+    "region": "us-east-1",
+    "tier": "enterprise"
+  }
+}

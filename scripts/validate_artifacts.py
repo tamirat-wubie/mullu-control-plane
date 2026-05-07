@@ -38,13 +38,20 @@ MCOI_RUNTIME_FIXTURE_DIR = REPO_ROOT / "integration" / "contracts_compat" / "fix
 if str(MCOI_PATH) not in sys.path:
     sys.path.insert(0, str(MCOI_PATH))
 
-from mcoi_runtime.app.cli import _build_operator_request
-from mcoi_runtime.app.config import AppConfig
-from mcoi_runtime.app.policy_packs import PolicyPackRegistry
-from mcoi_runtime.app.profiles import list_profiles
-from mcoi_runtime.contracts.document import DocumentVerificationStatus
-from mcoi_runtime.core.document import extract_json_fields, ingest_document, verify_extraction
-from mcoi_runtime.core.template_validator import TemplateValidationError, TemplateValidator
+from mcoi_runtime.app.cli import _build_operator_request  # noqa: E402
+from mcoi_runtime.app.config import AppConfig  # noqa: E402
+from mcoi_runtime.app.policy_packs import PolicyPackRegistry  # noqa: E402
+from mcoi_runtime.app.profiles import list_profiles  # noqa: E402
+from mcoi_runtime.contracts.document import DocumentVerificationStatus  # noqa: E402
+from mcoi_runtime.core.document import (  # noqa: E402
+    extract_json_fields,
+    ingest_document,
+    verify_extraction,
+)
+from mcoi_runtime.core.template_validator import (  # noqa: E402
+    TemplateValidationError,
+    TemplateValidator,
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -268,6 +275,16 @@ ANCHOR_DISPOSITIONS = frozenset({"anchored", "pending", "failed", "revoked"})
 WALLET_STATUSES = frozenset({"active", "frozen", "closed", "compromised"})
 LEDGER_VIOLATION_KINDS = frozenset(
     {"proof_failed", "anchor_expired", "wallet_compromised", "settlement_disputed"}
+)
+TENANT_STATUSES = frozenset({"active", "suspended", "provisioning", "decommissioning", "archived"})
+WORKSPACE_STATUSES = frozenset({"active", "suspended", "provisioning", "archived"})
+ENVIRONMENT_KINDS = frozenset({"development", "staging", "production", "sandbox", "dr"})
+ISOLATION_LEVELS = frozenset({"strict", "standard", "shared", "custom"})
+SCOPE_BOUNDARY_KINDS = frozenset(
+    {"memory", "connector", "budget", "campaign", "program", "control", "report", "graph"}
+)
+PROMOTION_STATUSES = frozenset(
+    {"requested", "approved", "in_progress", "completed", "failed", "rolled_back"}
 )
 
 
@@ -9310,6 +9327,419 @@ def _validate_ledger_closure_report_fixture(path: Path) -> list[str]:
     return errors
 
 
+def _validate_tenant_record_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MCOI runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "tenant_id",
+            "name",
+            "status",
+            "isolation_level",
+            "owner",
+            "workspace_ids",
+            "created_at",
+            "updated_at",
+            "metadata",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("tenant_id", "name", "status", "isolation_level", "owner"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    if payload["status"] not in TENANT_STATUSES:
+        errors.append(
+            f"{_relative_path(path)}: field 'status' must be one of {', '.join(sorted(TENANT_STATUSES))}"
+        )
+    if payload["isolation_level"] not in ISOLATION_LEVELS:
+        errors.append(
+            f"{_relative_path(path)}: field 'isolation_level' must be one of {', '.join(sorted(ISOLATION_LEVELS))}"
+        )
+    workspace_ids = payload["workspace_ids"]
+    if not isinstance(workspace_ids, list):
+        errors.append(f"{_relative_path(path)}: field 'workspace_ids' must be an array")
+    else:
+        for index, workspace_id in enumerate(workspace_ids):
+            errors.extend(_require_non_empty_text(workspace_id, field_name=f"workspace_ids[{index}]", path=path))
+        if len(set(workspace_ids)) != len(workspace_ids):
+            errors.append(f"{_relative_path(path)}: workspace_ids must not contain duplicates")
+    errors.extend(_validate_iso8601_text(payload["created_at"], field_name="created_at", path=path))
+    errors.extend(_validate_iso8601_text(payload["updated_at"], field_name="updated_at", path=path))
+    if not errors and _parse_iso8601_text(payload["updated_at"]) < _parse_iso8601_text(payload["created_at"]):
+        errors.append(f"{_relative_path(path)}: updated_at must not precede created_at")
+    if not isinstance(payload["metadata"], dict):
+        errors.append(f"{_relative_path(path)}: field 'metadata' must be an object")
+    return errors
+
+
+def _validate_workspace_record_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MCOI runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "workspace_id",
+            "tenant_id",
+            "name",
+            "status",
+            "isolation_level",
+            "environment_ids",
+            "resource_bindings",
+            "created_at",
+            "updated_at",
+            "metadata",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("workspace_id", "tenant_id", "name", "status", "isolation_level"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    if payload["status"] not in WORKSPACE_STATUSES:
+        errors.append(
+            f"{_relative_path(path)}: field 'status' must be one of {', '.join(sorted(WORKSPACE_STATUSES))}"
+        )
+    if payload["isolation_level"] not in ISOLATION_LEVELS:
+        errors.append(
+            f"{_relative_path(path)}: field 'isolation_level' must be one of {', '.join(sorted(ISOLATION_LEVELS))}"
+        )
+    for field_name in ("environment_ids", "resource_bindings"):
+        values = payload[field_name]
+        if not isinstance(values, list):
+            errors.append(f"{_relative_path(path)}: field '{field_name}' must be an array")
+            continue
+        for index, value in enumerate(values):
+            errors.extend(_require_non_empty_text(value, field_name=f"{field_name}[{index}]", path=path))
+        if len(set(values)) != len(values):
+            errors.append(f"{_relative_path(path)}: {field_name} must not contain duplicates")
+    errors.extend(_validate_iso8601_text(payload["created_at"], field_name="created_at", path=path))
+    errors.extend(_validate_iso8601_text(payload["updated_at"], field_name="updated_at", path=path))
+    if not errors and _parse_iso8601_text(payload["updated_at"]) < _parse_iso8601_text(payload["created_at"]):
+        errors.append(f"{_relative_path(path)}: updated_at must not precede created_at")
+    if not isinstance(payload["metadata"], dict):
+        errors.append(f"{_relative_path(path)}: field 'metadata' must be an object")
+    return errors
+
+
+def _validate_environment_record_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MCOI runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "environment_id",
+            "workspace_id",
+            "kind",
+            "name",
+            "promoted_from",
+            "connector_ids",
+            "created_at",
+            "updated_at",
+            "metadata",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("environment_id", "workspace_id", "kind", "name"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    if payload["kind"] not in ENVIRONMENT_KINDS:
+        errors.append(
+            f"{_relative_path(path)}: field 'kind' must be one of {', '.join(sorted(ENVIRONMENT_KINDS))}"
+        )
+    connector_ids = payload["connector_ids"]
+    if not isinstance(connector_ids, list):
+        errors.append(f"{_relative_path(path)}: field 'connector_ids' must be an array")
+    else:
+        for index, connector_id in enumerate(connector_ids):
+            errors.extend(_require_non_empty_text(connector_id, field_name=f"connector_ids[{index}]", path=path))
+        if len(set(connector_ids)) != len(connector_ids):
+            errors.append(f"{_relative_path(path)}: connector_ids must not contain duplicates")
+    errors.extend(_validate_iso8601_text(payload["created_at"], field_name="created_at", path=path))
+    errors.extend(_validate_iso8601_text(payload["updated_at"], field_name="updated_at", path=path))
+    if not errors and _parse_iso8601_text(payload["updated_at"]) < _parse_iso8601_text(payload["created_at"]):
+        errors.append(f"{_relative_path(path)}: updated_at must not precede created_at")
+    if not isinstance(payload["metadata"], dict):
+        errors.append(f"{_relative_path(path)}: field 'metadata' must be an object")
+    return errors
+
+
+def _validate_boundary_policy_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MCOI runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "policy_id",
+            "tenant_id",
+            "boundary_kind",
+            "isolation_level",
+            "enforced",
+            "description",
+            "created_at",
+            "metadata",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("policy_id", "tenant_id", "boundary_kind", "isolation_level", "description"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    if payload["boundary_kind"] not in SCOPE_BOUNDARY_KINDS:
+        errors.append(
+            f"{_relative_path(path)}: field 'boundary_kind' must be one of {', '.join(sorted(SCOPE_BOUNDARY_KINDS))}"
+        )
+    if payload["isolation_level"] not in ISOLATION_LEVELS:
+        errors.append(
+            f"{_relative_path(path)}: field 'isolation_level' must be one of {', '.join(sorted(ISOLATION_LEVELS))}"
+        )
+    if not isinstance(payload["enforced"], bool):
+        errors.append(f"{_relative_path(path)}: field 'enforced' must be boolean")
+    errors.extend(_validate_iso8601_text(payload["created_at"], field_name="created_at", path=path))
+    if not isinstance(payload["metadata"], dict):
+        errors.append(f"{_relative_path(path)}: field 'metadata' must be an object")
+    return errors
+
+
+def _validate_workspace_binding_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MCOI runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "binding_id",
+            "workspace_id",
+            "resource_ref_id",
+            "resource_type",
+            "environment_id",
+            "bound_at",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("binding_id", "workspace_id", "resource_ref_id", "resource_type", "environment_id"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    if payload["resource_type"] not in SCOPE_BOUNDARY_KINDS:
+        errors.append(
+            f"{_relative_path(path)}: field 'resource_type' must be one of {', '.join(sorted(SCOPE_BOUNDARY_KINDS))}"
+        )
+    errors.extend(_validate_iso8601_text(payload["bound_at"], field_name="bound_at", path=path))
+    return errors
+
+
+def _validate_environment_promotion_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MCOI runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "promotion_id",
+            "source_environment_id",
+            "target_environment_id",
+            "status",
+            "compliance_check_passed",
+            "promoted_by",
+            "requested_at",
+            "completed_at",
+            "metadata",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("promotion_id", "source_environment_id", "target_environment_id", "status", "promoted_by"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    if payload["status"] not in PROMOTION_STATUSES:
+        errors.append(
+            f"{_relative_path(path)}: field 'status' must be one of {', '.join(sorted(PROMOTION_STATUSES))}"
+        )
+    if not isinstance(payload["compliance_check_passed"], bool):
+        errors.append(f"{_relative_path(path)}: field 'compliance_check_passed' must be boolean")
+    errors.extend(_validate_iso8601_text(payload["requested_at"], field_name="requested_at", path=path))
+    if payload["completed_at"]:
+        errors.extend(_validate_iso8601_text(payload["completed_at"], field_name="completed_at", path=path))
+    if not errors:
+        if payload["source_environment_id"] == payload["target_environment_id"]:
+            errors.append(f"{_relative_path(path)}: source_environment_id must not equal target_environment_id")
+        terminal_statuses = {"completed", "failed", "rolled_back"}
+        nonterminal_statuses = {"requested", "approved", "in_progress"}
+        if payload["status"] in terminal_statuses and not payload["completed_at"]:
+            errors.append(f"{_relative_path(path)}: terminal promotions must carry completed_at")
+        if payload["status"] in nonterminal_statuses and payload["completed_at"]:
+            errors.append(f"{_relative_path(path)}: non-terminal promotions must keep completed_at empty")
+        if payload["status"] == "completed" and not payload["compliance_check_passed"]:
+            errors.append(f"{_relative_path(path)}: completed promotions must keep compliance_check_passed true")
+        if payload["completed_at"] and _parse_iso8601_text(payload["completed_at"]) < _parse_iso8601_text(payload["requested_at"]):
+            errors.append(f"{_relative_path(path)}: completed_at must not precede requested_at")
+    if not isinstance(payload["metadata"], dict):
+        errors.append(f"{_relative_path(path)}: field 'metadata' must be an object")
+    return errors
+
+
+def _validate_isolation_violation_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MCOI runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "violation_id",
+            "tenant_id",
+            "workspace_id",
+            "boundary_kind",
+            "violating_resource_ref",
+            "description",
+            "escalated",
+            "detected_at",
+            "metadata",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in (
+        "violation_id",
+        "tenant_id",
+        "workspace_id",
+        "boundary_kind",
+        "violating_resource_ref",
+        "description",
+    ):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    if payload["boundary_kind"] not in SCOPE_BOUNDARY_KINDS:
+        errors.append(
+            f"{_relative_path(path)}: field 'boundary_kind' must be one of {', '.join(sorted(SCOPE_BOUNDARY_KINDS))}"
+        )
+    if not isinstance(payload["escalated"], bool):
+        errors.append(f"{_relative_path(path)}: field 'escalated' must be boolean")
+    errors.extend(_validate_iso8601_text(payload["detected_at"], field_name="detected_at", path=path))
+    if not isinstance(payload["metadata"], dict):
+        errors.append(f"{_relative_path(path)}: field 'metadata' must be an object")
+    return errors
+
+
+def _validate_tenant_health_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MCOI runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "tenant_id",
+            "total_workspaces",
+            "active_workspaces",
+            "total_environments",
+            "total_bindings",
+            "total_violations",
+            "compliance_pct",
+            "assessed_at",
+            "metadata",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    errors.extend(_require_non_empty_text(payload["tenant_id"], field_name="tenant_id", path=path))
+    for field_name in (
+        "total_workspaces",
+        "active_workspaces",
+        "total_environments",
+        "total_bindings",
+        "total_violations",
+    ):
+        errors.extend(_require_non_negative_int(payload[field_name], field_name=field_name, path=path))
+    errors.extend(
+        _require_number_in_range(payload["compliance_pct"], field_name="compliance_pct", path=path, minimum=0.0, maximum=1.0)
+    )
+    if not errors:
+        if payload["active_workspaces"] > payload["total_workspaces"]:
+            errors.append(f"{_relative_path(path)}: active_workspaces must not exceed total_workspaces")
+        if payload["total_environments"] < payload["active_workspaces"]:
+            errors.append(f"{_relative_path(path)}: total_environments must be at least active_workspaces")
+    errors.extend(_validate_iso8601_text(payload["assessed_at"], field_name="assessed_at", path=path))
+    if not isinstance(payload["metadata"], dict):
+        errors.append(f"{_relative_path(path)}: field 'metadata' must be an object")
+    return errors
+
+
+def _validate_tenant_decision_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MCOI runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "decision_id",
+            "tenant_id",
+            "title",
+            "description",
+            "confidence",
+            "decided_by",
+            "decided_at",
+            "metadata",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("decision_id", "tenant_id", "title", "description", "decided_by"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    errors.extend(
+        _require_number_in_range(payload["confidence"], field_name="confidence", path=path, minimum=0.0, maximum=1.0)
+    )
+    errors.extend(_validate_iso8601_text(payload["decided_at"], field_name="decided_at", path=path))
+    if not isinstance(payload["metadata"], dict):
+        errors.append(f"{_relative_path(path)}: field 'metadata' must be an object")
+    return errors
+
+
+def _validate_tenant_closure_report_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MCOI runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "report_id",
+            "tenant_id",
+            "total_workspaces",
+            "total_environments",
+            "total_bindings",
+            "total_promotions",
+            "total_violations",
+            "total_decisions",
+            "compliance_pct",
+            "closed_at",
+            "metadata",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("report_id", "tenant_id"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    for field_name in (
+        "total_workspaces",
+        "total_environments",
+        "total_bindings",
+        "total_promotions",
+        "total_violations",
+        "total_decisions",
+    ):
+        errors.extend(_require_non_negative_int(payload[field_name], field_name=field_name, path=path))
+    errors.extend(
+        _require_number_in_range(payload["compliance_pct"], field_name="compliance_pct", path=path, minimum=0.0, maximum=1.0)
+    )
+    if not errors:
+        if payload["total_environments"] < payload["total_workspaces"]:
+            errors.append(f"{_relative_path(path)}: total_environments must be at least total_workspaces")
+        if payload["total_promotions"] > payload["total_environments"]:
+            errors.append(f"{_relative_path(path)}: total_promotions must not exceed total_environments")
+    errors.extend(_validate_iso8601_text(payload["closed_at"], field_name="closed_at", path=path))
+    if not isinstance(payload["metadata"], dict):
+        errors.append(f"{_relative_path(path)}: field 'metadata' must be an object")
+    return errors
+
+
 MAF_RUNTIME_FIXTURE_VALIDATORS: dict[str, MAFRuntimeFixtureValidator] = {
     "adversarial_case.json": _validate_adversarial_case_fixture,
     "assignment_record.json": _validate_assignment_record_fixture,
@@ -9471,6 +9901,8 @@ MCOI_RUNTIME_FIXTURE_VALIDATORS: dict[str, MCOIRuntimeFixtureValidator] = {
     "dispute_record.json": _validate_dispute_record_fixture,
     "dunning_notice.json": _validate_dunning_notice_fixture,
     "entitlement_record.json": _validate_entitlement_record_fixture,
+    "environment_promotion.json": _validate_environment_promotion_fixture,
+    "environment_record.json": _validate_environment_record_fixture,
     "financial_health_snapshot.json": _validate_financial_health_snapshot_fixture,
     "evidence_collection.json": _validate_evidence_collection_fixture,
     "evidence_item.json": _validate_evidence_item_fixture,
@@ -9486,6 +9918,7 @@ MCOI_RUNTIME_FIXTURE_VALIDATORS: dict[str, MCOIRuntimeFixtureValidator] = {
     "incident_record.json": _validate_incident_record_fixture,
     "inventory_record.json": _validate_inventory_record_fixture,
     "invoice_record.json": _validate_invoice_record_fixture,
+    "isolation_violation.json": _validate_isolation_violation_fixture,
     "lifecycle_event.json": _validate_lifecycle_event_fixture,
     "ledger_account.json": _validate_ledger_account_fixture,
     "ledger_assessment.json": _validate_ledger_assessment_fixture,
@@ -9544,14 +9977,21 @@ MCOI_RUNTIME_FIXTURE_VALIDATORS: dict[str, MCOIRuntimeFixtureValidator] = {
     "spend_forecast.json": _validate_spend_forecast_fixture,
     "spend_record.json": _validate_spend_record_fixture,
     "subscription_record.json": _validate_subscription_record_fixture,
+    "tenant_closure_report.json": _validate_tenant_closure_report_fixture,
+    "tenant_decision.json": _validate_tenant_decision_fixture,
+    "tenant_health.json": _validate_tenant_health_fixture,
+    "tenant_record.json": _validate_tenant_record_fixture,
     "verification_record.json": _validate_verification_record_fixture,
     "vendor_assessment.json": _validate_vendor_assessment_fixture,
     "vendor_commitment.json": _validate_vendor_commitment_fixture,
     "vendor_record.json": _validate_vendor_record_fixture,
     "vendor_violation.json": _validate_vendor_violation_fixture,
     "wallet_record.json": _validate_wallet_record_fixture,
+    "workspace_binding.json": _validate_workspace_binding_fixture,
+    "workspace_record.json": _validate_workspace_record_fixture,
     "writeoff_record.json": _validate_writeoff_record_fixture,
     "aging_snapshot.json": _validate_aging_snapshot_fixture,
+    "boundary_policy.json": _validate_boundary_policy_fixture,
     "connector_cost_profile.json": _validate_connector_cost_profile_fixture,
     "cost_estimate.json": _validate_cost_estimate_fixture,
 }

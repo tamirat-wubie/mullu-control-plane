@@ -289,6 +289,24 @@ from mcoi_runtime.contracts.ledger_runtime import (
     WalletRecord,
     WalletStatus,
 )
+from mcoi_runtime.contracts.tenant_runtime import (
+    BoundaryPolicy,
+    EnvironmentKind,
+    EnvironmentPromotion,
+    EnvironmentRecord,
+    IsolationLevel,
+    IsolationViolation,
+    PromotionStatus,
+    ScopeBoundaryKind,
+    TenantClosureReport,
+    TenantDecision,
+    TenantHealth,
+    TenantRecord,
+    TenantStatus,
+    WorkspaceBinding,
+    WorkspaceRecord,
+    WorkspaceStatus,
+)
 from mcoi_runtime.contracts.recovery import RecoveryRecord
 
 
@@ -2381,6 +2399,144 @@ def _build_ledger_closure_report(payload: dict) -> LedgerClosureReport:
     )
 
 
+def _build_tenant_record(payload: dict) -> TenantRecord:
+    return TenantRecord(
+        tenant_id=payload["tenant_id"],
+        name=payload["name"],
+        status=TenantStatus(payload["status"]),
+        isolation_level=IsolationLevel(payload["isolation_level"]),
+        owner=payload["owner"],
+        workspace_ids=tuple(payload["workspace_ids"]),
+        created_at=payload["created_at"],
+        updated_at=payload["updated_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_workspace_record(payload: dict) -> WorkspaceRecord:
+    return WorkspaceRecord(
+        workspace_id=payload["workspace_id"],
+        tenant_id=payload["tenant_id"],
+        name=payload["name"],
+        status=WorkspaceStatus(payload["status"]),
+        isolation_level=IsolationLevel(payload["isolation_level"]),
+        environment_ids=tuple(payload["environment_ids"]),
+        resource_bindings=tuple(payload["resource_bindings"]),
+        created_at=payload["created_at"],
+        updated_at=payload["updated_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_environment_record(payload: dict) -> EnvironmentRecord:
+    return EnvironmentRecord(
+        environment_id=payload["environment_id"],
+        workspace_id=payload["workspace_id"],
+        kind=EnvironmentKind(payload["kind"]),
+        name=payload["name"],
+        promoted_from=payload["promoted_from"],
+        connector_ids=tuple(payload["connector_ids"]),
+        created_at=payload["created_at"],
+        updated_at=payload["updated_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_boundary_policy(payload: dict) -> BoundaryPolicy:
+    return BoundaryPolicy(
+        policy_id=payload["policy_id"],
+        tenant_id=payload["tenant_id"],
+        boundary_kind=ScopeBoundaryKind(payload["boundary_kind"]),
+        isolation_level=IsolationLevel(payload["isolation_level"]),
+        enforced=payload["enforced"],
+        description=payload["description"],
+        created_at=payload["created_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_workspace_binding(payload: dict) -> WorkspaceBinding:
+    return WorkspaceBinding(
+        binding_id=payload["binding_id"],
+        workspace_id=payload["workspace_id"],
+        resource_ref_id=payload["resource_ref_id"],
+        resource_type=ScopeBoundaryKind(payload["resource_type"]),
+        environment_id=payload["environment_id"],
+        bound_at=payload["bound_at"],
+    )
+
+
+def _build_environment_promotion(payload: dict) -> EnvironmentPromotion:
+    return EnvironmentPromotion(
+        promotion_id=payload["promotion_id"],
+        source_environment_id=payload["source_environment_id"],
+        target_environment_id=payload["target_environment_id"],
+        status=PromotionStatus(payload["status"]),
+        compliance_check_passed=payload["compliance_check_passed"],
+        promoted_by=payload["promoted_by"],
+        requested_at=payload["requested_at"],
+        completed_at=payload["completed_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_isolation_violation(payload: dict) -> IsolationViolation:
+    return IsolationViolation(
+        violation_id=payload["violation_id"],
+        tenant_id=payload["tenant_id"],
+        workspace_id=payload["workspace_id"],
+        boundary_kind=ScopeBoundaryKind(payload["boundary_kind"]),
+        violating_resource_ref=payload["violating_resource_ref"],
+        description=payload["description"],
+        escalated=payload["escalated"],
+        detected_at=payload["detected_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_tenant_health(payload: dict) -> TenantHealth:
+    return TenantHealth(
+        tenant_id=payload["tenant_id"],
+        total_workspaces=payload["total_workspaces"],
+        active_workspaces=payload["active_workspaces"],
+        total_environments=payload["total_environments"],
+        total_bindings=payload["total_bindings"],
+        total_violations=payload["total_violations"],
+        compliance_pct=payload["compliance_pct"],
+        assessed_at=payload["assessed_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_tenant_decision(payload: dict) -> TenantDecision:
+    return TenantDecision(
+        decision_id=payload["decision_id"],
+        tenant_id=payload["tenant_id"],
+        title=payload["title"],
+        description=payload["description"],
+        confidence=payload["confidence"],
+        decided_by=payload["decided_by"],
+        decided_at=payload["decided_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_tenant_closure_report(payload: dict) -> TenantClosureReport:
+    return TenantClosureReport(
+        report_id=payload["report_id"],
+        tenant_id=payload["tenant_id"],
+        total_workspaces=payload["total_workspaces"],
+        total_environments=payload["total_environments"],
+        total_bindings=payload["total_bindings"],
+        total_promotions=payload["total_promotions"],
+        total_violations=payload["total_violations"],
+        total_decisions=payload["total_decisions"],
+        compliance_pct=payload["compliance_pct"],
+        closed_at=payload["closed_at"],
+        metadata=payload["metadata"],
+    )
+
+
 @pytest.mark.parametrize(
     ("fixture_name", "builder"),
     [
@@ -2525,6 +2681,16 @@ def _build_ledger_closure_report(payload: dict) -> LedgerClosureReport:
         ("spend_forecast.json", _build_spend_forecast),
         ("spend_record.json", _build_spend_record),
         ("subscription_record.json", _build_subscription_record),
+        ("tenant_closure_report.json", _build_tenant_closure_report),
+        ("tenant_decision.json", _build_tenant_decision),
+        ("tenant_health.json", _build_tenant_health),
+        ("tenant_record.json", _build_tenant_record),
+        ("workspace_binding.json", _build_workspace_binding),
+        ("workspace_record.json", _build_workspace_record),
+        ("environment_promotion.json", _build_environment_promotion),
+        ("environment_record.json", _build_environment_record),
+        ("boundary_policy.json", _build_boundary_policy),
+        ("isolation_violation.json", _build_isolation_violation),
         ("verification_record.json", _build_verification_record),
         ("vendor_assessment.json", _build_vendor_assessment),
         ("vendor_commitment.json", _build_vendor_commitment),

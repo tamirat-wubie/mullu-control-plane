@@ -1,0 +1,14 @@
+{
+  "violation_id": "isolation-violation-2026-01",
+  "tenant_id": "tenant-mullu-primary",
+  "workspace_id": "workspace-governed-core",
+  "boundary_kind": "connector",
+  "violating_resource_ref": "connector-shared-unapproved",
+  "description": "A non-approved shared connector was referenced by a strict workspace route.",
+  "escalated": true,
+  "detected_at": "2026-05-07T09:40:00+00:00",
+  "metadata": {
+    "severity": "high",
+    "policy_id": "boundary-policy-memory-core"
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "workspace_id": "workspace-governed-core",
+  "tenant_id": "tenant-mullu-primary",
+  "name": "Governed Core Workspace",
+  "status": "active",
+  "isolation_level": "strict",
+  "environment_ids": [
+    "env-core-dev",
+    "env-core-staging",
+    "env-core-production"
+  ],
+  "resource_bindings": [
+    "binding-core-budget",
+    "binding-core-memory"
+  ],
+  "created_at": "2026-05-07T08:10:00+00:00",
+  "updated_at": "2026-05-07T10:35:00+00:00",
+  "metadata": {
+    "domain": "platform-core",
+    "owner_team": "runtime-ops"
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "binding_id": "binding-core-budget",
+  "workspace_id": "workspace-governed-core",
+  "resource_ref_id": "budget-launch-q2-2026",
+  "resource_type": "budget",
+  "environment_id": "env-core-production",
+  "bound_at": "2026-05-07T08:30:00+00:00"
+}

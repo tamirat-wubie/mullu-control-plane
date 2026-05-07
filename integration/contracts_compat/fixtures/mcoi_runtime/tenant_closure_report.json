@@ -1,0 +1,16 @@
+{
+  "report_id": "tenant-closure-2026-05",
+  "tenant_id": "tenant-mullu-primary",
+  "total_workspaces": 2,
+  "total_environments": 5,
+  "total_bindings": 7,
+  "total_promotions": 3,
+  "total_violations": 1,
+  "total_decisions": 4,
+  "compliance_pct": 0.95,
+  "closed_at": "2026-05-31T23:59:00+00:00",
+  "metadata": {
+    "period": "2026-05",
+    "scope": "monthly"
+  }
+}

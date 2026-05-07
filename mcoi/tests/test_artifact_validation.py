@@ -265,6 +265,16 @@ def test_example_inventory_covers_shipped_and_pilot_artifacts() -> None:
     assert "ledger_violation.json" in mcoi_runtime_fixture_names
     assert "ledger_assessment.json" in mcoi_runtime_fixture_names
     assert "ledger_closure_report.json" in mcoi_runtime_fixture_names
+    assert "tenant_record.json" in mcoi_runtime_fixture_names
+    assert "workspace_record.json" in mcoi_runtime_fixture_names
+    assert "environment_record.json" in mcoi_runtime_fixture_names
+    assert "boundary_policy.json" in mcoi_runtime_fixture_names
+    assert "workspace_binding.json" in mcoi_runtime_fixture_names
+    assert "environment_promotion.json" in mcoi_runtime_fixture_names
+    assert "isolation_violation.json" in mcoi_runtime_fixture_names
+    assert "tenant_health.json" in mcoi_runtime_fixture_names
+    assert "tenant_decision.json" in mcoi_runtime_fixture_names
+    assert "tenant_closure_report.json" in mcoi_runtime_fixture_names
     assert "approval_gated_command" in pilot_names
 
 
@@ -277,7 +287,7 @@ def test_validate_example_artifacts_strictly() -> None:
     assert len(inventory.request_paths) >= 3
     assert len(inventory.auxiliary_paths) >= 1
     assert len(inventory.maf_runtime_fixture_paths) >= 89
-    assert len(inventory.mcoi_runtime_fixture_paths) >= 151
+    assert len(inventory.mcoi_runtime_fixture_paths) >= 161
 
 
 def test_validate_maf_runtime_fixtures_strictly() -> None:
@@ -2594,6 +2604,114 @@ def test_validate_mcoi_runtime_fixture_rejects_ledger_closure_proof_overflow(tmp
 
     assert len(errors) == 1
     assert "total_proofs must not exceed total_transactions" in errors[0]
+    assert fixture_path.name in errors[0]
+
+
+def test_validate_mcoi_runtime_fixture_rejects_tenant_record_duplicate_workspaces(tmp_path: Path) -> None:
+    fixture_path = tmp_path / "tenant_record.json"
+    fixture_path.write_text(
+        json.dumps(
+            {
+                "tenant_id": "tenant-drift",
+                "name": "Tenant Drift",
+                "status": "active",
+                "isolation_level": "strict",
+                "owner": "tenant-admin-1",
+                "workspace_ids": ["workspace-a", "workspace-a"],
+                "created_at": "2026-05-07T11:00:00+00:00",
+                "updated_at": "2026-05-07T11:10:00+00:00",
+                "metadata": {"region": "us-east-1"},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_artifacts.validate_mcoi_runtime_fixture(fixture_path)
+
+    assert len(errors) == 1
+    assert "workspace_ids must not contain duplicates" in errors[0]
+    assert fixture_path.name in errors[0]
+
+
+def test_validate_mcoi_runtime_fixture_rejects_environment_promotion_terminal_without_completed_at(
+    tmp_path: Path,
+) -> None:
+    fixture_path = tmp_path / "environment_promotion.json"
+    fixture_path.write_text(
+        json.dumps(
+            {
+                "promotion_id": "promotion-drift",
+                "source_environment_id": "env-dev",
+                "target_environment_id": "env-staging",
+                "status": "completed",
+                "compliance_check_passed": True,
+                "promoted_by": "release-manager-1",
+                "requested_at": "2026-05-07T11:15:00+00:00",
+                "completed_at": "",
+                "metadata": {"change_ref": "chg-1"},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_artifacts.validate_mcoi_runtime_fixture(fixture_path)
+
+    assert len(errors) == 1
+    assert "terminal promotions must carry completed_at" in errors[0]
+    assert fixture_path.name in errors[0]
+
+
+def test_validate_mcoi_runtime_fixture_rejects_tenant_health_active_workspace_overflow(tmp_path: Path) -> None:
+    fixture_path = tmp_path / "tenant_health.json"
+    fixture_path.write_text(
+        json.dumps(
+            {
+                "tenant_id": "tenant-1",
+                "total_workspaces": 3,
+                "active_workspaces": 4,
+                "total_environments": 5,
+                "total_bindings": 7,
+                "total_violations": 1,
+                "compliance_pct": 0.93,
+                "assessed_at": "2026-05-07T11:20:00+00:00",
+                "metadata": {"scope": "tenant"},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_artifacts.validate_mcoi_runtime_fixture(fixture_path)
+
+    assert len(errors) == 1
+    assert "active_workspaces must not exceed total_workspaces" in errors[0]
+    assert fixture_path.name in errors[0]
+
+
+def test_validate_mcoi_runtime_fixture_rejects_tenant_closure_promotion_overflow(tmp_path: Path) -> None:
+    fixture_path = tmp_path / "tenant_closure_report.json"
+    fixture_path.write_text(
+        json.dumps(
+            {
+                "report_id": "tenant-closure-drift",
+                "tenant_id": "tenant-1",
+                "total_workspaces": 2,
+                "total_environments": 3,
+                "total_bindings": 4,
+                "total_promotions": 5,
+                "total_violations": 1,
+                "total_decisions": 2,
+                "compliance_pct": 0.91,
+                "closed_at": "2026-05-31T23:59:00+00:00",
+                "metadata": {"period": "2026-05"},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_artifacts.validate_mcoi_runtime_fixture(fixture_path)
+
+    assert len(errors) == 1
+    assert "total_promotions must not exceed total_environments" in errors[0]
     assert fixture_path.name in errors[0]
 
 
