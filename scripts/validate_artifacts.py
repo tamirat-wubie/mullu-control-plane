@@ -294,6 +294,51 @@ HOLD_STATUSES = frozenset({"active", "released", "expired"})
 DISPOSAL_DISPOSITIONS = frozenset({"delete", "archive", "anonymize", "transfer", "deny"})
 RECORD_AUTHORITIES = frozenset({"system", "operator", "legal", "compliance", "executive", "automated"})
 EVIDENCE_GRADES = frozenset({"primary", "secondary", "derived", "copy", "reconstructed"})
+CHANGE_TYPES = frozenset(
+    {
+        "connector_preference",
+        "budget_threshold",
+        "escalation_timing",
+        "schedule_policy",
+        "campaign_template_path",
+        "domain_pack_activation",
+        "fallback_chain",
+        "routing_rule",
+        "availability_policy",
+        "configuration",
+    }
+)
+CHANGE_SCOPES = frozenset(
+    {"global", "portfolio", "campaign", "connector", "team", "function", "channel", "domain_pack"}
+)
+CHANGE_STATUSES = frozenset(
+    {
+        "draft",
+        "pending_approval",
+        "approved",
+        "in_progress",
+        "paused",
+        "completed",
+        "aborted",
+        "rolled_back",
+        "failed",
+    }
+)
+ROLLOUT_MODES = frozenset({"immediate", "canary", "partial", "phased", "full", "dry_run"})
+ROLLBACK_DISPOSITIONS = frozenset({"not_needed", "triggered", "completed", "partial", "failed"})
+CHANGE_EVIDENCE_KINDS = frozenset(
+    {
+        "metric_before",
+        "metric_after",
+        "log_entry",
+        "event_trace",
+        "approval_record",
+        "rollback_record",
+        "impact_assessment",
+        "user_feedback",
+    }
+)
+CHANGE_PRIORITIES = frozenset({"low", "normal", "high", "urgent", "critical"})
 
 
 def _sort_paths(paths: list[Path]) -> tuple[Path, ...]:
@@ -10082,6 +10127,387 @@ def _validate_records_closure_report_fixture(path: Path) -> list[str]:
     return errors
 
 
+def _validate_change_request_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MCOI runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "change_id",
+            "recommendation_id",
+            "change_type",
+            "scope",
+            "scope_ref_id",
+            "title",
+            "description",
+            "status",
+            "rollout_mode",
+            "priority",
+            "requested_by",
+            "reason",
+            "approval_required",
+            "created_at",
+            "metadata",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in (
+        "change_id",
+        "recommendation_id",
+        "scope_ref_id",
+        "title",
+        "description",
+        "requested_by",
+        "reason",
+    ):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    if payload["change_type"] not in CHANGE_TYPES:
+        errors.append(f"{_relative_path(path)}: field 'change_type' must be one of {', '.join(sorted(CHANGE_TYPES))}")
+    if payload["scope"] not in CHANGE_SCOPES:
+        errors.append(f"{_relative_path(path)}: field 'scope' must be one of {', '.join(sorted(CHANGE_SCOPES))}")
+    if payload["status"] not in CHANGE_STATUSES:
+        errors.append(f"{_relative_path(path)}: field 'status' must be one of {', '.join(sorted(CHANGE_STATUSES))}")
+    if payload["rollout_mode"] not in ROLLOUT_MODES:
+        errors.append(f"{_relative_path(path)}: field 'rollout_mode' must be one of {', '.join(sorted(ROLLOUT_MODES))}")
+    if payload["priority"] not in CHANGE_PRIORITIES:
+        errors.append(f"{_relative_path(path)}: field 'priority' must be one of {', '.join(sorted(CHANGE_PRIORITIES))}")
+    if not isinstance(payload["approval_required"], bool):
+        errors.append(f"{_relative_path(path)}: field 'approval_required' must be boolean")
+    errors.extend(_validate_iso8601_text(payload["created_at"], field_name="created_at", path=path))
+    if not isinstance(payload["metadata"], dict):
+        errors.append(f"{_relative_path(path)}: field 'metadata' must be an object")
+    return errors
+
+
+def _validate_change_plan_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MCOI runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "plan_id",
+            "change_id",
+            "title",
+            "step_ids",
+            "rollout_mode",
+            "estimated_duration_seconds",
+            "rollback_plan_id",
+            "created_at",
+            "metadata",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("plan_id", "change_id", "title", "rollback_plan_id"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    step_ids = payload["step_ids"]
+    if not isinstance(step_ids, list) or not step_ids:
+        errors.append(f"{_relative_path(path)}: field 'step_ids' must be a non-empty array")
+    else:
+        for index, step_id in enumerate(step_ids):
+            errors.extend(_require_non_empty_text(step_id, field_name=f"step_ids[{index}]", path=path))
+        if len(set(step_ids)) != len(step_ids):
+            errors.append(f"{_relative_path(path)}: step_ids must not contain duplicates")
+    if payload["rollout_mode"] not in ROLLOUT_MODES:
+        errors.append(f"{_relative_path(path)}: field 'rollout_mode' must be one of {', '.join(sorted(ROLLOUT_MODES))}")
+    if isinstance(payload["estimated_duration_seconds"], bool) or not isinstance(
+        payload["estimated_duration_seconds"], (int, float)
+    ) or payload["estimated_duration_seconds"] < 0:
+        errors.append(
+            f"{_relative_path(path)}: field 'estimated_duration_seconds' must be a non-negative numeric value"
+        )
+    errors.extend(_validate_iso8601_text(payload["created_at"], field_name="created_at", path=path))
+    if not isinstance(payload["metadata"], dict):
+        errors.append(f"{_relative_path(path)}: field 'metadata' must be an object")
+    return errors
+
+
+def _validate_change_step_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MCOI runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "step_id",
+            "plan_id",
+            "change_id",
+            "ordinal",
+            "action",
+            "target_ref_id",
+            "description",
+            "status",
+            "started_at",
+            "completed_at",
+            "metadata",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("step_id", "plan_id", "change_id", "action", "target_ref_id", "description"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    errors.extend(_require_non_negative_int(payload["ordinal"], field_name="ordinal", path=path))
+    if payload["status"] not in CHANGE_STATUSES:
+        errors.append(f"{_relative_path(path)}: field 'status' must be one of {', '.join(sorted(CHANGE_STATUSES))}")
+    if payload["started_at"]:
+        errors.extend(_validate_iso8601_text(payload["started_at"], field_name="started_at", path=path))
+    elif not isinstance(payload["started_at"], str):
+        errors.append(f"{_relative_path(path)}: field 'started_at' must be a string")
+    if payload["completed_at"]:
+        errors.extend(_validate_iso8601_text(payload["completed_at"], field_name="completed_at", path=path))
+    elif not isinstance(payload["completed_at"], str):
+        errors.append(f"{_relative_path(path)}: field 'completed_at' must be a string")
+    if not errors:
+        terminal_statuses = {"completed", "failed", "aborted", "rolled_back"}
+        nonterminal_statuses = {"draft", "pending_approval", "approved", "in_progress", "paused"}
+        if payload["status"] in terminal_statuses and not payload["completed_at"]:
+            errors.append(f"{_relative_path(path)}: terminal change steps must carry completed_at")
+        if payload["status"] in nonterminal_statuses and payload["completed_at"]:
+            errors.append(f"{_relative_path(path)}: non-terminal change steps must keep completed_at empty")
+        if payload["started_at"] and payload["completed_at"]:
+            if _parse_iso8601_text(payload["completed_at"]) < _parse_iso8601_text(payload["started_at"]):
+                errors.append(f"{_relative_path(path)}: completed_at must not precede started_at")
+    if not isinstance(payload["metadata"], dict):
+        errors.append(f"{_relative_path(path)}: field 'metadata' must be an object")
+    return errors
+
+
+def _validate_change_execution_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MCOI runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "execution_id",
+            "change_id",
+            "plan_id",
+            "status",
+            "steps_total",
+            "steps_completed",
+            "steps_failed",
+            "rollout_mode",
+            "started_at",
+            "completed_at",
+            "metadata",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("execution_id", "change_id", "plan_id"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    if payload["status"] not in CHANGE_STATUSES:
+        errors.append(f"{_relative_path(path)}: field 'status' must be one of {', '.join(sorted(CHANGE_STATUSES))}")
+    for field_name in ("steps_total", "steps_completed", "steps_failed"):
+        errors.extend(_require_non_negative_int(payload[field_name], field_name=field_name, path=path))
+    if payload["rollout_mode"] not in ROLLOUT_MODES:
+        errors.append(f"{_relative_path(path)}: field 'rollout_mode' must be one of {', '.join(sorted(ROLLOUT_MODES))}")
+    errors.extend(_validate_iso8601_text(payload["started_at"], field_name="started_at", path=path))
+    if payload["completed_at"]:
+        errors.extend(_validate_iso8601_text(payload["completed_at"], field_name="completed_at", path=path))
+    elif not isinstance(payload["completed_at"], str):
+        errors.append(f"{_relative_path(path)}: field 'completed_at' must be a string")
+    if not errors:
+        terminal_statuses = {"completed", "failed", "aborted", "rolled_back"}
+        nonterminal_statuses = {"draft", "pending_approval", "approved", "in_progress", "paused"}
+        if payload["steps_completed"] + payload["steps_failed"] > payload["steps_total"]:
+            errors.append(f"{_relative_path(path)}: steps_completed plus steps_failed must not exceed steps_total")
+        if payload["status"] in terminal_statuses and not payload["completed_at"]:
+            errors.append(f"{_relative_path(path)}: terminal change executions must carry completed_at")
+        if payload["status"] in nonterminal_statuses and payload["completed_at"]:
+            errors.append(f"{_relative_path(path)}: non-terminal change executions must keep completed_at empty")
+        if payload["completed_at"] and _parse_iso8601_text(payload["completed_at"]) < _parse_iso8601_text(payload["started_at"]):
+            errors.append(f"{_relative_path(path)}: completed_at must not precede started_at")
+    if not isinstance(payload["metadata"], dict):
+        errors.append(f"{_relative_path(path)}: field 'metadata' must be an object")
+    return errors
+
+
+def _validate_change_approval_binding_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MCOI runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=("approval_id", "change_id", "approved_by", "approved", "reason", "approved_at"),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("approval_id", "change_id", "approved_by", "reason"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    if not isinstance(payload["approved"], bool):
+        errors.append(f"{_relative_path(path)}: field 'approved' must be boolean")
+    errors.extend(_validate_iso8601_text(payload["approved_at"], field_name="approved_at", path=path))
+    return errors
+
+
+def _validate_change_evidence_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MCOI runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "evidence_id",
+            "change_id",
+            "kind",
+            "metric_name",
+            "metric_value",
+            "description",
+            "collected_at",
+            "metadata",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("evidence_id", "change_id", "metric_name", "description"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    if payload["kind"] not in CHANGE_EVIDENCE_KINDS:
+        errors.append(
+            f"{_relative_path(path)}: field 'kind' must be one of {', '.join(sorted(CHANGE_EVIDENCE_KINDS))}"
+        )
+    if isinstance(payload["metric_value"], bool) or not isinstance(payload["metric_value"], (int, float)) or payload["metric_value"] < 0:
+        errors.append(f"{_relative_path(path)}: field 'metric_value' must be a non-negative numeric value")
+    errors.extend(_validate_iso8601_text(payload["collected_at"], field_name="collected_at", path=path))
+    if not isinstance(payload["metadata"], dict):
+        errors.append(f"{_relative_path(path)}: field 'metadata' must be an object")
+    return errors
+
+
+def _validate_rollback_plan_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MCOI runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "rollback_id",
+            "change_id",
+            "disposition",
+            "rollback_steps",
+            "reason",
+            "triggered_at",
+            "completed_at",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("rollback_id", "change_id", "reason"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    if payload["disposition"] not in ROLLBACK_DISPOSITIONS:
+        errors.append(
+            f"{_relative_path(path)}: field 'disposition' must be one of {', '.join(sorted(ROLLBACK_DISPOSITIONS))}"
+        )
+    rollback_steps = payload["rollback_steps"]
+    if not isinstance(rollback_steps, list) or not rollback_steps:
+        errors.append(f"{_relative_path(path)}: field 'rollback_steps' must be a non-empty array")
+    else:
+        for index, rollback_step in enumerate(rollback_steps):
+            errors.extend(_require_non_empty_text(rollback_step, field_name=f"rollback_steps[{index}]", path=path))
+        if len(set(rollback_steps)) != len(rollback_steps):
+            errors.append(f"{_relative_path(path)}: rollback_steps must not contain duplicates")
+    errors.extend(_validate_iso8601_text(payload["triggered_at"], field_name="triggered_at", path=path))
+    if payload["completed_at"]:
+        errors.extend(_validate_iso8601_text(payload["completed_at"], field_name="completed_at", path=path))
+    elif not isinstance(payload["completed_at"], str):
+        errors.append(f"{_relative_path(path)}: field 'completed_at' must be a string")
+    if not errors:
+        terminal_dispositions = {"completed", "partial", "failed"}
+        if payload["disposition"] in terminal_dispositions and not payload["completed_at"]:
+            errors.append(f"{_relative_path(path)}: terminal rollback plans must carry completed_at")
+        if payload["completed_at"] and _parse_iso8601_text(payload["completed_at"]) < _parse_iso8601_text(payload["triggered_at"]):
+            errors.append(f"{_relative_path(path)}: completed_at must not precede triggered_at")
+    return errors
+
+
+def _validate_change_outcome_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MCOI runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "outcome_id",
+            "change_id",
+            "execution_id",
+            "status",
+            "success",
+            "improvement_observed",
+            "improvement_pct",
+            "rollback_disposition",
+            "evidence_count",
+            "completed_at",
+            "metadata",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("outcome_id", "change_id", "execution_id"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    if payload["status"] not in CHANGE_STATUSES:
+        errors.append(f"{_relative_path(path)}: field 'status' must be one of {', '.join(sorted(CHANGE_STATUSES))}")
+    if not isinstance(payload["success"], bool):
+        errors.append(f"{_relative_path(path)}: field 'success' must be boolean")
+    if not isinstance(payload["improvement_observed"], bool):
+        errors.append(f"{_relative_path(path)}: field 'improvement_observed' must be boolean")
+    if isinstance(payload["improvement_pct"], bool) or not isinstance(payload["improvement_pct"], (int, float)):
+        errors.append(f"{_relative_path(path)}: field 'improvement_pct' must be a numeric value")
+    if payload["rollback_disposition"] not in ROLLBACK_DISPOSITIONS:
+        errors.append(
+            f"{_relative_path(path)}: field 'rollback_disposition' must be one of {', '.join(sorted(ROLLBACK_DISPOSITIONS))}"
+        )
+    errors.extend(_require_non_negative_int(payload["evidence_count"], field_name="evidence_count", path=path))
+    errors.extend(_validate_iso8601_text(payload["completed_at"], field_name="completed_at", path=path))
+    if not errors and not payload["improvement_observed"] and payload["improvement_pct"] != 0:
+        errors.append(
+            f"{_relative_path(path)}: improvement_pct must be 0 when improvement_observed is false"
+        )
+    if not isinstance(payload["metadata"], dict):
+        errors.append(f"{_relative_path(path)}: field 'metadata' must be an object")
+    return errors
+
+
+def _validate_change_impact_assessment_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MCOI runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "assessment_id",
+            "change_id",
+            "metric_name",
+            "baseline_value",
+            "current_value",
+            "improvement_pct",
+            "confidence",
+            "assessment_window_seconds",
+            "assessed_at",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("assessment_id", "change_id", "metric_name"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    for field_name in ("baseline_value", "current_value", "improvement_pct"):
+        if isinstance(payload[field_name], bool) or not isinstance(payload[field_name], (int, float)):
+            errors.append(f"{_relative_path(path)}: field '{field_name}' must be a numeric value")
+    errors.extend(
+        _require_number_in_range(payload["confidence"], field_name="confidence", path=path, minimum=0.0, maximum=1.0)
+    )
+    if isinstance(payload["assessment_window_seconds"], bool) or not isinstance(
+        payload["assessment_window_seconds"], (int, float)
+    ) or payload["assessment_window_seconds"] < 0:
+        errors.append(
+            f"{_relative_path(path)}: field 'assessment_window_seconds' must be a non-negative numeric value"
+        )
+    errors.extend(_validate_iso8601_text(payload["assessed_at"], field_name="assessed_at", path=path))
+    return errors
+
+
 MAF_RUNTIME_FIXTURE_VALIDATORS: dict[str, MAFRuntimeFixtureValidator] = {
     "adversarial_case.json": _validate_adversarial_case_fixture,
     "assignment_record.json": _validate_assignment_record_fixture,
@@ -10191,6 +10617,14 @@ MCOI_RUNTIME_FIXTURE_VALIDATORS: dict[str, MCOIRuntimeFixtureValidator] = {
     "billing_violation.json": _validate_billing_violation_fixture,
     "breach_record.json": _validate_breach_record_fixture,
     "charge_record.json": _validate_charge_record_fixture,
+    "change_approval_binding.json": _validate_change_approval_binding_fixture,
+    "change_evidence.json": _validate_change_evidence_fixture,
+    "change_execution.json": _validate_change_execution_fixture,
+    "change_impact_assessment.json": _validate_change_impact_assessment_fixture,
+    "change_outcome.json": _validate_change_outcome_fixture,
+    "change_plan.json": _validate_change_plan_fixture,
+    "change_request.json": _validate_change_request_fixture,
+    "change_step.json": _validate_change_step_fixture,
     "commitment_record.json": _validate_commitment_record_fixture,
     "contract_assessment.json": _validate_contract_assessment_fixture,
     "contract_clause.json": _validate_contract_clause_fixture,
@@ -10313,6 +10747,7 @@ MCOI_RUNTIME_FIXTURE_VALIDATORS: dict[str, MCOIRuntimeFixtureValidator] = {
     "records_closure_report.json": _validate_records_closure_report_fixture,
     "refund_record.json": _validate_refund_record_fixture,
     "retention_schedule.json": _validate_retention_schedule_fixture,
+    "rollback_plan.json": _validate_rollback_plan_fixture,
     "review_packet.json": _validate_review_packet_fixture,
     "review_record.json": _validate_review_record_fixture,
     "recertification_window.json": _validate_recertification_window_fixture,

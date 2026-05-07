@@ -1,0 +1,16 @@
+{
+  "outcome_id": "change-outcome-routing-rule-2026-05-07",
+  "change_id": "change-routing-rule-2026-05-07",
+  "execution_id": "change-execution-routing-rule-2026-05-07",
+  "status": "completed",
+  "success": true,
+  "improvement_observed": true,
+  "improvement_pct": 0.24,
+  "rollback_disposition": "not_needed",
+  "evidence_count": 4,
+  "completed_at": "2026-05-07T13:10:00+00:00",
+  "metadata": {
+    "baseline_latency_ms": 240.0,
+    "current_latency_ms": 182.4
+  }
+}

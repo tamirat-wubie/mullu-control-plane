@@ -1,0 +1,16 @@
+{
+  "execution_id": "change-execution-routing-rule-2026-05-07",
+  "change_id": "change-routing-rule-2026-05-07",
+  "plan_id": "change-plan-routing-rule-2026-05-07",
+  "status": "completed",
+  "steps_total": 3,
+  "steps_completed": 3,
+  "steps_failed": 0,
+  "rollout_mode": "phased",
+  "started_at": "2026-05-07T12:15:00+00:00",
+  "completed_at": "2026-05-07T13:05:00+00:00",
+  "metadata": {
+    "initiated_by": "operator-release-1",
+    "region": "us-east-1"
+  }
+}

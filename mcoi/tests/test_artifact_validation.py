@@ -285,6 +285,15 @@ def test_example_inventory_covers_shipped_and_pilot_artifacts() -> None:
     assert "preservation_decision.json" in mcoi_runtime_fixture_names
     assert "disposal_decision.json" in mcoi_runtime_fixture_names
     assert "records_closure_report.json" in mcoi_runtime_fixture_names
+    assert "change_request.json" in mcoi_runtime_fixture_names
+    assert "change_plan.json" in mcoi_runtime_fixture_names
+    assert "change_step.json" in mcoi_runtime_fixture_names
+    assert "change_execution.json" in mcoi_runtime_fixture_names
+    assert "change_approval_binding.json" in mcoi_runtime_fixture_names
+    assert "change_evidence.json" in mcoi_runtime_fixture_names
+    assert "rollback_plan.json" in mcoi_runtime_fixture_names
+    assert "change_outcome.json" in mcoi_runtime_fixture_names
+    assert "change_impact_assessment.json" in mcoi_runtime_fixture_names
     assert "approval_gated_command" in pilot_names
 
 
@@ -297,7 +306,7 @@ def test_validate_example_artifacts_strictly() -> None:
     assert len(inventory.request_paths) >= 3
     assert len(inventory.auxiliary_paths) >= 1
     assert len(inventory.maf_runtime_fixture_paths) >= 89
-    assert len(inventory.mcoi_runtime_fixture_paths) >= 171
+    assert len(inventory.mcoi_runtime_fixture_paths) >= 180
 
 
 def test_validate_maf_runtime_fixtures_strictly() -> None:
@@ -2829,6 +2838,114 @@ def test_validate_mcoi_runtime_fixture_rejects_records_closure_tally_overflow(tm
 
     assert len(errors) == 1
     assert "total_preserved plus total_disposed plus total_held must not exceed total_records" in errors[0]
+    assert fixture_path.name in errors[0]
+
+
+def test_validate_mcoi_runtime_fixture_rejects_change_execution_step_overflow(tmp_path: Path) -> None:
+    fixture_path = tmp_path / "change_execution.json"
+    fixture_path.write_text(
+        json.dumps(
+            {
+                "execution_id": "change-execution-drift",
+                "change_id": "change-1",
+                "plan_id": "plan-1",
+                "status": "completed",
+                "steps_total": 3,
+                "steps_completed": 2,
+                "steps_failed": 2,
+                "rollout_mode": "phased",
+                "started_at": "2026-05-07T12:15:00+00:00",
+                "completed_at": "2026-05-07T13:05:00+00:00",
+                "metadata": {"scope": "connector"},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_artifacts.validate_mcoi_runtime_fixture(fixture_path)
+
+    assert len(errors) == 1
+    assert "steps_completed plus steps_failed must not exceed steps_total" in errors[0]
+    assert fixture_path.name in errors[0]
+
+
+def test_validate_mcoi_runtime_fixture_rejects_terminal_change_step_without_completed_at(tmp_path: Path) -> None:
+    fixture_path = tmp_path / "change_step.json"
+    fixture_path.write_text(
+        json.dumps(
+            {
+                "step_id": "change-step-drift",
+                "plan_id": "change-plan-1",
+                "change_id": "change-1",
+                "ordinal": 1,
+                "action": "Promote routing rule to canary tier",
+                "target_ref_id": "connector-openai-primary",
+                "description": "Shift 25 percent of traffic to the candidate route.",
+                "status": "completed",
+                "started_at": "2026-05-07T12:30:00+00:00",
+                "completed_at": "",
+                "metadata": {"phase": "canary"},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_artifacts.validate_mcoi_runtime_fixture(fixture_path)
+
+    assert len(errors) == 1
+    assert "terminal change steps must carry completed_at" in errors[0]
+    assert fixture_path.name in errors[0]
+
+
+def test_validate_mcoi_runtime_fixture_rejects_terminal_rollback_without_completed_at(tmp_path: Path) -> None:
+    fixture_path = tmp_path / "rollback_plan.json"
+    fixture_path.write_text(
+        json.dumps(
+            {
+                "rollback_id": "rollback-drift",
+                "change_id": "change-1",
+                "disposition": "completed",
+                "rollback_steps": ["restore-routing-baseline", "re-enable-fallback-priority"],
+                "reason": "Latency degraded after the partial rollout.",
+                "triggered_at": "2026-05-07T12:45:00+00:00",
+                "completed_at": "",
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_artifacts.validate_mcoi_runtime_fixture(fixture_path)
+
+    assert len(errors) == 1
+    assert "terminal rollback plans must carry completed_at" in errors[0]
+    assert fixture_path.name in errors[0]
+
+
+def test_validate_mcoi_runtime_fixture_rejects_change_outcome_without_observed_improvement(tmp_path: Path) -> None:
+    fixture_path = tmp_path / "change_outcome.json"
+    fixture_path.write_text(
+        json.dumps(
+            {
+                "outcome_id": "change-outcome-drift",
+                "change_id": "change-1",
+                "execution_id": "execution-1",
+                "status": "completed",
+                "success": True,
+                "improvement_observed": False,
+                "improvement_pct": 0.15,
+                "rollback_disposition": "not_needed",
+                "evidence_count": 2,
+                "completed_at": "2026-05-07T13:10:00+00:00",
+                "metadata": {"baseline_latency_ms": 240.0},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_artifacts.validate_mcoi_runtime_fixture(fixture_path)
+
+    assert len(errors) == 1
+    assert "improvement_pct must be 0 when improvement_observed is false" in errors[0]
     assert fixture_path.name in errors[0]
 
 

@@ -1,0 +1,11 @@
+{
+  "assessment_id": "change-impact-routing-rule-2026-05-07",
+  "change_id": "change-routing-rule-2026-05-07",
+  "metric_name": "response_latency_ms",
+  "baseline_value": 240.0,
+  "current_value": 182.4,
+  "improvement_pct": 0.24,
+  "confidence": 0.88,
+  "assessment_window_seconds": 7200.0,
+  "assessed_at": "2026-05-07T13:20:00+00:00"
+}

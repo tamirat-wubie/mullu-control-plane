@@ -325,6 +325,23 @@ from mcoi_runtime.contracts.records_runtime import (
     RetentionSchedule,
     RetentionStatus,
 )
+from mcoi_runtime.contracts.change_runtime import (
+    ChangeApprovalBinding,
+    ChangeEvidence,
+    ChangeEvidenceKind,
+    ChangeExecution,
+    ChangeImpactAssessment,
+    ChangeOutcome,
+    ChangePlan,
+    ChangeRequest,
+    ChangeScope,
+    ChangeStatus,
+    ChangeStep,
+    ChangeType,
+    RollbackDisposition,
+    RollbackPlan,
+    RolloutMode,
+)
 from mcoi_runtime.contracts.recovery import RecoveryRecord
 
 
@@ -2689,6 +2706,138 @@ def _build_records_closure_report(payload: dict) -> RecordsClosureReport:
     )
 
 
+def _build_change_request(payload: dict) -> ChangeRequest:
+    return ChangeRequest(
+        change_id=payload["change_id"],
+        recommendation_id=payload["recommendation_id"],
+        change_type=ChangeType(payload["change_type"]),
+        scope=ChangeScope(payload["scope"]),
+        scope_ref_id=payload["scope_ref_id"],
+        title=payload["title"],
+        description=payload["description"],
+        status=ChangeStatus(payload["status"]),
+        rollout_mode=RolloutMode(payload["rollout_mode"]),
+        priority=payload["priority"],
+        requested_by=payload["requested_by"],
+        reason=payload["reason"],
+        approval_required=payload["approval_required"],
+        created_at=payload["created_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_change_plan(payload: dict) -> ChangePlan:
+    return ChangePlan(
+        plan_id=payload["plan_id"],
+        change_id=payload["change_id"],
+        title=payload["title"],
+        step_ids=tuple(payload["step_ids"]),
+        rollout_mode=RolloutMode(payload["rollout_mode"]),
+        estimated_duration_seconds=payload["estimated_duration_seconds"],
+        rollback_plan_id=payload["rollback_plan_id"],
+        created_at=payload["created_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_change_step(payload: dict) -> ChangeStep:
+    return ChangeStep(
+        step_id=payload["step_id"],
+        plan_id=payload["plan_id"],
+        change_id=payload["change_id"],
+        ordinal=payload["ordinal"],
+        action=payload["action"],
+        target_ref_id=payload["target_ref_id"],
+        description=payload["description"],
+        status=ChangeStatus(payload["status"]),
+        started_at=payload["started_at"],
+        completed_at=payload["completed_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_change_execution(payload: dict) -> ChangeExecution:
+    return ChangeExecution(
+        execution_id=payload["execution_id"],
+        change_id=payload["change_id"],
+        plan_id=payload["plan_id"],
+        status=ChangeStatus(payload["status"]),
+        steps_total=payload["steps_total"],
+        steps_completed=payload["steps_completed"],
+        steps_failed=payload["steps_failed"],
+        rollout_mode=RolloutMode(payload["rollout_mode"]),
+        started_at=payload["started_at"],
+        completed_at=payload["completed_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_change_approval_binding(payload: dict) -> ChangeApprovalBinding:
+    return ChangeApprovalBinding(
+        approval_id=payload["approval_id"],
+        change_id=payload["change_id"],
+        approved_by=payload["approved_by"],
+        approved=payload["approved"],
+        reason=payload["reason"],
+        approved_at=payload["approved_at"],
+    )
+
+
+def _build_change_evidence(payload: dict) -> ChangeEvidence:
+    return ChangeEvidence(
+        evidence_id=payload["evidence_id"],
+        change_id=payload["change_id"],
+        kind=ChangeEvidenceKind(payload["kind"]),
+        metric_name=payload["metric_name"],
+        metric_value=payload["metric_value"],
+        description=payload["description"],
+        collected_at=payload["collected_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_rollback_plan(payload: dict) -> RollbackPlan:
+    return RollbackPlan(
+        rollback_id=payload["rollback_id"],
+        change_id=payload["change_id"],
+        disposition=RollbackDisposition(payload["disposition"]),
+        rollback_steps=tuple(payload["rollback_steps"]),
+        reason=payload["reason"],
+        triggered_at=payload["triggered_at"],
+        completed_at=payload["completed_at"],
+    )
+
+
+def _build_change_outcome(payload: dict) -> ChangeOutcome:
+    return ChangeOutcome(
+        outcome_id=payload["outcome_id"],
+        change_id=payload["change_id"],
+        execution_id=payload["execution_id"],
+        status=ChangeStatus(payload["status"]),
+        success=payload["success"],
+        improvement_observed=payload["improvement_observed"],
+        improvement_pct=payload["improvement_pct"],
+        rollback_disposition=RollbackDisposition(payload["rollback_disposition"]),
+        evidence_count=payload["evidence_count"],
+        completed_at=payload["completed_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_change_impact_assessment(payload: dict) -> ChangeImpactAssessment:
+    return ChangeImpactAssessment(
+        assessment_id=payload["assessment_id"],
+        change_id=payload["change_id"],
+        metric_name=payload["metric_name"],
+        baseline_value=payload["baseline_value"],
+        current_value=payload["current_value"],
+        improvement_pct=payload["improvement_pct"],
+        confidence=payload["confidence"],
+        assessment_window_seconds=payload["assessment_window_seconds"],
+        assessed_at=payload["assessed_at"],
+    )
+
+
 @pytest.mark.parametrize(
     ("fixture_name", "builder"),
     [
@@ -2707,6 +2856,15 @@ def _build_records_closure_report(payload: dict) -> RecordsClosureReport:
         ("breach_record.json", _build_breach_record),
         ("cash_application.json", _build_cash_application),
         ("charge_record.json", _build_charge_record),
+        ("change_request.json", _build_change_request),
+        ("change_plan.json", _build_change_plan),
+        ("change_step.json", _build_change_step),
+        ("change_execution.json", _build_change_execution),
+        ("change_approval_binding.json", _build_change_approval_binding),
+        ("change_evidence.json", _build_change_evidence),
+        ("rollback_plan.json", _build_rollback_plan),
+        ("change_outcome.json", _build_change_outcome),
+        ("change_impact_assessment.json", _build_change_impact_assessment),
         ("commitment_record.json", _build_commitment_record),
         ("collection_case.json", _build_collection_case),
         ("configuration_item.json", _build_configuration_item),
