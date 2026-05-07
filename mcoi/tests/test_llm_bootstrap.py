@@ -146,6 +146,7 @@ class TestLLMConfig:
         assert config.hyperbolic_api_key == ""
 
     def test_from_env_cloudflare_requires_account_id(self, monkeypatch):
+        monkeypatch.delenv("MULLU_ENV", raising=False)
         for key in LLM_ENV_KEYS:
             monkeypatch.delenv(key, raising=False)
         monkeypatch.setenv("CLOUDFLARE_API_TOKEN", "cloudflare-token")

@@ -899,6 +899,7 @@ def test_physical_action_boundary_surface_blocks_dispatch_without_safety_control
     assert "gateway/server.py" in physical_surface["evidence_files"]
     assert "gateway/physical_action_boundary.py" in physical_surface["evidence_files"]
     assert "gateway/physical_capability_promotion_receipt.py" in physical_surface["evidence_files"]
+    assert "gateway/physical_capability_promotion_store.py" in physical_surface["evidence_files"]
     assert "gateway/physical_worker_canary.py" in physical_surface["evidence_files"]
     assert "scripts/emit_physical_capability_promotion_receipt.py" in physical_surface["evidence_files"]
     assert "scripts/preflight_physical_capability_promotion.py" in physical_surface["evidence_files"]
@@ -929,6 +930,8 @@ def test_physical_action_boundary_surface_blocks_dispatch_without_safety_control
     assert "physical_promotion_receipt_cli_blocks_missing_live_refs" in witnesses
     assert "physical_promotion_receipt_operator_endpoint_emits_bundle" in witnesses
     assert "physical_promotion_receipt_operator_endpoint_blocks_missing_live_refs" in witnesses
+    assert "physical_promotion_receipt_jsonl_store_persists" in witnesses
+    assert "physical_promotion_receipt_store_fails_closed_on_invalid_record" in witnesses
     assert "hardware_identity_required" in witnesses
     assert "emergency_stop_required" in witnesses
     assert "physical_dispatch_blocked_until_controls_complete" in witnesses

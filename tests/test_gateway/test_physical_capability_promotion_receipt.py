@@ -32,6 +32,7 @@ from gateway.physical_capability_promotion_receipt import (
     PhysicalCapabilityPromotionReceipt,
     build_physical_capability_promotion_receipt,
 )
+from gateway.physical_capability_promotion_store import JsonlPhysicalCapabilityPromotionReceiptStore
 from gateway.server import create_gateway_app
 from mcoi_runtime.contracts.governed_capability_fabric import CapabilityRegistryEntry, DomainCapsule
 from scripts.preflight_physical_capability_promotion import preflight_physical_capability_records
@@ -124,6 +125,34 @@ def test_operator_physical_promotion_receipt_endpoint_emits_ready_bundle() -> No
     assert ledger_payload["physical_capability_promotion_receipts"][0]["receipt_id"] == payload["receipt_id"]
 
 
+def test_operator_physical_promotion_receipt_endpoint_persists_jsonl_ledger(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    store_path = tmp_path / "physical-promotion-receipts.jsonl"
+    monkeypatch.setenv("MULLU_PHYSICAL_PROMOTION_RECEIPT_LOG_PATH", str(store_path))
+    first_client = TestClient(create_gateway_app(platform=StubPlatform()))
+
+    emission_response = first_client.post(
+        "/operator/physical-capability-promotion-receipts",
+        json={
+            "use_fixture_refs": True,
+            "recorded_at": "2026-05-06T12:00:00+00:00",
+        },
+    )
+    receipt_id = emission_response.json()["receipt_id"]
+    second_client = TestClient(create_gateway_app(platform=StubPlatform()))
+    ledger_response = second_client.get("/operator/physical-capability-promotion-receipts")
+    ledger_payload = ledger_response.json()
+
+    assert emission_response.status_code == 200
+    assert store_path.exists()
+    assert ledger_response.status_code == 200
+    assert ledger_payload["count"] == 1
+    assert ledger_payload["total"] == 1
+    assert ledger_payload["physical_capability_promotion_receipts"][0]["receipt_id"] == receipt_id
+
+
 def test_operator_physical_promotion_receipt_endpoint_blocks_missing_live_refs() -> None:
     client = TestClient(create_gateway_app(platform=StubPlatform()))
 
@@ -152,6 +181,35 @@ def test_operator_physical_promotion_receipt_endpoint_rejects_invalid_payload_sh
     assert response.status_code == 400
     assert response.json()["detail"] == "physical_promotion_receipt_physical_safety_refs_must_be_object"
     assert client.get("/operator/physical-capability-promotion-receipts").json()["count"] == 0
+
+
+def test_physical_promotion_receipt_jsonl_store_lists_newest_with_filters(tmp_path: Path) -> None:
+    store = JsonlPhysicalCapabilityPromotionReceiptStore(tmp_path / "physical-promotion-receipts.jsonl")
+
+    store.append(_store_receipt("receipt-1", capability_id="physical.unlock_door"))
+    store.append(_store_receipt("receipt-2", capability_id="physical.lock_door"))
+    newest_page = store.list(limit=1)
+    filtered_page = store.list(capability_id="physical.unlock_door")
+
+    assert newest_page.total == 2
+    assert newest_page.next_offset == 1
+    assert newest_page.receipts[0]["receipt_id"] == "receipt-2"
+    assert filtered_page.total == 1
+    assert filtered_page.next_offset is None
+    assert filtered_page.receipts[0]["capability_id"] == "physical.unlock_door"
+
+
+def test_physical_promotion_receipt_jsonl_store_fails_closed_on_invalid_record(tmp_path: Path) -> None:
+    store_path = tmp_path / "physical-promotion-receipts.jsonl"
+    store_path.write_text('{"receipt_id":"missing-required-fields"}\n', encoding="utf-8")
+    store = JsonlPhysicalCapabilityPromotionReceiptStore(store_path)
+
+    with pytest.raises(ValueError, match="invalid physical promotion receipt JSONL record"):
+        store.list()
+
+    assert store_path.exists()
+    assert store.path == store_path
+    assert store_path.read_text(encoding="utf-8").startswith('{"receipt_id"')
 
 
 def _ready_physical_promotion_chain():
@@ -217,6 +275,16 @@ def _physical_live_safety_evidence_refs() -> dict[str, str]:
         "emergency_stop_ref": "proof://physical.unlock_door/emergency-stop",
         "sensor_confirmation_ref": "proof://physical.unlock_door/sensor-confirmation",
         "deployment_witness_ref": "proof://physical.unlock_door/deployment-witness",
+    }
+
+
+def _store_receipt(receipt_id: str, *, capability_id: str) -> dict[str, str]:
+    return {
+        "receipt_id": receipt_id,
+        "receipt_hash": f"hash-{receipt_id}",
+        "capability_id": capability_id,
+        "promotion_status": "ready",
+        "recorded_at": "2026-05-06T12:00:00+00:00",
     }
 
 
