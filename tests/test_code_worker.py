@@ -94,6 +94,41 @@ def test_sandboxed_code_worker_executes_exact_lease_command_with_receipt(tmp_pat
     assert calls and "--network" in calls[0] and "none" in calls[0]
 
 
+def test_sandboxed_code_worker_blocks_sandbox_mutation_outside_lease_path(
+    tmp_path: Path,
+) -> None:
+    (tmp_path / "src").mkdir()
+    (tmp_path / "other").mkdir()
+
+    def fake_runner(argv, **kwargs):  # noqa: ANN001, ANN202, ARG001
+        (tmp_path / "other" / "result.txt").write_text("escaped\n", encoding="utf-8")
+        return subprocess.CompletedProcess(argv, 0, stdout="ok\n", stderr="")
+
+    worker = SandboxedCodeWorker(
+        workspace_root=str(tmp_path),
+        clock=lambda: "2026-05-07T12:00:00+00:00",
+        runner=fake_runner,
+        platform_system=lambda: "Linux",
+    )
+
+    result = worker.execute_command(
+        _lease(allowed_commands=(("python", "-m", "task"),)),
+        command_id="cmd-1b",
+        argv=("python", "-m", "task"),
+        cwd="src",
+    )
+
+    assert result.status is CodeWorkerReceiptStatus.BLOCKED
+    assert result.stdout == "ok\n"
+    assert result.receipt.sandbox_receipt_id is not None
+    assert result.receipt.returncode == 0
+    assert result.receipt.metadata["worker_changed_file_count"] == 1
+    assert result.receipt.violation_reasons[0].startswith(
+        "sandbox_changed_file_outside_lease_allowed_paths:"
+    )
+    assert "other/result.txt" not in result.stderr
+
+
 def test_sandboxed_code_worker_blocks_denied_executable_without_dispatch(tmp_path: Path) -> None:
     (tmp_path / "src").mkdir()
     dispatched = False
@@ -145,6 +180,111 @@ def test_sandboxed_code_worker_blocks_argv_path_outside_lease(tmp_path: Path) ->
     assert result.receipt.changed_file_refs == ()
     assert result.receipt.violation_reasons[0].startswith("argv_path_outside_lease_allowed_paths:")
     assert result.receipt.evidence_refs[0].startswith("code_worker:")
+
+
+def test_sandboxed_code_worker_blocks_argv_path_outside_repository_boundary(
+    tmp_path: Path,
+) -> None:
+    (tmp_path / "src").mkdir()
+    dispatched = False
+
+    def fake_runner(argv, **kwargs):  # noqa: ANN001, ANN202
+        nonlocal dispatched
+        dispatched = True
+        return subprocess.CompletedProcess(argv, 0, stdout="", stderr="")
+
+    worker = SandboxedCodeWorker(
+        workspace_root=str(tmp_path),
+        clock=lambda: "2026-05-07T12:00:00+00:00",
+        runner=fake_runner,
+    )
+
+    result = worker.execute_command(
+        _lease(allowed_commands=(("python", "../outside.py"),)),
+        command_id="cmd-3b",
+        argv=("python", "../outside.py"),
+        cwd="src",
+    )
+
+    assert dispatched is False
+    assert result.status is CodeWorkerReceiptStatus.BLOCKED
+    assert "argv_path_outside_repository_boundary:" in result.stderr
+    assert result.receipt.changed_file_refs == ()
+    assert result.receipt.sandbox_receipt_id is None
+    assert result.receipt.violation_reasons[0].startswith("argv_path_outside_repository_boundary:")
+    assert "../outside.py" not in result.stderr
+
+
+def test_sandboxed_code_worker_blocks_cwd_outside_repository_boundary(
+    tmp_path: Path,
+) -> None:
+    (tmp_path / "src").mkdir()
+    dispatched = False
+
+    def fake_runner(argv, **kwargs):  # noqa: ANN001, ANN202
+        nonlocal dispatched
+        dispatched = True
+        return subprocess.CompletedProcess(argv, 0, stdout="", stderr="")
+
+    worker = SandboxedCodeWorker(
+        workspace_root=str(tmp_path),
+        clock=lambda: "2026-05-07T12:00:00+00:00",
+        runner=fake_runner,
+    )
+
+    result = worker.execute_command(
+        _lease(),
+        command_id="cmd-3c",
+        argv=("python", "src/task.py"),
+        cwd="../outside",
+    )
+
+    assert dispatched is False
+    assert result.status is CodeWorkerReceiptStatus.BLOCKED
+    assert "cwd_outside_repository_boundary:" in result.stderr
+    assert result.receipt.changed_file_refs == ()
+    assert result.receipt.sandbox_receipt_id is None
+    assert result.receipt.violation_reasons[0].startswith("cwd_outside_repository_boundary:")
+    assert "../outside" not in result.stderr
+
+
+def test_sandboxed_code_worker_blocks_flag_embedded_path_violations(
+    tmp_path: Path,
+) -> None:
+    (tmp_path / "src").mkdir()
+    dispatched = False
+
+    def fake_runner(argv, **kwargs):  # noqa: ANN001, ANN202
+        nonlocal dispatched
+        dispatched = True
+        return subprocess.CompletedProcess(argv, 0, stdout="", stderr="")
+
+    worker = SandboxedCodeWorker(
+        workspace_root=str(tmp_path),
+        clock=lambda: "2026-05-07T12:00:00+00:00",
+        runner=fake_runner,
+    )
+
+    boundary_result = worker.execute_command(
+        _lease(allowed_commands=(("python", "--config=../outside.py"),)),
+        command_id="cmd-3d",
+        argv=("python", "--config=../outside.py"),
+        cwd="src",
+    )
+    lease_result = worker.execute_command(
+        _lease(allowed_commands=(("python", "--config=tests/test_task.py"),)),
+        command_id="cmd-3e",
+        argv=("python", "--config=tests/test_task.py"),
+        cwd="src",
+    )
+
+    assert dispatched is False
+    assert boundary_result.status is CodeWorkerReceiptStatus.BLOCKED
+    assert lease_result.status is CodeWorkerReceiptStatus.BLOCKED
+    assert boundary_result.receipt.violation_reasons[0].startswith("argv_path_outside_repository_boundary:")
+    assert lease_result.receipt.violation_reasons[0].startswith("argv_path_outside_lease_allowed_paths:")
+    assert "../outside.py" not in boundary_result.stderr
+    assert "tests/test_task.py" not in lease_result.stderr
 
 
 def test_sandboxed_code_worker_blocks_network_and_risky_git_without_dispatch(

@@ -73,7 +73,14 @@ _PRODUCTION_REQUIRED_EVIDENCE = frozenset({
 })
 _PRODUCTION_REQUIRED_EVALS = frozenset({
     "tenant_isolation",
+})
+_WRITE_REQUIRED_EVALS = frozenset({
     "approval_required",
+    "idempotency",
+    "receipt_verification",
+})
+_FINANCIAL_REQUIRED_EVALS = frozenset({
+    "duplicate_prevention",
 })
 
 
@@ -282,7 +289,7 @@ class ConnectorCertificationRegistry:
         evidence_types = {evidence.evidence_type for evidence in connector_evidence}
         required_evidence = _required_evidence_for_level(manifest, requested_level)
         missing_evidence = tuple(sorted(required_evidence.difference(evidence_types)))
-        missing_evals = tuple(sorted(_required_evals_for_level(requested_level).difference(manifest.eval_suites)))
+        missing_evals = tuple(sorted(_required_evals_for_level(manifest, requested_level).difference(manifest.eval_suites)))
         if missing_evidence or missing_evals:
             decision = self._decision(
                 connector_id,
@@ -425,9 +432,20 @@ def _required_evidence_for_level(
     return required
 
 
-def _required_evals_for_level(requested_level: ConnectorCertificationLevel) -> set[str]:
+def _required_evals_for_level(
+    manifest: ConnectorManifest,
+    requested_level: ConnectorCertificationLevel,
+) -> set[str]:
     if _LEVEL_ORDER[requested_level] >= _LEVEL_ORDER[ConnectorCertificationLevel.L5_PRODUCTION_CERTIFIED]:
-        return set(_PRODUCTION_REQUIRED_EVALS)
+        required = set(_PRODUCTION_REQUIRED_EVALS)
+        if _has_write_side_effect(manifest):
+            required.update(_WRITE_REQUIRED_EVALS)
+        if any(
+            side_effect.startswith("financial_") or side_effect == "payment_dispatch"
+            for side_effect in manifest.side_effects
+        ):
+            required.update(_FINANCIAL_REQUIRED_EVALS)
+        return required
     return set()
 
 

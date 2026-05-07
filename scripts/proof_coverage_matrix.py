@@ -191,6 +191,37 @@ def proof_coverage_matrix() -> dict[str, Any]:
             "Budget and cost surfaces expose bounded read models over governed spend state.",
         ),
         _surface(
+            "operator_console_read_models",
+            [
+                "/api/v1/console",
+                "/api/v1/console/home",
+                "/api/v1/console/runs",
+                "/api/v1/console/audit",
+                "/api/v1/console/checkpoints",
+                "/api/v1/console/providers",
+                "/api/v1/console/scheduler",
+            ],
+            "read_model",
+            "read_model",
+            "audit_chain",
+            "witnessed",
+            [
+                "mcoi/mcoi_runtime/app/routers/console.py",
+                "mcoi/mcoi_runtime/app/console.py",
+                "mcoi/mcoi_runtime/app/view_models.py",
+                "mcoi/tests/test_operator_console.py",
+                "mcoi/tests/test_console.py",
+            ],
+            "Operator console routes expose bounded read-only runtime, audit, checkpoint, provider, scheduler, and aggregate views with governed response witnesses.",
+            [
+                "console_home_returns_governed_runtime_vitals",
+                "console_runs_bounds_recent_audit_entries",
+                "console_audit_exposes_chain_intact_read_model",
+                "console_checkpoints_expose_persisted_state_summary",
+                "console_provider_and_scheduler_views_are_read_only",
+            ],
+        ),
+        _surface(
             "model_experiment_control",
             ["/api/v1/models", "/api/v1/ab-test", "/api/v1/ab-test/summary"],
             "request_proof",
@@ -1882,6 +1913,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
         {
             "action_id": "connect_pilot_scaffold_to_hosted_provisioning_endpoint",
             "surfaces": ["pilot_provisioning"],
+            "status": "closed",
+        },
+        {
+            "action_id": "classify_operator_console_read_model_routes",
+            "surfaces": ["operator_console_read_models"],
             "status": "closed",
         },
         {

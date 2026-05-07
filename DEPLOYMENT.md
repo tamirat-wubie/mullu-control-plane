@@ -403,7 +403,7 @@ MULLU_EMAIL_CALENDAR_WORKER_SECRET=...
 MULLU_EMAIL_CALENDAR_WORKER_ADAPTER=production
 EMAIL_CALENDAR_CONNECTOR_TOKEN=...     # optional governed connector token
 EMAIL_CALENDAR_CONNECTOR_ID=gmail      # gmail, google_calendar, or microsoft_graph
-EMAIL_CALENDAR_CONNECTOR_SCOPE_ID=...  # optional governed scope witness
+EMAIL_CALENDAR_CONNECTOR_SCOPE_ID=gmail.readonly  # required read-only scope witness when a connector token is set
 GMAIL_ACCESS_TOKEN=...                 # optional Gmail connector credential
 GOOGLE_CALENDAR_ACCESS_TOKEN=...       # optional Google Calendar connector credential
 MICROSOFT_GRAPH_ACCESS_TOKEN=...       # optional Microsoft Graph connector credential
@@ -423,7 +423,9 @@ dependencies. Playwright Chromium is installed only when both
 `MULLU_INSTALL_WORKER_DEPS=true` and `MULLU_INSTALL_PLAYWRIGHT_BROWSERS=true`.
 The email/calendar worker starts in production adapter mode with either
 `EMAIL_CALENDAR_CONNECTOR_TOKEN` plus `EMAIL_CALENDAR_CONNECTOR_ID`, or the
-provider-specific token names. Missing credentials fail closed per request and
+provider-specific token names. Any configured connector token must be paired
+with read-only scope evidence such as `gmail.readonly` or
+`calendar.events.readonly`. Missing credentials fail closed per request and
 still produce signed failure receipts.
 
 The worker services expose:
@@ -462,13 +464,15 @@ The worker services expose:
 23. Run `python scripts/validate_gateway_deployment_env.py --strict` before claiming pilot or production readiness
 24. Run `python scripts/gateway_runtime_smoke.py` against the live gateway and capability worker before claiming runtime readiness
 25. Set `MULLU_BROWSER_WORKER_URL`, `MULLU_BROWSER_WORKER_SECRET`, `MULLU_DOCUMENT_WORKER_URL`, `MULLU_DOCUMENT_WORKER_SECRET`, `MULLU_VOICE_WORKER_URL`, `MULLU_VOICE_WORKER_SECRET`, `MULLU_EMAIL_CALENDAR_WORKER_URL`, and `MULLU_EMAIL_CALENDAR_WORKER_SECRET` on gateway and gateway worker before enabling adapter-backed capabilities
-26. Run `python scripts/produce_capability_adapter_live_receipts.py --strict --browser-sandbox-evidence "$MULLU_BROWSER_SANDBOX_EVIDENCE" --voice-audio-path "$MULLU_VOICE_PROBE_AUDIO" --email-calendar-connector-id gmail --email-calendar-query newer_than:1d` after browser, document, voice, and email/calendar worker dependencies and connector credentials are installed
-27. Run `python scripts/collect_capability_adapter_evidence.py --strict` after browser, document, voice, and email/calendar live receipts are available
-28. If adapter evidence is not closed, run `python scripts/plan_capability_adapter_closure.py --json` and resolve every generated dependency, credential, and live-receipt action before promotion
-29. Run `python scripts/validate_general_agent_promotion.py --output .change_assurance/general_agent_promotion_readiness.json` to write the current promotion-readiness artifact
-30. If deployment witness or public health blockers remain, run `python scripts/plan_deployment_publication_closure.py --json`
-31. Run `python scripts/plan_general_agent_promotion_closure.py --json`, `python scripts/validate_general_agent_promotion_closure_plan_schema.py --strict`, and `python scripts/validate_general_agent_promotion_closure_plan.py --strict` before executing promotion closure actions
-32. Run `python scripts/validate_general_agent_promotion.py --strict` before claiming production general-agent readiness
+26. Run `python scripts/preflight_finance_email_calendar_recovery.py --receipt .change_assurance/email_calendar_live_receipt.json --strict --json` after binding the email/calendar worker URL, signing secret, connector token, and read-only scope witness
+27. Run `python scripts/validate_finance_approval_email_calendar_live_receipt.py --require-ready --json` after the email/calendar live receipt probe is regenerated
+28. Run `python scripts/produce_capability_adapter_live_receipts.py --strict --browser-sandbox-evidence "$MULLU_BROWSER_SANDBOX_EVIDENCE" --voice-audio-path "$MULLU_VOICE_PROBE_AUDIO" --email-calendar-connector-id gmail --email-calendar-query newer_than:1d` after browser, document, voice, and email/calendar worker dependencies and connector credentials are installed
+29. Run `python scripts/collect_capability_adapter_evidence.py --strict` after browser, document, voice, and email/calendar live receipts are available
+30. If adapter evidence is not closed, run `python scripts/plan_capability_adapter_closure.py --json` and resolve every generated dependency, credential, and live-receipt action before promotion
+31. Run `python scripts/validate_general_agent_promotion.py --output .change_assurance/general_agent_promotion_readiness.json` to write the current promotion-readiness artifact
+32. If deployment witness or public health blockers remain, run `python scripts/plan_deployment_publication_closure.py --json`
+33. Run `python scripts/plan_general_agent_promotion_closure.py --json`, `python scripts/validate_general_agent_promotion_closure_plan_schema.py --strict`, and `python scripts/validate_general_agent_promotion_closure_plan.py --strict` before executing promotion closure actions
+34. Run `python scripts/validate_general_agent_promotion.py --strict` before claiming production general-agent readiness
 
 ## Startup Behavior
 

@@ -62,6 +62,13 @@
       ]
     },
     {
+      "action_id": "classify_operator_console_read_model_routes",
+      "status": "closed",
+      "surfaces": [
+        "operator_console_read_models"
+      ]
+    },
+    {
       "action_id": "publish_hosted_demo_sandbox_read_models",
       "status": "closed",
       "surfaces": [
@@ -411,12 +418,12 @@
       "action_proof": 52,
       "audit_chain": 0,
       "gap": 0,
-      "read_model": 9,
+      "read_model": 10,
       "request_proof": 2
     },
     "by_audit": {
       "action_proof": 0,
-      "audit_chain": 59,
+      "audit_chain": 60,
       "gap": 0,
       "read_model": 4,
       "request_proof": 0
@@ -424,23 +431,23 @@
     "by_coverage_state": {
       "proven": 1,
       "unproven": 0,
-      "witnessed": 62
+      "witnessed": 63
     },
     "by_request_proof": {
       "action_proof": 0,
       "audit_chain": 0,
       "gap": 0,
-      "read_model": 11,
+      "read_model": 12,
       "request_proof": 52
     },
-    "surface_count": 63
+    "surface_count": 64
   },
   "generated_by": "scripts/proof_coverage_matrix.py",
   "route_coverage": {
     "by_coverage_state": {
       "proven": 5,
-      "unproven": 199,
-      "witnessed": 109
+      "unproven": 192,
+      "witnessed": 116
     },
     "route_count": 313,
     "routes": [
@@ -735,39 +742,39 @@
         "surface_id": "unclassified_declared_route"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/console",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "operator_console_read_models"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/console/audit",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "operator_console_read_models"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/console/checkpoints",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "operator_console_read_models"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/console/home",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "operator_console_read_models"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/console/providers",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "operator_console_read_models"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/console/runs",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "operator_console_read_models"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/console/scheduler",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "operator_console_read_models"
       },
       {
         "coverage_state": "unproven",
@@ -2010,7 +2017,7 @@
         "surface_id": "gateway_capability_fabric"
       }
     ],
-    "unclassified_route_count": 199
+    "unclassified_route_count": 192
   },
   "schema_version": 1,
   "surfaces": [
@@ -2164,6 +2171,37 @@
       "request_proof": "read_model",
       "runtime_witnesses": [],
       "surface_id": "cost_budget_read_models"
+    },
+    {
+      "action_proof": "read_model",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "mcoi/mcoi_runtime/app/routers/console.py",
+        "mcoi/mcoi_runtime/app/console.py",
+        "mcoi/mcoi_runtime/app/view_models.py",
+        "mcoi/tests/test_operator_console.py",
+        "mcoi/tests/test_console.py"
+      ],
+      "notes": "Operator console routes expose bounded read-only runtime, audit, checkpoint, provider, scheduler, and aggregate views with governed response witnesses.",
+      "representative_paths": [
+        "/api/v1/console",
+        "/api/v1/console/home",
+        "/api/v1/console/runs",
+        "/api/v1/console/audit",
+        "/api/v1/console/checkpoints",
+        "/api/v1/console/providers",
+        "/api/v1/console/scheduler"
+      ],
+      "request_proof": "read_model",
+      "runtime_witnesses": [
+        "console_home_returns_governed_runtime_vitals",
+        "console_runs_bounds_recent_audit_entries",
+        "console_audit_exposes_chain_intact_read_model",
+        "console_checkpoints_expose_persisted_state_summary",
+        "console_provider_and_scheduler_views_are_read_only"
+      ],
+      "surface_id": "operator_console_read_models"
     },
     {
       "action_proof": "action_proof",

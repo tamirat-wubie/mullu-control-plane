@@ -125,8 +125,21 @@ class SandboxedCodeWorker:
             raise ValueError("lease must be a CodeWorkerLease")
         normalized_command_id = _require_text(command_id, "command_id")
         command = _normalize_argv(argv)
-        normalized_cwd = _normalize_relative_path(cwd)
         started_at = self._clock()
+        try:
+            normalized_cwd = _normalize_relative_path(cwd)
+        except ValueError as exc:
+            if "repository root" not in str(exc):
+                raise
+            finished_at = self._clock()
+            return self._blocked_result(
+                lease=lease,
+                command_id=normalized_command_id,
+                argv=command,
+                started_at=started_at,
+                finished_at=finished_at,
+                violations=(f"cwd_outside_repository_boundary:{_sha256_text(cwd)[:16]}",),
+            )
 
         violations = _admission_violations(
             lease=lease,
@@ -162,6 +175,7 @@ class SandboxedCodeWorker:
             clock=self._clock,
             platform_system=self._platform_system or _platform_system_default,
         )
+        before_worker_snapshot = _workspace_snapshot(self._workspace_root)
         sandbox_result = sandbox_runner.execute(
             SandboxCommandRequest(
                 request_id=normalized_command_id,
@@ -172,6 +186,10 @@ class SandboxedCodeWorker:
                 environment={},
             )
         )
+        worker_changed_paths = _changed_paths(
+            before_worker_snapshot,
+            _workspace_snapshot(self._workspace_root),
+        )
         finished_at = self._clock()
         status = _status_from_sandbox_status(sandbox_result.status)
         violation_reasons = (
@@ -179,6 +197,13 @@ class SandboxedCodeWorker:
             if status is CodeWorkerReceiptStatus.BLOCKED and sandbox_result.stderr
             else ()
         )
+        worker_path_violations = _changed_path_violations(
+            changed_paths=worker_changed_paths,
+            allowed_paths=lease.allowed_paths,
+        )
+        if worker_path_violations:
+            status = CodeWorkerReceiptStatus.BLOCKED
+            violation_reasons = (*violation_reasons, *worker_path_violations)
         receipt = _build_receipt(
             lease=lease,
             command_id=normalized_command_id,
@@ -199,6 +224,10 @@ class SandboxedCodeWorker:
                 "sandbox_network_disabled": sandbox_result.receipt.network_disabled,
                 "sandbox_read_only_rootfs": sandbox_result.receipt.read_only_rootfs,
                 "workspace_mount": sandbox_result.receipt.workspace_mount,
+                "worker_changed_file_count": len(worker_changed_paths),
+                "worker_changed_file_refs": tuple(
+                    f"workspace_path:{_sha256_text(path)[:16]}" for path in worker_changed_paths
+                ),
                 "production_credentials_available": False,
             },
         )
@@ -430,16 +459,42 @@ def _path_within_allowed(path_text: str, allowed_paths: tuple[str, ...]) -> bool
     return any(normalized_path == allowed_path or normalized_path.startswith(f"{allowed_path}/") for allowed_path in allowed_paths)
 
 
+def _changed_path_violations(
+    *,
+    changed_paths: tuple[str, ...],
+    allowed_paths: tuple[str, ...],
+) -> tuple[str, ...]:
+    violations: list[str] = []
+    for changed_path in changed_paths:
+        if not _path_within_allowed(changed_path, allowed_paths):
+            violations.append(f"sandbox_changed_file_outside_lease_allowed_paths:{_sha256_text(changed_path)[:16]}")
+    return tuple(violations)
+
+
 def _argv_path_violation(argv: tuple[str, ...], allowed_paths: tuple[str, ...]) -> str | None:
     for item in argv[1:]:
-        if item.startswith("-"):
-            continue
-        if not _looks_like_path(item):
-            continue
-        normalized_path = _normalize_relative_path(item)
-        if not _path_within_allowed(normalized_path, allowed_paths):
-            return f"argv_path_outside_lease_allowed_paths:{_sha256_text(normalized_path)[:16]}"
+        for path_candidate in _argv_path_candidates(item):
+            try:
+                normalized_path = _normalize_relative_path(path_candidate)
+            except ValueError:
+                return f"argv_path_outside_repository_boundary:{_sha256_text(path_candidate)[:16]}"
+            if not _path_within_allowed(normalized_path, allowed_paths):
+                return f"argv_path_outside_lease_allowed_paths:{_sha256_text(normalized_path)[:16]}"
     return None
+
+
+def _argv_path_candidates(item: str) -> tuple[str, ...]:
+    if item.startswith("-"):
+        if "=" not in item:
+            return ()
+        _, raw_value = item.split("=", 1)
+        value = raw_value.strip()
+        if not value or not _looks_like_path(value):
+            return ()
+        return (value,)
+    if not _looks_like_path(item):
+        return ()
+    return (item,)
 
 
 def _looks_like_path(value: str) -> bool:
@@ -474,6 +529,29 @@ def _bounded_violation(value: str) -> str:
 def _canonical_hash(value: object) -> str:
     payload = json.dumps(value, ensure_ascii=True, separators=(",", ":"), sort_keys=True)
     return _sha256_text(payload)
+
+
+def _workspace_snapshot(root: Path) -> dict[str, str]:
+    snapshot: dict[str, str] = {}
+    for path in sorted(root.rglob("*")):
+        if not path.is_file() or ".git" in path.relative_to(root).parts:
+            continue
+        relative_path = path.relative_to(root).as_posix()
+        try:
+            snapshot[relative_path] = hashlib.sha256(path.read_bytes()).hexdigest()
+        except OSError:
+            snapshot[relative_path] = "unreadable"
+    return snapshot
+
+
+def _changed_paths(before: dict[str, str], after: dict[str, str]) -> tuple[str, ...]:
+    return tuple(
+        sorted(
+            path
+            for path in set(before) | set(after)
+            if before.get(path) != after.get(path)
+        )
+    )
 
 
 def _sha256_text(value: str) -> str:
