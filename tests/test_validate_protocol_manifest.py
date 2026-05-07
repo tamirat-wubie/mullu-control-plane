@@ -383,6 +383,17 @@ def test_protocol_manifest_indexes_temporal_causal_order_receipt() -> None:
     assert causal_order_entry["surface"] == "temporal"
 
 
+def test_protocol_manifest_indexes_temporal_monotonic_duration_receipt() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    duration_entry = entries["temporal-monotonic-duration-receipt"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert duration_entry["path"] == "schemas/temporal_monotonic_duration_receipt.schema.json"
+    assert duration_entry["urn"] == "urn:mullusi:schema:temporal-monotonic-duration-receipt:1"
+    assert duration_entry["surface"] == "temporal"
+
+
 def test_protocol_manifest_indexes_temporal_memory_receipt() -> None:
     manifest = load_manifest()
     entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}

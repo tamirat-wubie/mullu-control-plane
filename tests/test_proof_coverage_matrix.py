@@ -1112,6 +1112,32 @@ def test_temporal_causal_order_surface_rechecks_required_event_order() -> None:
     assert closure_actions["publish_temporal_causal_order_receipt_contract"]["status"] == "closed"
 
 
+def test_temporal_monotonic_duration_surface_rechecks_elapsed_time() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    duration_surface = surfaces["temporal_monotonic_duration"]
+    witnesses = set(duration_surface["runtime_witnesses"])
+
+    assert duration_surface["coverage_state"] == "witnessed"
+    assert duration_surface["request_proof"] == "request_proof"
+    assert duration_surface["action_proof"] == "action_proof"
+    assert "TemporalMonotonicDuration.evaluate" in duration_surface["representative_paths"]
+    assert "TemporalMonotonicDurationRequest" in duration_surface["representative_paths"]
+    assert "TemporalMonotonicDurationReceipt" in duration_surface["representative_paths"]
+    assert "gateway/temporal_monotonic_duration.py" in duration_surface["evidence_files"]
+    assert "schemas/temporal_monotonic_duration_receipt.schema.json" in duration_surface["evidence_files"]
+    assert "tests/test_gateway/test_temporal_monotonic_duration.py" in duration_surface["evidence_files"]
+    assert "runtime_monotonic_clock_owns_duration_truth" in witnesses
+    assert "wall_clock_not_used_for_duration" in witnesses
+    assert "duration_limit_exceeded_blocks_dispatch" in witnesses
+    assert "cooldown_lower_bound_defers_dispatch" in witnesses
+    assert "monotonic_clock_regression_blocks_dispatch" in witnesses
+    assert "high_risk_source_receipts_bound" in witnesses
+    assert "temporal_monotonic_duration_receipt_schema_valid" in witnesses
+    assert closure_actions["publish_temporal_monotonic_duration_receipt_contract"]["status"] == "closed"
+
+
 def test_temporal_memory_surface_blocks_stale_or_superseded_memory() -> None:
     matrix = _load_fixture()
     surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
