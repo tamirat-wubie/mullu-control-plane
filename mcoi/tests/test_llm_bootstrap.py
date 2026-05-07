@@ -12,6 +12,7 @@ from mcoi_runtime.adapters.multi_provider import (
     DInferenceBackend,
     FireworksBackend,
     FriendliBackend,
+    GlamaBackend,
     GroqBackend,
     HyperbolicBackend,
     LlamaAPIBackend,
@@ -21,6 +22,8 @@ from mcoi_runtime.adapters.multi_provider import (
     PacketBackend,
     ParasailBackend,
     FeatherlessBackend,
+    NeuroRoutersBackend,
+    RidvayBackend,
     SambaNovaBackend,
     SiliconFlowBackend,
     TogetherBackend,
@@ -74,6 +77,9 @@ LLM_ENV_KEYS = (
     "PARASAIL_API_KEY",
     "FEATHERLESS_API_KEY",
     "PACKET_API_KEY",
+    "RIDVAY_API_KEY",
+    "NEUROROUTERS_API_KEY",
+    "GLAMA_API_KEY",
     "XAI_API_KEY",
     "MISTRAL_API_KEY",
     "OPENROUTER_API_KEY",
@@ -332,6 +338,9 @@ class TestBootstrapLLM:
             parasail_api_key="ps",
             featherless_api_key="fh",
             packet_api_key="pk",
+            ridvay_api_key="rv",
+            neurorouters_api_key="nr",
+            glama_api_key="gm",
             grok_api_key="xai",
             mistral_api_key="ms",
             openrouter_api_key="or",
@@ -370,6 +379,9 @@ class TestBootstrapLLM:
             "parasail",
             "featherless",
             "packet",
+            "ridvay",
+            "neurorouters",
+            "glama",
             "grok",
             "mistral",
             "openrouter",
@@ -397,6 +409,9 @@ class TestBootstrapLLM:
         assert isinstance(result.backends["parasail"], ParasailBackend)
         assert isinstance(result.backends["featherless"], FeatherlessBackend)
         assert isinstance(result.backends["packet"], PacketBackend)
+        assert isinstance(result.backends["ridvay"], RidvayBackend)
+        assert isinstance(result.backends["neurorouters"], NeuroRoutersBackend)
+        assert isinstance(result.backends["glama"], GlamaBackend)
         assert "llm-groq" in result.registered_providers
         assert "llm-deepseek" in result.registered_providers
         assert "llm-together" in result.registered_providers
@@ -417,6 +432,9 @@ class TestBootstrapLLM:
         assert "llm-parasail" in result.registered_providers
         assert "llm-featherless" in result.registered_providers
         assert "llm-packet" in result.registered_providers
+        assert "llm-ridvay" in result.registered_providers
+        assert "llm-neurorouters" in result.registered_providers
+        assert "llm-glama" in result.registered_providers
         assert "llm-openrouter" in result.registered_providers
         assert "meta-llama/llama-4-scout-17b-16e-instruct" in result.registered_models
         assert "deepseek-v4-flash" in result.registered_models
@@ -442,6 +460,9 @@ class TestBootstrapLLM:
         assert "parasail-qwen3-32b" in result.registered_models
         assert "Qwen/Qwen2.5-7B-Instruct-1M" in result.registered_models
         assert "meta-llama/Llama-3.1-70B-Instruct" in result.registered_models
+        assert "qwen/qwen3-30b-a3b" in result.registered_models
+        assert "qwen/qwen3-30b-a3b:free" in result.registered_models
+        assert "deepseek-chat-v3" in result.registered_models
         assert "mistral-small-2506" in result.registered_models
         assert "grok-3-mini" in result.registered_models
         assert "meta-llama/llama-4-scout" in result.registered_models

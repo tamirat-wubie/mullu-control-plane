@@ -511,6 +511,42 @@ def bootstrap_capability_services(
     )
     model_router.register(
         ModelProfile(
+            model_id="qwen/qwen3-30b-a3b",
+            name="Qwen3 30B A3B via Ridvay",
+            provider="ridvay",
+            cost_per_1k_input=0.00006,
+            cost_per_1k_output=0.00022,
+            max_context=40960,
+            speed_tier="fast",
+            capability_tier="standard",
+        )
+    )
+    model_router.register(
+        ModelProfile(
+            model_id="qwen/qwen3-30b-a3b:free",
+            name="Qwen3 30B A3B Free via NeuroRouters",
+            provider="neurorouters",
+            cost_per_1k_input=0.0,
+            cost_per_1k_output=0.0,
+            max_context=40960,
+            speed_tier="fast",
+            capability_tier="standard",
+        )
+    )
+    model_router.register(
+        ModelProfile(
+            model_id="deepseek-chat-v3",
+            name="DeepSeek Chat V3 via Glama Gateway",
+            provider="glama",
+            cost_per_1k_input=0.00014,
+            cost_per_1k_output=0.00028,
+            max_context=64000,
+            speed_tier="fast",
+            capability_tier="standard",
+        )
+    )
+    model_router.register(
+        ModelProfile(
             model_id="mistral-small-2603",
             name="Mistral Small 2603",
             provider="mistral",
