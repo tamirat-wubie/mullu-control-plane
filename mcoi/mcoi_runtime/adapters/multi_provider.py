@@ -560,6 +560,541 @@ class SambaNovaBackend:
         return self._call_count
 
 
+class CloudflareBackend:
+    """Cloudflare Workers AI OpenAI-compatible endpoint."""
+
+    provider = LLMProvider.CLOUDFLARE
+    DEFAULT_MODEL = "@cf/meta/llama-3.1-8b-instruct-fp8-fast"
+
+    def __init__(
+        self,
+        *,
+        model: str = "",
+        api_key: str | None = None,
+        api_key_env: str = "CLOUDFLARE_API_TOKEN",
+        account_id: str = "",
+        account_id_env: str = "CLOUDFLARE_ACCOUNT_ID",
+    ) -> None:
+        self._model = model or self.DEFAULT_MODEL
+        self._default_model = self._model
+        self._api_key = api_key or ""
+        self._api_key_env = api_key_env
+        self._account_id = account_id
+        self._account_id_env = account_id_env
+        self._call_count = 0
+
+    def call(self, params: LLMInvocationParams) -> LLMResult:
+        self._call_count += 1
+        account_id = self._account_id or os.environ.get(self._account_id_env, "")
+        if not account_id:
+            return LLMResult(
+                content="", input_tokens=0, output_tokens=0, cost=0.0,
+                model_name=params.model_name or self._model, provider=self.provider,
+                finished=False, error="provider account unavailable",
+            )
+        return _openai_compatible_call(
+            base_url=f"https://api.cloudflare.com/client/v4/accounts/{account_id}/ai/v1",
+            api_key=self._api_key or os.environ.get(self._api_key_env, "") or os.environ.get("CLOUDFLARE_API_KEY", ""),
+            model=params.model_name or self._model,
+            messages=_params_to_messages(params),
+            max_tokens=params.max_tokens,
+            temperature=0.0,
+            provider=self.provider,
+            cost_per_1m_input=0.045,
+            cost_per_1m_output=0.384,
+        )
+
+    @property
+    def call_count(self) -> int:
+        return self._call_count
+
+
+class MoonshotBackend:
+    """Moonshot Kimi OpenAI-compatible endpoint for agentic coding models."""
+
+    provider = LLMProvider.MOONSHOT
+    DEFAULT_MODEL = "kimi-k2.5"
+
+    def __init__(self, *, model: str = "", api_key: str | None = None, api_key_env: str = "MOONSHOT_API_KEY") -> None:
+        self._model = model or self.DEFAULT_MODEL
+        self._default_model = self._model
+        self._api_key = api_key or ""
+        self._api_key_env = api_key_env
+        self._call_count = 0
+
+    def call(self, params: LLMInvocationParams) -> LLMResult:
+        self._call_count += 1
+        return _openai_compatible_call(
+            base_url="https://api.moonshot.ai/v1",
+            api_key=self._api_key or os.environ.get(self._api_key_env, ""),
+            model=params.model_name or self._model,
+            messages=_params_to_messages(params),
+            max_tokens=params.max_tokens,
+            temperature=0.0,
+            provider=self.provider,
+            cost_per_1m_input=0.60,
+            cost_per_1m_output=3.00,
+        )
+
+    @property
+    def call_count(self) -> int:
+        return self._call_count
+
+
+class DashScopeBackend:
+    """Alibaba Cloud DashScope OpenAI-compatible endpoint for Qwen models."""
+
+    provider = LLMProvider.DASHSCOPE
+    DEFAULT_MODEL = "qwen-turbo"
+
+    def __init__(self, *, model: str = "", api_key: str | None = None, api_key_env: str = "DASHSCOPE_API_KEY") -> None:
+        self._model = model or self.DEFAULT_MODEL
+        self._default_model = self._model
+        self._api_key = api_key or ""
+        self._api_key_env = api_key_env
+        self._call_count = 0
+
+    def call(self, params: LLMInvocationParams) -> LLMResult:
+        self._call_count += 1
+        return _openai_compatible_call(
+            base_url="https://dashscope-intl.aliyuncs.com/compatible-mode/v1",
+            api_key=self._api_key or os.environ.get(self._api_key_env, ""),
+            model=params.model_name or self._model,
+            messages=_params_to_messages(params),
+            max_tokens=params.max_tokens,
+            temperature=0.0,
+            provider=self.provider,
+            cost_per_1m_input=0.05,
+            cost_per_1m_output=0.20,
+        )
+
+    @property
+    def call_count(self) -> int:
+        return self._call_count
+
+
+class ZAIBackend:
+    """Z.AI OpenAI-compatible endpoint for GLM models."""
+
+    provider = LLMProvider.ZAI
+    DEFAULT_MODEL = "glm-4.5-air"
+
+    def __init__(self, *, model: str = "", api_key: str | None = None, api_key_env: str = "ZAI_API_KEY") -> None:
+        self._model = model or self.DEFAULT_MODEL
+        self._default_model = self._model
+        self._api_key = api_key or ""
+        self._api_key_env = api_key_env
+        self._call_count = 0
+
+    def call(self, params: LLMInvocationParams) -> LLMResult:
+        self._call_count += 1
+        return _openai_compatible_call(
+            base_url="https://api.z.ai/api/paas/v4",
+            api_key=self._api_key or os.environ.get(self._api_key_env, ""),
+            model=params.model_name or self._model,
+            messages=_params_to_messages(params),
+            max_tokens=params.max_tokens,
+            temperature=0.0,
+            provider=self.provider,
+            cost_per_1m_input=0.20,
+            cost_per_1m_output=1.10,
+        )
+
+    @property
+    def call_count(self) -> int:
+        return self._call_count
+
+
+class SiliconFlowBackend:
+    """SiliconFlow OpenAI-compatible endpoint for inexpensive Qwen models."""
+
+    provider = LLMProvider.SILICONFLOW
+    DEFAULT_MODEL = "Qwen/Qwen2.5-7B-Instruct"
+
+    def __init__(self, *, model: str = "", api_key: str | None = None, api_key_env: str = "SILICONFLOW_API_KEY") -> None:
+        self._model = model or self.DEFAULT_MODEL
+        self._default_model = self._model
+        self._api_key = api_key or ""
+        self._api_key_env = api_key_env
+        self._call_count = 0
+
+    def call(self, params: LLMInvocationParams) -> LLMResult:
+        self._call_count += 1
+        return _openai_compatible_call(
+            base_url="https://api.siliconflow.com/v1",
+            api_key=self._api_key or os.environ.get(self._api_key_env, ""),
+            model=params.model_name or self._model,
+            messages=_params_to_messages(params),
+            max_tokens=params.max_tokens,
+            temperature=0.0,
+            provider=self.provider,
+            cost_per_1m_input=0.05,
+            cost_per_1m_output=0.05,
+        )
+
+    @property
+    def call_count(self) -> int:
+        return self._call_count
+
+
+class DInferenceBackend:
+    """DInference OpenAI-compatible endpoint for inexpensive GPT OSS models."""
+
+    provider = LLMProvider.DINFERENCE
+    DEFAULT_MODEL = "gpt-oss-120b"
+
+    def __init__(self, *, model: str = "", api_key: str | None = None, api_key_env: str = "DINFERENCE_API_KEY") -> None:
+        self._model = model or self.DEFAULT_MODEL
+        self._default_model = self._model
+        self._api_key = api_key or ""
+        self._api_key_env = api_key_env
+        self._call_count = 0
+
+    def call(self, params: LLMInvocationParams) -> LLMResult:
+        self._call_count += 1
+        return _openai_compatible_call(
+            base_url="https://api.dinference.com/v1",
+            api_key=self._api_key or os.environ.get(self._api_key_env, ""),
+            model=params.model_name or self._model,
+            messages=_params_to_messages(params),
+            max_tokens=params.max_tokens,
+            temperature=0.0,
+            provider=self.provider,
+            cost_per_1m_input=0.09,
+            cost_per_1m_output=0.36,
+        )
+
+    @property
+    def call_count(self) -> int:
+        return self._call_count
+
+
+class ChutesBackend:
+    """Chutes OpenAI-compatible endpoint for inexpensive open-weight models."""
+
+    provider = LLMProvider.CHUTES
+    DEFAULT_MODEL = "Qwen/Qwen3-32B-TEE"
+
+    def __init__(self, *, model: str = "", api_key: str | None = None, api_key_env: str = "CHUTES_API_KEY") -> None:
+        self._model = model or self.DEFAULT_MODEL
+        self._default_model = self._model
+        self._api_key = api_key or ""
+        self._api_key_env = api_key_env
+        self._call_count = 0
+
+    def call(self, params: LLMInvocationParams) -> LLMResult:
+        self._call_count += 1
+        return _openai_compatible_call(
+            base_url="https://llm.chutes.ai/v1",
+            api_key=self._api_key or os.environ.get(self._api_key_env, ""),
+            model=params.model_name or self._model,
+            messages=_params_to_messages(params),
+            max_tokens=params.max_tokens,
+            temperature=0.0,
+            provider=self.provider,
+            cost_per_1m_input=0.08,
+            cost_per_1m_output=0.24,
+        )
+
+    @property
+    def call_count(self) -> int:
+        return self._call_count
+
+
+class WaveSpeedBackend:
+    """WaveSpeed OpenAI-compatible endpoint for inexpensive Qwen coder models."""
+
+    provider = LLMProvider.WAVESPEED
+    DEFAULT_MODEL = "qwen/qwen3-coder-30b-a3b-instruct"
+
+    def __init__(self, *, model: str = "", api_key: str | None = None, api_key_env: str = "WAVESPEED_API_KEY") -> None:
+        self._model = model or self.DEFAULT_MODEL
+        self._default_model = self._model
+        self._api_key = api_key or ""
+        self._api_key_env = api_key_env
+        self._call_count = 0
+
+    def call(self, params: LLMInvocationParams) -> LLMResult:
+        self._call_count += 1
+        return _openai_compatible_call(
+            base_url="https://llm.wavespeed.ai/v1",
+            api_key=self._api_key or os.environ.get(self._api_key_env, ""),
+            model=params.model_name or self._model,
+            messages=_params_to_messages(params),
+            max_tokens=params.max_tokens,
+            temperature=0.0,
+            provider=self.provider,
+            cost_per_1m_input=0.07,
+            cost_per_1m_output=0.27,
+        )
+
+    @property
+    def call_count(self) -> int:
+        return self._call_count
+
+
+class BazaarLinkBackend:
+    """BazaarLink OpenAI-compatible endpoint for inexpensive Llama models."""
+
+    provider = LLMProvider.BAZAARLINK
+    DEFAULT_MODEL = "meta-llama/llama-3.1-8b-instruct"
+
+    def __init__(self, *, model: str = "", api_key: str | None = None, api_key_env: str = "BAZAARLINK_API_KEY") -> None:
+        self._model = model or self.DEFAULT_MODEL
+        self._default_model = self._model
+        self._api_key = api_key or ""
+        self._api_key_env = api_key_env
+        self._call_count = 0
+
+    def call(self, params: LLMInvocationParams) -> LLMResult:
+        self._call_count += 1
+        return _openai_compatible_call(
+            base_url="https://bazaarlink.ai/api/v1",
+            api_key=self._api_key or os.environ.get(self._api_key_env, ""),
+            model=params.model_name or self._model,
+            messages=_params_to_messages(params),
+            max_tokens=params.max_tokens,
+            temperature=0.0,
+            provider=self.provider,
+            cost_per_1m_input=0.02,
+            cost_per_1m_output=0.05,
+        )
+
+    @property
+    def call_count(self) -> int:
+        return self._call_count
+
+
+class LlamaAPIBackend:
+    """LlamaAPI OpenAI-compatible endpoint for inexpensive Llama models."""
+
+    provider = LLMProvider.LLAMAAPI
+    DEFAULT_MODEL = "llama3-70b"
+
+    def __init__(self, *, model: str = "", api_key: str | None = None, api_key_env: str = "LLAMA_API_KEY") -> None:
+        self._model = model or self.DEFAULT_MODEL
+        self._default_model = self._model
+        self._api_key = api_key or ""
+        self._api_key_env = api_key_env
+        self._call_count = 0
+
+    def call(self, params: LLMInvocationParams) -> LLMResult:
+        self._call_count += 1
+        return _openai_compatible_call(
+            base_url="https://api.llama-api.com",
+            api_key=self._api_key or os.environ.get(self._api_key_env, ""),
+            model=params.model_name or self._model,
+            messages=_params_to_messages(params),
+            max_tokens=params.max_tokens,
+            temperature=0.0,
+            provider=self.provider,
+            cost_per_1m_input=0.65,
+            cost_per_1m_output=0.65,
+        )
+
+    @property
+    def call_count(self) -> int:
+        return self._call_count
+
+
+class ParasailBackend:
+    """Parasail OpenAI-compatible endpoint for inexpensive Qwen models."""
+
+    provider = LLMProvider.PARASAIL
+    DEFAULT_MODEL = "parasail-qwen3-32b"
+
+    def __init__(self, *, model: str = "", api_key: str | None = None, api_key_env: str = "PARASAIL_API_KEY") -> None:
+        self._model = model or self.DEFAULT_MODEL
+        self._default_model = self._model
+        self._api_key = api_key or ""
+        self._api_key_env = api_key_env
+        self._call_count = 0
+
+    def call(self, params: LLMInvocationParams) -> LLMResult:
+        self._call_count += 1
+        return _openai_compatible_call(
+            base_url="https://api.parasail.io/v1",
+            api_key=self._api_key or os.environ.get(self._api_key_env, ""),
+            model=params.model_name or self._model,
+            messages=_params_to_messages(params),
+            max_tokens=params.max_tokens,
+            temperature=0.0,
+            provider=self.provider,
+            cost_per_1m_input=0.10,
+            cost_per_1m_output=0.50,
+        )
+
+    @property
+    def call_count(self) -> int:
+        return self._call_count
+
+
+class FeatherlessBackend:
+    """Featherless OpenAI-compatible endpoint for flat-rate open-weight models."""
+
+    provider = LLMProvider.FEATHERLESS
+    DEFAULT_MODEL = "Qwen/Qwen2.5-7B-Instruct-1M"
+
+    def __init__(self, *, model: str = "", api_key: str | None = None, api_key_env: str = "FEATHERLESS_API_KEY") -> None:
+        self._model = model or self.DEFAULT_MODEL
+        self._default_model = self._model
+        self._api_key = api_key or ""
+        self._api_key_env = api_key_env
+        self._call_count = 0
+
+    def call(self, params: LLMInvocationParams) -> LLMResult:
+        self._call_count += 1
+        return _openai_compatible_call(
+            base_url="https://api.featherless.ai/v1",
+            api_key=self._api_key or os.environ.get(self._api_key_env, ""),
+            model=params.model_name or self._model,
+            messages=_params_to_messages(params),
+            max_tokens=params.max_tokens,
+            temperature=0.0,
+            provider=self.provider,
+            cost_per_1m_input=0.0,
+            cost_per_1m_output=0.0,
+        )
+
+    @property
+    def call_count(self) -> int:
+        return self._call_count
+
+
+class PacketBackend:
+    """Packet Token Factory OpenAI-compatible endpoint for inexpensive Llama models."""
+
+    provider = LLMProvider.PACKET
+    DEFAULT_MODEL = "meta-llama/Llama-3.1-70B-Instruct"
+
+    def __init__(self, *, model: str = "", api_key: str | None = None, api_key_env: str = "PACKET_API_KEY") -> None:
+        self._model = model or self.DEFAULT_MODEL
+        self._default_model = self._model
+        self._api_key = api_key or ""
+        self._api_key_env = api_key_env
+        self._call_count = 0
+
+    def call(self, params: LLMInvocationParams) -> LLMResult:
+        self._call_count += 1
+        return _openai_compatible_call(
+            base_url="https://dash.packet.ai/api/v1",
+            api_key=self._api_key or os.environ.get(self._api_key_env, ""),
+            model=params.model_name or self._model,
+            messages=_params_to_messages(params),
+            max_tokens=params.max_tokens,
+            temperature=0.0,
+            provider=self.provider,
+            cost_per_1m_input=0.15,
+            cost_per_1m_output=0.15,
+        )
+
+    @property
+    def call_count(self) -> int:
+        return self._call_count
+
+
+class RidvayBackend:
+    """Ridvay OpenAI-compatible endpoint for Qwen and open-weight models."""
+
+    provider = LLMProvider.RIDVAY
+    DEFAULT_MODEL = "qwen/qwen3-30b-a3b"
+
+    def __init__(self, *, model: str = "", api_key: str | None = None, api_key_env: str = "RIDVAY_API_KEY") -> None:
+        self._model = model or self.DEFAULT_MODEL
+        self._default_model = self._model
+        self._api_key = api_key or ""
+        self._api_key_env = api_key_env
+        self._call_count = 0
+
+    def call(self, params: LLMInvocationParams) -> LLMResult:
+        self._call_count += 1
+        return _openai_compatible_call(
+            base_url="https://api.ridvay.com/v1",
+            api_key=self._api_key or os.environ.get(self._api_key_env, ""),
+            model=params.model_name or self._model,
+            messages=_params_to_messages(params),
+            max_tokens=params.max_tokens,
+            temperature=0.0,
+            provider=self.provider,
+            cost_per_1m_input=0.06,
+            cost_per_1m_output=0.22,
+        )
+
+    @property
+    def call_count(self) -> int:
+        return self._call_count
+
+
+class NeuroRoutersBackend:
+    """NeuroRouters OpenAI-compatible endpoint for routed free-tier models."""
+
+    provider = LLMProvider.NEUROROUTERS
+    DEFAULT_MODEL = "qwen/qwen3-30b-a3b:free"
+
+    def __init__(
+        self,
+        *,
+        model: str = "",
+        api_key: str | None = None,
+        api_key_env: str = "NEUROROUTERS_API_KEY",
+    ) -> None:
+        self._model = model or self.DEFAULT_MODEL
+        self._default_model = self._model
+        self._api_key = api_key or ""
+        self._api_key_env = api_key_env
+        self._call_count = 0
+
+    def call(self, params: LLMInvocationParams) -> LLMResult:
+        self._call_count += 1
+        return _openai_compatible_call(
+            base_url="https://neurorouters.com/api/v1",
+            api_key=self._api_key or os.environ.get(self._api_key_env, ""),
+            model=params.model_name or self._model,
+            messages=_params_to_messages(params),
+            max_tokens=params.max_tokens,
+            temperature=0.0,
+            provider=self.provider,
+            cost_per_1m_input=0.0,
+            cost_per_1m_output=0.0,
+        )
+
+    @property
+    def call_count(self) -> int:
+        return self._call_count
+
+
+class GlamaBackend:
+    """Glama Gateway OpenAI-compatible endpoint for hosted model routing."""
+
+    provider = LLMProvider.GLAMA
+    DEFAULT_MODEL = "deepseek-chat-v3"
+
+    def __init__(self, *, model: str = "", api_key: str | None = None, api_key_env: str = "GLAMA_API_KEY") -> None:
+        self._model = model or self.DEFAULT_MODEL
+        self._default_model = self._model
+        self._api_key = api_key or ""
+        self._api_key_env = api_key_env
+        self._call_count = 0
+
+    def call(self, params: LLMInvocationParams) -> LLMResult:
+        self._call_count += 1
+        return _openai_compatible_call(
+            base_url="https://gateway.glama.ai/v1",
+            api_key=self._api_key or os.environ.get(self._api_key_env, ""),
+            model=params.model_name or self._model,
+            messages=_params_to_messages(params),
+            max_tokens=params.max_tokens,
+            temperature=0.0,
+            provider=self.provider,
+            cost_per_1m_input=0.14,
+            cost_per_1m_output=0.28,
+        )
+
+    @property
+    def call_count(self) -> int:
+        return self._call_count
+
+
 # --- xAI Grok (real-time X data) ---
 
 
@@ -693,6 +1228,22 @@ ALL_PROVIDERS: dict[str, type] = {
     "nebius": NebiusBackend,
     "hyperbolic": HyperbolicBackend,
     "sambanova": SambaNovaBackend,
+    "cloudflare": CloudflareBackend,
+    "moonshot": MoonshotBackend,
+    "dashscope": DashScopeBackend,
+    "zai": ZAIBackend,
+    "siliconflow": SiliconFlowBackend,
+    "dinference": DInferenceBackend,
+    "chutes": ChutesBackend,
+    "wavespeed": WaveSpeedBackend,
+    "bazaarlink": BazaarLinkBackend,
+    "llamaapi": LlamaAPIBackend,
+    "parasail": ParasailBackend,
+    "featherless": FeatherlessBackend,
+    "packet": PacketBackend,
+    "ridvay": RidvayBackend,
+    "neurorouters": NeuroRoutersBackend,
+    "glama": GlamaBackend,
     "grok": GrokBackend,
     "mistral": MistralBackend,
     "openrouter": OpenRouterBackend,
@@ -722,8 +1273,27 @@ def available_providers() -> list[str]:
         "nebius": ("NEBIUS_API_KEY",),
         "hyperbolic": ("HYPERBOLIC_API_KEY",),
         "sambanova": ("SAMBANOVA_API_KEY",),
+        "cloudflare": ("CLOUDFLARE_API_TOKEN", "CLOUDFLARE_API_KEY"),
+        "moonshot": ("MOONSHOT_API_KEY",),
+        "dashscope": ("DASHSCOPE_API_KEY",),
+        "zai": ("ZAI_API_KEY",),
+        "siliconflow": ("SILICONFLOW_API_KEY",),
+        "dinference": ("DINFERENCE_API_KEY",),
+        "chutes": ("CHUTES_API_KEY",),
+        "wavespeed": ("WAVESPEED_API_KEY",),
+        "bazaarlink": ("BAZAARLINK_API_KEY",),
+        "llamaapi": ("LLAMA_API_KEY",),
+        "parasail": ("PARASAIL_API_KEY",),
+        "featherless": ("FEATHERLESS_API_KEY",),
+        "packet": ("PACKET_API_KEY",),
+        "ridvay": ("RIDVAY_API_KEY",),
+        "neurorouters": ("NEUROROUTERS_API_KEY",),
+        "glama": ("GLAMA_API_KEY",),
         "grok": ("XAI_API_KEY",),
         "mistral": ("MISTRAL_API_KEY",),
         "openrouter": ("OPENROUTER_API_KEY",),
     }
-    return [name for name, env_vars in env_map.items() if any(os.environ.get(env_var) for env_var in env_vars)]
+    available = [name for name, env_vars in env_map.items() if any(os.environ.get(env_var) for env_var in env_vars)]
+    if "cloudflare" in available and not os.environ.get("CLOUDFLARE_ACCOUNT_ID"):
+        available.remove("cloudflare")
+    return available
