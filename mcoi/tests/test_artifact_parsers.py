@@ -11,7 +11,6 @@ import pytest
 
 from mcoi_runtime.core.artifact_parsers import (
     ArchiveTestParser,
-    ArtifactParser,
     ArtifactParserRegistry,
     AudioTestParser,
     DocxTestParser,
@@ -32,6 +31,31 @@ from mcoi_runtime.contracts.artifact_parser import (
     ParserHealthReport,
     ParserStatus,
 )
+
+
+def _wav_bytes(
+    *,
+    data_bytes: int,
+    sample_rate: int,
+    channels: int,
+    bits_per_sample: int,
+) -> bytes:
+    byte_rate = sample_rate * channels * bits_per_sample // 8
+    block_align = channels * bits_per_sample // 8
+    header = bytearray()
+    header.extend(b"RIFF")
+    header.extend((36 + data_bytes).to_bytes(4, "little"))
+    header.extend(b"WAVEfmt ")
+    header.extend((16).to_bytes(4, "little"))
+    header.extend((1).to_bytes(2, "little"))
+    header.extend(channels.to_bytes(2, "little"))
+    header.extend(sample_rate.to_bytes(4, "little"))
+    header.extend(byte_rate.to_bytes(4, "little"))
+    header.extend(block_align.to_bytes(2, "little"))
+    header.extend(bits_per_sample.to_bytes(2, "little"))
+    header.extend(b"data")
+    header.extend(data_bytes.to_bytes(4, "little"))
+    return bytes(header) + (b"\x00" * min(data_bytes, 8))
 
 
 # ---- fixtures ---------------------------------------------------------------
@@ -511,9 +535,28 @@ class TestAudioTestParser:
     def test_can_parse_ogg(self) -> None:
         assert AudioTestParser().can_parse("audio.ogg", "", 0) is True
 
-    def test_parse_placeholder(self) -> None:
+    def test_parse_audio_metadata_not_placeholder(self) -> None:
         result = AudioTestParser().parse("art-1", "a.mp3", b"audio data")
-        assert "Audio transcript placeholder" in result.text_content
+        assert result.output_kind == ParseOutputKind.BINARY_DESCRIPTOR
+        assert "Audio metadata:" in result.text_content
+        assert "placeholder" not in result.text_content.lower()
+        assert result.extracted_metadata["detected_format"] == "unknown"
+
+    def test_parse_wav_header_extracts_audio_shape(self) -> None:
+        content = _wav_bytes(data_bytes=176400, sample_rate=44100, channels=2, bits_per_sample=16)
+        result = AudioTestParser().parse("art-1", "tone.wav", content)
+        assert result.structured_data["detected_format"] == "wav"
+        assert result.structured_data["sample_rate_hz"] == 44100
+        assert result.structured_data["channels"] == 2
+        assert result.structured_data["bits_per_sample"] == 16
+        assert result.structured_data["duration_seconds"] == 1.0
+        assert result.structured_data["data_bytes"] == 176400
+
+    def test_parse_mp3_estimates_payload_duration_without_id3(self) -> None:
+        result = AudioTestParser().parse("art-1", "song.mp3", b"\xff\xfb" + (b"x" * 31998))
+        assert result.structured_data["detected_format"] == "mp3"
+        assert result.structured_data["duration_seconds"] == 2.0
+        assert result.structured_data["container_bytes"] == 32000
 
 
 class TestArchiveTestParser:

@@ -16,7 +16,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from datetime import datetime, timezone
 from hashlib import sha256
-from typing import Any, Mapping
+from typing import Any
 
 from ..contracts.artifact_parser import (
     ArtifactParserDescriptor,
@@ -25,7 +25,6 @@ from ..contracts.artifact_parser import (
     ParseOutputKind,
     ParserCapabilityLevel,
     ParserCapabilityManifest,
-    ParserFailureMode,
     ParserFamily,
     ParserHealthReport,
     ParserStatus,
@@ -487,22 +486,107 @@ class ImageTestParser(_BaseTestParser):
 
 class AudioTestParser(_BaseTestParser):
     _FAMILY = ParserFamily.AUDIO
-    _NAME = "Audio Transcript Test Parser"
+    _NAME = "Audio Metadata Test Parser"
     _EXTENSIONS = (".mp3", ".wav", ".ogg", ".m4a", ".flac", ".aac")
     _MIME_TYPES = (
         "audio/mpeg", "audio/wav", "audio/ogg",
         "audio/mp4", "audio/flac", "audio/aac",
     )
-    _OUTPUT_KIND = ParseOutputKind.TEXT
+    _OUTPUT_KIND = ParseOutputKind.BINARY_DESCRIPTOR
 
     def __init__(self, parser_id: str | None = None) -> None:
         super().__init__(parser_id or "test-audio")
 
-    def _extract_text(self, content: bytes) -> str:
-        return f"[Audio transcript placeholder: {len(content)} bytes]"
-
     def _estimate_pages(self, content: bytes) -> int:
         return 1
+
+    def parse(
+        self, artifact_id: str, filename: str, content: bytes,
+    ) -> NormalizedParseOutput:
+        now = _now_iso()
+        self._parsed += 1
+        metadata = self._audio_metadata(filename, content)
+        duration = metadata["duration_seconds"]
+        duration_text = "unknown" if duration is None else f"{duration:.3f}s"
+        return NormalizedParseOutput(
+            output_id=stable_identifier("parse-out", {
+                "pid": self._id, "aid": artifact_id, "ts": now,
+            }),
+            parser_id=self._id,
+            artifact_id=artifact_id,
+            family=self._FAMILY,
+            output_kind=ParseOutputKind.BINARY_DESCRIPTOR,
+            text_content=(
+                f"Audio metadata: format={metadata['detected_format']}, "
+                f"duration={duration_text}, bytes={len(content)}"
+            ),
+            structured_data=metadata,
+            page_count=1,
+            word_count=0,
+            extracted_metadata={
+                "filename": filename,
+                "size_bytes": len(content),
+                "detected_format": metadata["detected_format"],
+                "parser": self._id,
+            },
+            parsed_at=now,
+        )
+
+    def _audio_metadata(self, filename: str, content: bytes) -> dict[str, Any]:
+        detected_format = self._detect_audio_format(filename, content)
+        sample_rate: int | None = None
+        channels: int | None = None
+        bits_per_sample: int | None = None
+        duration_seconds: float | None = None
+        data_bytes = len(content)
+
+        if detected_format == "wav" and len(content) >= 44:
+            channels = int.from_bytes(content[22:24], "little", signed=False) or None
+            sample_rate = int.from_bytes(content[24:28], "little", signed=False) or None
+            byte_rate = int.from_bytes(content[28:32], "little", signed=False)
+            bits_per_sample = int.from_bytes(content[34:36], "little", signed=False) or None
+            data_index = content.find(b"data")
+            if data_index >= 0 and len(content) >= data_index + 8:
+                data_bytes = int.from_bytes(content[data_index + 4:data_index + 8], "little", signed=False)
+            if byte_rate > 0:
+                duration_seconds = data_bytes / byte_rate
+        elif detected_format == "mp3":
+            payload_bytes = len(content)
+            if content[:3] == b"ID3" and len(content) >= 10:
+                tag_size = (
+                    (content[6] & 0x7F) << 21
+                    | (content[7] & 0x7F) << 14
+                    | (content[8] & 0x7F) << 7
+                    | (content[9] & 0x7F)
+                )
+                payload_bytes = max(0, len(content) - tag_size - 10)
+            duration_seconds = payload_bytes / 16000 if payload_bytes else None
+
+        return {
+            "detected_format": detected_format,
+            "sample_rate_hz": sample_rate,
+            "channels": channels,
+            "bits_per_sample": bits_per_sample,
+            "duration_seconds": duration_seconds,
+            "data_bytes": data_bytes,
+            "container_bytes": len(content),
+        }
+
+    def _detect_audio_format(self, filename: str, content: bytes) -> str:
+        lower = filename.lower()
+        if content[:4] == b"RIFF" and content[8:12] == b"WAVE":
+            return "wav"
+        if content[:3] == b"ID3" or content[:2] in (b"\xff\xfb", b"\xff\xf3", b"\xff\xf2"):
+            return "mp3"
+        if content[:4] == b"OggS":
+            return "ogg"
+        if content[:4] == b"fLaC":
+            return "flac"
+        if lower.endswith(".m4a"):
+            return "m4a"
+        if lower.endswith(".aac"):
+            return "aac"
+        return "unknown"
 
 
 class ArchiveTestParser(_BaseTestParser):
