@@ -197,6 +197,24 @@ from mcoi_runtime.contracts.customer_runtime import (
     ProductStatus,
     SubscriptionRecord,
 )
+from mcoi_runtime.contracts.partner_runtime import (
+    EcosystemAgreement,
+    EcosystemRole,
+    PartnerAccountLink,
+    PartnerClosureReport,
+    PartnerCommitment,
+    PartnerDecision,
+    PartnerDisposition,
+    PartnerHealthSnapshot,
+    PartnerHealthStatus,
+    PartnerKind,
+    PartnerRecord,
+    PartnerSnapshot,
+    PartnerStatus,
+    PartnerViolation,
+    RevenueShareRecord,
+    RevenueShareStatus,
+)
 from mcoi_runtime.contracts.recovery import RecoveryRecord
 
 
@@ -1565,6 +1583,145 @@ def _build_customer_closure_report(payload: dict) -> CustomerClosureReport:
     )
 
 
+def _build_partner_record(payload: dict) -> PartnerRecord:
+    return PartnerRecord(
+        partner_id=payload["partner_id"],
+        tenant_id=payload["tenant_id"],
+        display_name=payload["display_name"],
+        kind=PartnerKind(payload["kind"]),
+        status=PartnerStatus(payload["status"]),
+        tier=payload["tier"],
+        account_link_count=payload["account_link_count"],
+        created_at=payload["created_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_partner_account_link(payload: dict) -> PartnerAccountLink:
+    return PartnerAccountLink(
+        link_id=payload["link_id"],
+        partner_id=payload["partner_id"],
+        account_id=payload["account_id"],
+        tenant_id=payload["tenant_id"],
+        role=EcosystemRole(payload["role"]),
+        created_at=payload["created_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_ecosystem_agreement(payload: dict) -> EcosystemAgreement:
+    return EcosystemAgreement(
+        agreement_id=payload["agreement_id"],
+        partner_id=payload["partner_id"],
+        tenant_id=payload["tenant_id"],
+        title=payload["title"],
+        contract_ref=payload["contract_ref"],
+        revenue_share_pct=payload["revenue_share_pct"],
+        created_at=payload["created_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_revenue_share_record(payload: dict) -> RevenueShareRecord:
+    return RevenueShareRecord(
+        share_id=payload["share_id"],
+        partner_id=payload["partner_id"],
+        agreement_id=payload["agreement_id"],
+        tenant_id=payload["tenant_id"],
+        gross_amount=payload["gross_amount"],
+        share_amount=payload["share_amount"],
+        share_pct=payload["share_pct"],
+        status=RevenueShareStatus(payload["status"]),
+        created_at=payload["created_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_partner_commitment(payload: dict) -> PartnerCommitment:
+    return PartnerCommitment(
+        commitment_id=payload["commitment_id"],
+        partner_id=payload["partner_id"],
+        tenant_id=payload["tenant_id"],
+        description=payload["description"],
+        target_value=payload["target_value"],
+        actual_value=payload["actual_value"],
+        met=payload["met"],
+        assessed_at=payload["assessed_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_partner_health_snapshot(payload: dict) -> PartnerHealthSnapshot:
+    return PartnerHealthSnapshot(
+        snapshot_id=payload["snapshot_id"],
+        partner_id=payload["partner_id"],
+        tenant_id=payload["tenant_id"],
+        health_status=PartnerHealthStatus(payload["health_status"]),
+        health_score=payload["health_score"],
+        sla_breaches=payload["sla_breaches"],
+        open_cases=payload["open_cases"],
+        billing_issues=payload["billing_issues"],
+        commitment_failures=payload["commitment_failures"],
+        captured_at=payload["captured_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_partner_decision(payload: dict) -> PartnerDecision:
+    return PartnerDecision(
+        decision_id=payload["decision_id"],
+        tenant_id=payload["tenant_id"],
+        partner_id=payload["partner_id"],
+        disposition=PartnerDisposition(payload["disposition"]),
+        reason=payload["reason"],
+        decided_at=payload["decided_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_partner_violation(payload: dict) -> PartnerViolation:
+    return PartnerViolation(
+        violation_id=payload["violation_id"],
+        tenant_id=payload["tenant_id"],
+        partner_id=payload["partner_id"],
+        operation=payload["operation"],
+        reason=payload["reason"],
+        detected_at=payload["detected_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_partner_snapshot(payload: dict) -> PartnerSnapshot:
+    return PartnerSnapshot(
+        snapshot_id=payload["snapshot_id"],
+        total_partners=payload["total_partners"],
+        total_links=payload["total_links"],
+        total_agreements=payload["total_agreements"],
+        total_revenue_shares=payload["total_revenue_shares"],
+        total_commitments=payload["total_commitments"],
+        total_health_snapshots=payload["total_health_snapshots"],
+        total_decisions=payload["total_decisions"],
+        total_violations=payload["total_violations"],
+        captured_at=payload["captured_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_partner_closure_report(payload: dict) -> PartnerClosureReport:
+    return PartnerClosureReport(
+        report_id=payload["report_id"],
+        tenant_id=payload["tenant_id"],
+        total_partners=payload["total_partners"],
+        total_links=payload["total_links"],
+        total_agreements=payload["total_agreements"],
+        total_revenue_shares=payload["total_revenue_shares"],
+        total_commitments=payload["total_commitments"],
+        total_violations=payload["total_violations"],
+        closed_at=payload["closed_at"],
+        metadata=payload["metadata"],
+    )
+
+
 @pytest.mark.parametrize(
     ("fixture_name", "builder"),
     [
@@ -1644,13 +1801,23 @@ def _build_customer_closure_report(payload: dict) -> CustomerClosureReport:
         ("merge_decision.json", _build_merge_decision),
         ("payment_record.json", _build_payment_record),
         ("penalty_record.json", _build_penalty_record),
+        ("partner_account_link.json", _build_partner_account_link),
+        ("partner_closure_report.json", _build_partner_closure_report),
+        ("partner_commitment.json", _build_partner_commitment),
+        ("partner_decision.json", _build_partner_decision),
+        ("partner_health_snapshot.json", _build_partner_health_snapshot),
+        ("partner_record.json", _build_partner_record),
+        ("partner_snapshot.json", _build_partner_snapshot),
+        ("partner_violation.json", _build_partner_violation),
         ("product_record.json", _build_product_record),
+        ("ecosystem_agreement.json", _build_ecosystem_agreement),
         ("recovery_objective.json", _build_recovery_objective),
         ("recovery_execution.json", _build_recovery_execution),
         ("recovery_decision.json", _build_recovery_decision),
         ("recovery_attempt.json", _build_recovery_attempt),
         ("recovery_plan.json", _build_recovery_plan),
         ("recovery_record.json", _build_recovery_record),
+        ("revenue_share_record.json", _build_revenue_share_record),
         ("revenue_snapshot.json", _build_revenue_snapshot),
         ("refund_record.json", _build_refund_record),
         ("remedy_record.json", _build_remedy_record),

@@ -1,0 +1,12 @@
+{
+  "violation_id": "partner-violation-20260515",
+  "tenant_id": "tenant-mullu-primary",
+  "partner_id": "partner-ecosystem-17",
+  "operation": "agreement_review",
+  "reason": "Quarterly attestation packet arrived after the governed submission window.",
+  "detected_at": "2026-05-15T11:45:00+00:00",
+  "metadata": {
+    "severity": "low",
+    "policy_pack": "default-safe"
+  }
+}

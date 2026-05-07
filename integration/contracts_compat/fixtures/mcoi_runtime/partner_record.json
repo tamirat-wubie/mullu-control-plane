@@ -1,0 +1,14 @@
+{
+  "partner_id": "partner-ecosystem-17",
+  "tenant_id": "tenant-mullu-primary",
+  "display_name": "Addis Integration Collective",
+  "kind": "service_partner",
+  "status": "active",
+  "tier": "strategic",
+  "account_link_count": 3,
+  "created_at": "2026-05-01T09:00:00+00:00",
+  "metadata": {
+    "region": "east-africa",
+    "channel": "implementation"
+  }
+}

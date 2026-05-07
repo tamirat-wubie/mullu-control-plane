@@ -213,6 +213,16 @@ def test_example_inventory_covers_shipped_and_pilot_artifacts() -> None:
     assert "customer_violation.json" in mcoi_runtime_fixture_names
     assert "customer_snapshot.json" in mcoi_runtime_fixture_names
     assert "customer_closure_report.json" in mcoi_runtime_fixture_names
+    assert "partner_record.json" in mcoi_runtime_fixture_names
+    assert "partner_account_link.json" in mcoi_runtime_fixture_names
+    assert "ecosystem_agreement.json" in mcoi_runtime_fixture_names
+    assert "revenue_share_record.json" in mcoi_runtime_fixture_names
+    assert "partner_commitment.json" in mcoi_runtime_fixture_names
+    assert "partner_health_snapshot.json" in mcoi_runtime_fixture_names
+    assert "partner_decision.json" in mcoi_runtime_fixture_names
+    assert "partner_violation.json" in mcoi_runtime_fixture_names
+    assert "partner_snapshot.json" in mcoi_runtime_fixture_names
+    assert "partner_closure_report.json" in mcoi_runtime_fixture_names
     assert "approval_gated_command" in pilot_names
 
 
@@ -225,7 +235,7 @@ def test_validate_example_artifacts_strictly() -> None:
     assert len(inventory.request_paths) >= 3
     assert len(inventory.auxiliary_paths) >= 1
     assert len(inventory.maf_runtime_fixture_paths) >= 89
-    assert len(inventory.mcoi_runtime_fixture_paths) >= 99
+    assert len(inventory.mcoi_runtime_fixture_paths) >= 109
 
 
 def test_validate_maf_runtime_fixtures_strictly() -> None:
@@ -2085,6 +2095,85 @@ def test_validate_mcoi_runtime_fixture_rejects_customer_closure_account_underflo
 
     assert len(errors) == 1
     assert "total_accounts must be at least total_customers" in errors[0]
+    assert fixture_path.name in errors[0]
+
+
+def test_validate_mcoi_runtime_fixture_rejects_partner_self_link(tmp_path: Path) -> None:
+    fixture_path = tmp_path / "partner_account_link.json"
+    fixture_path.write_text(
+        json.dumps(
+            {
+                "link_id": "partner-link-drift",
+                "partner_id": "shared-identity-7",
+                "account_id": "shared-identity-7",
+                "tenant_id": "tenant-1",
+                "role": "integrator",
+                "created_at": "2026-05-02T12:30:00+00:00",
+                "metadata": {"source": "test"},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_artifacts.validate_mcoi_runtime_fixture(fixture_path)
+
+    assert len(errors) == 1
+    assert "partner_id must not equal account_id" in errors[0]
+    assert fixture_path.name in errors[0]
+
+
+def test_validate_mcoi_runtime_fixture_rejects_partner_share_amount_overflow(tmp_path: Path) -> None:
+    fixture_path = tmp_path / "revenue_share_record.json"
+    fixture_path.write_text(
+        json.dumps(
+            {
+                "share_id": "share-drift",
+                "partner_id": "partner-1",
+                "agreement_id": "agreement-1",
+                "tenant_id": "tenant-1",
+                "gross_amount": 1000.0,
+                "share_amount": 350.0,
+                "share_pct": 0.2,
+                "status": "settled",
+                "created_at": "2026-05-02T12:00:00+00:00",
+                "metadata": {"period": "2026-05"},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_artifacts.validate_mcoi_runtime_fixture(fixture_path)
+
+    assert len(errors) == 1
+    assert "share_amount must not exceed gross_amount multiplied by share_pct" in errors[0]
+    assert fixture_path.name in errors[0]
+
+
+def test_validate_mcoi_runtime_fixture_rejects_partner_snapshot_health_overflow(tmp_path: Path) -> None:
+    fixture_path = tmp_path / "partner_snapshot.json"
+    fixture_path.write_text(
+        json.dumps(
+            {
+                "snapshot_id": "partner-snapshot-drift",
+                "total_partners": 3,
+                "total_links": 4,
+                "total_agreements": 3,
+                "total_revenue_shares": 4,
+                "total_commitments": 5,
+                "total_health_snapshots": 5,
+                "total_decisions": 2,
+                "total_violations": 1,
+                "captured_at": "2026-05-02T13:00:00+00:00",
+                "metadata": {"scope": "tenant"},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_artifacts.validate_mcoi_runtime_fixture(fixture_path)
+
+    assert len(errors) == 1
+    assert "total_health_snapshots must not exceed total_partners" in errors[0]
     assert fixture_path.name in errors[0]
 
 
