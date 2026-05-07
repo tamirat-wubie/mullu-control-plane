@@ -1,0 +1,15 @@
+{
+  "request_id": "procurement-request-20260505",
+  "vendor_id": "vendor-governance-42",
+  "tenant_id": "tenant-mullu-primary",
+  "status": "approved",
+  "description": "Acquire governed observability capacity for the next release window.",
+  "estimated_amount": 18500.0,
+  "currency": "USD",
+  "requested_by": "ops-governance-lead",
+  "requested_at": "2026-05-05T09:00:00+00:00",
+  "metadata": {
+    "cost_center": "platform-reliability",
+    "priority": "high"
+  }
+}

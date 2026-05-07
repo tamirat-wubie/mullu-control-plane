@@ -233,6 +233,16 @@ def test_example_inventory_covers_shipped_and_pilot_artifacts() -> None:
     assert "marketplace_snapshot.json" in mcoi_runtime_fixture_names
     assert "marketplace_violation.json" in mcoi_runtime_fixture_names
     assert "marketplace_closure_report.json" in mcoi_runtime_fixture_names
+    assert "vendor_record.json" in mcoi_runtime_fixture_names
+    assert "procurement_request.json" in mcoi_runtime_fixture_names
+    assert "purchase_order.json" in mcoi_runtime_fixture_names
+    assert "vendor_assessment.json" in mcoi_runtime_fixture_names
+    assert "vendor_commitment.json" in mcoi_runtime_fixture_names
+    assert "procurement_decision.json" in mcoi_runtime_fixture_names
+    assert "procurement_renewal_window.json" in mcoi_runtime_fixture_names
+    assert "vendor_violation.json" in mcoi_runtime_fixture_names
+    assert "procurement_snapshot.json" in mcoi_runtime_fixture_names
+    assert "procurement_closure_report.json" in mcoi_runtime_fixture_names
     assert "approval_gated_command" in pilot_names
 
 
@@ -245,7 +255,7 @@ def test_validate_example_artifacts_strictly() -> None:
     assert len(inventory.request_paths) >= 3
     assert len(inventory.auxiliary_paths) >= 1
     assert len(inventory.maf_runtime_fixture_paths) >= 89
-    assert len(inventory.mcoi_runtime_fixture_paths) >= 119
+    assert len(inventory.mcoi_runtime_fixture_paths) >= 129
 
 
 def test_validate_maf_runtime_fixtures_strictly() -> None:
@@ -2264,6 +2274,83 @@ def test_validate_mcoi_runtime_fixture_rejects_marketplace_active_listing_overfl
 
     assert len(errors) == 1
     assert "active_listings must not exceed total_listings" in errors[0]
+    assert fixture_path.name in errors[0]
+
+
+def test_validate_mcoi_runtime_fixture_rejects_procurement_purchase_order_zero_amount(tmp_path: Path) -> None:
+    fixture_path = tmp_path / "purchase_order.json"
+    fixture_path.write_text(
+        json.dumps(
+            {
+                "po_id": "po-drift",
+                "request_id": "request-1",
+                "vendor_id": "vendor-1",
+                "tenant_id": "tenant-1",
+                "status": "issued",
+                "amount": 0.0,
+                "currency": "USD",
+                "issued_at": "2026-05-05T10:00:00+00:00",
+                "metadata": {"source": "test"},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_artifacts.validate_mcoi_runtime_fixture(fixture_path)
+
+    assert len(errors) == 1
+    assert "amount must be positive for a purchase order" in errors[0]
+    assert fixture_path.name in errors[0]
+
+
+def test_validate_mcoi_runtime_fixture_rejects_procurement_renewal_reverse_window(tmp_path: Path) -> None:
+    fixture_path = tmp_path / "procurement_renewal_window.json"
+    fixture_path.write_text(
+        json.dumps(
+            {
+                "renewal_id": "renewal-drift",
+                "vendor_id": "vendor-1",
+                "contract_ref": "contract-1",
+                "disposition": "pending",
+                "opens_at": "2026-06-01T00:00:00+00:00",
+                "closes_at": "2026-05-01T00:00:00+00:00",
+                "metadata": {"source": "test"},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_artifacts.validate_mcoi_runtime_fixture(fixture_path)
+
+    assert len(errors) == 1
+    assert "closes_at must not precede opens_at" in errors[0]
+    assert fixture_path.name in errors[0]
+
+
+def test_validate_mcoi_runtime_fixture_rejects_procurement_closure_tally_overflow(tmp_path: Path) -> None:
+    fixture_path = tmp_path / "procurement_closure_report.json"
+    fixture_path.write_text(
+        json.dumps(
+            {
+                "report_id": "procurement-closure-drift",
+                "tenant_id": "tenant-1",
+                "total_vendors": 4,
+                "total_requests": 6,
+                "total_purchase_orders": 5,
+                "total_fulfilled": 4,
+                "total_cancelled": 2,
+                "total_procurement_value": 12000.0,
+                "closed_at": "2026-05-31T23:59:00+00:00",
+                "metadata": {"period": "2026-05"},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_artifacts.validate_mcoi_runtime_fixture(fixture_path)
+
+    assert len(errors) == 1
+    assert "total_fulfilled plus total_cancelled must not exceed total_purchase_orders" in errors[0]
     assert fixture_path.name in errors[0]
 
 

@@ -1,0 +1,14 @@
+{
+  "po_id": "purchase-order-20260505",
+  "request_id": "procurement-request-20260505",
+  "vendor_id": "vendor-governance-42",
+  "tenant_id": "tenant-mullu-primary",
+  "status": "issued",
+  "amount": 18250.0,
+  "currency": "USD",
+  "issued_at": "2026-05-05T10:30:00+00:00",
+  "metadata": {
+    "approver": "finance-controller",
+    "delivery_window": "2026-Q2"
+  }
+}

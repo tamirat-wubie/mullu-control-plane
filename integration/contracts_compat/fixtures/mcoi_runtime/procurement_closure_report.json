@@ -1,0 +1,15 @@
+{
+  "report_id": "procurement-closure-20260505",
+  "tenant_id": "tenant-mullu-primary",
+  "total_vendors": 5,
+  "total_requests": 7,
+  "total_purchase_orders": 6,
+  "total_fulfilled": 4,
+  "total_cancelled": 1,
+  "total_procurement_value": 74250.0,
+  "closed_at": "2026-05-05T23:59:00+00:00",
+  "metadata": {
+    "period": "2026-05-05",
+    "closed_by": "procurement-runtime-closure"
+  }
+}

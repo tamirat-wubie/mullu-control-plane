@@ -233,6 +233,24 @@ from mcoi_runtime.contracts.marketplace_runtime import (
     PricingBinding,
     PricingDisposition,
 )
+from mcoi_runtime.contracts.procurement_runtime import (
+    ProcurementClosureReport,
+    ProcurementDecision,
+    ProcurementDecisionStatus,
+    ProcurementRenewalWindow,
+    ProcurementRequest,
+    ProcurementRequestStatus,
+    ProcurementSnapshot,
+    PurchaseOrder,
+    PurchaseOrderStatus,
+    RenewalDisposition,
+    VendorAssessment,
+    VendorCommitment,
+    VendorRecord,
+    VendorRiskLevel,
+    VendorStatus,
+    VendorViolation,
+)
 from mcoi_runtime.contracts.recovery import RecoveryRecord
 
 
@@ -1875,6 +1893,140 @@ def _build_marketplace_closure_report(payload: dict) -> MarketplaceClosureReport
     )
 
 
+def _build_vendor_record(payload: dict) -> VendorRecord:
+    return VendorRecord(
+        vendor_id=payload["vendor_id"],
+        name=payload["name"],
+        tenant_id=payload["tenant_id"],
+        status=VendorStatus(payload["status"]),
+        risk_level=VendorRiskLevel(payload["risk_level"]),
+        category=payload["category"],
+        registered_at=payload["registered_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_procurement_request(payload: dict) -> ProcurementRequest:
+    return ProcurementRequest(
+        request_id=payload["request_id"],
+        vendor_id=payload["vendor_id"],
+        tenant_id=payload["tenant_id"],
+        status=ProcurementRequestStatus(payload["status"]),
+        description=payload["description"],
+        estimated_amount=payload["estimated_amount"],
+        currency=payload["currency"],
+        requested_by=payload["requested_by"],
+        requested_at=payload["requested_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_purchase_order(payload: dict) -> PurchaseOrder:
+    return PurchaseOrder(
+        po_id=payload["po_id"],
+        request_id=payload["request_id"],
+        vendor_id=payload["vendor_id"],
+        tenant_id=payload["tenant_id"],
+        status=PurchaseOrderStatus(payload["status"]),
+        amount=payload["amount"],
+        currency=payload["currency"],
+        issued_at=payload["issued_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_vendor_assessment(payload: dict) -> VendorAssessment:
+    return VendorAssessment(
+        assessment_id=payload["assessment_id"],
+        vendor_id=payload["vendor_id"],
+        risk_level=VendorRiskLevel(payload["risk_level"]),
+        performance_score=payload["performance_score"],
+        fault_count=payload["fault_count"],
+        assessed_by=payload["assessed_by"],
+        assessed_at=payload["assessed_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_vendor_commitment(payload: dict) -> VendorCommitment:
+    return VendorCommitment(
+        commitment_id=payload["commitment_id"],
+        vendor_id=payload["vendor_id"],
+        contract_ref=payload["contract_ref"],
+        description=payload["description"],
+        target_value=payload["target_value"],
+        created_at=payload["created_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_procurement_decision(payload: dict) -> ProcurementDecision:
+    return ProcurementDecision(
+        decision_id=payload["decision_id"],
+        request_id=payload["request_id"],
+        status=ProcurementDecisionStatus(payload["status"]),
+        decided_by=payload["decided_by"],
+        reason=payload["reason"],
+        decided_at=payload["decided_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_procurement_renewal_window(payload: dict) -> ProcurementRenewalWindow:
+    return ProcurementRenewalWindow(
+        renewal_id=payload["renewal_id"],
+        vendor_id=payload["vendor_id"],
+        contract_ref=payload["contract_ref"],
+        disposition=RenewalDisposition(payload["disposition"]),
+        opens_at=payload["opens_at"],
+        closes_at=payload["closes_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_vendor_violation(payload: dict) -> VendorViolation:
+    return VendorViolation(
+        violation_id=payload["violation_id"],
+        vendor_id=payload["vendor_id"],
+        tenant_id=payload["tenant_id"],
+        operation=payload["operation"],
+        reason=payload["reason"],
+        detected_at=payload["detected_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_procurement_snapshot(payload: dict) -> ProcurementSnapshot:
+    return ProcurementSnapshot(
+        snapshot_id=payload["snapshot_id"],
+        total_vendors=payload["total_vendors"],
+        total_requests=payload["total_requests"],
+        total_purchase_orders=payload["total_purchase_orders"],
+        total_assessments=payload["total_assessments"],
+        total_commitments=payload["total_commitments"],
+        total_renewals=payload["total_renewals"],
+        total_violations=payload["total_violations"],
+        total_procurement_value=payload["total_procurement_value"],
+        captured_at=payload["captured_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_procurement_closure_report(payload: dict) -> ProcurementClosureReport:
+    return ProcurementClosureReport(
+        report_id=payload["report_id"],
+        tenant_id=payload["tenant_id"],
+        total_vendors=payload["total_vendors"],
+        total_requests=payload["total_requests"],
+        total_purchase_orders=payload["total_purchase_orders"],
+        total_fulfilled=payload["total_fulfilled"],
+        total_cancelled=payload["total_cancelled"],
+        total_procurement_value=payload["total_procurement_value"],
+        closed_at=payload["closed_at"],
+        metadata=payload["metadata"],
+    )
+
+
 @pytest.mark.parametrize(
     ("fixture_name", "builder"),
     [
@@ -1969,7 +2121,13 @@ def _build_marketplace_closure_report(payload: dict) -> MarketplaceClosureReport
         ("partner_snapshot.json", _build_partner_snapshot),
         ("partner_violation.json", _build_partner_violation),
         ("pricing_binding.json", _build_pricing_binding),
+        ("procurement_closure_report.json", _build_procurement_closure_report),
+        ("procurement_decision.json", _build_procurement_decision),
+        ("procurement_renewal_window.json", _build_procurement_renewal_window),
+        ("procurement_request.json", _build_procurement_request),
+        ("procurement_snapshot.json", _build_procurement_snapshot),
         ("product_record.json", _build_product_record),
+        ("purchase_order.json", _build_purchase_order),
         ("offering_record.json", _build_offering_record),
         ("bundle_record.json", _build_bundle_record),
         ("eligibility_rule.json", _build_eligibility_rule),
@@ -1994,6 +2152,10 @@ def _build_marketplace_closure_report(payload: dict) -> MarketplaceClosureReport
         ("sla_window.json", _build_sla_window),
         ("subscription_record.json", _build_subscription_record),
         ("verification_record.json", _build_verification_record),
+        ("vendor_assessment.json", _build_vendor_assessment),
+        ("vendor_commitment.json", _build_vendor_commitment),
+        ("vendor_record.json", _build_vendor_record),
+        ("vendor_violation.json", _build_vendor_violation),
         ("writeoff_record.json", _build_writeoff_record),
         ("account_health_snapshot.json", _build_account_health_snapshot),
         ("account_record.json", _build_account_record),
