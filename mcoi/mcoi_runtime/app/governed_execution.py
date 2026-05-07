@@ -141,6 +141,7 @@ def universal_command_dispatch(
     *,
     template: Mapping[str, Any],
     bindings: Mapping[str, str] | None = None,
+    dispatch_route: str = "",
     mode: str = "simulation",
 ) -> UniversalActionResult:
     """Dispatch a command-ledger command through the universal action kernel.
@@ -161,7 +162,7 @@ def universal_command_dispatch(
 
     request = DispatchRequest(
         goal_id=command.command_id,
-        route=action.capability,
+        route=dispatch_route or action.capability,
         template=template,
         bindings=dict(bindings or {}),
     )

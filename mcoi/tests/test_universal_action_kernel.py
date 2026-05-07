@@ -253,16 +253,8 @@ def test_universal_command_dispatch_binds_command_spine_transitions() -> None:
         source="web",
         conversation_id="conversation-1",
         idempotency_key="idem-universal-command",
-        intent="shell_command",
-        payload={
-            "body": "run shell command",
-            "capability_intent": {
-                "domain": "runtime",
-                "action": "shell_command",
-                "capability_id": "shell_command",
-                "params": {"msg": "hello"},
-            },
-        },
+        intent="llm_completion",
+        payload={"body": "run shell command"},
     )
 
     result = universal_command_dispatch(
@@ -271,6 +263,7 @@ def test_universal_command_dispatch_binds_command_spine_transitions() -> None:
         command.command_id,
         template=VALID_TEMPLATE,
         bindings={"msg": "hello"},
+        dispatch_route="shell_command",
     )
     current = ledger.get(command.command_id)
     events = ledger.events_for(command.command_id)
@@ -311,16 +304,8 @@ def test_universal_command_dispatch_records_blocked_kernel_result() -> None:
         source="web",
         conversation_id="conversation-1",
         idempotency_key="idem-universal-block",
-        intent="shell_command",
-        payload={
-            "body": "run shell command",
-            "capability_intent": {
-                "domain": "runtime",
-                "action": "shell_command",
-                "capability_id": "shell_command",
-                "params": {"msg": "hello"},
-            },
-        },
+        intent="llm_completion",
+        payload={"body": "run shell command"},
     )
 
     result = universal_command_dispatch(
@@ -329,6 +314,7 @@ def test_universal_command_dispatch_records_blocked_kernel_result() -> None:
         command.command_id,
         template=VALID_TEMPLATE,
         bindings={"msg": "hello"},
+        dispatch_route="shell_command",
     )
     current = ledger.get(command.command_id)
     events = ledger.events_for(command.command_id)

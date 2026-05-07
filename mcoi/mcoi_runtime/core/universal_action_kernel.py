@@ -299,7 +299,7 @@ class UniversalActionKernel:
     ) -> PlanCertificate:
         plan_item = PlanItem(
             item_id=f"step-{request.intent_id}-dispatch",
-            description=f"Dispatch {request.dispatch_request.route} through governed capability",
+            description="Dispatch through governed capability",
             order=0,
         )
         plan = Plan(
@@ -320,6 +320,7 @@ class UniversalActionKernel:
             updated_at=issued_at,
             metadata={
                 "tenant_id": request.tenant_id,
+                "route": request.dispatch_request.route,
                 "capability_id": capability_decision.capability_id,
                 "evidence_required": capability_decision.evidence_required,
             },
@@ -349,7 +350,7 @@ class UniversalActionKernel:
             request_id=stable_identifier("sim-request", {"plan_id": plan_certificate.plan.plan_id}),
             context_type="plan",
             context_id=plan_certificate.plan.plan_id,
-            description=f"Dry-run plan {plan_certificate.plan.plan_id}",
+            description="Dry-run governed action plan",
             options=(option,),
         )
         comparison, verdict = self._simulator.full_simulation(
