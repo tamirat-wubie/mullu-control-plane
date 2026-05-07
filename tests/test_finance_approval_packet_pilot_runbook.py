@@ -39,4 +39,9 @@ def test_finance_runbook_documents_strict_promotion_boundary() -> None:
     assert "only live connector touchpoint" in content
     assert "validates the aggregate handoff chain" in content
     assert "validates the operator summary schema" in content
+    assert "Email/calendar recovery requires three operator bindings" in content
+    assert "MULLU_EMAIL_CALENDAR_WORKER_URL and MULLU_EMAIL_CALENDAR_WORKER_SECRET" in content
+    assert "EMAIL_CALENDAR_CONNECTOR_SCOPE_ID=gmail.readonly" in content
+    assert "GOOGLE_CALENDAR_SCOPE_ID=calendar.events.readonly" in content
+    assert "Do not use write-capable scope witnesses" in content
     assert expected_manifest_result in content
