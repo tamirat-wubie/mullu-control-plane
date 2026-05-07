@@ -480,7 +480,7 @@ class NebiusBackend:
     def call(self, params: LLMInvocationParams) -> LLMResult:
         self._call_count += 1
         return _openai_compatible_call(
-            base_url="https://api.studio.nebius.com/v1",
+            base_url="https://api.tokenfactory.nebius.com/v1",
             api_key=self._api_key or os.environ.get(self._api_key_env, ""),
             model=params.model_name or self._model,
             messages=_params_to_messages(params),

@@ -569,7 +569,7 @@ def _register_providers(
         },
         "nebius": {
             "name": "Nebius",
-            "base_url": "https://api.studio.nebius.com/v1",
+            "base_url": "https://api.tokenfactory.nebius.com/v1",
             "rate_limit": 120,
             "cost_limit": 0.25,
         },
