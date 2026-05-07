@@ -42,6 +42,25 @@ class OperatorMILDispatchResult:
     instruction_trace: tuple[str, ...]
 
 
+@dataclass(frozen=True, slots=True)
+class UniversalCommandProofView:
+    """Replayable read model for a command's universal action proof chain."""
+
+    command_id: str
+    action_id: str
+    blocked: bool
+    block_reason: str
+    proof_hash: str
+    capability_id: str
+    dispatch_ledger_hash: str
+    terminal_certificate_id: str
+    terminal_disposition: str
+    learning_admission_id: str
+    learning_status: str
+    event_hashes: tuple[str, ...]
+    state_sequence: tuple[str, ...]
+
+
 def governed_operator_dispatch(
     governed: GovernedDispatcher,
     request: DispatchRequest,
@@ -216,6 +235,71 @@ def universal_command_dispatch(
             },
         )
     return result
+
+
+def universal_command_proof_view(
+    command_ledger: object,
+    command_id: str,
+) -> UniversalCommandProofView | None:
+    """Reconstruct the universal action proof chain from command events.
+
+    The read model intentionally relies only on persisted command events. It can
+    therefore answer audit/read-path questions after a process restart without
+    requiring the in-memory UniversalActionResult object.
+    """
+    events = command_ledger.events_for(command_id)
+    if not events:
+        return None
+
+    universal_detail: Mapping[str, Any] | None = None
+    terminal_certificate_id = ""
+    terminal_disposition = ""
+    learning_admission_id = ""
+    learning_status = ""
+    event_hashes: list[str] = []
+    state_sequence: list[str] = []
+
+    for event in events:
+        event_hash = str(getattr(event, "event_hash", ""))
+        if event_hash:
+            event_hashes.append(event_hash)
+        next_state = getattr(event, "next_state", "")
+        state_value = str(getattr(next_state, "value", next_state))
+        if state_value:
+            state_sequence.append(state_value)
+        detail = getattr(event, "detail", {})
+        if not isinstance(detail, Mapping):
+            continue
+        candidate = detail.get("universal_action")
+        if isinstance(candidate, Mapping):
+            universal_detail = candidate
+        if isinstance(detail.get("terminal_certificate_id"), str):
+            terminal_certificate_id = str(detail["terminal_certificate_id"])
+            terminal_disposition = str(detail.get("terminal_disposition", ""))
+        if isinstance(detail.get("learning_admission_id"), str):
+            learning_admission_id = str(detail["learning_admission_id"])
+            learning_status = str(detail.get("learning_status", ""))
+
+    if universal_detail is None:
+        return None
+
+    return UniversalCommandProofView(
+        command_id=command_id,
+        action_id=str(universal_detail.get("action_id", "")),
+        blocked=bool(universal_detail.get("blocked", False)),
+        block_reason=str(universal_detail.get("block_reason", "")),
+        proof_hash=str(universal_detail.get("proof_hash", "")),
+        capability_id=str(universal_detail.get("capability_id", "")),
+        dispatch_ledger_hash=str(universal_detail.get("dispatch_ledger_hash", "")),
+        terminal_certificate_id=terminal_certificate_id
+        or str(universal_detail.get("terminal_certificate_id", "")),
+        terminal_disposition=terminal_disposition,
+        learning_admission_id=learning_admission_id
+        or str(universal_detail.get("learning_admission_id", "")),
+        learning_status=learning_status,
+        event_hashes=tuple(event_hashes),
+        state_sequence=tuple(state_sequence),
+    )
 
 
 def build_universal_operator_kernel(

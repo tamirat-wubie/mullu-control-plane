@@ -22,6 +22,7 @@ from gateway.command_spine import CommandLedger, CommandState, InMemoryCommandLe
 from mcoi_runtime.app.governed_execution import (
     build_universal_operator_kernel,
     universal_command_dispatch,
+    universal_command_proof_view,
     universal_operator_dispatch,
 )
 from mcoi_runtime.contracts.execution import EffectRecord, ExecutionOutcome, ExecutionResult
@@ -284,6 +285,47 @@ def test_universal_command_dispatch_binds_command_spine_transitions() -> None:
     assert events[-1].detail["proof_hash"] == result.proof_hash
 
 
+def test_universal_command_proof_view_replays_persisted_success_events() -> None:
+    kernel, _executor = _kernel_with_capability()
+    store = InMemoryCommandLedgerStore()
+    ledger = CommandLedger(clock=_clock, store=store)
+    command = ledger.create_command(
+        tenant_id="tenant-1",
+        actor_id="actor-1",
+        source="web",
+        conversation_id="conversation-1",
+        idempotency_key="idem-universal-proof-view",
+        intent="llm_completion",
+        payload={"body": "run shell command"},
+    )
+
+    result = universal_command_dispatch(
+        ledger,
+        kernel,
+        command.command_id,
+        template=VALID_TEMPLATE,
+        bindings={"msg": "hello"},
+        dispatch_route="shell_command",
+    )
+    reloaded_ledger = CommandLedger(clock=_clock, store=store)
+
+    proof = universal_command_proof_view(reloaded_ledger, command.command_id)
+
+    assert proof is not None
+    assert proof.command_id == command.command_id
+    assert proof.blocked is False
+    assert proof.proof_hash == result.proof_hash
+    assert proof.capability_id == "shell_command"
+    assert proof.dispatch_ledger_hash == result.dispatch_result.ledger_hash
+    assert proof.terminal_certificate_id == result.terminal_certificate.certificate_id
+    assert proof.terminal_disposition == TerminalClosureDisposition.COMMITTED.value
+    assert proof.learning_admission_id == result.learning_decision.admission_id
+    assert proof.learning_status == LearningAdmissionStatus.ADMIT.value
+    assert CommandState.DISPATCHED.value in proof.state_sequence
+    assert CommandState.LEARNING_DECIDED.value in proof.state_sequence
+    assert len(proof.event_hashes) >= 5
+
+
 def test_universal_command_dispatch_records_blocked_kernel_result() -> None:
     world_state = WorldStateEngine(clock=_clock)
     world_state.record_contradiction(
@@ -328,6 +370,55 @@ def test_universal_command_dispatch_records_blocked_kernel_result() -> None:
     assert events[-1].detail["cause"] == "universal_action_kernel_blocked"
     assert events[-1].detail["universal_action"]["block_reason"] == "open_world_contradictions"
     assert events[-1].detail["universal_action"]["proof_hash"] == result.proof_hash
+
+
+def test_universal_command_proof_view_replays_blocked_result() -> None:
+    world_state = WorldStateEngine(clock=_clock)
+    world_state.record_contradiction(
+        ContradictionRecord(
+            contradiction_id="contradiction-1",
+            entity_id="vendor-1",
+            attribute="bank_account",
+            conflicting_evidence_ids=("evidence-a", "evidence-b"),
+            strategy=ContradictionStrategy.ESCALATE,
+            resolved=False,
+        )
+    )
+    kernel, _executor = _kernel_with_capability(world_state=world_state)
+    store = InMemoryCommandLedgerStore()
+    ledger = CommandLedger(clock=_clock, store=store)
+    command = ledger.create_command(
+        tenant_id="tenant-1",
+        actor_id="actor-1",
+        source="web",
+        conversation_id="conversation-1",
+        idempotency_key="idem-universal-proof-block",
+        intent="llm_completion",
+        payload={"body": "run shell command"},
+    )
+
+    result = universal_command_dispatch(
+        ledger,
+        kernel,
+        command.command_id,
+        template=VALID_TEMPLATE,
+        bindings={"msg": "hello"},
+        dispatch_route="shell_command",
+    )
+    reloaded_ledger = CommandLedger(clock=_clock, store=store)
+
+    proof = universal_command_proof_view(reloaded_ledger, command.command_id)
+
+    assert proof is not None
+    assert proof.blocked is True
+    assert proof.block_reason == "open_world_contradictions"
+    assert proof.proof_hash == result.proof_hash
+    assert proof.dispatch_ledger_hash == ""
+    assert proof.terminal_certificate_id == ""
+    assert proof.learning_admission_id == ""
+    assert CommandState.REQUIRES_REVIEW.value in proof.state_sequence
+    assert CommandState.TERMINALLY_CERTIFIED.value not in proof.state_sequence
+    assert len(proof.event_hashes) >= 4
 
 
 def _kernel_with_capability(
