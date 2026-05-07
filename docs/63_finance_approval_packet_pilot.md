@@ -257,7 +257,7 @@ pytest mcoi\tests\test_finance_approval_packet.py `
 Expected result:
 
 ```text
-102 passed
+103 passed
 ```
 
 Schema/protocol verification:
@@ -269,7 +269,7 @@ python scripts\validate_protocol_manifest.py
 Expected result:
 
 ```text
-protocol manifest ok: 102 schemas
+protocol manifest ok: 103 schemas
 ```
 
 Finance pilot readiness verification:

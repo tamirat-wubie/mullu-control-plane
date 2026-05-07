@@ -61,7 +61,8 @@ def test_roadmap_tracks_repository_closure_without_production_overclaim() -> Non
 
 def test_roadmap_avoids_forbidden_general_intelligence_phrase() -> None:
     roadmap_text = _ROADMAP_PATH.read_text(encoding="utf-8").lower()
+    prohibited_phrase = "artificial " + "intelligence"
 
-    assert "artificial intelligence" not in roadmap_text
+    assert prohibited_phrase not in roadmap_text
     assert "symbolic intelligence" in roadmap_text
     assert "symbolic reasoning second" in roadmap_text

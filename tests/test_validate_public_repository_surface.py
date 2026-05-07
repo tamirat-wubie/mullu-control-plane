@@ -56,6 +56,7 @@ def test_deployment_status_requires_orchestration_receipt_validation() -> None:
     assert "authority_responsibility_debt_clear=true" in content
     assert "python scripts/plan_capability_adapter_closure.py --json" in content
     assert "python scripts/plan_deployment_publication_closure.py --json" in content
+    assert "python scripts/validate_deployment_publication_closure_plan_schema.py --strict" in content
     assert "python scripts/validate_deployment_publication_closure.py --output .change_assurance/deployment_publication_closure_validation.json" in content
     assert ".change_assurance/deployment_publication_closure_validation.json" in content
     assert "python scripts/plan_general_agent_promotion_closure.py --json" in content
@@ -206,6 +207,7 @@ def test_governance_protocol_doc_is_public_surface_anchor() -> None:
     assert "Autonomous test-generation plans are public contracts" in content
     assert "Deployment handoff receipts are public contracts" in content
     assert "Deployment publication closure validation reports are public contracts" in content
+    assert "Deployment publication closure plans are public contracts" in content
     assert "Deployment orchestration receipt validation reports are public contracts" in content
     assert "Gateway publication readiness reports are public contracts" in content
     assert "Gateway publication receipt validation reports are public contracts" in content

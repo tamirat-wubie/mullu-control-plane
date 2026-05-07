@@ -136,6 +136,17 @@ def test_protocol_manifest_indexes_deployment_publication_closure_validation() -
     assert validation_entry["surface"] == "deployment"
 
 
+def test_protocol_manifest_indexes_deployment_publication_closure_plan() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    plan_entry = entries["deployment-publication-closure-plan"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert plan_entry["path"] == "schemas/deployment_publication_closure_plan.schema.json"
+    assert plan_entry["urn"] == "urn:mullusi:schema:deployment-publication-closure-plan:1"
+    assert plan_entry["surface"] == "deployment"
+
+
 def test_protocol_manifest_indexes_effect_assurance_record() -> None:
     manifest = load_manifest()
     entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
