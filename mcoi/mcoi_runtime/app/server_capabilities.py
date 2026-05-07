@@ -307,6 +307,54 @@ def bootstrap_capability_services(
     )
     model_router.register(
         ModelProfile(
+            model_id="meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo",
+            name="Llama 3.1 8B Turbo via DeepInfra",
+            provider="deepinfra",
+            cost_per_1k_input=0.00002,
+            cost_per_1k_output=0.00003,
+            max_context=131072,
+            speed_tier="fast",
+            capability_tier="basic",
+        )
+    )
+    model_router.register(
+        ModelProfile(
+            model_id="meta-llama/Meta-Llama-3.1-8B-Instruct",
+            name="Llama 3.1 8B via Nebius",
+            provider="nebius",
+            cost_per_1k_input=0.00002,
+            cost_per_1k_output=0.00006,
+            max_context=128000,
+            speed_tier="fast",
+            capability_tier="basic",
+        )
+    )
+    model_router.register(
+        ModelProfile(
+            model_id="Qwen/Qwen2.5-Coder-32B-Instruct",
+            name="Qwen2.5 Coder 32B via Hyperbolic",
+            provider="hyperbolic",
+            cost_per_1k_input=0.00020,
+            cost_per_1k_output=0.00020,
+            max_context=131072,
+            speed_tier="fast",
+            capability_tier="standard",
+        )
+    )
+    model_router.register(
+        ModelProfile(
+            model_id="Meta-Llama-3.1-8B-Instruct",
+            name="Llama 3.1 8B via SambaNova",
+            provider="sambanova",
+            cost_per_1k_input=0.00010,
+            cost_per_1k_output=0.00020,
+            max_context=16000,
+            speed_tier="fast",
+            capability_tier="basic",
+        )
+    )
+    model_router.register(
+        ModelProfile(
             model_id="mistral-small-2603",
             name="Mistral Small 2603",
             provider="mistral",
