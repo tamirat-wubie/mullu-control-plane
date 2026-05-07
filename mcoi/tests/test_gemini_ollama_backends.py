@@ -52,6 +52,7 @@ def test_llm_provider_declares_hosted_provider_mesh() -> None:
         LLMProvider.OLLAMA,
         LLMProvider.STUB,
     }
+    assert LLMProvider.CEREBRAS in expected_providers
     assert len(LLMProvider) == len(expected_providers)
     assert expected_providers == set(LLMProvider)
 
