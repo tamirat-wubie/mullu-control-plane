@@ -1,6 +1,6 @@
 """Multi-Provider LLM Backend Tests.
 
-Tests all 6 providers: Groq, Gemini, DeepSeek, Grok, Mistral, OpenRouter.
+Tests all OpenAI-compatible providers in the hosted provider mesh.
 Uses stub mode (no httpx) — validates protocol compliance, message formatting,
 cost estimation, and error handling.
 """
@@ -12,17 +12,37 @@ import types
 import pytest
 from mcoi_runtime.contracts.llm import LLMInvocationParams, LLMMessage, LLMProvider, LLMRole
 from mcoi_runtime.adapters.multi_provider import (
+    ALL_PROVIDERS,
+    CerebrasBackend,
+    DeepSeekBackend,
+    FireworksBackend,
+    FriendliBackend,
+    GeminiBackend,
+    GrokBackend,
+    GroqBackend,
+    MistralBackend,
+    NovitaBackend,
+    OpenRouterBackend,
+    TogetherBackend,
+    available_providers,
+    create_provider,
+    _params_to_messages,
+)
+
+
+OPENAI_COMPATIBLE_PROVIDER_CLASSES = [
     GroqBackend,
     GeminiBackend,
     DeepSeekBackend,
+    TogetherBackend,
+    FireworksBackend,
+    FriendliBackend,
+    NovitaBackend,
+    CerebrasBackend,
     GrokBackend,
     MistralBackend,
     OpenRouterBackend,
-    ALL_PROVIDERS,
-    create_provider,
-    available_providers,
-    _params_to_messages,
-)
+]
 
 
 def _install_fake_httpx(monkeypatch, post_fn) -> None:
@@ -43,26 +63,17 @@ def _params(prompt: str = "Hello", model: str = "test-model") -> LLMInvocationPa
 class TestProtocolCompliance:
     """Every provider must implement LLMBackend protocol."""
 
-    @pytest.mark.parametrize("cls", [
-        GroqBackend, GeminiBackend, DeepSeekBackend,
-        GrokBackend, MistralBackend, OpenRouterBackend,
-    ])
+    @pytest.mark.parametrize("cls", OPENAI_COMPATIBLE_PROVIDER_CLASSES)
     def test_has_provider_property(self, cls):
         backend = cls()
         assert isinstance(backend.provider, LLMProvider)
 
-    @pytest.mark.parametrize("cls", [
-        GroqBackend, GeminiBackend, DeepSeekBackend,
-        GrokBackend, MistralBackend, OpenRouterBackend,
-    ])
+    @pytest.mark.parametrize("cls", OPENAI_COMPATIBLE_PROVIDER_CLASSES)
     def test_has_call_method(self, cls):
         backend = cls()
         assert callable(backend.call)
 
-    @pytest.mark.parametrize("cls", [
-        GroqBackend, GeminiBackend, DeepSeekBackend,
-        GrokBackend, MistralBackend, OpenRouterBackend,
-    ])
+    @pytest.mark.parametrize("cls", OPENAI_COMPATIBLE_PROVIDER_CLASSES)
     def test_call_returns_llm_result(self, cls):
         backend = cls()
         result = backend.call(_params())
@@ -72,6 +83,13 @@ class TestProtocolCompliance:
         assert hasattr(result, "cost")
         assert hasattr(result, "model_name")
         assert hasattr(result, "provider")
+
+    @pytest.mark.parametrize("cls", OPENAI_COMPATIBLE_PROVIDER_CLASSES)
+    def test_exposes_default_model_for_bridge_resolution(self, cls):
+        backend = cls()
+        assert backend._default_model == backend.DEFAULT_MODEL
+        assert backend._model == backend.DEFAULT_MODEL
+        assert backend._default_model
 
 
 # ═══ Individual Providers ═══
@@ -274,17 +292,43 @@ class TestMessageConversion:
 
 class TestProviderRegistry:
     def test_all_providers_registered(self):
-        assert len(ALL_PROVIDERS) == 6
-        assert "groq" in ALL_PROVIDERS
-        assert "gemini" in ALL_PROVIDERS
-        assert "deepseek" in ALL_PROVIDERS
-        assert "grok" in ALL_PROVIDERS
-        assert "mistral" in ALL_PROVIDERS
-        assert "openrouter" in ALL_PROVIDERS
+        expected = {
+            "groq",
+            "gemini",
+            "deepseek",
+            "together",
+            "fireworks",
+            "friendli",
+            "novita",
+            "cerebras",
+            "grok",
+            "mistral",
+            "openrouter",
+        }
+        assert set(ALL_PROVIDERS) == expected
+        assert len(ALL_PROVIDERS) == len(expected)
 
     def test_create_provider(self):
         backend = create_provider("groq")
         assert backend.provider == LLMProvider.GROQ
+
+    @pytest.mark.parametrize(
+        ("provider_name", "backend_cls", "provider"),
+        [
+            ("together", TogetherBackend, LLMProvider.TOGETHER),
+            ("fireworks", FireworksBackend, LLMProvider.FIREWORKS),
+            ("friendli", FriendliBackend, LLMProvider.FRIENDLI),
+            ("novita", NovitaBackend, LLMProvider.NOVITA),
+            ("cerebras", CerebrasBackend, LLMProvider.CEREBRAS),
+        ],
+    )
+    def test_new_openai_compatible_providers(self, provider_name, backend_cls, provider):
+        backend = create_provider(provider_name)
+        direct_backend = backend_cls(api_key="test-key")
+
+        assert isinstance(backend, backend_cls)
+        assert direct_backend.provider == provider
+        assert direct_backend.DEFAULT_MODEL
 
     def test_create_unknown_raises(self):
         with pytest.raises(ValueError, match="^unsupported provider$") as exc_info:

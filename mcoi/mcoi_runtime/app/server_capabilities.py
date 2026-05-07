@@ -235,6 +235,78 @@ def bootstrap_capability_services(
     )
     model_router.register(
         ModelProfile(
+            model_id="LiquidAI/LFM2-24B-A2B",
+            name="LFM2 24B A2B",
+            provider="together",
+            cost_per_1k_input=0.00003,
+            cost_per_1k_output=0.00012,
+            max_context=32768,
+            speed_tier="fast",
+            capability_tier="basic",
+        )
+    )
+    model_router.register(
+        ModelProfile(
+            model_id="Qwen/Qwen3.5-9B",
+            name="Qwen3.5 9B",
+            provider="together",
+            cost_per_1k_input=0.00010,
+            cost_per_1k_output=0.00015,
+            max_context=262144,
+            speed_tier="fast",
+            capability_tier="standard",
+        )
+    )
+    model_router.register(
+        ModelProfile(
+            model_id="accounts/fireworks/models/gpt-oss-20b",
+            name="GPT OSS 20B via Fireworks",
+            provider="fireworks",
+            cost_per_1k_input=0.00007,
+            cost_per_1k_output=0.00030,
+            max_context=128000,
+            speed_tier="fast",
+            capability_tier="standard",
+        )
+    )
+    model_router.register(
+        ModelProfile(
+            model_id="meta-llama/Llama-3.1-8B-Instruct",
+            name="Llama 3.1 8B via Friendli",
+            provider="friendli",
+            cost_per_1k_input=0.00010,
+            cost_per_1k_output=0.00010,
+            max_context=131072,
+            speed_tier="fast",
+            capability_tier="basic",
+        )
+    )
+    model_router.register(
+        ModelProfile(
+            model_id="deepseek/deepseek-v4-flash",
+            name="DeepSeek V4 Flash via Novita",
+            provider="novita",
+            cost_per_1k_input=0.00014,
+            cost_per_1k_output=0.00028,
+            max_context=64000,
+            speed_tier="fast",
+            capability_tier="standard",
+        )
+    )
+    model_router.register(
+        ModelProfile(
+            model_id="llama3.1-8b",
+            name="Llama 3.1 8B via Cerebras",
+            provider="cerebras",
+            cost_per_1k_input=0.00010,
+            cost_per_1k_output=0.00010,
+            max_context=8192,
+            speed_tier="fast",
+            capability_tier="basic",
+        )
+    )
+    model_router.register(
+        ModelProfile(
             model_id="mistral-small-2603",
             name="Mistral Small 2603",
             provider="mistral",

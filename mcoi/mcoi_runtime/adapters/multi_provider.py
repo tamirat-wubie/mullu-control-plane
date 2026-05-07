@@ -1,14 +1,14 @@
-"""Multi-Provider LLM Backends — Groq, Gemini, DeepSeek, Grok, Mistral, OpenRouter.
+"""Multi-Provider LLM Backends.
 
 All providers follow the OpenAI-compatible chat completions API pattern.
 Each wraps a different endpoint with the same LLMBackend protocol.
 
-Provider credentials are resolved from environment variables — never stored.
+Provider credentials are injected at bootstrap or resolved from environment variables.
 All providers return LLMResult with cost estimation based on token counts.
 
 Invariants:
   - Every provider implements the LLMBackend protocol.
-  - API keys are read from env at call time, never cached.
+  - API keys are never logged or exposed through result errors.
   - Errors are typed (LLMResult with error field), never raw exceptions.
   - Cost is estimated from token counts × provider pricing.
 """
@@ -168,6 +168,7 @@ class GroqBackend:
 
     def __init__(self, *, model: str = "", api_key: str | None = None, api_key_env: str = "GROQ_API_KEY") -> None:
         self._model = model or self.DEFAULT_MODEL
+        self._default_model = self._model
         self._api_key = api_key or ""
         self._api_key_env = api_key_env
         self._call_count = 0
@@ -205,6 +206,7 @@ class GeminiBackend:
 
     def __init__(self, *, model: str = "", api_key: str | None = None, api_key_env: str = "GEMINI_API_KEY") -> None:
         self._model = model or self.DEFAULT_MODEL
+        self._default_model = self._model
         self._api_key = api_key or ""
         self._api_key_env = api_key_env
         self._call_count = 0
@@ -243,6 +245,7 @@ class DeepSeekBackend:
 
     def __init__(self, *, model: str = "", api_key: str | None = None, api_key_env: str = "DEEPSEEK_API_KEY") -> None:
         self._model = model or self.DEFAULT_MODEL
+        self._default_model = self._model
         self._api_key = api_key or ""
         self._api_key_env = api_key_env
         self._call_count = 0
@@ -269,6 +272,166 @@ class DeepSeekBackend:
 # ═══ xAI Grok (real-time X data) ═══
 
 
+class TogetherBackend:
+    """Together hosted open-model inference."""
+
+    provider = LLMProvider.TOGETHER
+    DEFAULT_MODEL = "LiquidAI/LFM2-24B-A2B"
+
+    def __init__(self, *, model: str = "", api_key: str | None = None, api_key_env: str = "TOGETHER_API_KEY") -> None:
+        self._model = model or self.DEFAULT_MODEL
+        self._default_model = self._model
+        self._api_key = api_key or ""
+        self._api_key_env = api_key_env
+        self._call_count = 0
+
+    def call(self, params: LLMInvocationParams) -> LLMResult:
+        self._call_count += 1
+        return _openai_compatible_call(
+            base_url="https://api.together.xyz/v1",
+            api_key=self._api_key or os.environ.get(self._api_key_env, ""),
+            model=params.model_name or self._model,
+            messages=_params_to_messages(params),
+            max_tokens=params.max_tokens,
+            temperature=0.0,
+            provider=self.provider,
+            cost_per_1m_input=0.03,
+            cost_per_1m_output=0.12,
+        )
+
+    @property
+    def call_count(self) -> int:
+        return self._call_count
+
+
+class FireworksBackend:
+    """Fireworks hosted open-model inference."""
+
+    provider = LLMProvider.FIREWORKS
+    DEFAULT_MODEL = "accounts/fireworks/models/gpt-oss-20b"
+
+    def __init__(self, *, model: str = "", api_key: str | None = None, api_key_env: str = "FIREWORKS_API_KEY") -> None:
+        self._model = model or self.DEFAULT_MODEL
+        self._default_model = self._model
+        self._api_key = api_key or ""
+        self._api_key_env = api_key_env
+        self._call_count = 0
+
+    def call(self, params: LLMInvocationParams) -> LLMResult:
+        self._call_count += 1
+        return _openai_compatible_call(
+            base_url="https://api.fireworks.ai/inference/v1",
+            api_key=self._api_key or os.environ.get(self._api_key_env, ""),
+            model=params.model_name or self._model,
+            messages=_params_to_messages(params),
+            max_tokens=params.max_tokens,
+            temperature=0.0,
+            provider=self.provider,
+            cost_per_1m_input=0.07,
+            cost_per_1m_output=0.30,
+        )
+
+    @property
+    def call_count(self) -> int:
+        return self._call_count
+
+
+class FriendliBackend:
+    """Friendli serverless OpenAI-compatible endpoint."""
+
+    provider = LLMProvider.FRIENDLI
+    DEFAULT_MODEL = "meta-llama-3.1-8b-instruct"
+
+    def __init__(self, *, model: str = "", api_key: str | None = None, api_key_env: str = "FRIENDLI_TOKEN") -> None:
+        self._model = model or self.DEFAULT_MODEL
+        self._default_model = self._model
+        self._api_key = api_key or ""
+        self._api_key_env = api_key_env
+        self._call_count = 0
+
+    def call(self, params: LLMInvocationParams) -> LLMResult:
+        self._call_count += 1
+        return _openai_compatible_call(
+            base_url="https://api.friendli.ai/serverless/v1",
+            api_key=self._api_key or os.environ.get(self._api_key_env, ""),
+            model=params.model_name or self._model,
+            messages=_params_to_messages(params),
+            max_tokens=params.max_tokens,
+            temperature=0.0,
+            provider=self.provider,
+            cost_per_1m_input=0.10,
+            cost_per_1m_output=0.10,
+        )
+
+    @property
+    def call_count(self) -> int:
+        return self._call_count
+
+
+class NovitaBackend:
+    """Novita OpenAI-compatible endpoint for inexpensive hosted models."""
+
+    provider = LLMProvider.NOVITA
+    DEFAULT_MODEL = "deepseek/deepseek-v4-flash"
+
+    def __init__(self, *, model: str = "", api_key: str | None = None, api_key_env: str = "NOVITA_API_KEY") -> None:
+        self._model = model or self.DEFAULT_MODEL
+        self._default_model = self._model
+        self._api_key = api_key or ""
+        self._api_key_env = api_key_env
+        self._call_count = 0
+
+    def call(self, params: LLMInvocationParams) -> LLMResult:
+        self._call_count += 1
+        return _openai_compatible_call(
+            base_url="https://api.novita.ai/openai",
+            api_key=self._api_key or os.environ.get(self._api_key_env, ""),
+            model=params.model_name or self._model,
+            messages=_params_to_messages(params),
+            max_tokens=params.max_tokens,
+            temperature=0.0,
+            provider=self.provider,
+            cost_per_1m_input=0.14,
+            cost_per_1m_output=0.28,
+        )
+
+    @property
+    def call_count(self) -> int:
+        return self._call_count
+
+
+class CerebrasBackend:
+    """Cerebras fast OpenAI-compatible inference endpoint."""
+
+    provider = LLMProvider.CEREBRAS
+    DEFAULT_MODEL = "llama3.1-8b"
+
+    def __init__(self, *, model: str = "", api_key: str | None = None, api_key_env: str = "CEREBRAS_API_KEY") -> None:
+        self._model = model or self.DEFAULT_MODEL
+        self._default_model = self._model
+        self._api_key = api_key or ""
+        self._api_key_env = api_key_env
+        self._call_count = 0
+
+    def call(self, params: LLMInvocationParams) -> LLMResult:
+        self._call_count += 1
+        return _openai_compatible_call(
+            base_url="https://api.cerebras.ai/v1",
+            api_key=self._api_key or os.environ.get(self._api_key_env, ""),
+            model=params.model_name or self._model,
+            messages=_params_to_messages(params),
+            max_tokens=params.max_tokens,
+            temperature=0.0,
+            provider=self.provider,
+            cost_per_1m_input=0.10,
+            cost_per_1m_output=0.10,
+        )
+
+    @property
+    def call_count(self) -> int:
+        return self._call_count
+
+
 class GrokBackend:
     """xAI Grok — real-time X (Twitter) data access.
 
@@ -281,6 +444,7 @@ class GrokBackend:
 
     def __init__(self, *, model: str = "", api_key: str | None = None, api_key_env: str = "XAI_API_KEY") -> None:
         self._model = model or self.DEFAULT_MODEL
+        self._default_model = self._model
         self._api_key = api_key or ""
         self._api_key_env = api_key_env
         self._call_count = 0
@@ -319,6 +483,7 @@ class MistralBackend:
 
     def __init__(self, *, model: str = "", api_key: str | None = None, api_key_env: str = "MISTRAL_API_KEY") -> None:
         self._model = model or self.DEFAULT_MODEL
+        self._default_model = self._model
         self._api_key = api_key or ""
         self._api_key_env = api_key_env
         self._call_count = 0
@@ -357,6 +522,7 @@ class OpenRouterBackend:
 
     def __init__(self, *, model: str = "", api_key: str | None = None, api_key_env: str = "OPENROUTER_API_KEY") -> None:
         self._model = model or self.DEFAULT_MODEL
+        self._default_model = self._model
         self._api_key = api_key or ""
         self._api_key_env = api_key_env
         self._call_count = 0
@@ -387,6 +553,11 @@ ALL_PROVIDERS: dict[str, type] = {
     "groq": GroqBackend,
     "gemini": GeminiBackend,
     "deepseek": DeepSeekBackend,
+    "together": TogetherBackend,
+    "fireworks": FireworksBackend,
+    "friendli": FriendliBackend,
+    "novita": NovitaBackend,
+    "cerebras": CerebrasBackend,
     "grok": GrokBackend,
     "mistral": MistralBackend,
     "openrouter": OpenRouterBackend,
@@ -404,11 +575,16 @@ def create_provider(name: str, **kwargs: Any) -> Any:
 def available_providers() -> list[str]:
     """List providers that have API keys configured."""
     env_map = {
-        "groq": "GROQ_API_KEY",
-        "gemini": "GEMINI_API_KEY",
-        "deepseek": "DEEPSEEK_API_KEY",
-        "grok": "XAI_API_KEY",
-        "mistral": "MISTRAL_API_KEY",
-        "openrouter": "OPENROUTER_API_KEY",
+        "groq": ("GROQ_API_KEY",),
+        "gemini": ("GEMINI_API_KEY",),
+        "deepseek": ("DEEPSEEK_API_KEY",),
+        "together": ("TOGETHER_API_KEY",),
+        "fireworks": ("FIREWORKS_API_KEY",),
+        "friendli": ("FRIENDLI_TOKEN", "FRIENDLI_API_KEY"),
+        "novita": ("NOVITA_API_KEY",),
+        "cerebras": ("CEREBRAS_API_KEY",),
+        "grok": ("XAI_API_KEY",),
+        "mistral": ("MISTRAL_API_KEY",),
+        "openrouter": ("OPENROUTER_API_KEY",),
     }
-    return [name for name, env_var in env_map.items() if os.environ.get(env_var)]
+    return [name for name, env_vars in env_map.items() if any(os.environ.get(env_var) for env_var in env_vars)]

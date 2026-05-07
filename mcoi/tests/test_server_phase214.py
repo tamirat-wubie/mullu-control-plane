@@ -56,6 +56,9 @@ class TestAutoRoutedCompletion:
         assert "gpt-4.1-nano" in ids
         assert "gemini-2.0-flash-lite" in ids
         assert "deepseek-v4-flash" in ids
+        assert "LiquidAI/LFM2-24B-A2B" in ids
+        assert "accounts/fireworks/models/gpt-oss-20b" in ids
+        assert "llama3.1-8b" in ids
 
     def test_auto_complete_exception_is_sanitized(self, client, monkeypatch):
         from mcoi_runtime.app.routers.deps import deps
