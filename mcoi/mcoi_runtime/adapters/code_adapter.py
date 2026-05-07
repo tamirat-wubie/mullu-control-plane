@@ -20,10 +20,10 @@ import re
 import subprocess
 import tempfile
 import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from hashlib import sha256
 from pathlib import Path
-from typing import Callable, Iterator
+from typing import Callable
 from uuid import uuid4
 
 from mcoi_runtime.contracts.code import (
@@ -345,8 +345,8 @@ def _peek_diff_kind(unified_diff: str, target_file: str) -> str:
     name target_file.
     """
     raw_lines = unified_diff.splitlines(keepends=True)
-    minus_indexes = [i for i, l in enumerate(raw_lines) if l.startswith("--- ")]
-    plus_indexes = [i for i, l in enumerate(raw_lines) if l.startswith("+++ ")]
+    minus_indexes = [i for i, raw_line in enumerate(raw_lines) if raw_line.startswith("--- ")]
+    plus_indexes = [i for i, raw_line in enumerate(raw_lines) if raw_line.startswith("+++ ")]
     if len(minus_indexes) != 1:
         raise ValueError("diff must contain exactly one '---' header")
     if len(plus_indexes) != 1:
@@ -373,8 +373,8 @@ def _apply_unified_diff_strict(
     Raises ValueError(stable_message) on any malformed input.
     """
     raw_lines = unified_diff.splitlines(keepends=True)
-    minus_indexes = [i for i, l in enumerate(raw_lines) if l.startswith("--- ")]
-    plus_indexes = [i for i, l in enumerate(raw_lines) if l.startswith("+++ ")]
+    minus_indexes = [i for i, raw_line in enumerate(raw_lines) if raw_line.startswith("--- ")]
+    plus_indexes = [i for i, raw_line in enumerate(raw_lines) if raw_line.startswith("+++ ")]
 
     if len(minus_indexes) != 1:
         raise ValueError("diff must contain exactly one '---' header")
@@ -399,8 +399,8 @@ def _apply_unified_diff_strict(
         raise ValueError("diff path does not match requested target file")
 
     hunk_indexes = [
-        i for i, l in enumerate(raw_lines)
-        if l.startswith("@@") and i > plus_idx
+        i for i, raw_line in enumerate(raw_lines)
+        if raw_line.startswith("@@") and i > plus_idx
     ]
     if not hunk_indexes:
         raise ValueError("missing diff hunk")

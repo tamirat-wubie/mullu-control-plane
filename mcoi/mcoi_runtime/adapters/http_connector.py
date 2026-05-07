@@ -18,18 +18,33 @@ from __future__ import annotations
 from typing import Callable
 
 import hashlib
-import ipaddress
 import socket
 import urllib.request
 import urllib.error
 from dataclasses import dataclass
 from urllib.parse import urlparse
 
+from mcoi_runtime.governance.network.ssrf import (
+    is_private_host as _is_private_host,
+    is_private_ip as _is_private_ip,
+    resolve_and_check as _resolve_and_check,
+)
 from mcoi_runtime.contracts.connector_effects import ConnectorInvocationReceipt
 from mcoi_runtime.contracts._shared_enums import EffectClass, TrustClass
 from mcoi_runtime.contracts.integration import ConnectorDescriptor, ConnectorResult, ConnectorStatus
 from mcoi_runtime.contracts.provider_policy import HttpProviderPolicy
 from mcoi_runtime.core.invariants import stable_identifier
+
+
+__all__ = (
+    "HttpConnector",
+    "HttpConnectorConfig",
+    "_NoRedirectHandler",
+    "_is_private_host",
+    "_is_private_ip",
+    "_map_status_code",
+    "_normalize_url",
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -56,13 +71,6 @@ class HttpConnectorConfig:
 # shared module adds Azure / Alibaba / DigitalOcean metadata hostnames,
 # IPv6 link-local + ULA prefixes, and the same DNS-resolution
 # fail-closed posture this module already had.
-from mcoi_runtime.governance.network.ssrf import (
-    is_private_host as _is_private_host,
-    is_private_ip as _is_private_ip,
-    resolve_and_check as _resolve_and_check,
-)
-
-
 class _NoRedirectHandler(urllib.request.HTTPRedirectHandler):
     """HTTP handler that blocks all redirects to prevent SSRF via redirect."""
 

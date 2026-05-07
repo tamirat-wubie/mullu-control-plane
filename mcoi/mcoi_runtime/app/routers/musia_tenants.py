@@ -16,7 +16,7 @@ from typing import Any
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 
-from mcoi_runtime.app.routers.musia_auth import require_admin, require_read
+from mcoi_runtime.app.routers.musia_auth import require_admin
 from mcoi_runtime.substrate.registry_store import STORE
 
 

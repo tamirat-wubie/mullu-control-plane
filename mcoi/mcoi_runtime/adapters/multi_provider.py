@@ -897,6 +897,204 @@ class LlamaAPIBackend:
         return self._call_count
 
 
+class ParasailBackend:
+    """Parasail OpenAI-compatible endpoint for inexpensive Qwen models."""
+
+    provider = LLMProvider.PARASAIL
+    DEFAULT_MODEL = "parasail-qwen3-32b"
+
+    def __init__(self, *, model: str = "", api_key: str | None = None, api_key_env: str = "PARASAIL_API_KEY") -> None:
+        self._model = model or self.DEFAULT_MODEL
+        self._default_model = self._model
+        self._api_key = api_key or ""
+        self._api_key_env = api_key_env
+        self._call_count = 0
+
+    def call(self, params: LLMInvocationParams) -> LLMResult:
+        self._call_count += 1
+        return _openai_compatible_call(
+            base_url="https://api.parasail.io/v1",
+            api_key=self._api_key or os.environ.get(self._api_key_env, ""),
+            model=params.model_name or self._model,
+            messages=_params_to_messages(params),
+            max_tokens=params.max_tokens,
+            temperature=0.0,
+            provider=self.provider,
+            cost_per_1m_input=0.10,
+            cost_per_1m_output=0.50,
+        )
+
+    @property
+    def call_count(self) -> int:
+        return self._call_count
+
+
+class FeatherlessBackend:
+    """Featherless OpenAI-compatible endpoint for flat-rate open-weight models."""
+
+    provider = LLMProvider.FEATHERLESS
+    DEFAULT_MODEL = "Qwen/Qwen2.5-7B-Instruct-1M"
+
+    def __init__(self, *, model: str = "", api_key: str | None = None, api_key_env: str = "FEATHERLESS_API_KEY") -> None:
+        self._model = model or self.DEFAULT_MODEL
+        self._default_model = self._model
+        self._api_key = api_key or ""
+        self._api_key_env = api_key_env
+        self._call_count = 0
+
+    def call(self, params: LLMInvocationParams) -> LLMResult:
+        self._call_count += 1
+        return _openai_compatible_call(
+            base_url="https://api.featherless.ai/v1",
+            api_key=self._api_key or os.environ.get(self._api_key_env, ""),
+            model=params.model_name or self._model,
+            messages=_params_to_messages(params),
+            max_tokens=params.max_tokens,
+            temperature=0.0,
+            provider=self.provider,
+            cost_per_1m_input=0.0,
+            cost_per_1m_output=0.0,
+        )
+
+    @property
+    def call_count(self) -> int:
+        return self._call_count
+
+
+class PacketBackend:
+    """Packet Token Factory OpenAI-compatible endpoint for inexpensive Llama models."""
+
+    provider = LLMProvider.PACKET
+    DEFAULT_MODEL = "meta-llama/Llama-3.1-70B-Instruct"
+
+    def __init__(self, *, model: str = "", api_key: str | None = None, api_key_env: str = "PACKET_API_KEY") -> None:
+        self._model = model or self.DEFAULT_MODEL
+        self._default_model = self._model
+        self._api_key = api_key or ""
+        self._api_key_env = api_key_env
+        self._call_count = 0
+
+    def call(self, params: LLMInvocationParams) -> LLMResult:
+        self._call_count += 1
+        return _openai_compatible_call(
+            base_url="https://dash.packet.ai/api/v1",
+            api_key=self._api_key or os.environ.get(self._api_key_env, ""),
+            model=params.model_name or self._model,
+            messages=_params_to_messages(params),
+            max_tokens=params.max_tokens,
+            temperature=0.0,
+            provider=self.provider,
+            cost_per_1m_input=0.15,
+            cost_per_1m_output=0.15,
+        )
+
+    @property
+    def call_count(self) -> int:
+        return self._call_count
+
+
+class RidvayBackend:
+    """Ridvay OpenAI-compatible endpoint for Qwen and open-weight models."""
+
+    provider = LLMProvider.RIDVAY
+    DEFAULT_MODEL = "qwen/qwen3-30b-a3b"
+
+    def __init__(self, *, model: str = "", api_key: str | None = None, api_key_env: str = "RIDVAY_API_KEY") -> None:
+        self._model = model or self.DEFAULT_MODEL
+        self._default_model = self._model
+        self._api_key = api_key or ""
+        self._api_key_env = api_key_env
+        self._call_count = 0
+
+    def call(self, params: LLMInvocationParams) -> LLMResult:
+        self._call_count += 1
+        return _openai_compatible_call(
+            base_url="https://api.ridvay.com/v1",
+            api_key=self._api_key or os.environ.get(self._api_key_env, ""),
+            model=params.model_name or self._model,
+            messages=_params_to_messages(params),
+            max_tokens=params.max_tokens,
+            temperature=0.0,
+            provider=self.provider,
+            cost_per_1m_input=0.06,
+            cost_per_1m_output=0.22,
+        )
+
+    @property
+    def call_count(self) -> int:
+        return self._call_count
+
+
+class NeuroRoutersBackend:
+    """NeuroRouters OpenAI-compatible endpoint for routed free-tier models."""
+
+    provider = LLMProvider.NEUROROUTERS
+    DEFAULT_MODEL = "qwen/qwen3-30b-a3b:free"
+
+    def __init__(
+        self,
+        *,
+        model: str = "",
+        api_key: str | None = None,
+        api_key_env: str = "NEUROROUTERS_API_KEY",
+    ) -> None:
+        self._model = model or self.DEFAULT_MODEL
+        self._default_model = self._model
+        self._api_key = api_key or ""
+        self._api_key_env = api_key_env
+        self._call_count = 0
+
+    def call(self, params: LLMInvocationParams) -> LLMResult:
+        self._call_count += 1
+        return _openai_compatible_call(
+            base_url="https://neurorouters.com/api/v1",
+            api_key=self._api_key or os.environ.get(self._api_key_env, ""),
+            model=params.model_name or self._model,
+            messages=_params_to_messages(params),
+            max_tokens=params.max_tokens,
+            temperature=0.0,
+            provider=self.provider,
+            cost_per_1m_input=0.0,
+            cost_per_1m_output=0.0,
+        )
+
+    @property
+    def call_count(self) -> int:
+        return self._call_count
+
+
+class GlamaBackend:
+    """Glama Gateway OpenAI-compatible endpoint for hosted model routing."""
+
+    provider = LLMProvider.GLAMA
+    DEFAULT_MODEL = "deepseek-chat-v3"
+
+    def __init__(self, *, model: str = "", api_key: str | None = None, api_key_env: str = "GLAMA_API_KEY") -> None:
+        self._model = model or self.DEFAULT_MODEL
+        self._default_model = self._model
+        self._api_key = api_key or ""
+        self._api_key_env = api_key_env
+        self._call_count = 0
+
+    def call(self, params: LLMInvocationParams) -> LLMResult:
+        self._call_count += 1
+        return _openai_compatible_call(
+            base_url="https://gateway.glama.ai/v1",
+            api_key=self._api_key or os.environ.get(self._api_key_env, ""),
+            model=params.model_name or self._model,
+            messages=_params_to_messages(params),
+            max_tokens=params.max_tokens,
+            temperature=0.0,
+            provider=self.provider,
+            cost_per_1m_input=0.14,
+            cost_per_1m_output=0.28,
+        )
+
+    @property
+    def call_count(self) -> int:
+        return self._call_count
+
+
 # --- xAI Grok (real-time X data) ---
 
 
@@ -1040,6 +1238,12 @@ ALL_PROVIDERS: dict[str, type] = {
     "wavespeed": WaveSpeedBackend,
     "bazaarlink": BazaarLinkBackend,
     "llamaapi": LlamaAPIBackend,
+    "parasail": ParasailBackend,
+    "featherless": FeatherlessBackend,
+    "packet": PacketBackend,
+    "ridvay": RidvayBackend,
+    "neurorouters": NeuroRoutersBackend,
+    "glama": GlamaBackend,
     "grok": GrokBackend,
     "mistral": MistralBackend,
     "openrouter": OpenRouterBackend,
@@ -1079,6 +1283,12 @@ def available_providers() -> list[str]:
         "wavespeed": ("WAVESPEED_API_KEY",),
         "bazaarlink": ("BAZAARLINK_API_KEY",),
         "llamaapi": ("LLAMA_API_KEY",),
+        "parasail": ("PARASAIL_API_KEY",),
+        "featherless": ("FEATHERLESS_API_KEY",),
+        "packet": ("PACKET_API_KEY",),
+        "ridvay": ("RIDVAY_API_KEY",),
+        "neurorouters": ("NEUROROUTERS_API_KEY",),
+        "glama": ("GLAMA_API_KEY",),
         "grok": ("XAI_API_KEY",),
         "mistral": ("MISTRAL_API_KEY",),
         "openrouter": ("OPENROUTER_API_KEY",),
