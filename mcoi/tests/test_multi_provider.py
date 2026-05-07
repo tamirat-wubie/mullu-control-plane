@@ -358,6 +358,8 @@ class TestProviderRegistry:
             ("moonshot", MoonshotBackend, LLMProvider.MOONSHOT),
             ("dashscope", DashScopeBackend, LLMProvider.DASHSCOPE),
             ("zai", ZAIBackend, LLMProvider.ZAI),
+            ("siliconflow", SiliconFlowBackend, LLMProvider.SILICONFLOW),
+            ("dinference", DInferenceBackend, LLMProvider.DINFERENCE),
         ],
     )
     def test_new_openai_compatible_providers(self, provider_name, backend_cls, provider):

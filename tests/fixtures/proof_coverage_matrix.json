@@ -369,12 +369,12 @@
       "action_proof": 46,
       "audit_chain": 0,
       "gap": 0,
-      "read_model": 8,
+      "read_model": 9,
       "request_proof": 2
     },
     "by_audit": {
       "action_proof": 0,
-      "audit_chain": 52,
+      "audit_chain": 53,
       "gap": 0,
       "read_model": 4,
       "request_proof": 0
@@ -382,16 +382,16 @@
     "by_coverage_state": {
       "proven": 1,
       "unproven": 0,
-      "witnessed": 55
+      "witnessed": 56
     },
     "by_request_proof": {
       "action_proof": 0,
       "audit_chain": 0,
       "gap": 0,
-      "read_model": 10,
+      "read_model": 11,
       "request_proof": 46
     },
-    "surface_count": 56
+    "surface_count": 57
   },
   "generated_by": "scripts/proof_coverage_matrix.py",
   "route_coverage": {
@@ -2033,6 +2033,38 @@
       "request_proof": "request_proof",
       "runtime_witnesses": [],
       "surface_id": "llm_streaming"
+    },
+    {
+      "action_proof": "read_model",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "gateway/code_intelligence_read_model.py",
+        "gateway/server.py",
+        "mcoi/mcoi_runtime/contracts/code_intelligence.py",
+        "mcoi/mcoi_runtime/contracts/code_context.py",
+        "mcoi/mcoi_runtime/core/code_intelligence.py",
+        "mcoi/mcoi_runtime/core/code_context_builder.py",
+        "tests/test_code_intelligence.py",
+        "tests/test_code_context_builder.py",
+        "tests/test_gateway/test_code_intelligence_read_model.py"
+      ],
+      "notes": "Code-intelligence operator read models expose repository maps, selected symbols, risk counts, bounded context receipts, and cost estimates without source content or execution authority.",
+      "representative_paths": [
+        "/operator/code-intelligence/read-model",
+        "build_repo_map",
+        "build_code_context",
+        "create_code_context_receipt"
+      ],
+      "request_proof": "read_model",
+      "runtime_witnesses": [
+        "code_intelligence_repo_map_detects_routes_schemas_dependencies",
+        "code_context_bundle_bounds_symbols_tests_and_edges",
+        "code_context_missing_affected_file_fails_closed",
+        "code_intelligence_operator_read_model_hides_source_content",
+        "code_intelligence_operator_endpoint_fails_closed_for_missing_file"
+      ],
+      "surface_id": "code_intelligence_operator_read_model"
     },
     {
       "action_proof": "action_proof",

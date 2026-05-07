@@ -7,6 +7,7 @@ from mcoi_runtime.adapters.multi_provider import (
     CloudflareBackend,
     DashScopeBackend,
     DeepInfraBackend,
+    DInferenceBackend,
     FireworksBackend,
     FriendliBackend,
     GroqBackend,
@@ -15,6 +16,7 @@ from mcoi_runtime.adapters.multi_provider import (
     NebiusBackend,
     NovitaBackend,
     SambaNovaBackend,
+    SiliconFlowBackend,
     TogetherBackend,
     ZAIBackend,
 )
@@ -56,6 +58,8 @@ LLM_ENV_KEYS = (
     "MOONSHOT_API_KEY",
     "DASHSCOPE_API_KEY",
     "ZAI_API_KEY",
+    "SILICONFLOW_API_KEY",
+    "DINFERENCE_API_KEY",
     "XAI_API_KEY",
     "MISTRAL_API_KEY",
     "OPENROUTER_API_KEY",
@@ -305,6 +309,8 @@ class TestBootstrapLLM:
             moonshot_api_key="mk",
             dashscope_api_key="dq",
             zai_api_key="zk",
+            siliconflow_api_key="sf",
+            dinference_api_key="df",
             grok_api_key="xai",
             mistral_api_key="ms",
             openrouter_api_key="or",
@@ -334,6 +340,8 @@ class TestBootstrapLLM:
             "moonshot",
             "dashscope",
             "zai",
+            "siliconflow",
+            "dinference",
             "grok",
             "mistral",
             "openrouter",
@@ -352,6 +360,8 @@ class TestBootstrapLLM:
         assert isinstance(result.backends["moonshot"], MoonshotBackend)
         assert isinstance(result.backends["dashscope"], DashScopeBackend)
         assert isinstance(result.backends["zai"], ZAIBackend)
+        assert isinstance(result.backends["siliconflow"], SiliconFlowBackend)
+        assert isinstance(result.backends["dinference"], DInferenceBackend)
         assert "llm-groq" in result.registered_providers
         assert "llm-deepseek" in result.registered_providers
         assert "llm-together" in result.registered_providers
@@ -363,6 +373,8 @@ class TestBootstrapLLM:
         assert "llm-moonshot" in result.registered_providers
         assert "llm-dashscope" in result.registered_providers
         assert "llm-zai" in result.registered_providers
+        assert "llm-siliconflow" in result.registered_providers
+        assert "llm-dinference" in result.registered_providers
         assert "llm-openrouter" in result.registered_providers
         assert "meta-llama/llama-4-scout-17b-16e-instruct" in result.registered_models
         assert "deepseek-v4-flash" in result.registered_models
@@ -379,6 +391,8 @@ class TestBootstrapLLM:
         assert "kimi-k2.5" in result.registered_models
         assert "qwen-turbo" in result.registered_models
         assert "glm-4.5-air" in result.registered_models
+        assert "Qwen/Qwen2.5-7B-Instruct" in result.registered_models
+        assert "gpt-oss-120b" in result.registered_models
         assert "mistral-small-2506" in result.registered_models
         assert "grok-3-mini" in result.registered_models
         assert "meta-llama/llama-4-scout" in result.registered_models

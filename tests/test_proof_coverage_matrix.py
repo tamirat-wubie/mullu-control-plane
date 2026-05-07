@@ -942,6 +942,31 @@ def test_physical_action_boundary_surface_blocks_dispatch_without_safety_control
     assert closure_actions["publish_physical_action_receipt_contract"]["status"] == "closed"
 
 
+def test_code_intelligence_operator_surface_is_read_only() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    code_surface = surfaces["code_intelligence_operator_read_model"]
+    witnesses = set(code_surface["runtime_witnesses"])
+
+    assert code_surface["coverage_state"] == "witnessed"
+    assert code_surface["request_proof"] == "read_model"
+    assert code_surface["action_proof"] == "read_model"
+    assert "/operator/code-intelligence/read-model" in code_surface["representative_paths"]
+    assert "build_repo_map" in code_surface["representative_paths"]
+    assert "build_code_context" in code_surface["representative_paths"]
+    assert "gateway/code_intelligence_read_model.py" in code_surface["evidence_files"]
+    assert "mcoi/mcoi_runtime/contracts/code_intelligence.py" in code_surface["evidence_files"]
+    assert "mcoi/mcoi_runtime/contracts/code_context.py" in code_surface["evidence_files"]
+    assert "mcoi/mcoi_runtime/core/code_intelligence.py" in code_surface["evidence_files"]
+    assert "mcoi/mcoi_runtime/core/code_context_builder.py" in code_surface["evidence_files"]
+    assert "tests/test_gateway/test_code_intelligence_read_model.py" in code_surface["evidence_files"]
+    assert "code_intelligence_repo_map_detects_routes_schemas_dependencies" in witnesses
+    assert "code_context_bundle_bounds_symbols_tests_and_edges" in witnesses
+    assert "code_context_missing_affected_file_fails_closed" in witnesses
+    assert "code_intelligence_operator_read_model_hides_source_content" in witnesses
+    assert "code_intelligence_operator_endpoint_fails_closed_for_missing_file" in witnesses
+
+
 def test_temporal_kernel_surface_owns_runtime_time_truth() -> None:
     matrix = _load_fixture()
     surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
