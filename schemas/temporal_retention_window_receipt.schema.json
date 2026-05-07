@@ -1,0 +1,278 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:temporal-retention-window-receipt:1",
+  "title": "Temporal Retention Window Receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "receipt_id",
+    "request_id",
+    "tenant_id",
+    "actor_id",
+    "command_id",
+    "action_type",
+    "risk_level",
+    "policy_id",
+    "status",
+    "retention_state",
+    "runtime_now_utc",
+    "retention_check_required",
+    "data_id",
+    "subject_tenant_id",
+    "classification",
+    "purpose",
+    "created_at",
+    "retention_until",
+    "delete_after",
+    "target_action_due_at",
+    "seconds_until_retention_until",
+    "seconds_until_delete_after",
+    "seconds_until_action_due",
+    "overdue_seconds",
+    "retention_policy_ref",
+    "owner_id",
+    "legal_hold",
+    "allowed_actions",
+    "blocked_reasons",
+    "warning_reasons",
+    "required_controls",
+    "evidence_refs",
+    "subject_evidence_refs",
+    "source_temporal_receipt_id",
+    "source_reapproval_receipt_id",
+    "source_data_decision_id",
+    "receipt_schema_ref",
+    "terminal_closure_required",
+    "receipt_hash",
+    "metadata"
+  ],
+  "properties": {
+    "receipt_id": {
+      "type": "string",
+      "pattern": "^temporal-retention-window-receipt-[0-9a-f]{16}$"
+    },
+    "request_id": {"type": "string", "minLength": 1},
+    "tenant_id": {"type": "string", "minLength": 1},
+    "actor_id": {"type": "string", "minLength": 1},
+    "command_id": {"type": "string", "minLength": 1},
+    "action_type": {
+      "type": "string",
+      "enum": ["delete", "archive", "anonymize", "review", "retain"]
+    },
+    "risk_level": {
+      "type": "string",
+      "enum": ["low", "medium", "high", "critical"]
+    },
+    "policy_id": {"type": "string", "minLength": 1},
+    "status": {
+      "type": "string",
+      "enum": ["retention_active", "action_due", "overdue", "blocked", "not_required"]
+    },
+    "retention_state": {
+      "type": "string",
+      "enum": ["retained", "action_due", "overdue", "legal_hold", "wrong_scope", "invalid", "not_required"]
+    },
+    "runtime_now_utc": {"type": "string", "format": "date-time"},
+    "retention_check_required": {"type": "boolean"},
+    "data_id": {"type": "string"},
+    "subject_tenant_id": {"type": "string"},
+    "classification": {"type": "string"},
+    "purpose": {"type": "string"},
+    "created_at": {"type": "string"},
+    "retention_until": {"type": "string"},
+    "delete_after": {"type": "string"},
+    "target_action_due_at": {"type": "string"},
+    "seconds_until_retention_until": {"type": "integer", "minimum": 0},
+    "seconds_until_delete_after": {"type": "integer", "minimum": 0},
+    "seconds_until_action_due": {"type": "integer", "minimum": 0},
+    "overdue_seconds": {"type": "integer", "minimum": 0},
+    "retention_policy_ref": {"type": "string"},
+    "owner_id": {"type": "string"},
+    "legal_hold": {"type": "boolean"},
+    "allowed_actions": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": ["delete", "archive", "anonymize", "review", "retain"]
+      }
+    },
+    "blocked_reasons": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1}
+    },
+    "warning_reasons": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1}
+    },
+    "required_controls": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"type": "string", "minLength": 1}
+    },
+    "evidence_refs": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1}
+    },
+    "subject_evidence_refs": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1}
+    },
+    "source_temporal_receipt_id": {"type": "string"},
+    "source_reapproval_receipt_id": {"type": "string"},
+    "source_data_decision_id": {"type": "string"},
+    "receipt_schema_ref": {
+      "type": "string",
+      "const": "urn:mullusi:schema:temporal-retention-window-receipt:1"
+    },
+    "terminal_closure_required": {"type": "boolean", "const": true},
+    "receipt_hash": {"type": "string", "minLength": 1},
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "receipt_is_not_terminal_closure",
+        "runtime_owns_time_truth",
+        "lifecycle_action_allowed",
+        "retention_checked",
+        "delete_after_checked",
+        "legal_hold_checked",
+        "tenant_scope_checked",
+        "high_risk_source_receipts_checked"
+      ],
+      "properties": {
+        "receipt_is_not_terminal_closure": {"type": "boolean", "const": true},
+        "runtime_owns_time_truth": {"type": "boolean", "const": true},
+        "lifecycle_action_allowed": {"type": "boolean"},
+        "retention_checked": {"type": "boolean"},
+        "delete_after_checked": {"type": "boolean"},
+        "legal_hold_checked": {"type": "boolean"},
+        "tenant_scope_checked": {"type": "boolean"},
+        "high_risk_source_receipts_checked": {"type": "boolean"}
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {"status": {"const": "retention_active"}},
+        "required": ["status"]
+      },
+      "then": {
+        "properties": {
+          "retention_check_required": {"const": true},
+          "retention_state": {"const": "retained"},
+          "blocked_reasons": {"maxItems": 0},
+          "warning_reasons": {"minItems": 1},
+          "seconds_until_action_due": {"exclusiveMinimum": 0},
+          "metadata": {
+            "properties": {
+              "lifecycle_action_allowed": {"const": false},
+              "retention_checked": {"const": true},
+              "delete_after_checked": {"const": true},
+              "legal_hold_checked": {"const": true}
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {"status": {"const": "action_due"}},
+        "required": ["status"]
+      },
+      "then": {
+        "properties": {
+          "retention_check_required": {"const": true},
+          "retention_state": {"const": "action_due"},
+          "blocked_reasons": {"maxItems": 0},
+          "seconds_until_action_due": {"const": 0},
+          "metadata": {
+            "properties": {
+              "lifecycle_action_allowed": {"const": true},
+              "retention_checked": {"const": true},
+              "delete_after_checked": {"const": true},
+              "legal_hold_checked": {"const": true}
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {"status": {"const": "overdue"}},
+        "required": ["status"]
+      },
+      "then": {
+        "properties": {
+          "retention_check_required": {"const": true},
+          "retention_state": {"const": "overdue"},
+          "blocked_reasons": {"maxItems": 0},
+          "warning_reasons": {"minItems": 1},
+          "seconds_until_action_due": {"const": 0},
+          "overdue_seconds": {"exclusiveMinimum": 0},
+          "metadata": {
+            "properties": {
+              "lifecycle_action_allowed": {"const": true}
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {"status": {"const": "blocked"}},
+        "required": ["status"]
+      },
+      "then": {
+        "properties": {
+          "blocked_reasons": {"minItems": 1},
+          "metadata": {
+            "properties": {
+              "lifecycle_action_allowed": {"const": false}
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {"status": {"const": "not_required"}},
+        "required": ["status"]
+      },
+      "then": {
+        "properties": {
+          "retention_check_required": {"const": false},
+          "retention_state": {"const": "not_required"},
+          "data_id": {"maxLength": 0},
+          "subject_tenant_id": {"maxLength": 0},
+          "classification": {"maxLength": 0},
+          "purpose": {"maxLength": 0},
+          "created_at": {"maxLength": 0},
+          "retention_until": {"maxLength": 0},
+          "delete_after": {"maxLength": 0},
+          "target_action_due_at": {"maxLength": 0},
+          "seconds_until_retention_until": {"const": 0},
+          "seconds_until_delete_after": {"const": 0},
+          "seconds_until_action_due": {"const": 0},
+          "overdue_seconds": {"const": 0},
+          "retention_policy_ref": {"maxLength": 0},
+          "owner_id": {"maxLength": 0},
+          "legal_hold": {"const": false},
+          "blocked_reasons": {"maxItems": 0},
+          "warning_reasons": {"maxItems": 0},
+          "subject_evidence_refs": {"maxItems": 0},
+          "metadata": {
+            "properties": {
+              "lifecycle_action_allowed": {"const": true},
+              "retention_checked": {"const": false},
+              "delete_after_checked": {"const": false},
+              "legal_hold_checked": {"const": false},
+              "tenant_scope_checked": {"const": false},
+              "high_risk_source_receipts_checked": {"const": false}
+            }
+          }
+        }
+      }
+    }
+  ]
+}
