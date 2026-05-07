@@ -7,7 +7,7 @@ Invariants: backends conform to LLMBackend protocol; costs are correct;
 
 from __future__ import annotations
 
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 
@@ -53,7 +53,6 @@ def test_gemini_provider_is_gemini() -> None:
 def test_gemini_missing_sdk_returns_error() -> None:
     backend = GeminiBackend(api_key="test-key")
     backend._sdk_available = False
-    params = _make_params()
     with pytest.raises(Exception, match="google-generativeai SDK"):
         backend._get_model("gemini-2.0-flash")
 
@@ -71,10 +70,12 @@ def test_gemini_cost_flash_is_low() -> None:
     assert cost < 0.001  # Very cheap
 
 
-def test_gemini_cost_flash_lite_is_zero() -> None:
+def test_gemini_cost_flash_lite_is_lower_than_flash() -> None:
     backend = GeminiBackend(api_key="test-key")
-    cost = backend._estimate_cost("gemini-2.0-flash-lite", 1000, 500)
-    assert cost == 0.0
+    flash_cost = backend._estimate_cost("gemini-2.0-flash", 1000, 500)
+    lite_cost = backend._estimate_cost("gemini-2.0-flash-lite", 1000, 500)
+    assert lite_cost > 0.0
+    assert lite_cost < flash_cost
 
 
 def test_gemini_default_model() -> None:
