@@ -101,6 +101,12 @@
       "surface": "commercial"
     },
     {
+      "schema_id": "economic-intelligence-snapshot",
+      "path": "schemas/economic_intelligence_snapshot.schema.json",
+      "urn": "urn:mullusi:schema:economic-intelligence-snapshot:1",
+      "surface": "commercial"
+    },
+    {
       "schema_id": "operational-case",
       "path": "schemas/operational_case.schema.json",
       "urn": "urn:mullusi:schema:operational-case:1",

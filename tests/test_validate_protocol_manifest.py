@@ -73,6 +73,7 @@ def test_protocol_manifest_indexes_collaboration_case() -> None:
     entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
     collaboration_entry = entries["collaboration-case"]
     commercial_entry = entries["commercial-metering-snapshot"]
+    economic_entry = entries["economic-intelligence-snapshot"]
     operational_entry = entries["operational-case"]
     operator_entry = entries["operator-control-tower-snapshot"]
 
@@ -83,6 +84,9 @@ def test_protocol_manifest_indexes_collaboration_case() -> None:
     assert commercial_entry["path"] == "schemas/commercial_metering_snapshot.schema.json"
     assert commercial_entry["urn"] == "urn:mullusi:schema:commercial-metering-snapshot:1"
     assert commercial_entry["surface"] == "commercial"
+    assert economic_entry["path"] == "schemas/economic_intelligence_snapshot.schema.json"
+    assert economic_entry["urn"] == "urn:mullusi:schema:economic-intelligence-snapshot:1"
+    assert economic_entry["surface"] == "commercial"
     assert operational_entry["path"] == "schemas/operational_case.schema.json"
     assert operational_entry["urn"] == "urn:mullusi:schema:operational-case:1"
     assert operational_entry["surface"] == "case_management"
