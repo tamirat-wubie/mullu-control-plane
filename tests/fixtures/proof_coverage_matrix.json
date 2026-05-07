@@ -331,6 +331,13 @@
       ]
     },
     {
+      "action_id": "publish_temporal_retry_window_receipt_contract",
+      "status": "closed",
+      "surfaces": [
+        "temporal_retry_window"
+      ]
+    },
+    {
       "action_id": "publish_temporal_memory_receipt_contract",
       "status": "closed",
       "surfaces": [
@@ -408,7 +415,7 @@
   ],
   "coverage_summary": {
     "by_action_proof": {
-      "action_proof": 52,
+      "action_proof": 53,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 8,
@@ -416,7 +423,7 @@
     },
     "by_audit": {
       "action_proof": 0,
-      "audit_chain": 58,
+      "audit_chain": 59,
       "gap": 0,
       "read_model": 4,
       "request_proof": 0
@@ -424,25 +431,25 @@
     "by_coverage_state": {
       "proven": 1,
       "unproven": 0,
-      "witnessed": 61
+      "witnessed": 62
     },
     "by_request_proof": {
       "action_proof": 0,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 10,
-      "request_proof": 52
+      "request_proof": 53
     },
-    "surface_count": 62
+    "surface_count": 63
   },
   "generated_by": "scripts/proof_coverage_matrix.py",
   "route_coverage": {
     "by_coverage_state": {
       "proven": 5,
-      "unproven": 199,
+      "unproven": 201,
       "witnessed": 109
     },
-    "route_count": 313,
+    "route_count": 315,
     "routes": [
       {
         "coverage_state": "witnessed",
@@ -907,6 +914,16 @@
       {
         "coverage_state": "unproven",
         "route": "/api/v1/deploy/readiness",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/engineering-puzzle/candidates/judge",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/engineering-puzzle/goal-delta",
         "surface_id": "unclassified_declared_route"
       },
       {
@@ -2010,7 +2027,7 @@
         "surface_id": "gateway_capability_fabric"
       }
     ],
-    "unclassified_route_count": 199
+    "unclassified_route_count": 201
   },
   "schema_version": 1,
   "surfaces": [
@@ -3515,6 +3532,36 @@
         "receipt_not_terminal_closure"
       ],
       "surface_id": "temporal_rate_limit_window"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "gateway/temporal_retry_window.py",
+        "schemas/temporal_retry_window_receipt.schema.json",
+        "tests/test_gateway/test_temporal_retry_window.py"
+      ],
+      "notes": "Temporal retry window rechecks retry-after timing, cooldown windows, max attempts, retry expiry, tenant and command scope, evidence refs, and high-risk source receipts before repeated dispatch.",
+      "representative_paths": [
+        "TemporalRetryWindow.evaluate",
+        "RetryWindowRequest",
+        "TemporalRetryWindowReceipt"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "runtime_clock_owns_retry_window",
+        "retry_after_floor_checked",
+        "cooldown_window_defers_early_retry",
+        "max_attempts_block_exhausted_retry",
+        "expired_retry_window_blocks_dispatch",
+        "tenant_command_scope_checked",
+        "terminal_failure_blocks_retry",
+        "high_risk_source_receipts_bound",
+        "temporal_retry_window_receipt_schema_valid",
+        "receipt_not_terminal_closure"
+      ],
+      "surface_id": "temporal_retry_window"
     },
     {
       "action_proof": "action_proof",

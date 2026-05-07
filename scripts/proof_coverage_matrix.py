@@ -1509,6 +1509,36 @@ def proof_coverage_matrix() -> dict[str, Any]:
             ],
         ),
         _surface(
+            "temporal_retry_window",
+            [
+                "TemporalRetryWindow.evaluate",
+                "RetryWindowRequest",
+                "TemporalRetryWindowReceipt",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "gateway/temporal_retry_window.py",
+                "schemas/temporal_retry_window_receipt.schema.json",
+                "tests/test_gateway/test_temporal_retry_window.py",
+            ],
+            "Temporal retry window rechecks retry-after timing, cooldown windows, max attempts, retry expiry, tenant and command scope, evidence refs, and high-risk source receipts before repeated dispatch.",
+            [
+                "runtime_clock_owns_retry_window",
+                "retry_after_floor_checked",
+                "cooldown_window_defers_early_retry",
+                "max_attempts_block_exhausted_retry",
+                "expired_retry_window_blocks_dispatch",
+                "tenant_command_scope_checked",
+                "terminal_failure_blocks_retry",
+                "high_risk_source_receipts_bound",
+                "temporal_retry_window_receipt_schema_valid",
+                "receipt_not_terminal_closure",
+            ],
+        ),
+        _surface(
             "temporal_memory",
             [
                 "TemporalMemory.evaluate",
@@ -2012,6 +2042,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
         {
             "action_id": "publish_temporal_rate_limit_window_receipt_contract",
             "surfaces": ["temporal_rate_limit_window"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_temporal_retry_window_receipt_contract",
+            "surfaces": ["temporal_retry_window"],
             "status": "closed",
         },
         {

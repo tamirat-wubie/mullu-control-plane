@@ -1251,6 +1251,34 @@ def test_temporal_rate_limit_window_surface_rechecks_token_windows() -> None:
     assert closure_actions["publish_temporal_rate_limit_window_receipt_contract"]["status"] == "closed"
 
 
+def test_temporal_retry_window_surface_rechecks_retry_windows() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    retry_surface = surfaces["temporal_retry_window"]
+    witnesses = set(retry_surface["runtime_witnesses"])
+
+    assert retry_surface["coverage_state"] == "witnessed"
+    assert retry_surface["request_proof"] == "request_proof"
+    assert retry_surface["action_proof"] == "action_proof"
+    assert "TemporalRetryWindow.evaluate" in retry_surface["representative_paths"]
+    assert "RetryWindowRequest" in retry_surface["representative_paths"]
+    assert "TemporalRetryWindowReceipt" in retry_surface["representative_paths"]
+    assert "gateway/temporal_retry_window.py" in retry_surface["evidence_files"]
+    assert "schemas/temporal_retry_window_receipt.schema.json" in retry_surface["evidence_files"]
+    assert "tests/test_gateway/test_temporal_retry_window.py" in retry_surface["evidence_files"]
+    assert "runtime_clock_owns_retry_window" in witnesses
+    assert "retry_after_floor_checked" in witnesses
+    assert "cooldown_window_defers_early_retry" in witnesses
+    assert "max_attempts_block_exhausted_retry" in witnesses
+    assert "expired_retry_window_blocks_dispatch" in witnesses
+    assert "tenant_command_scope_checked" in witnesses
+    assert "terminal_failure_blocks_retry" in witnesses
+    assert "high_risk_source_receipts_bound" in witnesses
+    assert "temporal_retry_window_receipt_schema_valid" in witnesses
+    assert closure_actions["publish_temporal_retry_window_receipt_contract"]["status"] == "closed"
+
+
 def test_temporal_memory_surface_blocks_stale_or_superseded_memory() -> None:
     matrix = _load_fixture()
     surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
