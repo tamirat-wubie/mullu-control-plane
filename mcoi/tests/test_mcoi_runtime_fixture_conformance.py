@@ -327,6 +327,23 @@ from mcoi_runtime.contracts.records_runtime import (
     RetentionSchedule,
     RetentionStatus,
 )
+from mcoi_runtime.contracts.causal_runtime import (
+    AttributionStrength,
+    CausalAssessment,
+    CausalAttribution,
+    CausalClosureReport,
+    CausalDecision,
+    CausalEdge,
+    CausalEdgeKind,
+    CausalNode,
+    CausalSnapshot,
+    CausalStatus,
+    CounterfactualScenario,
+    CounterfactualStatus,
+    InterventionDisposition,
+    InterventionRecord,
+    PropagationRecord,
+)
 from mcoi_runtime.contracts.access_runtime import (
     AccessAuditRecord,
     AccessDecision,
@@ -2875,6 +2892,133 @@ def _build_change_impact_assessment(payload: dict) -> ChangeImpactAssessment:
     )
 
 
+def _build_causal_node(payload: dict) -> CausalNode:
+    return CausalNode(
+        node_id=payload["node_id"],
+        tenant_id=payload["tenant_id"],
+        display_name=payload["display_name"],
+        status=CausalStatus(payload["status"]),
+        created_at=payload["created_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_causal_edge(payload: dict) -> CausalEdge:
+    return CausalEdge(
+        edge_id=payload["edge_id"],
+        tenant_id=payload["tenant_id"],
+        cause_ref=payload["cause_ref"],
+        effect_ref=payload["effect_ref"],
+        kind=CausalEdgeKind(payload["kind"]),
+        strength=AttributionStrength(payload["strength"]),
+        created_at=payload["created_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_intervention_record(payload: dict) -> InterventionRecord:
+    return InterventionRecord(
+        intervention_id=payload["intervention_id"],
+        tenant_id=payload["tenant_id"],
+        target_node_ref=payload["target_node_ref"],
+        disposition=InterventionDisposition(payload["disposition"]),
+        expected_effect=payload["expected_effect"],
+        created_at=payload["created_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_counterfactual_scenario(payload: dict) -> CounterfactualScenario:
+    return CounterfactualScenario(
+        scenario_id=payload["scenario_id"],
+        tenant_id=payload["tenant_id"],
+        intervention_ref=payload["intervention_ref"],
+        premise=payload["premise"],
+        status=CounterfactualStatus(payload["status"]),
+        created_at=payload["created_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_causal_attribution(payload: dict) -> CausalAttribution:
+    return CausalAttribution(
+        attribution_id=payload["attribution_id"],
+        tenant_id=payload["tenant_id"],
+        outcome_ref=payload["outcome_ref"],
+        cause_ref=payload["cause_ref"],
+        strength=AttributionStrength(payload["strength"]),
+        evidence_count=payload["evidence_count"],
+        created_at=payload["created_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_propagation_record(payload: dict) -> PropagationRecord:
+    return PropagationRecord(
+        propagation_id=payload["propagation_id"],
+        tenant_id=payload["tenant_id"],
+        source_ref=payload["source_ref"],
+        target_ref=payload["target_ref"],
+        hop_count=payload["hop_count"],
+        created_at=payload["created_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_causal_decision(payload: dict) -> CausalDecision:
+    return CausalDecision(
+        decision_id=payload["decision_id"],
+        tenant_id=payload["tenant_id"],
+        attribution_ref=payload["attribution_ref"],
+        disposition=payload["disposition"],
+        reason=payload["reason"],
+        decided_at=payload["decided_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_causal_assessment(payload: dict) -> CausalAssessment:
+    return CausalAssessment(
+        assessment_id=payload["assessment_id"],
+        tenant_id=payload["tenant_id"],
+        total_nodes=payload["total_nodes"],
+        total_edges=payload["total_edges"],
+        total_interventions=payload["total_interventions"],
+        attribution_coverage=payload["attribution_coverage"],
+        assessed_at=payload["assessed_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_causal_snapshot(payload: dict) -> CausalSnapshot:
+    return CausalSnapshot(
+        snapshot_id=payload["snapshot_id"],
+        tenant_id=payload["tenant_id"],
+        total_nodes=payload["total_nodes"],
+        total_edges=payload["total_edges"],
+        total_interventions=payload["total_interventions"],
+        total_counterfactuals=payload["total_counterfactuals"],
+        total_attributions=payload["total_attributions"],
+        total_violations=payload["total_violations"],
+        captured_at=payload["captured_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_causal_closure_report(payload: dict) -> CausalClosureReport:
+    return CausalClosureReport(
+        report_id=payload["report_id"],
+        tenant_id=payload["tenant_id"],
+        total_nodes=payload["total_nodes"],
+        total_edges=payload["total_edges"],
+        total_interventions=payload["total_interventions"],
+        total_attributions=payload["total_attributions"],
+        total_violations=payload["total_violations"],
+        created_at=payload["created_at"],
+        metadata=payload["metadata"],
+    )
+
+
 def _build_availability_record(payload: dict) -> AvailabilityRecord:
     return AvailabilityRecord(
         record_id=payload["record_id"],
@@ -3184,6 +3328,16 @@ def _build_access_audit_record(payload: dict) -> AccessAuditRecord:
         ("rollback_plan.json", _build_rollback_plan),
         ("change_outcome.json", _build_change_outcome),
         ("change_impact_assessment.json", _build_change_impact_assessment),
+        ("causal_node.json", _build_causal_node),
+        ("causal_edge.json", _build_causal_edge),
+        ("intervention_record.json", _build_intervention_record),
+        ("counterfactual_scenario.json", _build_counterfactual_scenario),
+        ("causal_attribution.json", _build_causal_attribution),
+        ("propagation_record.json", _build_propagation_record),
+        ("causal_decision.json", _build_causal_decision),
+        ("causal_assessment.json", _build_causal_assessment),
+        ("causal_snapshot.json", _build_causal_snapshot),
+        ("causal_closure_report.json", _build_causal_closure_report),
         ("commitment_record.json", _build_commitment_record),
         ("collection_case.json", _build_collection_case),
         ("configuration_item.json", _build_configuration_item),

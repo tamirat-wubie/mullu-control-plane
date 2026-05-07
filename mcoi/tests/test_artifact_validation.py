@@ -313,6 +313,16 @@ def test_example_inventory_covers_shipped_and_pilot_artifacts() -> None:
     assert "response_sla.json" in mcoi_runtime_fixture_names
     assert "availability_conflict.json" in mcoi_runtime_fixture_names
     assert "availability_routing_decision.json" in mcoi_runtime_fixture_names
+    assert "causal_node.json" in mcoi_runtime_fixture_names
+    assert "causal_edge.json" in mcoi_runtime_fixture_names
+    assert "intervention_record.json" in mcoi_runtime_fixture_names
+    assert "counterfactual_scenario.json" in mcoi_runtime_fixture_names
+    assert "causal_attribution.json" in mcoi_runtime_fixture_names
+    assert "propagation_record.json" in mcoi_runtime_fixture_names
+    assert "causal_decision.json" in mcoi_runtime_fixture_names
+    assert "causal_assessment.json" in mcoi_runtime_fixture_names
+    assert "causal_snapshot.json" in mcoi_runtime_fixture_names
+    assert "causal_closure_report.json" in mcoi_runtime_fixture_names
     assert "approval_gated_command" in pilot_names
 
 
@@ -325,7 +335,7 @@ def test_validate_example_artifacts_strictly() -> None:
     assert len(inventory.request_paths) >= 3
     assert len(inventory.auxiliary_paths) >= 1
     assert len(inventory.maf_runtime_fixture_paths) >= 89
-    assert len(inventory.mcoi_runtime_fixture_paths) >= 199
+    assert len(inventory.mcoi_runtime_fixture_paths) >= 209
 
 
 def test_validate_maf_runtime_fixtures_strictly() -> None:
@@ -3201,6 +3211,133 @@ def test_validate_mcoi_runtime_fixture_rejects_allowed_access_evaluation_without
 
     assert len(errors) == 1
     assert "allowed and requires_approval evaluations must cite matching rules or roles" in errors[0]
+    assert fixture_path.name in errors[0]
+
+
+def test_validate_mcoi_runtime_fixture_rejects_self_referential_causal_edge(tmp_path: Path) -> None:
+    fixture_path = tmp_path / "causal_edge.json"
+    fixture_path.write_text(
+        json.dumps(
+            {
+                "edge_id": "causal-edge-drift",
+                "tenant_id": "tenant-mullu-primary",
+                "cause_ref": "node-routing",
+                "effect_ref": "node-routing",
+                "kind": "direct",
+                "strength": "strong",
+                "created_at": "2026-05-08T14:10:00+00:00",
+                "metadata": {"scope": "routing"},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_artifacts.validate_mcoi_runtime_fixture(fixture_path)
+
+    assert len(errors) == 1
+    assert "cause_ref and effect_ref must be different" in errors[0]
+    assert fixture_path.name in errors[0]
+
+
+def test_validate_mcoi_runtime_fixture_rejects_zero_hop_self_propagation(tmp_path: Path) -> None:
+    fixture_path = tmp_path / "propagation_record.json"
+    fixture_path.write_text(
+        json.dumps(
+            {
+                "propagation_id": "propagation-drift",
+                "tenant_id": "tenant-mullu-primary",
+                "source_ref": "node-routing",
+                "target_ref": "node-routing",
+                "hop_count": 0,
+                "created_at": "2026-05-08T14:20:00+00:00",
+                "metadata": {"path": ["node-routing"]},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_artifacts.validate_mcoi_runtime_fixture(fixture_path)
+
+    assert len(errors) == 2
+    assert "source_ref and target_ref must be different" in errors[0]
+    assert "hop_count must be at least 1" in errors[1]
+    assert fixture_path.name in errors[0]
+
+
+def test_validate_mcoi_runtime_fixture_rejects_self_attribution(tmp_path: Path) -> None:
+    fixture_path = tmp_path / "causal_attribution.json"
+    fixture_path.write_text(
+        json.dumps(
+            {
+                "attribution_id": "attribution-drift",
+                "tenant_id": "tenant-mullu-primary",
+                "outcome_ref": "node-routing",
+                "cause_ref": "node-routing",
+                "strength": "moderate",
+                "evidence_count": 2,
+                "created_at": "2026-05-08T14:25:00+00:00",
+                "metadata": {"scope": "routing"},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_artifacts.validate_mcoi_runtime_fixture(fixture_path)
+
+    assert len(errors) == 1
+    assert "outcome_ref and cause_ref must be different" in errors[0]
+    assert fixture_path.name in errors[0]
+
+
+def test_validate_mcoi_runtime_fixture_rejects_causal_assessment_edges_without_nodes(tmp_path: Path) -> None:
+    fixture_path = tmp_path / "causal_assessment.json"
+    fixture_path.write_text(
+        json.dumps(
+            {
+                "assessment_id": "causal-assessment-drift",
+                "tenant_id": "tenant-mullu-primary",
+                "total_nodes": 0,
+                "total_edges": 1,
+                "total_interventions": 0,
+                "attribution_coverage": 0.0,
+                "assessed_at": "2026-05-08T14:30:00+00:00",
+                "metadata": {"scope": "routing"},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_artifacts.validate_mcoi_runtime_fixture(fixture_path)
+
+    assert len(errors) == 1
+    assert "total_edges must be 0 when total_nodes is 0" in errors[0]
+    assert fixture_path.name in errors[0]
+
+
+def test_validate_mcoi_runtime_fixture_rejects_causal_snapshot_edges_without_nodes(tmp_path: Path) -> None:
+    fixture_path = tmp_path / "causal_snapshot.json"
+    fixture_path.write_text(
+        json.dumps(
+            {
+                "snapshot_id": "causal-snapshot-drift",
+                "tenant_id": "tenant-mullu-primary",
+                "total_nodes": 0,
+                "total_edges": 2,
+                "total_interventions": 1,
+                "total_counterfactuals": 1,
+                "total_attributions": 1,
+                "total_violations": 0,
+                "captured_at": "2026-05-08T14:35:00+00:00",
+                "metadata": {"scope": "routing"},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_artifacts.validate_mcoi_runtime_fixture(fixture_path)
+
+    assert len(errors) == 1
+    assert "total_edges must be 0 when total_nodes is 0" in errors[0]
     assert fixture_path.name in errors[0]
 
 

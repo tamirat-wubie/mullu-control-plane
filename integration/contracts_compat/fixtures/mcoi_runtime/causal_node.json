@@ -1,0 +1,11 @@
+{
+  "node_id": "node-routing-rule-openai-primary",
+  "tenant_id": "tenant-mullu-primary",
+  "display_name": "OpenAI primary routing rule",
+  "status": "active",
+  "created_at": "2026-05-08T14:00:00+00:00",
+  "metadata": {
+    "scope": "connector",
+    "scope_ref_id": "connector-openai-primary"
+  }
+}
