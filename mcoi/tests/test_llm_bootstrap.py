@@ -3,16 +3,32 @@
 import os
 import pytest
 from mcoi_runtime.adapters.multi_provider import (
+    BazaarLinkBackend,
     CerebrasBackend,
+    ChutesBackend,
+    CloudflareBackend,
+    DashScopeBackend,
     DeepInfraBackend,
+    DInferenceBackend,
     FireworksBackend,
     FriendliBackend,
+    GlamaBackend,
     GroqBackend,
     HyperbolicBackend,
+    LlamaAPIBackend,
+    MoonshotBackend,
     NebiusBackend,
     NovitaBackend,
+    PacketBackend,
+    ParasailBackend,
+    FeatherlessBackend,
+    NeuroRoutersBackend,
+    RidvayBackend,
     SambaNovaBackend,
+    SiliconFlowBackend,
     TogetherBackend,
+    WaveSpeedBackend,
+    ZAIBackend,
 )
 from mcoi_runtime.app.llm_bootstrap import (
     LLMConfig,
@@ -46,6 +62,24 @@ LLM_ENV_KEYS = (
     "NEBIUS_API_KEY",
     "HYPERBOLIC_API_KEY",
     "SAMBANOVA_API_KEY",
+    "CLOUDFLARE_API_TOKEN",
+    "CLOUDFLARE_API_KEY",
+    "CLOUDFLARE_ACCOUNT_ID",
+    "MOONSHOT_API_KEY",
+    "DASHSCOPE_API_KEY",
+    "ZAI_API_KEY",
+    "SILICONFLOW_API_KEY",
+    "DINFERENCE_API_KEY",
+    "CHUTES_API_KEY",
+    "WAVESPEED_API_KEY",
+    "BAZAARLINK_API_KEY",
+    "LLAMA_API_KEY",
+    "PARASAIL_API_KEY",
+    "FEATHERLESS_API_KEY",
+    "PACKET_API_KEY",
+    "RIDVAY_API_KEY",
+    "NEUROROUTERS_API_KEY",
+    "GLAMA_API_KEY",
     "XAI_API_KEY",
     "MISTRAL_API_KEY",
     "OPENROUTER_API_KEY",
@@ -134,6 +168,22 @@ class TestLLMConfig:
         assert config.deepinfra_api_key == "deepinfra-alias-key"
         assert config.nebius_api_key == ""
         assert config.hyperbolic_api_key == ""
+
+    def test_from_env_cloudflare_requires_account_id(self, monkeypatch):
+        monkeypatch.delenv("MULLU_ENV", raising=False)
+        for key in LLM_ENV_KEYS:
+            monkeypatch.delenv(key, raising=False)
+        monkeypatch.setenv("CLOUDFLARE_API_TOKEN", "cloudflare-token")
+
+        config = LLMConfig.from_env()
+        assert config.default_backend == "stub"
+        assert config.cloudflare_api_key == "cloudflare-token"
+        assert config.cloudflare_account_id == ""
+
+        monkeypatch.setenv("CLOUDFLARE_ACCOUNT_ID", "account-id")
+        config = LLMConfig.from_env()
+        assert config.default_backend == "cloudflare"
+        assert config.cloudflare_account_id == "account-id"
 
     def test_from_env_explicit_backend(self):
         os.environ["MULLU_LLM_BACKEND"] = "stub"
@@ -274,6 +324,23 @@ class TestBootstrapLLM:
             nebius_api_key="nb",
             hyperbolic_api_key="hb",
             sambanova_api_key="sn",
+            cloudflare_api_key="cf",
+            cloudflare_account_id="account",
+            moonshot_api_key="mk",
+            dashscope_api_key="dq",
+            zai_api_key="zk",
+            siliconflow_api_key="sf",
+            dinference_api_key="df",
+            chutes_api_key="ct",
+            wavespeed_api_key="ws",
+            bazaarlink_api_key="bl",
+            llama_api_key="la",
+            parasail_api_key="ps",
+            featherless_api_key="fh",
+            packet_api_key="pk",
+            ridvay_api_key="rv",
+            neurorouters_api_key="nr",
+            glama_api_key="gm",
             grok_api_key="xai",
             mistral_api_key="ms",
             openrouter_api_key="or",
@@ -299,6 +366,22 @@ class TestBootstrapLLM:
             "nebius",
             "hyperbolic",
             "sambanova",
+            "cloudflare",
+            "moonshot",
+            "dashscope",
+            "zai",
+            "siliconflow",
+            "dinference",
+            "chutes",
+            "wavespeed",
+            "bazaarlink",
+            "llamaapi",
+            "parasail",
+            "featherless",
+            "packet",
+            "ridvay",
+            "neurorouters",
+            "glama",
             "grok",
             "mistral",
             "openrouter",
@@ -313,6 +396,22 @@ class TestBootstrapLLM:
         assert isinstance(result.backends["nebius"], NebiusBackend)
         assert isinstance(result.backends["hyperbolic"], HyperbolicBackend)
         assert isinstance(result.backends["sambanova"], SambaNovaBackend)
+        assert isinstance(result.backends["cloudflare"], CloudflareBackend)
+        assert isinstance(result.backends["moonshot"], MoonshotBackend)
+        assert isinstance(result.backends["dashscope"], DashScopeBackend)
+        assert isinstance(result.backends["zai"], ZAIBackend)
+        assert isinstance(result.backends["siliconflow"], SiliconFlowBackend)
+        assert isinstance(result.backends["dinference"], DInferenceBackend)
+        assert isinstance(result.backends["chutes"], ChutesBackend)
+        assert isinstance(result.backends["wavespeed"], WaveSpeedBackend)
+        assert isinstance(result.backends["bazaarlink"], BazaarLinkBackend)
+        assert isinstance(result.backends["llamaapi"], LlamaAPIBackend)
+        assert isinstance(result.backends["parasail"], ParasailBackend)
+        assert isinstance(result.backends["featherless"], FeatherlessBackend)
+        assert isinstance(result.backends["packet"], PacketBackend)
+        assert isinstance(result.backends["ridvay"], RidvayBackend)
+        assert isinstance(result.backends["neurorouters"], NeuroRoutersBackend)
+        assert isinstance(result.backends["glama"], GlamaBackend)
         assert "llm-groq" in result.registered_providers
         assert "llm-deepseek" in result.registered_providers
         assert "llm-together" in result.registered_providers
@@ -320,6 +419,22 @@ class TestBootstrapLLM:
         assert "llm-deepinfra" in result.registered_providers
         assert "llm-nebius" in result.registered_providers
         assert "llm-sambanova" in result.registered_providers
+        assert "llm-cloudflare" in result.registered_providers
+        assert "llm-moonshot" in result.registered_providers
+        assert "llm-dashscope" in result.registered_providers
+        assert "llm-zai" in result.registered_providers
+        assert "llm-siliconflow" in result.registered_providers
+        assert "llm-dinference" in result.registered_providers
+        assert "llm-chutes" in result.registered_providers
+        assert "llm-wavespeed" in result.registered_providers
+        assert "llm-bazaarlink" in result.registered_providers
+        assert "llm-llamaapi" in result.registered_providers
+        assert "llm-parasail" in result.registered_providers
+        assert "llm-featherless" in result.registered_providers
+        assert "llm-packet" in result.registered_providers
+        assert "llm-ridvay" in result.registered_providers
+        assert "llm-neurorouters" in result.registered_providers
+        assert "llm-glama" in result.registered_providers
         assert "llm-openrouter" in result.registered_providers
         assert "meta-llama/llama-4-scout-17b-16e-instruct" in result.registered_models
         assert "deepseek-v4-flash" in result.registered_models
@@ -332,6 +447,22 @@ class TestBootstrapLLM:
         assert "meta-llama/Meta-Llama-3.1-8B-Instruct" in result.registered_models
         assert "Qwen/Qwen2.5-Coder-32B-Instruct" in result.registered_models
         assert "Meta-Llama-3.3-70B-Instruct" in result.registered_models
+        assert "@cf/meta/llama-3.1-8b-instruct-fp8-fast" in result.registered_models
+        assert "kimi-k2.5" in result.registered_models
+        assert "qwen-turbo" in result.registered_models
+        assert "glm-4.5-air" in result.registered_models
+        assert "Qwen/Qwen2.5-7B-Instruct" in result.registered_models
+        assert "gpt-oss-120b" in result.registered_models
+        assert "Qwen/Qwen3-32B-TEE" in result.registered_models
+        assert "qwen/qwen3-coder-30b-a3b-instruct" in result.registered_models
+        assert "meta-llama/llama-3.1-8b-instruct" in result.registered_models
+        assert "llama3-70b" in result.registered_models
+        assert "parasail-qwen3-32b" in result.registered_models
+        assert "Qwen/Qwen2.5-7B-Instruct-1M" in result.registered_models
+        assert "meta-llama/Llama-3.1-70B-Instruct" in result.registered_models
+        assert "qwen/qwen3-30b-a3b" in result.registered_models
+        assert "qwen/qwen3-30b-a3b:free" in result.registered_models
+        assert "deepseek-chat-v3" in result.registered_models
         assert "mistral-small-2506" in result.registered_models
         assert "grok-3-mini" in result.registered_models
         assert "meta-llama/llama-4-scout" in result.registered_models

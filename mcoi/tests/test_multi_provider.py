@@ -13,21 +13,37 @@ import pytest
 from mcoi_runtime.contracts.llm import LLMInvocationParams, LLMMessage, LLMProvider, LLMRole
 from mcoi_runtime.adapters.multi_provider import (
     ALL_PROVIDERS,
+    BazaarLinkBackend,
     CerebrasBackend,
+    ChutesBackend,
+    CloudflareBackend,
+    DashScopeBackend,
     DeepSeekBackend,
     DeepInfraBackend,
+    DInferenceBackend,
     FireworksBackend,
     FriendliBackend,
     GeminiBackend,
+    GlamaBackend,
     GrokBackend,
     GroqBackend,
     HyperbolicBackend,
+    LlamaAPIBackend,
     MistralBackend,
+    MoonshotBackend,
     NebiusBackend,
     NovitaBackend,
     OpenRouterBackend,
+    PacketBackend,
+    ParasailBackend,
+    FeatherlessBackend,
+    NeuroRoutersBackend,
+    RidvayBackend,
     SambaNovaBackend,
+    SiliconFlowBackend,
     TogetherBackend,
+    WaveSpeedBackend,
+    ZAIBackend,
     available_providers,
     create_provider,
     _params_to_messages,
@@ -47,6 +63,22 @@ OPENAI_COMPATIBLE_PROVIDER_CLASSES = [
     NebiusBackend,
     HyperbolicBackend,
     SambaNovaBackend,
+    CloudflareBackend,
+    MoonshotBackend,
+    DashScopeBackend,
+    ZAIBackend,
+    SiliconFlowBackend,
+    DInferenceBackend,
+    ChutesBackend,
+    WaveSpeedBackend,
+    BazaarLinkBackend,
+    LlamaAPIBackend,
+    ParasailBackend,
+    FeatherlessBackend,
+    PacketBackend,
+    RidvayBackend,
+    NeuroRoutersBackend,
+    GlamaBackend,
     GrokBackend,
     MistralBackend,
     OpenRouterBackend,
@@ -313,6 +345,22 @@ class TestProviderRegistry:
             "nebius",
             "hyperbolic",
             "sambanova",
+            "cloudflare",
+            "moonshot",
+            "dashscope",
+            "zai",
+            "siliconflow",
+            "dinference",
+            "chutes",
+            "wavespeed",
+            "bazaarlink",
+            "llamaapi",
+            "parasail",
+            "featherless",
+            "packet",
+            "ridvay",
+            "neurorouters",
+            "glama",
             "grok",
             "mistral",
             "openrouter",
@@ -336,6 +384,22 @@ class TestProviderRegistry:
             ("nebius", NebiusBackend, LLMProvider.NEBIUS),
             ("hyperbolic", HyperbolicBackend, LLMProvider.HYPERBOLIC),
             ("sambanova", SambaNovaBackend, LLMProvider.SAMBANOVA),
+            ("cloudflare", CloudflareBackend, LLMProvider.CLOUDFLARE),
+            ("moonshot", MoonshotBackend, LLMProvider.MOONSHOT),
+            ("dashscope", DashScopeBackend, LLMProvider.DASHSCOPE),
+            ("zai", ZAIBackend, LLMProvider.ZAI),
+            ("siliconflow", SiliconFlowBackend, LLMProvider.SILICONFLOW),
+            ("dinference", DInferenceBackend, LLMProvider.DINFERENCE),
+            ("chutes", ChutesBackend, LLMProvider.CHUTES),
+            ("wavespeed", WaveSpeedBackend, LLMProvider.WAVESPEED),
+            ("bazaarlink", BazaarLinkBackend, LLMProvider.BAZAARLINK),
+            ("llamaapi", LlamaAPIBackend, LLMProvider.LLAMAAPI),
+            ("parasail", ParasailBackend, LLMProvider.PARASAIL),
+            ("featherless", FeatherlessBackend, LLMProvider.FEATHERLESS),
+            ("packet", PacketBackend, LLMProvider.PACKET),
+            ("ridvay", RidvayBackend, LLMProvider.RIDVAY),
+            ("neurorouters", NeuroRoutersBackend, LLMProvider.NEUROROUTERS),
+            ("glama", GlamaBackend, LLMProvider.GLAMA),
         ],
     )
     def test_new_openai_compatible_providers(self, provider_name, backend_cls, provider):
@@ -364,6 +428,15 @@ class TestProviderRegistry:
         assert "deepinfra" in available
         assert "nebius" not in available
         assert isinstance(available, list)
+
+    def test_available_providers_detects_cloudflare_account_pair(self, monkeypatch):
+        monkeypatch.setenv("CLOUDFLARE_API_TOKEN", "cloudflare-token")
+        monkeypatch.delenv("CLOUDFLARE_ACCOUNT_ID", raising=False)
+
+        assert "cloudflare" not in available_providers()
+
+        monkeypatch.setenv("CLOUDFLARE_ACCOUNT_ID", "account-id")
+        assert "cloudflare" in available_providers()
 
 
 # ═══ Custom Model Override ═══
