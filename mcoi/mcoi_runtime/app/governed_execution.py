@@ -3,20 +3,31 @@
 Purpose: Provides a governed dispatch wrapper that operator code can call
     with minimal interface change, bridging the operator model to governed execution.
 Governance scope: operator skill/workflow/goal execution paths.
-Dependencies: governed_dispatcher, dispatcher, MIL compiler, and MIL dispatch bridge.
-Invariants: all operator dispatches flow through governed spine.
+Dependencies: governed_dispatcher, dispatcher, universal action kernel, MIL
+    compiler, and MIL dispatch bridge.
+Invariants: all operator dispatches flow through governed spine or the universal
+    action kernel when a configured kernel is supplied.
 """
 from __future__ import annotations
 from dataclasses import dataclass
+from typing import Any, Mapping
 from mcoi_runtime.core.dispatcher import DispatchRequest
+from mcoi_runtime.core.command_capability_admission import CommandCapabilityAdmissionGate
 from mcoi_runtime.core.governed_dispatcher import (
     GovernedDispatcher, GovernedDispatchContext,
 )
 from mcoi_runtime.contracts.execution import ExecutionResult
 from mcoi_runtime.contracts.mil import MILProgram
 from mcoi_runtime.contracts.policy import PolicyDecision
+from mcoi_runtime.contracts.simulation import RiskLevel
 from mcoi_runtime.core.mil_dispatcher_bridge import dispatch_verified_mil
 from mcoi_runtime.core.mil_static_verifier import MILStaticReport, verify_mil_program
+from mcoi_runtime.core.universal_action_kernel import (
+    UniversalActionKernel,
+    UniversalActionRequest,
+    UniversalActionResult,
+    build_universal_action_kernel,
+)
 from mcoi_runtime.whqr.mil_compiler import compile_mil_from_policy_decision
 
 # Module-level counter for unique intent IDs (avoids collision with fixed clocks)
@@ -29,6 +40,25 @@ class OperatorMILDispatchResult:
     program: MILProgram
     verification: MILStaticReport
     instruction_trace: tuple[str, ...]
+
+
+@dataclass(frozen=True, slots=True)
+class UniversalCommandProofView:
+    """Replayable read model for a command's universal action proof chain."""
+
+    command_id: str
+    action_id: str
+    blocked: bool
+    block_reason: str
+    proof_hash: str
+    capability_id: str
+    dispatch_ledger_hash: str
+    terminal_certificate_id: str
+    terminal_disposition: str
+    learning_admission_id: str
+    learning_status: str
+    event_hashes: tuple[str, ...]
+    state_sequence: tuple[str, ...]
 
 
 def governed_operator_dispatch(
@@ -81,6 +111,282 @@ def governed_operator_dispatch(
         )
 
     return result.execution_result
+
+
+def universal_operator_dispatch(
+    kernel: UniversalActionKernel,
+    request: DispatchRequest,
+    *,
+    actor_id: str = "operator",
+    tenant_id: str = "operator",
+    intent_id: str = "",
+    objective: str = "",
+    risk_level: RiskLevel = RiskLevel.LOW,
+    estimated_cost: float = 100.0,
+    estimated_duration_seconds: float = 1.0,
+    success_probability: float = 0.9,
+    mode: str = "simulation",
+) -> UniversalActionResult:
+    """Dispatch an operator request through the universal governed action path.
+
+    This facade is the narrow runtime entry point for callers that have a
+    configured UniversalActionKernel. It preserves the operator call shape while
+    returning the full certificate chain instead of only ExecutionResult.
+    """
+    if not intent_id:
+        intent_id = _derive_intent_id(actor_id, request)
+    if not objective:
+        objective = f"Execute {request.route} for goal {request.goal_id}"
+    return kernel.run(
+        UniversalActionRequest(
+            actor_id=actor_id,
+            tenant_id=tenant_id,
+            intent_id=intent_id,
+            objective=objective,
+            dispatch_request=request,
+            risk_level=risk_level,
+            estimated_cost=estimated_cost,
+            estimated_duration_seconds=estimated_duration_seconds,
+            success_probability=success_probability,
+            mode=mode,
+        )
+    )
+
+
+def universal_command_dispatch(
+    command_ledger: object,
+    kernel: UniversalActionKernel,
+    command_id: str,
+    *,
+    template: Mapping[str, Any],
+    bindings: Mapping[str, str] | None = None,
+    dispatch_route: str = "",
+    mode: str = "simulation",
+) -> UniversalActionResult:
+    """Dispatch a command-ledger command through the universal action kernel.
+
+    The command spine remains the causal source of tenant, actor, command, and
+    intent identity. This function records command transitions around the
+    universal kernel result without giving the kernel authority to create or
+    mutate commands directly.
+    """
+    from gateway.command_spine import CommandState
+
+    command = command_ledger.get(command_id)
+    if command is None:
+        raise KeyError(f"unknown command_id: {command_id}")
+    action = command_ledger.governed_action_for(command_id)
+    if action is None:
+        action = command_ledger.bind_governed_action(command_id)
+
+    request = DispatchRequest(
+        goal_id=command.command_id,
+        route=dispatch_route or action.capability,
+        template=template,
+        bindings=dict(bindings or {}),
+    )
+    result = universal_operator_dispatch(
+        kernel,
+        request,
+        actor_id=command.actor_id,
+        tenant_id=command.tenant_id,
+        intent_id=command.command_id,
+        objective=f"Execute command {command.intent} through the universal action kernel.",
+        risk_level=_risk_level_from_tier(action.risk_tier),
+        mode=mode,
+    )
+    command_ledger.transition(
+        command.command_id,
+        CommandState.DISPATCHED if result.dispatched else CommandState.REQUIRES_REVIEW,
+        risk_tier=action.risk_tier,
+        tool_name=action.capability,
+        output={"universal_action_proof": result.proof_hash},
+        detail={
+            "cause": "universal_action_kernel_dispatched" if result.dispatched else "universal_action_kernel_blocked",
+            "universal_action": _universal_action_transition_detail(result),
+        },
+    )
+    if result.terminal_certificate is not None:
+        command_ledger.transition(
+            command.command_id,
+            CommandState.TERMINALLY_CERTIFIED,
+            risk_tier=action.risk_tier,
+            tool_name=action.capability,
+            output={"terminal_certificate_id": result.terminal_certificate.certificate_id},
+            detail={
+                "cause": "universal_action_terminal_certificate",
+                "terminal_certificate_id": result.terminal_certificate.certificate_id,
+                "terminal_disposition": result.terminal_certificate.disposition.value,
+                "proof_hash": result.proof_hash,
+            },
+        )
+    if result.learning_decision is not None:
+        command_ledger.transition(
+            command.command_id,
+            CommandState.LEARNING_DECIDED,
+            risk_tier=action.risk_tier,
+            tool_name=action.capability,
+            output={"learning_admission_id": result.learning_decision.admission_id},
+            detail={
+                "cause": "universal_action_learning_decided",
+                "learning_admission_id": result.learning_decision.admission_id,
+                "learning_status": result.learning_decision.status.value,
+                "proof_hash": result.proof_hash,
+            },
+        )
+    return result
+
+
+def universal_command_proof_view(
+    command_ledger: object,
+    command_id: str,
+) -> UniversalCommandProofView | None:
+    """Reconstruct the universal action proof chain from command events.
+
+    The read model intentionally relies only on persisted command events. It can
+    therefore answer audit/read-path questions after a process restart without
+    requiring the in-memory UniversalActionResult object.
+    """
+    events = command_ledger.events_for(command_id)
+    if not events:
+        return None
+
+    universal_detail: Mapping[str, Any] | None = None
+    terminal_certificate_id = ""
+    terminal_disposition = ""
+    learning_admission_id = ""
+    learning_status = ""
+    event_hashes: list[str] = []
+    state_sequence: list[str] = []
+
+    for event in events:
+        event_hash = str(getattr(event, "event_hash", ""))
+        if event_hash:
+            event_hashes.append(event_hash)
+        next_state = getattr(event, "next_state", "")
+        state_value = str(getattr(next_state, "value", next_state))
+        if state_value:
+            state_sequence.append(state_value)
+        detail = getattr(event, "detail", {})
+        if not isinstance(detail, Mapping):
+            continue
+        candidate = detail.get("universal_action")
+        if isinstance(candidate, Mapping):
+            universal_detail = candidate
+        if isinstance(detail.get("terminal_certificate_id"), str):
+            terminal_certificate_id = str(detail["terminal_certificate_id"])
+            terminal_disposition = str(detail.get("terminal_disposition", ""))
+        if isinstance(detail.get("learning_admission_id"), str):
+            learning_admission_id = str(detail["learning_admission_id"])
+            learning_status = str(detail.get("learning_status", ""))
+
+    if universal_detail is None:
+        return None
+
+    return UniversalCommandProofView(
+        command_id=command_id,
+        action_id=str(universal_detail.get("action_id", "")),
+        blocked=bool(universal_detail.get("blocked", False)),
+        block_reason=str(universal_detail.get("block_reason", "")),
+        proof_hash=str(universal_detail.get("proof_hash", "")),
+        capability_id=str(universal_detail.get("capability_id", "")),
+        dispatch_ledger_hash=str(universal_detail.get("dispatch_ledger_hash", "")),
+        terminal_certificate_id=terminal_certificate_id
+        or str(universal_detail.get("terminal_certificate_id", "")),
+        terminal_disposition=terminal_disposition,
+        learning_admission_id=learning_admission_id
+        or str(universal_detail.get("learning_admission_id", "")),
+        learning_status=learning_status,
+        event_hashes=tuple(event_hashes),
+        state_sequence=tuple(state_sequence),
+    )
+
+
+def build_universal_operator_kernel(
+    runtime: object,
+    *,
+    capability_admission_gate: CommandCapabilityAdmissionGate,
+    terminal_closure_enabled: bool = True,
+    learning_admission_enabled: bool = True,
+) -> UniversalActionKernel:
+    """Build a universal action kernel from a bootstrapped runtime.
+
+    Capability admission is intentionally supplied by the caller. This prevents
+    bootstrap from silently installing or authorizing capabilities.
+    """
+    from mcoi_runtime.core.closure_learning import ClosureLearningAdmissionGate
+    from mcoi_runtime.core.operational_graph import OperationalGraph
+    from mcoi_runtime.core.simulation import SimulationEngine
+    from mcoi_runtime.core.terminal_closure import TerminalClosureCertifier
+
+    world_state = getattr(runtime, "world_state", None)
+    governed_dispatcher = getattr(runtime, "governed_dispatcher", None)
+    clock = getattr(runtime, "clock", None)
+    if world_state is None:
+        raise ValueError("runtime must expose world_state")
+    if governed_dispatcher is None:
+        raise ValueError("runtime must expose governed_dispatcher")
+    if clock is None:
+        raise ValueError("runtime must expose clock")
+
+    operational_graph = getattr(runtime, "operational_graph", None)
+    if operational_graph is None:
+        operational_graph = OperationalGraph(clock=clock)
+    simulator = SimulationEngine(graph=operational_graph, clock=clock)
+    terminal_closure = (
+        TerminalClosureCertifier(clock=clock)
+        if terminal_closure_enabled
+        else None
+    )
+    learning_admission = (
+        ClosureLearningAdmissionGate(clock=clock)
+        if learning_admission_enabled
+        else None
+    )
+    return build_universal_action_kernel(
+        world_state=world_state,
+        simulator=simulator,
+        capability_admission=capability_admission_gate,
+        governed_dispatcher=governed_dispatcher,
+        terminal_closure=terminal_closure,
+        learning_admission=learning_admission,
+        clock=clock,
+    )
+
+
+def _risk_level_from_tier(risk_tier: str) -> RiskLevel:
+    normalized = risk_tier.strip().lower()
+    if normalized in {"critical", "max"}:
+        return RiskLevel.CRITICAL
+    if normalized == "high":
+        return RiskLevel.HIGH
+    if normalized in {"medium", "moderate"}:
+        return RiskLevel.MODERATE
+    if normalized == "minimal":
+        return RiskLevel.MINIMAL
+    return RiskLevel.LOW
+
+
+def _universal_action_transition_detail(result: UniversalActionResult) -> dict[str, Any]:
+    return {
+        "action_id": result.action_id,
+        "blocked": result.blocked,
+        "block_reason": result.block_reason,
+        "proof_hash": result.proof_hash,
+        "goal_certificate_id": result.goal_certificate.certificate_id,
+        "world_certificate_id": result.world_certificate.certificate_id,
+        "plan_certificate_id": result.plan_certificate.certificate_id if result.plan_certificate else "",
+        "simulation_certificate_id": (
+            result.simulation_certificate.certificate_id if result.simulation_certificate else ""
+        ),
+        "capability_status": result.capability_decision.status.value if result.capability_decision else "",
+        "capability_id": result.capability_decision.capability_id if result.capability_decision else "",
+        "dispatch_ledger_hash": result.dispatch_result.ledger_hash if result.dispatch_result else "",
+        "terminal_certificate_id": (
+            result.terminal_certificate.certificate_id if result.terminal_certificate else ""
+        ),
+        "learning_admission_id": result.learning_decision.admission_id if result.learning_decision else "",
+    }
 
 
 def governed_operator_mil_dispatch(
