@@ -60,6 +60,7 @@ Invariants: Absence of live deployment evidence is explicit; no production healt
 | Capability adapter closure planner | `scripts/plan_capability_adapter_closure.py` converts adapter evidence blockers into dependency, credential, and live-receipt actions without claiming closure | Reflected |
 | Capability adapter closure plan schema validator | `scripts/validate_capability_adapter_closure_plan_schema.py` validates adapter closure plan shape, action counts, proof contracts, and blocker coverage before aggregate promotion planning | Reflected |
 | Deployment publication closure planner | `scripts/plan_deployment_publication_closure.py` converts deployment witness, responsibility-debt, and public-health blockers into approval-bound publication actions without mutating status | Reflected |
+| Deployment publication closure plan schema validator | `scripts/validate_deployment_publication_closure_plan_schema.py` validates deployment publication closure plan shape, action counts, approval requirements, and blocker coverage before aggregate promotion planning | Reflected |
 | General-agent promotion closure planner | `scripts/plan_general_agent_promotion_closure.py` aggregates adapter and deployment closure plans into one operator-facing promotion plan | Reflected |
 | General-agent promotion closure plan schema | `schemas/general_agent_promotion_closure_plan.schema.json` defines the public operator-facing promotion closure plan contract | Reflected |
 | General-agent promotion closure plan schema validator | `scripts/validate_general_agent_promotion_closure_plan_schema.py` validates aggregate closure plan shape and semantic action counts before approval or execution | Reflected |
@@ -145,6 +146,7 @@ Before this witness can claim public deployment health, the repository must name
 | Capability adapter closure planning | `python scripts/plan_capability_adapter_closure.py --json` |
 | Capability adapter closure plan schema validation | `python scripts/validate_capability_adapter_closure_plan_schema.py --strict` |
 | Deployment publication closure planning | `python scripts/plan_deployment_publication_closure.py --json` |
+| Deployment publication closure plan schema validation | `python scripts/validate_deployment_publication_closure_plan_schema.py --strict` |
 | General-agent promotion closure planning | `python scripts/plan_general_agent_promotion_closure.py --json` |
 | General-agent promotion closure plan schema validation | `python scripts/validate_general_agent_promotion_closure_plan_schema.py --strict` |
 | General-agent promotion closure plan validation | `python scripts/validate_general_agent_promotion_closure_plan.py --strict` |
