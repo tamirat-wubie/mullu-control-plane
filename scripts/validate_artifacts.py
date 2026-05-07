@@ -294,6 +294,12 @@ HOLD_STATUSES = frozenset({"active", "released", "expired"})
 DISPOSAL_DISPOSITIONS = frozenset({"delete", "archive", "anonymize", "transfer", "deny"})
 RECORD_AUTHORITIES = frozenset({"system", "operator", "legal", "compliance", "executive", "automated"})
 EVIDENCE_GRADES = frozenset({"primary", "secondary", "derived", "copy", "reconstructed"})
+ACCESS_IDENTITY_KINDS = frozenset({"human", "service", "operator", "system", "api_key"})
+ACCESS_ROLE_KINDS = frozenset({"admin", "operator", "developer", "viewer", "auditor", "service", "custom"})
+PERMISSION_EFFECTS = frozenset({"allow", "deny", "require_approval"})
+ACCESS_DECISIONS = frozenset({"allowed", "denied", "requires_approval", "expired", "violation"})
+ACCESS_DELEGATION_STATUSES = frozenset({"active", "expired", "revoked"})
+AUTH_CONTEXT_KINDS = frozenset({"tenant", "workspace", "environment", "global"})
 AVAILABILITY_KINDS = frozenset(
     {
         "business_hours",
@@ -10173,6 +10179,354 @@ def _validate_records_closure_report_fixture(path: Path) -> list[str]:
     return errors
 
 
+def _validate_identity_record_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MCOI runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=("identity_id", "name", "kind", "tenant_id", "enabled", "created_at", "metadata"),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("identity_id", "name", "tenant_id"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    if payload["kind"] not in ACCESS_IDENTITY_KINDS:
+        errors.append(
+            f"{_relative_path(path)}: field 'kind' must be one of {', '.join(sorted(ACCESS_IDENTITY_KINDS))}"
+        )
+    if not isinstance(payload["enabled"], bool):
+        errors.append(f"{_relative_path(path)}: field 'enabled' must be boolean")
+    errors.extend(_validate_iso8601_text(payload["created_at"], field_name="created_at", path=path))
+    if not isinstance(payload["metadata"], dict):
+        errors.append(f"{_relative_path(path)}: field 'metadata' must be an object")
+    return errors
+
+
+def _validate_role_record_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MCOI runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=("role_id", "name", "kind", "permissions", "description", "created_at", "metadata"),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("role_id", "name", "description"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    if payload["kind"] not in ACCESS_ROLE_KINDS:
+        errors.append(
+            f"{_relative_path(path)}: field 'kind' must be one of {', '.join(sorted(ACCESS_ROLE_KINDS))}"
+        )
+    permissions = payload["permissions"]
+    if not isinstance(permissions, list) or not permissions:
+        errors.append(f"{_relative_path(path)}: field 'permissions' must be a non-empty array")
+    else:
+        for index, permission in enumerate(permissions):
+            errors.extend(_require_non_empty_text(permission, field_name=f"permissions[{index}]", path=path))
+        if len(set(permissions)) != len(permissions):
+            errors.append(f"{_relative_path(path)}: permissions must not contain duplicates")
+    errors.extend(_validate_iso8601_text(payload["created_at"], field_name="created_at", path=path))
+    if not isinstance(payload["metadata"], dict):
+        errors.append(f"{_relative_path(path)}: field 'metadata' must be an object")
+    return errors
+
+
+def _validate_permission_rule_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MCOI runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "rule_id",
+            "resource_type",
+            "action",
+            "effect",
+            "scope_kind",
+            "scope_ref_id",
+            "conditions",
+            "created_at",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("rule_id", "resource_type", "action", "scope_ref_id"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    if payload["effect"] not in PERMISSION_EFFECTS:
+        errors.append(
+            f"{_relative_path(path)}: field 'effect' must be one of {', '.join(sorted(PERMISSION_EFFECTS))}"
+        )
+    if payload["scope_kind"] not in AUTH_CONTEXT_KINDS:
+        errors.append(
+            f"{_relative_path(path)}: field 'scope_kind' must be one of {', '.join(sorted(AUTH_CONTEXT_KINDS))}"
+        )
+    if not isinstance(payload["conditions"], dict):
+        errors.append(f"{_relative_path(path)}: field 'conditions' must be an object")
+    errors.extend(_validate_iso8601_text(payload["created_at"], field_name="created_at", path=path))
+    return errors
+
+
+def _validate_role_binding_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MCOI runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=("binding_id", "identity_id", "role_id", "scope_kind", "scope_ref_id", "bound_at"),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("binding_id", "identity_id", "role_id", "scope_ref_id"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    if payload["scope_kind"] not in AUTH_CONTEXT_KINDS:
+        errors.append(
+            f"{_relative_path(path)}: field 'scope_kind' must be one of {', '.join(sorted(AUTH_CONTEXT_KINDS))}"
+        )
+    errors.extend(_validate_iso8601_text(payload["bound_at"], field_name="bound_at", path=path))
+    return errors
+
+
+def _validate_delegation_record_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MCOI runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "delegation_id",
+            "from_identity_id",
+            "to_identity_id",
+            "role_id",
+            "scope_kind",
+            "scope_ref_id",
+            "status",
+            "expires_at",
+            "delegated_at",
+            "revoked_at",
+            "metadata",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("delegation_id", "from_identity_id", "to_identity_id", "role_id", "scope_ref_id"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    if payload["scope_kind"] not in AUTH_CONTEXT_KINDS:
+        errors.append(
+            f"{_relative_path(path)}: field 'scope_kind' must be one of {', '.join(sorted(AUTH_CONTEXT_KINDS))}"
+        )
+    if payload["status"] not in ACCESS_DELEGATION_STATUSES:
+        errors.append(
+            f"{_relative_path(path)}: field 'status' must be one of {', '.join(sorted(ACCESS_DELEGATION_STATUSES))}"
+        )
+    errors.extend(_validate_iso8601_text(payload["delegated_at"], field_name="delegated_at", path=path))
+    if payload["expires_at"]:
+        errors.extend(_validate_iso8601_text(payload["expires_at"], field_name="expires_at", path=path))
+    elif not isinstance(payload["expires_at"], str):
+        errors.append(f"{_relative_path(path)}: field 'expires_at' must be a string")
+    if payload["revoked_at"]:
+        errors.extend(_validate_iso8601_text(payload["revoked_at"], field_name="revoked_at", path=path))
+    elif not isinstance(payload["revoked_at"], str):
+        errors.append(f"{_relative_path(path)}: field 'revoked_at' must be a string")
+    if not errors:
+        if payload["from_identity_id"] == payload["to_identity_id"]:
+            errors.append(f"{_relative_path(path)}: delegations must not target the same identity as the delegator")
+        if payload["status"] in {"active", "expired"} and not payload["expires_at"]:
+            errors.append(f"{_relative_path(path)}: active and expired delegations must carry expires_at")
+        if payload["status"] == "revoked" and not payload["revoked_at"]:
+            errors.append(f"{_relative_path(path)}: revoked delegations must carry revoked_at")
+        if payload["status"] != "revoked" and payload["revoked_at"]:
+            errors.append(f"{_relative_path(path)}: non-revoked delegations must keep revoked_at empty")
+        if payload["expires_at"] and _parse_iso8601_text(payload["expires_at"]) < _parse_iso8601_text(payload["delegated_at"]):
+            errors.append(f"{_relative_path(path)}: expires_at must not precede delegated_at")
+        if payload["revoked_at"] and _parse_iso8601_text(payload["revoked_at"]) < _parse_iso8601_text(payload["delegated_at"]):
+            errors.append(f"{_relative_path(path)}: revoked_at must not precede delegated_at")
+    if not isinstance(payload["metadata"], dict):
+        errors.append(f"{_relative_path(path)}: field 'metadata' must be an object")
+    return errors
+
+
+def _validate_access_request_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MCOI runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "request_id",
+            "identity_id",
+            "resource_type",
+            "action",
+            "scope_kind",
+            "scope_ref_id",
+            "requested_at",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("request_id", "identity_id", "resource_type", "action", "scope_ref_id"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    if payload["scope_kind"] not in AUTH_CONTEXT_KINDS:
+        errors.append(
+            f"{_relative_path(path)}: field 'scope_kind' must be one of {', '.join(sorted(AUTH_CONTEXT_KINDS))}"
+        )
+    errors.extend(_validate_iso8601_text(payload["requested_at"], field_name="requested_at", path=path))
+    return errors
+
+
+def _validate_access_evaluation_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MCOI runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "evaluation_id",
+            "request_id",
+            "decision",
+            "matching_rule_ids",
+            "matching_role_ids",
+            "reason",
+            "evaluated_at",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("evaluation_id", "request_id", "reason"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    if payload["decision"] not in ACCESS_DECISIONS:
+        errors.append(
+            f"{_relative_path(path)}: field 'decision' must be one of {', '.join(sorted(ACCESS_DECISIONS))}"
+        )
+    for list_name in ("matching_rule_ids", "matching_role_ids"):
+        values = payload[list_name]
+        if not isinstance(values, list):
+            errors.append(f"{_relative_path(path)}: field '{list_name}' must be an array")
+            continue
+        for index, value in enumerate(values):
+            errors.extend(_require_non_empty_text(value, field_name=f"{list_name}[{index}]", path=path))
+        if len(set(values)) != len(values):
+            errors.append(f"{_relative_path(path)}: {list_name} must not contain duplicates")
+    if not errors and payload["decision"] in {"allowed", "requires_approval"}:
+        if not payload["matching_rule_ids"] and not payload["matching_role_ids"]:
+            errors.append(
+                f"{_relative_path(path)}: allowed and requires_approval evaluations must cite matching rules or roles"
+            )
+    errors.extend(_validate_iso8601_text(payload["evaluated_at"], field_name="evaluated_at", path=path))
+    return errors
+
+
+def _validate_access_violation_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MCOI runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "violation_id",
+            "identity_id",
+            "resource_type",
+            "action",
+            "scope_kind",
+            "scope_ref_id",
+            "reason",
+            "detected_at",
+            "metadata",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("violation_id", "identity_id", "resource_type", "action", "scope_ref_id", "reason"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    if payload["scope_kind"] not in AUTH_CONTEXT_KINDS:
+        errors.append(
+            f"{_relative_path(path)}: field 'scope_kind' must be one of {', '.join(sorted(AUTH_CONTEXT_KINDS))}"
+        )
+    errors.extend(_validate_iso8601_text(payload["detected_at"], field_name="detected_at", path=path))
+    if not isinstance(payload["metadata"], dict):
+        errors.append(f"{_relative_path(path)}: field 'metadata' must be an object")
+    return errors
+
+
+def _validate_access_snapshot_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MCOI runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "snapshot_id",
+            "scope_ref_id",
+            "total_identities",
+            "total_roles",
+            "total_bindings",
+            "total_rules",
+            "active_delegations",
+            "total_violations",
+            "total_evaluations",
+            "captured_at",
+            "metadata",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("snapshot_id", "scope_ref_id"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    for field_name in (
+        "total_identities",
+        "total_roles",
+        "total_bindings",
+        "total_rules",
+        "active_delegations",
+        "total_violations",
+        "total_evaluations",
+    ):
+        errors.extend(_require_non_negative_int(payload[field_name], field_name=field_name, path=path))
+    if not errors and payload["active_delegations"] > payload["total_bindings"]:
+        errors.append(f"{_relative_path(path)}: active_delegations must not exceed total_bindings")
+    errors.extend(_validate_iso8601_text(payload["captured_at"], field_name="captured_at", path=path))
+    if not isinstance(payload["metadata"], dict):
+        errors.append(f"{_relative_path(path)}: field 'metadata' must be an object")
+    return errors
+
+
+def _validate_access_audit_record_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MCOI runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "audit_id",
+            "identity_id",
+            "action",
+            "resource_type",
+            "decision",
+            "scope_kind",
+            "scope_ref_id",
+            "recorded_at",
+            "metadata",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("audit_id", "identity_id", "action", "resource_type", "scope_ref_id"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    if payload["decision"] not in ACCESS_DECISIONS:
+        errors.append(
+            f"{_relative_path(path)}: field 'decision' must be one of {', '.join(sorted(ACCESS_DECISIONS))}"
+        )
+    if payload["scope_kind"] not in AUTH_CONTEXT_KINDS:
+        errors.append(
+            f"{_relative_path(path)}: field 'scope_kind' must be one of {', '.join(sorted(AUTH_CONTEXT_KINDS))}"
+        )
+    errors.extend(_validate_iso8601_text(payload["recorded_at"], field_name="recorded_at", path=path))
+    if not isinstance(payload["metadata"], dict):
+        errors.append(f"{_relative_path(path)}: field 'metadata' must be an object")
+    return errors
+
+
 def _validate_availability_record_fixture(path: Path) -> list[str]:
     payload = _load_json_object(path, kind="MCOI runtime fixture")
     errors = _validate_exact_object_fields(
@@ -11056,6 +11410,11 @@ MAF_RUNTIME_FIXTURE_VALIDATORS: dict[str, MAFRuntimeFixtureValidator] = {
 }
 
 MCOI_RUNTIME_FIXTURE_VALIDATORS: dict[str, MCOIRuntimeFixtureValidator] = {
+    "access_audit_record.json": _validate_access_audit_record_fixture,
+    "access_evaluation.json": _validate_access_evaluation_fixture,
+    "access_request.json": _validate_access_request_fixture,
+    "access_snapshot.json": _validate_access_snapshot_fixture,
+    "access_violation.json": _validate_access_violation_fixture,
     "account_health_snapshot.json": _validate_account_health_snapshot_fixture,
     "account_record.json": _validate_account_record_fixture,
     "anchor_record.json": _validate_anchor_record_fixture,
@@ -11139,6 +11498,7 @@ MCOI_RUNTIME_FIXTURE_VALIDATORS: dict[str, MCOIRuntimeFixtureValidator] = {
     "environment_promotion.json": _validate_environment_promotion_fixture,
     "environment_record.json": _validate_environment_record_fixture,
     "financial_health_snapshot.json": _validate_financial_health_snapshot_fixture,
+    "delegation_record.json": _validate_delegation_record_fixture,
     "evidence_collection.json": _validate_evidence_collection_fixture,
     "evidence_item.json": _validate_evidence_item_fixture,
     "failover_record.json": _validate_failover_record_fixture,
@@ -11150,6 +11510,7 @@ MCOI_RUNTIME_FIXTURE_VALIDATORS: dict[str, MCOIRuntimeFixtureValidator] = {
     "human_workflow_snapshot.json": _validate_human_workflow_snapshot_fixture,
     "human_workflow_violation.json": _validate_human_workflow_violation_fixture,
     "handoff_record.json": _validate_mcoi_handoff_record_fixture,
+    "identity_record.json": _validate_identity_record_fixture,
     "incident_record.json": _validate_incident_record_fixture,
     "inventory_record.json": _validate_inventory_record_fixture,
     "invoice_record.json": _validate_invoice_record_fixture,
@@ -11171,6 +11532,7 @@ MCOI_RUNTIME_FIXTURE_VALIDATORS: dict[str, MCOIRuntimeFixtureValidator] = {
     "meeting_decision.json": _validate_meeting_decision_fixture,
     "meeting_record.json": _validate_meeting_record_fixture,
     "meeting_request.json": _validate_meeting_request_fixture,
+    "permission_rule.json": _validate_permission_rule_fixture,
     "payment_record.json": _validate_payment_record_fixture,
     "package_record.json": _validate_package_record_fixture,
     "penalty_record.json": _validate_penalty_record_fixture,
@@ -11215,6 +11577,8 @@ MCOI_RUNTIME_FIXTURE_VALIDATORS: dict[str, MCOIRuntimeFixtureValidator] = {
     "recertification_window.json": _validate_recertification_window_fixture,
     "renewal_window.json": _validate_renewal_window_fixture,
     "response_sla.json": _validate_response_sla_fixture,
+    "role_binding.json": _validate_role_binding_fixture,
+    "role_record.json": _validate_role_record_fixture,
     "preservation_decision.json": _validate_preservation_decision_fixture,
     "disposal_decision.json": _validate_disposal_decision_fixture,
     "disposition_review.json": _validate_disposition_review_fixture,

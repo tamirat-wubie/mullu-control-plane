@@ -1,0 +1,8 @@
+{
+  "binding_id": "role-binding-ops-lead-workspace",
+  "identity_id": "identity-ops-lead",
+  "role_id": "role-workspace-operator",
+  "scope_kind": "workspace",
+  "scope_ref_id": "workspace-enterprise-ops",
+  "bound_at": "2026-05-07T12:06:00+00:00"
+}

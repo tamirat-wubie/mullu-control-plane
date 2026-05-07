@@ -1,0 +1,14 @@
+{
+  "audit_id": "access-audit-change-approve-2026-05-08",
+  "identity_id": "identity-backup-lead",
+  "action": "approve",
+  "resource_type": "change_request",
+  "decision": "requires_approval",
+  "scope_kind": "workspace",
+  "scope_ref_id": "workspace-enterprise-ops",
+  "recorded_at": "2026-05-08T13:01:30+00:00",
+  "metadata": {
+    "request_id": "access-request-change-approve-2026-05-08",
+    "evaluation_id": "access-evaluation-change-approve-2026-05-08"
+  }
+}

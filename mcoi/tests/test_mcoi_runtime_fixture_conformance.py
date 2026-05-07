@@ -4,6 +4,8 @@ Dependencies: shared MCOI runtime fixtures and continuity / incident / recovery 
 Invariants: canonical payload witnesses preserve exact JSON rendering across bounded MCOI runtime contracts.
 """
 
+# ruff: noqa: E402
+
 from __future__ import annotations
 
 import json
@@ -324,6 +326,24 @@ from mcoi_runtime.contracts.records_runtime import (
     RecordsClosureReport,
     RetentionSchedule,
     RetentionStatus,
+)
+from mcoi_runtime.contracts.access_runtime import (
+    AccessAuditRecord,
+    AccessDecision,
+    AccessEvaluation,
+    AccessRequest,
+    AccessSnapshot,
+    AccessViolation,
+    AuthContextKind,
+    DelegationRecord,
+    DelegationStatus as AccessDelegationStatus,
+    IdentityKind,
+    IdentityRecord,
+    PermissionEffect,
+    PermissionRule,
+    RoleBinding,
+    RoleKind,
+    RoleRecord,
 )
 from mcoi_runtime.contracts.availability import (
     AvailabilityConflict,
@@ -2986,9 +3006,146 @@ def _build_availability_routing_decision(payload: dict) -> AvailabilityRoutingDe
     )
 
 
+def _build_identity_record(payload: dict) -> IdentityRecord:
+    return IdentityRecord(
+        identity_id=payload["identity_id"],
+        name=payload["name"],
+        kind=IdentityKind(payload["kind"]),
+        tenant_id=payload["tenant_id"],
+        enabled=payload["enabled"],
+        created_at=payload["created_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_role_record(payload: dict) -> RoleRecord:
+    return RoleRecord(
+        role_id=payload["role_id"],
+        name=payload["name"],
+        kind=RoleKind(payload["kind"]),
+        permissions=tuple(payload["permissions"]),
+        description=payload["description"],
+        created_at=payload["created_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_permission_rule(payload: dict) -> PermissionRule:
+    return PermissionRule(
+        rule_id=payload["rule_id"],
+        resource_type=payload["resource_type"],
+        action=payload["action"],
+        effect=PermissionEffect(payload["effect"]),
+        scope_kind=AuthContextKind(payload["scope_kind"]),
+        scope_ref_id=payload["scope_ref_id"],
+        conditions=payload["conditions"],
+        created_at=payload["created_at"],
+    )
+
+
+def _build_role_binding(payload: dict) -> RoleBinding:
+    return RoleBinding(
+        binding_id=payload["binding_id"],
+        identity_id=payload["identity_id"],
+        role_id=payload["role_id"],
+        scope_kind=AuthContextKind(payload["scope_kind"]),
+        scope_ref_id=payload["scope_ref_id"],
+        bound_at=payload["bound_at"],
+    )
+
+
+def _build_delegation_record(payload: dict) -> DelegationRecord:
+    return DelegationRecord(
+        delegation_id=payload["delegation_id"],
+        from_identity_id=payload["from_identity_id"],
+        to_identity_id=payload["to_identity_id"],
+        role_id=payload["role_id"],
+        scope_kind=AuthContextKind(payload["scope_kind"]),
+        scope_ref_id=payload["scope_ref_id"],
+        status=AccessDelegationStatus(payload["status"]),
+        expires_at=payload["expires_at"],
+        delegated_at=payload["delegated_at"],
+        revoked_at=payload["revoked_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_access_request(payload: dict) -> AccessRequest:
+    return AccessRequest(
+        request_id=payload["request_id"],
+        identity_id=payload["identity_id"],
+        resource_type=payload["resource_type"],
+        action=payload["action"],
+        scope_kind=AuthContextKind(payload["scope_kind"]),
+        scope_ref_id=payload["scope_ref_id"],
+        requested_at=payload["requested_at"],
+    )
+
+
+def _build_access_evaluation(payload: dict) -> AccessEvaluation:
+    return AccessEvaluation(
+        evaluation_id=payload["evaluation_id"],
+        request_id=payload["request_id"],
+        decision=AccessDecision(payload["decision"]),
+        matching_rule_ids=tuple(payload["matching_rule_ids"]),
+        matching_role_ids=tuple(payload["matching_role_ids"]),
+        reason=payload["reason"],
+        evaluated_at=payload["evaluated_at"],
+    )
+
+
+def _build_access_violation(payload: dict) -> AccessViolation:
+    return AccessViolation(
+        violation_id=payload["violation_id"],
+        identity_id=payload["identity_id"],
+        resource_type=payload["resource_type"],
+        action=payload["action"],
+        scope_kind=AuthContextKind(payload["scope_kind"]),
+        scope_ref_id=payload["scope_ref_id"],
+        reason=payload["reason"],
+        detected_at=payload["detected_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_access_snapshot(payload: dict) -> AccessSnapshot:
+    return AccessSnapshot(
+        snapshot_id=payload["snapshot_id"],
+        scope_ref_id=payload["scope_ref_id"],
+        total_identities=payload["total_identities"],
+        total_roles=payload["total_roles"],
+        total_bindings=payload["total_bindings"],
+        total_rules=payload["total_rules"],
+        active_delegations=payload["active_delegations"],
+        total_violations=payload["total_violations"],
+        total_evaluations=payload["total_evaluations"],
+        captured_at=payload["captured_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_access_audit_record(payload: dict) -> AccessAuditRecord:
+    return AccessAuditRecord(
+        audit_id=payload["audit_id"],
+        identity_id=payload["identity_id"],
+        action=payload["action"],
+        resource_type=payload["resource_type"],
+        decision=AccessDecision(payload["decision"]),
+        scope_kind=AuthContextKind(payload["scope_kind"]),
+        scope_ref_id=payload["scope_ref_id"],
+        recorded_at=payload["recorded_at"],
+        metadata=payload["metadata"],
+    )
+
+
 @pytest.mark.parametrize(
     ("fixture_name", "builder"),
     [
+        ("access_request.json", _build_access_request),
+        ("access_evaluation.json", _build_access_evaluation),
+        ("access_violation.json", _build_access_violation),
+        ("access_snapshot.json", _build_access_snapshot),
+        ("access_audit_record.json", _build_access_audit_record),
         ("aging_snapshot.json", _build_aging_snapshot),
         ("asset_assessment.json", _build_asset_assessment),
         ("asset_assignment.json", _build_asset_assignment),
@@ -2997,6 +3154,11 @@ def _build_availability_routing_decision(payload: dict) -> AvailabilityRoutingDe
         ("asset_record.json", _build_asset_record),
         ("asset_snapshot.json", _build_asset_snapshot),
         ("asset_violation.json", _build_asset_violation),
+        ("identity_record.json", _build_identity_record),
+        ("role_record.json", _build_role_record),
+        ("permission_rule.json", _build_permission_rule),
+        ("role_binding.json", _build_role_binding),
+        ("delegation_record.json", _build_delegation_record),
         ("availability_record.json", _build_availability_record),
         ("scheduling_window.json", _build_scheduling_window),
         ("business_hours_profile.json", _build_business_hours_profile),

@@ -14,7 +14,7 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from scripts import validate_artifacts
+from scripts import validate_artifacts  # noqa: E402
 
 
 def test_example_inventory_covers_shipped_and_pilot_artifacts() -> None:
@@ -294,6 +294,16 @@ def test_example_inventory_covers_shipped_and_pilot_artifacts() -> None:
     assert "rollback_plan.json" in mcoi_runtime_fixture_names
     assert "change_outcome.json" in mcoi_runtime_fixture_names
     assert "change_impact_assessment.json" in mcoi_runtime_fixture_names
+    assert "identity_record.json" in mcoi_runtime_fixture_names
+    assert "role_record.json" in mcoi_runtime_fixture_names
+    assert "permission_rule.json" in mcoi_runtime_fixture_names
+    assert "role_binding.json" in mcoi_runtime_fixture_names
+    assert "delegation_record.json" in mcoi_runtime_fixture_names
+    assert "access_request.json" in mcoi_runtime_fixture_names
+    assert "access_evaluation.json" in mcoi_runtime_fixture_names
+    assert "access_violation.json" in mcoi_runtime_fixture_names
+    assert "access_snapshot.json" in mcoi_runtime_fixture_names
+    assert "access_audit_record.json" in mcoi_runtime_fixture_names
     assert "availability_record.json" in mcoi_runtime_fixture_names
     assert "scheduling_window.json" in mcoi_runtime_fixture_names
     assert "business_hours_profile.json" in mcoi_runtime_fixture_names
@@ -315,7 +325,7 @@ def test_validate_example_artifacts_strictly() -> None:
     assert len(inventory.request_paths) >= 3
     assert len(inventory.auxiliary_paths) >= 1
     assert len(inventory.maf_runtime_fixture_paths) >= 89
-    assert len(inventory.mcoi_runtime_fixture_paths) >= 189
+    assert len(inventory.mcoi_runtime_fixture_paths) >= 199
 
 
 def test_validate_maf_runtime_fixtures_strictly() -> None:
@@ -3059,6 +3069,138 @@ def test_validate_mcoi_runtime_fixture_rejects_fallback_routing_without_identity
 
     assert len(errors) == 1
     assert "fallback_identity resolution must carry fallback_identity_ref" in errors[0]
+    assert fixture_path.name in errors[0]
+
+
+def test_validate_mcoi_runtime_fixture_rejects_role_record_duplicate_permissions(tmp_path: Path) -> None:
+    fixture_path = tmp_path / "role_record.json"
+    fixture_path.write_text(
+        json.dumps(
+            {
+                "role_id": "role-drift",
+                "name": "Workspace Operator",
+                "kind": "operator",
+                "permissions": ["workspace.read", "workspace.read"],
+                "description": "Duplicate permission drift example.",
+                "created_at": "2026-05-07T12:00:00+00:00",
+                "metadata": {"scope": "workspace"},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_artifacts.validate_mcoi_runtime_fixture(fixture_path)
+
+    assert len(errors) == 1
+    assert "permissions must not contain duplicates" in errors[0]
+    assert fixture_path.name in errors[0]
+
+
+def test_validate_mcoi_runtime_fixture_rejects_delegation_self_target(tmp_path: Path) -> None:
+    fixture_path = tmp_path / "delegation_record.json"
+    fixture_path.write_text(
+        json.dumps(
+            {
+                "delegation_id": "delegation-drift",
+                "from_identity_id": "identity-ops-lead",
+                "to_identity_id": "identity-ops-lead",
+                "role_id": "role-workspace-operator",
+                "scope_kind": "workspace",
+                "scope_ref_id": "workspace-enterprise-ops",
+                "status": "active",
+                "expires_at": "2026-05-08T20:00:00+00:00",
+                "delegated_at": "2026-05-07T12:10:00+00:00",
+                "revoked_at": "",
+                "metadata": {"reason": "handoff"},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_artifacts.validate_mcoi_runtime_fixture(fixture_path)
+
+    assert len(errors) == 1
+    assert "delegations must not target the same identity as the delegator" in errors[0]
+    assert fixture_path.name in errors[0]
+
+
+def test_validate_mcoi_runtime_fixture_rejects_revoked_delegation_without_revoked_at(tmp_path: Path) -> None:
+    fixture_path = tmp_path / "delegation_record.json"
+    fixture_path.write_text(
+        json.dumps(
+            {
+                "delegation_id": "delegation-drift",
+                "from_identity_id": "identity-ops-lead",
+                "to_identity_id": "identity-backup-lead",
+                "role_id": "role-workspace-operator",
+                "scope_kind": "workspace",
+                "scope_ref_id": "workspace-enterprise-ops",
+                "status": "revoked",
+                "expires_at": "2026-05-08T20:00:00+00:00",
+                "delegated_at": "2026-05-07T12:10:00+00:00",
+                "revoked_at": "",
+                "metadata": {"reason": "handoff"},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_artifacts.validate_mcoi_runtime_fixture(fixture_path)
+
+    assert len(errors) == 1
+    assert "revoked delegations must carry revoked_at" in errors[0]
+    assert fixture_path.name in errors[0]
+
+
+def test_validate_mcoi_runtime_fixture_rejects_access_snapshot_delegation_overflow(tmp_path: Path) -> None:
+    fixture_path = tmp_path / "access_snapshot.json"
+    fixture_path.write_text(
+        json.dumps(
+            {
+                "snapshot_id": "access-snapshot-drift",
+                "scope_ref_id": "workspace-enterprise-ops",
+                "total_identities": 6,
+                "total_roles": 4,
+                "total_bindings": 3,
+                "total_rules": 5,
+                "active_delegations": 4,
+                "total_violations": 1,
+                "total_evaluations": 12,
+                "captured_at": "2026-05-07T12:20:00+00:00",
+                "metadata": {"scope_kind": "workspace"},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_artifacts.validate_mcoi_runtime_fixture(fixture_path)
+
+    assert len(errors) == 1
+    assert "active_delegations must not exceed total_bindings" in errors[0]
+    assert fixture_path.name in errors[0]
+
+
+def test_validate_mcoi_runtime_fixture_rejects_allowed_access_evaluation_without_matches(tmp_path: Path) -> None:
+    fixture_path = tmp_path / "access_evaluation.json"
+    fixture_path.write_text(
+        json.dumps(
+            {
+                "evaluation_id": "access-evaluation-drift",
+                "request_id": "access-request-1",
+                "decision": "allowed",
+                "matching_rule_ids": [],
+                "matching_role_ids": [],
+                "reason": "No matching evidence was preserved.",
+                "evaluated_at": "2026-05-07T12:25:00+00:00",
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_artifacts.validate_mcoi_runtime_fixture(fixture_path)
+
+    assert len(errors) == 1
+    assert "allowed and requires_approval evaluations must cite matching rules or roles" in errors[0]
     assert fixture_path.name in errors[0]
 
 

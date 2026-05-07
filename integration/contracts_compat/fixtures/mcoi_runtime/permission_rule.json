@@ -1,0 +1,13 @@
+{
+  "rule_id": "permission-rule-change-approve",
+  "resource_type": "change_request",
+  "action": "approve",
+  "effect": "require_approval",
+  "scope_kind": "workspace",
+  "scope_ref_id": "workspace-enterprise-ops",
+  "conditions": {
+    "required_role": "role-workspace-operator",
+    "sensitivity": "high"
+  },
+  "created_at": "2026-05-07T12:04:00+00:00"
+}
