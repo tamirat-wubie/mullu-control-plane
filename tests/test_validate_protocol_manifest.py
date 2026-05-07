@@ -395,6 +395,17 @@ def test_protocol_manifest_indexes_temporal_monotonic_duration_receipt() -> None
     assert duration_entry["surface"] == "temporal"
 
 
+def test_protocol_manifest_indexes_temporal_accepted_risk_expiry_receipt() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    accepted_risk_entry = entries["temporal-accepted-risk-expiry-receipt"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert accepted_risk_entry["path"] == "schemas/temporal_accepted_risk_expiry_receipt.schema.json"
+    assert accepted_risk_entry["urn"] == "urn:mullusi:schema:temporal-accepted-risk-expiry-receipt:1"
+    assert accepted_risk_entry["surface"] == "temporal"
+
+
 def test_protocol_manifest_indexes_temporal_memory_receipt() -> None:
     manifest = load_manifest()
     entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}

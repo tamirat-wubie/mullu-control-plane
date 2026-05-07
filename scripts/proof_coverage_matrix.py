@@ -1463,6 +1463,35 @@ def proof_coverage_matrix() -> dict[str, Any]:
             ],
         ),
         _surface(
+            "temporal_accepted_risk_expiry",
+            [
+                "TemporalAcceptedRiskExpiry.evaluate",
+                "TemporalAcceptedRiskRequest",
+                "TemporalAcceptedRiskExpiryReceipt",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "gateway/temporal_accepted_risk_expiry.py",
+                "schemas/temporal_accepted_risk_expiry_receipt.schema.json",
+                "tests/test_gateway/test_temporal_accepted_risk_expiry.py",
+            ],
+            "Temporal accepted-risk expiry rechecks active accepted-risk records for expiry, lifecycle disposition, tenant and command scope, review obligation, owner, evidence refs, and source receipts before dispatch reuse.",
+            [
+                "runtime_clock_owns_accepted_risk_expiry",
+                "expired_accepted_risk_blocks_dispatch",
+                "revoked_or_closed_accepted_risk_blocks_dispatch",
+                "tenant_command_and_action_scope_checked",
+                "review_obligation_required",
+                "accepted_risk_evidence_refs_required",
+                "high_risk_source_receipts_bound",
+                "temporal_accepted_risk_expiry_receipt_schema_valid",
+                "receipt_not_terminal_closure",
+            ],
+        ),
+        _surface(
             "temporal_memory_refresh",
             [
                 "TemporalMemoryRefresh.evaluate",
@@ -1922,6 +1951,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
         {
             "action_id": "publish_temporal_monotonic_duration_receipt_contract",
             "surfaces": ["temporal_monotonic_duration"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_temporal_accepted_risk_expiry_receipt_contract",
+            "surfaces": ["temporal_accepted_risk_expiry"],
             "status": "closed",
         },
         {
