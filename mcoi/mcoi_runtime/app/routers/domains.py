@@ -25,7 +25,6 @@ from pydantic import BaseModel, Field
 
 from mcoi_runtime.app.routers.musia_auth import (
     MusiaAuthContext,
-    require_read,
     resolve_musia_auth,
 )
 from mcoi_runtime.app.routers.musia_governance_bridge import gate_domain_run

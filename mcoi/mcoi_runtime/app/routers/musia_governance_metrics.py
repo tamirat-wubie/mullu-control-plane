@@ -34,6 +34,11 @@ from threading import RLock
 from time import time
 from typing import Any
 
+from fastapi import APIRouter, Depends
+from fastapi.responses import PlainTextResponse
+
+from mcoi_runtime.app.routers.musia_auth import require_admin, require_read
+
 
 # Surfaces the chain can gate.
 SURFACE_WRITE = "write"
@@ -675,12 +680,6 @@ REGISTRY = GovernanceMetricsRegistry()
 
 
 # ---- HTTP surface ----
-
-
-from fastapi import APIRouter, Depends
-from fastapi.responses import PlainTextResponse
-
-from mcoi_runtime.app.routers.musia_auth import require_admin, require_read
 
 
 router = APIRouter(prefix="/musia/governance", tags=["musia-governance"])
