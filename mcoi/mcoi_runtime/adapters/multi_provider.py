@@ -269,7 +269,7 @@ class DeepSeekBackend:
         return self._call_count
 
 
-# ═══ xAI Grok (real-time X data) ═══
+# --- Additional hosted OpenAI-compatible providers ---
 
 
 class TogetherBackend:
@@ -432,6 +432,137 @@ class CerebrasBackend:
         return self._call_count
 
 
+class DeepInfraBackend:
+    """DeepInfra OpenAI-compatible endpoint for broad low-cost model coverage."""
+
+    provider = LLMProvider.DEEPINFRA
+    DEFAULT_MODEL = "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo"
+
+    def __init__(self, *, model: str = "", api_key: str | None = None, api_key_env: str = "DEEPINFRA_TOKEN") -> None:
+        self._model = model or self.DEFAULT_MODEL
+        self._default_model = self._model
+        self._api_key = api_key or ""
+        self._api_key_env = api_key_env
+        self._call_count = 0
+
+    def call(self, params: LLMInvocationParams) -> LLMResult:
+        self._call_count += 1
+        return _openai_compatible_call(
+            base_url="https://api.deepinfra.com/v1/openai",
+            api_key=self._api_key or os.environ.get(self._api_key_env, "") or os.environ.get("DEEPINFRA_API_KEY", ""),
+            model=params.model_name or self._model,
+            messages=_params_to_messages(params),
+            max_tokens=params.max_tokens,
+            temperature=0.0,
+            provider=self.provider,
+            cost_per_1m_input=0.02,
+            cost_per_1m_output=0.03,
+        )
+
+    @property
+    def call_count(self) -> int:
+        return self._call_count
+
+
+class NebiusBackend:
+    """Nebius Studio OpenAI-compatible low-cost endpoint."""
+
+    provider = LLMProvider.NEBIUS
+    DEFAULT_MODEL = "meta-llama/Meta-Llama-3.1-8B-Instruct"
+
+    def __init__(self, *, model: str = "", api_key: str | None = None, api_key_env: str = "NEBIUS_API_KEY") -> None:
+        self._model = model or self.DEFAULT_MODEL
+        self._default_model = self._model
+        self._api_key = api_key or ""
+        self._api_key_env = api_key_env
+        self._call_count = 0
+
+    def call(self, params: LLMInvocationParams) -> LLMResult:
+        self._call_count += 1
+        return _openai_compatible_call(
+            base_url="https://api.studio.nebius.com/v1",
+            api_key=self._api_key or os.environ.get(self._api_key_env, ""),
+            model=params.model_name or self._model,
+            messages=_params_to_messages(params),
+            max_tokens=params.max_tokens,
+            temperature=0.0,
+            provider=self.provider,
+            cost_per_1m_input=0.02,
+            cost_per_1m_output=0.06,
+        )
+
+    @property
+    def call_count(self) -> int:
+        return self._call_count
+
+
+class HyperbolicBackend:
+    """Hyperbolic OpenAI-compatible endpoint for inexpensive open models."""
+
+    provider = LLMProvider.HYPERBOLIC
+    DEFAULT_MODEL = "Qwen/Qwen2.5-Coder-32B-Instruct"
+
+    def __init__(self, *, model: str = "", api_key: str | None = None, api_key_env: str = "HYPERBOLIC_API_KEY") -> None:
+        self._model = model or self.DEFAULT_MODEL
+        self._default_model = self._model
+        self._api_key = api_key or ""
+        self._api_key_env = api_key_env
+        self._call_count = 0
+
+    def call(self, params: LLMInvocationParams) -> LLMResult:
+        self._call_count += 1
+        return _openai_compatible_call(
+            base_url="https://api.hyperbolic.xyz/v1",
+            api_key=self._api_key or os.environ.get(self._api_key_env, ""),
+            model=params.model_name or self._model,
+            messages=_params_to_messages(params),
+            max_tokens=params.max_tokens,
+            temperature=0.0,
+            provider=self.provider,
+            cost_per_1m_input=0.20,
+            cost_per_1m_output=0.20,
+        )
+
+    @property
+    def call_count(self) -> int:
+        return self._call_count
+
+
+class SambaNovaBackend:
+    """SambaNova Cloud OpenAI-compatible endpoint for fast open models."""
+
+    provider = LLMProvider.SAMBANOVA
+    DEFAULT_MODEL = "Meta-Llama-3.1-8B-Instruct"
+
+    def __init__(self, *, model: str = "", api_key: str | None = None, api_key_env: str = "SAMBANOVA_API_KEY") -> None:
+        self._model = model or self.DEFAULT_MODEL
+        self._default_model = self._model
+        self._api_key = api_key or ""
+        self._api_key_env = api_key_env
+        self._call_count = 0
+
+    def call(self, params: LLMInvocationParams) -> LLMResult:
+        self._call_count += 1
+        return _openai_compatible_call(
+            base_url="https://api.sambanova.ai/v1",
+            api_key=self._api_key or os.environ.get(self._api_key_env, ""),
+            model=params.model_name or self._model,
+            messages=_params_to_messages(params),
+            max_tokens=params.max_tokens,
+            temperature=0.0,
+            provider=self.provider,
+            cost_per_1m_input=0.10,
+            cost_per_1m_output=0.20,
+        )
+
+    @property
+    def call_count(self) -> int:
+        return self._call_count
+
+
+# --- xAI Grok (real-time X data) ---
+
+
 class GrokBackend:
     """xAI Grok — real-time X (Twitter) data access.
 
@@ -558,6 +689,10 @@ ALL_PROVIDERS: dict[str, type] = {
     "friendli": FriendliBackend,
     "novita": NovitaBackend,
     "cerebras": CerebrasBackend,
+    "deepinfra": DeepInfraBackend,
+    "nebius": NebiusBackend,
+    "hyperbolic": HyperbolicBackend,
+    "sambanova": SambaNovaBackend,
     "grok": GrokBackend,
     "mistral": MistralBackend,
     "openrouter": OpenRouterBackend,
@@ -583,6 +718,10 @@ def available_providers() -> list[str]:
         "friendli": ("FRIENDLI_TOKEN", "FRIENDLI_API_KEY"),
         "novita": ("NOVITA_API_KEY",),
         "cerebras": ("CEREBRAS_API_KEY",),
+        "deepinfra": ("DEEPINFRA_TOKEN", "DEEPINFRA_API_KEY"),
+        "nebius": ("NEBIUS_API_KEY",),
+        "hyperbolic": ("HYPERBOLIC_API_KEY",),
+        "sambanova": ("SAMBANOVA_API_KEY",),
         "grok": ("XAI_API_KEY",),
         "mistral": ("MISTRAL_API_KEY",),
         "openrouter": ("OPENROUTER_API_KEY",),

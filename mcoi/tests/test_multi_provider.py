@@ -15,14 +15,18 @@ from mcoi_runtime.adapters.multi_provider import (
     ALL_PROVIDERS,
     CerebrasBackend,
     DeepSeekBackend,
+    DeepInfraBackend,
     FireworksBackend,
     FriendliBackend,
     GeminiBackend,
     GrokBackend,
     GroqBackend,
+    HyperbolicBackend,
     MistralBackend,
+    NebiusBackend,
     NovitaBackend,
     OpenRouterBackend,
+    SambaNovaBackend,
     TogetherBackend,
     available_providers,
     create_provider,
@@ -39,6 +43,10 @@ OPENAI_COMPATIBLE_PROVIDER_CLASSES = [
     FriendliBackend,
     NovitaBackend,
     CerebrasBackend,
+    DeepInfraBackend,
+    NebiusBackend,
+    HyperbolicBackend,
+    SambaNovaBackend,
     GrokBackend,
     MistralBackend,
     OpenRouterBackend,
@@ -301,6 +309,10 @@ class TestProviderRegistry:
             "friendli",
             "novita",
             "cerebras",
+            "deepinfra",
+            "nebius",
+            "hyperbolic",
+            "sambanova",
             "grok",
             "mistral",
             "openrouter",
@@ -320,6 +332,10 @@ class TestProviderRegistry:
             ("friendli", FriendliBackend, LLMProvider.FRIENDLI),
             ("novita", NovitaBackend, LLMProvider.NOVITA),
             ("cerebras", CerebrasBackend, LLMProvider.CEREBRAS),
+            ("deepinfra", DeepInfraBackend, LLMProvider.DEEPINFRA),
+            ("nebius", NebiusBackend, LLMProvider.NEBIUS),
+            ("hyperbolic", HyperbolicBackend, LLMProvider.HYPERBOLIC),
+            ("sambanova", SambaNovaBackend, LLMProvider.SAMBANOVA),
         ],
     )
     def test_new_openai_compatible_providers(self, provider_name, backend_cls, provider):
@@ -339,6 +355,14 @@ class TestProviderRegistry:
     def test_available_providers_empty(self):
         # No API keys set in test environment
         available = available_providers()
+        assert isinstance(available, list)
+
+    def test_available_providers_detects_deepinfra_alias(self, monkeypatch):
+        monkeypatch.delenv("DEEPINFRA_TOKEN", raising=False)
+        monkeypatch.setenv("DEEPINFRA_API_KEY", "deepinfra-alias")
+        available = available_providers()
+        assert "deepinfra" in available
+        assert "nebius" not in available
         assert isinstance(available, list)
 
 

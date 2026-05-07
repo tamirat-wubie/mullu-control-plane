@@ -4,10 +4,14 @@ import os
 import pytest
 from mcoi_runtime.adapters.multi_provider import (
     CerebrasBackend,
+    DeepInfraBackend,
     FireworksBackend,
     FriendliBackend,
     GroqBackend,
+    HyperbolicBackend,
+    NebiusBackend,
     NovitaBackend,
+    SambaNovaBackend,
     TogetherBackend,
 )
 from mcoi_runtime.app.llm_bootstrap import (
@@ -37,6 +41,11 @@ LLM_ENV_KEYS = (
     "FRIENDLI_API_KEY",
     "NOVITA_API_KEY",
     "CEREBRAS_API_KEY",
+    "DEEPINFRA_TOKEN",
+    "DEEPINFRA_API_KEY",
+    "NEBIUS_API_KEY",
+    "HYPERBOLIC_API_KEY",
+    "SAMBANOVA_API_KEY",
     "XAI_API_KEY",
     "MISTRAL_API_KEY",
     "OPENROUTER_API_KEY",
@@ -113,6 +122,18 @@ class TestLLMConfig:
         assert config.friendli_api_key == "friendli-alias-key"
         assert config.together_api_key == ""
         assert config.groq_api_key == ""
+
+    def test_from_env_deepinfra_api_key_alias_detected(self, monkeypatch):
+        for key in LLM_ENV_KEYS:
+            monkeypatch.delenv(key, raising=False)
+        monkeypatch.setenv("DEEPINFRA_API_KEY", "deepinfra-alias-key")
+
+        config = LLMConfig.from_env()
+
+        assert config.default_backend == "deepinfra"
+        assert config.deepinfra_api_key == "deepinfra-alias-key"
+        assert config.nebius_api_key == ""
+        assert config.hyperbolic_api_key == ""
 
     def test_from_env_explicit_backend(self):
         os.environ["MULLU_LLM_BACKEND"] = "stub"
@@ -249,6 +270,10 @@ class TestBootstrapLLM:
             friendli_api_key="fl",
             novita_api_key="nv",
             cerebras_api_key="cb",
+            deepinfra_api_key="di",
+            nebius_api_key="nb",
+            hyperbolic_api_key="hb",
+            sambanova_api_key="sn",
             grok_api_key="xai",
             mistral_api_key="ms",
             openrouter_api_key="or",
@@ -270,6 +295,10 @@ class TestBootstrapLLM:
             "friendli",
             "novita",
             "cerebras",
+            "deepinfra",
+            "nebius",
+            "hyperbolic",
+            "sambanova",
             "grok",
             "mistral",
             "openrouter",
@@ -280,10 +309,17 @@ class TestBootstrapLLM:
         assert isinstance(result.backends["friendli"], FriendliBackend)
         assert isinstance(result.backends["novita"], NovitaBackend)
         assert isinstance(result.backends["cerebras"], CerebrasBackend)
+        assert isinstance(result.backends["deepinfra"], DeepInfraBackend)
+        assert isinstance(result.backends["nebius"], NebiusBackend)
+        assert isinstance(result.backends["hyperbolic"], HyperbolicBackend)
+        assert isinstance(result.backends["sambanova"], SambaNovaBackend)
         assert "llm-groq" in result.registered_providers
         assert "llm-deepseek" in result.registered_providers
         assert "llm-together" in result.registered_providers
         assert "llm-cerebras" in result.registered_providers
+        assert "llm-deepinfra" in result.registered_providers
+        assert "llm-nebius" in result.registered_providers
+        assert "llm-sambanova" in result.registered_providers
         assert "llm-openrouter" in result.registered_providers
         assert "meta-llama/llama-4-scout-17b-16e-instruct" in result.registered_models
         assert "deepseek-v4-flash" in result.registered_models
@@ -292,6 +328,10 @@ class TestBootstrapLLM:
         assert "meta-llama-3.1-8b-instruct" in result.registered_models
         assert "deepseek/deepseek-v4-flash" in result.registered_models
         assert "llama3.1-8b" in result.registered_models
+        assert "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo" in result.registered_models
+        assert "meta-llama/Meta-Llama-3.1-8B-Instruct" in result.registered_models
+        assert "Qwen/Qwen2.5-Coder-32B-Instruct" in result.registered_models
+        assert "Meta-Llama-3.1-8B-Instruct" in result.registered_models
         assert "mistral-small-2506" in result.registered_models
         assert "grok-3-mini" in result.registered_models
         assert "meta-llama/llama-4-scout" in result.registered_models
@@ -308,42 +348,18 @@ class TestLLMConfigFromEnv:
     def test_stub_refused_in_production(self, monkeypatch):
         monkeypatch.setenv("MULLU_ENV", "production")
         monkeypatch.setenv("MULLU_LLM_BACKEND", "stub")
-        monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
-        monkeypatch.delenv("OPENAI_API_KEY", raising=False)
-        monkeypatch.delenv("GEMINI_API_KEY", raising=False)
-        monkeypatch.delenv("GROQ_API_KEY", raising=False)
-        monkeypatch.delenv("DEEPSEEK_API_KEY", raising=False)
-        monkeypatch.delenv("TOGETHER_API_KEY", raising=False)
-        monkeypatch.delenv("FIREWORKS_API_KEY", raising=False)
-        monkeypatch.delenv("FRIENDLI_TOKEN", raising=False)
-        monkeypatch.delenv("FRIENDLI_API_KEY", raising=False)
-        monkeypatch.delenv("NOVITA_API_KEY", raising=False)
-        monkeypatch.delenv("CEREBRAS_API_KEY", raising=False)
-        monkeypatch.delenv("XAI_API_KEY", raising=False)
-        monkeypatch.delenv("MISTRAL_API_KEY", raising=False)
-        monkeypatch.delenv("OPENROUTER_API_KEY", raising=False)
-        monkeypatch.delenv("OLLAMA_BASE_URL", raising=False)
+        for key in LLM_ENV_KEYS:
+            if key != "MULLU_LLM_BACKEND":
+                monkeypatch.delenv(key, raising=False)
         with pytest.raises(RuntimeError, match="stub.*forbidden.*production"):
             LLMConfig.from_env()
 
     def test_stub_refused_in_pilot(self, monkeypatch):
         monkeypatch.setenv("MULLU_ENV", "pilot")
         monkeypatch.setenv("MULLU_LLM_BACKEND", "stub")
-        monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
-        monkeypatch.delenv("OPENAI_API_KEY", raising=False)
-        monkeypatch.delenv("GEMINI_API_KEY", raising=False)
-        monkeypatch.delenv("GROQ_API_KEY", raising=False)
-        monkeypatch.delenv("DEEPSEEK_API_KEY", raising=False)
-        monkeypatch.delenv("TOGETHER_API_KEY", raising=False)
-        monkeypatch.delenv("FIREWORKS_API_KEY", raising=False)
-        monkeypatch.delenv("FRIENDLI_TOKEN", raising=False)
-        monkeypatch.delenv("FRIENDLI_API_KEY", raising=False)
-        monkeypatch.delenv("NOVITA_API_KEY", raising=False)
-        monkeypatch.delenv("CEREBRAS_API_KEY", raising=False)
-        monkeypatch.delenv("XAI_API_KEY", raising=False)
-        monkeypatch.delenv("MISTRAL_API_KEY", raising=False)
-        monkeypatch.delenv("OPENROUTER_API_KEY", raising=False)
-        monkeypatch.delenv("OLLAMA_BASE_URL", raising=False)
+        for key in LLM_ENV_KEYS:
+            if key != "MULLU_LLM_BACKEND":
+                monkeypatch.delenv(key, raising=False)
         with pytest.raises(RuntimeError, match="stub.*forbidden.*pilot"):
             LLMConfig.from_env()
 
@@ -356,22 +372,8 @@ class TestLLMConfigFromEnv:
     def test_stub_default_silent_in_dev(self, monkeypatch):
         """No env vars set, dev environment → stub fallback is silent."""
         monkeypatch.delenv("MULLU_ENV", raising=False)
-        monkeypatch.delenv("MULLU_LLM_BACKEND", raising=False)
-        monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
-        monkeypatch.delenv("OPENAI_API_KEY", raising=False)
-        monkeypatch.delenv("GEMINI_API_KEY", raising=False)
-        monkeypatch.delenv("GROQ_API_KEY", raising=False)
-        monkeypatch.delenv("DEEPSEEK_API_KEY", raising=False)
-        monkeypatch.delenv("TOGETHER_API_KEY", raising=False)
-        monkeypatch.delenv("FIREWORKS_API_KEY", raising=False)
-        monkeypatch.delenv("FRIENDLI_TOKEN", raising=False)
-        monkeypatch.delenv("FRIENDLI_API_KEY", raising=False)
-        monkeypatch.delenv("NOVITA_API_KEY", raising=False)
-        monkeypatch.delenv("CEREBRAS_API_KEY", raising=False)
-        monkeypatch.delenv("XAI_API_KEY", raising=False)
-        monkeypatch.delenv("MISTRAL_API_KEY", raising=False)
-        monkeypatch.delenv("OPENROUTER_API_KEY", raising=False)
-        monkeypatch.delenv("OLLAMA_BASE_URL", raising=False)
+        for key in LLM_ENV_KEYS:
+            monkeypatch.delenv(key, raising=False)
         config = LLMConfig.from_env()
         assert config.default_backend == "stub"
 
