@@ -269,7 +269,7 @@ python scripts\validate_protocol_manifest.py
 Expected result:
 
 ```text
-protocol manifest ok: 101 schemas
+protocol manifest ok: 102 schemas
 ```
 
 Finance pilot readiness verification:
