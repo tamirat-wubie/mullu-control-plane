@@ -8194,6 +8194,7 @@ def _validate_procurement_request_fixture(path: Path) -> list[str]:
             "currency",
             "requested_by",
             "requested_at",
+            "cancelled_by",
             "metadata",
         ),
         kind="runtime fixture",
@@ -8218,6 +8219,14 @@ def _validate_procurement_request_fixture(path: Path) -> list[str]:
         _require_non_negative_float(payload["estimated_amount"], field_name="estimated_amount", path=path)
     )
     errors.extend(_validate_iso8601_text(payload["requested_at"], field_name="requested_at", path=path))
+    if not isinstance(payload["cancelled_by"], str):
+        errors.append(f"{_relative_path(path)}: field 'cancelled_by' must be a string")
+    elif payload["cancelled_by"].strip() != payload["cancelled_by"]:
+        errors.append(f"{_relative_path(path)}: field 'cancelled_by' must be trimmed")
+    elif payload["cancelled_by"] == "system":
+        errors.append(f"{_relative_path(path)}: field 'cancelled_by' must exclude system")
+    elif payload["status"] == "cancelled" and not payload["cancelled_by"]:
+        errors.append(f"{_relative_path(path)}: cancelled requests must declare cancelled_by")
     if not isinstance(payload["metadata"], dict):
         errors.append(f"{_relative_path(path)}: field 'metadata' must be an object")
     return errors
