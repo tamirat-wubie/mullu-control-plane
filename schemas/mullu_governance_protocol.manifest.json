@@ -551,6 +551,12 @@
       "surface": "temporal"
     },
     {
+      "schema_id": "temporal-retry-window-receipt",
+      "path": "schemas/temporal_retry_window_receipt.schema.json",
+      "urn": "urn:mullusi:schema:temporal-retry-window-receipt:1",
+      "surface": "temporal"
+    },
+    {
       "schema_id": "temporal-memory-receipt",
       "path": "schemas/temporal_memory_receipt.schema.json",
       "urn": "urn:mullusi:schema:temporal-memory-receipt:1",

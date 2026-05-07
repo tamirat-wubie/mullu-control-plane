@@ -359,6 +359,13 @@
       ]
     },
     {
+      "action_id": "publish_temporal_retry_window_receipt_contract",
+      "status": "closed",
+      "surfaces": [
+        "temporal_retry_window"
+      ]
+    },
+    {
       "action_id": "publish_temporal_memory_refresh_receipt_contract",
       "status": "closed",
       "surfaces": [
@@ -429,7 +436,7 @@
   ],
   "coverage_summary": {
     "by_action_proof": {
-      "action_proof": 54,
+      "action_proof": 55,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 10,
@@ -437,7 +444,7 @@
     },
     "by_audit": {
       "action_proof": 0,
-      "audit_chain": 62,
+      "audit_chain": 63,
       "gap": 0,
       "read_model": 4,
       "request_proof": 0
@@ -445,16 +452,16 @@
     "by_coverage_state": {
       "proven": 1,
       "unproven": 0,
-      "witnessed": 65
+      "witnessed": 66
     },
     "by_request_proof": {
       "action_proof": 0,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 12,
-      "request_proof": 54
+      "request_proof": 55
     },
-    "surface_count": 66
+    "surface_count": 67
   },
   "generated_by": "scripts/proof_coverage_matrix.py",
   "route_coverage": {
@@ -3708,6 +3715,36 @@
         "receipt_not_terminal_closure"
       ],
       "surface_id": "temporal_rate_limit_window"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "gateway/temporal_retry_window.py",
+        "schemas/temporal_retry_window_receipt.schema.json",
+        "tests/test_gateway/test_temporal_retry_window.py"
+      ],
+      "notes": "Temporal retry window rechecks retry-after timing, cooldown windows, max attempts, retry expiry, tenant and command scope, evidence refs, and high-risk source receipts before repeated dispatch.",
+      "representative_paths": [
+        "TemporalRetryWindow.evaluate",
+        "RetryWindowRequest",
+        "TemporalRetryWindowReceipt"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "runtime_clock_owns_retry_window",
+        "retry_after_floor_checked",
+        "cooldown_window_defers_early_retry",
+        "max_attempts_block_exhausted_retry",
+        "expired_retry_window_blocks_dispatch",
+        "tenant_command_scope_checked",
+        "terminal_failure_blocks_retry",
+        "high_risk_source_receipts_bound",
+        "temporal_retry_window_receipt_schema_valid",
+        "receipt_not_terminal_closure"
+      ],
+      "surface_id": "temporal_retry_window"
     },
     {
       "action_proof": "action_proof",

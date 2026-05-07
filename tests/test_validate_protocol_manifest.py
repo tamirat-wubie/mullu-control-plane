@@ -458,6 +458,17 @@ def test_protocol_manifest_indexes_temporal_rate_limit_window_receipt() -> None:
     assert rate_limit_entry["surface"] == "temporal"
 
 
+def test_protocol_manifest_indexes_temporal_retry_window_receipt() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    retry_entry = entries["temporal-retry-window-receipt"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert retry_entry["path"] == "schemas/temporal_retry_window_receipt.schema.json"
+    assert retry_entry["urn"] == "urn:mullusi:schema:temporal-retry-window-receipt:1"
+    assert retry_entry["surface"] == "temporal"
+
+
 def test_protocol_manifest_indexes_temporal_memory_receipt() -> None:
     manifest = load_manifest()
     entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}

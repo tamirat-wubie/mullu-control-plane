@@ -1,0 +1,313 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:temporal-retry-window-receipt:1",
+  "title": "Temporal Retry Window Receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "receipt_id",
+    "request_id",
+    "tenant_id",
+    "actor_id",
+    "command_id",
+    "action_type",
+    "risk_level",
+    "policy_id",
+    "scope_id",
+    "attempt_id",
+    "previous_attempt_id",
+    "status",
+    "retry_state",
+    "runtime_now_utc",
+    "retry_window_required",
+    "first_attempt_at",
+    "last_attempt_at",
+    "next_retry_at",
+    "retry_after_due_at",
+    "expires_at",
+    "retry_after_seconds",
+    "cooldown_remaining_seconds",
+    "attempt_number",
+    "failure_count",
+    "max_attempts",
+    "attempts_remaining",
+    "retry_window_seconds",
+    "terminal_failure",
+    "last_failure_reason",
+    "blocked_reasons",
+    "deferral_reasons",
+    "required_controls",
+    "evidence_refs",
+    "attempt_evidence_refs",
+    "source_temporal_receipt_id",
+    "source_dispatch_window_receipt_id",
+    "source_rate_limit_window_receipt_id",
+    "source_reapproval_receipt_id",
+    "receipt_schema_ref",
+    "terminal_closure_required",
+    "receipt_hash",
+    "metadata"
+  ],
+  "properties": {
+    "receipt_id": {
+      "type": "string",
+      "pattern": "^temporal-retry-window-receipt-[0-9a-f]{16}$"
+    },
+    "request_id": {"type": "string", "minLength": 1},
+    "tenant_id": {"type": "string", "minLength": 1},
+    "actor_id": {"type": "string", "minLength": 1},
+    "command_id": {"type": "string", "minLength": 1},
+    "action_type": {"type": "string", "minLength": 1},
+    "risk_level": {
+      "type": "string",
+      "enum": ["low", "medium", "high", "critical"]
+    },
+    "policy_id": {"type": "string", "minLength": 1},
+    "scope_id": {"type": "string", "minLength": 1},
+    "attempt_id": {"type": "string"},
+    "previous_attempt_id": {"type": "string"},
+    "status": {
+      "type": "string",
+      "enum": ["retry_allowed", "retry_deferred", "retry_exhausted", "retry_expired", "blocked", "not_required"]
+    },
+    "retry_state": {
+      "type": "string",
+      "enum": [
+        "eligible",
+        "cooldown",
+        "max_attempts_reached",
+        "expired",
+        "terminal_failure",
+        "wrong_scope",
+        "invalid",
+        "not_required"
+      ]
+    },
+    "runtime_now_utc": {"type": "string", "format": "date-time"},
+    "retry_window_required": {"type": "boolean"},
+    "first_attempt_at": {"type": "string"},
+    "last_attempt_at": {"type": "string"},
+    "next_retry_at": {"type": "string"},
+    "retry_after_due_at": {"type": "string"},
+    "expires_at": {"type": "string"},
+    "retry_after_seconds": {"type": "integer", "minimum": 0},
+    "cooldown_remaining_seconds": {"type": "integer", "minimum": 0},
+    "attempt_number": {"type": "integer", "minimum": 0},
+    "failure_count": {"type": "integer", "minimum": 0},
+    "max_attempts": {"type": "integer", "minimum": 0},
+    "attempts_remaining": {"type": "integer", "minimum": 0},
+    "retry_window_seconds": {"type": "integer", "minimum": 0},
+    "terminal_failure": {"type": "boolean"},
+    "last_failure_reason": {"type": "string"},
+    "blocked_reasons": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1}
+    },
+    "deferral_reasons": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1}
+    },
+    "required_controls": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"type": "string", "minLength": 1}
+    },
+    "evidence_refs": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1}
+    },
+    "attempt_evidence_refs": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1}
+    },
+    "source_temporal_receipt_id": {"type": "string"},
+    "source_dispatch_window_receipt_id": {"type": "string"},
+    "source_rate_limit_window_receipt_id": {"type": "string"},
+    "source_reapproval_receipt_id": {"type": "string"},
+    "receipt_schema_ref": {
+      "type": "string",
+      "const": "urn:mullusi:schema:temporal-retry-window-receipt:1"
+    },
+    "terminal_closure_required": {"type": "boolean", "const": true},
+    "receipt_hash": {"type": "string", "minLength": 1},
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "receipt_is_not_terminal_closure",
+        "runtime_owns_time_truth",
+        "dispatch_allowed",
+        "retry_checked",
+        "retry_after_checked",
+        "cooldown_checked",
+        "attempts_checked",
+        "expiry_checked",
+        "high_risk_source_receipts_checked"
+      ],
+      "properties": {
+        "receipt_is_not_terminal_closure": {"type": "boolean", "const": true},
+        "runtime_owns_time_truth": {"type": "boolean", "const": true},
+        "dispatch_allowed": {"type": "boolean"},
+        "retry_checked": {"type": "boolean"},
+        "retry_after_checked": {"type": "boolean"},
+        "cooldown_checked": {"type": "boolean"},
+        "attempts_checked": {"type": "boolean"},
+        "expiry_checked": {"type": "boolean"},
+        "high_risk_source_receipts_checked": {"type": "boolean"}
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {"status": {"const": "retry_allowed"}},
+        "required": ["status"]
+      },
+      "then": {
+        "properties": {
+          "retry_window_required": {"const": true},
+          "retry_state": {"const": "eligible"},
+          "retry_after_seconds": {"const": 0},
+          "cooldown_remaining_seconds": {"const": 0},
+          "attempts_remaining": {"exclusiveMinimum": 0},
+          "blocked_reasons": {"maxItems": 0},
+          "deferral_reasons": {"maxItems": 0},
+          "metadata": {
+            "properties": {
+              "dispatch_allowed": {"const": true},
+              "retry_checked": {"const": true},
+              "retry_after_checked": {"const": true},
+              "cooldown_checked": {"const": true},
+              "attempts_checked": {"const": true},
+              "expiry_checked": {"const": true}
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {"status": {"const": "retry_deferred"}},
+        "required": ["status"]
+      },
+      "then": {
+        "properties": {
+          "retry_window_required": {"const": true},
+          "retry_state": {"const": "cooldown"},
+          "retry_after_seconds": {"exclusiveMinimum": 0},
+          "cooldown_remaining_seconds": {"exclusiveMinimum": 0},
+          "blocked_reasons": {"maxItems": 0},
+          "deferral_reasons": {"minItems": 1},
+          "metadata": {
+            "properties": {
+              "dispatch_allowed": {"const": false},
+              "retry_checked": {"const": true},
+              "retry_after_checked": {"const": true},
+              "cooldown_checked": {"const": true}
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {"status": {"const": "retry_exhausted"}},
+        "required": ["status"]
+      },
+      "then": {
+        "properties": {
+          "retry_window_required": {"const": true},
+          "retry_state": {"const": "max_attempts_reached"},
+          "retry_after_seconds": {"const": 0},
+          "cooldown_remaining_seconds": {"const": 0},
+          "attempts_remaining": {"const": 0},
+          "metadata": {
+            "properties": {
+              "dispatch_allowed": {"const": false},
+              "attempts_checked": {"const": true}
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {"status": {"const": "retry_expired"}},
+        "required": ["status"]
+      },
+      "then": {
+        "properties": {
+          "retry_window_required": {"const": true},
+          "retry_state": {"const": "expired"},
+          "retry_after_seconds": {"const": 0},
+          "cooldown_remaining_seconds": {"const": 0},
+          "metadata": {
+            "properties": {
+              "dispatch_allowed": {"const": false},
+              "expiry_checked": {"const": true}
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {"status": {"const": "blocked"}},
+        "required": ["status"]
+      },
+      "then": {
+        "properties": {
+          "blocked_reasons": {"minItems": 1},
+          "retry_after_seconds": {"const": 0},
+          "cooldown_remaining_seconds": {"const": 0},
+          "metadata": {
+            "properties": {
+              "dispatch_allowed": {"const": false}
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {"status": {"const": "not_required"}},
+        "required": ["status"]
+      },
+      "then": {
+        "properties": {
+          "retry_window_required": {"const": false},
+          "retry_state": {"const": "not_required"},
+          "attempt_id": {"maxLength": 0},
+          "previous_attempt_id": {"maxLength": 0},
+          "first_attempt_at": {"maxLength": 0},
+          "last_attempt_at": {"maxLength": 0},
+          "next_retry_at": {"maxLength": 0},
+          "retry_after_due_at": {"maxLength": 0},
+          "expires_at": {"maxLength": 0},
+          "retry_after_seconds": {"const": 0},
+          "cooldown_remaining_seconds": {"const": 0},
+          "attempt_number": {"const": 0},
+          "failure_count": {"const": 0},
+          "max_attempts": {"const": 0},
+          "attempts_remaining": {"const": 0},
+          "retry_window_seconds": {"const": 0},
+          "terminal_failure": {"const": false},
+          "last_failure_reason": {"maxLength": 0},
+          "blocked_reasons": {"maxItems": 0},
+          "deferral_reasons": {"maxItems": 0},
+          "attempt_evidence_refs": {"maxItems": 0},
+          "metadata": {
+            "properties": {
+              "dispatch_allowed": {"const": true},
+              "retry_checked": {"const": false},
+              "retry_after_checked": {"const": false},
+              "cooldown_checked": {"const": false},
+              "attempts_checked": {"const": false},
+              "expiry_checked": {"const": false}
+            }
+          }
+        }
+      }
+    }
+  ]
+}
