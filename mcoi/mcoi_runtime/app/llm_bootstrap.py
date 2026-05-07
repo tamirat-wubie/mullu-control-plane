@@ -28,20 +28,36 @@ from mcoi_runtime.adapters.llm_adapter import (
     StubLLMBackend,
 )
 from mcoi_runtime.adapters.multi_provider import (
+    BazaarLinkBackend,
     CerebrasBackend,
+    ChutesBackend,
+    CloudflareBackend,
+    DashScopeBackend,
     DeepSeekBackend,
     DeepInfraBackend,
+    DInferenceBackend,
+    FeatherlessBackend,
     FireworksBackend,
     FriendliBackend,
+    GlamaBackend,
     GrokBackend,
     GroqBackend,
     HyperbolicBackend,
+    LlamaAPIBackend,
     MistralBackend,
+    MoonshotBackend,
     NebiusBackend,
     NovitaBackend,
     OpenRouterBackend,
+    PacketBackend,
+    ParasailBackend,
+    NeuroRoutersBackend,
+    RidvayBackend,
     SambaNovaBackend,
+    SiliconFlowBackend,
     TogetherBackend,
+    WaveSpeedBackend,
+    ZAIBackend,
 )
 from mcoi_runtime.contracts.llm import LLMBudget
 from mcoi_runtime.contracts.provider import (
@@ -78,6 +94,23 @@ class LLMConfig:
     nebius_api_key: str = ""
     hyperbolic_api_key: str = ""
     sambanova_api_key: str = ""
+    cloudflare_api_key: str = ""
+    cloudflare_account_id: str = ""
+    moonshot_api_key: str = ""
+    dashscope_api_key: str = ""
+    zai_api_key: str = ""
+    siliconflow_api_key: str = ""
+    dinference_api_key: str = ""
+    chutes_api_key: str = ""
+    wavespeed_api_key: str = ""
+    bazaarlink_api_key: str = ""
+    llama_api_key: str = ""
+    parasail_api_key: str = ""
+    featherless_api_key: str = ""
+    packet_api_key: str = ""
+    ridvay_api_key: str = ""
+    neurorouters_api_key: str = ""
+    glama_api_key: str = ""
     grok_api_key: str = ""
     mistral_api_key: str = ""
     openrouter_api_key: str = ""
@@ -108,6 +141,23 @@ class LLMConfig:
         nebius_key = os.environ.get("NEBIUS_API_KEY", "")
         hyperbolic_key = os.environ.get("HYPERBOLIC_API_KEY", "")
         sambanova_key = os.environ.get("SAMBANOVA_API_KEY", "")
+        cloudflare_key = os.environ.get("CLOUDFLARE_API_TOKEN", "") or os.environ.get("CLOUDFLARE_API_KEY", "")
+        cloudflare_account_id = os.environ.get("CLOUDFLARE_ACCOUNT_ID", "")
+        moonshot_key = os.environ.get("MOONSHOT_API_KEY", "")
+        dashscope_key = os.environ.get("DASHSCOPE_API_KEY", "")
+        zai_key = os.environ.get("ZAI_API_KEY", "")
+        siliconflow_key = os.environ.get("SILICONFLOW_API_KEY", "")
+        dinference_key = os.environ.get("DINFERENCE_API_KEY", "")
+        chutes_key = os.environ.get("CHUTES_API_KEY", "")
+        wavespeed_key = os.environ.get("WAVESPEED_API_KEY", "")
+        bazaarlink_key = os.environ.get("BAZAARLINK_API_KEY", "")
+        llama_key = os.environ.get("LLAMA_API_KEY", "")
+        parasail_key = os.environ.get("PARASAIL_API_KEY", "")
+        featherless_key = os.environ.get("FEATHERLESS_API_KEY", "")
+        packet_key = os.environ.get("PACKET_API_KEY", "")
+        ridvay_key = os.environ.get("RIDVAY_API_KEY", "")
+        neurorouters_key = os.environ.get("NEUROROUTERS_API_KEY", "")
+        glama_key = os.environ.get("GLAMA_API_KEY", "")
         grok_key = os.environ.get("XAI_API_KEY", "")
         mistral_key = os.environ.get("MISTRAL_API_KEY", "")
         openrouter_key = os.environ.get("OPENROUTER_API_KEY", "")
@@ -145,6 +195,38 @@ class LLMConfig:
                 default_backend = "hyperbolic"
             elif sambanova_key:
                 default_backend = "sambanova"
+            elif cloudflare_key and cloudflare_account_id:
+                default_backend = "cloudflare"
+            elif moonshot_key:
+                default_backend = "moonshot"
+            elif dashscope_key:
+                default_backend = "dashscope"
+            elif zai_key:
+                default_backend = "zai"
+            elif siliconflow_key:
+                default_backend = "siliconflow"
+            elif dinference_key:
+                default_backend = "dinference"
+            elif chutes_key:
+                default_backend = "chutes"
+            elif wavespeed_key:
+                default_backend = "wavespeed"
+            elif bazaarlink_key:
+                default_backend = "bazaarlink"
+            elif llama_key:
+                default_backend = "llamaapi"
+            elif parasail_key:
+                default_backend = "parasail"
+            elif featherless_key:
+                default_backend = "featherless"
+            elif packet_key:
+                default_backend = "packet"
+            elif ridvay_key:
+                default_backend = "ridvay"
+            elif neurorouters_key:
+                default_backend = "neurorouters"
+            elif glama_key:
+                default_backend = "glama"
             elif mistral_key:
                 default_backend = "mistral"
             elif grok_key:
@@ -169,7 +251,14 @@ class LLMConfig:
                 "GROQ_API_KEY, DEEPSEEK_API_KEY, TOGETHER_API_KEY, "
                 "FIREWORKS_API_KEY, FRIENDLI_TOKEN, NOVITA_API_KEY, "
                 "CEREBRAS_API_KEY, DEEPINFRA_TOKEN, NEBIUS_API_KEY, "
-                "HYPERBOLIC_API_KEY, SAMBANOVA_API_KEY, XAI_API_KEY, MISTRAL_API_KEY, "
+                "HYPERBOLIC_API_KEY, SAMBANOVA_API_KEY, CLOUDFLARE_API_TOKEN "
+                "with CLOUDFLARE_ACCOUNT_ID, MOONSHOT_API_KEY, DASHSCOPE_API_KEY, "
+                "ZAI_API_KEY, SILICONFLOW_API_KEY, DINFERENCE_API_KEY, "
+                "CHUTES_API_KEY, WAVESPEED_API_KEY, BAZAARLINK_API_KEY, "
+                "LLAMA_API_KEY, PARASAIL_API_KEY, FEATHERLESS_API_KEY, "
+                "PACKET_API_KEY, RIDVAY_API_KEY, NEUROROUTERS_API_KEY, "
+                "GLAMA_API_KEY, "
+                "XAI_API_KEY, MISTRAL_API_KEY, "
                 "OPENROUTER_API_KEY) "
                 "or OLLAMA_BASE_URL."
             )
@@ -190,6 +279,23 @@ class LLMConfig:
             nebius_api_key=nebius_key,
             hyperbolic_api_key=hyperbolic_key,
             sambanova_api_key=sambanova_key,
+            cloudflare_api_key=cloudflare_key,
+            cloudflare_account_id=cloudflare_account_id,
+            moonshot_api_key=moonshot_key,
+            dashscope_api_key=dashscope_key,
+            zai_api_key=zai_key,
+            siliconflow_api_key=siliconflow_key,
+            dinference_api_key=dinference_key,
+            chutes_api_key=chutes_key,
+            wavespeed_api_key=wavespeed_key,
+            bazaarlink_api_key=bazaarlink_key,
+            llama_api_key=llama_key,
+            parasail_api_key=parasail_key,
+            featherless_api_key=featherless_key,
+            packet_api_key=packet_key,
+            ridvay_api_key=ridvay_key,
+            neurorouters_api_key=neurorouters_key,
+            glama_api_key=glama_key,
             grok_api_key=grok_key,
             mistral_api_key=mistral_key,
             openrouter_api_key=openrouter_key,
@@ -404,6 +510,183 @@ def bootstrap_llm(
         )
         backends["sambanova"] = sambanova
 
+    if llm_config.cloudflare_api_key and llm_config.cloudflare_account_id:
+        cloudflare = CloudflareBackend(
+            api_key=llm_config.cloudflare_api_key,
+            account_id=llm_config.cloudflare_account_id,
+            model=_select_provider_default_model(
+                llm_config.default_model,
+                ("@cf/", "cloudflare/"),
+                CloudflareBackend.DEFAULT_MODEL,
+            ),
+        )
+        backends["cloudflare"] = cloudflare
+
+    if llm_config.moonshot_api_key:
+        moonshot = MoonshotBackend(
+            api_key=llm_config.moonshot_api_key,
+            model=_select_provider_default_model(
+                llm_config.default_model,
+                ("kimi", "moonshot"),
+                MoonshotBackend.DEFAULT_MODEL,
+            ),
+        )
+        backends["moonshot"] = moonshot
+
+    if llm_config.dashscope_api_key:
+        dashscope = DashScopeBackend(
+            api_key=llm_config.dashscope_api_key,
+            model=_select_provider_default_model(
+                llm_config.default_model,
+                ("qwen", "dashscope"),
+                DashScopeBackend.DEFAULT_MODEL,
+            ),
+        )
+        backends["dashscope"] = dashscope
+
+    if llm_config.zai_api_key:
+        zai = ZAIBackend(
+            api_key=llm_config.zai_api_key,
+            model=_select_provider_default_model(
+                llm_config.default_model,
+                ("glm", "zai", "z.ai"),
+                ZAIBackend.DEFAULT_MODEL,
+            ),
+        )
+        backends["zai"] = zai
+
+    if llm_config.siliconflow_api_key:
+        siliconflow = SiliconFlowBackend(
+            api_key=llm_config.siliconflow_api_key,
+            model=_select_provider_default_model(
+                llm_config.default_model,
+                ("qwen/", "deepseek-ai/", "openai/gpt-oss", "siliconflow/"),
+                SiliconFlowBackend.DEFAULT_MODEL,
+            ),
+        )
+        backends["siliconflow"] = siliconflow
+
+    if llm_config.dinference_api_key:
+        dinference = DInferenceBackend(
+            api_key=llm_config.dinference_api_key,
+            model=_select_provider_default_model(
+                llm_config.default_model,
+                ("gpt-oss", "glm-", "minimax", "dinference/"),
+                DInferenceBackend.DEFAULT_MODEL,
+            ),
+        )
+        backends["dinference"] = dinference
+
+    if llm_config.chutes_api_key:
+        chutes = ChutesBackend(
+            api_key=llm_config.chutes_api_key,
+            model=_select_provider_default_model(
+                llm_config.default_model,
+                ("qwen/", "deepseek-ai/", "zai-org/", "minimaxai/", "chutes/"),
+                ChutesBackend.DEFAULT_MODEL,
+            ),
+        )
+        backends["chutes"] = chutes
+
+    if llm_config.wavespeed_api_key:
+        wavespeed = WaveSpeedBackend(
+            api_key=llm_config.wavespeed_api_key,
+            model=_select_provider_default_model(
+                llm_config.default_model,
+                ("qwen/", "deepseek/", "llama", "wavespeed/"),
+                WaveSpeedBackend.DEFAULT_MODEL,
+            ),
+        )
+        backends["wavespeed"] = wavespeed
+
+    if llm_config.bazaarlink_api_key:
+        bazaarlink = BazaarLinkBackend(
+            api_key=llm_config.bazaarlink_api_key,
+            model=_select_provider_default_model(
+                llm_config.default_model,
+                ("meta-llama/", "llama", "bazaarlink/"),
+                BazaarLinkBackend.DEFAULT_MODEL,
+            ),
+        )
+        backends["bazaarlink"] = bazaarlink
+
+    if llm_config.llama_api_key:
+        llamaapi = LlamaAPIBackend(
+            api_key=llm_config.llama_api_key,
+            model=_select_provider_default_model(
+                llm_config.default_model,
+                ("llama", "meta-llama/"),
+                LlamaAPIBackend.DEFAULT_MODEL,
+            ),
+        )
+        backends["llamaapi"] = llamaapi
+
+    if llm_config.parasail_api_key:
+        parasail = ParasailBackend(
+            api_key=llm_config.parasail_api_key,
+            model=_select_provider_default_model(
+                llm_config.default_model,
+                ("parasail-", "qwen", "llama", "deepseek"),
+                ParasailBackend.DEFAULT_MODEL,
+            ),
+        )
+        backends["parasail"] = parasail
+
+    if llm_config.featherless_api_key:
+        featherless = FeatherlessBackend(
+            api_key=llm_config.featherless_api_key,
+            model=_select_provider_default_model(
+                llm_config.default_model,
+                ("qwen/", "meta-llama/", "mistral", "deepseek", "featherless/"),
+                FeatherlessBackend.DEFAULT_MODEL,
+            ),
+        )
+        backends["featherless"] = featherless
+
+    if llm_config.packet_api_key:
+        packet = PacketBackend(
+            api_key=llm_config.packet_api_key,
+            model=_select_provider_default_model(
+                llm_config.default_model,
+                ("meta-llama/", "llama", "qwen/", "mistral", "packet/"),
+                PacketBackend.DEFAULT_MODEL,
+            ),
+        )
+        backends["packet"] = packet
+
+    if llm_config.ridvay_api_key:
+        ridvay = RidvayBackend(
+            api_key=llm_config.ridvay_api_key,
+            model=_select_provider_default_model(
+                llm_config.default_model,
+                ("qwen/", "meta-llama/", "deepseek", "ridvay/"),
+                RidvayBackend.DEFAULT_MODEL,
+            ),
+        )
+        backends["ridvay"] = ridvay
+
+    if llm_config.neurorouters_api_key:
+        neurorouters = NeuroRoutersBackend(
+            api_key=llm_config.neurorouters_api_key,
+            model=_select_provider_default_model(
+                llm_config.default_model,
+                ("qwen/", "meta-llama/", "deepseek", "neurorouters/"),
+                NeuroRoutersBackend.DEFAULT_MODEL,
+            ),
+        )
+        backends["neurorouters"] = neurorouters
+
+    if llm_config.glama_api_key:
+        glama = GlamaBackend(
+            api_key=llm_config.glama_api_key,
+            model=_select_provider_default_model(
+                llm_config.default_model,
+                ("deepseek", "qwen", "llama", "mistral", "glama/"),
+                GlamaBackend.DEFAULT_MODEL,
+            ),
+        )
+        backends["glama"] = glama
+
     if llm_config.grok_api_key:
         grok = GrokBackend(
             api_key=llm_config.grok_api_key,
@@ -585,6 +868,106 @@ def _register_providers(
             "rate_limit": 120,
             "cost_limit": 0.25,
         },
+        "cloudflare": {
+            "name": "Cloudflare Workers AI",
+            "base_url": (
+                f"https://api.cloudflare.com/client/v4/accounts/{config.cloudflare_account_id}/ai/v1"
+                if config.cloudflare_account_id
+                else "https://api.cloudflare.com/client/v4/accounts/{account_id}/ai/v1"
+            ),
+            "rate_limit": 120,
+            "cost_limit": 0.25,
+        },
+        "moonshot": {
+            "name": "Moonshot Kimi",
+            "base_url": "https://api.moonshot.ai/v1",
+            "rate_limit": 120,
+            "cost_limit": 0.50,
+        },
+        "dashscope": {
+            "name": "Alibaba DashScope",
+            "base_url": "https://dashscope-intl.aliyuncs.com/compatible-mode/v1",
+            "rate_limit": 120,
+            "cost_limit": 0.25,
+        },
+        "zai": {
+            "name": "Z.AI",
+            "base_url": "https://api.z.ai/api/paas/v4",
+            "rate_limit": 120,
+            "cost_limit": 0.50,
+        },
+        "siliconflow": {
+            "name": "SiliconFlow",
+            "base_url": "https://api.siliconflow.com/v1",
+            "rate_limit": 120,
+            "cost_limit": 0.25,
+        },
+        "dinference": {
+            "name": "DInference",
+            "base_url": "https://api.dinference.com/v1",
+            "rate_limit": 120,
+            "cost_limit": 0.25,
+        },
+        "chutes": {
+            "name": "Chutes",
+            "base_url": "https://llm.chutes.ai/v1",
+            "rate_limit": 120,
+            "cost_limit": 0.25,
+        },
+        "wavespeed": {
+            "name": "WaveSpeed",
+            "base_url": "https://llm.wavespeed.ai/v1",
+            "rate_limit": 120,
+            "cost_limit": 0.25,
+        },
+        "bazaarlink": {
+            "name": "BazaarLink",
+            "base_url": "https://bazaarlink.ai/api/v1",
+            "rate_limit": 120,
+            "cost_limit": 0.25,
+        },
+        "llamaapi": {
+            "name": "LlamaAPI",
+            "base_url": "https://api.llama-api.com",
+            "rate_limit": 120,
+            "cost_limit": 0.50,
+        },
+        "parasail": {
+            "name": "Parasail",
+            "base_url": "https://api.parasail.io/v1",
+            "rate_limit": 120,
+            "cost_limit": 0.50,
+        },
+        "featherless": {
+            "name": "Featherless",
+            "base_url": "https://api.featherless.ai/v1",
+            "rate_limit": 120,
+            "cost_limit": 0.05,
+        },
+        "packet": {
+            "name": "Packet Token Factory",
+            "base_url": "https://dash.packet.ai/api/v1",
+            "rate_limit": 120,
+            "cost_limit": 0.25,
+        },
+        "ridvay": {
+            "name": "Ridvay",
+            "base_url": "https://api.ridvay.com/v1",
+            "rate_limit": 120,
+            "cost_limit": 0.25,
+        },
+        "neurorouters": {
+            "name": "NeuroRouters",
+            "base_url": "https://neurorouters.com/api/v1",
+            "rate_limit": 120,
+            "cost_limit": 0.05,
+        },
+        "glama": {
+            "name": "Glama Gateway",
+            "base_url": "https://gateway.glama.ai/v1",
+            "rate_limit": 120,
+            "cost_limit": 0.25,
+        },
         "grok": {
             "name": "xAI Grok",
             "base_url": "https://api.x.ai/v1",
@@ -684,6 +1067,22 @@ def _register_models(
         ("meta-llama/Meta-Llama-3.1-8B-Instruct", "Llama 3.1 8B via Nebius", "nebius", 0.02, 0.06),
         ("Qwen/Qwen2.5-Coder-32B-Instruct", "Qwen2.5 Coder 32B via Hyperbolic", "hyperbolic", 0.20, 0.20),
         ("Meta-Llama-3.3-70B-Instruct", "Llama 3.3 70B via SambaNova", "sambanova", 0.60, 1.20),
+        ("@cf/meta/llama-3.1-8b-instruct-fp8-fast", "Llama 3.1 8B FP8 Fast via Cloudflare", "cloudflare", 0.045, 0.384),
+        ("kimi-k2.5", "Kimi K2.5 via Moonshot", "moonshot", 0.60, 3.00),
+        ("qwen-turbo", "Qwen Turbo via DashScope", "dashscope", 0.05, 0.20),
+        ("glm-4.5-air", "GLM-4.5 Air via Z.AI", "zai", 0.20, 1.10),
+        ("Qwen/Qwen2.5-7B-Instruct", "Qwen2.5 7B via SiliconFlow", "siliconflow", 0.05, 0.05),
+        ("gpt-oss-120b", "GPT OSS 120B via DInference", "dinference", 0.09, 0.36),
+        ("Qwen/Qwen3-32B-TEE", "Qwen3 32B TEE via Chutes", "chutes", 0.08, 0.24),
+        ("qwen/qwen3-coder-30b-a3b-instruct", "Qwen3 Coder 30B A3B via WaveSpeed", "wavespeed", 0.07, 0.27),
+        ("meta-llama/llama-3.1-8b-instruct", "Llama 3.1 8B via BazaarLink", "bazaarlink", 0.02, 0.05),
+        ("llama3-70b", "Llama 3 70B via LlamaAPI", "llamaapi", 0.65, 0.65),
+        ("parasail-qwen3-32b", "Qwen3 32B via Parasail", "parasail", 0.10, 0.50),
+        ("Qwen/Qwen2.5-7B-Instruct-1M", "Qwen2.5 7B 1M via Featherless", "featherless", 0.0, 0.0),
+        ("meta-llama/Llama-3.1-70B-Instruct", "Llama 3.1 70B via Packet Token Factory", "packet", 0.15, 0.15),
+        ("qwen/qwen3-30b-a3b", "Qwen3 30B A3B via Ridvay", "ridvay", 0.06, 0.22),
+        ("qwen/qwen3-30b-a3b:free", "Qwen3 30B A3B Free via NeuroRouters", "neurorouters", 0.0, 0.0),
+        ("deepseek-chat-v3", "DeepSeek Chat V3 via Glama Gateway", "glama", 0.14, 0.28),
         ("mistral-small-2506", "Mistral Small 2506", "mistral", 0.10, 0.30),
         ("mistral-small-2603", "Mistral Small 2603", "mistral", 0.15, 0.60),
         ("grok-3-mini", "Grok 3 Mini", "grok", 0.30, 0.50),
