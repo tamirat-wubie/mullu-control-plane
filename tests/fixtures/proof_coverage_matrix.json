@@ -303,6 +303,13 @@
       ]
     },
     {
+      "action_id": "publish_temporal_accepted_risk_expiry_receipt_contract",
+      "status": "closed",
+      "surfaces": [
+        "temporal_accepted_risk_expiry"
+      ]
+    },
+    {
       "action_id": "publish_temporal_memory_receipt_contract",
       "status": "closed",
       "surfaces": [
@@ -380,7 +387,7 @@
   ],
   "coverage_summary": {
     "by_action_proof": {
-      "action_proof": 48,
+      "action_proof": 49,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 8,
@@ -388,7 +395,7 @@
     },
     "by_audit": {
       "action_proof": 0,
-      "audit_chain": 54,
+      "audit_chain": 55,
       "gap": 0,
       "read_model": 4,
       "request_proof": 0
@@ -396,16 +403,16 @@
     "by_coverage_state": {
       "proven": 1,
       "unproven": 0,
-      "witnessed": 57
+      "witnessed": 58
     },
     "by_request_proof": {
       "action_proof": 0,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 10,
-      "request_proof": 48
+      "request_proof": 49
     },
-    "surface_count": 58
+    "surface_count": 59
   },
   "generated_by": "scripts/proof_coverage_matrix.py",
   "route_coverage": {
@@ -3366,6 +3373,35 @@
         "receipt_not_terminal_closure"
       ],
       "surface_id": "temporal_monotonic_duration"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "gateway/temporal_accepted_risk_expiry.py",
+        "schemas/temporal_accepted_risk_expiry_receipt.schema.json",
+        "tests/test_gateway/test_temporal_accepted_risk_expiry.py"
+      ],
+      "notes": "Temporal accepted-risk expiry rechecks active accepted-risk records for expiry, lifecycle disposition, tenant and command scope, review obligation, owner, evidence refs, and source receipts before dispatch reuse.",
+      "representative_paths": [
+        "TemporalAcceptedRiskExpiry.evaluate",
+        "TemporalAcceptedRiskRequest",
+        "TemporalAcceptedRiskExpiryReceipt"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "runtime_clock_owns_accepted_risk_expiry",
+        "expired_accepted_risk_blocks_dispatch",
+        "revoked_or_closed_accepted_risk_blocks_dispatch",
+        "tenant_command_and_action_scope_checked",
+        "review_obligation_required",
+        "accepted_risk_evidence_refs_required",
+        "high_risk_source_receipts_bound",
+        "temporal_accepted_risk_expiry_receipt_schema_valid",
+        "receipt_not_terminal_closure"
+      ],
+      "surface_id": "temporal_accepted_risk_expiry"
     },
     {
       "action_proof": "action_proof",

@@ -1,0 +1,246 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:temporal-accepted-risk-expiry-receipt:1",
+  "title": "Temporal Accepted Risk Expiry Receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "receipt_id",
+    "request_id",
+    "tenant_id",
+    "actor_id",
+    "command_id",
+    "action_type",
+    "risk_level",
+    "policy_id",
+    "status",
+    "risk_state",
+    "runtime_now_utc",
+    "accepted_risk_required",
+    "risk_id",
+    "scope",
+    "disposition",
+    "accepted_at",
+    "expires_at",
+    "seconds_until_expiry",
+    "accepted_age_seconds",
+    "case_id",
+    "owner_id",
+    "accepted_by",
+    "review_obligation_id",
+    "allowed_scopes",
+    "allowed_action_types",
+    "blocked_reasons",
+    "warning_reasons",
+    "required_controls",
+    "evidence_refs",
+    "accepted_risk_evidence_refs",
+    "source_terminal_closure_id",
+    "source_temporal_receipt_id",
+    "source_causal_order_receipt_id",
+    "source_reapproval_receipt_id",
+    "receipt_schema_ref",
+    "terminal_closure_required",
+    "receipt_hash",
+    "metadata"
+  ],
+  "properties": {
+    "receipt_id": {
+      "type": "string",
+      "pattern": "^temporal-accepted-risk-expiry-receipt-[0-9a-f]{16}$"
+    },
+    "request_id": {"type": "string", "minLength": 1},
+    "tenant_id": {"type": "string", "minLength": 1},
+    "actor_id": {"type": "string", "minLength": 1},
+    "command_id": {"type": "string", "minLength": 1},
+    "action_type": {"type": "string", "minLength": 1},
+    "risk_level": {
+      "type": "string",
+      "enum": ["low", "medium", "high", "critical"]
+    },
+    "policy_id": {"type": "string", "minLength": 1},
+    "status": {
+      "type": "string",
+      "enum": ["risk_active", "expired", "blocked", "not_required"]
+    },
+    "risk_state": {
+      "type": "string",
+      "enum": ["active", "expired", "revoked", "closed", "future", "wrong_scope", "invalid", "not_required"]
+    },
+    "runtime_now_utc": {"type": "string", "format": "date-time"},
+    "accepted_risk_required": {"type": "boolean"},
+    "risk_id": {"type": "string"},
+    "scope": {"type": "string"},
+    "disposition": {"type": "string"},
+    "accepted_at": {"type": "string"},
+    "expires_at": {"type": "string"},
+    "seconds_until_expiry": {"type": "integer", "minimum": 0},
+    "accepted_age_seconds": {"type": "integer", "minimum": 0},
+    "case_id": {"type": "string"},
+    "owner_id": {"type": "string"},
+    "accepted_by": {"type": "string"},
+    "review_obligation_id": {"type": "string"},
+    "allowed_scopes": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": ["effect_reconciliation", "verification_gap", "provider_uncertainty", "operational_limitation"]
+      }
+    },
+    "allowed_action_types": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1}
+    },
+    "blocked_reasons": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1}
+    },
+    "warning_reasons": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1}
+    },
+    "required_controls": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"type": "string", "minLength": 1}
+    },
+    "evidence_refs": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1}
+    },
+    "accepted_risk_evidence_refs": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1}
+    },
+    "source_terminal_closure_id": {"type": "string"},
+    "source_temporal_receipt_id": {"type": "string"},
+    "source_causal_order_receipt_id": {"type": "string"},
+    "source_reapproval_receipt_id": {"type": "string"},
+    "receipt_schema_ref": {
+      "type": "string",
+      "const": "urn:mullusi:schema:temporal-accepted-risk-expiry-receipt:1"
+    },
+    "terminal_closure_required": {"type": "boolean", "const": true},
+    "receipt_hash": {"type": "string", "minLength": 1},
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "receipt_is_not_terminal_closure",
+        "runtime_owns_time_truth",
+        "dispatch_allowed",
+        "accepted_risk_checked",
+        "expiry_checked",
+        "scope_checked",
+        "review_obligation_checked",
+        "high_risk_accepted_risk_checked",
+        "source_receipts_checked"
+      ],
+      "properties": {
+        "receipt_is_not_terminal_closure": {"type": "boolean", "const": true},
+        "runtime_owns_time_truth": {"type": "boolean", "const": true},
+        "dispatch_allowed": {"type": "boolean"},
+        "accepted_risk_checked": {"type": "boolean"},
+        "expiry_checked": {"type": "boolean"},
+        "scope_checked": {"type": "boolean"},
+        "review_obligation_checked": {"type": "boolean"},
+        "high_risk_accepted_risk_checked": {"type": "boolean"},
+        "source_receipts_checked": {"type": "boolean"}
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {"status": {"const": "risk_active"}},
+        "required": ["status"]
+      },
+      "then": {
+        "properties": {
+          "accepted_risk_required": {"const": true},
+          "risk_state": {"const": "active"},
+          "blocked_reasons": {"maxItems": 0},
+          "risk_id": {"minLength": 1},
+          "seconds_until_expiry": {"exclusiveMinimum": 0},
+          "metadata": {
+            "properties": {
+              "dispatch_allowed": {"const": true},
+              "accepted_risk_checked": {"const": true},
+              "expiry_checked": {"const": true},
+              "scope_checked": {"const": true},
+              "review_obligation_checked": {"const": true}
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {"status": {"const": "expired"}},
+        "required": ["status"]
+      },
+      "then": {
+        "properties": {
+          "risk_state": {"const": "expired"},
+          "seconds_until_expiry": {"const": 0},
+          "blocked_reasons": {"minItems": 1},
+          "metadata": {
+            "properties": {
+              "dispatch_allowed": {"const": false},
+              "accepted_risk_checked": {"const": true},
+              "expiry_checked": {"const": true}
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {"status": {"const": "blocked"}},
+        "required": ["status"]
+      },
+      "then": {
+        "properties": {
+          "blocked_reasons": {"minItems": 1},
+          "metadata": {
+            "properties": {
+              "dispatch_allowed": {"const": false}
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {"status": {"const": "not_required"}},
+        "required": ["status"]
+      },
+      "then": {
+        "properties": {
+          "accepted_risk_required": {"const": false},
+          "risk_state": {"const": "not_required"},
+          "risk_id": {"maxLength": 0},
+          "scope": {"maxLength": 0},
+          "disposition": {"maxLength": 0},
+          "accepted_at": {"maxLength": 0},
+          "expires_at": {"maxLength": 0},
+          "seconds_until_expiry": {"const": 0},
+          "accepted_age_seconds": {"const": 0},
+          "blocked_reasons": {"maxItems": 0},
+          "warning_reasons": {"maxItems": 0},
+          "metadata": {
+            "properties": {
+              "dispatch_allowed": {"const": true},
+              "accepted_risk_checked": {"const": false},
+              "expiry_checked": {"const": false},
+              "scope_checked": {"const": false},
+              "review_obligation_checked": {"const": false},
+              "high_risk_accepted_risk_checked": {"const": false},
+              "source_receipts_checked": {"const": false}
+            }
+          }
+        }
+      }
+    }
+  ]
+}
