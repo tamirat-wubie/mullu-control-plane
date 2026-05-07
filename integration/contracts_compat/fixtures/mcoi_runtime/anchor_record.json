@@ -1,0 +1,13 @@
+{
+  "anchor_id": "anchor-settlement-2026-042",
+  "tenant_id": "tenant-mullu-primary",
+  "source_ref": "settlement-proof-2026-042",
+  "content_hash": "sha256:settlement-proof-payload-2026-042",
+  "disposition": "anchored",
+  "anchor_ref": "chain-anchor-0x8a1f42",
+  "created_at": "2026-05-07T09:07:00+00:00",
+  "metadata": {
+    "block_height": "1820042",
+    "network": "consortium"
+  }
+}

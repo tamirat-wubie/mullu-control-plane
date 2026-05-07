@@ -271,6 +271,24 @@ from mcoi_runtime.contracts.financial_runtime import (
     SpendRecord,
     SpendStatus,
 )
+from mcoi_runtime.contracts.ledger_runtime import (
+    AnchorDisposition,
+    AnchorRecord,
+    LedgerAccount,
+    LedgerAssessment,
+    LedgerClosureReport,
+    LedgerDecision,
+    LedgerNetworkKind,
+    LedgerSnapshot,
+    LedgerStatus,
+    LedgerTransaction,
+    LedgerViolation,
+    LedgerViolationKind,
+    SettlementProof,
+    SettlementProofStatus,
+    WalletRecord,
+    WalletStatus,
+)
 from mcoi_runtime.contracts.recovery import RecoveryRecord
 
 
@@ -2233,6 +2251,136 @@ def _build_budget_closure_report(payload: dict) -> BudgetClosureReport:
     )
 
 
+def _build_ledger_account(payload: dict) -> LedgerAccount:
+    return LedgerAccount(
+        account_id=payload["account_id"],
+        tenant_id=payload["tenant_id"],
+        display_name=payload["display_name"],
+        status=LedgerStatus(payload["status"]),
+        network=LedgerNetworkKind(payload["network"]),
+        balance=payload["balance"],
+        created_at=payload["created_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_ledger_transaction(payload: dict) -> LedgerTransaction:
+    return LedgerTransaction(
+        transaction_id=payload["transaction_id"],
+        tenant_id=payload["tenant_id"],
+        from_account=payload["from_account"],
+        to_account=payload["to_account"],
+        amount=payload["amount"],
+        reference_ref=payload["reference_ref"],
+        created_at=payload["created_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_settlement_proof(payload: dict) -> SettlementProof:
+    return SettlementProof(
+        proof_id=payload["proof_id"],
+        tenant_id=payload["tenant_id"],
+        transaction_ref=payload["transaction_ref"],
+        status=SettlementProofStatus(payload["status"]),
+        proof_hash=payload["proof_hash"],
+        verified_at=payload["verified_at"],
+        created_at=payload["created_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_anchor_record(payload: dict) -> AnchorRecord:
+    return AnchorRecord(
+        anchor_id=payload["anchor_id"],
+        tenant_id=payload["tenant_id"],
+        source_ref=payload["source_ref"],
+        content_hash=payload["content_hash"],
+        disposition=AnchorDisposition(payload["disposition"]),
+        anchor_ref=payload["anchor_ref"],
+        created_at=payload["created_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_wallet_record(payload: dict) -> WalletRecord:
+    return WalletRecord(
+        wallet_id=payload["wallet_id"],
+        tenant_id=payload["tenant_id"],
+        identity_ref=payload["identity_ref"],
+        status=WalletStatus(payload["status"]),
+        public_key_ref=payload["public_key_ref"],
+        created_at=payload["created_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_ledger_decision(payload: dict) -> LedgerDecision:
+    return LedgerDecision(
+        decision_id=payload["decision_id"],
+        tenant_id=payload["tenant_id"],
+        operation=payload["operation"],
+        disposition=payload["disposition"],
+        reason=payload["reason"],
+        decided_at=payload["decided_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_ledger_snapshot(payload: dict) -> LedgerSnapshot:
+    return LedgerSnapshot(
+        snapshot_id=payload["snapshot_id"],
+        tenant_id=payload["tenant_id"],
+        total_accounts=payload["total_accounts"],
+        total_transactions=payload["total_transactions"],
+        total_proofs=payload["total_proofs"],
+        total_anchors=payload["total_anchors"],
+        total_wallets=payload["total_wallets"],
+        total_violations=payload["total_violations"],
+        captured_at=payload["captured_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_ledger_violation(payload: dict) -> LedgerViolation:
+    return LedgerViolation(
+        violation_id=payload["violation_id"],
+        tenant_id=payload["tenant_id"],
+        kind=LedgerViolationKind(payload["kind"]),
+        operation=payload["operation"],
+        reason=payload["reason"],
+        detected_at=payload["detected_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_ledger_assessment(payload: dict) -> LedgerAssessment:
+    return LedgerAssessment(
+        assessment_id=payload["assessment_id"],
+        tenant_id=payload["tenant_id"],
+        total_confirmed=payload["total_confirmed"],
+        total_failed=payload["total_failed"],
+        total_disputed=payload["total_disputed"],
+        integrity_score=payload["integrity_score"],
+        assessed_at=payload["assessed_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_ledger_closure_report(payload: dict) -> LedgerClosureReport:
+    return LedgerClosureReport(
+        report_id=payload["report_id"],
+        tenant_id=payload["tenant_id"],
+        total_accounts=payload["total_accounts"],
+        total_transactions=payload["total_transactions"],
+        total_proofs=payload["total_proofs"],
+        total_anchors=payload["total_anchors"],
+        total_violations=payload["total_violations"],
+        created_at=payload["created_at"],
+        metadata=payload["metadata"],
+    )
+
+
 @pytest.mark.parametrize(
     ("fixture_name", "builder"),
     [
@@ -2318,6 +2466,13 @@ def _build_budget_closure_report(payload: dict) -> BudgetClosureReport:
         ("inventory_record.json", _build_inventory_record),
         ("invoice_record.json", _build_invoice_record),
         ("lifecycle_event.json", _build_lifecycle_event),
+        ("ledger_account.json", _build_ledger_account),
+        ("ledger_assessment.json", _build_ledger_assessment),
+        ("ledger_closure_report.json", _build_ledger_closure_report),
+        ("ledger_decision.json", _build_ledger_decision),
+        ("ledger_snapshot.json", _build_ledger_snapshot),
+        ("ledger_transaction.json", _build_ledger_transaction),
+        ("ledger_violation.json", _build_ledger_violation),
         ("listing_record.json", _build_listing_record),
         ("merge_decision.json", _build_merge_decision),
         ("marketplace_assessment.json", _build_marketplace_assessment),
@@ -2361,8 +2516,10 @@ def _build_budget_closure_report(payload: dict) -> BudgetClosureReport:
         ("review_record.json", _build_review_record),
         ("recertification_window.json", _build_recertification_window),
         ("renewal_window.json", _build_renewal_window),
+        ("anchor_record.json", _build_anchor_record),
         ("settlement_closure_report.json", _build_settlement_closure_report),
         ("settlement_decision.json", _build_settlement_decision),
+        ("settlement_proof.json", _build_settlement_proof),
         ("settlement_record.json", _build_settlement_record),
         ("sla_window.json", _build_sla_window),
         ("spend_forecast.json", _build_spend_forecast),
@@ -2373,6 +2530,7 @@ def _build_budget_closure_report(payload: dict) -> BudgetClosureReport:
         ("vendor_commitment.json", _build_vendor_commitment),
         ("vendor_record.json", _build_vendor_record),
         ("vendor_violation.json", _build_vendor_violation),
+        ("wallet_record.json", _build_wallet_record),
         ("writeoff_record.json", _build_writeoff_record),
         ("account_health_snapshot.json", _build_account_health_snapshot),
         ("account_record.json", _build_account_record),

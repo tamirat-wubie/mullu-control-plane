@@ -261,6 +261,14 @@ BUDGET_CONFLICT_KINDS = frozenset(
         "threshold_breach",
     }
 )
+LEDGER_STATUSES = frozenset({"active", "suspended", "closed", "archived"})
+LEDGER_NETWORK_KINDS = frozenset({"private", "consortium", "public", "hybrid"})
+SETTLEMENT_PROOF_STATUSES = frozenset({"pending", "confirmed", "failed", "disputed"})
+ANCHOR_DISPOSITIONS = frozenset({"anchored", "pending", "failed", "revoked"})
+WALLET_STATUSES = frozenset({"active", "frozen", "closed", "compromised"})
+LEDGER_VIOLATION_KINDS = frozenset(
+    {"proof_failed", "anchor_expired", "wallet_compromised", "settlement_disputed"}
+)
 
 
 def _sort_paths(paths: list[Path]) -> tuple[Path, ...]:
@@ -342,6 +350,15 @@ def _validate_currency_code(value: Any, *, field_name: str, path: Path) -> list[
         return [f"{_relative_path(path)}: field '{field_name}' must be a non-empty 3-letter currency code"]
     if len(value) != 3 or not value.isalpha() or not value.isupper():
         return [f"{_relative_path(path)}: field '{field_name}' must be a 3-letter uppercase currency code"]
+    return []
+
+
+def _validate_sha256_hash_text(value: Any, *, field_name: str, path: Path) -> list[str]:
+    errors = _require_non_empty_text(value, field_name=field_name, path=path)
+    if errors:
+        return errors
+    if not value.startswith("sha256:"):
+        return [f"{_relative_path(path)}: field '{field_name}' must be a sha256-prefixed hash"]
     return []
 
 
@@ -8957,6 +8974,342 @@ def _validate_budget_closure_report_fixture(path: Path) -> list[str]:
     return errors
 
 
+def _validate_ledger_account_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MCOI runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "account_id",
+            "tenant_id",
+            "display_name",
+            "status",
+            "network",
+            "balance",
+            "created_at",
+            "metadata",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("account_id", "tenant_id", "display_name", "status", "network"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    if payload["status"] not in LEDGER_STATUSES:
+        errors.append(
+            f"{_relative_path(path)}: field 'status' must be one of {', '.join(sorted(LEDGER_STATUSES))}"
+        )
+    if payload["network"] not in LEDGER_NETWORK_KINDS:
+        errors.append(
+            f"{_relative_path(path)}: field 'network' must be one of {', '.join(sorted(LEDGER_NETWORK_KINDS))}"
+        )
+    errors.extend(_require_non_negative_float(payload["balance"], field_name="balance", path=path))
+    errors.extend(_validate_iso8601_text(payload["created_at"], field_name="created_at", path=path))
+    if not isinstance(payload["metadata"], dict):
+        errors.append(f"{_relative_path(path)}: field 'metadata' must be an object")
+    return errors
+
+
+def _validate_ledger_transaction_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MCOI runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "transaction_id",
+            "tenant_id",
+            "from_account",
+            "to_account",
+            "amount",
+            "reference_ref",
+            "created_at",
+            "metadata",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("transaction_id", "tenant_id", "from_account", "to_account", "reference_ref"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    errors.extend(_require_non_negative_float(payload["amount"], field_name="amount", path=path))
+    if not errors:
+        if payload["amount"] <= 0.0:
+            errors.append(f"{_relative_path(path)}: amount must be positive for a ledger transaction")
+        if payload["from_account"] == payload["to_account"]:
+            errors.append(f"{_relative_path(path)}: from_account must not equal to_account")
+    errors.extend(_validate_iso8601_text(payload["created_at"], field_name="created_at", path=path))
+    if not isinstance(payload["metadata"], dict):
+        errors.append(f"{_relative_path(path)}: field 'metadata' must be an object")
+    return errors
+
+
+def _validate_settlement_proof_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MCOI runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "proof_id",
+            "tenant_id",
+            "transaction_ref",
+            "status",
+            "proof_hash",
+            "verified_at",
+            "created_at",
+            "metadata",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("proof_id", "tenant_id", "transaction_ref", "status"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    if payload["status"] not in SETTLEMENT_PROOF_STATUSES:
+        errors.append(
+            f"{_relative_path(path)}: field 'status' must be one of {', '.join(sorted(SETTLEMENT_PROOF_STATUSES))}"
+        )
+    errors.extend(_validate_sha256_hash_text(payload["proof_hash"], field_name="proof_hash", path=path))
+    if payload["verified_at"]:
+        errors.extend(_validate_iso8601_text(payload["verified_at"], field_name="verified_at", path=path))
+    errors.extend(_validate_iso8601_text(payload["created_at"], field_name="created_at", path=path))
+    if not errors:
+        if payload["status"] == "confirmed" and not payload["verified_at"]:
+            errors.append(f"{_relative_path(path)}: confirmed settlement proofs must carry verified_at")
+        if payload["status"] == "pending" and payload["verified_at"]:
+            errors.append(f"{_relative_path(path)}: pending settlement proofs must keep verified_at empty")
+    if not isinstance(payload["metadata"], dict):
+        errors.append(f"{_relative_path(path)}: field 'metadata' must be an object")
+    return errors
+
+
+def _validate_anchor_record_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MCOI runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "anchor_id",
+            "tenant_id",
+            "source_ref",
+            "content_hash",
+            "disposition",
+            "anchor_ref",
+            "created_at",
+            "metadata",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("anchor_id", "tenant_id", "source_ref", "disposition", "anchor_ref"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    if payload["disposition"] not in ANCHOR_DISPOSITIONS:
+        errors.append(
+            f"{_relative_path(path)}: field 'disposition' must be one of {', '.join(sorted(ANCHOR_DISPOSITIONS))}"
+        )
+    errors.extend(_validate_sha256_hash_text(payload["content_hash"], field_name="content_hash", path=path))
+    errors.extend(_validate_iso8601_text(payload["created_at"], field_name="created_at", path=path))
+    if not isinstance(payload["metadata"], dict):
+        errors.append(f"{_relative_path(path)}: field 'metadata' must be an object")
+    return errors
+
+
+def _validate_wallet_record_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MCOI runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "wallet_id",
+            "tenant_id",
+            "identity_ref",
+            "status",
+            "public_key_ref",
+            "created_at",
+            "metadata",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("wallet_id", "tenant_id", "identity_ref", "status", "public_key_ref"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    if payload["status"] not in WALLET_STATUSES:
+        errors.append(
+            f"{_relative_path(path)}: field 'status' must be one of {', '.join(sorted(WALLET_STATUSES))}"
+        )
+    errors.extend(_validate_iso8601_text(payload["created_at"], field_name="created_at", path=path))
+    if not isinstance(payload["metadata"], dict):
+        errors.append(f"{_relative_path(path)}: field 'metadata' must be an object")
+    return errors
+
+
+def _validate_ledger_decision_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MCOI runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "decision_id",
+            "tenant_id",
+            "operation",
+            "disposition",
+            "reason",
+            "decided_at",
+            "metadata",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("decision_id", "tenant_id", "operation", "disposition", "reason"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    errors.extend(_validate_iso8601_text(payload["decided_at"], field_name="decided_at", path=path))
+    if not isinstance(payload["metadata"], dict):
+        errors.append(f"{_relative_path(path)}: field 'metadata' must be an object")
+    return errors
+
+
+def _validate_ledger_snapshot_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MCOI runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "snapshot_id",
+            "tenant_id",
+            "total_accounts",
+            "total_transactions",
+            "total_proofs",
+            "total_anchors",
+            "total_wallets",
+            "total_violations",
+            "captured_at",
+            "metadata",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("snapshot_id", "tenant_id"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    for field_name in (
+        "total_accounts",
+        "total_transactions",
+        "total_proofs",
+        "total_anchors",
+        "total_wallets",
+        "total_violations",
+    ):
+        errors.extend(_require_non_negative_int(payload[field_name], field_name=field_name, path=path))
+    if not errors and payload["total_proofs"] > payload["total_transactions"]:
+        errors.append(f"{_relative_path(path)}: total_proofs must not exceed total_transactions")
+    errors.extend(_validate_iso8601_text(payload["captured_at"], field_name="captured_at", path=path))
+    if not isinstance(payload["metadata"], dict):
+        errors.append(f"{_relative_path(path)}: field 'metadata' must be an object")
+    return errors
+
+
+def _validate_ledger_violation_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MCOI runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "violation_id",
+            "tenant_id",
+            "kind",
+            "operation",
+            "reason",
+            "detected_at",
+            "metadata",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("violation_id", "tenant_id", "kind", "operation", "reason"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    if payload["kind"] not in LEDGER_VIOLATION_KINDS:
+        errors.append(
+            f"{_relative_path(path)}: field 'kind' must be one of {', '.join(sorted(LEDGER_VIOLATION_KINDS))}"
+        )
+    errors.extend(_validate_iso8601_text(payload["detected_at"], field_name="detected_at", path=path))
+    if not isinstance(payload["metadata"], dict):
+        errors.append(f"{_relative_path(path)}: field 'metadata' must be an object")
+    return errors
+
+
+def _validate_ledger_assessment_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MCOI runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "assessment_id",
+            "tenant_id",
+            "total_confirmed",
+            "total_failed",
+            "total_disputed",
+            "integrity_score",
+            "assessed_at",
+            "metadata",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("assessment_id", "tenant_id"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    for field_name in ("total_confirmed", "total_failed", "total_disputed"):
+        errors.extend(_require_non_negative_int(payload[field_name], field_name=field_name, path=path))
+    errors.extend(
+        _require_number_in_range(payload["integrity_score"], field_name="integrity_score", path=path, minimum=0.0, maximum=1.0)
+    )
+    errors.extend(_validate_iso8601_text(payload["assessed_at"], field_name="assessed_at", path=path))
+    if not isinstance(payload["metadata"], dict):
+        errors.append(f"{_relative_path(path)}: field 'metadata' must be an object")
+    return errors
+
+
+def _validate_ledger_closure_report_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MCOI runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "report_id",
+            "tenant_id",
+            "total_accounts",
+            "total_transactions",
+            "total_proofs",
+            "total_anchors",
+            "total_violations",
+            "created_at",
+            "metadata",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("report_id", "tenant_id"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    for field_name in (
+        "total_accounts",
+        "total_transactions",
+        "total_proofs",
+        "total_anchors",
+        "total_violations",
+    ):
+        errors.extend(_require_non_negative_int(payload[field_name], field_name=field_name, path=path))
+    if not errors and payload["total_proofs"] > payload["total_transactions"]:
+        errors.append(f"{_relative_path(path)}: total_proofs must not exceed total_transactions")
+    errors.extend(_validate_iso8601_text(payload["created_at"], field_name="created_at", path=path))
+    if not isinstance(payload["metadata"], dict):
+        errors.append(f"{_relative_path(path)}: field 'metadata' must be an object")
+    return errors
+
+
 MAF_RUNTIME_FIXTURE_VALIDATORS: dict[str, MAFRuntimeFixtureValidator] = {
     "adversarial_case.json": _validate_adversarial_case_fixture,
     "assignment_record.json": _validate_assignment_record_fixture,
@@ -9052,6 +9405,7 @@ MAF_RUNTIME_FIXTURE_VALIDATORS: dict[str, MAFRuntimeFixtureValidator] = {
 MCOI_RUNTIME_FIXTURE_VALIDATORS: dict[str, MCOIRuntimeFixtureValidator] = {
     "account_health_snapshot.json": _validate_account_health_snapshot_fixture,
     "account_record.json": _validate_account_record_fixture,
+    "anchor_record.json": _validate_anchor_record_fixture,
     "asset_assessment.json": _validate_asset_assessment_fixture,
     "asset_assignment.json": _validate_asset_assignment_fixture,
     "asset_closure_report.json": _validate_asset_closure_report_fixture,
@@ -9133,6 +9487,13 @@ MCOI_RUNTIME_FIXTURE_VALIDATORS: dict[str, MCOIRuntimeFixtureValidator] = {
     "inventory_record.json": _validate_inventory_record_fixture,
     "invoice_record.json": _validate_invoice_record_fixture,
     "lifecycle_event.json": _validate_lifecycle_event_fixture,
+    "ledger_account.json": _validate_ledger_account_fixture,
+    "ledger_assessment.json": _validate_ledger_assessment_fixture,
+    "ledger_closure_report.json": _validate_ledger_closure_report_fixture,
+    "ledger_decision.json": _validate_ledger_decision_fixture,
+    "ledger_snapshot.json": _validate_ledger_snapshot_fixture,
+    "ledger_transaction.json": _validate_ledger_transaction_fixture,
+    "ledger_violation.json": _validate_ledger_violation_fixture,
     "listing_record.json": _validate_listing_record_fixture,
     "merge_decision.json": _validate_merge_decision_fixture,
     "marketplace_assessment.json": _validate_marketplace_assessment_fixture,
@@ -9177,6 +9538,7 @@ MCOI_RUNTIME_FIXTURE_VALIDATORS: dict[str, MCOIRuntimeFixtureValidator] = {
     "renewal_window.json": _validate_renewal_window_fixture,
     "settlement_closure_report.json": _validate_settlement_closure_report_fixture,
     "settlement_decision.json": _validate_settlement_decision_fixture,
+    "settlement_proof.json": _validate_settlement_proof_fixture,
     "settlement_record.json": _validate_settlement_record_fixture,
     "sla_window.json": _validate_sla_window_fixture,
     "spend_forecast.json": _validate_spend_forecast_fixture,
@@ -9187,6 +9549,7 @@ MCOI_RUNTIME_FIXTURE_VALIDATORS: dict[str, MCOIRuntimeFixtureValidator] = {
     "vendor_commitment.json": _validate_vendor_commitment_fixture,
     "vendor_record.json": _validate_vendor_record_fixture,
     "vendor_violation.json": _validate_vendor_violation_fixture,
+    "wallet_record.json": _validate_wallet_record_fixture,
     "writeoff_record.json": _validate_writeoff_record_fixture,
     "aging_snapshot.json": _validate_aging_snapshot_fixture,
     "connector_cost_profile.json": _validate_connector_cost_profile_fixture,

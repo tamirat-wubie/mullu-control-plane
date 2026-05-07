@@ -255,6 +255,16 @@ def test_example_inventory_covers_shipped_and_pilot_artifacts() -> None:
     assert "budget_decision.json" in mcoi_runtime_fixture_names
     assert "financial_health_snapshot.json" in mcoi_runtime_fixture_names
     assert "budget_closure_report.json" in mcoi_runtime_fixture_names
+    assert "ledger_account.json" in mcoi_runtime_fixture_names
+    assert "ledger_transaction.json" in mcoi_runtime_fixture_names
+    assert "settlement_proof.json" in mcoi_runtime_fixture_names
+    assert "anchor_record.json" in mcoi_runtime_fixture_names
+    assert "wallet_record.json" in mcoi_runtime_fixture_names
+    assert "ledger_decision.json" in mcoi_runtime_fixture_names
+    assert "ledger_snapshot.json" in mcoi_runtime_fixture_names
+    assert "ledger_violation.json" in mcoi_runtime_fixture_names
+    assert "ledger_assessment.json" in mcoi_runtime_fixture_names
+    assert "ledger_closure_report.json" in mcoi_runtime_fixture_names
     assert "approval_gated_command" in pilot_names
 
 
@@ -267,7 +277,7 @@ def test_validate_example_artifacts_strictly() -> None:
     assert len(inventory.request_paths) >= 3
     assert len(inventory.auxiliary_paths) >= 1
     assert len(inventory.maf_runtime_fixture_paths) >= 89
-    assert len(inventory.mcoi_runtime_fixture_paths) >= 141
+    assert len(inventory.mcoi_runtime_fixture_paths) >= 151
 
 
 def test_validate_maf_runtime_fixtures_strictly() -> None:
@@ -2479,6 +2489,111 @@ def test_validate_mcoi_runtime_fixture_rejects_budget_closure_overspend_drift(tm
 
     assert len(errors) == 1
     assert "overspend_amount must equal max(total_consumed minus limit_amount, 0)" in errors[0]
+    assert fixture_path.name in errors[0]
+
+
+def test_validate_mcoi_runtime_fixture_rejects_ledger_transaction_self_transfer(tmp_path: Path) -> None:
+    fixture_path = tmp_path / "ledger_transaction.json"
+    fixture_path.write_text(
+        json.dumps(
+            {
+                "transaction_id": "ledger-txn-drift",
+                "tenant_id": "tenant-1",
+                "from_account": "ledger-account-1",
+                "to_account": "ledger-account-1",
+                "amount": 125.0,
+                "reference_ref": "invoice-1",
+                "created_at": "2026-05-07T12:00:00+00:00",
+                "metadata": {"network": "consortium"},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_artifacts.validate_mcoi_runtime_fixture(fixture_path)
+
+    assert len(errors) == 1
+    assert "from_account must not equal to_account" in errors[0]
+    assert fixture_path.name in errors[0]
+
+
+def test_validate_mcoi_runtime_fixture_rejects_confirmed_settlement_proof_without_verified_at(
+    tmp_path: Path,
+) -> None:
+    fixture_path = tmp_path / "settlement_proof.json"
+    fixture_path.write_text(
+        json.dumps(
+            {
+                "proof_id": "proof-drift",
+                "tenant_id": "tenant-1",
+                "transaction_ref": "ledger-transaction-1",
+                "status": "confirmed",
+                "proof_hash": "sha256:proof-drift",
+                "verified_at": "",
+                "created_at": "2026-05-07T12:05:00+00:00",
+                "metadata": {"anchor": "anchor-1"},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_artifacts.validate_mcoi_runtime_fixture(fixture_path)
+
+    assert len(errors) == 1
+    assert "confirmed settlement proofs must carry verified_at" in errors[0]
+    assert fixture_path.name in errors[0]
+
+
+def test_validate_mcoi_runtime_fixture_rejects_ledger_snapshot_proof_overflow(tmp_path: Path) -> None:
+    fixture_path = tmp_path / "ledger_snapshot.json"
+    fixture_path.write_text(
+        json.dumps(
+            {
+                "snapshot_id": "ledger-snapshot-drift",
+                "tenant_id": "tenant-1",
+                "total_accounts": 3,
+                "total_transactions": 4,
+                "total_proofs": 5,
+                "total_anchors": 3,
+                "total_wallets": 2,
+                "total_violations": 1,
+                "captured_at": "2026-05-07T12:10:00+00:00",
+                "metadata": {"scope": "tenant"},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_artifacts.validate_mcoi_runtime_fixture(fixture_path)
+
+    assert len(errors) == 1
+    assert "total_proofs must not exceed total_transactions" in errors[0]
+    assert fixture_path.name in errors[0]
+
+
+def test_validate_mcoi_runtime_fixture_rejects_ledger_closure_proof_overflow(tmp_path: Path) -> None:
+    fixture_path = tmp_path / "ledger_closure_report.json"
+    fixture_path.write_text(
+        json.dumps(
+            {
+                "report_id": "ledger-closure-drift",
+                "tenant_id": "tenant-1",
+                "total_accounts": 3,
+                "total_transactions": 8,
+                "total_proofs": 9,
+                "total_anchors": 4,
+                "total_violations": 1,
+                "created_at": "2026-05-31T23:59:00+00:00",
+                "metadata": {"period": "2026-05"},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_artifacts.validate_mcoi_runtime_fixture(fixture_path)
+
+    assert len(errors) == 1
+    assert "total_proofs must not exceed total_transactions" in errors[0]
     assert fixture_path.name in errors[0]
 
 
