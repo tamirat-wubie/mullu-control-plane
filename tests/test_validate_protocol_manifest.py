@@ -420,6 +420,17 @@ def test_protocol_manifest_indexes_temporal_credential_expiry_receipt() -> None:
     assert credential_entry["surface"] == "temporal"
 
 
+def test_protocol_manifest_indexes_temporal_retention_window_receipt() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    retention_entry = entries["temporal-retention-window-receipt"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert retention_entry["path"] == "schemas/temporal_retention_window_receipt.schema.json"
+    assert retention_entry["urn"] == "urn:mullusi:schema:temporal-retention-window-receipt:1"
+    assert retention_entry["surface"] == "temporal"
+
+
 def test_protocol_manifest_indexes_temporal_memory_receipt() -> None:
     manifest = load_manifest()
     entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}

@@ -1194,6 +1194,35 @@ def test_temporal_credential_expiry_surface_blocks_expired_credentials() -> None
     assert closure_actions["publish_temporal_credential_expiry_receipt_contract"]["status"] == "closed"
 
 
+def test_temporal_retention_window_surface_rechecks_data_lifecycle_timing() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    retention_surface = surfaces["temporal_retention_window"]
+    witnesses = set(retention_surface["runtime_witnesses"])
+
+    assert retention_surface["coverage_state"] == "witnessed"
+    assert retention_surface["request_proof"] == "request_proof"
+    assert retention_surface["action_proof"] == "action_proof"
+    assert "TemporalRetentionWindow.evaluate" in retention_surface["representative_paths"]
+    assert "TemporalRetentionRequest" in retention_surface["representative_paths"]
+    assert "TemporalRetentionWindowReceipt" in retention_surface["representative_paths"]
+    assert "gateway/temporal_retention_window.py" in retention_surface["evidence_files"]
+    assert "schemas/temporal_retention_window_receipt.schema.json" in retention_surface["evidence_files"]
+    assert "tests/test_gateway/test_temporal_retention_window.py" in retention_surface["evidence_files"]
+    assert "runtime_clock_owns_retention_timing" in witnesses
+    assert "delete_before_delete_after_defers_action" in witnesses
+    assert "archive_and_anonymize_wait_for_retention_until" in witnesses
+    assert "legal_hold_blocks_lifecycle_action" in witnesses
+    assert "overdue_retention_action_warns" in witnesses
+    assert "tenant_scope_checked" in witnesses
+    assert "retention_policy_ref_required" in witnesses
+    assert "subject_evidence_refs_required" in witnesses
+    assert "high_risk_source_receipts_bound" in witnesses
+    assert "temporal_retention_window_receipt_schema_valid" in witnesses
+    assert closure_actions["publish_temporal_retention_window_receipt_contract"]["status"] == "closed"
+
+
 def test_temporal_memory_surface_blocks_stale_or_superseded_memory() -> None:
     matrix = _load_fixture()
     surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
