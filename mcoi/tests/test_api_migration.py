@@ -1,6 +1,5 @@
 """Tests for Phase 230B — API Migration Versioning Engine."""
 from __future__ import annotations
-import pytest
 from mcoi_runtime.core.api_migration import (
     ApiMigrationEngine, VersionStatus,
 )

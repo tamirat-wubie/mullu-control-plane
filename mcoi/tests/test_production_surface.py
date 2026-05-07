@@ -1,12 +1,12 @@
 """Tests for Phase 196 — Production Surface & Deployment Hardening."""
 import pytest
 from mcoi_runtime.app.production_surface import (
-    APIBoundary, APIRequest, APIResponse,
-    AuthGate, Session,
-    PersistenceConfig, PERSISTENCE_PROFILES,
+    APIBoundary, APIRequest,
+    AuthGate,
+    PERSISTENCE_PROFILES,
     TenantBoundary,
     ObservabilityCollector,
-    DeploymentManifest, DEPLOYMENT_MANIFESTS,
+    DEPLOYMENT_MANIFESTS,
     ProductionSurface,
 )
 
@@ -169,7 +169,7 @@ class TestProductionSurfaceGolden:
     def test_full_lifecycle(self):
         surface = ProductionSurface(DEPLOYMENT_MANIFESTS["production"])
         surface.tenants.register_tenant("t1")
-        session = surface.auth.create_session("s1", "actor1", "t1")
+        surface.auth.create_session("s1", "actor1", "t1")
 
         req = _req(rid="r1", method="POST", path="/action", actor="actor1", tenant="t1",
                     headers={"session_id": "s1"})
