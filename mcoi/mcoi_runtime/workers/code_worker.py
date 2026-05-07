@@ -62,6 +62,25 @@ _DENIED_EXECUTABLES: frozenset[str] = frozenset(
 _DENIED_GIT_SUBCOMMANDS: frozenset[str] = frozenset(
     {"push", "pull", "fetch", "clone", "remote", "submodule", "credential"}
 )
+_SNAPSHOT_SKIP_DIR_NAMES: frozenset[str] = frozenset(
+    {
+        ".git",
+        ".hg",
+        ".mypy_cache",
+        ".pytest_cache",
+        ".ruff_cache",
+        ".tmp",
+        ".tmp_test_outputs",
+        ".tox",
+        ".venv",
+        "__pycache__",
+        "build",
+        "dist",
+        "node_modules",
+        "tmp",
+        "venv",
+    }
+)
 _PATH_SUFFIXES: tuple[str, ...] = (
     ".py",
     ".pyi",
@@ -443,13 +462,40 @@ def _sandbox_argv(argv: tuple[str, ...], relative_cwd: str) -> tuple[str, ...]:
     projected: list[str] = [argv[0]]
     prefix = f"{relative_cwd}/"
     for item in argv[1:]:
+        projected_flag = _project_flag_path_argument(item, relative_cwd, prefix)
+        if projected_flag is not None:
+            projected.append(projected_flag)
+            continue
         if _looks_like_path(item):
             normalized = _normalize_relative_path(item)
-            if normalized.startswith(prefix):
-                projected.append(normalized[len(prefix):] or ".")
+            projected_path = _project_path_inside_cwd(normalized, relative_cwd, prefix)
+            if projected_path is not None:
+                projected.append(projected_path)
                 continue
         projected.append(item)
     return tuple(projected)
+
+
+def _project_flag_path_argument(item: str, relative_cwd: str, prefix: str) -> str | None:
+    if not item.startswith("-") or "=" not in item:
+        return None
+    flag_name, raw_value = item.split("=", 1)
+    value = raw_value.strip()
+    if not value or not _looks_like_path(value):
+        return None
+    normalized = _normalize_relative_path(value)
+    projected_path = _project_path_inside_cwd(normalized, relative_cwd, prefix)
+    if projected_path is None:
+        return None
+    return f"{flag_name}={projected_path}"
+
+
+def _project_path_inside_cwd(normalized_path: str, relative_cwd: str, prefix: str) -> str | None:
+    if normalized_path == relative_cwd:
+        return "."
+    if normalized_path.startswith(prefix):
+        return normalized_path[len(prefix):] or "."
+    return None
 
 
 def _path_within_allowed(path_text: str, allowed_paths: tuple[str, ...]) -> bool:
@@ -533,14 +579,30 @@ def _canonical_hash(value: object) -> str:
 
 def _workspace_snapshot(root: Path) -> dict[str, str]:
     snapshot: dict[str, str] = {}
-    for path in sorted(root.rglob("*")):
-        if not path.is_file() or ".git" in path.relative_to(root).parts:
-            continue
-        relative_path = path.relative_to(root).as_posix()
+    pending_directories = [root]
+    while pending_directories:
+        directory = pending_directories.pop()
         try:
-            snapshot[relative_path] = hashlib.sha256(path.read_bytes()).hexdigest()
+            children = sorted(directory.iterdir(), key=lambda child: child.as_posix())
         except OSError:
-            snapshot[relative_path] = "unreadable"
+            continue
+        for path in children:
+            try:
+                relative_path = path.relative_to(root)
+            except ValueError:
+                continue
+            if path.is_dir():
+                if path.name in _SNAPSHOT_SKIP_DIR_NAMES:
+                    continue
+                pending_directories.append(path)
+                continue
+            if not path.is_file():
+                continue
+            relative_path_text = relative_path.as_posix()
+            try:
+                snapshot[relative_path_text] = hashlib.sha256(path.read_bytes()).hexdigest()
+            except OSError:
+                snapshot[relative_path_text] = "unreadable"
     return snapshot
 
 

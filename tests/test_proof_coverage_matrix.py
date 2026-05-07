@@ -101,6 +101,8 @@ def test_representative_routes_are_not_unclassified() -> None:
     assert classified_routes["/authority/ownership"]["surface_id"] == "authority_operator_controls"
     assert classified_routes["/api/v1/temporal/schedules"]["surface_id"] == "temporal_kernel"
     assert classified_routes["/api/v1/temporal/worker/tick"]["surface_id"] == "temporal_kernel"
+    assert classified_routes["/api/v1/knowledge/entities"]["surface_id"] == "governed_operational_intelligence"
+    assert classified_routes["/api/v1/knowledge/contradictions/unresolved"]["surface_id"] == "governed_operational_intelligence"
     assert classified_routes["/api/v1/finance/approval-packets"]["surface_id"] == "finance_approval_packets"
     assert (
         classified_routes["/api/v1/finance/approval-packets/operator/read-model"]["surface_id"]
@@ -588,21 +590,32 @@ def test_governed_operational_intelligence_surface_is_witnessed() -> None:
     assert "WorldStateStore.add_entity" in operational_surface["representative_paths"]
     assert "GoalCompiler.compile" in operational_surface["representative_paths"]
     assert "CausalSimulator.simulate" in operational_surface["representative_paths"]
+    assert "/api/v1/knowledge/entities" in operational_surface["representative_paths"]
+    assert "/api/v1/knowledge/links" in operational_surface["representative_paths"]
+    assert "/api/v1/knowledge/contradictions/unresolved" in operational_surface["representative_paths"]
     assert "gateway/world_state.py" in operational_surface["evidence_files"]
     assert "gateway/goal_compiler.py" in operational_surface["evidence_files"]
     assert "gateway/causal_simulator.py" in operational_surface["evidence_files"]
+    assert "mcoi/mcoi_runtime/app/routers/knowledge.py" in operational_surface["evidence_files"]
+    assert "mcoi/mcoi_runtime/core/knowledge_graph.py" in operational_surface["evidence_files"]
     assert "schemas/world_state.schema.json" in operational_surface["evidence_files"]
     assert "schemas/goal.schema.json" in operational_surface["evidence_files"]
     assert "schemas/simulation_receipt.schema.json" in operational_surface["evidence_files"]
+    assert "mcoi/tests/test_knowledge_graph.py" in operational_surface["evidence_files"]
     assert "tests/test_gateway/test_world_state.py" in operational_surface["evidence_files"]
     assert "tests/test_gateway/test_goal_compiler.py" in operational_surface["evidence_files"]
     assert "tests/test_gateway/test_causal_simulator.py" in operational_surface["evidence_files"]
     assert "world_assertions_require_source_evidence" in witnesses
+    assert "knowledge_entity_routes_governed" in witnesses
+    assert "knowledge_link_routes_governed" in witnesses
+    assert "knowledge_contradiction_routes_governed" in witnesses
+    assert "knowledge_summary_route_bounded" in witnesses
     assert "goal_plan_certificate_hash_bound" in witnesses
     assert "simulation_receipt_schema_valid" in witnesses
     assert "open_world_contradictions_block_execution" in witnesses
     assert "high_risk_controls_projected_before_execution" in witnesses
     assert closure_actions["publish_governed_operational_intelligence_witnesses"]["status"] == "closed"
+    assert closure_actions["classify_world_state_knowledge_routes"]["status"] == "closed"
 
 
 def test_capability_forge_surface_is_candidate_only() -> None:

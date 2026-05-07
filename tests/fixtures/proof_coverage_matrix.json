@@ -170,6 +170,13 @@
       ]
     },
     {
+      "action_id": "classify_world_state_knowledge_routes",
+      "status": "closed",
+      "surfaces": [
+        "governed_operational_intelligence"
+      ]
+    },
+    {
       "action_id": "publish_capability_forge_candidate_contract",
       "status": "closed",
       "surfaces": [
@@ -446,8 +453,8 @@
   "route_coverage": {
     "by_coverage_state": {
       "proven": 5,
-      "unproven": 192,
-      "witnessed": 116
+      "unproven": 186,
+      "witnessed": 122
     },
     "route_count": 313,
     "routes": [
@@ -1052,34 +1059,34 @@
         "surface_id": "unclassified_declared_route"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/knowledge/contradictions",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "governed_operational_intelligence"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/knowledge/contradictions/unresolved",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "governed_operational_intelligence"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/knowledge/entities",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "governed_operational_intelligence"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/knowledge/entities/{entity_id}/links",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "governed_operational_intelligence"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/knowledge/links",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "governed_operational_intelligence"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/knowledge/summary",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "governed_operational_intelligence"
       },
       {
         "coverage_state": "unproven",
@@ -2017,7 +2024,7 @@
         "surface_id": "gateway_capability_fabric"
       }
     ],
-    "unclassified_route_count": 192
+    "unclassified_route_count": 186
   },
   "schema_version": 1,
   "surfaces": [
@@ -2796,22 +2803,35 @@
         "gateway/world_state.py",
         "gateway/goal_compiler.py",
         "gateway/causal_simulator.py",
+        "mcoi/mcoi_runtime/app/routers/knowledge.py",
+        "mcoi/mcoi_runtime/core/knowledge_graph.py",
         "schemas/world_state.schema.json",
         "schemas/goal.schema.json",
         "schemas/simulation_receipt.schema.json",
+        "mcoi/tests/test_knowledge_graph.py",
         "tests/test_gateway/test_world_state.py",
         "tests/test_gateway/test_goal_compiler.py",
         "tests/test_gateway/test_causal_simulator.py"
       ],
-      "notes": "Governed operational intelligence binds sourced world-state admission, compiled goal-plan certificates, and deterministic causal simulation receipts before effect-bearing execution.",
+      "notes": "Governed operational intelligence binds sourced world-state admission, knowledge graph entity/link/contradiction routes, compiled goal-plan certificates, and deterministic causal simulation receipts before effect-bearing execution.",
       "representative_paths": [
         "WorldStateStore.add_entity",
         "GoalCompiler.compile",
-        "CausalSimulator.simulate"
+        "CausalSimulator.simulate",
+        "/api/v1/knowledge/entities",
+        "/api/v1/knowledge/links",
+        "/api/v1/knowledge/entities/{entity_id}/links",
+        "/api/v1/knowledge/contradictions",
+        "/api/v1/knowledge/contradictions/unresolved",
+        "/api/v1/knowledge/summary"
       ],
       "request_proof": "request_proof",
       "runtime_witnesses": [
         "world_assertions_require_source_evidence",
+        "knowledge_entity_routes_governed",
+        "knowledge_link_routes_governed",
+        "knowledge_contradiction_routes_governed",
+        "knowledge_summary_route_bounded",
         "goal_plan_certificate_hash_bound",
         "simulation_receipt_schema_valid",
         "open_world_contradictions_block_execution",

@@ -410,6 +410,15 @@ MICROSOFT_GRAPH_ACCESS_TOKEN=...       # optional Microsoft Graph connector cred
 OPENAI_API_KEY=...
 ```
 
+Use `examples/finance_email_calendar_recovery.env.example` as the redacted
+operator template for finance email/calendar recovery binding. Replace only the
+secret placeholders through a secrets manager; do not commit concrete token or
+worker signing-secret values. Validate the template before use:
+
+```bash
+python scripts/validate_finance_email_calendar_recovery_env_example.py --template examples/finance_email_calendar_recovery.env.example --strict --json
+```
+
 The gateway and `gateway.worker` build signed adapter clients only when both
 the URL and matching secret for a worker are configured. A URL without its
 secret fails closed during dispatcher construction. Leaving both unset keeps the

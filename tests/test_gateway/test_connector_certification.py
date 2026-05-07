@@ -135,6 +135,22 @@ def test_invocation_requires_scope_tenant_idempotency_and_receipt() -> None:
         tenant_bound=True,
         receipt_ref="receipt://quickbooks/001",
     )
+    denied_receipt_ref = registry.evaluate_invocation(
+        connector_id="quickbooks.create_bill",
+        requested_oauth_scopes=("accounting",),
+        requires_write=True,
+        tenant_bound=True,
+        idempotency_key="idem-001",
+        receipt_ref="unbounded receipt ref",
+    )
+    denied_empty_receipt_ref = registry.evaluate_invocation(
+        connector_id="quickbooks.create_bill",
+        requested_oauth_scopes=("accounting",),
+        requires_write=True,
+        tenant_bound=True,
+        idempotency_key="idem-001",
+        receipt_ref="receipt://",
+    )
     allowed = registry.evaluate_invocation(
         connector_id="quickbooks.create_bill",
         requested_oauth_scopes=("accounting",),
@@ -148,6 +164,10 @@ def test_invocation_requires_scope_tenant_idempotency_and_receipt() -> None:
     assert denied_scope.reason == "oauth_scope_exceeds_manifest"
     assert denied_idempotency.verdict == ConnectorCertificationVerdict.DENY
     assert denied_idempotency.reason == "idempotency_key_required"
+    assert denied_receipt_ref.verdict == ConnectorCertificationVerdict.DENY
+    assert denied_receipt_ref.reason == "connector_receipt_ref_invalid"
+    assert denied_empty_receipt_ref.verdict == ConnectorCertificationVerdict.DENY
+    assert denied_empty_receipt_ref.reason == "connector_receipt_ref_invalid"
     assert allowed.verdict == ConnectorCertificationVerdict.ALLOW
     assert allowed.reason == "connector_invocation_certified"
     assert "receipt://quickbooks/001" in allowed.evidence_refs

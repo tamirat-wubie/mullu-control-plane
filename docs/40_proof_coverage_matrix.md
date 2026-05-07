@@ -35,7 +35,7 @@ document is the operator-readable witness.
 | `runtime_conformance_attestation` | /runtime/conformance | read_model | read_model | gateway_witness_valid, runtime_witness_valid, runtime_conformance_certificate_schema_valid, runtime_conformance_collector_schema_valid, proof_coverage_unclassified_routes_reported, command_closure_canary_passed, capability_admission_canary_passed, dangerous_capability_isolation_canary_passed, lineage_query_canary_passed, authority_responsibility_debt_clear, authority_directory_sync_receipt_valid, capability_plan_bundle_canary_passed, physical_worker_canary_passed, physical_worker_canary_artifact_hash_bound | audit_chain | witnessed | Runtime conformance certificate binds live witness, closure, fabric, isolation, lineage, authority, physical worker canary proof, MCP manifest validity, proof-matrix route classification summary, document-drift checks, issuer schema self-validation, and collector schema validation into one signed attestation. |
 | `production_evidence_plane` | /deployment/witness, /capabilities/evidence, /audit/verify, /proof/verify | read_model | read_model | signed_production_evidence_witness, capability_evidence_schema_valid, audit_verification_schema_valid, proof_verification_schema_valid, deployment_collection_requires_production_evidence, live_physical_safety_evidence_derived_from_registry, live_physical_capability_requires_safety_evidence, sandbox_physical_capability_remains_non_production, missing_production_evidence_fails_closed | audit_chain | witnessed | Production evidence endpoints expose signed deployment posture, capability evidence, audit verification, and proof verification; deployment witness collection can require the whole plane before publication, derives live physical safety evidence only from certified registry extensions, and blocks live physical capability claims without explicit safety evidence while allowing sandbox-only physical canary evidence. |
 | `runtime_reflex_engine` | /runtime/self/health, /runtime/self/inspect, /runtime/self/diagnose, /runtime/self/evaluate, /runtime/self/propose-upgrade, /runtime/self/certify, /runtime/self/promote, /runtime/self/deployment-witnesses, /runtime/self/witness | read_model | request_proof | operator_only_access, mutation_applied_false, certification_handoff_required, protected_surfaces_auto_promote_false, signed_reflex_witness, reflex_deployment_witness_schema, reflex_validator_receipt_schema, offline_reflex_witness_replay, reflex_validator_receipt_artifact | audit_chain | witnessed | Runtime Reflex surfaces expose operator-gated health, anomaly, diagnosis, eval, proposal, certification handoff, promotion decision, signed witness projections, schema-backed offline witness replay, and CI receipt artifacts without direct runtime mutation. |
-| `governed_operational_intelligence` | WorldStateStore.add_entity, GoalCompiler.compile, CausalSimulator.simulate | request_proof | action_proof | world_assertions_require_source_evidence, goal_plan_certificate_hash_bound, simulation_receipt_schema_valid, open_world_contradictions_block_execution, high_risk_controls_projected_before_execution | audit_chain | witnessed | Governed operational intelligence binds sourced world-state admission, compiled goal-plan certificates, and deterministic causal simulation receipts before effect-bearing execution. |
+| `governed_operational_intelligence` | WorldStateStore.add_entity, GoalCompiler.compile, CausalSimulator.simulate, /api/v1/knowledge/entities, /api/v1/knowledge/links, /api/v1/knowledge/entities/{entity_id}/links, /api/v1/knowledge/contradictions, /api/v1/knowledge/contradictions/unresolved, /api/v1/knowledge/summary | request_proof | action_proof | world_assertions_require_source_evidence, knowledge_entity_routes_governed, knowledge_link_routes_governed, knowledge_contradiction_routes_governed, knowledge_summary_route_bounded, goal_plan_certificate_hash_bound, simulation_receipt_schema_valid, open_world_contradictions_block_execution, high_risk_controls_projected_before_execution | audit_chain | witnessed | Governed operational intelligence binds sourced world-state admission, knowledge graph entity/link/contradiction routes, compiled goal-plan certificates, and deterministic causal simulation receipts before effect-bearing execution. |
 | `capability_forge` | CapabilityForge.create_candidate, CapabilityForge.validate, CapabilityForge.build_certification_handoff, install_certification_handoff_evidence, install_certification_handoff_evidence_batch | request_proof | action_proof | candidate_promotion_blocked, candidate_schema_valid, candidate_certification_handoff_emits_maturity_bundle, certification_handoff_installs_evidence_without_maturity_claim, certification_handoff_batch_preserves_capsule_admission_gate, physical_candidate_declares_live_safety_evidence_requirements, physical_handoff_installs_live_safety_evidence, high_risk_approval_policy_required, effect_bearing_candidate_requires_sandbox, effect_bearing_candidate_requires_recovery_path | audit_chain | witnessed | Capability forge emits schema-backed candidate packages and maturity-ready certification handoffs only, keeps promotion blocked, validates approval, sandbox, receipt, eval, live-write, physical safety, and recovery evidence before certification handoff, installs certified handoffs as certification and physical safety evidence without direct maturity overrides, and batches handoff evidence with exact capsule-entry coverage before registry admission. |
 | `capability_maturity_assessment` | CapabilityMaturityEvidenceSynthesizer.materialize_extension, CapabilityMaturityAssessor.assess, CapabilityRegistryMaturityProjector.decorate_read_model, MaturityProjectingCapabilityAdmissionGate.read_model | request_proof | action_proof | certification_evidence_synthesizes_maturity_extension, maturity_derived_from_evidence, registry_read_model_exposes_maturity, default_pack_C6_examples_projected, effect_bearing_production_requires_live_write, production_requires_worker_deployment_recovery, autonomy_requires_C7_controls, capability_maturity_schema_valid | audit_chain | witnessed | Capability maturity assessment derives C0-C7 readiness from explicit evidence, synthesizes maturity extensions from certification evidence bundles, projects maturity onto capability fabric read models, includes read-only and effect-bearing default-pack C6 examples, blocks production overclaims until live and recovery evidence are complete, and blocks autonomy overclaims until bounded autonomy controls are present. |
 | `networked_worker_mesh` | NetworkedWorkerMesh.register_worker, NetworkedWorkerMesh.dispatch, NetworkedWorkerMesh.read_model, SandboxedCodeWorker.execute_command, CodeWorkerLease, CodeWorkerReceipt | request_proof | action_proof | active_lease_required, tenant_capability_operation_budget_checked, forbidden_operations_override_allowed, code_worker_exact_lease_command_required, code_worker_blocks_network_shell_and_risky_git, code_worker_receipt_binds_sandbox_evidence, physical_action_receipt_required_for_physical_workers, physical_worker_canary_blocks_without_receipt, physical_worker_canary_passed, physical_worker_canary_uses_sandbox_handler, worker_evidence_refs_required, worker_receipt_not_terminal_closure, worker_mesh_schema_valid | audit_chain | witnessed | Networked worker mesh dispatches only through active leases, rejects tenant/capability/operation/budget violations before handler execution, requires admitted physical action receipts for physical workers, and emits schema-backed receipts that explicitly require terminal closure; the sandboxed code worker adds exact-command leases, no-network sandbox dispatch, denied shell/network/git controls, and command/output hash receipts. |
@@ -89,8 +89,8 @@ Declared route coverage:
 |---|---:|
 | Proof-relevant declared routes | 313 |
 | Proven routes | 5 |
-| Witnessed routes | 116 |
-| Unclassified declared routes | 192 |
+| Witnessed routes | 122 |
+| Unclassified declared routes | 186 |
 
 The canonical JSON witness lists every proof-relevant declared route under
 `route_coverage.routes`. Routes mapped to `unclassified_declared_route` carry
@@ -133,39 +133,40 @@ Resolved closure actions:
 21. `publish_deployment_orchestration_receipt_contract`
 22. `publish_runtime_reflex_engine_read_models`
 23. `publish_governed_operational_intelligence_witnesses`
-24. `publish_capability_forge_candidate_contract`
-25. `publish_capability_maturity_assessment_contract`
-26. `publish_networked_worker_mesh_contract`
-27. `publish_agent_identity_contract`
-28. `publish_claim_verification_report_contract`
-29. `publish_connector_self_healing_receipt_contract`
-30. `publish_collaboration_case_contract`
-31. `publish_capability_maturity_contract`
-32. `publish_policy_prover_counterexample_contract`
-33. `publish_memory_lattice_admission_contract`
-34. `publish_workflow_mining_draft_contract`
-35. `publish_domain_operating_pack_contract`
-36. `publish_multimodal_operation_receipt_contract`
-37. `publish_physical_action_receipt_contract`
-38. `publish_temporal_operation_receipt_contract`
-39. `publish_temporal_evidence_freshness_receipt_contract`
-40. `publish_temporal_reapproval_receipt_contract`
-41. `publish_temporal_dispatch_window_receipt_contract`
-42. `publish_temporal_budget_window_receipt_contract`
-43. `publish_temporal_memory_receipt_contract`
-44. `publish_temporal_causal_order_receipt_contract`
-45. `publish_temporal_monotonic_duration_receipt_contract`
-46. `publish_temporal_accepted_risk_expiry_receipt_contract`
-47. `publish_temporal_credential_expiry_receipt_contract`
-48. `publish_temporal_retention_window_receipt_contract`
-49. `publish_temporal_memory_refresh_receipt_contract`
-50. `classify_temporal_scheduler_routes`
-51. `publish_temporal_scheduler_receipt_contract`
-52. `publish_policy_proof_report_contract`
-53. `publish_capability_upgrade_plan_contract`
-54. `publish_autonomous_test_generation_plan_contract`
-55. `publish_trust_ledger_bundle_contract`
-56. `publish_trust_ledger_anchor_receipt_contract`
+24. `classify_world_state_knowledge_routes`
+25. `publish_capability_forge_candidate_contract`
+26. `publish_capability_maturity_assessment_contract`
+27. `publish_networked_worker_mesh_contract`
+28. `publish_agent_identity_contract`
+29. `publish_claim_verification_report_contract`
+30. `publish_connector_self_healing_receipt_contract`
+31. `publish_collaboration_case_contract`
+32. `publish_capability_maturity_contract`
+33. `publish_policy_prover_counterexample_contract`
+34. `publish_memory_lattice_admission_contract`
+35. `publish_workflow_mining_draft_contract`
+36. `publish_domain_operating_pack_contract`
+37. `publish_multimodal_operation_receipt_contract`
+38. `publish_physical_action_receipt_contract`
+39. `publish_temporal_operation_receipt_contract`
+40. `publish_temporal_evidence_freshness_receipt_contract`
+41. `publish_temporal_reapproval_receipt_contract`
+42. `publish_temporal_dispatch_window_receipt_contract`
+43. `publish_temporal_budget_window_receipt_contract`
+44. `publish_temporal_memory_receipt_contract`
+45. `publish_temporal_causal_order_receipt_contract`
+46. `publish_temporal_monotonic_duration_receipt_contract`
+47. `publish_temporal_accepted_risk_expiry_receipt_contract`
+48. `publish_temporal_credential_expiry_receipt_contract`
+49. `publish_temporal_retention_window_receipt_contract`
+50. `publish_temporal_memory_refresh_receipt_contract`
+51. `classify_temporal_scheduler_routes`
+52. `publish_temporal_scheduler_receipt_contract`
+53. `publish_policy_proof_report_contract`
+54. `publish_capability_upgrade_plan_contract`
+55. `publish_autonomous_test_generation_plan_contract`
+56. `publish_trust_ledger_bundle_contract`
+57. `publish_trust_ledger_anchor_receipt_contract`
 
 Open closure actions:
 
@@ -173,6 +174,6 @@ Open closure actions:
 
 STATUS:
   Completeness: 100%
-  Invariants verified: route declarations, route-level coverage classification, coverage levels, coverage states, closure action mapping, gateway runtime witness mapping, operator console read-model mapping, claim verification report contract mapping, collaboration case contract mapping, connector self-healing receipt contract mapping, physical action receipt contract mapping, temporal evidence freshness contract mapping, temporal reapproval contract mapping, temporal dispatch window contract mapping, temporal budget window contract mapping, temporal causal order contract mapping, temporal monotonic duration contract mapping, temporal accepted-risk expiry contract mapping, temporal credential expiry contract mapping, temporal retention window contract mapping, temporal memory contract mapping, temporal memory refresh contract mapping, physical worker canary mapping, schema contract validation, deployment orchestration receipt schema contract
-  Open issues: 192 proof-relevant declared routes remain unclassified and are marked unproven in the machine witness
+  Invariants verified: route declarations, route-level coverage classification, coverage levels, coverage states, closure action mapping, gateway runtime witness mapping, operator console read-model mapping, world-state knowledge route mapping, claim verification report contract mapping, collaboration case contract mapping, connector self-healing receipt contract mapping, physical action receipt contract mapping, temporal evidence freshness contract mapping, temporal reapproval contract mapping, temporal dispatch window contract mapping, temporal budget window contract mapping, temporal causal order contract mapping, temporal monotonic duration contract mapping, temporal accepted-risk expiry contract mapping, temporal credential expiry contract mapping, temporal retention window contract mapping, temporal memory contract mapping, temporal memory refresh contract mapping, physical worker canary mapping, schema contract validation, deployment orchestration receipt schema contract
+  Open issues: 186 proof-relevant declared routes remain unclassified and are marked unproven in the machine witness
   Next action: classify unproven declared routes into named proof surfaces or explicit exemptions
