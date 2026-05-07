@@ -1,0 +1,282 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:temporal-rate-limit-window-receipt:1",
+  "title": "Temporal Rate Limit Window Receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "receipt_id",
+    "request_id",
+    "tenant_id",
+    "actor_id",
+    "command_id",
+    "action_type",
+    "risk_level",
+    "policy_id",
+    "scope_id",
+    "endpoint",
+    "identity_id",
+    "bucket_key",
+    "status",
+    "rate_limit_state",
+    "runtime_now_utc",
+    "window_start",
+    "window_end",
+    "reset_at",
+    "retry_after_seconds",
+    "rate_limit_required",
+    "max_tokens",
+    "remaining_tokens",
+    "consumed_tokens",
+    "denied_count",
+    "tokens_requested",
+    "projected_remaining_tokens",
+    "deficit_tokens",
+    "refill_rate_per_second",
+    "burst_limit",
+    "window_seconds",
+    "blocked_reasons",
+    "deferral_reasons",
+    "required_controls",
+    "evidence_refs",
+    "snapshot_evidence_refs",
+    "source_temporal_receipt_id",
+    "source_dispatch_window_receipt_id",
+    "source_reapproval_receipt_id",
+    "receipt_schema_ref",
+    "terminal_closure_required",
+    "receipt_hash",
+    "metadata"
+  ],
+  "properties": {
+    "receipt_id": {
+      "type": "string",
+      "pattern": "^temporal-rate-limit-window-receipt-[0-9a-f]{16}$"
+    },
+    "request_id": {"type": "string", "minLength": 1},
+    "tenant_id": {"type": "string", "minLength": 1},
+    "actor_id": {"type": "string", "minLength": 1},
+    "command_id": {"type": "string", "minLength": 1},
+    "action_type": {"type": "string", "minLength": 1},
+    "risk_level": {
+      "type": "string",
+      "enum": ["low", "medium", "high", "critical"]
+    },
+    "policy_id": {"type": "string", "minLength": 1},
+    "scope_id": {"type": "string", "minLength": 1},
+    "endpoint": {"type": "string", "minLength": 1},
+    "identity_id": {"type": "string"},
+    "bucket_key": {"type": "string"},
+    "status": {
+      "type": "string",
+      "enum": ["within_limit", "throttled", "deferred", "blocked", "not_required"]
+    },
+    "rate_limit_state": {
+      "type": "string",
+      "enum": ["available", "exhausted", "future", "expired", "wrong_scope", "invalid", "not_required"]
+    },
+    "runtime_now_utc": {"type": "string", "format": "date-time"},
+    "window_start": {"type": "string"},
+    "window_end": {"type": "string"},
+    "reset_at": {"type": "string"},
+    "retry_after_seconds": {"type": "integer", "minimum": 0},
+    "rate_limit_required": {"type": "boolean"},
+    "max_tokens": {"type": "integer", "minimum": 0},
+    "remaining_tokens": {"type": "integer", "minimum": 0},
+    "consumed_tokens": {"type": "integer", "minimum": 0},
+    "denied_count": {"type": "integer", "minimum": 0},
+    "tokens_requested": {"type": "integer", "minimum": 1},
+    "projected_remaining_tokens": {"type": "integer", "minimum": 0},
+    "deficit_tokens": {"type": "integer", "minimum": 0},
+    "refill_rate_per_second": {
+      "type": "string",
+      "pattern": "^[0-9]+(\\.[0-9]+)?$"
+    },
+    "burst_limit": {"type": "integer", "minimum": 0},
+    "window_seconds": {"type": "integer", "minimum": 0},
+    "blocked_reasons": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1}
+    },
+    "deferral_reasons": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1}
+    },
+    "required_controls": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"type": "string", "minLength": 1}
+    },
+    "evidence_refs": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1}
+    },
+    "snapshot_evidence_refs": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1}
+    },
+    "source_temporal_receipt_id": {"type": "string"},
+    "source_dispatch_window_receipt_id": {"type": "string"},
+    "source_reapproval_receipt_id": {"type": "string"},
+    "receipt_schema_ref": {
+      "type": "string",
+      "const": "urn:mullusi:schema:temporal-rate-limit-window-receipt:1"
+    },
+    "terminal_closure_required": {"type": "boolean", "const": true},
+    "receipt_hash": {"type": "string", "minLength": 1},
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "receipt_is_not_terminal_closure",
+        "runtime_owns_time_truth",
+        "dispatch_allowed",
+        "retry_after_required",
+        "rate_limit_checked",
+        "token_projection_checked",
+        "window_bounds_checked",
+        "high_risk_source_receipts_checked"
+      ],
+      "properties": {
+        "receipt_is_not_terminal_closure": {"type": "boolean", "const": true},
+        "runtime_owns_time_truth": {"type": "boolean", "const": true},
+        "dispatch_allowed": {"type": "boolean"},
+        "retry_after_required": {"type": "boolean"},
+        "rate_limit_checked": {"type": "boolean"},
+        "token_projection_checked": {"type": "boolean"},
+        "window_bounds_checked": {"type": "boolean"},
+        "high_risk_source_receipts_checked": {"type": "boolean"}
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {"status": {"const": "within_limit"}},
+        "required": ["status"]
+      },
+      "then": {
+        "properties": {
+          "rate_limit_required": {"const": true},
+          "rate_limit_state": {"const": "available"},
+          "deficit_tokens": {"const": 0},
+          "retry_after_seconds": {"const": 0},
+          "blocked_reasons": {"maxItems": 0},
+          "deferral_reasons": {"maxItems": 0},
+          "metadata": {
+            "properties": {
+              "dispatch_allowed": {"const": true},
+              "retry_after_required": {"const": false},
+              "rate_limit_checked": {"const": true},
+              "token_projection_checked": {"const": true},
+              "window_bounds_checked": {"const": true}
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {"status": {"const": "throttled"}},
+        "required": ["status"]
+      },
+      "then": {
+        "properties": {
+          "rate_limit_required": {"const": true},
+          "rate_limit_state": {"const": "exhausted"},
+          "deficit_tokens": {"exclusiveMinimum": 0},
+          "retry_after_seconds": {"exclusiveMinimum": 0},
+          "blocked_reasons": {"maxItems": 0},
+          "deferral_reasons": {"maxItems": 0},
+          "metadata": {
+            "properties": {
+              "dispatch_allowed": {"const": false},
+              "retry_after_required": {"const": true},
+              "rate_limit_checked": {"const": true},
+              "token_projection_checked": {"const": true},
+              "window_bounds_checked": {"const": true}
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {"status": {"const": "deferred"}},
+        "required": ["status"]
+      },
+      "then": {
+        "properties": {
+          "rate_limit_required": {"const": true},
+          "rate_limit_state": {"const": "future"},
+          "retry_after_seconds": {"exclusiveMinimum": 0},
+          "reset_at": {"minLength": 1},
+          "blocked_reasons": {"maxItems": 0},
+          "deferral_reasons": {"minItems": 1},
+          "metadata": {
+            "properties": {
+              "dispatch_allowed": {"const": false},
+              "retry_after_required": {"const": true}
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {"status": {"const": "blocked"}},
+        "required": ["status"]
+      },
+      "then": {
+        "properties": {
+          "blocked_reasons": {"minItems": 1},
+          "retry_after_seconds": {"const": 0},
+          "metadata": {
+            "properties": {
+              "dispatch_allowed": {"const": false},
+              "retry_after_required": {"const": false}
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {"status": {"const": "not_required"}},
+        "required": ["status"]
+      },
+      "then": {
+        "properties": {
+          "rate_limit_required": {"const": false},
+          "rate_limit_state": {"const": "not_required"},
+          "bucket_key": {"maxLength": 0},
+          "window_start": {"maxLength": 0},
+          "window_end": {"maxLength": 0},
+          "reset_at": {"maxLength": 0},
+          "retry_after_seconds": {"const": 0},
+          "max_tokens": {"const": 0},
+          "remaining_tokens": {"const": 0},
+          "consumed_tokens": {"const": 0},
+          "denied_count": {"const": 0},
+          "projected_remaining_tokens": {"const": 0},
+          "deficit_tokens": {"const": 0},
+          "burst_limit": {"const": 0},
+          "window_seconds": {"const": 0},
+          "blocked_reasons": {"maxItems": 0},
+          "deferral_reasons": {"maxItems": 0},
+          "snapshot_evidence_refs": {"maxItems": 0},
+          "metadata": {
+            "properties": {
+              "dispatch_allowed": {"const": true},
+              "retry_after_required": {"const": false},
+              "rate_limit_checked": {"const": false},
+              "token_projection_checked": {"const": false},
+              "window_bounds_checked": {"const": false},
+              "high_risk_source_receipts_checked": {"const": false}
+            }
+          }
+        }
+      }
+    }
+  ]
+}

@@ -185,6 +185,12 @@
       "surface": "deployment"
     },
     {
+      "schema_id": "deployment-publication-closure-plan",
+      "path": "schemas/deployment_publication_closure_plan.schema.json",
+      "urn": "urn:mullusi:schema:deployment-publication-closure-plan:1",
+      "surface": "deployment"
+    },
+    {
       "schema_id": "deployment-witness",
       "path": "schemas/deployment_witness.schema.json",
       "urn": "urn:mullusi:schema:deployment-witness:1",
@@ -536,6 +542,12 @@
       "schema_id": "temporal-retention-window-receipt",
       "path": "schemas/temporal_retention_window_receipt.schema.json",
       "urn": "urn:mullusi:schema:temporal-retention-window-receipt:1",
+      "surface": "temporal"
+    },
+    {
+      "schema_id": "temporal-rate-limit-window-receipt",
+      "path": "schemas/temporal_rate_limit_window_receipt.schema.json",
+      "urn": "urn:mullusi:schema:temporal-rate-limit-window-receipt:1",
       "surface": "temporal"
     },
     {

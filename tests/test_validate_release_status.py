@@ -91,6 +91,7 @@ def test_release_public_surface_requires_orchestration_receipt_anchors() -> None
     assert ".change_assurance/deployment_publication_closure_validation.json" in deployment_literals
     assert any("plan_capability_adapter_closure.py" in literal for literal in deployment_literals)
     assert any("plan_deployment_publication_closure.py" in literal for literal in deployment_literals)
+    assert any("validate_deployment_publication_closure_plan_schema.py" in literal for literal in deployment_literals)
     assert any("plan_general_agent_promotion_closure.py" in literal for literal in deployment_literals)
     assert any("validate_general_agent_promotion_closure_plan_schema.py" in literal for literal in deployment_literals)
     assert any("validate_general_agent_promotion_closure_plan.py" in literal for literal in deployment_literals)
@@ -264,6 +265,10 @@ def test_ci_workflow_runs_protocol_manifest_gate() -> None:
         for literal in REQUIRED_CI_LITERALS
     )
     assert any(
+        "validate_deployment_publication_closure_plan_schema.py" in literal
+        for literal in REQUIRED_CI_LITERALS
+    )
+    assert any(
         "validate_general_agent_promotion_operator_checklist.py" in literal
         for literal in REQUIRED_CI_LITERALS
     )
@@ -294,7 +299,10 @@ def test_ci_workflow_runs_promotion_closure_schema_gate() -> None:
 
     assert errors == []
     assert any("validate_general_agent_promotion_closure_plan_schema.py" in literal for literal in REQUIRED_CI_LITERALS)
+    assert any("validate_deployment_publication_closure_plan_schema.py" in literal for literal in REQUIRED_CI_LITERALS)
     assert content.count("validate_general_agent_promotion_closure_plan_schema.py") == 2
+    assert content.count("validate_deployment_publication_closure_plan_schema.py") == 2
+    assert "deployment_publication_closure_plan_schema_validation.json" in content
     assert "general_agent_promotion_closure_plan_schema_validation.json" in content
 
 

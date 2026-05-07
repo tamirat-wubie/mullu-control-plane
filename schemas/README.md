@@ -36,6 +36,7 @@ files are open wire contracts. Runtime modules under `mcoi/`, `gateway/`, and
 | `economic_intelligence_snapshot.schema.json` | Canonical governed economic routing snapshot with utility decisions, blocked candidates, and policy override closure |
 | `data_governance_snapshot.schema.json` | Canonical data governance lifecycle snapshot with decisions and retention controls |
 | `deployment_orchestration_receipt.schema.json` | Canonical gateway deployment handoff receipt |
+| `deployment_publication_closure_plan.schema.json` | Canonical deployment publication closure action plan |
 | `deployment_witness.schema.json` | Canonical live gateway deployment witness artifact |
 | `domain_capsule.schema.json` | Domain capsule operating-model package |
 | `effect_assurance.schema.json` | Canonical planned, observed, and reconciled effect record |
@@ -75,6 +76,7 @@ files are open wire contracts. Runtime modules under `mcoi/`, `gateway/`, and
 | `temporal_accepted_risk_expiry_receipt.schema.json` | Canonical governed accepted-risk expiry receipt |
 | `temporal_credential_expiry_receipt.schema.json` | Canonical governed credential expiry receipt |
 | `temporal_retention_window_receipt.schema.json` | Canonical governed retention-window receipt |
+| `temporal_rate_limit_window_receipt.schema.json` | Canonical governed rate-limit window receipt |
 | `temporal_memory_receipt.schema.json` | Canonical governed temporal memory use receipt |
 | `temporal_memory_refresh_receipt.schema.json` | Canonical governed temporal memory refresh workflow receipt |
 | `temporal_scheduler_receipt.schema.json` | Canonical governed scheduled wakeup and lease receipt |

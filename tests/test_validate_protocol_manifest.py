@@ -141,6 +141,17 @@ def test_protocol_manifest_indexes_deployment_publication_closure_validation() -
     assert validation_entry["surface"] == "deployment"
 
 
+def test_protocol_manifest_indexes_deployment_publication_closure_plan() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    plan_entry = entries["deployment-publication-closure-plan"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert plan_entry["path"] == "schemas/deployment_publication_closure_plan.schema.json"
+    assert plan_entry["urn"] == "urn:mullusi:schema:deployment-publication-closure-plan:1"
+    assert plan_entry["surface"] == "deployment"
+
+
 def test_protocol_manifest_indexes_effect_assurance_record() -> None:
     manifest = load_manifest()
     entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
@@ -434,6 +445,17 @@ def test_protocol_manifest_indexes_temporal_retention_window_receipt() -> None:
     assert retention_entry["path"] == "schemas/temporal_retention_window_receipt.schema.json"
     assert retention_entry["urn"] == "urn:mullusi:schema:temporal-retention-window-receipt:1"
     assert retention_entry["surface"] == "temporal"
+
+
+def test_protocol_manifest_indexes_temporal_rate_limit_window_receipt() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    rate_limit_entry = entries["temporal-rate-limit-window-receipt"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert rate_limit_entry["path"] == "schemas/temporal_rate_limit_window_receipt.schema.json"
+    assert rate_limit_entry["urn"] == "urn:mullusi:schema:temporal-rate-limit-window-receipt:1"
+    assert rate_limit_entry["surface"] == "temporal"
 
 
 def test_protocol_manifest_indexes_temporal_memory_receipt() -> None:

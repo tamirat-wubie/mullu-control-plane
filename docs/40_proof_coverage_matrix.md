@@ -62,6 +62,7 @@ document is the operator-readable witness.
 | `temporal_accepted_risk_expiry` | TemporalAcceptedRiskExpiry.evaluate, TemporalAcceptedRiskRequest, TemporalAcceptedRiskExpiryReceipt | request_proof | action_proof | runtime_clock_owns_accepted_risk_expiry, expired_accepted_risk_blocks_dispatch, revoked_or_closed_accepted_risk_blocks_dispatch, tenant_command_and_action_scope_checked, review_obligation_required, accepted_risk_evidence_refs_required, high_risk_source_receipts_bound, temporal_accepted_risk_expiry_receipt_schema_valid, receipt_not_terminal_closure | audit_chain | witnessed | Temporal accepted-risk expiry rechecks active accepted-risk records for expiry, lifecycle disposition, tenant and command scope, review obligation, owner, evidence refs, and source receipts before dispatch reuse. |
 | `temporal_credential_expiry` | TemporalCredentialExpiry.evaluate, TemporalCredentialRequest, TemporalCredentialExpiryReceipt | request_proof | action_proof | runtime_clock_owns_credential_expiry, expired_credentials_block_dispatch, revoked_credentials_block_dispatch, provider_and_credential_scope_checked, rotation_pending_warns_before_dispatch, rotation_overdue_blocks_dispatch, credential_evidence_refs_required, secret_value_absence_verified, high_risk_source_receipts_bound, temporal_credential_expiry_receipt_schema_valid, receipt_not_terminal_closure | audit_chain | witnessed | Temporal credential expiry rechecks connector credential descriptors for expiry, lifecycle disposition, provider and credential scope, rotation warning windows, owner, evidence refs, source binding receipts, and no-secret serialization before dispatch. |
 | `temporal_retention_window` | TemporalRetentionWindow.evaluate, TemporalRetentionRequest, TemporalRetentionWindowReceipt | request_proof | action_proof | runtime_clock_owns_retention_timing, delete_before_delete_after_defers_action, archive_and_anonymize_wait_for_retention_until, legal_hold_blocks_lifecycle_action, overdue_retention_action_warns, tenant_scope_checked, retention_policy_ref_required, subject_evidence_refs_required, high_risk_source_receipts_bound, temporal_retention_window_receipt_schema_valid, receipt_not_terminal_closure | audit_chain | witnessed | Temporal retention window rechecks data lifecycle actions for retention_until, delete_after, legal hold, tenant scope, owner, retention policy refs, evidence refs, source data decisions, and overdue timing before deletion, archive, anonymization, or retention review. |
+| `temporal_rate_limit_window` | TemporalRateLimitWindow.evaluate, RateLimitWindowRequest, TemporalRateLimitWindowReceipt | request_proof | action_proof | runtime_clock_owns_rate_limit_window, tenant_endpoint_identity_scope_checked, active_window_admits_sufficient_tokens, exhausted_window_emits_retry_after, future_window_defers_dispatch, burst_limit_blocks_overlarge_request, stale_rate_limit_snapshot_blocks_dispatch, high_risk_source_receipts_bound, temporal_rate_limit_window_receipt_schema_valid, receipt_not_terminal_closure | audit_chain | witnessed | Temporal rate-limit window rechecks tenant, endpoint, and identity scoped token windows with runtime-owned reset timing, projected token consumption, burst limits, retry-after timing, evidence refs, and high-risk source receipts before dispatch. |
 | `temporal_memory_refresh` | TemporalMemoryRefresh.evaluate, MemoryRefreshRequest, TemporalMemoryRefreshReceipt | request_proof | action_proof | usable_memory_does_not_create_refresh_task, stale_memory_creates_bounded_refresh_task, evidence_type_coverage_gates_review_readiness, invalid_refresh_policy_blocks_task_creation, superseded_memory_blocks_reactivation, temporal_memory_refresh_receipt_schema_valid, receipt_not_terminal_closure | audit_chain | witnessed | Temporal memory refresh converts stale or refresh-required memory receipts into bounded refresh tasks with required evidence coverage, owner scope, review readiness, due windows, and activation blocks before refreshed memory can guide action. |
 | `temporal_scheduler` | TemporalScheduler.evaluate, ScheduledCommand, TemporalSchedulerReceipt | request_proof | action_proof | scheduled_command_requires_execute_at, idempotency_required, lease_acquired_before_dispatch, future_schedule_defers, missed_run_receipt_emitted, retry_window_checked, high_risk_reapproval_required, active_lease_blocks_duplicate_execution, temporal_scheduler_receipt_schema_valid, receipt_not_terminal_closure | audit_chain | witnessed | Temporal scheduler gates scheduled command wakeups with idempotency, due checks, retry windows, missed-run receipts, lease acquisition, recurrence declaration, and high-risk approval plus temporal recheck evidence before dispatch. |
 | `policy_proof_report` | PolicyProver.prove | request_proof | action_proof | bounded_policy_cases_required, empty_invariants_rejected, counterexamples_are_concrete, proved_report_has_no_counterexamples, policy_weakening_forbidden, policy_proof_schema_valid | audit_chain | witnessed | Policy proof reports evaluate explicit invariants over bounded cases, emit concrete counterexamples, and forbid policy weakening as a proof strategy. |
@@ -78,19 +79,19 @@ Coverage summary:
 
 | Metric | Count |
 |---|---:|
-| Total surfaces | 64 |
+| Total surfaces | 66 |
 | Proven surfaces | 1 |
-| Witnessed surfaces | 63 |
+| Witnessed surfaces | 65 |
 | Unproven surfaces | 0 |
 
 Declared route coverage:
 
 | Metric | Count |
 |---|---:|
-| Proof-relevant declared routes | 313 |
+| Proof-relevant declared routes | 315 |
 | Proven routes | 5 |
 | Witnessed routes | 122 |
-| Unclassified declared routes | 186 |
+| Unclassified declared routes | 188 |
 
 The canonical JSON witness lists every proof-relevant declared route under
 `route_coverage.routes`. Routes mapped to `unclassified_declared_route` carry
@@ -159,14 +160,15 @@ Resolved closure actions:
 47. `publish_temporal_accepted_risk_expiry_receipt_contract`
 48. `publish_temporal_credential_expiry_receipt_contract`
 49. `publish_temporal_retention_window_receipt_contract`
-50. `publish_temporal_memory_refresh_receipt_contract`
-51. `classify_temporal_scheduler_routes`
-52. `publish_temporal_scheduler_receipt_contract`
-53. `publish_policy_proof_report_contract`
-54. `publish_capability_upgrade_plan_contract`
-55. `publish_autonomous_test_generation_plan_contract`
-56. `publish_trust_ledger_bundle_contract`
-57. `publish_trust_ledger_anchor_receipt_contract`
+50. `publish_temporal_rate_limit_window_receipt_contract`
+51. `publish_temporal_memory_refresh_receipt_contract`
+52. `classify_temporal_scheduler_routes`
+53. `publish_temporal_scheduler_receipt_contract`
+54. `publish_policy_proof_report_contract`
+55. `publish_capability_upgrade_plan_contract`
+56. `publish_autonomous_test_generation_plan_contract`
+57. `publish_trust_ledger_bundle_contract`
+58. `publish_trust_ledger_anchor_receipt_contract`
 
 Open closure actions:
 
@@ -174,6 +176,6 @@ Open closure actions:
 
 STATUS:
   Completeness: 100%
-  Invariants verified: route declarations, route-level coverage classification, coverage levels, coverage states, closure action mapping, gateway runtime witness mapping, operator console read-model mapping, world-state knowledge route mapping, claim verification report contract mapping, collaboration case contract mapping, connector self-healing receipt contract mapping, physical action receipt contract mapping, temporal evidence freshness contract mapping, temporal reapproval contract mapping, temporal dispatch window contract mapping, temporal budget window contract mapping, temporal causal order contract mapping, temporal monotonic duration contract mapping, temporal accepted-risk expiry contract mapping, temporal credential expiry contract mapping, temporal retention window contract mapping, temporal memory contract mapping, temporal memory refresh contract mapping, physical worker canary mapping, schema contract validation, deployment orchestration receipt schema contract
-  Open issues: 186 proof-relevant declared routes remain unclassified and are marked unproven in the machine witness
+  Invariants verified: route declarations, route-level coverage classification, coverage levels, coverage states, closure action mapping, gateway runtime witness mapping, operator console read-model mapping, world-state knowledge route mapping, claim verification report contract mapping, collaboration case contract mapping, connector self-healing receipt contract mapping, physical action receipt contract mapping, temporal evidence freshness contract mapping, temporal reapproval contract mapping, temporal dispatch window contract mapping, temporal budget window contract mapping, temporal causal order contract mapping, temporal monotonic duration contract mapping, temporal accepted-risk expiry contract mapping, temporal credential expiry contract mapping, temporal retention window contract mapping, temporal rate-limit window contract mapping, temporal memory contract mapping, temporal memory refresh contract mapping, physical worker canary mapping, schema contract validation, deployment orchestration receipt schema contract
+  Open issues: 188 proof-relevant declared routes remain unclassified and are marked unproven in the machine witness
   Next action: classify unproven declared routes into named proof surfaces or explicit exemptions

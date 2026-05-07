@@ -1642,6 +1642,65 @@ def proof_coverage_matrix() -> dict[str, Any]:
             ],
         ),
         _surface(
+            "temporal_rate_limit_window",
+            [
+                "TemporalRateLimitWindow.evaluate",
+                "RateLimitWindowRequest",
+                "TemporalRateLimitWindowReceipt",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "gateway/temporal_rate_limit_window.py",
+                "schemas/temporal_rate_limit_window_receipt.schema.json",
+                "tests/test_gateway/test_temporal_rate_limit_window.py",
+            ],
+            "Temporal rate-limit window rechecks tenant, endpoint, and identity scoped token windows with runtime-owned reset timing, projected token consumption, burst limits, retry-after timing, evidence refs, and high-risk source receipts before dispatch.",
+            [
+                "runtime_clock_owns_rate_limit_window",
+                "tenant_endpoint_identity_scope_checked",
+                "active_window_admits_sufficient_tokens",
+                "exhausted_window_emits_retry_after",
+                "future_window_defers_dispatch",
+                "burst_limit_blocks_overlarge_request",
+                "stale_rate_limit_snapshot_blocks_dispatch",
+                "high_risk_source_receipts_bound",
+                "temporal_rate_limit_window_receipt_schema_valid",
+                "receipt_not_terminal_closure",
+            ],
+        ),
+        _surface(
+            "temporal_memory",
+            [
+                "TemporalMemory.evaluate",
+                "TemporalMemoryRecord",
+                "TemporalMemoryReceipt",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "gateway/temporal_memory.py",
+                "schemas/temporal_memory_receipt.schema.json",
+                "tests/test_gateway/test_temporal_memory.py",
+            ],
+            "Temporal memory gates memory use through runtime-owned age, evidence freshness, validity windows, confidence decay, tenant-owner scope, allowed use, and supersession checks before memory can guide action.",
+            [
+                "memory_age_computed_from_runtime_clock",
+                "stale_memory_requires_refresh",
+                "validity_window_blocks_expired_memory",
+                "superseded_memory_not_usable",
+                "confidence_decay_blocks_weak_memory",
+                "tenant_owner_scope_checked",
+                "allowed_use_checked",
+                "temporal_memory_receipt_schema_valid",
+                "receipt_not_terminal_closure",
+            ],
+        ),
+        _surface(
             "temporal_memory_refresh",
             [
                 "TemporalMemoryRefresh.evaluate",
@@ -2131,6 +2190,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
         {
             "action_id": "publish_temporal_retention_window_receipt_contract",
             "surfaces": ["temporal_retention_window"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_temporal_rate_limit_window_receipt_contract",
+            "surfaces": ["temporal_rate_limit_window"],
             "status": "closed",
         },
         {

@@ -352,6 +352,13 @@
       ]
     },
     {
+      "action_id": "publish_temporal_rate_limit_window_receipt_contract",
+      "status": "closed",
+      "surfaces": [
+        "temporal_rate_limit_window"
+      ]
+    },
+    {
       "action_id": "publish_temporal_memory_refresh_receipt_contract",
       "status": "closed",
       "surfaces": [
@@ -422,7 +429,7 @@
   ],
   "coverage_summary": {
     "by_action_proof": {
-      "action_proof": 52,
+      "action_proof": 54,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 10,
@@ -430,7 +437,7 @@
     },
     "by_audit": {
       "action_proof": 0,
-      "audit_chain": 60,
+      "audit_chain": 62,
       "gap": 0,
       "read_model": 4,
       "request_proof": 0
@@ -438,25 +445,25 @@
     "by_coverage_state": {
       "proven": 1,
       "unproven": 0,
-      "witnessed": 63
+      "witnessed": 65
     },
     "by_request_proof": {
       "action_proof": 0,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 12,
-      "request_proof": 52
+      "request_proof": 54
     },
-    "surface_count": 64
+    "surface_count": 66
   },
   "generated_by": "scripts/proof_coverage_matrix.py",
   "route_coverage": {
     "by_coverage_state": {
       "proven": 5,
-      "unproven": 186,
+      "unproven": 188,
       "witnessed": 122
     },
-    "route_count": 313,
+    "route_count": 315,
     "routes": [
       {
         "coverage_state": "witnessed",
@@ -921,6 +928,16 @@
       {
         "coverage_state": "unproven",
         "route": "/api/v1/deploy/readiness",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/engineering-puzzle/candidates/judge",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/engineering-puzzle/goal-delta",
         "surface_id": "unclassified_declared_route"
       },
       {
@@ -2024,7 +2041,7 @@
         "surface_id": "gateway_capability_fabric"
       }
     ],
-    "unclassified_route_count": 186
+    "unclassified_route_count": 188
   },
   "schema_version": 1,
   "surfaces": [
@@ -3661,6 +3678,65 @@
         "receipt_not_terminal_closure"
       ],
       "surface_id": "temporal_retention_window"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "gateway/temporal_rate_limit_window.py",
+        "schemas/temporal_rate_limit_window_receipt.schema.json",
+        "tests/test_gateway/test_temporal_rate_limit_window.py"
+      ],
+      "notes": "Temporal rate-limit window rechecks tenant, endpoint, and identity scoped token windows with runtime-owned reset timing, projected token consumption, burst limits, retry-after timing, evidence refs, and high-risk source receipts before dispatch.",
+      "representative_paths": [
+        "TemporalRateLimitWindow.evaluate",
+        "RateLimitWindowRequest",
+        "TemporalRateLimitWindowReceipt"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "runtime_clock_owns_rate_limit_window",
+        "tenant_endpoint_identity_scope_checked",
+        "active_window_admits_sufficient_tokens",
+        "exhausted_window_emits_retry_after",
+        "future_window_defers_dispatch",
+        "burst_limit_blocks_overlarge_request",
+        "stale_rate_limit_snapshot_blocks_dispatch",
+        "high_risk_source_receipts_bound",
+        "temporal_rate_limit_window_receipt_schema_valid",
+        "receipt_not_terminal_closure"
+      ],
+      "surface_id": "temporal_rate_limit_window"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "gateway/temporal_memory.py",
+        "schemas/temporal_memory_receipt.schema.json",
+        "tests/test_gateway/test_temporal_memory.py"
+      ],
+      "notes": "Temporal memory gates memory use through runtime-owned age, evidence freshness, validity windows, confidence decay, tenant-owner scope, allowed use, and supersession checks before memory can guide action.",
+      "representative_paths": [
+        "TemporalMemory.evaluate",
+        "TemporalMemoryRecord",
+        "TemporalMemoryReceipt"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "memory_age_computed_from_runtime_clock",
+        "stale_memory_requires_refresh",
+        "validity_window_blocks_expired_memory",
+        "superseded_memory_not_usable",
+        "confidence_decay_blocks_weak_memory",
+        "tenant_owner_scope_checked",
+        "allowed_use_checked",
+        "temporal_memory_receipt_schema_valid",
+        "receipt_not_terminal_closure"
+      ],
+      "surface_id": "temporal_memory"
     },
     {
       "action_proof": "action_proof",

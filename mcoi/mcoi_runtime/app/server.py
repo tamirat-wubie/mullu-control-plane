@@ -22,6 +22,7 @@ from mcoi_runtime.app.server_policy import (
     _validate_cors_origins_for_env,
     _validate_db_backend_for_env,
 )
+from mcoi_runtime.app.engineering_puzzle_control import EngineeringPuzzleControlSurface
 from mcoi_runtime.app.routers.deps import deps
 from mcoi_runtime.app.server_app import create_governed_app
 from mcoi_runtime.app.server_context import bootstrap_server_context, resolve_env
@@ -254,6 +255,11 @@ deps.set("temporal_scheduler_store", temporal_scheduler_store)
 deps.set("temporal_action_handlers", temporal_action_handlers)
 if temporal_scheduler_background is not None:
     deps.set("temporal_scheduler_background", temporal_scheduler_background)
+
+engineering_puzzle_event_spine = EventSpineEngine(clock=_clock)
+engineering_puzzle_control = EngineeringPuzzleControlSurface(engineering_puzzle_event_spine)
+deps.set("engineering_puzzle_event_spine", engineering_puzzle_event_spine)
+deps.set("engineering_puzzle_control", engineering_puzzle_control)
 
 _finance_approval_store_path = os.environ.get("MULLU_FINANCE_APPROVAL_STORE_PATH")
 finance_approval_store = (
