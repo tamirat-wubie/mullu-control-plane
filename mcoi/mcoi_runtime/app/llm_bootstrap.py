@@ -30,13 +30,17 @@ from mcoi_runtime.adapters.llm_adapter import (
 from mcoi_runtime.adapters.multi_provider import (
     CerebrasBackend,
     DeepSeekBackend,
+    DeepInfraBackend,
     FireworksBackend,
     FriendliBackend,
     GrokBackend,
     GroqBackend,
+    HyperbolicBackend,
     MistralBackend,
+    NebiusBackend,
     NovitaBackend,
     OpenRouterBackend,
+    SambaNovaBackend,
     TogetherBackend,
 )
 from mcoi_runtime.contracts.llm import LLMBudget
@@ -70,6 +74,10 @@ class LLMConfig:
     friendli_api_key: str = ""
     novita_api_key: str = ""
     cerebras_api_key: str = ""
+    deepinfra_api_key: str = ""
+    nebius_api_key: str = ""
+    hyperbolic_api_key: str = ""
+    sambanova_api_key: str = ""
     grok_api_key: str = ""
     mistral_api_key: str = ""
     openrouter_api_key: str = ""
@@ -96,6 +104,10 @@ class LLMConfig:
         friendli_key = os.environ.get("FRIENDLI_TOKEN", "") or os.environ.get("FRIENDLI_API_KEY", "")
         novita_key = os.environ.get("NOVITA_API_KEY", "")
         cerebras_key = os.environ.get("CEREBRAS_API_KEY", "")
+        deepinfra_key = os.environ.get("DEEPINFRA_TOKEN", "") or os.environ.get("DEEPINFRA_API_KEY", "")
+        nebius_key = os.environ.get("NEBIUS_API_KEY", "")
+        hyperbolic_key = os.environ.get("HYPERBOLIC_API_KEY", "")
+        sambanova_key = os.environ.get("SAMBANOVA_API_KEY", "")
         grok_key = os.environ.get("XAI_API_KEY", "")
         mistral_key = os.environ.get("MISTRAL_API_KEY", "")
         openrouter_key = os.environ.get("OPENROUTER_API_KEY", "")
@@ -125,6 +137,14 @@ class LLMConfig:
                 default_backend = "novita"
             elif cerebras_key:
                 default_backend = "cerebras"
+            elif deepinfra_key:
+                default_backend = "deepinfra"
+            elif nebius_key:
+                default_backend = "nebius"
+            elif hyperbolic_key:
+                default_backend = "hyperbolic"
+            elif sambanova_key:
+                default_backend = "sambanova"
             elif mistral_key:
                 default_backend = "mistral"
             elif grok_key:
@@ -148,7 +168,8 @@ class LLMConfig:
                 "(ANTHROPIC_API_KEY, OPENAI_API_KEY, GEMINI_API_KEY, "
                 "GROQ_API_KEY, DEEPSEEK_API_KEY, TOGETHER_API_KEY, "
                 "FIREWORKS_API_KEY, FRIENDLI_TOKEN, NOVITA_API_KEY, "
-                "CEREBRAS_API_KEY, XAI_API_KEY, MISTRAL_API_KEY, "
+                "CEREBRAS_API_KEY, DEEPINFRA_TOKEN, NEBIUS_API_KEY, "
+                "HYPERBOLIC_API_KEY, SAMBANOVA_API_KEY, XAI_API_KEY, MISTRAL_API_KEY, "
                 "OPENROUTER_API_KEY) "
                 "or OLLAMA_BASE_URL."
             )
@@ -165,6 +186,10 @@ class LLMConfig:
             friendli_api_key=friendli_key,
             novita_api_key=novita_key,
             cerebras_api_key=cerebras_key,
+            deepinfra_api_key=deepinfra_key,
+            nebius_api_key=nebius_key,
+            hyperbolic_api_key=hyperbolic_key,
+            sambanova_api_key=sambanova_key,
             grok_api_key=grok_key,
             mistral_api_key=mistral_key,
             openrouter_api_key=openrouter_key,
@@ -335,6 +360,50 @@ def bootstrap_llm(
         )
         backends["cerebras"] = cerebras
 
+    if llm_config.deepinfra_api_key:
+        deepinfra = DeepInfraBackend(
+            api_key=llm_config.deepinfra_api_key,
+            model=_select_provider_default_model(
+                llm_config.default_model,
+                ("meta-llama/", "deepseek-ai/", "qwen/", "mistralai/", "deepinfra/"),
+                DeepInfraBackend.DEFAULT_MODEL,
+            ),
+        )
+        backends["deepinfra"] = deepinfra
+
+    if llm_config.nebius_api_key:
+        nebius = NebiusBackend(
+            api_key=llm_config.nebius_api_key,
+            model=_select_provider_default_model(
+                llm_config.default_model,
+                ("meta-llama/", "deepseek-ai/", "mistralai/", "microsoft/", "nebius/"),
+                NebiusBackend.DEFAULT_MODEL,
+            ),
+        )
+        backends["nebius"] = nebius
+
+    if llm_config.hyperbolic_api_key:
+        hyperbolic = HyperbolicBackend(
+            api_key=llm_config.hyperbolic_api_key,
+            model=_select_provider_default_model(
+                llm_config.default_model,
+                ("meta-llama/", "deepseek-ai/", "qwen/", "moonshotai/", "hyperbolic/"),
+                HyperbolicBackend.DEFAULT_MODEL,
+            ),
+        )
+        backends["hyperbolic"] = hyperbolic
+
+    if llm_config.sambanova_api_key:
+        sambanova = SambaNovaBackend(
+            api_key=llm_config.sambanova_api_key,
+            model=_select_provider_default_model(
+                llm_config.default_model,
+                ("meta-llama", "deepseek", "qwen", "sambanova/"),
+                SambaNovaBackend.DEFAULT_MODEL,
+            ),
+        )
+        backends["sambanova"] = sambanova
+
     if llm_config.grok_api_key:
         grok = GrokBackend(
             api_key=llm_config.grok_api_key,
@@ -492,6 +561,30 @@ def _register_providers(
             "rate_limit": 120,
             "cost_limit": 0.25,
         },
+        "deepinfra": {
+            "name": "DeepInfra",
+            "base_url": "https://api.deepinfra.com/v1/openai",
+            "rate_limit": 120,
+            "cost_limit": 0.25,
+        },
+        "nebius": {
+            "name": "Nebius",
+            "base_url": "https://api.tokenfactory.nebius.com/v1",
+            "rate_limit": 120,
+            "cost_limit": 0.25,
+        },
+        "hyperbolic": {
+            "name": "Hyperbolic",
+            "base_url": "https://api.hyperbolic.xyz/v1",
+            "rate_limit": 120,
+            "cost_limit": 0.25,
+        },
+        "sambanova": {
+            "name": "SambaNova",
+            "base_url": "https://api.sambanova.ai/v1",
+            "rate_limit": 120,
+            "cost_limit": 0.25,
+        },
         "grok": {
             "name": "xAI Grok",
             "base_url": "https://api.x.ai/v1",
@@ -587,6 +680,10 @@ def _register_models(
         ("meta-llama-3.1-8b-instruct", "Llama 3.1 8B via Friendli", "friendli", 0.10, 0.10),
         ("deepseek/deepseek-v4-flash", "DeepSeek V4 Flash via Novita", "novita", 0.14, 0.28),
         ("llama3.1-8b", "Llama 3.1 8B via Cerebras", "cerebras", 0.10, 0.10),
+        ("meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo", "Llama 3.1 8B Turbo via DeepInfra", "deepinfra", 0.02, 0.03),
+        ("meta-llama/Meta-Llama-3.1-8B-Instruct", "Llama 3.1 8B via Nebius", "nebius", 0.02, 0.06),
+        ("Qwen/Qwen2.5-Coder-32B-Instruct", "Qwen2.5 Coder 32B via Hyperbolic", "hyperbolic", 0.20, 0.20),
+        ("Meta-Llama-3.3-70B-Instruct", "Llama 3.3 70B via SambaNova", "sambanova", 0.60, 1.20),
         ("mistral-small-2506", "Mistral Small 2506", "mistral", 0.10, 0.30),
         ("mistral-small-2603", "Mistral Small 2603", "mistral", 0.15, 0.60),
         ("grok-3-mini", "Grok 3 Mini", "grok", 0.30, 0.50),

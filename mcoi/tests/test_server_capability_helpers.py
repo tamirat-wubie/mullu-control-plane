@@ -49,7 +49,7 @@ def test_bootstrap_capability_services_registers_tools_models_and_flags() -> Non
     }
     assert bootstrap.structured_output.summary()["schemas"] == 1
     model_ids = set(bootstrap.model_router._profiles)
-    assert bootstrap.model_router.summary()["models"] >= 17
+    assert bootstrap.model_router.summary()["models"] >= 21
     assert {
         "gpt-4.1-nano",
         "gemini-2.0-flash-lite",
@@ -58,6 +58,10 @@ def test_bootstrap_capability_services_registers_tools_models_and_flags() -> Non
         "accounts/fireworks/models/gpt-oss-20b",
         "meta-llama/Llama-3.1-8B-Instruct",
         "llama3.1-8b",
+        "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo",
+        "meta-llama/Meta-Llama-3.1-8B-Instruct",
+        "Qwen/Qwen2.5-Coder-32B-Instruct",
+        "Meta-Llama-3.3-70B-Instruct",
     }.issubset(model_ids)
     assert "meta-llama-3.1-8b-instruct" not in model_ids
     assert bootstrap.feature_flags.summary() == {"total": 4, "enabled": 4, "disabled": 0}
