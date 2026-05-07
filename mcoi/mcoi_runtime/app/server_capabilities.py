@@ -475,6 +475,42 @@ def bootstrap_capability_services(
     )
     model_router.register(
         ModelProfile(
+            model_id="parasail-qwen3-32b",
+            name="Qwen3 32B via Parasail",
+            provider="parasail",
+            cost_per_1k_input=0.00010,
+            cost_per_1k_output=0.00050,
+            max_context=131072,
+            speed_tier="fast",
+            capability_tier="standard",
+        )
+    )
+    model_router.register(
+        ModelProfile(
+            model_id="Qwen/Qwen2.5-7B-Instruct-1M",
+            name="Qwen2.5 7B 1M via Featherless",
+            provider="featherless",
+            cost_per_1k_input=0.0,
+            cost_per_1k_output=0.0,
+            max_context=32768,
+            speed_tier="fast",
+            capability_tier="basic",
+        )
+    )
+    model_router.register(
+        ModelProfile(
+            model_id="meta-llama/Llama-3.1-70B-Instruct",
+            name="Llama 3.1 70B via Packet Token Factory",
+            provider="packet",
+            cost_per_1k_input=0.00015,
+            cost_per_1k_output=0.00015,
+            max_context=131072,
+            speed_tier="fast",
+            capability_tier="advanced",
+        )
+    )
+    model_router.register(
+        ModelProfile(
             model_id="mistral-small-2603",
             name="Mistral Small 2603",
             provider="mistral",

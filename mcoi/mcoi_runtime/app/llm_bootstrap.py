@@ -36,6 +36,7 @@ from mcoi_runtime.adapters.multi_provider import (
     DeepSeekBackend,
     DeepInfraBackend,
     DInferenceBackend,
+    FeatherlessBackend,
     FireworksBackend,
     FriendliBackend,
     GrokBackend,
@@ -47,6 +48,8 @@ from mcoi_runtime.adapters.multi_provider import (
     NebiusBackend,
     NovitaBackend,
     OpenRouterBackend,
+    PacketBackend,
+    ParasailBackend,
     SambaNovaBackend,
     SiliconFlowBackend,
     TogetherBackend,
@@ -99,6 +102,9 @@ class LLMConfig:
     wavespeed_api_key: str = ""
     bazaarlink_api_key: str = ""
     llama_api_key: str = ""
+    parasail_api_key: str = ""
+    featherless_api_key: str = ""
+    packet_api_key: str = ""
     grok_api_key: str = ""
     mistral_api_key: str = ""
     openrouter_api_key: str = ""
@@ -140,6 +146,9 @@ class LLMConfig:
         wavespeed_key = os.environ.get("WAVESPEED_API_KEY", "")
         bazaarlink_key = os.environ.get("BAZAARLINK_API_KEY", "")
         llama_key = os.environ.get("LLAMA_API_KEY", "")
+        parasail_key = os.environ.get("PARASAIL_API_KEY", "")
+        featherless_key = os.environ.get("FEATHERLESS_API_KEY", "")
+        packet_key = os.environ.get("PACKET_API_KEY", "")
         grok_key = os.environ.get("XAI_API_KEY", "")
         mistral_key = os.environ.get("MISTRAL_API_KEY", "")
         openrouter_key = os.environ.get("OPENROUTER_API_KEY", "")
@@ -197,6 +206,12 @@ class LLMConfig:
                 default_backend = "bazaarlink"
             elif llama_key:
                 default_backend = "llamaapi"
+            elif parasail_key:
+                default_backend = "parasail"
+            elif featherless_key:
+                default_backend = "featherless"
+            elif packet_key:
+                default_backend = "packet"
             elif mistral_key:
                 default_backend = "mistral"
             elif grok_key:
@@ -225,7 +240,8 @@ class LLMConfig:
                 "with CLOUDFLARE_ACCOUNT_ID, MOONSHOT_API_KEY, DASHSCOPE_API_KEY, "
                 "ZAI_API_KEY, SILICONFLOW_API_KEY, DINFERENCE_API_KEY, "
                 "CHUTES_API_KEY, WAVESPEED_API_KEY, BAZAARLINK_API_KEY, "
-                "LLAMA_API_KEY, "
+                "LLAMA_API_KEY, PARASAIL_API_KEY, FEATHERLESS_API_KEY, "
+                "PACKET_API_KEY, "
                 "XAI_API_KEY, MISTRAL_API_KEY, "
                 "OPENROUTER_API_KEY) "
                 "or OLLAMA_BASE_URL."
@@ -258,6 +274,9 @@ class LLMConfig:
             wavespeed_api_key=wavespeed_key,
             bazaarlink_api_key=bazaarlink_key,
             llama_api_key=llama_key,
+            parasail_api_key=parasail_key,
+            featherless_api_key=featherless_key,
+            packet_api_key=packet_key,
             grok_api_key=grok_key,
             mistral_api_key=mistral_key,
             openrouter_api_key=openrouter_key,
@@ -583,6 +602,39 @@ def bootstrap_llm(
         )
         backends["llamaapi"] = llamaapi
 
+    if llm_config.parasail_api_key:
+        parasail = ParasailBackend(
+            api_key=llm_config.parasail_api_key,
+            model=_select_provider_default_model(
+                llm_config.default_model,
+                ("parasail-", "qwen", "llama", "deepseek"),
+                ParasailBackend.DEFAULT_MODEL,
+            ),
+        )
+        backends["parasail"] = parasail
+
+    if llm_config.featherless_api_key:
+        featherless = FeatherlessBackend(
+            api_key=llm_config.featherless_api_key,
+            model=_select_provider_default_model(
+                llm_config.default_model,
+                ("qwen/", "meta-llama/", "mistral", "deepseek", "featherless/"),
+                FeatherlessBackend.DEFAULT_MODEL,
+            ),
+        )
+        backends["featherless"] = featherless
+
+    if llm_config.packet_api_key:
+        packet = PacketBackend(
+            api_key=llm_config.packet_api_key,
+            model=_select_provider_default_model(
+                llm_config.default_model,
+                ("meta-llama/", "llama", "qwen/", "mistral", "packet/"),
+                PacketBackend.DEFAULT_MODEL,
+            ),
+        )
+        backends["packet"] = packet
+
     if llm_config.grok_api_key:
         grok = GrokBackend(
             api_key=llm_config.grok_api_key,
@@ -828,6 +880,24 @@ def _register_providers(
             "rate_limit": 120,
             "cost_limit": 0.50,
         },
+        "parasail": {
+            "name": "Parasail",
+            "base_url": "https://api.parasail.io/v1",
+            "rate_limit": 120,
+            "cost_limit": 0.50,
+        },
+        "featherless": {
+            "name": "Featherless",
+            "base_url": "https://api.featherless.ai/v1",
+            "rate_limit": 120,
+            "cost_limit": 0.05,
+        },
+        "packet": {
+            "name": "Packet Token Factory",
+            "base_url": "https://dash.packet.ai/api/v1",
+            "rate_limit": 120,
+            "cost_limit": 0.25,
+        },
         "grok": {
             "name": "xAI Grok",
             "base_url": "https://api.x.ai/v1",
@@ -937,6 +1007,9 @@ def _register_models(
         ("qwen/qwen3-coder-30b-a3b-instruct", "Qwen3 Coder 30B A3B via WaveSpeed", "wavespeed", 0.07, 0.27),
         ("meta-llama/llama-3.1-8b-instruct", "Llama 3.1 8B via BazaarLink", "bazaarlink", 0.02, 0.05),
         ("llama3-70b", "Llama 3 70B via LlamaAPI", "llamaapi", 0.65, 0.65),
+        ("parasail-qwen3-32b", "Qwen3 32B via Parasail", "parasail", 0.10, 0.50),
+        ("Qwen/Qwen2.5-7B-Instruct-1M", "Qwen2.5 7B 1M via Featherless", "featherless", 0.0, 0.0),
+        ("meta-llama/Llama-3.1-70B-Instruct", "Llama 3.1 70B via Packet Token Factory", "packet", 0.15, 0.15),
         ("mistral-small-2506", "Mistral Small 2506", "mistral", 0.10, 0.30),
         ("mistral-small-2603", "Mistral Small 2603", "mistral", 0.15, 0.60),
         ("grok-3-mini", "Grok 3 Mini", "grok", 0.30, 0.50),
