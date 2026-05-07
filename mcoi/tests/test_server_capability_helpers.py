@@ -61,7 +61,7 @@ def test_bootstrap_capability_services_registers_tools_models_and_flags() -> Non
         "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo",
         "meta-llama/Meta-Llama-3.1-8B-Instruct",
         "Qwen/Qwen2.5-Coder-32B-Instruct",
-        "Meta-Llama-3.1-8B-Instruct",
+        "Meta-Llama-3.3-70B-Instruct",
     }.issubset(model_ids)
     assert "meta-llama-3.1-8b-instruct" not in model_ids
     assert bootstrap.feature_flags.summary() == {"total": 4, "enabled": 4, "disabled": 0}

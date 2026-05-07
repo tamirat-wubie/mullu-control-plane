@@ -331,7 +331,7 @@ class TestBootstrapLLM:
         assert "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo" in result.registered_models
         assert "meta-llama/Meta-Llama-3.1-8B-Instruct" in result.registered_models
         assert "Qwen/Qwen2.5-Coder-32B-Instruct" in result.registered_models
-        assert "Meta-Llama-3.1-8B-Instruct" in result.registered_models
+        assert "Meta-Llama-3.3-70B-Instruct" in result.registered_models
         assert "mistral-small-2506" in result.registered_models
         assert "grok-3-mini" in result.registered_models
         assert "meta-llama/llama-4-scout" in result.registered_models
