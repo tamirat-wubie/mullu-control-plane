@@ -705,6 +705,70 @@ class ZAIBackend:
         return self._call_count
 
 
+class SiliconFlowBackend:
+    """SiliconFlow OpenAI-compatible endpoint for inexpensive Qwen models."""
+
+    provider = LLMProvider.SILICONFLOW
+    DEFAULT_MODEL = "Qwen/Qwen2.5-7B-Instruct"
+
+    def __init__(self, *, model: str = "", api_key: str | None = None, api_key_env: str = "SILICONFLOW_API_KEY") -> None:
+        self._model = model or self.DEFAULT_MODEL
+        self._default_model = self._model
+        self._api_key = api_key or ""
+        self._api_key_env = api_key_env
+        self._call_count = 0
+
+    def call(self, params: LLMInvocationParams) -> LLMResult:
+        self._call_count += 1
+        return _openai_compatible_call(
+            base_url="https://api.siliconflow.com/v1",
+            api_key=self._api_key or os.environ.get(self._api_key_env, ""),
+            model=params.model_name or self._model,
+            messages=_params_to_messages(params),
+            max_tokens=params.max_tokens,
+            temperature=0.0,
+            provider=self.provider,
+            cost_per_1m_input=0.05,
+            cost_per_1m_output=0.05,
+        )
+
+    @property
+    def call_count(self) -> int:
+        return self._call_count
+
+
+class DInferenceBackend:
+    """DInference OpenAI-compatible endpoint for inexpensive GPT OSS models."""
+
+    provider = LLMProvider.DINFERENCE
+    DEFAULT_MODEL = "gpt-oss-120b"
+
+    def __init__(self, *, model: str = "", api_key: str | None = None, api_key_env: str = "DINFERENCE_API_KEY") -> None:
+        self._model = model or self.DEFAULT_MODEL
+        self._default_model = self._model
+        self._api_key = api_key or ""
+        self._api_key_env = api_key_env
+        self._call_count = 0
+
+    def call(self, params: LLMInvocationParams) -> LLMResult:
+        self._call_count += 1
+        return _openai_compatible_call(
+            base_url="https://api.dinference.com/v1",
+            api_key=self._api_key or os.environ.get(self._api_key_env, ""),
+            model=params.model_name or self._model,
+            messages=_params_to_messages(params),
+            max_tokens=params.max_tokens,
+            temperature=0.0,
+            provider=self.provider,
+            cost_per_1m_input=0.09,
+            cost_per_1m_output=0.36,
+        )
+
+    @property
+    def call_count(self) -> int:
+        return self._call_count
+
+
 # --- xAI Grok (real-time X data) ---
 
 
@@ -842,6 +906,8 @@ ALL_PROVIDERS: dict[str, type] = {
     "moonshot": MoonshotBackend,
     "dashscope": DashScopeBackend,
     "zai": ZAIBackend,
+    "siliconflow": SiliconFlowBackend,
+    "dinference": DInferenceBackend,
     "grok": GrokBackend,
     "mistral": MistralBackend,
     "openrouter": OpenRouterBackend,
@@ -875,6 +941,8 @@ def available_providers() -> list[str]:
         "moonshot": ("MOONSHOT_API_KEY",),
         "dashscope": ("DASHSCOPE_API_KEY",),
         "zai": ("ZAI_API_KEY",),
+        "siliconflow": ("SILICONFLOW_API_KEY",),
+        "dinference": ("DINFERENCE_API_KEY",),
         "grok": ("XAI_API_KEY",),
         "mistral": ("MISTRAL_API_KEY",),
         "openrouter": ("OPENROUTER_API_KEY",),

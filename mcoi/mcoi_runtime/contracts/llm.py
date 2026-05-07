@@ -37,6 +37,8 @@ class LLMProvider(StrEnum):
     MOONSHOT = "moonshot"
     DASHSCOPE = "dashscope"
     ZAI = "zai"
+    SILICONFLOW = "siliconflow"
+    DINFERENCE = "dinference"
     GROK = "grok"
     MISTRAL = "mistral"
     OPENROUTER = "openrouter"

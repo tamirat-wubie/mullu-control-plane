@@ -403,6 +403,30 @@ def bootstrap_capability_services(
     )
     model_router.register(
         ModelProfile(
+            model_id="Qwen/Qwen2.5-7B-Instruct",
+            name="Qwen2.5 7B via SiliconFlow",
+            provider="siliconflow",
+            cost_per_1k_input=0.00005,
+            cost_per_1k_output=0.00005,
+            max_context=32768,
+            speed_tier="fast",
+            capability_tier="basic",
+        )
+    )
+    model_router.register(
+        ModelProfile(
+            model_id="gpt-oss-120b",
+            name="GPT OSS 120B via DInference",
+            provider="dinference",
+            cost_per_1k_input=0.00009,
+            cost_per_1k_output=0.00036,
+            max_context=131072,
+            speed_tier="fast",
+            capability_tier="standard",
+        )
+    )
+    model_router.register(
+        ModelProfile(
             model_id="mistral-small-2603",
             name="Mistral Small 2603",
             provider="mistral",

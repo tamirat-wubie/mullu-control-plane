@@ -54,6 +54,8 @@ def test_llm_provider_declares_hosted_provider_mesh() -> None:
         LLMProvider.MOONSHOT,
         LLMProvider.DASHSCOPE,
         LLMProvider.ZAI,
+        LLMProvider.SILICONFLOW,
+        LLMProvider.DINFERENCE,
         LLMProvider.GROK,
         LLMProvider.MISTRAL,
         LLMProvider.OPENROUTER,

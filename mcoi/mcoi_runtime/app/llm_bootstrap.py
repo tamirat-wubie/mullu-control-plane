@@ -33,6 +33,7 @@ from mcoi_runtime.adapters.multi_provider import (
     DashScopeBackend,
     DeepSeekBackend,
     DeepInfraBackend,
+    DInferenceBackend,
     FireworksBackend,
     FriendliBackend,
     GrokBackend,
@@ -44,6 +45,7 @@ from mcoi_runtime.adapters.multi_provider import (
     NovitaBackend,
     OpenRouterBackend,
     SambaNovaBackend,
+    SiliconFlowBackend,
     TogetherBackend,
     ZAIBackend,
 )
@@ -87,6 +89,8 @@ class LLMConfig:
     moonshot_api_key: str = ""
     dashscope_api_key: str = ""
     zai_api_key: str = ""
+    siliconflow_api_key: str = ""
+    dinference_api_key: str = ""
     grok_api_key: str = ""
     mistral_api_key: str = ""
     openrouter_api_key: str = ""
@@ -122,6 +126,8 @@ class LLMConfig:
         moonshot_key = os.environ.get("MOONSHOT_API_KEY", "")
         dashscope_key = os.environ.get("DASHSCOPE_API_KEY", "")
         zai_key = os.environ.get("ZAI_API_KEY", "")
+        siliconflow_key = os.environ.get("SILICONFLOW_API_KEY", "")
+        dinference_key = os.environ.get("DINFERENCE_API_KEY", "")
         grok_key = os.environ.get("XAI_API_KEY", "")
         mistral_key = os.environ.get("MISTRAL_API_KEY", "")
         openrouter_key = os.environ.get("OPENROUTER_API_KEY", "")
@@ -167,6 +173,10 @@ class LLMConfig:
                 default_backend = "dashscope"
             elif zai_key:
                 default_backend = "zai"
+            elif siliconflow_key:
+                default_backend = "siliconflow"
+            elif dinference_key:
+                default_backend = "dinference"
             elif mistral_key:
                 default_backend = "mistral"
             elif grok_key:
@@ -193,7 +203,8 @@ class LLMConfig:
                 "CEREBRAS_API_KEY, DEEPINFRA_TOKEN, NEBIUS_API_KEY, "
                 "HYPERBOLIC_API_KEY, SAMBANOVA_API_KEY, CLOUDFLARE_API_TOKEN "
                 "with CLOUDFLARE_ACCOUNT_ID, MOONSHOT_API_KEY, DASHSCOPE_API_KEY, "
-                "ZAI_API_KEY, XAI_API_KEY, MISTRAL_API_KEY, "
+                "ZAI_API_KEY, SILICONFLOW_API_KEY, DINFERENCE_API_KEY, "
+                "XAI_API_KEY, MISTRAL_API_KEY, "
                 "OPENROUTER_API_KEY) "
                 "or OLLAMA_BASE_URL."
             )
@@ -219,6 +230,8 @@ class LLMConfig:
             moonshot_api_key=moonshot_key,
             dashscope_api_key=dashscope_key,
             zai_api_key=zai_key,
+            siliconflow_api_key=siliconflow_key,
+            dinference_api_key=dinference_key,
             grok_api_key=grok_key,
             mistral_api_key=mistral_key,
             openrouter_api_key=openrouter_key,
@@ -478,6 +491,28 @@ def bootstrap_llm(
         )
         backends["zai"] = zai
 
+    if llm_config.siliconflow_api_key:
+        siliconflow = SiliconFlowBackend(
+            api_key=llm_config.siliconflow_api_key,
+            model=_select_provider_default_model(
+                llm_config.default_model,
+                ("qwen/", "deepseek-ai/", "openai/gpt-oss", "siliconflow/"),
+                SiliconFlowBackend.DEFAULT_MODEL,
+            ),
+        )
+        backends["siliconflow"] = siliconflow
+
+    if llm_config.dinference_api_key:
+        dinference = DInferenceBackend(
+            api_key=llm_config.dinference_api_key,
+            model=_select_provider_default_model(
+                llm_config.default_model,
+                ("gpt-oss", "glm-", "minimax", "dinference/"),
+                DInferenceBackend.DEFAULT_MODEL,
+            ),
+        )
+        backends["dinference"] = dinference
+
     if llm_config.grok_api_key:
         grok = GrokBackend(
             api_key=llm_config.grok_api_key,
@@ -687,6 +722,18 @@ def _register_providers(
             "rate_limit": 120,
             "cost_limit": 0.50,
         },
+        "siliconflow": {
+            "name": "SiliconFlow",
+            "base_url": "https://api.siliconflow.com/v1",
+            "rate_limit": 120,
+            "cost_limit": 0.25,
+        },
+        "dinference": {
+            "name": "DInference",
+            "base_url": "https://api.dinference.com/v1",
+            "rate_limit": 120,
+            "cost_limit": 0.25,
+        },
         "grok": {
             "name": "xAI Grok",
             "base_url": "https://api.x.ai/v1",
@@ -790,6 +837,8 @@ def _register_models(
         ("kimi-k2.5", "Kimi K2.5 via Moonshot", "moonshot", 0.60, 3.00),
         ("qwen-turbo", "Qwen Turbo via DashScope", "dashscope", 0.05, 0.20),
         ("glm-4.5-air", "GLM-4.5 Air via Z.AI", "zai", 0.20, 1.10),
+        ("Qwen/Qwen2.5-7B-Instruct", "Qwen2.5 7B via SiliconFlow", "siliconflow", 0.05, 0.05),
+        ("gpt-oss-120b", "GPT OSS 120B via DInference", "dinference", 0.09, 0.36),
         ("mistral-small-2506", "Mistral Small 2506", "mistral", 0.10, 0.30),
         ("mistral-small-2603", "Mistral Small 2603", "mistral", 0.15, 0.60),
         ("grok-3-mini", "Grok 3 Mini", "grok", 0.30, 0.50),

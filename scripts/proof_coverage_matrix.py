@@ -1112,6 +1112,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
             "physical_action_boundary",
             [
                 "/operator/physical-capability-promotion-receipts",
+                "/operator/physical-capability-promotion-receipts/console",
                 "PhysicalActionBoundary.evaluate",
                 "PhysicalActionRequest",
                 "PhysicalActionReceipt",
@@ -1164,6 +1165,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "physical_promotion_receipt_operator_endpoint_blocks_missing_live_refs",
                 "physical_promotion_receipt_jsonl_store_persists",
                 "physical_promotion_receipt_store_fails_closed_on_invalid_record",
+                "physical_promotion_receipt_operator_console_renders_ledger",
                 "hardware_identity_required",
                 "safety_envelope_required",
                 "manual_override_required",

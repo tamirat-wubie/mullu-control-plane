@@ -3104,6 +3104,7 @@
       "notes": "Physical action boundary emits schema-backed pre-dispatch receipts that block physical-world side effects unless hardware identity, safety envelope, manual override, emergency stop, simulation, operator approval, sensor confirmation, and safe-state controls are present; checked-in physical capability fixtures stay outside default loading, admit sandbox replay only when production readiness is not required, reject live physical promotion by default, and require promotion preflight evidence before any live production claim.",
       "representative_paths": [
         "/operator/physical-capability-promotion-receipts",
+        "/operator/physical-capability-promotion-receipts/console",
         "PhysicalActionBoundary.evaluate",
         "PhysicalActionRequest",
         "PhysicalActionReceipt"
@@ -3129,6 +3130,7 @@
         "physical_promotion_receipt_operator_endpoint_blocks_missing_live_refs",
         "physical_promotion_receipt_jsonl_store_persists",
         "physical_promotion_receipt_store_fails_closed_on_invalid_record",
+        "physical_promotion_receipt_operator_console_renders_ledger",
         "hardware_identity_required",
         "safety_envelope_required",
         "manual_override_required",

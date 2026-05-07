@@ -893,6 +893,7 @@ def test_physical_action_boundary_surface_blocks_dispatch_without_safety_control
     assert physical_surface["request_proof"] == "request_proof"
     assert physical_surface["action_proof"] == "action_proof"
     assert "/operator/physical-capability-promotion-receipts" in physical_surface["representative_paths"]
+    assert "/operator/physical-capability-promotion-receipts/console" in physical_surface["representative_paths"]
     assert "capsules/physical.json" in physical_surface["evidence_files"]
     assert "capabilities/physical/capability_pack.json" in physical_surface["evidence_files"]
     assert "gateway/capability_capsule_installer.py" in physical_surface["evidence_files"]
@@ -932,6 +933,7 @@ def test_physical_action_boundary_surface_blocks_dispatch_without_safety_control
     assert "physical_promotion_receipt_operator_endpoint_blocks_missing_live_refs" in witnesses
     assert "physical_promotion_receipt_jsonl_store_persists" in witnesses
     assert "physical_promotion_receipt_store_fails_closed_on_invalid_record" in witnesses
+    assert "physical_promotion_receipt_operator_console_renders_ledger" in witnesses
     assert "hardware_identity_required" in witnesses
     assert "emergency_stop_required" in witnesses
     assert "physical_dispatch_blocked_until_controls_complete" in witnesses
