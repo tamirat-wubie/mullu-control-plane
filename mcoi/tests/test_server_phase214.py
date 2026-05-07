@@ -67,6 +67,8 @@ class TestAutoRoutedCompletion:
         assert "kimi-k2.5" in ids
         assert "qwen-turbo" in ids
         assert "glm-4.5-air" in ids
+        assert "Qwen/Qwen2.5-7B-Instruct" in ids
+        assert "gpt-oss-120b" in ids
 
     def test_auto_complete_exception_is_sanitized(self, client, monkeypatch):
         from mcoi_runtime.app.routers.deps import deps
