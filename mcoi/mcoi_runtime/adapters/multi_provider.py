@@ -15,8 +15,6 @@ Invariants:
 
 from __future__ import annotations
 
-import hashlib
-import json
 import os
 from typing import Any
 
@@ -74,8 +72,8 @@ def _openai_compatible_call(
     max_tokens: int,
     temperature: float,
     provider: LLMProvider,
-    cost_per_1k_input: float,
-    cost_per_1k_output: float,
+    cost_per_1m_input: float,
+    cost_per_1m_output: float,
 ) -> LLMResult:
     """Generic OpenAI-compatible API call.
 
@@ -116,7 +114,7 @@ def _openai_compatible_call(
         usage = data.get("usage", {})
         input_tokens = usage.get("prompt_tokens", 0)
         output_tokens = usage.get("completion_tokens", 0)
-        cost = (input_tokens * cost_per_1k_input + output_tokens * cost_per_1k_output) / 1000
+        cost = (input_tokens * cost_per_1m_input + output_tokens * cost_per_1m_output) / 1_000_000
 
         return LLMResult(
             content=content,
@@ -129,11 +127,10 @@ def _openai_compatible_call(
         )
     except ImportError:
         # httpx not available — return stub response for testing
-        content_hash = hashlib.sha256("|".join(m.get("content", "") for m in messages).encode()).hexdigest()[:16]
         total_chars = sum(len(m.get("content", "")) for m in messages)
         input_tokens = max(1, total_chars // 4)
         output_tokens = max(1, 20)
-        cost = (input_tokens * cost_per_1k_input + output_tokens * cost_per_1k_output) / 1000
+        cost = (input_tokens * cost_per_1m_input + output_tokens * cost_per_1m_output) / 1_000_000
         return LLMResult(
             content="provider stub response",
             input_tokens=input_tokens, output_tokens=output_tokens, cost=cost,
@@ -167,10 +164,11 @@ class GroqBackend:
     """
 
     provider = LLMProvider.GROQ
-    DEFAULT_MODEL = "llama-4-scout-17b-16e-instruct"
+    DEFAULT_MODEL = "meta-llama/llama-4-scout-17b-16e-instruct"
 
-    def __init__(self, *, model: str = "", api_key_env: str = "GROQ_API_KEY") -> None:
+    def __init__(self, *, model: str = "", api_key: str | None = None, api_key_env: str = "GROQ_API_KEY") -> None:
         self._model = model or self.DEFAULT_MODEL
+        self._api_key = api_key or ""
         self._api_key_env = api_key_env
         self._call_count = 0
 
@@ -178,14 +176,14 @@ class GroqBackend:
         self._call_count += 1
         return _openai_compatible_call(
             base_url="https://api.groq.com/openai/v1",
-            api_key=os.environ.get(self._api_key_env, ""),
+            api_key=self._api_key or os.environ.get(self._api_key_env, ""),
             model=params.model_name or self._model,
             messages=_params_to_messages(params),
             max_tokens=params.max_tokens,
             temperature=0.0,
             provider=self.provider,
-            cost_per_1k_input=0.0,  # Free tier
-            cost_per_1k_output=0.0,
+            cost_per_1m_input=0.11,
+            cost_per_1m_output=0.34,
         )
 
     @property
@@ -205,8 +203,9 @@ class GeminiBackend:
     provider = LLMProvider.GEMINI
     DEFAULT_MODEL = "gemini-2.0-flash"
 
-    def __init__(self, *, model: str = "", api_key_env: str = "GEMINI_API_KEY") -> None:
+    def __init__(self, *, model: str = "", api_key: str | None = None, api_key_env: str = "GEMINI_API_KEY") -> None:
         self._model = model or self.DEFAULT_MODEL
+        self._api_key = api_key or ""
         self._api_key_env = api_key_env
         self._call_count = 0
 
@@ -215,14 +214,14 @@ class GeminiBackend:
         # Gemini uses generativelanguage.googleapis.com, but also supports OpenAI-compat
         return _openai_compatible_call(
             base_url="https://generativelanguage.googleapis.com/v1beta/openai",
-            api_key=os.environ.get(self._api_key_env, ""),
+            api_key=self._api_key or os.environ.get(self._api_key_env, ""),
             model=params.model_name or self._model,
             messages=_params_to_messages(params),
             max_tokens=params.max_tokens,
             temperature=0.0,
             provider=self.provider,
-            cost_per_1k_input=0.075,  # Flash-Lite pricing
-            cost_per_1k_output=0.30,
+            cost_per_1m_input=0.10,
+            cost_per_1m_output=0.40,
         )
 
     @property
@@ -240,10 +239,11 @@ class DeepSeekBackend:
     """
 
     provider = LLMProvider.DEEPSEEK
-    DEFAULT_MODEL = "deepseek-chat"
+    DEFAULT_MODEL = "deepseek-v4-flash"
 
-    def __init__(self, *, model: str = "", api_key_env: str = "DEEPSEEK_API_KEY") -> None:
+    def __init__(self, *, model: str = "", api_key: str | None = None, api_key_env: str = "DEEPSEEK_API_KEY") -> None:
         self._model = model or self.DEFAULT_MODEL
+        self._api_key = api_key or ""
         self._api_key_env = api_key_env
         self._call_count = 0
 
@@ -251,14 +251,14 @@ class DeepSeekBackend:
         self._call_count += 1
         return _openai_compatible_call(
             base_url="https://api.deepseek.com/v1",
-            api_key=os.environ.get(self._api_key_env, ""),
+            api_key=self._api_key or os.environ.get(self._api_key_env, ""),
             model=params.model_name or self._model,
             messages=_params_to_messages(params),
             max_tokens=params.max_tokens,
             temperature=0.0,
             provider=self.provider,
-            cost_per_1k_input=0.28,
-            cost_per_1k_output=0.42,
+            cost_per_1m_input=0.14,
+            cost_per_1m_output=0.28,
         )
 
     @property
@@ -279,8 +279,9 @@ class GrokBackend:
     provider = LLMProvider.GROK
     DEFAULT_MODEL = "grok-3-mini"
 
-    def __init__(self, *, model: str = "", api_key_env: str = "XAI_API_KEY") -> None:
+    def __init__(self, *, model: str = "", api_key: str | None = None, api_key_env: str = "XAI_API_KEY") -> None:
         self._model = model or self.DEFAULT_MODEL
+        self._api_key = api_key or ""
         self._api_key_env = api_key_env
         self._call_count = 0
 
@@ -288,14 +289,14 @@ class GrokBackend:
         self._call_count += 1
         return _openai_compatible_call(
             base_url="https://api.x.ai/v1",
-            api_key=os.environ.get(self._api_key_env, ""),
+            api_key=self._api_key or os.environ.get(self._api_key_env, ""),
             model=params.model_name or self._model,
             messages=_params_to_messages(params),
             max_tokens=params.max_tokens,
             temperature=0.0,
             provider=self.provider,
-            cost_per_1k_input=0.30,
-            cost_per_1k_output=0.50,
+            cost_per_1m_input=0.30,
+            cost_per_1m_output=0.50,
         )
 
     @property
@@ -316,8 +317,9 @@ class MistralBackend:
     provider = LLMProvider.MISTRAL
     DEFAULT_MODEL = "mistral-small-latest"
 
-    def __init__(self, *, model: str = "", api_key_env: str = "MISTRAL_API_KEY") -> None:
+    def __init__(self, *, model: str = "", api_key: str | None = None, api_key_env: str = "MISTRAL_API_KEY") -> None:
         self._model = model or self.DEFAULT_MODEL
+        self._api_key = api_key or ""
         self._api_key_env = api_key_env
         self._call_count = 0
 
@@ -325,14 +327,14 @@ class MistralBackend:
         self._call_count += 1
         return _openai_compatible_call(
             base_url="https://api.mistral.ai/v1",
-            api_key=os.environ.get(self._api_key_env, ""),
+            api_key=self._api_key or os.environ.get(self._api_key_env, ""),
             model=params.model_name or self._model,
             messages=_params_to_messages(params),
             max_tokens=params.max_tokens,
             temperature=0.0,
             provider=self.provider,
-            cost_per_1k_input=0.20,
-            cost_per_1k_output=0.60,
+            cost_per_1m_input=0.10,
+            cost_per_1m_output=0.30,
         )
 
     @property
@@ -353,8 +355,9 @@ class OpenRouterBackend:
     provider = LLMProvider.OPENROUTER
     DEFAULT_MODEL = "meta-llama/llama-4-scout"
 
-    def __init__(self, *, model: str = "", api_key_env: str = "OPENROUTER_API_KEY") -> None:
+    def __init__(self, *, model: str = "", api_key: str | None = None, api_key_env: str = "OPENROUTER_API_KEY") -> None:
         self._model = model or self.DEFAULT_MODEL
+        self._api_key = api_key or ""
         self._api_key_env = api_key_env
         self._call_count = 0
 
@@ -362,14 +365,14 @@ class OpenRouterBackend:
         self._call_count += 1
         return _openai_compatible_call(
             base_url="https://openrouter.ai/api/v1",
-            api_key=os.environ.get(self._api_key_env, ""),
+            api_key=self._api_key or os.environ.get(self._api_key_env, ""),
             model=params.model_name or self._model,
             messages=_params_to_messages(params),
             max_tokens=params.max_tokens,
             temperature=0.0,
             provider=self.provider,
-            cost_per_1k_input=0.0,  # Free tier models
-            cost_per_1k_output=0.0,
+            cost_per_1m_input=0.0,
+            cost_per_1m_output=0.0,
         )
 
     @property

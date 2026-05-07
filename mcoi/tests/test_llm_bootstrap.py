@@ -2,9 +2,9 @@
 
 import os
 import pytest
+from mcoi_runtime.adapters.multi_provider import GroqBackend
 from mcoi_runtime.app.llm_bootstrap import (
     LLMConfig,
-    LLMBootstrapResult,
     bootstrap_llm,
 )
 from mcoi_runtime.core.model_orchestration import (
@@ -13,7 +13,9 @@ from mcoi_runtime.core.model_orchestration import (
 )
 from mcoi_runtime.core.provider_registry import ProviderRegistry
 
-FIXED_CLOCK = lambda: "2026-03-26T12:00:00Z"
+
+def FIXED_CLOCK() -> str:
+    return "2026-03-26T12:00:00Z"
 
 
 class TestLLMConfig:
@@ -25,7 +27,18 @@ class TestLLMConfig:
 
     def test_from_env_defaults(self):
         env_backup = {}
-        for key in ("ANTHROPIC_API_KEY", "OPENAI_API_KEY", "MULLU_LLM_BACKEND"):
+        for key in (
+            "ANTHROPIC_API_KEY",
+            "OPENAI_API_KEY",
+            "GEMINI_API_KEY",
+            "GROQ_API_KEY",
+            "DEEPSEEK_API_KEY",
+            "XAI_API_KEY",
+            "MISTRAL_API_KEY",
+            "OPENROUTER_API_KEY",
+            "OLLAMA_BASE_URL",
+            "MULLU_LLM_BACKEND",
+        ):
             env_backup[key] = os.environ.pop(key, None)
         try:
             config = LLMConfig.from_env()
@@ -48,6 +61,29 @@ class TestLLMConfig:
                 os.environ["ANTHROPIC_API_KEY"] = env_backup
             else:
                 os.environ.pop("ANTHROPIC_API_KEY", None)
+
+    def test_from_env_low_cost_provider_detected(self, monkeypatch):
+        for key in (
+            "ANTHROPIC_API_KEY",
+            "OPENAI_API_KEY",
+            "GEMINI_API_KEY",
+            "GROQ_API_KEY",
+            "DEEPSEEK_API_KEY",
+            "XAI_API_KEY",
+            "MISTRAL_API_KEY",
+            "OPENROUTER_API_KEY",
+            "OLLAMA_BASE_URL",
+            "MULLU_LLM_BACKEND",
+        ):
+            monkeypatch.delenv(key, raising=False)
+        monkeypatch.setenv("GROQ_API_KEY", "groq-test-key")
+
+        config = LLMConfig.from_env()
+
+        assert config.default_backend == "groq"
+        assert config.groq_api_key == "groq-test-key"
+        assert config.deepseek_api_key == ""
+        assert config.openrouter_api_key == ""
 
     def test_from_env_explicit_backend(self):
         os.environ["MULLU_LLM_BACKEND"] = "stub"
@@ -171,6 +207,38 @@ class TestBootstrapLLM:
         assert "anthropic" in result.backends
         assert "openai" in result.backends
 
+    def test_low_cost_provider_mesh_registered(self):
+        registry = ProviderRegistry(clock=FIXED_CLOCK)
+        engine = ModelOrchestrationEngine(clock=FIXED_CLOCK, provider_registry=registry)
+        config = LLMConfig(
+            default_backend="groq",
+            default_model="claude-sonnet-4-20250514",
+            groq_api_key="gq",
+            deepseek_api_key="ds",
+            grok_api_key="xai",
+            mistral_api_key="ms",
+            openrouter_api_key="or",
+        )
+
+        result = bootstrap_llm(
+            clock=FIXED_CLOCK,
+            config=config,
+            provider_registry=registry,
+            model_engine=engine,
+        )
+
+        assert result.default_backend_name == "groq"
+        assert {"groq", "deepseek", "grok", "mistral", "openrouter"}.issubset(result.backends)
+        assert isinstance(result.backends["groq"], GroqBackend)
+        assert "llm-groq" in result.registered_providers
+        assert "llm-deepseek" in result.registered_providers
+        assert "llm-openrouter" in result.registered_providers
+        assert "meta-llama/llama-4-scout-17b-16e-instruct" in result.registered_models
+        assert "deepseek-v4-flash" in result.registered_models
+        assert "mistral-small-2506" in result.registered_models
+        assert "grok-3-mini" in result.registered_models
+        assert "meta-llama/llama-4-scout" in result.registered_models
+
     def test_config_stored_in_result(self):
         config = LLMConfig(default_budget_max_cost=50.0)
         result = bootstrap_llm(clock=FIXED_CLOCK, config=config)
@@ -186,6 +254,11 @@ class TestLLMConfigFromEnv:
         monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
         monkeypatch.delenv("OPENAI_API_KEY", raising=False)
         monkeypatch.delenv("GEMINI_API_KEY", raising=False)
+        monkeypatch.delenv("GROQ_API_KEY", raising=False)
+        monkeypatch.delenv("DEEPSEEK_API_KEY", raising=False)
+        monkeypatch.delenv("XAI_API_KEY", raising=False)
+        monkeypatch.delenv("MISTRAL_API_KEY", raising=False)
+        monkeypatch.delenv("OPENROUTER_API_KEY", raising=False)
         monkeypatch.delenv("OLLAMA_BASE_URL", raising=False)
         with pytest.raises(RuntimeError, match="stub.*forbidden.*production"):
             LLMConfig.from_env()
@@ -196,6 +269,11 @@ class TestLLMConfigFromEnv:
         monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
         monkeypatch.delenv("OPENAI_API_KEY", raising=False)
         monkeypatch.delenv("GEMINI_API_KEY", raising=False)
+        monkeypatch.delenv("GROQ_API_KEY", raising=False)
+        monkeypatch.delenv("DEEPSEEK_API_KEY", raising=False)
+        monkeypatch.delenv("XAI_API_KEY", raising=False)
+        monkeypatch.delenv("MISTRAL_API_KEY", raising=False)
+        monkeypatch.delenv("OPENROUTER_API_KEY", raising=False)
         monkeypatch.delenv("OLLAMA_BASE_URL", raising=False)
         with pytest.raises(RuntimeError, match="stub.*forbidden.*pilot"):
             LLMConfig.from_env()
@@ -213,6 +291,11 @@ class TestLLMConfigFromEnv:
         monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
         monkeypatch.delenv("OPENAI_API_KEY", raising=False)
         monkeypatch.delenv("GEMINI_API_KEY", raising=False)
+        monkeypatch.delenv("GROQ_API_KEY", raising=False)
+        monkeypatch.delenv("DEEPSEEK_API_KEY", raising=False)
+        monkeypatch.delenv("XAI_API_KEY", raising=False)
+        monkeypatch.delenv("MISTRAL_API_KEY", raising=False)
+        monkeypatch.delenv("OPENROUTER_API_KEY", raising=False)
         monkeypatch.delenv("OLLAMA_BASE_URL", raising=False)
         config = LLMConfig.from_env()
         assert config.default_backend == "stub"

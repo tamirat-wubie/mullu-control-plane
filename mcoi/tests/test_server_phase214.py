@@ -53,6 +53,9 @@ class TestAutoRoutedCompletion:
         ids = [m["id"] for m in data["models"]]
         assert "claude-haiku-4-5" in ids
         assert "claude-opus-4-6" in ids
+        assert "gpt-4.1-nano" in ids
+        assert "gemini-2.0-flash-lite" in ids
+        assert "deepseek-v4-flash" in ids
 
     def test_auto_complete_exception_is_sanitized(self, client, monkeypatch):
         from mcoi_runtime.app.routers.deps import deps

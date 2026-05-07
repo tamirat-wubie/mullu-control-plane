@@ -143,6 +143,32 @@ class TestGroqBackend:
         assert "secret prompt" not in result.content
         assert "groq" not in result.content.lower()
 
+    def test_explicit_api_key_overrides_environment(self, monkeypatch):
+        backend = GroqBackend(api_key="explicit-key")
+        monkeypatch.setenv("GROQ_API_KEY", "env-key")
+        observed_headers = {}
+
+        class _Response:
+            @staticmethod
+            def json():
+                return {
+                    "choices": [{"message": {"content": "ok"}}],
+                    "usage": {"prompt_tokens": 10, "completion_tokens": 5},
+                }
+
+        def _post(*args, **kwargs):
+            observed_headers.update(kwargs["headers"])
+            return _Response()
+
+        _install_fake_httpx(monkeypatch, _post)
+
+        result = backend.call(_params("test"))
+
+        assert result.finished is True
+        assert result.content == "ok"
+        assert observed_headers["Authorization"] == "Bearer explicit-key"
+        assert result.cost > 0.0
+
 
 class TestGeminiBackend:
     def test_provider_type(self):

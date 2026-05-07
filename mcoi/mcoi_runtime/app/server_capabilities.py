@@ -118,8 +118,8 @@ def bootstrap_capability_services(
             model_id="claude-haiku-4-5",
             name="Claude Haiku 4.5",
             provider="anthropic",
-            cost_per_1k_input=0.80,
-            cost_per_1k_output=4.0,
+            cost_per_1k_input=0.00080,
+            cost_per_1k_output=0.0040,
             max_context=200000,
             speed_tier="fast",
             capability_tier="basic",
@@ -130,8 +130,8 @@ def bootstrap_capability_services(
             model_id="claude-sonnet-4",
             name="Claude Sonnet 4",
             provider="anthropic",
-            cost_per_1k_input=3.0,
-            cost_per_1k_output=15.0,
+            cost_per_1k_input=0.0030,
+            cost_per_1k_output=0.0150,
             max_context=200000,
             speed_tier="medium",
             capability_tier="standard",
@@ -142,8 +142,8 @@ def bootstrap_capability_services(
             model_id="claude-opus-4-6",
             name="Claude Opus 4.6",
             provider="anthropic",
-            cost_per_1k_input=15.0,
-            cost_per_1k_output=75.0,
+            cost_per_1k_input=0.0150,
+            cost_per_1k_output=0.0750,
             max_context=1000000,
             speed_tier="slow",
             capability_tier="advanced",
@@ -154,11 +154,95 @@ def bootstrap_capability_services(
             model_id="gpt-4o-mini",
             name="GPT-4o Mini",
             provider="openai",
-            cost_per_1k_input=0.15,
-            cost_per_1k_output=0.60,
+            cost_per_1k_input=0.00015,
+            cost_per_1k_output=0.00060,
             max_context=128000,
             speed_tier="fast",
             capability_tier="basic",
+        )
+    )
+    model_router.register(
+        ModelProfile(
+            model_id="gpt-4.1-nano",
+            name="GPT-4.1 Nano",
+            provider="openai",
+            cost_per_1k_input=0.00010,
+            cost_per_1k_output=0.00040,
+            max_context=128000,
+            speed_tier="fast",
+            capability_tier="basic",
+        )
+    )
+    model_router.register(
+        ModelProfile(
+            model_id="gpt-4.1-mini",
+            name="GPT-4.1 Mini",
+            provider="openai",
+            cost_per_1k_input=0.00040,
+            cost_per_1k_output=0.00160,
+            max_context=128000,
+            speed_tier="fast",
+            capability_tier="standard",
+        )
+    )
+    model_router.register(
+        ModelProfile(
+            model_id="gemini-2.0-flash-lite",
+            name="Gemini 2.0 Flash-Lite",
+            provider="gemini",
+            cost_per_1k_input=0.000075,
+            cost_per_1k_output=0.00030,
+            max_context=1000000,
+            speed_tier="fast",
+            capability_tier="basic",
+        )
+    )
+    model_router.register(
+        ModelProfile(
+            model_id="gemini-2.0-flash",
+            name="Gemini 2.0 Flash",
+            provider="gemini",
+            cost_per_1k_input=0.00010,
+            cost_per_1k_output=0.00040,
+            max_context=1000000,
+            speed_tier="fast",
+            capability_tier="standard",
+        )
+    )
+    model_router.register(
+        ModelProfile(
+            model_id="llama-3.1-8b-instant",
+            name="Llama 3.1 8B Instant",
+            provider="groq",
+            cost_per_1k_input=0.00005,
+            cost_per_1k_output=0.00008,
+            max_context=131072,
+            speed_tier="fast",
+            capability_tier="basic",
+        )
+    )
+    model_router.register(
+        ModelProfile(
+            model_id="deepseek-v4-flash",
+            name="DeepSeek V4 Flash",
+            provider="deepseek",
+            cost_per_1k_input=0.00014,
+            cost_per_1k_output=0.00028,
+            max_context=64000,
+            speed_tier="fast",
+            capability_tier="standard",
+        )
+    )
+    model_router.register(
+        ModelProfile(
+            model_id="mistral-small-2603",
+            name="Mistral Small 2603",
+            provider="mistral",
+            cost_per_1k_input=0.00015,
+            cost_per_1k_output=0.00060,
+            max_context=128000,
+            speed_tier="fast",
+            capability_tier="standard",
         )
     )
     observability.register_source("model_router", lambda: model_router.summary())

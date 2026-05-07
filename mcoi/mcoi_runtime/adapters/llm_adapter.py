@@ -334,6 +334,8 @@ class OpenAIBackend:
         pricing = {
             "gpt-4o": (2.50, 10.0),
             "gpt-4o-mini": (0.15, 0.60),
+            "gpt-4.1-mini": (0.40, 1.60),
+            "gpt-4.1-nano": (0.10, 0.40),
             "gpt-4-turbo": (10.0, 30.0),
         }
         input_rate, output_rate = pricing.get(model, (2.50, 10.0))
@@ -449,7 +451,7 @@ class GeminiBackend:
         """
         pricing = {
             "gemini-2.0-flash": (0.10, 0.40),
-            "gemini-2.0-flash-lite": (0.0, 0.0),
+            "gemini-2.0-flash-lite": (0.075, 0.30),
             "gemini-1.5-flash": (0.075, 0.30),
             "gemini-1.5-pro": (1.25, 5.0),
             "gemini-2.5-pro-preview-05-06": (1.25, 10.0),
