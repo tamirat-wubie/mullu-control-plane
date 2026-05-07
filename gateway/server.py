@@ -1060,6 +1060,11 @@ def create_gateway_app(
             "governed": True,
         }
 
+    @app.get("/api/v1/federation/summary")
+    def federation_summary(request: Request):
+        _require_authority_operator(request)
+        return federated_control_snapshot_to_json_dict(federated_control_plane.snapshot())
+
     def _reflex_snapshot() -> RuntimeHealthSnapshot:
         router_summary = router.summary()
         command_summary = router_summary.get("command_ledger", {})
@@ -2504,6 +2509,7 @@ def create_gateway_app(
     app.state.mcp_gateway_import = mcp_gateway_import
     app.state.plan_ledger = plan_ledger
     app.state.observability_recorder = observability_recorder
+    app.state.federated_control_plane = federated_control_plane
     app.state.verifier = verifier
 
     return app

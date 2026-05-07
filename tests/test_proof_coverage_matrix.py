@@ -139,6 +139,33 @@ def test_finance_approval_packet_surface_is_witnessed() -> None:
     assert closure_actions["classify_finance_approval_packet_routes"]["status"] == "closed"
 
 
+def test_federated_control_plane_surface_is_witnessed() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    federation_surface = surfaces["federated_control_plane"]
+    witnesses = set(federation_surface["runtime_witnesses"])
+
+    assert federation_surface["coverage_state"] == "witnessed"
+    assert federation_surface["request_proof"] == "read_model"
+    assert federation_surface["action_proof"] == "read_model"
+    assert "/api/v1/federation/summary" in federation_surface["representative_paths"]
+    assert "gateway/federated_control.py" in federation_surface["evidence_files"]
+    assert "gateway/server.py" in federation_surface["evidence_files"]
+    assert "mcoi/mcoi_runtime/app/routers/federation.py" in federation_surface["evidence_files"]
+    assert "mcoi/mcoi_runtime/core/federated_control_plane.py" in federation_surface["evidence_files"]
+    assert "schemas/federated_control_snapshot.schema.json" in federation_surface["evidence_files"]
+    assert "tests/test_gateway/test_federated_control.py" in federation_surface["evidence_files"]
+    assert "signed_policy_metadata_only_sync" in witnesses
+    assert "invalid_signature_denied_before_local_acceptance" in witnesses
+    assert "policy_not_allowed_for_cluster_denied" in witnesses
+    assert "unsynced_policy_denied_locally" in witnesses
+    assert "tenant_region_mismatch_denied_locally" in witnesses
+    assert "central_data_transfer_forbidden" in witnesses
+    assert "federated_snapshot_schema_valid" in witnesses
+    assert closure_actions["publish_federated_control_plane_read_model"]["status"] == "closed"
+
+
 def test_gateway_runtime_witnesses_bind_closure_invariants() -> None:
     matrix = _load_fixture()
     surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}

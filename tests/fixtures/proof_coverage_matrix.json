@@ -2251,17 +2251,29 @@
       "audit": "read_model",
       "coverage_state": "witnessed",
       "evidence_files": [
+        "gateway/federated_control.py",
+        "gateway/server.py",
         "mcoi/mcoi_runtime/app/routers/federation.py",
         "mcoi/mcoi_runtime/core/federated_control_plane.py",
         "mcoi/tests/test_federated_control_plane.py",
-        "docs/51_federated_control_plane.md"
+        "schemas/federated_control_snapshot.schema.json",
+        "docs/51_federated_control_plane.md",
+        "tests/test_gateway/test_federated_control.py"
       ],
       "notes": "Federated control-plane summary exposes signed policy distribution and local enforcement receipts without tenant data replication.",
       "representative_paths": [
         "/api/v1/federation/summary"
       ],
       "request_proof": "read_model",
-      "runtime_witnesses": [],
+      "runtime_witnesses": [
+        "signed_policy_metadata_only_sync",
+        "invalid_signature_denied_before_local_acceptance",
+        "policy_not_allowed_for_cluster_denied",
+        "unsynced_policy_denied_locally",
+        "tenant_region_mismatch_denied_locally",
+        "central_data_transfer_forbidden",
+        "federated_snapshot_schema_valid"
+      ],
       "surface_id": "federated_control_plane"
     },
     {
