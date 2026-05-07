@@ -68,6 +68,7 @@ REQUIRED_PUBLIC_DOCUMENTS = (
     "STATUS.md",
     "GITHUB_SURFACE.md",
     "DEPLOYMENT_STATUS.md",
+    "docs/PRODUCT_BOUNDARY.md",
     "docs/52_mullu_governance_protocol.md",
     "docs/60_logic_governance_application.md",
 )
@@ -80,6 +81,7 @@ GITHUB_SURFACE_REQUIRED_LITERALS = (
     EXPECTED_DESCRIPTION,
     EXPECTED_LATEST_RELEASE,
     "symbolic-intelligence",
+    "docs/PRODUCT_BOUNDARY.md",
     "docs/52_mullu_governance_protocol.md",
     "python scripts/validate_protocol_manifest.py",
     "python scripts/validate_public_repository_surface.py",
@@ -94,10 +96,19 @@ STATUS_REQUIRED_LITERALS = (
     "Known Reflection Gaps",
     "GITHUB_SURFACE.md",
     "DEPLOYMENT_STATUS.md",
+    "docs/PRODUCT_BOUNDARY.md",
     "docs/52_mullu_governance_protocol.md",
     "docs/60_logic_governance_application.md",
     "python scripts/validate_protocol_manifest.py",
     "python scripts/validate_public_repository_surface.py",
+)
+PRODUCT_BOUNDARY_REQUIRED_LITERALS = (
+    "Product Boundary",
+    "Mullu is the flagship product",
+    "Mullu Control Plane",
+    "Mullu Platform",
+    "Mullusi",
+    "Launch Constraint",
 )
 DEPLOYMENT_STATUS_REQUIRED_LITERALS = (
     "Deployment Status Witness",
@@ -397,6 +408,16 @@ def validate_local_public_documents() -> list[str]:
                 document_name="DEPLOYMENT_STATUS.md",
                 content=deployment_status_path.read_text(encoding="utf-8"),
                 required_literals=DEPLOYMENT_STATUS_REQUIRED_LITERALS,
+            )
+        )
+
+    product_boundary_path = REPO_ROOT / "docs" / "PRODUCT_BOUNDARY.md"
+    if product_boundary_path.exists():
+        errors.extend(
+            validate_required_document_text(
+                document_name="docs/PRODUCT_BOUNDARY.md",
+                content=product_boundary_path.read_text(encoding="utf-8"),
+                required_literals=PRODUCT_BOUNDARY_REQUIRED_LITERALS,
             )
         )
 

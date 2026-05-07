@@ -1,9 +1,16 @@
 # Platform Overview
 
-Purpose: define the repository boundary for Mullu Platform.
+Purpose: define the repository boundary for the Mullu Control Plane.
 Governance scope: Milestone 0 shared foundation.
-Dependencies: `docs/01_shared_invariants.md`, `docs/02_shared_contracts.md`.
-Invariants: shared meaning is defined once; MAF Core and MCOI Runtime remain split.
+Dependencies: `docs/PRODUCT_BOUNDARY.md`, `docs/01_shared_invariants.md`, `docs/02_shared_contracts.md`.
+Invariants: shared meaning is defined once; MAF Core and MCOI Runtime remain split; Mullu remains the flagship product name; Mullu Platform remains a developer and architecture term; Mullu Control Plane remains the admin/governance/deployment surface.
+
+## Product Identity
+
+Mullu is the flagship product by Mullusi. Mullu Platform is reserved for
+developer, SDK, API, deployment, and architecture contexts. This repository
+defines the Mullu Control Plane surface for admin, governance, approval, trace,
+budget, lineage, and deployment operation.
 
 ## Structure
 

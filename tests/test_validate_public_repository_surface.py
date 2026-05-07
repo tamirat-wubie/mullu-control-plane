@@ -27,6 +27,7 @@ from scripts.validate_public_repository_surface import (
     GOVERNANCE_PROTOCOL_REQUIRED_LITERALS,
     LOGIC_GOVERNANCE_DOC_PATH,
     LOGIC_GOVERNANCE_REQUIRED_LITERALS,
+    PRODUCT_BOUNDARY_REQUIRED_LITERALS,
     REPO_ROOT,
     STATUS_REQUIRED_LITERALS,
     validate_required_document_text,
@@ -107,8 +108,24 @@ def test_github_surface_requires_protocol_document_anchor() -> None:
 
     assert errors == []
     assert "docs/52_mullu_governance_protocol.md" in content
+    assert "docs/PRODUCT_BOUNDARY.md" in content
     assert "python scripts/validate_protocol_manifest.py" in content
     assert "Public protocol schema index" in content
+
+
+def test_product_boundary_names_product_and_launch_constraints() -> None:
+    content = (REPO_ROOT / "docs" / "PRODUCT_BOUNDARY.md").read_text(encoding="utf-8")
+
+    errors = validate_required_document_text(
+        document_name="docs/PRODUCT_BOUNDARY.md",
+        content=content,
+        required_literals=PRODUCT_BOUNDARY_REQUIRED_LITERALS,
+    )
+
+    assert errors == []
+    assert "Mullu is the flagship product" in content
+    assert "Mullu Control Plane" in content
+    assert "Launch Constraint" in content
 
 
 def test_gateway_publication_workflow_requires_receipt_validator() -> None:

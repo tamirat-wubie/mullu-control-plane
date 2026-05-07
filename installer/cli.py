@@ -340,7 +340,7 @@ def validate_config(config: MulluConfig) -> list[str]:
 
 def cmd_init(args: argparse.Namespace) -> int:
     """Interactive setup: configure and generate deployment files."""
-    _print_step("MULLU PLATFORM SETUP WIZARD")
+    _print_step("MULLU CONTROL PLANE SETUP WIZARD")
 
     config = MulluConfig()
 
@@ -428,7 +428,7 @@ def cmd_status(args: argparse.Namespace) -> int:
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="mullusi",
-        description="Mullu Platform - Governed Autonomous Agent Setup",
+        description="Mullu Control Plane - Governed Symbolic Work Setup",
     )
     parser.add_argument(
         "--directory",
