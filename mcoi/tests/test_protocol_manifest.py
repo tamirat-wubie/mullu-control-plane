@@ -51,6 +51,7 @@ def test_protocol_manifest_is_valid() -> None:
     temporal_accepted_risk_entry = entries["temporal-accepted-risk-expiry-receipt"]
     temporal_credential_entry = entries["temporal-credential-expiry-receipt"]
     temporal_retention_entry = entries["temporal-retention-window-receipt"]
+    temporal_rate_limit_entry = entries["temporal-rate-limit-window-receipt"]
     temporal_memory_entry = entries["temporal-memory-receipt"]
     temporal_memory_refresh_entry = entries["temporal-memory-refresh-receipt"]
     scheduler_entry = entries["temporal-scheduler-receipt"]
@@ -66,7 +67,7 @@ def test_protocol_manifest_is_valid() -> None:
     assert manifest["protocol_id"] == PROTOCOL_ID
     assert manifest["protocol_name"] == "Mullu Governance Protocol"
     assert manifest["protocol_uri_scheme"] == "mgp://"
-    assert len(manifest["schemas"]) == 103
+    assert len(manifest["schemas"]) == 104
     assert agent_identity_entry["path"] == "schemas/agent_identity.schema.json"
     assert agent_identity_entry["urn"] == "urn:mullusi:schema:agent-identity:1"
     assert agent_identity_entry["surface"] == "identity"
@@ -169,6 +170,9 @@ def test_protocol_manifest_is_valid() -> None:
     assert temporal_retention_entry["path"] == "schemas/temporal_retention_window_receipt.schema.json"
     assert temporal_retention_entry["urn"] == "urn:mullusi:schema:temporal-retention-window-receipt:1"
     assert temporal_retention_entry["surface"] == "temporal"
+    assert temporal_rate_limit_entry["path"] == "schemas/temporal_rate_limit_window_receipt.schema.json"
+    assert temporal_rate_limit_entry["urn"] == "urn:mullusi:schema:temporal-rate-limit-window-receipt:1"
+    assert temporal_rate_limit_entry["surface"] == "temporal"
     assert temporal_memory_entry["path"] == "schemas/temporal_memory_receipt.schema.json"
     assert temporal_memory_entry["urn"] == "urn:mullusi:schema:temporal-memory-receipt:1"
     assert temporal_memory_entry["surface"] == "temporal"

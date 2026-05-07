@@ -1315,6 +1315,34 @@ def test_temporal_retention_window_surface_rechecks_data_lifecycle_timing() -> N
     assert closure_actions["publish_temporal_retention_window_receipt_contract"]["status"] == "closed"
 
 
+def test_temporal_rate_limit_window_surface_rechecks_token_windows() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    rate_limit_surface = surfaces["temporal_rate_limit_window"]
+    witnesses = set(rate_limit_surface["runtime_witnesses"])
+
+    assert rate_limit_surface["coverage_state"] == "witnessed"
+    assert rate_limit_surface["request_proof"] == "request_proof"
+    assert rate_limit_surface["action_proof"] == "action_proof"
+    assert "TemporalRateLimitWindow.evaluate" in rate_limit_surface["representative_paths"]
+    assert "RateLimitWindowRequest" in rate_limit_surface["representative_paths"]
+    assert "TemporalRateLimitWindowReceipt" in rate_limit_surface["representative_paths"]
+    assert "gateway/temporal_rate_limit_window.py" in rate_limit_surface["evidence_files"]
+    assert "schemas/temporal_rate_limit_window_receipt.schema.json" in rate_limit_surface["evidence_files"]
+    assert "tests/test_gateway/test_temporal_rate_limit_window.py" in rate_limit_surface["evidence_files"]
+    assert "runtime_clock_owns_rate_limit_window" in witnesses
+    assert "tenant_endpoint_identity_scope_checked" in witnesses
+    assert "active_window_admits_sufficient_tokens" in witnesses
+    assert "exhausted_window_emits_retry_after" in witnesses
+    assert "future_window_defers_dispatch" in witnesses
+    assert "burst_limit_blocks_overlarge_request" in witnesses
+    assert "stale_rate_limit_snapshot_blocks_dispatch" in witnesses
+    assert "high_risk_source_receipts_bound" in witnesses
+    assert "temporal_rate_limit_window_receipt_schema_valid" in witnesses
+    assert closure_actions["publish_temporal_rate_limit_window_receipt_contract"]["status"] == "closed"
+
+
 def test_temporal_memory_surface_blocks_stale_or_superseded_memory() -> None:
     matrix = _load_fixture()
     surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
