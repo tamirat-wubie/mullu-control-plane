@@ -13,6 +13,7 @@ import pytest
 from mcoi_runtime.contracts.llm import LLMInvocationParams, LLMMessage, LLMProvider, LLMRole
 from mcoi_runtime.adapters.multi_provider import (
     ALL_PROVIDERS,
+    APIRouterBackend,
     AtlasCloudBackend,
     BazaarLinkBackend,
     CerebrasBackend,
@@ -22,6 +23,7 @@ from mcoi_runtime.adapters.multi_provider import (
     DeepSeekBackend,
     DeepInfraBackend,
     DInferenceBackend,
+    EURIBackend,
     FireworksBackend,
     FriendliBackend,
     GMIBackend,
@@ -45,6 +47,7 @@ from mcoi_runtime.adapters.multi_provider import (
     SambaNovaBackend,
     SiliconFlowBackend,
     TogetherBackend,
+    VeniceBackend,
     WaveSpeedBackend,
     ZAIBackend,
     available_providers,
@@ -85,6 +88,9 @@ OPENAI_COMPATIBLE_PROVIDER_CLASSES = [
     GMIBackend,
     AtlasCloudBackend,
     ModelMaxBackend,
+    VeniceBackend,
+    EURIBackend,
+    APIRouterBackend,
     GrokBackend,
     MistralBackend,
     OpenRouterBackend,
@@ -370,6 +376,9 @@ class TestProviderRegistry:
             "gmi",
             "atlascloud",
             "modelmax",
+            "venice",
+            "euri",
+            "apirouter",
             "grok",
             "mistral",
             "openrouter",
@@ -412,6 +421,9 @@ class TestProviderRegistry:
             ("gmi", GMIBackend, LLMProvider.GMI),
             ("atlascloud", AtlasCloudBackend, LLMProvider.ATLASCLOUD),
             ("modelmax", ModelMaxBackend, LLMProvider.MODELMAX),
+            ("venice", VeniceBackend, LLMProvider.VENICE),
+            ("euri", EURIBackend, LLMProvider.EURI),
+            ("apirouter", APIRouterBackend, LLMProvider.APIROUTER),
         ],
     )
     def test_new_openai_compatible_providers(self, provider_name, backend_cls, provider):

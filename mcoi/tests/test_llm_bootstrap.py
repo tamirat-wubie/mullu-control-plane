@@ -3,6 +3,7 @@
 import os
 import pytest
 from mcoi_runtime.adapters.multi_provider import (
+    APIRouterBackend,
     AtlasCloudBackend,
     BazaarLinkBackend,
     CerebrasBackend,
@@ -11,6 +12,7 @@ from mcoi_runtime.adapters.multi_provider import (
     DashScopeBackend,
     DeepInfraBackend,
     DInferenceBackend,
+    EURIBackend,
     FireworksBackend,
     FriendliBackend,
     GMIBackend,
@@ -30,6 +32,7 @@ from mcoi_runtime.adapters.multi_provider import (
     SambaNovaBackend,
     SiliconFlowBackend,
     TogetherBackend,
+    VeniceBackend,
     WaveSpeedBackend,
     ZAIBackend,
 )
@@ -86,6 +89,9 @@ LLM_ENV_KEYS = (
     "GMI_API_KEY",
     "ATLASCLOUD_API_KEY",
     "MODELMAX_API_KEY",
+    "VENICE_API_KEY",
+    "EURI_API_KEY",
+    "APIROUTER_API_KEY",
     "XAI_API_KEY",
     "MISTRAL_API_KEY",
     "OPENROUTER_API_KEY",
@@ -350,6 +356,9 @@ class TestBootstrapLLM:
             gmi_api_key="gmi",
             atlascloud_api_key="ac",
             modelmax_api_key="mm",
+            venice_api_key="vn",
+            euri_api_key="eu",
+            apirouter_api_key="ar",
             grok_api_key="xai",
             mistral_api_key="ms",
             openrouter_api_key="or",
@@ -394,6 +403,9 @@ class TestBootstrapLLM:
             "gmi",
             "atlascloud",
             "modelmax",
+            "venice",
+            "euri",
+            "apirouter",
             "grok",
             "mistral",
             "openrouter",
@@ -427,6 +439,9 @@ class TestBootstrapLLM:
         assert isinstance(result.backends["gmi"], GMIBackend)
         assert isinstance(result.backends["atlascloud"], AtlasCloudBackend)
         assert isinstance(result.backends["modelmax"], ModelMaxBackend)
+        assert isinstance(result.backends["venice"], VeniceBackend)
+        assert isinstance(result.backends["euri"], EURIBackend)
+        assert isinstance(result.backends["apirouter"], APIRouterBackend)
         assert "llm-groq" in result.registered_providers
         assert "llm-deepseek" in result.registered_providers
         assert "llm-together" in result.registered_providers
@@ -453,6 +468,9 @@ class TestBootstrapLLM:
         assert "llm-gmi" in result.registered_providers
         assert "llm-atlascloud" in result.registered_providers
         assert "llm-modelmax" in result.registered_providers
+        assert "llm-venice" in result.registered_providers
+        assert "llm-euri" in result.registered_providers
+        assert "llm-apirouter" in result.registered_providers
         assert "llm-openrouter" in result.registered_providers
         assert "meta-llama/llama-4-scout-17b-16e-instruct" in result.registered_models
         assert "deepseek-v4-flash" in result.registered_models
@@ -484,6 +502,9 @@ class TestBootstrapLLM:
         assert "Qwen/Qwen3-32B-FP8" in result.registered_models
         assert "Qwen/Qwen3-30B-A3B-Instruct-2507" in result.registered_models
         assert "qwen3-coder-30b-a3b" in result.registered_models
+        assert "qwen3-5-9b" in result.registered_models
+        assert "qwen/qwen3-32b" in result.registered_models
+        assert "Qwen/Qwen3-Coder-30B-A3B-Instruct" in result.registered_models
         assert "mistral-small-2506" in result.registered_models
         assert "grok-3-mini" in result.registered_models
         assert "meta-llama/llama-4-scout" in result.registered_models
