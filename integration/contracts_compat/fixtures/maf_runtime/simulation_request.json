@@ -1,0 +1,24 @@
+{
+  "request_id": "simreq-42",
+  "context_type": "deployment_review",
+  "context_id": "fn-42",
+  "description": "Simulate governed release rollout options",
+  "options": [
+    {
+      "option_id": "opt-safe",
+      "label": "Deploy with guarded rollout",
+      "risk_level": "low",
+      "estimated_cost": 12.5,
+      "estimated_duration_seconds": 180.0,
+      "success_probability": 0.93
+    },
+    {
+      "option_id": "opt-fast",
+      "label": "Deploy with compressed approval path",
+      "risk_level": "moderate",
+      "estimated_cost": 7.5,
+      "estimated_duration_seconds": 90.0,
+      "success_probability": 0.78
+    }
+  ]
+}

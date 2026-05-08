@@ -1427,7 +1427,8 @@ class TestCreateFulfillmentTask:
         assert task.description == ""
 
     def test_custom_description(self, engine_with_request: ServiceCatalogEngine) -> None:
-        task = _create_task(engine_with_request, 
+        task = _create_task(
+            engine_with_request,
             "t1", "req-1", "tech-1", description="Provision VM",
         )
         assert task.description == "Provision VM"
@@ -1437,7 +1438,8 @@ class TestCreateFulfillmentTask:
         assert task.dependency_ref == ""
 
     def test_custom_dependency_ref(self, engine_with_request: ServiceCatalogEngine) -> None:
-        task = _create_task(engine_with_request, 
+        task = _create_task(
+            engine_with_request,
             "t1", "req-1", "tech-1", dependency_ref="dep-abc",
         )
         assert task.dependency_ref == "dep-abc"
@@ -3485,5 +3487,3 @@ class TestBoundedContractWitnesses:
         assert violations[("req-all-failed", "all_tasks_failed")] == "All fulfillment tasks failed"
         assert "req-all-failed" not in violations[("req-all-failed", "all_tasks_failed")]
         assert "1" not in violations[("req-all-failed", "all_tasks_failed")]
-
-

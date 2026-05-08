@@ -1,0 +1,10 @@
+{
+  "outcome_id": "out-42",
+  "function_id": "fn-42",
+  "job_id": "job-42",
+  "completed": true,
+  "completion_minutes": 18,
+  "escalated": false,
+  "drift_detected": false,
+  "recorded_at": "2025-01-01T00:55:00+00:00"
+}

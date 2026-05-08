@@ -1,0 +1,13 @@
+{
+  "remedy_id": "remedy-governance-042",
+  "breach_id": "breach-governance-042",
+  "tenant_id": "tenant-mullu-primary",
+  "disposition": "penalty_applied",
+  "amount": "service-credit-10",
+  "description": "Applied a governance service credit due to closure policy breach.",
+  "applied_at": "2026-04-04T10:07:00+00:00",
+  "metadata": {
+    "currency": "internal-credit",
+    "approved_by": "contract-board"
+  }
+}

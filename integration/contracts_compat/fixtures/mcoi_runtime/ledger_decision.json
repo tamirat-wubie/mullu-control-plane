@@ -1,0 +1,12 @@
+{
+  "decision_id": "ledger-decision-2026-042",
+  "tenant_id": "tenant-mullu-primary",
+  "operation": "post_settlement",
+  "disposition": "approved",
+  "reason": "Settlement proof and anchor references are valid for posting.",
+  "decided_at": "2026-05-07T09:04:30+00:00",
+  "metadata": {
+    "approver": "ledger-governor-1",
+    "transaction_ref": "ledger-transaction-2026-042"
+  }
+}

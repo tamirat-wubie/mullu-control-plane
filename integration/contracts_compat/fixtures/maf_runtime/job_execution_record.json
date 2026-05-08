@@ -1,0 +1,11 @@
+{
+  "job_id": "job-42",
+  "execution_id": "job-exec-42",
+  "status": "failed",
+  "started_at": "2025-01-01T01:20:00+00:00",
+  "outcome_summary": "approval gate blocked rollout completion",
+  "errors": [
+    "approval not granted before deadline"
+  ],
+  "completed_at": "2025-01-01T01:25:00+00:00"
+}

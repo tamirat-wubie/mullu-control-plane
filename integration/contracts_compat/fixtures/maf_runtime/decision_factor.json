@@ -1,0 +1,7 @@
+{
+  "factor_id": "factor-risk",
+  "kind": "risk",
+  "weight": 0.4,
+  "value": 0.2,
+  "label": "release risk"
+}

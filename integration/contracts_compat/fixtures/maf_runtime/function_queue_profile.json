@@ -1,0 +1,8 @@
+{
+  "function_id": "fn-42",
+  "team_id": "team-release",
+  "default_role_id": "role-reviewer",
+  "communication_style": "urgent",
+  "max_concurrent_jobs": 6,
+  "escalation_chain_id": "esc-release-1"
+}

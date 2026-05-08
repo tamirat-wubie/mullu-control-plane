@@ -186,6 +186,9 @@ class WorkflowExecutionRecord(ContractRecord):
         if not isinstance(self.status, WorkflowStatus):
             raise ValueError("status must be a WorkflowStatus value")
         object.__setattr__(self, "stage_results", freeze_value(list(self.stage_results)))
+        object.__setattr__(self, "started_at", require_datetime_text(self.started_at, "started_at"))
+        if self.completed_at is not None:
+            object.__setattr__(self, "completed_at", require_datetime_text(self.completed_at, "completed_at"))
 
 
 @dataclass(frozen=True, slots=True)

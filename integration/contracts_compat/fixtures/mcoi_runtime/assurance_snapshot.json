@@ -1,0 +1,16 @@
+{
+  "snapshot_id": "assurance-snapshot-20260404",
+  "scope_ref_id": "tenant-mullu-primary",
+  "total_attestations": 4,
+  "granted_attestations": 3,
+  "total_certifications": 3,
+  "active_certifications": 2,
+  "total_assessments": 5,
+  "total_evidence_bindings": 7,
+  "total_violations": 1,
+  "captured_at": "2026-04-04T09:30:00+00:00",
+  "metadata": {
+    "captured_by": "assurance-monitor",
+    "scope": "tenant"
+  }
+}

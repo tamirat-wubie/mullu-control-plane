@@ -1,0 +1,15 @@
+{
+  "report_id": "case-closure-042",
+  "case_id": "case-incident-042",
+  "tenant_id": "tenant-1",
+  "disposition": "escalated",
+  "total_evidence": 1,
+  "total_reviews": 1,
+  "total_findings": 1,
+  "total_violations": 0,
+  "closed_at": "2026-04-03T08:25:00+00:00",
+  "metadata": {
+    "decision_id": "decision-case-042",
+    "escalation_target": "executive-ops"
+  }
+}

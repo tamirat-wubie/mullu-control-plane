@@ -1,0 +1,16 @@
+{
+  "report_id": "human-workflow-closure-20260403",
+  "tenant_id": "tenant-mullu-primary",
+  "total_tasks": 5,
+  "total_review_packets": 2,
+  "total_boards": 1,
+  "total_decisions_approved": 1,
+  "total_decisions_rejected": 0,
+  "total_handoffs": 1,
+  "total_violations": 1,
+  "closed_at": "2026-04-03T08:29:00+00:00",
+  "metadata": {
+    "closed_by": "workflow-audit",
+    "scope": "case"
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "renewal_id": "procurement-renewal-2026-q3",
+  "vendor_id": "vendor-governance-42",
+  "contract_ref": "contract-vendor-governance-42-2026",
+  "disposition": "pending",
+  "opens_at": "2026-06-01T00:00:00+00:00",
+  "closes_at": "2026-06-30T23:59:00+00:00",
+  "metadata": {
+    "owner": "vendor-management",
+    "review_scope": "renewal-risk"
+  }
+}

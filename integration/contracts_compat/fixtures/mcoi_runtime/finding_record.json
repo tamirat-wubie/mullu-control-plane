@@ -1,0 +1,16 @@
+{
+  "finding_id": "finding-case-042-escalation-gap",
+  "case_id": "case-incident-042",
+  "severity": "high",
+  "title": "Recovery path required escalation",
+  "description": "The governed recovery path required explicit escalation because automated closure conditions were not satisfied.",
+  "evidence_ids": [
+    "evidence-incident-042"
+  ],
+  "remediation": "Add escalation review witness coverage before allowing automatic closure for this failure family.",
+  "found_at": "2026-04-03T08:21:00+00:00",
+  "metadata": {
+    "owner": "governance-review",
+    "category": "closure_control"
+  }
+}

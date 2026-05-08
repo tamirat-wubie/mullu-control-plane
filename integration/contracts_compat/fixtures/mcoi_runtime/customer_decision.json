@@ -1,0 +1,13 @@
+{
+  "decision_id": "customer-decision-042",
+  "tenant_id": "tenant-mullu-primary",
+  "customer_id": "customer-042",
+  "account_id": "billing-account-042",
+  "disposition": "approved",
+  "reason": "Approve entitlement expansion after contract and settlement review.",
+  "decided_at": "2026-04-18T14:30:00+00:00",
+  "metadata": {
+    "decision_type": "entitlement_expansion",
+    "requested_by": "customer-success"
+  }
+}

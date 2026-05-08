@@ -13,10 +13,16 @@ import pytest
 from mcoi_runtime.app.bootstrap import bootstrap_runtime
 from mcoi_runtime.app.config import AppConfig
 from mcoi_runtime.app.console import render_goal_summary
-from mcoi_runtime.app.operator_loop import GoalRunReport, OperatorLoop, SkillRequest
+from mcoi_runtime.app.operator_loop import (
+    GoalResumeRequest,
+    GoalRunReport,
+    OperatorLoop,
+    SkillRequest,
+)
 from mcoi_runtime.app.view_models import GoalSummaryView
 from mcoi_runtime.contracts.goal import (
     GoalDescriptor,
+    GoalExecutionState,
     GoalPriority,
     GoalStatus,
     SubGoal,
@@ -34,6 +40,7 @@ from mcoi_runtime.contracts.skill import (
     VerificationStrength,
 )
 from mcoi_runtime.contracts.workflow import StageType, WorkflowDescriptor, WorkflowStage
+from mcoi_runtime.persistence.goal_store import GoalStore
 from mcoi_runtime.persistence.workflow_store import WorkflowStore
 
 
@@ -54,6 +61,12 @@ def _make_loop_with_autonomy(mode: str):
 def _make_loop_with_workflow_store(tmp_path: Path):
     store = WorkflowStore(tmp_path / "workflows")
     runtime = bootstrap_runtime(clock=lambda: FIXED_CLOCK, workflow_store=store)
+    return OperatorLoop(runtime=runtime), store
+
+
+def _make_loop_with_goal_store(tmp_path: Path):
+    store = GoalStore(tmp_path / "goals")
+    runtime = bootstrap_runtime(clock=lambda: FIXED_CLOCK, goal_store=store)
     return OperatorLoop(runtime=runtime), store
 
 
@@ -116,6 +129,41 @@ def _make_skill_workflow_descriptor(workflow_id: str, skill_id: str) -> Workflow
         ),
         created_at=FIXED_CLOCK,
     )
+
+
+def _seed_goal_store_for_resume(
+    tmp_path: Path,
+    *,
+    goal_id: str = "goal-resume",
+    status: GoalStatus = GoalStatus.EXECUTING,
+    completed_sub_goals: tuple[str, ...] = (),
+    failed_sub_goals: tuple[str, ...] = (),
+):
+    store = GoalStore(tmp_path / "goals")
+    sub_goals = (
+        SubGoal(
+            sub_goal_id="sg-resume",
+            goal_id=goal_id,
+            description="resume sub-goal",
+            skill_id="sk-resume",
+        ),
+    )
+    descriptor = _make_goal(goal_id, sub_goals=sub_goals)
+    builder_runtime = bootstrap_runtime(clock=lambda: FIXED_CLOCK)
+    plan = builder_runtime.goal_reasoning_engine.create_plan(descriptor, sub_goals)
+    state = GoalExecutionState(
+        goal_id=goal_id,
+        status=status,
+        current_plan_id=plan.plan_id,
+        updated_at=FIXED_CLOCK,
+        completed_sub_goals=completed_sub_goals,
+        failed_sub_goals=failed_sub_goals,
+    )
+    seed_runtime = bootstrap_runtime(clock=lambda: FIXED_CLOCK)
+    seed_runtime.goal_reasoning_engine.restore_goal(descriptor, state)
+    seed_runtime.goal_reasoning_engine.restore_plan(plan)
+    store.save_state(seed_runtime.goal_reasoning_engine)
+    return store, descriptor, plan, state
 
 
 class TestGoalRuntimeGoldenScenarios:
@@ -470,3 +518,112 @@ class TestGoalEdgeCaseBugs:
         assert "blocked" in report.errors[0].message
 
         engine.execute_next_sub_goal = original_execute
+
+
+class TestGoalResumeIntegration:
+    """Verify explicit goal runtime resume through the operator facade."""
+
+    def test_goal_resume_completes_from_persisted_state(self, tmp_path: Path):
+        store, descriptor, plan, _ = _seed_goal_store_for_resume(tmp_path)
+        runtime = bootstrap_runtime(clock=lambda: FIXED_CLOCK, goal_store=store)
+        loop = OperatorLoop(runtime=runtime)
+        _register_skill(loop, "sk-resume", name="shell_command")
+
+        report = loop.resume_goal(
+            GoalResumeRequest(
+                request_id="goal-resume-1",
+                subject_id="operator-1",
+                goal_id=descriptor.goal_id,
+                input_context=_goal_input_context("goal-resume"),
+            )
+        )
+
+        restored_state = runtime.goal_reasoning_engine.get_goal_state(descriptor.goal_id)
+        assert report.goal_id == descriptor.goal_id
+        assert report.plan_id == plan.plan_id
+        assert report.status is GoalStatus.COMPLETED
+        assert report.completed_sub_goals == ("sg-resume",)
+        assert report.failed_sub_goals == ()
+        assert report.errors == ()
+        assert restored_state is not None
+        assert restored_state.status is GoalStatus.COMPLETED
+
+    def test_goal_resume_fails_closed_without_configured_store(self):
+        loop = _make_loop()
+
+        report = loop.resume_goal(
+            GoalResumeRequest(
+                request_id="goal-resume-2",
+                subject_id="operator-1",
+                goal_id="missing-goal",
+            )
+        )
+
+        assert report.goal_id == "missing-goal"
+        assert report.status is GoalStatus.FAILED
+        assert report.plan_id is None
+        assert report.completed_sub_goals == ()
+        assert report.failed_sub_goals == ()
+        assert len(report.errors) == 1
+        assert report.errors[0].error_code == "goal_store_not_configured"
+
+    def test_goal_resume_fails_closed_on_terminal_state(self, tmp_path: Path):
+        store, descriptor, plan, _ = _seed_goal_store_for_resume(
+            tmp_path,
+            goal_id="goal-terminal",
+            status=GoalStatus.COMPLETED,
+            completed_sub_goals=("sg-resume",),
+        )
+        runtime = bootstrap_runtime(clock=lambda: FIXED_CLOCK, goal_store=store)
+        loop = OperatorLoop(runtime=runtime)
+
+        report = loop.resume_goal(
+            GoalResumeRequest(
+                request_id="goal-resume-3",
+                subject_id="operator-1",
+                goal_id=descriptor.goal_id,
+            )
+        )
+
+        assert report.goal_id == descriptor.goal_id
+        assert report.status is GoalStatus.FAILED
+        assert report.plan_id == plan.plan_id
+        assert report.completed_sub_goals == ("sg-resume",)
+        assert report.failed_sub_goals == ()
+        assert len(report.errors) == 1
+        assert report.errors[0].error_code == "goal_resume_invalid_state"
+
+    def test_goal_resume_fails_closed_on_runtime_mismatch(self, tmp_path: Path):
+        store, descriptor, plan, _ = _seed_goal_store_for_resume(
+            tmp_path,
+            goal_id="goal-mismatch",
+        )
+        runtime = bootstrap_runtime(clock=lambda: FIXED_CLOCK, goal_store=store)
+        runtime.goal_reasoning_engine.restore_goal(
+            descriptor,
+            GoalExecutionState(
+                goal_id=descriptor.goal_id,
+                status=GoalStatus.EXECUTING,
+                current_plan_id=plan.plan_id,
+                updated_at="2025-01-15T10:05:00+00:00",
+                completed_sub_goals=("sg-other",),
+            ),
+        )
+        runtime.goal_reasoning_engine.restore_plan(plan)
+        loop = OperatorLoop(runtime=runtime)
+
+        report = loop.resume_goal(
+            GoalResumeRequest(
+                request_id="goal-resume-4",
+                subject_id="operator-1",
+                goal_id=descriptor.goal_id,
+            )
+        )
+
+        assert report.goal_id == descriptor.goal_id
+        assert report.status is GoalStatus.FAILED
+        assert report.plan_id == plan.plan_id
+        assert report.completed_sub_goals == ()
+        assert report.failed_sub_goals == ()
+        assert len(report.errors) == 1
+        assert report.errors[0].error_code == "goal_resume_runtime_mismatch"

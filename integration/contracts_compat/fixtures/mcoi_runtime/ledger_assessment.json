@@ -1,0 +1,13 @@
+{
+  "assessment_id": "ledger-assessment-2026-05-07",
+  "tenant_id": "tenant-mullu-primary",
+  "total_confirmed": 11,
+  "total_failed": 0,
+  "total_disputed": 1,
+  "integrity_score": 0.94,
+  "assessed_at": "2026-05-07T10:20:00+00:00",
+  "metadata": {
+    "assessor": "ledger-audit-engine",
+    "scope": "daily"
+  }
+}

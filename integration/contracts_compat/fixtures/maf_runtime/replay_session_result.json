@@ -1,0 +1,28 @@
+{
+  "session_id": "replay-session-042",
+  "epoch_id": "epoch-2026-04-01",
+  "entries_replayed": 1,
+  "entries_matched": 1,
+  "entries_diverged": 0,
+  "entries_skipped": 0,
+  "verdict": "success",
+  "steps": [
+    {
+      "step_id": "replay-step-041",
+      "sequence": 41,
+      "kind": "checkpoint",
+      "verdict": "match",
+      "expected_payload": {
+        "checkpoint_id": "checkpoint-042",
+        "tick_number": 42
+      },
+      "actual_payload": {
+        "checkpoint_id": "checkpoint-042",
+        "tick_number": 42
+      },
+      "detail": "payload matched"
+    }
+  ],
+  "started_at": "2026-04-01T12:03:00+00:00",
+  "completed_at": "2026-04-01T12:04:00+00:00"
+}

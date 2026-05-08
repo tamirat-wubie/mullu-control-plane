@@ -1,0 +1,8 @@
+{
+  "entry_id": "queue-entry-42",
+  "job_id": "job-42",
+  "priority": "high",
+  "enqueued_at": "2025-01-01T01:00:00+00:00",
+  "assigned_to_person_id": "worker-7",
+  "assigned_to_team_id": "team-release"
+}

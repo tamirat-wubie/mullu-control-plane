@@ -42,6 +42,7 @@ from mcoi_runtime.app.software_receipt_observability import (
     register_software_receipt_observability,
 )
 from mcoi_runtime.app.software_receipt_review_queue import SoftwareReceiptReviewQueue
+from mcoi_runtime.app.engineering_puzzle_control import EngineeringPuzzleControlSurface
 from mcoi_runtime.core.review import ReviewEngine
 from mcoi_runtime.core.structured_logging import LogLevel
 from mcoi_runtime.core.event_spine import EventSpineEngine
@@ -304,5 +305,4 @@ _flush_state_on_shutdown = _lifecycle_bootstrap.flush_state_on_shutdown
 _restore_state_on_startup = _lifecycle_bootstrap.restore_state_on_startup
 _close_governance_stores = _lifecycle_bootstrap.close_governance_stores
 _startup_restored = _lifecycle_bootstrap.startup_restored
-
 

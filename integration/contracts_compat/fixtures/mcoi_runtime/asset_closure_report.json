@@ -1,0 +1,15 @@
+{
+  "report_id": "asset-closure-20260405",
+  "tenant_id": "tenant-mullu-primary",
+  "total_assets": 12,
+  "total_active": 9,
+  "total_retired": 2,
+  "total_assignments": 7,
+  "total_dependencies": 5,
+  "total_asset_value": 512000.0,
+  "closed_at": "2026-04-05T09:35:00+00:00",
+  "metadata": {
+    "closed_by": "asset-governance",
+    "scope": "tenant"
+  }
+}

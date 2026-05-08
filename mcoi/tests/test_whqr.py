@@ -223,4 +223,3 @@ def test_static_checks_detect_causal_cycles() -> None:
     assert not report.passed
     assert "causal_cycle" in {issue.code for issue in report.issues}
     assert len(report.issues) == 1
-

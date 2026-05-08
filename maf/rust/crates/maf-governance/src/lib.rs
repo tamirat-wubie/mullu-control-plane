@@ -14,7 +14,7 @@
 #![forbid(unsafe_code)]
 
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 
 // ===========================================================================
 // Enums
@@ -145,7 +145,7 @@ pub struct PolicyAction {
     pub action_id: String,
     pub kind: PolicyActionKind,
     #[serde(default)]
-    pub parameters: HashMap<String, serde_json::Value>,
+    pub parameters: BTreeMap<String, serde_json::Value>,
 }
 
 // ===========================================================================
@@ -170,7 +170,7 @@ pub struct PolicyRule {
     #[serde(default = "default_true")]
     pub enabled: bool,
     #[serde(default)]
-    pub metadata: HashMap<String, serde_json::Value>,
+    pub metadata: BTreeMap<String, serde_json::Value>,
 }
 
 fn default_true() -> bool {
@@ -208,7 +208,7 @@ pub struct PolicyBundle {
     pub rules: Vec<PolicyRule>,
     pub created_at: String,
     #[serde(default)]
-    pub metadata: HashMap<String, serde_json::Value>,
+    pub metadata: BTreeMap<String, serde_json::Value>,
 }
 
 impl PolicyBundle {
@@ -288,7 +288,7 @@ pub struct PolicyEvaluationTrace {
     pub trace_id: String,
     pub bundle_id: String,
     pub subject_id: String,
-    pub context_snapshot: HashMap<String, serde_json::Value>,
+    pub context_snapshot: BTreeMap<String, serde_json::Value>,
     pub rules_evaluated: u64,
     pub rules_matched: u64,
     pub rules_fired: u64,
@@ -298,7 +298,7 @@ pub struct PolicyEvaluationTrace {
     pub actions_produced: Vec<PolicyAction>,
     pub evaluated_at: String,
     #[serde(default)]
-    pub metadata: HashMap<String, serde_json::Value>,
+    pub metadata: BTreeMap<String, serde_json::Value>,
 }
 
 // ===========================================================================
@@ -382,7 +382,7 @@ mod tests {
             actions: vec![PolicyAction {
                 action_id: "a-1".to_string(),
                 kind: PolicyActionKind::SetAutonomy,
-                parameters: HashMap::new(),
+                parameters: BTreeMap::new(),
             }],
             scope: PolicyScope {
                 scope_id: "s-1".to_string(),
@@ -392,11 +392,28 @@ mod tests {
             },
             priority: 10,
             enabled: true,
-            metadata: HashMap::new(),
+            metadata: BTreeMap::new(),
         };
         let json = serde_json::to_string(&rule).unwrap();
         let back: PolicyRule = serde_json::from_str(&json).unwrap();
         assert_eq!(rule, back);
+    }
+
+    #[test]
+    fn governance_maps_serialize_in_lexicographic_key_order() {
+        let mut parameters = BTreeMap::new();
+        parameters.insert("zeta".to_string(), serde_json::json!(1));
+        parameters.insert("alpha".to_string(), serde_json::json!(2));
+
+        let action = PolicyAction {
+            action_id: "a-ordered".to_string(),
+            kind: PolicyActionKind::Custom,
+            parameters,
+        };
+
+        let json = serde_json::to_string(&action).unwrap();
+        assert!(json.contains(r#""parameters":{"alpha":2,"zeta":1}"#));
+        assert!(json.find(r#""alpha":2"#).unwrap() < json.find(r#""zeta":1"#).unwrap());
     }
 
     #[test]
@@ -414,7 +431,7 @@ mod tests {
             },
             rules: vec![],
             created_at: "2025-01-01T00:00:00+00:00".to_string(),
-            metadata: HashMap::new(),
+            metadata: BTreeMap::new(),
         };
         let json = serde_json::to_string(&bundle).unwrap();
         let back: PolicyBundle = serde_json::from_str(&json).unwrap();
@@ -466,7 +483,7 @@ mod tests {
             trace_id: "t-1".to_string(),
             bundle_id: "b-1".to_string(),
             subject_id: "subj-1".to_string(),
-            context_snapshot: HashMap::new(),
+            context_snapshot: BTreeMap::new(),
             rules_evaluated: 10,
             rules_matched: 3,
             rules_fired: 2,
@@ -475,7 +492,7 @@ mod tests {
             final_effect: PolicyEffect::Allow,
             actions_produced: vec![],
             evaluated_at: "2025-01-01T00:00:00+00:00".to_string(),
-            metadata: HashMap::new(),
+            metadata: BTreeMap::new(),
         };
         let json = serde_json::to_string(&trace).unwrap();
         let back: PolicyEvaluationTrace = serde_json::from_str(&json).unwrap();

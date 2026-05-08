@@ -1,0 +1,11 @@
+{
+  "tradeoff_id": "trade-42",
+  "comparison_id": "ucmp-42",
+  "chosen_option_id": "opt-safe",
+  "rejected_option_ids": [
+    "opt-fast"
+  ],
+  "tradeoff_direction": "favor_safety",
+  "rationale": "accepted slower path to preserve verification confidence",
+  "recorded_at": "2025-01-01T00:16:30+00:00"
+}

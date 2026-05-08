@@ -1,0 +1,16 @@
+{
+  "task_id": "human-task-case-042-review",
+  "tenant_id": "tenant-mullu-primary",
+  "assignee_ref": "reviewer-primary",
+  "status": "completed",
+  "scope": "case",
+  "scope_ref_id": "case-incident-042",
+  "title": "Review escalated recovery evidence",
+  "description": "Assess the governed recovery trace before case closure is authorized.",
+  "due_at": "2026-04-03T08:25:00+00:00",
+  "created_at": "2026-04-03T08:05:00+00:00",
+  "metadata": {
+    "queue": "case-review",
+    "priority": "high"
+  }
+}

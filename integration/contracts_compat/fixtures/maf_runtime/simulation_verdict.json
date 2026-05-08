@@ -1,0 +1,11 @@
+{
+  "verdict_id": "simver-42",
+  "comparison_id": "simcmp-1",
+  "verdict_type": "proceed_with_caution",
+  "recommended_option_id": "opt-safe",
+  "confidence": 0.87,
+  "reasons": [
+    "lowest projected incident probability",
+    "verification burden remains acceptable"
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "snapshot_id": "partner-snapshot-20260531",
+  "total_partners": 5,
+  "total_links": 8,
+  "total_agreements": 6,
+  "total_revenue_shares": 7,
+  "total_commitments": 9,
+  "total_health_snapshots": 5,
+  "total_decisions": 4,
+  "total_violations": 1,
+  "captured_at": "2026-05-31T21:00:00+00:00",
+  "metadata": {
+    "scope": "tenant",
+    "captured_by": "partner-runtime-monitor"
+  }
+}

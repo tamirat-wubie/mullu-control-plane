@@ -1,0 +1,12 @@
+{
+  "assignment_id": "asset-assignment-042",
+  "asset_id": "asset-runtime-042",
+  "scope_ref_id": "workspace-governance-042",
+  "scope_ref_type": "workspace",
+  "assigned_by": "asset-operator",
+  "assigned_at": "2026-04-05T09:12:00+00:00",
+  "metadata": {
+    "purpose": "governed-runtime-hosting",
+    "ticket": "ASSET-42"
+  }
+}

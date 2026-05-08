@@ -1,0 +1,12 @@
+{
+  "wallet_id": "wallet-settlement-ops-1",
+  "tenant_id": "tenant-mullu-primary",
+  "identity_ref": "ops-settlement-signer",
+  "status": "active",
+  "public_key_ref": "pk-settlement-ops-1",
+  "created_at": "2026-05-07T08:55:00+00:00",
+  "metadata": {
+    "network": "consortium",
+    "role": "signer"
+  }
+}

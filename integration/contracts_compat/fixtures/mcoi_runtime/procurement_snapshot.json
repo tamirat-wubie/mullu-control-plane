@@ -1,0 +1,16 @@
+{
+  "snapshot_id": "procurement-snapshot-20260505",
+  "total_vendors": 5,
+  "total_requests": 7,
+  "total_purchase_orders": 6,
+  "total_assessments": 5,
+  "total_commitments": 6,
+  "total_renewals": 3,
+  "total_violations": 1,
+  "total_procurement_value": 74250.0,
+  "captured_at": "2026-05-05T14:00:00+00:00",
+  "metadata": {
+    "scope": "tenant",
+    "captured_by": "procurement-runtime-monitor"
+  }
+}

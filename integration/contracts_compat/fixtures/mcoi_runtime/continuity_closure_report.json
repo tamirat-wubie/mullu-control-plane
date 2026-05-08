@@ -1,0 +1,16 @@
+{
+  "report_id": "closure-report-042",
+  "tenant_id": "tenant-1",
+  "total_plans": 6,
+  "total_disruptions": 1,
+  "total_failovers": 1,
+  "total_recoveries": 1,
+  "total_verifications_passed": 1,
+  "total_verifications_failed": 0,
+  "total_violations": 0,
+  "closed_at": "2026-04-03T08:21:00+00:00",
+  "metadata": {
+    "assessment_window": "release-042",
+    "scope": "service"
+  }
+}

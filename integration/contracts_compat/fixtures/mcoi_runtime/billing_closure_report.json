@@ -1,0 +1,16 @@
+{
+  "report_id": "billing-closure-20260430",
+  "account_id": "billing-account-042",
+  "tenant_id": "tenant-mullu-primary",
+  "total_invoices": 9,
+  "total_charges": 24,
+  "total_credits": 2,
+  "total_penalties": 1,
+  "total_disputes": 1,
+  "total_revenue": 19380.0,
+  "closed_at": "2026-04-30T23:59:00+00:00",
+  "metadata": {
+    "period": "2026-04",
+    "closed_by": "billing-governance"
+  }
+}

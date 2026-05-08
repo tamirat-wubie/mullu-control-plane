@@ -1,0 +1,15 @@
+{
+  "conflict_id": "conflict-recovery-042",
+  "goal_id": "goal-recovery-042",
+  "conflicting_ids": [
+    "assessment-primary",
+    "assessment-rollback"
+  ],
+  "strategy": "escalate",
+  "resolved": false,
+  "resolution_id": null,
+  "metadata": {
+    "severity": "medium",
+    "source": "recovery-merge"
+  }
+}

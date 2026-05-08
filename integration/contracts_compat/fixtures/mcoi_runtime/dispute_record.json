@@ -1,0 +1,14 @@
+{
+  "dispute_id": "dispute-invoice-042",
+  "invoice_id": "invoice-2026-042",
+  "account_id": "billing-account-042",
+  "status": "resolved_accepted",
+  "reason": "Customer contested excess workspace usage meters.",
+  "amount": 320.0,
+  "opened_at": "2026-04-10T09:00:00+00:00",
+  "resolved_at": "2026-04-12T15:30:00+00:00",
+  "metadata": {
+    "resolution": "partial_credit",
+    "reviewed_by": "billing-review"
+  }
+}

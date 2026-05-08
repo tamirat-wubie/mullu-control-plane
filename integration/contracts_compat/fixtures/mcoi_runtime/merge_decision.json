@@ -1,0 +1,11 @@
+{
+  "merge_id": "merge-recovery-042",
+  "goal_id": "goal-recovery-042",
+  "source_ids": [
+    "assessment-primary",
+    "assessment-dr"
+  ],
+  "outcome": "merged",
+  "reason": "Primary and failover assessments agree on the recovery path.",
+  "resolved_at": "2026-04-03T08:10:00+00:00"
+}

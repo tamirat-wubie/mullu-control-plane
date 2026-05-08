@@ -1,0 +1,14 @@
+{
+  "worker_id": "worker-7",
+  "name": "Selam Reviewer",
+  "roles": [
+    "role-reviewer",
+    "role-approver"
+  ],
+  "max_concurrent_jobs": 5,
+  "status": "available",
+  "metadata": {
+    "region": "us-east-1",
+    "shift": "day"
+  }
+}

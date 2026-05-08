@@ -32,11 +32,14 @@ from .software_change_receipt_store import (
     FileSoftwareChangeReceiptStore,
     SoftwareChangeReceiptStore,
 )
+from .team_registry_store import TeamRegistryState, TeamRegistryStore
+from .team_queue_store import TeamQueueStore
 from .temporal_scheduler_store import (
     FileTemporalSchedulerStore,
     TemporalSchedulerStore,
 )
 from .trace_store import TraceStore
+from .workforce_store import WorkforceRuntimeState, WorkforceStore
 from .workflow_store import WorkflowStore
 from .state_persistence import StatePersistence, StateSnapshot
 from ._serialization import deserialize_record, serialize_record
@@ -67,11 +70,16 @@ __all__ = [
     "FileSoftwareChangeReceiptStore",
     "FileTemporalSchedulerStore",
     "SoftwareChangeReceiptStore",
+    "TeamRegistryState",
+    "TeamRegistryStore",
+    "TeamQueueStore",
     "TemporalSchedulerStore",
     "StatePersistence",
     "StateSnapshot",
     "TraceNotFoundError",
     "TraceStore",
+    "WorkforceRuntimeState",
+    "WorkforceStore",
     "WorkflowStore",
     "deserialize_record",
     "serialize_record",

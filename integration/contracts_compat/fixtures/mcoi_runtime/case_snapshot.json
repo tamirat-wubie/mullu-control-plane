@@ -1,0 +1,16 @@
+{
+  "snapshot_id": "case-snapshot-incident-20260403",
+  "scope_ref_id": "tenant-mullu-primary",
+  "total_cases": 4,
+  "open_cases": 1,
+  "total_evidence": 9,
+  "total_reviews": 7,
+  "total_findings": 3,
+  "total_decisions": 4,
+  "total_violations": 1,
+  "captured_at": "2026-04-03T08:30:00+00:00",
+  "metadata": {
+    "captured_by": "case-runtime-audit",
+    "scope": "incident"
+  }
+}

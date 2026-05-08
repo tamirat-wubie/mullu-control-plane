@@ -1,0 +1,13 @@
+{
+  "proof_id": "settlement-proof-2026-042",
+  "tenant_id": "tenant-mullu-primary",
+  "transaction_ref": "ledger-transaction-2026-042",
+  "status": "confirmed",
+  "proof_hash": "sha256:settlement-proof-2026-042",
+  "verified_at": "2026-05-07T09:06:00+00:00",
+  "created_at": "2026-05-07T09:05:30+00:00",
+  "metadata": {
+    "verifier": "ledger-auditor-1",
+    "network": "consortium"
+  }
+}

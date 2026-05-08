@@ -13,7 +13,13 @@ import pytest
 from mcoi_runtime.app.bootstrap import bootstrap_runtime
 from mcoi_runtime.app.config import AppConfig
 from mcoi_runtime.app.console import render_workflow_summary
-from mcoi_runtime.app.operator_loop import OperatorLoop, SkillRequest, WorkflowRunReport
+from mcoi_runtime.app.operator_executors import _WorkflowStageExecutor
+from mcoi_runtime.app.operator_loop import (
+    OperatorLoop,
+    SkillRequest,
+    WorkflowResumeRequest,
+    WorkflowRunReport,
+)
 from mcoi_runtime.app.view_models import WorkflowSummaryView
 from mcoi_runtime.contracts.policy import PolicyDecisionStatus
 from mcoi_runtime.contracts.skill import (
@@ -239,11 +245,260 @@ class TestWorkflowRuntimeGoldenScenarios:
         assert report.status is WorkflowStatus.COMPLETED
         assert report.execution_id != ""
 
-        # Verify the record was persisted
+        # Verify the descriptor and final record were persisted.
+        loaded_descriptor = store.load_descriptor("wf-persist")
         loaded = store.load_execution_record(report.execution_id)
+        assert loaded_descriptor.workflow_id == "wf-persist"
+        assert loaded_descriptor.name == "skill-test"
         assert loaded.workflow_id == "wf-persist"
         assert loaded.status is WorkflowStatus.COMPLETED
         assert len(loaded.stage_results) == 2
+
+    def test_workflow_persistence_saves_intermediate_execution_states(self, tmp_path: Path):
+        """Workflow store captures start, intermediate, and final execution states."""
+        loop, store = _make_loop_with_store(tmp_path)
+        _register_skill(loop, "sk-stage-1", name="shell_command")
+        _register_skill(loop, "sk-stage-2", name="shell_command")
+        wf = _make_skill_workflow(
+            "wf-stage-persist",
+            first_skill_id="sk-stage-1",
+            second_skill_id="sk-stage-2",
+        )
+        request = _make_request(
+            "req-stage-persist",
+            "goal-stage-persist",
+            input_context=_workflow_input_context("wf-stage-persist"),
+        )
+
+        saved_records: list[tuple[str, int]] = []
+        original_save = store.save_execution_record
+
+        def capture_save(record):
+            saved_records.append((record.status.value, len(record.stage_results)))
+            original_save(record)
+
+        store.save_execution_record = capture_save
+        report = loop.run_workflow(request, wf)
+
+        assert report.status is WorkflowStatus.COMPLETED
+        assert saved_records[0] == ("running", 0)
+        assert saved_records[1] == ("running", 1)
+        assert saved_records[-1] == ("completed", 2)
+        assert len(saved_records) == 3
+
+    def test_loaded_suspended_record_can_resume_to_completion(self, tmp_path: Path):
+        """A persisted suspended workflow record can be loaded and resumed explicitly."""
+        loop, store = _make_loop_with_store(tmp_path)
+        _register_skill(loop, "sk-resume-1", name="shell_command")
+        _register_skill(loop, "sk-resume-2", name="shell_command")
+        wf = _make_skill_workflow(
+            "wf-resume",
+            first_skill_id="sk-resume-1",
+            second_skill_id="sk-resume-2",
+        )
+        request = _make_request(
+            "req-resume",
+            "goal-resume",
+            input_context=_workflow_input_context("wf-resume"),
+        )
+        workflow_context = dict(request.input_context)
+        stage_executor = _WorkflowStageExecutor(loop=loop, request=request)
+
+        initial = loop.runtime.workflow_engine.start_workflow(wf, context=workflow_context)
+        running = loop.runtime.workflow_engine.execute_next_stage(
+            wf,
+            initial,
+            stage_executor,
+            context=workflow_context,
+        )
+        suspended = loop.runtime.workflow_engine.suspend_workflow(
+            running,
+            reason="explicit operator pause",
+        )
+        store.save_descriptor(wf)
+        store.save_execution_record(suspended)
+
+        loaded = store.load_execution_record(suspended.execution_id)
+        resumed = loop.runtime.workflow_engine.resume_workflow(wf, loaded)
+        completed = loop.runtime.workflow_engine.execute_next_stage(
+            wf,
+            resumed,
+            stage_executor,
+            context=workflow_context,
+        )
+
+        assert running.status is WorkflowStatus.RUNNING
+        assert len(running.stage_results) == 1
+        assert loaded.status is WorkflowStatus.SUSPENDED
+        assert loaded == suspended
+        assert resumed.status is WorkflowStatus.RUNNING
+        assert completed.status is WorkflowStatus.COMPLETED
+        assert len(completed.stage_results) == 2
+
+    def test_operator_loop_can_resume_persisted_workflow(self, tmp_path: Path):
+        """Operator loop exposes an explicit governed workflow-resume path."""
+        loop, store = _make_loop_with_store(tmp_path)
+        _register_skill(loop, "sk-loop-resume-1", name="shell_command")
+        _register_skill(loop, "sk-loop-resume-2", name="shell_command")
+        wf = _make_skill_workflow(
+            "wf-loop-resume",
+            first_skill_id="sk-loop-resume-1",
+            second_skill_id="sk-loop-resume-2",
+        )
+        request = _make_request(
+            "req-loop-resume",
+            "goal-loop-resume",
+            input_context=_workflow_input_context("wf-loop-resume"),
+        )
+        workflow_context = dict(request.input_context)
+        stage_executor = _WorkflowStageExecutor(loop=loop, request=request)
+
+        store.save_descriptor(wf)
+        initial = loop.runtime.workflow_engine.start_workflow(wf, context=workflow_context)
+        running = loop.runtime.workflow_engine.execute_next_stage(
+            wf,
+            initial,
+            stage_executor,
+            context=workflow_context,
+        )
+        suspended = loop.runtime.workflow_engine.suspend_workflow(
+            running,
+            reason="operator requested pause",
+        )
+        store.save_execution_record(suspended)
+
+        report = loop.resume_workflow(
+            WorkflowResumeRequest(
+                request_id="resume-001",
+                subject_id="operator-1",
+                goal_id="goal-loop-resume",
+                workflow_id="wf-loop-resume",
+                execution_id=suspended.execution_id,
+                input_context=workflow_context,
+            )
+        )
+
+        assert report.workflow_id == "wf-loop-resume"
+        assert report.execution_id == suspended.execution_id
+        assert report.status is WorkflowStatus.COMPLETED
+        assert len(report.stage_summaries) == 2
+
+    def test_resume_workflow_fails_closed_without_store(self):
+        """Resume fails closed when no workflow store is configured."""
+        loop = _make_loop()
+
+        report = loop.resume_workflow(
+            WorkflowResumeRequest(
+                request_id="resume-no-store",
+                subject_id="operator-1",
+                goal_id="goal-no-store",
+                workflow_id="wf-no-store",
+                execution_id="exec-no-store",
+            )
+        )
+
+        assert report.status is WorkflowStatus.FAILED
+        assert len(report.errors) == 1
+        assert report.errors[0].error_code == "workflow_store_not_configured"
+
+    def test_resume_workflow_fails_closed_on_workflow_mismatch(self, tmp_path: Path):
+        """Resume rejects execution records that do not match the requested workflow."""
+        loop, store = _make_loop_with_store(tmp_path)
+        _register_skill(loop, "sk-mismatch-1", name="shell_command")
+        wf = _make_skill_workflow(
+            "wf-mismatch-real",
+            first_skill_id="sk-mismatch-1",
+            second_skill_id="sk-mismatch-1",
+        )
+        other_wf = _make_skill_workflow(
+            "wf-mismatch-requested",
+            first_skill_id="sk-mismatch-1",
+            second_skill_id="sk-mismatch-1",
+        )
+        request = _make_request(
+            "req-mismatch",
+            "goal-mismatch",
+            input_context=_workflow_input_context("wf-mismatch-real"),
+        )
+        workflow_context = dict(request.input_context)
+
+        store.save_descriptor(wf)
+        store.save_descriptor(other_wf)
+        record = loop.runtime.workflow_engine.start_workflow(wf, context=workflow_context)
+        store.save_execution_record(record)
+
+        report = loop.resume_workflow(
+            WorkflowResumeRequest(
+                request_id="resume-mismatch",
+                subject_id="operator-1",
+                goal_id="goal-mismatch",
+                workflow_id="wf-mismatch-requested",
+                execution_id=record.execution_id,
+                input_context=workflow_context,
+            )
+        )
+
+        assert report.status is WorkflowStatus.FAILED
+        assert len(report.errors) == 1
+        assert report.errors[0].error_code == "workflow_resume_mismatch"
+        assert report.stage_summaries == ()
+
+    def test_resume_workflow_fails_closed_for_completed_record(self, tmp_path: Path):
+        """Resume rejects a persisted completed workflow execution record."""
+        loop, _store = _make_loop_with_store(tmp_path)
+        _register_skill(loop, "sk-complete-1", name="shell_command")
+        _register_skill(loop, "sk-complete-2", name="shell_command")
+        wf = _make_skill_workflow(
+            "wf-completed-resume",
+            first_skill_id="sk-complete-1",
+            second_skill_id="sk-complete-2",
+        )
+        request = _make_request(
+            "req-completed-resume",
+            "goal-completed-resume",
+            input_context=_workflow_input_context("wf-completed-resume"),
+        )
+
+        completed_report = loop.run_workflow(request, wf)
+        resumed_report = loop.resume_workflow(
+            WorkflowResumeRequest(
+                request_id="resume-completed",
+                subject_id="operator-1",
+                goal_id="goal-completed-resume",
+                workflow_id="wf-completed-resume",
+                execution_id=completed_report.execution_id,
+                input_context=dict(request.input_context),
+            )
+        )
+
+        assert completed_report.status is WorkflowStatus.COMPLETED
+        assert resumed_report.status is WorkflowStatus.FAILED
+        assert len(resumed_report.stage_summaries) == 2
+        assert resumed_report.errors[0].error_code == "workflow_resume_invalid_state"
+        assert "completed workflow" in resumed_report.errors[0].message
+
+    def test_resume_workflow_fails_closed_for_failed_record(self, tmp_path: Path):
+        """Resume rejects a persisted failed workflow execution record."""
+        loop, _store = _make_loop_with_store(tmp_path)
+        wf = _make_linear_workflow("wf-failed-resume")
+        request = _make_request("req-failed-resume", "goal-failed-resume")
+
+        failed_report = loop.run_workflow(request, wf)
+        resumed_report = loop.resume_workflow(
+            WorkflowResumeRequest(
+                request_id="resume-failed",
+                subject_id="operator-1",
+                goal_id="goal-failed-resume",
+                workflow_id="wf-failed-resume",
+                execution_id=failed_report.execution_id,
+            )
+        )
+
+        assert failed_report.status is WorkflowStatus.FAILED
+        assert resumed_report.status is WorkflowStatus.FAILED
+        assert len(resumed_report.stage_summaries) == 1
+        assert resumed_report.errors[0].error_code == "workflow_resume_invalid_state"
+        assert "failed workflow" in resumed_report.errors[0].message
 
 
 class TestWorkflowGovernanceChecks:

@@ -14,7 +14,7 @@
 #![forbid(unsafe_code)]
 
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 
 // ===========================================================================
 // Enums
@@ -111,7 +111,7 @@ pub struct SupervisorDecision {
     pub governance_approved: bool,
     pub decided_at: String,
     #[serde(default)]
-    pub metadata: HashMap<String, serde_json::Value>,
+    pub metadata: BTreeMap<String, serde_json::Value>,
 }
 
 /// Immutable record of one supervisor tick cycle.
@@ -218,6 +218,17 @@ pub struct LivelockRecord {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use serde::de::DeserializeOwned;
+
+    fn assert_fixture_round_trip<T>(fixture_json: &str)
+    where
+        T: DeserializeOwned + Serialize,
+    {
+        let fixture_value: serde_json::Value = serde_json::from_str(fixture_json).unwrap();
+        let parsed: T = serde_json::from_str(fixture_json).unwrap();
+        let round_trip_value = serde_json::to_value(parsed).unwrap();
+        assert_eq!(fixture_value, round_trip_value);
+    }
 
     #[test]
     fn supervisor_phase_serializes_to_snake_case() {
@@ -270,6 +281,15 @@ mod tests {
     }
 
     #[test]
+    fn canonical_supervisor_policy_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/supervisor_policy.json"
+        ));
+        assert_fixture_round_trip::<SupervisorPolicy>(fixture_json);
+    }
+
+    #[test]
     fn supervisor_decision_round_trips() {
         let decision = SupervisorDecision {
             decision_id: "d-1".to_string(),
@@ -278,11 +298,31 @@ mod tests {
             reason: "pending obligation".to_string(),
             governance_approved: true,
             decided_at: "2025-01-01T00:00:00+00:00".to_string(),
-            metadata: HashMap::new(),
+            metadata: BTreeMap::new(),
         };
         let json = serde_json::to_string(&decision).unwrap();
         let back: SupervisorDecision = serde_json::from_str(&json).unwrap();
         assert_eq!(decision, back);
+    }
+
+    #[test]
+    fn supervisor_metadata_serializes_in_lexicographic_key_order() {
+        let mut metadata = BTreeMap::new();
+        metadata.insert("zeta".to_string(), serde_json::json!(1));
+        metadata.insert("alpha".to_string(), serde_json::json!(2));
+        let decision = SupervisorDecision {
+            decision_id: "d-ordered".to_string(),
+            action_type: "checkpoint".to_string(),
+            target_id: "runtime".to_string(),
+            reason: "deterministic serialization check".to_string(),
+            governance_approved: true,
+            decided_at: "2025-01-01T00:00:00+00:00".to_string(),
+            metadata,
+        };
+
+        let json = serde_json::to_string(&decision).unwrap();
+        assert!(json.contains(r#""metadata":{"alpha":2,"zeta":1}"#));
+        assert!(json.find(r#""alpha":2"#).unwrap() < json.find(r#""zeta":1"#).unwrap());
     }
 
     #[test]
@@ -312,6 +352,15 @@ mod tests {
     }
 
     #[test]
+    fn canonical_supervisor_tick_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/supervisor_tick.json"
+        ));
+        assert_fixture_round_trip::<SupervisorTick>(fixture_json);
+    }
+
+    #[test]
     fn supervisor_health_round_trips() {
         let health = SupervisorHealth {
             health_id: "h-1".to_string(),
@@ -332,6 +381,15 @@ mod tests {
     }
 
     #[test]
+    fn canonical_supervisor_health_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/supervisor_health.json"
+        ));
+        assert_fixture_round_trip::<SupervisorHealth>(fixture_json);
+    }
+
+    #[test]
     fn runtime_heartbeat_round_trips() {
         let hb = RuntimeHeartbeat {
             heartbeat_id: "hb-1".to_string(),
@@ -346,6 +404,15 @@ mod tests {
         let json = serde_json::to_string(&hb).unwrap();
         let back: RuntimeHeartbeat = serde_json::from_str(&json).unwrap();
         assert_eq!(hb, back);
+    }
+
+    #[test]
+    fn canonical_runtime_heartbeat_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/runtime_heartbeat.json"
+        ));
+        assert_fixture_round_trip::<RuntimeHeartbeat>(fixture_json);
     }
 
     #[test]
@@ -369,6 +436,15 @@ mod tests {
     }
 
     #[test]
+    fn canonical_supervisor_checkpoint_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/supervisor_checkpoint.json"
+        ));
+        assert_fixture_round_trip::<SupervisorCheckpoint>(fixture_json);
+    }
+
+    #[test]
     fn livelock_record_round_trips() {
         let ll = LivelockRecord {
             livelock_id: "ll-1".to_string(),
@@ -383,6 +459,15 @@ mod tests {
         let json = serde_json::to_string(&ll).unwrap();
         let back: LivelockRecord = serde_json::from_str(&json).unwrap();
         assert_eq!(ll, back);
+    }
+
+    #[test]
+    fn canonical_livelock_record_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/livelock_record.json"
+        ));
+        assert_fixture_round_trip::<LivelockRecord>(fixture_json);
     }
 
     // --- Cross-format compatibility ---

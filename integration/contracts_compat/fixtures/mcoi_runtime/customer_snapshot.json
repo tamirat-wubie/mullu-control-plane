@@ -1,0 +1,16 @@
+{
+  "snapshot_id": "customer-snapshot-20260430",
+  "total_customers": 4,
+  "total_accounts": 6,
+  "total_products": 5,
+  "total_subscriptions": 7,
+  "total_entitlements": 12,
+  "total_health_snapshots": 6,
+  "total_decisions": 3,
+  "total_violations": 1,
+  "captured_at": "2026-04-30T23:00:00+00:00",
+  "metadata": {
+    "scope": "tenant",
+    "captured_by": "customer-runtime-monitor"
+  }
+}
