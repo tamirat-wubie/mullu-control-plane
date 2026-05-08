@@ -7,6 +7,10 @@
 - [ ] Config profile matches pilot workflow requirements
 - [ ] Autonomy mode is explicitly set in config
 - [ ] Example request files are valid JSON and pass `scripts/validate_artifacts.py --strict`
+- [ ] Public naming readiness passes `scripts/validate_public_naming_readiness.py`
+- [ ] Public naming review packet has been checked if pilot material is external-facing
+- [ ] Public naming artifact manifest is intact before sharing pilot material
+- [ ] Pilot materials do not present `Mullu` as paid public launch-ready before clearance closes
 
 ## Per-pilot verification
 
@@ -48,6 +52,8 @@
 - [ ] All reports have autonomy_mode populated
 - [ ] Pilot witnesses remain aligned with `PILOT_WORKFLOWS_v0.1.md`
 - [ ] Known limitations reviewed and accepted
+- [ ] Public naming clearance status reviewed before any external-facing pilot material is shared
+- [ ] `docs/PUBLIC_NAMING_REVIEW_PACKET.md` confirms no paid public launch approval exists
 
 ## Known acceptable limitations (v0.1)
 
@@ -55,3 +61,4 @@
 - Provider IDs are None when no providers are registered
 - Skill execution through governed path may fail on template validation
 - This is expected behavior, not a bug
+- `Mullu` is internally aligned as the flagship product name but remains blocked for paid public launch until official clearance closes

@@ -651,6 +651,18 @@
       "path": "schemas/world_state.schema.json",
       "urn": "urn:mullusi:schema:world-state:1",
       "surface": "world"
+    },
+    {
+      "schema_id": "public-naming-readiness",
+      "path": "schemas/public_naming_readiness.schema.json",
+      "urn": "urn:mullusi:schema:public-naming-readiness:1",
+      "surface": "release"
+    },
+    {
+      "schema_id": "mullu-name-clearance-draft",
+      "path": "schemas/mullu_name_clearance_draft.schema.json",
+      "urn": "urn:mullusi:schema:mullu-name-clearance-draft:1",
+      "surface": "release"
     }
   ],
   "uri_schemes": [
