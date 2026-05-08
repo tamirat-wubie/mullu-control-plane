@@ -1,4 +1,4 @@
-﻿"""Purpose: issue terminal closure certificates for governed MIL dispatch results.
+"""Purpose: issue terminal closure certificates for governed MIL dispatch results.
 Governance scope: close MIL execution only after governed dispatch, verification synthesis, and effect reconciliation.
 Dependencies: MIL contracts, governed dispatcher result, verification, effect assurance, evidence, and terminal closure certifier.
 Invariants: blocked or missing execution results fail closed; committed certificates require succeeded execution and MATCH reconciliation.
@@ -46,7 +46,7 @@ def _reconciliation(program:MILProgram, execution:ExecutionResult, verification:
     matched=tuple(effect.name for effect in execution.actual_effects) if execution.status is ExecutionOutcome.SUCCEEDED else ()
     missing=() if execution.status is ExecutionOutcome.SUCCEEDED else ("mil_effect_commit",)
     status=ReconciliationStatus.MATCH if execution.status is ExecutionOutcome.SUCCEEDED else ReconciliationStatus.MISMATCH
-    return EffectReconciliation(reconciliation_id=stable_identifier("mil-reconciliation", {"program_id":program.program_id,"execution_id":execution.execution_id,"status":status.value}), command_id=program.program_id, effect_plan_id=f"mil-effect-plan:{program.program_id}", status=status, matched_effects=matched or ("mil_dispatch_completed",), missing_effects=missing, unexpected_effects=(), verification_result_id=verification.verification_id, case_id=None if status is ReconciliationStatus.MATCH else (case_id or f"case:{program.program_id}"), decided_at=execution.finished_at)
+    return EffectReconciliation(reconciliation_id=stable_identifier("mil-reconciliation", {"program_id":program.program_id,"execution_id":execution.execution_id,"status":status.value}), command_id=execution.goal_id, effect_plan_id=f"mil-effect-plan:{program.program_id}", status=status, matched_effects=matched or ("mil_dispatch_completed",), missing_effects=missing, unexpected_effects=(), verification_result_id=verification.verification_id, case_id=None if status is ReconciliationStatus.MATCH else (case_id or f"case:{program.program_id}"), decided_at=execution.finished_at)
 
 def _evidence_refs(verification:VerificationResult)->tuple[str,...]:
     refs=tuple(e.uri for e in verification.evidence if e.uri)
