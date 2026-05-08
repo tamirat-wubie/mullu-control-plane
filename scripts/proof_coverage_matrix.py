@@ -191,6 +191,46 @@ def proof_coverage_matrix() -> dict[str, Any]:
             "Budget and cost surfaces expose bounded read models over governed spend state.",
         ),
         _surface(
+            "tenant_governance_lifecycle",
+            [
+                "/api/v1/tenant/budget",
+                "/api/v1/tenant/{tenant_id}/budget",
+                "/api/v1/tenant/{tenant_id}/ledger",
+                "/api/v1/tenant/{tenant_id}/summary",
+                "/api/v1/tenants",
+                "/api/v1/tenant/register",
+                "/api/v1/tenant/{tenant_id}/status",
+                "/api/v1/tenant/{tenant_id}/gate",
+                "/api/v1/tenant/gates",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "mcoi/mcoi_runtime/app/routers/tenant.py",
+                "mcoi/mcoi_runtime/governance/guards/budget.py",
+                "mcoi/mcoi_runtime/governance/guards/tenant_gating.py",
+                "mcoi/tests/test_server_phase202.py",
+                "mcoi/tests/test_governance_endpoints.py",
+                "mcoi/tests/test_tenant_budget.py",
+                "mcoi/tests/test_tenant_gating.py",
+                "mcoi/tests/test_tenant_ledger.py",
+            ],
+            "Tenant governance lifecycle routes bind budget mutation, tenant ledger and budget read models, registration, status transitions, and gate summaries to governed responses with audit records and bounded action proofs.",
+            [
+                "tenant_budget_create_emits_action_proof",
+                "tenant_budget_create_records_audit",
+                "tenant_budget_read_models_scoped_by_tenant",
+                "tenant_ledger_queries_bounded",
+                "tenant_registry_lifecycle_errors_sanitized",
+                "tenant_register_emits_action_proof",
+                "tenant_status_update_emits_action_proof",
+                "tenant_gate_read_models_governed",
+                "tenant_gate_persistence_read_model_included",
+            ],
+        ),
+        _surface(
             "operator_console_read_models",
             [
                 "/api/v1/console",
@@ -2090,6 +2130,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
         {
             "action_id": "classify_audit_chain_api",
             "surfaces": ["audit_chain_api"],
+            "status": "closed",
+        },
+        {
+            "action_id": "classify_tenant_governance_lifecycle_routes",
+            "surfaces": ["tenant_governance_lifecycle"],
             "status": "closed",
         },
         {
