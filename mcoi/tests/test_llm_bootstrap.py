@@ -1,4 +1,4 @@
-"""Phase 200A — LLM bootstrap wiring tests."""
+"""Phase 200A - LLM bootstrap wiring tests."""
 
 import os
 import pytest
@@ -274,7 +274,7 @@ class TestBootstrapLLM:
             provider_registry=registry,
             model_engine=engine,
         )
-        # Stub backend registered — stub models should be available
+        # Stub backend registered - stub models should be available
         assert len(result.registered_models) >= 0  # May or may not match model names
 
     def test_duplicate_model_registration_recorded_as_skip(self):
@@ -577,7 +577,7 @@ class TestLLMConfigFromEnv:
         assert config.default_backend == "stub"
 
     def test_stub_default_silent_in_dev(self, monkeypatch):
-        """No env vars set, dev environment → stub fallback is silent."""
+        """No env vars set, dev environment -> stub fallback is silent."""
         monkeypatch.delenv("MULLU_ENV", raising=False)
         for key in LLM_ENV_KEYS:
             monkeypatch.delenv(key, raising=False)
@@ -585,7 +585,7 @@ class TestLLMConfigFromEnv:
         assert config.default_backend == "stub"
 
     def test_anthropic_key_overrides_stub_in_production(self, monkeypatch):
-        """Production with API key → real backend, no error."""
+        """Production with API key -> real backend, no error."""
         monkeypatch.setenv("MULLU_ENV", "production")
         monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
         monkeypatch.delenv("MULLU_LLM_BACKEND", raising=False)

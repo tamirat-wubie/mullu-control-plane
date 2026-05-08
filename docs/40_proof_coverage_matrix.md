@@ -15,6 +15,7 @@ document is the operator-readable witness.
 | `llm_completion` | /api/v1/complete, /api/v1/complete/safe, /api/v1/complete/auto | request_proof | action_proof | none | audit_chain | witnessed | Completion routes are governed through budget, model routing, and proof bridge checks. |
 | `llm_chat_workflow` | /api/v1/chat, /api/v1/chat/workflow, /api/v1/chat/workflow/history | request_proof | action_proof | none | audit_chain | witnessed | Chat and workflow routes preserve governed request and action proof boundaries. |
 | `cost_budget_read_models` | /api/v1/budget, /api/v1/costs, /api/v1/costs/by-model, /api/v1/costs/top-spenders, /api/v1/costs/{tenant_id}, /api/v1/costs/{tenant_id}/projection | read_model | read_model | none | audit_chain | witnessed | Budget and cost surfaces expose bounded read models over governed spend state. |
+| `tenant_governance_lifecycle` | /api/v1/tenant/budget, /api/v1/tenant/{tenant_id}/budget, /api/v1/tenant/{tenant_id}/ledger, /api/v1/tenant/{tenant_id}/summary, /api/v1/tenants, /api/v1/tenant/register, /api/v1/tenant/{tenant_id}/status, /api/v1/tenant/{tenant_id}/gate, /api/v1/tenant/gates | request_proof | action_proof | tenant_budget_create_emits_action_proof, tenant_budget_create_records_audit, tenant_budget_read_models_scoped_by_tenant, tenant_ledger_queries_bounded, tenant_registry_lifecycle_errors_sanitized, tenant_register_emits_action_proof, tenant_status_update_emits_action_proof, tenant_gate_read_models_governed, tenant_gate_persistence_read_model_included | audit_chain | witnessed | Tenant governance lifecycle routes bind budget mutation, tenant ledger and budget read models, registration, status transitions, and gate summaries to governed responses with audit records and bounded action proofs. |
 | `operator_console_read_models` | /api/v1/console, /api/v1/console/home, /api/v1/console/runs, /api/v1/console/audit, /api/v1/console/checkpoints, /api/v1/console/providers, /api/v1/console/scheduler | read_model | read_model | console_home_returns_governed_runtime_vitals, console_runs_bounds_recent_audit_entries, console_audit_exposes_chain_intact_read_model, console_checkpoints_expose_persisted_state_summary, console_provider_and_scheduler_views_are_read_only | audit_chain | witnessed | Operator console routes expose bounded read-only runtime, audit, checkpoint, provider, scheduler, and aggregate views with governed response witnesses. |
 | `model_experiment_control` | /api/v1/models, /api/v1/ab-test, /api/v1/ab-test/summary | request_proof | action_proof | none | audit_chain | witnessed | Model catalog and experiment control routes are declared as governed control surfaces. |
 | `policy_version_registry` | /api/v1/policies/{policy_id}/versions, /api/v1/policies/{policy_id}/versions/{version}, /api/v1/policies/{policy_id}/versions/{version}/promote, /api/v1/policies/{policy_id}/rollback, /api/v1/policies/{policy_id}/diff, /api/v1/policies/{policy_id}/shadow/{shadow_version} | request_proof | action_proof | none | audit_chain | witnessed | Policy version routes expose immutable artifact registration, promotion, rollback, diff, and shadow evaluation. |
@@ -42,7 +43,6 @@ document is the operator-readable witness.
 | `agent_identity` | AgentIdentityRegistry.register, AgentIdentityRegistry.evaluate, AgentIdentityRegistry.record_outcome, AgentIdentity | request_proof | action_proof | owner_tenant_identity_required, capability_scope_conflict_denied, self_approval_forbidden, policy_mutation_forbidden, delegation_requires_lease, agent_budget_enforced, reputation_update_requires_evidence, agent_identity_schema_valid | audit_chain | witnessed | Agent identity binds user-owned agents to owner, tenant, role, capability scopes, budget, memory scope, approval scope, delegation scope, evidence history, and reputation. |
 | `claim_verification` | ClaimVerificationEngine.verify, ClaimNode, ClaimVerificationReport | request_proof | action_proof | claim_type_declared, source_evidence_required, contradictions_block_execution, stale_claims_block_execution, high_risk_requires_independent_support, claim_verification_schema_valid | audit_chain | witnessed | Claim verification reports distinguish observed facts, user claims, model inferences, external source claims, verified results, stale results, and contradicted results before planning or execution use. |
 | `governed_connector_framework` | /api/v1/connectors, /api/v1/connectors/history, /api/v1/connectors/invoke, /api/v1/connectors/register, /api/v1/connectors/summary, /api/v1/connectors/{connector_id}/disable, /api/v1/connectors/{connector_id}/enable | request_proof | action_proof | connector_registration_typed, connector_invocation_guard_chain_checked, connector_lifecycle_disable_enable_bounded, connector_history_summary_bounded, connector_errors_sanitized, connector_invocation_audited | audit_chain | witnessed | Governed connector routes register typed connector definitions, invoke handlers through guard-chain admission, bound lifecycle enable/disable controls, expose bounded list/history/summary read models, and sanitize connector errors before returning operator-visible receipts. |
-| `tenant_governance_lifecycle` | /api/v1/tenant/budget, /api/v1/tenant/gates, /api/v1/tenant/register, /api/v1/tenant/{tenant_id}/budget, /api/v1/tenant/{tenant_id}/gate, /api/v1/tenant/{tenant_id}/ledger, /api/v1/tenant/{tenant_id}/status, /api/v1/tenant/{tenant_id}/summary | request_proof | action_proof | tenant_budget_action_proof_emitted, tenant_budget_read_model_bounded, tenant_ledger_summary_bounded, tenant_register_status_action_proof_emitted, tenant_lifecycle_errors_sanitized, tenant_gate_read_models_bounded, tenant_governance_actions_audited | audit_chain | witnessed | Tenant governance lifecycle routes create action-proofed tenant budgets and lifecycle gates, expose bounded budget, ledger, summary, and gate read models, sanitize lifecycle errors, and audit tenant registration, status, and budget mutations. |
 | `connector_self_healing` | ConnectorSelfHealingEngine.evaluate, ConnectorFailure, ConnectorHealingReceipt | request_proof | action_proof | provider_success_not_assumed, write_failures_require_operator_review, missing_receipt_revokes_capability, fallback_provider_requires_certification, read_only_degradation_bounded, connector_self_healing_schema_valid | audit_chain | witnessed | Connector self-healing emits bounded non-terminal recovery receipts for provider failures, retries, fallback providers, read-only degradation, incident opening, and capability revocation. |
 | `collaboration_cases` | CollaborationCaseManager.open_case, CollaborationCaseManager.close_case, CollaborationControl | request_proof | action_proof | approval_separation_required, pending_controls_block_case_closure, decider_authority_required, case_closure_not_terminal_command_closure, collaboration_case_schema_valid | audit_chain | witnessed | Collaboration cases bind requester separation, approval controls, decider authority, evidence hashing, and non-terminal case closure into governed operational casework. |
 | `capability_maturity` | CapabilityMaturityAssessor.assess, CapabilityMaturityAssessment | request_proof | action_proof | maturity_derived_from_evidence, effect_bearing_c6_requires_live_write, production_requires_c6_or_c7, autonomy_requires_c7, capability_maturity_schema_valid | audit_chain | witnessed | Capability maturity derives production and autonomy readiness from explicit evidence, reports missing C6/C7 proof, and rejects overclaimed autonomy states. |
@@ -93,8 +93,8 @@ Declared route coverage:
 |---|---:|
 | Proof-relevant declared routes | 315 |
 | Proven routes | 5 |
-| Witnessed routes | 140 |
-| Unclassified declared routes | 170 |
+| Witnessed routes | 141 |
+| Unclassified declared routes | 169 |
 
 The canonical JSON witness lists every proof-relevant declared route under
 `route_coverage.routes`. Routes mapped to `unclassified_declared_route` carry
@@ -129,23 +129,23 @@ Resolved closure actions:
 13. `classify_data_governance_routes`
 14. `classify_compliance_evidence_exports`
 15. `classify_audit_chain_api`
-16. `classify_runbook_learning_routes`
-17. `publish_software_outcome_learning_contract`
-18. `publish_runtime_conformance_attestation`
-19. `publish_production_evidence_plane`
-20. `publish_capability_plan_evidence_bundles`
-21. `publish_deployment_orchestration_receipt_contract`
-22. `publish_runtime_reflex_engine_read_models`
-23. `publish_governed_operational_intelligence_witnesses`
-24. `classify_world_state_knowledge_routes`
-25. `classify_policy_simulation_routes`
-26. `publish_capability_forge_candidate_contract`
-27. `publish_capability_maturity_assessment_contract`
-28. `publish_networked_worker_mesh_contract`
-29. `publish_agent_identity_contract`
-30. `publish_claim_verification_report_contract`
-31. `classify_governed_connector_routes`
-32. `classify_tenant_governance_routes`
+16. `classify_tenant_governance_lifecycle_routes`
+17. `classify_runbook_learning_routes`
+18. `publish_software_outcome_learning_contract`
+19. `publish_runtime_conformance_attestation`
+20. `publish_production_evidence_plane`
+21. `publish_capability_plan_evidence_bundles`
+22. `publish_deployment_orchestration_receipt_contract`
+23. `publish_runtime_reflex_engine_read_models`
+24. `publish_governed_operational_intelligence_witnesses`
+25. `classify_world_state_knowledge_routes`
+26. `classify_policy_simulation_routes`
+27. `publish_capability_forge_candidate_contract`
+28. `publish_capability_maturity_assessment_contract`
+29. `publish_networked_worker_mesh_contract`
+30. `publish_agent_identity_contract`
+31. `publish_claim_verification_report_contract`
+32. `classify_governed_connector_routes`
 33. `publish_connector_self_healing_receipt_contract`
 34. `publish_collaboration_case_contract`
 35. `publish_capability_maturity_contract`
@@ -183,6 +183,6 @@ Open closure actions:
 
 STATUS:
   Completeness: 100%
-  Invariants verified: route declarations, route-level coverage classification, coverage levels, coverage states, closure action mapping, gateway runtime witness mapping, operator console read-model mapping, world-state knowledge route mapping, policy simulation route mapping, claim verification report contract mapping, governed connector route mapping, tenant governance route mapping, collaboration case contract mapping, connector self-healing receipt contract mapping, physical action receipt contract mapping, temporal evidence freshness contract mapping, temporal reapproval contract mapping, temporal dispatch window contract mapping, temporal budget window contract mapping, temporal causal order contract mapping, temporal monotonic duration contract mapping, temporal accepted-risk expiry contract mapping, temporal credential expiry contract mapping, temporal retention window mapping, temporal rate-limit window contract mapping, temporal retry window contract mapping, temporal memory contract mapping, temporal memory refresh contract mapping, physical worker canary mapping, schema contract validation, deployment orchestration receipt schema contract
-  Open issues: 170 proof-relevant declared routes remain unclassified and are marked unproven in the machine witness
+  Invariants verified: route declarations, route-level coverage classification, coverage levels, coverage states, closure action mapping, gateway runtime witness mapping, tenant governance lifecycle route mapping, operator console read-model mapping, world-state knowledge route mapping, policy simulation route mapping, claim verification report contract mapping, governed connector route mapping, collaboration case contract mapping, connector self-healing receipt contract mapping, physical action receipt contract mapping, temporal evidence freshness contract mapping, temporal reapproval contract mapping, temporal dispatch window contract mapping, temporal budget window contract mapping, temporal causal order contract mapping, temporal monotonic duration contract mapping, temporal accepted-risk expiry contract mapping, temporal credential expiry contract mapping, temporal retention window mapping, temporal rate-limit window contract mapping, temporal retry window contract mapping, temporal memory contract mapping, temporal memory refresh contract mapping, physical worker canary mapping, schema contract validation, deployment orchestration receipt schema contract
+  Open issues: 169 proof-relevant declared routes remain unclassified and are marked unproven in the machine witness
   Next action: classify unproven declared routes into named proof surfaces or explicit exemptions

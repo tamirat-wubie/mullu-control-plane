@@ -285,7 +285,7 @@ class LLMConfig:
 
         # Fail-closed: stub backend is forbidden in pilot/production.
         # The stub returns deterministic fake responses suitable only
-        # for testing — running it under a "production" label is a
+        # for testing - running it under a "production" label is a
         # silent governance failure (audit trail records "real" calls
         # that never happened).
         if default_backend == "stub" and env in ("pilot", "production"):

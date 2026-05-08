@@ -1,4 +1,4 @@
-"""Phase 214 — Server endpoint tests for model routing, correlation, shutdown, readiness."""
+"""Phase 214 - Server endpoint tests for model routing, correlation, shutdown, readiness."""
 
 import pytest
 import os
@@ -147,7 +147,7 @@ class TestProductionReadiness:
 
 class TestV1_2Integration:
     def test_full_v1_2_flow(self, client):
-        """Auto-route → readiness → models → health score."""
+        """Auto-route -> readiness -> models -> health score."""
         # Auto-routed completion
         resp = client.post("/api/v1/complete/auto", json={"prompt": "test"})
         assert resp.json()["governed"] is True

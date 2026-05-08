@@ -1,9 +1,9 @@
-"""Purpose: LLM adapter contracts — governed invocation parameters and budget enforcement.
+"""Purpose: LLM adapter contracts â€” governed invocation parameters and budget enforcement.
 Governance scope: LLM adapter contract typing only.
 Dependencies: shared contract base helpers.
 Invariants:
   - Every LLM call is governed: budgeted, ledgered, scoped.
-  - No raw API keys in contracts — secrets resolved at adapter boundary.
+  - No raw API keys in contracts â€” secrets resolved at adapter boundary.
   - Cost limits are hard ceilings, never advisory.
 """
 
@@ -122,7 +122,7 @@ class LLMResult(ContractRecord):
     """Result of a governed LLM invocation.
 
     Contains the response content, token usage, and cost tracking.
-    Model outputs remain bounded_external — never auto-trusted.
+    Model outputs remain bounded_external â€” never auto-trusted.
     """
 
     content: str
@@ -161,7 +161,7 @@ class LLMResult(ContractRecord):
 class LLMBudget(ContractRecord):
     """Budget envelope for LLM cost control.
 
-    Hard ceiling — once exhausted, invocations are rejected.
+    Hard ceiling â€” once exhausted, invocations are rejected.
     """
 
     budget_id: str

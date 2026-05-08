@@ -1,7 +1,7 @@
 """Multi-Provider LLM Backend Tests.
 
 Tests all OpenAI-compatible providers in the hosted provider mesh.
-Uses stub mode (no httpx) — validates protocol compliance, message formatting,
+Uses stub mode (no httpx) - validates protocol compliance, message formatting,
 cost estimation, and error handling.
 """
 
@@ -115,9 +115,7 @@ def _params(prompt: str = "Hello", model: str = "test-model") -> LLMInvocationPa
     )
 
 
-# ═══ Protocol Compliance ═══
-
-
+# Protocol Compliance
 class TestProtocolCompliance:
     """Every provider must implement LLMBackend protocol."""
 
@@ -150,9 +148,7 @@ class TestProtocolCompliance:
         assert backend._default_model
 
 
-# ═══ Individual Providers ═══
-
-
+# Individual Providers
 class TestGroqBackend:
     def test_provider_type(self):
         assert GroqBackend().provider == LLMProvider.GROQ
@@ -319,9 +315,7 @@ class TestOpenRouterBackend:
         assert result.cost == 0.0  # Free community tier
 
 
-# ═══ Message Conversion ═══
-
-
+# Message Conversion
 class TestMessageConversion:
     def test_single_message(self):
         params = _params("Hello")
@@ -345,9 +339,7 @@ class TestMessageConversion:
         assert msgs[1]["role"] == "user"
 
 
-# ═══ Provider Registry ═══
-
-
+# Provider Registry
 class TestProviderRegistry:
     def test_all_providers_registered(self):
         expected = {
@@ -475,9 +467,7 @@ class TestProviderRegistry:
         assert "cloudflare" in available_providers()
 
 
-# ═══ Custom Model Override ═══
-
-
+# Custom Model Override
 class TestCustomModel:
     def test_custom_model_groq(self):
         backend = GroqBackend(model="mixtral-8x7b-32768")

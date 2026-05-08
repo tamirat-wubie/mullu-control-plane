@@ -10,7 +10,7 @@ Invariants:
   - Every provider implements the LLMBackend protocol.
   - API keys are never logged or exposed through result errors.
   - Errors are typed (LLMResult with error field), never raw exceptions.
-  - Cost is estimated from token counts × provider pricing.
+  - Cost is estimated from token counts x provider pricing.
 """
 
 from __future__ import annotations
@@ -126,7 +126,7 @@ def _openai_compatible_call(
             finished=True,
         )
     except ImportError:
-        # httpx not available — return stub response for testing
+        # httpx not available - return stub response for testing
         total_chars = sum(len(m.get("content", "")) for m in messages)
         input_tokens = max(1, total_chars // 4)
         output_tokens = max(1, 20)
@@ -153,11 +153,9 @@ def _params_to_messages(params: LLMInvocationParams) -> list[dict[str, str]]:
     ]
 
 
-# ═══ Groq (Llama 4, free tier) ═══
-
-
+# Groq (Llama 4, free tier)
 class GroqBackend:
-    """Groq — hardware-accelerated inference for open-weight models.
+    """Groq - hardware-accelerated inference for open-weight models.
 
     Free tier with rate limits. Fastest inference available.
     Models: llama-4-scout-17b, llama-4-maverick-17b, mixtral-8x7b
@@ -192,11 +190,9 @@ class GroqBackend:
         return self._call_count
 
 
-# ═══ Google Gemini (1K free/day) ═══
-
-
+# Google Gemini (1K free/day)
 class GeminiBackend:
-    """Google Gemini — generous free tier (1K requests/day).
+    """Google Gemini - generous free tier (1K requests/day).
 
     Models: gemini-2.5-pro, gemini-2.0-flash, gemini-2.0-flash-lite
     """
@@ -231,11 +227,9 @@ class GeminiBackend:
         return self._call_count
 
 
-# ═══ DeepSeek (V3.2 / R1, best price-performance) ═══
-
-
+# DeepSeek (V3.2 / R1, best price-performance)
 class DeepSeekBackend:
-    """DeepSeek — best price-performance ratio.
+    """DeepSeek - best price-performance ratio.
 
     Models: deepseek-chat (V3.2), deepseek-reasoner (R1)
     """
@@ -270,8 +264,6 @@ class DeepSeekBackend:
 
 
 # --- Additional hosted OpenAI-compatible providers ---
-
-
 class TogetherBackend:
     """Together hosted open-model inference."""
 
@@ -1384,10 +1376,8 @@ class ApiLinkBackend:
 
 
 # --- xAI Grok (real-time X data) ---
-
-
 class GrokBackend:
-    """xAI Grok — real-time X (Twitter) data access.
+    """xAI Grok - real-time X (Twitter) data access.
 
     Models: grok-3-mini, grok-3
     $25 free credit on signup.
@@ -1422,11 +1412,9 @@ class GrokBackend:
         return self._call_count
 
 
-# ═══ Mistral (cheapest paid option) ═══
-
-
+# Mistral (cheapest paid option)
 class MistralBackend:
-    """Mistral — cheapest paid LLM provider.
+    """Mistral - cheapest paid LLM provider.
 
     Models: mistral-small-latest, open-mistral-nemo, mistral-large-latest
     Nemo at $0.02/M tokens is essentially free for most workloads.
@@ -1461,11 +1449,9 @@ class MistralBackend:
         return self._call_count
 
 
-# ═══ OpenRouter (multi-provider gateway) ═══
-
-
+# OpenRouter (multi-provider gateway)
 class OpenRouterBackend:
-    """OpenRouter — unified gateway to 100+ models.
+    """OpenRouter - unified gateway to 100+ models.
 
     Routes to the cheapest/fastest available provider per model.
     Community-funded free tier for popular models.
@@ -1500,9 +1486,7 @@ class OpenRouterBackend:
         return self._call_count
 
 
-# ═══ Provider Registry ═══
-
-
+# Provider Registry
 ALL_PROVIDERS: dict[str, type] = {
     "groq": GroqBackend,
     "gemini": GeminiBackend,

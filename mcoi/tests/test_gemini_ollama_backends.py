@@ -32,8 +32,6 @@ def _make_params(prompt: str = "Hello", model: str = "") -> LLMInvocationParams:
 
 
 # --- LLMProvider enum ---
-
-
 def test_llm_provider_declares_hosted_provider_mesh() -> None:
     expected_providers = {
         LLMProvider.ANTHROPIC,
@@ -87,8 +85,6 @@ def test_llm_provider_declares_hosted_provider_mesh() -> None:
 
 
 # --- GeminiBackend ---
-
-
 def test_gemini_provider_is_gemini() -> None:
     backend = GeminiBackend(api_key="test-key")
     assert backend.provider == LLMProvider.GEMINI
@@ -145,8 +141,6 @@ def test_gemini_call_error_returns_llm_result() -> None:
 
 
 # --- OllamaBackend ---
-
-
 def test_ollama_provider_is_ollama() -> None:
     backend = OllamaBackend()
     assert backend.provider == LLMProvider.OLLAMA
@@ -173,7 +167,7 @@ def test_ollama_custom_url() -> None:
 
 
 def test_ollama_cost_is_always_zero() -> None:
-    """Ollama is local inference — cost is always zero."""
+    """Ollama is local inference - cost is always zero."""
     backend = OllamaBackend()
     # Simulate a successful call result
     params = _make_params()
@@ -201,8 +195,6 @@ def test_ollama_timeout_error_is_redacted() -> None:
 
 
 # --- Bootstrap wiring ---
-
-
 def test_bootstrap_registers_gemini_backend() -> None:
     from mcoi_runtime.app.llm_bootstrap import LLMConfig, bootstrap_llm
 

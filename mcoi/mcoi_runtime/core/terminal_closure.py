@@ -236,10 +236,20 @@ def _require_closure_chain_match(
 ) -> None:
     if verification_result.execution_id != execution_result.execution_id:
         raise RuntimeCoreInvariantError("verification execution mismatch")
-    if reconciliation.command_id != execution_result.goal_id:
+    if reconciliation.command_id not in _execution_command_refs(execution_result):
         raise RuntimeCoreInvariantError("reconciliation command mismatch")
     if reconciliation.verification_result_id != verification_result.verification_id:
         raise RuntimeCoreInvariantError("reconciliation verification mismatch")
+
+
+def _execution_command_refs(execution_result: ExecutionResult) -> tuple[str, ...]:
+    refs: list[str] = []
+    for source in (execution_result.metadata, execution_result.extensions):
+        command_id = source.get("command_id")
+        if isinstance(command_id, str) and command_id:
+            refs.append(command_id)
+    refs.append(execution_result.goal_id)
+    return tuple(dict.fromkeys(refs))
 
 
 def _verification_evidence_refs(verification_result: VerificationResult) -> tuple[str, ...]:

@@ -111,6 +111,13 @@
       ]
     },
     {
+      "action_id": "classify_tenant_governance_lifecycle_routes",
+      "status": "closed",
+      "surfaces": [
+        "tenant_governance_lifecycle"
+      ]
+    },
+    {
       "action_id": "classify_runbook_learning_routes",
       "status": "closed",
       "surfaces": [
@@ -223,13 +230,6 @@
       "status": "closed",
       "surfaces": [
         "governed_connector_framework"
-      ]
-    },
-    {
-      "action_id": "classify_tenant_governance_routes",
-      "status": "closed",
-      "surfaces": [
-        "tenant_governance_lifecycle"
       ]
     },
     {
@@ -488,8 +488,8 @@
   "route_coverage": {
     "by_coverage_state": {
       "proven": 5,
-      "unproven": 170,
-      "witnessed": 140
+      "unproven": 169,
+      "witnessed": 141
     },
     "route_count": 315,
     "routes": [
@@ -1744,9 +1744,9 @@
         "surface_id": "tenant_governance_lifecycle"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/tenants",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "tenant_governance_lifecycle"
       },
       {
         "coverage_state": "unproven",
@@ -2069,7 +2069,7 @@
         "surface_id": "gateway_capability_fabric"
       }
     ],
-    "unclassified_route_count": 170
+    "unclassified_route_count": 169
   },
   "schema_version": 1,
   "surfaces": [
@@ -2223,6 +2223,46 @@
       "request_proof": "read_model",
       "runtime_witnesses": [],
       "surface_id": "cost_budget_read_models"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "mcoi/mcoi_runtime/app/routers/tenant.py",
+        "mcoi/mcoi_runtime/governance/guards/budget.py",
+        "mcoi/mcoi_runtime/governance/guards/tenant_gating.py",
+        "mcoi/tests/test_server_phase202.py",
+        "mcoi/tests/test_governance_endpoints.py",
+        "mcoi/tests/test_tenant_budget.py",
+        "mcoi/tests/test_tenant_gating.py",
+        "mcoi/tests/test_tenant_ledger.py"
+      ],
+      "notes": "Tenant governance lifecycle routes bind budget mutation, tenant ledger and budget read models, registration, status transitions, and gate summaries to governed responses with audit records and bounded action proofs.",
+      "representative_paths": [
+        "/api/v1/tenant/budget",
+        "/api/v1/tenant/{tenant_id}/budget",
+        "/api/v1/tenant/{tenant_id}/ledger",
+        "/api/v1/tenant/{tenant_id}/summary",
+        "/api/v1/tenants",
+        "/api/v1/tenant/register",
+        "/api/v1/tenant/{tenant_id}/status",
+        "/api/v1/tenant/{tenant_id}/gate",
+        "/api/v1/tenant/gates"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "tenant_budget_create_emits_action_proof",
+        "tenant_budget_create_records_audit",
+        "tenant_budget_read_models_scoped_by_tenant",
+        "tenant_ledger_queries_bounded",
+        "tenant_registry_lifecycle_errors_sanitized",
+        "tenant_register_emits_action_proof",
+        "tenant_status_update_emits_action_proof",
+        "tenant_gate_read_models_governed",
+        "tenant_gate_persistence_read_model_included"
+      ],
+      "surface_id": "tenant_governance_lifecycle"
     },
     {
       "action_proof": "read_model",
@@ -3096,44 +3136,6 @@
         "connector_invocation_audited"
       ],
       "surface_id": "governed_connector_framework"
-    },
-    {
-      "action_proof": "action_proof",
-      "audit": "audit_chain",
-      "coverage_state": "witnessed",
-      "evidence_files": [
-        "mcoi/mcoi_runtime/app/routers/tenant.py",
-        "mcoi/mcoi_runtime/governance/guards/budget.py",
-        "mcoi/mcoi_runtime/governance/guards/tenant_gating.py",
-        "mcoi/mcoi_runtime/persistence/tenant_ledger.py",
-        "mcoi/tests/test_server_phase202.py",
-        "mcoi/tests/test_governance_endpoints.py",
-        "mcoi/tests/test_tenant_budget.py",
-        "mcoi/tests/test_tenant_gating.py",
-        "mcoi/tests/test_tenant_ledger.py"
-      ],
-      "notes": "Tenant governance lifecycle routes create action-proofed tenant budgets and lifecycle gates, expose bounded budget, ledger, summary, and gate read models, sanitize lifecycle errors, and audit tenant registration, status, and budget mutations.",
-      "representative_paths": [
-        "/api/v1/tenant/budget",
-        "/api/v1/tenant/gates",
-        "/api/v1/tenant/register",
-        "/api/v1/tenant/{tenant_id}/budget",
-        "/api/v1/tenant/{tenant_id}/gate",
-        "/api/v1/tenant/{tenant_id}/ledger",
-        "/api/v1/tenant/{tenant_id}/status",
-        "/api/v1/tenant/{tenant_id}/summary"
-      ],
-      "request_proof": "request_proof",
-      "runtime_witnesses": [
-        "tenant_budget_action_proof_emitted",
-        "tenant_budget_read_model_bounded",
-        "tenant_ledger_summary_bounded",
-        "tenant_register_status_action_proof_emitted",
-        "tenant_lifecycle_errors_sanitized",
-        "tenant_gate_read_models_bounded",
-        "tenant_governance_actions_audited"
-      ],
-      "surface_id": "tenant_governance_lifecycle"
     },
     {
       "action_proof": "action_proof",
