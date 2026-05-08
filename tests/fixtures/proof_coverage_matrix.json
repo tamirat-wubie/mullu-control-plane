@@ -132,6 +132,14 @@
       ]
     },
     {
+      "action_id": "publish_proof_route_gap_triage_report",
+      "status": "closed",
+      "surfaces": [
+        "proof_route_gap_triage",
+        "runtime_conformance_attestation"
+      ]
+    },
+    {
       "action_id": "publish_production_evidence_plane",
       "status": "closed",
       "surfaces": [
@@ -453,12 +461,12 @@
       "action_proof": 56,
       "audit_chain": 0,
       "gap": 0,
-      "read_model": 10,
+      "read_model": 11,
       "request_proof": 2
     },
     "by_audit": {
       "action_proof": 0,
-      "audit_chain": 64,
+      "audit_chain": 65,
       "gap": 0,
       "read_model": 4,
       "request_proof": 0
@@ -466,16 +474,16 @@
     "by_coverage_state": {
       "proven": 1,
       "unproven": 0,
-      "witnessed": 67
+      "witnessed": 68
     },
     "by_request_proof": {
       "action_proof": 0,
       "audit_chain": 0,
       "gap": 0,
-      "read_model": 12,
+      "read_model": 13,
       "request_proof": 56
     },
-    "surface_count": 68
+    "surface_count": 69
   },
   "generated_by": "scripts/proof_coverage_matrix.py",
   "route_coverage": {
@@ -2751,6 +2759,30 @@
         "physical_worker_canary_artifact_hash_bound"
       ],
       "surface_id": "runtime_conformance_attestation"
+    },
+    {
+      "action_proof": "read_model",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "scripts/proof_route_gap_triage.py",
+        "tests/test_proof_route_gap_triage.py",
+        "docs/70_proof_route_gap_triage.md"
+      ],
+      "notes": "Proof-route gap triage ranks unclassified declared routes by family, source file, method, and effect risk without reclassifying any route, producing a deterministic closure queue for the proof matrix.",
+      "representative_paths": [
+        "build_gap_triage_report",
+        "discover_route_declarations",
+        ".change_assurance/proof_route_gap_triage.json"
+      ],
+      "request_proof": "read_model",
+      "runtime_witnesses": [
+        "unclassified_routes_grouped_by_family",
+        "route_gap_triage_binds_source_files_and_methods",
+        "closure_candidates_ranked_deterministically",
+        "triage_report_check_detects_stale_output"
+      ],
+      "surface_id": "proof_route_gap_triage"
     },
     {
       "action_proof": "read_model",

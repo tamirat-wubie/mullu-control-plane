@@ -694,6 +694,30 @@ def proof_coverage_matrix() -> dict[str, Any]:
             ],
         ),
         _surface(
+            "proof_route_gap_triage",
+            [
+                "build_gap_triage_report",
+                "discover_route_declarations",
+                ".change_assurance/proof_route_gap_triage.json",
+            ],
+            "read_model",
+            "read_model",
+            "audit_chain",
+            "witnessed",
+            [
+                "scripts/proof_route_gap_triage.py",
+                "tests/test_proof_route_gap_triage.py",
+                "docs/70_proof_route_gap_triage.md",
+            ],
+            "Proof-route gap triage ranks unclassified declared routes by family, source file, method, and effect risk without reclassifying any route, producing a deterministic closure queue for the proof matrix.",
+            [
+                "unclassified_routes_grouped_by_family",
+                "route_gap_triage_binds_source_files_and_methods",
+                "closure_candidates_ranked_deterministically",
+                "triage_report_check_detects_stale_output",
+            ],
+        ),
+        _surface(
             "production_evidence_plane",
             [
                 "/deployment/witness",
@@ -2105,6 +2129,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
         {
             "action_id": "publish_runtime_conformance_attestation",
             "surfaces": ["runtime_conformance_attestation"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_proof_route_gap_triage_report",
+            "surfaces": ["proof_route_gap_triage", "runtime_conformance_attestation"],
             "status": "closed",
         },
         {
