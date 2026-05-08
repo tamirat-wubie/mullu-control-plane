@@ -1,0 +1,12 @@
+{
+  "regression_id": "reg-42",
+  "metric_name": "verification_closure_rate",
+  "category": "governance",
+  "baseline_value": 0.94,
+  "current_value": 0.88,
+  "direction": "degraded",
+  "delta": -0.06,
+  "baseline_run_id": "bench-run-41",
+  "current_run_id": "bench-run-42",
+  "detected_at": "2025-01-01T00:32:00+00:00"
+}

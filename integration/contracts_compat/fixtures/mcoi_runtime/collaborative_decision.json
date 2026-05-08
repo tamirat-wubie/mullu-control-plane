@@ -1,0 +1,15 @@
+{
+  "decision_id": "collab-decision-case-042",
+  "board_id": "approval-board-case-042",
+  "scope_ref_id": "case-incident-042",
+  "status": "approved",
+  "total_votes": 2,
+  "approvals": 2,
+  "rejections": 0,
+  "decided_by": "board-chair-reviewer-primary",
+  "decided_at": "2026-04-03T08:23:00+00:00",
+  "metadata": {
+    "decision_type": "case_closure",
+    "policy_pack": "default-safe"
+  }
+}

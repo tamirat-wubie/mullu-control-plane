@@ -1,0 +1,15 @@
+{
+  "assessment_id": "contract-assessment-042",
+  "contract_id": "contract-governance-042",
+  "tenant_id": "tenant-mullu-primary",
+  "total_commitments": 5,
+  "healthy_commitments": 4,
+  "at_risk_commitments": 1,
+  "breached_commitments": 0,
+  "overall_compliance": 0.96,
+  "assessed_at": "2026-04-04T10:10:00+00:00",
+  "metadata": {
+    "assessment_type": "monthly",
+    "owner": "contract-auditor"
+  }
+}

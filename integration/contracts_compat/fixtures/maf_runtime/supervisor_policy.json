@@ -1,0 +1,13 @@
+{
+  "policy_id": "sup-pol-42",
+  "tick_interval_ms": 100,
+  "max_events_per_tick": 16,
+  "max_actions_per_tick": 8,
+  "backpressure_threshold": 6,
+  "livelock_repeat_threshold": 3,
+  "livelock_strategy": "escalate",
+  "heartbeat_every_n_ticks": 5,
+  "checkpoint_every_n_ticks": 10,
+  "max_consecutive_errors": 4,
+  "created_at": "2025-01-01T00:00:00+00:00"
+}

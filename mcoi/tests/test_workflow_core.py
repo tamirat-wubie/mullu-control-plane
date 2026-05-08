@@ -1,5 +1,7 @@
 """Tests for cross-plane workflow runtime core engine."""
 
+from datetime import datetime, timedelta, timezone
+
 import pytest
 
 NOW = "2025-01-01T00:00:00+00:00"
@@ -77,11 +79,18 @@ class FakeStageExecutor:
 def _make_clock(times: list[str]):
     """Return a clock function that yields successive timestamps."""
     idx = [0]
+    base_time = datetime(2025, 1, 1, tzinfo=timezone.utc)
+
+    def normalize_timestamp(value: str) -> str:
+        if value.startswith("t") and value[1:].isdigit():
+            seconds = int(value[1:])
+            return (base_time + timedelta(seconds=seconds)).isoformat()
+        return value
 
     def clock() -> str:
         ts = times[idx[0] % len(times)]
         idx[0] += 1
-        return ts
+        return normalize_timestamp(ts)
 
     return clock
 

@@ -1,0 +1,17 @@
+{
+  "snapshot_id": "continuity-snapshot-042",
+  "total_plans": 6,
+  "total_active_plans": 4,
+  "total_recovery_plans": 3,
+  "total_disruptions": 1,
+  "total_failovers": 1,
+  "total_recoveries": 1,
+  "total_verifications": 1,
+  "total_violations": 0,
+  "total_objectives": 5,
+  "captured_at": "2026-04-03T08:20:00+00:00",
+  "metadata": {
+    "assessment_window": "release-042",
+    "tenant_id": "tenant-1"
+  }
+}

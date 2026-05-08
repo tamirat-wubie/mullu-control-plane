@@ -441,3 +441,76 @@ class TestClockDeterminism:
         plan = engine.create_plan(goal, (_sub_goal(),))
         # create_plan calls clock twice (stable_identifier + created_at)
         assert plan.created_at == _T2
+
+
+class TestGoalRuntimeWitnesses:
+    def test_accept_goal_tracks_descriptor_and_state(self):
+        engine = GoalReasoningEngine(clock=_make_clock([_T0]))
+        goal = _descriptor()
+
+        state = engine.accept_goal(goal)
+
+        assert engine.get_goal_descriptor("goal-001") == goal
+        assert engine.get_goal_state("goal-001") == state
+        assert engine.list_goal_descriptors() == (goal,)
+
+    def test_create_plan_and_replan_track_runtime_records(self):
+        engine = GoalReasoningEngine(clock=_make_clock([_T0, _T0, _T1, _T1, _T2]))
+        goal = _descriptor()
+        plan = engine.create_plan(goal, (_sub_goal(),))
+        state = GoalExecutionState(
+            goal_id="goal-001",
+            status=GoalStatus.REPLANNING,
+            current_plan_id=plan.plan_id,
+            updated_at=_T0,
+        )
+
+        new_plan, replan = engine.replan(
+            state,
+            plan,
+            (_sub_goal(sub_goal_id="sg-2"),),
+            "replan",
+        )
+
+        assert engine.get_plan(plan.plan_id) == plan
+        assert engine.get_plan(new_plan.plan_id) == new_plan
+        assert engine.list_replan_records() == (replan,)
+
+    def test_restore_goal_plan_and_replan_records(self):
+        engine = GoalReasoningEngine(clock=_make_clock([]))
+        descriptor = _descriptor()
+        state = GoalExecutionState(
+            goal_id="goal-001",
+            status=GoalStatus.EXECUTING,
+            current_plan_id="plan-001",
+            updated_at=_T0,
+        )
+        old_plan = GoalPlan(
+            plan_id="plan-001",
+            goal_id="goal-001",
+            sub_goals=(_sub_goal(),),
+            created_at=_T0,
+        )
+        new_plan = GoalPlan(
+            plan_id="plan-002",
+            goal_id="goal-001",
+            sub_goals=(_sub_goal(sub_goal_id="sg-2"),),
+            created_at=_T1,
+            version=2,
+        )
+        replan = GoalReplanRecord(
+            goal_id="goal-001",
+            previous_plan_id="plan-001",
+            new_plan_id="plan-002",
+            reason="replan",
+            replanned_at=_T2,
+        )
+
+        engine.restore_goal(descriptor, state)
+        engine.restore_plan(old_plan)
+        engine.restore_plan(new_plan)
+        engine.restore_replan_record(replan)
+
+        assert engine.get_goal_state("goal-001") == state
+        assert len(engine.list_plans()) == 2
+        assert engine.list_replan_records() == (replan,)

@@ -1,0 +1,14 @@
+{
+  "recovery_id": "recovery-verify-042",
+  "execution_id": "exec-verify-042",
+  "trace_id": "trace-verify-042",
+  "recorded_at": "2026-04-02T09:18:00+00:00",
+  "metadata": {
+    "incident_id": "inc-verify-042",
+    "attempt_id": "attempt-verify-042"
+  },
+  "extensions": {
+    "decision_status": "approved",
+    "result_run_id": "run-43"
+  }
+}

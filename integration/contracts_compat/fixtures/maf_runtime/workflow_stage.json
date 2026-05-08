@@ -1,0 +1,8 @@
+{
+  "stage_id": "stage-build",
+  "stage_type": "skill_execution",
+  "skill_id": "build-release",
+  "description": "Build the release artifact",
+  "predecessors": [],
+  "timeout_seconds": 600
+}

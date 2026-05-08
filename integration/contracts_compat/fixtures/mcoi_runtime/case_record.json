@@ -1,0 +1,16 @@
+{
+  "case_id": "case-incident-042",
+  "tenant_id": "tenant-1",
+  "kind": "incident",
+  "severity": "high",
+  "status": "closed",
+  "title": "Release verification service disruption",
+  "description": "Release verification degraded after provider failover and required escalated review.",
+  "opened_by": "operator-coordinator",
+  "opened_at": "2026-04-03T08:00:00+00:00",
+  "closed_at": "2026-04-03T08:25:00+00:00",
+  "metadata": {
+    "continuity_plan_id": "plan-continuity-042",
+    "incident_id": "incident-runtime-042"
+  }
+}

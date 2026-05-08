@@ -1,0 +1,12 @@
+{
+  "violation_id": "asset-violation-042",
+  "asset_id": "asset-runtime-042",
+  "tenant_id": "tenant-mullu-primary",
+  "operation": "assign_asset",
+  "reason": "Assignment attempted while dependency attestation was still incomplete.",
+  "detected_at": "2026-04-05T09:15:00+00:00",
+  "metadata": {
+    "policy_rule": "dependency-before-assignment",
+    "severity": "medium"
+  }
+}

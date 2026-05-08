@@ -1,0 +1,12 @@
+{
+  "function_id": "fn-42",
+  "period_start": "2025-01-01T00:00:00+00:00",
+  "period_end": "2025-01-01T01:00:00+00:00",
+  "total_jobs": 12,
+  "completed_jobs": 10,
+  "failed_jobs": 2,
+  "avg_completion_minutes": 17.5,
+  "escalation_count": 1,
+  "drift_count": 0,
+  "captured_at": "2025-01-01T01:05:00+00:00"
+}

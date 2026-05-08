@@ -1,0 +1,12 @@
+{
+  "violation_id": "human-workflow-violation-case-042",
+  "tenant_id": "tenant-mullu-primary",
+  "scope_ref_id": "case-incident-042",
+  "operation": "approve_case_closure",
+  "reason": "A closure approval attempt was observed before all review assignments were acknowledged.",
+  "detected_at": "2026-04-03T08:16:00+00:00",
+  "metadata": {
+    "policy_rule": "human-review-acknowledgement",
+    "severity": "medium"
+  }
+}

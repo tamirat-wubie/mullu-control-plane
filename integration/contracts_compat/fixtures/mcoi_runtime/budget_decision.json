@@ -1,0 +1,13 @@
+{
+  "decision_id": "budget-decision-launch-q2-02",
+  "budget_id": "budget-launch-q2-2026",
+  "disposition": "pending_approval",
+  "requested_amount": 3200.0,
+  "available_amount": 25000.0,
+  "currency": "USD",
+  "reason": "Human approval step exceeds automatic spend threshold.",
+  "reservation_id": "reservation-launch-q2-0011",
+  "approval_required": true,
+  "approver_ref": "finance-reviewer-primary",
+  "decided_at": "2026-05-06T13:30:00+00:00"
+}

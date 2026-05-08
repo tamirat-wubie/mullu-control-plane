@@ -1,0 +1,7 @@
+{
+  "job_id": "job-42",
+  "deadline": "2025-01-01T02:00:00+00:00",
+  "sla_status": "at_risk",
+  "evaluated_at": "2025-01-01T01:12:00+00:00",
+  "sla_target_minutes": 60
+}

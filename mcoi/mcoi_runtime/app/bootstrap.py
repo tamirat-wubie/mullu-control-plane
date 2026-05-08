@@ -4,7 +4,7 @@ Dependencies: execution-slice adapters, runtime-core boundaries, and local app c
 Invariants:
   - bootstrap constructs deterministic wiring only.
   - bootstrap never executes commands or observes the live machine.
-  - persisted memory restore is explicit and read-only during bootstrap.
+  - persisted memory, goal, workflow, job, workforce, and queue restore are explicit and read-only during bootstrap.
 """
 
 from __future__ import annotations
@@ -27,6 +27,7 @@ from mcoi_runtime.core.evidence_merger import EvidenceMerger
 from mcoi_runtime.core.event_spine import EventSpineEngine
 from mcoi_runtime.core.meta_reasoning import MetaReasoningEngine
 from mcoi_runtime.core.memory import EpisodicMemory, WorkingMemory
+from mcoi_runtime.core.invariants import RuntimeCoreInvariantError
 from mcoi_runtime.core.operational_graph import OperationalGraph
 from mcoi_runtime.core.planning_boundary import PlanningBoundary
 from mcoi_runtime.governance.policy.engine import PolicyEngine
@@ -34,21 +35,27 @@ from mcoi_runtime.core.registry_index import RegistryIndex
 from mcoi_runtime.core.registry_store import RegistryStore
 from mcoi_runtime.core.replay_engine import ReplayEngine
 from mcoi_runtime.core.runtime_kernel import RuntimeKernel
-from mcoi_runtime.core.invariants import RuntimeCoreInvariantError
 from mcoi_runtime.contracts.autonomy import AutonomyMode
 from mcoi_runtime.core.autonomy import AutonomyEngine
 from mcoi_runtime.core.goal_reasoning import GoalReasoningEngine
+from mcoi_runtime.core.jobs import JobEngine, WorkQueue
 from mcoi_runtime.core.skills import SkillExecutor, SkillRegistry, SkillSelector
 from mcoi_runtime.core.template_validator import TemplateValidator
 from mcoi_runtime.core.provider_registry import ProviderRegistry
 from mcoi_runtime.core.provider_attribution import ProviderAttributionLedger
+from mcoi_runtime.core.team_runtime import TeamEngine, WorkerRegistry
 from mcoi_runtime.core.verification_engine import VerificationEngine
 from mcoi_runtime.core.workflow import WorkflowEngine
+from mcoi_runtime.core.workforce_runtime import WorkforceRuntimeEngine
 from mcoi_runtime.core.world_state import WorldStateEngine
 from mcoi_runtime.persistence.goal_store import GoalStore
+from mcoi_runtime.persistence.job_store import JobStore
 from mcoi_runtime.persistence.memory_store import MemoryStore
 from mcoi_runtime.persistence.mil_audit_store import MILAuditStore
+from mcoi_runtime.persistence.team_queue_store import TeamQueueStore
 from mcoi_runtime.persistence.trace_store import TraceStore
+from mcoi_runtime.persistence.work_queue_store import WorkQueueStore
+from mcoi_runtime.persistence.workforce_store import WorkforceStore
 from mcoi_runtime.persistence.workflow_store import WorkflowStore
 
 from .config import AppConfig
@@ -79,8 +86,17 @@ class BootstrappedRuntime:
     autonomy: AutonomyEngine
     goal_reasoning_engine: GoalReasoningEngine
     workflow_engine: WorkflowEngine
+    job_engine: JobEngine
+    job_store: JobStore | None
     goal_store: GoalStore | None
     workflow_store: WorkflowStore | None
+    work_queue: WorkQueue
+    work_queue_store: WorkQueueStore | None
+    team_registry: WorkerRegistry
+    team_engine: TeamEngine
+    team_queue_store: TeamQueueStore | None
+    workforce_engine: WorkforceRuntimeEngine
+    workforce_store: WorkforceStore | None
     mil_audit_store: MILAuditStore | None
     trace_store: TraceStore | None
     working_memory: WorkingMemory
@@ -127,17 +143,39 @@ def bootstrap_runtime(
     executors: Mapping[str, ExecutorAdapter] | None = None,
     observers: Mapping[str, ObserverAdapter[object]] | None = None,
     goal_store: GoalStore | None = None,
+    job_store: JobStore | None = None,
     workflow_store: WorkflowStore | None = None,
+    work_queue_store: WorkQueueStore | None = None,
+    team_queue_store: TeamQueueStore | None = None,
+    workforce_store: WorkforceStore | None = None,
     mil_audit_store: MILAuditStore | None = None,
     trace_store: TraceStore | None = None,
     memory_store: MemoryStore | None = None,
     restore_memory: bool = False,
+    restore_goals: bool = False,
+    restore_workflows: bool = False,
+    restore_jobs: bool = False,
+    restore_work_queue: bool = False,
+    restore_team_queue: bool = False,
+    restore_workforce: bool = False,
 ) -> BootstrappedRuntime:
     app_config = config or AppConfig()
     runtime_clock = clock or utc_now_text
 
     if restore_memory and memory_store is None:
         raise RuntimeCoreInvariantError("restore_memory requires a memory_store")
+    if restore_goals and goal_store is None:
+        raise RuntimeCoreInvariantError("restore_goals requires a goal_store")
+    if restore_workflows and workflow_store is None:
+        raise RuntimeCoreInvariantError("restore_workflows requires a workflow_store")
+    if restore_jobs and job_store is None:
+        raise RuntimeCoreInvariantError("restore_jobs requires a job_store")
+    if restore_work_queue and work_queue_store is None:
+        raise RuntimeCoreInvariantError("restore_work_queue requires a work_queue_store")
+    if restore_team_queue and team_queue_store is None:
+        raise RuntimeCoreInvariantError("restore_team_queue requires a team_queue_store")
+    if restore_workforce and workforce_store is None:
+        raise RuntimeCoreInvariantError("restore_workforce requires a workforce_store")
 
     registry_store: RegistryStore[TemplateReference] = RegistryStore()
     registry_index: RegistryIndex[TemplateReference] = RegistryIndex()
@@ -201,19 +239,20 @@ def bootstrap_runtime(
     autonomy = AutonomyEngine(mode=AutonomyMode(app_config.autonomy_mode))
     goal_reasoning_engine = GoalReasoningEngine(clock=runtime_clock)
     workflow_engine_inst = WorkflowEngine(clock=runtime_clock)
+    job_engine = JobEngine(clock=runtime_clock)
+    work_queue = WorkQueue(clock=runtime_clock)
+    team_registry = WorkerRegistry(clock=runtime_clock)
+    team_engine = TeamEngine(registry=team_registry, clock=runtime_clock)
+    event_spine = EventSpineEngine(clock=runtime_clock)
+    workforce_engine = WorkforceRuntimeEngine(event_spine)
     operational_graph = (
         OperationalGraph(clock=runtime_clock)
         if app_config.effect_assurance_required
         else None
     )
-    event_spine = (
-        EventSpineEngine(clock=runtime_clock)
-        if app_config.effect_assurance_required
-        else None
-    )
     case_runtime = (
         CaseRuntimeEngine(event_spine)
-        if event_spine is not None
+        if app_config.effect_assurance_required
         else None
     )
     effect_assurance = (
@@ -243,6 +282,24 @@ def bootstrap_runtime(
         working_memory = WorkingMemory()
         episodic_memory = EpisodicMemory()
 
+    if restore_goals and goal_store is not None:
+        goal_store.restore_state(goal_reasoning_engine)
+
+    if restore_workflows and workflow_store is not None:
+        workflow_store.restore_state(workflow_engine_inst)
+
+    if restore_jobs and job_store is not None:
+        job_store.restore_state(job_engine)
+
+    if restore_work_queue and work_queue_store is not None:
+        work_queue_store.restore_state(work_queue)
+
+    if restore_team_queue and team_queue_store is not None:
+        team_queue_store.restore_queue_states(team_engine)
+
+    if restore_workforce and workforce_store is not None:
+        workforce_store.restore_state(workforce_engine)
+
     return BootstrappedRuntime(
         config=app_config,
         clock=runtime_clock,
@@ -266,8 +323,17 @@ def bootstrap_runtime(
         autonomy=autonomy,
         goal_reasoning_engine=goal_reasoning_engine,
         workflow_engine=workflow_engine_inst,
+        job_engine=job_engine,
+        job_store=job_store,
         goal_store=goal_store,
         workflow_store=workflow_store,
+        work_queue=work_queue,
+        work_queue_store=work_queue_store,
+        team_registry=team_registry,
+        team_engine=team_engine,
+        team_queue_store=team_queue_store,
+        workforce_engine=workforce_engine,
+        workforce_store=workforce_store,
         mil_audit_store=mil_audit_store,
         trace_store=trace_store,
         working_memory=working_memory,

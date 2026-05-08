@@ -1,0 +1,12 @@
+{
+  "violation_id": "case-violation-042-review-order",
+  "case_id": "case-incident-042",
+  "tenant_id": "tenant-mullu-primary",
+  "operation": "close_case",
+  "reason": "Closure was attempted before the escalation review chain had completed.",
+  "detected_at": "2026-04-03T08:19:00+00:00",
+  "metadata": {
+    "policy_rule": "case-review-before-closure",
+    "severity": "medium"
+  }
+}

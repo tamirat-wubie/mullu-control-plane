@@ -1,0 +1,13 @@
+{
+  "collection_id": "collection-case-042-core",
+  "case_id": "case-incident-042",
+  "title": "Primary incident evidence",
+  "evidence_ids": [
+    "evidence-incident-042"
+  ],
+  "created_at": "2026-04-03T08:18:00+00:00",
+  "metadata": {
+    "curated_by": "reviewer-primary",
+    "purpose": "escalation-review"
+  }
+}

@@ -1,0 +1,7 @@
+{
+  "binding_id": "binding-42",
+  "source_stage_id": "stage-build",
+  "source_output_key": "artifact_id",
+  "target_stage_id": "stage-verify",
+  "target_input_key": "artifact_id"
+}

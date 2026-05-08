@@ -1,0 +1,16 @@
+{
+  "report_id": "settlement-closure-20260430",
+  "account_id": "billing-account-042",
+  "total_settlements": 9,
+  "total_payments": 7,
+  "total_refunds": 1,
+  "total_writeoffs": 0,
+  "total_collection_cases": 4,
+  "total_collected": 18420.0,
+  "total_outstanding": 1420.5,
+  "closed_at": "2026-04-30T23:59:00+00:00",
+  "metadata": {
+    "period": "2026-04",
+    "closed_by": "settlement-governance"
+  }
+}

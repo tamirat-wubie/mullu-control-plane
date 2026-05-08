@@ -1,0 +1,14 @@
+{
+  "case_id": "collection-case-042",
+  "invoice_id": "invoice-2026-042",
+  "account_id": "billing-account-042",
+  "status": "in_progress",
+  "outstanding_amount": 875.5,
+  "dunning_count": 1,
+  "opened_at": "2026-04-21T09:00:00+00:00",
+  "closed_at": "",
+  "metadata": {
+    "owner": "collections-team",
+    "priority": "standard"
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "function_id": "fn-42",
+  "target_completion_minutes": 45,
+  "approval_latency_minutes": 10,
+  "escalation_threshold_minutes": 20
+}

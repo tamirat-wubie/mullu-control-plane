@@ -1,0 +1,14 @@
+{
+  "contract_id": "contract-governance-042",
+  "tenant_id": "tenant-mullu-primary",
+  "counterparty": "platform-operations",
+  "status": "active",
+  "title": "Governed Runtime Service Agreement",
+  "description": "Defines closure, review, and remediation commitments for governed symbolic runtime operations.",
+  "effective_at": "2026-01-01T00:00:00+00:00",
+  "expires_at": "2027-01-01T00:00:00+00:00",
+  "metadata": {
+    "program": "runtime-governance",
+    "tier": "primary"
+  }
+}

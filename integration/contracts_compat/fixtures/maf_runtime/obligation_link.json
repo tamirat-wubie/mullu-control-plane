@@ -1,0 +1,9 @@
+{
+  "edge_id": "olink-42",
+  "source_node_id": "job-42",
+  "target_node_id": "team-ops",
+  "obligation": "monitor_post_deploy",
+  "fulfilled": false,
+  "created_at": "2025-01-01T00:23:00+00:00",
+  "deadline": "2025-01-01T01:00:00+00:00"
+}

@@ -1,0 +1,13 @@
+{
+  "spend_id": "spend-launch-q2-0007",
+  "budget_id": "budget-launch-q2-2026",
+  "category": "connector_call",
+  "status": "consumed",
+  "amount": 1850.0,
+  "currency": "USD",
+  "campaign_ref": "campaign-launch-q2-2026",
+  "step_ref": "wf-stage-provider-route",
+  "connector_ref": "connector-openai-primary",
+  "reason": "Provider routing and response generation for launch rehearsal.",
+  "created_at": "2026-05-06T11:15:00+00:00"
+}

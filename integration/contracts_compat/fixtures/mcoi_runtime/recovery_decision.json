@@ -1,0 +1,9 @@
+{
+  "decision_id": "decision-verify-042",
+  "incident_id": "inc-verify-042",
+  "action": "reobserve",
+  "status": "approved",
+  "reason": "bounded reobservation is permitted before rollback",
+  "autonomy_mode": "bounded_autonomous",
+  "profile_id": "default-safe"
+}

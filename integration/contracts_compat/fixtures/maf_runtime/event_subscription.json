@@ -1,0 +1,9 @@
+{
+  "subscription_id": "sub-approval-1",
+  "event_type": "approval_requested",
+  "subscriber_id": "worker-supervisor",
+  "reaction_id": "react-create-obligation",
+  "filter_source": "approval_system",
+  "active": true,
+  "created_at": "2025-01-01T00:01:00+00:00"
+}

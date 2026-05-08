@@ -1,0 +1,23 @@
+{
+  "profile_id": "uprofile-42",
+  "context_type": "deployment_review",
+  "context_id": "fn-42",
+  "factors": [
+    {
+      "factor_id": "factor-risk",
+      "kind": "risk",
+      "weight": 0.4,
+      "value": 0.2,
+      "label": "release risk"
+    },
+    {
+      "factor_id": "factor-confidence",
+      "kind": "confidence",
+      "weight": 0.6,
+      "value": 0.9,
+      "label": "verification confidence"
+    }
+  ],
+  "tradeoff_direction": "favor_safety",
+  "created_at": "2025-01-01T00:15:00+00:00"
+}

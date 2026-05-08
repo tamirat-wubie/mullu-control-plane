@@ -1,0 +1,11 @@
+{
+  "member_id": "board-member-case-042-chair",
+  "board_id": "approval-board-case-042",
+  "identity_ref": "reviewer-primary",
+  "role": "chair",
+  "added_at": "2026-04-03T08:13:30+00:00",
+  "metadata": {
+    "region": "us-east",
+    "authority": "closure"
+  }
+}

@@ -58,4 +58,3 @@ def test_real_fastapi_router_serves_governed_invoice_run(tmp_path: Path) -> None
     assert get_response.json()["payload"]["record"]["run_id"] == "run_real_fastapi_invoice_001"
     assert list_response.status_code == 200
     assert list_response.json()["payload"]["count"] == 1
-

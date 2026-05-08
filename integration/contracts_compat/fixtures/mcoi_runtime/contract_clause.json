@@ -1,0 +1,11 @@
+{
+  "clause_id": "clause-governance-042-review",
+  "contract_id": "contract-governance-042",
+  "title": "Human review closure requirement",
+  "description": "Escalated closure operations require completed human review before contract compliance is satisfied.",
+  "commitment_kind": "compliance",
+  "metadata": {
+    "section": "4.2",
+    "owner": "governance-board"
+  }
+}

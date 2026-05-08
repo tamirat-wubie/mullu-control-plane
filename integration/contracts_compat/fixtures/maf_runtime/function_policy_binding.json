@@ -1,0 +1,8 @@
+{
+  "binding_id": "bind-fn-42",
+  "function_id": "fn-42",
+  "policy_pack_id": "strict-approval",
+  "autonomy_mode": "operator_approved",
+  "review_required": true,
+  "deployment_profile_id": "pilot-prod"
+}

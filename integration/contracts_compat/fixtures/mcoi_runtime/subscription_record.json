@@ -1,0 +1,15 @@
+{
+  "subscription_id": "subscription-042",
+  "account_id": "billing-account-042",
+  "product_id": "product-governed-runtime",
+  "tenant_id": "tenant-mullu-primary",
+  "status": "active",
+  "quantity": 1,
+  "start_at": "2026-04-01T00:00:00+00:00",
+  "end_at": "2027-03-31T23:59:59+00:00",
+  "created_at": "2026-04-01T00:05:00+00:00",
+  "metadata": {
+    "term": "annual",
+    "auto_renew": true
+  }
+}

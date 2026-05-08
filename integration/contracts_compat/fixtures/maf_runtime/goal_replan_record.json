@@ -1,0 +1,7 @@
+{
+  "goal_id": "goal-42",
+  "previous_plan_id": "plan-42",
+  "new_plan_id": "plan-43",
+  "reason": "verification workflow failed pending approval and required a narrower recovery path",
+  "replanned_at": "2025-01-01T01:31:00+00:00"
+}

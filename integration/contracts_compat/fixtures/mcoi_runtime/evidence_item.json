@@ -1,0 +1,15 @@
+{
+  "evidence_id": "evidence-incident-042",
+  "case_id": "case-incident-042",
+  "source_type": "trace",
+  "source_id": "trace-recovery-042",
+  "status": "reviewed",
+  "title": "Recovery verification trace",
+  "description": "Trace output captured during recovery execution and verification review.",
+  "submitted_by": "operator-recovery",
+  "submitted_at": "2026-04-03T08:18:00+00:00",
+  "metadata": {
+    "execution_id": "recovery-exec-042",
+    "provider_id": "provider-shell"
+  }
+}

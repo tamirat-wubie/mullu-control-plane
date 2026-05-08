@@ -1,0 +1,15 @@
+{
+  "report_id": "budget-closure-launch-q2-2026",
+  "budget_id": "budget-launch-q2-2026",
+  "limit_amount": 50000.0,
+  "total_consumed": 46120.0,
+  "total_released": 3200.0,
+  "total_reservations": 9,
+  "total_spend_records": 18,
+  "currency": "USD",
+  "under_budget": true,
+  "overspend_amount": 0.0,
+  "warnings_issued": 2,
+  "hard_stops_triggered": 0,
+  "closed_at": "2026-06-30T23:59:00+00:00"
+}

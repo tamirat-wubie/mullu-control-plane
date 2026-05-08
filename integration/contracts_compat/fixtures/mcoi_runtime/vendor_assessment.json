@@ -1,0 +1,13 @@
+{
+  "assessment_id": "vendor-assessment-20260505",
+  "vendor_id": "vendor-governance-42",
+  "risk_level": "medium",
+  "performance_score": 0.82,
+  "fault_count": 1,
+  "assessed_by": "third-party-risk-office",
+  "assessed_at": "2026-05-05T11:00:00+00:00",
+  "metadata": {
+    "cycle": "quarterly",
+    "basis": "delivery-and-sla"
+  }
+}

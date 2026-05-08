@@ -105,4 +105,3 @@ def test_validate_public_repository_surface_local_only_passes_current_repo() -> 
     assert errors == []
     assert len(errors) == 0
     assert (REPO_ROOT / "DEPLOYMENT_STATUS.md").exists()
-

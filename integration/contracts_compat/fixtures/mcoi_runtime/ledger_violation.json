@@ -1,0 +1,12 @@
+{
+  "violation_id": "ledger-violation-2026-001",
+  "tenant_id": "tenant-mullu-primary",
+  "kind": "settlement_disputed",
+  "operation": "reconcile_settlement",
+  "reason": "External counterparty disputed one posted settlement before final close.",
+  "detected_at": "2026-05-07T10:15:00+00:00",
+  "metadata": {
+    "transaction_ref": "ledger-transaction-2026-041",
+    "severity": "medium"
+  }
+}

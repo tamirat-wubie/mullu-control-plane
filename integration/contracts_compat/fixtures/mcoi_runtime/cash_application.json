@@ -1,0 +1,11 @@
+{
+  "application_id": "cash-application-042",
+  "settlement_id": "settlement-invoice-042",
+  "payment_id": "payment-042",
+  "amount": 960.0,
+  "applied_at": "2026-04-12T18:10:00+00:00",
+  "metadata": {
+    "applied_by": "settlement-engine",
+    "sequence": 1
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "violation_id": "violation-verify-042",
+  "plan_id": "plan-continuity-042",
+  "tenant_id": "tenant-1",
+  "operation": "reopen_completed_recovery",
+  "reason": "Completed recoveries cannot be reopened without explicit governance approval.",
+  "detected_at": "2026-04-03T08:17:30+00:00",
+  "metadata": {
+    "execution_id": "recovery-exec-042",
+    "severity": "guardrail"
+  }
+}

@@ -567,6 +567,63 @@ class TestClockDeterminism:
 
 
 # ============================================================
+# Restore and listing helpers
+# ============================================================
+
+
+class TestRestoreAndListingHelpers:
+    def test_restore_job_registers_exact_descriptor_and_state(self):
+        engine = JobEngine(clock=_fixed_clock())
+        descriptor = JobDescriptor(
+            job_id="job-restored",
+            name="Restored",
+            description="Persisted descriptor",
+            priority=JobPriority.HIGH,
+            created_at=_T0,
+            goal_id="goal-1",
+        )
+        state = JobState(
+            job_id="job-restored",
+            status=JobStatus.IN_PROGRESS,
+            sla_status=SlaStatus.ON_TRACK,
+            goal_id="goal-1",
+            started_at=_T1,
+            updated_at=_T2,
+        )
+
+        restored_descriptor, restored_state = engine.restore_job(descriptor, state)
+
+        assert restored_descriptor is descriptor
+        assert restored_state is state
+        assert engine.get_job_descriptor("job-restored") is descriptor
+        assert engine.get_job_state("job-restored") is state
+        assert engine.list_job_descriptors() == (descriptor,)
+        assert engine.list_job_states() == (state,)
+
+    def test_restore_job_rejects_mismatched_identity(self):
+        engine = JobEngine(clock=_fixed_clock())
+        descriptor = JobDescriptor(
+            job_id="job-a",
+            name="Mismatch",
+            description="Persisted descriptor",
+            priority=JobPriority.NORMAL,
+            created_at=_T0,
+        )
+        state = JobState(
+            job_id="job-b",
+            status=JobStatus.CREATED,
+            sla_status=SlaStatus.NOT_APPLICABLE,
+            updated_at=_T0,
+        )
+
+        with pytest.raises(RuntimeCoreInvariantError, match="job_id must match"):
+            engine.restore_job(descriptor, state)
+
+        assert engine.list_job_descriptors() == ()
+        assert engine.list_job_states() == ()
+
+
+# ============================================================
 # Edge cases
 # ============================================================
 

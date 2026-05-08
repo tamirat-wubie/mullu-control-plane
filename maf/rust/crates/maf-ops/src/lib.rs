@@ -16,7 +16,7 @@
 #![forbid(unsafe_code)]
 
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 
 // ===========================================================================
 // Simulation
@@ -120,7 +120,7 @@ pub mod simulation {
         pub comparison_id: String,
         pub request_id: String,
         pub ranked_option_ids: Vec<String>,
-        pub scores: HashMap<String, f64>,
+        pub scores: BTreeMap<String, f64>,
         pub top_risk_level: RiskLevel,
         pub review_burden: f64,
     }
@@ -210,7 +210,7 @@ pub mod utility {
         pub option_id: String,
         pub raw_score: f64,
         pub weighted_score: f64,
-        pub factor_contributions: HashMap<String, f64>,
+        pub factor_contributions: BTreeMap<String, f64>,
         pub rank: u64,
     }
 
@@ -357,10 +357,10 @@ pub mod benchmark {
         pub name: String,
         pub description: String,
         pub category: BenchmarkCategory,
-        pub inputs: HashMap<String, serde_json::Value>,
+        pub inputs: BTreeMap<String, serde_json::Value>,
         pub expected_outcome: BenchmarkOutcome,
         #[serde(default)]
-        pub expected_properties: HashMap<String, serde_json::Value>,
+        pub expected_properties: BTreeMap<String, serde_json::Value>,
         #[serde(default)]
         pub tags: Vec<String>,
         #[serde(default = "default_timeout")]
@@ -397,7 +397,7 @@ pub mod benchmark {
         pub scenario_id: String,
         pub outcome: BenchmarkOutcome,
         pub metrics: Vec<BenchmarkMetric>,
-        pub actual_properties: HashMap<String, serde_json::Value>,
+        pub actual_properties: BTreeMap<String, serde_json::Value>,
         #[serde(default, skip_serializing_if = "Option::is_none")]
         pub error_message: Option<String>,
         #[serde(default)]
@@ -414,7 +414,7 @@ pub mod benchmark {
         pub started_at: String,
         pub finished_at: String,
         #[serde(default)]
-        pub metadata: HashMap<String, serde_json::Value>,
+        pub metadata: BTreeMap<String, serde_json::Value>,
     }
 
     #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
@@ -426,7 +426,7 @@ pub mod benchmark {
         pub severity: AdversarialSeverity,
         pub target_subsystem: BenchmarkCategory,
         pub attack_vector: String,
-        pub inputs: HashMap<String, serde_json::Value>,
+        pub inputs: BTreeMap<String, serde_json::Value>,
         pub expected_behavior: String,
         #[serde(default)]
         pub tags: Vec<String>,
@@ -511,7 +511,7 @@ pub mod graph {
         pub label: String,
         pub created_at: String,
         #[serde(default)]
-        pub metadata: HashMap<String, serde_json::Value>,
+        pub metadata: BTreeMap<String, serde_json::Value>,
     }
 
     #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
@@ -523,7 +523,7 @@ pub mod graph {
         pub label: String,
         pub created_at: String,
         #[serde(default)]
-        pub metadata: HashMap<String, serde_json::Value>,
+        pub metadata: BTreeMap<String, serde_json::Value>,
     }
 
     #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
@@ -600,6 +600,17 @@ pub mod graph {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use serde::de::DeserializeOwned;
+
+    fn assert_fixture_round_trip<T>(fixture_json: &str)
+    where
+        T: DeserializeOwned + Serialize,
+    {
+        let fixture_value: serde_json::Value = serde_json::from_str(fixture_json).unwrap();
+        let parsed: T = serde_json::from_str(fixture_json).unwrap();
+        let round_trip_value = serde_json::to_value(parsed).unwrap();
+        assert_eq!(fixture_value, round_trip_value);
+    }
 
     // --- Simulation ---
 
@@ -631,6 +642,33 @@ mod tests {
     }
 
     #[test]
+    fn canonical_simulation_option_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/simulation_option.json"
+        ));
+        assert_fixture_round_trip::<simulation::SimulationOption>(fixture_json);
+    }
+
+    #[test]
+    fn canonical_simulation_request_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/simulation_request.json"
+        ));
+        assert_fixture_round_trip::<simulation::SimulationRequest>(fixture_json);
+    }
+
+    #[test]
+    fn canonical_simulation_outcome_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/simulation_outcome.json"
+        ));
+        assert_fixture_round_trip::<simulation::SimulationOutcome>(fixture_json);
+    }
+
+    #[test]
     fn simulation_verdict_round_trips() {
         let v = simulation::SimulationVerdict {
             verdict_id: "v-1".into(),
@@ -643,6 +681,43 @@ mod tests {
         let json = serde_json::to_string(&v).unwrap();
         let back: simulation::SimulationVerdict = serde_json::from_str(&json).unwrap();
         assert_eq!(v, back);
+    }
+
+    #[test]
+    fn canonical_simulation_verdict_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/simulation_verdict.json"
+        ));
+        assert_fixture_round_trip::<simulation::SimulationVerdict>(fixture_json);
+    }
+
+    #[test]
+    fn simulation_scores_serialize_in_lexicographic_key_order() {
+        let mut scores = BTreeMap::new();
+        scores.insert("zeta".to_string(), 1.0);
+        scores.insert("alpha".to_string(), 2.0);
+        let comparison = simulation::SimulationComparison {
+            comparison_id: "cmp-1".into(),
+            request_id: "req-1".into(),
+            ranked_option_ids: vec!["alpha".into(), "zeta".into()],
+            scores,
+            top_risk_level: simulation::RiskLevel::Low,
+            review_burden: 1.0,
+        };
+
+        let json = serde_json::to_string(&comparison).unwrap();
+        assert!(json.contains(r#""scores":{"alpha":2.0,"zeta":1.0}"#));
+        assert!(json.find(r#""alpha":2.0"#).unwrap() < json.find(r#""zeta":1.0"#).unwrap());
+    }
+
+    #[test]
+    fn canonical_simulation_comparison_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/simulation_comparison.json"
+        ));
+        assert_fixture_round_trip::<simulation::SimulationComparison>(fixture_json);
     }
 
     // --- Utility ---
@@ -674,6 +749,86 @@ mod tests {
     }
 
     #[test]
+    fn canonical_resource_budget_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/resource_budget.json"
+        ));
+        assert_fixture_round_trip::<utility::ResourceBudget>(fixture_json);
+    }
+
+    #[test]
+    fn canonical_decision_factor_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/decision_factor.json"
+        ));
+        assert_fixture_round_trip::<utility::DecisionFactor>(fixture_json);
+    }
+
+    #[test]
+    fn canonical_utility_profile_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/utility_profile.json"
+        ));
+        assert_fixture_round_trip::<utility::UtilityProfile>(fixture_json);
+    }
+
+    #[test]
+    fn option_utility_factor_contributions_serialize_in_lexicographic_key_order() {
+        let mut factor_contributions = BTreeMap::new();
+        factor_contributions.insert("zeta".to_string(), 0.2);
+        factor_contributions.insert("alpha".to_string(), 0.8);
+        let option_utility = utility::OptionUtility {
+            option_id: "opt-ordered".into(),
+            raw_score: 0.7,
+            weighted_score: 0.8,
+            factor_contributions,
+            rank: 1,
+        };
+        let json = serde_json::to_string(&option_utility).unwrap();
+        assert!(json.contains(r#""factor_contributions":{"alpha":0.8,"zeta":0.2}"#));
+        assert!(json.find(r#""alpha":0.8"#).unwrap() < json.find(r#""zeta":0.2"#).unwrap());
+    }
+
+    #[test]
+    fn canonical_option_utility_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/option_utility.json"
+        ));
+        assert_fixture_round_trip::<utility::OptionUtility>(fixture_json);
+    }
+
+    #[test]
+    fn canonical_decision_comparison_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/decision_comparison.json"
+        ));
+        assert_fixture_round_trip::<utility::DecisionComparison>(fixture_json);
+    }
+
+    #[test]
+    fn canonical_tradeoff_record_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/tradeoff_record.json"
+        ));
+        assert_fixture_round_trip::<utility::TradeoffRecord>(fixture_json);
+    }
+
+    #[test]
+    fn canonical_decision_policy_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/decision_policy.json"
+        ));
+        assert_fixture_round_trip::<utility::DecisionPolicy>(fixture_json);
+    }
+
+    #[test]
     fn utility_verdict_round_trips() {
         let v = utility::UtilityVerdict {
             verdict_id: "v-1".into(),
@@ -688,6 +843,15 @@ mod tests {
         let json = serde_json::to_string(&v).unwrap();
         let back: utility::UtilityVerdict = serde_json::from_str(&json).unwrap();
         assert_eq!(v, back);
+    }
+
+    #[test]
+    fn canonical_utility_verdict_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/utility_verdict.json"
+        ));
+        assert_fixture_round_trip::<utility::UtilityVerdict>(fixture_json);
     }
 
     // --- Benchmark ---
@@ -725,6 +889,100 @@ mod tests {
         assert_eq!(sc, back);
     }
 
+    #[test]
+    fn benchmark_inputs_serialize_in_lexicographic_key_order() {
+        let mut inputs = BTreeMap::new();
+        inputs.insert("zeta".to_string(), serde_json::json!(1));
+        inputs.insert("alpha".to_string(), serde_json::json!(2));
+        let scenario = benchmark::BenchmarkScenario {
+            scenario_id: "scenario-1".into(),
+            name: "Governed benchmark".into(),
+            description: "Checks deterministic input ordering".into(),
+            category: benchmark::BenchmarkCategory::Governance,
+            inputs,
+            expected_outcome: benchmark::BenchmarkOutcome::Pass,
+            expected_properties: BTreeMap::new(),
+            tags: vec![],
+            timeout_ms: 30000,
+        };
+
+        let json = serde_json::to_string(&scenario).unwrap();
+        assert!(json.contains(r#""inputs":{"alpha":2,"zeta":1}"#));
+        assert!(json.find(r#""alpha":2"#).unwrap() < json.find(r#""zeta":1"#).unwrap());
+    }
+
+    #[test]
+    fn canonical_benchmark_scenario_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/benchmark_scenario.json"
+        ));
+        assert_fixture_round_trip::<benchmark::BenchmarkScenario>(fixture_json);
+    }
+
+    #[test]
+    fn canonical_benchmark_suite_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/benchmark_suite.json"
+        ));
+        assert_fixture_round_trip::<benchmark::BenchmarkSuite>(fixture_json);
+    }
+
+    #[test]
+    fn canonical_benchmark_metric_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/benchmark_metric.json"
+        ));
+        assert_fixture_round_trip::<benchmark::BenchmarkMetric>(fixture_json);
+    }
+
+    #[test]
+    fn canonical_benchmark_result_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/benchmark_result.json"
+        ));
+        assert_fixture_round_trip::<benchmark::BenchmarkResult>(fixture_json);
+    }
+
+    #[test]
+    fn canonical_benchmark_run_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/benchmark_run.json"
+        ));
+        assert_fixture_round_trip::<benchmark::BenchmarkRun>(fixture_json);
+    }
+
+    #[test]
+    fn canonical_adversarial_case_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/adversarial_case.json"
+        ));
+        assert_fixture_round_trip::<benchmark::AdversarialCase>(fixture_json);
+    }
+
+    #[test]
+    fn canonical_regression_record_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/regression_record.json"
+        ));
+        assert_fixture_round_trip::<benchmark::RegressionRecord>(fixture_json);
+    }
+
+    #[test]
+    fn canonical_capability_scorecard_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/capability_scorecard.json"
+        ));
+        assert_fixture_round_trip::<benchmark::CapabilityScorecard>(fixture_json);
+    }
+
     // --- Graph ---
 
     #[test]
@@ -746,11 +1004,65 @@ mod tests {
             node_type: graph::NodeType::Job,
             label: "Deploy service".into(),
             created_at: "2025-01-01T00:00:00+00:00".into(),
-            metadata: HashMap::new(),
+            metadata: BTreeMap::new(),
         };
         let json = serde_json::to_string(&node).unwrap();
         let back: graph::OperationalNode = serde_json::from_str(&json).unwrap();
         assert_eq!(node, back);
+    }
+
+    #[test]
+    fn canonical_operational_node_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/operational_node.json"
+        ));
+        assert_fixture_round_trip::<graph::OperationalNode>(fixture_json);
+    }
+
+    #[test]
+    fn canonical_operational_edge_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/operational_edge.json"
+        ));
+        assert_fixture_round_trip::<graph::OperationalEdge>(fixture_json);
+    }
+
+    #[test]
+    fn canonical_evidence_link_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/evidence_link.json"
+        ));
+        assert_fixture_round_trip::<graph::EvidenceLink>(fixture_json);
+    }
+
+    #[test]
+    fn canonical_decision_link_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/decision_link.json"
+        ));
+        assert_fixture_round_trip::<graph::DecisionLink>(fixture_json);
+    }
+
+    #[test]
+    fn canonical_obligation_link_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/obligation_link.json"
+        ));
+        assert_fixture_round_trip::<graph::ObligationLink>(fixture_json);
+    }
+
+    #[test]
+    fn canonical_state_delta_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/state_delta.json"
+        ));
+        assert_fixture_round_trip::<graph::StateDelta>(fixture_json);
     }
 
     #[test]
@@ -764,6 +1076,33 @@ mod tests {
         let json = serde_json::to_string(&path).unwrap();
         let back: graph::CausalPath = serde_json::from_str(&json).unwrap();
         assert_eq!(path, back);
+    }
+
+    #[test]
+    fn canonical_causal_path_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/causal_path.json"
+        ));
+        assert_fixture_round_trip::<graph::CausalPath>(fixture_json);
+    }
+
+    #[test]
+    fn canonical_graph_snapshot_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/graph_snapshot.json"
+        ));
+        assert_fixture_round_trip::<graph::GraphSnapshot>(fixture_json);
+    }
+
+    #[test]
+    fn canonical_graph_query_result_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/graph_query_result.json"
+        ));
+        assert_fixture_round_trip::<graph::GraphQueryResult>(fixture_json);
     }
 
     // --- Cross-format compatibility ---

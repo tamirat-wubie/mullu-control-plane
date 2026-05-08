@@ -1,0 +1,13 @@
+{
+  "credit_id": "credit-breach-042",
+  "account_id": "billing-account-042",
+  "breach_id": "breach-sla-042",
+  "disposition": "applied",
+  "amount": 125.0,
+  "reason": "Service credit applied after response-time breach review.",
+  "applied_at": "2026-04-08T12:00:00+00:00",
+  "metadata": {
+    "authorized_by": "billing-governance",
+    "currency": "USD"
+  }
+}

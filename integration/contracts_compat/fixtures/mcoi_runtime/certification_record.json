@@ -1,0 +1,15 @@
+{
+  "certification_id": "certification-workspace-042",
+  "tenant_id": "tenant-mullu-primary",
+  "scope": "workspace",
+  "scope_ref_id": "workspace-governance-042",
+  "status": "active",
+  "level": "moderate",
+  "certified_by": "certification-board",
+  "certified_at": "2026-04-04T09:15:00+00:00",
+  "expires_at": "2027-04-04T09:15:00+00:00",
+  "metadata": {
+    "evidence_basis": "comprehensive",
+    "program": "runtime-assurance"
+  }
+}

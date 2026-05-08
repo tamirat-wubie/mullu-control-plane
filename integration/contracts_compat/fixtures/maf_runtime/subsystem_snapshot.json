@@ -1,0 +1,11 @@
+{
+  "snapshot_id": "snapshot-supervisor-042",
+  "scope": "supervisor",
+  "state_hash": "sha256:supervisor-state-042",
+  "record_count": 12,
+  "captured_at": "2026-04-01T12:00:30+00:00",
+  "payload": {
+    "active_obligations": 3,
+    "policy_id": "policy-default-safe"
+  }
+}

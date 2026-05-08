@@ -107,6 +107,16 @@ class WorkQueue:
         self._order.append(entry_id)
         return entry
 
+    def restore_entry(self, entry: WorkQueueEntry) -> WorkQueueEntry:
+        """Restore an exact persisted queue entry without generating new identifiers."""
+        if not isinstance(entry, WorkQueueEntry):
+            raise RuntimeCoreInvariantError("entry must be a WorkQueueEntry instance")
+        if entry.entry_id in self._entries:
+            raise RuntimeCoreInvariantError(f"duplicate queue entry: {entry.entry_id}")
+        self._entries[entry.entry_id] = entry
+        self._order.append(entry.entry_id)
+        return entry
+
     def _sort_key(self, entry_id: str) -> tuple[int, int]:
         entry = self._entries[entry_id]
         rank = JOB_PRIORITY_RANK.get(entry.priority, 99)
@@ -128,6 +138,10 @@ class WorkQueue:
             return None
         best_id = min(self._entries, key=self._sort_key)
         return self._entries[best_id]
+
+    def get(self, entry_id: str) -> WorkQueueEntry | None:
+        """Return a queue entry by identifier without mutating queue state."""
+        return self._entries.get(entry_id)
 
     def list_entries(self) -> tuple[WorkQueueEntry, ...]:
         """Return all entries sorted by priority then enqueue order."""
@@ -226,6 +240,50 @@ class JobEngine:
         self._jobs[job_id] = descriptor
         self._states[job_id] = state
         return descriptor, state
+
+    def restore_job(
+        self,
+        descriptor: JobDescriptor,
+        state: JobState,
+    ) -> tuple[JobDescriptor, JobState]:
+        """Restore an exact persisted job descriptor and state without replay."""
+        if not isinstance(descriptor, JobDescriptor):
+            raise RuntimeCoreInvariantError("descriptor must be a JobDescriptor instance")
+        if not isinstance(state, JobState):
+            raise RuntimeCoreInvariantError("state must be a JobState instance")
+        if descriptor.job_id != state.job_id:
+            raise RuntimeCoreInvariantError("descriptor and state job_id must match")
+        if descriptor.job_id in self._jobs or descriptor.job_id in self._states:
+            raise RuntimeCoreInvariantError(f"job already restored: {descriptor.job_id}")
+        if state.goal_id is not None and descriptor.goal_id is not None and state.goal_id != descriptor.goal_id:
+            raise RuntimeCoreInvariantError("descriptor and state goal_id must match when both are present")
+        if (
+            state.workflow_id is not None
+            and descriptor.workflow_id is not None
+            and state.workflow_id != descriptor.workflow_id
+        ):
+            raise RuntimeCoreInvariantError(
+                "descriptor and state workflow_id must match when both are present"
+            )
+        self._jobs[descriptor.job_id] = descriptor
+        self._states[state.job_id] = state
+        return descriptor, state
+
+    def get_job_descriptor(self, job_id: str) -> JobDescriptor | None:
+        """Return a job descriptor by identifier without mutating engine state."""
+        return self._jobs.get(job_id)
+
+    def get_job_state(self, job_id: str) -> JobState | None:
+        """Return a job state by identifier without mutating engine state."""
+        return self._states.get(job_id)
+
+    def list_job_descriptors(self) -> tuple[JobDescriptor, ...]:
+        """Return all job descriptors in deterministic identifier order."""
+        return tuple(self._jobs[job_id] for job_id in sorted(self._jobs))
+
+    def list_job_states(self) -> tuple[JobState, ...]:
+        """Return all job states in deterministic identifier order."""
+        return tuple(self._states[job_id] for job_id in sorted(self._states))
 
     # --- State helpers ---
 

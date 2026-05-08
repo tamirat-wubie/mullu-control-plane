@@ -1,0 +1,14 @@
+{
+  "inventory_id": "inventory-runtime-042",
+  "asset_id": "asset-runtime-042",
+  "tenant_id": "tenant-mullu-primary",
+  "disposition": "assigned",
+  "total_quantity": 10,
+  "assigned_quantity": 6,
+  "available_quantity": 4,
+  "updated_at": "2026-04-05T09:10:00+00:00",
+  "metadata": {
+    "warehouse": "dc-east",
+    "sku": "runtime-node"
+  }
+}
