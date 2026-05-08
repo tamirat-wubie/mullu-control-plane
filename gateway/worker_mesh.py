@@ -27,6 +27,7 @@ WorkerHandler = Callable[["WorkerDispatchRequest"], "WorkerHandlerResult"]
 VALID_WORKER_STATUSES = frozenset({"succeeded", "failed", "rejected"})
 PHYSICAL_ACTION_RECEIPT_PAYLOAD_KEY = "physical_action_receipt"
 PHYSICAL_ACTION_RECEIPT_SCHEMA_REF = "urn:mullusi:schema:physical-action-receipt:1"
+WORKER_MESH_SCHEMA_REF = "urn:mullusi:schema:worker-mesh:1"
 
 
 @dataclass(frozen=True, slots=True)
@@ -56,9 +57,9 @@ class WorkerLeaseScope:
     network_allowlist: list[str] = field(default_factory=list)
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "resource_refs", list(self.resource_refs))
-        object.__setattr__(self, "data_classes", list(self.data_classes))
-        object.__setattr__(self, "network_allowlist", list(self.network_allowlist))
+        object.__setattr__(self, "resource_refs", _normalized_text_list(self.resource_refs, "resource_refs"))
+        object.__setattr__(self, "data_classes", _normalized_text_list(self.data_classes, "data_classes"))
+        object.__setattr__(self, "network_allowlist", _normalized_text_list(self.network_allowlist, "network_allowlist"))
 
 
 @dataclass(frozen=True, slots=True)
@@ -86,9 +87,9 @@ class WorkerLease:
     metadata: dict[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "allowed_operations", list(self.allowed_operations))
-        object.__setattr__(self, "forbidden_operations", list(self.forbidden_operations))
-        object.__setattr__(self, "policy_refs", list(self.policy_refs))
+        object.__setattr__(self, "allowed_operations", _normalized_text_list(self.allowed_operations, "allowed_operations"))
+        object.__setattr__(self, "forbidden_operations", _normalized_text_list(self.forbidden_operations, "forbidden_operations"))
+        object.__setattr__(self, "policy_refs", _normalized_text_list(self.policy_refs, "policy_refs"))
         object.__setattr__(self, "metadata", dict(self.metadata))
 
 
@@ -285,6 +286,8 @@ def _validate_lease(lease: WorkerLease) -> str:
         return "sandbox_required"
     if not lease.receipt_schema_ref:
         return "receipt_schema_ref_required"
+    if lease.receipt_schema_ref != WORKER_MESH_SCHEMA_REF:
+        return "receipt_schema_ref_invalid"
     if not lease.verification_ref:
         return "verification_ref_required"
     if not lease.recovery_ref:
@@ -316,7 +319,10 @@ def _admission_denial(binding: _WorkerBinding, request: WorkerDispatchRequest, *
     if request.operation not in lease.allowed_operations:
         return "operation_not_allowed"
     if lease.physical_action_boundary_required:
-        physical_denial = _physical_action_receipt_denial(request.payload.get(PHYSICAL_ACTION_RECEIPT_PAYLOAD_KEY))
+        physical_denial = _physical_action_receipt_denial(
+            request.payload.get(PHYSICAL_ACTION_RECEIPT_PAYLOAD_KEY),
+            request=request,
+        )
         if physical_denial:
             return physical_denial
     if not request.request_id:
@@ -340,6 +346,15 @@ def _admission_denial(binding: _WorkerBinding, request: WorkerDispatchRequest, *
 
 def _cost_budget_exceeded(binding: _WorkerBinding, charged_cost: float) -> bool:
     return binding.lease.budget.max_cost > 0 and binding.cost_used + charged_cost > binding.lease.budget.max_cost
+
+
+def _normalized_text_list(values: list[str], field_name: str) -> list[str]:
+    normalized: list[str] = []
+    for index, value in enumerate(values):
+        if not isinstance(value, str) or not value.strip():
+            raise ValueError(f"{field_name}_{index}_required")
+        normalized.append(value.strip())
+    return normalized
 
 
 def _normalize_handler_result(result: WorkerHandlerResult) -> WorkerHandlerResult:
@@ -410,11 +425,15 @@ def _stamp_lease(lease: WorkerLease) -> WorkerLease:
     return replace(lease, lease_hash=canonical_hash(payload))
 
 
-def _physical_action_receipt_denial(receipt: Any) -> str:
+def _physical_action_receipt_denial(receipt: Any, *, request: WorkerDispatchRequest) -> str:
     if not isinstance(receipt, dict):
         return "physical_action_receipt_required"
     if receipt.get("receipt_schema_ref") != PHYSICAL_ACTION_RECEIPT_SCHEMA_REF:
         return "physical_action_receipt_schema_invalid"
+    if receipt.get("tenant_id") != request.tenant_id:
+        return "physical_action_receipt_tenant_mismatch"
+    if receipt.get("command_id") != request.command_id:
+        return "physical_action_receipt_command_mismatch"
     if receipt.get("status") != "allowed":
         return "physical_action_receipt_not_allowed"
     if receipt.get("terminal_closure_required") is not True:
@@ -431,12 +450,23 @@ def _physical_action_receipt_denial(receipt: Any) -> str:
         return "physical_actuator_id_required"
     if not receipt.get("receipt_hash"):
         return "physical_action_receipt_hash_required"
+    if not _physical_action_receipt_hash_valid(receipt):
+        return "physical_action_receipt_hash_mismatch"
     evidence_refs = receipt.get("evidence_refs")
     if not isinstance(evidence_refs, list) or not evidence_refs:
         return "physical_action_evidence_required"
     if receipt.get("effect_mode") == "live" and receipt.get("operator_approval_required") is not True:
         return "physical_operator_approval_required"
     return ""
+
+
+def _physical_action_receipt_hash_valid(receipt: dict[str, Any]) -> bool:
+    expected_payload = {
+        **receipt,
+        "receipt_id": "pending",
+        "receipt_hash": "",
+    }
+    return canonical_hash(expected_payload) == receipt.get("receipt_hash")
 
 
 def _is_expired(expires_at: str, now: str) -> bool:

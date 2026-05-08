@@ -21,7 +21,7 @@ from mcoi_runtime.contracts.code_worker import (
     CodeWorkerLease,
     CodeWorkerReceiptStatus,
 )
-from mcoi_runtime.workers.code_worker import SandboxedCodeWorker
+from mcoi_runtime.workers.code_worker import SandboxedCodeWorker, _workspace_snapshot
 
 
 def _lease(**overrides: object) -> CodeWorkerLease:
@@ -194,6 +194,30 @@ def test_sandboxed_code_worker_blocks_sandbox_mutation_outside_lease_path(
         "sandbox_changed_file_outside_lease_allowed_paths:"
     )
     assert "other/result.txt" not in result.stderr
+
+
+def test_workspace_snapshot_records_symlink_without_following_target(
+    tmp_path: Path,
+) -> None:
+    workspace = tmp_path / "workspace"
+    outside = tmp_path / "outside"
+    workspace.mkdir()
+    outside.mkdir()
+    (workspace / "regular.txt").write_text("inside\n", encoding="utf-8")
+    (outside / "secret.txt").write_text("outside\n", encoding="utf-8")
+    link_path = workspace / "linked-outside"
+    try:
+        link_path.symlink_to(outside, target_is_directory=True)
+    except (NotImplementedError, OSError) as exc:
+        pytest.skip(f"symlink creation unavailable: {type(exc).__name__}")
+
+    snapshot = _workspace_snapshot(workspace)
+
+    assert "regular.txt" in snapshot
+    assert "linked-outside" in snapshot
+    assert snapshot["linked-outside"].startswith("symlink:")
+    assert "linked-outside/secret.txt" not in snapshot
+    assert snapshot["linked-outside"] != "unreadable"
 
 
 def test_sandboxed_code_worker_blocks_denied_executable_without_dispatch(tmp_path: Path) -> None:

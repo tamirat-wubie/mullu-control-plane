@@ -10,6 +10,7 @@ Dependencies: schemas/finance_approval_live_handoff_closure_run.schema.json and
 Invariants:
   - Closure run shape matches the public protocol schema.
   - Closure run mode remains dry-run.
+  - Redacted recovery env template validation precedes binding receipt emission.
   - Binding validation precedes live receipt collection.
   - Exactly one live connector touchpoint is declared.
   - Promotion and operator-summary commands preserve strict readiness gates.
@@ -35,48 +36,55 @@ from scripts.validate_schemas import _validate_schema_instance  # noqa: E402
 DEFAULT_SCHEMA = REPO_ROOT / "schemas" / "finance_approval_live_handoff_closure_run.schema.json"
 DEFAULT_OUTPUT = REPO_ROOT / ".change_assurance" / "finance_approval_live_handoff_closure_run_schema_validation.json"
 EXPECTED_STEP_IDS = (
-    "01_emit_binding_receipt",
-    "02_validate_binding_receipt",
-    "03_collect_read_only_live_receipt",
-    "04_validate_read_only_live_receipt",
-    "05_collect_adapter_evidence",
-    "06_validate_pilot_readiness",
-    "07_refresh_handoff_plan",
-    "08_validate_handoff_plan_schema",
-    "09_run_preflight",
-    "10_validate_preflight_schema",
-    "11_produce_handoff_packet",
-    "12_validate_handoff_packet_schema",
-    "13_validate_handoff_chain",
-    "14_validate_handoff_chain_schema",
-    "15_produce_operator_summary",
-    "16_validate_operator_summary_schema",
+    "01_validate_recovery_env_template",
+    "02_emit_binding_receipt",
+    "03_validate_binding_receipt",
+    "04_collect_read_only_live_receipt",
+    "05_validate_read_only_live_receipt",
+    "06_collect_adapter_evidence",
+    "07_validate_pilot_readiness",
+    "08_refresh_handoff_plan",
+    "09_validate_handoff_plan_schema",
+    "10_run_preflight",
+    "11_validate_preflight_schema",
+    "12_produce_handoff_packet",
+    "13_validate_handoff_packet_schema",
+    "14_validate_handoff_chain",
+    "15_validate_handoff_chain_schema",
+    "16_produce_operator_summary",
+    "17_validate_operator_summary_schema",
 )
-LIVE_STEP_ID = "03_collect_read_only_live_receipt"
+LIVE_STEP_ID = "04_collect_read_only_live_receipt"
 REQUIRED_COMMAND_TOKENS_BY_STEP = {
-    "03_collect_read_only_live_receipt": (
+    "01_validate_recovery_env_template": (
+        "validate_finance_email_calendar_recovery_env_example.py",
+        "--template examples/finance_email_calendar_recovery.env.example",
+        "--strict",
+        "--json",
+    ),
+    "04_collect_read_only_live_receipt": (
         "produce_capability_adapter_live_receipts.py",
         "--target email-calendar",
         "--strict",
         "--json",
     ),
-    "13_validate_handoff_chain": (
+    "14_validate_handoff_chain": (
         "validate_finance_approval_live_handoff_chain.py",
         "--strict",
         "--require-ready",
         "--json",
     ),
-    "14_validate_handoff_chain_schema": (
+    "15_validate_handoff_chain_schema": (
         "validate_finance_approval_live_handoff_chain_schema.py",
         "--strict",
         "--json",
     ),
-    "15_produce_operator_summary": (
+    "16_produce_operator_summary": (
         "produce_finance_approval_operator_summary.py",
         "--strict",
         "--json",
     ),
-    "16_validate_operator_summary_schema": (
+    "17_validate_operator_summary_schema": (
         "validate_finance_approval_operator_summary_schema.py",
         "--strict",
         "--json",

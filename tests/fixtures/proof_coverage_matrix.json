@@ -177,6 +177,13 @@
       ]
     },
     {
+      "action_id": "classify_policy_simulation_routes",
+      "status": "closed",
+      "surfaces": [
+        "governed_operational_intelligence"
+      ]
+    },
+    {
       "action_id": "publish_capability_forge_candidate_contract",
       "status": "closed",
       "surfaces": [
@@ -209,6 +216,13 @@
       "status": "closed",
       "surfaces": [
         "claim_verification"
+      ]
+    },
+    {
+      "action_id": "classify_governed_connector_routes",
+      "status": "closed",
+      "surfaces": [
+        "governed_connector_framework"
       ]
     },
     {
@@ -436,7 +450,7 @@
   ],
   "coverage_summary": {
     "by_action_proof": {
-      "action_proof": 55,
+      "action_proof": 56,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 10,
@@ -444,7 +458,7 @@
     },
     "by_audit": {
       "action_proof": 0,
-      "audit_chain": 63,
+      "audit_chain": 64,
       "gap": 0,
       "read_model": 4,
       "request_proof": 0
@@ -452,23 +466,23 @@
     "by_coverage_state": {
       "proven": 1,
       "unproven": 0,
-      "witnessed": 66
+      "witnessed": 67
     },
     "by_request_proof": {
       "action_proof": 0,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 12,
-      "request_proof": 55
+      "request_proof": 56
     },
-    "surface_count": 67
+    "surface_count": 68
   },
   "generated_by": "scripts/proof_coverage_matrix.py",
   "route_coverage": {
     "by_coverage_state": {
       "proven": 5,
-      "unproven": 188,
-      "witnessed": 122
+      "unproven": 178,
+      "witnessed": 132
     },
     "route_count": 315,
     "routes": [
@@ -728,39 +742,39 @@
         "surface_id": "unclassified_declared_route"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/connectors",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "governed_connector_framework"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/connectors/history",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "governed_connector_framework"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/connectors/invoke",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "governed_connector_framework"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/connectors/register",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "governed_connector_framework"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/connectors/summary",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "governed_connector_framework"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/connectors/{connector_id}/disable",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "governed_connector_framework"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/connectors/{connector_id}/enable",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "governed_connector_framework"
       },
       {
         "coverage_state": "witnessed",
@@ -1583,19 +1597,19 @@
         "surface_id": "unclassified_declared_route"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/simulate",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "governed_operational_intelligence"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/simulate/history",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "governed_operational_intelligence"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/simulate/summary",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "governed_operational_intelligence"
       },
       {
         "coverage_state": "unproven",
@@ -2048,7 +2062,7 @@
         "surface_id": "gateway_capability_fabric"
       }
     ],
-    "unclassified_route_count": 188
+    "unclassified_route_count": 178
   },
   "schema_version": 1,
   "surfaces": [
@@ -2828,16 +2842,19 @@
         "gateway/goal_compiler.py",
         "gateway/causal_simulator.py",
         "mcoi/mcoi_runtime/app/routers/knowledge.py",
+        "mcoi/mcoi_runtime/app/routers/simulation.py",
         "mcoi/mcoi_runtime/core/knowledge_graph.py",
+        "mcoi/mcoi_runtime/governance/policy/sandbox.py",
         "schemas/world_state.schema.json",
         "schemas/goal.schema.json",
         "schemas/simulation_receipt.schema.json",
         "mcoi/tests/test_knowledge_graph.py",
+        "mcoi/tests/test_policy_sandbox.py",
         "tests/test_gateway/test_world_state.py",
         "tests/test_gateway/test_goal_compiler.py",
         "tests/test_gateway/test_causal_simulator.py"
       ],
-      "notes": "Governed operational intelligence binds sourced world-state admission, knowledge graph entity/link/contradiction routes, compiled goal-plan certificates, and deterministic causal simulation receipts before effect-bearing execution.",
+      "notes": "Governed operational intelligence binds sourced world-state admission, knowledge graph entity/link/contradiction routes, policy simulation dry-run APIs, compiled goal-plan certificates, and deterministic causal simulation receipts before effect-bearing execution.",
       "representative_paths": [
         "WorldStateStore.add_entity",
         "GoalCompiler.compile",
@@ -2847,7 +2864,10 @@
         "/api/v1/knowledge/entities/{entity_id}/links",
         "/api/v1/knowledge/contradictions",
         "/api/v1/knowledge/contradictions/unresolved",
-        "/api/v1/knowledge/summary"
+        "/api/v1/knowledge/summary",
+        "/api/v1/simulate",
+        "/api/v1/simulate/history",
+        "/api/v1/simulate/summary"
       ],
       "request_proof": "request_proof",
       "runtime_witnesses": [
@@ -2856,6 +2876,8 @@
         "knowledge_link_routes_governed",
         "knowledge_contradiction_routes_governed",
         "knowledge_summary_route_bounded",
+        "policy_simulation_routes_governed",
+        "policy_simulation_history_summary_bounded",
         "goal_plan_certificate_hash_bound",
         "simulation_receipt_schema_valid",
         "open_world_contradictions_block_execution",
@@ -3035,6 +3057,38 @@
         "claim_verification_schema_valid"
       ],
       "surface_id": "claim_verification"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "mcoi/mcoi_runtime/app/routers/connectors.py",
+        "mcoi/mcoi_runtime/core/connector_framework.py",
+        "mcoi/tests/test_connector_framework.py",
+        "mcoi/tests/test_server_phase217.py",
+        "mcoi/tests/test_server_phase218.py"
+      ],
+      "notes": "Governed connector routes register typed connector definitions, invoke handlers through guard-chain admission, bound lifecycle enable/disable controls, expose bounded list/history/summary read models, and sanitize connector errors before returning operator-visible receipts.",
+      "representative_paths": [
+        "/api/v1/connectors",
+        "/api/v1/connectors/history",
+        "/api/v1/connectors/invoke",
+        "/api/v1/connectors/register",
+        "/api/v1/connectors/summary",
+        "/api/v1/connectors/{connector_id}/disable",
+        "/api/v1/connectors/{connector_id}/enable"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "connector_registration_typed",
+        "connector_invocation_guard_chain_checked",
+        "connector_lifecycle_disable_enable_bounded",
+        "connector_history_summary_bounded",
+        "connector_errors_sanitized",
+        "connector_invocation_audited"
+      ],
+      "surface_id": "governed_connector_framework"
     },
     {
       "action_proof": "action_proof",
