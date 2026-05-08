@@ -1287,6 +1287,102 @@ class APIRouterBackend:
         return self._call_count
 
 
+class QuickSilverBackend:
+    """QuickSilver Pro OpenAI-compatible endpoint for long-context Qwen models."""
+
+    provider = LLMProvider.QUICKSILVER
+    DEFAULT_MODEL = "qwen3.6-35b"
+
+    def __init__(self, *, model: str = "", api_key: str | None = None, api_key_env: str = "QUICKSILVER_API_KEY") -> None:
+        self._model = model or self.DEFAULT_MODEL
+        self._default_model = self._model
+        self._api_key = api_key or ""
+        self._api_key_env = api_key_env
+        self._call_count = 0
+
+    def call(self, params: LLMInvocationParams) -> LLMResult:
+        self._call_count += 1
+        return _openai_compatible_call(
+            base_url="https://api.quicksilverpro.io/v1",
+            api_key=self._api_key or os.environ.get(self._api_key_env, "") or os.environ.get("QSP_KEY", ""),
+            model=params.model_name or self._model,
+            messages=_params_to_messages(params),
+            max_tokens=params.max_tokens,
+            temperature=0.0,
+            provider=self.provider,
+            cost_per_1m_input=0.13,
+            cost_per_1m_output=0.78,
+        )
+
+    @property
+    def call_count(self) -> int:
+        return self._call_count
+
+
+class MixlayerBackend:
+    """Mixlayer OpenAI-compatible endpoint for low-cost open model routing."""
+
+    provider = LLMProvider.MIXLAYER
+    DEFAULT_MODEL = "qwen/qwen3.5-9b"
+
+    def __init__(self, *, model: str = "", api_key: str | None = None, api_key_env: str = "MIXLAYER_API_KEY") -> None:
+        self._model = model or self.DEFAULT_MODEL
+        self._default_model = self._model
+        self._api_key = api_key or ""
+        self._api_key_env = api_key_env
+        self._call_count = 0
+
+    def call(self, params: LLMInvocationParams) -> LLMResult:
+        self._call_count += 1
+        return _openai_compatible_call(
+            base_url="https://models.mixlayer.ai/v1",
+            api_key=self._api_key or os.environ.get(self._api_key_env, ""),
+            model=params.model_name or self._model,
+            messages=_params_to_messages(params),
+            max_tokens=params.max_tokens,
+            temperature=0.0,
+            provider=self.provider,
+            cost_per_1m_input=0.10,
+            cost_per_1m_output=0.40,
+        )
+
+    @property
+    def call_count(self) -> int:
+        return self._call_count
+
+
+class ApiLinkBackend:
+    """ApiLink OpenAI-compatible gateway for hosted model routing."""
+
+    provider = LLMProvider.APILINK
+    DEFAULT_MODEL = "deepseek/deepseek-v4-pro"
+
+    def __init__(self, *, model: str = "", api_key: str | None = None, api_key_env: str = "APILINK_API_KEY") -> None:
+        self._model = model or self.DEFAULT_MODEL
+        self._default_model = self._model
+        self._api_key = api_key or ""
+        self._api_key_env = api_key_env
+        self._call_count = 0
+
+    def call(self, params: LLMInvocationParams) -> LLMResult:
+        self._call_count += 1
+        return _openai_compatible_call(
+            base_url="https://api.apilink.io/v1",
+            api_key=self._api_key or os.environ.get(self._api_key_env, ""),
+            model=params.model_name or self._model,
+            messages=_params_to_messages(params),
+            max_tokens=params.max_tokens,
+            temperature=0.0,
+            provider=self.provider,
+            cost_per_1m_input=0.43,
+            cost_per_1m_output=0.870,
+        )
+
+    @property
+    def call_count(self) -> int:
+        return self._call_count
+
+
 # --- xAI Grok (real-time X data) ---
 
 
@@ -1442,6 +1538,9 @@ ALL_PROVIDERS: dict[str, type] = {
     "venice": VeniceBackend,
     "euri": EURIBackend,
     "apirouter": APIRouterBackend,
+    "quicksilver": QuickSilverBackend,
+    "mixlayer": MixlayerBackend,
+    "apilink": ApiLinkBackend,
     "grok": GrokBackend,
     "mistral": MistralBackend,
     "openrouter": OpenRouterBackend,
@@ -1493,6 +1592,9 @@ def available_providers() -> list[str]:
         "venice": ("VENICE_API_KEY",),
         "euri": ("EURI_API_KEY",),
         "apirouter": ("APIROUTER_API_KEY",),
+        "quicksilver": ("QUICKSILVER_API_KEY", "QSP_KEY"),
+        "mixlayer": ("MIXLAYER_API_KEY",),
+        "apilink": ("APILINK_API_KEY",),
         "grok": ("XAI_API_KEY",),
         "mistral": ("MISTRAL_API_KEY",),
         "openrouter": ("OPENROUTER_API_KEY",),

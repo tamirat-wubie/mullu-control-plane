@@ -1032,6 +1032,44 @@ def proof_coverage_matrix() -> dict[str, Any]:
             ],
         ),
         _surface(
+            "tenant_governance_lifecycle",
+            [
+                "/api/v1/tenant/budget",
+                "/api/v1/tenant/gates",
+                "/api/v1/tenant/register",
+                "/api/v1/tenant/{tenant_id}/budget",
+                "/api/v1/tenant/{tenant_id}/gate",
+                "/api/v1/tenant/{tenant_id}/ledger",
+                "/api/v1/tenant/{tenant_id}/status",
+                "/api/v1/tenant/{tenant_id}/summary",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "mcoi/mcoi_runtime/app/routers/tenant.py",
+                "mcoi/mcoi_runtime/governance/guards/budget.py",
+                "mcoi/mcoi_runtime/governance/guards/tenant_gating.py",
+                "mcoi/mcoi_runtime/persistence/tenant_ledger.py",
+                "mcoi/tests/test_server_phase202.py",
+                "mcoi/tests/test_governance_endpoints.py",
+                "mcoi/tests/test_tenant_budget.py",
+                "mcoi/tests/test_tenant_gating.py",
+                "mcoi/tests/test_tenant_ledger.py",
+            ],
+            "Tenant governance lifecycle routes create action-proofed tenant budgets and lifecycle gates, expose bounded budget, ledger, summary, and gate read models, sanitize lifecycle errors, and audit tenant registration, status, and budget mutations.",
+            [
+                "tenant_budget_action_proof_emitted",
+                "tenant_budget_read_model_bounded",
+                "tenant_ledger_summary_bounded",
+                "tenant_register_status_action_proof_emitted",
+                "tenant_lifecycle_errors_sanitized",
+                "tenant_gate_read_models_bounded",
+                "tenant_governance_actions_audited",
+            ],
+        ),
+        _surface(
             "connector_self_healing",
             [
                 "ConnectorSelfHealingEngine.evaluate",
@@ -2170,6 +2208,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
         {
             "action_id": "classify_governed_connector_routes",
             "surfaces": ["governed_connector_framework"],
+            "status": "closed",
+        },
+        {
+            "action_id": "classify_tenant_governance_routes",
+            "surfaces": ["tenant_governance_lifecycle"],
             "status": "closed",
         },
         {

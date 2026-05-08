@@ -619,6 +619,42 @@ def bootstrap_capability_services(
     )
     model_router.register(
         ModelProfile(
+            model_id="qwen3.6-35b",
+            name="Qwen3.6 35B via QuickSilver Pro",
+            provider="quicksilver",
+            cost_per_1k_input=0.00013,
+            cost_per_1k_output=0.00078,
+            max_context=262144,
+            speed_tier="fast",
+            capability_tier="standard",
+        )
+    )
+    model_router.register(
+        ModelProfile(
+            model_id="qwen/qwen3.5-9b",
+            name="Qwen3.5 9B via Mixlayer",
+            provider="mixlayer",
+            cost_per_1k_input=0.00010,
+            cost_per_1k_output=0.00040,
+            max_context=262144,
+            speed_tier="fast",
+            capability_tier="standard",
+        )
+    )
+    model_router.register(
+        ModelProfile(
+            model_id="deepseek/deepseek-v4-pro",
+            name="DeepSeek V4 Pro via ApiLink",
+            provider="apilink",
+            cost_per_1k_input=0.00043,
+            cost_per_1k_output=0.00087,
+            max_context=1000000,
+            speed_tier="balanced",
+            capability_tier="advanced",
+        )
+    )
+    model_router.register(
+        ModelProfile(
             model_id="mistral-small-2603",
             name="Mistral Small 2603",
             provider="mistral",

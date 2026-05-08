@@ -4,6 +4,7 @@ import os
 import pytest
 from mcoi_runtime.adapters.multi_provider import (
     APIRouterBackend,
+    ApiLinkBackend,
     AtlasCloudBackend,
     BazaarLinkBackend,
     CerebrasBackend,
@@ -20,6 +21,7 @@ from mcoi_runtime.adapters.multi_provider import (
     GroqBackend,
     HyperbolicBackend,
     LlamaAPIBackend,
+    MixlayerBackend,
     ModelMaxBackend,
     MoonshotBackend,
     NebiusBackend,
@@ -28,6 +30,7 @@ from mcoi_runtime.adapters.multi_provider import (
     ParasailBackend,
     FeatherlessBackend,
     NeuroRoutersBackend,
+    QuickSilverBackend,
     RidvayBackend,
     SambaNovaBackend,
     SiliconFlowBackend,
@@ -92,6 +95,10 @@ LLM_ENV_KEYS = (
     "VENICE_API_KEY",
     "EURI_API_KEY",
     "APIROUTER_API_KEY",
+    "QUICKSILVER_API_KEY",
+    "QSP_KEY",
+    "MIXLAYER_API_KEY",
+    "APILINK_API_KEY",
     "XAI_API_KEY",
     "MISTRAL_API_KEY",
     "OPENROUTER_API_KEY",
@@ -180,6 +187,18 @@ class TestLLMConfig:
         assert config.deepinfra_api_key == "deepinfra-alias-key"
         assert config.nebius_api_key == ""
         assert config.hyperbolic_api_key == ""
+
+    def test_from_env_quicksilver_api_key_alias_detected(self, monkeypatch):
+        for key in LLM_ENV_KEYS:
+            monkeypatch.delenv(key, raising=False)
+        monkeypatch.setenv("QSP_KEY", "quicksilver-alias-key")
+
+        config = LLMConfig.from_env()
+
+        assert config.default_backend == "quicksilver"
+        assert config.quicksilver_api_key == "quicksilver-alias-key"
+        assert config.mixlayer_api_key == ""
+        assert config.apilink_api_key == ""
 
     def test_from_env_cloudflare_requires_account_id(self, monkeypatch):
         monkeypatch.delenv("MULLU_ENV", raising=False)
@@ -359,6 +378,9 @@ class TestBootstrapLLM:
             venice_api_key="vn",
             euri_api_key="eu",
             apirouter_api_key="ar",
+            quicksilver_api_key="qs",
+            mixlayer_api_key="mx",
+            apilink_api_key="al",
             grok_api_key="xai",
             mistral_api_key="ms",
             openrouter_api_key="or",
@@ -406,6 +428,9 @@ class TestBootstrapLLM:
             "venice",
             "euri",
             "apirouter",
+            "quicksilver",
+            "mixlayer",
+            "apilink",
             "grok",
             "mistral",
             "openrouter",
@@ -442,6 +467,9 @@ class TestBootstrapLLM:
         assert isinstance(result.backends["venice"], VeniceBackend)
         assert isinstance(result.backends["euri"], EURIBackend)
         assert isinstance(result.backends["apirouter"], APIRouterBackend)
+        assert isinstance(result.backends["quicksilver"], QuickSilverBackend)
+        assert isinstance(result.backends["mixlayer"], MixlayerBackend)
+        assert isinstance(result.backends["apilink"], ApiLinkBackend)
         assert "llm-groq" in result.registered_providers
         assert "llm-deepseek" in result.registered_providers
         assert "llm-together" in result.registered_providers
@@ -471,6 +499,9 @@ class TestBootstrapLLM:
         assert "llm-venice" in result.registered_providers
         assert "llm-euri" in result.registered_providers
         assert "llm-apirouter" in result.registered_providers
+        assert "llm-quicksilver" in result.registered_providers
+        assert "llm-mixlayer" in result.registered_providers
+        assert "llm-apilink" in result.registered_providers
         assert "llm-openrouter" in result.registered_providers
         assert "meta-llama/llama-4-scout-17b-16e-instruct" in result.registered_models
         assert "deepseek-v4-flash" in result.registered_models
@@ -505,6 +536,9 @@ class TestBootstrapLLM:
         assert "qwen3-5-9b" in result.registered_models
         assert "qwen/qwen3-32b" in result.registered_models
         assert "Qwen/Qwen3-Coder-30B-A3B-Instruct" in result.registered_models
+        assert "qwen3.6-35b" in result.registered_models
+        assert "qwen/qwen3.5-9b" in result.registered_models
+        assert "deepseek/deepseek-v4-pro" in result.registered_models
         assert "mistral-small-2506" in result.registered_models
         assert "grok-3-mini" in result.registered_models
         assert "meta-llama/llama-4-scout" in result.registered_models
