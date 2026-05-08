@@ -344,6 +344,22 @@ from mcoi_runtime.contracts.causal_runtime import (
     InterventionRecord,
     PropagationRecord,
 )
+from mcoi_runtime.contracts.constraint_runtime import (
+    AlgorithmKind,
+    AssignmentRecord,
+    AssignmentStrategy,
+    ConstraintClosureReport,
+    ConstraintDefinition,
+    ConstraintKind,
+    ConstraintSnapshot,
+    DependencyChain,
+    GraphEdge,
+    GraphNode,
+    ScheduleSlot,
+    SolveStatus,
+    SolverProblem,
+    SolverSolution,
+)
 from mcoi_runtime.contracts.access_runtime import (
     AccessAuditRecord,
     AccessDecision,
@@ -3019,6 +3035,136 @@ def _build_causal_closure_report(payload: dict) -> CausalClosureReport:
     )
 
 
+def _build_constraint_definition(payload: dict) -> ConstraintDefinition:
+    return ConstraintDefinition(
+        constraint_id=payload["constraint_id"],
+        tenant_id=payload["tenant_id"],
+        kind=ConstraintKind(payload["kind"]),
+        expression=payload["expression"],
+        variable_refs=payload["variable_refs"],
+        priority=payload["priority"],
+        created_at=payload["created_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_solver_problem(payload: dict) -> SolverProblem:
+    return SolverProblem(
+        problem_id=payload["problem_id"],
+        tenant_id=payload["tenant_id"],
+        algorithm=AlgorithmKind(payload["algorithm"]),
+        constraint_count=payload["constraint_count"],
+        variable_count=payload["variable_count"],
+        status=SolveStatus(payload["status"]),
+        created_at=payload["created_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_solver_solution(payload: dict) -> SolverSolution:
+    return SolverSolution(
+        solution_id=payload["solution_id"],
+        tenant_id=payload["tenant_id"],
+        problem_ref=payload["problem_ref"],
+        status=SolveStatus(payload["status"]),
+        objective_value=payload["objective_value"],
+        iterations=payload["iterations"],
+        duration_ms=payload["duration_ms"],
+        solved_at=payload["solved_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_graph_node(payload: dict) -> GraphNode:
+    return GraphNode(
+        node_id=payload["node_id"],
+        tenant_id=payload["tenant_id"],
+        label=payload["label"],
+        weight=payload["weight"],
+        created_at=payload["created_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_graph_edge(payload: dict) -> GraphEdge:
+    return GraphEdge(
+        edge_id=payload["edge_id"],
+        tenant_id=payload["tenant_id"],
+        from_node=payload["from_node"],
+        to_node=payload["to_node"],
+        weight=payload["weight"],
+        created_at=payload["created_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_schedule_slot(payload: dict) -> ScheduleSlot:
+    return ScheduleSlot(
+        slot_id=payload["slot_id"],
+        tenant_id=payload["tenant_id"],
+        resource_ref=payload["resource_ref"],
+        start_at=payload["start_at"],
+        end_at=payload["end_at"],
+        priority=payload["priority"],
+        created_at=payload["created_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_assignment_record(payload: dict) -> AssignmentRecord:
+    return AssignmentRecord(
+        assignment_id=payload["assignment_id"],
+        tenant_id=payload["tenant_id"],
+        resource_ref=payload["resource_ref"],
+        task_ref=payload["task_ref"],
+        strategy=AssignmentStrategy(payload["strategy"]),
+        cost=payload["cost"],
+        created_at=payload["created_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_dependency_chain(payload: dict) -> DependencyChain:
+    return DependencyChain(
+        chain_id=payload["chain_id"],
+        tenant_id=payload["tenant_id"],
+        source_ref=payload["source_ref"],
+        target_ref=payload["target_ref"],
+        lag=payload["lag"],
+        created_at=payload["created_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_constraint_snapshot(payload: dict) -> ConstraintSnapshot:
+    return ConstraintSnapshot(
+        snapshot_id=payload["snapshot_id"],
+        tenant_id=payload["tenant_id"],
+        total_constraints=payload["total_constraints"],
+        total_problems=payload["total_problems"],
+        total_solutions=payload["total_solutions"],
+        total_nodes=payload["total_nodes"],
+        total_edges=payload["total_edges"],
+        total_violations=payload["total_violations"],
+        captured_at=payload["captured_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_constraint_closure_report(payload: dict) -> ConstraintClosureReport:
+    return ConstraintClosureReport(
+        report_id=payload["report_id"],
+        tenant_id=payload["tenant_id"],
+        total_constraints=payload["total_constraints"],
+        total_problems=payload["total_problems"],
+        total_solutions=payload["total_solutions"],
+        total_assignments=payload["total_assignments"],
+        total_violations=payload["total_violations"],
+        created_at=payload["created_at"],
+        metadata=payload["metadata"],
+    )
+
+
 def _build_availability_record(payload: dict) -> AvailabilityRecord:
     return AvailabilityRecord(
         record_id=payload["record_id"],
@@ -3338,6 +3484,16 @@ def _build_access_audit_record(payload: dict) -> AccessAuditRecord:
         ("causal_assessment.json", _build_causal_assessment),
         ("causal_snapshot.json", _build_causal_snapshot),
         ("causal_closure_report.json", _build_causal_closure_report),
+        ("constraint_definition.json", _build_constraint_definition),
+        ("solver_problem.json", _build_solver_problem),
+        ("solver_solution.json", _build_solver_solution),
+        ("graph_node.json", _build_graph_node),
+        ("graph_edge.json", _build_graph_edge),
+        ("schedule_slot.json", _build_schedule_slot),
+        ("assignment_record.json", _build_assignment_record),
+        ("dependency_chain.json", _build_dependency_chain),
+        ("constraint_snapshot.json", _build_constraint_snapshot),
+        ("constraint_closure_report.json", _build_constraint_closure_report),
         ("commitment_record.json", _build_commitment_record),
         ("collection_case.json", _build_collection_case),
         ("configuration_item.json", _build_configuration_item),

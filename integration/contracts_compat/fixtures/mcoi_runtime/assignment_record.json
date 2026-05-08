@@ -1,0 +1,13 @@
+{
+  "assignment_id": "assignment-governance-review-2026-05-08",
+  "tenant_id": "tenant-mullu-primary",
+  "resource_ref": "reviewer-ops-lead",
+  "task_ref": "task-governance-review-routing-2026-05-08",
+  "strategy": "balanced",
+  "cost": 1.25,
+  "created_at": "2026-05-08T15:37:00+00:00",
+  "metadata": {
+    "scope": "review",
+    "team": "operations"
+  }
+}

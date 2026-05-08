@@ -323,6 +323,16 @@ def test_example_inventory_covers_shipped_and_pilot_artifacts() -> None:
     assert "causal_assessment.json" in mcoi_runtime_fixture_names
     assert "causal_snapshot.json" in mcoi_runtime_fixture_names
     assert "causal_closure_report.json" in mcoi_runtime_fixture_names
+    assert "constraint_definition.json" in mcoi_runtime_fixture_names
+    assert "solver_problem.json" in mcoi_runtime_fixture_names
+    assert "solver_solution.json" in mcoi_runtime_fixture_names
+    assert "graph_node.json" in mcoi_runtime_fixture_names
+    assert "graph_edge.json" in mcoi_runtime_fixture_names
+    assert "schedule_slot.json" in mcoi_runtime_fixture_names
+    assert "assignment_record.json" in mcoi_runtime_fixture_names
+    assert "dependency_chain.json" in mcoi_runtime_fixture_names
+    assert "constraint_snapshot.json" in mcoi_runtime_fixture_names
+    assert "constraint_closure_report.json" in mcoi_runtime_fixture_names
     assert "approval_gated_command" in pilot_names
 
 
@@ -335,7 +345,7 @@ def test_validate_example_artifacts_strictly() -> None:
     assert len(inventory.request_paths) >= 3
     assert len(inventory.auxiliary_paths) >= 1
     assert len(inventory.maf_runtime_fixture_paths) >= 89
-    assert len(inventory.mcoi_runtime_fixture_paths) >= 209
+    assert len(inventory.mcoi_runtime_fixture_paths) >= 219
 
 
 def test_validate_maf_runtime_fixtures_strictly() -> None:
@@ -3338,6 +3348,157 @@ def test_validate_mcoi_runtime_fixture_rejects_causal_snapshot_edges_without_nod
 
     assert len(errors) == 1
     assert "total_edges must be 0 when total_nodes is 0" in errors[0]
+    assert fixture_path.name in errors[0]
+
+
+def test_validate_mcoi_runtime_fixture_rejects_self_referential_graph_edge(tmp_path: Path) -> None:
+    fixture_path = tmp_path / "graph_edge.json"
+    fixture_path.write_text(
+        json.dumps(
+            {
+                "edge_id": "graph-edge-drift",
+                "tenant_id": "tenant-mullu-primary",
+                "from_node": "graph-node-routing",
+                "to_node": "graph-node-routing",
+                "weight": 1.0,
+                "created_at": "2026-05-08T15:10:00+00:00",
+                "metadata": {"kind": "self_loop"},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_artifacts.validate_mcoi_runtime_fixture(fixture_path)
+
+    assert len(errors) == 1
+    assert "from_node and to_node must be different" in errors[0]
+    assert fixture_path.name in errors[0]
+
+
+def test_validate_mcoi_runtime_fixture_rejects_reverse_schedule_slot_window(tmp_path: Path) -> None:
+    fixture_path = tmp_path / "schedule_slot.json"
+    fixture_path.write_text(
+        json.dumps(
+            {
+                "slot_id": "slot-drift",
+                "tenant_id": "tenant-mullu-primary",
+                "resource_ref": "reviewer-ops-lead",
+                "start_at": "2026-05-08T16:00:00+00:00",
+                "end_at": "2026-05-08T15:00:00+00:00",
+                "priority": 2,
+                "created_at": "2026-05-08T14:55:00+00:00",
+                "metadata": {"calendar": "ops"},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_artifacts.validate_mcoi_runtime_fixture(fixture_path)
+
+    assert len(errors) == 1
+    assert "end_at must be after start_at" in errors[0]
+    assert fixture_path.name in errors[0]
+
+
+def test_validate_mcoi_runtime_fixture_rejects_self_constraint_assignment(tmp_path: Path) -> None:
+    fixture_path = tmp_path / "assignment_record.json"
+    fixture_path.write_text(
+        json.dumps(
+            {
+                "assignment_id": "assignment-drift",
+                "tenant_id": "tenant-mullu-primary",
+                "resource_ref": "task-promote-routing",
+                "task_ref": "task-promote-routing",
+                "strategy": "balanced",
+                "cost": 1.0,
+                "created_at": "2026-05-08T15:00:00+00:00",
+                "metadata": {"scope": "routing"},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_artifacts.validate_mcoi_runtime_fixture(fixture_path)
+
+    assert len(errors) == 1
+    assert "resource_ref and task_ref must be different" in errors[0]
+    assert fixture_path.name in errors[0]
+
+
+def test_validate_mcoi_runtime_fixture_rejects_self_dependency_chain(tmp_path: Path) -> None:
+    fixture_path = tmp_path / "dependency_chain.json"
+    fixture_path.write_text(
+        json.dumps(
+            {
+                "chain_id": "dependency-drift",
+                "tenant_id": "tenant-mullu-primary",
+                "source_ref": "task-promote-routing",
+                "target_ref": "task-promote-routing",
+                "lag": 0,
+                "created_at": "2026-05-08T15:05:00+00:00",
+                "metadata": {"dependency_type": "temporal"},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_artifacts.validate_mcoi_runtime_fixture(fixture_path)
+
+    assert len(errors) == 1
+    assert "source_ref and target_ref must be different" in errors[0]
+    assert fixture_path.name in errors[0]
+
+
+def test_validate_mcoi_runtime_fixture_rejects_constraint_snapshot_solution_overflow(tmp_path: Path) -> None:
+    fixture_path = tmp_path / "constraint_snapshot.json"
+    fixture_path.write_text(
+        json.dumps(
+            {
+                "snapshot_id": "constraint-snapshot-drift",
+                "tenant_id": "tenant-mullu-primary",
+                "total_constraints": 3,
+                "total_problems": 1,
+                "total_solutions": 2,
+                "total_nodes": 2,
+                "total_edges": 1,
+                "total_violations": 0,
+                "captured_at": "2026-05-08T15:15:00+00:00",
+                "metadata": {"scope": "routing"},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_artifacts.validate_mcoi_runtime_fixture(fixture_path)
+
+    assert len(errors) == 1
+    assert "total_solutions must not exceed total_problems" in errors[0]
+    assert fixture_path.name in errors[0]
+
+
+def test_validate_mcoi_runtime_fixture_rejects_constraint_closure_solution_overflow(tmp_path: Path) -> None:
+    fixture_path = tmp_path / "constraint_closure_report.json"
+    fixture_path.write_text(
+        json.dumps(
+            {
+                "report_id": "constraint-closure-drift",
+                "tenant_id": "tenant-mullu-primary",
+                "total_constraints": 3,
+                "total_problems": 1,
+                "total_solutions": 2,
+                "total_assignments": 1,
+                "total_violations": 0,
+                "created_at": "2026-05-08T15:20:00+00:00",
+                "metadata": {"closed_by": "constraint-governance"},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_artifacts.validate_mcoi_runtime_fixture(fixture_path)
+
+    assert len(errors) == 1
+    assert "total_solutions must not exceed total_problems" in errors[0]
     assert fixture_path.name in errors[0]
 
 

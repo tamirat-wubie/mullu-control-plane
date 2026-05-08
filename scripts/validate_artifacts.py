@@ -20,6 +20,7 @@ Usage:
 from __future__ import annotations
 
 import json
+import math
 import re
 import sys
 from dataclasses import dataclass
@@ -396,6 +397,10 @@ CAUSAL_EDGE_KINDS = frozenset({"direct", "indirect", "mediating", "confounding",
 INTERVENTION_DISPOSITIONS = frozenset({"proposed", "applied", "rejected", "rolled_back"})
 COUNTERFACTUAL_STATUSES = frozenset({"pending", "evaluated", "confirmed", "rejected"})
 CAUSAL_ATTRIBUTION_STRENGTHS = frozenset({"strong", "moderate", "weak", "none"})
+ALGORITHM_KINDS = frozenset({"graph_search", "matching", "routing", "scheduling", "packing", "constraint_sat"})
+SOLVE_STATUSES = frozenset({"pending", "running", "solved", "infeasible", "timeout", "failed"})
+CONSTRAINT_KINDS = frozenset({"equality", "inequality", "range", "exclusion", "dependency", "temporal"})
+ASSIGNMENT_STRATEGIES = frozenset({"greedy", "balanced", "min_cost", "round_robin"})
 
 
 def _sort_paths(paths: list[Path]) -> tuple[Path, ...]:
@@ -11627,6 +11632,314 @@ def _validate_causal_closure_report_fixture(path: Path) -> list[str]:
     return errors
 
 
+def _validate_constraint_definition_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MCOI runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "constraint_id",
+            "tenant_id",
+            "kind",
+            "expression",
+            "variable_refs",
+            "priority",
+            "created_at",
+            "metadata",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("constraint_id", "tenant_id", "expression"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    if payload["kind"] not in CONSTRAINT_KINDS:
+        errors.append(
+            f"{_relative_path(path)}: field 'kind' must be one of {', '.join(sorted(CONSTRAINT_KINDS))}"
+        )
+    if not isinstance(payload["variable_refs"], str):
+        errors.append(f"{_relative_path(path)}: field 'variable_refs' must be a string")
+    errors.extend(_require_non_negative_int(payload["priority"], field_name="priority", path=path))
+    errors.extend(_validate_iso8601_text(payload["created_at"], field_name="created_at", path=path))
+    if not isinstance(payload["metadata"], dict):
+        errors.append(f"{_relative_path(path)}: field 'metadata' must be an object")
+    return errors
+
+
+def _validate_solver_problem_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MCOI runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "problem_id",
+            "tenant_id",
+            "algorithm",
+            "constraint_count",
+            "variable_count",
+            "status",
+            "created_at",
+            "metadata",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("problem_id", "tenant_id"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    if payload["algorithm"] not in ALGORITHM_KINDS:
+        errors.append(
+            f"{_relative_path(path)}: field 'algorithm' must be one of {', '.join(sorted(ALGORITHM_KINDS))}"
+        )
+    if payload["status"] not in SOLVE_STATUSES:
+        errors.append(
+            f"{_relative_path(path)}: field 'status' must be one of {', '.join(sorted(SOLVE_STATUSES))}"
+        )
+    errors.extend(_require_non_negative_int(payload["constraint_count"], field_name="constraint_count", path=path))
+    errors.extend(_require_non_negative_int(payload["variable_count"], field_name="variable_count", path=path))
+    errors.extend(_validate_iso8601_text(payload["created_at"], field_name="created_at", path=path))
+    if not isinstance(payload["metadata"], dict):
+        errors.append(f"{_relative_path(path)}: field 'metadata' must be an object")
+    return errors
+
+
+def _validate_solver_solution_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MCOI runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "solution_id",
+            "tenant_id",
+            "problem_ref",
+            "status",
+            "objective_value",
+            "iterations",
+            "duration_ms",
+            "solved_at",
+            "metadata",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("solution_id", "tenant_id", "problem_ref"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    if payload["status"] not in SOLVE_STATUSES:
+        errors.append(
+            f"{_relative_path(path)}: field 'status' must be one of {', '.join(sorted(SOLVE_STATUSES))}"
+        )
+    if isinstance(payload["objective_value"], bool) or not isinstance(payload["objective_value"], (int, float)):
+        errors.append(f"{_relative_path(path)}: field 'objective_value' must be a numeric value")
+    elif not math.isfinite(payload["objective_value"]):
+        errors.append(f"{_relative_path(path)}: field 'objective_value' must be finite")
+    errors.extend(_require_non_negative_int(payload["iterations"], field_name="iterations", path=path))
+    errors.extend(_require_non_negative_float(payload["duration_ms"], field_name="duration_ms", path=path))
+    errors.extend(_validate_iso8601_text(payload["solved_at"], field_name="solved_at", path=path))
+    if not isinstance(payload["metadata"], dict):
+        errors.append(f"{_relative_path(path)}: field 'metadata' must be an object")
+    return errors
+
+
+def _validate_graph_node_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MCOI runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=("node_id", "tenant_id", "label", "weight", "created_at", "metadata"),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("node_id", "tenant_id", "label"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    errors.extend(_require_non_negative_float(payload["weight"], field_name="weight", path=path))
+    errors.extend(_validate_iso8601_text(payload["created_at"], field_name="created_at", path=path))
+    if not isinstance(payload["metadata"], dict):
+        errors.append(f"{_relative_path(path)}: field 'metadata' must be an object")
+    return errors
+
+
+def _validate_graph_edge_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MCOI runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=("edge_id", "tenant_id", "from_node", "to_node", "weight", "created_at", "metadata"),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("edge_id", "tenant_id", "from_node", "to_node"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    errors.extend(_require_non_negative_float(payload["weight"], field_name="weight", path=path))
+    errors.extend(_validate_iso8601_text(payload["created_at"], field_name="created_at", path=path))
+    if not errors and payload["from_node"] == payload["to_node"]:
+        errors.append(f"{_relative_path(path)}: from_node and to_node must be different")
+    if not isinstance(payload["metadata"], dict):
+        errors.append(f"{_relative_path(path)}: field 'metadata' must be an object")
+    return errors
+
+
+def _validate_schedule_slot_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MCOI runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=("slot_id", "tenant_id", "resource_ref", "start_at", "end_at", "priority", "created_at", "metadata"),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("slot_id", "tenant_id", "resource_ref"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    errors.extend(_validate_iso8601_text(payload["start_at"], field_name="start_at", path=path))
+    errors.extend(_validate_iso8601_text(payload["end_at"], field_name="end_at", path=path))
+    errors.extend(_require_non_negative_int(payload["priority"], field_name="priority", path=path))
+    errors.extend(_validate_iso8601_text(payload["created_at"], field_name="created_at", path=path))
+    if not errors and _parse_iso8601_text(payload["end_at"]) <= _parse_iso8601_text(payload["start_at"]):
+        errors.append(f"{_relative_path(path)}: end_at must be after start_at")
+    if not isinstance(payload["metadata"], dict):
+        errors.append(f"{_relative_path(path)}: field 'metadata' must be an object")
+    return errors
+
+
+def _validate_constraint_assignment_record_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MCOI runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "assignment_id",
+            "tenant_id",
+            "resource_ref",
+            "task_ref",
+            "strategy",
+            "cost",
+            "created_at",
+            "metadata",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("assignment_id", "tenant_id", "resource_ref", "task_ref"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    if payload["strategy"] not in ASSIGNMENT_STRATEGIES:
+        errors.append(
+            f"{_relative_path(path)}: field 'strategy' must be one of {', '.join(sorted(ASSIGNMENT_STRATEGIES))}"
+        )
+    errors.extend(_require_non_negative_float(payload["cost"], field_name="cost", path=path))
+    errors.extend(_validate_iso8601_text(payload["created_at"], field_name="created_at", path=path))
+    if not errors and payload["resource_ref"] == payload["task_ref"]:
+        errors.append(f"{_relative_path(path)}: resource_ref and task_ref must be different")
+    if not isinstance(payload["metadata"], dict):
+        errors.append(f"{_relative_path(path)}: field 'metadata' must be an object")
+    return errors
+
+
+def _validate_dependency_chain_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MCOI runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=("chain_id", "tenant_id", "source_ref", "target_ref", "lag", "created_at", "metadata"),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("chain_id", "tenant_id", "source_ref", "target_ref"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    errors.extend(_require_non_negative_int(payload["lag"], field_name="lag", path=path))
+    errors.extend(_validate_iso8601_text(payload["created_at"], field_name="created_at", path=path))
+    if not errors and payload["source_ref"] == payload["target_ref"]:
+        errors.append(f"{_relative_path(path)}: source_ref and target_ref must be different")
+    if not isinstance(payload["metadata"], dict):
+        errors.append(f"{_relative_path(path)}: field 'metadata' must be an object")
+    return errors
+
+
+def _validate_constraint_snapshot_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MCOI runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "snapshot_id",
+            "tenant_id",
+            "total_constraints",
+            "total_problems",
+            "total_solutions",
+            "total_nodes",
+            "total_edges",
+            "total_violations",
+            "captured_at",
+            "metadata",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("snapshot_id", "tenant_id"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    for field_name in (
+        "total_constraints",
+        "total_problems",
+        "total_solutions",
+        "total_nodes",
+        "total_edges",
+        "total_violations",
+    ):
+        errors.extend(_require_non_negative_int(payload[field_name], field_name=field_name, path=path))
+    errors.extend(_validate_iso8601_text(payload["captured_at"], field_name="captured_at", path=path))
+    if not errors:
+        if payload["total_nodes"] == 0 and payload["total_edges"] > 0:
+            errors.append(f"{_relative_path(path)}: total_edges must be 0 when total_nodes is 0")
+        if payload["total_solutions"] > payload["total_problems"]:
+            errors.append(f"{_relative_path(path)}: total_solutions must not exceed total_problems")
+    if not isinstance(payload["metadata"], dict):
+        errors.append(f"{_relative_path(path)}: field 'metadata' must be an object")
+    return errors
+
+
+def _validate_constraint_closure_report_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MCOI runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "report_id",
+            "tenant_id",
+            "total_constraints",
+            "total_problems",
+            "total_solutions",
+            "total_assignments",
+            "total_violations",
+            "created_at",
+            "metadata",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("report_id", "tenant_id"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    for field_name in (
+        "total_constraints",
+        "total_problems",
+        "total_solutions",
+        "total_assignments",
+        "total_violations",
+    ):
+        errors.extend(_require_non_negative_int(payload[field_name], field_name=field_name, path=path))
+    errors.extend(_validate_iso8601_text(payload["created_at"], field_name="created_at", path=path))
+    if not errors and payload["total_solutions"] > payload["total_problems"]:
+        errors.append(f"{_relative_path(path)}: total_solutions must not exceed total_problems")
+    if not isinstance(payload["metadata"], dict):
+        errors.append(f"{_relative_path(path)}: field 'metadata' must be an object")
+    return errors
+
+
 MAF_RUNTIME_FIXTURE_VALIDATORS: dict[str, MAFRuntimeFixtureValidator] = {
     "adversarial_case.json": _validate_adversarial_case_fixture,
     "assignment_record.json": _validate_assignment_record_fixture,
@@ -11800,11 +12113,16 @@ MCOI_RUNTIME_FIXTURE_VALIDATORS: dict[str, MCOIRuntimeFixtureValidator] = {
     "continuity_plan.json": _validate_continuity_plan_fixture,
     "continuity_snapshot.json": _validate_continuity_snapshot_fixture,
     "continuity_violation.json": _validate_continuity_violation_fixture,
+    "constraint_closure_report.json": _validate_constraint_closure_report_fixture,
+    "constraint_definition.json": _validate_constraint_definition_fixture,
+    "constraint_snapshot.json": _validate_constraint_snapshot_fixture,
+    "counterfactual_scenario.json": _validate_counterfactual_scenario_fixture,
     "customer_closure_report.json": _validate_customer_closure_report_fixture,
     "customer_decision.json": _validate_customer_decision_fixture,
     "customer_record.json": _validate_customer_record_fixture,
     "customer_snapshot.json": _validate_customer_snapshot_fixture,
     "customer_violation.json": _validate_customer_violation_fixture,
+    "dependency_chain.json": _validate_dependency_chain_fixture,
     "ecosystem_agreement.json": _validate_ecosystem_agreement_fixture,
     "delegation_request.json": _validate_delegation_request_fixture,
     "delegation_result.json": _validate_delegation_result_fixture,
@@ -11821,6 +12139,8 @@ MCOI_RUNTIME_FIXTURE_VALIDATORS: dict[str, MCOIRuntimeFixtureValidator] = {
     "failover_record.json": _validate_failover_record_fixture,
     "finding_record.json": _validate_finding_record_fixture,
     "governance_contract_record.json": _validate_governance_contract_record_fixture,
+    "graph_edge.json": _validate_graph_edge_fixture,
+    "graph_node.json": _validate_graph_node_fixture,
     "handoff_packet.json": _validate_handoff_packet_fixture,
     "human_task_record.json": _validate_human_task_record_fixture,
     "human_workflow_closure_report.json": _validate_human_workflow_closure_report_fixture,
@@ -11899,6 +12219,9 @@ MCOI_RUNTIME_FIXTURE_VALIDATORS: dict[str, MCOIRuntimeFixtureValidator] = {
     "response_sla.json": _validate_response_sla_fixture,
     "role_binding.json": _validate_role_binding_fixture,
     "role_record.json": _validate_role_record_fixture,
+    "schedule_slot.json": _validate_schedule_slot_fixture,
+    "solver_problem.json": _validate_solver_problem_fixture,
+    "solver_solution.json": _validate_solver_solution_fixture,
     "preservation_decision.json": _validate_preservation_decision_fixture,
     "disposal_decision.json": _validate_disposal_decision_fixture,
     "disposition_review.json": _validate_disposition_review_fixture,
@@ -11929,6 +12252,7 @@ MCOI_RUNTIME_FIXTURE_VALIDATORS: dict[str, MCOIRuntimeFixtureValidator] = {
     "boundary_policy.json": _validate_boundary_policy_fixture,
     "connector_cost_profile.json": _validate_connector_cost_profile_fixture,
     "cost_estimate.json": _validate_cost_estimate_fixture,
+    "assignment_record.json": _validate_constraint_assignment_record_fixture,
 }
 
 DOCUMENT_ARTIFACT_EXPECTATIONS: dict[str, tuple[str, ...]] = {
