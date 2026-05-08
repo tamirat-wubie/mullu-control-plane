@@ -43,7 +43,7 @@ def test_handoff_preflight_blocks_missing_environment_bindings(tmp_path: Path) -
 
     assert report.ready is False
     assert "required environment bindings" in report.blockers
-    assert report.step_count == 9
+    assert report.step_count == 10
     assert "MULLU_GATEWAY_URL" in report.missing_environment_variables
     assert report.readiness_level == "pilot-governed-core"
     assert report.production_ready is False
@@ -70,6 +70,7 @@ def test_handoff_preflight_accepts_valid_local_state(tmp_path: Path) -> None:
     assert {step.name for step in report.steps} == {
         "operator checklist validation",
         "handoff packet validation",
+        "conditional responsibility debt blockers",
         "environment binding contract validation",
         "environment binding receipt validation",
         "required environment bindings",
@@ -253,6 +254,29 @@ def test_handoff_preflight_rejects_schema_and_drift_count_disagreement(tmp_path:
     assert report.ready is False
     assert report.blockers == ("closure plan drift validation",)
     assert any("schema=" in step.detail for step in report.steps)
+
+
+def test_handoff_preflight_rejects_conditional_responsibility_debt_drift(tmp_path: Path) -> None:
+    adapter_schema_validation, schema_validation, drift_validation, readiness = _write_valid_reports(tmp_path)
+    environment_binding_receipt = _write_valid_environment_binding_receipt(tmp_path)
+    checklist_path = tmp_path / "checklist.json"
+    checklist = json.loads(Path("examples/general_agent_promotion_operator_checklist.json").read_text(encoding="utf-8"))
+    checklist["conditional_approval_blockers"] = []
+    checklist_path.write_text(json.dumps(checklist), encoding="utf-8")
+
+    report = preflight_general_agent_promotion_handoff(
+        checklist_path=checklist_path,
+        environment_binding_receipt_path=environment_binding_receipt,
+        adapter_schema_validation_path=adapter_schema_validation,
+        schema_validation_path=schema_validation,
+        drift_validation_path=drift_validation,
+        readiness_path=readiness,
+        env_reader=lambda name: "present" if name in REQUIRED_ENV else "",
+    )
+
+    assert report.ready is False
+    assert "conditional responsibility debt blockers" in report.blockers
+    assert any("conditional responsibility debt blocker drift" in step.detail for step in report.steps)
 
 
 def _write_valid_reports(

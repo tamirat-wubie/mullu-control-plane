@@ -36,6 +36,19 @@ def test_validate_promotion_operator_checklist_rejects_missing_approval_blocker(
     assert any("production_health_not_declared" in error for error in result.errors)
 
 
+def test_validate_promotion_operator_checklist_rejects_missing_conditional_blocker(tmp_path: Path) -> None:
+    checklist_path = tmp_path / "promotion_operator_checklist.json"
+    payload = json.loads(CHECKLIST_PATH.read_text(encoding="utf-8"))
+    payload["conditional_approval_blockers"].remove("email_calendar_dependency_missing:EMAIL_CALENDAR_CONNECTOR_TOKEN")
+    checklist_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    result = validate_general_agent_promotion_operator_checklist(checklist_path)
+
+    assert result.valid is False
+    assert any("conditional_approval_blockers missing" in error for error in result.errors)
+    assert any("EMAIL_CALENDAR_CONNECTOR_TOKEN" in error for error in result.errors)
+
+
 def test_validate_promotion_operator_checklist_rejects_command_drift(tmp_path: Path) -> None:
     checklist_path = tmp_path / "promotion_operator_checklist.json"
     payload = json.loads(CHECKLIST_PATH.read_text(encoding="utf-8"))
