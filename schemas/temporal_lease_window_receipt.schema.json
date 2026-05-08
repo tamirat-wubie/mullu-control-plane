@@ -1,0 +1,286 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:temporal-lease-window-receipt:1",
+  "title": "Temporal Lease Window Receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "receipt_id",
+    "request_id",
+    "tenant_id",
+    "actor_id",
+    "command_id",
+    "action_type",
+    "risk_level",
+    "policy_id",
+    "scope_id",
+    "lease_id",
+    "resource_id",
+    "worker_id",
+    "lease_owner_id",
+    "status",
+    "lease_state",
+    "runtime_now_utc",
+    "lease_required",
+    "acquired_at",
+    "last_renewed_at",
+    "lease_expires_at",
+    "lease_age_seconds",
+    "seconds_until_expiry",
+    "max_lease_seconds",
+    "renewal_grace_seconds",
+    "fencing_token",
+    "sequence",
+    "released",
+    "revoked",
+    "blocked_reasons",
+    "warning_reasons",
+    "required_controls",
+    "evidence_refs",
+    "lease_evidence_refs",
+    "source_temporal_receipt_id",
+    "source_scheduler_receipt_id",
+    "source_retry_window_receipt_id",
+    "source_reapproval_receipt_id",
+    "receipt_schema_ref",
+    "terminal_closure_required",
+    "receipt_hash",
+    "metadata"
+  ],
+  "properties": {
+    "receipt_id": {
+      "type": "string",
+      "pattern": "^temporal-lease-window-receipt-[0-9a-f]{16}$"
+    },
+    "request_id": {"type": "string", "minLength": 1},
+    "tenant_id": {"type": "string", "minLength": 1},
+    "actor_id": {"type": "string", "minLength": 1},
+    "command_id": {"type": "string", "minLength": 1},
+    "action_type": {"type": "string", "minLength": 1},
+    "risk_level": {
+      "type": "string",
+      "enum": ["low", "medium", "high", "critical"]
+    },
+    "policy_id": {"type": "string", "minLength": 1},
+    "scope_id": {"type": "string", "minLength": 1},
+    "lease_id": {"type": "string"},
+    "resource_id": {"type": "string"},
+    "worker_id": {"type": "string"},
+    "lease_owner_id": {"type": "string"},
+    "status": {
+      "type": "string",
+      "enum": ["lease_active", "lease_expiring", "lease_expired", "blocked", "not_required"]
+    },
+    "lease_state": {
+      "type": "string",
+      "enum": ["active", "expiring", "expired", "released", "revoked", "wrong_scope", "invalid", "not_required"]
+    },
+    "runtime_now_utc": {"type": "string", "format": "date-time"},
+    "lease_required": {"type": "boolean"},
+    "acquired_at": {"type": "string"},
+    "last_renewed_at": {"type": "string"},
+    "lease_expires_at": {"type": "string"},
+    "lease_age_seconds": {"type": "integer", "minimum": 0},
+    "seconds_until_expiry": {"type": "integer", "minimum": 0},
+    "max_lease_seconds": {"type": "integer", "minimum": 0},
+    "renewal_grace_seconds": {"type": "integer", "minimum": 0},
+    "fencing_token": {"type": "string"},
+    "sequence": {"type": "integer", "minimum": 0},
+    "released": {"type": "boolean"},
+    "revoked": {"type": "boolean"},
+    "blocked_reasons": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1}
+    },
+    "warning_reasons": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1}
+    },
+    "required_controls": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"type": "string", "minLength": 1}
+    },
+    "evidence_refs": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1}
+    },
+    "lease_evidence_refs": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1}
+    },
+    "source_temporal_receipt_id": {"type": "string"},
+    "source_scheduler_receipt_id": {"type": "string"},
+    "source_retry_window_receipt_id": {"type": "string"},
+    "source_reapproval_receipt_id": {"type": "string"},
+    "receipt_schema_ref": {
+      "type": "string",
+      "const": "urn:mullusi:schema:temporal-lease-window-receipt:1"
+    },
+    "terminal_closure_required": {"type": "boolean", "const": true},
+    "receipt_hash": {"type": "string", "minLength": 1},
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "receipt_is_not_terminal_closure",
+        "runtime_owns_time_truth",
+        "dispatch_allowed",
+        "lease_checked",
+        "lease_scope_checked",
+        "lease_expiry_checked",
+        "fencing_token_checked",
+        "renewal_required",
+        "high_risk_source_receipts_checked"
+      ],
+      "properties": {
+        "receipt_is_not_terminal_closure": {"type": "boolean", "const": true},
+        "runtime_owns_time_truth": {"type": "boolean", "const": true},
+        "dispatch_allowed": {"type": "boolean"},
+        "lease_checked": {"type": "boolean"},
+        "lease_scope_checked": {"type": "boolean"},
+        "lease_expiry_checked": {"type": "boolean"},
+        "fencing_token_checked": {"type": "boolean"},
+        "renewal_required": {"type": "boolean"},
+        "high_risk_source_receipts_checked": {"type": "boolean"}
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {"status": {"const": "lease_active"}},
+        "required": ["status"]
+      },
+      "then": {
+        "properties": {
+          "lease_required": {"const": true},
+          "lease_state": {"const": "active"},
+          "lease_id": {"minLength": 1},
+          "resource_id": {"minLength": 1},
+          "worker_id": {"minLength": 1},
+          "lease_owner_id": {"minLength": 1},
+          "fencing_token": {"minLength": 1},
+          "sequence": {"exclusiveMinimum": 0},
+          "seconds_until_expiry": {"exclusiveMinimum": 0},
+          "blocked_reasons": {"maxItems": 0},
+          "warning_reasons": {"maxItems": 0},
+          "metadata": {
+            "properties": {
+              "dispatch_allowed": {"const": true},
+              "lease_checked": {"const": true},
+              "lease_scope_checked": {"const": true},
+              "lease_expiry_checked": {"const": true},
+              "fencing_token_checked": {"const": true},
+              "renewal_required": {"const": false}
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {"status": {"const": "lease_expiring"}},
+        "required": ["status"]
+      },
+      "then": {
+        "properties": {
+          "lease_required": {"const": true},
+          "lease_state": {"const": "expiring"},
+          "lease_id": {"minLength": 1},
+          "seconds_until_expiry": {"exclusiveMinimum": 0},
+          "blocked_reasons": {"maxItems": 0},
+          "warning_reasons": {"minItems": 1},
+          "metadata": {
+            "properties": {
+              "dispatch_allowed": {"const": true},
+              "lease_checked": {"const": true},
+              "lease_scope_checked": {"const": true},
+              "lease_expiry_checked": {"const": true},
+              "fencing_token_checked": {"const": true},
+              "renewal_required": {"const": true}
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {"status": {"const": "lease_expired"}},
+        "required": ["status"]
+      },
+      "then": {
+        "properties": {
+          "lease_required": {"const": true},
+          "lease_state": {"const": "expired"},
+          "seconds_until_expiry": {"const": 0},
+          "blocked_reasons": {"maxItems": 0},
+          "metadata": {
+            "properties": {
+              "dispatch_allowed": {"const": false},
+              "lease_checked": {"const": true},
+              "lease_expiry_checked": {"const": true}
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {"status": {"const": "blocked"}},
+        "required": ["status"]
+      },
+      "then": {
+        "properties": {
+          "blocked_reasons": {"minItems": 1},
+          "seconds_until_expiry": {"minimum": 0},
+          "metadata": {
+            "properties": {
+              "dispatch_allowed": {"const": false}
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {"status": {"const": "not_required"}},
+        "required": ["status"]
+      },
+      "then": {
+        "properties": {
+          "lease_required": {"const": false},
+          "lease_state": {"const": "not_required"},
+          "lease_id": {"maxLength": 0},
+          "resource_id": {"maxLength": 0},
+          "worker_id": {"maxLength": 0},
+          "lease_owner_id": {"maxLength": 0},
+          "acquired_at": {"maxLength": 0},
+          "last_renewed_at": {"maxLength": 0},
+          "lease_expires_at": {"maxLength": 0},
+          "lease_age_seconds": {"const": 0},
+          "seconds_until_expiry": {"const": 0},
+          "max_lease_seconds": {"const": 0},
+          "renewal_grace_seconds": {"const": 0},
+          "fencing_token": {"maxLength": 0},
+          "sequence": {"const": 0},
+          "released": {"const": false},
+          "revoked": {"const": false},
+          "blocked_reasons": {"maxItems": 0},
+          "warning_reasons": {"maxItems": 0},
+          "lease_evidence_refs": {"maxItems": 0},
+          "metadata": {
+            "properties": {
+              "dispatch_allowed": {"const": true},
+              "lease_checked": {"const": false},
+              "lease_scope_checked": {"const": false},
+              "lease_expiry_checked": {"const": false},
+              "fencing_token_checked": {"const": false},
+              "renewal_required": {"const": false}
+            }
+          }
+        }
+      }
+    }
+  ]
+}

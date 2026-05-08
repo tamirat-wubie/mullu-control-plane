@@ -469,6 +469,17 @@ def test_protocol_manifest_indexes_temporal_retry_window_receipt() -> None:
     assert retry_entry["surface"] == "temporal"
 
 
+def test_protocol_manifest_indexes_temporal_lease_window_receipt() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    lease_entry = entries["temporal-lease-window-receipt"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert lease_entry["path"] == "schemas/temporal_lease_window_receipt.schema.json"
+    assert lease_entry["urn"] == "urn:mullusi:schema:temporal-lease-window-receipt:1"
+    assert lease_entry["surface"] == "temporal"
+
+
 def test_protocol_manifest_indexes_temporal_memory_receipt() -> None:
     manifest = load_manifest()
     entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}

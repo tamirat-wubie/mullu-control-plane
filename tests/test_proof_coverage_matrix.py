@@ -1489,6 +1489,34 @@ def test_temporal_retry_window_surface_rechecks_retry_windows() -> None:
     assert closure_actions["publish_temporal_retry_window_receipt_contract"]["status"] == "closed"
 
 
+def test_temporal_lease_window_surface_rechecks_lease_ownership() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    lease_surface = surfaces["temporal_lease_window"]
+    witnesses = set(lease_surface["runtime_witnesses"])
+
+    assert lease_surface["coverage_state"] == "witnessed"
+    assert lease_surface["request_proof"] == "request_proof"
+    assert lease_surface["action_proof"] == "action_proof"
+    assert "TemporalLeaseWindow.evaluate" in lease_surface["representative_paths"]
+    assert "LeaseWindowRequest" in lease_surface["representative_paths"]
+    assert "TemporalLeaseWindowReceipt" in lease_surface["representative_paths"]
+    assert "gateway/temporal_lease_window.py" in lease_surface["evidence_files"]
+    assert "schemas/temporal_lease_window_receipt.schema.json" in lease_surface["evidence_files"]
+    assert "tests/test_gateway/test_temporal_lease_window.py" in lease_surface["evidence_files"]
+    assert "runtime_clock_owns_lease_window" in witnesses
+    assert "tenant_command_resource_worker_scope_checked" in witnesses
+    assert "active_lease_admits_dispatch" in witnesses
+    assert "near_expiry_lease_requires_renewal_warning" in witnesses
+    assert "expired_lease_blocks_dispatch" in witnesses
+    assert "released_or_revoked_lease_blocks_dispatch" in witnesses
+    assert "fencing_token_required" in witnesses
+    assert "high_risk_source_receipts_bound" in witnesses
+    assert "temporal_lease_window_receipt_schema_valid" in witnesses
+    assert closure_actions["publish_temporal_lease_window_receipt_contract"]["status"] == "closed"
+
+
 def test_temporal_memory_surface_blocks_stale_or_superseded_memory() -> None:
     matrix = _load_fixture()
     surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
