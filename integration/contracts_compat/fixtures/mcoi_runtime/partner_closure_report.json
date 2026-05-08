@@ -1,0 +1,15 @@
+{
+  "report_id": "partner-closure-20260531",
+  "tenant_id": "tenant-mullu-primary",
+  "total_partners": 5,
+  "total_links": 8,
+  "total_agreements": 6,
+  "total_revenue_shares": 7,
+  "total_commitments": 9,
+  "total_violations": 1,
+  "closed_at": "2026-05-31T23:59:00+00:00",
+  "metadata": {
+    "period": "2026-05",
+    "closed_by": "partner-runtime-closure"
+  }
+}

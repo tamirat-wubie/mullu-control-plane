@@ -1,0 +1,32 @@
+{
+  "checkpoint_id": "checkpoint-042",
+  "epoch_id": "epoch-2026-04-01",
+  "tick_number": 42,
+  "snapshots": [
+    {
+      "snapshot_id": "snapshot-supervisor-042",
+      "scope": "supervisor",
+      "state_hash": "sha256:supervisor-state-042",
+      "record_count": 12,
+      "captured_at": "2026-04-01T12:00:30+00:00",
+      "payload": {
+        "active_obligations": 3,
+        "policy_id": "policy-default-safe"
+      }
+    },
+    {
+      "snapshot_id": "snapshot-event-spine-042",
+      "scope": "event_spine",
+      "state_hash": "sha256:event-spine-state-042",
+      "record_count": 19,
+      "captured_at": "2026-04-01T12:00:30+00:00",
+      "payload": {
+        "correlation_count": 8,
+        "last_event_id": "evt-042"
+      }
+    }
+  ],
+  "journal_sequence": 41,
+  "composite_hash": "sha256:composite-042",
+  "created_at": "2026-04-01T12:01:00+00:00"
+}

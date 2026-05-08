@@ -15,4 +15,3 @@ package. Callers that need the metrics module should import it directly:
     from mcoi_runtime.substrate import metrics    # works without the alias
     from mcoi_runtime.substrate.metrics import REGISTRY
 """
-

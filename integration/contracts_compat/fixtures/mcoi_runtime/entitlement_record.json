@@ -1,0 +1,13 @@
+{
+  "entitlement_id": "entitlement-runtime-042",
+  "account_id": "billing-account-042",
+  "tenant_id": "tenant-mullu-primary",
+  "service_ref": "service-governed-runtime",
+  "status": "active",
+  "granted_at": "2026-04-01T00:10:00+00:00",
+  "expires_at": "2027-03-31T23:59:59+00:00",
+  "metadata": {
+    "scope": "workspace",
+    "limit": "premium"
+  }
+}

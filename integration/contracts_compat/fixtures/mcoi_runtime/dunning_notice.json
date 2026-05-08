@@ -1,0 +1,12 @@
+{
+  "notice_id": "dunning-042-1",
+  "case_id": "collection-case-042",
+  "account_id": "billing-account-042",
+  "severity": "warning",
+  "message": "Payment remains outstanding after the initial billing window. Please remit or contact billing governance.",
+  "sent_at": "2026-04-22T09:00:00+00:00",
+  "metadata": {
+    "channel": "email",
+    "template_id": "warning-v1"
+  }
+}

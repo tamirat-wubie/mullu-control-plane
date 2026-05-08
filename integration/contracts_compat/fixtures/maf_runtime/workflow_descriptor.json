@@ -1,0 +1,35 @@
+{
+  "workflow_id": "wf-release-42",
+  "name": "Release approval workflow",
+  "description": "Build and verify a governed release candidate",
+  "stages": [
+    {
+      "stage_id": "stage-build",
+      "stage_type": "skill_execution",
+      "skill_id": "build-release",
+      "description": "Build the release artifact",
+      "predecessors": [],
+      "timeout_seconds": 600
+    },
+    {
+      "stage_id": "stage-verify",
+      "stage_type": "skill_execution",
+      "skill_id": "verify-release",
+      "description": "Verify the release candidate",
+      "predecessors": [
+        "stage-build"
+      ],
+      "timeout_seconds": 300
+    }
+  ],
+  "bindings": [
+    {
+      "binding_id": "binding-42",
+      "source_stage_id": "stage-build",
+      "source_output_key": "artifact_id",
+      "target_stage_id": "stage-verify",
+      "target_input_key": "artifact_id"
+    }
+  ],
+  "created_at": "2025-01-01T00:50:00+00:00"
+}

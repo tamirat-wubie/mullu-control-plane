@@ -1,0 +1,11 @@
+{
+  "dependency_id": "asset-dependency-042",
+  "asset_id": "asset-runtime-042",
+  "depends_on_asset_id": "asset-network-007",
+  "description": "Runtime cluster depends on managed network backbone connectivity.",
+  "created_at": "2026-04-05T09:13:00+00:00",
+  "metadata": {
+    "dependency_type": "network",
+    "critical": true
+  }
+}

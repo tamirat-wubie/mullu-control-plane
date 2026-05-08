@@ -73,6 +73,26 @@ class TestGracefulShutdownWiring:
         body = resp.json()
         assert body["hooks"] >= 3
 
+    def test_lifespan_shutdown_executes_manager(self, monkeypatch):
+        os.environ["MULLU_ENV"] = "local_dev"
+        os.environ["MULLU_DB_BACKEND"] = "memory"
+        from mcoi_runtime.app.server import app, shutdown_mgr
+
+        calls: list[str] = []
+        original_execute = shutdown_mgr.execute
+
+        def tracked_execute():
+            calls.append("shutdown")
+            return original_execute()
+
+        monkeypatch.setattr(shutdown_mgr, "execute", tracked_execute)
+
+        with TestClient(app, raise_server_exceptions=False) as test_client:
+            resp = test_client.get("/health")
+            assert resp.status_code == 200
+
+        assert calls == ["shutdown"]
+
 
 class TestRouterDeps:
     """Test the dependency container for router modules."""

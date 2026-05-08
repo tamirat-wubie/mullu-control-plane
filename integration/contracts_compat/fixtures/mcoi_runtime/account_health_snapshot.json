@@ -1,0 +1,16 @@
+{
+  "snapshot_id": "account-health-20260430",
+  "account_id": "billing-account-042",
+  "tenant_id": "tenant-mullu-primary",
+  "health_status": "healthy",
+  "health_score": 0.92,
+  "sla_breaches": 1,
+  "open_cases": 0,
+  "billing_issues": 1,
+  "entitlement_count": 3,
+  "captured_at": "2026-04-30T22:00:00+00:00",
+  "metadata": {
+    "captured_by": "customer-health-engine",
+    "window": "30d"
+  }
+}

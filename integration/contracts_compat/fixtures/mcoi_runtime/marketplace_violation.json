@@ -1,0 +1,11 @@
+{
+  "violation_id": "marketplace-violation-20260504",
+  "tenant_id": "tenant-mullu-primary",
+  "operation": "listing_publication",
+  "reason": "One staged listing was missing the required governed pricing attachment during publication.",
+  "detected_at": "2026-05-04T11:45:00+00:00",
+  "metadata": {
+    "severity": "medium",
+    "policy_pack": "strict-approval"
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "breach_id": "breach-governance-042",
+  "commitment_id": "commitment-governance-042-closure",
+  "contract_id": "contract-governance-042",
+  "tenant_id": "tenant-mullu-primary",
+  "severity": "moderate",
+  "description": "A closure approval attempt occurred before the full review chain completed.",
+  "detected_at": "2026-04-04T10:05:00+00:00",
+  "metadata": {
+    "policy_rule": "review-before-closure",
+    "source": "contract-audit"
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "plan_id": "plan-42",
+  "goal_id": "goal-42",
+  "sub_goals": [
+    {
+      "sub_goal_id": "sg-prepare",
+      "goal_id": "goal-42",
+      "description": "Prepare the release package",
+      "status": "completed",
+      "skill_id": "prepare_release",
+      "workflow_id": "wf-prepare",
+      "predecessors": []
+    },
+    {
+      "sub_goal_id": "sg-deploy",
+      "goal_id": "goal-42",
+      "description": "Run the governed deployment workflow",
+      "status": "pending",
+      "skill_id": "deploy_release",
+      "workflow_id": "wf-deploy",
+      "predecessors": [
+        "sg-prepare"
+      ]
+    }
+  ],
+  "created_at": "2025-01-01T00:05:00+00:00",
+  "version": 2
+}

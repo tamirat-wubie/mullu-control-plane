@@ -1,0 +1,13 @@
+{
+  "vendor_id": "vendor-governance-42",
+  "name": "Causal Infrastructure Supply Group",
+  "tenant_id": "tenant-mullu-primary",
+  "status": "active",
+  "risk_level": "medium",
+  "category": "infrastructure_services",
+  "registered_at": "2026-05-05T08:00:00+00:00",
+  "metadata": {
+    "region": "us-east-1",
+    "portfolio": "platform-ops"
+  }
+}

@@ -29,6 +29,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable, Protocol
 import urllib.error
+import urllib.parse
 import urllib.request
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -109,9 +110,11 @@ def preflight_deployment_witness(
     secret_name: str = DEFAULT_SECRET_NAME,
     conformance_secret_name: str = DEFAULT_CONFORMANCE_SECRET_NAME,
     deployment_witness_secret_name: str = DEFAULT_DEPLOYMENT_WITNESS_SECRET_NAME,
+    repository_inputs_present: bool = False,
     runtime_secret_present: bool = False,
     conformance_secret_present: bool = False,
     deployment_witness_secret_present: bool = False,
+    workflow_file_present: bool = False,
     mcp_capability_manifest_path: str = "",
     probe_endpoints: bool = True,
     runner: CommandRunner | None = None,
@@ -122,8 +125,10 @@ def preflight_deployment_witness(
     command_runner = runner or subprocess.run
     dns_resolver = resolver or _resolve_host
     endpoint_getter = json_getter or _get_json
-    normalized_host = _require_gateway_host(gateway_host)
-    normalized_url = _require_gateway_url(gateway_url or f"https://{normalized_host}")
+    normalized_url = _require_gateway_url(gateway_url or f"https://{gateway_host.strip()}")
+    normalized_host = _require_gateway_host(
+        gateway_host or _gateway_host_from_url(normalized_url)
+    )
     _require_expected_environment(expected_environment)
 
     steps = [
@@ -132,6 +137,7 @@ def preflight_deployment_witness(
             repository=repository,
             gateway_url=normalized_url,
             expected_environment=expected_environment,
+            repository_inputs_present=repository_inputs_present,
             runner=command_runner,
         ),
         _check_secret(
@@ -159,6 +165,7 @@ def preflight_deployment_witness(
             repository=repository,
             workflow_file=workflow_file,
             workflow_name=workflow_name,
+            workflow_file_present=workflow_file_present,
             runner=command_runner,
         ),
     ]
@@ -225,6 +232,13 @@ def _require_gateway_url(gateway_url: str) -> str:
     return normalized
 
 
+def _gateway_host_from_url(gateway_url: str) -> str:
+    parsed = urllib.parse.urlsplit(gateway_url)
+    if not parsed.hostname:
+        raise RuntimeError("gateway URL must include a host")
+    return parsed.hostname
+
+
 def _require_expected_environment(expected_environment: str) -> None:
     if expected_environment not in VALID_ENVIRONMENTS:
         raise RuntimeError(
@@ -247,8 +261,11 @@ def _check_repository_variables(
     repository: str,
     gateway_url: str,
     expected_environment: str,
+    repository_inputs_present: bool,
     runner: CommandRunner,
 ) -> PreflightStep:
+    if repository_inputs_present:
+        return PreflightStep("repository variables", True, "matched:mounted-environment")
     completed = _run_checked(
         runner,
         ["gh", "variable", "list", "--repo", repository, "--json", "name,value"],
@@ -292,8 +309,14 @@ def _check_workflow(
     repository: str,
     workflow_file: str,
     workflow_name: str,
+    workflow_file_present: bool,
     runner: CommandRunner,
 ) -> PreflightStep:
+    if workflow_file_present:
+        path = REPO_ROOT / ".github" / "workflows" / workflow_file
+        if path.exists():
+            return PreflightStep("deployment witness workflow", True, "present:local-file")
+        return PreflightStep("deployment witness workflow", False, "missing:local-file")
     completed = _run_checked(
         runner,
         ["gh", "workflow", "list", "--repo", repository, "--json", "name,path,state"],
@@ -492,9 +515,11 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--secret-name", default=DEFAULT_SECRET_NAME)
     parser.add_argument("--conformance-secret-name", default=DEFAULT_CONFORMANCE_SECRET_NAME)
     parser.add_argument("--deployment-witness-secret-name", default=DEFAULT_DEPLOYMENT_WITNESS_SECRET_NAME)
+    parser.add_argument("--accept-repository-input-env", action="store_true")
     parser.add_argument("--accept-runtime-secret-env", action="store_true")
     parser.add_argument("--accept-conformance-secret-env", action="store_true")
     parser.add_argument("--accept-deployment-witness-secret-env", action="store_true")
+    parser.add_argument("--accept-workflow-file", action="store_true")
     parser.add_argument(
         "--mcp-capability-manifest",
         default=os.environ.get("MULLU_MCP_CAPABILITY_MANIFEST_PATH", ""),
@@ -518,6 +543,11 @@ def main(argv: list[str] | None = None) -> int:
             secret_name=args.secret_name,
             conformance_secret_name=args.conformance_secret_name,
             deployment_witness_secret_name=args.deployment_witness_secret_name,
+            repository_inputs_present=(
+                args.accept_repository_input_env
+                and os.environ.get("MULLU_GATEWAY_URL", "").rstrip("/") == args.gateway_url.rstrip("/")
+                and os.environ.get("MULLU_EXPECTED_RUNTIME_ENV") == args.expected_environment
+            ),
             runtime_secret_present=(
                 args.accept_runtime_secret_env
                 and bool(os.environ.get("MULLU_RUNTIME_WITNESS_SECRET"))
@@ -530,6 +560,7 @@ def main(argv: list[str] | None = None) -> int:
                 args.accept_deployment_witness_secret_env
                 and bool(os.environ.get("MULLU_DEPLOYMENT_WITNESS_SECRET"))
             ),
+            workflow_file_present=args.accept_workflow_file,
             mcp_capability_manifest_path=args.mcp_capability_manifest,
             probe_endpoints=not args.skip_endpoint_probes,
         )

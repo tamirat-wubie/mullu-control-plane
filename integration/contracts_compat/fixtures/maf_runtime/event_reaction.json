@@ -1,0 +1,8 @@
+{
+  "reaction_id": "react-evt-100",
+  "event_id": "evt-100",
+  "subscription_id": "sub-approval-1",
+  "action_taken": "created_obligation",
+  "result": "success",
+  "reacted_at": "2025-01-01T00:01:05+00:00"
+}

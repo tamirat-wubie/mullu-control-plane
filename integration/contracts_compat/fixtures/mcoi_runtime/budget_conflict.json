@@ -1,0 +1,8 @@
+{
+  "conflict_id": "budget-conflict-launch-q2-01",
+  "budget_id": "budget-launch-q2-2026",
+  "kind": "threshold_breach",
+  "description": "Projected launch traffic would cross the warning threshold during peak routing hours.",
+  "severity": 2,
+  "detected_at": "2026-05-06T13:15:00+00:00"
+}

@@ -1,0 +1,9 @@
+{
+  "handoff_id": "handoff-42",
+  "job_id": "job-42",
+  "from_worker_id": "worker-7",
+  "to_worker_id": "worker-8",
+  "reason": "capacity_exceeded",
+  "thread_id": "thread-release-42",
+  "handoff_at": "2025-01-01T00:40:00+00:00"
+}

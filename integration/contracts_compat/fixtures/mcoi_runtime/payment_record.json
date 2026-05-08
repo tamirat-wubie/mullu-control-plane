@@ -1,0 +1,15 @@
+{
+  "payment_id": "payment-042",
+  "invoice_id": "invoice-2026-042",
+  "account_id": "billing-account-042",
+  "amount": 960.0,
+  "currency": "USD",
+  "method": "ach",
+  "status": "cleared",
+  "reference": "ACH-20260412-042",
+  "received_at": "2026-04-12T18:05:00+00:00",
+  "metadata": {
+    "processor": "bank-rail-a",
+    "batch_id": "batch-042"
+  }
+}

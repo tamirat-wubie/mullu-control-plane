@@ -1,0 +1,8 @@
+{
+  "metric_id": "metric-42",
+  "kind": "correctness",
+  "name": "verification_closure_rate",
+  "value": 0.92,
+  "threshold": 0.9,
+  "passed": true
+}

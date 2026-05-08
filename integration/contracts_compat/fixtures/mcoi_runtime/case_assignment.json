@@ -1,0 +1,11 @@
+{
+  "assignment_id": "assignment-case-042-primary",
+  "case_id": "case-incident-042",
+  "assignee_id": "reviewer-primary",
+  "role": "lead_investigator",
+  "assigned_at": "2026-04-03T08:02:00+00:00",
+  "metadata": {
+    "shift": "day",
+    "queue": "incident-response"
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "snapshot_id": "revenue-snapshot-20260412",
+  "total_accounts": 4,
+  "total_invoices": 9,
+  "total_charges": 24,
+  "total_credits": 2,
+  "total_penalties": 1,
+  "total_disputes": 1,
+  "total_recognized_revenue": 18420.0,
+  "total_pending_revenue": 960.0,
+  "total_violations": 1,
+  "captured_at": "2026-04-12T18:00:00+00:00",
+  "metadata": {
+    "currency": "USD",
+    "scope": "tenant"
+  }
+}

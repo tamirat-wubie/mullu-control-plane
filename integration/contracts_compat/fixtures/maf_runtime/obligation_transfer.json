@@ -1,0 +1,16 @@
+{
+  "transfer_id": "xfr-42",
+  "obligation_id": "obl-42",
+  "from_owner": {
+    "owner_id": "team-release",
+    "owner_type": "team",
+    "display_name": "Release Team"
+  },
+  "to_owner": {
+    "owner_id": "team-ops",
+    "owner_type": "team",
+    "display_name": "Operations"
+  },
+  "reason": "handoff after deployment gate opened",
+  "transferred_at": "2025-01-01T00:10:00+00:00"
+}

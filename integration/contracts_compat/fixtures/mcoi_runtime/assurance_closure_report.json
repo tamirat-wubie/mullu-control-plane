@@ -1,0 +1,16 @@
+{
+  "report_id": "assurance-closure-20260404",
+  "target_id": "certification-workspace-042",
+  "target_type": "certification",
+  "tenant_id": "tenant-mullu-primary",
+  "final_level": "moderate",
+  "total_evidence_bindings": 7,
+  "total_assessments": 5,
+  "total_findings": 1,
+  "total_violations": 1,
+  "closed_at": "2026-04-04T09:35:00+00:00",
+  "metadata": {
+    "closed_by": "assurance-board",
+    "scope": "workspace"
+  }
+}

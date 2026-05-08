@@ -1062,5 +1062,3 @@ def create_governance_stores(
             "tenant_gating": PostgresTenantGatingStore(conn, pool_size=pool_size),
         })
     raise ValueError("unsupported governance store backend")
-
-

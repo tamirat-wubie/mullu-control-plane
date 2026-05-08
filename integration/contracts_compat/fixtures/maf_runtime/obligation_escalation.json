@@ -1,0 +1,12 @@
+{
+  "escalation_id": "esc-42",
+  "obligation_id": "obl-42",
+  "escalated_to": {
+    "owner_id": "mgr-platform",
+    "owner_type": "manager",
+    "display_name": "Platform Manager"
+  },
+  "reason": "deadline breach after unresolved approval wait",
+  "severity": "high",
+  "escalated_at": "2025-01-01T00:12:00+00:00"
+}

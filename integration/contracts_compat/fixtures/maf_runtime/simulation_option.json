@@ -1,0 +1,8 @@
+{
+  "option_id": "opt-safe",
+  "label": "Deploy with guarded rollout",
+  "risk_level": "low",
+  "estimated_cost": 12.5,
+  "estimated_duration_seconds": 180.0,
+  "success_probability": 0.93
+}

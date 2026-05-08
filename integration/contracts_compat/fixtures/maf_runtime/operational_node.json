@@ -1,0 +1,10 @@
+{
+  "node_id": "job-42",
+  "node_type": "job",
+  "label": "Deploy release candidate",
+  "created_at": "2025-01-01T00:20:00+00:00",
+  "metadata": {
+    "priority": "high",
+    "team_id": "team-release"
+  }
+}

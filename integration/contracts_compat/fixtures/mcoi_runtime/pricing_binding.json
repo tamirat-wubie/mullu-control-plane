@@ -1,0 +1,14 @@
+{
+  "binding_id": "pricing-binding-analytics-enterprise",
+  "offering_id": "offering-analytics-suite-2026",
+  "tenant_id": "tenant-mullu-primary",
+  "base_price": 1200.0,
+  "effective_price": 960.0,
+  "disposition": "discounted",
+  "contract_ref": "contract-marketplace-enterprise-2026",
+  "created_at": "2026-05-04T10:30:00+00:00",
+  "metadata": {
+    "currency": "USD",
+    "discount_program": "launch-enterprise"
+  }
+}

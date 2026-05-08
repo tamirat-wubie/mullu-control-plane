@@ -1,0 +1,15 @@
+{
+  "snapshot_id": "ledger-snapshot-2026-05-07",
+  "tenant_id": "tenant-mullu-primary",
+  "total_accounts": 3,
+  "total_transactions": 12,
+  "total_proofs": 12,
+  "total_anchors": 6,
+  "total_wallets": 3,
+  "total_violations": 1,
+  "captured_at": "2026-05-07T10:00:00+00:00",
+  "metadata": {
+    "scope": "tenant",
+    "network": "consortium"
+  }
+}

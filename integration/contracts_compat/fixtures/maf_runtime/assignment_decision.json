@@ -1,0 +1,8 @@
+{
+  "decision_id": "assign-dec-42",
+  "job_id": "job-42",
+  "worker_id": "worker-7",
+  "role_id": "role-reviewer",
+  "reason": "lowest governed queue load",
+  "decided_at": "2025-01-01T00:22:00+00:00"
+}

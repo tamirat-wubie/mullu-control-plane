@@ -1,0 +1,16 @@
+{
+  "snapshot_id": "partner-health-20260531",
+  "partner_id": "partner-ecosystem-17",
+  "tenant_id": "tenant-mullu-primary",
+  "health_status": "healthy",
+  "health_score": 0.91,
+  "sla_breaches": 0,
+  "open_cases": 1,
+  "billing_issues": 0,
+  "commitment_failures": 0,
+  "captured_at": "2026-05-31T20:00:00+00:00",
+  "metadata": {
+    "captured_by": "partner-health-monitor",
+    "scope": "monthly-review"
+  }
+}

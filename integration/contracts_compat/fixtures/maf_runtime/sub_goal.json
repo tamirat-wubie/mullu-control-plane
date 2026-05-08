@@ -1,0 +1,11 @@
+{
+  "sub_goal_id": "sg-verify",
+  "goal_id": "goal-42",
+  "description": "Run the governed verification workflow",
+  "status": "executing",
+  "skill_id": "verify-release",
+  "workflow_id": "wf-release-42",
+  "predecessors": [
+    "sg-prepare"
+  ]
+}

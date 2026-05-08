@@ -1,0 +1,15 @@
+{
+  "handoff_id": "handoff-packet-case-042",
+  "tenant_id": "tenant-mullu-primary",
+  "scope": "case",
+  "scope_ref_id": "case-incident-042",
+  "from_ref": "runtime-incident-processor",
+  "to_ref": "approval-board-case-042",
+  "direction": "runtime_to_human",
+  "reason": "Escalated case closure requires human board confirmation.",
+  "handed_at": "2026-04-03T08:14:00+00:00",
+  "metadata": {
+    "source_run": "incident-run-042",
+    "packet_id": "review-packet-case-042"
+  }
+}

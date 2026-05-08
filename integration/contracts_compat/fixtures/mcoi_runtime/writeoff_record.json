@@ -1,0 +1,13 @@
+{
+  "writeoff_id": "writeoff-042",
+  "settlement_id": "settlement-invoice-042",
+  "account_id": "billing-account-042",
+  "amount": 50.0,
+  "disposition": "pending",
+  "reason": "Residual uncollectable balance pending governance review.",
+  "written_off_at": "2026-04-28T12:00:00+00:00",
+  "metadata": {
+    "requested_by": "collections-team",
+    "currency": "USD"
+  }
+}

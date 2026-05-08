@@ -1,0 +1,8 @@
+{
+  "follow_up_id": "follow-up-42",
+  "job_id": "job-42",
+  "reason": "approval thread needed operator response",
+  "scheduled_at": "2025-01-01T01:10:00+00:00",
+  "resolved": true,
+  "executed_at": "2025-01-01T01:15:00+00:00"
+}

@@ -1,0 +1,15 @@
+{
+  "path_id": "path-42",
+  "node_ids": [
+    "goal-42",
+    "approval-42",
+    "job-42",
+    "verification-42"
+  ],
+  "edge_ids": [
+    "edge-40",
+    "dlink-42",
+    "evlink-42"
+  ],
+  "description": "release approval to verification causal chain"
+}

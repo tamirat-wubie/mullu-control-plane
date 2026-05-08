@@ -1,0 +1,12 @@
+{
+  "window_id": "renewal-governance-042",
+  "contract_id": "contract-governance-042",
+  "status": "completed",
+  "opens_at": "2026-12-01T00:00:00+00:00",
+  "closes_at": "2026-12-31T23:59:59+00:00",
+  "completed_at": "2026-12-20T12:00:00+00:00",
+  "metadata": {
+    "renewal_cycle": "annual",
+    "owner": "contract-ops"
+  }
+}

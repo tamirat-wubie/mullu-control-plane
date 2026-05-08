@@ -1,0 +1,11 @@
+{
+  "decision_id": "settlement-decision-042",
+  "settlement_id": "settlement-invoice-042",
+  "description": "Continue collection on the remaining balance while preserving the dispute-adjusted credit.",
+  "decided_by": "settlement-governance",
+  "decided_at": "2026-04-22T10:00:00+00:00",
+  "metadata": {
+    "decision_type": "collection_continuation",
+    "reference_case": "collection-case-042"
+  }
+}

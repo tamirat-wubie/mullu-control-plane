@@ -1,0 +1,12 @@
+{
+  "delegation_id": "delegation-recovery-042",
+  "delegator_id": "operator-coordinator",
+  "delegate_id": "operator-recovery",
+  "goal_id": "goal-recovery-042",
+  "action_scope": "execute_recovery_plan",
+  "deadline": "2026-04-03T08:30:00+00:00",
+  "metadata": {
+    "continuity_plan_id": "plan-continuity-042",
+    "priority": "high"
+  }
+}
