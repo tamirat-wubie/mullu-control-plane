@@ -38,10 +38,10 @@ def _clock():
     return now
 
 
-def _execution() -> ExecutionResult:
+def _execution(*, goal_id: str = "cmd-terminal-1") -> ExecutionResult:
     return ExecutionResult(
         execution_id="exec-terminal-1",
-        goal_id="cmd-terminal-1",
+        goal_id=goal_id,
         status=ExecutionOutcome.SUCCEEDED,
         actual_effects=(EffectRecord(name="ledger_entry_created", details={"evidence_ref": "ledger:entry-1"}),),
         assumed_effects=(),
@@ -50,7 +50,11 @@ def _execution() -> ExecutionResult:
     )
 
 
-def _verification(status: VerificationStatus = VerificationStatus.PASS) -> VerificationResult:
+def _verification(
+    status: VerificationStatus = VerificationStatus.PASS,
+    *,
+    metadata: dict[str, str] | None = None,
+) -> VerificationResult:
     return VerificationResult(
         verification_id=f"ver-terminal-{status.value}",
         execution_id="exec-terminal-1",
@@ -58,6 +62,7 @@ def _verification(status: VerificationStatus = VerificationStatus.PASS) -> Verif
         checks=(VerificationCheck(name="terminal-check", status=status),),
         evidence=(EvidenceRecord(description="terminal evidence", uri="evidence:terminal-1"),),
         closed_at="2026-04-24T16:00:02+00:00",
+        metadata=metadata or {},
     )
 
 
@@ -254,6 +259,25 @@ def test_rejects_terminal_closure_when_reconciliation_names_wrong_command():
             ),
         )
     assert certifier.certificate_count == 0
+
+
+def test_accepts_terminal_closure_when_reconciliation_matches_verification_program_ref():
+    certifier = TerminalClosureCertifier(clock=_clock())
+    certificate = certifier.certify_committed(
+        execution_result=_execution(goal_id="goal-terminal-1"),
+        verification_result=_verification(
+            VerificationStatus.PASS,
+            metadata={"program_id": "program-terminal-1"},
+        ),
+        reconciliation=_reconciliation(
+            ReconciliationStatus.MATCH,
+            command_id="program-terminal-1",
+        ),
+    )
+
+    assert certificate.command_id == "program-terminal-1"
+    assert certificate.disposition is TerminalClosureDisposition.COMMITTED
+    assert certifier.certificate_count == 1
 
 
 def test_rejects_terminal_closure_when_reconciliation_names_wrong_verification():
