@@ -41,6 +41,7 @@ from scripts.validate_general_agent_promotion_environment_binding_receipt import
 )
 from scripts.validate_general_agent_promotion_operator_checklist import (  # noqa: E402
     DEFAULT_CHECKLIST,
+    REQUIRED_APPROVAL_BLOCKERS,
     validate_general_agent_promotion_operator_checklist,
 )
 
@@ -138,6 +139,7 @@ def preflight_general_agent_promotion_handoff(
             passed=packet_result.valid,
             detail=_validation_detail(packet_result.errors),
         ),
+        _conditional_responsibility_debt_step(checklist_path),
         HandoffPreflightStep(
             name="environment binding contract validation",
             passed=binding_result.valid,
@@ -198,6 +200,27 @@ def _required_environment_step(
             detail=detail,
         ),
         missing,
+    )
+
+
+def _conditional_responsibility_debt_step(checklist_path: Path) -> HandoffPreflightStep:
+    payload = _load_json_object(checklist_path)
+    observed_values = payload.get(
+        "conditional_approval_blockers",
+        payload.get("approval_required_blockers", ()),
+    )
+    observed = {str(item) for item in observed_values} if isinstance(observed_values, list) else set()
+    missing = sorted(REQUIRED_APPROVAL_BLOCKERS - observed)
+    if missing:
+        return HandoffPreflightStep(
+            name="conditional responsibility debt blockers",
+            passed=False,
+            detail=f"conditional responsibility debt blocker drift missing={missing}",
+        )
+    return HandoffPreflightStep(
+        name="conditional responsibility debt blockers",
+        passed=True,
+        detail="conditional responsibility debt blockers present",
     )
 
 
