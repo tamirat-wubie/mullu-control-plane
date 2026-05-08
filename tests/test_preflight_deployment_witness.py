@@ -178,6 +178,38 @@ def test_preflight_deployment_witness_accepts_mounted_runtime_secret() -> None:
     assert not any(command[:3] == ["gh", "secret", "list"] for command in runner.commands)
 
 
+def test_preflight_deployment_witness_accepts_workflow_runtime_inputs() -> None:
+    runner = FakeRunner(secret_present=False, conformance_secret_present=False)
+    resolved_hosts: list[str] = []
+
+    def resolve(host: str) -> tuple[str, ...]:
+        resolved_hosts.append(host)
+        return ("203.0.113.10",)
+
+    report = preflight_deployment_witness(
+        gateway_host="",
+        gateway_url="https://gateway.mullusi.com",
+        expected_environment="pilot",
+        repository_inputs_present=True,
+        runtime_secret_present=True,
+        conformance_secret_present=True,
+        deployment_witness_secret_present=True,
+        workflow_file_present=True,
+        probe_endpoints=False,
+        runner=runner,
+        resolver=resolve,
+    )
+
+    variable_step = next(step for step in report.steps if step.name == "repository variables")
+    workflow_step = next(step for step in report.steps if step.name == "deployment witness workflow")
+    assert report.ready is True
+    assert report.gateway_host == "gateway.mullusi.com"
+    assert resolved_hosts == ["gateway.mullusi.com"]
+    assert variable_step.detail == "matched:mounted-environment"
+    assert workflow_step.detail == "present:local-file"
+    assert runner.commands == []
+
+
 def test_preflight_deployment_witness_accepts_valid_mcp_manifest() -> None:
     runner = FakeRunner()
 

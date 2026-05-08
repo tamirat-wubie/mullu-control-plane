@@ -173,6 +173,11 @@ def test_deployment_witness_workflow_requires_conformance_secret_handoff() -> No
     )
 
     assert errors == []
+    assert "python scripts/preflight_deployment_witness.py" in content
+    assert "--accept-repository-input-env" in content
+    assert "--accept-workflow-file" in content
+    assert ".change_assurance/deployment_witness_preflight.json" in content
+    assert "deployment-witness-preflight" in content
     assert "MULLU_RUNTIME_CONFORMANCE_SECRET" in content
     assert '--conformance-secret "$MULLU_RUNTIME_CONFORMANCE_SECRET"' in content
     assert ".change_assurance/deployment_witness.json" in content
