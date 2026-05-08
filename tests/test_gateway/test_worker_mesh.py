@@ -20,6 +20,7 @@ from pathlib import Path
 import pytest
 
 from gateway.worker_mesh import (
+    PHYSICAL_ACTION_RECEIPT_PAYLOAD_KEY,
     NetworkedWorkerMesh,
     WorkerDispatchRequest,
     WorkerHandlerResult,
@@ -27,6 +28,7 @@ from gateway.worker_mesh import (
     WorkerLeaseBudget,
     WorkerLeaseScope,
 )
+from gateway.physical_action_boundary import PhysicalActionBoundary, PhysicalActionRequest
 from scripts.validate_schemas import _load_schema, _validate_schema_instance
 
 
@@ -173,6 +175,94 @@ def test_worker_mesh_rejects_invalid_or_expired_leases() -> None:
     assert receipt.terminal_closure_required is True
 
 
+def test_worker_mesh_rejects_schema_misaligned_lease_fields() -> None:
+    mesh = NetworkedWorkerMesh(clock=lambda: "2026-05-04T12:01:00+00:00")
+
+    with pytest.raises(ValueError, match="resource_refs_0_required"):
+        replace(
+            _lease(),
+            scope=WorkerLeaseScope(resource_refs=[""], data_classes=[], network_allowlist=[]),
+        )
+
+    with pytest.raises(ValueError, match="allowed_operations_0_required"):
+        replace(_lease(), allowed_operations=[" "])
+
+    with pytest.raises(ValueError, match="policy_refs_0_required"):
+        replace(_lease(), policy_refs=[""])
+
+    with pytest.raises(ValueError, match="receipt_schema_ref_invalid"):
+        mesh.register_worker(
+            replace(_lease(), receipt_schema_ref="urn:mullusi:schema:other-worker:1"),
+            _successful_handler,
+        )
+
+
+def test_worker_mesh_binds_physical_receipt_to_dispatch_identity() -> None:
+    calls: list[str] = []
+    mesh = NetworkedWorkerMesh(clock=lambda: "2026-05-04T12:01:00+00:00")
+    lease = mesh.register_worker(
+        replace(
+            _lease(),
+            capability="physical.sandbox_replay",
+            allowed_operations=["sandbox_replay"],
+            physical_action_boundary_required=True,
+        ),
+        lambda request: calls.append(request.request_id) or _successful_handler(request),
+    )
+    receipt = PhysicalActionBoundary().evaluate(_physical_request()).to_json_dict()
+    mismatched_tenant_receipt = {**receipt, "tenant_id": "tenant-other"}
+    tenant_mismatch = mesh.dispatch(
+        lease.lease_id,
+        replace(
+            _physical_dispatch_request(),
+            payload={PHYSICAL_ACTION_RECEIPT_PAYLOAD_KEY: mismatched_tenant_receipt},
+        ),
+    )
+    command_mismatch = mesh.dispatch(
+        lease.lease_id,
+        replace(
+            _physical_dispatch_request(),
+            command_id="cmd-other",
+            payload={PHYSICAL_ACTION_RECEIPT_PAYLOAD_KEY: receipt},
+        ),
+    )
+
+    assert calls == []
+    assert tenant_mismatch.status == "rejected"
+    assert tenant_mismatch.reason == "physical_action_receipt_tenant_mismatch"
+    assert command_mismatch.status == "rejected"
+    assert command_mismatch.reason == "physical_action_receipt_command_mismatch"
+
+
+def test_worker_mesh_rejects_tampered_physical_receipt_hash() -> None:
+    calls: list[str] = []
+    mesh = NetworkedWorkerMesh(clock=lambda: "2026-05-04T12:01:00+00:00")
+    lease = mesh.register_worker(
+        replace(
+            _lease(),
+            capability="physical.sandbox_replay",
+            allowed_operations=["sandbox_replay"],
+            physical_action_boundary_required=True,
+        ),
+        lambda request: calls.append(request.request_id) or _successful_handler(request),
+    )
+    receipt = PhysicalActionBoundary().evaluate(_physical_request()).to_json_dict()
+    tampered_receipt = {**receipt, "actuator_id": "actuator:tampered"}
+
+    dispatch_receipt = mesh.dispatch(
+        lease.lease_id,
+        replace(
+            _physical_dispatch_request(),
+            payload={PHYSICAL_ACTION_RECEIPT_PAYLOAD_KEY: tampered_receipt},
+        ),
+    )
+
+    assert calls == []
+    assert dispatch_receipt.status == "rejected"
+    assert dispatch_receipt.reason == "physical_action_receipt_hash_mismatch"
+    assert dispatch_receipt.metadata["physical_action_receipt_validated"] is False
+
+
 def test_worker_mesh_schema_rejects_terminal_closure_claim() -> None:
     mesh = NetworkedWorkerMesh(clock=lambda: "2026-05-04T12:01:00+00:00")
     lease = mesh.register_worker(_lease(), _successful_handler)
@@ -236,4 +326,37 @@ def _successful_handler(_request: WorkerDispatchRequest) -> WorkerHandlerResult:
         status="succeeded",
         output={"accepted": True},
         evidence_refs=["worker:evidence:1"],
+    )
+
+
+def _physical_request() -> PhysicalActionRequest:
+    return PhysicalActionRequest(
+        request_id="physical-action-test",
+        tenant_id="tenant-1",
+        command_id="cmd-1",
+        actuator_id="actuator:sandbox-1",
+        action="sandbox_replay",
+        effect_mode="sandbox",
+        safety_envelope_ref="safety-envelope:test",
+        environment_ref="environment:sandbox",
+        risk_level="high",
+        simulation_passed=True,
+        operator_approval_ref="approval:test",
+        manual_override_ref="manual-override:test",
+        emergency_stop_ref="emergency-stop:test",
+        sensor_confirmation_ref="sensor:test",
+        evidence_refs=("proof://physical/simulation",),
+    )
+
+
+def _physical_dispatch_request() -> WorkerDispatchRequest:
+    return WorkerDispatchRequest(
+        request_id="physical-worker-request-1",
+        tenant_id="tenant-1",
+        capability="physical.sandbox_replay",
+        operation="sandbox_replay",
+        command_id="cmd-1",
+        input_hash="sha256:" + "2" * 64,
+        payload={},
+        requested_at="2026-05-04T12:00:30+00:00",
     )

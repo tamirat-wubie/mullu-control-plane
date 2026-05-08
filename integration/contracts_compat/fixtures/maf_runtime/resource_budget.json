@@ -1,0 +1,7 @@
+{
+  "resource_id": "budget-compute-42",
+  "resource_type": "compute",
+  "total": 100.0,
+  "consumed": 60.0,
+  "reserved": 20.0
+}

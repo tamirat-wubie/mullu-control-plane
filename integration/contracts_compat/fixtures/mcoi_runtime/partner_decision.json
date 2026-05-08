@@ -1,0 +1,12 @@
+{
+  "decision_id": "partner-decision-20260531",
+  "tenant_id": "tenant-mullu-primary",
+  "partner_id": "partner-ecosystem-17",
+  "disposition": "approved",
+  "reason": "Partner maintained delivery and compliance thresholds for expansion.",
+  "decided_at": "2026-05-31T20:30:00+00:00",
+  "metadata": {
+    "committee": "ecosystem-governance",
+    "action": "tier-expansion"
+  }
+}

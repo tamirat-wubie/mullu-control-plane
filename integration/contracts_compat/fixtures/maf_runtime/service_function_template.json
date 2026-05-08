@@ -1,0 +1,11 @@
+{
+  "function_id": "fn-42",
+  "name": "Governed Deployment Review",
+  "function_type": "deployment_review",
+  "description": "Review release evidence and approve or reject production deployment",
+  "created_at": "2025-01-01T00:00:00+00:00",
+  "metadata": {
+    "channel": "release-control",
+    "service_tier": "critical"
+  }
+}

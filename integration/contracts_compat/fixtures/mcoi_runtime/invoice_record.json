@@ -1,0 +1,14 @@
+{
+  "invoice_id": "invoice-2026-042",
+  "account_id": "billing-account-042",
+  "tenant_id": "tenant-mullu-primary",
+  "status": "disputed",
+  "total_amount": 1960.5,
+  "currency": "USD",
+  "issued_at": "2026-04-05T10:05:00+00:00",
+  "due_at": "2026-04-20T00:00:00+00:00",
+  "metadata": {
+    "period": "2026-04",
+    "statement_id": "statement-042"
+  }
+}

@@ -1,0 +1,33 @@
+{
+  "tick_id": "tick-42",
+  "tick_number": 42,
+  "phase_sequence": [
+    "polling",
+    "evaluating_obligations",
+    "acting",
+    "emitting_heartbeat"
+  ],
+  "events_polled": 3,
+  "obligations_evaluated": 2,
+  "deadlines_checked": 1,
+  "reactions_fired": 1,
+  "decisions": [
+    {
+      "decision_id": "dec-1",
+      "action_type": "activate_obligation",
+      "target_id": "obl-1",
+      "reason": "deadline approaching",
+      "governance_approved": true,
+      "decided_at": "2025-01-01T00:00:00+00:00",
+      "metadata": {
+        "priority": "high",
+        "source": "policy"
+      }
+    }
+  ],
+  "outcome": "work_done",
+  "errors": [],
+  "started_at": "2025-01-01T00:00:00+00:00",
+  "completed_at": "2025-01-01T00:00:01+00:00",
+  "duration_ms": 100
+}

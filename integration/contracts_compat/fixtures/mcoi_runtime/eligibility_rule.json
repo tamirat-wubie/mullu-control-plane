@@ -1,0 +1,13 @@
+{
+  "rule_id": "eligibility-enterprise-verified",
+  "offering_id": "offering-analytics-suite-2026",
+  "tenant_id": "tenant-mullu-primary",
+  "account_segment": "enterprise_verified",
+  "status": "eligible",
+  "reason": "Enterprise verified accounts are admitted to the full analytics suite.",
+  "evaluated_at": "2026-05-04T10:00:00+00:00",
+  "metadata": {
+    "policy_pack": "default-safe",
+    "source": "marketplace-eligibility-engine"
+  }
+}

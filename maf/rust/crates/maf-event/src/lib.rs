@@ -13,7 +13,7 @@
 #![forbid(unsafe_code)]
 
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 
 // ===========================================================================
 // Event enums
@@ -83,7 +83,7 @@ pub struct EventRecord {
     pub event_type: EventType,
     pub source: EventSource,
     pub correlation_id: String,
-    pub payload: HashMap<String, serde_json::Value>,
+    pub payload: BTreeMap<String, serde_json::Value>,
     pub emitted_at: String,
 }
 
@@ -229,7 +229,7 @@ pub struct ObligationRecord {
     pub description: String,
     pub correlation_id: String,
     #[serde(default)]
-    pub metadata: HashMap<String, serde_json::Value>,
+    pub metadata: BTreeMap<String, serde_json::Value>,
     pub created_at: String,
     pub updated_at: String,
 }
@@ -274,6 +274,17 @@ pub struct ObligationEscalation {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use serde::de::DeserializeOwned;
+
+    fn assert_fixture_round_trip<T>(fixture_json: &str)
+    where
+        T: DeserializeOwned + Serialize,
+    {
+        let fixture_value: serde_json::Value = serde_json::from_str(fixture_json).unwrap();
+        let parsed: T = serde_json::from_str(fixture_json).unwrap();
+        let round_trip_value = serde_json::to_value(parsed).unwrap();
+        assert_eq!(fixture_value, round_trip_value);
+    }
 
     // --- Event enum serialization ---
 
@@ -300,7 +311,7 @@ mod tests {
 
     #[test]
     fn event_record_round_trips() {
-        let mut payload = HashMap::new();
+        let mut payload = BTreeMap::new();
         payload.insert("key".to_string(), serde_json::json!("value"));
 
         let record = EventRecord {
@@ -317,13 +328,42 @@ mod tests {
     }
 
     #[test]
+    fn canonical_event_record_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/event_record.json"
+        ));
+        assert_fixture_round_trip::<EventRecord>(fixture_json);
+    }
+
+    #[test]
+    fn event_payload_serializes_in_lexicographic_key_order() {
+        let mut payload = BTreeMap::new();
+        payload.insert("zeta".to_string(), serde_json::json!(1));
+        payload.insert("alpha".to_string(), serde_json::json!(2));
+
+        let record = EventRecord {
+            event_id: "evt-ordered".to_string(),
+            event_type: EventType::Custom,
+            source: EventSource::External,
+            correlation_id: "corr-ordered".to_string(),
+            payload,
+            emitted_at: "2025-01-01T00:00:00+00:00".to_string(),
+        };
+
+        let json = serde_json::to_string(&record).unwrap();
+        assert!(json.contains(r#""payload":{"alpha":2,"zeta":1}"#));
+        assert!(json.find(r#""alpha":2"#).unwrap() < json.find(r#""zeta":1"#).unwrap());
+    }
+
+    #[test]
     fn event_envelope_round_trips() {
         let record = EventRecord {
             event_id: "evt-2".to_string(),
             event_type: EventType::IncidentOpened,
             source: EventSource::IncidentSystem,
             correlation_id: "corr-2".to_string(),
-            payload: HashMap::new(),
+            payload: BTreeMap::new(),
             emitted_at: "2025-01-01T00:00:00+00:00".to_string(),
         };
         let envelope = EventEnvelope {
@@ -337,6 +377,15 @@ mod tests {
         let json = serde_json::to_string(&envelope).unwrap();
         let back: EventEnvelope = serde_json::from_str(&json).unwrap();
         assert_eq!(envelope, back);
+    }
+
+    #[test]
+    fn canonical_event_envelope_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/event_envelope.json"
+        ));
+        assert_fixture_round_trip::<EventEnvelope>(fixture_json);
     }
 
     #[test]
@@ -356,6 +405,15 @@ mod tests {
     }
 
     #[test]
+    fn canonical_event_subscription_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/event_subscription.json"
+        ));
+        assert_fixture_round_trip::<EventSubscription>(fixture_json);
+    }
+
+    #[test]
     fn event_reaction_round_trips() {
         let reaction = EventReaction {
             reaction_id: "r-1".to_string(),
@@ -371,6 +429,38 @@ mod tests {
     }
 
     #[test]
+    fn canonical_event_reaction_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/event_reaction.json"
+        ));
+        assert_fixture_round_trip::<EventReaction>(fixture_json);
+    }
+
+    #[test]
+    fn event_window_round_trips() {
+        let window = EventWindow {
+            window_id: "win-1".to_string(),
+            correlation_id: "corr-1".to_string(),
+            window_start: "2025-01-01T00:00:00+00:00".to_string(),
+            window_end: "2025-01-01T00:05:00+00:00".to_string(),
+            event_count: 3,
+        };
+        let json = serde_json::to_string(&window).unwrap();
+        let back: EventWindow = serde_json::from_str(&json).unwrap();
+        assert_eq!(window, back);
+    }
+
+    #[test]
+    fn canonical_event_window_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/event_window.json"
+        ));
+        assert_fixture_round_trip::<EventWindow>(fixture_json);
+    }
+
+    #[test]
     fn event_correlation_round_trips() {
         let corr = EventCorrelation {
             correlation_id: "corr-1".to_string(),
@@ -382,6 +472,15 @@ mod tests {
         let json = serde_json::to_string(&corr).unwrap();
         let back: EventCorrelation = serde_json::from_str(&json).unwrap();
         assert_eq!(corr, back);
+    }
+
+    #[test]
+    fn canonical_event_correlation_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/event_correlation.json"
+        ));
+        assert_fixture_round_trip::<EventCorrelation>(fixture_json);
     }
 
     // --- Obligation enum serialization ---
@@ -476,13 +575,22 @@ mod tests {
             },
             description: "test obligation".to_string(),
             correlation_id: "corr-1".to_string(),
-            metadata: HashMap::new(),
+            metadata: BTreeMap::new(),
             created_at: "2025-01-01T00:00:00+00:00".to_string(),
             updated_at: "2025-01-01T00:00:00+00:00".to_string(),
         };
         let json = serde_json::to_string(&record).unwrap();
         let back: ObligationRecord = serde_json::from_str(&json).unwrap();
         assert_eq!(record, back);
+    }
+
+    #[test]
+    fn canonical_obligation_record_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/obligation_record.json"
+        ));
+        assert_fixture_round_trip::<ObligationRecord>(fixture_json);
     }
 
     #[test]
@@ -498,6 +606,15 @@ mod tests {
         let json = serde_json::to_string(&closure).unwrap();
         let back: ObligationClosure = serde_json::from_str(&json).unwrap();
         assert_eq!(closure, back);
+    }
+
+    #[test]
+    fn canonical_obligation_closure_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/obligation_closure.json"
+        ));
+        assert_fixture_round_trip::<ObligationClosure>(fixture_json);
     }
 
     #[test]
@@ -524,6 +641,15 @@ mod tests {
     }
 
     #[test]
+    fn canonical_obligation_transfer_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/obligation_transfer.json"
+        ));
+        assert_fixture_round_trip::<ObligationTransfer>(fixture_json);
+    }
+
+    #[test]
     fn obligation_escalation_round_trips() {
         let esc = ObligationEscalation {
             escalation_id: "esc-1".to_string(),
@@ -540,6 +666,15 @@ mod tests {
         let json = serde_json::to_string(&esc).unwrap();
         let back: ObligationEscalation = serde_json::from_str(&json).unwrap();
         assert_eq!(esc, back);
+    }
+
+    #[test]
+    fn canonical_obligation_escalation_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/obligation_escalation.json"
+        ));
+        assert_fixture_round_trip::<ObligationEscalation>(fixture_json);
     }
 
     // --- Cross-format compatibility ---

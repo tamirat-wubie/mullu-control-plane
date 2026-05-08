@@ -1,0 +1,13 @@
+{
+  "window_id": "sla-window-governance-042",
+  "commitment_id": "commitment-governance-042-closure",
+  "status": "healthy",
+  "opens_at": "2026-04-01T00:00:00+00:00",
+  "closes_at": "2026-04-30T23:59:59+00:00",
+  "actual_value": "100% compliant",
+  "compliance": 1.0,
+  "metadata": {
+    "metric": "closure_review_rate",
+    "unit": "ratio"
+  }
+}

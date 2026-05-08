@@ -127,6 +127,68 @@ class WorkflowEngine:
     def __init__(self, *, clock: Callable[[], str]) -> None:
         self._clock = clock
         self._validator = WorkflowValidator()
+        self._descriptors: dict[str, WorkflowDescriptor] = {}
+        self._records: dict[str, WorkflowExecutionRecord] = {}
+
+    def restore_descriptor(self, descriptor: WorkflowDescriptor) -> WorkflowDescriptor:
+        """Restore an exact persisted workflow descriptor without replay."""
+        if not isinstance(descriptor, WorkflowDescriptor):
+            raise RuntimeCoreInvariantError(
+                "descriptor must be a WorkflowDescriptor instance"
+            )
+        errors = self.validate_workflow(descriptor)
+        if errors:
+            raise RuntimeCoreInvariantError(
+                f"workflow validation failed: {'; '.join(errors)}"
+            )
+        if descriptor.workflow_id in self._descriptors:
+            raise RuntimeCoreInvariantError(
+                f"workflow descriptor already restored: {descriptor.workflow_id}"
+            )
+        self._descriptors[descriptor.workflow_id] = descriptor
+        return descriptor
+
+    def restore_execution_record(
+        self,
+        record: WorkflowExecutionRecord,
+    ) -> WorkflowExecutionRecord:
+        """Restore an exact persisted workflow execution record without replay."""
+        if not isinstance(record, WorkflowExecutionRecord):
+            raise RuntimeCoreInvariantError(
+                "record must be a WorkflowExecutionRecord instance"
+            )
+        if record.workflow_id not in self._descriptors:
+            raise RuntimeCoreInvariantError(
+                "workflow descriptor must be restored before execution record"
+            )
+        if record.execution_id in self._records:
+            raise RuntimeCoreInvariantError(
+                f"workflow execution already restored: {record.execution_id}"
+            )
+        self._records[record.execution_id] = record
+        return record
+
+    def get_workflow_descriptor(self, workflow_id: str) -> WorkflowDescriptor | None:
+        """Return a workflow descriptor by identifier without mutating engine state."""
+        return self._descriptors.get(workflow_id)
+
+    def get_execution_record(self, execution_id: str) -> WorkflowExecutionRecord | None:
+        """Return a workflow execution record by identifier without mutating engine state."""
+        return self._records.get(execution_id)
+
+    def list_workflow_descriptors(self) -> tuple[WorkflowDescriptor, ...]:
+        """Return all workflow descriptors in deterministic identifier order."""
+        return tuple(
+            self._descriptors[workflow_id]
+            for workflow_id in sorted(self._descriptors)
+        )
+
+    def list_execution_records(self) -> tuple[WorkflowExecutionRecord, ...]:
+        """Return all workflow execution records in deterministic identifier order."""
+        return tuple(
+            self._records[execution_id]
+            for execution_id in sorted(self._records)
+        )
 
     def validate_workflow(self, descriptor: WorkflowDescriptor) -> list[str]:
         """Validate a workflow descriptor. Returns list of error strings."""
@@ -150,13 +212,16 @@ class WorkflowEngine:
             "started_at": self._clock(),
         })
 
-        return WorkflowExecutionRecord(
+        self._descriptors[descriptor.workflow_id] = descriptor
+        record = WorkflowExecutionRecord(
             workflow_id=descriptor.workflow_id,
             execution_id=execution_id,
             status=WorkflowStatus.RUNNING,
             stage_results=(),
             started_at=self._clock(),
         )
+        self._records[record.execution_id] = record
+        return record
 
     def execute_next_stage(
         self,
@@ -182,7 +247,7 @@ class WorkflowEngine:
 
         # If any stage has failed, the workflow is already failed
         if failed_ids:
-            return WorkflowExecutionRecord(
+            result = WorkflowExecutionRecord(
                 workflow_id=record.workflow_id,
                 execution_id=record.execution_id,
                 status=WorkflowStatus.FAILED,
@@ -190,6 +255,8 @@ class WorkflowEngine:
                 started_at=record.started_at,
                 completed_at=self._clock(),
             )
+            self._records[result.execution_id] = result
+            return result
 
         # Find next eligible stage
         for stage in execution_order:
@@ -215,7 +282,7 @@ class WorkflowEngine:
                         started_at=self._clock(),
                         completed_at=self._clock(),
                     )
-                    return WorkflowExecutionRecord(
+                    result = WorkflowExecutionRecord(
                         workflow_id=record.workflow_id,
                         execution_id=record.execution_id,
                         status=WorkflowStatus.FAILED,
@@ -223,6 +290,8 @@ class WorkflowEngine:
                         started_at=record.started_at,
                         completed_at=self._clock(),
                     )
+                    self._records[result.execution_id] = result
+                    return result
                 if binding.source_output_key not in source_result.output:
                     binding_failure = StageExecutionResult(
                         stage_id=stage.stage_id,
@@ -231,7 +300,7 @@ class WorkflowEngine:
                         started_at=self._clock(),
                         completed_at=self._clock(),
                     )
-                    return WorkflowExecutionRecord(
+                    result = WorkflowExecutionRecord(
                         workflow_id=record.workflow_id,
                         execution_id=record.execution_id,
                         status=WorkflowStatus.FAILED,
@@ -239,6 +308,8 @@ class WorkflowEngine:
                         started_at=record.started_at,
                         completed_at=self._clock(),
                     )
+                    self._records[result.execution_id] = result
+                    return result
                 inputs[binding.target_input_key] = source_result.output[binding.source_output_key]
 
             result = stage_executor.execute_stage(
@@ -251,7 +322,7 @@ class WorkflowEngine:
             new_results = record.stage_results + (result,)
 
             if result.status is StageStatus.FAILED:
-                return WorkflowExecutionRecord(
+                workflow_result = WorkflowExecutionRecord(
                     workflow_id=record.workflow_id,
                     execution_id=record.execution_id,
                     status=WorkflowStatus.FAILED,
@@ -259,12 +330,14 @@ class WorkflowEngine:
                     started_at=record.started_at,
                     completed_at=self._clock(),
                 )
+                self._records[workflow_result.execution_id] = workflow_result
+                return workflow_result
 
             # Check if all stages are now completed
             new_completed = {r.stage_id for r in new_results}
             all_stage_ids = {s.stage_id for s in descriptor.stages}
             if new_completed == all_stage_ids:
-                return WorkflowExecutionRecord(
+                workflow_result = WorkflowExecutionRecord(
                     workflow_id=record.workflow_id,
                     execution_id=record.execution_id,
                     status=WorkflowStatus.COMPLETED,
@@ -272,19 +345,23 @@ class WorkflowEngine:
                     started_at=record.started_at,
                     completed_at=self._clock(),
                 )
+                self._records[workflow_result.execution_id] = workflow_result
+                return workflow_result
 
-            return WorkflowExecutionRecord(
+            workflow_result = WorkflowExecutionRecord(
                 workflow_id=record.workflow_id,
                 execution_id=record.execution_id,
                 status=WorkflowStatus.RUNNING,
                 stage_results=new_results,
                 started_at=record.started_at,
             )
+            self._records[workflow_result.execution_id] = workflow_result
+            return workflow_result
 
         # No eligible stage found — all done or stuck
         all_stage_ids = {s.stage_id for s in descriptor.stages}
         if completed_ids == all_stage_ids:
-            return WorkflowExecutionRecord(
+            result = WorkflowExecutionRecord(
                 workflow_id=record.workflow_id,
                 execution_id=record.execution_id,
                 status=WorkflowStatus.COMPLETED,
@@ -292,6 +369,8 @@ class WorkflowEngine:
                 started_at=record.started_at,
                 completed_at=self._clock(),
             )
+            self._records[result.execution_id] = result
+            return result
 
         return record
 
@@ -304,7 +383,7 @@ class WorkflowEngine:
         if record.status is not WorkflowStatus.RUNNING:
             raise RuntimeCoreInvariantError("cannot suspend workflow in current status")
 
-        return WorkflowExecutionRecord(
+        result = WorkflowExecutionRecord(
             workflow_id=record.workflow_id,
             execution_id=record.execution_id,
             status=WorkflowStatus.SUSPENDED,
@@ -312,6 +391,43 @@ class WorkflowEngine:
             started_at=record.started_at,
             completed_at=self._clock(),
         )
+        self._records[result.execution_id] = result
+        return result
+
+    def resume_workflow(
+        self,
+        descriptor: WorkflowDescriptor,
+        record: WorkflowExecutionRecord,
+    ) -> WorkflowExecutionRecord:
+        """Resume a persisted running or suspended workflow record explicitly."""
+        if descriptor.workflow_id != record.workflow_id:
+            raise RuntimeCoreInvariantError(
+                "workflow descriptor does not match execution record"
+            )
+        if record.status is WorkflowStatus.COMPLETED:
+            raise RuntimeCoreInvariantError("cannot resume a completed workflow")
+        if record.status is WorkflowStatus.FAILED:
+            raise RuntimeCoreInvariantError("cannot resume a failed workflow")
+        if record.status not in (WorkflowStatus.RUNNING, WorkflowStatus.SUSPENDED):
+            raise RuntimeCoreInvariantError(
+                f"cannot resume workflow in status {record.status.value}"
+            )
+        if record.status is WorkflowStatus.RUNNING:
+            self._descriptors[descriptor.workflow_id] = descriptor
+            self._records[record.execution_id] = record
+            return record
+
+        self._descriptors[descriptor.workflow_id] = descriptor
+        result = WorkflowExecutionRecord(
+            workflow_id=record.workflow_id,
+            execution_id=record.execution_id,
+            status=WorkflowStatus.RUNNING,
+            stage_results=record.stage_results,
+            started_at=record.started_at,
+            completed_at=None,
+        )
+        self._records[result.execution_id] = result
+        return result
 
     def _topological_sort(self, descriptor: WorkflowDescriptor) -> list:
         """Sort stages by predecessor order (Kahn's algorithm). Deterministic via sorted queues."""

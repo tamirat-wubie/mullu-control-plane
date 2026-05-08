@@ -1,0 +1,15 @@
+{
+  "report_id": "customer-closure-20260430",
+  "tenant_id": "tenant-mullu-primary",
+  "total_customers": 4,
+  "total_accounts": 6,
+  "total_products": 5,
+  "total_subscriptions": 7,
+  "total_entitlements": 12,
+  "total_violations": 1,
+  "closed_at": "2026-04-30T23:59:00+00:00",
+  "metadata": {
+    "period": "2026-04",
+    "closed_by": "customer-governance"
+  }
+}

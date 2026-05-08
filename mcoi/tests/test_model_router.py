@@ -57,6 +57,60 @@ class TestModelRouter:
         assert decision.model_id == ""
         assert "no models" in decision.reason
 
+    def test_duplicate_model_profile_rejected(self):
+        r = ModelRouter()
+        profile = ModelProfile(
+            model_id="same",
+            name="Same",
+            provider="p",
+            cost_per_1k_input=0.1,
+            cost_per_1k_output=0.2,
+            max_context=1024,
+            speed_tier="fast",
+            capability_tier="basic",
+        )
+        r.register(profile)
+
+        with pytest.raises(ValueError, match="^model profile already registered$"):
+            r.register(profile)
+
+        assert r.summary()["models"] == 1
+        assert r.route("test", force_model="same").model_id == "same"
+
+    def test_invalid_model_profile_rejected_before_routing(self):
+        r = ModelRouter()
+
+        with pytest.raises(ValueError, match="^model_id required$"):
+            r.register(
+                ModelProfile(
+                    model_id=" ",
+                    name="Blank",
+                    provider="p",
+                    cost_per_1k_input=0.1,
+                    cost_per_1k_output=0.2,
+                    max_context=1024,
+                    speed_tier="fast",
+                    capability_tier="basic",
+                )
+            )
+
+        with pytest.raises(ValueError, match="^model costs must be non-negative$"):
+            r.register(
+                ModelProfile(
+                    model_id="bad-cost",
+                    name="Bad Cost",
+                    provider="p",
+                    cost_per_1k_input=-0.1,
+                    cost_per_1k_output=0.2,
+                    max_context=1024,
+                    speed_tier="fast",
+                    capability_tier="basic",
+                )
+            )
+
+        assert r.summary()["models"] == 0
+        assert r.route("test").model_id == ""
+
     def test_policy_selected_reason_bounded(self):
         r = _router()
         decision = r.route("Implement a recursive function for tree traversal and debug it")

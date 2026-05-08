@@ -33,6 +33,24 @@ jobs:
         with:
           python-version: "3.13"
 
+      - name: Preflight deployment witness runtime inputs
+        env:
+          MULLU_GATEWAY_URL: ${{ inputs.gateway_url }}
+          MULLU_EXPECTED_RUNTIME_ENV: ${{ inputs.expected_environment }}
+          MULLU_RUNTIME_WITNESS_SECRET: ${{ secrets.MULLU_RUNTIME_WITNESS_SECRET }}
+          MULLU_RUNTIME_CONFORMANCE_SECRET: ${{ secrets.MULLU_RUNTIME_CONFORMANCE_SECRET }}
+          MULLU_DEPLOYMENT_WITNESS_SECRET: ${{ secrets.MULLU_DEPLOYMENT_WITNESS_SECRET }}
+        run: |
+          python scripts/preflight_deployment_witness.py \
+            --gateway-url "${{ inputs.gateway_url }}" \
+            --expected-environment "${{ inputs.expected_environment }}" \
+            --accept-repository-input-env \
+            --accept-runtime-secret-env \
+            --accept-conformance-secret-env \
+            --accept-deployment-witness-secret-env \
+            --accept-workflow-file \
+            --output .change_assurance/deployment_witness_preflight.json
+
       - name: Collect live deployment witness
         env:
           MULLU_RUNTIME_WITNESS_SECRET: ${{ secrets.MULLU_RUNTIME_WITNESS_SECRET }}
@@ -47,6 +65,14 @@ jobs:
             --expected-environment "${{ inputs.expected_environment }}" \
             --require-production-evidence \
             --output .change_assurance/deployment_witness.json
+
+      - name: Upload deployment witness preflight
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: deployment-witness-preflight
+          path: .change_assurance/deployment_witness_preflight.json
+          if-no-files-found: warn
 
       - name: Upload deployment witness
         if: always()

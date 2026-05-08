@@ -1,0 +1,5 @@
+{
+  "goal_id": "goal-42",
+  "depends_on_goal_id": "goal-41",
+  "dependency_type": "verification_prerequisite"
+}

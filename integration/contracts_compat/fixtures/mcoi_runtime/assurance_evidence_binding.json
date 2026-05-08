@@ -1,0 +1,12 @@
+{
+  "binding_id": "binding-assurance-042",
+  "target_id": "certification-workspace-042",
+  "target_type": "certification",
+  "source_type": "review_packet",
+  "source_id": "review-packet-case-042",
+  "bound_at": "2026-04-04T09:21:00+00:00",
+  "metadata": {
+    "bound_by": "assurance-auditor",
+    "evidence_role": "closure-confirmation"
+  }
+}

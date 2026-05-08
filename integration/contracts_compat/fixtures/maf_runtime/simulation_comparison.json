@@ -1,0 +1,14 @@
+{
+  "comparison_id": "simcmp-1",
+  "request_id": "simreq-1",
+  "ranked_option_ids": [
+    "opt-safe",
+    "opt-fast"
+  ],
+  "scores": {
+    "opt-fast": 0.72,
+    "opt-safe": 0.91
+  },
+  "top_risk_level": "low",
+  "review_burden": 0.25
+}

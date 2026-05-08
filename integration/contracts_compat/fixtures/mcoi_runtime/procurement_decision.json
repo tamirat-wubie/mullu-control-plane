@@ -1,0 +1,12 @@
+{
+  "decision_id": "procurement-decision-20260505",
+  "request_id": "procurement-request-20260505",
+  "status": "approved",
+  "decided_by": "procurement-board",
+  "reason": "Vendor remains admissible and request is within governed budget.",
+  "decided_at": "2026-05-05T12:00:00+00:00",
+  "metadata": {
+    "board": "commercial-governance",
+    "budget_window": "2026-Q2"
+  }
+}

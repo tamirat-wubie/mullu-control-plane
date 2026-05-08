@@ -1,0 +1,39 @@
+{
+  "outcome_id": "simout-42",
+  "option_id": "opt-safe",
+  "consequence": {
+    "estimate_id": "con-42",
+    "option_id": "opt-safe",
+    "affected_node_ids": [
+      "job-42",
+      "wf-deploy",
+      "goal-42"
+    ],
+    "new_edges_count": 2,
+    "new_obligations_count": 1,
+    "blocked_nodes_count": 0,
+    "unblocked_nodes_count": 1
+  },
+  "risk": {
+    "estimate_id": "risk-42",
+    "option_id": "opt-safe",
+    "risk_level": "low",
+    "incident_probability": 0.12,
+    "review_burden": 2,
+    "provider_exposure_count": 1,
+    "verification_difficulty": "moderate",
+    "rationale": "bounded rollout with preserved verification hooks"
+  },
+  "obligation_projection": {
+    "projection_id": "oblproj-42",
+    "option_id": "opt-safe",
+    "new_obligations": [
+      "obl-42"
+    ],
+    "fulfilled_obligations": [
+      "obl-precheck"
+    ],
+    "deadline_pressure": 1
+  },
+  "simulated_at": "2025-01-01T00:35:00+00:00"
+}

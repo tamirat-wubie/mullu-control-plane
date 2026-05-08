@@ -1,0 +1,17 @@
+{
+  "snapshot_id": "asset-snapshot-20260405",
+  "total_assets": 12,
+  "total_active": 9,
+  "total_retired": 2,
+  "total_config_items": 11,
+  "total_inventory": 8,
+  "total_assignments": 7,
+  "total_dependencies": 5,
+  "total_violations": 1,
+  "total_asset_value": 512000.0,
+  "captured_at": "2026-04-05T09:30:00+00:00",
+  "metadata": {
+    "captured_by": "asset-monitor",
+    "scope": "tenant"
+  }
+}

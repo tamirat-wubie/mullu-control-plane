@@ -1,0 +1,13 @@
+{
+  "objective_id": "objective-rto-042",
+  "plan_id": "plan-continuity-042",
+  "name": "Release Verification RTO",
+  "target_minutes": 30,
+  "actual_minutes": 18,
+  "met": true,
+  "evaluated_at": "2026-04-03T08:18:00+00:00",
+  "metadata": {
+    "execution_id": "recovery-exec-042",
+    "objective_type": "rto"
+  }
+}

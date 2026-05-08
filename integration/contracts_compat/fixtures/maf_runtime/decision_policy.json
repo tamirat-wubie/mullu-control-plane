@@ -1,0 +1,9 @@
+{
+  "policy_id": "upol-42",
+  "name": "default utility policy",
+  "min_confidence": 0.75,
+  "max_risk_tolerance": 0.35,
+  "max_cost": 25.0,
+  "deadline_weight": 0.4,
+  "require_human_above_risk": 0.65
+}

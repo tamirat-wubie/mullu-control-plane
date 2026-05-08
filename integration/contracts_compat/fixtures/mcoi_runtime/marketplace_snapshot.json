@@ -1,0 +1,16 @@
+{
+  "snapshot_id": "marketplace-snapshot-20260504",
+  "total_offerings": 6,
+  "total_packages": 3,
+  "total_bundles": 4,
+  "total_listings": 8,
+  "total_eligibility_rules": 7,
+  "total_pricing_bindings": 6,
+  "total_assessments": 4,
+  "total_violations": 1,
+  "captured_at": "2026-05-04T11:30:00+00:00",
+  "metadata": {
+    "scope": "tenant",
+    "captured_by": "marketplace-runtime-monitor"
+  }
+}

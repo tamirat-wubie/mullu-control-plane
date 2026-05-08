@@ -1,0 +1,21 @@
+{
+  "snapshot_id": "snap-42",
+  "team_id": "team-release",
+  "worker_capacities": [
+    {
+      "worker_id": "worker-7",
+      "max_concurrent": 5,
+      "current_load": 2,
+      "available_slots": 3,
+      "updated_at": "2025-01-01T00:20:00+00:00"
+    },
+    {
+      "worker_id": "worker-8",
+      "max_concurrent": 4,
+      "current_load": 1,
+      "available_slots": 3,
+      "updated_at": "2025-01-01T00:20:00+00:00"
+    }
+  ],
+  "captured_at": "2025-01-01T00:21:00+00:00"
+}

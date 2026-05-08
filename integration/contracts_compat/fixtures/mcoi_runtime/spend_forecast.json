@@ -1,0 +1,15 @@
+{
+  "forecast_id": "forecast-launch-q2-may",
+  "budget_id": "budget-launch-q2-2026",
+  "projected_amount": 12600.0,
+  "currency": "USD",
+  "period_start": "2026-05-07T00:00:00+00:00",
+  "period_end": "2026-06-01T00:00:00+00:00",
+  "confidence": 0.79,
+  "breakdown": {
+    "connector_call": 7200.0,
+    "human_labor": 3800.0,
+    "communication": 1600.0
+  },
+  "created_at": "2026-05-06T13:00:00+00:00"
+}

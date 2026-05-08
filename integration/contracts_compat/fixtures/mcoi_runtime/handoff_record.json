@@ -1,0 +1,15 @@
+{
+  "handoff_id": "handoff-recovery-042",
+  "from_party": "operator-coordinator",
+  "to_party": "operator-recovery",
+  "goal_id": "goal-recovery-042",
+  "context_ids": [
+    "recovery-exec-042",
+    "verification-verify-042"
+  ],
+  "handed_off_at": "2026-04-03T08:04:00+00:00",
+  "metadata": {
+    "continuity_plan_id": "plan-continuity-042",
+    "shift": "primary"
+  }
+}

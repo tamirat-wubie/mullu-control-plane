@@ -1,0 +1,15 @@
+{
+  "commitment_id": "commitment-governance-042-closure",
+  "contract_id": "contract-governance-042",
+  "clause_id": "clause-governance-042-review",
+  "tenant_id": "tenant-mullu-primary",
+  "kind": "compliance",
+  "target_value": "100% human-reviewed closure for escalated cases",
+  "scope_ref_id": "case-incident-042",
+  "scope_ref_type": "case",
+  "created_at": "2026-04-04T10:00:00+00:00",
+  "metadata": {
+    "owner": "contract-auditor",
+    "measurement_window": "monthly"
+  }
+}

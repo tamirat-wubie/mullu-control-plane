@@ -1,0 +1,14 @@
+{
+  "commitment_id": "commitment-ecosystem-17-velocity",
+  "partner_id": "partner-ecosystem-17",
+  "tenant_id": "tenant-mullu-primary",
+  "description": "Quarterly certified deployment target",
+  "target_value": 20.0,
+  "actual_value": 22.0,
+  "met": true,
+  "assessed_at": "2026-05-31T19:00:00+00:00",
+  "metadata": {
+    "unit": "deployments",
+    "quarter": "2026-Q2"
+  }
+}

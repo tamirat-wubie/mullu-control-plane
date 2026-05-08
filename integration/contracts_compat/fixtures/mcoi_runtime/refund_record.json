@@ -1,0 +1,12 @@
+{
+  "refund_id": "refund-042",
+  "payment_id": "payment-042",
+  "account_id": "billing-account-042",
+  "amount": 60.0,
+  "reason": "Usage meter correction after dispute review.",
+  "refunded_at": "2026-04-13T11:00:00+00:00",
+  "metadata": {
+    "authorized_by": "billing-governance",
+    "currency": "USD"
+  }
+}

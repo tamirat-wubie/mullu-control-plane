@@ -1,0 +1,22 @@
+{
+  "result_id": "bench-result-42",
+  "scenario_id": "bench-scenario-42",
+  "outcome": "fail",
+  "metrics": [
+    {
+      "metric_id": "metric-42",
+      "kind": "correctness",
+      "name": "verification_closure_rate",
+      "value": 0.88,
+      "threshold": 0.9,
+      "passed": false
+    }
+  ],
+  "actual_properties": {
+    "approval_required": true,
+    "verification_closed": false
+  },
+  "error_message": "verification closure below threshold",
+  "duration_ms": 3210,
+  "executed_at": "2025-01-01T00:31:00+00:00"
+}

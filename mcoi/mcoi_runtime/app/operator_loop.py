@@ -42,16 +42,42 @@ from mcoi_runtime.core.template_validator import (
 
 from .bootstrap import BootstrappedRuntime, build_policy_decision
 from .operator_models import (
+    CoordinationRecoveryReport,
+    CoordinationRecoveryRequest,
+    GoalReconcileReport,
+    GoalReconcileRequest,
+    GoalResumeRequest,
     GoalRunReport,
+    JobReconcileReport,
+    JobReconcileRequest,
     ObservationDirective,
     ObservationReport,
     OperatorRequest,
     OperatorRunReport,
     SkillRequest,
     SkillRunReport,
+    TeamQueueReconcileReport,
+    TeamQueueReconcileRequest,
+    WorkQueueReconcileReport,
+    WorkQueueReconcileRequest,
+    WorkforceReconcileReport,
+    WorkforceReconcileRequest,
+    WorkflowResumeRequest,
     WorkflowRunReport,
 )
-from .operator_runners import run_goal, run_skill, run_workflow
+from .operator_runners import (
+    recover_coordination_state,
+    reconcile_goals,
+    reconcile_jobs,
+    reconcile_work_queue,
+    reconcile_team_queues,
+    reconcile_workforce,
+    resume_goal,
+    resume_workflow,
+    run_goal,
+    run_skill,
+    run_workflow,
+)
 
 
 @dataclass(slots=True)
@@ -392,12 +418,60 @@ class OperatorLoop:
     ) -> WorkflowRunReport:
         return run_workflow(self, request, workflow_descriptor)
 
+    def resume_workflow(
+        self,
+        request: WorkflowResumeRequest,
+    ) -> WorkflowRunReport:
+        return resume_workflow(self, request)
+
     def run_goal(
         self,
         request: SkillRequest,
         goal_descriptor: GoalDescriptor,
     ) -> GoalRunReport:
         return run_goal(self, request, goal_descriptor)
+
+    def resume_goal(
+        self,
+        request: GoalResumeRequest,
+    ) -> GoalRunReport:
+        return resume_goal(self, request)
+
+    def recover_coordination_state(
+        self,
+        request: CoordinationRecoveryRequest,
+    ) -> CoordinationRecoveryReport:
+        return recover_coordination_state(self, request)
+
+    def reconcile_goals(
+        self,
+        request: GoalReconcileRequest,
+    ) -> GoalReconcileReport:
+        return reconcile_goals(self, request)
+
+    def reconcile_workforce(
+        self,
+        request: WorkforceReconcileRequest,
+    ) -> WorkforceReconcileReport:
+        return reconcile_workforce(self, request)
+
+    def reconcile_jobs(
+        self,
+        request: JobReconcileRequest,
+    ) -> JobReconcileReport:
+        return reconcile_jobs(self, request)
+
+    def reconcile_team_queues(
+        self,
+        request: TeamQueueReconcileRequest,
+    ) -> TeamQueueReconcileReport:
+        return reconcile_team_queues(self, request)
+
+    def reconcile_work_queue(
+        self,
+        request: WorkQueueReconcileRequest,
+    ) -> WorkQueueReconcileReport:
+        return reconcile_work_queue(self, request)
 
     def _runtime_state_fields(self) -> dict[str, object]:
         """Capture current world-state, meta-reasoning, and provider state for reports."""
@@ -563,7 +637,13 @@ class OperatorLoop:
 
 
 __all__ = [
+    "CoordinationRecoveryReport",
+    "CoordinationRecoveryRequest",
+    "GoalReconcileReport",
+    "GoalReconcileRequest",
     "GoalRunReport",
+    "JobReconcileReport",
+    "JobReconcileRequest",
     "ObservationDirective",
     "ObservationReport",
     "OperatorLoop",
@@ -571,5 +651,12 @@ __all__ = [
     "OperatorRunReport",
     "SkillRequest",
     "SkillRunReport",
+    "TeamQueueReconcileReport",
+    "TeamQueueReconcileRequest",
+    "WorkQueueReconcileReport",
+    "WorkQueueReconcileRequest",
+    "WorkforceReconcileReport",
+    "WorkforceReconcileRequest",
+    "WorkflowResumeRequest",
     "WorkflowRunReport",
 ]

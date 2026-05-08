@@ -329,7 +329,7 @@ pub struct TransitionAuditRecord {
     pub reason: String,
     pub transitioned_at: String,
     #[serde(default)]
-    pub metadata: std::collections::HashMap<String, serde_json::Value>,
+    pub metadata: BTreeMap<String, serde_json::Value>,
 }
 
 // ---------------------------------------------------------------------------
@@ -484,7 +484,7 @@ impl StateMachineSpec {
             actor_id: p.actor_id.to_string(),
             reason: p.reason.to_string(),
             transitioned_at: p.timestamp.to_string(),
-            metadata: std::collections::HashMap::new(),
+            metadata: BTreeMap::new(),
         };
 
         Ok(ProofCapsule {
@@ -1159,8 +1159,8 @@ pub struct SubsystemSnapshot {
     pub state_hash: String,
     pub record_count: u64,
     pub captured_at: String,
-    #[serde(default, skip_serializing_if = "std::collections::HashMap::is_empty")]
-    pub payload: std::collections::HashMap<String, serde_json::Value>,
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub payload: BTreeMap<String, serde_json::Value>,
 }
 
 /// A unified checkpoint spanning all subsystems at a single boundary.
@@ -1206,9 +1206,8 @@ pub struct RestoreVerification {
     pub verdict: RestoreVerdict,
     pub expected_composite_hash: String,
     pub actual_composite_hash: String,
-    #[serde(default, skip_serializing_if = "std::collections::HashMap::is_empty")]
-    pub subsystem_results:
-        std::collections::HashMap<String, std::collections::HashMap<String, String>>,
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub subsystem_results: BTreeMap<String, BTreeMap<String, String>>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub verified_at: Option<String>,
 }
@@ -1520,6 +1519,69 @@ mod tests {
         assert_fixture_round_trip::<LearningAdmissionDecision>(fixture_json);
     }
 
+    #[test]
+    fn canonical_journal_entry_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/journal_entry.json"
+        ));
+        assert_fixture_round_trip::<JournalEntry>(fixture_json);
+    }
+
+    #[test]
+    fn canonical_subsystem_snapshot_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/subsystem_snapshot.json"
+        ));
+        assert_fixture_round_trip::<SubsystemSnapshot>(fixture_json);
+    }
+
+    #[test]
+    fn canonical_composite_checkpoint_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/composite_checkpoint.json"
+        ));
+        assert_fixture_round_trip::<CompositeCheckpoint>(fixture_json);
+    }
+
+    #[test]
+    fn canonical_restore_verification_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/restore_verification.json"
+        ));
+        assert_fixture_round_trip::<RestoreVerification>(fixture_json);
+    }
+
+    #[test]
+    fn canonical_journal_validation_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/journal_validation_result.json"
+        ));
+        assert_fixture_round_trip::<JournalValidationResult>(fixture_json);
+    }
+
+    #[test]
+    fn canonical_replay_step_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/replay_step_result.json"
+        ));
+        assert_fixture_round_trip::<ReplayStepResult>(fixture_json);
+    }
+
+    #[test]
+    fn canonical_replay_session_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/replay_session_result.json"
+        ));
+        assert_fixture_round_trip::<ReplaySessionResult>(fixture_json);
+    }
+
     // -------------------------------------------------------------------
     // State machine tests
     // -------------------------------------------------------------------
@@ -1611,7 +1673,7 @@ mod tests {
 
     #[test]
     fn transition_audit_record_round_trips() {
-        let mut metadata = std::collections::HashMap::new();
+        let mut metadata = BTreeMap::new();
         metadata.insert("context".into(), serde_json::json!("test"));
         let rec = TransitionAuditRecord {
             audit_id: "a-1".into(),
@@ -1629,6 +1691,30 @@ mod tests {
         let json = serde_json::to_string(&rec).unwrap();
         let restored: TransitionAuditRecord = serde_json::from_str(&json).unwrap();
         assert_eq!(rec, restored);
+    }
+
+    #[test]
+    fn transition_audit_metadata_serializes_in_lexicographic_key_order() {
+        let mut metadata = BTreeMap::new();
+        metadata.insert("zeta".into(), serde_json::json!(1));
+        metadata.insert("alpha".into(), serde_json::json!(2));
+        let rec = TransitionAuditRecord {
+            audit_id: "a-ordered".into(),
+            machine_id: "obligation-lifecycle".into(),
+            entity_id: "obl-1".into(),
+            from_state: "pending".into(),
+            to_state: "active".into(),
+            action: "activate".into(),
+            verdict: TransitionVerdict::Allowed,
+            actor_id: "supervisor".into(),
+            reason: "deterministic ordering".into(),
+            transitioned_at: "2026-03-20T00:00:00+00:00".into(),
+            metadata,
+        };
+
+        let json = serde_json::to_string(&rec).unwrap();
+        assert!(json.contains(r#""metadata":{"alpha":2,"zeta":1}"#));
+        assert!(json.find(r#""alpha":2"#).unwrap() < json.find(r#""zeta":1"#).unwrap());
     }
 
     // -------------------------------------------------------------------
@@ -1684,7 +1770,7 @@ mod tests {
                     state_hash: "abc123".into(),
                     record_count: 10,
                     captured_at: "2026-03-20T00:00:00+00:00".into(),
-                    payload: std::collections::HashMap::new(),
+                    payload: BTreeMap::new(),
                 },
                 SubsystemSnapshot {
                     snapshot_id: "snap-2".into(),
@@ -1692,7 +1778,7 @@ mod tests {
                     state_hash: "def456".into(),
                     record_count: 100,
                     captured_at: "2026-03-20T00:00:00+00:00".into(),
-                    payload: std::collections::HashMap::new(),
+                    payload: BTreeMap::new(),
                 },
             ],
             journal_sequence: 500,
@@ -1702,6 +1788,25 @@ mod tests {
         let json = serde_json::to_string(&cp).unwrap();
         let restored: CompositeCheckpoint = serde_json::from_str(&json).unwrap();
         assert_eq!(cp, restored);
+    }
+
+    #[test]
+    fn subsystem_snapshot_payload_serializes_in_lexicographic_key_order() {
+        let mut payload = BTreeMap::new();
+        payload.insert("zeta".into(), serde_json::json!(1));
+        payload.insert("alpha".into(), serde_json::json!(2));
+        let snapshot = SubsystemSnapshot {
+            snapshot_id: "snap-ordered".into(),
+            scope: CheckpointScope::Supervisor,
+            state_hash: "hash".into(),
+            record_count: 1,
+            captured_at: "2026-03-20T00:00:00+00:00".into(),
+            payload,
+        };
+
+        let json = serde_json::to_string(&snapshot).unwrap();
+        assert!(json.contains(r#""payload":{"alpha":2,"zeta":1}"#));
+        assert!(json.find(r#""alpha":2"#).unwrap() < json.find(r#""zeta":1"#).unwrap());
     }
 
     #[test]
@@ -1716,7 +1821,7 @@ mod tests {
                 state_hash: "h".into(),
                 record_count: 0,
                 captured_at: "2026-03-20T00:00:00+00:00".into(),
-                payload: std::collections::HashMap::new(),
+                payload: BTreeMap::new(),
             }],
             journal_sequence: 0,
             composite_hash: "h".into(),
@@ -1776,12 +1881,42 @@ mod tests {
             verdict: RestoreVerdict::Verified,
             expected_composite_hash: "abc123".into(),
             actual_composite_hash: "abc123".into(),
-            subsystem_results: std::collections::HashMap::new(),
+            subsystem_results: BTreeMap::new(),
             verified_at: Some("2026-03-20T00:00:00+00:00".into()),
         };
         let json = serde_json::to_string(&rv).unwrap();
         let restored: RestoreVerification = serde_json::from_str(&json).unwrap();
         assert_eq!(rv, restored);
+    }
+
+    #[test]
+    fn restore_verification_results_serialize_in_lexicographic_key_order() {
+        let mut subsystem_results = BTreeMap::new();
+        let mut ordered_checks = BTreeMap::new();
+        ordered_checks.insert("zeta".into(), "ok".into());
+        ordered_checks.insert("alpha".into(), "ok".into());
+        subsystem_results.insert("zeta".into(), BTreeMap::new());
+        subsystem_results.insert("alpha".into(), ordered_checks);
+        let rv = RestoreVerification {
+            verification_id: "rv-ordered".into(),
+            checkpoint_id: "cp-1".into(),
+            epoch_id: "epoch-1".into(),
+            tick_number: 10,
+            verdict: RestoreVerdict::Verified,
+            expected_composite_hash: "abc123".into(),
+            actual_composite_hash: "abc123".into(),
+            subsystem_results,
+            verified_at: Some("2026-03-20T00:00:00+00:00".into()),
+        };
+
+        let json = serde_json::to_string(&rv).unwrap();
+        assert!(
+            json.contains(r#""subsystem_results":{"alpha":{"alpha":"ok","zeta":"ok"},"zeta":{}}"#)
+        );
+        assert!(
+            json.find(r#""alpha":{"alpha":"ok","zeta":"ok"}"#).unwrap()
+                < json.find(r#""zeta":{}"#).unwrap()
+        );
     }
 
     #[test]

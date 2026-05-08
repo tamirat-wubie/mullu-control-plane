@@ -1,0 +1,10 @@
+{
+  "heartbeat_id": "hb-42",
+  "tick_number": 42,
+  "phase": "emitting_heartbeat",
+  "outcome_of_last_tick": "work_done",
+  "open_obligations": 3,
+  "pending_events": 2,
+  "uptime_ticks": 420,
+  "emitted_at": "2025-01-01T00:42:05+00:00"
+}

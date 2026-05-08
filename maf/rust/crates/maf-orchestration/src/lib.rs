@@ -18,7 +18,7 @@
 #![forbid(unsafe_code)]
 
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 
 // ===========================================================================
 // Jobs
@@ -88,7 +88,7 @@ pub mod job {
         #[serde(default, skip_serializing_if = "Option::is_none")]
         pub sla_target_minutes: Option<u64>,
         #[serde(default)]
-        pub metadata: HashMap<String, serde_json::Value>,
+        pub metadata: BTreeMap<String, serde_json::Value>,
     }
 
     #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
@@ -279,8 +279,8 @@ pub mod workflow {
     pub struct StageExecutionResult {
         pub stage_id: String,
         pub status: StageStatus,
-        pub output: HashMap<String, serde_json::Value>,
-        #[serde(default, skip_serializing_if = "Option::is_none")]
+        pub output: BTreeMap<String, serde_json::Value>,
+        #[serde(default)]
         pub error: Option<serde_json::Value>,
         #[serde(default, skip_serializing_if = "String::is_empty")]
         pub started_at: String,
@@ -357,7 +357,7 @@ pub mod goal {
         #[serde(default, skip_serializing_if = "Option::is_none")]
         pub deadline: Option<String>,
         #[serde(default)]
-        pub metadata: HashMap<String, serde_json::Value>,
+        pub metadata: BTreeMap<String, serde_json::Value>,
     }
 
     #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
@@ -457,7 +457,7 @@ pub mod function {
         pub description: String,
         pub created_at: String,
         #[serde(default)]
-        pub metadata: HashMap<String, serde_json::Value>,
+        pub metadata: BTreeMap<String, serde_json::Value>,
     }
 
     #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
@@ -565,7 +565,7 @@ pub mod roles {
         #[serde(default = "default_max_concurrent")]
         pub max_concurrent_per_worker: u64,
         #[serde(default)]
-        pub metadata: HashMap<String, serde_json::Value>,
+        pub metadata: BTreeMap<String, serde_json::Value>,
     }
 
     fn default_max_concurrent() -> u64 {
@@ -582,7 +582,7 @@ pub mod roles {
         #[serde(default)]
         pub status: WorkerStatus,
         #[serde(default)]
-        pub metadata: HashMap<String, serde_json::Value>,
+        pub metadata: BTreeMap<String, serde_json::Value>,
     }
 
     // Default derived via #[default] on Available variant
@@ -701,11 +701,115 @@ mod tests {
             workflow_id: None,
             deadline: Some("2025-01-02T00:00:00+00:00".into()),
             sla_target_minutes: Some(60),
-            metadata: HashMap::new(),
+            metadata: BTreeMap::new(),
         };
         let json = serde_json::to_string(&jd).unwrap();
         let back: job::JobDescriptor = serde_json::from_str(&json).unwrap();
         assert_eq!(jd, back);
+    }
+
+    #[test]
+    fn job_metadata_serializes_in_lexicographic_key_order() {
+        let mut metadata = BTreeMap::new();
+        metadata.insert("zeta".into(), serde_json::json!(1));
+        metadata.insert("alpha".into(), serde_json::json!(2));
+        let descriptor = job::JobDescriptor {
+            job_id: "j-ordered".into(),
+            name: "Ordered metadata".into(),
+            description: "Checks deterministic job metadata ordering".into(),
+            priority: job::JobPriority::Normal,
+            created_at: "2025-01-01T00:00:00+00:00".into(),
+            goal_id: None,
+            workflow_id: None,
+            deadline: None,
+            sla_target_minutes: None,
+            metadata,
+        };
+
+        let json = serde_json::to_string(&descriptor).unwrap();
+        assert!(json.contains(r#""metadata":{"alpha":2,"zeta":1}"#));
+        assert!(json.find(r#""alpha":2"#).unwrap() < json.find(r#""zeta":1"#).unwrap());
+    }
+
+    #[test]
+    fn canonical_job_descriptor_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/job_descriptor.json"
+        ));
+        assert_fixture_round_trip::<job::JobDescriptor>(fixture_json);
+    }
+
+    #[test]
+    fn canonical_work_queue_entry_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/work_queue_entry.json"
+        ));
+        assert_fixture_round_trip::<job::WorkQueueEntry>(fixture_json);
+    }
+
+    #[test]
+    fn canonical_assignment_record_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/assignment_record.json"
+        ));
+        assert_fixture_round_trip::<job::AssignmentRecord>(fixture_json);
+    }
+
+    #[test]
+    fn canonical_job_state_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/job_state.json"
+        ));
+        assert_fixture_round_trip::<job::JobState>(fixture_json);
+    }
+
+    #[test]
+    fn canonical_follow_up_record_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/follow_up_record.json"
+        ));
+        assert_fixture_round_trip::<job::FollowUpRecord>(fixture_json);
+    }
+
+    #[test]
+    fn canonical_deadline_record_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/deadline_record.json"
+        ));
+        assert_fixture_round_trip::<job::DeadlineRecord>(fixture_json);
+    }
+
+    #[test]
+    fn canonical_job_execution_record_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/job_execution_record.json"
+        ));
+        assert_fixture_round_trip::<job::JobExecutionRecord>(fixture_json);
+    }
+
+    #[test]
+    fn canonical_job_pause_record_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/job_pause_record.json"
+        ));
+        assert_fixture_round_trip::<job::JobPauseRecord>(fixture_json);
+    }
+
+    #[test]
+    fn canonical_job_resume_record_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/job_resume_record.json"
+        ));
+        assert_fixture_round_trip::<job::JobResumeRecord>(fixture_json);
     }
 
     // --- Workflows ---
@@ -753,6 +857,88 @@ mod tests {
         assert_fixture_round_trip::<workflow::WorkflowDescriptor>(fixture_json);
     }
 
+    #[test]
+    fn workflow_stage_output_serializes_in_lexicographic_key_order() {
+        let mut output = BTreeMap::new();
+        output.insert("zeta".into(), serde_json::json!(1));
+        output.insert("alpha".into(), serde_json::json!(2));
+        let result = workflow::StageExecutionResult {
+            stage_id: "s-ordered".into(),
+            status: workflow::StageStatus::Completed,
+            output,
+            error: None,
+            started_at: "2025-01-01T00:00:00+00:00".into(),
+            completed_at: "2025-01-01T00:00:01+00:00".into(),
+        };
+
+        let json = serde_json::to_string(&result).unwrap();
+        assert!(json.contains(r#""output":{"alpha":2,"zeta":1}"#));
+        assert!(json.find(r#""alpha":2"#).unwrap() < json.find(r#""zeta":1"#).unwrap());
+    }
+
+    #[test]
+    fn canonical_workflow_stage_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/workflow_stage.json"
+        ));
+        assert_fixture_round_trip::<workflow::WorkflowStage>(fixture_json);
+    }
+
+    #[test]
+    fn canonical_workflow_binding_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/workflow_binding.json"
+        ));
+        assert_fixture_round_trip::<workflow::WorkflowBinding>(fixture_json);
+    }
+
+    #[test]
+    fn canonical_workflow_descriptor_runtime_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/workflow_descriptor.json"
+        ));
+        assert_fixture_round_trip::<workflow::WorkflowDescriptor>(fixture_json);
+    }
+
+    #[test]
+    fn canonical_workflow_transition_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/workflow_transition.json"
+        ));
+        assert_fixture_round_trip::<workflow::WorkflowTransition>(fixture_json);
+    }
+
+    #[test]
+    fn canonical_stage_execution_result_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/stage_execution_result.json"
+        ));
+        assert_fixture_round_trip::<workflow::StageExecutionResult>(fixture_json);
+    }
+
+    #[test]
+    fn canonical_workflow_execution_record_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/workflow_execution_record.json"
+        ));
+        assert_fixture_round_trip::<workflow::WorkflowExecutionRecord>(fixture_json);
+    }
+
+    #[test]
+    fn canonical_workflow_verification_record_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/workflow_verification_record.json"
+        ));
+        assert_fixture_round_trip::<workflow::WorkflowVerificationRecord>(fixture_json);
+    }
+
     // --- Goals ---
 
     #[test]
@@ -783,6 +969,60 @@ mod tests {
         assert_eq!(plan, back);
     }
 
+    #[test]
+    fn canonical_goal_plan_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/goal_plan.json"
+        ));
+        assert_fixture_round_trip::<goal::GoalPlan>(fixture_json);
+    }
+
+    #[test]
+    fn canonical_goal_descriptor_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/goal_descriptor.json"
+        ));
+        assert_fixture_round_trip::<goal::GoalDescriptor>(fixture_json);
+    }
+
+    #[test]
+    fn canonical_goal_dependency_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/goal_dependency.json"
+        ));
+        assert_fixture_round_trip::<goal::GoalDependency>(fixture_json);
+    }
+
+    #[test]
+    fn canonical_sub_goal_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/sub_goal.json"
+        ));
+        assert_fixture_round_trip::<goal::SubGoal>(fixture_json);
+    }
+
+    #[test]
+    fn canonical_goal_execution_state_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/goal_execution_state.json"
+        ));
+        assert_fixture_round_trip::<goal::GoalExecutionState>(fixture_json);
+    }
+
+    #[test]
+    fn canonical_goal_replan_record_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/goal_replan_record.json"
+        ));
+        assert_fixture_round_trip::<goal::GoalReplanRecord>(fixture_json);
+    }
+
     // --- Functions ---
 
     #[test]
@@ -808,6 +1048,79 @@ mod tests {
         let json = serde_json::to_string(&sla).unwrap();
         let back: function::FunctionSlaProfile = serde_json::from_str(&json).unwrap();
         assert_eq!(sla, back);
+    }
+
+    #[test]
+    fn function_metadata_serializes_in_lexicographic_key_order() {
+        let mut metadata = BTreeMap::new();
+        metadata.insert("zeta".into(), serde_json::json!(1));
+        metadata.insert("alpha".into(), serde_json::json!(2));
+        let template = function::ServiceFunctionTemplate {
+            function_id: "fn-ordered".into(),
+            name: "Ordered function".into(),
+            function_type: function::FunctionType::Custom,
+            description: "Checks deterministic function metadata ordering".into(),
+            created_at: "2025-01-01T00:00:00+00:00".into(),
+            metadata,
+        };
+
+        let json = serde_json::to_string(&template).unwrap();
+        assert!(json.contains(r#""metadata":{"alpha":2,"zeta":1}"#));
+        assert!(json.find(r#""alpha":2"#).unwrap() < json.find(r#""zeta":1"#).unwrap());
+    }
+
+    #[test]
+    fn canonical_service_function_template_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/service_function_template.json"
+        ));
+        assert_fixture_round_trip::<function::ServiceFunctionTemplate>(fixture_json);
+    }
+
+    #[test]
+    fn canonical_function_policy_binding_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/function_policy_binding.json"
+        ));
+        assert_fixture_round_trip::<function::FunctionPolicyBinding>(fixture_json);
+    }
+
+    #[test]
+    fn canonical_function_sla_profile_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/function_sla_profile.json"
+        ));
+        assert_fixture_round_trip::<function::FunctionSlaProfile>(fixture_json);
+    }
+
+    #[test]
+    fn canonical_function_queue_profile_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/function_queue_profile.json"
+        ));
+        assert_fixture_round_trip::<function::FunctionQueueProfile>(fixture_json);
+    }
+
+    #[test]
+    fn canonical_function_outcome_record_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/function_outcome_record.json"
+        ));
+        assert_fixture_round_trip::<function::FunctionOutcomeRecord>(fixture_json);
+    }
+
+    #[test]
+    fn canonical_function_metrics_snapshot_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/function_metrics_snapshot.json"
+        ));
+        assert_fixture_round_trip::<function::FunctionMetricsSnapshot>(fixture_json);
     }
 
     // --- Roles ---
@@ -839,11 +1152,76 @@ mod tests {
             required_skills: vec!["rust".into(), "review".into()],
             approval_required: false,
             max_concurrent_per_worker: 3,
-            metadata: HashMap::new(),
+            metadata: BTreeMap::new(),
         };
         let json = serde_json::to_string(&rd).unwrap();
         let back: roles::RoleDescriptor = serde_json::from_str(&json).unwrap();
         assert_eq!(rd, back);
+    }
+
+    #[test]
+    fn role_metadata_serializes_in_lexicographic_key_order() {
+        let mut metadata = BTreeMap::new();
+        metadata.insert("zeta".into(), serde_json::json!(1));
+        metadata.insert("alpha".into(), serde_json::json!(2));
+        let role = roles::RoleDescriptor {
+            role_id: "r-ordered".into(),
+            name: "Ordered role".into(),
+            description: "Checks deterministic role metadata ordering".into(),
+            required_skills: vec!["rust".into()],
+            approval_required: true,
+            max_concurrent_per_worker: 2,
+            metadata,
+        };
+
+        let json = serde_json::to_string(&role).unwrap();
+        assert!(json.contains(r#""metadata":{"alpha":2,"zeta":1}"#));
+        assert!(json.find(r#""alpha":2"#).unwrap() < json.find(r#""zeta":1"#).unwrap());
+    }
+
+    #[test]
+    fn canonical_role_descriptor_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/role_descriptor.json"
+        ));
+        assert_fixture_round_trip::<roles::RoleDescriptor>(fixture_json);
+    }
+
+    #[test]
+    fn canonical_assignment_policy_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/assignment_policy.json"
+        ));
+        assert_fixture_round_trip::<roles::AssignmentPolicy>(fixture_json);
+    }
+
+    #[test]
+    fn canonical_worker_profile_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/worker_profile.json"
+        ));
+        assert_fixture_round_trip::<roles::WorkerProfile>(fixture_json);
+    }
+
+    #[test]
+    fn canonical_assignment_decision_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/assignment_decision.json"
+        ));
+        assert_fixture_round_trip::<roles::AssignmentDecision>(fixture_json);
+    }
+
+    #[test]
+    fn canonical_handoff_record_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/handoff_record.json"
+        ));
+        assert_fixture_round_trip::<roles::HandoffRecord>(fixture_json);
     }
 
     #[test]
@@ -861,6 +1239,15 @@ mod tests {
     }
 
     #[test]
+    fn canonical_worker_capacity_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/worker_capacity.json"
+        ));
+        assert_fixture_round_trip::<roles::WorkerCapacity>(fixture_json);
+    }
+
+    #[test]
     fn team_queue_state_round_trips() {
         let tqs = roles::TeamQueueState {
             team_id: "t-1".into(),
@@ -873,6 +1260,24 @@ mod tests {
         let json = serde_json::to_string(&tqs).unwrap();
         let back: roles::TeamQueueState = serde_json::from_str(&json).unwrap();
         assert_eq!(tqs, back);
+    }
+
+    #[test]
+    fn canonical_team_queue_state_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/team_queue_state.json"
+        ));
+        assert_fixture_round_trip::<roles::TeamQueueState>(fixture_json);
+    }
+
+    #[test]
+    fn canonical_workload_snapshot_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/workload_snapshot.json"
+        ));
+        assert_fixture_round_trip::<roles::WorkloadSnapshot>(fixture_json);
     }
 
     // --- Cross-format compatibility ---

@@ -165,6 +165,7 @@ def validate_general_agent_promotion_operator_checklist(
 
     _require_superset(payload, "required_environment_variables", REQUIRED_ENVIRONMENT_VARIABLES, errors)
     _require_superset(payload, "approval_required_blockers", REQUIRED_APPROVAL_BLOCKERS, errors)
+    _require_superset(payload, "conditional_approval_blockers", REQUIRED_APPROVAL_BLOCKERS, errors)
     _require_superset(payload, "blocking_gap_ids", REQUIRED_BLOCKING_GAPS, errors)
     _validate_steps(steps, errors)
     return PromotionOperatorChecklistValidation(

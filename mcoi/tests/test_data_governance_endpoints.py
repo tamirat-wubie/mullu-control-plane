@@ -135,4 +135,3 @@ class TestDataGovernanceEndpoints:
         assert summary_resp.status_code == 200
         assert summary_resp.json()["tenant"]["violation_count"] == 1
         assert summary_resp.json()["tenant"]["records"][0]["data_id"] == "dg-http-record-denial"
-

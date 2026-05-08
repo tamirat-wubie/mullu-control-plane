@@ -1,0 +1,11 @@
+{
+  "correlation_id": "corr-100",
+  "event_ids": [
+    "evt-100",
+    "evt-101",
+    "evt-102"
+  ],
+  "root_event_id": "evt-100",
+  "description": "workflow verification and obligation follow-up",
+  "created_at": "2025-01-01T00:05:00+00:00"
+}

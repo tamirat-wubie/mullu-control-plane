@@ -19,7 +19,7 @@ def test_validate_handoff_preflight_accepts_ready_report(tmp_path: Path) -> None
 
     assert result.valid is True
     assert result.ready is True
-    assert result.step_count == 9
+    assert result.step_count == 10
     assert result.blockers == ()
 
 
@@ -73,7 +73,7 @@ def test_validate_handoff_preflight_cli_outputs_json(tmp_path: Path, capsys) -> 
     assert exit_code == 0
     assert payload["valid"] is True
     assert payload["ready"] is True
-    assert payload["step_count"] == 9
+    assert payload["step_count"] == 10
 
 
 def test_validate_handoff_preflight_missing_file_error_is_bounded(tmp_path: Path) -> None:
@@ -107,10 +107,15 @@ def _ready_report() -> dict[str, object]:
         "production_ready": False,
         "readiness_level": "pilot-governed-core",
         "ready": True,
-        "step_count": 9,
+        "step_count": 10,
         "steps": [
             {"detail": "valid=true", "name": "operator checklist validation", "passed": True},
             {"detail": "valid=true", "name": "handoff packet validation", "passed": True},
+            {
+                "detail": "conditional responsibility debt blockers present",
+                "name": "conditional responsibility debt blockers",
+                "passed": True,
+            },
             {"detail": "valid=true", "name": "environment binding contract validation", "passed": True},
             {"detail": "valid=true", "name": "environment binding receipt validation", "passed": True},
             {"detail": "all required environment variables are present", "name": "required environment bindings", "passed": True},
@@ -128,7 +133,7 @@ def _blocked_report() -> dict[str, object]:
     payload["blockers"] = ["required environment bindings"]
     payload["missing_environment_variables"] = ["MULLU_GATEWAY_URL"]
     steps = list(payload["steps"])  # type: ignore[arg-type]
-    steps[4] = {
+    steps[5] = {
         "detail": "missing=['MULLU_GATEWAY_URL']",
         "name": "required environment bindings",
         "passed": False,

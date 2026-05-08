@@ -1,0 +1,13 @@
+{
+  "review_id": "review-incident-042",
+  "case_id": "case-incident-042",
+  "evidence_id": "evidence-incident-042",
+  "reviewer_id": "operator-lead",
+  "disposition": "escalated",
+  "notes": "Escalated for lead approval before final closure because the failover path changed the provider set.",
+  "reviewed_at": "2026-04-03T08:20:00+00:00",
+  "metadata": {
+    "escalation_chain": "ops-lead",
+    "priority": "high"
+  }
+}

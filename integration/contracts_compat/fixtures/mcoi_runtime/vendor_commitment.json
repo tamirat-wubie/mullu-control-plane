@@ -1,0 +1,12 @@
+{
+  "commitment_id": "vendor-commitment-availability",
+  "vendor_id": "vendor-governance-42",
+  "contract_ref": "contract-vendor-governance-42-2026",
+  "description": "Maintain 99.9% governed telemetry availability.",
+  "target_value": "99.9_percent_availability",
+  "created_at": "2026-05-05T11:30:00+00:00",
+  "metadata": {
+    "measurement_window": "monthly",
+    "control": "service-availability"
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "role_id": "role-reviewer",
+  "name": "Release Reviewer",
+  "description": "Validates release evidence and governed rollout readiness",
+  "required_skills": [
+    "governed_review",
+    "release_operations"
+  ],
+  "approval_required": true,
+  "max_concurrent_per_worker": 2,
+  "metadata": {
+    "plane": "operator",
+    "shift": "primary"
+  }
+}

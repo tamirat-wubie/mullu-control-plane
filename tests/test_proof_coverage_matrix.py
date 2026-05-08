@@ -106,6 +106,10 @@ def test_representative_routes_are_not_unclassified() -> None:
     assert classified_routes["/api/v1/temporal/worker/tick"]["surface_id"] == "temporal_kernel"
     assert classified_routes["/api/v1/knowledge/entities"]["surface_id"] == "governed_operational_intelligence"
     assert classified_routes["/api/v1/knowledge/contradictions/unresolved"]["surface_id"] == "governed_operational_intelligence"
+    assert classified_routes["/api/v1/simulate"]["surface_id"] == "governed_operational_intelligence"
+    assert classified_routes["/api/v1/simulate/history"]["surface_id"] == "governed_operational_intelligence"
+    assert classified_routes["/api/v1/connectors/register"]["surface_id"] == "governed_connector_framework"
+    assert classified_routes["/api/v1/connectors/invoke"]["surface_id"] == "governed_connector_framework"
     assert classified_routes["/api/v1/finance/approval-packets"]["surface_id"] == "finance_approval_packets"
     assert (
         classified_routes["/api/v1/finance/approval-packets/operator/read-model"]["surface_id"]
@@ -629,15 +633,20 @@ def test_governed_operational_intelligence_surface_is_witnessed() -> None:
     assert "/api/v1/knowledge/entities" in operational_surface["representative_paths"]
     assert "/api/v1/knowledge/links" in operational_surface["representative_paths"]
     assert "/api/v1/knowledge/contradictions/unresolved" in operational_surface["representative_paths"]
+    assert "/api/v1/simulate" in operational_surface["representative_paths"]
+    assert "/api/v1/simulate/history" in operational_surface["representative_paths"]
     assert "gateway/world_state.py" in operational_surface["evidence_files"]
     assert "gateway/goal_compiler.py" in operational_surface["evidence_files"]
     assert "gateway/causal_simulator.py" in operational_surface["evidence_files"]
     assert "mcoi/mcoi_runtime/app/routers/knowledge.py" in operational_surface["evidence_files"]
+    assert "mcoi/mcoi_runtime/app/routers/simulation.py" in operational_surface["evidence_files"]
     assert "mcoi/mcoi_runtime/core/knowledge_graph.py" in operational_surface["evidence_files"]
+    assert "mcoi/mcoi_runtime/governance/policy/sandbox.py" in operational_surface["evidence_files"]
     assert "schemas/world_state.schema.json" in operational_surface["evidence_files"]
     assert "schemas/goal.schema.json" in operational_surface["evidence_files"]
     assert "schemas/simulation_receipt.schema.json" in operational_surface["evidence_files"]
     assert "mcoi/tests/test_knowledge_graph.py" in operational_surface["evidence_files"]
+    assert "mcoi/tests/test_policy_sandbox.py" in operational_surface["evidence_files"]
     assert "tests/test_gateway/test_world_state.py" in operational_surface["evidence_files"]
     assert "tests/test_gateway/test_goal_compiler.py" in operational_surface["evidence_files"]
     assert "tests/test_gateway/test_causal_simulator.py" in operational_surface["evidence_files"]
@@ -646,12 +655,15 @@ def test_governed_operational_intelligence_surface_is_witnessed() -> None:
     assert "knowledge_link_routes_governed" in witnesses
     assert "knowledge_contradiction_routes_governed" in witnesses
     assert "knowledge_summary_route_bounded" in witnesses
+    assert "policy_simulation_routes_governed" in witnesses
+    assert "policy_simulation_history_summary_bounded" in witnesses
     assert "goal_plan_certificate_hash_bound" in witnesses
     assert "simulation_receipt_schema_valid" in witnesses
     assert "open_world_contradictions_block_execution" in witnesses
     assert "high_risk_controls_projected_before_execution" in witnesses
     assert closure_actions["publish_governed_operational_intelligence_witnesses"]["status"] == "closed"
     assert closure_actions["classify_world_state_knowledge_routes"]["status"] == "closed"
+    assert closure_actions["classify_policy_simulation_routes"]["status"] == "closed"
 
 
 def test_capability_forge_surface_is_candidate_only() -> None:
@@ -809,6 +821,42 @@ def test_claim_verification_surface_gates_execution_admission() -> None:
     assert "high_risk_requires_independent_support" in witnesses
     assert "claim_verification_schema_valid" in witnesses
     assert closure_actions["publish_claim_verification_report_contract"]["status"] == "closed"
+
+
+def test_governed_connector_framework_surface_gates_invocation_lifecycle() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    connector_surface = surfaces["governed_connector_framework"]
+    witnesses = set(connector_surface["runtime_witnesses"])
+    route_records = {
+        record["route"]: record
+        for record in matrix["route_coverage"]["routes"]
+    }
+
+    assert connector_surface["coverage_state"] == "witnessed"
+    assert connector_surface["request_proof"] == "request_proof"
+    assert connector_surface["action_proof"] == "action_proof"
+    assert "/api/v1/connectors/register" in connector_surface["representative_paths"]
+    assert "/api/v1/connectors/invoke" in connector_surface["representative_paths"]
+    assert "/api/v1/connectors/{connector_id}/disable" in connector_surface["representative_paths"]
+    assert "/api/v1/connectors/{connector_id}/enable" in connector_surface["representative_paths"]
+    assert "mcoi/mcoi_runtime/app/routers/connectors.py" in connector_surface["evidence_files"]
+    assert "mcoi/mcoi_runtime/core/connector_framework.py" in connector_surface["evidence_files"]
+    assert "mcoi/tests/test_connector_framework.py" in connector_surface["evidence_files"]
+    assert "mcoi/tests/test_server_phase217.py" in connector_surface["evidence_files"]
+    assert "mcoi/tests/test_server_phase218.py" in connector_surface["evidence_files"]
+    assert "connector_registration_typed" in witnesses
+    assert "connector_invocation_guard_chain_checked" in witnesses
+    assert "connector_lifecycle_disable_enable_bounded" in witnesses
+    assert "connector_history_summary_bounded" in witnesses
+    assert "connector_errors_sanitized" in witnesses
+    assert "connector_invocation_audited" in witnesses
+    assert route_records["/api/v1/connectors/register"]["coverage_state"] == "witnessed"
+    assert route_records["/api/v1/connectors/register"]["surface_id"] == "governed_connector_framework"
+    assert route_records["/api/v1/connectors/invoke"]["coverage_state"] == "witnessed"
+    assert route_records["/api/v1/connectors/invoke"]["surface_id"] == "governed_connector_framework"
+    assert closure_actions["classify_governed_connector_routes"]["status"] == "closed"
 
 
 def test_connector_self_healing_surface_emits_bounded_recovery_receipts() -> None:

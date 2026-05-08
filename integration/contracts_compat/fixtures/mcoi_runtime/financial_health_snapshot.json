@@ -1,0 +1,15 @@
+{
+  "snapshot_id": "financial-health-launch-q2-01",
+  "budget_id": "budget-launch-q2-2026",
+  "limit_amount": 50000.0,
+  "consumed_amount": 18000.0,
+  "reserved_amount": 7000.0,
+  "available_amount": 25000.0,
+  "utilization": 0.5,
+  "currency": "USD",
+  "warning_triggered": false,
+  "hard_stop_triggered": false,
+  "active_reservations": 4,
+  "total_spend_records": 11,
+  "captured_at": "2026-05-06T14:00:00+00:00"
+}

@@ -1,0 +1,8 @@
+{
+  "delta_id": "delta-42",
+  "node_id": "job-42",
+  "field_name": "status",
+  "old_value": "queued",
+  "new_value": "in_progress",
+  "changed_at": "2025-01-01T00:23:30+00:00"
+}

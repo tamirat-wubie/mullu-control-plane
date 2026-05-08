@@ -1,0 +1,6 @@
+{
+  "from_stage_id": "stage-build",
+  "to_stage_id": "stage-verify",
+  "transition_type": "conditional",
+  "condition": "artifact_ready == true"
+}

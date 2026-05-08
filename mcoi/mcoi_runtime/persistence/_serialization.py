@@ -15,7 +15,7 @@ import json
 from dataclasses import fields, is_dataclass
 from typing import Any, Type, TypeVar, Union, get_args, get_origin, get_type_hints
 
-from mcoi_runtime.contracts._base import ContractRecord, freeze_value, thaw_value
+from mcoi_runtime.contracts._base import ContractRecord
 
 from .errors import CorruptedDataError
 
@@ -96,7 +96,7 @@ def deserialize_record(json_str: str, record_type: Type[RecordT]) -> RecordT:
         raise
     except (TypeError, ValueError) as exc:
         raise CorruptedDataError(
-            _bounded_error("failed to construct record", exc)
+            _bounded_error(f"failed to construct {record_type.__name__}", exc)
         ) from exc
 
 

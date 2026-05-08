@@ -66,6 +66,16 @@ class ModelRouter:
         self._provider_reasons: dict[str, str] = {}
 
     def register(self, profile: ModelProfile) -> None:
+        if not profile.model_id.strip():
+            raise ValueError("model_id required")
+        if not profile.provider.strip():
+            raise ValueError("provider required")
+        if profile.cost_per_1k_input < 0 or profile.cost_per_1k_output < 0:
+            raise ValueError("model costs must be non-negative")
+        if profile.max_context <= 0:
+            raise ValueError("max_context must be positive")
+        if profile.model_id in self._profiles:
+            raise ValueError("model profile already registered")
         self._profiles[profile.model_id] = profile
         self._provider_status.setdefault(profile.provider, ProviderRoutingStatus.HEALTHY)
 

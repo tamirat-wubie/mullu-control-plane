@@ -1,0 +1,15 @@
+{
+  "assessment_id": "assessment-workspace-042",
+  "tenant_id": "tenant-mullu-primary",
+  "scope": "workspace",
+  "scope_ref_id": "workspace-governance-042",
+  "level": "moderate",
+  "sufficiency": "sufficient",
+  "confidence": 0.91,
+  "assessed_by": "assurance-auditor",
+  "assessed_at": "2026-04-04T09:20:00+00:00",
+  "metadata": {
+    "assessment_type": "closure-readiness",
+    "evidence_window": "2026-q2"
+  }
+}

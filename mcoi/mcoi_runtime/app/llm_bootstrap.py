@@ -28,6 +28,7 @@ from mcoi_runtime.adapters.llm_adapter import (
     StubLLMBackend,
 )
 from mcoi_runtime.adapters.multi_provider import (
+    APIRouterBackend,
     AtlasCloudBackend,
     BazaarLinkBackend,
     CerebrasBackend,
@@ -37,6 +38,7 @@ from mcoi_runtime.adapters.multi_provider import (
     DeepSeekBackend,
     DeepInfraBackend,
     DInferenceBackend,
+    EURIBackend,
     FeatherlessBackend,
     FireworksBackend,
     FriendliBackend,
@@ -59,6 +61,7 @@ from mcoi_runtime.adapters.multi_provider import (
     SambaNovaBackend,
     SiliconFlowBackend,
     TogetherBackend,
+    VeniceBackend,
     WaveSpeedBackend,
     ZAIBackend,
 )
@@ -117,6 +120,9 @@ class LLMConfig:
     gmi_api_key: str = ""
     atlascloud_api_key: str = ""
     modelmax_api_key: str = ""
+    venice_api_key: str = ""
+    euri_api_key: str = ""
+    apirouter_api_key: str = ""
     grok_api_key: str = ""
     mistral_api_key: str = ""
     openrouter_api_key: str = ""
@@ -167,6 +173,9 @@ class LLMConfig:
         gmi_key = os.environ.get("GMI_API_KEY", "")
         atlascloud_key = os.environ.get("ATLASCLOUD_API_KEY", "")
         modelmax_key = os.environ.get("MODELMAX_API_KEY", "")
+        venice_key = os.environ.get("VENICE_API_KEY", "")
+        euri_key = os.environ.get("EURI_API_KEY", "")
+        apirouter_key = os.environ.get("APIROUTER_API_KEY", "")
         grok_key = os.environ.get("XAI_API_KEY", "")
         mistral_key = os.environ.get("MISTRAL_API_KEY", "")
         openrouter_key = os.environ.get("OPENROUTER_API_KEY", "")
@@ -242,6 +251,12 @@ class LLMConfig:
                 default_backend = "atlascloud"
             elif modelmax_key:
                 default_backend = "modelmax"
+            elif venice_key:
+                default_backend = "venice"
+            elif euri_key:
+                default_backend = "euri"
+            elif apirouter_key:
+                default_backend = "apirouter"
             elif mistral_key:
                 default_backend = "mistral"
             elif grok_key:
@@ -273,7 +288,8 @@ class LLMConfig:
                 "LLAMA_API_KEY, PARASAIL_API_KEY, FEATHERLESS_API_KEY, "
                 "PACKET_API_KEY, RIDVAY_API_KEY, NEUROROUTERS_API_KEY, "
                 "GLAMA_API_KEY, GMI_API_KEY, ATLASCLOUD_API_KEY, "
-                "MODELMAX_API_KEY, "
+                "MODELMAX_API_KEY, VENICE_API_KEY, EURI_API_KEY, "
+                "APIROUTER_API_KEY, "
                 "XAI_API_KEY, MISTRAL_API_KEY, "
                 "OPENROUTER_API_KEY) "
                 "or OLLAMA_BASE_URL."
@@ -315,6 +331,9 @@ class LLMConfig:
             gmi_api_key=gmi_key,
             atlascloud_api_key=atlascloud_key,
             modelmax_api_key=modelmax_key,
+            venice_api_key=venice_key,
+            euri_api_key=euri_key,
+            apirouter_api_key=apirouter_key,
             grok_api_key=grok_key,
             mistral_api_key=mistral_key,
             openrouter_api_key=openrouter_key,
@@ -739,6 +758,39 @@ def bootstrap_llm(
         )
         backends["modelmax"] = modelmax
 
+    if llm_config.venice_api_key:
+        venice = VeniceBackend(
+            api_key=llm_config.venice_api_key,
+            model=_select_provider_default_model(
+                llm_config.default_model,
+                ("qwen", "deepseek", "llama", "mistral", "venice"),
+                VeniceBackend.DEFAULT_MODEL,
+            ),
+        )
+        backends["venice"] = venice
+
+    if llm_config.euri_api_key:
+        euri = EURIBackend(
+            api_key=llm_config.euri_api_key,
+            model=_select_provider_default_model(
+                llm_config.default_model,
+                ("qwen", "gpt", "gemini", "llama", "groq/", "euri/"),
+                EURIBackend.DEFAULT_MODEL,
+            ),
+        )
+        backends["euri"] = euri
+
+    if llm_config.apirouter_api_key:
+        apirouter = APIRouterBackend(
+            api_key=llm_config.apirouter_api_key,
+            model=_select_provider_default_model(
+                llm_config.default_model,
+                ("qwen/", "deepseek-ai/", "pro/moonshotai/", "pro/zai-org/", "minimaxai/"),
+                APIRouterBackend.DEFAULT_MODEL,
+            ),
+        )
+        backends["apirouter"] = apirouter
+
     if llm_config.grok_api_key:
         grok = GrokBackend(
             api_key=llm_config.grok_api_key,
@@ -1038,6 +1090,24 @@ def _register_providers(
             "rate_limit": 120,
             "cost_limit": 0.25,
         },
+        "venice": {
+            "name": "Venice",
+            "base_url": "https://api.venice.ai/api/v1",
+            "rate_limit": 120,
+            "cost_limit": 0.25,
+        },
+        "euri": {
+            "name": "EURI",
+            "base_url": "https://api.euron.one/api/v1/euri",
+            "rate_limit": 120,
+            "cost_limit": 0.25,
+        },
+        "apirouter": {
+            "name": "APIRouter",
+            "base_url": "https://apirouter.chat/v1",
+            "rate_limit": 120,
+            "cost_limit": 0.25,
+        },
         "grok": {
             "name": "xAI Grok",
             "base_url": "https://api.x.ai/v1",
@@ -1156,6 +1226,15 @@ def _register_models(
         ("Qwen/Qwen3-32B-FP8", "Qwen3 32B FP8 via GMI Cloud", "gmi", 0.10, 0.60),
         ("Qwen/Qwen3-30B-A3B-Instruct-2507", "Qwen3 30B A3B 2507 via Atlas Cloud", "atlascloud", 0.09, 0.30),
         ("qwen3-coder-30b-a3b", "Qwen3 Coder 30B A3B via ModelMax", "modelmax", 0.15, 0.60),
+        ("qwen3-5-9b", "Qwen3.5 9B via Venice", "venice", 0.10, 0.15),
+        ("qwen/qwen3-32b", "Qwen3 32B via EURI", "euri", 0.29, 0.59),
+        (
+            "Qwen/Qwen3-Coder-30B-A3B-Instruct",
+            "Qwen3 Coder 30B A3B via APIRouter",
+            "apirouter",
+            0.028,
+            0.112,
+        ),
         ("mistral-small-2506", "Mistral Small 2506", "mistral", 0.10, 0.30),
         ("mistral-small-2603", "Mistral Small 2603", "mistral", 0.15, 0.60),
         ("grok-3-mini", "Grok 3 Mini", "grok", 0.30, 0.50),

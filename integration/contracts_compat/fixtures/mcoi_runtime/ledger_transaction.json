@@ -1,0 +1,13 @@
+{
+  "transaction_id": "ledger-transaction-2026-042",
+  "tenant_id": "tenant-mullu-primary",
+  "from_account": "ledger-account-receivables-usd",
+  "to_account": "ledger-account-settlement-usd",
+  "amount": 1960.5,
+  "reference_ref": "invoice-2026-042",
+  "created_at": "2026-05-07T09:05:00+00:00",
+  "metadata": {
+    "settlement_id": "settlement-invoice-042",
+    "source": "billing-runtime"
+  }
+}

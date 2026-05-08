@@ -1,0 +1,18 @@
+{
+  "incident_id": "inc-verify-042",
+  "severity": "high",
+  "status": "recovering",
+  "source_type": "workflow",
+  "source_id": "wf-release-42",
+  "failure_family": "verification_mismatch",
+  "message": "workflow verification detected mismatched release digest",
+  "occurred_at": "2026-04-02T09:15:00+00:00",
+  "run_id": "run-42",
+  "skill_id": "verify-release",
+  "provider_id": "provider-shell",
+  "escalation_id": null,
+  "metadata": {
+    "verification_id": "verify-42",
+    "workflow_execution_id": "wf-exec-42"
+  }
+}

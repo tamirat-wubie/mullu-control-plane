@@ -5,6 +5,7 @@ Proves that workflow execution records survive save/load cycles.
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 import pytest
@@ -19,6 +20,8 @@ from mcoi_runtime.contracts.workflow import (
     WorkflowStage,
     WorkflowStatus,
 )
+from mcoi_runtime.core.invariants import RuntimeCoreInvariantError
+from mcoi_runtime.core.workflow import WorkflowEngine
 from mcoi_runtime.persistence.workflow_store import WorkflowStore
 from mcoi_runtime.persistence.errors import CorruptedDataError, PersistenceError
 
@@ -205,6 +208,78 @@ class TestWorkflowStore:
         store = WorkflowStore(tmp_path / "workflows")
         with pytest.raises(PersistenceError, match="WorkflowDescriptor"):
             store.save_descriptor("not a descriptor")
+
+    def test_save_and_load_runtime_state_round_trip(self, tmp_path: Path):
+        store = WorkflowStore(tmp_path / "workflows")
+        engine = WorkflowEngine(clock=lambda: FIXED_CLOCK)
+        descriptor = _make_descriptor()
+        record = _make_record(status=WorkflowStatus.SUSPENDED)
+        engine.restore_descriptor(descriptor)
+        engine.restore_execution_record(record)
+
+        store.save_state(engine)
+        loaded = store.load_state()
+
+        assert len(loaded.descriptors) == 1
+        assert loaded.descriptors[0].workflow_id == "wf-1"
+        assert len(loaded.execution_records) == 1
+        assert loaded.execution_records[0].execution_id == "exec-001"
+        assert loaded.execution_records[0].status is WorkflowStatus.SUSPENDED
+
+    def test_restore_state_restores_runtime_witnesses(self, tmp_path: Path):
+        store = WorkflowStore(tmp_path / "workflows")
+        source_engine = WorkflowEngine(clock=lambda: FIXED_CLOCK)
+        descriptor = _make_descriptor()
+        record = _make_record(status=WorkflowStatus.SUSPENDED)
+        source_engine.restore_descriptor(descriptor)
+        source_engine.restore_execution_record(record)
+        store.save_state(source_engine)
+
+        target_engine = WorkflowEngine(clock=lambda: FIXED_CLOCK)
+        restored = store.restore_state(target_engine)
+
+        assert len(restored.descriptors) == 1
+        assert len(restored.execution_records) == 1
+        assert target_engine.get_workflow_descriptor("wf-1") is not None
+        assert target_engine.get_execution_record("exec-001") is not None
+
+    def test_load_runtime_state_fails_closed_on_missing_descriptor_for_record(self, tmp_path: Path):
+        store = WorkflowStore(tmp_path / "workflows")
+        bad_payload = {
+            "descriptors": [],
+            "execution_records": [
+                _make_record(status=WorkflowStatus.SUSPENDED).to_json_dict()
+            ],
+        }
+        runtime_path = tmp_path / "workflows" / "workflow_runtime.json"
+        runtime_path.parent.mkdir(parents=True, exist_ok=True)
+        runtime_path.write_text(
+            json.dumps(
+                bad_payload,
+                sort_keys=True,
+                ensure_ascii=True,
+                separators=(",", ":"),
+            ),
+            encoding="utf-8",
+        )
+
+        with pytest.raises(CorruptedDataError, match="missing workflow descriptors"):
+            store.load_state()
+
+    def test_restore_state_rejects_duplicate_runtime_restore(self, tmp_path: Path):
+        store = WorkflowStore(tmp_path / "workflows")
+        source_engine = WorkflowEngine(clock=lambda: FIXED_CLOCK)
+        descriptor = _make_descriptor()
+        record = _make_record(status=WorkflowStatus.SUSPENDED)
+        source_engine.restore_descriptor(descriptor)
+        source_engine.restore_execution_record(record)
+        store.save_state(source_engine)
+
+        target_engine = WorkflowEngine(clock=lambda: FIXED_CLOCK)
+        target_engine.restore_descriptor(descriptor)
+
+        with pytest.raises(RuntimeCoreInvariantError, match="already restored"):
+            store.restore_state(target_engine)
 
     def test_descriptor_load_bounds_invalid_artifact_errors(
         self, tmp_path: Path, monkeypatch

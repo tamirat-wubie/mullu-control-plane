@@ -89,4 +89,3 @@ The GitHub page is sufficient only when these anchors are present and current:
 | General-agent promotion handoff preflight validation | `python scripts/validate_general_agent_promotion_handoff_preflight.py --report .change_assurance/general_agent_promotion_handoff_preflight.json --require-ready --json` |
 | Governed runtime promotion validation | `python scripts/validate_governed_runtime_promotion.py --strict` |
 | Change assurance | `python scripts/certify_change.py --base HEAD^ --head HEAD --strict --approval-id ci-governance --rollback-plan-ref RELEASE_CHECKLIST_v0.1.md` |
-

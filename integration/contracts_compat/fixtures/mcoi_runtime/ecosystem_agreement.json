@@ -1,0 +1,13 @@
+{
+  "agreement_id": "agreement-ecosystem-17-q2",
+  "partner_id": "partner-ecosystem-17",
+  "tenant_id": "tenant-mullu-primary",
+  "title": "Regional Implementation Alliance 2026 Q2",
+  "contract_ref": "contract-ecosystem-17-2026-q2",
+  "revenue_share_pct": 0.18,
+  "created_at": "2026-05-01T10:00:00+00:00",
+  "metadata": {
+    "territory": "east-africa",
+    "currency": "USD"
+  }
+}

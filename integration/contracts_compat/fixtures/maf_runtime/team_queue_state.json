@@ -1,0 +1,8 @@
+{
+  "team_id": "team-release",
+  "queued_jobs": 4,
+  "assigned_jobs": 3,
+  "waiting_jobs": 1,
+  "overloaded_workers": 0,
+  "captured_at": "2025-01-01T00:25:00+00:00"
+}

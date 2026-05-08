@@ -1,0 +1,15 @@
+{
+  "step_id": "replay-step-041",
+  "sequence": 41,
+  "kind": "checkpoint",
+  "verdict": "match",
+  "expected_payload": {
+    "checkpoint_id": "checkpoint-042",
+    "tick_number": 42
+  },
+  "actual_payload": {
+    "checkpoint_id": "checkpoint-042",
+    "tick_number": 42
+  },
+  "detail": "payload matched"
+}

@@ -1,0 +1,8 @@
+{
+  "execution_id": "wf-exec-42",
+  "verified": false,
+  "mismatch_reasons": [
+    "approval gate did not close before verification deadline"
+  ],
+  "verified_at": "2025-01-01T01:25:00+00:00"
+}

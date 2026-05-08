@@ -1,0 +1,13 @@
+{
+  "vote_id": "board-vote-case-042-1",
+  "board_id": "approval-board-case-042",
+  "member_id": "board-member-case-042-chair",
+  "scope_ref_id": "case-incident-042",
+  "approved": true,
+  "reason": "Evidence and escalation handling satisfy closure prerequisites.",
+  "voted_at": "2026-04-03T08:22:30+00:00",
+  "metadata": {
+    "channel": "review-console",
+    "confidence": "high"
+  }
+}

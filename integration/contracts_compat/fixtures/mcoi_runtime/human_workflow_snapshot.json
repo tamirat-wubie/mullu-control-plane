@@ -1,0 +1,16 @@
+{
+  "snapshot_id": "human-workflow-snapshot-20260403",
+  "total_tasks": 5,
+  "total_review_packets": 2,
+  "total_boards": 1,
+  "total_members": 3,
+  "total_votes": 2,
+  "total_decisions": 1,
+  "total_handoffs": 1,
+  "total_violations": 0,
+  "captured_at": "2026-04-03T08:28:00+00:00",
+  "metadata": {
+    "captured_by": "workflow-audit",
+    "scope": "case"
+  }
+}

@@ -276,6 +276,11 @@ DEPLOYMENT_WITNESS_WORKFLOW_REQUIRED_LITERALS: tuple[str, ...] = (
     "MULLU_RUNTIME_WITNESS_SECRET",
     "MULLU_RUNTIME_CONFORMANCE_SECRET",
     "MULLU_DEPLOYMENT_WITNESS_SECRET",
+    "python scripts/preflight_deployment_witness.py",
+    "--accept-repository-input-env",
+    "--accept-workflow-file",
+    ".change_assurance/deployment_witness_preflight.json",
+    "deployment-witness-preflight",
     "python scripts/collect_deployment_witness.py",
     '--conformance-secret "$MULLU_RUNTIME_CONFORMANCE_SECRET"',
     '--deployment-witness-secret "$MULLU_DEPLOYMENT_WITNESS_SECRET"',
@@ -369,6 +374,8 @@ class ReleaseStatusSummary:
     config_artifacts: tuple[str, ...]
     request_artifacts: tuple[str, ...]
     auxiliary_artifacts: tuple[str, ...]
+    maf_runtime_fixtures: tuple[str, ...]
+    mcoi_runtime_fixtures: tuple[str, ...]
     ci_workflow_present: bool
     release_version: str | None
     release_date: str | None
@@ -402,6 +409,8 @@ def discover_release_status_summary() -> ReleaseStatusSummary:
         config_artifacts=_sorted_names(list(artifact_inventory.config_paths)),
         request_artifacts=_sorted_names(list(artifact_inventory.request_paths)),
         auxiliary_artifacts=_sorted_names(list(artifact_inventory.auxiliary_paths)),
+        maf_runtime_fixtures=_sorted_names(list(artifact_inventory.maf_runtime_fixture_paths)),
+        mcoi_runtime_fixtures=_sorted_names(list(artifact_inventory.mcoi_runtime_fixture_paths)),
         ci_workflow_present=CI_WORKFLOW_PATH.exists(),
         release_version=None,
         release_date=None,
@@ -766,6 +775,8 @@ def validate_release_status(*, strict: bool = False) -> tuple[ReleaseStatusSumma
         config_artifacts=summary.config_artifacts,
         request_artifacts=summary.request_artifacts,
         auxiliary_artifacts=summary.auxiliary_artifacts,
+        maf_runtime_fixtures=summary.maf_runtime_fixtures,
+        mcoi_runtime_fixtures=summary.mcoi_runtime_fixtures,
         ci_workflow_present=summary.ci_workflow_present,
         release_version=release_version,
         release_date=release_date,
@@ -791,6 +802,10 @@ def validate_release_status(*, strict: bool = False) -> tuple[ReleaseStatusSumma
             errors.append("release status requires at least one config artifact")
         if not summary.request_artifacts:
             errors.append("release status requires at least one request artifact")
+        if not summary.maf_runtime_fixtures:
+            errors.append("release status requires at least one MAF runtime fixture")
+        if not summary.mcoi_runtime_fixtures:
+            errors.append("release status requires at least one MCOI runtime fixture")
 
     return summary, errors
 
@@ -807,6 +822,8 @@ def main() -> None:
     print(f"  config artifacts:   {len(summary.config_artifacts)}")
     print(f"  request artifacts:  {len(summary.request_artifacts)}")
     print(f"  auxiliary artifacts:{len(summary.auxiliary_artifacts):>4}")
+    print(f"  MAF runtime fixtures:{len(summary.maf_runtime_fixtures):>3}")
+    print(f"  MCOI runtime fixtures:{len(summary.mcoi_runtime_fixtures):>2}")
     print(f"  ci workflow:        {'present' if summary.ci_workflow_present else 'missing'}")
     print(f"  release version:    {summary.release_version or 'missing'}")
     print(f"  release date:       {summary.release_date or 'missing'}")

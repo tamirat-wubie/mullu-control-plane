@@ -1,0 +1,13 @@
+{
+  "execution_id": "recovery-exec-042",
+  "recovery_plan_id": "recovery-plan-verify-042",
+  "disruption_id": "disruption-verify-042",
+  "status": "completed",
+  "executed_by": "operator-1",
+  "started_at": "2026-04-03T08:06:00+00:00",
+  "completed_at": "2026-04-03T08:16:00+00:00",
+  "metadata": {
+    "attempt_id": "attempt-verify-042",
+    "restored_provider": "provider-shell"
+  }
+}

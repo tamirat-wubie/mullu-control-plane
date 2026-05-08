@@ -1,0 +1,16 @@
+{
+  "report_id": "marketplace-closure-20260504",
+  "tenant_id": "tenant-mullu-primary",
+  "total_offerings": 6,
+  "total_packages": 3,
+  "total_bundles": 4,
+  "total_listings": 8,
+  "total_eligibility_rules": 7,
+  "total_pricing_bindings": 6,
+  "total_violations": 1,
+  "closed_at": "2026-05-04T23:59:00+00:00",
+  "metadata": {
+    "period": "2026-05-04",
+    "closed_by": "marketplace-runtime-closure"
+  }
+}

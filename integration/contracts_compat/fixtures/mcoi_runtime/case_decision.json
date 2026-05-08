@@ -1,0 +1,12 @@
+{
+  "decision_id": "decision-case-042",
+  "case_id": "case-incident-042",
+  "disposition": "escalated",
+  "decided_by": "operator-lead",
+  "reason": "Escalated decision recorded before closure to preserve executive visibility over the provider failover.",
+  "decided_at": "2026-04-03T08:22:00+00:00",
+  "metadata": {
+    "escalation_target": "executive-ops",
+    "review_id": "review-incident-042"
+  }
+}
