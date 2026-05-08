@@ -97,6 +97,9 @@ def test_representative_routes_are_not_unclassified() -> None:
     assert classified_routes["/api/v1/compliance/audit-package"]["surface_id"] == "compliance_evidence_exports"
     assert classified_routes["/api/v1/runbooks/analyze"]["surface_id"] == "runbook_learning_lifecycle"
     assert classified_routes["/api/v1/runbooks/{runbook_id}/activate"]["surface_id"] == "runbook_learning_lifecycle"
+    assert classified_routes["/api/v1/tenant/register"]["surface_id"] == "tenant_governance_lifecycle"
+    assert classified_routes["/api/v1/tenant/{tenant_id}/status"]["surface_id"] == "tenant_governance_lifecycle"
+    assert classified_routes["/api/v1/tenant/{tenant_id}/gate"]["surface_id"] == "tenant_governance_lifecycle"
     assert classified_routes["/authority/operator"]["surface_id"] == "authority_operator_controls"
     assert classified_routes["/authority/ownership"]["surface_id"] == "authority_operator_controls"
     assert classified_routes["/api/v1/temporal/schedules"]["surface_id"] == "temporal_kernel"
@@ -239,6 +242,39 @@ def test_compliance_evidence_exports_surface_is_witnessed() -> None:
     assert "audit_chain_verification" in witnesses
     assert "self_audited_export_event" in witnesses
     assert closure_actions["classify_compliance_evidence_exports"]["status"] == "closed"
+
+
+def test_tenant_governance_lifecycle_surface_is_witnessed() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    tenant_surface = surfaces["tenant_governance_lifecycle"]
+    witnesses = set(tenant_surface["runtime_witnesses"])
+
+    assert tenant_surface["coverage_state"] == "witnessed"
+    assert tenant_surface["request_proof"] == "request_proof"
+    assert tenant_surface["action_proof"] == "action_proof"
+    assert "/api/v1/tenant/budget" in tenant_surface["representative_paths"]
+    assert "/api/v1/tenant/{tenant_id}/budget" in tenant_surface["representative_paths"]
+    assert "/api/v1/tenant/{tenant_id}/ledger" in tenant_surface["representative_paths"]
+    assert "/api/v1/tenants" in tenant_surface["representative_paths"]
+    assert "/api/v1/tenant/register" in tenant_surface["representative_paths"]
+    assert "/api/v1/tenant/{tenant_id}/status" in tenant_surface["representative_paths"]
+    assert "/api/v1/tenant/gates" in tenant_surface["representative_paths"]
+    assert "mcoi/mcoi_runtime/app/routers/tenant.py" in tenant_surface["evidence_files"]
+    assert "mcoi/mcoi_runtime/governance/guards/budget.py" in tenant_surface["evidence_files"]
+    assert "mcoi/mcoi_runtime/governance/guards/tenant_gating.py" in tenant_surface["evidence_files"]
+    assert "mcoi/tests/test_server_phase202.py" in tenant_surface["evidence_files"]
+    assert "mcoi/tests/test_governance_endpoints.py" in tenant_surface["evidence_files"]
+    assert "tenant_budget_create_emits_action_proof" in witnesses
+    assert "tenant_budget_create_records_audit" in witnesses
+    assert "tenant_budget_read_models_scoped_by_tenant" in witnesses
+    assert "tenant_ledger_queries_bounded" in witnesses
+    assert "tenant_registry_lifecycle_errors_sanitized" in witnesses
+    assert "tenant_register_emits_action_proof" in witnesses
+    assert "tenant_status_update_emits_action_proof" in witnesses
+    assert "tenant_gate_read_models_governed" in witnesses
+    assert closure_actions["classify_tenant_governance_lifecycle_routes"]["status"] == "closed"
 
 
 def test_runbook_learning_lifecycle_surface_is_witnessed() -> None:
