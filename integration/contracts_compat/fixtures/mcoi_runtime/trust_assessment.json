@@ -1,0 +1,14 @@
+{
+  "assessment_id": "trust-assessment-routing-latency-2026-05-08",
+  "tenant_id": "tenant-mullu-primary",
+  "claim_ref": "claim-routing-latency-improved-2026-05-08",
+  "source_ref": "source-routing-telemetry-openai-primary",
+  "trust_level": "high",
+  "confidence": 0.88,
+  "basis": "Governed telemetry matched the causal and constraint runtime witnesses across the evaluation window.",
+  "assessed_at": "2026-05-08T16:42:00+00:00",
+  "metadata": {
+    "reviewed_by": "epistemic-governance",
+    "scope": "routing"
+  }
+}

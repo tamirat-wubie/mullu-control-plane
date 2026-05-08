@@ -1,0 +1,13 @@
+{
+  "conflict_id": "claim-conflict-routing-latency-2026-05-08",
+  "tenant_id": "tenant-mullu-primary",
+  "claim_a_ref": "claim-routing-latency-improved-2026-05-08",
+  "claim_b_ref": "claim-routing-latency-flat-2026-05-08",
+  "disposition": "merged",
+  "resolution_basis": "The contradictory draft claim was superseded after replay, telemetry, and causal witnesses agreed on the improved latency outcome.",
+  "detected_at": "2026-05-08T16:44:00+00:00",
+  "metadata": {
+    "scope": "routing",
+    "resolution_ticket": "epistemic-review-17"
+  }
+}

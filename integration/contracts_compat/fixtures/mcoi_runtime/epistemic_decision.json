@@ -1,0 +1,12 @@
+{
+  "decision_id": "epistemic-decision-routing-publish-2026-05-08",
+  "tenant_id": "tenant-mullu-primary",
+  "claim_ref": "claim-routing-latency-improved-2026-05-08",
+  "disposition": "publish_as_governed_fact",
+  "reason": "The claim has high trust, replay-aligned evidence, and no unresolved conflict remaining.",
+  "decided_at": "2026-05-08T16:45:00+00:00",
+  "metadata": {
+    "approved_by": "operator-release-1",
+    "scope": "routing"
+  }
+}

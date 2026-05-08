@@ -1,0 +1,11 @@
+{
+  "violation_id": "epistemic-violation-routing-missing-basis-2026-05-08",
+  "tenant_id": "tenant-mullu-primary",
+  "operation": "publish_claim_without_assessment",
+  "reason": "A draft routing claim attempted to bypass trust assessment admission.",
+  "detected_at": "2026-05-08T16:47:00+00:00",
+  "metadata": {
+    "blocked_claim_ref": "claim-routing-latency-flat-2026-05-08",
+    "scope": "routing"
+  }
+}

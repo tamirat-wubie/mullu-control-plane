@@ -333,6 +333,16 @@ def test_example_inventory_covers_shipped_and_pilot_artifacts() -> None:
     assert "dependency_chain.json" in mcoi_runtime_fixture_names
     assert "constraint_snapshot.json" in mcoi_runtime_fixture_names
     assert "constraint_closure_report.json" in mcoi_runtime_fixture_names
+    assert "knowledge_claim.json" in mcoi_runtime_fixture_names
+    assert "evidence_source.json" in mcoi_runtime_fixture_names
+    assert "trust_assessment.json" in mcoi_runtime_fixture_names
+    assert "source_reliability_record.json" in mcoi_runtime_fixture_names
+    assert "claim_conflict.json" in mcoi_runtime_fixture_names
+    assert "epistemic_decision.json" in mcoi_runtime_fixture_names
+    assert "epistemic_assessment.json" in mcoi_runtime_fixture_names
+    assert "epistemic_violation.json" in mcoi_runtime_fixture_names
+    assert "epistemic_snapshot.json" in mcoi_runtime_fixture_names
+    assert "epistemic_closure_report.json" in mcoi_runtime_fixture_names
     assert "approval_gated_command" in pilot_names
 
 
@@ -345,7 +355,7 @@ def test_validate_example_artifacts_strictly() -> None:
     assert len(inventory.request_paths) >= 3
     assert len(inventory.auxiliary_paths) >= 1
     assert len(inventory.maf_runtime_fixture_paths) >= 89
-    assert len(inventory.mcoi_runtime_fixture_paths) >= 219
+    assert len(inventory.mcoi_runtime_fixture_paths) >= 229
 
 
 def test_validate_maf_runtime_fixtures_strictly() -> None:
@@ -3499,6 +3509,133 @@ def test_validate_mcoi_runtime_fixture_rejects_constraint_closure_solution_overf
 
     assert len(errors) == 1
     assert "total_solutions must not exceed total_problems" in errors[0]
+    assert fixture_path.name in errors[0]
+
+
+def test_validate_mcoi_runtime_fixture_rejects_unchanged_source_reliability_update(tmp_path: Path) -> None:
+    fixture_path = tmp_path / "source_reliability_record.json"
+    fixture_path.write_text(
+        json.dumps(
+            {
+                "record_id": "reliability-drift",
+                "tenant_id": "tenant-mullu-primary",
+                "source_ref": "source-routing-log",
+                "previous_score": 0.7,
+                "updated_score": 0.7,
+                "reason": "No actual change occurred.",
+                "updated_at": "2026-05-08T16:10:00+00:00",
+                "metadata": {"reviewed_by": "epistemic-governance"},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_artifacts.validate_mcoi_runtime_fixture(fixture_path)
+
+    assert len(errors) == 1
+    assert "updated_score must differ from previous_score" in errors[0]
+    assert fixture_path.name in errors[0]
+
+
+def test_validate_mcoi_runtime_fixture_rejects_self_claim_conflict(tmp_path: Path) -> None:
+    fixture_path = tmp_path / "claim_conflict.json"
+    fixture_path.write_text(
+        json.dumps(
+            {
+                "conflict_id": "claim-conflict-drift",
+                "tenant_id": "tenant-mullu-primary",
+                "claim_a_ref": "claim-routing-latency",
+                "claim_b_ref": "claim-routing-latency",
+                "disposition": "unresolved",
+                "resolution_basis": "",
+                "detected_at": "2026-05-08T16:15:00+00:00",
+                "metadata": {"scope": "routing"},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_artifacts.validate_mcoi_runtime_fixture(fixture_path)
+
+    assert len(errors) == 1
+    assert "claim_a_ref and claim_b_ref must be different" in errors[0]
+    assert fixture_path.name in errors[0]
+
+
+def test_validate_mcoi_runtime_fixture_rejects_resolved_claim_conflict_without_basis(tmp_path: Path) -> None:
+    fixture_path = tmp_path / "claim_conflict.json"
+    fixture_path.write_text(
+        json.dumps(
+            {
+                "conflict_id": "claim-conflict-drift",
+                "tenant_id": "tenant-mullu-primary",
+                "claim_a_ref": "claim-routing-latency-a",
+                "claim_b_ref": "claim-routing-latency-b",
+                "disposition": "merged",
+                "resolution_basis": "",
+                "detected_at": "2026-05-08T16:20:00+00:00",
+                "metadata": {"scope": "routing"},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_artifacts.validate_mcoi_runtime_fixture(fixture_path)
+
+    assert len(errors) == 1
+    assert "resolved claim conflicts must carry resolution_basis" in errors[0]
+    assert fixture_path.name in errors[0]
+
+
+def test_validate_mcoi_runtime_fixture_rejects_epistemic_snapshot_assessment_overflow(tmp_path: Path) -> None:
+    fixture_path = tmp_path / "epistemic_snapshot.json"
+    fixture_path.write_text(
+        json.dumps(
+            {
+                "snapshot_id": "epistemic-snapshot-drift",
+                "tenant_id": "tenant-mullu-primary",
+                "total_claims": 2,
+                "total_sources": 2,
+                "total_assessments": 3,
+                "total_conflicts": 1,
+                "total_reliability_updates": 1,
+                "total_violations": 0,
+                "captured_at": "2026-05-08T16:25:00+00:00",
+                "metadata": {"scope": "routing"},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_artifacts.validate_mcoi_runtime_fixture(fixture_path)
+
+    assert len(errors) == 1
+    assert "total_assessments must not exceed total_claims" in errors[0]
+    assert fixture_path.name in errors[0]
+
+
+def test_validate_mcoi_runtime_fixture_rejects_epistemic_closure_conflicts_without_claims(tmp_path: Path) -> None:
+    fixture_path = tmp_path / "epistemic_closure_report.json"
+    fixture_path.write_text(
+        json.dumps(
+            {
+                "report_id": "epistemic-closure-drift",
+                "tenant_id": "tenant-mullu-primary",
+                "total_claims": 0,
+                "total_sources": 1,
+                "total_conflicts": 1,
+                "total_violations": 0,
+                "created_at": "2026-05-08T16:30:00+00:00",
+                "metadata": {"closed_by": "epistemic-governance"},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_artifacts.validate_mcoi_runtime_fixture(fixture_path)
+
+    assert len(errors) == 1
+    assert "total_conflicts must be 0 when total_claims is 0" in errors[0]
     assert fixture_path.name in errors[0]
 
 

@@ -1,0 +1,15 @@
+{
+  "snapshot_id": "epistemic-snapshot-routing-2026-05-08",
+  "tenant_id": "tenant-mullu-primary",
+  "total_claims": 5,
+  "total_sources": 3,
+  "total_assessments": 4,
+  "total_conflicts": 1,
+  "total_reliability_updates": 2,
+  "total_violations": 1,
+  "captured_at": "2026-05-08T16:48:00+00:00",
+  "metadata": {
+    "scope": "routing",
+    "profile": "pilot-prod"
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "claim_id": "claim-routing-latency-improved-2026-05-08",
+  "tenant_id": "tenant-mullu-primary",
+  "content": "The promoted routing rule reduced median connector latency below the governed 200 ms threshold.",
+  "status": "reported",
+  "assertion_mode": "factual",
+  "trust_level": "high",
+  "source_ref": "source-routing-telemetry-openai-primary",
+  "confidence": 0.86,
+  "created_at": "2026-05-08T16:40:00+00:00",
+  "metadata": {
+    "scope": "routing",
+    "profile": "pilot-prod"
+  }
+}

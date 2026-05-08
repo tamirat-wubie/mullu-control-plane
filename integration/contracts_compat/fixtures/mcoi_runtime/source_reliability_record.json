@@ -1,0 +1,13 @@
+{
+  "record_id": "reliability-update-routing-telemetry-2026-05-08",
+  "tenant_id": "tenant-mullu-primary",
+  "source_ref": "source-routing-telemetry-openai-primary",
+  "previous_score": 0.84,
+  "updated_score": 0.91,
+  "reason": "Observed telemetry remained consistent across repeated governed replay and latency verification runs.",
+  "updated_at": "2026-05-08T16:43:00+00:00",
+  "metadata": {
+    "window": "24h",
+    "reviewed_by": "epistemic-governance"
+  }
+}
