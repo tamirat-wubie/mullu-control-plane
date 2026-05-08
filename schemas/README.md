@@ -26,6 +26,8 @@ These schemas define the canonical shared JSON interchange surface for Mullu Pla
 | `environment_fingerprint.schema.json` | Canonical environment fingerprint |
 | `workflow.schema.json` | Shared workflow descriptor interchange surface |
 | `plan.schema.json` | Shared plan definition |
+| `public_naming_readiness.schema.json` | Public naming launch-gate witness |
+| `mullu_name_clearance_draft.schema.json` | Draft name-clearance evidence packet |
 
 ## Notes
 

@@ -1,0 +1,133 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:public-naming-readiness:1",
+  "title": "Public Naming Readiness",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "witness_id",
+    "product_name",
+    "company_brand",
+    "first_reference",
+    "platform_term",
+    "admin_surface",
+    "status",
+    "public_paid_launch_allowed",
+    "closed_gates",
+    "open_gates",
+    "blocked_public_names",
+    "allowed_technical_terms",
+    "product_surfaces",
+    "evidence_docs",
+    "resolution"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "1"
+    },
+    "witness_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "product_name": {
+      "type": "string",
+      "const": "Mullu"
+    },
+    "company_brand": {
+      "type": "string",
+      "const": "Mullusi"
+    },
+    "first_reference": {
+      "type": "string",
+      "const": "Mullu, by Mullusi"
+    },
+    "platform_term": {
+      "type": "string",
+      "const": "Mullu Platform"
+    },
+    "admin_surface": {
+      "type": "string",
+      "const": "Mullu Control Plane"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "internal_alignment_only",
+        "clearance_in_progress",
+        "cleared_for_public_launch",
+        "blocked"
+      ]
+    },
+    "public_paid_launch_allowed": {
+      "type": "boolean"
+    },
+    "closed_gates": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true
+    },
+    "open_gates": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true
+    },
+    "blocked_public_names": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true
+    },
+    "allowed_technical_terms": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true
+    },
+    "product_surfaces": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true
+    },
+    "evidence_docs": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true
+    },
+    "resolution": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "decision",
+        "required_next_action"
+      ],
+      "properties": {
+        "decision": {
+          "type": "string",
+          "minLength": 1
+        },
+        "required_next_action": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    }
+  }
+}

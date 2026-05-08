@@ -101,6 +101,12 @@ jobs:
       - name: Validate shipped artifacts
         run: python scripts/validate_artifacts.py
 
+      - name: Validate public naming readiness
+        run: python scripts/validate_public_naming_readiness.py
+
+      - name: Test public naming readiness
+        run: python -m pytest tests/test_public_naming_readiness.py -q
+
       - name: Validate release status
         run: python scripts/validate_release_status.py
 
@@ -132,6 +138,12 @@ jobs:
 
       - name: Artifact validation check
         run: python scripts/validate_artifacts.py --strict
+
+      - name: Public naming readiness check
+        run: python scripts/validate_public_naming_readiness.py
+
+      - name: Public naming readiness tests
+        run: python -m pytest tests/test_public_naming_readiness.py -q
 
       - name: Release status check
         run: python scripts/validate_release_status.py --strict

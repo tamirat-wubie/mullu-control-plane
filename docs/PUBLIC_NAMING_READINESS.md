@@ -1,0 +1,117 @@
+# Public Naming Readiness
+
+Purpose: define the release gate for exposing `Mullu` as the public product name.
+Governance scope: brand clearance, domain ownership, website copy, SDK/API terminology, admin surfaces, and product launch evidence.
+Dependencies: `docs/PRODUCT_IDENTITY.md`, `docs/PUBLIC_LAUNCH_COPY.md`, `docs/NAME_CLEARANCE_PRELIMINARY.md`, `docs/NAMING_MIGRATION_PLAN.md`, `docs/TRADEMARK_SEARCH_RUNBOOK.md`, `docs/DOMAIN_ACQUISITION_PLAN.md`, `docs/WEBSITE_UPDATE_CHECKLIST.md`, `docs/WEBSITE_RECHECK_LOG.md`, `docs/PUBLIC_NAMING_STATE_TRANSITION.md`, `docs/PUBLIC_NAMING_HANDOFF.md`, `docs/CLEARANCE_PACKET_TEMPLATE.md`, `docs/DOMAIN_OWNERSHIP_RECORD_TEMPLATE.md`, `docs/public-naming-readiness.json`.
+Invariants: `Mullu` is the product name only after clearance; `Mullusi` remains the company and governance authority; `Mullu Platform` remains valid for developer contracts and architecture surfaces.
+
+## Readiness Gates
+
+| Gate | Requirement | Status |
+| --- | --- | --- |
+| Product identity | `Mullu` is documented as flagship product | Closed |
+| Company boundary | `Mullusi` is documented as company, ecosystem, governance authority | Closed |
+| Platform boundary | `Mullu Platform` is reserved for developer, SDK, API, deployment, and architecture contexts | Closed |
+| Admin boundary | `Mullu Control Plane` is documented as admin/governance/deployment surface | Closed |
+| Blocked generic names | `Mullusi Handler`, `Mullusi Work`, `Mullusi Operator`, and `Mullu AI` are blocked as public product names | Closed |
+| Public copy | Launch-ready homepage copy exists | Closed |
+| Product route draft | Deploy-ready `/mullu/index.html` product page exists and remains private beta | Closed |
+| Product route deployment handoff | Product route copied to sibling website repo target; live deployment still blocked | Closed with blocker |
+| Trademark runbook | Official search procedure exists | Closed |
+| TSDR evidence template | Official USPTO close-variant serial capture template exists | Closed |
+| Domain plan | Domain acquisition and routing plan exists | Closed |
+| Website checklist | Public-site update checklist exists | Closed |
+| Website deployment evidence template | Live-route verification template exists | Closed |
+| Website deployment probe | Direct route evidence recorded; product routes are not yet ready | Closed with blocker |
+| Website recheck log | Non-authoritative public index signal is recorded without closing deployment verification | Closed |
+| State transition rules | Launch-state mutation rules exist | Closed |
+| Handoff summary | Reviewer-facing public naming handoff exists | Closed |
+| PR summary | Review and release-note summary exists | Closed |
+| Review packet | Final reviewer-facing clearance packet exists | Closed |
+| Artifact manifest | Full naming package inventory exists | Closed |
+| Clearance packet template | Evidence packet template exists | Closed |
+| Domain ownership template | Domain-control record template exists | Closed |
+| Draft clearance packet | Preliminary evidence packet exists | Closed |
+| Machine-readable witness | JSON readiness witness exists | Closed |
+| Readiness validator | Validator checks JSON witness and evidence docs | Closed |
+| Readiness tests | Focused Python tests cover witness, failure modes, report output, and transition plan output | Closed |
+| Readiness report | CLI report summarizes open launch blockers | Closed |
+| Transition planner | CLI planner derives remaining launch-state actions | Closed |
+| Naming schemas | JSON schemas exist for readiness witness and clearance draft | Closed |
+| Preliminary web search | Obvious public conflicts recorded | Closed with review items |
+| Close-variant review | `MULU` software/service-adjacent public records captured for official review | Open |
+| USPTO search | Exact and similar marks checked | Open |
+| WIPO search | Exact and similar marks checked | Open |
+| EUIPO/TMview search | Exact and similar marks checked | Open |
+| Domain ownership | Primary or fallback product domain acquired | Open |
+| Legal review | Counsel or qualified trademark review completed | Open |
+| Homepage update | `mullusi.com` or product landing page updated | Open |
+| Website deployment verification | `mullusi.com` and any product route verified live and not site-not-found | Open |
+| App title update | User-facing app title uses `Mullu` | Open |
+| SDK/API stability review | Technical contracts intentionally keep `Mullu Platform` where required | Open |
+
+## Keep Technical Contracts Stable
+
+The following may remain `Mullu Platform` after public launch:
+
+1. OpenAPI titles.
+2. SDK generation manifests.
+3. Schema package documentation.
+4. Deployment and architecture docs.
+5. Generated configuration headers.
+6. Internal runtime metadata that identifies the platform layer.
+
+Do not rename these unless a separate compatibility review confirms downstream
+SDKs, tests, docs, and generated clients will not drift.
+
+## Verification Commands
+
+```powershell
+python .\scripts\validate_public_naming_readiness.py
+python .\scripts\report_public_naming_readiness.py
+python .\scripts\plan_public_naming_transition.py
+python -m pytest tests\test_public_naming_readiness.py -q
+python .\scripts\validate_release_status.py
+```
+
+## Product-Facing Update Targets
+
+After clearance closes, update:
+
+1. Homepage hero.
+2. Product pricing page.
+3. Signup/onboarding flow.
+4. Browser extension listing.
+5. CLI install page.
+6. Public docs landing page.
+7. Product screenshots.
+8. Footer first-reference copy: `Mullu, by Mullusi`.
+
+## Product Route Draft
+
+The deploy-ready static product route is:
+
+```text
+site/mullu/index.html
+```
+
+Deploy it as `/mullu/index.html` in the public GitHub Pages site only after the
+appropriate clearance posture is chosen. Until the open gates close, the page
+must remain private beta or request-access copy, not a paid public launch page.
+
+The current deployment handoff target is:
+
+```text
+../mullusi/mullu/index.html
+```
+
+This target is not a live-route pass by itself; `website_deployment_verification`
+remains open until `https://mullusi.com/mullu` returns intentional product
+content with HTTP 200.
+
+## Launch Decision
+
+`Mullu` is approved for internal alignment and product planning.
+
+`Mullu` is not approved for paid public launch until all open clearance gates
+close.

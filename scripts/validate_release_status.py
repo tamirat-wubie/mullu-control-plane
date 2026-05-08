@@ -28,9 +28,13 @@ if str(REPO_ROOT) not in sys.path:
 if str(MCOI_PATH) not in sys.path:
     sys.path.insert(0, str(MCOI_PATH))
 
-from mcoi_runtime.app.policy_packs import PolicyPackRegistry
-from mcoi_runtime.app.profiles import list_profiles
-from scripts import validate_artifacts, validate_schemas
+from mcoi_runtime.app.policy_packs import PolicyPackRegistry  # noqa: E402
+from mcoi_runtime.app.profiles import list_profiles  # noqa: E402
+from scripts import (  # noqa: E402
+    validate_artifacts,
+    validate_public_naming_readiness,
+    validate_schemas,
+)
 
 
 REQUIRED_RELEASE_DOCUMENTS: tuple[str, ...] = (
@@ -60,6 +64,8 @@ REQUIRED_CI_LITERALS: tuple[str, ...] = (
     "python scripts/validate_artifacts.py --strict",
     "python scripts/validate_release_status.py",
     "python scripts/validate_release_status.py --strict",
+    "python scripts/validate_public_naming_readiness.py",
+    "python -m pytest tests/test_public_naming_readiness.py -q",
 )
 
 METADATA_DOCUMENTS: tuple[str, ...] = (
@@ -92,6 +98,28 @@ ACCEPTED_LIMITATION_EXPECTATIONS: dict[str, tuple[str, ...]] = {
     ),
     "encryption_limitation": (
         "No Encryption at Rest",
+    ),
+}
+
+PUBLIC_NAMING_RELEASE_SURFACE_LITERALS: dict[str, tuple[str, ...]] = {
+    "README.md": (
+        "docs/PUBLIC_NAMING_REVIEW_PACKET.md",
+        "docs/PUBLIC_NAMING_ARTIFACT_MANIFEST.md",
+        "python scripts/report_public_naming_readiness.py",
+        "python scripts/plan_public_naming_transition.py",
+    ),
+    "RELEASE_CHECKLIST_v0.1.md": (
+        "docs/PUBLIC_NAMING_REVIEW_PACKET.md",
+        "docs/PUBLIC_NAMING_ARTIFACT_MANIFEST.md",
+        "python scripts/report_public_naming_readiness.py",
+        "python scripts/plan_public_naming_transition.py",
+        "No paid public product launch under `Mullu` until clearance evidence is complete",
+    ),
+    "PILOT_CHECKLIST_v0.1.md": (
+        "Public naming review packet has been checked",
+        "Public naming artifact manifest is intact",
+        "docs/PUBLIC_NAMING_REVIEW_PACKET.md",
+        "paid public launch",
     ),
 }
 
@@ -265,6 +293,25 @@ def validate_release_limitation_coverage(
     return errors
 
 
+def validate_public_naming_release_surface_links() -> list[str]:
+    """Validate release-facing docs keep public naming review links visible."""
+    errors: list[str] = []
+    for relative_path, required_literals in PUBLIC_NAMING_RELEASE_SURFACE_LITERALS.items():
+        path = REPO_ROOT / relative_path
+        if not path.exists():
+            errors.append(f"{relative_path}: missing public naming release surface")
+            continue
+        content = path.read_text(encoding="utf-8")
+        missing_literals = tuple(
+            literal for literal in required_literals if literal not in content
+        )
+        if missing_literals:
+            errors.append(
+                f"{relative_path}: missing public naming literals {list(missing_literals)}"
+            )
+    return errors
+
+
 def _iter_source_hygiene_paths() -> tuple[Path, ...]:
     paths: list[Path] = []
     for pattern in SOURCE_HYGIENE_GLOBS:
@@ -341,6 +388,7 @@ def validate_release_status(*, strict: bool = False) -> tuple[ReleaseStatusSumma
         )
 
     errors.extend(validate_source_hygiene())
+    errors.extend(validate_public_naming_release_surface_links())
 
     summary = ReleaseStatusSummary(
         release_documents=summary.release_documents,
@@ -363,6 +411,10 @@ def validate_release_status(*, strict: bool = False) -> tuple[ReleaseStatusSumma
     errors.extend(validate_schemas.validate_canonical_fixtures(strict=strict))
     errors.extend(validate_schemas.check_python_fixture_round_trip())
     errors.extend(validate_artifacts.validate_example_artifacts(strict=strict))
+    try:
+        validate_public_naming_readiness.validate_public_naming_readiness()
+    except AssertionError as exc:
+        errors.append(f"public naming readiness failed: {exc}")
 
     if strict:
         if not summary.schema_files:
