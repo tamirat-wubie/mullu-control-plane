@@ -584,6 +584,27 @@ def test_capability_plan_evidence_bundle_surface_is_witnessed() -> None:
     assert "runtime_conformance_attestation" in closure_actions["publish_capability_plan_evidence_bundles"]["surfaces"]
 
 
+def test_proof_route_gap_triage_surface_preserves_route_gaps() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    triage_surface = surfaces["proof_route_gap_triage"]
+    witnesses = set(triage_surface["runtime_witnesses"])
+
+    assert triage_surface["coverage_state"] == "witnessed"
+    assert triage_surface["request_proof"] == "read_model"
+    assert triage_surface["action_proof"] == "read_model"
+    assert "build_gap_triage_report" in triage_surface["representative_paths"]
+    assert "scripts/proof_route_gap_triage.py" in triage_surface["evidence_files"]
+    assert "tests/test_proof_route_gap_triage.py" in triage_surface["evidence_files"]
+    assert "docs/70_proof_route_gap_triage.md" in triage_surface["evidence_files"]
+    assert "unclassified_routes_grouped_by_family" in witnesses
+    assert "route_gap_triage_binds_source_files_and_methods" in witnesses
+    assert "closure_candidates_ranked_deterministically" in witnesses
+    assert closure_actions["publish_proof_route_gap_triage_report"]["status"] == "closed"
+    assert "runtime_conformance_attestation" in closure_actions["publish_proof_route_gap_triage_report"]["surfaces"]
+
+
 def test_runtime_reflex_engine_surface_is_operator_gated_and_non_mutating() -> None:
     matrix = _load_fixture()
     surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
