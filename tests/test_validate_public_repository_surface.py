@@ -235,6 +235,7 @@ def test_governance_protocol_doc_is_public_surface_anchor() -> None:
     assert "Temporal retention window receipts are public contracts" in content
     assert "Temporal rate-limit window receipts are public contracts" in content
     assert "Temporal retry window receipts are public contracts" in content
+    assert "Temporal lease window receipts are public contracts" in content
     assert "Temporal memory refresh receipts are public contracts" in content
     assert "python scripts\\validate_protocol_manifest.py" in content
 

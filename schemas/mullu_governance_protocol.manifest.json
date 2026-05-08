@@ -557,6 +557,12 @@
       "surface": "temporal"
     },
     {
+      "schema_id": "temporal-lease-window-receipt",
+      "path": "schemas/temporal_lease_window_receipt.schema.json",
+      "urn": "urn:mullusi:schema:temporal-lease-window-receipt:1",
+      "surface": "temporal"
+    },
+    {
       "schema_id": "temporal-memory-receipt",
       "path": "schemas/temporal_memory_receipt.schema.json",
       "urn": "urn:mullusi:schema:temporal-memory-receipt:1",

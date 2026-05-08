@@ -64,6 +64,7 @@ document is the operator-readable witness.
 | `temporal_retention_window` | TemporalRetentionWindow.evaluate, TemporalRetentionRequest, TemporalRetentionWindowReceipt | request_proof | action_proof | runtime_clock_owns_retention_timing, delete_before_delete_after_defers_action, archive_and_anonymize_wait_for_retention_until, legal_hold_blocks_lifecycle_action, overdue_retention_action_warns, tenant_scope_checked, retention_policy_ref_required, subject_evidence_refs_required, high_risk_source_receipts_bound, temporal_retention_window_receipt_schema_valid, receipt_not_terminal_closure | audit_chain | witnessed | Temporal retention window rechecks data lifecycle actions for retention_until, delete_after, legal hold, tenant scope, owner, retention policy refs, evidence refs, source data decisions, and overdue timing before deletion, archive, anonymization, or retention review. |
 | `temporal_rate_limit_window` | TemporalRateLimitWindow.evaluate, RateLimitWindowRequest, TemporalRateLimitWindowReceipt | request_proof | action_proof | runtime_clock_owns_rate_limit_window, tenant_endpoint_identity_scope_checked, active_window_admits_sufficient_tokens, exhausted_window_emits_retry_after, future_window_defers_dispatch, burst_limit_blocks_overlarge_request, stale_rate_limit_snapshot_blocks_dispatch, high_risk_source_receipts_bound, temporal_rate_limit_window_receipt_schema_valid, receipt_not_terminal_closure | audit_chain | witnessed | Temporal rate-limit window rechecks tenant, endpoint, and identity scoped token windows with runtime-owned reset timing, projected token consumption, burst limits, retry-after timing, evidence refs, and high-risk source receipts before dispatch. |
 | `temporal_retry_window` | TemporalRetryWindow.evaluate, RetryWindowRequest, TemporalRetryWindowReceipt | request_proof | action_proof | runtime_clock_owns_retry_window, retry_after_floor_checked, cooldown_window_defers_early_retry, max_attempts_block_exhausted_retry, expired_retry_window_blocks_dispatch, tenant_command_scope_checked, terminal_failure_blocks_retry, high_risk_source_receipts_bound, temporal_retry_window_receipt_schema_valid, receipt_not_terminal_closure | audit_chain | witnessed | Temporal retry window rechecks retry-after timing, cooldown windows, max attempts, retry expiry, tenant and command scope, evidence refs, and high-risk source receipts before repeated dispatch. |
+| `temporal_lease_window` | TemporalLeaseWindow.evaluate, LeaseWindowRequest, TemporalLeaseWindowReceipt | request_proof | action_proof | runtime_clock_owns_lease_window, tenant_command_resource_worker_scope_checked, active_lease_admits_dispatch, near_expiry_lease_requires_renewal_warning, expired_lease_blocks_dispatch, released_or_revoked_lease_blocks_dispatch, fencing_token_required, high_risk_source_receipts_bound, temporal_lease_window_receipt_schema_valid, receipt_not_terminal_closure | audit_chain | witnessed | Temporal lease window rechecks lease ownership, tenant and command scope, resource scope, worker ownership, fencing tokens, expiry, renewal warning windows, evidence refs, and high-risk source receipts before worker dispatch. |
 | `temporal_memory_refresh` | TemporalMemoryRefresh.evaluate, MemoryRefreshRequest, TemporalMemoryRefreshReceipt | request_proof | action_proof | usable_memory_does_not_create_refresh_task, stale_memory_creates_bounded_refresh_task, evidence_type_coverage_gates_review_readiness, invalid_refresh_policy_blocks_task_creation, superseded_memory_blocks_reactivation, temporal_memory_refresh_receipt_schema_valid, receipt_not_terminal_closure | audit_chain | witnessed | Temporal memory refresh converts stale or refresh-required memory receipts into bounded refresh tasks with required evidence coverage, owner scope, review readiness, due windows, and activation blocks before refreshed memory can guide action. |
 | `temporal_scheduler` | TemporalScheduler.evaluate, ScheduledCommand, TemporalSchedulerReceipt | request_proof | action_proof | scheduled_command_requires_execute_at, idempotency_required, lease_acquired_before_dispatch, future_schedule_defers, missed_run_receipt_emitted, retry_window_checked, high_risk_reapproval_required, active_lease_blocks_duplicate_execution, temporal_scheduler_receipt_schema_valid, receipt_not_terminal_closure | audit_chain | witnessed | Temporal scheduler gates scheduled command wakeups with idempotency, due checks, retry windows, missed-run receipts, lease acquisition, recurrence declaration, and high-risk approval plus temporal recheck evidence before dispatch. |
 | `policy_proof_report` | PolicyProver.prove | request_proof | action_proof | bounded_policy_cases_required, empty_invariants_rejected, counterexamples_are_concrete, proved_report_has_no_counterexamples, policy_weakening_forbidden, policy_proof_schema_valid | audit_chain | witnessed | Policy proof reports evaluate explicit invariants over bounded cases, emit concrete counterexamples, and forbid policy weakening as a proof strategy. |
@@ -80,9 +81,9 @@ Coverage summary:
 
 | Metric | Count |
 |---|---:|
-| Total surfaces | 67 |
+| Total surfaces | 68 |
 | Proven surfaces | 1 |
-| Witnessed surfaces | 66 |
+| Witnessed surfaces | 67 |
 | Unproven surfaces | 0 |
 
 Declared route coverage:
@@ -163,14 +164,15 @@ Resolved closure actions:
 49. `publish_temporal_retention_window_receipt_contract`
 50. `publish_temporal_rate_limit_window_receipt_contract`
 51. `publish_temporal_retry_window_receipt_contract`
-52. `publish_temporal_memory_refresh_receipt_contract`
-53. `classify_temporal_scheduler_routes`
-54. `publish_temporal_scheduler_receipt_contract`
-55. `publish_policy_proof_report_contract`
-56. `publish_capability_upgrade_plan_contract`
-57. `publish_autonomous_test_generation_plan_contract`
-58. `publish_trust_ledger_bundle_contract`
-59. `publish_trust_ledger_anchor_receipt_contract`
+52. `publish_temporal_lease_window_receipt_contract`
+53. `publish_temporal_memory_refresh_receipt_contract`
+54. `classify_temporal_scheduler_routes`
+55. `publish_temporal_scheduler_receipt_contract`
+56. `publish_policy_proof_report_contract`
+57. `publish_capability_upgrade_plan_contract`
+58. `publish_autonomous_test_generation_plan_contract`
+59. `publish_trust_ledger_bundle_contract`
+60. `publish_trust_ledger_anchor_receipt_contract`
 
 Open closure actions:
 
@@ -178,6 +180,6 @@ Open closure actions:
 
 STATUS:
   Completeness: 100%
-  Invariants verified: route declarations, route-level coverage classification, coverage levels, coverage states, closure action mapping, gateway runtime witness mapping, operator console read-model mapping, world-state knowledge route mapping, claim verification report contract mapping, collaboration case contract mapping, connector self-healing receipt contract mapping, physical action receipt contract mapping, temporal evidence freshness contract mapping, temporal reapproval contract mapping, temporal dispatch window contract mapping, temporal budget window contract mapping, temporal causal order contract mapping, temporal monotonic duration contract mapping, temporal accepted-risk expiry contract mapping, temporal credential expiry contract mapping, temporal retention window mapping, temporal rate-limit window contract mapping, temporal retry window contract mapping, temporal memory contract mapping, temporal memory refresh contract mapping, physical worker canary mapping, schema contract validation, deployment orchestration receipt schema contract
+  Invariants verified: route declarations, route-level coverage classification, coverage levels, coverage states, closure action mapping, gateway runtime witness mapping, operator console read-model mapping, world-state knowledge route mapping, claim verification report contract mapping, collaboration case contract mapping, connector self-healing receipt contract mapping, physical action receipt contract mapping, temporal evidence freshness contract mapping, temporal reapproval contract mapping, temporal dispatch window contract mapping, temporal budget window contract mapping, temporal causal order contract mapping, temporal monotonic duration contract mapping, temporal accepted-risk expiry contract mapping, temporal credential expiry contract mapping, temporal retention window mapping, temporal rate-limit window contract mapping, temporal retry window contract mapping, temporal lease window contract mapping, temporal memory contract mapping, temporal memory refresh contract mapping, physical worker canary mapping, schema contract validation, deployment orchestration receipt schema contract
   Open issues: 188 proof-relevant declared routes remain unclassified and are marked unproven in the machine witness
   Next action: classify unproven declared routes into named proof surfaces or explicit exemptions

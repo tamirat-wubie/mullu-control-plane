@@ -1702,6 +1702,36 @@ def proof_coverage_matrix() -> dict[str, Any]:
             ],
         ),
         _surface(
+            "temporal_lease_window",
+            [
+                "TemporalLeaseWindow.evaluate",
+                "LeaseWindowRequest",
+                "TemporalLeaseWindowReceipt",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "gateway/temporal_lease_window.py",
+                "schemas/temporal_lease_window_receipt.schema.json",
+                "tests/test_gateway/test_temporal_lease_window.py",
+            ],
+            "Temporal lease window rechecks lease ownership, tenant and command scope, resource scope, worker ownership, fencing tokens, expiry, renewal warning windows, evidence refs, and high-risk source receipts before worker dispatch.",
+            [
+                "runtime_clock_owns_lease_window",
+                "tenant_command_resource_worker_scope_checked",
+                "active_lease_admits_dispatch",
+                "near_expiry_lease_requires_renewal_warning",
+                "expired_lease_blocks_dispatch",
+                "released_or_revoked_lease_blocks_dispatch",
+                "fencing_token_required",
+                "high_risk_source_receipts_bound",
+                "temporal_lease_window_receipt_schema_valid",
+                "receipt_not_terminal_closure",
+            ],
+        ),
+        _surface(
             "temporal_memory",
             [
                 "TemporalMemory.evaluate",
@@ -2230,6 +2260,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
         {
             "action_id": "publish_temporal_retry_window_receipt_contract",
             "surfaces": ["temporal_retry_window"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_temporal_lease_window_receipt_contract",
+            "surfaces": ["temporal_lease_window"],
             "status": "closed",
         },
         {

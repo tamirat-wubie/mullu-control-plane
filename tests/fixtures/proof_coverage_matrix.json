@@ -366,6 +366,13 @@
       ]
     },
     {
+      "action_id": "publish_temporal_lease_window_receipt_contract",
+      "status": "closed",
+      "surfaces": [
+        "temporal_lease_window"
+      ]
+    },
+    {
       "action_id": "publish_temporal_memory_refresh_receipt_contract",
       "status": "closed",
       "surfaces": [
@@ -436,7 +443,7 @@
   ],
   "coverage_summary": {
     "by_action_proof": {
-      "action_proof": 55,
+      "action_proof": 56,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 10,
@@ -444,7 +451,7 @@
     },
     "by_audit": {
       "action_proof": 0,
-      "audit_chain": 63,
+      "audit_chain": 64,
       "gap": 0,
       "read_model": 4,
       "request_proof": 0
@@ -452,16 +459,16 @@
     "by_coverage_state": {
       "proven": 1,
       "unproven": 0,
-      "witnessed": 66
+      "witnessed": 67
     },
     "by_request_proof": {
       "action_proof": 0,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 12,
-      "request_proof": 55
+      "request_proof": 56
     },
-    "surface_count": 67
+    "surface_count": 68
   },
   "generated_by": "scripts/proof_coverage_matrix.py",
   "route_coverage": {
@@ -3745,6 +3752,36 @@
         "receipt_not_terminal_closure"
       ],
       "surface_id": "temporal_retry_window"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "gateway/temporal_lease_window.py",
+        "schemas/temporal_lease_window_receipt.schema.json",
+        "tests/test_gateway/test_temporal_lease_window.py"
+      ],
+      "notes": "Temporal lease window rechecks lease ownership, tenant and command scope, resource scope, worker ownership, fencing tokens, expiry, renewal warning windows, evidence refs, and high-risk source receipts before worker dispatch.",
+      "representative_paths": [
+        "TemporalLeaseWindow.evaluate",
+        "LeaseWindowRequest",
+        "TemporalLeaseWindowReceipt"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "runtime_clock_owns_lease_window",
+        "tenant_command_resource_worker_scope_checked",
+        "active_lease_admits_dispatch",
+        "near_expiry_lease_requires_renewal_warning",
+        "expired_lease_blocks_dispatch",
+        "released_or_revoked_lease_blocks_dispatch",
+        "fencing_token_required",
+        "high_risk_source_receipts_bound",
+        "temporal_lease_window_receipt_schema_valid",
+        "receipt_not_terminal_closure"
+      ],
+      "surface_id": "temporal_lease_window"
     },
     {
       "action_proof": "action_proof",
