@@ -38,10 +38,10 @@ def _clock():
     return now
 
 
-def _execution() -> ExecutionResult:
+def _execution(*, goal_id: str = "cmd-terminal-1") -> ExecutionResult:
     return ExecutionResult(
         execution_id="exec-terminal-1",
-        goal_id="cmd-terminal-1",
+        goal_id=goal_id,
         status=ExecutionOutcome.SUCCEEDED,
         actual_effects=(EffectRecord(name="ledger_entry_created", details={"evidence_ref": "ledger:entry-1"}),),
         assumed_effects=(),
@@ -50,7 +50,11 @@ def _execution() -> ExecutionResult:
     )
 
 
-def _verification(status: VerificationStatus = VerificationStatus.PASS) -> VerificationResult:
+def _verification(
+    status: VerificationStatus = VerificationStatus.PASS,
+    *,
+    metadata: dict[str, str] | None = None,
+) -> VerificationResult:
     return VerificationResult(
         verification_id=f"ver-terminal-{status.value}",
         execution_id="exec-terminal-1",
@@ -58,19 +62,25 @@ def _verification(status: VerificationStatus = VerificationStatus.PASS) -> Verif
         checks=(VerificationCheck(name="terminal-check", status=status),),
         evidence=(EvidenceRecord(description="terminal evidence", uri="evidence:terminal-1"),),
         closed_at="2026-04-24T16:00:02+00:00",
+        metadata=metadata or {},
     )
 
 
-def _reconciliation(status: ReconciliationStatus = ReconciliationStatus.MATCH) -> EffectReconciliation:
+def _reconciliation(
+    status: ReconciliationStatus = ReconciliationStatus.MATCH,
+    *,
+    command_id: str = "cmd-terminal-1",
+    verification_result_id: str = "ver-terminal-pass",
+) -> EffectReconciliation:
     return EffectReconciliation(
         reconciliation_id=f"recon-terminal-{status.value}",
-        command_id="cmd-terminal-1",
+        command_id=command_id,
         effect_plan_id="plan-terminal-1",
         status=status,
         matched_effects=("ledger_entry_created",) if status is ReconciliationStatus.MATCH else (),
         missing_effects=() if status is ReconciliationStatus.MATCH else ("ledger_entry_created",),
         unexpected_effects=(),
-        verification_result_id="ver-terminal-pass",
+        verification_result_id=verification_result_id,
         case_id=None if status is ReconciliationStatus.MATCH else "case-terminal-1",
         decided_at="2026-04-24T16:00:03+00:00",
     )
@@ -153,7 +163,10 @@ def test_certifies_compensated_closure_with_successful_compensation():
     certificate = certifier.certify_compensated(
         execution_result=_execution(),
         verification_result=_verification(VerificationStatus.FAIL),
-        reconciliation=_reconciliation(ReconciliationStatus.MISMATCH),
+        reconciliation=_reconciliation(
+            ReconciliationStatus.MISMATCH,
+            verification_result_id="ver-terminal-fail",
+        ),
         compensation_outcome=_compensation_outcome(CompensationStatus.SUCCEEDED),
     )
     assert certificate.disposition is TerminalClosureDisposition.COMPENSATED
@@ -168,7 +181,10 @@ def test_rejects_compensated_closure_without_successful_compensation():
         certifier.certify_compensated(
             execution_result=_execution(),
             verification_result=_verification(VerificationStatus.FAIL),
-            reconciliation=_reconciliation(ReconciliationStatus.MISMATCH),
+            reconciliation=_reconciliation(
+                ReconciliationStatus.MISMATCH,
+                verification_result_id="ver-terminal-fail",
+            ),
             compensation_outcome=_compensation_outcome(CompensationStatus.REQUIRES_REVIEW),
         )
 
@@ -178,7 +194,10 @@ def test_certifies_accepted_risk_closure_with_case_and_risk():
     certificate = certifier.certify_accepted_risk(
         execution_result=_execution(),
         verification_result=_verification(VerificationStatus.INCONCLUSIVE),
-        reconciliation=_reconciliation(ReconciliationStatus.UNKNOWN),
+        reconciliation=_reconciliation(
+            ReconciliationStatus.UNKNOWN,
+            verification_result_id="ver-terminal-inconclusive",
+        ),
         accepted_risk=_accepted_risk(),
     )
     assert certificate.disposition is TerminalClosureDisposition.ACCEPTED_RISK
@@ -193,7 +212,10 @@ def test_rejects_accepted_risk_closure_with_expired_risk():
         certifier.certify_accepted_risk(
             execution_result=_execution(),
             verification_result=_verification(VerificationStatus.INCONCLUSIVE),
-            reconciliation=_reconciliation(ReconciliationStatus.UNKNOWN),
+            reconciliation=_reconciliation(
+                ReconciliationStatus.UNKNOWN,
+                verification_result_id="ver-terminal-inconclusive",
+            ),
             accepted_risk=_accepted_risk(AcceptedRiskDisposition.EXPIRED),
         )
 
@@ -203,7 +225,10 @@ def test_certifies_review_required_closure_with_case():
     certificate = certifier.certify_requires_review(
         execution_result=_execution(),
         verification_result=_verification(VerificationStatus.FAIL),
-        reconciliation=_reconciliation(ReconciliationStatus.MISMATCH),
+        reconciliation=_reconciliation(
+            ReconciliationStatus.MISMATCH,
+            verification_result_id="ver-terminal-fail",
+        ),
         case_id="case-terminal-1",
     )
     assert certificate.disposition is TerminalClosureDisposition.REQUIRES_REVIEW
@@ -220,3 +245,69 @@ def test_rejects_review_required_closure_for_matched_reconciliation():
             reconciliation=_reconciliation(ReconciliationStatus.MATCH),
             case_id="case-terminal-1",
         )
+
+
+def test_rejects_terminal_closure_when_reconciliation_names_wrong_command():
+    certifier = TerminalClosureCertifier(clock=_clock())
+    with pytest.raises(RuntimeCoreInvariantError, match="reconciliation command mismatch"):
+        certifier.certify_committed(
+            execution_result=_execution(),
+            verification_result=_verification(VerificationStatus.PASS),
+            reconciliation=_reconciliation(
+                ReconciliationStatus.MATCH,
+                command_id="cmd-terminal-other",
+            ),
+        )
+    assert certifier.certificate_count == 0
+
+
+def test_accepts_terminal_closure_when_reconciliation_matches_verification_program_ref():
+    certifier = TerminalClosureCertifier(clock=_clock())
+    certificate = certifier.certify_committed(
+        execution_result=_execution(goal_id="goal-terminal-1"),
+        verification_result=_verification(
+            VerificationStatus.PASS,
+            metadata={"program_id": "program-terminal-1"},
+        ),
+        reconciliation=_reconciliation(
+            ReconciliationStatus.MATCH,
+            command_id="program-terminal-1",
+        ),
+    )
+
+    assert certificate.command_id == "program-terminal-1"
+    assert certificate.disposition is TerminalClosureDisposition.COMMITTED
+    assert certifier.certificate_count == 1
+
+
+def test_rejects_terminal_closure_when_reconciliation_names_wrong_verification():
+    certifier = TerminalClosureCertifier(clock=_clock())
+    with pytest.raises(RuntimeCoreInvariantError, match="reconciliation verification mismatch"):
+        certifier.certify_committed(
+            execution_result=_execution(),
+            verification_result=_verification(VerificationStatus.PASS),
+            reconciliation=_reconciliation(
+                ReconciliationStatus.MATCH,
+                verification_result_id="ver-terminal-other",
+            ),
+        )
+    assert certifier.certificate_count == 0
+
+
+def test_terminal_certificate_identity_binds_evidence_refs():
+    left = TerminalClosureCertifier(clock=_clock()).certify_committed(
+        execution_result=_execution(),
+        verification_result=_verification(VerificationStatus.PASS),
+        reconciliation=_reconciliation(ReconciliationStatus.MATCH),
+        evidence_refs=("proof://verification/left",),
+    )
+    right = TerminalClosureCertifier(clock=_clock()).certify_committed(
+        execution_result=_execution(),
+        verification_result=_verification(VerificationStatus.PASS),
+        reconciliation=_reconciliation(ReconciliationStatus.MATCH),
+        evidence_refs=("proof://verification/right",),
+    )
+
+    assert left.certificate_id.startswith("terminal-closure-")
+    assert right.certificate_id.startswith("terminal-closure-")
+    assert left.certificate_id != right.certificate_id

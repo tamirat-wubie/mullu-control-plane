@@ -1,4 +1,4 @@
-﻿"""Purpose: issue terminal closure certificates for governed MIL dispatch results.
+"""Purpose: issue terminal closure certificates for governed MIL dispatch results.
 Governance scope: close MIL execution only after governed dispatch, verification synthesis, and effect reconciliation.
 Dependencies: MIL contracts, governed dispatcher result, verification, effect assurance, evidence, and terminal closure certifier.
 Invariants: blocked or missing execution results fail closed; committed certificates require succeeded execution and MATCH reconciliation.

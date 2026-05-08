@@ -1,4 +1,4 @@
-"""Phase 214 — Server endpoint tests for model routing, correlation, shutdown, readiness."""
+"""Phase 214 - Server endpoint tests for model routing, correlation, shutdown, readiness."""
 
 import pytest
 import os
@@ -85,6 +85,9 @@ class TestAutoRoutedCompletion:
         assert "qwen3-5-9b" in ids
         assert "qwen/qwen3-32b" in ids
         assert "Qwen/Qwen3-Coder-30B-A3B-Instruct" in ids
+        assert "qwen3.6-35b" in ids
+        assert "qwen/qwen3.5-9b" in ids
+        assert "deepseek/deepseek-v4-pro" in ids
 
     def test_auto_complete_exception_is_sanitized(self, client, monkeypatch):
         from mcoi_runtime.app.routers.deps import deps
@@ -144,7 +147,7 @@ class TestProductionReadiness:
 
 class TestV1_2Integration:
     def test_full_v1_2_flow(self, client):
-        """Auto-route → readiness → models → health score."""
+        """Auto-route -> readiness -> models -> health score."""
         # Auto-routed completion
         resp = client.post("/api/v1/complete/auto", json={"prompt": "test"})
         assert resp.json()["governed"] is True

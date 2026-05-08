@@ -2532,7 +2532,7 @@ def validate_matrix_routes(matrix: dict[str, Any], routes: set[str]) -> list[str
 
 def write_matrix(path: Path, matrix: dict[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(matrix, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    path.write_text(json.dumps(matrix, indent=2, sort_keys=True) + "\n", encoding="utf-8", newline="\n")
 
 
 def parse_args() -> argparse.Namespace:

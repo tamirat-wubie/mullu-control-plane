@@ -56,7 +56,7 @@ class TerminalClosureCertifier:
         graph_refs: tuple[str, ...] = (),
     ) -> TerminalClosureCertificate:
         """Certify ordinary committed closure."""
-        _require_execution_verification_match(execution_result, verification_result)
+        _require_closure_chain_match(execution_result, verification_result, reconciliation)
         if verification_result.status is not VerificationStatus.PASS:
             raise RuntimeCoreInvariantError("committed closure requires passing verification")
         if reconciliation.status is not ReconciliationStatus.MATCH:
@@ -87,7 +87,7 @@ class TerminalClosureCertifier:
         graph_refs: tuple[str, ...] = (),
     ) -> TerminalClosureCertificate:
         """Certify compensated terminal closure."""
-        _require_execution_verification_match(execution_result, verification_result)
+        _require_closure_chain_match(execution_result, verification_result, reconciliation)
         if reconciliation.status is ReconciliationStatus.MATCH:
             raise RuntimeCoreInvariantError("compensated closure requires unresolved original reconciliation")
         if compensation_outcome.status is not CompensationStatus.SUCCEEDED:
@@ -118,7 +118,7 @@ class TerminalClosureCertifier:
         graph_refs: tuple[str, ...] = (),
     ) -> TerminalClosureCertificate:
         """Certify accepted-risk terminal closure."""
-        _require_execution_verification_match(execution_result, verification_result)
+        _require_closure_chain_match(execution_result, verification_result, reconciliation)
         if reconciliation.status is ReconciliationStatus.MATCH:
             raise RuntimeCoreInvariantError("accepted-risk closure requires unresolved reconciliation")
         if accepted_risk.disposition is not AcceptedRiskDisposition.ACTIVE:
@@ -152,7 +152,7 @@ class TerminalClosureCertifier:
         graph_refs: tuple[str, ...] = (),
     ) -> TerminalClosureCertificate:
         """Certify review-required terminal state."""
-        _require_execution_verification_match(execution_result, verification_result)
+        _require_closure_chain_match(execution_result, verification_result, reconciliation)
         if reconciliation.status is ReconciliationStatus.MATCH:
             raise RuntimeCoreInvariantError("review closure requires unresolved reconciliation")
         return self._store(
@@ -194,6 +194,15 @@ class TerminalClosureCertifier:
                     "command_id": command_id,
                     "execution_id": execution_id,
                     "disposition": disposition.value,
+                    "verification_result_id": verification_result_id,
+                    "effect_reconciliation_id": effect_reconciliation_id,
+                    "evidence_refs": evidence_refs,
+                    "response_closure_ref": response_closure_ref,
+                    "memory_entry_id": memory_entry_id,
+                    "compensation_outcome_id": compensation_outcome_id,
+                    "accepted_risk_id": accepted_risk_id,
+                    "case_id": case_id,
+                    "graph_refs": graph_refs,
                     "closed_at": closed_at,
                 },
             ),
@@ -220,12 +229,36 @@ class TerminalClosureCertifier:
         return certificate
 
 
-def _require_execution_verification_match(
+def _require_closure_chain_match(
     execution_result: ExecutionResult,
     verification_result: VerificationResult,
+    reconciliation: EffectReconciliation,
 ) -> None:
     if verification_result.execution_id != execution_result.execution_id:
         raise RuntimeCoreInvariantError("verification execution mismatch")
+    if reconciliation.command_id not in _closure_command_refs(execution_result, verification_result):
+        raise RuntimeCoreInvariantError("reconciliation command mismatch")
+    if reconciliation.verification_result_id != verification_result.verification_id:
+        raise RuntimeCoreInvariantError("reconciliation verification mismatch")
+
+
+def _closure_command_refs(
+    execution_result: ExecutionResult,
+    verification_result: VerificationResult,
+) -> tuple[str, ...]:
+    refs: list[str] = []
+    for source in (
+        execution_result.metadata,
+        execution_result.extensions,
+        verification_result.metadata,
+        verification_result.extensions,
+    ):
+        for key in ("command_id", "intent_id", "program_id"):
+            command_id = source.get(key)
+            if isinstance(command_id, str) and command_id:
+                refs.append(command_id)
+    refs.append(execution_result.goal_id)
+    return tuple(dict.fromkeys(refs))
 
 
 def _verification_evidence_refs(verification_result: VerificationResult) -> tuple[str, ...]:

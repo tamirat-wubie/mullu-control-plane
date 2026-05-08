@@ -550,7 +550,7 @@ def _build_verification_result(
             ),
         ),
         closed_at=issued_at,
-        metadata={"kernel": "universal_action"},
+        metadata={"kernel": "universal_action", "intent_id": request.intent_id, "goal_id": execution_result.goal_id},
     )
 
 
