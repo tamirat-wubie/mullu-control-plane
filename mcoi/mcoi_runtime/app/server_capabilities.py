@@ -583,6 +583,42 @@ def bootstrap_capability_services(
     )
     model_router.register(
         ModelProfile(
+            model_id="qwen3-5-9b",
+            name="Qwen3.5 9B via Venice",
+            provider="venice",
+            cost_per_1k_input=0.00010,
+            cost_per_1k_output=0.00015,
+            max_context=256000,
+            speed_tier="fast",
+            capability_tier="standard",
+        )
+    )
+    model_router.register(
+        ModelProfile(
+            model_id="qwen/qwen3-32b",
+            name="Qwen3 32B via EURI",
+            provider="euri",
+            cost_per_1k_input=0.00029,
+            cost_per_1k_output=0.00059,
+            max_context=131072,
+            speed_tier="fast",
+            capability_tier="standard",
+        )
+    )
+    model_router.register(
+        ModelProfile(
+            model_id="Qwen/Qwen3-Coder-30B-A3B-Instruct",
+            name="Qwen3 Coder 30B A3B via APIRouter",
+            provider="apirouter",
+            cost_per_1k_input=0.000028,
+            cost_per_1k_output=0.000112,
+            max_context=131072,
+            speed_tier="fast",
+            capability_tier="standard",
+        )
+    )
+    model_router.register(
+        ModelProfile(
             model_id="mistral-small-2603",
             name="Mistral Small 2603",
             provider="mistral",

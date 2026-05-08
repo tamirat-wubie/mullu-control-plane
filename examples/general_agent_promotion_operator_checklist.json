@@ -14,6 +14,12 @@
     "production_health_not_declared"
   ],
   "checklist_id": "general-agent-promotion-operator-v1",
+  "conditional_approval_blockers": [
+    "voice_dependency_missing:OPENAI_API_KEY",
+    "email_calendar_dependency_missing:EMAIL_CALENDAR_CONNECTOR_TOKEN",
+    "deployment_witness_not_published",
+    "production_health_not_declared"
+  ],
   "required_commands": [
     {
       "command": "python scripts\\collect_capability_adapter_evidence.py --output .change_assurance\\capability_adapter_evidence.json",

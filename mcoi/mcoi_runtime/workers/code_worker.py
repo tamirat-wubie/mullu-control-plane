@@ -591,6 +591,10 @@ def _workspace_snapshot(root: Path) -> dict[str, str]:
                 relative_path = path.relative_to(root)
             except ValueError:
                 continue
+            relative_path_text = relative_path.as_posix()
+            if path.is_symlink():
+                snapshot[relative_path_text] = _symlink_snapshot_value(path)
+                continue
             if path.is_dir():
                 if path.name in _SNAPSHOT_SKIP_DIR_NAMES:
                     continue
@@ -598,12 +602,19 @@ def _workspace_snapshot(root: Path) -> dict[str, str]:
                 continue
             if not path.is_file():
                 continue
-            relative_path_text = relative_path.as_posix()
             try:
                 snapshot[relative_path_text] = hashlib.sha256(path.read_bytes()).hexdigest()
             except OSError:
                 snapshot[relative_path_text] = "unreadable"
     return snapshot
+
+
+def _symlink_snapshot_value(path: Path) -> str:
+    try:
+        target = path.readlink().as_posix()
+    except OSError:
+        return "symlink:unreadable"
+    return f"symlink:{_sha256_text(target)}"
 
 
 def _changed_paths(before: dict[str, str], after: dict[str, str]) -> tuple[str, ...]:

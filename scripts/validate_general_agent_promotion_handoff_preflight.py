@@ -25,6 +25,7 @@ DEFAULT_REPORT = REPO_ROOT / ".change_assurance" / "general_agent_promotion_hand
 EXPECTED_STEP_NAMES = (
     "operator checklist validation",
     "handoff packet validation",
+    "conditional responsibility debt blockers",
     "environment binding contract validation",
     "environment binding receipt validation",
     "required environment bindings",

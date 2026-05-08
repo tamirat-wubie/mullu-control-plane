@@ -11,6 +11,7 @@ validation.
 Invariants:
   - Default mode never executes commands.
   - Secret values are never read or serialized.
+  - Redacted binding template validation precedes binding receipt emission.
   - Live connector touchpoints are explicitly marked.
   - Binding readiness is checked before live email/calendar receipt collection.
 """
@@ -122,7 +123,17 @@ def write_finance_live_handoff_closure_run(run: FinanceLiveHandoffClosureRun, ou
 def _closure_commands() -> tuple[FinanceLiveHandoffClosureCommand, ...]:
     return (
         FinanceLiveHandoffClosureCommand(
-            step_id="01_emit_binding_receipt",
+            step_id="01_validate_recovery_env_template",
+            purpose="Validate the redacted finance email/calendar recovery env template before secret binding.",
+            command=(
+                "python scripts/validate_finance_email_calendar_recovery_env_example.py "
+                "--template examples/finance_email_calendar_recovery.env.example --strict --json"
+            ),
+            required_before_next=True,
+            live_effect_possible=False,
+        ),
+        FinanceLiveHandoffClosureCommand(
+            step_id="02_emit_binding_receipt",
             purpose="Record redacted token-name presence for approved email/calendar connector bindings.",
             command=(
                 "python scripts/emit_finance_approval_email_calendar_binding_receipt.py "
@@ -132,14 +143,14 @@ def _closure_commands() -> tuple[FinanceLiveHandoffClosureCommand, ...]:
             live_effect_possible=False,
         ),
         FinanceLiveHandoffClosureCommand(
-            step_id="02_validate_binding_receipt",
+            step_id="03_validate_binding_receipt",
             purpose="Fail closed until one accepted connector binding is present and schema-valid.",
             command="python scripts/validate_finance_approval_email_calendar_binding_receipt.py --require-ready --json",
             required_before_next=True,
             live_effect_possible=False,
         ),
         FinanceLiveHandoffClosureCommand(
-            step_id="03_collect_read_only_live_receipt",
+            step_id="04_collect_read_only_live_receipt",
             purpose="Produce the read-only email/calendar live receipt after binding readiness is proven.",
             command=(
                 "python scripts/produce_capability_adapter_live_receipts.py --target email-calendar "
@@ -149,14 +160,14 @@ def _closure_commands() -> tuple[FinanceLiveHandoffClosureCommand, ...]:
             live_effect_possible=True,
         ),
         FinanceLiveHandoffClosureCommand(
-            step_id="04_validate_read_only_live_receipt",
+            step_id="05_validate_read_only_live_receipt",
             purpose="Fail closed unless the email/calendar live receipt is passed, read-only, and adapter-bound.",
             command="python scripts/validate_finance_approval_email_calendar_live_receipt.py --require-ready --json",
             required_before_next=True,
             live_effect_possible=False,
         ),
         FinanceLiveHandoffClosureCommand(
-            step_id="05_collect_adapter_evidence",
+            step_id="06_collect_adapter_evidence",
             purpose="Collect capability adapter evidence from the newly produced live receipt.",
             command=(
                 "python scripts/collect_capability_adapter_evidence.py "
@@ -166,7 +177,7 @@ def _closure_commands() -> tuple[FinanceLiveHandoffClosureCommand, ...]:
             live_effect_possible=False,
         ),
         FinanceLiveHandoffClosureCommand(
-            step_id="06_validate_pilot_readiness",
+            step_id="07_validate_pilot_readiness",
             purpose="Recompute finance approval pilot readiness from adapter evidence.",
             command=(
                 "python scripts/validate_finance_approval_pilot.py "
@@ -176,7 +187,7 @@ def _closure_commands() -> tuple[FinanceLiveHandoffClosureCommand, ...]:
             live_effect_possible=False,
         ),
         FinanceLiveHandoffClosureCommand(
-            step_id="07_refresh_handoff_plan",
+            step_id="08_refresh_handoff_plan",
             purpose="Refresh the finance live handoff plan after evidence collection.",
             command=(
                 "python scripts/plan_finance_approval_live_handoff.py "
@@ -186,14 +197,14 @@ def _closure_commands() -> tuple[FinanceLiveHandoffClosureCommand, ...]:
             live_effect_possible=False,
         ),
         FinanceLiveHandoffClosureCommand(
-            step_id="08_validate_handoff_plan_schema",
+            step_id="09_validate_handoff_plan_schema",
             purpose="Validate the finance live handoff plan schema and finance-only blocker boundary.",
             command="python scripts/validate_finance_approval_live_handoff_plan_schema.py --strict --json",
             required_before_next=True,
             live_effect_possible=False,
         ),
         FinanceLiveHandoffClosureCommand(
-            step_id="09_run_preflight",
+            step_id="10_run_preflight",
             purpose="Run strict finance handoff preflight before updating the final packet.",
             command=(
                 "python scripts/preflight_finance_approval_live_handoff.py "
@@ -203,14 +214,14 @@ def _closure_commands() -> tuple[FinanceLiveHandoffClosureCommand, ...]:
             live_effect_possible=False,
         ),
         FinanceLiveHandoffClosureCommand(
-            step_id="10_validate_preflight_schema",
+            step_id="11_validate_preflight_schema",
             purpose="Validate the strict four-step finance handoff preflight report.",
             command="python scripts/validate_finance_approval_live_handoff_preflight_schema.py --strict --json",
             required_before_next=True,
             live_effect_possible=False,
         ),
         FinanceLiveHandoffClosureCommand(
-            step_id="11_produce_handoff_packet",
+            step_id="12_produce_handoff_packet",
             purpose="Produce the bounded finance approval handoff packet.",
             command=(
                 "python scripts/produce_finance_approval_handoff_packet.py "
@@ -220,28 +231,28 @@ def _closure_commands() -> tuple[FinanceLiveHandoffClosureCommand, ...]:
             live_effect_possible=False,
         ),
         FinanceLiveHandoffClosureCommand(
-            step_id="12_validate_handoff_packet_schema",
+            step_id="13_validate_handoff_packet_schema",
             purpose="Validate the final finance approval handoff packet schema.",
             command="python scripts/validate_finance_approval_handoff_packet_schema.py --strict --json",
             required_before_next=True,
             live_effect_possible=False,
         ),
         FinanceLiveHandoffClosureCommand(
-            step_id="13_validate_handoff_chain",
+            step_id="14_validate_handoff_chain",
             purpose="Validate the aggregate finance live handoff artifact chain.",
             command="python scripts/validate_finance_approval_live_handoff_chain.py --strict --require-ready --json",
             required_before_next=True,
             live_effect_possible=False,
         ),
         FinanceLiveHandoffClosureCommand(
-            step_id="14_validate_handoff_chain_schema",
+            step_id="15_validate_handoff_chain_schema",
             purpose="Validate the aggregate finance live handoff chain validation report schema.",
             command="python scripts/validate_finance_approval_live_handoff_chain_schema.py --strict --json",
             required_before_next=True,
             live_effect_possible=False,
         ),
         FinanceLiveHandoffClosureCommand(
-            step_id="15_produce_operator_summary",
+            step_id="16_produce_operator_summary",
             purpose="Produce the operator-facing finance handoff summary from the bounded packet and chain result.",
             command=(
                 "python scripts/produce_finance_approval_operator_summary.py "
@@ -251,7 +262,7 @@ def _closure_commands() -> tuple[FinanceLiveHandoffClosureCommand, ...]:
             live_effect_possible=False,
         ),
         FinanceLiveHandoffClosureCommand(
-            step_id="16_validate_operator_summary_schema",
+            step_id="17_validate_operator_summary_schema",
             purpose="Validate the operator summary schema and promotion-claim guardrails.",
             command="python scripts/validate_finance_approval_operator_summary_schema.py --strict --json",
             required_before_next=True,
