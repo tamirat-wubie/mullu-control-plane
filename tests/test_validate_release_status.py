@@ -51,6 +51,11 @@ def test_deployment_witness_workflow_carries_conformance_secret_handoff() -> Non
     errors = validate_deployment_witness_workflow_text(content)
 
     assert errors == []
+    assert "python scripts/preflight_deployment_witness.py" in content
+    assert "--accept-repository-input-env" in content
+    assert "--accept-workflow-file" in content
+    assert ".change_assurance/deployment_witness_preflight.json" in content
+    assert "deployment-witness-preflight" in content
     assert "MULLU_RUNTIME_CONFORMANCE_SECRET" in content
     assert '--conformance-secret "$MULLU_RUNTIME_CONFORMANCE_SECRET"' in content
     assert "python scripts/collect_deployment_witness.py" in content
@@ -192,6 +197,7 @@ def test_deployment_witness_workflow_reports_missing_conformance_secret_handoff(
         "gateway_url\n"
         "MULLU_RUNTIME_WITNESS_SECRET\n"
         "MULLU_RUNTIME_CONFORMANCE_SECRET\n"
+        "MULLU_DEPLOYMENT_WITNESS_SECRET\n"
         "python scripts/collect_deployment_witness.py\n"
         ".change_assurance/deployment_witness.json\n"
         "actions/upload-artifact@v4\n"
@@ -200,8 +206,8 @@ def test_deployment_witness_workflow_reports_missing_conformance_secret_handoff(
     errors = validate_deployment_witness_workflow_text(content)
 
     assert len(errors) == 1
-    assert "--conformance-secret" in errors[0]
-    assert "MULLU_RUNTIME_CONFORMANCE_SECRET" in errors[0]
+    assert "preflight_deployment_witness.py" in errors[0]
+    assert "deployment_witness_preflight.json" in errors[0]
     assert "Deployment Witness Collection" not in errors[0]
 
 
