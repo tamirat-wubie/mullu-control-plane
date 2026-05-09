@@ -876,6 +876,175 @@ def test_command_ledger_requires_terminal_certificate_before_success_response():
     assert responded.state == CommandState.RESPONDED
 
 
+def test_success_response_requires_full_post_cert_bookkeeping():
+    # Ψ I-PSI-6 atomicity guard: assert_success_response_allowed refuses
+    # to grant a success response until the full _certify_committed
+    # sequence is present — terminal certificate AND closure memory AND
+    # admitted learning decision. This prevents a partial failure mid-
+    # sequence from leaving a TERMINALLY_CERTIFIED event in the audit
+    # log paired with a missing-bookkeeping success response.
+    ledger = CommandLedger(
+        clock=lambda: "2026-04-24T12:00:00+00:00",
+        store=InMemoryCommandLedgerStore(),
+    )
+    command = ledger.create_command(
+        tenant_id="tenant-1",
+        actor_id="identity-1",
+        source="web",
+        conversation_id="conversation-1",
+        idempotency_key="idem-atomicity-guard",
+        intent="llm_completion",
+        payload={"body": "hello"},
+    )
+    ledger.bind_governed_action(command.command_id)
+    ledger.observe_and_reconcile_effect(
+        command.command_id,
+        output={"content": "hello", "succeeded": True},
+    )
+    ledger.promote_provider_receipts_to_graph(command.command_id)
+    claim = ledger.record_operational_claim(
+        command.command_id,
+        text="Command llm_completion completed.",
+        verified=True,
+    )
+    closure = ledger.close_success_response_evidence(
+        command.command_id, claim_id=claim.claim_id,
+    )
+
+    certificate = ledger.certify_terminal_closure(
+        command.command_id,
+        disposition=ClosureDisposition.COMMITTED,
+        response_evidence_closure=closure,
+    )
+
+    # Certificate is stored, but post-cert bookkeeping is absent.
+    assert ledger.terminal_certificate_for(command.command_id) is certificate
+    with pytest.raises(ValueError, match="closure memory entry"):
+        ledger.assert_success_response_allowed(command.command_id)
+
+    # After memory exists but learning is missing, still refused.
+    ledger.promote_closure_memory(command.command_id)
+    with pytest.raises(ValueError, match="learning admission decision"):
+        ledger.assert_success_response_allowed(command.command_id)
+
+    # Once learning is admitted, the success response is allowed.
+    ledger.decide_closure_learning(command.command_id)
+    allowed = ledger.assert_success_response_allowed(command.command_id)
+    assert allowed == certificate
+
+
+def test_bind_governed_action_is_idempotent_to_preserve_freeze():
+    # I-PRED-2 freeze: the governed action is captured at first bind and is
+    # immutable for the lifetime of the command. A second bind would let the
+    # capability registry / admission gate drift mid-lifecycle and would
+    # leave duplicate GOVERNED_ACTION_BOUND events in the audit log.
+    ledger = CommandLedger(
+        clock=lambda: "2026-04-24T12:00:00+00:00",
+        store=InMemoryCommandLedgerStore(),
+    )
+    command = ledger.create_command(
+        tenant_id="tenant-1",
+        actor_id="identity-1",
+        source="web",
+        conversation_id="conversation-1",
+        idempotency_key="idem-rebind-refused",
+        intent="llm_completion",
+        payload={"body": "hello"},
+    )
+
+    first = ledger.bind_governed_action(command.command_id)
+
+    with pytest.raises(ValueError, match="governed action already bound"):
+        ledger.bind_governed_action(command.command_id)
+
+    bind_events = [
+        event
+        for event in ledger.events_for(command.command_id)
+        if event.next_state is CommandState.GOVERNED_ACTION_BOUND
+    ]
+    assert len(bind_events) == 1
+
+    resolved = ledger.governed_action_for(command.command_id)
+    assert resolved == first
+
+
+def test_command_id_is_uuid_so_lifecycle_is_not_bit_identical_across_creates():
+    # I-PRED-9 characterization. The spec requires "given the same inputs,
+    # bit-identical outputs". create_command (gateway/command_spine.py:2283)
+    # generates command_id = f"cmd-{uuid4().hex}", so two ledger instances
+    # given identical (tenant_id, actor_id, idempotency_key, payload, clock)
+    # produce DIFFERENT command_ids. Every downstream identifier is content-
+    # addressed over command_id (terminal_certificate_id, memory entry_id,
+    # learning admission_id, event hash chain) so the entire lifecycle drifts.
+    #
+    # The closure_evidence_hash IS bit-identical across creates because it
+    # excludes command_id from its content. Everything that includes
+    # command_id varies. Replay determinism in this codebase therefore holds
+    # CONDITIONAL ON command_id stability (e.g., when replaying from
+    # governance_log where command_ids are already fixed), not for fresh
+    # creates with the same logical inputs.
+    def run_lifecycle() -> dict[str, str]:
+        ledger = CommandLedger(
+            clock=lambda: "2026-04-24T12:00:00+00:00",
+            store=InMemoryCommandLedgerStore(),
+        )
+        command = ledger.create_command(
+            tenant_id="tenant-determinism",
+            actor_id="identity-determinism",
+            source="web",
+            conversation_id="conv-determinism",
+            idempotency_key="idem-determinism",
+            intent="llm_completion",
+            payload={"body": "hello determinism"},
+        )
+        ledger.bind_governed_action(command.command_id)
+        ledger.observe_and_reconcile_effect(
+            command.command_id,
+            output={"content": "hello determinism", "succeeded": True},
+        )
+        ledger.promote_provider_receipts_to_graph(command.command_id)
+        claim = ledger.record_operational_claim(
+            command.command_id,
+            text="Command llm_completion completed.",
+            verified=True,
+        )
+        closure = ledger.close_success_response_evidence(
+            command.command_id, claim_id=claim.claim_id,
+        )
+        certificate = ledger.certify_terminal_closure(
+            command.command_id,
+            disposition=ClosureDisposition.COMMITTED,
+            response_evidence_closure=closure,
+        )
+        memory_entry = ledger.promote_closure_memory(command.command_id)
+        learning = ledger.decide_closure_learning(command.command_id)
+        events = ledger.events_for(command.command_id)
+        return {
+            "command_id": command.command_id,
+            "closure_evidence_hash": closure.evidence_hash,
+            "certificate_id": certificate.certificate_id,
+            "memory_entry_id": memory_entry.entry_id,
+            "learning_admission_id": learning.admission_id,
+            "final_event_hash": events[-1].event_hash,
+        }
+
+    first = run_lifecycle()
+    second = run_lifecycle()
+
+    # command_id varies because create_command generates uuid4.
+    assert first["command_id"] != second["command_id"]
+
+    # Every downstream identifier varies because command_id is part of the
+    # content addressed by each: terminal_certificate_id, memory entry_id,
+    # learning admission_id, the closure evidence hash (over per-command
+    # evidence records), and the event hash chain.
+    assert first["closure_evidence_hash"] != second["closure_evidence_hash"]
+    assert first["certificate_id"] != second["certificate_id"]
+    assert first["memory_entry_id"] != second["memory_entry_id"]
+    assert first["learning_admission_id"] != second["learning_admission_id"]
+    assert first["final_event_hash"] != second["final_event_hash"]
+
+
 def test_command_ledger_fracture_test_requires_high_risk_approval():
     ledger = CommandLedger(
         clock=lambda: "2026-04-24T12:00:00+00:00",

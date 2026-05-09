@@ -501,6 +501,54 @@ def test_plan_ledger_rejects_missing_evidence_bundle() -> None:
     assert ledger.witnesses_for() == ()
 
 
+def test_plan_certify_is_idempotent_for_a_given_plan_id() -> None:
+    # I-PSI-3 idempotency: a second certify() for the same plan_id returns
+    # the original certificate unchanged, even when the clock has advanced.
+    # certificate_id derives from a payload that includes issued_at, so
+    # without a guard the second call would mint a new id and overwrite
+    # the original in storage — silently breaking the audit chain.
+    plan = one_step_plan(
+        capability_id="enterprise.knowledge_search",
+        params={"query": "policy"},
+        tenant_id="tenant-1",
+        identity_id="identity-1",
+        goal="search policy",
+    )
+
+    def execute_step(step: CapabilityPlanStep, completed):
+        return CapabilityPlanStepResult(
+            step_id=step.step_id,
+            capability_id=step.capability_id,
+            succeeded=True,
+            command_id="cmd-1",
+            terminal_certificate_id="terminal-1",
+            output={"total_chunks_searched": 1},
+        )
+
+    execution = CapabilityPlanExecutor(execute_step).execute(plan)
+
+    clocks = iter(
+        [
+            "2026-04-29T12:00:00+00:00",
+            "2026-04-29T12:00:01+00:00",
+        ]
+    )
+    ledger = CapabilityPlanLedger(clock=lambda: next(clocks))
+
+    first = ledger.certify(plan=plan, execution=execution)
+    second = ledger.certify(plan=plan, execution=execution)
+
+    # Same certificate_id, same object content, same store entry.
+    assert second == first
+    assert ledger.certificate_for(plan.plan_id) == first
+
+    # Witness log records the original certification only — the duplicate
+    # certify() is a no-op.
+    witnesses = ledger.witnesses_for(plan.plan_id)
+    assert len(witnesses) == 1
+    assert witnesses[0].certificate_id == first.certificate_id
+
+
 def test_json_plan_ledger_store_survives_recreation(tmp_path) -> None:
     plan = one_step_plan(
         capability_id="enterprise.knowledge_search",

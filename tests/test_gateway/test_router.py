@@ -1331,6 +1331,68 @@ class TestChannelAdapterIntegration:
 # ═══ Summary ═══
 
 
+class TestProcessReadyCommandsIsolation:
+    def test_failing_command_does_not_abandon_batch_or_lease(self, monkeypatch):
+        # Per-command isolation: a single command failure must record an
+        # error, release the lease, and continue with the next command —
+        # not propagate out of the worker loop with leases still held.
+        router = GatewayRouter(platform=StubPlatform())
+        router.register_channel(StubChannel())
+        router.register_tenant_mapping(TenantMapping(
+            channel="test", sender_id="u1", tenant_id="t1", identity_id="identity-1",
+        ))
+
+        first = router._commands.create_command(
+            tenant_id="t1",
+            actor_id="identity-1",
+            source="test",
+            conversation_id="conv-1",
+            idempotency_key="idem-1",
+            intent="llm_completion",
+            payload={"body": "first", "sender_id": "u1"},
+        )
+        second = router._commands.create_command(
+            tenant_id="t1",
+            actor_id="identity-1",
+            source="test",
+            conversation_id="conv-1",
+            idempotency_key="idem-2",
+            intent="llm_completion",
+            payload={"body": "second", "sender_id": "u1"},
+        )
+        router._commands.transition(first.command_id, CommandState.ALLOWED, risk_tier="low")
+        router._commands.transition(second.command_id, CommandState.ALLOWED, risk_tier="low")
+
+        original_execute = router._execute_command
+
+        def execute_with_first_failing(command, *, recipient_id):
+            if command.command_id == first.command_id:
+                raise RuntimeError("simulated worker execution failure")
+            return original_execute(command, recipient_id=recipient_id)
+
+        monkeypatch.setattr(router, "_execute_command", execute_with_first_failing)
+
+        responses = router.process_ready_commands(worker_id="worker-1", limit=2)
+
+        # The failing command was skipped; the second still produced a response.
+        response_command_ids = {r.metadata.get("command_id") for r in responses}
+        assert second.command_id in response_command_ids
+        assert first.command_id not in response_command_ids
+
+        # Error was recorded under the bounded-reason taxonomy.
+        summary = router.summary()
+        assert summary["error_reasons"].get("worker_command_execution_failed", 0) >= 1
+
+        # Lease was released for the failing command — it is re-claimable
+        # for retry rather than stuck in CLAIMED state. The second command
+        # is no longer claimable because its state has progressed past
+        # ALLOWED through successful execution.
+        remaining = router._commands.claim_ready_commands(worker_id="worker-1", limit=2)
+        remaining_ids = {c.command_id for c in remaining}
+        assert second.command_id not in remaining_ids
+        assert first.command_id in remaining_ids
+
+
 class TestRouterSummary:
     def test_summary(self):
         channel = StubChannel()
