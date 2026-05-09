@@ -77,14 +77,15 @@ document is the operator-readable witness.
 | `governed_session` | GovernedSession.llm, GovernedSession.execute, GovernedSession.query | request_proof | action_proof | none | audit_chain | witnessed | Session entry points return request-envelope proofs and retain action proof lineage. |
 | `health_docs_exempt` | /health, /docs, /openapi.json, /redoc | read_model | read_model | none | read_model | witnessed | Operational liveness and documentation surfaces are outside the proof-critical path. |
 | `lineage_query_api` | /api/v1/lineage/resolve, /api/v1/lineage/{trace_id}, /api/v1/lineage/output/{output_id}, /api/v1/lineage/command/{command_id} | read_model | read_model | none | read_model | witnessed | Lineage query API resolves read-only lineage:// URIs with bounded output, command, graph, and policy-version read models. |
+| `god_mode_lifecycle` | /api/v1/god-mode/* (capabilities, agreements, tickets, receipts) | action_proof | action_proof | none | audit_chain | witnessed | Privileged "god mode" capabilities ship dormant. Two-stage explicit consent — registration agreement promotes capability dormant→armed; activation issues a single-use, short-lived ticket. Catastrophic capabilities require dual control (≥2 distinct approvers). Every consumption emits an immutable receipt with pre/post hashes and the full agreement chain. Withdrawals and revocations are first-class, irreversible-as-events. |
 
 Coverage summary:
 
 | Metric | Count |
 |---|---:|
-| Total surfaces | 69 |
+| Total surfaces | 70 |
 | Proven surfaces | 1 |
-| Witnessed surfaces | 68 |
+| Witnessed surfaces | 69 |
 | Unproven surfaces | 0 |
 
 Declared route coverage:
