@@ -371,6 +371,8 @@ class AgentRuntimeCoordinator:
         capabilities = _normalize_text_tuple(tuple(capability_scope), "capability_scope")
         refs = tuple(context_refs)
         denial = _handoff_denial(from_agent, to_agent, tenant_id, capabilities, budget_cents, refs)
+        if not denial:
+            denial = _handoff_chain_denial(self._handoffs.values(), task_id, to_agent_id)
         if denial:
             receipt = self._record_receipt("agent_handoff", AgentReceiptStatus.REJECTED, from_agent_id, tenant_id, denial, handoff_id, refs)
             return None, receipt
@@ -500,6 +502,26 @@ def _task_denial(
         return "task_budget_exceeds_agent_scope"
     if risk_tier in {"high", "critical"} and not evidence_refs:
         return "high_risk_evidence_required"
+    return ""
+
+
+MAX_HANDOFF_CHAIN_DEPTH = 4
+
+
+def _handoff_chain_denial(
+    existing_handoffs: Iterable[AgentHandoff],
+    task_id: str,
+    to_agent_id: str,
+) -> str:
+    # I-MULTI-24: delegation chains must be cycle-detected and depth-bounded.
+    # Walk handoffs for this task; refuse if to_agent_id has already acted
+    # as a from_agent for this task (cycle) or if depth would exceed bound.
+    chain = tuple(handoff for handoff in existing_handoffs if handoff.task_id == task_id)
+    if len(chain) >= MAX_HANDOFF_CHAIN_DEPTH:
+        return "handoff_chain_depth_exceeded"
+    chain_from_agents = {handoff.from_agent_id for handoff in chain}
+    if to_agent_id in chain_from_agents:
+        return "handoff_cycle_detected"
     return ""
 
 

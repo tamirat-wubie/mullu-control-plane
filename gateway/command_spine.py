@@ -2331,6 +2331,13 @@ class CommandLedger:
         command = self.get(command_id)
         if command is None:
             raise KeyError(f"unknown command_id: {command_id}")
+        # I-PRED-2 freeze: governed action is captured at first bind and is
+        # immutable for the lifetime of the command. Rebinding would let the
+        # capability registry / admission gate drift mid-lifecycle.
+        if self.governed_action_for(command_id) is not None:
+            raise ValueError(
+                f"governed action already bound for command_id: {command_id}"
+            )
 
         typed_intent = compile_typed_intent(command)
         self.transition(
@@ -3406,6 +3413,18 @@ class CommandLedger:
             raise ValueError("success response requires committed terminal closure")
         if not certificate.evidence_refs:
             raise ValueError("success response requires terminal evidence references")
+        # Ψ I-PSI-6 atomicity: certification + post-cert bookkeeping must
+        # all be present before a success response is permitted. Without
+        # these checks, a partial failure mid-_certify_committed could
+        # leave a TERMINALLY_CERTIFIED event in the audit log without the
+        # corresponding closure-memory and learning records.
+        if self._closure_memory.get(command_id) is None:
+            raise ValueError("success response requires closure memory entry")
+        learning = self._closure_learning.get(command_id)
+        if learning is None:
+            raise ValueError("success response requires learning admission decision")
+        if learning.status != "admit":
+            raise ValueError("success response requires admitted learning decision")
         return certificate
 
     def fracture_test(self, command_id: str) -> FractureResult:
