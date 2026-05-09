@@ -276,6 +276,11 @@ governed_swarm_bootstrap = mount_governed_swarm_router_from_env(
 )
 deps.set("governed_swarm_bootstrap", governed_swarm_bootstrap)
 
+from mcoi_runtime.core.god_mode_integration import install_god_mode  # noqa: E402
+
+god_mode_engine = install_god_mode(deps, audit_trail=audit_trail)
+deps.set("god_mode_engine", god_mode_engine)
+
 
 # â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 # Include routers â€” all route handlers live in routers/ modules
