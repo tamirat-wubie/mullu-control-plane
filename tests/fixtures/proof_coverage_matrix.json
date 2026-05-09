@@ -488,10 +488,10 @@
   "route_coverage": {
     "by_coverage_state": {
       "proven": 5,
-      "unproven": 169,
+      "unproven": 182,
       "witnessed": 141
     },
-    "route_count": 315,
+    "route_count": 328,
     "routes": [
       {
         "coverage_state": "witnessed",
@@ -1056,6 +1056,71 @@
       {
         "coverage_state": "unproven",
         "route": "/api/v1/flags/{flag_id}",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/god-mode/agreements/{agreement_id}/withdraw",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/god-mode/capabilities",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/god-mode/capabilities/{module}/{name}",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/god-mode/capabilities/{module}/{name}/agree-to-register",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/god-mode/capabilities/{module}/{name}/issue-ticket",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/god-mode/capabilities/{module}/{name}/resume",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/god-mode/capabilities/{module}/{name}/suspend",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/god-mode/modules",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/god-mode/receipts",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/god-mode/tickets",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/god-mode/tickets/{ticket_id}",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/god-mode/tickets/{ticket_id}/consume",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/god-mode/tickets/{ticket_id}/revoke",
         "surface_id": "unclassified_declared_route"
       },
       {
@@ -2069,7 +2134,7 @@
         "surface_id": "gateway_capability_fabric"
       }
     ],
-    "unclassified_route_count": 169
+    "unclassified_route_count": 182
   },
   "schema_version": 1,
   "surfaces": [
