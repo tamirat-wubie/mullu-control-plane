@@ -174,6 +174,12 @@ jobs:
           python scripts/validate_mil_audit_runbook_operator_checklist.py --checklist examples/mil_audit_runbook_operator_checklist.json --json
           python -m pytest tests/test_preflight_mil_audit_runbook_workflow.py tests/test_validate_mil_audit_runbook_operator_checklist.py -q
 
+      - name: Validate public naming readiness
+        run: python scripts/validate_public_naming_readiness.py
+
+      - name: Test public naming readiness
+        run: python -m pytest tests/test_public_naming_readiness.py -q
+
       - name: Validate release status
         run: python scripts/validate_release_status.py
         env:
@@ -278,6 +284,12 @@ jobs:
 
       - name: Artifact validation check
         run: python scripts/validate_artifacts.py --strict
+
+      - name: Public naming readiness check
+        run: python scripts/validate_public_naming_readiness.py
+
+      - name: Public naming readiness tests
+        run: python -m pytest tests/test_public_naming_readiness.py -q
 
       - name: Release status check
         run: python scripts/validate_release_status.py --strict

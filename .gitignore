@@ -36,6 +36,9 @@ mullusi.yml
 dist/
 build/
 site/
+!site/mullu/
+site/mullu/*
+!site/mullu/index.html
 *.egg-info/
 
 # Rust and Cargo

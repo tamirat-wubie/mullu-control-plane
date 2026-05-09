@@ -1,0 +1,176 @@
+{
+  "schema_version": "1",
+  "packet_id": "mullu-name-clearance-draft-2026-05-06",
+  "candidate_name": "Mullu",
+  "company_brand": "Mullusi",
+  "first_reference": "Mullu, by Mullusi",
+  "prepared_date": "2026-05-06",
+  "timezone": "America/New_York",
+  "review_status": "draft",
+  "final_decision": "pending",
+  "public_paid_launch_allowed": false,
+  "summary": {
+    "product_architecture_fit": "passed",
+    "existing_surface_coherence": "passed",
+    "preliminary_public_web_collision_scan": "passed_with_review_items",
+    "close_variant_mulu_review": "high_review_item",
+    "exact_domain_indexed_result_scan": "no_indexed_blockers_found",
+    "mullusi_com_deployment_signal": "requires_direct_verification",
+    "dns_availability": "inconclusive",
+    "registrar_availability": "not_checked",
+    "trademark_clearance": "not_checked",
+    "legal_clearance": "not_complete"
+  },
+  "known_public_uses": [
+    {
+      "name": "Mullu TV",
+      "surface": "online film and communication platform",
+      "relevance": "media/cultural platform, not software/SaaS governance",
+      "risk": "medium_review_item",
+      "decision": "pending_review"
+    },
+    {
+      "name": "The Last Mullu",
+      "surface": "indie game title",
+      "relevance": "game title, not enterprise software/SaaS",
+      "risk": "low_to_medium_review_item",
+      "decision": "pending_review"
+    },
+    {
+      "name": "Thillu Mullu",
+      "surface": "film title",
+      "relevance": "entertainment title, not software/SaaS",
+      "risk": "low_review_item",
+      "decision": "pending_review"
+    },
+    {
+      "name": "mullu language/cultural uses",
+      "surface": "general-language and cultural references",
+      "relevance": "outside software/SaaS",
+      "risk": "low_review_item",
+      "decision": "pending_review"
+    },
+    {
+      "name": "MULU Corp.",
+      "surface": "close-variant public trademark mirror records in software, business consulting, and technical services classes; verify USPTO TSDR serials 99518598 and 99264214",
+      "relevance": "similar spelling and adjacent software/service classes",
+      "risk": "high_review_item",
+      "decision": "official_uspto_and_legal_review_required"
+    },
+    {
+      "name": "Mulu, Inc.",
+      "surface": "older close-variant public trademark mirror records; verify USPTO TSDR serials 85772539, 85494313, and 85222451",
+      "relevance": "historic software/service-adjacent mark",
+      "risk": "medium_review_item",
+      "decision": "official_status_review_required"
+    }
+  ],
+  "official_searches": [
+    {
+      "source": "USPTO Trademark Search",
+      "url": "https://tmsearch.uspto.gov",
+      "status": "open",
+      "required_queries": [
+        "MULLU",
+        "MULLUSI",
+        "Mullu by Mullusi",
+        "Mullu Inspect",
+        "Mullu CLI",
+        "Mullu Code",
+        "Mullu Control Plane",
+        "MULU",
+        "99518598",
+        "99264214",
+        "85772539",
+        "85494313",
+        "85222451"
+      ],
+      "required_classes": [
+        "9",
+        "35",
+        "38",
+        "41",
+        "42",
+        "45"
+      ]
+    },
+    {
+      "source": "WIPO Global Brand Database",
+      "url": "https://branddb.wipo.int",
+      "status": "open",
+      "required_queries": [
+        "MULLU",
+        "MULLUSI",
+        "Mullu by Mullusi"
+      ]
+    },
+    {
+      "source": "EUIPO eSearch plus and TMview",
+      "url": "https://www.euipo.europa.eu/en/search-ip",
+      "status": "open",
+      "required_queries": [
+        "MULLU",
+        "MULLUSI",
+        "Mullu by Mullusi"
+      ]
+    }
+  ],
+  "domain_candidates": [
+    {
+      "domain": "mullu.ai",
+      "priority": 1,
+      "role": "primary product domain",
+      "status": "registrar_check_required"
+    },
+    {
+      "domain": "mullu.app",
+      "priority": 2,
+      "role": "app-forwarding product domain",
+      "status": "registrar_check_required"
+    },
+    {
+      "domain": "mullu.dev",
+      "priority": 3,
+      "role": "developer/product domain",
+      "status": "registrar_check_required"
+    },
+    {
+      "domain": "getmullu.com",
+      "priority": 4,
+      "role": "marketing fallback",
+      "status": "registrar_check_required"
+    },
+    {
+      "domain": "mullu.mullusi.com",
+      "priority": 5,
+      "role": "controlled subdomain fallback",
+      "status": "dns_control_required"
+    },
+    {
+      "domain": "mullusi.com/mullu",
+      "priority": 6,
+      "role": "company-site fallback",
+      "status": "site_route_required"
+    }
+  ],
+  "stop_conditions": [
+    "live MULLU mark in Class 9 for software/developer tools",
+    "live MULLU mark in Class 42 for SaaS/platform/tooling",
+    "confusingly similar enterprise workflow/governance software mark",
+    "live close-variant MULU software or SaaS mark with likely confusion risk",
+    "live MULLU AI or similar mark in software classes",
+    "legal reviewer marks the name high-risk"
+  ],
+  "required_next_actions": [
+    "run USPTO official search",
+    "run WIPO official search",
+    "run EUIPO/TMview official search",
+    "complete close-variant MULU confusion analysis",
+    "verify close-variant MULU serials in USPTO TSDR",
+    "run registrar availability checks",
+    "verify mullusi.com deployment state",
+    "record domain ownership evidence",
+    "complete legal/trademark review",
+    "update public-naming-readiness.json only after evidence closes"
+  ]
+}
