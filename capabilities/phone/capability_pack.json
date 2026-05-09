@@ -1,0 +1,286 @@
+{
+  "capabilities": [
+    {
+      "capability_id": "phone.call.place.with_approval",
+      "domain": "phone",
+      "version": "0.1.0",
+      "input_schema_ref": "schemas/phone/call_place.input.schema.json",
+      "output_schema_ref": "schemas/phone/call_place.output.schema.json",
+      "effect_model": {
+        "expected_effects": ["external_phone_call_placed"],
+        "forbidden_effects": ["phone_call_placed_without_approval", "credential_scope_exceeded", "callee_unapproved"],
+        "reconciliation_required": true
+      },
+      "evidence_model": {
+        "required_evidence": ["connector_id", "callee_hashes", "approval_id", "provider_receipt"],
+        "terminal_certificate_required": true
+      },
+      "authority_policy": {
+        "required_roles": ["phone_operator"],
+        "approval_chain": ["platform_approver"],
+        "separation_of_duty": true
+      },
+      "isolation_profile": {
+        "execution_plane": "phone_worker",
+        "network_allowlist": ["api.twilio.com", "api.vonage.com"],
+        "secret_scope": "carrier:voice.place"
+      },
+      "recovery_plan": {
+        "rollback_capability": "phone.call.terminate",
+        "compensation_capability": "",
+        "review_required_on_failure": true
+      },
+      "cost_model": {
+        "budget_class": "connector_write",
+        "max_estimated_cost": 0.10
+      },
+      "obligation_model": {
+        "owner_team": "platform-ops",
+        "failure_due_seconds": 600,
+        "escalation_route": "support@mullusi.com"
+      },
+      "certification_status": "certified",
+      "metadata": {
+        "display_name": "Place outbound phone call with approval",
+        "risk_tier": "high"
+      },
+      "extensions": {
+        "governed_record": {
+          "read_only": false,
+          "world_mutating": true,
+          "requires_approval": true,
+          "requires_sandbox": true,
+          "allowed_roles": ["phone_operator"],
+          "allowed_tools": ["phone_worker.call_place"],
+          "allowed_networks": ["api.twilio.com", "api.vonage.com"],
+          "rollback_or_compensation_required": true
+        }
+      }
+    },
+    {
+      "capability_id": "phone.call.receive",
+      "domain": "phone",
+      "version": "0.1.0",
+      "input_schema_ref": "schemas/phone/call_receive.input.schema.json",
+      "output_schema_ref": "schemas/phone/call_receive.output.schema.json",
+      "effect_model": {
+        "expected_effects": ["phone_call_received_recorded"],
+        "forbidden_effects": ["external_phone_call_placed", "credential_scope_exceeded", "transcript_modified"],
+        "reconciliation_required": true
+      },
+      "evidence_model": {
+        "required_evidence": ["connector_id", "caller_hashes", "provider_receipt"],
+        "terminal_certificate_required": true
+      },
+      "authority_policy": {
+        "required_roles": ["phone_operator"],
+        "approval_chain": [],
+        "separation_of_duty": false
+      },
+      "isolation_profile": {
+        "execution_plane": "phone_worker",
+        "network_allowlist": ["api.twilio.com", "api.vonage.com"],
+        "secret_scope": "carrier:voice.receive"
+      },
+      "recovery_plan": {
+        "rollback_capability": "",
+        "compensation_capability": "",
+        "review_required_on_failure": true
+      },
+      "cost_model": {
+        "budget_class": "connector_read",
+        "max_estimated_cost": 0.02
+      },
+      "obligation_model": {
+        "owner_team": "platform-ops",
+        "failure_due_seconds": 1800,
+        "escalation_route": "support@mullusi.com"
+      },
+      "certification_status": "certified",
+      "metadata": {
+        "display_name": "Record inbound phone call",
+        "risk_tier": "low"
+      },
+      "extensions": {
+        "governed_record": {
+          "read_only": true,
+          "world_mutating": false,
+          "requires_approval": false,
+          "requires_sandbox": true,
+          "allowed_roles": ["phone_operator"],
+          "allowed_tools": ["phone_worker.call_receive"],
+          "allowed_networks": ["api.twilio.com", "api.vonage.com"]
+        }
+      }
+    },
+    {
+      "capability_id": "phone.call.transfer.with_approval",
+      "domain": "phone",
+      "version": "0.1.0",
+      "input_schema_ref": "schemas/phone/call_transfer.input.schema.json",
+      "output_schema_ref": "schemas/phone/call_transfer.output.schema.json",
+      "effect_model": {
+        "expected_effects": ["phone_call_transferred"],
+        "forbidden_effects": ["phone_call_transferred_without_approval", "credential_scope_exceeded", "transferee_unapproved"],
+        "reconciliation_required": true
+      },
+      "evidence_model": {
+        "required_evidence": ["connector_id", "call_id", "transferee_hashes", "approval_id", "provider_receipt"],
+        "terminal_certificate_required": true
+      },
+      "authority_policy": {
+        "required_roles": ["phone_operator"],
+        "approval_chain": ["platform_approver"],
+        "separation_of_duty": true
+      },
+      "isolation_profile": {
+        "execution_plane": "phone_worker",
+        "network_allowlist": ["api.twilio.com", "api.vonage.com"],
+        "secret_scope": "carrier:voice.transfer"
+      },
+      "recovery_plan": {
+        "rollback_capability": "phone.call.terminate",
+        "compensation_capability": "",
+        "review_required_on_failure": true
+      },
+      "cost_model": {
+        "budget_class": "connector_write",
+        "max_estimated_cost": 0.05
+      },
+      "obligation_model": {
+        "owner_team": "platform-ops",
+        "failure_due_seconds": 600,
+        "escalation_route": "support@mullusi.com"
+      },
+      "certification_status": "certified",
+      "metadata": {
+        "display_name": "Transfer phone call with approval",
+        "risk_tier": "high"
+      },
+      "extensions": {
+        "governed_record": {
+          "read_only": false,
+          "world_mutating": true,
+          "requires_approval": true,
+          "requires_sandbox": true,
+          "allowed_roles": ["phone_operator"],
+          "allowed_tools": ["phone_worker.call_transfer"],
+          "allowed_networks": ["api.twilio.com", "api.vonage.com"],
+          "rollback_or_compensation_required": true
+        }
+      }
+    },
+    {
+      "capability_id": "phone.call.terminate",
+      "domain": "phone",
+      "version": "0.1.0",
+      "input_schema_ref": "schemas/phone/call_terminate.input.schema.json",
+      "output_schema_ref": "schemas/phone/call_terminate.output.schema.json",
+      "effect_model": {
+        "expected_effects": ["phone_call_terminated"],
+        "forbidden_effects": ["external_phone_call_placed", "credential_scope_exceeded"],
+        "reconciliation_required": true
+      },
+      "evidence_model": {
+        "required_evidence": ["connector_id", "call_id", "provider_receipt"],
+        "terminal_certificate_required": true
+      },
+      "authority_policy": {
+        "required_roles": ["phone_operator"],
+        "approval_chain": [],
+        "separation_of_duty": false
+      },
+      "isolation_profile": {
+        "execution_plane": "phone_worker",
+        "network_allowlist": ["api.twilio.com", "api.vonage.com"],
+        "secret_scope": "carrier:voice.terminate"
+      },
+      "recovery_plan": {
+        "rollback_capability": "",
+        "compensation_capability": "",
+        "review_required_on_failure": true
+      },
+      "cost_model": {
+        "budget_class": "connector_write",
+        "max_estimated_cost": 0.01
+      },
+      "obligation_model": {
+        "owner_team": "platform-ops",
+        "failure_due_seconds": 600,
+        "escalation_route": "support@mullusi.com"
+      },
+      "certification_status": "certified",
+      "metadata": {
+        "display_name": "Terminate active phone call",
+        "risk_tier": "medium"
+      },
+      "extensions": {
+        "governed_record": {
+          "read_only": false,
+          "world_mutating": true,
+          "requires_approval": false,
+          "requires_sandbox": true,
+          "allowed_roles": ["phone_operator"],
+          "allowed_tools": ["phone_worker.call_terminate"],
+          "allowed_networks": ["api.twilio.com", "api.vonage.com"],
+          "rollback_or_compensation_required": true
+        }
+      }
+    },
+    {
+      "capability_id": "phone.call.transcript_record",
+      "domain": "phone",
+      "version": "0.1.0",
+      "input_schema_ref": "schemas/phone/call_transcript_record.input.schema.json",
+      "output_schema_ref": "schemas/phone/call_transcript_record.output.schema.json",
+      "effect_model": {
+        "expected_effects": ["phone_call_transcript_recorded"],
+        "forbidden_effects": ["audio_stored", "external_phone_call_placed", "transcript_modified"],
+        "reconciliation_required": true
+      },
+      "evidence_model": {
+        "required_evidence": ["call_id", "transcript_hash", "redaction_hash"],
+        "terminal_certificate_required": true
+      },
+      "authority_policy": {
+        "required_roles": ["phone_operator"],
+        "approval_chain": [],
+        "separation_of_duty": false
+      },
+      "isolation_profile": {
+        "execution_plane": "phone_worker",
+        "network_allowlist": [],
+        "secret_scope": "none"
+      },
+      "recovery_plan": {
+        "rollback_capability": "",
+        "compensation_capability": "",
+        "review_required_on_failure": true
+      },
+      "cost_model": {
+        "budget_class": "standard",
+        "max_estimated_cost": 0.02
+      },
+      "obligation_model": {
+        "owner_team": "platform-ops",
+        "failure_due_seconds": 1800,
+        "escalation_route": "support@mullusi.com"
+      },
+      "certification_status": "certified",
+      "metadata": {
+        "display_name": "Record phone call transcript",
+        "risk_tier": "low"
+      },
+      "extensions": {
+        "governed_record": {
+          "read_only": true,
+          "world_mutating": false,
+          "requires_approval": false,
+          "requires_sandbox": true,
+          "allowed_roles": ["phone_operator"],
+          "allowed_tools": ["phone_worker.call_transcript_record"]
+        }
+      }
+    }
+  ]
+}
