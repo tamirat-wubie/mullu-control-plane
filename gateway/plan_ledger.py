@@ -323,6 +323,13 @@ class CapabilityPlanLedger:
     ) -> CapabilityPlanTerminalCertificate:
         """Issue and record a plan-level terminal certificate."""
         _validate_certifiable_execution(plan=plan, execution=execution)
+        # I-PSI-3 idempotency: if a certificate already exists for this
+        # plan_id, return it unchanged. certificate_id includes issued_at,
+        # so re-issuing under a later clock would otherwise produce a new
+        # id and overwrite the original — silently breaking the audit chain.
+        existing = self._store.load_certificate(plan.plan_id)
+        if existing is not None:
+            return existing
         issued_at = self._clock()
         step_command_ids = tuple(result.command_id for result in execution.step_results)
         certificate_payload = {

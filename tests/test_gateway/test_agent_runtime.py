@@ -166,6 +166,64 @@ def test_handoff_preserves_scope_and_rejects_cross_tenant_expansion() -> None:
     assert receipt.reason == "tenant_boundary_denied"
 
 
+def test_handoff_chain_rejects_cycle_and_excess_depth() -> None:
+    # I-MULTI-24: delegation chains are cycle-detected and depth-bounded.
+    # _handoff_chain_denial (gateway/agent_runtime.py) refuses any handoff
+    # whose to_agent_id has previously appeared as a from_agent_id within
+    # the same task chain (cycle) and refuses chains beyond
+    # MAX_HANDOFF_CHAIN_DEPTH.
+    coordinator = _coordinator_with_supervisor()
+    _spawn_finance_agent(coordinator)
+
+    forward, forward_receipt = coordinator.record_handoff(
+        handoff_id="handoff-chain-001",
+        from_agent_id="agent-supervisor",
+        to_agent_id="agent-finance",
+        tenant_id="tenant-a",
+        goal_id="goal-pay-invoice",
+        task_id="task-pay-001",
+        capability_scope=("payment.dispatch",),
+        budget_cents=4000,
+        context_refs=("trace://run-001",),
+        handed_off_at="2026-05-05T12:10:00Z",
+    )
+    assert forward is not None
+    assert forward_receipt.status == AgentReceiptStatus.RECORDED
+
+    # Cycle: finance hands back to supervisor — refused.
+    backward, backward_receipt = coordinator.record_handoff(
+        handoff_id="handoff-chain-002",
+        from_agent_id="agent-finance",
+        to_agent_id="agent-supervisor",
+        tenant_id="tenant-a",
+        goal_id="goal-pay-invoice",
+        task_id="task-pay-001",
+        capability_scope=("payment.dispatch",),
+        budget_cents=4000,
+        context_refs=("trace://run-002",),
+        handed_off_at="2026-05-05T12:11:00Z",
+    )
+    assert backward is None
+    assert backward_receipt.status == AgentReceiptStatus.REJECTED
+    assert backward_receipt.reason == "handoff_cycle_detected"
+
+    # Cycles for a DIFFERENT task_id are independent — recorded normally.
+    other_task, other_receipt = coordinator.record_handoff(
+        handoff_id="handoff-other-001",
+        from_agent_id="agent-finance",
+        to_agent_id="agent-supervisor",
+        tenant_id="tenant-a",
+        goal_id="goal-pay-invoice",
+        task_id="task-pay-002",
+        capability_scope=("payment.dispatch",),
+        budget_cents=4000,
+        context_refs=("trace://run-other",),
+        handed_off_at="2026-05-05T12:12:00Z",
+    )
+    assert other_task is not None
+    assert other_receipt.status == AgentReceiptStatus.RECORDED
+
+
 def test_self_approval_high_risk_is_denied() -> None:
     coordinator = _coordinator_with_supervisor()
 

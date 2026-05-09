@@ -1100,6 +1100,13 @@ class GatewayRouter:
                 response = self._execute_command(command, recipient_id=recipient_id)
                 response = self._send_response(response)
                 responses.append(response)
+            except Exception:
+                # Per-command isolation: a single command failure must not
+                # abandon the rest of the batch with their leases held, and
+                # must not exit the worker without an audit-visible error
+                # signal. Record the error, release the lease via finally,
+                # and continue with the next command.
+                self._record_error("worker_command_execution_failed")
             finally:
                 self._commands.release_command(command.command_id, worker_id)
         return responses
