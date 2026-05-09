@@ -2134,7 +2134,8 @@
       "audit": "audit_chain",
       "coverage_state": "witnessed",
       "evidence_files": [
-        "mcoi/mcoi_runtime/app/routers/llm.py",
+        "mcoi/mcoi_runtime/app/routers/llm/completion.py",
+        "mcoi/mcoi_runtime/app/routers/llm/chat.py",
         "mcoi/mcoi_runtime/app/streaming.py",
         "mcoi/tests/test_streaming.py",
         "mcoi/tests/test_server_phase200.py",
@@ -2187,7 +2188,7 @@
       "audit": "audit_chain",
       "coverage_state": "witnessed",
       "evidence_files": [
-        "mcoi/mcoi_runtime/app/routers/llm.py",
+        "mcoi/mcoi_runtime/app/routers/llm/completion.py",
         "mcoi/mcoi_runtime/core/proof_bridge.py"
       ],
       "notes": "Completion routes are governed through budget, model routing, and proof bridge checks.",
@@ -2205,7 +2206,7 @@
       "audit": "audit_chain",
       "coverage_state": "witnessed",
       "evidence_files": [
-        "mcoi/mcoi_runtime/app/routers/llm.py",
+        "mcoi/mcoi_runtime/app/routers/llm/chat.py",
         "mcoi/mcoi_runtime/core/proof_bridge.py"
       ],
       "notes": "Chat and workflow routes preserve governed request and action proof boundaries.",
@@ -2223,7 +2224,8 @@
       "audit": "audit_chain",
       "coverage_state": "witnessed",
       "evidence_files": [
-        "mcoi/mcoi_runtime/app/routers/llm.py",
+        "mcoi/mcoi_runtime/app/routers/llm/admin.py",
+        "mcoi/mcoi_runtime/app/routers/llm/costs.py",
         "mcoi/mcoi_runtime/governance/guards/budget.py"
       ],
       "notes": "Budget and cost surfaces expose bounded read models over governed spend state.",
@@ -2315,7 +2317,8 @@
       "audit": "audit_chain",
       "coverage_state": "witnessed",
       "evidence_files": [
-        "mcoi/mcoi_runtime/app/routers/llm.py"
+        "mcoi/mcoi_runtime/app/routers/llm/admin.py",
+        "mcoi/mcoi_runtime/app/routers/llm/ab_test.py"
       ],
       "notes": "Model catalog and experiment control routes are declared as governed control surfaces.",
       "representative_paths": [
@@ -2459,7 +2462,7 @@
       "audit": "audit_chain",
       "coverage_state": "witnessed",
       "evidence_files": [
-        "mcoi/mcoi_runtime/app/routers/data.py",
+        "mcoi/mcoi_runtime/app/routers/data/governance.py",
         "mcoi/mcoi_runtime/core/data_governance.py",
         "mcoi/mcoi_runtime/contracts/data_governance.py",
         "mcoi/tests/test_data_governance_endpoints.py",
@@ -4126,7 +4129,7 @@
       "audit": "audit_chain",
       "coverage_state": "witnessed",
       "evidence_files": [
-        "mcoi/mcoi_runtime/app/routers/data.py",
+        "mcoi/mcoi_runtime/app/routers/data/tools.py",
         "mcoi/mcoi_runtime/app/routers/workflow.py",
         "mcoi/mcoi_runtime/core/tool_use.py",
         "mcoi/mcoi_runtime/mcp/capability_bridge.py",

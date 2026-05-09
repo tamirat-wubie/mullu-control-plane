@@ -103,7 +103,8 @@ def proof_coverage_matrix() -> dict[str, Any]:
             "audit_chain",
             "witnessed",
             [
-                "mcoi/mcoi_runtime/app/routers/llm.py",
+                "mcoi/mcoi_runtime/app/routers/llm/completion.py",
+                "mcoi/mcoi_runtime/app/routers/llm/chat.py",
                 "mcoi/mcoi_runtime/app/streaming.py",
                 "mcoi/tests/test_streaming.py",
                 "mcoi/tests/test_server_phase200.py",
@@ -152,7 +153,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
             "audit_chain",
             "witnessed",
             [
-                "mcoi/mcoi_runtime/app/routers/llm.py",
+                "mcoi/mcoi_runtime/app/routers/llm/completion.py",
                 "mcoi/mcoi_runtime/core/proof_bridge.py",
             ],
             "Completion routes are governed through budget, model routing, and proof bridge checks.",
@@ -165,7 +166,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
             "audit_chain",
             "witnessed",
             [
-                "mcoi/mcoi_runtime/app/routers/llm.py",
+                "mcoi/mcoi_runtime/app/routers/llm/chat.py",
                 "mcoi/mcoi_runtime/core/proof_bridge.py",
             ],
             "Chat and workflow routes preserve governed request and action proof boundaries.",
@@ -185,7 +186,8 @@ def proof_coverage_matrix() -> dict[str, Any]:
             "audit_chain",
             "witnessed",
             [
-                "mcoi/mcoi_runtime/app/routers/llm.py",
+                "mcoi/mcoi_runtime/app/routers/llm/admin.py",
+                "mcoi/mcoi_runtime/app/routers/llm/costs.py",
                 "mcoi/mcoi_runtime/governance/guards/budget.py",
             ],
             "Budget and cost surfaces expose bounded read models over governed spend state.",
@@ -268,7 +270,10 @@ def proof_coverage_matrix() -> dict[str, Any]:
             "action_proof",
             "audit_chain",
             "witnessed",
-            ["mcoi/mcoi_runtime/app/routers/llm.py"],
+            [
+                "mcoi/mcoi_runtime/app/routers/llm/admin.py",
+                "mcoi/mcoi_runtime/app/routers/llm/ab_test.py",
+            ],
             "Model catalog and experiment control routes are declared as governed control surfaces.",
         ),
         _surface(
@@ -410,7 +415,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
             "audit_chain",
             "witnessed",
             [
-                "mcoi/mcoi_runtime/app/routers/data.py",
+                "mcoi/mcoi_runtime/app/routers/data/governance.py",
                 "mcoi/mcoi_runtime/core/data_governance.py",
                 "mcoi/mcoi_runtime/contracts/data_governance.py",
                 "mcoi/tests/test_data_governance_endpoints.py",
@@ -2045,7 +2050,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
             "audit_chain",
             "witnessed",
             [
-                "mcoi/mcoi_runtime/app/routers/data.py",
+                "mcoi/mcoi_runtime/app/routers/data/tools.py",
                 "mcoi/mcoi_runtime/app/routers/workflow.py",
                 "mcoi/mcoi_runtime/core/tool_use.py",
                 "mcoi/mcoi_runtime/mcp/capability_bridge.py",

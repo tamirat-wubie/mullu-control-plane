@@ -218,7 +218,7 @@ def test_data_governance_controls_surface_is_witnessed() -> None:
     assert data_surface["action_proof"] == "action_proof"
     assert "/api/v1/data-governance/classify" in data_surface["representative_paths"]
     assert "/api/v1/data-governance/evaluate" in data_surface["representative_paths"]
-    assert "mcoi/mcoi_runtime/app/routers/data.py" in data_surface["evidence_files"]
+    assert "mcoi/mcoi_runtime/app/routers/data/governance.py" in data_surface["evidence_files"]
     assert "mcoi/mcoi_runtime/core/data_governance.py" in data_surface["evidence_files"]
     assert "mcoi/tests/test_data_governance_endpoints.py" in data_surface["evidence_files"]
     assert "data_governance_state_hash" in witnesses
