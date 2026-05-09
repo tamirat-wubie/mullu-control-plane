@@ -1,0 +1,26 @@
+{
+  "capsule_id": "phone.call_ops.v0",
+  "domain": "phone",
+  "version": "0.1.0",
+  "ontology_refs": ["ontologies/phone/call_ops.json"],
+  "capability_refs": [
+    "phone.call.place.with_approval",
+    "phone.call.receive",
+    "phone.call.transfer.with_approval",
+    "phone.call.terminate",
+    "phone.call.transcript_record"
+  ],
+  "policy_refs": ["policies/phone/call_ops.policy.json"],
+  "evidence_rules": ["evidence/phone/call_ops.evidence.json"],
+  "approval_rules": ["approval/phone/call_ops.approval.json"],
+  "recovery_rules": ["recovery/phone/call_ops.recovery.json"],
+  "test_fixture_refs": ["tests/fixtures/phone/call_ops"],
+  "read_model_refs": ["read_models/phone/call_ops.json"],
+  "operator_view_refs": ["operator_views/phone/call_ops.json"],
+  "owner_team": "platform-ops",
+  "certification_status": "certified",
+  "metadata": {
+    "purpose": "Certified phone worker declarations for outbound call placement, inbound call receipt, transfer, termination, and transcript recording across PSTN/VOIP connectors"
+  },
+  "extensions": {}
+}
