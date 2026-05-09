@@ -28,6 +28,7 @@ from gateway.command_spine import (
     CommandAnchor,
     CommandEvent,
     CommandLedger,
+    CommandState,
     _anchor_signature_payload,
     _compute_merkle_root,
     canonical_hash,
@@ -296,6 +297,55 @@ class AuditTraceVerifier:
             failures=tuple(failures),
         )
 
+    def verify_replay_state_consistency(self, command_id: str) -> "ReplayStateVerification":
+        """Replay events for a command and compare derived state against live state.
+
+        The event log is the source of truth: walking events in append order
+        yields a sequence of state transitions whose final state must match
+        what the ledger currently reports. Any divergence indicates the live
+        state was modified outside the event log (the audit-bypass attack
+        surface).
+        """
+        command = self._ledger.get(command_id)
+        if command is None:
+            return ReplayStateVerification(
+                command_id=command_id,
+                command_present=False,
+                replayed_state=None,
+                live_state=None,
+                states_match=False,
+                event_count=0,
+                failures=("command_not_found",),
+            )
+        events = self._ledger.events_for(command_id)
+        failures: list[str] = []
+        replayed_state: CommandState | None = None
+        for event in events:
+            replayed_state = event.next_state
+        if replayed_state is None:
+            failures.append("replay_no_events_for_command")
+            return ReplayStateVerification(
+                command_id=command_id,
+                command_present=True,
+                replayed_state=None,
+                live_state=command.state,
+                states_match=False,
+                event_count=0,
+                failures=tuple(failures),
+            )
+        states_match = replayed_state == command.state
+        if not states_match:
+            failures.append("replay_state_diverges_from_live")
+        return ReplayStateVerification(
+            command_id=command_id,
+            command_present=True,
+            replayed_state=replayed_state,
+            live_state=command.state,
+            states_match=states_match,
+            event_count=len(events),
+            failures=tuple(failures),
+        )
+
     def verify_tenant_isolation(self, command_id: str) -> "TenantIsolationVerification":
         """Verify the command's tenant_id is consistent across every artifact.
 
@@ -361,6 +411,7 @@ class AuditTraceVerifier:
         global_chain = self.verify_global_event_chain()
         approval = self.verify_approval_chain(command_id, obligation_mesh=obligation_mesh)
         tenant = self.verify_tenant_isolation(command_id)
+        replay = self.verify_replay_state_consistency(command_id)
         anchor: AnchorVerification | None = None
         if anchor_id:
             if not anchor_signing_secret:
@@ -376,6 +427,7 @@ class AuditTraceVerifier:
         all_failures.extend(global_chain.failures)
         all_failures.extend(approval.failures)
         all_failures.extend(tenant.failures)
+        all_failures.extend(replay.failures)
         if anchor is not None:
             all_failures.extend(anchor.failures)
         if bundle_check is not None:
@@ -386,6 +438,7 @@ class AuditTraceVerifier:
             global_chain=global_chain,
             approval=approval,
             tenant=tenant,
+            replay=replay,
             anchor=anchor,
             bundle=bundle_check,
             failures=tuple(all_failures),
@@ -425,6 +478,24 @@ class AnchorVerification:
 
 
 @dataclass(frozen=True, slots=True)
+class ReplayStateVerification:
+    """Bounded outcome of one command's state-replay verification."""
+
+    command_id: str
+    command_present: bool
+    replayed_state: CommandState | None
+    live_state: CommandState | None
+    states_match: bool
+    event_count: int
+    failures: tuple[str, ...]
+
+    @property
+    def fully_replayed(self) -> bool:
+        """True iff zero structured failures."""
+        return not self.failures
+
+
+@dataclass(frozen=True, slots=True)
 class TenantIsolationVerification:
     """Bounded outcome of one command's tenant-boundary check."""
 
@@ -450,6 +521,7 @@ class FullVerification:
     global_chain: "GlobalChainVerification"
     approval: "ApprovalChainVerification"
     tenant: "TenantIsolationVerification"
+    replay: "ReplayStateVerification"
     anchor: "AnchorVerification | None"
     bundle: "TrustBundleVerification | None"
     failures: tuple[str, ...]
