@@ -58,12 +58,11 @@ from mcoi_runtime.core.event_spine import EventSpineEngine
 from .closures import IntentClosure
 from .primitives import (
     EntityId,
+    IntentId,
     IntentPredicate,
     StateView,
     gather_vector,
 )
-
-IntentId = str
 
 
 @dataclass
@@ -161,7 +160,7 @@ class IntentResolver:
         candidate confirms run against their original baseline before
         the new event has a chance to overwrite it.
         """
-        emitted: list[Any] = list(self.tick())
+        emitted: list[Any] = list(self._tick_no_notify())
         with self._lock:
             affected = set(self._index.get(event.event_type, set()))
         now = self._clock()
@@ -172,7 +171,7 @@ class IntentResolver:
                     continue
                 self._last_eval_at[iid] = now
             emitted.extend(self._evaluate_one(iid))
-        emitted.extend(self.tick())
+        emitted.extend(self._tick_no_notify())
         for record in emitted:
             self._notify(record)
         return emitted
@@ -184,15 +183,27 @@ class IntentResolver:
 
     def evaluate(self, intent_id: IntentId) -> list[Any]:
         """Re-evaluate a single intent on demand (no event)."""
-        emitted: list[Any] = list(self.tick())
+        emitted: list[Any] = list(self._tick_no_notify())
         emitted.extend(self._evaluate_one(intent_id))
-        emitted.extend(self.tick())
+        emitted.extend(self._tick_no_notify())
         for record in emitted:
             self._notify(record)
         return emitted
 
     def tick(self) -> list[Any]:
-        """Process pending two-confirm candidates whose window has ripened."""
+        """Process pending two-confirm candidates whose window has ripened.
+
+        Public entry point — notifies observers for any closures it
+        produces. Use this from BackgroundTicker or any external caller
+        that does not separately notify; internal call sites use
+        `_tick_no_notify` to avoid double-notification.
+        """
+        emitted = self._tick_no_notify()
+        for record in emitted:
+            self._notify(record)
+        return emitted
+
+    def _tick_no_notify(self) -> list[Any]:
         emitted: list[Any] = []
         now = self._clock()
         with self._lock:
@@ -307,6 +318,10 @@ class IntentResolver:
 
 
 class _Verdict:
-    OPEN = "open"
-    BROKEN = "broken"
-    SUCCESS = "success"
+    """Internal sentinel objects. `object()` so `is` comparisons are
+    unambiguous identity checks (string literals would work via CPython
+    interning but the behavior is implementation-dependent).
+    """
+    OPEN = object()
+    BROKEN = object()
+    SUCCESS = object()

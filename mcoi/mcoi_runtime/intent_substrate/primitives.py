@@ -1,10 +1,12 @@
 """Core primitives for the intent substrate.
 
-The substrate layers automatic predicate-driven obligation closure on
-top of the existing mcoi engines:
+The substrate layers automatic predicate-driven *intent closure* on
+top of the existing mcoi engines. The lifecycle backend (what
+"closing" means in your domain) is supplied by the caller via an
+IntentClosure adapter — the resolver itself is state-machine-agnostic.
 
-  - Lifecycle:    ObligationRuntimeEngine (PENDING -> ACTIVE -> closed)
-  - Audit trail:  EventSpineEngine        (event records, correlations)
+  - Audit trail:  EventSpineEngine (event records, correlations)
+  - Closure:      caller-supplied IntentClosure (e.g. ObligationClosureAdapter)
 
 Notably, the substrate does NOT couple to WorldStateEngine. That engine
 holds evidence-derived, immutable entities — the wrong primitive for
@@ -45,6 +47,7 @@ from typing import Any, Callable, Mapping, Protocol, runtime_checkable
 from mcoi_runtime.contracts.event import EventType
 
 EntityId = str
+IntentId = str
 
 #: Caller-supplied state lookup. Returns the current attribute mapping
 #: for the entity, or None if it does not (yet) exist.

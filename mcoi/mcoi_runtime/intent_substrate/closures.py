@@ -30,9 +30,7 @@ from mcoi_runtime.contracts.obligation import (
 )
 from mcoi_runtime.core.obligation_runtime import ObligationRuntimeEngine
 
-from .primitives import EntityId
-
-IntentId = str
+from .primitives import IntentId
 
 
 @runtime_checkable

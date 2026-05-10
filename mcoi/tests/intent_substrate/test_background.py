@@ -82,6 +82,37 @@ def test_idle_fulfillment_drives_pending_to_close_success():
     assert len(closure.successes) == 1
 
 
+def test_observer_notified_for_background_ticker_close():
+    """Regression: tick() must notify closure observers, even when
+    invoked from BackgroundTicker (not from evaluate/on_event). If
+    tick() returns records but doesn't call _notify, observers stay
+    silent and downstream consumers (audit, logging, metrics) miss
+    every background-driven closure."""
+    state, closure, resolver = _build_resolver(confirm_window_s=0.1)
+    state.set("vendor", {"shipped": True})
+    closure.register("i1")
+    resolver.register_intent(
+        "i1", preconditions=(),
+        success=(EntityAttributeEq("vendor", "shipped", True),),
+    )
+    resolver.evaluate("i1")  # creates pending — no notify yet
+    assert resolver.pending_count() == 1
+
+    received = []
+    resolver.add_closure_observer(lambda r: received.append(r))
+
+    with BackgroundTicker(resolver, interval_s=0.02):
+        deadline = time.monotonic() + 1.5
+        while time.monotonic() < deadline:
+            if received:
+                break
+            time.sleep(0.01)
+
+    assert len(received) == 1, (
+        "BackgroundTicker drove the close but observer was not notified"
+    )
+
+
 def test_ticker_survives_resolver_exceptions(caplog):
     _state, _closure, resolver = _build_resolver()
     call_count = {"n": 0}
