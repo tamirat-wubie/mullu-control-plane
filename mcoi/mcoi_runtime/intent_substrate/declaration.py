@@ -11,11 +11,12 @@ IntentClosure backend (e.g. a service-catalog request adapter), don't
 use this helper; create the lifecycle record yourself and call
 resolver.register_intent directly.
 
-The substrate stores no parallel "intent" record — the obligation IS
-the intent's durable identity, lifecycle, audit trail, owner,
-deadline, and metadata. Predicates live in resolver memory only;
-restart loses them. For durable predicates, persist them in obligation
-metadata and reload on startup — out of scope here.
+The obligation IS the intent's durable identity, lifecycle, audit
+trail, owner, deadline, and metadata. As of the persistence layer,
+predicates are also durably stored: declare_intent serializes them
+into obligation.metadata under `persistence.METADATA_KEY`, and
+`persistence.restore_intents_from_obligations` rebuilds the resolver's
+in-memory registry on startup.
 """
 
 from __future__ import annotations
@@ -30,6 +31,7 @@ from mcoi_runtime.contracts.obligation import (
 )
 from mcoi_runtime.core.obligation_runtime import ObligationRuntimeEngine
 
+from .persistence import METADATA_KEY, serialize_predicate_set
 from .primitives import IntentPredicate
 from .resolver import IntentResolver
 
@@ -48,10 +50,17 @@ def declare_intent(
     trigger_ref_id: str | None = None,
     extra_metadata: dict[str, str] | None = None,
 ) -> ObligationRecord:
-    """Create the obligation, register the predicates, return the obligation."""
+    """Create the obligation, register the predicates, return the obligation.
+
+    Predicates are serialized into obligation metadata so they survive
+    a process restart — see `persistence.restore_intents_from_obligations`.
+    """
+    pre_t = tuple(preconditions)
+    succ_t = tuple(success)
     metadata: dict[str, object] = {
         "intent_substrate": "true",
-        "predicate_count": str(len(preconditions) + len(success)),
+        "predicate_count": str(len(pre_t) + len(succ_t)),
+        METADATA_KEY: serialize_predicate_set(pre_t, succ_t),
     }
     if extra_metadata:
         metadata.update(extra_metadata)
@@ -66,7 +75,7 @@ def declare_intent(
     )
     resolver.register_intent(
         obligation.obligation_id,
-        preconditions=preconditions,
-        success=success,
+        preconditions=pre_t,
+        success=succ_t,
     )
     return obligation
