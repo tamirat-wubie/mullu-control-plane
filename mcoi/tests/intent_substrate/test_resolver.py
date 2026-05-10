@@ -1,160 +1,143 @@
-"""Tests for IntentResolver — register, dispatch, two-confirm safety."""
+"""Tests for IntentResolver — verdict logic, two-confirm safety, dispatch.
+
+These tests use RecordingClosure (state-machine-agnostic) so they
+exercise resolver behavior without coupling to ObligationRuntimeEngine.
+For obligation-backed end-to-end behavior, see test_integration.py
+and test_declaration.py.
+"""
 
 from __future__ import annotations
 
-import pytest
-
 from mcoi_runtime.contracts.event import EventType
-from mcoi_runtime.contracts.obligation import (
-    ObligationState,
-    ObligationTrigger,
-)
 from mcoi_runtime.core.event_spine import EventSpineEngine
-from mcoi_runtime.core.obligation_runtime import ObligationRuntimeEngine
 from mcoi_runtime.intent_substrate import (
     EntityAttributeEq,
     EntityAttributeThreshold,
     IntentResolver,
-    declare_intent,
 )
 
-from .conftest import FakeClock, MutableState, make_deadline, make_event, make_owner
+from .conftest import FakeClock, MutableState, RecordingClosure, make_event
 
 
 def _build(*, confirm_window_s=0.5, debounce_window_s=0.0):
     state = MutableState()
-    obligations = ObligationRuntimeEngine()
+    closure = RecordingClosure()
     spine = EventSpineEngine()
     clock = FakeClock()
     resolver = IntentResolver(
         state_view=state,
-        obligations=obligations,
+        closure=closure,
         spine=spine,
         confirm_window_s=confirm_window_s,
         debounce_window_s=debounce_window_s,
         clock=clock,
     )
-    return state, obligations, spine, resolver, clock
+    return state, closure, spine, resolver, clock
 
 
-def test_register_unknown_obligation_rejected():
-    _state, obligations, spine, resolver, _clock = _build()
-    with pytest.raises(LookupError):
-        resolver.register_intent(
-            "obl-nope", preconditions=(), success=()
-        )
+def _register(resolver, closure, intent_id, *, preconditions=(), success=()):
+    closure.register(intent_id)
+    resolver.register_intent(
+        intent_id, preconditions=preconditions, success=success
+    )
 
 
-def test_open_when_pre_holds_no_success():
-    state, obligations, spine, resolver, _clock = _build()
+def test_open_when_pre_holds_no_success_no_close():
+    state, closure, _spine, resolver, _clock = _build()
     state.set("vendor", {"approved": True})
-    obl = declare_intent(
-        resolver=resolver, obligation_engine=obligations,
-        owner=make_owner(), deadline=make_deadline(),
-        description="d", correlation_id="c",
+    _register(
+        resolver, closure, "i1",
         preconditions=(EntityAttributeEq("vendor", "approved", True),),
         success=(EntityAttributeEq("vendor", "shipped", True),),
     )
-    resolver.evaluate(obl.obligation_id)
-    assert obligations.get_obligation(obl.obligation_id).state == ObligationState.PENDING
+    resolver.evaluate("i1")
+    assert closure.successes == []
+    assert closure.failures == []
 
 
-def test_precondition_failure_cancels_obligation():
-    state, obligations, spine, resolver, _clock = _build()
+def test_precondition_failure_calls_close_precondition_failed():
+    state, closure, _spine, resolver, _clock = _build()
     state.set("vendor", {"approved": False})
-    obl = declare_intent(
-        resolver=resolver, obligation_engine=obligations,
-        owner=make_owner(), deadline=make_deadline(),
-        description="d", correlation_id="c",
+    _register(
+        resolver, closure, "i1",
         preconditions=(EntityAttributeEq("vendor", "approved", True),),
         success=(),
     )
-    resolver.evaluate(obl.obligation_id)
-    refreshed = obligations.get_obligation(obl.obligation_id)
-    assert refreshed.state == ObligationState.CANCELLED
+    resolver.evaluate("i1")
+    assert len(closure.failures) == 1
+    assert closure.failures[0][0] == "i1"
+    assert "precondition" in closure.failures[0][1]
 
 
-def test_two_confirm_path_to_completed():
-    state, obligations, spine, resolver, clock = _build(confirm_window_s=0.5)
+def test_two_confirm_path_to_close_success():
+    state, closure, _spine, resolver, clock = _build(confirm_window_s=0.5)
     state.set("vendor", {"approved": True, "shipped": True})
-    obl = declare_intent(
-        resolver=resolver, obligation_engine=obligations,
-        owner=make_owner(), deadline=make_deadline(),
-        description="d", correlation_id="c",
+    _register(
+        resolver, closure, "i1",
         preconditions=(EntityAttributeEq("vendor", "approved", True),),
         success=(EntityAttributeEq("vendor", "shipped", True),),
     )
-    resolver.evaluate(obl.obligation_id)
-    # After first eval, candidate fulfillment is pending — not yet COMPLETED.
-    assert obligations.get_obligation(obl.obligation_id).state == ObligationState.PENDING
+    resolver.evaluate("i1")
+    # First eval: candidate pending — no close yet.
+    assert closure.successes == []
     assert resolver.pending_count() == 1
 
     clock.advance(0.6)
-    resolver.evaluate(obl.obligation_id)
-    assert obligations.get_obligation(obl.obligation_id).state == ObligationState.COMPLETED
+    resolver.evaluate("i1")
+    assert len(closure.successes) == 1
+    assert closure.successes[0][0] == "i1"
     assert resolver.pending_count() == 0
 
 
 def test_two_confirm_rejects_when_state_advances():
     """Phantom-fulfillment defense: if any relevant entity hash advances
-    between candidate and confirm, fulfillment is rejected — even if
-    success still passes against the new state. Safety property: NOT
-    COMPLETED until a baseline survives the full confirm window with
-    no advance."""
-    state, obligations, spine, resolver, clock = _build(confirm_window_s=0.5)
+    between candidate and confirm, success is rejected even if the
+    success predicate still passes against the new state. Safety: never
+    close_success unless a baseline survives the full confirm window."""
+    state, closure, _spine, resolver, clock = _build(confirm_window_s=0.5)
     state.set("vendor", {"approved": True, "shipped": True})
-    obl = declare_intent(
-        resolver=resolver, obligation_engine=obligations,
-        owner=make_owner(), deadline=make_deadline(),
-        description="d", correlation_id="c",
+    _register(
+        resolver, closure, "i1",
         preconditions=(EntityAttributeEq("vendor", "approved", True),),
         success=(EntityAttributeEq("vendor", "shipped", True),),
     )
-    resolver.evaluate(obl.obligation_id)
+    resolver.evaluate("i1")
 
     # Mutate an unrelated attribute — hash changes, value still satisfies.
     state.update("vendor", touched_at="now")
     clock.advance(0.6)
-    resolver.evaluate(obl.obligation_id)
-    # Safety property: NOT COMPLETED.
-    assert obligations.get_obligation(obl.obligation_id).state != ObligationState.COMPLETED
+    resolver.evaluate("i1")
+    # Safety property: NO close_success.
+    assert closure.successes == []
 
 
 def test_two_confirm_rejects_when_success_no_longer_holds():
-    state, obligations, spine, resolver, clock = _build(confirm_window_s=0.5)
+    state, closure, _spine, resolver, clock = _build(confirm_window_s=0.5)
     state.set("vendor", {"approved": True, "shipped": True})
-    obl = declare_intent(
-        resolver=resolver, obligation_engine=obligations,
-        owner=make_owner(), deadline=make_deadline(),
-        description="d", correlation_id="c",
+    _register(
+        resolver, closure, "i1",
         preconditions=(EntityAttributeEq("vendor", "approved", True),),
         success=(EntityAttributeEq("vendor", "shipped", True),),
     )
-    resolver.evaluate(obl.obligation_id)
+    resolver.evaluate("i1")
 
     state.update("vendor", shipped=False)
     clock.advance(0.6)
-    resolver.evaluate(obl.obligation_id)
-    assert obligations.get_obligation(obl.obligation_id).state != ObligationState.COMPLETED
+    resolver.evaluate("i1")
+    assert closure.successes == []
 
 
 def test_event_dispatch_routes_only_to_indexed_intents():
-    state, obligations, spine, resolver, _clock = _build(confirm_window_s=0.1)
-    state.set("vendor", {"approved": True, "shipped": True})
-    state.set("budget", {"allocated": 0})
+    state, closure, _spine, resolver, _clock = _build(confirm_window_s=0.1)
+    state.set("vendor", {"shipped": True})
+    state.set("budget", {"approved": True})
 
-    obl_a = declare_intent(
-        resolver=resolver, obligation_engine=obligations,
-        owner=make_owner(), deadline=make_deadline(),
-        description="A", correlation_id="cA",
-        preconditions=(),
+    _register(
+        resolver, closure, "i_vendor",
         success=(EntityAttributeEq("vendor", "shipped", True),),
     )
-    obl_b = declare_intent(
-        resolver=resolver, obligation_engine=obligations,
-        owner=make_owner(), deadline=make_deadline(),
-        description="B", correlation_id="cB",
-        preconditions=(),
+    _register(
+        resolver, closure, "i_budget",
         success=(
             EntityAttributeEq(
                 "budget", "approved", True,
@@ -162,106 +145,95 @@ def test_event_dispatch_routes_only_to_indexed_intents():
             ),
         ),
     )
-    closures = []
-    resolver.add_closure_observer(lambda c: closures.append(c.obligation_id))
 
-    # WORLD_STATE_CHANGED event: only obl_a watches that type.
+    # WORLD_STATE_CHANGED — only i_vendor watches that type.
     resolver.on_event(make_event(EventType.WORLD_STATE_CHANGED))
-
-    # obl_a should have entered pending fulfillment (success holds).
-    a = obligations.get_obligation(obl_a.obligation_id)
-    b = obligations.get_obligation(obl_b.obligation_id)
-    assert a.state == ObligationState.PENDING  # candidate, not yet confirmed
+    # i_vendor should be in pending (success holds, awaits confirm).
     assert resolver.pending_count() == 1
-    assert b.state == ObligationState.PENDING
 
 
 def test_event_for_unsubscribed_type_ignored():
-    state, obligations, spine, resolver, _clock = _build()
+    state, closure, _spine, resolver, _clock = _build()
     state.set("vendor", {"approved": True})
-    obl = declare_intent(
-        resolver=resolver, obligation_engine=obligations,
-        owner=make_owner(), deadline=make_deadline(),
-        description="d", correlation_id="c",
+    _register(
+        resolver, closure, "i1",
         preconditions=(EntityAttributeEq("vendor", "approved", True),),
         success=(EntityAttributeEq("vendor", "shipped", True),),
     )
-    closures = []
-    resolver.add_closure_observer(lambda c: closures.append(c))
-
-    # Event type the predicate does NOT watch.
+    # Type the predicate doesn't watch.
     resolver.on_event(make_event(EventType.JOB_STATE_TRANSITION))
-    assert closures == []
+    assert closure.successes == []
+    assert closure.failures == []
     assert resolver.pending_count() == 0
 
 
 def test_emit_and_dispatch_writes_to_spine():
-    state, obligations, spine, resolver, _clock = _build()
-    state.set("vendor", {"approved": True, "shipped": True})
-    declare_intent(
-        resolver=resolver, obligation_engine=obligations,
-        owner=make_owner(), deadline=make_deadline(),
-        description="d", correlation_id="c",
-        preconditions=(),
+    state, closure, spine, resolver, _clock = _build()
+    state.set("vendor", {"shipped": True})
+    _register(
+        resolver, closure, "i1",
         success=(EntityAttributeEq("vendor", "shipped", True),),
     )
     event = make_event(EventType.WORLD_STATE_CHANGED)
     resolver.emit_and_dispatch(event)
-    # The event made it into the spine.
     assert spine.get_event(event.event_id) is event
 
 
-def test_deregistered_intent_no_longer_responds():
-    state, obligations, spine, resolver, _clock = _build()
-    state.set("vendor", {"approved": True, "shipped": True})
-    obl = declare_intent(
-        resolver=resolver, obligation_engine=obligations,
-        owner=make_owner(), deadline=make_deadline(),
-        description="d", correlation_id="c",
-        preconditions=(),
+def test_deregister_stops_responses():
+    state, closure, _spine, resolver, _clock = _build()
+    state.set("vendor", {"shipped": True})
+    _register(
+        resolver, closure, "i1",
         success=(EntityAttributeEq("vendor", "shipped", True),),
     )
-    resolver.deregister_intent(obl.obligation_id)
-    assert not resolver.is_registered(obl.obligation_id)
+    resolver.deregister_intent("i1")
+    assert not resolver.is_registered("i1")
     resolver.on_event(make_event(EventType.WORLD_STATE_CHANGED))
-    # Obligation is still PENDING; resolver no longer drives it.
-    assert obligations.get_obligation(obl.obligation_id).state == ObligationState.PENDING
+    assert closure.successes == []
 
 
-def test_already_closed_obligation_skipped():
-    state, obligations, spine, resolver, _clock = _build()
-    state.set("vendor", {"approved": True, "shipped": True})
-    obl = declare_intent(
-        resolver=resolver, obligation_engine=obligations,
-        owner=make_owner(), deadline=make_deadline(),
-        description="d", correlation_id="c",
-        preconditions=(),
+def test_intent_with_closed_lifecycle_self_cleans():
+    """If an intent is closed externally (closure.is_open returns False),
+    the resolver self-cleans on its next look at the intent."""
+    state, closure, _spine, resolver, _clock = _build()
+    state.set("vendor", {"shipped": True})
+    _register(
+        resolver, closure, "i1",
         success=(EntityAttributeEq("vendor", "shipped", True),),
     )
-    obligations.close(
-        obl.obligation_id,
-        final_state=ObligationState.CANCELLED,
-        reason="manual cancel",
-        closed_by="test",
-    )
-    # Resolver evaluation should noop and self-clean.
-    resolver.evaluate(obl.obligation_id)
-    assert not resolver.is_registered(obl.obligation_id)
+    # Close externally (e.g. manual cancel).
+    closure._open.discard("i1")
+    resolver.evaluate("i1")
+    assert not resolver.is_registered("i1")
+    assert closure.successes == []  # not closed by resolver
 
 
 def test_threshold_predicate_end_to_end():
-    state, obligations, spine, resolver, clock = _build(confirm_window_s=0.1)
+    state, closure, _spine, resolver, clock = _build(confirm_window_s=0.1)
     state.set("queue", {"depth": 0})
-    obl = declare_intent(
-        resolver=resolver, obligation_engine=obligations,
-        owner=make_owner(), deadline=make_deadline(),
-        description="d", correlation_id="c",
-        preconditions=(),
+    _register(
+        resolver, closure, "i1",
         success=(EntityAttributeThreshold("queue", "depth", "<=", 0),),
     )
-    resolver.evaluate(obl.obligation_id)
-    assert obligations.get_obligation(obl.obligation_id).state == ObligationState.PENDING
+    resolver.evaluate("i1")
     assert resolver.pending_count() == 1
     clock.advance(0.2)
-    resolver.evaluate(obl.obligation_id)
-    assert obligations.get_obligation(obl.obligation_id).state == ObligationState.COMPLETED
+    resolver.evaluate("i1")
+    assert len(closure.successes) == 1
+
+
+def test_observer_receives_closure_records():
+    state, closure, _spine, resolver, clock = _build(confirm_window_s=0.1)
+    state.set("vendor", {"shipped": True})
+    _register(
+        resolver, closure, "i1",
+        success=(EntityAttributeEq("vendor", "shipped", True),),
+    )
+    received = []
+    resolver.add_closure_observer(lambda r: received.append(r))
+    resolver.evaluate("i1")
+    clock.advance(0.2)
+    resolver.evaluate("i1")
+    # Observer should have received the success record from the closure.
+    assert len(received) == 1
+    assert received[0] == ("success", "i1", "intent_substrate: success predicates confirmed")

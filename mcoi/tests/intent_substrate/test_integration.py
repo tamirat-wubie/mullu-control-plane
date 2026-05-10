@@ -1,10 +1,12 @@
 """End-to-end integration test — vendor onboarding intent driven through
 its full lifecycle across all three engines (ObligationRuntimeEngine,
-EventSpineEngine, IntentResolver) with a realistic two-entity AND
-success condition.
+EventSpineEngine, IntentResolver) using ObligationClosureAdapter as
+the lifecycle backend.
 
 This is the textbook AND-across-entities case the substrate is designed
-to handle correctly under non-linearizable cross-entity reads.
+to handle correctly under non-linearizable cross-entity reads, AND it
+proves the obligation adapter wires the resolver cleanly to a real
+state machine.
 """
 
 from __future__ import annotations
@@ -20,6 +22,7 @@ from mcoi_runtime.intent_substrate import (
     EntityAttributeEq,
     EntityAttributeThreshold,
     IntentResolver,
+    ObligationClosureAdapter,
     declare_intent,
 )
 
@@ -41,7 +44,7 @@ def _build_intent():
     spine = EventSpineEngine()
     resolver = IntentResolver(
         state_view=state,
-        obligations=obligations,
+        closure=ObligationClosureAdapter(obligations),
         spine=spine,
         confirm_window_s=0.1,
         debounce_window_s=0.0,
@@ -54,8 +57,6 @@ def _build_intent():
         success=(
             EntityAttributeEq(
                 "approval:vendor-001", "status", "approved",
-                # Subscribe to BOTH approval events and the coarse
-                # WORLD_STATE_CHANGED for safety.
                 watches_kinds=(
                     EventType.APPROVAL_DECIDED,
                     EventType.WORLD_STATE_CHANGED,
@@ -88,7 +89,7 @@ def test_full_lifecycle_completes_when_both_conditions_meet():
         state.update("approval:vendor-001", status="approved")
         resolver.on_event(make_event(EventType.APPROVAL_DECIDED))
         time.sleep(0.05)
-        # Budget still 0, so success doesn't hold.
+        # Budget still 0, success doesn't hold.
         assert obligations.get_obligation(obl.obligation_id).state == ObligationState.PENDING
         assert resolver.pending_count() == 0
 
@@ -99,8 +100,8 @@ def test_full_lifecycle_completes_when_both_conditions_meet():
         assert obligations.get_obligation(obl.obligation_id).state == ObligationState.PENDING
         assert resolver.pending_count() == 0
 
-        # Step 4: top up to 11k (meets threshold). Both conditions now
-        # hold; resolver enters PENDING_FULFILLMENT and ticker confirms.
+        # Step 4: top up to 11k. Both conditions hold; resolver enters
+        # candidate fulfillment, ticker confirms, obligation closes.
         state.update("budget:vendor", allocated=11_000)
         resolver.on_event(make_event(EventType.WORLD_STATE_CHANGED))
 
@@ -120,3 +121,26 @@ def test_intent_substrate_metadata_persisted_on_obligation():
     _state, obligations, _spine, _resolver, obl = _build_intent()
     fetched = obligations.get_obligation(obl.obligation_id)
     assert fetched.metadata.get("intent_substrate") == "true"
+
+
+def test_precondition_failure_cancels_obligation():
+    state = MutableState()
+    obligations = ObligationRuntimeEngine()
+    spine = EventSpineEngine()
+    resolver = IntentResolver(
+        state_view=state,
+        closure=ObligationClosureAdapter(obligations),
+        spine=spine,
+        confirm_window_s=0.1,
+        debounce_window_s=0.0,
+    )
+    state.set("vendor", {"approved": False})
+    obl = declare_intent(
+        resolver=resolver, obligation_engine=obligations,
+        owner=make_owner(), deadline=make_deadline(),
+        description="d", correlation_id="c",
+        preconditions=(EntityAttributeEq("vendor", "approved", True),),
+        success=(),
+    )
+    resolver.evaluate(obl.obligation_id)
+    assert obligations.get_obligation(obl.obligation_id).state == ObligationState.CANCELLED

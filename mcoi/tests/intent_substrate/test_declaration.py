@@ -1,4 +1,4 @@
-"""Tests for declare_intent — wiring obligation creation + resolver registration."""
+"""Tests for declare_intent — obligation creation + resolver registration."""
 
 from __future__ import annotations
 
@@ -11,6 +11,7 @@ from mcoi_runtime.core.obligation_runtime import ObligationRuntimeEngine
 from mcoi_runtime.intent_substrate import (
     EntityAttributeEq,
     IntentResolver,
+    ObligationClosureAdapter,
     declare_intent,
 )
 
@@ -22,7 +23,9 @@ def _build():
     obligations = ObligationRuntimeEngine()
     spine = EventSpineEngine()
     resolver = IntentResolver(
-        state_view=state, obligations=obligations, spine=spine,
+        state_view=state,
+        closure=ObligationClosureAdapter(obligations),
+        spine=spine,
     )
     return state, obligations, spine, resolver
 

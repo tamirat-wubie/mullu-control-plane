@@ -51,6 +51,43 @@ class MutableState:
             self._state.pop(entity_id, None)
 
 
+class RecordingClosure:
+    """Generic IntentClosure for tests — records actions, no real state machine.
+
+    Lets resolver tests exercise verdict logic without needing an
+    ObligationRuntimeEngine. Tests verify outcomes by inspecting
+    `successes` and `failures`.
+    """
+
+    def __init__(self) -> None:
+        self._open: set[str] = set()
+        self._lock = threading.Lock()
+        self.successes: list[tuple[str, str]] = []
+        self.failures: list[tuple[str, str]] = []
+
+    def register(self, intent_id: str) -> None:
+        with self._lock:
+            self._open.add(intent_id)
+
+    def is_open(self, intent_id: str) -> bool:
+        with self._lock:
+            return intent_id in self._open
+
+    def close_success(self, intent_id: str, reason: str) -> tuple[str, str, str]:
+        with self._lock:
+            self._open.discard(intent_id)
+            self.successes.append((intent_id, reason))
+        return ("success", intent_id, reason)
+
+    def close_precondition_failed(
+        self, intent_id: str, reason: str
+    ) -> tuple[str, str, str]:
+        with self._lock:
+            self._open.discard(intent_id)
+            self.failures.append((intent_id, reason))
+        return ("failed", intent_id, reason)
+
+
 class FakeClock:
     """Deterministic clock for tests. Advance manually with `advance`."""
 

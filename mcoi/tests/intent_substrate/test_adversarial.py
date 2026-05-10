@@ -5,15 +5,16 @@ referencing all three with an AND-success condition that's only
 briefly true between mutator passes. We replay aggressively and
 verify:
 
-  (1) ZERO false COMPLETIONS — the dangerous failure mode where the
-      obligation is closed COMPLETED but the world was never actually
-      consistent.
+  (1) ZERO false success closures — the dangerous failure mode where
+      close_success is called but the world was never actually
+      consistent at the moment of closure.
   (2) Drift / precondition signals can fire transiently — counted but
       not required to be zero (they self-correct on next replay).
 
-If the two-confirmation rule is broken or removed, this test will
-flake aggressively (false_completions > 0 within a few hundred
-iterations).
+Uses RecordingClosure so the test exercises pure resolver verdict
+logic without obligation lifecycle overhead. If the two-confirmation
+rule is broken or removed, this test will flake aggressively
+(false_completions > 0 within a few hundred iterations).
 """
 
 from __future__ import annotations
@@ -24,17 +25,14 @@ import time
 import pytest
 
 from mcoi_runtime.contracts.event import EventType
-from mcoi_runtime.contracts.obligation import ObligationState
 from mcoi_runtime.core.event_spine import EventSpineEngine
-from mcoi_runtime.core.obligation_runtime import ObligationRuntimeEngine
 from mcoi_runtime.intent_substrate import (
     BackgroundTicker,
     EntityAttributeEq,
     IntentResolver,
-    declare_intent,
 )
 
-from .conftest import MutableState, make_deadline, make_event, make_owner
+from .conftest import MutableState, RecordingClosure, make_event
 
 
 @pytest.mark.parametrize("iterations", [3])
@@ -45,11 +43,11 @@ def test_zero_false_completions_under_concurrent_mutation(iterations):
 
 def _run_one_burst() -> None:
     state = MutableState()
-    obligations = ObligationRuntimeEngine()
+    closure = RecordingClosure()
     spine = EventSpineEngine()
     resolver = IntentResolver(
         state_view=state,
-        obligations=obligations,
+        closure=closure,
         spine=spine,
         confirm_window_s=0.05,
         debounce_window_s=0.0,
@@ -59,10 +57,11 @@ def _run_one_burst() -> None:
     state.set("b", {"y": 0})
     state.set("c", {"z": 0})
 
-    obl = declare_intent(
-        resolver=resolver, obligation_engine=obligations,
-        owner=make_owner(), deadline=make_deadline(),
-        description="all three at target", correlation_id="adv",
+    intent_id = "adv-1"
+    closure.register(intent_id)
+    resolver.register_intent(
+        intent_id,
+        preconditions=(),
         success=(
             EntityAttributeEq("a", "x", 1),
             EntityAttributeEq("b", "y", 1),
@@ -72,19 +71,15 @@ def _run_one_burst() -> None:
 
     false_completions: list[dict] = []
 
-    def observe(closure):
-        if closure.final_state != ObligationState.COMPLETED:
+    def observe(record):
+        kind, iid, _reason = record
+        if kind != "success":
             return
-        # Verify reality at the moment of the COMPLETED transition. A
-        # phantom completion = closed COMPLETED while not all three
-        # values are actually 1.
         x = state("a") or {}
         y = state("b") or {}
         z = state("c") or {}
         if not (x.get("x") == 1 and y.get("y") == 1 and z.get("z") == 1):
-            false_completions.append(
-                {"x": x, "y": y, "z": z}
-            )
+            false_completions.append({"x": x, "y": y, "z": z})
 
     resolver.add_closure_observer(observe)
 
@@ -96,8 +91,7 @@ def _run_one_burst() -> None:
             state.update(entity_id, **{field: 1})
             i += 1
             if i % 50 == 0:
-                # Hold all-at-1 long enough for the confirm window to
-                # ripen; the resolver should complete cleanly here.
+                # Hold all-at-1 long enough for confirm to ripen.
                 time.sleep(0.15)
             state.update(entity_id, **{field: 0})
 
@@ -111,13 +105,10 @@ def _run_one_burst() -> None:
         for t in threads:
             t.start()
 
-        # Drive replay aggressively by emitting WORLD_STATE_CHANGED
-        # events into the resolver. We don't bother with the spine
-        # here — on_event is the dispatch entry point.
         deadline = time.monotonic() + 2.0
         while time.monotonic() < deadline:
             resolver.on_event(make_event(EventType.WORLD_STATE_CHANGED))
-            if obligations.get_obligation(obl.obligation_id).state == ObligationState.COMPLETED:
+            if closure.successes:
                 break
             time.sleep(0.005)
 
