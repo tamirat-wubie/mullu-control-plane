@@ -31,6 +31,67 @@ def _allow_musia_dev_mode_in_tests():
     configure_musia_dev_mode(True)
 
 
+# Many router tests register stub subsystems (MetricsStub, FixedClock, etc.)
+# into the module-global ``deps`` container. Without isolation, a stub from
+# one test leaks into the next test's ``mcoi_runtime.app.server.app`` import
+# path, and a real handler then calls a method the stub does not implement
+# (e.g. MetricsStub.to_dict).
+#
+# server.py registers real subsystems at import time. We import it once at
+# session start so the baseline snapshot contains the production wiring,
+# then restore that baseline after each test — stubs added by the test are
+# discarded, but real subsystems remain available for tests that exercise
+# the production app.
+@pytest.fixture(scope="session")
+def _router_deps_baseline():
+    os.environ.setdefault("MULLU_ENV", "local_dev")
+    os.environ.setdefault("MULLU_DB_BACKEND", "memory")
+    os.environ.setdefault("MULLU_CERT_INTERVAL", "0")
+    import mcoi_runtime.app.server  # noqa: F401 — triggers deps registration
+    from mcoi_runtime.app.routers.deps import deps
+    return dict(deps._store)
+
+
+@pytest.fixture(autouse=True)
+def _isolate_router_deps(_router_deps_baseline):
+    from mcoi_runtime.app.routers.deps import deps
+    yield
+    deps._store.clear()
+    deps._store.update(_router_deps_baseline)
+    # Singletons in the baseline carry their own internal state (replay
+    # traces, audit ledger entries, etc.). Reset the ones tests depend on.
+    recorder = deps._store.get("replay_recorder")
+    if recorder is not None:
+        recorder._traces.clear()
+        recorder._completed.clear()
+        recorder._frame_counter = 0
+
+
+# god_mode_engine and god_mode_registry both expose a process-wide
+# singleton (set_engine / set_registry) that test fixtures install fresh
+# instances into via _client(). Without explicit teardown, an engine/
+# registry installed by one test persists across tests until the next
+# test calls set_engine() — meaning tests that assume "fresh state on
+# import" silently inherit prior state. Two failures in PR #578 trace
+# directly to this: test_health_endpoint_after_arm_and_issue and
+# test_list_receipts_after_consumption pass alone but fail intermittently
+# when the suite runs in certain orders.
+#
+# This autouse fixture clears both god_mode singletons after every test
+# so each test starts from None and must call _client() (or its own
+# fixture) to set up state explicitly.
+@pytest.fixture(autouse=True)
+def _isolate_god_mode_state():
+    yield
+    try:
+        from mcoi_runtime.core.god_mode_engine import set_engine
+        from mcoi_runtime.core.god_mode_registry import set_registry
+    except ImportError:
+        return
+    set_engine(None)
+    set_registry(None)
+
+
 # ═══ Shared Fixtures ═══
 
 
