@@ -42,7 +42,6 @@ from mcoi_runtime.app.software_receipt_observability import (
     register_software_receipt_observability,
 )
 from mcoi_runtime.app.software_receipt_review_queue import SoftwareReceiptReviewQueue
-from mcoi_runtime.app.engineering_puzzle_control import EngineeringPuzzleControlSurface
 from mcoi_runtime.core.review import ReviewEngine
 from mcoi_runtime.core.structured_logging import LogLevel
 from mcoi_runtime.core.event_spine import EventSpineEngine
@@ -74,6 +73,16 @@ def _init_field_encryption_from_env() -> tuple[Any | None, dict[str, Any]]:
 # Clock
 def _clock() -> str:
     return _utc_clock()
+
+
+def _validate_startup_boundary_policy() -> None:
+    """Validate network boundary policy before stateful bootstrap."""
+    env = os.environ.get("MULLU_ENV", "local_dev")
+    origins = _resolve_cors_origins(os.environ.get("MULLU_CORS_ORIGINS"), env)
+    _validate_cors_origins_for_env(origins, env)
+
+
+_validate_startup_boundary_policy()
 
 # Environment and governance context
 _server_context = bootstrap_server_context(
@@ -178,7 +187,6 @@ app = create_governed_app(
 # â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 # Dependency injection â€” register all subsystems into deps container
 # â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-
 _dependency_bootstrap = bootstrap_dependency_registry(
     deps_container=deps,
     clock=_clock,
@@ -275,6 +283,11 @@ governed_swarm_bootstrap = mount_governed_swarm_router_from_env(
     runtime_env=os.environ,
 )
 deps.set("governed_swarm_bootstrap", governed_swarm_bootstrap)
+
+from mcoi_runtime.core.god_mode_integration import install_god_mode  # noqa: E402
+
+god_mode_engine = install_god_mode(deps, audit_trail=audit_trail)
+deps.set("god_mode_engine", god_mode_engine)
 
 
 # â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
