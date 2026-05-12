@@ -11,8 +11,6 @@ Verifies that:
 from __future__ import annotations
 
 from mcoi_runtime.contracts.obligation import (
-    ObligationDeadline,
-    ObligationOwner,
     ObligationState,
     ObligationTrigger,
 )

@@ -105,6 +105,7 @@ class IntentResolver:
         self._index: dict[EventType, set[IntentId]] = defaultdict(set)
         self._pending: dict[IntentId, _PendingConfirm] = {}
         self._last_eval_at: dict[IntentId, float] = {}
+        self._deferred_eval_at: dict[IntentId, float] = {}
         self._confirm_window_s = confirm_window_s
         self._debounce_window_s = debounce_window_s
         self._clock = clock
@@ -135,6 +136,7 @@ class IntentResolver:
             success=tuple(success),
         )
         with self._lock:
+            self._drop_intent_locked(intent_id)
             self._intents[intent_id] = spec
             for predicate in spec.preconditions + spec.success:
                 for evt_type in predicate.watches():
@@ -142,10 +144,7 @@ class IntentResolver:
 
     def deregister_intent(self, intent_id: IntentId) -> None:
         with self._lock:
-            self._intents.pop(intent_id, None)
-            self._pending.pop(intent_id, None)
-            for ids in self._index.values():
-                ids.discard(intent_id)
+            self._drop_intent_locked(intent_id)
 
     def add_closure_observer(self, callback: Callable[[Any], None]) -> None:
         """Register a callback fired with whatever IntentClosure returns
@@ -168,8 +167,13 @@ class IntentResolver:
             with self._lock:
                 last = self._last_eval_at.get(iid, -float("inf"))
                 if now - last < self._debounce_window_s:
+                    due_at = last + self._debounce_window_s
+                    existing_due = self._deferred_eval_at.get(iid)
+                    if existing_due is None or due_at < existing_due:
+                        self._deferred_eval_at[iid] = due_at
                     continue
                 self._last_eval_at[iid] = now
+                self._deferred_eval_at.pop(iid, None)
             emitted.extend(self._evaluate_one(iid))
         emitted.extend(self._tick_no_notify())
         for record in emitted:
@@ -240,6 +244,18 @@ class IntentResolver:
                 self.deregister_intent(p.intent_id)
             else:
                 spec.last_vector = current_vector
+        now = self._clock()
+        with self._lock:
+            due_evals = [
+                intent_id
+                for intent_id, due_at in self._deferred_eval_at.items()
+                if due_at <= now
+            ]
+            for intent_id in due_evals:
+                self._deferred_eval_at.pop(intent_id, None)
+                self._last_eval_at[intent_id] = now
+        for intent_id in due_evals:
+            emitted.extend(self._evaluate_one(intent_id))
         return emitted
 
     def pending_count(self) -> int:
@@ -251,6 +267,14 @@ class IntentResolver:
             return intent_id in self._intents
 
     # --- Internal ---
+
+    def _drop_intent_locked(self, intent_id: IntentId) -> None:
+        self._intents.pop(intent_id, None)
+        self._pending.pop(intent_id, None)
+        self._last_eval_at.pop(intent_id, None)
+        self._deferred_eval_at.pop(intent_id, None)
+        for ids in self._index.values():
+            ids.discard(intent_id)
 
     def _evaluate_one(self, intent_id: IntentId) -> list[Any]:
         spec = self._intents.get(intent_id)

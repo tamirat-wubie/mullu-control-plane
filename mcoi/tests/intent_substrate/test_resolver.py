@@ -167,6 +167,35 @@ def test_event_for_unsubscribed_type_ignored():
     assert resolver.pending_count() == 0
 
 
+def test_debounced_event_is_deferred_until_tick():
+    state, closure, _spine, resolver, clock = _build(
+        confirm_window_s=0.1,
+        debounce_window_s=1.0,
+    )
+    state.set("vendor", {"shipped": False})
+    _register(
+        resolver, closure, "i1",
+        success=(EntityAttributeEq("vendor", "shipped", True),),
+    )
+
+    resolver.on_event(make_event(EventType.WORLD_STATE_CHANGED))
+    clock.advance(0.2)
+    state.update("vendor", shipped=True)
+    resolver.on_event(make_event(EventType.WORLD_STATE_CHANGED))
+
+    assert closure.successes == []
+    assert resolver.pending_count() == 0
+
+    clock.advance(0.8)
+    resolver.tick()
+    assert resolver.pending_count() == 1
+
+    clock.advance(0.2)
+    resolver.tick()
+    assert len(closure.successes) == 1
+    assert closure.successes[0][0] == "i1"
+
+
 def test_emit_and_dispatch_writes_to_spine():
     state, closure, spine, resolver, _clock = _build()
     state.set("vendor", {"shipped": True})
@@ -190,6 +219,35 @@ def test_deregister_stops_responses():
     assert not resolver.is_registered("i1")
     resolver.on_event(make_event(EventType.WORLD_STATE_CHANGED))
     assert closure.successes == []
+
+
+def test_reregister_replaces_old_event_index_entries():
+    state, closure, _spine, resolver, _clock = _build(confirm_window_s=0.1)
+    state.set("vendor", {"shipped": True})
+    closure.register("i1")
+    resolver.register_intent(
+        "i1",
+        preconditions=(),
+        success=(
+            EntityAttributeEq(
+                "vendor",
+                "shipped",
+                True,
+                watches_kinds=(EventType.APPROVAL_DECIDED,),
+            ),
+        ),
+    )
+    resolver.register_intent(
+        "i1",
+        preconditions=(),
+        success=(EntityAttributeEq("vendor", "shipped", True),),
+    )
+
+    resolver.on_event(make_event(EventType.APPROVAL_DECIDED))
+    assert resolver.pending_count() == 0
+
+    resolver.on_event(make_event(EventType.WORLD_STATE_CHANGED))
+    assert resolver.pending_count() == 1
 
 
 def test_intent_with_closed_lifecycle_self_cleans():

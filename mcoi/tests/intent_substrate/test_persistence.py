@@ -91,6 +91,15 @@ def test_deserialize_unknown_kind_raises():
         deserialize_predicate({"kind": "MadeUp"})
 
 
+def test_deserialize_missing_watches_uses_default_world_state_event():
+    restored = deserialize_predicate({
+        "kind": "EntityExists",
+        "entity_id": "vendor",
+    })
+    assert isinstance(restored, EntityExists)
+    assert restored.watches() == {EventType.WORLD_STATE_CHANGED}
+
+
 def test_predicate_set_roundtrip():
     pre = (
         EntityAttributeEq("a", "ready", True),

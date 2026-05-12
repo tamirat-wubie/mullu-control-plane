@@ -15,7 +15,6 @@ transitions.
 from __future__ import annotations
 
 import time
-from datetime import datetime, timezone
 
 from mcoi_runtime.contracts.event import EventType
 from mcoi_runtime.contracts.obligation import ObligationState

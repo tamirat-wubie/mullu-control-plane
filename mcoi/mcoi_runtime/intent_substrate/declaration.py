@@ -35,6 +35,10 @@ from .persistence import METADATA_KEY, serialize_predicate_set
 from .primitives import IntentPredicate
 from .resolver import IntentResolver
 
+_RESERVED_METADATA_KEYS = frozenset(
+    {"intent_substrate", "predicate_count", METADATA_KEY}
+)
+
 
 def declare_intent(
     *,
@@ -57,6 +61,13 @@ def declare_intent(
     """
     pre_t = tuple(preconditions)
     succ_t = tuple(success)
+    if extra_metadata:
+        reserved_keys = _RESERVED_METADATA_KEYS.intersection(extra_metadata)
+        if reserved_keys:
+            raise ValueError(
+                "extra_metadata cannot override reserved intent_substrate keys: "
+                + ", ".join(sorted(reserved_keys))
+            )
     metadata: dict[str, object] = {
         "intent_substrate": "true",
         "predicate_count": str(len(pre_t) + len(succ_t)),

@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import pytest
+
 from mcoi_runtime.contracts.obligation import (
     ObligationState,
     ObligationTrigger,
@@ -67,6 +69,18 @@ def test_extra_metadata_merged():
     )
     assert obl.metadata["tenant_id"] == "acme"
     assert obl.metadata["domain"] == "vendor"
+
+
+def test_extra_metadata_cannot_override_substrate_keys():
+    _state, obligations, _spine, resolver = _build()
+    with pytest.raises(ValueError, match="reserved intent_substrate keys"):
+        declare_intent(
+            resolver=resolver, obligation_engine=obligations,
+            owner=make_owner(), deadline=make_deadline(),
+            description="d", correlation_id="c",
+            success=(EntityAttributeEq("e", "x", 1),),
+            extra_metadata={"intent_substrate": "false"},
+        )
 
 
 def test_registers_intent_with_resolver():

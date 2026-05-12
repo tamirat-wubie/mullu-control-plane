@@ -108,8 +108,14 @@ def deserialize_predicate(data: dict[str, Any]) -> IntentPredicate:
     cls = _PREDICATE_KINDS.get(kind) if kind else None
     if cls is None:
         raise ValueError(f"unknown predicate kind {kind!r}")
+    raw_watches = data.get("watches_kinds")
     watches_kinds = tuple(
-        EventType(k) for k in data.get("watches_kinds", ())
+        EventType(k)
+        for k in (
+            raw_watches
+            if raw_watches is not None
+            else (EventType.WORLD_STATE_CHANGED.value,)
+        )
     )
     if cls is EntityAttributeEq:
         return EntityAttributeEq(
@@ -143,7 +149,8 @@ def serialize_predicate_set(
         {
             "preconditions": [serialize_predicate(p) for p in preconditions],
             "success": [serialize_predicate(p) for p in success],
-        }
+        },
+        sort_keys=True,
     )
 
 
