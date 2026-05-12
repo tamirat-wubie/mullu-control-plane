@@ -25,6 +25,9 @@
 - [x] Logic governance application validates with `scripts/validate_logic_governance_application.py`
 - [x] Shipped artifacts and document references validate with `scripts/validate_artifacts.py --strict`
 - [x] Release status derives from `scripts/validate_release_status.py --strict`
+- [x] Public naming readiness derives from `scripts/validate_public_naming_readiness.py`
+- [x] Public naming review packet is present at `docs/PUBLIC_NAMING_REVIEW_PACKET.md`
+- [x] Public naming artifact manifest is present at `docs/PUBLIC_NAMING_ARTIFACT_MANIFEST.md`
 - [x] CI workflow retains the full gated release command set in `.github/workflows/ci.yml`
 - [x] Release notes publish red-team pass rate and witness hash from `.change_assurance/red_team_harness.json`
 
@@ -70,6 +73,7 @@
 - [x] HTTP connector read timeout enforcement added (v3.9.1)
 - [x] API key auth with scopes, JWT auth, per-session RBAC checks
 - [x] Field-level encryption at rest (AES-256-GCM, optional cryptography dep)
+- [ ] Public paid launch under `Mullu` is blocked until trademark, domain, and legal clearance close
 
 ## Release Decision
 
@@ -77,9 +81,14 @@ Status: **READY FOR INTERNAL ALPHA / CONTROLLED PILOT**
 
 Release status source:
 - `python scripts/validate_release_status.py --strict`
+- `python scripts/validate_public_naming_readiness.py`
+- `python scripts/report_public_naming_readiness.py`
+- `python scripts/plan_public_naming_transition.py`
 
 Conditions for use:
 - Internal development and experimentation only
 - Operator-supervised execution
 - Local/bounded provider configurations
 - Known limitations explicitly accepted by pilot participants
+- No paid public product launch under `Mullu` until clearance evidence is complete
+- Review `docs/PUBLIC_NAMING_REVIEW_PACKET.md` and `docs/PUBLIC_NAMING_ARTIFACT_MANIFEST.md` before any external launch decision

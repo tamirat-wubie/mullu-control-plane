@@ -10,8 +10,6 @@ from __future__ import annotations
 
 import re
 
-import pytest
-
 from mcoi_runtime.contracts.god_mode import (
     GodCapability,
     GodCapabilityBlastRadius,

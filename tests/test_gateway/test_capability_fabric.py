@@ -5,7 +5,7 @@ Dependencies: gateway capability fabric loader and governed capability registry.
 Invariants:
   - Fabric admission remains disabled unless explicitly enabled.
   - Enabled admission requires explicit sources unless default packs are requested.
-  - Checked-in default packs install all certified browser, communication, connector, creative, document, enterprise, financial, computer, and voice entries.
+  - Checked-in default packs install all certified browser, communication, connector, creative, document, enterprise, financial, computer, messaging, phone, and voice entries.
   - Operator read models expose governed capability records, not raw tool handles.
 """
 
@@ -65,10 +65,10 @@ def test_capability_fabric_env_loader_installs_checked_in_default_packs(
 
     assert gate is not None
     read_model = gate.read_model()
-    assert read_model["capsule_count"] == 10
-    assert read_model["capability_count"] == 52
-    assert len(read_model["capability_maturity_assessments"]) == 52
-    assert read_model["capability_maturity_counts"]["C3"] == 50
+    assert read_model["capsule_count"] == 12
+    assert read_model["capability_count"] == 62
+    assert len(read_model["capability_maturity_assessments"]) == 62
+    assert read_model["capability_maturity_counts"]["C3"] == 60
     assert read_model["capability_maturity_counts"]["C6"] == 2
     assert read_model["production_ready_count"] == 2
     assert read_model["autonomy_ready_count"] == 0
@@ -82,6 +82,8 @@ def test_capability_fabric_env_loader_installs_checked_in_default_packs(
         "document",
         "enterprise",
         "financial",
+        "messaging",
+        "phone",
         "voice",
     }
     assert read_model["general_agent_plane_count"] == 13
@@ -255,7 +257,7 @@ def test_default_read_model_projects_governed_capability_records() -> None:
         for plane in gate.read_model()["general_agent_planes"]
     }
 
-    assert len(records) == 52
+    assert len(records) == 62
     assert payment_capability["maturity_assessment"]["maturity_level"] == "C6"
     assert payment_capability["maturity_assessment"]["production_ready"] is True
     assert payment_capability["maturity_assessment"]["autonomy_ready"] is False
@@ -368,7 +370,7 @@ def test_default_read_model_projects_governed_capability_records() -> None:
     assert "connector.github.read" in planes["9.mcp_external_tool_plane"]["capability_ids"]
     assert "deployment.witness.collect" in planes["12.deployment_witness_plane"]["capability_ids"]
     assert planes["8.financial_effect_plane"]["requires_approval_count"] >= 2
-    assert planes["3.tool_skill_plane"]["governed_record_count"] == 50
+    assert planes["3.tool_skill_plane"]["governed_record_count"] == 60
     for plane in planes.values():
         assert "allowed_tools" not in plane
         assert "input_schema_ref" not in plane

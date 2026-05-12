@@ -21,9 +21,13 @@ if str(_ROOT) not in sys.path:
 from gateway.adapter_worker_clients import (  # noqa: E402
     BrowserWorkerClient,
     EmailCalendarWorkerClient,
+    MessagingWorkerClient,
+    PhoneWorkerClient,
     SignedAdapterWorkerTransport,
     build_browser_worker_client_from_env,
     build_email_calendar_worker_client_from_env,
+    build_messaging_worker_client_from_env,
+    build_phone_worker_client_from_env,
 )
 from gateway.capability_isolation import sign_capability_payload, verify_capability_signature  # noqa: E402
 
@@ -220,3 +224,145 @@ def test_email_calendar_worker_env_requires_complete_signed_transport(monkeypatc
     assert str(excinfo.value) == "email/calendar worker endpoint is required"
     monkeypatch.delenv("MULLU_EMAIL_CALENDAR_WORKER_SECRET", raising=False)
     assert build_email_calendar_worker_client_from_env() is None
+
+
+def test_messaging_transport_uses_distinct_signature_headers(monkeypatch) -> None:
+    secret = "messaging-transport-secret"
+    request_payload = {
+        "request_id": "messaging-request-1",
+        "tenant_id": "tenant-1",
+        "capability_id": "messaging.sms.draft",
+        "action": "messaging.sms.draft",
+        "connector_id": "twilio",
+        "metadata": {},
+    }
+    worker_payload = {
+        "request_id": "messaging-request-1",
+        "status": "succeeded",
+        "result": {"resource_id": "msg-1"},
+        "receipt": {
+            "request_id": "messaging-request-1",
+            "tenant_id": "tenant-1",
+            "capability_id": "messaging.sms.draft",
+            "verification_status": "passed",
+            "evidence_refs": ["messaging_action:test"],
+        },
+        "error": "",
+    }
+    response_body = json.dumps(worker_payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    observed_request: dict[str, Any] = {}
+
+    class StubHttpResponse:
+        headers = {"X-Mullu-Messaging-Response-Signature": sign_capability_payload(response_body, secret)}
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc, traceback):
+            return False
+
+        def read(self):
+            return response_body
+
+    def capture_urlopen(http_request, timeout):
+        observed_request["signature"] = http_request.get_header("X-mullu-messaging-signature")
+        observed_request["body"] = http_request.data
+        return StubHttpResponse()
+
+    monkeypatch.setattr("urllib.request.urlopen", capture_urlopen)
+    client = MessagingWorkerClient(SignedAdapterWorkerTransport(
+        adapter_id="messaging",
+        endpoint_url="https://worker.invalid/messaging/execute",
+        signing_secret=secret,
+        request_signature_header="X-Mullu-Messaging-Signature",
+        response_signature_header="X-Mullu-Messaging-Response-Signature",
+    ))
+
+    response = client.execute(request_payload)
+
+    assert response.status == "succeeded"
+    assert response.receipt["capability_id"] == "messaging.sms.draft"
+    assert verify_capability_signature(observed_request["body"], observed_request["signature"], secret)
+
+
+def test_messaging_worker_env_requires_complete_signed_transport(monkeypatch) -> None:
+    monkeypatch.setenv("MULLU_MESSAGING_WORKER_SECRET", "messaging-secret")
+    monkeypatch.delenv("MULLU_MESSAGING_WORKER_URL", raising=False)
+
+    with pytest.raises(ValueError, match="^messaging worker endpoint is required$") as excinfo:
+        build_messaging_worker_client_from_env()
+
+    assert str(excinfo.value) == "messaging worker endpoint is required"
+    monkeypatch.delenv("MULLU_MESSAGING_WORKER_SECRET", raising=False)
+    assert build_messaging_worker_client_from_env() is None
+
+
+def test_phone_transport_uses_distinct_signature_headers(monkeypatch) -> None:
+    secret = "phone-transport-secret"
+    request_payload = {
+        "request_id": "phone-request-1",
+        "tenant_id": "tenant-1",
+        "capability_id": "phone.call.receive",
+        "action": "phone.call.receive",
+        "connector_id": "twilio",
+        "metadata": {},
+    }
+    worker_payload = {
+        "request_id": "phone-request-1",
+        "status": "succeeded",
+        "result": {"resource_id": "call-1"},
+        "receipt": {
+            "request_id": "phone-request-1",
+            "tenant_id": "tenant-1",
+            "capability_id": "phone.call.receive",
+            "verification_status": "passed",
+            "evidence_refs": ["phone_action:test"],
+        },
+        "error": "",
+    }
+    response_body = json.dumps(worker_payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    observed_request: dict[str, Any] = {}
+
+    class StubHttpResponse:
+        headers = {"X-Mullu-Phone-Response-Signature": sign_capability_payload(response_body, secret)}
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc, traceback):
+            return False
+
+        def read(self):
+            return response_body
+
+    def capture_urlopen(http_request, timeout):
+        observed_request["signature"] = http_request.get_header("X-mullu-phone-signature")
+        observed_request["body"] = http_request.data
+        return StubHttpResponse()
+
+    monkeypatch.setattr("urllib.request.urlopen", capture_urlopen)
+    client = PhoneWorkerClient(SignedAdapterWorkerTransport(
+        adapter_id="phone",
+        endpoint_url="https://worker.invalid/phone/execute",
+        signing_secret=secret,
+        request_signature_header="X-Mullu-Phone-Signature",
+        response_signature_header="X-Mullu-Phone-Response-Signature",
+    ))
+
+    response = client.execute(request_payload)
+
+    assert response.status == "succeeded"
+    assert response.receipt["capability_id"] == "phone.call.receive"
+    assert verify_capability_signature(observed_request["body"], observed_request["signature"], secret)
+
+
+def test_phone_worker_env_requires_complete_signed_transport(monkeypatch) -> None:
+    monkeypatch.setenv("MULLU_PHONE_WORKER_SECRET", "phone-secret")
+    monkeypatch.delenv("MULLU_PHONE_WORKER_URL", raising=False)
+
+    with pytest.raises(ValueError, match="^phone worker endpoint is required$") as excinfo:
+        build_phone_worker_client_from_env()
+
+    assert str(excinfo.value) == "phone worker endpoint is required"
+    monkeypatch.delenv("MULLU_PHONE_WORKER_SECRET", raising=False)
+    assert build_phone_worker_client_from_env() is None

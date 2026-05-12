@@ -218,7 +218,7 @@ def test_data_governance_controls_surface_is_witnessed() -> None:
     assert data_surface["action_proof"] == "action_proof"
     assert "/api/v1/data-governance/classify" in data_surface["representative_paths"]
     assert "/api/v1/data-governance/evaluate" in data_surface["representative_paths"]
-    assert "mcoi/mcoi_runtime/app/routers/data.py" in data_surface["evidence_files"]
+    assert "mcoi/mcoi_runtime/app/routers/data/governance.py" in data_surface["evidence_files"]
     assert "mcoi/mcoi_runtime/core/data_governance.py" in data_surface["evidence_files"]
     assert "mcoi/tests/test_data_governance_endpoints.py" in data_surface["evidence_files"]
     assert "data_governance_state_hash" in witnesses
@@ -582,6 +582,27 @@ def test_capability_plan_evidence_bundle_surface_is_witnessed() -> None:
     assert "proof_coverage_unclassified_routes_reported" in conformance_surface["runtime_witnesses"]
     assert closure_actions["publish_capability_plan_evidence_bundles"]["status"] == "closed"
     assert "runtime_conformance_attestation" in closure_actions["publish_capability_plan_evidence_bundles"]["surfaces"]
+
+
+def test_proof_route_gap_triage_surface_preserves_route_gaps() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    triage_surface = surfaces["proof_route_gap_triage"]
+    witnesses = set(triage_surface["runtime_witnesses"])
+
+    assert triage_surface["coverage_state"] == "witnessed"
+    assert triage_surface["request_proof"] == "read_model"
+    assert triage_surface["action_proof"] == "read_model"
+    assert "build_gap_triage_report" in triage_surface["representative_paths"]
+    assert "scripts/proof_route_gap_triage.py" in triage_surface["evidence_files"]
+    assert "tests/test_proof_route_gap_triage.py" in triage_surface["evidence_files"]
+    assert "docs/70_proof_route_gap_triage.md" in triage_surface["evidence_files"]
+    assert "unclassified_routes_grouped_by_family" in witnesses
+    assert "route_gap_triage_binds_source_files_and_methods" in witnesses
+    assert "closure_candidates_ranked_deterministically" in witnesses
+    assert closure_actions["publish_proof_route_gap_triage_report"]["status"] == "closed"
+    assert "runtime_conformance_attestation" in closure_actions["publish_proof_route_gap_triage_report"]["surfaces"]
 
 
 def test_runtime_reflex_engine_surface_is_operator_gated_and_non_mutating() -> None:
@@ -1466,6 +1487,34 @@ def test_temporal_retry_window_surface_rechecks_retry_windows() -> None:
     assert "high_risk_source_receipts_bound" in witnesses
     assert "temporal_retry_window_receipt_schema_valid" in witnesses
     assert closure_actions["publish_temporal_retry_window_receipt_contract"]["status"] == "closed"
+
+
+def test_temporal_lease_window_surface_rechecks_lease_ownership() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    lease_surface = surfaces["temporal_lease_window"]
+    witnesses = set(lease_surface["runtime_witnesses"])
+
+    assert lease_surface["coverage_state"] == "witnessed"
+    assert lease_surface["request_proof"] == "request_proof"
+    assert lease_surface["action_proof"] == "action_proof"
+    assert "TemporalLeaseWindow.evaluate" in lease_surface["representative_paths"]
+    assert "LeaseWindowRequest" in lease_surface["representative_paths"]
+    assert "TemporalLeaseWindowReceipt" in lease_surface["representative_paths"]
+    assert "gateway/temporal_lease_window.py" in lease_surface["evidence_files"]
+    assert "schemas/temporal_lease_window_receipt.schema.json" in lease_surface["evidence_files"]
+    assert "tests/test_gateway/test_temporal_lease_window.py" in lease_surface["evidence_files"]
+    assert "runtime_clock_owns_lease_window" in witnesses
+    assert "tenant_command_resource_worker_scope_checked" in witnesses
+    assert "active_lease_admits_dispatch" in witnesses
+    assert "near_expiry_lease_requires_renewal_warning" in witnesses
+    assert "expired_lease_blocks_dispatch" in witnesses
+    assert "released_or_revoked_lease_blocks_dispatch" in witnesses
+    assert "fencing_token_required" in witnesses
+    assert "high_risk_source_receipts_bound" in witnesses
+    assert "temporal_lease_window_receipt_schema_valid" in witnesses
+    assert closure_actions["publish_temporal_lease_window_receipt_contract"]["status"] == "closed"
 
 
 def test_temporal_memory_surface_blocks_stale_or_superseded_memory() -> None:

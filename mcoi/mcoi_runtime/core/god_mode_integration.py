@@ -24,7 +24,6 @@ from mcoi_runtime.contracts.god_mode import (
 )
 from mcoi_runtime.core.god_mode_engine import (
     GodModeEngine,
-    get_engine,
     set_engine,
 )
 from mcoi_runtime.core.god_mode_registry import (

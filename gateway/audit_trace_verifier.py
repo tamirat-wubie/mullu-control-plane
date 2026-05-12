@@ -33,7 +33,6 @@ from gateway.command_spine import (
     canonical_hash,
 )
 from gateway.authority_obligation_mesh import (
-    ApprovalChain,
     ApprovalChainStatus,
     AuthorityObligationMesh,
 )

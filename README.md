@@ -15,6 +15,22 @@ enforcement.
 
 Product naming boundaries are recorded in [`docs/PRODUCT_BOUNDARY.md`](docs/PRODUCT_BOUNDARY.md).
 
+## Public Naming Gate
+
+Mullu is internally aligned as the flagship product name, but paid public launch
+remains blocked until trademark, domain, and legal clearance close. Review the
+current naming state in [`docs/PUBLIC_NAMING_HANDOFF.md`](docs/PUBLIC_NAMING_HANDOFF.md)
+and [`docs/PUBLIC_NAMING_READINESS.md`](docs/PUBLIC_NAMING_READINESS.md).
+Use [`docs/PUBLIC_NAMING_REVIEW_PACKET.md`](docs/PUBLIC_NAMING_REVIEW_PACKET.md)
+for reviewer signoff and [`docs/PUBLIC_NAMING_ARTIFACT_MANIFEST.md`](docs/PUBLIC_NAMING_ARTIFACT_MANIFEST.md)
+for the complete naming-package inventory.
+
+```bash
+python scripts/validate_public_naming_readiness.py
+python scripts/report_public_naming_readiness.py
+python scripts/plan_public_naming_transition.py
+```
+
 The next operational-intelligence extension is specified in [`docs/62_governed_operational_intelligence.md`](docs/62_governed_operational_intelligence.md): world-state graph, goal compiler, causal simulator, capability forge, worker mesh, maturity levels, policy prover, memory lattice, trust ledger, and domain operating packs.
 
 ## Production Claim Boundary

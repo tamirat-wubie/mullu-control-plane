@@ -1,0 +1,26 @@
+{
+  "capsule_id": "messaging.sms_chat_ops.v0",
+  "domain": "messaging",
+  "version": "0.1.0",
+  "ontology_refs": ["ontologies/messaging/sms_chat_ops.json"],
+  "capability_refs": [
+    "messaging.sms.send.with_approval",
+    "messaging.sms.draft",
+    "messaging.chat.send.with_approval",
+    "messaging.chat.draft",
+    "messaging.thread.read"
+  ],
+  "policy_refs": ["policies/messaging/sms_chat_ops.policy.json"],
+  "evidence_rules": ["evidence/messaging/sms_chat_ops.evidence.json"],
+  "approval_rules": ["approval/messaging/sms_chat_ops.approval.json"],
+  "recovery_rules": ["recovery/messaging/sms_chat_ops.recovery.json"],
+  "test_fixture_refs": ["tests/fixtures/messaging/sms_chat_ops"],
+  "read_model_refs": ["read_models/messaging/sms_chat_ops.json"],
+  "operator_view_refs": ["operator_views/messaging/sms_chat_ops.json"],
+  "owner_team": "platform-ops",
+  "certification_status": "certified",
+  "metadata": {
+    "purpose": "Certified messaging worker declarations for SMS and IM/chat draft, send-with-approval, and thread-read operations across carrier and chat platform connectors"
+  },
+  "extensions": {}
+}

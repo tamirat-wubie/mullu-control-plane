@@ -46,6 +46,8 @@ class AdapterWorkerClients:
     document: DocumentWorkerClient | None = None
     voice: VoiceWorkerClient | None = None
     email_calendar: EmailCalendarWorkerClient | None = None
+    messaging: MessagingWorkerClient | None = None
+    phone: PhoneWorkerClient | None = None
 
 
 class SignedAdapterWorkerTransport:
@@ -155,6 +157,28 @@ class EmailCalendarWorkerClient:
         return _execute_with_transport(self._transport, payload, adapter_id="email/calendar")
 
 
+class MessagingWorkerClient:
+    """Client for the restricted messaging worker."""
+
+    def __init__(self, transport: SignedAdapterWorkerTransport) -> None:
+        self._transport = transport
+
+    def execute(self, payload: Mapping[str, Any]) -> AdapterWorkerResponse:
+        """Execute one messaging action through the signed worker."""
+        return _execute_with_transport(self._transport, payload, adapter_id="messaging")
+
+
+class PhoneWorkerClient:
+    """Client for the restricted phone worker."""
+
+    def __init__(self, transport: SignedAdapterWorkerTransport) -> None:
+        self._transport = transport
+
+    def execute(self, payload: Mapping[str, Any]) -> AdapterWorkerResponse:
+        """Execute one phone action through the signed worker."""
+        return _execute_with_transport(self._transport, payload, adapter_id="phone")
+
+
 def build_adapter_worker_clients_from_env() -> AdapterWorkerClients:
     """Build all configured adapter worker clients from environment."""
     return AdapterWorkerClients(
@@ -162,6 +186,8 @@ def build_adapter_worker_clients_from_env() -> AdapterWorkerClients:
         document=build_document_worker_client_from_env(),
         voice=build_voice_worker_client_from_env(),
         email_calendar=build_email_calendar_worker_client_from_env(),
+        messaging=build_messaging_worker_client_from_env(),
+        phone=build_phone_worker_client_from_env(),
     )
 
 
@@ -215,6 +241,32 @@ def build_email_calendar_worker_client_from_env() -> EmailCalendarWorkerClient |
         response_signature_header="X-Mullu-Email-Calendar-Response-Signature",
     )
     return EmailCalendarWorkerClient(transport) if transport is not None else None
+
+
+def build_messaging_worker_client_from_env() -> MessagingWorkerClient | None:
+    """Build the messaging worker client from environment configuration."""
+    transport = _build_transport_from_env(
+        adapter_id="messaging",
+        url_env="MULLU_MESSAGING_WORKER_URL",
+        secret_env="MULLU_MESSAGING_WORKER_SECRET",
+        timeout_env="MULLU_MESSAGING_WORKER_TIMEOUT_SECONDS",
+        request_signature_header="X-Mullu-Messaging-Signature",
+        response_signature_header="X-Mullu-Messaging-Response-Signature",
+    )
+    return MessagingWorkerClient(transport) if transport is not None else None
+
+
+def build_phone_worker_client_from_env() -> PhoneWorkerClient | None:
+    """Build the phone worker client from environment configuration."""
+    transport = _build_transport_from_env(
+        adapter_id="phone",
+        url_env="MULLU_PHONE_WORKER_URL",
+        secret_env="MULLU_PHONE_WORKER_SECRET",
+        timeout_env="MULLU_PHONE_WORKER_TIMEOUT_SECONDS",
+        request_signature_header="X-Mullu-Phone-Signature",
+        response_signature_header="X-Mullu-Phone-Response-Signature",
+    )
+    return PhoneWorkerClient(transport) if transport is not None else None
 
 
 def _build_transport_from_env(

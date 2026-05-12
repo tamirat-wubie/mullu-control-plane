@@ -103,7 +103,8 @@ def proof_coverage_matrix() -> dict[str, Any]:
             "audit_chain",
             "witnessed",
             [
-                "mcoi/mcoi_runtime/app/routers/llm.py",
+                "mcoi/mcoi_runtime/app/routers/llm/completion.py",
+                "mcoi/mcoi_runtime/app/routers/llm/chat.py",
                 "mcoi/mcoi_runtime/app/streaming.py",
                 "mcoi/tests/test_streaming.py",
                 "mcoi/tests/test_server_phase200.py",
@@ -152,7 +153,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
             "audit_chain",
             "witnessed",
             [
-                "mcoi/mcoi_runtime/app/routers/llm.py",
+                "mcoi/mcoi_runtime/app/routers/llm/completion.py",
                 "mcoi/mcoi_runtime/core/proof_bridge.py",
             ],
             "Completion routes are governed through budget, model routing, and proof bridge checks.",
@@ -165,7 +166,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
             "audit_chain",
             "witnessed",
             [
-                "mcoi/mcoi_runtime/app/routers/llm.py",
+                "mcoi/mcoi_runtime/app/routers/llm/chat.py",
                 "mcoi/mcoi_runtime/core/proof_bridge.py",
             ],
             "Chat and workflow routes preserve governed request and action proof boundaries.",
@@ -185,7 +186,8 @@ def proof_coverage_matrix() -> dict[str, Any]:
             "audit_chain",
             "witnessed",
             [
-                "mcoi/mcoi_runtime/app/routers/llm.py",
+                "mcoi/mcoi_runtime/app/routers/llm/admin.py",
+                "mcoi/mcoi_runtime/app/routers/llm/costs.py",
                 "mcoi/mcoi_runtime/governance/guards/budget.py",
             ],
             "Budget and cost surfaces expose bounded read models over governed spend state.",
@@ -268,7 +270,10 @@ def proof_coverage_matrix() -> dict[str, Any]:
             "action_proof",
             "audit_chain",
             "witnessed",
-            ["mcoi/mcoi_runtime/app/routers/llm.py"],
+            [
+                "mcoi/mcoi_runtime/app/routers/llm/admin.py",
+                "mcoi/mcoi_runtime/app/routers/llm/ab_test.py",
+            ],
             "Model catalog and experiment control routes are declared as governed control surfaces.",
         ),
         _surface(
@@ -410,7 +415,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
             "audit_chain",
             "witnessed",
             [
-                "mcoi/mcoi_runtime/app/routers/data.py",
+                "mcoi/mcoi_runtime/app/routers/data/governance.py",
                 "mcoi/mcoi_runtime/core/data_governance.py",
                 "mcoi/mcoi_runtime/contracts/data_governance.py",
                 "mcoi/tests/test_data_governance_endpoints.py",
@@ -731,6 +736,30 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "capability_plan_bundle_canary_passed",
                 "physical_worker_canary_passed",
                 "physical_worker_canary_artifact_hash_bound",
+            ],
+        ),
+        _surface(
+            "proof_route_gap_triage",
+            [
+                "build_gap_triage_report",
+                "discover_route_declarations",
+                ".change_assurance/proof_route_gap_triage.json",
+            ],
+            "read_model",
+            "read_model",
+            "audit_chain",
+            "witnessed",
+            [
+                "scripts/proof_route_gap_triage.py",
+                "tests/test_proof_route_gap_triage.py",
+                "docs/70_proof_route_gap_triage.md",
+            ],
+            "Proof-route gap triage ranks unclassified declared routes by family, source file, method, and effect risk without reclassifying any route, producing a deterministic closure queue for the proof matrix.",
+            [
+                "unclassified_routes_grouped_by_family",
+                "route_gap_triage_binds_source_files_and_methods",
+                "closure_candidates_ranked_deterministically",
+                "triage_report_check_detects_stale_output",
             ],
         ),
         _surface(
@@ -1782,6 +1811,36 @@ def proof_coverage_matrix() -> dict[str, Any]:
             ],
         ),
         _surface(
+            "temporal_lease_window",
+            [
+                "TemporalLeaseWindow.evaluate",
+                "LeaseWindowRequest",
+                "TemporalLeaseWindowReceipt",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "gateway/temporal_lease_window.py",
+                "schemas/temporal_lease_window_receipt.schema.json",
+                "tests/test_gateway/test_temporal_lease_window.py",
+            ],
+            "Temporal lease window rechecks lease ownership, tenant and command scope, resource scope, worker ownership, fencing tokens, expiry, renewal warning windows, evidence refs, and high-risk source receipts before worker dispatch.",
+            [
+                "runtime_clock_owns_lease_window",
+                "tenant_command_resource_worker_scope_checked",
+                "active_lease_admits_dispatch",
+                "near_expiry_lease_requires_renewal_warning",
+                "expired_lease_blocks_dispatch",
+                "released_or_revoked_lease_blocks_dispatch",
+                "fencing_token_required",
+                "high_risk_source_receipts_bound",
+                "temporal_lease_window_receipt_schema_valid",
+                "receipt_not_terminal_closure",
+            ],
+        ),
+        _surface(
             "temporal_memory",
             [
                 "TemporalMemory.evaluate",
@@ -1991,7 +2050,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
             "audit_chain",
             "witnessed",
             [
-                "mcoi/mcoi_runtime/app/routers/data.py",
+                "mcoi/mcoi_runtime/app/routers/data/tools.py",
                 "mcoi/mcoi_runtime/app/routers/workflow.py",
                 "mcoi/mcoi_runtime/core/tool_use.py",
                 "mcoi/mcoi_runtime/mcp/capability_bridge.py",
@@ -2216,6 +2275,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
             "status": "closed",
         },
         {
+            "action_id": "publish_proof_route_gap_triage_report",
+            "surfaces": ["proof_route_gap_triage", "runtime_conformance_attestation"],
+            "status": "closed",
+        },
+        {
             "action_id": "publish_production_evidence_plane",
             "surfaces": ["production_evidence_plane", "gateway_runtime_witness"],
             "status": "closed",
@@ -2388,6 +2452,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
         {
             "action_id": "publish_temporal_retry_window_receipt_contract",
             "surfaces": ["temporal_retry_window"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_temporal_lease_window_receipt_contract",
+            "surfaces": ["temporal_lease_window"],
             "status": "closed",
         },
         {

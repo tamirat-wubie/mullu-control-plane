@@ -139,6 +139,14 @@
       ]
     },
     {
+      "action_id": "publish_proof_route_gap_triage_report",
+      "status": "closed",
+      "surfaces": [
+        "proof_route_gap_triage",
+        "runtime_conformance_attestation"
+      ]
+    },
+    {
       "action_id": "publish_production_evidence_plane",
       "status": "closed",
       "surfaces": [
@@ -387,6 +395,13 @@
       ]
     },
     {
+      "action_id": "publish_temporal_lease_window_receipt_contract",
+      "status": "closed",
+      "surfaces": [
+        "temporal_lease_window"
+      ]
+    },
+    {
       "action_id": "publish_temporal_memory_refresh_receipt_contract",
       "status": "closed",
       "surfaces": [
@@ -457,15 +472,15 @@
   ],
   "coverage_summary": {
     "by_action_proof": {
-      "action_proof": 58,
+      "action_proof": 59,
       "audit_chain": 0,
       "gap": 0,
-      "read_model": 10,
+      "read_model": 11,
       "request_proof": 2
     },
     "by_audit": {
       "action_proof": 0,
-      "audit_chain": 66,
+      "audit_chain": 68,
       "gap": 0,
       "read_model": 4,
       "request_proof": 0
@@ -473,25 +488,25 @@
     "by_coverage_state": {
       "proven": 1,
       "unproven": 0,
-      "witnessed": 69
+      "witnessed": 71
     },
     "by_request_proof": {
       "action_proof": 1,
       "audit_chain": 0,
       "gap": 0,
-      "read_model": 12,
-      "request_proof": 57
+      "read_model": 13,
+      "request_proof": 58
     },
-    "surface_count": 70
+    "surface_count": 72
   },
   "generated_by": "scripts/proof_coverage_matrix.py",
   "route_coverage": {
     "by_coverage_state": {
-      "proven": 5,
+      "proven": 8,
       "unproven": 169,
       "witnessed": 155
     },
-    "route_count": 329,
+    "route_count": 332,
     "routes": [
       {
         "coverage_state": "witnessed",
@@ -2119,9 +2134,24 @@
         "surface_id": "gateway_capability_fabric"
       },
       {
+        "coverage_state": "proven",
+        "route": "/webhook/phone",
+        "surface_id": "gateway_capability_fabric"
+      },
+      {
         "coverage_state": "witnessed",
         "route": "/webhook/slack",
         "surface_id": "gateway_webhook_ingress"
+      },
+      {
+        "coverage_state": "proven",
+        "route": "/webhook/sms",
+        "surface_id": "gateway_capability_fabric"
+      },
+      {
+        "coverage_state": "proven",
+        "route": "/webhook/teams",
+        "surface_id": "gateway_capability_fabric"
       },
       {
         "coverage_state": "witnessed",
@@ -2189,7 +2219,8 @@
       "audit": "audit_chain",
       "coverage_state": "witnessed",
       "evidence_files": [
-        "mcoi/mcoi_runtime/app/routers/llm.py",
+        "mcoi/mcoi_runtime/app/routers/llm/completion.py",
+        "mcoi/mcoi_runtime/app/routers/llm/chat.py",
         "mcoi/mcoi_runtime/app/streaming.py",
         "mcoi/tests/test_streaming.py",
         "mcoi/tests/test_server_phase200.py",
@@ -2242,7 +2273,7 @@
       "audit": "audit_chain",
       "coverage_state": "witnessed",
       "evidence_files": [
-        "mcoi/mcoi_runtime/app/routers/llm.py",
+        "mcoi/mcoi_runtime/app/routers/llm/completion.py",
         "mcoi/mcoi_runtime/core/proof_bridge.py"
       ],
       "notes": "Completion routes are governed through budget, model routing, and proof bridge checks.",
@@ -2260,7 +2291,7 @@
       "audit": "audit_chain",
       "coverage_state": "witnessed",
       "evidence_files": [
-        "mcoi/mcoi_runtime/app/routers/llm.py",
+        "mcoi/mcoi_runtime/app/routers/llm/chat.py",
         "mcoi/mcoi_runtime/core/proof_bridge.py"
       ],
       "notes": "Chat and workflow routes preserve governed request and action proof boundaries.",
@@ -2278,7 +2309,8 @@
       "audit": "audit_chain",
       "coverage_state": "witnessed",
       "evidence_files": [
-        "mcoi/mcoi_runtime/app/routers/llm.py",
+        "mcoi/mcoi_runtime/app/routers/llm/admin.py",
+        "mcoi/mcoi_runtime/app/routers/llm/costs.py",
         "mcoi/mcoi_runtime/governance/guards/budget.py"
       ],
       "notes": "Budget and cost surfaces expose bounded read models over governed spend state.",
@@ -2370,7 +2402,8 @@
       "audit": "audit_chain",
       "coverage_state": "witnessed",
       "evidence_files": [
-        "mcoi/mcoi_runtime/app/routers/llm.py"
+        "mcoi/mcoi_runtime/app/routers/llm/admin.py",
+        "mcoi/mcoi_runtime/app/routers/llm/ab_test.py"
       ],
       "notes": "Model catalog and experiment control routes are declared as governed control surfaces.",
       "representative_paths": [
@@ -2514,7 +2547,7 @@
       "audit": "audit_chain",
       "coverage_state": "witnessed",
       "evidence_files": [
-        "mcoi/mcoi_runtime/app/routers/data.py",
+        "mcoi/mcoi_runtime/app/routers/data/governance.py",
         "mcoi/mcoi_runtime/core/data_governance.py",
         "mcoi/mcoi_runtime/contracts/data_governance.py",
         "mcoi/tests/test_data_governance_endpoints.py",
@@ -2868,6 +2901,30 @@
         "physical_worker_canary_artifact_hash_bound"
       ],
       "surface_id": "runtime_conformance_attestation"
+    },
+    {
+      "action_proof": "read_model",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "scripts/proof_route_gap_triage.py",
+        "tests/test_proof_route_gap_triage.py",
+        "docs/70_proof_route_gap_triage.md"
+      ],
+      "notes": "Proof-route gap triage ranks unclassified declared routes by family, source file, method, and effect risk without reclassifying any route, producing a deterministic closure queue for the proof matrix.",
+      "representative_paths": [
+        "build_gap_triage_report",
+        "discover_route_declarations",
+        ".change_assurance/proof_route_gap_triage.json"
+      ],
+      "request_proof": "read_model",
+      "runtime_witnesses": [
+        "unclassified_routes_grouped_by_family",
+        "route_gap_triage_binds_source_files_and_methods",
+        "closure_candidates_ranked_deterministically",
+        "triage_report_check_detects_stale_output"
+      ],
+      "surface_id": "proof_route_gap_triage"
     },
     {
       "action_proof": "read_model",
@@ -3922,6 +3979,36 @@
       "audit": "audit_chain",
       "coverage_state": "witnessed",
       "evidence_files": [
+        "gateway/temporal_lease_window.py",
+        "schemas/temporal_lease_window_receipt.schema.json",
+        "tests/test_gateway/test_temporal_lease_window.py"
+      ],
+      "notes": "Temporal lease window rechecks lease ownership, tenant and command scope, resource scope, worker ownership, fencing tokens, expiry, renewal warning windows, evidence refs, and high-risk source receipts before worker dispatch.",
+      "representative_paths": [
+        "TemporalLeaseWindow.evaluate",
+        "LeaseWindowRequest",
+        "TemporalLeaseWindowReceipt"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "runtime_clock_owns_lease_window",
+        "tenant_command_resource_worker_scope_checked",
+        "active_lease_admits_dispatch",
+        "near_expiry_lease_requires_renewal_warning",
+        "expired_lease_blocks_dispatch",
+        "released_or_revoked_lease_blocks_dispatch",
+        "fencing_token_required",
+        "high_risk_source_receipts_bound",
+        "temporal_lease_window_receipt_schema_valid",
+        "receipt_not_terminal_closure"
+      ],
+      "surface_id": "temporal_lease_window"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
         "gateway/temporal_memory.py",
         "schemas/temporal_memory_receipt.schema.json",
         "tests/test_gateway/test_temporal_memory.py"
@@ -4127,7 +4214,7 @@
       "audit": "audit_chain",
       "coverage_state": "witnessed",
       "evidence_files": [
-        "mcoi/mcoi_runtime/app/routers/data.py",
+        "mcoi/mcoi_runtime/app/routers/data/tools.py",
         "mcoi/mcoi_runtime/app/routers/workflow.py",
         "mcoi/mcoi_runtime/core/tool_use.py",
         "mcoi/mcoi_runtime/mcp/capability_bridge.py",
