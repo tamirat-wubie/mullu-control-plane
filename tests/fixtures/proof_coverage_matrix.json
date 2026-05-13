@@ -111,6 +111,13 @@
       ]
     },
     {
+      "action_id": "classify_event_bus_operations_routes",
+      "status": "closed",
+      "surfaces": [
+        "event_bus_operations"
+      ]
+    },
+    {
       "action_id": "classify_tenant_governance_lifecycle_routes",
       "status": "closed",
       "surfaces": [
@@ -528,7 +535,7 @@
   ],
   "coverage_summary": {
     "by_action_proof": {
-      "action_proof": 67,
+      "action_proof": 68,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 11,
@@ -536,7 +543,7 @@
     },
     "by_audit": {
       "action_proof": 0,
-      "audit_chain": 76,
+      "audit_chain": 77,
       "gap": 0,
       "read_model": 4,
       "request_proof": 0
@@ -544,23 +551,23 @@
     "by_coverage_state": {
       "proven": 1,
       "unproven": 0,
-      "witnessed": 79
+      "witnessed": 80
     },
     "by_request_proof": {
       "action_proof": 1,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 13,
-      "request_proof": 66
+      "request_proof": 67
     },
-    "surface_count": 80
+    "surface_count": 81
   },
   "generated_by": "scripts/proof_coverage_matrix.py",
   "route_coverage": {
     "by_coverage_state": {
       "proven": 8,
-      "unproven": 131,
-      "witnessed": 193
+      "unproven": 127,
+      "witnessed": 197
     },
     "route_count": 332,
     "routes": [
@@ -1040,24 +1047,24 @@
         "surface_id": "unclassified_declared_route"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/events",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "event_bus_operations"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/events/publish",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "event_bus_operations"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/events/store/summary",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "event_bus_operations"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/events/summary",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "event_bus_operations"
       },
       {
         "coverage_state": "unproven",
@@ -2225,7 +2232,7 @@
         "surface_id": "gateway_capability_fabric"
       }
     ],
-    "unclassified_route_count": 131
+    "unclassified_route_count": 127
   },
   "schema_version": 1,
   "surfaces": [
@@ -2782,6 +2789,33 @@
         "audit_chain_hash_linked"
       ],
       "surface_id": "audit_chain_api"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "mcoi/mcoi_runtime/app/routers/audit.py",
+        "mcoi/tests/test_server_phase206.py",
+        "mcoi/tests/test_server_phase207.py"
+      ],
+      "notes": "Event bus operations publish hash-bound governed events, expose filtered event history, return bounded event-bus summaries, and surface event-store summary state for operational replay.",
+      "representative_paths": [
+        "/api/v1/events",
+        "/api/v1/events/publish",
+        "/api/v1/events/store/summary",
+        "/api/v1/events/summary"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "event_publish_hash_bound",
+        "event_history_filter_bounded",
+        "event_summary_bounded",
+        "event_store_summary_governed",
+        "pipeline_completion_event_visible",
+        "config_update_event_visible"
+      ],
+      "surface_id": "event_bus_operations"
     },
     {
       "action_proof": "action_proof",

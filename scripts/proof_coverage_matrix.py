@@ -584,6 +584,33 @@ def proof_coverage_matrix() -> dict[str, Any]:
             ],
         ),
         _surface(
+            "event_bus_operations",
+            [
+                "/api/v1/events",
+                "/api/v1/events/publish",
+                "/api/v1/events/store/summary",
+                "/api/v1/events/summary",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "mcoi/mcoi_runtime/app/routers/audit.py",
+                "mcoi/tests/test_server_phase206.py",
+                "mcoi/tests/test_server_phase207.py",
+            ],
+            "Event bus operations publish hash-bound governed events, expose filtered event history, return bounded event-bus summaries, and surface event-store summary state for operational replay.",
+            [
+                "event_publish_hash_bound",
+                "event_history_filter_bounded",
+                "event_summary_bounded",
+                "event_store_summary_governed",
+                "pipeline_completion_event_visible",
+                "config_update_event_visible",
+            ],
+        ),
+        _surface(
             "runbook_learning_lifecycle",
             [
                 "/api/v1/runbooks",
@@ -2536,6 +2563,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
         {
             "action_id": "classify_audit_chain_api",
             "surfaces": ["audit_chain_api"],
+            "status": "closed",
+        },
+        {
+            "action_id": "classify_event_bus_operations_routes",
+            "surfaces": ["event_bus_operations"],
             "status": "closed",
         },
         {
