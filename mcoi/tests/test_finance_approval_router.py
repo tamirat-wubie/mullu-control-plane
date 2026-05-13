@@ -6,6 +6,7 @@ Invariants:
   - Created packets are policy-evaluated before read-model exposure.
   - Blocked packets export review proof without effects.
   - Approval actions create explicit approval/effect/closure state.
+  - Payment handoff preparation is witnessed without claiming live payment.
   - Default router mounting includes the finance approval API.
 """
 
@@ -120,6 +121,124 @@ def test_approval_creates_effect_and_closed_proof() -> None:
     assert proof.status_code == 200
     assert proof.json()["proof"]["closure_certificate_id"] == "closure:case-success-001:sent"
     assert proof.json()["proof"]["final_state"] == "closed_sent"
+
+
+def test_approval_can_create_payment_handoff_without_live_payment_claim() -> None:
+    client = _client()
+    client.post("/api/v1/finance/approval-packets", json=_success_request())
+
+    approved = client.post(
+        "/api/v1/finance/approval-packets/case-success-001/approval",
+        json={
+            "approver_id": "finance-admin",
+            "approver_role": "finance_admin",
+            "status": "granted",
+            "create_email_handoff": False,
+            "create_payment_handoff": True,
+            "payment_evidence_refs": ["evidence:payment-handoff:case-success-001"],
+        },
+    )
+    fetched = client.get("/api/v1/finance/approval-packets/case-success-001")
+    proof = client.get("/api/v1/finance/approval-packets/case-success-001/proof")
+
+    assert approved.status_code == 200
+    assert approved.json()["packet"]["state"] == "closed_prepared"
+    assert approved.json()["packet"]["closure_certificate_id"] == "closure:case-success-001:payment_handoff_prepared"
+    assert len(approved.json()["packet"]["approval_refs"]) == 1
+    assert len(approved.json()["packet"]["effect_refs"]) == 1
+    assert fetched.json()["effects"][0]["effect_type"] == "payment_handoff_created"
+    assert fetched.json()["effects"][0]["capability_id"] == "payment.prepare"
+    assert fetched.json()["effects"][0]["evidence_refs"] == ["evidence:payment-handoff:case-success-001"]
+    assert proof.status_code == 200
+    assert proof.json()["proof"]["final_state"] == "closed_prepared"
+    assert proof.json()["proof"]["closure_certificate_id"] == "closure:case-success-001:payment_handoff_prepared"
+    assert "payment_sent_with_approval" not in {effect["effect_type"] for effect in fetched.json()["effects"]}
+
+
+def test_payment_finalization_requires_provider_and_ledger_evidence_without_mutation() -> None:
+    client = _client()
+    client.post("/api/v1/finance/approval-packets", json=_success_request())
+
+    rejected = client.post(
+        "/api/v1/finance/approval-packets/case-success-001/approval",
+        json={
+            "approver_id": "finance-admin",
+            "status": "granted",
+            "create_email_handoff": False,
+            "create_payment_handoff": True,
+            "finalize_payment_with_receipt": True,
+            "payment_provider_receipt_ref": "provider:payment:receipt-001",
+        },
+    )
+    fetched = client.get("/api/v1/finance/approval-packets/case-success-001")
+
+    assert rejected.status_code == 400
+    assert rejected.json()["detail"]["error_code"] == "finance_approval_failed"
+    assert "provider receipt and ledger reconciliation evidence" in rejected.json()["detail"]["error"]
+    assert fetched.json()["packet"]["state"] == "approved"
+    assert fetched.json()["approvals"] == []
+    assert fetched.json()["effects"] == []
+
+
+def test_payment_finalization_closes_sent_with_reconciled_receipts() -> None:
+    client = _client()
+    client.post("/api/v1/finance/approval-packets", json=_success_request())
+
+    approved = client.post(
+        "/api/v1/finance/approval-packets/case-success-001/approval",
+        json={
+            "approver_id": "finance-admin",
+            "approver_role": "finance_admin",
+            "status": "granted",
+            "create_email_handoff": False,
+            "create_payment_handoff": True,
+            "finalize_payment_with_receipt": True,
+            "payment_evidence_refs": ["evidence:payment-handoff:case-success-001"],
+            "payment_provider_receipt_ref": "provider:payment:receipt-001",
+            "ledger_reconciliation_ref": "ledger:reconciliation:receipt-001",
+        },
+    )
+    fetched = client.get("/api/v1/finance/approval-packets/case-success-001")
+    proof = client.get("/api/v1/finance/approval-packets/case-success-001/proof")
+
+    assert approved.status_code == 200
+    assert approved.json()["packet"]["state"] == "closed_sent"
+    assert approved.json()["packet"]["closure_certificate_id"] == "closure:case-success-001:payment_receipt_reconciled"
+    assert len(approved.json()["packet"]["effect_refs"]) == 2
+    assert fetched.json()["effects"][0]["effect_type"] == "payment_handoff_created"
+    assert fetched.json()["effects"][1]["effect_type"] == "payment_sent_with_approval"
+    assert fetched.json()["effects"][1]["capability_id"] == "payment.execute.with_approval"
+    assert fetched.json()["effects"][1]["evidence_refs"] == [
+        "provider:payment:receipt-001",
+        "ledger:reconciliation:receipt-001",
+    ]
+    assert proof.status_code == 200
+    assert proof.json()["proof"]["final_state"] == "closed_sent"
+    assert len(proof.json()["proof"]["effect_refs"]) == 2
+
+
+def test_approval_rejects_conflicting_handoff_modes_without_mutation() -> None:
+    client = _client()
+    client.post("/api/v1/finance/approval-packets", json=_success_request())
+
+    rejected = client.post(
+        "/api/v1/finance/approval-packets/case-success-001/approval",
+        json={
+            "approver_id": "finance-admin",
+            "status": "granted",
+            "create_email_handoff": True,
+            "create_payment_handoff": True,
+        },
+    )
+    fetched = client.get("/api/v1/finance/approval-packets/case-success-001")
+
+    assert rejected.status_code == 400
+    assert rejected.json()["detail"]["error_code"] == "finance_approval_failed"
+    assert rejected.json()["detail"]["governed"] is True
+    assert "only one handoff type" in rejected.json()["detail"]["error"]
+    assert fetched.json()["packet"]["state"] == "approved"
+    assert fetched.json()["approvals"] == []
+    assert fetched.json()["effects"] == []
 
 
 def test_operator_read_model_summarizes_blocked_and_closed_packets() -> None:

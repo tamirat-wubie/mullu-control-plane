@@ -3552,6 +3552,11 @@
         "mcoi/mcoi_runtime/core/finance_approval/proof.py",
         "mcoi/tests/test_finance_approval_packet.py",
         "mcoi/tests/test_finance_approval_router.py",
+        "schemas/finance_approval_payment_closure_receipt.schema.json",
+        "scripts/produce_finance_approval_payment_closure_receipt.py",
+        "scripts/validate_finance_approval_payment_closure_receipt.py",
+        "tests/test_produce_finance_approval_payment_closure_receipt.py",
+        "tests/test_validate_finance_approval_payment_closure_receipt.py",
         "examples/finance_approval_packet_blocked.json",
         "examples/finance_approval_packet_success.json"
       ],
@@ -3569,6 +3574,10 @@
         "blocked_packet_emits_no_effect",
         "approval_action_binds_approval_effect_and_closure_refs",
         "payment_handoff_prepared_without_live_payment_claim",
+        "payment_receipt_and_ledger_reconciliation_required_for_payment_closure",
+        "payment_closure_receipt_validator_blocks_unbound_evidence",
+        "payment_closure_receipt_producer_emits_ready_sandbox_evidence",
+        "payment_closure_receipt_producer_requires_provider_binding_for_nonsandbox",
         "packet_proof_requires_policy_evidence_and_closure_for_closed_states",
         "operator_read_model_bounds_visible_packets_and_counts"
       ],
