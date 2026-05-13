@@ -437,6 +437,13 @@
       ]
     },
     {
+      "action_id": "publish_temporal_recurrence_window_receipt_contract",
+      "status": "closed",
+      "surfaces": [
+        "temporal_recurrence_window"
+      ]
+    },
+    {
       "action_id": "publish_temporal_memory_refresh_receipt_contract",
       "status": "closed",
       "surfaces": [
@@ -507,7 +514,7 @@
   ],
   "coverage_summary": {
     "by_action_proof": {
-      "action_proof": 64,
+      "action_proof": 65,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 11,
@@ -515,7 +522,7 @@
     },
     "by_audit": {
       "action_proof": 0,
-      "audit_chain": 73,
+      "audit_chain": 74,
       "gap": 0,
       "read_model": 4,
       "request_proof": 0
@@ -523,16 +530,16 @@
     "by_coverage_state": {
       "proven": 1,
       "unproven": 0,
-      "witnessed": 76
+      "witnessed": 77
     },
     "by_request_proof": {
       "action_proof": 1,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 13,
-      "request_proof": 63
+      "request_proof": 64
     },
-    "surface_count": 77
+    "surface_count": 78
   },
   "generated_by": "scripts/proof_coverage_matrix.py",
   "route_coverage": {
@@ -4195,6 +4202,36 @@
         "receipt_not_terminal_closure"
       ],
       "surface_id": "temporal_missed_run"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "gateway/temporal_recurrence_window.py",
+        "schemas/temporal_recurrence_window_receipt.schema.json",
+        "tests/test_gateway/test_temporal_recurrence_window.py"
+      ],
+      "notes": "Temporal recurrence-window receipts certify next recurring occurrences with runtime-owned time truth, tenant timezone preservation, DST-safe next-occurrence checks, recurrence completion, duplicate-run prevention, scheduler source receipts, evidence refs, and high-risk due-candidate reapproval binding before recurring dispatch.",
+      "representative_paths": [
+        "evaluate_temporal_recurrence_window",
+        "RecurrenceWindowRequest",
+        "TemporalRecurrenceWindowReceipt"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "runtime_clock_owns_recurrence_window_time",
+        "tenant_timezone_preserved_across_dst",
+        "candidate_must_match_next_occurrence",
+        "future_candidate_defers_dispatch",
+        "completed_series_blocks_dispatch",
+        "duplicate_candidate_requires_terminal_receipt",
+        "monthly_end_of_month_clamped",
+        "high_risk_due_candidate_requires_reapproval_source",
+        "temporal_recurrence_window_receipt_schema_valid",
+        "receipt_not_terminal_closure"
+      ],
+      "surface_id": "temporal_recurrence_window"
     },
     {
       "action_proof": "action_proof",
