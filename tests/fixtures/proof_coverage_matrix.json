@@ -240,6 +240,13 @@
       ]
     },
     {
+      "action_id": "classify_feature_flag_read_model_routes",
+      "status": "closed",
+      "surfaces": [
+        "feature_flag_read_models"
+      ]
+    },
+    {
       "action_id": "classify_ops_diagnostics_routes",
       "status": "closed",
       "surfaces": [
@@ -702,12 +709,12 @@
       "action_proof": 86,
       "audit_chain": 0,
       "gap": 0,
-      "read_model": 15,
+      "read_model": 16,
       "request_proof": 2
     },
     "by_audit": {
       "action_proof": 0,
-      "audit_chain": 99,
+      "audit_chain": 100,
       "gap": 0,
       "read_model": 4,
       "request_proof": 0
@@ -715,23 +722,23 @@
     "by_coverage_state": {
       "proven": 1,
       "unproven": 0,
-      "witnessed": 102
+      "witnessed": 103
     },
     "by_request_proof": {
       "action_proof": 1,
       "audit_chain": 0,
       "gap": 0,
-      "read_model": 17,
+      "read_model": 18,
       "request_proof": 85
     },
-    "surface_count": 103
+    "surface_count": 104
   },
   "generated_by": "scripts/proof_coverage_matrix.py",
   "route_coverage": {
     "by_coverage_state": {
       "proven": 12,
-      "unproven": 23,
-      "witnessed": 298
+      "unproven": 21,
+      "witnessed": 300
     },
     "route_count": 333,
     "routes": [
@@ -1291,14 +1298,14 @@
         "surface_id": "finance_approval_packets"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/flags",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "feature_flag_read_models"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/flags/{flag_id}",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "feature_flag_read_models"
       },
       {
         "coverage_state": "witnessed",
@@ -2401,7 +2408,7 @@
         "surface_id": "gateway_capability_fabric"
       }
     ],
-    "unclassified_route_count": 23
+    "unclassified_route_count": 21
   },
   "schema_version": 1,
   "surfaces": [
@@ -3375,6 +3382,35 @@
         "identity_rate_limit_store_bounds_per_identity_consumption"
       ],
       "surface_id": "rate_limit_read_models"
+    },
+    {
+      "action_proof": "read_model",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "mcoi/mcoi_runtime/app/routers/ops/feature_flags.py",
+        "mcoi/mcoi_runtime/core/feature_flags.py",
+        "mcoi/tests/test_server_phase220.py",
+        "mcoi/tests/test_feature_flags.py",
+        "mcoi/tests/test_enforcement_integration.py",
+        "mcoi/tests/test_server_capability_helpers.py"
+      ],
+      "notes": "Feature-flag read-model routes expose bounded flag listings, summary counts, tenant-aware flag checks, and fail-closed unknown-flag behavior without mutating runtime feature state.",
+      "representative_paths": [
+        "/api/v1/flags",
+        "/api/v1/flags/{flag_id}"
+      ],
+      "request_proof": "read_model",
+      "runtime_witnesses": [
+        "feature_flags_list_returns_registered_flags",
+        "feature_flags_summary_counts_enabled_disabled",
+        "feature_flag_check_enabled",
+        "feature_flag_unknown_returns_disabled",
+        "feature_flag_tenant_override_respected",
+        "feature_flag_enforcement_gates_access",
+        "bootstrap_registers_default_feature_flags"
+      ],
+      "surface_id": "feature_flag_read_models"
     },
     {
       "action_proof": "read_model",

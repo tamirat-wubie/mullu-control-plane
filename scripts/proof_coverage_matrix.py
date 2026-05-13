@@ -1000,6 +1000,35 @@ def proof_coverage_matrix() -> dict[str, Any]:
             ],
         ),
         _surface(
+            "feature_flag_read_models",
+            [
+                "/api/v1/flags",
+                "/api/v1/flags/{flag_id}",
+            ],
+            "read_model",
+            "read_model",
+            "audit_chain",
+            "witnessed",
+            [
+                "mcoi/mcoi_runtime/app/routers/ops/feature_flags.py",
+                "mcoi/mcoi_runtime/core/feature_flags.py",
+                "mcoi/tests/test_server_phase220.py",
+                "mcoi/tests/test_feature_flags.py",
+                "mcoi/tests/test_enforcement_integration.py",
+                "mcoi/tests/test_server_capability_helpers.py",
+            ],
+            "Feature-flag read-model routes expose bounded flag listings, summary counts, tenant-aware flag checks, and fail-closed unknown-flag behavior without mutating runtime feature state.",
+            [
+                "feature_flags_list_returns_registered_flags",
+                "feature_flags_summary_counts_enabled_disabled",
+                "feature_flag_check_enabled",
+                "feature_flag_unknown_returns_disabled",
+                "feature_flag_tenant_override_respected",
+                "feature_flag_enforcement_gates_access",
+                "bootstrap_registers_default_feature_flags",
+            ],
+        ),
+        _surface(
             "operational_health_read_models",
             [
                 "/api/v1/health/deep",
@@ -3461,6 +3490,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
         {
             "action_id": "classify_rate_limit_read_model_routes",
             "surfaces": ["rate_limit_read_models"],
+            "status": "closed",
+        },
+        {
+            "action_id": "classify_feature_flag_read_model_routes",
+            "surfaces": ["feature_flag_read_models"],
             "status": "closed",
         },
         {
