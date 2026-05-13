@@ -123,9 +123,11 @@ def test_representative_routes_are_not_unclassified() -> None:
         classified_routes["/api/v1/multi-agent/conflicts/unresolved"]["surface_id"]
         == "multi_agent_coordination_runtime"
     )
-    assert classified_routes["/api/v1/config/update"]["surface_id"] == "config_governance_lifecycle"
-    assert classified_routes["/api/v1/config/rollback"]["surface_id"] == "config_governance_lifecycle"
-    assert classified_routes["/api/v1/config/drift"]["surface_id"] == "config_governance_lifecycle"
+    assert classified_routes["/api/v1/config"]["surface_id"] == "runtime_config_management"
+    assert classified_routes["/api/v1/config/update"]["surface_id"] == "runtime_config_management"
+    assert classified_routes["/api/v1/config/rollback"]["surface_id"] == "runtime_config_management"
+    assert classified_routes["/api/v1/config/watcher"]["surface_id"] == "runtime_config_management"
+    assert classified_routes["/api/v1/config/drift"]["surface_id"] == "runtime_config_management"
     assert classified_routes["/api/v1/events/publish"]["surface_id"] == "event_bus_operations"
     assert classified_routes["/api/v1/events"]["surface_id"] == "event_bus_operations"
     assert classified_routes["/api/v1/events/store/summary"]["surface_id"] == "event_bus_operations"
@@ -168,25 +170,97 @@ def test_representative_routes_are_not_unclassified() -> None:
         classified_routes["/api/v1/finance/approval-packets/{case_id}/proof"]["surface_id"]
         == "finance_approval_packets"
     )
-    assert classified_routes["/api/v1/agent/register"]["surface_id"] == "agent_adapter_lifecycle"
-    assert classified_routes["/api/v1/agent/action-request"]["surface_id"] == "agent_adapter_lifecycle"
-    assert classified_routes["/api/v1/agent/restore"]["surface_id"] == "agent_adapter_lifecycle"
-    assert classified_routes["/api/v1/webhooks/subscribe"]["surface_id"] == "webhook_operations_lifecycle"
-    assert classified_routes["/api/v1/webhooks/deliveries"]["surface_id"] == "webhook_operations_lifecycle"
-    assert (
-        classified_routes["/api/v1/webhooks/retry/dead-letters"]["surface_id"]
-        == "webhook_operations_lifecycle"
-    )
+    assert classified_routes["/api/v1/agent/register"]["surface_id"] == "agent_adapter_protocol"
+    assert classified_routes["/api/v1/agent/action-request"]["surface_id"] == "agent_adapter_protocol"
+    assert classified_routes["/api/v1/agent/restore"]["surface_id"] == "agent_adapter_protocol"
+    assert classified_routes["/api/v1/agents"]["surface_id"] == "agent_adapter_protocol"
+    assert classified_routes["/api/v1/agents/{agent_id}/tasks"]["surface_id"] == "agent_adapter_protocol"
+    assert classified_routes["/api/v1/webhooks/subscribe"]["surface_id"] == "webhooks_proof_surface"
+    assert classified_routes["/api/v1/webhooks"]["surface_id"] == "webhooks_proof_surface"
+    assert classified_routes["/api/v1/webhooks/deliveries"]["surface_id"] == "webhooks_proof_surface"
+    assert classified_routes["/api/v1/webhooks/retry/summary"]["surface_id"] == "webhooks_proof_surface"
+    assert classified_routes["/api/v1/webhooks/retry/dead-letters"]["surface_id"] == "webhooks_proof_surface"
     assert classified_routes["/api/v1/rbac/identities"]["surface_id"] == "rbac_access_governance"
     assert classified_routes["/api/v1/rbac/roles"]["surface_id"] == "rbac_access_governance"
     assert classified_routes["/api/v1/rbac/bindings"]["surface_id"] == "rbac_access_governance"
 
 
-def test_agent_adapter_lifecycle_surface_is_witnessed() -> None:
+def test_runtime_config_management_surface_is_witnessed() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    route_records = {
+        record["route"]: record
+        for record in matrix["route_coverage"]["routes"]
+    }
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    config_surface = surfaces["runtime_config_management"]
+    witnesses = set(config_surface["runtime_witnesses"])
+
+    assert config_surface["coverage_state"] == "witnessed"
+    assert config_surface["request_proof"] == "request_proof"
+    assert config_surface["action_proof"] == "action_proof"
+    assert config_surface["audit"] == "audit_chain"
+    assert "/api/v1/config/update" in config_surface["representative_paths"]
+    assert "/api/v1/config/rollback" in config_surface["representative_paths"]
+    assert "/api/v1/config/watcher" in config_surface["representative_paths"]
+    assert "/api/v1/config/drift" in config_surface["representative_paths"]
+    assert "mcoi/mcoi_runtime/app/routers/ops/config.py" in config_surface["evidence_files"]
+    assert "mcoi/mcoi_runtime/core/config_reload.py" in config_surface["evidence_files"]
+    assert "mcoi/tests/test_server_phase207.py" in config_surface["evidence_files"]
+    assert "mcoi/tests/test_config_drift.py" in config_surface["evidence_files"]
+    assert "config_update_emits_event_and_audit" in witnesses
+    assert "config_rollback_requires_known_version" in witnesses
+    assert "config_watcher_errors_are_bounded" in witnesses
+    assert "config_drift_secret_changes_are_critical" in witnesses
+    assert route_records["/api/v1/config/update"]["coverage_state"] == "witnessed"
+    assert route_records["/api/v1/config/update"]["surface_id"] == "runtime_config_management"
+    assert route_records["/api/v1/config/drift"]["coverage_state"] == "witnessed"
+    assert route_records["/api/v1/config/drift"]["surface_id"] == "runtime_config_management"
+    assert closure_actions["classify_runtime_config_management_routes"]["status"] == "closed"
+
+
+def test_webhooks_proof_surface_is_witnessed() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    route_records = {
+        record["route"]: record
+        for record in matrix["route_coverage"]["routes"]
+    }
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    webhooks_surface = surfaces["webhooks_proof_surface"]
+    witnesses = set(webhooks_surface["runtime_witnesses"])
+
+    assert webhooks_surface["coverage_state"] == "witnessed"
+    assert webhooks_surface["request_proof"] == "request_proof"
+    assert webhooks_surface["action_proof"] == "action_proof"
+    assert webhooks_surface["audit"] == "audit_chain"
+    assert "/api/v1/webhooks/subscribe" in webhooks_surface["representative_paths"]
+    assert "/api/v1/webhooks" in webhooks_surface["representative_paths"]
+    assert "/api/v1/webhooks/deliveries" in webhooks_surface["representative_paths"]
+    assert "/api/v1/webhooks/retry/summary" in webhooks_surface["representative_paths"]
+    assert "/api/v1/webhooks/retry/dead-letters" in webhooks_surface["representative_paths"]
+    assert "mcoi/mcoi_runtime/app/routers/agent.py" in webhooks_surface["evidence_files"]
+    assert "mcoi/mcoi_runtime/core/webhook_retry.py" in webhooks_surface["evidence_files"]
+    assert "mcoi/tests/test_server_phase205.py" in webhooks_surface["evidence_files"]
+    assert "mcoi/tests/test_webhook_retry.py" in webhooks_surface["evidence_files"]
+    assert "webhook_subscribe_records_audit" in witnesses
+    assert "webhook_subscription_audited" in witnesses
+    assert "webhook_delivery_history_is_bounded" in witnesses
+    assert "webhook_delivery_history_bounded" in witnesses
+    assert "webhook_dead_letters_are_explicit" in witnesses
+    assert "webhook_delivery_errors_are_sanitized" in witnesses
+    assert route_records["/api/v1/webhooks/subscribe"]["coverage_state"] == "witnessed"
+    assert route_records["/api/v1/webhooks/subscribe"]["surface_id"] == "webhooks_proof_surface"
+    assert route_records["/api/v1/webhooks/retry/dead-letters"]["coverage_state"] == "witnessed"
+    assert route_records["/api/v1/webhooks/retry/dead-letters"]["surface_id"] == "webhooks_proof_surface"
+    assert closure_actions["classify_webhooks_routes"]["status"] == "closed"
+
+
+def test_agent_adapter_protocol_surface_is_witnessed() -> None:
     matrix = _load_fixture()
     surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
     closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
-    agent_surface = surfaces["agent_adapter_lifecycle"]
+    agent_surface = surfaces["agent_adapter_protocol"]
     witnesses = set(agent_surface["runtime_witnesses"])
 
     assert agent_surface["coverage_state"] == "witnessed"
@@ -199,38 +273,18 @@ def test_agent_adapter_lifecycle_surface_is_witnessed() -> None:
     assert "/api/v1/agents" in agent_surface["representative_paths"]
     assert "/api/v1/agents/{agent_id}/tasks" in agent_surface["representative_paths"]
     assert "mcoi/mcoi_runtime/app/routers/adapter.py" in agent_surface["evidence_files"]
+    assert "mcoi/mcoi_runtime/app/routers/deps.py" in agent_surface["evidence_files"]
     assert "mcoi/mcoi_runtime/app/routers/agent.py" in agent_surface["evidence_files"]
     assert "mcoi/tests/test_agent_adapter_protocol.py" in agent_surface["evidence_files"]
+    assert "agent_register_emits_governed_identity" in witnesses
     assert "agent_register_emits_audit_record" in witnesses
     assert "agent_action_request_runs_guard_chain" in witnesses
+    assert "agent_checkpoint_restore_errors_are_bounded" in witnesses
     assert "agent_checkpoint_restore_roundtrip_governed" in witnesses
+    assert "agent_adapter_summary_is_governed_read_model" in witnesses
     assert "agent_adapter_summary_bounded" in witnesses
     assert "builtin_agent_registry_read_models_governed" in witnesses
-    assert closure_actions["classify_agent_adapter_lifecycle_routes"]["status"] == "closed"
-
-
-def test_webhook_operations_lifecycle_surface_is_witnessed() -> None:
-    matrix = _load_fixture()
-    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
-    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
-    webhook_surface = surfaces["webhook_operations_lifecycle"]
-    witnesses = set(webhook_surface["runtime_witnesses"])
-
-    assert webhook_surface["coverage_state"] == "witnessed"
-    assert webhook_surface["request_proof"] == "request_proof"
-    assert webhook_surface["action_proof"] == "action_proof"
-    assert "/api/v1/webhooks" in webhook_surface["representative_paths"]
-    assert "/api/v1/webhooks/subscribe" in webhook_surface["representative_paths"]
-    assert "/api/v1/webhooks/deliveries" in webhook_surface["representative_paths"]
-    assert "/api/v1/webhooks/retry/summary" in webhook_surface["representative_paths"]
-    assert "mcoi/mcoi_runtime/app/routers/agent.py" in webhook_surface["evidence_files"]
-    assert "mcoi/tests/test_server_phase205.py" in webhook_surface["evidence_files"]
-    assert "mcoi/tests/test_e2e_integration.py" in webhook_surface["evidence_files"]
-    assert "webhook_subscription_audited" in witnesses
-    assert "webhook_delivery_history_bounded" in witnesses
-    assert "webhook_retry_summary_governed" in witnesses
-    assert "webhook_workflow_delivery_witnessed" in witnesses
-    assert closure_actions["classify_webhook_operations_lifecycle_routes"]["status"] == "closed"
+    assert closure_actions["classify_agent_adapter_protocol_routes"]["status"] == "closed"
 
 
 def test_rbac_access_governance_surface_is_witnessed() -> None:
@@ -1184,38 +1238,6 @@ def test_multi_agent_coordination_runtime_surface_tracks_cooperation_lifecycle()
     assert route_records["/api/v1/multi-agent/summary"]["coverage_state"] == "witnessed"
     assert route_records["/api/v1/multi-agent/summary"]["surface_id"] == "multi_agent_coordination_runtime"
     assert closure_actions["classify_multi_agent_coordination_routes"]["status"] == "closed"
-
-
-def test_config_governance_lifecycle_surface_tracks_update_and_drift() -> None:
-    matrix = _load_fixture()
-    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
-    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
-    config_surface = surfaces["config_governance_lifecycle"]
-    witnesses = set(config_surface["runtime_witnesses"])
-    route_records = {
-        record["route"]: record
-        for record in matrix["route_coverage"]["routes"]
-    }
-
-    assert config_surface["coverage_state"] == "witnessed"
-    assert config_surface["request_proof"] == "request_proof"
-    assert config_surface["action_proof"] == "action_proof"
-    assert "/api/v1/config" in config_surface["representative_paths"]
-    assert "/api/v1/config/update" in config_surface["representative_paths"]
-    assert "/api/v1/config/rollback" in config_surface["representative_paths"]
-    assert "/api/v1/config/drift" in config_surface["representative_paths"]
-    assert "mcoi/mcoi_runtime/app/routers/ops/config.py" in config_surface["evidence_files"]
-    assert "mcoi/mcoi_runtime/core/config_reload.py" in config_surface["evidence_files"]
-    assert "mcoi/tests/test_server_phase207.py" in config_surface["evidence_files"]
-    assert "config_update_audited" in witnesses
-    assert "config_update_emits_event" in witnesses
-    assert "config_rollback_version_checked" in witnesses
-    assert "config_drift_summary_bounded" in witnesses
-    assert route_records["/api/v1/config/update"]["coverage_state"] == "witnessed"
-    assert route_records["/api/v1/config/update"]["surface_id"] == "config_governance_lifecycle"
-    assert route_records["/api/v1/config/watcher"]["coverage_state"] == "witnessed"
-    assert route_records["/api/v1/config/watcher"]["surface_id"] == "config_governance_lifecycle"
-    assert closure_actions["classify_config_governance_routes"]["status"] == "closed"
 
 
 def test_task_queue_lifecycle_surface_tracks_priority_processing() -> None:
@@ -2172,6 +2194,33 @@ def test_temporal_idempotency_window_surface_blocks_duplicate_dispatch() -> None
     assert "high_risk_source_receipts_bound" in witnesses
     assert "temporal_idempotency_window_receipt_schema_valid" in witnesses
     assert closure_actions["publish_temporal_idempotency_window_receipt_contract"]["status"] == "closed"
+
+
+def test_temporal_missed_run_surface_emits_skip_and_recovery_receipts() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    missed_run_surface = surfaces["temporal_missed_run"]
+    witnesses = set(missed_run_surface["runtime_witnesses"])
+
+    assert missed_run_surface["coverage_state"] == "witnessed"
+    assert missed_run_surface["request_proof"] == "request_proof"
+    assert missed_run_surface["action_proof"] == "action_proof"
+    assert "evaluate_temporal_missed_run" in missed_run_surface["representative_paths"]
+    assert "MissedRunRequest" in missed_run_surface["representative_paths"]
+    assert "TemporalMissedRunReceipt" in missed_run_surface["representative_paths"]
+    assert "gateway/temporal_missed_run.py" in missed_run_surface["evidence_files"]
+    assert "schemas/temporal_missed_run_receipt.schema.json" in missed_run_surface["evidence_files"]
+    assert "tests/test_gateway/test_temporal_missed_run.py" in missed_run_surface["evidence_files"]
+    assert "runtime_clock_owns_missed_run_time" in witnesses
+    assert "late_within_grace_preserves_dispatch_eligibility" in witnesses
+    assert "expired_command_emits_missed_run_receipt" in witnesses
+    assert "duplicate_dispatched_run_requires_terminal_receipt" in witnesses
+    assert "recovery_due_requires_review_actions" in witnesses
+    assert "tenant_command_action_scope_checked" in witnesses
+    assert "high_risk_source_receipts_bound" in witnesses
+    assert "temporal_missed_run_receipt_schema_valid" in witnesses
+    assert closure_actions["publish_temporal_missed_run_receipt_contract"]["status"] == "closed"
 
 
 def test_temporal_memory_surface_blocks_stale_or_superseded_memory() -> None:

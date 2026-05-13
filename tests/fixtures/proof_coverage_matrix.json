@@ -181,13 +181,6 @@
       ]
     },
     {
-      "action_id": "classify_webhook_operations_lifecycle_routes",
-      "status": "closed",
-      "surfaces": [
-        "webhook_operations_lifecycle"
-      ]
-    },
-    {
       "action_id": "classify_rbac_access_governance_routes",
       "status": "closed",
       "surfaces": [
@@ -195,10 +188,24 @@
       ]
     },
     {
-      "action_id": "classify_agent_adapter_lifecycle_routes",
+      "action_id": "classify_runtime_config_management_routes",
       "status": "closed",
       "surfaces": [
-        "agent_adapter_lifecycle"
+        "runtime_config_management"
+      ]
+    },
+    {
+      "action_id": "classify_webhooks_routes",
+      "status": "closed",
+      "surfaces": [
+        "webhooks_proof_surface"
+      ]
+    },
+    {
+      "action_id": "classify_agent_adapter_protocol_routes",
+      "status": "closed",
+      "surfaces": [
+        "agent_adapter_protocol"
       ]
     },
     {
@@ -350,13 +357,6 @@
       "status": "closed",
       "surfaces": [
         "multi_agent_coordination_runtime"
-      ]
-    },
-    {
-      "action_id": "classify_config_governance_routes",
-      "status": "closed",
-      "surfaces": [
-        "config_governance_lifecycle"
       ]
     },
     {
@@ -535,6 +535,13 @@
       ]
     },
     {
+      "action_id": "publish_temporal_recurrence_window_receipt_contract",
+      "status": "closed",
+      "surfaces": [
+        "temporal_recurrence_window"
+      ]
+    },
+    {
       "action_id": "publish_temporal_memory_refresh_receipt_contract",
       "status": "closed",
       "surfaces": [
@@ -605,7 +612,7 @@
   ],
   "coverage_summary": {
     "by_action_proof": {
-      "action_proof": 75,
+      "action_proof": 76,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 13,
@@ -613,7 +620,7 @@
     },
     "by_audit": {
       "action_proof": 0,
-      "audit_chain": 86,
+      "audit_chain": 87,
       "gap": 0,
       "read_model": 4,
       "request_proof": 0
@@ -621,16 +628,16 @@
     "by_coverage_state": {
       "proven": 1,
       "unproven": 0,
-      "witnessed": 89
+      "witnessed": 90
     },
     "by_request_proof": {
       "action_proof": 1,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 15,
-      "request_proof": 74
+      "request_proof": 75
     },
-    "surface_count": 90
+    "surface_count": 91
   },
   "generated_by": "scripts/proof_coverage_matrix.py",
   "route_coverage": {
@@ -659,47 +666,47 @@
       {
         "coverage_state": "witnessed",
         "route": "/api/v1/agent/action-request",
-        "surface_id": "agent_adapter_lifecycle"
+        "surface_id": "agent_adapter_protocol"
       },
       {
         "coverage_state": "witnessed",
         "route": "/api/v1/agent/action-result",
-        "surface_id": "agent_adapter_lifecycle"
+        "surface_id": "agent_adapter_protocol"
       },
       {
         "coverage_state": "witnessed",
         "route": "/api/v1/agent/adapter/summary",
-        "surface_id": "agent_adapter_lifecycle"
+        "surface_id": "agent_adapter_protocol"
       },
       {
         "coverage_state": "witnessed",
         "route": "/api/v1/agent/checkpoint",
-        "surface_id": "agent_adapter_lifecycle"
+        "surface_id": "agent_adapter_protocol"
       },
       {
         "coverage_state": "witnessed",
         "route": "/api/v1/agent/heartbeat",
-        "surface_id": "agent_adapter_lifecycle"
+        "surface_id": "agent_adapter_protocol"
       },
       {
         "coverage_state": "witnessed",
         "route": "/api/v1/agent/register",
-        "surface_id": "agent_adapter_lifecycle"
+        "surface_id": "agent_adapter_protocol"
       },
       {
         "coverage_state": "witnessed",
         "route": "/api/v1/agent/restore",
-        "surface_id": "agent_adapter_lifecycle"
+        "surface_id": "agent_adapter_protocol"
       },
       {
         "coverage_state": "witnessed",
         "route": "/api/v1/agents",
-        "surface_id": "agent_adapter_lifecycle"
+        "surface_id": "agent_adapter_protocol"
       },
       {
         "coverage_state": "witnessed",
         "route": "/api/v1/agents/{agent_id}/tasks",
-        "surface_id": "agent_adapter_lifecycle"
+        "surface_id": "agent_adapter_protocol"
       },
       {
         "coverage_state": "unproven",
@@ -869,32 +876,32 @@
       {
         "coverage_state": "witnessed",
         "route": "/api/v1/config",
-        "surface_id": "config_governance_lifecycle"
+        "surface_id": "runtime_config_management"
       },
       {
         "coverage_state": "witnessed",
         "route": "/api/v1/config/drift",
-        "surface_id": "config_governance_lifecycle"
+        "surface_id": "runtime_config_management"
       },
       {
         "coverage_state": "witnessed",
         "route": "/api/v1/config/history",
-        "surface_id": "config_governance_lifecycle"
+        "surface_id": "runtime_config_management"
       },
       {
         "coverage_state": "witnessed",
         "route": "/api/v1/config/rollback",
-        "surface_id": "config_governance_lifecycle"
+        "surface_id": "runtime_config_management"
       },
       {
         "coverage_state": "witnessed",
         "route": "/api/v1/config/update",
-        "surface_id": "config_governance_lifecycle"
+        "surface_id": "runtime_config_management"
       },
       {
         "coverage_state": "witnessed",
         "route": "/api/v1/config/watcher",
-        "surface_id": "config_governance_lifecycle"
+        "surface_id": "runtime_config_management"
       },
       {
         "coverage_state": "witnessed",
@@ -2029,27 +2036,27 @@
       {
         "coverage_state": "witnessed",
         "route": "/api/v1/webhooks",
-        "surface_id": "webhook_operations_lifecycle"
+        "surface_id": "webhooks_proof_surface"
       },
       {
         "coverage_state": "witnessed",
         "route": "/api/v1/webhooks/deliveries",
-        "surface_id": "webhook_operations_lifecycle"
+        "surface_id": "webhooks_proof_surface"
       },
       {
         "coverage_state": "witnessed",
         "route": "/api/v1/webhooks/retry/dead-letters",
-        "surface_id": "webhook_operations_lifecycle"
+        "surface_id": "webhooks_proof_surface"
       },
       {
         "coverage_state": "witnessed",
         "route": "/api/v1/webhooks/retry/summary",
-        "surface_id": "webhook_operations_lifecycle"
+        "surface_id": "webhooks_proof_surface"
       },
       {
         "coverage_state": "witnessed",
         "route": "/api/v1/webhooks/subscribe",
-        "surface_id": "webhook_operations_lifecycle"
+        "surface_id": "webhooks_proof_surface"
       },
       {
         "coverage_state": "witnessed",
@@ -2509,35 +2516,6 @@
       "audit": "audit_chain",
       "coverage_state": "witnessed",
       "evidence_files": [
-        "mcoi/mcoi_runtime/app/routers/agent.py",
-        "mcoi/mcoi_runtime/core/agent_workflow.py",
-        "mcoi/tests/test_server_phase205.py",
-        "mcoi/tests/test_e2e_integration.py"
-      ],
-      "notes": "Webhook operations routes bind subscription creation, subscription listing, delivery history, retry summary, and dead-letter read models to governed metrics, audit records, and bounded webhook manager state.",
-      "representative_paths": [
-        "/api/v1/webhooks",
-        "/api/v1/webhooks/deliveries",
-        "/api/v1/webhooks/retry/dead-letters",
-        "/api/v1/webhooks/retry/summary",
-        "/api/v1/webhooks/subscribe"
-      ],
-      "request_proof": "request_proof",
-      "runtime_witnesses": [
-        "webhook_subscription_audited",
-        "webhook_subscription_list_bounded",
-        "webhook_delivery_history_bounded",
-        "webhook_retry_summary_governed",
-        "webhook_dead_letters_bounded",
-        "webhook_workflow_delivery_witnessed"
-      ],
-      "surface_id": "webhook_operations_lifecycle"
-    },
-    {
-      "action_proof": "action_proof",
-      "audit": "audit_chain",
-      "coverage_state": "witnessed",
-      "evidence_files": [
         "mcoi/mcoi_runtime/app/routers/rbac.py",
         "mcoi/mcoi_runtime/core/access_runtime_integration.py",
         "mcoi/mcoi_runtime/contracts/access_runtime.py",
@@ -2567,37 +2545,82 @@
       "audit": "audit_chain",
       "coverage_state": "witnessed",
       "evidence_files": [
-        "mcoi/mcoi_runtime/app/routers/adapter.py",
-        "mcoi/mcoi_runtime/app/routers/agent.py",
-        "mcoi/tests/test_agent_adapter_protocol.py",
+        "mcoi/mcoi_runtime/app/routers/ops/config.py",
+        "mcoi/mcoi_runtime/core/config_reload.py",
+        "mcoi/mcoi_runtime/core/config_watcher.py",
+        "mcoi/mcoi_runtime/core/config_drift.py",
         "mcoi/tests/test_server_phase205.py",
-        "mcoi/tests/test_server_phase217.py"
+        "mcoi/tests/test_server_phase207.py",
+        "mcoi/tests/test_config_watcher.py",
+        "mcoi/tests/test_config_drift.py",
+        "mcoi/tests/test_e2e_integration.py"
       ],
-      "notes": "Agent adapter lifecycle routes bind external agent registration, heartbeat, action admission, action result closure, checkpoint/restore, adapter summary, and built-in agent task read models to governed responses with audit records and bounded error contracts.",
+      "notes": "Runtime configuration routes expose hash-bound read models, version history, audited hot-reload updates, bounded rollback, watcher status, and drift summaries through governed runtime configuration state.",
       "representative_paths": [
-        "/api/v1/agent/register",
-        "/api/v1/agent/heartbeat",
-        "/api/v1/agent/action-request",
-        "/api/v1/agent/action-result",
-        "/api/v1/agent/checkpoint",
-        "/api/v1/agent/restore",
-        "/api/v1/agent/adapter/summary",
-        "/api/v1/agents",
-        "/api/v1/agents/{agent_id}/tasks"
+        "/api/v1/config",
+        "/api/v1/config/history",
+        "/api/v1/config/update",
+        "/api/v1/config/rollback",
+        "/api/v1/config/watcher",
+        "/api/v1/config/drift"
       ],
       "request_proof": "request_proof",
       "runtime_witnesses": [
-        "agent_register_emits_audit_record",
-        "agent_heartbeat_requires_registered_agent",
-        "agent_action_request_runs_guard_chain",
-        "agent_action_result_closes_tracked_action",
-        "agent_goal_context_propagates_to_response_and_audit",
-        "agent_checkpoint_restore_roundtrip_governed",
-        "agent_adapter_summary_bounded",
-        "builtin_agent_registry_read_models_governed",
-        "agent_error_contracts_bounded"
+        "config_read_model_hash_bound",
+        "config_current_read_model_hash_bound",
+        "config_history_versions_bounded",
+        "config_history_bounded",
+        "config_update_applies_atomically",
+        "config_update_audited",
+        "config_update_emits_event_and_audit",
+        "config_update_emits_event",
+        "config_rollback_requires_known_version",
+        "config_rollback_version_checked",
+        "config_watcher_errors_are_bounded",
+        "config_watcher_status_bounded",
+        "config_drift_secret_changes_are_critical",
+        "config_drift_summary_bounded"
       ],
-      "surface_id": "agent_adapter_lifecycle"
+      "surface_id": "runtime_config_management"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "mcoi/mcoi_runtime/app/routers/agent.py",
+        "mcoi/mcoi_runtime/core/agent_workflow.py",
+        "mcoi/mcoi_runtime/governance/network/webhook.py",
+        "mcoi/mcoi_runtime/core/webhook_retry.py",
+        "mcoi/tests/test_server_phase205.py",
+        "mcoi/tests/test_e2e_integration.py",
+        "mcoi/tests/test_webhook_retry.py"
+      ],
+      "notes": "API webhook management routes bind subscription mutation, tenant-scoped subscription read models, delivery history, retry summary, dead-letter read models, and workflow delivery evidence to governed runtime state, audit records, and bounded retry failure evidence.",
+      "representative_paths": [
+        "/api/v1/webhooks/subscribe",
+        "/api/v1/webhooks",
+        "/api/v1/webhooks/deliveries",
+        "/api/v1/webhooks/retry/summary",
+        "/api/v1/webhooks/retry/dead-letters"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "webhook_subscribe_records_audit",
+        "webhook_subscription_audited",
+        "webhook_list_is_tenant_scoped",
+        "webhook_subscription_list_bounded",
+        "webhook_delivery_history_is_bounded",
+        "webhook_delivery_history_bounded",
+        "webhook_flow_records_delivery",
+        "webhook_retry_summary_is_bounded",
+        "webhook_retry_summary_governed",
+        "webhook_dead_letters_are_explicit",
+        "webhook_dead_letters_bounded",
+        "webhook_workflow_delivery_witnessed",
+        "webhook_delivery_errors_are_sanitized"
+      ],
+      "surface_id": "webhooks_proof_surface"
     },
     {
       "action_proof": "read_model",
@@ -2629,6 +2652,49 @@
         "console_provider_and_scheduler_views_are_read_only"
       ],
       "surface_id": "operator_console_read_models"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "mcoi/mcoi_runtime/app/routers/adapter.py",
+        "mcoi/mcoi_runtime/app/routers/deps.py",
+        "mcoi/mcoi_runtime/app/routers/agent.py",
+        "mcoi/tests/test_agent_adapter_protocol.py",
+        "mcoi/tests/test_server_phase205.py",
+        "mcoi/tests/test_server_phase217.py"
+      ],
+      "notes": "Agent adapter protocol routes register external workers, maintain heartbeat state, pass action requests through the guard chain, record action results, checkpoint and restore coordination state, expose adapter summaries, and expose built-in agent task read models with bounded errors.",
+      "representative_paths": [
+        "/api/v1/agent/register",
+        "/api/v1/agent/heartbeat",
+        "/api/v1/agent/action-request",
+        "/api/v1/agent/action-result",
+        "/api/v1/agent/checkpoint",
+        "/api/v1/agent/restore",
+        "/api/v1/agent/adapter/summary",
+        "/api/v1/agents",
+        "/api/v1/agents/{agent_id}/tasks"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "agent_register_emits_governed_identity",
+        "agent_register_emits_audit_record",
+        "agent_heartbeat_requires_registered_agent",
+        "agent_action_request_runs_guard_chain",
+        "agent_action_result_records_outcome",
+        "agent_action_result_closes_tracked_action",
+        "agent_goal_context_propagates_to_action_request",
+        "agent_goal_context_propagates_to_response_and_audit",
+        "agent_checkpoint_restore_errors_are_bounded",
+        "agent_checkpoint_restore_roundtrip_governed",
+        "agent_adapter_summary_is_governed_read_model",
+        "agent_adapter_summary_bounded",
+        "builtin_agent_registry_read_models_governed",
+        "agent_error_contracts_bounded"
+      ],
+      "surface_id": "agent_adapter_protocol"
     },
     {
       "action_proof": "action_proof",
@@ -3937,39 +4003,6 @@
       "audit": "audit_chain",
       "coverage_state": "witnessed",
       "evidence_files": [
-        "mcoi/mcoi_runtime/app/routers/ops/config.py",
-        "mcoi/mcoi_runtime/core/config_reload.py",
-        "mcoi/mcoi_runtime/core/config_watcher.py",
-        "mcoi/mcoi_runtime/core/config_drift.py",
-        "mcoi/tests/test_server_phase207.py",
-        "mcoi/tests/test_e2e_integration.py"
-      ],
-      "notes": "Configuration governance routes expose current config and history, apply audited hot updates, support rollback to prior versions, publish config update events, and expose watcher plus drift read models.",
-      "representative_paths": [
-        "/api/v1/config",
-        "/api/v1/config/drift",
-        "/api/v1/config/history",
-        "/api/v1/config/rollback",
-        "/api/v1/config/update",
-        "/api/v1/config/watcher"
-      ],
-      "request_proof": "request_proof",
-      "runtime_witnesses": [
-        "config_current_read_model_hash_bound",
-        "config_history_bounded",
-        "config_update_audited",
-        "config_update_emits_event",
-        "config_rollback_version_checked",
-        "config_watcher_status_bounded",
-        "config_drift_summary_bounded"
-      ],
-      "surface_id": "config_governance_lifecycle"
-    },
-    {
-      "action_proof": "action_proof",
-      "audit": "audit_chain",
-      "coverage_state": "witnessed",
-      "evidence_files": [
         "gateway/connector_self_healing.py",
         "schemas/connector_self_healing_receipt.schema.json",
         "tests/test_gateway/test_connector_self_healing.py"
@@ -4783,6 +4816,36 @@
         "receipt_not_terminal_closure"
       ],
       "surface_id": "temporal_missed_run"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "gateway/temporal_recurrence_window.py",
+        "schemas/temporal_recurrence_window_receipt.schema.json",
+        "tests/test_gateway/test_temporal_recurrence_window.py"
+      ],
+      "notes": "Temporal recurrence-window receipts certify next recurring occurrences with runtime-owned time truth, tenant timezone preservation, DST-safe next-occurrence checks, recurrence completion, duplicate-run prevention, scheduler source receipts, evidence refs, and high-risk due-candidate reapproval binding before recurring dispatch.",
+      "representative_paths": [
+        "evaluate_temporal_recurrence_window",
+        "RecurrenceWindowRequest",
+        "TemporalRecurrenceWindowReceipt"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "runtime_clock_owns_recurrence_window_time",
+        "tenant_timezone_preserved_across_dst",
+        "candidate_must_match_next_occurrence",
+        "future_candidate_defers_dispatch",
+        "completed_series_blocks_dispatch",
+        "duplicate_candidate_requires_terminal_receipt",
+        "monthly_end_of_month_clamped",
+        "high_risk_due_candidate_requires_reapproval_source",
+        "temporal_recurrence_window_receipt_schema_valid",
+        "receipt_not_terminal_closure"
+      ],
+      "surface_id": "temporal_recurrence_window"
     },
     {
       "action_proof": "action_proof",

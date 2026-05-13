@@ -1,0 +1,259 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:temporal-recurrence-window-receipt:1",
+  "title": "Mullusi Temporal Recurrence Window Receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "receipt_id",
+    "request_id",
+    "tenant_id",
+    "actor_id",
+    "command_id",
+    "action_type",
+    "risk_level",
+    "policy_id",
+    "schedule_id",
+    "status",
+    "recurrence_state",
+    "runtime_now_utc",
+    "recurrence_required",
+    "timezone_name",
+    "recurrence_rule",
+    "frequency",
+    "interval",
+    "occurrence_index",
+    "count_limit",
+    "until",
+    "previous_execute_at",
+    "candidate_execute_at",
+    "expected_next_execute_at",
+    "candidate_local_time",
+    "expected_local_time",
+    "candidate_tolerance_seconds",
+    "series_completed",
+    "blocked_reasons",
+    "deferral_reasons",
+    "required_controls",
+    "evidence_refs",
+    "snapshot_evidence_refs",
+    "source_scheduler_receipt_id",
+    "source_temporal_receipt_id",
+    "source_missed_run_receipt_id",
+    "source_reapproval_receipt_id",
+    "scheduler_receipt_id",
+    "terminal_receipt_id",
+    "receipt_schema_ref",
+    "terminal_closure_required",
+    "receipt_hash",
+    "metadata"
+  ],
+  "properties": {
+    "receipt_id": {
+      "type": "string",
+      "pattern": "^temporal-recurrence-window-receipt-[0-9a-f]{16}$"
+    },
+    "request_id": { "type": "string", "minLength": 1 },
+    "tenant_id": { "type": "string", "minLength": 1 },
+    "actor_id": { "type": "string", "minLength": 1 },
+    "command_id": { "type": "string", "minLength": 1 },
+    "action_type": { "type": "string", "minLength": 1 },
+    "risk_level": {
+      "type": "string",
+      "enum": ["low", "medium", "high", "critical"]
+    },
+    "policy_id": { "type": "string", "minLength": 1 },
+    "schedule_id": { "type": "string" },
+    "status": {
+      "type": "string",
+      "enum": ["next_due", "not_due", "completed", "blocked", "not_required"]
+    },
+    "recurrence_state": {
+      "type": "string",
+      "enum": [
+        "candidate_matches",
+        "candidate_future",
+        "series_completed",
+        "wrong_scope",
+        "duplicate_blocked",
+        "invalid",
+        "not_required"
+      ]
+    },
+    "runtime_now_utc": { "type": "string", "format": "date-time" },
+    "recurrence_required": { "type": "boolean" },
+    "timezone_name": { "type": "string", "minLength": 1 },
+    "recurrence_rule": { "type": "string" },
+    "frequency": { "type": "string" },
+    "interval": { "type": "integer", "minimum": 0 },
+    "occurrence_index": { "type": "integer", "minimum": 0 },
+    "count_limit": { "type": "integer", "minimum": 0 },
+    "until": { "type": "string" },
+    "previous_execute_at": { "type": "string" },
+    "candidate_execute_at": { "type": "string" },
+    "expected_next_execute_at": { "type": "string" },
+    "candidate_local_time": { "type": "string" },
+    "expected_local_time": { "type": "string" },
+    "candidate_tolerance_seconds": { "type": "integer", "minimum": 0 },
+    "series_completed": { "type": "boolean" },
+    "blocked_reasons": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "deferral_reasons": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "required_controls": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "evidence_refs": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "snapshot_evidence_refs": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "source_scheduler_receipt_id": { "type": "string" },
+    "source_temporal_receipt_id": { "type": "string" },
+    "source_missed_run_receipt_id": { "type": "string" },
+    "source_reapproval_receipt_id": { "type": "string" },
+    "scheduler_receipt_id": { "type": "string" },
+    "terminal_receipt_id": { "type": "string" },
+    "receipt_schema_ref": {
+      "type": "string",
+      "const": "urn:mullusi:schema:temporal-recurrence-window-receipt:1"
+    },
+    "terminal_closure_required": {
+      "type": "boolean",
+      "const": true
+    },
+    "receipt_hash": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "runtime_owns_time_truth",
+        "receipt_is_not_terminal_closure",
+        "recurrence_checked",
+        "dispatch_allowed",
+        "terminal_closure_required",
+        "timezone_preserved",
+        "high_risk_reapproval_checked"
+      ],
+      "properties": {
+        "runtime_owns_time_truth": { "type": "boolean", "const": true },
+        "receipt_is_not_terminal_closure": { "type": "boolean", "const": true },
+        "recurrence_checked": { "type": "boolean" },
+        "dispatch_allowed": { "type": "boolean" },
+        "terminal_closure_required": { "type": "boolean", "const": true },
+        "timezone_preserved": { "type": "boolean" },
+        "high_risk_reapproval_checked": { "type": "boolean" }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "status": { "const": "next_due" } } },
+      "then": {
+        "properties": {
+          "recurrence_required": { "const": true },
+          "recurrence_state": { "const": "candidate_matches" },
+          "series_completed": { "const": false },
+          "expected_next_execute_at": { "minLength": 1 },
+          "candidate_execute_at": { "minLength": 1 },
+          "blocked_reasons": { "maxItems": 0 },
+          "deferral_reasons": { "maxItems": 0 },
+          "metadata": {
+            "properties": {
+              "dispatch_allowed": { "const": true },
+              "recurrence_checked": { "const": true }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "status": { "const": "not_due" } } },
+      "then": {
+        "properties": {
+          "recurrence_required": { "const": true },
+          "recurrence_state": { "const": "candidate_future" },
+          "series_completed": { "const": false },
+          "deferral_reasons": { "minItems": 1 },
+          "blocked_reasons": { "maxItems": 0 },
+          "metadata": {
+            "properties": {
+              "dispatch_allowed": { "const": false },
+              "recurrence_checked": { "const": true }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "status": { "const": "completed" } } },
+      "then": {
+        "properties": {
+          "recurrence_required": { "const": true },
+          "recurrence_state": { "const": "series_completed" },
+          "series_completed": { "const": true },
+          "blocked_reasons": { "maxItems": 0 },
+          "metadata": {
+            "properties": {
+              "dispatch_allowed": { "const": false },
+              "recurrence_checked": { "const": true }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "status": { "const": "blocked" } } },
+      "then": {
+        "properties": {
+          "recurrence_required": { "const": true },
+          "blocked_reasons": { "minItems": 1 },
+          "metadata": {
+            "properties": {
+              "dispatch_allowed": { "const": false }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "status": { "const": "not_required" } } },
+      "then": {
+        "properties": {
+          "recurrence_required": { "const": false },
+          "recurrence_state": { "const": "not_required" },
+          "schedule_id": { "const": "" },
+          "recurrence_rule": { "const": "" },
+          "frequency": { "const": "" },
+          "interval": { "const": 0 },
+          "previous_execute_at": { "const": "" },
+          "candidate_execute_at": { "const": "" },
+          "expected_next_execute_at": { "const": "" },
+          "required_controls": { "maxItems": 0 },
+          "metadata": {
+            "properties": {
+              "dispatch_allowed": { "const": false },
+              "recurrence_checked": { "const": false }
+            }
+          }
+        }
+      }
+    }
+  ]
+}
