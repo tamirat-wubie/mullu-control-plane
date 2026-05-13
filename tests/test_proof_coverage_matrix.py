@@ -945,6 +945,40 @@ def test_conversation_memory_lifecycle_surface_is_witnessed() -> None:
     assert closure_actions["classify_conversation_memory_routes"]["status"] == "closed"
 
 
+def test_coordination_checkpoint_lifecycle_surface_is_witnessed() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    route_records = {
+        record["route"]: record
+        for record in matrix["route_coverage"]["routes"]
+    }
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    coordination_surface = surfaces["coordination_checkpoint_lifecycle"]
+    witnesses = set(coordination_surface["runtime_witnesses"])
+
+    assert coordination_surface["coverage_state"] == "witnessed"
+    assert coordination_surface["request_proof"] == "request_proof"
+    assert coordination_surface["action_proof"] == "action_proof"
+    assert coordination_surface["audit"] == "audit_chain"
+    assert "/api/v1/coordination/checkpoint" in coordination_surface["representative_paths"]
+    assert "/api/v1/coordination/restore" in coordination_surface["representative_paths"]
+    assert "mcoi/mcoi_runtime/app/routers/ops/coordination.py" in coordination_surface["evidence_files"]
+    assert "mcoi/mcoi_runtime/core/coordination.py" in coordination_surface["evidence_files"]
+    assert "mcoi/mcoi_runtime/persistence/coordination_store.py" in coordination_surface["evidence_files"]
+    assert "mcoi/tests/test_coordination_http_endpoints.py" in coordination_surface["evidence_files"]
+    assert "mcoi/tests/test_coordination_engine_persistence.py" in coordination_surface["evidence_files"]
+    assert "coordination_checkpoint_save_governed" in witnesses
+    assert "coordination_restore_resumes_checkpoint" in witnesses
+    assert "coordination_restore_missing_is_bounded" in witnesses
+    assert "coordination_policy_drift_requires_review" in witnesses
+    assert "coordination_store_path_traversal_rejected" in witnesses
+    assert route_records["/api/v1/coordination/checkpoint"]["coverage_state"] == "witnessed"
+    assert route_records["/api/v1/coordination/checkpoint"]["surface_id"] == "coordination_checkpoint_lifecycle"
+    assert route_records["/api/v1/coordination/restore"]["coverage_state"] == "witnessed"
+    assert route_records["/api/v1/coordination/restore"]["surface_id"] == "coordination_checkpoint_lifecycle"
+    assert closure_actions["classify_coordination_checkpoint_routes"]["status"] == "closed"
+
+
 def test_ops_proof_surface_is_witnessed() -> None:
     matrix = _load_fixture()
     surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
