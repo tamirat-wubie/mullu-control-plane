@@ -110,6 +110,12 @@ def test_representative_routes_are_not_unclassified() -> None:
     assert classified_routes["/api/v1/simulate/history"]["surface_id"] == "governed_operational_intelligence"
     assert classified_routes["/api/v1/connectors/register"]["surface_id"] == "governed_connector_framework"
     assert classified_routes["/api/v1/connectors/invoke"]["surface_id"] == "governed_connector_framework"
+    assert classified_routes["/api/v1/scheduler/jobs"]["surface_id"] == "governed_background_scheduler"
+    assert classified_routes["/api/v1/scheduler/execute"]["surface_id"] == "governed_background_scheduler"
+    assert (
+        classified_routes["/api/v1/scheduler/jobs/{job_id}/disable"]["surface_id"]
+        == "governed_background_scheduler"
+    )
     assert classified_routes["/api/v1/finance/approval-packets"]["surface_id"] == "finance_approval_packets"
     assert (
         classified_routes["/api/v1/finance/approval-packets/operator/read-model"]["surface_id"]
@@ -911,6 +917,43 @@ def test_governed_connector_framework_surface_gates_invocation_lifecycle() -> No
     assert route_records["/api/v1/connectors/invoke"]["coverage_state"] == "witnessed"
     assert route_records["/api/v1/connectors/invoke"]["surface_id"] == "governed_connector_framework"
     assert closure_actions["classify_governed_connector_routes"]["status"] == "closed"
+
+
+def test_governed_background_scheduler_surface_gates_job_lifecycle() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    scheduler_surface = surfaces["governed_background_scheduler"]
+    witnesses = set(scheduler_surface["runtime_witnesses"])
+    route_records = {
+        record["route"]: record
+        for record in matrix["route_coverage"]["routes"]
+    }
+
+    assert scheduler_surface["coverage_state"] == "witnessed"
+    assert scheduler_surface["request_proof"] == "request_proof"
+    assert scheduler_surface["action_proof"] == "action_proof"
+    assert "/api/v1/scheduler/jobs" in scheduler_surface["representative_paths"]
+    assert "/api/v1/scheduler/execute" in scheduler_surface["representative_paths"]
+    assert "/api/v1/scheduler/jobs/{job_id}" in scheduler_surface["representative_paths"]
+    assert "/api/v1/scheduler/jobs/{job_id}/disable" in scheduler_surface["representative_paths"]
+    assert "/api/v1/scheduler/jobs/{job_id}/enable" in scheduler_surface["representative_paths"]
+    assert "mcoi/mcoi_runtime/app/routers/scheduler.py" in scheduler_surface["evidence_files"]
+    assert "mcoi/mcoi_runtime/core/scheduler.py" in scheduler_surface["evidence_files"]
+    assert "mcoi/tests/test_scheduler.py" in scheduler_surface["evidence_files"]
+    assert "mcoi/tests/test_server_phase217.py" in scheduler_surface["evidence_files"]
+    assert "mcoi/tests/test_server_phase218.py" in scheduler_surface["evidence_files"]
+    assert "scheduler_job_registration_typed" in witnesses
+    assert "scheduler_execute_guard_chain_checked" in witnesses
+    assert "scheduler_lifecycle_controls_bounded" in witnesses
+    assert "scheduler_history_summary_bounded" in witnesses
+    assert "scheduler_errors_sanitized" in witnesses
+    assert "scheduler_execution_audited" in witnesses
+    assert route_records["/api/v1/scheduler/jobs"]["coverage_state"] == "witnessed"
+    assert route_records["/api/v1/scheduler/jobs"]["surface_id"] == "governed_background_scheduler"
+    assert route_records["/api/v1/scheduler/execute"]["coverage_state"] == "witnessed"
+    assert route_records["/api/v1/scheduler/execute"]["surface_id"] == "governed_background_scheduler"
+    assert closure_actions["classify_governed_scheduler_routes"]["status"] == "closed"
 
 
 def test_connector_self_healing_surface_emits_bounded_recovery_receipts() -> None:

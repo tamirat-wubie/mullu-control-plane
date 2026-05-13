@@ -248,6 +248,13 @@
       ]
     },
     {
+      "action_id": "classify_governed_scheduler_routes",
+      "status": "closed",
+      "surfaces": [
+        "governed_background_scheduler"
+      ]
+    },
+    {
       "action_id": "publish_connector_self_healing_receipt_contract",
       "status": "closed",
       "surfaces": [
@@ -479,7 +486,7 @@
   ],
   "coverage_summary": {
     "by_action_proof": {
-      "action_proof": 60,
+      "action_proof": 61,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 11,
@@ -487,7 +494,7 @@
     },
     "by_audit": {
       "action_proof": 0,
-      "audit_chain": 69,
+      "audit_chain": 70,
       "gap": 0,
       "read_model": 4,
       "request_proof": 0
@@ -495,23 +502,23 @@
     "by_coverage_state": {
       "proven": 1,
       "unproven": 0,
-      "witnessed": 72
+      "witnessed": 73
     },
     "by_request_proof": {
       "action_proof": 1,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 13,
-      "request_proof": 59
+      "request_proof": 60
     },
-    "surface_count": 73
+    "surface_count": 74
   },
   "generated_by": "scripts/proof_coverage_matrix.py",
   "route_coverage": {
     "by_coverage_state": {
       "proven": 8,
-      "unproven": 162,
-      "witnessed": 162
+      "unproven": 155,
+      "witnessed": 169
     },
     "route_count": 332,
     "routes": [
@@ -1626,39 +1633,39 @@
         "surface_id": "hosted_demo_sandbox"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/scheduler/execute",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "governed_background_scheduler"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/scheduler/history",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "governed_background_scheduler"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/scheduler/jobs",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "governed_background_scheduler"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/scheduler/jobs/{job_id}",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "governed_background_scheduler"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/scheduler/jobs/{job_id}/disable",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "governed_background_scheduler"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/scheduler/jobs/{job_id}/enable",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "governed_background_scheduler"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/scheduler/summary",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "governed_background_scheduler"
       },
       {
         "coverage_state": "unproven",
@@ -2176,7 +2183,7 @@
         "surface_id": "gateway_capability_fabric"
       }
     ],
-    "unclassified_route_count": 162
+    "unclassified_route_count": 155
   },
   "schema_version": 1,
   "surfaces": [
@@ -3302,6 +3309,38 @@
         "connector_invocation_audited"
       ],
       "surface_id": "governed_connector_framework"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "mcoi/mcoi_runtime/app/routers/scheduler.py",
+        "mcoi/mcoi_runtime/core/scheduler.py",
+        "mcoi/tests/test_scheduler.py",
+        "mcoi/tests/test_server_phase217.py",
+        "mcoi/tests/test_server_phase218.py"
+      ],
+      "notes": "Governed background scheduler routes register one-shot, interval, and cron jobs, execute handlers through guard-chain admission, bound job lifecycle enable/disable/delete controls, expose bounded history and summary read models, and sanitize scheduler execution errors.",
+      "representative_paths": [
+        "/api/v1/scheduler/execute",
+        "/api/v1/scheduler/history",
+        "/api/v1/scheduler/jobs",
+        "/api/v1/scheduler/jobs/{job_id}",
+        "/api/v1/scheduler/jobs/{job_id}/disable",
+        "/api/v1/scheduler/jobs/{job_id}/enable",
+        "/api/v1/scheduler/summary"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "scheduler_job_registration_typed",
+        "scheduler_execute_guard_chain_checked",
+        "scheduler_lifecycle_controls_bounded",
+        "scheduler_history_summary_bounded",
+        "scheduler_errors_sanitized",
+        "scheduler_execution_audited"
+      ],
+      "surface_id": "governed_background_scheduler"
     },
     {
       "action_proof": "action_proof",
