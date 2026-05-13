@@ -1,0 +1,27 @@
+{
+  "capsule_id": "software_dev.governed_loop.v0",
+  "domain": "software_dev",
+  "version": "0.1.0",
+  "ontology_refs": ["ontologies/software_dev/governed_loop.json"],
+  "capability_refs": [
+    "software_dev.repo_map.read",
+    "software_dev.context_bundle.build",
+    "software_dev.gate_plan.select",
+    "software_dev.change.run",
+    "software_dev.app_task_graph.plan",
+    "software_dev.pr_candidate.prepare"
+  ],
+  "policy_refs": ["policies/software_dev/governed_loop.policy.json"],
+  "evidence_rules": ["evidence/software_dev/governed_loop.evidence.json"],
+  "approval_rules": ["approval/software_dev/governed_loop.approval.json"],
+  "recovery_rules": ["recovery/software_dev/governed_loop.recovery.json"],
+  "test_fixture_refs": ["tests/fixtures/software_dev/governed_loop"],
+  "read_model_refs": ["read_models/software_dev/governed_loop.json"],
+  "operator_view_refs": ["operator_views/software_dev/governed_loop.json"],
+  "owner_team": "platform-ops",
+  "certification_status": "certified",
+  "metadata": {
+    "purpose": "Certified software-development capabilities constrained to repository intelligence, bounded planning, sandboxed change execution, review packet preparation, and no direct deployment"
+  },
+  "extensions": {}
+}

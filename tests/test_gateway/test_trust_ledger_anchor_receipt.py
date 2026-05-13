@@ -107,6 +107,22 @@ def test_trust_ledger_anchor_receipt_rejects_missing_terminal_artifact() -> None
     assert all(artifact.artifact_type != "terminal_certificate" for artifact in artifacts)
 
 
+def test_trust_ledger_anchor_receipt_rejects_non_proof_artifact_evidence_ref() -> None:
+    try:
+        TrustLedgerEvidenceArtifact(
+            artifact_type="command",
+            artifact_id="command-1",
+            artifact_hash="sha256:command-1",
+            evidence_ref="command:1",
+        )
+    except ValueError as exc:
+        error = str(exc)
+    else:
+        error = ""
+
+    assert error == "evidence_ref_scheme_invalid"
+
+
 def test_trust_ledger_anchor_receipt_rejects_command_identity_drift() -> None:
     ledger = TrustLedger()
     bundle = _bundle()

@@ -63,6 +63,13 @@ def test_trust_ledger_requires_terminal_certificate_and_evidence() -> None:
         _draft(evidence_refs=())
 
 
+def test_trust_ledger_rejects_non_proof_evidence_refs() -> None:
+    with pytest.raises(ValueError, match="evidence_ref_scheme_invalid"):
+        _draft(evidence_refs=("audit:root-1",))
+    with pytest.raises(ValueError, match="evidence_ref_invalid"):
+        _draft(evidence_refs=(" proof://audit-root-1",))
+
+
 def test_trust_ledger_requires_anchor_ref_when_anchored() -> None:
     with pytest.raises(ValueError, match="anchored_bundle_requires_external_anchor_ref"):
         _draft(external_anchor_status="anchored", external_anchor_ref="")

@@ -119,7 +119,32 @@ def test_representative_routes_are_not_unclassified() -> None:
         classified_routes["/api/v1/finance/approval-packets/{case_id}/proof"]["surface_id"]
         == "finance_approval_packets"
     )
-    assert classified_routes["/api/v1/agent/register"]["coverage_state"] == "unproven"
+    assert classified_routes["/api/v1/agent/register"]["surface_id"] == "agent_adapter_lifecycle"
+    assert classified_routes["/api/v1/agent/action-request"]["surface_id"] == "agent_adapter_lifecycle"
+    assert classified_routes["/api/v1/agents/{agent_id}/tasks"]["surface_id"] == "agent_adapter_lifecycle"
+
+
+def test_agent_adapter_lifecycle_surface_is_witnessed() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    agent_surface = surfaces["agent_adapter_lifecycle"]
+    witnesses = set(agent_surface["runtime_witnesses"])
+
+    assert agent_surface["coverage_state"] == "witnessed"
+    assert agent_surface["request_proof"] == "request_proof"
+    assert agent_surface["action_proof"] == "action_proof"
+    assert "/api/v1/agent/register" in agent_surface["representative_paths"]
+    assert "/api/v1/agent/action-request" in agent_surface["representative_paths"]
+    assert "/api/v1/agent/restore" in agent_surface["representative_paths"]
+    assert "/api/v1/agents/{agent_id}/tasks" in agent_surface["representative_paths"]
+    assert "mcoi/mcoi_runtime/app/routers/adapter.py" in agent_surface["evidence_files"]
+    assert "mcoi/mcoi_runtime/app/routers/agent.py" in agent_surface["evidence_files"]
+    assert "mcoi/tests/test_agent_adapter_protocol.py" in agent_surface["evidence_files"]
+    assert "agent_register_emits_audit_record" in witnesses
+    assert "agent_action_request_runs_guard_chain" in witnesses
+    assert "agent_checkpoint_restore_roundtrip_governed" in witnesses
+    assert closure_actions["classify_agent_adapter_lifecycle_routes"]["status"] == "closed"
 
 
 def test_finance_approval_packet_surface_is_witnessed() -> None:

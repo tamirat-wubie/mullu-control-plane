@@ -179,3 +179,24 @@ def test_action_request_propagates_goal_hierarchy(client: TestClient) -> None:
     assert data["decision"] == "allow"
     assert data["mission_id"] == "mission-001"
     assert data["goal_id"] == "goal-042"
+
+
+def test_agent_checkpoint_restore_roundtrip(client: TestClient) -> None:
+    checkpoint = client.post("/api/v1/agent/checkpoint", json={
+        "checkpoint_id": "agent-adapter-roundtrip",
+        "lease_duration_seconds": 300,
+    })
+    assert checkpoint.status_code == 200
+    checkpoint_data = checkpoint.json()
+    assert checkpoint_data["governed"] is True
+    assert checkpoint_data["checkpoint_id"] == "agent-adapter-roundtrip"
+    assert checkpoint_data["lease_expires_at"]
+
+    restore = client.post("/api/v1/agent/restore", json={
+        "checkpoint_id": "agent-adapter-roundtrip",
+    })
+    assert restore.status_code == 200
+    restore_data = restore.json()
+    assert restore_data["governed"] is True
+    assert restore_data["checkpoint_id"] == "agent-adapter-roundtrip"
+    assert restore_data["status"] in {"resumed", "restored", "rejected"}

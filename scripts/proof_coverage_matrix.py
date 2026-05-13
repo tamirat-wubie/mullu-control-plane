@@ -233,6 +233,43 @@ def proof_coverage_matrix() -> dict[str, Any]:
             ],
         ),
         _surface(
+            "agent_adapter_lifecycle",
+            [
+                "/api/v1/agent/action-request",
+                "/api/v1/agent/action-result",
+                "/api/v1/agent/adapter/summary",
+                "/api/v1/agent/checkpoint",
+                "/api/v1/agent/heartbeat",
+                "/api/v1/agent/register",
+                "/api/v1/agent/restore",
+                "/api/v1/agents",
+                "/api/v1/agents/{agent_id}/tasks",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "mcoi/mcoi_runtime/app/routers/adapter.py",
+                "mcoi/mcoi_runtime/app/routers/agent.py",
+                "mcoi/tests/test_agent_adapter_protocol.py",
+                "mcoi/tests/test_server_phase205.py",
+                "mcoi/tests/test_server_phase217.py",
+            ],
+            "Agent adapter lifecycle routes bind external agent registration, heartbeat, action admission, action result closure, checkpoint/restore, adapter summary, and built-in agent task read models to governed responses with audit records and bounded error contracts.",
+            [
+                "agent_register_emits_audit_record",
+                "agent_heartbeat_requires_registered_agent",
+                "agent_action_request_runs_guard_chain",
+                "agent_action_result_closes_tracked_action",
+                "agent_goal_context_propagates_to_response_and_audit",
+                "agent_checkpoint_restore_roundtrip_governed",
+                "agent_adapter_summary_bounded",
+                "builtin_agent_registry_read_models_governed",
+                "agent_error_contracts_bounded",
+            ],
+        ),
+        _surface(
             "operator_console_read_models",
             [
                 "/api/v1/console",
@@ -2257,6 +2294,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
         {
             "action_id": "classify_tenant_governance_lifecycle_routes",
             "surfaces": ["tenant_governance_lifecycle"],
+            "status": "closed",
+        },
+        {
+            "action_id": "classify_agent_adapter_lifecycle_routes",
+            "surfaces": ["agent_adapter_lifecycle"],
             "status": "closed",
         },
         {

@@ -655,6 +655,42 @@ def bootstrap_capability_services(
     )
     model_router.register(
         ModelProfile(
+            model_id="glm-4.7-flash",
+            name="GLM 4.7 Flash via EmberCloud",
+            provider="embercloud",
+            cost_per_1k_input=0.00006,
+            cost_per_1k_output=0.00040,
+            max_context=131072,
+            speed_tier="fast",
+            capability_tier="standard",
+        )
+    )
+    model_router.register(
+        ModelProfile(
+            model_id="qwen35-9b",
+            name="Qwen 3.5 9B via Morpheus",
+            provider="morpheus",
+            cost_per_1k_input=0.00007,
+            cost_per_1k_output=0.00028,
+            max_context=131072,
+            speed_tier="fast",
+            capability_tier="standard",
+        )
+    )
+    model_router.register(
+        ModelProfile(
+            model_id="google/gemma-3-27b-instruct/bf-16",
+            name="Gemma 3 27B via Inference.net",
+            provider="inferencenet",
+            cost_per_1k_input=0.00015,
+            cost_per_1k_output=0.00030,
+            max_context=131072,
+            speed_tier="balanced",
+            capability_tier="standard",
+        )
+    )
+    model_router.register(
+        ModelProfile(
             model_id="mistral-small-2603",
             name="Mistral Small 2603",
             provider="mistral",

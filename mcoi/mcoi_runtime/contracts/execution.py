@@ -29,6 +29,16 @@ class EffectRecord(ContractRecord):
         object.__setattr__(self, "details", freeze_value(self.details))
 
 
+def _freeze_effect_records(effects: tuple[EffectRecord, ...], field_name: str) -> tuple[EffectRecord, ...]:
+    if isinstance(effects, (str, bytes)) or not isinstance(effects, (tuple, list)):
+        raise ValueError(f"{field_name} must be an array of EffectRecord values")
+    frozen = freeze_value(list(effects))
+    for index, effect in enumerate(frozen):
+        if not isinstance(effect, EffectRecord):
+            raise ValueError(f"{field_name}[{index}] must be an EffectRecord")
+    return frozen
+
+
 @dataclass(frozen=True, slots=True)
 class ExecutionResult(ContractRecord):
     execution_id: str
@@ -46,8 +56,8 @@ class ExecutionResult(ContractRecord):
         object.__setattr__(self, "goal_id", require_non_empty_text(self.goal_id, "goal_id"))
         if not isinstance(self.status, ExecutionOutcome):
             raise ValueError("status must be an ExecutionOutcome value")
-        object.__setattr__(self, "actual_effects", freeze_value(list(self.actual_effects)))
-        object.__setattr__(self, "assumed_effects", freeze_value(list(self.assumed_effects)))
+        object.__setattr__(self, "actual_effects", _freeze_effect_records(self.actual_effects, "actual_effects"))
+        object.__setattr__(self, "assumed_effects", _freeze_effect_records(self.assumed_effects, "assumed_effects"))
         object.__setattr__(self, "started_at", require_datetime_text(self.started_at, "started_at"))
         object.__setattr__(self, "finished_at", require_datetime_text(self.finished_at, "finished_at"))
         object.__setattr__(self, "metadata", freeze_value(self.metadata))
