@@ -1050,6 +1050,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "payment_closure_receipt_producer_emits_ready_sandbox_evidence",
                 "payment_provider_binding_receipt_redacts_credentials_and_scopes_provider",
                 "payment_closure_producer_consumes_provider_binding_receipt",
+                "payment_closure_validator_verifies_provider_binding_receipt_object",
                 "payment_closure_receipt_producer_requires_provider_binding_for_nonsandbox",
                 "packet_proof_requires_policy_evidence_and_closure_for_closed_states",
                 "operator_read_model_bounds_visible_packets_and_counts",
