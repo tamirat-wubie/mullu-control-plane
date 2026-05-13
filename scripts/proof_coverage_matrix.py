@@ -233,6 +233,41 @@ def proof_coverage_matrix() -> dict[str, Any]:
             ],
         ),
         _surface(
+            "runtime_config_management",
+            [
+                "/api/v1/config",
+                "/api/v1/config/history",
+                "/api/v1/config/update",
+                "/api/v1/config/rollback",
+                "/api/v1/config/watcher",
+                "/api/v1/config/drift",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "mcoi/mcoi_runtime/app/routers/ops/config.py",
+                "mcoi/mcoi_runtime/core/config_reload.py",
+                "mcoi/mcoi_runtime/core/config_watcher.py",
+                "mcoi/mcoi_runtime/core/config_drift.py",
+                "mcoi/tests/test_server_phase205.py",
+                "mcoi/tests/test_server_phase207.py",
+                "mcoi/tests/test_config_watcher.py",
+                "mcoi/tests/test_config_drift.py",
+            ],
+            "Runtime configuration routes expose hash-bound read models, version history, audited hot-reload updates, bounded rollback, watcher status, and drift summaries through governed runtime configuration state.",
+            [
+                "config_read_model_hash_bound",
+                "config_history_versions_bounded",
+                "config_update_applies_atomically",
+                "config_update_emits_event_and_audit",
+                "config_rollback_requires_known_version",
+                "config_watcher_errors_are_bounded",
+                "config_drift_secret_changes_are_critical",
+            ],
+        ),
+        _surface(
             "operator_console_read_models",
             [
                 "/api/v1/console",
@@ -2424,6 +2459,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
         {
             "action_id": "classify_tenant_governance_lifecycle_routes",
             "surfaces": ["tenant_governance_lifecycle"],
+            "status": "closed",
+        },
+        {
+            "action_id": "classify_runtime_config_management_routes",
+            "surfaces": ["runtime_config_management"],
             "status": "closed",
         },
         {
