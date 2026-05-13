@@ -2065,6 +2065,36 @@ def proof_coverage_matrix() -> dict[str, Any]:
             ],
         ),
         _surface(
+            "temporal_recurrence_window",
+            [
+                "evaluate_temporal_recurrence_window",
+                "RecurrenceWindowRequest",
+                "TemporalRecurrenceWindowReceipt",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "gateway/temporal_recurrence_window.py",
+                "schemas/temporal_recurrence_window_receipt.schema.json",
+                "tests/test_gateway/test_temporal_recurrence_window.py",
+            ],
+            "Temporal recurrence-window receipts certify next recurring occurrences with runtime-owned time truth, tenant timezone preservation, DST-safe next-occurrence checks, recurrence completion, duplicate-run prevention, scheduler source receipts, evidence refs, and high-risk due-candidate reapproval binding before recurring dispatch.",
+            [
+                "runtime_clock_owns_recurrence_window_time",
+                "tenant_timezone_preserved_across_dst",
+                "candidate_must_match_next_occurrence",
+                "future_candidate_defers_dispatch",
+                "completed_series_blocks_dispatch",
+                "duplicate_candidate_requires_terminal_receipt",
+                "monthly_end_of_month_clamped",
+                "high_risk_due_candidate_requires_reapproval_source",
+                "temporal_recurrence_window_receipt_schema_valid",
+                "receipt_not_terminal_closure",
+            ],
+        ),
+        _surface(
             "temporal_memory",
             [
                 "TemporalMemory.evaluate",
@@ -2716,6 +2746,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
         {
             "action_id": "publish_temporal_missed_run_receipt_contract",
             "surfaces": ["temporal_missed_run"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_temporal_recurrence_window_receipt_contract",
+            "surfaces": ["temporal_recurrence_window"],
             "status": "closed",
         },
         {
