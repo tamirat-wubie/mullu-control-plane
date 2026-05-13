@@ -473,6 +473,40 @@ def test_verifier_command_without_terminal_certificate_is_valid_but_marked():
     assert verification.all_links_verified is True
 
 
+def test_verifier_replay_state_passes_canonical_lifecycle():
+    ledger, command_id = _ledger_through_terminal_closure()
+    verification = AuditTraceVerifier(ledger).verify_replay_state_consistency(command_id)
+    assert verification.command_present is True
+    assert verification.states_match is True
+    assert verification.replayed_state == verification.live_state
+    assert verification.event_count > 0
+    assert verification.fully_replayed is True
+    assert verification.failures == ()
+
+
+def test_verifier_replay_state_detects_live_state_diverged_from_event_log():
+    ledger, command_id = _ledger_through_terminal_closure()
+    live = ledger._commands[command_id]
+    ledger._commands[command_id] = replace(live, state=CommandState.RECEIVED)
+
+    verification = AuditTraceVerifier(ledger).verify_replay_state_consistency(command_id)
+
+    assert verification.states_match is False
+    assert verification.replayed_state != verification.live_state
+    assert verification.live_state == CommandState.RECEIVED
+    assert "replay_state_diverges_from_live" in verification.failures
+
+
+def test_verifier_replay_state_reports_missing_command():
+    ledger = CommandLedger(
+        clock=lambda: "2026-04-24T12:00:00+00:00",
+        store=InMemoryCommandLedgerStore(),
+    )
+    verification = AuditTraceVerifier(ledger).verify_replay_state_consistency("cmd-missing")
+    assert verification.command_present is False
+    assert verification.failures == ("command_not_found",)
+
+
 def test_verifier_tenant_isolation_passes_canonical_lifecycle():
     ledger, command_id = _ledger_through_terminal_closure()
     verification = AuditTraceVerifier(ledger).verify_tenant_isolation(command_id)
@@ -541,6 +575,7 @@ def test_verifier_verify_all_composes_every_method():
     assert report.global_chain.chain_intact is True
     assert report.approval.fully_verified is True
     assert report.tenant.fully_isolated is True
+    assert report.replay.fully_replayed is True
     assert report.anchor is not None and report.anchor.failures == ()
     assert report.bundle is not None and report.bundle.fully_verified is True
 
