@@ -118,6 +118,13 @@
       ]
     },
     {
+      "action_id": "classify_task_queue_lifecycle_routes",
+      "status": "closed",
+      "surfaces": [
+        "task_queue_lifecycle"
+      ]
+    },
+    {
       "action_id": "classify_tenant_governance_lifecycle_routes",
       "status": "closed",
       "surfaces": [
@@ -535,7 +542,7 @@
   ],
   "coverage_summary": {
     "by_action_proof": {
-      "action_proof": 68,
+      "action_proof": 69,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 11,
@@ -543,7 +550,7 @@
     },
     "by_audit": {
       "action_proof": 0,
-      "audit_chain": 77,
+      "audit_chain": 78,
       "gap": 0,
       "read_model": 4,
       "request_proof": 0
@@ -551,23 +558,23 @@
     "by_coverage_state": {
       "proven": 1,
       "unproven": 0,
-      "witnessed": 80
+      "witnessed": 81
     },
     "by_request_proof": {
       "action_proof": 1,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 13,
-      "request_proof": 67
+      "request_proof": 68
     },
-    "surface_count": 81
+    "surface_count": 82
   },
   "generated_by": "scripts/proof_coverage_matrix.py",
   "route_coverage": {
     "by_coverage_state": {
       "proven": 8,
-      "unproven": 127,
-      "witnessed": 197
+      "unproven": 123,
+      "witnessed": 201
     },
     "route_count": 332,
     "routes": [
@@ -1527,24 +1534,24 @@
         "surface_id": "unclassified_declared_route"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/queue/process",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "task_queue_lifecycle"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/queue/result/{task_id}",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "task_queue_lifecycle"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/queue/status",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "task_queue_lifecycle"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/queue/submit",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "task_queue_lifecycle"
       },
       {
         "coverage_state": "unproven",
@@ -2232,7 +2239,7 @@
         "surface_id": "gateway_capability_fabric"
       }
     ],
-    "unclassified_route_count": 127
+    "unclassified_route_count": 123
   },
   "schema_version": 1,
   "surfaces": [
@@ -2816,6 +2823,36 @@
         "config_update_event_visible"
       ],
       "surface_id": "event_bus_operations"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "mcoi/mcoi_runtime/app/routers/agent.py",
+        "mcoi/mcoi_runtime/core/task_queue.py",
+        "mcoi/tests/test_task_queue.py",
+        "mcoi/tests/test_server_phase215.py"
+      ],
+      "notes": "Task queue lifecycle routes submit bounded priority tasks, process one queued task at a time, expose queue status, and return stored task results with bounded missing-result failures.",
+      "representative_paths": [
+        "/api/v1/queue/process",
+        "/api/v1/queue/result/{task_id}",
+        "/api/v1/queue/status",
+        "/api/v1/queue/submit"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "task_queue_priority_order",
+        "task_queue_depth_bounded",
+        "task_queue_submit_endpoint",
+        "task_queue_process_endpoint",
+        "task_queue_empty_process_bounded",
+        "task_queue_result_retrieval",
+        "task_queue_missing_result_bounded",
+        "task_queue_errors_sanitized"
+      ],
+      "surface_id": "task_queue_lifecycle"
     },
     {
       "action_proof": "action_proof",
@@ -3768,6 +3805,7 @@
         "scripts/verify_anchor_receipt.py",
         "schemas/trust_ledger_anchor_receipt.schema.json",
         "schemas/trust_ledger_bundle.schema.json",
+        "schemas/trust_ledger_evidence_artifacts.schema.json",
         "tests/test_gateway/test_evidence_bundle_endpoint.py",
         "tests/test_gateway/test_trust_ledger_anchor_receipt.py",
         "tests/test_gateway/test_trust_ledger.py",

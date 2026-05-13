@@ -35,6 +35,7 @@ from scripts.validate_schemas import _load_schema, _validate_schema_instance  # 
 
 BUNDLE_SCHEMA_PATH = ROOT / "schemas" / "trust_ledger_bundle.schema.json"
 ANCHOR_RECEIPT_SCHEMA_PATH = ROOT / "schemas" / "trust_ledger_anchor_receipt.schema.json"
+ARTIFACTS_SCHEMA_PATH = ROOT / "schemas" / "trust_ledger_evidence_artifacts.schema.json"
 
 
 def verify_anchor_receipt_files(
@@ -67,8 +68,10 @@ def verify_anchor_receipt_files(
     receipt_payload = receipt_raw["payload"]
     bundle_errors = _validate_schema_instance(_load_schema(BUNDLE_SCHEMA_PATH), bundle_payload)
     receipt_errors = _validate_schema_instance(_load_schema(ANCHOR_RECEIPT_SCHEMA_PATH), receipt_payload)
+    artifact_errors = _validate_schema_instance(_load_schema(ARTIFACTS_SCHEMA_PATH), artifacts_raw["payload"])
     schema_errors = [f"bundle:{error}" for error in bundle_errors]
     schema_errors.extend(f"anchor_receipt:{error}" for error in receipt_errors)
+    schema_errors.extend(f"artifacts:{error}" for error in artifact_errors)
     if schema_errors:
         return _report(
             valid=False,

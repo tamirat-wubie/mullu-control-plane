@@ -89,6 +89,27 @@ def test_verify_anchor_receipt_files_rejects_schema_invalid_receipt(tmp_path: Pa
     assert any("anchor_receipt:" in error for error in report["schema_errors"])
 
 
+def test_verify_anchor_receipt_files_rejects_schema_invalid_artifacts(tmp_path: Path) -> None:
+    paths = _write_export(tmp_path)
+    artifacts = json.loads(paths["artifacts"].read_text(encoding="utf-8"))
+    artifacts[0]["artifact_hash"] = "sha256:not-a-digest"
+    paths["artifacts"].write_text(json.dumps(artifacts), encoding="utf-8")
+
+    report = verify_anchor_receipt_files(
+        bundle_path=paths["bundle"],
+        receipt_path=paths["receipt"],
+        artifacts_path=paths["artifacts"],
+        signing_secret="anchor-secret",
+    )
+
+    assert report["valid"] is False
+    assert report["reason"] == "schema_validation_failed"
+    assert report["schema_valid"] is False
+    assert report["bundle_id"].startswith("trust-bundle-")
+    assert report["anchor_receipt_id"].startswith("trust-anchor-receipt-")
+    assert any("artifacts:" in error for error in report["schema_errors"])
+
+
 def test_verify_anchor_receipt_cli_reports_valid_export(tmp_path: Path, capsys: Any) -> None:
     paths = _write_export(tmp_path)
 

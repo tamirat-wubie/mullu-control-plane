@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:trust-ledger-evidence-artifacts:1",
+  "title": "Trust Ledger Evidence Artifacts",
+  "type": "array",
+  "minItems": 1,
+  "items": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "artifact_type",
+      "artifact_id",
+      "artifact_hash",
+      "evidence_ref"
+    ],
+    "properties": {
+      "artifact_type": {
+        "type": "string",
+        "enum": [
+          "command",
+          "approval",
+          "execution_receipt",
+          "verification_result",
+          "effect_reconciliation",
+          "terminal_certificate",
+          "learning_decision",
+          "deployment_witness"
+        ]
+      },
+      "artifact_id": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 256
+      },
+      "artifact_hash": {
+        "type": "string",
+        "pattern": "^sha256:[0-9a-f]{64}$"
+      },
+      "evidence_ref": {
+        "type": "string",
+        "minLength": 9,
+        "maxLength": 256,
+        "pattern": "^proof://[A-Za-z0-9._~:/?#[\\]@!$&'()*+,;=%-]+$"
+      },
+      "required": {
+        "type": "boolean",
+        "default": true
+      },
+      "metadata": {
+        "type": "object",
+        "additionalProperties": true
+      }
+    }
+  }
+}

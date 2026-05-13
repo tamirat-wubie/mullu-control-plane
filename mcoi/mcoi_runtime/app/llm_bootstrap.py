@@ -32,6 +32,7 @@ from mcoi_runtime.adapters.multi_provider import (
     AnswiraBackend,
     ApiLinkBackend,
     AtlasCloudBackend,
+    BasetenBackend,
     BazaarLinkBackend,
     CerebrasBackend,
     ChutesBackend,
@@ -50,6 +51,8 @@ from mcoi_runtime.adapters.multi_provider import (
     GrokBackend,
     GroqBackend,
     HyperbolicBackend,
+    HaimakerBackend,
+    HuggingFaceBackend,
     InferenceNetBackend,
     LLMAIBackend,
     LlamaAPIBackend,
@@ -141,6 +144,9 @@ class LLMConfig:
     answira_api_key: str = ""
     llmai_api_key: str = ""
     requesty_api_key: str = ""
+    huggingface_api_key: str = ""
+    baseten_api_key: str = ""
+    haimaker_api_key: str = ""
     grok_api_key: str = ""
     mistral_api_key: str = ""
     openrouter_api_key: str = ""
@@ -203,6 +209,9 @@ class LLMConfig:
         answira_key = os.environ.get("ANSWIRA_API_KEY", "")
         llmai_key = os.environ.get("LLMAI_API_KEY", "") or os.environ.get("LLMAI_TOKEN", "")
         requesty_key = os.environ.get("REQUESTY_API_KEY", "")
+        huggingface_key = os.environ.get("HF_TOKEN", "") or os.environ.get("HUGGINGFACE_API_KEY", "")
+        baseten_key = os.environ.get("BASETEN_API_KEY", "")
+        haimaker_key = os.environ.get("HAIMAKER_API_KEY", "")
         grok_key = os.environ.get("XAI_API_KEY", "")
         mistral_key = os.environ.get("MISTRAL_API_KEY", "")
         openrouter_key = os.environ.get("OPENROUTER_API_KEY", "")
@@ -302,6 +311,12 @@ class LLMConfig:
                 default_backend = "llmai"
             elif requesty_key:
                 default_backend = "requesty"
+            elif huggingface_key:
+                default_backend = "huggingface"
+            elif baseten_key:
+                default_backend = "baseten"
+            elif haimaker_key:
+                default_backend = "haimaker"
             elif mistral_key:
                 default_backend = "mistral"
             elif grok_key:
@@ -339,6 +354,7 @@ class LLMConfig:
                 "EMBERCLOUD_API_KEY, MORPHEUS_API_KEY, MOR_API_KEY, "
                 "INFERENCE_API_KEY, INFERENCENET_API_KEY, "
                 "ANSWIRA_API_KEY, LLMAI_API_KEY, LLMAI_TOKEN, REQUESTY_API_KEY, "
+                "HF_TOKEN, HUGGINGFACE_API_KEY, BASETEN_API_KEY, HAIMAKER_API_KEY, "
                 "XAI_API_KEY, MISTRAL_API_KEY, "
                 "OPENROUTER_API_KEY) "
                 "or OLLAMA_BASE_URL."
@@ -392,6 +408,9 @@ class LLMConfig:
             answira_api_key=answira_key,
             llmai_api_key=llmai_key,
             requesty_api_key=requesty_key,
+            huggingface_api_key=huggingface_key,
+            baseten_api_key=baseten_key,
+            haimaker_api_key=haimaker_key,
             grok_api_key=grok_key,
             mistral_api_key=mistral_key,
             openrouter_api_key=openrouter_key,
@@ -948,6 +967,39 @@ def bootstrap_llm(
         )
         backends["requesty"] = requesty
 
+    if llm_config.huggingface_api_key:
+        huggingface = HuggingFaceBackend(
+            api_key=llm_config.huggingface_api_key,
+            model=_select_provider_default_model(
+                llm_config.default_model,
+                ("Qwen/", "openai/", "deepseek-ai/", "zai-org/", "huggingface"),
+                HuggingFaceBackend.DEFAULT_MODEL,
+            ),
+        )
+        backends["huggingface"] = huggingface
+
+    if llm_config.baseten_api_key:
+        baseten = BasetenBackend(
+            api_key=llm_config.baseten_api_key,
+            model=_select_provider_default_model(
+                llm_config.default_model,
+                ("nvidia/", "openai/", "deepseek-ai/", "MiniMaxAI/", "moonshotai/", "zai-org/"),
+                BasetenBackend.DEFAULT_MODEL,
+            ),
+        )
+        backends["baseten"] = baseten
+
+    if llm_config.haimaker_api_key:
+        haimaker = HaimakerBackend(
+            api_key=llm_config.haimaker_api_key,
+            model=_select_provider_default_model(
+                llm_config.default_model,
+                ("deepseek/", "openai/", "qwen/", "haimaker"),
+                HaimakerBackend.DEFAULT_MODEL,
+            ),
+        )
+        backends["haimaker"] = haimaker
+
     if llm_config.grok_api_key:
         grok = GrokBackend(
             api_key=llm_config.grok_api_key,
@@ -1319,6 +1371,24 @@ def _register_providers(
             "rate_limit": 120,
             "cost_limit": 0.25,
         },
+        "huggingface": {
+            "name": "Hugging Face",
+            "base_url": "https://router.huggingface.co/v1",
+            "rate_limit": 120,
+            "cost_limit": 0.25,
+        },
+        "baseten": {
+            "name": "Baseten",
+            "base_url": "https://inference.baseten.co/v1",
+            "rate_limit": 120,
+            "cost_limit": 0.50,
+        },
+        "haimaker": {
+            "name": "haimaker",
+            "base_url": "https://api.haimaker.ai/v1",
+            "rate_limit": 120,
+            "cost_limit": 0.25,
+        },
         "grok": {
             "name": "xAI Grok",
             "base_url": "https://api.x.ai/v1",
@@ -1461,6 +1531,15 @@ def _register_models(
         ("qwen/qwen3-coder-next", "Qwen3 Coder Next via Answira", "answira", 0.07, 0.30),
         ("gemma-4", "Gemma 4 via LLMAI", "llmai", 0.046, 0.130),
         ("deepseek/deepseek-chat", "DeepSeek Chat via Requesty", "requesty", 0.14, 0.28),
+        (
+            "Qwen/Qwen3-Coder-30B-A3B-Instruct:cheapest",
+            "Qwen3 Coder 30B A3B via Hugging Face",
+            "huggingface",
+            0.07,
+            0.26,
+        ),
+        ("nvidia/Nemotron-120B-A12B", "Nemotron Super via Baseten", "baseten", 0.30, 0.75),
+        ("deepseek/deepseek-chat-v3-0324", "DeepSeek Chat V3 0324 via haimaker", "haimaker", 0.14, 0.28),
         ("mistral-small-2506", "Mistral Small 2506", "mistral", 0.10, 0.30),
         ("mistral-small-2603", "Mistral Small 2603", "mistral", 0.15, 0.60),
         ("grok-3-mini", "Grok 3 Mini", "grok", 0.30, 0.50),

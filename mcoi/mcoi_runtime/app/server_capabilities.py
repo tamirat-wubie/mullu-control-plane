@@ -727,6 +727,42 @@ def bootstrap_capability_services(
     )
     model_router.register(
         ModelProfile(
+            model_id="Qwen/Qwen3-Coder-30B-A3B-Instruct:cheapest",
+            name="Qwen3 Coder 30B A3B via Hugging Face",
+            provider="huggingface",
+            cost_per_1k_input=0.00007,
+            cost_per_1k_output=0.00026,
+            max_context=262144,
+            speed_tier="fast",
+            capability_tier="standard",
+        )
+    )
+    model_router.register(
+        ModelProfile(
+            model_id="nvidia/Nemotron-120B-A12B",
+            name="Nemotron Super via Baseten",
+            provider="baseten",
+            cost_per_1k_input=0.00030,
+            cost_per_1k_output=0.00075,
+            max_context=202000,
+            speed_tier="balanced",
+            capability_tier="advanced",
+        )
+    )
+    model_router.register(
+        ModelProfile(
+            model_id="deepseek/deepseek-chat-v3-0324",
+            name="DeepSeek Chat V3 0324 via haimaker",
+            provider="haimaker",
+            cost_per_1k_input=0.00014,
+            cost_per_1k_output=0.00028,
+            max_context=65536,
+            speed_tier="fast",
+            capability_tier="standard",
+        )
+    )
+    model_router.register(
+        ModelProfile(
             model_id="mistral-small-2603",
             name="Mistral Small 2603",
             provider="mistral",

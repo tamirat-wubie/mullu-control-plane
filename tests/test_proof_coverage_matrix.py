@@ -125,6 +125,12 @@ def test_representative_routes_are_not_unclassified() -> None:
     assert classified_routes["/api/v1/config/update"]["surface_id"] == "config_governance_lifecycle"
     assert classified_routes["/api/v1/config/rollback"]["surface_id"] == "config_governance_lifecycle"
     assert classified_routes["/api/v1/config/drift"]["surface_id"] == "config_governance_lifecycle"
+    assert classified_routes["/api/v1/events/publish"]["surface_id"] == "event_bus_operations"
+    assert classified_routes["/api/v1/events"]["surface_id"] == "event_bus_operations"
+    assert classified_routes["/api/v1/events/store/summary"]["surface_id"] == "event_bus_operations"
+    assert classified_routes["/api/v1/queue/submit"]["surface_id"] == "task_queue_lifecycle"
+    assert classified_routes["/api/v1/queue/process"]["surface_id"] == "task_queue_lifecycle"
+    assert classified_routes["/api/v1/queue/result/{task_id}"]["surface_id"] == "task_queue_lifecycle"
     assert classified_routes["/api/v1/finance/approval-packets"]["surface_id"] == "finance_approval_packets"
     assert (
         classified_routes["/api/v1/finance/approval-packets/operator/read-model"]["surface_id"]
@@ -494,6 +500,30 @@ def test_audit_chain_api_surface_is_witnessed() -> None:
     assert "audit_anchor_checkpoint_created" in witnesses
     assert "audit_anchor_verification_endpoint" in witnesses
     assert closure_actions["classify_audit_chain_api"]["status"] == "closed"
+
+
+def test_event_bus_operations_surface_is_witnessed() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    event_surface = surfaces["event_bus_operations"]
+    witnesses = set(event_surface["runtime_witnesses"])
+
+    assert event_surface["coverage_state"] == "witnessed"
+    assert event_surface["request_proof"] == "request_proof"
+    assert event_surface["action_proof"] == "action_proof"
+    assert "/api/v1/events" in event_surface["representative_paths"]
+    assert "/api/v1/events/publish" in event_surface["representative_paths"]
+    assert "/api/v1/events/summary" in event_surface["representative_paths"]
+    assert "/api/v1/events/store/summary" in event_surface["representative_paths"]
+    assert "mcoi/mcoi_runtime/app/routers/audit.py" in event_surface["evidence_files"]
+    assert "mcoi/tests/test_server_phase206.py" in event_surface["evidence_files"]
+    assert "mcoi/tests/test_server_phase207.py" in event_surface["evidence_files"]
+    assert "event_publish_hash_bound" in witnesses
+    assert "event_history_filter_bounded" in witnesses
+    assert "event_store_summary_governed" in witnesses
+    assert "pipeline_completion_event_visible" in witnesses
+    assert closure_actions["classify_event_bus_operations_routes"]["status"] == "closed"
 
 
 def test_gateway_runtime_witness_covers_orchestration_receipts() -> None:
@@ -1115,6 +1145,40 @@ def test_config_governance_lifecycle_surface_tracks_update_and_drift() -> None:
     assert closure_actions["classify_config_governance_routes"]["status"] == "closed"
 
 
+def test_task_queue_lifecycle_surface_tracks_priority_processing() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    queue_surface = surfaces["task_queue_lifecycle"]
+    witnesses = set(queue_surface["runtime_witnesses"])
+    route_records = {
+        record["route"]: record
+        for record in matrix["route_coverage"]["routes"]
+    }
+
+    assert queue_surface["coverage_state"] == "witnessed"
+    assert queue_surface["request_proof"] == "request_proof"
+    assert queue_surface["action_proof"] == "action_proof"
+    assert "/api/v1/queue/submit" in queue_surface["representative_paths"]
+    assert "/api/v1/queue/process" in queue_surface["representative_paths"]
+    assert "/api/v1/queue/status" in queue_surface["representative_paths"]
+    assert "/api/v1/queue/result/{task_id}" in queue_surface["representative_paths"]
+    assert "mcoi/mcoi_runtime/app/routers/agent.py" in queue_surface["evidence_files"]
+    assert "mcoi/mcoi_runtime/core/task_queue.py" in queue_surface["evidence_files"]
+    assert "mcoi/tests/test_task_queue.py" in queue_surface["evidence_files"]
+    assert "mcoi/tests/test_server_phase215.py" in queue_surface["evidence_files"]
+    assert "task_queue_priority_order" in witnesses
+    assert "task_queue_depth_bounded" in witnesses
+    assert "task_queue_empty_process_bounded" in witnesses
+    assert "task_queue_missing_result_bounded" in witnesses
+    assert "task_queue_errors_sanitized" in witnesses
+    assert route_records["/api/v1/queue/submit"]["coverage_state"] == "witnessed"
+    assert route_records["/api/v1/queue/submit"]["surface_id"] == "task_queue_lifecycle"
+    assert route_records["/api/v1/queue/result/{task_id}"]["coverage_state"] == "witnessed"
+    assert route_records["/api/v1/queue/result/{task_id}"]["surface_id"] == "task_queue_lifecycle"
+    assert closure_actions["classify_task_queue_lifecycle_routes"]["status"] == "closed"
+
+
 def test_connector_self_healing_surface_emits_bounded_recovery_receipts() -> None:
     matrix = _load_fixture()
     surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
@@ -1249,6 +1313,7 @@ def test_trust_ledger_surface_signs_terminal_evidence_bundles() -> None:
     assert "scripts/verify_anchor_receipt.py" in trust_surface["evidence_files"]
     assert "schemas/trust_ledger_anchor_receipt.schema.json" in trust_surface["evidence_files"]
     assert "schemas/trust_ledger_bundle.schema.json" in trust_surface["evidence_files"]
+    assert "schemas/trust_ledger_evidence_artifacts.schema.json" in trust_surface["evidence_files"]
     assert "tests/test_gateway/test_trust_ledger_anchor_receipt.py" in trust_surface["evidence_files"]
     assert "tests/test_gateway/test_trust_ledger.py" in trust_surface["evidence_files"]
     assert "tests/test_verify_anchor_receipt.py" in trust_surface["evidence_files"]

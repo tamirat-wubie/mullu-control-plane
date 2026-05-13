@@ -1567,6 +1567,104 @@ class RequestyBackend:
         return self._call_count
 
 
+class HuggingFaceBackend:
+    """Hugging Face router OpenAI-compatible endpoint for cheap hosted models."""
+
+    provider = LLMProvider.HUGGINGFACE
+    DEFAULT_MODEL = "Qwen/Qwen3-Coder-30B-A3B-Instruct:cheapest"
+
+    def __init__(self, *, model: str = "", api_key: str | None = None, api_key_env: str = "HF_TOKEN") -> None:
+        self._model = model or self.DEFAULT_MODEL
+        self._default_model = self._model
+        self._api_key = api_key or ""
+        self._api_key_env = api_key_env
+        self._call_count = 0
+
+    def call(self, params: LLMInvocationParams) -> LLMResult:
+        self._call_count += 1
+        return _openai_compatible_call(
+            base_url="https://router.huggingface.co/v1",
+            api_key=self._api_key
+            or os.environ.get(self._api_key_env, "")
+            or os.environ.get("HUGGINGFACE_API_KEY", ""),
+            model=params.model_name or self._model,
+            messages=_params_to_messages(params),
+            max_tokens=params.max_tokens,
+            temperature=0.0,
+            provider=self.provider,
+            cost_per_1m_input=0.07,
+            cost_per_1m_output=0.26,
+        )
+
+    @property
+    def call_count(self) -> int:
+        return self._call_count
+
+
+class BasetenBackend:
+    """Baseten Model APIs OpenAI-compatible endpoint for managed workhorse models."""
+
+    provider = LLMProvider.BASETEN
+    DEFAULT_MODEL = "nvidia/Nemotron-120B-A12B"
+
+    def __init__(self, *, model: str = "", api_key: str | None = None, api_key_env: str = "BASETEN_API_KEY") -> None:
+        self._model = model or self.DEFAULT_MODEL
+        self._default_model = self._model
+        self._api_key = api_key or ""
+        self._api_key_env = api_key_env
+        self._call_count = 0
+
+    def call(self, params: LLMInvocationParams) -> LLMResult:
+        self._call_count += 1
+        return _openai_compatible_call(
+            base_url="https://inference.baseten.co/v1",
+            api_key=self._api_key or os.environ.get(self._api_key_env, ""),
+            model=params.model_name or self._model,
+            messages=_params_to_messages(params),
+            max_tokens=params.max_tokens,
+            temperature=0.0,
+            provider=self.provider,
+            cost_per_1m_input=0.30,
+            cost_per_1m_output=0.75,
+        )
+
+    @property
+    def call_count(self) -> int:
+        return self._call_count
+
+
+class HaimakerBackend:
+    """haimaker OpenAI-compatible endpoint for cheap DeepSeek routing."""
+
+    provider = LLMProvider.HAIMAKER
+    DEFAULT_MODEL = "deepseek/deepseek-chat-v3-0324"
+
+    def __init__(self, *, model: str = "", api_key: str | None = None, api_key_env: str = "HAIMAKER_API_KEY") -> None:
+        self._model = model or self.DEFAULT_MODEL
+        self._default_model = self._model
+        self._api_key = api_key or ""
+        self._api_key_env = api_key_env
+        self._call_count = 0
+
+    def call(self, params: LLMInvocationParams) -> LLMResult:
+        self._call_count += 1
+        return _openai_compatible_call(
+            base_url="https://api.haimaker.ai/v1",
+            api_key=self._api_key or os.environ.get(self._api_key_env, ""),
+            model=params.model_name or self._model,
+            messages=_params_to_messages(params),
+            max_tokens=params.max_tokens,
+            temperature=0.0,
+            provider=self.provider,
+            cost_per_1m_input=0.14,
+            cost_per_1m_output=0.28,
+        )
+
+    @property
+    def call_count(self) -> int:
+        return self._call_count
+
+
 # --- xAI Grok (real-time X data) ---
 class GrokBackend:
     """xAI Grok - real-time X (Twitter) data access.
@@ -1723,6 +1821,9 @@ ALL_PROVIDERS: dict[str, type] = {
     "answira": AnswiraBackend,
     "llmai": LLMAIBackend,
     "requesty": RequestyBackend,
+    "huggingface": HuggingFaceBackend,
+    "baseten": BasetenBackend,
+    "haimaker": HaimakerBackend,
     "grok": GrokBackend,
     "mistral": MistralBackend,
     "openrouter": OpenRouterBackend,
@@ -1783,6 +1884,9 @@ def available_providers() -> list[str]:
         "answira": ("ANSWIRA_API_KEY",),
         "llmai": ("LLMAI_API_KEY", "LLMAI_TOKEN"),
         "requesty": ("REQUESTY_API_KEY",),
+        "huggingface": ("HF_TOKEN", "HUGGINGFACE_API_KEY"),
+        "baseten": ("BASETEN_API_KEY",),
+        "haimaker": ("HAIMAKER_API_KEY",),
         "grok": ("XAI_API_KEY",),
         "mistral": ("MISTRAL_API_KEY",),
         "openrouter": ("OPENROUTER_API_KEY",),

@@ -611,6 +611,36 @@ def proof_coverage_matrix() -> dict[str, Any]:
             ],
         ),
         _surface(
+            "task_queue_lifecycle",
+            [
+                "/api/v1/queue/process",
+                "/api/v1/queue/result/{task_id}",
+                "/api/v1/queue/status",
+                "/api/v1/queue/submit",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "mcoi/mcoi_runtime/app/routers/agent.py",
+                "mcoi/mcoi_runtime/core/task_queue.py",
+                "mcoi/tests/test_task_queue.py",
+                "mcoi/tests/test_server_phase215.py",
+            ],
+            "Task queue lifecycle routes submit bounded priority tasks, process one queued task at a time, expose queue status, and return stored task results with bounded missing-result failures.",
+            [
+                "task_queue_priority_order",
+                "task_queue_depth_bounded",
+                "task_queue_submit_endpoint",
+                "task_queue_process_endpoint",
+                "task_queue_empty_process_bounded",
+                "task_queue_result_retrieval",
+                "task_queue_missing_result_bounded",
+                "task_queue_errors_sanitized",
+            ],
+        ),
+        _surface(
             "runbook_learning_lifecycle",
             [
                 "/api/v1/runbooks",
@@ -1554,6 +1584,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "scripts/verify_anchor_receipt.py",
                 "schemas/trust_ledger_anchor_receipt.schema.json",
                 "schemas/trust_ledger_bundle.schema.json",
+                "schemas/trust_ledger_evidence_artifacts.schema.json",
                 "tests/test_gateway/test_evidence_bundle_endpoint.py",
                 "tests/test_gateway/test_trust_ledger_anchor_receipt.py",
                 "tests/test_gateway/test_trust_ledger.py",
@@ -2568,6 +2599,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
         {
             "action_id": "classify_event_bus_operations_routes",
             "surfaces": ["event_bus_operations"],
+            "status": "closed",
+        },
+        {
+            "action_id": "classify_task_queue_lifecycle_routes",
+            "surfaces": ["task_queue_lifecycle"],
             "status": "closed",
         },
         {
