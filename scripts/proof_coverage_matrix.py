@@ -308,7 +308,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
             ],
             "request_proof",
             "action_proof",
-            "audit_chain",
+            "action_proof",
             "witnessed",
             [
                 "mcoi/mcoi_runtime/app/routers/multi_agent.py",
@@ -318,7 +318,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "mcoi/tests/test_multi_agent_runtime.py",
                 "mcoi/tests/test_server_phase217.py",
             ],
-            "Multi-agent coordination routes delegate work, resolve delegations, record handoffs, record merge decisions, record explicit conflicts, expose unresolved-conflict read models, and publish bounded summary counts through the coordination engine and audit trail.",
+            "Multi-agent coordination routes delegate work, resolve delegations, record handoffs, record merge decisions, record explicit conflicts, expose unresolved-conflict read models, and publish bounded summary counts through the coordination engine; delegation, resolution, and handoff routes also write audit-trail entries.",
             [
                 "multi_agent_delegation_audited",
                 "multi_agent_delegation_resolution_bounded",

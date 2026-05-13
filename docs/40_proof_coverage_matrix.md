@@ -18,7 +18,7 @@ document is the operator-readable witness.
 | `tenant_governance_lifecycle` | /api/v1/tenant/budget, /api/v1/tenant/{tenant_id}/budget, /api/v1/tenant/{tenant_id}/ledger, /api/v1/tenant/{tenant_id}/summary, /api/v1/tenants, /api/v1/tenant/register, /api/v1/tenant/{tenant_id}/status, /api/v1/tenant/{tenant_id}/gate, /api/v1/tenant/gates | request_proof | action_proof | tenant_budget_create_emits_action_proof, tenant_budget_create_records_audit, tenant_budget_read_models_scoped_by_tenant, tenant_ledger_queries_bounded, tenant_registry_lifecycle_errors_sanitized, tenant_register_emits_action_proof, tenant_status_update_emits_action_proof, tenant_gate_read_models_governed, tenant_gate_persistence_read_model_included | audit_chain | witnessed | Tenant governance lifecycle routes bind budget mutation, tenant ledger and budget read models, registration, status transitions, and gate summaries to governed responses with audit records and bounded action proofs. |
 | `operator_console_read_models` | /api/v1/console, /api/v1/console/home, /api/v1/console/runs, /api/v1/console/audit, /api/v1/console/checkpoints, /api/v1/console/providers, /api/v1/console/scheduler | read_model | read_model | console_home_returns_governed_runtime_vitals, console_runs_bounds_recent_audit_entries, console_audit_exposes_chain_intact_read_model, console_checkpoints_expose_persisted_state_summary, console_provider_and_scheduler_views_are_read_only | audit_chain | witnessed | Operator console routes expose bounded read-only runtime, audit, checkpoint, provider, scheduler, and aggregate views with governed response witnesses. |
 | `agent_adapter_protocol` | /api/v1/agent/register, /api/v1/agent/heartbeat, /api/v1/agent/action-request, /api/v1/agent/action-result, /api/v1/agent/checkpoint, /api/v1/agent/restore, /api/v1/agent/adapter/summary | request_proof | action_proof | agent_register_emits_governed_identity, agent_heartbeat_requires_registered_agent, agent_action_request_runs_guard_chain, agent_action_result_records_outcome, agent_goal_context_propagates_to_action_request, agent_checkpoint_restore_errors_are_bounded, agent_adapter_summary_is_governed_read_model | audit_chain | witnessed | Agent adapter protocol routes register external workers, maintain heartbeat state, pass action requests through the guard chain, record action results, checkpoint and restore coordination state with bounded errors, and expose a governed summary read model. |
-| `multi_agent_coordination` | /api/v1/multi-agent/delegate, /api/v1/multi-agent/delegate/resolve, /api/v1/multi-agent/handoff, /api/v1/multi-agent/merge, /api/v1/multi-agent/conflict, /api/v1/multi-agent/conflicts/unresolved, /api/v1/multi-agent/summary | request_proof | action_proof | multi_agent_delegation_audited, multi_agent_delegation_resolution_bounded, multi_agent_handoff_preserves_context, multi_agent_merge_decision_explicit, multi_agent_conflict_recorded_for_resolution, multi_agent_unresolved_conflicts_bounded_read_model, multi_agent_summary_bounded | audit_chain | witnessed | Multi-agent coordination routes delegate work, resolve delegations, record handoffs, record merge decisions, record explicit conflicts, expose unresolved-conflict read models, and publish bounded summary counts through the coordination engine and audit trail. |
+| `multi_agent_coordination` | /api/v1/multi-agent/delegate, /api/v1/multi-agent/delegate/resolve, /api/v1/multi-agent/handoff, /api/v1/multi-agent/merge, /api/v1/multi-agent/conflict, /api/v1/multi-agent/conflicts/unresolved, /api/v1/multi-agent/summary | request_proof | action_proof | multi_agent_delegation_audited, multi_agent_delegation_resolution_bounded, multi_agent_handoff_preserves_context, multi_agent_merge_decision_explicit, multi_agent_conflict_recorded_for_resolution, multi_agent_unresolved_conflicts_bounded_read_model, multi_agent_summary_bounded | action_proof | witnessed | Multi-agent coordination routes delegate work, resolve delegations, record handoffs, record merge decisions, record explicit conflicts, expose unresolved-conflict read models, and publish bounded summary counts through the coordination engine; delegation, resolution, and handoff routes also write audit-trail entries. |
 | `model_experiment_control` | /api/v1/models, /api/v1/ab-test, /api/v1/ab-test/summary | request_proof | action_proof | none | audit_chain | witnessed | Model catalog and experiment control routes are declared as governed control surfaces. |
 | `policy_version_registry` | /api/v1/policies/{policy_id}/versions, /api/v1/policies/{policy_id}/versions/{version}, /api/v1/policies/{policy_id}/versions/{version}/promote, /api/v1/policies/{policy_id}/rollback, /api/v1/policies/{policy_id}/diff, /api/v1/policies/{policy_id}/shadow/{shadow_version} | request_proof | action_proof | none | audit_chain | witnessed | Policy version routes expose immutable artifact registration, promotion, rollback, diff, and shadow evaluation. |
 | `pilot_provisioning` | /api/v1/pilots/provision, /api/v1/pilots/provisions, /api/v1/pilots/provisions/{pilot_id} | request_proof | action_proof | none | audit_chain | witnessed | Pilot provisioning returns deterministic scaffold artifacts, persists accepted provision records, and exposes bounded operator history read models. |
@@ -89,9 +89,9 @@ Coverage summary:
 
 | Metric | Count |
 |---|---:|
-| Total surfaces | 75 |
+| Total surfaces | 76 |
 | Proven surfaces | 1 |
-| Witnessed surfaces | 74 |
+| Witnessed surfaces | 75 |
 | Unproven surfaces | 0 |
 
 Declared route coverage:
@@ -100,8 +100,8 @@ Declared route coverage:
 |---|---:|
 | Proof-relevant declared routes | 332 |
 | Proven routes | 8 |
-| Witnessed routes | 171 |
-| Unclassified declared routes | 153 |
+| Witnessed routes | 176 |
+| Unclassified declared routes | 148 |
 
 The canonical JSON witness lists every proof-relevant declared route under
 `route_coverage.routes`. Routes mapped to `unclassified_declared_route` carry
