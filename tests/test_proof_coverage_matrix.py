@@ -746,6 +746,41 @@ def test_api_key_lifecycle_surface_is_witnessed() -> None:
     assert closure_actions["classify_api_key_lifecycle_routes"]["status"] == "closed"
 
 
+def test_conversation_memory_lifecycle_surface_is_witnessed() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    route_records = {
+        record["route"]: record
+        for record in matrix["route_coverage"]["routes"]
+    }
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    conversation_surface = surfaces["conversation_memory_lifecycle"]
+    witnesses = set(conversation_surface["runtime_witnesses"])
+
+    assert conversation_surface["coverage_state"] == "witnessed"
+    assert conversation_surface["request_proof"] == "request_proof"
+    assert conversation_surface["action_proof"] == "action_proof"
+    assert conversation_surface["audit"] == "audit_chain"
+    assert "/api/v1/conversation/message" in conversation_surface["representative_paths"]
+    assert "/api/v1/conversation/{conversation_id}" in conversation_surface["representative_paths"]
+    assert "/api/v1/conversations" in conversation_surface["representative_paths"]
+    assert "mcoi/mcoi_runtime/app/routers/data/conversations.py" in conversation_surface["evidence_files"]
+    assert "mcoi/mcoi_runtime/core/conversation_memory.py" in conversation_surface["evidence_files"]
+    assert "mcoi/tests/test_server_phase208.py" in conversation_surface["evidence_files"]
+    assert "mcoi/tests/test_conversation_memory.py" in conversation_surface["evidence_files"]
+    assert "conversation_message_append_increments_count" in witnesses
+    assert "conversation_history_returns_messages_and_summary" in witnesses
+    assert "conversation_store_tenant_filtering" in witnesses
+    assert "conversation_memory_pruning_bounded" in witnesses
+    assert route_records["/api/v1/conversation/message"]["coverage_state"] == "witnessed"
+    assert route_records["/api/v1/conversation/message"]["surface_id"] == "conversation_memory_lifecycle"
+    assert route_records["/api/v1/conversation/{conversation_id}"]["coverage_state"] == "witnessed"
+    assert route_records["/api/v1/conversation/{conversation_id}"]["surface_id"] == "conversation_memory_lifecycle"
+    assert route_records["/api/v1/conversations"]["coverage_state"] == "witnessed"
+    assert route_records["/api/v1/conversations"]["surface_id"] == "conversation_memory_lifecycle"
+    assert closure_actions["classify_conversation_memory_routes"]["status"] == "closed"
+
+
 def test_ops_proof_surface_is_witnessed() -> None:
     matrix = _load_fixture()
     surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
