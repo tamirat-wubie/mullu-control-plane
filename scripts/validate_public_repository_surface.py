@@ -237,6 +237,7 @@ GOVERNANCE_PROTOCOL_REQUIRED_LITERALS = (
     "Temporal rate-limit window receipts are public contracts",
     "Temporal retry window receipts are public contracts",
     "Temporal lease window receipts are public contracts",
+    "Temporal idempotency window receipts are public contracts",
     "Temporal memory receipts are public contracts",
     "Temporal memory refresh receipts are public contracts",
     "Temporal scheduler receipts are public contracts",

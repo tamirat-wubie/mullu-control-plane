@@ -563,6 +563,12 @@
       "surface": "temporal"
     },
     {
+      "schema_id": "temporal-idempotency-window-receipt",
+      "path": "schemas/temporal_idempotency_window_receipt.schema.json",
+      "urn": "urn:mullusi:schema:temporal-idempotency-window-receipt:1",
+      "surface": "temporal"
+    },
+    {
       "schema_id": "temporal-memory-receipt",
       "path": "schemas/temporal_memory_receipt.schema.json",
       "urn": "urn:mullusi:schema:temporal-memory-receipt:1",

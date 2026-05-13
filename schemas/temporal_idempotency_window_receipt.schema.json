@@ -1,0 +1,317 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:temporal-idempotency-window-receipt:1",
+  "title": "Temporal Idempotency Window Receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "receipt_id",
+    "request_id",
+    "tenant_id",
+    "actor_id",
+    "command_id",
+    "action_type",
+    "risk_level",
+    "policy_id",
+    "scope_id",
+    "idempotency_key",
+    "status",
+    "idempotency_state",
+    "runtime_now_utc",
+    "idempotency_required",
+    "first_seen_at",
+    "last_seen_at",
+    "expires_at",
+    "window_age_seconds",
+    "seconds_until_expiry",
+    "attempt_count",
+    "max_replay_attempts",
+    "effect_committed",
+    "request_fingerprint",
+    "stored_request_fingerprint",
+    "terminal_receipt_id",
+    "prior_receipt_id",
+    "blocked_reasons",
+    "required_controls",
+    "evidence_refs",
+    "snapshot_evidence_refs",
+    "source_temporal_receipt_id",
+    "source_scheduler_receipt_id",
+    "source_retry_window_receipt_id",
+    "source_lease_window_receipt_id",
+    "source_reapproval_receipt_id",
+    "receipt_schema_ref",
+    "terminal_closure_required",
+    "receipt_hash",
+    "metadata"
+  ],
+  "properties": {
+    "receipt_id": {
+      "type": "string",
+      "pattern": "^temporal-idempotency-window-receipt-[0-9a-f]{16}$"
+    },
+    "request_id": {"type": "string", "minLength": 1},
+    "tenant_id": {"type": "string", "minLength": 1},
+    "actor_id": {"type": "string", "minLength": 1},
+    "command_id": {"type": "string", "minLength": 1},
+    "action_type": {"type": "string", "minLength": 1},
+    "risk_level": {
+      "type": "string",
+      "enum": ["low", "medium", "high", "critical"]
+    },
+    "policy_id": {"type": "string", "minLength": 1},
+    "scope_id": {"type": "string", "minLength": 1},
+    "idempotency_key": {"type": "string"},
+    "status": {
+      "type": "string",
+      "enum": [
+        "admit_new",
+        "admit_replay",
+        "duplicate_committed",
+        "idempotency_expired",
+        "blocked",
+        "not_required"
+      ]
+    },
+    "idempotency_state": {
+      "type": "string",
+      "enum": [
+        "new_key",
+        "matching_replay",
+        "committed",
+        "expired",
+        "wrong_scope",
+        "fingerprint_mismatch",
+        "attempts_exceeded",
+        "invalid",
+        "not_required"
+      ]
+    },
+    "runtime_now_utc": {"type": "string", "format": "date-time"},
+    "idempotency_required": {"type": "boolean"},
+    "first_seen_at": {"type": "string"},
+    "last_seen_at": {"type": "string"},
+    "expires_at": {"type": "string"},
+    "window_age_seconds": {"type": "integer", "minimum": 0},
+    "seconds_until_expiry": {"type": "integer", "minimum": 0},
+    "attempt_count": {"type": "integer", "minimum": 0},
+    "max_replay_attempts": {"type": "integer", "minimum": 0},
+    "effect_committed": {"type": "boolean"},
+    "request_fingerprint": {"type": "string"},
+    "stored_request_fingerprint": {"type": "string"},
+    "terminal_receipt_id": {"type": "string"},
+    "prior_receipt_id": {"type": "string"},
+    "blocked_reasons": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1}
+    },
+    "required_controls": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"type": "string", "minLength": 1}
+    },
+    "evidence_refs": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1}
+    },
+    "snapshot_evidence_refs": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1}
+    },
+    "source_temporal_receipt_id": {"type": "string"},
+    "source_scheduler_receipt_id": {"type": "string"},
+    "source_retry_window_receipt_id": {"type": "string"},
+    "source_lease_window_receipt_id": {"type": "string"},
+    "source_reapproval_receipt_id": {"type": "string"},
+    "receipt_schema_ref": {
+      "type": "string",
+      "const": "urn:mullusi:schema:temporal-idempotency-window-receipt:1"
+    },
+    "terminal_closure_required": {"type": "boolean", "const": true},
+    "receipt_hash": {"type": "string", "minLength": 1},
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "receipt_is_not_terminal_closure",
+        "runtime_owns_time_truth",
+        "dispatch_allowed",
+        "idempotency_checked",
+        "idempotency_scope_checked",
+        "request_fingerprint_checked",
+        "committed_effect_checked",
+        "high_risk_source_receipts_checked"
+      ],
+      "properties": {
+        "receipt_is_not_terminal_closure": {"type": "boolean", "const": true},
+        "runtime_owns_time_truth": {"type": "boolean", "const": true},
+        "dispatch_allowed": {"type": "boolean"},
+        "idempotency_checked": {"type": "boolean"},
+        "idempotency_scope_checked": {"type": "boolean"},
+        "request_fingerprint_checked": {"type": "boolean"},
+        "committed_effect_checked": {"type": "boolean"},
+        "high_risk_source_receipts_checked": {"type": "boolean"}
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {"status": {"const": "admit_new"}},
+        "required": ["status"]
+      },
+      "then": {
+        "properties": {
+          "idempotency_required": {"const": true},
+          "idempotency_state": {"const": "new_key"},
+          "idempotency_key": {"minLength": 1},
+          "first_seen_at": {"minLength": 1},
+          "last_seen_at": {"minLength": 1},
+          "expires_at": {"minLength": 1},
+          "window_age_seconds": {"const": 0},
+          "seconds_until_expiry": {"exclusiveMinimum": 0},
+          "attempt_count": {"const": 1},
+          "effect_committed": {"const": false},
+          "request_fingerprint": {"minLength": 1},
+          "stored_request_fingerprint": {"maxLength": 0},
+          "terminal_receipt_id": {"maxLength": 0},
+          "blocked_reasons": {"maxItems": 0},
+          "snapshot_evidence_refs": {"maxItems": 0},
+          "metadata": {
+            "properties": {
+              "dispatch_allowed": {"const": true},
+              "idempotency_checked": {"const": true},
+              "request_fingerprint_checked": {"const": true},
+              "committed_effect_checked": {"const": false}
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {"status": {"const": "admit_replay"}},
+        "required": ["status"]
+      },
+      "then": {
+        "properties": {
+          "idempotency_required": {"const": true},
+          "idempotency_state": {"const": "matching_replay"},
+          "idempotency_key": {"minLength": 1},
+          "first_seen_at": {"minLength": 1},
+          "last_seen_at": {"minLength": 1},
+          "expires_at": {"minLength": 1},
+          "seconds_until_expiry": {"exclusiveMinimum": 0},
+          "effect_committed": {"const": false},
+          "request_fingerprint": {"minLength": 1},
+          "stored_request_fingerprint": {"minLength": 1},
+          "blocked_reasons": {"maxItems": 0},
+          "snapshot_evidence_refs": {"minItems": 1},
+          "metadata": {
+            "properties": {
+              "dispatch_allowed": {"const": true},
+              "idempotency_checked": {"const": true},
+              "idempotency_scope_checked": {"const": true},
+              "request_fingerprint_checked": {"const": true},
+              "committed_effect_checked": {"const": true}
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {"status": {"const": "duplicate_committed"}},
+        "required": ["status"]
+      },
+      "then": {
+        "properties": {
+          "idempotency_required": {"const": true},
+          "idempotency_state": {"const": "committed"},
+          "effect_committed": {"const": true},
+          "terminal_receipt_id": {"minLength": 1},
+          "blocked_reasons": {"maxItems": 0},
+          "metadata": {
+            "properties": {
+              "dispatch_allowed": {"const": false},
+              "idempotency_checked": {"const": true},
+              "committed_effect_checked": {"const": true}
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {"status": {"const": "idempotency_expired"}},
+        "required": ["status"]
+      },
+      "then": {
+        "properties": {
+          "idempotency_required": {"const": true},
+          "idempotency_state": {"const": "expired"},
+          "seconds_until_expiry": {"const": 0},
+          "blocked_reasons": {"maxItems": 0},
+          "metadata": {
+            "properties": {
+              "dispatch_allowed": {"const": false},
+              "idempotency_checked": {"const": true}
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {"status": {"const": "blocked"}},
+        "required": ["status"]
+      },
+      "then": {
+        "properties": {
+          "blocked_reasons": {"minItems": 1},
+          "metadata": {
+            "properties": {
+              "dispatch_allowed": {"const": false}
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {"status": {"const": "not_required"}},
+        "required": ["status"]
+      },
+      "then": {
+        "properties": {
+          "idempotency_required": {"const": false},
+          "idempotency_state": {"const": "not_required"},
+          "idempotency_key": {"maxLength": 0},
+          "first_seen_at": {"maxLength": 0},
+          "last_seen_at": {"maxLength": 0},
+          "expires_at": {"maxLength": 0},
+          "window_age_seconds": {"const": 0},
+          "seconds_until_expiry": {"const": 0},
+          "attempt_count": {"const": 0},
+          "max_replay_attempts": {"const": 0},
+          "effect_committed": {"const": false},
+          "request_fingerprint": {"maxLength": 0},
+          "stored_request_fingerprint": {"maxLength": 0},
+          "terminal_receipt_id": {"maxLength": 0},
+          "prior_receipt_id": {"maxLength": 0},
+          "blocked_reasons": {"maxItems": 0},
+          "snapshot_evidence_refs": {"maxItems": 0},
+          "metadata": {
+            "properties": {
+              "dispatch_allowed": {"const": true},
+              "idempotency_checked": {"const": false},
+              "idempotency_scope_checked": {"const": false},
+              "request_fingerprint_checked": {"const": false},
+              "committed_effect_checked": {"const": false}
+            }
+          }
+        }
+      }
+    }
+  ]
+}

@@ -416,6 +416,13 @@
       ]
     },
     {
+      "action_id": "publish_temporal_idempotency_window_receipt_contract",
+      "status": "closed",
+      "surfaces": [
+        "temporal_idempotency_window"
+      ]
+    },
+    {
       "action_id": "publish_temporal_memory_refresh_receipt_contract",
       "status": "closed",
       "surfaces": [
@@ -486,7 +493,7 @@
   ],
   "coverage_summary": {
     "by_action_proof": {
-      "action_proof": 61,
+      "action_proof": 62,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 11,
@@ -494,7 +501,7 @@
     },
     "by_audit": {
       "action_proof": 0,
-      "audit_chain": 70,
+      "audit_chain": 71,
       "gap": 0,
       "read_model": 4,
       "request_proof": 0
@@ -502,16 +509,16 @@
     "by_coverage_state": {
       "proven": 1,
       "unproven": 0,
-      "witnessed": 73
+      "witnessed": 74
     },
     "by_request_proof": {
       "action_proof": 1,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 13,
-      "request_proof": 60
+      "request_proof": 61
     },
-    "surface_count": 74
+    "surface_count": 75
   },
   "generated_by": "scripts/proof_coverage_matrix.py",
   "route_coverage": {
@@ -4081,6 +4088,36 @@
         "receipt_not_terminal_closure"
       ],
       "surface_id": "temporal_lease_window"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "gateway/temporal_idempotency_window.py",
+        "schemas/temporal_idempotency_window_receipt.schema.json",
+        "tests/test_gateway/test_temporal_idempotency_window.py"
+      ],
+      "notes": "Temporal idempotency window rechecks idempotency keys, request fingerprints, replay windows, tenant and command scope, action scope, committed effects, terminal receipt binding, evidence refs, and high-risk source receipts before effect dispatch.",
+      "representative_paths": [
+        "TemporalIdempotencyWindow.evaluate",
+        "IdempotencyWindowRequest",
+        "TemporalIdempotencyWindowReceipt"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "runtime_clock_owns_idempotency_window",
+        "new_idempotency_key_admits_dispatch",
+        "matching_replay_admits_uncommitted_dispatch",
+        "committed_effect_blocks_duplicate_dispatch",
+        "expired_idempotency_window_blocks_dispatch",
+        "request_fingerprint_mismatch_blocks_replay",
+        "tenant_command_action_scope_checked",
+        "high_risk_source_receipts_bound",
+        "temporal_idempotency_window_receipt_schema_valid",
+        "receipt_not_terminal_closure"
+      ],
+      "surface_id": "temporal_idempotency_window"
     },
     {
       "action_proof": "action_proof",
