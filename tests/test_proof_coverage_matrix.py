@@ -131,6 +131,9 @@ def test_representative_routes_are_not_unclassified() -> None:
     assert classified_routes["/api/v1/events/publish"]["surface_id"] == "event_bus_operations"
     assert classified_routes["/api/v1/events"]["surface_id"] == "event_bus_operations"
     assert classified_routes["/api/v1/events/store/summary"]["surface_id"] == "event_bus_operations"
+    assert classified_routes["/api/v1/ops/benchmarks"]["surface_id"] == "ops_proof_surface"
+    assert classified_routes["/api/v1/ops/imports"]["surface_id"] == "ops_proof_surface"
+    assert classified_routes["/api/v1/ops/proof-bridge"]["surface_id"] == "ops_proof_surface"
     assert classified_routes["/api/v1/queue/submit"]["surface_id"] == "task_queue_lifecycle"
     assert classified_routes["/api/v1/queue/process"]["surface_id"] == "task_queue_lifecycle"
     assert classified_routes["/api/v1/queue/result/{task_id}"]["surface_id"] == "task_queue_lifecycle"
@@ -610,6 +613,39 @@ def test_event_bus_operations_surface_is_witnessed() -> None:
     assert "event_store_summary_governed" in witnesses
     assert "pipeline_completion_event_visible" in witnesses
     assert closure_actions["classify_event_bus_operations_routes"]["status"] == "closed"
+
+
+def test_ops_proof_surface_is_witnessed() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    route_records = {
+        record["route"]: record
+        for record in matrix["route_coverage"]["routes"]
+    }
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    ops_surface = surfaces["ops_proof_surface"]
+    witnesses = set(ops_surface["runtime_witnesses"])
+
+    assert ops_surface["coverage_state"] == "witnessed"
+    assert ops_surface["request_proof"] == "request_proof"
+    assert ops_surface["action_proof"] == "action_proof"
+    assert ops_surface["audit"] == "audit_chain"
+    assert "/api/v1/ops/benchmarks" in ops_surface["representative_paths"]
+    assert "/api/v1/ops/imports" in ops_surface["representative_paths"]
+    assert "/api/v1/ops/proof-bridge" in ops_surface["representative_paths"]
+    assert "mcoi/mcoi_runtime/app/routers/ops/diagnostics.py" in ops_surface["evidence_files"]
+    assert "mcoi/mcoi_runtime/core/governance_bench.py" in ops_surface["evidence_files"]
+    assert "mcoi/mcoi_runtime/core/import_analyzer.py" in ops_surface["evidence_files"]
+    assert "mcoi/mcoi_runtime/core/proof_bridge.py" in ops_surface["evidence_files"]
+    assert "mcoi/tests/test_governance_endpoints.py" in ops_surface["evidence_files"]
+    assert "ops_benchmarks_return_governed_summary" in witnesses
+    assert "ops_import_analysis_returns_dependency_summary" in witnesses
+    assert "ops_proof_bridge_status_governed" in witnesses
+    assert route_records["/api/v1/ops/benchmarks"]["coverage_state"] == "witnessed"
+    assert route_records["/api/v1/ops/benchmarks"]["surface_id"] == "ops_proof_surface"
+    assert route_records["/api/v1/ops/proof-bridge"]["coverage_state"] == "witnessed"
+    assert route_records["/api/v1/ops/proof-bridge"]["surface_id"] == "ops_proof_surface"
+    assert closure_actions["classify_ops_diagnostics_routes"]["status"] == "closed"
 
 
 def test_gateway_runtime_witness_covers_orchestration_receipts() -> None:
