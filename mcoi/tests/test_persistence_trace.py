@@ -6,6 +6,7 @@ Invariants: one file per trace entry, append-only, fail closed on malformed data
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 import pytest
@@ -80,6 +81,40 @@ def test_malformed_trace_file_raises(tmp_path: Path) -> None:
     store = TraceStore(trace_dir)
     with pytest.raises(CorruptedDataError, match=r"^malformed trace file \(JSONDecodeError\)$"):
         store.load_trace("bad-trace")
+
+
+def test_load_rejects_trace_id_mismatch(tmp_path: Path) -> None:
+    store = TraceStore(tmp_path / "traces")
+    store.append(_make_trace("trace-real"))
+    trace_path = tmp_path / "traces" / "trace-real.json"
+    raw = json.loads(trace_path.read_text(encoding="utf-8"))
+    raw["trace_id"] = "trace-other"
+    trace_path.write_text(json.dumps(raw), encoding="utf-8")
+
+    with pytest.raises(CorruptedDataError, match=r"^trace id mismatch$"):
+        store.load_trace("trace-real")
+
+
+def test_load_all_rejects_trace_id_mismatch(tmp_path: Path) -> None:
+    store = TraceStore(tmp_path / "traces")
+    store.append(_make_trace("trace-real"))
+    trace_path = tmp_path / "traces" / "trace-real.json"
+    raw = json.loads(trace_path.read_text(encoding="utf-8"))
+    raw["trace_id"] = "trace-other"
+    trace_path.write_text(json.dumps(raw), encoding="utf-8")
+
+    with pytest.raises(CorruptedDataError, match=r"^trace id mismatch$"):
+        store.load_all()
+
+
+def test_list_rejects_invalid_trace_filename(tmp_path: Path) -> None:
+    trace_dir = tmp_path / "traces"
+    trace_dir.mkdir(parents=True)
+    (trace_dir / "bad..trace.json").write_text("{}", encoding="utf-8")
+
+    store = TraceStore(trace_dir)
+    with pytest.raises(CorruptedDataError, match=r"^trace filename is invalid$"):
+        store.list_traces()
 
 
 def test_empty_trace_id_raises(tmp_path: Path) -> None:

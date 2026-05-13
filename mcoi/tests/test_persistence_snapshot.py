@@ -108,6 +108,30 @@ def test_tampered_data_raises_corrupted(tmp_path: Path) -> None:
         store.load_snapshot("snap-tamper")
 
 
+def test_load_rejects_metadata_id_mismatch(tmp_path: Path) -> None:
+    store = SnapshotStore(tmp_path / "snapshots")
+    store.save_snapshot("snap-real", {"key": "value"})
+    meta_path = tmp_path / "snapshots" / "snap-real" / "metadata.json"
+    meta = json.loads(meta_path.read_text(encoding="utf-8"))
+    meta["snapshot_id"] = "snap-other"
+    meta_path.write_text(json.dumps(meta), encoding="utf-8")
+
+    with pytest.raises(CorruptedDataError, match=r"^snapshot metadata id mismatch$"):
+        store.load_snapshot("snap-real")
+
+
+def test_list_rejects_metadata_id_mismatch(tmp_path: Path) -> None:
+    store = SnapshotStore(tmp_path / "snapshots")
+    store.save_snapshot("snap-real", {"key": "value"})
+    meta_path = tmp_path / "snapshots" / "snap-real" / "metadata.json"
+    meta = json.loads(meta_path.read_text(encoding="utf-8"))
+    meta["snapshot_id"] = "snap-other"
+    meta_path.write_text(json.dumps(meta), encoding="utf-8")
+
+    with pytest.raises(CorruptedDataError, match=r"^snapshot metadata id mismatch$"):
+        store.list_snapshots()
+
+
 def test_empty_snapshot_id_raises(tmp_path: Path) -> None:
     store = SnapshotStore(tmp_path / "snapshots")
     with pytest.raises(PersistenceError):

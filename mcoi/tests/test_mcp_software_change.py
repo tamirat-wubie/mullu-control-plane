@@ -34,6 +34,7 @@ from mcoi_runtime.mcp.server import (
     MulluMCPServer,
     SoftwareDevRunnerConfig,
 )
+from mcoi_runtime.persistence.software_learning_store import SoftwareLearningStore
 
 
 T0 = "2025-01-15T10:00:00+00:00"
@@ -115,7 +116,11 @@ def _passing_gate(adapter, request, attempt) -> QualityGateResult:
     )
 
 
-def _runner_config(tmp_path: Path) -> SoftwareDevRunnerConfig:
+def _runner_config(
+    tmp_path: Path,
+    *,
+    software_learning_store: SoftwareLearningStore | None = None,
+) -> SoftwareDevRunnerConfig:
     ws = _setup_workspace(tmp_path)
     adapter = LocalCodeAdapter(
         root_path=str(ws),
@@ -129,6 +134,7 @@ def _runner_config(tmp_path: Path) -> SoftwareDevRunnerConfig:
         gate_runners={SoftwareQualityGate.UNIT_TESTS: _passing_gate},
         clock=_clock,
         ucja_runner=_accept_ucja,
+        software_learning_store=software_learning_store,
     )
 
 
@@ -347,6 +353,36 @@ class TestMCPSoftwareChangeSuccess:
         assert learning["decision_count"] == 1
         assert learning["decisions"][0]["status"] == "admit"
         assert learning["planning_knowledge"][0]["knowledge_class"] == "procedural_memory"
+
+    def test_learning_admission_persists_when_store_configured(self, tmp_path):
+        store = SoftwareLearningStore()
+        server = MulluMCPServer(
+            platform=_PlatformStub(),
+            command_ledger=_ledger(),
+            software_dev_runner=_runner_config(tmp_path, software_learning_store=store),
+        )
+        result = server.call_tool("mullu_software_change", {
+            "kind": "bug_fix",
+            "summary": "rename hello",
+            "repository": "r",
+            "affected_files": ["main.py"],
+            "quality_gates": ["unit_tests"],
+            "max_self_debug_iterations": 0,
+        })
+        body = json.loads(result.content)
+        learning = body["learning_admission"]
+        summary = store.summary()
+
+        assert not result.is_error
+        assert learning["persistence"]["configured"] is True
+        assert learning["persistence"]["persisted"] is True
+        assert learning["persistence"]["candidates"] == 1
+        assert learning["persistence"]["decisions"] == 1
+        assert learning["persistence"]["planning_entries"] == 1
+        assert summary["candidate_count"] == 1
+        assert summary["decision_count"] == 1
+        assert summary["planning_entry_count"] == 1
+        assert summary["raw_log_candidate_count"] == 0
 
     def test_high_risk_tier_recorded(self, tmp_path):
         ledger = _ledger()

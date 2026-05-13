@@ -66,6 +66,15 @@ class TestReceiptStoreBaseClass:
     def test_max_entries_has_safe_default(self):
         assert ReceiptStore().max_entries >= 1
 
+    def test_base_class_validates_inputs_before_noop(self):
+        s = ReceiptStore()
+        with pytest.raises(ValueError, match="entity_id"):
+            s.get_lineage("")
+        with pytest.raises(ValueError, match="lineage"):
+            s.record_lineage("e1", "bad")  # type: ignore[arg-type]
+        with pytest.raises(ValueError, match="entity_id"):
+            s.has_lineage("")
+
 
 # ── InMemoryReceiptStore: working implementation ─────────────────────
 
@@ -121,10 +130,21 @@ class TestInMemoryReceiptStore:
             InMemoryReceiptStore(max_entries=0)
         with pytest.raises(ValueError):
             InMemoryReceiptStore(max_entries=-5)
+        with pytest.raises(ValueError):
+            InMemoryReceiptStore(max_entries=True)  # type: ignore[arg-type]
 
     def test_custom_max_entries_respected(self):
         s = InMemoryReceiptStore(max_entries=3)
         assert s.max_entries == 3
+
+    def test_record_lineage_requires_matching_entity(self):
+        s = InMemoryReceiptStore()
+        with pytest.raises(ValueError, match="entity_id"):
+            s.record_lineage("", _lineage("e1"))
+        with pytest.raises(ValueError, match="lineage"):
+            s.record_lineage("e1", "bad")  # type: ignore[arg-type]
+        with pytest.raises(ValueError, match="match"):
+            s.record_lineage("e1", _lineage("other"))
 
 
 # ── ProofBridge ↔ ReceiptStore wiring ────────────────────────────────

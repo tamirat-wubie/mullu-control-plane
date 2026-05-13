@@ -57,6 +57,18 @@ def test_deserialize_wrong_type_raises() -> None:
         deserialize_record("[1, 2, 3]", TraceEntry)
 
 
+def test_deserialize_unexpected_fields_raises() -> None:
+    raw = (
+        '{"event_type":"test_event","goal_id":"goal-1","parent_trace_id":null,'
+        '"registry_hash":"registry-hash-1","state_hash":"state-hash-1",'
+        '"subject_id":"subject-1","timestamp":"2026-03-19T00:00:00+00:00",'
+        '"trace_id":"trace-1","unexpected":"value"}'
+    )
+    with pytest.raises(CorruptedDataError, match=r"^unexpected fields$") as excinfo:
+        deserialize_record(raw, TraceEntry)
+    assert "value" not in str(excinfo.value)
+
+
 def test_serialize_non_dataclass_raises() -> None:
     with pytest.raises(
         CorruptedDataError,

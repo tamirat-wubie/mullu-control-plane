@@ -100,3 +100,12 @@ def test_app_config_rejects_non_boolean_shell_sandbox_flag() -> None:
 def test_app_config_rejects_empty_shell_sandbox_root() -> None:
     with pytest.raises(ValueError, match="^config values must contain non-empty strings$"):
         AppConfig.from_mapping({"shell_allowed_cwd_roots": (" ",)})
+
+
+def test_app_config_rejects_scalar_sequence_values() -> None:
+    with pytest.raises(ValueError, match="^config values must be sequences of non-empty strings$"):
+        AppConfig.from_mapping({"enabled_executor_routes": "shell_command"})
+    with pytest.raises(ValueError, match="^config values must be sequences of non-empty strings$"):
+        AppConfig.from_mapping({"shell_allowed_cwd_roots": "C:/workspace"})
+    with pytest.raises(ValueError, match="^config values must be a mapping$"):
+        AppConfig.from_mapping("not-a-mapping")  # type: ignore[arg-type]

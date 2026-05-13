@@ -111,6 +111,10 @@ def _reconstruct_dataclass(raw: dict[str, Any], dc_type: type, *, depth: int = 0
             _bounded_error("cannot resolve type hints", exc)
         ) from exc
 
+    field_names = {f.name for f in fields(dc_type)}
+    if set(raw) - field_names:
+        raise CorruptedDataError("unexpected fields")
+
     reconstructed: dict[str, Any] = {}
     for f in fields(dc_type):
         if f.name not in raw:

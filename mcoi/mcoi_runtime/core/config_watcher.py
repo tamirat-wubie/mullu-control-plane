@@ -16,28 +16,70 @@ import json
 import os
 import threading
 import time
-from dataclasses import dataclass, field
-from typing import Any, Callable
+from dataclasses import dataclass
+from typing import Any, Callable, Mapping
+
+
+def _require_non_empty_text(value: Any, field_name: str) -> str:
+    if not isinstance(value, str) or not value.strip():
+        raise ValueError(f"{field_name} must be a non-empty string")
+    return value
+
+
+def _require_text(value: Any, field_name: str) -> str:
+    if not isinstance(value, str):
+        raise ValueError(f"{field_name} must be a string")
+    return value
+
+
+def _require_non_negative_number(value: Any, field_name: str) -> float:
+    if not isinstance(value, (int, float)) or isinstance(value, bool):
+        raise ValueError(f"{field_name} must be a number")
+    number = float(value)
+    if number < 0:
+        raise ValueError(f"{field_name} must be non-negative")
+    return number
 
 
 @dataclass(frozen=True)
 class WatchedFile:
     """A configuration file being monitored for changes."""
+
     path: str
     parser: Callable[[str], dict[str, Any]]  # fn(content) -> config dict
     on_change: Callable[[dict[str, Any]], None]  # fn(new_config)
     description: str = ""
 
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "path", _require_non_empty_text(self.path, "path"))
+        if not callable(self.parser):
+            raise ValueError("parser must be callable")
+        if not callable(self.on_change):
+            raise ValueError("on_change must be callable")
+        object.__setattr__(self, "description", _require_text(self.description, "description"))
+
 
 @dataclass
 class FileState:
     """Tracked state for a watched file."""
+
     path: str
     last_mtime: float = 0.0
     last_hash: str = ""
     reload_count: int = 0
     last_error: str = ""
     last_reload_at: float = 0.0
+
+    def __post_init__(self) -> None:
+        self.path = _require_non_empty_text(self.path, "path")
+        self.last_mtime = _require_non_negative_number(self.last_mtime, "last_mtime")
+        self.last_hash = _require_text(self.last_hash, "last_hash")
+        if not isinstance(self.reload_count, int) or isinstance(self.reload_count, bool):
+            raise ValueError("reload_count must be an integer")
+        if self.reload_count < 0:
+            raise ValueError("reload_count must be non-negative")
+        self.last_error = _require_text(self.last_error, "last_error")
+        self.last_reload_at = _require_non_negative_number(self.last_reload_at, "last_reload_at")
 
 
 def _bounded_watch_error(exc: Exception) -> str:
@@ -49,7 +91,9 @@ class ConfigFileWatcher:
 
     def __init__(self, poll_interval: float = 5.0,
                  clock: Callable[[], str] | None = None):
-        self._poll_interval = poll_interval
+        self._poll_interval = _require_non_negative_number(poll_interval, "poll_interval")
+        if clock is not None and not callable(clock):
+            raise ValueError("clock must be callable")
         self._clock = clock
         self._watched: dict[str, WatchedFile] = {}
         self._states: dict[str, FileState] = {}
@@ -60,11 +104,14 @@ class ConfigFileWatcher:
         self._total_errors = 0
 
     def watch(self, watched: WatchedFile) -> None:
+        if not isinstance(watched, WatchedFile):
+            raise ValueError("watched must be a WatchedFile instance")
         with self._lock:
             self._watched[watched.path] = watched
             self._states[watched.path] = FileState(path=watched.path)
 
     def unwatch(self, path: str) -> None:
+        path = _require_non_empty_text(path, "path")
         with self._lock:
             self._watched.pop(path, None)
             self._states.pop(path, None)
@@ -96,6 +143,8 @@ class ConfigFileWatcher:
                     content = f.read()
 
                 config = watched.parser(content)
+                if not isinstance(config, Mapping):
+                    raise ValueError("parser must return a mapping")
                 watched.on_change(config)
 
                 with self._lock:
@@ -154,4 +203,7 @@ class ConfigFileWatcher:
 
 def json_parser(content: str) -> dict[str, Any]:
     """Default JSON config parser."""
-    return json.loads(content)
+    parsed = json.loads(content)
+    if not isinstance(parsed, dict):
+        raise ValueError("json config must be an object")
+    return parsed

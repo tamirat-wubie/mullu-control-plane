@@ -383,6 +383,12 @@
       "surface": "lineage"
     },
     {
+      "schema_id": "latest-anchor-read-model",
+      "path": "schemas/latest_anchor_read_model.schema.json",
+      "urn": "urn:mullusi:schema:latest-anchor-read-model:1",
+      "surface": "audit"
+    },
+    {
       "schema_id": "model-invocation",
       "path": "schemas/model_invocation.schema.json",
       "urn": "urn:mullusi:schema:model-invocation:1",

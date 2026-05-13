@@ -6,15 +6,18 @@ Invariants: preserves lifecycle state explicitly, fail closed on malformed data.
 
 from __future__ import annotations
 
+import copy
 import json
+import keyword
 import os
 import tempfile
-from dataclasses import is_dataclass, fields as dc_fields
+from dataclasses import field as dc_field, fields as dc_fields, is_dataclass, make_dataclass
 from hashlib import sha256
 from pathlib import Path
 from typing import Any
 
 from mcoi_runtime.contracts._base import thaw_value
+from mcoi_runtime.core.invariants import RuntimeCoreInvariantError
 from mcoi_runtime.core.registry_store import RegistryEntry, RegistryLifecycle, RegistryStore
 
 from .errors import CorruptedDataError, PersistenceError, PersistenceWriteError
@@ -57,6 +60,37 @@ def _entry_value_to_dict(value: Any) -> dict[str, Any]:
             result[f.name] = thaw_value(getattr(value, f.name))
         return result
     raise CorruptedDataError("registry entry value must be a dataclass instance")
+
+
+def _validate_value_field_name(field_name: object) -> str:
+    if (
+        not isinstance(field_name, str)
+        or not field_name.strip()
+        or not field_name.isidentifier()
+        or keyword.iskeyword(field_name)
+    ):
+        raise CorruptedDataError("registry entry value has invalid field")
+    return field_name
+
+
+def _raw_value_instance(value_data: dict[str, Any]) -> Any:
+    """Rebuild a frozen dataclass value from persisted raw fields."""
+    field_defs = []
+    for field_name, field_value in sorted(value_data.items()):
+        validated_name = _validate_value_field_name(field_name)
+        thawed_value = thaw_value(field_value)
+        field_defs.append(
+            (
+                validated_name,
+                Any,
+                dc_field(default_factory=lambda value=thawed_value: copy.deepcopy(value)),
+            )
+        )
+    try:
+        RawValue = make_dataclass("RawValue", field_defs, frozen=True, slots=True)
+        return RawValue()
+    except (TypeError, ValueError) as exc:
+        raise CorruptedDataError(_bounded_store_error("invalid registry entry value", exc)) from exc
 
 
 def _serialize_entry(entry: RegistryEntry[Any]) -> dict[str, Any]:
@@ -121,8 +155,12 @@ class RegistryBackend:
         store: RegistryStore[Any] = RegistryStore()
 
         for entry_id, entry_data in sorted(entries_raw.items()):
+            if not isinstance(entry_id, str) or not entry_id.strip():
+                raise CorruptedDataError("registry entry id must be a non-empty string")
             if not isinstance(entry_data, dict):
                 raise CorruptedDataError("registry entry must be a JSON object")
+            if entry_data.get("entry_id") != entry_id:
+                raise CorruptedDataError("registry entry id mismatch")
 
             try:
                 lifecycle_str = entry_data["lifecycle"]
@@ -141,22 +179,18 @@ class RegistryBackend:
             if not isinstance(value_data, dict):
                 raise CorruptedDataError("registry entry value must be a JSON object")
 
-            # Store raw value dict wrapped in a SimpleNamespace-like frozen dataclass
-            # so it passes the dataclass check in RegistryEntry.__post_init__.
-            # We use a _RawRegistryValue to hold the deserialized dict fields.
-            from dataclasses import make_dataclass, field as dc_field
+            value_instance = _raw_value_instance(value_data)
 
-            field_defs = [(k, type(v), dc_field(default=v)) for k, v in value_data.items()]
-            RawValue = make_dataclass("RawValue", field_defs, frozen=True)
-            value_instance = RawValue()
-
-            entry = RegistryEntry(
-                entry_id=entry_id,
-                entry_type=entry_type,
-                value=value_instance,
-                lifecycle=lifecycle,
-            )
-            store.add(entry)
+            try:
+                entry = RegistryEntry(
+                    entry_id=entry_id,
+                    entry_type=entry_type,
+                    value=value_instance,
+                    lifecycle=lifecycle,
+                )
+                store.add(entry)
+            except RuntimeCoreInvariantError as exc:
+                raise CorruptedDataError(_bounded_store_error("invalid registry entry", exc)) from exc
 
         return store
 

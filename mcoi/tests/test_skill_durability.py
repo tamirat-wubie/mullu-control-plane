@@ -6,22 +6,17 @@ carry provenance through to runbook admission.
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 import pytest
 
 from mcoi_runtime.contracts.skill import (
-    DeterminismClass,
-    EffectClass,
-    SkillClass,
     SkillExecutionRecord,
-    SkillLifecycle,
     SkillOutcome,
     SkillOutcomeStatus,
     SkillSelectionDecision,
     SkillStepOutcome,
-    TrustClass,
-    VerificationStrength,
 )
 from mcoi_runtime.persistence.skill_store import SkillStore
 from mcoi_runtime.persistence.errors import CorruptedDataError, PersistenceError
@@ -180,6 +175,37 @@ class TestSkillStore:
         (tmp_path / "skills" / "bad.json").write_text("not json!!")
         with pytest.raises(CorruptedDataError, match=r"^malformed JSON \(JSONDecodeError\)$"):
             store.load("bad")
+
+    def test_load_rejects_record_id_mismatch(self, tmp_path: Path):
+        store = SkillStore(tmp_path / "skills")
+        store.save(_make_record("rec-real"))
+        record_path = tmp_path / "skills" / "rec-real.json"
+        raw = json.loads(record_path.read_text(encoding="utf-8"))
+        raw["record_id"] = "rec-other"
+        record_path.write_text(json.dumps(raw), encoding="utf-8")
+
+        with pytest.raises(CorruptedDataError, match=r"^skill record id mismatch$"):
+            store.load("rec-real")
+
+    def test_load_all_rejects_record_id_mismatch(self, tmp_path: Path):
+        store = SkillStore(tmp_path / "skills")
+        store.save(_make_record("rec-real"))
+        record_path = tmp_path / "skills" / "rec-real.json"
+        raw = json.loads(record_path.read_text(encoding="utf-8"))
+        raw["record_id"] = "rec-other"
+        record_path.write_text(json.dumps(raw), encoding="utf-8")
+
+        with pytest.raises(CorruptedDataError, match=r"^skill record id mismatch$"):
+            store.load_all()
+
+    def test_list_rejects_invalid_record_filename(self, tmp_path: Path):
+        store = SkillStore(tmp_path / "skills")
+        skill_dir = tmp_path / "skills"
+        skill_dir.mkdir(parents=True)
+        (skill_dir / "bad..record.json").write_text("{}", encoding="utf-8")
+
+        with pytest.raises(CorruptedDataError, match=r"^skill record filename is invalid$"):
+            store.list_records()
 
     def test_invalid_type_rejected(self, tmp_path: Path):
         store = SkillStore(tmp_path / "skills")

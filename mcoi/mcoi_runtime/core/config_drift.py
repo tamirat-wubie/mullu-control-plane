@@ -13,7 +13,38 @@ from __future__ import annotations
 import time
 from dataclasses import dataclass, field
 from enum import Enum, unique
-from typing import Any
+from typing import Any, Mapping
+
+
+def _require_non_empty_text(value: Any, field_name: str) -> str:
+    if not isinstance(value, str) or not value.strip():
+        raise ValueError(f"{field_name} must be a non-empty string")
+    return value
+
+
+def _require_text(value: Any, field_name: str) -> str:
+    if not isinstance(value, str):
+        raise ValueError(f"{field_name} must be a string")
+    return value
+
+
+def _require_config_mapping(value: Any, field_name: str) -> Mapping[str, Any]:
+    if not isinstance(value, Mapping):
+        raise ValueError(f"{field_name} must be a mapping")
+    for key in value:
+        _require_non_empty_text(key, f"{field_name} key")
+    return value
+
+
+def _freeze_drifts(drifts: Any) -> tuple["DriftItem", ...]:
+    if isinstance(drifts, (str, bytes)) or not isinstance(drifts, (tuple, list)):
+        raise ValueError("drifts must be an array")
+    normalized: list[DriftItem] = []
+    for drift in drifts:
+        if not isinstance(drift, DriftItem):
+            raise ValueError("drifts must contain only DriftItem instances")
+        normalized.append(drift)
+    return tuple(normalized)
 
 
 @unique
@@ -26,11 +57,18 @@ class DriftSeverity(Enum):
 @dataclass(frozen=True)
 class DriftItem:
     """A single configuration drift."""
+
     key: str
     expected: Any
     actual: Any
     severity: DriftSeverity
     message: str = ""
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "key", _require_non_empty_text(self.key, "key"))
+        if not isinstance(self.severity, DriftSeverity):
+            raise ValueError("severity must be a DriftSeverity value")
+        object.__setattr__(self, "message", _require_text(self.message, "message"))
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -45,8 +83,16 @@ class DriftItem:
 @dataclass
 class DriftReport:
     """Aggregate drift detection report."""
-    drifts: list[DriftItem]
+
+    drifts: tuple[DriftItem, ...]
     scanned_at: float = field(default_factory=time.time)
+
+    def __post_init__(self) -> None:
+        self.drifts = _freeze_drifts(self.drifts)
+        if not isinstance(self.scanned_at, (int, float)) or isinstance(self.scanned_at, bool):
+            raise ValueError("scanned_at must be a number")
+        if self.scanned_at < 0:
+            raise ValueError("scanned_at must be non-negative")
 
     @property
     def has_drift(self) -> bool:
@@ -74,10 +120,13 @@ class ConfigDriftDetector:
         self._total_scans = 0
         self._total_drifts_found = 0
 
-    def set_expected(self, config: dict[str, Any]) -> None:
-        self._expected = dict(config)
+    def set_expected(self, config: Mapping[str, Any]) -> None:
+        self._expected = dict(_require_config_mapping(config, "config"))
 
     def set_severity(self, key: str, severity: DriftSeverity) -> None:
+        key = _require_non_empty_text(key, "key")
+        if not isinstance(severity, DriftSeverity):
+            raise ValueError("severity must be a DriftSeverity value")
         self._severity_overrides[key] = severity
 
     def _classify(self, key: str) -> DriftSeverity:
@@ -89,8 +138,9 @@ class ConfigDriftDetector:
             return DriftSeverity.CRITICAL
         return DriftSeverity.WARNING
 
-    def detect(self, actual: dict[str, Any]) -> DriftReport:
+    def detect(self, actual: Mapping[str, Any]) -> DriftReport:
         """Compare actual config against expected and report drifts."""
+        actual = _require_config_mapping(actual, "actual")
         self._total_scans += 1
         drifts: list[DriftItem] = []
 

@@ -1,4 +1,4 @@
-﻿"""Purpose: verify the generated proof coverage matrix witness.
+"""Purpose: verify the generated proof coverage matrix witness.
 
 Governance scope: prevents drift between route surfaces and the proof coverage
 closure ledger.
@@ -78,11 +78,9 @@ def test_declared_routes_have_explicit_coverage_classification() -> None:
     assert report["unclassified_route_count"] == report["by_coverage_state"]["unproven"]
     assert all(record["coverage_state"] in matrix["coverage_states"] for record in report["routes"])
     assert all(record["surface_id"] for record in report["routes"])
-    assert any(
-        record["surface_id"] == "unclassified_declared_route"
-        and record["coverage_state"] == "unproven"
-        for record in report["routes"]
-    )
+    assert report["unclassified_route_count"] == 0
+    assert all(record["surface_id"] != "unclassified_declared_route" for record in report["routes"])
+    assert all(record["coverage_state"] != "unproven" for record in report["routes"])
 
 
 def test_representative_routes_are_not_unclassified() -> None:
@@ -223,6 +221,39 @@ def test_representative_routes_are_not_unclassified() -> None:
     assert classified_routes["/api/v1/rbac/identities"]["surface_id"] == "rbac_access_governance"
     assert classified_routes["/api/v1/rbac/roles"]["surface_id"] == "rbac_access_governance"
     assert classified_routes["/api/v1/rbac/bindings"]["surface_id"] == "rbac_access_governance"
+    assert classified_routes["/api/v1/bootstrap"]["surface_id"] == "llm_admin_observability"
+    assert classified_routes["/api/v1/circuit-breaker"]["surface_id"] == "llm_admin_observability"
+    assert classified_routes["/api/v1/llm/history"]["surface_id"] == "llm_admin_observability"
+    assert classified_routes["/api/v1/conversation/message"]["surface_id"] == "conversation_memory_lifecycle"
+    assert classified_routes["/api/v1/conversation/{conversation_id}"]["surface_id"] == "conversation_memory_lifecycle"
+    assert classified_routes["/api/v1/conversations"]["surface_id"] == "conversation_memory_lifecycle"
+    assert classified_routes["/api/v1/coordination/checkpoint"]["surface_id"] == "coordination_checkpoint_lifecycle"
+    assert classified_routes["/api/v1/coordination/restore"]["surface_id"] == "coordination_checkpoint_lifecycle"
+    assert classified_routes["/api/v1/dependencies"]["surface_id"] == "dependency_graph_read_models"
+    assert classified_routes["/api/v1/dependencies/{name}/impact"]["surface_id"] == "dependency_graph_read_models"
+    assert (
+        classified_routes["/api/v1/engineering-puzzle/candidates/judge"]["surface_id"]
+        == "engineering_puzzle_governance"
+    )
+    assert classified_routes["/api/v1/engineering-puzzle/goal-delta"]["surface_id"] == "engineering_puzzle_governance"
+    assert classified_routes["/api/v1/export"]["surface_id"] == "data_export_lifecycle"
+    assert classified_routes["/api/v1/export/sources"]["surface_id"] == "data_export_lifecycle"
+    assert classified_routes["/api/v1/flags"]["surface_id"] == "feature_flag_read_models"
+    assert classified_routes["/api/v1/flags/{flag_id}"]["surface_id"] == "feature_flag_read_models"
+    assert classified_routes["/api/v1/metrics"]["surface_id"] == "operational_telemetry_read_models"
+    assert classified_routes["/api/v1/grafana/dashboard"]["surface_id"] == "operational_telemetry_read_models"
+    assert classified_routes["/api/v1/prompts"]["surface_id"] == "prompt_template_lifecycle"
+    assert classified_routes["/api/v1/prompts/render"]["surface_id"] == "prompt_template_lifecycle"
+    assert classified_routes["/api/v1/rate-limit/status"]["surface_id"] == "rate_limit_read_models"
+    assert classified_routes["/api/v1/rate-limits/{client_id}"]["surface_id"] == "rate_limit_read_models"
+    assert classified_routes["/api/v1/replay/traces"]["surface_id"] == "replay_trace_read_models"
+    assert classified_routes["/api/v1/schemas"]["surface_id"] == "schema_validation_registry"
+    assert classified_routes["/api/v1/schemas/validate"]["surface_id"] == "schema_validation_registry"
+    assert classified_routes["/api/v1/search"]["surface_id"] == "semantic_search_read_models"
+    assert classified_routes["/api/v1/search/stats"]["surface_id"] == "semantic_search_read_models"
+    assert classified_routes["/api/v1/sla"]["surface_id"] == "sla_monitoring_read_models"
+    assert classified_routes["/api/v1/sla/violations"]["surface_id"] == "sla_monitoring_read_models"
+    assert classified_routes["/gateway/status"]["surface_id"] == "gateway_status_read_model"
 
 
 def test_runtime_config_management_surface_is_witnessed() -> None:
@@ -349,6 +380,135 @@ def test_rbac_access_governance_surface_is_witnessed() -> None:
     assert "rbac_role_binding_governed" in witnesses
     assert "rbac_identity_creation_audited" in witnesses
     assert closure_actions["classify_rbac_access_governance_routes"]["status"] == "closed"
+
+
+def test_remaining_declared_route_groups_are_witnessed() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    route_records = {
+        record["route"]: record
+        for record in matrix["route_coverage"]["routes"]
+    }
+    expected_groups = (
+        (
+            "llm_admin_observability",
+            "classify_llm_admin_observability_routes",
+            ("/api/v1/bootstrap", "/api/v1/circuit-breaker", "/api/v1/llm/history"),
+            "mcoi/mcoi_runtime/app/routers/llm/admin.py",
+            "llm_history_window_bounded",
+        ),
+        (
+            "dependency_graph_read_models",
+            "classify_dependency_graph_routes",
+            ("/api/v1/dependencies", "/api/v1/dependencies/{name}/impact"),
+            "mcoi/mcoi_runtime/app/routers/ops/dependencies.py",
+            "dependency_impact_analysis_bounded",
+        ),
+        (
+            "feature_flag_read_models",
+            "classify_feature_flag_routes",
+            ("/api/v1/flags", "/api/v1/flags/{flag_id}"),
+            "mcoi/mcoi_runtime/app/routers/ops/feature_flags.py",
+            "missing_feature_flag_defaults_closed",
+        ),
+        (
+            "operational_telemetry_read_models",
+            "classify_operational_telemetry_routes",
+            ("/api/v1/metrics", "/api/v1/grafana/dashboard"),
+            "mcoi/mcoi_runtime/app/routers/ops/metrics.py",
+            "metrics_snapshot_bounded",
+        ),
+        (
+            "rate_limit_read_models",
+            "classify_rate_limit_read_model_routes",
+            ("/api/v1/rate-limit/status", "/api/v1/rate-limits/{client_id}"),
+            "mcoi/mcoi_runtime/app/routers/ops/rate_limit.py",
+            "rate_limit_read_model_non_mutating",
+        ),
+        (
+            "sla_monitoring_read_models",
+            "classify_sla_monitoring_routes",
+            ("/api/v1/sla", "/api/v1/sla/violations"),
+            "mcoi/mcoi_runtime/app/routers/data/sla.py",
+            "sla_read_model_non_mutating",
+        ),
+        (
+            "gateway_status_read_model",
+            "classify_gateway_status_route",
+            ("/gateway/status",),
+            "gateway/server.py",
+            "gateway_status_governed",
+        ),
+        (
+            "conversation_memory_lifecycle",
+            "classify_conversation_memory_routes",
+            ("/api/v1/conversation/message", "/api/v1/conversation/{conversation_id}", "/api/v1/conversations"),
+            "mcoi/mcoi_runtime/app/routers/data/conversations.py",
+            "missing_conversation_bounded_404",
+        ),
+        (
+            "coordination_checkpoint_lifecycle",
+            "classify_coordination_checkpoint_routes",
+            ("/api/v1/coordination/checkpoint", "/api/v1/coordination/restore"),
+            "mcoi/mcoi_runtime/app/routers/ops/coordination.py",
+            "coordination_restore_missing_bounded",
+        ),
+        (
+            "engineering_puzzle_governance",
+            "classify_engineering_puzzle_routes",
+            ("/api/v1/engineering-puzzle/candidates/judge", "/api/v1/engineering-puzzle/goal-delta"),
+            "mcoi/mcoi_runtime/app/routers/engineering_puzzle.py",
+            "engineering_candidate_judgment_governed",
+        ),
+        (
+            "data_export_lifecycle",
+            "classify_data_export_routes",
+            ("/api/v1/export", "/api/v1/export/sources"),
+            "mcoi/mcoi_runtime/app/routers/data/export.py",
+            "data_export_format_validated",
+        ),
+        (
+            "prompt_template_lifecycle",
+            "classify_prompt_template_routes",
+            ("/api/v1/prompts", "/api/v1/prompts/render"),
+            "mcoi/mcoi_runtime/app/routers/data/prompts.py",
+            "prompt_render_variables_validated",
+        ),
+        (
+            "replay_trace_read_models",
+            "classify_replay_trace_routes",
+            ("/api/v1/replay/traces",),
+            "mcoi/mcoi_runtime/app/routers/agent.py",
+            "replay_trace_hash_projected",
+        ),
+        (
+            "schema_validation_registry",
+            "classify_schema_validation_routes",
+            ("/api/v1/schemas", "/api/v1/schemas/validate"),
+            "mcoi/mcoi_runtime/app/routers/data/schemas.py",
+            "schema_validation_errors_explicit",
+        ),
+        (
+            "semantic_search_read_models",
+            "classify_semantic_search_routes",
+            ("/api/v1/search", "/api/v1/search/stats"),
+            "mcoi/mcoi_runtime/app/routers/data/search.py",
+            "semantic_search_stats_bounded",
+        ),
+    )
+
+    for surface_id, action_id, routes, evidence_file, witness in expected_groups:
+        surface = surfaces[surface_id]
+        witnesses = set(surface["runtime_witnesses"])
+
+        assert surface["coverage_state"] == "witnessed"
+        assert evidence_file in surface["evidence_files"]
+        assert witness in witnesses
+        assert closure_actions[action_id]["status"] == "closed"
+        assert all(route in surface["representative_paths"] for route in routes)
+        assert all(route_records[route]["surface_id"] == surface_id for route in routes)
+        assert all(route_records[route]["coverage_state"] == "witnessed" for route in routes)
 
 
 def test_finance_approval_packet_surface_is_witnessed() -> None:
@@ -793,6 +953,7 @@ def test_gateway_runtime_witness_covers_orchestration_receipts() -> None:
     assert "schemas/deployment_orchestration_receipt_validation.schema.json" in runtime_surface["evidence_files"]
     assert "schemas/gateway_publication_readiness.schema.json" in runtime_surface["evidence_files"]
     assert "schemas/gateway_publication_receipt_validation.schema.json" in runtime_surface["evidence_files"]
+    assert "schemas/latest_anchor_read_model.schema.json" in runtime_surface["evidence_files"]
     assert "schemas/runtime_witness.schema.json" in runtime_surface["evidence_files"]
     assert "schemas/mullu_governance_protocol.manifest.json" in runtime_surface["evidence_files"]
     assert "tests/test_orchestrate_deployment_witness.py" in runtime_surface["evidence_files"]
@@ -801,6 +962,7 @@ def test_gateway_runtime_witness_covers_orchestration_receipts() -> None:
     assert "tests/test_validate_deployment_publication_closure.py" in runtime_surface["evidence_files"]
     assert "tests/test_validate_protocol_manifest.py" in runtime_surface["evidence_files"]
     assert "deployment_witness_orchestration_receipt" in runtime_surface["runtime_witnesses"]
+    assert "latest_anchor_read_model_schema_valid" in runtime_surface["runtime_witnesses"]
     assert "runtime_witness_schema_valid" in runtime_surface["runtime_witnesses"]
     assert "deployment_publication_closure_validation_schema" in runtime_surface["runtime_witnesses"]
     assert "deployment_orchestration_validation_schema" in runtime_surface["runtime_witnesses"]

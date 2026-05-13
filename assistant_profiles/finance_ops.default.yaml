@@ -1,0 +1,44 @@
+# Purpose: FinanceOps flagship assistant profile.
+# Governance scope: invoice intake, approval, payment, reconciliation, and proof.
+# Dependencies: mcoi_runtime.assistant_kernel.identity built-in profile contract.
+# Invariants: payment requires approval, reconciliation, and signed evidence.
+assistant_id: finance_ops.default
+owner_scope: organization_owned
+tenant_scope: enterprise_tenant
+allowed_capabilities:
+  - invoice.read
+  - invoice.extract
+  - vendor.verify
+  - po.match
+  - budget.check
+  - approval.request
+  - payment.prepare
+  - payment.execute.with_approval
+  - payment.reconcile
+  - ledger.update
+  - evidence.export
+  - email.draft
+  - email.send.with_approval
+  - calendar.read
+forbidden_capabilities:
+  - payment.execute
+  - bank_account.modify
+  - vendor.create.without_review
+memory_policy: admitted_finance_facts_only
+approval_policy: fresh_dual_control_for_payment
+budget_policy: budget_check_required_before_payment_prepare
+external_send_policy: dual_approval_required
+data_retention_policy: finance_audit_retention
+evidence_required:
+  - invoice_source_evidence
+  - vendor_verification_receipt
+  - duplicate_payment_check
+  - budget_check_receipt
+  - approval_receipt
+  - payment_receipt
+  - ledger_reconciliation
+  - signed_evidence_bundle
+escalation_path:
+  - finance_admin
+  - controller
+  - audit_owner

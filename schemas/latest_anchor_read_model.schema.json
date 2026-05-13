@@ -1,0 +1,123 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:latest-anchor-read-model:1",
+  "title": "Latest Anchor Read Model",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "anchor_present",
+    "anchor_id",
+    "from_event_hash",
+    "to_event_hash",
+    "event_count",
+    "merkle_root",
+    "signature",
+    "signature_key_id",
+    "anchored_at",
+    "governed"
+  ],
+  "properties": {
+    "anchor_present": {
+      "type": "boolean"
+    },
+    "anchor_id": {
+      "type": "string"
+    },
+    "from_event_hash": {
+      "type": "string"
+    },
+    "to_event_hash": {
+      "type": "string"
+    },
+    "event_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "merkle_root": {
+      "type": "string"
+    },
+    "signature": {
+      "type": "string"
+    },
+    "signature_key_id": {
+      "type": "string"
+    },
+    "anchored_at": {
+      "type": "string"
+    },
+    "governed": {
+      "type": "boolean",
+      "const": true
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "anchor_present": {
+            "const": true
+          }
+        },
+        "required": [
+          "anchor_present"
+        ]
+      },
+      "then": {
+        "properties": {
+          "anchor_id": {
+            "pattern": "^cmd-anchor-[0-9a-f]{16}$"
+          },
+          "from_event_hash": {
+            "minLength": 1
+          },
+          "to_event_hash": {
+            "minLength": 1
+          },
+          "event_count": {
+            "minimum": 1
+          },
+          "merkle_root": {
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "signature": {
+            "pattern": "^hmac-sha256:[0-9a-f]{64}$"
+          },
+          "signature_key_id": {
+            "minLength": 1
+          },
+          "anchored_at": {
+            "minLength": 1
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "anchor_id": {
+            "const": ""
+          },
+          "from_event_hash": {
+            "const": ""
+          },
+          "to_event_hash": {
+            "const": ""
+          },
+          "event_count": {
+            "const": 0
+          },
+          "merkle_root": {
+            "const": ""
+          },
+          "signature": {
+            "const": ""
+          },
+          "signature_key_id": {
+            "const": ""
+          },
+          "anchored_at": {
+            "const": ""
+          }
+        }
+      }
+    }
+  ]
+}

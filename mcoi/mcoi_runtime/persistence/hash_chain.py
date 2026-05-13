@@ -7,7 +7,6 @@ Invariants: chain is append-only; hash computation is deterministic; validation 
 from __future__ import annotations
 
 import hashlib
-import json
 import os
 import tempfile
 import uuid
@@ -156,6 +155,16 @@ class HashChainStore:
     def _entry_path(self, sequence_number: int) -> Path:
         return self._safe_path(f"{sequence_number:012d}", suffix=".json")
 
+    def _entry_sequence_from_path(self, path: Path) -> int:
+        sequence_text = path.stem
+        if len(sequence_text) != 12 or not sequence_text.isdigit():
+            raise CorruptedDataError("hash chain filename is invalid")
+        try:
+            self._safe_path(sequence_text, suffix=".json")
+        except PathTraversalError as exc:
+            raise CorruptedDataError("hash chain filename is invalid") from exc
+        return int(sequence_text)
+
     def latest(self) -> HashChainEntry | None:
         """Return the most recent chain entry, or None if the chain is empty."""
         if not self._base_path.exists():
@@ -226,7 +235,6 @@ class HashChainStore:
         linear.
         """
         max_attempts = 64
-        last_exc: Exception | None = None
         for _attempt in range(max_attempts):
             try:
                 entry = self.try_append(content_hash)
@@ -234,8 +242,7 @@ class HashChainStore:
                 # Non-collision write failure (disk full, permissions,
                 # etc.) — surface immediately. Do not retry.
                 raise exc
-            except (CorruptedDataError, PathTraversalError) as exc:
-                last_exc = exc
+            except (CorruptedDataError, PathTraversalError):
                 raise
             if entry is not None:
                 return entry
@@ -323,12 +330,16 @@ class HashChainStore:
 
     def _load_entry(self, path: Path) -> HashChainEntry:
         """Load and validate a single chain entry JSON file."""
+        expected_sequence_number = self._entry_sequence_from_path(path)
         try:
             raw_text = path.read_text(encoding="utf-8")
         except OSError as exc:
             raise CorruptedDataError(_bounded_store_error("hash chain read failed", exc)) from exc
 
         try:
-            return deserialize_record(raw_text, HashChainEntry)
+            entry = deserialize_record(raw_text, HashChainEntry)
         except (CorruptedDataError, TypeError, ValueError) as exc:
             raise CorruptedDataError(_bounded_store_error("invalid hash chain entry", exc)) from exc
+        if entry.sequence_number != expected_sequence_number:
+            raise CorruptedDataError("hash chain sequence mismatch")
+        return entry

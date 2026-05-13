@@ -1,0 +1,27 @@
+# Purpose: founder assistant profile for briefings and follow-up.
+# Governance scope: owner delegation, approval, capability, and evidence policy.
+# Dependencies: mcoi_runtime.assistant_kernel.identity built-in profile contract.
+# Invariants: external writes require approval; policy mutation remains forbidden.
+assistant_id: founder.default
+owner_scope: organization_owned
+tenant_scope: organization_tenant
+allowed_capabilities:
+  - email.draft
+  - calendar.read
+  - calendar.invite
+  - task.reminder.schedule
+forbidden_capabilities:
+  - payment.execute
+  - policy.modify
+memory_policy: tenant_scoped_admitted_facts_only
+approval_policy: role_bound_external_write_approval
+budget_policy: tenant_budget_gate
+external_send_policy: approval_required
+data_retention_policy: tenant_retention_policy
+evidence_required:
+  - approval_receipt
+  - effect_receipt
+  - closure_receipt
+escalation_path:
+  - founder
+  - operator

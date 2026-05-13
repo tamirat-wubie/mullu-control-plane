@@ -7,6 +7,7 @@ Dependencies: server agent, subsystem, operational, and capability helpers.
 Invariants:
   - Runtime bootstrap order remains deterministic.
   - Downstream bootstraps receive the same upstream wiring as before.
+  - Configured capability manifests constrain orchestration planning.
   - Selected server-exported globals preserve identity across the composition.
 """
 from __future__ import annotations
@@ -115,6 +116,10 @@ def bootstrap_server_runtime_stack(
         tenant_budget_mgr=tenant_budget_mgr,
         evaluate_expression_fn=evaluate_expression_fn,
     )
+    _bind_manifest_admissions_to_orchestrator(
+        operational_bootstrap=operational_bootstrap,
+        capability_bootstrap=capability_bootstrap,
+    )
 
     return ServerRuntimeStackBootstrap(
         agent_bootstrap=agent_bootstrap,
@@ -126,4 +131,43 @@ def bootstrap_server_runtime_stack(
         guard_chain=operational_bootstrap.guard_chain,
         shutdown_mgr=capability_bootstrap.shutdown_mgr,
         state_persistence=capability_bootstrap.state_persistence,
+    )
+
+
+def _bind_manifest_admissions_to_orchestrator(
+    *,
+    operational_bootstrap: Any,
+    capability_bootstrap: Any,
+) -> None:
+    orchestrator = getattr(operational_bootstrap, "agent_orchestrator", None)
+    set_admitted_capabilities = getattr(orchestrator, "set_admitted_capabilities", None)
+    if not callable(set_admitted_capabilities):
+        return
+
+    read_model = _capability_manifest_read_model(capability_bootstrap)
+    if not read_model or read_model.get("configured") is not True:
+        return
+
+    set_admitted_capabilities(_capability_ids_from_read_model(read_model))
+
+
+def _capability_manifest_read_model(capability_bootstrap: Any) -> Mapping[str, Any] | None:
+    manifest_registry = getattr(capability_bootstrap, "capability_manifest_registry", None)
+    read_model_fn = getattr(manifest_registry, "read_model", None)
+    if not callable(read_model_fn):
+        return None
+    read_model = read_model_fn()
+    if not isinstance(read_model, Mapping):
+        return None
+    return read_model
+
+
+def _capability_ids_from_read_model(read_model: Mapping[str, Any]) -> tuple[str, ...]:
+    raw_capability_ids = read_model.get("capability_ids", ())
+    if not isinstance(raw_capability_ids, (tuple, list)):
+        return ()
+    return tuple(
+        str(capability_id).strip()
+        for capability_id in raw_capability_ids
+        if str(capability_id).strip()
     )

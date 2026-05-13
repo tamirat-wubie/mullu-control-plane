@@ -2619,9 +2619,21 @@ def create_gateway_app(
     def latest_anchor():
         anchors = command_ledger.list_anchors(limit=1)
         if not anchors:
-            raise HTTPException(404, detail="anchor not found")
+            return {
+                "anchor_present": False,
+                "anchor_id": "",
+                "from_event_hash": "",
+                "to_event_hash": "",
+                "event_count": 0,
+                "merkle_root": "",
+                "signature": "",
+                "signature_key_id": "",
+                "anchored_at": "",
+                "governed": True,
+            }
         anchor = anchors[0]
         return {
+            "anchor_present": True,
             "anchor_id": anchor.anchor_id,
             "from_event_hash": anchor.from_event_hash,
             "to_event_hash": anchor.to_event_hash,
@@ -2630,6 +2642,7 @@ def create_gateway_app(
             "signature": f"hmac-sha256:{anchor.signature}",
             "signature_key_id": anchor.signature_key_id,
             "anchored_at": anchor.anchored_at,
+            "governed": True,
         }
 
     @app.get("/evidence/bundles/{command_id}")

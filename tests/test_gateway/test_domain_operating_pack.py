@@ -39,11 +39,17 @@ def test_finance_ops_pack_declares_governed_solution_artifacts() -> None:
     spec = next(spec for spec in builtin_domain_operating_pack_specs() if spec.domain == "finance_ops")
     pack = DomainOperatingPackCompiler().compile(spec)
 
+    assert "invoice.extract" in pack.workflows
     assert "invoice.approval" in pack.workflows
+    assert "vendor.verify" in pack.workflows
+    assert "payment.execute.with_approval" in pack.workflows
+    assert "payment.reconcile" in pack.workflows
     assert "payment.guard" in pack.workflows
     assert "tenant_boundary" in pack.policies
     assert "approval_required" in pack.evals
     assert "finance_admin" in pack.approval_roles
+    assert "controller" in pack.approval_roles
+    assert "signed_evidence_bundle_required" in pack.risk_rules
     assert "terminal_certificate_export" in pack.evidence_exports
 
 

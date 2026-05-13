@@ -72,6 +72,7 @@ def include_default_routers(app: FastAPI) -> None:
     """Mount the default API router set onto the application."""
     from mcoi_runtime.app.routers.adapter import router as adapter_router
     from mcoi_runtime.app.routers.agent import router as agent_router
+    from mcoi_runtime.app.routers.assistant import router as assistant_router
     from mcoi_runtime.app.routers.audit import router as audit_router
     from mcoi_runtime.app.routers.cognition import router as cognition_router
     from mcoi_runtime.app.routers.domains import router as domains_router
@@ -116,6 +117,7 @@ def include_default_routers(app: FastAPI) -> None:
     app.include_router(audit_router)
     app.include_router(workflow_router)
     app.include_router(agent_router)
+    app.include_router(assistant_router)
     app.include_router(data_router)
     app.include_router(federation_router)
     app.include_router(finance_approval_router)

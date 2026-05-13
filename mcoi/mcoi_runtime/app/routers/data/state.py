@@ -7,7 +7,8 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
 from mcoi_runtime.app.routers.data._common import _data_error_detail, deps
-from mcoi_runtime.persistence import PathTraversalError
+from mcoi_runtime.persistence import CorruptedDataError, PathTraversalError
+from mcoi_runtime.persistence.state_persistence import thaw_state_data
 
 router = APIRouter()
 
@@ -39,9 +40,11 @@ def load_state(state_type: str):
         snap = deps.state_persistence.load(state_type)
     except PathTraversalError:
         raise HTTPException(400, detail=_data_error_detail("invalid state_type", "invalid_state_type"))
+    except CorruptedDataError:
+        raise HTTPException(409, detail=_data_error_detail("state snapshot corrupted", "state_corrupted"))
     if snap is None:
         raise HTTPException(404, detail=_data_error_detail("state not found", "state_not_found"))
-    return {"state_type": snap.state_type, "data": snap.data, "hash": snap.state_hash[:16]}
+    return {"state_type": snap.state_type, "data": thaw_state_data(snap.data), "hash": snap.state_hash[:16]}
 
 
 @router.get("/api/v1/state")
