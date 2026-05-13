@@ -257,7 +257,7 @@ pytest mcoi\tests\test_finance_approval_packet.py `
 Expected result:
 
 ```text
-106 passed
+193 passed
 ```
 
 Schema/protocol verification:
@@ -269,7 +269,7 @@ python scripts\validate_protocol_manifest.py
 Expected result:
 
 ```text
-protocol manifest ok: 119 schemas
+protocol manifest ok: 121 schemas
 ```
 
 Finance pilot readiness verification:
@@ -335,6 +335,19 @@ The handoff packet carries `promotion_boundary.ok` separately from `promotion_bo
 The operator summary is a redacted read-only artifact that copies packet readiness, chain readiness, readiness blockers, artifact statuses, next actions, and must-not-claim boundaries into `.change_assurance\finance_approval_operator_summary.json`.
 The closure runner is a 17-command dry-run artifact by default. It validates the redacted recovery env template before binding receipt emission, marks the read-only email/calendar live receipt command as the only live connector touchpoint, validates that receipt before adapter evidence collection, validates the aggregate handoff chain, produces the operator summary, validates the operator summary schema, and blocks until the binding receipt, live receipt, preflight, packet, and pilot readiness are closed.
 
+Payment-provider binding receipt:
+
+```powershell
+python scripts\emit_finance_approval_payment_provider_binding_receipt.py --provider stripe --output .change_assurance\finance_approval_payment_provider_binding_receipt.json --strict --json
+python scripts\validate_finance_approval_payment_provider_binding_receipt.py --receipt .change_assurance\finance_approval_payment_provider_binding_receipt.json --require-ready --json
+python scripts\produce_finance_approval_payment_closure_receipt.py --provider stripe --provider-binding-receipt .change_assurance\finance_approval_payment_provider_binding_receipt.json --output .change_assurance\finance_approval_payment_closure_receipt.json --strict --json
+python scripts\validate_finance_approval_payment_closure_receipt.py --receipt .change_assurance\finance_approval_payment_closure_receipt.json --provider-binding-receipt .change_assurance\finance_approval_payment_provider_binding_receipt.json --require-ready --json
+```
+
+The payment-provider binding receipt records only provider-scoped credential name presence for `PAYMENT_PROVIDER_CONNECTOR_TOKEN`, `STRIPE_API_KEY`, `BANK_ACH_CONNECTOR_TOKEN`, or `MANUAL_BANK_PORTAL_TOKEN`. It never serializes credential values. The payment closure receipt remains blocked unless the binding receipt is ready, provider-matched, and its `provider-binding:{provider}:...` ref is present in both root evidence and provider receipt evidence.
+
+This is still not a production payment claim. It is a governed closure-evidence path for non-sandbox provider labels. Live payment execution still requires provider-live receipt certification, reconciliation evidence, and approval-bound dispatch controls.
+
 Deterministic local pilot witness:
 
 ```powershell
@@ -374,6 +387,6 @@ production finance automation
 
 STATUS:
   Completeness: 100%
-  Invariants verified: no-float money, policy-before-exposure, no effect on blocked packets, explicit approval/effect receipts, proof schema, bounded operator read model, deterministic persistence, finance-scoped live handoff plan, dry-run live handoff closure sequence
+  Invariants verified: no-float money, policy-before-exposure, no effect on blocked packets, explicit approval/effect receipts, proof schema, bounded operator read model, deterministic persistence, finance-scoped live handoff plan, dry-run live handoff closure sequence, payment-provider binding receipt validation
   Open issues: no HTML operator page; no PostgreSQL finance store; no live email/calendar adapter closure
   Next action: close live email/calendar adapter evidence before claiming production finance operations
