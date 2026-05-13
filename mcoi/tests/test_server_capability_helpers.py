@@ -49,7 +49,7 @@ def test_bootstrap_capability_services_registers_tools_models_and_flags() -> Non
     }
     assert bootstrap.structured_output.summary()["schemas"] == 1
     model_ids = set(bootstrap.model_router._profiles)
-    assert bootstrap.model_router.summary()["models"] >= 58
+    assert bootstrap.model_router.summary()["models"] >= 61
     assert {
         "gpt-4.1-nano",
         "gemini-2.0-flash-lite",
@@ -99,6 +99,9 @@ def test_bootstrap_capability_services_registers_tools_models_and_flags() -> Non
         "nscale/openai/gpt-oss-20b",
         "scaleway/gpt-oss-120b",
         "ovhcloud/Qwen3-Coder-30B-A3B-Instruct",
+        "aimlapi/nvidia/nemotron-3-nano-30b-a3b",
+        "infomaniak/google/gemma-4-31B-it",
+        "kataleptic/gemma3-27b",
     }.issubset(model_ids)
     assert "meta-llama-3.1-8b-instruct" not in model_ids
     assert bootstrap.model_router.summary()["models"] == len(model_ids)

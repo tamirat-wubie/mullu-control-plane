@@ -100,6 +100,9 @@ class TestAutoRoutedCompletion:
         assert "nscale/openai/gpt-oss-20b" in ids
         assert "scaleway/gpt-oss-120b" in ids
         assert "ovhcloud/Qwen3-Coder-30B-A3B-Instruct" in ids
+        assert "aimlapi/nvidia/nemotron-3-nano-30b-a3b" in ids
+        assert "infomaniak/google/gemma-4-31B-it" in ids
+        assert "kataleptic/gemma3-27b" in ids
 
     def test_auto_complete_exception_is_sanitized(self, client, monkeypatch):
         from mcoi_runtime.app.routers.deps import deps
