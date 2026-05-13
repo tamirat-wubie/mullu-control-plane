@@ -1738,6 +1738,34 @@ def test_temporal_missed_run_surface_emits_skip_and_recovery_receipts() -> None:
     assert closure_actions["publish_temporal_missed_run_receipt_contract"]["status"] == "closed"
 
 
+def test_temporal_recurrence_window_surface_certifies_next_occurrence() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    recurrence_surface = surfaces["temporal_recurrence_window"]
+    witnesses = set(recurrence_surface["runtime_witnesses"])
+
+    assert recurrence_surface["coverage_state"] == "witnessed"
+    assert recurrence_surface["request_proof"] == "request_proof"
+    assert recurrence_surface["action_proof"] == "action_proof"
+    assert "evaluate_temporal_recurrence_window" in recurrence_surface["representative_paths"]
+    assert "RecurrenceWindowRequest" in recurrence_surface["representative_paths"]
+    assert "TemporalRecurrenceWindowReceipt" in recurrence_surface["representative_paths"]
+    assert "gateway/temporal_recurrence_window.py" in recurrence_surface["evidence_files"]
+    assert "schemas/temporal_recurrence_window_receipt.schema.json" in recurrence_surface["evidence_files"]
+    assert "tests/test_gateway/test_temporal_recurrence_window.py" in recurrence_surface["evidence_files"]
+    assert "runtime_clock_owns_recurrence_window_time" in witnesses
+    assert "tenant_timezone_preserved_across_dst" in witnesses
+    assert "candidate_must_match_next_occurrence" in witnesses
+    assert "future_candidate_defers_dispatch" in witnesses
+    assert "completed_series_blocks_dispatch" in witnesses
+    assert "duplicate_candidate_requires_terminal_receipt" in witnesses
+    assert "monthly_end_of_month_clamped" in witnesses
+    assert "high_risk_due_candidate_requires_reapproval_source" in witnesses
+    assert "temporal_recurrence_window_receipt_schema_valid" in witnesses
+    assert closure_actions["publish_temporal_recurrence_window_receipt_contract"]["status"] == "closed"
+
+
 def test_temporal_memory_surface_blocks_stale_or_superseded_memory() -> None:
     matrix = _load_fixture()
     surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
