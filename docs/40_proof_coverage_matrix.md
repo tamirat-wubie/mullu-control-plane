@@ -42,9 +42,12 @@ document is the operator-readable witness.
 | `capability_forge` | CapabilityForge.create_candidate, CapabilityForge.validate, CapabilityForge.build_certification_handoff, install_certification_handoff_evidence, install_certification_handoff_evidence_batch | request_proof | action_proof | candidate_promotion_blocked, candidate_schema_valid, candidate_certification_handoff_emits_maturity_bundle, certification_handoff_installs_evidence_without_maturity_claim, certification_handoff_batch_preserves_capsule_admission_gate, physical_candidate_declares_live_safety_evidence_requirements, physical_handoff_installs_live_safety_evidence, high_risk_approval_policy_required, effect_bearing_candidate_requires_sandbox, effect_bearing_candidate_requires_recovery_path | audit_chain | witnessed | Capability forge emits schema-backed candidate packages and maturity-ready certification handoffs only, keeps promotion blocked, validates approval, sandbox, receipt, eval, live-write, physical safety, and recovery evidence before certification handoff, installs certified handoffs as certification and physical safety evidence without direct maturity overrides, and batches handoff evidence with exact capsule-entry coverage before registry admission. |
 | `capability_maturity_assessment` | CapabilityMaturityEvidenceSynthesizer.materialize_extension, CapabilityMaturityAssessor.assess, CapabilityRegistryMaturityProjector.decorate_read_model, MaturityProjectingCapabilityAdmissionGate.read_model | request_proof | action_proof | certification_evidence_synthesizes_maturity_extension, maturity_derived_from_evidence, registry_read_model_exposes_maturity, default_pack_C6_examples_projected, effect_bearing_production_requires_live_write, production_requires_worker_deployment_recovery, autonomy_requires_C7_controls, capability_maturity_schema_valid | audit_chain | witnessed | Capability maturity assessment derives C0-C7 readiness from explicit evidence, synthesizes maturity extensions from certification evidence bundles, projects maturity onto capability fabric read models, includes read-only and effect-bearing default-pack C6 examples, blocks production overclaims until live and recovery evidence are complete, and blocks autonomy overclaims until bounded autonomy controls are present. |
 | `networked_worker_mesh` | NetworkedWorkerMesh.register_worker, NetworkedWorkerMesh.dispatch, NetworkedWorkerMesh.read_model, SandboxedCodeWorker.execute_command, CodeWorkerLease, CodeWorkerReceipt | request_proof | action_proof | active_lease_required, tenant_capability_operation_budget_checked, forbidden_operations_override_allowed, code_worker_exact_lease_command_required, code_worker_blocks_network_shell_and_risky_git, code_worker_receipt_binds_sandbox_evidence, physical_action_receipt_required_for_physical_workers, physical_worker_canary_blocks_without_receipt, physical_worker_canary_passed, physical_worker_canary_uses_sandbox_handler, worker_evidence_refs_required, worker_receipt_not_terminal_closure, worker_mesh_schema_valid | audit_chain | witnessed | Networked worker mesh dispatches only through active leases, rejects tenant/capability/operation/budget violations before handler execution, requires admitted physical action receipts for physical workers, and emits schema-backed receipts that explicitly require terminal closure; the sandboxed code worker adds exact-command leases, no-network sandbox dispatch, denied shell/network/git controls, and command/output hash receipts. |
+| `software_dev_capability_pack` | load_software_dev_domain_capsule, load_software_dev_capability_entries, build_software_dev_capability_admission_gate, software_dev.repo_map.read, software_dev.context_bundle.build, software_dev.gate_plan.select, software_dev.change.run, software_dev.app_task_graph.plan, software_dev.pr_candidate.prepare | request_proof | action_proof | software_dev_pack_fixture_not_default_loaded, software_dev_capability_entries_schema_valid, software_dev_named_loader_installs_only_software_dev_domain, software_dev_capsule_refs_match_pack_capabilities, software_dev_pack_explicit_fabric_admits_known_capabilities, software_dev_direct_deployment_capability_absent, software_dev_read_only_records_non_mutating, software_dev_effectful_records_require_sandbox_approval, software_dev_pr_candidate_blocks_git_push, software_dev_production_ready_overclaim_rejected | audit_chain | witnessed | Software-development capability pack keeps repo intelligence, context building, gate planning, governed change execution, app task graph planning, and PR candidate preparation behind explicit capsule admission; default packs do not load it, read-only capabilities expose no execution authority, and effectful capabilities require sandboxing, approval, receipts, recovery evidence, and direct-deployment denial. |
 | `agent_identity` | AgentIdentityRegistry.register, AgentIdentityRegistry.evaluate, AgentIdentityRegistry.record_outcome, AgentIdentity | request_proof | action_proof | owner_tenant_identity_required, capability_scope_conflict_denied, self_approval_forbidden, policy_mutation_forbidden, delegation_requires_lease, agent_budget_enforced, reputation_update_requires_evidence, agent_identity_schema_valid | audit_chain | witnessed | Agent identity binds user-owned agents to owner, tenant, role, capability scopes, budget, memory scope, approval scope, delegation scope, evidence history, and reputation. |
 | `claim_verification` | ClaimVerificationEngine.verify, ClaimNode, ClaimVerificationReport | request_proof | action_proof | claim_type_declared, source_evidence_required, contradictions_block_execution, stale_claims_block_execution, high_risk_requires_independent_support, claim_verification_schema_valid | audit_chain | witnessed | Claim verification reports distinguish observed facts, user claims, model inferences, external source claims, verified results, stale results, and contradicted results before planning or execution use. |
 | `governed_connector_framework` | /api/v1/connectors, /api/v1/connectors/history, /api/v1/connectors/invoke, /api/v1/connectors/register, /api/v1/connectors/summary, /api/v1/connectors/{connector_id}/disable, /api/v1/connectors/{connector_id}/enable | request_proof | action_proof | connector_registration_typed, connector_invocation_guard_chain_checked, connector_lifecycle_disable_enable_bounded, connector_history_summary_bounded, connector_errors_sanitized, connector_invocation_audited | audit_chain | witnessed | Governed connector routes register typed connector definitions, invoke handlers through guard-chain admission, bound lifecycle enable/disable controls, expose bounded list/history/summary read models, and sanitize connector errors before returning operator-visible receipts. |
+| `governed_background_scheduler` | /api/v1/scheduler/execute, /api/v1/scheduler/history, /api/v1/scheduler/jobs, /api/v1/scheduler/jobs/{job_id}, /api/v1/scheduler/jobs/{job_id}/disable, /api/v1/scheduler/jobs/{job_id}/enable, /api/v1/scheduler/summary | request_proof | action_proof | scheduler_job_registration_typed, scheduler_execute_guard_chain_checked, scheduler_lifecycle_controls_bounded, scheduler_history_summary_bounded, scheduler_errors_sanitized, scheduler_execution_audited | audit_chain | witnessed | Governed background scheduler routes register one-shot, interval, and cron jobs, execute handlers through guard-chain admission, bound job lifecycle enable/disable/delete controls, expose bounded history and summary read models, and sanitize scheduler execution errors. |
+| `multi_agent_coordination_runtime` | /api/v1/multi-agent/conflict, /api/v1/multi-agent/conflicts/unresolved, /api/v1/multi-agent/delegate, /api/v1/multi-agent/delegate/resolve, /api/v1/multi-agent/handoff, /api/v1/multi-agent/merge, /api/v1/multi-agent/summary | request_proof | action_proof | multi_agent_delegation_tracked, multi_agent_delegation_resolution_validated, multi_agent_handoff_preserves_context, multi_agent_merge_outcome_typed, multi_agent_conflict_strategy_typed, multi_agent_unresolved_conflicts_bounded, multi_agent_summary_bounded, multi_agent_errors_sanitized | audit_chain | witnessed | Multi-agent coordination routes bind delegation, resolution, handoff, merge, conflict recording, unresolved-conflict read models, and runtime summaries to the coordination engine with audit records and bounded error contracts. |
 | `connector_self_healing` | ConnectorSelfHealingEngine.evaluate, ConnectorFailure, ConnectorHealingReceipt | request_proof | action_proof | provider_success_not_assumed, write_failures_require_operator_review, missing_receipt_revokes_capability, fallback_provider_requires_certification, read_only_degradation_bounded, connector_self_healing_schema_valid | audit_chain | witnessed | Connector self-healing emits bounded non-terminal recovery receipts for provider failures, retries, fallback providers, read-only degradation, incident opening, and capability revocation. |
 | `collaboration_cases` | CollaborationCaseManager.open_case, CollaborationCaseManager.close_case, CollaborationControl | request_proof | action_proof | approval_separation_required, pending_controls_block_case_closure, decider_authority_required, case_closure_not_terminal_command_closure, collaboration_case_schema_valid | audit_chain | witnessed | Collaboration cases bind requester separation, approval controls, decider authority, evidence hashing, and non-terminal case closure into governed operational casework. |
 | `capability_maturity` | CapabilityMaturityAssessor.assess, CapabilityMaturityAssessment | request_proof | action_proof | maturity_derived_from_evidence, effect_bearing_c6_requires_live_write, production_requires_c6_or_c7, autonomy_requires_c7, capability_maturity_schema_valid | audit_chain | witnessed | Capability maturity derives production and autonomy readiness from explicit evidence, reports missing C6/C7 proof, and rejects overclaimed autonomy states. |
@@ -69,6 +72,8 @@ document is the operator-readable witness.
 | `temporal_rate_limit_window` | TemporalRateLimitWindow.evaluate, RateLimitWindowRequest, TemporalRateLimitWindowReceipt | request_proof | action_proof | runtime_clock_owns_rate_limit_window, tenant_endpoint_identity_scope_checked, active_window_admits_sufficient_tokens, exhausted_window_emits_retry_after, future_window_defers_dispatch, burst_limit_blocks_overlarge_request, stale_rate_limit_snapshot_blocks_dispatch, high_risk_source_receipts_bound, temporal_rate_limit_window_receipt_schema_valid, receipt_not_terminal_closure | audit_chain | witnessed | Temporal rate-limit window rechecks tenant, endpoint, and identity scoped token windows with runtime-owned reset timing, projected token consumption, burst limits, retry-after timing, evidence refs, and high-risk source receipts before dispatch. |
 | `temporal_retry_window` | TemporalRetryWindow.evaluate, RetryWindowRequest, TemporalRetryWindowReceipt | request_proof | action_proof | runtime_clock_owns_retry_window, retry_after_floor_checked, cooldown_window_defers_early_retry, max_attempts_block_exhausted_retry, expired_retry_window_blocks_dispatch, tenant_command_scope_checked, terminal_failure_blocks_retry, high_risk_source_receipts_bound, temporal_retry_window_receipt_schema_valid, receipt_not_terminal_closure | audit_chain | witnessed | Temporal retry window rechecks retry-after timing, cooldown windows, max attempts, retry expiry, tenant and command scope, evidence refs, and high-risk source receipts before repeated dispatch. |
 | `temporal_lease_window` | TemporalLeaseWindow.evaluate, LeaseWindowRequest, TemporalLeaseWindowReceipt | request_proof | action_proof | runtime_clock_owns_lease_window, tenant_command_resource_worker_scope_checked, active_lease_admits_dispatch, near_expiry_lease_requires_renewal_warning, expired_lease_blocks_dispatch, released_or_revoked_lease_blocks_dispatch, fencing_token_required, high_risk_source_receipts_bound, temporal_lease_window_receipt_schema_valid, receipt_not_terminal_closure | audit_chain | witnessed | Temporal lease window rechecks lease ownership, tenant and command scope, resource scope, worker ownership, fencing tokens, expiry, renewal warning windows, evidence refs, and high-risk source receipts before worker dispatch. |
+| `temporal_idempotency_window` | TemporalIdempotencyWindow.evaluate, IdempotencyWindowRequest, TemporalIdempotencyWindowReceipt | request_proof | action_proof | runtime_clock_owns_idempotency_window, new_idempotency_key_admits_dispatch, matching_replay_admits_uncommitted_dispatch, committed_effect_blocks_duplicate_dispatch, expired_idempotency_window_blocks_dispatch, request_fingerprint_mismatch_blocks_replay, tenant_command_action_scope_checked, high_risk_source_receipts_bound, temporal_idempotency_window_receipt_schema_valid, receipt_not_terminal_closure | audit_chain | witnessed | Temporal idempotency window rechecks idempotency keys, request fingerprints, replay windows, tenant and command scope, action scope, committed effects, terminal receipt binding, evidence refs, and high-risk source receipts before effect dispatch. |
+| `temporal_memory` | TemporalMemory.evaluate, TemporalMemoryRecord, TemporalMemoryReceipt | request_proof | action_proof | memory_age_computed_from_runtime_clock, stale_memory_requires_refresh, validity_window_blocks_expired_memory, superseded_memory_not_usable, confidence_decay_blocks_weak_memory, tenant_owner_scope_checked, allowed_use_checked, temporal_memory_receipt_schema_valid, receipt_not_terminal_closure | audit_chain | witnessed | Temporal memory gates memory use through runtime-owned age, evidence freshness, validity windows, confidence decay, tenant-owner scope, allowed use, and supersession checks before memory can guide action. |
 | `temporal_memory_refresh` | TemporalMemoryRefresh.evaluate, MemoryRefreshRequest, TemporalMemoryRefreshReceipt | request_proof | action_proof | usable_memory_does_not_create_refresh_task, stale_memory_creates_bounded_refresh_task, evidence_type_coverage_gates_review_readiness, invalid_refresh_policy_blocks_task_creation, superseded_memory_blocks_reactivation, temporal_memory_refresh_receipt_schema_valid, receipt_not_terminal_closure | audit_chain | witnessed | Temporal memory refresh converts stale or refresh-required memory receipts into bounded refresh tasks with required evidence coverage, owner scope, review readiness, due windows, and activation blocks before refreshed memory can guide action. |
 | `temporal_scheduler` | TemporalScheduler.evaluate, ScheduledCommand, TemporalSchedulerReceipt | request_proof | action_proof | scheduled_command_requires_execute_at, idempotency_required, lease_acquired_before_dispatch, future_schedule_defers, missed_run_receipt_emitted, retry_window_checked, high_risk_reapproval_required, active_lease_blocks_duplicate_execution, temporal_scheduler_receipt_schema_valid, receipt_not_terminal_closure | audit_chain | witnessed | Temporal scheduler gates scheduled command wakeups with idempotency, due checks, retry windows, missed-run receipts, lease acquisition, recurrence declaration, and high-risk approval plus temporal recheck evidence before dispatch. |
 | `policy_proof_report` | PolicyProver.prove | request_proof | action_proof | bounded_policy_cases_required, empty_invariants_rejected, counterexamples_are_concrete, proved_report_has_no_counterexamples, policy_weakening_forbidden, policy_proof_schema_valid | audit_chain | witnessed | Policy proof reports evaluate explicit invariants over bounded cases, emit concrete counterexamples, and forbid policy weakening as a proof strategy. |
@@ -80,15 +85,15 @@ document is the operator-readable witness.
 | `governed_session` | GovernedSession.llm, GovernedSession.execute, GovernedSession.query | request_proof | action_proof | none | audit_chain | witnessed | Session entry points return request-envelope proofs and retain action proof lineage. |
 | `health_docs_exempt` | /health, /docs, /openapi.json, /redoc | read_model | read_model | none | read_model | witnessed | Operational liveness and documentation surfaces are outside the proof-critical path. |
 | `lineage_query_api` | /api/v1/lineage/resolve, /api/v1/lineage/{trace_id}, /api/v1/lineage/output/{output_id}, /api/v1/lineage/command/{command_id} | read_model | read_model | none | read_model | witnessed | Lineage query API resolves read-only lineage:// URIs with bounded output, command, graph, and policy-version read models. |
-| `god_mode_lifecycle` | /api/v1/god-mode/* (capabilities, agreements, tickets, receipts) | action_proof | action_proof | none | audit_chain | witnessed | Privileged "god mode" capabilities ship dormant. Two-stage explicit consent — registration agreement promotes capability dormant→armed; activation issues a single-use, short-lived ticket. Catastrophic capabilities require dual control (≥2 distinct approvers). Every consumption emits an immutable receipt with pre/post hashes and the full agreement chain. Withdrawals and revocations are first-class, irreversible-as-events. |
+| `god_mode_lifecycle` | /api/v1/god-mode/capabilities, /api/v1/god-mode/health, /api/v1/god-mode/modules, /api/v1/god-mode/capabilities/{module}/{name}, /api/v1/god-mode/capabilities/{module}/{name}/agree-to-register, /api/v1/god-mode/agreements/{agreement_id}/withdraw, /api/v1/god-mode/capabilities/{module}/{name}/suspend, /api/v1/god-mode/capabilities/{module}/{name}/resume, /api/v1/god-mode/capabilities/{module}/{name}/issue-ticket, /api/v1/god-mode/tickets, /api/v1/god-mode/tickets/{ticket_id}, /api/v1/god-mode/tickets/{ticket_id}/consume, /api/v1/god-mode/tickets/{ticket_id}/revoke, /api/v1/god-mode/receipts | action_proof | action_proof | god_mode_capability_keys_are_unique, god_mode_every_capability_declares_at_least_one_bypass, god_mode_catastrophic_caps_require_dual_control, god_mode_catastrophic_caps_are_one_shot, god_mode_catastrophic_caps_have_short_ttl, god_mode_secrets_capabilities_use_strictest_floor, god_mode_agree_to_register_arms_capability, god_mode_issue_ticket_requires_armed, god_mode_double_consume_rejected, god_mode_consume_ticket_emits_receipt, god_mode_revoke_ticket_blocks_consume, god_mode_withdraw_agreement_reverts_state, god_mode_two_distinct_agreements_arm_capability, god_mode_end_to_end_consent_chain | audit_chain | witnessed | Privileged 'god mode' capabilities ship dormant. Two-stage explicit consent — registration agreement promotes capability dormant→armed; activation issues a single-use, short-lived ticket. Catastrophic capabilities require dual control (≥2 distinct approvers). Every consumption emits an immutable receipt with pre/post hashes and the full agreement chain. Withdrawals and revocations are first-class, irreversible-as-events. |
 
 Coverage summary:
 
 | Metric | Count |
 |---|---:|
-| Total surfaces | 73 |
+| Total surfaces | 77 |
 | Proven surfaces | 1 |
-| Witnessed surfaces | 72 |
+| Witnessed surfaces | 76 |
 | Unproven surfaces | 0 |
 
 Declared route coverage:
@@ -97,24 +102,12 @@ Declared route coverage:
 |---|---:|
 | Proof-relevant declared routes | 332 |
 | Proven routes | 8 |
-| Witnessed routes | 164 |
-| Unclassified declared routes | 160 |
+| Witnessed routes | 178 |
+| Unclassified declared routes | 146 |
 
 The canonical JSON witness lists every proof-relevant declared route under
 `route_coverage.routes`. Routes mapped to `unclassified_declared_route` carry
-`coverage_state=unproven` until a named proof surface claims them.
-
-Gateway runtime witness invariants:
-
-1. `command_lifecycle_events_are_hash_linked`
-2. `terminal_closure_requires_evidence_refs`
-3. `successful_response_is_bound_to_response_evidence_closure`
-4. `universal_action_proof_replays_from_command_events`
-5. `operator_universal_action_read_model_filters_command_proofs`
-6. `operator_universal_action_console_renders_replay_state`
-7. `capsule_compiler_emits_certification_evidence_manifest`
-8. `capsule_installer_stamps_admission_receipt`
-9. `physical_capsule_admission_runs_promotion_preflight`
+`coverage_state = unproven` and remain explicit closure work.
 
 Resolved closure actions:
 
@@ -149,47 +142,51 @@ Resolved closure actions:
 29. `publish_capability_forge_candidate_contract`
 30. `publish_capability_maturity_assessment_contract`
 31. `publish_networked_worker_mesh_contract`
-32. `publish_agent_identity_contract`
-33. `publish_claim_verification_report_contract`
-34. `classify_governed_connector_routes`
-35. `publish_connector_self_healing_receipt_contract`
-36. `publish_collaboration_case_contract`
-37. `publish_capability_maturity_contract`
-38. `publish_policy_prover_counterexample_contract`
-39. `publish_memory_lattice_admission_contract`
-40. `publish_workflow_mining_draft_contract`
-41. `publish_domain_operating_pack_contract`
-42. `publish_multimodal_operation_receipt_contract`
-43. `publish_physical_action_receipt_contract`
-44. `publish_temporal_operation_receipt_contract`
-45. `publish_temporal_evidence_freshness_receipt_contract`
-46. `publish_temporal_reapproval_receipt_contract`
-47. `publish_temporal_dispatch_window_receipt_contract`
-48. `publish_temporal_budget_window_receipt_contract`
-49. `publish_temporal_memory_receipt_contract`
-50. `publish_temporal_causal_order_receipt_contract`
-51. `publish_temporal_monotonic_duration_receipt_contract`
-52. `publish_temporal_accepted_risk_expiry_receipt_contract`
-53. `publish_temporal_credential_expiry_receipt_contract`
-54. `publish_temporal_retention_window_receipt_contract`
-55. `publish_temporal_rate_limit_window_receipt_contract`
-56. `publish_temporal_retry_window_receipt_contract`
-57. `publish_temporal_lease_window_receipt_contract`
-58. `publish_temporal_memory_refresh_receipt_contract`
-59. `classify_temporal_scheduler_routes`
-60. `publish_temporal_scheduler_receipt_contract`
-61. `publish_policy_proof_report_contract`
-62. `publish_capability_upgrade_plan_contract`
-63. `publish_autonomous_test_generation_plan_contract`
-64. `publish_trust_ledger_bundle_contract`
-65. `publish_trust_ledger_anchor_receipt_contract`
+32. `publish_software_dev_capability_pack_contract`
+33. `publish_agent_identity_contract`
+34. `publish_claim_verification_report_contract`
+35. `classify_governed_connector_routes`
+36. `classify_governed_scheduler_routes`
+37. `classify_multi_agent_coordination_routes`
+38. `publish_connector_self_healing_receipt_contract`
+39. `publish_collaboration_case_contract`
+40. `publish_capability_maturity_contract`
+41. `publish_policy_prover_counterexample_contract`
+42. `publish_memory_lattice_admission_contract`
+43. `publish_workflow_mining_draft_contract`
+44. `publish_domain_operating_pack_contract`
+45. `publish_multimodal_operation_receipt_contract`
+46. `publish_physical_action_receipt_contract`
+47. `publish_temporal_operation_receipt_contract`
+48. `publish_temporal_evidence_freshness_receipt_contract`
+49. `publish_temporal_reapproval_receipt_contract`
+50. `publish_temporal_dispatch_window_receipt_contract`
+51. `publish_temporal_budget_window_receipt_contract`
+52. `publish_temporal_memory_receipt_contract`
+53. `publish_temporal_causal_order_receipt_contract`
+54. `publish_temporal_monotonic_duration_receipt_contract`
+55. `publish_temporal_accepted_risk_expiry_receipt_contract`
+56. `publish_temporal_credential_expiry_receipt_contract`
+57. `publish_temporal_retention_window_receipt_contract`
+58. `publish_temporal_rate_limit_window_receipt_contract`
+59. `publish_temporal_retry_window_receipt_contract`
+60. `publish_temporal_lease_window_receipt_contract`
+61. `publish_temporal_idempotency_window_receipt_contract`
+62. `publish_temporal_memory_refresh_receipt_contract`
+63. `classify_temporal_scheduler_routes`
+64. `publish_temporal_scheduler_receipt_contract`
+65. `publish_policy_proof_report_contract`
+66. `publish_capability_upgrade_plan_contract`
+67. `publish_autonomous_test_generation_plan_contract`
+68. `publish_trust_ledger_bundle_contract`
+69. `publish_trust_ledger_anchor_receipt_contract`
 
 Open closure actions:
 
-1. none
+none
 
 STATUS:
   Completeness: 100%
-  Invariants verified: route declarations, route-level coverage classification, coverage levels, coverage states, closure action mapping, gateway runtime witness mapping, tenant governance lifecycle route mapping, agent adapter lifecycle route mapping, operator console read-model mapping, world-state knowledge route mapping, policy simulation route mapping, proof route gap triage witness mapping, claim verification report contract mapping, governed connector route mapping, collaboration case contract mapping, connector self-healing receipt contract mapping, physical action receipt contract mapping, temporal evidence freshness contract mapping, temporal reapproval contract mapping, temporal dispatch window contract mapping, temporal budget window contract mapping, temporal causal order contract mapping, temporal monotonic duration contract mapping, temporal accepted-risk expiry contract mapping, temporal credential expiry contract mapping, temporal retention window mapping, temporal rate-limit window contract mapping, temporal retry window contract mapping, temporal lease window contract mapping, temporal memory contract mapping, temporal memory refresh contract mapping, physical worker canary mapping, schema contract validation, deployment orchestration receipt schema contract
-  Open issues: 160 proof-relevant declared routes remain unclassified and are marked unproven in the machine witness
+  Invariants verified: route declarations, route-level coverage classification, coverage levels, coverage states, closure action mapping, gateway runtime witness mapping, tenant governance lifecycle route mapping, agent adapter lifecycle route mapping, operator console read-model mapping, world-state knowledge route mapping, policy simulation route mapping, proof route gap triage witness mapping, claim verification report contract mapping, governed connector route mapping, governed scheduler route mapping, software development capability pack mapping, collaboration case contract mapping, connector self-healing receipt contract mapping, physical action receipt contract mapping, temporal evidence freshness contract mapping, temporal reapproval contract mapping, temporal dispatch window contract mapping, temporal budget window contract mapping, temporal causal order contract mapping, temporal monotonic duration contract mapping, temporal accepted-risk expiry contract mapping, temporal credential expiry contract mapping, temporal retention window mapping, temporal rate-limit window contract mapping, temporal retry window contract mapping, temporal lease window contract mapping, temporal idempotency window contract mapping, temporal memory contract mapping, temporal memory refresh contract mapping, physical worker canary mapping, schema contract validation, deployment orchestration receipt schema contract
+  Open issues: 146 proof-relevant declared routes remain unclassified and are marked unproven in the machine witness
   Next action: classify unproven declared routes into named proof surfaces or explicit exemptions

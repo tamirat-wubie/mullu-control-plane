@@ -480,6 +480,17 @@ def test_protocol_manifest_indexes_temporal_lease_window_receipt() -> None:
     assert lease_entry["surface"] == "temporal"
 
 
+def test_protocol_manifest_indexes_temporal_idempotency_window_receipt() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    idempotency_entry = entries["temporal-idempotency-window-receipt"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert idempotency_entry["path"] == "schemas/temporal_idempotency_window_receipt.schema.json"
+    assert idempotency_entry["urn"] == "urn:mullusi:schema:temporal-idempotency-window-receipt:1"
+    assert idempotency_entry["surface"] == "temporal"
+
+
 def test_protocol_manifest_indexes_temporal_memory_receipt() -> None:
     manifest = load_manifest()
     entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}

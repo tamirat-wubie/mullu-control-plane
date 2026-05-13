@@ -21,18 +21,27 @@
     "signature"
   ],
   "properties": {
-    "bundle_id": {"type": "string", "minLength": 1},
+    "bundle_id": {"type": "string", "pattern": "^trust-bundle-[0-9a-f]{16}$"},
     "tenant_id": {"type": "string", "minLength": 1},
     "command_id": {"type": "string", "minLength": 1},
     "terminal_certificate_id": {"type": "string", "minLength": 1},
     "deployment_id": {"type": "string", "minLength": 1},
     "commit_sha": {"type": "string", "minLength": 1},
     "hash_chain_root": {"type": "string", "minLength": 1},
-    "evidence_refs": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+    "evidence_refs": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 9,
+        "maxLength": 256,
+        "pattern": "^proof://[A-Za-z0-9._~:/?#[\\]@!$&'()*+,;=%-]+$"
+      }
+    },
     "issued_at": {"type": "string", "format": "date-time"},
     "external_anchor_ref": {"type": "string"},
     "external_anchor_status": {"type": "string", "enum": ["not_requested", "pending", "anchored", "failed"]},
-    "bundle_hash": {"type": "string", "minLength": 1},
+    "bundle_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
     "signature_key_id": {"type": "string", "minLength": 1},
     "signature": {"type": "string", "pattern": "^hmac-sha256:.+"},
     "metadata": {"type": "object", "additionalProperties": true}

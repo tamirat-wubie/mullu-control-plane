@@ -125,6 +125,13 @@
       ]
     },
     {
+      "action_id": "classify_rbac_access_governance_routes",
+      "status": "closed",
+      "surfaces": [
+        "rbac_access_governance"
+      ]
+    },
+    {
       "action_id": "classify_runbook_learning_routes",
       "status": "closed",
       "surfaces": [
@@ -227,6 +234,13 @@
       ]
     },
     {
+      "action_id": "publish_software_dev_capability_pack_contract",
+      "status": "closed",
+      "surfaces": [
+        "software_dev_capability_pack"
+      ]
+    },
+    {
       "action_id": "publish_agent_identity_contract",
       "status": "closed",
       "surfaces": [
@@ -245,6 +259,20 @@
       "status": "closed",
       "surfaces": [
         "governed_connector_framework"
+      ]
+    },
+    {
+      "action_id": "classify_governed_scheduler_routes",
+      "status": "closed",
+      "surfaces": [
+        "governed_background_scheduler"
+      ]
+    },
+    {
+      "action_id": "classify_multi_agent_coordination_routes",
+      "status": "closed",
+      "surfaces": [
+        "multi_agent_coordination_runtime"
       ]
     },
     {
@@ -409,6 +437,13 @@
       ]
     },
     {
+      "action_id": "publish_temporal_idempotency_window_receipt_contract",
+      "status": "closed",
+      "surfaces": [
+        "temporal_idempotency_window"
+      ]
+    },
+    {
       "action_id": "publish_temporal_memory_refresh_receipt_contract",
       "status": "closed",
       "surfaces": [
@@ -479,7 +514,7 @@
   ],
   "coverage_summary": {
     "by_action_proof": {
-      "action_proof": 60,
+      "action_proof": 65,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 11,
@@ -487,7 +522,7 @@
     },
     "by_audit": {
       "action_proof": 0,
-      "audit_chain": 69,
+      "audit_chain": 74,
       "gap": 0,
       "read_model": 4,
       "request_proof": 0
@@ -495,23 +530,23 @@
     "by_coverage_state": {
       "proven": 1,
       "unproven": 0,
-      "witnessed": 72
+      "witnessed": 77
     },
     "by_request_proof": {
       "action_proof": 1,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 13,
-      "request_proof": 59
+      "request_proof": 64
     },
-    "surface_count": 73
+    "surface_count": 78
   },
   "generated_by": "scripts/proof_coverage_matrix.py",
   "route_coverage": {
     "by_coverage_state": {
       "proven": 8,
-      "unproven": 160,
-      "witnessed": 164
+      "unproven": 142,
+      "witnessed": 182
     },
     "route_count": 332,
     "routes": [
@@ -1311,39 +1346,39 @@
         "surface_id": "unclassified_declared_route"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/multi-agent/conflict",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "multi_agent_coordination_runtime"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/multi-agent/conflicts/unresolved",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "multi_agent_coordination_runtime"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/multi-agent/delegate",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "multi_agent_coordination_runtime"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/multi-agent/delegate/resolve",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "multi_agent_coordination_runtime"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/multi-agent/handoff",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "multi_agent_coordination_runtime"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/multi-agent/merge",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "multi_agent_coordination_runtime"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/multi-agent/summary",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "multi_agent_coordination_runtime"
       },
       {
         "coverage_state": "unproven",
@@ -1511,24 +1546,24 @@
         "surface_id": "unclassified_declared_route"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/rbac/bindings",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "rbac_access_governance"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/rbac/identities",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "rbac_access_governance"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/rbac/roles",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "rbac_access_governance"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/rbac/summary",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "rbac_access_governance"
       },
       {
         "coverage_state": "unproven",
@@ -1626,39 +1661,39 @@
         "surface_id": "hosted_demo_sandbox"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/scheduler/execute",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "governed_background_scheduler"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/scheduler/history",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "governed_background_scheduler"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/scheduler/jobs",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "governed_background_scheduler"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/scheduler/jobs/{job_id}",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "governed_background_scheduler"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/scheduler/jobs/{job_id}/disable",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "governed_background_scheduler"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/scheduler/jobs/{job_id}/enable",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "governed_background_scheduler"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/scheduler/summary",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "governed_background_scheduler"
       },
       {
         "coverage_state": "unproven",
@@ -2176,7 +2211,7 @@
         "surface_id": "gateway_capability_fabric"
       }
     ],
-    "unclassified_route_count": 160
+    "unclassified_route_count": 142
   },
   "schema_version": 1,
   "surfaces": [
@@ -2409,6 +2444,35 @@
         "agent_error_contracts_bounded"
       ],
       "surface_id": "agent_adapter_lifecycle"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "mcoi/mcoi_runtime/app/routers/rbac.py",
+        "mcoi/mcoi_runtime/core/access_runtime_integration.py",
+        "mcoi/mcoi_runtime/contracts/access_runtime.py",
+        "mcoi/tests/test_rbac_endpoints.py",
+        "mcoi/tests/test_rbac_guard.py"
+      ],
+      "notes": "RBAC access-governance routes bind identity registration, role registration, role binding, and bounded summary read models to governed responses, audit records, and access-runtime contracts.",
+      "representative_paths": [
+        "/api/v1/rbac/bindings",
+        "/api/v1/rbac/identities",
+        "/api/v1/rbac/roles",
+        "/api/v1/rbac/summary"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "rbac_identity_registration_governed",
+        "rbac_role_registration_governed",
+        "rbac_role_binding_governed",
+        "rbac_identity_creation_audited",
+        "rbac_summary_bounded",
+        "rbac_errors_sanitized"
+      ],
+      "surface_id": "rbac_access_governance"
     },
     {
       "action_proof": "read_model",
@@ -3225,6 +3289,60 @@
       "audit": "audit_chain",
       "coverage_state": "witnessed",
       "evidence_files": [
+        "capsules/software_dev.json",
+        "capabilities/software_dev/capability_pack.json",
+        "gateway/capability_fabric.py",
+        "mcoi/mcoi_runtime/contracts/app_builder.py",
+        "mcoi/mcoi_runtime/contracts/code_context.py",
+        "mcoi/mcoi_runtime/contracts/code_intelligence.py",
+        "mcoi/mcoi_runtime/contracts/code_worker.py",
+        "mcoi/mcoi_runtime/contracts/pr_candidate.py",
+        "mcoi/mcoi_runtime/core/app_builder/codegen_pipeline.py",
+        "mcoi/mcoi_runtime/core/app_builder/pr_candidate.py",
+        "mcoi/mcoi_runtime/core/code_context_builder.py",
+        "mcoi/mcoi_runtime/core/code_intelligence.py",
+        "mcoi/mcoi_runtime/core/software_gate_planner.py",
+        "mcoi/mcoi_runtime/workers/code_worker.py",
+        "tests/test_app_builder_pipeline.py",
+        "tests/test_code_context_builder.py",
+        "tests/test_code_intelligence.py",
+        "tests/test_code_worker.py",
+        "tests/test_pr_candidate.py",
+        "tests/test_software_dev_capability_pack.py",
+        "tests/test_software_gate_planner.py"
+      ],
+      "notes": "Software-development capability pack keeps repo intelligence, context building, gate planning, governed change execution, app task graph planning, and PR candidate preparation behind explicit capsule admission; default packs do not load it, read-only capabilities expose no execution authority, and effectful capabilities require sandboxing, approval, receipts, recovery evidence, and direct-deployment denial.",
+      "representative_paths": [
+        "load_software_dev_domain_capsule",
+        "load_software_dev_capability_entries",
+        "build_software_dev_capability_admission_gate",
+        "software_dev.repo_map.read",
+        "software_dev.context_bundle.build",
+        "software_dev.gate_plan.select",
+        "software_dev.change.run",
+        "software_dev.app_task_graph.plan",
+        "software_dev.pr_candidate.prepare"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "software_dev_pack_fixture_not_default_loaded",
+        "software_dev_capability_entries_schema_valid",
+        "software_dev_named_loader_installs_only_software_dev_domain",
+        "software_dev_capsule_refs_match_pack_capabilities",
+        "software_dev_pack_explicit_fabric_admits_known_capabilities",
+        "software_dev_direct_deployment_capability_absent",
+        "software_dev_read_only_records_non_mutating",
+        "software_dev_effectful_records_require_sandbox_approval",
+        "software_dev_pr_candidate_blocks_git_push",
+        "software_dev_production_ready_overclaim_rejected"
+      ],
+      "surface_id": "software_dev_capability_pack"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
         "docs/62_governed_operational_intelligence.md",
         "gateway/agent_identity.py",
         "schemas/agent_identity.schema.json",
@@ -3307,6 +3425,72 @@
         "connector_invocation_audited"
       ],
       "surface_id": "governed_connector_framework"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "mcoi/mcoi_runtime/app/routers/scheduler.py",
+        "mcoi/mcoi_runtime/core/scheduler.py",
+        "mcoi/tests/test_scheduler.py",
+        "mcoi/tests/test_server_phase217.py",
+        "mcoi/tests/test_server_phase218.py"
+      ],
+      "notes": "Governed background scheduler routes register one-shot, interval, and cron jobs, execute handlers through guard-chain admission, bound job lifecycle enable/disable/delete controls, expose bounded history and summary read models, and sanitize scheduler execution errors.",
+      "representative_paths": [
+        "/api/v1/scheduler/execute",
+        "/api/v1/scheduler/history",
+        "/api/v1/scheduler/jobs",
+        "/api/v1/scheduler/jobs/{job_id}",
+        "/api/v1/scheduler/jobs/{job_id}/disable",
+        "/api/v1/scheduler/jobs/{job_id}/enable",
+        "/api/v1/scheduler/summary"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "scheduler_job_registration_typed",
+        "scheduler_execute_guard_chain_checked",
+        "scheduler_lifecycle_controls_bounded",
+        "scheduler_history_summary_bounded",
+        "scheduler_errors_sanitized",
+        "scheduler_execution_audited"
+      ],
+      "surface_id": "governed_background_scheduler"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "mcoi/mcoi_runtime/app/routers/multi_agent.py",
+        "mcoi/mcoi_runtime/contracts/coordination.py",
+        "mcoi/mcoi_runtime/core/coordination.py",
+        "mcoi/tests/test_multi_agent_runtime.py",
+        "mcoi/tests/test_server_phase217.py"
+      ],
+      "notes": "Multi-agent coordination routes bind delegation, resolution, handoff, merge, conflict recording, unresolved-conflict read models, and runtime summaries to the coordination engine with audit records and bounded error contracts.",
+      "representative_paths": [
+        "/api/v1/multi-agent/conflict",
+        "/api/v1/multi-agent/conflicts/unresolved",
+        "/api/v1/multi-agent/delegate",
+        "/api/v1/multi-agent/delegate/resolve",
+        "/api/v1/multi-agent/handoff",
+        "/api/v1/multi-agent/merge",
+        "/api/v1/multi-agent/summary"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "multi_agent_delegation_tracked",
+        "multi_agent_delegation_resolution_validated",
+        "multi_agent_handoff_preserves_context",
+        "multi_agent_merge_outcome_typed",
+        "multi_agent_conflict_strategy_typed",
+        "multi_agent_unresolved_conflicts_bounded",
+        "multi_agent_summary_bounded",
+        "multi_agent_errors_sanitized"
+      ],
+      "surface_id": "multi_agent_coordination_runtime"
     },
     {
       "action_proof": "action_proof",
@@ -4047,6 +4231,36 @@
         "receipt_not_terminal_closure"
       ],
       "surface_id": "temporal_lease_window"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "gateway/temporal_idempotency_window.py",
+        "schemas/temporal_idempotency_window_receipt.schema.json",
+        "tests/test_gateway/test_temporal_idempotency_window.py"
+      ],
+      "notes": "Temporal idempotency window rechecks idempotency keys, request fingerprints, replay windows, tenant and command scope, action scope, committed effects, terminal receipt binding, evidence refs, and high-risk source receipts before effect dispatch.",
+      "representative_paths": [
+        "TemporalIdempotencyWindow.evaluate",
+        "IdempotencyWindowRequest",
+        "TemporalIdempotencyWindowReceipt"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "runtime_clock_owns_idempotency_window",
+        "new_idempotency_key_admits_dispatch",
+        "matching_replay_admits_uncommitted_dispatch",
+        "committed_effect_blocks_duplicate_dispatch",
+        "expired_idempotency_window_blocks_dispatch",
+        "request_fingerprint_mismatch_blocks_replay",
+        "tenant_command_action_scope_checked",
+        "high_risk_source_receipts_bound",
+        "temporal_idempotency_window_receipt_schema_valid",
+        "receipt_not_terminal_closure"
+      ],
+      "surface_id": "temporal_idempotency_window"
     },
     {
       "action_proof": "action_proof",

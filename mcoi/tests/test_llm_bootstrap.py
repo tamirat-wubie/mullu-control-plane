@@ -4,6 +4,7 @@ import os
 import pytest
 from mcoi_runtime.adapters.multi_provider import (
     APIRouterBackend,
+    AnswiraBackend,
     ApiLinkBackend,
     AtlasCloudBackend,
     BazaarLinkBackend,
@@ -22,6 +23,7 @@ from mcoi_runtime.adapters.multi_provider import (
     GroqBackend,
     HyperbolicBackend,
     InferenceNetBackend,
+    LLMAIBackend,
     LlamaAPIBackend,
     MixlayerBackend,
     ModelMaxBackend,
@@ -34,6 +36,7 @@ from mcoi_runtime.adapters.multi_provider import (
     FeatherlessBackend,
     NeuroRoutersBackend,
     QuickSilverBackend,
+    RequestyBackend,
     RidvayBackend,
     SambaNovaBackend,
     SiliconFlowBackend,
@@ -107,6 +110,10 @@ LLM_ENV_KEYS = (
     "MOR_API_KEY",
     "INFERENCE_API_KEY",
     "INFERENCENET_API_KEY",
+    "ANSWIRA_API_KEY",
+    "LLMAI_API_KEY",
+    "LLMAI_TOKEN",
+    "REQUESTY_API_KEY",
     "XAI_API_KEY",
     "MISTRAL_API_KEY",
     "OPENROUTER_API_KEY",
@@ -227,6 +234,26 @@ class TestLLMConfig:
         assert config.default_backend == "inferencenet"
         assert config.inferencenet_api_key == "inferencenet-alias-key"
         assert config.morpheus_api_key == ""
+
+    def test_from_env_llmai_alias_and_requesty_detected(self, monkeypatch):
+        for key in LLM_ENV_KEYS:
+            monkeypatch.delenv(key, raising=False)
+        monkeypatch.setenv("LLMAI_TOKEN", "llmai-alias-key")
+
+        config = LLMConfig.from_env()
+
+        assert config.default_backend == "llmai"
+        assert config.llmai_api_key == "llmai-alias-key"
+        assert config.answira_api_key == ""
+        assert config.requesty_api_key == ""
+
+        monkeypatch.delenv("LLMAI_TOKEN", raising=False)
+        monkeypatch.setenv("REQUESTY_API_KEY", "requesty-key")
+        config = LLMConfig.from_env()
+
+        assert config.default_backend == "requesty"
+        assert config.requesty_api_key == "requesty-key"
+        assert config.llmai_api_key == ""
 
     def test_from_env_cloudflare_requires_account_id(self, monkeypatch):
         monkeypatch.delenv("MULLU_ENV", raising=False)
@@ -412,6 +439,9 @@ class TestBootstrapLLM:
             embercloud_api_key="ec",
             morpheus_api_key="mo",
             inferencenet_api_key="in",
+            answira_api_key="aw",
+            llmai_api_key="lm",
+            requesty_api_key="rq",
             grok_api_key="xai",
             mistral_api_key="ms",
             openrouter_api_key="or",
@@ -465,6 +495,9 @@ class TestBootstrapLLM:
             "embercloud",
             "morpheus",
             "inferencenet",
+            "answira",
+            "llmai",
+            "requesty",
             "grok",
             "mistral",
             "openrouter",
@@ -507,6 +540,9 @@ class TestBootstrapLLM:
         assert isinstance(result.backends["embercloud"], EmberCloudBackend)
         assert isinstance(result.backends["morpheus"], MorpheusBackend)
         assert isinstance(result.backends["inferencenet"], InferenceNetBackend)
+        assert isinstance(result.backends["answira"], AnswiraBackend)
+        assert isinstance(result.backends["llmai"], LLMAIBackend)
+        assert isinstance(result.backends["requesty"], RequestyBackend)
         assert "llm-groq" in result.registered_providers
         assert "llm-deepseek" in result.registered_providers
         assert "llm-together" in result.registered_providers
@@ -542,6 +578,9 @@ class TestBootstrapLLM:
         assert "llm-embercloud" in result.registered_providers
         assert "llm-morpheus" in result.registered_providers
         assert "llm-inferencenet" in result.registered_providers
+        assert "llm-answira" in result.registered_providers
+        assert "llm-llmai" in result.registered_providers
+        assert "llm-requesty" in result.registered_providers
         assert "llm-openrouter" in result.registered_providers
         assert "meta-llama/llama-4-scout-17b-16e-instruct" in result.registered_models
         assert "deepseek-v4-flash" in result.registered_models
@@ -582,6 +621,9 @@ class TestBootstrapLLM:
         assert "glm-4.7-flash" in result.registered_models
         assert "qwen35-9b" in result.registered_models
         assert "google/gemma-3-27b-instruct/bf-16" in result.registered_models
+        assert "qwen/qwen3-coder-next" in result.registered_models
+        assert "gemma-4" in result.registered_models
+        assert "deepseek/deepseek-chat" in result.registered_models
         assert "mistral-small-2506" in result.registered_models
         assert "grok-3-mini" in result.registered_models
         assert "meta-llama/llama-4-scout" in result.registered_models

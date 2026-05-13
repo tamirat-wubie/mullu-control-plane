@@ -31,7 +31,7 @@
     },
     "bundle_id": {
       "type": "string",
-      "minLength": 1
+      "pattern": "^trust-bundle-[0-9a-f]{16}$"
     },
     "tenant_id": {
       "type": "string",
@@ -58,11 +58,11 @@
     },
     "bundle_hash": {
       "type": "string",
-      "minLength": 1
+      "pattern": "^[0-9a-f]{64}$"
     },
     "artifact_root_hash": {
       "type": "string",
-      "minLength": 1
+      "pattern": "^[0-9a-f]{64}$"
     },
     "hash_chain_root": {
       "type": "string",
@@ -103,7 +103,7 @@
     },
     "anchor_receipt_hash": {
       "type": "string",
-      "minLength": 1
+      "pattern": "^[0-9a-f]{64}$"
     },
     "metadata": {
       "type": "object",

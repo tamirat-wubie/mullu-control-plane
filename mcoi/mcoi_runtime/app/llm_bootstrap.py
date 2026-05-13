@@ -29,6 +29,7 @@ from mcoi_runtime.adapters.llm_adapter import (
 )
 from mcoi_runtime.adapters.multi_provider import (
     APIRouterBackend,
+    AnswiraBackend,
     ApiLinkBackend,
     AtlasCloudBackend,
     BazaarLinkBackend,
@@ -50,6 +51,7 @@ from mcoi_runtime.adapters.multi_provider import (
     GroqBackend,
     HyperbolicBackend,
     InferenceNetBackend,
+    LLMAIBackend,
     LlamaAPIBackend,
     MixlayerBackend,
     MistralBackend,
@@ -63,6 +65,7 @@ from mcoi_runtime.adapters.multi_provider import (
     ParasailBackend,
     NeuroRoutersBackend,
     QuickSilverBackend,
+    RequestyBackend,
     RidvayBackend,
     SambaNovaBackend,
     SiliconFlowBackend,
@@ -135,6 +138,9 @@ class LLMConfig:
     embercloud_api_key: str = ""
     morpheus_api_key: str = ""
     inferencenet_api_key: str = ""
+    answira_api_key: str = ""
+    llmai_api_key: str = ""
+    requesty_api_key: str = ""
     grok_api_key: str = ""
     mistral_api_key: str = ""
     openrouter_api_key: str = ""
@@ -194,6 +200,9 @@ class LLMConfig:
         embercloud_key = os.environ.get("EMBERCLOUD_API_KEY", "")
         morpheus_key = os.environ.get("MORPHEUS_API_KEY", "") or os.environ.get("MOR_API_KEY", "")
         inferencenet_key = os.environ.get("INFERENCE_API_KEY", "") or os.environ.get("INFERENCENET_API_KEY", "")
+        answira_key = os.environ.get("ANSWIRA_API_KEY", "")
+        llmai_key = os.environ.get("LLMAI_API_KEY", "") or os.environ.get("LLMAI_TOKEN", "")
+        requesty_key = os.environ.get("REQUESTY_API_KEY", "")
         grok_key = os.environ.get("XAI_API_KEY", "")
         mistral_key = os.environ.get("MISTRAL_API_KEY", "")
         openrouter_key = os.environ.get("OPENROUTER_API_KEY", "")
@@ -287,6 +296,12 @@ class LLMConfig:
                 default_backend = "morpheus"
             elif inferencenet_key:
                 default_backend = "inferencenet"
+            elif answira_key:
+                default_backend = "answira"
+            elif llmai_key:
+                default_backend = "llmai"
+            elif requesty_key:
+                default_backend = "requesty"
             elif mistral_key:
                 default_backend = "mistral"
             elif grok_key:
@@ -323,6 +338,7 @@ class LLMConfig:
                 "MIXLAYER_API_KEY, APILINK_API_KEY, "
                 "EMBERCLOUD_API_KEY, MORPHEUS_API_KEY, MOR_API_KEY, "
                 "INFERENCE_API_KEY, INFERENCENET_API_KEY, "
+                "ANSWIRA_API_KEY, LLMAI_API_KEY, LLMAI_TOKEN, REQUESTY_API_KEY, "
                 "XAI_API_KEY, MISTRAL_API_KEY, "
                 "OPENROUTER_API_KEY) "
                 "or OLLAMA_BASE_URL."
@@ -373,6 +389,9 @@ class LLMConfig:
             embercloud_api_key=embercloud_key,
             morpheus_api_key=morpheus_key,
             inferencenet_api_key=inferencenet_key,
+            answira_api_key=answira_key,
+            llmai_api_key=llmai_key,
+            requesty_api_key=requesty_key,
             grok_api_key=grok_key,
             mistral_api_key=mistral_key,
             openrouter_api_key=openrouter_key,
@@ -896,6 +915,39 @@ def bootstrap_llm(
         )
         backends["inferencenet"] = inferencenet
 
+    if llm_config.answira_api_key:
+        answira = AnswiraBackend(
+            api_key=llm_config.answira_api_key,
+            model=_select_provider_default_model(
+                llm_config.default_model,
+                ("qwen/", "zai-org/", "glm", "answira"),
+                AnswiraBackend.DEFAULT_MODEL,
+            ),
+        )
+        backends["answira"] = answira
+
+    if llm_config.llmai_api_key:
+        llmai = LLMAIBackend(
+            api_key=llm_config.llmai_api_key,
+            model=_select_provider_default_model(
+                llm_config.default_model,
+                ("gemma", "deepseek", "qwen", "glm", "kimi", "llmai"),
+                LLMAIBackend.DEFAULT_MODEL,
+            ),
+        )
+        backends["llmai"] = llmai
+
+    if llm_config.requesty_api_key:
+        requesty = RequestyBackend(
+            api_key=llm_config.requesty_api_key,
+            model=_select_provider_default_model(
+                llm_config.default_model,
+                ("deepseek/", "zai/", "fireworks/", "anthropic/", "openai/"),
+                RequestyBackend.DEFAULT_MODEL,
+            ),
+        )
+        backends["requesty"] = requesty
+
     if llm_config.grok_api_key:
         grok = GrokBackend(
             api_key=llm_config.grok_api_key,
@@ -1249,6 +1301,24 @@ def _register_providers(
             "rate_limit": 120,
             "cost_limit": 0.25,
         },
+        "answira": {
+            "name": "Answira",
+            "base_url": "https://answira.ai/api/v1",
+            "rate_limit": 120,
+            "cost_limit": 0.25,
+        },
+        "llmai": {
+            "name": "LLMAI",
+            "base_url": "https://api.llmai.dev/v1",
+            "rate_limit": 120,
+            "cost_limit": 0.25,
+        },
+        "requesty": {
+            "name": "Requesty",
+            "base_url": "https://router.requesty.ai/v1",
+            "rate_limit": 120,
+            "cost_limit": 0.25,
+        },
         "grok": {
             "name": "xAI Grok",
             "base_url": "https://api.x.ai/v1",
@@ -1388,6 +1458,9 @@ def _register_models(
             0.15,
             0.30,
         ),
+        ("qwen/qwen3-coder-next", "Qwen3 Coder Next via Answira", "answira", 0.07, 0.30),
+        ("gemma-4", "Gemma 4 via LLMAI", "llmai", 0.046, 0.130),
+        ("deepseek/deepseek-chat", "DeepSeek Chat via Requesty", "requesty", 0.14, 0.28),
         ("mistral-small-2506", "Mistral Small 2506", "mistral", 0.10, 0.30),
         ("mistral-small-2603", "Mistral Small 2603", "mistral", 0.15, 0.60),
         ("grok-3-mini", "Grok 3 Mini", "grok", 0.30, 0.50),

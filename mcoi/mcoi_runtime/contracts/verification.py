@@ -51,6 +51,12 @@ class VerificationResult(ContractRecord):
             raise ValueError("status must be a VerificationStatus value")
         object.__setattr__(self, "checks", require_non_empty_tuple(self.checks, "checks"))
         object.__setattr__(self, "evidence", require_non_empty_tuple(self.evidence, "evidence"))
+        for idx, check in enumerate(self.checks):
+            if not isinstance(check, VerificationCheck):
+                raise ValueError(f"checks[{idx}] must be a VerificationCheck")
+        for idx, evidence in enumerate(self.evidence):
+            if not isinstance(evidence, EvidenceRecord):
+                raise ValueError(f"evidence[{idx}] must be an EvidenceRecord")
         object.__setattr__(self, "closed_at", require_datetime_text(self.closed_at, "closed_at"))
         object.__setattr__(self, "metadata", freeze_value(self.metadata))
         object.__setattr__(self, "extensions", freeze_value(self.extensions))

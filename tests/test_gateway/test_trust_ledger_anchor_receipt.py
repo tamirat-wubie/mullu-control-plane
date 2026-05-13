@@ -180,6 +180,18 @@ def test_trust_ledger_anchor_receipt_validates_against_schema() -> None:
     assert receipt.to_json_dict()["external_anchor_ref"] == "anchor://transparency-log/1"
 
 
+def test_trust_ledger_anchor_receipt_schema_rejects_non_canonical_bundle_id() -> None:
+    ledger = TrustLedger()
+    bundle = _bundle()
+    receipt = _anchor_receipt(ledger, bundle, _artifacts()).to_json_dict()
+    receipt["bundle_id"] = "bundle-placeholder"
+    errors = _validate_schema_instance(_load_schema(SCHEMA_PATH), receipt)
+
+    assert any("does not match" in error for error in errors)
+    assert receipt["bundle_hash"]
+    assert receipt["anchor_receipt_hash"]
+
+
 def _anchor_receipt(
     ledger: TrustLedger,
     bundle: TrustLedgerBundle,

@@ -691,6 +691,42 @@ def bootstrap_capability_services(
     )
     model_router.register(
         ModelProfile(
+            model_id="qwen/qwen3-coder-next",
+            name="Qwen3 Coder Next via Answira",
+            provider="answira",
+            cost_per_1k_input=0.00007,
+            cost_per_1k_output=0.00030,
+            max_context=256000,
+            speed_tier="fast",
+            capability_tier="standard",
+        )
+    )
+    model_router.register(
+        ModelProfile(
+            model_id="gemma-4",
+            name="Gemma 4 via LLMAI",
+            provider="llmai",
+            cost_per_1k_input=0.000046,
+            cost_per_1k_output=0.000130,
+            max_context=256000,
+            speed_tier="fast",
+            capability_tier="standard",
+        )
+    )
+    model_router.register(
+        ModelProfile(
+            model_id="deepseek/deepseek-chat",
+            name="DeepSeek Chat via Requesty",
+            provider="requesty",
+            cost_per_1k_input=0.00014,
+            cost_per_1k_output=0.00028,
+            max_context=1000000,
+            speed_tier="fast",
+            capability_tier="standard",
+        )
+    )
+    model_router.register(
+        ModelProfile(
             model_id="mistral-small-2603",
             name="Mistral Small 2603",
             provider="mistral",
