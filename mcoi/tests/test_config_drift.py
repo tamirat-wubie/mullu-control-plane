@@ -1,7 +1,7 @@
 """Tests for Phase 231C — Config Drift Detector."""
 from __future__ import annotations
 import pytest
-from mcoi_runtime.core.config_drift import ConfigDriftDetector, DriftSeverity
+from mcoi_runtime.core.config_drift import ConfigDriftDetector, DriftItem, DriftReport, DriftSeverity
 
 
 class TestConfigDriftDetector:
@@ -64,6 +64,36 @@ class TestConfigDriftDetector:
         data = report.to_dict()
         assert data["has_drift"] is True
         assert data["total_drifts"] == 1
+
+    def test_input_shapes_are_bounded(self):
+        d = ConfigDriftDetector()
+        with pytest.raises(ValueError, match="config"):
+            d.set_expected("bad")  # type: ignore[arg-type]
+        with pytest.raises(ValueError, match="config key"):
+            d.set_expected({"": "value"})
+        with pytest.raises(ValueError, match="actual"):
+            d.detect("bad")  # type: ignore[arg-type]
+        with pytest.raises(ValueError, match="severity"):
+            d.set_severity("a", "critical")  # type: ignore[arg-type]
+        with pytest.raises(ValueError, match="key"):
+            d.set_severity("", DriftSeverity.INFO)
+
+    def test_report_and_item_validation(self):
+        item = DriftItem(
+            key="a",
+            expected=1,
+            actual=2,
+            severity=DriftSeverity.WARNING,
+            message="changed",
+        )
+        report = DriftReport(drifts=[item], scanned_at=1.0)
+        assert report.drifts == (item,)
+        with pytest.raises(ValueError, match="drifts"):
+            DriftReport(drifts="bad")  # type: ignore[arg-type]
+        with pytest.raises(ValueError, match="severity"):
+            DriftItem(key="a", expected=1, actual=2, severity="warning")  # type: ignore[arg-type]
+        with pytest.raises(ValueError, match="scanned_at"):
+            DriftReport(drifts=[item], scanned_at=True)  # type: ignore[arg-type]
 
     def test_summary(self):
         d = ConfigDriftDetector()

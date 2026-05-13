@@ -52,7 +52,7 @@ def _atomic_write(path: Path, content: str) -> None:
         raise PersistenceWriteError(_bounded_store_error("trace store write failed", exc)) from exc
 
 
-def _load_trace_file(path: Path) -> TraceEntry:
+def _load_trace_file(path: Path, *, expected_trace_id: str | None = None) -> TraceEntry:
     """Load and validate a single trace entry JSON file."""
     try:
         raw = json.loads(path.read_text(encoding="utf-8"))
@@ -63,9 +63,12 @@ def _load_trace_file(path: Path) -> TraceEntry:
         raise CorruptedDataError("trace file must be a JSON object")
 
     try:
-        return TraceEntry(**raw)
+        entry = TraceEntry(**raw)
     except (TypeError, ValueError) as exc:
         raise CorruptedDataError(_bounded_store_error("invalid trace entry", exc)) from exc
+    if expected_trace_id is not None and entry.trace_id != expected_trace_id:
+        raise CorruptedDataError("trace id mismatch")
+    return entry
 
 
 class TraceStore:
@@ -101,6 +104,14 @@ class TraceStore:
     def _trace_path(self, trace_id: str) -> Path:
         return self._safe_path(trace_id, suffix=".json")
 
+    def _listed_trace_id(self, file_path: Path) -> str:
+        trace_id = file_path.stem
+        try:
+            self._trace_path(trace_id)
+        except PathTraversalError as exc:
+            raise CorruptedDataError("trace filename is invalid") from exc
+        return trace_id
+
     def append(self, entry: TraceEntry) -> None:
         if not isinstance(entry, TraceEntry):
             raise PersistenceError("entry must be a TraceEntry instance")
@@ -121,7 +132,7 @@ class TraceStore:
         trace_ids: list[str] = []
         for entry in sorted(self._base_path.iterdir()):
             if entry.is_file() and entry.suffix == ".json":
-                trace_ids.append(entry.stem)
+                trace_ids.append(self._listed_trace_id(entry))
 
         return tuple(trace_ids)
 
@@ -133,7 +144,7 @@ class TraceStore:
         if not path.exists():
             raise TraceNotFoundError("trace entry not found")
 
-        return _load_trace_file(path)
+        return _load_trace_file(path, expected_trace_id=trace_id)
 
     def load_all(self) -> tuple[TraceEntry, ...]:
         if not self._base_path.exists():
@@ -142,6 +153,7 @@ class TraceStore:
         entries: list[TraceEntry] = []
         for file_path in sorted(self._base_path.iterdir()):
             if file_path.is_file() and file_path.suffix == ".json":
-                entries.append(_load_trace_file(file_path))
+                expected_trace_id = self._listed_trace_id(file_path)
+                entries.append(_load_trace_file(file_path, expected_trace_id=expected_trace_id))
 
         return tuple(entries)

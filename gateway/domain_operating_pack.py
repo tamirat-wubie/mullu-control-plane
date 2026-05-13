@@ -214,7 +214,34 @@ class DomainOperatingPackCompiler:
 def builtin_domain_operating_pack_specs() -> tuple[DomainOperatingPackSpec, ...]:
     """Return default solution-pack specifications."""
     return (
-        _spec("finance-ops-pack", "finance_ops", ("invoice.approval", "payment.guard", "budget.enforcement", "duplicate.detect"), ("bank_change_hold", "fresh_approval", "duplicate_invoice_block"), ("finance_admin", "manager")),
+        _spec(
+            "finance-ops-pack",
+            "finance_ops",
+            (
+                "invoice.read",
+                "invoice.extract",
+                "invoice.approval",
+                "vendor.verify",
+                "po.match",
+                "budget.check",
+                "budget.enforcement",
+                "duplicate.detect",
+                "payment.prepare",
+                "payment.guard",
+                "payment.execute.with_approval",
+                "payment.reconcile",
+                "ledger.update",
+                "evidence.export",
+            ),
+            (
+                "bank_change_hold",
+                "fresh_approval",
+                "duplicate_invoice_block",
+                "vendor_identity_required",
+                "signed_evidence_bundle_required",
+            ),
+            ("finance_admin", "manager", "controller"),
+        ),
         _spec("customer-support-pack", "customer_support", ("ticket.triage", "sla.track", "refund.review", "escalation.route"), ("refund_threshold", "sla_breach"), ("support_lead",)),
         _spec("compliance-pack", "compliance", ("evidence.bundle", "audit.export", "policy.exception", "control.review"), ("exception_expiry", "dual_control"), ("compliance_officer", "legal_reviewer")),
         _spec("research-pack", "research", ("source.track", "claim.graph", "literature.review", "experiment.log"), ("source_freshness", "claim_contradiction"), ("research_lead",)),

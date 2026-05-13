@@ -10,7 +10,6 @@ Invariants:
 
 from __future__ import annotations
 
-import json
 import os
 import tempfile
 from pathlib import Path
@@ -120,7 +119,12 @@ class CoordinationStore:
         state_ids: list[str] = []
         for entry in sorted(self._base_path.iterdir()):
             if entry.is_file() and entry.suffix == ".json":
-                state_ids.append(entry.stem)
+                state_id = entry.stem
+                try:
+                    self._state_path(state_id)
+                except PathTraversalError as exc:
+                    raise CorruptedDataError("coordination state filename is invalid") from exc
+                state_ids.append(state_id)
 
         return tuple(state_ids)
 

@@ -35,6 +35,10 @@ from gateway.skill_dispatch import FunctionCapabilityHandler  # noqa: E402
 from mcoi_runtime.contracts.governed_capability_fabric import (  # noqa: E402
     CommandCapabilityAdmissionStatus,
 )
+from scripts.validate_schemas import _load_schema, _validate_schema_instance  # noqa: E402
+
+
+LATEST_ANCHOR_SCHEMA = _ROOT / "schemas" / "latest_anchor_read_model.schema.json"
 
 
 class StubPlatform:
@@ -1873,6 +1877,20 @@ class TestGatewayStatus:
         resp = client.get("/anchors/latest")
         assert resp.status_code == 200
         data = resp.json()
+        assert data["anchor_present"] is True
         assert data["anchor_id"] == anchor.anchor_id
         assert data["event_count"] > 0
         assert data["signature"].startswith("hmac-sha256:")
+        assert data["governed"] is True
+        assert _validate_schema_instance(_load_schema(LATEST_ANCHOR_SCHEMA), data) == []
+
+    def test_latest_anchor_read_model_reports_absent_anchor(self, client):
+        resp = client.get("/anchors/latest")
+
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["anchor_present"] is False
+        assert data["anchor_id"] == ""
+        assert data["event_count"] == 0
+        assert data["governed"] is True
+        assert _validate_schema_instance(_load_schema(LATEST_ANCHOR_SCHEMA), data) == []

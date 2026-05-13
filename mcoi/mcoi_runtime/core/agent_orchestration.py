@@ -7,6 +7,8 @@ Dependencies: agent_protocol, agent_chain.
 Invariants:
   - All orchestration decisions are auditable.
   - Agent handoffs require capability matching.
+  - Proposals require a registered proposer with matching capabilities.
+  - Dispatch results carry bounded proof records.
   - Consensus requires quorum (majority of registered agents).
   - Plans are immutable once approved.
 """
@@ -15,7 +17,7 @@ from __future__ import annotations
 import uuid
 from dataclasses import dataclass, field
 from enum import Enum, unique
-from typing import Any, Callable
+from typing import Any, Callable, Mapping
 
 
 def _classify_orchestration_exception(exc: Exception) -> str:
@@ -61,6 +63,41 @@ class AgentProposal:
 
 
 @dataclass
+class DispatchProof:
+    """Bounded proof record for an orchestration dispatch decision."""
+    proof_id: str
+    plan_id: str
+    proposal_id: str
+    agent_id: str
+    decision: str
+    reason: str
+    checked_at: str
+    quorum_met: bool
+    agent_registered: bool
+    agent_capable: bool
+    manifest_admitted: bool
+    manifest_gated: bool
+    required_capability_count: int
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "proof_id": self.proof_id,
+            "plan_id": self.plan_id,
+            "proposal_id": self.proposal_id,
+            "agent_id": self.agent_id,
+            "decision": self.decision,
+            "reason": self.reason,
+            "checked_at": self.checked_at,
+            "quorum_met": self.quorum_met,
+            "agent_registered": self.agent_registered,
+            "agent_capable": self.agent_capable,
+            "manifest_admitted": self.manifest_admitted,
+            "manifest_gated": self.manifest_gated,
+            "required_capability_count": self.required_capability_count,
+        }
+
+
+@dataclass
 class OrchestrationPlan:
     """A multi-agent execution plan requiring consensus."""
     plan_id: str
@@ -70,6 +107,7 @@ class OrchestrationPlan:
     votes: dict[str, Vote] = field(default_factory=dict)
     phase: OrchestrationPhase = OrchestrationPhase.PLANNING
     results: list[dict[str, Any]] = field(default_factory=list)
+    dispatch_proofs: list[DispatchProof] = field(default_factory=list)
     created_at: str = ""
 
     @property
@@ -94,6 +132,7 @@ class OrchestrationPlan:
             "approval_count": self.approval_count,
             "rejection_count": self.rejection_count,
             "results": self.results,
+            "dispatch_proofs": [proof.to_dict() for proof in self.dispatch_proofs],
             "created_at": self.created_at,
         }
 
@@ -112,13 +151,30 @@ class AgentOrchestrator:
     """Governs multi-agent coordination, consensus, and handoffs."""
 
     def __init__(self, clock: Callable[[], str],
-                 agent_capabilities: dict[str, tuple[str, ...]] | None = None):
+                 agent_capabilities: dict[str, tuple[str, ...]] | None = None,
+                 admitted_capabilities: tuple[str, ...] | None = None):
         self._clock = clock
         self._capabilities: dict[str, tuple[str, ...]] = dict(agent_capabilities or {})
+        self._admitted_capabilities: frozenset[str] | None = _normalize_admitted_capabilities(admitted_capabilities)
         self._plans: dict[str, OrchestrationPlan] = {}
         self._handoffs: list[HandoffResult] = []
         self._total_plans = 0
         self._total_handoffs = 0
+
+    @classmethod
+    def from_manifest_read_model(
+        cls,
+        *,
+        clock: Callable[[], str],
+        manifest_read_model: Mapping[str, Any] | None,
+        agent_capabilities: dict[str, tuple[str, ...]] | None = None,
+    ) -> "AgentOrchestrator":
+        """Build an orchestrator constrained by admitted manifest capability ids."""
+        return cls(
+            clock=clock,
+            agent_capabilities=agent_capabilities,
+            admitted_capabilities=_capability_ids_from_manifest_read_model(manifest_read_model),
+        )
 
     def register_agent(self, agent_id: str, capabilities: tuple[str, ...]) -> None:
         self._capabilities[agent_id] = capabilities
@@ -129,6 +185,14 @@ class AgentOrchestrator:
     @property
     def agent_count(self) -> int:
         return len(self._capabilities)
+
+    @property
+    def manifest_gated(self) -> bool:
+        return self._admitted_capabilities is not None
+
+    def set_admitted_capabilities(self, admitted_capabilities: tuple[str, ...] | None) -> None:
+        """Replace the manifest-admitted capability set used by planning."""
+        self._admitted_capabilities = _normalize_admitted_capabilities(admitted_capabilities)
 
     def create_plan(self, initiator_id: str, goal: str) -> OrchestrationPlan:
         if initiator_id not in self._capabilities:
@@ -149,6 +213,9 @@ class AgentOrchestrator:
             raise ValueError("plan unavailable")
         if plan.phase != OrchestrationPhase.PLANNING:
             raise ValueError("plan not accepting proposals")
+        admission_error = self._proposal_admission_error(proposal)
+        if admission_error:
+            raise ValueError(admission_error)
         plan.proposals.append(proposal)
 
     def submit_for_voting(self, plan_id: str) -> None:
@@ -183,20 +250,67 @@ class AgentOrchestrator:
         if plan.phase != OrchestrationPhase.VOTING:
             raise ValueError("plan not ready for execution")
         if not plan.has_quorum(self.agent_count):
+            proof = self._build_dispatch_proof(
+                plan=plan,
+                proposal=None,
+                decision="blocked",
+                reason="consensus quorum not met",
+                quorum_met=False,
+            )
+            plan.dispatch_proofs.append(proof)
             plan.phase = OrchestrationPhase.FAILED
             return plan
 
         plan.phase = OrchestrationPhase.EXECUTING
         for proposal in sorted(plan.proposals, key=lambda p: -p.priority):
+            admission_error = self._proposal_admission_error(proposal)
+            if admission_error:
+                proof = self._build_dispatch_proof(
+                    plan=plan,
+                    proposal=proposal,
+                    decision="blocked",
+                    reason=admission_error,
+                    quorum_met=True,
+                )
+                plan.dispatch_proofs.append(proof)
+                plan.results.append({
+                    "proposal_id": proposal.proposal_id,
+                    "proof_id": proof.proof_id,
+                    "success": False,
+                    "error": admission_error,
+                })
+                continue
             try:
                 if executor:
                     result = executor(proposal)
                 else:
                     result = {"status": "executed", "proposal_id": proposal.proposal_id}
-                plan.results.append({"proposal_id": proposal.proposal_id, "success": True, **result})
-            except Exception as e:
+                proof = self._build_dispatch_proof(
+                    plan=plan,
+                    proposal=proposal,
+                    decision="executed",
+                    reason="proposal dispatched",
+                    quorum_met=True,
+                )
+                plan.dispatch_proofs.append(proof)
                 plan.results.append({
                     "proposal_id": proposal.proposal_id,
+                    "proof_id": proof.proof_id,
+                    "success": True,
+                    **result,
+                })
+            except Exception as e:
+                proof = self._build_dispatch_proof(
+                    plan=plan,
+                    proposal=proposal,
+                    decision="failed",
+                    reason="executor error",
+                    quorum_met=True,
+                )
+                plan.dispatch_proofs.append(proof)
+                plan.results.append({
+                    "proposal_id": proposal.proposal_id,
+                    "proof_id": proof.proof_id,
                     "success": False,
                     "error": _classify_orchestration_exception(e),
                 })
@@ -218,6 +332,10 @@ class AgentOrchestrator:
         if missing:
             return HandoffResult(from_agent, to_agent, False,
                                  error="target agent lacks required capabilities")
+        unavailable = self._unadmitted_capabilities(required_capabilities)
+        if unavailable:
+            return HandoffResult(from_agent, to_agent, False,
+                                 error="required capabilities are not manifest admitted")
 
         result = HandoffResult(from_agent, to_agent, True, payload=payload or {})
         self._handoffs.append(result)
@@ -225,6 +343,8 @@ class AgentOrchestrator:
         return result
 
     def find_capable_agents(self, required: tuple[str, ...]) -> list[str]:
+        if self._unadmitted_capabilities(required):
+            return []
         required_set = set(required)
         return [aid for aid, caps in self._capabilities.items() if required_set <= set(caps)]
 
@@ -240,4 +360,92 @@ class AgentOrchestrator:
                                                OrchestrationPhase.VOTING,
                                                OrchestrationPhase.EXECUTING)),
             "total_handoffs": self._total_handoffs,
+            "manifest_gated": self.manifest_gated,
+            "admitted_capability_count": (
+                0 if self._admitted_capabilities is None else len(self._admitted_capabilities)
+            ),
+            "dispatch_proofs": sum(len(p.dispatch_proofs) for p in self._plans.values()),
         }
+
+    def _unadmitted_capabilities(self, required: tuple[str, ...]) -> tuple[str, ...]:
+        if self._admitted_capabilities is None:
+            return ()
+        return tuple(
+            capability
+            for capability in required
+            if capability not in self._admitted_capabilities
+        )
+
+    def _missing_agent_capabilities(
+        self,
+        agent_id: str,
+        required: tuple[str, ...],
+    ) -> tuple[str, ...]:
+        agent_capabilities = set(self._capabilities.get(agent_id, ()))
+        return tuple(
+            capability
+            for capability in required
+            if capability not in agent_capabilities
+        )
+
+    def _proposal_admission_error(self, proposal: AgentProposal) -> str:
+        if proposal.agent_id not in self._capabilities:
+            return "proposal agent unavailable"
+        if self._missing_agent_capabilities(
+            proposal.agent_id,
+            proposal.required_capabilities,
+        ):
+            return "proposal agent lacks required capabilities"
+        if self._unadmitted_capabilities(proposal.required_capabilities):
+            return "proposal requires unadmitted capabilities"
+        return ""
+
+    def _build_dispatch_proof(
+        self,
+        *,
+        plan: OrchestrationPlan,
+        proposal: AgentProposal | None,
+        decision: str,
+        reason: str,
+        quorum_met: bool,
+    ) -> DispatchProof:
+        proposal_id = "" if proposal is None else proposal.proposal_id
+        agent_id = "" if proposal is None else proposal.agent_id
+        required_capabilities = () if proposal is None else proposal.required_capabilities
+        agent_registered = bool(proposal is not None and agent_id in self._capabilities)
+        agent_capable = bool(
+            proposal is not None
+            and not self._missing_agent_capabilities(agent_id, required_capabilities)
+        )
+        manifest_admitted = not self._unadmitted_capabilities(required_capabilities)
+        proof_index = len(plan.dispatch_proofs) + 1
+        return DispatchProof(
+            proof_id=f"{plan.plan_id}:{proposal_id or 'plan'}:{proof_index}",
+            plan_id=plan.plan_id,
+            proposal_id=proposal_id,
+            agent_id=agent_id,
+            decision=decision,
+            reason=reason,
+            checked_at=self._clock(),
+            quorum_met=quorum_met,
+            agent_registered=agent_registered,
+            agent_capable=agent_capable,
+            manifest_admitted=manifest_admitted,
+            manifest_gated=self.manifest_gated,
+            required_capability_count=len(required_capabilities),
+        )
+
+
+def _normalize_admitted_capabilities(values: tuple[str, ...] | None) -> frozenset[str] | None:
+    if values is None:
+        return None
+    return frozenset(str(value).strip() for value in values if str(value).strip())
+
+
+def _capability_ids_from_manifest_read_model(read_model: Mapping[str, Any] | None) -> tuple[str, ...] | None:
+    if read_model is None:
+        return None
+    raw_ids = read_model.get("capability_ids", ())
+    if not isinstance(raw_ids, (tuple, list)):
+        return ()
+    return tuple(str(capability_id).strip() for capability_id in raw_ids if str(capability_id).strip())

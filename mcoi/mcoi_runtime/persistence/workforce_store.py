@@ -34,6 +34,10 @@ def _deterministic_json(data: Any) -> str:
     return json.dumps(data, sort_keys=True, ensure_ascii=True, separators=(",", ":"))
 
 
+def _bounded_store_error(summary: str, exc: BaseException) -> str:
+    return f"{summary} ({type(exc).__name__})"
+
+
 def _atomic_write(path: Path, content: str) -> None:
     """Write content to a file atomically via temp-file-then-rename."""
     parent = path.parent
@@ -52,7 +56,7 @@ def _atomic_write(path: Path, content: str) -> None:
                 os.unlink(tmp_path)
             raise
     except OSError as exc:
-        raise PersistenceWriteError(f"failed to write {path}: {exc}") from exc
+        raise PersistenceWriteError(_bounded_store_error("workforce store write failed", exc)) from exc
 
 
 def _record_payload(record: object) -> dict[str, Any]:
@@ -112,11 +116,11 @@ class WorkforceStore:
     def load_state(self) -> WorkforceRuntimeState:
         path = self._state_path()
         if not path.exists():
-            raise CorruptedDataError(f"workforce runtime file not found: {path}")
+            raise CorruptedDataError("workforce runtime file not found")
         try:
             payload = json.loads(path.read_text(encoding="utf-8"))
         except (json.JSONDecodeError, OSError) as exc:
-            raise CorruptedDataError(f"malformed workforce runtime file: {exc}") from exc
+            raise CorruptedDataError(_bounded_store_error("malformed workforce runtime file", exc)) from exc
         if not isinstance(payload, dict):
             raise CorruptedDataError("workforce runtime payload must be a JSON object")
 

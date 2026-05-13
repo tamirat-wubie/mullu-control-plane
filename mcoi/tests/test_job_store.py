@@ -97,6 +97,33 @@ def test_job_store_fails_closed_on_mismatched_descriptor_and_state_sets(tmp_path
     assert payload_path.exists() is True
 
 
+def test_job_store_missing_file_error_is_bounded(tmp_path: Path) -> None:
+    store = JobStore(tmp_path / "jobs")
+
+    with pytest.raises(CorruptedDataError, match=r"^job runtime file not found$") as excinfo:
+        store.load_state()
+
+    assert str(tmp_path) not in str(excinfo.value)
+
+
+def test_job_store_read_error_is_bounded(tmp_path: Path, monkeypatch) -> None:
+    store = JobStore(tmp_path / "jobs")
+    payload_path = tmp_path / "jobs" / "job_runtime.json"
+    payload_path.parent.mkdir(parents=True, exist_ok=True)
+    payload_path.write_text("{}", encoding="utf-8")
+
+    def _raise_os_error(*_args, **_kwargs):
+        raise OSError("secret path detail")
+
+    monkeypatch.setattr(Path, "read_text", _raise_os_error)
+
+    with pytest.raises(CorruptedDataError, match=r"^malformed job runtime file \(OSError\)$") as excinfo:
+        store.load_state()
+
+    assert "secret path detail" not in str(excinfo.value)
+    assert str(payload_path) not in str(excinfo.value)
+
+
 def test_job_store_restore_fails_closed_when_job_already_exists(tmp_path: Path) -> None:
     store = JobStore(tmp_path / "jobs")
     source_engine = _seed_job_engine()

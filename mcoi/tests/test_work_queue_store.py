@@ -100,6 +100,33 @@ def test_work_queue_store_fails_closed_on_malformed_payload(tmp_path: Path) -> N
     assert payload_path.exists() is True
 
 
+def test_work_queue_store_missing_file_error_is_bounded(tmp_path: Path) -> None:
+    store = WorkQueueStore(tmp_path / "work-queue")
+
+    with pytest.raises(CorruptedDataError, match=r"^work queue file not found$") as excinfo:
+        store.load_state()
+
+    assert str(tmp_path) not in str(excinfo.value)
+
+
+def test_work_queue_store_read_error_is_bounded(tmp_path: Path, monkeypatch) -> None:
+    store = WorkQueueStore(tmp_path / "work-queue")
+    payload_path = tmp_path / "work-queue" / "work_queue.json"
+    payload_path.parent.mkdir(parents=True, exist_ok=True)
+    payload_path.write_text("{}", encoding="utf-8")
+
+    def _raise_os_error(*_args, **_kwargs):
+        raise OSError("secret path detail")
+
+    monkeypatch.setattr(Path, "read_text", _raise_os_error)
+
+    with pytest.raises(CorruptedDataError, match=r"^malformed work queue file \(OSError\)$") as excinfo:
+        store.load_state()
+
+    assert "secret path detail" not in str(excinfo.value)
+    assert str(payload_path) not in str(excinfo.value)
+
+
 def test_work_queue_store_restore_fails_closed_when_entry_already_exists(tmp_path: Path) -> None:
     store = WorkQueueStore(tmp_path / "work-queue")
     source_queue = _seed_queue()

@@ -292,6 +292,7 @@ class TestDefaultSoftwareDevRunnerFactory:
         sentinel = object()
         receipt_store = object()
         receipt_review_queue = object()
+        software_learning_store = object()
         config = make_default_software_dev_runner(
             adapter=adapter,
             plan_generator=self._plan_gen,
@@ -300,10 +301,12 @@ class TestDefaultSoftwareDevRunnerFactory:
             ucja_runner=sentinel,
             receipt_store=receipt_store,
             receipt_review_queue=receipt_review_queue,
+            software_learning_store=software_learning_store,
         )
         assert config.ucja_runner is sentinel
         assert config.receipt_store is receipt_store
         assert config.receipt_review_queue is receipt_review_queue
+        assert config.software_learning_store is software_learning_store
 
     def test_factory_disables_specific_gates_via_none(self, tmp_path):
         adapter = _adapter(tmp_path)

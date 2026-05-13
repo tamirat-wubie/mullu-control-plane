@@ -29,6 +29,10 @@ def _deterministic_json(data: Any) -> str:
     return json.dumps(data, sort_keys=True, ensure_ascii=True, separators=(",", ":"))
 
 
+def _bounded_store_error(summary: str, exc: BaseException) -> str:
+    return f"{summary} ({type(exc).__name__})"
+
+
 def _atomic_write(path: Path, content: str) -> None:
     """Write content to a file atomically via temp-file-then-rename."""
     parent = path.parent
@@ -47,7 +51,7 @@ def _atomic_write(path: Path, content: str) -> None:
                 os.unlink(tmp_path)
             raise
     except OSError as exc:
-        raise PersistenceWriteError(f"failed to write {path}: {exc}") from exc
+        raise PersistenceWriteError(_bounded_store_error("team registry write failed", exc)) from exc
 
 
 def _record_payload(record: object) -> dict[str, Any]:
@@ -72,7 +76,7 @@ def _deserialize_load_state(raw: object) -> WorkerLoadState:
             current_load=raw["current_load"],
         )
     except (KeyError, TypeError, ValueError, RuntimeCoreInvariantError) as exc:
-        raise CorruptedDataError(f"invalid WorkerLoadState payload: {exc}") from exc
+        raise CorruptedDataError(_bounded_store_error("invalid WorkerLoadState payload", exc)) from exc
 
 
 @dataclass(frozen=True, slots=True)
@@ -129,11 +133,11 @@ class TeamRegistryStore:
     def load_registry_state(self) -> TeamRegistryState:
         path = self._registry_path()
         if not path.exists():
-            raise CorruptedDataError(f"team registry file not found: {path}")
+            raise CorruptedDataError("team registry file not found")
         try:
             payload = json.loads(path.read_text(encoding="utf-8"))
         except (json.JSONDecodeError, OSError) as exc:
-            raise CorruptedDataError(f"malformed team registry file: {exc}") from exc
+            raise CorruptedDataError(_bounded_store_error("malformed team registry file", exc)) from exc
         if not isinstance(payload, dict):
             raise CorruptedDataError("team registry payload must be a JSON object")
 

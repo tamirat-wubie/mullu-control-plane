@@ -6,10 +6,13 @@ import tempfile
 
 import pytest
 
-from mcoi_runtime.persistence import PathTraversalError
+from mcoi_runtime.persistence import CorruptedDataError, PathTraversalError, PersistenceError
 from mcoi_runtime.persistence.state_persistence import StatePersistence
 
-FIXED_CLOCK = lambda: "2026-03-26T12:00:00Z"
+def FIXED_CLOCK():
+    return "2026-03-26T12:00:00Z"
+
+
 MALICIOUS_STATE_TYPES = [
     "../../etc/passwd",
     "foo/bar",
@@ -30,6 +33,23 @@ class TestStatePersistence:
         assert snap.state_type == "config"
         assert snap.state_hash
         assert snap.saved_at
+
+    def test_save_rejects_non_dict_data(self):
+        sp, _ = self._persistence()
+        with pytest.raises(PersistenceError, match=r"^data must be a dict$"):
+            sp.save("config", ["not", "a", "dict"])  # type: ignore[arg-type]
+
+    def test_snapshot_data_is_defensive(self):
+        sp, _ = self._persistence()
+        data = {"nested": {"value": 1}, "items": [{"x": 2}]}
+        snap = sp.save("config", data)
+
+        data["nested"]["value"] = 99
+
+        assert snap.data["nested"]["value"] == 1
+        assert snap.data["items"][0]["x"] == 2
+        with pytest.raises(TypeError):
+            snap.data["new"] = True  # type: ignore[index]
 
     def test_save_and_load(self):
         sp, _ = self._persistence()
@@ -137,12 +157,29 @@ class TestStatePersistence:
         sp, tmp_dir = self._persistence()
         sp.save("config", {"key": "value"})
         file_path = os.path.join(tmp_dir, "mullu_state_config.json")
-        with open(file_path, "r") as f:
+        with open(file_path, "r", encoding="utf-8") as f:
             wrapper = json.load(f)
         wrapper["data"]["key"] = "tampered"
-        with open(file_path, "w") as f:
-            json.dump(wrapper, f, sort_keys=True, default=str, indent=2)
-        assert sp.load("config") is None
+        with open(file_path, "w", encoding="utf-8") as f:
+            json.dump(wrapper, f, sort_keys=True)
+        with pytest.raises(CorruptedDataError, match=r"^state hash mismatch$"):
+            sp.load("config")
+
+    def test_load_rejects_malformed_json(self):
+        sp, tmp_dir = self._persistence()
+        file_path = os.path.join(tmp_dir, "mullu_state_config.json")
+        with open(file_path, "w", encoding="utf-8") as f:
+            f.write("{invalid json")
+        with pytest.raises(CorruptedDataError, match=r"^malformed state file \(JSONDecodeError\)$"):
+            sp.load("config")
+
+    def test_list_states_rejects_invalid_filename(self):
+        sp, tmp_dir = self._persistence()
+        file_path = os.path.join(tmp_dir, "mullu_state_bad..name.json")
+        with open(file_path, "w", encoding="utf-8") as f:
+            json.dump({}, f)
+        with pytest.raises(CorruptedDataError, match=r"^state filename is invalid$"):
+            sp.list_states()
 
     def test_list_states_missing_base_dir(self):
         missing_dir = os.path.join(tempfile.gettempdir(), "mullu-state-missing-dir")

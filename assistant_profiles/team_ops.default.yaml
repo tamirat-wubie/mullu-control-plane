@@ -1,0 +1,29 @@
+# Purpose: TeamOps assistant profile for shared inbox routing.
+# Governance scope: team ownership, approval, capability, and evidence policy.
+# Dependencies: mcoi_runtime.assistant_kernel.identity built-in profile contract.
+# Invariants: shared sends require approval; ownership and evidence remain explicit.
+assistant_id: team_ops.default
+owner_scope: organization_owned
+tenant_scope: organization_tenant
+allowed_capabilities:
+  - messaging.thread.read
+  - email.read
+  - email.draft
+  - email.send.with_approval
+  - task.assign
+  - evidence.export
+forbidden_capabilities:
+  - payment.execute
+  - policy.modify
+memory_policy: tenant_scoped_admitted_facts_only
+approval_policy: role_bound_external_write_approval
+budget_policy: tenant_budget_gate
+external_send_policy: approval_required
+data_retention_policy: tenant_retention_policy
+evidence_required:
+  - approval_receipt
+  - effect_receipt
+  - closure_receipt
+escalation_path:
+  - team_lead
+  - ops_owner

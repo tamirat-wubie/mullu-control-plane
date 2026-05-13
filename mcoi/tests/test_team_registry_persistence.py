@@ -135,6 +135,57 @@ def test_team_registry_store_fails_closed_on_malformed_payload(tmp_path: Path) -
     assert store.exists() is True
 
 
+def test_team_registry_store_missing_file_error_is_bounded(tmp_path: Path) -> None:
+    store = TeamRegistryStore(tmp_path / "team")
+
+    with pytest.raises(CorruptedDataError, match=r"^team registry file not found$") as excinfo:
+        store.load_registry_state()
+
+    assert str(tmp_path) not in str(excinfo.value)
+
+
+def test_team_registry_store_read_error_is_bounded(tmp_path: Path, monkeypatch) -> None:
+    base_path = tmp_path / "team"
+    base_path.mkdir(parents=True, exist_ok=True)
+    payload_path = base_path / "team_registry.json"
+    payload_path.write_text("{}", encoding="utf-8")
+    store = TeamRegistryStore(base_path)
+
+    def _raise_os_error(*_args, **_kwargs):
+        raise OSError("secret path detail")
+
+    monkeypatch.setattr(Path, "read_text", _raise_os_error)
+
+    with pytest.raises(CorruptedDataError, match=r"^malformed team registry file \(OSError\)$") as excinfo:
+        store.load_registry_state()
+
+    assert "secret path detail" not in str(excinfo.value)
+    assert str(payload_path) not in str(excinfo.value)
+
+
+def test_team_registry_store_bounds_invalid_load_state_payload(tmp_path: Path) -> None:
+    base_path = tmp_path / "team"
+    base_path.mkdir(parents=True, exist_ok=True)
+    payload_path = base_path / "team_registry.json"
+    payload_path.write_text(
+        json.dumps(
+            {
+                "workers": [],
+                "roles": [],
+                "policies": [],
+                "load_states": [{"worker_id": "worker-a"}],
+            }
+        ),
+        encoding="utf-8",
+    )
+    store = TeamRegistryStore(base_path)
+
+    with pytest.raises(CorruptedDataError, match=r"^invalid WorkerLoadState payload \(KeyError\)$") as excinfo:
+        store.load_registry_state()
+
+    assert "worker-a" not in str(excinfo.value)
+
+
 def test_restore_registry_fails_closed_before_mutation_when_worker_reference_is_missing(
     tmp_path: Path,
 ) -> None:

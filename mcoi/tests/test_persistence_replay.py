@@ -6,6 +6,7 @@ Invariants: one file per replay record, fail closed on malformed data.
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 import pytest
@@ -110,6 +111,45 @@ def test_malformed_replay_file_raises(tmp_path: Path) -> None:
     store = ReplayStore(replay_dir)
     with pytest.raises(CorruptedDataError, match=r"^malformed replay file \(JSONDecodeError\)$"):
         store.load("bad-replay")
+
+
+def test_load_rejects_replay_id_mismatch(tmp_path: Path) -> None:
+    store = ReplayStore(tmp_path / "replays")
+    store.save(_make_record("replay-real"))
+    replay_path = tmp_path / "replays" / "replay-real.json"
+    raw = json.loads(replay_path.read_text(encoding="utf-8"))
+    raw["replay_id"] = "replay-other"
+    replay_path.write_text(json.dumps(raw), encoding="utf-8")
+
+    with pytest.raises(CorruptedDataError, match=r"^replay id mismatch$"):
+        store.load("replay-real")
+
+
+def test_load_all_rejects_replay_id_mismatch(tmp_path: Path) -> None:
+    store = ReplayStore(tmp_path / "replays")
+    store.save(_make_record("replay-real"))
+    replay_path = tmp_path / "replays" / "replay-real.json"
+    raw = json.loads(replay_path.read_text(encoding="utf-8"))
+    raw["replay_id"] = "replay-other"
+    replay_path.write_text(json.dumps(raw), encoding="utf-8")
+
+    with pytest.raises(CorruptedDataError, match=r"^replay id mismatch$"):
+        store.load_all()
+
+
+def test_load_rejects_malformed_effect_arrays(tmp_path: Path) -> None:
+    store = ReplayStore(tmp_path / "replays")
+    store.save(_make_record("replay-real"))
+    replay_path = tmp_path / "replays" / "replay-real.json"
+    raw = json.loads(replay_path.read_text(encoding="utf-8"))
+    raw["approved_effects"] = {"effect_id": "not-an-array"}
+    replay_path.write_text(json.dumps(raw), encoding="utf-8")
+
+    with pytest.raises(
+        CorruptedDataError,
+        match=r"^replay approved_effects must be a JSON array$",
+    ):
+        store.load("replay-real")
 
 
 def test_empty_replay_id_raises(tmp_path: Path) -> None:

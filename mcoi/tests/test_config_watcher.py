@@ -24,6 +24,10 @@ class TestJsonParser:
         with pytest.raises(json.JSONDecodeError):
             json_parser("not json")
 
+    def test_non_object_json_rejected(self):
+        with pytest.raises(ValueError, match="json config"):
+            json_parser("[1, 2, 3]")
+
 
 class TestConfigFileWatcher:
     def test_watch_and_unwatch(self):
@@ -33,6 +37,23 @@ class TestConfigFileWatcher:
         assert watcher.watched_count == 1
         watcher.unwatch("/tmp/test.json")
         assert watcher.watched_count == 0
+
+    def test_constructor_and_watch_inputs_are_bounded(self):
+        with pytest.raises(ValueError, match="poll_interval"):
+            ConfigFileWatcher(poll_interval=True)  # type: ignore[arg-type]
+        with pytest.raises(ValueError, match="clock"):
+            ConfigFileWatcher(clock="bad")  # type: ignore[arg-type]
+        with pytest.raises(ValueError, match="path"):
+            WatchedFile(path="", parser=json_parser, on_change=lambda c: None)
+        with pytest.raises(ValueError, match="parser"):
+            WatchedFile(path="/tmp/test.json", parser="bad", on_change=lambda c: None)  # type: ignore[arg-type]
+        with pytest.raises(ValueError, match="on_change"):
+            WatchedFile(path="/tmp/test.json", parser=json_parser, on_change="bad")  # type: ignore[arg-type]
+        watcher = ConfigFileWatcher()
+        with pytest.raises(ValueError, match="watched"):
+            watcher.watch("bad")  # type: ignore[arg-type]
+        with pytest.raises(ValueError, match="path"):
+            watcher.unwatch("")
 
     def test_check_nonexistent_file(self):
         watcher = ConfigFileWatcher()
@@ -110,6 +131,23 @@ class TestConfigFileWatcher:
             s = watcher.summary()
             assert s["total_errors"] == 1  # parse error on invalid JSON
             assert s["files"][path]["last_error"] == "watch error (JSONDecodeError)"
+        finally:
+            os.unlink(path)
+
+    def test_parser_must_return_mapping(self):
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
+            f.write("{}")
+            path = f.name
+
+        try:
+            wf = WatchedFile(path=path, parser=lambda content: [], on_change=lambda c: None)  # type: ignore[arg-type]
+            watcher = ConfigFileWatcher()
+            watcher.watch(wf)
+            reloaded = watcher.check_once()
+            assert reloaded == []
+            summary = watcher.summary()
+            assert summary["total_errors"] == 1
+            assert summary["files"][path]["last_error"] == "watch error (ValueError)"
         finally:
             os.unlink(path)
 

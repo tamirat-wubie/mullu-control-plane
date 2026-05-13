@@ -42,6 +42,26 @@ from __future__ import annotations
 from mcoi_runtime.contracts.proof import CausalLineage
 
 
+def _require_entity_id(entity_id: object) -> str:
+    if not isinstance(entity_id, str) or not entity_id.strip():
+        raise ValueError("entity_id must be a non-empty string")
+    return entity_id
+
+
+def _require_lineage(lineage: object) -> CausalLineage:
+    if not isinstance(lineage, CausalLineage):
+        raise ValueError("lineage must be a CausalLineage instance")
+    return lineage
+
+
+def _require_positive_int(value: object, field_name: str) -> int:
+    if not isinstance(value, int) or isinstance(value, bool):
+        raise ValueError(f"{field_name} must be an integer")
+    if value < 1:
+        raise ValueError(f"{field_name} must be >= 1")
+    return value
+
+
 class ReceiptStore:
     """Base class for causal-lineage storage backends. Defaults are
     no-ops; subclasses override only the operations they support.
@@ -56,10 +76,13 @@ class ReceiptStore:
 
     def get_lineage(self, entity_id: str) -> CausalLineage | None:
         """Return the lineage for an entity, or None if absent."""
+        _require_entity_id(entity_id)
         return None
 
     def record_lineage(self, entity_id: str, lineage: CausalLineage) -> None:
         """Persist (or replace) the lineage for an entity."""
+        _require_entity_id(entity_id)
+        _require_lineage(lineage)
         return None
 
     def evict_oldest(self) -> None:
@@ -73,6 +96,7 @@ class ReceiptStore:
 
     def has_lineage(self, entity_id: str) -> bool:
         """Whether a lineage currently exists for an entity."""
+        _require_entity_id(entity_id)
         return False
 
     def __len__(self) -> int:
@@ -100,15 +124,18 @@ class InMemoryReceiptStore(ReceiptStore):
     DEFAULT_MAX_ENTRIES = 10_000
 
     def __init__(self, *, max_entries: int = DEFAULT_MAX_ENTRIES) -> None:
-        if max_entries < 1:
-            raise ValueError("max_entries must be >= 1")
-        self._max_entries = max_entries
+        self._max_entries = _require_positive_int(max_entries, "max_entries")
         self._lineage: dict[str, CausalLineage] = {}
 
     def get_lineage(self, entity_id: str) -> CausalLineage | None:
+        entity_id = _require_entity_id(entity_id)
         return self._lineage.get(entity_id)
 
     def record_lineage(self, entity_id: str, lineage: CausalLineage) -> None:
+        entity_id = _require_entity_id(entity_id)
+        lineage = _require_lineage(lineage)
+        if lineage.entity_id != entity_id:
+            raise ValueError("lineage entity_id must match entity_id")
         self._lineage[entity_id] = lineage
 
     def evict_oldest(self) -> None:
@@ -118,6 +145,7 @@ class InMemoryReceiptStore(ReceiptStore):
         del self._lineage[oldest_key]
 
     def has_lineage(self, entity_id: str) -> bool:
+        entity_id = _require_entity_id(entity_id)
         return entity_id in self._lineage
 
     def __len__(self) -> int:

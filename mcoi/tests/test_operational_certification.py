@@ -10,25 +10,26 @@ import os
 import sqlite3
 import tempfile
 import threading
-import time
 import pytest
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from mcoi_runtime.persistence.sqlite_store import SQLiteStore
-from mcoi_runtime.persistence.postgres_store import InMemoryStore, create_store
+from mcoi_runtime.persistence.postgres_store import create_store
 from mcoi_runtime.persistence.migrations import (
     MigrationEngine, Migration, create_platform_migration_engine,
 )
+from mcoi_runtime.persistence.errors import CorruptedDataError
 from mcoi_runtime.persistence.state_persistence import StatePersistence
 from mcoi_runtime.app.llm_bootstrap import LLMConfig, bootstrap_llm
 from mcoi_runtime.governance.audit.trail import AuditTrail
 from mcoi_runtime.governance.guards.budget import TenantBudgetManager, TenantBudgetPolicy
 from mcoi_runtime.core.cost_analytics import CostAnalyticsEngine
-from mcoi_runtime.governance.guards.rate_limit import RateLimiter, RateLimitConfig
 from mcoi_runtime.core.event_bus import EventBus
 
 
-CLOCK = lambda: "2026-03-27T12:00:00Z"
+def CLOCK():
+    return "2026-03-27T12:00:00Z"
+
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -173,8 +174,8 @@ class TestStatePersistenceLifecycle:
             assert snap.data["entry_count"] == 1500
             assert snap.data["last_hash"] == "abc123"
 
-    def test_corrupt_snapshot_returns_none(self):
-        """Corrupted snapshot file doesn't crash restore."""
+    def test_corrupt_snapshot_raises_bounded_error(self):
+        """Corrupted snapshot file fails closed with a bounded error."""
         with tempfile.TemporaryDirectory() as d:
             # Write corrupt file
             path = os.path.join(d, "mullu_state_budgets.json")
@@ -182,7 +183,8 @@ class TestStatePersistenceLifecycle:
                 f.write("{invalid json{{")
 
             sp = StatePersistence(clock=CLOCK, base_dir=d)
-            assert sp.load("budgets") is None  # Graceful None, not crash
+            with pytest.raises(CorruptedDataError, match=r"^malformed state file \(JSONDecodeError\)$"):
+                sp.load("budgets")
 
 
 # ═══════════════════════════════════════════════════════════════════════════

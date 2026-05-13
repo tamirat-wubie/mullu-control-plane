@@ -192,6 +192,7 @@ def make_default_software_dev_runner(
     ucja_runner: Callable | None = None,
     receipt_store: Any | None = None,
     receipt_review_queue: Any | None = None,
+    software_learning_store: Any | None = None,
     unit_test_command: tuple[str, ...] | None = ("pytest", "-q"),
     integration_test_command: tuple[str, ...] | None = None,
     lint_command: tuple[str, ...] | None = ("ruff", "check", "."),
@@ -205,7 +206,9 @@ def make_default_software_dev_runner(
     one engine, default gate command set, optionally LLM-backed plan and
     patch generators. Returns a SoftwareDevRunnerConfig you can pass
     directly to MulluMCPServer(software_dev_runner=...) or to invoke the
-    loop directly via governed_software_change.
+    loop directly via governed_software_change. When supplied, the software
+    learning store receives admitted software-outcome candidates through the
+    MCP software-change payload path.
 
     Pass `ucja_runner=None` to use the live UCJAPipeline; pass an explicit
     callable for tests or for stubbing during initial integration. Pass
@@ -232,6 +235,7 @@ def make_default_software_dev_runner(
         ucja_runner=ucja_runner,
         receipt_store=receipt_store,
         receipt_review_queue=receipt_review_queue,
+        software_learning_store=software_learning_store,
     )
 
 

@@ -1,0 +1,131 @@
+"""Purpose: verify assistant kernel HTTP planning routes.
+Governance scope: profile read models, FinanceOps plan compilation, consent
+    evidence, non-execution, default router mounting, and bounded failures.
+Dependencies: FastAPI TestClient and mcoi_runtime.app.routers.assistant.
+Invariants:
+  - Assistant routes compile plans only and never grant execution authority.
+  - FinanceOps external payment effects require active consent evidence.
+  - Ready plans still require governed dispatch outside the assistant route.
+"""
+
+from __future__ import annotations
+
+from fastapi import FastAPI
+from fastapi.testclient import TestClient
+
+from mcoi_runtime.app.routers.assistant import router
+from mcoi_runtime.app.routers.deps import deps
+from mcoi_runtime.app.server_http import include_default_routers
+
+
+class MetricsStub:
+    def __init__(self) -> None:
+        self.counts: dict[str, int] = {}
+
+    def inc(self, name: str, value: int = 1) -> None:
+        self.counts[name] = self.counts.get(name, 0) + value
+
+
+class FixedClock:
+    def __call__(self) -> str:
+        return "2026-05-13T10:00:00+00:00"
+
+
+def _client() -> TestClient:
+    deps.set("clock", FixedClock())
+    deps.set("metrics", MetricsStub())
+    app = FastAPI()
+    app.include_router(router)
+    return TestClient(app)
+
+
+def _plan_request(**overrides: object) -> dict[str, object]:
+    payload: dict[str, object] = {
+        "tenant_id": "tenant-finance",
+        "owner_id": "finance-owner",
+        "invoice_ref": "invoice:1001",
+        "vendor_ref": "vendor:acme",
+        "created_at": "2026-05-13T10:00:00+00:00",
+    }
+    payload.update(overrides)
+    return payload
+
+
+def test_assistant_profiles_read_model_exposes_finance_ops_profile() -> None:
+    client = _client()
+
+    response = client.get("/api/v1/assistant/profiles")
+    body = response.json()
+    finance_profile = next(profile for profile in body["profiles"] if profile["assistant_id"] == "finance_ops.default")
+
+    assert response.status_code == 200
+    assert body["count"] == 6
+    assert body["governed"] is True
+    assert "payment.execute.with_approval" in finance_profile["allowed_capabilities"]
+    assert "payment.execute" in finance_profile["forbidden_capabilities"]
+    assert "signed_evidence_bundle" in finance_profile["evidence_required"]
+
+
+def test_finance_ops_plan_blocks_without_active_payment_consent() -> None:
+    client = _client()
+
+    response = client.post("/api/v1/assistant/finance-ops/plans", json=_plan_request())
+    body = response.json()
+
+    assert response.status_code == 200
+    assert body["outcome"] == "AwaitingEvidence"
+    assert body["plan"]["blocked"] is True
+    assert "active_consent_required:payment.execute.with_approval" in body["plan"]["blocked_reasons"]
+    assert body["operator_queue_item"]["state"] == "blocked"
+    assert body["operator_queue_item"]["execution_authority_granted"] is False
+    assert body["plan"]["steps"] == []
+
+
+def test_finance_ops_plan_with_consent_projects_dispatch_ready_controls() -> None:
+    client = _client()
+
+    response = client.post(
+        "/api/v1/assistant/finance-ops/plans",
+        json=_plan_request(
+            consent_granted_by="finance-owner",
+            consent_expires_at="2026-05-13T12:00:00+00:00",
+            consent_evidence_refs=["approval:finance-owner"],
+        ),
+    )
+    body = response.json()
+
+    assert response.status_code == 200
+    assert body["outcome"] == "SolvedUnverified"
+    assert body["plan"]["blocked"] is False
+    assert body["operator_queue_item"]["state"] == "ready_for_governed_dispatch"
+    assert body["operator_queue_item"]["execution_authority_granted"] is False
+    assert "active_consent" in body["plan"]["required_controls"]
+    assert "temporal_idempotency" in body["plan"]["required_controls"]
+    assert "effect_reconciliation" in body["plan"]["required_controls"]
+    assert body["plan"]["closure_contract"]["two_confirmation_required"] is True
+    assert "signed_evidence_bundle_exists" in body["goal"]["required_closure_predicates"]
+    assert any(step["capability_id"] == "payment.execute.with_approval" for step in body["plan"]["steps"])
+
+
+def test_invalid_finance_ops_plan_fails_closed() -> None:
+    client = _client()
+
+    response = client.post(
+        "/api/v1/assistant/finance-ops/plans",
+        json=_plan_request(invoice_ref=""),
+    )
+
+    assert response.status_code == 400
+    assert response.json()["detail"]["error_code"] == "invalid_assistant_plan"
+    assert response.json()["detail"]["governed"] is True
+
+
+def test_default_routers_include_assistant_kernel_paths() -> None:
+    deps.set("clock", FixedClock())
+    deps.set("metrics", MetricsStub())
+    app = FastAPI()
+    include_default_routers(app)
+    paths = {route.path for route in app.routes}
+
+    assert "/api/v1/assistant/profiles" in paths
+    assert "/api/v1/assistant/finance-ops/plans" in paths

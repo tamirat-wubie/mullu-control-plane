@@ -100,7 +100,10 @@ class GoalStore:
         path = self._safe_path("descriptors", goal_id)
         if not path.exists():
             raise PersistenceError(f"goal descriptor not found: {goal_id}")
-        return _load_file(path, GoalDescriptor)
+        descriptor = _load_file(path, GoalDescriptor)
+        if descriptor.goal_id != goal_id:
+            raise CorruptedDataError("goal descriptor id mismatch")
+        return descriptor
 
     def save_goal_state(self, state: GoalExecutionState) -> None:
         """Persist goal execution state."""
@@ -117,7 +120,10 @@ class GoalStore:
         path = self._safe_path("goals", goal_id)
         if not path.exists():
             raise PersistenceError("goal state not found")
-        return _load_file(path, GoalExecutionState)
+        state = _load_file(path, GoalExecutionState)
+        if state.goal_id != goal_id:
+            raise CorruptedDataError("goal state id mismatch")
+        return state
 
     # --- Plans ---
 
@@ -136,7 +142,10 @@ class GoalStore:
         path = self._safe_path("plans", plan_id)
         if not path.exists():
             raise PersistenceError("plan not found")
-        return _load_file(path, GoalPlan)
+        plan = _load_file(path, GoalPlan)
+        if plan.plan_id != plan_id:
+            raise CorruptedDataError("goal plan id mismatch")
+        return plan
 
     # --- Replan records ---
 
@@ -157,7 +166,10 @@ class GoalStore:
         path = self._safe_path("replans", record_key)
         if not path.exists():
             raise PersistenceError(f"replan record not found: {record_key}")
-        return _load_file(path, GoalReplanRecord)
+        record = _load_file(path, GoalReplanRecord)
+        if f"{record.goal_id}_{record.new_plan_id}" != record_key:
+            raise CorruptedDataError("goal replan record id mismatch")
+        return record
 
     # --- Listing ---
 
@@ -167,7 +179,7 @@ class GoalStore:
         if not descriptors_dir.exists():
             return ()
         return tuple(
-            entry.stem
+            self._listed_artifact_id("descriptors", entry, label="goal descriptor")
             for entry in sorted(descriptors_dir.iterdir())
             if entry.is_file() and entry.suffix == ".json"
         )
@@ -178,7 +190,7 @@ class GoalStore:
         if not goals_dir.exists():
             return ()
         return tuple(
-            entry.stem
+            self._listed_artifact_id("goals", entry, label="goal state")
             for entry in sorted(goals_dir.iterdir())
             if entry.is_file() and entry.suffix == ".json"
         )
@@ -189,7 +201,7 @@ class GoalStore:
         if not plans_dir.exists():
             return ()
         return tuple(
-            entry.stem
+            self._listed_artifact_id("plans", entry, label="goal plan")
             for entry in sorted(plans_dir.iterdir())
             if entry.is_file() and entry.suffix == ".json"
         )
@@ -200,10 +212,18 @@ class GoalStore:
         if not replans_dir.exists():
             return ()
         return tuple(
-            entry.stem
+            self._listed_artifact_id("replans", entry, label="goal replan record")
             for entry in sorted(replans_dir.iterdir())
             if entry.is_file() and entry.suffix == ".json"
         )
+
+    def _listed_artifact_id(self, subdir: str, file_path: Path, *, label: str) -> str:
+        artifact_id = file_path.stem
+        try:
+            self._safe_path(subdir, artifact_id)
+        except PathTraversalError as exc:
+            raise CorruptedDataError(f"{label} filename is invalid") from exc
+        return artifact_id
 
     def save_state(self, engine: GoalReasoningEngine) -> str:
         """Persist exact goal runtime descriptors, states, plans, and replans."""

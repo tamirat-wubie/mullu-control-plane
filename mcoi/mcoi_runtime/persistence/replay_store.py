@@ -9,11 +9,9 @@ from __future__ import annotations
 import json
 import os
 import tempfile
-from dataclasses import fields as dc_fields
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
-from mcoi_runtime.contracts._base import thaw_value
 from mcoi_runtime.core.replay_engine import (
     EffectControl,
     ReplayArtifact,
@@ -87,16 +85,28 @@ def _serialize_replay_record(record: ReplayRecord) -> str:
     return _deterministic_json(data)
 
 
+def _require_record_items(raw: dict[str, Any], field_name: str) -> list[dict[str, Any]]:
+    items = raw.get(field_name, [])
+    if not isinstance(items, list):
+        raise CorruptedDataError(f"replay {field_name} must be a JSON array")
+    if not all(isinstance(item, dict) for item in items):
+        raise CorruptedDataError(f"replay {field_name} entries must be JSON objects")
+    return items
+
+
 def _deserialize_replay_record(raw: dict[str, Any]) -> ReplayRecord:
     """Reconstruct a ReplayRecord from a parsed dict."""
     try:
+        approved_raw = _require_record_items(raw, "approved_effects")
+        blocked_raw = _require_record_items(raw, "blocked_effects")
+        artifacts_raw = _require_record_items(raw, "artifacts")
         approved = tuple(
             ReplayEffect(
                 effect_id=e["effect_id"],
                 control=EffectControl(e["control"]),
                 artifact_id=e.get("artifact_id"),
             )
-            for e in raw.get("approved_effects", [])
+            for e in approved_raw
         )
         blocked = tuple(
             ReplayEffect(
@@ -104,14 +114,14 @@ def _deserialize_replay_record(raw: dict[str, Any]) -> ReplayRecord:
                 control=EffectControl(e["control"]),
                 artifact_id=e.get("artifact_id"),
             )
-            for e in raw.get("blocked_effects", [])
+            for e in blocked_raw
         )
         artifacts = tuple(
             ReplayArtifact(
                 artifact_id=a["artifact_id"],
                 payload_digest=a["payload_digest"],
             )
-            for a in raw.get("artifacts", [])
+            for a in artifacts_raw
         )
         return ReplayRecord(
             replay_id=raw["replay_id"],
@@ -125,6 +135,8 @@ def _deserialize_replay_record(raw: dict[str, Any]) -> ReplayRecord:
             state_hash=raw.get("state_hash"),
             environment_digest=raw.get("environment_digest"),
         )
+    except CorruptedDataError:
+        raise
     except (KeyError, TypeError, ValueError) as exc:
         raise CorruptedDataError(_bounded_store_error("invalid replay record", exc)) from exc
 
@@ -162,6 +174,14 @@ class ReplayStore:
     def _replay_path(self, replay_id: str) -> Path:
         return self._safe_path(replay_id, suffix=".json")
 
+    def _listed_replay_id(self, file_path: Path) -> str:
+        replay_id = file_path.stem
+        try:
+            self._replay_path(replay_id)
+        except PathTraversalError as exc:
+            raise CorruptedDataError("replay filename is invalid") from exc
+        return replay_id
+
     def save(self, record: ReplayRecord) -> None:
         if not isinstance(record, ReplayRecord):
             raise PersistenceError("record must be a ReplayRecord instance")
@@ -189,16 +209,19 @@ class ReplayStore:
         if not isinstance(raw, dict):
             raise CorruptedDataError("replay file must be a JSON object")
 
-        return _deserialize_replay_record(raw)
+        record = _deserialize_replay_record(raw)
+        if record.replay_id != replay_id:
+            raise CorruptedDataError("replay id mismatch")
+        return record
 
     def list_replays(self) -> tuple[str, ...]:
         if not self._base_path.exists():
             return ()
-        return tuple(
-            entry.stem
-            for entry in sorted(self._base_path.iterdir())
-            if entry.is_file() and entry.suffix == ".json"
-        )
+        replay_ids: list[str] = []
+        for entry in sorted(self._base_path.iterdir()):
+            if entry.is_file() and entry.suffix == ".json":
+                replay_ids.append(self._listed_replay_id(entry))
+        return tuple(replay_ids)
 
     def load_all(self) -> tuple[ReplayRecord, ...]:
         if not self._base_path.exists():
@@ -212,5 +235,9 @@ class ReplayStore:
                     raise CorruptedDataError(_bounded_store_error("malformed replay file", exc)) from exc
                 if not isinstance(raw, dict):
                     raise CorruptedDataError("replay file must be a JSON object")
-                results.append(_deserialize_replay_record(raw))
+                expected_replay_id = self._listed_replay_id(file_path)
+                record = _deserialize_replay_record(raw)
+                if record.replay_id != expected_replay_id:
+                    raise CorruptedDataError("replay id mismatch")
+                results.append(record)
         return tuple(results)

@@ -103,7 +103,10 @@ class WorkflowStore:
         path = self._safe_path(execution_id)
         if not path.exists():
             raise PersistenceError("workflow execution record not found")
-        return _load_workflow_file(path, WorkflowExecutionRecord, "workflow record")
+        record = _load_workflow_file(path, WorkflowExecutionRecord, "workflow record")
+        if record.execution_id != execution_id:
+            raise CorruptedDataError("workflow execution id mismatch")
+        return record
 
     def load_descriptor(self, workflow_id: str) -> WorkflowDescriptor:
         """Load a workflow descriptor by workflow ID."""
@@ -112,14 +115,17 @@ class WorkflowStore:
         path = self._descriptor_path(workflow_id)
         if not path.exists():
             raise PersistenceError("workflow descriptor not found")
-        return _load_workflow_file(path, WorkflowDescriptor, "workflow descriptor")
+        descriptor = _load_workflow_file(path, WorkflowDescriptor, "workflow descriptor")
+        if descriptor.workflow_id != workflow_id:
+            raise CorruptedDataError("workflow descriptor id mismatch")
+        return descriptor
 
     def list_executions(self) -> tuple[str, ...]:
         """List all persisted workflow execution IDs in sorted order."""
         if not self._base_path.exists():
             return ()
         return tuple(
-            entry.stem
+            self._listed_execution_id(entry)
             for entry in sorted(self._base_path.iterdir())
             if (
                 entry.is_file()
@@ -134,13 +140,29 @@ class WorkflowStore:
         if not self._base_path.exists():
             return ()
         return tuple(
-            entry.name[len(_DESCRIPTOR_PREFIX):-len(".json")]
+            self._listed_descriptor_id(entry)
             for entry in sorted(self._base_path.iterdir())
             if entry.is_file() and entry.suffix == ".json" and entry.name.startswith(_DESCRIPTOR_PREFIX)
         )
 
     def _descriptor_path(self, workflow_id: str) -> Path:
         return self._safe_path(f"{_DESCRIPTOR_PREFIX}{workflow_id}")
+
+    def _listed_execution_id(self, file_path: Path) -> str:
+        execution_id = file_path.stem
+        try:
+            self._safe_path(execution_id)
+        except PathTraversalError as exc:
+            raise CorruptedDataError("workflow execution filename is invalid") from exc
+        return execution_id
+
+    def _listed_descriptor_id(self, file_path: Path) -> str:
+        workflow_id = file_path.name[len(_DESCRIPTOR_PREFIX):-len(".json")]
+        try:
+            self._descriptor_path(workflow_id)
+        except PathTraversalError as exc:
+            raise CorruptedDataError("workflow descriptor filename is invalid") from exc
+        return workflow_id
 
     def save_state(self, engine: WorkflowEngine) -> str:
         """Persist exact workflow descriptors and execution records as one witness."""

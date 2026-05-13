@@ -17,7 +17,6 @@ from mcoi_runtime.persistence.hash_chain import (
     GENESIS_PREVIOUS_HASH,
     HashChainStore,
     compute_chain_hash,
-    compute_content_hash,
 )
 from mcoi_runtime.persistence.errors import CorruptedDataError, PathTraversalError
 from mcoi_runtime.persistence.trace_store import TraceStore
@@ -239,6 +238,30 @@ class TestLoadAll:
 
         store = HashChainStore(chain_dir)
         with pytest.raises(CorruptedDataError, match=r"^invalid hash chain entry \(CorruptedDataError\)$"):
+            store.load_all()
+
+    def test_load_all_rejects_sequence_filename_mismatch(self, tmp_path: Path) -> None:
+        chain_dir = tmp_path / "chain"
+        store = HashChainStore(chain_dir)
+        store.append("hash-a")
+        entry_file = chain_dir / "000000000000.json"
+        raw = json.loads(entry_file.read_text(encoding="utf-8"))
+        raw["sequence_number"] = 1
+        entry_file.write_text(
+            json.dumps(raw, sort_keys=True, ensure_ascii=True, separators=(",", ":")),
+            encoding="utf-8",
+        )
+
+        with pytest.raises(CorruptedDataError, match=r"^hash chain sequence mismatch$"):
+            store.load_all()
+
+    def test_load_all_rejects_invalid_sequence_filename(self, tmp_path: Path) -> None:
+        chain_dir = tmp_path / "chain"
+        chain_dir.mkdir(parents=True)
+        (chain_dir / "not-a-sequence.json").write_text("{}", encoding="utf-8")
+
+        store = HashChainStore(chain_dir)
+        with pytest.raises(CorruptedDataError, match=r"^hash chain filename is invalid$"):
             store.load_all()
 
 

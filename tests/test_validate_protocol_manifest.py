@@ -765,6 +765,21 @@ def test_protocol_manifest_indexes_production_evidence_endpoint_contracts() -> N
     assert proof_entry["surface"] == "proof"
 
 
+def test_protocol_manifest_indexes_runtime_witness_and_latest_anchor() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    witness_entry = entries["runtime-witness"]
+    anchor_entry = entries["latest-anchor-read-model"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert witness_entry["path"] == "schemas/runtime_witness.schema.json"
+    assert witness_entry["urn"] == "urn:mullusi:schema:runtime-witness:1"
+    assert witness_entry["surface"] == "runtime"
+    assert anchor_entry["path"] == "schemas/latest_anchor_read_model.schema.json"
+    assert anchor_entry["urn"] == "urn:mullusi:schema:latest-anchor-read-model:1"
+    assert anchor_entry["surface"] == "audit"
+
+
 def test_protocol_manifest_indexes_finance_approval_packet_proof() -> None:
     manifest = load_manifest()
     entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}

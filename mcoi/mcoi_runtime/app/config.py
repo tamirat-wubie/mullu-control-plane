@@ -135,25 +135,17 @@ class AppConfig:
             raise ValueError("unknown config keys")
 
         return cls(
-            allowed_planning_classes=tuple(
-                normalized.get("allowed_planning_classes", ("constraint",))
-            ),
-            enabled_executor_routes=tuple(
-                normalized.get("enabled_executor_routes", ("shell_command",))
-            ),
-            enabled_observer_routes=tuple(
-                normalized.get("enabled_observer_routes", ("filesystem", "process"))
-            ),
+            allowed_planning_classes=normalized.get("allowed_planning_classes", ("constraint",)),
+            enabled_executor_routes=normalized.get("enabled_executor_routes", ("shell_command",)),
+            enabled_observer_routes=normalized.get("enabled_observer_routes", ("filesystem", "process")),
             autonomy_mode=normalized.get("autonomy_mode", "bounded_autonomous"),
             policy_pack_id=normalized.get("policy_pack_id"),
             policy_pack_version=normalized.get("policy_pack_version"),
             effect_assurance_required=normalized.get("effect_assurance_required", False),
             shell_sandbox_enabled=normalized.get("shell_sandbox_enabled", False),
             shell_sandbox_id=normalized.get("shell_sandbox_id", "local"),
-            shell_allowed_cwd_roots=tuple(normalized.get("shell_allowed_cwd_roots", ())),
-            shell_allowed_environment_keys=tuple(
-                normalized.get("shell_allowed_environment_keys", ())
-            ),
+            shell_allowed_cwd_roots=normalized.get("shell_allowed_cwd_roots", ()),
+            shell_allowed_environment_keys=normalized.get("shell_allowed_environment_keys", ()),
             shell_allow_inherited_environment=normalized.get(
                 "shell_allow_inherited_environment",
                 True,

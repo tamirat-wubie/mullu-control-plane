@@ -11,9 +11,7 @@ from datetime import datetime, timezone
 from mcoi_runtime.core.agent_orchestration import (
     AgentOrchestrator,
     AgentProposal,
-    HandoffResult,
     OrchestrationPhase,
-    OrchestrationPlan,
     Vote,
 )
 
@@ -83,6 +81,59 @@ class TestPlanLifecycle:
         with pytest.raises(ValueError, match="^plan unavailable$") as exc_info:
             orchestrator.add_proposal("missing-plan", proposal)
         assert "missing-plan" not in str(exc_info.value)
+
+    def test_add_proposal_rejects_unknown_proposer_before_voting(self, orchestrator):
+        plan = orchestrator.create_plan("agent-a", "goal")
+        proposal = AgentProposal(
+            proposal_id="p1",
+            agent_id="ghost",
+            action="search",
+            description="Search docs",
+            required_capabilities=("search",),
+        )
+
+        with pytest.raises(ValueError, match="^proposal agent unavailable$") as exc_info:
+            orchestrator.add_proposal(plan.plan_id, proposal)
+
+        assert "ghost" not in str(exc_info.value)
+        assert plan.proposals == []
+
+    def test_add_proposal_rejects_missing_agent_capability_before_voting(self, orchestrator):
+        plan = orchestrator.create_plan("agent-a", "goal")
+        proposal = AgentProposal(
+            proposal_id="p1",
+            agent_id="agent-b",
+            action="deploy",
+            description="Deploy change",
+            required_capabilities=("deploy",),
+        )
+
+        with pytest.raises(ValueError, match="^proposal agent lacks required capabilities$") as exc_info:
+            orchestrator.add_proposal(plan.plan_id, proposal)
+
+        assert "deploy" not in str(exc_info.value)
+        assert plan.proposals == []
+
+    def test_add_proposal_rejects_unmanifested_capability_before_voting(self):
+        orch = AgentOrchestrator(
+            clock=_clock,
+            agent_capabilities={"agent-a": ("search", "deploy")},
+            admitted_capabilities=("search",),
+        )
+        plan = orch.create_plan("agent-a", "goal")
+        proposal = AgentProposal(
+            proposal_id="p1",
+            agent_id="agent-a",
+            action="deploy",
+            description="Deploy change",
+            required_capabilities=("deploy",),
+        )
+
+        with pytest.raises(ValueError, match="^proposal requires unadmitted capabilities$") as exc_info:
+            orch.add_proposal(plan.plan_id, proposal)
+
+        assert "deploy" not in str(exc_info.value)
+        assert plan.proposals == []
 
     def test_submit_empty_plan_fails(self, orchestrator):
         plan = orchestrator.create_plan("agent-a", "goal")
@@ -166,6 +217,9 @@ class TestPlanExecution:
         assert result.phase == OrchestrationPhase.COMPLETED
         assert len(result.results) == 1
         assert result.results[0]["success"]
+        assert result.results[0]["proof_id"] == result.dispatch_proofs[0].proof_id
+        assert result.dispatch_proofs[0].decision == "executed"
+        assert result.dispatch_proofs[0].reason == "proposal dispatched"
 
     def test_execute_without_quorum_fails(self, orchestrator):
         plan = orchestrator.create_plan("agent-a", "goal")
@@ -176,6 +230,11 @@ class TestPlanExecution:
         orchestrator.cast_vote(plan.plan_id, "agent-a", Vote.APPROVE)
         result = orchestrator.execute_plan(plan.plan_id)
         assert result.phase == OrchestrationPhase.FAILED
+        assert result.results == []
+        assert len(result.dispatch_proofs) == 1
+        assert result.dispatch_proofs[0].decision == "blocked"
+        assert result.dispatch_proofs[0].reason == "consensus quorum not met"
+        assert result.dispatch_proofs[0].quorum_met is False
 
     def test_execute_with_custom_executor(self, orchestrator):
         plan = orchestrator.create_plan("agent-a", "goal")
@@ -191,6 +250,9 @@ class TestPlanExecution:
         )
         assert result.phase == OrchestrationPhase.COMPLETED
         assert result.results[0]["output"] == "executed p1"
+        assert result.results[0]["proof_id"] == result.dispatch_proofs[0].proof_id
+        assert result.dispatch_proofs[0].agent_registered is True
+        assert result.dispatch_proofs[0].manifest_admitted is True
 
     def test_execute_with_failing_executor(self, orchestrator):
         plan = orchestrator.create_plan("agent-a", "goal")
@@ -207,6 +269,63 @@ class TestPlanExecution:
         assert result.phase == OrchestrationPhase.FAILED
         assert result.results[0]["error"] == "proposal execution error (RuntimeError)"
         assert "boom" not in result.results[0]["error"]
+        assert result.results[0]["proof_id"] == result.dispatch_proofs[0].proof_id
+        assert result.dispatch_proofs[0].decision == "failed"
+        assert result.dispatch_proofs[0].reason == "executor error"
+
+    def test_execute_revalidates_proposal_agent_availability(self, orchestrator):
+        plan = orchestrator.create_plan("agent-a", "goal")
+        orchestrator.add_proposal(plan.plan_id, AgentProposal(
+            proposal_id="p1",
+            agent_id="agent-c",
+            action="deploy",
+            description="Deploy change",
+            required_capabilities=("deploy",),
+        ))
+        orchestrator.submit_for_voting(plan.plan_id)
+        orchestrator.cast_vote(plan.plan_id, "agent-a", Vote.APPROVE)
+        orchestrator.cast_vote(plan.plan_id, "agent-b", Vote.APPROVE)
+        orchestrator.unregister_agent("agent-c")
+
+        result = orchestrator.execute_plan(plan.plan_id)
+
+        assert result.phase == OrchestrationPhase.FAILED
+        assert result.results[0]["success"] is False
+        assert result.results[0]["error"] == "proposal agent unavailable"
+        assert result.results[0]["proof_id"] == result.dispatch_proofs[0].proof_id
+        assert result.dispatch_proofs[0].agent_registered is False
+        assert result.dispatch_proofs[0].decision == "blocked"
+
+    def test_execute_revalidates_manifest_admission(self):
+        orch = AgentOrchestrator(
+            clock=_clock,
+            agent_capabilities={
+                "agent-a": ("deploy",),
+                "agent-b": ("deploy",),
+            },
+            admitted_capabilities=("deploy",),
+        )
+        plan = orch.create_plan("agent-a", "goal")
+        orch.add_proposal(plan.plan_id, AgentProposal(
+            proposal_id="p1",
+            agent_id="agent-a",
+            action="deploy",
+            description="Deploy change",
+            required_capabilities=("deploy",),
+        ))
+        orch.submit_for_voting(plan.plan_id)
+        orch.cast_vote(plan.plan_id, "agent-a", Vote.APPROVE)
+        orch.cast_vote(plan.plan_id, "agent-b", Vote.APPROVE)
+        orch.set_admitted_capabilities(())
+
+        result = orch.execute_plan(plan.plan_id)
+
+        assert result.phase == OrchestrationPhase.FAILED
+        assert result.results[0]["success"] is False
+        assert result.results[0]["error"] == "proposal requires unadmitted capabilities"
+        assert result.results[0]["proof_id"] == result.dispatch_proofs[0].proof_id
+        assert result.dispatch_proofs[0].manifest_gated is True
+        assert result.dispatch_proofs[0].manifest_admitted is False
 
     def test_execute_plan_wrong_phase_is_bounded(self, orchestrator):
         plan = orchestrator.create_plan("agent-a", "goal")
@@ -247,6 +366,22 @@ class TestHandoffs:
         assert result.error == "target agent unavailable"
         assert "ghost" not in result.error
 
+    def test_handoff_blocks_unmanifested_required_capability(self):
+        orch = AgentOrchestrator(
+            clock=_clock,
+            agent_capabilities={
+                "agent-a": ("search",),
+                "agent-b": ("search", "deploy"),
+            },
+            admitted_capabilities=("search",),
+        )
+
+        result = orch.handoff("agent-a", "agent-b", required_capabilities=("deploy",))
+
+        assert result.success is False
+        assert result.error == "required capabilities are not manifest admitted"
+        assert "deploy" not in result.error
+
     def test_find_capable_agents(self, orchestrator):
         agents = orchestrator.find_capable_agents(("code", "deploy"))
         assert agents == ["agent-c"]
@@ -255,14 +390,51 @@ class TestHandoffs:
         agents = orchestrator.find_capable_agents(("llm",))
         assert set(agents) == {"agent-a", "agent-b"}
 
+    def test_find_capable_agents_excludes_unmanifested_capabilities(self):
+        orch = AgentOrchestrator(
+            clock=_clock,
+            agent_capabilities={
+                "agent-a": ("search",),
+                "agent-b": ("deploy",),
+            },
+            admitted_capabilities=("search",),
+        )
+
+        assert orch.find_capable_agents(("search",)) == ["agent-a"]
+        assert orch.find_capable_agents(("deploy",)) == []
+
+    def test_manifest_read_model_builds_gated_orchestrator(self):
+        orch = AgentOrchestrator.from_manifest_read_model(
+            clock=_clock,
+            agent_capabilities={"agent-a": ("search", "deploy")},
+            manifest_read_model={
+                "capability_ids": ("search",),
+                "manifest_count": 1,
+            },
+        )
+
+        summary = orch.summary()
+        assert orch.manifest_gated is True
+        assert summary["manifest_gated"] is True
+        assert summary["admitted_capability_count"] == 1
+        assert orch.find_capable_agents(("deploy",)) == []
+
 
 class TestSummary:
     def test_summary(self, orchestrator):
         plan = orchestrator.create_plan("agent-a", "goal")
+        orchestrator.add_proposal(plan.plan_id, AgentProposal(
+            proposal_id="p1", agent_id="agent-a", action="search", description="d",
+        ))
+        orchestrator.submit_for_voting(plan.plan_id)
+        orchestrator.cast_vote(plan.plan_id, "agent-a", Vote.APPROVE)
+        orchestrator.cast_vote(plan.plan_id, "agent-b", Vote.APPROVE)
+        orchestrator.execute_plan(plan.plan_id)
         s = orchestrator.summary()
         assert s["registered_agents"] == 3
         assert s["total_plans"] == 1
-        assert s["active_plans"] == 1
+        assert s["active_plans"] == 0
+        assert s["dispatch_proofs"] == 1
 
     def test_plan_to_dict(self, orchestrator):
         plan = orchestrator.create_plan("agent-a", "goal")
@@ -270,3 +442,21 @@ class TestSummary:
         assert d["plan_id"] == plan.plan_id
         assert d["phase"] == "planning"
         assert d["approval_count"] == 0
+        assert d["dispatch_proofs"] == []
+
+    def test_plan_to_dict_includes_dispatch_proofs(self, orchestrator):
+        plan = orchestrator.create_plan("agent-a", "goal")
+        orchestrator.add_proposal(plan.plan_id, AgentProposal(
+            proposal_id="p1", agent_id="agent-a", action="search", description="d",
+        ))
+        orchestrator.submit_for_voting(plan.plan_id)
+        orchestrator.cast_vote(plan.plan_id, "agent-a", Vote.APPROVE)
+        orchestrator.cast_vote(plan.plan_id, "agent-b", Vote.APPROVE)
+
+        result = orchestrator.execute_plan(plan.plan_id)
+        data = result.to_dict()
+
+        assert len(data["dispatch_proofs"]) == 1
+        assert data["dispatch_proofs"][0]["proof_id"] == result.results[0]["proof_id"]
+        assert data["dispatch_proofs"][0]["decision"] == "executed"
+        assert data["dispatch_proofs"][0]["required_capability_count"] == 0

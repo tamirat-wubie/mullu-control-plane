@@ -16,6 +16,14 @@ from mcoi_runtime.core.structured_output import StructuredOutputEngine
 from mcoi_runtime.core.tool_use import ToolRegistry
 
 
+class _RecordingOrchestrator:
+    def __init__(self) -> None:
+        self.admitted_capability_calls: list[tuple[str, ...]] = []
+
+    def set_admitted_capabilities(self, capabilities: tuple[str, ...] | None) -> None:
+        self.admitted_capability_calls.append(tuple(capabilities or ()))
+
+
 def test_build_default_input_validator_registers_expected_schemas() -> None:
     validator = server_runtime.build_default_input_validator()
 
@@ -38,6 +46,7 @@ def test_bootstrap_server_runtime_stack_preserves_order_and_exported_bindings() 
     guard_chain = object()
     shutdown_mgr = object()
     state_persistence = object()
+    agent_orchestrator = _RecordingOrchestrator()
 
     agent_bootstrap = SimpleNamespace(
         observability=observability,
@@ -51,10 +60,17 @@ def test_bootstrap_server_runtime_stack_preserves_order_and_exported_bindings() 
     )
     operational_bootstrap = SimpleNamespace(
         guard_chain=guard_chain,
+        agent_orchestrator=agent_orchestrator,
     )
     capability_bootstrap = SimpleNamespace(
         shutdown_mgr=shutdown_mgr,
         state_persistence=state_persistence,
+        capability_manifest_registry=SimpleNamespace(
+            read_model=lambda: {
+                "configured": True,
+                "capability_ids": ("search", "code", ""),
+            },
+        ),
     )
 
     def fake_bootstrap_agent_runtime_fn(**kwargs):
@@ -113,6 +129,25 @@ def test_bootstrap_server_runtime_stack_preserves_order_and_exported_bindings() 
     assert bootstrap.guard_chain is guard_chain
     assert bootstrap.shutdown_mgr is shutdown_mgr
     assert bootstrap.state_persistence is state_persistence
+    assert agent_orchestrator.admitted_capability_calls == [("search", "code")]
+
+
+def test_manifest_binding_ignores_unconfigured_registry() -> None:
+    agent_orchestrator = _RecordingOrchestrator()
+
+    server_runtime_stack._bind_manifest_admissions_to_orchestrator(
+        operational_bootstrap=SimpleNamespace(agent_orchestrator=agent_orchestrator),
+        capability_bootstrap=SimpleNamespace(
+            capability_manifest_registry=SimpleNamespace(
+                read_model=lambda: {
+                    "configured": False,
+                    "capability_ids": ("search",),
+                },
+            ),
+        ),
+    )
+
+    assert agent_orchestrator.admitted_capability_calls == []
 
 
 def test_validate_or_raise_returns_bounded_422_payload() -> None:

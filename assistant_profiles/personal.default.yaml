@@ -1,0 +1,32 @@
+# Purpose: owner-scoped personal assistant profile.
+# Governance scope: personal memory, approval, capability, and evidence policy.
+# Dependencies: mcoi_runtime.assistant_kernel.identity built-in profile contract.
+# Invariants: external writes require approval; memory admits verified preferences only.
+assistant_id: personal.default
+owner_scope: single_owner
+tenant_scope: personal_tenant
+allowed_capabilities:
+  - email.read
+  - email.search
+  - email.draft
+  - email.send.with_approval
+  - calendar.read
+  - calendar.conflict_check
+  - calendar.schedule
+  - calendar.invite
+  - memory.preference.admit
+  - task.reminder.schedule
+forbidden_capabilities:
+  - payment.execute
+  - device.host_control
+memory_policy: verified_preferences_only
+approval_policy: owner_approval_for_external_write
+budget_policy: personal_budget_awareness_only
+external_send_policy: approval_required
+data_retention_policy: owner_controlled_retention
+evidence_required:
+  - approval_receipt
+  - effect_receipt
+  - closure_receipt
+escalation_path:
+  - owner

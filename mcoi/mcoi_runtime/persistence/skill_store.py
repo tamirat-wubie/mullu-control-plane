@@ -6,7 +6,6 @@ Invariants: one file per skill record, append-only, fail closed on malformed dat
 
 from __future__ import annotations
 
-import json
 import os
 import tempfile
 from pathlib import Path
@@ -74,6 +73,14 @@ class SkillStore:
     def _record_path(self, record_id: str) -> Path:
         return self._safe_path(record_id, suffix=".json")
 
+    def _listed_record_id(self, file_path: Path) -> str:
+        record_id = file_path.stem
+        try:
+            self._record_path(record_id)
+        except PathTraversalError as exc:
+            raise CorruptedDataError("skill record filename is invalid") from exc
+        return record_id
+
     def save(self, record: SkillExecutionRecord) -> None:
         """Persist a skill execution record."""
         if not isinstance(record, SkillExecutionRecord):
@@ -89,17 +96,17 @@ class SkillStore:
         path = self._record_path(record_id)
         if not path.exists():
             raise PersistenceError("skill record not found")
-        return _load_skill_file(path)
+        return _load_skill_file(path, expected_record_id=record_id)
 
     def list_records(self) -> tuple[str, ...]:
         """List all persisted skill record IDs in sorted order."""
         if not self._base_path.exists():
             return ()
-        return tuple(
-            entry.stem
-            for entry in sorted(self._base_path.iterdir())
-            if entry.is_file() and entry.suffix == ".json"
-        )
+        record_ids: list[str] = []
+        for entry in sorted(self._base_path.iterdir()):
+            if entry.is_file() and entry.suffix == ".json":
+                record_ids.append(self._listed_record_id(entry))
+        return tuple(record_ids)
 
     def load_all(self) -> tuple[SkillExecutionRecord, ...]:
         """Load all skill execution records in sorted order."""
@@ -108,11 +115,12 @@ class SkillStore:
         records: list[SkillExecutionRecord] = []
         for file_path in sorted(self._base_path.iterdir()):
             if file_path.is_file() and file_path.suffix == ".json":
-                records.append(_load_skill_file(file_path))
+                expected_record_id = self._listed_record_id(file_path)
+                records.append(_load_skill_file(file_path, expected_record_id=expected_record_id))
         return tuple(records)
 
 
-def _load_skill_file(path: Path) -> SkillExecutionRecord:
+def _load_skill_file(path: Path, *, expected_record_id: str | None = None) -> SkillExecutionRecord:
     """Load and validate a single skill execution record JSON file."""
     try:
         content = path.read_text(encoding="utf-8")
@@ -120,8 +128,11 @@ def _load_skill_file(path: Path) -> SkillExecutionRecord:
         raise CorruptedDataError(_bounded_store_error("skill store read failed", exc)) from exc
 
     try:
-        return deserialize_record(content, SkillExecutionRecord)
+        record = deserialize_record(content, SkillExecutionRecord)
     except CorruptedDataError:
         raise
     except (TypeError, ValueError) as exc:
         raise CorruptedDataError(_bounded_store_error("invalid skill record", exc)) from exc
+    if expected_record_id is not None and record.record_id != expected_record_id:
+        raise CorruptedDataError("skill record id mismatch")
+    return record

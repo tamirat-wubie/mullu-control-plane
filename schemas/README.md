@@ -101,6 +101,7 @@ files are open wire contracts. Runtime modules under `mcoi/`, `gateway/`, and
 | `trust_ledger_export_package.schema.json` | Canonical manifest binding trust ledger bundle, anchor receipt, and artifact export files |
 | `verification_result.schema.json` | Canonical verification closure |
 | `learning_admission.schema.json` | Canonical learning admission decision |
+| `latest_anchor_read_model.schema.json` | Canonical latest command-event anchor read model |
 | `low_code_builder_catalog.schema.json` | Canonical declarative low-code builder catalog snapshot |
 | `marketplace_sdk_catalog.schema.json` | Canonical governed marketplace and SDK catalog snapshot |
 | `memory_lattice.schema.json` | Canonical memory planning and execution admission claim |

@@ -15,7 +15,7 @@ from hashlib import sha256
 from pathlib import Path
 from typing import Any, Callable
 
-from mcoi_runtime.contracts._base import freeze_value, thaw_value
+from mcoi_runtime.contracts._base import thaw_value
 
 from .errors import (
     CorruptedDataError,
@@ -91,6 +91,8 @@ class SnapshotStore:
     def __init__(self, base_path: Path, *, clock: Callable[[], str] | None = None) -> None:
         if not isinstance(base_path, Path):
             raise PersistenceError("base_path must be a Path instance")
+        if clock is not None and not callable(clock):
+            raise PersistenceError("clock must be callable")
         self._base_path = base_path
         self._clock = clock or (lambda: datetime.now(timezone.utc).isoformat())
 
@@ -144,8 +146,8 @@ class SnapshotStore:
             "description": metadata.description,
             "content_hash": metadata.content_hash,
         }
-        _atomic_write(snap_dir / "metadata.json", _deterministic_json(metadata_dict))
         _atomic_write(snap_dir / "data.json", data_json)
+        _atomic_write(snap_dir / "metadata.json", _deterministic_json(metadata_dict))
 
         return metadata
 
@@ -178,6 +180,9 @@ class SnapshotStore:
         except (KeyError, TypeError, PersistenceError) as exc:
             raise CorruptedDataError(_bounded_store_error("invalid snapshot metadata", exc)) from exc
 
+        if metadata.snapshot_id != snapshot_id:
+            raise CorruptedDataError("snapshot metadata id mismatch")
+
         try:
             data_raw = json.loads(data_path.read_text(encoding="utf-8"))
         except (json.JSONDecodeError, OSError) as exc:
@@ -201,19 +206,26 @@ class SnapshotStore:
         for entry in sorted(self._base_path.iterdir()):
             if not entry.is_dir():
                 continue
+            try:
+                self._snapshot_dir(entry.name)
+            except PathTraversalError as exc:
+                raise CorruptedDataError("snapshot directory name is invalid") from exc
             meta_path = entry / "metadata.json"
             if not meta_path.exists():
                 continue
             try:
                 meta_raw = json.loads(meta_path.read_text(encoding="utf-8"))
-                results.append(
-                    SnapshotMetadata(
-                        snapshot_id=meta_raw["snapshot_id"],
-                        created_at=meta_raw["created_at"],
-                        description=meta_raw["description"],
-                        content_hash=meta_raw["content_hash"],
-                    )
+                metadata = SnapshotMetadata(
+                    snapshot_id=meta_raw["snapshot_id"],
+                    created_at=meta_raw["created_at"],
+                    description=meta_raw["description"],
+                    content_hash=meta_raw["content_hash"],
                 )
+                if metadata.snapshot_id != entry.name:
+                    raise CorruptedDataError("snapshot metadata id mismatch")
+                results.append(metadata)
+            except CorruptedDataError:
+                raise
             except (json.JSONDecodeError, KeyError, TypeError, OSError, PersistenceError):
                 raise CorruptedDataError("malformed snapshot metadata")
 

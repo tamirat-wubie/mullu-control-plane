@@ -1,0 +1,29 @@
+# Purpose: corporate admin assistant profile for governed administration.
+# Governance scope: directory, access, audit, approval, and evidence policy.
+# Dependencies: mcoi_runtime.assistant_kernel.identity built-in profile contract.
+# Invariants: administrative actions route through approval and audit evidence.
+assistant_id: corporate_admin.default
+owner_scope: organization_owned
+tenant_scope: organization_tenant
+allowed_capabilities:
+  - directory.read
+  - approval.request
+  - access.request.route
+  - audit.export
+  - evidence.export
+forbidden_capabilities:
+  - payment.execute
+  - policy.modify
+memory_policy: tenant_scoped_admitted_facts_only
+approval_policy: role_bound_external_write_approval
+budget_policy: tenant_budget_gate
+external_send_policy: dual_approval_required
+data_retention_policy: tenant_retention_policy
+evidence_required:
+  - approval_receipt
+  - effect_receipt
+  - closure_receipt
+escalation_path:
+  - it_admin
+  - security_owner
+  - compliance_officer
