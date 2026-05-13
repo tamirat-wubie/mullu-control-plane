@@ -1035,6 +1035,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "blocked_packet_emits_no_effect",
                 "approval_action_binds_approval_effect_and_closure_refs",
                 "payment_handoff_prepared_without_live_payment_claim",
+                "payment_receipt_and_ledger_reconciliation_required_for_payment_closure",
                 "packet_proof_requires_policy_evidence_and_closure_for_closed_states",
                 "operator_read_model_bounds_visible_packets_and_counts",
             ],

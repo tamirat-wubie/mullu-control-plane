@@ -74,6 +74,7 @@ class EffectReceiptType(StrEnum):
     EMAIL_HANDOFF_CREATED = "email_handoff_created"
     EMAIL_SENT_WITH_APPROVAL = "email_sent_with_approval"
     PAYMENT_HANDOFF_CREATED = "payment_handoff_created"
+    PAYMENT_SENT_WITH_APPROVAL = "payment_sent_with_approval"
 
 
 @dataclass(frozen=True, slots=True)

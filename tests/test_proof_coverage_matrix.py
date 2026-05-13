@@ -537,6 +537,7 @@ def test_finance_approval_packet_surface_is_witnessed() -> None:
     assert "blocked_packet_emits_no_effect" in witnesses
     assert "approval_action_binds_approval_effect_and_closure_refs" in witnesses
     assert "payment_handoff_prepared_without_live_payment_claim" in witnesses
+    assert "payment_receipt_and_ledger_reconciliation_required_for_payment_closure" in witnesses
     assert "packet_proof_requires_policy_evidence_and_closure_for_closed_states" in witnesses
     assert "operator_read_model_bounds_visible_packets_and_counts" in witnesses
     assert closure_actions["classify_finance_approval_packet_routes"]["status"] == "closed"

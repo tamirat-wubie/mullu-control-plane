@@ -72,9 +72,12 @@ class FinancePacketApprovalRequest(BaseModel):
     status: str = ApprovalStatus.GRANTED.value
     create_email_handoff: bool = True
     create_payment_handoff: bool = False
+    finalize_payment_with_receipt: bool = False
     closure_certificate_id: str = ""
     evidence_refs: list[str] = Field(default_factory=list)
     payment_evidence_refs: list[str] = Field(default_factory=list)
+    payment_provider_receipt_ref: str = ""
+    ledger_reconciliation_ref: str = ""
 
 
 def reset_finance_approval_packets_for_tests() -> None:
@@ -301,12 +304,20 @@ def approve_finance_approval_packet(case_id: str, req: FinancePacketApprovalRequ
     case = store.get_case(case_id)
     if case is None:
         raise HTTPException(404, detail=_error_detail("packet not found", "packet_not_found"))
-    effect: FinanceEffectReceipt | None = None
+    effects: list[FinanceEffectReceipt] = []
     try:
         now = _clock_now()
         approval_status = ApprovalStatus(req.status)
         if req.create_email_handoff and req.create_payment_handoff:
             raise RuntimeCoreInvariantError("only one handoff type may be created per approval")
+        if req.finalize_payment_with_receipt and not req.create_payment_handoff:
+            raise RuntimeCoreInvariantError("payment finalization requires payment handoff")
+        if req.finalize_payment_with_receipt and (
+            not req.payment_provider_receipt_ref or not req.ledger_reconciliation_ref
+        ):
+            raise RuntimeCoreInvariantError(
+                "payment finalization requires provider receipt and ledger reconciliation evidence"
+            )
         approval = FinanceApprovalReceipt(
             approval_id=stable_identifier(
                 "fin-approval",
@@ -357,6 +368,7 @@ def approve_finance_approval_packet(case_id: str, req: FinancePacketApprovalRequ
                     dispatched_at=now,
                     evidence_refs=(f"evidence:effect:{case_id}",),
                 )
+                effects.append(effect)
                 current = transition_invoice_case(
                     current,
                     FinancePacketTransition(
@@ -405,6 +417,7 @@ def approve_finance_approval_packet(case_id: str, req: FinancePacketApprovalRequ
                     dispatched_at=now,
                     evidence_refs=tuple(req.payment_evidence_refs or [f"evidence:payment-handoff:{case_id}"]),
                 )
+                effects.append(effect)
                 current = transition_invoice_case(
                     current,
                     FinancePacketTransition(
@@ -416,28 +429,70 @@ def approve_finance_approval_packet(case_id: str, req: FinancePacketApprovalRequ
                         effect_ref=effect.effect_id,
                     ),
                 )
-                current = transition_invoice_case(
-                    current,
-                    FinancePacketTransition(
-                        next_state=FinancePacketState.RECONCILED,
-                        cause="payment_handoff_receipt_verified",
-                        actor_id="finance-verifier",
-                        occurred_at=now,
-                        evidence_refs=effect.evidence_refs,
-                    ),
-                )
-                updated = transition_invoice_case(
-                    current,
-                    FinancePacketTransition(
-                        next_state=FinancePacketState.CLOSED_PREPARED,
-                        cause="payment_handoff_prepared_closure_issued",
-                        actor_id="closure-engine",
-                        occurred_at=now,
-                        closure_certificate_id=(
-                            req.closure_certificate_id or f"closure:{case_id}:payment_handoff_prepared"
+                if req.finalize_payment_with_receipt:
+                    payment_effect = FinanceEffectReceipt(
+                        effect_id=stable_identifier(
+                            "fin-effect",
+                            {
+                                "case_id": case_id,
+                                "effect_type": EffectReceiptType.PAYMENT_SENT_WITH_APPROVAL.value,
+                                "dispatched_at": now,
+                            },
                         ),
-                    ),
-                )
+                        case_id=case.case_id,
+                        tenant_id=case.tenant_id,
+                        effect_type=EffectReceiptType.PAYMENT_SENT_WITH_APPROVAL,
+                        capability_id="payment.execute.with_approval",
+                        dispatched_at=now,
+                        evidence_refs=(req.payment_provider_receipt_ref, req.ledger_reconciliation_ref),
+                    )
+                    effects.append(payment_effect)
+                    current = transition_invoice_case(
+                        current,
+                        FinancePacketTransition(
+                            next_state=FinancePacketState.RECONCILED,
+                            cause="payment_receipt_and_ledger_reconciled",
+                            actor_id="finance-verifier",
+                            occurred_at=now,
+                            evidence_refs=payment_effect.evidence_refs,
+                            effect_ref=payment_effect.effect_id,
+                        ),
+                    )
+                    updated = transition_invoice_case(
+                        current,
+                        FinancePacketTransition(
+                            next_state=FinancePacketState.CLOSED_SENT,
+                            cause="payment_execution_closure_issued",
+                            actor_id="closure-engine",
+                            occurred_at=now,
+                            closure_certificate_id=(
+                                req.closure_certificate_id or f"closure:{case_id}:payment_receipt_reconciled"
+                            ),
+                        ),
+                    )
+                else:
+                    current = transition_invoice_case(
+                        current,
+                        FinancePacketTransition(
+                            next_state=FinancePacketState.RECONCILED,
+                            cause="payment_handoff_receipt_verified",
+                            actor_id="finance-verifier",
+                            occurred_at=now,
+                            evidence_refs=effect.evidence_refs,
+                        ),
+                    )
+                    updated = transition_invoice_case(
+                        current,
+                        FinancePacketTransition(
+                            next_state=FinancePacketState.CLOSED_PREPARED,
+                            cause="payment_handoff_prepared_closure_issued",
+                            actor_id="closure-engine",
+                            occurred_at=now,
+                            closure_certificate_id=(
+                                req.closure_certificate_id or f"closure:{case_id}:payment_handoff_prepared"
+                            ),
+                        ),
+                    )
             else:
                 updated = transition_invoice_case(
                     current,
@@ -454,7 +509,7 @@ def approve_finance_approval_packet(case_id: str, req: FinancePacketApprovalRequ
         raise HTTPException(400, detail=_error_detail(str(exc), "finance_approval_failed")) from exc
 
     store.append_approval(approval)
-    if effect is not None:
+    for effect in effects:
         store.append_effect(effect)
     store.save_case(updated)
     return {"packet": _case_body(updated), "approval": approval.to_json_dict(), "governed": True}
