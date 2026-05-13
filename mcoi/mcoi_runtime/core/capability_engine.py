@@ -315,10 +315,10 @@ class CapabilityEngine:
         def visit(current_id: str, stack: tuple[str, ...]) -> None:
             if current_id in closure:
                 return
+            closure.add(current_id)
             cap = self._capabilities.get(current_id)
             if cap is None:
                 return
-            closure.add(current_id)
             for dep_id in cap.requires:
                 if dep_id in stack:
                     continue

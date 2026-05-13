@@ -1,0 +1,29 @@
+{
+  "capability_id": "software_dev.context_bundle.build",
+  "version": 1,
+  "kind": "software_dev",
+  "risk": "low",
+  "owner": "software_platform",
+  "input_schema_ref": "schemas/software_dev/context_bundle.input.schema.json",
+  "output_schema_ref": "urn:mullusi:schema:code-context-bundle:1",
+  "allowed_environments": ["local", "pilot"],
+  "required_gates": ["schema_validation", "context_budget_check"],
+  "rollback_required": false,
+  "sandbox_required": false,
+  "effect_bearing": false,
+  "maturity": "C3",
+  "evidence_refs": [
+    "tests/test_software_dev_capability_pack.py",
+    "tests/test_code_context_builder.py",
+    "schemas/software_dev/code_context_bundle.output.schema.json"
+  ],
+  "policy_refs": [
+    "policy://software-dev/minimal-context",
+    "policy://software-dev/no-whole-repository-prompt"
+  ],
+  "receipt_contract_ref": "urn:mullusi:schema:code-context-bundle:1",
+  "metadata": {
+    "hot_reload_allowed_environments": ["local", "pilot"],
+    "direct_effects_allowed": false
+  }
+}

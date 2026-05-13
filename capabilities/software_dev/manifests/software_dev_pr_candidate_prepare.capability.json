@@ -1,0 +1,36 @@
+{
+  "capability_id": "software_dev.pr_candidate.prepare",
+  "version": 1,
+  "kind": "software_dev",
+  "risk": "high",
+  "owner": "software_platform",
+  "input_schema_ref": "schemas/software_dev/pr_candidate.input.schema.json",
+  "output_schema_ref": "urn:mullusi:schema:pr-candidate:1",
+  "allowed_environments": ["local", "pilot"],
+  "required_gates": [
+    "unit_tests",
+    "secret_scan",
+    "review_packet_check",
+    "git_push_denied"
+  ],
+  "rollback_required": true,
+  "sandbox_required": true,
+  "effect_bearing": true,
+  "maturity": "C3",
+  "evidence_refs": [
+    "tests/test_software_dev_capability_pack.py",
+    "tests/test_pr_candidate.py",
+    "schemas/software_dev/pr_candidate.output.schema.json"
+  ],
+  "policy_refs": [
+    "policy://software-dev/local-branch-only",
+    "policy://software-dev/git-push-denied",
+    "policy://software-dev/pr-open-requires-approval"
+  ],
+  "receipt_contract_ref": "urn:mullusi:schema:pr-candidate:1",
+  "metadata": {
+    "hot_reload_allowed_environments": ["local", "pilot"],
+    "direct_effects_allowed": true,
+    "production_hot_reload_allowed": false
+  }
+}

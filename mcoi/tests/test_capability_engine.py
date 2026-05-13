@@ -109,6 +109,7 @@ class TestCapabilityEngine:
             requires=("shell",),
         ))
         eng.assign_to_agent("agent1", "repo.inspect")
+        eng.assign_to_agent("agent1", "shell")
 
         readiness = eng.assess_readiness("repo.inspect")
 
@@ -129,7 +130,7 @@ class TestCapabilityEngine:
         readiness = eng.assess_readiness("repo.inspect")
 
         assert readiness.status == "blocked"
-        assert readiness.score == 0.75
+        assert readiness.score == 0.6
         assert readiness.agent_ids == ("agent1",)
         assert readiness.missing_deps == ("shell",)
         assert readiness.reasons == ("dependency is not registered",)
@@ -147,10 +148,27 @@ class TestCapabilityEngine:
         readiness = eng.assess_readiness("repo.inspect")
 
         assert readiness.status == "blocked"
-        assert readiness.score == 0.75
+        assert readiness.score == 0.6
         assert readiness.disabled_deps == ("shell",)
         assert readiness.missing_deps == ()
         assert readiness.dependency_closure == ("repo.inspect", "shell")
+
+    def test_assess_readiness_marks_partial_agent_dependency_coverage(self):
+        eng = CapabilityEngine()
+        eng.register(CapabilityDescriptor(capability_id="shell", name="Shell", description="x"))
+        eng.register(CapabilityDescriptor(
+            capability_id="repo.inspect", name="Repo Inspect", description="x",
+            requires=("shell",),
+        ))
+        eng.assign_to_agent("agent1", "repo.inspect")
+
+        readiness = eng.assess_readiness("repo.inspect")
+
+        assert readiness.status == "partial"
+        assert readiness.score == 0.8
+        assert readiness.agent_ids == ("agent1",)
+        assert readiness.dependency_closure == ("repo.inspect", "shell")
+        assert readiness.reasons == ("no assigned agent covers dependency closure",)
 
     def test_rank_agents_for_orders_by_dependency_coverage(self):
         eng = CapabilityEngine()
@@ -191,3 +209,4 @@ class TestCapabilityEngine:
         assert report["blocked"] == 1
         assert report["unassigned"] == 1
         assert report["disabled"] == 1
+        assert report["partial"] == 0

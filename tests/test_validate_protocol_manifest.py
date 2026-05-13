@@ -251,9 +251,13 @@ def test_protocol_manifest_indexes_capability_maturity_assessment() -> None:
 def test_protocol_manifest_indexes_trust_ledger_anchor_verification_report() -> None:
     manifest = load_manifest()
     entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    bundle_report_entry = entries["trust-ledger-bundle-verification-report"]
     report_entry = entries["trust-ledger-anchor-verification-report"]
 
     assert validate_protocol_manifest(manifest) == []
+    assert bundle_report_entry["path"] == "schemas/trust_ledger_bundle_verification_report.schema.json"
+    assert bundle_report_entry["urn"] == "urn:mullusi:schema:trust-ledger-bundle-verification-report:1"
+    assert bundle_report_entry["surface"] == "evidence"
     assert report_entry["path"] == "schemas/trust_ledger_anchor_verification_report.schema.json"
     assert report_entry["urn"] == "urn:mullusi:schema:trust-ledger-anchor-verification-report:1"
     assert report_entry["surface"] == "evidence"
