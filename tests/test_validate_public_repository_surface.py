@@ -226,7 +226,9 @@ def test_governance_protocol_doc_is_public_surface_anchor() -> None:
     assert "Governed runtime promotion validators are public contracts" in content
     assert "Terminal closure certificates are public contracts" in content
     assert "Finance approval live handoff artifacts are public contracts" in content
+    assert "Finance payment provider binding receipts are public contracts" in content
     assert "finance approval live handoff artifact contract" in content
+    assert "finance payment provider binding receipt contract" in content
     assert "Reflex deployment witness envelopes are public contracts" in content
     assert "Reflex deployment witness validator receipts are public contracts" in content
     assert "Temporal evidence freshness receipts are public contracts" in content

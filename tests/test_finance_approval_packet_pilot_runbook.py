@@ -48,4 +48,15 @@ def test_finance_runbook_documents_strict_promotion_boundary() -> None:
     assert "EMAIL_CALENDAR_CONNECTOR_SCOPE_ID=gmail.readonly" in content
     assert "GOOGLE_CALENDAR_SCOPE_ID=calendar.events.readonly" in content
     assert "Do not use write-capable scope witnesses" in content
+    assert "Payment-provider binding receipt" in content
+    assert "python scripts\\emit_finance_approval_payment_provider_binding_receipt.py --provider stripe" in content
+    assert "python scripts\\validate_finance_approval_payment_provider_binding_receipt.py --receipt .change_assurance\\finance_approval_payment_provider_binding_receipt.json --require-ready --json" in content
+    assert "python scripts\\produce_finance_approval_payment_closure_receipt.py --provider stripe --provider-binding-receipt .change_assurance\\finance_approval_payment_provider_binding_receipt.json" in content
+    assert "python scripts\\validate_finance_approval_payment_closure_receipt.py --receipt .change_assurance\\finance_approval_payment_closure_receipt.json --provider-binding-receipt .change_assurance\\finance_approval_payment_provider_binding_receipt.json --require-ready --json" in content
+    assert "provider-binding:{provider}:..." in content
+    assert "Reviewer fixtures" in content
+    assert "examples\\finance_payment_provider_binding_receipt_stripe.json" in content
+    assert "examples\\finance_payment_closure_receipt_stripe_bound.json" in content
+    assert "These fixtures are deterministic Stripe-scoped evidence examples" in content
+    assert "not a production payment claim" in content
     assert expected_manifest_result in content

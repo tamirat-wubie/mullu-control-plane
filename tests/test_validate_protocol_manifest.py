@@ -822,6 +822,13 @@ def test_protocol_manifest_indexes_finance_approval_packet_proof() -> None:
         "urn:mullusi:schema:finance-approval-email-calendar-binding-receipt:1"
     )
     assert entries["finance-approval-email-calendar-binding-receipt"]["surface"] == "finance"
+    assert entries["finance-approval-payment-provider-binding-receipt"]["path"] == (
+        "schemas/finance_approval_payment_provider_binding_receipt.schema.json"
+    )
+    assert entries["finance-approval-payment-provider-binding-receipt"]["urn"] == (
+        "urn:mullusi:schema:finance-approval-payment-provider-binding-receipt:1"
+    )
+    assert entries["finance-approval-payment-provider-binding-receipt"]["surface"] == "finance"
     assert entries["finance-approval-email-calendar-live-receipt"]["path"] == (
         "schemas/finance_approval_email_calendar_live_receipt.schema.json"
     )

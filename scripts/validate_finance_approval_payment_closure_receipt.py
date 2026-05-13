@@ -11,6 +11,7 @@ Invariants:
   - The adapter id is exactly finance.payment_adapter.
   - Ready receipts are passed, verification-passed, approval-bound writes.
   - Provider and ledger receipts must match the root closure receipt.
+  - When supplied, provider binding receipts must be ready and ref-matched.
   - Failed receipts remain valid blocked evidence when require-ready is false.
 """
 
@@ -28,6 +29,9 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from scripts.validate_schemas import _validate_schema_instance  # noqa: E402
+from scripts.validate_finance_approval_payment_provider_binding_receipt import (  # noqa: E402
+    validate_finance_approval_payment_provider_binding_receipt,
+)
 
 DEFAULT_RECEIPT = REPO_ROOT / ".change_assurance" / "finance_approval_payment_closure_receipt.json"
 DEFAULT_SCHEMA = REPO_ROOT / "schemas" / "finance_approval_payment_closure_receipt.schema.json"
@@ -75,6 +79,7 @@ def validate_finance_approval_payment_closure_receipt(
     *,
     receipt_path: Path = DEFAULT_RECEIPT,
     schema_path: Path = DEFAULT_SCHEMA,
+    provider_binding_receipt_path: Path | None = None,
     require_ready: bool = False,
 ) -> FinancePaymentClosureReceiptValidation:
     """Validate one finance approval payment closure receipt."""
@@ -86,6 +91,8 @@ def validate_finance_approval_payment_closure_receipt(
 
     errors.extend(_validate_schema_instance(schema, receipt))
     _validate_semantics(receipt, errors)
+    if provider_binding_receipt_path is not None:
+        _validate_provider_binding_receipt_object(receipt, provider_binding_receipt_path, errors)
     ready = _receipt_ready(receipt)
     if require_ready and not ready:
         errors.append("finance payment closure receipt ready must be true")
@@ -211,6 +218,37 @@ def _validate_non_sandbox_provider_binding(
         errors.append("provider_receipt evidence_refs must include provider binding receipt for non-sandbox provider")
 
 
+def _validate_provider_binding_receipt_object(
+    receipt: dict[str, Any],
+    provider_binding_receipt_path: Path,
+    errors: list[str],
+) -> None:
+    provider_receipt = receipt.get("provider_receipt")
+    if not isinstance(provider_receipt, dict):
+        return
+    provider = str(provider_receipt.get("provider", ""))
+    if provider == "sandbox":
+        return
+    validation = validate_finance_approval_payment_provider_binding_receipt(
+        receipt_path=provider_binding_receipt_path,
+        require_ready=True,
+    )
+    if not validation.valid or not validation.ready:
+        errors.append("provider binding receipt must be ready")
+    errors.extend(f"provider_binding_receipt: {error}" for error in validation.errors)
+    if validation.provider and validation.provider != provider:
+        errors.append("provider binding receipt provider must match payment provider")
+    root_evidence_refs = receipt.get("evidence_refs")
+    provider_evidence_refs = provider_receipt.get("evidence_refs")
+    if validation.provider_binding_ref and (
+        not isinstance(root_evidence_refs, list)
+        or validation.provider_binding_ref not in root_evidence_refs
+        or not isinstance(provider_evidence_refs, list)
+        or validation.provider_binding_ref not in provider_evidence_refs
+    ):
+        errors.append("provider binding receipt ref must be present in payment closure evidence_refs")
+
+
 def _receipt_ready(receipt: dict[str, Any]) -> bool:
     return (
         receipt.get("adapter_id") == ADAPTER_ID
@@ -333,6 +371,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Validate finance payment closure receipt.")
     parser.add_argument("--receipt", default=str(DEFAULT_RECEIPT))
     parser.add_argument("--schema", default=str(DEFAULT_SCHEMA))
+    parser.add_argument("--provider-binding-receipt", default="")
     parser.add_argument("--require-ready", action="store_true")
     parser.add_argument("--json", action="store_true")
     return parser.parse_args(argv)
@@ -344,6 +383,7 @@ def main(argv: list[str] | None = None) -> int:
     result = validate_finance_approval_payment_closure_receipt(
         receipt_path=Path(args.receipt),
         schema_path=Path(args.schema),
+        provider_binding_receipt_path=Path(args.provider_binding_receipt) if args.provider_binding_receipt else None,
         require_ready=args.require_ready,
     )
     if args.json:

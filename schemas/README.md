@@ -50,6 +50,7 @@ files are open wire contracts. Runtime modules under `mcoi/`, `gateway/`, and
 | `finance_approval_operator_summary.schema.json` | Canonical redacted finance operator summary for packet and chain readiness |
 | `finance_approval_packet_proof.schema.json` | Canonical proof export for governed finance approval packet closure or review |
 | `finance_approval_payment_closure_receipt.schema.json` | Canonical provider-payment and ledger-reconciliation receipt for finance payment closure |
+| `finance_approval_payment_provider_binding_receipt.schema.json` | Canonical redacted payment-provider binding receipt for non-sandbox finance payment closure |
 | `operator_control_tower_snapshot.schema.json` | Canonical read-only operator control tower snapshot across governed platform panels |
 | `physical_action_receipt.schema.json` | Canonical no-effect physical action safety receipt |
 | `physical_capability_promotion_receipt.schema.json` | Canonical operator receipt binding physical Forge requirements, handoff refs, registry safety evidence, and preflight readiness |
