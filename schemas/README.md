@@ -66,6 +66,7 @@ files are open wire contracts. Runtime modules under `mcoi/`, `gateway/`, and
 | `replay_record.schema.json` | Canonical replay and audit capture |
 | `simulation_receipt.schema.json` | Canonical causal simulation dry-run receipt |
 | `software_dev/*.input.schema.json` | Governed input contracts for repository mapping, context building, gate planning, sandboxed software changes, app task graph planning, and PR candidate preparation |
+| `software_dev/*.output.schema.json` | Governed output and receipt contracts for repository maps, context bundles, gate plans, software-change receipts, app task graphs, and PR candidates |
 | `streaming_budget_enforcement.schema.json` | Canonical predictive streaming budget event |
 | `temporal_evidence_freshness_receipt.schema.json` | Canonical governed evidence freshness recheck receipt |
 | `temporal_operation_receipt.schema.json` | Canonical runtime-owned temporal operation receipt |
@@ -87,6 +88,7 @@ files are open wire contracts. Runtime modules under `mcoi/`, `gateway/`, and
 | `temporal_sla_receipt.schema.json` | Canonical governed SLA, business-window, and escalation receipt |
 | `terminal_closure_certificate.schema.json` | Canonical final command closure certificate |
 | `trust_ledger_anchor_receipt.schema.json` | Canonical signed external proof anchor receipt for trust ledger bundles |
+| `trust_ledger_anchor_verification_report.schema.json` | Canonical offline verifier report for trust ledger anchor and package replay |
 | `trust_ledger_bundle.schema.json` | Canonical signed evidence bundle for terminal closure anchoring |
 | `trust_ledger_evidence_artifacts.schema.json` | Canonical typed evidence artifact export for trust ledger anchor verification |
 | `trust_ledger_export_package.schema.json` | Canonical manifest binding trust ledger bundle, anchor receipt, and artifact export files |

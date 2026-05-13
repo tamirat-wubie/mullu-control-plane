@@ -971,16 +971,24 @@ def test_software_dev_capability_pack_surface_requires_explicit_admission() -> N
     assert "mcoi/mcoi_runtime/core/app_builder/codegen_pipeline.py" in software_surface["evidence_files"]
     assert "mcoi/mcoi_runtime/core/app_builder/pr_candidate.py" in software_surface["evidence_files"]
     assert "schemas/software_dev/app_task_graph.input.schema.json" in software_surface["evidence_files"]
+    assert "schemas/software_dev/app_task_graph.output.schema.json" in software_surface["evidence_files"]
     assert "schemas/software_dev/change_run.input.schema.json" in software_surface["evidence_files"]
+    assert "schemas/software_dev/code_context_bundle.output.schema.json" in software_surface["evidence_files"]
     assert "schemas/software_dev/context_bundle.input.schema.json" in software_surface["evidence_files"]
     assert "schemas/software_dev/gate_plan.input.schema.json" in software_surface["evidence_files"]
+    assert "schemas/software_dev/pr_candidate.output.schema.json" in software_surface["evidence_files"]
     assert "schemas/software_dev/pr_candidate.input.schema.json" in software_surface["evidence_files"]
+    assert "schemas/software_dev/repo_map.output.schema.json" in software_surface["evidence_files"]
     assert "schemas/software_dev/repo_map_read.input.schema.json" in software_surface["evidence_files"]
+    assert "schemas/software_dev/software_change_receipt.output.schema.json" in software_surface["evidence_files"]
+    assert "schemas/software_dev/software_gate_plan.output.schema.json" in software_surface["evidence_files"]
     assert "tests/test_software_dev_capability_pack.py" in software_surface["evidence_files"]
     assert "software_dev_pack_fixture_not_default_loaded" in witnesses
     assert "software_dev_capability_entries_schema_valid" in witnesses
     assert "software_dev_input_schema_refs_materialized" in witnesses
     assert "software_dev_input_schemas_reject_boundary_violations" in witnesses
+    assert "software_dev_output_schema_refs_materialized" in witnesses
+    assert "software_dev_output_schemas_reject_effect_overclaims" in witnesses
     assert "software_dev_named_loader_installs_only_software_dev_domain" in witnesses
     assert "software_dev_capsule_refs_match_pack_capabilities" in witnesses
     assert "software_dev_direct_deployment_capability_absent" in witnesses
@@ -1517,6 +1525,7 @@ def test_trust_ledger_surface_signs_terminal_evidence_bundles() -> None:
     assert "gateway/trust_ledger.py" in trust_surface["evidence_files"]
     assert "scripts/verify_anchor_receipt.py" in trust_surface["evidence_files"]
     assert "schemas/trust_ledger_anchor_receipt.schema.json" in trust_surface["evidence_files"]
+    assert "schemas/trust_ledger_anchor_verification_report.schema.json" in trust_surface["evidence_files"]
     assert "schemas/trust_ledger_bundle.schema.json" in trust_surface["evidence_files"]
     assert "schemas/trust_ledger_evidence_artifacts.schema.json" in trust_surface["evidence_files"]
     assert "schemas/trust_ledger_export_package.schema.json" in trust_surface["evidence_files"]
@@ -1531,6 +1540,7 @@ def test_trust_ledger_surface_signs_terminal_evidence_bundles() -> None:
     assert "offline_anchor_schema_invalid_receipt_rejected" in witnesses
     assert "offline_anchor_package_hash_mismatch_rejected" in witnesses
     assert "offline_anchor_package_schema_invalid_rejected" in witnesses
+    assert "offline_anchor_verification_report_schema_valid" in witnesses
     assert "offline_anchor_report_emits_package_identity" in witnesses
     assert "typed_artifact_root_required" in witnesses
     assert "anchor_receipt_hmac_verification" in witnesses

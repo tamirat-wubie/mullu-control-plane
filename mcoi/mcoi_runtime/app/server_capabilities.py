@@ -799,6 +799,42 @@ def bootstrap_capability_services(
     )
     model_router.register(
         ModelProfile(
+            model_id="aimlapi/nvidia/nemotron-3-nano-30b-a3b",
+            name="Nemotron 3 Nano 30B A3B via AIMLAPI",
+            provider="aimlapi",
+            cost_per_1k_input=0.000065,
+            cost_per_1k_output=0.00026,
+            max_context=262144,
+            speed_tier="fast",
+            capability_tier="standard",
+        )
+    )
+    model_router.register(
+        ModelProfile(
+            model_id="infomaniak/google/gemma-4-31B-it",
+            name="Gemma 4 31B via Infomaniak",
+            provider="infomaniak",
+            cost_per_1k_input=0.00020,
+            cost_per_1k_output=0.00040,
+            max_context=262144,
+            speed_tier="balanced",
+            capability_tier="advanced",
+        )
+    )
+    model_router.register(
+        ModelProfile(
+            model_id="kataleptic/gemma3-27b",
+            name="Gemma 3 27B via Kataleptic",
+            provider="kataleptic",
+            cost_per_1k_input=0.00015,
+            cost_per_1k_output=0.00020,
+            max_context=131072,
+            speed_tier="fast",
+            capability_tier="standard",
+        )
+    )
+    model_router.register(
+        ModelProfile(
             model_id="mistral-small-2603",
             name="Mistral Small 2603",
             provider="mistral",
