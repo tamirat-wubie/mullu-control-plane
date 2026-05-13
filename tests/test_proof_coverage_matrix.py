@@ -137,6 +137,12 @@ def test_representative_routes_are_not_unclassified() -> None:
     assert classified_routes["/api/v1/agent/register"]["surface_id"] == "agent_adapter_lifecycle"
     assert classified_routes["/api/v1/agent/action-request"]["surface_id"] == "agent_adapter_lifecycle"
     assert classified_routes["/api/v1/agents/{agent_id}/tasks"]["surface_id"] == "agent_adapter_lifecycle"
+    assert classified_routes["/api/v1/webhooks/subscribe"]["surface_id"] == "webhook_operations_lifecycle"
+    assert classified_routes["/api/v1/webhooks/deliveries"]["surface_id"] == "webhook_operations_lifecycle"
+    assert (
+        classified_routes["/api/v1/webhooks/retry/dead-letters"]["surface_id"]
+        == "webhook_operations_lifecycle"
+    )
     assert classified_routes["/api/v1/rbac/identities"]["surface_id"] == "rbac_access_governance"
     assert classified_routes["/api/v1/rbac/roles"]["surface_id"] == "rbac_access_governance"
     assert classified_routes["/api/v1/rbac/bindings"]["surface_id"] == "rbac_access_governance"
@@ -163,6 +169,30 @@ def test_agent_adapter_lifecycle_surface_is_witnessed() -> None:
     assert "agent_action_request_runs_guard_chain" in witnesses
     assert "agent_checkpoint_restore_roundtrip_governed" in witnesses
     assert closure_actions["classify_agent_adapter_lifecycle_routes"]["status"] == "closed"
+
+
+def test_webhook_operations_lifecycle_surface_is_witnessed() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    webhook_surface = surfaces["webhook_operations_lifecycle"]
+    witnesses = set(webhook_surface["runtime_witnesses"])
+
+    assert webhook_surface["coverage_state"] == "witnessed"
+    assert webhook_surface["request_proof"] == "request_proof"
+    assert webhook_surface["action_proof"] == "action_proof"
+    assert "/api/v1/webhooks" in webhook_surface["representative_paths"]
+    assert "/api/v1/webhooks/subscribe" in webhook_surface["representative_paths"]
+    assert "/api/v1/webhooks/deliveries" in webhook_surface["representative_paths"]
+    assert "/api/v1/webhooks/retry/summary" in webhook_surface["representative_paths"]
+    assert "mcoi/mcoi_runtime/app/routers/agent.py" in webhook_surface["evidence_files"]
+    assert "mcoi/tests/test_server_phase205.py" in webhook_surface["evidence_files"]
+    assert "mcoi/tests/test_e2e_integration.py" in webhook_surface["evidence_files"]
+    assert "webhook_subscription_audited" in witnesses
+    assert "webhook_delivery_history_bounded" in witnesses
+    assert "webhook_retry_summary_governed" in witnesses
+    assert "webhook_workflow_delivery_witnessed" in witnesses
+    assert closure_actions["classify_webhook_operations_lifecycle_routes"]["status"] == "closed"
 
 
 def test_rbac_access_governance_surface_is_witnessed() -> None:
@@ -1216,13 +1246,18 @@ def test_trust_ledger_surface_signs_terminal_evidence_bundles() -> None:
     assert trust_surface["request_proof"] == "request_proof"
     assert trust_surface["action_proof"] == "action_proof"
     assert "gateway/trust_ledger.py" in trust_surface["evidence_files"]
+    assert "scripts/verify_anchor_receipt.py" in trust_surface["evidence_files"]
     assert "schemas/trust_ledger_anchor_receipt.schema.json" in trust_surface["evidence_files"]
     assert "schemas/trust_ledger_bundle.schema.json" in trust_surface["evidence_files"]
     assert "tests/test_gateway/test_trust_ledger_anchor_receipt.py" in trust_surface["evidence_files"]
     assert "tests/test_gateway/test_trust_ledger.py" in trust_surface["evidence_files"]
+    assert "tests/test_verify_anchor_receipt.py" in trust_surface["evidence_files"]
     assert "terminal_certificate_id_required" in witnesses
     assert "bundle_hash_tamper_detection" in witnesses
     assert "hmac_signature_verification" in witnesses
+    assert "offline_anchor_verifier_validates_schema_artifacts_and_signature" in witnesses
+    assert "offline_anchor_artifact_root_tamper_detection" in witnesses
+    assert "offline_anchor_schema_invalid_receipt_rejected" in witnesses
     assert "typed_artifact_root_required" in witnesses
     assert "anchor_receipt_hmac_verification" in witnesses
     assert "anchor_receipt_schema_valid" in witnesses

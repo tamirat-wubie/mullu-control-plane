@@ -125,6 +125,13 @@
       ]
     },
     {
+      "action_id": "classify_webhook_operations_lifecycle_routes",
+      "status": "closed",
+      "surfaces": [
+        "webhook_operations_lifecycle"
+      ]
+    },
+    {
       "action_id": "classify_rbac_access_governance_routes",
       "status": "closed",
       "surfaces": [
@@ -521,7 +528,7 @@
   ],
   "coverage_summary": {
     "by_action_proof": {
-      "action_proof": 66,
+      "action_proof": 67,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 11,
@@ -529,7 +536,7 @@
     },
     "by_audit": {
       "action_proof": 0,
-      "audit_chain": 75,
+      "audit_chain": 76,
       "gap": 0,
       "read_model": 4,
       "request_proof": 0
@@ -537,23 +544,23 @@
     "by_coverage_state": {
       "proven": 1,
       "unproven": 0,
-      "witnessed": 78
+      "witnessed": 79
     },
     "by_request_proof": {
       "action_proof": 1,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 13,
-      "request_proof": 65
+      "request_proof": 66
     },
-    "surface_count": 79
+    "surface_count": 80
   },
   "generated_by": "scripts/proof_coverage_matrix.py",
   "route_coverage": {
     "by_coverage_state": {
       "proven": 8,
-      "unproven": 136,
-      "witnessed": 188
+      "unproven": 131,
+      "witnessed": 193
     },
     "route_count": 332,
     "routes": [
@@ -1938,29 +1945,29 @@
         "surface_id": "unclassified_declared_route"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/webhooks",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "webhook_operations_lifecycle"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/webhooks/deliveries",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "webhook_operations_lifecycle"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/webhooks/retry/dead-letters",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "webhook_operations_lifecycle"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/webhooks/retry/summary",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "webhook_operations_lifecycle"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/webhooks/subscribe",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "webhook_operations_lifecycle"
       },
       {
         "coverage_state": "unproven",
@@ -2218,7 +2225,7 @@
         "surface_id": "gateway_capability_fabric"
       }
     ],
-    "unclassified_route_count": 136
+    "unclassified_route_count": 131
   },
   "schema_version": 1,
   "surfaces": [
@@ -2451,6 +2458,35 @@
         "agent_error_contracts_bounded"
       ],
       "surface_id": "agent_adapter_lifecycle"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "mcoi/mcoi_runtime/app/routers/agent.py",
+        "mcoi/mcoi_runtime/core/agent_workflow.py",
+        "mcoi/tests/test_server_phase205.py",
+        "mcoi/tests/test_e2e_integration.py"
+      ],
+      "notes": "Webhook operations routes bind subscription creation, subscription listing, delivery history, retry summary, and dead-letter read models to governed metrics, audit records, and bounded webhook manager state.",
+      "representative_paths": [
+        "/api/v1/webhooks",
+        "/api/v1/webhooks/deliveries",
+        "/api/v1/webhooks/retry/dead-letters",
+        "/api/v1/webhooks/retry/summary",
+        "/api/v1/webhooks/subscribe"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "webhook_subscription_audited",
+        "webhook_subscription_list_bounded",
+        "webhook_delivery_history_bounded",
+        "webhook_retry_summary_governed",
+        "webhook_dead_letters_bounded",
+        "webhook_workflow_delivery_witnessed"
+      ],
+      "surface_id": "webhook_operations_lifecycle"
     },
     {
       "action_proof": "action_proof",
@@ -3695,13 +3731,15 @@
         "gateway/evidence_bundle.py",
         "gateway/trust_ledger.py",
         "scripts/verify_evidence_bundle.py",
+        "scripts/verify_anchor_receipt.py",
         "schemas/trust_ledger_anchor_receipt.schema.json",
         "schemas/trust_ledger_bundle.schema.json",
         "tests/test_gateway/test_evidence_bundle_endpoint.py",
         "tests/test_gateway/test_trust_ledger_anchor_receipt.py",
-        "tests/test_gateway/test_trust_ledger.py"
+        "tests/test_gateway/test_trust_ledger.py",
+        "tests/test_verify_anchor_receipt.py"
       ],
-      "notes": "Trust ledger signs terminal-closure evidence bundles, exposes operator bundle export, verifies exported bundle files offline, and emits external anchor receipts that bind typed artifact roots, tenant, command, deployment, commit, hash-chain root, and external anchor state.",
+      "notes": "Trust ledger signs terminal-closure evidence bundles, exposes operator bundle export, verifies exported bundle and anchor receipt files offline, and emits external anchor receipts that bind typed artifact roots, tenant, command, deployment, commit, hash-chain root, and external anchor state.",
       "representative_paths": [
         "TrustLedger.issue",
         "TrustLedger.verify",
@@ -3709,6 +3747,7 @@
         "TrustLedger.verify_anchor_receipt",
         "GET /evidence/bundles/{command_id}",
         "scripts/verify_evidence_bundle.py",
+        "scripts/verify_anchor_receipt.py",
         "TrustLedgerBundle",
         "ExternalProofAnchorReceipt"
       ],
@@ -3718,10 +3757,13 @@
         "evidence_refs_required",
         "evidence_bundle_endpoint_requires_terminal_certificate",
         "offline_bundle_verifier_validates_schema_hash_and_signature",
+        "offline_anchor_verifier_validates_schema_artifacts_and_signature",
         "bundle_hash_tamper_detection",
         "hmac_signature_verification",
         "anchored_bundle_requires_external_anchor_ref",
         "typed_artifact_root_required",
+        "offline_anchor_artifact_root_tamper_detection",
+        "offline_anchor_schema_invalid_receipt_rejected",
         "anchor_receipt_hmac_verification",
         "anchor_receipt_schema_valid",
         "anchor_receipt_non_terminal_marker_required",
