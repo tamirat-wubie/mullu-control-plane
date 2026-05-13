@@ -1101,6 +1101,38 @@ def proof_coverage_matrix() -> dict[str, Any]:
             ],
         ),
         _surface(
+            "governed_background_scheduler",
+            [
+                "/api/v1/scheduler/execute",
+                "/api/v1/scheduler/history",
+                "/api/v1/scheduler/jobs",
+                "/api/v1/scheduler/jobs/{job_id}",
+                "/api/v1/scheduler/jobs/{job_id}/disable",
+                "/api/v1/scheduler/jobs/{job_id}/enable",
+                "/api/v1/scheduler/summary",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "mcoi/mcoi_runtime/app/routers/scheduler.py",
+                "mcoi/mcoi_runtime/core/scheduler.py",
+                "mcoi/tests/test_scheduler.py",
+                "mcoi/tests/test_server_phase217.py",
+                "mcoi/tests/test_server_phase218.py",
+            ],
+            "Governed background scheduler routes register one-shot, interval, and cron jobs, execute handlers through guard-chain admission, bound job lifecycle enable/disable/delete controls, expose bounded history and summary read models, and sanitize scheduler execution errors.",
+            [
+                "scheduler_job_registration_typed",
+                "scheduler_execute_guard_chain_checked",
+                "scheduler_lifecycle_controls_bounded",
+                "scheduler_history_summary_bounded",
+                "scheduler_errors_sanitized",
+                "scheduler_execution_audited",
+            ],
+        ),
+        _surface(
             "connector_self_healing",
             [
                 "ConnectorSelfHealingEngine.evaluate",
@@ -2342,6 +2374,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
         {
             "action_id": "classify_governed_connector_routes",
             "surfaces": ["governed_connector_framework"],
+            "status": "closed",
+        },
+        {
+            "action_id": "classify_governed_scheduler_routes",
+            "surfaces": ["governed_background_scheduler"],
             "status": "closed",
         },
         {
