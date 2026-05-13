@@ -3646,6 +3646,7 @@
         "gateway/server.py",
         "scripts/collect_deployment_witness.py",
         ".github/workflows/deployment-witness.yml",
+        "schemas/gateway_health.schema.json",
         "schemas/production_evidence_witness.schema.json",
         "schemas/capability_evidence_endpoint.schema.json",
         "schemas/audit_verification_endpoint.schema.json",
@@ -3655,6 +3656,7 @@
       ],
       "notes": "Production evidence endpoints expose signed deployment posture, capability evidence, audit verification, and proof verification; deployment witness collection can require the whole plane before publication, derives live physical safety evidence only from certified registry extensions, and blocks live physical capability claims without explicit safety evidence while allowing sandbox-only physical canary evidence.",
       "representative_paths": [
+        "/health",
         "/deployment/witness",
         "/capabilities/evidence",
         "/audit/verify",
@@ -3662,6 +3664,7 @@
       ],
       "request_proof": "read_model",
       "runtime_witnesses": [
+        "gateway_health_schema_valid",
         "signed_production_evidence_witness",
         "capability_evidence_schema_valid",
         "audit_verification_schema_valid",
