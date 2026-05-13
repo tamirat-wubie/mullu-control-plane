@@ -18,6 +18,10 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+from scripts.emit_finance_approval_payment_provider_binding_receipt import (
+    emit_finance_approval_payment_provider_binding_receipt,
+    write_finance_payment_provider_binding_receipt,
+)
 from scripts.produce_finance_approval_payment_closure_receipt import (
     main,
     produce_finance_approval_payment_closure_receipt,
@@ -66,6 +70,90 @@ def test_produce_payment_closure_receipt_emits_ready_non_sandbox_with_binding(tm
     assert payload["provider_receipt"]["provider"] == "stripe"
     assert binding_ref in payload["evidence_refs"]
     assert binding_ref in payload["provider_receipt"]["evidence_refs"]
+
+
+def test_produce_payment_closure_receipt_derives_binding_ref_from_ready_receipt(tmp_path: Path) -> None:
+    receipt_path = tmp_path / "finance-payment-closure-receipt.json"
+    binding_path = tmp_path / "finance-payment-provider-binding.json"
+    binding_receipt, binding_errors = emit_finance_approval_payment_provider_binding_receipt(
+        provider="stripe",
+        env_reader=lambda name: "present" if name == "STRIPE_API_KEY" else "",
+    )
+    write_finance_payment_provider_binding_receipt(binding_receipt, binding_path)
+
+    write = produce_finance_approval_payment_closure_receipt(
+        output_path=receipt_path,
+        provider="stripe",
+        provider_binding_receipt_path=binding_path,
+    )
+    validation = validate_finance_approval_payment_closure_receipt(receipt_path=receipt_path, require_ready=True)
+    payload = json.loads(receipt_path.read_text(encoding="utf-8"))
+
+    assert binding_errors == ()
+    assert write.passed is True
+    assert write.provider_binding_ref == binding_receipt.provider_binding_ref
+    assert write.provider_binding_receipt_path == str(binding_path)
+    assert write.binding_validation_errors == ()
+    assert validation.valid is True
+    assert validation.ready is True
+    assert binding_receipt.provider_binding_ref in payload["evidence_refs"]
+    assert binding_receipt.provider_binding_ref in payload["provider_receipt"]["evidence_refs"]
+
+
+def test_produce_payment_closure_receipt_blocks_unready_binding_receipt(tmp_path: Path) -> None:
+    receipt_path = tmp_path / "finance-payment-closure-receipt.json"
+    binding_path = tmp_path / "finance-payment-provider-binding.json"
+    binding_receipt, binding_errors = emit_finance_approval_payment_provider_binding_receipt(
+        provider="stripe",
+        env_reader=lambda name: "",
+    )
+    write_finance_payment_provider_binding_receipt(binding_receipt, binding_path)
+
+    write = produce_finance_approval_payment_closure_receipt(
+        output_path=receipt_path,
+        provider="stripe",
+        provider_binding_receipt_path=binding_path,
+    )
+    validation = validate_finance_approval_payment_closure_receipt(receipt_path=receipt_path)
+    payload = json.loads(receipt_path.read_text(encoding="utf-8"))
+
+    assert binding_errors == ()
+    assert write.passed is False
+    assert write.ready is False
+    assert write.blockers == ("provider_binding_receipt_required",)
+    assert "finance payment provider binding receipt ready must be true" in write.binding_validation_errors
+    assert validation.valid is True
+    assert validation.ready is False
+    assert "provider_receipt" not in payload
+    assert "ledger_reconciliation" not in payload
+
+
+def test_produce_payment_closure_receipt_blocks_binding_receipt_provider_drift(tmp_path: Path) -> None:
+    receipt_path = tmp_path / "finance-payment-closure-receipt.json"
+    binding_path = tmp_path / "finance-payment-provider-binding.json"
+    binding_receipt, binding_errors = emit_finance_approval_payment_provider_binding_receipt(
+        provider="bank_ach",
+        env_reader=lambda name: "present" if name == "BANK_ACH_CONNECTOR_TOKEN" else "",
+    )
+    write_finance_payment_provider_binding_receipt(binding_receipt, binding_path)
+
+    write = produce_finance_approval_payment_closure_receipt(
+        output_path=receipt_path,
+        provider="stripe",
+        provider_binding_receipt_path=binding_path,
+    )
+    validation = validate_finance_approval_payment_closure_receipt(receipt_path=receipt_path)
+    payload = json.loads(receipt_path.read_text(encoding="utf-8"))
+
+    assert binding_errors == ()
+    assert write.passed is False
+    assert write.ready is False
+    assert write.provider_binding_ref == binding_receipt.provider_binding_ref
+    assert write.blockers == ("provider_binding_receipt_mismatch",)
+    assert write.binding_validation_errors == ()
+    assert validation.valid is True
+    assert validation.ready is False
+    assert payload["evidence_refs"] == [binding_receipt.provider_binding_ref]
 
 
 def test_produce_payment_closure_receipt_requires_non_sandbox_provider_binding(tmp_path: Path) -> None:
@@ -198,3 +286,39 @@ def test_produce_payment_closure_receipt_cli_outputs_json(tmp_path: Path, capsys
     assert payload["status"] == "passed"
     assert payload["ready"] is True
     assert payload["payment_provider_receipt_ref"].startswith("provider:payment:")
+
+
+def test_produce_payment_closure_receipt_cli_accepts_provider_binding_receipt(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    receipt_path = tmp_path / "finance-payment-closure-receipt.json"
+    binding_path = tmp_path / "finance-payment-provider-binding.json"
+    binding_receipt, binding_errors = emit_finance_approval_payment_provider_binding_receipt(
+        provider="stripe",
+        env_reader=lambda name: "present" if name == "STRIPE_API_KEY" else "",
+    )
+    write_finance_payment_provider_binding_receipt(binding_receipt, binding_path)
+
+    exit_code = main(
+        [
+            "--output",
+            str(receipt_path),
+            "--provider",
+            "stripe",
+            "--provider-binding-receipt",
+            str(binding_path),
+            "--strict",
+            "--json",
+        ]
+    )
+    captured = capsys.readouterr()
+    stdout_payload = json.loads(captured.out)
+    payload = json.loads(receipt_path.read_text(encoding="utf-8"))
+
+    assert binding_errors == ()
+    assert exit_code == 0
+    assert stdout_payload["ready"] is True
+    assert stdout_payload["provider_binding_ref"] == binding_receipt.provider_binding_ref
+    assert payload["status"] == "passed"
+    assert binding_receipt.provider_binding_ref in payload["evidence_refs"]

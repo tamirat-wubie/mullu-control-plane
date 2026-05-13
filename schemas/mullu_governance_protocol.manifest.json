@@ -341,6 +341,12 @@
       "surface": "finance"
     },
     {
+      "schema_id": "finance-approval-payment-provider-binding-receipt",
+      "path": "schemas/finance_approval_payment_provider_binding_receipt.schema.json",
+      "urn": "urn:mullusi:schema:finance-approval-payment-provider-binding-receipt:1",
+      "surface": "finance"
+    },
+    {
       "schema_id": "finance-approval-email-calendar-live-receipt",
       "path": "schemas/finance_approval_email_calendar_live_receipt.schema.json",
       "urn": "urn:mullusi:schema:finance-approval-email-calendar-live-receipt:1",

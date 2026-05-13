@@ -7,11 +7,12 @@ contract.
 Governance scope: approval-bound payment effect evidence, idempotency key
 binding, provider receipt identity, ledger reconciliation identity, and blocked
 failure evidence.
-Dependencies: schemas/finance_approval_payment_closure_receipt.schema.json and
-scripts.validate_finance_approval_payment_closure_receipt.
+Dependencies: finance payment closure and payment provider binding receipt
+validators.
 Invariants:
   - The default producer emits sandbox evidence only; no live provider is called.
-  - Non-sandbox provider labels require a matching provider binding receipt ref.
+  - Non-sandbox provider labels require a matching provider binding receipt ref
+    or ready provider binding receipt.
   - Ready receipts bind provider and ledger evidence to the same approval.
   - Failed producer modes still write valid blocked evidence.
   - Raw provider responses and secrets are never written.
@@ -36,6 +37,9 @@ from scripts.validate_finance_approval_payment_closure_receipt import (  # noqa:
     PROVIDER_BINDING_REF_PREFIX,
     validate_finance_approval_payment_closure_receipt,
 )
+from scripts.validate_finance_approval_payment_provider_binding_receipt import (  # noqa: E402
+    validate_finance_approval_payment_provider_binding_receipt,
+)
 
 DEFAULT_CASE_ID = "case-success-001"
 DEFAULT_TENANT_ID = "tenant-demo"
@@ -57,7 +61,9 @@ class FinancePaymentClosureReceiptWrite:
     payment_provider_receipt_ref: str
     ledger_reconciliation_ref: str
     provider_binding_ref: str
+    provider_binding_receipt_path: str
     blockers: tuple[str, ...]
+    binding_validation_errors: tuple[str, ...]
     validation_errors: tuple[str, ...]
 
     @property
@@ -69,6 +75,7 @@ class FinancePaymentClosureReceiptWrite:
         """Return a JSON-ready receipt write summary."""
         payload = asdict(self)
         payload["blockers"] = list(self.blockers)
+        payload["binding_validation_errors"] = list(self.binding_validation_errors)
         payload["validation_errors"] = list(self.validation_errors)
         return payload
 
@@ -85,6 +92,7 @@ def produce_finance_approval_payment_closure_receipt(
     minor_units: int = DEFAULT_MINOR_UNITS,
     provider: str = "sandbox",
     provider_binding_ref: str = "",
+    provider_binding_receipt_path: Path | None = None,
     missing_provider_receipt: bool = False,
     ledger_mismatch: bool = False,
     unapproved_write: bool = False,
@@ -96,9 +104,10 @@ def produce_finance_approval_payment_closure_receipt(
     payment_provider_receipt_ref = ""
     ledger_reconciliation_ref = ""
     blockers: list[str] = []
-    provider_binding_blocker = _provider_binding_blocker(
+    resolved_provider_binding_ref, provider_binding_blocker, binding_errors = _resolve_provider_binding(
         provider=provider,
         provider_binding_ref=provider_binding_ref,
+        provider_binding_receipt_path=provider_binding_receipt_path,
     )
     if provider_binding_blocker:
         blockers.append(provider_binding_blocker)
@@ -130,7 +139,7 @@ def produce_finance_approval_payment_closure_receipt(
         idempotency_key=idempotency_key,
         amount=amount,
         provider=provider,
-        provider_binding_ref=provider_binding_ref,
+        provider_binding_ref=resolved_provider_binding_ref,
         payment_provider_receipt_ref=payment_provider_receipt_ref,
         ledger_reconciliation_ref=ledger_reconciliation_ref,
         ledger_mismatch=ledger_mismatch,
@@ -146,8 +155,10 @@ def produce_finance_approval_payment_closure_receipt(
         receipt_id=str(payload["receipt_id"]),
         payment_provider_receipt_ref=payment_provider_receipt_ref,
         ledger_reconciliation_ref=ledger_reconciliation_ref,
-        provider_binding_ref=provider_binding_ref,
+        provider_binding_ref=resolved_provider_binding_ref,
+        provider_binding_receipt_path=str(provider_binding_receipt_path or ""),
         blockers=tuple(blockers),
+        binding_validation_errors=binding_errors,
         validation_errors=validation.errors,
     )
 
@@ -324,6 +335,33 @@ def _provider_binding_blocker(*, provider: str, provider_binding_ref: str) -> st
     return ""
 
 
+def _resolve_provider_binding(
+    *,
+    provider: str,
+    provider_binding_ref: str,
+    provider_binding_receipt_path: Path | None,
+) -> tuple[str, str, tuple[str, ...]]:
+    if provider == "sandbox":
+        return provider_binding_ref, "", ()
+    if provider_binding_receipt_path is None:
+        return provider_binding_ref, _provider_binding_blocker(
+            provider=provider,
+            provider_binding_ref=provider_binding_ref,
+        ), ()
+    validation = validate_finance_approval_payment_provider_binding_receipt(
+        receipt_path=provider_binding_receipt_path,
+        require_ready=True,
+    )
+    resolved_ref = validation.provider_binding_ref or provider_binding_ref
+    if not validation.valid or not validation.ready:
+        return resolved_ref, "provider_binding_receipt_required", validation.errors
+    if validation.provider != provider:
+        return resolved_ref, "provider_binding_receipt_mismatch", validation.errors
+    if provider_binding_ref and provider_binding_ref != validation.provider_binding_ref:
+        return resolved_ref, "provider_binding_receipt_mismatch", validation.errors
+    return validation.provider_binding_ref, "", validation.errors
+
+
 def _recovery_actions(blockers: list[str]) -> list[str]:
     actions: list[str] = []
     if (
@@ -385,6 +423,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         default="sandbox",
     )
     parser.add_argument("--provider-binding-ref", default="")
+    parser.add_argument("--provider-binding-receipt", default="")
     parser.add_argument("--missing-provider-receipt", action="store_true")
     parser.add_argument("--ledger-mismatch", action="store_true")
     parser.add_argument("--unapproved-write", action="store_true")
@@ -407,6 +446,7 @@ def main(argv: list[str] | None = None) -> int:
         minor_units=args.minor_units,
         provider=args.provider,
         provider_binding_ref=args.provider_binding_ref,
+        provider_binding_receipt_path=Path(args.provider_binding_receipt) if args.provider_binding_receipt else None,
         missing_provider_receipt=args.missing_provider_receipt,
         ledger_mismatch=args.ledger_mismatch,
         unapproved_write=args.unapproved_write,

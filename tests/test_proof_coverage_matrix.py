@@ -533,10 +533,15 @@ def test_finance_approval_packet_surface_is_witnessed() -> None:
     assert "mcoi/mcoi_runtime/contracts/finance_approval_packet.py" in finance_surface["evidence_files"]
     assert "mcoi/tests/test_finance_approval_packet.py" in finance_surface["evidence_files"]
     assert "mcoi/tests/test_finance_approval_router.py" in finance_surface["evidence_files"]
+    assert "schemas/finance_approval_payment_provider_binding_receipt.schema.json" in finance_surface["evidence_files"]
     assert "schemas/finance_approval_payment_closure_receipt.schema.json" in finance_surface["evidence_files"]
+    assert "scripts/emit_finance_approval_payment_provider_binding_receipt.py" in finance_surface["evidence_files"]
     assert "scripts/produce_finance_approval_payment_closure_receipt.py" in finance_surface["evidence_files"]
+    assert "scripts/validate_finance_approval_payment_provider_binding_receipt.py" in finance_surface["evidence_files"]
     assert "scripts/validate_finance_approval_payment_closure_receipt.py" in finance_surface["evidence_files"]
+    assert "tests/test_emit_finance_approval_payment_provider_binding_receipt.py" in finance_surface["evidence_files"]
     assert "tests/test_produce_finance_approval_payment_closure_receipt.py" in finance_surface["evidence_files"]
+    assert "tests/test_validate_finance_approval_payment_provider_binding_receipt.py" in finance_surface["evidence_files"]
     assert "tests/test_validate_finance_approval_payment_closure_receipt.py" in finance_surface["evidence_files"]
     assert "finance_packet_policy_reasons_explicit" in witnesses
     assert "blocked_packet_emits_no_effect" in witnesses
@@ -545,6 +550,8 @@ def test_finance_approval_packet_surface_is_witnessed() -> None:
     assert "payment_receipt_and_ledger_reconciliation_required_for_payment_closure" in witnesses
     assert "payment_closure_receipt_validator_blocks_unbound_evidence" in witnesses
     assert "payment_closure_receipt_producer_emits_ready_sandbox_evidence" in witnesses
+    assert "payment_provider_binding_receipt_redacts_credentials_and_scopes_provider" in witnesses
+    assert "payment_closure_producer_consumes_provider_binding_receipt" in witnesses
     assert "payment_closure_receipt_producer_requires_provider_binding_for_nonsandbox" in witnesses
     assert "packet_proof_requires_policy_evidence_and_closure_for_closed_states" in witnesses
     assert "operator_read_model_bounds_visible_packets_and_counts" in witnesses
