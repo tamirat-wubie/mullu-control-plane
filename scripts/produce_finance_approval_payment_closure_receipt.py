@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Produce a finance approval payment closure receipt.
 
-Purpose: emit deterministic sandbox payment-provider and ledger-reconciliation
-receipt evidence for the finance approval payment closure contract.
+Purpose: emit deterministic sandbox or binding-gated payment-provider and
+ledger-reconciliation receipt evidence for the finance approval payment closure
+contract.
 Governance scope: approval-bound payment effect evidence, idempotency key
 binding, provider receipt identity, ledger reconciliation identity, and blocked
 failure evidence.
@@ -10,6 +11,7 @@ Dependencies: schemas/finance_approval_payment_closure_receipt.schema.json and
 scripts.validate_finance_approval_payment_closure_receipt.
 Invariants:
   - The default producer emits sandbox evidence only; no live provider is called.
+  - Non-sandbox provider labels require a matching provider binding receipt ref.
   - Ready receipts bind provider and ledger evidence to the same approval.
   - Failed producer modes still write valid blocked evidence.
   - Raw provider responses and secrets are never written.
