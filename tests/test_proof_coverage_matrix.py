@@ -101,6 +101,9 @@ def test_representative_routes_are_not_unclassified() -> None:
     assert classified_routes["/api/v1/tenant/register"]["surface_id"] == "tenant_governance_lifecycle"
     assert classified_routes["/api/v1/tenant/{tenant_id}/status"]["surface_id"] == "tenant_governance_lifecycle"
     assert classified_routes["/api/v1/tenant/{tenant_id}/gate"]["surface_id"] == "tenant_governance_lifecycle"
+    assert classified_routes["/api/v1/usage/{tenant_id}"]["surface_id"] == "tenant_governance_lifecycle"
+    assert classified_routes["/api/v1/isolation/verify"]["surface_id"] == "tenant_governance_lifecycle"
+    assert classified_routes["/api/v1/quotas/{tenant_id}"]["surface_id"] == "tenant_governance_lifecycle"
     assert classified_routes["/authority/operator"]["surface_id"] == "authority_operator_controls"
     assert classified_routes["/authority/ownership"]["surface_id"] == "authority_operator_controls"
     assert classified_routes["/api/v1/temporal/schedules"]["surface_id"] == "temporal_kernel"
@@ -131,6 +134,8 @@ def test_representative_routes_are_not_unclassified() -> None:
     assert classified_routes["/api/v1/events/publish"]["surface_id"] == "event_bus_operations"
     assert classified_routes["/api/v1/events"]["surface_id"] == "event_bus_operations"
     assert classified_routes["/api/v1/events/store/summary"]["surface_id"] == "event_bus_operations"
+    assert classified_routes["/api/v1/api-keys"]["surface_id"] == "api_key_lifecycle"
+    assert classified_routes["/api/v1/api-keys/{key_id}"]["surface_id"] == "api_key_lifecycle"
     assert classified_routes["/api/v1/queue/submit"]["surface_id"] == "task_queue_lifecycle"
     assert classified_routes["/api/v1/queue/process"]["surface_id"] == "task_queue_lifecycle"
     assert classified_routes["/api/v1/queue/result/{task_id}"]["surface_id"] == "task_queue_lifecycle"
@@ -149,6 +154,10 @@ def test_representative_routes_are_not_unclassified() -> None:
     assert classified_routes["/api/v1/health/deep"]["surface_id"] == "operational_health_read_models"
     assert classified_routes["/api/v1/health/score"]["surface_id"] == "operational_health_read_models"
     assert classified_routes["/api/v1/health/v3"]["surface_id"] == "operational_health_read_models"
+    assert classified_routes["/api/v1/readiness"]["surface_id"] == "operational_health_read_models"
+    assert classified_routes["/api/v1/deploy/readiness"]["surface_id"] == "operational_health_read_models"
+    assert classified_routes["/api/v1/release/latest"]["surface_id"] == "operational_health_read_models"
+    assert classified_routes["/api/v1/snapshot"]["surface_id"] == "operational_health_read_models"
     assert classified_routes["/api/v1/orchestration"]["surface_id"] == "agent_orchestration_lifecycle"
     assert classified_routes["/api/v1/orchestration/plans"]["surface_id"] == "agent_orchestration_lifecycle"
     assert (
@@ -158,6 +167,9 @@ def test_representative_routes_are_not_unclassified() -> None:
     assert classified_routes["/api/v1/workflow/execute"]["surface_id"] == "workflow_execution_lifecycle"
     assert classified_routes["/api/v1/workflow/history"]["surface_id"] == "workflow_execution_lifecycle"
     assert classified_routes["/api/v1/workflow/traced"]["surface_id"] == "workflow_execution_lifecycle"
+    assert classified_routes["/api/v1/execute"]["surface_id"] == "workflow_execution_lifecycle"
+    assert classified_routes["/api/v1/pipeline/execute"]["surface_id"] == "workflow_execution_lifecycle"
+    assert classified_routes["/api/v1/templates/execute"]["surface_id"] == "workflow_execution_lifecycle"
     assert classified_routes["/api/v1/daemon/status"]["surface_id"] == "certification_daemon_lifecycle"
     assert classified_routes["/api/v1/daemon/tick"]["surface_id"] == "certification_daemon_lifecycle"
     assert classified_routes["/api/v1/daemon/force"]["surface_id"] == "certification_daemon_lifecycle"
@@ -454,6 +466,10 @@ def test_tenant_governance_lifecycle_surface_is_witnessed() -> None:
     assert "/api/v1/tenant/register" in tenant_surface["representative_paths"]
     assert "/api/v1/tenant/{tenant_id}/status" in tenant_surface["representative_paths"]
     assert "/api/v1/tenant/gates" in tenant_surface["representative_paths"]
+    assert "/api/v1/usage/{tenant_id}" in tenant_surface["representative_paths"]
+    assert "/api/v1/tenant-isolation/audits" in tenant_surface["representative_paths"]
+    assert "/api/v1/quotas/{tenant_id}" in tenant_surface["representative_paths"]
+    assert "/api/v1/partitions" in tenant_surface["representative_paths"]
     assert "mcoi/mcoi_runtime/app/routers/tenant.py" in tenant_surface["evidence_files"]
     assert "mcoi/mcoi_runtime/governance/guards/budget.py" in tenant_surface["evidence_files"]
     assert "mcoi/mcoi_runtime/governance/guards/tenant_gating.py" in tenant_surface["evidence_files"]
@@ -467,6 +483,10 @@ def test_tenant_governance_lifecycle_surface_is_witnessed() -> None:
     assert "tenant_register_emits_action_proof" in witnesses
     assert "tenant_status_update_emits_action_proof" in witnesses
     assert "tenant_gate_read_models_governed" in witnesses
+    assert "tenant_usage_read_model_scoped" in witnesses
+    assert "tenant_isolation_audits_bounded" in witnesses
+    assert "tenant_quota_read_models_bounded" in witnesses
+    assert "tenant_partition_read_model_bounded" in witnesses
     assert closure_actions["classify_tenant_governance_lifecycle_routes"]["status"] == "closed"
 
 
@@ -577,6 +597,7 @@ def test_audit_chain_api_surface_is_witnessed() -> None:
     assert audit_surface["action_proof"] == "request_proof"
     assert "/api/v1/audit/verify" in audit_surface["representative_paths"]
     assert "/api/v1/audit/anchor/{anchor_id}/verify" in audit_surface["representative_paths"]
+    assert "/api/v1/logs" in audit_surface["representative_paths"]
     assert "mcoi/mcoi_runtime/app/routers/audit.py" in audit_surface["evidence_files"]
     assert "mcoi/mcoi_runtime/governance/audit/trail.py" in audit_surface["evidence_files"]
     assert "mcoi/mcoi_runtime/governance/audit/anchor.py" in audit_surface["evidence_files"]
@@ -585,6 +606,7 @@ def test_audit_chain_api_surface_is_witnessed() -> None:
     assert "audit_chain_verify_endpoint" in witnesses
     assert "audit_anchor_checkpoint_created" in witnesses
     assert "audit_anchor_verification_endpoint" in witnesses
+    assert "audit_logs_read_model_bounded" in witnesses
     assert closure_actions["classify_audit_chain_api"]["status"] == "closed"
 
 
@@ -610,6 +632,38 @@ def test_event_bus_operations_surface_is_witnessed() -> None:
     assert "event_store_summary_governed" in witnesses
     assert "pipeline_completion_event_visible" in witnesses
     assert closure_actions["classify_event_bus_operations_routes"]["status"] == "closed"
+
+
+def test_api_key_lifecycle_surface_is_witnessed() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    api_key_surface = surfaces["api_key_lifecycle"]
+    witnesses = set(api_key_surface["runtime_witnesses"])
+    route_records = {
+        record["route"]: record
+        for record in matrix["route_coverage"]["routes"]
+    }
+
+    assert api_key_surface["coverage_state"] == "witnessed"
+    assert api_key_surface["request_proof"] == "request_proof"
+    assert api_key_surface["action_proof"] == "action_proof"
+    assert "/api/v1/api-keys" in api_key_surface["representative_paths"]
+    assert "/api/v1/api-keys/{key_id}" in api_key_surface["representative_paths"]
+    assert "mcoi/mcoi_runtime/app/routers/data/api_keys.py" in api_key_surface["evidence_files"]
+    assert "mcoi/mcoi_runtime/governance/auth/api_key.py" in api_key_surface["evidence_files"]
+    assert "mcoi/tests/test_api_key_lifecycle.py" in api_key_surface["evidence_files"]
+    assert "mcoi/tests/test_server_phase216.py" in api_key_surface["evidence_files"]
+    assert "api_key_create_rejects_wildcard_when_disabled" in witnesses
+    assert "api_key_create_rejects_empty_scopes" in witnesses
+    assert "api_key_revoke_missing_is_bounded" in witnesses
+    assert "api_key_rotation_links_old_and_new_keys" in witnesses
+    assert "api_key_expiration_and_stale_detection" in witnesses
+    assert route_records["/api/v1/api-keys"]["coverage_state"] == "witnessed"
+    assert route_records["/api/v1/api-keys"]["surface_id"] == "api_key_lifecycle"
+    assert route_records["/api/v1/api-keys/{key_id}"]["coverage_state"] == "witnessed"
+    assert route_records["/api/v1/api-keys/{key_id}"]["surface_id"] == "api_key_lifecycle"
+    assert closure_actions["classify_api_key_lifecycle_routes"]["status"] == "closed"
 
 
 def test_gateway_runtime_witness_covers_orchestration_receipts() -> None:

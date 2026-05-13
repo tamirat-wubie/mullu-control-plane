@@ -2871,6 +2871,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
             "status": "closed",
         },
         {
+            "action_id": "classify_gateway_capability_admission_routes",
+            "surfaces": ["gateway_capability_fabric", "capability_worker_execution", "trust_ledger"],
+            "status": "closed",
+        },
+        {
             "action_id": "bound_authority_read_models_to_paginated_windows",
             "surfaces": ["gateway_approval_resolution", "authority_obligation_mesh"],
             "status": "closed",
