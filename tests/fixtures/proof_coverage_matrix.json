@@ -3015,7 +3015,9 @@
         "mcoi/mcoi_runtime/app/routers/ops/coordination.py",
         "mcoi/mcoi_runtime/core/coordination.py",
         "mcoi/mcoi_runtime/core/coordination_persistence.py",
+        "mcoi/mcoi_runtime/persistence/coordination_store.py",
         "mcoi/tests/test_coordination_http_endpoints.py",
+        "mcoi/tests/test_coordination_engine_persistence.py",
         "mcoi/tests/test_coordination_checkpoint_persistence.py"
       ],
       "notes": "Coordination checkpoint routes save lease-bound coordination snapshots, restore governed checkpoints, and return bounded missing-checkpoint errors.",
@@ -3026,9 +3028,15 @@
       "request_proof": "request_proof",
       "runtime_witnesses": [
         "coordination_checkpoint_audited",
+        "coordination_restore_load_governed",
+        "coordination_restore_resumes_checkpoint",
+        "coordination_checkpoint_save_governed",
         "coordination_checkpoint_lease_bound",
+        "coordination_store_path_traversal_rejected",
         "coordination_restore_policy_checked",
-        "coordination_restore_missing_bounded"
+        "coordination_policy_drift_requires_review",
+        "coordination_restore_missing_bounded",
+        "coordination_restore_missing_is_bounded"
       ],
       "surface_id": "coordination_checkpoint_lifecycle"
     },
