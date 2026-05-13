@@ -8,7 +8,9 @@ Invariants: fail-closed on any gate failure, all actions are identity-bound and 
 """
 from __future__ import annotations
 from dataclasses import dataclass, field
-from typing import Any, Callable
+from pathlib import Path
+from string import Formatter
+from typing import Any, Callable, Mapping
 from hashlib import sha256
 
 from mcoi_runtime.core.dispatcher import Dispatcher, DispatchRequest
@@ -17,7 +19,7 @@ from mcoi_runtime.contracts.effect_assurance import (
     ExpectedEffect,
     ReconciliationStatus,
 )
-from mcoi_runtime.contracts.execution import ExecutionResult, ExecutionOutcome
+from mcoi_runtime.contracts.execution import EffectRecord, ExecutionResult, ExecutionOutcome
 from mcoi_runtime.contracts.governed_capability_fabric import (
     CommandCapabilityAdmissionStatus,
 )
@@ -75,6 +77,18 @@ class GovernedDispatchResult:
     @property
     def all_gates_passed(self) -> bool:
         return len(self.gates_failed) == 0
+
+
+@dataclass(frozen=True, slots=True)
+class _FilesystemSnapshot:
+    path_hash: str
+    exists: bool
+    is_file: bool
+    is_dir: bool
+    size_bytes: int | None
+    modified_time_ns: int | None
+    content_hash: str | None
+    error_code: str | None = None
 
 
 class GovernedDispatcher:
@@ -217,6 +231,7 @@ class GovernedDispatcher:
 
         # --- DISPATCH ---
         effect_plan = None
+        filesystem_before: Mapping[str, _FilesystemSnapshot] = {}
         if self._effect_assurance is not None:
             try:
                 effect_plan = self._effect_assurance.create_plan(
@@ -229,6 +244,7 @@ class GovernedDispatcher:
                 result.gates_passed.append(
                     GateResult("effect_plan", True, effect_plan.effect_plan_id)
                 )
+                filesystem_before = _filesystem_snapshots_from_request(context.request)
             except (RuntimeCoreInvariantError, ValueError) as exc:
                 bounded_error = _bounded_gate_error("effect plan failed", exc)
                 result.gates_failed.append(GateResult("effect_plan", False, bounded_error))
@@ -238,6 +254,13 @@ class GovernedDispatcher:
                 return result
 
         exec_result = self._dispatcher.dispatch(context.request)
+        if filesystem_before:
+            exec_result = _append_filesystem_delta_effects(
+                context.request,
+                exec_result,
+                filesystem_before,
+                observed_at=self._clock(),
+            )
         result.execution_result = exec_result
 
         if self._effect_assurance is not None and effect_plan is not None:
@@ -517,7 +540,7 @@ def _expected_effects_from_request(request: DispatchRequest) -> tuple[ExpectedEf
     """Build required expected effects from dispatch template metadata."""
     declared = _string_tuple(request.template.get("declared_effects"))
     if not declared:
-        declared = _default_declared_effects(request.route)
+        declared = _default_declared_effects(request)
     return tuple(
         ExpectedEffect(
             effect_id=effect_name,
@@ -535,11 +558,16 @@ def _forbidden_effects_from_request(request: DispatchRequest) -> tuple[str, ...]
     forbidden = _string_tuple(request.template.get("forbidden_effects"))
     if forbidden:
         return forbidden
-    return (f"{request.route}:unexpected_duplicate",)
+    default = [f"{request.route}:unexpected_duplicate"]
+    if _effect_observation_paths_from_request(request):
+        default.append("file_observation_failed")
+    return tuple(default)
 
 
-def _default_declared_effects(route: str) -> tuple[str, ...]:
-    if route == "shell_command":
+def _default_declared_effects(request: DispatchRequest) -> tuple[str, ...]:
+    if request.route == "shell_command":
+        if _effect_observation_paths_from_request(request):
+            return ("process_completed", "file_changed")
         return ("process_completed",)
     return ("execution_completed",)
 
@@ -548,3 +576,214 @@ def _string_tuple(value: object) -> tuple[str, ...]:
     if not isinstance(value, (list, tuple)):
         return ()
     return tuple(item for item in value if isinstance(item, str) and item.strip())
+
+
+def _effect_observation_paths_from_request(request: DispatchRequest) -> tuple[str, ...]:
+    paths = _string_tuple(request.template.get("effect_observation_paths"))
+    if not paths:
+        return ()
+    return tuple(_bind_template_text(path, request.bindings) for path in paths)
+
+
+def _bind_template_text(value: str, bindings: Mapping[str, str]) -> str:
+    normalized = {
+        key: item
+        for key, item in bindings.items()
+        if isinstance(key, str) and isinstance(item, str)
+    }
+    for _, field_name, _, _ in Formatter().parse(value):
+        if field_name is not None and field_name not in normalized:
+            raise RuntimeCoreInvariantError("effect observation path binding failed")
+    return value.format_map(normalized)
+
+
+def _filesystem_snapshots_from_request(request: DispatchRequest) -> Mapping[str, _FilesystemSnapshot]:
+    return {
+        path: _capture_filesystem_snapshot(path)
+        for path in _effect_observation_paths_from_request(request)
+    }
+
+
+def _capture_filesystem_snapshot(path_text: str) -> _FilesystemSnapshot:
+    path_hash = _path_hash(path_text)
+    try:
+        path = Path(path_text)
+        exists = path.exists()
+        if not exists:
+            return _FilesystemSnapshot(
+                path_hash=path_hash,
+                exists=False,
+                is_file=False,
+                is_dir=False,
+                size_bytes=None,
+                modified_time_ns=None,
+                content_hash=None,
+            )
+        is_file = path.is_file()
+        is_dir = path.is_dir()
+        stat_result = path.stat()
+        return _FilesystemSnapshot(
+            path_hash=path_hash,
+            exists=True,
+            is_file=is_file,
+            is_dir=is_dir,
+            size_bytes=stat_result.st_size,
+            modified_time_ns=stat_result.st_mtime_ns,
+            content_hash=_file_content_hash(path) if is_file else None,
+        )
+    except OSError:
+        return _FilesystemSnapshot(
+            path_hash=path_hash,
+            exists=False,
+            is_file=False,
+            is_dir=False,
+            size_bytes=None,
+            modified_time_ns=None,
+            content_hash=None,
+            error_code="filesystem_observation_error",
+        )
+
+
+def _append_filesystem_delta_effects(
+    request: DispatchRequest,
+    execution_result: ExecutionResult,
+    before: Mapping[str, _FilesystemSnapshot],
+    *,
+    observed_at: str,
+) -> ExecutionResult:
+    effects = list(execution_result.actual_effects)
+    observation_records: list[dict[str, Any]] = []
+    for path_text, before_snapshot in before.items():
+        after_snapshot = _capture_filesystem_snapshot(path_text)
+        observation_records.append(
+            _filesystem_observation_record(
+                path_text=path_text,
+                before_snapshot=before_snapshot,
+                after_snapshot=after_snapshot,
+            )
+        )
+        if before_snapshot.error_code or after_snapshot.error_code:
+            effects.append(
+                _filesystem_effect_record(
+                    execution_id=execution_result.execution_id,
+                    effect_name="file_observation_failed",
+                    before_snapshot=before_snapshot,
+                    after_snapshot=after_snapshot,
+                    observed_at=observed_at,
+                )
+            )
+            continue
+        if _filesystem_snapshot_changed(before_snapshot, after_snapshot):
+            effects.append(
+                _filesystem_effect_record(
+                    execution_id=execution_result.execution_id,
+                    effect_name="file_changed",
+                    before_snapshot=before_snapshot,
+                    after_snapshot=after_snapshot,
+                    observed_at=observed_at,
+                )
+            )
+    if len(effects) == len(execution_result.actual_effects):
+        return ExecutionResult(
+            execution_id=execution_result.execution_id,
+            goal_id=execution_result.goal_id,
+            status=execution_result.status,
+            actual_effects=execution_result.actual_effects,
+            assumed_effects=execution_result.assumed_effects,
+            started_at=execution_result.started_at,
+            finished_at=execution_result.finished_at,
+            metadata={
+                **dict(execution_result.metadata),
+                "filesystem_effect_observations": tuple(observation_records),
+            },
+            extensions=execution_result.extensions,
+        )
+    return ExecutionResult(
+        execution_id=execution_result.execution_id,
+        goal_id=execution_result.goal_id,
+        status=execution_result.status,
+        actual_effects=tuple(effects),
+        assumed_effects=execution_result.assumed_effects,
+        started_at=execution_result.started_at,
+        finished_at=execution_result.finished_at,
+        metadata={
+            **dict(execution_result.metadata),
+            "filesystem_effect_observations": tuple(observation_records),
+        },
+        extensions=execution_result.extensions,
+    )
+
+
+def _filesystem_observation_record(
+    *,
+    path_text: str,
+    before_snapshot: _FilesystemSnapshot,
+    after_snapshot: _FilesystemSnapshot,
+) -> dict[str, Any]:
+    return {
+        "path_hash": _path_hash(path_text),
+        "before": _snapshot_details(before_snapshot),
+        "after": _snapshot_details(after_snapshot),
+        "changed": _filesystem_snapshot_changed(before_snapshot, after_snapshot),
+    }
+
+
+def _filesystem_effect_record(
+    *,
+    execution_id: str,
+    effect_name: str,
+    before_snapshot: _FilesystemSnapshot,
+    after_snapshot: _FilesystemSnapshot,
+    observed_at: str,
+) -> EffectRecord:
+    evidence_hash = sha256(
+        f"{execution_id}:{effect_name}:{before_snapshot.path_hash}:{after_snapshot.path_hash}:"
+        f"{before_snapshot.content_hash}:{after_snapshot.content_hash}:{after_snapshot.modified_time_ns}".encode()
+    ).hexdigest()[:16]
+    evidence_ref = f"filesystem-delta:{execution_id}:{before_snapshot.path_hash[:16]}:{evidence_hash}"
+    return EffectRecord(
+        name=effect_name,
+        details={
+            "effect_id": effect_name,
+            "source": execution_id,
+            "evidence_ref": evidence_ref,
+            "observed_value": {
+                "before": _snapshot_details(before_snapshot),
+                "after": _snapshot_details(after_snapshot),
+                "observed_at": observed_at,
+            },
+        },
+    )
+
+
+def _snapshot_details(snapshot: _FilesystemSnapshot) -> dict[str, Any]:
+    return {
+        "path_hash": snapshot.path_hash,
+        "exists": snapshot.exists,
+        "is_file": snapshot.is_file,
+        "is_dir": snapshot.is_dir,
+        "size_bytes": snapshot.size_bytes,
+        "modified_time_ns": snapshot.modified_time_ns,
+        "content_hash": snapshot.content_hash,
+        "error_code": snapshot.error_code,
+    }
+
+
+def _filesystem_snapshot_changed(before: _FilesystemSnapshot, after: _FilesystemSnapshot) -> bool:
+    return _snapshot_details(before) != _snapshot_details(after)
+
+
+def _path_hash(path_text: str) -> str:
+    try:
+        material = str(Path(path_text).resolve(strict=False))
+    except OSError:
+        material = path_text
+    return sha256(material.encode("utf-8", errors="replace")).hexdigest()
+
+
+def _file_content_hash(path: Path) -> str:
+    digest = sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()

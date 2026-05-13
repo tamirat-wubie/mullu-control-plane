@@ -36,6 +36,42 @@ def test_template_validator_accepts_valid_shell_templates() -> None:
     assert validated.timeout_seconds == 5.0
 
 
+def test_template_validator_binds_effect_observation_paths() -> None:
+    validator = TemplateValidator()
+    validated = validator.validate(
+        {
+            "template_id": "template-effect-path-1",
+            "action_type": "shell_command",
+            "command_argv": ("python", "-c", "print('ok')"),
+            "effect_observation_paths": ("{workspace}/result.txt",),
+        },
+        {"workspace": "C:/workspace"},
+    )
+
+    assert validated.effect_observation_paths == ("C:/workspace/result.txt",)
+    assert validated.command_argv == ("python", "-c", "print('ok')")
+    assert validated.action_type is ExecutionActionType.SHELL_COMMAND
+
+
+def test_template_validator_rejects_missing_effect_observation_path_binding() -> None:
+    validator = TemplateValidator()
+
+    with pytest.raises(TemplateValidationError) as exc_info:
+        validator.validate(
+            {
+                "template_id": "template-effect-path-2",
+                "action_type": "shell_command",
+                "command_argv": ("python", "-c", "print('ok')"),
+                "effect_observation_paths": ("{workspace}/result.txt",),
+            },
+            {},
+        )
+
+    assert exc_info.value.code == "missing_binding"
+    assert str(exc_info.value) == "binding resolution failed"
+    assert "workspace" not in str(exc_info.value)
+
+
 def test_template_validator_rejects_missing_required_parameters() -> None:
     validator = TemplateValidator()
 

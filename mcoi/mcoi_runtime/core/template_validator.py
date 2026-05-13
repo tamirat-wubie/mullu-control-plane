@@ -39,6 +39,7 @@ _TEMPLATE_TEXT_REQUIREMENTS = {
 _TEMPLATE_SEQUENCE_REQUIREMENTS = {
     "required_parameters": "required_parameters must be a sequence of strings",
     "declared_effects": "declared_effects must be a sequence of strings",
+    "effect_observation_paths": "effect_observation_paths must be a sequence of strings",
     "forbidden_effects": "forbidden_effects must be a sequence of strings",
 }
 _TEMPLATE_NON_EMPTY_SEQUENCE_REQUIREMENTS = {
@@ -57,6 +58,7 @@ class ValidatedTemplate:
     command_argv: tuple[str, ...]
     cwd: str | None = None
     environment: Mapping[str, str] = field(default_factory=dict)
+    effect_observation_paths: tuple[str, ...] = ()
     timeout_seconds: float | None = None
 
     def __post_init__(self) -> None:
@@ -79,6 +81,9 @@ class ValidatedTemplate:
                 raise RuntimeCoreInvariantError("environment values must be strings")
         if self.timeout_seconds is not None and self.timeout_seconds <= 0:
             raise RuntimeCoreInvariantError("timeout_seconds must be greater than zero when provided")
+        for path in self.effect_observation_paths:
+            if not isinstance(path, str) or not path.strip():
+                raise RuntimeCoreInvariantError("effect_observation_paths items must be non-empty strings")
         object.__setattr__(self, "environment", freeze_mapping(environment))
 
 
@@ -106,6 +111,7 @@ class TemplateValidator:
         "required_parameters",
         "cwd",
         "declared_effects",
+        "effect_observation_paths",
         "environment",
         "forbidden_effects",
         "timeout_seconds",
@@ -150,6 +156,11 @@ class TemplateValidator:
             field_name="forbidden_effects",
             allow_empty=True,
         )
+        effect_observation_paths_raw = self._sequence_of_text(
+            template.get("effect_observation_paths", ()),
+            field_name="effect_observation_paths",
+            allow_empty=True,
+        )
         normalized_bindings = self._normalized_bindings(bindings)
 
         missing_parameters = [name for name in required_parameters if name not in normalized_bindings]
@@ -178,6 +189,10 @@ class TemplateValidator:
             )
             for key, value in environment_raw.items()
         }
+        effect_observation_paths = tuple(
+            self._bind_text(path, normalized_bindings)
+            for path in effect_observation_paths_raw
+        )
 
         timeout_seconds = template.get("timeout_seconds")
         if timeout_seconds is not None and (
@@ -194,6 +209,7 @@ class TemplateValidator:
             command_argv=command_argv,
             cwd=bound_cwd,
             environment=environment,
+            effect_observation_paths=effect_observation_paths,
             timeout_seconds=float(timeout_seconds) if timeout_seconds is not None else None,
         )
 
