@@ -744,6 +744,35 @@ def proof_coverage_matrix() -> dict[str, Any]:
             ],
         ),
         _surface(
+            "conversation_memory_lifecycle",
+            [
+                "/api/v1/conversation/message",
+                "/api/v1/conversation/{conversation_id}",
+                "/api/v1/conversations",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "mcoi/mcoi_runtime/app/routers/data/conversations.py",
+                "mcoi/mcoi_runtime/core/conversation_memory.py",
+                "mcoi/tests/test_server_phase208.py",
+                "mcoi/tests/test_conversation_memory.py",
+            ],
+            "Conversation memory routes append governed conversation messages, expose bounded conversation history and summaries, preserve tenant-scoped store filtering, and return explicit missing-conversation failures.",
+            [
+                "conversation_message_append_increments_count",
+                "conversation_history_returns_messages_and_summary",
+                "conversation_missing_read_is_bounded",
+                "conversation_multi_turn_history_preserved",
+                "conversation_list_summary_bounded",
+                "conversation_store_tenant_filtering",
+                "conversation_memory_state_hash_changes",
+                "conversation_memory_pruning_bounded",
+            ],
+        ),
+        _surface(
             "ops_proof_surface",
             [
                 "/api/v1/ops/benchmarks",
@@ -3259,6 +3288,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
         {
             "action_id": "classify_api_key_lifecycle_routes",
             "surfaces": ["api_key_lifecycle"],
+            "status": "closed",
+        },
+        {
+            "action_id": "classify_conversation_memory_routes",
+            "surfaces": ["conversation_memory_lifecycle"],
             "status": "closed",
         },
         {

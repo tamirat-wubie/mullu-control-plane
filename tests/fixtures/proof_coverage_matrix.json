@@ -134,6 +134,13 @@
       ]
     },
     {
+      "action_id": "classify_conversation_memory_routes",
+      "status": "closed",
+      "surfaces": [
+        "conversation_memory_lifecycle"
+      ]
+    },
+    {
       "action_id": "classify_task_queue_lifecycle_routes",
       "status": "closed",
       "surfaces": [
@@ -671,7 +678,7 @@
   ],
   "coverage_summary": {
     "by_action_proof": {
-      "action_proof": 83,
+      "action_proof": 84,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 14,
@@ -679,7 +686,7 @@
     },
     "by_audit": {
       "action_proof": 0,
-      "audit_chain": 95,
+      "audit_chain": 96,
       "gap": 0,
       "read_model": 4,
       "request_proof": 0
@@ -687,23 +694,23 @@
     "by_coverage_state": {
       "proven": 1,
       "unproven": 0,
-      "witnessed": 98
+      "witnessed": 99
     },
     "by_request_proof": {
       "action_proof": 1,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 16,
-      "request_proof": 82
+      "request_proof": 83
     },
-    "surface_count": 99
+    "surface_count": 100
   },
   "generated_by": "scripts/proof_coverage_matrix.py",
   "route_coverage": {
     "by_coverage_state": {
       "proven": 12,
-      "unproven": 30,
-      "witnessed": 291
+      "unproven": 27,
+      "witnessed": 294
     },
     "route_count": 333,
     "routes": [
@@ -1038,19 +1045,19 @@
         "surface_id": "operational_health_read_models"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/conversation/message",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "conversation_memory_lifecycle"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/conversation/{conversation_id}",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "conversation_memory_lifecycle"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/conversations",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "conversation_memory_lifecycle"
       },
       {
         "coverage_state": "unproven",
@@ -2373,7 +2380,7 @@
         "surface_id": "gateway_capability_fabric"
       }
     ],
-    "unclassified_route_count": 30
+    "unclassified_route_count": 27
   },
   "schema_version": 1,
   "surfaces": [
@@ -3091,6 +3098,35 @@
         "api_key_expiration_and_stale_detection"
       ],
       "surface_id": "api_key_lifecycle"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "mcoi/mcoi_runtime/app/routers/data/conversations.py",
+        "mcoi/mcoi_runtime/core/conversation_memory.py",
+        "mcoi/tests/test_server_phase208.py",
+        "mcoi/tests/test_conversation_memory.py"
+      ],
+      "notes": "Conversation memory routes append governed conversation messages, expose bounded conversation history and summaries, preserve tenant-scoped store filtering, and return explicit missing-conversation failures.",
+      "representative_paths": [
+        "/api/v1/conversation/message",
+        "/api/v1/conversation/{conversation_id}",
+        "/api/v1/conversations"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "conversation_message_append_increments_count",
+        "conversation_history_returns_messages_and_summary",
+        "conversation_missing_read_is_bounded",
+        "conversation_multi_turn_history_preserved",
+        "conversation_list_summary_bounded",
+        "conversation_store_tenant_filtering",
+        "conversation_memory_state_hash_changes",
+        "conversation_memory_pruning_bounded"
+      ],
+      "surface_id": "conversation_memory_lifecycle"
     },
     {
       "action_proof": "action_proof",
