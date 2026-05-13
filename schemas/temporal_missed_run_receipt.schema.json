@@ -1,0 +1,522 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:temporal-missed-run-receipt:1",
+  "title": "Mullusi Temporal Missed-Run Receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "receipt_id",
+    "request_id",
+    "tenant_id",
+    "actor_id",
+    "command_id",
+    "action_type",
+    "risk_level",
+    "policy_id",
+    "scope_id",
+    "schedule_id",
+    "status",
+    "missed_run_state",
+    "runtime_now_utc",
+    "missed_run_required",
+    "execute_at",
+    "observed_at",
+    "expires_at",
+    "last_attempt_at",
+    "lateness_seconds",
+    "grace_seconds",
+    "max_lateness_seconds",
+    "attempt_count",
+    "max_attempts",
+    "recurring",
+    "recurrence_rule",
+    "already_dispatched",
+    "terminal_receipt_id",
+    "scheduler_receipt_id",
+    "missed_reasons",
+    "blocked_reasons",
+    "recovery_actions",
+    "required_controls",
+    "evidence_refs",
+    "snapshot_evidence_refs",
+    "source_temporal_receipt_id",
+    "source_scheduler_receipt_id",
+    "source_retry_window_receipt_id",
+    "source_lease_window_receipt_id",
+    "source_idempotency_window_receipt_id",
+    "source_reapproval_receipt_id",
+    "receipt_schema_ref",
+    "terminal_closure_required",
+    "receipt_hash",
+    "metadata"
+  ],
+  "properties": {
+    "receipt_id": {
+      "type": "string",
+      "pattern": "^temporal-missed-run-receipt-[0-9a-f]{16}$"
+    },
+    "request_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "tenant_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "actor_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "command_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "action_type": {
+      "type": "string",
+      "minLength": 1
+    },
+    "risk_level": {
+      "type": "string",
+      "enum": ["low", "medium", "high", "critical"]
+    },
+    "policy_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "scope_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "schedule_id": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "missed",
+        "late_within_grace",
+        "recovery_due",
+        "duplicate_dispatched",
+        "blocked",
+        "not_required"
+      ]
+    },
+    "missed_run_state": {
+      "type": "string",
+      "enum": [
+        "missed_expired",
+        "late_allowed",
+        "recovery_allowed",
+        "already_dispatched",
+        "wrong_scope",
+        "invalid",
+        "not_required"
+      ]
+    },
+    "runtime_now_utc": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "missed_run_required": {
+      "type": "boolean"
+    },
+    "execute_at": {
+      "type": "string"
+    },
+    "observed_at": {
+      "type": "string"
+    },
+    "expires_at": {
+      "type": "string"
+    },
+    "last_attempt_at": {
+      "type": "string"
+    },
+    "lateness_seconds": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "grace_seconds": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "max_lateness_seconds": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "attempt_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "max_attempts": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "recurring": {
+      "type": "boolean"
+    },
+    "recurrence_rule": {
+      "type": "string"
+    },
+    "already_dispatched": {
+      "type": "boolean"
+    },
+    "terminal_receipt_id": {
+      "type": "string"
+    },
+    "scheduler_receipt_id": {
+      "type": "string"
+    },
+    "missed_reasons": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true
+    },
+    "blocked_reasons": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true
+    },
+    "recovery_actions": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true
+    },
+    "required_controls": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true
+    },
+    "evidence_refs": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true
+    },
+    "snapshot_evidence_refs": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true
+    },
+    "source_temporal_receipt_id": {
+      "type": "string"
+    },
+    "source_scheduler_receipt_id": {
+      "type": "string"
+    },
+    "source_retry_window_receipt_id": {
+      "type": "string"
+    },
+    "source_lease_window_receipt_id": {
+      "type": "string"
+    },
+    "source_idempotency_window_receipt_id": {
+      "type": "string"
+    },
+    "source_reapproval_receipt_id": {
+      "type": "string"
+    },
+    "receipt_schema_ref": {
+      "type": "string",
+      "const": "urn:mullusi:schema:temporal-missed-run-receipt:1"
+    },
+    "terminal_closure_required": {
+      "type": "boolean",
+      "const": true
+    },
+    "receipt_hash": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "runtime_owns_time_truth",
+        "receipt_is_not_terminal_closure",
+        "missed_run_checked",
+        "dispatch_allowed",
+        "recovery_required",
+        "terminal_closure_required",
+        "high_risk_source_receipts_checked"
+      ],
+      "properties": {
+        "runtime_owns_time_truth": {
+          "type": "boolean",
+          "const": true
+        },
+        "receipt_is_not_terminal_closure": {
+          "type": "boolean",
+          "const": true
+        },
+        "missed_run_checked": {
+          "type": "boolean"
+        },
+        "dispatch_allowed": {
+          "type": "boolean"
+        },
+        "recovery_required": {
+          "type": "boolean"
+        },
+        "terminal_closure_required": {
+          "type": "boolean",
+          "const": true
+        },
+        "high_risk_source_receipts_checked": {
+          "type": "boolean"
+        }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "late_within_grace"
+          }
+        }
+      },
+      "then": {
+        "required": ["execute_at", "observed_at"],
+        "properties": {
+          "missed_run_required": {
+            "const": true
+          },
+          "missed_run_state": {
+            "const": "late_allowed"
+          },
+          "missed_reasons": {
+            "maxItems": 0
+          },
+          "blocked_reasons": {
+            "maxItems": 0
+          },
+          "metadata": {
+            "properties": {
+              "dispatch_allowed": {
+                "const": true
+              },
+              "recovery_required": {
+                "const": false
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "missed"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "missed_run_required": {
+            "const": true
+          },
+          "missed_run_state": {
+            "const": "missed_expired"
+          },
+          "missed_reasons": {
+            "minItems": 1
+          },
+          "blocked_reasons": {
+            "maxItems": 0
+          },
+          "recovery_actions": {
+            "maxItems": 0
+          },
+          "metadata": {
+            "properties": {
+              "dispatch_allowed": {
+                "const": false
+              },
+              "recovery_required": {
+                "const": false
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "recovery_due"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "missed_run_required": {
+            "const": true
+          },
+          "missed_run_state": {
+            "const": "recovery_allowed"
+          },
+          "missed_reasons": {
+            "minItems": 1
+          },
+          "blocked_reasons": {
+            "maxItems": 0
+          },
+          "recovery_actions": {
+            "minItems": 1
+          },
+          "metadata": {
+            "properties": {
+              "dispatch_allowed": {
+                "const": false
+              },
+              "recovery_required": {
+                "const": true
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "duplicate_dispatched"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "missed_run_required": {
+            "const": true
+          },
+          "missed_run_state": {
+            "const": "already_dispatched"
+          },
+          "already_dispatched": {
+            "const": true
+          },
+          "terminal_receipt_id": {
+            "minLength": 1
+          },
+          "missed_reasons": {
+            "maxItems": 0
+          },
+          "blocked_reasons": {
+            "maxItems": 0
+          },
+          "metadata": {
+            "properties": {
+              "dispatch_allowed": {
+                "const": false
+              },
+              "recovery_required": {
+                "const": false
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "blocked"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "missed_run_required": {
+            "const": true
+          },
+          "blocked_reasons": {
+            "minItems": 1
+          },
+          "metadata": {
+            "properties": {
+              "dispatch_allowed": {
+                "const": false
+              },
+              "recovery_required": {
+                "const": false
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "not_required"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "missed_run_required": {
+            "const": false
+          },
+          "missed_run_state": {
+            "const": "not_required"
+          },
+          "schedule_id": {
+            "const": ""
+          },
+          "execute_at": {
+            "const": ""
+          },
+          "observed_at": {
+            "const": ""
+          },
+          "expires_at": {
+            "const": ""
+          },
+          "last_attempt_at": {
+            "const": ""
+          },
+          "required_controls": {
+            "maxItems": 0
+          },
+          "metadata": {
+            "properties": {
+              "missed_run_checked": {
+                "const": false
+              },
+              "dispatch_allowed": {
+                "const": false
+              },
+              "recovery_required": {
+                "const": false
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

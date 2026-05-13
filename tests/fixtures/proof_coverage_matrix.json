@@ -430,6 +430,13 @@
       ]
     },
     {
+      "action_id": "publish_temporal_missed_run_receipt_contract",
+      "status": "closed",
+      "surfaces": [
+        "temporal_missed_run"
+      ]
+    },
+    {
       "action_id": "publish_temporal_memory_refresh_receipt_contract",
       "status": "closed",
       "surfaces": [
@@ -500,7 +507,7 @@
   ],
   "coverage_summary": {
     "by_action_proof": {
-      "action_proof": 63,
+      "action_proof": 64,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 11,
@@ -508,7 +515,7 @@
     },
     "by_audit": {
       "action_proof": 0,
-      "audit_chain": 72,
+      "audit_chain": 73,
       "gap": 0,
       "read_model": 4,
       "request_proof": 0
@@ -516,16 +523,16 @@
     "by_coverage_state": {
       "proven": 1,
       "unproven": 0,
-      "witnessed": 75
+      "witnessed": 76
     },
     "by_request_proof": {
       "action_proof": 1,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 13,
-      "request_proof": 62
+      "request_proof": 63
     },
-    "surface_count": 76
+    "surface_count": 77
   },
   "generated_by": "scripts/proof_coverage_matrix.py",
   "route_coverage": {
@@ -4159,6 +4166,35 @@
         "receipt_not_terminal_closure"
       ],
       "surface_id": "temporal_idempotency_window"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "gateway/temporal_missed_run.py",
+        "schemas/temporal_missed_run_receipt.schema.json",
+        "tests/test_gateway/test_temporal_missed_run.py"
+      ],
+      "notes": "Temporal missed-run receipts classify late, expired, duplicate-dispatched, and recovery-due scheduled commands with runtime-owned time truth, scheduler source receipts, evidence refs, and high-risk reapproval binding before skip, retry, or closure.",
+      "representative_paths": [
+        "evaluate_temporal_missed_run",
+        "MissedRunRequest",
+        "TemporalMissedRunReceipt"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "runtime_clock_owns_missed_run_time",
+        "late_within_grace_preserves_dispatch_eligibility",
+        "expired_command_emits_missed_run_receipt",
+        "duplicate_dispatched_run_requires_terminal_receipt",
+        "recovery_due_requires_review_actions",
+        "tenant_command_action_scope_checked",
+        "high_risk_source_receipts_bound",
+        "temporal_missed_run_receipt_schema_valid",
+        "receipt_not_terminal_closure"
+      ],
+      "surface_id": "temporal_missed_run"
     },
     {
       "action_proof": "action_proof",
