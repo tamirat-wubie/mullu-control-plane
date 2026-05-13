@@ -142,7 +142,7 @@ def test_representative_routes_are_not_unclassified() -> None:
     )
     assert classified_routes["/api/v1/agent/register"]["surface_id"] == "agent_adapter_lifecycle"
     assert classified_routes["/api/v1/agent/action-request"]["surface_id"] == "agent_adapter_lifecycle"
-    assert classified_routes["/api/v1/agents/{agent_id}/tasks"]["surface_id"] == "agent_adapter_lifecycle"
+    assert classified_routes["/api/v1/agent/restore"]["surface_id"] == "agent_adapter_lifecycle"
     assert classified_routes["/api/v1/webhooks/subscribe"]["surface_id"] == "webhook_operations_lifecycle"
     assert classified_routes["/api/v1/webhooks/deliveries"]["surface_id"] == "webhook_operations_lifecycle"
     assert (
@@ -167,7 +167,7 @@ def test_agent_adapter_lifecycle_surface_is_witnessed() -> None:
     assert "/api/v1/agent/register" in agent_surface["representative_paths"]
     assert "/api/v1/agent/action-request" in agent_surface["representative_paths"]
     assert "/api/v1/agent/restore" in agent_surface["representative_paths"]
-    assert "/api/v1/agents/{agent_id}/tasks" in agent_surface["representative_paths"]
+    assert "/api/v1/agent/adapter/summary" in agent_surface["representative_paths"]
     assert "mcoi/mcoi_runtime/app/routers/adapter.py" in agent_surface["evidence_files"]
     assert "mcoi/mcoi_runtime/app/routers/agent.py" in agent_surface["evidence_files"]
     assert "mcoi/tests/test_agent_adapter_protocol.py" in agent_surface["evidence_files"]
@@ -948,9 +948,17 @@ def test_software_dev_capability_pack_surface_requires_explicit_admission() -> N
     assert "mcoi/mcoi_runtime/workers/code_worker.py" in software_surface["evidence_files"]
     assert "mcoi/mcoi_runtime/core/app_builder/codegen_pipeline.py" in software_surface["evidence_files"]
     assert "mcoi/mcoi_runtime/core/app_builder/pr_candidate.py" in software_surface["evidence_files"]
+    assert "schemas/software_dev/app_task_graph.input.schema.json" in software_surface["evidence_files"]
+    assert "schemas/software_dev/change_run.input.schema.json" in software_surface["evidence_files"]
+    assert "schemas/software_dev/context_bundle.input.schema.json" in software_surface["evidence_files"]
+    assert "schemas/software_dev/gate_plan.input.schema.json" in software_surface["evidence_files"]
+    assert "schemas/software_dev/pr_candidate.input.schema.json" in software_surface["evidence_files"]
+    assert "schemas/software_dev/repo_map_read.input.schema.json" in software_surface["evidence_files"]
     assert "tests/test_software_dev_capability_pack.py" in software_surface["evidence_files"]
     assert "software_dev_pack_fixture_not_default_loaded" in witnesses
     assert "software_dev_capability_entries_schema_valid" in witnesses
+    assert "software_dev_input_schema_refs_materialized" in witnesses
+    assert "software_dev_input_schemas_reject_boundary_violations" in witnesses
     assert "software_dev_named_loader_installs_only_software_dev_domain" in witnesses
     assert "software_dev_capsule_refs_match_pack_capabilities" in witnesses
     assert "software_dev_direct_deployment_capability_absent" in witnesses
@@ -1309,6 +1317,7 @@ def test_trust_ledger_surface_signs_terminal_evidence_bundles() -> None:
     assert trust_surface["coverage_state"] == "witnessed"
     assert trust_surface["request_proof"] == "request_proof"
     assert trust_surface["action_proof"] == "action_proof"
+    assert "docs/65_trust_ledger_offline_verification.md" in trust_surface["evidence_files"]
     assert "gateway/trust_ledger.py" in trust_surface["evidence_files"]
     assert "scripts/verify_anchor_receipt.py" in trust_surface["evidence_files"]
     assert "schemas/trust_ledger_anchor_receipt.schema.json" in trust_surface["evidence_files"]

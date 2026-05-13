@@ -1,4 +1,4 @@
-"""Purpose: generate the proof coverage matrix witness.
+﻿"""Purpose: generate the proof coverage matrix witness.
 
 Governance scope: records request-proof, action-proof, runtime-witness, and
 audit-chain coverage for externally callable control-plane surfaces.
@@ -233,43 +233,6 @@ def proof_coverage_matrix() -> dict[str, Any]:
             ],
         ),
         _surface(
-            "agent_adapter_lifecycle",
-            [
-                "/api/v1/agent/action-request",
-                "/api/v1/agent/action-result",
-                "/api/v1/agent/adapter/summary",
-                "/api/v1/agent/checkpoint",
-                "/api/v1/agent/heartbeat",
-                "/api/v1/agent/register",
-                "/api/v1/agent/restore",
-                "/api/v1/agents",
-                "/api/v1/agents/{agent_id}/tasks",
-            ],
-            "request_proof",
-            "action_proof",
-            "audit_chain",
-            "witnessed",
-            [
-                "mcoi/mcoi_runtime/app/routers/adapter.py",
-                "mcoi/mcoi_runtime/app/routers/agent.py",
-                "mcoi/tests/test_agent_adapter_protocol.py",
-                "mcoi/tests/test_server_phase205.py",
-                "mcoi/tests/test_server_phase217.py",
-            ],
-            "Agent adapter lifecycle routes bind external agent registration, heartbeat, action admission, action result closure, checkpoint/restore, adapter summary, and built-in agent task read models to governed responses with audit records and bounded error contracts.",
-            [
-                "agent_register_emits_audit_record",
-                "agent_heartbeat_requires_registered_agent",
-                "agent_action_request_runs_guard_chain",
-                "agent_action_result_closes_tracked_action",
-                "agent_goal_context_propagates_to_response_and_audit",
-                "agent_checkpoint_restore_roundtrip_governed",
-                "agent_adapter_summary_bounded",
-                "builtin_agent_registry_read_models_governed",
-                "agent_error_contracts_bounded",
-            ],
-        ),
-        _surface(
             "webhook_operations_lifecycle",
             [
                 "/api/v1/webhooks",
@@ -356,6 +319,38 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "console_audit_exposes_chain_intact_read_model",
                 "console_checkpoints_expose_persisted_state_summary",
                 "console_provider_and_scheduler_views_are_read_only",
+            ],
+        ),
+        _surface(
+            "agent_adapter_protocol",
+            [
+                "/api/v1/agent/register",
+                "/api/v1/agent/heartbeat",
+                "/api/v1/agent/action-request",
+                "/api/v1/agent/action-result",
+                "/api/v1/agent/checkpoint",
+                "/api/v1/agent/restore",
+                "/api/v1/agent/adapter/summary",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "mcoi/mcoi_runtime/app/routers/adapter.py",
+                "mcoi/mcoi_runtime/app/routers/deps.py",
+                "mcoi/tests/test_agent_adapter_protocol.py",
+                "mcoi/tests/test_server_phase217.py",
+            ],
+            "Agent adapter protocol routes register external workers, maintain heartbeat state, pass action requests through the guard chain, record action results, checkpoint and restore coordination state with bounded errors, and expose a governed summary read model.",
+            [
+                "agent_register_emits_governed_identity",
+                "agent_heartbeat_requires_registered_agent",
+                "agent_action_request_runs_guard_chain",
+                "agent_action_result_records_outcome",
+                "agent_goal_context_propagates_to_action_request",
+                "agent_checkpoint_restore_errors_are_bounded",
+                "agent_adapter_summary_is_governed_read_model",
             ],
         ),
         _surface(
@@ -638,6 +633,34 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "task_queue_result_retrieval",
                 "task_queue_missing_result_bounded",
                 "task_queue_errors_sanitized",
+            ],
+        ),
+        _surface(
+            "trace_observability_read_models",
+            [
+                "/api/v1/traces",
+                "/api/v1/traces/slow",
+                "/api/v1/traces/summary",
+                "/api/v1/traces/{trace_id}",
+            ],
+            "read_model",
+            "read_model",
+            "audit_chain",
+            "witnessed",
+            [
+                "mcoi/mcoi_runtime/app/routers/agent.py",
+                "mcoi/mcoi_runtime/app/routers/ops/summaries.py",
+                "mcoi/mcoi_runtime/core/request_tracing.py",
+                "mcoi/tests/test_request_tracing.py",
+            ],
+            "Trace observability routes expose bounded request-tracing summaries, individual trace spans, slow-trace projections, and OpenTelemetry exporter summaries without mutation authority.",
+            [
+                "request_trace_summary_bounded",
+                "request_trace_lookup_bounded",
+                "missing_trace_returns_governed_404",
+                "slow_trace_projection_bounded",
+                "otel_trace_summary_bounded",
+                "trace_context_roundtrip_tested",
             ],
         ),
         _surface(
@@ -1196,6 +1219,12 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "mcoi/mcoi_runtime/core/code_intelligence.py",
                 "mcoi/mcoi_runtime/core/software_gate_planner.py",
                 "mcoi/mcoi_runtime/workers/code_worker.py",
+                "schemas/software_dev/app_task_graph.input.schema.json",
+                "schemas/software_dev/change_run.input.schema.json",
+                "schemas/software_dev/context_bundle.input.schema.json",
+                "schemas/software_dev/gate_plan.input.schema.json",
+                "schemas/software_dev/pr_candidate.input.schema.json",
+                "schemas/software_dev/repo_map_read.input.schema.json",
                 "tests/test_app_builder_pipeline.py",
                 "tests/test_code_context_builder.py",
                 "tests/test_code_intelligence.py",
@@ -1208,6 +1237,8 @@ def proof_coverage_matrix() -> dict[str, Any]:
             [
                 "software_dev_pack_fixture_not_default_loaded",
                 "software_dev_capability_entries_schema_valid",
+                "software_dev_input_schema_refs_materialized",
+                "software_dev_input_schemas_reject_boundary_violations",
                 "software_dev_named_loader_installs_only_software_dev_domain",
                 "software_dev_capsule_refs_match_pack_capabilities",
                 "software_dev_pack_explicit_fabric_admits_known_capabilities",
@@ -1578,6 +1609,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
             "witnessed",
             [
                 "docs/62_governed_operational_intelligence.md",
+                "docs/65_trust_ledger_offline_verification.md",
                 "gateway/evidence_bundle.py",
                 "gateway/trust_ledger.py",
                 "scripts/verify_evidence_bundle.py",
@@ -2495,10 +2527,10 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "mcoi/tests/test_god_mode_decorator.py",
             ],
             (
-                "Privileged 'god mode' capabilities ship dormant. Two-stage explicit consent — "
-                "registration agreement promotes capability dormant→armed; activation issues "
+                "Privileged 'god mode' capabilities ship dormant. Two-stage explicit consent â€” "
+                "registration agreement promotes capability dormantâ†’armed; activation issues "
                 "a single-use, short-lived ticket. Catastrophic capabilities require dual "
-                "control (≥2 distinct approvers). Every consumption emits an immutable "
+                "control (â‰¥2 distinct approvers). Every consumption emits an immutable "
                 "receipt with pre/post hashes and the full agreement chain. Withdrawals and "
                 "revocations are first-class, irreversible-as-events."
             ),
@@ -2567,6 +2599,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
             "status": "closed",
         },
         {
+            "action_id": "classify_agent_adapter_protocol_routes",
+            "surfaces": ["agent_adapter_protocol"],
+            "status": "closed",
+        },
+        {
             "action_id": "publish_hosted_demo_sandbox_read_models",
             "surfaces": ["hosted_demo_sandbox"],
             "status": "closed",
@@ -2607,13 +2644,13 @@ def proof_coverage_matrix() -> dict[str, Any]:
             "status": "closed",
         },
         {
-            "action_id": "classify_tenant_governance_lifecycle_routes",
-            "surfaces": ["tenant_governance_lifecycle"],
+            "action_id": "classify_trace_observability_routes",
+            "surfaces": ["trace_observability_read_models"],
             "status": "closed",
         },
         {
-            "action_id": "classify_agent_adapter_lifecycle_routes",
-            "surfaces": ["agent_adapter_lifecycle"],
+            "action_id": "classify_tenant_governance_lifecycle_routes",
+            "surfaces": ["tenant_governance_lifecycle"],
             "status": "closed",
         },
         {

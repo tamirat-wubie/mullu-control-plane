@@ -1,0 +1,87 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:software-dev:context-bundle-input:1",
+  "title": "Software Dev Context Bundle Input",
+  "description": "Governed request for building a bounded code context bundle from an existing repository map. The request carries affected files, acceptance criteria, and selection limits only.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "capability_id",
+    "request_id",
+    "repository_ref",
+    "commit_sha",
+    "repo_map_ref",
+    "task_summary",
+    "affected_files",
+    "acceptance_criteria",
+    "target_model",
+    "metadata"
+  ],
+  "properties": {
+    "capability_id": {
+      "const": "software_dev.context_bundle.build"
+    },
+    "request_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "repository_ref": {
+      "type": "string",
+      "minLength": 1
+    },
+    "commit_sha": {
+      "type": "string",
+      "minLength": 1
+    },
+    "repo_map_ref": {
+      "type": "string",
+      "minLength": 1
+    },
+    "task_summary": {
+      "type": "string",
+      "minLength": 1
+    },
+    "affected_files": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/repository_path"
+      }
+    },
+    "acceptance_criteria": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "max_symbol_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "max_test_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "max_dependency_edges": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "target_model": {
+      "type": "string",
+      "minLength": 1
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  },
+  "$defs": {
+    "repository_path": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))(?![A-Za-z]:)[^\\r\\n]+$"
+    }
+  }
+}

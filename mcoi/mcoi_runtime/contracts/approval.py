@@ -10,9 +10,9 @@ Invariants:
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import StrEnum
-from typing import Any, Mapping
+from typing import cast
 
 from ._base import ContractRecord, freeze_value, require_datetime_text, require_non_empty_text
 
@@ -41,6 +41,15 @@ class OverrideType(StrEnum):
     PROVIDER_OVERRIDE = "provider_override"
 
 
+def _freeze_text_array(values: tuple[str, ...] | list[str], field_name: str) -> tuple[str, ...]:
+    if isinstance(values, (str, bytes)) or not isinstance(values, (tuple, list)):
+        raise ValueError(f"{field_name} must be an array")
+    frozen = cast(tuple[str, ...], freeze_value(list(values)))
+    for idx, value in enumerate(frozen):
+        require_non_empty_text(value, f"{field_name}[{idx}]")
+    return frozen
+
+
 @dataclass(frozen=True, slots=True)
 class ApprovalScope(ContractRecord):
     """What the approval covers — typed and bounded."""
@@ -54,7 +63,7 @@ class ApprovalScope(ContractRecord):
         if not isinstance(self.scope_type, ApprovalScopeType):
             raise ValueError("scope_type must be an ApprovalScopeType value")
         object.__setattr__(self, "target_id", require_non_empty_text(self.target_id, "target_id"))
-        object.__setattr__(self, "allowed_actions", freeze_value(list(self.allowed_actions)))
+        object.__setattr__(self, "allowed_actions", _freeze_text_array(self.allowed_actions, "allowed_actions"))
         if not isinstance(self.max_executions, int) or self.max_executions < 1:
             raise ValueError("max_executions must be a positive integer")
 
@@ -81,15 +90,14 @@ class ApprovalRequest(ContractRecord):
             raise ValueError("scope must be an ApprovalScope instance")
         object.__setattr__(self, "reason", require_non_empty_text(self.reason, "reason"))
         object.__setattr__(self, "requested_at", require_datetime_text(self.requested_at, "requested_at"))
-        allowed_approver_ids = freeze_value(list(self.allowed_approver_ids))
+        allowed_approver_ids = _freeze_text_array(self.allowed_approver_ids, "allowed_approver_ids")
         seen_approver_ids: set[str] = set()
-        for index, approver_id in enumerate(allowed_approver_ids):
-            normalized_approver_id = require_non_empty_text(approver_id, f"allowed_approver_ids[{index}]")
-            if normalized_approver_id in seen_approver_ids:
+        for approver_id in allowed_approver_ids:
+            if approver_id in seen_approver_ids:
                 raise ValueError("allowed_approver_ids must not contain duplicates")
-            if normalized_approver_id == self.requester_id:
+            if approver_id == self.requester_id:
                 raise ValueError("allowed_approver_ids must exclude requester_id")
-            seen_approver_ids.add(normalized_approver_id)
+            seen_approver_ids.add(approver_id)
         object.__setattr__(self, "allowed_approver_ids", allowed_approver_ids)
         if self.expires_at is not None:
             object.__setattr__(self, "expires_at", require_datetime_text(self.expires_at, "expires_at"))

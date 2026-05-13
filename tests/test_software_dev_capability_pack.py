@@ -12,6 +12,7 @@ Invariants:
 
 from __future__ import annotations
 
+from copy import deepcopy
 import json
 from pathlib import Path
 
@@ -29,6 +30,7 @@ from scripts.validate_schemas import _load_schema, _validate_schema_instance
 ROOT = Path(__file__).resolve().parent.parent
 SOFTWARE_DEV_CAPSULE_PATH = ROOT / "capsules" / "software_dev.json"
 SOFTWARE_DEV_CAPABILITY_PACK_PATH = ROOT / "capabilities" / "software_dev" / "capability_pack.json"
+SOFTWARE_DEV_SCHEMA_DIR = ROOT / "schemas" / "software_dev"
 CAPABILITY_REGISTRY_SCHEMA_PATH = ROOT / "schemas" / "capability_registry_entry.schema.json"
 
 
@@ -50,6 +52,56 @@ def test_software_dev_capability_entries_are_schema_valid() -> None:
     assert len(entries) == 6
     assert all(_validate_schema_instance(schema, entry) == [] for entry in entries)
     assert all(CapabilityRegistryEntry.from_mapping(entry).domain == "software_dev" for entry in entries)
+
+
+def test_software_dev_input_schema_refs_are_materialized_and_strict() -> None:
+    entries = _software_dev_entries()
+    schema_refs = tuple(entry.input_schema_ref for entry in entries)
+    output_refs = tuple(entry.output_schema_ref for entry in entries)
+
+    assert len(schema_refs) == 6
+    assert all(ref.startswith("schemas/software_dev/") for ref in schema_refs)
+    assert all((ROOT / ref).exists() for ref in schema_refs)
+    assert all(ref.startswith("urn:mullusi:schema:") for ref in output_refs)
+    for ref in schema_refs:
+        schema = _load_schema(ROOT / ref)
+        assert schema["additionalProperties"] is False
+        assert schema["$id"].startswith("urn:mullusi:schema:software-dev:")
+
+
+def test_software_dev_input_schemas_accept_representative_requests() -> None:
+    payloads = _representative_software_dev_schema_payloads()
+
+    assert set(payloads) == {entry.input_schema_ref for entry in _software_dev_entries()}
+    for schema_ref, payload in payloads.items():
+        schema = _load_schema(ROOT / schema_ref)
+        assert _validate_schema_instance(schema, payload) == []
+        assert payload["capability_id"].startswith("software_dev.")
+        assert payload["metadata"]["fixture"] == "software_dev_capability_pack"
+
+
+def test_software_dev_input_schemas_reject_boundary_violations() -> None:
+    payloads = _representative_software_dev_schema_payloads()
+    context_payload = deepcopy(payloads["schemas/software_dev/context_bundle.input.schema.json"])
+    change_payload = deepcopy(payloads["schemas/software_dev/change_run.input.schema.json"])
+    pr_payload = deepcopy(payloads["schemas/software_dev/pr_candidate.input.schema.json"])
+
+    context_payload["affected_files"] = ["../secrets.py"]
+    change_payload["command_policy"]["network_allowed"] = True
+    pr_payload["local_git_push_allowed"] = True
+
+    assert _validate_schema_instance(
+        _load_schema(SOFTWARE_DEV_SCHEMA_DIR / "context_bundle.input.schema.json"),
+        context_payload,
+    )
+    assert _validate_schema_instance(
+        _load_schema(SOFTWARE_DEV_SCHEMA_DIR / "change_run.input.schema.json"),
+        change_payload,
+    )
+    assert _validate_schema_instance(
+        _load_schema(SOFTWARE_DEV_SCHEMA_DIR / "pr_candidate.input.schema.json"),
+        pr_payload,
+    )
 
 
 def test_software_dev_named_loader_installs_only_software_dev_domain() -> None:
@@ -147,6 +199,120 @@ def _software_dev_entries() -> tuple[CapabilityRegistryEntry, ...]:
         CapabilityRegistryEntry.from_mapping(item)
         for item in _load_json(SOFTWARE_DEV_CAPABILITY_PACK_PATH)["capabilities"]
     )
+
+
+def _representative_software_dev_schema_payloads() -> dict[str, dict]:
+    metadata = {"fixture": "software_dev_capability_pack"}
+    return {
+        "schemas/software_dev/repo_map_read.input.schema.json": {
+            "capability_id": "software_dev.repo_map.read",
+            "request_id": "req-repo-map",
+            "repository_ref": "repo:mullu-control-plane",
+            "commit_sha": "abc123",
+            "workspace_ref": "workspace:local-sandbox",
+            "include_patterns": ["mcoi/**/*.py", "tests/**/*.py"],
+            "exclude_patterns": [".tmp_test_outputs/**"],
+            "max_file_count": 5000,
+            "metadata": metadata,
+        },
+        "schemas/software_dev/context_bundle.input.schema.json": {
+            "capability_id": "software_dev.context_bundle.build",
+            "request_id": "req-context",
+            "repository_ref": "repo:mullu-control-plane",
+            "commit_sha": "abc123",
+            "repo_map_ref": "repo-map:abc123",
+            "task_summary": "Add governed schema coverage for software-dev capability inputs",
+            "affected_files": ["tests/test_software_dev_capability_pack.py"],
+            "acceptance_criteria": ["schema refs resolve", "boundary violations reject", "pack stays explicit"],
+            "max_symbol_count": 40,
+            "max_test_count": 20,
+            "max_dependency_edges": 60,
+            "target_model": "coding",
+            "metadata": metadata,
+        },
+        "schemas/software_dev/gate_plan.input.schema.json": {
+            "capability_id": "software_dev.gate_plan.select",
+            "request_id": "req-gates",
+            "repository_ref": "repo:mullu-control-plane",
+            "commit_sha": "abc123",
+            "repo_map_ref": "repo-map:abc123",
+            "work_kind": "feature",
+            "mode": "patch_test_review",
+            "summary": "Plan validation gates for software-dev schema contracts",
+            "affected_files": ["schemas/software_dev/change_run.input.schema.json"],
+            "acceptance_criteria": ["schemas are valid", "tests pass", "proof matrix remains current"],
+            "quality_gates": ["unit_tests", "lint", "security_scan"],
+            "blast_radius": "module",
+            "rollback_required": True,
+            "reviewer_required": True,
+            "metadata": metadata,
+        },
+        "schemas/software_dev/change_run.input.schema.json": {
+            "capability_id": "software_dev.change.run",
+            "request_id": "req-change",
+            "software_request_id": "swreq-schema-coverage",
+            "repository_ref": "repo:mullu-control-plane",
+            "commit_sha": "abc123",
+            "target_branch": "feature/software-dev-schema-coverage",
+            "context_bundle_ref": "context:abc123",
+            "gate_plan_ref": "gate-plan:abc123",
+            "approval_ref": "approval:developer-reviewer",
+            "workspace_snapshot_ref": "snapshot:before-change",
+            "rollback_snapshot_ref": "snapshot:rollback",
+            "work_kind": "feature",
+            "mode": "patch_test_review",
+            "summary": "Run governed schema contract update",
+            "affected_files": ["schemas/software_dev/change_run.input.schema.json"],
+            "acceptance_criteria": ["schemas are strict", "network remains disabled", "rollback evidence is bound"],
+            "quality_gates": ["unit_tests", "security_scan", "review"],
+            "max_self_debug_iterations": 2,
+            "rollback_required": True,
+            "sandbox_profile": "workspace_network_none",
+            "command_policy": {
+                "network_allowed": False,
+                "allowed_executables": ["python", "pytest", "ruff", "mypy", "git"],
+                "denied_executables": ["sh", "bash", "cmd", "powershell", "curl", "wget"],
+                "denied_git_subcommands": ["push", "pull", "fetch", "clone", "remote", "submodule", "credential"],
+                "max_timeout_seconds": 300,
+                "max_output_bytes": 1048576,
+            },
+            "metadata": metadata,
+        },
+        "schemas/software_dev/app_task_graph.input.schema.json": {
+            "capability_id": "software_dev.app_task_graph.plan",
+            "request_id": "req-app-graph",
+            "repository_ref": "repo:invoice-service",
+            "target_branch": "feature/invoice-dashboard",
+            "product_spec": {
+                "app_name": "Invoice Dashboard",
+                "users": ["finance operator", "accounting manager"],
+                "jobs_to_be_done": ["review invoices", "flag overdue invoices"],
+                "core_flows": ["list invoices", "create invoice", "mark invoice paid"],
+                "non_goals": ["production deployment", "payment processing"],
+                "security_requirements": ["tenant scoped access", "role based approval"],
+            },
+            "max_task_count": 12,
+            "direct_deployment_allowed": False,
+            "commit_candidate_allowed": False,
+            "metadata": metadata,
+        },
+        "schemas/software_dev/pr_candidate.input.schema.json": {
+            "capability_id": "software_dev.pr_candidate.prepare",
+            "request_id": "req-pr-candidate",
+            "repository_ref": "repo:invoice-service",
+            "base_branch": "main",
+            "candidate_branch": "mullu/app-builder-invoice-dashboard-abc123",
+            "title": "Invoice Dashboard governed candidate",
+            "app_task_graph_ref": "app-task-graph:invoice-dashboard",
+            "software_receipt_refs": ["software-change:receipt-1"],
+            "quality_gate_refs": ["gate-plan:abc123"],
+            "approval_request_ref": "approval:pr-open-review",
+            "local_git_push_allowed": False,
+            "open_pull_request_allowed": False,
+            "production_deployment_allowed": False,
+            "metadata": metadata,
+        },
+    }
 
 
 def _load_json(path: Path) -> dict:

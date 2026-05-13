@@ -15,7 +15,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Mapping
+from typing import Any, Mapping, cast
 
 from ._base import (
     ContractRecord,
@@ -23,7 +23,6 @@ from ._base import (
     require_datetime_text,
     require_non_empty_text,
     require_non_negative_int,
-    require_unit_float,
 )
 
 
@@ -88,6 +87,16 @@ class AuthContextKind(Enum):
 # ---------------------------------------------------------------------------
 
 
+def _freeze_text_array(values: tuple[str, ...] | list[str], field_name: str) -> tuple[str, ...]:
+    if isinstance(values, (str, bytes)) or not isinstance(values, (tuple, list)):
+        raise ValueError(f"{field_name} must be an array")
+    frozen = cast(tuple[str, ...], freeze_value(list(values)))
+    for idx, value in enumerate(frozen):
+        if not isinstance(value, str) or not value.strip():
+            raise ValueError(f"{field_name}[{idx}] must be a non-empty string")
+    return frozen
+
+
 @dataclass(frozen=True, slots=True)
 class IdentityRecord(ContractRecord):
     """A registered identity in the platform."""
@@ -129,7 +138,7 @@ class RoleRecord(ContractRecord):
         object.__setattr__(self, "name", require_non_empty_text(self.name, "name"))
         if not isinstance(self.kind, RoleKind):
             raise ValueError("kind must be a RoleKind")
-        object.__setattr__(self, "permissions", freeze_value(list(self.permissions)))
+        object.__setattr__(self, "permissions", _freeze_text_array(self.permissions, "permissions"))
         require_datetime_text(self.created_at, "created_at")
         object.__setattr__(self, "metadata", freeze_value(dict(self.metadata)))
 
@@ -254,8 +263,8 @@ class AccessEvaluation(ContractRecord):
         object.__setattr__(self, "request_id", require_non_empty_text(self.request_id, "request_id"))
         if not isinstance(self.decision, AccessDecision):
             raise ValueError("decision must be an AccessDecision")
-        object.__setattr__(self, "matching_rule_ids", freeze_value(list(self.matching_rule_ids)))
-        object.__setattr__(self, "matching_role_ids", freeze_value(list(self.matching_role_ids)))
+        object.__setattr__(self, "matching_rule_ids", _freeze_text_array(self.matching_rule_ids, "matching_rule_ids"))
+        object.__setattr__(self, "matching_role_ids", _freeze_text_array(self.matching_role_ids, "matching_role_ids"))
         require_datetime_text(self.evaluated_at, "evaluated_at")
 
 

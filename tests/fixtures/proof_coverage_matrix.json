@@ -69,6 +69,13 @@
       ]
     },
     {
+      "action_id": "classify_agent_adapter_protocol_routes",
+      "status": "closed",
+      "surfaces": [
+        "agent_adapter_protocol"
+      ]
+    },
+    {
       "action_id": "publish_hosted_demo_sandbox_read_models",
       "status": "closed",
       "surfaces": [
@@ -125,17 +132,17 @@
       ]
     },
     {
+      "action_id": "classify_trace_observability_routes",
+      "status": "closed",
+      "surfaces": [
+        "trace_observability_read_models"
+      ]
+    },
+    {
       "action_id": "classify_tenant_governance_lifecycle_routes",
       "status": "closed",
       "surfaces": [
         "tenant_governance_lifecycle"
-      ]
-    },
-    {
-      "action_id": "classify_agent_adapter_lifecycle_routes",
-      "status": "closed",
-      "surfaces": [
-        "agent_adapter_lifecycle"
       ]
     },
     {
@@ -545,12 +552,12 @@
       "action_proof": 69,
       "audit_chain": 0,
       "gap": 0,
-      "read_model": 11,
+      "read_model": 12,
       "request_proof": 2
     },
     "by_audit": {
       "action_proof": 0,
-      "audit_chain": 78,
+      "audit_chain": 79,
       "gap": 0,
       "read_model": 4,
       "request_proof": 0
@@ -558,23 +565,23 @@
     "by_coverage_state": {
       "proven": 1,
       "unproven": 0,
-      "witnessed": 81
+      "witnessed": 82
     },
     "by_request_proof": {
       "action_proof": 1,
       "audit_chain": 0,
       "gap": 0,
-      "read_model": 13,
+      "read_model": 14,
       "request_proof": 68
     },
-    "surface_count": 82
+    "surface_count": 83
   },
   "generated_by": "scripts/proof_coverage_matrix.py",
   "route_coverage": {
     "by_coverage_state": {
       "proven": 8,
-      "unproven": 123,
-      "witnessed": 201
+      "unproven": 121,
+      "witnessed": 203
     },
     "route_count": 332,
     "routes": [
@@ -596,47 +603,47 @@
       {
         "coverage_state": "witnessed",
         "route": "/api/v1/agent/action-request",
-        "surface_id": "agent_adapter_lifecycle"
+        "surface_id": "agent_adapter_protocol"
       },
       {
         "coverage_state": "witnessed",
         "route": "/api/v1/agent/action-result",
-        "surface_id": "agent_adapter_lifecycle"
+        "surface_id": "agent_adapter_protocol"
       },
       {
         "coverage_state": "witnessed",
         "route": "/api/v1/agent/adapter/summary",
-        "surface_id": "agent_adapter_lifecycle"
+        "surface_id": "agent_adapter_protocol"
       },
       {
         "coverage_state": "witnessed",
         "route": "/api/v1/agent/checkpoint",
-        "surface_id": "agent_adapter_lifecycle"
+        "surface_id": "agent_adapter_protocol"
       },
       {
         "coverage_state": "witnessed",
         "route": "/api/v1/agent/heartbeat",
-        "surface_id": "agent_adapter_lifecycle"
+        "surface_id": "agent_adapter_protocol"
       },
       {
         "coverage_state": "witnessed",
         "route": "/api/v1/agent/register",
-        "surface_id": "agent_adapter_lifecycle"
+        "surface_id": "agent_adapter_protocol"
       },
       {
         "coverage_state": "witnessed",
         "route": "/api/v1/agent/restore",
-        "surface_id": "agent_adapter_lifecycle"
+        "surface_id": "agent_adapter_protocol"
       },
       {
-        "coverage_state": "witnessed",
+        "coverage_state": "unproven",
         "route": "/api/v1/agents",
-        "surface_id": "agent_adapter_lifecycle"
+        "surface_id": "unclassified_declared_route"
       },
       {
-        "coverage_state": "witnessed",
+        "coverage_state": "unproven",
         "route": "/api/v1/agents/{agent_id}/tasks",
-        "surface_id": "agent_adapter_lifecycle"
+        "surface_id": "unclassified_declared_route"
       },
       {
         "coverage_state": "unproven",
@@ -1924,24 +1931,24 @@
         "surface_id": "unclassified_declared_route"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/traces",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "trace_observability_read_models"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/traces/slow",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "trace_observability_read_models"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/traces/summary",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "trace_observability_read_models"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/traces/{trace_id}",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "trace_observability_read_models"
       },
       {
         "coverage_state": "unproven",
@@ -2239,7 +2246,7 @@
         "surface_id": "gateway_capability_fabric"
       }
     ],
-    "unclassified_route_count": 123
+    "unclassified_route_count": 121
   },
   "schema_version": 1,
   "surfaces": [
@@ -2441,43 +2448,6 @@
       "audit": "audit_chain",
       "coverage_state": "witnessed",
       "evidence_files": [
-        "mcoi/mcoi_runtime/app/routers/adapter.py",
-        "mcoi/mcoi_runtime/app/routers/agent.py",
-        "mcoi/tests/test_agent_adapter_protocol.py",
-        "mcoi/tests/test_server_phase205.py",
-        "mcoi/tests/test_server_phase217.py"
-      ],
-      "notes": "Agent adapter lifecycle routes bind external agent registration, heartbeat, action admission, action result closure, checkpoint/restore, adapter summary, and built-in agent task read models to governed responses with audit records and bounded error contracts.",
-      "representative_paths": [
-        "/api/v1/agent/action-request",
-        "/api/v1/agent/action-result",
-        "/api/v1/agent/adapter/summary",
-        "/api/v1/agent/checkpoint",
-        "/api/v1/agent/heartbeat",
-        "/api/v1/agent/register",
-        "/api/v1/agent/restore",
-        "/api/v1/agents",
-        "/api/v1/agents/{agent_id}/tasks"
-      ],
-      "request_proof": "request_proof",
-      "runtime_witnesses": [
-        "agent_register_emits_audit_record",
-        "agent_heartbeat_requires_registered_agent",
-        "agent_action_request_runs_guard_chain",
-        "agent_action_result_closes_tracked_action",
-        "agent_goal_context_propagates_to_response_and_audit",
-        "agent_checkpoint_restore_roundtrip_governed",
-        "agent_adapter_summary_bounded",
-        "builtin_agent_registry_read_models_governed",
-        "agent_error_contracts_bounded"
-      ],
-      "surface_id": "agent_adapter_lifecycle"
-    },
-    {
-      "action_proof": "action_proof",
-      "audit": "audit_chain",
-      "coverage_state": "witnessed",
-      "evidence_files": [
         "mcoi/mcoi_runtime/app/routers/agent.py",
         "mcoi/mcoi_runtime/core/agent_workflow.py",
         "mcoi/tests/test_server_phase205.py",
@@ -2561,6 +2531,38 @@
         "console_provider_and_scheduler_views_are_read_only"
       ],
       "surface_id": "operator_console_read_models"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "mcoi/mcoi_runtime/app/routers/adapter.py",
+        "mcoi/mcoi_runtime/app/routers/deps.py",
+        "mcoi/tests/test_agent_adapter_protocol.py",
+        "mcoi/tests/test_server_phase217.py"
+      ],
+      "notes": "Agent adapter protocol routes register external workers, maintain heartbeat state, pass action requests through the guard chain, record action results, checkpoint and restore coordination state with bounded errors, and expose a governed summary read model.",
+      "representative_paths": [
+        "/api/v1/agent/register",
+        "/api/v1/agent/heartbeat",
+        "/api/v1/agent/action-request",
+        "/api/v1/agent/action-result",
+        "/api/v1/agent/checkpoint",
+        "/api/v1/agent/restore",
+        "/api/v1/agent/adapter/summary"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "agent_register_emits_governed_identity",
+        "agent_heartbeat_requires_registered_agent",
+        "agent_action_request_runs_guard_chain",
+        "agent_action_result_records_outcome",
+        "agent_goal_context_propagates_to_action_request",
+        "agent_checkpoint_restore_errors_are_bounded",
+        "agent_adapter_summary_is_governed_read_model"
+      ],
+      "surface_id": "agent_adapter_protocol"
     },
     {
       "action_proof": "action_proof",
@@ -2853,6 +2855,34 @@
         "task_queue_errors_sanitized"
       ],
       "surface_id": "task_queue_lifecycle"
+    },
+    {
+      "action_proof": "read_model",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "mcoi/mcoi_runtime/app/routers/agent.py",
+        "mcoi/mcoi_runtime/app/routers/ops/summaries.py",
+        "mcoi/mcoi_runtime/core/request_tracing.py",
+        "mcoi/tests/test_request_tracing.py"
+      ],
+      "notes": "Trace observability routes expose bounded request-tracing summaries, individual trace spans, slow-trace projections, and OpenTelemetry exporter summaries without mutation authority.",
+      "representative_paths": [
+        "/api/v1/traces",
+        "/api/v1/traces/slow",
+        "/api/v1/traces/summary",
+        "/api/v1/traces/{trace_id}"
+      ],
+      "request_proof": "read_model",
+      "runtime_witnesses": [
+        "request_trace_summary_bounded",
+        "request_trace_lookup_bounded",
+        "missing_trace_returns_governed_404",
+        "slow_trace_projection_bounded",
+        "otel_trace_summary_bounded",
+        "trace_context_roundtrip_tested"
+      ],
+      "surface_id": "trace_observability_read_models"
     },
     {
       "action_proof": "action_proof",
@@ -3417,6 +3447,12 @@
         "mcoi/mcoi_runtime/core/code_intelligence.py",
         "mcoi/mcoi_runtime/core/software_gate_planner.py",
         "mcoi/mcoi_runtime/workers/code_worker.py",
+        "schemas/software_dev/app_task_graph.input.schema.json",
+        "schemas/software_dev/change_run.input.schema.json",
+        "schemas/software_dev/context_bundle.input.schema.json",
+        "schemas/software_dev/gate_plan.input.schema.json",
+        "schemas/software_dev/pr_candidate.input.schema.json",
+        "schemas/software_dev/repo_map_read.input.schema.json",
         "tests/test_app_builder_pipeline.py",
         "tests/test_code_context_builder.py",
         "tests/test_code_intelligence.py",
@@ -3441,6 +3477,8 @@
       "runtime_witnesses": [
         "software_dev_pack_fixture_not_default_loaded",
         "software_dev_capability_entries_schema_valid",
+        "software_dev_input_schema_refs_materialized",
+        "software_dev_input_schemas_reject_boundary_violations",
         "software_dev_named_loader_installs_only_software_dev_domain",
         "software_dev_capsule_refs_match_pack_capabilities",
         "software_dev_pack_explicit_fabric_admits_known_capabilities",
@@ -3799,6 +3837,7 @@
       "coverage_state": "witnessed",
       "evidence_files": [
         "docs/62_governed_operational_intelligence.md",
+        "docs/65_trust_ledger_offline_verification.md",
         "gateway/evidence_bundle.py",
         "gateway/trust_ledger.py",
         "scripts/verify_evidence_bundle.py",
@@ -4731,7 +4770,7 @@
         "mcoi/tests/test_god_mode_router.py",
         "mcoi/tests/test_god_mode_decorator.py"
       ],
-      "notes": "Privileged 'god mode' capabilities ship dormant. Two-stage explicit consent \u2014 registration agreement promotes capability dormant\u2192armed; activation issues a single-use, short-lived ticket. Catastrophic capabilities require dual control (\u22652 distinct approvers). Every consumption emits an immutable receipt with pre/post hashes and the full agreement chain. Withdrawals and revocations are first-class, irreversible-as-events.",
+      "notes": "Privileged 'god mode' capabilities ship dormant. Two-stage explicit consent \u00e2\u20ac\u201d registration agreement promotes capability dormant\u00e2\u2020\u2019armed; activation issues a single-use, short-lived ticket. Catastrophic capabilities require dual control (\u00e2\u2030\u00a52 distinct approvers). Every consumption emits an immutable receipt with pre/post hashes and the full agreement chain. Withdrawals and revocations are first-class, irreversible-as-events.",
       "representative_paths": [
         "/api/v1/god-mode/capabilities",
         "/api/v1/god-mode/health",

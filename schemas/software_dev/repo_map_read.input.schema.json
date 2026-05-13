@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:software-dev:repo-map-read-input:1",
+  "title": "Software Dev Repo Map Read Input",
+  "description": "Governed read-only request for repository intelligence. The request identifies an immutable repository boundary and cannot grant execution, write, network, or secret access.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "capability_id",
+    "request_id",
+    "repository_ref",
+    "commit_sha",
+    "workspace_ref",
+    "include_patterns",
+    "exclude_patterns",
+    "metadata"
+  ],
+  "properties": {
+    "capability_id": {
+      "const": "software_dev.repo_map.read"
+    },
+    "request_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "repository_ref": {
+      "type": "string",
+      "minLength": 1
+    },
+    "commit_sha": {
+      "type": "string",
+      "minLength": 1
+    },
+    "workspace_ref": {
+      "type": "string",
+      "minLength": 1
+    },
+    "include_patterns": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/repository_pattern"
+      }
+    },
+    "exclude_patterns": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/repository_pattern"
+      }
+    },
+    "max_file_count": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  },
+  "$defs": {
+    "repository_pattern": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))(?![A-Za-z]:)[^\\r\\n]+$"
+    }
+  }
+}
