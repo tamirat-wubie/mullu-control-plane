@@ -14,12 +14,20 @@ Invariants tested:
   - The forge input round-trips through CapabilityForge.create_candidate
     and the resulting CandidateCapabilityPackage carries the provenance
     block in its metadata.
+  - The resulting CandidateCapabilityPackage validates against
+    schemas/capability_candidate.schema.json — the metadata extension does
+    not break the public schema contract.
   - Bridge surface has no install/promote/certify/deploy.
 """
 
 from __future__ import annotations
 
+import json
+from dataclasses import asdict
+from pathlib import Path
+
 import pytest
+from jsonschema import Draft202012Validator
 
 from gateway.candidate_ledger import (
     CandidateLedger,
@@ -44,6 +52,10 @@ from gateway.solver_forge_bridge import (
     forge_input_for_winner,
     is_winner,
 )
+
+
+_REPO_ROOT = Path(__file__).resolve().parents[2]
+_SCHEMA_PATH = _REPO_ROOT / "schemas" / "capability_candidate.schema.json"
 
 
 def _signature(
@@ -392,6 +404,36 @@ def test_forge_input_round_trips_through_capability_forge() -> None:
     assert isinstance(block, dict)
     assert block["winner_record_hash"] == winner.record_hash
     assert block["signature_hash"] == signature.signature_hash
+
+
+def test_package_built_via_bridge_validates_against_public_schema() -> None:
+    """Belt-and-suspenders: the `solver_forge.*` provenance block the bridge
+    stamps into CapabilityForgeInput.metadata must not break the public
+    capability-candidate schema. The schema declares metadata as
+    additionalProperties=True today, so this holds by construction — but
+    pinning it in a test catches any future schema tightening that would
+    silently invalidate every Solver-Forge-produced package.
+    """
+    ledger = CandidateLedger(InMemoryCandidateLedgerStore())
+    signature = _signature()
+    winner = _record_winner(ledger=ledger, signature=signature)
+    forge_input = forge_input_for_winner(
+        winner=winner,
+        signature=signature,
+        **_author_fields(),
+    )
+    package = CapabilityForge().create_candidate(forge_input)
+
+    schema = json.loads(_SCHEMA_PATH.read_text(encoding="utf-8"))
+    validator = Draft202012Validator(schema)
+    errors = sorted(validator.iter_errors(asdict(package)), key=lambda e: e.path)
+    assert not errors, "\n".join(
+        f"{'/'.join(str(p) for p in error.path) or '<root>'}: {error.message}"
+        for error in errors
+    )
+
+    # And the provenance block must still be present after schema validation.
+    assert package.metadata[SOLVER_FORGE_PROVENANCE_KEY]["winner_record_hash"] == winner.record_hash
 
 
 def test_extract_provenance_reads_back_what_bridge_wrote() -> None:
