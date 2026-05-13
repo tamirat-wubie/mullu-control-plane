@@ -773,6 +773,38 @@ def proof_coverage_matrix() -> dict[str, Any]:
             ],
         ),
         _surface(
+            "coordination_checkpoint_lifecycle",
+            [
+                "/api/v1/coordination/checkpoint",
+                "/api/v1/coordination/restore",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "mcoi/mcoi_runtime/app/routers/ops/coordination.py",
+                "mcoi/mcoi_runtime/core/coordination.py",
+                "mcoi/mcoi_runtime/persistence/coordination_store.py",
+                "mcoi/tests/test_coordination_http_endpoints.py",
+                "mcoi/tests/test_coordination_engine_persistence.py",
+                "mcoi/tests/test_coordination_persistence.py",
+            ],
+            "Coordination checkpoint routes persist governed engine checkpoints, restore bounded coordination state, record audit entries for save and restore actions, and reject missing or unsafe checkpoint identifiers through explicit failure paths.",
+            [
+                "coordination_checkpoint_save_governed",
+                "coordination_restore_resumes_checkpoint",
+                "coordination_restore_missing_is_bounded",
+                "coordination_checkpoint_save_audited",
+                "coordination_restore_audited",
+                "coordination_checkpoint_round_trip",
+                "coordination_expired_lease_rejected",
+                "coordination_policy_drift_requires_review",
+                "coordination_retry_cap_aborts_restore",
+                "coordination_store_path_traversal_rejected",
+            ],
+        ),
+        _surface(
             "ops_proof_surface",
             [
                 "/api/v1/ops/benchmarks",
@@ -3420,6 +3452,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
         {
             "action_id": "classify_conversation_memory_routes",
             "surfaces": ["conversation_memory_lifecycle"],
+            "status": "closed",
+        },
+        {
+            "action_id": "classify_coordination_checkpoint_routes",
+            "surfaces": ["coordination_checkpoint_lifecycle"],
             "status": "closed",
         },
         {
