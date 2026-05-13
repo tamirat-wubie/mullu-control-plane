@@ -134,6 +134,9 @@ def test_representative_routes_are_not_unclassified() -> None:
     assert classified_routes["/api/v1/agent/register"]["surface_id"] == "agent_adapter_lifecycle"
     assert classified_routes["/api/v1/agent/action-request"]["surface_id"] == "agent_adapter_lifecycle"
     assert classified_routes["/api/v1/agents/{agent_id}/tasks"]["surface_id"] == "agent_adapter_lifecycle"
+    assert classified_routes["/api/v1/rbac/identities"]["surface_id"] == "rbac_access_governance"
+    assert classified_routes["/api/v1/rbac/roles"]["surface_id"] == "rbac_access_governance"
+    assert classified_routes["/api/v1/rbac/bindings"]["surface_id"] == "rbac_access_governance"
 
 
 def test_agent_adapter_lifecycle_surface_is_witnessed() -> None:
@@ -157,6 +160,30 @@ def test_agent_adapter_lifecycle_surface_is_witnessed() -> None:
     assert "agent_action_request_runs_guard_chain" in witnesses
     assert "agent_checkpoint_restore_roundtrip_governed" in witnesses
     assert closure_actions["classify_agent_adapter_lifecycle_routes"]["status"] == "closed"
+
+
+def test_rbac_access_governance_surface_is_witnessed() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    rbac_surface = surfaces["rbac_access_governance"]
+    witnesses = set(rbac_surface["runtime_witnesses"])
+
+    assert rbac_surface["coverage_state"] == "witnessed"
+    assert rbac_surface["request_proof"] == "request_proof"
+    assert rbac_surface["action_proof"] == "action_proof"
+    assert "/api/v1/rbac/identities" in rbac_surface["representative_paths"]
+    assert "/api/v1/rbac/roles" in rbac_surface["representative_paths"]
+    assert "/api/v1/rbac/bindings" in rbac_surface["representative_paths"]
+    assert "/api/v1/rbac/summary" in rbac_surface["representative_paths"]
+    assert "mcoi/mcoi_runtime/app/routers/rbac.py" in rbac_surface["evidence_files"]
+    assert "mcoi/mcoi_runtime/contracts/access_runtime.py" in rbac_surface["evidence_files"]
+    assert "mcoi/tests/test_rbac_endpoints.py" in rbac_surface["evidence_files"]
+    assert "rbac_identity_registration_governed" in witnesses
+    assert "rbac_role_registration_governed" in witnesses
+    assert "rbac_role_binding_governed" in witnesses
+    assert "rbac_identity_creation_audited" in witnesses
+    assert closure_actions["classify_rbac_access_governance_routes"]["status"] == "closed"
 
 
 def test_finance_approval_packet_surface_is_witnessed() -> None:
