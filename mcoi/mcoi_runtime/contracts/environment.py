@@ -52,6 +52,10 @@ class EnvironmentFingerprint(ContractRecord):
         object.__setattr__(self, "fingerprint_id", require_non_empty_text(self.fingerprint_id, "fingerprint_id"))
         object.__setattr__(self, "captured_at", require_datetime_text(self.captured_at, "captured_at"))
         object.__setattr__(self, "digest", require_non_empty_text(self.digest, "digest"))
+        if self.platform is not None and not isinstance(self.platform, PlatformDescriptor):
+            raise ValueError("platform must be a PlatformDescriptor")
+        if self.runtime is not None and not isinstance(self.runtime, RuntimeDescriptor):
+            raise ValueError("runtime must be a RuntimeDescriptor")
         object.__setattr__(self, "tooling", freeze_value(self.tooling))
         object.__setattr__(self, "metadata", freeze_value(self.metadata))
         object.__setattr__(self, "extensions", freeze_value(self.extensions))

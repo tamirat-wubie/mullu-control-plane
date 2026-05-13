@@ -1375,6 +1375,102 @@ class ApiLinkBackend:
         return self._call_count
 
 
+class EmberCloudBackend:
+    """EmberCloud OpenAI-compatible endpoint for low-cost GLM models."""
+
+    provider = LLMProvider.EMBERCLOUD
+    DEFAULT_MODEL = "glm-4.7-flash"
+
+    def __init__(self, *, model: str = "", api_key: str | None = None, api_key_env: str = "EMBERCLOUD_API_KEY") -> None:
+        self._model = model or self.DEFAULT_MODEL
+        self._default_model = self._model
+        self._api_key = api_key or ""
+        self._api_key_env = api_key_env
+        self._call_count = 0
+
+    def call(self, params: LLMInvocationParams) -> LLMResult:
+        self._call_count += 1
+        return _openai_compatible_call(
+            base_url="https://api.embercloud.ai/v1",
+            api_key=self._api_key or os.environ.get(self._api_key_env, ""),
+            model=params.model_name or self._model,
+            messages=_params_to_messages(params),
+            max_tokens=params.max_tokens,
+            temperature=0.0,
+            provider=self.provider,
+            cost_per_1m_input=0.06,
+            cost_per_1m_output=0.40,
+        )
+
+    @property
+    def call_count(self) -> int:
+        return self._call_count
+
+
+class MorpheusBackend:
+    """Morpheus OpenAI-compatible marketplace for low-cost hosted models."""
+
+    provider = LLMProvider.MORPHEUS
+    DEFAULT_MODEL = "qwen35-9b"
+
+    def __init__(self, *, model: str = "", api_key: str | None = None, api_key_env: str = "MORPHEUS_API_KEY") -> None:
+        self._model = model or self.DEFAULT_MODEL
+        self._default_model = self._model
+        self._api_key = api_key or ""
+        self._api_key_env = api_key_env
+        self._call_count = 0
+
+    def call(self, params: LLMInvocationParams) -> LLMResult:
+        self._call_count += 1
+        return _openai_compatible_call(
+            base_url="https://api.mor.org/api/v1",
+            api_key=self._api_key or os.environ.get(self._api_key_env, "") or os.environ.get("MOR_API_KEY", ""),
+            model=params.model_name or self._model,
+            messages=_params_to_messages(params),
+            max_tokens=params.max_tokens,
+            temperature=0.0,
+            provider=self.provider,
+            cost_per_1m_input=0.05,
+            cost_per_1m_output=0.15,
+        )
+
+    @property
+    def call_count(self) -> int:
+        return self._call_count
+
+
+class InferenceNetBackend:
+    """Inference.net OpenAI-compatible endpoint for Gemma and workhorse models."""
+
+    provider = LLMProvider.INFERENCENET
+    DEFAULT_MODEL = "google/gemma-3-27b-instruct/bf-16"
+
+    def __init__(self, *, model: str = "", api_key: str | None = None, api_key_env: str = "INFERENCE_API_KEY") -> None:
+        self._model = model or self.DEFAULT_MODEL
+        self._default_model = self._model
+        self._api_key = api_key or ""
+        self._api_key_env = api_key_env
+        self._call_count = 0
+
+    def call(self, params: LLMInvocationParams) -> LLMResult:
+        self._call_count += 1
+        return _openai_compatible_call(
+            base_url="https://api.inference.net/v1",
+            api_key=self._api_key or os.environ.get(self._api_key_env, "") or os.environ.get("INFERENCENET_API_KEY", ""),
+            model=params.model_name or self._model,
+            messages=_params_to_messages(params),
+            max_tokens=params.max_tokens,
+            temperature=0.0,
+            provider=self.provider,
+            cost_per_1m_input=0.15,
+            cost_per_1m_output=0.30,
+        )
+
+    @property
+    def call_count(self) -> int:
+        return self._call_count
+
+
 # --- xAI Grok (real-time X data) ---
 class GrokBackend:
     """xAI Grok - real-time X (Twitter) data access.
@@ -1525,6 +1621,9 @@ ALL_PROVIDERS: dict[str, type] = {
     "quicksilver": QuickSilverBackend,
     "mixlayer": MixlayerBackend,
     "apilink": ApiLinkBackend,
+    "embercloud": EmberCloudBackend,
+    "morpheus": MorpheusBackend,
+    "inferencenet": InferenceNetBackend,
     "grok": GrokBackend,
     "mistral": MistralBackend,
     "openrouter": OpenRouterBackend,
@@ -1579,6 +1678,9 @@ def available_providers() -> list[str]:
         "quicksilver": ("QUICKSILVER_API_KEY", "QSP_KEY"),
         "mixlayer": ("MIXLAYER_API_KEY",),
         "apilink": ("APILINK_API_KEY",),
+        "embercloud": ("EMBERCLOUD_API_KEY",),
+        "morpheus": ("MORPHEUS_API_KEY", "MOR_API_KEY"),
+        "inferencenet": ("INFERENCE_API_KEY", "INFERENCENET_API_KEY"),
         "grok": ("XAI_API_KEY",),
         "mistral": ("MISTRAL_API_KEY",),
         "openrouter": ("OPENROUTER_API_KEY",),

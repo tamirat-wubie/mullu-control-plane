@@ -88,9 +88,9 @@ Coverage summary:
 
 | Metric | Count |
 |---|---:|
-| Total surfaces | 74 |
+| Total surfaces | 75 |
 | Proven surfaces | 1 |
-| Witnessed surfaces | 73 |
+| Witnessed surfaces | 74 |
 | Unproven surfaces | 0 |
 
 Declared route coverage:
@@ -99,8 +99,8 @@ Declared route coverage:
 |---|---:|
 | Proof-relevant declared routes | 332 |
 | Proven routes | 8 |
-| Witnessed routes | 162 |
-| Unclassified declared routes | 162 |
+| Witnessed routes | 171 |
+| Unclassified declared routes | 153 |
 
 The canonical JSON witness lists every proof-relevant declared route under
 `route_coverage.routes`. Routes mapped to `unclassified_declared_route` carry

@@ -13,6 +13,7 @@ from mcoi_runtime.adapters.multi_provider import (
     DashScopeBackend,
     DeepInfraBackend,
     DInferenceBackend,
+    EmberCloudBackend,
     EURIBackend,
     FireworksBackend,
     FriendliBackend,
@@ -20,10 +21,12 @@ from mcoi_runtime.adapters.multi_provider import (
     GlamaBackend,
     GroqBackend,
     HyperbolicBackend,
+    InferenceNetBackend,
     LlamaAPIBackend,
     MixlayerBackend,
     ModelMaxBackend,
     MoonshotBackend,
+    MorpheusBackend,
     NebiusBackend,
     NovitaBackend,
     PacketBackend,
@@ -99,6 +102,11 @@ LLM_ENV_KEYS = (
     "QSP_KEY",
     "MIXLAYER_API_KEY",
     "APILINK_API_KEY",
+    "EMBERCLOUD_API_KEY",
+    "MORPHEUS_API_KEY",
+    "MOR_API_KEY",
+    "INFERENCE_API_KEY",
+    "INFERENCENET_API_KEY",
     "XAI_API_KEY",
     "MISTRAL_API_KEY",
     "OPENROUTER_API_KEY",
@@ -199,6 +207,26 @@ class TestLLMConfig:
         assert config.quicksilver_api_key == "quicksilver-alias-key"
         assert config.mixlayer_api_key == ""
         assert config.apilink_api_key == ""
+
+    def test_from_env_morpheus_and_inferencenet_aliases_detected(self, monkeypatch):
+        for key in LLM_ENV_KEYS:
+            monkeypatch.delenv(key, raising=False)
+        monkeypatch.setenv("MOR_API_KEY", "morpheus-alias-key")
+
+        config = LLMConfig.from_env()
+
+        assert config.default_backend == "morpheus"
+        assert config.morpheus_api_key == "morpheus-alias-key"
+        assert config.embercloud_api_key == ""
+        assert config.inferencenet_api_key == ""
+
+        monkeypatch.delenv("MOR_API_KEY", raising=False)
+        monkeypatch.setenv("INFERENCENET_API_KEY", "inferencenet-alias-key")
+        config = LLMConfig.from_env()
+
+        assert config.default_backend == "inferencenet"
+        assert config.inferencenet_api_key == "inferencenet-alias-key"
+        assert config.morpheus_api_key == ""
 
     def test_from_env_cloudflare_requires_account_id(self, monkeypatch):
         monkeypatch.delenv("MULLU_ENV", raising=False)
@@ -381,6 +409,9 @@ class TestBootstrapLLM:
             quicksilver_api_key="qs",
             mixlayer_api_key="mx",
             apilink_api_key="al",
+            embercloud_api_key="ec",
+            morpheus_api_key="mo",
+            inferencenet_api_key="in",
             grok_api_key="xai",
             mistral_api_key="ms",
             openrouter_api_key="or",
@@ -431,6 +462,9 @@ class TestBootstrapLLM:
             "quicksilver",
             "mixlayer",
             "apilink",
+            "embercloud",
+            "morpheus",
+            "inferencenet",
             "grok",
             "mistral",
             "openrouter",
@@ -470,6 +504,9 @@ class TestBootstrapLLM:
         assert isinstance(result.backends["quicksilver"], QuickSilverBackend)
         assert isinstance(result.backends["mixlayer"], MixlayerBackend)
         assert isinstance(result.backends["apilink"], ApiLinkBackend)
+        assert isinstance(result.backends["embercloud"], EmberCloudBackend)
+        assert isinstance(result.backends["morpheus"], MorpheusBackend)
+        assert isinstance(result.backends["inferencenet"], InferenceNetBackend)
         assert "llm-groq" in result.registered_providers
         assert "llm-deepseek" in result.registered_providers
         assert "llm-together" in result.registered_providers
@@ -502,6 +539,9 @@ class TestBootstrapLLM:
         assert "llm-quicksilver" in result.registered_providers
         assert "llm-mixlayer" in result.registered_providers
         assert "llm-apilink" in result.registered_providers
+        assert "llm-embercloud" in result.registered_providers
+        assert "llm-morpheus" in result.registered_providers
+        assert "llm-inferencenet" in result.registered_providers
         assert "llm-openrouter" in result.registered_providers
         assert "meta-llama/llama-4-scout-17b-16e-instruct" in result.registered_models
         assert "deepseek-v4-flash" in result.registered_models
@@ -539,6 +579,9 @@ class TestBootstrapLLM:
         assert "qwen3.6-35b" in result.registered_models
         assert "qwen/qwen3.5-9b" in result.registered_models
         assert "deepseek/deepseek-v4-pro" in result.registered_models
+        assert "glm-4.7-flash" in result.registered_models
+        assert "qwen35-9b" in result.registered_models
+        assert "google/gemma-3-27b-instruct/bf-16" in result.registered_models
         assert "mistral-small-2506" in result.registered_models
         assert "grok-3-mini" in result.registered_models
         assert "meta-llama/llama-4-scout" in result.registered_models

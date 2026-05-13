@@ -39,6 +39,7 @@ from mcoi_runtime.adapters.multi_provider import (
     DeepSeekBackend,
     DeepInfraBackend,
     DInferenceBackend,
+    EmberCloudBackend,
     EURIBackend,
     FeatherlessBackend,
     FireworksBackend,
@@ -48,11 +49,13 @@ from mcoi_runtime.adapters.multi_provider import (
     GrokBackend,
     GroqBackend,
     HyperbolicBackend,
+    InferenceNetBackend,
     LlamaAPIBackend,
     MixlayerBackend,
     MistralBackend,
     ModelMaxBackend,
     MoonshotBackend,
+    MorpheusBackend,
     NebiusBackend,
     NovitaBackend,
     OpenRouterBackend,
@@ -129,6 +132,9 @@ class LLMConfig:
     quicksilver_api_key: str = ""
     mixlayer_api_key: str = ""
     apilink_api_key: str = ""
+    embercloud_api_key: str = ""
+    morpheus_api_key: str = ""
+    inferencenet_api_key: str = ""
     grok_api_key: str = ""
     mistral_api_key: str = ""
     openrouter_api_key: str = ""
@@ -185,6 +191,9 @@ class LLMConfig:
         quicksilver_key = os.environ.get("QUICKSILVER_API_KEY", "") or os.environ.get("QSP_KEY", "")
         mixlayer_key = os.environ.get("MIXLAYER_API_KEY", "")
         apilink_key = os.environ.get("APILINK_API_KEY", "")
+        embercloud_key = os.environ.get("EMBERCLOUD_API_KEY", "")
+        morpheus_key = os.environ.get("MORPHEUS_API_KEY", "") or os.environ.get("MOR_API_KEY", "")
+        inferencenet_key = os.environ.get("INFERENCE_API_KEY", "") or os.environ.get("INFERENCENET_API_KEY", "")
         grok_key = os.environ.get("XAI_API_KEY", "")
         mistral_key = os.environ.get("MISTRAL_API_KEY", "")
         openrouter_key = os.environ.get("OPENROUTER_API_KEY", "")
@@ -272,6 +281,12 @@ class LLMConfig:
                 default_backend = "mixlayer"
             elif apilink_key:
                 default_backend = "apilink"
+            elif embercloud_key:
+                default_backend = "embercloud"
+            elif morpheus_key:
+                default_backend = "morpheus"
+            elif inferencenet_key:
+                default_backend = "inferencenet"
             elif mistral_key:
                 default_backend = "mistral"
             elif grok_key:
@@ -306,6 +321,8 @@ class LLMConfig:
                 "MODELMAX_API_KEY, VENICE_API_KEY, EURI_API_KEY, "
                 "APIROUTER_API_KEY, QUICKSILVER_API_KEY, QSP_KEY, "
                 "MIXLAYER_API_KEY, APILINK_API_KEY, "
+                "EMBERCLOUD_API_KEY, MORPHEUS_API_KEY, MOR_API_KEY, "
+                "INFERENCE_API_KEY, INFERENCENET_API_KEY, "
                 "XAI_API_KEY, MISTRAL_API_KEY, "
                 "OPENROUTER_API_KEY) "
                 "or OLLAMA_BASE_URL."
@@ -353,6 +370,9 @@ class LLMConfig:
             quicksilver_api_key=quicksilver_key,
             mixlayer_api_key=mixlayer_key,
             apilink_api_key=apilink_key,
+            embercloud_api_key=embercloud_key,
+            morpheus_api_key=morpheus_key,
+            inferencenet_api_key=inferencenet_key,
             grok_api_key=grok_key,
             mistral_api_key=mistral_key,
             openrouter_api_key=openrouter_key,
@@ -843,6 +863,39 @@ def bootstrap_llm(
         )
         backends["apilink"] = apilink
 
+    if llm_config.embercloud_api_key:
+        embercloud = EmberCloudBackend(
+            api_key=llm_config.embercloud_api_key,
+            model=_select_provider_default_model(
+                llm_config.default_model,
+                ("glm", "qwen", "kimi", "ember"),
+                EmberCloudBackend.DEFAULT_MODEL,
+            ),
+        )
+        backends["embercloud"] = embercloud
+
+    if llm_config.morpheus_api_key:
+        morpheus = MorpheusBackend(
+            api_key=llm_config.morpheus_api_key,
+            model=_select_provider_default_model(
+                llm_config.default_model,
+                ("qwen", "gpt-oss", "gemma", "glm", "morpheus"),
+                MorpheusBackend.DEFAULT_MODEL,
+            ),
+        )
+        backends["morpheus"] = morpheus
+
+    if llm_config.inferencenet_api_key:
+        inferencenet = InferenceNetBackend(
+            api_key=llm_config.inferencenet_api_key,
+            model=_select_provider_default_model(
+                llm_config.default_model,
+                ("inference-net/", "google/gemma", "schematron", "cliptagger"),
+                InferenceNetBackend.DEFAULT_MODEL,
+            ),
+        )
+        backends["inferencenet"] = inferencenet
+
     if llm_config.grok_api_key:
         grok = GrokBackend(
             api_key=llm_config.grok_api_key,
@@ -1178,6 +1231,24 @@ def _register_providers(
             "rate_limit": 60,
             "cost_limit": 0.25,
         },
+        "embercloud": {
+            "name": "EmberCloud",
+            "base_url": "https://api.embercloud.ai/v1",
+            "rate_limit": 120,
+            "cost_limit": 0.25,
+        },
+        "morpheus": {
+            "name": "Morpheus",
+            "base_url": "https://api.mor.org/api/v1",
+            "rate_limit": 120,
+            "cost_limit": 0.25,
+        },
+        "inferencenet": {
+            "name": "Inference.net",
+            "base_url": "https://api.inference.net/v1",
+            "rate_limit": 120,
+            "cost_limit": 0.25,
+        },
         "grok": {
             "name": "xAI Grok",
             "base_url": "https://api.x.ai/v1",
@@ -1308,6 +1379,15 @@ def _register_models(
         ("qwen3.6-35b", "Qwen3.6 35B via QuickSilver Pro", "quicksilver", 0.13, 0.78),
         ("qwen/qwen3.5-9b", "Qwen3.5 9B via Mixlayer", "mixlayer", 0.10, 0.40),
         ("deepseek/deepseek-v4-pro", "DeepSeek V4 Pro via ApiLink", "apilink", 0.43, 0.87),
+        ("glm-4.7-flash", "GLM 4.7 Flash via EmberCloud", "embercloud", 0.06, 0.40),
+        ("qwen35-9b", "Qwen 3.5 9B via Morpheus", "morpheus", 0.05, 0.15),
+        (
+            "google/gemma-3-27b-instruct/bf-16",
+            "Gemma 3 27B via Inference.net",
+            "inferencenet",
+            0.15,
+            0.30,
+        ),
         ("mistral-small-2506", "Mistral Small 2506", "mistral", 0.10, 0.30),
         ("mistral-small-2603", "Mistral Small 2603", "mistral", 0.15, 0.60),
         ("grok-3-mini", "Grok 3 Mini", "grok", 0.30, 0.50),
