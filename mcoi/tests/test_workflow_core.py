@@ -351,39 +351,28 @@ class TestWorkflowEngineCycleDetection:
     """Cycle detection raises validation error."""
 
     def test_start_with_cycle_raises(self):
-        d = _descriptor(stages=(
-            _stage("A", predecessors=("B",)),
-            _stage("B", predecessors=("A",)),
-        ))
-        clock = _make_clock(["t0"])
-        engine = WorkflowEngine(clock=clock)
-        with pytest.raises(RuntimeCoreInvariantError, match="^workflow validation failed$") as exc_info:
-            engine.start_workflow(d)
-        assert "cycle" not in str(exc_info.value)
+        with pytest.raises(ValueError, match="predecessor cycles"):
+            _descriptor(stages=(
+                _stage("A", predecessors=("B",)),
+                _stage("B", predecessors=("A",)),
+            ))
 
     def test_validate_returns_cycle_error(self):
-        d = _descriptor(stages=(
-            _stage("A", predecessors=("B",)),
-            _stage("B", predecessors=("A",)),
-        ))
-        clock = _make_clock(["t0"])
-        engine = WorkflowEngine(clock=clock)
-        errors = engine.validate_workflow(d)
-        assert any("cycle" in e for e in errors)
+        with pytest.raises(ValueError, match="predecessor cycles"):
+            _descriptor(stages=(
+                _stage("A", predecessors=("B",)),
+                _stage("B", predecessors=("A",)),
+            ))
 
 
 class TestWorkflowEngineMissingPredecessor:
     """Missing predecessor raises validation error."""
 
     def test_start_with_missing_predecessor_raises(self):
-        d = _descriptor(stages=(
-            _stage("A", predecessors=("nonexistent",)),
-        ))
-        clock = _make_clock(["t0"])
-        engine = WorkflowEngine(clock=clock)
-        with pytest.raises(RuntimeCoreInvariantError, match="^workflow validation failed$") as exc_info:
-            engine.start_workflow(d)
-        assert "nonexistent" not in str(exc_info.value)
+        with pytest.raises(ValueError, match="declared stage_id"):
+            _descriptor(stages=(
+                _stage("A", predecessors=("nonexistent",)),
+            ))
 
 
 class TestWorkflowEngineFailure:
