@@ -169,6 +169,8 @@ def test_representative_routes_are_not_unclassified() -> None:
     assert classified_routes["/api/v1/tools/invoke"]["surface_id"] == "tool_invocation"
     assert classified_routes["/api/v1/output/parse"]["surface_id"] == "structured_output_validation"
     assert classified_routes["/api/v1/output/schemas"]["surface_id"] == "structured_output_validation"
+    assert classified_routes["/api/v1/rate-limit/status"]["surface_id"] == "rate_limit_read_models"
+    assert classified_routes["/api/v1/rate-limits/{client_id}"]["surface_id"] == "rate_limit_read_models"
     assert classified_routes["/api/v1/traces"]["surface_id"] == "trace_observability_read_models"
     assert classified_routes["/api/v1/traces/slow"]["surface_id"] == "trace_observability_read_models"
     assert classified_routes["/api/v1/traces/summary"]["surface_id"] == "trace_observability_read_models"
@@ -1645,6 +1647,38 @@ def test_structured_output_validation_surface_is_witnessed() -> None:
     assert route_records["/api/v1/output/schemas"]["coverage_state"] == "witnessed"
     assert route_records["/api/v1/output/schemas"]["surface_id"] == "structured_output_validation"
     assert closure_actions["classify_structured_output_validation_routes"]["status"] == "closed"
+
+
+def test_rate_limit_read_model_surface_exposes_bounded_status_and_headers() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    rate_surface = surfaces["rate_limit_read_models"]
+    witnesses = set(rate_surface["runtime_witnesses"])
+    route_records = {
+        record["route"]: record
+        for record in matrix["route_coverage"]["routes"]
+    }
+
+    assert rate_surface["coverage_state"] == "witnessed"
+    assert rate_surface["request_proof"] == "read_model"
+    assert rate_surface["action_proof"] == "read_model"
+    assert "/api/v1/rate-limit/status" in rate_surface["representative_paths"]
+    assert "/api/v1/rate-limits/{client_id}" in rate_surface["representative_paths"]
+    assert "mcoi/mcoi_runtime/app/routers/ops/rate_limit.py" in rate_surface["evidence_files"]
+    assert "mcoi/mcoi_runtime/governance/guards/rate_limit.py" in rate_surface["evidence_files"]
+    assert "mcoi/mcoi_runtime/core/rate_limit_headers.py" in rate_surface["evidence_files"]
+    assert "mcoi/tests/test_server_phase202.py" in rate_surface["evidence_files"]
+    assert "mcoi/tests/test_rate_limit_headers.py" in rate_surface["evidence_files"]
+    assert "rate_limit_status_reports_allowed_and_active_buckets" in witnesses
+    assert "rate_limit_headers_project_limit_remaining_reset" in witnesses
+    assert "rate_limit_header_peek_does_not_consume" in witnesses
+    assert "atomic_rate_limit_store_bounds_concurrent_consumption" in witnesses
+    assert route_records["/api/v1/rate-limit/status"]["coverage_state"] == "witnessed"
+    assert route_records["/api/v1/rate-limit/status"]["surface_id"] == "rate_limit_read_models"
+    assert route_records["/api/v1/rate-limits/{client_id}"]["coverage_state"] == "witnessed"
+    assert route_records["/api/v1/rate-limits/{client_id}"]["surface_id"] == "rate_limit_read_models"
+    assert closure_actions["classify_rate_limit_read_model_routes"]["status"] == "closed"
 
 
 def test_operational_health_surface_exposes_bounded_read_models() -> None:

@@ -969,6 +969,37 @@ def proof_coverage_matrix() -> dict[str, Any]:
             ],
         ),
         _surface(
+            "rate_limit_read_models",
+            [
+                "/api/v1/rate-limit/status",
+                "/api/v1/rate-limits/{client_id}",
+            ],
+            "read_model",
+            "read_model",
+            "audit_chain",
+            "witnessed",
+            [
+                "mcoi/mcoi_runtime/app/routers/ops/rate_limit.py",
+                "mcoi/mcoi_runtime/governance/guards/rate_limit.py",
+                "mcoi/mcoi_runtime/core/rate_limit_headers.py",
+                "mcoi/tests/test_server_phase202.py",
+                "mcoi/tests/test_rate_limit_headers.py",
+                "mcoi/tests/test_rate_limiter.py",
+                "mcoi/tests/test_v4_29_atomic_rate_limit.py",
+                "mcoi/tests/test_v4_34_atomic_identity_rate_limit.py",
+            ],
+            "Rate-limit read-model routes expose bounded limiter status and per-client response-header projections while enforcement remains in the governed guard chain and atomic rate-limit stores.",
+            [
+                "rate_limit_status_reports_allowed_and_active_buckets",
+                "rate_limit_headers_project_limit_remaining_reset",
+                "rate_limit_header_peek_does_not_consume",
+                "rate_limit_remaining_never_negative",
+                "rate_limiter_endpoint_configs_resolved",
+                "atomic_rate_limit_store_bounds_concurrent_consumption",
+                "identity_rate_limit_store_bounds_per_identity_consumption",
+            ],
+        ),
+        _surface(
             "operational_health_read_models",
             [
                 "/api/v1/health/deep",
@@ -3388,6 +3419,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
         {
             "action_id": "classify_runtime_state_persistence_routes",
             "surfaces": ["runtime_state_persistence_lifecycle"],
+            "status": "closed",
+        },
+        {
+            "action_id": "classify_rate_limit_read_model_routes",
+            "surfaces": ["rate_limit_read_models"],
             "status": "closed",
         },
         {
