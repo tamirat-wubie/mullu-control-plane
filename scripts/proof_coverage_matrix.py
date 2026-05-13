@@ -701,6 +701,36 @@ def proof_coverage_matrix() -> dict[str, Any]:
             ],
         ),
         _surface(
+            "state_proof_surface",
+            [
+                "/api/v1/state",
+                "/api/v1/state/save",
+                "/api/v1/state/{state_type}",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "mcoi/mcoi_runtime/app/routers/data/state.py",
+                "mcoi/mcoi_runtime/persistence/state_persistence.py",
+                "mcoi/tests/test_server_phase212.py",
+                "mcoi/tests/test_state_persistence.py",
+                "mcoi/tests/test_server_lifecycle_helpers.py",
+            ],
+            "Runtime state routes persist hash-bound state snapshots with atomic writes, expose bounded load and list read models, and reject path traversal with governed error envelopes.",
+            [
+                "state_save_returns_hash_bound_snapshot",
+                "state_load_returns_saved_data",
+                "state_list_returns_summary",
+                "state_save_rejects_path_traversal",
+                "state_load_rejects_path_traversal",
+                "state_persistence_atomic_write",
+                "state_persistence_rejects_hash_mismatch",
+                "server_lifecycle_registers_save_state_hook",
+            ],
+        ),
+        _surface(
             "task_queue_lifecycle",
             [
                 "/api/v1/queue/process",
@@ -2964,6 +2994,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
         {
             "action_id": "classify_ops_diagnostics_routes",
             "surfaces": ["ops_proof_surface"],
+            "status": "closed",
+        },
+        {
+            "action_id": "classify_state_persistence_routes",
+            "surfaces": ["state_proof_surface"],
             "status": "closed",
         },
         {

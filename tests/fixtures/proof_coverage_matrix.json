@@ -125,6 +125,13 @@
       ]
     },
     {
+      "action_id": "classify_state_persistence_routes",
+      "status": "closed",
+      "surfaces": [
+        "state_proof_surface"
+      ]
+    },
+    {
       "action_id": "classify_task_queue_lifecycle_routes",
       "status": "closed",
       "surfaces": [
@@ -619,7 +626,7 @@
   ],
   "coverage_summary": {
     "by_action_proof": {
-      "action_proof": 77,
+      "action_proof": 78,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 13,
@@ -627,7 +634,7 @@
     },
     "by_audit": {
       "action_proof": 0,
-      "audit_chain": 88,
+      "audit_chain": 89,
       "gap": 0,
       "read_model": 4,
       "request_proof": 0
@@ -635,23 +642,23 @@
     "by_coverage_state": {
       "proven": 1,
       "unproven": 0,
-      "witnessed": 91
+      "witnessed": 92
     },
     "by_request_proof": {
       "action_proof": 1,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 15,
-      "request_proof": 76
+      "request_proof": 77
     },
-    "surface_count": 92
+    "surface_count": 93
   },
   "generated_by": "scripts/proof_coverage_matrix.py",
   "route_coverage": {
     "by_coverage_state": {
       "proven": 8,
-      "unproven": 96,
-      "witnessed": 229
+      "unproven": 93,
+      "witnessed": 232
     },
     "route_count": 333,
     "routes": [
@@ -1876,19 +1883,19 @@
         "surface_id": "unclassified_declared_route"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/state",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "state_proof_surface"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/state/save",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "state_proof_surface"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/state/{state_type}",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "state_proof_surface"
       },
       {
         "coverage_state": "witnessed",
@@ -2321,7 +2328,7 @@
         "surface_id": "gateway_capability_fabric"
       }
     ],
-    "unclassified_route_count": 96
+    "unclassified_route_count": 93
   },
   "schema_version": 1,
   "surfaces": [
@@ -2995,6 +3002,36 @@
         "proof_bridge_registered_in_deps"
       ],
       "surface_id": "ops_proof_surface"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "mcoi/mcoi_runtime/app/routers/data/state.py",
+        "mcoi/mcoi_runtime/persistence/state_persistence.py",
+        "mcoi/tests/test_server_phase212.py",
+        "mcoi/tests/test_state_persistence.py",
+        "mcoi/tests/test_server_lifecycle_helpers.py"
+      ],
+      "notes": "Runtime state routes persist hash-bound state snapshots with atomic writes, expose bounded load and list read models, and reject path traversal with governed error envelopes.",
+      "representative_paths": [
+        "/api/v1/state",
+        "/api/v1/state/save",
+        "/api/v1/state/{state_type}"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "state_save_returns_hash_bound_snapshot",
+        "state_load_returns_saved_data",
+        "state_list_returns_summary",
+        "state_save_rejects_path_traversal",
+        "state_load_rejects_path_traversal",
+        "state_persistence_atomic_write",
+        "state_persistence_rejects_hash_mismatch",
+        "server_lifecycle_registers_save_state_hook"
+      ],
+      "surface_id": "state_proof_surface"
     },
     {
       "action_proof": "action_proof",

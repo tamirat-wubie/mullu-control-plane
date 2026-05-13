@@ -648,6 +648,40 @@ def test_ops_proof_surface_is_witnessed() -> None:
     assert closure_actions["classify_ops_diagnostics_routes"]["status"] == "closed"
 
 
+def test_state_proof_surface_is_witnessed() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    route_records = {
+        record["route"]: record
+        for record in matrix["route_coverage"]["routes"]
+    }
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    state_surface = surfaces["state_proof_surface"]
+    witnesses = set(state_surface["runtime_witnesses"])
+
+    assert state_surface["coverage_state"] == "witnessed"
+    assert state_surface["request_proof"] == "request_proof"
+    assert state_surface["action_proof"] == "action_proof"
+    assert state_surface["audit"] == "audit_chain"
+    assert "/api/v1/state" in state_surface["representative_paths"]
+    assert "/api/v1/state/save" in state_surface["representative_paths"]
+    assert "/api/v1/state/{state_type}" in state_surface["representative_paths"]
+    assert "mcoi/mcoi_runtime/app/routers/data/state.py" in state_surface["evidence_files"]
+    assert "mcoi/mcoi_runtime/persistence/state_persistence.py" in state_surface["evidence_files"]
+    assert "mcoi/tests/test_server_phase212.py" in state_surface["evidence_files"]
+    assert "mcoi/tests/test_state_persistence.py" in state_surface["evidence_files"]
+    assert "state_save_returns_hash_bound_snapshot" in witnesses
+    assert "state_persistence_atomic_write" in witnesses
+    assert "state_persistence_rejects_hash_mismatch" in witnesses
+    assert route_records["/api/v1/state"]["coverage_state"] == "witnessed"
+    assert route_records["/api/v1/state"]["surface_id"] == "state_proof_surface"
+    assert route_records["/api/v1/state/save"]["coverage_state"] == "witnessed"
+    assert route_records["/api/v1/state/save"]["surface_id"] == "state_proof_surface"
+    assert route_records["/api/v1/state/{state_type}"]["coverage_state"] == "witnessed"
+    assert route_records["/api/v1/state/{state_type}"]["surface_id"] == "state_proof_surface"
+    assert closure_actions["classify_state_persistence_routes"]["status"] == "closed"
+
+
 def test_gateway_runtime_witness_covers_orchestration_receipts() -> None:
     matrix = _load_fixture()
     surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
