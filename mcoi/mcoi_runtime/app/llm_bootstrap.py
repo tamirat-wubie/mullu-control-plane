@@ -28,6 +28,7 @@ from mcoi_runtime.adapters.llm_adapter import (
     StubLLMBackend,
 )
 from mcoi_runtime.adapters.multi_provider import (
+    AIMLAPIBackend,
     APIRouterBackend,
     AnswiraBackend,
     ApiLinkBackend,
@@ -54,6 +55,8 @@ from mcoi_runtime.adapters.multi_provider import (
     HaimakerBackend,
     HuggingFaceBackend,
     InferenceNetBackend,
+    InfomaniakBackend,
+    KatalepticBackend,
     LLMAIBackend,
     LlamaAPIBackend,
     MixlayerBackend,
@@ -153,6 +156,11 @@ class LLMConfig:
     nscale_api_key: str = ""
     scaleway_api_key: str = ""
     ovhcloud_api_key: str = ""
+    aimlapi_api_key: str = ""
+    infomaniak_api_key: str = ""
+    infomaniak_product_id: str = ""
+    infomaniak_base_url: str = ""
+    kataleptic_api_key: str = ""
     grok_api_key: str = ""
     mistral_api_key: str = ""
     openrouter_api_key: str = ""
@@ -221,6 +229,11 @@ class LLMConfig:
         nscale_key = os.environ.get("NSCALE_API_KEY", "")
         scaleway_key = os.environ.get("SCW_API_KEY", "") or os.environ.get("SCALEWAY_API_KEY", "")
         ovhcloud_key = os.environ.get("OVH_AI_ENDPOINTS_ACCESS_TOKEN", "") or os.environ.get("AI_ENDPOINT_API_KEY", "")
+        aimlapi_key = os.environ.get("AIMLAPI_API_KEY", "") or os.environ.get("AIML_API_KEY", "")
+        infomaniak_key = os.environ.get("INFOMANIAK_API_KEY", "")
+        infomaniak_product_id = os.environ.get("INFOMANIAK_PRODUCT_ID", "")
+        infomaniak_base_url = os.environ.get("INFOMANIAK_BASE_URL", "")
+        kataleptic_key = os.environ.get("KATALEPTIC_API_KEY", "")
         grok_key = os.environ.get("XAI_API_KEY", "")
         mistral_key = os.environ.get("MISTRAL_API_KEY", "")
         openrouter_key = os.environ.get("OPENROUTER_API_KEY", "")
@@ -332,6 +345,12 @@ class LLMConfig:
                 default_backend = "scaleway"
             elif ovhcloud_key:
                 default_backend = "ovhcloud"
+            elif aimlapi_key:
+                default_backend = "aimlapi"
+            elif infomaniak_key and (infomaniak_base_url or infomaniak_product_id):
+                default_backend = "infomaniak"
+            elif kataleptic_key:
+                default_backend = "kataleptic"
             elif mistral_key:
                 default_backend = "mistral"
             elif grok_key:
@@ -372,6 +391,9 @@ class LLMConfig:
                 "HF_TOKEN, HUGGINGFACE_API_KEY, BASETEN_API_KEY, HAIMAKER_API_KEY, "
                 "NSCALE_API_KEY, SCW_API_KEY, SCALEWAY_API_KEY, "
                 "OVH_AI_ENDPOINTS_ACCESS_TOKEN, AI_ENDPOINT_API_KEY, "
+                "AIMLAPI_API_KEY, AIML_API_KEY, INFOMANIAK_API_KEY "
+                "with INFOMANIAK_PRODUCT_ID or INFOMANIAK_BASE_URL, "
+                "KATALEPTIC_API_KEY, "
                 "XAI_API_KEY, MISTRAL_API_KEY, "
                 "OPENROUTER_API_KEY) "
                 "or OLLAMA_BASE_URL."
@@ -431,6 +453,11 @@ class LLMConfig:
             nscale_api_key=nscale_key,
             scaleway_api_key=scaleway_key,
             ovhcloud_api_key=ovhcloud_key,
+            aimlapi_api_key=aimlapi_key,
+            infomaniak_api_key=infomaniak_key,
+            infomaniak_product_id=infomaniak_product_id,
+            infomaniak_base_url=infomaniak_base_url,
+            kataleptic_api_key=kataleptic_key,
             grok_api_key=grok_key,
             mistral_api_key=mistral_key,
             openrouter_api_key=openrouter_key,
@@ -1053,6 +1080,41 @@ def bootstrap_llm(
         )
         backends["ovhcloud"] = ovhcloud
 
+    if llm_config.aimlapi_api_key:
+        aimlapi = AIMLAPIBackend(
+            api_key=llm_config.aimlapi_api_key,
+            model=_select_provider_default_model(
+                llm_config.default_model,
+                ("nvidia/", "qwen", "deepseek", "gemma", "mistral", "openai/"),
+                AIMLAPIBackend.DEFAULT_MODEL,
+            ),
+        )
+        backends["aimlapi"] = aimlapi
+
+    if llm_config.infomaniak_api_key and (llm_config.infomaniak_base_url or llm_config.infomaniak_product_id):
+        infomaniak = InfomaniakBackend(
+            api_key=llm_config.infomaniak_api_key,
+            product_id=llm_config.infomaniak_product_id,
+            base_url=llm_config.infomaniak_base_url,
+            model=_select_provider_default_model(
+                llm_config.default_model,
+                ("google/", "mistralai/", "Qwen/", "moonshotai/", "Apertus"),
+                InfomaniakBackend.DEFAULT_MODEL,
+            ),
+        )
+        backends["infomaniak"] = infomaniak
+
+    if llm_config.kataleptic_api_key:
+        kataleptic = KatalepticBackend(
+            api_key=llm_config.kataleptic_api_key,
+            model=_select_provider_default_model(
+                llm_config.default_model,
+                ("gemma", "qwen", "llama", "deepseek", "mistral", "gpt-oss"),
+                KatalepticBackend.DEFAULT_MODEL,
+            ),
+        )
+        backends["kataleptic"] = kataleptic
+
     if llm_config.grok_api_key:
         grok = GrokBackend(
             api_key=llm_config.grok_api_key,
@@ -1460,6 +1522,27 @@ def _register_providers(
             "rate_limit": 120,
             "cost_limit": 0.25,
         },
+        "aimlapi": {
+            "name": "AIMLAPI",
+            "base_url": "https://api.aimlapi.com/v1",
+            "rate_limit": 120,
+            "cost_limit": 0.25,
+        },
+        "infomaniak": {
+            "name": "Infomaniak",
+            "base_url": InfomaniakBackend.resolve_base_url(
+                config.infomaniak_base_url,
+                config.infomaniak_product_id,
+            ),
+            "rate_limit": 120,
+            "cost_limit": 0.50,
+        },
+        "kataleptic": {
+            "name": "Kataleptic",
+            "base_url": "https://api.kataleptic.com/v1",
+            "rate_limit": 120,
+            "cost_limit": 0.25,
+        },
         "grok": {
             "name": "xAI Grok",
             "base_url": "https://api.x.ai/v1",
@@ -1614,6 +1697,9 @@ def _register_models(
         (NscaleBackend.ROUTING_MODEL, "GPT OSS 20B via Nscale", "nscale", 0.05, 0.20),
         (ScalewayBackend.ROUTING_MODEL, "GPT OSS 120B via Scaleway", "scaleway", 0.15, 0.60),
         (OVHCloudBackend.ROUTING_MODEL, "Qwen3 Coder 30B A3B via OVHcloud", "ovhcloud", 0.06, 0.22),
+        (AIMLAPIBackend.ROUTING_MODEL, "Nemotron 3 Nano 30B A3B via AIMLAPI", "aimlapi", 0.065, 0.26),
+        (InfomaniakBackend.ROUTING_MODEL, "Gemma 4 31B via Infomaniak", "infomaniak", 0.20, 0.40),
+        (KatalepticBackend.ROUTING_MODEL, "Gemma 3 27B via Kataleptic", "kataleptic", 0.15, 0.20),
         ("mistral-small-2506", "Mistral Small 2506", "mistral", 0.10, 0.30),
         ("mistral-small-2603", "Mistral Small 2603", "mistral", 0.15, 0.60),
         ("grok-3-mini", "Grok 3 Mini", "grok", 0.30, 0.50),

@@ -1,0 +1,86 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:software-change-receipt:1",
+  "title": "Software Dev Change Receipt Output",
+  "description": "Typed witness for one governed software-change transition.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "receipt_id",
+    "request_id",
+    "stage",
+    "cause",
+    "outcome",
+    "target_refs",
+    "constraint_refs",
+    "evidence_refs",
+    "created_at",
+    "metadata"
+  ],
+  "properties": {
+    "receipt_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "request_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "stage": {
+      "enum": [
+        "request_admitted",
+        "ucja_evaluated",
+        "snapshot_captured",
+        "plan_validated",
+        "plan_unavailable",
+        "patch_rejected",
+        "patch_apply_failed",
+        "patch_applied",
+        "gate_evaluated",
+        "rollback_completed",
+        "review_required",
+        "terminal_closed"
+      ]
+    },
+    "cause": {
+      "type": "string",
+      "minLength": 1
+    },
+    "outcome": {
+      "type": "string",
+      "minLength": 1
+    },
+    "target_refs": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "constraint_refs": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "evidence_refs": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  }
+}

@@ -132,6 +132,13 @@
       ]
     },
     {
+      "action_id": "classify_agent_memory_lifecycle_routes",
+      "status": "closed",
+      "surfaces": [
+        "agent_memory_lifecycle"
+      ]
+    },
+    {
       "action_id": "classify_operational_health_read_model_routes",
       "status": "closed",
       "surfaces": [
@@ -143,6 +150,13 @@
       "status": "closed",
       "surfaces": [
         "agent_orchestration_lifecycle"
+      ]
+    },
+    {
+      "action_id": "classify_workflow_execution_lifecycle_routes",
+      "status": "closed",
+      "surfaces": [
+        "workflow_execution_lifecycle"
       ]
     },
     {
@@ -563,7 +577,7 @@
   ],
   "coverage_summary": {
     "by_action_proof": {
-      "action_proof": 69,
+      "action_proof": 71,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 13,
@@ -571,7 +585,7 @@
     },
     "by_audit": {
       "action_proof": 0,
-      "audit_chain": 80,
+      "audit_chain": 82,
       "gap": 0,
       "read_model": 4,
       "request_proof": 0
@@ -579,23 +593,23 @@
     "by_coverage_state": {
       "proven": 1,
       "unproven": 0,
-      "witnessed": 83
+      "witnessed": 85
     },
     "by_request_proof": {
       "action_proof": 1,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 15,
-      "request_proof": 68
+      "request_proof": 70
     },
-    "surface_count": 84
+    "surface_count": 86
   },
   "generated_by": "scripts/proof_coverage_matrix.py",
   "route_coverage": {
     "by_coverage_state": {
       "proven": 8,
-      "unproven": 112,
-      "witnessed": 213
+      "unproven": 106,
+      "witnessed": 219
     },
     "route_count": 333,
     "routes": [
@@ -1350,19 +1364,19 @@
         "surface_id": "unclassified_declared_route"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/memory/search",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "agent_memory_lifecycle"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/memory/store",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "agent_memory_lifecycle"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/memory/summary",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "agent_memory_lifecycle"
       },
       {
         "coverage_state": "unproven",
@@ -2010,14 +2024,14 @@
         "surface_id": "webhook_operations_lifecycle"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/workflow/execute",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "workflow_execution_lifecycle"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/workflow/history",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "workflow_execution_lifecycle"
       },
       {
         "coverage_state": "witnessed",
@@ -2025,9 +2039,9 @@
         "surface_id": "tool_invocation"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/workflow/traced",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "workflow_execution_lifecycle"
       },
       {
         "coverage_state": "witnessed",
@@ -2265,7 +2279,7 @@
         "surface_id": "gateway_capability_fabric"
       }
     ],
-    "unclassified_route_count": 112
+    "unclassified_route_count": 106
   },
   "schema_version": 1,
   "surfaces": [
@@ -2909,6 +2923,32 @@
       "surface_id": "trace_observability_read_models"
     },
     {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "mcoi/mcoi_runtime/app/routers/agent.py",
+        "mcoi/mcoi_runtime/core/agent_memory.py",
+        "mcoi/tests/test_agent_memory.py"
+      ],
+      "notes": "Agent memory lifecycle routes store tenant-scoped memories, search them through bounded relevance scoring, and expose bounded memory summaries without cross-tenant disclosure.",
+      "representative_paths": [
+        "/api/v1/memory/search",
+        "/api/v1/memory/store",
+        "/api/v1/memory/summary"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "agent_memory_store_bounded",
+        "agent_memory_search_relevance_scored",
+        "agent_memory_tenant_isolation",
+        "agent_memory_capacity_eviction",
+        "agent_memory_summary_bounded",
+        "agent_memory_forget_removes_entry"
+      ],
+      "surface_id": "agent_memory_lifecycle"
+    },
+    {
       "action_proof": "read_model",
       "audit": "audit_chain",
       "coverage_state": "witnessed",
@@ -2974,6 +3014,37 @@
         "orchestration_executor_errors_sanitized"
       ],
       "surface_id": "agent_orchestration_lifecycle"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "mcoi/mcoi_runtime/app/routers/workflow.py",
+        "mcoi/mcoi_runtime/core/agent_workflow.py",
+        "mcoi/mcoi_runtime/core/traced_workflow.py",
+        "mcoi/tests/test_agent_workflow.py",
+        "mcoi/tests/test_traced_workflow.py",
+        "mcoi/tests/test_server_phase205.py"
+      ],
+      "notes": "Workflow execution routes execute governed multi-agent workflows with action proof receipts, expose bounded history read models, and produce replay-traced workflow runs.",
+      "representative_paths": [
+        "/api/v1/workflow/execute",
+        "/api/v1/workflow/history",
+        "/api/v1/workflow/traced"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "workflow_execute_emits_action_proof",
+        "workflow_invalid_capability_bounded",
+        "workflow_history_bounded",
+        "workflow_success_records_audit",
+        "workflow_failure_records_audit",
+        "workflow_errors_sanitized",
+        "traced_workflow_emits_replay_trace",
+        "traced_workflow_recorder_errors_sanitized"
+      ],
+      "surface_id": "workflow_execution_lifecycle"
     },
     {
       "action_proof": "action_proof",

@@ -25,6 +25,10 @@ from gateway.trust_ledger import (
     TrustLedgerEvidenceArtifact,
 )
 from scripts.verify_anchor_receipt import main, verify_anchor_receipt_files
+from scripts.validate_schemas import _load_schema, _validate_schema_instance
+
+
+REPORT_SCHEMA_PATH = Path("schemas/trust_ledger_anchor_verification_report.schema.json")
 
 
 def test_verify_anchor_receipt_files_accepts_valid_export(tmp_path: Path) -> None:
@@ -51,6 +55,7 @@ def test_verify_anchor_receipt_files_accepts_valid_export(tmp_path: Path) -> Non
     assert report["package_valid"] is True
     assert report["package_id"].startswith("trust-export-")
     assert len(report["package_hash"]) == 64
+    _assert_report_schema(report)
 
 
 def test_verify_anchor_receipt_files_detects_tampered_artifact_root(tmp_path: Path) -> None:
@@ -76,6 +81,7 @@ def test_verify_anchor_receipt_files_detects_tampered_artifact_root(tmp_path: Pa
     assert report["package_present"] is True
     assert report["package_valid"] is False
     assert report["package_id"].startswith("trust-export-")
+    _assert_report_schema(report)
 
 
 def test_verify_anchor_receipt_files_rejects_schema_invalid_receipt(tmp_path: Path) -> None:
@@ -97,6 +103,7 @@ def test_verify_anchor_receipt_files_rejects_schema_invalid_receipt(tmp_path: Pa
     assert report["bundle_id"].startswith("trust-bundle-")
     assert report["anchor_receipt_id"].startswith("trust-anchor-receipt-")
     assert any("anchor_receipt:" in error for error in report["schema_errors"])
+    _assert_report_schema(report)
 
 
 def test_verify_anchor_receipt_files_rejects_schema_invalid_artifacts(tmp_path: Path) -> None:
@@ -118,6 +125,7 @@ def test_verify_anchor_receipt_files_rejects_schema_invalid_artifacts(tmp_path: 
     assert report["bundle_id"].startswith("trust-bundle-")
     assert report["anchor_receipt_id"].startswith("trust-anchor-receipt-")
     assert any("artifacts:" in error for error in report["schema_errors"])
+    _assert_report_schema(report)
 
 
 def test_verify_anchor_receipt_files_detects_package_bundle_hash_mismatch(tmp_path: Path) -> None:
@@ -140,6 +148,7 @@ def test_verify_anchor_receipt_files_detects_package_bundle_hash_mismatch(tmp_pa
     assert report["schema_errors"] == []
     assert report["package_present"] is True
     assert report["package_valid"] is False
+    _assert_report_schema(report)
 
 
 def test_verify_anchor_receipt_files_rejects_schema_invalid_package(tmp_path: Path) -> None:
@@ -163,6 +172,7 @@ def test_verify_anchor_receipt_files_rejects_schema_invalid_package(tmp_path: Pa
     assert report["package_present"] is True
     assert report["package_valid"] is False
     assert report["package_id"] == "package-placeholder"
+    _assert_report_schema(report)
 
 
 def test_verify_anchor_receipt_files_rejects_package_hash_mismatch(tmp_path: Path) -> None:
@@ -185,6 +195,7 @@ def test_verify_anchor_receipt_files_rejects_package_hash_mismatch(tmp_path: Pat
     assert report["package_present"] is True
     assert report["package_valid"] is False
     assert report["package_id"].startswith("trust-export-")
+    _assert_report_schema(report)
 
 
 def test_verify_anchor_receipt_cli_reports_valid_export(tmp_path: Path, capsys: Any) -> None:
@@ -213,6 +224,22 @@ def test_verify_anchor_receipt_cli_reports_valid_export(tmp_path: Path, capsys: 
     assert output["package_present"] is True
     assert output["package_valid"] is True
     assert output["package_id"].startswith("trust-export-")
+    _assert_report_schema(output)
+
+
+def test_verify_anchor_receipt_report_contract_allows_missing_secret_report() -> None:
+    report = verify_anchor_receipt_files(
+        bundle_path=Path("missing-bundle.json"),
+        receipt_path=Path("missing-receipt.json"),
+        artifacts_path=Path("missing-artifacts.json"),
+        signing_secret="",
+    )
+
+    assert report["valid"] is False
+    assert report["reason"] == "signing_secret_required"
+    assert report["schema_valid"] is False
+    assert report["package_present"] is False
+    _assert_report_schema(report)
 
 
 def _write_export(tmp_path: Path) -> dict[str, Path]:
@@ -318,3 +345,7 @@ def _artifacts() -> tuple[TrustLedgerEvidenceArtifact, ...]:
 
 def _hash(value: str) -> str:
     return f"sha256:{hashlib.sha256(value.encode('utf-8')).hexdigest()}"
+
+
+def _assert_report_schema(report: dict[str, Any]) -> None:
+    assert _validate_schema_instance(_load_schema(REPORT_SCHEMA_PATH), report) == []

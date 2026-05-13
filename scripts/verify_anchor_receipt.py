@@ -38,6 +38,7 @@ BUNDLE_SCHEMA_PATH = ROOT / "schemas" / "trust_ledger_bundle.schema.json"
 ANCHOR_RECEIPT_SCHEMA_PATH = ROOT / "schemas" / "trust_ledger_anchor_receipt.schema.json"
 ARTIFACTS_SCHEMA_PATH = ROOT / "schemas" / "trust_ledger_evidence_artifacts.schema.json"
 PACKAGE_SCHEMA_PATH = ROOT / "schemas" / "trust_ledger_export_package.schema.json"
+REPORT_SCHEMA_PATH = ROOT / "schemas" / "trust_ledger_anchor_verification_report.schema.json"
 
 
 def verify_anchor_receipt_files(

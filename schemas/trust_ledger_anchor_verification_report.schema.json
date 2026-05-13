@@ -1,0 +1,130 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:trust-ledger-anchor-verification-report:1",
+  "title": "Trust Ledger Anchor Verification Report",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "valid",
+    "reason",
+    "bundle_id",
+    "anchor_receipt_id",
+    "schema_valid",
+    "schema_errors",
+    "expected_bundle_hash",
+    "observed_bundle_hash",
+    "signature_key_id",
+    "command_id",
+    "terminal_certificate_id",
+    "artifact_count",
+    "package_present",
+    "package_valid",
+    "package_id",
+    "package_hash"
+  ],
+  "properties": {
+    "valid": {
+      "type": "boolean"
+    },
+    "reason": {
+      "type": "string",
+      "minLength": 1
+    },
+    "bundle_id": {
+      "type": "string"
+    },
+    "anchor_receipt_id": {
+      "type": "string"
+    },
+    "schema_valid": {
+      "type": "boolean"
+    },
+    "schema_errors": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "expected_bundle_hash": {
+      "type": "string"
+    },
+    "observed_bundle_hash": {
+      "type": "string"
+    },
+    "signature_key_id": {
+      "type": "string"
+    },
+    "command_id": {
+      "type": "string"
+    },
+    "terminal_certificate_id": {
+      "type": "string"
+    },
+    "artifact_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "package_present": {
+      "type": "boolean"
+    },
+    "package_valid": {
+      "type": "boolean"
+    },
+    "package_id": {
+      "type": "string"
+    },
+    "package_hash": {
+      "type": "string"
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "valid": {
+            "const": true
+          }
+        },
+        "required": [
+          "valid"
+        ]
+      },
+      "then": {
+        "properties": {
+          "schema_valid": {
+            "const": true
+          },
+          "reason": {
+            "const": "anchor_verified"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "package_present": {
+            "const": false
+          }
+        },
+        "required": [
+          "package_present"
+        ]
+      },
+      "then": {
+        "properties": {
+          "package_valid": {
+            "const": false
+          },
+          "package_id": {
+            "const": ""
+          },
+          "package_hash": {
+            "const": ""
+          }
+        }
+      }
+    }
+  ]
+}

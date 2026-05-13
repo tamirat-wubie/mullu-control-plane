@@ -69,6 +69,19 @@ def test_software_dev_input_schema_refs_are_materialized_and_strict() -> None:
         assert schema["$id"].startswith("urn:mullusi:schema:software-dev:")
 
 
+def test_software_dev_output_schema_refs_are_materialized_and_strict() -> None:
+    output_refs = tuple(entry.output_schema_ref for entry in _software_dev_entries())
+    schemas_by_id = _software_dev_output_schemas_by_id()
+
+    assert len(output_refs) == 6
+    assert len(schemas_by_id) == 6
+    assert set(output_refs) == set(schemas_by_id)
+    for schema_id, schema in schemas_by_id.items():
+        assert schema_id.startswith("urn:mullusi:schema:")
+        assert schema["additionalProperties"] is False
+        assert schema["$id"] == schema_id
+
+
 def test_software_dev_input_schemas_accept_representative_requests() -> None:
     payloads = _representative_software_dev_schema_payloads()
 
@@ -102,6 +115,34 @@ def test_software_dev_input_schemas_reject_boundary_violations() -> None:
         _load_schema(SOFTWARE_DEV_SCHEMA_DIR / "pr_candidate.input.schema.json"),
         pr_payload,
     )
+
+
+def test_software_dev_output_schemas_accept_representative_receipts() -> None:
+    payloads = _representative_software_dev_output_payloads()
+    schemas_by_id = _software_dev_output_schemas_by_id()
+
+    assert set(payloads) == {entry.output_schema_ref for entry in _software_dev_entries()}
+    assert set(payloads) == set(schemas_by_id)
+    for schema_id, payload in payloads.items():
+        assert _validate_schema_instance(schemas_by_id[schema_id], payload) == []
+        assert payload
+        assert payload.get("metadata", {}) or schema_id == "urn:mullusi:schema:repo-map:1"
+
+
+def test_software_dev_output_schemas_reject_effect_overclaims() -> None:
+    payloads = _representative_software_dev_output_payloads()
+    schemas_by_id = _software_dev_output_schemas_by_id()
+    repo_payload = deepcopy(payloads["urn:mullusi:schema:repo-map:1"])
+    app_graph_payload = deepcopy(payloads["urn:mullusi:schema:app-task-graph:1"])
+    pr_payload = deepcopy(payloads["urn:mullusi:schema:pr-candidate:1"])
+
+    repo_payload["files"] = ["C:\\secrets.py"]
+    app_graph_payload["metadata"]["direct_deployment_allowed"] = True
+    pr_payload["metadata"]["local_git_push_allowed"] = True
+
+    assert _validate_schema_instance(schemas_by_id["urn:mullusi:schema:repo-map:1"], repo_payload)
+    assert _validate_schema_instance(schemas_by_id["urn:mullusi:schema:app-task-graph:1"], app_graph_payload)
+    assert _validate_schema_instance(schemas_by_id["urn:mullusi:schema:pr-candidate:1"], pr_payload)
 
 
 def test_software_dev_named_loader_installs_only_software_dev_domain() -> None:
@@ -199,6 +240,16 @@ def _software_dev_entries() -> tuple[CapabilityRegistryEntry, ...]:
         CapabilityRegistryEntry.from_mapping(item)
         for item in _load_json(SOFTWARE_DEV_CAPABILITY_PACK_PATH)["capabilities"]
     )
+
+
+def _software_dev_output_schemas_by_id() -> dict[str, dict]:
+    schemas: dict[str, dict] = {}
+    for schema_path in sorted(SOFTWARE_DEV_SCHEMA_DIR.glob("*.output.schema.json")):
+        schema = _load_schema(schema_path)
+        schema_id = schema["$id"]
+        assert schema_id not in schemas
+        schemas[schema_id] = schema
+    return schemas
 
 
 def _representative_software_dev_schema_payloads() -> dict[str, dict]:
@@ -311,6 +362,228 @@ def _representative_software_dev_schema_payloads() -> dict[str, dict]:
             "open_pull_request_allowed": False,
             "production_deployment_allowed": False,
             "metadata": metadata,
+        },
+    }
+
+
+def _representative_software_dev_output_payloads() -> dict[str, dict]:
+    metadata = {"fixture": "software_dev_capability_pack"}
+    symbol = {
+        "name": "build_repo_map",
+        "kind": "function",
+        "file_path": "mcoi/mcoi_runtime/core/code_intelligence.py",
+        "line_start": 35,
+        "line_end": 120,
+        "imports": ["ast", "pathlib"],
+        "referenced_by": ["tests/test_code_intelligence.py"],
+        "metadata": {"detector": "python_ast"},
+    }
+    risk = {
+        "file_path": "schemas/software_dev/repo_map.output.schema.json",
+        "risk": "medium",
+        "score": 35,
+        "reasons": ["schema contract change", "proof matrix witness update"],
+    }
+    return {
+        "urn:mullusi:schema:repo-map:1": {
+            "repository": "repo:mullu-control-plane",
+            "commit_sha": "abc123",
+            "files": [
+                "mcoi/mcoi_runtime/core/code_intelligence.py",
+                "tests/test_code_intelligence.py",
+            ],
+            "symbols": [symbol],
+            "test_map": {
+                "source_to_tests": {
+                    "mcoi/mcoi_runtime/core/code_intelligence.py": ["tests/test_code_intelligence.py"],
+                },
+                "test_to_sources": {
+                    "tests/test_code_intelligence.py": ["mcoi/mcoi_runtime/core/code_intelligence.py"],
+                },
+            },
+            "dependency_edges": [
+                ["mcoi/mcoi_runtime/core/code_intelligence.py", "tests/test_code_intelligence.py"],
+            ],
+            "risk_assessments": [risk],
+        },
+        "urn:mullusi:schema:code-context-bundle:1": {
+            "bundle_id": "context:abc123",
+            "repository": "repo:mullu-control-plane",
+            "commit_sha": "abc123",
+            "task_summary": "Add governed output schema coverage for software-dev capability receipts",
+            "selected_files": [
+                {
+                    "file_path": "schemas/software_dev/repo_map.output.schema.json",
+                    "reason": "output schema under test",
+                    "distance": 0,
+                },
+            ],
+            "selected_symbols": [symbol],
+            "selected_tests": ["tests/test_software_dev_capability_pack.py"],
+            "dependency_edges": [
+                ["schemas/software_dev/repo_map.output.schema.json", "tests/test_software_dev_capability_pack.py"],
+            ],
+            "acceptance_criteria": ["output URNs resolve", "overclaims reject", "proof matrix remains current"],
+            "risk_assessments": [risk],
+            "estimate": {
+                "token_estimate": 1200,
+                "cost_microusd_estimate": 40,
+                "estimation_method": "deterministic_character_count_v1",
+            },
+            "evidence_refs": ["proof://software_dev/output-schema/context-bundle"],
+            "metadata": metadata,
+        },
+        "urn:mullusi:schema:software-gate-plan:1": {
+            "plan_id": "gate-plan:abc123",
+            "repository": "repo:mullu-control-plane",
+            "commit_sha": "abc123",
+            "mode": "patch_test_review",
+            "blast_radius": "module",
+            "affected_files": ["schemas/software_dev/software_gate_plan.output.schema.json"],
+            "gates": [
+                {
+                    "gate_id": "schema_contract_tests",
+                    "tier": "fast",
+                    "command": ["python", "-m", "pytest", "tests/test_software_dev_capability_pack.py", "-q"],
+                    "reason": "validate software-dev schema contract witnesses",
+                    "target_refs": ["tests/test_software_dev_capability_pack.py"],
+                    "order": 0,
+                    "required": True,
+                    "metadata": {"network_allowed": False},
+                },
+            ],
+            "skipped_gate_ids": [],
+            "full_suite_required": False,
+            "evidence_refs": ["proof://software_dev/output-schema/gate-plan"],
+            "metadata": metadata,
+        },
+        "urn:mullusi:schema:software-change-receipt:1": {
+            "receipt_id": "software-change:receipt-1",
+            "request_id": "req-change",
+            "stage": "terminal_closed",
+            "cause": "all requested gates passed",
+            "outcome": "SolvedVerified",
+            "target_refs": ["schemas/software_dev/software_change_receipt.output.schema.json"],
+            "constraint_refs": ["sandbox_profile:workspace_network_none", "rollback_required:true"],
+            "evidence_refs": ["gate:schema_contract_tests"],
+            "created_at": "2026-05-13T00:00:00+00:00",
+            "metadata": {"network_enabled": False, "rollback_required": True},
+        },
+        "urn:mullusi:schema:app-task-graph:1": {
+            "graph_id": "app-task-graph:invoice-dashboard",
+            "app_name": "Invoice Dashboard",
+            "tasks": [
+                {
+                    "task_id": "task-data-model",
+                    "title": "Create invoice data model",
+                    "kind": "data_model",
+                    "affected_files": ["app/models/invoice.py"],
+                    "acceptance_criteria": ["invoice fields are typed", "tenant id is required"],
+                    "dependencies": [],
+                    "quality_gates": ["unit_tests", "typecheck"],
+                    "risk": "medium",
+                    "review_required": True,
+                    "metadata": {"software_mode": "patch_test_review"},
+                },
+                {
+                    "task_id": "task-model-tests",
+                    "title": "Add invoice model tests",
+                    "kind": "tests",
+                    "affected_files": ["tests/test_invoice_model.py"],
+                    "acceptance_criteria": ["model tests cover validation failure", "model tests cover tenant scope"],
+                    "dependencies": ["task-data-model"],
+                    "quality_gates": ["unit_tests"],
+                    "risk": "low",
+                    "review_required": True,
+                    "metadata": {"software_mode": "patch_test_review"},
+                },
+            ],
+            "root_task_ids": ["task-data-model"],
+            "terminal_task_ids": ["task-model-tests"],
+            "evidence_refs": ["proof://software_dev/output-schema/app-task-graph"],
+            "metadata": {
+                "direct_deployment_allowed": False,
+                "commit_candidate_allowed": False,
+                "fixture": "software_dev_capability_pack",
+            },
+        },
+        "urn:mullusi:schema:pr-candidate:1": {
+            "candidate_id": "pr-candidate:invoice-dashboard",
+            "status": "approval_required",
+            "repository": "repo:invoice-service",
+            "branch_candidate": {
+                "branch_name": "mullu/app-builder-invoice-dashboard-abc123",
+                "base_branch": "main",
+                "create_command": {
+                    "command_id": "git-create-branch",
+                    "purpose": "create local review branch candidate",
+                    "command": ["git", "switch", "-c", "mullu/app-builder-invoice-dashboard-abc123", "main"],
+                    "requires_clean_worktree": True,
+                    "metadata": {"push_allowed": False},
+                },
+                "rollback_command": {
+                    "command_id": "git-rollback-branch",
+                    "purpose": "return to base branch without pushing",
+                    "command": ["git", "switch", "main"],
+                    "requires_clean_worktree": False,
+                    "metadata": {"push_allowed": False},
+                },
+            },
+            "commit_candidate": {
+                "commit_message": "Add invoice dashboard governed candidate",
+                "affected_files": ["app/models/invoice.py", "tests/test_invoice_model.py"],
+                "receipt_refs": ["software-change:receipt-1"],
+                "quality_gate_refs": ["gate:schema_contract_tests"],
+                "local_commands": [
+                    {
+                        "command_id": "git-add-candidate",
+                        "purpose": "stage local candidate files",
+                        "command": ["git", "add", "app/models/invoice.py", "tests/test_invoice_model.py"],
+                        "requires_clean_worktree": False,
+                        "metadata": {"push_allowed": False},
+                    },
+                    {
+                        "command_id": "git-commit-candidate",
+                        "purpose": "create local commit candidate",
+                        "command": ["git", "commit", "-m", "Add invoice dashboard governed candidate"],
+                        "requires_clean_worktree": False,
+                        "metadata": {"push_allowed": False},
+                    },
+                ],
+            },
+            "review_packet": {
+                "packet_id": "review-packet:invoice-dashboard",
+                "title": "Invoice Dashboard governed candidate",
+                "summary": "Prepares invoice model and tests for human review.",
+                "affected_files": ["app/models/invoice.py", "tests/test_invoice_model.py"],
+                "quality_gate_refs": ["gate:schema_contract_tests"],
+                "receipt_refs": ["software-change:receipt-1"],
+                "risk_flags": ["approval_required_before_pr_open"],
+                "rollback_plan": ["switch back to main", "delete local candidate branch after review"],
+                "markdown_body": "## Summary\n\nAdds invoice model and tests with governed receipts.",
+                "metadata": {"approval_required": True},
+            },
+            "open_intent": {
+                "intent_id": "github-pr-open:intent-1",
+                "repository": "repo:invoice-service",
+                "title": "Invoice Dashboard governed candidate",
+                "body": "Prepared PR candidate. Opening requires human approval.",
+                "base_branch": "main",
+                "head_branch": "mullu/app-builder-invoice-dashboard-abc123",
+                "capability_id": "github.open_pull_request",
+                "approval_request_id": "approval:pr-open-review",
+                "requires_approval": True,
+                "world_mutating": True,
+                "execution_allowed": False,
+                "approval_decision_id": "",
+                "metadata": {"approval_required": True},
+            },
+            "evidence_refs": ["proof://software_dev/output-schema/pr-candidate"],
+            "metadata": {
+                "local_git_push_allowed": False,
+                "github_open_requires_approval": True,
+                "fixture": "software_dev_capability_pack",
+            },
         },
     }
 

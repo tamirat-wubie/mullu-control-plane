@@ -1783,6 +1783,150 @@ class OVHCloudBackend:
         return self._call_count
 
 
+class AIMLAPIBackend:
+    """AIMLAPI OpenAI-compatible endpoint for low-cost Nemotron models."""
+
+    provider = LLMProvider.AIMLAPI
+    DEFAULT_MODEL = "nvidia/nemotron-3-nano-30b-a3b"
+    ROUTING_MODEL = "aimlapi/nvidia/nemotron-3-nano-30b-a3b"
+    MODEL_ALIASES = {ROUTING_MODEL: DEFAULT_MODEL}
+
+    def __init__(self, *, model: str = "", api_key: str | None = None, api_key_env: str = "AIMLAPI_API_KEY") -> None:
+        self._model = model or self.DEFAULT_MODEL
+        self._default_model = self._model
+        self._api_key = api_key or ""
+        self._api_key_env = api_key_env
+        self._call_count = 0
+
+    def call(self, params: LLMInvocationParams) -> LLMResult:
+        self._call_count += 1
+        requested_model = params.model_name or self._model
+        model = self.MODEL_ALIASES.get(requested_model, requested_model)
+        return _openai_compatible_call(
+            base_url="https://api.aimlapi.com/v1",
+            api_key=self._api_key
+            or os.environ.get(self._api_key_env, "")
+            or os.environ.get("AIML_API_KEY", ""),
+            model=model,
+            messages=_params_to_messages(params),
+            max_tokens=params.max_tokens,
+            temperature=0.0,
+            provider=self.provider,
+            cost_per_1m_input=0.065,
+            cost_per_1m_output=0.26,
+        )
+
+    @property
+    def call_count(self) -> int:
+        return self._call_count
+
+
+class InfomaniakBackend:
+    """Infomaniak product-scoped OpenAI-compatible endpoint."""
+
+    provider = LLMProvider.INFOMANIAK
+    DEFAULT_MODEL = "google/gemma-4-31B-it"
+    ROUTING_MODEL = "infomaniak/google/gemma-4-31B-it"
+    MODEL_ALIASES = {ROUTING_MODEL: DEFAULT_MODEL}
+
+    def __init__(
+        self,
+        *,
+        model: str = "",
+        api_key: str | None = None,
+        api_key_env: str = "INFOMANIAK_API_KEY",
+        product_id: str = "",
+        base_url: str = "",
+    ) -> None:
+        self._model = model or self.DEFAULT_MODEL
+        self._default_model = self._model
+        self._api_key = api_key or ""
+        self._api_key_env = api_key_env
+        self._product_id = product_id
+        self._base_url = self.resolve_base_url(base_url, product_id)
+        self._call_count = 0
+
+    @staticmethod
+    def resolve_base_url(base_url: str = "", product_id: str = "") -> str:
+        if base_url:
+            return base_url.rstrip("/")
+        if product_id:
+            return f"https://api.infomaniak.com/2/ai/{product_id}/openai/v1"
+        return ""
+
+    def call(self, params: LLMInvocationParams) -> LLMResult:
+        self._call_count += 1
+        requested_model = params.model_name or self._model
+        model = self.MODEL_ALIASES.get(requested_model, requested_model)
+        api_key = self._api_key or os.environ.get(self._api_key_env, "")
+        base_url = self._base_url or self.resolve_base_url(
+            os.environ.get("INFOMANIAK_BASE_URL", ""),
+            os.environ.get("INFOMANIAK_PRODUCT_ID", ""),
+        )
+        if not base_url:
+            return LLMResult(
+                content="",
+                input_tokens=0,
+                output_tokens=0,
+                cost=0.0,
+                model_name=model,
+                provider=self.provider,
+                finished=False,
+                error="provider base URL unavailable",
+            )
+        return _openai_compatible_call(
+            base_url=base_url,
+            api_key=api_key,
+            model=model,
+            messages=_params_to_messages(params),
+            max_tokens=params.max_tokens,
+            temperature=0.0,
+            provider=self.provider,
+            cost_per_1m_input=0.20,
+            cost_per_1m_output=0.40,
+        )
+
+    @property
+    def call_count(self) -> int:
+        return self._call_count
+
+
+class KatalepticBackend:
+    """Kataleptic OpenAI-compatible endpoint for curated low-cost models."""
+
+    provider = LLMProvider.KATALEPTIC
+    DEFAULT_MODEL = "gemma3-27b"
+    ROUTING_MODEL = "kataleptic/gemma3-27b"
+    MODEL_ALIASES = {ROUTING_MODEL: DEFAULT_MODEL}
+
+    def __init__(self, *, model: str = "", api_key: str | None = None, api_key_env: str = "KATALEPTIC_API_KEY") -> None:
+        self._model = model or self.DEFAULT_MODEL
+        self._default_model = self._model
+        self._api_key = api_key or ""
+        self._api_key_env = api_key_env
+        self._call_count = 0
+
+    def call(self, params: LLMInvocationParams) -> LLMResult:
+        self._call_count += 1
+        requested_model = params.model_name or self._model
+        model = self.MODEL_ALIASES.get(requested_model, requested_model)
+        return _openai_compatible_call(
+            base_url="https://api.kataleptic.com/v1",
+            api_key=self._api_key or os.environ.get(self._api_key_env, ""),
+            model=model,
+            messages=_params_to_messages(params),
+            max_tokens=params.max_tokens,
+            temperature=0.0,
+            provider=self.provider,
+            cost_per_1m_input=0.15,
+            cost_per_1m_output=0.20,
+        )
+
+    @property
+    def call_count(self) -> int:
+        return self._call_count
+
+
 # --- xAI Grok (real-time X data) ---
 class GrokBackend:
     """xAI Grok - real-time X (Twitter) data access.
@@ -1945,6 +2089,9 @@ ALL_PROVIDERS: dict[str, type] = {
     "nscale": NscaleBackend,
     "scaleway": ScalewayBackend,
     "ovhcloud": OVHCloudBackend,
+    "aimlapi": AIMLAPIBackend,
+    "infomaniak": InfomaniakBackend,
+    "kataleptic": KatalepticBackend,
     "grok": GrokBackend,
     "mistral": MistralBackend,
     "openrouter": OpenRouterBackend,
@@ -2011,6 +2158,9 @@ def available_providers() -> list[str]:
         "nscale": ("NSCALE_API_KEY",),
         "scaleway": ("SCW_API_KEY", "SCALEWAY_API_KEY"),
         "ovhcloud": ("OVH_AI_ENDPOINTS_ACCESS_TOKEN", "AI_ENDPOINT_API_KEY"),
+        "aimlapi": ("AIMLAPI_API_KEY", "AIML_API_KEY"),
+        "infomaniak": ("INFOMANIAK_API_KEY",),
+        "kataleptic": ("KATALEPTIC_API_KEY",),
         "grok": ("XAI_API_KEY",),
         "mistral": ("MISTRAL_API_KEY",),
         "openrouter": ("OPENROUTER_API_KEY",),
@@ -2018,4 +2168,8 @@ def available_providers() -> list[str]:
     available = [name for name, env_vars in env_map.items() if any(os.environ.get(env_var) for env_var in env_vars)]
     if "cloudflare" in available and not os.environ.get("CLOUDFLARE_ACCOUNT_ID"):
         available.remove("cloudflare")
+    if "infomaniak" in available and not (
+        os.environ.get("INFOMANIAK_BASE_URL") or os.environ.get("INFOMANIAK_PRODUCT_ID")
+    ):
+        available.remove("infomaniak")
     return available

@@ -669,6 +669,32 @@ def proof_coverage_matrix() -> dict[str, Any]:
             ],
         ),
         _surface(
+            "agent_memory_lifecycle",
+            [
+                "/api/v1/memory/search",
+                "/api/v1/memory/store",
+                "/api/v1/memory/summary",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "mcoi/mcoi_runtime/app/routers/agent.py",
+                "mcoi/mcoi_runtime/core/agent_memory.py",
+                "mcoi/tests/test_agent_memory.py",
+            ],
+            "Agent memory lifecycle routes store tenant-scoped memories, search them through bounded relevance scoring, and expose bounded memory summaries without cross-tenant disclosure.",
+            [
+                "agent_memory_store_bounded",
+                "agent_memory_search_relevance_scored",
+                "agent_memory_tenant_isolation",
+                "agent_memory_capacity_eviction",
+                "agent_memory_summary_bounded",
+                "agent_memory_forget_removes_entry",
+            ],
+        ),
+        _surface(
             "operational_health_read_models",
             [
                 "/api/v1/health/deep",
@@ -733,6 +759,37 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "orchestration_handoff_errors_sanitized",
                 "orchestration_quorum_required",
                 "orchestration_executor_errors_sanitized",
+            ],
+        ),
+        _surface(
+            "workflow_execution_lifecycle",
+            [
+                "/api/v1/workflow/execute",
+                "/api/v1/workflow/history",
+                "/api/v1/workflow/traced",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "mcoi/mcoi_runtime/app/routers/workflow.py",
+                "mcoi/mcoi_runtime/core/agent_workflow.py",
+                "mcoi/mcoi_runtime/core/traced_workflow.py",
+                "mcoi/tests/test_agent_workflow.py",
+                "mcoi/tests/test_traced_workflow.py",
+                "mcoi/tests/test_server_phase205.py",
+            ],
+            "Workflow execution routes execute governed multi-agent workflows with action proof receipts, expose bounded history read models, and produce replay-traced workflow runs.",
+            [
+                "workflow_execute_emits_action_proof",
+                "workflow_invalid_capability_bounded",
+                "workflow_history_bounded",
+                "workflow_success_records_audit",
+                "workflow_failure_records_audit",
+                "workflow_errors_sanitized",
+                "traced_workflow_emits_replay_trace",
+                "traced_workflow_recorder_errors_sanitized",
             ],
         ),
         _surface(
@@ -2695,6 +2752,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
             "status": "closed",
         },
         {
+            "action_id": "classify_agent_memory_lifecycle_routes",
+            "surfaces": ["agent_memory_lifecycle"],
+            "status": "closed",
+        },
+        {
             "action_id": "classify_operational_health_read_model_routes",
             "surfaces": ["operational_health_read_models"],
             "status": "closed",
@@ -2702,6 +2764,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
         {
             "action_id": "classify_agent_orchestration_lifecycle_routes",
             "surfaces": ["agent_orchestration_lifecycle"],
+            "status": "closed",
+        },
+        {
+            "action_id": "classify_workflow_execution_lifecycle_routes",
+            "surfaces": ["workflow_execution_lifecycle"],
             "status": "closed",
         },
         {

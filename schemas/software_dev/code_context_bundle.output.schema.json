@@ -1,0 +1,235 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:code-context-bundle:1",
+  "title": "Software Dev Code Context Bundle Output",
+  "description": "Minimal prompt-bound context bundle derived from a repository map and bounded task request.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "bundle_id",
+    "repository",
+    "commit_sha",
+    "task_summary",
+    "selected_files",
+    "selected_symbols",
+    "selected_tests",
+    "dependency_edges",
+    "acceptance_criteria",
+    "risk_assessments",
+    "estimate",
+    "evidence_refs",
+    "metadata"
+  ],
+  "properties": {
+    "bundle_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "repository": {
+      "type": "string",
+      "minLength": 1
+    },
+    "commit_sha": {
+      "type": "string",
+      "minLength": 1
+    },
+    "task_summary": {
+      "type": "string",
+      "minLength": 1
+    },
+    "selected_files": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/context_file_selection"
+      }
+    },
+    "selected_symbols": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/code_symbol"
+      }
+    },
+    "selected_tests": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/repository_path"
+      }
+    },
+    "dependency_edges": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/dependency_edge"
+      }
+    },
+    "acceptance_criteria": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "risk_assessments": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/file_risk_assessment"
+      }
+    },
+    "estimate": {
+      "$ref": "#/$defs/context_estimate"
+    },
+    "evidence_refs": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  },
+  "$defs": {
+    "repository_path": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))(?![A-Za-z]:)[^\\r\\n]+$"
+    },
+    "context_file_selection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["file_path", "reason", "distance"],
+      "properties": {
+        "file_path": {
+          "$ref": "#/$defs/repository_path"
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1
+        },
+        "distance": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "code_symbol_kind": {
+      "enum": [
+        "module",
+        "class",
+        "function",
+        "async_function",
+        "method",
+        "async_method",
+        "fastapi_route",
+        "pydantic_schema",
+        "dataclass_schema"
+      ]
+    },
+    "code_symbol": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "kind",
+        "file_path",
+        "line_start",
+        "line_end",
+        "imports",
+        "referenced_by",
+        "metadata"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "kind": {
+          "$ref": "#/$defs/code_symbol_kind"
+        },
+        "file_path": {
+          "$ref": "#/$defs/repository_path"
+        },
+        "line_start": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "line_end": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "imports": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "referenced_by": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "metadata": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      }
+    },
+    "dependency_edge": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "items": {
+        "$ref": "#/$defs/repository_path"
+      }
+    },
+    "file_risk_assessment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["file_path", "risk", "score", "reasons"],
+      "properties": {
+        "file_path": {
+          "$ref": "#/$defs/repository_path"
+        },
+        "risk": {
+          "enum": ["low", "medium", "high", "critical"]
+        },
+        "score": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "reasons": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "context_estimate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["token_estimate", "cost_microusd_estimate", "estimation_method"],
+      "properties": {
+        "token_estimate": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "cost_microusd_estimate": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "estimation_method": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    }
+  }
+}

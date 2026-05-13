@@ -131,6 +131,9 @@ def test_representative_routes_are_not_unclassified() -> None:
     assert classified_routes["/api/v1/queue/submit"]["surface_id"] == "task_queue_lifecycle"
     assert classified_routes["/api/v1/queue/process"]["surface_id"] == "task_queue_lifecycle"
     assert classified_routes["/api/v1/queue/result/{task_id}"]["surface_id"] == "task_queue_lifecycle"
+    assert classified_routes["/api/v1/memory/store"]["surface_id"] == "agent_memory_lifecycle"
+    assert classified_routes["/api/v1/memory/search"]["surface_id"] == "agent_memory_lifecycle"
+    assert classified_routes["/api/v1/memory/summary"]["surface_id"] == "agent_memory_lifecycle"
     assert classified_routes["/api/v1/traces"]["surface_id"] == "trace_observability_read_models"
     assert classified_routes["/api/v1/traces/slow"]["surface_id"] == "trace_observability_read_models"
     assert classified_routes["/api/v1/traces/summary"]["surface_id"] == "trace_observability_read_models"
@@ -143,6 +146,9 @@ def test_representative_routes_are_not_unclassified() -> None:
         classified_routes["/api/v1/orchestration/plans/{plan_id}"]["surface_id"]
         == "agent_orchestration_lifecycle"
     )
+    assert classified_routes["/api/v1/workflow/execute"]["surface_id"] == "workflow_execution_lifecycle"
+    assert classified_routes["/api/v1/workflow/history"]["surface_id"] == "workflow_execution_lifecycle"
+    assert classified_routes["/api/v1/workflow/traced"]["surface_id"] == "workflow_execution_lifecycle"
     assert classified_routes["/api/v1/finance/approval-packets"]["surface_id"] == "finance_approval_packets"
     assert (
         classified_routes["/api/v1/finance/approval-packets/operator/read-model"]["surface_id"]
@@ -1236,6 +1242,37 @@ def test_trace_observability_surface_exposes_read_only_models() -> None:
     assert closure_actions["classify_trace_observability_routes"]["status"] == "closed"
 
 
+def test_agent_memory_lifecycle_surface_is_witnessed() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    memory_surface = surfaces["agent_memory_lifecycle"]
+    witnesses = set(memory_surface["runtime_witnesses"])
+    route_records = {
+        record["route"]: record
+        for record in matrix["route_coverage"]["routes"]
+    }
+
+    assert memory_surface["coverage_state"] == "witnessed"
+    assert memory_surface["request_proof"] == "request_proof"
+    assert memory_surface["action_proof"] == "action_proof"
+    assert "/api/v1/memory/store" in memory_surface["representative_paths"]
+    assert "/api/v1/memory/search" in memory_surface["representative_paths"]
+    assert "/api/v1/memory/summary" in memory_surface["representative_paths"]
+    assert "mcoi/mcoi_runtime/app/routers/agent.py" in memory_surface["evidence_files"]
+    assert "mcoi/mcoi_runtime/core/agent_memory.py" in memory_surface["evidence_files"]
+    assert "mcoi/tests/test_agent_memory.py" in memory_surface["evidence_files"]
+    assert "agent_memory_store_bounded" in witnesses
+    assert "agent_memory_search_relevance_scored" in witnesses
+    assert "agent_memory_tenant_isolation" in witnesses
+    assert "agent_memory_capacity_eviction" in witnesses
+    assert route_records["/api/v1/memory/store"]["coverage_state"] == "witnessed"
+    assert route_records["/api/v1/memory/store"]["surface_id"] == "agent_memory_lifecycle"
+    assert route_records["/api/v1/memory/summary"]["coverage_state"] == "witnessed"
+    assert route_records["/api/v1/memory/summary"]["surface_id"] == "agent_memory_lifecycle"
+    assert closure_actions["classify_agent_memory_lifecycle_routes"]["status"] == "closed"
+
+
 def test_operational_health_surface_exposes_bounded_read_models() -> None:
     matrix = _load_fixture()
     surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
@@ -1308,6 +1345,42 @@ def test_agent_orchestration_lifecycle_surface_tracks_plans_and_handoffs() -> No
     assert route_records["/api/v1/orchestration/plans/{plan_id}"]["coverage_state"] == "witnessed"
     assert route_records["/api/v1/orchestration/plans/{plan_id}"]["surface_id"] == "agent_orchestration_lifecycle"
     assert closure_actions["classify_agent_orchestration_lifecycle_routes"]["status"] == "closed"
+
+
+def test_workflow_execution_lifecycle_surface_tracks_execution_history_and_tracing() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    workflow_surface = surfaces["workflow_execution_lifecycle"]
+    witnesses = set(workflow_surface["runtime_witnesses"])
+    route_records = {
+        record["route"]: record
+        for record in matrix["route_coverage"]["routes"]
+    }
+
+    assert workflow_surface["coverage_state"] == "witnessed"
+    assert workflow_surface["request_proof"] == "request_proof"
+    assert workflow_surface["action_proof"] == "action_proof"
+    assert "/api/v1/workflow/execute" in workflow_surface["representative_paths"]
+    assert "/api/v1/workflow/history" in workflow_surface["representative_paths"]
+    assert "/api/v1/workflow/traced" in workflow_surface["representative_paths"]
+    assert "mcoi/mcoi_runtime/app/routers/workflow.py" in workflow_surface["evidence_files"]
+    assert "mcoi/mcoi_runtime/core/agent_workflow.py" in workflow_surface["evidence_files"]
+    assert "mcoi/mcoi_runtime/core/traced_workflow.py" in workflow_surface["evidence_files"]
+    assert "mcoi/tests/test_agent_workflow.py" in workflow_surface["evidence_files"]
+    assert "mcoi/tests/test_traced_workflow.py" in workflow_surface["evidence_files"]
+    assert "mcoi/tests/test_server_phase205.py" in workflow_surface["evidence_files"]
+    assert "workflow_execute_emits_action_proof" in witnesses
+    assert "workflow_invalid_capability_bounded" in witnesses
+    assert "workflow_history_bounded" in witnesses
+    assert "workflow_errors_sanitized" in witnesses
+    assert "traced_workflow_emits_replay_trace" in witnesses
+    assert "traced_workflow_recorder_errors_sanitized" in witnesses
+    assert route_records["/api/v1/workflow/execute"]["coverage_state"] == "witnessed"
+    assert route_records["/api/v1/workflow/execute"]["surface_id"] == "workflow_execution_lifecycle"
+    assert route_records["/api/v1/workflow/traced"]["coverage_state"] == "witnessed"
+    assert route_records["/api/v1/workflow/traced"]["surface_id"] == "workflow_execution_lifecycle"
+    assert closure_actions["classify_workflow_execution_lifecycle_routes"]["status"] == "closed"
 
 
 def test_connector_self_healing_surface_emits_bounded_recovery_receipts() -> None:

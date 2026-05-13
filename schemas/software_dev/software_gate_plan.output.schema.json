@@ -1,0 +1,147 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:software-gate-plan:1",
+  "title": "Software Dev Gate Plan Output",
+  "description": "Ordered validation plan for a bounded software-development request.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "plan_id",
+    "repository",
+    "commit_sha",
+    "mode",
+    "blast_radius",
+    "affected_files",
+    "gates",
+    "skipped_gate_ids",
+    "full_suite_required",
+    "evidence_refs",
+    "metadata"
+  ],
+  "properties": {
+    "plan_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "repository": {
+      "type": "string",
+      "minLength": 1
+    },
+    "commit_sha": {
+      "type": "string",
+      "minLength": 1
+    },
+    "mode": {
+      "enum": [
+        "understand_only",
+        "plan_only",
+        "dry_run",
+        "patch_only",
+        "patch_and_test",
+        "patch_test_review",
+        "commit_candidate",
+        "pull_request_candidate",
+        "deployment_candidate"
+      ]
+    },
+    "blast_radius": {
+      "enum": ["file", "module", "package", "api_surface", "database", "repository"]
+    },
+    "affected_files": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/repository_path"
+      }
+    },
+    "gates": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/planned_software_gate"
+      }
+    },
+    "skipped_gate_ids": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "full_suite_required": {
+      "type": "boolean"
+    },
+    "evidence_refs": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  },
+  "$defs": {
+    "repository_path": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))(?![A-Za-z]:)[^\\r\\n]+$"
+    },
+    "planned_software_gate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "gate_id",
+        "tier",
+        "command",
+        "reason",
+        "target_refs",
+        "order",
+        "required",
+        "metadata"
+      ],
+      "properties": {
+        "gate_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "tier": {
+          "enum": ["static", "fast", "targeted", "integration", "release"]
+        },
+        "command": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1
+        },
+        "target_refs": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "order": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "required": {
+          "type": "boolean"
+        },
+        "metadata": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      }
+    }
+  }
+}

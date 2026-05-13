@@ -1,0 +1,184 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:repo-map:1",
+  "title": "Software Dev Repo Map Output",
+  "description": "Read-only repository intelligence output for one repository commit boundary.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "repository",
+    "commit_sha",
+    "files",
+    "symbols",
+    "test_map",
+    "dependency_edges",
+    "risk_assessments"
+  ],
+  "properties": {
+    "repository": {
+      "type": "string",
+      "minLength": 1
+    },
+    "commit_sha": {
+      "type": "string",
+      "minLength": 1
+    },
+    "files": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/repository_path"
+      }
+    },
+    "symbols": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/code_symbol"
+      }
+    },
+    "test_map": {
+      "$ref": "#/$defs/test_map"
+    },
+    "dependency_edges": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/dependency_edge"
+      }
+    },
+    "risk_assessments": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/file_risk_assessment"
+      }
+    }
+  },
+  "$defs": {
+    "repository_path": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))(?![A-Za-z]:)[^\\r\\n]+$"
+    },
+    "code_symbol_kind": {
+      "enum": [
+        "module",
+        "class",
+        "function",
+        "async_function",
+        "method",
+        "async_method",
+        "fastapi_route",
+        "pydantic_schema",
+        "dataclass_schema"
+      ]
+    },
+    "code_symbol": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "kind",
+        "file_path",
+        "line_start",
+        "line_end",
+        "imports",
+        "referenced_by",
+        "metadata"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "kind": {
+          "$ref": "#/$defs/code_symbol_kind"
+        },
+        "file_path": {
+          "$ref": "#/$defs/repository_path"
+        },
+        "line_start": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "line_end": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "imports": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "referenced_by": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "metadata": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      }
+    },
+    "test_map": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source_to_tests", "test_to_sources"],
+      "properties": {
+        "source_to_tests": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/repository_path"
+            }
+          }
+        },
+        "test_to_sources": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/repository_path"
+            }
+          }
+        }
+      }
+    },
+    "dependency_edge": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "items": {
+        "$ref": "#/$defs/repository_path"
+      }
+    },
+    "file_risk_assessment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["file_path", "risk", "score", "reasons"],
+      "properties": {
+        "file_path": {
+          "$ref": "#/$defs/repository_path"
+        },
+        "risk": {
+          "enum": ["low", "medium", "high", "critical"]
+        },
+        "score": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "reasons": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    }
+  }
+}
