@@ -122,6 +122,7 @@ _GENERAL_AGENT_PLAN_DEFINITIONS = (
             "connector.google_drive.write.with_approval",
             "connector.github.read",
             "connector.github.write.with_approval",
+            "github.open_pull_request",
             "connector.postgres.query",
             "connector.postgres.write.with_approval",
             "email.read",
@@ -211,7 +212,7 @@ _GENERAL_AGENT_PLAN_DEFINITIONS = (
         "plane_id": "9.mcp_external_tool_plane",
         "name": "MCP External Tool Plane",
         "capability_prefixes": ("connector.",),
-        "capability_ids": (),
+        "capability_ids": ("github.open_pull_request",),
         "boundary": "external tools enter only through manifest validation, owner binding, and authority gates",
         "evidence_refs": ("examples/mcp_capability_manifest.json", "mcp_operator_read_model"),
     },
@@ -273,6 +274,9 @@ class MaturityProjectingCapabilityAdmissionGate(CommandCapabilityAdmissionGate):
         decision = super().admit(command_id=command_id, intent_name=intent_name)
         if decision.status is not CommandCapabilityAdmissionStatus.ACCEPTED:
             return decision
+        manifest_decision = self._admit_manifest(decision)
+        if manifest_decision.status is not CommandCapabilityAdmissionStatus.ACCEPTED:
+            return manifest_decision
         if not self._require_production_ready:
             return decision
 
@@ -292,11 +296,35 @@ class MaturityProjectingCapabilityAdmissionGate(CommandCapabilityAdmissionGate):
             decided_at=decision.decided_at,
         )
 
+    def _admit_manifest(
+        self,
+        decision: CommandCapabilityAdmissionDecision,
+    ) -> CommandCapabilityAdmissionDecision:
+        if self._capability_manifest_registry_read_model is None:
+            return decision
+        manifest_capability_ids = _manifest_registry_capability_ids(
+            self._capability_manifest_registry_read_model
+        )
+        if decision.capability_id in manifest_capability_ids:
+            return decision
+        return CommandCapabilityAdmissionDecision(
+            command_id=decision.command_id,
+            intent_name=decision.intent_name,
+            status=CommandCapabilityAdmissionStatus.REJECTED,
+            capability_id=decision.capability_id,
+            domain=decision.domain,
+            owner_team=decision.owner_team,
+            evidence_required=decision.evidence_required,
+            reason="capability manifest is not admitted for typed intent",
+            decided_at=decision.decided_at,
+        )
+
     def read_model(self) -> dict:
         """Return registry read model decorated with C0-C7 maturity evidence."""
         decorated = self._maturity_projector.decorate_read_model(super().read_model())
         general_agent_planes = _project_general_agent_planes(decorated)
         manifest_registry = self._capability_manifest_registry_read_model
+        manifest_coverage = _project_manifest_coverage(decorated, manifest_registry)
         return {
             **decorated,
             "general_agent_plane_count": len(general_agent_planes),
@@ -309,6 +337,11 @@ class MaturityProjectingCapabilityAdmissionGate(CommandCapabilityAdmissionGate):
             "capability_manifest_registry": manifest_registry
             if manifest_registry is not None
             else _empty_capability_manifest_registry_read_model(),
+            "capability_manifest_gated": manifest_registry is not None,
+            "capability_manifest_covered_count": len(manifest_coverage["covered_capability_ids"]),
+            "capability_manifest_missing_count": len(manifest_coverage["missing_capability_ids"]),
+            "capability_manifest_covered_capability_ids": manifest_coverage["covered_capability_ids"],
+            "capability_manifest_missing_capability_ids": manifest_coverage["missing_capability_ids"],
         }
 
 
@@ -513,6 +546,36 @@ def _empty_capability_manifest_registry_read_model() -> dict:
         "capability_ids": (),
         "manifests": (),
         "admissions": (),
+    }
+
+
+def _manifest_registry_capability_ids(read_model: dict | None) -> frozenset[str]:
+    if read_model is None:
+        return frozenset()
+    raw_ids = read_model.get("capability_ids", ())
+    if not isinstance(raw_ids, (tuple, list)):
+        return frozenset()
+    return frozenset(str(capability_id) for capability_id in raw_ids if str(capability_id).strip())
+
+
+def _project_manifest_coverage(
+    registry_read_model: dict,
+    manifest_read_model: dict | None,
+) -> dict[str, tuple[str, ...]]:
+    installed_ids = tuple(
+        str(capability.get("capability_id", ""))
+        for capability in registry_read_model.get("capabilities", ())
+        if isinstance(capability, dict) and str(capability.get("capability_id", "")).strip()
+    )
+    if manifest_read_model is None:
+        return {
+            "covered_capability_ids": (),
+            "missing_capability_ids": (),
+        }
+    manifest_ids = _manifest_registry_capability_ids(manifest_read_model)
+    return {
+        "covered_capability_ids": tuple(sorted(set(installed_ids).intersection(manifest_ids))),
+        "missing_capability_ids": tuple(sorted(set(installed_ids).difference(manifest_ids))),
     }
 
 

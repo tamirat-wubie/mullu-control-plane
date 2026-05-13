@@ -170,6 +170,13 @@
       ]
     },
     {
+      "action_id": "classify_structured_output_validation_routes",
+      "status": "closed",
+      "surfaces": [
+        "structured_output_validation"
+      ]
+    },
+    {
       "action_id": "classify_operational_health_read_model_routes",
       "status": "closed",
       "surfaces": [
@@ -191,10 +198,31 @@
       ]
     },
     {
+      "action_id": "classify_agent_chain_execution_routes",
+      "status": "closed",
+      "surfaces": [
+        "agent_chain_execution_lifecycle"
+      ]
+    },
+    {
       "action_id": "classify_certification_daemon_lifecycle_routes",
       "status": "closed",
       "surfaces": [
         "certification_daemon_lifecycle"
+      ]
+    },
+    {
+      "action_id": "classify_live_path_certification_routes",
+      "status": "closed",
+      "surfaces": [
+        "live_path_certification_lifecycle"
+      ]
+    },
+    {
+      "action_id": "classify_runtime_state_persistence_routes",
+      "status": "closed",
+      "surfaces": [
+        "runtime_state_persistence_lifecycle"
       ]
     },
     {
@@ -636,7 +664,7 @@
   ],
   "coverage_summary": {
     "by_action_proof": {
-      "action_proof": 78,
+      "action_proof": 82,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 14,
@@ -644,7 +672,7 @@
     },
     "by_audit": {
       "action_proof": 0,
-      "audit_chain": 90,
+      "audit_chain": 94,
       "gap": 0,
       "read_model": 4,
       "request_proof": 0
@@ -652,23 +680,23 @@
     "by_coverage_state": {
       "proven": 1,
       "unproven": 0,
-      "witnessed": 93
+      "witnessed": 97
     },
     "by_request_proof": {
       "action_proof": 1,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 16,
-      "request_proof": 77
+      "request_proof": 81
     },
-    "surface_count": 94
+    "surface_count": 98
   },
   "generated_by": "scripts/proof_coverage_matrix.py",
   "route_coverage": {
     "by_coverage_state": {
       "proven": 12,
-      "unproven": 42,
-      "witnessed": 279
+      "unproven": 33,
+      "witnessed": 288
     },
     "route_count": 333,
     "routes": [
@@ -808,24 +836,24 @@
         "surface_id": "operational_health_read_models"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/certify",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "live_path_certification_lifecycle"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/certify/history",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "live_path_certification_lifecycle"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/chain/execute",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "agent_chain_execution_lifecycle"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/chain/history",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "agent_chain_execution_lifecycle"
       },
       {
         "coverage_state": "witnessed",
@@ -1548,14 +1576,14 @@
         "surface_id": "agent_orchestration_lifecycle"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/output/parse",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "structured_output_validation"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/output/schemas",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "structured_output_validation"
       },
       {
         "coverage_state": "witnessed",
@@ -1893,19 +1921,19 @@
         "surface_id": "operational_health_read_models"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/state",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "runtime_state_persistence_lifecycle"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/state/save",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "runtime_state_persistence_lifecycle"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/state/{state_type}",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "runtime_state_persistence_lifecycle"
       },
       {
         "coverage_state": "witnessed",
@@ -2338,7 +2366,7 @@
         "surface_id": "gateway_capability_fabric"
       }
     ],
-    "unclassified_route_count": 42
+    "unclassified_route_count": 33
   },
   "schema_version": 1,
   "surfaces": [
@@ -3196,6 +3224,33 @@
       "surface_id": "tool_registry_read_models"
     },
     {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "mcoi/mcoi_runtime/app/routers/data/output.py",
+        "mcoi/mcoi_runtime/core/structured_output.py",
+        "mcoi/tests/test_server_phase212.py",
+        "mcoi/tests/test_structured_output.py"
+      ],
+      "notes": "Structured-output routes parse model text against registered schemas, return explicit validation errors, preserve raw text in the parser contract, and expose bounded schema read models.",
+      "representative_paths": [
+        "/api/v1/output/parse",
+        "/api/v1/output/schemas"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "structured_output_parse_valid_json",
+        "structured_output_parse_invalid_json",
+        "structured_output_parse_unknown_schema_bounded",
+        "structured_output_parse_markdown_json",
+        "structured_output_schema_registration_validated",
+        "structured_output_endpoint_parse_valid_and_invalid",
+        "structured_output_schema_list_bounded"
+      ],
+      "surface_id": "structured_output_validation"
+    },
+    {
       "action_proof": "read_model",
       "audit": "audit_chain",
       "coverage_state": "witnessed",
@@ -3352,6 +3407,34 @@
       "audit": "audit_chain",
       "coverage_state": "witnessed",
       "evidence_files": [
+        "mcoi/mcoi_runtime/app/routers/agent.py",
+        "mcoi/mcoi_runtime/core/agent_chain.py",
+        "mcoi/tests/test_agent_chain.py",
+        "mcoi/tests/test_server_phase215.py"
+      ],
+      "notes": "Agent chain routes execute ordered multi-step LLM chains, propagate prior outputs through templates, publish bounded completion events, sanitize failure details, and expose bounded execution history.",
+      "representative_paths": [
+        "/api/v1/chain/execute",
+        "/api/v1/chain/history"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "chain_execute_single_step",
+        "chain_execute_two_steps",
+        "chain_prev_template_propagates_output",
+        "chain_halt_on_failure_bounded",
+        "chain_skip_on_failure_continues",
+        "chain_returned_failure_redacted",
+        "chain_history_bounded",
+        "chain_endpoint_governed"
+      ],
+      "surface_id": "agent_chain_execution_lifecycle"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
         "mcoi/mcoi_runtime/app/routers/data/daemon.py",
         "mcoi/mcoi_runtime/core/certification_daemon.py",
         "mcoi/tests/test_certification_daemon.py",
@@ -3375,6 +3458,65 @@
         "daemon_endpoint_contracts_governed"
       ],
       "surface_id": "certification_daemon_lifecycle"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "mcoi/mcoi_runtime/app/routers/data/certify.py",
+        "mcoi/mcoi_runtime/core/live_path_certification.py",
+        "mcoi/tests/test_live_path_certification.py",
+        "mcoi/tests/test_server_phase199.py",
+        "mcoi/tests/test_e2e_integration.py"
+      ],
+      "notes": "Live-path certification routes run governed certification chains with action-proof receipts, step-level proof hashes, bounded failure details, deterministic chain hashes, and bounded certification history read models.",
+      "representative_paths": [
+        "/api/v1/certify",
+        "/api/v1/certify/history"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "certification_run_emits_action_proof",
+        "certification_run_returns_chain_hash",
+        "certification_run_records_five_steps",
+        "certification_steps_named",
+        "certification_history_bounded",
+        "certification_chain_hash_deterministic",
+        "certification_failures_bounded",
+        "certification_partial_failure_recorded"
+      ],
+      "surface_id": "live_path_certification_lifecycle"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "mcoi/mcoi_runtime/app/routers/data/state.py",
+        "mcoi/mcoi_runtime/persistence/state_persistence.py",
+        "mcoi/tests/test_state_persistence.py",
+        "mcoi/tests/test_server_phase212.py",
+        "mcoi/tests/test_server_phase216.py"
+      ],
+      "notes": "Runtime state persistence routes save hash-bound state snapshots, load bounded state by type, reject path traversal, and expose state summary read models.",
+      "representative_paths": [
+        "/api/v1/state",
+        "/api/v1/state/save",
+        "/api/v1/state/{state_type}"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "state_save_returns_hash_bound_snapshot",
+        "state_load_roundtrip",
+        "state_load_missing_bounded",
+        "state_list_summary_bounded",
+        "state_save_rejects_path_traversal",
+        "state_load_rejects_path_traversal",
+        "state_hash_mismatch_rejected",
+        "state_atomic_write_verified"
+      ],
+      "surface_id": "runtime_state_persistence_lifecycle"
     },
     {
       "action_proof": "action_proof",
@@ -3572,6 +3714,7 @@
         "schemas/gateway_publication_readiness.schema.json",
         "schemas/gateway_publication_receipt_validation.schema.json",
         "schemas/deployment_witness.schema.json",
+        "schemas/runtime_witness.schema.json",
         "schemas/mullu_governance_protocol.manifest.json",
         "tests/test_orchestrate_deployment_witness.py",
         "tests/test_report_gateway_publication_readiness.py",
@@ -3592,6 +3735,7 @@
       "request_proof": "read_model",
       "runtime_witnesses": [
         "latest_command_event_hash",
+        "runtime_witness_schema_valid",
         "latest_terminal_certificate_id",
         "responsibility_debt_clear",
         "runtime_responsibility_debt_clear",

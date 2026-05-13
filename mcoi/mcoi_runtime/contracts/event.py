@@ -12,9 +12,9 @@ Invariants:
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import StrEnum
-from typing import Any, Mapping
+from typing import Any, Mapping, cast
 
 from ._base import (
     ContractRecord,
@@ -23,6 +23,31 @@ from ._base import (
     require_non_empty_text,
     require_non_negative_int,
 )
+
+
+def _require_bool(value: Any, field_name: str) -> bool:
+    if not isinstance(value, bool):
+        raise ValueError(f"{field_name} must be a boolean")
+    return value
+
+
+def _freeze_mapping(value: Any, field_name: str) -> Mapping[str, Any]:
+    if not isinstance(value, Mapping):
+        raise ValueError(f"{field_name} must be a mapping")
+    return cast(Mapping[str, Any], freeze_value(dict(value)))
+
+
+def _freeze_text_array(values: Any, field_name: str, *, allow_empty: bool) -> tuple[str, ...]:
+    if isinstance(values, (str, bytes)) or not isinstance(values, (tuple, list)):
+        raise ValueError(f"{field_name} must be an array")
+    if not values and not allow_empty:
+        raise ValueError(f"{field_name} must contain at least one item")
+    normalized: list[str] = []
+    for value in values:
+        if not isinstance(value, str) or not value.strip():
+            raise ValueError(f"{field_name} must contain only non-empty strings")
+        normalized.append(value)
+    return cast(tuple[str, ...], freeze_value(normalized))
 
 
 # ---------------------------------------------------------------------------
@@ -111,7 +136,7 @@ class EventRecord(ContractRecord):
             self, "correlation_id",
             require_non_empty_text(self.correlation_id, "correlation_id"),
         )
-        object.__setattr__(self, "payload", freeze_value(dict(self.payload)))
+        object.__setattr__(self, "payload", _freeze_mapping(self.payload, "payload"))
         object.__setattr__(self, "emitted_at", require_datetime_text(self.emitted_at, "emitted_at"))
 
 
@@ -133,15 +158,16 @@ class EventEnvelope(ContractRecord):
         )
         if not isinstance(self.event, EventRecord):
             raise ValueError("event must be an EventRecord instance")
-        object.__setattr__(self, "target_subsystems", freeze_value(list(self.target_subsystems)))
-        if not self.target_subsystems:
-            raise ValueError("target_subsystems must contain at least one item")
-        for ts in self.target_subsystems:
-            require_non_empty_text(ts, "target_subsystem")
+        object.__setattr__(
+            self,
+            "target_subsystems",
+            _freeze_text_array(self.target_subsystems, "target_subsystems", allow_empty=False),
+        )
         object.__setattr__(
             self, "priority",
             require_non_negative_int(self.priority, "priority"),
         )
+        object.__setattr__(self, "delivered", _require_bool(self.delivered, "delivered"))
         if self.delivered_at is not None:
             object.__setattr__(
                 self, "delivered_at",
@@ -178,6 +204,7 @@ class EventSubscription(ContractRecord):
         )
         if self.filter_source is not None and not isinstance(self.filter_source, EventSource):
             raise ValueError("filter_source must be an EventSource value or None")
+        object.__setattr__(self, "active", _require_bool(self.active, "active"))
         object.__setattr__(
             self, "created_at",
                 require_datetime_text(self.created_at, "created_at"),
@@ -252,15 +279,19 @@ class EventCorrelation(ContractRecord):
             self, "correlation_id",
             require_non_empty_text(self.correlation_id, "correlation_id"),
         )
-        object.__setattr__(self, "event_ids", freeze_value(list(self.event_ids)))
-        if not self.event_ids:
-            raise ValueError("event_ids must contain at least one item")
-        for eid in self.event_ids:
-            require_non_empty_text(eid, "event_id")
+        object.__setattr__(
+            self,
+            "event_ids",
+            _freeze_text_array(self.event_ids, "event_ids", allow_empty=False),
+        )
+        if len(set(self.event_ids)) != len(self.event_ids):
+            raise ValueError("event_ids must not contain duplicates")
         object.__setattr__(
             self, "root_event_id",
             require_non_empty_text(self.root_event_id, "root_event_id"),
         )
+        if self.root_event_id not in self.event_ids:
+            raise ValueError("root_event_id must be declared in event_ids")
         object.__setattr__(
             self, "description",
             require_non_empty_text(self.description, "description"),

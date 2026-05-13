@@ -49,6 +49,35 @@ class TestEventRecord:
         with pytest.raises(TypeError):
             e.payload["new_key"] = "val"  # type: ignore[index]
 
+    def test_payload_must_be_mapping(self) -> None:
+        with pytest.raises(ValueError, match="payload"):
+            EventRecord(
+                event_id="evt-1",
+                event_type=EventType.CUSTOM,
+                source=EventSource.EXTERNAL,
+                correlation_id="corr-1",
+                payload="bad",  # type: ignore[arg-type]
+                emitted_at=_CLOCK,
+            )
+        with pytest.raises(ValueError, match="event_type"):
+            EventRecord(
+                event_id="evt-1",
+                event_type="bad",  # type: ignore[arg-type]
+                source=EventSource.EXTERNAL,
+                correlation_id="corr-1",
+                payload={},
+                emitted_at=_CLOCK,
+            )
+        with pytest.raises(ValueError, match="source"):
+            EventRecord(
+                event_id="evt-1",
+                event_type=EventType.CUSTOM,
+                source="bad",  # type: ignore[arg-type]
+                correlation_id="corr-1",
+                payload={},
+                emitted_at=_CLOCK,
+            )
+
     def test_empty_event_id_rejected(self) -> None:
         with pytest.raises(ValueError, match="event_id"):
             EventRecord(
@@ -104,6 +133,30 @@ class TestEventEnvelope:
                 target_subsystems=("x",), priority=-1,
             )
 
+    def test_envelope_rejects_scalar_targets_bool_priority_and_delivered(self) -> None:
+        with pytest.raises(ValueError, match="target_subsystems"):
+            EventEnvelope(
+                envelope_id="env-1",
+                event=_event(),
+                target_subsystems="dashboard",  # type: ignore[arg-type]
+                priority=0,
+            )
+        with pytest.raises(ValueError, match="priority"):
+            EventEnvelope(
+                envelope_id="env-1",
+                event=_event(),
+                target_subsystems=("dashboard",),
+                priority=True,  # type: ignore[arg-type]
+            )
+        with pytest.raises(ValueError, match="delivered"):
+            EventEnvelope(
+                envelope_id="env-1",
+                event=_event(),
+                target_subsystems=("dashboard",),
+                priority=0,
+                delivered=1,  # type: ignore[arg-type]
+            )
+
     def test_delivered_at_validated(self) -> None:
         env = EventEnvelope(
             envelope_id="env-1", event=_event(),
@@ -148,6 +201,34 @@ class TestEventSubscription:
                 subscriber_id="x",
                 reaction_id="y",
                 filter_source="bad",  # type: ignore[arg-type]
+                created_at=_CLOCK,
+            )
+
+    def test_active_must_be_bool(self) -> None:
+        with pytest.raises(ValueError, match="active"):
+            EventSubscription(
+                subscription_id="sub-1",
+                event_type=EventType.CUSTOM,
+                subscriber_id="x",
+                reaction_id="y",
+                active=1,  # type: ignore[arg-type]
+                created_at=_CLOCK,
+            )
+        with pytest.raises(ValueError, match="created_at"):
+            EventSubscription(
+                subscription_id="sub-1",
+                event_type=EventType.CUSTOM,
+                subscriber_id="x",
+                reaction_id="y",
+                active=True,
+                created_at="bad",
+            )
+        with pytest.raises(ValueError, match="event_type"):
+            EventSubscription(
+                subscription_id="sub-1",
+                event_type="bad",  # type: ignore[arg-type]
+                subscriber_id="x",
+                reaction_id="y",
                 created_at=_CLOCK,
             )
 
@@ -220,6 +301,32 @@ class TestEventCorrelation:
                 correlation_id="corr-1", event_ids=(),
                 root_event_id="evt-1",
                 description="test", created_at=_CLOCK,
+            )
+
+    def test_event_ids_are_bounded_unique_and_rooted(self) -> None:
+        with pytest.raises(ValueError, match="event_ids"):
+            EventCorrelation(
+                correlation_id="corr-1",
+                event_ids="evt-1",  # type: ignore[arg-type]
+                root_event_id="evt-1",
+                description="test",
+                created_at=_CLOCK,
+            )
+        with pytest.raises(ValueError, match="event_ids"):
+            EventCorrelation(
+                correlation_id="corr-1",
+                event_ids=("evt-1", "evt-1"),
+                root_event_id="evt-1",
+                description="test",
+                created_at=_CLOCK,
+            )
+        with pytest.raises(ValueError, match="root_event_id"):
+            EventCorrelation(
+                correlation_id="corr-1",
+                event_ids=("evt-2",),
+                root_event_id="evt-1",
+                description="test",
+                created_at=_CLOCK,
             )
 
     def test_frozen(self) -> None:

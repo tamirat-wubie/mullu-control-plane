@@ -65,6 +65,7 @@ files are open wire contracts. Runtime modules under `mcoi/`, `gateway/`, and
 | `execution_result.schema.json` | Canonical execution outcome |
 | `trace_entry.schema.json` | Canonical causal audit entry |
 | `replay_record.schema.json` | Canonical replay and audit capture |
+| `runtime_witness.schema.json` | Canonical signed runtime witness for gateway closure and anchor state |
 | `simulation_receipt.schema.json` | Canonical causal simulation dry-run receipt |
 | `software_dev/capability_manifest.schema.json` | Governed manifest contract for admitting dynamic software-development capabilities |
 | `software_dev/*.input.schema.json` | Governed input contracts for repository mapping, context building, gate planning, sandboxed software changes, app task graph planning, and PR candidate preparation |

@@ -13,7 +13,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import StrEnum
-from typing import Any, Mapping
+from typing import Any, Mapping, TypeVar, cast
 
 from ._base import (
     ContractRecord,
@@ -23,6 +23,79 @@ from ._base import (
     require_non_empty_tuple,
     require_non_negative_int,
 )
+
+
+ContractT = TypeVar("ContractT")
+
+
+def _require_text(value: Any, field_name: str) -> str:
+    if not isinstance(value, str):
+        raise ValueError(f"{field_name} must be a string")
+    return value
+
+
+def _freeze_mapping(value: Any, field_name: str) -> Mapping[str, Any]:
+    if not isinstance(value, Mapping):
+        raise ValueError(f"{field_name} must be a mapping")
+    return cast(Mapping[str, Any], freeze_value(dict(value)))
+
+
+def _freeze_nested_text_mapping(value: Any, field_name: str) -> Mapping[str, Mapping[str, str]]:
+    if not isinstance(value, Mapping):
+        raise ValueError(f"{field_name} must be a mapping")
+    normalized: dict[str, dict[str, str]] = {}
+    for key, item in value.items():
+        if not isinstance(key, str) or not key.strip():
+            raise ValueError(f"{field_name} must contain only non-empty string keys")
+        if not isinstance(item, Mapping):
+            raise ValueError(f"{field_name} must contain only mapping values")
+        normalized_item: dict[str, str] = {}
+        for nested_key, nested_value in item.items():
+            if not isinstance(nested_key, str) or not nested_key.strip():
+                raise ValueError(f"{field_name} must contain only non-empty nested string keys")
+            if not isinstance(nested_value, str) or not nested_value.strip():
+                raise ValueError(f"{field_name} must contain only non-empty nested string values")
+            normalized_item[nested_key] = nested_value
+        normalized[key] = normalized_item
+    return cast(Mapping[str, Mapping[str, str]], freeze_value(normalized))
+
+
+def _freeze_text_array(values: Any, field_name: str, *, allow_empty: bool) -> tuple[str, ...]:
+    if isinstance(values, (str, bytes)) or not isinstance(values, (tuple, list)):
+        raise ValueError(f"{field_name} must be an array")
+    if not values and not allow_empty:
+        raise ValueError(f"{field_name} must contain at least one item")
+    normalized: list[str] = []
+    for value in values:
+        if not isinstance(value, str) or not value.strip():
+            raise ValueError(f"{field_name} must contain only non-empty strings")
+        normalized.append(value)
+    return cast(tuple[str, ...], freeze_value(normalized))
+
+
+def _freeze_contract_array(
+    values: Any,
+    field_name: str,
+    record_type: type[ContractT],
+    record_type_name: str,
+) -> tuple[ContractT, ...]:
+    if isinstance(values, (str, bytes)) or not isinstance(values, (tuple, list)):
+        raise ValueError(f"{field_name} must be an array")
+    normalized: list[ContractT] = []
+    for value in values:
+        if not isinstance(value, record_type):
+            raise ValueError(f"{field_name} must contain only {record_type_name} instances")
+        normalized.append(value)
+    return cast(tuple[ContractT, ...], freeze_value(normalized))
+
+
+def _freeze_int_array(values: Any, field_name: str) -> tuple[int, ...]:
+    if isinstance(values, (str, bytes)) or not isinstance(values, (tuple, list)):
+        raise ValueError(f"{field_name} must be an array")
+    normalized: list[int] = []
+    for value in values:
+        normalized.append(require_non_negative_int(value, field_name))
+    return cast(tuple[int, ...], freeze_value(normalized))
 
 
 # ---------------------------------------------------------------------------
@@ -64,6 +137,8 @@ class TransitionRule(ContractRecord):
         object.__setattr__(self, "from_state", require_non_empty_text(self.from_state, "from_state"))
         object.__setattr__(self, "to_state", require_non_empty_text(self.to_state, "to_state"))
         object.__setattr__(self, "action", require_non_empty_text(self.action, "action"))
+        object.__setattr__(self, "guard_label", _require_text(self.guard_label, "guard_label"))
+        object.__setattr__(self, "emits", _require_text(self.emits, "emits"))
 
 
 # ---------------------------------------------------------------------------
@@ -91,25 +166,40 @@ class StateMachineSpec(ContractRecord):
         object.__setattr__(self, "machine_id", require_non_empty_text(self.machine_id, "machine_id"))
         object.__setattr__(self, "name", require_non_empty_text(self.name, "name"))
         object.__setattr__(self, "version", require_non_empty_text(self.version, "version"))
-        object.__setattr__(self, "states", require_non_empty_tuple(self.states, "states"))
+        object.__setattr__(self, "states", _freeze_text_array(self.states, "states", allow_empty=False))
+        if len(set(self.states)) != len(self.states):
+            raise ValueError("states must not contain duplicates")
         object.__setattr__(self, "initial_state", require_non_empty_text(self.initial_state, "initial_state"))
         # initial_state must be in states
         if self.initial_state not in self.states:
             raise ValueError("initial state must be declared in states")
         # terminal_states must be subset of states
-        object.__setattr__(self, "terminal_states", freeze_value(list(self.terminal_states)))
+        object.__setattr__(
+            self,
+            "terminal_states",
+            _freeze_text_array(self.terminal_states, "terminal_states", allow_empty=True),
+        )
+        if len(set(self.terminal_states)) != len(self.terminal_states):
+            raise ValueError("terminal_states must not contain duplicates")
         for ts in self.terminal_states:
             if ts not in self.states:
                 raise ValueError("terminal state must be declared in states")
         # transitions must reference declared states
-        object.__setattr__(self, "transitions", freeze_value(list(self.transitions)))
+        object.__setattr__(
+            self,
+            "transitions",
+            _freeze_contract_array(self.transitions, "transitions", TransitionRule, "TransitionRule"),
+        )
+        transition_keys: set[tuple[str, str, str, str]] = set()
         for tr in self.transitions:
-            if not isinstance(tr, TransitionRule):
-                raise ValueError("each transition must be a TransitionRule instance")
             if tr.from_state not in self.states:
                 raise ValueError("transition source state must be declared in states")
             if tr.to_state not in self.states:
                 raise ValueError("transition target state must be declared in states")
+            transition_key = (tr.from_state, tr.to_state, tr.action, tr.guard_label)
+            if transition_key in transition_keys:
+                raise ValueError("transitions must not contain duplicate rules")
+            transition_keys.add(transition_key)
         # terminal states must have no outgoing transitions
         for ts in self.terminal_states:
             outgoing = [t for t in self.transitions if t.from_state == ts]
@@ -168,8 +258,9 @@ class TransitionAuditRecord(ContractRecord):
             object.__setattr__(self, f, require_non_empty_text(getattr(self, f), f))
         if not isinstance(self.verdict, TransitionVerdict):
             raise ValueError("verdict must be a TransitionVerdict value")
+        object.__setattr__(self, "reason", _require_text(self.reason, "reason"))
         object.__setattr__(self, "transitioned_at", require_datetime_text(self.transitioned_at, "transitioned_at"))
-        object.__setattr__(self, "metadata", freeze_value(self.metadata))
+        object.__setattr__(self, "metadata", _freeze_mapping(self.metadata, "metadata"))
 
     @property
     def succeeded(self) -> bool:
@@ -218,7 +309,7 @@ class JournalEntry(ContractRecord):
         if not isinstance(self.kind, JournalEntryKind):
             raise ValueError("kind must be a JournalEntryKind value")
         object.__setattr__(self, "subject_id", require_non_empty_text(self.subject_id, "subject_id"))
-        object.__setattr__(self, "payload", freeze_value(self.payload))
+        object.__setattr__(self, "payload", _freeze_mapping(self.payload, "payload"))
         object.__setattr__(self, "recorded_at", require_datetime_text(self.recorded_at, "recorded_at"))
 
 
@@ -250,7 +341,7 @@ class SubsystemSnapshot(ContractRecord):
         object.__setattr__(self, "state_hash", require_non_empty_text(self.state_hash, "state_hash"))
         object.__setattr__(self, "record_count", require_non_negative_int(self.record_count, "record_count"))
         object.__setattr__(self, "captured_at", require_datetime_text(self.captured_at, "captured_at"))
-        object.__setattr__(self, "payload", freeze_value(self.payload))
+        object.__setattr__(self, "payload", _freeze_mapping(self.payload, "payload"))
 
 
 @dataclass(frozen=True, slots=True)
@@ -339,7 +430,11 @@ class RestoreVerification(ContractRecord):
         object.__setattr__(self, "expected_composite_hash", require_non_empty_text(self.expected_composite_hash, "expected_composite_hash"))
         object.__setattr__(self, "actual_composite_hash", require_non_empty_text(self.actual_composite_hash, "actual_composite_hash"))
         object.__setattr__(self, "verified_at", require_datetime_text(self.verified_at, "verified_at"))
-        object.__setattr__(self, "subsystem_results", freeze_value(self.subsystem_results))
+        object.__setattr__(
+            self,
+            "subsystem_results",
+            _freeze_nested_text_mapping(self.subsystem_results, "subsystem_results"),
+        )
 
 
 class JournalValidationVerdict(StrEnum):
@@ -376,4 +471,5 @@ class JournalValidationResult(ContractRecord):
         object.__setattr__(self, "last_sequence", require_non_negative_int(self.last_sequence, "last_sequence"))
         if not isinstance(self.verdict, JournalValidationVerdict):
             raise ValueError("verdict must be a JournalValidationVerdict value")
-        object.__setattr__(self, "gap_positions", freeze_value(list(self.gap_positions)))
+        object.__setattr__(self, "gap_positions", _freeze_int_array(self.gap_positions, "gap_positions"))
+        object.__setattr__(self, "detail", _require_text(self.detail, "detail"))

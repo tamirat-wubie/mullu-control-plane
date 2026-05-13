@@ -327,7 +327,7 @@ def _write_valid_reports(
             {
                 "ready": False,
                 "readiness_level": "pilot-governed-core",
-                "capability_count": 62,
+                "capability_count": 63,
                 "capsule_count": 12,
             }
         ),

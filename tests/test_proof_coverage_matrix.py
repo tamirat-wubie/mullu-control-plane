@@ -164,6 +164,8 @@ def test_representative_routes_are_not_unclassified() -> None:
     assert classified_routes["/api/v1/tools/history"]["surface_id"] == "tool_registry_read_models"
     assert classified_routes["/api/v1/tools/llm-format"]["surface_id"] == "tool_registry_read_models"
     assert classified_routes["/api/v1/tools/invoke"]["surface_id"] == "tool_invocation"
+    assert classified_routes["/api/v1/output/parse"]["surface_id"] == "structured_output_validation"
+    assert classified_routes["/api/v1/output/schemas"]["surface_id"] == "structured_output_validation"
     assert classified_routes["/api/v1/traces"]["surface_id"] == "trace_observability_read_models"
     assert classified_routes["/api/v1/traces/slow"]["surface_id"] == "trace_observability_read_models"
     assert classified_routes["/api/v1/traces/summary"]["surface_id"] == "trace_observability_read_models"
@@ -186,9 +188,16 @@ def test_representative_routes_are_not_unclassified() -> None:
     assert classified_routes["/api/v1/execute"]["surface_id"] == "workflow_execution_lifecycle"
     assert classified_routes["/api/v1/pipeline/execute"]["surface_id"] == "workflow_execution_lifecycle"
     assert classified_routes["/api/v1/templates/execute"]["surface_id"] == "workflow_execution_lifecycle"
+    assert classified_routes["/api/v1/chain/execute"]["surface_id"] == "agent_chain_execution_lifecycle"
+    assert classified_routes["/api/v1/chain/history"]["surface_id"] == "agent_chain_execution_lifecycle"
     assert classified_routes["/api/v1/daemon/status"]["surface_id"] == "certification_daemon_lifecycle"
     assert classified_routes["/api/v1/daemon/tick"]["surface_id"] == "certification_daemon_lifecycle"
     assert classified_routes["/api/v1/daemon/force"]["surface_id"] == "certification_daemon_lifecycle"
+    assert classified_routes["/api/v1/certify"]["surface_id"] == "live_path_certification_lifecycle"
+    assert classified_routes["/api/v1/certify/history"]["surface_id"] == "live_path_certification_lifecycle"
+    assert classified_routes["/api/v1/state"]["surface_id"] == "runtime_state_persistence_lifecycle"
+    assert classified_routes["/api/v1/state/save"]["surface_id"] == "runtime_state_persistence_lifecycle"
+    assert classified_routes["/api/v1/state/{state_type}"]["surface_id"] == "runtime_state_persistence_lifecycle"
     assert classified_routes["/api/v1/finance/approval-packets"]["surface_id"] == "finance_approval_packets"
     assert (
         classified_routes["/api/v1/finance/approval-packets/operator/read-model"]["surface_id"]
@@ -748,6 +757,7 @@ def test_gateway_runtime_witness_covers_orchestration_receipts() -> None:
     assert "schemas/deployment_orchestration_receipt_validation.schema.json" in runtime_surface["evidence_files"]
     assert "schemas/gateway_publication_readiness.schema.json" in runtime_surface["evidence_files"]
     assert "schemas/gateway_publication_receipt_validation.schema.json" in runtime_surface["evidence_files"]
+    assert "schemas/runtime_witness.schema.json" in runtime_surface["evidence_files"]
     assert "schemas/mullu_governance_protocol.manifest.json" in runtime_surface["evidence_files"]
     assert "tests/test_orchestrate_deployment_witness.py" in runtime_surface["evidence_files"]
     assert "tests/test_report_gateway_publication_readiness.py" in runtime_surface["evidence_files"]
@@ -755,6 +765,7 @@ def test_gateway_runtime_witness_covers_orchestration_receipts() -> None:
     assert "tests/test_validate_deployment_publication_closure.py" in runtime_surface["evidence_files"]
     assert "tests/test_validate_protocol_manifest.py" in runtime_surface["evidence_files"]
     assert "deployment_witness_orchestration_receipt" in runtime_surface["runtime_witnesses"]
+    assert "runtime_witness_schema_valid" in runtime_surface["runtime_witnesses"]
     assert "deployment_publication_closure_validation_schema" in runtime_surface["runtime_witnesses"]
     assert "deployment_orchestration_validation_schema" in runtime_surface["runtime_witnesses"]
     assert "gateway_publication_readiness_schema" in runtime_surface["runtime_witnesses"]
@@ -1533,6 +1544,38 @@ def test_tool_registry_read_model_surface_keeps_invocation_separate() -> None:
     assert closure_actions["classify_tool_registry_read_model_routes"]["status"] == "closed"
 
 
+def test_structured_output_validation_surface_is_witnessed() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    output_surface = surfaces["structured_output_validation"]
+    witnesses = set(output_surface["runtime_witnesses"])
+    route_records = {
+        record["route"]: record
+        for record in matrix["route_coverage"]["routes"]
+    }
+
+    assert output_surface["coverage_state"] == "witnessed"
+    assert output_surface["request_proof"] == "request_proof"
+    assert output_surface["action_proof"] == "action_proof"
+    assert "/api/v1/output/parse" in output_surface["representative_paths"]
+    assert "/api/v1/output/schemas" in output_surface["representative_paths"]
+    assert "mcoi/mcoi_runtime/app/routers/data/output.py" in output_surface["evidence_files"]
+    assert "mcoi/mcoi_runtime/core/structured_output.py" in output_surface["evidence_files"]
+    assert "mcoi/tests/test_server_phase212.py" in output_surface["evidence_files"]
+    assert "mcoi/tests/test_structured_output.py" in output_surface["evidence_files"]
+    assert "structured_output_parse_valid_json" in witnesses
+    assert "structured_output_parse_invalid_json" in witnesses
+    assert "structured_output_parse_unknown_schema_bounded" in witnesses
+    assert "structured_output_schema_registration_validated" in witnesses
+    assert "structured_output_endpoint_parse_valid_and_invalid" in witnesses
+    assert route_records["/api/v1/output/parse"]["coverage_state"] == "witnessed"
+    assert route_records["/api/v1/output/parse"]["surface_id"] == "structured_output_validation"
+    assert route_records["/api/v1/output/schemas"]["coverage_state"] == "witnessed"
+    assert route_records["/api/v1/output/schemas"]["surface_id"] == "structured_output_validation"
+    assert closure_actions["classify_structured_output_validation_routes"]["status"] == "closed"
+
+
 def test_operational_health_surface_exposes_bounded_read_models() -> None:
     matrix = _load_fixture()
     surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
@@ -1665,6 +1708,40 @@ def test_workflow_execution_lifecycle_surface_tracks_execution_history_and_traci
     assert closure_actions["classify_workflow_execution_lifecycle_routes"]["status"] == "closed"
 
 
+def test_agent_chain_execution_lifecycle_surface_tracks_execution_and_history() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    chain_surface = surfaces["agent_chain_execution_lifecycle"]
+    witnesses = set(chain_surface["runtime_witnesses"])
+    route_records = {
+        record["route"]: record
+        for record in matrix["route_coverage"]["routes"]
+    }
+
+    assert chain_surface["coverage_state"] == "witnessed"
+    assert chain_surface["request_proof"] == "request_proof"
+    assert chain_surface["action_proof"] == "action_proof"
+    assert "/api/v1/chain/execute" in chain_surface["representative_paths"]
+    assert "/api/v1/chain/history" in chain_surface["representative_paths"]
+    assert "mcoi/mcoi_runtime/app/routers/agent.py" in chain_surface["evidence_files"]
+    assert "mcoi/mcoi_runtime/core/agent_chain.py" in chain_surface["evidence_files"]
+    assert "mcoi/tests/test_agent_chain.py" in chain_surface["evidence_files"]
+    assert "mcoi/tests/test_server_phase215.py" in chain_surface["evidence_files"]
+    assert "chain_execute_single_step" in witnesses
+    assert "chain_execute_two_steps" in witnesses
+    assert "chain_prev_template_propagates_output" in witnesses
+    assert "chain_halt_on_failure_bounded" in witnesses
+    assert "chain_skip_on_failure_continues" in witnesses
+    assert "chain_returned_failure_redacted" in witnesses
+    assert "chain_history_bounded" in witnesses
+    assert route_records["/api/v1/chain/execute"]["coverage_state"] == "witnessed"
+    assert route_records["/api/v1/chain/execute"]["surface_id"] == "agent_chain_execution_lifecycle"
+    assert route_records["/api/v1/chain/history"]["coverage_state"] == "witnessed"
+    assert route_records["/api/v1/chain/history"]["surface_id"] == "agent_chain_execution_lifecycle"
+    assert closure_actions["classify_agent_chain_execution_routes"]["status"] == "closed"
+
+
 def test_certification_daemon_lifecycle_surface_tracks_status_ticks_and_force_runs() -> None:
     matrix = _load_fixture()
     surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
@@ -1697,6 +1774,77 @@ def test_certification_daemon_lifecycle_surface_tracks_status_ticks_and_force_ru
     assert route_records["/api/v1/daemon/force"]["coverage_state"] == "witnessed"
     assert route_records["/api/v1/daemon/force"]["surface_id"] == "certification_daemon_lifecycle"
     assert closure_actions["classify_certification_daemon_lifecycle_routes"]["status"] == "closed"
+
+
+def test_live_path_certification_lifecycle_surface_tracks_runs_and_history() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    certification_surface = surfaces["live_path_certification_lifecycle"]
+    witnesses = set(certification_surface["runtime_witnesses"])
+    route_records = {
+        record["route"]: record
+        for record in matrix["route_coverage"]["routes"]
+    }
+
+    assert certification_surface["coverage_state"] == "witnessed"
+    assert certification_surface["request_proof"] == "request_proof"
+    assert certification_surface["action_proof"] == "action_proof"
+    assert "/api/v1/certify" in certification_surface["representative_paths"]
+    assert "/api/v1/certify/history" in certification_surface["representative_paths"]
+    assert "mcoi/mcoi_runtime/app/routers/data/certify.py" in certification_surface["evidence_files"]
+    assert "mcoi/mcoi_runtime/core/live_path_certification.py" in certification_surface["evidence_files"]
+    assert "mcoi/tests/test_live_path_certification.py" in certification_surface["evidence_files"]
+    assert "mcoi/tests/test_server_phase199.py" in certification_surface["evidence_files"]
+    assert "certification_run_emits_action_proof" in witnesses
+    assert "certification_run_returns_chain_hash" in witnesses
+    assert "certification_run_records_five_steps" in witnesses
+    assert "certification_steps_named" in witnesses
+    assert "certification_history_bounded" in witnesses
+    assert "certification_chain_hash_deterministic" in witnesses
+    assert "certification_failures_bounded" in witnesses
+    assert route_records["/api/v1/certify"]["coverage_state"] == "witnessed"
+    assert route_records["/api/v1/certify"]["surface_id"] == "live_path_certification_lifecycle"
+    assert route_records["/api/v1/certify/history"]["coverage_state"] == "witnessed"
+    assert route_records["/api/v1/certify/history"]["surface_id"] == "live_path_certification_lifecycle"
+    assert closure_actions["classify_live_path_certification_routes"]["status"] == "closed"
+
+
+def test_runtime_state_persistence_lifecycle_surface_tracks_save_load_and_list() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    state_surface = surfaces["runtime_state_persistence_lifecycle"]
+    witnesses = set(state_surface["runtime_witnesses"])
+    route_records = {
+        record["route"]: record
+        for record in matrix["route_coverage"]["routes"]
+    }
+
+    assert state_surface["coverage_state"] == "witnessed"
+    assert state_surface["request_proof"] == "request_proof"
+    assert state_surface["action_proof"] == "action_proof"
+    assert "/api/v1/state" in state_surface["representative_paths"]
+    assert "/api/v1/state/save" in state_surface["representative_paths"]
+    assert "/api/v1/state/{state_type}" in state_surface["representative_paths"]
+    assert "mcoi/mcoi_runtime/app/routers/data/state.py" in state_surface["evidence_files"]
+    assert "mcoi/mcoi_runtime/persistence/state_persistence.py" in state_surface["evidence_files"]
+    assert "mcoi/tests/test_state_persistence.py" in state_surface["evidence_files"]
+    assert "mcoi/tests/test_server_phase212.py" in state_surface["evidence_files"]
+    assert "state_save_returns_hash_bound_snapshot" in witnesses
+    assert "state_load_roundtrip" in witnesses
+    assert "state_load_missing_bounded" in witnesses
+    assert "state_list_summary_bounded" in witnesses
+    assert "state_save_rejects_path_traversal" in witnesses
+    assert "state_load_rejects_path_traversal" in witnesses
+    assert "state_hash_mismatch_rejected" in witnesses
+    assert route_records["/api/v1/state"]["coverage_state"] == "witnessed"
+    assert route_records["/api/v1/state"]["surface_id"] == "runtime_state_persistence_lifecycle"
+    assert route_records["/api/v1/state/save"]["coverage_state"] == "witnessed"
+    assert route_records["/api/v1/state/save"]["surface_id"] == "runtime_state_persistence_lifecycle"
+    assert route_records["/api/v1/state/{state_type}"]["coverage_state"] == "witnessed"
+    assert route_records["/api/v1/state/{state_type}"]["surface_id"] == "runtime_state_persistence_lifecycle"
+    assert closure_actions["classify_runtime_state_persistence_routes"]["status"] == "closed"
 
 
 def test_connector_self_healing_surface_emits_bounded_recovery_receipts() -> None:
