@@ -11,6 +11,7 @@ Dependencies:
 - `scripts/verify_evidence_bundle.py`
 - `scripts/verify_anchor_receipt.py`
 - `schemas/trust_ledger_bundle.schema.json`
+- `schemas/trust_ledger_bundle_verification_report.schema.json`
 - `schemas/trust_ledger_anchor_receipt.schema.json`
 - `schemas/trust_ledger_evidence_artifacts.schema.json`
 - `schemas/trust_ledger_export_package.schema.json`
@@ -19,6 +20,7 @@ Dependencies:
 Invariants:
 
 - Bundle verification validates schema, bundle hash, and HMAC signature.
+- Bundle verifier JSON output validates against `trust_ledger_bundle_verification_report.schema.json` for both valid and fail-closed reports.
 - Anchor verification validates bundle, receipt, and artifact schemas before typed reconstruction.
 - Anchor verification binds the receipt to the bundle id, bundle hash, artifact root, receipt id, receipt hash, and HMAC signature.
 - Anchor verifier JSON output validates against `trust_ledger_anchor_verification_report.schema.json` for both valid and fail-closed reports.

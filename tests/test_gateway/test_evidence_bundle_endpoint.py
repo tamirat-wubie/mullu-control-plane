@@ -28,6 +28,7 @@ from scripts.verify_evidence_bundle import verify_bundle_file  # noqa: E402
 
 
 TRUST_BUNDLE_SCHEMA = _ROOT / "schemas" / "trust_ledger_bundle.schema.json"
+TRUST_BUNDLE_REPORT_SCHEMA = _ROOT / "schemas" / "trust_ledger_bundle_verification_report.schema.json"
 
 
 class StubPlatform:
@@ -87,6 +88,7 @@ def test_terminal_command_exports_signed_evidence_bundle(monkeypatch, tmp_path: 
     assert verification["valid"] is True
     assert verification["reason"] == "verified"
     assert _validate_schema_instance(_load_schema(TRUST_BUNDLE_SCHEMA), bundle) == []
+    assert _validate_schema_instance(_load_schema(TRUST_BUNDLE_REPORT_SCHEMA), verification) == []
 
 
 def test_evidence_bundle_endpoint_rejects_non_terminal_command(monkeypatch) -> None:
@@ -136,3 +138,17 @@ def test_offline_bundle_verifier_detects_tampering(monkeypatch, tmp_path: Path) 
     assert verification["valid"] is False
     assert verification["reason"] == "bundle_hash_mismatch"
     assert verification["expected_bundle_hash"] != verification["observed_bundle_hash"]
+    assert _validate_schema_instance(_load_schema(TRUST_BUNDLE_REPORT_SCHEMA), verification) == []
+
+
+def test_offline_bundle_verifier_report_contract_allows_missing_secret(tmp_path: Path) -> None:
+    bundle_path = tmp_path / "missing-secret-bundle.json"
+    bundle_path.write_text("{}", encoding="utf-8")
+
+    verification = verify_bundle_file(bundle_path=bundle_path, signing_secret="")
+
+    assert verification["valid"] is False
+    assert verification["reason"] == "signing_secret_required"
+    assert verification["schema_valid"] is False
+    assert verification["bundle_id"] == ""
+    assert _validate_schema_instance(_load_schema(TRUST_BUNDLE_REPORT_SCHEMA), verification) == []

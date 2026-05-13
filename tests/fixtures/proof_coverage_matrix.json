@@ -622,8 +622,8 @@
   "route_coverage": {
     "by_coverage_state": {
       "proven": 8,
-      "unproven": 100,
-      "witnessed": 225
+      "unproven": 99,
+      "witnessed": 226
     },
     "route_count": 333,
     "routes": [
@@ -1343,9 +1343,9 @@
         "surface_id": "unclassified_declared_route"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/lineage/artifact/{artifact_id}",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "lineage_query_api"
       },
       {
         "coverage_state": "witnessed",
@@ -2293,7 +2293,7 @@
         "surface_id": "gateway_capability_fabric"
       }
     ],
-    "unclassified_route_count": 100
+    "unclassified_route_count": 99
   },
   "schema_version": 1,
   "surfaces": [
@@ -4085,6 +4085,7 @@
         "schemas/trust_ledger_anchor_receipt.schema.json",
         "schemas/trust_ledger_anchor_verification_report.schema.json",
         "schemas/trust_ledger_bundle.schema.json",
+        "schemas/trust_ledger_bundle_verification_report.schema.json",
         "schemas/trust_ledger_evidence_artifacts.schema.json",
         "schemas/trust_ledger_export_package.schema.json",
         "tests/test_gateway/test_evidence_bundle_endpoint.py",
@@ -4112,6 +4113,7 @@
         "evidence_refs_required",
         "evidence_bundle_endpoint_requires_terminal_certificate",
         "offline_bundle_verifier_validates_schema_hash_and_signature",
+        "offline_bundle_verification_report_schema_valid",
         "offline_anchor_verifier_validates_schema_artifacts_and_signature",
         "bundle_hash_tamper_detection",
         "hmac_signature_verification",
@@ -4955,6 +4957,7 @@
       "evidence_files": [
         "mcoi/mcoi_runtime/app/routers/lineage.py",
         "mcoi/mcoi_runtime/core/lineage_query.py",
+        "mcoi/tests/test_server_lineage.py",
         "docs/42_lineage_query_api.md",
         "schemas/lineage_query.schema.json",
         "schemas/trace_entry.schema.json",
@@ -4965,7 +4968,8 @@
         "/api/v1/lineage/resolve",
         "/api/v1/lineage/{trace_id}",
         "/api/v1/lineage/output/{output_id}",
-        "/api/v1/lineage/command/{command_id}"
+        "/api/v1/lineage/command/{command_id}",
+        "/api/v1/lineage/artifact/{artifact_id}"
       ],
       "request_proof": "read_model",
       "runtime_witnesses": [],

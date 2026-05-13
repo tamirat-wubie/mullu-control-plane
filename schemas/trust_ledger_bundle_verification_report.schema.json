@@ -1,0 +1,88 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:trust-ledger-bundle-verification-report:1",
+  "title": "Trust Ledger Bundle Verification Report",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "valid",
+    "reason",
+    "bundle_id",
+    "schema_valid",
+    "schema_errors",
+    "expected_bundle_hash",
+    "observed_bundle_hash",
+    "signature_key_id",
+    "command_id",
+    "terminal_certificate_id",
+    "deployment_id",
+    "commit_sha"
+  ],
+  "properties": {
+    "valid": {
+      "type": "boolean"
+    },
+    "reason": {
+      "type": "string",
+      "minLength": 1
+    },
+    "bundle_id": {
+      "type": "string"
+    },
+    "schema_valid": {
+      "type": "boolean"
+    },
+    "schema_errors": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "expected_bundle_hash": {
+      "type": "string"
+    },
+    "observed_bundle_hash": {
+      "type": "string"
+    },
+    "signature_key_id": {
+      "type": "string"
+    },
+    "command_id": {
+      "type": "string"
+    },
+    "terminal_certificate_id": {
+      "type": "string"
+    },
+    "deployment_id": {
+      "type": "string"
+    },
+    "commit_sha": {
+      "type": "string"
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "valid": {
+            "const": true
+          }
+        },
+        "required": [
+          "valid"
+        ]
+      },
+      "then": {
+        "properties": {
+          "schema_valid": {
+            "const": true
+          },
+          "reason": {
+            "const": "verified"
+          }
+        }
+      }
+    }
+  ]
+}

@@ -91,6 +91,7 @@ def test_representative_routes_are_not_unclassified() -> None:
     }
 
     assert classified_routes["/api/v1/lineage/resolve"]["surface_id"] == "lineage_query_api"
+    assert classified_routes["/api/v1/lineage/artifact/{artifact_id}"]["surface_id"] == "lineage_query_api"
     assert classified_routes["/api/v1/stream"]["surface_id"] == "llm_streaming"
     assert classified_routes["/webhook/web"]["surface_id"] == "gateway_webhook_ingress"
     assert classified_routes["/api/v1/data-governance/evaluate"]["surface_id"] == "data_governance_controls"
@@ -710,7 +711,9 @@ def test_lineage_query_api_is_witnessed_read_model() -> None:
     assert lineage_surface["request_proof"] == "read_model"
     assert lineage_surface["action_proof"] == "read_model"
     assert "/api/v1/lineage/command/{command_id}" in lineage_surface["representative_paths"]
+    assert "/api/v1/lineage/artifact/{artifact_id}" in lineage_surface["representative_paths"]
     assert "mcoi/mcoi_runtime/core/lineage_query.py" in lineage_surface["evidence_files"]
+    assert "mcoi/tests/test_server_lineage.py" in lineage_surface["evidence_files"]
     assert "schemas/lineage_query.schema.json" in lineage_surface["evidence_files"]
     assert "docs/42_lineage_query_api.md" in lineage_surface["evidence_files"]
     assert closure_actions["implement_lineage_query_routes_and_schema"]["status"] == "closed"
@@ -1602,6 +1605,7 @@ def test_trust_ledger_surface_signs_terminal_evidence_bundles() -> None:
     assert "schemas/trust_ledger_anchor_receipt.schema.json" in trust_surface["evidence_files"]
     assert "schemas/trust_ledger_anchor_verification_report.schema.json" in trust_surface["evidence_files"]
     assert "schemas/trust_ledger_bundle.schema.json" in trust_surface["evidence_files"]
+    assert "schemas/trust_ledger_bundle_verification_report.schema.json" in trust_surface["evidence_files"]
     assert "schemas/trust_ledger_evidence_artifacts.schema.json" in trust_surface["evidence_files"]
     assert "schemas/trust_ledger_export_package.schema.json" in trust_surface["evidence_files"]
     assert "tests/test_gateway/test_trust_ledger_anchor_receipt.py" in trust_surface["evidence_files"]
@@ -1609,6 +1613,7 @@ def test_trust_ledger_surface_signs_terminal_evidence_bundles() -> None:
     assert "tests/test_verify_anchor_receipt.py" in trust_surface["evidence_files"]
     assert "terminal_certificate_id_required" in witnesses
     assert "bundle_hash_tamper_detection" in witnesses
+    assert "offline_bundle_verification_report_schema_valid" in witnesses
     assert "hmac_signature_verification" in witnesses
     assert "offline_anchor_verifier_validates_schema_artifacts_and_signature" in witnesses
     assert "offline_anchor_artifact_root_tamper_detection" in witnesses

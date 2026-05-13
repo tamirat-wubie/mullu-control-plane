@@ -605,6 +605,12 @@
       "surface": "evidence"
     },
     {
+      "schema_id": "trust-ledger-bundle-verification-report",
+      "path": "schemas/trust_ledger_bundle_verification_report.schema.json",
+      "urn": "urn:mullusi:schema:trust-ledger-bundle-verification-report:1",
+      "surface": "evidence"
+    },
+    {
       "schema_id": "trust-ledger-anchor-receipt",
       "path": "schemas/trust_ledger_anchor_receipt.schema.json",
       "urn": "urn:mullusi:schema:trust-ledger-anchor-receipt:1",

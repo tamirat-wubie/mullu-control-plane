@@ -140,11 +140,13 @@ class CapabilityEngine:
         missing_deps, disabled_deps, cycle_deps = self._dependency_gaps(capability_id)
         dependency_closure = self._dependency_closure(capability_id)
         dependency_ok = not missing_deps and not disabled_deps and not cycle_deps
+        has_complete_agent = any(score.score == 1.0 for score in self.rank_agents_for(capability_id))
         score = _readiness_score(
             cap_exists=True,
             cap_enabled=cap.enabled,
             deps_satisfied=dependency_ok,
             assigned=bool(agents),
+            agent_covers_closure=has_complete_agent,
         )
 
         reasons: list[str] = []
@@ -164,6 +166,9 @@ class CapabilityEngine:
         elif not agents:
             status = "unassigned"
             reasons.append("no agent has the capability")
+        elif not has_complete_agent:
+            status = "partial"
+            reasons.append("no assigned agent covers dependency closure")
         else:
             reasons.append("capability is enabled, assigned, and dependency-complete")
 
@@ -276,6 +281,7 @@ class CapabilityEngine:
             "blocked": sum(1 for record in records if record["status"] == "blocked"),
             "unassigned": sum(1 for record in records if record["status"] == "unassigned"),
             "disabled": sum(1 for record in records if record["status"] == "disabled"),
+            "partial": sum(1 for record in records if record["status"] == "partial"),
             "capabilities": tuple(records),
         }
 
@@ -328,6 +334,7 @@ def _readiness_score(
     cap_enabled: bool,
     deps_satisfied: bool,
     assigned: bool,
+    agent_covers_closure: bool,
 ) -> float:
-    checks = (cap_exists, cap_enabled, deps_satisfied, assigned)
+    checks = (cap_exists, cap_enabled, deps_satisfied, assigned, agent_covers_closure)
     return round(sum(1 for passed in checks if passed) / len(checks), 4)
