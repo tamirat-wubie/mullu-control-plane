@@ -523,6 +523,27 @@ def test_verifier_replay_state_detects_transition_gap():
     assert verification.fully_replayed is False
 
 
+def test_verifier_replay_state_detects_invalid_initial_witness():
+    # Audit-bypass scenario: the first event no longer proves canonical
+    # ingress. Even if later events settle to the live state, replay must fail.
+    ledger, command_id = _ledger_through_terminal_closure()
+    first_index = next(
+        index
+        for index, event in enumerate(ledger._events)
+        if event.command_id == command_id
+    )
+    tampered = replace(ledger._events[first_index], previous_state=CommandState.DENIED)
+    ledger._events[first_index] = replace(tampered, event_hash=_recompute_event_hash(tampered))
+
+    verification = AuditTraceVerifier(ledger).verify_replay_state_consistency(command_id)
+
+    assert verification.transition_chain_valid is False
+    assert verification.states_match is True
+    assert verification.replayed_state == verification.live_state
+    assert any(failure.startswith("replay_initial_state_gap:") for failure in verification.failures)
+    assert verification.fully_replayed is False
+
+
 def test_verifier_replay_state_reports_missing_command():
     ledger = CommandLedger(
         clock=lambda: "2026-04-24T12:00:00+00:00",

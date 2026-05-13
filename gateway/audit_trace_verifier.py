@@ -322,7 +322,14 @@ class AuditTraceVerifier:
         replayed_state: CommandState | None = None
         transition_chain_valid = True
         for event in events:
-            if replayed_state is not None and event.previous_state != replayed_state:
+            if replayed_state is None:
+                if (
+                    event.previous_state is not CommandState.RECEIVED
+                    or event.next_state is not CommandState.RECEIVED
+                ):
+                    failures.append(f"replay_initial_state_gap:{event.event_id}")
+                    transition_chain_valid = False
+            elif event.previous_state != replayed_state:
                 failures.append(f"replay_transition_gap:{event.event_id}")
                 transition_chain_valid = False
             replayed_state = event.next_state
