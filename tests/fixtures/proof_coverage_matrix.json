@@ -297,6 +297,13 @@
       ]
     },
     {
+      "action_id": "publish_capability_manifest_registry_contract",
+      "status": "closed",
+      "surfaces": [
+        "capability_manifest_registry"
+      ]
+    },
+    {
       "action_id": "publish_networked_worker_mesh_contract",
       "status": "closed",
       "surfaces": [

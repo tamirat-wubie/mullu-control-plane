@@ -16,13 +16,10 @@ document is the operator-readable witness.
 | `llm_chat_workflow` | /api/v1/chat, /api/v1/chat/workflow, /api/v1/chat/workflow/history | request_proof | action_proof | none | audit_chain | witnessed | Chat and workflow routes preserve governed request and action proof boundaries. |
 | `cost_budget_read_models` | /api/v1/budget, /api/v1/costs, /api/v1/costs/by-model, /api/v1/costs/top-spenders, /api/v1/costs/{tenant_id}, /api/v1/costs/{tenant_id}/projection | read_model | read_model | none | audit_chain | witnessed | Budget and cost surfaces expose bounded read models over governed spend state. |
 | `tenant_governance_lifecycle` | /api/v1/tenant/budget, /api/v1/tenant/{tenant_id}/budget, /api/v1/tenant/{tenant_id}/ledger, /api/v1/tenant/{tenant_id}/summary, /api/v1/tenants, /api/v1/tenant/register, /api/v1/tenant/{tenant_id}/status, /api/v1/tenant/{tenant_id}/gate, /api/v1/tenant/gates | request_proof | action_proof | tenant_budget_create_emits_action_proof, tenant_budget_create_records_audit, tenant_budget_read_models_scoped_by_tenant, tenant_ledger_queries_bounded, tenant_registry_lifecycle_errors_sanitized, tenant_register_emits_action_proof, tenant_status_update_emits_action_proof, tenant_gate_read_models_governed, tenant_gate_persistence_read_model_included | audit_chain | witnessed | Tenant governance lifecycle routes bind budget mutation, tenant ledger and budget read models, registration, status transitions, and gate summaries to governed responses with audit records and bounded action proofs. |
-| `runtime_config_management` | /api/v1/config, /api/v1/config/history, /api/v1/config/update, /api/v1/config/rollback, /api/v1/config/watcher, /api/v1/config/drift | request_proof | action_proof | config_read_model_hash_bound, config_history_versions_bounded, config_update_applies_atomically, config_update_emits_event_and_audit, config_rollback_requires_known_version, config_watcher_errors_are_bounded, config_drift_secret_changes_are_critical | audit_chain | witnessed | Runtime configuration routes expose hash-bound read models, version history, audited hot-reload updates, bounded rollback, watcher status, and drift summaries through governed runtime configuration state. |
 | `webhook_operations_lifecycle` | /api/v1/webhooks, /api/v1/webhooks/deliveries, /api/v1/webhooks/retry/dead-letters, /api/v1/webhooks/retry/summary, /api/v1/webhooks/subscribe | request_proof | action_proof | webhook_subscription_audited, webhook_subscription_list_bounded, webhook_delivery_history_bounded, webhook_retry_summary_governed, webhook_dead_letters_bounded, webhook_workflow_delivery_witnessed | audit_chain | witnessed | Webhook operations routes bind subscription creation, subscription listing, delivery history, retry summary, and dead-letter read models to governed metrics, audit records, and bounded webhook manager state. |
 | `rbac_access_governance` | /api/v1/rbac/bindings, /api/v1/rbac/identities, /api/v1/rbac/roles, /api/v1/rbac/summary | request_proof | action_proof | rbac_identity_registration_governed, rbac_role_registration_governed, rbac_role_binding_governed, rbac_identity_creation_audited, rbac_summary_bounded, rbac_errors_sanitized | audit_chain | witnessed | RBAC access-governance routes bind identity registration, role registration, role binding, and bounded summary read models to governed responses, audit records, and access-runtime contracts. |
 | `agent_adapter_lifecycle` | /api/v1/agent/register, /api/v1/agent/heartbeat, /api/v1/agent/action-request, /api/v1/agent/action-result, /api/v1/agent/checkpoint, /api/v1/agent/restore, /api/v1/agent/adapter/summary, /api/v1/agents, /api/v1/agents/{agent_id}/tasks | request_proof | action_proof | agent_register_emits_audit_record, agent_heartbeat_requires_registered_agent, agent_action_request_runs_guard_chain, agent_action_result_closes_tracked_action, agent_goal_context_propagates_to_response_and_audit, agent_checkpoint_restore_roundtrip_governed, agent_adapter_summary_bounded, builtin_agent_registry_read_models_governed, agent_error_contracts_bounded | audit_chain | witnessed | Agent adapter lifecycle routes bind external agent registration, heartbeat, action admission, action result closure, checkpoint/restore, adapter summary, and built-in agent task read models to governed responses with audit records and bounded error contracts. |
 | `operator_console_read_models` | /api/v1/console, /api/v1/console/home, /api/v1/console/runs, /api/v1/console/audit, /api/v1/console/checkpoints, /api/v1/console/providers, /api/v1/console/scheduler | read_model | read_model | console_home_returns_governed_runtime_vitals, console_runs_bounds_recent_audit_entries, console_audit_exposes_chain_intact_read_model, console_checkpoints_expose_persisted_state_summary, console_provider_and_scheduler_views_are_read_only | audit_chain | witnessed | Operator console routes expose bounded read-only runtime, audit, checkpoint, provider, scheduler, and aggregate views with governed response witnesses. |
-| `agent_adapter_protocol` | /api/v1/agent/register, /api/v1/agent/heartbeat, /api/v1/agent/action-request, /api/v1/agent/action-result, /api/v1/agent/checkpoint, /api/v1/agent/restore, /api/v1/agent/adapter/summary | request_proof | action_proof | agent_register_emits_governed_identity, agent_heartbeat_requires_registered_agent, agent_action_request_runs_guard_chain, agent_action_result_records_outcome, agent_goal_context_propagates_to_action_request, agent_checkpoint_restore_errors_are_bounded, agent_adapter_summary_is_governed_read_model | audit_chain | witnessed | Agent adapter protocol routes register external workers, maintain heartbeat state, pass action requests through the guard chain, record action results, checkpoint and restore coordination state with bounded errors, and expose a governed summary read model. |
-| `multi_agent_coordination` | /api/v1/multi-agent/delegate, /api/v1/multi-agent/delegate/resolve, /api/v1/multi-agent/handoff, /api/v1/multi-agent/merge, /api/v1/multi-agent/conflict, /api/v1/multi-agent/conflicts/unresolved, /api/v1/multi-agent/summary | request_proof | action_proof | multi_agent_delegation_audited, multi_agent_delegation_resolution_bounded, multi_agent_handoff_preserves_context, multi_agent_merge_decision_explicit, multi_agent_conflict_recorded_for_resolution, multi_agent_unresolved_conflicts_bounded_read_model, multi_agent_summary_bounded | action_proof | witnessed | Multi-agent coordination routes delegate work, resolve delegations, record handoffs, record merge decisions, record explicit conflicts, expose unresolved-conflict read models, and publish bounded summary counts through the coordination engine; delegation, resolution, and handoff routes also write audit-trail entries. |
 | `model_experiment_control` | /api/v1/models, /api/v1/ab-test, /api/v1/ab-test/summary | request_proof | action_proof | none | audit_chain | witnessed | Model catalog and experiment control routes are declared as governed control surfaces. |
 | `policy_version_registry` | /api/v1/policies/{policy_id}/versions, /api/v1/policies/{policy_id}/versions/{version}, /api/v1/policies/{policy_id}/versions/{version}/promote, /api/v1/policies/{policy_id}/rollback, /api/v1/policies/{policy_id}/diff, /api/v1/policies/{policy_id}/shadow/{shadow_version} | request_proof | action_proof | none | audit_chain | witnessed | Policy version routes expose immutable artifact registration, promotion, rollback, diff, and shadow evaluation. |
 | `pilot_provisioning` | /api/v1/pilots/provision, /api/v1/pilots/provisions, /api/v1/pilots/provisions/{pilot_id} | request_proof | action_proof | none | audit_chain | witnessed | Pilot provisioning returns deterministic scaffold artifacts, persists accepted provision records, and exposes bounded operator history read models. |
@@ -107,9 +104,9 @@ Coverage summary:
 
 | Metric | Count |
 |---|---:|
-| Total surfaces | 93 |
+| Total surfaces | 90 |
 | Proven surfaces | 1 |
-| Witnessed surfaces | 92 |
+| Witnessed surfaces | 89 |
 | Unproven surfaces | 0 |
 
 Declared route coverage:
@@ -164,67 +161,63 @@ Resolved closure actions:
 23. `classify_workflow_execution_lifecycle_routes`
 24. `classify_certification_daemon_lifecycle_routes`
 25. `classify_tenant_governance_lifecycle_routes`
-26. `classify_runtime_config_management_routes`
-27. `classify_webhook_operations_lifecycle_routes`
-28. `classify_rbac_access_governance_routes`
-29. `classify_agent_adapter_lifecycle_routes`
-30. `classify_agent_adapter_protocol_routes`
-31. `classify_multi_agent_coordination_routes`
-32. `classify_runbook_learning_routes`
-33. `publish_software_outcome_learning_contract`
-34. `publish_runtime_conformance_attestation`
-35. `publish_proof_route_gap_triage_report`
-36. `publish_production_evidence_plane`
-37. `publish_capability_plan_evidence_bundles`
-38. `publish_deployment_orchestration_receipt_contract`
-39. `publish_runtime_reflex_engine_read_models`
-40. `publish_governed_operational_intelligence_witnesses`
-41. `classify_world_state_knowledge_routes`
-42. `classify_policy_simulation_routes`
-43. `publish_capability_forge_candidate_contract`
-44. `publish_capability_maturity_assessment_contract`
-45. `publish_capability_manifest_registry_contract`
-46. `publish_networked_worker_mesh_contract`
-47. `publish_software_dev_capability_pack_contract`
-48. `publish_agent_identity_contract`
-49. `publish_claim_verification_report_contract`
-50. `classify_governed_connector_routes`
-51. `classify_governed_scheduler_routes`
-52. `classify_multi_agent_coordination_routes`
-53. `classify_config_governance_routes`
-54. `publish_connector_self_healing_receipt_contract`
-55. `publish_collaboration_case_contract`
-56. `publish_capability_maturity_contract`
-57. `publish_policy_prover_counterexample_contract`
-58. `publish_memory_lattice_admission_contract`
-59. `publish_workflow_mining_draft_contract`
-60. `publish_domain_operating_pack_contract`
-61. `publish_multimodal_operation_receipt_contract`
-62. `publish_physical_action_receipt_contract`
-63. `publish_temporal_operation_receipt_contract`
-64. `publish_temporal_evidence_freshness_receipt_contract`
-65. `publish_temporal_reapproval_receipt_contract`
-66. `publish_temporal_dispatch_window_receipt_contract`
-67. `publish_temporal_budget_window_receipt_contract`
-68. `publish_temporal_memory_receipt_contract`
-69. `publish_temporal_causal_order_receipt_contract`
-70. `publish_temporal_monotonic_duration_receipt_contract`
-71. `publish_temporal_accepted_risk_expiry_receipt_contract`
-72. `publish_temporal_credential_expiry_receipt_contract`
-73. `publish_temporal_retention_window_receipt_contract`
-74. `publish_temporal_rate_limit_window_receipt_contract`
-75. `publish_temporal_retry_window_receipt_contract`
-76. `publish_temporal_lease_window_receipt_contract`
-77. `publish_temporal_idempotency_window_receipt_contract`
-78. `publish_temporal_missed_run_receipt_contract`
-79. `publish_temporal_memory_refresh_receipt_contract`
-80. `classify_temporal_scheduler_routes`
-81. `publish_temporal_scheduler_receipt_contract`
-82. `publish_policy_proof_report_contract`
-83. `publish_capability_upgrade_plan_contract`
-84. `publish_autonomous_test_generation_plan_contract`
-85. `publish_trust_ledger_bundle_contract`
-86. `publish_trust_ledger_anchor_receipt_contract`
+26. `classify_webhook_operations_lifecycle_routes`
+27. `classify_rbac_access_governance_routes`
+28. `classify_agent_adapter_lifecycle_routes`
+29. `classify_runbook_learning_routes`
+30. `publish_software_outcome_learning_contract`
+31. `publish_runtime_conformance_attestation`
+32. `publish_proof_route_gap_triage_report`
+33. `publish_production_evidence_plane`
+34. `publish_capability_plan_evidence_bundles`
+35. `publish_deployment_orchestration_receipt_contract`
+36. `publish_runtime_reflex_engine_read_models`
+37. `publish_governed_operational_intelligence_witnesses`
+38. `classify_world_state_knowledge_routes`
+39. `classify_policy_simulation_routes`
+40. `publish_capability_forge_candidate_contract`
+41. `publish_capability_maturity_assessment_contract`
+42. `publish_networked_worker_mesh_contract`
+43. `publish_software_dev_capability_pack_contract`
+44. `publish_agent_identity_contract`
+45. `publish_claim_verification_report_contract`
+46. `classify_governed_connector_routes`
+47. `classify_governed_scheduler_routes`
+48. `classify_multi_agent_coordination_routes`
+49. `classify_config_governance_routes`
+50. `publish_connector_self_healing_receipt_contract`
+51. `publish_collaboration_case_contract`
+52. `publish_capability_maturity_contract`
+53. `publish_policy_prover_counterexample_contract`
+54. `publish_memory_lattice_admission_contract`
+55. `publish_workflow_mining_draft_contract`
+56. `publish_domain_operating_pack_contract`
+57. `publish_multimodal_operation_receipt_contract`
+58. `publish_physical_action_receipt_contract`
+59. `publish_temporal_operation_receipt_contract`
+60. `publish_temporal_evidence_freshness_receipt_contract`
+61. `publish_temporal_reapproval_receipt_contract`
+62. `publish_temporal_dispatch_window_receipt_contract`
+63. `publish_temporal_budget_window_receipt_contract`
+64. `publish_temporal_memory_receipt_contract`
+65. `publish_temporal_causal_order_receipt_contract`
+66. `publish_temporal_monotonic_duration_receipt_contract`
+67. `publish_temporal_accepted_risk_expiry_receipt_contract`
+68. `publish_temporal_credential_expiry_receipt_contract`
+69. `publish_temporal_retention_window_receipt_contract`
+70. `publish_temporal_rate_limit_window_receipt_contract`
+71. `publish_temporal_retry_window_receipt_contract`
+72. `publish_temporal_lease_window_receipt_contract`
+73. `publish_temporal_idempotency_window_receipt_contract`
+74. `publish_temporal_missed_run_receipt_contract`
+75. `publish_temporal_memory_refresh_receipt_contract`
+76. `classify_temporal_scheduler_routes`
+77. `publish_temporal_scheduler_receipt_contract`
+78. `publish_policy_proof_report_contract`
+79. `publish_capability_upgrade_plan_contract`
+80. `publish_autonomous_test_generation_plan_contract`
+81. `publish_trust_ledger_bundle_contract`
+82. `publish_trust_ledger_anchor_receipt_contract`
 
 Open closure actions:
 

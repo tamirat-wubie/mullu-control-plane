@@ -3000,6 +3000,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
             "status": "closed",
         },
         {
+            "action_id": "publish_capability_manifest_registry_contract",
+            "surfaces": ["capability_manifest_registry"],
+            "status": "closed",
+        },
+        {
             "action_id": "publish_networked_worker_mesh_contract",
             "surfaces": ["networked_worker_mesh"],
             "status": "closed",
