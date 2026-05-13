@@ -1,0 +1,244 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:temporal-resolution-receipt:1",
+  "title": "Mullusi Temporal Resolution Receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "receipt_id",
+    "request_id",
+    "tenant_id",
+    "actor_id",
+    "command_id",
+    "action_type",
+    "risk_level",
+    "policy_id",
+    "status",
+    "resolution_state",
+    "original_text",
+    "normalized_text",
+    "runtime_now_utc",
+    "timezone_name",
+    "local_now",
+    "resolved_execute_at",
+    "local_resolved_time",
+    "safe_default_execute_at",
+    "resolution_basis",
+    "ambiguity_level",
+    "clarification_required",
+    "business_calendar_used",
+    "business_day_count",
+    "holidays",
+    "blocked_reasons",
+    "warning_reasons",
+    "required_controls",
+    "evidence_refs",
+    "source_clock_sample_id",
+    "source_temporal_receipt_id",
+    "receipt_schema_ref",
+    "terminal_closure_required",
+    "receipt_hash",
+    "metadata"
+  ],
+  "properties": {
+    "receipt_id": {
+      "type": "string",
+      "pattern": "^temporal-resolution-receipt-[0-9a-f]{16}$"
+    },
+    "request_id": { "type": "string", "minLength": 1 },
+    "tenant_id": { "type": "string", "minLength": 1 },
+    "actor_id": { "type": "string", "minLength": 1 },
+    "command_id": { "type": "string", "minLength": 1 },
+    "action_type": { "type": "string", "minLength": 1 },
+    "risk_level": {
+      "type": "string",
+      "enum": ["low", "medium", "high", "critical"]
+    },
+    "policy_id": { "type": "string", "minLength": 1 },
+    "status": {
+      "type": "string",
+      "enum": ["resolved", "needs_clarification", "blocked", "unsupported", "not_required"]
+    },
+    "resolution_state": {
+      "type": "string",
+      "enum": [
+        "absolute_instant",
+        "local_datetime",
+        "relative_duration",
+        "tomorrow_explicit",
+        "tomorrow_defaulted",
+        "business_day",
+        "end_of_day",
+        "unsupported",
+        "invalid",
+        "not_required"
+      ]
+    },
+    "original_text": { "type": "string", "minLength": 1 },
+    "normalized_text": { "type": "string", "minLength": 1 },
+    "runtime_now_utc": { "type": "string", "format": "date-time" },
+    "timezone_name": { "type": "string", "minLength": 1 },
+    "local_now": { "type": "string", "format": "date-time" },
+    "resolved_execute_at": { "type": "string" },
+    "local_resolved_time": { "type": "string" },
+    "safe_default_execute_at": { "type": "string" },
+    "resolution_basis": { "type": "string", "minLength": 1 },
+    "ambiguity_level": {
+      "type": "string",
+      "enum": ["none", "defaulted", "high", "unsupported"]
+    },
+    "clarification_required": { "type": "boolean" },
+    "business_calendar_used": { "type": "boolean" },
+    "business_day_count": { "type": "integer", "minimum": 0 },
+    "holidays": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "blocked_reasons": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "warning_reasons": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "required_controls": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "evidence_refs": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "source_clock_sample_id": { "type": "string" },
+    "source_temporal_receipt_id": { "type": "string" },
+    "receipt_schema_ref": {
+      "type": "string",
+      "const": "urn:mullusi:schema:temporal-resolution-receipt:1"
+    },
+    "terminal_closure_required": {
+      "type": "boolean",
+      "const": true
+    },
+    "receipt_hash": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "runtime_owns_time_truth",
+        "receipt_is_not_terminal_closure",
+        "original_text_preserved",
+        "timezone_preserved",
+        "temporal_phrase_resolved",
+        "safe_default_used",
+        "high_risk_clarification_checked",
+        "terminal_closure_required"
+      ],
+      "properties": {
+        "runtime_owns_time_truth": { "type": "boolean", "const": true },
+        "receipt_is_not_terminal_closure": { "type": "boolean", "const": true },
+        "original_text_preserved": { "type": "boolean", "const": true },
+        "timezone_preserved": { "type": "boolean", "const": true },
+        "temporal_phrase_resolved": { "type": "boolean" },
+        "safe_default_used": { "type": "boolean" },
+        "high_risk_clarification_checked": { "type": "boolean" },
+        "terminal_closure_required": { "type": "boolean", "const": true }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "status": { "const": "resolved" } } },
+      "then": {
+        "properties": {
+          "resolved_execute_at": { "minLength": 1 },
+          "local_resolved_time": { "minLength": 1 },
+          "clarification_required": { "const": false },
+          "blocked_reasons": { "maxItems": 0 },
+          "metadata": {
+            "properties": {
+              "temporal_phrase_resolved": { "const": true }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "status": { "const": "needs_clarification" } } },
+      "then": {
+        "properties": {
+          "resolved_execute_at": { "const": "" },
+          "local_resolved_time": { "const": "" },
+          "safe_default_execute_at": { "minLength": 1 },
+          "clarification_required": { "const": true },
+          "blocked_reasons": { "maxItems": 0 },
+          "warning_reasons": { "minItems": 1 },
+          "metadata": {
+            "properties": {
+              "temporal_phrase_resolved": { "const": false },
+              "safe_default_used": { "const": true },
+              "high_risk_clarification_checked": { "const": true }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "status": { "const": "blocked" } } },
+      "then": {
+        "properties": {
+          "blocked_reasons": { "minItems": 1 },
+          "metadata": {
+            "properties": {
+              "temporal_phrase_resolved": { "const": false }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "status": { "const": "unsupported" } } },
+      "then": {
+        "properties": {
+          "resolution_state": { "const": "unsupported" },
+          "resolution_basis": { "const": "unsupported_temporal_phrase" },
+          "resolved_execute_at": { "const": "" },
+          "local_resolved_time": { "const": "" },
+          "safe_default_execute_at": { "const": "" },
+          "ambiguity_level": { "const": "unsupported" },
+          "metadata": {
+            "properties": {
+              "temporal_phrase_resolved": { "const": false }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "status": { "const": "not_required" } } },
+      "then": {
+        "properties": {
+          "resolution_state": { "const": "not_required" },
+          "resolved_execute_at": { "const": "" },
+          "local_resolved_time": { "const": "" },
+          "safe_default_execute_at": { "const": "" },
+          "required_controls": { "maxItems": 0 },
+          "clarification_required": { "const": false },
+          "metadata": {
+            "properties": {
+              "temporal_phrase_resolved": { "const": false }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

@@ -17,7 +17,7 @@ from mcoi_runtime.contracts.coordination import (
     MergeOutcome,
 )
 from mcoi_runtime.persistence.coordination_store import CoordinationStore
-from mcoi_runtime.persistence.errors import PathTraversalError, PersistenceError
+from mcoi_runtime.persistence.errors import CorruptedDataError, PathTraversalError, PersistenceError
 
 
 def _make_delegation_request() -> DelegationRequest:
@@ -119,6 +119,13 @@ class TestListStates:
     def test_list_states_nonexistent_dir(self, tmp_path):
         store = CoordinationStore(tmp_path / "does-not-exist")
         assert store.list_states() == ()
+
+    def test_list_states_rejects_invalid_filename(self, tmp_path):
+        store = CoordinationStore(tmp_path)
+        (tmp_path / "bad..state.json").write_text("{}", encoding="utf-8")
+
+        with pytest.raises(CorruptedDataError, match=r"^coordination state filename is invalid$"):
+            store.list_states()
 
 
 class TestDeleteState:

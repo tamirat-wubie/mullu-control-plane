@@ -167,6 +167,10 @@ def test_representative_routes_are_not_unclassified() -> None:
     assert classified_routes["/api/v1/tools/invoke"]["surface_id"] == "tool_invocation"
     assert classified_routes["/api/v1/output/parse"]["surface_id"] == "structured_output_validation"
     assert classified_routes["/api/v1/output/schemas"]["surface_id"] == "structured_output_validation"
+    assert classified_routes["/api/v1/rate-limit/status"]["surface_id"] == "rate_limit_read_models"
+    assert classified_routes["/api/v1/rate-limits/{client_id}"]["surface_id"] == "rate_limit_read_models"
+    assert classified_routes["/api/v1/flags"]["surface_id"] == "feature_flag_read_models"
+    assert classified_routes["/api/v1/flags/{flag_id}"]["surface_id"] == "feature_flag_read_models"
     assert classified_routes["/api/v1/traces"]["surface_id"] == "trace_observability_read_models"
     assert classified_routes["/api/v1/traces/slow"]["surface_id"] == "trace_observability_read_models"
     assert classified_routes["/api/v1/traces/summary"]["surface_id"] == "trace_observability_read_models"
@@ -904,6 +908,41 @@ def test_api_key_lifecycle_surface_is_witnessed() -> None:
     assert route_records["/api/v1/api-keys/{key_id}"]["coverage_state"] == "witnessed"
     assert route_records["/api/v1/api-keys/{key_id}"]["surface_id"] == "api_key_lifecycle"
     assert closure_actions["classify_api_key_lifecycle_routes"]["status"] == "closed"
+
+
+def test_conversation_memory_lifecycle_surface_is_witnessed() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    route_records = {
+        record["route"]: record
+        for record in matrix["route_coverage"]["routes"]
+    }
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    conversation_surface = surfaces["conversation_memory_lifecycle"]
+    witnesses = set(conversation_surface["runtime_witnesses"])
+
+    assert conversation_surface["coverage_state"] == "witnessed"
+    assert conversation_surface["request_proof"] == "request_proof"
+    assert conversation_surface["action_proof"] == "action_proof"
+    assert conversation_surface["audit"] == "audit_chain"
+    assert "/api/v1/conversation/message" in conversation_surface["representative_paths"]
+    assert "/api/v1/conversation/{conversation_id}" in conversation_surface["representative_paths"]
+    assert "/api/v1/conversations" in conversation_surface["representative_paths"]
+    assert "mcoi/mcoi_runtime/app/routers/data/conversations.py" in conversation_surface["evidence_files"]
+    assert "mcoi/mcoi_runtime/core/conversation_memory.py" in conversation_surface["evidence_files"]
+    assert "mcoi/tests/test_server_phase208.py" in conversation_surface["evidence_files"]
+    assert "mcoi/tests/test_conversation_memory.py" in conversation_surface["evidence_files"]
+    assert "conversation_message_append_increments_count" in witnesses
+    assert "conversation_history_returns_messages_and_summary" in witnesses
+    assert "conversation_store_tenant_filtering" in witnesses
+    assert "conversation_memory_pruning_bounded" in witnesses
+    assert route_records["/api/v1/conversation/message"]["coverage_state"] == "witnessed"
+    assert route_records["/api/v1/conversation/message"]["surface_id"] == "conversation_memory_lifecycle"
+    assert route_records["/api/v1/conversation/{conversation_id}"]["coverage_state"] == "witnessed"
+    assert route_records["/api/v1/conversation/{conversation_id}"]["surface_id"] == "conversation_memory_lifecycle"
+    assert route_records["/api/v1/conversations"]["coverage_state"] == "witnessed"
+    assert route_records["/api/v1/conversations"]["surface_id"] == "conversation_memory_lifecycle"
+    assert closure_actions["classify_conversation_memory_routes"]["status"] == "closed"
 
 
 def test_ops_proof_surface_is_witnessed() -> None:
@@ -1774,6 +1813,71 @@ def test_structured_output_validation_surface_is_witnessed() -> None:
     assert closure_actions["classify_structured_output_validation_routes"]["status"] == "closed"
 
 
+def test_rate_limit_read_model_surface_exposes_bounded_status_and_headers() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    rate_surface = surfaces["rate_limit_read_models"]
+    witnesses = set(rate_surface["runtime_witnesses"])
+    route_records = {
+        record["route"]: record
+        for record in matrix["route_coverage"]["routes"]
+    }
+
+    assert rate_surface["coverage_state"] == "witnessed"
+    assert rate_surface["request_proof"] == "read_model"
+    assert rate_surface["action_proof"] == "read_model"
+    assert "/api/v1/rate-limit/status" in rate_surface["representative_paths"]
+    assert "/api/v1/rate-limits/{client_id}" in rate_surface["representative_paths"]
+    assert "mcoi/mcoi_runtime/app/routers/ops/rate_limit.py" in rate_surface["evidence_files"]
+    assert "mcoi/mcoi_runtime/core/rate_limit_headers.py" in rate_surface["evidence_files"]
+    assert "mcoi/mcoi_runtime/core/rate_limit_middleware.py" in rate_surface["evidence_files"]
+    assert "mcoi/tests/test_rate_limiter.py" in rate_surface["evidence_files"]
+    assert "mcoi/tests/test_server_phase202.py" in rate_surface["evidence_files"]
+    assert "mcoi/tests/test_rate_limit_headers.py" in rate_surface["evidence_files"]
+    assert "rate_limit_status_reports_allowed_and_active_buckets" in witnesses
+    assert "rate_limit_headers_project_limit_remaining_reset" in witnesses
+    assert "rate_limit_header_peek_does_not_consume" in witnesses
+    assert "atomic_rate_limit_store_bounds_concurrent_consumption" in witnesses
+    assert route_records["/api/v1/rate-limit/status"]["coverage_state"] == "witnessed"
+    assert route_records["/api/v1/rate-limit/status"]["surface_id"] == "rate_limit_read_models"
+    assert route_records["/api/v1/rate-limits/{client_id}"]["coverage_state"] == "witnessed"
+    assert route_records["/api/v1/rate-limits/{client_id}"]["surface_id"] == "rate_limit_read_models"
+    assert closure_actions["classify_rate_limit_read_model_routes"]["status"] == "closed"
+
+
+def test_feature_flag_read_model_surface_exposes_bounded_flag_checks() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    flag_surface = surfaces["feature_flag_read_models"]
+    witnesses = set(flag_surface["runtime_witnesses"])
+    route_records = {
+        record["route"]: record
+        for record in matrix["route_coverage"]["routes"]
+    }
+
+    assert flag_surface["coverage_state"] == "witnessed"
+    assert flag_surface["request_proof"] == "read_model"
+    assert flag_surface["action_proof"] == "read_model"
+    assert "/api/v1/flags" in flag_surface["representative_paths"]
+    assert "/api/v1/flags/{flag_id}" in flag_surface["representative_paths"]
+    assert "mcoi/mcoi_runtime/app/routers/ops/feature_flags.py" in flag_surface["evidence_files"]
+    assert "mcoi/mcoi_runtime/core/feature_flags.py" in flag_surface["evidence_files"]
+    assert "mcoi/tests/test_server_phase220.py" in flag_surface["evidence_files"]
+    assert "mcoi/tests/test_feature_flags.py" in flag_surface["evidence_files"]
+    assert "feature_flags_list_returns_registered_flags" in witnesses
+    assert "feature_flags_summary_counts_enabled_disabled" in witnesses
+    assert "feature_flag_check_enabled" in witnesses
+    assert "feature_flag_unknown_returns_disabled" in witnesses
+    assert "feature_flag_tenant_override_respected" in witnesses
+    assert route_records["/api/v1/flags"]["coverage_state"] == "witnessed"
+    assert route_records["/api/v1/flags"]["surface_id"] == "feature_flag_read_models"
+    assert route_records["/api/v1/flags/{flag_id}"]["coverage_state"] == "witnessed"
+    assert route_records["/api/v1/flags/{flag_id}"]["surface_id"] == "feature_flag_read_models"
+    assert closure_actions["classify_feature_flag_routes"]["status"] == "closed"
+
+
 def test_operational_health_surface_exposes_bounded_read_models() -> None:
     matrix = _load_fixture()
     surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
@@ -2397,6 +2501,34 @@ def test_temporal_evidence_freshness_surface_rechecks_required_evidence() -> Non
     assert "expiring_evidence_warns_before_dispatch" in witnesses
     assert "temporal_evidence_freshness_receipt_schema_valid" in witnesses
     assert closure_actions["publish_temporal_evidence_freshness_receipt_contract"]["status"] == "closed"
+
+
+def test_temporal_resolution_surface_resolves_phrases_with_runtime_time() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    resolution_surface = surfaces["temporal_resolution"]
+    witnesses = set(resolution_surface["runtime_witnesses"])
+
+    assert resolution_surface["coverage_state"] == "witnessed"
+    assert resolution_surface["request_proof"] == "request_proof"
+    assert resolution_surface["action_proof"] == "action_proof"
+    assert "evaluate_temporal_resolution" in resolution_surface["representative_paths"]
+    assert "TemporalResolutionRequest" in resolution_surface["representative_paths"]
+    assert "TemporalResolutionReceipt" in resolution_surface["representative_paths"]
+    assert "gateway/temporal_resolution.py" in resolution_surface["evidence_files"]
+    assert "schemas/temporal_resolution_receipt.schema.json" in resolution_surface["evidence_files"]
+    assert "tests/test_gateway/test_temporal_resolution.py" in resolution_surface["evidence_files"]
+    assert "runtime_clock_owns_phrase_resolution" in witnesses
+    assert "original_text_preserved" in witnesses
+    assert "tenant_timezone_controls_local_resolution" in witnesses
+    assert "relative_duration_resolved_from_injected_now" in witnesses
+    assert "ambiguous_low_risk_phrase_uses_safe_default" in witnesses
+    assert "ambiguous_high_risk_phrase_requires_clarification" in witnesses
+    assert "business_day_resolution_skips_weekends_and_holidays" in witnesses
+    assert "unsupported_phrase_fails_closed" in witnesses
+    assert "temporal_resolution_receipt_schema_valid" in witnesses
+    assert closure_actions["publish_temporal_resolution_receipt_contract"]["status"] == "closed"
 
 
 def test_temporal_reapproval_surface_rechecks_execution_time_approval_grants() -> None:

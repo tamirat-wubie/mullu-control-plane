@@ -27,6 +27,10 @@ def _deterministic_json(payload: object) -> str:
     return json.dumps(payload, sort_keys=True, ensure_ascii=True, separators=(",", ":"))
 
 
+def _bounded_store_error(summary: str, exc: BaseException) -> str:
+    return f"{summary} ({type(exc).__name__})"
+
+
 def _atomic_write(path: Path, content: str) -> None:
     """Write content to a file atomically via temp-file-then-rename."""
     parent = path.parent
@@ -45,7 +49,7 @@ def _atomic_write(path: Path, content: str) -> None:
                 os.unlink(tmp_path)
             raise
     except OSError as exc:
-        raise PersistenceWriteError(f"failed to write {path}: {exc}") from exc
+        raise PersistenceWriteError(_bounded_store_error("team queue store write failed", exc)) from exc
 
 
 def _queue_state_payload(state: TeamQueueState) -> dict[str, object]:
@@ -82,11 +86,11 @@ class TeamQueueStore:
     def load_queue_states(self) -> tuple[TeamQueueState, ...]:
         path = self._queue_path()
         if not path.exists():
-            raise CorruptedDataError(f"team queue state file not found: {path}")
+            raise CorruptedDataError("team queue state file not found")
         try:
             payload = json.loads(path.read_text(encoding="utf-8"))
         except (json.JSONDecodeError, OSError) as exc:
-            raise CorruptedDataError(f"malformed team queue state file: {exc}") from exc
+            raise CorruptedDataError(_bounded_store_error("malformed team queue state file", exc)) from exc
         if not isinstance(payload, dict):
             raise CorruptedDataError("team queue state payload must be a JSON object")
         states_raw = payload.get("queue_states")

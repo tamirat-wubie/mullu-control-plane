@@ -6,6 +6,7 @@ save/load cycles.
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 import pytest
@@ -18,7 +19,6 @@ from mcoi_runtime.contracts.goal import (
     GoalPriority,
     GoalStatus,
     SubGoal,
-    SubGoalStatus,
 )
 from mcoi_runtime.core.goal_reasoning import GoalReasoningEngine
 from mcoi_runtime.core.invariants import RuntimeCoreInvariantError
@@ -149,6 +149,17 @@ class TestGoalStoreState:
         with pytest.raises(CorruptedDataError, match=r"^malformed JSON \(JSONDecodeError\)$"):
             store.load_goal_state("bad")
 
+    def test_load_rejects_goal_state_id_mismatch(self, tmp_path: Path):
+        store = GoalStore(tmp_path / "goal-data")
+        store.save_goal_state(_make_state("goal-real"))
+        state_path = tmp_path / "goal-data" / "goals" / "goal-real.json"
+        raw = json.loads(state_path.read_text(encoding="utf-8"))
+        raw["goal_id"] = "goal-other"
+        state_path.write_text(json.dumps(raw), encoding="utf-8")
+
+        with pytest.raises(CorruptedDataError, match=r"^goal state id mismatch$"):
+            store.load_goal_state("goal-real")
+
     def test_overwrite_same_id(self, tmp_path: Path):
         store = GoalStore(tmp_path / "goal-data")
         state1 = _make_state(status=GoalStatus.EXECUTING)
@@ -173,6 +184,17 @@ class TestGoalStorePlan:
         assert loaded.goal_id == plan.goal_id
         assert len(loaded.sub_goals) == 1
         assert loaded.sub_goals[0].sub_goal_id == "sg-1"
+
+    def test_load_rejects_plan_id_mismatch(self, tmp_path: Path):
+        store = GoalStore(tmp_path / "goal-data")
+        store.save_plan(_make_plan("plan-real"))
+        plan_path = tmp_path / "goal-data" / "plans" / "plan-real.json"
+        raw = json.loads(plan_path.read_text(encoding="utf-8"))
+        raw["plan_id"] = "plan-other"
+        plan_path.write_text(json.dumps(raw), encoding="utf-8")
+
+        with pytest.raises(CorruptedDataError, match=r"^goal plan id mismatch$"):
+            store.load_plan("plan-real")
 
     def test_plan_with_predecessors_preserved(self, tmp_path: Path):
         store = GoalStore(tmp_path / "goal-data")
@@ -216,6 +238,17 @@ class TestGoalStoreReplan:
         # Should not raise
         store.save_replan_record(record)
 
+    def test_load_rejects_replan_id_mismatch(self, tmp_path: Path):
+        store = GoalStore(tmp_path / "goal-data")
+        store.save_replan_record(_make_replan_record("goal-real"))
+        replan_path = tmp_path / "goal-data" / "replans" / "goal-real_plan-2.json"
+        raw = json.loads(replan_path.read_text(encoding="utf-8"))
+        raw["new_plan_id"] = "plan-other"
+        replan_path.write_text(json.dumps(raw), encoding="utf-8")
+
+        with pytest.raises(CorruptedDataError, match=r"^goal replan record id mismatch$"):
+            store.load_replan_record("goal-real_plan-2")
+
     def test_invalid_type_rejected(self, tmp_path: Path):
         store = GoalStore(tmp_path / "goal-data")
         with pytest.raises(PersistenceError, match="GoalReplanRecord"):
@@ -233,6 +266,26 @@ class TestGoalStoreListing:
 
         ids = store.list_goal_descriptors()
         assert ids == ("goal-a", "goal-b")
+
+    def test_load_rejects_descriptor_id_mismatch(self, tmp_path: Path):
+        store = GoalStore(tmp_path / "goal-data")
+        store.save_goal_descriptor(_make_descriptor("goal-real"))
+        descriptor_path = tmp_path / "goal-data" / "descriptors" / "goal-real.json"
+        raw = json.loads(descriptor_path.read_text(encoding="utf-8"))
+        raw["goal_id"] = "goal-other"
+        descriptor_path.write_text(json.dumps(raw), encoding="utf-8")
+
+        with pytest.raises(CorruptedDataError, match=r"^goal descriptor id mismatch$"):
+            store.load_goal_descriptor("goal-real")
+
+    def test_list_rejects_invalid_goal_filename(self, tmp_path: Path):
+        store = GoalStore(tmp_path / "goal-data")
+        goals_dir = tmp_path / "goal-data" / "goals"
+        goals_dir.mkdir(parents=True)
+        (goals_dir / "bad..goal.json").write_text("{}", encoding="utf-8")
+
+        with pytest.raises(CorruptedDataError, match=r"^goal state filename is invalid$"):
+            store.list_goals()
 
     def test_list_goals(self, tmp_path: Path):
         store = GoalStore(tmp_path / "goal-data")

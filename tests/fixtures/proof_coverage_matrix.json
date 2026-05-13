@@ -134,6 +134,62 @@
       ]
     },
     {
+      "action_id": "classify_operational_platform_read_model_routes",
+      "status": "closed",
+      "surfaces": [
+        "operational_platform_read_models"
+      ]
+    },
+    {
+      "action_id": "classify_llm_admin_observability_routes",
+      "status": "closed",
+      "surfaces": [
+        "llm_admin_observability"
+      ]
+    },
+    {
+      "action_id": "classify_dependency_graph_routes",
+      "status": "closed",
+      "surfaces": [
+        "dependency_graph_read_models"
+      ]
+    },
+    {
+      "action_id": "classify_feature_flag_routes",
+      "status": "closed",
+      "surfaces": [
+        "feature_flag_read_models"
+      ]
+    },
+    {
+      "action_id": "classify_operational_telemetry_routes",
+      "status": "closed",
+      "surfaces": [
+        "operational_telemetry_read_models"
+      ]
+    },
+    {
+      "action_id": "classify_rate_limit_read_model_routes",
+      "status": "closed",
+      "surfaces": [
+        "rate_limit_read_models"
+      ]
+    },
+    {
+      "action_id": "classify_sla_monitoring_routes",
+      "status": "closed",
+      "surfaces": [
+        "sla_monitoring_read_models"
+      ]
+    },
+    {
+      "action_id": "classify_gateway_status_route",
+      "status": "closed",
+      "surfaces": [
+        "gateway_status_read_model"
+      ]
+    },
+    {
       "action_id": "classify_conversation_memory_routes",
       "status": "closed",
       "surfaces": [
@@ -328,55 +384,6 @@
       "status": "closed",
       "surfaces": [
         "assistant_kernel_planning"
-      ]
-    },
-    {
-      "action_id": "classify_llm_admin_observability_routes",
-      "status": "closed",
-      "surfaces": [
-        "llm_admin_observability"
-      ]
-    },
-    {
-      "action_id": "classify_dependency_graph_routes",
-      "status": "closed",
-      "surfaces": [
-        "dependency_graph_read_models"
-      ]
-    },
-    {
-      "action_id": "classify_feature_flag_routes",
-      "status": "closed",
-      "surfaces": [
-        "feature_flag_read_models"
-      ]
-    },
-    {
-      "action_id": "classify_operational_telemetry_routes",
-      "status": "closed",
-      "surfaces": [
-        "operational_telemetry_read_models"
-      ]
-    },
-    {
-      "action_id": "classify_rate_limit_read_model_routes",
-      "status": "closed",
-      "surfaces": [
-        "rate_limit_read_models"
-      ]
-    },
-    {
-      "action_id": "classify_sla_monitoring_routes",
-      "status": "closed",
-      "surfaces": [
-        "sla_monitoring_read_models"
-      ]
-    },
-    {
-      "action_id": "classify_gateway_status_route",
-      "status": "closed",
-      "surfaces": [
-        "gateway_status_read_model"
       ]
     },
     {
@@ -601,6 +608,13 @@
       ]
     },
     {
+      "action_id": "publish_temporal_resolution_receipt_contract",
+      "status": "closed",
+      "surfaces": [
+        "temporal_resolution"
+      ]
+    },
+    {
       "action_id": "publish_temporal_evidence_freshness_receipt_contract",
       "status": "closed",
       "surfaces": [
@@ -783,15 +797,15 @@
   ],
   "coverage_summary": {
     "by_action_proof": {
-      "action_proof": 91,
+      "action_proof": 92,
       "audit_chain": 0,
       "gap": 0,
-      "read_model": 22,
+      "read_model": 23,
       "request_proof": 2
     },
     "by_audit": {
       "action_proof": 0,
-      "audit_chain": 111,
+      "audit_chain": 113,
       "gap": 0,
       "read_model": 4,
       "request_proof": 0
@@ -799,16 +813,16 @@
     "by_coverage_state": {
       "proven": 1,
       "unproven": 0,
-      "witnessed": 114
+      "witnessed": 116
     },
     "by_request_proof": {
       "action_proof": 1,
       "audit_chain": 0,
       "gap": 0,
-      "read_model": 24,
-      "request_proof": 90
+      "read_model": 25,
+      "request_proof": 91
     },
-    "surface_count": 115
+    "surface_count": 117
   },
   "generated_by": "scripts/proof_coverage_matrix.py",
   "route_coverage": {
@@ -2716,13 +2730,90 @@
       "audit": "audit_chain",
       "coverage_state": "witnessed",
       "evidence_files": [
+        "gateway/server.py",
+        "mcoi/mcoi_runtime/app/routers/data/sla.py",
+        "mcoi/mcoi_runtime/app/routers/llm/admin.py",
+        "mcoi/mcoi_runtime/app/routers/ops/dependencies.py",
+        "mcoi/mcoi_runtime/app/routers/ops/feature_flags.py",
+        "mcoi/mcoi_runtime/app/routers/ops/metrics.py",
+        "mcoi/mcoi_runtime/app/routers/ops/rate_limit.py",
+        "mcoi/mcoi_runtime/core/feature_flags.py",
+        "mcoi/mcoi_runtime/core/rate_limit_headers.py",
+        "mcoi/mcoi_runtime/governance/guards/rate_limit.py",
+        "mcoi/tests/test_feature_flags.py",
+        "mcoi/tests/test_rate_limit_headers.py",
+        "mcoi/tests/test_server_phase199.py",
+        "mcoi/tests/test_server_phase200.py",
+        "mcoi/tests/test_server_phase202.py",
+        "mcoi/tests/test_server_phase212.py",
+        "mcoi/tests/test_server_phase213.py",
+        "mcoi/tests/test_server_phase220.py",
+        "mcoi/tests/test_sla_monitor.py",
+        "tests/test_gateway/test_webhooks.py"
+      ],
+      "notes": "Operational platform read-model routes aggregate bounded bootstrap, LLM history, dependency, feature-flag, metric, rate-limit, SLA, and gateway status state without mutation authority.",
+      "representative_paths": [
+        "/api/v1/bootstrap",
+        "/api/v1/circuit-breaker",
+        "/api/v1/dependencies",
+        "/api/v1/dependencies/{name}/impact",
+        "/api/v1/flags",
+        "/api/v1/flags/{flag_id}",
+        "/api/v1/grafana/dashboard",
+        "/api/v1/llm/history",
+        "/api/v1/metrics",
+        "/api/v1/rate-limit/status",
+        "/api/v1/rate-limits/{client_id}",
+        "/api/v1/sla",
+        "/api/v1/sla/violations",
+        "/gateway/status"
+      ],
+      "request_proof": "read_model",
+      "runtime_witnesses": [
+        "bootstrap_info_bounded",
+        "bootstrap_reports_stub_provider",
+        "llm_circuit_breaker_status_bounded",
+        "llm_history_window_bounded",
+        "dependency_graph_startup_order_bounded",
+        "dependency_impact_analysis_bounded",
+        "feature_flags_list_bounded",
+        "feature_flags_summary_counts_enabled_disabled",
+        "feature_flags_list_returns_registered_flags",
+        "feature_flag_check_enabled",
+        "feature_flag_unknown_returns_disabled",
+        "feature_flag_tenant_override_respected",
+        "feature_flag_lookup_bounded",
+        "missing_feature_flag_defaults_closed",
+        "metrics_snapshot_bounded",
+        "metrics_read_model_bounded",
+        "grafana_dashboard_export_bounded",
+        "rate_limit_status_bounded",
+        "rate_limit_status_reports_allowed_and_active_buckets",
+        "rate_limit_client_headers_bounded",
+        "rate_limit_headers_project_limit_remaining_reset",
+        "rate_limit_header_peek_does_not_consume",
+        "atomic_rate_limit_store_bounds_concurrent_consumption",
+        "rate_limit_read_model_non_mutating",
+        "sla_summary_bounded",
+        "sla_violations_bounded",
+        "sla_read_model_non_mutating",
+        "gateway_status_governed",
+        "gateway_status_bounded"
+      ],
+      "surface_id": "operational_platform_read_models"
+    },
+    {
+      "action_proof": "read_model",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
         "mcoi/mcoi_runtime/app/routers/llm/admin.py",
         "mcoi/tests/test_server_phase199.py",
         "mcoi/tests/test_server_phase200.py",
         "mcoi/tests/test_server_phase212.py",
         "mcoi/tests/test_server_phase213.py"
       ],
-      "notes": "LLM admin observability exposes bounded bootstrap, circuit-breaker, and LLM history read models without mutation authority.",
+      "notes": "LLM admin observability routes expose bounded bootstrap inventory, circuit-breaker state, and invocation history without mutation authority.",
       "representative_paths": [
         "/api/v1/bootstrap",
         "/api/v1/circuit-breaker",
@@ -2777,7 +2868,12 @@
       "request_proof": "read_model",
       "runtime_witnesses": [
         "feature_flags_list_bounded",
+        "feature_flags_list_returns_registered_flags",
+        "feature_flags_summary_counts_enabled_disabled",
         "feature_flag_lookup_bounded",
+        "feature_flag_check_enabled",
+        "feature_flag_unknown_returns_disabled",
+        "feature_flag_tenant_override_respected",
         "missing_feature_flag_defaults_closed"
       ],
       "surface_id": "feature_flag_read_models"
@@ -2826,7 +2922,11 @@
       "request_proof": "read_model",
       "runtime_witnesses": [
         "rate_limit_status_bounded",
+        "rate_limit_status_reports_allowed_and_active_buckets",
         "rate_limit_client_headers_bounded",
+        "rate_limit_headers_project_limit_remaining_reset",
+        "rate_limit_header_peek_does_not_consume",
+        "atomic_rate_limit_store_bounds_concurrent_consumption",
         "rate_limit_read_model_non_mutating"
       ],
       "surface_id": "rate_limit_read_models"
@@ -2895,7 +2995,15 @@
         "conversation_history_read_model_bounded",
         "missing_conversation_bounded_404",
         "conversation_list_read_model_bounded",
-        "conversation_store_tenant_filter"
+        "conversation_store_tenant_filter",
+        "conversation_message_append_increments_count",
+        "conversation_history_returns_messages_and_summary",
+        "conversation_missing_read_is_bounded",
+        "conversation_multi_turn_history_preserved",
+        "conversation_list_summary_bounded",
+        "conversation_store_tenant_filtering",
+        "conversation_memory_state_hash_changes",
+        "conversation_memory_pruning_bounded"
       ],
       "surface_id": "conversation_memory_lifecycle"
     },
@@ -5284,6 +5392,36 @@
         "receipt_not_terminal_closure"
       ],
       "surface_id": "temporal_evidence_freshness"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "gateway/temporal_resolution.py",
+        "schemas/temporal_resolution_receipt.schema.json",
+        "tests/test_gateway/test_temporal_resolution.py"
+      ],
+      "notes": "Temporal resolution receipts resolve bounded temporal phrases with runtime-owned time truth, tenant timezone preservation, original text retention, business-calendar defaults, unsupported phrase closure, and high-risk clarification before scheduling or dispatch.",
+      "representative_paths": [
+        "evaluate_temporal_resolution",
+        "TemporalResolutionRequest",
+        "TemporalResolutionReceipt"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "runtime_clock_owns_phrase_resolution",
+        "original_text_preserved",
+        "tenant_timezone_controls_local_resolution",
+        "relative_duration_resolved_from_injected_now",
+        "ambiguous_low_risk_phrase_uses_safe_default",
+        "ambiguous_high_risk_phrase_requires_clarification",
+        "business_day_resolution_skips_weekends_and_holidays",
+        "unsupported_phrase_fails_closed",
+        "temporal_resolution_receipt_schema_valid",
+        "receipt_not_terminal_closure"
+      ],
+      "surface_id": "temporal_resolution"
     },
     {
       "action_proof": "action_proof",

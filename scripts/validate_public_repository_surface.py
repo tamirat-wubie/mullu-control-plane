@@ -225,6 +225,7 @@ GOVERNANCE_PROTOCOL_REQUIRED_LITERALS = (
     "Reflex deployment witness envelopes are public contracts",
     "Reflex deployment witness validator receipts are public contracts",
     "Temporal operation receipts are public contracts",
+    "Temporal resolution receipts are public contracts",
     "Temporal evidence freshness receipts are public contracts",
     "Temporal reapproval receipts are public contracts",
     "Temporal dispatch window receipts are public contracts",

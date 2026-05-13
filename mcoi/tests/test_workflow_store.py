@@ -145,6 +145,17 @@ class TestWorkflowStore:
         with pytest.raises(CorruptedDataError, match=r"^malformed JSON \(JSONDecodeError\)$"):
             store.load_execution_record("bad")
 
+    def test_load_rejects_execution_id_mismatch(self, tmp_path: Path):
+        store = WorkflowStore(tmp_path / "workflows")
+        store.save_execution_record(_make_record("exec-real"))
+        record_path = tmp_path / "workflows" / "exec-real.json"
+        raw = json.loads(record_path.read_text(encoding="utf-8"))
+        raw["execution_id"] = "exec-other"
+        record_path.write_text(json.dumps(raw), encoding="utf-8")
+
+        with pytest.raises(CorruptedDataError, match=r"^workflow execution id mismatch$"):
+            store.load_execution_record("exec-real")
+
     def test_invalid_type_rejected(self, tmp_path: Path):
         store = WorkflowStore(tmp_path / "workflows")
         with pytest.raises(PersistenceError, match="WorkflowExecutionRecord"):
@@ -176,12 +187,41 @@ class TestWorkflowStore:
         assert loaded.name == descriptor.name
         assert loaded.stages[0].stage_id == "s1"
 
+    def test_load_rejects_descriptor_id_mismatch(self, tmp_path: Path):
+        store = WorkflowStore(tmp_path / "workflows")
+        store.save_descriptor(_make_descriptor("wf-real"))
+        descriptor_path = tmp_path / "workflows" / "workflow-descriptor--wf-real.json"
+        raw = json.loads(descriptor_path.read_text(encoding="utf-8"))
+        raw["workflow_id"] = "wf-other"
+        descriptor_path.write_text(json.dumps(raw), encoding="utf-8")
+
+        with pytest.raises(CorruptedDataError, match=r"^workflow descriptor id mismatch$"):
+            store.load_descriptor("wf-real")
+
     def test_list_descriptors(self, tmp_path: Path):
         store = WorkflowStore(tmp_path / "workflows")
         store.save_descriptor(_make_descriptor("wf-b"))
         store.save_descriptor(_make_descriptor("wf-a"))
 
         assert store.list_descriptors() == ("wf-a", "wf-b")
+
+    def test_list_rejects_invalid_execution_filename(self, tmp_path: Path):
+        store = WorkflowStore(tmp_path / "workflows")
+        workflow_dir = tmp_path / "workflows"
+        workflow_dir.mkdir(parents=True)
+        (workflow_dir / "bad..exec.json").write_text("{}", encoding="utf-8")
+
+        with pytest.raises(CorruptedDataError, match=r"^workflow execution filename is invalid$"):
+            store.list_executions()
+
+    def test_list_rejects_invalid_descriptor_filename(self, tmp_path: Path):
+        store = WorkflowStore(tmp_path / "workflows")
+        workflow_dir = tmp_path / "workflows"
+        workflow_dir.mkdir(parents=True)
+        (workflow_dir / "workflow-descriptor--bad..wf.json").write_text("{}", encoding="utf-8")
+
+        with pytest.raises(CorruptedDataError, match=r"^workflow descriptor filename is invalid$"):
+            store.list_descriptors()
 
     def test_list_executions_ignores_descriptors(self, tmp_path: Path):
         store = WorkflowStore(tmp_path / "workflows")
