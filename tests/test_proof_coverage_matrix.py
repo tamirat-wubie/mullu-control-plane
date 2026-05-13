@@ -1105,14 +1105,19 @@ def test_capability_manifest_registry_surface_admits_governed_manifests() -> Non
     assert manifest_surface["action_proof"] == "action_proof"
     assert "CapabilityManifestRegistry.admit_path" in manifest_surface["representative_paths"]
     assert "CapabilityManifestAdmission" in manifest_surface["representative_paths"]
+    assert "build_software_dev_capability_manifest_registry" in manifest_surface["representative_paths"]
+    assert "gateway/capability_fabric.py" in manifest_surface["evidence_files"]
     assert "mcoi/mcoi_runtime/contracts/capability_manifest.py" in manifest_surface["evidence_files"]
     assert "mcoi/mcoi_runtime/core/capability_manifest_registry.py" in manifest_surface["evidence_files"]
     assert "schemas/software_dev/capability_manifest.schema.json" in manifest_surface["evidence_files"]
+    assert "tests/test_gateway/test_capability_fabric.py" in manifest_surface["evidence_files"]
     assert "tests/test_software_dev_capability_manifest_registry.py" in manifest_surface["evidence_files"]
     assert "capability_manifest_schema_valid" in witnesses
     assert "software_dev_manifests_admit_locally" in witnesses
     assert "effect_manifest_requires_sandbox_rollback" in witnesses
     assert "production_hot_reload_denied_for_effect_manifest" in witnesses
+    assert "fabric_projects_local_manifest_registry" in witnesses
+    assert "fabric_rejects_production_hot_reload_manifest_registry" in witnesses
     assert closure_actions["publish_capability_manifest_registry_contract"]["status"] == "closed"
 
 
@@ -1204,6 +1209,7 @@ def test_software_dev_capability_pack_surface_requires_explicit_admission() -> N
     assert "software_dev_output_schema_refs_materialized" in witnesses
     assert "software_dev_output_schemas_reject_effect_overclaims" in witnesses
     assert "software_dev_named_loader_installs_only_software_dev_domain" in witnesses
+    assert "software_dev_gate_projects_manifest_registry" in witnesses
     assert "software_dev_capsule_refs_match_pack_capabilities" in witnesses
     assert "software_dev_direct_deployment_capability_absent" in witnesses
     assert "software_dev_read_only_records_non_mutating" in witnesses
@@ -1493,6 +1499,38 @@ def test_governance_explanation_lifecycle_surface_is_witnessed() -> None:
     assert route_records["/api/v1/explain/summary"]["coverage_state"] == "witnessed"
     assert route_records["/api/v1/explain/summary"]["surface_id"] == "governance_explanation_lifecycle"
     assert closure_actions["classify_governance_explanation_lifecycle_routes"]["status"] == "closed"
+
+
+def test_tool_registry_read_model_surface_keeps_invocation_separate() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    tool_surface = surfaces["tool_registry_read_models"]
+    witnesses = set(tool_surface["runtime_witnesses"])
+    route_records = {
+        record["route"]: record
+        for record in matrix["route_coverage"]["routes"]
+    }
+
+    assert tool_surface["coverage_state"] == "witnessed"
+    assert tool_surface["request_proof"] == "read_model"
+    assert tool_surface["action_proof"] == "read_model"
+    assert "/api/v1/tools" in tool_surface["representative_paths"]
+    assert "/api/v1/tools/history" in tool_surface["representative_paths"]
+    assert "/api/v1/tools/llm-format" in tool_surface["representative_paths"]
+    assert "/api/v1/tools/invoke" not in tool_surface["representative_paths"]
+    assert "mcoi/mcoi_runtime/app/routers/data/tools.py" in tool_surface["evidence_files"]
+    assert "mcoi/mcoi_runtime/core/tool_use.py" in tool_surface["evidence_files"]
+    assert "mcoi/tests/test_server_phase212.py" in tool_surface["evidence_files"]
+    assert "tool_registry_list_returns_registered_tools" in witnesses
+    assert "tool_llm_format_exports_input_schema" in witnesses
+    assert "tool_history_returns_bounded_summary" in witnesses
+    assert "tool_invoke_separate_action_proof_surface" in witnesses
+    assert route_records["/api/v1/tools"]["surface_id"] == "tool_registry_read_models"
+    assert route_records["/api/v1/tools/history"]["coverage_state"] == "witnessed"
+    assert route_records["/api/v1/tools/llm-format"]["surface_id"] == "tool_registry_read_models"
+    assert route_records["/api/v1/tools/invoke"]["surface_id"] == "tool_invocation"
+    assert closure_actions["classify_tool_registry_read_model_routes"]["status"] == "closed"
 
 
 def test_operational_health_surface_exposes_bounded_read_models() -> None:

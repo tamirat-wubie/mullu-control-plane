@@ -70,6 +70,7 @@ from mcoi_runtime.adapters.multi_provider import (
     ZAIBackend,
     available_providers,
     create_provider,
+    provider_configuration_health,
     _params_to_messages,
 )
 
@@ -550,6 +551,39 @@ class TestProviderRegistry:
 
         monkeypatch.setenv("CLOUDFLARE_ACCOUNT_ID", "account-id")
         assert "cloudflare" in available_providers()
+
+    def test_provider_configuration_health_is_secret_safe(self):
+        health = provider_configuration_health({
+            "GROQ_API_KEY": "groq-secret",
+            "INFOMANIAK_API_KEY": "infomaniak-secret",
+            "AIML_API_KEY": "aiml-secret",
+        })
+
+        assert health["groq"]["status"] == "ready"
+        assert health["aimlapi"]["status"] == "ready"
+        assert health["infomaniak"]["status"] == "missing_dependency"
+        assert health["infomaniak"]["configured"] is False
+        assert health["infomaniak"]["dependency_groups"] == (("INFOMANIAK_BASE_URL", "INFOMANIAK_PRODUCT_ID"),)
+        assert "groq-secret" not in str(health)
+        assert "infomaniak-secret" not in str(health)
+        assert "aiml-secret" not in str(health)
+
+    def test_provider_configuration_health_marks_dependency_ready(self):
+        health = provider_configuration_health({
+            "CLOUDFLARE_API_KEY": "cloudflare-secret",
+            "CLOUDFLARE_ACCOUNT_ID": "account-id",
+            "INFOMANIAK_API_KEY": "infomaniak-secret",
+            "INFOMANIAK_PRODUCT_ID": "product-id",
+            "KATALEPTIC_API_KEY": "kataleptic-secret",
+        })
+
+        assert health["cloudflare"]["status"] == "ready"
+        assert health["infomaniak"]["status"] == "ready"
+        assert health["kataleptic"]["status"] == "ready"
+        assert health["nscale"]["status"] == "missing_credentials"
+        assert "cloudflare-secret" not in str(health)
+        assert "infomaniak-secret" not in str(health)
+        assert "kataleptic-secret" not in str(health)
 
 
 class TestLowCostProviderCatalog:

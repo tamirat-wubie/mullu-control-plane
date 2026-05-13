@@ -16,17 +16,20 @@ Invariants:
 from __future__ import annotations
 
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any, Callable, Mapping
 
 from mcoi_runtime.app.server_runtime import (
     register_default_output_schemas,
     register_default_tools,
 )
+from mcoi_runtime.contracts.capability_manifest import CapabilityManifestAdmissionStatus
 from mcoi_runtime.core.ab_testing import ABTestEngine
 from mcoi_runtime.core.agent_chain import AgentChainEngine
 from mcoi_runtime.core.agent_chain import ChainStep as _ChainStep
 from mcoi_runtime.core.agent_memory import AgentMemoryStore
 from mcoi_runtime.core.backpressure import BackpressureEngine
+from mcoi_runtime.core.capability_manifest_registry import CapabilityManifestRegistry
 from mcoi_runtime.core.cache import GovernedCache
 from mcoi_runtime.core.dependency_graph import DependencyGraph, SubsystemNode
 from mcoi_runtime.core.event_sourcing import EventStore
@@ -46,6 +49,10 @@ from mcoi_runtime.core.tool_use import ToolRegistry
 from mcoi_runtime.core.usage_reporter import UsageReporter
 from mcoi_runtime.core.workflow_templates import WorkflowTemplate, WorkflowTemplateRegistry
 from mcoi_runtime.persistence.state_persistence import StatePersistence
+
+
+_REPO_ROOT = Path(__file__).resolve().parents[3]
+_DEFAULT_CAPABILITY_MANIFEST_DIR = _REPO_ROOT / "capabilities" / "software_dev" / "manifests"
 
 
 @dataclass(frozen=True)
@@ -75,6 +82,30 @@ class CapabilityBootstrap:
     tenant_analytics: Any
     wf_templates: Any
     event_store: Any
+    capability_manifest_registry: Any
+
+
+@dataclass(frozen=True)
+class CapabilityManifestRegistryView:
+    """Read-only server projection of admitted capability manifests."""
+
+    configured: bool
+    registry: CapabilityManifestRegistry | None
+    model: Mapping[str, Any]
+
+    def read_model(self) -> dict[str, Any]:
+        return {
+            "configured": self.configured,
+            **dict(self.model),
+        }
+
+    def summary(self) -> dict[str, Any]:
+        model = self.read_model()
+        return {
+            "configured": model["configured"],
+            "manifest_count": model["manifest_count"],
+            "admission_count": model["admission_count"],
+        }
 
 
 def bootstrap_capability_services(
@@ -1009,6 +1040,14 @@ def bootstrap_capability_services(
     )
 
     event_store = EventStore(max_events=100_000)
+    capability_manifest_registry = _build_capability_manifest_registry_view(
+        runtime_env=runtime_env,
+        clock=clock,
+    )
+    observability.register_source(
+        "capability_manifest_registry",
+        capability_manifest_registry.read_model,
+    )
 
     return CapabilityBootstrap(
         tool_registry=tool_registry,
@@ -1034,4 +1073,105 @@ def bootstrap_capability_services(
         tenant_analytics=tenant_analytics,
         wf_templates=wf_templates,
         event_store=event_store,
+        capability_manifest_registry=capability_manifest_registry,
     )
+
+
+def _build_capability_manifest_registry_view(
+    *,
+    runtime_env: Mapping[str, str],
+    clock: Callable[[], str],
+) -> CapabilityManifestRegistryView:
+    enabled = _runtime_flag(
+        runtime_env,
+        "MULLU_CAPABILITY_MANIFEST_REGISTRY_ENABLED",
+        "MULLU_CAPABILITY_FABRIC_MANIFEST_REGISTRY_ENABLED",
+    )
+    if not enabled:
+        return CapabilityManifestRegistryView(
+            configured=False,
+            registry=None,
+            model=_empty_capability_manifest_registry_read_model(),
+        )
+
+    environment = _runtime_value(
+        runtime_env,
+        "MULLU_CAPABILITY_MANIFEST_ENVIRONMENT",
+        "MULLU_CAPABILITY_FABRIC_MANIFEST_ENVIRONMENT",
+    )
+    if not environment:
+        environment = runtime_env.get("MULLU_ENV", "").strip().lower() or "local"
+    manifest_dir_raw = _runtime_value(
+        runtime_env,
+        "MULLU_CAPABILITY_MANIFEST_DIR",
+        "MULLU_CAPABILITY_FABRIC_MANIFEST_DIR",
+    )
+    manifest_dir = _resolve_manifest_directory(manifest_dir_raw)
+    if not manifest_dir.is_dir():
+        raise ValueError(f"capability manifest directory not found: {manifest_dir}")
+
+    registry = CapabilityManifestRegistry(repo_root=_REPO_ROOT, clock=clock)
+    admissions = registry.admit_directory(
+        manifest_dir,
+        environment=environment,
+        hot_reload=_runtime_flag(
+            runtime_env,
+            "MULLU_CAPABILITY_MANIFEST_HOT_RELOAD",
+            "MULLU_CAPABILITY_FABRIC_MANIFEST_HOT_RELOAD",
+        ),
+    )
+    if not admissions:
+        raise ValueError(f"capability manifest directory contains no manifests: {manifest_dir}")
+    rejected = tuple(
+        admission
+        for admission in admissions
+        if admission.status is CapabilityManifestAdmissionStatus.REJECTED
+    )
+    if rejected:
+        details = "; ".join(
+            f"{admission.source_ref}:{','.join(admission.errors)}"
+            for admission in rejected
+        )
+        raise ValueError(f"capability manifest admission failed: {details}")
+    return CapabilityManifestRegistryView(
+        configured=True,
+        registry=registry,
+        model=registry.read_model(),
+    )
+
+
+def _empty_capability_manifest_registry_read_model() -> dict[str, Any]:
+    return {
+        "manifest_count": 0,
+        "admission_count": 0,
+        "capability_ids": (),
+        "manifests": (),
+        "admissions": (),
+    }
+
+
+def _resolve_manifest_directory(raw_path: str) -> Path:
+    if not raw_path:
+        return _DEFAULT_CAPABILITY_MANIFEST_DIR.resolve()
+    candidate = Path(raw_path)
+    if not candidate.is_absolute():
+        candidate = _REPO_ROOT / candidate
+    resolved = candidate.resolve()
+    try:
+        resolved.relative_to(_REPO_ROOT)
+    except ValueError as exc:
+        raise ValueError("capability manifest directory must stay inside repository") from exc
+    return resolved
+
+
+def _runtime_value(runtime_env: Mapping[str, str], *keys: str) -> str:
+    for key in keys:
+        value = runtime_env.get(key, "").strip()
+        if value:
+            return value
+    return ""
+
+
+def _runtime_flag(runtime_env: Mapping[str, str], *keys: str) -> bool:
+    value = _runtime_value(runtime_env, *keys).lower()
+    return value in {"1", "true", "yes", "on"}
