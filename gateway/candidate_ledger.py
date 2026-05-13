@@ -83,6 +83,8 @@ class CandidateRun:
     recorded_at: str
     record_hash: str = ""
     notes: str = ""
+    adversarial_review_findings: tuple[str, ...] = ()
+    adversarial_review_evidence_refs: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
         if self.outcome not in _VALID_OUTCOMES:
@@ -96,6 +98,16 @@ class CandidateRun:
         object.__setattr__(self, "failure_modes", tuple(self.failure_modes))
         object.__setattr__(self, "evidence_refs", tuple(self.evidence_refs))
         object.__setattr__(self, "baseline_delta", dict(self.baseline_delta))
+        object.__setattr__(
+            self,
+            "adversarial_review_findings",
+            tuple(self.adversarial_review_findings),
+        )
+        object.__setattr__(
+            self,
+            "adversarial_review_evidence_refs",
+            tuple(self.adversarial_review_evidence_refs),
+        )
         if not self.record_hash:
             object.__setattr__(self, "record_hash", compute_record_hash(self))
 
@@ -111,6 +123,7 @@ def compute_record_hash(record: CandidateRun) -> str:
         "baseline_delta": record.baseline_delta,
         "method_families": list(record.method_families),
         "is_baseline": record.is_baseline,
+        "adversarial_review_findings": list(record.adversarial_review_findings),
     }
     return canonical_hash(payload)
 
@@ -138,6 +151,10 @@ def record_from_mapping(payload: dict[str, Any]) -> CandidateRun:
         recorded_at=payload["recorded_at"],
         record_hash=payload.get("record_hash", ""),
         notes=payload.get("notes", ""),
+        adversarial_review_findings=tuple(payload.get("adversarial_review_findings", ())),
+        adversarial_review_evidence_refs=tuple(
+            payload.get("adversarial_review_evidence_refs", ())
+        ),
     )
 
 
@@ -276,6 +293,8 @@ class CandidateLedger:
         run_seed: str = "",
         is_baseline: bool = False,
         notes: str = "",
+        adversarial_review_findings: tuple[str, ...] = (),
+        adversarial_review_evidence_refs: tuple[str, ...] = (),
     ) -> CandidateRun:
         record_id = f"candrun:{candidate_pipeline_id}:{run_seed or 'noseed'}"
         record = CandidateRun(
@@ -295,6 +314,8 @@ class CandidateLedger:
             is_baseline=is_baseline,
             recorded_at=self._clock(),
             notes=notes,
+            adversarial_review_findings=adversarial_review_findings,
+            adversarial_review_evidence_refs=adversarial_review_evidence_refs,
         )
         self._store.append(record)
         return record
@@ -315,15 +336,23 @@ class CandidateLedger:
         primary_metric_id: str,
     ) -> tuple[CandidateRun, ...]:
         """Return passed runs whose baseline_delta on the primary metric is
-        positive when direction is maximize, negative when minimize. A run is
-        only a "winner" if it beat a baseline; runs without a recorded baseline
-        delta are deliberately excluded — that is the load-bearing comparison
-        rule.
+        positive when direction is maximize, negative when minimize, AND that
+        carry no adversarial-review findings. A run is only a "winner" if it
+        beat a baseline AND survived adversarial review; runs without a
+        recorded baseline delta or with non-empty findings are deliberately
+        excluded.
+
+        Note: this method cannot detect the case where the *baseline itself*
+        has findings — the caller must check baseline integrity separately
+        (the composer reports this via baseline_compromised flags on its
+        comparison report).
         """
         runs = [
             run
             for run in self._store.list_for_signature(signature_hash)
-            if run.outcome == "passed" and not run.is_baseline
+            if run.outcome == "passed"
+            and not run.is_baseline
+            and not run.adversarial_review_findings
         ]
         winners: list[CandidateRun] = []
         for run in runs:
