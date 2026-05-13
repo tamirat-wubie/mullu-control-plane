@@ -125,7 +125,40 @@ def test_representative_routes_are_not_unclassified() -> None:
         classified_routes["/api/v1/finance/approval-packets/{case_id}/proof"]["surface_id"]
         == "finance_approval_packets"
     )
-    assert classified_routes["/api/v1/agent/register"]["coverage_state"] == "unproven"
+    assert classified_routes["/api/v1/agent/register"]["surface_id"] == "agent_adapter_protocol"
+    assert classified_routes["/api/v1/agent/action-request"]["surface_id"] == "agent_adapter_protocol"
+    assert classified_routes["/api/v1/agent/restore"]["surface_id"] == "agent_adapter_protocol"
+
+
+def test_agent_adapter_protocol_surface_is_witnessed() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    agent_surface = surfaces["agent_adapter_protocol"]
+    witnesses = set(agent_surface["runtime_witnesses"])
+
+    assert agent_surface["coverage_state"] == "witnessed"
+    assert agent_surface["request_proof"] == "request_proof"
+    assert agent_surface["action_proof"] == "action_proof"
+    assert "/api/v1/agent/register" in agent_surface["representative_paths"]
+    assert "/api/v1/agent/heartbeat" in agent_surface["representative_paths"]
+    assert "/api/v1/agent/action-request" in agent_surface["representative_paths"]
+    assert "/api/v1/agent/action-result" in agent_surface["representative_paths"]
+    assert "/api/v1/agent/checkpoint" in agent_surface["representative_paths"]
+    assert "/api/v1/agent/restore" in agent_surface["representative_paths"]
+    assert "/api/v1/agent/adapter/summary" in agent_surface["representative_paths"]
+    assert "mcoi/mcoi_runtime/app/routers/adapter.py" in agent_surface["evidence_files"]
+    assert "mcoi/mcoi_runtime/app/routers/deps.py" in agent_surface["evidence_files"]
+    assert "mcoi/tests/test_agent_adapter_protocol.py" in agent_surface["evidence_files"]
+    assert "mcoi/tests/test_server_phase217.py" in agent_surface["evidence_files"]
+    assert "agent_register_emits_governed_identity" in witnesses
+    assert "agent_heartbeat_requires_registered_agent" in witnesses
+    assert "agent_action_request_runs_guard_chain" in witnesses
+    assert "agent_action_result_records_outcome" in witnesses
+    assert "agent_goal_context_propagates_to_action_request" in witnesses
+    assert "agent_checkpoint_restore_errors_are_bounded" in witnesses
+    assert "agent_adapter_summary_is_governed_read_model" in witnesses
+    assert closure_actions["classify_agent_adapter_protocol_routes"]["status"] == "closed"
 
 
 def test_finance_approval_packet_surface_is_witnessed() -> None:

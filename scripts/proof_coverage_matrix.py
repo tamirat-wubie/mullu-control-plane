@@ -264,6 +264,38 @@ def proof_coverage_matrix() -> dict[str, Any]:
             ],
         ),
         _surface(
+            "agent_adapter_protocol",
+            [
+                "/api/v1/agent/register",
+                "/api/v1/agent/heartbeat",
+                "/api/v1/agent/action-request",
+                "/api/v1/agent/action-result",
+                "/api/v1/agent/checkpoint",
+                "/api/v1/agent/restore",
+                "/api/v1/agent/adapter/summary",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "mcoi/mcoi_runtime/app/routers/adapter.py",
+                "mcoi/mcoi_runtime/app/routers/deps.py",
+                "mcoi/tests/test_agent_adapter_protocol.py",
+                "mcoi/tests/test_server_phase217.py",
+            ],
+            "Agent adapter protocol routes register external workers, maintain heartbeat state, pass action requests through the guard chain, record action results, checkpoint and restore coordination state with bounded errors, and expose a governed summary read model.",
+            [
+                "agent_register_emits_governed_identity",
+                "agent_heartbeat_requires_registered_agent",
+                "agent_action_request_runs_guard_chain",
+                "agent_action_result_records_outcome",
+                "agent_goal_context_propagates_to_action_request",
+                "agent_checkpoint_restore_errors_are_bounded",
+                "agent_adapter_summary_is_governed_read_model",
+            ],
+        ),
+        _surface(
             "model_experiment_control",
             ["/api/v1/models", "/api/v1/ab-test", "/api/v1/ab-test/summary"],
             "request_proof",
@@ -2284,6 +2316,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
         {
             "action_id": "classify_operator_console_read_model_routes",
             "surfaces": ["operator_console_read_models"],
+            "status": "closed",
+        },
+        {
+            "action_id": "classify_agent_adapter_protocol_routes",
+            "surfaces": ["agent_adapter_protocol"],
             "status": "closed",
         },
         {
