@@ -855,6 +855,33 @@ def proof_coverage_matrix() -> dict[str, Any]:
             ],
         ),
         _surface(
+            "tool_registry_read_models",
+            [
+                "/api/v1/tools",
+                "/api/v1/tools/history",
+                "/api/v1/tools/llm-format",
+            ],
+            "read_model",
+            "read_model",
+            "audit_chain",
+            "witnessed",
+            [
+                "mcoi/mcoi_runtime/app/routers/data/tools.py",
+                "mcoi/mcoi_runtime/core/tool_use.py",
+                "mcoi/tests/test_server_phase212.py",
+                "mcoi/tests/test_tool_use.py",
+            ],
+            "Tool registry read-model routes expose registered tool metadata, bounded invocation history, and LLM-compatible schemas while invocation remains governed by the tool_invocation action-proof surface.",
+            [
+                "tool_registry_list_returns_registered_tools",
+                "tool_registry_category_filter_bounded",
+                "tool_llm_format_exports_input_schema",
+                "tool_history_returns_bounded_summary",
+                "tool_invocation_history_limit_applied",
+                "tool_invoke_separate_action_proof_surface",
+            ],
+        ),
+        _surface(
             "operational_health_read_models",
             [
                 "/api/v1/health/deep",
@@ -3098,6 +3125,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
         {
             "action_id": "classify_governance_explanation_lifecycle_routes",
             "surfaces": ["governance_explanation_lifecycle"],
+            "status": "closed",
+        },
+        {
+            "action_id": "classify_tool_registry_read_model_routes",
+            "surfaces": ["tool_registry_read_models", "tool_invocation"],
             "status": "closed",
         },
         {

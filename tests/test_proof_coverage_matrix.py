@@ -160,6 +160,10 @@ def test_representative_routes_are_not_unclassified() -> None:
         == "governance_explanation_lifecycle"
     )
     assert classified_routes["/api/v1/explain/summary"]["surface_id"] == "governance_explanation_lifecycle"
+    assert classified_routes["/api/v1/tools"]["surface_id"] == "tool_registry_read_models"
+    assert classified_routes["/api/v1/tools/history"]["surface_id"] == "tool_registry_read_models"
+    assert classified_routes["/api/v1/tools/llm-format"]["surface_id"] == "tool_registry_read_models"
+    assert classified_routes["/api/v1/tools/invoke"]["surface_id"] == "tool_invocation"
     assert classified_routes["/api/v1/traces"]["surface_id"] == "trace_observability_read_models"
     assert classified_routes["/api/v1/traces/slow"]["surface_id"] == "trace_observability_read_models"
     assert classified_routes["/api/v1/traces/summary"]["surface_id"] == "trace_observability_read_models"
