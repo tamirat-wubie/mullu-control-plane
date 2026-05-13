@@ -56,6 +56,7 @@ files are open wire contracts. Runtime modules under `mcoi/`, `gateway/`, and
 | `general_agent_promotion_environment_bindings.schema.json` | Canonical presence-only operator environment binding contract |
 | `general_agent_promotion_environment_binding_receipt.schema.json` | Canonical presence-only operator environment binding receipt |
 | `general_agent_promotion_handoff_packet.schema.json` | Canonical promotion handoff packet |
+| `gateway_health.schema.json` | Canonical public gateway health read model |
 | `gateway_observability_snapshot.schema.json` | Canonical gateway observability summary with bounded run metrics |
 | `goal.schema.json` | Canonical governed goal compilation contract |
 | `policy_decision.schema.json` | Canonical policy gate outcome |

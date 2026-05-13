@@ -12,6 +12,7 @@ Invariants:
 from __future__ import annotations
 
 import os
+from pathlib import Path
 
 import pytest
 
@@ -21,6 +22,11 @@ from gateway.capability_fabric import (
     load_default_capability_entries,
     load_default_domain_capsules,
 )
+
+
+ROOT = Path(__file__).resolve().parents[2]
+SOFTWARE_DEV_CAPSULE_PATH = ROOT / "capsules" / "software_dev.json"
+SOFTWARE_DEV_CAPABILITY_PACK_PATH = ROOT / "capabilities" / "software_dev" / "capability_pack.json"
 
 
 def _clock() -> str:
@@ -105,6 +111,44 @@ def test_capability_fabric_env_loader_installs_checked_in_default_packs(
         "11.observation_verification_plane",
         "12.deployment_witness_plane",
     ]
+    assert read_model["capability_manifest_registry_configured"] is False
+    assert read_model["capability_manifest_registry"]["manifest_count"] == 0
+
+
+def test_capability_fabric_env_loader_projects_local_manifest_registry(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("MULLU_CAPABILITY_FABRIC_ADMISSION_ENABLED", "true")
+    monkeypatch.setenv("MULLU_CAPABILITY_FABRIC_CAPSULE_PATH", str(SOFTWARE_DEV_CAPSULE_PATH))
+    monkeypatch.setenv("MULLU_CAPABILITY_FABRIC_CAPABILITY_PACK_PATH", str(SOFTWARE_DEV_CAPABILITY_PACK_PATH))
+    monkeypatch.setenv("MULLU_CAPABILITY_FABRIC_MANIFEST_REGISTRY_ENABLED", "true")
+    monkeypatch.setenv("MULLU_CAPABILITY_FABRIC_MANIFEST_ENVIRONMENT", "local")
+
+    gate = build_capability_admission_gate_from_env(clock=_clock)
+
+    assert gate is not None
+    read_model = gate.read_model()
+    manifest_registry = read_model["capability_manifest_registry"]
+    assert read_model["capsule_count"] == 1
+    assert read_model["capability_count"] == 6
+    assert read_model["capability_manifest_registry_configured"] is True
+    assert manifest_registry["manifest_count"] == 6
+    assert manifest_registry["admission_count"] == 6
+    assert "software_dev.change.run" in manifest_registry["capability_ids"]
+
+
+def test_capability_fabric_env_loader_rejects_production_hot_reload_for_manifest_registry(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("MULLU_CAPABILITY_FABRIC_ADMISSION_ENABLED", "true")
+    monkeypatch.setenv("MULLU_CAPABILITY_FABRIC_CAPSULE_PATH", str(SOFTWARE_DEV_CAPSULE_PATH))
+    monkeypatch.setenv("MULLU_CAPABILITY_FABRIC_CAPABILITY_PACK_PATH", str(SOFTWARE_DEV_CAPABILITY_PACK_PATH))
+    monkeypatch.setenv("MULLU_CAPABILITY_FABRIC_MANIFEST_REGISTRY_ENABLED", "true")
+    monkeypatch.setenv("MULLU_CAPABILITY_FABRIC_MANIFEST_ENVIRONMENT", "production")
+    monkeypatch.setenv("MULLU_CAPABILITY_FABRIC_MANIFEST_HOT_RELOAD", "true")
+
+    with pytest.raises(ValueError, match="production_hot_reload_denied_for_effect_bearing_capability"):
+        build_capability_admission_gate_from_env(clock=_clock)
 
 
 def test_default_capability_admission_gate_accepts_pack_capabilities() -> None:

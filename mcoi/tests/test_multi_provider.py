@@ -132,6 +132,15 @@ OPENAI_COMPATIBLE_PROVIDER_CLASSES = [
     OpenRouterBackend,
 ]
 
+LOW_COST_PROVIDER_CATALOG_CLASSES = [
+    NscaleBackend,
+    ScalewayBackend,
+    OVHCloudBackend,
+    AIMLAPIBackend,
+    InfomaniakBackend,
+    KatalepticBackend,
+]
+
 
 def _install_fake_httpx(monkeypatch, post_fn) -> None:
     monkeypatch.setitem(sys.modules, "httpx", types.SimpleNamespace(post=post_fn))
@@ -143,6 +152,12 @@ def _params(prompt: str = "Hello", model: str = "test-model") -> LLMInvocationPa
         model_name=model,
         max_tokens=100,
     )
+
+
+def _catalog_backend(provider_cls):
+    if provider_cls is InfomaniakBackend:
+        return provider_cls(api_key="test-key", base_url="https://api.infomaniak.com/2/ai/product-123/openai/v1")
+    return provider_cls(api_key="test-key")
 
 
 # Protocol Compliance
@@ -535,6 +550,52 @@ class TestProviderRegistry:
 
         monkeypatch.setenv("CLOUDFLARE_ACCOUNT_ID", "account-id")
         assert "cloudflare" in available_providers()
+
+
+class TestLowCostProviderCatalog:
+    def test_routing_models_are_unique_and_provider_scoped(self):
+        routing_models = [provider_cls.ROUTING_MODEL for provider_cls in LOW_COST_PROVIDER_CATALOG_CLASSES]
+
+        assert len(routing_models) == len(set(routing_models))
+        assert all("/" in routing_model for routing_model in routing_models)
+        assert all(not routing_model.startswith("/") for routing_model in routing_models)
+
+    def test_routing_aliases_resolve_to_provider_model_ids(self):
+        for provider_cls in LOW_COST_PROVIDER_CATALOG_CLASSES:
+            assert provider_cls.MODEL_ALIASES[provider_cls.ROUTING_MODEL] == provider_cls.DEFAULT_MODEL
+            assert provider_cls.DEFAULT_MODEL
+            assert provider_cls.ROUTING_MODEL != provider_cls.DEFAULT_MODEL
+
+    @pytest.mark.parametrize("provider_cls", LOW_COST_PROVIDER_CATALOG_CLASSES)
+    def test_routing_aliases_translate_before_provider_call(self, provider_cls, monkeypatch):
+        observed_requests: list[dict[str, object]] = []
+
+        class _Response:
+            @staticmethod
+            def json():
+                return {
+                    "choices": [{"message": {"content": "ok"}}],
+                    "usage": {"prompt_tokens": 1000, "completion_tokens": 1000},
+                }
+
+        def _post(url, **kwargs):
+            observed_requests.append({"url": url, "json": kwargs["json"]})
+            return _Response()
+
+        _install_fake_httpx(monkeypatch, _post)
+
+        backend = _catalog_backend(provider_cls)
+        result = backend.call(_params(model=provider_cls.ROUTING_MODEL))
+
+        assert result.finished is True
+        assert result.content == "ok"
+        assert result.model_name == provider_cls.DEFAULT_MODEL
+        assert result.provider == provider_cls.provider
+        assert backend.call_count == 1
+        assert result.cost > 0.0
+        assert result.cost <= 0.001
+        assert observed_requests[-1]["url"].endswith("/chat/completions")
+        assert observed_requests[-1]["json"]["model"] == provider_cls.DEFAULT_MODEL
 
 
 # Custom Model Override

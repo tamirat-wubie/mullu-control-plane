@@ -263,6 +263,12 @@
       "surface": "observability"
     },
     {
+      "schema_id": "gateway-health",
+      "path": "schemas/gateway_health.schema.json",
+      "urn": "urn:mullusi:schema:gateway-health:1",
+      "surface": "deployment"
+    },
+    {
       "schema_id": "gateway-publication-receipt-validation",
       "path": "schemas/gateway_publication_receipt_validation.schema.json",
       "urn": "urn:mullusi:schema:gateway-publication-receipt-validation:1",

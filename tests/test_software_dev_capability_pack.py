@@ -157,6 +157,32 @@ def test_software_dev_named_loader_installs_only_software_dev_domain() -> None:
     assert read_model["capsule_count"] == 1
     assert read_model["capability_count"] == 6
     assert read_model["domains"] == ({"domain": "software_dev", "capability_ids": tuple(sorted(capsule.capability_refs))},)
+    assert read_model["capability_manifest_registry_configured"] is False
+    assert read_model["capability_manifest_registry"]["manifest_count"] == 0
+
+
+def test_software_dev_named_loader_projects_manifest_registry_when_configured() -> None:
+    gate = build_software_dev_capability_admission_gate(
+        clock=lambda: "2026-05-13T00:00:00+00:00",
+        require_production_ready=False,
+        manifest_environment="local",
+    )
+    read_model = gate.read_model()
+    manifest_registry = read_model["capability_manifest_registry"]
+    manifests = {
+        manifest["capability_id"]: manifest
+        for manifest in manifest_registry["manifests"]
+    }
+
+    assert read_model["capability_manifest_registry_configured"] is True
+    assert manifest_registry["manifest_count"] == 6
+    assert manifest_registry["admission_count"] == 6
+    assert set(manifest_registry["capability_ids"]) == {
+        entry.capability_id for entry in load_software_dev_capability_entries()
+    }
+    assert manifests["software_dev.change.run"]["sandbox_required"] is True
+    assert manifests["software_dev.change.run"]["rollback_required"] is True
+    assert manifests["software_dev.repo_map.read"]["effect_bearing"] is False
 
 
 def test_software_dev_capsule_references_exact_pack_capabilities() -> None:

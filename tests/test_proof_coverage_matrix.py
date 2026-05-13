@@ -15,8 +15,10 @@ import json
 from scripts.proof_coverage_matrix import (
     ASSURANCE_OUTPUT,
     CANONICAL_OUTPUT,
+    DOC_OUTPUT,
     REPO_ROOT,
     discover_declared_routes,
+    operator_document,
     route_coverage_report,
     proof_coverage_matrix,
     validate_matrix_routes,
@@ -785,16 +787,19 @@ def test_production_evidence_plane_is_witnessed_and_schema_backed() -> None:
     assert evidence_surface["request_proof"] == "read_model"
     assert evidence_surface["action_proof"] == "read_model"
     assert evidence_surface["audit"] == "audit_chain"
+    assert "/health" in evidence_surface["representative_paths"]
     assert "/deployment/witness" in evidence_surface["representative_paths"]
     assert "/capabilities/evidence" in evidence_surface["representative_paths"]
     assert "/audit/verify" in evidence_surface["representative_paths"]
     assert "/proof/verify" in evidence_surface["representative_paths"]
+    assert "schemas/gateway_health.schema.json" in evidence_surface["evidence_files"]
     assert "schemas/production_evidence_witness.schema.json" in evidence_surface["evidence_files"]
     assert "schemas/capability_evidence_endpoint.schema.json" in evidence_surface["evidence_files"]
     assert "schemas/audit_verification_endpoint.schema.json" in evidence_surface["evidence_files"]
     assert "schemas/proof_verification_endpoint.schema.json" in evidence_surface["evidence_files"]
     assert "tests/test_gateway/test_production_evidence.py" in evidence_surface["evidence_files"]
     assert "tests/test_collect_deployment_witness.py" in evidence_surface["evidence_files"]
+    assert "gateway_health_schema_valid" in witnesses
     assert "signed_production_evidence_witness" in witnesses
     assert "capability_evidence_schema_valid" in witnesses
     assert "audit_verification_schema_valid" in witnesses
@@ -2524,8 +2529,9 @@ def test_generated_assurance_copy_matches_when_present() -> None:
 
 def test_operator_document_mentions_every_surface() -> None:
     matrix = _load_fixture()
-    doc = (REPO_ROOT / "docs" / "40_proof_coverage_matrix.md").read_text(encoding="utf-8")
+    doc = DOC_OUTPUT.read_text(encoding="utf-8")
 
+    assert doc == operator_document(matrix)
     assert all(f"`{surface['surface_id']}`" in doc for surface in matrix["surfaces"])
     assert all(f"`{action['action_id']}`" in doc for action in matrix["closure_actions"])
     assert "schema contract validation" in doc
