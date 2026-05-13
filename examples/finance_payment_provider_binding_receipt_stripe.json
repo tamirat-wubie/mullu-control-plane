@@ -1,0 +1,65 @@
+{
+  "accepted_binding_names": [
+    "PAYMENT_PROVIDER_CONNECTOR_TOKEN",
+    "STRIPE_API_KEY",
+    "BANK_ACH_CONNECTOR_TOKEN",
+    "MANUAL_BANK_PORTAL_TOKEN"
+  ],
+  "binding_count": 4,
+  "bindings": [
+    {
+      "approval_required": true,
+      "binding_kind": "secret",
+      "name": "PAYMENT_PROVIDER_CONNECTOR_TOKEN",
+      "present": false,
+      "provider_scope": "shared",
+      "receipt_projection": "name_and_presence_only",
+      "risk": "high",
+      "value_serialized": false
+    },
+    {
+      "approval_required": true,
+      "binding_kind": "secret",
+      "name": "STRIPE_API_KEY",
+      "present": true,
+      "provider_scope": "stripe",
+      "receipt_projection": "name_and_presence_only",
+      "risk": "high",
+      "value_serialized": false
+    },
+    {
+      "approval_required": true,
+      "binding_kind": "secret",
+      "name": "BANK_ACH_CONNECTOR_TOKEN",
+      "present": false,
+      "provider_scope": "bank_ach",
+      "receipt_projection": "name_and_presence_only",
+      "risk": "high",
+      "value_serialized": false
+    },
+    {
+      "approval_required": true,
+      "binding_kind": "secret",
+      "name": "MANUAL_BANK_PORTAL_TOKEN",
+      "present": false,
+      "provider_scope": "manual_bank_portal",
+      "receipt_projection": "name_and_presence_only",
+      "risk": "high",
+      "value_serialized": false
+    }
+  ],
+  "checked_at": "2026-05-01T12:00:00+00:00",
+  "present_binding_names": [
+    "STRIPE_API_KEY"
+  ],
+  "provider": "stripe",
+  "provider_binding_names": [
+    "PAYMENT_PROVIDER_CONNECTOR_TOKEN",
+    "STRIPE_API_KEY"
+  ],
+  "provider_binding_ref": "provider-binding:stripe:660bfb37d537d381",
+  "ready": true,
+  "receipt_id": "provider-binding:stripe:660bfb37d537d381",
+  "schema_version": 1,
+  "secret_serialization": "forbidden"
+}

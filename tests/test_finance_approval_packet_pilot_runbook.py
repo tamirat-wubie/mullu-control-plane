@@ -54,5 +54,9 @@ def test_finance_runbook_documents_strict_promotion_boundary() -> None:
     assert "python scripts\\produce_finance_approval_payment_closure_receipt.py --provider stripe --provider-binding-receipt .change_assurance\\finance_approval_payment_provider_binding_receipt.json" in content
     assert "python scripts\\validate_finance_approval_payment_closure_receipt.py --receipt .change_assurance\\finance_approval_payment_closure_receipt.json --provider-binding-receipt .change_assurance\\finance_approval_payment_provider_binding_receipt.json --require-ready --json" in content
     assert "provider-binding:{provider}:..." in content
+    assert "Reviewer fixtures" in content
+    assert "examples\\finance_payment_provider_binding_receipt_stripe.json" in content
+    assert "examples\\finance_payment_closure_receipt_stripe_bound.json" in content
+    assert "These fixtures are deterministic Stripe-scoped evidence examples" in content
     assert "not a production payment claim" in content
     assert expected_manifest_result in content

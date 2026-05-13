@@ -346,6 +346,15 @@ python scripts\validate_finance_approval_payment_closure_receipt.py --receipt .c
 
 The payment-provider binding receipt records only provider-scoped credential name presence for `PAYMENT_PROVIDER_CONNECTOR_TOKEN`, `STRIPE_API_KEY`, `BANK_ACH_CONNECTOR_TOKEN`, or `MANUAL_BANK_PORTAL_TOKEN`. It never serializes credential values. The payment closure receipt remains blocked unless the binding receipt is ready, provider-matched, and its `provider-binding:{provider}:...` ref is present in both root evidence and provider receipt evidence.
 
+Reviewer fixtures:
+
+```powershell
+python scripts\validate_finance_approval_payment_provider_binding_receipt.py --receipt examples\finance_payment_provider_binding_receipt_stripe.json --require-ready --json
+python scripts\validate_finance_approval_payment_closure_receipt.py --receipt examples\finance_payment_closure_receipt_stripe_bound.json --provider-binding-receipt examples\finance_payment_provider_binding_receipt_stripe.json --require-ready --json
+```
+
+These fixtures are deterministic Stripe-scoped evidence examples. They prove the validator path and provider-binding reference contract, but they do not prove live provider execution.
+
 This is still not a production payment claim. It is a governed closure-evidence path for non-sandbox provider labels. Live payment execution still requires provider-live receipt certification, reconciliation evidence, and approval-bound dispatch controls.
 
 Deterministic local pilot witness:

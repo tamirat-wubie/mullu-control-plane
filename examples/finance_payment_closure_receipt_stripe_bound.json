@@ -1,0 +1,57 @@
+{
+  "adapter_id": "finance.payment_adapter",
+  "amount": {
+    "currency": "USD",
+    "minor_units": 120000
+  },
+  "approval_id": "fin-approval-001",
+  "approved_external_write": true,
+  "blockers": [],
+  "capability_id": "payment.execute.with_approval",
+  "case_id": "case-success-001",
+  "checked_at": "2026-05-01T12:00:00+00:00",
+  "effect_type": "payment_sent_with_approval",
+  "evidence_refs": [
+    "provider:payment:8ac03556c6863c0d",
+    "ledger:reconciliation:07bddb6bfce7b3c2",
+    "provider-binding:stripe:660bfb37d537d381"
+  ],
+  "external_write": true,
+  "idempotency_key": "idempotency:case-success-001:payment",
+  "invoice_id": "INV-OK-001",
+  "ledger_reconciliation": {
+    "amount_matched": true,
+    "currency_matched": true,
+    "evidence_refs": [
+      "ledger:reconciliation:07bddb6bfce7b3c2"
+    ],
+    "invoice_id": "INV-OK-001",
+    "ledger_system": "sandbox-ledger",
+    "payment_provider_receipt_ref": "provider:payment:8ac03556c6863c0d",
+    "receipt_ref": "ledger:reconciliation:07bddb6bfce7b3c2",
+    "reconciliation_status": "matched"
+  },
+  "ledger_reconciliation_ref": "ledger:reconciliation:07bddb6bfce7b3c2",
+  "payment_provider_receipt_ref": "provider:payment:8ac03556c6863c0d",
+  "provider_receipt": {
+    "amount": {
+      "currency": "USD",
+      "minor_units": 120000
+    },
+    "approval_id": "fin-approval-001",
+    "evidence_refs": [
+      "provider:payment:8ac03556c6863c0d",
+      "provider-binding:stripe:660bfb37d537d381"
+    ],
+    "external_write": true,
+    "idempotency_key": "idempotency:case-success-001:payment",
+    "provider": "stripe",
+    "provider_operation": "payment.execute.with_approval",
+    "receipt_ref": "provider:payment:8ac03556c6863c0d",
+    "transaction_id_hash": "8e27880d22dbf882a6044dc1eeb328d71c64cc0e4b012c2a90fb0e249753f61a"
+  },
+  "receipt_id": "finance-payment-closure-receipt-b1a9e2f0438ad177",
+  "status": "passed",
+  "tenant_id": "tenant-demo",
+  "verification_status": "passed"
+}
