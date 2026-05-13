@@ -11,11 +11,15 @@ import pytest
 from mcoi_runtime.contracts.email import (
     ActionExtractionStatus,
     ApprovalDecision,
+    ApprovalResponse,
     EmailDirection,
+    EmailActionExtraction,
     EmailEnvelope,
     EmailMessage,
+    EmailParseResult,
     EmailParseStatus,
     EmailPurpose,
+    EmailThreadRef,
     EmailWorkflowLink,
 )
 from mcoi_runtime.core.email_workflow import (
@@ -50,6 +54,108 @@ def _inbound(
         body=body,
         workflow_link=EmailWorkflowLink(correlation_id=correlation_id),
     )
+
+
+# --- Contract hardening ---
+
+
+class TestEmailContracts:
+    def test_envelope_rejects_malformed_recipients(self):
+        with pytest.raises(ValueError, match="recipients must be an array"):
+            EmailEnvelope(sender="user@example.com", recipients="ops@example.com", subject="Hi")
+        with pytest.raises(ValueError, match="recipients must contain at least one item"):
+            EmailEnvelope(sender="user@example.com", recipients=(), subject="Hi")
+        with pytest.raises(ValueError, match=r"recipients\[0\]"):
+            EmailEnvelope(sender="user@example.com", recipients=("",), subject="Hi")
+
+    def test_thread_ref_rejects_malformed_references(self):
+        with pytest.raises(ValueError, match="references must be an array"):
+            EmailThreadRef(thread_id="thread-1", references="msg-1")
+        with pytest.raises(ValueError, match=r"references\[0\]"):
+            EmailThreadRef(thread_id="thread-1", references=("",))
+        with pytest.raises(ValueError, match="in_reply_to"):
+            EmailThreadRef(thread_id="thread-1", in_reply_to="")
+
+    def test_workflow_link_rejects_empty_optional_ids(self):
+        with pytest.raises(ValueError, match="skill_id"):
+            EmailWorkflowLink(correlation_id="corr-1", skill_id="")
+        with pytest.raises(ValueError, match="execution_id"):
+            EmailWorkflowLink(correlation_id="corr-1", execution_id=" ")
+        with pytest.raises(ValueError, match="runbook_id"):
+            EmailWorkflowLink(correlation_id="corr-1", runbook_id="")
+
+    def test_message_rejects_invalid_nested_records(self):
+        envelope = EmailEnvelope(
+            sender="user@example.com",
+            recipients=("ops@example.com",),
+            subject="Hi",
+        )
+        with pytest.raises(ValueError, match="thread must be an EmailThreadRef"):
+            EmailMessage(
+                message_id="msg-1",
+                direction=EmailDirection.INBOUND,
+                purpose=EmailPurpose.GENERAL,
+                envelope=envelope,
+                body="hello",
+                thread={"thread_id": "thread-1"},
+            )
+        with pytest.raises(ValueError, match="workflow_link must be an EmailWorkflowLink"):
+            EmailMessage(
+                message_id="msg-2",
+                direction=EmailDirection.INBOUND,
+                purpose=EmailPurpose.GENERAL,
+                envelope=envelope,
+                body="hello",
+                workflow_link={"correlation_id": "corr-1"},
+            )
+
+    def test_parse_result_rejects_invalid_nested_records(self):
+        with pytest.raises(ValueError, match="detected_purpose"):
+            EmailParseResult(
+                parse_id="parse-1",
+                message_id="msg-1",
+                status=EmailParseStatus.PARSED,
+                detected_purpose="approval_response",
+            )
+        with pytest.raises(ValueError, match="approval_response"):
+            EmailParseResult(
+                parse_id="parse-2",
+                message_id="msg-1",
+                status=EmailParseStatus.PARSED,
+                approval_response={"decision": "approved"},
+            )
+        with pytest.raises(ValueError, match="error_message"):
+            EmailParseResult(
+                parse_id="parse-3",
+                message_id="msg-1",
+                status=EmailParseStatus.MALFORMED,
+                error_message="",
+            )
+
+    def test_optional_text_fields_reject_empty_values(self):
+        with pytest.raises(ValueError, match="reason"):
+            ApprovalResponse(
+                response_id="resp-1",
+                message_id="msg-1",
+                correlation_id="corr-1",
+                decision=ApprovalDecision.APPROVED,
+                responder="user@example.com",
+                reason="",
+            )
+        with pytest.raises(ValueError, match="action_type"):
+            EmailActionExtraction(
+                extraction_id="ext-1",
+                message_id="msg-1",
+                status=ActionExtractionStatus.ACTION_FOUND,
+                action_type="",
+            )
+        with pytest.raises(ValueError, match="suggested_skill_id"):
+            EmailActionExtraction(
+                extraction_id="ext-2",
+                message_id="msg-1",
+                status=ActionExtractionStatus.NO_ACTION,
+                suggested_skill_id=" ",
+            )
 
 
 # --- Approval parsing ---
@@ -231,6 +337,7 @@ class TestEndToEndScenarios:
         assert parse_result.status is EmailParseStatus.PARSED
         assert parse_result.approval_response.decision is ApprovalDecision.APPROVED
         assert parse_result.approval_response.correlation_id == "corr-e2e-1"
+        assert request.workflow_link.correlation_id == "corr-e2e-1"
 
     def test_approval_request_then_rejection(self):
         """Golden: send request, receive rejection."""

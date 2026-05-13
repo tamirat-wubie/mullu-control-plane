@@ -91,6 +91,14 @@ class TestIdentityRecord:
         r = self._make(tags=("tag1",))
         assert isinstance(r.tags, tuple)
 
+    def test_text_arrays_reject_scalar_and_blank_items(self):
+        with pytest.raises(ValueError, match="role_ids must be an array"):
+            self._make(role_ids="admin")
+        with pytest.raises(ValueError, match=r"role_ids\[0\]"):
+            self._make(role_ids=("",))
+        with pytest.raises(ValueError, match="tags must be an array"):
+            self._make(tags="critical")
+
     def test_frozen(self):
         r = self._make()
         with pytest.raises(AttributeError):
@@ -218,6 +226,20 @@ class TestContactPreferenceRecord:
                 created_at=NOW,
             )
 
+    def test_channel_arrays_reject_scalar_text(self):
+        with pytest.raises(ValueError, match="preferred_channels must be an array"):
+            ContactPreferenceRecord(
+                preference_id="pref-bad3", identity_id="id-1",
+                preferred_channels="email",
+                created_at=NOW,
+            )
+        with pytest.raises(ValueError, match="blocked_channels must be an array"):
+            ContactPreferenceRecord(
+                preference_id="pref-bad4", identity_id="id-1",
+                blocked_channels="sms",
+                created_at=NOW,
+            )
+
 
 # ---------------------------------------------------------------------------
 # AvailabilityWindow
@@ -308,6 +330,15 @@ class TestEscalationChainRecord:
                 created_at=NOW,
             )
 
+    def test_scalar_targets_rejected(self):
+        with pytest.raises(ValueError, match="target_identity_ids must be an array"):
+            EscalationChainRecord(
+                chain_id="esc-bad5", name="Bad",
+                mode=EscalationMode.SEQUENTIAL,
+                target_identity_ids="id-1",
+                created_at=NOW,
+            )
+
 
 # ---------------------------------------------------------------------------
 # IdentityResolutionRecord
@@ -329,6 +360,14 @@ class TestIdentityResolutionRecord:
                 resolution_id="res-bad", resolved_identity_id="id-1",
                 source_ref="x", source_type="email",
                 confidence=1.5, resolved_at=NOW,
+            )
+
+    def test_confidence_rejects_boolean(self):
+        with pytest.raises(ValueError, match="confidence"):
+            IdentityResolutionRecord(
+                resolution_id="res-bool", resolved_identity_id="id-1",
+                source_ref="x", source_type="email",
+                confidence=True, resolved_at=NOW,
             )
 
     def test_empty_source_ref_rejected(self):
@@ -360,6 +399,22 @@ class TestIdentityRoutingDecision:
             IdentityRoutingDecision(
                 decision_id="rd-bad", target_identity_id="id-1",
                 selected_handle_id="hd-1", reason="",
+                created_at=NOW,
+            )
+
+    def test_fallback_handles_reject_scalar_and_blank_items(self):
+        with pytest.raises(ValueError, match="fallback_handle_ids must be an array"):
+            IdentityRoutingDecision(
+                decision_id="rd-bad2", target_identity_id="id-1",
+                selected_handle_id="hd-1", reason="Best",
+                fallback_handle_ids="hd-2",
+                created_at=NOW,
+            )
+        with pytest.raises(ValueError, match=r"fallback_handle_ids\[0\]"):
+            IdentityRoutingDecision(
+                decision_id="rd-bad3", target_identity_id="id-1",
+                selected_handle_id="hd-1", reason="Best",
+                fallback_handle_ids=("",),
                 created_at=NOW,
             )
 
