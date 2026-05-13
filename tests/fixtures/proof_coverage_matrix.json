@@ -521,8 +521,8 @@
       "request_proof": 2
     },
     "by_audit": {
-      "action_proof": 0,
-      "audit_chain": 74,
+      "action_proof": 1,
+      "audit_chain": 73,
       "gap": 0,
       "read_model": 4,
       "request_proof": 0
@@ -2473,7 +2473,7 @@
     },
     {
       "action_proof": "action_proof",
-      "audit": "audit_chain",
+      "audit": "action_proof",
       "coverage_state": "witnessed",
       "evidence_files": [
         "mcoi/mcoi_runtime/app/routers/multi_agent.py",
@@ -2483,7 +2483,7 @@
         "mcoi/tests/test_multi_agent_runtime.py",
         "mcoi/tests/test_server_phase217.py"
       ],
-      "notes": "Multi-agent coordination routes delegate work, resolve delegations, record handoffs, record merge decisions, record explicit conflicts, expose unresolved-conflict read models, and publish bounded summary counts through the coordination engine and audit trail.",
+      "notes": "Multi-agent coordination routes delegate work, resolve delegations, record handoffs, record merge decisions, record explicit conflicts, expose unresolved-conflict read models, and publish bounded summary counts through the coordination engine; delegation, resolution, and handoff routes also write audit-trail entries.",
       "representative_paths": [
         "/api/v1/multi-agent/delegate",
         "/api/v1/multi-agent/delegate/resolve",

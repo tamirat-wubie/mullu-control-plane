@@ -181,6 +181,7 @@ def test_multi_agent_coordination_surface_is_witnessed() -> None:
     assert multi_agent_surface["coverage_state"] == "witnessed"
     assert multi_agent_surface["request_proof"] == "request_proof"
     assert multi_agent_surface["action_proof"] == "action_proof"
+    assert multi_agent_surface["audit"] == "action_proof"
     assert "/api/v1/multi-agent/delegate" in multi_agent_surface["representative_paths"]
     assert "/api/v1/multi-agent/delegate/resolve" in multi_agent_surface["representative_paths"]
     assert "/api/v1/multi-agent/handoff" in multi_agent_surface["representative_paths"]
