@@ -4,8 +4,6 @@ from datetime import datetime, timedelta, timezone
 
 import pytest
 
-NOW = "2025-01-01T00:00:00+00:00"
-
 from mcoi_runtime.contracts.workflow import (
     StageExecutionResult,
     StageStatus,
@@ -20,6 +18,8 @@ from mcoi_runtime.core.workflow import (
     WorkflowValidator,
 )
 from mcoi_runtime.core.invariants import RuntimeCoreInvariantError
+
+NOW = "2025-01-01T00:00:00+00:00"
 
 
 # --- Helpers ---
