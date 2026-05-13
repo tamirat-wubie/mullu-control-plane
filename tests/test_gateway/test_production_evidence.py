@@ -28,6 +28,7 @@ from scripts.validate_schemas import _load_schema, _validate_schema_instance  # 
 
 
 PRODUCTION_EVIDENCE_SCHEMA = _ROOT / "schemas" / "production_evidence_witness.schema.json"
+GATEWAY_HEALTH_SCHEMA = _ROOT / "schemas" / "gateway_health.schema.json"
 CAPABILITY_EVIDENCE_SCHEMA = _ROOT / "schemas" / "capability_evidence_endpoint.schema.json"
 AUDIT_VERIFICATION_SCHEMA = _ROOT / "schemas" / "audit_verification_endpoint.schema.json"
 PROOF_VERIFICATION_SCHEMA = _ROOT / "schemas" / "proof_verification_endpoint.schema.json"
@@ -68,6 +69,21 @@ class StubCapabilityAdmissionGate:
             "governed_capability_records": (),
             "capability_maturity_assessments": (),
         }
+
+
+def test_gateway_health_matches_public_schema() -> None:
+    app = create_gateway_app(platform=StubPlatform())
+    client = TestClient(app)
+
+    response = client.get("/health")
+    payload = response.json()
+
+    assert response.status_code == 200
+    assert payload["status"] == "healthy"
+    assert "gateway" in payload
+    assert "sessions" in payload
+    assert "channels_configured" in payload
+    assert _validate_schema_instance(_load_schema(GATEWAY_HEALTH_SCHEMA), payload) == []
 
 
 def test_deployment_witness_is_signed_and_reports_missing_runtime_evidence(monkeypatch) -> None:

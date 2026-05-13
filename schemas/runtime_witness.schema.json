@@ -1,0 +1,141 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:runtime-witness:1",
+  "title": "Runtime Witness",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "witness_id",
+    "environment",
+    "runtime_status",
+    "gateway_status",
+    "latest_command_event_hash",
+    "latest_anchor_id",
+    "latest_terminal_certificate_id",
+    "open_case_count",
+    "active_accepted_risk_count",
+    "active_compensation_review_count",
+    "requires_review_count",
+    "responsibility_debt_clear",
+    "pending_approval_chain_count",
+    "overdue_approval_chain_count",
+    "expired_approval_chain_count",
+    "open_obligation_count",
+    "overdue_obligation_count",
+    "escalated_obligation_count",
+    "unowned_high_risk_capability_count",
+    "unresolved_reconciliation_count",
+    "last_change_certificate_id",
+    "signed_at",
+    "signature_key_id",
+    "signature"
+  ],
+  "properties": {
+    "witness_id": {
+      "type": "string",
+      "pattern": "^runtime-witness-[0-9a-f]{16}$"
+    },
+    "environment": {
+      "type": "string",
+      "minLength": 1
+    },
+    "runtime_status": {
+      "type": "string",
+      "enum": [
+        "healthy",
+        "degraded"
+      ]
+    },
+    "gateway_status": {
+      "type": "string",
+      "enum": [
+        "healthy",
+        "degraded"
+      ]
+    },
+    "latest_command_event_hash": {
+      "type": "string"
+    },
+    "latest_anchor_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "latest_terminal_certificate_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "open_case_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "active_accepted_risk_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "active_compensation_review_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "requires_review_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "responsibility_debt_clear": {
+      "type": "boolean"
+    },
+    "pending_approval_chain_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "overdue_approval_chain_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "expired_approval_chain_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "open_obligation_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "overdue_obligation_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "escalated_obligation_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "unowned_high_risk_capability_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "unresolved_reconciliation_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "last_change_certificate_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "signed_at": {
+      "type": "string",
+      "minLength": 1
+    },
+    "signature_key_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "signature": {
+      "type": "string",
+      "pattern": "^hmac-sha256:[0-9a-f]{64}$"
+    }
+  }
+}

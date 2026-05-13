@@ -19,7 +19,6 @@ from mcoi_runtime.contracts.runbook_execution import (
 from mcoi_runtime.core.runbook import RunbookEntry, RunbookLibrary, RunbookProvenance
 from mcoi_runtime.core.runbook_executor import RunbookExecutor
 from mcoi_runtime.core.persisted_replay import PersistedReplayValidator
-from mcoi_runtime.core.replay_engine import ReplayVerdict
 
 
 FIXED_CLOCK = "2025-01-15T10:00:00+00:00"
@@ -89,9 +88,25 @@ class TestRunbookExecutionContracts:
         with pytest.raises(ValueError):
             RunbookExecutionContext(operator_id="", autonomy_mode="x")
 
+    def test_context_rejects_blank_optional_governance_ids(self):
+        with pytest.raises(ValueError, match="policy_pack_id"):
+            _context(policy_pack_id="")
+        with pytest.raises(ValueError, match="policy_pack_version"):
+            _context(policy_pack_version="")
+        with pytest.raises(ValueError, match="approval_actor_id"):
+            _context(approval_actor_id="")
+
     def test_request_valid(self):
         req = _request()
         assert req.runbook_id == "rb-1"
+
+    def test_request_rejects_unbounded_bindings(self):
+        with pytest.raises(ValueError, match="bindings"):
+            _request(bindings="target=/tmp")  # type: ignore[arg-type]
+        with pytest.raises(ValueError, match="bindings"):
+            _request(bindings={"": "/tmp"})
+        with pytest.raises(ValueError, match="bindings"):
+            _request(bindings={"target": ""})
 
     def test_step_result_valid(self):
         r = RunbookStepResult(step_index=0, step_name="check", succeeded=True)
@@ -101,6 +116,14 @@ class TestRunbookExecutionContracts:
         with pytest.raises(ValueError):
             RunbookStepResult(step_index=-1, step_name="x", succeeded=True)
 
+    def test_step_result_rejects_bool_and_blank_optional_fields(self):
+        with pytest.raises(ValueError, match="step_index"):
+            RunbookStepResult(step_index=True, step_name="x", succeeded=True)  # type: ignore[arg-type]
+        with pytest.raises(ValueError, match="succeeded"):
+            RunbookStepResult(step_index=0, step_name="x", succeeded=1)  # type: ignore[arg-type]
+        with pytest.raises(ValueError, match="error_message"):
+            RunbookStepResult(step_index=0, step_name="x", succeeded=False, error_message="")
+
     def test_drift_record_valid(self):
         d = DriftRecord(
             drift_type=DriftType.AUTONOMY_MISMATCH,
@@ -109,6 +132,30 @@ class TestRunbookExecutionContracts:
             current_value="bounded_autonomous",
         )
         assert d.drift_type is DriftType.AUTONOMY_MISMATCH
+
+    def test_drift_record_rejects_empty_severity_and_invalid_type(self):
+        with pytest.raises(ValueError, match="severity"):
+            DriftRecord(
+                drift_type=DriftType.AUTONOMY_MISMATCH,
+                field_name="autonomy_mode",
+                baseline_value="observe_only",
+                current_value="bounded_autonomous",
+                severity="",
+            )
+        with pytest.raises(ValueError, match="drift_type"):
+            DriftRecord(
+                drift_type="bad",  # type: ignore[arg-type]
+                field_name="autonomy_mode",
+                baseline_value="observe_only",
+                current_value="bounded_autonomous",
+            )
+        with pytest.raises(ValueError, match="baseline_value"):
+            DriftRecord(
+                drift_type=DriftType.AUTONOMY_MISMATCH,
+                field_name="autonomy_mode",
+                baseline_value="",
+                current_value="bounded_autonomous",
+            )
 
     def test_execution_record_properties(self):
         r = RunbookExecutionRecord(
@@ -130,6 +177,26 @@ class TestRunbookExecutionContracts:
         )
         assert r.has_drift is True
         assert r.succeeded is False
+
+    def test_execution_record_rejects_unbounded_children_and_datetimes(self):
+        with pytest.raises(ValueError, match="step_results"):
+            RunbookExecutionRecord(
+                record_id="r-1", runbook_id="rb-1", request_id="req-1",
+                status=RunbookExecutionStatus.SUCCEEDED, context=_context(),
+                step_results="bad",  # type: ignore[arg-type]
+            )
+        with pytest.raises(ValueError, match="drift_records"):
+            RunbookExecutionRecord(
+                record_id="r-1", runbook_id="rb-1", request_id="req-1",
+                status=RunbookExecutionStatus.SUCCEEDED, context=_context(),
+                drift_records=("bad",),  # type: ignore[arg-type]
+            )
+        with pytest.raises(ValueError, match="started_at"):
+            RunbookExecutionRecord(
+                record_id="r-1", runbook_id="rb-1", request_id="req-1",
+                status=RunbookExecutionStatus.SUCCEEDED, context=_context(),
+                started_at="bad",
+            )
 
 
 # --- Executor ---

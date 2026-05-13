@@ -247,6 +247,84 @@
       }
     },
     {
+      "capability_id": "github.open_pull_request",
+      "domain": "connector",
+      "version": "0.1.0",
+      "input_schema_ref": "schemas/connector/github_open_pull_request.input.schema.json",
+      "output_schema_ref": "schemas/connector/github_open_pull_request.output.schema.json",
+      "effect_model": {
+        "expected_effects": ["github_pull_request_opened"],
+        "forbidden_effects": [
+          "credential_scope_exceeded",
+          "cross_tenant_write",
+          "git_push_executed",
+          "production_deployment_started",
+          "pull_request_opened_without_approval",
+          "unreviewed_repository_write"
+        ],
+        "reconciliation_required": true
+      },
+      "evidence_model": {
+        "required_evidence": [
+          "approval_id",
+          "base_branch",
+          "head_branch",
+          "repository",
+          "review_packet_id"
+        ],
+        "terminal_certificate_required": true
+      },
+      "authority_policy": {
+        "required_roles": ["connector_operator"],
+        "approval_chain": ["platform_approver"],
+        "separation_of_duty": true
+      },
+      "isolation_profile": {
+        "execution_plane": "connector_worker",
+        "network_allowlist": ["api.github.com"],
+        "secret_scope": "oauth:github.pull_request.write"
+      },
+      "recovery_plan": {
+        "rollback_capability": "",
+        "compensation_capability": "connector.github.write.with_approval",
+        "review_required_on_failure": true
+      },
+      "cost_model": {
+        "budget_class": "connector_write",
+        "max_estimated_cost": 0.02
+      },
+      "obligation_model": {
+        "owner_team": "platform-ops",
+        "failure_due_seconds": 900,
+        "escalation_route": "support@mullusi.com"
+      },
+      "certification_status": "certified",
+      "metadata": {
+        "display_name": "Open GitHub pull request with approval",
+        "connector_provider": "github",
+        "credential_boundary": "oauth_scope_allowlist",
+        "operation": "open_pull_request",
+        "risk_tier": "high"
+      },
+      "extensions": {
+        "governed_record": {
+          "read_only": false,
+          "world_mutating": true,
+          "requires_approval": true,
+          "requires_sandbox": true,
+          "allowed_roles": ["connector_operator"],
+          "allowed_tools": ["connector_worker.github_open_pull_request"],
+          "allowed_networks": ["api.github.com"],
+          "rollback_or_compensation_required": true,
+          "forbidden_effects": [
+            "git_push_executed",
+            "production_deployment_started",
+            "pull_request_opened_without_approval"
+          ]
+        }
+      }
+    },
+    {
       "capability_id": "connector.postgres.query",
       "domain": "connector",
       "version": "0.1.0",

@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:gateway-health:1",
+  "title": "Gateway Health",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "status",
+    "gateway",
+    "sessions",
+    "event_log",
+    "verifier",
+    "dependencies",
+    "channels_configured"
+  ],
+  "properties": {
+    "status": {
+      "type": "string",
+      "enum": [
+        "healthy",
+        "degraded"
+      ]
+    },
+    "gateway": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "sessions": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "event_log": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "verifier": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "dependencies": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "channels_configured": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    }
+  }
+}

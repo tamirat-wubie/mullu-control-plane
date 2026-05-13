@@ -8,6 +8,7 @@
     "connector.google_drive.write.with_approval",
     "connector.github.read",
     "connector.github.write.with_approval",
+    "github.open_pull_request",
     "connector.postgres.query",
     "connector.postgres.write.with_approval"
   ],

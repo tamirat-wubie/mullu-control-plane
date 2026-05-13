@@ -109,7 +109,13 @@ def test_bootstrap_capability_services_registers_tools_models_and_flags() -> Non
     assert bootstrap.feature_flags.is_enabled("tool_augmentation") is True
     assert bootstrap.llm_circuit.status()["state"] == "closed"
     assert bootstrap.state_persistence.summary()["base_dir"]
-    assert {"tools", "model_router", "agent_memory"}.issubset(observability.sources)
+    assert {"tools", "model_router", "agent_memory", "capability_manifest_registry"}.issubset(
+        observability.sources
+    )
+    manifest_registry = bootstrap.capability_manifest_registry.read_model()
+    assert manifest_registry["configured"] is False
+    assert manifest_registry["manifest_count"] == 0
+    assert observability.sources["capability_manifest_registry"]() == manifest_registry
 
 
 def test_bootstrap_capability_services_wires_usage_templates_and_isolation() -> None:
@@ -159,3 +165,46 @@ def test_bootstrap_capability_services_wires_usage_templates_and_isolation() -> 
     assert templates == ["research-draft", "summarize-refine"]
     assert bootstrap.dep_graph.topological_sort()[-1] == "api"
     assert bootstrap.event_store.summary()["total_events"] == 0
+
+
+def test_bootstrap_capability_services_exposes_enabled_manifest_registry() -> None:
+    class FakeObservability:
+        def __init__(self) -> None:
+            self.sources: dict[str, object] = {}
+
+        def register_source(self, name, source) -> None:
+            self.sources[name] = source
+
+    class FakeBudgetManager:
+        def get_budget(self, tenant_id: str):
+            return None
+
+    bridge = type(
+        "Bridge",
+        (),
+        {
+            "invocation_count": 0,
+            "total_cost": 0.0,
+            "complete": lambda self, prompt, **kwargs: {"prompt": prompt, **kwargs},
+        },
+    )()
+    observability = FakeObservability()
+
+    bootstrap = server_capabilities.bootstrap_capability_services(
+        clock=lambda: "2026-05-13T00:00:00+00:00",
+        runtime_env={
+            "MULLU_CAPABILITY_MANIFEST_REGISTRY_ENABLED": "true",
+            "MULLU_CAPABILITY_MANIFEST_ENVIRONMENT": "local",
+        },
+        llm_bridge=bridge,
+        observability=observability,
+        tenant_budget_mgr=FakeBudgetManager(),
+        evaluate_expression_fn=lambda expression: 0,
+    )
+
+    read_model = bootstrap.capability_manifest_registry.read_model()
+    assert read_model["configured"] is True
+    assert read_model["manifest_count"] == 6
+    assert read_model["admission_count"] == 6
+    assert "software_dev.change.run" in read_model["capability_ids"]
+    assert observability.sources["capability_manifest_registry"]() == read_model

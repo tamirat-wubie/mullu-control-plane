@@ -9,11 +9,47 @@ Invariants:
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import StrEnum
-from typing import Any, Mapping
+from typing import Any, TypeVar, cast
 
-from ._base import ContractRecord, freeze_value, require_non_empty_text
+from ._base import ContractRecord, freeze_value, require_non_empty_text, require_non_negative_int
+
+
+ContractT = TypeVar("ContractT")
+
+
+def _require_bool(value: Any, field_name: str) -> bool:
+    if not isinstance(value, bool):
+        raise ValueError(f"{field_name} must be a boolean")
+    return value
+
+
+def _freeze_text_array(values: Any, field_name: str) -> tuple[str, ...]:
+    if isinstance(values, (str, bytes)) or not isinstance(values, (tuple, list)):
+        raise ValueError(f"{field_name} must be an array")
+    normalized: list[str] = []
+    for value in values:
+        if not isinstance(value, str) or not value.strip():
+            raise ValueError(f"{field_name} must contain only non-empty strings")
+        normalized.append(value)
+    return cast(tuple[str, ...], freeze_value(normalized))
+
+
+def _freeze_contract_array(
+    values: Any,
+    field_name: str,
+    record_type: type[ContractT],
+    record_type_name: str,
+) -> tuple[ContractT, ...]:
+    if isinstance(values, (str, bytes)) or not isinstance(values, (tuple, list)):
+        raise ValueError(f"{field_name} must be an array")
+    normalized: list[ContractT] = []
+    for value in values:
+        if not isinstance(value, record_type):
+            raise ValueError(f"{field_name} must contain only {record_type_name} instances")
+        normalized.append(value)
+    return cast(tuple[ContractT, ...], freeze_value(normalized))
 
 
 class ConformanceVerdict(StrEnum):
@@ -49,8 +85,40 @@ class DeploymentBinding(ContractRecord):
     def __post_init__(self) -> None:
         object.__setattr__(self, "profile_id", require_non_empty_text(self.profile_id, "profile_id"))
         object.__setattr__(self, "autonomy_mode", require_non_empty_text(self.autonomy_mode, "autonomy_mode"))
-        object.__setattr__(self, "allowed_executor_routes", freeze_value(list(self.allowed_executor_routes)))
-        object.__setattr__(self, "allowed_observer_routes", freeze_value(list(self.allowed_observer_routes)))
+        if self.policy_pack_id is not None:
+            object.__setattr__(
+                self,
+                "policy_pack_id",
+                require_non_empty_text(self.policy_pack_id, "policy_pack_id"),
+            )
+        if self.policy_pack_version is not None:
+            object.__setattr__(
+                self,
+                "policy_pack_version",
+                require_non_empty_text(self.policy_pack_version, "policy_pack_version"),
+            )
+        object.__setattr__(
+            self,
+            "allowed_executor_routes",
+            _freeze_text_array(self.allowed_executor_routes, "allowed_executor_routes"),
+        )
+        object.__setattr__(
+            self,
+            "allowed_observer_routes",
+            _freeze_text_array(self.allowed_observer_routes, "allowed_observer_routes"),
+        )
+        object.__setattr__(self, "export_enabled", _require_bool(self.export_enabled, "export_enabled"))
+        object.__setattr__(self, "import_enabled", _require_bool(self.import_enabled, "import_enabled"))
+        object.__setattr__(
+            self,
+            "max_retention_days",
+            require_non_negative_int(self.max_retention_days, "max_retention_days"),
+        )
+        object.__setattr__(
+            self,
+            "telemetry_enabled",
+            _require_bool(self.telemetry_enabled, "telemetry_enabled"),
+        )
 
 
 @dataclass(frozen=True, slots=True)
@@ -66,6 +134,8 @@ class ConformanceViolation(ContractRecord):
         if not isinstance(self.violation_type, ViolationType):
             raise ValueError("violation_type must be a ViolationType value")
         object.__setattr__(self, "field_name", require_non_empty_text(self.field_name, "field_name"))
+        object.__setattr__(self, "expected", require_non_empty_text(self.expected, "expected"))
+        object.__setattr__(self, "actual", require_non_empty_text(self.actual, "actual"))
 
 
 @dataclass(frozen=True, slots=True)
@@ -85,10 +155,31 @@ class DeploymentConformanceReport(ContractRecord):
         object.__setattr__(self, "profile_id", require_non_empty_text(self.profile_id, "profile_id"))
         if not isinstance(self.verdict, ConformanceVerdict):
             raise ValueError("verdict must be a ConformanceVerdict value")
-        object.__setattr__(self, "violations", freeze_value(list(self.violations)))
-        object.__setattr__(self, "providers_consulted", freeze_value(list(self.providers_consulted)))
-        object.__setattr__(self, "providers_blocked", freeze_value(list(self.providers_blocked)))
-        object.__setattr__(self, "routes_blocked", freeze_value(list(self.routes_blocked)))
+        object.__setattr__(
+            self,
+            "violations",
+            _freeze_contract_array(
+                self.violations,
+                "violations",
+                ConformanceViolation,
+                "ConformanceViolation",
+            ),
+        )
+        object.__setattr__(
+            self,
+            "providers_consulted",
+            _freeze_text_array(self.providers_consulted, "providers_consulted"),
+        )
+        object.__setattr__(
+            self,
+            "providers_blocked",
+            _freeze_text_array(self.providers_blocked, "providers_blocked"),
+        )
+        object.__setattr__(
+            self,
+            "routes_blocked",
+            _freeze_text_array(self.routes_blocked, "routes_blocked"),
+        )
 
     @property
     def is_conformant(self) -> bool:

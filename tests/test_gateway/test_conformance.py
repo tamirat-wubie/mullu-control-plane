@@ -31,6 +31,8 @@ from gateway.conformance import ProofCoverageStatus, _known_limitations_aligned,
 from gateway.server import create_gateway_app  # noqa: E402
 from scripts.validate_schemas import _validate_schema_instance  # noqa: E402
 
+RUNTIME_WITNESS_SCHEMA = _ROOT / "schemas" / "runtime_witness.schema.json"
+
 
 class StubPlatform:
     """Minimal governed platform fixture for gateway app construction."""
@@ -75,6 +77,25 @@ def test_runtime_conformance_endpoint_returns_signed_gap_certificate(monkeypatch
     assert "capability_fabric_admission_not_live" in payload["open_conformance_gaps"]
     assert payload["signature"].startswith("hmac-sha256:")
     assert _signature_valid(payload, "conformance-secret") is True
+
+
+def test_runtime_witness_endpoints_match_public_schema(monkeypatch) -> None:
+    monkeypatch.setenv("MULLU_RUNTIME_WITNESS_SECRET", "witness-secret")
+    app = create_gateway_app(platform=StubPlatform())
+    client = TestClient(app)
+    schema = json.loads(RUNTIME_WITNESS_SCHEMA.read_text(encoding="utf-8"))
+
+    gateway_payload = client.get("/gateway/witness").json()
+    runtime_payload = client.get("/runtime/witness").json()
+
+    assert gateway_payload["witness_id"].startswith("runtime-witness-")
+    assert runtime_payload["witness_id"].startswith("runtime-witness-")
+    assert gateway_payload["signature"].startswith("hmac-sha256:")
+    assert runtime_payload["signature"].startswith("hmac-sha256:")
+    assert _signature_valid(gateway_payload, "witness-secret") is True
+    assert _signature_valid(runtime_payload, "witness-secret") is True
+    assert _validate_schema_instance(schema, gateway_payload) == []
+    assert _validate_schema_instance(schema, runtime_payload) == []
 
 
 def test_runtime_conformance_certificate_matches_schema(monkeypatch) -> None:

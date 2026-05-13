@@ -1294,6 +1294,10 @@ class GatewayRouter:
     def _gen_id(self, prefix: str, ref: str) -> str:
         return f"{prefix}-{hashlib.sha256(f'{ref}:{self._message_count}'.encode()).hexdigest()[:12]}"
 
+    def _runtime_witness_id(self, ref: str) -> str:
+        digest = hashlib.sha256(f"{ref}:{self._message_count}".encode()).hexdigest()[:16]
+        return f"runtime-witness-{digest}"
+
     @property
     def message_count(self) -> int:
         return self._message_count
@@ -1339,7 +1343,7 @@ class GatewayRouter:
         latest_certificate = self._commands.latest_terminal_certificate()
         responsibility_witness = self._authority_obligation_mesh.responsibility_witness()
         witness_payload = {
-            "witness_id": self._gen_id("runtime-witness", ledger_summary.get("last_event_hash", "")),
+            "witness_id": self._runtime_witness_id(ledger_summary.get("last_event_hash", "")),
             "environment": environment,
             "runtime_status": "healthy",
             "gateway_status": "healthy" if self._error_count == 0 else "degraded",
