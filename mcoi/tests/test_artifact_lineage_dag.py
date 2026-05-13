@@ -12,6 +12,8 @@ import pytest
 from mcoi_runtime.core.artifact_lineage_dag import (
     ArtifactLineageDAG,
     ArtifactLineageRelation,
+    ArtifactLineageSnapshot,
+    JsonArtifactLineageStore,
     hash_artifact_payload,
 )
 from mcoi_runtime.core.invariants import RuntimeCoreInvariantError
@@ -133,3 +135,83 @@ def test_registration_and_edge_shape_violations_fail_closed() -> None:
 
     assert dag.artifact_count == 2
     assert dag.edge_count == 0
+
+
+def test_snapshot_roundtrip_preserves_replay_plan_and_impact() -> None:
+    dag = _dag()
+    _register(dag, "raw")
+    _register(dag, "summary")
+    _register(dag, "dashboard")
+    dag.add_edge(upstream_artifact_id="raw", downstream_artifact_id="summary", reason="summarize")
+    dag.add_edge(upstream_artifact_id="summary", downstream_artifact_id="dashboard", reason="publish")
+
+    snapshot = dag.export_snapshot()
+    restored = ArtifactLineageDAG.from_snapshot(snapshot.to_json_dict(), clock=_clock)
+
+    assert snapshot.snapshot_id.startswith("artifact-lineage-snapshot-")
+    assert snapshot.artifact_count == 3
+    assert snapshot.edge_count == 2
+    assert restored.replay_plan("dashboard").artifact_ids == ("raw", "summary", "dashboard")
+    assert restored.descendants_of("raw") == ("summary", "dashboard")
+    assert restored.topological_order() == ("raw", "summary", "dashboard")
+
+
+def test_json_artifact_lineage_store_survives_process_restart(tmp_path) -> None:
+    dag = _dag()
+    _register(dag, "source")
+    _register(dag, "report", replayable=False)
+    dag.add_edge(upstream_artifact_id="source", downstream_artifact_id="report", reason="manual report")
+    store = JsonArtifactLineageStore(tmp_path / "artifact-lineage.json")
+
+    saved = store.save(dag)
+    restored = store.load(clock=_clock)
+    plan = restored.replay_plan("report")
+
+    assert store.path.exists()
+    assert saved.snapshot_hash == restored.export_snapshot().snapshot_hash
+    assert plan.ready is False
+    assert plan.blocked_reasons == ("report:not_replayable",)
+    assert restored.dependencies_of("report") == ("source",)
+
+
+def test_snapshot_hash_is_deterministic_for_same_graph_and_clock() -> None:
+    first = _dag()
+    second = _dag()
+    for dag in (first, second):
+        _register(dag, "source")
+        _register(dag, "report")
+        dag.add_edge(upstream_artifact_id="source", downstream_artifact_id="report", reason="derive")
+
+    first_snapshot = first.export_snapshot()
+    second_snapshot = second.export_snapshot()
+
+    assert first_snapshot.snapshot_hash == second_snapshot.snapshot_hash
+    assert first_snapshot.snapshot_id == second_snapshot.snapshot_id
+    assert first_snapshot.to_json_dict() == second_snapshot.to_json_dict()
+
+
+def test_snapshot_restore_rejects_tampered_hash() -> None:
+    dag = _dag()
+    _register(dag, "source")
+    snapshot = dag.export_snapshot().to_json_dict()
+    snapshot["artifacts"][0]["artifact_hash"] = "tampered"
+
+    with pytest.raises(RuntimeCoreInvariantError, match="snapshot hash mismatch"):
+        ArtifactLineageSnapshot.from_json_dict(snapshot)
+
+
+def test_snapshot_restore_rejects_missing_edge_endpoint() -> None:
+    dag = _dag()
+    _register(dag, "source")
+    _register(dag, "report")
+    dag.add_edge(upstream_artifact_id="source", downstream_artifact_id="report", reason="derive")
+    snapshot = dag.export_snapshot().to_json_dict()
+    snapshot["edges"][0]["downstream_artifact_id"] = "missing-report"
+    repaired_snapshot = ArtifactLineageSnapshot.build(
+        created_at=snapshot["created_at"],
+        artifacts=tuple(snapshot["artifacts"]),
+        edges=tuple(snapshot["edges"]),
+    )
+
+    with pytest.raises(RuntimeCoreInvariantError, match="artifact not found"):
+        ArtifactLineageDAG.from_snapshot(repaired_snapshot, clock=_clock)

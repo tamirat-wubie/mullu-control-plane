@@ -560,6 +560,9 @@ def _edge_to_json_dict(edge: ArtifactLineageEdge) -> dict[str, Any]:
 def _node_from_json_dict(payload: Mapping[str, Any]) -> ArtifactLineageNode:
     if not isinstance(payload, Mapping):
         raise RuntimeCoreInvariantError("artifact snapshot row must be an object")
+    replayable = payload.get("replayable", True)
+    if not isinstance(replayable, bool):
+        raise RuntimeCoreInvariantError("replayable must be a bool")
     return ArtifactLineageNode(
         artifact_id=str(payload.get("artifact_id", "")),
         artifact_hash=str(payload.get("artifact_hash", "")),
@@ -567,7 +570,7 @@ def _node_from_json_dict(payload: Mapping[str, Any]) -> ArtifactLineageNode:
         tenant_id=str(payload.get("tenant_id", "")),
         produced_by_event_id=str(payload.get("produced_by_event_id", "")),
         created_at=str(payload.get("created_at", "")),
-        replayable=bool(payload.get("replayable", True)),
+        replayable=replayable,
         metadata=_json_mapping(_mapping_value(payload, "metadata")),
     )
 
