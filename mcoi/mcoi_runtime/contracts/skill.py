@@ -12,10 +12,12 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import StrEnum
-from typing import Any, Mapping
+from typing import Any, Mapping, TypeVar, cast
 
 from ._base import ContractRecord, freeze_value, require_non_empty_text, require_unit_float
 from ._shared_enums import EffectClass, TrustClass
+
+TContract = TypeVar("TContract", bound=ContractRecord)
 
 
 # --- Classification enums ---
@@ -79,6 +81,29 @@ class SkillOutcomeStatus(StrEnum):
 # --- Contract types ---
 
 
+def _freeze_text_array(values: tuple[str, ...] | list[str], field_name: str) -> tuple[str, ...]:
+    if isinstance(values, (str, bytes)) or not isinstance(values, (tuple, list)):
+        raise ValueError(f"{field_name} must be an array")
+    frozen = cast(tuple[str, ...], freeze_value(list(values)))
+    for idx, value in enumerate(frozen):
+        require_non_empty_text(value, f"{field_name}[{idx}]")
+    return frozen
+
+
+def _freeze_contract_array(
+    values: tuple[TContract, ...] | list[TContract],
+    field_name: str,
+    record_type: type[TContract],
+) -> tuple[TContract, ...]:
+    if isinstance(values, (str, bytes)) or not isinstance(values, (tuple, list)):
+        raise ValueError(f"{field_name} must be an array")
+    frozen = cast(tuple[TContract, ...], freeze_value(list(values)))
+    for idx, item in enumerate(frozen):
+        if not isinstance(item, record_type):
+            raise ValueError(f"{field_name}[{idx}] must be a {record_type.__name__}")
+    return frozen
+
+
 @dataclass(frozen=True, slots=True)
 class SkillPrecondition(ContractRecord):
     """A typed condition that MUST hold before skill execution may begin."""
@@ -130,11 +155,9 @@ class SkillStep(ContractRecord):
         object.__setattr__(self, "step_id", require_non_empty_text(self.step_id, "step_id"))
         object.__setattr__(self, "name", require_non_empty_text(self.name, "name"))
         object.__setattr__(self, "action_type", require_non_empty_text(self.action_type, "action_type"))
-        object.__setattr__(self, "depends_on", freeze_value(list(self.depends_on)))
-        for idx, dep in enumerate(self.depends_on):
-            require_non_empty_text(dep, f"depends_on[{idx}]")
+        object.__setattr__(self, "depends_on", _freeze_text_array(self.depends_on, "depends_on"))
         object.__setattr__(self, "input_bindings", freeze_value(self.input_bindings))
-        object.__setattr__(self, "output_keys", freeze_value(list(self.output_keys)))
+        object.__setattr__(self, "output_keys", _freeze_text_array(self.output_keys, "output_keys"))
         if self.provider_class_required is not None:
             object.__setattr__(
                 self, "provider_class_required",
@@ -176,10 +199,22 @@ class SkillDescriptor(ContractRecord):
         ):
             if not isinstance(getattr(self, attr), enum_type):
                 raise ValueError(error_message)
-        object.__setattr__(self, "preconditions", freeze_value(list(self.preconditions)))
-        object.__setattr__(self, "postconditions", freeze_value(list(self.postconditions)))
-        object.__setattr__(self, "steps", freeze_value(list(self.steps)))
-        object.__setattr__(self, "provider_requirements", freeze_value(list(self.provider_requirements)))
+        object.__setattr__(
+            self,
+            "preconditions",
+            _freeze_contract_array(self.preconditions, "preconditions", SkillPrecondition),
+        )
+        object.__setattr__(
+            self,
+            "postconditions",
+            _freeze_contract_array(self.postconditions, "postconditions", SkillPostcondition),
+        )
+        object.__setattr__(self, "steps", _freeze_contract_array(self.steps, "steps", SkillStep))
+        object.__setattr__(
+            self,
+            "provider_requirements",
+            _freeze_text_array(self.provider_requirements, "provider_requirements"),
+        )
         object.__setattr__(self, "metadata", freeze_value(self.metadata))
         object.__setattr__(self, "confidence", require_unit_float(self.confidence, "confidence"))
         # Composite skills must have steps
@@ -193,7 +228,11 @@ class SkillDescriptor(ContractRecord):
             self._check_no_circular_deps()
 
     def _check_no_circular_deps(self) -> None:
-        step_ids = {s.step_id for s in self.steps}
+        step_ids: set[str] = set()
+        for step in self.steps:
+            if step.step_id in step_ids:
+                raise ValueError("steps must declare unique step_id values")
+            step_ids.add(step.step_id)
         # Validate all dependencies reference existing steps
         for step in self.steps:
             for dep in step.depends_on:
@@ -255,7 +294,11 @@ class SkillOutcome(ContractRecord):
         object.__setattr__(self, "skill_id", require_non_empty_text(self.skill_id, "skill_id"))
         if not isinstance(self.status, SkillOutcomeStatus):
             raise ValueError("status must be a SkillOutcomeStatus value")
-        object.__setattr__(self, "step_outcomes", freeze_value(list(self.step_outcomes)))
+        object.__setattr__(
+            self,
+            "step_outcomes",
+            _freeze_contract_array(self.step_outcomes, "step_outcomes", SkillStepOutcome),
+        )
         object.__setattr__(self, "metadata", freeze_value(self.metadata))
 
 
@@ -273,8 +316,16 @@ class SkillSelectionDecision(ContractRecord):
             self, "selected_skill_id",
             require_non_empty_text(self.selected_skill_id, "selected_skill_id"),
         )
-        object.__setattr__(self, "candidates_considered", freeze_value(list(self.candidates_considered)))
-        object.__setattr__(self, "selection_reasons", freeze_value(list(self.selection_reasons)))
+        object.__setattr__(
+            self,
+            "candidates_considered",
+            _freeze_text_array(self.candidates_considered, "candidates_considered"),
+        )
+        object.__setattr__(
+            self,
+            "selection_reasons",
+            _freeze_text_array(self.selection_reasons, "selection_reasons"),
+        )
         object.__setattr__(self, "rejected_reasons", freeze_value(self.rejected_reasons))
 
 

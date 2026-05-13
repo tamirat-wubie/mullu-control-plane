@@ -276,6 +276,13 @@
       ]
     },
     {
+      "action_id": "classify_config_governance_routes",
+      "status": "closed",
+      "surfaces": [
+        "config_governance_lifecycle"
+      ]
+    },
+    {
       "action_id": "publish_connector_self_healing_receipt_contract",
       "status": "closed",
       "surfaces": [
@@ -514,7 +521,7 @@
   ],
   "coverage_summary": {
     "by_action_proof": {
-      "action_proof": 65,
+      "action_proof": 66,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 11,
@@ -522,7 +529,7 @@
     },
     "by_audit": {
       "action_proof": 0,
-      "audit_chain": 74,
+      "audit_chain": 75,
       "gap": 0,
       "read_model": 4,
       "request_proof": 0
@@ -530,23 +537,23 @@
     "by_coverage_state": {
       "proven": 1,
       "unproven": 0,
-      "witnessed": 77
+      "witnessed": 78
     },
     "by_request_proof": {
       "action_proof": 1,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 13,
-      "request_proof": 64
+      "request_proof": 65
     },
-    "surface_count": 78
+    "surface_count": 79
   },
   "generated_by": "scripts/proof_coverage_matrix.py",
   "route_coverage": {
     "by_coverage_state": {
       "proven": 8,
-      "unproven": 142,
-      "witnessed": 182
+      "unproven": 136,
+      "witnessed": 188
     },
     "route_count": 332,
     "routes": [
@@ -776,34 +783,34 @@
         "surface_id": "unclassified_declared_route"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/config",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "config_governance_lifecycle"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/config/drift",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "config_governance_lifecycle"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/config/history",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "config_governance_lifecycle"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/config/rollback",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "config_governance_lifecycle"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/config/update",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "config_governance_lifecycle"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/config/watcher",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "config_governance_lifecycle"
       },
       {
         "coverage_state": "witnessed",
@@ -2211,7 +2218,7 @@
         "surface_id": "gateway_capability_fabric"
       }
     ],
-    "unclassified_route_count": 142
+    "unclassified_route_count": 136
   },
   "schema_version": 1,
   "surfaces": [
@@ -3491,6 +3498,39 @@
         "multi_agent_errors_sanitized"
       ],
       "surface_id": "multi_agent_coordination_runtime"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "mcoi/mcoi_runtime/app/routers/ops/config.py",
+        "mcoi/mcoi_runtime/core/config_reload.py",
+        "mcoi/mcoi_runtime/core/config_watcher.py",
+        "mcoi/mcoi_runtime/core/config_drift.py",
+        "mcoi/tests/test_server_phase207.py",
+        "mcoi/tests/test_e2e_integration.py"
+      ],
+      "notes": "Configuration governance routes expose current config and history, apply audited hot updates, support rollback to prior versions, publish config update events, and expose watcher plus drift read models.",
+      "representative_paths": [
+        "/api/v1/config",
+        "/api/v1/config/drift",
+        "/api/v1/config/history",
+        "/api/v1/config/rollback",
+        "/api/v1/config/update",
+        "/api/v1/config/watcher"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "config_current_read_model_hash_bound",
+        "config_history_bounded",
+        "config_update_audited",
+        "config_update_emits_event",
+        "config_rollback_version_checked",
+        "config_watcher_status_bounded",
+        "config_drift_summary_bounded"
+      ],
+      "surface_id": "config_governance_lifecycle"
     },
     {
       "action_proof": "action_proof",

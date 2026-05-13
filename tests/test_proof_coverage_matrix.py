@@ -122,6 +122,9 @@ def test_representative_routes_are_not_unclassified() -> None:
         classified_routes["/api/v1/multi-agent/conflicts/unresolved"]["surface_id"]
         == "multi_agent_coordination_runtime"
     )
+    assert classified_routes["/api/v1/config/update"]["surface_id"] == "config_governance_lifecycle"
+    assert classified_routes["/api/v1/config/rollback"]["surface_id"] == "config_governance_lifecycle"
+    assert classified_routes["/api/v1/config/drift"]["surface_id"] == "config_governance_lifecycle"
     assert classified_routes["/api/v1/finance/approval-packets"]["surface_id"] == "finance_approval_packets"
     assert (
         classified_routes["/api/v1/finance/approval-packets/operator/read-model"]["surface_id"]
@@ -1048,6 +1051,38 @@ def test_multi_agent_coordination_runtime_surface_tracks_cooperation_lifecycle()
     assert route_records["/api/v1/multi-agent/summary"]["coverage_state"] == "witnessed"
     assert route_records["/api/v1/multi-agent/summary"]["surface_id"] == "multi_agent_coordination_runtime"
     assert closure_actions["classify_multi_agent_coordination_routes"]["status"] == "closed"
+
+
+def test_config_governance_lifecycle_surface_tracks_update_and_drift() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    config_surface = surfaces["config_governance_lifecycle"]
+    witnesses = set(config_surface["runtime_witnesses"])
+    route_records = {
+        record["route"]: record
+        for record in matrix["route_coverage"]["routes"]
+    }
+
+    assert config_surface["coverage_state"] == "witnessed"
+    assert config_surface["request_proof"] == "request_proof"
+    assert config_surface["action_proof"] == "action_proof"
+    assert "/api/v1/config" in config_surface["representative_paths"]
+    assert "/api/v1/config/update" in config_surface["representative_paths"]
+    assert "/api/v1/config/rollback" in config_surface["representative_paths"]
+    assert "/api/v1/config/drift" in config_surface["representative_paths"]
+    assert "mcoi/mcoi_runtime/app/routers/ops/config.py" in config_surface["evidence_files"]
+    assert "mcoi/mcoi_runtime/core/config_reload.py" in config_surface["evidence_files"]
+    assert "mcoi/tests/test_server_phase207.py" in config_surface["evidence_files"]
+    assert "config_update_audited" in witnesses
+    assert "config_update_emits_event" in witnesses
+    assert "config_rollback_version_checked" in witnesses
+    assert "config_drift_summary_bounded" in witnesses
+    assert route_records["/api/v1/config/update"]["coverage_state"] == "witnessed"
+    assert route_records["/api/v1/config/update"]["surface_id"] == "config_governance_lifecycle"
+    assert route_records["/api/v1/config/watcher"]["coverage_state"] == "witnessed"
+    assert route_records["/api/v1/config/watcher"]["surface_id"] == "config_governance_lifecycle"
+    assert closure_actions["classify_config_governance_routes"]["status"] == "closed"
 
 
 def test_connector_self_healing_surface_emits_bounded_recovery_receipts() -> None:

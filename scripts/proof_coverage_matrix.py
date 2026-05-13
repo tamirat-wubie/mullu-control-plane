@@ -1287,6 +1287,39 @@ def proof_coverage_matrix() -> dict[str, Any]:
             ],
         ),
         _surface(
+            "config_governance_lifecycle",
+            [
+                "/api/v1/config",
+                "/api/v1/config/drift",
+                "/api/v1/config/history",
+                "/api/v1/config/rollback",
+                "/api/v1/config/update",
+                "/api/v1/config/watcher",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "mcoi/mcoi_runtime/app/routers/ops/config.py",
+                "mcoi/mcoi_runtime/core/config_reload.py",
+                "mcoi/mcoi_runtime/core/config_watcher.py",
+                "mcoi/mcoi_runtime/core/config_drift.py",
+                "mcoi/tests/test_server_phase207.py",
+                "mcoi/tests/test_e2e_integration.py",
+            ],
+            "Configuration governance routes expose current config and history, apply audited hot updates, support rollback to prior versions, publish config update events, and expose watcher plus drift read models.",
+            [
+                "config_current_read_model_hash_bound",
+                "config_history_bounded",
+                "config_update_audited",
+                "config_update_emits_event",
+                "config_rollback_version_checked",
+                "config_watcher_status_bounded",
+                "config_drift_summary_bounded",
+            ],
+        ),
+        _surface(
             "connector_self_healing",
             [
                 "ConnectorSelfHealingEngine.evaluate",
@@ -2583,6 +2616,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
         {
             "action_id": "classify_multi_agent_coordination_routes",
             "surfaces": ["multi_agent_coordination_runtime"],
+            "status": "closed",
+        },
+        {
+            "action_id": "classify_config_governance_routes",
+            "surfaces": ["config_governance_lifecycle"],
             "status": "closed",
         },
         {

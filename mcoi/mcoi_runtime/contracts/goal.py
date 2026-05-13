@@ -14,7 +14,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import StrEnum
-from typing import Any, Mapping
+from typing import Any, Mapping, cast
 
 from ._base import (
     ContractRecord,
@@ -66,6 +66,15 @@ class SubGoalStatus(StrEnum):
 
 
 # --- Contract types ---
+
+
+def _freeze_text_array(values: tuple[str, ...] | list[str], field_name: str) -> tuple[str, ...]:
+    if isinstance(values, (str, bytes)) or not isinstance(values, (tuple, list)):
+        raise ValueError(f"{field_name} must be an array")
+    frozen = cast(tuple[str, ...], freeze_value(list(values)))
+    for idx, value in enumerate(frozen):
+        require_non_empty_text(value, f"{field_name}[{idx}]")
+    return frozen
 
 
 @dataclass(frozen=True, slots=True)
@@ -128,9 +137,11 @@ class SubGoal(ContractRecord):
         object.__setattr__(self, "description", require_non_empty_text(self.description, "description"))
         if not isinstance(self.status, SubGoalStatus):
             raise ValueError("status must be a SubGoalStatus value")
-        object.__setattr__(self, "predecessors", freeze_value(list(self.predecessors)))
-        for idx, pred in enumerate(self.predecessors):
-            require_non_empty_text(pred, f"predecessors[{idx}]")
+        if self.skill_id is not None:
+            object.__setattr__(self, "skill_id", require_non_empty_text(self.skill_id, "skill_id"))
+        if self.workflow_id is not None:
+            object.__setattr__(self, "workflow_id", require_non_empty_text(self.workflow_id, "workflow_id"))
+        object.__setattr__(self, "predecessors", _freeze_text_array(self.predecessors, "predecessors"))
 
 
 @dataclass(frozen=True, slots=True)
@@ -150,11 +161,18 @@ class GoalPlan(ContractRecord):
         object.__setattr__(self, "created_at", require_datetime_text(self.created_at, "created_at"))
         if not isinstance(self.version, int) or self.version < 1:
             raise ValueError("version must be a positive integer")
+        for idx, sub_goal in enumerate(self.sub_goals):
+            if not isinstance(sub_goal, SubGoal):
+                raise ValueError(f"sub_goals[{idx}] must be a SubGoal")
         # Validate no circular sub-goal dependencies
         self._check_no_circular_deps()
 
     def _check_no_circular_deps(self) -> None:
-        sg_ids = {sg.sub_goal_id for sg in self.sub_goals}
+        sg_ids: set[str] = set()
+        for sg in self.sub_goals:
+            if sg.sub_goal_id in sg_ids:
+                raise ValueError("sub_goals must declare unique sub_goal_id values")
+            sg_ids.add(sg.sub_goal_id)
         for sg in self.sub_goals:
             for pred in sg.predecessors:
                 if pred not in sg_ids:
@@ -195,12 +213,16 @@ class GoalExecutionState(ContractRecord):
         if not isinstance(self.status, GoalStatus):
             raise ValueError("status must be a GoalStatus value")
         object.__setattr__(self, "updated_at", require_datetime_text(self.updated_at, "updated_at"))
-        object.__setattr__(self, "completed_sub_goals", freeze_value(list(self.completed_sub_goals)))
-        for idx, sg_id in enumerate(self.completed_sub_goals):
-            require_non_empty_text(sg_id, f"completed_sub_goals[{idx}]")
-        object.__setattr__(self, "failed_sub_goals", freeze_value(list(self.failed_sub_goals)))
-        for idx, sg_id in enumerate(self.failed_sub_goals):
-            require_non_empty_text(sg_id, f"failed_sub_goals[{idx}]")
+        object.__setattr__(
+            self,
+            "completed_sub_goals",
+            _freeze_text_array(self.completed_sub_goals, "completed_sub_goals"),
+        )
+        object.__setattr__(
+            self,
+            "failed_sub_goals",
+            _freeze_text_array(self.failed_sub_goals, "failed_sub_goals"),
+        )
         # Detect duplicate sub-goal IDs
         if len(set(self.completed_sub_goals)) != len(self.completed_sub_goals):
             raise ValueError("completed_sub_goals must not contain duplicates")

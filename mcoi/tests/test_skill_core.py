@@ -13,10 +13,12 @@ from mcoi_runtime.contracts.skill import (
     PostconditionType,
     SkillClass,
     SkillDescriptor,
+    SkillOutcome,
     SkillLifecycle,
     SkillOutcomeStatus,
     SkillPostcondition,
     SkillPrecondition,
+    SkillSelectionDecision,
     SkillStep,
     SkillStepOutcome,
     TrustClass,
@@ -24,12 +26,9 @@ from mcoi_runtime.contracts.skill import (
 )
 from mcoi_runtime.core.invariants import RuntimeCoreInvariantError
 from mcoi_runtime.core.skills import (
-    PostconditionChecker,
-    PreconditionChecker,
     SkillExecutor,
     SkillRegistry,
     SkillSelector,
-    StepExecutor,
 )
 
 
@@ -57,6 +56,100 @@ def _make_skill(skill_id="sk-1", lifecycle=SkillLifecycle.CANDIDATE, confidence=
     )
     defaults.update(kw)
     return SkillDescriptor(**defaults)
+
+
+class TestSkillContractShape:
+    def test_skill_step_rejects_sequence_shape_drift(self):
+        step = SkillStep(
+            step_id="s2",
+            name="second",
+            action_type="x",
+            depends_on=["s1"],  # type: ignore[arg-type]
+            output_keys=["result"],  # type: ignore[arg-type]
+        )
+
+        assert step.depends_on == ("s1",)
+        assert step.output_keys == ("result",)
+        assert step.to_json_dict()["output_keys"] == ["result"]
+
+        with pytest.raises(ValueError, match="depends_on must be an array"):
+            SkillStep(step_id="s2", name="second", action_type="x", depends_on="s1")  # type: ignore[arg-type]
+        with pytest.raises(ValueError, match="output_keys must be an array"):
+            SkillStep(step_id="s2", name="second", action_type="x", output_keys="result")  # type: ignore[arg-type]
+
+    def test_skill_descriptor_rejects_nested_sequence_shape_drift(self):
+        precondition = SkillPrecondition(
+            condition_id="pre-1",
+            condition_type=PreconditionType.STATE_CHECK,
+            description="state available",
+        )
+        postcondition = SkillPostcondition(
+            condition_id="post-1",
+            condition_type=PostconditionType.VERIFICATION_PASSED,
+            description="verified",
+        )
+        step = SkillStep(step_id="s1", name="first", action_type="x")
+
+        descriptor = _make_skill(
+            preconditions=[precondition],  # type: ignore[arg-type]
+            postconditions=[postcondition],  # type: ignore[arg-type]
+            steps=[step],  # type: ignore[arg-type]
+            provider_requirements=["local"],  # type: ignore[arg-type]
+        )
+
+        assert descriptor.preconditions == (precondition,)
+        assert descriptor.steps == (step,)
+        assert descriptor.provider_requirements == ("local",)
+
+        with pytest.raises(ValueError, match="preconditions must be an array"):
+            _make_skill(preconditions="pre-1")  # type: ignore[arg-type]
+        with pytest.raises(ValueError, match=r"preconditions\[0\] must be a SkillPrecondition"):
+            _make_skill(preconditions=("pre-1",))  # type: ignore[arg-type]
+        with pytest.raises(ValueError, match=r"steps\[0\] must be a SkillStep"):
+            _make_skill(steps=("s1",))  # type: ignore[arg-type]
+        with pytest.raises(ValueError, match="unique step_id"):
+            _make_skill(
+                steps=(
+                    SkillStep(step_id="s1", name="first", action_type="x"),
+                    SkillStep(step_id="s1", name="duplicate", action_type="x"),
+                ),
+            )
+
+    def test_skill_outcome_and_selection_reject_sequence_shape_drift(self):
+        step_outcome = SkillStepOutcome(step_id="s1", status=SkillOutcomeStatus.SUCCEEDED)
+        outcome = SkillOutcome(
+            skill_id="sk-1",
+            status=SkillOutcomeStatus.SUCCEEDED,
+            step_outcomes=[step_outcome],  # type: ignore[arg-type]
+        )
+        decision = SkillSelectionDecision(
+            selected_skill_id="sk-1",
+            candidates_considered=["sk-1"],  # type: ignore[arg-type]
+            selection_reasons=["highest confidence"],  # type: ignore[arg-type]
+        )
+
+        assert outcome.step_outcomes == (step_outcome,)
+        assert decision.candidates_considered == ("sk-1",)
+        assert decision.selection_reasons == ("highest confidence",)
+
+        with pytest.raises(ValueError, match="step_outcomes must be an array"):
+            SkillOutcome(
+                skill_id="sk-1",
+                status=SkillOutcomeStatus.SUCCEEDED,
+                step_outcomes="s1",  # type: ignore[arg-type]
+            )
+        with pytest.raises(ValueError, match=r"step_outcomes\[0\] must be a SkillStepOutcome"):
+            SkillOutcome(
+                skill_id="sk-1",
+                status=SkillOutcomeStatus.SUCCEEDED,
+                step_outcomes=("s1",),  # type: ignore[arg-type]
+            )
+        with pytest.raises(ValueError, match="candidates_considered must be an array"):
+            SkillSelectionDecision(
+                selected_skill_id="sk-1",
+                candidates_considered="sk-1",  # type: ignore[arg-type]
+                selection_reasons=("highest confidence",),
+            )
 
 
 class SuccessStepExecutor:
