@@ -569,6 +569,12 @@
       "surface": "temporal"
     },
     {
+      "schema_id": "temporal-missed-run-receipt",
+      "path": "schemas/temporal_missed_run_receipt.schema.json",
+      "urn": "urn:mullusi:schema:temporal-missed-run-receipt:1",
+      "surface": "temporal"
+    },
+    {
       "schema_id": "temporal-memory-receipt",
       "path": "schemas/temporal_memory_receipt.schema.json",
       "urn": "urn:mullusi:schema:temporal-memory-receipt:1",

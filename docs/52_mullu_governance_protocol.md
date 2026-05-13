@@ -62,7 +62,8 @@ Invariants: schemas and wire contracts are public; runtime implementation remain
 39. Temporal idempotency window receipts are public contracts when they certify idempotency keys, request fingerprints, replay windows, committed effects, terminal receipt binding, tenant and command scope, evidence refs, source temporal receipts, and non-terminal duplicate-dispatch admission before worker execution.
 40. Temporal memory refresh receipts are public contracts when they certify memory refresh status, refreshed-at time, source evidence refs, tenant scope, allowed use, and non-terminal refresh checks before refreshed memory can guide action.
 41. Temporal scheduler receipts are public contracts when they certify lease acquisition, retry windows, missed-run handling, idempotency, recurrence declarations, and high-risk temporal rechecks before scheduled dispatch.
-42. Temporal SLA receipts are public contracts when they certify business calendars, business-time response and resolution deadlines, warning escalation, breach detection, tenant scope, evidence refs, and dispatch windows before escalation or action.
+42. Temporal missed-run receipts are public contracts when they certify late, expired, duplicate-dispatched, and recovery-due scheduled commands before skip, retry, or closure.
+43. Temporal SLA receipts are public contracts when they certify business calendars, business-time response and resolution deadlines, warning escalation, breach detection, tenant scope, evidence refs, and dispatch windows before escalation or action.
 43. Capability upgrade plans are public contracts when they turn health signals into activation-blocked upgrade proposals with eval, sandbox, ChangeCommand, ChangeCertificate, canary, terminal-closure, and learning-admission gates.
 44. Autonomous test-generation plans are public contracts when they convert certified failure traces into activation-blocked replay, policy, tenant, approval, budget, and sandbox test proposals.
 45. World-state projections are public contracts when they expose sourced operational reality for planning and execution gates.
@@ -102,7 +103,7 @@ python scripts\validate_protocol_manifest.py
 Expected result:
 
 ```text
-protocol manifest ok: 113 schemas
+protocol manifest ok: 114 schemas
 ```
 
 STATUS:

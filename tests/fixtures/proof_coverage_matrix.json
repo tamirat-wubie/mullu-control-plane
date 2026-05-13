@@ -521,6 +521,13 @@
       ]
     },
     {
+      "action_id": "publish_temporal_missed_run_receipt_contract",
+      "status": "closed",
+      "surfaces": [
+        "temporal_missed_run"
+      ]
+    },
+    {
       "action_id": "publish_temporal_memory_refresh_receipt_contract",
       "status": "closed",
       "surfaces": [
@@ -591,7 +598,7 @@
   ],
   "coverage_summary": {
     "by_action_proof": {
-      "action_proof": 73,
+      "action_proof": 75,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 13,
@@ -599,7 +606,7 @@
     },
     "by_audit": {
       "action_proof": 0,
-      "audit_chain": 84,
+      "audit_chain": 86,
       "gap": 0,
       "read_model": 4,
       "request_proof": 0
@@ -607,16 +614,16 @@
     "by_coverage_state": {
       "proven": 1,
       "unproven": 0,
-      "witnessed": 87
+      "witnessed": 89
     },
     "by_request_proof": {
       "action_proof": 1,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 15,
-      "request_proof": 72
+      "request_proof": 74
     },
-    "surface_count": 88
+    "surface_count": 90
   },
   "generated_by": "scripts/proof_coverage_matrix.py",
   "route_coverage": {
@@ -3618,6 +3625,40 @@
       "audit": "audit_chain",
       "coverage_state": "witnessed",
       "evidence_files": [
+        "capabilities/software_dev/manifests/software_dev_app_task_graph_plan.capability.json",
+        "capabilities/software_dev/manifests/software_dev_change_run.capability.json",
+        "capabilities/software_dev/manifests/software_dev_context_bundle_build.capability.json",
+        "capabilities/software_dev/manifests/software_dev_gate_plan_select.capability.json",
+        "capabilities/software_dev/manifests/software_dev_pr_candidate_prepare.capability.json",
+        "capabilities/software_dev/manifests/software_dev_repo_map_read.capability.json",
+        "mcoi/mcoi_runtime/contracts/capability_manifest.py",
+        "mcoi/mcoi_runtime/core/capability_manifest_registry.py",
+        "schemas/software_dev/capability_manifest.schema.json",
+        "tests/test_capability_manifest_registry.py"
+      ],
+      "notes": "Capability manifest registry admits dynamic capability declarations only after owner, policy, evidence, schema, receipt, maturity, sandbox, rollback, environment, and hot-reload constraints validate; production hot reload remains denied for effect-bearing capabilities.",
+      "representative_paths": [
+        "CapabilityManifestRegistry.admit_path",
+        "CapabilityManifestRegistry.admit_directory",
+        "CapabilityManifest",
+        "CapabilityManifestAdmission"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "capability_manifest_schema_valid",
+        "software_dev_manifests_admit_locally",
+        "manifest_missing_policy_rejected",
+        "manifest_unresolved_schema_rejected",
+        "effect_manifest_requires_sandbox_rollback",
+        "production_hot_reload_denied_for_effect_manifest"
+      ],
+      "surface_id": "capability_manifest_registry"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
         "docs/62_governed_operational_intelligence.md",
         "gateway/physical_action_boundary.py",
         "gateway/physical_worker_canary.py",
@@ -4706,6 +4747,35 @@
         "receipt_not_terminal_closure"
       ],
       "surface_id": "temporal_memory"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "gateway/temporal_missed_run.py",
+        "schemas/temporal_missed_run_receipt.schema.json",
+        "tests/test_gateway/test_temporal_missed_run.py"
+      ],
+      "notes": "Temporal missed-run receipts classify late, expired, duplicate-dispatched, and recovery-due scheduled commands with runtime-owned time truth, scheduler source receipts, evidence refs, and high-risk reapproval binding before skip, retry, or closure.",
+      "representative_paths": [
+        "evaluate_temporal_missed_run",
+        "MissedRunRequest",
+        "TemporalMissedRunReceipt"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "runtime_clock_owns_missed_run_time",
+        "late_within_grace_preserves_dispatch_eligibility",
+        "expired_command_emits_missed_run_receipt",
+        "duplicate_dispatched_run_requires_terminal_receipt",
+        "recovery_due_requires_review_actions",
+        "tenant_command_action_scope_checked",
+        "high_risk_source_receipts_bound",
+        "temporal_missed_run_receipt_schema_valid",
+        "receipt_not_terminal_closure"
+      ],
+      "surface_id": "temporal_missed_run"
     },
     {
       "action_proof": "action_proof",

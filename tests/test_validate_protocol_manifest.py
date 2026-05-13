@@ -528,6 +528,17 @@ def test_protocol_manifest_indexes_temporal_idempotency_window_receipt() -> None
     assert idempotency_entry["surface"] == "temporal"
 
 
+def test_protocol_manifest_indexes_temporal_missed_run_receipt() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    missed_run_entry = entries["temporal-missed-run-receipt"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert missed_run_entry["path"] == "schemas/temporal_missed_run_receipt.schema.json"
+    assert missed_run_entry["urn"] == "urn:mullusi:schema:temporal-missed-run-receipt:1"
+    assert missed_run_entry["surface"] == "temporal"
+
+
 def test_protocol_manifest_indexes_temporal_memory_receipt() -> None:
     manifest = load_manifest()
     entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}

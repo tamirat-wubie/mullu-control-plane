@@ -2454,6 +2454,35 @@ def proof_coverage_matrix() -> dict[str, Any]:
             ],
         ),
         _surface(
+            "temporal_missed_run",
+            [
+                "evaluate_temporal_missed_run",
+                "MissedRunRequest",
+                "TemporalMissedRunReceipt",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "gateway/temporal_missed_run.py",
+                "schemas/temporal_missed_run_receipt.schema.json",
+                "tests/test_gateway/test_temporal_missed_run.py",
+            ],
+            "Temporal missed-run receipts classify late, expired, duplicate-dispatched, and recovery-due scheduled commands with runtime-owned time truth, scheduler source receipts, evidence refs, and high-risk reapproval binding before skip, retry, or closure.",
+            [
+                "runtime_clock_owns_missed_run_time",
+                "late_within_grace_preserves_dispatch_eligibility",
+                "expired_command_emits_missed_run_receipt",
+                "duplicate_dispatched_run_requires_terminal_receipt",
+                "recovery_due_requires_review_actions",
+                "tenant_command_action_scope_checked",
+                "high_risk_source_receipts_bound",
+                "temporal_missed_run_receipt_schema_valid",
+                "receipt_not_terminal_closure",
+            ],
+        ),
+        _surface(
             "temporal_memory_refresh",
             [
                 "TemporalMemoryRefresh.evaluate",
@@ -3128,6 +3157,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
         {
             "action_id": "publish_temporal_idempotency_window_receipt_contract",
             "surfaces": ["temporal_idempotency_window"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_temporal_missed_run_receipt_contract",
+            "surfaces": ["temporal_missed_run"],
             "status": "closed",
         },
         {

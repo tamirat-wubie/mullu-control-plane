@@ -18,7 +18,7 @@ from copy import deepcopy
 import json
 from pathlib import Path
 
-from mcoi_runtime.contracts.capability_manifest import CapabilityManifestAdmissionStatus
+from mcoi_runtime.contracts.capability_manifest import CapabilityManifest, CapabilityManifestAdmissionStatus
 from mcoi_runtime.core.capability_manifest_registry import CapabilityManifestRegistry
 from scripts.validate_schemas import _load_schema, _validate_schema_instance
 
@@ -97,6 +97,20 @@ def test_capability_manifest_registry_blocks_effects_without_sandbox_and_rollbac
     assert admission.status is CapabilityManifestAdmissionStatus.REJECTED
     assert "effect_bearing_capability_requires_sandbox" in admission.errors
     assert "effect_bearing_capability_requires_rollback" in admission.errors
+
+
+def test_capability_manifest_contract_rejects_scalar_array_fields() -> None:
+    payload = _temp_payload("software_dev_change_run.capability.json")
+    payload["allowed_environments"] = "local"
+
+    try:
+        CapabilityManifest.from_mapping(payload)
+    except ValueError as exc:
+        assert "allowed_environments must be an array" in str(exc)
+        assert "policy_refs" not in str(exc)
+        assert "evidence_refs" not in str(exc)
+    else:
+        raise AssertionError("scalar allowed_environments must be rejected")
 
 
 def test_capability_manifest_registry_blocks_production_hot_reload_for_effects(tmp_path: Path) -> None:
