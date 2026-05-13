@@ -106,3 +106,30 @@ def test_replay_plan_blocks_non_replayable_artifact() -> None:
     assert plan.artifact_ids == ("external-upload", "report")
     assert plan.blocked_reasons == ("external-upload:not_replayable",)
     assert len(plan.plan_hash) == 64
+
+
+def test_registration_and_edge_shape_violations_fail_closed() -> None:
+    dag = _dag()
+    _register(dag, "source")
+    _register(dag, "report")
+
+    with pytest.raises(RuntimeCoreInvariantError, match="artifact_id"):
+        dag.register_artifact(
+            artifact_id="",  # type: ignore[arg-type]
+            artifact_hash=hash_artifact_payload({"artifact_id": "empty"}),
+            artifact_type="json",
+            tenant_id="tenant-1",
+            produced_by_event_id="event-empty",
+        )
+    with pytest.raises(RuntimeCoreInvariantError, match="relation must be an ArtifactLineageRelation"):
+        dag.add_edge(
+            upstream_artifact_id="source",
+            downstream_artifact_id="report",
+            relation="depends_on",  # type: ignore[arg-type]
+            reason="invalid relation shape",
+        )
+    with pytest.raises(RuntimeCoreInvariantError, match="artifact not found"):
+        dag.replay_plan("missing")
+
+    assert dag.artifact_count == 2
+    assert dag.edge_count == 0

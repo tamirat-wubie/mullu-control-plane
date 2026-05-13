@@ -9,8 +9,14 @@ from __future__ import annotations
 
 import pytest
 
+from mcoi_runtime.core.artifact_lineage_dag import ArtifactLineageDAG, hash_artifact_payload
 from mcoi_runtime.core.causal_runtime_ledger import CausalRuntimeLedger
-from mcoi_runtime.core.governed_tool_gateway import GovernedToolGateway, ToolGatewayRequest
+from mcoi_runtime.core.governed_tool_gateway import (
+    GovernedToolGateway,
+    ToolGatewayArtifactBinding,
+    ToolGatewayRequest,
+    tool_gateway_receipt_json,
+)
 from mcoi_runtime.core.governed_tool_use import GovernedToolRegistry, ToolDefinition
 from mcoi_runtime.core.invariants import RuntimeCoreInvariantError
 from mcoi_runtime.core.tool_permission_primitives import ToolCallPermission, ToolPermissionRegistry
@@ -24,6 +30,16 @@ def _gateway() -> GovernedToolGateway:
     registry = GovernedToolRegistry(clock=_clock)
     ledger = CausalRuntimeLedger(clock=_clock)
     return GovernedToolGateway(registry=registry, ledger=ledger)
+
+
+def _lineage_gateway(lineage: ArtifactLineageDAG | None = None) -> GovernedToolGateway:
+    registry = GovernedToolRegistry(clock=_clock)
+    ledger = CausalRuntimeLedger(clock=_clock)
+    return GovernedToolGateway(
+        registry=registry,
+        ledger=ledger,
+        artifact_lineage=lineage or ArtifactLineageDAG(clock=_clock),
+    )
 
 
 def _request(**overrides: object) -> ToolGatewayRequest:
@@ -117,3 +133,191 @@ def test_gateway_binds_permission_decision_to_receipt() -> None:
     assert result.receipt.reason_codes == ("permission_matched",)
     assert f"permission:{permission.permission_id}" in result.ledger_event.constraint_refs
     assert result.ledger_event.metadata["reason_codes"] == ["permission_matched"]
+
+
+def test_gateway_registers_successful_tool_artifact_in_lineage() -> None:
+    lineage = ArtifactLineageDAG(clock=_clock)
+    gateway = _lineage_gateway(lineage)
+    gateway.register(
+        ToolDefinition(name="docs.render", description="Render document"),
+        executor=lambda _name, _args: {"document_id": "doc-1"},
+    )
+
+    result = gateway.invoke(
+        _request(
+            tool_name="docs.render",
+            arguments={"template": "policy"},
+            produced_artifacts=(
+                ToolGatewayArtifactBinding(
+                    artifact_id="artifact-doc-1",
+                    artifact_type="document",
+                    payload={"document_id": "doc-1"},
+                    metadata={"format": "markdown"},
+                ),
+            ),
+        )
+    )
+    artifact = lineage.get_artifact("artifact-doc-1")
+
+    assert result.status == "succeeded"
+    assert result.receipt.artifact_ids == ("artifact-doc-1",)
+    assert artifact is not None
+    assert artifact.produced_by_event_id == result.ledger_event.event_id
+    assert tool_gateway_receipt_json(result.receipt)["artifact_ids"] == ["artifact-doc-1"]
+
+
+def test_gateway_links_produced_artifact_to_existing_dependency() -> None:
+    lineage = ArtifactLineageDAG(clock=_clock)
+    lineage.register_artifact(
+        artifact_id="source-json",
+        artifact_hash=hash_artifact_payload({"source": True}),
+        artifact_type="json",
+        tenant_id="tenant-1",
+        produced_by_event_id="event-source",
+    )
+    gateway = _lineage_gateway(lineage)
+    gateway.register(
+        ToolDefinition(name="docs.summarize", description="Summarize source"),
+        executor=lambda _name, _args: {"summary": "ok"},
+    )
+
+    result = gateway.invoke(
+        _request(
+            tool_name="docs.summarize",
+            arguments={"source": "source-json"},
+            produced_artifacts=(
+                ToolGatewayArtifactBinding(
+                    artifact_id="summary-json",
+                    artifact_type="json",
+                    payload={"summary": "ok"},
+                    depends_on_artifact_ids=("source-json",),
+                ),
+            ),
+        )
+    )
+    plan = lineage.replay_plan("summary-json")
+
+    assert result.artifacts[0].artifact_id == "summary-json"
+    assert plan.ready is True
+    assert plan.artifact_ids == ("source-json", "summary-json")
+    assert lineage.descendants_of("source-json") == ("summary-json",)
+
+
+def test_gateway_requires_lineage_before_artifact_tool_execution() -> None:
+    gateway = _gateway()
+    calls: list[str] = []
+    gateway.register(
+        ToolDefinition(name="docs.render", description="Render document"),
+        executor=lambda _name, _args: calls.append("called") or {"document_id": "doc-1"},
+    )
+
+    with pytest.raises(RuntimeCoreInvariantError, match="artifact lineage is required"):
+        gateway.invoke(
+            _request(
+                tool_name="docs.render",
+                produced_artifacts=(
+                    ToolGatewayArtifactBinding(
+                        artifact_id="artifact-doc-1",
+                        artifact_type="document",
+                        payload={"document_id": "doc-1"},
+                    ),
+                ),
+            )
+        )
+
+    assert calls == []
+    assert gateway.ledger.event_count == 0
+    assert gateway.ledger.verify_chain().verified is True
+
+
+def test_gateway_does_not_register_artifact_for_denied_tool() -> None:
+    lineage = ArtifactLineageDAG(clock=_clock)
+    gateway = _lineage_gateway(lineage)
+
+    result = gateway.invoke(
+        _request(
+            tool_name="docs.render",
+            produced_artifacts=(
+                ToolGatewayArtifactBinding(
+                    artifact_id="artifact-doc-1",
+                    artifact_type="document",
+                    payload={"document_id": "doc-1"},
+                ),
+            ),
+        )
+    )
+
+    assert result.allowed is False
+    assert result.receipt.artifact_ids == ()
+    assert lineage.get_artifact("artifact-doc-1") is None
+    assert lineage.artifact_count == 0
+
+
+def test_gateway_supports_same_call_artifact_dependencies() -> None:
+    lineage = ArtifactLineageDAG(clock=_clock)
+    gateway = _lineage_gateway(lineage)
+    gateway.register(
+        ToolDefinition(name="docs.package", description="Package document"),
+        executor=lambda _name, _args: {"package_id": "pkg-1"},
+    )
+
+    result = gateway.invoke(
+        _request(
+            tool_name="docs.package",
+            arguments={"source": "draft"},
+            produced_artifacts=(
+                ToolGatewayArtifactBinding(
+                    artifact_id="draft-md",
+                    artifact_type="markdown",
+                    payload={"draft": "body"},
+                ),
+                ToolGatewayArtifactBinding(
+                    artifact_id="package-json",
+                    artifact_type="json",
+                    payload={"package_id": "pkg-1"},
+                    depends_on_artifact_ids=("draft-md",),
+                ),
+            ),
+        )
+    )
+    plan = lineage.replay_plan("package-json")
+
+    assert result.status == "succeeded"
+    assert result.receipt.artifact_ids == ("draft-md", "package-json")
+    assert plan.artifact_ids == ("draft-md", "package-json")
+    assert lineage.descendants_of("draft-md") == ("package-json",)
+
+
+def test_gateway_blocks_same_call_artifact_cycles_before_execution() -> None:
+    lineage = ArtifactLineageDAG(clock=_clock)
+    gateway = _lineage_gateway(lineage)
+    calls: list[str] = []
+    gateway.register(
+        ToolDefinition(name="docs.package", description="Package document"),
+        executor=lambda _name, _args: calls.append("called") or {"package_id": "pkg-1"},
+    )
+
+    with pytest.raises(RuntimeCoreInvariantError, match="produced artifact cycle detected"):
+        gateway.invoke(
+            _request(
+                tool_name="docs.package",
+                produced_artifacts=(
+                    ToolGatewayArtifactBinding(
+                        artifact_id="artifact-a",
+                        artifact_type="json",
+                        payload={"a": True},
+                        depends_on_artifact_ids=("artifact-b",),
+                    ),
+                    ToolGatewayArtifactBinding(
+                        artifact_id="artifact-b",
+                        artifact_type="json",
+                        payload={"b": True},
+                        depends_on_artifact_ids=("artifact-a",),
+                    ),
+                ),
+            )
+        )
+
+    assert calls == []
+    assert lineage.artifact_count == 0
+    assert gateway.ledger.event_count == 0

@@ -69,13 +69,6 @@
       ]
     },
     {
-      "action_id": "classify_agent_adapter_protocol_routes",
-      "status": "closed",
-      "surfaces": [
-        "agent_adapter_protocol"
-      ]
-    },
-    {
       "action_id": "publish_hosted_demo_sandbox_read_models",
       "status": "closed",
       "surfaces": [
@@ -139,6 +132,13 @@
       ]
     },
     {
+      "action_id": "classify_operational_health_read_model_routes",
+      "status": "closed",
+      "surfaces": [
+        "operational_health_read_models"
+      ]
+    },
+    {
       "action_id": "classify_tenant_governance_lifecycle_routes",
       "status": "closed",
       "surfaces": [
@@ -157,6 +157,13 @@
       "status": "closed",
       "surfaces": [
         "rbac_access_governance"
+      ]
+    },
+    {
+      "action_id": "classify_agent_adapter_lifecycle_routes",
+      "status": "closed",
+      "surfaces": [
+        "agent_adapter_lifecycle"
       ]
     },
     {
@@ -549,10 +556,10 @@
   ],
   "coverage_summary": {
     "by_action_proof": {
-      "action_proof": 69,
+      "action_proof": 68,
       "audit_chain": 0,
       "gap": 0,
-      "read_model": 12,
+      "read_model": 13,
       "request_proof": 2
     },
     "by_audit": {
@@ -571,8 +578,8 @@
       "action_proof": 1,
       "audit_chain": 0,
       "gap": 0,
-      "read_model": 14,
-      "request_proof": 68
+      "read_model": 15,
+      "request_proof": 67
     },
     "surface_count": 83
   },
@@ -580,10 +587,10 @@
   "route_coverage": {
     "by_coverage_state": {
       "proven": 8,
-      "unproven": 121,
-      "witnessed": 203
+      "unproven": 116,
+      "witnessed": 209
     },
-    "route_count": 332,
+    "route_count": 333,
     "routes": [
       {
         "coverage_state": "witnessed",
@@ -603,47 +610,47 @@
       {
         "coverage_state": "witnessed",
         "route": "/api/v1/agent/action-request",
-        "surface_id": "agent_adapter_protocol"
+        "surface_id": "agent_adapter_lifecycle"
       },
       {
         "coverage_state": "witnessed",
         "route": "/api/v1/agent/action-result",
-        "surface_id": "agent_adapter_protocol"
+        "surface_id": "agent_adapter_lifecycle"
       },
       {
         "coverage_state": "witnessed",
         "route": "/api/v1/agent/adapter/summary",
-        "surface_id": "agent_adapter_protocol"
+        "surface_id": "agent_adapter_lifecycle"
       },
       {
         "coverage_state": "witnessed",
         "route": "/api/v1/agent/checkpoint",
-        "surface_id": "agent_adapter_protocol"
+        "surface_id": "agent_adapter_lifecycle"
       },
       {
         "coverage_state": "witnessed",
         "route": "/api/v1/agent/heartbeat",
-        "surface_id": "agent_adapter_protocol"
+        "surface_id": "agent_adapter_lifecycle"
       },
       {
         "coverage_state": "witnessed",
         "route": "/api/v1/agent/register",
-        "surface_id": "agent_adapter_protocol"
+        "surface_id": "agent_adapter_lifecycle"
       },
       {
         "coverage_state": "witnessed",
         "route": "/api/v1/agent/restore",
-        "surface_id": "agent_adapter_protocol"
+        "surface_id": "agent_adapter_lifecycle"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/agents",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "agent_adapter_lifecycle"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/agents/{agent_id}/tasks",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "agent_adapter_lifecycle"
       },
       {
         "coverage_state": "unproven",
@@ -1231,24 +1238,24 @@
         "surface_id": "unclassified_declared_route"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/health/deep",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "operational_health_read_models"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/health/score",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "operational_health_read_models"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/health/v2",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "operational_health_read_models"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/health/v3",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "operational_health_read_models"
       },
       {
         "coverage_state": "unproven",
@@ -1298,6 +1305,11 @@
       {
         "coverage_state": "unproven",
         "route": "/api/v1/ledger",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/lineage/artifact/{artifact_id}",
         "surface_id": "unclassified_declared_route"
       },
       {
@@ -2246,7 +2258,7 @@
         "surface_id": "gateway_capability_fabric"
       }
     ],
-    "unclassified_route_count": 121
+    "unclassified_route_count": 116
   },
   "schema_version": 1,
   "surfaces": [
@@ -2502,6 +2514,43 @@
       "surface_id": "rbac_access_governance"
     },
     {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "mcoi/mcoi_runtime/app/routers/adapter.py",
+        "mcoi/mcoi_runtime/app/routers/agent.py",
+        "mcoi/tests/test_agent_adapter_protocol.py",
+        "mcoi/tests/test_server_phase205.py",
+        "mcoi/tests/test_server_phase217.py"
+      ],
+      "notes": "Agent adapter lifecycle routes bind external agent registration, heartbeat, action admission, action result closure, checkpoint/restore, adapter summary, and built-in agent task read models to governed responses with audit records and bounded error contracts.",
+      "representative_paths": [
+        "/api/v1/agent/register",
+        "/api/v1/agent/heartbeat",
+        "/api/v1/agent/action-request",
+        "/api/v1/agent/action-result",
+        "/api/v1/agent/checkpoint",
+        "/api/v1/agent/restore",
+        "/api/v1/agent/adapter/summary",
+        "/api/v1/agents",
+        "/api/v1/agents/{agent_id}/tasks"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "agent_register_emits_audit_record",
+        "agent_heartbeat_requires_registered_agent",
+        "agent_action_request_runs_guard_chain",
+        "agent_action_result_closes_tracked_action",
+        "agent_goal_context_propagates_to_response_and_audit",
+        "agent_checkpoint_restore_roundtrip_governed",
+        "agent_adapter_summary_bounded",
+        "builtin_agent_registry_read_models_governed",
+        "agent_error_contracts_bounded"
+      ],
+      "surface_id": "agent_adapter_lifecycle"
+    },
+    {
       "action_proof": "read_model",
       "audit": "audit_chain",
       "coverage_state": "witnessed",
@@ -2531,38 +2580,6 @@
         "console_provider_and_scheduler_views_are_read_only"
       ],
       "surface_id": "operator_console_read_models"
-    },
-    {
-      "action_proof": "action_proof",
-      "audit": "audit_chain",
-      "coverage_state": "witnessed",
-      "evidence_files": [
-        "mcoi/mcoi_runtime/app/routers/adapter.py",
-        "mcoi/mcoi_runtime/app/routers/deps.py",
-        "mcoi/tests/test_agent_adapter_protocol.py",
-        "mcoi/tests/test_server_phase217.py"
-      ],
-      "notes": "Agent adapter protocol routes register external workers, maintain heartbeat state, pass action requests through the guard chain, record action results, checkpoint and restore coordination state with bounded errors, and expose a governed summary read model.",
-      "representative_paths": [
-        "/api/v1/agent/register",
-        "/api/v1/agent/heartbeat",
-        "/api/v1/agent/action-request",
-        "/api/v1/agent/action-result",
-        "/api/v1/agent/checkpoint",
-        "/api/v1/agent/restore",
-        "/api/v1/agent/adapter/summary"
-      ],
-      "request_proof": "request_proof",
-      "runtime_witnesses": [
-        "agent_register_emits_governed_identity",
-        "agent_heartbeat_requires_registered_agent",
-        "agent_action_request_runs_guard_chain",
-        "agent_action_result_records_outcome",
-        "agent_goal_context_propagates_to_action_request",
-        "agent_checkpoint_restore_errors_are_bounded",
-        "agent_adapter_summary_is_governed_read_model"
-      ],
-      "surface_id": "agent_adapter_protocol"
     },
     {
       "action_proof": "action_proof",
@@ -2883,6 +2900,43 @@
         "trace_context_roundtrip_tested"
       ],
       "surface_id": "trace_observability_read_models"
+    },
+    {
+      "action_proof": "read_model",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "mcoi/mcoi_runtime/app/routers/health.py",
+        "mcoi/mcoi_runtime/core/deep_health.py",
+        "mcoi/mcoi_runtime/core/health_aggregator.py",
+        "mcoi/mcoi_runtime/core/health_check_agg.py",
+        "mcoi/mcoi_runtime/core/health_v3.py",
+        "mcoi/tests/test_deep_health.py",
+        "mcoi/tests/test_health_aggregator.py",
+        "mcoi/tests/test_health_check_agg.py",
+        "mcoi/tests/test_phase232.py",
+        "mcoi/tests/test_server_phase205.py",
+        "mcoi/tests/test_server_phase210.py"
+      ],
+      "notes": "Operational health routes expose bounded read models for deep component diagnostics, weighted health score, degraded-state checks, and v3 recovery tracking without mutation authority.",
+      "representative_paths": [
+        "/api/v1/health/deep",
+        "/api/v1/health/score",
+        "/api/v1/health/v2",
+        "/api/v1/health/v3"
+      ],
+      "request_proof": "read_model",
+      "runtime_witnesses": [
+        "deep_health_components_bounded",
+        "health_score_range_bounded",
+        "health_score_components_weighted",
+        "health_v2_degraded_state_supported",
+        "health_v2_exception_sanitized",
+        "health_v3_weighted_aggregation",
+        "health_v3_recovery_tracking",
+        "health_routes_return_read_models"
+      ],
+      "surface_id": "operational_health_read_models"
     },
     {
       "action_proof": "action_proof",
@@ -3845,12 +3899,13 @@
         "schemas/trust_ledger_anchor_receipt.schema.json",
         "schemas/trust_ledger_bundle.schema.json",
         "schemas/trust_ledger_evidence_artifacts.schema.json",
+        "schemas/trust_ledger_export_package.schema.json",
         "tests/test_gateway/test_evidence_bundle_endpoint.py",
         "tests/test_gateway/test_trust_ledger_anchor_receipt.py",
         "tests/test_gateway/test_trust_ledger.py",
         "tests/test_verify_anchor_receipt.py"
       ],
-      "notes": "Trust ledger signs terminal-closure evidence bundles, exposes operator bundle export, verifies exported bundle and anchor receipt files offline, and emits external anchor receipts that bind typed artifact roots, tenant, command, deployment, commit, hash-chain root, and external anchor state.",
+      "notes": "Trust ledger signs terminal-closure evidence bundles, exposes operator bundle export, verifies exported bundle and anchor receipt files offline, emits external anchor receipts, and packages verifier inputs with content hashes for portable audit review.",
       "representative_paths": [
         "TrustLedger.issue",
         "TrustLedger.verify",
@@ -3859,8 +3914,10 @@
         "GET /evidence/bundles/{command_id}",
         "scripts/verify_evidence_bundle.py",
         "scripts/verify_anchor_receipt.py",
+        "TrustLedger.package_anchor_export",
         "TrustLedgerBundle",
-        "ExternalProofAnchorReceipt"
+        "ExternalProofAnchorReceipt",
+        "TrustLedgerExportPackage"
       ],
       "request_proof": "request_proof",
       "runtime_witnesses": [
@@ -3875,9 +3932,13 @@
         "typed_artifact_root_required",
         "offline_anchor_artifact_root_tamper_detection",
         "offline_anchor_schema_invalid_receipt_rejected",
+        "offline_anchor_package_hash_mismatch_rejected",
+        "offline_anchor_package_schema_invalid_rejected",
         "anchor_receipt_hmac_verification",
         "anchor_receipt_schema_valid",
         "anchor_receipt_non_terminal_marker_required",
+        "export_package_binds_bundle_receipt_and_artifact_files",
+        "export_package_rejects_receipt_identity_drift",
         "trust_ledger_bundle_schema_valid"
       ],
       "surface_id": "trust_ledger"
@@ -4157,35 +4218,6 @@
         "receipt_not_terminal_closure"
       ],
       "surface_id": "temporal_budget_window"
-    },
-    {
-      "action_proof": "action_proof",
-      "audit": "audit_chain",
-      "coverage_state": "witnessed",
-      "evidence_files": [
-        "gateway/temporal_memory.py",
-        "schemas/temporal_memory_receipt.schema.json",
-        "tests/test_gateway/test_temporal_memory.py"
-      ],
-      "notes": "Temporal memory gates memory use through runtime-owned age, evidence freshness, validity windows, confidence decay, tenant-owner scope, allowed use, and supersession checks before memory can guide action.",
-      "representative_paths": [
-        "TemporalMemory.evaluate",
-        "TemporalMemoryRecord",
-        "TemporalMemoryReceipt"
-      ],
-      "request_proof": "request_proof",
-      "runtime_witnesses": [
-        "memory_age_computed_from_runtime_clock",
-        "stale_memory_requires_refresh",
-        "validity_window_blocks_expired_memory",
-        "superseded_memory_not_usable",
-        "confidence_decay_blocks_weak_memory",
-        "tenant_owner_scope_checked",
-        "allowed_use_checked",
-        "temporal_memory_receipt_schema_valid",
-        "receipt_not_terminal_closure"
-      ],
-      "surface_id": "temporal_memory"
     },
     {
       "action_proof": "action_proof",
@@ -4770,7 +4802,7 @@
         "mcoi/tests/test_god_mode_router.py",
         "mcoi/tests/test_god_mode_decorator.py"
       ],
-      "notes": "Privileged 'god mode' capabilities ship dormant. Two-stage explicit consent \u00e2\u20ac\u201d registration agreement promotes capability dormant\u00e2\u2020\u2019armed; activation issues a single-use, short-lived ticket. Catastrophic capabilities require dual control (\u00e2\u2030\u00a52 distinct approvers). Every consumption emits an immutable receipt with pre/post hashes and the full agreement chain. Withdrawals and revocations are first-class, irreversible-as-events.",
+      "notes": "Privileged 'god mode' capabilities ship dormant. Two-stage explicit consent - registration agreement promotes capability dormant-to-armed; activation issues a single-use, short-lived ticket. Catastrophic capabilities require dual control (at least 2 distinct approvers). Every consumption emits an immutable receipt with pre/post hashes and the full agreement chain. Withdrawals and revocations are first-class, irreversible-as-events.",
       "representative_paths": [
         "/api/v1/god-mode/capabilities",
         "/api/v1/god-mode/health",

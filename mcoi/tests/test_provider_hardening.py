@@ -8,11 +8,12 @@ from mcoi_runtime.contracts.provider_policy import (
     HttpProviderPolicy,
     PolicyViolationSeverity,
     ProcessProviderPolicy,
+    ProviderInvocationCheck,
     ProviderPolicyType,
+    ProviderPolicyViolation,
     SmtpProviderPolicy,
 )
 from mcoi_runtime.contracts.review import (
-    ReviewDecision,
     ReviewRequest,
     ReviewScope,
     ReviewScopeType,
@@ -24,6 +25,92 @@ from mcoi_runtime.core.review import ReviewEngine
 
 T0 = "2025-01-15T10:00:00+00:00"
 T1 = "2025-01-15T11:00:00+00:00"
+
+
+class TestProviderPolicyContractShape:
+    def test_http_policy_rejects_sequence_shape_drift(self):
+        policy = HttpProviderPolicy(
+            policy_id="http-pol-1",
+            allowed_methods=["GET"],  # type: ignore[arg-type]
+            allowed_content_types=["application/json"],  # type: ignore[arg-type]
+            header_allowlist=["x-request-id"],  # type: ignore[arg-type]
+        )
+
+        assert policy.allowed_methods == ("GET",)
+        assert policy.allowed_content_types == ("application/json",)
+        assert policy.header_allowlist == ("x-request-id",)
+
+        with pytest.raises(ValueError, match="allowed_methods must be an array"):
+            HttpProviderPolicy(policy_id="http-pol-1", allowed_methods="GET")  # type: ignore[arg-type]
+        with pytest.raises(ValueError, match="allowed_content_types must be an array"):
+            HttpProviderPolicy(policy_id="http-pol-1", allowed_content_types="application/json")  # type: ignore[arg-type]
+        with pytest.raises(ValueError, match="header_allowlist must be an array"):
+            HttpProviderPolicy(policy_id="http-pol-1", header_allowlist="x-request-id")  # type: ignore[arg-type]
+
+    def test_smtp_and_process_policies_reject_sequence_shape_drift(self):
+        smtp_policy = SmtpProviderPolicy(
+            policy_id="smtp-pol-1",
+            allowed_recipient_domains=["company.com"],  # type: ignore[arg-type]
+        )
+        process_policy = ProcessProviderPolicy(
+            policy_id="proc-pol-1",
+            command_allowlist=["python"],  # type: ignore[arg-type]
+            env_allowlist=["PATH"],  # type: ignore[arg-type]
+            cwd_allowed=["C:/work"],  # type: ignore[arg-type]
+        )
+
+        assert smtp_policy.allowed_recipient_domains == ("company.com",)
+        assert process_policy.command_allowlist == ("python",)
+        assert process_policy.env_allowlist == ("PATH",)
+        assert process_policy.cwd_allowed == ("C:/work",)
+
+        with pytest.raises(ValueError, match="allowed_recipient_domains must be an array"):
+            SmtpProviderPolicy(policy_id="smtp-pol-1", allowed_recipient_domains="company.com")  # type: ignore[arg-type]
+        with pytest.raises(ValueError, match="command_allowlist must be an array"):
+            ProcessProviderPolicy(policy_id="proc-pol-1", command_allowlist="python")  # type: ignore[arg-type]
+        with pytest.raises(ValueError, match="env_allowlist must be an array"):
+            ProcessProviderPolicy(policy_id="proc-pol-1", env_allowlist="PATH")  # type: ignore[arg-type]
+        with pytest.raises(ValueError, match="cwd_allowed must be an array"):
+            ProcessProviderPolicy(policy_id="proc-pol-1", cwd_allowed="C:/work")  # type: ignore[arg-type]
+
+    def test_invocation_check_rejects_violation_shape_drift(self):
+        violation = ProviderPolicyViolation(
+            violation_id="violation-1",
+            provider_id="provider-1",
+            policy_type=ProviderPolicyType.HTTP,
+            severity=PolicyViolationSeverity.BLOCKED,
+            field_name="method",
+            expected="GET",
+            actual="DELETE",
+            message="method blocked",
+        )
+        check = ProviderInvocationCheck(
+            provider_id="provider-1",
+            policy_type=ProviderPolicyType.HTTP,
+            allowed=False,
+            violations=[violation],  # type: ignore[arg-type]
+        )
+
+        assert check.allowed is False
+        assert check.violations == (violation,)
+        assert check.to_json_dict()["violations"][0]["severity"] == "blocked"
+
+        with pytest.raises(ValueError, match="allowed must be a bool"):
+            ProviderInvocationCheck(provider_id="provider-1", policy_type=ProviderPolicyType.HTTP, allowed="no")  # type: ignore[arg-type]
+        with pytest.raises(ValueError, match="violations must be an array"):
+            ProviderInvocationCheck(
+                provider_id="provider-1",
+                policy_type=ProviderPolicyType.HTTP,
+                allowed=False,
+                violations="violation-1",  # type: ignore[arg-type]
+            )
+        with pytest.raises(ValueError, match=r"violations\[0\] must be a ProviderPolicyViolation"):
+            ProviderInvocationCheck(
+                provider_id="provider-1",
+                policy_type=ProviderPolicyType.HTTP,
+                allowed=False,
+                violations=("violation-1",),  # type: ignore[arg-type]
+            )
 
 
 # --- HTTP policy ---

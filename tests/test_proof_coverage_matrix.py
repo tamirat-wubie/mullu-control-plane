@@ -1,4 +1,4 @@
-"""Purpose: verify the generated proof coverage matrix witness.
+﻿"""Purpose: verify the generated proof coverage matrix witness.
 
 Governance scope: prevents drift between route surfaces and the proof coverage
 closure ledger.
@@ -131,6 +131,12 @@ def test_representative_routes_are_not_unclassified() -> None:
     assert classified_routes["/api/v1/queue/submit"]["surface_id"] == "task_queue_lifecycle"
     assert classified_routes["/api/v1/queue/process"]["surface_id"] == "task_queue_lifecycle"
     assert classified_routes["/api/v1/queue/result/{task_id}"]["surface_id"] == "task_queue_lifecycle"
+    assert classified_routes["/api/v1/traces"]["surface_id"] == "trace_observability_read_models"
+    assert classified_routes["/api/v1/traces/slow"]["surface_id"] == "trace_observability_read_models"
+    assert classified_routes["/api/v1/traces/summary"]["surface_id"] == "trace_observability_read_models"
+    assert classified_routes["/api/v1/health/deep"]["surface_id"] == "operational_health_read_models"
+    assert classified_routes["/api/v1/health/score"]["surface_id"] == "operational_health_read_models"
+    assert classified_routes["/api/v1/health/v3"]["surface_id"] == "operational_health_read_models"
     assert classified_routes["/api/v1/finance/approval-packets"]["surface_id"] == "finance_approval_packets"
     assert (
         classified_routes["/api/v1/finance/approval-packets/operator/read-model"]["surface_id"]
@@ -168,12 +174,16 @@ def test_agent_adapter_lifecycle_surface_is_witnessed() -> None:
     assert "/api/v1/agent/action-request" in agent_surface["representative_paths"]
     assert "/api/v1/agent/restore" in agent_surface["representative_paths"]
     assert "/api/v1/agent/adapter/summary" in agent_surface["representative_paths"]
+    assert "/api/v1/agents" in agent_surface["representative_paths"]
+    assert "/api/v1/agents/{agent_id}/tasks" in agent_surface["representative_paths"]
     assert "mcoi/mcoi_runtime/app/routers/adapter.py" in agent_surface["evidence_files"]
     assert "mcoi/mcoi_runtime/app/routers/agent.py" in agent_surface["evidence_files"]
     assert "mcoi/tests/test_agent_adapter_protocol.py" in agent_surface["evidence_files"]
     assert "agent_register_emits_audit_record" in witnesses
     assert "agent_action_request_runs_guard_chain" in witnesses
     assert "agent_checkpoint_restore_roundtrip_governed" in witnesses
+    assert "agent_adapter_summary_bounded" in witnesses
+    assert "builtin_agent_registry_read_models_governed" in witnesses
     assert closure_actions["classify_agent_adapter_lifecycle_routes"]["status"] == "closed"
 
 
@@ -1187,6 +1197,78 @@ def test_task_queue_lifecycle_surface_tracks_priority_processing() -> None:
     assert closure_actions["classify_task_queue_lifecycle_routes"]["status"] == "closed"
 
 
+def test_trace_observability_surface_exposes_read_only_models() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    trace_surface = surfaces["trace_observability_read_models"]
+    witnesses = set(trace_surface["runtime_witnesses"])
+    route_records = {
+        record["route"]: record
+        for record in matrix["route_coverage"]["routes"]
+    }
+
+    assert trace_surface["coverage_state"] == "witnessed"
+    assert trace_surface["request_proof"] == "read_model"
+    assert trace_surface["action_proof"] == "read_model"
+    assert "/api/v1/traces" in trace_surface["representative_paths"]
+    assert "/api/v1/traces/slow" in trace_surface["representative_paths"]
+    assert "/api/v1/traces/summary" in trace_surface["representative_paths"]
+    assert "/api/v1/traces/{trace_id}" in trace_surface["representative_paths"]
+    assert "mcoi/mcoi_runtime/app/routers/agent.py" in trace_surface["evidence_files"]
+    assert "mcoi/mcoi_runtime/app/routers/ops/summaries.py" in trace_surface["evidence_files"]
+    assert "mcoi/mcoi_runtime/core/request_tracing.py" in trace_surface["evidence_files"]
+    assert "mcoi/tests/test_request_tracing.py" in trace_surface["evidence_files"]
+    assert "request_trace_summary_bounded" in witnesses
+    assert "missing_trace_returns_governed_404" in witnesses
+    assert "slow_trace_projection_bounded" in witnesses
+    assert "otel_trace_summary_bounded" in witnesses
+    assert route_records["/api/v1/traces"]["coverage_state"] == "witnessed"
+    assert route_records["/api/v1/traces"]["surface_id"] == "trace_observability_read_models"
+    assert route_records["/api/v1/traces/summary"]["coverage_state"] == "witnessed"
+    assert route_records["/api/v1/traces/summary"]["surface_id"] == "trace_observability_read_models"
+    assert closure_actions["classify_trace_observability_routes"]["status"] == "closed"
+
+
+def test_operational_health_surface_exposes_bounded_read_models() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    health_surface = surfaces["operational_health_read_models"]
+    witnesses = set(health_surface["runtime_witnesses"])
+    route_records = {
+        record["route"]: record
+        for record in matrix["route_coverage"]["routes"]
+    }
+
+    assert health_surface["coverage_state"] == "witnessed"
+    assert health_surface["request_proof"] == "read_model"
+    assert health_surface["action_proof"] == "read_model"
+    assert "/api/v1/health/deep" in health_surface["representative_paths"]
+    assert "/api/v1/health/score" in health_surface["representative_paths"]
+    assert "/api/v1/health/v2" in health_surface["representative_paths"]
+    assert "/api/v1/health/v3" in health_surface["representative_paths"]
+    assert "mcoi/mcoi_runtime/app/routers/health.py" in health_surface["evidence_files"]
+    assert "mcoi/mcoi_runtime/core/deep_health.py" in health_surface["evidence_files"]
+    assert "mcoi/mcoi_runtime/core/health_aggregator.py" in health_surface["evidence_files"]
+    assert "mcoi/mcoi_runtime/core/health_check_agg.py" in health_surface["evidence_files"]
+    assert "mcoi/mcoi_runtime/core/health_v3.py" in health_surface["evidence_files"]
+    assert "mcoi/tests/test_deep_health.py" in health_surface["evidence_files"]
+    assert "mcoi/tests/test_health_aggregator.py" in health_surface["evidence_files"]
+    assert "mcoi/tests/test_health_check_agg.py" in health_surface["evidence_files"]
+    assert "mcoi/tests/test_phase232.py" in health_surface["evidence_files"]
+    assert "deep_health_components_bounded" in witnesses
+    assert "health_score_range_bounded" in witnesses
+    assert "health_v2_degraded_state_supported" in witnesses
+    assert "health_v2_exception_sanitized" in witnesses
+    assert "health_v3_recovery_tracking" in witnesses
+    assert route_records["/api/v1/health/deep"]["coverage_state"] == "witnessed"
+    assert route_records["/api/v1/health/deep"]["surface_id"] == "operational_health_read_models"
+    assert route_records["/api/v1/health/v3"]["coverage_state"] == "witnessed"
+    assert route_records["/api/v1/health/v3"]["surface_id"] == "operational_health_read_models"
+    assert closure_actions["classify_operational_health_read_model_routes"]["status"] == "closed"
+
+
 def test_connector_self_healing_surface_emits_bounded_recovery_receipts() -> None:
     matrix = _load_fixture()
     surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
@@ -1323,6 +1405,7 @@ def test_trust_ledger_surface_signs_terminal_evidence_bundles() -> None:
     assert "schemas/trust_ledger_anchor_receipt.schema.json" in trust_surface["evidence_files"]
     assert "schemas/trust_ledger_bundle.schema.json" in trust_surface["evidence_files"]
     assert "schemas/trust_ledger_evidence_artifacts.schema.json" in trust_surface["evidence_files"]
+    assert "schemas/trust_ledger_export_package.schema.json" in trust_surface["evidence_files"]
     assert "tests/test_gateway/test_trust_ledger_anchor_receipt.py" in trust_surface["evidence_files"]
     assert "tests/test_gateway/test_trust_ledger.py" in trust_surface["evidence_files"]
     assert "tests/test_verify_anchor_receipt.py" in trust_surface["evidence_files"]
@@ -1332,9 +1415,13 @@ def test_trust_ledger_surface_signs_terminal_evidence_bundles() -> None:
     assert "offline_anchor_verifier_validates_schema_artifacts_and_signature" in witnesses
     assert "offline_anchor_artifact_root_tamper_detection" in witnesses
     assert "offline_anchor_schema_invalid_receipt_rejected" in witnesses
+    assert "offline_anchor_package_hash_mismatch_rejected" in witnesses
+    assert "offline_anchor_package_schema_invalid_rejected" in witnesses
     assert "typed_artifact_root_required" in witnesses
     assert "anchor_receipt_hmac_verification" in witnesses
     assert "anchor_receipt_schema_valid" in witnesses
+    assert "export_package_binds_bundle_receipt_and_artifact_files" in witnesses
+    assert "export_package_rejects_receipt_identity_drift" in witnesses
     assert closure_actions["publish_trust_ledger_bundle_contract"]["status"] == "closed"
     assert closure_actions["publish_trust_ledger_anchor_receipt_contract"]["status"] == "closed"
 
@@ -2026,3 +2113,4 @@ def test_operator_document_mentions_every_surface() -> None:
     assert all(f"`{action['action_id']}`" in doc for action in matrix["closure_actions"])
     assert "schema contract validation" in doc
     assert "deployment orchestration receipt schema contract" in doc
+

@@ -97,6 +97,9 @@ class TestAutoRoutedCompletion:
         assert "Qwen/Qwen3-Coder-30B-A3B-Instruct:cheapest" in ids
         assert "nvidia/Nemotron-120B-A12B" in ids
         assert "deepseek/deepseek-chat-v3-0324" in ids
+        assert "nscale/openai/gpt-oss-20b" in ids
+        assert "scaleway/gpt-oss-120b" in ids
+        assert "ovhcloud/Qwen3-Coder-30B-A3B-Instruct" in ids
 
     def test_auto_complete_exception_is_sanitized(self, client, monkeypatch):
         from mcoi_runtime.app.routers.deps import deps

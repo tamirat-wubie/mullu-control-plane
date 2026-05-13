@@ -1665,6 +1665,124 @@ class HaimakerBackend:
         return self._call_count
 
 
+class NscaleBackend:
+    """Nscale Serverless Inference OpenAI-compatible endpoint for cheap GPT OSS models."""
+
+    provider = LLMProvider.NSCALE
+    DEFAULT_MODEL = "openai/gpt-oss-20b"
+    ROUTING_MODEL = "nscale/openai/gpt-oss-20b"
+    MODEL_ALIASES = {ROUTING_MODEL: DEFAULT_MODEL}
+
+    def __init__(self, *, model: str = "", api_key: str | None = None, api_key_env: str = "NSCALE_API_KEY") -> None:
+        self._model = model or self.DEFAULT_MODEL
+        self._default_model = self._model
+        self._api_key = api_key or ""
+        self._api_key_env = api_key_env
+        self._call_count = 0
+
+    def call(self, params: LLMInvocationParams) -> LLMResult:
+        self._call_count += 1
+        requested_model = params.model_name or self._model
+        model = self.MODEL_ALIASES.get(requested_model, requested_model)
+        return _openai_compatible_call(
+            base_url="https://inference.api.nscale.com/v1",
+            api_key=self._api_key or os.environ.get(self._api_key_env, ""),
+            model=model,
+            messages=_params_to_messages(params),
+            max_tokens=params.max_tokens,
+            temperature=0.0,
+            provider=self.provider,
+            cost_per_1m_input=0.05,
+            cost_per_1m_output=0.20,
+        )
+
+    @property
+    def call_count(self) -> int:
+        return self._call_count
+
+
+class ScalewayBackend:
+    """Scaleway Generative APIs OpenAI-compatible endpoint for EU-hosted models."""
+
+    provider = LLMProvider.SCALEWAY
+    DEFAULT_MODEL = "gpt-oss-120b"
+    ROUTING_MODEL = "scaleway/gpt-oss-120b"
+    MODEL_ALIASES = {ROUTING_MODEL: DEFAULT_MODEL}
+
+    def __init__(self, *, model: str = "", api_key: str | None = None, api_key_env: str = "SCW_API_KEY") -> None:
+        self._model = model or self.DEFAULT_MODEL
+        self._default_model = self._model
+        self._api_key = api_key or ""
+        self._api_key_env = api_key_env
+        self._call_count = 0
+
+    def call(self, params: LLMInvocationParams) -> LLMResult:
+        self._call_count += 1
+        requested_model = params.model_name or self._model
+        model = self.MODEL_ALIASES.get(requested_model, requested_model)
+        return _openai_compatible_call(
+            base_url="https://api.scaleway.ai/v1",
+            api_key=self._api_key
+            or os.environ.get(self._api_key_env, "")
+            or os.environ.get("SCALEWAY_API_KEY", ""),
+            model=model,
+            messages=_params_to_messages(params),
+            max_tokens=params.max_tokens,
+            temperature=0.0,
+            provider=self.provider,
+            cost_per_1m_input=0.15,
+            cost_per_1m_output=0.60,
+        )
+
+    @property
+    def call_count(self) -> int:
+        return self._call_count
+
+
+class OVHCloudBackend:
+    """OVHcloud AI Endpoints OpenAI-compatible endpoint for low-cost code models."""
+
+    provider = LLMProvider.OVHCLOUD
+    DEFAULT_MODEL = "Qwen3-Coder-30B-A3B-Instruct"
+    ROUTING_MODEL = "ovhcloud/Qwen3-Coder-30B-A3B-Instruct"
+    MODEL_ALIASES = {ROUTING_MODEL: DEFAULT_MODEL}
+
+    def __init__(
+        self,
+        *,
+        model: str = "",
+        api_key: str | None = None,
+        api_key_env: str = "OVH_AI_ENDPOINTS_ACCESS_TOKEN",
+    ) -> None:
+        self._model = model or self.DEFAULT_MODEL
+        self._default_model = self._model
+        self._api_key = api_key or ""
+        self._api_key_env = api_key_env
+        self._call_count = 0
+
+    def call(self, params: LLMInvocationParams) -> LLMResult:
+        self._call_count += 1
+        requested_model = params.model_name or self._model
+        model = self.MODEL_ALIASES.get(requested_model, requested_model)
+        return _openai_compatible_call(
+            base_url="https://oai.endpoints.kepler.ai.cloud.ovh.net/v1",
+            api_key=self._api_key
+            or os.environ.get(self._api_key_env, "")
+            or os.environ.get("AI_ENDPOINT_API_KEY", ""),
+            model=model,
+            messages=_params_to_messages(params),
+            max_tokens=params.max_tokens,
+            temperature=0.0,
+            provider=self.provider,
+            cost_per_1m_input=0.06,
+            cost_per_1m_output=0.22,
+        )
+
+    @property
+    def call_count(self) -> int:
+        return self._call_count
+
+
 # --- xAI Grok (real-time X data) ---
 class GrokBackend:
     """xAI Grok - real-time X (Twitter) data access.
@@ -1824,6 +1942,9 @@ ALL_PROVIDERS: dict[str, type] = {
     "huggingface": HuggingFaceBackend,
     "baseten": BasetenBackend,
     "haimaker": HaimakerBackend,
+    "nscale": NscaleBackend,
+    "scaleway": ScalewayBackend,
+    "ovhcloud": OVHCloudBackend,
     "grok": GrokBackend,
     "mistral": MistralBackend,
     "openrouter": OpenRouterBackend,
@@ -1887,6 +2008,9 @@ def available_providers() -> list[str]:
         "huggingface": ("HF_TOKEN", "HUGGINGFACE_API_KEY"),
         "baseten": ("BASETEN_API_KEY",),
         "haimaker": ("HAIMAKER_API_KEY",),
+        "nscale": ("NSCALE_API_KEY",),
+        "scaleway": ("SCW_API_KEY", "SCALEWAY_API_KEY"),
+        "ovhcloud": ("OVH_AI_ENDPOINTS_ACCESS_TOKEN", "AI_ENDPOINT_API_KEY"),
         "grok": ("XAI_API_KEY",),
         "mistral": ("MISTRAL_API_KEY",),
         "openrouter": ("OPENROUTER_API_KEY",),

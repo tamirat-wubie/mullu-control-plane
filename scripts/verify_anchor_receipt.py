@@ -14,6 +14,7 @@ Invariants:
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import sys
@@ -36,6 +37,7 @@ from scripts.validate_schemas import _load_schema, _validate_schema_instance  # 
 BUNDLE_SCHEMA_PATH = ROOT / "schemas" / "trust_ledger_bundle.schema.json"
 ANCHOR_RECEIPT_SCHEMA_PATH = ROOT / "schemas" / "trust_ledger_anchor_receipt.schema.json"
 ARTIFACTS_SCHEMA_PATH = ROOT / "schemas" / "trust_ledger_evidence_artifacts.schema.json"
+PACKAGE_SCHEMA_PATH = ROOT / "schemas" / "trust_ledger_export_package.schema.json"
 
 
 def verify_anchor_receipt_files(
@@ -43,6 +45,7 @@ def verify_anchor_receipt_files(
     bundle_path: Path,
     receipt_path: Path,
     artifacts_path: Path,
+    package_path: Path | None = None,
     signing_secret: str,
     strict: bool = False,
 ) -> dict[str, Any]:
@@ -63,6 +66,11 @@ def verify_anchor_receipt_files(
     artifacts_raw = _read_json_array(artifacts_path, "artifacts")
     if artifacts_raw["reason"]:
         return _report(**artifacts_raw)
+    package_raw = None
+    if package_path is not None:
+        package_raw = _read_json_object(package_path, "package")
+        if package_raw["reason"]:
+            return _report(**package_raw)
 
     bundle_payload = bundle_raw["payload"]
     receipt_payload = receipt_raw["payload"]
@@ -72,6 +80,9 @@ def verify_anchor_receipt_files(
     schema_errors = [f"bundle:{error}" for error in bundle_errors]
     schema_errors.extend(f"anchor_receipt:{error}" for error in receipt_errors)
     schema_errors.extend(f"artifacts:{error}" for error in artifact_errors)
+    if package_raw is not None:
+        package_errors = _validate_schema_instance(_load_schema(PACKAGE_SCHEMA_PATH), package_raw["payload"])
+        schema_errors.extend(f"package:{error}" for error in package_errors)
     if schema_errors:
         return _report(
             valid=False,
@@ -81,6 +92,25 @@ def verify_anchor_receipt_files(
             schema_valid=False,
             schema_errors=schema_errors if strict else schema_errors[:10],
         )
+    if package_raw is not None:
+        package_verification = _verify_package_payload(
+            package_raw["payload"],
+            bundle_path=bundle_path,
+            receipt_path=receipt_path,
+            artifacts_path=artifacts_path,
+            bundle_payload=bundle_payload,
+            receipt_payload=receipt_payload,
+            artifacts_payload=artifacts_raw["payload"],
+        )
+        if package_verification["reason"]:
+            return _report(
+                valid=False,
+                reason=package_verification["reason"],
+                bundle_id=str(bundle_payload.get("bundle_id", "")),
+                anchor_receipt_id=str(receipt_payload.get("anchor_receipt_id", "")),
+                schema_valid=True,
+                schema_errors=[],
+            )
 
     try:
         bundle = _bundle_from_payload(bundle_payload)
@@ -219,6 +249,52 @@ def _artifacts_from_payload(payload: list[Any]) -> tuple[TrustLedgerEvidenceArti
     return tuple(artifacts)
 
 
+def _verify_package_payload(
+    payload: dict[str, Any],
+    *,
+    bundle_path: Path,
+    receipt_path: Path,
+    artifacts_path: Path,
+    bundle_payload: dict[str, Any],
+    receipt_payload: dict[str, Any],
+    artifacts_payload: list[Any],
+) -> dict[str, str]:
+    expected_paths = {
+        "bundle": bundle_path,
+        "anchor_receipt": receipt_path,
+        "artifacts": artifacts_path,
+    }
+    for label, path in expected_paths.items():
+        file_ref = payload["files"][label]
+        if file_ref["path"] != path.name:
+            return {"reason": f"package_{label}_path_mismatch"}
+        observed_hash = _json_content_hash(
+            {"bundle": bundle_payload, "anchor_receipt": receipt_payload, "artifacts": artifacts_payload}[label]
+        )
+        if file_ref["sha256"] != observed_hash:
+            return {"reason": f"package_{label}_hash_mismatch"}
+    expected_fields = {
+        "bundle_id": str(bundle_payload["bundle_id"]),
+        "anchor_receipt_id": str(receipt_payload["anchor_receipt_id"]),
+        "tenant_id": str(bundle_payload["tenant_id"]),
+        "command_id": str(bundle_payload["command_id"]),
+        "terminal_certificate_id": str(bundle_payload["terminal_certificate_id"]),
+        "bundle_hash": str(bundle_payload["bundle_hash"]),
+        "anchor_receipt_hash": str(receipt_payload["anchor_receipt_hash"]),
+        "artifact_root_hash": str(receipt_payload["artifact_root_hash"]),
+        "artifact_count": len(artifacts_payload),
+    }
+    for field_name, expected_value in expected_fields.items():
+        if payload[field_name] != expected_value:
+            return {"reason": f"package_{field_name}_mismatch"}
+    return {"reason": ""}
+
+
+def _json_content_hash(payload: Any) -> str:
+    encoded = json.dumps(payload, sort_keys=True, separators=(",", ":"), default=str).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
+
+
 def _report(
     *,
     valid: bool,
@@ -255,6 +331,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--bundle", required=True, type=Path, help="Path to trust-ledger bundle JSON")
     parser.add_argument("--receipt", required=True, type=Path, help="Path to external anchor receipt JSON")
     parser.add_argument("--artifacts", required=True, type=Path, help="Path to evidence artifact array JSON")
+    parser.add_argument("--package", type=Path, help="Optional trust-ledger export package manifest JSON")
     parser.add_argument(
         "--signing-secret",
         default=os.environ.get("MULLU_TRUST_LEDGER_ANCHOR_SECRET", ""),
@@ -268,6 +345,7 @@ def main(argv: list[str] | None = None) -> int:
         bundle_path=args.bundle,
         receipt_path=args.receipt,
         artifacts_path=args.artifacts,
+        package_path=args.package,
         signing_secret=args.signing_secret,
         strict=args.strict,
     )

@@ -34,6 +34,7 @@ def test_verify_anchor_receipt_files_accepts_valid_export(tmp_path: Path) -> Non
         bundle_path=paths["bundle"],
         receipt_path=paths["receipt"],
         artifacts_path=paths["artifacts"],
+        package_path=paths["package"],
         signing_secret="anchor-secret",
     )
 
@@ -58,14 +59,16 @@ def test_verify_anchor_receipt_files_detects_tampered_artifact_root(tmp_path: Pa
         bundle_path=paths["bundle"],
         receipt_path=paths["receipt"],
         artifacts_path=paths["artifacts"],
+        package_path=paths["package"],
         signing_secret="anchor-secret",
     )
 
     assert report["valid"] is False
-    assert report["reason"] == "artifact_root_hash_mismatch"
+    assert report["reason"] == "package_artifacts_hash_mismatch"
     assert report["schema_valid"] is True
-    assert report["signature_key_id"] == "anchor-key"
-    assert report["expected_bundle_hash"] != report["observed_bundle_hash"]
+    assert report["bundle_id"].startswith("trust-bundle-")
+    assert report["anchor_receipt_id"].startswith("trust-anchor-receipt-")
+    assert report["signature_key_id"] == ""
 
 
 def test_verify_anchor_receipt_files_rejects_schema_invalid_receipt(tmp_path: Path) -> None:
@@ -110,6 +113,46 @@ def test_verify_anchor_receipt_files_rejects_schema_invalid_artifacts(tmp_path: 
     assert any("artifacts:" in error for error in report["schema_errors"])
 
 
+def test_verify_anchor_receipt_files_detects_package_bundle_hash_mismatch(tmp_path: Path) -> None:
+    paths = _write_export(tmp_path)
+    bundle = json.loads(paths["bundle"].read_text(encoding="utf-8"))
+    bundle["metadata"]["tampered"] = True
+    paths["bundle"].write_text(json.dumps(bundle), encoding="utf-8")
+
+    report = verify_anchor_receipt_files(
+        bundle_path=paths["bundle"],
+        receipt_path=paths["receipt"],
+        artifacts_path=paths["artifacts"],
+        package_path=paths["package"],
+        signing_secret="anchor-secret",
+    )
+
+    assert report["valid"] is False
+    assert report["reason"] == "package_bundle_hash_mismatch"
+    assert report["schema_valid"] is True
+    assert report["schema_errors"] == []
+
+
+def test_verify_anchor_receipt_files_rejects_schema_invalid_package(tmp_path: Path) -> None:
+    paths = _write_export(tmp_path)
+    package = json.loads(paths["package"].read_text(encoding="utf-8"))
+    package["package_id"] = "package-placeholder"
+    paths["package"].write_text(json.dumps(package), encoding="utf-8")
+
+    report = verify_anchor_receipt_files(
+        bundle_path=paths["bundle"],
+        receipt_path=paths["receipt"],
+        artifacts_path=paths["artifacts"],
+        package_path=paths["package"],
+        signing_secret="anchor-secret",
+    )
+
+    assert report["valid"] is False
+    assert report["reason"] == "schema_validation_failed"
+    assert report["schema_valid"] is False
+    assert any("package:" in error for error in report["schema_errors"])
+
+
 def test_verify_anchor_receipt_cli_reports_valid_export(tmp_path: Path, capsys: Any) -> None:
     paths = _write_export(tmp_path)
 
@@ -120,6 +163,8 @@ def test_verify_anchor_receipt_cli_reports_valid_export(tmp_path: Path, capsys: 
         str(paths["receipt"]),
         "--artifacts",
         str(paths["artifacts"]),
+        "--package",
+        str(paths["package"]),
         "--signing-secret",
         "anchor-secret",
         "--json",
@@ -151,13 +196,21 @@ def _write_export(tmp_path: Path) -> dict[str, Path]:
         "bundle": tmp_path / "bundle.json",
         "receipt": tmp_path / "anchor_receipt.json",
         "artifacts": tmp_path / "artifacts.json",
+        "package": tmp_path / "package.json",
     }
+    package = ledger.package_anchor_export(
+        bundle=bundle,
+        receipt=receipt,
+        artifacts=artifacts,
+        created_at="2026-05-05T12:05:00+00:00",
+    )
     paths["bundle"].write_text(json.dumps(bundle.to_json_dict()), encoding="utf-8")
     paths["receipt"].write_text(json.dumps(receipt.to_json_dict()), encoding="utf-8")
     paths["artifacts"].write_text(
         json.dumps([artifact.to_json_dict() for artifact in artifacts]),
         encoding="utf-8",
     )
+    paths["package"].write_text(json.dumps(package.to_json_dict()), encoding="utf-8")
     return paths
 
 

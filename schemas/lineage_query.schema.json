@@ -54,7 +54,8 @@
           "enum": [
             "trace",
             "output",
-            "command"
+            "command",
+            "artifact"
           ]
         },
         "ref_id": {
@@ -241,7 +242,8 @@
           "relation": {
             "type": "string",
             "enum": [
-              "caused"
+              "caused",
+              "depends_on"
             ]
           }
         }

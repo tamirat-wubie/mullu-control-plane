@@ -34,6 +34,7 @@ def _resolve(uri: str) -> dict[str, Any]:
             replay_source=deps.replay_recorder,
             clock=deps._clock,
             command_source=_optional_dependency("command_ledger"),
+            artifact_source=_optional_dependency("artifact_lineage"),
         )
     except ValueError as exc:
         raise HTTPException(
@@ -76,3 +77,9 @@ def get_output_lineage(output_id: str, depth: int = 25, verify: bool = True) -> 
 def get_command_lineage(command_id: str, depth: int = 25, verify: bool = True) -> dict[str, Any]:
     """Resolve lineage by command id."""
     return _resolve(f"lineage://command/{command_id}?depth={depth}&verify={str(verify).lower()}")
+
+
+@router.get("/api/v1/lineage/artifact/{artifact_id}")
+def get_artifact_lineage(artifact_id: str, depth: int = 25, verify: bool = True) -> dict[str, Any]:
+    """Resolve lineage by artifact id."""
+    return _resolve(f"lineage://artifact/{artifact_id}?depth={depth}&verify={str(verify).lower()}")

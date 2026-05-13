@@ -763,6 +763,42 @@ def bootstrap_capability_services(
     )
     model_router.register(
         ModelProfile(
+            model_id="nscale/openai/gpt-oss-20b",
+            name="GPT OSS 20B via Nscale",
+            provider="nscale",
+            cost_per_1k_input=0.00005,
+            cost_per_1k_output=0.00020,
+            max_context=131072,
+            speed_tier="fast",
+            capability_tier="standard",
+        )
+    )
+    model_router.register(
+        ModelProfile(
+            model_id="scaleway/gpt-oss-120b",
+            name="GPT OSS 120B via Scaleway",
+            provider="scaleway",
+            cost_per_1k_input=0.00015,
+            cost_per_1k_output=0.00060,
+            max_context=128000,
+            speed_tier="balanced",
+            capability_tier="advanced",
+        )
+    )
+    model_router.register(
+        ModelProfile(
+            model_id="ovhcloud/Qwen3-Coder-30B-A3B-Instruct",
+            name="Qwen3 Coder 30B A3B via OVHcloud",
+            provider="ovhcloud",
+            cost_per_1k_input=0.00006,
+            cost_per_1k_output=0.00022,
+            max_context=256000,
+            speed_tier="fast",
+            capability_tier="standard",
+        )
+    )
+    model_router.register(
+        ModelProfile(
             model_id="mistral-small-2603",
             name="Mistral Small 2603",
             provider="mistral",

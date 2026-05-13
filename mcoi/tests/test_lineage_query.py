@@ -15,6 +15,7 @@ from pathlib import Path
 import pytest
 
 from gateway.command_spine import CommandLedger, CommandState, InMemoryCommandLedgerStore
+from mcoi_runtime.core.artifact_lineage_dag import ArtifactLineageDAG, hash_artifact_payload
 from mcoi_runtime.core.execution_replay import ReplayRecorder
 from mcoi_runtime.core.lineage_query import (
     LineageEdge,
@@ -108,6 +109,32 @@ def _command_ledger_with_events() -> tuple[CommandLedger, str]:
     return ledger, command.command_id
 
 
+def _artifact_lineage() -> ArtifactLineageDAG:
+    lineage = ArtifactLineageDAG(clock=fixed_clock)
+    lineage.register_artifact(
+        artifact_id="source-json",
+        artifact_hash=hash_artifact_payload({"source": True}),
+        artifact_type="json",
+        tenant_id="tenant-artifact",
+        produced_by_event_id="event-source",
+        metadata={"policy_version": "policy:v1", "budget_ref": "budget-artifact"},
+    )
+    lineage.register_artifact(
+        artifact_id="summary-json",
+        artifact_hash=hash_artifact_payload({"summary": True}),
+        artifact_type="json",
+        tenant_id="tenant-artifact",
+        produced_by_event_id="event-summary",
+        metadata={"policy_version": "policy:v1", "budget_ref": "budget-artifact"},
+    )
+    lineage.add_edge(
+        upstream_artifact_id="source-json",
+        downstream_artifact_id="summary-json",
+        reason="summarize source",
+    )
+    return lineage
+
+
 def test_parse_lineage_uri_extracts_bounded_query() -> None:
     query = parse_lineage_uri("lineage://trace/trace-1?depth=7&include=policy,tenant&verify=false")
 
@@ -116,6 +143,15 @@ def test_parse_lineage_uri_extracts_bounded_query() -> None:
     assert query.depth == 7
     assert query.include == ("policy", "tenant")
     assert query.verify is False
+
+
+def test_parse_lineage_uri_accepts_artifact_refs() -> None:
+    query = parse_lineage_uri("lineage://artifact/summary-json?depth=10&include=artifact,replay")
+
+    assert query.ref.ref_type == "artifact"
+    assert query.ref.ref_id == "summary-json"
+    assert query.depth == 10
+    assert query.include == ("artifact", "replay")
 
 
 def test_parse_lineage_uri_deduplicates_include_values() -> None:
@@ -170,6 +206,31 @@ def test_resolved_lineage_document_satisfies_schema() -> None:
     assert document["verification"]["checked_edges"] == 1
     assert document["nodes"][0]["metadata"]["sequence"] == 1
     assert any("undocumented_field" in error for error in _validate_schema_instance(schema, invalid_document))
+
+
+def test_resolved_artifact_lineage_document_satisfies_schema() -> None:
+    schema = json.loads((REPO_ROOT / "schemas" / "lineage_query.schema.json").read_text(encoding="utf-8"))
+    document = resolve_lineage_uri(
+        "lineage://artifact/summary-json?depth=10",
+        replay_source=ReplayRecorder(clock=fixed_clock),
+        artifact_source=_artifact_lineage(),
+        clock=fixed_clock,
+    )
+
+    assert _validate_schema_instance(schema, document) == []
+    assert document["verified"] is True
+    assert document["root_ref"] == {"ref_type": "artifact", "ref_id": "summary-json"}
+    assert document["nodes"][0]["node_id"] == "artifact:source-json"
+    assert document["nodes"][1]["parent_node_ids"] == ["artifact:source-json"]
+    assert document["edges"] == [
+        {
+            "from_node_id": "artifact:source-json",
+            "to_node_id": "artifact:summary-json",
+            "relation": "depends_on",
+        }
+    ]
+    assert document["nodes"][1]["metadata"]["replay_plan_ready"] is True
+    assert document["nodes"][1]["metadata"]["replay_plan_hash"]
 
 
 def test_lineage_document_projects_policy_version_read_model() -> None:
@@ -257,6 +318,33 @@ def test_resolve_missing_trace_returns_unresolved_node() -> None:
     assert len(document["nodes"]) == 1
     assert document["nodes"][0]["unresolved"] is True
     assert document["unresolved_nodes"] == ["unresolved:trace:missing-trace"]
+
+
+def test_resolve_artifact_without_source_returns_unresolved_node() -> None:
+    document = resolve_lineage_uri(
+        "lineage://artifact/summary-json",
+        replay_source=ReplayRecorder(clock=fixed_clock),
+        clock=fixed_clock,
+    )
+
+    assert document["verified"] is False
+    assert document["verification"]["reason_codes"] == ["artifact_source_not_configured"]
+    assert document["nodes"][0]["metadata"]["reason"] == "artifact_source_not_configured"
+    assert document["unresolved_nodes"] == ["unresolved:artifact:summary-json"]
+
+
+def test_resolve_missing_artifact_returns_unresolved_node() -> None:
+    document = resolve_lineage_uri(
+        "lineage://artifact/missing-artifact",
+        replay_source=ReplayRecorder(clock=fixed_clock),
+        artifact_source=_artifact_lineage(),
+        clock=fixed_clock,
+    )
+
+    assert document["verified"] is False
+    assert document["verification"]["reason_codes"] == ["artifact_not_found"]
+    assert document["nodes"][0]["metadata"]["reason"] == "artifact_not_found"
+    assert document["unresolved_nodes"] == ["unresolved:artifact:missing-artifact"]
 
 
 def test_resolve_output_lineage_uses_bounded_replay_index() -> None:

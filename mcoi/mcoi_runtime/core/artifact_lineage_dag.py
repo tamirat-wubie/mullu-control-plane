@@ -55,7 +55,7 @@ class ArtifactLineageNode:
             object.__setattr__(
                 self,
                 field_name,
-                ensure_non_empty_text(field_name, str(getattr(self, field_name))),
+                ensure_non_empty_text(field_name, getattr(self, field_name)),
             )
         if not isinstance(self.replayable, bool):
             raise RuntimeCoreInvariantError("replayable must be a bool")
@@ -86,7 +86,7 @@ class ArtifactLineageEdge:
             object.__setattr__(
                 self,
                 field_name,
-                ensure_non_empty_text(field_name, str(getattr(self, field_name))),
+                ensure_non_empty_text(field_name, getattr(self, field_name)),
             )
         if not isinstance(self.relation, ArtifactLineageRelation):
             raise RuntimeCoreInvariantError("relation must be an ArtifactLineageRelation value")
@@ -165,6 +165,8 @@ class ArtifactLineageDAG:
         """Add one dependency edge after cycle validation."""
         self._require_artifact(upstream_artifact_id)
         self._require_artifact(downstream_artifact_id)
+        if not isinstance(relation, ArtifactLineageRelation):
+            raise RuntimeCoreInvariantError("relation must be an ArtifactLineageRelation value")
         if upstream_artifact_id == downstream_artifact_id:
             raise RuntimeCoreInvariantError("artifact lineage edge cannot point to itself")
         edge_id = stable_identifier(
@@ -216,6 +218,11 @@ class ArtifactLineageDAG:
 
         walk(artifact_id)
         return tuple(ordered)
+
+    def dependencies_of(self, artifact_id: str) -> tuple[str, ...]:
+        """Return direct upstream artifacts for one artifact."""
+        self._require_artifact(artifact_id)
+        return tuple(sorted(self._incoming.get(artifact_id, ())))
 
     def descendants_of(self, artifact_id: str) -> tuple[str, ...]:
         """Return transitive downstream artifacts impacted by an artifact."""

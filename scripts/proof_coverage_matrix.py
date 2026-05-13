@@ -291,6 +291,43 @@ def proof_coverage_matrix() -> dict[str, Any]:
             ],
         ),
         _surface(
+            "agent_adapter_lifecycle",
+            [
+                "/api/v1/agent/register",
+                "/api/v1/agent/heartbeat",
+                "/api/v1/agent/action-request",
+                "/api/v1/agent/action-result",
+                "/api/v1/agent/checkpoint",
+                "/api/v1/agent/restore",
+                "/api/v1/agent/adapter/summary",
+                "/api/v1/agents",
+                "/api/v1/agents/{agent_id}/tasks",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "mcoi/mcoi_runtime/app/routers/adapter.py",
+                "mcoi/mcoi_runtime/app/routers/agent.py",
+                "mcoi/tests/test_agent_adapter_protocol.py",
+                "mcoi/tests/test_server_phase205.py",
+                "mcoi/tests/test_server_phase217.py",
+            ],
+            "Agent adapter lifecycle routes bind external agent registration, heartbeat, action admission, action result closure, checkpoint/restore, adapter summary, and built-in agent task read models to governed responses with audit records and bounded error contracts.",
+            [
+                "agent_register_emits_audit_record",
+                "agent_heartbeat_requires_registered_agent",
+                "agent_action_request_runs_guard_chain",
+                "agent_action_result_closes_tracked_action",
+                "agent_goal_context_propagates_to_response_and_audit",
+                "agent_checkpoint_restore_roundtrip_governed",
+                "agent_adapter_summary_bounded",
+                "builtin_agent_registry_read_models_governed",
+                "agent_error_contracts_bounded",
+            ],
+        ),
+        _surface(
             "operator_console_read_models",
             [
                 "/api/v1/console",
@@ -319,38 +356,6 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "console_audit_exposes_chain_intact_read_model",
                 "console_checkpoints_expose_persisted_state_summary",
                 "console_provider_and_scheduler_views_are_read_only",
-            ],
-        ),
-        _surface(
-            "agent_adapter_protocol",
-            [
-                "/api/v1/agent/register",
-                "/api/v1/agent/heartbeat",
-                "/api/v1/agent/action-request",
-                "/api/v1/agent/action-result",
-                "/api/v1/agent/checkpoint",
-                "/api/v1/agent/restore",
-                "/api/v1/agent/adapter/summary",
-            ],
-            "request_proof",
-            "action_proof",
-            "audit_chain",
-            "witnessed",
-            [
-                "mcoi/mcoi_runtime/app/routers/adapter.py",
-                "mcoi/mcoi_runtime/app/routers/deps.py",
-                "mcoi/tests/test_agent_adapter_protocol.py",
-                "mcoi/tests/test_server_phase217.py",
-            ],
-            "Agent adapter protocol routes register external workers, maintain heartbeat state, pass action requests through the guard chain, record action results, checkpoint and restore coordination state with bounded errors, and expose a governed summary read model.",
-            [
-                "agent_register_emits_governed_identity",
-                "agent_heartbeat_requires_registered_agent",
-                "agent_action_request_runs_guard_chain",
-                "agent_action_result_records_outcome",
-                "agent_goal_context_propagates_to_action_request",
-                "agent_checkpoint_restore_errors_are_bounded",
-                "agent_adapter_summary_is_governed_read_model",
             ],
         ),
         _surface(
@@ -661,6 +666,43 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "slow_trace_projection_bounded",
                 "otel_trace_summary_bounded",
                 "trace_context_roundtrip_tested",
+            ],
+        ),
+        _surface(
+            "operational_health_read_models",
+            [
+                "/api/v1/health/deep",
+                "/api/v1/health/score",
+                "/api/v1/health/v2",
+                "/api/v1/health/v3",
+            ],
+            "read_model",
+            "read_model",
+            "audit_chain",
+            "witnessed",
+            [
+                "mcoi/mcoi_runtime/app/routers/health.py",
+                "mcoi/mcoi_runtime/core/deep_health.py",
+                "mcoi/mcoi_runtime/core/health_aggregator.py",
+                "mcoi/mcoi_runtime/core/health_check_agg.py",
+                "mcoi/mcoi_runtime/core/health_v3.py",
+                "mcoi/tests/test_deep_health.py",
+                "mcoi/tests/test_health_aggregator.py",
+                "mcoi/tests/test_health_check_agg.py",
+                "mcoi/tests/test_phase232.py",
+                "mcoi/tests/test_server_phase205.py",
+                "mcoi/tests/test_server_phase210.py",
+            ],
+            "Operational health routes expose bounded read models for deep component diagnostics, weighted health score, degraded-state checks, and v3 recovery tracking without mutation authority.",
+            [
+                "deep_health_components_bounded",
+                "health_score_range_bounded",
+                "health_score_components_weighted",
+                "health_v2_degraded_state_supported",
+                "health_v2_exception_sanitized",
+                "health_v3_weighted_aggregation",
+                "health_v3_recovery_tracking",
+                "health_routes_return_read_models",
             ],
         ),
         _surface(
@@ -1600,8 +1642,10 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "GET /evidence/bundles/{command_id}",
                 "scripts/verify_evidence_bundle.py",
                 "scripts/verify_anchor_receipt.py",
+                "TrustLedger.package_anchor_export",
                 "TrustLedgerBundle",
                 "ExternalProofAnchorReceipt",
+                "TrustLedgerExportPackage",
             ],
             "request_proof",
             "action_proof",
@@ -1617,12 +1661,13 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "schemas/trust_ledger_anchor_receipt.schema.json",
                 "schemas/trust_ledger_bundle.schema.json",
                 "schemas/trust_ledger_evidence_artifacts.schema.json",
+                "schemas/trust_ledger_export_package.schema.json",
                 "tests/test_gateway/test_evidence_bundle_endpoint.py",
                 "tests/test_gateway/test_trust_ledger_anchor_receipt.py",
                 "tests/test_gateway/test_trust_ledger.py",
                 "tests/test_verify_anchor_receipt.py",
             ],
-            "Trust ledger signs terminal-closure evidence bundles, exposes operator bundle export, verifies exported bundle and anchor receipt files offline, and emits external anchor receipts that bind typed artifact roots, tenant, command, deployment, commit, hash-chain root, and external anchor state.",
+            "Trust ledger signs terminal-closure evidence bundles, exposes operator bundle export, verifies exported bundle and anchor receipt files offline, emits external anchor receipts, and packages verifier inputs with content hashes for portable audit review.",
             [
                 "terminal_certificate_id_required",
                 "evidence_refs_required",
@@ -1635,9 +1680,13 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "typed_artifact_root_required",
                 "offline_anchor_artifact_root_tamper_detection",
                 "offline_anchor_schema_invalid_receipt_rejected",
+                "offline_anchor_package_hash_mismatch_rejected",
+                "offline_anchor_package_schema_invalid_rejected",
                 "anchor_receipt_hmac_verification",
                 "anchor_receipt_schema_valid",
                 "anchor_receipt_non_terminal_marker_required",
+                "export_package_binds_bundle_receipt_and_artifact_files",
+                "export_package_rejects_receipt_identity_drift",
                 "trust_ledger_bundle_schema_valid",
             ],
         ),
@@ -1914,35 +1963,6 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "future_budget_window_defers_dispatch",
                 "source_reapproval_bound_for_high_risk_budget_window",
                 "temporal_budget_window_receipt_schema_valid",
-                "receipt_not_terminal_closure",
-            ],
-        ),
-        _surface(
-            "temporal_memory",
-            [
-                "TemporalMemory.evaluate",
-                "TemporalMemoryRecord",
-                "TemporalMemoryReceipt",
-            ],
-            "request_proof",
-            "action_proof",
-            "audit_chain",
-            "witnessed",
-            [
-                "gateway/temporal_memory.py",
-                "schemas/temporal_memory_receipt.schema.json",
-                "tests/test_gateway/test_temporal_memory.py",
-            ],
-            "Temporal memory gates memory use through runtime-owned age, evidence freshness, validity windows, confidence decay, tenant-owner scope, allowed use, and supersession checks before memory can guide action.",
-            [
-                "memory_age_computed_from_runtime_clock",
-                "stale_memory_requires_refresh",
-                "validity_window_blocks_expired_memory",
-                "superseded_memory_not_usable",
-                "confidence_decay_blocks_weak_memory",
-                "tenant_owner_scope_checked",
-                "allowed_use_checked",
-                "temporal_memory_receipt_schema_valid",
                 "receipt_not_terminal_closure",
             ],
         ),
@@ -2527,10 +2547,10 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "mcoi/tests/test_god_mode_decorator.py",
             ],
             (
-                "Privileged 'god mode' capabilities ship dormant. Two-stage explicit consent â€” "
-                "registration agreement promotes capability dormantâ†’armed; activation issues "
+                "Privileged 'god mode' capabilities ship dormant. Two-stage explicit consent - "
+                "registration agreement promotes capability dormant-to-armed; activation issues "
                 "a single-use, short-lived ticket. Catastrophic capabilities require dual "
-                "control (â‰¥2 distinct approvers). Every consumption emits an immutable "
+                "control (at least 2 distinct approvers). Every consumption emits an immutable "
                 "receipt with pre/post hashes and the full agreement chain. Withdrawals and "
                 "revocations are first-class, irreversible-as-events."
             ),
@@ -2599,11 +2619,6 @@ def proof_coverage_matrix() -> dict[str, Any]:
             "status": "closed",
         },
         {
-            "action_id": "classify_agent_adapter_protocol_routes",
-            "surfaces": ["agent_adapter_protocol"],
-            "status": "closed",
-        },
-        {
             "action_id": "publish_hosted_demo_sandbox_read_models",
             "surfaces": ["hosted_demo_sandbox"],
             "status": "closed",
@@ -2649,6 +2664,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
             "status": "closed",
         },
         {
+            "action_id": "classify_operational_health_read_model_routes",
+            "surfaces": ["operational_health_read_models"],
+            "status": "closed",
+        },
+        {
             "action_id": "classify_tenant_governance_lifecycle_routes",
             "surfaces": ["tenant_governance_lifecycle"],
             "status": "closed",
@@ -2661,6 +2681,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
         {
             "action_id": "classify_rbac_access_governance_routes",
             "surfaces": ["rbac_access_governance"],
+            "status": "closed",
+        },
+        {
+            "action_id": "classify_agent_adapter_lifecycle_routes",
+            "surfaces": ["agent_adapter_lifecycle"],
             "status": "closed",
         },
         {
@@ -3094,3 +3119,4 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+

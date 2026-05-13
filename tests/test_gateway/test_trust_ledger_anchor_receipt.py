@@ -23,12 +23,14 @@ from gateway.trust_ledger import (
     TrustLedgerBundle,
     TrustLedgerBundleDraft,
     TrustLedgerEvidenceArtifact,
+    TrustLedgerExportPackage,
 )
 from scripts.validate_schemas import _load_schema, _validate_schema_instance
 
 
 ROOT = Path(__file__).resolve().parents[2]
 SCHEMA_PATH = ROOT / "schemas" / "trust_ledger_anchor_receipt.schema.json"
+EXPORT_PACKAGE_SCHEMA_PATH = ROOT / "schemas" / "trust_ledger_export_package.schema.json"
 
 
 def test_trust_ledger_anchor_receipt_binds_required_artifacts() -> None:
@@ -190,6 +192,57 @@ def test_trust_ledger_anchor_receipt_schema_rejects_non_canonical_bundle_id() ->
     assert any("does not match" in error for error in errors)
     assert receipt["bundle_hash"]
     assert receipt["anchor_receipt_hash"]
+
+
+def test_trust_ledger_export_package_binds_verifier_inputs() -> None:
+    ledger = TrustLedger()
+    bundle = _bundle()
+    artifacts = _artifacts()
+    receipt = _anchor_receipt(ledger, bundle, artifacts)
+
+    package = ledger.package_anchor_export(
+        bundle=bundle,
+        receipt=receipt,
+        artifacts=artifacts,
+        created_at="2026-05-05T12:05:00+00:00",
+    )
+    errors = _validate_schema_instance(_load_schema(EXPORT_PACKAGE_SCHEMA_PATH), package.to_json_dict())
+
+    assert errors == []
+    assert isinstance(package, TrustLedgerExportPackage)
+    assert package.package_id.startswith("trust-export-")
+    assert package.package_hash != bundle.bundle_hash
+    assert package.bundle_id == bundle.bundle_id
+    assert package.anchor_receipt_id == receipt.anchor_receipt_id
+    assert package.artifact_root_hash == receipt.artifact_root_hash
+    assert package.artifact_count == len(artifacts)
+    assert package.files["bundle"].path == "bundle.json"
+    assert package.files["anchor_receipt"].path == "anchor_receipt.json"
+    assert package.files["artifacts"].path == "artifacts.json"
+    assert package.metadata["package_is_not_terminal_closure"] is True
+
+
+def test_trust_ledger_export_package_rejects_receipt_identity_drift() -> None:
+    ledger = TrustLedger()
+    bundle = _bundle()
+    artifacts = _artifacts()
+    receipt = replace(_anchor_receipt(ledger, bundle, artifacts), command_id="command-2")
+
+    try:
+        ledger.package_anchor_export(
+            bundle=bundle,
+            receipt=receipt,
+            artifacts=artifacts,
+            created_at="2026-05-05T12:05:00+00:00",
+        )
+    except ValueError as exc:
+        error = str(exc)
+    else:
+        error = ""
+
+    assert error == "export_package_command_mismatch"
+    assert receipt.command_id != bundle.command_id
+    assert bundle.command_id == "command-1"
 
 
 def _anchor_receipt(

@@ -1,10 +1,10 @@
-"""Purpose: read-only lineage query resolution for governed outputs and traces.
+"""Purpose: read-only lineage query resolution for governed outputs, traces, and artifacts.
 
 Governance scope: parses lineage URIs, projects replay traces and command
-events into causal nodes, and exposes unresolved ancestors explicitly without
-mutating runtime state.
+events into causal nodes, projects artifact replay plans, and exposes unresolved
+ancestors explicitly without mutating runtime state.
 Dependencies: execution replay recorder contracts, command ledger read
-interfaces, and stdlib URI parsing.
+interfaces, optional artifact lineage sources, and stdlib URI parsing.
 Invariants: lineage queries are read-only; missing sources are explicit; tenant
 context is always present; verification state is bounded.
 """
@@ -18,9 +18,9 @@ from typing import Any, Protocol
 from urllib.parse import parse_qs, urlparse
 
 
-DEFAULT_INCLUDE = ("policy", "model", "tenant", "budget", "tool", "replay")
+DEFAULT_INCLUDE = ("policy", "model", "tenant", "budget", "tool", "replay", "artifact")
 SUPPORTED_INCLUDE = frozenset(DEFAULT_INCLUDE)
-SUPPORTED_REF_TYPES = frozenset({"trace", "output", "command"})
+SUPPORTED_REF_TYPES = frozenset({"trace", "output", "command", "artifact"})
 MAX_DEPTH = 100
 MAX_TRACE_INDEX_SCAN = 1000
 
@@ -43,6 +43,19 @@ class CommandLineageSource(Protocol):
 
     def events_for(self, command_id: str) -> list[Any]:
         """Return hash-linked command events for a command."""
+
+
+class ArtifactLineageSource(Protocol):
+    """Read-only subset required from an artifact lineage DAG."""
+
+    def get_artifact(self, artifact_id: str) -> Any | None:
+        """Return a registered artifact node when present."""
+
+    def dependencies_of(self, artifact_id: str) -> tuple[str, ...]:
+        """Return direct upstream artifact ids for one artifact."""
+
+    def replay_plan(self, target_artifact_id: str) -> Any:
+        """Return the replay plan for reconstructing an artifact."""
 
 
 @dataclass(frozen=True, slots=True)
@@ -193,8 +206,26 @@ def resolve_lineage_query(
     replay_source: ReplayTraceSource,
     clock: Any,
     command_source: CommandLineageSource | None = None,
+    artifact_source: ArtifactLineageSource | None = None,
 ) -> dict[str, Any]:
     """Resolve a lineage query against read-only replay trace state."""
+    if query.ref.ref_type == "artifact":
+        if artifact_source is None:
+            node = _unresolved_node(
+                query,
+                trace_id=f"artifact:{query.ref.ref_id}",
+                timestamp=clock(),
+                reason="artifact_source_not_configured",
+            )
+            return _document(
+                query,
+                nodes=(node,),
+                edges=(),
+                verified=False,
+                reason_codes=("artifact_source_not_configured",),
+            )
+        return _resolve_artifact_lineage(query, artifact_source=artifact_source, clock=clock)
+
     if query.ref.ref_type == "command" and command_source is not None:
         command = command_source.get(query.ref.ref_id)
         if command is not None:
@@ -206,7 +237,7 @@ def resolve_lineage_query(
 
     trace_id, trace = _trace_for_ref(query.ref, replay_source)
     if trace is None:
-        node = _unresolved_node(query, trace_id=trace_id, timestamp=clock())
+        node = _unresolved_node(query, trace_id=trace_id, timestamp=clock(), reason="trace_not_found")
         return _document(query, nodes=(node,), edges=(), verified=False, reason_codes=("trace_not_found",))
 
     nodes = tuple(_nodes_from_replay_trace(trace, depth=query.depth))
@@ -222,6 +253,7 @@ def resolve_lineage_uri(
     replay_source: ReplayTraceSource,
     clock: Any,
     command_source: CommandLineageSource | None = None,
+    artifact_source: ArtifactLineageSource | None = None,
 ) -> dict[str, Any]:
     """Parse and resolve a lineage URI."""
     return resolve_lineage_query(
@@ -229,6 +261,7 @@ def resolve_lineage_uri(
         replay_source=replay_source,
         clock=clock,
         command_source=command_source,
+        artifact_source=artifact_source,
     )
 
 
@@ -345,6 +378,75 @@ def _nodes_from_command(command: Any, events: list[Any], *, depth: int) -> list[
     return nodes
 
 
+def _resolve_artifact_lineage(
+    query: LineageQuery,
+    *,
+    artifact_source: ArtifactLineageSource,
+    clock: Any,
+) -> dict[str, Any]:
+    artifact = artifact_source.get_artifact(query.ref.ref_id)
+    if artifact is None:
+        node = _unresolved_node(
+            query,
+            trace_id=f"artifact:{query.ref.ref_id}",
+            timestamp=clock(),
+            reason="artifact_not_found",
+        )
+        return _document(query, nodes=(node,), edges=(), verified=False, reason_codes=("artifact_not_found",))
+
+    replay_plan = artifact_source.replay_plan(query.ref.ref_id)
+    artifact_ids = tuple(getattr(replay_plan, "artifact_ids"))[: query.depth]
+    nodes = tuple(
+        _node_from_artifact(
+            artifact,
+            artifact_source=artifact_source,
+            replay_plan=replay_plan,
+            timestamp=clock(),
+        )
+        for artifact in (artifact_source.get_artifact(artifact_id) for artifact_id in artifact_ids)
+        if artifact is not None
+    )
+    edges = tuple(_artifact_edges_from_nodes(nodes))
+    reason_codes = _verify_graph(nodes, edges) if query.verify else ()
+    if getattr(replay_plan, "ready") is False:
+        reason_codes = (*reason_codes, *tuple(getattr(replay_plan, "blocked_reasons")))
+    verified = not reason_codes
+    return _document(query, nodes=nodes, edges=edges, verified=verified, reason_codes=reason_codes)
+
+
+def _node_from_artifact(
+    artifact: Any,
+    *,
+    artifact_source: ArtifactLineageSource,
+    replay_plan: Any,
+    timestamp: str,
+) -> LineageNode:
+    artifact_id = str(getattr(artifact, "artifact_id"))
+    parent_node_ids = tuple(f"artifact:{dependency_id}" for dependency_id in artifact_source.dependencies_of(artifact_id))
+    metadata = dict(getattr(artifact, "metadata", {}) or {})
+    metadata.update({
+        "artifact_type": str(getattr(artifact, "artifact_type")),
+        "produced_by_event_id": str(getattr(artifact, "produced_by_event_id")),
+        "replayable": bool(getattr(artifact, "replayable")),
+        "replay_plan_hash": str(getattr(replay_plan, "plan_hash")),
+        "replay_plan_ready": bool(getattr(replay_plan, "ready")),
+    })
+    return LineageNode(
+        node_id=f"artifact:{artifact_id}",
+        node_type="artifact.lineage",
+        parent_node_ids=parent_node_ids,
+        trace_id=f"artifact:{artifact_id}",
+        policy_version=str(metadata.get("policy_version") or "unknown"),
+        model_version=str(metadata.get("model_version") or "unknown"),
+        tenant_id=str(getattr(artifact, "tenant_id")),
+        budget_ref=str(metadata.get("budget_ref") or "unknown"),
+        proof_id=str(getattr(artifact, "produced_by_event_id")),
+        state_hash=str(getattr(artifact, "artifact_hash")),
+        timestamp=str(getattr(artifact, "created_at") or timestamp),
+        metadata=metadata,
+    )
+
+
 def _edges_from_nodes(nodes: tuple[LineageNode, ...]) -> list[LineageEdge]:
     edges: list[LineageEdge] = []
     for node in nodes:
@@ -353,7 +455,17 @@ def _edges_from_nodes(nodes: tuple[LineageNode, ...]) -> list[LineageEdge]:
     return edges
 
 
-def _unresolved_node(query: LineageQuery, *, trace_id: str, timestamp: str) -> LineageNode:
+def _artifact_edges_from_nodes(nodes: tuple[LineageNode, ...]) -> list[LineageEdge]:
+    node_ids = {node.node_id for node in nodes}
+    edges: list[LineageEdge] = []
+    for node in nodes:
+        for parent_id in node.parent_node_ids:
+            if parent_id in node_ids:
+                edges.append(LineageEdge(from_node_id=parent_id, to_node_id=node.node_id, relation="depends_on"))
+    return edges
+
+
+def _unresolved_node(query: LineageQuery, *, trace_id: str, timestamp: str, reason: str) -> LineageNode:
     return LineageNode(
         node_id=f"unresolved:{query.ref.ref_type}:{query.ref.ref_id}",
         node_type="unresolved_node",
@@ -367,7 +479,7 @@ def _unresolved_node(query: LineageQuery, *, trace_id: str, timestamp: str) -> L
         state_hash="unresolved",
         timestamp=timestamp,
         unresolved=True,
-        metadata={"reason": "trace_not_found"},
+        metadata={"reason": reason},
     )
 
 

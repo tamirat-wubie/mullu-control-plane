@@ -63,6 +63,8 @@ from mcoi_runtime.adapters.multi_provider import (
     MorpheusBackend,
     NebiusBackend,
     NovitaBackend,
+    NscaleBackend,
+    OVHCloudBackend,
     OpenRouterBackend,
     PacketBackend,
     ParasailBackend,
@@ -71,6 +73,7 @@ from mcoi_runtime.adapters.multi_provider import (
     RequestyBackend,
     RidvayBackend,
     SambaNovaBackend,
+    ScalewayBackend,
     SiliconFlowBackend,
     TogetherBackend,
     VeniceBackend,
@@ -147,6 +150,9 @@ class LLMConfig:
     huggingface_api_key: str = ""
     baseten_api_key: str = ""
     haimaker_api_key: str = ""
+    nscale_api_key: str = ""
+    scaleway_api_key: str = ""
+    ovhcloud_api_key: str = ""
     grok_api_key: str = ""
     mistral_api_key: str = ""
     openrouter_api_key: str = ""
@@ -212,6 +218,9 @@ class LLMConfig:
         huggingface_key = os.environ.get("HF_TOKEN", "") or os.environ.get("HUGGINGFACE_API_KEY", "")
         baseten_key = os.environ.get("BASETEN_API_KEY", "")
         haimaker_key = os.environ.get("HAIMAKER_API_KEY", "")
+        nscale_key = os.environ.get("NSCALE_API_KEY", "")
+        scaleway_key = os.environ.get("SCW_API_KEY", "") or os.environ.get("SCALEWAY_API_KEY", "")
+        ovhcloud_key = os.environ.get("OVH_AI_ENDPOINTS_ACCESS_TOKEN", "") or os.environ.get("AI_ENDPOINT_API_KEY", "")
         grok_key = os.environ.get("XAI_API_KEY", "")
         mistral_key = os.environ.get("MISTRAL_API_KEY", "")
         openrouter_key = os.environ.get("OPENROUTER_API_KEY", "")
@@ -317,6 +326,12 @@ class LLMConfig:
                 default_backend = "baseten"
             elif haimaker_key:
                 default_backend = "haimaker"
+            elif nscale_key:
+                default_backend = "nscale"
+            elif scaleway_key:
+                default_backend = "scaleway"
+            elif ovhcloud_key:
+                default_backend = "ovhcloud"
             elif mistral_key:
                 default_backend = "mistral"
             elif grok_key:
@@ -355,6 +370,8 @@ class LLMConfig:
                 "INFERENCE_API_KEY, INFERENCENET_API_KEY, "
                 "ANSWIRA_API_KEY, LLMAI_API_KEY, LLMAI_TOKEN, REQUESTY_API_KEY, "
                 "HF_TOKEN, HUGGINGFACE_API_KEY, BASETEN_API_KEY, HAIMAKER_API_KEY, "
+                "NSCALE_API_KEY, SCW_API_KEY, SCALEWAY_API_KEY, "
+                "OVH_AI_ENDPOINTS_ACCESS_TOKEN, AI_ENDPOINT_API_KEY, "
                 "XAI_API_KEY, MISTRAL_API_KEY, "
                 "OPENROUTER_API_KEY) "
                 "or OLLAMA_BASE_URL."
@@ -411,6 +428,9 @@ class LLMConfig:
             huggingface_api_key=huggingface_key,
             baseten_api_key=baseten_key,
             haimaker_api_key=haimaker_key,
+            nscale_api_key=nscale_key,
+            scaleway_api_key=scaleway_key,
+            ovhcloud_api_key=ovhcloud_key,
             grok_api_key=grok_key,
             mistral_api_key=mistral_key,
             openrouter_api_key=openrouter_key,
@@ -1000,6 +1020,39 @@ def bootstrap_llm(
         )
         backends["haimaker"] = haimaker
 
+    if llm_config.nscale_api_key:
+        nscale = NscaleBackend(
+            api_key=llm_config.nscale_api_key,
+            model=_select_provider_default_model(
+                llm_config.default_model,
+                ("openai/", "qwen", "deepseek", "mistral", "llama"),
+                NscaleBackend.DEFAULT_MODEL,
+            ),
+        )
+        backends["nscale"] = nscale
+
+    if llm_config.scaleway_api_key:
+        scaleway = ScalewayBackend(
+            api_key=llm_config.scaleway_api_key,
+            model=_select_provider_default_model(
+                llm_config.default_model,
+                ("gpt-oss", "qwen", "mistral", "llama", "deepseek", "gemma"),
+                ScalewayBackend.DEFAULT_MODEL,
+            ),
+        )
+        backends["scaleway"] = scaleway
+
+    if llm_config.ovhcloud_api_key:
+        ovhcloud = OVHCloudBackend(
+            api_key=llm_config.ovhcloud_api_key,
+            model=_select_provider_default_model(
+                llm_config.default_model,
+                ("Qwen", "qwen", "gpt-oss", "Mistral", "Meta-Llama", "ovh"),
+                OVHCloudBackend.DEFAULT_MODEL,
+            ),
+        )
+        backends["ovhcloud"] = ovhcloud
+
     if llm_config.grok_api_key:
         grok = GrokBackend(
             api_key=llm_config.grok_api_key,
@@ -1389,6 +1442,24 @@ def _register_providers(
             "rate_limit": 120,
             "cost_limit": 0.25,
         },
+        "nscale": {
+            "name": "Nscale",
+            "base_url": "https://inference.api.nscale.com/v1",
+            "rate_limit": 120,
+            "cost_limit": 0.25,
+        },
+        "scaleway": {
+            "name": "Scaleway",
+            "base_url": "https://api.scaleway.ai/v1",
+            "rate_limit": 120,
+            "cost_limit": 0.50,
+        },
+        "ovhcloud": {
+            "name": "OVHcloud",
+            "base_url": "https://oai.endpoints.kepler.ai.cloud.ovh.net/v1",
+            "rate_limit": 120,
+            "cost_limit": 0.25,
+        },
         "grok": {
             "name": "xAI Grok",
             "base_url": "https://api.x.ai/v1",
@@ -1540,6 +1611,9 @@ def _register_models(
         ),
         ("nvidia/Nemotron-120B-A12B", "Nemotron Super via Baseten", "baseten", 0.30, 0.75),
         ("deepseek/deepseek-chat-v3-0324", "DeepSeek Chat V3 0324 via haimaker", "haimaker", 0.14, 0.28),
+        (NscaleBackend.ROUTING_MODEL, "GPT OSS 20B via Nscale", "nscale", 0.05, 0.20),
+        (ScalewayBackend.ROUTING_MODEL, "GPT OSS 120B via Scaleway", "scaleway", 0.15, 0.60),
+        (OVHCloudBackend.ROUTING_MODEL, "Qwen3 Coder 30B A3B via OVHcloud", "ovhcloud", 0.06, 0.22),
         ("mistral-small-2506", "Mistral Small 2506", "mistral", 0.10, 0.30),
         ("mistral-small-2603", "Mistral Small 2603", "mistral", 0.15, 0.60),
         ("grok-3-mini", "Grok 3 Mini", "grok", 0.30, 0.50),

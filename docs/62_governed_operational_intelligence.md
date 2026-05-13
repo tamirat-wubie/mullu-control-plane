@@ -261,6 +261,9 @@ Every important action should be represented by a signed evidence bundle:
 
 Trust ledger invariant: audit/proof records may exist before closure, but external anchoring must bind the final terminal certificate.
 
+Offline verification for trust-ledger bundles and external anchor receipts is specified in
+[`docs/65_trust_ledger_offline_verification.md`](65_trust_ledger_offline_verification.md).
+
 ### Memory Lattice
 
 Memory is separated by use and risk:

@@ -51,6 +51,14 @@ class TestApprovalContracts:
         assert s.scope_type is ApprovalScopeType.SKILL
         assert s.max_executions == 1
 
+    def test_scope_allowed_actions_reject_scalar_shape(self):
+        s = _scope(allowed_actions=["execute"])  # type: ignore[arg-type]
+        assert s.allowed_actions == ("execute",)
+        assert s.to_json_dict()["allowed_actions"] == ["execute"]
+
+        with pytest.raises(ValueError, match="allowed_actions must be an array"):
+            _scope(allowed_actions="execute")  # type: ignore[arg-type]
+
     def test_scope_empty_target_rejected(self):
         with pytest.raises(ValueError):
             ApprovalScope(scope_type=ApprovalScopeType.EXECUTION, target_id="")
@@ -66,6 +74,14 @@ class TestApprovalContracts:
     def test_request_preserves_allowed_approver_ids(self):
         r = _request(allowed_approver_ids=("ops-lead", "admin-1"))
         assert r.allowed_approver_ids == ("ops-lead", "admin-1")
+
+    def test_request_allowed_approver_ids_reject_scalar_shape(self):
+        r = _request(allowed_approver_ids=["ops-lead"])  # type: ignore[arg-type]
+        assert r.allowed_approver_ids == ("ops-lead",)
+        assert r.to_json_dict()["allowed_approver_ids"] == ["ops-lead"]
+
+        with pytest.raises(ValueError, match="allowed_approver_ids must be an array"):
+            _request(allowed_approver_ids="ops-lead")  # type: ignore[arg-type]
 
     def test_request_rejects_duplicate_allowed_approver_ids(self):
         with pytest.raises(ValueError, match="^allowed_approver_ids must not contain duplicates$") as exc_info:

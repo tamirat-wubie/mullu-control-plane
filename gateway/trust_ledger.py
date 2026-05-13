@@ -215,6 +215,87 @@ class ExternalProofAnchorReceipt:
         return _json_ready(asdict(self))
 
 
+@dataclass(frozen=True, slots=True)
+class TrustLedgerExportFileRef:
+    """Content hash and expected file name for one trust-ledger export artifact."""
+
+    path: str
+    sha256: str
+
+    def __post_init__(self) -> None:
+        _require_text(self.path, "export_file_path")
+        _require_sha256(self.sha256, "export_file_sha256")
+
+    def to_json_dict(self) -> dict[str, Any]:
+        """Return a schema-oriented JSON object for this file reference."""
+        return _json_ready(asdict(self))
+
+
+@dataclass(frozen=True, slots=True)
+class TrustLedgerExportPackage:
+    """Portable manifest binding bundle, receipt, and artifact export files."""
+
+    package_id: str
+    schema_version: int
+    bundle_id: str
+    anchor_receipt_id: str
+    tenant_id: str
+    command_id: str
+    terminal_certificate_id: str
+    bundle_hash: str
+    anchor_receipt_hash: str
+    artifact_root_hash: str
+    artifact_count: int
+    files: dict[str, TrustLedgerExportFileRef]
+    package_hash: str
+    created_at: str
+    metadata: dict[str, Any] = field(default_factory=dict)
+
+    def __post_init__(self) -> None:
+        _require_text(self.package_id, "package_id")
+        if self.schema_version != 1:
+            raise ValueError("schema_version_invalid")
+        _require_text(self.bundle_id, "bundle_id")
+        _require_text(self.anchor_receipt_id, "anchor_receipt_id")
+        _require_text(self.tenant_id, "tenant_id")
+        _require_text(self.command_id, "command_id")
+        _require_text(self.terminal_certificate_id, "terminal_certificate_id")
+        _require_sha256(self.bundle_hash, "bundle_hash")
+        _require_sha256(self.anchor_receipt_hash, "anchor_receipt_hash")
+        _require_sha256(self.artifact_root_hash, "artifact_root_hash")
+        if self.artifact_count <= 0:
+            raise ValueError("artifact_count_positive")
+        required_files = {"bundle", "anchor_receipt", "artifacts"}
+        if set(self.files) != required_files:
+            raise ValueError("export_package_files_required")
+        for file_ref in self.files.values():
+            if not isinstance(file_ref, TrustLedgerExportFileRef):
+                raise ValueError("export_package_file_ref_invalid")
+        _require_sha256(self.package_hash, "package_hash")
+        _require_text(self.created_at, "created_at")
+        object.__setattr__(self, "metadata", dict(self.metadata))
+
+    def to_json_dict(self) -> dict[str, Any]:
+        """Return a schema-oriented JSON object for this export package."""
+        return _json_ready({
+            "package_id": self.package_id,
+            "schema_version": self.schema_version,
+            "bundle_id": self.bundle_id,
+            "anchor_receipt_id": self.anchor_receipt_id,
+            "tenant_id": self.tenant_id,
+            "command_id": self.command_id,
+            "terminal_certificate_id": self.terminal_certificate_id,
+            "bundle_hash": self.bundle_hash,
+            "anchor_receipt_hash": self.anchor_receipt_hash,
+            "artifact_root_hash": self.artifact_root_hash,
+            "artifact_count": self.artifact_count,
+            "files": {name: file_ref.to_json_dict() for name, file_ref in self.files.items()},
+            "package_hash": self.package_hash,
+            "created_at": self.created_at,
+            "metadata": self.metadata,
+        })
+
+
 class TrustLedger:
     """Issue and verify signed evidence bundles."""
 
@@ -428,6 +509,55 @@ class TrustLedger:
             signature_key_id=receipt.signature_key_id,
         )
 
+    def package_anchor_export(
+        self,
+        *,
+        bundle: TrustLedgerBundle,
+        receipt: ExternalProofAnchorReceipt,
+        artifacts: tuple[TrustLedgerEvidenceArtifact, ...],
+        created_at: str,
+    ) -> TrustLedgerExportPackage:
+        """Create a portable export manifest for offline anchor verification."""
+        _require_text(created_at, "created_at")
+        checked_artifacts = _require_artifacts(artifacts)
+        _require_export_package_inputs(bundle=bundle, receipt=receipt, artifacts=checked_artifacts)
+        unsigned = TrustLedgerExportPackage(
+            package_id="trust-export-pending",
+            schema_version=1,
+            bundle_id=bundle.bundle_id,
+            anchor_receipt_id=receipt.anchor_receipt_id,
+            tenant_id=bundle.tenant_id,
+            command_id=bundle.command_id,
+            terminal_certificate_id=bundle.terminal_certificate_id,
+            bundle_hash=bundle.bundle_hash,
+            anchor_receipt_hash=receipt.anchor_receipt_hash,
+            artifact_root_hash=receipt.artifact_root_hash,
+            artifact_count=len(checked_artifacts),
+            files={
+                "bundle": TrustLedgerExportFileRef(
+                    path="bundle.json",
+                    sha256=_content_hash(bundle.to_json_dict()),
+                ),
+                "anchor_receipt": TrustLedgerExportFileRef(
+                    path="anchor_receipt.json",
+                    sha256=_content_hash(receipt.to_json_dict()),
+                ),
+                "artifacts": TrustLedgerExportFileRef(
+                    path="artifacts.json",
+                    sha256=_content_hash([artifact.to_json_dict() for artifact in checked_artifacts]),
+                ),
+            },
+            package_hash="0" * 64,
+            created_at=created_at,
+            metadata={"package_is_not_terminal_closure": True},
+        )
+        package_hash = _export_package_hash(unsigned)
+        return replace(
+            unsigned,
+            package_id=f"trust-export-{package_hash[:16]}",
+            package_hash=package_hash,
+        )
+
 
 def _bundle_hash_from_draft(draft: TrustLedgerBundleDraft) -> str:
     return _stable_hash({
@@ -515,6 +645,18 @@ def _anchor_signature(receipt: ExternalProofAnchorReceipt, *, signing_secret: st
     return f"hmac-sha256:{digest}"
 
 
+def _content_hash(payload: Any) -> str:
+    encoded = json.dumps(payload, sort_keys=True, separators=(",", ":"), default=str).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
+
+
+def _export_package_hash(package: TrustLedgerExportPackage) -> str:
+    payload = asdict(package)
+    payload["package_id"] = ""
+    payload["package_hash"] = ""
+    return _stable_hash(payload)
+
+
 def _stable_hash(payload: dict[str, Any]) -> str:
     encoded = json.dumps(payload, sort_keys=True, separators=(",", ":"), default=str).encode("utf-8")
     return hashlib.sha256(encoded).hexdigest()
@@ -523,6 +665,12 @@ def _stable_hash(payload: dict[str, Any]) -> str:
 def _require_text(value: str, field_name: str) -> None:
     if not value:
         raise ValueError(f"{field_name}_required")
+
+
+def _require_sha256(value: str, field_name: str) -> None:
+    _require_text(value, field_name)
+    if re.fullmatch(r"[0-9a-f]{64}", value) is None:
+        raise ValueError(f"{field_name}_invalid")
 
 
 def _require_refs(values: tuple[str, ...]) -> tuple[str, ...]:
@@ -590,6 +738,37 @@ def _require_anchor_artifact_identity(
         raise ValueError("command_artifact_id_mismatch")
     if terminal_certificate_artifact_ids != {bundle.terminal_certificate_id}:
         raise ValueError("terminal_certificate_artifact_id_mismatch")
+
+
+def _require_export_package_inputs(
+    *,
+    bundle: TrustLedgerBundle,
+    receipt: ExternalProofAnchorReceipt,
+    artifacts: tuple[TrustLedgerEvidenceArtifact, ...],
+) -> None:
+    if receipt.bundle_id != bundle.bundle_id:
+        raise ValueError("export_package_bundle_mismatch")
+    if receipt.bundle_hash != bundle.bundle_hash:
+        raise ValueError("export_package_bundle_hash_mismatch")
+    if receipt.tenant_id != bundle.tenant_id:
+        raise ValueError("export_package_tenant_mismatch")
+    if receipt.command_id != bundle.command_id:
+        raise ValueError("export_package_command_mismatch")
+    if receipt.terminal_certificate_id != bundle.terminal_certificate_id:
+        raise ValueError("export_package_terminal_certificate_mismatch")
+    if receipt.artifact_count != len(artifacts):
+        raise ValueError("export_package_artifact_count_mismatch")
+    _require_anchor_artifact_identity(bundle, artifacts)
+    artifact_root = _artifact_root_hash(artifacts)
+    if receipt.artifact_root_hash != artifact_root:
+        raise ValueError("export_package_artifact_root_mismatch")
+    expected_receipt_id = _anchor_receipt_id(
+        bundle_id=receipt.bundle_id,
+        artifact_root_hash=artifact_root,
+        anchor_target=receipt.anchor_target,
+    )
+    if receipt.anchor_receipt_id != expected_receipt_id:
+        raise ValueError("export_package_anchor_receipt_id_mismatch")
 
 
 def _json_ready(value: Any) -> Any:
