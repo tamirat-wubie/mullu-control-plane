@@ -15,7 +15,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import StrEnum
-from typing import Any, Mapping
+from typing import Any, Mapping, cast
 
 from ._base import (
     ContractRecord,
@@ -23,8 +23,42 @@ from ._base import (
     require_datetime_text,
     require_non_empty_text,
     require_non_negative_int,
+    require_unit_float,
 )
 from .communication_surface import ChannelType
+
+
+def _freeze_text_array(
+    values: object,
+    field_name: str,
+    *,
+    allow_empty: bool = True,
+) -> tuple[str, ...]:
+    if isinstance(values, (str, bytes)) or not isinstance(values, (tuple, list)):
+        raise ValueError(f"{field_name} must be an array")
+    frozen = cast(tuple[Any, ...], freeze_value(list(values)))
+    if not allow_empty and not frozen:
+        raise ValueError(f"{field_name} must contain at least one item")
+    for idx, value in enumerate(frozen):
+        require_non_empty_text(value, f"{field_name}[{idx}]")
+    return cast(tuple[str, ...], frozen)
+
+
+def _freeze_channel_array(
+    values: object,
+    field_name: str,
+    *,
+    allow_empty: bool = True,
+) -> tuple[ChannelType, ...]:
+    if isinstance(values, (str, bytes)) or not isinstance(values, (tuple, list)):
+        raise ValueError(f"{field_name} must be an array")
+    frozen = cast(tuple[Any, ...], freeze_value(list(values)))
+    if not allow_empty and not frozen:
+        raise ValueError(f"{field_name} must contain at least one item")
+    for idx, value in enumerate(frozen):
+        if not isinstance(value, ChannelType):
+            raise ValueError(f"{field_name}[{idx}] must be a ChannelType value")
+    return cast(tuple[ChannelType, ...], frozen)
 
 
 # ---------------------------------------------------------------------------
@@ -96,8 +130,12 @@ class IdentityRecord(ContractRecord):
         if not isinstance(self.identity_type, IdentityType):
             raise ValueError("identity_type must be an IdentityType value")
         object.__setattr__(self, "display_name", require_non_empty_text(self.display_name, "display_name"))
-        object.__setattr__(self, "role_ids", freeze_value(list(self.role_ids)))
-        object.__setattr__(self, "tags", freeze_value(list(self.tags)))
+        if self.organization_id:
+            object.__setattr__(self, "organization_id", require_non_empty_text(self.organization_id, "organization_id"))
+        if self.team_id:
+            object.__setattr__(self, "team_id", require_non_empty_text(self.team_id, "team_id"))
+        object.__setattr__(self, "role_ids", _freeze_text_array(self.role_ids, "role_ids"))
+        object.__setattr__(self, "tags", _freeze_text_array(self.tags, "tags"))
         object.__setattr__(self, "created_at", require_datetime_text(self.created_at, "created_at"))
         object.__setattr__(self, "updated_at", require_datetime_text(self.updated_at, "updated_at"))
         object.__setattr__(self, "metadata", freeze_value(self.metadata))
@@ -180,14 +218,16 @@ class ContactPreferenceRecord(ContractRecord):
     def __post_init__(self) -> None:
         object.__setattr__(self, "preference_id", require_non_empty_text(self.preference_id, "preference_id"))
         object.__setattr__(self, "identity_id", require_non_empty_text(self.identity_id, "identity_id"))
-        object.__setattr__(self, "preferred_channels", freeze_value(list(self.preferred_channels)))
-        for ch in self.preferred_channels:
-            if not isinstance(ch, ChannelType):
-                raise ValueError("each preferred_channel must be a ChannelType value")
-        object.__setattr__(self, "blocked_channels", freeze_value(list(self.blocked_channels)))
-        for ch in self.blocked_channels:
-            if not isinstance(ch, ChannelType):
-                raise ValueError("each blocked_channel must be a ChannelType value")
+        object.__setattr__(
+            self,
+            "preferred_channels",
+            _freeze_channel_array(self.preferred_channels, "preferred_channels"),
+        )
+        object.__setattr__(
+            self,
+            "blocked_channels",
+            _freeze_channel_array(self.blocked_channels, "blocked_channels"),
+        )
         object.__setattr__(self, "created_at", require_datetime_text(self.created_at, "created_at"))
 
 
@@ -237,12 +277,11 @@ class EscalationChainRecord(ContractRecord):
         object.__setattr__(self, "name", require_non_empty_text(self.name, "name"))
         if not isinstance(self.mode, EscalationMode):
             raise ValueError("mode must be an EscalationMode value")
-        object.__setattr__(self, "target_identity_ids", freeze_value(list(self.target_identity_ids)))
-        if not self.target_identity_ids:
-            raise ValueError("escalation chain must have at least one target")
-        for tid in self.target_identity_ids:
-            if not isinstance(tid, str) or not tid.strip():
-                raise ValueError("each target_identity_id must be a non-empty string")
+        object.__setattr__(
+            self,
+            "target_identity_ids",
+            _freeze_text_array(self.target_identity_ids, "target_identity_ids", allow_empty=False),
+        )
         object.__setattr__(self, "timeout_minutes", require_non_negative_int(self.timeout_minutes, "timeout_minutes"))
         if self.timeout_minutes == 0:
             raise ValueError("timeout_minutes must be positive")
@@ -270,8 +309,7 @@ class IdentityResolutionRecord(ContractRecord):
         object.__setattr__(self, "resolved_identity_id", require_non_empty_text(self.resolved_identity_id, "resolved_identity_id"))
         object.__setattr__(self, "source_ref", require_non_empty_text(self.source_ref, "source_ref"))
         object.__setattr__(self, "source_type", require_non_empty_text(self.source_type, "source_type"))
-        if not (0.0 <= self.confidence <= 1.0):
-            raise ValueError("confidence must be between 0.0 and 1.0")
+        object.__setattr__(self, "confidence", require_unit_float(self.confidence, "confidence"))
         object.__setattr__(self, "resolved_at", require_datetime_text(self.resolved_at, "resolved_at"))
 
 
@@ -296,5 +334,9 @@ class IdentityRoutingDecision(ContractRecord):
         object.__setattr__(self, "target_identity_id", require_non_empty_text(self.target_identity_id, "target_identity_id"))
         object.__setattr__(self, "selected_handle_id", require_non_empty_text(self.selected_handle_id, "selected_handle_id"))
         object.__setattr__(self, "reason", require_non_empty_text(self.reason, "reason"))
-        object.__setattr__(self, "fallback_handle_ids", freeze_value(list(self.fallback_handle_ids)))
+        object.__setattr__(
+            self,
+            "fallback_handle_ids",
+            _freeze_text_array(self.fallback_handle_ids, "fallback_handle_ids"),
+        )
         object.__setattr__(self, "created_at", require_datetime_text(self.created_at, "created_at"))

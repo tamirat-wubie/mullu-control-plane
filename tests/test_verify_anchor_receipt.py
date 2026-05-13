@@ -47,6 +47,10 @@ def test_verify_anchor_receipt_files_accepts_valid_export(tmp_path: Path) -> Non
     assert report["command_id"] == "command-1"
     assert report["terminal_certificate_id"] == "terminal-closure-1"
     assert report["artifact_count"] == 7
+    assert report["package_present"] is True
+    assert report["package_valid"] is True
+    assert report["package_id"].startswith("trust-export-")
+    assert len(report["package_hash"]) == 64
 
 
 def test_verify_anchor_receipt_files_detects_tampered_artifact_root(tmp_path: Path) -> None:
@@ -69,6 +73,9 @@ def test_verify_anchor_receipt_files_detects_tampered_artifact_root(tmp_path: Pa
     assert report["bundle_id"].startswith("trust-bundle-")
     assert report["anchor_receipt_id"].startswith("trust-anchor-receipt-")
     assert report["signature_key_id"] == ""
+    assert report["package_present"] is True
+    assert report["package_valid"] is False
+    assert report["package_id"].startswith("trust-export-")
 
 
 def test_verify_anchor_receipt_files_rejects_schema_invalid_receipt(tmp_path: Path) -> None:
@@ -131,6 +138,8 @@ def test_verify_anchor_receipt_files_detects_package_bundle_hash_mismatch(tmp_pa
     assert report["reason"] == "package_bundle_hash_mismatch"
     assert report["schema_valid"] is True
     assert report["schema_errors"] == []
+    assert report["package_present"] is True
+    assert report["package_valid"] is False
 
 
 def test_verify_anchor_receipt_files_rejects_schema_invalid_package(tmp_path: Path) -> None:
@@ -151,6 +160,31 @@ def test_verify_anchor_receipt_files_rejects_schema_invalid_package(tmp_path: Pa
     assert report["reason"] == "schema_validation_failed"
     assert report["schema_valid"] is False
     assert any("package:" in error for error in report["schema_errors"])
+    assert report["package_present"] is True
+    assert report["package_valid"] is False
+    assert report["package_id"] == "package-placeholder"
+
+
+def test_verify_anchor_receipt_files_rejects_package_hash_mismatch(tmp_path: Path) -> None:
+    paths = _write_export(tmp_path)
+    package = json.loads(paths["package"].read_text(encoding="utf-8"))
+    package["metadata"]["operator_note"] = "changed after packaging"
+    paths["package"].write_text(json.dumps(package), encoding="utf-8")
+
+    report = verify_anchor_receipt_files(
+        bundle_path=paths["bundle"],
+        receipt_path=paths["receipt"],
+        artifacts_path=paths["artifacts"],
+        package_path=paths["package"],
+        signing_secret="anchor-secret",
+    )
+
+    assert report["valid"] is False
+    assert report["reason"] == "package_hash_mismatch"
+    assert report["schema_valid"] is True
+    assert report["package_present"] is True
+    assert report["package_valid"] is False
+    assert report["package_id"].startswith("trust-export-")
 
 
 def test_verify_anchor_receipt_cli_reports_valid_export(tmp_path: Path, capsys: Any) -> None:
@@ -176,6 +210,9 @@ def test_verify_anchor_receipt_cli_reports_valid_export(tmp_path: Path, capsys: 
     assert output["reason"] == "anchor_verified"
     assert output["artifact_count"] == 7
     assert output["schema_errors"] == []
+    assert output["package_present"] is True
+    assert output["package_valid"] is True
+    assert output["package_id"].startswith("trust-export-")
 
 
 def _write_export(tmp_path: Path) -> dict[str, Path]:

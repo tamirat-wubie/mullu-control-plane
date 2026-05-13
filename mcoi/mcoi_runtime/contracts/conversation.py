@@ -13,7 +13,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import StrEnum
-from typing import Any, Mapping
+from typing import Any, Mapping, TypeVar, cast
 
 from ._base import (
     ContractRecord,
@@ -21,6 +21,27 @@ from ._base import (
     require_datetime_text,
     require_non_empty_text,
 )
+
+
+ContractT = TypeVar("ContractT", bound=ContractRecord)
+
+
+def _freeze_contract_array(
+    values: object,
+    field_name: str,
+    record_type: type[ContractT],
+    *,
+    allow_empty: bool = True,
+) -> tuple[ContractT, ...]:
+    if isinstance(values, (str, bytes)) or not isinstance(values, (tuple, list)):
+        raise ValueError(f"{field_name} must be an array")
+    frozen = cast(tuple[Any, ...], freeze_value(list(values)))
+    if not allow_empty and not frozen:
+        raise ValueError(f"{field_name} must contain at least one item")
+    for idx, value in enumerate(frozen):
+        if not isinstance(value, record_type):
+            raise ValueError(f"{field_name}[{idx}] must be a {record_type.__name__}")
+    return cast(tuple[ContractT, ...], frozen)
 
 
 class ThreadStatus(StrEnum):
@@ -96,7 +117,11 @@ class ConversationThread(ContractRecord):
         object.__setattr__(self, "subject", require_non_empty_text(self.subject, "subject"))
         if not isinstance(self.status, ThreadStatus):
             raise ValueError("status must be a ThreadStatus value")
-        object.__setattr__(self, "messages", freeze_value(list(self.messages)))
+        object.__setattr__(
+            self,
+            "messages",
+            _freeze_contract_array(self.messages, "messages", ThreadMessage),
+        )
         object.__setattr__(
             self, "created_at", require_datetime_text(self.created_at, "created_at")
         )
@@ -202,7 +227,12 @@ class StatusReport(ContractRecord):
             )
         if self.goal_id is not None:
             require_non_empty_text(self.goal_id, "goal_id")
-        if not isinstance(self.progress_pct, int) or not (0 <= self.progress_pct <= 100):
+            object.__setattr__(self, "goal_id", self.goal_id)
+        if (
+            not isinstance(self.progress_pct, int)
+            or isinstance(self.progress_pct, bool)
+            or not (0 <= self.progress_pct <= 100)
+        ):
             raise ValueError("progress_pct must be an integer between 0 and 100")
         object.__setattr__(
             self, "reported_at", require_datetime_text(self.reported_at, "reported_at")

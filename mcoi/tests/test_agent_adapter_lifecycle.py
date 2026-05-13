@@ -7,7 +7,7 @@ Invariants: lifecycle evidence remains reachable from a documented test entry.
 
 from __future__ import annotations
 
-from mcoi.tests.test_agent_adapter_protocol import (
+from test_agent_adapter_protocol import (
     client,
     test_action_request_allowed,
     test_action_request_propagates_goal_hierarchy,

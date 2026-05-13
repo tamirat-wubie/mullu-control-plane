@@ -103,6 +103,14 @@ class TestConversationHandle:
         with pytest.raises(ValueError):
             self._make(channel_types=("invalid",))
 
+    def test_array_fields_reject_scalar_text(self):
+        with pytest.raises(ValueError, match="contact_ids must be an array"):
+            self._make(contact_ids="c1")
+        with pytest.raises(ValueError, match="channel_types must be an array"):
+            self._make(channel_types="email")
+        with pytest.raises(ValueError, match=r"contact_ids\[0\]"):
+            self._make(contact_ids=("",))
+
     def test_metadata_frozen(self):
         ch = self._make(metadata={"k": "v"})
         with pytest.raises(TypeError):
@@ -138,6 +146,12 @@ class TestInboundMessage:
     def test_attachments_frozen(self):
         m = self._make(attachments=("file1.pdf",))
         assert isinstance(m.attachments, tuple)
+
+    def test_attachments_reject_scalar_and_blank_items(self):
+        with pytest.raises(ValueError, match="attachments must be an array"):
+            self._make(attachments="file1.pdf")
+        with pytest.raises(ValueError, match=r"attachments\[0\]"):
+            self._make(attachments=("",))
 
     def test_raw_payload_frozen(self):
         m = self._make(raw_payload={"raw": True})
@@ -178,6 +192,10 @@ class TestOutboundMessage:
     def test_empty_recipient_rejected(self):
         with pytest.raises(ValueError):
             self._make(recipient_identity_id="")
+
+    def test_attachments_reject_scalar_text(self):
+        with pytest.raises(ValueError, match="attachments must be an array"):
+            self._make(attachments="invoice.pdf")
 
 
 # ---------------------------------------------------------------------------
@@ -243,6 +261,12 @@ class TestContactPreference:
         with pytest.raises(ValueError):
             self._make(blocked_channels=("smoke_signal",))
 
+    def test_channel_arrays_reject_scalar_text(self):
+        with pytest.raises(ValueError, match="preferred_channels must be an array"):
+            self._make(preferred_channels="email")
+        with pytest.raises(ValueError, match="blocked_channels must be an array"):
+            self._make(blocked_channels="sms")
+
 
 # ---------------------------------------------------------------------------
 # EscalationPreference
@@ -277,6 +301,14 @@ class TestEscalationPreference:
         with pytest.raises(ValueError):
             self._make(escalation_timeout_seconds=0)
 
+    def test_escalation_chain_rejects_scalar_and_boolean_counts(self):
+        with pytest.raises(ValueError, match="escalation_chain must be an array"):
+            self._make(escalation_chain="email")
+        with pytest.raises(ValueError, match="max_attempts_per_channel"):
+            self._make(max_attempts_per_channel=True)
+        with pytest.raises(ValueError, match="escalation_timeout_seconds"):
+            self._make(escalation_timeout_seconds=True)
+
 
 # ---------------------------------------------------------------------------
 # CallSession
@@ -308,6 +340,12 @@ class TestCallSession:
     def test_empty_participants_rejected(self):
         with pytest.raises(ValueError):
             self._make(participant_ids=())
+
+    def test_participants_reject_scalar_and_blank_items(self):
+        with pytest.raises(ValueError, match="participant_ids must be an array"):
+            self._make(participant_ids="p1")
+        with pytest.raises(ValueError, match=r"participant_ids\[0\]"):
+            self._make(participant_ids=("",))
 
     def test_with_duration(self):
         s = self._make(
@@ -376,6 +414,15 @@ class TestCallTranscript:
                 created_at=NOW,
             )
 
+    def test_segments_reject_scalar_text(self):
+        with pytest.raises(ValueError, match="segments must be an array"):
+            CallTranscript(
+                transcript_id="tx-1",
+                session_id="call-1",
+                segments="not a segment",
+                created_at=NOW,
+            )
+
 
 # ---------------------------------------------------------------------------
 # CommunicationPolicy
@@ -412,6 +459,20 @@ class TestCommunicationPolicy:
     def test_invalid_allowed_channel(self):
         with pytest.raises(ValueError):
             self._make(allowed_channels=("bad",))
+
+    def test_channel_arrays_reject_scalar_text(self):
+        with pytest.raises(ValueError, match="allowed_channels must be an array"):
+            self._make(allowed_channels="email")
+        with pytest.raises(ValueError, match="denied_channels must be an array"):
+            self._make(denied_channels="fax")
+        with pytest.raises(ValueError, match="require_approval_channels must be an array"):
+            self._make(require_approval_channels="sms")
+
+    def test_rate_limits_reject_boolean_values(self):
+        with pytest.raises(ValueError, match="max_outbound_per_hour"):
+            self._make(max_outbound_per_hour=True)
+        with pytest.raises(ValueError, match="max_outbound_per_day"):
+            self._make(max_outbound_per_day=True)
 
 
 # ---------------------------------------------------------------------------
@@ -473,6 +534,10 @@ class TestChannelCapabilityManifest:
     def test_zero_body_length_rejected(self):
         with pytest.raises(ValueError):
             self._make(max_body_length=0)
+
+    def test_max_body_length_rejects_boolean(self):
+        with pytest.raises(ValueError, match="max_body_length"):
+            self._make(max_body_length=True)
 
     def test_capabilities_frozen(self):
         m = self._make(capabilities={"realtime": True})

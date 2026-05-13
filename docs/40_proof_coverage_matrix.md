@@ -33,6 +33,7 @@ document is the operator-readable witness.
 | `task_queue_lifecycle` | /api/v1/queue/process, /api/v1/queue/result/{task_id}, /api/v1/queue/status, /api/v1/queue/submit | request_proof | action_proof | task_queue_priority_order, task_queue_depth_bounded, task_queue_submit_endpoint, task_queue_process_endpoint, task_queue_empty_process_bounded, task_queue_result_retrieval, task_queue_missing_result_bounded, task_queue_errors_sanitized | audit_chain | witnessed | Task queue lifecycle routes submit bounded priority tasks, process one queued task at a time, expose queue status, and return stored task results with bounded missing-result failures. |
 | `trace_observability_read_models` | /api/v1/traces, /api/v1/traces/slow, /api/v1/traces/summary, /api/v1/traces/{trace_id} | read_model | read_model | request_trace_summary_bounded, request_trace_lookup_bounded, missing_trace_returns_governed_404, slow_trace_projection_bounded, otel_trace_summary_bounded, trace_context_roundtrip_tested | audit_chain | witnessed | Trace observability routes expose bounded request-tracing summaries, individual trace spans, slow-trace projections, and OpenTelemetry exporter summaries without mutation authority. |
 | `operational_health_read_models` | /api/v1/health/deep, /api/v1/health/score, /api/v1/health/v2, /api/v1/health/v3 | read_model | read_model | deep_health_components_bounded, health_score_range_bounded, health_score_components_weighted, health_v2_degraded_state_supported, health_v2_exception_sanitized, health_v3_weighted_aggregation, health_v3_recovery_tracking, health_routes_return_read_models | audit_chain | witnessed | Operational health routes expose bounded read models for deep component diagnostics, weighted health score, degraded-state checks, and v3 recovery tracking without mutation authority. |
+| `agent_orchestration_lifecycle` | /api/v1/orchestration, /api/v1/orchestration/handoff, /api/v1/orchestration/plans, /api/v1/orchestration/plans/{plan_id} | request_proof | action_proof | orchestration_summary_bounded, orchestration_plan_created_for_registered_agent, orchestration_unknown_initiator_bounded, orchestration_missing_plan_bounded, orchestration_handoff_capability_checked, orchestration_handoff_errors_sanitized, orchestration_quorum_required, orchestration_executor_errors_sanitized | audit_chain | witnessed | Agent orchestration routes expose governed orchestration summaries, create bounded multi-agent plans, return bounded plan read models, and execute capability-checked handoffs. |
 | `runbook_learning_lifecycle` | /api/v1/runbooks, /api/v1/runbooks/analyze, /api/v1/runbooks/approve, /api/v1/runbooks/patterns, /api/v1/runbooks/promote, /api/v1/runbooks/summary, /api/v1/runbooks/{runbook_id}/activate, /api/v1/runbooks/{runbook_id}/retire, /api/v1/mil-audit/admit-runbook, /api/v1/mil-audit/runbooks, /api/v1/mil-audit/runbooks/{runbook_id} | request_proof | action_proof | patterns_detected_from_audit_trail, promotion_requires_detected_pattern, approval_required_before_activation, retirement_requires_active_runbook, promote_and_approve_audit_records, mil_audit_replay_admits_runbook, mil_audit_operator_checklist_validated, mil_audit_runbook_preflight_ready, sanitized_runbook_error_details, runbook_pattern_read_models_bounded, runbook_responses_governed | audit_chain | witnessed | Runbook learning lifecycle routes derive candidate runbooks from audit-trail patterns and MIL audit replay bundles, require explicit promotion and operator approval before activation, gate retirement by active state, emit governed sanitized errors, expose bounded read models for runbooks, patterns, and summaries, and provide a checklist-backed MIL audit runbook preflight. |
 | `software_outcome_learning` | mullu_software_change, _software_learning_admission_payload, derive_software_outcome_learning_candidates, decide_software_outcome_learning, planning_knowledge_from_software_candidate | request_proof | action_proof | software_learning_schema_default_enabled, passed_gates_yield_procedural_memory, failed_gates_yield_hashed_risk_memory, raw_logs_rejected_before_planning_use, rollback_failure_defers_learning, planning_projection_requires_admitted_matching_decision, software_learning_errors_are_bounded | audit_chain | witnessed | Software outcome learning derives sanitized procedural and risk-memory candidates from governed software-change receipts, rejects raw logs, and projects planning knowledge only after admitted learning decisions. |
 | `gateway_webhook_ingress` | /webhook/web, /webhook/slack, /webhook/telegram | request_proof | action_proof | none | audit_chain | witnessed | Webhook ingress binds tenant resolution, command ledger, and event-log evidence. |
@@ -61,7 +62,7 @@ document is the operator-readable witness.
 | `policy_prover` | PolicyProver.prove, PolicyProofReport | request_proof | action_proof | payment_requires_approval_counterexample, tenant_isolation_counterexample, shell_requires_sandbox_counterexample, provider_url_approved_counterexample, memory_requires_admission_counterexample, unknown_property_fails_closed, policy_proof_report_schema_valid | audit_chain | witnessed | Policy prover evaluates modeled execution paths against named safety properties and emits schema-backed counterexamples for reachable bypasses. |
 | `memory_lattice` | MemoryLatticeGate.assess, MemoryLatticeAdmission | request_proof | action_proof | raw_event_memory_not_directly_admitted, semantic_memory_requires_learning_admission, policy_memory_requires_authority_ref, preference_memory_tenant_owner_scoped, contradiction_and_stale_memory_block_execution, memory_lattice_schema_valid | audit_chain | witnessed | Memory lattice admission derives planning and execution use from evidence, learning admission, policy authority, freshness, scope, and contradiction state. |
 | `workflow_mining` | WorkflowMiningEngine.mine, WorkflowMiningReport, WorkflowDraft | request_proof | action_proof | repeated_trace_pattern_required, workflow_draft_activation_blocked, operator_review_required, sandbox_replay_required, risky_pattern_requires_approval_rules, workflow_mining_report_schema_valid | audit_chain | witnessed | Workflow mining detects repeated human traces and emits governed draft templates that remain blocked until sandbox replay and operator review. |
-| `trust_ledger` | TrustLedger.issue, TrustLedger.verify, TrustLedger.anchor_bundle, TrustLedger.verify_anchor_receipt, GET /evidence/bundles/{command_id}, scripts/verify_evidence_bundle.py, scripts/verify_anchor_receipt.py, TrustLedger.package_anchor_export, TrustLedgerBundle, ExternalProofAnchorReceipt, TrustLedgerExportPackage | request_proof | action_proof | terminal_certificate_id_required, evidence_refs_required, evidence_bundle_endpoint_requires_terminal_certificate, offline_bundle_verifier_validates_schema_hash_and_signature, offline_anchor_verifier_validates_schema_artifacts_and_signature, bundle_hash_tamper_detection, hmac_signature_verification, anchored_bundle_requires_external_anchor_ref, typed_artifact_root_required, offline_anchor_artifact_root_tamper_detection, offline_anchor_schema_invalid_receipt_rejected, offline_anchor_package_hash_mismatch_rejected, offline_anchor_package_schema_invalid_rejected, anchor_receipt_hmac_verification, anchor_receipt_schema_valid, anchor_receipt_non_terminal_marker_required, export_package_binds_bundle_receipt_and_artifact_files, export_package_rejects_receipt_identity_drift, trust_ledger_bundle_schema_valid | audit_chain | witnessed | Trust ledger signs terminal-closure evidence bundles, exposes operator bundle export, verifies exported bundle and anchor receipt files offline, emits external anchor receipts, and packages verifier inputs with content hashes for portable audit review. |
+| `trust_ledger` | TrustLedger.issue, TrustLedger.verify, TrustLedger.anchor_bundle, TrustLedger.verify_anchor_receipt, GET /evidence/bundles/{command_id}, scripts/verify_evidence_bundle.py, scripts/verify_anchor_receipt.py, TrustLedger.package_anchor_export, TrustLedgerBundle, ExternalProofAnchorReceipt, TrustLedgerExportPackage | request_proof | action_proof | terminal_certificate_id_required, evidence_refs_required, evidence_bundle_endpoint_requires_terminal_certificate, offline_bundle_verifier_validates_schema_hash_and_signature, offline_anchor_verifier_validates_schema_artifacts_and_signature, bundle_hash_tamper_detection, hmac_signature_verification, anchored_bundle_requires_external_anchor_ref, typed_artifact_root_required, offline_anchor_artifact_root_tamper_detection, offline_anchor_schema_invalid_receipt_rejected, offline_anchor_package_hash_mismatch_rejected, offline_anchor_package_schema_invalid_rejected, offline_anchor_report_emits_package_identity, anchor_receipt_hmac_verification, anchor_receipt_schema_valid, anchor_receipt_non_terminal_marker_required, export_package_binds_bundle_receipt_and_artifact_files, export_package_rejects_receipt_identity_drift, trust_ledger_bundle_schema_valid | audit_chain | witnessed | Trust ledger signs terminal-closure evidence bundles, exposes operator bundle export, verifies exported bundle and anchor receipt files offline, emits external anchor receipts, and packages verifier inputs with content hashes for portable audit review. |
 | `domain_operating_pack` | DomainOperatingPackCompiler.compile, DomainOperatingPackCompiler.validate, DomainOperatingPackCatalog | request_proof | action_proof | builtin_domain_pack_catalog_complete, finance_ops_pack_declares_governed_artifacts, high_risk_pack_requires_approval_roles, certified_pack_requires_evidence_refs, domain_operating_pack_schema_valid | audit_chain | witnessed | Domain operating packs compile governed buyer-facing solution bundles that remain activation-blocked until certification evidence is present. |
 | `multimodal_operating_layer` | MultimodalOperatingLayer.evaluate, MultimodalOperationReceipt | request_proof | action_proof | multimodal_receipt_schema_valid, external_send_blocked_by_default, sensitive_voice_requires_redaction_evidence, unknown_modality_fails_closed | audit_chain | witnessed | Multimodal operating layer emits source-bound pre-dispatch receipts and blocks unsafe modality worker effects before execution. |
 | `physical_action_boundary` | /operator/physical-capability-promotion-receipts, /operator/physical-capability-promotion-receipts/console, PhysicalActionBoundary.evaluate, PhysicalActionRequest, PhysicalActionReceipt | request_proof | action_proof | physical_action_receipt_schema_valid, physical_capability_pack_fixture_not_default_loaded, physical_sandbox_replay_admitted_without_production_gate, live_physical_capability_rejected_by_production_gate, physical_pack_projects_sandbox_only_evidence, physical_promotion_preflight_blocks_fixture_live_claim, physical_promotion_preflight_requires_live_safety_evidence, physical_promotion_preflight_accepts_full_evidence, physical_promotion_preflight_allows_sandbox_only_pack, physical_capsule_admission_runs_promotion_preflight, physical_capsule_admission_keeps_registry_unmutated_on_preflight_failure, physical_promotion_receipt_binds_forge_handoff_registry_preflight, physical_promotion_receipt_schema_valid, physical_promotion_receipt_cli_emits_schema_valid_bundle, physical_promotion_receipt_cli_blocks_missing_live_refs, physical_promotion_receipt_operator_endpoint_emits_bundle, physical_promotion_receipt_operator_endpoint_blocks_missing_live_refs, physical_promotion_receipt_jsonl_store_persists, physical_promotion_receipt_store_fails_closed_on_invalid_record, physical_promotion_receipt_operator_console_renders_ledger, hardware_identity_required, safety_envelope_required, manual_override_required, emergency_stop_required, simulation_pass_required, operator_approval_required, sensor_confirmation_required, physical_dispatch_blocked_until_controls_complete, physical_worker_canary_uses_sandbox_handler, physical_worker_canary_artifact_hash_bound | audit_chain | witnessed | Physical action boundary emits schema-backed pre-dispatch receipts that block physical-world side effects unless hardware identity, safety envelope, manual override, emergency stop, simulation, operator approval, sensor confirmation, and safe-state controls are present; checked-in physical capability fixtures stay outside default loading, admit sandbox replay only when production readiness is not required, reject live physical promotion by default, and require promotion preflight evidence before any live production claim. |
@@ -97,9 +98,9 @@ Coverage summary:
 
 | Metric | Count |
 |---|---:|
-| Total surfaces | 83 |
+| Total surfaces | 84 |
 | Proven surfaces | 1 |
-| Witnessed surfaces | 82 |
+| Witnessed surfaces | 83 |
 | Unproven surfaces | 0 |
 
 Declared route coverage:
@@ -108,8 +109,8 @@ Declared route coverage:
 |---|---:|
 | Proof-relevant declared routes | 333 |
 | Proven routes | 8 |
-| Witnessed routes | 209 |
-| Unclassified declared routes | 116 |
+| Witnessed routes | 213 |
+| Unclassified declared routes | 112 |
 
 The canonical JSON witness lists every proof-relevant declared route under
 `route_coverage.routes`. Routes mapped to `unclassified_declared_route` carry
@@ -148,63 +149,64 @@ Resolved closure actions:
 17. `classify_task_queue_lifecycle_routes`
 18. `classify_trace_observability_routes`
 19. `classify_operational_health_read_model_routes`
-20. `classify_tenant_governance_lifecycle_routes`
-21. `classify_webhook_operations_lifecycle_routes`
-22. `classify_rbac_access_governance_routes`
-23. `classify_agent_adapter_lifecycle_routes`
-24. `classify_runbook_learning_routes`
-25. `publish_software_outcome_learning_contract`
-26. `publish_runtime_conformance_attestation`
-27. `publish_proof_route_gap_triage_report`
-28. `publish_production_evidence_plane`
-29. `publish_capability_plan_evidence_bundles`
-30. `publish_deployment_orchestration_receipt_contract`
-31. `publish_runtime_reflex_engine_read_models`
-32. `publish_governed_operational_intelligence_witnesses`
-33. `classify_world_state_knowledge_routes`
-34. `classify_policy_simulation_routes`
-35. `publish_capability_forge_candidate_contract`
-36. `publish_capability_maturity_assessment_contract`
-37. `publish_networked_worker_mesh_contract`
-38. `publish_software_dev_capability_pack_contract`
-39. `publish_agent_identity_contract`
-40. `publish_claim_verification_report_contract`
-41. `classify_governed_connector_routes`
-42. `classify_governed_scheduler_routes`
-43. `classify_multi_agent_coordination_routes`
-44. `classify_config_governance_routes`
-45. `publish_connector_self_healing_receipt_contract`
-46. `publish_collaboration_case_contract`
-47. `publish_capability_maturity_contract`
-48. `publish_policy_prover_counterexample_contract`
-49. `publish_memory_lattice_admission_contract`
-50. `publish_workflow_mining_draft_contract`
-51. `publish_domain_operating_pack_contract`
-52. `publish_multimodal_operation_receipt_contract`
-53. `publish_physical_action_receipt_contract`
-54. `publish_temporal_operation_receipt_contract`
-55. `publish_temporal_evidence_freshness_receipt_contract`
-56. `publish_temporal_reapproval_receipt_contract`
-57. `publish_temporal_dispatch_window_receipt_contract`
-58. `publish_temporal_budget_window_receipt_contract`
-59. `publish_temporal_memory_receipt_contract`
-60. `publish_temporal_causal_order_receipt_contract`
-61. `publish_temporal_monotonic_duration_receipt_contract`
-62. `publish_temporal_accepted_risk_expiry_receipt_contract`
-63. `publish_temporal_credential_expiry_receipt_contract`
-64. `publish_temporal_retention_window_receipt_contract`
-65. `publish_temporal_rate_limit_window_receipt_contract`
-66. `publish_temporal_retry_window_receipt_contract`
-67. `publish_temporal_lease_window_receipt_contract`
-68. `publish_temporal_idempotency_window_receipt_contract`
-69. `publish_temporal_memory_refresh_receipt_contract`
-70. `classify_temporal_scheduler_routes`
-71. `publish_temporal_scheduler_receipt_contract`
-72. `publish_policy_proof_report_contract`
-73. `publish_capability_upgrade_plan_contract`
-74. `publish_autonomous_test_generation_plan_contract`
-75. `publish_trust_ledger_bundle_contract`
-76. `publish_trust_ledger_anchor_receipt_contract`
+20. `classify_agent_orchestration_lifecycle_routes`
+21. `classify_tenant_governance_lifecycle_routes`
+22. `classify_webhook_operations_lifecycle_routes`
+23. `classify_rbac_access_governance_routes`
+24. `classify_agent_adapter_lifecycle_routes`
+25. `classify_runbook_learning_routes`
+26. `publish_software_outcome_learning_contract`
+27. `publish_runtime_conformance_attestation`
+28. `publish_proof_route_gap_triage_report`
+29. `publish_production_evidence_plane`
+30. `publish_capability_plan_evidence_bundles`
+31. `publish_deployment_orchestration_receipt_contract`
+32. `publish_runtime_reflex_engine_read_models`
+33. `publish_governed_operational_intelligence_witnesses`
+34. `classify_world_state_knowledge_routes`
+35. `classify_policy_simulation_routes`
+36. `publish_capability_forge_candidate_contract`
+37. `publish_capability_maturity_assessment_contract`
+38. `publish_networked_worker_mesh_contract`
+39. `publish_software_dev_capability_pack_contract`
+40. `publish_agent_identity_contract`
+41. `publish_claim_verification_report_contract`
+42. `classify_governed_connector_routes`
+43. `classify_governed_scheduler_routes`
+44. `classify_multi_agent_coordination_routes`
+45. `classify_config_governance_routes`
+46. `publish_connector_self_healing_receipt_contract`
+47. `publish_collaboration_case_contract`
+48. `publish_capability_maturity_contract`
+49. `publish_policy_prover_counterexample_contract`
+50. `publish_memory_lattice_admission_contract`
+51. `publish_workflow_mining_draft_contract`
+52. `publish_domain_operating_pack_contract`
+53. `publish_multimodal_operation_receipt_contract`
+54. `publish_physical_action_receipt_contract`
+55. `publish_temporal_operation_receipt_contract`
+56. `publish_temporal_evidence_freshness_receipt_contract`
+57. `publish_temporal_reapproval_receipt_contract`
+58. `publish_temporal_dispatch_window_receipt_contract`
+59. `publish_temporal_budget_window_receipt_contract`
+60. `publish_temporal_memory_receipt_contract`
+61. `publish_temporal_causal_order_receipt_contract`
+62. `publish_temporal_monotonic_duration_receipt_contract`
+63. `publish_temporal_accepted_risk_expiry_receipt_contract`
+64. `publish_temporal_credential_expiry_receipt_contract`
+65. `publish_temporal_retention_window_receipt_contract`
+66. `publish_temporal_rate_limit_window_receipt_contract`
+67. `publish_temporal_retry_window_receipt_contract`
+68. `publish_temporal_lease_window_receipt_contract`
+69. `publish_temporal_idempotency_window_receipt_contract`
+70. `publish_temporal_memory_refresh_receipt_contract`
+71. `classify_temporal_scheduler_routes`
+72. `publish_temporal_scheduler_receipt_contract`
+73. `publish_policy_proof_report_contract`
+74. `publish_capability_upgrade_plan_contract`
+75. `publish_autonomous_test_generation_plan_contract`
+76. `publish_trust_ledger_bundle_contract`
+77. `publish_trust_ledger_anchor_receipt_contract`
 
 Open closure actions:
 
@@ -212,6 +214,6 @@ Open closure actions:
 
 STATUS:
   Completeness: 100%
-  Invariants verified: route declarations, route-level coverage classification, coverage levels, coverage states, closure action mapping, gateway runtime witness mapping, event bus operations route mapping, trace observability route mapping, tenant governance lifecycle route mapping, agent adapter lifecycle route mapping, webhook operations lifecycle route mapping, rbac access-governance route mapping, operator console read-model mapping, world-state knowledge route mapping, policy simulation route mapping, proof route gap triage witness mapping, claim verification report contract mapping, governed connector route mapping, governed scheduler route mapping, software development capability pack mapping, collaboration case contract mapping, connector self-healing receipt contract mapping, physical action receipt contract mapping, temporal evidence freshness contract mapping, temporal reapproval contract mapping, temporal dispatch window contract mapping, temporal budget window contract mapping, temporal causal order contract mapping, temporal monotonic duration contract mapping, temporal accepted-risk expiry contract mapping, temporal credential expiry contract mapping, temporal retention window mapping, temporal rate-limit window contract mapping, temporal retry window contract mapping, temporal lease window contract mapping, temporal idempotency window contract mapping, temporal memory contract mapping, temporal memory refresh contract mapping, physical worker canary mapping, schema contract validation, deployment orchestration receipt schema contract
-  Open issues: 116 proof-relevant declared routes remain unclassified and are marked unproven in the machine witness
+  Invariants verified: route declarations, route-level coverage classification, coverage levels, coverage states, closure action mapping, gateway runtime witness mapping, event bus operations route mapping, trace observability route mapping, operational health route mapping, agent orchestration lifecycle route mapping, tenant governance lifecycle route mapping, agent adapter lifecycle route mapping, webhook operations lifecycle route mapping, rbac access-governance route mapping, operator console read-model mapping, world-state knowledge route mapping, policy simulation route mapping, proof route gap triage witness mapping, claim verification report contract mapping, governed connector route mapping, governed scheduler route mapping, software development capability pack mapping, collaboration case contract mapping, connector self-healing receipt contract mapping, physical action receipt contract mapping, temporal evidence freshness contract mapping, temporal reapproval contract mapping, temporal dispatch window contract mapping, temporal budget window contract mapping, temporal causal order contract mapping, temporal monotonic duration contract mapping, temporal accepted-risk expiry contract mapping, temporal credential expiry contract mapping, temporal retention window mapping, temporal rate-limit window contract mapping, temporal retry window mapping, temporal lease window mapping, temporal idempotency window contract mapping, temporal memory contract mapping, temporal memory refresh contract mapping, physical worker canary mapping, schema contract validation, deployment orchestration receipt schema contract
+  Open issues: 112 proof-relevant declared routes remain unclassified and are marked unproven in the machine witness
   Next action: classify unproven declared routes into named proof surfaces or explicit exemptions

@@ -340,7 +340,7 @@ class GovernedToolGateway:
                 self._artifact_lineage.add_edge(
                     upstream_artifact_id=dependency_id,
                     downstream_artifact_id=binding.artifact_id,
-                    reason=f"tool:{request.tool_name}",
+                    reason="tool_output_dependency",
                 )
         return tuple(nodes)
 

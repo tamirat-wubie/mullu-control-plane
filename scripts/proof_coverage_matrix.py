@@ -1712,6 +1712,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "offline_anchor_schema_invalid_receipt_rejected",
                 "offline_anchor_package_hash_mismatch_rejected",
                 "offline_anchor_package_schema_invalid_rejected",
+                "offline_anchor_report_emits_package_identity",
                 "anchor_receipt_hmac_verification",
                 "anchor_receipt_schema_valid",
                 "anchor_receipt_non_terminal_marker_required",

@@ -1458,6 +1458,7 @@ def test_trust_ledger_surface_signs_terminal_evidence_bundles() -> None:
     assert "offline_anchor_schema_invalid_receipt_rejected" in witnesses
     assert "offline_anchor_package_hash_mismatch_rejected" in witnesses
     assert "offline_anchor_package_schema_invalid_rejected" in witnesses
+    assert "offline_anchor_report_emits_package_identity" in witnesses
     assert "typed_artifact_root_required" in witnesses
     assert "anchor_receipt_hmac_verification" in witnesses
     assert "anchor_receipt_schema_valid" in witnesses

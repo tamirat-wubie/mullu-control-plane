@@ -99,7 +99,10 @@ Pass condition:
 {
   "valid": true,
   "reason": "anchor_verified",
-  "schema_valid": true
+  "schema_valid": true,
+  "package_present": true,
+  "package_valid": true,
+  "package_id": "trust-export-..."
 }
 ```
 
@@ -109,6 +112,7 @@ Fail-closed reasons include:
 | --- | --- |
 | `signing_secret_required` | No anchor HMAC secret was provided |
 | `schema_validation_failed` | Bundle, receipt, or artifact JSON violates its schema |
+| `package_hash_mismatch` | `package.json` no longer matches its own package hash |
 | `package_bundle_hash_mismatch` | `package.json` no longer matches `bundle.json` |
 | `package_anchor_receipt_hash_mismatch` | `package.json` no longer matches `anchor_receipt.json` |
 | `package_artifacts_hash_mismatch` | `package.json` no longer matches `artifacts.json` |

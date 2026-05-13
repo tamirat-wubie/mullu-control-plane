@@ -91,6 +91,10 @@ def verify_anchor_receipt_files(
             anchor_receipt_id=str(receipt_payload.get("anchor_receipt_id", "")),
             schema_valid=False,
             schema_errors=schema_errors if strict else schema_errors[:10],
+            package_present=package_raw is not None,
+            package_valid=False,
+            package_id=_package_id(package_raw["payload"]) if package_raw is not None else "",
+            package_hash=_package_hash(package_raw["payload"]) if package_raw is not None else "",
         )
     if package_raw is not None:
         package_verification = _verify_package_payload(
@@ -110,6 +114,10 @@ def verify_anchor_receipt_files(
                 anchor_receipt_id=str(receipt_payload.get("anchor_receipt_id", "")),
                 schema_valid=True,
                 schema_errors=[],
+                package_present=True,
+                package_valid=False,
+                package_id=_package_id(package_raw["payload"]),
+                package_hash=_package_hash(package_raw["payload"]),
             )
 
     try:
@@ -145,6 +153,10 @@ def verify_anchor_receipt_files(
         command_id=bundle.command_id,
         terminal_certificate_id=bundle.terminal_certificate_id,
         artifact_count=len(artifacts),
+        package_present=package_raw is not None,
+        package_valid=package_raw is not None,
+        package_id=_package_id(package_raw["payload"]) if package_raw is not None else "",
+        package_hash=_package_hash(package_raw["payload"]) if package_raw is not None else "",
     )
 
 
@@ -259,6 +271,9 @@ def _verify_package_payload(
     receipt_payload: dict[str, Any],
     artifacts_payload: list[Any],
 ) -> dict[str, str]:
+    expected_package_hash = _package_hash_from_payload(payload)
+    if payload["package_hash"] != expected_package_hash:
+        return {"reason": "package_hash_mismatch"}
     expected_paths = {
         "bundle": bundle_path,
         "anchor_receipt": receipt_path,
@@ -290,6 +305,21 @@ def _verify_package_payload(
     return {"reason": ""}
 
 
+def _package_id(payload: dict[str, Any]) -> str:
+    return str(payload.get("package_id", ""))
+
+
+def _package_hash(payload: dict[str, Any]) -> str:
+    return str(payload.get("package_hash", ""))
+
+
+def _package_hash_from_payload(payload: dict[str, Any]) -> str:
+    hashed_payload = dict(payload)
+    hashed_payload["package_id"] = ""
+    hashed_payload["package_hash"] = ""
+    return _json_content_hash(hashed_payload)
+
+
 def _json_content_hash(payload: Any) -> str:
     encoded = json.dumps(payload, sort_keys=True, separators=(",", ":"), default=str).encode("utf-8")
     return hashlib.sha256(encoded).hexdigest()
@@ -309,6 +339,10 @@ def _report(
     command_id: str = "",
     terminal_certificate_id: str = "",
     artifact_count: int = 0,
+    package_present: bool = False,
+    package_valid: bool = False,
+    package_id: str = "",
+    package_hash: str = "",
 ) -> dict[str, Any]:
     return {
         "valid": valid,
@@ -323,6 +357,10 @@ def _report(
         "command_id": command_id,
         "terminal_certificate_id": terminal_certificate_id,
         "artifact_count": artifact_count,
+        "package_present": package_present,
+        "package_valid": package_valid,
+        "package_id": package_id,
+        "package_hash": package_hash,
     }
 
 
