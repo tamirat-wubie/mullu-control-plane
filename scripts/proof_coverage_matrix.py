@@ -706,6 +706,36 @@ def proof_coverage_matrix() -> dict[str, Any]:
             ],
         ),
         _surface(
+            "agent_orchestration_lifecycle",
+            [
+                "/api/v1/orchestration",
+                "/api/v1/orchestration/handoff",
+                "/api/v1/orchestration/plans",
+                "/api/v1/orchestration/plans/{plan_id}",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "mcoi/mcoi_runtime/app/routers/agent.py",
+                "mcoi/mcoi_runtime/core/agent_orchestration.py",
+                "mcoi/tests/test_agent_orchestration.py",
+                "mcoi/tests/test_server_phase216.py",
+            ],
+            "Agent orchestration routes expose governed orchestration summaries, create bounded multi-agent plans, return bounded plan read models, and execute capability-checked handoffs.",
+            [
+                "orchestration_summary_bounded",
+                "orchestration_plan_created_for_registered_agent",
+                "orchestration_unknown_initiator_bounded",
+                "orchestration_missing_plan_bounded",
+                "orchestration_handoff_capability_checked",
+                "orchestration_handoff_errors_sanitized",
+                "orchestration_quorum_required",
+                "orchestration_executor_errors_sanitized",
+            ],
+        ),
+        _surface(
             "runbook_learning_lifecycle",
             [
                 "/api/v1/runbooks",
@@ -2666,6 +2696,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
         {
             "action_id": "classify_operational_health_read_model_routes",
             "surfaces": ["operational_health_read_models"],
+            "status": "closed",
+        },
+        {
+            "action_id": "classify_agent_orchestration_lifecycle_routes",
+            "surfaces": ["agent_orchestration_lifecycle"],
             "status": "closed",
         },
         {

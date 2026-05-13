@@ -139,6 +139,13 @@
       ]
     },
     {
+      "action_id": "classify_agent_orchestration_lifecycle_routes",
+      "status": "closed",
+      "surfaces": [
+        "agent_orchestration_lifecycle"
+      ]
+    },
+    {
       "action_id": "classify_tenant_governance_lifecycle_routes",
       "status": "closed",
       "surfaces": [
@@ -556,7 +563,7 @@
   ],
   "coverage_summary": {
     "by_action_proof": {
-      "action_proof": 68,
+      "action_proof": 69,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 13,
@@ -564,7 +571,7 @@
     },
     "by_audit": {
       "action_proof": 0,
-      "audit_chain": 79,
+      "audit_chain": 80,
       "gap": 0,
       "read_model": 4,
       "request_proof": 0
@@ -572,23 +579,23 @@
     "by_coverage_state": {
       "proven": 1,
       "unproven": 0,
-      "witnessed": 82
+      "witnessed": 83
     },
     "by_request_proof": {
       "action_proof": 1,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 15,
-      "request_proof": 67
+      "request_proof": 68
     },
-    "surface_count": 83
+    "surface_count": 84
   },
   "generated_by": "scripts/proof_coverage_matrix.py",
   "route_coverage": {
     "by_coverage_state": {
       "proven": 8,
-      "unproven": 116,
-      "witnessed": 209
+      "unproven": 112,
+      "witnessed": 213
     },
     "route_count": 333,
     "routes": [
@@ -1448,24 +1455,24 @@
         "surface_id": "unclassified_declared_route"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/orchestration",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "agent_orchestration_lifecycle"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/orchestration/handoff",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "agent_orchestration_lifecycle"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/orchestration/plans",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "agent_orchestration_lifecycle"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/orchestration/plans/{plan_id}",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "agent_orchestration_lifecycle"
       },
       {
         "coverage_state": "unproven",
@@ -2258,7 +2265,7 @@
         "surface_id": "gateway_capability_fabric"
       }
     ],
-    "unclassified_route_count": 116
+    "unclassified_route_count": 112
   },
   "schema_version": 1,
   "surfaces": [
@@ -2937,6 +2944,36 @@
         "health_routes_return_read_models"
       ],
       "surface_id": "operational_health_read_models"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "mcoi/mcoi_runtime/app/routers/agent.py",
+        "mcoi/mcoi_runtime/core/agent_orchestration.py",
+        "mcoi/tests/test_agent_orchestration.py",
+        "mcoi/tests/test_server_phase216.py"
+      ],
+      "notes": "Agent orchestration routes expose governed orchestration summaries, create bounded multi-agent plans, return bounded plan read models, and execute capability-checked handoffs.",
+      "representative_paths": [
+        "/api/v1/orchestration",
+        "/api/v1/orchestration/handoff",
+        "/api/v1/orchestration/plans",
+        "/api/v1/orchestration/plans/{plan_id}"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "orchestration_summary_bounded",
+        "orchestration_plan_created_for_registered_agent",
+        "orchestration_unknown_initiator_bounded",
+        "orchestration_missing_plan_bounded",
+        "orchestration_handoff_capability_checked",
+        "orchestration_handoff_errors_sanitized",
+        "orchestration_quorum_required",
+        "orchestration_executor_errors_sanitized"
+      ],
+      "surface_id": "agent_orchestration_lifecycle"
     },
     {
       "action_proof": "action_proof",

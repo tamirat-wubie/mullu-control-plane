@@ -137,6 +137,12 @@ def test_representative_routes_are_not_unclassified() -> None:
     assert classified_routes["/api/v1/health/deep"]["surface_id"] == "operational_health_read_models"
     assert classified_routes["/api/v1/health/score"]["surface_id"] == "operational_health_read_models"
     assert classified_routes["/api/v1/health/v3"]["surface_id"] == "operational_health_read_models"
+    assert classified_routes["/api/v1/orchestration"]["surface_id"] == "agent_orchestration_lifecycle"
+    assert classified_routes["/api/v1/orchestration/plans"]["surface_id"] == "agent_orchestration_lifecycle"
+    assert (
+        classified_routes["/api/v1/orchestration/plans/{plan_id}"]["surface_id"]
+        == "agent_orchestration_lifecycle"
+    )
     assert classified_routes["/api/v1/finance/approval-packets"]["surface_id"] == "finance_approval_packets"
     assert (
         classified_routes["/api/v1/finance/approval-packets/operator/read-model"]["surface_id"]
@@ -1267,6 +1273,41 @@ def test_operational_health_surface_exposes_bounded_read_models() -> None:
     assert route_records["/api/v1/health/v3"]["coverage_state"] == "witnessed"
     assert route_records["/api/v1/health/v3"]["surface_id"] == "operational_health_read_models"
     assert closure_actions["classify_operational_health_read_model_routes"]["status"] == "closed"
+
+
+def test_agent_orchestration_lifecycle_surface_tracks_plans_and_handoffs() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    orchestration_surface = surfaces["agent_orchestration_lifecycle"]
+    witnesses = set(orchestration_surface["runtime_witnesses"])
+    route_records = {
+        record["route"]: record
+        for record in matrix["route_coverage"]["routes"]
+    }
+
+    assert orchestration_surface["coverage_state"] == "witnessed"
+    assert orchestration_surface["request_proof"] == "request_proof"
+    assert orchestration_surface["action_proof"] == "action_proof"
+    assert "/api/v1/orchestration" in orchestration_surface["representative_paths"]
+    assert "/api/v1/orchestration/plans" in orchestration_surface["representative_paths"]
+    assert "/api/v1/orchestration/plans/{plan_id}" in orchestration_surface["representative_paths"]
+    assert "/api/v1/orchestration/handoff" in orchestration_surface["representative_paths"]
+    assert "mcoi/mcoi_runtime/app/routers/agent.py" in orchestration_surface["evidence_files"]
+    assert "mcoi/mcoi_runtime/core/agent_orchestration.py" in orchestration_surface["evidence_files"]
+    assert "mcoi/tests/test_agent_orchestration.py" in orchestration_surface["evidence_files"]
+    assert "mcoi/tests/test_server_phase216.py" in orchestration_surface["evidence_files"]
+    assert "orchestration_summary_bounded" in witnesses
+    assert "orchestration_plan_created_for_registered_agent" in witnesses
+    assert "orchestration_missing_plan_bounded" in witnesses
+    assert "orchestration_handoff_capability_checked" in witnesses
+    assert "orchestration_quorum_required" in witnesses
+    assert "orchestration_executor_errors_sanitized" in witnesses
+    assert route_records["/api/v1/orchestration"]["coverage_state"] == "witnessed"
+    assert route_records["/api/v1/orchestration"]["surface_id"] == "agent_orchestration_lifecycle"
+    assert route_records["/api/v1/orchestration/plans/{plan_id}"]["coverage_state"] == "witnessed"
+    assert route_records["/api/v1/orchestration/plans/{plan_id}"]["surface_id"] == "agent_orchestration_lifecycle"
+    assert closure_actions["classify_agent_orchestration_lifecycle_routes"]["status"] == "closed"
 
 
 def test_connector_self_healing_surface_emits_bounded_recovery_receipts() -> None:
