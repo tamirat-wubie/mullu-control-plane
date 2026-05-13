@@ -34,6 +34,26 @@ class TestDeploymentContracts:
         with pytest.raises(ValueError):
             DeploymentBinding(profile_id="", autonomy_mode="observe_only")
 
+    def test_binding_rejects_unbounded_runtime_fields(self):
+        with pytest.raises(ValueError, match="allowed_executor_routes"):
+            DeploymentBinding(
+                profile_id="test",
+                autonomy_mode="observe_only",
+                allowed_executor_routes="shell_command",  # type: ignore[arg-type]
+            )
+        with pytest.raises(ValueError, match="export_enabled"):
+            DeploymentBinding(
+                profile_id="test",
+                autonomy_mode="observe_only",
+                export_enabled=1,  # type: ignore[arg-type]
+            )
+        with pytest.raises(ValueError, match="max_retention_days"):
+            DeploymentBinding(
+                profile_id="test",
+                autonomy_mode="observe_only",
+                max_retention_days=True,  # type: ignore[arg-type]
+            )
+
     def test_violation_valid(self):
         v = ConformanceViolation(
             violation_type=ViolationType.AUTONOMY_VIOLATION,
@@ -42,6 +62,29 @@ class TestDeploymentContracts:
             actual="bounded_autonomous",
         )
         assert v.violation_type is ViolationType.AUTONOMY_VIOLATION
+
+    def test_violation_rejects_empty_expected_or_actual(self):
+        with pytest.raises(ValueError, match="expected"):
+            ConformanceViolation(
+                violation_type=ViolationType.AUTONOMY_VIOLATION,
+                field_name="autonomy_mode",
+                expected="",
+                actual="bounded_autonomous",
+            )
+        with pytest.raises(ValueError, match="actual"):
+            ConformanceViolation(
+                violation_type=ViolationType.AUTONOMY_VIOLATION,
+                field_name="autonomy_mode",
+                expected="observe_only",
+                actual="",
+            )
+        with pytest.raises(ValueError, match="violation_type"):
+            ConformanceViolation(
+                violation_type="bad",  # type: ignore[arg-type]
+                field_name="autonomy_mode",
+                expected="observe_only",
+                actual="bounded_autonomous",
+            )
 
     def test_report_conformant(self):
         r = DeploymentConformanceReport(
@@ -56,6 +99,29 @@ class TestDeploymentContracts:
             verdict=ConformanceVerdict.VIOLATION,
         )
         assert not r.is_conformant
+
+    def test_report_rejects_unbounded_arrays(self):
+        with pytest.raises(ValueError, match="violations"):
+            DeploymentConformanceReport(
+                report_id="r-1",
+                profile_id="test",
+                verdict=ConformanceVerdict.VIOLATION,
+                violations="bad",  # type: ignore[arg-type]
+            )
+        with pytest.raises(ValueError, match="providers_consulted"):
+            DeploymentConformanceReport(
+                report_id="r-1",
+                profile_id="test",
+                verdict=ConformanceVerdict.CONFORMANT,
+                providers_consulted=("ok", ""),
+            )
+        with pytest.raises(ValueError, match="routes_blocked"):
+            DeploymentConformanceReport(
+                report_id="r-1",
+                profile_id="test",
+                verdict=ConformanceVerdict.VIOLATION,
+                routes_blocked="shell_command",  # type: ignore[arg-type]
+            )
 
 
 # --- Profile binding ---

@@ -12,15 +12,24 @@ Invariants:
 from __future__ import annotations
 
 import os
+from pathlib import Path
 
 import pytest
 
 from gateway.capability_fabric import (
+    build_capability_admission_gate,
     build_capability_admission_gate_from_env,
     build_default_capability_admission_gate,
     load_default_capability_entries,
     load_default_domain_capsules,
+    load_software_dev_capability_entries,
+    load_software_dev_domain_capsule,
 )
+
+
+ROOT = Path(__file__).resolve().parents[2]
+SOFTWARE_DEV_CAPSULE_PATH = ROOT / "capsules" / "software_dev.json"
+SOFTWARE_DEV_CAPABILITY_PACK_PATH = ROOT / "capabilities" / "software_dev" / "capability_pack.json"
 
 
 def _clock() -> str:
@@ -66,9 +75,9 @@ def test_capability_fabric_env_loader_installs_checked_in_default_packs(
     assert gate is not None
     read_model = gate.read_model()
     assert read_model["capsule_count"] == 12
-    assert read_model["capability_count"] == 62
-    assert len(read_model["capability_maturity_assessments"]) == 62
-    assert read_model["capability_maturity_counts"]["C3"] == 60
+    assert read_model["capability_count"] == 63
+    assert len(read_model["capability_maturity_assessments"]) == 63
+    assert read_model["capability_maturity_counts"]["C3"] == 61
     assert read_model["capability_maturity_counts"]["C6"] == 2
     assert read_model["production_ready_count"] == 2
     assert read_model["autonomy_ready_count"] == 0
@@ -105,6 +114,76 @@ def test_capability_fabric_env_loader_installs_checked_in_default_packs(
         "11.observation_verification_plane",
         "12.deployment_witness_plane",
     ]
+    assert read_model["capability_manifest_registry_configured"] is False
+    assert read_model["capability_manifest_registry"]["manifest_count"] == 0
+
+
+def test_capability_fabric_env_loader_projects_local_manifest_registry(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("MULLU_CAPABILITY_FABRIC_ADMISSION_ENABLED", "true")
+    monkeypatch.setenv("MULLU_CAPABILITY_FABRIC_CAPSULE_PATH", str(SOFTWARE_DEV_CAPSULE_PATH))
+    monkeypatch.setenv("MULLU_CAPABILITY_FABRIC_CAPABILITY_PACK_PATH", str(SOFTWARE_DEV_CAPABILITY_PACK_PATH))
+    monkeypatch.setenv("MULLU_CAPABILITY_FABRIC_MANIFEST_REGISTRY_ENABLED", "true")
+    monkeypatch.setenv("MULLU_CAPABILITY_FABRIC_MANIFEST_ENVIRONMENT", "local")
+
+    gate = build_capability_admission_gate_from_env(clock=_clock)
+
+    assert gate is not None
+    read_model = gate.read_model()
+    manifest_registry = read_model["capability_manifest_registry"]
+    assert read_model["capsule_count"] == 1
+    assert read_model["capability_count"] == 6
+    assert read_model["capability_manifest_registry_configured"] is True
+    assert manifest_registry["manifest_count"] == 6
+    assert manifest_registry["admission_count"] == 6
+    assert "software_dev.change.run" in manifest_registry["capability_ids"]
+    assert read_model["capability_manifest_gated"] is True
+    assert read_model["capability_manifest_covered_count"] == 6
+    assert read_model["capability_manifest_missing_count"] == 0
+    decision = gate.admit(command_id="cmd-software-dev-change", intent_name="software_dev.change.run")
+    assert decision.status.value == "accepted"
+    assert decision.capability_id == "software_dev.change.run"
+
+
+def test_capability_fabric_manifest_gate_rejects_unmanifested_capability() -> None:
+    gate = build_capability_admission_gate(
+        capsules=(load_software_dev_domain_capsule(),),
+        capabilities=load_software_dev_capability_entries(),
+        require_certified=True,
+        capability_manifest_registry_read_model={
+            "manifest_count": 1,
+            "admission_count": 1,
+            "capability_ids": ("software_dev.repo_map.read",),
+            "manifests": (),
+            "admissions": (),
+        },
+        clock=_clock,
+    )
+
+    decision = gate.admit(command_id="cmd-software-dev-change", intent_name="software_dev.change.run")
+    read_model = gate.read_model()
+
+    assert decision.status.value == "rejected"
+    assert decision.capability_id == "software_dev.change.run"
+    assert decision.reason == "capability manifest is not admitted for typed intent"
+    assert read_model["capability_manifest_gated"] is True
+    assert read_model["capability_manifest_covered_count"] == 1
+    assert "software_dev.change.run" in read_model["capability_manifest_missing_capability_ids"]
+
+
+def test_capability_fabric_env_loader_rejects_production_hot_reload_for_manifest_registry(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("MULLU_CAPABILITY_FABRIC_ADMISSION_ENABLED", "true")
+    monkeypatch.setenv("MULLU_CAPABILITY_FABRIC_CAPSULE_PATH", str(SOFTWARE_DEV_CAPSULE_PATH))
+    monkeypatch.setenv("MULLU_CAPABILITY_FABRIC_CAPABILITY_PACK_PATH", str(SOFTWARE_DEV_CAPABILITY_PACK_PATH))
+    monkeypatch.setenv("MULLU_CAPABILITY_FABRIC_MANIFEST_REGISTRY_ENABLED", "true")
+    monkeypatch.setenv("MULLU_CAPABILITY_FABRIC_MANIFEST_ENVIRONMENT", "production")
+    monkeypatch.setenv("MULLU_CAPABILITY_FABRIC_MANIFEST_HOT_RELOAD", "true")
+
+    with pytest.raises(ValueError, match="production_hot_reload_denied_for_effect_bearing_capability"):
+        build_capability_admission_gate_from_env(clock=_clock)
 
 
 def test_default_capability_admission_gate_accepts_pack_capabilities() -> None:
@@ -123,6 +202,7 @@ def test_default_capability_admission_gate_accepts_pack_capabilities() -> None:
     voice_actions_decision = gate.admit(command_id="command-16", intent_name="voice.action_items_extract")
     connector_read_decision = gate.admit(command_id="command-10", intent_name="connector.github.read")
     connector_write_decision = gate.admit(command_id="command-11", intent_name="connector.postgres.write.with_approval")
+    github_pr_decision = gate.admit(command_id="command-19", intent_name="github.open_pull_request")
     email_draft_decision = gate.admit(command_id="command-12", intent_name="email.draft")
     calendar_invite_decision = gate.admit(command_id="command-13", intent_name="calendar.invite")
     deployment_collect_decision = gate.admit(command_id="command-17", intent_name="deployment.witness.collect")
@@ -155,6 +235,9 @@ def test_default_capability_admission_gate_accepts_pack_capabilities() -> None:
     assert connector_read_decision.domain == "connector"
     assert connector_write_decision.status.value == "accepted"
     assert connector_write_decision.owner_team == "platform-ops"
+    assert github_pr_decision.status.value == "accepted"
+    assert github_pr_decision.capability_id == "github.open_pull_request"
+    assert github_pr_decision.domain == "connector"
     assert email_draft_decision.status.value == "accepted"
     assert email_draft_decision.domain == "communication"
     assert calendar_invite_decision.status.value == "accepted"
@@ -247,6 +330,7 @@ def test_default_read_model_projects_governed_capability_records() -> None:
     voice_actions_record = records["voice.action_items_extract"]
     github_read_record = records["connector.github.read"]
     github_read_capability = capabilities["connector.github.read"]
+    github_open_record = records["github.open_pull_request"]
     postgres_write_record = records["connector.postgres.write.with_approval"]
     email_send_record = records["email.send.with_approval"]
     calendar_invite_record = records["calendar.invite"]
@@ -257,7 +341,7 @@ def test_default_read_model_projects_governed_capability_records() -> None:
         for plane in gate.read_model()["general_agent_planes"]
     }
 
-    assert len(records) == 62
+    assert len(records) == 63
     assert payment_capability["maturity_assessment"]["maturity_level"] == "C6"
     assert payment_capability["maturity_assessment"]["production_ready"] is True
     assert payment_capability["maturity_assessment"]["autonomy_ready"] is False
@@ -333,6 +417,22 @@ def test_default_read_model_projects_governed_capability_records() -> None:
     assert postgres_write_record["requires_approval"] is True
     assert postgres_write_record["rollback_or_compensation_required"] is True
     assert postgres_write_record["allowed_networks"] == ["postgres.internal"]
+    assert github_open_record["risk_level"] == "high"
+    assert github_open_record["read_only"] is False
+    assert github_open_record["world_mutating"] is True
+    assert github_open_record["requires_approval"] is True
+    assert github_open_record["requires_sandbox"] is True
+    assert github_open_record["allowed_tools"] == ["connector_worker.github_open_pull_request"]
+    assert github_open_record["allowed_networks"] == ["api.github.com"]
+    assert github_open_record["rollback_or_compensation_required"] is True
+    assert github_open_record["forbidden_effects"] == [
+        "credential_scope_exceeded",
+        "cross_tenant_write",
+        "git_push_executed",
+        "production_deployment_started",
+        "pull_request_opened_without_approval",
+        "unreviewed_repository_write",
+    ]
     assert email_send_record["risk_level"] == "high"
     assert email_send_record["read_only"] is False
     assert email_send_record["world_mutating"] is True
@@ -368,9 +468,10 @@ def test_default_read_model_projects_governed_capability_records() -> None:
     assert "browser.submit" in planes["5.browser_web_plane"]["capability_ids"]
     assert "document.extract_text" in planes["6.document_data_plane"]["capability_ids"]
     assert "connector.github.read" in planes["9.mcp_external_tool_plane"]["capability_ids"]
+    assert "github.open_pull_request" in planes["9.mcp_external_tool_plane"]["capability_ids"]
     assert "deployment.witness.collect" in planes["12.deployment_witness_plane"]["capability_ids"]
     assert planes["8.financial_effect_plane"]["requires_approval_count"] >= 2
-    assert planes["3.tool_skill_plane"]["governed_record_count"] == 60
+    assert planes["3.tool_skill_plane"]["governed_record_count"] == 61
     for plane in planes.values():
         assert "allowed_tools" not in plane
         assert "input_schema_ref" not in plane

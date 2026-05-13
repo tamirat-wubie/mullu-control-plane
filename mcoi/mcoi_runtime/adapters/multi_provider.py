@@ -16,7 +16,7 @@ Invariants:
 from __future__ import annotations
 
 import os
-from typing import Any
+from typing import Any, Mapping
 
 from mcoi_runtime.contracts.llm import (
     LLMInvocationParams,
@@ -2039,6 +2039,69 @@ class OpenRouterBackend:
 
 
 # Provider Registry
+PROVIDER_ENV_MAP: Mapping[str, tuple[str, ...]] = {
+    "groq": ("GROQ_API_KEY",),
+    "gemini": ("GEMINI_API_KEY",),
+    "deepseek": ("DEEPSEEK_API_KEY",),
+    "together": ("TOGETHER_API_KEY",),
+    "fireworks": ("FIREWORKS_API_KEY",),
+    "friendli": ("FRIENDLI_TOKEN", "FRIENDLI_API_KEY"),
+    "novita": ("NOVITA_API_KEY",),
+    "cerebras": ("CEREBRAS_API_KEY",),
+    "deepinfra": ("DEEPINFRA_TOKEN", "DEEPINFRA_API_KEY"),
+    "nebius": ("NEBIUS_API_KEY",),
+    "hyperbolic": ("HYPERBOLIC_API_KEY",),
+    "sambanova": ("SAMBANOVA_API_KEY",),
+    "cloudflare": ("CLOUDFLARE_API_TOKEN", "CLOUDFLARE_API_KEY"),
+    "moonshot": ("MOONSHOT_API_KEY",),
+    "dashscope": ("DASHSCOPE_API_KEY",),
+    "zai": ("ZAI_API_KEY",),
+    "siliconflow": ("SILICONFLOW_API_KEY",),
+    "dinference": ("DINFERENCE_API_KEY",),
+    "chutes": ("CHUTES_API_KEY",),
+    "wavespeed": ("WAVESPEED_API_KEY",),
+    "bazaarlink": ("BAZAARLINK_API_KEY",),
+    "llamaapi": ("LLAMA_API_KEY",),
+    "parasail": ("PARASAIL_API_KEY",),
+    "featherless": ("FEATHERLESS_API_KEY",),
+    "packet": ("PACKET_API_KEY",),
+    "ridvay": ("RIDVAY_API_KEY",),
+    "neurorouters": ("NEUROROUTERS_API_KEY",),
+    "glama": ("GLAMA_API_KEY",),
+    "gmi": ("GMI_API_KEY",),
+    "atlascloud": ("ATLASCLOUD_API_KEY",),
+    "modelmax": ("MODELMAX_API_KEY",),
+    "venice": ("VENICE_API_KEY",),
+    "euri": ("EURI_API_KEY",),
+    "apirouter": ("APIROUTER_API_KEY",),
+    "quicksilver": ("QUICKSILVER_API_KEY", "QSP_KEY"),
+    "mixlayer": ("MIXLAYER_API_KEY",),
+    "apilink": ("APILINK_API_KEY",),
+    "embercloud": ("EMBERCLOUD_API_KEY",),
+    "morpheus": ("MORPHEUS_API_KEY", "MOR_API_KEY"),
+    "inferencenet": ("INFERENCE_API_KEY", "INFERENCENET_API_KEY"),
+    "answira": ("ANSWIRA_API_KEY",),
+    "llmai": ("LLMAI_API_KEY", "LLMAI_TOKEN"),
+    "requesty": ("REQUESTY_API_KEY",),
+    "huggingface": ("HF_TOKEN", "HUGGINGFACE_API_KEY"),
+    "baseten": ("BASETEN_API_KEY",),
+    "haimaker": ("HAIMAKER_API_KEY",),
+    "nscale": ("NSCALE_API_KEY",),
+    "scaleway": ("SCW_API_KEY", "SCALEWAY_API_KEY"),
+    "ovhcloud": ("OVH_AI_ENDPOINTS_ACCESS_TOKEN", "AI_ENDPOINT_API_KEY"),
+    "aimlapi": ("AIMLAPI_API_KEY", "AIML_API_KEY"),
+    "infomaniak": ("INFOMANIAK_API_KEY",),
+    "kataleptic": ("KATALEPTIC_API_KEY",),
+    "grok": ("XAI_API_KEY",),
+    "mistral": ("MISTRAL_API_KEY",),
+    "openrouter": ("OPENROUTER_API_KEY",),
+}
+
+PROVIDER_DEPENDENCY_GROUPS: Mapping[str, tuple[tuple[str, ...], ...]] = {
+    "cloudflare": (("CLOUDFLARE_ACCOUNT_ID",),),
+    "infomaniak": (("INFOMANIAK_BASE_URL", "INFOMANIAK_PRODUCT_ID"),),
+}
+
 ALL_PROVIDERS: dict[str, type] = {
     "groq": GroqBackend,
     "gemini": GeminiBackend,
@@ -2108,68 +2171,31 @@ def create_provider(name: str, **kwargs: Any) -> Any:
 
 def available_providers() -> list[str]:
     """List providers that have API keys configured."""
-    env_map = {
-        "groq": ("GROQ_API_KEY",),
-        "gemini": ("GEMINI_API_KEY",),
-        "deepseek": ("DEEPSEEK_API_KEY",),
-        "together": ("TOGETHER_API_KEY",),
-        "fireworks": ("FIREWORKS_API_KEY",),
-        "friendli": ("FRIENDLI_TOKEN", "FRIENDLI_API_KEY"),
-        "novita": ("NOVITA_API_KEY",),
-        "cerebras": ("CEREBRAS_API_KEY",),
-        "deepinfra": ("DEEPINFRA_TOKEN", "DEEPINFRA_API_KEY"),
-        "nebius": ("NEBIUS_API_KEY",),
-        "hyperbolic": ("HYPERBOLIC_API_KEY",),
-        "sambanova": ("SAMBANOVA_API_KEY",),
-        "cloudflare": ("CLOUDFLARE_API_TOKEN", "CLOUDFLARE_API_KEY"),
-        "moonshot": ("MOONSHOT_API_KEY",),
-        "dashscope": ("DASHSCOPE_API_KEY",),
-        "zai": ("ZAI_API_KEY",),
-        "siliconflow": ("SILICONFLOW_API_KEY",),
-        "dinference": ("DINFERENCE_API_KEY",),
-        "chutes": ("CHUTES_API_KEY",),
-        "wavespeed": ("WAVESPEED_API_KEY",),
-        "bazaarlink": ("BAZAARLINK_API_KEY",),
-        "llamaapi": ("LLAMA_API_KEY",),
-        "parasail": ("PARASAIL_API_KEY",),
-        "featherless": ("FEATHERLESS_API_KEY",),
-        "packet": ("PACKET_API_KEY",),
-        "ridvay": ("RIDVAY_API_KEY",),
-        "neurorouters": ("NEUROROUTERS_API_KEY",),
-        "glama": ("GLAMA_API_KEY",),
-        "gmi": ("GMI_API_KEY",),
-        "atlascloud": ("ATLASCLOUD_API_KEY",),
-        "modelmax": ("MODELMAX_API_KEY",),
-        "venice": ("VENICE_API_KEY",),
-        "euri": ("EURI_API_KEY",),
-        "apirouter": ("APIROUTER_API_KEY",),
-        "quicksilver": ("QUICKSILVER_API_KEY", "QSP_KEY"),
-        "mixlayer": ("MIXLAYER_API_KEY",),
-        "apilink": ("APILINK_API_KEY",),
-        "embercloud": ("EMBERCLOUD_API_KEY",),
-        "morpheus": ("MORPHEUS_API_KEY", "MOR_API_KEY"),
-        "inferencenet": ("INFERENCE_API_KEY", "INFERENCENET_API_KEY"),
-        "answira": ("ANSWIRA_API_KEY",),
-        "llmai": ("LLMAI_API_KEY", "LLMAI_TOKEN"),
-        "requesty": ("REQUESTY_API_KEY",),
-        "huggingface": ("HF_TOKEN", "HUGGINGFACE_API_KEY"),
-        "baseten": ("BASETEN_API_KEY",),
-        "haimaker": ("HAIMAKER_API_KEY",),
-        "nscale": ("NSCALE_API_KEY",),
-        "scaleway": ("SCW_API_KEY", "SCALEWAY_API_KEY"),
-        "ovhcloud": ("OVH_AI_ENDPOINTS_ACCESS_TOKEN", "AI_ENDPOINT_API_KEY"),
-        "aimlapi": ("AIMLAPI_API_KEY", "AIML_API_KEY"),
-        "infomaniak": ("INFOMANIAK_API_KEY",),
-        "kataleptic": ("KATALEPTIC_API_KEY",),
-        "grok": ("XAI_API_KEY",),
-        "mistral": ("MISTRAL_API_KEY",),
-        "openrouter": ("OPENROUTER_API_KEY",),
-    }
-    available = [name for name, env_vars in env_map.items() if any(os.environ.get(env_var) for env_var in env_vars)]
-    if "cloudflare" in available and not os.environ.get("CLOUDFLARE_ACCOUNT_ID"):
-        available.remove("cloudflare")
-    if "infomaniak" in available and not (
-        os.environ.get("INFOMANIAK_BASE_URL") or os.environ.get("INFOMANIAK_PRODUCT_ID")
-    ):
-        available.remove("infomaniak")
-    return available
+    return [
+        provider_name
+        for provider_name, health in provider_configuration_health().items()
+        if health["status"] == "ready"
+    ]
+
+
+def provider_configuration_health(environ: Mapping[str, str] | None = None) -> dict[str, dict[str, object]]:
+    """Return secret-safe provider readiness from environment configuration only."""
+    env = os.environ if environ is None else environ
+    health: dict[str, dict[str, object]] = {}
+    for provider_name, credential_keys in PROVIDER_ENV_MAP.items():
+        credential_configured = any(env.get(key) for key in credential_keys)
+        dependency_groups = PROVIDER_DEPENDENCY_GROUPS.get(provider_name, ())
+        dependencies_configured = all(any(env.get(key) for key in group) for group in dependency_groups)
+        if credential_configured and dependencies_configured:
+            status = "ready"
+        elif credential_configured:
+            status = "missing_dependency"
+        else:
+            status = "missing_credentials"
+        health[provider_name] = {
+            "status": status,
+            "configured": status == "ready",
+            "credential_keys": credential_keys,
+            "dependency_groups": dependency_groups,
+        }
+    return health

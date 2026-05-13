@@ -741,12 +741,16 @@ def test_protocol_manifest_indexes_reflex_validator_receipt() -> None:
 def test_protocol_manifest_indexes_production_evidence_endpoint_contracts() -> None:
     manifest = load_manifest()
     entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    health_entry = entries["gateway-health"]
     production_entry = entries["production-evidence-witness"]
     capability_entry = entries["capability-evidence-endpoint"]
     audit_entry = entries["audit-verification-endpoint"]
     proof_entry = entries["proof-verification-endpoint"]
 
     assert validate_protocol_manifest(manifest) == []
+    assert health_entry["path"] == "schemas/gateway_health.schema.json"
+    assert health_entry["urn"] == "urn:mullusi:schema:gateway-health:1"
+    assert health_entry["surface"] == "deployment"
     assert production_entry["path"] == "schemas/production_evidence_witness.schema.json"
     assert production_entry["urn"] == "urn:mullusi:schema:production-evidence-witness:1"
     assert production_entry["surface"] == "deployment"

@@ -63,6 +63,9 @@ def validate_protocol_manifest(manifest: dict[str, Any]) -> list[str]:
     entry_paths = [entry.get("path") for entry in schema_entries]
     if len(entry_paths) != len(set(entry_paths)):
         errors.append("schema paths must be unique")
+    entry_schema_ids = [entry.get("schema_id") for entry in schema_entries]
+    if len(entry_schema_ids) != len(set(entry_schema_ids)):
+        errors.append("schema ids must be unique")
 
     public_schema_paths = {
         f"schemas/{path.name}"

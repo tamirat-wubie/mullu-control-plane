@@ -12,9 +12,59 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import StrEnum
-from typing import Any, Mapping
+from typing import Any, Mapping, TypeVar, cast
 
-from ._base import ContractRecord, freeze_value, require_non_empty_text
+from ._base import (
+    ContractRecord,
+    freeze_value,
+    require_datetime_text,
+    require_non_empty_text,
+    require_non_negative_int,
+)
+
+
+ContractT = TypeVar("ContractT")
+
+
+def _require_bool(value: Any, field_name: str) -> bool:
+    if not isinstance(value, bool):
+        raise ValueError(f"{field_name} must be a boolean")
+    return value
+
+
+def _require_optional_text(value: str | None, field_name: str) -> str | None:
+    if value is None:
+        return None
+    return require_non_empty_text(value, field_name)
+
+
+def _freeze_text_mapping(value: Any, field_name: str) -> Mapping[str, str]:
+    if not isinstance(value, Mapping):
+        raise ValueError(f"{field_name} must be a mapping")
+    normalized: dict[str, str] = {}
+    for key, item in value.items():
+        if not isinstance(key, str) or not key.strip():
+            raise ValueError(f"{field_name} must contain only non-empty string keys")
+        if not isinstance(item, str) or not item.strip():
+            raise ValueError(f"{field_name} must contain only non-empty string values")
+        normalized[key] = item
+    return cast(Mapping[str, str], freeze_value(normalized))
+
+
+def _freeze_contract_array(
+    values: Any,
+    field_name: str,
+    record_type: type[ContractT],
+    record_type_name: str,
+) -> tuple[ContractT, ...]:
+    if isinstance(values, (str, bytes)) or not isinstance(values, (tuple, list)):
+        raise ValueError(f"{field_name} must be an array")
+    normalized: list[ContractT] = []
+    for value in values:
+        if not isinstance(value, record_type):
+            raise ValueError(f"{field_name} must contain only {record_type_name} instances")
+        normalized.append(value)
+    return cast(tuple[ContractT, ...], freeze_value(normalized))
 
 
 class RunbookExecutionStatus(StrEnum):
@@ -50,6 +100,17 @@ class RunbookExecutionContext(ContractRecord):
     def __post_init__(self) -> None:
         object.__setattr__(self, "operator_id", require_non_empty_text(self.operator_id, "operator_id"))
         object.__setattr__(self, "autonomy_mode", require_non_empty_text(self.autonomy_mode, "autonomy_mode"))
+        object.__setattr__(self, "policy_pack_id", _require_optional_text(self.policy_pack_id, "policy_pack_id"))
+        object.__setattr__(
+            self,
+            "policy_pack_version",
+            _require_optional_text(self.policy_pack_version, "policy_pack_version"),
+        )
+        object.__setattr__(
+            self,
+            "approval_actor_id",
+            _require_optional_text(self.approval_actor_id, "approval_actor_id"),
+        )
 
 
 @dataclass(frozen=True, slots=True)
@@ -66,7 +127,7 @@ class RunbookExecutionRequest(ContractRecord):
         object.__setattr__(self, "runbook_id", require_non_empty_text(self.runbook_id, "runbook_id"))
         if not isinstance(self.context, RunbookExecutionContext):
             raise ValueError("context must be a RunbookExecutionContext instance")
-        object.__setattr__(self, "bindings", freeze_value(self.bindings))
+        object.__setattr__(self, "bindings", _freeze_text_mapping(self.bindings, "bindings"))
 
 
 @dataclass(frozen=True, slots=True)
@@ -80,9 +141,11 @@ class RunbookStepResult(ContractRecord):
     execution_id: str | None = None
 
     def __post_init__(self) -> None:
+        object.__setattr__(self, "step_index", require_non_negative_int(self.step_index, "step_index"))
         object.__setattr__(self, "step_name", require_non_empty_text(self.step_name, "step_name"))
-        if not isinstance(self.step_index, int) or self.step_index < 0:
-            raise ValueError("step_index must be a non-negative integer")
+        object.__setattr__(self, "succeeded", _require_bool(self.succeeded, "succeeded"))
+        object.__setattr__(self, "error_message", _require_optional_text(self.error_message, "error_message"))
+        object.__setattr__(self, "execution_id", _require_optional_text(self.execution_id, "execution_id"))
 
 
 @dataclass(frozen=True, slots=True)
@@ -101,6 +164,7 @@ class DriftRecord(ContractRecord):
         object.__setattr__(self, "field_name", require_non_empty_text(self.field_name, "field_name"))
         object.__setattr__(self, "baseline_value", require_non_empty_text(self.baseline_value, "baseline_value"))
         object.__setattr__(self, "current_value", require_non_empty_text(self.current_value, "current_value"))
+        object.__setattr__(self, "severity", require_non_empty_text(self.severity, "severity"))
 
 
 @dataclass(frozen=True, slots=True)
@@ -126,8 +190,31 @@ class RunbookExecutionRecord(ContractRecord):
             raise ValueError("status must be a RunbookExecutionStatus value")
         if not isinstance(self.context, RunbookExecutionContext):
             raise ValueError("context must be a RunbookExecutionContext instance")
-        object.__setattr__(self, "step_results", freeze_value(list(self.step_results)))
-        object.__setattr__(self, "drift_records", freeze_value(list(self.drift_records)))
+        object.__setattr__(
+            self,
+            "step_results",
+            _freeze_contract_array(
+                self.step_results,
+                "step_results",
+                RunbookStepResult,
+                "RunbookStepResult",
+            ),
+        )
+        object.__setattr__(
+            self,
+            "drift_records",
+            _freeze_contract_array(
+                self.drift_records,
+                "drift_records",
+                DriftRecord,
+                "DriftRecord",
+            ),
+        )
+        if self.started_at is not None:
+            object.__setattr__(self, "started_at", require_datetime_text(self.started_at, "started_at"))
+        if self.finished_at is not None:
+            object.__setattr__(self, "finished_at", require_datetime_text(self.finished_at, "finished_at"))
+        object.__setattr__(self, "error_message", _require_optional_text(self.error_message, "error_message"))
 
     @property
     def has_drift(self) -> bool:

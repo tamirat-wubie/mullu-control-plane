@@ -32,6 +32,15 @@
       ]
     },
     {
+      "action_id": "classify_gateway_capability_admission_routes",
+      "status": "closed",
+      "surfaces": [
+        "gateway_capability_fabric",
+        "capability_worker_execution",
+        "trust_ledger"
+      ]
+    },
+    {
       "action_id": "bound_authority_read_models_to_paginated_windows",
       "status": "closed",
       "surfaces": [
@@ -118,17 +127,10 @@
       ]
     },
     {
-      "action_id": "classify_ops_diagnostics_routes",
+      "action_id": "classify_api_key_lifecycle_routes",
       "status": "closed",
       "surfaces": [
-        "ops_proof_surface"
-      ]
-    },
-    {
-      "action_id": "classify_state_persistence_routes",
-      "status": "closed",
-      "surfaces": [
-        "state_proof_surface"
+        "api_key_lifecycle"
       ]
     },
     {
@@ -160,6 +162,21 @@
       ]
     },
     {
+      "action_id": "classify_tool_registry_read_model_routes",
+      "status": "closed",
+      "surfaces": [
+        "tool_registry_read_models",
+        "tool_invocation"
+      ]
+    },
+    {
+      "action_id": "classify_structured_output_validation_routes",
+      "status": "closed",
+      "surfaces": [
+        "structured_output_validation"
+      ]
+    },
+    {
       "action_id": "classify_operational_health_read_model_routes",
       "status": "closed",
       "surfaces": [
@@ -181,10 +198,38 @@
       ]
     },
     {
+      "action_id": "classify_agent_chain_execution_routes",
+      "status": "closed",
+      "surfaces": [
+        "agent_chain_execution_lifecycle"
+      ]
+    },
+    {
       "action_id": "classify_certification_daemon_lifecycle_routes",
       "status": "closed",
       "surfaces": [
         "certification_daemon_lifecycle"
+      ]
+    },
+    {
+      "action_id": "classify_live_path_certification_routes",
+      "status": "closed",
+      "surfaces": [
+        "live_path_certification_lifecycle"
+      ]
+    },
+    {
+      "action_id": "classify_runtime_state_persistence_routes",
+      "status": "closed",
+      "surfaces": [
+        "runtime_state_persistence_lifecycle"
+      ]
+    },
+    {
+      "action_id": "classify_ops_diagnostics_routes",
+      "status": "closed",
+      "surfaces": [
+        "ops_proof_surface"
       ]
     },
     {
@@ -633,15 +678,15 @@
   ],
   "coverage_summary": {
     "by_action_proof": {
-      "action_proof": 79,
+      "action_proof": 84,
       "audit_chain": 0,
       "gap": 0,
-      "read_model": 13,
+      "read_model": 14,
       "request_proof": 2
     },
     "by_audit": {
       "action_proof": 0,
-      "audit_chain": 90,
+      "audit_chain": 96,
       "gap": 0,
       "read_model": 4,
       "request_proof": 0
@@ -649,23 +694,23 @@
     "by_coverage_state": {
       "proven": 1,
       "unproven": 0,
-      "witnessed": 93
+      "witnessed": 99
     },
     "by_request_proof": {
       "action_proof": 1,
       "audit_chain": 0,
       "gap": 0,
-      "read_model": 15,
-      "request_proof": 78
+      "read_model": 16,
+      "request_proof": 83
     },
-    "surface_count": 94
+    "surface_count": 100
   },
   "generated_by": "scripts/proof_coverage_matrix.py",
   "route_coverage": {
     "by_coverage_state": {
-      "proven": 8,
-      "unproven": 93,
-      "witnessed": 232
+      "proven": 12,
+      "unproven": 30,
+      "witnessed": 291
     },
     "route_count": 333,
     "routes": [
@@ -730,19 +775,19 @@
         "surface_id": "agent_adapter_protocol"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/analytics/{tenant_id}",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "tenant_governance_lifecycle"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/api-keys",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "api_key_lifecycle"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/api-keys/{key_id}",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "api_key_lifecycle"
       },
       {
         "coverage_state": "witnessed",
@@ -775,9 +820,9 @@
         "surface_id": "audit_chain_api"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/backpressure",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "operational_health_read_models"
       },
       {
         "coverage_state": "unproven",
@@ -790,39 +835,39 @@
         "surface_id": "cost_budget_read_models"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/cache/stats",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "operational_health_read_models"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/canary",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "operational_health_read_models"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/capabilities",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "operational_health_read_models"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/certify",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "live_path_certification_lifecycle"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/certify/history",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "live_path_certification_lifecycle"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/chain/execute",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "agent_chain_execution_lifecycle"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/chain/history",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "agent_chain_execution_lifecycle"
       },
       {
         "coverage_state": "witnessed",
@@ -850,9 +895,9 @@
         "surface_id": "unclassified_declared_route"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/circuits/dashboard",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "operational_health_read_models"
       },
       {
         "coverage_state": "witnessed",
@@ -890,9 +935,9 @@
         "surface_id": "compliance_evidence_exports"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/compression/summary",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "operational_health_read_models"
       },
       {
         "coverage_state": "witnessed",
@@ -995,9 +1040,9 @@
         "surface_id": "operator_console_read_models"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/context/summary",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "operational_health_read_models"
       },
       {
         "coverage_state": "unproven",
@@ -1025,9 +1070,9 @@
         "surface_id": "unclassified_declared_route"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/correlation/active",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "operational_health_read_models"
       },
       {
         "coverage_state": "witnessed",
@@ -1070,9 +1115,9 @@
         "surface_id": "certification_daemon_lifecycle"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/dashboard",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "operational_health_read_models"
       },
       {
         "coverage_state": "witnessed",
@@ -1115,9 +1160,9 @@
         "surface_id": "data_governance_controls"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/dedup/summary",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "operational_health_read_models"
       },
       {
         "coverage_state": "unproven",
@@ -1130,9 +1175,9 @@
         "surface_id": "unclassified_declared_route"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/deploy/readiness",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "operational_health_read_models"
       },
       {
         "coverage_state": "unproven",
@@ -1165,9 +1210,9 @@
         "surface_id": "event_bus_operations"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/execute",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "workflow_execution_lifecycle"
       },
       {
         "coverage_state": "witnessed",
@@ -1310,9 +1355,9 @@
         "surface_id": "unclassified_declared_route"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/guards",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "operational_health_read_models"
       },
       {
         "coverage_state": "witnessed",
@@ -1335,19 +1380,19 @@
         "surface_id": "operational_health_read_models"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/idempotency/summary",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "operational_health_read_models"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/isolation/summary",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "tenant_governance_lifecycle"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/isolation/verify",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "tenant_governance_lifecycle"
       },
       {
         "coverage_state": "witnessed",
@@ -1380,9 +1425,9 @@
         "surface_id": "governed_operational_intelligence"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/ledger",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "workflow_execution_lifecycle"
       },
       {
         "coverage_state": "witnessed",
@@ -1415,9 +1460,9 @@
         "surface_id": "unclassified_declared_route"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/logs",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "audit_chain_api"
       },
       {
         "coverage_state": "witnessed",
@@ -1440,9 +1485,9 @@
         "surface_id": "unclassified_declared_route"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/migrations/summary",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "operational_health_read_models"
       },
       {
         "coverage_state": "witnessed",
@@ -1465,9 +1510,9 @@
         "surface_id": "model_experiment_control"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/monitor",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "operational_health_read_models"
       },
       {
         "coverage_state": "witnessed",
@@ -1505,9 +1550,9 @@
         "surface_id": "multi_agent_coordination_runtime"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/notifications/summary",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "operational_health_read_models"
       },
       {
         "coverage_state": "witnessed",
@@ -1545,19 +1590,19 @@
         "surface_id": "agent_orchestration_lifecycle"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/output/parse",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "structured_output_validation"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/output/schemas",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "structured_output_validation"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/partitions",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "tenant_governance_lifecycle"
       },
       {
         "coverage_state": "witnessed",
@@ -1575,19 +1620,19 @@
         "surface_id": "pilot_provisioning"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/pipeline/execute",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "workflow_execution_lifecycle"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/pipeline/history",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "workflow_execution_lifecycle"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/plugins",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "operational_health_read_models"
       },
       {
         "coverage_state": "witnessed",
@@ -1650,14 +1695,14 @@
         "surface_id": "task_queue_lifecycle"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/quotas/summary",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "tenant_governance_lifecycle"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/quotas/{tenant_id}",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "tenant_governance_lifecycle"
       },
       {
         "coverage_state": "unproven",
@@ -1690,24 +1735,24 @@
         "surface_id": "rbac_access_governance"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/readiness",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "operational_health_read_models"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/regions",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "operational_health_read_models"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/release",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "operational_health_read_models"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/release/latest",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "operational_health_read_models"
       },
       {
         "coverage_state": "unproven",
@@ -1720,9 +1765,9 @@
         "surface_id": "replay_determinism"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/retries/summary",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "operational_health_read_models"
       },
       {
         "coverage_state": "witnessed",
@@ -1840,19 +1885,19 @@
         "surface_id": "unclassified_declared_route"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/secrets/summary",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "operational_health_read_models"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/session",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "workflow_execution_lifecycle"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/shutdown/info",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "operational_health_read_models"
       },
       {
         "coverage_state": "witnessed",
@@ -1880,29 +1925,29 @@
         "surface_id": "unclassified_declared_route"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/snapshot",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "operational_health_read_models"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/snapshots",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "operational_health_read_models"
       },
       {
         "coverage_state": "witnessed",
         "route": "/api/v1/state",
-        "surface_id": "state_proof_surface"
+        "surface_id": "runtime_state_persistence_lifecycle"
       },
       {
         "coverage_state": "witnessed",
         "route": "/api/v1/state/save",
-        "surface_id": "state_proof_surface"
+        "surface_id": "runtime_state_persistence_lifecycle"
       },
       {
         "coverage_state": "witnessed",
         "route": "/api/v1/state/{state_type}",
-        "surface_id": "state_proof_surface"
+        "surface_id": "runtime_state_persistence_lifecycle"
       },
       {
         "coverage_state": "witnessed",
@@ -1910,14 +1955,14 @@
         "surface_id": "llm_streaming"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/templates",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "workflow_execution_lifecycle"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/templates/execute",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "workflow_execution_lifecycle"
       },
       {
         "coverage_state": "witnessed",
@@ -1945,14 +1990,14 @@
         "surface_id": "temporal_kernel"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/tenant-isolation",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "tenant_governance_lifecycle"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/tenant-isolation/audits",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "tenant_governance_lifecycle"
       },
       {
         "coverage_state": "witnessed",
@@ -2000,14 +2045,14 @@
         "surface_id": "tenant_governance_lifecycle"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/tools",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "tool_registry_read_models"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/tools/history",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "tool_registry_read_models"
       },
       {
         "coverage_state": "witnessed",
@@ -2015,9 +2060,9 @@
         "surface_id": "tool_invocation"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/tools/llm-format",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "tool_registry_read_models"
       },
       {
         "coverage_state": "witnessed",
@@ -2040,19 +2085,19 @@
         "surface_id": "trace_observability_read_models"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/usage/{tenant_id}",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "tenant_governance_lifecycle"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/validation/schemas",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "operational_health_read_models"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/version",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "operational_health_read_models"
       },
       {
         "coverage_state": "witnessed",
@@ -2160,19 +2205,19 @@
         "surface_id": "authority_obligation_mesh"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "proven",
         "route": "/capability-fabric/admission-audits",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "gateway_capability_fabric"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "proven",
         "route": "/capability-fabric/capsule-admission-receipts",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "gateway_capability_fabric"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "proven",
         "route": "/capability-fabric/capsule-admissions",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "gateway_capability_fabric"
       },
       {
         "coverage_state": "proven",
@@ -2195,19 +2240,19 @@
         "surface_id": "capability_plan_evidence_bundle"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/capability/execute",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "capability_worker_execution"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/commands/{command_id}/authority",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "authority_obligation_mesh"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "proven",
         "route": "/commands/{command_id}/capability-admission",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "gateway_capability_fabric"
       },
       {
         "coverage_state": "proven",
@@ -2220,9 +2265,9 @@
         "surface_id": "gateway_capability_fabric"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/evidence/bundles/{command_id}",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "trust_ledger"
       },
       {
         "coverage_state": "unproven",
@@ -2335,7 +2380,7 @@
         "surface_id": "gateway_capability_fabric"
       }
     ],
-    "unclassified_route_count": 93
+    "unclassified_route_count": 30
   },
   "schema_version": 1,
   "surfaces": [
@@ -2359,7 +2404,11 @@
       "representative_paths": [
         "/webhook/*",
         "/capability-fabric/read-model",
+        "/capability-fabric/admission-audits",
+        "/capability-fabric/capsule-admissions",
+        "/capability-fabric/capsule-admission-receipts",
         "/commands/{command_id}/closure",
+        "/commands/{command_id}/capability-admission",
         "/commands/{command_id}/universal-action-proof",
         "/operator/universal-actions/read-model",
         "/operator/universal-actions",
@@ -2374,11 +2423,40 @@
         "universal_action_proof_replays_from_command_events",
         "operator_universal_action_read_model_filters_command_proofs",
         "operator_universal_action_console_renders_replay_state",
+        "capability_admission_audits_filter_status",
+        "command_capability_admission_read_model_reports_accepted_witness",
         "capsule_compiler_emits_certification_evidence_manifest",
         "capsule_installer_stamps_admission_receipt",
+        "capsule_admission_operator_endpoint_lists_receipt",
+        "invalid_capsule_admission_preserves_registry_state",
         "physical_capsule_admission_runs_promotion_preflight"
       ],
       "surface_id": "gateway_capability_fabric"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "gateway/capability_worker.py",
+        "gateway/capability_isolation.py",
+        "gateway/capability_dispatch.py",
+        "tests/test_gateway/test_capability_worker.py"
+      ],
+      "notes": "Restricted capability worker execution accepts only signed, hash-bound, isolated capability requests and returns signed receipt-bearing execution responses.",
+      "representative_paths": [
+        "/capability/execute"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "signed_capability_request_required",
+        "response_signature_verified",
+        "input_hash_mismatch_rejected",
+        "intent_boundary_mismatch_rejected",
+        "non_isolated_boundary_rejected",
+        "local_smoke_stub_bound_to_local_environment"
+      ],
+      "surface_id": "capability_worker_execution"
     },
     {
       "action_proof": "action_proof",
@@ -2513,6 +2591,15 @@
         "/api/v1/tenant/{tenant_id}/ledger",
         "/api/v1/tenant/{tenant_id}/summary",
         "/api/v1/tenants",
+        "/api/v1/usage/{tenant_id}",
+        "/api/v1/analytics/{tenant_id}",
+        "/api/v1/isolation/verify",
+        "/api/v1/isolation/summary",
+        "/api/v1/tenant-isolation",
+        "/api/v1/tenant-isolation/audits",
+        "/api/v1/quotas/summary",
+        "/api/v1/quotas/{tenant_id}",
+        "/api/v1/partitions",
         "/api/v1/tenant/register",
         "/api/v1/tenant/{tenant_id}/status",
         "/api/v1/tenant/{tenant_id}/gate",
@@ -2528,7 +2615,13 @@
         "tenant_register_emits_action_proof",
         "tenant_status_update_emits_action_proof",
         "tenant_gate_read_models_governed",
-        "tenant_gate_persistence_read_model_included"
+        "tenant_gate_persistence_read_model_included",
+        "tenant_usage_read_model_scoped",
+        "tenant_analytics_read_model_scoped",
+        "tenant_isolation_verify_governed",
+        "tenant_isolation_audits_bounded",
+        "tenant_quota_read_models_bounded",
+        "tenant_partition_read_model_bounded"
       ],
       "surface_id": "tenant_governance_lifecycle"
     },
@@ -2939,7 +3032,8 @@
         "/api/v1/audit/summary",
         "/api/v1/audit/anchor",
         "/api/v1/audit/anchor/{anchor_id}/verify",
-        "/api/v1/audit/anchors"
+        "/api/v1/audit/anchors",
+        "/api/v1/logs"
       ],
       "request_proof": "read_model",
       "runtime_witnesses": [
@@ -2948,7 +3042,8 @@
         "audit_anchor_checkpoint_created",
         "audit_anchor_verification_endpoint",
         "audit_anchor_history_read_model",
-        "audit_chain_hash_linked"
+        "audit_chain_hash_linked",
+        "audit_logs_read_model_bounded"
       ],
       "surface_id": "audit_chain_api"
     },
@@ -2984,6 +3079,31 @@
       "audit": "audit_chain",
       "coverage_state": "witnessed",
       "evidence_files": [
+        "mcoi/mcoi_runtime/app/routers/data/api_keys.py",
+        "mcoi/mcoi_runtime/governance/auth/api_key.py",
+        "mcoi/tests/test_api_key_lifecycle.py",
+        "mcoi/tests/test_server_phase216.py"
+      ],
+      "notes": "API-key lifecycle routes create, list, revoke, rotate, expire, and inspect tenant-scoped credentials through governed validation errors, bounded lifecycle metadata, and audit-ready key state.",
+      "representative_paths": [
+        "/api/v1/api-keys",
+        "/api/v1/api-keys/{key_id}"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "api_key_create_rejects_wildcard_when_disabled",
+        "api_key_create_rejects_empty_scopes",
+        "api_key_revoke_missing_is_bounded",
+        "api_key_rotation_links_old_and_new_keys",
+        "api_key_expiration_and_stale_detection"
+      ],
+      "surface_id": "api_key_lifecycle"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
         "mcoi/mcoi_runtime/app/routers/ops/diagnostics.py",
         "mcoi/mcoi_runtime/core/governance_bench.py",
         "mcoi/mcoi_runtime/core/import_analyzer.py",
@@ -3009,36 +3129,6 @@
         "proof_bridge_registered_in_deps"
       ],
       "surface_id": "ops_proof_surface"
-    },
-    {
-      "action_proof": "action_proof",
-      "audit": "audit_chain",
-      "coverage_state": "witnessed",
-      "evidence_files": [
-        "mcoi/mcoi_runtime/app/routers/data/state.py",
-        "mcoi/mcoi_runtime/persistence/state_persistence.py",
-        "mcoi/tests/test_server_phase212.py",
-        "mcoi/tests/test_state_persistence.py",
-        "mcoi/tests/test_server_lifecycle_helpers.py"
-      ],
-      "notes": "Runtime state routes persist hash-bound state snapshots with atomic writes, expose bounded load and list read models, and reject path traversal with governed error envelopes.",
-      "representative_paths": [
-        "/api/v1/state",
-        "/api/v1/state/save",
-        "/api/v1/state/{state_type}"
-      ],
-      "request_proof": "request_proof",
-      "runtime_witnesses": [
-        "state_save_returns_hash_bound_snapshot",
-        "state_load_returns_saved_data",
-        "state_list_returns_summary",
-        "state_save_rejects_path_traversal",
-        "state_load_rejects_path_traversal",
-        "state_persistence_atomic_write",
-        "state_persistence_rejects_hash_mismatch",
-        "server_lifecycle_registers_save_state_hook"
-      ],
-      "surface_id": "state_proof_surface"
     },
     {
       "action_proof": "action_proof",
@@ -3156,11 +3246,68 @@
       "audit": "audit_chain",
       "coverage_state": "witnessed",
       "evidence_files": [
+        "mcoi/mcoi_runtime/app/routers/data/tools.py",
+        "mcoi/mcoi_runtime/core/tool_use.py",
+        "mcoi/tests/test_server_phase212.py",
+        "mcoi/tests/test_tool_use.py"
+      ],
+      "notes": "Tool registry read-model routes expose registered tool metadata, bounded invocation history, and LLM-compatible schemas while invocation remains governed by the tool_invocation action-proof surface.",
+      "representative_paths": [
+        "/api/v1/tools",
+        "/api/v1/tools/history",
+        "/api/v1/tools/llm-format"
+      ],
+      "request_proof": "read_model",
+      "runtime_witnesses": [
+        "tool_registry_list_returns_registered_tools",
+        "tool_registry_category_filter_bounded",
+        "tool_llm_format_exports_input_schema",
+        "tool_history_returns_bounded_summary",
+        "tool_invocation_history_limit_applied",
+        "tool_invoke_separate_action_proof_surface"
+      ],
+      "surface_id": "tool_registry_read_models"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "mcoi/mcoi_runtime/app/routers/data/output.py",
+        "mcoi/mcoi_runtime/core/structured_output.py",
+        "mcoi/tests/test_server_phase212.py",
+        "mcoi/tests/test_structured_output.py"
+      ],
+      "notes": "Structured-output routes parse model text against registered schemas, return explicit validation errors, preserve raw text in the parser contract, and expose bounded schema read models.",
+      "representative_paths": [
+        "/api/v1/output/parse",
+        "/api/v1/output/schemas"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "structured_output_parse_valid_json",
+        "structured_output_parse_invalid_json",
+        "structured_output_parse_unknown_schema_bounded",
+        "structured_output_parse_markdown_json",
+        "structured_output_schema_registration_validated",
+        "structured_output_endpoint_parse_valid_and_invalid",
+        "structured_output_schema_list_bounded"
+      ],
+      "surface_id": "structured_output_validation"
+    },
+    {
+      "action_proof": "read_model",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
         "mcoi/mcoi_runtime/app/routers/health.py",
         "mcoi/mcoi_runtime/core/deep_health.py",
         "mcoi/mcoi_runtime/core/health_aggregator.py",
         "mcoi/mcoi_runtime/core/health_check_agg.py",
         "mcoi/mcoi_runtime/core/health_v3.py",
+        "mcoi/mcoi_runtime/app/routers/ops/summaries.py",
+        "mcoi/mcoi_runtime/app/routers/ops/release.py",
+        "mcoi/mcoi_runtime/app/routers/ops/snapshots.py",
         "mcoi/tests/test_deep_health.py",
         "mcoi/tests/test_health_aggregator.py",
         "mcoi/tests/test_health_check_agg.py",
@@ -3173,7 +3320,35 @@
         "/api/v1/health/deep",
         "/api/v1/health/score",
         "/api/v1/health/v2",
-        "/api/v1/health/v3"
+        "/api/v1/health/v3",
+        "/api/v1/dashboard",
+        "/api/v1/plugins",
+        "/api/v1/guards",
+        "/api/v1/capabilities",
+        "/api/v1/readiness",
+        "/api/v1/monitor",
+        "/api/v1/shutdown/info",
+        "/api/v1/correlation/active",
+        "/api/v1/notifications/summary",
+        "/api/v1/validation/schemas",
+        "/api/v1/idempotency/summary",
+        "/api/v1/compression/summary",
+        "/api/v1/canary",
+        "/api/v1/secrets/summary",
+        "/api/v1/dedup/summary",
+        "/api/v1/deploy/readiness",
+        "/api/v1/migrations/summary",
+        "/api/v1/retries/summary",
+        "/api/v1/regions",
+        "/api/v1/context/summary",
+        "/api/v1/circuits/dashboard",
+        "/api/v1/cache/stats",
+        "/api/v1/backpressure",
+        "/api/v1/version",
+        "/api/v1/release",
+        "/api/v1/release/latest",
+        "/api/v1/snapshot",
+        "/api/v1/snapshots"
       ],
       "request_proof": "read_model",
       "runtime_witnesses": [
@@ -3184,7 +3359,16 @@
         "health_v2_exception_sanitized",
         "health_v3_weighted_aggregation",
         "health_v3_recovery_tracking",
-        "health_routes_return_read_models"
+        "health_routes_return_read_models",
+        "ops_dashboard_read_model_bounded",
+        "production_readiness_checks_bounded",
+        "monitoring_vitals_read_model_bounded",
+        "shutdown_info_read_model_bounded",
+        "correlation_summary_read_model_bounded",
+        "idempotency_summary_read_model_bounded",
+        "deployment_readiness_read_model_bounded",
+        "release_info_read_model_bounded",
+        "system_snapshot_read_model_bounded"
       ],
       "surface_id": "operational_health_read_models"
     },
@@ -3232,9 +3416,16 @@
       ],
       "notes": "Workflow execution routes execute governed multi-agent workflows with action proof receipts, expose bounded history read models, and produce replay-traced workflow runs.",
       "representative_paths": [
+        "/api/v1/execute",
+        "/api/v1/session",
+        "/api/v1/ledger",
         "/api/v1/workflow/execute",
         "/api/v1/workflow/history",
-        "/api/v1/workflow/traced"
+        "/api/v1/workflow/traced",
+        "/api/v1/pipeline/execute",
+        "/api/v1/pipeline/history",
+        "/api/v1/templates",
+        "/api/v1/templates/execute"
       ],
       "request_proof": "request_proof",
       "runtime_witnesses": [
@@ -3245,9 +3436,44 @@
         "workflow_failure_records_audit",
         "workflow_errors_sanitized",
         "traced_workflow_emits_replay_trace",
-        "traced_workflow_recorder_errors_sanitized"
+        "traced_workflow_recorder_errors_sanitized",
+        "legacy_execute_emits_action_proof",
+        "session_read_model_bounded",
+        "ledger_read_model_bounded",
+        "pipeline_execution_emits_action_proof",
+        "pipeline_history_bounded",
+        "template_read_models_bounded",
+        "template_execution_governed"
       ],
       "surface_id": "workflow_execution_lifecycle"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "mcoi/mcoi_runtime/app/routers/agent.py",
+        "mcoi/mcoi_runtime/core/agent_chain.py",
+        "mcoi/tests/test_agent_chain.py",
+        "mcoi/tests/test_server_phase215.py"
+      ],
+      "notes": "Agent chain routes execute ordered multi-step LLM chains, propagate prior outputs through templates, publish bounded completion events, sanitize failure details, and expose bounded execution history.",
+      "representative_paths": [
+        "/api/v1/chain/execute",
+        "/api/v1/chain/history"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "chain_execute_single_step",
+        "chain_execute_two_steps",
+        "chain_prev_template_propagates_output",
+        "chain_halt_on_failure_bounded",
+        "chain_skip_on_failure_continues",
+        "chain_returned_failure_redacted",
+        "chain_history_bounded",
+        "chain_endpoint_governed"
+      ],
+      "surface_id": "agent_chain_execution_lifecycle"
     },
     {
       "action_proof": "action_proof",
@@ -3277,6 +3503,65 @@
         "daemon_endpoint_contracts_governed"
       ],
       "surface_id": "certification_daemon_lifecycle"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "mcoi/mcoi_runtime/app/routers/data/certify.py",
+        "mcoi/mcoi_runtime/core/live_path_certification.py",
+        "mcoi/tests/test_live_path_certification.py",
+        "mcoi/tests/test_server_phase199.py",
+        "mcoi/tests/test_e2e_integration.py"
+      ],
+      "notes": "Live-path certification routes run governed certification chains with action-proof receipts, step-level proof hashes, bounded failure details, deterministic chain hashes, and bounded certification history read models.",
+      "representative_paths": [
+        "/api/v1/certify",
+        "/api/v1/certify/history"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "certification_run_emits_action_proof",
+        "certification_run_returns_chain_hash",
+        "certification_run_records_five_steps",
+        "certification_steps_named",
+        "certification_history_bounded",
+        "certification_chain_hash_deterministic",
+        "certification_failures_bounded",
+        "certification_partial_failure_recorded"
+      ],
+      "surface_id": "live_path_certification_lifecycle"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "mcoi/mcoi_runtime/app/routers/data/state.py",
+        "mcoi/mcoi_runtime/persistence/state_persistence.py",
+        "mcoi/tests/test_state_persistence.py",
+        "mcoi/tests/test_server_phase212.py",
+        "mcoi/tests/test_server_phase216.py"
+      ],
+      "notes": "Runtime state persistence routes save hash-bound state snapshots, load bounded state by type, reject path traversal, and expose state summary read models.",
+      "representative_paths": [
+        "/api/v1/state",
+        "/api/v1/state/save",
+        "/api/v1/state/{state_type}"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "state_save_returns_hash_bound_snapshot",
+        "state_load_roundtrip",
+        "state_load_missing_bounded",
+        "state_list_summary_bounded",
+        "state_save_rejects_path_traversal",
+        "state_load_rejects_path_traversal",
+        "state_hash_mismatch_rejected",
+        "state_atomic_write_verified"
+      ],
+      "surface_id": "runtime_state_persistence_lifecycle"
     },
     {
       "action_proof": "action_proof",
@@ -3400,6 +3685,7 @@
       "evidence_files": [
         "gateway/server.py",
         "gateway/authority_obligation_mesh.py",
+        "tests/test_gateway/test_webhooks.py",
         "tests/test_gateway/test_authority_obligation_mesh.py"
       ],
       "notes": "Authority and obligation surfaces expose unresolved responsibility state.",
@@ -3407,14 +3693,16 @@
         "/authority/witness",
         "/authority/responsibility",
         "/authority/obligations",
-        "/authority/escalations"
+        "/authority/escalations",
+        "/commands/{command_id}/authority"
       ],
       "request_proof": "request_proof",
       "runtime_witnesses": [
         "pending_approval_chain_count",
         "open_obligation_count",
         "overdue_obligation_count",
-        "escalated_obligation_count"
+        "escalated_obligation_count",
+        "command_authority_read_model_bound_to_approval_chain"
       ],
       "surface_id": "authority_obligation_mesh"
     },
@@ -3471,6 +3759,7 @@
         "schemas/gateway_publication_readiness.schema.json",
         "schemas/gateway_publication_receipt_validation.schema.json",
         "schemas/deployment_witness.schema.json",
+        "schemas/runtime_witness.schema.json",
         "schemas/mullu_governance_protocol.manifest.json",
         "tests/test_orchestrate_deployment_witness.py",
         "tests/test_report_gateway_publication_readiness.py",
@@ -3491,6 +3780,7 @@
       "request_proof": "read_model",
       "runtime_witnesses": [
         "latest_command_event_hash",
+        "runtime_witness_schema_valid",
         "latest_terminal_certificate_id",
         "responsibility_debt_clear",
         "runtime_responsibility_debt_clear",
@@ -3580,6 +3870,7 @@
         "gateway/server.py",
         "scripts/collect_deployment_witness.py",
         ".github/workflows/deployment-witness.yml",
+        "schemas/gateway_health.schema.json",
         "schemas/production_evidence_witness.schema.json",
         "schemas/capability_evidence_endpoint.schema.json",
         "schemas/audit_verification_endpoint.schema.json",
@@ -3589,6 +3880,7 @@
       ],
       "notes": "Production evidence endpoints expose signed deployment posture, capability evidence, audit verification, and proof verification; deployment witness collection can require the whole plane before publication, derives live physical safety evidence only from certified registry extensions, and blocks live physical capability claims without explicit safety evidence while allowing sandbox-only physical canary evidence.",
       "representative_paths": [
+        "/health",
         "/deployment/witness",
         "/capabilities/evidence",
         "/audit/verify",
@@ -3596,6 +3888,7 @@
       ],
       "request_proof": "read_model",
       "runtime_witnesses": [
+        "gateway_health_schema_valid",
         "signed_production_evidence_witness",
         "capability_evidence_schema_valid",
         "audit_verification_schema_valid",
@@ -3786,15 +4079,19 @@
         "capabilities/software_dev/manifests/software_dev_gate_plan_select.capability.json",
         "capabilities/software_dev/manifests/software_dev_pr_candidate_prepare.capability.json",
         "capabilities/software_dev/manifests/software_dev_repo_map_read.capability.json",
+        "gateway/capability_fabric.py",
         "mcoi/mcoi_runtime/contracts/capability_manifest.py",
         "mcoi/mcoi_runtime/core/capability_manifest_registry.py",
         "schemas/software_dev/capability_manifest.schema.json",
+        "tests/test_gateway/test_capability_fabric.py",
         "tests/test_software_dev_capability_manifest_registry.py"
       ],
-      "notes": "Capability manifest registry admits dynamic capability declarations only after owner, policy, evidence, schema, receipt, maturity, sandbox, rollback, environment, and hot-reload constraints validate; production hot reload remains denied for effect-bearing capabilities.",
+      "notes": "Capability manifest registry admits dynamic capability declarations only after owner, policy, evidence, schema, receipt, maturity, sandbox, rollback, environment, and hot-reload constraints validate; gateway fabric projects admitted manifests only when explicitly enabled; production hot reload remains denied for effect-bearing capabilities.",
       "representative_paths": [
         "CapabilityManifestRegistry.admit_path",
         "CapabilityManifestRegistry.admit_directory",
+        "build_software_dev_capability_manifest_registry",
+        "MaturityProjectingCapabilityAdmissionGate.read_model",
         "CapabilityManifest",
         "CapabilityManifestAdmission"
       ],
@@ -3805,7 +4102,9 @@
         "manifest_missing_policy_rejected",
         "manifest_unresolved_schema_rejected",
         "effect_manifest_requires_sandbox_rollback",
-        "production_hot_reload_denied_for_effect_manifest"
+        "production_hot_reload_denied_for_effect_manifest",
+        "fabric_projects_local_manifest_registry",
+        "fabric_rejects_production_hot_reload_manifest_registry"
       ],
       "surface_id": "capability_manifest_registry"
     },
@@ -3918,6 +4217,7 @@
         "software_dev_named_loader_installs_only_software_dev_domain",
         "software_dev_capsule_refs_match_pack_capabilities",
         "software_dev_pack_explicit_fabric_admits_known_capabilities",
+        "software_dev_gate_projects_manifest_registry",
         "software_dev_direct_deployment_capability_absent",
         "software_dev_read_only_records_non_mutating",
         "software_dev_effectful_records_require_sandbox_approval",
@@ -4262,6 +4562,7 @@
         "TrustLedger.verify",
         "TrustLedger.anchor_bundle",
         "TrustLedger.verify_anchor_receipt",
+        "/evidence/bundles/{command_id}",
         "GET /evidence/bundles/{command_id}",
         "scripts/verify_evidence_bundle.py",
         "scripts/verify_anchor_receipt.py",

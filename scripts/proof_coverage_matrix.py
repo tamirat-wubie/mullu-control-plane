@@ -17,6 +17,7 @@ from typing import Any
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 CANONICAL_OUTPUT = REPO_ROOT / "tests" / "fixtures" / "proof_coverage_matrix.json"
+DOC_OUTPUT = REPO_ROOT / "docs" / "40_proof_coverage_matrix.md"
 ASSURANCE_OUTPUT = REPO_ROOT / ".change_assurance" / "proof_coverage_matrix.json"
 ROUTE_PATTERN = re.compile(r"@(?:router|app)\.(?:get|post|put|delete|patch)\(\s*[\"']([^\"']+)[\"']")
 ROUTER_PREFIX_PATTERN = re.compile(r"APIRouter\([^)]*prefix\s*=\s*[\"']([^\"']+)[\"']")
@@ -64,7 +65,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
             [
                 "/webhook/*",
                 "/capability-fabric/read-model",
+                "/capability-fabric/admission-audits",
+                "/capability-fabric/capsule-admissions",
+                "/capability-fabric/capsule-admission-receipts",
                 "/commands/{command_id}/closure",
+                "/commands/{command_id}/capability-admission",
                 "/commands/{command_id}/universal-action-proof",
                 "/operator/universal-actions/read-model",
                 "/operator/universal-actions",
@@ -90,9 +95,36 @@ def proof_coverage_matrix() -> dict[str, Any]:
             "Gateway command admission, request receipt envelopes, terminal closure, universal action proof replay, capsule compiler certification-evidence manifests, and the capsule admission installer receipt expose runtime witnesses.",
             [
                 *gateway_witnesses,
+                "capability_admission_audits_filter_status",
+                "command_capability_admission_read_model_reports_accepted_witness",
                 "capsule_compiler_emits_certification_evidence_manifest",
                 "capsule_installer_stamps_admission_receipt",
+                "capsule_admission_operator_endpoint_lists_receipt",
+                "invalid_capsule_admission_preserves_registry_state",
                 "physical_capsule_admission_runs_promotion_preflight",
+            ],
+        ),
+        _surface(
+            "capability_worker_execution",
+            ["/capability/execute"],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "gateway/capability_worker.py",
+                "gateway/capability_isolation.py",
+                "gateway/capability_dispatch.py",
+                "tests/test_gateway/test_capability_worker.py",
+            ],
+            "Restricted capability worker execution accepts only signed, hash-bound, isolated capability requests and returns signed receipt-bearing execution responses.",
+            [
+                "signed_capability_request_required",
+                "response_signature_verified",
+                "input_hash_mismatch_rejected",
+                "intent_boundary_mismatch_rejected",
+                "non_isolated_boundary_rejected",
+                "local_smoke_stub_bound_to_local_environment",
             ],
         ),
         _surface(
@@ -200,6 +232,15 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "/api/v1/tenant/{tenant_id}/ledger",
                 "/api/v1/tenant/{tenant_id}/summary",
                 "/api/v1/tenants",
+                "/api/v1/usage/{tenant_id}",
+                "/api/v1/analytics/{tenant_id}",
+                "/api/v1/isolation/verify",
+                "/api/v1/isolation/summary",
+                "/api/v1/tenant-isolation",
+                "/api/v1/tenant-isolation/audits",
+                "/api/v1/quotas/summary",
+                "/api/v1/quotas/{tenant_id}",
+                "/api/v1/partitions",
                 "/api/v1/tenant/register",
                 "/api/v1/tenant/{tenant_id}/status",
                 "/api/v1/tenant/{tenant_id}/gate",
@@ -230,6 +271,12 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "tenant_status_update_emits_action_proof",
                 "tenant_gate_read_models_governed",
                 "tenant_gate_persistence_read_model_included",
+                "tenant_usage_read_model_scoped",
+                "tenant_analytics_read_model_scoped",
+                "tenant_isolation_verify_governed",
+                "tenant_isolation_audits_bounded",
+                "tenant_quota_read_models_bounded",
+                "tenant_partition_read_model_bounded",
             ],
         ),
         _surface(
@@ -618,6 +665,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "/api/v1/audit/anchor",
                 "/api/v1/audit/anchor/{anchor_id}/verify",
                 "/api/v1/audit/anchors",
+                "/api/v1/logs",
             ],
             "read_model",
             "request_proof",
@@ -640,6 +688,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "audit_anchor_verification_endpoint",
                 "audit_anchor_history_read_model",
                 "audit_chain_hash_linked",
+                "audit_logs_read_model_bounded",
             ],
         ),
         _surface(
@@ -667,6 +716,31 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "event_store_summary_governed",
                 "pipeline_completion_event_visible",
                 "config_update_event_visible",
+            ],
+        ),
+        _surface(
+            "api_key_lifecycle",
+            [
+                "/api/v1/api-keys",
+                "/api/v1/api-keys/{key_id}",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "mcoi/mcoi_runtime/app/routers/data/api_keys.py",
+                "mcoi/mcoi_runtime/governance/auth/api_key.py",
+                "mcoi/tests/test_api_key_lifecycle.py",
+                "mcoi/tests/test_server_phase216.py",
+            ],
+            "API-key lifecycle routes create, list, revoke, rotate, expire, and inspect tenant-scoped credentials through governed validation errors, bounded lifecycle metadata, and audit-ready key state.",
+            [
+                "api_key_create_rejects_wildcard_when_disabled",
+                "api_key_create_rejects_empty_scopes",
+                "api_key_revoke_missing_is_bounded",
+                "api_key_rotation_links_old_and_new_keys",
+                "api_key_expiration_and_stale_detection",
             ],
         ),
         _surface(
@@ -698,36 +772,6 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "ops_import_depth_distribution_bounded",
                 "ops_proof_bridge_status_governed",
                 "proof_bridge_registered_in_deps",
-            ],
-        ),
-        _surface(
-            "state_proof_surface",
-            [
-                "/api/v1/state",
-                "/api/v1/state/save",
-                "/api/v1/state/{state_type}",
-            ],
-            "request_proof",
-            "action_proof",
-            "audit_chain",
-            "witnessed",
-            [
-                "mcoi/mcoi_runtime/app/routers/data/state.py",
-                "mcoi/mcoi_runtime/persistence/state_persistence.py",
-                "mcoi/tests/test_server_phase212.py",
-                "mcoi/tests/test_state_persistence.py",
-                "mcoi/tests/test_server_lifecycle_helpers.py",
-            ],
-            "Runtime state routes persist hash-bound state snapshots with atomic writes, expose bounded load and list read models, and reject path traversal with governed error envelopes.",
-            [
-                "state_save_returns_hash_bound_snapshot",
-                "state_load_returns_saved_data",
-                "state_list_returns_summary",
-                "state_save_rejects_path_traversal",
-                "state_load_rejects_path_traversal",
-                "state_persistence_atomic_write",
-                "state_persistence_rejects_hash_mismatch",
-                "server_lifecycle_registers_save_state_hook",
             ],
         ),
         _surface(
@@ -842,12 +886,94 @@ def proof_coverage_matrix() -> dict[str, Any]:
             ],
         ),
         _surface(
+            "tool_registry_read_models",
+            [
+                "/api/v1/tools",
+                "/api/v1/tools/history",
+                "/api/v1/tools/llm-format",
+            ],
+            "read_model",
+            "read_model",
+            "audit_chain",
+            "witnessed",
+            [
+                "mcoi/mcoi_runtime/app/routers/data/tools.py",
+                "mcoi/mcoi_runtime/core/tool_use.py",
+                "mcoi/tests/test_server_phase212.py",
+                "mcoi/tests/test_tool_use.py",
+            ],
+            "Tool registry read-model routes expose registered tool metadata, bounded invocation history, and LLM-compatible schemas while invocation remains governed by the tool_invocation action-proof surface.",
+            [
+                "tool_registry_list_returns_registered_tools",
+                "tool_registry_category_filter_bounded",
+                "tool_llm_format_exports_input_schema",
+                "tool_history_returns_bounded_summary",
+                "tool_invocation_history_limit_applied",
+                "tool_invoke_separate_action_proof_surface",
+            ],
+        ),
+        _surface(
+            "structured_output_validation",
+            [
+                "/api/v1/output/parse",
+                "/api/v1/output/schemas",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "mcoi/mcoi_runtime/app/routers/data/output.py",
+                "mcoi/mcoi_runtime/core/structured_output.py",
+                "mcoi/tests/test_server_phase212.py",
+                "mcoi/tests/test_structured_output.py",
+            ],
+            "Structured-output routes parse model text against registered schemas, return explicit validation errors, preserve raw text in the parser contract, and expose bounded schema read models.",
+            [
+                "structured_output_parse_valid_json",
+                "structured_output_parse_invalid_json",
+                "structured_output_parse_unknown_schema_bounded",
+                "structured_output_parse_markdown_json",
+                "structured_output_schema_registration_validated",
+                "structured_output_endpoint_parse_valid_and_invalid",
+                "structured_output_schema_list_bounded",
+            ],
+        ),
+        _surface(
             "operational_health_read_models",
             [
                 "/api/v1/health/deep",
                 "/api/v1/health/score",
                 "/api/v1/health/v2",
                 "/api/v1/health/v3",
+                "/api/v1/dashboard",
+                "/api/v1/plugins",
+                "/api/v1/guards",
+                "/api/v1/capabilities",
+                "/api/v1/readiness",
+                "/api/v1/monitor",
+                "/api/v1/shutdown/info",
+                "/api/v1/correlation/active",
+                "/api/v1/notifications/summary",
+                "/api/v1/validation/schemas",
+                "/api/v1/idempotency/summary",
+                "/api/v1/compression/summary",
+                "/api/v1/canary",
+                "/api/v1/secrets/summary",
+                "/api/v1/dedup/summary",
+                "/api/v1/deploy/readiness",
+                "/api/v1/migrations/summary",
+                "/api/v1/retries/summary",
+                "/api/v1/regions",
+                "/api/v1/context/summary",
+                "/api/v1/circuits/dashboard",
+                "/api/v1/cache/stats",
+                "/api/v1/backpressure",
+                "/api/v1/version",
+                "/api/v1/release",
+                "/api/v1/release/latest",
+                "/api/v1/snapshot",
+                "/api/v1/snapshots",
             ],
             "read_model",
             "read_model",
@@ -859,6 +985,9 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "mcoi/mcoi_runtime/core/health_aggregator.py",
                 "mcoi/mcoi_runtime/core/health_check_agg.py",
                 "mcoi/mcoi_runtime/core/health_v3.py",
+                "mcoi/mcoi_runtime/app/routers/ops/summaries.py",
+                "mcoi/mcoi_runtime/app/routers/ops/release.py",
+                "mcoi/mcoi_runtime/app/routers/ops/snapshots.py",
                 "mcoi/tests/test_deep_health.py",
                 "mcoi/tests/test_health_aggregator.py",
                 "mcoi/tests/test_health_check_agg.py",
@@ -876,6 +1005,15 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "health_v3_weighted_aggregation",
                 "health_v3_recovery_tracking",
                 "health_routes_return_read_models",
+                "ops_dashboard_read_model_bounded",
+                "production_readiness_checks_bounded",
+                "monitoring_vitals_read_model_bounded",
+                "shutdown_info_read_model_bounded",
+                "correlation_summary_read_model_bounded",
+                "idempotency_summary_read_model_bounded",
+                "deployment_readiness_read_model_bounded",
+                "release_info_read_model_bounded",
+                "system_snapshot_read_model_bounded",
             ],
         ),
         _surface(
@@ -911,9 +1049,16 @@ def proof_coverage_matrix() -> dict[str, Any]:
         _surface(
             "workflow_execution_lifecycle",
             [
+                "/api/v1/execute",
+                "/api/v1/session",
+                "/api/v1/ledger",
                 "/api/v1/workflow/execute",
                 "/api/v1/workflow/history",
                 "/api/v1/workflow/traced",
+                "/api/v1/pipeline/execute",
+                "/api/v1/pipeline/history",
+                "/api/v1/templates",
+                "/api/v1/templates/execute",
             ],
             "request_proof",
             "action_proof",
@@ -937,6 +1082,41 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "workflow_errors_sanitized",
                 "traced_workflow_emits_replay_trace",
                 "traced_workflow_recorder_errors_sanitized",
+                "legacy_execute_emits_action_proof",
+                "session_read_model_bounded",
+                "ledger_read_model_bounded",
+                "pipeline_execution_emits_action_proof",
+                "pipeline_history_bounded",
+                "template_read_models_bounded",
+                "template_execution_governed",
+            ],
+        ),
+        _surface(
+            "agent_chain_execution_lifecycle",
+            [
+                "/api/v1/chain/execute",
+                "/api/v1/chain/history",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "mcoi/mcoi_runtime/app/routers/agent.py",
+                "mcoi/mcoi_runtime/core/agent_chain.py",
+                "mcoi/tests/test_agent_chain.py",
+                "mcoi/tests/test_server_phase215.py",
+            ],
+            "Agent chain routes execute ordered multi-step LLM chains, propagate prior outputs through templates, publish bounded completion events, sanitize failure details, and expose bounded execution history.",
+            [
+                "chain_execute_single_step",
+                "chain_execute_two_steps",
+                "chain_prev_template_propagates_output",
+                "chain_halt_on_failure_bounded",
+                "chain_skip_on_failure_continues",
+                "chain_returned_failure_redacted",
+                "chain_history_bounded",
+                "chain_endpoint_governed",
             ],
         ),
         _surface(
@@ -966,6 +1146,65 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "daemon_health_degrades_on_failures",
                 "daemon_exceptions_sanitized",
                 "daemon_endpoint_contracts_governed",
+            ],
+        ),
+        _surface(
+            "live_path_certification_lifecycle",
+            [
+                "/api/v1/certify",
+                "/api/v1/certify/history",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "mcoi/mcoi_runtime/app/routers/data/certify.py",
+                "mcoi/mcoi_runtime/core/live_path_certification.py",
+                "mcoi/tests/test_live_path_certification.py",
+                "mcoi/tests/test_server_phase199.py",
+                "mcoi/tests/test_e2e_integration.py",
+            ],
+            "Live-path certification routes run governed certification chains with action-proof receipts, step-level proof hashes, bounded failure details, deterministic chain hashes, and bounded certification history read models.",
+            [
+                "certification_run_emits_action_proof",
+                "certification_run_returns_chain_hash",
+                "certification_run_records_five_steps",
+                "certification_steps_named",
+                "certification_history_bounded",
+                "certification_chain_hash_deterministic",
+                "certification_failures_bounded",
+                "certification_partial_failure_recorded",
+            ],
+        ),
+        _surface(
+            "runtime_state_persistence_lifecycle",
+            [
+                "/api/v1/state",
+                "/api/v1/state/save",
+                "/api/v1/state/{state_type}",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "mcoi/mcoi_runtime/app/routers/data/state.py",
+                "mcoi/mcoi_runtime/persistence/state_persistence.py",
+                "mcoi/tests/test_state_persistence.py",
+                "mcoi/tests/test_server_phase212.py",
+                "mcoi/tests/test_server_phase216.py",
+            ],
+            "Runtime state persistence routes save hash-bound state snapshots, load bounded state by type, reject path traversal, and expose state summary read models.",
+            [
+                "state_save_returns_hash_bound_snapshot",
+                "state_load_roundtrip",
+                "state_load_missing_bounded",
+                "state_list_summary_bounded",
+                "state_save_rejects_path_traversal",
+                "state_load_rejects_path_traversal",
+                "state_hash_mismatch_rejected",
+                "state_atomic_write_verified",
             ],
         ),
         _surface(
@@ -1076,7 +1315,13 @@ def proof_coverage_matrix() -> dict[str, Any]:
         ),
         _surface(
             "authority_obligation_mesh",
-            ["/authority/witness", "/authority/responsibility", "/authority/obligations", "/authority/escalations"],
+            [
+                "/authority/witness",
+                "/authority/responsibility",
+                "/authority/obligations",
+                "/authority/escalations",
+                "/commands/{command_id}/authority",
+            ],
             "request_proof",
             "action_proof",
             "audit_chain",
@@ -1084,6 +1329,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
             [
                 "gateway/server.py",
                 "gateway/authority_obligation_mesh.py",
+                "tests/test_gateway/test_webhooks.py",
                 "tests/test_gateway/test_authority_obligation_mesh.py",
             ],
             "Authority and obligation surfaces expose unresolved responsibility state.",
@@ -1092,6 +1338,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "open_obligation_count",
                 "overdue_obligation_count",
                 "escalated_obligation_count",
+                "command_authority_read_model_bound_to_approval_chain",
             ],
         ),
         _surface(
@@ -1150,6 +1397,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "schemas/gateway_publication_readiness.schema.json",
                 "schemas/gateway_publication_receipt_validation.schema.json",
                 "schemas/deployment_witness.schema.json",
+                "schemas/runtime_witness.schema.json",
                 "schemas/mullu_governance_protocol.manifest.json",
                 "tests/test_orchestrate_deployment_witness.py",
                 "tests/test_report_gateway_publication_readiness.py",
@@ -1164,6 +1412,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
             "Runtime witness surfaces publish bounded operational and responsibility debt state; deployment witnesses require raw runtime and authority debt-clear evidence before publication closure, and orchestration receipts bind ingress render, MCP checklist validation, preflight, dispatch evidence, schema contract validation, and post-run receipt validation before deployment witness readiness.",
             [
                 "latest_command_event_hash",
+                "runtime_witness_schema_valid",
                 "latest_terminal_certificate_id",
                 "responsibility_debt_clear",
                 "runtime_responsibility_debt_clear",
@@ -1245,6 +1494,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
         _surface(
             "production_evidence_plane",
             [
+                "/health",
                 "/deployment/witness",
                 "/capabilities/evidence",
                 "/audit/verify",
@@ -1258,6 +1508,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "gateway/server.py",
                 "scripts/collect_deployment_witness.py",
                 ".github/workflows/deployment-witness.yml",
+                "schemas/gateway_health.schema.json",
                 "schemas/production_evidence_witness.schema.json",
                 "schemas/capability_evidence_endpoint.schema.json",
                 "schemas/audit_verification_endpoint.schema.json",
@@ -1267,6 +1518,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
             ],
             "Production evidence endpoints expose signed deployment posture, capability evidence, audit verification, and proof verification; deployment witness collection can require the whole plane before publication, derives live physical safety evidence only from certified registry extensions, and blocks live physical capability claims without explicit safety evidence while allowing sandbox-only physical canary evidence.",
             [
+                "gateway_health_schema_valid",
                 "signed_production_evidence_witness",
                 "capability_evidence_schema_valid",
                 "audit_verification_schema_valid",
@@ -1450,6 +1702,8 @@ def proof_coverage_matrix() -> dict[str, Any]:
             [
                 "CapabilityManifestRegistry.admit_path",
                 "CapabilityManifestRegistry.admit_directory",
+                "build_software_dev_capability_manifest_registry",
+                "MaturityProjectingCapabilityAdmissionGate.read_model",
                 "CapabilityManifest",
                 "CapabilityManifestAdmission",
             ],
@@ -1464,12 +1718,14 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "capabilities/software_dev/manifests/software_dev_gate_plan_select.capability.json",
                 "capabilities/software_dev/manifests/software_dev_pr_candidate_prepare.capability.json",
                 "capabilities/software_dev/manifests/software_dev_repo_map_read.capability.json",
+                "gateway/capability_fabric.py",
                 "mcoi/mcoi_runtime/contracts/capability_manifest.py",
                 "mcoi/mcoi_runtime/core/capability_manifest_registry.py",
                 "schemas/software_dev/capability_manifest.schema.json",
+                "tests/test_gateway/test_capability_fabric.py",
                 "tests/test_software_dev_capability_manifest_registry.py",
             ],
-            "Capability manifest registry admits dynamic capability declarations only after owner, policy, evidence, schema, receipt, maturity, sandbox, rollback, environment, and hot-reload constraints validate; production hot reload remains denied for effect-bearing capabilities.",
+            "Capability manifest registry admits dynamic capability declarations only after owner, policy, evidence, schema, receipt, maturity, sandbox, rollback, environment, and hot-reload constraints validate; gateway fabric projects admitted manifests only when explicitly enabled; production hot reload remains denied for effect-bearing capabilities.",
             [
                 "capability_manifest_schema_valid",
                 "software_dev_manifests_admit_locally",
@@ -1477,6 +1733,8 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "manifest_unresolved_schema_rejected",
                 "effect_manifest_requires_sandbox_rollback",
                 "production_hot_reload_denied_for_effect_manifest",
+                "fabric_projects_local_manifest_registry",
+                "fabric_rejects_production_hot_reload_manifest_registry",
             ],
         ),
         _surface(
@@ -1589,6 +1847,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "software_dev_named_loader_installs_only_software_dev_domain",
                 "software_dev_capsule_refs_match_pack_capabilities",
                 "software_dev_pack_explicit_fabric_admits_known_capabilities",
+                "software_dev_gate_projects_manifest_registry",
                 "software_dev_direct_deployment_capability_absent",
                 "software_dev_read_only_records_non_mutating",
                 "software_dev_effectful_records_require_sandbox_approval",
@@ -1911,6 +2170,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "TrustLedger.verify",
                 "TrustLedger.anchor_bundle",
                 "TrustLedger.verify_anchor_receipt",
+                "/evidence/bundles/{command_id}",
                 "GET /evidence/bundles/{command_id}",
                 "scripts/verify_evidence_bundle.py",
                 "scripts/verify_anchor_receipt.py",
@@ -2962,6 +3222,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
             "status": "closed",
         },
         {
+            "action_id": "classify_gateway_capability_admission_routes",
+            "surfaces": ["gateway_capability_fabric", "capability_worker_execution", "trust_ledger"],
+            "status": "closed",
+        },
+        {
             "action_id": "bound_authority_read_models_to_paginated_windows",
             "surfaces": ["gateway_approval_resolution", "authority_obligation_mesh"],
             "status": "closed",
@@ -3022,13 +3287,8 @@ def proof_coverage_matrix() -> dict[str, Any]:
             "status": "closed",
         },
         {
-            "action_id": "classify_ops_diagnostics_routes",
-            "surfaces": ["ops_proof_surface"],
-            "status": "closed",
-        },
-        {
-            "action_id": "classify_state_persistence_routes",
-            "surfaces": ["state_proof_surface"],
+            "action_id": "classify_api_key_lifecycle_routes",
+            "surfaces": ["api_key_lifecycle"],
             "status": "closed",
         },
         {
@@ -3052,6 +3312,16 @@ def proof_coverage_matrix() -> dict[str, Any]:
             "status": "closed",
         },
         {
+            "action_id": "classify_tool_registry_read_model_routes",
+            "surfaces": ["tool_registry_read_models", "tool_invocation"],
+            "status": "closed",
+        },
+        {
+            "action_id": "classify_structured_output_validation_routes",
+            "surfaces": ["structured_output_validation"],
+            "status": "closed",
+        },
+        {
             "action_id": "classify_operational_health_read_model_routes",
             "surfaces": ["operational_health_read_models"],
             "status": "closed",
@@ -3067,8 +3337,28 @@ def proof_coverage_matrix() -> dict[str, Any]:
             "status": "closed",
         },
         {
+            "action_id": "classify_agent_chain_execution_routes",
+            "surfaces": ["agent_chain_execution_lifecycle"],
+            "status": "closed",
+        },
+        {
             "action_id": "classify_certification_daemon_lifecycle_routes",
             "surfaces": ["certification_daemon_lifecycle"],
+            "status": "closed",
+        },
+        {
+            "action_id": "classify_live_path_certification_routes",
+            "surfaces": ["live_path_certification_lifecycle"],
+            "status": "closed",
+        },
+        {
+            "action_id": "classify_runtime_state_persistence_routes",
+            "surfaces": ["runtime_state_persistence_lifecycle"],
+            "status": "closed",
+        },
+        {
+            "action_id": "classify_ops_diagnostics_routes",
+            "surfaces": ["ops_proof_surface"],
             "status": "closed",
         },
         {
@@ -3515,9 +3805,131 @@ def write_matrix(path: Path, matrix: dict[str, Any]) -> None:
     path.write_text(json.dumps(matrix, indent=2, sort_keys=True) + "\n", encoding="utf-8", newline="\n")
 
 
+def _markdown_cell(value: object) -> str:
+    if isinstance(value, list):
+        text = ", ".join(str(item) for item in value) if value else "none"
+    else:
+        text = str(value) if value else "none"
+    return text.replace("|", "\\|").replace("\n", " ")
+
+
+def operator_document(matrix: dict[str, Any]) -> str:
+    """Return the operator-readable proof coverage witness."""
+    summary = matrix["coverage_summary"]
+    route_coverage = matrix["route_coverage"]
+    route_count = route_coverage["route_count"]
+    unclassified_count = route_coverage["unclassified_route_count"]
+    classified_count = route_count - unclassified_count
+    completeness = round((classified_count / route_count) * 100) if route_count else 100
+
+    lines = [
+        "# Proof Coverage Matrix",
+        "",
+        "Purpose: define the current request-proof, action-proof, runtime-witness, and audit-chain coverage for externally callable MCOI and gateway surfaces.",
+        "",
+        "Governance scope: this document summarizes the canonical matrix generated by `scripts/proof_coverage_matrix.py`. The JSON fixture is the machine witness; this document is the operator-readable witness.",
+        "",
+        "| Surface | Representative paths | Request proof | Action proof | Runtime witnesses | Audit | Coverage state | Status |",
+        "|---|---|---|---|---|---|---|---|",
+    ]
+    for surface in matrix["surfaces"]:
+        lines.append(
+            "| `{}` | {} | {} | {} | {} | {} | {} | {} |".format(
+                surface["surface_id"],
+                _markdown_cell(surface.get("representative_paths", [])),
+                _markdown_cell(surface.get("request_proof", "")),
+                _markdown_cell(surface.get("action_proof", "")),
+                _markdown_cell(surface.get("runtime_witnesses", [])),
+                _markdown_cell(surface.get("audit", "")),
+                _markdown_cell(surface.get("coverage_state", "")),
+                _markdown_cell(surface.get("notes", "")),
+            )
+        )
+
+    lines.extend(
+        [
+            "",
+            "Coverage summary:",
+            "",
+            "| Metric | Count |",
+            "|---|---:|",
+            f"| Total surfaces | {summary['surface_count']} |",
+            f"| Proven surfaces | {summary['by_coverage_state']['proven']} |",
+            f"| Witnessed surfaces | {summary['by_coverage_state']['witnessed']} |",
+            f"| Unproven surfaces | {summary['by_coverage_state']['unproven']} |",
+            "",
+            "Declared route coverage:",
+            "",
+            "| Metric | Count |",
+            "|---|---:|",
+            f"| Proof-relevant declared routes | {route_count} |",
+            f"| Proven routes | {route_coverage['by_coverage_state']['proven']} |",
+            f"| Witnessed routes | {route_coverage['by_coverage_state']['witnessed']} |",
+            f"| Unclassified declared routes | {unclassified_count} |",
+            "",
+            "The canonical JSON witness lists every proof-relevant declared route under `route_coverage.routes`. Routes mapped to `unclassified_declared_route` carry `coverage_state=unproven` until a named proof surface claims them.",
+            "",
+            "Gateway runtime witness invariants:",
+            "",
+        ]
+    )
+    gateway_surface = next(
+        surface for surface in matrix["surfaces"] if surface["surface_id"] == "gateway_capability_fabric"
+    )
+    for index, witness in enumerate(gateway_surface.get("runtime_witnesses", []), 1):
+        lines.append(f"{index}. `{witness}`")
+
+    closed_actions = [action for action in matrix["closure_actions"] if action["status"] == "closed"]
+    open_actions = [action for action in matrix["closure_actions"] if action["status"] != "closed"]
+    lines.extend(["", "Resolved closure actions:", ""])
+    for index, action in enumerate(closed_actions, 1):
+        lines.append(f"{index}. `{action['action_id']}`")
+
+    lines.extend(["", "Open closure actions:"])
+    if open_actions:
+        lines.append("")
+        for index, action in enumerate(open_actions, 1):
+            lines.append(f"{index}. `{action['action_id']}`")
+    else:
+        lines.append("none")
+
+    open_issue = (
+        f"{unclassified_count} proof-relevant declared routes remain unclassified and are marked unproven in the machine witness"
+        if unclassified_count
+        else "none"
+    )
+    verified_invariants = [
+        "route declarations",
+        "route-level coverage classification",
+        "coverage levels",
+        "coverage states",
+        "closure action mapping",
+        "schema contract validation",
+        "deployment orchestration receipt schema contract",
+    ]
+    lines.extend(
+        [
+            "",
+            "STATUS:",
+            f"  Completeness: {completeness}%",
+            f"  Invariants verified: {', '.join(verified_invariants)}",
+            f"  Open issues: {open_issue}",
+            "  Next action: classify remaining unproven declared routes into named proof surfaces or explicit exemptions",
+            "",
+        ]
+    )
+    return "\n".join(lines)
+
+
+def write_operator_document(path: Path, matrix: dict[str, Any]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(operator_document(matrix), encoding="utf-8", newline="\n")
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Generate or validate the proof coverage matrix.")
     parser.add_argument("--output", type=Path, default=CANONICAL_OUTPUT)
+    parser.add_argument("--doc-output", type=Path, default=DOC_OUTPUT)
     parser.add_argument("--assurance-output", type=Path, default=ASSURANCE_OUTPUT)
     parser.add_argument("--check", action="store_true")
     return parser.parse_args()
@@ -3534,9 +3946,14 @@ def main() -> int:
         actual = args.output.read_text(encoding="utf-8")
         if actual != expected:
             raise SystemExit(f"{args.output} is stale; run scripts/proof_coverage_matrix.py")
+        expected_doc = operator_document(matrix)
+        actual_doc = args.doc_output.read_text(encoding="utf-8")
+        if actual_doc != expected_doc:
+            raise SystemExit(f"{args.doc_output} is stale; run scripts/proof_coverage_matrix.py")
         return 0
     write_matrix(args.output, matrix)
     write_matrix(args.assurance_output, matrix)
+    write_operator_document(args.doc_output, matrix)
     return 0
 
 

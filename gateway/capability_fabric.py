@@ -24,12 +24,14 @@ from pathlib import Path
 from typing import Callable
 
 from gateway.capability_maturity import CapabilityRegistryMaturityProjector
+from mcoi_runtime.contracts.capability_manifest import CapabilityManifestAdmissionStatus
 from mcoi_runtime.contracts.governed_capability_fabric import (
     CapabilityRegistryEntry,
     CommandCapabilityAdmissionDecision,
     CommandCapabilityAdmissionStatus,
     DomainCapsule,
 )
+from mcoi_runtime.core.capability_manifest_registry import CapabilityManifestRegistry
 from mcoi_runtime.core.command_capability_admission import CommandCapabilityAdmissionGate
 from mcoi_runtime.core.domain_capsule_compiler import DomainCapsuleCompiler
 from mcoi_runtime.core.governed_capability_registry import GovernedCapabilityRegistry
@@ -66,6 +68,7 @@ _DEFAULT_CAPABILITY_PACK_PATHS = (
 )
 _SOFTWARE_DEV_CAPSULE_PATH = _REPO_ROOT / "capsules" / "software_dev.json"
 _SOFTWARE_DEV_CAPABILITY_PACK_PATH = _REPO_ROOT / "capabilities" / "software_dev" / "capability_pack.json"
+_SOFTWARE_DEV_CAPABILITY_MANIFEST_DIR = _REPO_ROOT / "capabilities" / "software_dev" / "manifests"
 _GENERAL_AGENT_PLAN_DEFINITIONS = (
     {
         "plane_index": 0,
@@ -119,6 +122,7 @@ _GENERAL_AGENT_PLAN_DEFINITIONS = (
             "connector.google_drive.write.with_approval",
             "connector.github.read",
             "connector.github.write.with_approval",
+            "github.open_pull_request",
             "connector.postgres.query",
             "connector.postgres.write.with_approval",
             "email.read",
@@ -208,7 +212,7 @@ _GENERAL_AGENT_PLAN_DEFINITIONS = (
         "plane_id": "9.mcp_external_tool_plane",
         "name": "MCP External Tool Plane",
         "capability_prefixes": ("connector.",),
-        "capability_ids": (),
+        "capability_ids": ("github.open_pull_request",),
         "boundary": "external tools enter only through manifest validation, owner binding, and authority gates",
         "evidence_refs": ("examples/mcp_capability_manifest.json", "mcp_operator_read_model"),
     },
@@ -258,16 +262,21 @@ class MaturityProjectingCapabilityAdmissionGate(CommandCapabilityAdmissionGate):
         clock: Callable[[], str],
         maturity_projector: CapabilityRegistryMaturityProjector | None = None,
         require_production_ready: bool = False,
+        capability_manifest_registry_read_model: dict | None = None,
     ) -> None:
         super().__init__(registry=registry, clock=clock)
         self._maturity_projector = maturity_projector or CapabilityRegistryMaturityProjector()
         self._require_production_ready = require_production_ready
+        self._capability_manifest_registry_read_model = capability_manifest_registry_read_model
 
     def admit(self, *, command_id: str, intent_name: str) -> CommandCapabilityAdmissionDecision:
         """Reject non-production-ready capabilities when certification closure is required."""
         decision = super().admit(command_id=command_id, intent_name=intent_name)
         if decision.status is not CommandCapabilityAdmissionStatus.ACCEPTED:
             return decision
+        manifest_decision = self._admit_manifest(decision)
+        if manifest_decision.status is not CommandCapabilityAdmissionStatus.ACCEPTED:
+            return manifest_decision
         if not self._require_production_ready:
             return decision
 
@@ -287,10 +296,35 @@ class MaturityProjectingCapabilityAdmissionGate(CommandCapabilityAdmissionGate):
             decided_at=decision.decided_at,
         )
 
+    def _admit_manifest(
+        self,
+        decision: CommandCapabilityAdmissionDecision,
+    ) -> CommandCapabilityAdmissionDecision:
+        if self._capability_manifest_registry_read_model is None:
+            return decision
+        manifest_capability_ids = _manifest_registry_capability_ids(
+            self._capability_manifest_registry_read_model
+        )
+        if decision.capability_id in manifest_capability_ids:
+            return decision
+        return CommandCapabilityAdmissionDecision(
+            command_id=decision.command_id,
+            intent_name=decision.intent_name,
+            status=CommandCapabilityAdmissionStatus.REJECTED,
+            capability_id=decision.capability_id,
+            domain=decision.domain,
+            owner_team=decision.owner_team,
+            evidence_required=decision.evidence_required,
+            reason="capability manifest is not admitted for typed intent",
+            decided_at=decision.decided_at,
+        )
+
     def read_model(self) -> dict:
         """Return registry read model decorated with C0-C7 maturity evidence."""
         decorated = self._maturity_projector.decorate_read_model(super().read_model())
         general_agent_planes = _project_general_agent_planes(decorated)
+        manifest_registry = self._capability_manifest_registry_read_model
+        manifest_coverage = _project_manifest_coverage(decorated, manifest_registry)
         return {
             **decorated,
             "general_agent_plane_count": len(general_agent_planes),
@@ -299,6 +333,15 @@ class MaturityProjectingCapabilityAdmissionGate(CommandCapabilityAdmissionGate):
             ),
             "general_agent_planes": general_agent_planes,
             "require_production_ready": self._require_production_ready,
+            "capability_manifest_registry_configured": manifest_registry is not None,
+            "capability_manifest_registry": manifest_registry
+            if manifest_registry is not None
+            else _empty_capability_manifest_registry_read_model(),
+            "capability_manifest_gated": manifest_registry is not None,
+            "capability_manifest_covered_count": len(manifest_coverage["covered_capability_ids"]),
+            "capability_manifest_missing_count": len(manifest_coverage["missing_capability_ids"]),
+            "capability_manifest_covered_capability_ids": manifest_coverage["covered_capability_ids"],
+            "capability_manifest_missing_capability_ids": manifest_coverage["missing_capability_ids"],
         }
 
 
@@ -331,12 +374,16 @@ def build_capability_admission_gate_from_env(
     if use_default_packs:
         capsules = (*capsules, *load_default_domain_capsules())
         loaded_capabilities = (*loaded_capabilities, *load_default_capability_entries())
+    capability_manifest_registry_read_model = _load_capability_manifest_registry_read_model_from_env(
+        clock=clock,
+    )
 
     return build_capability_admission_gate(
         capsules=capsules,
         capabilities=loaded_capabilities,
         require_certified=require_certified,
         require_production_ready=require_production_ready,
+        capability_manifest_registry_read_model=capability_manifest_registry_read_model,
         clock=clock,
     )
 
@@ -385,15 +432,56 @@ def build_software_dev_capability_admission_gate(
     clock: Callable[[], str],
     require_certified: bool = True,
     require_production_ready: bool = False,
+    manifest_environment: str | None = None,
+    manifest_hot_reload: bool = False,
+    manifest_dir: Path | str | None = None,
 ) -> CommandCapabilityAdmissionGate:
     """Build an admission gate for only the software-development capsule."""
+    capability_manifest_registry_read_model = None
+    if manifest_environment is not None:
+        capability_manifest_registry_read_model = build_software_dev_capability_manifest_registry(
+            clock=clock,
+            environment=manifest_environment,
+            hot_reload=manifest_hot_reload,
+            manifest_dir=manifest_dir,
+        ).read_model()
     return build_capability_admission_gate(
         capsules=(load_software_dev_domain_capsule(),),
         capabilities=load_software_dev_capability_entries(),
         require_certified=require_certified,
         require_production_ready=require_production_ready,
+        capability_manifest_registry_read_model=capability_manifest_registry_read_model,
         clock=clock,
     )
+
+
+def build_software_dev_capability_manifest_registry(
+    *,
+    clock: Callable[[], str],
+    environment: str = "local",
+    hot_reload: bool = False,
+    manifest_dir: Path | str | None = None,
+) -> CapabilityManifestRegistry:
+    """Admit software-development capability manifests for a bounded environment."""
+    registry = CapabilityManifestRegistry(repo_root=_REPO_ROOT, clock=clock)
+    directory = _resolve_capability_manifest_directory(manifest_dir)
+    if not directory.is_dir():
+        raise ValueError(f"capability manifest directory not found: {directory}")
+    admissions = registry.admit_directory(directory, environment=environment, hot_reload=hot_reload)
+    if not admissions:
+        raise ValueError(f"capability manifest directory contains no manifests: {directory}")
+    rejected = tuple(
+        admission
+        for admission in admissions
+        if admission.status is CapabilityManifestAdmissionStatus.REJECTED
+    )
+    if rejected:
+        details = "; ".join(
+            f"{admission.source_ref}:{','.join(admission.errors)}"
+            for admission in rejected
+        )
+        raise ValueError(f"capability manifest admission failed: {details}")
+    return registry
 
 
 def build_capability_admission_gate(
@@ -402,6 +490,7 @@ def build_capability_admission_gate(
     capabilities: tuple[CapabilityRegistryEntry, ...],
     require_certified: bool,
     require_production_ready: bool = False,
+    capability_manifest_registry_read_model: dict | None = None,
     clock: Callable[[], str],
 ) -> CommandCapabilityAdmissionGate:
     """Install capsules and capabilities into a command admission gate."""
@@ -419,6 +508,7 @@ def build_capability_admission_gate(
         registry=registry,
         clock=clock,
         require_production_ready=require_production_ready,
+        capability_manifest_registry_read_model=capability_manifest_registry_read_model,
     )
 
 
@@ -428,6 +518,79 @@ def _load_object(path: Path) -> dict:
     if not isinstance(payload, dict):
         raise ValueError(f"fabric JSON root must be an object: {path}")
     return payload
+
+
+def _load_capability_manifest_registry_read_model_from_env(
+    *,
+    clock: Callable[[], str],
+) -> dict | None:
+    if not _truthy(os.environ.get("MULLU_CAPABILITY_FABRIC_MANIFEST_REGISTRY_ENABLED", "")):
+        return None
+    environment = os.environ.get("MULLU_CAPABILITY_FABRIC_MANIFEST_ENVIRONMENT", "").strip()
+    if not environment:
+        environment = os.environ.get("MULLU_ENV", "").strip().lower() or "local"
+    manifest_dir = os.environ.get("MULLU_CAPABILITY_FABRIC_MANIFEST_DIR", "").strip()
+    registry = build_software_dev_capability_manifest_registry(
+        clock=clock,
+        environment=environment,
+        hot_reload=_truthy(os.environ.get("MULLU_CAPABILITY_FABRIC_MANIFEST_HOT_RELOAD", "")),
+        manifest_dir=manifest_dir or None,
+    )
+    return registry.read_model()
+
+
+def _empty_capability_manifest_registry_read_model() -> dict:
+    return {
+        "manifest_count": 0,
+        "admission_count": 0,
+        "capability_ids": (),
+        "manifests": (),
+        "admissions": (),
+    }
+
+
+def _manifest_registry_capability_ids(read_model: dict | None) -> frozenset[str]:
+    if read_model is None:
+        return frozenset()
+    raw_ids = read_model.get("capability_ids", ())
+    if not isinstance(raw_ids, (tuple, list)):
+        return frozenset()
+    return frozenset(str(capability_id) for capability_id in raw_ids if str(capability_id).strip())
+
+
+def _project_manifest_coverage(
+    registry_read_model: dict,
+    manifest_read_model: dict | None,
+) -> dict[str, tuple[str, ...]]:
+    installed_ids = tuple(
+        str(capability.get("capability_id", ""))
+        for capability in registry_read_model.get("capabilities", ())
+        if isinstance(capability, dict) and str(capability.get("capability_id", "")).strip()
+    )
+    if manifest_read_model is None:
+        return {
+            "covered_capability_ids": (),
+            "missing_capability_ids": (),
+        }
+    manifest_ids = _manifest_registry_capability_ids(manifest_read_model)
+    return {
+        "covered_capability_ids": tuple(sorted(set(installed_ids).intersection(manifest_ids))),
+        "missing_capability_ids": tuple(sorted(set(installed_ids).difference(manifest_ids))),
+    }
+
+
+def _resolve_capability_manifest_directory(manifest_dir: Path | str | None) -> Path:
+    if manifest_dir is None:
+        return _SOFTWARE_DEV_CAPABILITY_MANIFEST_DIR.resolve()
+    candidate = Path(manifest_dir)
+    if not candidate.is_absolute():
+        candidate = _REPO_ROOT / candidate
+    resolved = candidate.resolve()
+    try:
+        resolved.relative_to(_REPO_ROOT)
+    except ValueError as exc:
+        raise ValueError("capability manifest directory must stay inside repository") from exc
+    return resolved
 
 
 def _load_capsule_sources(*, capsule_path: str, capsule_pack_path: str) -> tuple[DomainCapsule, ...]:

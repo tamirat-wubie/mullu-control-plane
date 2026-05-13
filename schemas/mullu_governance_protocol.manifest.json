@@ -41,6 +41,12 @@
       "surface": "runtime"
     },
     {
+      "schema_id": "runtime-witness",
+      "path": "schemas/runtime_witness.schema.json",
+      "urn": "urn:mullusi:schema:runtime-witness:1",
+      "surface": "runtime"
+    },
+    {
       "schema_id": "autonomous-test-generation-plan",
       "path": "schemas/autonomous_test_generation_plan.schema.json",
       "urn": "urn:mullusi:schema:autonomous-test-generation-plan:1",
@@ -261,6 +267,12 @@
       "path": "schemas/gateway_observability_snapshot.schema.json",
       "urn": "urn:mullusi:schema:gateway-observability-snapshot:1",
       "surface": "observability"
+    },
+    {
+      "schema_id": "gateway-health",
+      "path": "schemas/gateway_health.schema.json",
+      "urn": "urn:mullusi:schema:gateway-health:1",
+      "surface": "deployment"
     },
     {
       "schema_id": "gateway-publication-receipt-validation",

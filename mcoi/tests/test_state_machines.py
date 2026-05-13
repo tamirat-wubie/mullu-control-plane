@@ -5,7 +5,6 @@ long-run deterministic supervisor, and pilot control plane."""
 from __future__ import annotations
 
 import pytest
-from types import MappingProxyType
 
 from mcoi_runtime.contracts.event import EventRecord, EventSource, EventType
 from mcoi_runtime.contracts.obligation import (
@@ -19,6 +18,10 @@ from mcoi_runtime.contracts.state_machine import (
     CompositeCheckpoint,
     JournalEntry,
     JournalEntryKind,
+    JournalValidationResult,
+    JournalValidationVerdict,
+    RestoreVerdict,
+    RestoreVerification,
     StateMachineSpec,
     SubsystemSnapshot,
     TransitionAuditRecord,
@@ -36,8 +39,6 @@ from mcoi_runtime.core.invariants import RuntimeCoreInvariantError
 from mcoi_runtime.core.obligation_runtime import ObligationRuntimeEngine
 from mcoi_runtime.core.pilot_control import (
     CanaryMode,
-    HealthReport,
-    OperatorAction,
     PilotControlPlane,
     RuntimeStatus,
 )
@@ -87,6 +88,70 @@ class TestStateMachineSpec:
         assert "supervisor-tick-lifecycle" in MACHINE_REGISTRY
         assert "reaction-pipeline" in MACHINE_REGISTRY
         assert "checkpoint-lifecycle" in MACHINE_REGISTRY
+
+    def test_spec_rejects_unbounded_state_and_transition_shapes(self) -> None:
+        with pytest.raises(ValueError, match="states"):
+            StateMachineSpec(
+                machine_id="bad",
+                name="Bad Machine",
+                version="1.0.0",
+                states="a",  # type: ignore[arg-type]
+                initial_state="a",
+                terminal_states=(),
+                transitions=(),
+            )
+        with pytest.raises(ValueError, match="states"):
+            StateMachineSpec(
+                machine_id="bad",
+                name="Bad Machine",
+                version="1.0.0",
+                states=("a", "a"),
+                initial_state="a",
+                terminal_states=(),
+                transitions=(),
+            )
+        with pytest.raises(ValueError, match="transitions"):
+            StateMachineSpec(
+                machine_id="bad",
+                name="Bad Machine",
+                version="1.0.0",
+                states=("a",),
+                initial_state="a",
+                terminal_states=(),
+                transitions="bad",  # type: ignore[arg-type]
+            )
+
+    def test_spec_rejects_duplicate_terminals_and_transition_rules(self) -> None:
+        with pytest.raises(ValueError, match="terminal_states"):
+            StateMachineSpec(
+                machine_id="bad",
+                name="Bad Machine",
+                version="1.0.0",
+                states=("a", "b"),
+                initial_state="a",
+                terminal_states=("b", "b"),
+                transitions=(),
+            )
+        with pytest.raises(ValueError, match="duplicate rules"):
+            StateMachineSpec(
+                machine_id="bad",
+                name="Bad Machine",
+                version="1.0.0",
+                states=("a", "b"),
+                initial_state="a",
+                terminal_states=("b",),
+                transitions=(
+                    TransitionRule(from_state="a", to_state="b", action="go"),
+                    TransitionRule(from_state="a", to_state="b", action="go"),
+                ),
+            )
+        with pytest.raises(ValueError, match="guard_label"):
+            TransitionRule(
+                from_state="a",
+                to_state="b",
+                action="go",
+                guard_label=1,  # type: ignore[arg-type]
+            )
 
 
 class TestTransitionLegality:
@@ -299,6 +364,48 @@ class TestTransitionAuditRecord:
         )
         assert rec.succeeded is False
 
+    def test_record_rejects_non_mapping_metadata_and_non_text_reason(self) -> None:
+        with pytest.raises(ValueError, match="metadata"):
+            TransitionAuditRecord(
+                audit_id="a-1",
+                machine_id="obligation-lifecycle",
+                entity_id="obl-1",
+                from_state="pending",
+                to_state="active",
+                action="activate",
+                verdict=TransitionVerdict.ALLOWED,
+                actor_id="supervisor",
+                reason="test",
+                transitioned_at=NOW,
+                metadata="bad",  # type: ignore[arg-type]
+            )
+        with pytest.raises(ValueError, match="reason"):
+            TransitionAuditRecord(
+                audit_id="a-1",
+                machine_id="obligation-lifecycle",
+                entity_id="obl-1",
+                from_state="pending",
+                to_state="active",
+                action="activate",
+                verdict=TransitionVerdict.ALLOWED,
+                actor_id="supervisor",
+                reason=1,  # type: ignore[arg-type]
+                transitioned_at=NOW,
+            )
+        with pytest.raises(ValueError, match="verdict"):
+            TransitionAuditRecord(
+                audit_id="a-1",
+                machine_id="obligation-lifecycle",
+                entity_id="obl-1",
+                from_state="pending",
+                to_state="active",
+                action="activate",
+                verdict="bad",  # type: ignore[arg-type]
+                actor_id="supervisor",
+                reason="test",
+                transitioned_at=NOW,
+            )
+
 
 # =====================================================================
 # Journal entry tests
@@ -332,6 +439,38 @@ class TestJournalEntry:
             )
             assert entry.kind == kind
 
+    def test_payload_and_sequence_are_bounded(self) -> None:
+        with pytest.raises(ValueError, match="payload"):
+            JournalEntry(
+                entry_id="j-1",
+                epoch_id="epoch-1",
+                sequence=0,
+                kind=JournalEntryKind.TICK,
+                subject_id="supervisor",
+                payload="bad",  # type: ignore[arg-type]
+                recorded_at=NOW,
+            )
+        with pytest.raises(ValueError, match="sequence"):
+            JournalEntry(
+                entry_id="j-1",
+                epoch_id="epoch-1",
+                sequence=True,  # type: ignore[arg-type]
+                kind=JournalEntryKind.TICK,
+                subject_id="supervisor",
+                payload={},
+                recorded_at=NOW,
+            )
+        with pytest.raises(ValueError, match="kind"):
+            JournalEntry(
+                entry_id="j-1",
+                epoch_id="epoch-1",
+                sequence=0,
+                kind="bad",  # type: ignore[arg-type]
+                subject_id="supervisor",
+                payload={},
+                recorded_at=NOW,
+            )
+
 
 # =====================================================================
 # SubsystemSnapshot and CompositeCheckpoint tests
@@ -359,6 +498,33 @@ class TestSubsystemSnapshot:
                 captured_at=NOW,
             )
             assert snap.scope == scope
+
+    def test_snapshot_rejects_unbounded_payload_count_and_scope(self) -> None:
+        with pytest.raises(ValueError, match="payload"):
+            SubsystemSnapshot(
+                snapshot_id="snap-1",
+                scope=CheckpointScope.EVENT_SPINE,
+                state_hash="abc123",
+                record_count=42,
+                captured_at=NOW,
+                payload="bad",  # type: ignore[arg-type]
+            )
+        with pytest.raises(ValueError, match="record_count"):
+            SubsystemSnapshot(
+                snapshot_id="snap-1",
+                scope=CheckpointScope.EVENT_SPINE,
+                state_hash="abc123",
+                record_count=True,  # type: ignore[arg-type]
+                captured_at=NOW,
+            )
+        with pytest.raises(ValueError, match="scope"):
+            SubsystemSnapshot(
+                snapshot_id="snap-1",
+                scope="bad",  # type: ignore[arg-type]
+                state_hash="abc123",
+                record_count=0,
+                captured_at=NOW,
+            )
 
 
 class TestCompositeCheckpoint:
@@ -411,6 +577,78 @@ class TestCompositeCheckpoint:
                 journal_sequence=0,
                 composite_hash="h",
                 created_at=NOW,
+            )
+
+
+class TestRestoreAndJournalValidationContracts:
+    def test_restore_verification_rejects_unbounded_subsystem_results(self) -> None:
+        with pytest.raises(ValueError, match="subsystem_results"):
+            RestoreVerification(
+                verification_id="rv-1",
+                checkpoint_id="cp-1",
+                epoch_id="epoch-1",
+                tick_number=0,
+                verdict=RestoreVerdict.VERIFIED,
+                expected_composite_hash="h1",
+                actual_composite_hash="h1",
+                verified_at=NOW,
+                subsystem_results="bad",  # type: ignore[arg-type]
+            )
+        with pytest.raises(ValueError, match="subsystem_results"):
+            RestoreVerification(
+                verification_id="rv-1",
+                checkpoint_id="cp-1",
+                epoch_id="epoch-1",
+                tick_number=0,
+                verdict=RestoreVerdict.VERIFIED,
+                expected_composite_hash="h1",
+                actual_composite_hash="h1",
+                verified_at=NOW,
+                subsystem_results={"event_spine": "bad"},  # type: ignore[dict-item]
+            )
+        with pytest.raises(ValueError, match="subsystem_results"):
+            RestoreVerification(
+                verification_id="rv-1",
+                checkpoint_id="cp-1",
+                epoch_id="epoch-1",
+                tick_number=0,
+                verdict=RestoreVerdict.VERIFIED,
+                expected_composite_hash="h1",
+                actual_composite_hash="h1",
+                verified_at=NOW,
+                subsystem_results={"event_spine": {"match": ""}},
+            )
+
+    def test_journal_validation_rejects_unbounded_gap_positions(self) -> None:
+        with pytest.raises(ValueError, match="gap_positions"):
+            JournalValidationResult(
+                validation_id="jv-1",
+                epoch_id="epoch-1",
+                entry_count=1,
+                first_sequence=0,
+                last_sequence=2,
+                verdict=JournalValidationVerdict.SEQUENCE_GAP,
+                gap_positions="1",  # type: ignore[arg-type]
+            )
+        with pytest.raises(ValueError, match="gap_positions"):
+            JournalValidationResult(
+                validation_id="jv-1",
+                epoch_id="epoch-1",
+                entry_count=1,
+                first_sequence=0,
+                last_sequence=2,
+                verdict=JournalValidationVerdict.SEQUENCE_GAP,
+                gap_positions=(True,),  # type: ignore[arg-type]
+            )
+        with pytest.raises(ValueError, match="detail"):
+            JournalValidationResult(
+                validation_id="jv-1",
+                epoch_id="epoch-1",
+                entry_count=1,
+                first_sequence=0,
+                last_sequence=2,
+                verdict=JournalValidationVerdict.SEQUENCE_GAP,
+                detail=1,  # type: ignore[arg-type]
             )
 
 
