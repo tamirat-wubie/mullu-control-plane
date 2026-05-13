@@ -611,6 +611,12 @@
       "surface": "evidence"
     },
     {
+      "schema_id": "trust-ledger-evidence-artifacts",
+      "path": "schemas/trust_ledger_evidence_artifacts.schema.json",
+      "urn": "urn:mullusi:schema:trust-ledger-evidence-artifacts:1",
+      "surface": "evidence"
+    },
+    {
       "schema_id": "trace-entry",
       "path": "schemas/trace_entry.schema.json",
       "urn": "urn:mullusi:schema:trace-entry:1",

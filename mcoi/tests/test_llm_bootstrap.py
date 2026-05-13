@@ -7,6 +7,7 @@ from mcoi_runtime.adapters.multi_provider import (
     AnswiraBackend,
     ApiLinkBackend,
     AtlasCloudBackend,
+    BasetenBackend,
     BazaarLinkBackend,
     CerebrasBackend,
     ChutesBackend,
@@ -22,6 +23,8 @@ from mcoi_runtime.adapters.multi_provider import (
     GlamaBackend,
     GroqBackend,
     HyperbolicBackend,
+    HaimakerBackend,
+    HuggingFaceBackend,
     InferenceNetBackend,
     LLMAIBackend,
     LlamaAPIBackend,
@@ -114,6 +117,10 @@ LLM_ENV_KEYS = (
     "LLMAI_API_KEY",
     "LLMAI_TOKEN",
     "REQUESTY_API_KEY",
+    "HF_TOKEN",
+    "HUGGINGFACE_API_KEY",
+    "BASETEN_API_KEY",
+    "HAIMAKER_API_KEY",
     "XAI_API_KEY",
     "MISTRAL_API_KEY",
     "OPENROUTER_API_KEY",
@@ -254,6 +261,41 @@ class TestLLMConfig:
         assert config.default_backend == "requesty"
         assert config.requesty_api_key == "requesty-key"
         assert config.llmai_api_key == ""
+
+    def test_from_env_huggingface_baseten_and_haimaker_detected(self, monkeypatch):
+        for key in LLM_ENV_KEYS:
+            monkeypatch.delenv(key, raising=False)
+        monkeypatch.setenv("HF_TOKEN", "huggingface-token-key")
+
+        config = LLMConfig.from_env()
+
+        assert config.default_backend == "huggingface"
+        assert config.huggingface_api_key == "huggingface-token-key"
+        assert config.baseten_api_key == ""
+        assert config.haimaker_api_key == ""
+
+        monkeypatch.delenv("HF_TOKEN", raising=False)
+        monkeypatch.setenv("HUGGINGFACE_API_KEY", "huggingface-alias-key")
+        config = LLMConfig.from_env()
+
+        assert config.default_backend == "huggingface"
+        assert config.huggingface_api_key == "huggingface-alias-key"
+
+        monkeypatch.delenv("HUGGINGFACE_API_KEY", raising=False)
+        monkeypatch.setenv("BASETEN_API_KEY", "baseten-key")
+        config = LLMConfig.from_env()
+
+        assert config.default_backend == "baseten"
+        assert config.baseten_api_key == "baseten-key"
+        assert config.huggingface_api_key == ""
+
+        monkeypatch.delenv("BASETEN_API_KEY", raising=False)
+        monkeypatch.setenv("HAIMAKER_API_KEY", "haimaker-key")
+        config = LLMConfig.from_env()
+
+        assert config.default_backend == "haimaker"
+        assert config.haimaker_api_key == "haimaker-key"
+        assert config.huggingface_api_key == ""
 
     def test_from_env_cloudflare_requires_account_id(self, monkeypatch):
         monkeypatch.delenv("MULLU_ENV", raising=False)
@@ -442,6 +484,9 @@ class TestBootstrapLLM:
             answira_api_key="aw",
             llmai_api_key="lm",
             requesty_api_key="rq",
+            huggingface_api_key="hf",
+            baseten_api_key="bt",
+            haimaker_api_key="hm",
             grok_api_key="xai",
             mistral_api_key="ms",
             openrouter_api_key="or",
@@ -498,6 +543,9 @@ class TestBootstrapLLM:
             "answira",
             "llmai",
             "requesty",
+            "huggingface",
+            "baseten",
+            "haimaker",
             "grok",
             "mistral",
             "openrouter",
@@ -543,6 +591,9 @@ class TestBootstrapLLM:
         assert isinstance(result.backends["answira"], AnswiraBackend)
         assert isinstance(result.backends["llmai"], LLMAIBackend)
         assert isinstance(result.backends["requesty"], RequestyBackend)
+        assert isinstance(result.backends["huggingface"], HuggingFaceBackend)
+        assert isinstance(result.backends["baseten"], BasetenBackend)
+        assert isinstance(result.backends["haimaker"], HaimakerBackend)
         assert "llm-groq" in result.registered_providers
         assert "llm-deepseek" in result.registered_providers
         assert "llm-together" in result.registered_providers
@@ -581,6 +632,9 @@ class TestBootstrapLLM:
         assert "llm-answira" in result.registered_providers
         assert "llm-llmai" in result.registered_providers
         assert "llm-requesty" in result.registered_providers
+        assert "llm-huggingface" in result.registered_providers
+        assert "llm-baseten" in result.registered_providers
+        assert "llm-haimaker" in result.registered_providers
         assert "llm-openrouter" in result.registered_providers
         assert "meta-llama/llama-4-scout-17b-16e-instruct" in result.registered_models
         assert "deepseek-v4-flash" in result.registered_models
@@ -624,6 +678,9 @@ class TestBootstrapLLM:
         assert "qwen/qwen3-coder-next" in result.registered_models
         assert "gemma-4" in result.registered_models
         assert "deepseek/deepseek-chat" in result.registered_models
+        assert "Qwen/Qwen3-Coder-30B-A3B-Instruct:cheapest" in result.registered_models
+        assert "nvidia/Nemotron-120B-A12B" in result.registered_models
+        assert "deepseek/deepseek-chat-v3-0324" in result.registered_models
         assert "mistral-small-2506" in result.registered_models
         assert "grok-3-mini" in result.registered_models
         assert "meta-llama/llama-4-scout" in result.registered_models

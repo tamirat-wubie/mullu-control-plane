@@ -461,6 +461,9 @@ class TestProviderRegistry:
             ("answira", AnswiraBackend, LLMProvider.ANSWIRA),
             ("llmai", LLMAIBackend, LLMProvider.LLMAI),
             ("requesty", RequestyBackend, LLMProvider.REQUESTY),
+            ("huggingface", HuggingFaceBackend, LLMProvider.HUGGINGFACE),
+            ("baseten", BasetenBackend, LLMProvider.BASETEN),
+            ("haimaker", HaimakerBackend, LLMProvider.HAIMAKER),
         ],
     )
     def test_new_openai_compatible_providers(self, provider_name, backend_cls, provider):
@@ -488,6 +491,16 @@ class TestProviderRegistry:
         available = available_providers()
         assert "deepinfra" in available
         assert "nebius" not in available
+        assert isinstance(available, list)
+
+    def test_available_providers_detects_huggingface_alias(self, monkeypatch):
+        monkeypatch.delenv("HF_TOKEN", raising=False)
+        monkeypatch.delenv("BASETEN_API_KEY", raising=False)
+        monkeypatch.delenv("HAIMAKER_API_KEY", raising=False)
+        monkeypatch.setenv("HUGGINGFACE_API_KEY", "huggingface-alias")
+        available = available_providers()
+        assert "huggingface" in available
+        assert "baseten" not in available
         assert isinstance(available, list)
 
     def test_available_providers_detects_cloudflare_account_pair(self, monkeypatch):

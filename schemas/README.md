@@ -87,6 +87,7 @@ files are open wire contracts. Runtime modules under `mcoi/`, `gateway/`, and
 | `terminal_closure_certificate.schema.json` | Canonical final command closure certificate |
 | `trust_ledger_anchor_receipt.schema.json` | Canonical signed external proof anchor receipt for trust ledger bundles |
 | `trust_ledger_bundle.schema.json` | Canonical signed evidence bundle for terminal closure anchoring |
+| `trust_ledger_evidence_artifacts.schema.json` | Canonical typed evidence artifact export for trust ledger anchor verification |
 | `verification_result.schema.json` | Canonical verification closure |
 | `learning_admission.schema.json` | Canonical learning admission decision |
 | `low_code_builder_catalog.schema.json` | Canonical declarative low-code builder catalog snapshot |

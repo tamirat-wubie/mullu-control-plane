@@ -285,6 +285,17 @@ def test_protocol_manifest_indexes_trust_ledger_anchor_receipt() -> None:
     assert compliance_entry["surface"] == "compliance"
 
 
+def test_protocol_manifest_indexes_trust_ledger_evidence_artifacts() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    trust_entry = entries["trust-ledger-evidence-artifacts"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert trust_entry["path"] == "schemas/trust_ledger_evidence_artifacts.schema.json"
+    assert trust_entry["urn"] == "urn:mullusi:schema:trust-ledger-evidence-artifacts:1"
+    assert trust_entry["surface"] == "evidence"
+
+
 def test_protocol_manifest_indexes_memory_lattice_admission() -> None:
     manifest = load_manifest()
     entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
