@@ -134,6 +134,45 @@ def test_representative_routes_are_not_unclassified() -> None:
         classified_routes["/api/v1/multi-agent/conflicts/unresolved"]["surface_id"]
         == "multi_agent_coordination"
     )
+    assert classified_routes["/api/v1/config"]["surface_id"] == "runtime_config_management"
+    assert classified_routes["/api/v1/config/update"]["surface_id"] == "runtime_config_management"
+    assert classified_routes["/api/v1/config/rollback"]["surface_id"] == "runtime_config_management"
+    assert classified_routes["/api/v1/config/watcher"]["surface_id"] == "runtime_config_management"
+    assert classified_routes["/api/v1/config/drift"]["surface_id"] == "runtime_config_management"
+
+
+def test_runtime_config_management_surface_is_witnessed() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    route_records = {
+        record["route"]: record
+        for record in matrix["route_coverage"]["routes"]
+    }
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    config_surface = surfaces["runtime_config_management"]
+    witnesses = set(config_surface["runtime_witnesses"])
+
+    assert config_surface["coverage_state"] == "witnessed"
+    assert config_surface["request_proof"] == "request_proof"
+    assert config_surface["action_proof"] == "action_proof"
+    assert config_surface["audit"] == "audit_chain"
+    assert "/api/v1/config/update" in config_surface["representative_paths"]
+    assert "/api/v1/config/rollback" in config_surface["representative_paths"]
+    assert "/api/v1/config/watcher" in config_surface["representative_paths"]
+    assert "/api/v1/config/drift" in config_surface["representative_paths"]
+    assert "mcoi/mcoi_runtime/app/routers/ops/config.py" in config_surface["evidence_files"]
+    assert "mcoi/mcoi_runtime/core/config_reload.py" in config_surface["evidence_files"]
+    assert "mcoi/tests/test_server_phase207.py" in config_surface["evidence_files"]
+    assert "mcoi/tests/test_config_drift.py" in config_surface["evidence_files"]
+    assert "config_update_emits_event_and_audit" in witnesses
+    assert "config_rollback_requires_known_version" in witnesses
+    assert "config_watcher_errors_are_bounded" in witnesses
+    assert "config_drift_secret_changes_are_critical" in witnesses
+    assert route_records["/api/v1/config/update"]["coverage_state"] == "witnessed"
+    assert route_records["/api/v1/config/update"]["surface_id"] == "runtime_config_management"
+    assert route_records["/api/v1/config/drift"]["coverage_state"] == "witnessed"
+    assert route_records["/api/v1/config/drift"]["surface_id"] == "runtime_config_management"
+    assert closure_actions["classify_runtime_config_management_routes"]["status"] == "closed"
 
 
 def test_agent_adapter_protocol_surface_is_witnessed() -> None:

@@ -132,6 +132,13 @@
       ]
     },
     {
+      "action_id": "classify_runtime_config_management_routes",
+      "status": "closed",
+      "surfaces": [
+        "runtime_config_management"
+      ]
+    },
+    {
       "action_id": "classify_runbook_learning_routes",
       "status": "closed",
       "surfaces": [
@@ -507,7 +514,7 @@
   ],
   "coverage_summary": {
     "by_action_proof": {
-      "action_proof": 64,
+      "action_proof": 65,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 11,
@@ -515,7 +522,7 @@
     },
     "by_audit": {
       "action_proof": 1,
-      "audit_chain": 72,
+      "audit_chain": 73,
       "gap": 0,
       "read_model": 4,
       "request_proof": 0
@@ -523,23 +530,23 @@
     "by_coverage_state": {
       "proven": 1,
       "unproven": 0,
-      "witnessed": 76
+      "witnessed": 77
     },
     "by_request_proof": {
       "action_proof": 1,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 13,
-      "request_proof": 63
+      "request_proof": 64
     },
-    "surface_count": 77
+    "surface_count": 78
   },
   "generated_by": "scripts/proof_coverage_matrix.py",
   "route_coverage": {
     "by_coverage_state": {
       "proven": 8,
-      "unproven": 148,
-      "witnessed": 176
+      "unproven": 142,
+      "witnessed": 182
     },
     "route_count": 332,
     "routes": [
@@ -769,34 +776,34 @@
         "surface_id": "unclassified_declared_route"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/config",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "runtime_config_management"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/config/drift",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "runtime_config_management"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/config/history",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "runtime_config_management"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/config/rollback",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "runtime_config_management"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/config/update",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "runtime_config_management"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/config/watcher",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "runtime_config_management"
       },
       {
         "coverage_state": "witnessed",
@@ -2204,7 +2211,7 @@
         "surface_id": "gateway_capability_fabric"
       }
     ],
-    "unclassified_route_count": 148
+    "unclassified_route_count": 142
   },
   "schema_version": 1,
   "surfaces": [
@@ -2400,6 +2407,41 @@
         "tenant_gate_persistence_read_model_included"
       ],
       "surface_id": "tenant_governance_lifecycle"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "mcoi/mcoi_runtime/app/routers/ops/config.py",
+        "mcoi/mcoi_runtime/core/config_reload.py",
+        "mcoi/mcoi_runtime/core/config_watcher.py",
+        "mcoi/mcoi_runtime/core/config_drift.py",
+        "mcoi/tests/test_server_phase205.py",
+        "mcoi/tests/test_server_phase207.py",
+        "mcoi/tests/test_config_watcher.py",
+        "mcoi/tests/test_config_drift.py"
+      ],
+      "notes": "Runtime configuration routes expose hash-bound read models, version history, audited hot-reload updates, bounded rollback, watcher status, and drift summaries through governed runtime configuration state.",
+      "representative_paths": [
+        "/api/v1/config",
+        "/api/v1/config/history",
+        "/api/v1/config/update",
+        "/api/v1/config/rollback",
+        "/api/v1/config/watcher",
+        "/api/v1/config/drift"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "config_read_model_hash_bound",
+        "config_history_versions_bounded",
+        "config_update_applies_atomically",
+        "config_update_emits_event_and_audit",
+        "config_rollback_requires_known_version",
+        "config_watcher_errors_are_bounded",
+        "config_drift_secret_changes_are_critical"
+      ],
+      "surface_id": "runtime_config_management"
     },
     {
       "action_proof": "read_model",
