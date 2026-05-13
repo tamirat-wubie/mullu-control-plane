@@ -2569,6 +2569,43 @@ def proof_coverage_matrix() -> dict[str, Any]:
             ],
         ),
         _surface(
+            "temporal_sla",
+            [
+                "/api/v1/sla",
+                "/api/v1/sla/violations",
+                "TemporalSla.evaluate",
+                "SlaPolicy",
+                "SlaCase",
+                "TemporalSlaReceipt",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "gateway/temporal_sla.py",
+                "mcoi/mcoi_runtime/app/routers/data/sla.py",
+                "mcoi/mcoi_runtime/core/sla_monitor.py",
+                "schemas/temporal_sla_receipt.schema.json",
+                "tests/test_gateway/test_temporal_sla.py",
+                "mcoi/tests/test_sla_monitor.py",
+                "mcoi/tests/test_sla_router.py",
+            ],
+            "Temporal SLA surfaces expose governed SLA summaries and violation read models while temporal SLA receipts certify business calendars, business-time deadlines, warning escalation, breach detection, tenant scope, evidence refs, and dispatch windows before escalation or action.",
+            [
+                "runtime_clock_owns_sla_deadlines",
+                "business_time_deadlines_skip_closed_windows",
+                "approaching_deadline_warns_before_breach",
+                "breached_deadline_emits_escalation_reason",
+                "outside_business_window_holds_normal_dispatch",
+                "sla_evidence_and_scope_checked",
+                "sla_summary_read_model_bounded",
+                "sla_violations_read_model_bounded",
+                "temporal_sla_receipt_schema_valid",
+                "receipt_not_terminal_closure",
+            ],
+        ),
+        _surface(
             "temporal_reapproval",
             [
                 "TemporalReapproval.evaluate",
@@ -3685,6 +3722,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
         {
             "action_id": "publish_temporal_resolution_receipt_contract",
             "surfaces": ["temporal_resolution"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_temporal_sla_receipt_contract",
+            "surfaces": ["temporal_sla"],
             "status": "closed",
         },
         {
