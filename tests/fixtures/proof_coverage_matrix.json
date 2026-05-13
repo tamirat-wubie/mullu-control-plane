@@ -139,6 +139,13 @@
       ]
     },
     {
+      "action_id": "classify_governance_explanation_lifecycle_routes",
+      "status": "closed",
+      "surfaces": [
+        "governance_explanation_lifecycle"
+      ]
+    },
+    {
       "action_id": "classify_operational_health_read_model_routes",
       "status": "closed",
       "surfaces": [
@@ -157,6 +164,13 @@
       "status": "closed",
       "surfaces": [
         "workflow_execution_lifecycle"
+      ]
+    },
+    {
+      "action_id": "classify_certification_daemon_lifecycle_routes",
+      "status": "closed",
+      "surfaces": [
+        "certification_daemon_lifecycle"
       ]
     },
     {
@@ -577,7 +591,7 @@
   ],
   "coverage_summary": {
     "by_action_proof": {
-      "action_proof": 71,
+      "action_proof": 73,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 13,
@@ -585,7 +599,7 @@
     },
     "by_audit": {
       "action_proof": 0,
-      "audit_chain": 82,
+      "audit_chain": 84,
       "gap": 0,
       "read_model": 4,
       "request_proof": 0
@@ -593,23 +607,23 @@
     "by_coverage_state": {
       "proven": 1,
       "unproven": 0,
-      "witnessed": 85
+      "witnessed": 87
     },
     "by_request_proof": {
       "action_proof": 1,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 15,
-      "request_proof": 70
+      "request_proof": 72
     },
-    "surface_count": 86
+    "surface_count": 88
   },
   "generated_by": "scripts/proof_coverage_matrix.py",
   "route_coverage": {
     "by_coverage_state": {
       "proven": 8,
-      "unproven": 106,
-      "witnessed": 219
+      "unproven": 100,
+      "witnessed": 225
     },
     "route_count": 333,
     "routes": [
@@ -999,19 +1013,19 @@
         "surface_id": "cost_budget_read_models"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/daemon/force",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "certification_daemon_lifecycle"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/daemon/status",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "certification_daemon_lifecycle"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/daemon/tick",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "certification_daemon_lifecycle"
       },
       {
         "coverage_state": "unproven",
@@ -1114,19 +1128,19 @@
         "surface_id": "unclassified_declared_route"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/explain/action",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "governance_explanation_lifecycle"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/explain/audit/{entry_index}",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "governance_explanation_lifecycle"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/explain/summary",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "governance_explanation_lifecycle"
       },
       {
         "coverage_state": "unproven",
@@ -2279,7 +2293,7 @@
         "surface_id": "gateway_capability_fabric"
       }
     ],
-    "unclassified_route_count": 106
+    "unclassified_route_count": 100
   },
   "schema_version": 1,
   "surfaces": [
@@ -2949,6 +2963,33 @@
       "surface_id": "agent_memory_lifecycle"
     },
     {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "mcoi/mcoi_runtime/app/routers/explain.py",
+        "mcoi/mcoi_runtime/core/explanation_engine.py",
+        "mcoi/tests/test_explanation_engine.py"
+      ],
+      "notes": "Governance explanation routes generate bounded explanations for prospective actions, audit entries, and explanation-engine summary state with governed responses and missing-entry errors.",
+      "representative_paths": [
+        "/api/v1/explain/action",
+        "/api/v1/explain/audit/{entry_index}",
+        "/api/v1/explain/summary"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "explain_action_guard_chain_path_reported",
+        "explain_action_returns_explanation_id",
+        "explain_audit_entry_allowed_and_denied",
+        "explain_audit_entry_goal_context_preserved",
+        "explanation_cache_bounded",
+        "explain_action_endpoint_governed",
+        "explain_summary_endpoint_governed"
+      ],
+      "surface_id": "governance_explanation_lifecycle"
+    },
+    {
       "action_proof": "read_model",
       "audit": "audit_chain",
       "coverage_state": "witnessed",
@@ -3045,6 +3086,35 @@
         "traced_workflow_recorder_errors_sanitized"
       ],
       "surface_id": "workflow_execution_lifecycle"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "mcoi/mcoi_runtime/app/routers/data/daemon.py",
+        "mcoi/mcoi_runtime/core/certification_daemon.py",
+        "mcoi/tests/test_certification_daemon.py",
+        "mcoi/tests/test_server_phase200.py"
+      ],
+      "notes": "Certification daemon routes expose bounded daemon status, run interval-gated certification ticks, and force immediate certification runs while preserving bounded health and history state.",
+      "representative_paths": [
+        "/api/v1/daemon/force",
+        "/api/v1/daemon/status",
+        "/api/v1/daemon/tick"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "daemon_status_bounded",
+        "daemon_tick_interval_gated",
+        "daemon_force_runs_when_disabled",
+        "daemon_force_returns_chain_hash",
+        "daemon_history_bounded",
+        "daemon_health_degrades_on_failures",
+        "daemon_exceptions_sanitized",
+        "daemon_endpoint_contracts_governed"
+      ],
+      "surface_id": "certification_daemon_lifecycle"
     },
     {
       "action_proof": "action_proof",

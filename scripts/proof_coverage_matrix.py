@@ -695,6 +695,33 @@ def proof_coverage_matrix() -> dict[str, Any]:
             ],
         ),
         _surface(
+            "governance_explanation_lifecycle",
+            [
+                "/api/v1/explain/action",
+                "/api/v1/explain/audit/{entry_index}",
+                "/api/v1/explain/summary",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "mcoi/mcoi_runtime/app/routers/explain.py",
+                "mcoi/mcoi_runtime/core/explanation_engine.py",
+                "mcoi/tests/test_explanation_engine.py",
+            ],
+            "Governance explanation routes generate bounded explanations for prospective actions, audit entries, and explanation-engine summary state with governed responses and missing-entry errors.",
+            [
+                "explain_action_guard_chain_path_reported",
+                "explain_action_returns_explanation_id",
+                "explain_audit_entry_allowed_and_denied",
+                "explain_audit_entry_goal_context_preserved",
+                "explanation_cache_bounded",
+                "explain_action_endpoint_governed",
+                "explain_summary_endpoint_governed",
+            ],
+        ),
+        _surface(
             "operational_health_read_models",
             [
                 "/api/v1/health/deep",
@@ -790,6 +817,35 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "workflow_errors_sanitized",
                 "traced_workflow_emits_replay_trace",
                 "traced_workflow_recorder_errors_sanitized",
+            ],
+        ),
+        _surface(
+            "certification_daemon_lifecycle",
+            [
+                "/api/v1/daemon/force",
+                "/api/v1/daemon/status",
+                "/api/v1/daemon/tick",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "mcoi/mcoi_runtime/app/routers/data/daemon.py",
+                "mcoi/mcoi_runtime/core/certification_daemon.py",
+                "mcoi/tests/test_certification_daemon.py",
+                "mcoi/tests/test_server_phase200.py",
+            ],
+            "Certification daemon routes expose bounded daemon status, run interval-gated certification ticks, and force immediate certification runs while preserving bounded health and history state.",
+            [
+                "daemon_status_bounded",
+                "daemon_tick_interval_gated",
+                "daemon_force_runs_when_disabled",
+                "daemon_force_returns_chain_hash",
+                "daemon_history_bounded",
+                "daemon_health_degrades_on_failures",
+                "daemon_exceptions_sanitized",
+                "daemon_endpoint_contracts_governed",
             ],
         ),
         _surface(
@@ -2767,6 +2823,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
             "status": "closed",
         },
         {
+            "action_id": "classify_governance_explanation_lifecycle_routes",
+            "surfaces": ["governance_explanation_lifecycle"],
+            "status": "closed",
+        },
+        {
             "action_id": "classify_operational_health_read_model_routes",
             "surfaces": ["operational_health_read_models"],
             "status": "closed",
@@ -2779,6 +2840,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
         {
             "action_id": "classify_workflow_execution_lifecycle_routes",
             "surfaces": ["workflow_execution_lifecycle"],
+            "status": "closed",
+        },
+        {
+            "action_id": "classify_certification_daemon_lifecycle_routes",
+            "surfaces": ["certification_daemon_lifecycle"],
             "status": "closed",
         },
         {
