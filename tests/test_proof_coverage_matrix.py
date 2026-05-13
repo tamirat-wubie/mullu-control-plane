@@ -128,6 +128,12 @@ def test_representative_routes_are_not_unclassified() -> None:
     assert classified_routes["/api/v1/agent/register"]["surface_id"] == "agent_adapter_protocol"
     assert classified_routes["/api/v1/agent/action-request"]["surface_id"] == "agent_adapter_protocol"
     assert classified_routes["/api/v1/agent/restore"]["surface_id"] == "agent_adapter_protocol"
+    assert classified_routes["/api/v1/multi-agent/delegate"]["surface_id"] == "multi_agent_coordination"
+    assert classified_routes["/api/v1/multi-agent/merge"]["surface_id"] == "multi_agent_coordination"
+    assert (
+        classified_routes["/api/v1/multi-agent/conflicts/unresolved"]["surface_id"]
+        == "multi_agent_coordination"
+    )
 
 
 def test_agent_adapter_protocol_surface_is_witnessed() -> None:
@@ -159,6 +165,50 @@ def test_agent_adapter_protocol_surface_is_witnessed() -> None:
     assert "agent_checkpoint_restore_errors_are_bounded" in witnesses
     assert "agent_adapter_summary_is_governed_read_model" in witnesses
     assert closure_actions["classify_agent_adapter_protocol_routes"]["status"] == "closed"
+
+
+def test_multi_agent_coordination_surface_is_witnessed() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    route_records = {
+        record["route"]: record
+        for record in matrix["route_coverage"]["routes"]
+    }
+    multi_agent_surface = surfaces["multi_agent_coordination"]
+    witnesses = set(multi_agent_surface["runtime_witnesses"])
+
+    assert multi_agent_surface["coverage_state"] == "witnessed"
+    assert multi_agent_surface["request_proof"] == "request_proof"
+    assert multi_agent_surface["action_proof"] == "action_proof"
+    assert "/api/v1/multi-agent/delegate" in multi_agent_surface["representative_paths"]
+    assert "/api/v1/multi-agent/delegate/resolve" in multi_agent_surface["representative_paths"]
+    assert "/api/v1/multi-agent/handoff" in multi_agent_surface["representative_paths"]
+    assert "/api/v1/multi-agent/merge" in multi_agent_surface["representative_paths"]
+    assert "/api/v1/multi-agent/conflict" in multi_agent_surface["representative_paths"]
+    assert "/api/v1/multi-agent/conflicts/unresolved" in multi_agent_surface["representative_paths"]
+    assert "/api/v1/multi-agent/summary" in multi_agent_surface["representative_paths"]
+    assert "mcoi/mcoi_runtime/app/routers/multi_agent.py" in multi_agent_surface["evidence_files"]
+    assert "mcoi/mcoi_runtime/core/coordination.py" in multi_agent_surface["evidence_files"]
+    assert "mcoi/mcoi_runtime/contracts/coordination.py" in multi_agent_surface["evidence_files"]
+    assert "mcoi/tests/test_coordination.py" in multi_agent_surface["evidence_files"]
+    assert "mcoi/tests/test_multi_agent_runtime.py" in multi_agent_surface["evidence_files"]
+    assert "mcoi/tests/test_server_phase217.py" in multi_agent_surface["evidence_files"]
+    assert "multi_agent_delegation_audited" in witnesses
+    assert "multi_agent_delegation_resolution_bounded" in witnesses
+    assert "multi_agent_handoff_preserves_context" in witnesses
+    assert "multi_agent_merge_decision_explicit" in witnesses
+    assert "multi_agent_conflict_recorded_for_resolution" in witnesses
+    assert "multi_agent_unresolved_conflicts_bounded_read_model" in witnesses
+    assert "multi_agent_summary_bounded" in witnesses
+    assert route_records["/api/v1/multi-agent/delegate"]["coverage_state"] == "witnessed"
+    assert route_records["/api/v1/multi-agent/delegate"]["surface_id"] == "multi_agent_coordination"
+    assert route_records["/api/v1/multi-agent/conflicts/unresolved"]["coverage_state"] == "witnessed"
+    assert (
+        route_records["/api/v1/multi-agent/conflicts/unresolved"]["surface_id"]
+        == "multi_agent_coordination"
+    )
+    assert closure_actions["classify_multi_agent_coordination_routes"]["status"] == "closed"
 
 
 def test_finance_approval_packet_surface_is_witnessed() -> None:
