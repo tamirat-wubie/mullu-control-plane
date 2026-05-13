@@ -536,6 +536,7 @@ def test_finance_approval_packet_surface_is_witnessed() -> None:
     assert "finance_packet_policy_reasons_explicit" in witnesses
     assert "blocked_packet_emits_no_effect" in witnesses
     assert "approval_action_binds_approval_effect_and_closure_refs" in witnesses
+    assert "payment_handoff_prepared_without_live_payment_claim" in witnesses
     assert "packet_proof_requires_policy_evidence_and_closure_for_closed_states" in witnesses
     assert "operator_read_model_bounds_visible_packets_and_counts" in witnesses
     assert closure_actions["classify_finance_approval_packet_routes"]["status"] == "closed"
@@ -2563,6 +2564,41 @@ def test_temporal_resolution_surface_resolves_phrases_with_runtime_time() -> Non
     assert "unsupported_phrase_fails_closed" in witnesses
     assert "temporal_resolution_receipt_schema_valid" in witnesses
     assert closure_actions["publish_temporal_resolution_receipt_contract"]["status"] == "closed"
+
+
+def test_temporal_sla_surface_classifies_sla_read_models_and_receipts() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    sla_surface = surfaces["temporal_sla"]
+    witnesses = set(sla_surface["runtime_witnesses"])
+
+    assert sla_surface["coverage_state"] == "witnessed"
+    assert sla_surface["request_proof"] == "request_proof"
+    assert sla_surface["action_proof"] == "action_proof"
+    assert "/api/v1/sla" in sla_surface["representative_paths"]
+    assert "/api/v1/sla/violations" in sla_surface["representative_paths"]
+    assert "TemporalSla.evaluate" in sla_surface["representative_paths"]
+    assert "SlaPolicy" in sla_surface["representative_paths"]
+    assert "SlaCase" in sla_surface["representative_paths"]
+    assert "TemporalSlaReceipt" in sla_surface["representative_paths"]
+    assert "gateway/temporal_sla.py" in sla_surface["evidence_files"]
+    assert "mcoi/mcoi_runtime/app/routers/data/sla.py" in sla_surface["evidence_files"]
+    assert "mcoi/mcoi_runtime/core/sla_monitor.py" in sla_surface["evidence_files"]
+    assert "schemas/temporal_sla_receipt.schema.json" in sla_surface["evidence_files"]
+    assert "tests/test_gateway/test_temporal_sla.py" in sla_surface["evidence_files"]
+    assert "mcoi/tests/test_sla_monitor.py" in sla_surface["evidence_files"]
+    assert "mcoi/tests/test_sla_router.py" in sla_surface["evidence_files"]
+    assert "runtime_clock_owns_sla_deadlines" in witnesses
+    assert "business_time_deadlines_skip_closed_windows" in witnesses
+    assert "approaching_deadline_warns_before_breach" in witnesses
+    assert "breached_deadline_emits_escalation_reason" in witnesses
+    assert "outside_business_window_holds_normal_dispatch" in witnesses
+    assert "sla_evidence_and_scope_checked" in witnesses
+    assert "sla_summary_read_model_bounded" in witnesses
+    assert "sla_violations_read_model_bounded" in witnesses
+    assert "temporal_sla_receipt_schema_valid" in witnesses
+    assert closure_actions["publish_temporal_sla_receipt_contract"]["status"] == "closed"
 
 
 def test_temporal_reapproval_surface_rechecks_execution_time_approval_grants() -> None:

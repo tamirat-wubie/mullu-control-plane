@@ -615,6 +615,13 @@
       ]
     },
     {
+      "action_id": "publish_temporal_sla_receipt_contract",
+      "status": "closed",
+      "surfaces": [
+        "temporal_sla"
+      ]
+    },
+    {
       "action_id": "publish_temporal_evidence_freshness_receipt_contract",
       "status": "closed",
       "surfaces": [
@@ -797,7 +804,7 @@
   ],
   "coverage_summary": {
     "by_action_proof": {
-      "action_proof": 92,
+      "action_proof": 93,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 23,
@@ -805,7 +812,7 @@
     },
     "by_audit": {
       "action_proof": 0,
-      "audit_chain": 113,
+      "audit_chain": 114,
       "gap": 0,
       "read_model": 4,
       "request_proof": 0
@@ -813,16 +820,16 @@
     "by_coverage_state": {
       "proven": 1,
       "unproven": 0,
-      "witnessed": 116
+      "witnessed": 117
     },
     "by_request_proof": {
       "action_proof": 1,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 25,
-      "request_proof": 91
+      "request_proof": 92
     },
-    "surface_count": 117
+    "surface_count": 118
   },
   "generated_by": "scripts/proof_coverage_matrix.py",
   "route_coverage": {
@@ -3561,6 +3568,7 @@
         "finance_packet_policy_reasons_explicit",
         "blocked_packet_emits_no_effect",
         "approval_action_binds_approval_effect_and_closure_refs",
+        "payment_handoff_prepared_without_live_payment_claim",
         "packet_proof_requires_policy_evidence_and_closure_for_closed_states",
         "operator_read_model_bounds_visible_packets_and_counts"
       ],
@@ -5430,6 +5438,43 @@
         "receipt_not_terminal_closure"
       ],
       "surface_id": "temporal_resolution"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "gateway/temporal_sla.py",
+        "mcoi/mcoi_runtime/app/routers/data/sla.py",
+        "mcoi/mcoi_runtime/core/sla_monitor.py",
+        "schemas/temporal_sla_receipt.schema.json",
+        "tests/test_gateway/test_temporal_sla.py",
+        "mcoi/tests/test_sla_monitor.py",
+        "mcoi/tests/test_sla_router.py"
+      ],
+      "notes": "Temporal SLA surfaces expose governed SLA summaries and violation read models while temporal SLA receipts certify business calendars, business-time deadlines, warning escalation, breach detection, tenant scope, evidence refs, and dispatch windows before escalation or action.",
+      "representative_paths": [
+        "/api/v1/sla",
+        "/api/v1/sla/violations",
+        "TemporalSla.evaluate",
+        "SlaPolicy",
+        "SlaCase",
+        "TemporalSlaReceipt"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "runtime_clock_owns_sla_deadlines",
+        "business_time_deadlines_skip_closed_windows",
+        "approaching_deadline_warns_before_breach",
+        "breached_deadline_emits_escalation_reason",
+        "outside_business_window_holds_normal_dispatch",
+        "sla_evidence_and_scope_checked",
+        "sla_summary_read_model_bounded",
+        "sla_violations_read_model_bounded",
+        "temporal_sla_receipt_schema_valid",
+        "receipt_not_terminal_closure"
+      ],
+      "surface_id": "temporal_sla"
     },
     {
       "action_proof": "action_proof",
