@@ -64,6 +64,8 @@ _DEFAULT_CAPABILITY_PACK_PATHS = (
     _REPO_ROOT / "capabilities" / "phone" / "capability_pack.json",
     _REPO_ROOT / "capabilities" / "voice" / "capability_pack.json",
 )
+_SOFTWARE_DEV_CAPSULE_PATH = _REPO_ROOT / "capsules" / "software_dev.json"
+_SOFTWARE_DEV_CAPABILITY_PACK_PATH = _REPO_ROOT / "capabilities" / "software_dev" / "capability_pack.json"
 _GENERAL_AGENT_PLAN_DEFINITIONS = (
     {
         "plane_index": 0,
@@ -362,6 +364,32 @@ def build_default_capability_admission_gate(
     return build_capability_admission_gate(
         capsules=load_default_domain_capsules(),
         capabilities=load_default_capability_entries(),
+        require_certified=require_certified,
+        require_production_ready=require_production_ready,
+        clock=clock,
+    )
+
+
+def load_software_dev_domain_capsule() -> DomainCapsule:
+    """Load the explicit software-development capsule fixture."""
+    return DomainCapsule.from_mapping(_load_object(_SOFTWARE_DEV_CAPSULE_PATH))
+
+
+def load_software_dev_capability_entries() -> tuple[CapabilityRegistryEntry, ...]:
+    """Load explicit software-development capability entries."""
+    return tuple(_load_capability_pack(_SOFTWARE_DEV_CAPABILITY_PACK_PATH))
+
+
+def build_software_dev_capability_admission_gate(
+    *,
+    clock: Callable[[], str],
+    require_certified: bool = True,
+    require_production_ready: bool = False,
+) -> CommandCapabilityAdmissionGate:
+    """Build an admission gate for only the software-development capsule."""
+    return build_capability_admission_gate(
+        capsules=(load_software_dev_domain_capsule(),),
+        capabilities=load_software_dev_capability_entries(),
         require_certified=require_certified,
         require_production_ready=require_production_ready,
         clock=clock,

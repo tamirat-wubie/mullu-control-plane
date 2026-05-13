@@ -88,6 +88,9 @@ class TestAutoRoutedCompletion:
         assert "qwen3.6-35b" in ids
         assert "qwen/qwen3.5-9b" in ids
         assert "deepseek/deepseek-v4-pro" in ids
+        assert "glm-4.7-flash" in ids
+        assert "qwen35-9b" in ids
+        assert "google/gemma-3-27b-instruct/bf-16" in ids
 
     def test_auto_complete_exception_is_sanitized(self, client, monkeypatch):
         from mcoi_runtime.app.routers.deps import deps

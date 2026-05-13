@@ -102,6 +102,8 @@ def require_datetime_text(value: str, field_name: str) -> str:
 
 
 def require_non_empty_tuple(values: Sequence[Any], field_name: str) -> tuple[Any, ...]:
+    if isinstance(values, (str, bytes)) or not isinstance(values, (tuple, list)):
+        raise ValueError(_field_validation_message(field_name, " must be an array"))
     frozen = freeze_value(list(values))
     if not isinstance(frozen, tuple) or not frozen:
         raise ValueError(_field_validation_message(field_name, " must contain at least one item"))

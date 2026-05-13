@@ -19,6 +19,7 @@ from __future__ import annotations
 import hashlib
 import hmac
 import json
+import re
 from dataclasses import asdict, dataclass, field, replace
 from typing import Any
 
@@ -35,6 +36,9 @@ EVIDENCE_ARTIFACT_TYPES = (
 )
 EXTERNAL_ANCHOR_STATUSES = ("pending", "anchored", "failed")
 EXTERNAL_ANCHOR_TARGETS = ("audit_chain", "transparency_log", "external_ledger", "regulatory_archive")
+MAX_EVIDENCE_REF_LENGTH = 256
+EVIDENCE_REF_PREFIX = "proof://"
+EVIDENCE_REF_PATTERN = re.compile(r"^proof://[A-Za-z0-9._~:/?#[\]@!$&'()*+,;=%-]+$")
 
 
 @dataclass(frozen=True, slots=True)
@@ -53,7 +57,7 @@ class TrustLedgerEvidenceArtifact:
             raise ValueError("artifact_type_invalid")
         _require_text(self.artifact_id, "artifact_id")
         _require_text(self.artifact_hash, "artifact_hash")
-        _require_text(self.evidence_ref, "evidence_ref")
+        _require_evidence_ref(self.evidence_ref)
         object.__setattr__(self, "metadata", dict(self.metadata))
 
     def to_json_dict(self) -> dict[str, Any]:
@@ -191,7 +195,11 @@ class ExternalProofAnchorReceipt:
         _require_text(self.hash_chain_root, "hash_chain_root")
         if self.artifact_count <= 0:
             raise ValueError("artifact_count_positive")
-        object.__setattr__(self, "required_artifact_types", list(_require_refs(tuple(self.required_artifact_types))))
+        object.__setattr__(
+            self,
+            "required_artifact_types",
+            list(_require_required_artifact_types(tuple(self.required_artifact_types))),
+        )
         _require_text(self.anchored_at, "anchored_at")
         _require_text(self.signature_key_id, "signature_key_id")
         _require_text(self.signature, "signature")
@@ -301,15 +309,12 @@ class TrustLedger:
         if missing_types:
             raise ValueError(f"anchor_required_artifacts_missing:{','.join(missing_types)}")
         _require_anchor_artifact_identity(bundle, artifacts)
-        anchor_receipt_digest = _stable_hash(
-            {
-                "bundle_id": bundle.bundle_id,
-                "artifact_root_hash": artifact_root,
-                "target": anchor_target,
-            },
-        )
         receipt = ExternalProofAnchorReceipt(
-            anchor_receipt_id=f"trust-anchor-receipt-{anchor_receipt_digest[:16]}",
+            anchor_receipt_id=_anchor_receipt_id(
+                bundle_id=bundle.bundle_id,
+                artifact_root_hash=artifact_root,
+                anchor_target=anchor_target,
+            ),
             bundle_id=bundle.bundle_id,
             tenant_id=bundle.tenant_id,
             command_id=bundle.command_id,
@@ -378,6 +383,20 @@ class TrustLedger:
                 "artifact_root_hash_mismatch",
                 expected_bundle_hash=expected_artifact_root,
                 observed_bundle_hash=receipt.artifact_root_hash,
+                signature_key_id=receipt.signature_key_id,
+            )
+        expected_receipt_id = _anchor_receipt_id(
+            bundle_id=receipt.bundle_id,
+            artifact_root_hash=expected_artifact_root,
+            anchor_target=receipt.anchor_target,
+        )
+        if not hmac.compare_digest(expected_receipt_id, receipt.anchor_receipt_id):
+            return TrustLedgerVerification(
+                receipt.bundle_id,
+                False,
+                "anchor_receipt_id_mismatch",
+                expected_bundle_hash=expected_receipt_id,
+                observed_bundle_hash=receipt.anchor_receipt_id,
                 signature_key_id=receipt.signature_key_id,
             )
         expected_receipt_hash = _anchor_receipt_hash(receipt)
@@ -465,6 +484,22 @@ def _artifact_root_hash(artifacts: tuple[TrustLedgerEvidenceArtifact, ...]) -> s
     return _stable_hash({"artifacts": payload})
 
 
+def _anchor_receipt_id(
+    *,
+    bundle_id: str,
+    artifact_root_hash: str,
+    anchor_target: str,
+) -> str:
+    digest = _stable_hash(
+        {
+            "bundle_id": bundle_id,
+            "artifact_root_hash": artifact_root_hash,
+            "target": anchor_target,
+        },
+    )
+    return f"trust-anchor-receipt-{digest[:16]}"
+
+
 def _anchor_receipt_hash(receipt: ExternalProofAnchorReceipt) -> str:
     payload = asdict(receipt)
     payload["signature"] = ""
@@ -495,8 +530,31 @@ def _require_refs(values: tuple[str, ...]) -> tuple[str, ...]:
     if not refs:
         raise ValueError("evidence_refs_required")
     for ref in refs:
-        _require_text(ref, "evidence_ref")
+        _require_evidence_ref(ref)
     return refs
+
+
+def _require_required_artifact_types(values: tuple[str, ...]) -> tuple[str, ...]:
+    artifact_types = tuple(values)
+    if not artifact_types:
+        raise ValueError("required_artifact_types_required")
+    for artifact_type in artifact_types:
+        _require_text(artifact_type, "required_artifact_type")
+        if artifact_type not in EVIDENCE_ARTIFACT_TYPES:
+            raise ValueError("required_artifact_type_invalid")
+    return artifact_types
+
+
+def _require_evidence_ref(value: str) -> None:
+    _require_text(value, "evidence_ref")
+    if len(value) > MAX_EVIDENCE_REF_LENGTH:
+        raise ValueError("evidence_ref_too_long")
+    if value.strip() != value or any(character.isspace() or ord(character) < 32 for character in value):
+        raise ValueError("evidence_ref_invalid")
+    if not value.startswith(EVIDENCE_REF_PREFIX):
+        raise ValueError("evidence_ref_scheme_invalid")
+    if EVIDENCE_REF_PATTERN.fullmatch(value) is None:
+        raise ValueError("evidence_ref_invalid")
 
 
 def _require_artifacts(values: tuple[TrustLedgerEvidenceArtifact, ...]) -> tuple[TrustLedgerEvidenceArtifact, ...]:
