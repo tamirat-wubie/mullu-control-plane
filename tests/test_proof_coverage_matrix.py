@@ -914,6 +914,29 @@ def test_capability_maturity_surface_blocks_readiness_overclaims() -> None:
     assert closure_actions["publish_capability_maturity_assessment_contract"]["status"] == "closed"
 
 
+def test_capability_manifest_registry_surface_admits_governed_manifests() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    manifest_surface = surfaces["capability_manifest_registry"]
+    witnesses = set(manifest_surface["runtime_witnesses"])
+
+    assert manifest_surface["coverage_state"] == "witnessed"
+    assert manifest_surface["request_proof"] == "request_proof"
+    assert manifest_surface["action_proof"] == "action_proof"
+    assert "CapabilityManifestRegistry.admit_path" in manifest_surface["representative_paths"]
+    assert "CapabilityManifestAdmission" in manifest_surface["representative_paths"]
+    assert "mcoi/mcoi_runtime/contracts/capability_manifest.py" in manifest_surface["evidence_files"]
+    assert "mcoi/mcoi_runtime/core/capability_manifest_registry.py" in manifest_surface["evidence_files"]
+    assert "schemas/software_dev/capability_manifest.schema.json" in manifest_surface["evidence_files"]
+    assert "tests/test_software_dev_capability_manifest_registry.py" in manifest_surface["evidence_files"]
+    assert "capability_manifest_schema_valid" in witnesses
+    assert "software_dev_manifests_admit_locally" in witnesses
+    assert "effect_manifest_requires_sandbox_rollback" in witnesses
+    assert "production_hot_reload_denied_for_effect_manifest" in witnesses
+    assert closure_actions["publish_capability_manifest_registry_contract"]["status"] == "closed"
+
+
 def test_networked_worker_mesh_surface_requires_non_terminal_receipts() -> None:
     matrix = _load_fixture()
     surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
@@ -2318,4 +2341,3 @@ def test_operator_document_mentions_every_surface() -> None:
     assert all(f"`{action['action_id']}`" in doc for action in matrix["closure_actions"])
     assert "schema contract validation" in doc
     assert "deployment orchestration receipt schema contract" in doc
-
