@@ -268,6 +268,38 @@ def proof_coverage_matrix() -> dict[str, Any]:
             ],
         ),
         _surface(
+            "webhooks_proof_surface",
+            [
+                "/api/v1/webhooks/subscribe",
+                "/api/v1/webhooks",
+                "/api/v1/webhooks/deliveries",
+                "/api/v1/webhooks/retry/summary",
+                "/api/v1/webhooks/retry/dead-letters",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "mcoi/mcoi_runtime/app/routers/agent.py",
+                "mcoi/mcoi_runtime/governance/network/webhook.py",
+                "mcoi/mcoi_runtime/core/webhook_retry.py",
+                "mcoi/tests/test_server_phase205.py",
+                "mcoi/tests/test_e2e_integration.py",
+                "mcoi/tests/test_webhook_retry.py",
+            ],
+            "API webhook management routes bind subscription mutation, tenant-scoped subscription read models, delivery history, retry summary, and dead-letter read models to governed runtime state, audit records, and bounded retry failure evidence.",
+            [
+                "webhook_subscribe_records_audit",
+                "webhook_list_is_tenant_scoped",
+                "webhook_delivery_history_is_bounded",
+                "webhook_flow_records_delivery",
+                "webhook_retry_summary_is_bounded",
+                "webhook_dead_letters_are_explicit",
+                "webhook_delivery_errors_are_sanitized",
+            ],
+        ),
+        _surface(
             "operator_console_read_models",
             [
                 "/api/v1/console",
@@ -2464,6 +2496,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
         {
             "action_id": "classify_runtime_config_management_routes",
             "surfaces": ["runtime_config_management"],
+            "status": "closed",
+        },
+        {
+            "action_id": "classify_webhooks_routes",
+            "surfaces": ["webhooks_proof_surface"],
             "status": "closed",
         },
         {

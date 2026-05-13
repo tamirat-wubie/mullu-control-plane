@@ -139,6 +139,13 @@
       ]
     },
     {
+      "action_id": "classify_webhooks_routes",
+      "status": "closed",
+      "surfaces": [
+        "webhooks_proof_surface"
+      ]
+    },
+    {
       "action_id": "classify_runbook_learning_routes",
       "status": "closed",
       "surfaces": [
@@ -514,7 +521,7 @@
   ],
   "coverage_summary": {
     "by_action_proof": {
-      "action_proof": 65,
+      "action_proof": 66,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 11,
@@ -522,7 +529,7 @@
     },
     "by_audit": {
       "action_proof": 1,
-      "audit_chain": 73,
+      "audit_chain": 74,
       "gap": 0,
       "read_model": 4,
       "request_proof": 0
@@ -530,23 +537,23 @@
     "by_coverage_state": {
       "proven": 1,
       "unproven": 0,
-      "witnessed": 77
+      "witnessed": 78
     },
     "by_request_proof": {
       "action_proof": 1,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 13,
-      "request_proof": 64
+      "request_proof": 65
     },
-    "surface_count": 78
+    "surface_count": 79
   },
   "generated_by": "scripts/proof_coverage_matrix.py",
   "route_coverage": {
     "by_coverage_state": {
       "proven": 8,
-      "unproven": 142,
-      "witnessed": 182
+      "unproven": 137,
+      "witnessed": 187
     },
     "route_count": 332,
     "routes": [
@@ -1931,29 +1938,29 @@
         "surface_id": "unclassified_declared_route"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/webhooks",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "webhooks_proof_surface"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/webhooks/deliveries",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "webhooks_proof_surface"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/webhooks/retry/dead-letters",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "webhooks_proof_surface"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/webhooks/retry/summary",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "webhooks_proof_surface"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/webhooks/subscribe",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "webhooks_proof_surface"
       },
       {
         "coverage_state": "unproven",
@@ -2211,7 +2218,7 @@
         "surface_id": "gateway_capability_fabric"
       }
     ],
-    "unclassified_route_count": 142
+    "unclassified_route_count": 137
   },
   "schema_version": 1,
   "surfaces": [
@@ -2442,6 +2449,38 @@
         "config_drift_secret_changes_are_critical"
       ],
       "surface_id": "runtime_config_management"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "mcoi/mcoi_runtime/app/routers/agent.py",
+        "mcoi/mcoi_runtime/governance/network/webhook.py",
+        "mcoi/mcoi_runtime/core/webhook_retry.py",
+        "mcoi/tests/test_server_phase205.py",
+        "mcoi/tests/test_e2e_integration.py",
+        "mcoi/tests/test_webhook_retry.py"
+      ],
+      "notes": "API webhook management routes bind subscription mutation, tenant-scoped subscription read models, delivery history, retry summary, and dead-letter read models to governed runtime state, audit records, and bounded retry failure evidence.",
+      "representative_paths": [
+        "/api/v1/webhooks/subscribe",
+        "/api/v1/webhooks",
+        "/api/v1/webhooks/deliveries",
+        "/api/v1/webhooks/retry/summary",
+        "/api/v1/webhooks/retry/dead-letters"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "webhook_subscribe_records_audit",
+        "webhook_list_is_tenant_scoped",
+        "webhook_delivery_history_is_bounded",
+        "webhook_flow_records_delivery",
+        "webhook_retry_summary_is_bounded",
+        "webhook_dead_letters_are_explicit",
+        "webhook_delivery_errors_are_sanitized"
+      ],
+      "surface_id": "webhooks_proof_surface"
     },
     {
       "action_proof": "read_model",
