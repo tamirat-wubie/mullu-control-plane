@@ -297,14 +297,7 @@ class AuditTraceVerifier:
         )
 
     def verify_replay_state_consistency(self, command_id: str) -> "ReplayStateVerification":
-        """Replay events for a command and compare derived state against live state.
-
-        The event log is the source of truth: walking events in append order
-        yields a sequence of state transitions whose final state must match
-        what the ledger currently reports. Any divergence indicates the live
-        state was modified outside the event log (the audit-bypass attack
-        surface).
-        """
+        """Replay command events and compare the result with current ledger state."""
         command = self._ledger.get(command_id)
         if command is None:
             return ReplayStateVerification(
@@ -317,6 +310,7 @@ class AuditTraceVerifier:
                 event_count=0,
                 failures=("command_not_found",),
             )
+
         events = self._ledger.events_for(command_id)
         failures: list[str] = []
         replayed_state: CommandState | None = None
@@ -333,6 +327,7 @@ class AuditTraceVerifier:
                 failures.append(f"replay_transition_gap:{event.event_id}")
                 transition_chain_valid = False
             replayed_state = event.next_state
+
         if replayed_state is None:
             failures.append("replay_no_events_for_command")
             return ReplayStateVerification(
@@ -345,9 +340,11 @@ class AuditTraceVerifier:
                 event_count=0,
                 failures=tuple(failures),
             )
+
         states_match = replayed_state == command.state
         if not states_match:
             failures.append("replay_state_diverges_from_live")
+
         return ReplayStateVerification(
             command_id=command_id,
             command_present=True,
