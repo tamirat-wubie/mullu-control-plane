@@ -129,6 +129,29 @@ def test_trust_ledger_anchor_receipt_rejects_command_identity_drift() -> None:
     assert verification.signature_key_id == "anchor-key"
 
 
+def test_trust_ledger_anchor_receipt_rejects_non_canonical_receipt_id() -> None:
+    ledger = TrustLedger()
+    bundle = _bundle()
+    artifacts = _artifacts()
+    receipt = replace(
+        _anchor_receipt(ledger, bundle, artifacts),
+        anchor_receipt_id="trust-anchor-receipt-0000000000000000",
+    )
+
+    verification = ledger.verify_anchor_receipt(
+        receipt,
+        bundle=bundle,
+        artifacts=artifacts,
+        signing_secret="anchor-secret",
+    )
+
+    assert verification.verified is False
+    assert verification.reason == "anchor_receipt_id_mismatch"
+    assert verification.expected_bundle_hash.startswith("trust-anchor-receipt-")
+    assert verification.observed_bundle_hash == "trust-anchor-receipt-0000000000000000"
+    assert verification.signature_key_id == "anchor-key"
+
+
 def test_trust_ledger_anchor_receipt_validates_against_schema() -> None:
     ledger = TrustLedger()
     bundle = _bundle()

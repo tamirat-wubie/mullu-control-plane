@@ -301,15 +301,12 @@ class TrustLedger:
         if missing_types:
             raise ValueError(f"anchor_required_artifacts_missing:{','.join(missing_types)}")
         _require_anchor_artifact_identity(bundle, artifacts)
-        anchor_receipt_digest = _stable_hash(
-            {
-                "bundle_id": bundle.bundle_id,
-                "artifact_root_hash": artifact_root,
-                "target": anchor_target,
-            },
-        )
         receipt = ExternalProofAnchorReceipt(
-            anchor_receipt_id=f"trust-anchor-receipt-{anchor_receipt_digest[:16]}",
+            anchor_receipt_id=_anchor_receipt_id(
+                bundle_id=bundle.bundle_id,
+                artifact_root_hash=artifact_root,
+                anchor_target=anchor_target,
+            ),
             bundle_id=bundle.bundle_id,
             tenant_id=bundle.tenant_id,
             command_id=bundle.command_id,
@@ -378,6 +375,20 @@ class TrustLedger:
                 "artifact_root_hash_mismatch",
                 expected_bundle_hash=expected_artifact_root,
                 observed_bundle_hash=receipt.artifact_root_hash,
+                signature_key_id=receipt.signature_key_id,
+            )
+        expected_receipt_id = _anchor_receipt_id(
+            bundle_id=receipt.bundle_id,
+            artifact_root_hash=expected_artifact_root,
+            anchor_target=receipt.anchor_target,
+        )
+        if not hmac.compare_digest(expected_receipt_id, receipt.anchor_receipt_id):
+            return TrustLedgerVerification(
+                receipt.bundle_id,
+                False,
+                "anchor_receipt_id_mismatch",
+                expected_bundle_hash=expected_receipt_id,
+                observed_bundle_hash=receipt.anchor_receipt_id,
                 signature_key_id=receipt.signature_key_id,
             )
         expected_receipt_hash = _anchor_receipt_hash(receipt)
@@ -463,6 +474,22 @@ def _artifact_root_hash(artifacts: tuple[TrustLedgerEvidenceArtifact, ...]) -> s
         for artifact in sorted(artifacts, key=lambda item: (item.artifact_type, item.artifact_id))
     ]
     return _stable_hash({"artifacts": payload})
+
+
+def _anchor_receipt_id(
+    *,
+    bundle_id: str,
+    artifact_root_hash: str,
+    anchor_target: str,
+) -> str:
+    digest = _stable_hash(
+        {
+            "bundle_id": bundle_id,
+            "artifact_root_hash": artifact_root_hash,
+            "target": anchor_target,
+        },
+    )
+    return f"trust-anchor-receipt-{digest[:16]}"
 
 
 def _anchor_receipt_hash(receipt: ExternalProofAnchorReceipt) -> str:
