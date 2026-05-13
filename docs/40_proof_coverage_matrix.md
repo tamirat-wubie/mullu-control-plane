@@ -28,6 +28,7 @@ Purpose: declare the proof state for every published MCOI proof surface and proo
 | `compliance_evidence_exports` | /api/v1/compliance/audit-package, /api/v1/compliance/incident-package, /api/v1/compliance/mapping, /api/v1/compliance/summary | request_proof | action_proof | compliance_package_hash, audit_chain_verification, self_audited_export_event | audit_chain | witnessed | Compliance export routes emit bounded evidence packages with package hashes, audit-chain verification, supported-framework boundaries, and self-audited export events. |
 | `audit_chain_api` | /api/v1/audit, /api/v1/audit/verify, /api/v1/audit/summary, /api/v1/audit/anchor, /api/v1/audit/anchor/{anchor_id}/verify, /api/v1/audit/anchors | read_model | request_proof | audit_chain_verify_endpoint, audit_summary_read_model, audit_anchor_checkpoint_created, audit_anchor_verification_endpoint, audit_anchor_history_read_model, audit_chain_hash_linked | audit_chain | witnessed | Audit routes expose bounded audit entries, chain verification, summaries, checkpoint anchoring, anchor verification, and anchor history with hash-chain witnesses. |
 | `event_bus_operations` | /api/v1/events, /api/v1/events/publish, /api/v1/events/store/summary, /api/v1/events/summary | request_proof | action_proof | event_publish_hash_bound, event_history_filter_bounded, event_summary_bounded, event_store_summary_governed, pipeline_completion_event_visible, config_update_event_visible | audit_chain | witnessed | Event bus operations publish hash-bound governed events, expose filtered event history, return bounded event-bus summaries, and surface event-store summary state for operational replay. |
+| `ops_proof_surface` | /api/v1/ops/benchmarks, /api/v1/ops/imports, /api/v1/ops/proof-bridge | request_proof | action_proof | ops_benchmarks_return_governed_summary, ops_benchmark_results_have_metrics, ops_import_analysis_returns_dependency_summary, ops_import_depth_distribution_bounded, ops_proof_bridge_status_governed, proof_bridge_registered_in_deps | audit_chain | witnessed | Operational diagnostics routes run governed benchmark summaries, expose bounded import-cycle analysis, and publish proof-bridge status read models without mutating runtime authority. |
 | `task_queue_lifecycle` | /api/v1/queue/process, /api/v1/queue/result/{task_id}, /api/v1/queue/status, /api/v1/queue/submit | request_proof | action_proof | task_queue_priority_order, task_queue_depth_bounded, task_queue_submit_endpoint, task_queue_process_endpoint, task_queue_empty_process_bounded, task_queue_result_retrieval, task_queue_missing_result_bounded, task_queue_errors_sanitized | audit_chain | witnessed | Task queue lifecycle routes submit bounded priority tasks, process one queued task at a time, expose queue status, and return stored task results with bounded missing-result failures. |
 | `trace_observability_read_models` | /api/v1/traces, /api/v1/traces/slow, /api/v1/traces/summary, /api/v1/traces/{trace_id} | read_model | read_model | request_trace_summary_bounded, request_trace_lookup_bounded, missing_trace_returns_governed_404, slow_trace_projection_bounded, otel_trace_summary_bounded, trace_context_roundtrip_tested | audit_chain | witnessed | Trace observability routes expose bounded request-tracing summaries, individual trace spans, slow-trace projections, and OpenTelemetry exporter summaries without mutation authority. |
 | `agent_memory_lifecycle` | /api/v1/memory/search, /api/v1/memory/store, /api/v1/memory/summary | request_proof | action_proof | agent_memory_store_bounded, agent_memory_search_relevance_scored, agent_memory_tenant_isolation, agent_memory_capacity_eviction, agent_memory_summary_bounded, agent_memory_forget_removes_entry | audit_chain | witnessed | Agent memory lifecycle routes store tenant-scoped memories, search them through bounded relevance scoring, and expose bounded memory summaries without cross-tenant disclosure. |
@@ -114,8 +115,8 @@ Declared route coverage:
 |---|---:|
 | Proof-relevant declared routes | 333 |
 | Proven routes | 8 |
-| Witnessed routes | 226 |
-| Unclassified declared routes | 99 |
+| Witnessed routes | 229 |
+| Unclassified declared routes | 96 |
 
 The canonical JSON witness lists every proof-relevant declared route under `route_coverage.routes`. Routes mapped to `unclassified_declared_route` remain explicit unproven gaps rather than implicit omissions.
 
@@ -137,75 +138,76 @@ Closed closure actions:
 14. `classify_compliance_evidence_exports`
 15. `classify_audit_chain_api`
 16. `classify_event_bus_operations_routes`
-17. `classify_task_queue_lifecycle_routes`
-18. `classify_trace_observability_routes`
-19. `classify_agent_memory_lifecycle_routes`
-20. `classify_governance_explanation_lifecycle_routes`
-21. `classify_operational_health_read_model_routes`
-22. `classify_agent_orchestration_lifecycle_routes`
-23. `classify_workflow_execution_lifecycle_routes`
-24. `classify_certification_daemon_lifecycle_routes`
-25. `classify_tenant_governance_lifecycle_routes`
-26. `classify_rbac_access_governance_routes`
-27. `classify_runtime_config_management_routes`
-28. `classify_webhooks_routes`
-29. `classify_agent_adapter_protocol_routes`
-30. `classify_runbook_learning_routes`
-31. `publish_software_outcome_learning_contract`
-32. `publish_runtime_conformance_attestation`
-33. `publish_proof_route_gap_triage_report`
-34. `publish_production_evidence_plane`
-35. `publish_capability_plan_evidence_bundles`
-36. `publish_deployment_orchestration_receipt_contract`
-37. `publish_runtime_reflex_engine_read_models`
-38. `publish_governed_operational_intelligence_witnesses`
-39. `classify_world_state_knowledge_routes`
-40. `classify_policy_simulation_routes`
-41. `publish_capability_forge_candidate_contract`
-42. `publish_capability_maturity_assessment_contract`
-43. `publish_capability_manifest_registry_contract`
-44. `publish_networked_worker_mesh_contract`
-45. `publish_software_dev_capability_pack_contract`
-46. `publish_agent_identity_contract`
-47. `publish_claim_verification_report_contract`
-48. `classify_governed_connector_routes`
-49. `classify_governed_scheduler_routes`
-50. `classify_multi_agent_coordination_routes`
-51. `publish_connector_self_healing_receipt_contract`
-52. `publish_collaboration_case_contract`
-53. `publish_capability_maturity_contract`
-54. `publish_policy_prover_counterexample_contract`
-55. `publish_memory_lattice_admission_contract`
-56. `publish_workflow_mining_draft_contract`
-57. `publish_domain_operating_pack_contract`
-58. `publish_multimodal_operation_receipt_contract`
-59. `publish_physical_action_receipt_contract`
-60. `publish_temporal_operation_receipt_contract`
-61. `publish_temporal_evidence_freshness_receipt_contract`
-62. `publish_temporal_resolution_receipt_contract`
-63. `publish_temporal_reapproval_receipt_contract`
-64. `publish_temporal_dispatch_window_receipt_contract`
-65. `publish_temporal_budget_window_receipt_contract`
-66. `publish_temporal_memory_receipt_contract`
-67. `publish_temporal_causal_order_receipt_contract`
-68. `publish_temporal_monotonic_duration_receipt_contract`
-69. `publish_temporal_accepted_risk_expiry_receipt_contract`
-70. `publish_temporal_credential_expiry_receipt_contract`
-71. `publish_temporal_retention_window_receipt_contract`
-72. `publish_temporal_rate_limit_window_receipt_contract`
-73. `publish_temporal_retry_window_receipt_contract`
-74. `publish_temporal_lease_window_receipt_contract`
-75. `publish_temporal_idempotency_window_receipt_contract`
-76. `publish_temporal_missed_run_receipt_contract`
-77. `publish_temporal_recurrence_window_receipt_contract`
-78. `publish_temporal_memory_refresh_receipt_contract`
-79. `classify_temporal_scheduler_routes`
-80. `publish_temporal_scheduler_receipt_contract`
-81. `publish_policy_proof_report_contract`
-82. `publish_capability_upgrade_plan_contract`
-83. `publish_autonomous_test_generation_plan_contract`
-84. `publish_trust_ledger_bundle_contract`
-85. `publish_trust_ledger_anchor_receipt_contract`
+17. `classify_ops_diagnostics_routes`
+18. `classify_task_queue_lifecycle_routes`
+19. `classify_trace_observability_routes`
+20. `classify_agent_memory_lifecycle_routes`
+21. `classify_governance_explanation_lifecycle_routes`
+22. `classify_operational_health_read_model_routes`
+23. `classify_agent_orchestration_lifecycle_routes`
+24. `classify_workflow_execution_lifecycle_routes`
+25. `classify_certification_daemon_lifecycle_routes`
+26. `classify_tenant_governance_lifecycle_routes`
+27. `classify_rbac_access_governance_routes`
+28. `classify_runtime_config_management_routes`
+29. `classify_webhooks_routes`
+30. `classify_agent_adapter_protocol_routes`
+31. `classify_runbook_learning_routes`
+32. `publish_software_outcome_learning_contract`
+33. `publish_runtime_conformance_attestation`
+34. `publish_proof_route_gap_triage_report`
+35. `publish_production_evidence_plane`
+36. `publish_capability_plan_evidence_bundles`
+37. `publish_deployment_orchestration_receipt_contract`
+38. `publish_runtime_reflex_engine_read_models`
+39. `publish_governed_operational_intelligence_witnesses`
+40. `classify_world_state_knowledge_routes`
+41. `classify_policy_simulation_routes`
+42. `publish_capability_forge_candidate_contract`
+43. `publish_capability_maturity_assessment_contract`
+44. `publish_capability_manifest_registry_contract`
+45. `publish_networked_worker_mesh_contract`
+46. `publish_software_dev_capability_pack_contract`
+47. `publish_agent_identity_contract`
+48. `publish_claim_verification_report_contract`
+49. `classify_governed_connector_routes`
+50. `classify_governed_scheduler_routes`
+51. `classify_multi_agent_coordination_routes`
+52. `publish_connector_self_healing_receipt_contract`
+53. `publish_collaboration_case_contract`
+54. `publish_capability_maturity_contract`
+55. `publish_policy_prover_counterexample_contract`
+56. `publish_memory_lattice_admission_contract`
+57. `publish_workflow_mining_draft_contract`
+58. `publish_domain_operating_pack_contract`
+59. `publish_multimodal_operation_receipt_contract`
+60. `publish_physical_action_receipt_contract`
+61. `publish_temporal_operation_receipt_contract`
+62. `publish_temporal_evidence_freshness_receipt_contract`
+63. `publish_temporal_resolution_receipt_contract`
+64. `publish_temporal_reapproval_receipt_contract`
+65. `publish_temporal_dispatch_window_receipt_contract`
+66. `publish_temporal_budget_window_receipt_contract`
+67. `publish_temporal_memory_receipt_contract`
+68. `publish_temporal_causal_order_receipt_contract`
+69. `publish_temporal_monotonic_duration_receipt_contract`
+70. `publish_temporal_accepted_risk_expiry_receipt_contract`
+71. `publish_temporal_credential_expiry_receipt_contract`
+72. `publish_temporal_retention_window_receipt_contract`
+73. `publish_temporal_rate_limit_window_receipt_contract`
+74. `publish_temporal_retry_window_receipt_contract`
+75. `publish_temporal_lease_window_receipt_contract`
+76. `publish_temporal_idempotency_window_receipt_contract`
+77. `publish_temporal_missed_run_receipt_contract`
+78. `publish_temporal_recurrence_window_receipt_contract`
+79. `publish_temporal_memory_refresh_receipt_contract`
+80. `classify_temporal_scheduler_routes`
+81. `publish_temporal_scheduler_receipt_contract`
+82. `publish_policy_proof_report_contract`
+83. `publish_capability_upgrade_plan_contract`
+84. `publish_autonomous_test_generation_plan_contract`
+85. `publish_trust_ledger_bundle_contract`
+86. `publish_trust_ledger_anchor_receipt_contract`
 
 Open closure actions:
 
@@ -213,6 +215,6 @@ Open closure actions:
 
 STATUS:
   Completeness: 100%
-  Invariants verified: route declarations, route-level coverage classification, coverage levels, coverage states, closure action mapping, gateway runtime witness mapping, tenant governance lifecycle route mapping, runtime configuration management route mapping, webhooks proof surface mapping, agent adapter protocol route mapping, multi-agent coordination runtime route mapping, temporal resolution receipt contract mapping, temporal missed-run receipt contract mapping, temporal recurrence window contract mapping, temporal memory contract mapping, temporal memory refresh contract mapping, schema contract validation, deployment orchestration receipt schema contract
-  Open issues: 99 proof-relevant declared routes remain unclassified and are marked unproven in the machine witness
-  Next action: classify unproven declared routes into named proof surfaces or explicit exemptions
+  Invariants verified: route declarations, route-level coverage classification, coverage levels, coverage states, closure action mapping, gateway runtime witness mapping, tenant governance lifecycle route mapping, runtime configuration management route mapping, webhooks proof surface mapping, ops diagnostics route mapping, agent adapter protocol route mapping, multi-agent coordination runtime route mapping, temporal resolution receipt contract mapping, temporal missed-run receipt contract mapping, temporal recurrence window contract mapping, temporal memory contract mapping, temporal memory refresh contract mapping, schema contract validation, deployment orchestration receipt schema contract
+  Open issues: 96 proof-relevant declared routes remain unclassified and are marked unproven in the machine witness
+  Next action: classify `/api/v1/state` routes into a named proof surface or explicit exemption

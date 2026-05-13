@@ -670,6 +670,37 @@ def proof_coverage_matrix() -> dict[str, Any]:
             ],
         ),
         _surface(
+            "ops_proof_surface",
+            [
+                "/api/v1/ops/benchmarks",
+                "/api/v1/ops/imports",
+                "/api/v1/ops/proof-bridge",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "mcoi/mcoi_runtime/app/routers/ops/diagnostics.py",
+                "mcoi/mcoi_runtime/core/governance_bench.py",
+                "mcoi/mcoi_runtime/core/import_analyzer.py",
+                "mcoi/mcoi_runtime/core/proof_bridge.py",
+                "mcoi/tests/test_governance_endpoints.py",
+                "mcoi/tests/test_governance_bench.py",
+                "mcoi/tests/test_import_analyzer.py",
+                "mcoi/tests/test_autonomous_fixes.py",
+            ],
+            "Operational diagnostics routes run governed benchmark summaries, expose bounded import-cycle analysis, and publish proof-bridge status read models without mutating runtime authority.",
+            [
+                "ops_benchmarks_return_governed_summary",
+                "ops_benchmark_results_have_metrics",
+                "ops_import_analysis_returns_dependency_summary",
+                "ops_import_depth_distribution_bounded",
+                "ops_proof_bridge_status_governed",
+                "proof_bridge_registered_in_deps",
+            ],
+        ),
+        _surface(
             "task_queue_lifecycle",
             [
                 "/api/v1/queue/process",
@@ -2958,6 +2989,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
         {
             "action_id": "classify_event_bus_operations_routes",
             "surfaces": ["event_bus_operations"],
+            "status": "closed",
+        },
+        {
+            "action_id": "classify_ops_diagnostics_routes",
+            "surfaces": ["ops_proof_surface"],
             "status": "closed",
         },
         {
