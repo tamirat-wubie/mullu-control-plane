@@ -430,6 +430,13 @@
       ]
     },
     {
+      "action_id": "publish_temporal_resolution_receipt_contract",
+      "status": "closed",
+      "surfaces": [
+        "temporal_resolution"
+      ]
+    },
+    {
       "action_id": "publish_temporal_evidence_freshness_receipt_contract",
       "status": "closed",
       "surfaces": [
@@ -612,7 +619,7 @@
   ],
   "coverage_summary": {
     "by_action_proof": {
-      "action_proof": 76,
+      "action_proof": 77,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 13,
@@ -620,7 +627,7 @@
     },
     "by_audit": {
       "action_proof": 0,
-      "audit_chain": 87,
+      "audit_chain": 88,
       "gap": 0,
       "read_model": 4,
       "request_proof": 0
@@ -628,16 +635,16 @@
     "by_coverage_state": {
       "proven": 1,
       "unproven": 0,
-      "witnessed": 90
+      "witnessed": 91
     },
     "by_request_proof": {
       "action_proof": 1,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 15,
-      "request_proof": 75
+      "request_proof": 76
     },
-    "surface_count": 91
+    "surface_count": 92
   },
   "generated_by": "scripts/proof_coverage_matrix.py",
   "route_coverage": {
@@ -4404,6 +4411,36 @@
         "receipt_not_terminal_closure"
       ],
       "surface_id": "temporal_evidence_freshness"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "gateway/temporal_resolution.py",
+        "schemas/temporal_resolution_receipt.schema.json",
+        "tests/test_gateway/test_temporal_resolution.py"
+      ],
+      "notes": "Temporal resolution receipts resolve bounded temporal phrases with runtime-owned time truth, tenant timezone preservation, original text retention, business-calendar defaults, unsupported phrase closure, and high-risk clarification before scheduling or dispatch.",
+      "representative_paths": [
+        "evaluate_temporal_resolution",
+        "TemporalResolutionRequest",
+        "TemporalResolutionReceipt"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "runtime_clock_owns_phrase_resolution",
+        "original_text_preserved",
+        "tenant_timezone_controls_local_resolution",
+        "relative_duration_resolved_from_injected_now",
+        "ambiguous_low_risk_phrase_uses_safe_default",
+        "ambiguous_high_risk_phrase_requires_clarification",
+        "business_day_resolution_skips_weekends_and_holidays",
+        "unsupported_phrase_fails_closed",
+        "temporal_resolution_receipt_schema_valid",
+        "receipt_not_terminal_closure"
+      ],
+      "surface_id": "temporal_resolution"
     },
     {
       "action_proof": "action_proof",

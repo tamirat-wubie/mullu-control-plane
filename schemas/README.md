@@ -71,6 +71,7 @@ files are open wire contracts. Runtime modules under `mcoi/`, `gateway/`, and
 | `streaming_budget_enforcement.schema.json` | Canonical predictive streaming budget event |
 | `temporal_evidence_freshness_receipt.schema.json` | Canonical governed evidence freshness recheck receipt |
 | `temporal_operation_receipt.schema.json` | Canonical runtime-owned temporal operation receipt |
+| `temporal_resolution_receipt.schema.json` | Canonical governed temporal phrase resolution receipt |
 | `temporal_reapproval_receipt.schema.json` | Canonical governed execution-time approval recheck receipt |
 | `temporal_dispatch_window_receipt.schema.json` | Canonical governed dispatch-window admission receipt |
 | `temporal_budget_window_receipt.schema.json` | Canonical governed tenant-local budget-window admission receipt |

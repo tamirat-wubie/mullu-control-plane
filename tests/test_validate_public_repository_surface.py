@@ -230,6 +230,7 @@ def test_governance_protocol_doc_is_public_surface_anchor() -> None:
     assert "Reflex deployment witness envelopes are public contracts" in content
     assert "Reflex deployment witness validator receipts are public contracts" in content
     assert "Temporal evidence freshness receipts are public contracts" in content
+    assert "Temporal resolution receipts are public contracts" in content
     assert "Temporal reapproval receipts are public contracts" in content
     assert "Temporal dispatch window receipts are public contracts" in content
     assert "Temporal budget window receipts are public contracts" in content

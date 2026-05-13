@@ -2097,6 +2097,36 @@ def proof_coverage_matrix() -> dict[str, Any]:
             ],
         ),
         _surface(
+            "temporal_resolution",
+            [
+                "evaluate_temporal_resolution",
+                "TemporalResolutionRequest",
+                "TemporalResolutionReceipt",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "gateway/temporal_resolution.py",
+                "schemas/temporal_resolution_receipt.schema.json",
+                "tests/test_gateway/test_temporal_resolution.py",
+            ],
+            "Temporal resolution receipts resolve bounded temporal phrases with runtime-owned time truth, tenant timezone preservation, original text retention, business-calendar defaults, unsupported phrase closure, and high-risk clarification before scheduling or dispatch.",
+            [
+                "runtime_clock_owns_phrase_resolution",
+                "original_text_preserved",
+                "tenant_timezone_controls_local_resolution",
+                "relative_duration_resolved_from_injected_now",
+                "ambiguous_low_risk_phrase_uses_safe_default",
+                "ambiguous_high_risk_phrase_requires_clarification",
+                "business_day_resolution_skips_weekends_and_holidays",
+                "unsupported_phrase_fails_closed",
+                "temporal_resolution_receipt_schema_valid",
+                "receipt_not_terminal_closure",
+            ],
+        ),
+        _surface(
             "temporal_reapproval",
             [
                 "TemporalReapproval.evaluate",
@@ -3148,6 +3178,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
         {
             "action_id": "publish_temporal_operation_receipt_contract",
             "surfaces": ["temporal_kernel"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_temporal_resolution_receipt_contract",
+            "surfaces": ["temporal_resolution"],
             "status": "closed",
         },
         {

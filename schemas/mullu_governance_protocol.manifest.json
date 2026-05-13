@@ -491,6 +491,12 @@
       "surface": "temporal"
     },
     {
+      "schema_id": "temporal-resolution-receipt",
+      "path": "schemas/temporal_resolution_receipt.schema.json",
+      "urn": "urn:mullusi:schema:temporal-resolution-receipt:1",
+      "surface": "temporal"
+    },
+    {
       "schema_id": "temporal-evidence-freshness-receipt",
       "path": "schemas/temporal_evidence_freshness_receipt.schema.json",
       "urn": "urn:mullusi:schema:temporal-evidence-freshness-receipt:1",

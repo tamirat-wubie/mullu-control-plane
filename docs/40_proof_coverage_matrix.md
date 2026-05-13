@@ -70,6 +70,7 @@ Purpose: declare the proof state for every published MCOI proof surface and proo
 | `physical_action_boundary` | /operator/physical-capability-promotion-receipts, /operator/physical-capability-promotion-receipts/console, PhysicalActionBoundary.evaluate, PhysicalActionRequest, PhysicalActionReceipt | request_proof | action_proof | physical_action_receipt_schema_valid, physical_capability_pack_fixture_not_default_loaded, physical_sandbox_replay_admitted_without_production_gate, live_physical_capability_rejected_by_production_gate, physical_pack_projects_sandbox_only_evidence, physical_promotion_preflight_blocks_fixture_live_claim, physical_promotion_preflight_requires_live_safety_evidence, physical_promotion_preflight_accepts_full_evidence, physical_promotion_preflight_allows_sandbox_only_pack, physical_capsule_admission_runs_promotion_preflight, physical_capsule_admission_keeps_registry_unmutated_on_preflight_failure, physical_promotion_receipt_binds_forge_handoff_registry_preflight, physical_promotion_receipt_schema_valid, physical_promotion_receipt_cli_emits_schema_valid_bundle, physical_promotion_receipt_cli_blocks_missing_live_refs, physical_promotion_receipt_operator_endpoint_emits_bundle, physical_promotion_receipt_operator_endpoint_blocks_missing_live_refs, physical_promotion_receipt_jsonl_store_persists, physical_promotion_receipt_store_fails_closed_on_invalid_record, physical_promotion_receipt_operator_console_renders_ledger, hardware_identity_required, safety_envelope_required, manual_override_required, emergency_stop_required, simulation_pass_required, operator_approval_required, sensor_confirmation_required, physical_dispatch_blocked_until_controls_complete, physical_worker_canary_uses_sandbox_handler, physical_worker_canary_artifact_hash_bound | audit_chain | witnessed | Physical action boundary emits schema-backed pre-dispatch receipts that block physical-world side effects unless hardware identity, safety envelope, manual override, emergency stop, simulation, operator approval, sensor confirmation, and safe-state controls are present; checked-in physical capability fixtures stay outside default loading, admit sandbox replay only when production readiness is not required, reject live physical promotion by default, and require promotion preflight evidence before any live production claim. |
 | `temporal_kernel` | /api/v1/temporal/schedules, /api/v1/temporal/schedules/{schedule_id}, /api/v1/temporal/schedules/{schedule_id}/cancel, /api/v1/temporal/worker/tick, /api/v1/temporal/summary, TemporalKernel.evaluate, TrustedClock.now_utc, TrustedClock.monotonic_ns | request_proof | action_proof | runtime_clock_injected, monotonic_duration_measured, future_schedule_defers, approval_expiry_denies, stale_evidence_escalates, budget_window_checked, causal_preconditions_required, temporal_scheduler_routes_governed, schedule_read_models_persisted, worker_tick_certifies_proofs, cancel_emits_terminal_receipt, temporal_receipt_schema_valid, receipt_not_terminal_closure | audit_chain | witnessed | Temporal kernel owns runtime time truth for schedules, expiry, approval validity, evidence freshness, budget windows, causal prerequisites, temporal schedule APIs, and monotonic duration witnesses before dispatch. |
 | `temporal_evidence_freshness` | TemporalEvidenceFreshness.evaluate, EvidenceFreshnessClaim, TemporalEvidenceFreshnessReceipt | request_proof | action_proof | evidence_age_computed_from_runtime_clock, freshness_window_required_for_dispatch, stale_required_evidence_triggers_refresh, missing_required_evidence_blocks_dispatch, revoked_or_unverified_high_risk_evidence_blocks, expiring_evidence_warns_before_dispatch, temporal_evidence_freshness_receipt_schema_valid, receipt_not_terminal_closure | audit_chain | witnessed | Temporal evidence freshness rechecks required evidence age, freshness windows, tenant scope, high-risk verification, revoked evidence, missing evidence, and expiring evidence before dispatch. |
+| `temporal_resolution` | evaluate_temporal_resolution, TemporalResolutionRequest, TemporalResolutionReceipt | request_proof | action_proof | runtime_clock_owns_phrase_resolution, original_text_preserved, tenant_timezone_controls_local_resolution, relative_duration_resolved_from_injected_now, ambiguous_low_risk_phrase_uses_safe_default, ambiguous_high_risk_phrase_requires_clarification, business_day_resolution_skips_weekends_and_holidays, unsupported_phrase_fails_closed, temporal_resolution_receipt_schema_valid, receipt_not_terminal_closure | audit_chain | witnessed | Temporal resolution receipts resolve bounded temporal phrases with runtime-owned time truth, tenant timezone preservation, original text retention, business-calendar defaults, unsupported phrase closure, and high-risk clarification before scheduling or dispatch. |
 | `temporal_reapproval` | TemporalReapproval.evaluate, ReapprovalRequest, TemporalReapprovalReceipt | request_proof | action_proof | runtime_clock_owns_reapproval_time, high_risk_approval_roles_required, expired_approval_requires_reapproval, revoked_or_out_of_scope_approval_blocks_dispatch, missing_approval_role_requires_reapproval, low_risk_action_does_not_require_reapproval, temporal_reapproval_receipt_schema_valid, receipt_not_terminal_closure | audit_chain | witnessed | Temporal reapproval rechecks high-risk and critical approval grants at execution time for expiry, revocation, scope, tenant, approver role coverage, approval age, evidence refs, and source schedule binding before dispatch. |
 | `temporal_dispatch_window` | TemporalDispatchWindow.evaluate, DispatchWindowRequest, TemporalDispatchWindowReceipt | request_proof | action_proof | runtime_clock_owns_dispatch_window_time, tenant_timezone_resolved, allowed_window_required_for_high_risk_dispatch, outside_allowed_window_defers_dispatch, active_blackout_defers_dispatch, holiday_closure_defers_dispatch, source_reapproval_bound_for_high_risk_dispatch, temporal_dispatch_window_receipt_schema_valid, receipt_not_terminal_closure | audit_chain | witnessed | Temporal dispatch window rechecks tenant-local dispatch admission at runtime through allowed windows, blackout windows, holidays, evidence refs, and high-risk source schedule plus reapproval binding before worker execution. |
 | `temporal_budget_window` | TemporalBudgetWindow.evaluate, BudgetWindowRequest, TemporalBudgetWindowReceipt | request_proof | action_proof | runtime_clock_owns_budget_window_time, tenant_timezone_resolves_budget_period, daily_weekly_monthly_budget_resets_computed, spend_snapshot_period_matches_active_window, projected_spend_blocks_over_limit_dispatch, future_budget_window_defers_dispatch, source_reapproval_bound_for_high_risk_budget_window, temporal_budget_window_receipt_schema_valid, receipt_not_terminal_closure | audit_chain | witnessed | Temporal budget window rechecks tenant-local daily, weekly, monthly, or custom reset periods against active spend snapshots, reserved spend, projected spend, evidence refs, and high-risk source receipts before worker execution. |
@@ -102,9 +103,9 @@ Coverage summary:
 
 | Metric | Count |
 |---|---:|
-| Total surfaces | 91 |
+| Total surfaces | 92 |
 | Proven surfaces | 1 |
-| Witnessed surfaces | 90 |
+| Witnessed surfaces | 91 |
 | Unproven surfaces | 0 |
 
 Declared route coverage:
@@ -181,29 +182,30 @@ Closed closure actions:
 59. `publish_physical_action_receipt_contract`
 60. `publish_temporal_operation_receipt_contract`
 61. `publish_temporal_evidence_freshness_receipt_contract`
-62. `publish_temporal_reapproval_receipt_contract`
-63. `publish_temporal_dispatch_window_receipt_contract`
-64. `publish_temporal_budget_window_receipt_contract`
-65. `publish_temporal_memory_receipt_contract`
-66. `publish_temporal_causal_order_receipt_contract`
-67. `publish_temporal_monotonic_duration_receipt_contract`
-68. `publish_temporal_accepted_risk_expiry_receipt_contract`
-69. `publish_temporal_credential_expiry_receipt_contract`
-70. `publish_temporal_retention_window_receipt_contract`
-71. `publish_temporal_rate_limit_window_receipt_contract`
-72. `publish_temporal_retry_window_receipt_contract`
-73. `publish_temporal_lease_window_receipt_contract`
-74. `publish_temporal_idempotency_window_receipt_contract`
-75. `publish_temporal_missed_run_receipt_contract`
-76. `publish_temporal_recurrence_window_receipt_contract`
-77. `publish_temporal_memory_refresh_receipt_contract`
-78. `classify_temporal_scheduler_routes`
-79. `publish_temporal_scheduler_receipt_contract`
-80. `publish_policy_proof_report_contract`
-81. `publish_capability_upgrade_plan_contract`
-82. `publish_autonomous_test_generation_plan_contract`
-83. `publish_trust_ledger_bundle_contract`
-84. `publish_trust_ledger_anchor_receipt_contract`
+62. `publish_temporal_resolution_receipt_contract`
+63. `publish_temporal_reapproval_receipt_contract`
+64. `publish_temporal_dispatch_window_receipt_contract`
+65. `publish_temporal_budget_window_receipt_contract`
+66. `publish_temporal_memory_receipt_contract`
+67. `publish_temporal_causal_order_receipt_contract`
+68. `publish_temporal_monotonic_duration_receipt_contract`
+69. `publish_temporal_accepted_risk_expiry_receipt_contract`
+70. `publish_temporal_credential_expiry_receipt_contract`
+71. `publish_temporal_retention_window_receipt_contract`
+72. `publish_temporal_rate_limit_window_receipt_contract`
+73. `publish_temporal_retry_window_receipt_contract`
+74. `publish_temporal_lease_window_receipt_contract`
+75. `publish_temporal_idempotency_window_receipt_contract`
+76. `publish_temporal_missed_run_receipt_contract`
+77. `publish_temporal_recurrence_window_receipt_contract`
+78. `publish_temporal_memory_refresh_receipt_contract`
+79. `classify_temporal_scheduler_routes`
+80. `publish_temporal_scheduler_receipt_contract`
+81. `publish_policy_proof_report_contract`
+82. `publish_capability_upgrade_plan_contract`
+83. `publish_autonomous_test_generation_plan_contract`
+84. `publish_trust_ledger_bundle_contract`
+85. `publish_trust_ledger_anchor_receipt_contract`
 
 Open closure actions:
 
@@ -211,6 +213,6 @@ Open closure actions:
 
 STATUS:
   Completeness: 100%
-  Invariants verified: route declarations, route-level coverage classification, coverage levels, coverage states, closure action mapping, gateway runtime witness mapping, tenant governance lifecycle route mapping, runtime configuration management route mapping, webhooks proof surface mapping, agent adapter protocol route mapping, multi-agent coordination runtime route mapping, temporal missed-run receipt contract mapping, temporal recurrence window contract mapping, temporal memory contract mapping, temporal memory refresh contract mapping, schema contract validation, deployment orchestration receipt schema contract
+  Invariants verified: route declarations, route-level coverage classification, coverage levels, coverage states, closure action mapping, gateway runtime witness mapping, tenant governance lifecycle route mapping, runtime configuration management route mapping, webhooks proof surface mapping, agent adapter protocol route mapping, multi-agent coordination runtime route mapping, temporal resolution receipt contract mapping, temporal missed-run receipt contract mapping, temporal recurrence window contract mapping, temporal memory contract mapping, temporal memory refresh contract mapping, schema contract validation, deployment orchestration receipt schema contract
   Open issues: 99 proof-relevant declared routes remain unclassified and are marked unproven in the machine witness
   Next action: classify unproven declared routes into named proof surfaces or explicit exemptions
