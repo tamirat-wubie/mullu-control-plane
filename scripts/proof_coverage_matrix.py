@@ -1133,6 +1133,39 @@ def proof_coverage_matrix() -> dict[str, Any]:
             ],
         ),
         _surface(
+            "agent_adapter_protocol",
+            [
+                "/api/v1/agent/action-request",
+                "/api/v1/agent/action-result",
+                "/api/v1/agent/adapter/summary",
+                "/api/v1/agent/checkpoint",
+                "/api/v1/agent/heartbeat",
+                "/api/v1/agent/register",
+                "/api/v1/agent/restore",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "mcoi/mcoi_runtime/app/routers/adapter.py",
+                "mcoi/tests/test_agent_adapter_protocol.py",
+                "mcoi/tests/test_compliance_export.py",
+                "mcoi/tests/test_runbook_learning.py",
+                "mcoi/tests/test_server_phase217.py",
+            ],
+            "Agent adapter protocol routes register external agents, accept lease heartbeats, gate action requests through the guard chain, resolve action results into tracked records, checkpoint and restore coordination state with bounded errors, expose a governed adapter summary, and audit adapter registration plus action outcomes.",
+            [
+                "agent_adapter_registration_audited",
+                "agent_adapter_heartbeat_scoped",
+                "agent_adapter_action_request_guard_chain_checked",
+                "agent_adapter_action_result_tracked",
+                "agent_adapter_checkpoint_restore_bounded",
+                "agent_adapter_summary_bounded",
+                "agent_adapter_errors_sanitized",
+            ],
+        ),
+        _surface(
             "connector_self_healing",
             [
                 "ConnectorSelfHealingEngine.evaluate",
@@ -2409,6 +2442,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
         {
             "action_id": "classify_governed_scheduler_routes",
             "surfaces": ["governed_background_scheduler"],
+            "status": "closed",
+        },
+        {
+            "action_id": "classify_agent_adapter_routes",
+            "surfaces": ["agent_adapter_protocol"],
             "status": "closed",
         },
         {

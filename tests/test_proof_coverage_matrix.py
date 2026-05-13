@@ -116,6 +116,9 @@ def test_representative_routes_are_not_unclassified() -> None:
         classified_routes["/api/v1/scheduler/jobs/{job_id}/disable"]["surface_id"]
         == "governed_background_scheduler"
     )
+    assert classified_routes["/api/v1/agent/register"]["surface_id"] == "agent_adapter_protocol"
+    assert classified_routes["/api/v1/agent/action-request"]["surface_id"] == "agent_adapter_protocol"
+    assert classified_routes["/api/v1/agent/action-result"]["surface_id"] == "agent_adapter_protocol"
     assert classified_routes["/api/v1/finance/approval-packets"]["surface_id"] == "finance_approval_packets"
     assert (
         classified_routes["/api/v1/finance/approval-packets/operator/read-model"]["surface_id"]
@@ -125,7 +128,7 @@ def test_representative_routes_are_not_unclassified() -> None:
         classified_routes["/api/v1/finance/approval-packets/{case_id}/proof"]["surface_id"]
         == "finance_approval_packets"
     )
-    assert classified_routes["/api/v1/agent/register"]["coverage_state"] == "unproven"
+    assert classified_routes["/api/v1/agents"]["coverage_state"] == "unproven"
 
 
 def test_finance_approval_packet_surface_is_witnessed() -> None:
@@ -921,6 +924,46 @@ def test_governed_background_scheduler_surface_gates_job_lifecycle() -> None:
     assert route_records["/api/v1/scheduler/execute"]["coverage_state"] == "witnessed"
     assert route_records["/api/v1/scheduler/execute"]["surface_id"] == "governed_background_scheduler"
     assert closure_actions["classify_governed_scheduler_routes"]["status"] == "closed"
+
+
+def test_agent_adapter_protocol_surface_gates_external_agent_actions() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    adapter_surface = surfaces["agent_adapter_protocol"]
+    witnesses = set(adapter_surface["runtime_witnesses"])
+    route_records = {
+        record["route"]: record
+        for record in matrix["route_coverage"]["routes"]
+    }
+
+    assert adapter_surface["coverage_state"] == "witnessed"
+    assert adapter_surface["request_proof"] == "request_proof"
+    assert adapter_surface["action_proof"] == "action_proof"
+    assert "/api/v1/agent/register" in adapter_surface["representative_paths"]
+    assert "/api/v1/agent/heartbeat" in adapter_surface["representative_paths"]
+    assert "/api/v1/agent/action-request" in adapter_surface["representative_paths"]
+    assert "/api/v1/agent/action-result" in adapter_surface["representative_paths"]
+    assert "/api/v1/agent/checkpoint" in adapter_surface["representative_paths"]
+    assert "/api/v1/agent/restore" in adapter_surface["representative_paths"]
+    assert "/api/v1/agent/adapter/summary" in adapter_surface["representative_paths"]
+    assert "mcoi/mcoi_runtime/app/routers/adapter.py" in adapter_surface["evidence_files"]
+    assert "mcoi/tests/test_agent_adapter_protocol.py" in adapter_surface["evidence_files"]
+    assert "mcoi/tests/test_compliance_export.py" in adapter_surface["evidence_files"]
+    assert "mcoi/tests/test_runbook_learning.py" in adapter_surface["evidence_files"]
+    assert "mcoi/tests/test_server_phase217.py" in adapter_surface["evidence_files"]
+    assert "agent_adapter_registration_audited" in witnesses
+    assert "agent_adapter_heartbeat_scoped" in witnesses
+    assert "agent_adapter_action_request_guard_chain_checked" in witnesses
+    assert "agent_adapter_action_result_tracked" in witnesses
+    assert "agent_adapter_checkpoint_restore_bounded" in witnesses
+    assert "agent_adapter_summary_bounded" in witnesses
+    assert "agent_adapter_errors_sanitized" in witnesses
+    assert route_records["/api/v1/agent/register"]["coverage_state"] == "witnessed"
+    assert route_records["/api/v1/agent/register"]["surface_id"] == "agent_adapter_protocol"
+    assert route_records["/api/v1/agent/action-request"]["coverage_state"] == "witnessed"
+    assert route_records["/api/v1/agent/action-request"]["surface_id"] == "agent_adapter_protocol"
+    assert closure_actions["classify_agent_adapter_routes"]["status"] == "closed"
 
 
 def test_connector_self_healing_surface_emits_bounded_recovery_receipts() -> None:
