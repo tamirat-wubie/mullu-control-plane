@@ -62,6 +62,13 @@
       ]
     },
     {
+      "action_id": "classify_capability_fabric_routes",
+      "status": "closed",
+      "surfaces": [
+        "gateway_capability_fabric"
+      ]
+    },
+    {
       "action_id": "classify_operator_console_read_model_routes",
       "status": "closed",
       "surfaces": [
@@ -656,8 +663,8 @@
   "generated_by": "scripts/proof_coverage_matrix.py",
   "route_coverage": {
     "by_coverage_state": {
-      "proven": 8,
-      "unproven": 93,
+      "proven": 11,
+      "unproven": 90,
       "witnessed": 232
     },
     "route_count": 333,
@@ -2153,19 +2160,19 @@
         "surface_id": "authority_obligation_mesh"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "proven",
         "route": "/capability-fabric/admission-audits",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "gateway_capability_fabric"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "proven",
         "route": "/capability-fabric/capsule-admission-receipts",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "gateway_capability_fabric"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "proven",
         "route": "/capability-fabric/capsule-admissions",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "gateway_capability_fabric"
       },
       {
         "coverage_state": "proven",
@@ -2328,7 +2335,7 @@
         "surface_id": "gateway_capability_fabric"
       }
     ],
-    "unclassified_route_count": 93
+    "unclassified_route_count": 90
   },
   "schema_version": 1,
   "surfaces": [
@@ -2351,6 +2358,9 @@
       "notes": "Gateway command admission, request receipt envelopes, terminal closure, universal action proof replay, capsule compiler certification-evidence manifests, and the capsule admission installer receipt expose runtime witnesses.",
       "representative_paths": [
         "/webhook/*",
+        "/capability-fabric/admission-audits",
+        "/capability-fabric/capsule-admission-receipts",
+        "/capability-fabric/capsule-admissions",
         "/capability-fabric/read-model",
         "/commands/{command_id}/closure",
         "/commands/{command_id}/universal-action-proof",
@@ -2369,6 +2379,10 @@
         "operator_universal_action_console_renders_replay_state",
         "capsule_compiler_emits_certification_evidence_manifest",
         "capsule_installer_stamps_admission_receipt",
+        "capsule_admission_endpoint_installs_and_lists_receipt",
+        "capsule_admission_endpoint_rejects_invalid_payload",
+        "capability_fabric_admission_audits_are_filterable",
+        "capability_fabric_receipts_are_bounded",
         "physical_capsule_admission_runs_promotion_preflight"
       ],
       "surface_id": "gateway_capability_fabric"

@@ -63,6 +63,9 @@ def proof_coverage_matrix() -> dict[str, Any]:
             "gateway_capability_fabric",
             [
                 "/webhook/*",
+                "/capability-fabric/admission-audits",
+                "/capability-fabric/capsule-admission-receipts",
+                "/capability-fabric/capsule-admissions",
                 "/capability-fabric/read-model",
                 "/commands/{command_id}/closure",
                 "/commands/{command_id}/universal-action-proof",
@@ -92,6 +95,10 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 *gateway_witnesses,
                 "capsule_compiler_emits_certification_evidence_manifest",
                 "capsule_installer_stamps_admission_receipt",
+                "capsule_admission_endpoint_installs_and_lists_receipt",
+                "capsule_admission_endpoint_rejects_invalid_payload",
+                "capability_fabric_admission_audits_are_filterable",
+                "capability_fabric_receipts_are_bounded",
                 "physical_capsule_admission_runs_promotion_preflight",
             ],
         ),
@@ -2949,6 +2956,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
         {
             "action_id": "connect_pilot_scaffold_to_hosted_provisioning_endpoint",
             "surfaces": ["pilot_provisioning"],
+            "status": "closed",
+        },
+        {
+            "action_id": "classify_capability_fabric_routes",
+            "surfaces": ["gateway_capability_fabric"],
             "status": "closed",
         },
         {

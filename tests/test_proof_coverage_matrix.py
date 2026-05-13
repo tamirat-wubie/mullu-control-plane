@@ -370,10 +370,19 @@ def test_federated_control_plane_surface_is_witnessed() -> None:
 def test_gateway_runtime_witnesses_bind_closure_invariants() -> None:
     matrix = _load_fixture()
     surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    route_records = {
+        record["route"]: record
+        for record in matrix["route_coverage"]["routes"]
+    }
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
     gateway_surface = surfaces["gateway_capability_fabric"]
     witnesses = set(gateway_surface["runtime_witnesses"])
 
     assert gateway_surface["action_proof"] == "action_proof"
+    assert "/capability-fabric/admission-audits" in gateway_surface["representative_paths"]
+    assert "/capability-fabric/capsule-admission-receipts" in gateway_surface["representative_paths"]
+    assert "/capability-fabric/capsule-admissions" in gateway_surface["representative_paths"]
+    assert "/capability-fabric/read-model" in gateway_surface["representative_paths"]
     assert "/commands/{command_id}/closure" in gateway_surface["representative_paths"]
     assert "/commands/{command_id}/universal-action-proof" in gateway_surface["representative_paths"]
     assert "/operator/universal-actions/read-model" in gateway_surface["representative_paths"]
@@ -395,7 +404,18 @@ def test_gateway_runtime_witnesses_bind_closure_invariants() -> None:
     assert "operator_universal_action_console_renders_replay_state" in witnesses
     assert "capsule_compiler_emits_certification_evidence_manifest" in witnesses
     assert "capsule_installer_stamps_admission_receipt" in witnesses
+    assert "capsule_admission_endpoint_installs_and_lists_receipt" in witnesses
+    assert "capsule_admission_endpoint_rejects_invalid_payload" in witnesses
+    assert "capability_fabric_admission_audits_are_filterable" in witnesses
+    assert "capability_fabric_receipts_are_bounded" in witnesses
     assert "physical_capsule_admission_runs_promotion_preflight" in witnesses
+    assert route_records["/capability-fabric/admission-audits"]["coverage_state"] == "proven"
+    assert route_records["/capability-fabric/admission-audits"]["surface_id"] == "gateway_capability_fabric"
+    assert route_records["/capability-fabric/capsule-admission-receipts"]["coverage_state"] == "proven"
+    assert route_records["/capability-fabric/capsule-admission-receipts"]["surface_id"] == "gateway_capability_fabric"
+    assert route_records["/capability-fabric/capsule-admissions"]["coverage_state"] == "proven"
+    assert route_records["/capability-fabric/capsule-admissions"]["surface_id"] == "gateway_capability_fabric"
+    assert closure_actions["classify_capability_fabric_routes"]["status"] == "closed"
 
 
 def test_data_governance_controls_surface_is_witnessed() -> None:
