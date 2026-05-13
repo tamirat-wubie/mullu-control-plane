@@ -36,6 +36,7 @@ EFFECT_TYPE = "payment_sent_with_approval"
 CAPABILITY_ID = "payment.execute.with_approval"
 PROVIDER_REF_PREFIX = "provider:payment:"
 LEDGER_REF_PREFIX = "ledger:reconciliation:"
+PROVIDER_BINDING_REF_PREFIX = "provider-binding:"
 
 
 @dataclass(frozen=True, slots=True)
@@ -164,6 +165,9 @@ def _validate_provider_receipt(receipt: dict[str, Any], errors: list[str]) -> No
     evidence_refs = provider_receipt.get("evidence_refs")
     if not isinstance(evidence_refs, list) or provider_receipt.get("receipt_ref") not in evidence_refs:
         errors.append("provider_receipt evidence_refs must include provider receipt_ref")
+    provider = str(provider_receipt.get("provider", ""))
+    if provider != "sandbox":
+        _validate_non_sandbox_provider_binding(receipt, provider_receipt, provider, errors)
 
 
 def _validate_ledger_reconciliation(receipt: dict[str, Any], errors: list[str]) -> None:
@@ -186,6 +190,25 @@ def _validate_ledger_reconciliation(receipt: dict[str, Any], errors: list[str]) 
     evidence_refs = ledger_reconciliation.get("evidence_refs")
     if not isinstance(evidence_refs, list) or ledger_reconciliation.get("receipt_ref") not in evidence_refs:
         errors.append("ledger_reconciliation evidence_refs must include ledger receipt_ref")
+
+
+def _validate_non_sandbox_provider_binding(
+    receipt: dict[str, Any],
+    provider_receipt: dict[str, Any],
+    provider: str,
+    errors: list[str],
+) -> None:
+    expected_prefix = f"{PROVIDER_BINDING_REF_PREFIX}{provider}:"
+    root_evidence_refs = receipt.get("evidence_refs")
+    provider_evidence_refs = provider_receipt.get("evidence_refs")
+    if not isinstance(root_evidence_refs, list) or not any(
+        str(ref).startswith(expected_prefix) for ref in root_evidence_refs
+    ):
+        errors.append("evidence_refs must include provider binding receipt for non-sandbox provider")
+    if not isinstance(provider_evidence_refs, list) or not any(
+        str(ref).startswith(expected_prefix) for ref in provider_evidence_refs
+    ):
+        errors.append("provider_receipt evidence_refs must include provider binding receipt for non-sandbox provider")
 
 
 def _receipt_ready(receipt: dict[str, Any]) -> bool:
@@ -215,6 +238,17 @@ def _provider_receipt_ready(receipt: dict[str, Any]) -> bool:
     if not isinstance(provider_receipt, dict):
         return False
     evidence_refs = provider_receipt.get("evidence_refs")
+    provider = str(provider_receipt.get("provider", ""))
+    provider_binding_ready = True
+    if provider != "sandbox":
+        expected_prefix = f"{PROVIDER_BINDING_REF_PREFIX}{provider}:"
+        root_evidence_refs = receipt.get("evidence_refs")
+        provider_binding_ready = (
+            isinstance(root_evidence_refs, list)
+            and any(str(ref).startswith(expected_prefix) for ref in root_evidence_refs)
+            and isinstance(evidence_refs, list)
+            and any(str(ref).startswith(expected_prefix) for ref in evidence_refs)
+        )
     return (
         provider_receipt.get("receipt_ref") == receipt.get("payment_provider_receipt_ref")
         and provider_receipt.get("provider_operation") == CAPABILITY_ID
@@ -224,6 +258,7 @@ def _provider_receipt_ready(receipt: dict[str, Any]) -> bool:
         and provider_receipt.get("amount") == receipt.get("amount")
         and isinstance(evidence_refs, list)
         and provider_receipt.get("receipt_ref") in evidence_refs
+        and provider_binding_ready
     )
 
 

@@ -116,6 +116,42 @@ def test_validate_payment_closure_receipt_rejects_provider_receipt_drift(tmp_pat
     assert "provider_receipt idempotency_key must match receipt idempotency_key" in result.errors
 
 
+def test_validate_payment_closure_receipt_accepts_non_sandbox_provider_binding(tmp_path: Path) -> None:
+    receipt_path = tmp_path / "finance-payment-closure-receipt.json"
+    binding_ref = "provider-binding:stripe:acct-001"
+    payload = _ready_receipt()
+    payload["provider_receipt"] = dict(payload["provider_receipt"]) | {
+        "provider": "stripe",
+        "evidence_refs": ["provider:payment:receipt-001", binding_ref],
+    }
+    payload["evidence_refs"] = [
+        "provider:payment:receipt-001",
+        "ledger:reconciliation:receipt-001",
+        binding_ref,
+    ]
+    receipt_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    result = validate_finance_approval_payment_closure_receipt(receipt_path=receipt_path, require_ready=True)
+
+    assert result.valid is True
+    assert result.ready is True
+    assert result.blockers == ()
+
+
+def test_validate_payment_closure_receipt_rejects_non_sandbox_provider_without_binding(tmp_path: Path) -> None:
+    receipt_path = tmp_path / "finance-payment-closure-receipt.json"
+    payload = _ready_receipt()
+    payload["provider_receipt"] = dict(payload["provider_receipt"]) | {"provider": "stripe"}
+    receipt_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    result = validate_finance_approval_payment_closure_receipt(receipt_path=receipt_path, require_ready=True)
+
+    assert result.valid is False
+    assert result.ready is False
+    assert "evidence_refs must include provider binding receipt for non-sandbox provider" in result.errors
+    assert "provider_receipt evidence_refs must include provider binding receipt for non-sandbox provider" in result.errors
+
+
 def test_validate_payment_closure_receipt_rejects_unapproved_external_write(tmp_path: Path) -> None:
     receipt_path = tmp_path / "finance-payment-closure-receipt.json"
     payload = _ready_receipt() | {"approved_external_write": False}

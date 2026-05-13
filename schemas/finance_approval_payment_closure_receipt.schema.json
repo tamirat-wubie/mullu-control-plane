@@ -114,6 +114,8 @@
       "type": "string",
       "enum": [
         "adapter_receipt_missing",
+        "provider_binding_receipt_required",
+        "provider_binding_receipt_mismatch",
         "provider_receipt_mismatch",
         "ledger_reconciliation_mismatch",
         "unapproved_external_write",
