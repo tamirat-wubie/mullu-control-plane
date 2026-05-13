@@ -296,6 +296,38 @@ def proof_coverage_matrix() -> dict[str, Any]:
             ],
         ),
         _surface(
+            "multi_agent_coordination_runtime",
+            [
+                "/api/v1/multi-agent/conflict",
+                "/api/v1/multi-agent/conflicts/unresolved",
+                "/api/v1/multi-agent/delegate",
+                "/api/v1/multi-agent/delegate/resolve",
+                "/api/v1/multi-agent/handoff",
+                "/api/v1/multi-agent/merge",
+                "/api/v1/multi-agent/summary",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "mcoi/mcoi_runtime/app/routers/multi_agent.py",
+                "mcoi/mcoi_runtime/app/routers/deps.py",
+                "mcoi/tests/test_multi_agent_runtime.py",
+                "mcoi/tests/test_server_phase217.py",
+            ],
+            "Multi-agent coordination routes record delegation, delegation resolution, handoff, merge, and conflict decisions through the coordination engine, expose unresolved-conflict and summary read models, sanitize invalid coordination states, and audit effect-bearing coordination operations.",
+            [
+                "multi_agent_delegation_recorded",
+                "multi_agent_delegation_resolution_bounded",
+                "multi_agent_handoff_preserves_context",
+                "multi_agent_merge_decision_recorded",
+                "multi_agent_conflict_recorded",
+                "multi_agent_read_models_bounded",
+                "multi_agent_errors_sanitized",
+            ],
+        ),
+        _surface(
             "model_experiment_control",
             ["/api/v1/models", "/api/v1/ab-test", "/api/v1/ab-test/summary"],
             "request_proof",
@@ -2321,6 +2353,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
         {
             "action_id": "classify_agent_adapter_protocol_routes",
             "surfaces": ["agent_adapter_protocol"],
+            "status": "closed",
+        },
+        {
+            "action_id": "classify_multi_agent_coordination_routes",
+            "surfaces": ["multi_agent_coordination_runtime"],
             "status": "closed",
         },
         {
