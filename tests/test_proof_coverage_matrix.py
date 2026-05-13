@@ -1672,6 +1672,33 @@ def test_temporal_idempotency_window_surface_blocks_duplicate_dispatch() -> None
     assert closure_actions["publish_temporal_idempotency_window_receipt_contract"]["status"] == "closed"
 
 
+def test_temporal_missed_run_surface_emits_skip_and_recovery_receipts() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    missed_run_surface = surfaces["temporal_missed_run"]
+    witnesses = set(missed_run_surface["runtime_witnesses"])
+
+    assert missed_run_surface["coverage_state"] == "witnessed"
+    assert missed_run_surface["request_proof"] == "request_proof"
+    assert missed_run_surface["action_proof"] == "action_proof"
+    assert "evaluate_temporal_missed_run" in missed_run_surface["representative_paths"]
+    assert "MissedRunRequest" in missed_run_surface["representative_paths"]
+    assert "TemporalMissedRunReceipt" in missed_run_surface["representative_paths"]
+    assert "gateway/temporal_missed_run.py" in missed_run_surface["evidence_files"]
+    assert "schemas/temporal_missed_run_receipt.schema.json" in missed_run_surface["evidence_files"]
+    assert "tests/test_gateway/test_temporal_missed_run.py" in missed_run_surface["evidence_files"]
+    assert "runtime_clock_owns_missed_run_time" in witnesses
+    assert "late_within_grace_preserves_dispatch_eligibility" in witnesses
+    assert "expired_command_emits_missed_run_receipt" in witnesses
+    assert "duplicate_dispatched_run_requires_terminal_receipt" in witnesses
+    assert "recovery_due_requires_review_actions" in witnesses
+    assert "tenant_command_action_scope_checked" in witnesses
+    assert "high_risk_source_receipts_bound" in witnesses
+    assert "temporal_missed_run_receipt_schema_valid" in witnesses
+    assert closure_actions["publish_temporal_missed_run_receipt_contract"]["status"] == "closed"
+
+
 def test_temporal_memory_surface_blocks_stale_or_superseded_memory() -> None:
     matrix = _load_fixture()
     surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}

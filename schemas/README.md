@@ -80,6 +80,7 @@ files are open wire contracts. Runtime modules under `mcoi/`, `gateway/`, and
 | `temporal_retry_window_receipt.schema.json` | Canonical governed retry-window receipt |
 | `temporal_lease_window_receipt.schema.json` | Canonical governed lease-window receipt |
 | `temporal_idempotency_window_receipt.schema.json` | Canonical governed idempotency-window receipt |
+| `temporal_missed_run_receipt.schema.json` | Canonical governed missed-run receipt |
 | `temporal_memory_receipt.schema.json` | Canonical governed temporal memory use receipt |
 | `temporal_memory_refresh_receipt.schema.json` | Canonical governed temporal memory refresh workflow receipt |
 | `temporal_scheduler_receipt.schema.json` | Canonical governed scheduled wakeup and lease receipt |
