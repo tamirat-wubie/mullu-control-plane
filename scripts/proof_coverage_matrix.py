@@ -510,6 +510,14 @@ def proof_coverage_matrix() -> dict[str, Any]:
             ],
         ),
         _surface(
+            "llm_admin_observability",
+            ["/api/v1/bootstrap", "/api/v1/circuit-breaker", "/api/v1/llm/history"],
+            "read_model", "read_model", "audit_chain", "witnessed",
+            ["mcoi/mcoi_runtime/app/routers/llm/admin.py"],
+            "LLM admin observability routes expose bounded read models.",
+            ["llm_history_window_bounded"],
+        ),
+        _surface(
             "conversation_memory_lifecycle",
             [
                 "/api/v1/conversation/message",
@@ -4189,6 +4197,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
             "status": "closed",
         },
     ]
+    surfaces = _merge_duplicate_surfaces(surfaces)
     return {
         "schema_version": 1,
         "generated_by": "scripts/proof_coverage_matrix.py",
@@ -4199,6 +4208,46 @@ def proof_coverage_matrix() -> dict[str, Any]:
         "route_coverage": route_coverage_report(surfaces, discover_declared_routes()),
         "closure_actions": closure_actions,
     }
+
+
+def _ordered_unique(values: list[str]) -> list[str]:
+    seen: set[str] = set()
+    unique_values: list[str] = []
+    for value in values:
+        if value in seen:
+            continue
+        seen.add(value)
+        unique_values.append(value)
+    return unique_values
+
+
+def _merge_duplicate_surfaces(surfaces: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    merged: dict[str, dict[str, Any]] = {}
+    ordered_ids: list[str] = []
+    contract_keys = ("request_proof", "action_proof", "audit", "coverage_state")
+    for surface in surfaces:
+        surface_id = surface["surface_id"]
+        if surface_id not in merged:
+            merged[surface_id] = {
+                **surface,
+                "representative_paths": list(surface["representative_paths"]),
+                "evidence_files": list(surface["evidence_files"]),
+                "runtime_witnesses": list(surface.get("runtime_witnesses", [])),
+            }
+            ordered_ids.append(surface_id)
+            continue
+        existing = merged[surface_id]
+        for key in contract_keys:
+            if existing[key] != surface[key]:
+                raise ValueError(f"Conflicting proof coverage contract for surface {surface_id}: {key}")
+        existing["representative_paths"] = _ordered_unique(
+            [*existing["representative_paths"], *surface["representative_paths"]]
+        )
+        existing["evidence_files"] = _ordered_unique([*existing["evidence_files"], *surface["evidence_files"]])
+        existing["runtime_witnesses"] = _ordered_unique(
+            [*existing.get("runtime_witnesses", []), *surface.get("runtime_witnesses", [])]
+        )
+    return [merged[surface_id] for surface_id in ordered_ids]
 
 
 def coverage_summary(surfaces: list[dict[str, Any]]) -> dict[str, Any]:

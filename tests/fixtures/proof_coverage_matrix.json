@@ -786,12 +786,12 @@
       "action_proof": 91,
       "audit_chain": 0,
       "gap": 0,
-      "read_model": 29,
+      "read_model": 22,
       "request_proof": 2
     },
     "by_audit": {
       "action_proof": 0,
-      "audit_chain": 118,
+      "audit_chain": 111,
       "gap": 0,
       "read_model": 4,
       "request_proof": 0
@@ -799,16 +799,16 @@
     "by_coverage_state": {
       "proven": 1,
       "unproven": 0,
-      "witnessed": 121
+      "witnessed": 114
     },
     "by_request_proof": {
       "action_proof": 1,
       "audit_chain": 0,
       "gap": 0,
-      "read_model": 31,
+      "read_model": 24,
       "request_proof": 90
     },
-    "surface_count": 122
+    "surface_count": 115
   },
   "generated_by": "scripts/proof_coverage_matrix.py",
   "route_coverage": {
@@ -2718,171 +2718,11 @@
       "evidence_files": [
         "mcoi/mcoi_runtime/app/routers/llm/admin.py",
         "mcoi/tests/test_server_phase199.py",
-        "mcoi/tests/test_server_phase200.py"
-      ],
-      "notes": "LLM admin observability exposes bounded bootstrap, circuit-breaker, and LLM history read models without mutation authority.",
-      "representative_paths": [
-        "/api/v1/bootstrap",
-        "/api/v1/circuit-breaker",
-        "/api/v1/llm/history"
-      ],
-      "request_proof": "read_model",
-      "runtime_witnesses": [
-        "bootstrap_info_bounded",
-        "bootstrap_reports_stub_provider",
-        "llm_circuit_breaker_status_bounded",
-        "llm_history_window_bounded"
-      ],
-      "surface_id": "llm_admin_observability"
-    },
-    {
-      "action_proof": "read_model",
-      "audit": "audit_chain",
-      "coverage_state": "witnessed",
-      "evidence_files": [
-        "mcoi/mcoi_runtime/app/routers/ops/dependencies.py",
-        "mcoi/mcoi_runtime/core/dependency_graph.py",
-        "mcoi/tests/test_dependency_graph.py",
-        "mcoi/tests/test_server_registry_helpers.py"
-      ],
-      "notes": "Dependency graph routes expose startup ordering and bounded failure-impact read models.",
-      "representative_paths": [
-        "/api/v1/dependencies",
-        "/api/v1/dependencies/{name}/impact"
-      ],
-      "request_proof": "read_model",
-      "runtime_witnesses": [
-        "dependency_graph_startup_order_bounded",
-        "dependency_impact_analysis_bounded"
-      ],
-      "surface_id": "dependency_graph_read_models"
-    },
-    {
-      "action_proof": "read_model",
-      "audit": "audit_chain",
-      "coverage_state": "witnessed",
-      "evidence_files": [
-        "mcoi/mcoi_runtime/app/routers/ops/feature_flags.py",
-        "mcoi/mcoi_runtime/core/feature_flags.py",
-        "mcoi/tests/test_feature_flags.py",
-        "mcoi/tests/test_server_phase220.py"
-      ],
-      "notes": "Feature-flag routes expose bounded flag lists and closed defaults for missing flag lookups.",
-      "representative_paths": [
-        "/api/v1/flags",
-        "/api/v1/flags/{flag_id}"
-      ],
-      "request_proof": "read_model",
-      "runtime_witnesses": [
-        "feature_flags_list_bounded",
-        "feature_flag_lookup_bounded",
-        "missing_feature_flag_defaults_closed"
-      ],
-      "surface_id": "feature_flag_read_models"
-    },
-    {
-      "action_proof": "read_model",
-      "audit": "audit_chain",
-      "coverage_state": "witnessed",
-      "evidence_files": [
-        "mcoi/mcoi_runtime/app/routers/ops/metrics.py",
-        "mcoi/mcoi_runtime/core/prometheus_exporter.py",
-        "mcoi/tests/test_governance_metrics.py",
-        "mcoi/tests/test_platform_metrics.py",
-        "mcoi/tests/test_server_phase202.py"
-      ],
-      "notes": "Operational telemetry routes expose bounded metric snapshots and dashboard exports without mutating runtime state.",
-      "representative_paths": [
-        "/api/v1/metrics",
-        "/api/v1/grafana/dashboard"
-      ],
-      "request_proof": "read_model",
-      "runtime_witnesses": [
-        "metrics_snapshot_bounded",
-        "metrics_read_model_bounded",
-        "grafana_dashboard_export_bounded"
-      ],
-      "surface_id": "operational_telemetry_read_models"
-    },
-    {
-      "action_proof": "read_model",
-      "audit": "audit_chain",
-      "coverage_state": "witnessed",
-      "evidence_files": [
-        "mcoi/mcoi_runtime/app/routers/ops/rate_limit.py",
-        "mcoi/mcoi_runtime/core/rate_limit_headers.py",
-        "mcoi/mcoi_runtime/core/rate_limit_middleware.py",
-        "mcoi/tests/test_rate_limiter.py",
-        "mcoi/tests/test_rate_limit_headers.py",
-        "mcoi/tests/test_server_phase202.py"
-      ],
-      "notes": "Rate-limit read-model routes expose global and client-scoped token state without consuming request budget.",
-      "representative_paths": [
-        "/api/v1/rate-limit/status",
-        "/api/v1/rate-limits/{client_id}"
-      ],
-      "request_proof": "read_model",
-      "runtime_witnesses": [
-        "rate_limit_status_bounded",
-        "rate_limit_client_headers_bounded",
-        "rate_limit_read_model_non_mutating"
-      ],
-      "surface_id": "rate_limit_read_models"
-    },
-    {
-      "action_proof": "read_model",
-      "audit": "audit_chain",
-      "coverage_state": "witnessed",
-      "evidence_files": [
-        "mcoi/mcoi_runtime/app/routers/data/sla.py",
-        "mcoi/mcoi_runtime/core/sla_monitor.py",
-        "mcoi/tests/test_sla_monitor.py"
-      ],
-      "notes": "SLA monitoring routes expose bounded summaries and violations without mutating monitor state.",
-      "representative_paths": [
-        "/api/v1/sla",
-        "/api/v1/sla/violations"
-      ],
-      "request_proof": "read_model",
-      "runtime_witnesses": [
-        "sla_summary_bounded",
-        "sla_violations_bounded",
-        "sla_read_model_non_mutating"
-      ],
-      "surface_id": "sla_monitoring_read_models"
-    },
-    {
-      "action_proof": "read_model",
-      "audit": "audit_chain",
-      "coverage_state": "witnessed",
-      "evidence_files": [
-        "gateway/server.py",
-        "gateway/router.py",
-        "tests/test_gateway/test_webhooks.py"
-      ],
-      "notes": "Gateway status exposes bounded gateway health and route state as a non-mutating read model.",
-      "representative_paths": [
-        "/gateway/status"
-      ],
-      "request_proof": "read_model",
-      "runtime_witnesses": [
-        "gateway_status_governed",
-        "gateway_status_bounded"
-      ],
-      "surface_id": "gateway_status_read_model"
-    },
-    {
-      "action_proof": "read_model",
-      "audit": "audit_chain",
-      "coverage_state": "witnessed",
-      "evidence_files": [
-        "mcoi/mcoi_runtime/app/routers/llm/admin.py",
-        "mcoi/tests/test_server_phase199.py",
         "mcoi/tests/test_server_phase200.py",
         "mcoi/tests/test_server_phase212.py",
         "mcoi/tests/test_server_phase213.py"
       ],
-      "notes": "LLM admin observability routes expose bounded bootstrap inventory, circuit-breaker state, and invocation history without mutation authority.",
+      "notes": "LLM admin observability exposes bounded bootstrap, circuit-breaker, and LLM history read models without mutation authority.",
       "representative_paths": [
         "/api/v1/bootstrap",
         "/api/v1/circuit-breaker",
