@@ -34,6 +34,7 @@ from scripts import (  # noqa: E402
     validate_artifacts,
     validate_logic_governance_application,
     validate_protocol_manifest,
+    validate_public_naming_readiness,
     validate_schemas,
 )
 
@@ -113,6 +114,8 @@ REQUIRED_CI_LITERALS: tuple[str, ...] = (
     "python scripts/validate_mil_audit_runbook_operator_checklist.py --checklist examples/mil_audit_runbook_operator_checklist.json --json",
     "python -m pytest tests/test_preflight_mil_audit_runbook_workflow.py tests/test_validate_mil_audit_runbook_operator_checklist.py -q",
     "python scripts/certify_change.py --base HEAD^ --head HEAD --strict --approval-id ci-governance --rollback-plan-ref RELEASE_CHECKLIST_v0.1.md",
+    "python scripts/validate_public_naming_readiness.py",
+    "python -m pytest tests/test_public_naming_readiness.py -q",
 )
 
 METADATA_DOCUMENTS: tuple[str, ...] = (
@@ -344,6 +347,28 @@ ACCEPTED_LIMITATION_EXPECTATIONS: dict[str, tuple[str, ...]] = {
     "encryption_limitation": (
         "Field-Level Encryption",
         "AES-256-GCM",
+    ),
+}
+
+PUBLIC_NAMING_RELEASE_SURFACE_LITERALS: dict[str, tuple[str, ...]] = {
+    "README.md": (
+        "docs/PUBLIC_NAMING_REVIEW_PACKET.md",
+        "docs/PUBLIC_NAMING_ARTIFACT_MANIFEST.md",
+        "python scripts/report_public_naming_readiness.py",
+        "python scripts/plan_public_naming_transition.py",
+    ),
+    "RELEASE_CHECKLIST_v0.1.md": (
+        "docs/PUBLIC_NAMING_REVIEW_PACKET.md",
+        "docs/PUBLIC_NAMING_ARTIFACT_MANIFEST.md",
+        "python scripts/report_public_naming_readiness.py",
+        "python scripts/plan_public_naming_transition.py",
+        "No paid public product launch under `Mullu` until clearance evidence is complete",
+    ),
+    "PILOT_CHECKLIST_v0.1.md": (
+        "Public naming review packet has been checked",
+        "Public naming artifact manifest is intact",
+        "docs/PUBLIC_NAMING_REVIEW_PACKET.md",
+        "paid public launch",
     ),
 }
 
@@ -607,6 +632,25 @@ def validate_public_surface_document_texts(
     return errors
 
 
+def validate_public_naming_release_surface_links() -> list[str]:
+    """Validate release-facing docs keep public naming review links visible."""
+    errors: list[str] = []
+    for relative_path, required_literals in PUBLIC_NAMING_RELEASE_SURFACE_LITERALS.items():
+        path = REPO_ROOT / relative_path
+        if not path.exists():
+            errors.append(f"{relative_path}: missing public naming release surface")
+            continue
+        content = path.read_text(encoding="utf-8")
+        missing_literals = tuple(
+            literal for literal in required_literals if literal not in content
+        )
+        if missing_literals:
+            errors.append(
+                f"{relative_path}: missing public naming literals {list(missing_literals)}"
+            )
+    return errors
+
+
 def validate_release_notes_text(content: str) -> list[str]:
     """Validate release notes publish the red-team witness for this release."""
     missing_literals = tuple(
@@ -766,6 +810,7 @@ def validate_release_status(*, strict: bool = False) -> tuple[ReleaseStatusSumma
         errors.append("missing required deployment matrix: DEPLOYMENT.md")
 
     errors.extend(validate_source_hygiene())
+    errors.extend(validate_public_naming_release_surface_links())
 
     summary = ReleaseStatusSummary(
         release_documents=summary.release_documents,
@@ -790,6 +835,10 @@ def validate_release_status(*, strict: bool = False) -> tuple[ReleaseStatusSumma
     errors.extend(validate_protocol_manifest_surface())
     errors.extend(validate_logic_governance_surface())
     errors.extend(validate_artifacts.validate_example_artifacts(strict=strict))
+    try:
+        validate_public_naming_readiness.validate_public_naming_readiness()
+    except AssertionError as exc:
+        errors.append(f"public naming readiness failed: {exc}")
 
     if strict:
         if not summary.schema_files:

@@ -485,9 +485,6 @@ def test_verifier_replay_state_passes_canonical_lifecycle():
 
 
 def test_verifier_replay_state_detects_live_state_diverged_from_event_log():
-    # Audit-bypass scenario: someone modified the live command state without
-    # appending a corresponding transition event. Walking the event log and
-    # comparing against the live state catches the divergence.
     ledger, command_id = _ledger_through_terminal_closure()
     live = ledger._commands[command_id]
     ledger._commands[command_id] = replace(live, state=CommandState.RECEIVED)

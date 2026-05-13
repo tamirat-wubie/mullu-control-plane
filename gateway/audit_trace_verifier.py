@@ -34,7 +34,6 @@ from gateway.command_spine import (
     canonical_hash,
 )
 from gateway.authority_obligation_mesh import (
-    ApprovalChain,
     ApprovalChainStatus,
     AuthorityObligationMesh,
 )
@@ -298,14 +297,7 @@ class AuditTraceVerifier:
         )
 
     def verify_replay_state_consistency(self, command_id: str) -> "ReplayStateVerification":
-        """Replay events for a command and compare derived state against live state.
-
-        The event log is the source of truth: walking events in append order
-        yields a sequence of state transitions whose final state must match
-        what the ledger currently reports. Any divergence indicates the live
-        state was modified outside the event log (the audit-bypass attack
-        surface).
-        """
+        """Replay command events and compare the result with current ledger state."""
         command = self._ledger.get(command_id)
         if command is None:
             return ReplayStateVerification(
@@ -317,13 +309,13 @@ class AuditTraceVerifier:
                 event_count=0,
                 failures=("command_not_found",),
             )
+
         events = self._ledger.events_for(command_id)
-        failures: list[str] = []
         replayed_state: CommandState | None = None
         for event in events:
             replayed_state = event.next_state
+
         if replayed_state is None:
-            failures.append("replay_no_events_for_command")
             return ReplayStateVerification(
                 command_id=command_id,
                 command_present=True,
@@ -331,11 +323,11 @@ class AuditTraceVerifier:
                 live_state=command.state,
                 states_match=False,
                 event_count=0,
-                failures=tuple(failures),
+                failures=("replay_no_events_for_command",),
             )
+
         states_match = replayed_state == command.state
-        if not states_match:
-            failures.append("replay_state_diverges_from_live")
+        failures = () if states_match else ("replay_state_diverges_from_live",)
         return ReplayStateVerification(
             command_id=command_id,
             command_present=True,
@@ -343,7 +335,7 @@ class AuditTraceVerifier:
             live_state=command.state,
             states_match=states_match,
             event_count=len(events),
-            failures=tuple(failures),
+            failures=failures,
         )
 
     def verify_tenant_isolation(self, command_id: str) -> "TenantIsolationVerification":

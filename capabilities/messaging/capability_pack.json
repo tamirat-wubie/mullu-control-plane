@@ -1,0 +1,312 @@
+{
+  "capabilities": [
+    {
+      "capability_id": "messaging.sms.send.with_approval",
+      "domain": "messaging",
+      "version": "0.1.0",
+      "input_schema_ref": "schemas/messaging/sms_send.input.schema.json",
+      "output_schema_ref": "schemas/messaging/sms_send.output.schema.json",
+      "effect_model": {
+        "expected_effects": ["external_sms_sent"],
+        "forbidden_effects": ["sms_sent_without_approval", "credential_scope_exceeded", "recipient_unapproved"],
+        "reconciliation_required": true
+      },
+      "evidence_model": {
+        "required_evidence": ["connector_id", "recipient_hashes", "approval_id", "provider_receipt"],
+        "terminal_certificate_required": true
+      },
+      "authority_policy": {
+        "required_roles": ["messaging_operator"],
+        "approval_chain": ["platform_approver"],
+        "separation_of_duty": true
+      },
+      "isolation_profile": {
+        "execution_plane": "messaging_worker",
+        "network_allowlist": ["api.twilio.com", "messaging.cloud.amazonaws.com"],
+        "secret_scope": "carrier:sms.send"
+      },
+      "recovery_plan": {
+        "rollback_capability": "",
+        "compensation_capability": "",
+        "review_required_on_failure": true
+      },
+      "cost_model": {
+        "budget_class": "connector_write",
+        "max_estimated_cost": 0.05
+      },
+      "obligation_model": {
+        "owner_team": "platform-ops",
+        "failure_due_seconds": 900,
+        "escalation_route": "support@mullusi.com"
+      },
+      "certification_status": "certified",
+      "metadata": {
+        "display_name": "Send SMS with approval",
+        "risk_tier": "high"
+      },
+      "extensions": {
+        "governed_record": {
+          "read_only": false,
+          "world_mutating": true,
+          "requires_approval": true,
+          "requires_sandbox": true,
+          "allowed_roles": ["messaging_operator"],
+          "allowed_tools": ["messaging_worker.sms_send"],
+          "allowed_networks": ["api.twilio.com", "messaging.cloud.amazonaws.com"],
+          "rollback_or_compensation_required": true
+        }
+      }
+    },
+    {
+      "capability_id": "messaging.sms.draft",
+      "domain": "messaging",
+      "version": "0.1.0",
+      "input_schema_ref": "schemas/messaging/sms_draft.input.schema.json",
+      "output_schema_ref": "schemas/messaging/sms_draft.output.schema.json",
+      "effect_model": {
+        "expected_effects": ["sms_draft_created"],
+        "forbidden_effects": ["external_sms_sent", "credential_scope_exceeded", "recipient_unapproved"],
+        "reconciliation_required": true
+      },
+      "evidence_model": {
+        "required_evidence": ["connector_id", "recipient_hashes", "draft_receipt"],
+        "terminal_certificate_required": true
+      },
+      "authority_policy": {
+        "required_roles": ["messaging_operator"],
+        "approval_chain": [],
+        "separation_of_duty": false
+      },
+      "isolation_profile": {
+        "execution_plane": "messaging_worker",
+        "network_allowlist": [],
+        "secret_scope": "carrier:sms.draft"
+      },
+      "recovery_plan": {
+        "rollback_capability": "",
+        "compensation_capability": "",
+        "review_required_on_failure": true
+      },
+      "cost_model": {
+        "budget_class": "connector_write",
+        "max_estimated_cost": 0.02
+      },
+      "obligation_model": {
+        "owner_team": "platform-ops",
+        "failure_due_seconds": 1800,
+        "escalation_route": "support@mullusi.com"
+      },
+      "certification_status": "certified",
+      "metadata": {
+        "display_name": "Draft SMS message",
+        "risk_tier": "medium"
+      },
+      "extensions": {
+        "governed_record": {
+          "read_only": false,
+          "world_mutating": true,
+          "requires_approval": false,
+          "requires_sandbox": true,
+          "allowed_roles": ["messaging_operator"],
+          "allowed_tools": ["messaging_worker.sms_draft"],
+          "allowed_networks": [],
+          "rollback_or_compensation_required": true
+        }
+      }
+    },
+    {
+      "capability_id": "messaging.chat.send.with_approval",
+      "domain": "messaging",
+      "version": "0.1.0",
+      "input_schema_ref": "schemas/messaging/chat_send.input.schema.json",
+      "output_schema_ref": "schemas/messaging/chat_send.output.schema.json",
+      "effect_model": {
+        "expected_effects": ["external_chat_message_sent"],
+        "forbidden_effects": ["chat_message_sent_without_approval", "credential_scope_exceeded", "recipient_unapproved"],
+        "reconciliation_required": true
+      },
+      "evidence_model": {
+        "required_evidence": ["connector_id", "recipient_hashes", "approval_id", "provider_receipt"],
+        "terminal_certificate_required": true
+      },
+      "authority_policy": {
+        "required_roles": ["messaging_operator"],
+        "approval_chain": ["platform_approver"],
+        "separation_of_duty": true
+      },
+      "isolation_profile": {
+        "execution_plane": "messaging_worker",
+        "network_allowlist": [
+          "graph.facebook.com",
+          "slack.com",
+          "graph.microsoft.com",
+          "api.telegram.org",
+          "discord.com"
+        ],
+        "secret_scope": "oauth:chat.send"
+      },
+      "recovery_plan": {
+        "rollback_capability": "",
+        "compensation_capability": "",
+        "review_required_on_failure": true
+      },
+      "cost_model": {
+        "budget_class": "connector_write",
+        "max_estimated_cost": 0.03
+      },
+      "obligation_model": {
+        "owner_team": "platform-ops",
+        "failure_due_seconds": 900,
+        "escalation_route": "support@mullusi.com"
+      },
+      "certification_status": "certified",
+      "metadata": {
+        "display_name": "Send chat message with approval",
+        "risk_tier": "high"
+      },
+      "extensions": {
+        "governed_record": {
+          "read_only": false,
+          "world_mutating": true,
+          "requires_approval": true,
+          "requires_sandbox": true,
+          "allowed_roles": ["messaging_operator"],
+          "allowed_tools": ["messaging_worker.chat_send"],
+          "allowed_networks": [
+            "graph.facebook.com",
+            "slack.com",
+            "graph.microsoft.com",
+            "api.telegram.org",
+            "discord.com"
+          ],
+          "rollback_or_compensation_required": true
+        }
+      }
+    },
+    {
+      "capability_id": "messaging.chat.draft",
+      "domain": "messaging",
+      "version": "0.1.0",
+      "input_schema_ref": "schemas/messaging/chat_draft.input.schema.json",
+      "output_schema_ref": "schemas/messaging/chat_draft.output.schema.json",
+      "effect_model": {
+        "expected_effects": ["chat_draft_created"],
+        "forbidden_effects": ["external_chat_message_sent", "credential_scope_exceeded", "recipient_unapproved"],
+        "reconciliation_required": true
+      },
+      "evidence_model": {
+        "required_evidence": ["connector_id", "recipient_hashes", "draft_receipt"],
+        "terminal_certificate_required": true
+      },
+      "authority_policy": {
+        "required_roles": ["messaging_operator"],
+        "approval_chain": [],
+        "separation_of_duty": false
+      },
+      "isolation_profile": {
+        "execution_plane": "messaging_worker",
+        "network_allowlist": [],
+        "secret_scope": "oauth:chat.draft"
+      },
+      "recovery_plan": {
+        "rollback_capability": "",
+        "compensation_capability": "",
+        "review_required_on_failure": true
+      },
+      "cost_model": {
+        "budget_class": "connector_write",
+        "max_estimated_cost": 0.02
+      },
+      "obligation_model": {
+        "owner_team": "platform-ops",
+        "failure_due_seconds": 1800,
+        "escalation_route": "support@mullusi.com"
+      },
+      "certification_status": "certified",
+      "metadata": {
+        "display_name": "Draft chat message",
+        "risk_tier": "medium"
+      },
+      "extensions": {
+        "governed_record": {
+          "read_only": false,
+          "world_mutating": true,
+          "requires_approval": false,
+          "requires_sandbox": true,
+          "allowed_roles": ["messaging_operator"],
+          "allowed_tools": ["messaging_worker.chat_draft"],
+          "allowed_networks": [],
+          "rollback_or_compensation_required": true
+        }
+      }
+    },
+    {
+      "capability_id": "messaging.thread.read",
+      "domain": "messaging",
+      "version": "0.1.0",
+      "input_schema_ref": "schemas/messaging/thread_read.input.schema.json",
+      "output_schema_ref": "schemas/messaging/thread_read.output.schema.json",
+      "effect_model": {
+        "expected_effects": ["chat_thread_read"],
+        "forbidden_effects": ["external_chat_message_sent", "thread_modified", "credential_scope_exceeded"],
+        "reconciliation_required": true
+      },
+      "evidence_model": {
+        "required_evidence": ["connector_id", "query_hash", "response_digest"],
+        "terminal_certificate_required": true
+      },
+      "authority_policy": {
+        "required_roles": ["messaging_operator"],
+        "approval_chain": [],
+        "separation_of_duty": false
+      },
+      "isolation_profile": {
+        "execution_plane": "messaging_worker",
+        "network_allowlist": [
+          "graph.facebook.com",
+          "slack.com",
+          "graph.microsoft.com",
+          "api.telegram.org",
+          "discord.com"
+        ],
+        "secret_scope": "oauth:chat.read"
+      },
+      "recovery_plan": {
+        "rollback_capability": "",
+        "compensation_capability": "",
+        "review_required_on_failure": true
+      },
+      "cost_model": {
+        "budget_class": "connector_read",
+        "max_estimated_cost": 0.01
+      },
+      "obligation_model": {
+        "owner_team": "platform-ops",
+        "failure_due_seconds": 1800,
+        "escalation_route": "support@mullusi.com"
+      },
+      "certification_status": "certified",
+      "metadata": {
+        "display_name": "Read chat thread",
+        "risk_tier": "low"
+      },
+      "extensions": {
+        "governed_record": {
+          "read_only": true,
+          "world_mutating": false,
+          "requires_approval": false,
+          "requires_sandbox": true,
+          "allowed_roles": ["messaging_operator"],
+          "allowed_tools": ["messaging_worker.thread_read"],
+          "allowed_networks": [
+            "graph.facebook.com",
+            "slack.com",
+            "graph.microsoft.com",
+            "api.telegram.org",
+            "discord.com"
+          ]
+        }
+      }
+    }
+  ]
+}

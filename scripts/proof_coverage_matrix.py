@@ -103,7 +103,8 @@ def proof_coverage_matrix() -> dict[str, Any]:
             "audit_chain",
             "witnessed",
             [
-                "mcoi/mcoi_runtime/app/routers/llm.py",
+                "mcoi/mcoi_runtime/app/routers/llm/completion.py",
+                "mcoi/mcoi_runtime/app/routers/llm/chat.py",
                 "mcoi/mcoi_runtime/app/streaming.py",
                 "mcoi/tests/test_streaming.py",
                 "mcoi/tests/test_server_phase200.py",
@@ -152,7 +153,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
             "audit_chain",
             "witnessed",
             [
-                "mcoi/mcoi_runtime/app/routers/llm.py",
+                "mcoi/mcoi_runtime/app/routers/llm/completion.py",
                 "mcoi/mcoi_runtime/core/proof_bridge.py",
             ],
             "Completion routes are governed through budget, model routing, and proof bridge checks.",
@@ -165,7 +166,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
             "audit_chain",
             "witnessed",
             [
-                "mcoi/mcoi_runtime/app/routers/llm.py",
+                "mcoi/mcoi_runtime/app/routers/llm/chat.py",
                 "mcoi/mcoi_runtime/core/proof_bridge.py",
             ],
             "Chat and workflow routes preserve governed request and action proof boundaries.",
@@ -185,7 +186,8 @@ def proof_coverage_matrix() -> dict[str, Any]:
             "audit_chain",
             "witnessed",
             [
-                "mcoi/mcoi_runtime/app/routers/llm.py",
+                "mcoi/mcoi_runtime/app/routers/llm/admin.py",
+                "mcoi/mcoi_runtime/app/routers/llm/costs.py",
                 "mcoi/mcoi_runtime/governance/guards/budget.py",
             ],
             "Budget and cost surfaces expose bounded read models over governed spend state.",
@@ -268,7 +270,10 @@ def proof_coverage_matrix() -> dict[str, Any]:
             "action_proof",
             "audit_chain",
             "witnessed",
-            ["mcoi/mcoi_runtime/app/routers/llm.py"],
+            [
+                "mcoi/mcoi_runtime/app/routers/llm/admin.py",
+                "mcoi/mcoi_runtime/app/routers/llm/ab_test.py",
+            ],
             "Model catalog and experiment control routes are declared as governed control surfaces.",
         ),
         _surface(
@@ -410,7 +415,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
             "audit_chain",
             "witnessed",
             [
-                "mcoi/mcoi_runtime/app/routers/data.py",
+                "mcoi/mcoi_runtime/app/routers/data/governance.py",
                 "mcoi/mcoi_runtime/core/data_governance.py",
                 "mcoi/mcoi_runtime/contracts/data_governance.py",
                 "mcoi/tests/test_data_governance_endpoints.py",
@@ -2045,7 +2050,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
             "audit_chain",
             "witnessed",
             [
-                "mcoi/mcoi_runtime/app/routers/data.py",
+                "mcoi/mcoi_runtime/app/routers/data/tools.py",
                 "mcoi/mcoi_runtime/app/routers/workflow.py",
                 "mcoi/mcoi_runtime/core/tool_use.py",
                 "mcoi/mcoi_runtime/mcp/capability_bridge.py",
@@ -2108,6 +2113,69 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "schemas/replay_record.schema.json",
             ],
             "Lineage query API resolves read-only lineage:// URIs with bounded output, command, graph, and policy-version read models.",
+        ),
+        _surface(
+            "god_mode_lifecycle",
+            [
+                "/api/v1/god-mode/capabilities",
+                "/api/v1/god-mode/health",
+                "/api/v1/god-mode/modules",
+                "/api/v1/god-mode/capabilities/{module}/{name}",
+                "/api/v1/god-mode/capabilities/{module}/{name}/agree-to-register",
+                "/api/v1/god-mode/agreements/{agreement_id}/withdraw",
+                "/api/v1/god-mode/capabilities/{module}/{name}/suspend",
+                "/api/v1/god-mode/capabilities/{module}/{name}/resume",
+                "/api/v1/god-mode/capabilities/{module}/{name}/issue-ticket",
+                "/api/v1/god-mode/tickets",
+                "/api/v1/god-mode/tickets/{ticket_id}",
+                "/api/v1/god-mode/tickets/{ticket_id}/consume",
+                "/api/v1/god-mode/tickets/{ticket_id}/revoke",
+                "/api/v1/god-mode/receipts",
+            ],
+            "action_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "mcoi/mcoi_runtime/contracts/god_mode.py",
+                "mcoi/mcoi_runtime/core/god_mode_registry.py",
+                "mcoi/mcoi_runtime/core/god_mode_engine.py",
+                "mcoi/mcoi_runtime/core/god_mode_integration.py",
+                "mcoi/mcoi_runtime/core/god_mode_demonstrators.py",
+                "mcoi/mcoi_runtime/app/routers/god_mode.py",
+                "mcoi/tests/test_god_mode_contracts.py",
+                "mcoi/tests/test_god_mode_registry.py",
+                "mcoi/tests/test_god_mode_engine.py",
+                "mcoi/tests/test_god_mode_dual_control.py",
+                "mcoi/tests/test_god_mode_invariants.py",
+                "mcoi/tests/test_god_mode_hardening.py",
+                "mcoi/tests/test_god_mode_router.py",
+                "mcoi/tests/test_god_mode_decorator.py",
+            ],
+            (
+                "Privileged 'god mode' capabilities ship dormant. Two-stage explicit consent — "
+                "registration agreement promotes capability dormant→armed; activation issues "
+                "a single-use, short-lived ticket. Catastrophic capabilities require dual "
+                "control (≥2 distinct approvers). Every consumption emits an immutable "
+                "receipt with pre/post hashes and the full agreement chain. Withdrawals and "
+                "revocations are first-class, irreversible-as-events."
+            ),
+            [
+                "god_mode_capability_keys_are_unique",
+                "god_mode_every_capability_declares_at_least_one_bypass",
+                "god_mode_catastrophic_caps_require_dual_control",
+                "god_mode_catastrophic_caps_are_one_shot",
+                "god_mode_catastrophic_caps_have_short_ttl",
+                "god_mode_secrets_capabilities_use_strictest_floor",
+                "god_mode_agree_to_register_arms_capability",
+                "god_mode_issue_ticket_requires_armed",
+                "god_mode_double_consume_rejected",
+                "god_mode_consume_ticket_emits_receipt",
+                "god_mode_revoke_ticket_blocks_consume",
+                "god_mode_withdraw_agreement_reverts_state",
+                "god_mode_two_distinct_agreements_arm_capability",
+                "god_mode_end_to_end_consent_chain",
+            ],
         ),
     ]
     closure_actions = [

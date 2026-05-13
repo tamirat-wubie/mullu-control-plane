@@ -148,7 +148,9 @@ def collect_source_files() -> list[Path]:
     """Source files to scan for route declarations."""
     files: list[Path] = []
     if ROUTERS_DIR.exists():
-        files.extend(sorted(ROUTERS_DIR.glob("*.py")))
+        # rglob so package-style routers (e.g. routers/data/governance.py)
+        # are scanned alongside top-level single-file routers.
+        files.extend(sorted(ROUTERS_DIR.rglob("*.py")))
     for gw in GATEWAY_FILES:
         if gw.exists():
             files.append(gw)

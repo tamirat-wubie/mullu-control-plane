@@ -46,7 +46,10 @@ from mcoi_runtime.core.reflex import (
 from mcoi_runtime.app.governed_execution import universal_command_proof_view
 
 from gateway.channels.discord import DiscordAdapter
+from gateway.channels.phone import PhoneAdapter
 from gateway.channels.slack import SlackAdapter
+from gateway.channels.sms import SmsAdapter
+from gateway.channels.teams import TeamsAdapter
 from gateway.channels.telegram import TelegramAdapter
 from gateway.channels.web import WebChatAdapter
 from gateway.channels.whatsapp import WhatsAppAdapter
@@ -621,6 +624,36 @@ def create_gateway_app(
     web = WebChatAdapter()
     router.register_channel(web)
 
+    sms = None
+    if os.environ.get("TWILIO_ACCOUNT_SID") and os.environ.get("TWILIO_AUTH_TOKEN"):
+        sms = SmsAdapter(
+            account_sid=os.environ["TWILIO_ACCOUNT_SID"],
+            auth_token=os.environ["TWILIO_AUTH_TOKEN"],
+            sender=os.environ.get("TWILIO_SMS_SENDER", ""),
+            webhook_url=os.environ.get("TWILIO_WEBHOOK_URL", ""),
+        )
+        router.register_channel(sms)
+
+    teams = None
+    if os.environ.get("MICROSOFT_TEAMS_ACCESS_TOKEN"):
+        if not os.environ.get("MICROSOFT_TEAMS_SHARED_SECRET"):
+            _log.warning("MICROSOFT_TEAMS_SHARED_SECRET not set — signature verification will reject all requests")
+        teams = TeamsAdapter(
+            access_token=os.environ["MICROSOFT_TEAMS_ACCESS_TOKEN"],
+            shared_secret=os.environ.get("MICROSOFT_TEAMS_SHARED_SECRET", ""),
+        )
+        router.register_channel(teams)
+
+    phone_channel = None
+    if os.environ.get("TWILIO_ACCOUNT_SID") and os.environ.get("TWILIO_AUTH_TOKEN"):
+        phone_channel = PhoneAdapter(
+            account_sid=os.environ["TWILIO_ACCOUNT_SID"],
+            auth_token=os.environ["TWILIO_AUTH_TOKEN"],
+            caller_id=os.environ.get("TWILIO_VOICE_CALLER_ID", ""),
+            webhook_url=os.environ.get("TWILIO_VOICE_WEBHOOK_URL", ""),
+        )
+        router.register_channel(phone_channel)
+
     # ── Register signature verifiers from env ──
     if os.environ.get("WHATSAPP_APP_SECRET"):
         verifier.register("whatsapp", ChannelVerifierConfig(
@@ -661,7 +694,7 @@ def create_gateway_app(
 
         # Check channel adapters
         channels_configured = []
-        for ch_name in ["whatsapp", "telegram", "slack", "discord", "web"]:
+        for ch_name in ["whatsapp", "telegram", "slack", "discord", "web", "sms", "teams", "phone"]:
             if ch_name in [a for a in router._channels]:
                 channels_configured.append(ch_name)
 
@@ -885,6 +918,133 @@ def create_gateway_app(
             "request_receipt": request_receipt,
             "metadata": response.metadata,
         })
+
+    # ── Twilio SMS Webhook ──
+
+    @app.post("/webhook/sms")
+    async def sms_receive(request: Request):
+        """Twilio Programmable Messaging inbound webhook (POST, form-encoded)."""
+        if sms is None:
+            raise HTTPException(503, detail="SMS not configured")
+        import time as _time
+        import urllib.parse as _urllib_parse
+        _t0 = _time.monotonic()
+        body_bytes = await request.body()
+        try:
+            params = {
+                key: values[0]
+                for key, values in _urllib_parse.parse_qs(
+                    body_bytes.decode("utf-8"), keep_blank_values=True,
+                ).items()
+                if values
+            }
+        except (UnicodeDecodeError, ValueError):
+            raise HTTPException(400, detail="Invalid form payload")
+        signature = request.headers.get("X-Twilio-Signature", "")
+        canonical_url = os.environ.get("TWILIO_WEBHOOK_URL", "") or str(request.url)
+        if not sms.verify_signature(canonical_url, params, signature):
+            raise HTTPException(403, detail="Invalid signature")
+        msg = sms.parse_message(params)
+        request_receipt = _gateway_request_receipt(
+            channel="sms",
+            request=request,
+            body=body_bytes,
+            message=msg,
+        )
+        if msg is None:
+            event_log.record(channel="sms", sender_id="", status="ignored",
+                             headers=dict(request.headers),
+                             outcome_detail=request_receipt["receipt_id"])
+            return JSONResponse({"status": "ignored", "request_receipt": request_receipt})
+        response = router.handle_message(msg)
+        event_log.record(channel="sms", sender_id=msg.sender_id,
+                         message_id=msg.message_id, status="processed",
+                         body=msg.body[:200], headers=dict(request.headers),
+                         outcome_detail=request_receipt["receipt_id"],
+                         processing_ms=(_time.monotonic() - _t0) * 1000)
+        return JSONResponse({"status": "ok", "response": response.body, "request_receipt": request_receipt})
+
+    # ── Microsoft Teams Webhook ──
+
+    @app.post("/webhook/teams")
+    async def teams_receive(request: Request):
+        """Microsoft Teams Bot Framework inbound webhook (POST)."""
+        if teams is None:
+            raise HTTPException(503, detail="Teams not configured")
+        import time as _time
+        _t0 = _time.monotonic()
+        body_bytes = await request.body()
+        signature = request.headers.get("X-Mullu-Teams-Signature", "")
+        if not teams.verify_signature(body_bytes, signature):
+            raise HTTPException(403, detail="Invalid signature")
+        try:
+            payload = json.loads(body_bytes)
+        except (json.JSONDecodeError, ValueError):
+            raise HTTPException(400, detail="Invalid JSON payload")
+        msg = teams.parse_message(payload)
+        request_receipt = _gateway_request_receipt(
+            channel="teams",
+            request=request,
+            body=body_bytes,
+            message=msg,
+        )
+        if msg is None:
+            event_log.record(channel="teams", sender_id="", status="ignored",
+                             headers=dict(request.headers),
+                             outcome_detail=request_receipt["receipt_id"])
+            return JSONResponse({"status": "ignored", "request_receipt": request_receipt})
+        response = router.handle_message(msg)
+        event_log.record(channel="teams", sender_id=msg.sender_id,
+                         message_id=msg.message_id, status="processed",
+                         body=msg.body[:200], headers=dict(request.headers),
+                         outcome_detail=request_receipt["receipt_id"],
+                         processing_ms=(_time.monotonic() - _t0) * 1000)
+        return JSONResponse({"status": "ok", "response": response.body, "request_receipt": request_receipt})
+
+    # ── Twilio Voice Webhook ──
+
+    @app.post("/webhook/phone")
+    async def phone_receive(request: Request):
+        """Twilio Voice inbound webhook (POST, form-encoded)."""
+        if phone_channel is None:
+            raise HTTPException(503, detail="Phone not configured")
+        import time as _time
+        import urllib.parse as _urllib_parse
+        _t0 = _time.monotonic()
+        body_bytes = await request.body()
+        try:
+            params = {
+                key: values[0]
+                for key, values in _urllib_parse.parse_qs(
+                    body_bytes.decode("utf-8"), keep_blank_values=True,
+                ).items()
+                if values
+            }
+        except (UnicodeDecodeError, ValueError):
+            raise HTTPException(400, detail="Invalid form payload")
+        signature = request.headers.get("X-Twilio-Signature", "")
+        canonical_url = os.environ.get("TWILIO_VOICE_WEBHOOK_URL", "") or str(request.url)
+        if not phone_channel.verify_signature(canonical_url, params, signature):
+            raise HTTPException(403, detail="Invalid signature")
+        msg = phone_channel.parse_message(params)
+        request_receipt = _gateway_request_receipt(
+            channel="phone",
+            request=request,
+            body=body_bytes,
+            message=msg,
+        )
+        if msg is None:
+            event_log.record(channel="phone", sender_id="", status="ignored",
+                             headers=dict(request.headers),
+                             outcome_detail=request_receipt["receipt_id"])
+            return JSONResponse({"status": "ignored", "request_receipt": request_receipt})
+        response = router.handle_message(msg)
+        event_log.record(channel="phone", sender_id=msg.sender_id,
+                         message_id=msg.message_id, status="processed",
+                         body=msg.body[:200], headers=dict(request.headers),
+                         outcome_detail=request_receipt["receipt_id"],
+                         processing_ms=(_time.monotonic() - _t0) * 1000)
+        return JSONResponse({"status": "ok", "response": response.body, "request_receipt": request_receipt})
 
     # ── Approval Callback ──
 
