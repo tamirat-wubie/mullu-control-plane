@@ -12,12 +12,14 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import StrEnum
-from typing import Any, Mapping
+from typing import Any, Mapping, TypeVar, cast
 
 from ._base import ContractRecord, freeze_value, require_datetime_text, require_non_empty_text
 
 # Re-export legacy names for backward compatibility with existing imports.
 # The old Workflow/WorkflowStep types are superseded by WorkflowDescriptor/WorkflowStage.
+
+TContract = TypeVar("TContract", bound=ContractRecord)
 
 # --- Classification enums ---
 
@@ -65,6 +67,78 @@ class TransitionType(StrEnum):
 # --- Contract types ---
 
 
+def _freeze_text_array(values: tuple[str, ...] | list[str], field_name: str) -> tuple[str, ...]:
+    if isinstance(values, (str, bytes)) or not isinstance(values, (tuple, list)):
+        raise ValueError(f"{field_name} must be an array")
+    frozen = cast(tuple[str, ...], freeze_value(list(values)))
+    for idx, value in enumerate(frozen):
+        require_non_empty_text(value, f"{field_name}[{idx}]")
+    return frozen
+
+
+def _freeze_contract_array(
+    values: tuple[TContract, ...] | list[TContract],
+    field_name: str,
+    record_type: type[TContract],
+    *,
+    allow_empty: bool,
+) -> tuple[TContract, ...]:
+    if isinstance(values, (str, bytes)) or not isinstance(values, (tuple, list)):
+        raise ValueError(f"{field_name} must be an array")
+    if not values and not allow_empty:
+        raise ValueError(f"{field_name} must contain at least one item")
+    frozen = cast(tuple[TContract, ...], freeze_value(list(values)))
+    for idx, item in enumerate(frozen):
+        if not isinstance(item, record_type):
+            raise ValueError(f"{field_name}[{idx}] must be a {record_type.__name__}")
+    return frozen
+
+
+def _validate_stage_graph(stages: tuple["WorkflowStage", ...]) -> set[str]:
+    stage_ids: set[str] = set()
+    for stage in stages:
+        if stage.stage_id in stage_ids:
+            raise ValueError("stages must declare unique stage_id values")
+        stage_ids.add(stage.stage_id)
+
+    predecessor_graph: dict[str, tuple[str, ...]] = {}
+    for stage in stages:
+        predecessor_graph[stage.stage_id] = stage.predecessors
+        for predecessor_id in stage.predecessors:
+            if predecessor_id == stage.stage_id:
+                raise ValueError("stage predecessors cannot reference the same stage_id")
+            if predecessor_id not in stage_ids:
+                raise ValueError("stage predecessors must reference declared stage_id values")
+
+    visiting: set[str] = set()
+    visited: set[str] = set()
+
+    def visit(stage_id: str) -> None:
+        if stage_id in visited:
+            return
+        if stage_id in visiting:
+            raise ValueError("workflow stage graph must not contain predecessor cycles")
+        visiting.add(stage_id)
+        for predecessor_id in predecessor_graph[stage_id]:
+            visit(predecessor_id)
+        visiting.remove(stage_id)
+        visited.add(stage_id)
+
+    for stage_id in stage_ids:
+        visit(stage_id)
+    return stage_ids
+
+
+def _validate_bindings(bindings: tuple["WorkflowBinding", ...], stage_ids: set[str]) -> None:
+    binding_ids: set[str] = set()
+    for binding in bindings:
+        if binding.binding_id in binding_ids:
+            raise ValueError("bindings must declare unique binding_id values")
+        binding_ids.add(binding.binding_id)
+        if binding.source_stage_id not in stage_ids or binding.target_stage_id not in stage_ids:
+            raise ValueError("bindings must reference declared stage_id values")
+
+
 @dataclass(frozen=True, slots=True)
 class WorkflowStage(ContractRecord):
     """One unit of work within a workflow."""
@@ -82,9 +156,7 @@ class WorkflowStage(ContractRecord):
             raise ValueError("stage_type must be a StageType value")
         if self.skill_id is not None:
             object.__setattr__(self, "skill_id", require_non_empty_text(self.skill_id, "skill_id"))
-        object.__setattr__(self, "predecessors", freeze_value(list(self.predecessors)))
-        for idx, pred in enumerate(self.predecessors):
-            require_non_empty_text(pred, f"predecessors[{idx}]")
+        object.__setattr__(self, "predecessors", _freeze_text_array(self.predecessors, "predecessors"))
         if self.timeout_seconds is not None:
             if not isinstance(self.timeout_seconds, int) or self.timeout_seconds <= 0:
                 raise ValueError("timeout_seconds must be a positive integer")
@@ -122,14 +194,18 @@ class WorkflowDescriptor(ContractRecord):
     def __post_init__(self) -> None:
         object.__setattr__(self, "workflow_id", require_non_empty_text(self.workflow_id, "workflow_id"))
         object.__setattr__(self, "name", require_non_empty_text(self.name, "name"))
-        if not self.stages:
-            raise ValueError("stages must contain at least one stage")
-        object.__setattr__(self, "stages", freeze_value(list(self.stages)))
-        object.__setattr__(self, "bindings", freeze_value(list(self.bindings)))
-        # Validate all stages are WorkflowStage instances
-        for stage in self.stages:
-            if not isinstance(stage, WorkflowStage):
-                raise ValueError("every stage must be a WorkflowStage instance")
+        object.__setattr__(
+            self,
+            "stages",
+            _freeze_contract_array(self.stages, "stages", WorkflowStage, allow_empty=False),
+        )
+        object.__setattr__(
+            self,
+            "bindings",
+            _freeze_contract_array(self.bindings, "bindings", WorkflowBinding, allow_empty=True),
+        )
+        stage_ids = _validate_stage_graph(self.stages)
+        _validate_bindings(self.bindings, stage_ids)
         object.__setattr__(self, "created_at", require_datetime_text(self.created_at, "created_at"))
 
 
@@ -185,7 +261,11 @@ class WorkflowExecutionRecord(ContractRecord):
         object.__setattr__(self, "execution_id", require_non_empty_text(self.execution_id, "execution_id"))
         if not isinstance(self.status, WorkflowStatus):
             raise ValueError("status must be a WorkflowStatus value")
-        object.__setattr__(self, "stage_results", freeze_value(list(self.stage_results)))
+        object.__setattr__(
+            self,
+            "stage_results",
+            _freeze_contract_array(self.stage_results, "stage_results", StageExecutionResult, allow_empty=True),
+        )
         object.__setattr__(self, "started_at", require_datetime_text(self.started_at, "started_at"))
         if self.completed_at is not None:
             object.__setattr__(self, "completed_at", require_datetime_text(self.completed_at, "completed_at"))
@@ -204,7 +284,7 @@ class WorkflowVerificationRecord(ContractRecord):
         object.__setattr__(self, "execution_id", require_non_empty_text(self.execution_id, "execution_id"))
         if not isinstance(self.verified, bool):
             raise ValueError("verified must be a boolean")
-        object.__setattr__(self, "mismatch_reasons", freeze_value(list(self.mismatch_reasons)))
+        object.__setattr__(self, "mismatch_reasons", _freeze_text_array(self.mismatch_reasons, "mismatch_reasons"))
         object.__setattr__(self, "verified_at", require_datetime_text(self.verified_at, "verified_at"))
 
 

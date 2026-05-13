@@ -28,7 +28,8 @@ from gateway.trust_ledger import TrustLedger, TrustLedgerBundle  # noqa: E402
 from scripts.validate_schemas import _load_schema, _validate_schema_instance  # noqa: E402
 
 
-SCHEMA_PATH = ROOT / "schemas" / "trust_ledger_bundle.schema.json"
+BUNDLE_SCHEMA_PATH = ROOT / "schemas" / "trust_ledger_bundle.schema.json"
+REPORT_SCHEMA_PATH = ROOT / "schemas" / "trust_ledger_bundle_verification_report.schema.json"
 
 
 def verify_bundle_file(
@@ -39,40 +40,37 @@ def verify_bundle_file(
 ) -> dict[str, Any]:
     """Verify one evidence bundle file and return a bounded report."""
     if not signing_secret:
-        return {
-            "valid": False,
-            "reason": "signing_secret_required",
-            "bundle_id": "",
-            "schema_valid": False,
-            "schema_errors": ["signing secret is required"],
-        }
+        return _report(
+            valid=False,
+            reason="signing_secret_required",
+            schema_valid=False,
+            schema_errors=["signing secret is required"],
+        )
     try:
         raw = json.loads(bundle_path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError, UnicodeDecodeError) as exc:
-        return {
-            "valid": False,
-            "reason": "bundle_read_failed",
-            "bundle_id": "",
-            "schema_valid": False,
-            "schema_errors": [type(exc).__name__],
-        }
+        return _report(
+            valid=False,
+            reason="bundle_read_failed",
+            schema_valid=False,
+            schema_errors=[type(exc).__name__],
+        )
     if not isinstance(raw, dict):
-        return {
-            "valid": False,
-            "reason": "bundle_json_must_be_object",
-            "bundle_id": "",
-            "schema_valid": False,
-            "schema_errors": ["bundle JSON must be an object"],
-        }
-    schema_errors = _validate_schema_instance(_load_schema(SCHEMA_PATH), raw)
+        return _report(
+            valid=False,
+            reason="bundle_json_must_be_object",
+            schema_valid=False,
+            schema_errors=["bundle JSON must be an object"],
+        )
+    schema_errors = _validate_schema_instance(_load_schema(BUNDLE_SCHEMA_PATH), raw)
     if schema_errors:
-        return {
-            "valid": False,
-            "reason": "schema_validation_failed",
-            "bundle_id": str(raw.get("bundle_id", "")),
-            "schema_valid": False,
-            "schema_errors": schema_errors if strict else schema_errors[:10],
-        }
+        return _report(
+            valid=False,
+            reason="schema_validation_failed",
+            bundle_id=str(raw.get("bundle_id", "")),
+            schema_valid=False,
+            schema_errors=schema_errors if strict else schema_errors[:10],
+        )
     try:
         bundle = TrustLedgerBundle(
             bundle_id=str(raw["bundle_id"]),
@@ -92,27 +90,58 @@ def verify_bundle_file(
             metadata=dict(raw.get("metadata", {})),
         )
     except (KeyError, TypeError, ValueError) as exc:
-        return {
-            "valid": False,
-            "reason": str(exc),
-            "bundle_id": str(raw.get("bundle_id", "")),
-            "schema_valid": True,
-            "schema_errors": [],
-        }
+        return _report(
+            valid=False,
+            reason=str(exc),
+            bundle_id=str(raw.get("bundle_id", "")),
+            schema_valid=True,
+            schema_errors=[],
+        )
     verification = TrustLedger().verify(bundle, signing_secret=signing_secret)
+    return _report(
+        valid=verification.verified,
+        reason=verification.reason,
+        bundle_id=verification.bundle_id,
+        schema_valid=True,
+        schema_errors=[],
+        expected_bundle_hash=verification.expected_bundle_hash,
+        observed_bundle_hash=verification.observed_bundle_hash,
+        signature_key_id=verification.signature_key_id,
+        command_id=bundle.command_id,
+        terminal_certificate_id=bundle.terminal_certificate_id,
+        deployment_id=bundle.deployment_id,
+        commit_sha=bundle.commit_sha,
+    )
+
+
+def _report(
+    *,
+    valid: bool,
+    reason: str,
+    bundle_id: str = "",
+    schema_valid: bool,
+    schema_errors: list[str],
+    expected_bundle_hash: str = "",
+    observed_bundle_hash: str = "",
+    signature_key_id: str = "",
+    command_id: str = "",
+    terminal_certificate_id: str = "",
+    deployment_id: str = "",
+    commit_sha: str = "",
+) -> dict[str, Any]:
     return {
-        "valid": verification.verified,
-        "reason": verification.reason,
-        "bundle_id": verification.bundle_id,
-        "schema_valid": True,
-        "schema_errors": [],
-        "expected_bundle_hash": verification.expected_bundle_hash,
-        "observed_bundle_hash": verification.observed_bundle_hash,
-        "signature_key_id": verification.signature_key_id,
-        "command_id": bundle.command_id,
-        "terminal_certificate_id": bundle.terminal_certificate_id,
-        "deployment_id": bundle.deployment_id,
-        "commit_sha": bundle.commit_sha,
+        "valid": valid,
+        "reason": reason,
+        "bundle_id": bundle_id,
+        "schema_valid": schema_valid,
+        "schema_errors": schema_errors,
+        "expected_bundle_hash": expected_bundle_hash,
+        "observed_bundle_hash": observed_bundle_hash,
+        "signature_key_id": signature_key_id,
+        "command_id": command_id,
+        "terminal_certificate_id": terminal_certificate_id,
+        "deployment_id": deployment_id,
+        "commit_sha": commit_sha,
     }
 
 

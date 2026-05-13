@@ -10,11 +10,13 @@ Invariants:
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import StrEnum
-from typing import Any, Mapping
+from typing import TypeVar, cast
 
 from ._base import ContractRecord, freeze_value, require_non_empty_text, require_non_negative_int
+
+TContract = TypeVar("TContract", bound=ContractRecord)
 
 
 class ProviderPolicyType(StrEnum):
@@ -26,6 +28,29 @@ class ProviderPolicyType(StrEnum):
 class PolicyViolationSeverity(StrEnum):
     BLOCKED = "blocked"
     WARNING = "warning"
+
+
+def _freeze_text_array(values: tuple[str, ...] | list[str], field_name: str) -> tuple[str, ...]:
+    if isinstance(values, (str, bytes)) or not isinstance(values, (tuple, list)):
+        raise ValueError(f"{field_name} must be an array")
+    frozen = cast(tuple[str, ...], freeze_value(list(values)))
+    for idx, value in enumerate(frozen):
+        require_non_empty_text(value, f"{field_name}[{idx}]")
+    return frozen
+
+
+def _freeze_contract_array(
+    values: tuple[TContract, ...] | list[TContract],
+    field_name: str,
+    record_type: type[TContract],
+) -> tuple[TContract, ...]:
+    if isinstance(values, (str, bytes)) or not isinstance(values, (tuple, list)):
+        raise ValueError(f"{field_name} must be an array")
+    frozen = cast(tuple[TContract, ...], freeze_value(list(values)))
+    for idx, item in enumerate(frozen):
+        if not isinstance(item, record_type):
+            raise ValueError(f"{field_name}[{idx}] must be a {record_type.__name__}")
+    return frozen
 
 
 @dataclass(frozen=True, slots=True)
@@ -43,15 +68,19 @@ class HttpProviderPolicy(ContractRecord):
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "policy_id", require_non_empty_text(self.policy_id, "policy_id"))
-        object.__setattr__(self, "allowed_methods", freeze_value(list(self.allowed_methods)))
-        object.__setattr__(self, "allowed_content_types", freeze_value(list(self.allowed_content_types)))
+        object.__setattr__(self, "allowed_methods", _freeze_text_array(self.allowed_methods, "allowed_methods"))
+        object.__setattr__(
+            self,
+            "allowed_content_types",
+            _freeze_text_array(self.allowed_content_types, "allowed_content_types"),
+        )
         require_non_negative_int(self.max_response_bytes, "max_response_bytes")
         require_non_negative_int(self.max_retries, "max_retries")
         if not isinstance(self.retry_enabled, bool):
             raise ValueError("retry_enabled must be a bool")
         if not isinstance(self.require_https, bool):
             raise ValueError("require_https must be a bool")
-        object.__setattr__(self, "header_allowlist", freeze_value(list(self.header_allowlist)))
+        object.__setattr__(self, "header_allowlist", _freeze_text_array(self.header_allowlist, "header_allowlist"))
 
 
 @dataclass(frozen=True, slots=True)
@@ -67,7 +96,11 @@ class SmtpProviderPolicy(ContractRecord):
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "policy_id", require_non_empty_text(self.policy_id, "policy_id"))
-        object.__setattr__(self, "allowed_recipient_domains", freeze_value(list(self.allowed_recipient_domains)))
+        object.__setattr__(
+            self,
+            "allowed_recipient_domains",
+            _freeze_text_array(self.allowed_recipient_domains, "allowed_recipient_domains"),
+        )
         require_non_negative_int(self.max_message_bytes, "max_message_bytes")
         if not isinstance(self.attachments_enabled, bool):
             raise ValueError("attachments_enabled must be a bool")
@@ -90,9 +123,9 @@ class ProcessProviderPolicy(ContractRecord):
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "policy_id", require_non_empty_text(self.policy_id, "policy_id"))
-        object.__setattr__(self, "command_allowlist", freeze_value(list(self.command_allowlist)))
-        object.__setattr__(self, "env_allowlist", freeze_value(list(self.env_allowlist)))
-        object.__setattr__(self, "cwd_allowed", freeze_value(list(self.cwd_allowed)))
+        object.__setattr__(self, "command_allowlist", _freeze_text_array(self.command_allowlist, "command_allowlist"))
+        object.__setattr__(self, "env_allowlist", _freeze_text_array(self.env_allowlist, "env_allowlist"))
+        object.__setattr__(self, "cwd_allowed", _freeze_text_array(self.cwd_allowed, "cwd_allowed"))
         require_non_negative_int(self.max_output_bytes, "max_output_bytes")
         require_non_negative_int(self.timeout_seconds, "timeout_seconds")
         if not isinstance(self.stderr_capture, bool):
@@ -122,6 +155,10 @@ class ProviderPolicyViolation(ContractRecord):
         if not isinstance(self.severity, PolicyViolationSeverity):
             raise ValueError("severity must be a PolicyViolationSeverity value")
         object.__setattr__(self, "field_name", require_non_empty_text(self.field_name, "field_name"))
+        if not isinstance(self.expected, str):
+            raise ValueError("expected must be a string")
+        if not isinstance(self.actual, str):
+            raise ValueError("actual must be a string")
         object.__setattr__(self, "message", require_non_empty_text(self.message, "message"))
 
 
@@ -138,4 +175,10 @@ class ProviderInvocationCheck(ContractRecord):
         object.__setattr__(self, "provider_id", require_non_empty_text(self.provider_id, "provider_id"))
         if not isinstance(self.policy_type, ProviderPolicyType):
             raise ValueError("policy_type must be a ProviderPolicyType value")
-        object.__setattr__(self, "violations", freeze_value(list(self.violations)))
+        if not isinstance(self.allowed, bool):
+            raise ValueError("allowed must be a bool")
+        object.__setattr__(
+            self,
+            "violations",
+            _freeze_contract_array(self.violations, "violations", ProviderPolicyViolation),
+        )

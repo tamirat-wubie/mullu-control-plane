@@ -3,9 +3,12 @@
 import os
 import pytest
 from mcoi_runtime.adapters.multi_provider import (
+    AIMLAPIBackend,
     APIRouterBackend,
+    AnswiraBackend,
     ApiLinkBackend,
     AtlasCloudBackend,
+    BasetenBackend,
     BazaarLinkBackend,
     CerebrasBackend,
     ChutesBackend,
@@ -21,7 +24,12 @@ from mcoi_runtime.adapters.multi_provider import (
     GlamaBackend,
     GroqBackend,
     HyperbolicBackend,
+    HaimakerBackend,
+    HuggingFaceBackend,
     InferenceNetBackend,
+    InfomaniakBackend,
+    KatalepticBackend,
+    LLMAIBackend,
     LlamaAPIBackend,
     MixlayerBackend,
     ModelMaxBackend,
@@ -29,13 +37,17 @@ from mcoi_runtime.adapters.multi_provider import (
     MorpheusBackend,
     NebiusBackend,
     NovitaBackend,
+    NscaleBackend,
+    OVHCloudBackend,
     PacketBackend,
     ParasailBackend,
     FeatherlessBackend,
     NeuroRoutersBackend,
     QuickSilverBackend,
+    RequestyBackend,
     RidvayBackend,
     SambaNovaBackend,
+    ScalewayBackend,
     SiliconFlowBackend,
     TogetherBackend,
     VeniceBackend,
@@ -107,6 +119,25 @@ LLM_ENV_KEYS = (
     "MOR_API_KEY",
     "INFERENCE_API_KEY",
     "INFERENCENET_API_KEY",
+    "ANSWIRA_API_KEY",
+    "LLMAI_API_KEY",
+    "LLMAI_TOKEN",
+    "REQUESTY_API_KEY",
+    "HF_TOKEN",
+    "HUGGINGFACE_API_KEY",
+    "BASETEN_API_KEY",
+    "HAIMAKER_API_KEY",
+    "NSCALE_API_KEY",
+    "SCW_API_KEY",
+    "SCALEWAY_API_KEY",
+    "OVH_AI_ENDPOINTS_ACCESS_TOKEN",
+    "AI_ENDPOINT_API_KEY",
+    "AIMLAPI_API_KEY",
+    "AIML_API_KEY",
+    "INFOMANIAK_API_KEY",
+    "INFOMANIAK_PRODUCT_ID",
+    "INFOMANIAK_BASE_URL",
+    "KATALEPTIC_API_KEY",
     "XAI_API_KEY",
     "MISTRAL_API_KEY",
     "OPENROUTER_API_KEY",
@@ -227,6 +258,120 @@ class TestLLMConfig:
         assert config.default_backend == "inferencenet"
         assert config.inferencenet_api_key == "inferencenet-alias-key"
         assert config.morpheus_api_key == ""
+
+    def test_from_env_llmai_alias_and_requesty_detected(self, monkeypatch):
+        for key in LLM_ENV_KEYS:
+            monkeypatch.delenv(key, raising=False)
+        monkeypatch.setenv("LLMAI_TOKEN", "llmai-alias-key")
+
+        config = LLMConfig.from_env()
+
+        assert config.default_backend == "llmai"
+        assert config.llmai_api_key == "llmai-alias-key"
+        assert config.answira_api_key == ""
+        assert config.requesty_api_key == ""
+
+        monkeypatch.delenv("LLMAI_TOKEN", raising=False)
+        monkeypatch.setenv("REQUESTY_API_KEY", "requesty-key")
+        config = LLMConfig.from_env()
+
+        assert config.default_backend == "requesty"
+        assert config.requesty_api_key == "requesty-key"
+        assert config.llmai_api_key == ""
+
+    def test_from_env_huggingface_baseten_and_haimaker_detected(self, monkeypatch):
+        for key in LLM_ENV_KEYS:
+            monkeypatch.delenv(key, raising=False)
+        monkeypatch.setenv("HF_TOKEN", "huggingface-token-key")
+
+        config = LLMConfig.from_env()
+
+        assert config.default_backend == "huggingface"
+        assert config.huggingface_api_key == "huggingface-token-key"
+        assert config.baseten_api_key == ""
+        assert config.haimaker_api_key == ""
+
+        monkeypatch.delenv("HF_TOKEN", raising=False)
+        monkeypatch.setenv("HUGGINGFACE_API_KEY", "huggingface-alias-key")
+        config = LLMConfig.from_env()
+
+        assert config.default_backend == "huggingface"
+        assert config.huggingface_api_key == "huggingface-alias-key"
+
+        monkeypatch.delenv("HUGGINGFACE_API_KEY", raising=False)
+        monkeypatch.setenv("BASETEN_API_KEY", "baseten-key")
+        config = LLMConfig.from_env()
+
+        assert config.default_backend == "baseten"
+        assert config.baseten_api_key == "baseten-key"
+        assert config.huggingface_api_key == ""
+
+        monkeypatch.delenv("BASETEN_API_KEY", raising=False)
+        monkeypatch.setenv("HAIMAKER_API_KEY", "haimaker-key")
+        config = LLMConfig.from_env()
+
+        assert config.default_backend == "haimaker"
+        assert config.haimaker_api_key == "haimaker-key"
+        assert config.huggingface_api_key == ""
+
+    def test_from_env_nscale_scaleway_and_ovhcloud_detected(self, monkeypatch):
+        for key in LLM_ENV_KEYS:
+            monkeypatch.delenv(key, raising=False)
+        monkeypatch.setenv("NSCALE_API_KEY", "nscale-key")
+
+        config = LLMConfig.from_env()
+
+        assert config.default_backend == "nscale"
+        assert config.nscale_api_key == "nscale-key"
+        assert config.scaleway_api_key == ""
+        assert config.ovhcloud_api_key == ""
+
+        monkeypatch.delenv("NSCALE_API_KEY", raising=False)
+        monkeypatch.setenv("SCALEWAY_API_KEY", "scaleway-alias-key")
+        config = LLMConfig.from_env()
+
+        assert config.default_backend == "scaleway"
+        assert config.scaleway_api_key == "scaleway-alias-key"
+        assert config.nscale_api_key == ""
+
+        monkeypatch.delenv("SCALEWAY_API_KEY", raising=False)
+        monkeypatch.setenv("AI_ENDPOINT_API_KEY", "ovhcloud-alias-key")
+        config = LLMConfig.from_env()
+
+        assert config.default_backend == "ovhcloud"
+        assert config.ovhcloud_api_key == "ovhcloud-alias-key"
+        assert config.scaleway_api_key == ""
+
+    def test_from_env_aimlapi_infomaniak_and_kataleptic_detected(self, monkeypatch):
+        for key in LLM_ENV_KEYS:
+            monkeypatch.delenv(key, raising=False)
+        monkeypatch.setenv("AIML_API_KEY", "aimlapi-alias-key")
+
+        config = LLMConfig.from_env()
+
+        assert config.default_backend == "aimlapi"
+        assert config.aimlapi_api_key == "aimlapi-alias-key"
+        assert config.infomaniak_api_key == ""
+        assert config.kataleptic_api_key == ""
+
+        monkeypatch.delenv("AIML_API_KEY", raising=False)
+        monkeypatch.setenv("INFOMANIAK_API_KEY", "infomaniak-key")
+        monkeypatch.setenv("INFOMANIAK_PRODUCT_ID", "product-123")
+        config = LLMConfig.from_env()
+
+        assert config.default_backend == "infomaniak"
+        assert config.infomaniak_api_key == "infomaniak-key"
+        assert config.infomaniak_product_id == "product-123"
+        assert config.aimlapi_api_key == ""
+
+        monkeypatch.delenv("INFOMANIAK_API_KEY", raising=False)
+        monkeypatch.delenv("INFOMANIAK_PRODUCT_ID", raising=False)
+        monkeypatch.setenv("KATALEPTIC_API_KEY", "kataleptic-key")
+        config = LLMConfig.from_env()
+
+        assert config.default_backend == "kataleptic"
+        assert config.kataleptic_api_key == "kataleptic-key"
+        assert config.infomaniak_api_key == ""
 
     def test_from_env_cloudflare_requires_account_id(self, monkeypatch):
         monkeypatch.delenv("MULLU_ENV", raising=False)
@@ -412,6 +557,19 @@ class TestBootstrapLLM:
             embercloud_api_key="ec",
             morpheus_api_key="mo",
             inferencenet_api_key="in",
+            answira_api_key="aw",
+            llmai_api_key="lm",
+            requesty_api_key="rq",
+            huggingface_api_key="hf",
+            baseten_api_key="bt",
+            haimaker_api_key="hm",
+            nscale_api_key="ns",
+            scaleway_api_key="scw",
+            ovhcloud_api_key="ovh",
+            aimlapi_api_key="aiml",
+            infomaniak_api_key="info",
+            infomaniak_product_id="product-123",
+            kataleptic_api_key="kt",
             grok_api_key="xai",
             mistral_api_key="ms",
             openrouter_api_key="or",
@@ -465,6 +623,18 @@ class TestBootstrapLLM:
             "embercloud",
             "morpheus",
             "inferencenet",
+            "answira",
+            "llmai",
+            "requesty",
+            "huggingface",
+            "baseten",
+            "haimaker",
+            "nscale",
+            "scaleway",
+            "ovhcloud",
+            "aimlapi",
+            "infomaniak",
+            "kataleptic",
             "grok",
             "mistral",
             "openrouter",
@@ -507,6 +677,18 @@ class TestBootstrapLLM:
         assert isinstance(result.backends["embercloud"], EmberCloudBackend)
         assert isinstance(result.backends["morpheus"], MorpheusBackend)
         assert isinstance(result.backends["inferencenet"], InferenceNetBackend)
+        assert isinstance(result.backends["answira"], AnswiraBackend)
+        assert isinstance(result.backends["llmai"], LLMAIBackend)
+        assert isinstance(result.backends["requesty"], RequestyBackend)
+        assert isinstance(result.backends["huggingface"], HuggingFaceBackend)
+        assert isinstance(result.backends["baseten"], BasetenBackend)
+        assert isinstance(result.backends["haimaker"], HaimakerBackend)
+        assert isinstance(result.backends["nscale"], NscaleBackend)
+        assert isinstance(result.backends["scaleway"], ScalewayBackend)
+        assert isinstance(result.backends["ovhcloud"], OVHCloudBackend)
+        assert isinstance(result.backends["aimlapi"], AIMLAPIBackend)
+        assert isinstance(result.backends["infomaniak"], InfomaniakBackend)
+        assert isinstance(result.backends["kataleptic"], KatalepticBackend)
         assert "llm-groq" in result.registered_providers
         assert "llm-deepseek" in result.registered_providers
         assert "llm-together" in result.registered_providers
@@ -542,6 +724,18 @@ class TestBootstrapLLM:
         assert "llm-embercloud" in result.registered_providers
         assert "llm-morpheus" in result.registered_providers
         assert "llm-inferencenet" in result.registered_providers
+        assert "llm-answira" in result.registered_providers
+        assert "llm-llmai" in result.registered_providers
+        assert "llm-requesty" in result.registered_providers
+        assert "llm-huggingface" in result.registered_providers
+        assert "llm-baseten" in result.registered_providers
+        assert "llm-haimaker" in result.registered_providers
+        assert "llm-nscale" in result.registered_providers
+        assert "llm-scaleway" in result.registered_providers
+        assert "llm-ovhcloud" in result.registered_providers
+        assert "llm-aimlapi" in result.registered_providers
+        assert "llm-infomaniak" in result.registered_providers
+        assert "llm-kataleptic" in result.registered_providers
         assert "llm-openrouter" in result.registered_providers
         assert "meta-llama/llama-4-scout-17b-16e-instruct" in result.registered_models
         assert "deepseek-v4-flash" in result.registered_models
@@ -582,6 +776,18 @@ class TestBootstrapLLM:
         assert "glm-4.7-flash" in result.registered_models
         assert "qwen35-9b" in result.registered_models
         assert "google/gemma-3-27b-instruct/bf-16" in result.registered_models
+        assert "qwen/qwen3-coder-next" in result.registered_models
+        assert "gemma-4" in result.registered_models
+        assert "deepseek/deepseek-chat" in result.registered_models
+        assert "Qwen/Qwen3-Coder-30B-A3B-Instruct:cheapest" in result.registered_models
+        assert "nvidia/Nemotron-120B-A12B" in result.registered_models
+        assert "deepseek/deepseek-chat-v3-0324" in result.registered_models
+        assert "nscale/openai/gpt-oss-20b" in result.registered_models
+        assert "scaleway/gpt-oss-120b" in result.registered_models
+        assert "ovhcloud/Qwen3-Coder-30B-A3B-Instruct" in result.registered_models
+        assert "aimlapi/nvidia/nemotron-3-nano-30b-a3b" in result.registered_models
+        assert "infomaniak/google/gemma-4-31B-it" in result.registered_models
+        assert "kataleptic/gemma3-27b" in result.registered_models
         assert "mistral-small-2506" in result.registered_models
         assert "grok-3-mini" in result.registered_models
         assert "meta-llama/llama-4-scout" in result.registered_models

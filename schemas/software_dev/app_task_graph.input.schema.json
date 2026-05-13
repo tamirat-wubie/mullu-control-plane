@@ -1,0 +1,117 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:software-dev:app-task-graph-input:1",
+  "title": "Software Dev App Task Graph Input",
+  "description": "Governed app-builder planning request. The request may produce a task graph and software request candidates, but direct deployment and commit-candidate emission remain disabled.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "capability_id",
+    "request_id",
+    "repository_ref",
+    "target_branch",
+    "product_spec",
+    "direct_deployment_allowed",
+    "commit_candidate_allowed",
+    "metadata"
+  ],
+  "properties": {
+    "capability_id": {
+      "const": "software_dev.app_task_graph.plan"
+    },
+    "request_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "repository_ref": {
+      "type": "string",
+      "minLength": 1
+    },
+    "target_branch": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^(?!/)(?!.*//)(?!.*\\.lock$)(?!.*(?:^|/)\\.\\.(?:/|$))[^ ~^:?*\\[\\]\\\\\\r\\n]+$"
+    },
+    "product_spec": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "app_name",
+        "users",
+        "jobs_to_be_done",
+        "core_flows",
+        "non_goals",
+        "security_requirements"
+      ],
+      "properties": {
+        "app_name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "users": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "jobs_to_be_done": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "core_flows": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "non_goals": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "contains": {
+            "type": "string",
+            "pattern": "deployment|production"
+          }
+        },
+        "security_requirements": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "architecture_spec_ref": {
+      "type": "string",
+      "minLength": 1
+    },
+    "max_task_count": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 25
+    },
+    "direct_deployment_allowed": {
+      "const": false
+    },
+    "commit_candidate_allowed": {
+      "const": false
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  }
+}

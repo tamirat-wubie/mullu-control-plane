@@ -1,0 +1,321 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:pr-candidate:1",
+  "title": "Software Dev PR Candidate Output",
+  "description": "Planning receipt for a pull-request candidate. The bundle may prepare local branch, commit, and review packet candidates, but direct git push and PR opening remain approval-gated.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "candidate_id",
+    "status",
+    "repository",
+    "branch_candidate",
+    "commit_candidate",
+    "review_packet",
+    "open_intent",
+    "evidence_refs",
+    "metadata"
+  ],
+  "properties": {
+    "candidate_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "status": {
+      "enum": ["draft", "approval_required", "approved_for_open", "blocked"]
+    },
+    "repository": {
+      "type": "string",
+      "minLength": 1
+    },
+    "branch_candidate": {
+      "$ref": "#/$defs/pull_request_branch_candidate"
+    },
+    "commit_candidate": {
+      "$ref": "#/$defs/pull_request_commit_candidate"
+    },
+    "review_packet": {
+      "$ref": "#/$defs/pull_request_review_packet"
+    },
+    "open_intent": {
+      "$ref": "#/$defs/pull_request_open_intent"
+    },
+    "evidence_refs": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["local_git_push_allowed", "github_open_requires_approval"],
+      "properties": {
+        "local_git_push_allowed": {
+          "const": false
+        },
+        "github_open_requires_approval": {
+          "const": true
+        }
+      }
+    }
+  },
+  "$defs": {
+    "repository_path": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))(?![A-Za-z]:)[^\\r\\n]+$"
+    },
+    "git_ref": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^(?!/)(?!.*//)(?!.*\\.lock$)(?!.*(?:^|/)\\.\\.(?:/|$))[^ ~^:?*\\[\\]\\\\\\r\\n]+$"
+    },
+    "local_git_command_candidate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "command_id",
+        "purpose",
+        "command",
+        "requires_clean_worktree",
+        "metadata"
+      ],
+      "properties": {
+        "command_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "purpose": {
+          "type": "string",
+          "minLength": 1
+        },
+        "command": {
+          "type": "array",
+          "minItems": 2,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "requires_clean_worktree": {
+          "type": "boolean"
+        },
+        "metadata": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      }
+    },
+    "pull_request_branch_candidate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["branch_name", "base_branch", "create_command", "rollback_command"],
+      "properties": {
+        "branch_name": {
+          "$ref": "#/$defs/git_ref"
+        },
+        "base_branch": {
+          "$ref": "#/$defs/git_ref"
+        },
+        "create_command": {
+          "$ref": "#/$defs/local_git_command_candidate"
+        },
+        "rollback_command": {
+          "$ref": "#/$defs/local_git_command_candidate"
+        }
+      }
+    },
+    "pull_request_commit_candidate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "commit_message",
+        "affected_files",
+        "receipt_refs",
+        "quality_gate_refs",
+        "local_commands"
+      ],
+      "properties": {
+        "commit_message": {
+          "type": "string",
+          "minLength": 1
+        },
+        "affected_files": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/repository_path"
+          }
+        },
+        "receipt_refs": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "quality_gate_refs": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "local_commands": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/local_git_command_candidate"
+          }
+        }
+      }
+    },
+    "pull_request_review_packet": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "packet_id",
+        "title",
+        "summary",
+        "affected_files",
+        "quality_gate_refs",
+        "receipt_refs",
+        "risk_flags",
+        "rollback_plan",
+        "markdown_body",
+        "metadata"
+      ],
+      "properties": {
+        "packet_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "summary": {
+          "type": "string",
+          "minLength": 1
+        },
+        "affected_files": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/repository_path"
+          }
+        },
+        "quality_gate_refs": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "receipt_refs": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "risk_flags": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "rollback_plan": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "markdown_body": {
+          "type": "string",
+          "minLength": 1
+        },
+        "metadata": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      }
+    },
+    "pull_request_open_intent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "intent_id",
+        "repository",
+        "title",
+        "body",
+        "base_branch",
+        "head_branch",
+        "capability_id",
+        "approval_request_id",
+        "requires_approval",
+        "world_mutating",
+        "execution_allowed",
+        "approval_decision_id",
+        "metadata"
+      ],
+      "properties": {
+        "intent_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "repository": {
+          "type": "string",
+          "minLength": 1
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "body": {
+          "type": "string",
+          "minLength": 1
+        },
+        "base_branch": {
+          "$ref": "#/$defs/git_ref"
+        },
+        "head_branch": {
+          "$ref": "#/$defs/git_ref"
+        },
+        "capability_id": {
+          "const": "github.open_pull_request"
+        },
+        "approval_request_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "requires_approval": {
+          "const": true
+        },
+        "world_mutating": {
+          "const": true
+        },
+        "execution_allowed": {
+          "const": false
+        },
+        "approval_decision_id": {
+          "type": "string"
+        },
+        "metadata": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      }
+    }
+  }
+}

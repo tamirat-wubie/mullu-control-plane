@@ -1471,6 +1471,462 @@ class InferenceNetBackend:
         return self._call_count
 
 
+class AnswiraBackend:
+    """Answira OpenAI-compatible EU-hosted endpoint for Qwen coding models."""
+
+    provider = LLMProvider.ANSWIRA
+    DEFAULT_MODEL = "qwen/qwen3-coder-next"
+
+    def __init__(self, *, model: str = "", api_key: str | None = None, api_key_env: str = "ANSWIRA_API_KEY") -> None:
+        self._model = model or self.DEFAULT_MODEL
+        self._default_model = self._model
+        self._api_key = api_key or ""
+        self._api_key_env = api_key_env
+        self._call_count = 0
+
+    def call(self, params: LLMInvocationParams) -> LLMResult:
+        self._call_count += 1
+        return _openai_compatible_call(
+            base_url="https://answira.ai/api/v1",
+            api_key=self._api_key or os.environ.get(self._api_key_env, ""),
+            model=params.model_name or self._model,
+            messages=_params_to_messages(params),
+            max_tokens=params.max_tokens,
+            temperature=0.0,
+            provider=self.provider,
+            cost_per_1m_input=0.07,
+            cost_per_1m_output=0.30,
+        )
+
+    @property
+    def call_count(self) -> int:
+        return self._call_count
+
+
+class LLMAIBackend:
+    """LLMAI OpenAI-compatible gateway for low-cost Gemma and DeepSeek models."""
+
+    provider = LLMProvider.LLMAI
+    DEFAULT_MODEL = "gemma-4"
+
+    def __init__(self, *, model: str = "", api_key: str | None = None, api_key_env: str = "LLMAI_API_KEY") -> None:
+        self._model = model or self.DEFAULT_MODEL
+        self._default_model = self._model
+        self._api_key = api_key or ""
+        self._api_key_env = api_key_env
+        self._call_count = 0
+
+    def call(self, params: LLMInvocationParams) -> LLMResult:
+        self._call_count += 1
+        return _openai_compatible_call(
+            base_url="https://api.llmai.dev/v1",
+            api_key=self._api_key or os.environ.get(self._api_key_env, "") or os.environ.get("LLMAI_TOKEN", ""),
+            model=params.model_name or self._model,
+            messages=_params_to_messages(params),
+            max_tokens=params.max_tokens,
+            temperature=0.0,
+            provider=self.provider,
+            cost_per_1m_input=0.046,
+            cost_per_1m_output=0.130,
+        )
+
+    @property
+    def call_count(self) -> int:
+        return self._call_count
+
+
+class RequestyBackend:
+    """Requesty OpenAI-compatible gateway for cached long-context routing."""
+
+    provider = LLMProvider.REQUESTY
+    DEFAULT_MODEL = "deepseek/deepseek-chat"
+
+    def __init__(self, *, model: str = "", api_key: str | None = None, api_key_env: str = "REQUESTY_API_KEY") -> None:
+        self._model = model or self.DEFAULT_MODEL
+        self._default_model = self._model
+        self._api_key = api_key or ""
+        self._api_key_env = api_key_env
+        self._call_count = 0
+
+    def call(self, params: LLMInvocationParams) -> LLMResult:
+        self._call_count += 1
+        return _openai_compatible_call(
+            base_url="https://router.requesty.ai/v1",
+            api_key=self._api_key or os.environ.get(self._api_key_env, ""),
+            model=params.model_name or self._model,
+            messages=_params_to_messages(params),
+            max_tokens=params.max_tokens,
+            temperature=0.0,
+            provider=self.provider,
+            cost_per_1m_input=0.14,
+            cost_per_1m_output=0.28,
+        )
+
+    @property
+    def call_count(self) -> int:
+        return self._call_count
+
+
+class HuggingFaceBackend:
+    """Hugging Face router OpenAI-compatible endpoint for cheap hosted models."""
+
+    provider = LLMProvider.HUGGINGFACE
+    DEFAULT_MODEL = "Qwen/Qwen3-Coder-30B-A3B-Instruct:cheapest"
+
+    def __init__(self, *, model: str = "", api_key: str | None = None, api_key_env: str = "HF_TOKEN") -> None:
+        self._model = model or self.DEFAULT_MODEL
+        self._default_model = self._model
+        self._api_key = api_key or ""
+        self._api_key_env = api_key_env
+        self._call_count = 0
+
+    def call(self, params: LLMInvocationParams) -> LLMResult:
+        self._call_count += 1
+        return _openai_compatible_call(
+            base_url="https://router.huggingface.co/v1",
+            api_key=self._api_key
+            or os.environ.get(self._api_key_env, "")
+            or os.environ.get("HUGGINGFACE_API_KEY", ""),
+            model=params.model_name or self._model,
+            messages=_params_to_messages(params),
+            max_tokens=params.max_tokens,
+            temperature=0.0,
+            provider=self.provider,
+            cost_per_1m_input=0.07,
+            cost_per_1m_output=0.26,
+        )
+
+    @property
+    def call_count(self) -> int:
+        return self._call_count
+
+
+class BasetenBackend:
+    """Baseten Model APIs OpenAI-compatible endpoint for managed workhorse models."""
+
+    provider = LLMProvider.BASETEN
+    DEFAULT_MODEL = "nvidia/Nemotron-120B-A12B"
+
+    def __init__(self, *, model: str = "", api_key: str | None = None, api_key_env: str = "BASETEN_API_KEY") -> None:
+        self._model = model or self.DEFAULT_MODEL
+        self._default_model = self._model
+        self._api_key = api_key or ""
+        self._api_key_env = api_key_env
+        self._call_count = 0
+
+    def call(self, params: LLMInvocationParams) -> LLMResult:
+        self._call_count += 1
+        return _openai_compatible_call(
+            base_url="https://inference.baseten.co/v1",
+            api_key=self._api_key or os.environ.get(self._api_key_env, ""),
+            model=params.model_name or self._model,
+            messages=_params_to_messages(params),
+            max_tokens=params.max_tokens,
+            temperature=0.0,
+            provider=self.provider,
+            cost_per_1m_input=0.30,
+            cost_per_1m_output=0.75,
+        )
+
+    @property
+    def call_count(self) -> int:
+        return self._call_count
+
+
+class HaimakerBackend:
+    """haimaker OpenAI-compatible endpoint for cheap DeepSeek routing."""
+
+    provider = LLMProvider.HAIMAKER
+    DEFAULT_MODEL = "deepseek/deepseek-chat-v3-0324"
+
+    def __init__(self, *, model: str = "", api_key: str | None = None, api_key_env: str = "HAIMAKER_API_KEY") -> None:
+        self._model = model or self.DEFAULT_MODEL
+        self._default_model = self._model
+        self._api_key = api_key or ""
+        self._api_key_env = api_key_env
+        self._call_count = 0
+
+    def call(self, params: LLMInvocationParams) -> LLMResult:
+        self._call_count += 1
+        return _openai_compatible_call(
+            base_url="https://api.haimaker.ai/v1",
+            api_key=self._api_key or os.environ.get(self._api_key_env, ""),
+            model=params.model_name or self._model,
+            messages=_params_to_messages(params),
+            max_tokens=params.max_tokens,
+            temperature=0.0,
+            provider=self.provider,
+            cost_per_1m_input=0.14,
+            cost_per_1m_output=0.28,
+        )
+
+    @property
+    def call_count(self) -> int:
+        return self._call_count
+
+
+class NscaleBackend:
+    """Nscale Serverless Inference OpenAI-compatible endpoint for cheap GPT OSS models."""
+
+    provider = LLMProvider.NSCALE
+    DEFAULT_MODEL = "openai/gpt-oss-20b"
+    ROUTING_MODEL = "nscale/openai/gpt-oss-20b"
+    MODEL_ALIASES = {ROUTING_MODEL: DEFAULT_MODEL}
+
+    def __init__(self, *, model: str = "", api_key: str | None = None, api_key_env: str = "NSCALE_API_KEY") -> None:
+        self._model = model or self.DEFAULT_MODEL
+        self._default_model = self._model
+        self._api_key = api_key or ""
+        self._api_key_env = api_key_env
+        self._call_count = 0
+
+    def call(self, params: LLMInvocationParams) -> LLMResult:
+        self._call_count += 1
+        requested_model = params.model_name or self._model
+        model = self.MODEL_ALIASES.get(requested_model, requested_model)
+        return _openai_compatible_call(
+            base_url="https://inference.api.nscale.com/v1",
+            api_key=self._api_key or os.environ.get(self._api_key_env, ""),
+            model=model,
+            messages=_params_to_messages(params),
+            max_tokens=params.max_tokens,
+            temperature=0.0,
+            provider=self.provider,
+            cost_per_1m_input=0.05,
+            cost_per_1m_output=0.20,
+        )
+
+    @property
+    def call_count(self) -> int:
+        return self._call_count
+
+
+class ScalewayBackend:
+    """Scaleway Generative APIs OpenAI-compatible endpoint for EU-hosted models."""
+
+    provider = LLMProvider.SCALEWAY
+    DEFAULT_MODEL = "gpt-oss-120b"
+    ROUTING_MODEL = "scaleway/gpt-oss-120b"
+    MODEL_ALIASES = {ROUTING_MODEL: DEFAULT_MODEL}
+
+    def __init__(self, *, model: str = "", api_key: str | None = None, api_key_env: str = "SCW_API_KEY") -> None:
+        self._model = model or self.DEFAULT_MODEL
+        self._default_model = self._model
+        self._api_key = api_key or ""
+        self._api_key_env = api_key_env
+        self._call_count = 0
+
+    def call(self, params: LLMInvocationParams) -> LLMResult:
+        self._call_count += 1
+        requested_model = params.model_name or self._model
+        model = self.MODEL_ALIASES.get(requested_model, requested_model)
+        return _openai_compatible_call(
+            base_url="https://api.scaleway.ai/v1",
+            api_key=self._api_key
+            or os.environ.get(self._api_key_env, "")
+            or os.environ.get("SCALEWAY_API_KEY", ""),
+            model=model,
+            messages=_params_to_messages(params),
+            max_tokens=params.max_tokens,
+            temperature=0.0,
+            provider=self.provider,
+            cost_per_1m_input=0.15,
+            cost_per_1m_output=0.60,
+        )
+
+    @property
+    def call_count(self) -> int:
+        return self._call_count
+
+
+class OVHCloudBackend:
+    """OVHcloud AI Endpoints OpenAI-compatible endpoint for low-cost code models."""
+
+    provider = LLMProvider.OVHCLOUD
+    DEFAULT_MODEL = "Qwen3-Coder-30B-A3B-Instruct"
+    ROUTING_MODEL = "ovhcloud/Qwen3-Coder-30B-A3B-Instruct"
+    MODEL_ALIASES = {ROUTING_MODEL: DEFAULT_MODEL}
+
+    def __init__(
+        self,
+        *,
+        model: str = "",
+        api_key: str | None = None,
+        api_key_env: str = "OVH_AI_ENDPOINTS_ACCESS_TOKEN",
+    ) -> None:
+        self._model = model or self.DEFAULT_MODEL
+        self._default_model = self._model
+        self._api_key = api_key or ""
+        self._api_key_env = api_key_env
+        self._call_count = 0
+
+    def call(self, params: LLMInvocationParams) -> LLMResult:
+        self._call_count += 1
+        requested_model = params.model_name or self._model
+        model = self.MODEL_ALIASES.get(requested_model, requested_model)
+        return _openai_compatible_call(
+            base_url="https://oai.endpoints.kepler.ai.cloud.ovh.net/v1",
+            api_key=self._api_key
+            or os.environ.get(self._api_key_env, "")
+            or os.environ.get("AI_ENDPOINT_API_KEY", ""),
+            model=model,
+            messages=_params_to_messages(params),
+            max_tokens=params.max_tokens,
+            temperature=0.0,
+            provider=self.provider,
+            cost_per_1m_input=0.06,
+            cost_per_1m_output=0.22,
+        )
+
+    @property
+    def call_count(self) -> int:
+        return self._call_count
+
+
+class AIMLAPIBackend:
+    """AIMLAPI OpenAI-compatible endpoint for low-cost Nemotron models."""
+
+    provider = LLMProvider.AIMLAPI
+    DEFAULT_MODEL = "nvidia/nemotron-3-nano-30b-a3b"
+    ROUTING_MODEL = "aimlapi/nvidia/nemotron-3-nano-30b-a3b"
+    MODEL_ALIASES = {ROUTING_MODEL: DEFAULT_MODEL}
+
+    def __init__(self, *, model: str = "", api_key: str | None = None, api_key_env: str = "AIMLAPI_API_KEY") -> None:
+        self._model = model or self.DEFAULT_MODEL
+        self._default_model = self._model
+        self._api_key = api_key or ""
+        self._api_key_env = api_key_env
+        self._call_count = 0
+
+    def call(self, params: LLMInvocationParams) -> LLMResult:
+        self._call_count += 1
+        requested_model = params.model_name or self._model
+        model = self.MODEL_ALIASES.get(requested_model, requested_model)
+        return _openai_compatible_call(
+            base_url="https://api.aimlapi.com/v1",
+            api_key=self._api_key
+            or os.environ.get(self._api_key_env, "")
+            or os.environ.get("AIML_API_KEY", ""),
+            model=model,
+            messages=_params_to_messages(params),
+            max_tokens=params.max_tokens,
+            temperature=0.0,
+            provider=self.provider,
+            cost_per_1m_input=0.065,
+            cost_per_1m_output=0.26,
+        )
+
+    @property
+    def call_count(self) -> int:
+        return self._call_count
+
+
+class InfomaniakBackend:
+    """Infomaniak product-scoped OpenAI-compatible endpoint."""
+
+    provider = LLMProvider.INFOMANIAK
+    DEFAULT_MODEL = "google/gemma-4-31B-it"
+    ROUTING_MODEL = "infomaniak/google/gemma-4-31B-it"
+    MODEL_ALIASES = {ROUTING_MODEL: DEFAULT_MODEL}
+
+    def __init__(
+        self,
+        *,
+        model: str = "",
+        api_key: str | None = None,
+        api_key_env: str = "INFOMANIAK_API_KEY",
+        product_id: str = "",
+        base_url: str = "",
+    ) -> None:
+        self._model = model or self.DEFAULT_MODEL
+        self._default_model = self._model
+        self._api_key = api_key or ""
+        self._api_key_env = api_key_env
+        self._product_id = product_id
+        self._base_url = self.resolve_base_url(base_url, product_id)
+        self._call_count = 0
+
+    @staticmethod
+    def resolve_base_url(base_url: str = "", product_id: str = "") -> str:
+        if base_url:
+            return base_url.rstrip("/")
+        if product_id:
+            return f"https://api.infomaniak.com/2/ai/{product_id}/openai/v1"
+        return ""
+
+    def call(self, params: LLMInvocationParams) -> LLMResult:
+        self._call_count += 1
+        requested_model = params.model_name or self._model
+        model = self.MODEL_ALIASES.get(requested_model, requested_model)
+        api_key = self._api_key or os.environ.get(self._api_key_env, "")
+        base_url = self._base_url or self.resolve_base_url(
+            os.environ.get("INFOMANIAK_BASE_URL", ""),
+            os.environ.get("INFOMANIAK_PRODUCT_ID", ""),
+        )
+        if not base_url:
+            return LLMResult(
+                content="",
+                input_tokens=0,
+                output_tokens=0,
+                cost=0.0,
+                model_name=model,
+                provider=self.provider,
+                finished=False,
+                error="provider base URL unavailable",
+            )
+        return _openai_compatible_call(
+            base_url=base_url,
+            api_key=api_key,
+            model=model,
+            messages=_params_to_messages(params),
+            max_tokens=params.max_tokens,
+            temperature=0.0,
+            provider=self.provider,
+            cost_per_1m_input=0.20,
+            cost_per_1m_output=0.40,
+        )
+
+    @property
+    def call_count(self) -> int:
+        return self._call_count
+
+
+class KatalepticBackend:
+    """Kataleptic OpenAI-compatible endpoint for curated low-cost models."""
+
+    provider = LLMProvider.KATALEPTIC
+    DEFAULT_MODEL = "gemma3-27b"
+    ROUTING_MODEL = "kataleptic/gemma3-27b"
+    MODEL_ALIASES = {ROUTING_MODEL: DEFAULT_MODEL}
+
+    def __init__(self, *, model: str = "", api_key: str | None = None, api_key_env: str = "KATALEPTIC_API_KEY") -> None:
+        self._model = model or self.DEFAULT_MODEL
+        self._default_model = self._model
+        self._api_key = api_key or ""
+        self._api_key_env = api_key_env
+        self._call_count = 0
+
+    def call(self, params: LLMInvocationParams) -> LLMResult:
+        self._call_count += 1
+        requested_model = params.model_name or self._model
+        model = self.MODEL_ALIASES.get(requested_model, requested_model)
+        return _openai_compatible_call(
+            base_url="https://api.kataleptic.com/v1",
+            api_key=self._api_key or os.environ.get(self._api_key_env, ""),
+            model=model,
+            messages=_params_to_messages(params),
+            max_tokens=params.max_tokens,
+            temperature=0.0,
+            provider=self.provider,
+            cost_per_1m_input=0.15,
+            cost_per_1m_output=0.20,
+        )
+
+    @property
+    def call_count(self) -> int:
+        return self._call_count
+
+
 # --- xAI Grok (real-time X data) ---
 class GrokBackend:
     """xAI Grok - real-time X (Twitter) data access.
@@ -1624,6 +2080,18 @@ ALL_PROVIDERS: dict[str, type] = {
     "embercloud": EmberCloudBackend,
     "morpheus": MorpheusBackend,
     "inferencenet": InferenceNetBackend,
+    "answira": AnswiraBackend,
+    "llmai": LLMAIBackend,
+    "requesty": RequestyBackend,
+    "huggingface": HuggingFaceBackend,
+    "baseten": BasetenBackend,
+    "haimaker": HaimakerBackend,
+    "nscale": NscaleBackend,
+    "scaleway": ScalewayBackend,
+    "ovhcloud": OVHCloudBackend,
+    "aimlapi": AIMLAPIBackend,
+    "infomaniak": InfomaniakBackend,
+    "kataleptic": KatalepticBackend,
     "grok": GrokBackend,
     "mistral": MistralBackend,
     "openrouter": OpenRouterBackend,
@@ -1681,6 +2149,18 @@ def available_providers() -> list[str]:
         "embercloud": ("EMBERCLOUD_API_KEY",),
         "morpheus": ("MORPHEUS_API_KEY", "MOR_API_KEY"),
         "inferencenet": ("INFERENCE_API_KEY", "INFERENCENET_API_KEY"),
+        "answira": ("ANSWIRA_API_KEY",),
+        "llmai": ("LLMAI_API_KEY", "LLMAI_TOKEN"),
+        "requesty": ("REQUESTY_API_KEY",),
+        "huggingface": ("HF_TOKEN", "HUGGINGFACE_API_KEY"),
+        "baseten": ("BASETEN_API_KEY",),
+        "haimaker": ("HAIMAKER_API_KEY",),
+        "nscale": ("NSCALE_API_KEY",),
+        "scaleway": ("SCW_API_KEY", "SCALEWAY_API_KEY"),
+        "ovhcloud": ("OVH_AI_ENDPOINTS_ACCESS_TOKEN", "AI_ENDPOINT_API_KEY"),
+        "aimlapi": ("AIMLAPI_API_KEY", "AIML_API_KEY"),
+        "infomaniak": ("INFOMANIAK_API_KEY",),
+        "kataleptic": ("KATALEPTIC_API_KEY",),
         "grok": ("XAI_API_KEY",),
         "mistral": ("MISTRAL_API_KEY",),
         "openrouter": ("OPENROUTER_API_KEY",),
@@ -1688,4 +2168,8 @@ def available_providers() -> list[str]:
     available = [name for name, env_vars in env_map.items() if any(os.environ.get(env_var) for env_var in env_vars)]
     if "cloudflare" in available and not os.environ.get("CLOUDFLARE_ACCOUNT_ID"):
         available.remove("cloudflare")
+    if "infomaniak" in available and not (
+        os.environ.get("INFOMANIAK_BASE_URL") or os.environ.get("INFOMANIAK_PRODUCT_ID")
+    ):
+        available.remove("infomaniak")
     return available

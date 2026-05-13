@@ -237,6 +237,27 @@ def test_conversation_thread_with_messages() -> None:
     assert thread.messages[0].message_id == "msg-1"
 
 
+def test_conversation_thread_rejects_malformed_messages_array() -> None:
+    with pytest.raises(ValueError, match="messages must be an array"):
+        ConversationThread(
+            thread_id="thread-1",
+            subject="Test",
+            status=ThreadStatus.ACTIVE,
+            messages="msg-1",
+            created_at=_CLOCK,
+            updated_at=_CLOCK,
+        )
+    with pytest.raises(ValueError, match=r"messages\[0\]"):
+        ConversationThread(
+            thread_id="thread-1",
+            subject="Test",
+            status=ThreadStatus.ACTIVE,
+            messages=("not-a-message",),
+            created_at=_CLOCK,
+            updated_at=_CLOCK,
+        )
+
+
 def test_conversation_thread_with_goal_and_workflow() -> None:
     thread = ConversationThread(
         thread_id="thread-1",
@@ -519,6 +540,18 @@ def test_status_report_rejects_progress_above_hundred() -> None:
             goal_id=None,
             summary="Bad.",
             progress_pct=101,
+            reported_at=_CLOCK,
+        )
+
+
+def test_status_report_rejects_boolean_progress() -> None:
+    with pytest.raises(ValueError, match="progress_pct"):
+        StatusReport(
+            report_id="rpt-bool",
+            thread_id="thread-1",
+            goal_id=None,
+            summary="Bad.",
+            progress_pct=True,
             reported_at=_CLOCK,
         )
 

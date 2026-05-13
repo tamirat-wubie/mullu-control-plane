@@ -162,6 +162,15 @@ class TestSubGoal:
         sg = _sub_goal(predecessors=("sg-0",))
         assert sg.predecessors == ("sg-0",)
 
+    def test_predecessors_reject_scalar_shape(self):
+        sg = _sub_goal(predecessors=["sg-0"])  # type: ignore[arg-type]
+        assert sg.predecessors == ("sg-0",)
+        assert isinstance(sg.predecessors, tuple)
+        assert sg.to_json_dict()["predecessors"] == ["sg-0"]
+
+        with pytest.raises(ValueError, match="predecessors must be an array"):
+            _sub_goal(predecessors="sg-0")  # type: ignore[arg-type]
+
     def test_empty_sub_goal_id_rejected(self):
         with pytest.raises(ValueError, match="sub_goal_id"):
             _sub_goal(sub_goal_id="")
@@ -169,6 +178,12 @@ class TestSubGoal:
     def test_empty_predecessor_rejected(self):
         with pytest.raises(ValueError, match="must be a non-empty string"):
             _sub_goal(predecessors=("",))
+
+    def test_empty_skill_or_workflow_id_rejected(self):
+        with pytest.raises(ValueError, match="skill_id"):
+            _sub_goal(skill_id="")
+        with pytest.raises(ValueError, match="workflow_id"):
+            _sub_goal(workflow_id="")
 
     def test_frozen(self):
         sg = _sub_goal()
@@ -185,6 +200,19 @@ class TestGoalPlan:
         assert p.plan_id == "plan-001"
         assert len(p.sub_goals) == 1
         assert p.version == 1
+
+    def test_sub_goals_accept_list_and_reject_wrong_record_shape(self):
+        sg = _sub_goal()
+        p = _plan(sub_goals=[sg])  # type: ignore[arg-type]
+
+        assert p.sub_goals == (sg,)
+        assert isinstance(p.sub_goals, tuple)
+        assert p.to_json_dict()["sub_goals"][0]["sub_goal_id"] == "sg-1"
+
+        with pytest.raises(ValueError, match=r"sub_goals\[0\] must be a SubGoal"):
+            _plan(sub_goals=("sg-1",))  # type: ignore[arg-type]
+        with pytest.raises(ValueError, match="unique sub_goal_id"):
+            _plan(sub_goals=(sg, _sub_goal(description="duplicate")))
 
     def test_empty_sub_goals_rejected(self):
         with pytest.raises(ValueError, match="sub_goals"):
@@ -261,6 +289,34 @@ class TestGoalExecutionState:
             updated_at=_NOW,
         )
         assert s.current_plan_id == "plan-001"
+
+    def test_sub_goal_state_ids_reject_scalar_shape(self):
+        state = GoalExecutionState(
+            goal_id="goal-001",
+            status=GoalStatus.EXECUTING,
+            updated_at=_NOW,
+            completed_sub_goals=["sg-1"],  # type: ignore[arg-type]
+            failed_sub_goals=["sg-2"],  # type: ignore[arg-type]
+        )
+
+        assert state.completed_sub_goals == ("sg-1",)
+        assert state.failed_sub_goals == ("sg-2",)
+        assert state.to_json_dict()["completed_sub_goals"] == ["sg-1"]
+
+        with pytest.raises(ValueError, match="completed_sub_goals must be an array"):
+            GoalExecutionState(
+                goal_id="goal-001",
+                status=GoalStatus.EXECUTING,
+                updated_at=_NOW,
+                completed_sub_goals="sg-1",  # type: ignore[arg-type]
+            )
+        with pytest.raises(ValueError, match="failed_sub_goals must be an array"):
+            GoalExecutionState(
+                goal_id="goal-001",
+                status=GoalStatus.EXECUTING,
+                updated_at=_NOW,
+                failed_sub_goals="sg-2",  # type: ignore[arg-type]
+            )
 
     def test_empty_goal_id_rejected(self):
         with pytest.raises(ValueError, match="goal_id"):

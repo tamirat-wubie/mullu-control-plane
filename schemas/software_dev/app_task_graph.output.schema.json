@@ -1,0 +1,154 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:app-task-graph:1",
+  "title": "Software Dev App Task Graph Output",
+  "description": "Acyclic app-builder task graph with proof references and no deployment edge.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "graph_id",
+    "app_name",
+    "tasks",
+    "root_task_ids",
+    "terminal_task_ids",
+    "evidence_refs",
+    "metadata"
+  ],
+  "properties": {
+    "graph_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "app_name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "tasks": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/app_task"
+      }
+    },
+    "root_task_ids": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "terminal_task_ids": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "evidence_refs": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["direct_deployment_allowed", "commit_candidate_allowed"],
+      "properties": {
+        "direct_deployment_allowed": {
+          "const": false
+        },
+        "commit_candidate_allowed": {
+          "const": false
+        }
+      }
+    }
+  },
+  "$defs": {
+    "repository_path": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))(?![A-Za-z]:)[^\\r\\n]+$"
+    },
+    "app_task": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "task_id",
+        "title",
+        "kind",
+        "affected_files",
+        "acceptance_criteria",
+        "dependencies",
+        "quality_gates",
+        "risk",
+        "review_required",
+        "metadata"
+      ],
+      "properties": {
+        "task_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "kind": {
+          "enum": [
+            "data_model",
+            "api_contract",
+            "ui_surface",
+            "validation_security",
+            "tests",
+            "integration_wiring",
+            "preview_review"
+          ]
+        },
+        "affected_files": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/repository_path"
+          }
+        },
+        "acceptance_criteria": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "dependencies": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "quality_gates": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "risk": {
+          "enum": ["low", "medium", "high"]
+        },
+        "review_required": {
+          "type": "boolean"
+        },
+        "metadata": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      }
+    }
+  }
+}

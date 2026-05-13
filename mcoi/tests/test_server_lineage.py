@@ -30,6 +30,7 @@ def client():
     os.environ["MULLU_CERT_INTERVAL"] = "0"
     from mcoi_runtime.app.routers.deps import deps
     from mcoi_runtime.app.server import app
+    from mcoi_runtime.core.artifact_lineage_dag import ArtifactLineageDAG, hash_artifact_payload
 
     trace_id = "lineage-http-trace"
     if deps.replay_recorder.get_trace(trace_id) is None:
@@ -47,6 +48,29 @@ def client():
             {"proof_id": "proof:http", "output_id": "out-http"},
         )
         deps.replay_recorder.complete_trace(trace_id)
+    artifact_lineage = ArtifactLineageDAG(clock=lambda: "2026-05-13T14:00:00+00:00")
+    artifact_lineage.register_artifact(
+        artifact_id="source-http",
+        artifact_hash=hash_artifact_payload({"source": "http"}),
+        artifact_type="json",
+        tenant_id="tenant-http",
+        produced_by_event_id="event-source-http",
+        metadata={"policy_version": "policy:http", "budget_ref": "budget-http"},
+    )
+    artifact_lineage.register_artifact(
+        artifact_id="summary-http",
+        artifact_hash=hash_artifact_payload({"summary": "http"}),
+        artifact_type="json",
+        tenant_id="tenant-http",
+        produced_by_event_id="event-summary-http",
+        metadata={"policy_version": "policy:http", "budget_ref": "budget-http"},
+    )
+    artifact_lineage.add_edge(
+        upstream_artifact_id="source-http",
+        downstream_artifact_id="summary-http",
+        reason="summarize http artifact",
+    )
+    deps.set("artifact_lineage", artifact_lineage)
     return TestClient(app)
 
 
@@ -106,6 +130,19 @@ def test_lineage_command_permalink_resolves_indexed_trace(client) -> None:
     assert data["root_ref"]["ref_type"] == "command"
     assert data["root_ref"]["ref_id"] == "cmd-http"
     assert len(data["nodes"]) == 1
+
+
+def test_lineage_artifact_permalink_resolves_persisted_dag(client) -> None:
+    response = client.get("/api/v1/lineage/artifact/summary-http?depth=5")
+    data = response.json()
+
+    assert response.status_code == 200
+    assert data["verified"] is True
+    assert data["root_ref"]["ref_type"] == "artifact"
+    assert data["root_ref"]["ref_id"] == "summary-http"
+    assert data["nodes"][0]["node_id"] == "artifact:source-http"
+    assert data["nodes"][1]["parent_node_ids"] == ["artifact:source-http"]
+    assert data["edges"][0]["relation"] == "depends_on"
 
 
 def test_lineage_resolve_rejects_invalid_uri(client) -> None:

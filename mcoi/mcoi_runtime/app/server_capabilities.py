@@ -691,6 +691,150 @@ def bootstrap_capability_services(
     )
     model_router.register(
         ModelProfile(
+            model_id="qwen/qwen3-coder-next",
+            name="Qwen3 Coder Next via Answira",
+            provider="answira",
+            cost_per_1k_input=0.00007,
+            cost_per_1k_output=0.00030,
+            max_context=256000,
+            speed_tier="fast",
+            capability_tier="standard",
+        )
+    )
+    model_router.register(
+        ModelProfile(
+            model_id="gemma-4",
+            name="Gemma 4 via LLMAI",
+            provider="llmai",
+            cost_per_1k_input=0.000046,
+            cost_per_1k_output=0.000130,
+            max_context=256000,
+            speed_tier="fast",
+            capability_tier="standard",
+        )
+    )
+    model_router.register(
+        ModelProfile(
+            model_id="deepseek/deepseek-chat",
+            name="DeepSeek Chat via Requesty",
+            provider="requesty",
+            cost_per_1k_input=0.00014,
+            cost_per_1k_output=0.00028,
+            max_context=1000000,
+            speed_tier="fast",
+            capability_tier="standard",
+        )
+    )
+    model_router.register(
+        ModelProfile(
+            model_id="Qwen/Qwen3-Coder-30B-A3B-Instruct:cheapest",
+            name="Qwen3 Coder 30B A3B via Hugging Face",
+            provider="huggingface",
+            cost_per_1k_input=0.00007,
+            cost_per_1k_output=0.00026,
+            max_context=262144,
+            speed_tier="fast",
+            capability_tier="standard",
+        )
+    )
+    model_router.register(
+        ModelProfile(
+            model_id="nvidia/Nemotron-120B-A12B",
+            name="Nemotron Super via Baseten",
+            provider="baseten",
+            cost_per_1k_input=0.00030,
+            cost_per_1k_output=0.00075,
+            max_context=202000,
+            speed_tier="balanced",
+            capability_tier="advanced",
+        )
+    )
+    model_router.register(
+        ModelProfile(
+            model_id="deepseek/deepseek-chat-v3-0324",
+            name="DeepSeek Chat V3 0324 via haimaker",
+            provider="haimaker",
+            cost_per_1k_input=0.00014,
+            cost_per_1k_output=0.00028,
+            max_context=65536,
+            speed_tier="fast",
+            capability_tier="standard",
+        )
+    )
+    model_router.register(
+        ModelProfile(
+            model_id="nscale/openai/gpt-oss-20b",
+            name="GPT OSS 20B via Nscale",
+            provider="nscale",
+            cost_per_1k_input=0.00005,
+            cost_per_1k_output=0.00020,
+            max_context=131072,
+            speed_tier="fast",
+            capability_tier="standard",
+        )
+    )
+    model_router.register(
+        ModelProfile(
+            model_id="scaleway/gpt-oss-120b",
+            name="GPT OSS 120B via Scaleway",
+            provider="scaleway",
+            cost_per_1k_input=0.00015,
+            cost_per_1k_output=0.00060,
+            max_context=128000,
+            speed_tier="balanced",
+            capability_tier="advanced",
+        )
+    )
+    model_router.register(
+        ModelProfile(
+            model_id="ovhcloud/Qwen3-Coder-30B-A3B-Instruct",
+            name="Qwen3 Coder 30B A3B via OVHcloud",
+            provider="ovhcloud",
+            cost_per_1k_input=0.00006,
+            cost_per_1k_output=0.00022,
+            max_context=256000,
+            speed_tier="fast",
+            capability_tier="standard",
+        )
+    )
+    model_router.register(
+        ModelProfile(
+            model_id="aimlapi/nvidia/nemotron-3-nano-30b-a3b",
+            name="Nemotron 3 Nano 30B A3B via AIMLAPI",
+            provider="aimlapi",
+            cost_per_1k_input=0.000065,
+            cost_per_1k_output=0.00026,
+            max_context=262144,
+            speed_tier="fast",
+            capability_tier="standard",
+        )
+    )
+    model_router.register(
+        ModelProfile(
+            model_id="infomaniak/google/gemma-4-31B-it",
+            name="Gemma 4 31B via Infomaniak",
+            provider="infomaniak",
+            cost_per_1k_input=0.00020,
+            cost_per_1k_output=0.00040,
+            max_context=262144,
+            speed_tier="balanced",
+            capability_tier="advanced",
+        )
+    )
+    model_router.register(
+        ModelProfile(
+            model_id="kataleptic/gemma3-27b",
+            name="Gemma 3 27B via Kataleptic",
+            provider="kataleptic",
+            cost_per_1k_input=0.00015,
+            cost_per_1k_output=0.00020,
+            max_context=131072,
+            speed_tier="fast",
+            capability_tier="standard",
+        )
+    )
+    model_router.register(
+        ModelProfile(
             model_id="mistral-small-2603",
             name="Mistral Small 2603",
             provider="mistral",

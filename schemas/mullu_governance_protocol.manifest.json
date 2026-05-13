@@ -617,9 +617,33 @@
       "surface": "evidence"
     },
     {
+      "schema_id": "trust-ledger-bundle-verification-report",
+      "path": "schemas/trust_ledger_bundle_verification_report.schema.json",
+      "urn": "urn:mullusi:schema:trust-ledger-bundle-verification-report:1",
+      "surface": "evidence"
+    },
+    {
       "schema_id": "trust-ledger-anchor-receipt",
       "path": "schemas/trust_ledger_anchor_receipt.schema.json",
       "urn": "urn:mullusi:schema:trust-ledger-anchor-receipt:1",
+      "surface": "evidence"
+    },
+    {
+      "schema_id": "trust-ledger-evidence-artifacts",
+      "path": "schemas/trust_ledger_evidence_artifacts.schema.json",
+      "urn": "urn:mullusi:schema:trust-ledger-evidence-artifacts:1",
+      "surface": "evidence"
+    },
+    {
+      "schema_id": "trust-ledger-export-package",
+      "path": "schemas/trust_ledger_export_package.schema.json",
+      "urn": "urn:mullusi:schema:trust-ledger-export-package:1",
+      "surface": "evidence"
+    },
+    {
+      "schema_id": "trust-ledger-anchor-verification-report",
+      "path": "schemas/trust_ledger_anchor_verification_report.schema.json",
+      "urn": "urn:mullusi:schema:trust-ledger-anchor-verification-report:1",
       "surface": "evidence"
     },
     {

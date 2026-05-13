@@ -44,6 +44,7 @@ from mcoi_runtime.app.software_receipt_observability import (
 from mcoi_runtime.app.software_receipt_review_queue import SoftwareReceiptReviewQueue
 from mcoi_runtime.core.review import ReviewEngine
 from mcoi_runtime.core.structured_logging import LogLevel
+from mcoi_runtime.core.artifact_lineage_dag import ArtifactLineageDAG, JsonArtifactLineageStore
 from mcoi_runtime.core.event_spine import EventSpineEngine
 from mcoi_runtime.core.temporal_runtime import TemporalRuntimeEngine
 from mcoi_runtime.core.temporal_scheduler_background import TemporalSchedulerBackgroundLoop
@@ -277,6 +278,31 @@ finance_approval_store = (
     else FinanceApprovalPacketStore()
 )
 deps.set("finance_approval_store", finance_approval_store)
+
+_artifact_lineage_store_path = os.environ.get("MULLU_ARTIFACT_LINEAGE_STORE_PATH")
+artifact_lineage_store = (
+    JsonArtifactLineageStore(Path(_artifact_lineage_store_path))
+    if _artifact_lineage_store_path
+    else None
+)
+artifact_lineage = (
+    artifact_lineage_store.load(clock=_clock)
+    if artifact_lineage_store is not None and artifact_lineage_store.path.exists()
+    else ArtifactLineageDAG(clock=_clock)
+)
+deps.set("artifact_lineage", artifact_lineage)
+if artifact_lineage_store is not None:
+    deps.set("artifact_lineage_store", artifact_lineage_store)
+
+    def _save_artifact_lineage_on_shutdown() -> dict[str, Any]:
+        snapshot = artifact_lineage_store.save(artifact_lineage)
+        return {
+            "snapshot_id": snapshot.snapshot_id,
+            "artifact_count": snapshot.artifact_count,
+            "edge_count": snapshot.edge_count,
+        }
+
+    shutdown_mgr.register("save_artifact_lineage", _save_artifact_lineage_on_shutdown, priority=80)
 
 governed_swarm_bootstrap = mount_governed_swarm_router_from_env(
     app=app,

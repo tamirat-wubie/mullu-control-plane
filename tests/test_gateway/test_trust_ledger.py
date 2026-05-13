@@ -20,6 +20,7 @@ from pathlib import Path
 import pytest
 
 from gateway.trust_ledger import TrustLedger, TrustLedgerBundleDraft
+from scripts.validate_schemas import _load_schema, _validate_schema_instance
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -88,6 +89,17 @@ def test_trust_ledger_bundle_schema_exposes_signature_contract() -> None:
     assert schema["properties"]["signature"]["pattern"] == "^hmac-sha256:.+"
     assert bundle.external_anchor_status == "anchored"
     assert bundle.external_anchor_ref == "anchor://ledger/1"
+
+
+def test_trust_ledger_bundle_schema_rejects_non_proof_evidence_ref() -> None:
+    bundle = TrustLedger().issue(_draft(), signing_secret="secret", signature_key_id="local-key")
+    payload = bundle.to_json_dict()
+    payload["evidence_refs"] = ["audit:root-1"]
+    errors = _validate_schema_instance(_load_schema(SCHEMA_PATH), payload)
+
+    assert any("does not match" in error for error in errors)
+    assert payload["bundle_id"].startswith("trust-bundle-")
+    assert payload["bundle_hash"]
 
 
 def _draft(**overrides: object) -> TrustLedgerBundleDraft:

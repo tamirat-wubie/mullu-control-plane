@@ -1,0 +1,38 @@
+{
+  "capability_id": "software_dev.change.run",
+  "version": 1,
+  "kind": "software_dev",
+  "risk": "high",
+  "owner": "software_platform",
+  "input_schema_ref": "schemas/software_dev/change_run.input.schema.json",
+  "output_schema_ref": "urn:mullusi:schema:software-change-receipt:1",
+  "allowed_environments": ["local", "pilot"],
+  "required_gates": [
+    "unit_tests",
+    "lint",
+    "secret_scan",
+    "blast_radius_check",
+    "rollback_check"
+  ],
+  "rollback_required": true,
+  "sandbox_required": true,
+  "effect_bearing": true,
+  "maturity": "C3",
+  "evidence_refs": [
+    "tests/test_software_dev_capability_pack.py",
+    "tests/test_mcp_software_change.py",
+    "tests/test_software_change_receipts.py",
+    "schemas/software_dev/software_change_receipt.output.schema.json"
+  ],
+  "policy_refs": [
+    "policy://software-dev/no-network-by-default",
+    "policy://software-dev/human-approval-required",
+    "policy://software-dev/no-production-deployment"
+  ],
+  "receipt_contract_ref": "urn:mullusi:schema:software-change-receipt:1",
+  "metadata": {
+    "hot_reload_allowed_environments": ["local", "pilot"],
+    "direct_effects_allowed": true,
+    "production_hot_reload_allowed": false
+  }
+}

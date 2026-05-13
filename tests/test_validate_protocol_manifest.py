@@ -248,6 +248,21 @@ def test_protocol_manifest_indexes_capability_maturity_assessment() -> None:
     assert maturity_entry["surface"] == "capability"
 
 
+def test_protocol_manifest_indexes_trust_ledger_anchor_verification_report() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    bundle_report_entry = entries["trust-ledger-bundle-verification-report"]
+    report_entry = entries["trust-ledger-anchor-verification-report"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert bundle_report_entry["path"] == "schemas/trust_ledger_bundle_verification_report.schema.json"
+    assert bundle_report_entry["urn"] == "urn:mullusi:schema:trust-ledger-bundle-verification-report:1"
+    assert bundle_report_entry["surface"] == "evidence"
+    assert report_entry["path"] == "schemas/trust_ledger_anchor_verification_report.schema.json"
+    assert report_entry["urn"] == "urn:mullusi:schema:trust-ledger-anchor-verification-report:1"
+    assert report_entry["surface"] == "evidence"
+
+
 def test_protocol_manifest_indexes_domain_operating_pack() -> None:
     manifest = load_manifest()
     entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
@@ -283,6 +298,28 @@ def test_protocol_manifest_indexes_trust_ledger_anchor_receipt() -> None:
     assert compliance_entry["path"] == "schemas/risk_compliance_mapping_snapshot.schema.json"
     assert compliance_entry["urn"] == "urn:mullusi:schema:risk-compliance-mapping-snapshot:1"
     assert compliance_entry["surface"] == "compliance"
+
+
+def test_protocol_manifest_indexes_trust_ledger_evidence_artifacts() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    trust_entry = entries["trust-ledger-evidence-artifacts"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert trust_entry["path"] == "schemas/trust_ledger_evidence_artifacts.schema.json"
+    assert trust_entry["urn"] == "urn:mullusi:schema:trust-ledger-evidence-artifacts:1"
+    assert trust_entry["surface"] == "evidence"
+
+
+def test_protocol_manifest_indexes_trust_ledger_export_package() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    trust_entry = entries["trust-ledger-export-package"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert trust_entry["path"] == "schemas/trust_ledger_export_package.schema.json"
+    assert trust_entry["urn"] == "urn:mullusi:schema:trust-ledger-export-package:1"
+    assert trust_entry["surface"] == "evidence"
 
 
 def test_protocol_manifest_indexes_memory_lattice_admission() -> None:

@@ -44,7 +44,8 @@ def _make_request(argv: tuple[str, ...]) -> ExecutionRequest:
     )
 
 
-FIXED_CLOCK = lambda: "2026-03-26T12:00:00+00:00"
+def FIXED_CLOCK() -> str:
+    return "2026-03-26T12:00:00+00:00"
 
 
 # ---------------------------------------------------------------------------
@@ -66,6 +67,14 @@ class TestShellCommandPolicyContract:
     def test_empty_allowed_executables_rejected(self) -> None:
         with pytest.raises(ValueError, match="allowed_executables"):
             _basic_policy(allowed_executables=())
+
+    def test_allowed_executables_reject_scalar_shape(self) -> None:
+        with pytest.raises(ValueError, match="allowed_executables must be an array"):
+            _basic_policy(allowed_executables="python3")  # type: ignore[arg-type]
+
+    def test_denied_patterns_reject_scalar_shape(self) -> None:
+        with pytest.raises(ValueError, match="denied_patterns must be an array"):
+            _basic_policy(denied_patterns=r"\brm\b")  # type: ignore[arg-type]
 
     def test_invalid_regex_denied_pattern_rejected(self) -> None:
         with pytest.raises(ValueError, match=r"^denied pattern must be a valid regex$") as exc_info:
@@ -116,6 +125,10 @@ class TestShellPolicyVerdictContract:
             argv_summary=("a", "b", "c", "d", "e"),
         )
         assert len(v.argv_summary) == 3
+
+    def test_argv_summary_rejects_scalar_shape(self) -> None:
+        with pytest.raises(ValueError, match="argv_summary must be an array"):
+            ShellPolicyVerdict(verdict="allow", matched_rule="ok", argv_summary="echo")  # type: ignore[arg-type]
 
 
 # ---------------------------------------------------------------------------

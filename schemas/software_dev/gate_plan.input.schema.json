@@ -1,0 +1,107 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:software-dev:gate-plan-input:1",
+  "title": "Software Dev Gate Plan Input",
+  "description": "Governed request for selecting software quality gates. This schema plans validation only; it does not execute commands or mutate the workspace.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "capability_id",
+    "request_id",
+    "repository_ref",
+    "commit_sha",
+    "repo_map_ref",
+    "work_kind",
+    "mode",
+    "summary",
+    "affected_files",
+    "acceptance_criteria",
+    "quality_gates",
+    "blast_radius",
+    "rollback_required",
+    "reviewer_required",
+    "metadata"
+  ],
+  "properties": {
+    "capability_id": {
+      "const": "software_dev.gate_plan.select"
+    },
+    "request_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "repository_ref": {
+      "type": "string",
+      "minLength": 1
+    },
+    "commit_sha": {
+      "type": "string",
+      "minLength": 1
+    },
+    "repo_map_ref": {
+      "type": "string",
+      "minLength": 1
+    },
+    "work_kind": {
+      "$ref": "#/$defs/software_work_kind"
+    },
+    "mode": {
+      "$ref": "#/$defs/software_work_mode"
+    },
+    "summary": {
+      "type": "string",
+      "minLength": 1
+    },
+    "affected_files": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/repository_path"
+      }
+    },
+    "acceptance_criteria": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "quality_gates": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/software_quality_gate"
+      }
+    },
+    "blast_radius": {
+      "enum": ["function", "module", "service", "system"]
+    },
+    "rollback_required": {
+      "type": "boolean"
+    },
+    "reviewer_required": {
+      "type": "boolean"
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  },
+  "$defs": {
+    "repository_path": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))(?![A-Za-z]:)[^\\r\\n]+$"
+    },
+    "software_quality_gate": {
+      "enum": ["unit_tests", "integration_tests", "lint", "typecheck", "security_scan", "build", "review"]
+    },
+    "software_work_kind": {
+      "enum": ["bug_fix", "feature", "refactor", "deploy", "review", "investigate", "test_generation", "security_fix", "docs", "migration", "dependency_update", "rollback"]
+    },
+    "software_work_mode": {
+      "enum": ["plan_only", "dry_run", "patch_only", "patch_and_test", "patch_test_review", "commit_candidate"]
+    }
+  }
+}

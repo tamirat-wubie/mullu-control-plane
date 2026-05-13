@@ -17,17 +17,71 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import StrEnum
-from typing import Any, Mapping
+from typing import Any, Mapping, TypeVar, cast
 
 from ._base import (
     ContractRecord,
     freeze_value,
     require_datetime_text,
     require_non_empty_text,
-    require_non_empty_tuple,
     require_non_negative_int,
+    require_positive_int,
     require_unit_float,
 )
+
+
+ContractT = TypeVar("ContractT", bound=ContractRecord)
+
+
+def _freeze_text_array(
+    values: object,
+    field_name: str,
+    *,
+    allow_empty: bool = True,
+) -> tuple[str, ...]:
+    if isinstance(values, (str, bytes)) or not isinstance(values, (tuple, list)):
+        raise ValueError(f"{field_name} must be an array")
+    frozen = cast(tuple[Any, ...], freeze_value(list(values)))
+    if not allow_empty and not frozen:
+        raise ValueError(f"{field_name} must contain at least one item")
+    for idx, value in enumerate(frozen):
+        require_non_empty_text(value, f"{field_name}[{idx}]")
+    return cast(tuple[str, ...], frozen)
+
+
+def _freeze_channel_array(
+    values: object,
+    field_name: str,
+    *,
+    allow_empty: bool = True,
+) -> tuple[ChannelType, ...]:
+    if isinstance(values, (str, bytes)) or not isinstance(values, (tuple, list)):
+        raise ValueError(f"{field_name} must be an array")
+    frozen = cast(tuple[Any, ...], freeze_value(list(values)))
+    if not allow_empty and not frozen:
+        raise ValueError(f"{field_name} must contain at least one item")
+    for idx, value in enumerate(frozen):
+        if not isinstance(value, ChannelType):
+            raise ValueError(f"{field_name}[{idx}] must be a ChannelType value")
+    return cast(tuple[ChannelType, ...], frozen)
+
+
+def _freeze_contract_array(
+    values: object,
+    field_name: str,
+    record_type: type[ContractT],
+    *,
+    allow_empty: bool = True,
+) -> tuple[ContractT, ...]:
+    if isinstance(values, (str, bytes)) or not isinstance(values, (tuple, list)):
+        raise ValueError(f"{field_name} must be an array")
+    frozen = cast(tuple[Any, ...], freeze_value(list(values)))
+    if not allow_empty and not frozen:
+        raise ValueError(f"{field_name} must contain at least one item")
+    for idx, value in enumerate(frozen):
+        if not isinstance(value, record_type):
+            raise ValueError(f"{field_name}[{idx}] must be a {record_type.__name__}")
+    return cast(tuple[ContractT, ...], frozen)
 
 
 # ---------------------------------------------------------------------------
@@ -141,11 +195,16 @@ class ConversationHandle(ContractRecord):
     def __post_init__(self) -> None:
         object.__setattr__(self, "conversation_id", require_non_empty_text(self.conversation_id, "conversation_id"))
         object.__setattr__(self, "subject", require_non_empty_text(self.subject, "subject"))
-        object.__setattr__(self, "contact_ids", require_non_empty_tuple(self.contact_ids, "contact_ids"))
-        object.__setattr__(self, "channel_types", freeze_value(list(self.channel_types)))
-        for ct in self.channel_types:
-            if not isinstance(ct, ChannelType):
-                raise ValueError("each channel_type must be a ChannelType value")
+        object.__setattr__(
+            self,
+            "contact_ids",
+            _freeze_text_array(self.contact_ids, "contact_ids", allow_empty=False),
+        )
+        object.__setattr__(
+            self,
+            "channel_types",
+            _freeze_channel_array(self.channel_types, "channel_types"),
+        )
         object.__setattr__(self, "started_at", require_datetime_text(self.started_at, "started_at"))
         object.__setattr__(self, "metadata", freeze_value(self.metadata))
 
@@ -180,7 +239,7 @@ class InboundMessage(ContractRecord):
             raise ValueError("channel_type must be a ChannelType value")
         object.__setattr__(self, "sender_identity_id", require_non_empty_text(self.sender_identity_id, "sender_identity_id"))
         object.__setattr__(self, "body", require_non_empty_text(self.body, "body"))
-        object.__setattr__(self, "attachments", freeze_value(list(self.attachments)))
+        object.__setattr__(self, "attachments", _freeze_text_array(self.attachments, "attachments"))
         object.__setattr__(self, "received_at", require_datetime_text(self.received_at, "received_at"))
         object.__setattr__(self, "raw_payload", freeze_value(self.raw_payload))
         object.__setattr__(self, "metadata", freeze_value(self.metadata))
@@ -211,7 +270,7 @@ class OutboundMessage(ContractRecord):
             raise ValueError("channel_type must be a ChannelType value")
         object.__setattr__(self, "recipient_identity_id", require_non_empty_text(self.recipient_identity_id, "recipient_identity_id"))
         object.__setattr__(self, "body", require_non_empty_text(self.body, "body"))
-        object.__setattr__(self, "attachments", freeze_value(list(self.attachments)))
+        object.__setattr__(self, "attachments", _freeze_text_array(self.attachments, "attachments"))
         object.__setattr__(self, "scheduled_at", require_datetime_text(self.scheduled_at, "scheduled_at"))
         if self.sent_at is not None:
             object.__setattr__(self, "sent_at", require_datetime_text(self.sent_at, "sent_at"))
@@ -269,14 +328,16 @@ class ContactPreference(ContractRecord):
     def __post_init__(self) -> None:
         object.__setattr__(self, "preference_id", require_non_empty_text(self.preference_id, "preference_id"))
         object.__setattr__(self, "contact_id", require_non_empty_text(self.contact_id, "contact_id"))
-        object.__setattr__(self, "preferred_channels", freeze_value(list(self.preferred_channels)))
-        for ch in self.preferred_channels:
-            if not isinstance(ch, ChannelType):
-                raise ValueError("each preferred_channel must be a ChannelType value")
-        object.__setattr__(self, "blocked_channels", freeze_value(list(self.blocked_channels)))
-        for ch in self.blocked_channels:
-            if not isinstance(ch, ChannelType):
-                raise ValueError("each blocked_channel must be a ChannelType value")
+        object.__setattr__(
+            self,
+            "preferred_channels",
+            _freeze_channel_array(self.preferred_channels, "preferred_channels"),
+        )
+        object.__setattr__(
+            self,
+            "blocked_channels",
+            _freeze_channel_array(self.blocked_channels, "blocked_channels"),
+        )
         object.__setattr__(self, "timezone", require_non_empty_text(self.timezone, "timezone"))
         object.__setattr__(self, "created_at", require_datetime_text(self.created_at, "created_at"))
 
@@ -299,14 +360,21 @@ class EscalationPreference(ContractRecord):
     def __post_init__(self) -> None:
         object.__setattr__(self, "preference_id", require_non_empty_text(self.preference_id, "preference_id"))
         object.__setattr__(self, "contact_id", require_non_empty_text(self.contact_id, "contact_id"))
-        object.__setattr__(self, "escalation_chain", require_non_empty_tuple(self.escalation_chain, "escalation_chain"))
-        for ch in self.escalation_chain:
-            if not isinstance(ch, ChannelType):
-                raise ValueError("each escalation channel must be a ChannelType value")
-        if not isinstance(self.max_attempts_per_channel, int) or self.max_attempts_per_channel < 1:
-            raise ValueError("max_attempts_per_channel must be a positive integer")
-        if not isinstance(self.escalation_timeout_seconds, int) or self.escalation_timeout_seconds < 1:
-            raise ValueError("escalation_timeout_seconds must be a positive integer")
+        object.__setattr__(
+            self,
+            "escalation_chain",
+            _freeze_channel_array(self.escalation_chain, "escalation_chain", allow_empty=False),
+        )
+        object.__setattr__(
+            self,
+            "max_attempts_per_channel",
+            require_positive_int(self.max_attempts_per_channel, "max_attempts_per_channel"),
+        )
+        object.__setattr__(
+            self,
+            "escalation_timeout_seconds",
+            require_positive_int(self.escalation_timeout_seconds, "escalation_timeout_seconds"),
+        )
         object.__setattr__(self, "created_at", require_datetime_text(self.created_at, "created_at"))
 
 
@@ -334,7 +402,11 @@ class CallSession(ContractRecord):
         object.__setattr__(self, "conversation_id", require_non_empty_text(self.conversation_id, "conversation_id"))
         if not isinstance(self.channel_type, ChannelType):
             raise ValueError("channel_type must be a ChannelType value")
-        object.__setattr__(self, "participant_ids", require_non_empty_tuple(self.participant_ids, "participant_ids"))
+        object.__setattr__(
+            self,
+            "participant_ids",
+            _freeze_text_array(self.participant_ids, "participant_ids", allow_empty=False),
+        )
         if not isinstance(self.state, CallSessionState):
             raise ValueError("state must be a CallSessionState value")
         object.__setattr__(self, "started_at", require_datetime_text(self.started_at, "started_at"))
@@ -378,10 +450,11 @@ class CallTranscript(ContractRecord):
     def __post_init__(self) -> None:
         object.__setattr__(self, "transcript_id", require_non_empty_text(self.transcript_id, "transcript_id"))
         object.__setattr__(self, "session_id", require_non_empty_text(self.session_id, "session_id"))
-        object.__setattr__(self, "segments", freeze_value(list(self.segments)))
-        for seg in self.segments:
-            if not isinstance(seg, TranscriptSegment):
-                raise ValueError("each segment must be a TranscriptSegment")
+        object.__setattr__(
+            self,
+            "segments",
+            _freeze_contract_array(self.segments, "segments", TranscriptSegment),
+        )
         object.__setattr__(self, "language", require_non_empty_text(self.language, "language"))
         object.__setattr__(self, "created_at", require_datetime_text(self.created_at, "created_at"))
 
@@ -410,24 +483,33 @@ class CommunicationPolicy(ContractRecord):
     def __post_init__(self) -> None:
         object.__setattr__(self, "policy_id", require_non_empty_text(self.policy_id, "policy_id"))
         object.__setattr__(self, "name", require_non_empty_text(self.name, "name"))
-        object.__setattr__(self, "allowed_channels", freeze_value(list(self.allowed_channels)))
-        for ch in self.allowed_channels:
-            if not isinstance(ch, ChannelType):
-                raise ValueError("each allowed_channel must be a ChannelType value")
-        object.__setattr__(self, "denied_channels", freeze_value(list(self.denied_channels)))
-        for ch in self.denied_channels:
-            if not isinstance(ch, ChannelType):
-                raise ValueError("each denied_channel must be a ChannelType value")
-        object.__setattr__(self, "require_approval_channels", freeze_value(list(self.require_approval_channels)))
-        for ch in self.require_approval_channels:
-            if not isinstance(ch, ChannelType):
-                raise ValueError("each require_approval_channel must be a ChannelType value")
+        object.__setattr__(
+            self,
+            "allowed_channels",
+            _freeze_channel_array(self.allowed_channels, "allowed_channels"),
+        )
+        object.__setattr__(
+            self,
+            "denied_channels",
+            _freeze_channel_array(self.denied_channels, "denied_channels"),
+        )
+        object.__setattr__(
+            self,
+            "require_approval_channels",
+            _freeze_channel_array(self.require_approval_channels, "require_approval_channels"),
+        )
         if self.max_outbound_per_hour is not None:
-            if not isinstance(self.max_outbound_per_hour, int) or self.max_outbound_per_hour < 1:
-                raise ValueError("max_outbound_per_hour must be a positive integer")
+            object.__setattr__(
+                self,
+                "max_outbound_per_hour",
+                require_positive_int(self.max_outbound_per_hour, "max_outbound_per_hour"),
+            )
         if self.max_outbound_per_day is not None:
-            if not isinstance(self.max_outbound_per_day, int) or self.max_outbound_per_day < 1:
-                raise ValueError("max_outbound_per_day must be a positive integer")
+            object.__setattr__(
+                self,
+                "max_outbound_per_day",
+                require_positive_int(self.max_outbound_per_day, "max_outbound_per_day"),
+            )
         object.__setattr__(self, "created_at", require_datetime_text(self.created_at, "created_at"))
 
 
@@ -484,7 +566,10 @@ class ChannelCapabilityManifest(ContractRecord):
             if not isinstance(getattr(self, f), bool):
                 raise ValueError("value must be a boolean flag")
         if self.max_body_length is not None:
-            if not isinstance(self.max_body_length, int) or self.max_body_length < 1:
-                raise ValueError("max_body_length must be a positive integer")
+            object.__setattr__(
+                self,
+                "max_body_length",
+                require_positive_int(self.max_body_length, "max_body_length"),
+            )
         object.__setattr__(self, "capabilities", freeze_value(self.capabilities))
         object.__setattr__(self, "created_at", require_datetime_text(self.created_at, "created_at"))

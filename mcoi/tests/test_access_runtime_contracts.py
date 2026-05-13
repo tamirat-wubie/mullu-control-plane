@@ -903,15 +903,31 @@ class TestFreezeValue:
         assert isinstance(r.permissions, tuple)
         assert r.permissions == ("read", "write")
 
+    def test_role_permissions_reject_scalar_shape(self):
+        with pytest.raises(ValueError, match="permissions must be an array"):
+            _role(permissions="read")  # type: ignore[arg-type]
+
+    def test_role_permissions_reject_blank_entries(self):
+        with pytest.raises(ValueError, match="permissions"):
+            _role(permissions=("read", ""))
+
     def test_evaluation_matching_rule_ids_tuple(self):
         e = _evaluation(matching_rule_ids=["rule-001", "rule-002"])
         assert isinstance(e.matching_rule_ids, tuple)
         assert e.matching_rule_ids == ("rule-001", "rule-002")
 
+    def test_evaluation_matching_rule_ids_reject_scalar_shape(self):
+        with pytest.raises(ValueError, match="matching_rule_ids must be an array"):
+            _evaluation(matching_rule_ids="rule-001")  # type: ignore[arg-type]
+
     def test_evaluation_matching_role_ids_tuple(self):
         e = _evaluation(matching_role_ids=["role-001"])
         assert isinstance(e.matching_role_ids, tuple)
         assert e.matching_role_ids == ("role-001",)
+
+    def test_evaluation_matching_role_ids_reject_scalar_shape(self):
+        with pytest.raises(ValueError, match="matching_role_ids must be an array"):
+            _evaluation(matching_role_ids="role-001")  # type: ignore[arg-type]
 
     def test_nested_metadata_frozen(self):
         r = _identity(metadata={"nested": {"inner": 1}})

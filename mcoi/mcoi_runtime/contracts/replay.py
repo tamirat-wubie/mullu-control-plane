@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import StrEnum
-from typing import Any, Mapping
+from typing import Any, Mapping, cast
 
 from ._base import ContractRecord, freeze_value, require_datetime_text, require_non_empty_text
 
@@ -31,6 +31,19 @@ class ReplayEffect(ContractRecord):
         object.__setattr__(self, "details", freeze_value(self.details))
 
 
+def _freeze_replay_effects(
+    values: tuple[ReplayEffect, ...] | list[ReplayEffect],
+    field_name: str,
+) -> tuple[ReplayEffect, ...]:
+    if isinstance(values, (str, bytes)) or not isinstance(values, (tuple, list)):
+        raise ValueError(f"{field_name} must be an array")
+    frozen = cast(tuple[ReplayEffect, ...], freeze_value(list(values)))
+    for idx, effect in enumerate(frozen):
+        if not isinstance(effect, ReplayEffect):
+            raise ValueError(f"{field_name}[{idx}] must be a ReplayEffect")
+    return frozen
+
+
 @dataclass(frozen=True, slots=True)
 class ReplayRecord(ContractRecord):
     replay_id: str
@@ -46,8 +59,16 @@ class ReplayRecord(ContractRecord):
     def __post_init__(self) -> None:
         for field_name in ("replay_id", "trace_id", "source_hash"):
             object.__setattr__(self, field_name, require_non_empty_text(getattr(self, field_name), field_name))
-        object.__setattr__(self, "approved_effects", freeze_value(list(self.approved_effects)))
-        object.__setattr__(self, "blocked_effects", freeze_value(list(self.blocked_effects)))
+        object.__setattr__(
+            self,
+            "approved_effects",
+            _freeze_replay_effects(self.approved_effects, "approved_effects"),
+        )
+        object.__setattr__(
+            self,
+            "blocked_effects",
+            _freeze_replay_effects(self.blocked_effects, "blocked_effects"),
+        )
         if not isinstance(self.mode, ReplayMode):
             raise ValueError("mode must be a ReplayMode value")
         object.__setattr__(self, "recorded_at", require_datetime_text(self.recorded_at, "recorded_at"))

@@ -11,8 +11,28 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass, field
+from typing import cast
 
 from ._base import ContractRecord, freeze_value, require_non_empty_text, require_positive_int
+
+
+def _freeze_string_array(
+    values: tuple[str, ...] | list[str],
+    field_name: str,
+    *,
+    require_non_empty_items: bool,
+    empty_item_message: str | None = None,
+) -> tuple[str, ...]:
+    if isinstance(values, (str, bytes)) or not isinstance(values, (tuple, list)):
+        raise ValueError(f"{field_name} must be an array")
+    frozen = cast(tuple[str, ...], freeze_value(list(values)))
+    for idx, value in enumerate(frozen):
+        if require_non_empty_items:
+            if not isinstance(value, str) or not value.strip():
+                raise ValueError(empty_item_message or f"{field_name}[{idx}] must be a non-empty string")
+        elif not isinstance(value, str):
+            raise ValueError(f"{field_name}[{idx}] must be a string")
+    return frozen
 
 
 @dataclass(frozen=True, slots=True)
@@ -34,19 +54,26 @@ class ShellCommandPolicy(ContractRecord):
         object.__setattr__(
             self,
             "allowed_executables",
-            freeze_value(list(self.allowed_executables)),
+            _freeze_string_array(
+                self.allowed_executables,
+                "allowed_executables",
+                require_non_empty_items=True,
+                empty_item_message="allowed executable entry must be a non-empty string",
+            ),
         )
         if not self.allowed_executables:
             raise ValueError("allowed_executables must contain at least one entry")
-        for idx, exe in enumerate(self.allowed_executables):
-            if not isinstance(exe, str) or not exe.strip():
-                raise ValueError("allowed executable entry must be a non-empty string")
         object.__setattr__(
-            self, "denied_patterns", freeze_value(list(self.denied_patterns))
+            self,
+            "denied_patterns",
+            _freeze_string_array(
+                self.denied_patterns,
+                "denied_patterns",
+                require_non_empty_items=True,
+                empty_item_message="denied pattern entry must be a non-empty string",
+            ),
         )
-        for idx, pat in enumerate(self.denied_patterns):
-            if not isinstance(pat, str) or not pat.strip():
-                raise ValueError("denied pattern entry must be a non-empty string")
+        for pat in self.denied_patterns:
             try:
                 re.compile(pat)
             except re.error as exc:
@@ -97,5 +124,5 @@ class ShellPolicyVerdict(ContractRecord):
             self, "matched_rule", require_non_empty_text(self.matched_rule, "matched_rule")
         )
         # Truncate argv_summary to first 3 elements for audit safety.
-        summary = freeze_value(list(self.argv_summary))
+        summary = _freeze_string_array(self.argv_summary, "argv_summary", require_non_empty_items=False)
         object.__setattr__(self, "argv_summary", summary[:3])

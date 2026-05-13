@@ -13,9 +13,12 @@ import pytest
 from mcoi_runtime.contracts.llm import LLMInvocationParams, LLMMessage, LLMProvider, LLMRole
 from mcoi_runtime.adapters.multi_provider import (
     ALL_PROVIDERS,
+    AIMLAPIBackend,
     APIRouterBackend,
+    AnswiraBackend,
     ApiLinkBackend,
     AtlasCloudBackend,
+    BasetenBackend,
     BazaarLinkBackend,
     CerebrasBackend,
     ChutesBackend,
@@ -34,7 +37,12 @@ from mcoi_runtime.adapters.multi_provider import (
     GrokBackend,
     GroqBackend,
     HyperbolicBackend,
+    HaimakerBackend,
+    HuggingFaceBackend,
     InferenceNetBackend,
+    InfomaniakBackend,
+    KatalepticBackend,
+    LLMAIBackend,
     LlamaAPIBackend,
     MistralBackend,
     MixlayerBackend,
@@ -43,14 +51,18 @@ from mcoi_runtime.adapters.multi_provider import (
     MorpheusBackend,
     NebiusBackend,
     NovitaBackend,
+    NscaleBackend,
+    OVHCloudBackend,
     OpenRouterBackend,
     PacketBackend,
     ParasailBackend,
     FeatherlessBackend,
     NeuroRoutersBackend,
     QuickSilverBackend,
+    RequestyBackend,
     RidvayBackend,
     SambaNovaBackend,
+    ScalewayBackend,
     SiliconFlowBackend,
     TogetherBackend,
     VeniceBackend,
@@ -103,6 +115,18 @@ OPENAI_COMPATIBLE_PROVIDER_CLASSES = [
     EmberCloudBackend,
     MorpheusBackend,
     InferenceNetBackend,
+    AnswiraBackend,
+    LLMAIBackend,
+    RequestyBackend,
+    HuggingFaceBackend,
+    BasetenBackend,
+    HaimakerBackend,
+    NscaleBackend,
+    ScalewayBackend,
+    OVHCloudBackend,
+    AIMLAPIBackend,
+    InfomaniakBackend,
+    KatalepticBackend,
     GrokBackend,
     MistralBackend,
     OpenRouterBackend,
@@ -386,9 +410,21 @@ class TestProviderRegistry:
             "quicksilver",
             "mixlayer",
             "apilink",
+            "scaleway",
+            "nscale",
+            "ovhcloud",
+            "aimlapi",
+            "infomaniak",
+            "kataleptic",
             "embercloud",
             "morpheus",
             "inferencenet",
+            "answira",
+            "llmai",
+            "requesty",
+            "huggingface",
+            "baseten",
+            "haimaker",
             "grok",
             "mistral",
             "openrouter",
@@ -437,9 +473,21 @@ class TestProviderRegistry:
             ("quicksilver", QuickSilverBackend, LLMProvider.QUICKSILVER),
             ("mixlayer", MixlayerBackend, LLMProvider.MIXLAYER),
             ("apilink", ApiLinkBackend, LLMProvider.APILINK),
+            ("nscale", NscaleBackend, LLMProvider.NSCALE),
+            ("scaleway", ScalewayBackend, LLMProvider.SCALEWAY),
+            ("ovhcloud", OVHCloudBackend, LLMProvider.OVHCLOUD),
+            ("aimlapi", AIMLAPIBackend, LLMProvider.AIMLAPI),
+            ("infomaniak", InfomaniakBackend, LLMProvider.INFOMANIAK),
+            ("kataleptic", KatalepticBackend, LLMProvider.KATALEPTIC),
             ("embercloud", EmberCloudBackend, LLMProvider.EMBERCLOUD),
             ("morpheus", MorpheusBackend, LLMProvider.MORPHEUS),
             ("inferencenet", InferenceNetBackend, LLMProvider.INFERENCENET),
+            ("answira", AnswiraBackend, LLMProvider.ANSWIRA),
+            ("llmai", LLMAIBackend, LLMProvider.LLMAI),
+            ("requesty", RequestyBackend, LLMProvider.REQUESTY),
+            ("huggingface", HuggingFaceBackend, LLMProvider.HUGGINGFACE),
+            ("baseten", BasetenBackend, LLMProvider.BASETEN),
+            ("haimaker", HaimakerBackend, LLMProvider.HAIMAKER),
         ],
     )
     def test_new_openai_compatible_providers(self, provider_name, backend_cls, provider):
@@ -467,6 +515,16 @@ class TestProviderRegistry:
         available = available_providers()
         assert "deepinfra" in available
         assert "nebius" not in available
+        assert isinstance(available, list)
+
+    def test_available_providers_detects_huggingface_alias(self, monkeypatch):
+        monkeypatch.delenv("HF_TOKEN", raising=False)
+        monkeypatch.delenv("BASETEN_API_KEY", raising=False)
+        monkeypatch.delenv("HAIMAKER_API_KEY", raising=False)
+        monkeypatch.setenv("HUGGINGFACE_API_KEY", "huggingface-alias")
+        available = available_providers()
+        assert "huggingface" in available
+        assert "baseten" not in available
         assert isinstance(available, list)
 
     def test_available_providers_detects_cloudflare_account_pair(self, monkeypatch):
