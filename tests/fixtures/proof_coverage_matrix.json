@@ -233,6 +233,13 @@
       ]
     },
     {
+      "action_id": "classify_rate_limit_read_model_routes",
+      "status": "closed",
+      "surfaces": [
+        "rate_limit_read_models"
+      ]
+    },
+    {
       "action_id": "classify_ops_diagnostics_routes",
       "status": "closed",
       "surfaces": [
@@ -688,12 +695,12 @@
       "action_proof": 85,
       "audit_chain": 0,
       "gap": 0,
-      "read_model": 14,
+      "read_model": 15,
       "request_proof": 2
     },
     "by_audit": {
       "action_proof": 0,
-      "audit_chain": 97,
+      "audit_chain": 98,
       "gap": 0,
       "read_model": 4,
       "request_proof": 0
@@ -701,23 +708,23 @@
     "by_coverage_state": {
       "proven": 1,
       "unproven": 0,
-      "witnessed": 100
+      "witnessed": 101
     },
     "by_request_proof": {
       "action_proof": 1,
       "audit_chain": 0,
       "gap": 0,
-      "read_model": 16,
+      "read_model": 17,
       "request_proof": 84
     },
-    "surface_count": 101
+    "surface_count": 102
   },
   "generated_by": "scripts/proof_coverage_matrix.py",
   "route_coverage": {
     "by_coverage_state": {
       "proven": 12,
-      "unproven": 27,
-      "witnessed": 294
+      "unproven": 25,
+      "witnessed": 296
     },
     "route_count": 333,
     "routes": [
@@ -1712,14 +1719,14 @@
         "surface_id": "tenant_governance_lifecycle"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/rate-limit/status",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "rate_limit_read_models"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/rate-limits/{client_id}",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "rate_limit_read_models"
       },
       {
         "coverage_state": "witnessed",
@@ -2387,7 +2394,7 @@
         "surface_id": "gateway_capability_fabric"
       }
     ],
-    "unclassified_route_count": 27
+    "unclassified_route_count": 25
   },
   "schema_version": 1,
   "surfaces": [
@@ -3330,6 +3337,37 @@
         "structured_output_schema_list_bounded"
       ],
       "surface_id": "structured_output_validation"
+    },
+    {
+      "action_proof": "read_model",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "mcoi/mcoi_runtime/app/routers/ops/rate_limit.py",
+        "mcoi/mcoi_runtime/governance/guards/rate_limit.py",
+        "mcoi/mcoi_runtime/core/rate_limit_headers.py",
+        "mcoi/tests/test_server_phase202.py",
+        "mcoi/tests/test_rate_limit_headers.py",
+        "mcoi/tests/test_rate_limiter.py",
+        "mcoi/tests/test_v4_29_atomic_rate_limit.py",
+        "mcoi/tests/test_v4_34_atomic_identity_rate_limit.py"
+      ],
+      "notes": "Rate-limit read-model routes expose bounded limiter status and per-client response-header projections while enforcement remains in the governed guard chain and atomic rate-limit stores.",
+      "representative_paths": [
+        "/api/v1/rate-limit/status",
+        "/api/v1/rate-limits/{client_id}"
+      ],
+      "request_proof": "read_model",
+      "runtime_witnesses": [
+        "rate_limit_status_reports_allowed_and_active_buckets",
+        "rate_limit_headers_project_limit_remaining_reset",
+        "rate_limit_header_peek_does_not_consume",
+        "rate_limit_remaining_never_negative",
+        "rate_limiter_endpoint_configs_resolved",
+        "atomic_rate_limit_store_bounds_concurrent_consumption",
+        "identity_rate_limit_store_bounds_per_identity_consumption"
+      ],
+      "surface_id": "rate_limit_read_models"
     },
     {
       "action_proof": "read_model",
