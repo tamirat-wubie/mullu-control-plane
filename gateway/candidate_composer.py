@@ -121,6 +121,36 @@ EvaluatorCallback = Callable[[ProblemSignature, CandidatePipeline, str], Candida
 
 
 @dataclass(frozen=True, slots=True)
+class AdversarialReviewResult:
+    """Outcome of an adversarial-review pass on one candidate pipeline.
+
+    A candidate must clear adversarial review in addition to beating the
+    baseline on the primary metric. Findings are appended to the ledger
+    record so they remain auditable even if the candidate is later
+    discarded.
+    """
+
+    passed: bool
+    findings: tuple[str, ...] = ()
+    evidence_refs: tuple[str, ...] = ()
+    notes: str = ""
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "findings", tuple(self.findings))
+        object.__setattr__(self, "evidence_refs", tuple(self.evidence_refs))
+        if self.passed and self.findings:
+            raise ValueError("adversarial_review_passed_cannot_have_findings")
+        if not self.passed and not self.findings:
+            raise ValueError("adversarial_review_failed_must_explain_with_findings")
+
+
+AdversarialReviewCallback = Callable[
+    [ProblemSignature, CandidatePipeline, "CandidateEvaluation", str],
+    AdversarialReviewResult,
+]
+
+
+@dataclass(frozen=True, slots=True)
 class CandidateComparisonReport:
     """Final composer output for one signature run."""
 
@@ -131,16 +161,25 @@ class CandidateComparisonReport:
     candidate_record_hashes: tuple[str, ...]
     winner_record_hashes: tuple[str, ...]
     negative_record_hashes: tuple[str, ...]
+    adversarial_review_failed_record_hashes: tuple[str, ...]
     skipped_capsule_ids: tuple[str, ...]
     skipped_reasons: dict[str, str]
+    baseline_compromised: bool = False
+    baseline_findings: tuple[str, ...] = ()
     notes: str = ""
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "candidate_record_hashes", tuple(self.candidate_record_hashes))
         object.__setattr__(self, "winner_record_hashes", tuple(self.winner_record_hashes))
         object.__setattr__(self, "negative_record_hashes", tuple(self.negative_record_hashes))
+        object.__setattr__(
+            self,
+            "adversarial_review_failed_record_hashes",
+            tuple(self.adversarial_review_failed_record_hashes),
+        )
         object.__setattr__(self, "skipped_capsule_ids", tuple(self.skipped_capsule_ids))
         object.__setattr__(self, "skipped_reasons", dict(self.skipped_reasons))
+        object.__setattr__(self, "baseline_findings", tuple(self.baseline_findings))
 
 
 _RISK_RANK = {"low": 0, "medium": 1, "high": 2, "physical": 3}
@@ -183,9 +222,11 @@ class CandidateComposer:
         ledger: CandidateLedger,
         *,
         capsules: tuple[MethodCapsule, ...] = (),
+        adversarial_reviewer: AdversarialReviewCallback | None = None,
     ) -> None:
         self._ledger = ledger
         self._capsules: dict[str, MethodCapsule] = {}
+        self._adversarial_reviewer = adversarial_reviewer
         for capsule in capsules:
             self.register_capsule(capsule)
 
@@ -257,9 +298,11 @@ class CandidateComposer:
 
         baseline_record: CandidateRun | None = None
         baseline_record_hash = ""
+        baseline_findings: tuple[str, ...] = ()
         if baseline_pipeline is not None:
             seed = _derive_run_seed(signature.signature_hash, baseline_pipeline.pipeline_id)
             evaluation = evaluator(signature, baseline_pipeline, seed)
+            review = self._maybe_review(signature, baseline_pipeline, evaluation, seed)
             baseline_record = self._ledger.record(
                 signature_hash=signature.signature_hash,
                 problem_id=signature.problem_id,
@@ -275,12 +318,19 @@ class CandidateComposer:
                 run_seed=seed,
                 is_baseline=True,
                 notes=evaluation.notes,
+                adversarial_review_findings=review.findings if review else (),
+                adversarial_review_evidence_refs=review.evidence_refs if review else (),
             )
             baseline_record_hash = baseline_record.record_hash
+            if review is not None and not review.passed:
+                baseline_findings = review.findings
+
+        baseline_compromised = bool(baseline_findings)
 
         candidate_hashes: list[str] = []
         winner_hashes: list[str] = []
         negative_hashes: list[str] = []
+        review_failed_hashes: list[str] = []
 
         for pipeline in candidate_pipelines:
             seed = _derive_run_seed(signature.signature_hash, pipeline.pipeline_id)
@@ -290,6 +340,7 @@ class CandidateComposer:
                 if baseline_record is not None
                 else {}
             )
+            review = self._maybe_review(signature, pipeline, evaluation, seed)
             record = self._ledger.record(
                 signature_hash=signature.signature_hash,
                 problem_id=signature.problem_id,
@@ -305,10 +356,17 @@ class CandidateComposer:
                 run_seed=seed,
                 is_baseline=False,
                 notes=evaluation.notes,
+                adversarial_review_findings=review.findings if review else (),
+                adversarial_review_evidence_refs=review.evidence_refs if review else (),
             )
             candidate_hashes.append(record.record_hash)
             if record.outcome != "passed":
                 negative_hashes.append(record.record_hash)
+                continue
+            if review is not None and not review.passed:
+                review_failed_hashes.append(record.record_hash)
+                continue
+            if baseline_compromised:
                 continue
             delta = baseline_delta.get(primary_metric.metric_id)
             if delta is None:
@@ -324,6 +382,12 @@ class CandidateComposer:
                 "baseline_method_family declared on signature but no matching capsule "
                 "was registered; winners cannot be claimed without a baseline."
             )
+        if baseline_compromised:
+            notes = (
+                (notes + " " if notes else "")
+                + "baseline failed adversarial review; no candidate can claim winner "
+                "status against an untrusted baseline."
+            )
 
         return CandidateComparisonReport(
             signature_hash=signature.signature_hash,
@@ -333,7 +397,29 @@ class CandidateComposer:
             candidate_record_hashes=tuple(candidate_hashes),
             winner_record_hashes=tuple(winner_hashes),
             negative_record_hashes=tuple(negative_hashes),
+            adversarial_review_failed_record_hashes=tuple(review_failed_hashes),
             skipped_capsule_ids=tuple(skipped.keys()),
             skipped_reasons=skipped,
+            baseline_compromised=baseline_compromised,
+            baseline_findings=baseline_findings,
             notes=notes,
         )
+
+    def _maybe_review(
+        self,
+        signature: ProblemSignature,
+        pipeline: CandidatePipeline,
+        evaluation: CandidateEvaluation,
+        seed: str,
+    ) -> AdversarialReviewResult | None:
+        """Run adversarial review on passing evaluations only.
+
+        Skipping review on failed evaluations is intentional: findings on a
+        run that already failed the evaluator add cost without changing the
+        outcome — the run was already going to be discarded.
+        """
+        if self._adversarial_reviewer is None:
+            return None
+        if evaluation.outcome != "passed":
+            return None
+        return self._adversarial_reviewer(signature, pipeline, evaluation, seed)

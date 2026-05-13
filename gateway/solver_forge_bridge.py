@@ -133,6 +133,8 @@ def is_winner(winner: CandidateRun, signature: ProblemSignature) -> bool:
         return False
     if winner.signature_hash != signature.signature_hash:
         return False
+    if winner.adversarial_review_findings:
+        return False
     primary_metric = _primary_success_metric(signature)
     delta = winner.baseline_delta.get(primary_metric.metric_id)
     if delta is None:
@@ -151,6 +153,11 @@ def build_provenance(winner: CandidateRun, signature: ProblemSignature) -> Solve
         raise ValueError("baseline_runs_cannot_cross_bridge")
     if winner.signature_hash != signature.signature_hash:
         raise ValueError("winner_signature_hash_must_match_signature")
+    if winner.adversarial_review_findings:
+        raise ValueError(
+            "winner_failed_adversarial_review:"
+            + ",".join(winner.adversarial_review_findings)
+        )
     primary_metric = _primary_success_metric(signature)
     score = _score_for_metric(winner.scores, primary_metric.metric_id)
     delta = winner.baseline_delta.get(primary_metric.metric_id)
