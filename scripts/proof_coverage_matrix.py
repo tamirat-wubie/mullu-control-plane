@@ -1138,6 +1138,38 @@ def proof_coverage_matrix() -> dict[str, Any]:
             ],
         ),
         _surface(
+            "governed_background_scheduler",
+            [
+                "/api/v1/scheduler/execute",
+                "/api/v1/scheduler/history",
+                "/api/v1/scheduler/jobs",
+                "/api/v1/scheduler/jobs/{job_id}",
+                "/api/v1/scheduler/jobs/{job_id}/disable",
+                "/api/v1/scheduler/jobs/{job_id}/enable",
+                "/api/v1/scheduler/summary",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "mcoi/mcoi_runtime/app/routers/scheduler.py",
+                "mcoi/mcoi_runtime/core/scheduler.py",
+                "mcoi/tests/test_scheduler.py",
+                "mcoi/tests/test_server_phase217.py",
+                "mcoi/tests/test_server_phase218.py",
+            ],
+            "Governed background scheduler routes register one-shot, interval, and cron jobs, execute handlers through guard-chain admission, bound job lifecycle enable/disable/delete controls, expose bounded history and summary read models, and sanitize scheduler execution errors.",
+            [
+                "scheduler_job_registration_typed",
+                "scheduler_execute_guard_chain_checked",
+                "scheduler_lifecycle_controls_bounded",
+                "scheduler_history_summary_bounded",
+                "scheduler_errors_sanitized",
+                "scheduler_execution_audited",
+            ],
+        ),
+        _surface(
             "connector_self_healing",
             [
                 "ConnectorSelfHealingEngine.evaluate",
@@ -1878,6 +1910,36 @@ def proof_coverage_matrix() -> dict[str, Any]:
             ],
         ),
         _surface(
+            "temporal_idempotency_window",
+            [
+                "TemporalIdempotencyWindow.evaluate",
+                "IdempotencyWindowRequest",
+                "TemporalIdempotencyWindowReceipt",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "gateway/temporal_idempotency_window.py",
+                "schemas/temporal_idempotency_window_receipt.schema.json",
+                "tests/test_gateway/test_temporal_idempotency_window.py",
+            ],
+            "Temporal idempotency window rechecks idempotency keys, request fingerprints, replay windows, tenant and command scope, action scope, committed effects, terminal receipt binding, evidence refs, and high-risk source receipts before effect dispatch.",
+            [
+                "runtime_clock_owns_idempotency_window",
+                "new_idempotency_key_admits_dispatch",
+                "matching_replay_admits_uncommitted_dispatch",
+                "committed_effect_blocks_duplicate_dispatch",
+                "expired_idempotency_window_blocks_dispatch",
+                "request_fingerprint_mismatch_blocks_replay",
+                "tenant_command_action_scope_checked",
+                "high_risk_source_receipts_bound",
+                "temporal_idempotency_window_receipt_schema_valid",
+                "receipt_not_terminal_closure",
+            ],
+        ),
+        _surface(
             "temporal_memory",
             [
                 "TemporalMemory.evaluate",
@@ -2387,6 +2449,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
             "status": "closed",
         },
         {
+            "action_id": "classify_governed_scheduler_routes",
+            "surfaces": ["governed_background_scheduler"],
+            "status": "closed",
+        },
+        {
             "action_id": "publish_connector_self_healing_receipt_contract",
             "surfaces": ["connector_self_healing"],
             "status": "closed",
@@ -2499,6 +2566,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
         {
             "action_id": "publish_temporal_lease_window_receipt_contract",
             "surfaces": ["temporal_lease_window"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_temporal_idempotency_window_receipt_contract",
+            "surfaces": ["temporal_idempotency_window"],
             "status": "closed",
         },
         {

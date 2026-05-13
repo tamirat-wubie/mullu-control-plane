@@ -110,6 +110,12 @@ def test_representative_routes_are_not_unclassified() -> None:
     assert classified_routes["/api/v1/simulate/history"]["surface_id"] == "governed_operational_intelligence"
     assert classified_routes["/api/v1/connectors/register"]["surface_id"] == "governed_connector_framework"
     assert classified_routes["/api/v1/connectors/invoke"]["surface_id"] == "governed_connector_framework"
+    assert classified_routes["/api/v1/scheduler/jobs"]["surface_id"] == "governed_background_scheduler"
+    assert classified_routes["/api/v1/scheduler/execute"]["surface_id"] == "governed_background_scheduler"
+    assert (
+        classified_routes["/api/v1/scheduler/jobs/{job_id}/disable"]["surface_id"]
+        == "governed_background_scheduler"
+    )
     assert classified_routes["/api/v1/finance/approval-packets"]["surface_id"] == "finance_approval_packets"
     assert (
         classified_routes["/api/v1/finance/approval-packets/operator/read-model"]["surface_id"]
@@ -905,6 +911,43 @@ def test_governed_connector_framework_surface_gates_invocation_lifecycle() -> No
     assert closure_actions["classify_governed_connector_routes"]["status"] == "closed"
 
 
+def test_governed_background_scheduler_surface_gates_job_lifecycle() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    scheduler_surface = surfaces["governed_background_scheduler"]
+    witnesses = set(scheduler_surface["runtime_witnesses"])
+    route_records = {
+        record["route"]: record
+        for record in matrix["route_coverage"]["routes"]
+    }
+
+    assert scheduler_surface["coverage_state"] == "witnessed"
+    assert scheduler_surface["request_proof"] == "request_proof"
+    assert scheduler_surface["action_proof"] == "action_proof"
+    assert "/api/v1/scheduler/jobs" in scheduler_surface["representative_paths"]
+    assert "/api/v1/scheduler/execute" in scheduler_surface["representative_paths"]
+    assert "/api/v1/scheduler/jobs/{job_id}" in scheduler_surface["representative_paths"]
+    assert "/api/v1/scheduler/jobs/{job_id}/disable" in scheduler_surface["representative_paths"]
+    assert "/api/v1/scheduler/jobs/{job_id}/enable" in scheduler_surface["representative_paths"]
+    assert "mcoi/mcoi_runtime/app/routers/scheduler.py" in scheduler_surface["evidence_files"]
+    assert "mcoi/mcoi_runtime/core/scheduler.py" in scheduler_surface["evidence_files"]
+    assert "mcoi/tests/test_scheduler.py" in scheduler_surface["evidence_files"]
+    assert "mcoi/tests/test_server_phase217.py" in scheduler_surface["evidence_files"]
+    assert "mcoi/tests/test_server_phase218.py" in scheduler_surface["evidence_files"]
+    assert "scheduler_job_registration_typed" in witnesses
+    assert "scheduler_execute_guard_chain_checked" in witnesses
+    assert "scheduler_lifecycle_controls_bounded" in witnesses
+    assert "scheduler_history_summary_bounded" in witnesses
+    assert "scheduler_errors_sanitized" in witnesses
+    assert "scheduler_execution_audited" in witnesses
+    assert route_records["/api/v1/scheduler/jobs"]["coverage_state"] == "witnessed"
+    assert route_records["/api/v1/scheduler/jobs"]["surface_id"] == "governed_background_scheduler"
+    assert route_records["/api/v1/scheduler/execute"]["coverage_state"] == "witnessed"
+    assert route_records["/api/v1/scheduler/execute"]["surface_id"] == "governed_background_scheduler"
+    assert closure_actions["classify_governed_scheduler_routes"]["status"] == "closed"
+
+
 def test_connector_self_healing_surface_emits_bounded_recovery_receipts() -> None:
     matrix = _load_fixture()
     surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
@@ -1540,6 +1583,34 @@ def test_temporal_lease_window_surface_rechecks_lease_ownership() -> None:
     assert "high_risk_source_receipts_bound" in witnesses
     assert "temporal_lease_window_receipt_schema_valid" in witnesses
     assert closure_actions["publish_temporal_lease_window_receipt_contract"]["status"] == "closed"
+
+
+def test_temporal_idempotency_window_surface_blocks_duplicate_dispatch() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    idempotency_surface = surfaces["temporal_idempotency_window"]
+    witnesses = set(idempotency_surface["runtime_witnesses"])
+
+    assert idempotency_surface["coverage_state"] == "witnessed"
+    assert idempotency_surface["request_proof"] == "request_proof"
+    assert idempotency_surface["action_proof"] == "action_proof"
+    assert "TemporalIdempotencyWindow.evaluate" in idempotency_surface["representative_paths"]
+    assert "IdempotencyWindowRequest" in idempotency_surface["representative_paths"]
+    assert "TemporalIdempotencyWindowReceipt" in idempotency_surface["representative_paths"]
+    assert "gateway/temporal_idempotency_window.py" in idempotency_surface["evidence_files"]
+    assert "schemas/temporal_idempotency_window_receipt.schema.json" in idempotency_surface["evidence_files"]
+    assert "tests/test_gateway/test_temporal_idempotency_window.py" in idempotency_surface["evidence_files"]
+    assert "runtime_clock_owns_idempotency_window" in witnesses
+    assert "new_idempotency_key_admits_dispatch" in witnesses
+    assert "matching_replay_admits_uncommitted_dispatch" in witnesses
+    assert "committed_effect_blocks_duplicate_dispatch" in witnesses
+    assert "expired_idempotency_window_blocks_dispatch" in witnesses
+    assert "request_fingerprint_mismatch_blocks_replay" in witnesses
+    assert "tenant_command_action_scope_checked" in witnesses
+    assert "high_risk_source_receipts_bound" in witnesses
+    assert "temporal_idempotency_window_receipt_schema_valid" in witnesses
+    assert closure_actions["publish_temporal_idempotency_window_receipt_contract"]["status"] == "closed"
 
 
 def test_temporal_memory_surface_blocks_stale_or_superseded_memory() -> None:

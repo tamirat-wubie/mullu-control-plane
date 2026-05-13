@@ -248,6 +248,13 @@
       ]
     },
     {
+      "action_id": "classify_governed_scheduler_routes",
+      "status": "closed",
+      "surfaces": [
+        "governed_background_scheduler"
+      ]
+    },
+    {
       "action_id": "publish_connector_self_healing_receipt_contract",
       "status": "closed",
       "surfaces": [
@@ -409,6 +416,13 @@
       ]
     },
     {
+      "action_id": "publish_temporal_idempotency_window_receipt_contract",
+      "status": "closed",
+      "surfaces": [
+        "temporal_idempotency_window"
+      ]
+    },
+    {
       "action_id": "publish_temporal_memory_refresh_receipt_contract",
       "status": "closed",
       "surfaces": [
@@ -479,7 +493,7 @@
   ],
   "coverage_summary": {
     "by_action_proof": {
-      "action_proof": 60,
+      "action_proof": 62,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 11,
@@ -487,7 +501,7 @@
     },
     "by_audit": {
       "action_proof": 0,
-      "audit_chain": 69,
+      "audit_chain": 71,
       "gap": 0,
       "read_model": 4,
       "request_proof": 0
@@ -495,23 +509,23 @@
     "by_coverage_state": {
       "proven": 1,
       "unproven": 0,
-      "witnessed": 72
+      "witnessed": 74
     },
     "by_request_proof": {
       "action_proof": 1,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 13,
-      "request_proof": 59
+      "request_proof": 61
     },
-    "surface_count": 73
+    "surface_count": 75
   },
   "generated_by": "scripts/proof_coverage_matrix.py",
   "route_coverage": {
     "by_coverage_state": {
       "proven": 8,
-      "unproven": 160,
-      "witnessed": 164
+      "unproven": 153,
+      "witnessed": 171
     },
     "route_count": 332,
     "routes": [
@@ -1626,39 +1640,39 @@
         "surface_id": "hosted_demo_sandbox"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/scheduler/execute",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "governed_background_scheduler"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/scheduler/history",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "governed_background_scheduler"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/scheduler/jobs",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "governed_background_scheduler"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/scheduler/jobs/{job_id}",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "governed_background_scheduler"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/scheduler/jobs/{job_id}/disable",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "governed_background_scheduler"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/scheduler/jobs/{job_id}/enable",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "governed_background_scheduler"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/scheduler/summary",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "governed_background_scheduler"
       },
       {
         "coverage_state": "unproven",
@@ -2176,7 +2190,7 @@
         "surface_id": "gateway_capability_fabric"
       }
     ],
-    "unclassified_route_count": 160
+    "unclassified_route_count": 153
   },
   "schema_version": 1,
   "surfaces": [
@@ -3313,6 +3327,38 @@
       "audit": "audit_chain",
       "coverage_state": "witnessed",
       "evidence_files": [
+        "mcoi/mcoi_runtime/app/routers/scheduler.py",
+        "mcoi/mcoi_runtime/core/scheduler.py",
+        "mcoi/tests/test_scheduler.py",
+        "mcoi/tests/test_server_phase217.py",
+        "mcoi/tests/test_server_phase218.py"
+      ],
+      "notes": "Governed background scheduler routes register one-shot, interval, and cron jobs, execute handlers through guard-chain admission, bound job lifecycle enable/disable/delete controls, expose bounded history and summary read models, and sanitize scheduler execution errors.",
+      "representative_paths": [
+        "/api/v1/scheduler/execute",
+        "/api/v1/scheduler/history",
+        "/api/v1/scheduler/jobs",
+        "/api/v1/scheduler/jobs/{job_id}",
+        "/api/v1/scheduler/jobs/{job_id}/disable",
+        "/api/v1/scheduler/jobs/{job_id}/enable",
+        "/api/v1/scheduler/summary"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "scheduler_job_registration_typed",
+        "scheduler_execute_guard_chain_checked",
+        "scheduler_lifecycle_controls_bounded",
+        "scheduler_history_summary_bounded",
+        "scheduler_errors_sanitized",
+        "scheduler_execution_audited"
+      ],
+      "surface_id": "governed_background_scheduler"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
         "gateway/connector_self_healing.py",
         "schemas/connector_self_healing_receipt.schema.json",
         "tests/test_gateway/test_connector_self_healing.py"
@@ -4047,6 +4093,36 @@
         "receipt_not_terminal_closure"
       ],
       "surface_id": "temporal_lease_window"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "gateway/temporal_idempotency_window.py",
+        "schemas/temporal_idempotency_window_receipt.schema.json",
+        "tests/test_gateway/test_temporal_idempotency_window.py"
+      ],
+      "notes": "Temporal idempotency window rechecks idempotency keys, request fingerprints, replay windows, tenant and command scope, action scope, committed effects, terminal receipt binding, evidence refs, and high-risk source receipts before effect dispatch.",
+      "representative_paths": [
+        "TemporalIdempotencyWindow.evaluate",
+        "IdempotencyWindowRequest",
+        "TemporalIdempotencyWindowReceipt"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "runtime_clock_owns_idempotency_window",
+        "new_idempotency_key_admits_dispatch",
+        "matching_replay_admits_uncommitted_dispatch",
+        "committed_effect_blocks_duplicate_dispatch",
+        "expired_idempotency_window_blocks_dispatch",
+        "request_fingerprint_mismatch_blocks_replay",
+        "tenant_command_action_scope_checked",
+        "high_risk_source_receipts_bound",
+        "temporal_idempotency_window_receipt_schema_valid",
+        "receipt_not_terminal_closure"
+      ],
+      "surface_id": "temporal_idempotency_window"
     },
     {
       "action_proof": "action_proof",

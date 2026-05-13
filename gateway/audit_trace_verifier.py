@@ -305,37 +305,55 @@ class AuditTraceVerifier:
                 command_present=False,
                 replayed_state=None,
                 live_state=None,
+                transition_chain_valid=False,
                 states_match=False,
                 event_count=0,
                 failures=("command_not_found",),
             )
 
         events = self._ledger.events_for(command_id)
+        failures: list[str] = []
         replayed_state: CommandState | None = None
+        transition_chain_valid = True
         for event in events:
+            if replayed_state is None:
+                if (
+                    event.previous_state is not CommandState.RECEIVED
+                    or event.next_state is not CommandState.RECEIVED
+                ):
+                    failures.append(f"replay_initial_state_gap:{event.event_id}")
+                    transition_chain_valid = False
+            elif event.previous_state != replayed_state:
+                failures.append(f"replay_transition_gap:{event.event_id}")
+                transition_chain_valid = False
             replayed_state = event.next_state
 
         if replayed_state is None:
+            failures.append("replay_no_events_for_command")
             return ReplayStateVerification(
                 command_id=command_id,
                 command_present=True,
                 replayed_state=None,
                 live_state=command.state,
+                transition_chain_valid=False,
                 states_match=False,
                 event_count=0,
-                failures=("replay_no_events_for_command",),
+                failures=tuple(failures),
             )
 
         states_match = replayed_state == command.state
-        failures = () if states_match else ("replay_state_diverges_from_live",)
+        if not states_match:
+            failures.append("replay_state_diverges_from_live")
+
         return ReplayStateVerification(
             command_id=command_id,
             command_present=True,
             replayed_state=replayed_state,
             live_state=command.state,
+            transition_chain_valid=transition_chain_valid,
             states_match=states_match,
             event_count=len(events),
-            failures=failures,
+            failures=tuple(failures),
         )
 
     def verify_tenant_isolation(self, command_id: str) -> "TenantIsolationVerification":
@@ -477,6 +495,7 @@ class ReplayStateVerification:
     command_present: bool
     replayed_state: CommandState | None
     live_state: CommandState | None
+    transition_chain_valid: bool
     states_match: bool
     event_count: int
     failures: tuple[str, ...]
