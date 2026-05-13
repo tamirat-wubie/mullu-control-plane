@@ -226,6 +226,13 @@
       ]
     },
     {
+      "action_id": "classify_ops_diagnostics_routes",
+      "status": "closed",
+      "surfaces": [
+        "ops_proof_surface"
+      ]
+    },
+    {
       "action_id": "classify_tenant_governance_lifecycle_routes",
       "status": "closed",
       "surfaces": [
@@ -664,7 +671,7 @@
   ],
   "coverage_summary": {
     "by_action_proof": {
-      "action_proof": 82,
+      "action_proof": 83,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 14,
@@ -672,7 +679,7 @@
     },
     "by_audit": {
       "action_proof": 0,
-      "audit_chain": 94,
+      "audit_chain": 95,
       "gap": 0,
       "read_model": 4,
       "request_proof": 0
@@ -680,23 +687,23 @@
     "by_coverage_state": {
       "proven": 1,
       "unproven": 0,
-      "witnessed": 97
+      "witnessed": 98
     },
     "by_request_proof": {
       "action_proof": 1,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 16,
-      "request_proof": 81
+      "request_proof": 82
     },
-    "surface_count": 98
+    "surface_count": 99
   },
   "generated_by": "scripts/proof_coverage_matrix.py",
   "route_coverage": {
     "by_coverage_state": {
       "proven": 12,
-      "unproven": 33,
-      "witnessed": 288
+      "unproven": 30,
+      "witnessed": 291
     },
     "route_count": 333,
     "routes": [
@@ -1541,19 +1548,19 @@
         "surface_id": "operational_health_read_models"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/ops/benchmarks",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "ops_proof_surface"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/ops/imports",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "ops_proof_surface"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/ops/proof-bridge",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "ops_proof_surface"
       },
       {
         "coverage_state": "witnessed",
@@ -2366,7 +2373,7 @@
         "surface_id": "gateway_capability_fabric"
       }
     ],
-    "unclassified_route_count": 33
+    "unclassified_route_count": 30
   },
   "schema_version": 1,
   "surfaces": [
@@ -3084,6 +3091,37 @@
         "api_key_expiration_and_stale_detection"
       ],
       "surface_id": "api_key_lifecycle"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "mcoi/mcoi_runtime/app/routers/ops/diagnostics.py",
+        "mcoi/mcoi_runtime/core/governance_bench.py",
+        "mcoi/mcoi_runtime/core/import_analyzer.py",
+        "mcoi/mcoi_runtime/core/proof_bridge.py",
+        "mcoi/tests/test_governance_endpoints.py",
+        "mcoi/tests/test_governance_bench.py",
+        "mcoi/tests/test_import_analyzer.py",
+        "mcoi/tests/test_autonomous_fixes.py"
+      ],
+      "notes": "Operational diagnostics routes run governed benchmark summaries, expose bounded import-cycle analysis, and publish proof-bridge status read models without mutating runtime authority.",
+      "representative_paths": [
+        "/api/v1/ops/benchmarks",
+        "/api/v1/ops/imports",
+        "/api/v1/ops/proof-bridge"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "ops_benchmarks_return_governed_summary",
+        "ops_benchmark_results_have_metrics",
+        "ops_import_analysis_returns_dependency_summary",
+        "ops_import_depth_distribution_bounded",
+        "ops_proof_bridge_status_governed",
+        "proof_bridge_registered_in_deps"
+      ],
+      "surface_id": "ops_proof_surface"
     },
     {
       "action_proof": "action_proof",
