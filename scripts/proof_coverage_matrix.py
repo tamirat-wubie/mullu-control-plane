@@ -1347,7 +1347,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "mcoi/mcoi_runtime/contracts/capability_manifest.py",
                 "mcoi/mcoi_runtime/core/capability_manifest_registry.py",
                 "schemas/software_dev/capability_manifest.schema.json",
-                "tests/test_capability_manifest_registry.py",
+                "tests/test_software_dev_capability_manifest_registry.py",
             ],
             "Capability manifest registry admits dynamic capability declarations only after owner, policy, evidence, schema, receipt, maturity, sandbox, rollback, environment, and hot-reload constraints validate; production hot reload remains denied for effect-bearing capabilities.",
             [

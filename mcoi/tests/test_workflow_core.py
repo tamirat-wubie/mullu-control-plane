@@ -118,42 +118,31 @@ class TestWorkflowValidator:
         assert v.validate(d) == []
 
     def test_missing_predecessor(self):
-        d = _descriptor(stages=(
-            _stage("A", predecessors=("missing",)),
-        ))
-        v = WorkflowValidator()
-        errors = v.validate(d)
-        assert len(errors) == 1
-        assert "unknown predecessor" in errors[0]
+        with pytest.raises(ValueError, match="declared stage_id"):
+            _descriptor(stages=(
+                _stage("A", predecessors=("missing",)),
+            ))
 
     def test_cycle_detected(self):
-        d = _descriptor(stages=(
-            _stage("A", predecessors=("B",)),
-            _stage("B", predecessors=("A",)),
-        ))
-        v = WorkflowValidator()
-        errors = v.validate(d)
-        assert len(errors) == 1
-        assert "cycle" in errors[0]
+        with pytest.raises(ValueError, match="predecessor cycles"):
+            _descriptor(stages=(
+                _stage("A", predecessors=("B",)),
+                _stage("B", predecessors=("A",)),
+            ))
 
     def test_self_cycle_detected(self):
-        d = _descriptor(stages=(
-            _stage("A", predecessors=("A",)),
-        ))
-        v = WorkflowValidator()
-        errors = v.validate(d)
-        assert len(errors) == 1
-        assert "cycle" in errors[0]
+        with pytest.raises(ValueError, match="same stage_id"):
+            _descriptor(stages=(
+                _stage("A", predecessors=("A",)),
+            ))
 
     def test_three_node_cycle(self):
-        d = _descriptor(stages=(
-            _stage("A", predecessors=("C",)),
-            _stage("B", predecessors=("A",)),
-            _stage("C", predecessors=("B",)),
-        ))
-        v = WorkflowValidator()
-        errors = v.validate(d)
-        assert any("cycle" in e for e in errors)
+        with pytest.raises(ValueError, match="predecessor cycles"):
+            _descriptor(stages=(
+                _stage("A", predecessors=("C",)),
+                _stage("B", predecessors=("A",)),
+                _stage("C", predecessors=("B",)),
+            ))
 
     def test_invalid_binding_source(self):
         binding = WorkflowBinding(
@@ -163,10 +152,8 @@ class TestWorkflowValidator:
             target_stage_id="A",
             target_input_key="in",
         )
-        d = _descriptor(stages=(_stage("A"),), bindings=(binding,))
-        v = WorkflowValidator()
-        errors = v.validate(d)
-        assert any("unknown source stage" in e for e in errors)
+        with pytest.raises(ValueError, match="bindings must reference declared stage_id"):
+            _descriptor(stages=(_stage("A"),), bindings=(binding,))
 
     def test_invalid_binding_target(self):
         binding = WorkflowBinding(
@@ -176,10 +163,8 @@ class TestWorkflowValidator:
             target_stage_id="missing",
             target_input_key="in",
         )
-        d = _descriptor(stages=(_stage("A"),), bindings=(binding,))
-        v = WorkflowValidator()
-        errors = v.validate(d)
-        assert any("unknown target stage" in e for e in errors)
+        with pytest.raises(ValueError, match="bindings must reference declared stage_id"):
+            _descriptor(stages=(_stage("A"),), bindings=(binding,))
 
     def test_binding_source_must_be_declared_predecessor(self):
         binding = WorkflowBinding(
