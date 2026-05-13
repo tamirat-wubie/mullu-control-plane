@@ -76,6 +76,13 @@
       ]
     },
     {
+      "action_id": "classify_multi_agent_coordination_routes",
+      "status": "closed",
+      "surfaces": [
+        "multi_agent_coordination_runtime"
+      ]
+    },
+    {
       "action_id": "publish_hosted_demo_sandbox_read_models",
       "status": "closed",
       "surfaces": [
@@ -493,14 +500,14 @@
   ],
   "coverage_summary": {
     "by_action_proof": {
-      "action_proof": 62,
+      "action_proof": 63,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 11,
       "request_proof": 2
     },
     "by_audit": {
-      "action_proof": 0,
+      "action_proof": 1,
       "audit_chain": 71,
       "gap": 0,
       "read_model": 4,
@@ -509,23 +516,23 @@
     "by_coverage_state": {
       "proven": 1,
       "unproven": 0,
-      "witnessed": 74
+      "witnessed": 75
     },
     "by_request_proof": {
       "action_proof": 1,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 13,
-      "request_proof": 61
+      "request_proof": 62
     },
-    "surface_count": 75
+    "surface_count": 76
   },
   "generated_by": "scripts/proof_coverage_matrix.py",
   "route_coverage": {
     "by_coverage_state": {
       "proven": 8,
-      "unproven": 155,
-      "witnessed": 169
+      "unproven": 148,
+      "witnessed": 176
     },
     "route_count": 332,
     "routes": [
@@ -1325,39 +1332,39 @@
         "surface_id": "unclassified_declared_route"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/multi-agent/conflict",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "multi_agent_coordination_runtime"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/multi-agent/conflicts/unresolved",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "multi_agent_coordination_runtime"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/multi-agent/delegate",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "multi_agent_coordination_runtime"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/multi-agent/delegate/resolve",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "multi_agent_coordination_runtime"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/multi-agent/handoff",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "multi_agent_coordination_runtime"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/multi-agent/merge",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "multi_agent_coordination_runtime"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/multi-agent/summary",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "multi_agent_coordination_runtime"
       },
       {
         "coverage_state": "unproven",
@@ -2190,7 +2197,7 @@
         "surface_id": "gateway_capability_fabric"
       }
     ],
-    "unclassified_route_count": 155
+    "unclassified_route_count": 148
   },
   "schema_version": 1,
   "surfaces": [
@@ -2449,6 +2456,41 @@
         "agent_adapter_summary_is_governed_read_model"
       ],
       "surface_id": "agent_adapter_protocol"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "action_proof",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "mcoi/mcoi_runtime/app/routers/multi_agent.py",
+        "mcoi/mcoi_runtime/contracts/coordination.py",
+        "mcoi/mcoi_runtime/core/coordination.py",
+        "mcoi/tests/test_coordination.py",
+        "mcoi/tests/test_multi_agent_runtime.py",
+        "mcoi/tests/test_server_phase217.py"
+      ],
+      "notes": "Multi-agent coordination routes accept typed delegation, resolution, handoff, merge, and conflict requests, execute bounded coordination-engine state transitions, expose governed read models, and return sanitized error contracts for invalid enum and missing-state cases.",
+      "representative_paths": [
+        "/api/v1/multi-agent/conflict",
+        "/api/v1/multi-agent/conflicts/unresolved",
+        "/api/v1/multi-agent/delegate",
+        "/api/v1/multi-agent/delegate/resolve",
+        "/api/v1/multi-agent/handoff",
+        "/api/v1/multi-agent/merge",
+        "/api/v1/multi-agent/summary"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "multi_agent_delegation_request_typed",
+        "multi_agent_delegation_resolution_guarded",
+        "multi_agent_handoff_preserves_context_ids",
+        "multi_agent_merge_requires_valid_outcome",
+        "multi_agent_conflict_requires_valid_strategy",
+        "multi_agent_unresolved_conflicts_read_model_bounded",
+        "multi_agent_summary_is_governed_read_model",
+        "multi_agent_errors_are_sanitized"
+      ],
+      "surface_id": "multi_agent_coordination_runtime"
     },
     {
       "action_proof": "action_proof",

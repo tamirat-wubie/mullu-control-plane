@@ -296,6 +296,41 @@ def proof_coverage_matrix() -> dict[str, Any]:
             ],
         ),
         _surface(
+            "multi_agent_coordination_runtime",
+            [
+                "/api/v1/multi-agent/conflict",
+                "/api/v1/multi-agent/conflicts/unresolved",
+                "/api/v1/multi-agent/delegate",
+                "/api/v1/multi-agent/delegate/resolve",
+                "/api/v1/multi-agent/handoff",
+                "/api/v1/multi-agent/merge",
+                "/api/v1/multi-agent/summary",
+            ],
+            "request_proof",
+            "action_proof",
+            "action_proof",
+            "witnessed",
+            [
+                "mcoi/mcoi_runtime/app/routers/multi_agent.py",
+                "mcoi/mcoi_runtime/contracts/coordination.py",
+                "mcoi/mcoi_runtime/core/coordination.py",
+                "mcoi/tests/test_coordination.py",
+                "mcoi/tests/test_multi_agent_runtime.py",
+                "mcoi/tests/test_server_phase217.py",
+            ],
+            "Multi-agent coordination routes accept typed delegation, resolution, handoff, merge, and conflict requests, execute bounded coordination-engine state transitions, expose governed read models, and return sanitized error contracts for invalid enum and missing-state cases.",
+            [
+                "multi_agent_delegation_request_typed",
+                "multi_agent_delegation_resolution_guarded",
+                "multi_agent_handoff_preserves_context_ids",
+                "multi_agent_merge_requires_valid_outcome",
+                "multi_agent_conflict_requires_valid_strategy",
+                "multi_agent_unresolved_conflicts_read_model_bounded",
+                "multi_agent_summary_is_governed_read_model",
+                "multi_agent_errors_are_sanitized",
+            ],
+        ),
+        _surface(
             "model_experiment_control",
             ["/api/v1/models", "/api/v1/ab-test", "/api/v1/ab-test/summary"],
             "request_proof",
@@ -2321,6 +2356,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
         {
             "action_id": "classify_agent_adapter_protocol_routes",
             "surfaces": ["agent_adapter_protocol"],
+            "status": "closed",
+        },
+        {
+            "action_id": "classify_multi_agent_coordination_routes",
+            "surfaces": ["multi_agent_coordination_runtime"],
             "status": "closed",
         },
         {
