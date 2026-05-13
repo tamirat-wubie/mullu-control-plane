@@ -141,6 +141,13 @@
       ]
     },
     {
+      "action_id": "classify_coordination_checkpoint_routes",
+      "status": "closed",
+      "surfaces": [
+        "coordination_checkpoint_lifecycle"
+      ]
+    },
+    {
       "action_id": "classify_task_queue_lifecycle_routes",
       "status": "closed",
       "surfaces": [
@@ -699,7 +706,7 @@
   ],
   "coverage_summary": {
     "by_action_proof": {
-      "action_proof": 85,
+      "action_proof": 86,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 16,
@@ -707,7 +714,7 @@
     },
     "by_audit": {
       "action_proof": 0,
-      "audit_chain": 99,
+      "audit_chain": 100,
       "gap": 0,
       "read_model": 4,
       "request_proof": 0
@@ -715,23 +722,23 @@
     "by_coverage_state": {
       "proven": 1,
       "unproven": 0,
-      "witnessed": 102
+      "witnessed": 103
     },
     "by_request_proof": {
       "action_proof": 1,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 18,
-      "request_proof": 84
+      "request_proof": 85
     },
-    "surface_count": 103
+    "surface_count": 104
   },
   "generated_by": "scripts/proof_coverage_matrix.py",
   "route_coverage": {
     "by_coverage_state": {
       "proven": 12,
-      "unproven": 23,
-      "witnessed": 298
+      "unproven": 21,
+      "witnessed": 300
     },
     "route_count": 333,
     "routes": [
@@ -1081,14 +1088,14 @@
         "surface_id": "conversation_memory_lifecycle"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/coordination/checkpoint",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "coordination_checkpoint_lifecycle"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/coordination/restore",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "coordination_checkpoint_lifecycle"
       },
       {
         "coverage_state": "witnessed",
@@ -2401,7 +2408,7 @@
         "surface_id": "gateway_capability_fabric"
       }
     ],
-    "unclassified_route_count": 23
+    "unclassified_route_count": 21
   },
   "schema_version": 1,
   "surfaces": [
@@ -3148,6 +3155,38 @@
         "conversation_memory_pruning_bounded"
       ],
       "surface_id": "conversation_memory_lifecycle"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "mcoi/mcoi_runtime/app/routers/ops/coordination.py",
+        "mcoi/mcoi_runtime/core/coordination.py",
+        "mcoi/mcoi_runtime/persistence/coordination_store.py",
+        "mcoi/tests/test_coordination_http_endpoints.py",
+        "mcoi/tests/test_coordination_engine_persistence.py",
+        "mcoi/tests/test_coordination_persistence.py"
+      ],
+      "notes": "Coordination checkpoint routes persist governed engine checkpoints, restore bounded coordination state, record audit entries for save and restore actions, and reject missing or unsafe checkpoint identifiers through explicit failure paths.",
+      "representative_paths": [
+        "/api/v1/coordination/checkpoint",
+        "/api/v1/coordination/restore"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "coordination_checkpoint_save_governed",
+        "coordination_restore_resumes_checkpoint",
+        "coordination_restore_missing_is_bounded",
+        "coordination_checkpoint_save_audited",
+        "coordination_restore_audited",
+        "coordination_checkpoint_round_trip",
+        "coordination_expired_lease_rejected",
+        "coordination_policy_drift_requires_review",
+        "coordination_retry_cap_aborts_restore",
+        "coordination_store_path_traversal_rejected"
+      ],
+      "surface_id": "coordination_checkpoint_lifecycle"
     },
     {
       "action_proof": "action_proof",
