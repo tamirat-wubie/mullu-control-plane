@@ -20,11 +20,13 @@ from mcoi_runtime.contracts.governed_capability_fabric import (
 from mcoi_runtime.core.command_capability_admission import CommandCapabilityAdmissionGate
 from mcoi_runtime.core.dispatcher import DispatchRequest, Dispatcher
 from mcoi_runtime.core.domain_capsule_compiler import DomainCapsuleCompiler
+from mcoi_runtime.core.effect_assurance import EffectAssuranceGate
 from mcoi_runtime.core.governed_capability_registry import GovernedCapabilityRegistry
 from mcoi_runtime.core.governed_dispatcher import (
     GovernedDispatchContext,
     GovernedDispatcher,
 )
+from mcoi_runtime.core.operational_graph import OperationalGraph
 from mcoi_runtime.core.system_closure import (
     ExecutionVerificationLoop,
     FailureRecoveryEngine,
@@ -72,6 +74,26 @@ class FakeExecutor:
             started_at="2026-03-26T12:00:00+00:00",
             finished_at="2026-03-26T12:00:01+00:00",
             metadata={"adapter": "fake"},
+        )
+
+
+@dataclass
+class FileWritingExecutor:
+    calls: int = 0
+
+    def execute(self, request: ExecutionRequest) -> ExecutionResult:
+        self.calls += 1
+        target = Path(request.argv[1])
+        target.write_text(request.argv[2], encoding="utf-8")
+        return ExecutionResult(
+            execution_id=request.execution_id,
+            goal_id=request.goal_id,
+            status=ExecutionOutcome.SUCCEEDED,
+            actual_effects=(EffectRecord(name="process_completed", details={"argv": list(request.argv)}),),
+            assumed_effects=(),
+            started_at="2026-03-26T12:00:00+00:00",
+            finished_at="2026-03-26T12:00:01+00:00",
+            metadata={"adapter": "file-writing-fake"},
         )
 
 
@@ -548,3 +570,93 @@ def test_full_pipeline_integration() -> None:
     assert entry["actor_id"] == "actor-full"
     assert entry["goal_id"] == "goal-full"
     assert entry["blocked"] is False
+
+
+def test_effect_assurance_observes_declared_filesystem_delta(tmp_path: Path) -> None:
+    target = tmp_path / "result.txt"
+    executor = FileWritingExecutor()
+    dispatcher = Dispatcher(
+        template_validator=TemplateValidator(),
+        executors={"shell_command": executor},
+        clock=fixed_clock,
+    )
+    graph = OperationalGraph(clock=fixed_clock)
+    governed = GovernedDispatcher(
+        dispatcher,
+        effect_assurance=EffectAssuranceGate(clock=fixed_clock, graph=graph),
+        clock=fixed_clock,
+    )
+    request = DispatchRequest(
+        goal_id="goal-file-effect",
+        route="shell_command",
+        template={
+            "template_id": "tpl-file-effect-1",
+            "action_type": "shell_command",
+            "command_argv": ("write-file", "{target}", "observed"),
+            "required_parameters": ("target",),
+            "effect_observation_paths": ("{target}",),
+        },
+        bindings={"target": str(target)},
+    )
+
+    result = governed.governed_dispatch(
+        GovernedDispatchContext(
+            actor_id="actor-file",
+            intent_id="intent-file-effect",
+            request=request,
+        )
+    )
+
+    assert result.execution_result is not None
+    assert result.execution_result.status is ExecutionOutcome.SUCCEEDED
+    effect_names = tuple(effect.name for effect in result.execution_result.actual_effects)
+    assert "process_completed" in effect_names
+    assert "file_changed" in effect_names
+    assert result.execution_result.metadata["effect_assurance"]["reconciliation_status"] == "match"
+    assert result.execution_result.metadata["filesystem_effect_observations"][0]["changed"] is True
+    assert graph.capture_snapshot().node_count >= 4
+
+
+def test_effect_assurance_rejects_missing_declared_filesystem_delta(tmp_path: Path) -> None:
+    target = tmp_path / "unchanged.txt"
+    target.write_text("stable", encoding="utf-8")
+    executor = FakeExecutor()
+    dispatcher = Dispatcher(
+        template_validator=TemplateValidator(),
+        executors={"shell_command": executor},
+        clock=fixed_clock,
+    )
+    governed = GovernedDispatcher(
+        dispatcher,
+        effect_assurance=EffectAssuranceGate(clock=fixed_clock, graph=OperationalGraph(clock=fixed_clock)),
+        clock=fixed_clock,
+    )
+    request = DispatchRequest(
+        goal_id="goal-file-missing",
+        route="shell_command",
+        template={
+            "template_id": "tpl-file-effect-2",
+            "action_type": "shell_command",
+            "command_argv": ("echo", "no-change"),
+            "effect_observation_paths": ("{target}",),
+            "declared_effects": ("process_completed", "file_changed"),
+        },
+        bindings={"target": str(target)},
+    )
+
+    result = governed.governed_dispatch(
+        GovernedDispatchContext(
+            actor_id="actor-file",
+            intent_id="intent-file-missing",
+            request=request,
+        )
+    )
+
+    assert result.execution_result is not None
+    assert result.execution_result.status is ExecutionOutcome.FAILED
+    assert result.execution_result.actual_effects[0].name == "effect_reconciliation_mismatch"
+    assert (
+        result.execution_result.metadata["effect_assurance"]["reconciliation_status"]
+        == "partial_match"
+    )
+    assert result.execution_result.metadata["filesystem_effect_observations"][0]["changed"] is False
