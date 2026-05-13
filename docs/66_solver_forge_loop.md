@@ -59,6 +59,7 @@ ProblemSignature
 | `gateway/candidate_ledger.py` | `CandidateLedger`, `CandidateRun`, `CandidateScore`, stores | Append-only record of every candidate run. Negative results and adversarial findings are first-class. In-memory + JSON-file stores follow the `plan_ledger.py` pattern. |
 | `gateway/candidate_composer.py` | `CandidateComposer`, `MethodCapsule`, `CandidatePipeline`, `CandidateEvaluation`, `AdversarialReviewResult`, `CandidateComparisonReport` | Composes pipelines from registered capsules, runs each under a deterministic per-pipeline seed, applies both gates, and records every result. |
 | `gateway/solver_forge_bridge.py` | `forge_input_for_winner`, `build_provenance`, `extract_provenance`, `SolverForgeProvenance`, `is_winner` | Carries a winning ledger record into a `CapabilityForgeInput` with full provenance stamped under the reserved `solver_forge.*` metadata key. Refuses non-winners and findings-bearing runs. |
+| `gateway/solver_forge_red_team_adapter.py` | `RedTeamPlatformReviewer` | Production `AdversarialReviewCallback` backed by `RedTeamHarness`. Caches the report per instance by default. Findings derive from the harness category summary; evidence ref is the harness `report_hash`. |
 
 ## Problem signatures
 
@@ -129,7 +130,20 @@ AdversarialReviewCallback = Callable[
 
 The reviewer is optional but recommended. It is invoked on passing evaluations only (failed-evaluator runs are already losing; adversarial review would add cost without changing the outcome). The reviewer is applied **symmetrically** to the baseline. Why: if the baseline itself fails review (audit tamper, policy bypass, prompt-injection susceptibility), then a candidate's `baseline_delta` cannot be trusted as a comparison signal. `CandidateComparisonReport.baseline_compromised=True` zeroes the winner set for that run.
 
-A production wiring routes the callback through `mcoi/mcoi_runtime/core/red_team_harness.py` and `adversarial_operations.py`. The composer accepts any callable matching the protocol; for tests, in-process stub reviewers are typical.
+A production wiring is provided by `gateway/solver_forge_red_team_adapter.py`. `RedTeamPlatformReviewer` is a callable that satisfies `AdversarialReviewCallback` and is backed by the platform's deterministic `RedTeamHarness` (prompt injection, budget evasion, audit tampering, policy bypass).
+
+```python
+from gateway.solver_forge_red_team_adapter import RedTeamPlatformReviewer
+
+reviewer = RedTeamPlatformReviewer()  # default harness; cached per instance
+composer = CandidateComposer(ledger, capsules=..., adversarial_reviewer=reviewer)
+```
+
+The adapter tests *platform invariants*, not candidate-specific behavior. Every candidate in a session inherits the same verdict: either the platform is safe (no findings) or it is not (all candidates fail with `red_team_<category>_failed` findings, one per failing category, and the harness `report_hash` as the evidence ref).
+
+`severity_threshold` tolerates up to N failed cases (default `0` = strict). `cache=True` (default) runs the harness once per adapter instance; `reset_cache()` forces a fresh run. Construct a new adapter for each composer.run() session if you want fresh platform evidence per session.
+
+Candidate-specific adversarial probes (per-pipeline injection patterns derived from declared capsule inputs) remain out of scope and are tracked below as follow-on work.
 
 ## Comparison ledger
 
@@ -236,10 +250,11 @@ Method families are open-ended strings; the registry is just whichever capsules 
 | `tests/test_gateway/test_solver_forge.py` | 19 | Signature validation, ledger append-only and duplicate rejection, composer fairness, baseline-required winner claim, capsule skip, promotion isolation. |
 | `tests/test_gateway/test_solver_forge_bridge.py` | 20 | Winner classification, provenance round-trip, non-winner refusal, signature-hash mismatch, domain/risk laundering refusal, high-risk approval enforcement, reserved-key protection, end-to-end round-trip through `CapabilityForge.create_candidate`. |
 | `tests/test_gateway/test_solver_forge_adversarial.py` | 12 | Review-result shape invariants, reviewer-on-passing-only semantics, finding preservation, candidate exclusion despite beating baseline, baseline-compromise zeroing winners, ledger filtering, bridge refusal, double-gate end-to-end. |
+| `tests/test_gateway/test_solver_forge_red_team_adapter.py` | 14 | Default-platform clean path, injected failing case → findings + report_hash evidence ref, multi-category finding derivation (sorted + deduped), malformed/inconsistent report defenses, severity_threshold tolerance, cache hit + opt-out + `reset_cache()` + `latest_report()` immutability, end-to-end composer integration with both clean and failing platform. |
 
 ## Open questions deferred to follow-on work
 
 - **Multi-capsule pipelines.** The default composition is one capsule per pipeline. Multi-capsule pipelines (e.g. OCR -> embedding -> rule check -> reviewer summary) are supported by `CandidatePipeline.capsule_ids` but a real composer subclass that emits non-trivial compositions is not in scope here.
-- **Production red-team adapter.** The `AdversarialReviewCallback` interface is defined but the concrete adapter that routes findings from `red_team_harness.py` is left to a follow-on PR. The current callers must wire their own reviewer.
+- **Candidate-specific adversarial probes.** The `RedTeamPlatformReviewer` adapter tests platform invariants (every candidate inherits the same verdict). Per-pipeline injection patterns derived from declared capsule inputs — so that two candidates in the same session can receive different findings — are not implemented. The interface supports it; the adapter does not.
 - **Ledger durability beyond JSON file.** `InMemoryCandidateLedgerStore` and `JsonFileCandidateLedgerStore` are the only stores; a Postgres-backed store mirroring `plan_ledger` durability is a natural follow-on.
 - **Cross-signature learning.** Two signatures with different `signature_hash` values are siblings, not the same problem class. A clustering layer that recognizes "this is the same kind of problem we've seen before" is out of scope; the ledger preserves the evidence to enable it later.
