@@ -2272,6 +2272,34 @@ def test_temporal_evidence_freshness_surface_rechecks_required_evidence() -> Non
     assert closure_actions["publish_temporal_evidence_freshness_receipt_contract"]["status"] == "closed"
 
 
+def test_temporal_resolution_surface_resolves_phrases_with_runtime_time() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    resolution_surface = surfaces["temporal_resolution"]
+    witnesses = set(resolution_surface["runtime_witnesses"])
+
+    assert resolution_surface["coverage_state"] == "witnessed"
+    assert resolution_surface["request_proof"] == "request_proof"
+    assert resolution_surface["action_proof"] == "action_proof"
+    assert "evaluate_temporal_resolution" in resolution_surface["representative_paths"]
+    assert "TemporalResolutionRequest" in resolution_surface["representative_paths"]
+    assert "TemporalResolutionReceipt" in resolution_surface["representative_paths"]
+    assert "gateway/temporal_resolution.py" in resolution_surface["evidence_files"]
+    assert "schemas/temporal_resolution_receipt.schema.json" in resolution_surface["evidence_files"]
+    assert "tests/test_gateway/test_temporal_resolution.py" in resolution_surface["evidence_files"]
+    assert "runtime_clock_owns_phrase_resolution" in witnesses
+    assert "original_text_preserved" in witnesses
+    assert "tenant_timezone_controls_local_resolution" in witnesses
+    assert "relative_duration_resolved_from_injected_now" in witnesses
+    assert "ambiguous_low_risk_phrase_uses_safe_default" in witnesses
+    assert "ambiguous_high_risk_phrase_requires_clarification" in witnesses
+    assert "business_day_resolution_skips_weekends_and_holidays" in witnesses
+    assert "unsupported_phrase_fails_closed" in witnesses
+    assert "temporal_resolution_receipt_schema_valid" in witnesses
+    assert closure_actions["publish_temporal_resolution_receipt_contract"]["status"] == "closed"
+
+
 def test_temporal_reapproval_surface_rechecks_execution_time_approval_grants() -> None:
     matrix = _load_fixture()
     surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}

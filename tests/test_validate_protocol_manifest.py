@@ -550,6 +550,17 @@ def test_protocol_manifest_indexes_temporal_recurrence_window_receipt() -> None:
     assert recurrence_entry["surface"] == "temporal"
 
 
+def test_protocol_manifest_indexes_temporal_resolution_receipt() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    resolution_entry = entries["temporal-resolution-receipt"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert resolution_entry["path"] == "schemas/temporal_resolution_receipt.schema.json"
+    assert resolution_entry["urn"] == "urn:mullusi:schema:temporal-resolution-receipt:1"
+    assert resolution_entry["surface"] == "temporal"
+
+
 def test_protocol_manifest_indexes_temporal_memory_receipt() -> None:
     manifest = load_manifest()
     entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
