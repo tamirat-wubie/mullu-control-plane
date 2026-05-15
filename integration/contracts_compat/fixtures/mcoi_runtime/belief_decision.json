@@ -1,0 +1,12 @@
+{
+  "decision_id": "belief-decision-42",
+  "tenant_id": "tenant-mullu-primary",
+  "belief_ref": "belief-runtime-health-42",
+  "disposition": "retain_supported",
+  "reason": "runtime evidence and interval bounds remain coherent across the review window",
+  "decided_at": "2026-05-10T09:12:00+00:00",
+  "metadata": {
+    "decision_scope": "tenant-review",
+    "reviewer": "uncertainty-engine"
+  }
+}

@@ -323,6 +323,21 @@ from mcoi_runtime.contracts.epistemic_runtime import (
     TrustAssessment,
     TrustLevel,
 )
+from mcoi_runtime.contracts.uncertainty_runtime import (
+    BeliefDecision,
+    BeliefRecord,
+    BeliefStatus,
+    BeliefUpdate,
+    CompetingHypothesisSet,
+    ConfidenceInterval,
+    EvidenceWeight,
+    EvidenceWeightRecord,
+    HypothesisDisposition,
+    UncertaintyAssessment,
+    UncertaintyClosureReport,
+    UncertaintyHypothesis,
+    UncertaintySnapshot,
+)
 from mcoi_runtime.contracts.recovery import RecoveryRecord
 
 
@@ -2677,6 +2692,134 @@ def _build_epistemic_closure_report(payload: dict) -> EpistemicClosureReport:
     )
 
 
+def _build_belief_record(payload: dict) -> BeliefRecord:
+    return BeliefRecord(
+        belief_id=payload["belief_id"],
+        tenant_id=payload["tenant_id"],
+        content=payload["content"],
+        status=BeliefStatus(payload["status"]),
+        confidence=payload["confidence"],
+        created_at=payload["created_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_uncertainty_hypothesis(payload: dict) -> UncertaintyHypothesis:
+    return UncertaintyHypothesis(
+        hypothesis_id=payload["hypothesis_id"],
+        tenant_id=payload["tenant_id"],
+        belief_ref=payload["belief_ref"],
+        disposition=HypothesisDisposition(payload["disposition"]),
+        prior_confidence=payload["prior_confidence"],
+        posterior_confidence=payload["posterior_confidence"],
+        created_at=payload["created_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_evidence_weight_record(payload: dict) -> EvidenceWeightRecord:
+    return EvidenceWeightRecord(
+        weight_id=payload["weight_id"],
+        tenant_id=payload["tenant_id"],
+        belief_ref=payload["belief_ref"],
+        evidence_ref=payload["evidence_ref"],
+        weight=EvidenceWeight(payload["weight"]),
+        impact=payload["impact"],
+        created_at=payload["created_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_confidence_interval(payload: dict) -> ConfidenceInterval:
+    return ConfidenceInterval(
+        interval_id=payload["interval_id"],
+        tenant_id=payload["tenant_id"],
+        belief_ref=payload["belief_ref"],
+        lower=payload["lower"],
+        upper=payload["upper"],
+        confidence_level=payload["confidence_level"],
+        created_at=payload["created_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_belief_update(payload: dict) -> BeliefUpdate:
+    return BeliefUpdate(
+        update_id=payload["update_id"],
+        tenant_id=payload["tenant_id"],
+        belief_ref=payload["belief_ref"],
+        prior_confidence=payload["prior_confidence"],
+        posterior_confidence=payload["posterior_confidence"],
+        evidence_ref=payload["evidence_ref"],
+        updated_at=payload["updated_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_competing_hypothesis_set(payload: dict) -> CompetingHypothesisSet:
+    return CompetingHypothesisSet(
+        set_id=payload["set_id"],
+        tenant_id=payload["tenant_id"],
+        hypothesis_count=payload["hypothesis_count"],
+        leading_hypothesis_ref=payload["leading_hypothesis_ref"],
+        created_at=payload["created_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_belief_decision(payload: dict) -> BeliefDecision:
+    return BeliefDecision(
+        decision_id=payload["decision_id"],
+        tenant_id=payload["tenant_id"],
+        belief_ref=payload["belief_ref"],
+        disposition=payload["disposition"],
+        reason=payload["reason"],
+        decided_at=payload["decided_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_uncertainty_assessment(payload: dict) -> UncertaintyAssessment:
+    return UncertaintyAssessment(
+        assessment_id=payload["assessment_id"],
+        tenant_id=payload["tenant_id"],
+        total_beliefs=payload["total_beliefs"],
+        total_hypotheses=payload["total_hypotheses"],
+        total_updates=payload["total_updates"],
+        avg_confidence=payload["avg_confidence"],
+        assessed_at=payload["assessed_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_uncertainty_snapshot(payload: dict) -> UncertaintySnapshot:
+    return UncertaintySnapshot(
+        snapshot_id=payload["snapshot_id"],
+        tenant_id=payload["tenant_id"],
+        total_beliefs=payload["total_beliefs"],
+        total_hypotheses=payload["total_hypotheses"],
+        total_weights=payload["total_weights"],
+        total_intervals=payload["total_intervals"],
+        total_updates=payload["total_updates"],
+        total_violations=payload["total_violations"],
+        captured_at=payload["captured_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_uncertainty_closure_report(payload: dict) -> UncertaintyClosureReport:
+    return UncertaintyClosureReport(
+        report_id=payload["report_id"],
+        tenant_id=payload["tenant_id"],
+        total_beliefs=payload["total_beliefs"],
+        total_hypotheses=payload["total_hypotheses"],
+        total_updates=payload["total_updates"],
+        total_violations=payload["total_violations"],
+        created_at=payload["created_at"],
+        metadata=payload["metadata"],
+    )
+
+
 @pytest.mark.parametrize(
     ("fixture_name", "builder"),
     [
@@ -2795,6 +2938,16 @@ def _build_epistemic_closure_report(payload: dict) -> EpistemicClosureReport:
         ("epistemic_violation.json", _build_epistemic_violation),
         ("epistemic_snapshot.json", _build_epistemic_snapshot),
         ("epistemic_closure_report.json", _build_epistemic_closure_report),
+        ("belief_record.json", _build_belief_record),
+        ("uncertainty_hypothesis.json", _build_uncertainty_hypothesis),
+        ("evidence_weight_record.json", _build_evidence_weight_record),
+        ("confidence_interval.json", _build_confidence_interval),
+        ("belief_update.json", _build_belief_update),
+        ("competing_hypothesis_set.json", _build_competing_hypothesis_set),
+        ("belief_decision.json", _build_belief_decision),
+        ("uncertainty_assessment.json", _build_uncertainty_assessment),
+        ("uncertainty_snapshot.json", _build_uncertainty_snapshot),
+        ("uncertainty_closure_report.json", _build_uncertainty_closure_report),
         ("payment_record.json", _build_payment_record),
         ("package_record.json", _build_package_record),
         ("penalty_record.json", _build_penalty_record),

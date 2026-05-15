@@ -1,0 +1,13 @@
+{
+  "hypothesis_id": "hypothesis-runtime-health-42",
+  "tenant_id": "tenant-mullu-primary",
+  "belief_ref": "belief-runtime-health-42",
+  "disposition": "leading",
+  "prior_confidence": 0.41,
+  "posterior_confidence": 0.74,
+  "created_at": "2026-05-10T09:05:00+00:00",
+  "metadata": {
+    "scenario": "recovery-window",
+    "source": "runtime-observability"
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "report_id": "uncertainty-closure-42",
+  "tenant_id": "tenant-mullu-primary",
+  "total_beliefs": 4,
+  "total_hypotheses": 3,
+  "total_updates": 5,
+  "total_violations": 1,
+  "created_at": "2026-05-10T09:20:00+00:00",
+  "metadata": {
+    "period": "2026-05",
+    "scope": "uncertainty-runtime"
+  }
+}
