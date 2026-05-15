@@ -19,7 +19,6 @@ from __future__ import annotations
 
 import hashlib
 import logging
-import os
 import threading
 from dataclasses import dataclass
 from typing import Any, Callable, Mapping
@@ -588,6 +587,7 @@ class GovernedSession:
                 "model": result.model_name, "cost": result.cost,
                 "tokens": result.input_tokens + result.output_tokens,
                 "cache_hit": cache_hit,
+                "request_envelope_proof": request_proof,
             },
         )
 
@@ -689,7 +689,7 @@ class GovernedSession:
             action="session.query",
             target=resource_type,
             outcome="success",
-            detail={"filters": filters},
+            detail={"filters": filters, "request_envelope_proof": request_proof},
         )
 
         self._maybe_checkpoint()
