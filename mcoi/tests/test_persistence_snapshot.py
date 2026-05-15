@@ -78,6 +78,25 @@ def test_malformed_metadata_raises_corrupted(tmp_path: Path) -> None:
         store.load_snapshot("bad-snap")
 
 
+def test_snapshot_store_rejects_nonfinite_metadata_with_bounded_error(tmp_path: Path) -> None:
+    store = SnapshotStore(tmp_path / "snapshots")
+    snap_dir = tmp_path / "snapshots" / "bad-snap"
+    snap_dir.mkdir(parents=True)
+    (snap_dir / "metadata.json").write_text('{"snapshot_id":"bad-snap","score":NaN}', encoding="utf-8")
+    (snap_dir / "data.json").write_text("{}", encoding="utf-8")
+
+    with pytest.raises(
+        CorruptedDataError,
+        match=r"^malformed snapshot metadata \(ValueError\)$",
+    ) as excinfo:
+        store.load_snapshot("bad-snap")
+
+    message = str(excinfo.value)
+    assert message == "malformed snapshot metadata (ValueError)"
+    assert "nan" not in message.lower()
+    assert "score" not in message
+
+
 def test_malformed_data_raises_corrupted(tmp_path: Path) -> None:
     store = SnapshotStore(tmp_path / "snapshots")
     snap_dir = tmp_path / "snapshots" / "bad-data"
@@ -93,6 +112,28 @@ def test_malformed_data_raises_corrupted(tmp_path: Path) -> None:
 
     with pytest.raises(CorruptedDataError, match=r"^malformed snapshot data \(JSONDecodeError\)$"):
         store.load_snapshot("bad-data")
+
+
+def test_snapshot_store_rejects_nonfinite_data_with_bounded_error(tmp_path: Path) -> None:
+    store = SnapshotStore(tmp_path / "snapshots")
+    snap_dir = tmp_path / "snapshots" / "bad-data"
+    snap_dir.mkdir(parents=True)
+    meta = {
+        "snapshot_id": "bad-data",
+        "created_at": "2026-03-19T00:00:00+00:00",
+        "description": "",
+        "content_hash": "abc123",
+    }
+    (snap_dir / "metadata.json").write_text(json.dumps(meta), encoding="utf-8")
+    (snap_dir / "data.json").write_text('{"score":Infinity}', encoding="utf-8")
+
+    with pytest.raises(CorruptedDataError, match=r"^malformed snapshot data \(ValueError\)$") as excinfo:
+        store.load_snapshot("bad-data")
+
+    message = str(excinfo.value)
+    assert message == "malformed snapshot data (ValueError)"
+    assert "infinity" not in message.lower()
+    assert "score" not in message
 
 
 def test_tampered_data_raises_corrupted(tmp_path: Path) -> None:

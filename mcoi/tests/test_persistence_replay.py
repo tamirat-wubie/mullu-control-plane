@@ -113,6 +113,36 @@ def test_malformed_replay_file_raises(tmp_path: Path) -> None:
         store.load("bad-replay")
 
 
+def test_replay_store_rejects_nonfinite_json_constants_with_bounded_error(tmp_path: Path) -> None:
+    replay_dir = tmp_path / "replays"
+    replay_dir.mkdir(parents=True)
+    (replay_dir / "bad-replay.json").write_text('{"replay_id":"bad-replay","score":NaN}', encoding="utf-8")
+
+    store = ReplayStore(replay_dir)
+    with pytest.raises(CorruptedDataError, match=r"^malformed replay file \(ValueError\)$") as excinfo:
+        store.load("bad-replay")
+
+    message = str(excinfo.value)
+    assert message == "malformed replay file (ValueError)"
+    assert "nan" not in message.lower()
+    assert "score" not in message
+
+
+def test_replay_store_load_all_rejects_nonfinite_json_constants(tmp_path: Path) -> None:
+    replay_dir = tmp_path / "replays"
+    replay_dir.mkdir(parents=True)
+    (replay_dir / "bad-replay.json").write_text('{"replay_id":"bad-replay","score":Infinity}', encoding="utf-8")
+
+    store = ReplayStore(replay_dir)
+    with pytest.raises(CorruptedDataError, match=r"^malformed replay file \(ValueError\)$") as excinfo:
+        store.load_all()
+
+    message = str(excinfo.value)
+    assert message == "malformed replay file (ValueError)"
+    assert "infinity" not in message.lower()
+    assert "score" not in message
+
+
 def test_load_rejects_replay_id_mismatch(tmp_path: Path) -> None:
     store = ReplayStore(tmp_path / "replays")
     store.save(_make_record("replay-real"))

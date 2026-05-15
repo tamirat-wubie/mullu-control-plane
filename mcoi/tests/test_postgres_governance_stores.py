@@ -461,6 +461,22 @@ class TestPostgresAuditStoreStructure:
         assert "not-json" not in str(exc_info.value)
         assert "parse failed" in str(exc_info.value)
 
+    def test_decrypt_detail_rejects_non_standard_json_constants(self):
+        class PlaintextEncryptor:
+            def is_encrypted(self, _stored: str) -> bool:
+                return False
+
+        store = PostgresAuditStore.__new__(PostgresAuditStore)
+        store._field_encryptor = PlaintextEncryptor()
+
+        with pytest.raises(RuntimeError, match=r"^audit detail parse failed \(ValueError\)$") as exc_info:
+            store._decrypt_detail('{"secret_metric":NaN}')
+
+        message = str(exc_info.value)
+        assert "secret_metric" not in message
+        assert "NaN" not in message
+        assert "parse failed" in message
+
 
 class TestPostgresRateLimitStoreStructure:
     def test_inherits_rate_limit_store(self):
