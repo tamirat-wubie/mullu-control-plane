@@ -68,7 +68,7 @@ def main() -> int:
 
     print("Domain evidence still required:")
     for domain in domain_candidates:
-        if domain["status"] not in {"owned", "verified", "not_selected"}:
+        if domain["status"] not in {"owned", "verified", "site_route_verified", "not_selected"}:
             print(f"  - {domain['domain']}: {domain['status']} ({domain['role']})")
     print()
 
