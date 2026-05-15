@@ -1733,6 +1733,9 @@ def test_task_queue_lifecycle_surface_tracks_priority_processing() -> None:
     assert "mcoi/tests/test_server_phase215.py" in queue_surface["evidence_files"]
     assert "task_queue_priority_order" in witnesses
     assert "task_queue_depth_bounded" in witnesses
+    assert "task_queue_submit_mutation_receipt_emitted" in witnesses
+    assert "task_queue_process_mutation_receipts_emitted" in witnesses
+    assert "task_queue_mutation_receipt_closes_effect_assurance" in witnesses
     assert "task_queue_empty_process_bounded" in witnesses
     assert "task_queue_missing_result_bounded" in witnesses
     assert "task_queue_errors_sanitized" in witnesses
@@ -3167,9 +3170,7 @@ def test_generated_assurance_copy_matches_when_present() -> None:
     assert matrix["surfaces"]
     if ASSURANCE_OUTPUT.exists():
         assurance = json.loads(ASSURANCE_OUTPUT.read_text(encoding="utf-8"))
-        assert [surface["surface_id"] for surface in assurance["surfaces"]] == [
-            surface["surface_id"] for surface in matrix["surfaces"]
-        ]
+        assert assurance == matrix
 
 
 def test_operator_document_mentions_every_surface() -> None:

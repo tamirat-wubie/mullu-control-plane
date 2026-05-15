@@ -311,7 +311,7 @@ of scope for the chain).
 | README claims "7-Guard Chain" but the HTTP chain has nine guard slots when JWT is configured | Low | README/spec correction | **Closed (G4.0/G4.2)** |
 | HTTP and session chains have different orders and different guard sets, which is documented here but not enforced by tests | Medium | Add a test that asserts the canonical order of each chain by name; fail if a future refactor reorders them | Open |
 | Output content safety and PII redaction are not in the "chain" abstraction even though they enforce real policy | Low | Spec v2 — extend chain to a generalized notion of "policy checkpoint" covering pre-dispatch, dispatch, and post-dispatch | Open |
-| No CI check enumerates `/api/v1/*` routes and asserts each flows through `GovernanceMiddleware` | Medium | Mirror the gap from MAF_RECEIPT_COVERAGE.md — `scripts/validate_guard_chain_coverage.py` | Open |
+| No CI check enumerates `/api/v1/*` routes and asserts each flows through `GovernanceMiddleware` | Medium | Mirror the gap from MAF_RECEIPT_COVERAGE.md — `scripts/validate_guard_chain_coverage.py` | **Closed** — `scripts/validate_guard_chain_coverage.py` builds the assembled default router set, asserts `GovernanceMiddleware` is installed, verifies every `/api/v1/*` route is non-exempt and covered by the middleware prefix rule, and is pinned by `tests/test_validate_guard_chain_coverage.py`. |
 | No external verifier reads an audit trail and reproves "every entry was preceded by chain admission" | Medium | After ledger persistence and receipt persistence ship: cross-verifier that joins audit + receipt streams | Open |
 
 ## Versioning
@@ -346,9 +346,8 @@ discipline that keeps "governed" from being a marketing term.
 
 The next moves from here are concrete:
 
-1. Close the medium-severity coverage-CI gap (script that enumerates routes).
-2. Ship receipt persistence (carries forward from `MAF_RECEIPT_COVERAGE.md`).
-3. Multi-tenant isolation tests (audit gap G5).
+1. Ship receipt persistence (carries forward from `MAF_RECEIPT_COVERAGE.md`).
+2. Multi-tenant isolation tests (audit gap G5).
 
 These are the work that gets done by shipping, not by auditing the
 same artifacts again.

@@ -1,9 +1,15 @@
 """Phase 215C — Task queue tests."""
 
 import pytest
+
+from mcoi_runtime.contracts.effect_assurance import ExpectedEffect, ReconciliationStatus
+from mcoi_runtime.contracts.execution import ExecutionOutcome, ExecutionResult
+from mcoi_runtime.core.effect_assurance import EffectAssuranceGate
 from mcoi_runtime.core.task_queue import TaskQueue
 
-FIXED_CLOCK = lambda: "2026-03-26T12:00:00Z"
+
+def FIXED_CLOCK() -> str:
+    return "2026-03-26T12:00:00Z"
 
 
 class TestTaskQueue:
@@ -13,6 +19,7 @@ class TestTaskQueue:
         task = q.pop()
         assert task is not None
         assert task.task_id == "t1"
+        assert q.mutation_receipts()[-1].effect_name == "task_queue_item_dequeued"
 
     def test_priority_order(self):
         q = TaskQueue(clock=FIXED_CLOCK)
@@ -56,6 +63,7 @@ class TestTaskQueue:
         assert result is not None
         assert result.succeeded is True
         assert result.output["result"] == 2
+        assert q.mutation_receipts()[-1].effect_name == "task_queue_result_recorded"
 
     def test_process_empty(self):
         q = TaskQueue(clock=FIXED_CLOCK)
@@ -100,3 +108,93 @@ class TestTaskQueue:
         assert s["submitted"] == 1
         assert s["processed"] == 1
         assert s["depth"] == 0
+        assert s["mutation_receipts"] == 3
+
+    def test_submit_records_bounded_mutation_receipt(self):
+        q = TaskQueue(clock=FIXED_CLOCK)
+        q.submit("t1", {"secret": "payload"}, tenant_id="tenant-1", priority=7)
+
+        receipt = q.mutation_receipts()[-1]
+
+        assert receipt.effect_name == "task_queue_item_submitted"
+        assert receipt.before_depth == 0
+        assert receipt.after_depth == 1
+        assert receipt.tenant_id == "tenant-1"
+        assert receipt.metadata["priority"] == 7
+        assert "payload_hash" in receipt.metadata
+        assert "secret" not in str(receipt.to_dict())
+
+    def test_process_records_dequeue_and_result_receipts(self):
+        q = TaskQueue(clock=FIXED_CLOCK)
+        q.submit("t1", {"x": 1}, tenant_id="tenant-1")
+
+        result = q.process_one(lambda payload: {"result": payload["x"] + 1})
+        receipts = q.mutation_receipts()
+
+        assert result is not None
+        assert tuple(receipt.effect_name for receipt in receipts) == (
+            "task_queue_item_submitted",
+            "task_queue_item_dequeued",
+            "task_queue_result_recorded",
+        )
+        assert receipts[-2].tenant_id == "tenant-1"
+        assert receipts[-1].metadata["succeeded"] is True
+        assert receipts[-1].metadata["error_present"] is False
+        assert "output_hash" in receipts[-1].metadata
+
+    def test_mutation_receipts_convert_to_effect_records(self):
+        q = TaskQueue(clock=FIXED_CLOCK)
+        q.submit("t1", {"x": 1}, tenant_id="tenant-1")
+
+        effects = q.effect_records()
+        effect = effects[-1]
+
+        assert effect.name == "task_queue_item_submitted"
+        assert effect.details["source"] == "task_queue"
+        assert effect.details["tenant_id"] == "tenant-1"
+        assert effect.details["evidence_ref"].startswith("task-queue-receipt:")
+        assert effect.details["after_depth"] == 1
+        assert effect.details["metadata"]["payload_hash"]
+
+    def test_task_queue_mutation_receipt_closes_effect_assurance(self):
+        q = TaskQueue(clock=FIXED_CLOCK)
+        gate = EffectAssuranceGate(clock=FIXED_CLOCK)
+        plan = gate.create_plan(
+            command_id="cmd-task-submit",
+            tenant_id="tenant-1",
+            capability_id="task_queue.submit",
+            expected_effects=(
+                ExpectedEffect(
+                    effect_id="task_queue_item_submitted",
+                    name="task_queue_item_submitted",
+                    target_ref="task:t1",
+                    required=True,
+                    verification_method="task_queue_mutation_receipt",
+                ),
+            ),
+            forbidden_effects=("task_queue_duplicate_submission",),
+        )
+
+        q.submit("t1", {"x": 1}, tenant_id="tenant-1")
+        execution = ExecutionResult(
+            execution_id="exec-task-submit",
+            goal_id="goal-task-submit",
+            status=ExecutionOutcome.SUCCEEDED,
+            actual_effects=q.effect_records(limit=1),
+            assumed_effects=(),
+            started_at="2026-03-26T12:00:00+00:00",
+            finished_at="2026-03-26T12:00:01+00:00",
+        )
+        observed = gate.observe(execution)
+        verification = gate.verify(plan=plan, execution_result=execution, observed_effects=observed)
+        reconciliation = gate.reconcile(
+            plan=plan,
+            observed_effects=observed,
+            verification_result=verification,
+        )
+
+        assert reconciliation.status is ReconciliationStatus.MATCH
+        assert reconciliation.matched_effects == ("task_queue_item_submitted",)
+        assert reconciliation.missing_effects == ()
+        assert reconciliation.unexpected_effects == ()
+        assert verification.evidence[0].uri.startswith("task-queue-receipt:")

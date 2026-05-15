@@ -17,6 +17,11 @@ Invariants: this handoff closes `website_deployment_verification` only for the p
 | Current live commit carrying route | `ea4159d Add Mullu product route` |
 | Site validation workflow | `Validate Site` run `25919014515` passed |
 | Pages deployment workflow | `pages-build-deployment` run `25919013720` passed |
+| Initial non-live route PR | `https://github.com/tamirat-wubie/mullusi/pull/84` |
+| Non-live boundary update PR | `https://github.com/tamirat-wubie/mullusi/pull/86` |
+| Non-live route commit | `7965ae4e393457017611f6bd4e9b1f3e6dea4940` |
+| Redundant route PR | `https://github.com/tamirat-wubie/mullusi/pull/85` closed after route appeared on `origin/main` |
+| Historical live-route blocker issue | `https://github.com/tamirat-wubie/mullusi/issues/87`; superseded by May 15 direct live-route evidence |
 | DNS Pages target | `mullusi.github.io` |
 | Product first reference | `Mullu, by Mullusi` |
 | Launch posture | private beta / request access |
@@ -54,6 +59,17 @@ The live custom-domain source was identified as:
 ```text
 https://github.com/mullusi/mullusi-site.git
 ```
+
+PR #86 later replaced the product route copy with a clearer Mullusi/Mullu
+boundary: Mullusi is the company, research, governance, and trust umbrella;
+Mullu is the flagship governed symbolic intelligence product. It also added
+explicit public claim handling for repository-verified evidence versus live
+deployment witness evidence. PR #86 passed `fast-check` and merged into
+`tamirat-wubie/mullusi` `main` at `7965ae4e393457017611f6bd4e9b1f3e6dea4940`.
+
+The earlier accidental product-route push to `ci/optimize-actions-minutes` was
+removed with a lease-protected branch update before PR #84 was repaired and
+merged.
 
 The route and sitemap update were committed there as `ea4159d Add Mullu product
 route`. The repository validation workflow and Pages deployment completed

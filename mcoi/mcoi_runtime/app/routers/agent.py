@@ -234,7 +234,13 @@ def queue_submit(req: QueueSubmitRequest):
     """Submit a task to the async queue."""
     deps.metrics.inc("requests_governed")
     task = deps.task_queue.submit(req.task_id, req.payload, priority=req.priority, tenant_id=req.tenant_id)
-    return {"task_id": task.task_id, "priority": task.priority, "queued_at": task.submitted_at}
+    receipt = deps.task_queue.mutation_receipts(limit=1)[-1]
+    return {
+        "task_id": task.task_id,
+        "priority": task.priority,
+        "queued_at": task.submitted_at,
+        "mutation_receipt": receipt.to_dict(),
+    }
 
 
 @router.post("/api/v1/queue/process")
@@ -244,13 +250,29 @@ def queue_process():
     result = deps.task_queue.process_one(lambda payload: {"processed": True, **payload})
     if result is None:
         return {"processed": False, "reason": "queue empty"}
-    return {"processed": True, "task_id": result.task_id, "succeeded": result.succeeded, "output": result.output}
+    receipts = [
+        receipt.to_dict()
+        for receipt in deps.task_queue.mutation_receipts(limit=2)
+        if receipt.task_id == result.task_id
+    ]
+    return {
+        "processed": True,
+        "task_id": result.task_id,
+        "succeeded": result.succeeded,
+        "output": result.output,
+        "mutation_receipts": receipts,
+    }
 
 
 @router.get("/api/v1/queue/status")
 def queue_status():
     """Task queue status."""
-    return deps.task_queue.summary()
+    summary = deps.task_queue.summary()
+    summary["recent_mutation_receipts"] = [
+        receipt.to_dict()
+        for receipt in deps.task_queue.mutation_receipts(limit=10)
+    ]
+    return summary
 
 
 @router.get("/api/v1/queue/result/{task_id}")

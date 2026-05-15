@@ -1157,7 +1157,10 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "task_queue_priority_order",
                 "task_queue_depth_bounded",
                 "task_queue_submit_endpoint",
+                "task_queue_submit_mutation_receipt_emitted",
                 "task_queue_process_endpoint",
+                "task_queue_process_mutation_receipts_emitted",
+                "task_queue_mutation_receipt_closes_effect_assurance",
                 "task_queue_empty_process_bounded",
                 "task_queue_result_retrieval",
                 "task_queue_missing_result_bounded",
@@ -4456,6 +4459,10 @@ def main() -> int:
         actual_doc = args.doc_output.read_text(encoding="utf-8")
         if actual_doc != expected_doc:
             raise SystemExit(f"{args.doc_output} is stale; run scripts/proof_coverage_matrix.py")
+        if args.assurance_output.exists():
+            actual_assurance = args.assurance_output.read_text(encoding="utf-8")
+            if actual_assurance != expected:
+                raise SystemExit(f"{args.assurance_output} is stale; run scripts/proof_coverage_matrix.py")
         return 0
     write_matrix(args.output, matrix)
     write_matrix(args.assurance_output, matrix)
