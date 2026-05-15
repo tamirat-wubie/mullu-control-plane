@@ -76,9 +76,10 @@ witness and merged into `tamirat-wubie/mullusi` `main` at commit
 
 ## 2026-05-15 Proof Boundary Route Probe
 
-PR #89 added a static public proof boundary page at `/proof/` and linked the
-Mullu product route to it. The page separates verified route evidence, pending
-runtime witness evidence, and paid-public-launch blockers.
+PR #89 added a static public proof boundary page at `/proof/` in
+`tamirat-wubie/mullusi` and linked the Mullu product route to it. That
+repository was later proven not to be the active Pages source for
+`mullusi.com`, so the live route initially remained unpublished.
 
 | Check | Observed result | Decision |
 | --- | --- | --- |
@@ -97,12 +98,33 @@ DNS now shows:
 
 | Route | Observed result | Decision |
 | --- | --- | --- |
-| `www.mullusi.com` | CNAME to `mullusi.github.io` | Live Pages source is likely a `mullusi.github.io` user/org Pages source, not the checked-out `tamirat-wubie/mullusi` application repo |
-| `https://github.com/mullusi/mullusi.github.io.git` | Repository not found from current session | Source repository is inaccessible, private, renamed, or controlled outside current GitHub access |
+| `www.mullusi.com` | CNAME to `mullusi.github.io` | Live Pages source is under the `mullusi` GitHub organization |
+| `gh api repos/mullusi/mullusi-site/pages` | HTTP 200, `status: built`, `source.branch: main`, `source.path: /`, `html_url: https://mullusi.com/` | Active Pages source identified |
+| Active source repository | `https://github.com/mullusi/mullusi-site` | Live website source is not `tamirat-wubie/mullusi` |
 
-The route file is present on `tamirat-wubie/mullusi` `origin/main`, but that is
-not sufficient to close the deployment gate until the Pages source that backs
-`mullusi.github.io` is identified and updated.
+The route file in `tamirat-wubie/mullusi` remains useful as prior source
+history, but live publication is governed by `mullusi/mullusi-site`.
+
+## 2026-05-15 Live Proof Boundary Route Closure
+
+`mullusi/mullusi-site` PR #1 published the active `/proof/` route, linked the
+live `/mullu/` product route to it, added `/proof/` to `sitemap.xml`, and made
+`proof/index.html` a required static-site validation artifact.
+
+| Check | Observed result | Decision |
+| --- | --- | --- |
+| `mullusi/mullusi-site` PR #1 | Merged after `validate` passed | Active Pages source updated |
+| Active source commit | `c9badb0` | `/proof/index.html` present on active `main` |
+| `https://mullusi.com/proof/` | HTTP 200 from current environment | Public proof boundary route is live |
+| Body literal: `Public proof boundary` | Present | Route identity verified |
+| Body literal: `AwaitingEvidence` | Present | Runtime witness boundary remains explicit |
+| `https://mullusi.com/mullu/` | HTTP 200 and contains `/proof/` link | Product route now points to proof boundary |
+| `https://mullusi.com/sitemap.xml` | HTTP 200 and contains `https://mullusi.com/proof/` | Search/discovery surface updated |
+| Proof-route tracking issue | `https://github.com/tamirat-wubie/mullusi/issues/90` closed | Public proof-route publication closed |
+
+This closes only the public website proof boundary route. Live runtime witness
+closure still requires reachable gateway witness, runtime conformance, and
+health endpoints.
 
 ## Homepage Copy Evidence
 
@@ -112,19 +134,22 @@ not sufficient to close the deployment gate until the Pages source that backs
 | Contains `Mullu, by Mullusi` first reference | No |
 | Contains company-level Mullusi copy | Yes |
 | Contains Mullu family references | Partial, including `Mullu Mathematics` |
-| Product flagship route ready | No |
+| Product flagship route ready | Yes for `/mullu/`; homepage first-reference update remains separate |
 
 ## Decision
 
-The public company homepage is live, but the product launch route is not ready.
+The public company homepage, `/mullu/` product route, and `/proof/` public
+proof boundary route are live. Paid public launch is still not ready because
+runtime witness, legal/domain, and broader homepage/app-surface gates remain
+open.
 
 The original 2026-05-07 and earlier 2026-05-15 probes kept
 `website_deployment_verification` open because:
 
-1. `https://mullusi.com/mullu` returns HTTP 404 after redirect.
-2. `https://mullu.mullusi.com` has no DNS record.
-3. The live homepage does not yet present the first-reference product boundary: `Mullu, by Mullusi`.
-4. The homepage remains company/ecosystem oriented rather than flagship product oriented.
+1. `https://mullu.mullusi.com` has no DNS record.
+2. The live homepage does not yet present the first-reference product boundary: `Mullu, by Mullusi`.
+3. The homepage remains company/ecosystem oriented rather than flagship product oriented.
+4. Live runtime witness closure is still AwaitingEvidence.
 
 ## Remaining Public Launch Work
 

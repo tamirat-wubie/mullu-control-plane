@@ -65,6 +65,63 @@ class WorkflowRunStatus(StrEnum):
 
 _CLOSED_TASK_STATUSES = frozenset({TaskRunStatus.COMMITTED, TaskRunStatus.COMPENSATED})
 _REVIEW_TASK_STATUSES = frozenset({TaskRunStatus.REQUIRES_REVIEW, TaskRunStatus.FAILED})
+_MUTATION_RECEIPTS_METADATA_KEY = "mutation_receipts"
+
+
+@dataclass(frozen=True, slots=True)
+class WorkflowMutationReceipt:
+    """Observed workflow lifecycle mutation receipt."""
+
+    receipt_id: str
+    mutation_type: str
+    effect_name: str
+    workflow_run_id: str
+    evidence_ref: str
+    previous_workflow_status: str | None
+    new_workflow_status: str
+    task_id: str | None = None
+    previous_task_status: str | None = None
+    new_task_status: str | None = None
+    recorded_at: str = ""
+    metadata: dict[str, Any] = field(default_factory=dict)
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "receipt_id": self.receipt_id,
+            "mutation_type": self.mutation_type,
+            "effect_name": self.effect_name,
+            "workflow_run_id": self.workflow_run_id,
+            "evidence_ref": self.evidence_ref,
+            "previous_workflow_status": self.previous_workflow_status,
+            "new_workflow_status": self.new_workflow_status,
+            "task_id": self.task_id,
+            "previous_task_status": self.previous_task_status,
+            "new_task_status": self.new_task_status,
+            "recorded_at": self.recorded_at,
+            "metadata": dict(self.metadata),
+        }
+
+    def to_effect_record(self) -> Any:
+        from mcoi_runtime.contracts.execution import EffectRecord
+
+        return EffectRecord(
+            name=self.effect_name,
+            details={
+                "effect_id": self.effect_name,
+                "receipt_id": self.receipt_id,
+                "mutation_type": self.mutation_type,
+                "workflow_run_id": self.workflow_run_id,
+                "evidence_ref": self.evidence_ref,
+                "previous_workflow_status": self.previous_workflow_status,
+                "new_workflow_status": self.new_workflow_status,
+                "task_id": self.task_id,
+                "previous_task_status": self.previous_task_status,
+                "new_task_status": self.new_task_status,
+                "observed_at": self.recorded_at,
+                "metadata": dict(self.metadata),
+                "source": "workflow_orchestrator",
+            },
+        )
 
 
 @dataclass(frozen=True, slots=True)
@@ -191,9 +248,12 @@ class WorkflowOrchestrator:
         """Create a planned workflow run and initial task-run witnesses."""
         task_tuple = tuple(tasks)
         _validate_task_graph(task_tuple)
+        metadata_payload = dict(metadata or {})
+        if _MUTATION_RECEIPTS_METADATA_KEY in metadata_payload:
+            raise ValueError("workflow_metadata_reserved_mutation_receipts")
         run_id = workflow_run_id or f"workflow-run-{_hash_payload({'workflow_id': workflow_id, 'tenant_id': tenant_id, 'goal': goal})[:16]}"
         task_runs = tuple(_initial_task_run(run_id, task) for task in task_tuple)
-        return _stamp_run(WorkflowRun(
+        run = _stamp_run(WorkflowRun(
             workflow_run_id=run_id,
             workflow_id=workflow_id,
             tenant_id=tenant_id,
@@ -202,8 +262,22 @@ class WorkflowOrchestrator:
             status=_derive_workflow_status(task_runs),
             tasks=task_tuple,
             task_runs=task_runs,
-            metadata=metadata or {},
+            metadata=metadata_payload,
         ))
+        return _append_mutation_receipt(
+            run,
+            mutation_type="start_run",
+            effect_name="workflow_run_started",
+            previous_workflow_status=None,
+            new_workflow_status=run.status,
+            metadata={
+                "workflow_id_hash": _hash_text(workflow_id),
+                "tenant_id_hash": _hash_text(tenant_id),
+                "actor_id_hash": _hash_text(actor_id),
+                "goal_hash": _hash_text(goal),
+                "task_count": len(task_tuple),
+            },
+        )
 
     def approve_task(self, run: WorkflowRun, *, task_id: str, approval_ref: str) -> WorkflowRun:
         """Attach approval evidence and move one task to approved state."""
@@ -212,10 +286,23 @@ class WorkflowOrchestrator:
         task = _task_spec(run, task_id)
         if not task.approval_required:
             raise ValueError("task_does_not_require_approval")
-        return _replace_task_run(
+        current = _task_run(run, task_id)
+        next_run = _replace_task_run(
             run,
             task_id,
             lambda current: replace(current, status=TaskRunStatus.APPROVED, approval_ref=approval_ref),
+        )
+        updated = _task_run(next_run, task_id)
+        return _append_mutation_receipt(
+            next_run,
+            mutation_type="approve_task",
+            effect_name="workflow_task_approved",
+            previous_workflow_status=run.status,
+            new_workflow_status=next_run.status,
+            task_id=task_id,
+            previous_task_status=current.status,
+            new_task_status=updated.status,
+            metadata={"approval_ref_hash": _hash_text(approval_ref)},
         )
 
     def mark_executing(self, run: WorkflowRun, *, task_id: str) -> WorkflowRun:
@@ -227,7 +314,7 @@ class WorkflowOrchestrator:
             raise ValueError("task_not_ready_to_execute")
         if current.attempts >= current.max_attempts:
             raise ValueError("retry_limit_exhausted")
-        return _replace_task_run(
+        next_run = _replace_task_run(
             run,
             task_id,
             lambda current_run: replace(
@@ -235,6 +322,18 @@ class WorkflowOrchestrator:
                 status=TaskRunStatus.EXECUTING,
                 attempts=current_run.attempts + 1,
             ),
+        )
+        updated = _task_run(next_run, task_id)
+        return _append_mutation_receipt(
+            next_run,
+            mutation_type="mark_executing",
+            effect_name="workflow_task_executing",
+            previous_workflow_status=run.status,
+            new_workflow_status=next_run.status,
+            task_id=task_id,
+            previous_task_status=current.status,
+            new_task_status=updated.status,
+            metadata={"attempts": updated.attempts, "max_attempts": updated.max_attempts},
         )
 
     def commit_task(
@@ -270,18 +369,46 @@ class WorkflowOrchestrator:
         )
         if task.task_type == WorkflowTaskType.CLOSE_CERTIFICATE and terminal_certificate_id:
             next_run = replace(next_run, terminal_certificate_id=terminal_certificate_id)
-        return _stamp_run(replace(next_run, status=_derive_workflow_status(next_run.task_runs)))
+        next_run = _stamp_run(replace(next_run, status=_derive_workflow_status(next_run.task_runs)))
+        updated = _task_run(next_run, task_id)
+        return _append_mutation_receipt(
+            next_run,
+            mutation_type="commit_task",
+            effect_name="workflow_task_committed",
+            previous_workflow_status=run.status,
+            new_workflow_status=next_run.status,
+            task_id=task_id,
+            previous_task_status=current.status,
+            new_task_status=updated.status,
+            metadata={
+                "evidence_ref_hashes": tuple(_hash_text(ref) for ref in refs),
+                "terminal_certificate_id_hash": _hash_optional_text(terminal_certificate_id),
+            },
+        )
 
     def fail_task(self, run: WorkflowRun, *, task_id: str, reason: str) -> WorkflowRun:
         """Record task failure and choose failed or review-required workflow state."""
         if not reason:
             raise ValueError("failure_reason_required")
         task = _task_spec(run, task_id)
+        current = _task_run(run, task_id)
         next_status = TaskRunStatus.REQUIRES_REVIEW if task.compensation_task_id else TaskRunStatus.FAILED
-        return _replace_task_run(
+        next_run = _replace_task_run(
             run,
             task_id,
             lambda current: replace(current, status=next_status, failure_reason=reason),
+        )
+        updated = _task_run(next_run, task_id)
+        return _append_mutation_receipt(
+            next_run,
+            mutation_type="fail_task",
+            effect_name="workflow_task_failed",
+            previous_workflow_status=run.status,
+            new_workflow_status=next_run.status,
+            task_id=task_id,
+            previous_task_status=current.status,
+            new_task_status=updated.status,
+            metadata={"failure_reason_hash": _hash_text(reason)},
         )
 
     def compensate_task(self, run: WorkflowRun, *, task_id: str, evidence_refs: Iterable[str]) -> WorkflowRun:
@@ -292,7 +419,7 @@ class WorkflowOrchestrator:
         current = _task_run(run, task_id)
         if current.status not in _REVIEW_TASK_STATUSES:
             raise ValueError("task_not_compensatable")
-        return _replace_task_run(
+        next_run = _replace_task_run(
             run,
             task_id,
             lambda current_run: replace(
@@ -301,11 +428,36 @@ class WorkflowOrchestrator:
                 evidence_refs=tuple(dict.fromkeys((*current_run.evidence_refs, *refs))),
             ),
         )
+        updated = _task_run(next_run, task_id)
+        return _append_mutation_receipt(
+            next_run,
+            mutation_type="compensate_task",
+            effect_name="workflow_task_compensated",
+            previous_workflow_status=run.status,
+            new_workflow_status=next_run.status,
+            task_id=task_id,
+            previous_task_status=current.status,
+            new_task_status=updated.status,
+            metadata={"evidence_ref_hashes": tuple(_hash_text(ref) for ref in refs)},
+        )
 
 
 def workflow_run_to_json_dict(run: WorkflowRun) -> dict[str, Any]:
     """Return the JSON-contract representation of one workflow run."""
     return _json_ready(asdict(run))
+
+
+def workflow_mutation_receipts(run: WorkflowRun, limit: int = 50) -> tuple[WorkflowMutationReceipt, ...]:
+    """Return recent workflow lifecycle mutation receipts in append order."""
+    receipt_payloads = run.metadata.get(_MUTATION_RECEIPTS_METADATA_KEY, ())
+    if not isinstance(receipt_payloads, (tuple, list)):
+        return ()
+    return tuple(_workflow_receipt_from_dict(payload) for payload in receipt_payloads[-limit:])
+
+
+def workflow_effect_records(run: WorkflowRun, limit: int = 50) -> tuple[Any, ...]:
+    """Return recent workflow mutation receipts as execution actual-effect records."""
+    return tuple(receipt.to_effect_record() for receipt in workflow_mutation_receipts(run, limit=limit))
 
 
 def _initial_task_run(workflow_run_id: str, task: WorkflowTaskSpec) -> TaskRun:
@@ -417,6 +569,101 @@ def _stamp_task_run(task_run: TaskRun) -> TaskRun:
 
 def _stamp_run(run: WorkflowRun) -> WorkflowRun:
     return replace(run, run_hash=_hash_payload(_json_ready(asdict(replace(run, run_hash="")))))
+
+
+def _append_mutation_receipt(
+    run: WorkflowRun,
+    *,
+    mutation_type: str,
+    effect_name: str,
+    previous_workflow_status: WorkflowRunStatus | None,
+    new_workflow_status: WorkflowRunStatus,
+    task_id: str | None = None,
+    previous_task_status: TaskRunStatus | None = None,
+    new_task_status: TaskRunStatus | None = None,
+    metadata: dict[str, Any] | None = None,
+) -> WorkflowRun:
+    existing = tuple(
+        receipt.to_dict()
+        for receipt in workflow_mutation_receipts(run, limit=10_000)
+    )
+    ordinal = len(existing)
+    receipt_id = _workflow_receipt_id(
+        workflow_run_id=run.workflow_run_id,
+        mutation_type=mutation_type,
+        task_id=task_id,
+        ordinal=ordinal,
+    )
+    receipt = WorkflowMutationReceipt(
+        receipt_id=receipt_id,
+        mutation_type=mutation_type,
+        effect_name=effect_name,
+        workflow_run_id=run.workflow_run_id,
+        evidence_ref=f"workflow-receipt:{receipt_id}",
+        previous_workflow_status=previous_workflow_status.value if previous_workflow_status is not None else None,
+        new_workflow_status=new_workflow_status.value,
+        task_id=task_id,
+        previous_task_status=previous_task_status.value if previous_task_status is not None else None,
+        new_task_status=new_task_status.value if new_task_status is not None else None,
+        recorded_at=f"workflow-mutation:{ordinal}",
+        metadata=metadata or {},
+    )
+    next_metadata = dict(run.metadata)
+    next_metadata[_MUTATION_RECEIPTS_METADATA_KEY] = (*existing, receipt.to_dict())
+    return _stamp_run(replace(run, metadata=next_metadata))
+
+
+def _workflow_receipt_from_dict(payload: Any) -> WorkflowMutationReceipt:
+    if not isinstance(payload, dict):
+        raise ValueError("workflow_mutation_receipt_invalid")
+    return WorkflowMutationReceipt(
+        receipt_id=str(payload["receipt_id"]),
+        mutation_type=str(payload["mutation_type"]),
+        effect_name=str(payload["effect_name"]),
+        workflow_run_id=str(payload["workflow_run_id"]),
+        evidence_ref=str(payload["evidence_ref"]),
+        previous_workflow_status=(
+            str(payload["previous_workflow_status"])
+            if payload.get("previous_workflow_status") is not None
+            else None
+        ),
+        new_workflow_status=str(payload["new_workflow_status"]),
+        task_id=str(payload["task_id"]) if payload.get("task_id") is not None else None,
+        previous_task_status=(
+            str(payload["previous_task_status"])
+            if payload.get("previous_task_status") is not None
+            else None
+        ),
+        new_task_status=str(payload["new_task_status"]) if payload.get("new_task_status") is not None else None,
+        recorded_at=str(payload.get("recorded_at") or ""),
+        metadata=dict(payload.get("metadata") or {}),
+    )
+
+
+def _workflow_receipt_id(
+    *,
+    workflow_run_id: str,
+    mutation_type: str,
+    task_id: str | None,
+    ordinal: int,
+) -> str:
+    digest = _hash_payload(
+        {
+            "workflow_run_id": workflow_run_id,
+            "mutation_type": mutation_type,
+            "task_id": task_id,
+            "ordinal": ordinal,
+        }
+    )[:16]
+    return f"workflow-{mutation_type}-{digest}"
+
+
+def _hash_text(value: str) -> str:
+    return hashlib.sha256(value.encode("utf-8")).hexdigest()
+
+
+def _hash_optional_text(value: str | None) -> str | None:
+    return None if not value else _hash_text(value)
 
 
 def _hash_payload(payload: Any) -> str:

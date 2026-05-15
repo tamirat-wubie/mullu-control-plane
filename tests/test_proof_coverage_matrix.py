@@ -2238,9 +2238,11 @@ def test_workflow_execution_lifecycle_surface_tracks_execution_history_and_traci
     assert "/api/v1/execute" in workflow_surface["representative_paths"]
     assert "/api/v1/pipeline/execute" in workflow_surface["representative_paths"]
     assert "/api/v1/templates/execute" in workflow_surface["representative_paths"]
+    assert "gateway/workflow_orchestration.py" in workflow_surface["evidence_files"]
     assert "mcoi/mcoi_runtime/app/routers/workflow.py" in workflow_surface["evidence_files"]
     assert "mcoi/mcoi_runtime/core/agent_workflow.py" in workflow_surface["evidence_files"]
     assert "mcoi/mcoi_runtime/core/traced_workflow.py" in workflow_surface["evidence_files"]
+    assert "tests/test_gateway/test_workflow_orchestration.py" in workflow_surface["evidence_files"]
     assert "mcoi/tests/test_agent_workflow.py" in workflow_surface["evidence_files"]
     assert "mcoi/tests/test_traced_workflow.py" in workflow_surface["evidence_files"]
     assert "mcoi/tests/test_server_phase205.py" in workflow_surface["evidence_files"]
@@ -2248,6 +2250,9 @@ def test_workflow_execution_lifecycle_surface_tracks_execution_history_and_traci
     assert "workflow_invalid_capability_bounded" in witnesses
     assert "workflow_history_bounded" in witnesses
     assert "workflow_errors_sanitized" in witnesses
+    assert "workflow_lifecycle_mutation_receipts_emitted" in witnesses
+    assert "workflow_failure_compensation_receipts_emitted" in witnesses
+    assert "workflow_mutation_receipt_closes_effect_assurance" in witnesses
     assert "traced_workflow_emits_replay_trace" in witnesses
     assert "traced_workflow_recorder_errors_sanitized" in witnesses
     assert "legacy_execute_emits_action_proof" in witnesses
@@ -2260,6 +2265,7 @@ def test_workflow_execution_lifecycle_surface_tracks_execution_history_and_traci
     assert route_records["/api/v1/pipeline/execute"]["surface_id"] == "workflow_execution_lifecycle"
     assert route_records["/api/v1/templates/execute"]["surface_id"] == "workflow_execution_lifecycle"
     assert closure_actions["classify_workflow_execution_lifecycle_routes"]["status"] == "closed"
+    assert closure_actions["bind_workflow_lifecycle_mutations_to_effect_receipts"]["status"] == "closed"
 
 
 def test_agent_chain_execution_lifecycle_surface_tracks_execution_and_history() -> None:
