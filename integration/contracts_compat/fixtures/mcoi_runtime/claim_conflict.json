@@ -1,0 +1,13 @@
+{
+  "conflict_id": "claim-conflict-42",
+  "tenant_id": "tenant-mullu-primary",
+  "claim_a_ref": "claim-runtime-health-42",
+  "claim_b_ref": "claim-runtime-degradation-42",
+  "disposition": "merged",
+  "resolution_basis": "Windowed logs showed degraded latency but healthy completion guarantees.",
+  "detected_at": "2026-05-09T08:20:00+00:00",
+  "metadata": {
+    "scope": "billing",
+    "review_stage": "triage"
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "decision_id": "epistemic-decision-42",
+  "tenant_id": "tenant-mullu-primary",
+  "claim_ref": "claim-runtime-health-42",
+  "disposition": "accepted_with_context",
+  "reason": "Claim remains acceptable when paired with the merged conflict interpretation.",
+  "decided_at": "2026-05-09T08:25:00+00:00",
+  "metadata": {
+    "decider": "epistemic-board-1",
+    "scope": "tenant"
+  }
+}

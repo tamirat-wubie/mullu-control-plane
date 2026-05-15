@@ -1,0 +1,14 @@
+{
+  "assessment_id": "trust-assessment-42",
+  "tenant_id": "tenant-mullu-primary",
+  "claim_ref": "claim-runtime-health-42",
+  "source_ref": "source-runtime-log-42",
+  "trust_level": "high",
+  "confidence": 0.88,
+  "basis": "System log continuity matched ledger and billing event traces.",
+  "assessed_at": "2026-05-09T08:10:00+00:00",
+  "metadata": {
+    "reviewer": "epistemic-governor-1",
+    "scope": "tenant"
+  }
+}

@@ -306,6 +306,23 @@ from mcoi_runtime.contracts.ontology_runtime import (
     SemanticConflict,
     SemanticConflictStatus,
 )
+from mcoi_runtime.contracts.epistemic_runtime import (
+    AssertionMode,
+    ClaimConflict,
+    ConflictDisposition,
+    EpistemicAssessment,
+    EpistemicClosureReport,
+    EpistemicDecision,
+    EpistemicSnapshot,
+    EpistemicViolation,
+    EvidenceOrigin,
+    EvidenceSource,
+    KnowledgeClaim,
+    KnowledgeStatus,
+    SourceReliabilityRecord,
+    TrustAssessment,
+    TrustLevel,
+)
 from mcoi_runtime.contracts.recovery import RecoveryRecord
 
 
@@ -2528,6 +2545,138 @@ def _build_ontology_closure_report(payload: dict) -> OntologyClosureReport:
     )
 
 
+def _build_knowledge_claim(payload: dict) -> KnowledgeClaim:
+    return KnowledgeClaim(
+        claim_id=payload["claim_id"],
+        tenant_id=payload["tenant_id"],
+        content=payload["content"],
+        status=KnowledgeStatus(payload["status"]),
+        assertion_mode=AssertionMode(payload["assertion_mode"]),
+        trust_level=TrustLevel(payload["trust_level"]),
+        source_ref=payload["source_ref"],
+        confidence=payload["confidence"],
+        created_at=payload["created_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_evidence_source(payload: dict) -> EvidenceSource:
+    return EvidenceSource(
+        source_id=payload["source_id"],
+        tenant_id=payload["tenant_id"],
+        display_name=payload["display_name"],
+        origin=EvidenceOrigin(payload["origin"]),
+        reliability_score=payload["reliability_score"],
+        claim_count=payload["claim_count"],
+        created_at=payload["created_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_trust_assessment(payload: dict) -> TrustAssessment:
+    return TrustAssessment(
+        assessment_id=payload["assessment_id"],
+        tenant_id=payload["tenant_id"],
+        claim_ref=payload["claim_ref"],
+        source_ref=payload["source_ref"],
+        trust_level=TrustLevel(payload["trust_level"]),
+        confidence=payload["confidence"],
+        basis=payload["basis"],
+        assessed_at=payload["assessed_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_source_reliability_record(payload: dict) -> SourceReliabilityRecord:
+    return SourceReliabilityRecord(
+        record_id=payload["record_id"],
+        tenant_id=payload["tenant_id"],
+        source_ref=payload["source_ref"],
+        previous_score=payload["previous_score"],
+        updated_score=payload["updated_score"],
+        reason=payload["reason"],
+        updated_at=payload["updated_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_claim_conflict(payload: dict) -> ClaimConflict:
+    return ClaimConflict(
+        conflict_id=payload["conflict_id"],
+        tenant_id=payload["tenant_id"],
+        claim_a_ref=payload["claim_a_ref"],
+        claim_b_ref=payload["claim_b_ref"],
+        disposition=ConflictDisposition(payload["disposition"]),
+        resolution_basis=payload["resolution_basis"],
+        detected_at=payload["detected_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_epistemic_decision(payload: dict) -> EpistemicDecision:
+    return EpistemicDecision(
+        decision_id=payload["decision_id"],
+        tenant_id=payload["tenant_id"],
+        claim_ref=payload["claim_ref"],
+        disposition=payload["disposition"],
+        reason=payload["reason"],
+        decided_at=payload["decided_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_epistemic_assessment(payload: dict) -> EpistemicAssessment:
+    return EpistemicAssessment(
+        assessment_id=payload["assessment_id"],
+        tenant_id=payload["tenant_id"],
+        total_claims=payload["total_claims"],
+        total_sources=payload["total_sources"],
+        total_conflicts=payload["total_conflicts"],
+        avg_trust=payload["avg_trust"],
+        assessed_at=payload["assessed_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_epistemic_violation(payload: dict) -> EpistemicViolation:
+    return EpistemicViolation(
+        violation_id=payload["violation_id"],
+        tenant_id=payload["tenant_id"],
+        operation=payload["operation"],
+        reason=payload["reason"],
+        detected_at=payload["detected_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_epistemic_snapshot(payload: dict) -> EpistemicSnapshot:
+    return EpistemicSnapshot(
+        snapshot_id=payload["snapshot_id"],
+        tenant_id=payload["tenant_id"],
+        total_claims=payload["total_claims"],
+        total_sources=payload["total_sources"],
+        total_assessments=payload["total_assessments"],
+        total_conflicts=payload["total_conflicts"],
+        total_reliability_updates=payload["total_reliability_updates"],
+        total_violations=payload["total_violations"],
+        captured_at=payload["captured_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_epistemic_closure_report(payload: dict) -> EpistemicClosureReport:
+    return EpistemicClosureReport(
+        report_id=payload["report_id"],
+        tenant_id=payload["tenant_id"],
+        total_claims=payload["total_claims"],
+        total_sources=payload["total_sources"],
+        total_conflicts=payload["total_conflicts"],
+        total_violations=payload["total_violations"],
+        created_at=payload["created_at"],
+        metadata=payload["metadata"],
+    )
+
+
 @pytest.mark.parametrize(
     ("fixture_name", "builder"),
     [
@@ -2636,6 +2785,16 @@ def _build_ontology_closure_report(payload: dict) -> OntologyClosureReport:
         ("ontology_violation.json", _build_ontology_violation),
         ("ontology_snapshot.json", _build_ontology_snapshot),
         ("ontology_closure_report.json", _build_ontology_closure_report),
+        ("knowledge_claim.json", _build_knowledge_claim),
+        ("evidence_source.json", _build_evidence_source),
+        ("trust_assessment.json", _build_trust_assessment),
+        ("source_reliability_record.json", _build_source_reliability_record),
+        ("claim_conflict.json", _build_claim_conflict),
+        ("epistemic_decision.json", _build_epistemic_decision),
+        ("epistemic_assessment.json", _build_epistemic_assessment),
+        ("epistemic_violation.json", _build_epistemic_violation),
+        ("epistemic_snapshot.json", _build_epistemic_snapshot),
+        ("epistemic_closure_report.json", _build_epistemic_closure_report),
         ("payment_record.json", _build_payment_record),
         ("package_record.json", _build_package_record),
         ("penalty_record.json", _build_penalty_record),

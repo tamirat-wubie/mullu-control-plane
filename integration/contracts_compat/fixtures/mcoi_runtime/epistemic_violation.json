@@ -1,0 +1,11 @@
+{
+  "violation_id": "epistemic-violation-42",
+  "tenant_id": "tenant-mullu-primary",
+  "operation": "missing_resolution_basis",
+  "reason": "A prior conflict resolution attempt omitted the required justification anchor.",
+  "detected_at": "2026-05-09T08:35:00+00:00",
+  "metadata": {
+    "scope": "epistemic",
+    "severity": "medium"
+  }
+}

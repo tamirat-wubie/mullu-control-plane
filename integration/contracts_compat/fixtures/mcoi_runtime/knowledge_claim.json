@@ -1,0 +1,15 @@
+{
+  "claim_id": "claim-runtime-health-42",
+  "tenant_id": "tenant-mullu-primary",
+  "content": "The billing account runtime remained healthy during the observed audit window.",
+  "status": "reported",
+  "assertion_mode": "factual",
+  "trust_level": "moderate",
+  "source_ref": "source-runtime-log-42",
+  "confidence": 0.83,
+  "created_at": "2026-05-09T08:00:00+00:00",
+  "metadata": {
+    "domain": "billing",
+    "scope": "runtime"
+  }
+}
