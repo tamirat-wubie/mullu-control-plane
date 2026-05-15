@@ -39,6 +39,8 @@ from mcoi_runtime.core.software_learning import (
     derive_software_outcome_learning_candidates,
     planning_knowledge_from_software_candidate,
 )
+from mcoi_runtime.persistence.errors import CorruptedDataError
+from mcoi_runtime.persistence.software_learning_store import FileSoftwareLearningStore
 
 
 T0 = "2025-01-15T10:00:00+00:00"
@@ -264,3 +266,19 @@ def test_planning_projection_requires_matching_admission() -> None:
     assert mismatched.status is LearningAdmissionStatus.ADMIT
     assert mismatched.knowledge_id != candidate.knowledge_id
     assert mismatched.admission_id == "admission-other"
+
+
+def test_file_software_learning_store_rejects_nonfinite_json_constants(tmp_path) -> None:
+    path = tmp_path / "software_learning.json"
+    path.write_text('{"candidates":NaN,"decisions":[],"planning_knowledge":[]}', encoding="utf-8")
+
+    with pytest.raises(
+        CorruptedDataError,
+        match=r"^malformed software learning store file \(ValueError\)$",
+    ) as excinfo:
+        FileSoftwareLearningStore(path)
+
+    message = str(excinfo.value)
+    assert message == "malformed software learning store file (ValueError)"
+    assert "nan" not in message.lower()
+    assert "candidates" not in message

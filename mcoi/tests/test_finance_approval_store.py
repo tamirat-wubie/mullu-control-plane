@@ -160,7 +160,7 @@ def test_file_store_rejects_malformed_payload(tmp_path) -> None:
 
 def test_file_store_rejects_nonfinite_json_constants_with_bounded_error(tmp_path) -> None:
     path = tmp_path / "finance_approval.json"
-    path.write_text('{"cases":NaN,"decisions":[],"approvals":[],"effects":[]}', encoding="utf-8")
+    path.write_text('{"cases":Infinity,"decisions":[],"approvals":[],"effects":[]}', encoding="utf-8")
 
     with pytest.raises(
         CorruptedDataError,
@@ -170,5 +170,5 @@ def test_file_store_rejects_nonfinite_json_constants_with_bounded_error(tmp_path
 
     message = str(excinfo.value)
     assert message == "malformed finance approval store file (ValueError)"
-    assert "nan" not in message.lower()
+    assert "infinity" not in message.lower()
     assert "cases" not in message

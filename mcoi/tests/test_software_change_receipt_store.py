@@ -227,3 +227,19 @@ def test_file_store_rejects_malformed_payload(tmp_path: Path) -> None:
 
     with pytest.raises(CorruptedDataError):
         FileSoftwareChangeReceiptStore(path)
+
+
+def test_file_store_rejects_nonfinite_json_constants_with_bounded_error(tmp_path: Path) -> None:
+    path = tmp_path / "software_receipts.json"
+    path.write_text('{"receipts":Infinity}', encoding="utf-8")
+
+    with pytest.raises(
+        CorruptedDataError,
+        match=r"^malformed software receipt store file \(ValueError\)$",
+    ) as excinfo:
+        FileSoftwareChangeReceiptStore(path)
+
+    message = str(excinfo.value)
+    assert message == "malformed software receipt store file (ValueError)"
+    assert "infinity" not in message.lower()
+    assert "receipts" not in message
