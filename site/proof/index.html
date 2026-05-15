@@ -1,0 +1,357 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mullusi Proof Boundary</title>
+  <meta name="description" content="Public proof and claim boundary for Mullusi and the Mullu governed symbolic intelligence product family.">
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #080908;
+      --panel: #131714;
+      --panel-2: #191d1a;
+      --line: #313a34;
+      --text: #f2eee3;
+      --muted: #b8b2a3;
+      --gold: #d7ad45;
+      --green: #5fc89b;
+      --blue: #79a8ff;
+      --red: #e0716f;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.55;
+    }
+
+    a { color: inherit; }
+
+    nav {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      border-bottom: 1px solid rgba(215, 173, 69, 0.24);
+      background: rgba(8, 9, 8, 0.9);
+      backdrop-filter: blur(14px);
+    }
+
+    .nav-inner,
+    header,
+    section,
+    footer {
+      width: min(1180px, calc(100% - 32px));
+      margin: 0 auto;
+    }
+
+    .nav-inner {
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+    }
+
+    .brand {
+      color: var(--gold);
+      font-weight: 760;
+      letter-spacing: 0.12em;
+      text-decoration: none;
+      text-transform: uppercase;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 18px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .nav-links a { text-decoration: none; }
+    .nav-links a:hover { color: var(--gold); }
+
+    header {
+      padding: 96px 0 64px;
+    }
+
+    .eyebrow {
+      color: var(--green);
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+    }
+
+    h1,
+    h2,
+    h3,
+    p { margin-top: 0; }
+
+    h1 {
+      max-width: 920px;
+      margin-bottom: 24px;
+      font-size: clamp(46px, 8vw, 96px);
+      line-height: 0.98;
+      letter-spacing: 0;
+    }
+
+    h2 {
+      margin-bottom: 18px;
+      font-size: clamp(30px, 4vw, 52px);
+      line-height: 1.06;
+      letter-spacing: 0;
+    }
+
+    h3 {
+      margin-bottom: 8px;
+      color: var(--gold);
+      font-size: 18px;
+      letter-spacing: 0;
+    }
+
+    .lede {
+      max-width: 820px;
+      color: var(--muted);
+      font-size: 19px;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 30px;
+    }
+
+    .button {
+      display: inline-flex;
+      align-items: center;
+      min-height: 44px;
+      padding: 0 18px;
+      border: 1px solid var(--line);
+      color: var(--text);
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 650;
+    }
+
+    .button.primary {
+      border-color: var(--gold);
+      background: var(--gold);
+      color: #141007;
+    }
+
+    section {
+      padding: 72px 0;
+      border-top: 1px solid rgba(215, 173, 69, 0.18);
+    }
+
+    .section-head {
+      max-width: 820px;
+      margin-bottom: 30px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .card,
+    .status-table {
+      border: 1px solid var(--line);
+      background: var(--panel);
+    }
+
+    .card {
+      min-height: 180px;
+      padding: 22px;
+    }
+
+    .card p,
+    .card li {
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .status-table {
+      width: 100%;
+      border-collapse: collapse;
+      overflow: hidden;
+    }
+
+    .status-table th,
+    .status-table td {
+      padding: 16px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      vertical-align: top;
+      font-size: 14px;
+    }
+
+    .status-table th {
+      color: var(--gold);
+      font-weight: 720;
+      background: var(--panel-2);
+    }
+
+    .status-table td {
+      color: var(--muted);
+    }
+
+    .state-ready { color: var(--green); font-weight: 720; }
+    .state-pending { color: var(--blue); font-weight: 720; }
+    .state-blocked { color: var(--red); font-weight: 720; }
+
+    footer {
+      display: flex;
+      justify-content: space-between;
+      gap: 24px;
+      padding: 40px 0 56px;
+      border-top: 1px solid rgba(215, 173, 69, 0.18);
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    @media (max-width: 900px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+
+      .nav-links { display: none; }
+
+      footer {
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+<body>
+  <nav aria-label="Primary">
+    <div class="nav-inner">
+      <a class="brand" href="/">Mullusi</a>
+      <div class="nav-links">
+        <a href="/mullu/">Mullu</a>
+        <a href="#verified">Verified</a>
+        <a href="#pending">Pending</a>
+        <a href="#blocked">Blocked</a>
+      </div>
+    </div>
+  </nav>
+
+  <header>
+    <div class="eyebrow">Proof boundary</div>
+    <h1>Public claims stay tied to visible evidence.</h1>
+    <p class="lede">
+      Mullusi is the umbrella company and governance authority. Mullu is the
+      private beta product family. This page separates what is verified now,
+      what is designed but pending runtime evidence, and what remains blocked
+      before paid public launch.
+    </p>
+    <div class="actions">
+      <a class="button primary" href="/mullu/">View Mullu</a>
+      <a class="button" href="https://github.com/tamirat-wubie/mullu-control-plane">Review repository</a>
+    </div>
+  </header>
+
+  <main>
+    <section id="verified">
+      <div class="section-head">
+        <div class="eyebrow">Verified now</div>
+        <h2>Evidence already public or directly probed.</h2>
+      </div>
+      <div class="grid">
+        <article class="card">
+          <h3>Mullu route</h3>
+          <p>
+            `https://mullusi.com/mullu` is live and returns intentional Mullu
+            private beta product copy, including `Mullu, by Mullusi`.
+          </p>
+        </article>
+        <article class="card">
+          <h3>Product boundary</h3>
+          <p>
+            Mullusi is the company and governance umbrella. Mullu is the
+            governed symbolic intelligence product family.
+          </p>
+        </article>
+        <article class="card">
+          <h3>Repository evidence</h3>
+          <p>
+            The public control-plane repository exposes status, schemas, release
+            notes, tests, proof coverage, security notes, and known limitations.
+          </p>
+        </article>
+      </div>
+    </section>
+
+    <section id="pending">
+      <div class="section-head">
+        <div class="eyebrow">Pending runtime evidence</div>
+        <h2>Runtime claims require live witness publication.</h2>
+      </div>
+      <table class="status-table">
+        <thead>
+          <tr>
+            <th>Claim surface</th>
+            <th>Current state</th>
+            <th>Required evidence</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Gateway health</td>
+            <td><span class="state-pending">Pending live witness</span></td>
+            <td>Reachable `/health` endpoint bound to declared runtime environment.</td>
+          </tr>
+          <tr>
+            <td>Governance witness</td>
+            <td><span class="state-pending">Pending live witness</span></td>
+            <td>Reachable `/gateway/witness` endpoint with signed or bounded evidence payload.</td>
+          </tr>
+          <tr>
+            <td>Runtime conformance</td>
+            <td><span class="state-pending">Pending live witness</span></td>
+            <td>Reachable `/runtime/conformance` endpoint with runtime conformance certificate.</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section id="blocked">
+      <div class="section-head">
+        <div class="eyebrow">Blocked before paid launch</div>
+        <h2>Route publication is not launch clearance.</h2>
+        <p class="lede">
+          The private beta route is live. Paid public launch remains blocked
+          until naming, legal, domain, homepage, app-title, SDK/API stability,
+          and runtime witness evidence close.
+        </p>
+      </div>
+      <div class="grid">
+        <article class="card">
+          <h3>Naming and legal</h3>
+          <p>USPTO, WIPO, EUIPO/TMview, close-variant review, and legal decision remain required.</p>
+        </article>
+        <article class="card">
+          <h3>Domain ownership</h3>
+          <p>Standalone product domain or controlled subdomain ownership evidence remains required.</p>
+        </article>
+        <article class="card">
+          <h3>Production witness</h3>
+          <p>Production runtime readiness remains pending until live witness endpoints are configured and reachable.</p>
+        </article>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div>Mullusi proof boundary</div>
+    <div>Repository evidence, route evidence, and live runtime evidence are tracked separately.</div>
+  </footer>
+</body>
+</html>
