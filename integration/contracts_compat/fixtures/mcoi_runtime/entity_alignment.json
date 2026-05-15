@@ -1,0 +1,13 @@
+{
+  "alignment_id": "alignment-crm-billing-42",
+  "tenant_id": "tenant-mullu-primary",
+  "source_ref": "crm.customer.42",
+  "target_ref": "billing.account.42",
+  "strength": "strong",
+  "confidence": 0.94,
+  "created_at": "2026-05-08T09:15:00+00:00",
+  "metadata": {
+    "basis": "stable_external_id",
+    "source_system": "crm"
+  }
+}

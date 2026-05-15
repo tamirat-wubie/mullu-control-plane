@@ -1,0 +1,13 @@
+{
+  "assessment_id": "ontology-assessment-2026-05-08",
+  "tenant_id": "tenant-mullu-primary",
+  "total_concepts": 8,
+  "total_mappings": 3,
+  "total_conflicts": 1,
+  "alignment_score": 0.91,
+  "assessed_at": "2026-05-08T09:40:00+00:00",
+  "metadata": {
+    "scope": "tenant",
+    "cycle": "daily"
+  }
+}

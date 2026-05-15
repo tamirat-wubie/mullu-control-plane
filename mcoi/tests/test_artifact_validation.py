@@ -265,6 +265,16 @@ def test_example_inventory_covers_shipped_and_pilot_artifacts() -> None:
     assert "ledger_violation.json" in mcoi_runtime_fixture_names
     assert "ledger_assessment.json" in mcoi_runtime_fixture_names
     assert "ledger_closure_report.json" in mcoi_runtime_fixture_names
+    assert "concept_record.json" in mcoi_runtime_fixture_names
+    assert "concept_relation.json" in mcoi_runtime_fixture_names
+    assert "schema_mapping.json" in mcoi_runtime_fixture_names
+    assert "entity_alignment.json" in mcoi_runtime_fixture_names
+    assert "semantic_conflict.json" in mcoi_runtime_fixture_names
+    assert "ontology_decision.json" in mcoi_runtime_fixture_names
+    assert "ontology_assessment.json" in mcoi_runtime_fixture_names
+    assert "ontology_violation.json" in mcoi_runtime_fixture_names
+    assert "ontology_snapshot.json" in mcoi_runtime_fixture_names
+    assert "ontology_closure_report.json" in mcoi_runtime_fixture_names
     assert "approval_gated_command" in pilot_names
 
 
@@ -277,7 +287,7 @@ def test_validate_example_artifacts_strictly() -> None:
     assert len(inventory.request_paths) >= 3
     assert len(inventory.auxiliary_paths) >= 1
     assert len(inventory.maf_runtime_fixture_paths) >= 89
-    assert len(inventory.mcoi_runtime_fixture_paths) >= 151
+    assert len(inventory.mcoi_runtime_fixture_paths) >= 161
 
 
 def test_validate_maf_runtime_fixtures_strictly() -> None:
@@ -2593,6 +2603,133 @@ def test_validate_mcoi_runtime_fixture_rejects_ledger_closure_proof_overflow(tmp
 
     assert len(errors) == 1
     assert "total_proofs must not exceed total_transactions" in errors[0]
+    assert fixture_path.name in errors[0]
+
+
+def test_validate_mcoi_runtime_fixture_rejects_ontology_relation_self_loop(tmp_path: Path) -> None:
+    fixture_path = tmp_path / "concept_relation.json"
+    fixture_path.write_text(
+        json.dumps(
+            {
+                "relation_id": "relation-drift",
+                "tenant_id": "tenant-1",
+                "parent_ref": "concept-shared",
+                "child_ref": "concept-shared",
+                "kind": "relation",
+                "strength": "moderate",
+                "created_at": "2026-05-08T09:00:00+00:00",
+                "metadata": {"scope": "ontology"},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_artifacts.validate_mcoi_runtime_fixture(fixture_path)
+
+    assert len(errors) == 1
+    assert "parent_ref must not equal child_ref" in errors[0]
+    assert fixture_path.name in errors[0]
+
+
+def test_validate_mcoi_runtime_fixture_rejects_ontology_unmatched_mapping_with_fields(tmp_path: Path) -> None:
+    fixture_path = tmp_path / "schema_mapping.json"
+    fixture_path.write_text(
+        json.dumps(
+            {
+                "mapping_id": "mapping-drift",
+                "tenant_id": "tenant-1",
+                "source_schema": "source.schema.v1",
+                "target_schema": "target.schema.v1",
+                "disposition": "unmatched",
+                "field_count": 2,
+                "created_at": "2026-05-08T09:10:00+00:00",
+                "metadata": {"scope": "ontology"},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_artifacts.validate_mcoi_runtime_fixture(fixture_path)
+
+    assert len(errors) == 1
+    assert "unmatched mappings must keep field_count at 0" in errors[0]
+    assert fixture_path.name in errors[0]
+
+
+def test_validate_mcoi_runtime_fixture_rejects_ontology_self_alignment(tmp_path: Path) -> None:
+    fixture_path = tmp_path / "entity_alignment.json"
+    fixture_path.write_text(
+        json.dumps(
+            {
+                "alignment_id": "alignment-drift",
+                "tenant_id": "tenant-1",
+                "source_ref": "entity-shared",
+                "target_ref": "entity-shared",
+                "strength": "strong",
+                "confidence": 0.99,
+                "created_at": "2026-05-08T09:20:00+00:00",
+                "metadata": {"basis": "stable-id"},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_artifacts.validate_mcoi_runtime_fixture(fixture_path)
+
+    assert len(errors) == 1
+    assert "source_ref must not equal target_ref" in errors[0]
+    assert fixture_path.name in errors[0]
+
+
+def test_validate_mcoi_runtime_fixture_rejects_ontology_self_conflict(tmp_path: Path) -> None:
+    fixture_path = tmp_path / "semantic_conflict.json"
+    fixture_path.write_text(
+        json.dumps(
+            {
+                "conflict_id": "conflict-drift",
+                "tenant_id": "tenant-1",
+                "concept_a_ref": "concept-shared",
+                "concept_b_ref": "concept-shared",
+                "status": "detected",
+                "reason": "self conflict drift",
+                "detected_at": "2026-05-08T09:30:00+00:00",
+                "metadata": {"scope": "ontology"},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_artifacts.validate_mcoi_runtime_fixture(fixture_path)
+
+    assert len(errors) == 1
+    assert "concept_a_ref must not equal concept_b_ref" in errors[0]
+    assert fixture_path.name in errors[0]
+
+
+def test_validate_mcoi_runtime_fixture_rejects_ontology_snapshot_relation_underflow(tmp_path: Path) -> None:
+    fixture_path = tmp_path / "ontology_snapshot.json"
+    fixture_path.write_text(
+        json.dumps(
+            {
+                "snapshot_id": "ontology-snapshot-drift",
+                "tenant_id": "tenant-1",
+                "total_concepts": 1,
+                "total_relations": 2,
+                "total_mappings": 1,
+                "total_alignments": 1,
+                "total_conflicts": 0,
+                "total_violations": 0,
+                "captured_at": "2026-05-08T09:40:00+00:00",
+                "metadata": {"scope": "tenant"},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_artifacts.validate_mcoi_runtime_fixture(fixture_path)
+
+    assert len(errors) == 1
+    assert "total_relations require at least two concepts" in errors[0]
     assert fixture_path.name in errors[0]
 
 

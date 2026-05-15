@@ -269,6 +269,11 @@ WALLET_STATUSES = frozenset({"active", "frozen", "closed", "compromised"})
 LEDGER_VIOLATION_KINDS = frozenset(
     {"proof_failed", "anchor_expired", "wallet_compromised", "settlement_disputed"}
 )
+ONTOLOGY_STATUSES = frozenset({"active", "deprecated", "retired", "draft"})
+CONCEPT_KINDS = frozenset({"entity", "attribute", "relation", "action", "event", "qualifier"})
+MAPPING_DISPOSITIONS = frozenset({"exact", "broader", "narrower", "related", "unmatched"})
+ALIGNMENT_STRENGTHS = frozenset({"strong", "moderate", "weak", "tentative"})
+SEMANTIC_CONFLICT_STATUSES = frozenset({"detected", "resolved", "deferred", "accepted"})
 
 
 def _sort_paths(paths: list[Path]) -> tuple[Path, ...]:
@@ -9319,6 +9324,329 @@ def _validate_ledger_closure_report_fixture(path: Path) -> list[str]:
     return errors
 
 
+def _validate_concept_record_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MCOI runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "concept_id",
+            "tenant_id",
+            "display_name",
+            "kind",
+            "canonical_form",
+            "status",
+            "created_at",
+            "metadata",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("concept_id", "tenant_id", "display_name", "kind", "canonical_form", "status"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    if payload["kind"] not in CONCEPT_KINDS:
+        errors.append(f"{_relative_path(path)}: field 'kind' must be one of {', '.join(sorted(CONCEPT_KINDS))}")
+    if payload["status"] not in ONTOLOGY_STATUSES:
+        errors.append(f"{_relative_path(path)}: field 'status' must be one of {', '.join(sorted(ONTOLOGY_STATUSES))}")
+    errors.extend(_validate_iso8601_text(payload["created_at"], field_name="created_at", path=path))
+    if not isinstance(payload["metadata"], dict):
+        errors.append(f"{_relative_path(path)}: field 'metadata' must be an object")
+    return errors
+
+
+def _validate_concept_relation_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MCOI runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "relation_id",
+            "tenant_id",
+            "parent_ref",
+            "child_ref",
+            "kind",
+            "strength",
+            "created_at",
+            "metadata",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("relation_id", "tenant_id", "parent_ref", "child_ref", "kind", "strength"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    if payload["kind"] not in CONCEPT_KINDS:
+        errors.append(f"{_relative_path(path)}: field 'kind' must be one of {', '.join(sorted(CONCEPT_KINDS))}")
+    if payload["strength"] not in ALIGNMENT_STRENGTHS:
+        errors.append(
+            f"{_relative_path(path)}: field 'strength' must be one of {', '.join(sorted(ALIGNMENT_STRENGTHS))}"
+        )
+    if not errors and payload["parent_ref"] == payload["child_ref"]:
+        errors.append(f"{_relative_path(path)}: parent_ref must not equal child_ref")
+    errors.extend(_validate_iso8601_text(payload["created_at"], field_name="created_at", path=path))
+    if not isinstance(payload["metadata"], dict):
+        errors.append(f"{_relative_path(path)}: field 'metadata' must be an object")
+    return errors
+
+
+def _validate_schema_mapping_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MCOI runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "mapping_id",
+            "tenant_id",
+            "source_schema",
+            "target_schema",
+            "disposition",
+            "field_count",
+            "created_at",
+            "metadata",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("mapping_id", "tenant_id", "source_schema", "target_schema", "disposition"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    if payload["disposition"] not in MAPPING_DISPOSITIONS:
+        errors.append(
+            f"{_relative_path(path)}: field 'disposition' must be one of {', '.join(sorted(MAPPING_DISPOSITIONS))}"
+        )
+    errors.extend(_require_non_negative_int(payload["field_count"], field_name="field_count", path=path))
+    if not errors:
+        if payload["disposition"] == "unmatched" and payload["field_count"] != 0:
+            errors.append(f"{_relative_path(path)}: unmatched mappings must keep field_count at 0")
+        if payload["disposition"] != "unmatched" and payload["field_count"] <= 0:
+            errors.append(f"{_relative_path(path)}: matched mappings must carry a positive field_count")
+    errors.extend(_validate_iso8601_text(payload["created_at"], field_name="created_at", path=path))
+    if not isinstance(payload["metadata"], dict):
+        errors.append(f"{_relative_path(path)}: field 'metadata' must be an object")
+    return errors
+
+
+def _validate_entity_alignment_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MCOI runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "alignment_id",
+            "tenant_id",
+            "source_ref",
+            "target_ref",
+            "strength",
+            "confidence",
+            "created_at",
+            "metadata",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("alignment_id", "tenant_id", "source_ref", "target_ref", "strength"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    if payload["strength"] not in ALIGNMENT_STRENGTHS:
+        errors.append(
+            f"{_relative_path(path)}: field 'strength' must be one of {', '.join(sorted(ALIGNMENT_STRENGTHS))}"
+        )
+    errors.extend(
+        _require_number_in_range(payload["confidence"], field_name="confidence", path=path, minimum=0.0, maximum=1.0)
+    )
+    if not errors and payload["source_ref"] == payload["target_ref"]:
+        errors.append(f"{_relative_path(path)}: source_ref must not equal target_ref")
+    errors.extend(_validate_iso8601_text(payload["created_at"], field_name="created_at", path=path))
+    if not isinstance(payload["metadata"], dict):
+        errors.append(f"{_relative_path(path)}: field 'metadata' must be an object")
+    return errors
+
+
+def _validate_semantic_conflict_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MCOI runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "conflict_id",
+            "tenant_id",
+            "concept_a_ref",
+            "concept_b_ref",
+            "status",
+            "reason",
+            "detected_at",
+            "metadata",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("conflict_id", "tenant_id", "concept_a_ref", "concept_b_ref", "status", "reason"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    if payload["status"] not in SEMANTIC_CONFLICT_STATUSES:
+        errors.append(
+            f"{_relative_path(path)}: field 'status' must be one of {', '.join(sorted(SEMANTIC_CONFLICT_STATUSES))}"
+        )
+    if not errors and payload["concept_a_ref"] == payload["concept_b_ref"]:
+        errors.append(f"{_relative_path(path)}: concept_a_ref must not equal concept_b_ref")
+    errors.extend(_validate_iso8601_text(payload["detected_at"], field_name="detected_at", path=path))
+    if not isinstance(payload["metadata"], dict):
+        errors.append(f"{_relative_path(path)}: field 'metadata' must be an object")
+    return errors
+
+
+def _validate_ontology_decision_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MCOI runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=("decision_id", "tenant_id", "conflict_ref", "disposition", "reason", "decided_at", "metadata"),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("decision_id", "tenant_id", "conflict_ref", "disposition", "reason"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    errors.extend(_validate_iso8601_text(payload["decided_at"], field_name="decided_at", path=path))
+    if not isinstance(payload["metadata"], dict):
+        errors.append(f"{_relative_path(path)}: field 'metadata' must be an object")
+    return errors
+
+
+def _validate_ontology_assessment_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MCOI runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "assessment_id",
+            "tenant_id",
+            "total_concepts",
+            "total_mappings",
+            "total_conflicts",
+            "alignment_score",
+            "assessed_at",
+            "metadata",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("assessment_id", "tenant_id"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    for field_name in ("total_concepts", "total_mappings", "total_conflicts"):
+        errors.extend(_require_non_negative_int(payload[field_name], field_name=field_name, path=path))
+    errors.extend(
+        _require_number_in_range(
+            payload["alignment_score"],
+            field_name="alignment_score",
+            path=path,
+            minimum=0.0,
+            maximum=1.0,
+        )
+    )
+    if not errors and payload["total_conflicts"] > 0 and payload["total_concepts"] == 0 and payload["total_mappings"] == 0:
+        errors.append(f"{_relative_path(path)}: total_conflicts require at least one concept or mapping")
+    errors.extend(_validate_iso8601_text(payload["assessed_at"], field_name="assessed_at", path=path))
+    if not isinstance(payload["metadata"], dict):
+        errors.append(f"{_relative_path(path)}: field 'metadata' must be an object")
+    return errors
+
+
+def _validate_ontology_violation_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MCOI runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=("violation_id", "tenant_id", "operation", "reason", "detected_at", "metadata"),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("violation_id", "tenant_id", "operation", "reason"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    errors.extend(_validate_iso8601_text(payload["detected_at"], field_name="detected_at", path=path))
+    if not isinstance(payload["metadata"], dict):
+        errors.append(f"{_relative_path(path)}: field 'metadata' must be an object")
+    return errors
+
+
+def _validate_ontology_snapshot_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MCOI runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "snapshot_id",
+            "tenant_id",
+            "total_concepts",
+            "total_relations",
+            "total_mappings",
+            "total_alignments",
+            "total_conflicts",
+            "total_violations",
+            "captured_at",
+            "metadata",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("snapshot_id", "tenant_id"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    for field_name in (
+        "total_concepts",
+        "total_relations",
+        "total_mappings",
+        "total_alignments",
+        "total_conflicts",
+        "total_violations",
+    ):
+        errors.extend(_require_non_negative_int(payload[field_name], field_name=field_name, path=path))
+    if not errors:
+        if payload["total_relations"] > 0 and payload["total_concepts"] < 2:
+            errors.append(f"{_relative_path(path)}: total_relations require at least two concepts")
+        if payload["total_conflicts"] > 0 and payload["total_concepts"] == 0 and payload["total_mappings"] == 0:
+            errors.append(f"{_relative_path(path)}: total_conflicts require at least one concept or mapping")
+    errors.extend(_validate_iso8601_text(payload["captured_at"], field_name="captured_at", path=path))
+    if not isinstance(payload["metadata"], dict):
+        errors.append(f"{_relative_path(path)}: field 'metadata' must be an object")
+    return errors
+
+
+def _validate_ontology_closure_report_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MCOI runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "report_id",
+            "tenant_id",
+            "total_concepts",
+            "total_mappings",
+            "total_alignments",
+            "total_conflicts",
+            "total_violations",
+            "created_at",
+            "metadata",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("report_id", "tenant_id"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    for field_name in ("total_concepts", "total_mappings", "total_alignments", "total_conflicts", "total_violations"):
+        errors.extend(_require_non_negative_int(payload[field_name], field_name=field_name, path=path))
+    if not errors and payload["total_conflicts"] > 0 and payload["total_concepts"] == 0 and payload["total_mappings"] == 0:
+        errors.append(f"{_relative_path(path)}: total_conflicts require at least one concept or mapping")
+    errors.extend(_validate_iso8601_text(payload["created_at"], field_name="created_at", path=path))
+    if not isinstance(payload["metadata"], dict):
+        errors.append(f"{_relative_path(path)}: field 'metadata' must be an object")
+    return errors
+
+
 MAF_RUNTIME_FIXTURE_VALIDATORS: dict[str, MAFRuntimeFixtureValidator] = {
     "adversarial_case.json": _validate_adversarial_case_fixture,
     "assignment_record.json": _validate_assignment_record_fixture,
@@ -9509,6 +9837,16 @@ MCOI_RUNTIME_FIXTURE_VALIDATORS: dict[str, MCOIRuntimeFixtureValidator] = {
     "marketplace_closure_report.json": _validate_marketplace_closure_report_fixture,
     "marketplace_snapshot.json": _validate_marketplace_snapshot_fixture,
     "marketplace_violation.json": _validate_marketplace_violation_fixture,
+    "concept_record.json": _validate_concept_record_fixture,
+    "concept_relation.json": _validate_concept_relation_fixture,
+    "schema_mapping.json": _validate_schema_mapping_fixture,
+    "entity_alignment.json": _validate_entity_alignment_fixture,
+    "semantic_conflict.json": _validate_semantic_conflict_fixture,
+    "ontology_decision.json": _validate_ontology_decision_fixture,
+    "ontology_assessment.json": _validate_ontology_assessment_fixture,
+    "ontology_violation.json": _validate_ontology_violation_fixture,
+    "ontology_snapshot.json": _validate_ontology_snapshot_fixture,
+    "ontology_closure_report.json": _validate_ontology_closure_report_fixture,
     "payment_record.json": _validate_payment_record_fixture,
     "package_record.json": _validate_package_record_fixture,
     "penalty_record.json": _validate_penalty_record_fixture,
