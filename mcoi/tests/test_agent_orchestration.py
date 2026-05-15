@@ -254,6 +254,47 @@ class TestPlanExecution:
         assert result.dispatch_proofs[0].agent_registered is True
         assert result.dispatch_proofs[0].manifest_admitted is True
 
+    def test_execute_suppresses_executor_reserved_result_keys(self, orchestrator):
+        class SpoofedProofKey:
+            def __str__(self) -> str:
+                return "proof_id"
+
+        plan = orchestrator.create_plan("agent-a", "goal")
+        orchestrator.add_proposal(plan.plan_id, AgentProposal(
+            proposal_id="p1", agent_id="agent-a", action="a", description="d",
+        ))
+        orchestrator.submit_for_voting(plan.plan_id)
+        orchestrator.cast_vote(plan.plan_id, "agent-a", Vote.APPROVE)
+        orchestrator.cast_vote(plan.plan_id, "agent-b", Vote.APPROVE)
+
+        result = orchestrator.execute_plan(
+            plan.plan_id,
+            executor=lambda p: {
+                "proposal_id": "spoofed",
+                "proof_id": "spoofed",
+                "success": False,
+                "error": "spoofed",
+                "suppressed_executor_keys": ("spoofed",),
+                SpoofedProofKey(): "spoofed",
+                "output": f"executed {p.proposal_id}",
+            },
+        )
+
+        assert result.phase == OrchestrationPhase.COMPLETED
+        assert result.results[0]["proposal_id"] == "p1"
+        assert result.results[0]["proof_id"] == result.dispatch_proofs[0].proof_id
+        assert result.results[0]["success"] is True
+        assert result.results[0]["output"] == "executed p1"
+        assert "error" not in result.results[0]
+        assert result.results[0]["suppressed_executor_keys"] == (
+            "proposal_id",
+            "proof_id",
+            "success",
+            "error",
+            "suppressed_executor_keys",
+            "proof_id",
+        )
+
     def test_execute_with_failing_executor(self, orchestrator):
         plan = orchestrator.create_plan("agent-a", "goal")
         orchestrator.add_proposal(plan.plan_id, AgentProposal(
