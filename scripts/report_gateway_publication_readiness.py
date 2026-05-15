@@ -22,18 +22,23 @@ import re
 import shlex
 import socket
 import subprocess
+import sys
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any, Callable, Protocol
 from urllib.parse import urlparse
 
-from scripts.dispatch_deployment_witness import (
+REPO_ROOT = Path(__file__).resolve().parents[1]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
+from scripts.dispatch_deployment_witness import (  # noqa: E402
     DEFAULT_EXPECTED_ENVIRONMENT_VARIABLE,
     DEFAULT_GATEWAY_URL_VARIABLE,
     DEFAULT_REPOSITORY,
     VALID_ENVIRONMENTS,
 )
-from scripts.dispatch_gateway_publication import (
+from scripts.dispatch_gateway_publication import (  # noqa: E402
     DEFAULT_CONFORMANCE_SECRET_NAME,
     DEFAULT_DEPLOYMENT_WITNESS_SECRET_NAME,
     DEFAULT_KUBECONFIG_SECRET_NAME,
@@ -41,7 +46,7 @@ from scripts.dispatch_gateway_publication import (
     DEFAULT_WORKFLOW_FILE,
     DEFAULT_WORKFLOW_NAME,
 )
-from scripts.render_gateway_ingress import PLACEHOLDER_HOST
+from scripts.render_gateway_ingress import PLACEHOLDER_HOST  # noqa: E402
 
 DEFAULT_OUTPUT = Path(".change_assurance") / "gateway_publication_readiness.json"
 
