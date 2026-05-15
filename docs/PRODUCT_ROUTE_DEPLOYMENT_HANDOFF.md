@@ -10,20 +10,22 @@ Invariants: this handoff closes `website_deployment_verification` only for the `
 | Field | Value |
 | --- | --- |
 | Governed source artifact | `site/mullu/index.html` |
-| Website repo copy target | `../mullusi/mullu/index.html` |
+| Website repo copy target | `../mullusi/mullu/index.html` and active source `mullusi/mullusi-site` |
 | Intended live route | `https://mullusi.com/mullu` |
 | Website main branch | `origin/main` |
 | Initial merged PR carrying route | `https://github.com/tamirat-wubie/mullusi/pull/84` |
 | Current merged PR carrying route boundary update | `https://github.com/tamirat-wubie/mullusi/pull/86` |
 | Current merged PR carrying launch literals | `https://github.com/tamirat-wubie/mullusi/pull/88` |
+| Current merged PR carrying active proof route | `https://github.com/mullusi/mullusi-site/pull/1` |
 | Current main commit carrying route | `93b7a6de942241424564f686aebee023a469ecde` |
+| Active Pages source commit carrying proof route | `c9badb0` |
 | Redundant route PR | `https://github.com/tamirat-wubie/mullusi/pull/85` closed after route appeared on `origin/main` |
 | Live-route blocker issue | `https://github.com/tamirat-wubie/mullusi/issues/87` resolved by PR #88 live probe |
 | DNS Pages target | `mullusi.github.io` |
-| Pages source access | `https://github.com/mullusi/mullusi.github.io.git` returned repository not found from current session |
+| Pages source access | `gh api repos/mullusi/mullusi-site/pages` returns active Pages config for `https://mullusi.com/` from `main` path `/` |
 | Product first reference | `Mullu, by Mullusi` |
 | Launch posture | private beta / request access |
-| Live status | live route verified; HTTP 200 |
+| Live status | live route verified for `/mullu/` and `/proof/`; HTTP 200 |
 
 ## Copy Result
 
@@ -76,6 +78,11 @@ The earlier accidental product-route push to `ci/optimize-actions-minutes` was
 removed with a lease-protected branch update before PR #84 was repaired and
 merged.
 
+During the first Pages-source investigation,
+`https://github.com/mullusi/mullusi.github.io.git` returned repository not found
+from the current session. The active source was later identified through the
+GitHub Pages API as `mullusi/mullusi-site`.
+
 ## Live Route Verification
 
 On 2026-05-15, a direct probe of `https://mullusi.com/mullu` returned HTTP 200
@@ -93,3 +100,22 @@ clearance, domain ownership, homepage update, app title update, or SDK/API
 stability review.
 
 Tracking issue: `https://github.com/tamirat-wubie/mullusi/issues/87`.
+
+## Live Proof Boundary Verification
+
+On 2026-05-15, the active GitHub Pages source was identified as
+`mullusi/mullusi-site`. PR #1 in that repository published `/proof/`, linked
+`/mullu/` to the proof boundary, and added `/proof/` to the live sitemap.
+
+Direct probes from the current environment returned:
+
+```text
+https://mullusi.com/proof/      HTTP 200, contains Public proof boundary and AwaitingEvidence
+https://mullusi.com/mullu/      HTTP 200, contains /proof/ and Review proof boundary
+https://mullusi.com/sitemap.xml HTTP 200, contains https://mullusi.com/proof/
+```
+
+Tracking issue `https://github.com/tamirat-wubie/mullusi/issues/90` is closed.
+This closes the public proof boundary route only; live runtime witness closure
+remains pending until gateway witness, runtime conformance, and health endpoints
+are reachable and validated.
