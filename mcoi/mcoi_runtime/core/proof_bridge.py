@@ -43,6 +43,19 @@ from mcoi_runtime.core.temporal_scheduler import (
 )
 
 
+def state_hash(state: str, entity_id: str, timestamp: str) -> str:
+    """Compute the canonical v1 transition state hash.
+
+    Input contract: state, entity_id, and timestamp are already selected by
+    the caller from an authoritative transition context.
+    Output contract: 64-character lowercase SHA-256 hex digest.
+    Error contract: this pure helper does not validate external truth; callers
+    must validate field presence and provenance before relying on the result.
+    """
+    content = f"{state}:{entity_id}:{timestamp}"
+    return hashlib.sha256(content.encode()).hexdigest()
+
+
 # ═══ Governance State Machine ═══
 
 # Models the governance decision lifecycle as a formal state machine.
@@ -516,8 +529,7 @@ class ProofBridge:
 
     def _state_hash(self, state: str, entity_id: str, timestamp: str) -> str:
         """Compute a deterministic state hash."""
-        content = f"{state}:{entity_id}:{timestamp}"
-        return hashlib.sha256(content.encode()).hexdigest()
+        return state_hash(state, entity_id, timestamp)
 
     @staticmethod
     def _temporal_transition(receipt: TemporalRunReceipt) -> tuple[str, str, str, bool]:

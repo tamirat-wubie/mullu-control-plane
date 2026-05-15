@@ -127,13 +127,20 @@ state log to compare against. This is the same epistemic gap the
 ledger spec describes: the chain proves *internal* consistency, not
 *external* truth.
 
+The `mcoi verify-state-hash <input.json>` verifier now recomputes the
+canonical v1 state hash for exported JSON inputs. It accepts either a
+transition receipt/proof capsule or a minimal
+`{state, entity_id, timestamp, state_hash}` record. This verifier proves
+only internal consistency of the supplied fields; it does not prove that
+the supplied state log is authoritative.
+
 ## Known gaps (issue-tracker-ready)
 
 | Gap | Severity | Resolution path | Status |
 |-----|----------|-----------------|--------|
 | Rust kernel does not implement state-hash construction | Medium | Add `fn state_hash(state, entity_id, timestamp) -> String` to `maf-kernel` mirroring Python `_state_hash`; add a paired contract test pinning a known fixture. | Closed |
 | State-hash content is structurally minimal (state + entity_id + timestamp only) | Low | Define a v2 canonical layout that includes selected entity fields (tenant config hash, budget hash, policy version) and bump schema version. | Open — design needed |
-| No external verifier for state-hash consistency | Medium | After Rust mirror lands: implement `mcoi verify-state-hash` mirroring `mcoi verify-ledger`. | Open — depends on row 1 |
+| No external verifier for state-hash consistency | Medium | After Rust mirror lands: implement `mcoi verify-state-hash` mirroring `mcoi verify-ledger`. | Closed |
 
 ## Versioning
 
