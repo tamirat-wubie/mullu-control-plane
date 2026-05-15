@@ -32,14 +32,66 @@ def orchestrator():
 class TestAgentRegistration:
     def test_register_and_count(self, orchestrator):
         assert orchestrator.agent_count == 3
+        proofs = orchestrator.registration_proofs()
+        assert len(proofs) == 3
+        assert [proof["decision"] for proof in proofs] == [
+            "registered",
+            "registered",
+            "registered",
+        ]
+        assert proofs[0]["agent_id"] == "agent-a"
+        assert proofs[0]["current_capability_count"] == 2
+        assert proofs[0]["previous_registered"] is False
+        assert proofs[0]["current_registered"] is True
+
+    def test_register_existing_agent_records_update(self, orchestrator):
+        orchestrator.register_agent("agent-a", ("deploy",))
+
+        proofs = orchestrator.registration_proofs()
+
+        assert orchestrator.agent_count == 3
+        assert len(proofs) == 4
+        assert proofs[-1]["agent_id"] == "agent-a"
+        assert proofs[-1]["action"] == "register"
+        assert proofs[-1]["decision"] == "updated"
+        assert proofs[-1]["reason"] == "agent capabilities updated"
+        assert proofs[-1]["previous_registered"] is True
+        assert proofs[-1]["current_registered"] is True
+        assert proofs[-1]["previous_capability_count"] == 2
+        assert proofs[-1]["current_capability_count"] == 1
 
     def test_unregister(self, orchestrator):
         orchestrator.unregister_agent("agent-c")
+        proofs = orchestrator.registration_proofs()
         assert orchestrator.agent_count == 2
+        assert len(proofs) == 4
+        assert proofs[-1]["agent_id"] == "agent-c"
+        assert proofs[-1]["action"] == "unregister"
+        assert proofs[-1]["decision"] == "unregistered"
+        assert proofs[-1]["reason"] == "agent unregistered"
+        assert proofs[-1]["previous_registered"] is True
+        assert proofs[-1]["current_registered"] is False
+        assert proofs[-1]["previous_capability_count"] == 3
+        assert proofs[-1]["current_capability_count"] == 0
 
     def test_unregister_nonexistent(self, orchestrator):
         orchestrator.unregister_agent("ghost")  # no error
+        proofs = orchestrator.registration_proofs()
         assert orchestrator.agent_count == 3
+        assert len(proofs) == 4
+        assert proofs[-1]["agent_id"] == "ghost"
+        assert proofs[-1]["action"] == "unregister"
+        assert proofs[-1]["decision"] == "ignored"
+        assert proofs[-1]["reason"] == "agent unavailable"
+        assert proofs[-1]["previous_registered"] is False
+        assert proofs[-1]["current_registered"] is False
+
+    def test_registration_proofs_limit_is_bounded(self, orchestrator):
+        assert orchestrator.registration_proofs(limit=0) == []
+        assert [
+            proof["proof_id"]
+            for proof in orchestrator.registration_proofs(limit=1)
+        ] == ["registry:3"]
 
 
 class TestPlanLifecycle:
@@ -621,6 +673,8 @@ class TestSummary:
         orchestrator.execute_plan(plan.plan_id)
         s = orchestrator.summary()
         assert s["registered_agents"] == 3
+        assert s["registration_proofs"] == 3
+        assert s["registration_decisions"] == {"registered": 3}
         assert s["total_plans"] == 1
         assert s["active_plans"] == 0
         assert s["plans_by_phase"] == {"completed": 1}
@@ -680,6 +734,7 @@ class TestSummary:
         model = orchestrator.read_model(proof_limit=1)
 
         assert model["summary"]["plans_by_phase"] == {"completed": 1}
+        assert model["summary"]["registration_decisions"] == {"registered": 3}
         assert model["summary"]["proposal_decisions"] == {"accepted": 1}
         assert model["summary"]["vote_decisions"] == {"accepted": 2}
         assert model["summary"]["submission_decisions"] == {"accepted": 1}
@@ -690,12 +745,14 @@ class TestSummary:
             "blocked": 1,
         }
         assert len(model["recent_proposal_proofs"]) == 1
+        assert len(model["recent_registration_proofs"]) == 1
         assert len(model["recent_vote_proofs"]) == 1
         assert len(model["recent_submission_proofs"]) == 1
         assert len(model["recent_execution_proofs"]) == 1
         assert len(model["recent_dispatch_proofs"]) == 1
         assert len(model["recent_handoff_proofs"]) == 1
         assert model["recent_proposal_proofs"][0]["decision"] == "accepted"
+        assert model["recent_registration_proofs"][0]["agent_id"] == "agent-c"
         assert model["recent_vote_proofs"][0]["agent_id"] == "agent-b"
         assert model["recent_submission_proofs"][0]["decision"] == "accepted"
         assert model["recent_execution_proofs"][0]["decision"] == "accepted"

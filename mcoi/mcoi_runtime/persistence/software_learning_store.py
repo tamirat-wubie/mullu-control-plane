@@ -27,6 +27,7 @@ from mcoi_runtime.contracts.software_learning import (
 )
 from mcoi_runtime.core.planning_boundary import KnowledgeLifecycle, PlanningKnowledge
 
+from ._serialization import loads_strict_json
 from .errors import CorruptedDataError, PersistenceError, PersistenceWriteError
 
 
@@ -316,8 +317,8 @@ class FileSoftwareLearningStore(SoftwareLearningStore):
         if not self._path.exists():
             return
         try:
-            raw = json.loads(self._path.read_text(encoding="utf-8"))
-        except (json.JSONDecodeError, OSError) as exc:
+            raw = loads_strict_json(self._path.read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, OSError, ValueError) as exc:
             raise CorruptedDataError(
                 _bounded_store_error("malformed software learning store file", exc),
             ) from exc

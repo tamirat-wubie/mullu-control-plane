@@ -153,6 +153,68 @@
       "status": "site_route_verified"
     }
   ],
+  "gate_closure_requirements": {
+    "uspto_search": {
+      "status": "open",
+      "required_evidence": [
+        "official USPTO Trademark Search result export or screenshot set",
+        "queries for MULLU, MULLUSI, Mullu by Mullusi, Mullu surfaces, and MULU",
+        "Nice Class 9, 35, 38, 41, 42, and 45 review notes"
+      ],
+      "closure_authority": "product owner plus qualified trademark reviewer",
+      "closure_blocker": "no official USPTO evidence attached"
+    },
+    "wipo_search": {
+      "status": "open",
+      "required_evidence": [
+        "official WIPO Global Brand Database result export or screenshot set",
+        "queries for MULLU, MULLUSI, and Mullu by Mullusi",
+        "Madrid and participating office review notes"
+      ],
+      "closure_authority": "product owner plus qualified trademark reviewer",
+      "closure_blocker": "no official WIPO evidence attached"
+    },
+    "euipo_tmview_search": {
+      "status": "open",
+      "required_evidence": [
+        "official EUIPO eSearch plus result export or screenshot set",
+        "official TMview result export or screenshot set",
+        "queries for MULLU, MULLUSI, and Mullu by Mullusi"
+      ],
+      "closure_authority": "product owner plus qualified trademark reviewer",
+      "closure_blocker": "no official EUIPO/TMview evidence attached"
+    },
+    "close_variant_review": {
+      "status": "open",
+      "required_evidence": [
+        "official TSDR status for serials 99518598, 99264214, 85772539, 85494313, and 85222451",
+        "confusion analysis for MULU versus Mullu",
+        "goods/services comparison for software, SaaS, developer tooling, and enterprise workflow contexts"
+      ],
+      "closure_authority": "qualified trademark reviewer",
+      "closure_blocker": "no official TSDR serial evidence or legal confusion analysis attached"
+    },
+    "domain_ownership": {
+      "status": "open",
+      "required_evidence": [
+        "registrar ownership evidence for selected product domain or controlled fallback route",
+        "DNS zone or routing evidence",
+        "renewal owner, MFA, registrar lock, HTTPS, and security-control evidence"
+      ],
+      "closure_authority": "domain/DNS owner plus launch owner",
+      "closure_blocker": "no registrar or DNS ownership packet attached"
+    },
+    "legal_review": {
+      "status": "open",
+      "required_evidence": [
+        "signed trademark/legal decision",
+        "decision outcome: proceed, proceed_with_risk_controls, hold, or rename",
+        "risk controls if proceed_with_risk_controls is selected"
+      ],
+      "closure_authority": "qualified legal/trademark reviewer",
+      "closure_blocker": "final legal decision is pending"
+    }
+  },
   "stop_conditions": [
     "live MULLU mark in Class 9 for software/developer tools",
     "live MULLU mark in Class 42 for SaaS/platform/tooling",

@@ -43,6 +43,7 @@ from scripts.validate_public_naming_readiness import (  # noqa: E402
     WITNESS_PATH,
     validate_no_forbidden_terminology,
     validate_clearance_domain_candidates,
+    validate_clearance_gate_closure_requirements,
     validate_clearance_official_searches,
     validate_app_title_update_evidence,
     validate_domain_acquisition_plan,
@@ -400,6 +401,22 @@ def test_clearance_draft_official_searches_match_required_sources() -> None:
     clearance_draft = json.loads(CLEARANCE_DRAFT_PATH.read_text(encoding="utf-8"))
 
     validate_clearance_official_searches(clearance_draft)
+
+
+def test_clearance_draft_gate_closure_requirements_match_open_authority() -> None:
+    clearance_draft = json.loads(CLEARANCE_DRAFT_PATH.read_text(encoding="utf-8"))
+
+    validate_clearance_gate_closure_requirements(clearance_draft)
+
+
+def test_clearance_draft_gate_closure_requirements_reject_missing_gate() -> None:
+    clearance_draft = json.loads(CLEARANCE_DRAFT_PATH.read_text(encoding="utf-8"))
+    requirements = dict(clearance_draft["gate_closure_requirements"])
+    requirements.pop("legal_review")
+    clearance_draft["gate_closure_requirements"] = requirements
+
+    with pytest.raises(AssertionError, match="missing gate closure requirements"):
+        validate_clearance_gate_closure_requirements(clearance_draft)
 
 
 def test_clearance_draft_official_searches_reject_missing_source() -> None:

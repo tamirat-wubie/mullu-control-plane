@@ -6,6 +6,7 @@ Purpose: Coordinate multi-agent workflows with governed handoffs, capability
 Dependencies: agent_protocol, agent_chain.
 Invariants:
   - All orchestration decisions are auditable.
+  - Agent registry mutations carry bounded proof records.
   - Agent handoffs require capability matching.
   - Handoff attempts carry bounded proof records.
   - Proposals require a registered proposer with matching capabilities.
@@ -239,6 +240,39 @@ class ExecutionReadinessProof:
 
 
 @dataclass
+class AgentRegistryProof:
+    """Bounded proof record for agent registry mutations."""
+    proof_id: str
+    agent_id: str
+    action: str
+    decision: str
+    reason: str
+    checked_at: str
+    previous_registered: bool
+    current_registered: bool
+    previous_capability_count: int
+    current_capability_count: int
+    manifest_gated: bool
+    admitted_capability_count: int
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "proof_id": self.proof_id,
+            "agent_id": self.agent_id,
+            "action": self.action,
+            "decision": self.decision,
+            "reason": self.reason,
+            "checked_at": self.checked_at,
+            "previous_registered": self.previous_registered,
+            "current_registered": self.current_registered,
+            "previous_capability_count": self.previous_capability_count,
+            "current_capability_count": self.current_capability_count,
+            "manifest_gated": self.manifest_gated,
+            "admitted_capability_count": self.admitted_capability_count,
+        }
+
+
+@dataclass
 class OrchestrationPlan:
     """A multi-agent execution plan requiring consensus."""
     plan_id: str
@@ -349,6 +383,7 @@ class AgentOrchestrator:
         self._plans: dict[str, OrchestrationPlan] = {}
         self._handoffs: list[HandoffResult] = []
         self._handoff_proofs: list[HandoffProof] = []
+        self._registration_proofs: list[AgentRegistryProof] = []
         self._total_plans = 0
         self._total_handoffs = 0
 
@@ -368,10 +403,40 @@ class AgentOrchestrator:
         )
 
     def register_agent(self, agent_id: str, capabilities: tuple[str, ...]) -> None:
-        self._capabilities[agent_id] = capabilities
+        previous_capabilities = self._capabilities.get(agent_id)
+        current_capabilities = tuple(capabilities)
+        self._capabilities[agent_id] = current_capabilities
+        self._registration_proofs.append(
+            self._build_registration_proof(
+                agent_id=agent_id,
+                action="register",
+                decision="updated" if previous_capabilities is not None else "registered",
+                reason=(
+                    "agent capabilities updated"
+                    if previous_capabilities is not None
+                    else "agent registered"
+                ),
+                previous_capabilities=previous_capabilities,
+                current_capabilities=current_capabilities,
+            )
+        )
 
     def unregister_agent(self, agent_id: str) -> None:
-        self._capabilities.pop(agent_id, None)
+        previous_capabilities = self._capabilities.pop(agent_id, None)
+        self._registration_proofs.append(
+            self._build_registration_proof(
+                agent_id=agent_id,
+                action="unregister",
+                decision="unregistered" if previous_capabilities is not None else "ignored",
+                reason=(
+                    "agent unregistered"
+                    if previous_capabilities is not None
+                    else "agent unavailable"
+                ),
+                previous_capabilities=previous_capabilities,
+                current_capabilities=None,
+            )
+        )
 
     @property
     def agent_count(self) -> int:
@@ -693,6 +758,7 @@ class AgentOrchestrator:
     def read_model(self, proof_limit: int = 20) -> dict[str, Any]:
         return {
             "summary": self.summary(),
+            "recent_registration_proofs": self.registration_proofs(limit=proof_limit),
             "recent_proposal_proofs": self._recent_proposal_proofs(proof_limit),
             "recent_vote_proofs": self._recent_vote_proofs(proof_limit),
             "recent_submission_proofs": self._recent_submission_proofs(proof_limit),
@@ -706,9 +772,18 @@ class AgentOrchestrator:
             return []
         return [proof.to_dict() for proof in self._handoff_proofs[-limit:]]
 
+    def registration_proofs(self, limit: int = 50) -> list[dict[str, Any]]:
+        if limit <= 0:
+            return []
+        return [proof.to_dict() for proof in self._registration_proofs[-limit:]]
+
     def summary(self) -> dict[str, Any]:
         return {
             "registered_agents": self.agent_count,
+            "registration_proofs": len(self._registration_proofs),
+            "registration_decisions": _count_by_value(
+                proof.decision for proof in self._registration_proofs
+            ),
             "total_plans": self._total_plans,
             "active_plans": sum(1 for p in self._plans.values()
                                 if p.phase in (OrchestrationPhase.PLANNING,
@@ -942,6 +1017,38 @@ class AgentOrchestrator:
             rejection_count=plan.rejection_count,
             voter_count=self.agent_count,
             quorum_met=plan.has_quorum(self.agent_count),
+        )
+
+    def _build_registration_proof(
+        self,
+        *,
+        agent_id: str,
+        action: str,
+        decision: str,
+        reason: str,
+        previous_capabilities: tuple[str, ...] | None,
+        current_capabilities: tuple[str, ...] | None,
+    ) -> AgentRegistryProof:
+        proof_index = len(self._registration_proofs) + 1
+        return AgentRegistryProof(
+            proof_id=f"registry:{proof_index}",
+            agent_id=agent_id,
+            action=action,
+            decision=decision,
+            reason=reason,
+            checked_at=self._clock(),
+            previous_registered=previous_capabilities is not None,
+            current_registered=current_capabilities is not None,
+            previous_capability_count=(
+                0 if previous_capabilities is None else len(previous_capabilities)
+            ),
+            current_capability_count=(
+                0 if current_capabilities is None else len(current_capabilities)
+            ),
+            manifest_gated=self.manifest_gated,
+            admitted_capability_count=(
+                0 if self._admitted_capabilities is None else len(self._admitted_capabilities)
+            ),
         )
 
     def _handoff_admission_error(

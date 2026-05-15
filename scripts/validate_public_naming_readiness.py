@@ -541,6 +541,32 @@ def validate_clearance_official_searches(clearance_draft: dict[str, object]) -> 
             _require(not missing_classes, f"USPTO search missing required classes: {missing_classes}")
 
 
+def validate_clearance_gate_closure_requirements(clearance_draft: dict[str, object]) -> None:
+    requirements = clearance_draft.get("gate_closure_requirements", {})
+    _require(isinstance(requirements, dict), "gate closure requirements must be an object")
+
+    required_gates = {
+        "uspto_search",
+        "wipo_search",
+        "euipo_tmview_search",
+        "close_variant_review",
+        "domain_ownership",
+        "legal_review",
+    }
+    missing_gates = sorted(gate for gate in required_gates if gate not in requirements)
+    _require(not missing_gates, f"clearance draft missing gate closure requirements: {missing_gates}")
+
+    for gate in sorted(required_gates):
+        requirement = requirements[gate]
+        _require(isinstance(requirement, dict), f"{gate} closure requirement must be an object")
+        _require(requirement.get("status") == "open", f"{gate} closure requirement must remain open")
+        required_evidence = requirement.get("required_evidence", [])
+        _require(isinstance(required_evidence, list), f"{gate} required evidence must be a list")
+        _require(len(required_evidence) >= 1, f"{gate} must list required evidence")
+        _require(requirement.get("closure_authority"), f"{gate} must name closure authority")
+        _require(requirement.get("closure_blocker"), f"{gate} must name closure blocker")
+
+
 def validate_public_naming_review_packet(packet_path: Path = PUBLIC_NAMING_REVIEW_PACKET_PATH) -> None:
     packet_text = packet_path.read_text(encoding="utf-8")
     validate_no_forbidden_terminology(_display_path(packet_path), packet_text)
@@ -642,6 +668,7 @@ def validate_public_naming_readiness(witness_path: Path = WITNESS_PATH) -> None:
     _validate_top_level_required(clearance_draft, CLEARANCE_SCHEMA_PATH)
     validate_clearance_domain_candidates(clearance_draft)
     validate_clearance_official_searches(clearance_draft)
+    validate_clearance_gate_closure_requirements(clearance_draft)
     _require(clearance_draft.get("candidate_name") == "Mullu", "clearance draft candidate mismatch")
     _require(clearance_draft.get("company_brand") == "Mullusi", "clearance draft company mismatch")
     _require(clearance_draft.get("public_paid_launch_allowed") is False, "clearance draft must block public launch")

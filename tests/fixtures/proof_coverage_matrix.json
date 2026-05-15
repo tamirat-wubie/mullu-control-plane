@@ -4432,6 +4432,7 @@
         "schemas/latest_anchor_read_model.schema.json",
         "schemas/runtime_witness.schema.json",
         "schemas/mullu_governance_protocol.manifest.json",
+        "tests/test_gateway/test_webhooks.py",
         "tests/test_orchestrate_deployment_witness.py",
         "tests/test_report_gateway_publication_readiness.py",
         "tests/test_validate_gateway_publication_receipt.py",
@@ -4450,24 +4451,28 @@
       ],
       "request_proof": "read_model",
       "runtime_witnesses": [
-        "latest_command_event_hash",
-        "latest_anchor_read_model_schema_valid",
-        "runtime_witness_schema_valid",
-        "latest_terminal_certificate_id",
-        "responsibility_debt_clear",
-        "runtime_responsibility_debt_clear",
-        "open_obligation_count",
-        "overdue_obligation_count",
-        "authority_responsibility_debt_clear",
-        "authority_overdue_approval_chain_count",
-        "authority_overdue_obligation_count",
-        "authority_escalated_obligation_count",
-        "authority_unowned_high_risk_capability_count",
-        "deployment_witness_orchestration_receipt",
-        "deployment_publication_closure_validation_schema",
-        "deployment_orchestration_validation_schema",
-        "gateway_publication_readiness_schema",
-        "gateway_publication_receipt_validation_schema"
+        "gateway_witness",
+        "runtime_witness_alias",
+        "latest_anchor_read_model",
+        "runtime_self_reflex_read_models_do_not_mutate",
+        "collect_deployment_witness_publishes_with_verified_signature",
+        "collect_deployment_witness_rejects_responsibility_debt",
+        "collect_deployment_witness_rejects_runtime_responsibility_debt",
+        "preflight_deployment_witness_rejects_responsibility_debt",
+        "preflight_deployment_witness_rejects_runtime_witness_responsibility_debt",
+        "published_status_rejects_authority_responsibility_debt",
+        "published_status_rejects_runtime_responsibility_debt",
+        "orchestrate_deployment_witness_renders_and_provisions",
+        "orchestration_receipt_schema_matches_cli_output",
+        "orchestration_validation_report_matches_public_schema",
+        "closure_validation_report_matches_public_schema_for_not_published",
+        "readiness_report_matches_public_schema",
+        "receipt_validation_report_matches_public_schema",
+        "protocol_manifest_indexes_deployment_orchestration_validation",
+        "protocol_manifest_indexes_deployment_publication_closure_validation",
+        "protocol_manifest_indexes_gateway_publication_readiness",
+        "protocol_manifest_indexes_gateway_publication_receipt_validation",
+        "protocol_manifest_indexes_runtime_witness_and_latest_anchor"
       ],
       "surface_id": "gateway_runtime_witness"
     },
@@ -6351,8 +6356,8 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 198,
-    "runtime_witness_count": 991,
+    "exact_test_anchor_count": 220,
+    "runtime_witness_count": 995,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -7790,31 +7795,148 @@
         ]
       },
       {
-        "anchored_witnesses": [],
-        "exact_test_anchor_count": 0,
-        "runtime_witness_count": 18,
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "tests/test_gateway/test_webhooks.py::test_gateway_witness"
+            ],
+            "witness": "gateway_witness"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_webhooks.py::test_runtime_witness_alias"
+            ],
+            "witness": "runtime_witness_alias"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_webhooks.py::test_latest_anchor_read_model"
+            ],
+            "witness": "latest_anchor_read_model"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_webhooks.py::test_runtime_self_reflex_read_models_do_not_mutate"
+            ],
+            "witness": "runtime_self_reflex_read_models_do_not_mutate"
+          },
+          {
+            "anchors": [
+              "tests/test_collect_deployment_witness.py::test_collect_deployment_witness_publishes_with_verified_signature"
+            ],
+            "witness": "collect_deployment_witness_publishes_with_verified_signature"
+          },
+          {
+            "anchors": [
+              "tests/test_collect_deployment_witness.py::test_collect_deployment_witness_rejects_responsibility_debt"
+            ],
+            "witness": "collect_deployment_witness_rejects_responsibility_debt"
+          },
+          {
+            "anchors": [
+              "tests/test_collect_deployment_witness.py::test_collect_deployment_witness_rejects_runtime_responsibility_debt"
+            ],
+            "witness": "collect_deployment_witness_rejects_runtime_responsibility_debt"
+          },
+          {
+            "anchors": [
+              "tests/test_preflight_deployment_witness.py::test_preflight_deployment_witness_rejects_responsibility_debt"
+            ],
+            "witness": "preflight_deployment_witness_rejects_responsibility_debt"
+          },
+          {
+            "anchors": [
+              "tests/test_preflight_deployment_witness.py::test_preflight_deployment_witness_rejects_runtime_witness_responsibility_debt"
+            ],
+            "witness": "preflight_deployment_witness_rejects_runtime_witness_responsibility_debt"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_deployment_publication_closure.py::test_published_status_rejects_authority_responsibility_debt",
+              "tests/test_validate_deployment_publication_closure.py::test_published_status_rejects_authority_responsibility_debt"
+            ],
+            "witness": "published_status_rejects_authority_responsibility_debt"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_deployment_publication_closure.py::test_published_status_rejects_runtime_responsibility_debt",
+              "tests/test_validate_deployment_publication_closure.py::test_published_status_rejects_runtime_responsibility_debt"
+            ],
+            "witness": "published_status_rejects_runtime_responsibility_debt"
+          },
+          {
+            "anchors": [
+              "tests/test_orchestrate_deployment_witness.py::test_orchestrate_deployment_witness_renders_and_provisions"
+            ],
+            "witness": "orchestrate_deployment_witness_renders_and_provisions"
+          },
+          {
+            "anchors": [
+              "tests/test_orchestrate_deployment_witness.py::test_orchestration_receipt_schema_matches_cli_output"
+            ],
+            "witness": "orchestration_receipt_schema_matches_cli_output"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_deployment_orchestration_receipt.py::test_orchestration_validation_report_matches_public_schema"
+            ],
+            "witness": "orchestration_validation_report_matches_public_schema"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_deployment_publication_closure.py::test_closure_validation_report_matches_public_schema_for_not_published",
+              "tests/test_validate_deployment_publication_closure.py::test_closure_validation_report_matches_public_schema_for_not_published"
+            ],
+            "witness": "closure_validation_report_matches_public_schema_for_not_published"
+          },
+          {
+            "anchors": [
+              "tests/test_report_gateway_publication_readiness.py::test_readiness_report_matches_public_schema"
+            ],
+            "witness": "readiness_report_matches_public_schema"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_gateway_publication_receipt.py::test_receipt_validation_report_matches_public_schema"
+            ],
+            "witness": "receipt_validation_report_matches_public_schema"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_protocol_manifest.py::test_protocol_manifest_indexes_deployment_orchestration_validation"
+            ],
+            "witness": "protocol_manifest_indexes_deployment_orchestration_validation"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_protocol_manifest.py::test_protocol_manifest_indexes_deployment_publication_closure_validation"
+            ],
+            "witness": "protocol_manifest_indexes_deployment_publication_closure_validation"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_protocol_manifest.py::test_protocol_manifest_indexes_gateway_publication_readiness"
+            ],
+            "witness": "protocol_manifest_indexes_gateway_publication_readiness"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_protocol_manifest.py::test_protocol_manifest_indexes_gateway_publication_receipt_validation"
+            ],
+            "witness": "protocol_manifest_indexes_gateway_publication_receipt_validation"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_protocol_manifest.py::test_protocol_manifest_indexes_runtime_witness_and_latest_anchor"
+            ],
+            "witness": "protocol_manifest_indexes_runtime_witness_and_latest_anchor"
+          }
+        ],
+        "exact_test_anchor_count": 22,
+        "runtime_witness_count": 22,
         "surface_id": "gateway_runtime_witness",
-        "unanchored_witness_count": 18,
-        "unanchored_witnesses": [
-          "latest_command_event_hash",
-          "latest_anchor_read_model_schema_valid",
-          "runtime_witness_schema_valid",
-          "latest_terminal_certificate_id",
-          "responsibility_debt_clear",
-          "runtime_responsibility_debt_clear",
-          "open_obligation_count",
-          "overdue_obligation_count",
-          "authority_responsibility_debt_clear",
-          "authority_overdue_approval_chain_count",
-          "authority_overdue_obligation_count",
-          "authority_escalated_obligation_count",
-          "authority_unowned_high_risk_capability_count",
-          "deployment_witness_orchestration_receipt",
-          "deployment_publication_closure_validation_schema",
-          "deployment_orchestration_validation_schema",
-          "gateway_publication_readiness_schema",
-          "gateway_publication_receipt_validation_schema"
-        ]
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
       },
       {
         "anchored_witnesses": [],
@@ -9384,6 +9506,6 @@
         ]
       }
     ],
-    "unanchored_witness_count": 793
+    "unanchored_witness_count": 775
   }
 }

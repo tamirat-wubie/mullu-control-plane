@@ -24,6 +24,8 @@ from hashlib import sha256
 from pathlib import Path
 from typing import Any, Callable
 
+from ._serialization import load_strict_json
+
 
 _log = _logging.getLogger(__name__)
 
@@ -251,7 +253,7 @@ class FileSessionStore(SessionStore):
             if not path.exists():
                 return None
             with path.open("r") as f:
-                data = json.load(f)
+                data = load_strict_json(f)
             if not isinstance(data, dict):
                 return None
             return SessionCheckpoint.from_dict(data)

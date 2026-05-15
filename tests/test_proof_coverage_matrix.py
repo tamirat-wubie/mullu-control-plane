@@ -132,6 +132,7 @@ def test_witness_integrity_report_tracks_exact_test_anchors() -> None:
     assert surfaces["operational_platform_read_models"]["exact_test_anchor_count"] >= 25
     assert surfaces["operational_platform_read_models"]["unanchored_witness_count"] == 2
     assert surfaces["trust_ledger"]["unanchored_witness_count"] == 0
+    assert surfaces["gateway_runtime_witness"]["unanchored_witness_count"] == 0
 
 
 def test_declared_routes_have_explicit_coverage_classification() -> None:
@@ -1247,13 +1248,13 @@ def test_gateway_runtime_witness_covers_orchestration_receipts() -> None:
     assert "tests/test_validate_gateway_publication_receipt.py" in runtime_surface["evidence_files"]
     assert "tests/test_validate_deployment_publication_closure.py" in runtime_surface["evidence_files"]
     assert "tests/test_validate_protocol_manifest.py" in runtime_surface["evidence_files"]
-    assert "deployment_witness_orchestration_receipt" in runtime_surface["runtime_witnesses"]
-    assert "latest_anchor_read_model_schema_valid" in runtime_surface["runtime_witnesses"]
-    assert "runtime_witness_schema_valid" in runtime_surface["runtime_witnesses"]
-    assert "deployment_publication_closure_validation_schema" in runtime_surface["runtime_witnesses"]
-    assert "deployment_orchestration_validation_schema" in runtime_surface["runtime_witnesses"]
-    assert "gateway_publication_readiness_schema" in runtime_surface["runtime_witnesses"]
-    assert "gateway_publication_receipt_validation_schema" in runtime_surface["runtime_witnesses"]
+    assert "orchestrate_deployment_witness_renders_and_provisions" in runtime_surface["runtime_witnesses"]
+    assert "latest_anchor_read_model" in runtime_surface["runtime_witnesses"]
+    assert "runtime_witness_alias" in runtime_surface["runtime_witnesses"]
+    assert "closure_validation_report_matches_public_schema_for_not_published" in runtime_surface["runtime_witnesses"]
+    assert "orchestration_validation_report_matches_public_schema" in runtime_surface["runtime_witnesses"]
+    assert "readiness_report_matches_public_schema" in runtime_surface["runtime_witnesses"]
+    assert "receipt_validation_report_matches_public_schema" in runtime_surface["runtime_witnesses"]
     assert closure_actions["publish_deployment_orchestration_receipt_contract"]["status"] == "closed"
 
 
@@ -1266,13 +1267,12 @@ def test_gateway_runtime_witness_covers_publication_responsibility_debt() -> Non
     assert "schemas/deployment_witness.schema.json" in runtime_surface["evidence_files"]
     assert "scripts/validate_deployment_publication_closure.py" in runtime_surface["evidence_files"]
     assert "tests/test_validate_deployment_publication_closure.py" in runtime_surface["evidence_files"]
-    assert "responsibility_debt_clear" in witnesses
-    assert "runtime_responsibility_debt_clear" in witnesses
-    assert "authority_responsibility_debt_clear" in witnesses
-    assert "authority_overdue_approval_chain_count" in witnesses
-    assert "authority_overdue_obligation_count" in witnesses
-    assert "authority_escalated_obligation_count" in witnesses
-    assert "authority_unowned_high_risk_capability_count" in witnesses
+    assert "collect_deployment_witness_rejects_responsibility_debt" in witnesses
+    assert "collect_deployment_witness_rejects_runtime_responsibility_debt" in witnesses
+    assert "preflight_deployment_witness_rejects_responsibility_debt" in witnesses
+    assert "preflight_deployment_witness_rejects_runtime_witness_responsibility_debt" in witnesses
+    assert "published_status_rejects_authority_responsibility_debt" in witnesses
+    assert "published_status_rejects_runtime_responsibility_debt" in witnesses
 
 
 def test_production_evidence_plane_is_witnessed_and_schema_backed() -> None:

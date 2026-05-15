@@ -28,6 +28,7 @@ from mcoi_runtime.core.temporal_scheduler import (
     TemporalRunReceipt,
 )
 
+from ._serialization import loads_strict_json
 from .errors import CorruptedDataError, PersistenceError, PersistenceWriteError
 
 
@@ -340,8 +341,8 @@ class FileTemporalSchedulerStore(TemporalSchedulerStore):
         if not self._path.exists():
             return
         try:
-            raw = json.loads(self._path.read_text(encoding="utf-8"))
-        except (json.JSONDecodeError, OSError) as exc:
+            raw = loads_strict_json(self._path.read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, OSError, ValueError) as exc:
             raise CorruptedDataError(
                 _bounded_store_error("malformed temporal scheduler store file", exc),
             ) from exc
