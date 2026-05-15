@@ -1120,6 +1120,18 @@ def build_parser() -> argparse.ArgumentParser:
         ),
     )
 
+    verify_state_hash_parser = subparsers.add_parser(
+        "verify-state-hash",
+        help="Verify canonical v1 transition state hashes from a JSON receipt or state-hash record",
+    )
+    verify_state_hash_parser.add_argument(
+        "input",
+        help=(
+            "Path to a JSON transition receipt, proof capsule, or "
+            "{state, entity_id, timestamp, state_hash} record"
+        ),
+    )
+
     return parser
 
 
@@ -1378,6 +1390,129 @@ def verify_ledger_command(args: argparse.Namespace) -> int:
     return 1
 
 
+def verify_state_hash_command(args: argparse.Namespace) -> int:
+    """Verify canonical v1 state-hash consistency for an exported JSON object.
+
+    Exit codes:
+      0 - state hash content is internally consistent
+      1 - hash mismatch
+      2 - input error: missing file, invalid JSON, non-object JSON
+      3 - schema error: required fields missing or non-string
+    """
+    from mcoi_runtime.core.proof_bridge import state_hash
+
+    input_path = Path(args.input)
+    if not input_path.exists():
+        print(f"error: file not found: {input_path}")
+        return 2
+
+    try:
+        payload = json.loads(input_path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        print(f"error: invalid JSON: {exc.msg}")
+        return 2
+    except OSError as exc:
+        print(f"error: cannot read {input_path}: {exc.strerror}")
+        return 2
+
+    if not isinstance(payload, dict):
+        print("error: input JSON must be an object")
+        return 2
+
+    receipt = payload.get("receipt") if isinstance(payload.get("receipt"), dict) else payload
+    if _looks_like_transition_receipt(receipt):
+        return _verify_transition_receipt_state_hashes(receipt, state_hash)
+
+    return _verify_single_state_hash_record(payload, state_hash)
+
+
+def _looks_like_transition_receipt(payload: object) -> bool:
+    if not isinstance(payload, dict):
+        return False
+    return any(
+        field_name in payload
+        for field_name in (
+            "before_state_hash",
+            "after_state_hash",
+            "from_state",
+            "to_state",
+            "issued_at",
+        )
+    )
+
+
+def _require_text_fields(payload: Mapping[str, Any], field_names: tuple[str, ...]) -> dict[str, str]:
+    values: dict[str, str] = {}
+    for field_name in field_names:
+        value = payload.get(field_name)
+        if not isinstance(value, str) or not value.strip():
+            raise ValueError(field_name)
+        values[field_name] = value
+    return values
+
+
+def _verify_transition_receipt_state_hashes(
+    receipt: Mapping[str, Any],
+    state_hash_fn: Any,
+) -> int:
+    try:
+        values = _require_text_fields(
+            receipt,
+            (
+                "entity_id",
+                "from_state",
+                "to_state",
+                "before_state_hash",
+                "after_state_hash",
+                "issued_at",
+            ),
+        )
+    except ValueError as exc:
+        print(f"error: receipt field {exc.args[0]!r} must be a non-empty string")
+        return 3
+
+    before_expected = state_hash_fn(values["from_state"], values["entity_id"], values["issued_at"])
+    after_expected = state_hash_fn(values["to_state"], values["entity_id"], values["issued_at"])
+    mismatches = []
+    if values["before_state_hash"] != before_expected:
+        mismatches.append(("before_state_hash", before_expected, values["before_state_hash"]))
+    if values["after_state_hash"] != after_expected:
+        mismatches.append(("after_state_hash", after_expected, values["after_state_hash"]))
+
+    if not mismatches:
+        print("OK  state hashes verified - before_state_hash and after_state_hash match")
+        return 0
+
+    print("FAIL state hash verification failed")
+    for field_name, expected, observed in mismatches:
+        print(f"  field: {field_name}")
+        print(f"  expected: {expected}")
+        print(f"  observed: {observed}")
+    return 1
+
+
+def _verify_single_state_hash_record(
+    payload: Mapping[str, Any],
+    state_hash_fn: Any,
+) -> int:
+    try:
+        values = _require_text_fields(payload, ("state", "entity_id", "timestamp", "state_hash"))
+    except ValueError as exc:
+        print(f"error: field {exc.args[0]!r} must be a non-empty string")
+        return 3
+
+    expected = state_hash_fn(values["state"], values["entity_id"], values["timestamp"])
+    if values["state_hash"] == expected:
+        print("OK  state hash verified")
+        return 0
+
+    print("FAIL state hash verification failed")
+    print("  field: state_hash")
+    print(f"  expected: {expected}")
+    print(f"  observed: {values['state_hash']}")
+    return 1
+
+
 def _open_sqlite_for_migrations(db_url: str):
     """Open a sqlite connection from a sqlite:///<path> URL.
 
@@ -1488,6 +1623,7 @@ def main(argv: list[str] | None = None) -> int:
         "init": init_command,
         "demo": demo_command,
         "verify-ledger": verify_ledger_command,
+        "verify-state-hash": verify_state_hash_command,
         "migrate": migrate_command,
         "software-receipts": software_receipts_command,
         "mil-audit": mil_audit_command,
