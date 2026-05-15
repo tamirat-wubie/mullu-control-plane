@@ -56,6 +56,13 @@
       ]
     },
     {
+      "action_id": "bind_job_engine_mutations_to_effect_receipts",
+      "status": "closed",
+      "surfaces": [
+        "job_engine_lifecycle"
+      ]
+    },
+    {
       "action_id": "classify_authority_operator_controls",
       "status": "closed",
       "surfaces": [
@@ -811,7 +818,7 @@
   ],
   "coverage_summary": {
     "by_action_proof": {
-      "action_proof": 94,
+      "action_proof": 95,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 23,
@@ -819,7 +826,7 @@
     },
     "by_audit": {
       "action_proof": 0,
-      "audit_chain": 115,
+      "audit_chain": 116,
       "gap": 0,
       "read_model": 4,
       "request_proof": 0
@@ -827,16 +834,16 @@
     "by_coverage_state": {
       "proven": 1,
       "unproven": 0,
-      "witnessed": 118
+      "witnessed": 119
     },
     "by_request_proof": {
       "action_proof": 1,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 25,
-      "request_proof": 93
+      "request_proof": 94
     },
-    "surface_count": 119
+    "surface_count": 120
   },
   "generated_by": "scripts/proof_coverage_matrix.py",
   "route_coverage": {
@@ -4360,6 +4367,37 @@
         "approval_mutation_receipt_closes_effect_assurance"
       ],
       "surface_id": "approval_engine_lifecycle"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "mcoi/mcoi_runtime/core/jobs.py",
+        "mcoi/mcoi_runtime/contracts/job.py",
+        "mcoi/tests/test_job_core.py"
+      ],
+      "notes": "Job engine lifecycle mutations record create, restore, start, pause, resume, complete, fail, and cancel receipts as bounded evidence that can close Effect Assurance observation.",
+      "representative_paths": [
+        "JobEngine.create_job",
+        "JobEngine.start_job",
+        "JobEngine.pause_job",
+        "JobEngine.resume_job",
+        "JobEngine.complete_job",
+        "JobEngine.fail_job",
+        "JobEngine.cancel_job",
+        "JobEngine.restore_job"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "job_create_mutation_receipt_emitted",
+        "job_start_mutation_receipt_emitted",
+        "job_pause_resume_mutation_receipts_emitted",
+        "job_terminal_mutation_receipts_emitted",
+        "job_restore_mutation_receipt_emitted",
+        "job_mutation_receipt_closes_effect_assurance"
+      ],
+      "surface_id": "job_engine_lifecycle"
     },
     {
       "action_proof": "action_proof",
