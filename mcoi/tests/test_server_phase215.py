@@ -60,12 +60,26 @@ class TestQueueEndpoints:
             "task_id": "q1", "payload": {"data": "test"}, "priority": 5,
         })
         assert resp.status_code == 200
-        assert resp.json()["task_id"] == "q1"
+        body = resp.json()
+        assert body["task_id"] == "q1"
+        assert body["mutation_receipt"]["effect_name"] == "task_queue_item_submitted"
+        assert body["mutation_receipt"]["metadata"]["payload_hash"]
+        assert "test" not in str(body["mutation_receipt"])
 
     def test_process(self, client):
-        client.post("/api/v1/queue/submit", json={"task_id": "q-proc", "payload": {"x": 1}})
+        client.post("/api/v1/queue/submit", json={
+            "task_id": "q-proc",
+            "payload": {"x": 1},
+            "priority": 999,
+        })
         resp = client.post("/api/v1/queue/process")
-        assert resp.json()["processed"] is True
+        body = resp.json()
+        assert body["processed"] is True
+        assert body["task_id"] == "q-proc"
+        assert [receipt["effect_name"] for receipt in body["mutation_receipts"]] == [
+            "task_queue_item_dequeued",
+            "task_queue_result_recorded",
+        ]
 
     def test_process_empty(self, client):
         # Process all existing tasks first
@@ -80,6 +94,8 @@ class TestQueueEndpoints:
         resp = client.get("/api/v1/queue/status")
         assert resp.status_code == 200
         assert "depth" in resp.json()
+        assert "mutation_receipts" in resp.json()
+        assert "recent_mutation_receipts" in resp.json()
 
     def test_get_result(self, client):
         client.post("/api/v1/queue/submit", json={"task_id": "q-result", "payload": {}})

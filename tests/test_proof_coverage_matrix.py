@@ -1733,6 +1733,9 @@ def test_task_queue_lifecycle_surface_tracks_priority_processing() -> None:
     assert "mcoi/tests/test_server_phase215.py" in queue_surface["evidence_files"]
     assert "task_queue_priority_order" in witnesses
     assert "task_queue_depth_bounded" in witnesses
+    assert "task_queue_submit_mutation_receipt_emitted" in witnesses
+    assert "task_queue_process_mutation_receipts_emitted" in witnesses
+    assert "task_queue_mutation_receipt_closes_effect_assurance" in witnesses
     assert "task_queue_empty_process_bounded" in witnesses
     assert "task_queue_missing_result_bounded" in witnesses
     assert "task_queue_errors_sanitized" in witnesses
