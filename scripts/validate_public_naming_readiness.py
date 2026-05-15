@@ -50,6 +50,7 @@ REQUIRED_CLOSED_GATES = {
     "website_checklist",
     "website_deployment_evidence_template",
     "website_deployment_probe",
+    "website_deployment_verification",
     "website_recheck_log",
     "state_transition_rules",
     "handoff_summary",
@@ -76,7 +77,6 @@ REQUIRED_OPEN_GATES = {
     "domain_ownership",
     "legal_review",
     "homepage_update",
-    "website_deployment_verification",
     "app_title_update",
     "sdk_api_stability_review",
 }
@@ -255,13 +255,16 @@ def validate_product_route_deployment_handoff(
         "https://github.com/tamirat-wubie/mullusi/pull/84",
         "product/mullu-route",
         "https://github.com/tamirat-wubie/mullusi/pull/85",
+        "https://github.com/tamirat-wubie/mullusi/pull/88",
         "39014fd",
+        "93b7a6de942241424564f686aebee023a469ecde",
         "closed as redundant",
         "mullusi.github.io",
         "repository not found",
         "Mullu, by Mullusi",
         "private beta",
-        "not yet live",
+        "HTTP 200",
+        "live route verified",
         "website_deployment_verification",
     )
     missing_literals = sorted(literal for literal in required_literals if literal not in handoff_text)
@@ -317,6 +320,7 @@ def validate_website_deployment_evidence_log(
         "HTTP 200",
         "https://mullusi.com/mullu",
         "HTTP 404",
+        "HTTP 200",
         "https://mullu.mullusi.com",
         "DNS name does not exist",
         "MULLUSI — Symbolic Intelligence",
@@ -346,8 +350,8 @@ def validate_website_recheck_log(log_path: Path = WEBSITE_RECHECK_LOG_PATH) -> N
     missing_literals = sorted(literal for literal in required_literals if literal not in log_text)
     _require(not missing_literals, f"website recheck log missing literals: {missing_literals}")
     _require(
-        "Direct route verification still required" in log_text,
-        "website recheck log must keep direct route verification open",
+        "superseded by the 2026-05-15 live route probe" in log_text,
+        "website recheck log must point to the authoritative live-route probe",
     )
 
 

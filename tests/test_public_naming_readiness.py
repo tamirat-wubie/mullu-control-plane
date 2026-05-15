@@ -322,19 +322,19 @@ def test_website_deployment_evidence_log_rejects_cleared_gate(tmp_path: Path) ->
         validate_website_deployment_evidence_log(log_path)
 
 
-def test_website_recheck_log_preserves_open_deployment_gate() -> None:
+def test_website_recheck_log_points_to_authoritative_live_probe() -> None:
     validate_website_recheck_log()
 
 
-def test_website_recheck_log_rejects_missing_direct_verification(tmp_path: Path) -> None:
+def test_website_recheck_log_rejects_missing_live_probe_handoff(tmp_path: Path) -> None:
     log_path = tmp_path / "WEBSITE_RECHECK_LOG.md"
     log_text = WEBSITE_RECHECK_LOG_PATH.read_text(encoding="utf-8").replace(
-        "Direct route verification still required",
-        "Route verification complete",
+        "superseded by the 2026-05-15 live route probe",
+        "superseded without named evidence",
     )
     log_path.write_text(log_text, encoding="utf-8")
 
-    with pytest.raises(AssertionError, match="direct route verification"):
+    with pytest.raises(AssertionError, match="authoritative live-route probe"):
         validate_website_recheck_log(log_path)
 
 
