@@ -179,7 +179,7 @@ class ContractRecord:
         return {field.name: thaw_value_json(getattr(self, field.name)) for field in fields(self)}
 
     def to_json(self) -> str:
-        """Serialize to JSON string using contract field order."""
+        """Serialize to deterministic JSON string."""
         try:
             return json.dumps(
                 self.to_json_dict(),
