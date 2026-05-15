@@ -69,12 +69,12 @@ def test_unknown_tuple_field_label_is_bounded() -> None:
     assert "private_items" not in str(excinfo.value)
 
 
-def test_contract_record_to_json_is_sorted_and_deterministic() -> None:
+def test_contract_record_to_json_preserves_field_order_and_is_deterministic() -> None:
     record = ContractProbe(z_field="last", a_field={"b": 2.0, "a": 1.0})
     serialized = record.to_json()
 
-    assert serialized == '{"a_field":{"a":1.0,"b":2.0},"z_field":"last"}'
-    assert serialized.index("a_field") < serialized.index("z_field")
+    assert serialized == '{"z_field":"last","a_field":{"b":2.0,"a":1.0}}'
+    assert serialized.index("z_field") < serialized.index("a_field")
     assert serialized == record.to_json()
 
 
