@@ -13,7 +13,10 @@ from mcoi_runtime.contracts.approval import (
     OverrideRecord,
     OverrideType,
 )
+from mcoi_runtime.contracts.effect_assurance import ExpectedEffect, ReconciliationStatus
+from mcoi_runtime.contracts.execution import ExecutionOutcome, ExecutionResult
 from mcoi_runtime.core.approval import ApprovalEngine
+from mcoi_runtime.core.effect_assurance import EffectAssuranceGate
 
 
 T0 = "2025-01-15T10:00:00+00:00"
@@ -424,6 +427,134 @@ class TestApprovalGoldenScenarios:
         recorded = engine.list_overrides()[0]
         assert recorded.operator_id == "admin-1"
         assert recorded.approval_id == "approval-42"
+
+
+class TestApprovalMutationReceipts:
+    def test_request_submission_records_bounded_receipt(self):
+        engine = _engine()
+        engine.submit_request(_request(reason="secret approval reason"))
+
+        receipt = engine.mutation_receipts()[-1]
+
+        assert receipt.effect_name == "approval_request_registered"
+        assert receipt.mutation_type == "submit_request"
+        assert receipt.subject_ref == "approval-request:req-1"
+        assert receipt.evidence_ref.startswith("approval-receipt:")
+        assert receipt.metadata["scope_type"] == "skill"
+        assert receipt.metadata["target_id_hash"]
+        assert receipt.metadata["reason_hash"]
+        assert "secret approval reason" not in str(receipt.to_dict())
+
+    def test_decision_consumption_revocation_and_override_record_receipts(self):
+        engine = _engine()
+        engine.submit_request(_request())
+        decision = engine.record_decision(
+            request_id="req-1",
+            approver_id="op-1",
+            approved=True,
+            reason="secret approve reason",
+        )
+        engine.consume_approval(decision.decision_id)
+        revoked = engine.revoke(decision.decision_id, reason="secret revoke reason")
+        engine.record_override(
+            OverrideRecord(
+                override_id="ovr-1",
+                operator_id="admin-1",
+                override_type=OverrideType.AUTONOMY_OVERRIDE,
+                target_id="autonomy-decision-1",
+                original_decision="blocked",
+                new_decision="allowed",
+                reason="secret override reason",
+                overridden_at=T0,
+                approval_id=decision.decision_id,
+            )
+        )
+
+        receipts = engine.mutation_receipts()
+        effect_names = tuple(receipt.effect_name for receipt in receipts)
+
+        assert revoked is not None
+        assert effect_names == (
+            "approval_request_registered",
+            "approval_decision_recorded",
+            "approval_execution_consumed",
+            "approval_revoked",
+            "approval_override_recorded",
+        )
+        assert receipts[1].metadata["status"] == "approved"
+        assert receipts[2].metadata["executions_used"] == 1
+        assert receipts[3].metadata["executions_used"] == 1
+        assert receipts[4].metadata["override_type"] == "autonomy_override"
+        assert "secret approve reason" not in str(receipts[1].to_dict())
+        assert "secret revoke reason" not in str(receipts[3].to_dict())
+        assert "secret override reason" not in str(receipts[4].to_dict())
+
+    def test_expired_decision_records_decision_receipt(self):
+        engine = _engine(clock_time=T1)
+        engine.submit_request(_request(expires_at=T0))
+
+        decision = engine.record_decision(request_id="req-1", approver_id="op-1", approved=True)
+        receipt = engine.mutation_receipts()[-1]
+
+        assert decision.status is ApprovalStatus.EXPIRED
+        assert receipt.effect_name == "approval_decision_recorded"
+        assert receipt.metadata["status"] == "expired"
+        assert receipt.metadata["request_id_hash"]
+
+    def test_approval_receipts_convert_to_effect_records(self):
+        engine = _engine()
+        engine.submit_request(_request())
+
+        effect = engine.effect_records(limit=1)[0]
+
+        assert effect.name == "approval_request_registered"
+        assert effect.details["source"] == "approval_engine"
+        assert effect.details["evidence_ref"].startswith("approval-receipt:")
+        assert effect.details["metadata"]["scope_type"] == "skill"
+        assert effect.details["metadata"]["target_id_hash"]
+
+    def test_approval_mutation_receipt_closes_effect_assurance(self):
+        engine = _engine()
+        gate = EffectAssuranceGate(clock=lambda: T0)
+        plan = gate.create_plan(
+            command_id="cmd-approval-request",
+            tenant_id="tenant-1",
+            capability_id="approval.submit_request",
+            expected_effects=(
+                ExpectedEffect(
+                    effect_id="approval_request_registered",
+                    name="approval_request_registered",
+                    target_ref="approval-request:req-1",
+                    required=True,
+                    verification_method="approval_mutation_receipt",
+                ),
+            ),
+            forbidden_effects=("self_approval_granted",),
+        )
+
+        engine.submit_request(_request())
+        execution = ExecutionResult(
+            execution_id="exec-approval-request",
+            goal_id="goal-approval-request",
+            status=ExecutionOutcome.SUCCEEDED,
+            actual_effects=engine.effect_records(limit=1),
+            assumed_effects=(),
+            started_at=T0,
+            finished_at=T1,
+        )
+        observed = gate.observe(execution)
+        verification = gate.verify(plan=plan, execution_result=execution, observed_effects=observed)
+        reconciliation = gate.reconcile(
+            plan=plan,
+            observed_effects=observed,
+            verification_result=verification,
+        )
+
+        assert reconciliation.status is ReconciliationStatus.MATCH
+        assert reconciliation.matched_effects == ("approval_request_registered",)
+        assert reconciliation.missing_effects == ()
+        assert reconciliation.unexpected_effects == ()
+        assert verification.evidence[0].uri.startswith("approval-receipt:")
 
 
 # --- Fail-closed expiry on malformed timestamps ---

@@ -11,19 +11,59 @@ Invariants:
 
 from __future__ import annotations
 
+import hashlib
+import json
+from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Callable
+from typing import Any, Callable
 
 from mcoi_runtime.contracts.approval import (
     ApprovalDecisionRecord,
     ApprovalRequest,
-    ApprovalScope,
-    ApprovalScopeType,
     ApprovalStatus,
     OverrideRecord,
-    OverrideType,
 )
 from .invariants import ensure_non_empty_text, stable_identifier
+
+
+@dataclass(frozen=True, slots=True)
+class ApprovalMutationReceipt:
+    """Observed approval lifecycle mutation receipt."""
+
+    receipt_id: str
+    mutation_type: str
+    effect_name: str
+    subject_ref: str
+    evidence_ref: str
+    recorded_at: str
+    metadata: dict[str, Any] = field(default_factory=dict)
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "receipt_id": self.receipt_id,
+            "mutation_type": self.mutation_type,
+            "effect_name": self.effect_name,
+            "subject_ref": self.subject_ref,
+            "evidence_ref": self.evidence_ref,
+            "recorded_at": self.recorded_at,
+            "metadata": dict(self.metadata),
+        }
+
+    def to_effect_record(self) -> Any:
+        from mcoi_runtime.contracts.execution import EffectRecord
+
+        return EffectRecord(
+            name=self.effect_name,
+            details={
+                "receipt_id": self.receipt_id,
+                "mutation_type": self.mutation_type,
+                "subject_ref": self.subject_ref,
+                "evidence_ref": self.evidence_ref,
+                "observed_at": self.recorded_at,
+                "metadata": dict(self.metadata),
+                "source": "approval_engine",
+            },
+        )
 
 
 class ApprovalEngine:
@@ -44,6 +84,7 @@ class ApprovalEngine:
         self._decisions: dict[str, ApprovalDecisionRecord] = {}
         self._overrides: list[OverrideRecord] = []
         self._execution_counts: dict[str, int] = {}
+        self._mutation_receipts: list[ApprovalMutationReceipt] = []
 
     # --- Request management ---
 
@@ -52,6 +93,25 @@ class ApprovalEngine:
         if request.request_id in self._requests:
             raise ValueError("approval request already exists")
         self._requests[request.request_id] = request
+        self._record_mutation_receipt(
+            mutation_type="submit_request",
+            effect_name="approval_request_registered",
+            subject_ref=f"approval-request:{request.request_id}",
+            metadata={
+                "request_id_hash": _sha256_text(request.request_id),
+                "requester_id_hash": _sha256_text(request.requester_id),
+                "scope_type": request.scope.scope_type.value,
+                "target_id_hash": _sha256_text(request.scope.target_id),
+                "allowed_action_count": len(request.scope.allowed_actions),
+                "max_executions": request.scope.max_executions,
+                "allowed_approver_count": len(request.allowed_approver_ids),
+                "expires_at_present": request.expires_at is not None,
+                "correlation_id_hash": _sha256_optional_text(request.correlation_id),
+                "goal_id_hash": _sha256_optional_text(request.goal_id),
+                "incident_id_hash": _sha256_optional_text(request.incident_id),
+                "reason_hash": _sha256_text(request.reason),
+            },
+        )
         return request
 
     def get_request(self, request_id: str) -> ApprovalRequest | None:
@@ -96,6 +156,7 @@ class ApprovalEngine:
                 reason="request expired before decision",
             )
             self._decisions[decision.decision_id] = decision
+            self._record_decision_receipt(decision, request=request)
             return decision
 
         if request.requester_id.strip() == approver_id.strip():
@@ -113,6 +174,7 @@ class ApprovalEngine:
             reason=reason,
         )
         self._decisions[decision.decision_id] = decision
+        self._record_decision_receipt(decision, request=request)
         return decision
 
     def get_decision(self, decision_id: str) -> ApprovalDecisionRecord | None:
@@ -167,12 +229,36 @@ class ApprovalEngine:
     def consume_approval(self, decision_id: str) -> None:
         """Mark one execution consumed against an approval."""
         self._execution_counts[decision_id] = self._execution_counts.get(decision_id, 0) + 1
+        self._record_mutation_receipt(
+            mutation_type="consume_approval",
+            effect_name="approval_execution_consumed",
+            subject_ref=f"approval-decision:{decision_id}",
+            metadata={
+                "decision_id_hash": _sha256_text(decision_id),
+                "executions_used": self._execution_counts[decision_id],
+            },
+        )
 
     # --- Override ---
 
     def record_override(self, override: OverrideRecord) -> OverrideRecord:
         """Record a manual override."""
         self._overrides.append(override)
+        self._record_mutation_receipt(
+            mutation_type="record_override",
+            effect_name="approval_override_recorded",
+            subject_ref=f"approval-override:{override.override_id}",
+            metadata={
+                "override_id_hash": _sha256_text(override.override_id),
+                "operator_id_hash": _sha256_text(override.operator_id),
+                "override_type": override.override_type.value,
+                "target_id_hash": _sha256_text(override.target_id),
+                "original_decision_hash": _sha256_text(override.original_decision),
+                "new_decision_hash": _sha256_text(override.new_decision),
+                "reason_hash": _sha256_text(override.reason),
+                "approval_id_hash": _sha256_optional_text(override.approval_id),
+            },
+        )
         return override
 
     def list_overrides(self) -> tuple[OverrideRecord, ...]:
@@ -196,7 +282,26 @@ class ApprovalEngine:
             executions_used=self._execution_counts.get(decision_id, 0),
         )
         self._decisions[decision_id] = revoked
+        self._record_mutation_receipt(
+            mutation_type="revoke",
+            effect_name="approval_revoked",
+            subject_ref=f"approval-decision:{decision_id}",
+            metadata={
+                "decision_id_hash": _sha256_text(decision_id),
+                "request_id_hash": _sha256_text(revoked.request_id),
+                "executions_used": revoked.executions_used,
+                "reason_hash": _sha256_text(reason),
+            },
+        )
         return revoked
+
+    def mutation_receipts(self, limit: int = 50) -> tuple[ApprovalMutationReceipt, ...]:
+        """Return recent approval mutation receipts in append order."""
+        return tuple(self._mutation_receipts[-limit:])
+
+    def effect_records(self, limit: int = 50) -> tuple[Any, ...]:
+        """Return recent mutation receipts as execution actual-effect records."""
+        return tuple(receipt.to_effect_record() for receipt in self.mutation_receipts(limit=limit))
 
     # --- Helpers ---
 
@@ -221,3 +326,75 @@ class ApprovalEngine:
             if decision.request_id == request_id:
                 return decision
         return None
+
+    def _record_decision_receipt(
+        self,
+        decision: ApprovalDecisionRecord,
+        *,
+        request: ApprovalRequest,
+    ) -> ApprovalMutationReceipt:
+        return self._record_mutation_receipt(
+            mutation_type="record_decision",
+            effect_name="approval_decision_recorded",
+            subject_ref=f"approval-decision:{decision.decision_id}",
+            metadata={
+                "decision_id_hash": _sha256_text(decision.decision_id),
+                "request_id_hash": _sha256_text(decision.request_id),
+                "approver_id_hash": _sha256_text(decision.approver_id),
+                "status": decision.status.value,
+                "scope_type": request.scope.scope_type.value,
+                "target_id_hash": _sha256_text(request.scope.target_id),
+                "reason_hash": _sha256_optional_text(decision.reason),
+            },
+        )
+
+    def _record_mutation_receipt(
+        self,
+        *,
+        mutation_type: str,
+        effect_name: str,
+        subject_ref: str,
+        metadata: dict[str, Any],
+    ) -> ApprovalMutationReceipt:
+        recorded_at = self._clock()
+        receipt_id = _receipt_id(
+            mutation_type=mutation_type,
+            subject_ref=subject_ref,
+            recorded_at=recorded_at,
+            ordinal=len(self._mutation_receipts),
+        )
+        receipt = ApprovalMutationReceipt(
+            receipt_id=receipt_id,
+            mutation_type=mutation_type,
+            effect_name=effect_name,
+            subject_ref=subject_ref,
+            evidence_ref=f"approval-receipt:{receipt_id}",
+            recorded_at=recorded_at,
+            metadata=metadata,
+        )
+        self._mutation_receipts.append(receipt)
+        return receipt
+
+
+def _sha256_text(value: str) -> str:
+    return hashlib.sha256(value.encode("utf-8")).hexdigest()
+
+
+def _sha256_optional_text(value: str | None) -> str | None:
+    return None if value is None else _sha256_text(value)
+
+
+def _receipt_id(*, mutation_type: str, subject_ref: str, recorded_at: str, ordinal: int) -> str:
+    payload = json.dumps(
+        {
+            "mutation_type": mutation_type,
+            "subject_ref": subject_ref,
+            "recorded_at": recorded_at,
+            "ordinal": ordinal,
+        },
+        sort_keys=True,
+        ensure_ascii=True,
+        separators=(",", ":"),
+    )
+    digest = hashlib.sha256(payload.encode("utf-8")).hexdigest()[:16]
+    return f"approval-{mutation_type}-{digest}"
