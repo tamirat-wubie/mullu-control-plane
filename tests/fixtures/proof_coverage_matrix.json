@@ -5277,36 +5277,41 @@
       ],
       "request_proof": "request_proof",
       "runtime_witnesses": [
-        "physical_action_receipt_schema_valid",
-        "physical_capability_pack_fixture_not_default_loaded",
-        "physical_sandbox_replay_admitted_without_production_gate",
-        "live_physical_capability_rejected_by_production_gate",
-        "physical_pack_projects_sandbox_only_evidence",
-        "physical_promotion_preflight_blocks_fixture_live_claim",
-        "physical_promotion_preflight_requires_live_safety_evidence",
-        "physical_promotion_preflight_accepts_full_evidence",
-        "physical_promotion_preflight_allows_sandbox_only_pack",
-        "physical_capsule_admission_runs_promotion_preflight",
-        "physical_capsule_admission_keeps_registry_unmutated_on_preflight_failure",
-        "physical_promotion_receipt_binds_forge_handoff_registry_preflight",
-        "physical_promotion_receipt_schema_valid",
-        "physical_promotion_receipt_cli_emits_schema_valid_bundle",
-        "physical_promotion_receipt_cli_blocks_missing_live_refs",
-        "physical_promotion_receipt_operator_endpoint_emits_bundle",
-        "physical_promotion_receipt_operator_endpoint_blocks_missing_live_refs",
-        "physical_promotion_receipt_jsonl_store_persists",
-        "physical_promotion_receipt_store_fails_closed_on_invalid_record",
-        "physical_promotion_receipt_operator_console_renders_ledger",
-        "hardware_identity_required",
-        "safety_envelope_required",
-        "manual_override_required",
-        "emergency_stop_required",
-        "simulation_pass_required",
-        "operator_approval_required",
-        "sensor_confirmation_required",
-        "physical_dispatch_blocked_until_controls_complete",
-        "physical_worker_canary_uses_sandbox_handler",
-        "physical_worker_canary_artifact_hash_bound"
+        "physical_boundary_allows_sandbox_replay_with_full_controls",
+        "physical_boundary_blocks_without_simulation",
+        "physical_boundary_blocks_live_effects_without_certification",
+        "physical_boundary_requires_operator_review_when_approval_missing",
+        "physical_action_receipt_matches_schema",
+        "physical_fixture_pack_is_not_loaded_by_default",
+        "physical_fixture_pack_allows_sandbox_replay_when_production_gate_disabled",
+        "physical_fixture_pack_blocks_live_promotion_when_production_gate_enabled",
+        "physical_fixture_pack_projects_sandbox_only_gateway_evidence",
+        "physical_capability_promotion_preflight_blocks_live_fixture_by_default",
+        "physical_capability_promotion_preflight_passes_with_full_evidence",
+        "physical_capability_promotion_preflight_allows_sandbox_only_pack",
+        "physical_capability_promotion_preflight_cli_outputs_json",
+        "capsule_installer_runs_physical_preflight_before_registry_mutation",
+        "capsule_installer_returns_rejected_receipt_without_registry_mutation",
+        "capsule_installer_admits_physical_capsule_when_preflight_passes",
+        "capsule_admission_operator_endpoint_blocks_physical_preflight_failure",
+        "capsule_admission_operator_endpoint_accepts_physical_safety_refs_from_handoff",
+        "physical_capability_promotion_receipt_binds_ready_chain",
+        "operator_physical_promotion_receipt_endpoint_emits_ready_bundle",
+        "operator_physical_promotion_receipt_endpoint_persists_jsonl_ledger",
+        "operator_physical_promotion_receipt_console_renders_ledger",
+        "operator_physical_promotion_receipt_endpoint_blocks_missing_live_refs",
+        "physical_promotion_receipt_jsonl_store_lists_newest_with_filters",
+        "physical_promotion_receipt_jsonl_store_fails_closed_on_invalid_record",
+        "emit_physical_capability_promotion_receipt_accepts_fixture_refs",
+        "emit_physical_capability_promotion_receipt_blocks_missing_refs",
+        "emit_physical_capability_promotion_receipt_blocks_missing_physical_safety_refs",
+        "emit_physical_capability_promotion_receipt_cli_outputs_json",
+        "emit_physical_capability_promotion_receipt_cli_strict_blocks_missing_refs",
+        "physical_worker_canary_blocks_missing_receipt_and_allows_sandbox_replay",
+        "physical_worker_canary_artifact_preserves_no_effect_proof",
+        "physical_worker_canary_evidence_and_hash_are_stable",
+        "produce_physical_worker_canary_writes_artifact",
+        "physical_worker_canary_cli_strict_passes"
       ],
       "surface_id": "physical_action_boundary"
     },
@@ -6257,8 +6262,8 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 89,
-    "runtime_witness_count": 961,
+    "exact_test_anchor_count": 124,
+    "runtime_witness_count": 966,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -7919,43 +7924,223 @@
         ]
       },
       {
-        "anchored_witnesses": [],
-        "exact_test_anchor_count": 0,
-        "runtime_witness_count": 30,
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "tests/test_gateway/test_physical_action_boundary.py::test_physical_boundary_allows_sandbox_replay_with_full_controls"
+            ],
+            "witness": "physical_boundary_allows_sandbox_replay_with_full_controls"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_physical_action_boundary.py::test_physical_boundary_blocks_without_simulation"
+            ],
+            "witness": "physical_boundary_blocks_without_simulation"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_physical_action_boundary.py::test_physical_boundary_blocks_live_effects_without_certification"
+            ],
+            "witness": "physical_boundary_blocks_live_effects_without_certification"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_physical_action_boundary.py::test_physical_boundary_requires_operator_review_when_approval_missing"
+            ],
+            "witness": "physical_boundary_requires_operator_review_when_approval_missing"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_physical_action_boundary.py::test_physical_action_receipt_matches_schema"
+            ],
+            "witness": "physical_action_receipt_matches_schema"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_physical_capability_pack.py::test_physical_fixture_pack_is_not_loaded_by_default"
+            ],
+            "witness": "physical_fixture_pack_is_not_loaded_by_default"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_physical_capability_pack.py::test_physical_fixture_pack_allows_sandbox_replay_when_production_gate_disabled"
+            ],
+            "witness": "physical_fixture_pack_allows_sandbox_replay_when_production_gate_disabled"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_physical_capability_pack.py::test_physical_fixture_pack_blocks_live_promotion_when_production_gate_enabled"
+            ],
+            "witness": "physical_fixture_pack_blocks_live_promotion_when_production_gate_enabled"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_physical_capability_pack.py::test_physical_fixture_pack_projects_sandbox_only_gateway_evidence"
+            ],
+            "witness": "physical_fixture_pack_projects_sandbox_only_gateway_evidence"
+          },
+          {
+            "anchors": [
+              "tests/test_preflight_physical_capability_promotion.py::test_physical_capability_promotion_preflight_blocks_live_fixture_by_default"
+            ],
+            "witness": "physical_capability_promotion_preflight_blocks_live_fixture_by_default"
+          },
+          {
+            "anchors": [
+              "tests/test_preflight_physical_capability_promotion.py::test_physical_capability_promotion_preflight_passes_with_full_evidence"
+            ],
+            "witness": "physical_capability_promotion_preflight_passes_with_full_evidence"
+          },
+          {
+            "anchors": [
+              "tests/test_preflight_physical_capability_promotion.py::test_physical_capability_promotion_preflight_allows_sandbox_only_pack"
+            ],
+            "witness": "physical_capability_promotion_preflight_allows_sandbox_only_pack"
+          },
+          {
+            "anchors": [
+              "tests/test_preflight_physical_capability_promotion.py::test_physical_capability_promotion_preflight_cli_outputs_json"
+            ],
+            "witness": "physical_capability_promotion_preflight_cli_outputs_json"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_capability_capsule_installer.py::test_capsule_installer_runs_physical_preflight_before_registry_mutation"
+            ],
+            "witness": "capsule_installer_runs_physical_preflight_before_registry_mutation"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_capability_capsule_installer.py::test_capsule_installer_returns_rejected_receipt_without_registry_mutation"
+            ],
+            "witness": "capsule_installer_returns_rejected_receipt_without_registry_mutation"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_capability_capsule_installer.py::test_capsule_installer_admits_physical_capsule_when_preflight_passes"
+            ],
+            "witness": "capsule_installer_admits_physical_capsule_when_preflight_passes"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_capability_capsule_installer.py::test_capsule_admission_operator_endpoint_blocks_physical_preflight_failure"
+            ],
+            "witness": "capsule_admission_operator_endpoint_blocks_physical_preflight_failure"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_capability_capsule_installer.py::test_capsule_admission_operator_endpoint_accepts_physical_safety_refs_from_handoff"
+            ],
+            "witness": "capsule_admission_operator_endpoint_accepts_physical_safety_refs_from_handoff"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_physical_capability_promotion_receipt.py::test_physical_capability_promotion_receipt_binds_ready_chain"
+            ],
+            "witness": "physical_capability_promotion_receipt_binds_ready_chain"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_physical_capability_promotion_receipt.py::test_operator_physical_promotion_receipt_endpoint_emits_ready_bundle"
+            ],
+            "witness": "operator_physical_promotion_receipt_endpoint_emits_ready_bundle"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_physical_capability_promotion_receipt.py::test_operator_physical_promotion_receipt_endpoint_persists_jsonl_ledger"
+            ],
+            "witness": "operator_physical_promotion_receipt_endpoint_persists_jsonl_ledger"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_physical_capability_promotion_receipt.py::test_operator_physical_promotion_receipt_console_renders_ledger"
+            ],
+            "witness": "operator_physical_promotion_receipt_console_renders_ledger"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_physical_capability_promotion_receipt.py::test_operator_physical_promotion_receipt_endpoint_blocks_missing_live_refs"
+            ],
+            "witness": "operator_physical_promotion_receipt_endpoint_blocks_missing_live_refs"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_physical_capability_promotion_receipt.py::test_physical_promotion_receipt_jsonl_store_lists_newest_with_filters"
+            ],
+            "witness": "physical_promotion_receipt_jsonl_store_lists_newest_with_filters"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_physical_capability_promotion_receipt.py::test_physical_promotion_receipt_jsonl_store_fails_closed_on_invalid_record"
+            ],
+            "witness": "physical_promotion_receipt_jsonl_store_fails_closed_on_invalid_record"
+          },
+          {
+            "anchors": [
+              "tests/test_emit_physical_capability_promotion_receipt.py::test_emit_physical_capability_promotion_receipt_accepts_fixture_refs"
+            ],
+            "witness": "emit_physical_capability_promotion_receipt_accepts_fixture_refs"
+          },
+          {
+            "anchors": [
+              "tests/test_emit_physical_capability_promotion_receipt.py::test_emit_physical_capability_promotion_receipt_blocks_missing_refs"
+            ],
+            "witness": "emit_physical_capability_promotion_receipt_blocks_missing_refs"
+          },
+          {
+            "anchors": [
+              "tests/test_emit_physical_capability_promotion_receipt.py::test_emit_physical_capability_promotion_receipt_blocks_missing_physical_safety_refs"
+            ],
+            "witness": "emit_physical_capability_promotion_receipt_blocks_missing_physical_safety_refs"
+          },
+          {
+            "anchors": [
+              "tests/test_emit_physical_capability_promotion_receipt.py::test_emit_physical_capability_promotion_receipt_cli_outputs_json"
+            ],
+            "witness": "emit_physical_capability_promotion_receipt_cli_outputs_json"
+          },
+          {
+            "anchors": [
+              "tests/test_emit_physical_capability_promotion_receipt.py::test_emit_physical_capability_promotion_receipt_cli_strict_blocks_missing_refs"
+            ],
+            "witness": "emit_physical_capability_promotion_receipt_cli_strict_blocks_missing_refs"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_physical_worker_canary.py::test_physical_worker_canary_blocks_missing_receipt_and_allows_sandbox_replay"
+            ],
+            "witness": "physical_worker_canary_blocks_missing_receipt_and_allows_sandbox_replay"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_physical_worker_canary.py::test_physical_worker_canary_artifact_preserves_no_effect_proof"
+            ],
+            "witness": "physical_worker_canary_artifact_preserves_no_effect_proof"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_physical_worker_canary.py::test_physical_worker_canary_evidence_and_hash_are_stable"
+            ],
+            "witness": "physical_worker_canary_evidence_and_hash_are_stable"
+          },
+          {
+            "anchors": [
+              "tests/test_produce_physical_worker_canary.py::test_produce_physical_worker_canary_writes_artifact"
+            ],
+            "witness": "produce_physical_worker_canary_writes_artifact"
+          },
+          {
+            "anchors": [
+              "tests/test_produce_physical_worker_canary.py::test_physical_worker_canary_cli_strict_passes"
+            ],
+            "witness": "physical_worker_canary_cli_strict_passes"
+          }
+        ],
+        "exact_test_anchor_count": 35,
+        "runtime_witness_count": 35,
         "surface_id": "physical_action_boundary",
-        "unanchored_witness_count": 30,
-        "unanchored_witnesses": [
-          "physical_action_receipt_schema_valid",
-          "physical_capability_pack_fixture_not_default_loaded",
-          "physical_sandbox_replay_admitted_without_production_gate",
-          "live_physical_capability_rejected_by_production_gate",
-          "physical_pack_projects_sandbox_only_evidence",
-          "physical_promotion_preflight_blocks_fixture_live_claim",
-          "physical_promotion_preflight_requires_live_safety_evidence",
-          "physical_promotion_preflight_accepts_full_evidence",
-          "physical_promotion_preflight_allows_sandbox_only_pack",
-          "physical_capsule_admission_runs_promotion_preflight",
-          "physical_capsule_admission_keeps_registry_unmutated_on_preflight_failure",
-          "physical_promotion_receipt_binds_forge_handoff_registry_preflight",
-          "physical_promotion_receipt_schema_valid",
-          "physical_promotion_receipt_cli_emits_schema_valid_bundle",
-          "physical_promotion_receipt_cli_blocks_missing_live_refs",
-          "physical_promotion_receipt_operator_endpoint_emits_bundle",
-          "physical_promotion_receipt_operator_endpoint_blocks_missing_live_refs",
-          "physical_promotion_receipt_jsonl_store_persists",
-          "physical_promotion_receipt_store_fails_closed_on_invalid_record",
-          "physical_promotion_receipt_operator_console_renders_ledger",
-          "hardware_identity_required",
-          "safety_envelope_required",
-          "manual_override_required",
-          "emergency_stop_required",
-          "simulation_pass_required",
-          "operator_approval_required",
-          "sensor_confirmation_required",
-          "physical_dispatch_blocked_until_controls_complete",
-          "physical_worker_canary_uses_sandbox_handler",
-          "physical_worker_canary_artifact_hash_bound"
-        ]
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
       },
       {
         "anchored_witnesses": [],
@@ -8701,6 +8886,6 @@
         ]
       }
     ],
-    "unanchored_witness_count": 872
+    "unanchored_witness_count": 842
   }
 }

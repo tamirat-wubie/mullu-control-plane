@@ -72,6 +72,21 @@ def test_document_semantics_are_versioned_and_canonical() -> None:
     assert first.canonical_hash() == second.canonical_hash()
 
 
+def test_document_canonical_json_rejects_nonfinite_metadata() -> None:
+    document = WHQRDocument(
+        root=WHQRNode(
+            role=WHRole.WHAT,
+            target="measurement",
+            metadata={"confidence": float("nan")},
+        )
+    )
+
+    with pytest.raises(ValueError, match="WHQR document must serialize to deterministic canonical JSON") as excinfo:
+        document.canonical_json()
+
+    assert "nan" not in str(excinfo.value).lower()
+
+
 def test_contract_validation_and_metadata_fail_closed() -> None:
     with pytest.raises(ValueError, match="non-empty string"):
         WHQRNode(role=WHRole.WHO, target="")

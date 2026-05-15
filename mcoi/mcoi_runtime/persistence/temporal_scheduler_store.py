@@ -36,7 +36,7 @@ def _bounded_store_error(summary: str, exc: BaseException) -> str:
 
 
 def _deterministic_json(payload: Any) -> str:
-    return json.dumps(payload, sort_keys=True, ensure_ascii=True, separators=(",", ":"))
+    return json.dumps(payload, sort_keys=True, ensure_ascii=True, separators=(",", ":"), allow_nan=False)
 
 
 def _atomic_write(path: Path, content: str) -> None:

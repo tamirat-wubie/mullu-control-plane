@@ -76,7 +76,7 @@ def _copy_state_data(data: object) -> dict[str, Any]:
 
 def _deterministic_json(data: Any) -> str:
     try:
-        return json.dumps(data, sort_keys=True, ensure_ascii=True, separators=(",", ":"))
+        return json.dumps(data, sort_keys=True, ensure_ascii=True, separators=(",", ":"), allow_nan=False)
     except (TypeError, ValueError) as exc:
         raise PersistenceError(_bounded_store_error("state data is not JSON serializable", exc)) from exc
 

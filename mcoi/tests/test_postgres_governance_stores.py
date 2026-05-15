@@ -416,6 +416,18 @@ class TestPostgresAuditStoreStructure:
         assert "secret encryption backend failure" not in str(exc_info.value)
         assert "encryption failed" in str(exc_info.value)
 
+    def test_encrypt_detail_rejects_non_finite_values_before_storage(self):
+        store = PostgresAuditStore.__new__(PostgresAuditStore)
+        store._field_encryptor = None
+
+        with pytest.raises(RuntimeError, match=r"^audit detail serialization failed \(ValueError\)$") as exc_info:
+            store._encrypt_detail({"secret_metric": float("nan")})
+
+        message = str(exc_info.value)
+        assert "secret_metric" not in message
+        assert "nan" not in message.lower()
+        assert "serialization failed" in message
+
     def test_decrypt_detail_fails_closed_when_ciphertext_is_broken(self):
         class BrokenDecryptor:
             def is_encrypted(self, _stored: str) -> bool:

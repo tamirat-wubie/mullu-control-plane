@@ -20,6 +20,13 @@ from hashlib import sha256
 import json
 
 
+def _canonical_content_json(content: dict[str, Any]) -> str:
+    try:
+        return json.dumps(content, sort_keys=True, allow_nan=False)
+    except (TypeError, ValueError) as exc:
+        raise ValueError("ledger content must be deterministic JSON") from exc
+
+
 @dataclass(frozen=True, slots=True)
 class TenantSession:
     """Session scoped to a single tenant."""
@@ -77,9 +84,7 @@ class TenantLedger:
         content: dict[str, Any],
     ) -> TenantLedgerEntry:
         """Append a ledger entry for a tenant."""
-        content_hash = sha256(
-            json.dumps(content, sort_keys=True, default=str).encode()
-        ).hexdigest()
+        content_hash = sha256(_canonical_content_json(content).encode()).hexdigest()
 
         entry_id = sha256(
             f"{tenant_id}:{entry_type}:{self._clock()}:{content_hash[:8]}".encode()

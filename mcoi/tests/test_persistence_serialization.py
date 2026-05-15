@@ -6,8 +6,11 @@ Invariants: serialize(deserialize(serialize(x))) == serialize(x).
 
 from __future__ import annotations
 
+from dataclasses import dataclass
+
 import pytest
 
+from mcoi_runtime.contracts._base import ContractRecord
 from mcoi_runtime.contracts.trace import TraceEntry
 from mcoi_runtime.persistence import (
     CorruptedDataError,
@@ -27,6 +30,11 @@ def _make_trace() -> TraceEntry:
         registry_hash="registry-hash-1",
         timestamp="2026-03-19T00:00:00+00:00",
     )
+
+
+@dataclass(frozen=True)
+class _NonFiniteContract(ContractRecord):
+    value: float
 
 
 def test_round_trip_invariant() -> None:
@@ -76,3 +84,23 @@ def test_serialize_non_dataclass_raises() -> None:
     ) as excinfo:
         serialize_record({"not": "a dataclass"})
     assert "dict" not in str(excinfo.value)
+
+
+def test_contract_record_to_json_rejects_nonfinite_values() -> None:
+    with pytest.raises(ValueError, match="^contract record must be deterministic JSON$") as excinfo:
+        _NonFiniteContract(float("nan")).to_json()
+
+    message = str(excinfo.value)
+    assert message == "contract record must be deterministic JSON"
+    assert "nan" not in message.lower()
+    assert "value" not in message
+
+
+def test_serialize_record_rejects_nonfinite_values_with_bounded_error() -> None:
+    with pytest.raises(CorruptedDataError, match=r"^failed to serialize record \(ValueError\)$") as excinfo:
+        serialize_record(_NonFiniteContract(float("nan")))
+
+    message = str(excinfo.value)
+    assert message == "failed to serialize record (ValueError)"
+    assert "nan" not in message.lower()
+    assert "value" not in message

@@ -41,7 +41,16 @@ def serialize_record(record: Any) -> str:
             "serialize_record requires a contract record or dataclass instance"
         )
 
-    return json.dumps(data, sort_keys=True, ensure_ascii=True, separators=(",", ":"))
+    try:
+        return json.dumps(
+            data,
+            sort_keys=True,
+            ensure_ascii=True,
+            separators=(",", ":"),
+            allow_nan=False,
+        )
+    except (TypeError, ValueError) as exc:
+        raise CorruptedDataError(_bounded_error("failed to serialize record", exc)) from exc
 
 
 def _serialize_value(value: Any) -> Any:

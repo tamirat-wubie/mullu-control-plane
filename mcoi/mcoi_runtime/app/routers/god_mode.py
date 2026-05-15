@@ -96,6 +96,17 @@ def _god_mode_error_detail(error: str, error_code: str) -> dict[str, object]:
     return {"error": error, "error_code": error_code, "governed": True}
 
 
+def _god_mode_public_error(exc: Exception, fallback: str) -> str:
+    reason = str(exc).lower()
+    if "dual control" in reason:
+        return "dual control registration agreement failed"
+    if "pending_dual" in reason:
+        return "ticket issue blocked: pending_dual"
+    if "bound to tenant" in reason:
+        return "ticket consume blocked: bound to tenant"
+    return fallback
+
+
 # --- Catalog ----------------------------------------------------------------
 
 
@@ -185,7 +196,10 @@ def agree_to_register(
     except GodModeRegistryError as exc:
         raise HTTPException(
             status_code=400,
-            detail=_god_mode_error_detail("registration agreement failed", "registration_agreement_failed"),
+            detail=_god_mode_error_detail(
+                _god_mode_public_error(exc, "registration agreement failed"),
+                "registration_agreement_failed",
+            ),
         ) from exc
     return {
         "governed": True,
@@ -273,7 +287,10 @@ def issue_ticket(
     except GodModeEngineError as exc:
         raise HTTPException(
             status_code=400,
-            detail=_god_mode_error_detail("ticket issue failed", "ticket_issue_failed"),
+            detail=_god_mode_error_detail(
+                _god_mode_public_error(exc, "ticket issue failed"),
+                "ticket_issue_failed",
+            ),
         ) from exc
     return {
         "governed": True,
@@ -338,7 +355,10 @@ def consume_ticket(ticket_id: str, req: ConsumeTicketRequest) -> dict[str, Any]:
     except GodModeEngineError as exc:
         raise HTTPException(
             status_code=400,
-            detail=_god_mode_error_detail("ticket consume failed", "ticket_consume_failed"),
+            detail=_god_mode_error_detail(
+                _god_mode_public_error(exc, "ticket consume failed"),
+                "ticket_consume_failed",
+            ),
         ) from exc
     return {"governed": True, "receipt": receipt.to_json_dict()}
 

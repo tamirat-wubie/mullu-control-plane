@@ -186,6 +186,30 @@ def test_capability_worker_rejects_bad_signature() -> None:
     assert response.json()["detail"] == "invalid capability request signature"
 
 
+def test_capability_worker_parse_error_detail_is_bounded() -> None:
+    secret = "worker-secret"
+    body = b'{"request_id":"secret-token-from-worker"'
+    app = create_capability_worker_app(
+        dispatcher=SkillDispatcher(payment_executor=SettlingPaymentExecutor()),
+        signing_secret=secret,
+        worker_id="restricted-worker-test",
+    )
+    client = TestClient(app)
+
+    response = client.post(
+        "/capability/execute",
+        content=body,
+        headers={"X-Mullu-Capability-Signature": sign_capability_payload(body, secret)},
+    )
+    detail = response.json()["detail"]
+
+    assert response.status_code == 422
+    assert detail["error"] == "invalid capability execution request"
+    assert detail["error_code"] == "invalid_capability_execution_request"
+    assert detail["governed"] is True
+    assert "secret-token-from-worker" not in response.text
+
+
 def test_capability_worker_rejects_tampered_input_hash() -> None:
     secret = "worker-secret"
     body_payload = json.loads(_request_body().decode("utf-8"))
@@ -205,7 +229,10 @@ def test_capability_worker_rejects_tampered_input_hash() -> None:
     )
 
     assert response.status_code == 422
-    assert "input hash mismatch" in response.json()["detail"]
+    detail = response.json()["detail"]
+    assert detail["error"] == "capability request input hash mismatch"
+    assert detail["error_code"] == "capability_input_hash_mismatch"
+    assert detail["governed"] is True
 
 
 def test_capability_worker_rejects_intent_boundary_mismatch() -> None:
@@ -227,7 +254,11 @@ def test_capability_worker_rejects_intent_boundary_mismatch() -> None:
     )
 
     assert response.status_code == 422
-    assert "capability request is malformed" in response.json()["detail"]
+    detail = response.json()["detail"]
+    assert detail["error"] == "malformed capability request"
+    assert detail["error_code"] == "malformed_capability_request"
+    assert detail["governed"] is True
+    assert "refund" not in response.text
 
 
 def test_capability_worker_rejects_non_isolated_boundary() -> None:
@@ -250,7 +281,11 @@ def test_capability_worker_rejects_non_isolated_boundary() -> None:
     )
 
     assert response.status_code == 422
-    assert "restricted worker requires an isolated capability boundary" in response.json()["detail"]
+    detail = response.json()["detail"]
+    assert detail["error"] == "isolated capability boundary required"
+    assert detail["error_code"] == "isolated_capability_boundary_required"
+    assert detail["governed"] is True
+    assert "gateway_process" not in response.text
 
 
 def test_capability_worker_rejects_gateway_process_boundary_even_when_isolated() -> None:
@@ -273,7 +308,11 @@ def test_capability_worker_rejects_gateway_process_boundary_even_when_isolated()
     )
 
     assert response.status_code == 422
-    assert "restricted worker requires isolated_worker execution plane" in response.json()["detail"]
+    detail = response.json()["detail"]
+    assert detail["error"] == "isolated worker execution plane required"
+    assert detail["error_code"] == "isolated_worker_execution_plane_required"
+    assert detail["governed"] is True
+    assert "gateway_process" not in response.text
 
 
 def test_default_capability_worker_smoke_stub_is_local_only(monkeypatch) -> None:

@@ -128,6 +128,7 @@ def test_witness_integrity_report_tracks_exact_test_anchors() -> None:
     assert surfaces["replay_determinism"]["unanchored_witness_count"] == 0
     assert surfaces["governed_session"]["unanchored_witness_count"] == 0
     assert surfaces["lineage_query_api"]["unanchored_witness_count"] == 0
+    assert surfaces["physical_action_boundary"]["unanchored_witness_count"] == 0
 
 
 def test_declared_routes_have_explicit_coverage_classification() -> None:
@@ -2588,30 +2589,28 @@ def test_physical_action_boundary_surface_blocks_dispatch_without_safety_control
     assert "tests/test_gateway/test_physical_worker_canary.py" in physical_surface["evidence_files"]
     assert "tests/test_preflight_physical_capability_promotion.py" in physical_surface["evidence_files"]
     assert "tests/test_produce_physical_worker_canary.py" in physical_surface["evidence_files"]
-    assert "physical_capability_pack_fixture_not_default_loaded" in witnesses
-    assert "physical_sandbox_replay_admitted_without_production_gate" in witnesses
-    assert "live_physical_capability_rejected_by_production_gate" in witnesses
-    assert "physical_pack_projects_sandbox_only_evidence" in witnesses
-    assert "physical_promotion_preflight_blocks_fixture_live_claim" in witnesses
-    assert "physical_promotion_preflight_requires_live_safety_evidence" in witnesses
-    assert "physical_promotion_preflight_accepts_full_evidence" in witnesses
-    assert "physical_promotion_preflight_allows_sandbox_only_pack" in witnesses
-    assert "physical_capsule_admission_runs_promotion_preflight" in witnesses
-    assert "physical_capsule_admission_keeps_registry_unmutated_on_preflight_failure" in witnesses
-    assert "physical_promotion_receipt_binds_forge_handoff_registry_preflight" in witnesses
-    assert "physical_promotion_receipt_schema_valid" in witnesses
-    assert "physical_promotion_receipt_cli_emits_schema_valid_bundle" in witnesses
-    assert "physical_promotion_receipt_cli_blocks_missing_live_refs" in witnesses
-    assert "physical_promotion_receipt_operator_endpoint_emits_bundle" in witnesses
-    assert "physical_promotion_receipt_operator_endpoint_blocks_missing_live_refs" in witnesses
-    assert "physical_promotion_receipt_jsonl_store_persists" in witnesses
-    assert "physical_promotion_receipt_store_fails_closed_on_invalid_record" in witnesses
-    assert "physical_promotion_receipt_operator_console_renders_ledger" in witnesses
-    assert "hardware_identity_required" in witnesses
-    assert "emergency_stop_required" in witnesses
-    assert "physical_dispatch_blocked_until_controls_complete" in witnesses
-    assert "physical_worker_canary_uses_sandbox_handler" in witnesses
-    assert "physical_worker_canary_artifact_hash_bound" in witnesses
+    expected_witnesses = {
+        "physical_boundary_blocks_without_simulation",
+        "physical_boundary_blocks_live_effects_without_certification",
+        "physical_boundary_requires_operator_review_when_approval_missing",
+        "physical_action_receipt_matches_schema",
+        "physical_fixture_pack_is_not_loaded_by_default",
+        "physical_fixture_pack_allows_sandbox_replay_when_production_gate_disabled",
+        "physical_fixture_pack_blocks_live_promotion_when_production_gate_enabled",
+        "physical_fixture_pack_projects_sandbox_only_gateway_evidence",
+        "physical_capability_promotion_preflight_blocks_live_fixture_by_default",
+        "physical_capability_promotion_preflight_passes_with_full_evidence",
+        "physical_capability_promotion_preflight_allows_sandbox_only_pack",
+        "capsule_installer_runs_physical_preflight_before_registry_mutation",
+        "capsule_installer_returns_rejected_receipt_without_registry_mutation",
+        "physical_capability_promotion_receipt_binds_ready_chain",
+        "operator_physical_promotion_receipt_endpoint_emits_ready_bundle",
+        "operator_physical_promotion_receipt_endpoint_blocks_missing_live_refs",
+        "physical_promotion_receipt_jsonl_store_fails_closed_on_invalid_record",
+        "physical_worker_canary_blocks_missing_receipt_and_allows_sandbox_replay",
+        "physical_worker_canary_evidence_and_hash_are_stable",
+    }
+    assert expected_witnesses <= witnesses
     assert closure_actions["publish_physical_action_receipt_contract"]["status"] == "closed"
 
 

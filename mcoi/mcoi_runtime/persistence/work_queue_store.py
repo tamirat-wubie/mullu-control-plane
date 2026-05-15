@@ -25,7 +25,7 @@ from .errors import CorruptedDataError, PersistenceError, PersistenceWriteError
 
 
 def _deterministic_json(payload: object) -> str:
-    return json.dumps(payload, sort_keys=True, ensure_ascii=True, separators=(",", ":"))
+    return json.dumps(payload, sort_keys=True, ensure_ascii=True, separators=(",", ":"), allow_nan=False)
 
 
 def _bounded_store_error(summary: str, exc: BaseException) -> str:

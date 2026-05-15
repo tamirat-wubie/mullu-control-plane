@@ -395,8 +395,14 @@ class PostgresStore:
             cur.execute(
                 "INSERT INTO ledger (entry_type, actor_id, tenant_id, content, content_hash, created_at) "
                 "VALUES (%s, %s, %s, %s, %s, %s) RETURNING id",
-                (entry_type, actor_id, tenant_id, json.dumps(content, sort_keys=True),
-                 content_hash, datetime.now(timezone.utc).isoformat()),
+                (
+                    entry_type,
+                    actor_id,
+                    tenant_id,
+                    json.dumps(content, sort_keys=True, allow_nan=False),
+                    content_hash,
+                    datetime.now(timezone.utc).isoformat(),
+                ),
             )
             row_id = cur.fetchone()[0]
             conn.commit()

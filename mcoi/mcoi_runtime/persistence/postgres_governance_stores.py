@@ -37,7 +37,7 @@ from mcoi_runtime.governance.audit.trail import (
 # the public API; reaching into private internals stays on the canonical
 # core path. Phase 4 will move the implementation here too.
 from mcoi_runtime.governance.audit.trail import _canonical_hash_v1
-from mcoi_runtime.governance.guards.rate_limit import RateLimitStore
+from mcoi_runtime.governance.guards.rate_limit import RateLimitConfig, RateLimitStore
 from mcoi_runtime.governance.guards.budget import BudgetStore
 from mcoi_runtime.governance.guards.tenant_gating import TenantGate, TenantGatingStore, TenantStatus
 
@@ -523,7 +523,10 @@ class PostgresAuditStore(_PostgresBase, AuditStore):
 
     def _encrypt_detail(self, detail: dict[str, Any]) -> str:
         """Encrypt detail dict if encryptor is available, else return JSON."""
-        detail_json = json.dumps(detail, sort_keys=True, default=str)
+        try:
+            detail_json = json.dumps(detail, sort_keys=True, allow_nan=False)
+        except (TypeError, ValueError) as exc:
+            raise _bounded_detail_crypto_error("serialization", exc) from exc
         if self._field_encryptor is not None:
             try:
                 return self._field_encryptor.encrypt(detail_json)
@@ -936,7 +939,7 @@ class InMemoryRateLimitStore(RateLimitStore):
         self,
         bucket_key: str,
         tokens: int,
-        config: "RateLimitConfig",
+        config: RateLimitConfig,
     ) -> tuple[bool, float] | None:
         # F11: store-owned bucket state with single-process atomicity.
         # The lock spans refill + check + decrement so concurrent

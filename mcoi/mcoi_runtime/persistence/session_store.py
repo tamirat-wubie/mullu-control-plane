@@ -32,6 +32,13 @@ def _bounded_session_store_failure(exc: BaseException) -> str:
     return type(exc).__name__
 
 
+def _canonical_checkpoint_json(data: dict[str, Any]) -> str:
+    try:
+        return json.dumps(data, sort_keys=True, allow_nan=False)
+    except (TypeError, ValueError) as exc:
+        raise ValueError("session checkpoint must be deterministic JSON") from exc
+
+
 @dataclass(frozen=True, slots=True)
 class SessionCheckpoint:
     """Serializable snapshot of GovernedSession mutable state."""
@@ -59,7 +66,7 @@ class SessionCheckpoint:
             "compaction_count": self.compaction_count,
             "checkpoint_at": self.checkpoint_at,
         }
-        content = json.dumps(data, sort_keys=True, default=str)
+        content = _canonical_checkpoint_json(data)
         data["checkpoint_hash"] = sha256(content.encode()).hexdigest()[:16]
         return data
 
@@ -69,7 +76,7 @@ class SessionCheckpoint:
         try:
             payload = dict(data)
             stored_hash = payload.pop("checkpoint_hash", "")
-            content = json.dumps(payload, sort_keys=True, default=str)
+            content = _canonical_checkpoint_json(payload)
             expected_hash = sha256(content.encode()).hexdigest()[:16]
             if stored_hash and stored_hash != expected_hash:
                 return None
@@ -123,11 +130,19 @@ class InMemorySessionStore(SessionStore):
         self._lock = threading.Lock()
 
     def save(self, checkpoint: SessionCheckpoint) -> bool:
+        try:
+            data = checkpoint.to_dict()
+        except ValueError as exc:
+            _log.warning(
+                "session checkpoint save failed (%s)",
+                _bounded_session_store_failure(exc),
+            )
+            return False
         with self._lock:
             if len(self._sessions) >= self.MAX_SESSIONS and checkpoint.session_id not in self._sessions:
                 oldest_key = next(iter(self._sessions))
                 del self._sessions[oldest_key]
-            self._sessions[checkpoint.session_id] = checkpoint.to_dict()
+            self._sessions[checkpoint.session_id] = data
             return True
 
     def load(self, session_id: str) -> SessionCheckpoint | None:
@@ -206,7 +221,7 @@ class FileSessionStore(SessionStore):
             )
             try:
                 with os.fdopen(tmp_fd, "w") as f:
-                    json.dump(data, f, sort_keys=True, default=str, indent=2)
+                    json.dump(data, f, sort_keys=True, allow_nan=False, indent=2)
                 os.replace(tmp_path, str(self._session_path(checkpoint.session_id)))
             except Exception as exc:
                 _log.warning(

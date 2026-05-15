@@ -50,7 +50,7 @@ def _bounded_store_error(summary: str, exc: BaseException) -> str:
 
 def _deterministic_json(data: Any) -> str:
     """Produce deterministic JSON for hashing and storage."""
-    return json.dumps(data, sort_keys=True, ensure_ascii=True, separators=(",", ":"))
+    return json.dumps(data, sort_keys=True, ensure_ascii=True, separators=(",", ":"), allow_nan=False)
 
 
 def _content_hash(json_str: str) -> str:

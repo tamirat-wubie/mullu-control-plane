@@ -5,7 +5,6 @@ Purpose: Durable storage for requests, ledger entries, and session state.
 from __future__ import annotations
 import sqlite3
 import json
-from pathlib import Path
 from typing import Any
 
 class SQLiteStore:
@@ -51,7 +50,14 @@ class SQLiteStore:
         from datetime import datetime, timezone
         cur = self._conn.execute(
             "INSERT INTO ledger (entry_type, actor_id, tenant_id, content, content_hash, created_at) VALUES (?, ?, ?, ?, ?, ?)",
-            (entry_type, actor_id, tenant_id, json.dumps(content, sort_keys=True), content_hash, datetime.now(timezone.utc).isoformat()),
+            (
+                entry_type,
+                actor_id,
+                tenant_id,
+                json.dumps(content, sort_keys=True, allow_nan=False),
+                content_hash,
+                datetime.now(timezone.utc).isoformat(),
+            ),
         )
         self._conn.commit()
         return cur.lastrowid
