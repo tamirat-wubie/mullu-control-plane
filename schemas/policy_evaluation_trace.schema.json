@@ -1,0 +1,132 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:policy-evaluation-trace:1",
+  "title": "Policy Evaluation Trace",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "trace_id",
+    "bundle_id",
+    "subject_id",
+    "context_snapshot",
+    "rules_evaluated",
+    "rules_matched",
+    "rules_fired",
+    "matched_rule_ids",
+    "fired_rule_ids",
+    "final_effect",
+    "actions_produced",
+    "evaluated_at",
+    "metadata"
+  ],
+  "properties": {
+    "trace_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "bundle_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "subject_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "context_snapshot": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "rules_evaluated": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "rules_matched": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "rules_fired": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "matched_rule_ids": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "fired_rule_ids": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "final_effect": {
+      "type": "string",
+      "enum": [
+        "allow",
+        "deny",
+        "escalate",
+        "require_approval",
+        "require_review",
+        "replan"
+      ]
+    },
+    "actions_produced": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/policy_action"
+      }
+    },
+    "evaluated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  },
+  "$defs": {
+    "policy_action": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "action_id",
+        "kind",
+        "parameters"
+      ],
+      "properties": {
+        "action_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "set_autonomy",
+            "set_approval_required",
+            "set_review_required",
+            "allow_provider",
+            "deny_provider",
+            "allow_reaction",
+            "deny_reaction",
+            "set_retention",
+            "set_export_rule",
+            "set_simulation_threshold",
+            "set_utility_threshold",
+            "set_meta_threshold",
+            "set_escalation_threshold",
+            "emit_event",
+            "custom"
+          ]
+        },
+        "parameters": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      }
+    }
+  }
+}

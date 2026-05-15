@@ -76,6 +76,18 @@ SCHEMA_CONTRACT_MAP: dict[str, tuple[str, str]] = {
         "mcoi_runtime.contracts.policy",
         "PolicyDecision",
     ),
+    "policy_rule.schema.json": (
+        "mcoi_runtime.contracts.governance",
+        "PolicyRule",
+    ),
+    "policy_bundle.schema.json": (
+        "mcoi_runtime.contracts.governance",
+        "PolicyBundle",
+    ),
+    "policy_evaluation_trace.schema.json": (
+        "mcoi_runtime.contracts.governance",
+        "PolicyEvaluationTrace",
+    ),
     "replay_record.schema.json": (
         "mcoi_runtime.contracts.replay",
         "ReplayRecord",
@@ -648,6 +660,100 @@ def _build_policy_decision(payload: dict[str, Any]) -> Any:
     )
 
 
+def _build_policy_condition(payload: dict[str, Any]) -> Any:
+    from mcoi_runtime.contracts.governance import PolicyCondition
+
+    return PolicyCondition(
+        field_path=payload["field_path"],
+        operator=payload["operator"],
+        expected_value=payload.get("expected_value"),
+    )
+
+
+def _build_policy_action(payload: dict[str, Any]) -> Any:
+    from mcoi_runtime.contracts.governance import PolicyAction, PolicyActionKind
+
+    return PolicyAction(
+        action_id=payload["action_id"],
+        kind=PolicyActionKind(payload["kind"]),
+        parameters=payload["parameters"],
+    )
+
+
+def _build_policy_scope(payload: dict[str, Any]) -> Any:
+    from mcoi_runtime.contracts.governance import PolicyScope, PolicyScopeKind
+
+    return PolicyScope(
+        scope_id=payload["scope_id"],
+        kind=PolicyScopeKind(payload["kind"]),
+        ref_id=payload.get("ref_id"),
+        description=payload["description"],
+    )
+
+
+def _build_policy_rule(payload: dict[str, Any]) -> Any:
+    from mcoi_runtime.contracts.governance import PolicyEffect, PolicyRule
+
+    return PolicyRule(
+        rule_id=payload["rule_id"],
+        name=payload["name"],
+        description=payload["description"],
+        effect=PolicyEffect(payload["effect"]),
+        conditions=tuple(_build_policy_condition(condition) for condition in payload["conditions"]),
+        actions=tuple(_build_policy_action(action) for action in payload["actions"]),
+        scope=_build_policy_scope(payload["scope"]),
+        priority=payload["priority"],
+        enabled=payload["enabled"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_policy_version(payload: dict[str, Any]) -> Any:
+    from mcoi_runtime.contracts.governance import PolicyVersion
+
+    return PolicyVersion(
+        version_id=payload["version_id"],
+        major=payload["major"],
+        minor=payload["minor"],
+        patch=payload["patch"],
+        created_at=payload["created_at"],
+        description=payload["description"],
+    )
+
+
+def _build_policy_bundle(payload: dict[str, Any]) -> Any:
+    from mcoi_runtime.contracts.governance import PolicyBundle
+
+    return PolicyBundle(
+        bundle_id=payload["bundle_id"],
+        name=payload["name"],
+        version=_build_policy_version(payload["version"]),
+        rules=tuple(_build_policy_rule(rule) for rule in payload["rules"]),
+        created_at=payload["created_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_policy_evaluation_trace(payload: dict[str, Any]) -> Any:
+    from mcoi_runtime.contracts.governance import PolicyEffect, PolicyEvaluationTrace
+
+    return PolicyEvaluationTrace(
+        trace_id=payload["trace_id"],
+        bundle_id=payload["bundle_id"],
+        subject_id=payload["subject_id"],
+        context_snapshot=payload["context_snapshot"],
+        rules_evaluated=payload["rules_evaluated"],
+        rules_matched=payload["rules_matched"],
+        rules_fired=payload["rules_fired"],
+        matched_rule_ids=tuple(payload["matched_rule_ids"]),
+        fired_rule_ids=tuple(payload["fired_rule_ids"]),
+        final_effect=PolicyEffect(payload["final_effect"]),
+        actions_produced=tuple(_build_policy_action(action) for action in payload["actions_produced"]),
+        evaluated_at=payload["evaluated_at"],
+        metadata=payload["metadata"],
+    )
+
+
 def _build_execution_result(payload: dict[str, Any]) -> Any:
     from mcoi_runtime.contracts.execution import EffectRecord, ExecutionOutcome, ExecutionResult
 
@@ -889,6 +995,9 @@ FIXTURE_BUILDERS: dict[str, SharedFixtureBuilder] = {
     "capability_descriptor.schema.json": _build_capability_descriptor,
     "environment_fingerprint.schema.json": _build_environment_fingerprint,
     "policy_decision.schema.json": _build_policy_decision,
+    "policy_rule.schema.json": _build_policy_rule,
+    "policy_bundle.schema.json": _build_policy_bundle,
+    "policy_evaluation_trace.schema.json": _build_policy_evaluation_trace,
     "execution_result.schema.json": _build_execution_result,
     "model_invocation.schema.json": _build_model_invocation,
     "model_response.schema.json": _build_model_response,

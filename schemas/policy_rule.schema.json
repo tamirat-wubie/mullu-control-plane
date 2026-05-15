@@ -1,0 +1,183 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:policy-rule:1",
+  "title": "Policy Rule",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "rule_id",
+    "name",
+    "description",
+    "effect",
+    "conditions",
+    "actions",
+    "scope",
+    "priority",
+    "enabled",
+    "metadata"
+  ],
+  "properties": {
+    "rule_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "description": {
+      "type": "string",
+      "minLength": 1
+    },
+    "effect": {
+      "type": "string",
+      "enum": [
+        "allow",
+        "deny",
+        "escalate",
+        "require_approval",
+        "require_review",
+        "replan"
+      ]
+    },
+    "conditions": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/policy_condition"
+      }
+    },
+    "actions": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/policy_action"
+      }
+    },
+    "scope": {
+      "$ref": "#/$defs/policy_scope"
+    },
+    "priority": {
+      "type": "integer"
+    },
+    "enabled": {
+      "type": "boolean"
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  },
+  "$defs": {
+    "policy_condition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "field_path",
+        "operator",
+        "expected_value"
+      ],
+      "properties": {
+        "field_path": {
+          "type": "string",
+          "minLength": 1
+        },
+        "operator": {
+          "type": "string",
+          "enum": [
+            "eq",
+            "neq",
+            "gt",
+            "gte",
+            "lt",
+            "lte",
+            "contains",
+            "in",
+            "exists",
+            "not_exists",
+            "matches"
+          ]
+        },
+        "expected_value": true
+      }
+    },
+    "policy_action": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "action_id",
+        "kind",
+        "parameters"
+      ],
+      "properties": {
+        "action_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "set_autonomy",
+            "set_approval_required",
+            "set_review_required",
+            "allow_provider",
+            "deny_provider",
+            "allow_reaction",
+            "deny_reaction",
+            "set_retention",
+            "set_export_rule",
+            "set_simulation_threshold",
+            "set_utility_threshold",
+            "set_meta_threshold",
+            "set_escalation_threshold",
+            "emit_event",
+            "custom"
+          ]
+        },
+        "parameters": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      }
+    },
+    "policy_scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "scope_id",
+        "kind",
+        "ref_id",
+        "description"
+      ],
+      "properties": {
+        "scope_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "global",
+            "deployment",
+            "team",
+            "function",
+            "job",
+            "workflow",
+            "provider",
+            "capability"
+          ]
+        },
+        "ref_id": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1
+        },
+        "description": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

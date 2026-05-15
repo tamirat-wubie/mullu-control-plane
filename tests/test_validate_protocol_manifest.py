@@ -58,6 +58,25 @@ def test_protocol_manifest_indexes_claim_verification_report() -> None:
     assert claim_entry["surface"] == "claim"
 
 
+def test_protocol_manifest_indexes_policy_dsl_schemas() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    rule_entry = entries["policy-rule"]
+    bundle_entry = entries["policy-bundle"]
+    trace_entry = entries["policy-evaluation-trace"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert rule_entry["path"] == "schemas/policy_rule.schema.json"
+    assert rule_entry["urn"] == "urn:mullusi:schema:policy-rule:1"
+    assert rule_entry["surface"] == "policy"
+    assert bundle_entry["path"] == "schemas/policy_bundle.schema.json"
+    assert bundle_entry["urn"] == "urn:mullusi:schema:policy-bundle:1"
+    assert bundle_entry["surface"] == "policy"
+    assert trace_entry["path"] == "schemas/policy_evaluation_trace.schema.json"
+    assert trace_entry["urn"] == "urn:mullusi:schema:policy-evaluation-trace:1"
+    assert trace_entry["surface"] == "policy"
+
+
 def test_protocol_manifest_indexes_connector_self_healing_receipt() -> None:
     manifest = load_manifest()
     entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
