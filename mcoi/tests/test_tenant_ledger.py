@@ -157,4 +157,3 @@ class TestGlobalStats:
         assert stats["total_entries"] == 2
         assert stats["total_sessions"] == 1
         assert stats["active_sessions"] == 1
-
