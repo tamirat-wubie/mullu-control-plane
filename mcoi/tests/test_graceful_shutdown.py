@@ -142,6 +142,38 @@ class TestShutdownManager:
         assert observed[0]["shutdown_started"] is True
         assert observed[0]["shutdown_complete"] is False
 
+    def test_concurrent_execute_returns_first_result_once(self):
+        mgr = ShutdownManager()
+        entered = threading.Event()
+        release = threading.Event()
+        calls: list[str] = []
+        results = []
+
+        def controlled_hook():
+            calls.append("persist")
+            entered.set()
+            release.wait(timeout=1.0)
+            return {"released": release.is_set()}
+
+        def run_execute():
+            results.append(mgr.execute())
+
+        mgr.register("persist", controlled_hook, timeout_seconds=1.0)
+        first = threading.Thread(target=run_execute)
+        second = threading.Thread(target=run_execute)
+
+        first.start()
+        assert entered.wait(timeout=1.0) is True
+        second.start()
+        release.set()
+        first.join(timeout=1.0)
+        second.join(timeout=1.0)
+
+        assert calls == ["persist"]
+        assert len(results) == 2
+        assert len({id(result) for result in results}) == 1
+        assert results[0].hooks_succeeded == 1
+
     def test_slow_hook_times_out_without_blocking_later_hooks(self):
         mgr = ShutdownManager()
         release = threading.Event()
