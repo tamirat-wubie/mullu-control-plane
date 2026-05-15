@@ -7,6 +7,8 @@ import sqlite3
 import json
 from typing import Any
 
+from ._serialization import loads_strict_json
+
 class SQLiteStore:
     def __init__(self, db_path: str = "mullu.db"):
         self._path = db_path
@@ -67,7 +69,7 @@ class SQLiteStore:
             "SELECT id, entry_type, actor_id, content, content_hash, created_at FROM ledger WHERE tenant_id = ? ORDER BY id DESC LIMIT ?",
             (tenant_id, limit),
         ).fetchall()
-        return [{"id": r[0], "type": r[1], "actor": r[2], "content": json.loads(r[3]), "hash": r[4], "at": r[5]} for r in rows]
+        return [{"id": r[0], "type": r[1], "actor": r[2], "content": loads_strict_json(r[3]), "hash": r[4], "at": r[5]} for r in rows]
 
     def ledger_count(self, tenant_id: str | None = None) -> int:
         if tenant_id:

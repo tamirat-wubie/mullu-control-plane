@@ -22,6 +22,8 @@ from contextlib import contextmanager
 from datetime import datetime, timezone
 from typing import Any, Iterator, Protocol
 
+from ._serialization import loads_strict_json
+
 
 _log = _logging.getLogger(__name__)
 
@@ -417,7 +419,7 @@ class PostgresStore:
             )
             rows = cur.fetchall()
         return [
-            {"id": r[0], "type": r[1], "actor": r[2], "content": json.loads(r[3]), "hash": r[4], "at": r[5]}
+            {"id": r[0], "type": r[1], "actor": r[2], "content": loads_strict_json(r[3]), "hash": r[4], "at": r[5]}
             for r in rows
         ]
 
