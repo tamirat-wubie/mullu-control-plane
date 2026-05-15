@@ -819,6 +819,46 @@ def test_discover_release_status_summary_exposes_live_inventory() -> None:
         "integration/contracts_compat/fixtures/mcoi_runtime/epistemic_closure_report.json"
         in summary.mcoi_runtime_fixtures
     )
+    assert (
+        "integration/contracts_compat/fixtures/mcoi_runtime/belief_record.json"
+        in summary.mcoi_runtime_fixtures
+    )
+    assert (
+        "integration/contracts_compat/fixtures/mcoi_runtime/uncertainty_hypothesis.json"
+        in summary.mcoi_runtime_fixtures
+    )
+    assert (
+        "integration/contracts_compat/fixtures/mcoi_runtime/evidence_weight_record.json"
+        in summary.mcoi_runtime_fixtures
+    )
+    assert (
+        "integration/contracts_compat/fixtures/mcoi_runtime/confidence_interval.json"
+        in summary.mcoi_runtime_fixtures
+    )
+    assert (
+        "integration/contracts_compat/fixtures/mcoi_runtime/belief_update.json"
+        in summary.mcoi_runtime_fixtures
+    )
+    assert (
+        "integration/contracts_compat/fixtures/mcoi_runtime/competing_hypothesis_set.json"
+        in summary.mcoi_runtime_fixtures
+    )
+    assert (
+        "integration/contracts_compat/fixtures/mcoi_runtime/belief_decision.json"
+        in summary.mcoi_runtime_fixtures
+    )
+    assert (
+        "integration/contracts_compat/fixtures/mcoi_runtime/uncertainty_assessment.json"
+        in summary.mcoi_runtime_fixtures
+    )
+    assert (
+        "integration/contracts_compat/fixtures/mcoi_runtime/uncertainty_snapshot.json"
+        in summary.mcoi_runtime_fixtures
+    )
+    assert (
+        "integration/contracts_compat/fixtures/mcoi_runtime/uncertainty_closure_report.json"
+        in summary.mcoi_runtime_fixtures
+    )
 
 
 def test_validate_release_status_strictly() -> None:
@@ -829,7 +869,7 @@ def test_validate_release_status_strictly() -> None:
     assert len(summary.schema_files) >= 10
     assert len(summary.config_artifacts) >= 5
     assert len(summary.maf_runtime_fixtures) >= 89
-    assert len(summary.mcoi_runtime_fixtures) >= 171
+    assert len(summary.mcoi_runtime_fixtures) >= 181
     assert summary.ci_workflow_present is True
     assert summary.release_version == "0.4.3 (v3.13.3)"
     assert summary.release_date == "2026-05-06"
