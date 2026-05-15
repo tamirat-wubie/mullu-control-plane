@@ -1849,6 +1849,30 @@ def proof_coverage_matrix() -> dict[str, Any]:
             ],
         ),
         _surface(
+            "effect_assurance_graph_commit",
+            [
+                "EffectAssuranceGate.commit_graph",
+                "EffectAssuranceGate.graph_commit_receipts",
+                "EffectAssuranceGate.graph_commit_effect_records",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "mcoi/mcoi_runtime/core/effect_assurance.py",
+                "mcoi/mcoi_runtime/core/operational_graph.py",
+                "mcoi/tests/test_effect_assurance_core.py",
+            ],
+            "Effect Assurance graph commits emit bounded receipts for MATCH-only operational graph mutation and expose those receipts as actual effects for observation.",
+            [
+                "effect_graph_commit_requires_match",
+                "effect_graph_commit_receipt_emitted",
+                "effect_graph_commit_receipt_converts_to_actual_effect",
+                "effect_graph_commit_receipt_closes_effect_assurance",
+            ],
+        ),
+        _surface(
             "job_engine_lifecycle",
             [
                 "JobEngine.create_job",
@@ -3904,6 +3928,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
         {
             "action_id": "bind_approval_engine_mutations_to_effect_receipts",
             "surfaces": ["approval_engine_lifecycle"],
+            "status": "closed",
+        },
+        {
+            "action_id": "bind_effect_graph_commits_to_effect_receipts",
+            "surfaces": ["effect_assurance_graph_commit"],
             "status": "closed",
         },
         {

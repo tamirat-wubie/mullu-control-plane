@@ -14,6 +14,7 @@ Invariants:
 from __future__ import annotations
 
 from collections.abc import Callable
+from dataclasses import dataclass, field
 from typing import Any, Mapping
 
 from mcoi_runtime.contracts.effect_assurance import (
@@ -60,6 +61,72 @@ _RISK_SUCCESS: dict[RiskLevel, float] = {
 }
 
 
+@dataclass(frozen=True, slots=True)
+class EffectGraphCommitReceipt:
+    """Observed Effect Assurance operational graph commit receipt."""
+
+    receipt_id: str
+    mutation_type: str
+    effect_name: str
+    command_id: str
+    effect_plan_id: str
+    reconciliation_id: str
+    evidence_ref: str
+    verification_result_id: str | None
+    observed_effect_ids: tuple[str, ...]
+    observed_evidence_refs: tuple[str, ...]
+    before_node_count: int
+    before_edge_count: int
+    after_node_count: int
+    after_edge_count: int
+    recorded_at: str
+    metadata: dict[str, Any] = field(default_factory=dict)
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "receipt_id": self.receipt_id,
+            "mutation_type": self.mutation_type,
+            "effect_name": self.effect_name,
+            "command_id": self.command_id,
+            "effect_plan_id": self.effect_plan_id,
+            "reconciliation_id": self.reconciliation_id,
+            "evidence_ref": self.evidence_ref,
+            "verification_result_id": self.verification_result_id,
+            "observed_effect_ids": self.observed_effect_ids,
+            "observed_evidence_refs": self.observed_evidence_refs,
+            "before_node_count": self.before_node_count,
+            "before_edge_count": self.before_edge_count,
+            "after_node_count": self.after_node_count,
+            "after_edge_count": self.after_edge_count,
+            "recorded_at": self.recorded_at,
+            "metadata": dict(self.metadata),
+        }
+
+    def to_effect_record(self) -> EffectRecord:
+        return EffectRecord(
+            name=self.effect_name,
+            details={
+                "effect_id": self.effect_name,
+                "receipt_id": self.receipt_id,
+                "mutation_type": self.mutation_type,
+                "command_id": self.command_id,
+                "effect_plan_id": self.effect_plan_id,
+                "reconciliation_id": self.reconciliation_id,
+                "evidence_ref": self.evidence_ref,
+                "verification_result_id": self.verification_result_id,
+                "observed_effect_ids": self.observed_effect_ids,
+                "observed_evidence_refs": self.observed_evidence_refs,
+                "before_node_count": self.before_node_count,
+                "before_edge_count": self.before_edge_count,
+                "after_node_count": self.after_node_count,
+                "after_edge_count": self.after_edge_count,
+                "observed_at": self.recorded_at,
+                "metadata": dict(self.metadata),
+                "source": "effect_assurance_graph_commit",
+            },
+        )
+
+
 class EffectAssuranceGate:
     """Mandatory bridge from approved action to evidence-backed commit."""
 
@@ -73,11 +140,20 @@ class EffectAssuranceGate:
         self._clock = clock
         self._graph = graph
         self._simulation_engine = simulation_engine
+        self._graph_commit_receipts: list[EffectGraphCommitReceipt] = []
 
     @property
     def graph_commit_available(self) -> bool:
         """Return whether matched effects can be committed to an operational graph."""
         return self._graph is not None
+
+    def graph_commit_receipts(self, limit: int = 50) -> tuple[EffectGraphCommitReceipt, ...]:
+        """Return recent Effect Assurance graph commit receipts in append order."""
+        return tuple(self._graph_commit_receipts[-limit:])
+
+    def graph_commit_effect_records(self, limit: int = 50) -> tuple[EffectRecord, ...]:
+        """Return recent graph commit receipts as execution actual-effect records."""
+        return tuple(receipt.to_effect_record() for receipt in self.graph_commit_receipts(limit=limit))
 
     def create_plan(
         self,
@@ -344,7 +420,7 @@ class EffectAssuranceGate:
         plan: EffectPlan,
         observed_effects: tuple[ObservedEffect, ...],
         reconciliation: EffectReconciliation,
-    ) -> None:
+    ) -> EffectGraphCommitReceipt:
         """Commit a reconciled action to the operational graph."""
         if self._graph is None:
             raise RuntimeCoreInvariantError("graph commit requires graph")
@@ -353,6 +429,7 @@ class EffectAssuranceGate:
         if not observed_effects:
             raise RuntimeCoreInvariantError("graph commit requires observed effects")
 
+        before_snapshot = self._graph.capture_snapshot()
         command_node = self._graph.ensure_node(
             f"command:{plan.command_id}",
             NodeType.JOB,
@@ -384,6 +461,63 @@ class EffectAssuranceGate:
             self._graph.add_edge(EdgeType.PRODUCED, command_node.node_id, provider_node.node_id)
             self._graph.add_evidence_link(provider_node.node_id, evidence_node.node_id, "observed_effect", 1.0)
             self._graph.add_edge(EdgeType.VERIFIED_BY, provider_node.node_id, verification_node.node_id)
+        after_snapshot = self._graph.capture_snapshot()
+        return self._record_graph_commit_receipt(
+            plan=plan,
+            observed_effects=observed_effects,
+            reconciliation=reconciliation,
+            before_node_count=before_snapshot.node_count,
+            before_edge_count=before_snapshot.edge_count,
+            after_node_count=after_snapshot.node_count,
+            after_edge_count=after_snapshot.edge_count,
+            recorded_at=after_snapshot.captured_at,
+        )
+
+    def _record_graph_commit_receipt(
+        self,
+        *,
+        plan: EffectPlan,
+        observed_effects: tuple[ObservedEffect, ...],
+        reconciliation: EffectReconciliation,
+        before_node_count: int,
+        before_edge_count: int,
+        after_node_count: int,
+        after_edge_count: int,
+        recorded_at: str,
+    ) -> EffectGraphCommitReceipt:
+        receipt_id = stable_identifier(
+            "effect-graph-commit-receipt",
+            {
+                "command_id": plan.command_id,
+                "effect_plan_id": plan.effect_plan_id,
+                "reconciliation_id": reconciliation.reconciliation_id,
+                "ordinal": len(self._graph_commit_receipts),
+                "recorded_at": recorded_at,
+            },
+        )
+        receipt = EffectGraphCommitReceipt(
+            receipt_id=receipt_id,
+            mutation_type="commit_graph",
+            effect_name="effect_graph_committed",
+            command_id=plan.command_id,
+            effect_plan_id=plan.effect_plan_id,
+            reconciliation_id=reconciliation.reconciliation_id,
+            evidence_ref=f"effect-graph-commit:{receipt_id}",
+            verification_result_id=reconciliation.verification_result_id,
+            observed_effect_ids=tuple(effect.effect_id for effect in observed_effects),
+            observed_evidence_refs=tuple(effect.evidence_ref for effect in observed_effects),
+            before_node_count=before_node_count,
+            before_edge_count=before_edge_count,
+            after_node_count=after_node_count,
+            after_edge_count=after_edge_count,
+            recorded_at=recorded_at,
+            metadata={
+                "node_delta": after_node_count - before_node_count,
+                "edge_delta": after_edge_count - before_edge_count,
+            },
+        )
+        self._graph_commit_receipts.append(receipt)
+        return receipt
 
 
 def _mapping_or_empty(value: Any) -> Mapping[str, Any]:
