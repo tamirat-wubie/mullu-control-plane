@@ -31,9 +31,11 @@ from scripts.validate_public_naming_readiness import (  # noqa: E402
     REQUIRED_OPEN_GATES,
     REQUIRED_TSDR_SERIALS,
     REQUIRED_WEBSITE_ROUTES,
+    OFFICIAL_CLEARANCE_ACCESS_LOG_PATH,
     PRODUCT_ROUTE_DEPLOYMENT_HANDOFF_PATH,
     PRODUCT_ROUTE_DRAFT_PATH,
     READINESS_SCHEMA_PATH,
+    SDK_API_STABILITY_REVIEW_PATH,
     WEBSITE_DEPLOYMENT_EVIDENCE_LOG_PATH,
     WEBSITE_RECHECK_LOG_PATH,
     WITNESS_PATH,
@@ -43,10 +45,12 @@ from scripts.validate_public_naming_readiness import (  # noqa: E402
     validate_domain_acquisition_plan,
     validate_product_route_draft,
     validate_product_route_deployment_handoff,
+    validate_official_clearance_access_log,
     validate_public_naming_artifact_manifest,
     validate_public_launch_copy,
     validate_public_naming_readiness,
     validate_public_naming_review_packet,
+    validate_sdk_api_stability_review,
     validate_tsdr_evidence_template,
     validate_website_deployment_evidence_log,
     validate_website_deployment_evidence_template,
@@ -242,8 +246,8 @@ def test_product_route_deployment_handoff_preserves_live_blocker() -> None:
 def test_product_route_deployment_handoff_rejects_missing_target(tmp_path: Path) -> None:
     handoff_path = tmp_path / "PRODUCT_ROUTE_DEPLOYMENT_HANDOFF.md"
     handoff_text = PRODUCT_ROUTE_DEPLOYMENT_HANDOFF_PATH.read_text(encoding="utf-8").replace(
-        "../mullusi/mullu/index.html",
-        "../mullusi/index.html",
+        "../mullusi_website/mullu/index.html",
+        "../missing-route-target/index.html",
     )
     handoff_path.write_text(handoff_text, encoding="utf-8")
 
@@ -431,6 +435,38 @@ def test_required_official_searches_keep_uspto_serials_and_classes() -> None:
 
 def test_public_naming_review_packet_contains_required_review_inputs() -> None:
     validate_public_naming_review_packet()
+
+
+def test_official_clearance_access_log_preserves_open_clearance_gates() -> None:
+    validate_official_clearance_access_log()
+
+
+def test_official_clearance_access_log_rejects_missing_api_key_boundary(tmp_path: Path) -> None:
+    log_path = tmp_path / "OFFICIAL_CLEARANCE_ACCESS_LOG_2026-05-15.md"
+    log_text = OFFICIAL_CLEARANCE_ACCESS_LOG_PATH.read_text(encoding="utf-8").replace(
+        "API key",
+        "credential",
+    )
+    log_path.write_text(log_text, encoding="utf-8")
+
+    with pytest.raises(AssertionError, match="official clearance access log missing literals"):
+        validate_official_clearance_access_log(log_path)
+
+
+def test_sdk_api_stability_review_preserves_contract_boundary() -> None:
+    validate_sdk_api_stability_review()
+
+
+def test_sdk_api_stability_review_rejects_missing_platform_term(tmp_path: Path) -> None:
+    review_path = tmp_path / "SDK_API_STABILITY_REVIEW_2026-05-15.md"
+    review_text = SDK_API_STABILITY_REVIEW_PATH.read_text(encoding="utf-8").replace(
+        "Mullu Platform",
+        "Mullu Product",
+    )
+    review_path.write_text(review_text, encoding="utf-8")
+
+    with pytest.raises(AssertionError, match="SDK/API stability review missing literals"):
+        validate_sdk_api_stability_review(review_path)
 
 
 def test_public_naming_review_packet_rejects_missing_serial(tmp_path: Path) -> None:

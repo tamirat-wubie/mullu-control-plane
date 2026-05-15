@@ -127,6 +127,45 @@ def test_capability_manifest_registry_blocks_production_hot_reload_for_effects(t
     assert "production_environment_requires_C6_or_C7_maturity" in admission.errors
 
 
+def test_capability_manifest_registry_enforces_hot_reload_metadata_environment(
+    tmp_path: Path,
+) -> None:
+    payload = _temp_payload("software_dev_change_run.capability.json")
+    payload["allowed_environments"] = ["local", "pilot", "production"]
+    payload["maturity"] = "C6"
+    payload["effect_bearing"] = False
+    payload["sandbox_required"] = False
+    payload["rollback_required"] = False
+    payload["metadata"]["hot_reload_allowed_environments"] = ["local", "pilot"]
+    payload["metadata"]["production_hot_reload_allowed"] = False
+    temp_repo = _make_temp_manifest_repo(payload, root=tmp_path)
+    manifest_path = temp_repo / "capabilities" / "software_dev" / "manifests" / "software_dev_change_run.capability.json"
+    registry = CapabilityManifestRegistry(repo_root=temp_repo, clock=_clock)
+
+    admission = registry.admit_path(manifest_path, environment="production", hot_reload=True)
+
+    assert admission.status is CapabilityManifestAdmissionStatus.REJECTED
+    assert "hot_reload_environment_not_allowed:production" in admission.errors
+    assert "production_hot_reload_denied_by_manifest_metadata" in admission.errors
+    assert registry.manifest_count == 0
+
+
+def test_capability_manifest_registry_requires_hot_reload_metadata(
+    tmp_path: Path,
+) -> None:
+    payload = _temp_payload("software_dev_change_run.capability.json")
+    payload["metadata"].pop("hot_reload_allowed_environments")
+    temp_repo = _make_temp_manifest_repo(payload, root=tmp_path)
+    manifest_path = temp_repo / "capabilities" / "software_dev" / "manifests" / "software_dev_change_run.capability.json"
+    registry = CapabilityManifestRegistry(repo_root=temp_repo, clock=_clock)
+
+    admission = registry.admit_path(manifest_path, environment="local", hot_reload=True)
+
+    assert admission.status is CapabilityManifestAdmissionStatus.REJECTED
+    assert "hot_reload_allowed_environments_required" in admission.errors
+    assert registry.manifest_count == 0
+
+
 def _clock() -> str:
     return "2026-05-13T00:00:00+00:00"
 
@@ -145,7 +184,7 @@ def _make_temp_manifest_repo(payload: dict, *, root: Path) -> Path:
     schema_dir = temp_repo / "schemas" / "software_dev"
     manifest_dir.mkdir(parents=True, exist_ok=True)
     schema_dir.mkdir(parents=True, exist_ok=True)
-    manifest_path = manifest_dir / "software_dev_change_run.capability.json"
+    manifest_path = manifest_dir / f"{payload['capability_id'].replace('.', '_')}.capability.json"
     manifest_path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
     (schema_dir / "change_run.input.schema.json").write_text(
         json.dumps({"$schema": "https://json-schema.org/draft/2020-12/schema", "type": "object"}) + "\n",

@@ -124,7 +124,10 @@ def create_temporal_schedule(req: TemporalScheduleRequest):
         )
         deps.temporal_scheduler_store.save_action(schedule)
     except (RuntimeCoreInvariantError, ValueError, PersistenceError) as exc:
-        raise HTTPException(400, detail=_temporal_error_detail(str(exc), "invalid_temporal_schedule")) from exc
+        raise HTTPException(
+            400,
+            detail=_temporal_error_detail("invalid temporal schedule", "invalid_temporal_schedule"),
+        ) from exc
     return {"schedule": _schedule_to_body(schedule), "governed": True}
 
 
@@ -181,9 +184,9 @@ def cancel_temporal_schedule(schedule_id: str, worker_id: str = "temporal-api"):
             actor_id=worker_id,
         )
     except RuntimeCoreInvariantError as exc:
-        raise HTTPException(404, detail=_temporal_error_detail(str(exc), "schedule_not_found")) from exc
+        raise HTTPException(404, detail=_temporal_error_detail("schedule not found", "schedule_not_found")) from exc
     except (ValueError, PersistenceError) as exc:
-        raise HTTPException(400, detail=_temporal_error_detail(str(exc), "temporal_cancel_failed")) from exc
+        raise HTTPException(400, detail=_temporal_error_detail("temporal cancel failed", "temporal_cancel_failed")) from exc
     return {
         "schedule": _schedule_to_body(schedule),
         "receipt": _receipt_to_body(receipt),
@@ -207,7 +210,7 @@ def tick_temporal_worker(req: TemporalWorkerTickRequest):
         )
         results = worker.run_once(limit=req.limit)
     except (TypeError, ValueError, PersistenceError) as exc:
-        raise HTTPException(400, detail=_temporal_error_detail(str(exc), "temporal_worker_error")) from exc
+        raise HTTPException(400, detail=_temporal_error_detail("temporal worker error", "temporal_worker_error")) from exc
     return {
         "results": [
             {

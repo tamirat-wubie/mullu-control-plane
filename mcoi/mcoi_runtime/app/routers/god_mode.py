@@ -92,6 +92,10 @@ def _ensure_seeded() -> None:
         install_default_capabilities()
 
 
+def _god_mode_error_detail(error: str, error_code: str) -> dict[str, object]:
+    return {"error": error, "error_code": error_code, "governed": True}
+
+
 # --- Catalog ----------------------------------------------------------------
 
 
@@ -157,7 +161,10 @@ def get_capability(module: str, name: str) -> dict[str, Any]:
     try:
         return _capability_view(module, name)
     except GodModeRegistryError as exc:
-        raise HTTPException(status_code=404, detail={"error": str(exc), "governed": True})
+        raise HTTPException(
+            status_code=404,
+            detail=_god_mode_error_detail("capability not found", "capability_not_found"),
+        ) from exc
 
 
 # --- Registration agreements ------------------------------------------------
@@ -177,8 +184,9 @@ def agree_to_register(
         )
     except GodModeRegistryError as exc:
         raise HTTPException(
-            status_code=400, detail={"error": str(exc), "governed": True}
-        )
+            status_code=400,
+            detail=_god_mode_error_detail("registration agreement failed", "registration_agreement_failed"),
+        ) from exc
     return {
         "governed": True,
         "agreement": agreement.to_json_dict(),
@@ -198,8 +206,9 @@ def withdraw_agreement(
         )
     except GodModeRegistryError as exc:
         raise HTTPException(
-            status_code=400, detail={"error": str(exc), "governed": True}
-        )
+            status_code=400,
+            detail=_god_mode_error_detail("registration withdrawal failed", "registration_withdrawal_failed"),
+        ) from exc
     return {
         "governed": True,
         "agreement": withdrawn.to_json_dict(),
@@ -217,8 +226,9 @@ def suspend_capability(
         get_registry().suspend(module, name)
     except GodModeRegistryError as exc:
         raise HTTPException(
-            status_code=404, detail={"error": str(exc), "governed": True}
-        )
+            status_code=404,
+            detail=_god_mode_error_detail("capability not found", "capability_not_found"),
+        ) from exc
     return {
         "governed": True,
         "module": module,
@@ -236,8 +246,9 @@ def resume_capability(module: str, name: str) -> dict[str, Any]:
         state = get_registry().state_of(module, name).value
     except GodModeRegistryError as exc:
         raise HTTPException(
-            status_code=404, detail={"error": str(exc), "governed": True}
-        )
+            status_code=404,
+            detail=_god_mode_error_detail("capability not found", "capability_not_found"),
+        ) from exc
     return {"governed": True, "module": module, "name": name, "state": state}
 
 
@@ -261,8 +272,9 @@ def issue_ticket(
         )
     except GodModeEngineError as exc:
         raise HTTPException(
-            status_code=400, detail={"error": str(exc), "governed": True}
-        )
+            status_code=400,
+            detail=_god_mode_error_detail("ticket issue failed", "ticket_issue_failed"),
+        ) from exc
     return {
         "governed": True,
         "ticket": ticket.to_json_dict(),
@@ -298,8 +310,9 @@ def get_ticket(ticket_id: str) -> dict[str, Any]:
         ticket = get_engine().get_ticket(ticket_id)
     except GodModeEngineError as exc:
         raise HTTPException(
-            status_code=404, detail={"error": str(exc), "governed": True}
-        )
+            status_code=404,
+            detail=_god_mode_error_detail("ticket not found", "ticket_not_found"),
+        ) from exc
     return {"governed": True, "ticket": ticket.to_json_dict()}
 
 
@@ -310,10 +323,7 @@ def consume_ticket(ticket_id: str, req: ConsumeTicketRequest) -> dict[str, Any]:
     except ValueError as exc:
         raise HTTPException(
             status_code=400,
-            detail={
-                "error": f"invalid outcome: {req.outcome}",
-                "governed": True,
-            },
+            detail=_god_mode_error_detail("invalid outcome", "invalid_outcome"),
         ) from exc
     try:
         receipt = get_engine().consume(
@@ -327,8 +337,9 @@ def consume_ticket(ticket_id: str, req: ConsumeTicketRequest) -> dict[str, Any]:
         )
     except GodModeEngineError as exc:
         raise HTTPException(
-            status_code=400, detail={"error": str(exc), "governed": True}
-        )
+            status_code=400,
+            detail=_god_mode_error_detail("ticket consume failed", "ticket_consume_failed"),
+        ) from exc
     return {"governed": True, "receipt": receipt.to_json_dict()}
 
 
@@ -342,8 +353,9 @@ def revoke_ticket(ticket_id: str, req: RevokeTicketRequest) -> dict[str, Any]:
         )
     except GodModeEngineError as exc:
         raise HTTPException(
-            status_code=400, detail={"error": str(exc), "governed": True}
-        )
+            status_code=400,
+            detail=_god_mode_error_detail("ticket revoke failed", "ticket_revoke_failed"),
+        ) from exc
     return {"governed": True, "ticket": ticket.to_json_dict()}
 
 
@@ -364,7 +376,7 @@ def list_receipts(
         except ValueError as exc:
             raise HTTPException(
                 status_code=400,
-                detail={"error": f"invalid outcome: {outcome}", "governed": True},
+                detail=_god_mode_error_detail("invalid outcome", "invalid_outcome"),
             ) from exc
     receipts = get_engine().list_receipts(
         actor_id=actor_id,

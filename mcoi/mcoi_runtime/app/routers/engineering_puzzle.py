@@ -25,6 +25,10 @@ from mcoi_runtime.app.routers.deps import deps
 router = APIRouter()
 
 
+def _engineering_puzzle_error_detail(error: str, error_code: str) -> dict[str, object]:
+    return {"error": error, "error_code": error_code, "governed": True}
+
+
 class GoalDeltaRequest(BaseModel):
     """Request to classify and apply an episode goal delta."""
 
@@ -74,7 +78,13 @@ def decide_goal_delta(req: GoalDeltaRequest) -> dict[str, Any]:
             }
         )
     except ValueError as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
+        raise HTTPException(
+            status_code=400,
+            detail=_engineering_puzzle_error_detail(
+                "invalid engineering puzzle goal delta",
+                "invalid_goal_delta",
+            ),
+        ) from exc
 
 
 @router.post("/api/v1/engineering-puzzle/candidates/judge")
@@ -90,4 +100,10 @@ def judge_candidate(req: CandidateJudgmentRequest) -> dict[str, Any]:
             }
         )
     except ValueError as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
+        raise HTTPException(
+            status_code=400,
+            detail=_engineering_puzzle_error_detail(
+                "invalid engineering puzzle candidate judgment",
+                "invalid_candidate_judgment",
+            ),
+        ) from exc

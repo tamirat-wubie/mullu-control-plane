@@ -23,6 +23,7 @@ from scripts.proof_coverage_matrix import (
     route_coverage_report,
     proof_coverage_matrix,
     validate_matrix_routes,
+    witness_integrity_report,
 )
 
 
@@ -89,17 +90,44 @@ def test_evidence_quality_report_tracks_witness_strength_gaps() -> None:
     assert sum(evidence_quality["by_strength"].values()) == len(matrix["surfaces"])
     assert evidence_quality["quality_gap_count"] == len(evidence_quality["quality_gaps"])
     assert evidence_quality["by_strength"]["strong"] >= 1
-    assert evidence_quality["by_strength"]["classified_with_quality_gaps"] >= 1
-    assert evidence_quality["quality_gap_count"] == 10
+    assert evidence_quality["by_strength"]["classified_with_quality_gaps"] == 0
+    assert evidence_quality["quality_gap_count"] == 0
     assert "llm_streaming" not in quality_gaps
     assert "llm_completion" not in quality_gaps
     assert "llm_chat_workflow" not in quality_gaps
     assert "cost_budget_read_models" not in quality_gaps
     assert "model_experiment_control" not in quality_gaps
-    assert "policy_version_registry" in quality_gaps
-    assert quality_gaps["policy_version_registry"]["gaps"] == ["missing_runtime_witness"]
-    assert quality_gaps["policy_version_registry"]["evidence_file_count"] >= 1
-    assert quality_gaps["policy_version_registry"]["runtime_witness_count"] == 0
+    assert "policy_version_registry" not in quality_gaps
+    assert "pilot_provisioning" not in quality_gaps
+    assert "hosted_demo_sandbox" not in quality_gaps
+    assert "gateway_webhook_ingress" not in quality_gaps
+    assert "gateway_approval_resolution" not in quality_gaps
+    assert "replay_determinism" not in quality_gaps
+    assert "tool_invocation" not in quality_gaps
+    assert "governed_session" not in quality_gaps
+    assert "health_docs_exempt" not in quality_gaps
+    assert "lineage_query_api" not in quality_gaps
+
+
+def test_witness_integrity_report_tracks_exact_test_anchors() -> None:
+    matrix = _load_fixture()
+    witness_integrity = matrix["witness_integrity"]
+    surfaces = {
+        record["surface_id"]: record
+        for record in witness_integrity["surfaces"]
+    }
+
+    assert witness_integrity == witness_integrity_report(matrix["surfaces"])
+    assert witness_integrity["runtime_witness_count"] >= witness_integrity["exact_test_anchor_count"]
+    assert witness_integrity["runtime_witness_count"] == (
+        witness_integrity["exact_test_anchor_count"] + witness_integrity["unanchored_witness_count"]
+    )
+    assert surfaces["policy_version_registry"]["unanchored_witness_count"] == 0
+    assert surfaces["pilot_provisioning"]["unanchored_witness_count"] == 0
+    assert surfaces["hosted_demo_sandbox"]["unanchored_witness_count"] == 0
+    assert surfaces["replay_determinism"]["unanchored_witness_count"] == 0
+    assert surfaces["governed_session"]["unanchored_witness_count"] == 0
+    assert surfaces["lineage_query_api"]["unanchored_witness_count"] == 0
 
 
 def test_declared_routes_have_explicit_coverage_classification() -> None:
@@ -1506,6 +1534,7 @@ def test_capability_manifest_registry_surface_admits_governed_manifests() -> Non
     assert "capability_manifest_schema_valid" in witnesses
     assert "software_dev_manifests_admit_locally" in witnesses
     assert "effect_manifest_requires_sandbox_rollback" in witnesses
+    assert "hot_reload_metadata_enforced" in witnesses
     assert "production_hot_reload_denied_for_effect_manifest" in witnesses
     assert "fabric_projects_local_manifest_registry" in witnesses
     assert "fabric_rejects_production_hot_reload_manifest_registry" in witnesses

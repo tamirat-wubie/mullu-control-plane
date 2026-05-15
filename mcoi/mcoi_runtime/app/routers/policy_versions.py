@@ -104,7 +104,6 @@ def register_policy_version(policy_id: str, req: PolicyArtifactRequest) -> dict[
         raise HTTPException(400, detail={
             "error": "policy version registration failed",
             "error_code": "policy_version_registration_failed",
-            "reason": str(exc),
             "governed": True,
         }) from exc
 
@@ -143,7 +142,6 @@ def promote_policy_version(policy_id: str, version: str) -> dict[str, Any]:
         raise HTTPException(400, detail={
             "error": "policy version promotion failed",
             "error_code": "policy_version_promotion_failed",
-            "reason": str(exc),
             "governed": True,
         }) from exc
     deps.audit_trail.record(
@@ -166,7 +164,6 @@ def rollback_policy_version(policy_id: str) -> dict[str, Any]:
         raise HTTPException(400, detail={
             "error": "policy version rollback failed",
             "error_code": "policy_version_rollback_failed",
-            "reason": str(exc),
             "governed": True,
         }) from exc
     deps.audit_trail.record(
@@ -189,7 +186,6 @@ def diff_policy_versions(policy_id: str, from_version: str, to_version: str) -> 
         raise HTTPException(400, detail={
             "error": "policy version diff failed",
             "error_code": "policy_version_diff_failed",
-            "reason": str(exc),
             "governed": True,
         }) from exc
     return {
@@ -239,7 +235,6 @@ def shadow_policy_version(
         raise HTTPException(400, detail={
             "error": "policy shadow evaluation failed",
             "error_code": "policy_shadow_evaluation_failed",
-            "reason": str(exc),
             "governed": True,
         }) from exc
     return {

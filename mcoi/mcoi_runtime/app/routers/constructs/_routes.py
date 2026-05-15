@@ -47,6 +47,10 @@ from mcoi_runtime.substrate.registry_store import STORE
 router = APIRouter(prefix="/constructs", tags=["constructs"])
 
 
+def _construct_error_detail(error: str, error_code: str) -> dict[str, object]:
+    return {"error": error, "error_code": error_code, "governed": True}
+
+
 # ---- Reads ----
 
 
@@ -225,8 +229,11 @@ def create_causation(
             mechanism=payload.mechanism,
             strength=payload.strength,
         )
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=400,
+            detail=_construct_error_detail("invalid causation construct", "invalid_causation_construct"),
+        ) from exc
     _governed_write(c, "create", depends_on=tuple(deps), state=state)
     return _construct_to_payload(c, state.tenant_id)
 
@@ -243,8 +250,11 @@ def create_constraint(
             restriction=payload.restriction,
             violation_response=payload.violation_response,
         )
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=400,
+            detail=_construct_error_detail("invalid constraint construct", "invalid_constraint_construct"),
+        ) from exc
     _governed_write(c, "create", depends_on=(), state=state)
     return _construct_to_payload(c, state.tenant_id)
 
@@ -261,8 +271,11 @@ def create_boundary(
             interface_points=tuple(payload.interface_points),
             permeability=payload.permeability,
         )
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=400,
+            detail=_construct_error_detail("invalid boundary construct", "invalid_boundary_construct"),
+        ) from exc
     _governed_write(b, "create", depends_on=(), state=state)
     return _construct_to_payload(b, state.tenant_id)
 
@@ -373,6 +386,9 @@ def delete_construct(
         )
     try:
         state.graph.unregister(cid)
-    except ValueError as e:
-        raise HTTPException(status_code=409, detail=str(e))
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=409,
+            detail=_construct_error_detail("construct has dependents", "construct_has_dependents"),
+        ) from exc
     STORE.maybe_snapshot(state.tenant_id)

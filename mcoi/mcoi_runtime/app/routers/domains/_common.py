@@ -25,6 +25,17 @@ class DomainOutcome(BaseModel):
     run_id: str | None = None  # populated when persist_run=true and merge succeeds
 
 
+def _domain_error_400(domain: str) -> HTTPException:
+    return HTTPException(
+        status_code=400,
+        detail={
+            "error": "invalid domain request",
+            "error_code": f"invalid_{domain}_request",
+            "governed": True,
+        },
+    )
+
+
 def _gate_or_blocked_outcome(
     *,
     domain: str,

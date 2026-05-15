@@ -42,7 +42,6 @@ def _resolve(uri: str) -> dict[str, Any]:
             detail={
                 "error": "invalid lineage uri",
                 "error_code": "invalid_lineage_uri",
-                "reason": str(exc),
                 "governed": True,
             },
         ) from exc

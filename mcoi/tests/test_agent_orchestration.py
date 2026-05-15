@@ -62,6 +62,9 @@ class TestPlanLifecycle:
         )
         orchestrator.add_proposal(plan.plan_id, proposal)
         assert len(plan.proposals) == 1
+        assert len(plan.proposal_proofs) == 1
+        assert plan.proposal_proofs[0].decision == "accepted"
+        assert plan.proposal_proofs[0].reason == "proposal admitted"
 
     def test_add_proposal_wrong_phase(self, orchestrator):
         plan = orchestrator.create_plan("agent-a", "goal")
@@ -72,6 +75,28 @@ class TestPlanLifecycle:
         with pytest.raises(ValueError, match="^plan not accepting proposals$") as exc_info:
             orchestrator.add_proposal(plan.plan_id, proposal)
         assert OrchestrationPhase.VOTING.value not in str(exc_info.value)
+        assert plan.proposal_proofs[-1].decision == "rejected"
+        assert plan.proposal_proofs[-1].reason == "plan not accepting proposals"
+
+    def test_add_proposal_rejects_duplicate_proposal_id(self, orchestrator):
+        plan = orchestrator.create_plan("agent-a", "goal")
+        first = AgentProposal(
+            proposal_id="p1", agent_id="agent-a",
+            action="search", description="Search docs",
+        )
+        duplicate = AgentProposal(
+            proposal_id="p1", agent_id="agent-a",
+            action="search-again", description="Search docs again",
+        )
+
+        orchestrator.add_proposal(plan.plan_id, first)
+        with pytest.raises(ValueError, match="^proposal already recorded$") as exc_info:
+            orchestrator.add_proposal(plan.plan_id, duplicate)
+
+        assert "p1" not in str(exc_info.value)
+        assert len(plan.proposals) == 1
+        assert plan.proposal_proofs[-1].decision == "rejected"
+        assert plan.proposal_proofs[-1].reason == "proposal already recorded"
 
     def test_add_proposal_plan_unavailable(self, orchestrator):
         proposal = AgentProposal(
@@ -97,6 +122,8 @@ class TestPlanLifecycle:
 
         assert "ghost" not in str(exc_info.value)
         assert plan.proposals == []
+        assert plan.proposal_proofs[0].decision == "rejected"
+        assert plan.proposal_proofs[0].agent_registered is False
 
     def test_add_proposal_rejects_missing_agent_capability_before_voting(self, orchestrator):
         plan = orchestrator.create_plan("agent-a", "goal")
@@ -113,6 +140,8 @@ class TestPlanLifecycle:
 
         assert "deploy" not in str(exc_info.value)
         assert plan.proposals == []
+        assert plan.proposal_proofs[0].decision == "rejected"
+        assert plan.proposal_proofs[0].agent_capable is False
 
     def test_add_proposal_rejects_unmanifested_capability_before_voting(self):
         orch = AgentOrchestrator(
@@ -134,6 +163,8 @@ class TestPlanLifecycle:
 
         assert "deploy" not in str(exc_info.value)
         assert plan.proposals == []
+        assert plan.proposal_proofs[0].decision == "rejected"
+        assert plan.proposal_proofs[0].manifest_admitted is False
 
     def test_submit_empty_plan_fails(self, orchestrator):
         plan = orchestrator.create_plan("agent-a", "goal")
@@ -159,6 +190,8 @@ class TestVotingAndConsensus:
         orchestrator.cast_vote(plan.plan_id, "agent-a", Vote.APPROVE)
         orchestrator.cast_vote(plan.plan_id, "agent-b", Vote.APPROVE)
         assert plan.approval_count == 2
+        assert [proof.decision for proof in plan.vote_proofs] == ["accepted", "accepted"]
+        assert [proof.vote for proof in plan.vote_proofs] == ["approve", "approve"]
 
     def test_quorum_reached(self, orchestrator):
         plan = orchestrator.create_plan("agent-a", "goal")
@@ -186,6 +219,8 @@ class TestVotingAndConsensus:
         with pytest.raises(ValueError, match="^plan not accepting votes$") as exc_info:
             orchestrator.cast_vote(plan.plan_id, "agent-a", Vote.APPROVE)
         assert OrchestrationPhase.PLANNING.value not in str(exc_info.value)
+        assert plan.vote_proofs[0].decision == "rejected"
+        assert plan.vote_proofs[0].reason == "plan not accepting votes"
 
     def test_vote_unknown_agent(self, orchestrator):
         plan = orchestrator.create_plan("agent-a", "goal")
@@ -196,6 +231,24 @@ class TestVotingAndConsensus:
         with pytest.raises(ValueError, match="^voting agent unavailable$") as exc_info:
             orchestrator.cast_vote(plan.plan_id, "ghost", Vote.APPROVE)
         assert "ghost" not in str(exc_info.value)
+        assert plan.vote_proofs[0].decision == "rejected"
+        assert plan.vote_proofs[0].voter_registered is False
+
+    def test_vote_rejects_duplicate_voter(self, orchestrator):
+        plan = orchestrator.create_plan("agent-a", "goal")
+        orchestrator.add_proposal(plan.plan_id, AgentProposal(
+            proposal_id="p1", agent_id="agent-a", action="a", description="d",
+        ))
+        orchestrator.submit_for_voting(plan.plan_id)
+        orchestrator.cast_vote(plan.plan_id, "agent-a", Vote.APPROVE)
+
+        with pytest.raises(ValueError, match="^vote already recorded$") as exc_info:
+            orchestrator.cast_vote(plan.plan_id, "agent-a", Vote.REJECT)
+
+        assert "agent-a" not in str(exc_info.value)
+        assert plan.votes["agent-a"] == Vote.APPROVE
+        assert plan.vote_proofs[-1].decision == "rejected"
+        assert plan.vote_proofs[-1].reason == "vote already recorded"
 
     def test_vote_plan_unavailable(self, orchestrator):
         with pytest.raises(ValueError, match="^plan unavailable$") as exc_info:
@@ -521,6 +574,10 @@ class TestSummary:
         assert s["dispatch_proofs"] == 1
         assert s["dispatch_decisions"] == {"executed": 1}
         assert s["handoff_decisions"] == {}
+        assert s["proposal_proofs"] == 1
+        assert s["proposal_decisions"] == {"accepted": 1}
+        assert s["vote_proofs"] == 2
+        assert s["vote_decisions"] == {"accepted": 2}
 
     def test_plan_to_dict(self, orchestrator):
         plan = orchestrator.create_plan("agent-a", "goal")
@@ -528,6 +585,8 @@ class TestSummary:
         assert d["plan_id"] == plan.plan_id
         assert d["phase"] == "planning"
         assert d["approval_count"] == 0
+        assert d["proposal_proofs"] == []
+        assert d["vote_proofs"] == []
         assert d["dispatch_proofs"] == []
 
     def test_plan_to_dict_includes_dispatch_proofs(self, orchestrator):
@@ -562,11 +621,17 @@ class TestSummary:
         model = orchestrator.read_model(proof_limit=1)
 
         assert model["summary"]["plans_by_phase"] == {"completed": 1}
+        assert model["summary"]["proposal_decisions"] == {"accepted": 1}
+        assert model["summary"]["vote_decisions"] == {"accepted": 2}
         assert model["summary"]["dispatch_decisions"] == {"executed": 1}
         assert model["summary"]["handoff_decisions"] == {
             "transferred": 1,
             "blocked": 1,
         }
+        assert len(model["recent_proposal_proofs"]) == 1
+        assert len(model["recent_vote_proofs"]) == 1
         assert len(model["recent_dispatch_proofs"]) == 1
         assert len(model["recent_handoff_proofs"]) == 1
+        assert model["recent_proposal_proofs"][0]["decision"] == "accepted"
+        assert model["recent_vote_proofs"][0]["agent_id"] == "agent-b"
         assert model["recent_handoff_proofs"][0]["decision"] == "blocked"

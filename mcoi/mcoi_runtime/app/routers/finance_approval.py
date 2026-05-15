@@ -198,7 +198,7 @@ def create_finance_approval_packet(req: FinancePacketCreateRequest):
             ),
         )
     except (RuntimeCoreInvariantError, ValueError) as exc:
-        raise HTTPException(400, detail=_error_detail(str(exc), "invalid_finance_packet")) from exc
+        raise HTTPException(400, detail=_error_detail("invalid finance packet", "invalid_finance_packet")) from exc
 
     store.save_case(case)
     store.append_decision(decision)
@@ -506,7 +506,7 @@ def approve_finance_approval_packet(case_id: str, req: FinancePacketApprovalRequ
                     ),
                 )
     except (RuntimeCoreInvariantError, ValueError) as exc:
-        raise HTTPException(400, detail=_error_detail(str(exc), "finance_approval_failed")) from exc
+        raise HTTPException(400, detail=_error_detail("finance approval failed", "finance_approval_failed")) from exc
 
     store.append_approval(approval)
     for effect in effects:
@@ -531,5 +531,5 @@ def get_finance_approval_packet_proof(case_id: str):
             generated_at=_clock_now(),
         )
     except FinanceProofExportError as exc:
-        raise HTTPException(400, detail=_error_detail(str(exc), "proof_not_exportable")) from exc
+        raise HTTPException(400, detail=_error_detail("proof not exportable", "proof_not_exportable")) from exc
     return {"proof": proof.to_json_dict(), "governed": True}

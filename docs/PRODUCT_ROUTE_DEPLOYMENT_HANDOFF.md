@@ -2,17 +2,21 @@
 
 Purpose: record the deployment handoff for the Mullu private-beta product route.
 Governance scope: source artifact, copied website target, live-route publication, and post-deploy verification.
-Dependencies: `site/mullu/index.html`, `docs/WEBSITE_DEPLOYMENT_EVIDENCE_2026-05-07.md`.
-Invariants: this handoff closes `website_deployment_verification` only for the `/mullu` fallback route; paid public launch remains blocked until the remaining public naming gates close.
+Dependencies: `site/mullu/index.html`, `docs/WEBSITE_DEPLOYMENT_EVIDENCE_2026-05-07.md`, `docs/WEBSITE_DEPLOYMENT_EVIDENCE_2026-05-15.md`.
+Invariants: this handoff closes `website_deployment_verification` only for the private-beta `/mullu` fallback route; paid public launch remains blocked until the remaining public naming gates close.
 
 ## Source And Target
 
 | Field | Value |
 | --- | --- |
 | Governed source artifact | `site/mullu/index.html` |
-| Website repo copy target | `../mullusi/mullu/index.html` |
-| Intended live route | `https://mullusi.com/mullu` |
+| Website repo copy target | `../mullusi_website/mullu/index.html` |
+| Intended live route | `https://mullusi.com/mullu/` |
 | Website main branch | `origin/main` |
+| Live website repository | `https://github.com/mullusi/mullusi-site.git` |
+| Current live commit carrying route | `ea4159d Add Mullu product route` |
+| Site validation workflow | `Validate Site` run `25919014515` passed |
+| Pages deployment workflow | `pages-build-deployment` run `25919013720` passed |
 | Initial merged PR carrying route | `https://github.com/tamirat-wubie/mullusi/pull/84` |
 | Current merged PR carrying route boundary update | `https://github.com/tamirat-wubie/mullusi/pull/86` |
 | Current merged PR carrying launch literals | `https://github.com/tamirat-wubie/mullusi/pull/88` |
@@ -20,7 +24,6 @@ Invariants: this handoff closes `website_deployment_verification` only for the `
 | Redundant route PR | `https://github.com/tamirat-wubie/mullusi/pull/85` closed after route appeared on `origin/main` |
 | Live-route blocker issue | `https://github.com/tamirat-wubie/mullusi/issues/87` resolved by PR #88 live probe |
 | DNS Pages target | `mullusi.github.io` |
-| Pages source access | `https://github.com/mullusi/mullusi.github.io.git` returned repository not found from current session |
 | Product first reference | `Mullu, by Mullusi` |
 | Launch posture | private beta / request access |
 | Live status | live route verified; HTTP 200 |
@@ -36,8 +39,20 @@ site/mullu/index.html
 to the sibling website repository target:
 
 ```text
+../mullusi_website/mullu/index.html
+```
+
+Earlier non-live route lineage referenced:
+
+```text
 ../mullusi/mullu/index.html
 ```
+
+That path is retained only as source-control history. It was not the active
+custom-domain Pages source. A prior attempt to access
+`https://github.com/mullusi/mullusi.github.io.git` returned repository not found
+from the current session, which is why the live source was later identified as
+`mullusi/mullusi-site`.
 
 The copied file was byte-equivalent by line comparison during the handoff check.
 

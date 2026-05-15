@@ -10,6 +10,7 @@ to declared application routes or explicit wildcard families.
 from __future__ import annotations
 
 import argparse
+import ast
 import json
 import os
 import re
@@ -851,6 +852,16 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "mcoi/tests/test_policy_versioning.py",
             ],
             "Policy version routes expose immutable artifact registration, promotion, rollback, diff, and shadow evaluation.",
+            [
+                "policy_version_register_and_fetch",
+                "policy_version_promote_diff_shadow_and_rollback",
+                "policy_version_routes_fail_closed",
+                "policy_artifact_hash_is_deterministic",
+                "policy_registry_promotes_and_rolls_back_versions",
+                "policy_diff_reports_changed_and_added_rules",
+                "shadow_governance_compares_without_promoting",
+                "registry_fails_closed_on_unknown_versions",
+            ],
         ),
         _surface(
             "pilot_provisioning",
@@ -870,6 +881,16 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "docs/47_one_command_pilot_bringup.md",
             ],
             "Pilot provisioning returns deterministic scaffold artifacts, persists accepted provision records, and exposes bounded operator history read models.",
+            [
+                "initialize_pilot_writes_complete_artifact_set",
+                "initialize_pilot_is_deterministic_for_same_inputs",
+                "build_pilot_scaffold_has_no_filesystem_side_effects",
+                "pilot_provision_registry_persists_bounded_records",
+                "initialize_pilot_fails_closed_on_existing_files",
+                "pilot_provision_endpoint_returns_audited_scaffold",
+                "pilot_provision_history_routes_return_accepted_records",
+                "pilot_provision_detail_fails_closed_for_missing_record",
+            ],
         ),
         _surface(
             "hosted_demo_sandbox",
@@ -890,6 +911,16 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "docs/48_hosted_demo_sandbox.md",
             ],
             "Hosted demo sandbox exposes deterministic read-only traces, lineage projections, and policy evaluations without runtime mutation.",
+            [
+                "sandbox_summary_is_deterministic",
+                "sandbox_lineage_contains_bounded_causal_graph",
+                "sandbox_policy_evaluations_are_read_only",
+                "sandbox_summary_route",
+                "sandbox_traces_route",
+                "sandbox_lineage_route",
+                "sandbox_missing_lineage_route_fails_closed",
+                "sandbox_policy_evaluations_route",
+            ],
         ),
         _surface(
             "federated_control_plane",
@@ -1705,6 +1736,12 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "tests/test_gateway/test_webhooks.py",
             ],
             "Webhook ingress binds tenant resolution, command ledger, and event-log evidence.",
+            [
+                "receive_with_message_returns_request_receipt",
+                "receive_with_message",
+                "ignored_update_returns_request_receipt",
+                "receive_with_command_returns_request_receipt",
+            ],
         ),
         _surface(
             "gateway_approval_resolution",
@@ -1719,6 +1756,14 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "tests/test_gateway/test_webhooks.py",
             ],
             "Approval resolution exposes protected operator paths and audited chain state.",
+            [
+                "approve_unknown_request",
+                "approve_valid_request",
+                "authority_approval_chain_read_model",
+                "expire_overdue_authority_approval_chains_records_transition",
+                "production_approval_callback_requires_secret",
+                "approval_callback_denies_unauthorized_resolver",
+            ],
         ),
         _surface(
             "approval_engine_lifecycle",
@@ -2169,6 +2214,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "manifest_missing_policy_rejected",
                 "manifest_unresolved_schema_rejected",
                 "effect_manifest_requires_sandbox_rollback",
+                "hot_reload_metadata_enforced",
                 "production_hot_reload_denied_for_effect_manifest",
                 "fabric_projects_local_manifest_registry",
                 "fabric_rejects_production_hot_reload_manifest_registry",
@@ -3535,6 +3581,15 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "docs/03_trace_and_replay.md",
             ],
             "Replay determinism route emits governed reports over completed traces with bounded operation specs.",
+            [
+                "replay_determinism_endpoint_returns_match_report",
+                "replay_determinism_endpoint_reports_unknown_operation",
+                "replay_determinism_endpoint_missing_trace_fails_closed",
+                "harness_reports_deterministic_match",
+                "harness_report_hash_is_deterministic",
+                "harness_reports_sequence_gap_before_replay",
+                "harness_reports_operation_errors_bounded",
+            ],
         ),
         _surface(
             "tool_invocation",
@@ -3556,11 +3611,25 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "examples/mcp_capability_manifest.json",
                 "examples/mcp_operator_handoff_checklist.json",
                 "docs/55_mcp_capability_manifest.md",
+                "mcoi/tests/test_server_phase212.py",
+                "mcoi/tests/test_server_phase213.py",
+                "mcoi/tests/test_server_runtime_helpers.py",
                 "tests/test_gateway/test_mcp_capability_fabric.py",
                 "tests/test_validate_mcp_capability_manifest.py",
                 "tests/test_validate_mcp_operator_checklist.py",
             ],
             "Tool invocation and MCP capability import bind action proof ids, capability policy receipts, authority-obligation ownership records, validated operator manifests, and machine-readable handoff checklists.",
+            [
+                "invoke_tool",
+                "invoke_tool_rejects_unsafe_expression",
+                "invoke_unknown_tool",
+                "tool_history",
+                "tool_workflow",
+                "tool_workflow_tool_calls_include_policy_receipts",
+                "register_default_tools_registers_calculator_and_time",
+                "validate_mcp_capability_manifest_accepts_example",
+                "validate_mcp_operator_checklist_accepts_example",
+            ],
         ),
         _surface(
             "governed_session",
@@ -3575,6 +3644,16 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "mcoi/tests/test_governed_session.py",
             ],
             "Session entry points return request-envelope proofs and retain action proof lineage.",
+            [
+                "query_generates_proof",
+                "execute_generates_proof",
+                "query_returns_request_envelope_proof",
+                "execute_returns_request_envelope_proof",
+                "llm_result_metadata_has_request_envelope_proof",
+                "query_proof_failure_is_audited_and_blocks_operation",
+                "execute_proof_failure_blocks_dispatch",
+                "llm_proof_failure_blocks_llm_bridge",
+            ],
         ),
         _surface(
             "health_docs_exempt",
@@ -3583,8 +3662,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
             "read_model",
             "read_model",
             "witnessed",
-            ["gateway/server.py"],
+            ["gateway/server.py", "tests/test_gateway/test_webhooks.py"],
             "Operational liveness and documentation surfaces are outside the proof-critical path.",
+            [
+                "health",
+            ],
         ),
         _surface(
             "lineage_query_api",
@@ -3609,6 +3691,15 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "schemas/replay_record.schema.json",
             ],
             "Lineage query API resolves read-only lineage:// URIs with bounded output, command, graph, and policy-version read models.",
+            [
+                "lineage_resolve_route_returns_trace_document",
+                "lineage_trace_permalink_route_returns_document",
+                "lineage_output_permalink_returns_unresolved_document",
+                "lineage_output_permalink_resolves_indexed_trace",
+                "lineage_command_permalink_resolves_indexed_trace",
+                "lineage_artifact_permalink_resolves_persisted_dag",
+                "lineage_resolve_rejects_invalid_uri",
+            ],
         ),
         _surface(
             "god_mode_lifecycle",
@@ -4210,6 +4301,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
         "coverage_states": COVERAGE_STATES,
         "coverage_summary": coverage_summary(surfaces),
         "evidence_quality": evidence_quality_report(surfaces),
+        "witness_integrity": witness_integrity_report(surfaces),
         "surfaces": surfaces,
         "route_coverage": route_coverage_report(surfaces, discover_declared_routes()),
         "closure_actions": closure_actions,
@@ -4332,6 +4424,73 @@ def evidence_quality_report(surfaces: list[dict[str, Any]]) -> dict[str, Any]:
         "quality_gap_count": len(quality_records),
         "quality_gaps": quality_records,
     }
+
+
+def witness_integrity_report(
+    surfaces: list[dict[str, Any]],
+    repo_root: Path = REPO_ROOT,
+) -> dict[str, Any]:
+    """Return exact test-function anchors for runtime witness labels."""
+    surface_records: list[dict[str, Any]] = []
+    anchored_count = 0
+    unanchored_count = 0
+    witness_count = 0
+
+    for surface in surfaces:
+        test_anchors = _test_function_anchors(surface.get("evidence_files", []), repo_root=repo_root)
+        anchored_witnesses: list[dict[str, Any]] = []
+        unanchored_witnesses: list[str] = []
+        for witness in surface.get("runtime_witnesses", []):
+            witness_count += 1
+            matching_anchors = test_anchors.get(witness, [])
+            if matching_anchors:
+                anchored_count += 1
+                anchored_witnesses.append({"witness": witness, "anchors": matching_anchors})
+                continue
+            unanchored_count += 1
+            unanchored_witnesses.append(witness)
+        if anchored_witnesses or unanchored_witnesses:
+            surface_records.append(
+                {
+                    "surface_id": surface["surface_id"],
+                    "runtime_witness_count": len(surface.get("runtime_witnesses", [])),
+                    "exact_test_anchor_count": len(anchored_witnesses),
+                    "unanchored_witness_count": len(unanchored_witnesses),
+                    "anchored_witnesses": anchored_witnesses,
+                    "unanchored_witnesses": unanchored_witnesses,
+                }
+            )
+
+    return {
+        "runtime_witness_count": witness_count,
+        "exact_test_anchor_count": anchored_count,
+        "unanchored_witness_count": unanchored_count,
+        "surfaces": surface_records,
+    }
+
+
+def _test_function_anchors(evidence_files: list[str], repo_root: Path = REPO_ROOT) -> dict[str, list[str]]:
+    anchors: dict[str, list[str]] = {}
+    for evidence_file in evidence_files:
+        if not evidence_file.endswith(".py"):
+            continue
+        if "/test" not in evidence_file.replace("\\", "/"):
+            continue
+        evidence_path = repo_root / evidence_file
+        if not evidence_path.exists():
+            continue
+        try:
+            parsed = ast.parse(evidence_path.read_text(encoding="utf-8"))
+        except SyntaxError:
+            continue
+        for node in ast.walk(parsed):
+            if not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                continue
+            if not node.name.startswith("test_"):
+                continue
+            witness = node.name.removeprefix("test_")
+            anchors.setdefault(witness, []).append(f"{evidence_file}::{node.name}")
+    return anchors
 
 
 def discover_declared_routes(repo_root: Path = REPO_ROOT) -> set[str]:
@@ -4462,6 +4621,7 @@ def operator_document(matrix: dict[str, Any]) -> str:
     """Return the operator-readable proof coverage witness."""
     summary = matrix["coverage_summary"]
     evidence_quality = matrix["evidence_quality"]
+    witness_integrity = matrix["witness_integrity"]
     route_coverage = matrix["route_coverage"]
     route_count = route_coverage["route_count"]
     unclassified_count = route_coverage["unclassified_route_count"]
@@ -4519,6 +4679,14 @@ def operator_document(matrix: dict[str, Any]) -> str:
             f"| Unproven surfaces | {evidence_quality['by_strength']['unproven']} |",
             f"| Evidence quality gaps | {evidence_quality['quality_gap_count']} |",
             "",
+            "Witness integrity audit:",
+            "",
+            "| Metric | Count |",
+            "|---|---:|",
+            f"| Runtime witness labels | {witness_integrity['runtime_witness_count']} |",
+            f"| Exact test anchors | {witness_integrity['exact_test_anchor_count']} |",
+            f"| Unanchored witness labels | {witness_integrity['unanchored_witness_count']} |",
+            "",
             "Evidence quality gaps:",
         ]
     )
@@ -4532,6 +4700,24 @@ def operator_document(matrix: dict[str, Any]) -> str:
                     _markdown_cell(record["gaps"]),
                     record["evidence_file_count"],
                     record["runtime_witness_count"],
+                )
+            )
+    else:
+        lines.append("none")
+
+    lines.extend(["", "Witness integrity gaps:"])
+    unanchored_surfaces = [
+        record for record in witness_integrity["surfaces"] if record["unanchored_witness_count"]
+    ]
+    if unanchored_surfaces:
+        lines.extend(["", "| Surface | Exact anchors | Unanchored | Unanchored labels |", "|---|---:|---:|---|"])
+        for record in unanchored_surfaces:
+            lines.append(
+                "| `{}` | {} | {} | {} |".format(
+                    record["surface_id"],
+                    record["exact_test_anchor_count"],
+                    record["unanchored_witness_count"],
+                    _markdown_cell(record["unanchored_witnesses"]),
                 )
             )
     else:
@@ -4566,6 +4752,10 @@ def operator_document(matrix: dict[str, Any]) -> str:
         open_issues.append(
             f"{evidence_quality['quality_gap_count']} classified surfaces need stronger runtime-witness labels"
         )
+    if witness_integrity["unanchored_witness_count"]:
+        open_issues.append(
+            f"{witness_integrity['unanchored_witness_count']} runtime-witness labels lack exact test-function anchors"
+        )
     open_issue = "; ".join(open_issues) if open_issues else "none"
     verified_invariants = [
         "route declarations",
@@ -4588,6 +4778,8 @@ def operator_document(matrix: dict[str, Any]) -> str:
                 if unclassified_count
                 else "  Next action: strengthen classified surfaces that still lack runtime-witness labels"
                 if evidence_quality["quality_gap_count"]
+                else "  Next action: bind unanchored runtime-witness labels to exact test-function anchors"
+                if witness_integrity["unanchored_witness_count"]
                 else "  Next action: advance sandboxed capability-worker execution closure"
             ),
             "",
