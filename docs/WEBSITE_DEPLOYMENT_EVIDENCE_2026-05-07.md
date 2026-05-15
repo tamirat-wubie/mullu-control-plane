@@ -136,20 +136,37 @@ health endpoints.
 | Contains Mullu family references | Partial, including `Mullu Mathematics` |
 | Product flagship route ready | Yes for `/mullu/`; homepage first-reference update remains separate |
 
+## 2026-05-15 Homepage Boundary Closure
+
+The Homepage Copy Evidence table above is superseded by this closure probe.
+`mullusi/mullusi-site` PR #2 updated the active homepage so the first viewport
+states Mullusi as the company umbrella and Mullu as the flagship governed
+symbolic product. The route keeps public runtime readiness bounded as
+`AwaitingEvidence` and routes users to `/mullu/` and `/proof/`.
+
+| Check | Observed result | Decision |
+| --- | --- | --- |
+| `mullusi/mullusi-site` PR #2 | Merged after `validate` passed | Active Pages source updated |
+| Active source commit | `4866b0a` | Homepage boundary copy present on active `main` |
+| `https://mullusi.com/` | HTTP 200 from current environment | Company homepage is live |
+| Body literal: `Mullusi builds governed symbolic products` | Present | First-viewport umbrella/product boundary verified |
+| Body literal: `/mullu/` | Present | Homepage routes to flagship product |
+| Body literal: `/proof/` | Present | Homepage routes to public proof boundary |
+| Body literal: `AwaitingEvidence` | Present | Runtime witness boundary remains explicit |
+
 ## Decision
 
 The public company homepage, `/mullu/` product route, and `/proof/` public
-proof boundary route are live. Paid public launch is still not ready because
-runtime witness, legal/domain, and broader homepage/app-surface gates remain
-open.
+proof boundary route are live and aligned around Mullusi as umbrella and Mullu
+as flagship product. Paid public launch is still not ready because runtime
+witness, legal/domain, and broader app-surface gates remain open.
 
 The original 2026-05-07 and earlier 2026-05-15 probes kept
 `website_deployment_verification` open because:
 
 1. `https://mullu.mullusi.com` has no DNS record.
-2. The live homepage does not yet present the first-reference product boundary: `Mullu, by Mullusi`.
-3. The homepage remains company/ecosystem oriented rather than flagship product oriented.
-4. Live runtime witness closure is still AwaitingEvidence.
+2. Live runtime witness closure is still AwaitingEvidence.
+3. Paid public launch still needs legal/domain and app-surface clearance.
 
 ## Remaining Public Launch Work
 
