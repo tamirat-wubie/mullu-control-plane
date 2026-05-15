@@ -179,11 +179,10 @@ class ContractRecord:
         return {field.name: thaw_value_json(getattr(self, field.name)) for field in fields(self)}
 
     def to_json(self) -> str:
-        """Serialize to JSON string (uses to_json_dict for Enum safety)."""
+        """Serialize to JSON string using contract field order."""
         try:
             return json.dumps(
                 self.to_json_dict(),
-                sort_keys=True,
                 ensure_ascii=True,
                 separators=(",", ":"),
                 allow_nan=False,
