@@ -21,11 +21,9 @@ Invariants: `Mullu` remains internally aligned only; paid public launch remains 
 | Input | Required reviewer action |
 | --- | --- |
 | `docs/mullu-name-clearance-draft.json` | Fill official search outcomes, final legal decision, and launch effect |
-| `docs/OFFICIAL_CLEARANCE_ACCESS_LOG_2026-05-15.md` | Review blocked official API/RDAP access attempts and required replacement evidence |
 | `docs/TSDR_EVIDENCE_TEMPLATE.md` | Capture official USPTO/TSDR status for each required `MULU` serial |
 | `docs/DOMAIN_OWNERSHIP_RECORD_TEMPLATE.md` | Record registrar, DNS, renewal, and security evidence |
 | `docs/WEBSITE_DEPLOYMENT_EVIDENCE_TEMPLATE.md` | Record live route, HTTPS, copy, and site-not-found checks |
-| `docs/WEBSITE_DEPLOYMENT_EVIDENCE_2026-05-15.md` | Verify private-beta fallback route evidence already closed |
 | `docs/PUBLIC_LAUNCH_COPY.md` | Confirm copy remains waitlist/private beta/request-access until clearance closes |
 | `docs/public-naming-readiness.json` | Update only after evidence closes the matching gate |
 | `docs/PUBLIC_NAMING_ARTIFACT_MANIFEST.md` | Confirm all naming package artifacts are present |
@@ -40,15 +38,15 @@ Invariants: `Mullu` remains internally aligned only; paid public launch remains 
 | `close_variant_review` | Legal confusion analysis for required `MULU` records |
 | `domain_ownership` | Registrar and DNS ownership evidence for selected product route |
 | `legal_review` | Qualified legal/trademark conclusion |
+| `homepage_update` | Approved page copy or explicit waitlist/private-beta state |
 | `app_title_update` | User-facing app title update after authorization |
 | `sdk_api_stability_review` | Confirmation that technical `Mullu Platform` contracts remain intentional |
 
 ## Closed Website Evidence
 
-| Gate | Evidence |
+| Gate | Evidence recorded |
 | --- | --- |
-| `homepage_update` | Product landing page is live at `https://mullusi.com/mullu/` with private-beta/request-access copy |
-| `website_deployment_verification` | `docs/WEBSITE_DEPLOYMENT_EVIDENCE_2026-05-15.md` records HTTP 200 product-route and sitemap checks |
+| `website_deployment_verification` | `https://mullusi.com/mullu` returned HTTP 200 on 2026-05-15 and contained `Mullu, by Mullusi`, `Mullu CLI`, and `Mullu Control Plane` |
 
 ## Required TSDR Serials
 

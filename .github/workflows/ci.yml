@@ -111,6 +111,9 @@ jobs:
       - name: Validate logic governance application
         run: python scripts/validate_logic_governance_application.py
 
+      - name: Validate proof coverage matrix
+        run: python scripts/proof_coverage_matrix.py --check
+
       - name: Validate terminal closure certificate
         run: python scripts/validate_terminal_closure_certificate.py --json
 
@@ -281,6 +284,9 @@ jobs:
 
       - name: Protocol manifest check
         run: python scripts/validate_protocol_manifest.py
+
+      - name: Proof coverage matrix check
+        run: python scripts/proof_coverage_matrix.py --check
 
       - name: Artifact validation check
         run: python scripts/validate_artifacts.py --strict

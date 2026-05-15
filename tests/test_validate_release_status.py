@@ -259,6 +259,7 @@ def test_ci_workflow_runs_protocol_manifest_gate() -> None:
 
     assert errors == []
     assert "python scripts/validate_protocol_manifest.py" in REQUIRED_CI_LITERALS
+    assert "python scripts/proof_coverage_matrix.py --check" in REQUIRED_CI_LITERALS
     assert "python scripts/validate_deployment_publication_closure.py --output .change_assurance/deployment_publication_closure_validation.json" in REQUIRED_CI_LITERALS
     assert "schemas/deployment_publication_closure_validation.schema.json" in REQUIRED_CI_LITERALS
     assert "deployment-publication-closure-validation" in REQUIRED_CI_LITERALS
@@ -291,8 +292,11 @@ def test_ci_workflow_runs_protocol_manifest_gate() -> None:
         for literal in REQUIRED_CI_LITERALS
     )
     assert content.count("python scripts/validate_protocol_manifest.py") == 2
+    assert content.count("python scripts/proof_coverage_matrix.py --check") == 2
     assert content.count("python scripts/validate_logic_governance_application.py") == 1
     assert "Validate protocol manifest" in content
+    assert "Validate proof coverage matrix" in content
+    assert "Proof coverage matrix check" in content
     assert "Validate logic governance application" in content
     assert "test -f schemas/deployment_publication_closure_validation.schema.json" in content
     assert "Upload build verification deployment publication closure validation" in content

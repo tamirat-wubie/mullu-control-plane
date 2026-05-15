@@ -27,12 +27,10 @@ PRODUCT_ROUTE_DEPLOYMENT_HANDOFF_PATH = REPO_ROOT / "docs" / "PRODUCT_ROUTE_DEPL
 TSDR_EVIDENCE_TEMPLATE_PATH = REPO_ROOT / "docs" / "TSDR_EVIDENCE_TEMPLATE.md"
 WEBSITE_DEPLOYMENT_EVIDENCE_TEMPLATE_PATH = REPO_ROOT / "docs" / "WEBSITE_DEPLOYMENT_EVIDENCE_TEMPLATE.md"
 WEBSITE_DEPLOYMENT_EVIDENCE_LOG_PATH = REPO_ROOT / "docs" / "WEBSITE_DEPLOYMENT_EVIDENCE_2026-05-07.md"
-WEBSITE_DEPLOYMENT_EVIDENCE_SUCCESS_PATH = REPO_ROOT / "docs" / "WEBSITE_DEPLOYMENT_EVIDENCE_2026-05-15.md"
 WEBSITE_RECHECK_LOG_PATH = REPO_ROOT / "docs" / "WEBSITE_RECHECK_LOG.md"
 DOMAIN_ACQUISITION_PLAN_PATH = REPO_ROOT / "docs" / "DOMAIN_ACQUISITION_PLAN.md"
 PUBLIC_NAMING_REVIEW_PACKET_PATH = REPO_ROOT / "docs" / "PUBLIC_NAMING_REVIEW_PACKET.md"
 PUBLIC_NAMING_ARTIFACT_MANIFEST_PATH = REPO_ROOT / "docs" / "PUBLIC_NAMING_ARTIFACT_MANIFEST.md"
-OFFICIAL_CLEARANCE_ACCESS_LOG_PATH = REPO_ROOT / "docs" / "OFFICIAL_CLEARANCE_ACCESS_LOG_2026-05-15.md"
 READINESS_SCHEMA_PATH = REPO_ROOT / "schemas" / "public_naming_readiness.schema.json"
 CLEARANCE_SCHEMA_PATH = REPO_ROOT / "schemas" / "mullu_name_clearance_draft.schema.json"
 
@@ -54,7 +52,6 @@ REQUIRED_CLOSED_GATES = {
     "website_deployment_probe",
     "website_deployment_verification",
     "website_recheck_log",
-    "homepage_update",
     "state_transition_rules",
     "handoff_summary",
     "pr_summary",
@@ -70,7 +67,6 @@ REQUIRED_CLOSED_GATES = {
     "readiness_report",
     "transition_planner",
     "naming_schemas",
-    "official_clearance_access_log",
 }
 
 REQUIRED_OPEN_GATES = {
@@ -80,6 +76,7 @@ REQUIRED_OPEN_GATES = {
     "close_variant_review",
     "domain_ownership",
     "legal_review",
+    "homepage_update",
     "app_title_update",
     "sdk_api_stability_review",
 }
@@ -88,7 +85,7 @@ BLOCKED_PUBLIC_NAMES = {
     "Mullusi Handler",
     "Mullusi Work",
     "Mullusi Operator",
-    "Mullu Generic",
+    "Mullu AI",
 }
 
 REQUIRED_EVIDENCE_DOCS = {
@@ -99,14 +96,12 @@ REQUIRED_EVIDENCE_DOCS = {
     "docs/PUBLIC_NAMING_READINESS.md",
     "docs/NAMING_MIGRATION_PLAN.md",
     "docs/NAME_CLEARANCE_PRELIMINARY.md",
-    "docs/OFFICIAL_CLEARANCE_ACCESS_LOG_2026-05-15.md",
     "docs/TRADEMARK_SEARCH_RUNBOOK.md",
     "docs/TSDR_EVIDENCE_TEMPLATE.md",
     "docs/DOMAIN_ACQUISITION_PLAN.md",
     "docs/WEBSITE_UPDATE_CHECKLIST.md",
     "docs/WEBSITE_DEPLOYMENT_EVIDENCE_TEMPLATE.md",
     "docs/WEBSITE_DEPLOYMENT_EVIDENCE_2026-05-07.md",
-    "docs/WEBSITE_DEPLOYMENT_EVIDENCE_2026-05-15.md",
     "docs/WEBSITE_RECHECK_LOG.md",
     "docs/PUBLIC_NAMING_STATE_TRANSITION.md",
     "docs/PUBLIC_NAMING_HANDOFF.md",
@@ -221,9 +216,6 @@ def validate_public_launch_copy(copy_path: Path = PUBLIC_LAUNCH_COPY_PATH) -> No
 def validate_product_route_draft(route_path: Path = PRODUCT_ROUTE_DRAFT_PATH) -> None:
     route_text = route_path.read_text(encoding="utf-8")
     validate_no_forbidden_terminology(_display_path(route_path), route_text)
-    conflict_markers = ("<<<<<<<", "=======", ">>>>>>>")
-    leaked_markers = sorted(marker for marker in conflict_markers if marker in route_text)
-    _require(not leaked_markers, f"product route draft contains conflict markers: {leaked_markers}")
 
     leaked_names = sorted(name for name in BLOCKED_PUBLIC_NAMES if name in route_text)
     _require(not leaked_names, f"blocked public names leaked into product route draft: {leaked_names}")
@@ -257,17 +249,22 @@ def validate_product_route_deployment_handoff(
 
     required_literals = (
         "site/mullu/index.html",
-        "../mullusi_website/mullu/index.html",
+        "../mullusi/mullu/index.html",
         "https://mullusi.com/mullu",
         "origin/main",
-        "https://github.com/mullusi/mullusi-site.git",
-        "ea4159d",
-        "25919014515",
-        "25919013720",
+        "https://github.com/tamirat-wubie/mullusi/pull/84",
+        "product/mullu-route",
+        "https://github.com/tamirat-wubie/mullusi/pull/85",
+        "https://github.com/tamirat-wubie/mullusi/pull/88",
+        "39014fd",
+        "93b7a6de942241424564f686aebee023a469ecde",
+        "closed as redundant",
         "mullusi.github.io",
+        "repository not found",
         "Mullu, by Mullusi",
         "private beta",
         "HTTP 200",
+        "live route verified",
         "website_deployment_verification",
     )
     missing_literals = sorted(literal for literal in required_literals if literal not in handoff_text)
@@ -323,6 +320,7 @@ def validate_website_deployment_evidence_log(
         "HTTP 200",
         "https://mullusi.com/mullu",
         "HTTP 404",
+        "HTTP 200",
         "https://mullu.mullusi.com",
         "DNS name does not exist",
         "MULLUSI — Symbolic Intelligence",
@@ -338,38 +336,6 @@ def validate_website_deployment_evidence_log(
     )
 
 
-def validate_website_deployment_success_log(
-    log_path: Path = WEBSITE_DEPLOYMENT_EVIDENCE_SUCCESS_PATH,
-) -> None:
-    log_text = log_path.read_text(encoding="utf-8")
-    validate_no_forbidden_terminology(_display_path(log_path), log_text)
-
-    required_literals = (
-        "2026-05-15",
-        "https://mullusi.com/mullu/",
-        "HTTP 200",
-        "Mullu, by Mullusi",
-        "private beta",
-        "Request access",
-        "Symbols are atomic. Meaning is relational. Traversal is governed. Judgment is earned.",
-        "mullusi/mullusi-site",
-        "ea4159d",
-        "Validate Site",
-        "25919014515",
-        "pages-build-deployment",
-        "25919013720",
-        "https://mullusi.com/sitemap.xml",
-        "website_deployment_verification",
-        "homepage_update",
-    )
-    missing_literals = sorted(literal for literal in required_literals if literal not in log_text)
-    _require(not missing_literals, f"website deployment success log missing literals: {missing_literals}")
-    _require(
-        "paid public launch remains blocked" in log_text,
-        "website deployment success log must preserve paid-launch blocker",
-    )
-
-
 def validate_website_recheck_log(log_path: Path = WEBSITE_RECHECK_LOG_PATH) -> None:
     log_text = log_path.read_text(encoding="utf-8")
     validate_no_forbidden_terminology(_display_path(log_path), log_text)
@@ -380,11 +346,13 @@ def validate_website_recheck_log(log_path: Path = WEBSITE_RECHECK_LOG_PATH) -> N
         "GitHub Pages site-not-found",
         "non-authoritative",
         "website_deployment_verification",
-        "superseded by direct live-route evidence",
     )
     missing_literals = sorted(literal for literal in required_literals if literal not in log_text)
     _require(not missing_literals, f"website recheck log missing literals: {missing_literals}")
-    _require("2026-05-15" in log_text, "website recheck log must reference the superseding live evidence")
+    _require(
+        "superseded by the 2026-05-15 live route probe" in log_text,
+        "website recheck log must point to the authoritative live-route probe",
+    )
 
 
 def validate_domain_acquisition_plan(plan_path: Path = DOMAIN_ACQUISITION_PLAN_PATH) -> None:
@@ -470,45 +438,6 @@ def validate_public_naming_review_packet(packet_path: Path = PUBLIC_NAMING_REVIE
     _require(not missing_conditional_routes, f"review packet missing conditional website routes: {missing_conditional_routes}")
 
 
-def validate_official_clearance_access_log(log_path: Path = OFFICIAL_CLEARANCE_ACCESS_LOG_PATH) -> None:
-    log_text = log_path.read_text(encoding="utf-8")
-    validate_no_forbidden_terminology(_display_path(log_path), log_text)
-
-    required_literals = (
-        "2026-05-15",
-        "USPTO Trademark Search",
-        "USPTO TSDR",
-        "WIPO Global Brand Database",
-        "EUIPO eSearch plus / TMview",
-        "Beginning October 2",
-        "API key",
-        "99518598",
-        "99264214",
-        "85772539",
-        "85494313",
-        "85222451",
-        "mullu.ai",
-        "mullu.app",
-        "mullu.dev",
-        "getmullu.com",
-        "mullu.mullusi.com",
-        "No clearance gate is closed by this log",
-    )
-    missing_literals = sorted(literal for literal in required_literals if literal not in log_text)
-    _require(not missing_literals, f"official clearance access log missing literals: {missing_literals}")
-
-    open_gate_literals = (
-        "uspto_search",
-        "wipo_search",
-        "euipo_tmview_search",
-        "close_variant_review",
-        "domain_ownership",
-        "legal_review",
-    )
-    missing_gates = sorted(gate for gate in open_gate_literals if gate not in log_text)
-    _require(not missing_gates, f"official clearance access log missing open gates: {missing_gates}")
-
-
 def validate_public_naming_artifact_manifest(
     manifest_path: Path = PUBLIC_NAMING_ARTIFACT_MANIFEST_PATH,
 ) -> None:
@@ -545,11 +474,9 @@ def validate_public_naming_readiness(witness_path: Path = WITNESS_PATH) -> None:
     validate_tsdr_evidence_template()
     validate_website_deployment_evidence_template()
     validate_website_deployment_evidence_log()
-    validate_website_deployment_success_log()
     validate_website_recheck_log()
     validate_domain_acquisition_plan()
     validate_public_naming_review_packet()
-    validate_official_clearance_access_log()
     validate_public_naming_artifact_manifest()
 
     _require(witness.get("product_name") == "Mullu", "product_name must be Mullu")

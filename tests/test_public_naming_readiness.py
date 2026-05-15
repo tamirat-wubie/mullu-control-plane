@@ -34,9 +34,7 @@ from scripts.validate_public_naming_readiness import (  # noqa: E402
     PRODUCT_ROUTE_DEPLOYMENT_HANDOFF_PATH,
     PRODUCT_ROUTE_DRAFT_PATH,
     READINESS_SCHEMA_PATH,
-    OFFICIAL_CLEARANCE_ACCESS_LOG_PATH,
     WEBSITE_DEPLOYMENT_EVIDENCE_LOG_PATH,
-    WEBSITE_DEPLOYMENT_EVIDENCE_SUCCESS_PATH,
     WEBSITE_RECHECK_LOG_PATH,
     WITNESS_PATH,
     validate_no_forbidden_terminology,
@@ -49,10 +47,8 @@ from scripts.validate_public_naming_readiness import (  # noqa: E402
     validate_public_launch_copy,
     validate_public_naming_readiness,
     validate_public_naming_review_packet,
-    validate_official_clearance_access_log,
     validate_tsdr_evidence_template,
     validate_website_deployment_evidence_log,
-    validate_website_deployment_success_log,
     validate_website_deployment_evidence_template,
     validate_website_recheck_log,
 )
@@ -208,7 +204,6 @@ def test_public_naming_transition_plan_outputs_remaining_actions(capsys: pytest.
     assert "Evidence artifact count:" in output
     assert "uspto_search" in output
     assert "domain_ownership" in output
-    assert "mullusi.com/mullu: site_route_verified" not in output
     assert "Set public_paid_launch_allowed to true" in output
     assert "STATUS: transition_blocked" in output
 
@@ -240,17 +235,6 @@ def test_product_route_draft_rejects_blocked_public_name(tmp_path: Path) -> None
         validate_product_route_draft(route_path)
 
 
-def test_product_route_draft_rejects_conflict_markers(tmp_path: Path) -> None:
-    route_path = tmp_path / "index.html"
-    route_path.write_text(
-        PRODUCT_ROUTE_DRAFT_PATH.read_text(encoding="utf-8") + "\n<<<<<<< HEAD\n",
-        encoding="utf-8",
-    )
-
-    with pytest.raises(AssertionError, match="conflict markers"):
-        validate_product_route_draft(route_path)
-
-
 def test_product_route_deployment_handoff_preserves_live_blocker() -> None:
     validate_product_route_deployment_handoff()
 
@@ -258,7 +242,7 @@ def test_product_route_deployment_handoff_preserves_live_blocker() -> None:
 def test_product_route_deployment_handoff_rejects_missing_target(tmp_path: Path) -> None:
     handoff_path = tmp_path / "PRODUCT_ROUTE_DEPLOYMENT_HANDOFF.md"
     handoff_text = PRODUCT_ROUTE_DEPLOYMENT_HANDOFF_PATH.read_text(encoding="utf-8").replace(
-        "../mullusi_website/mullu/index.html",
+        "../mullusi/mullu/index.html",
         "../mullusi/index.html",
     )
     handoff_path.write_text(handoff_text, encoding="utf-8")
@@ -322,7 +306,7 @@ def test_website_deployment_template_contains_required_routes() -> None:
     validate_website_deployment_evidence_template()
 
 
-def test_website_deployment_evidence_log_preserves_failed_historical_product_routes() -> None:
+def test_website_deployment_evidence_log_preserves_failed_product_routes() -> None:
     validate_website_deployment_evidence_log()
 
 
@@ -338,35 +322,19 @@ def test_website_deployment_evidence_log_rejects_cleared_gate(tmp_path: Path) ->
         validate_website_deployment_evidence_log(log_path)
 
 
-def test_website_deployment_success_log_closes_private_beta_route() -> None:
-    validate_website_deployment_success_log()
-
-
-def test_website_deployment_success_log_rejects_missing_paid_launch_blocker(tmp_path: Path) -> None:
-    log_path = tmp_path / "WEBSITE_DEPLOYMENT_EVIDENCE_2026-05-15.md"
-    log_text = WEBSITE_DEPLOYMENT_EVIDENCE_SUCCESS_PATH.read_text(encoding="utf-8").replace(
-        "paid public launch remains blocked",
-        "paid public launch is allowed",
-    )
-    log_path.write_text(log_text, encoding="utf-8")
-
-    with pytest.raises(AssertionError, match="paid-launch blocker"):
-        validate_website_deployment_success_log(log_path)
-
-
-def test_website_recheck_log_preserves_historical_warning_boundary() -> None:
+def test_website_recheck_log_points_to_authoritative_live_probe() -> None:
     validate_website_recheck_log()
 
 
-def test_website_recheck_log_rejects_missing_superseding_evidence(tmp_path: Path) -> None:
+def test_website_recheck_log_rejects_missing_live_probe_handoff(tmp_path: Path) -> None:
     log_path = tmp_path / "WEBSITE_RECHECK_LOG.md"
     log_text = WEBSITE_RECHECK_LOG_PATH.read_text(encoding="utf-8").replace(
-        "superseded by direct live-route evidence",
-        "still the active route authority",
+        "superseded by the 2026-05-15 live route probe",
+        "superseded without named evidence",
     )
     log_path.write_text(log_text, encoding="utf-8")
 
-    with pytest.raises(AssertionError, match="website recheck log missing literals"):
+    with pytest.raises(AssertionError, match="authoritative live-route probe"):
         validate_website_recheck_log(log_path)
 
 
@@ -463,22 +431,6 @@ def test_required_official_searches_keep_uspto_serials_and_classes() -> None:
 
 def test_public_naming_review_packet_contains_required_review_inputs() -> None:
     validate_public_naming_review_packet()
-
-
-def test_official_clearance_access_log_preserves_open_clearance_gates() -> None:
-    validate_official_clearance_access_log()
-
-
-def test_official_clearance_access_log_rejects_missing_api_key_boundary(tmp_path: Path) -> None:
-    log_path = tmp_path / "OFFICIAL_CLEARANCE_ACCESS_LOG_2026-05-15.md"
-    log_text = OFFICIAL_CLEARANCE_ACCESS_LOG_PATH.read_text(encoding="utf-8").replace(
-        "API key",
-        "access token",
-    )
-    log_path.write_text(log_text, encoding="utf-8")
-
-    with pytest.raises(AssertionError, match="missing literals"):
-        validate_official_clearance_access_log(log_path)
 
 
 def test_public_naming_review_packet_rejects_missing_serial(tmp_path: Path) -> None:

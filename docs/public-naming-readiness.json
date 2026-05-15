@@ -25,7 +25,6 @@
     "website_deployment_probe",
     "website_deployment_verification",
     "website_recheck_log",
-    "homepage_update",
     "state_transition_rules",
     "handoff_summary",
     "pr_summary",
@@ -40,8 +39,7 @@
     "readiness_tests",
     "readiness_report",
     "transition_planner",
-    "naming_schemas",
-    "official_clearance_access_log"
+    "naming_schemas"
   ],
   "open_gates": [
     "uspto_search",
@@ -50,6 +48,7 @@
     "close_variant_review",
     "domain_ownership",
     "legal_review",
+    "homepage_update",
     "app_title_update",
     "sdk_api_stability_review"
   ],
@@ -57,7 +56,7 @@
     "Mullusi Handler",
     "Mullusi Work",
     "Mullusi Operator",
-    "Mullu Generic"
+    "Mullu AI"
   ],
   "allowed_technical_terms": [
     "Mullu Platform",
@@ -82,14 +81,12 @@
     "docs/PUBLIC_NAMING_READINESS.md",
     "docs/NAMING_MIGRATION_PLAN.md",
     "docs/NAME_CLEARANCE_PRELIMINARY.md",
-    "docs/OFFICIAL_CLEARANCE_ACCESS_LOG_2026-05-15.md",
     "docs/TRADEMARK_SEARCH_RUNBOOK.md",
     "docs/TSDR_EVIDENCE_TEMPLATE.md",
     "docs/DOMAIN_ACQUISITION_PLAN.md",
     "docs/WEBSITE_UPDATE_CHECKLIST.md",
     "docs/WEBSITE_DEPLOYMENT_EVIDENCE_TEMPLATE.md",
     "docs/WEBSITE_DEPLOYMENT_EVIDENCE_2026-05-07.md",
-    "docs/WEBSITE_DEPLOYMENT_EVIDENCE_2026-05-15.md",
     "docs/WEBSITE_RECHECK_LOG.md",
     "docs/PUBLIC_NAMING_STATE_TRANSITION.md",
     "docs/PUBLIC_NAMING_HANDOFF.md",
