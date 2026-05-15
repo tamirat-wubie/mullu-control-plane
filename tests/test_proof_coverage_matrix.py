@@ -3170,9 +3170,7 @@ def test_generated_assurance_copy_matches_when_present() -> None:
     assert matrix["surfaces"]
     if ASSURANCE_OUTPUT.exists():
         assurance = json.loads(ASSURANCE_OUTPUT.read_text(encoding="utf-8"))
-        assert [surface["surface_id"] for surface in assurance["surfaces"]] == [
-            surface["surface_id"] for surface in matrix["surfaces"]
-        ]
+        assert assurance == matrix
 
 
 def test_operator_document_mentions_every_surface() -> None:

@@ -4633,6 +4633,10 @@ def main() -> int:
         actual_doc = args.doc_output.read_text(encoding="utf-8")
         if actual_doc != expected_doc:
             raise SystemExit(f"{args.doc_output} is stale; run scripts/proof_coverage_matrix.py")
+        if args.assurance_output.exists():
+            actual_assurance = args.assurance_output.read_text(encoding="utf-8")
+            if actual_assurance != expected:
+                raise SystemExit(f"{args.assurance_output} is stale; run scripts/proof_coverage_matrix.py")
         return 0
     write_matrix(args.output, matrix)
     write_matrix(args.assurance_output, matrix)
