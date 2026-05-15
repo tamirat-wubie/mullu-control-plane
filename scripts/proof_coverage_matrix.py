@@ -23,7 +23,6 @@ ASSURANCE_OUTPUT = REPO_ROOT / ".change_assurance" / "proof_coverage_matrix.json
 ROUTE_PATTERN = re.compile(r"@(?:router|app)\.(?:get|post|put|delete|patch)\(\s*[\"']([^\"']+)[\"']")
 ROUTER_PREFIX_PATTERN = re.compile(r"APIRouter\([^)]*prefix\s*=\s*[\"']([^\"']+)[\"']")
 FRAMEWORK_GENERATED_ROUTES = frozenset({"/docs", "/openapi.json", "/redoc"})
-AGGREGATE_ROUTE_SURFACE_IDS = frozenset({"operational_platform_read_models"})
 COVERAGE_LEVELS = ["gap", "read_model", "request_proof", "action_proof", "audit_chain"]
 COVERAGE_STATES = ["proven", "witnessed", "unproven"]
 
@@ -330,142 +329,6 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "gateway_status_governed",
                 "gateway_status_bounded",
             ],
-        ),
-        _surface(
-            "llm_admin_observability",
-            ["/api/v1/bootstrap", "/api/v1/circuit-breaker", "/api/v1/llm/history"],
-            "read_model",
-            "read_model",
-            "audit_chain",
-            "witnessed",
-            [
-                "mcoi/mcoi_runtime/app/routers/llm/admin.py",
-                "mcoi/tests/test_server_phase199.py",
-                "mcoi/tests/test_server_phase200.py",
-                "mcoi/tests/test_server_phase212.py",
-                "mcoi/tests/test_server_phase213.py",
-            ],
-            "LLM admin observability routes expose bounded bootstrap inventory, circuit-breaker state, and invocation history without mutation authority.",
-            [
-                "bootstrap_info_bounded",
-                "bootstrap_reports_stub_provider",
-                "llm_circuit_breaker_status_bounded",
-                "llm_history_window_bounded",
-            ],
-        ),
-        _surface(
-            "dependency_graph_read_models",
-            ["/api/v1/dependencies", "/api/v1/dependencies/{name}/impact"],
-            "read_model",
-            "read_model",
-            "audit_chain",
-            "witnessed",
-            [
-                "mcoi/mcoi_runtime/app/routers/ops/dependencies.py",
-                "mcoi/mcoi_runtime/core/dependency_graph.py",
-                "mcoi/tests/test_dependency_graph.py",
-                "mcoi/tests/test_server_registry_helpers.py",
-            ],
-            "Dependency graph routes expose startup ordering and bounded failure-impact read models.",
-            ["dependency_graph_startup_order_bounded", "dependency_impact_analysis_bounded"],
-        ),
-        _surface(
-            "feature_flag_read_models",
-            ["/api/v1/flags", "/api/v1/flags/{flag_id}"],
-            "read_model",
-            "read_model",
-            "audit_chain",
-            "witnessed",
-            [
-                "mcoi/mcoi_runtime/app/routers/ops/feature_flags.py",
-                "mcoi/mcoi_runtime/core/feature_flags.py",
-                "mcoi/tests/test_feature_flags.py",
-                "mcoi/tests/test_server_phase220.py",
-            ],
-            "Feature-flag routes expose bounded flag lists and closed defaults for missing flag lookups.",
-            [
-                "feature_flags_list_bounded",
-                "feature_flags_list_returns_registered_flags",
-                "feature_flags_summary_counts_enabled_disabled",
-                "feature_flag_lookup_bounded",
-                "feature_flag_check_enabled",
-                "feature_flag_unknown_returns_disabled",
-                "feature_flag_tenant_override_respected",
-                "missing_feature_flag_defaults_closed",
-            ],
-        ),
-        _surface(
-            "operational_telemetry_read_models",
-            ["/api/v1/metrics", "/api/v1/grafana/dashboard"],
-            "read_model",
-            "read_model",
-            "audit_chain",
-            "witnessed",
-            [
-                "mcoi/mcoi_runtime/app/routers/ops/metrics.py",
-                "mcoi/mcoi_runtime/core/prometheus_exporter.py",
-                "mcoi/tests/test_governance_metrics.py",
-                "mcoi/tests/test_platform_metrics.py",
-                "mcoi/tests/test_server_phase202.py",
-            ],
-            "Operational telemetry routes expose bounded metric snapshots and dashboard exports without mutating runtime state.",
-            ["metrics_snapshot_bounded", "metrics_read_model_bounded", "grafana_dashboard_export_bounded"],
-        ),
-        _surface(
-            "rate_limit_read_models",
-            ["/api/v1/rate-limit/status", "/api/v1/rate-limits/{client_id}"],
-            "read_model",
-            "read_model",
-            "audit_chain",
-            "witnessed",
-            [
-                "mcoi/mcoi_runtime/app/routers/ops/rate_limit.py",
-                "mcoi/mcoi_runtime/core/rate_limit_headers.py",
-                "mcoi/mcoi_runtime/core/rate_limit_middleware.py",
-                "mcoi/tests/test_rate_limiter.py",
-                "mcoi/tests/test_rate_limit_headers.py",
-                "mcoi/tests/test_server_phase202.py",
-            ],
-            "Rate-limit read-model routes expose global and client-scoped token state without consuming request budget.",
-            [
-                "rate_limit_status_bounded",
-                "rate_limit_status_reports_allowed_and_active_buckets",
-                "rate_limit_client_headers_bounded",
-                "rate_limit_headers_project_limit_remaining_reset",
-                "rate_limit_header_peek_does_not_consume",
-                "atomic_rate_limit_store_bounds_concurrent_consumption",
-                "rate_limit_read_model_non_mutating",
-            ],
-        ),
-        _surface(
-            "sla_monitoring_read_models",
-            ["/api/v1/sla", "/api/v1/sla/violations"],
-            "read_model",
-            "read_model",
-            "audit_chain",
-            "witnessed",
-            [
-                "mcoi/mcoi_runtime/app/routers/data/sla.py",
-                "mcoi/mcoi_runtime/core/sla_monitor.py",
-                "mcoi/tests/test_sla_monitor.py",
-            ],
-            "SLA monitoring routes expose bounded summaries and violations without mutating monitor state.",
-            ["sla_summary_bounded", "sla_violations_bounded", "sla_read_model_non_mutating"],
-        ),
-        _surface(
-            "gateway_status_read_model",
-            ["/gateway/status"],
-            "read_model",
-            "read_model",
-            "audit_chain",
-            "witnessed",
-            [
-                "gateway/server.py",
-                "gateway/router.py",
-                "tests/test_gateway/test_webhooks.py",
-            ],
-            "Gateway status exposes bounded gateway health and route state as a non-mutating read model.",
-            ["gateway_status_governed", "gateway_status_bounded"],
         ),
         _surface(
             "conversation_memory_lifecycle",
@@ -3833,41 +3696,6 @@ def proof_coverage_matrix() -> dict[str, Any]:
             "status": "closed",
         },
         {
-            "action_id": "classify_llm_admin_observability_routes",
-            "surfaces": ["llm_admin_observability"],
-            "status": "closed",
-        },
-        {
-            "action_id": "classify_dependency_graph_routes",
-            "surfaces": ["dependency_graph_read_models"],
-            "status": "closed",
-        },
-        {
-            "action_id": "classify_feature_flag_routes",
-            "surfaces": ["feature_flag_read_models"],
-            "status": "closed",
-        },
-        {
-            "action_id": "classify_operational_telemetry_routes",
-            "surfaces": ["operational_telemetry_read_models"],
-            "status": "closed",
-        },
-        {
-            "action_id": "classify_rate_limit_read_model_routes",
-            "surfaces": ["rate_limit_read_models"],
-            "status": "closed",
-        },
-        {
-            "action_id": "classify_sla_monitoring_routes",
-            "surfaces": ["sla_monitoring_read_models"],
-            "status": "closed",
-        },
-        {
-            "action_id": "classify_gateway_status_route",
-            "surfaces": ["gateway_status_read_model"],
-            "status": "closed",
-        },
-        {
             "action_id": "classify_conversation_memory_routes",
             "surfaces": ["conversation_memory_lifecycle"],
             "status": "closed",
@@ -4451,21 +4279,12 @@ def _proof_relevant_routes(routes: set[str]) -> tuple[str, ...]:
 def _surface_for_route(route: str, surfaces: list[dict[str, Any]]) -> dict[str, Any] | None:
     """Return the surface that explicitly covers a declared route."""
     for surface in surfaces:
-        if surface["surface_id"] == "operational_platform_read_models":
-            for path in surface["representative_paths"]:
-                if path.startswith("/") and path == route:
-                    return surface
-            continue
-        if surface["surface_id"] in AGGREGATE_ROUTE_SURFACE_IDS:
-            continue
         for path in surface["representative_paths"]:
             if not path.startswith("/"):
                 continue
             if path == route:
                 return surface
     for surface in surfaces:
-        if surface["surface_id"] in AGGREGATE_ROUTE_SURFACE_IDS:
-            continue
         for path in surface["representative_paths"]:
             if path.startswith("/") and path.endswith("*") and route.startswith(path[:-1]):
                 return surface

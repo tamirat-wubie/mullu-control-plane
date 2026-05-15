@@ -1907,7 +1907,7 @@ def test_rate_limit_read_model_surface_exposes_bounded_status_and_headers() -> N
     matrix = _load_fixture()
     surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
     closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
-    rate_surface = surfaces["rate_limit_read_models"]
+    rate_surface = surfaces["operational_platform_read_models"]
     witnesses = set(rate_surface["runtime_witnesses"])
     route_records = {
         record["route"]: record
@@ -1930,17 +1930,17 @@ def test_rate_limit_read_model_surface_exposes_bounded_status_and_headers() -> N
     assert "rate_limit_header_peek_does_not_consume" in witnesses
     assert "atomic_rate_limit_store_bounds_concurrent_consumption" in witnesses
     assert route_records["/api/v1/rate-limit/status"]["coverage_state"] == "witnessed"
-    assert route_records["/api/v1/rate-limit/status"]["surface_id"] == "rate_limit_read_models"
+    assert route_records["/api/v1/rate-limit/status"]["surface_id"] == "operational_platform_read_models"
     assert route_records["/api/v1/rate-limits/{client_id}"]["coverage_state"] == "witnessed"
-    assert route_records["/api/v1/rate-limits/{client_id}"]["surface_id"] == "rate_limit_read_models"
-    assert closure_actions["classify_rate_limit_read_model_routes"]["status"] == "closed"
+    assert route_records["/api/v1/rate-limits/{client_id}"]["surface_id"] == "operational_platform_read_models"
+    assert closure_actions["classify_operational_platform_read_model_routes"]["status"] == "closed"
 
 
 def test_feature_flag_read_model_surface_exposes_bounded_flag_checks() -> None:
     matrix = _load_fixture()
     surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
     closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
-    flag_surface = surfaces["feature_flag_read_models"]
+    flag_surface = surfaces["operational_platform_read_models"]
     witnesses = set(flag_surface["runtime_witnesses"])
     route_records = {
         record["route"]: record
@@ -1962,10 +1962,10 @@ def test_feature_flag_read_model_surface_exposes_bounded_flag_checks() -> None:
     assert "feature_flag_unknown_returns_disabled" in witnesses
     assert "feature_flag_tenant_override_respected" in witnesses
     assert route_records["/api/v1/flags"]["coverage_state"] == "witnessed"
-    assert route_records["/api/v1/flags"]["surface_id"] == "feature_flag_read_models"
+    assert route_records["/api/v1/flags"]["surface_id"] == "operational_platform_read_models"
     assert route_records["/api/v1/flags/{flag_id}"]["coverage_state"] == "witnessed"
-    assert route_records["/api/v1/flags/{flag_id}"]["surface_id"] == "feature_flag_read_models"
-    assert closure_actions["classify_feature_flag_routes"]["status"] == "closed"
+    assert route_records["/api/v1/flags/{flag_id}"]["surface_id"] == "operational_platform_read_models"
+    assert closure_actions["classify_operational_platform_read_model_routes"]["status"] == "closed"
 
 
 def test_operational_health_surface_exposes_bounded_read_models() -> None:
