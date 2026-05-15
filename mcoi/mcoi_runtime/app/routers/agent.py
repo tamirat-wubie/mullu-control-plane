@@ -118,7 +118,12 @@ def webhook_subscribe(req: WebhookSubscribeRequest):
         action="webhook.subscribe", actor_id="system",
         tenant_id=req.tenant_id, target=req.subscription_id, outcome="success",
     )
-    return {"subscription_id": sub.subscription_id, "events": list(sub.events)}
+    receipt = deps.webhook_manager.mutation_receipts(limit=1)[-1]
+    return {
+        "subscription_id": sub.subscription_id,
+        "events": list(sub.events),
+        "mutation_receipt": receipt.to_dict(),
+    }
 
 
 @router.get("/api/v1/webhooks")
@@ -139,8 +144,19 @@ def webhook_deliveries(limit: int = 50):
     """Recent webhook delivery history."""
     return {
         "deliveries": [
-            {"id": d.delivery_id, "subscription": d.subscription_id, "event": d.event, "status": d.status, "at": d.created_at}
+            {
+                "id": d.delivery_id,
+                "subscription": d.subscription_id,
+                "event": d.event,
+                "status": d.status,
+                "at": d.created_at,
+            }
             for d in deps.webhook_manager.delivery_history(limit=limit)
+        ],
+        "mutation_receipts": [
+            receipt.to_dict()
+            for receipt in deps.webhook_manager.mutation_receipts(limit=limit)
+            if receipt.effect_name == "webhook_delivery_queued"
         ],
     }
 

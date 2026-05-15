@@ -74,6 +74,11 @@ class TestWebhookEndpoints:
         })
         assert resp.status_code == 200
         assert resp.json()["subscription_id"] == "sub-test"
+        receipt = resp.json()["mutation_receipt"]
+        assert receipt["effect_name"] == "webhook_subscription_registered"
+        assert receipt["evidence_ref"].startswith("webhook-mutation:")
+        assert receipt["metadata"]["target_url_hash"]
+        assert "https://example.com/hook" not in str(receipt)
 
     def test_list_webhooks(self, client):
         client.post("/api/v1/webhooks/subscribe", json={
@@ -87,6 +92,7 @@ class TestWebhookEndpoints:
     def test_webhook_deliveries(self, client):
         resp = client.get("/api/v1/webhooks/deliveries")
         assert resp.status_code == 200
+        assert "mutation_receipts" in resp.json()
 
 
 class TestDeepHealthEndpoint:

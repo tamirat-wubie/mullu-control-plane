@@ -38,6 +38,15 @@ def test_fixture_contract_is_canonical() -> None:
     assert len(matrix["surfaces"]) >= 3
 
 
+def test_surface_ids_are_unique_after_generation() -> None:
+    matrix = _load_fixture()
+    surface_ids = [surface["surface_id"] for surface in matrix["surfaces"]]
+
+    assert len(surface_ids) == len(set(surface_ids))
+    assert surface_ids.count("operational_platform_read_models") == 1
+    assert all(surface_id for surface_id in surface_ids)
+
+
 def test_coverage_levels_are_bounded() -> None:
     matrix = _load_fixture()
     coverage_levels = set(matrix["coverage_levels"])
@@ -81,6 +90,26 @@ def test_declared_routes_have_explicit_coverage_classification() -> None:
     assert report["unclassified_route_count"] == 0
     assert all(record["surface_id"] != "unclassified_declared_route" for record in report["routes"])
     assert all(record["coverage_state"] != "unproven" for record in report["routes"])
+
+
+def test_aggregate_operational_surface_does_not_override_specific_route_owners() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    route_records = {
+        record["route"]: record
+        for record in matrix["route_coverage"]["routes"]
+    }
+    aggregate_routes = {
+        route
+        for route in surfaces["operational_platform_read_models"]["representative_paths"]
+        if route.startswith("/")
+    }
+
+    assert aggregate_routes
+    assert all(route_records[route]["surface_id"] != "operational_platform_read_models" for route in aggregate_routes)
+    assert route_records["/api/v1/rate-limit/status"]["surface_id"] == "rate_limit_read_models"
+    assert route_records["/api/v1/flags"]["surface_id"] == "feature_flag_read_models"
+    assert route_records["/gateway/status"]["surface_id"] == "gateway_status_read_model"
 
 
 def test_representative_routes_are_not_unclassified() -> None:
@@ -317,11 +346,16 @@ def test_webhooks_proof_surface_is_witnessed() -> None:
     assert "mcoi/mcoi_runtime/app/routers/agent.py" in webhooks_surface["evidence_files"]
     assert "mcoi/mcoi_runtime/core/webhook_retry.py" in webhooks_surface["evidence_files"]
     assert "mcoi/tests/test_server_phase205.py" in webhooks_surface["evidence_files"]
+    assert "mcoi/tests/test_webhook_system.py" in webhooks_surface["evidence_files"]
     assert "mcoi/tests/test_webhook_retry.py" in webhooks_surface["evidence_files"]
     assert "webhook_subscribe_records_audit" in witnesses
     assert "webhook_subscription_audited" in witnesses
+    assert "webhook_subscription_mutation_receipt_emitted" in witnesses
     assert "webhook_delivery_history_is_bounded" in witnesses
+    assert "webhook_delivery_mutation_receipts_exposed" in witnesses
     assert "webhook_delivery_history_bounded" in witnesses
+    assert "webhook_delivery_queue_mutation_receipt_emitted" in witnesses
+    assert "webhook_mutation_receipt_closes_effect_assurance" in witnesses
     assert "webhook_dead_letters_are_explicit" in witnesses
     assert "webhook_delivery_errors_are_sanitized" in witnesses
     assert route_records["/api/v1/webhooks/subscribe"]["coverage_state"] == "witnessed"
