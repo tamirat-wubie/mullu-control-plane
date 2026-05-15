@@ -2,7 +2,7 @@
 
 Purpose: define the release gate for exposing `Mullu` as the public product name.
 Governance scope: brand clearance, domain ownership, website copy, SDK/API terminology, admin surfaces, and product launch evidence.
-Dependencies: `docs/PRODUCT_IDENTITY.md`, `docs/PUBLIC_LAUNCH_COPY.md`, `docs/NAME_CLEARANCE_PRELIMINARY.md`, `docs/NAMING_MIGRATION_PLAN.md`, `docs/TRADEMARK_SEARCH_RUNBOOK.md`, `docs/DOMAIN_ACQUISITION_PLAN.md`, `docs/WEBSITE_UPDATE_CHECKLIST.md`, `docs/WEBSITE_RECHECK_LOG.md`, `docs/WEBSITE_DEPLOYMENT_EVIDENCE_2026-05-15.md`, `docs/PUBLIC_NAMING_STATE_TRANSITION.md`, `docs/PUBLIC_NAMING_HANDOFF.md`, `docs/CLEARANCE_PACKET_TEMPLATE.md`, `docs/DOMAIN_OWNERSHIP_RECORD_TEMPLATE.md`, `docs/public-naming-readiness.json`.
+Dependencies: `docs/PRODUCT_IDENTITY.md`, `docs/PUBLIC_LAUNCH_COPY.md`, `docs/NAME_CLEARANCE_PRELIMINARY.md`, `docs/OFFICIAL_CLEARANCE_ACCESS_LOG_2026-05-15.md`, `docs/NAMING_MIGRATION_PLAN.md`, `docs/TRADEMARK_SEARCH_RUNBOOK.md`, `docs/DOMAIN_ACQUISITION_PLAN.md`, `docs/WEBSITE_UPDATE_CHECKLIST.md`, `docs/WEBSITE_RECHECK_LOG.md`, `docs/WEBSITE_DEPLOYMENT_EVIDENCE_2026-05-15.md`, `docs/PUBLIC_NAMING_STATE_TRANSITION.md`, `docs/PUBLIC_NAMING_HANDOFF.md`, `docs/CLEARANCE_PACKET_TEMPLATE.md`, `docs/DOMAIN_OWNERSHIP_RECORD_TEMPLATE.md`, `docs/public-naming-readiness.json`.
 Invariants: `Mullu` is the product name only after clearance; `Mullusi` remains the company and governance authority; `Mullu Platform` remains valid for developer contracts and architecture surfaces.
 
 ## Readiness Gates
@@ -39,6 +39,7 @@ Invariants: `Mullu` is the product name only after clearance; `Mullusi` remains 
 | Readiness report | CLI report summarizes open launch blockers | Closed |
 | Transition planner | CLI planner derives remaining launch-state actions | Closed |
 | Naming schemas | JSON schemas exist for readiness witness and clearance draft | Closed |
+| Official clearance access log | 2026-05-15 USPTO/TSDR and domain-access attempts are recorded without closing clearance gates | Closed |
 | Preliminary web search | Obvious public conflicts recorded | Closed with review items |
 | Close-variant review | `MULU` software/service-adjacent public records captured for official review | Open |
 | USPTO search | Exact and similar marks checked | Open |

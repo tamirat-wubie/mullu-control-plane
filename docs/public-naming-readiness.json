@@ -40,7 +40,8 @@
     "readiness_tests",
     "readiness_report",
     "transition_planner",
-    "naming_schemas"
+    "naming_schemas",
+    "official_clearance_access_log"
   ],
   "open_gates": [
     "uspto_search",
@@ -81,6 +82,7 @@
     "docs/PUBLIC_NAMING_READINESS.md",
     "docs/NAMING_MIGRATION_PLAN.md",
     "docs/NAME_CLEARANCE_PRELIMINARY.md",
+    "docs/OFFICIAL_CLEARANCE_ACCESS_LOG_2026-05-15.md",
     "docs/TRADEMARK_SEARCH_RUNBOOK.md",
     "docs/TSDR_EVIDENCE_TEMPLATE.md",
     "docs/DOMAIN_ACQUISITION_PLAN.md",

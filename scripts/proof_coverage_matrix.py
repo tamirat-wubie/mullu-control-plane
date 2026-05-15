@@ -221,6 +221,15 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "mcoi/mcoi_runtime/core/proof_bridge.py",
             ],
             "Chat and workflow routes preserve governed request and action proof boundaries.",
+            [
+                "chat_completion_governed",
+                "streaming_chat_returns_sse",
+                "streaming_chat_multi_turn_history_preserved",
+                "streaming_chat_governed",
+                "streaming_chat_contains_budget_witnesses",
+                "streaming_chat_exception_sanitized",
+                "chat_workflow_history_bounded",
+            ],
         ),
         _surface(
             "cost_budget_read_models",
@@ -242,6 +251,14 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "mcoi/mcoi_runtime/governance/guards/budget.py",
             ],
             "Budget and cost surfaces expose bounded read models over governed spend state.",
+            [
+                "budget_summary_bounded",
+                "safe_completion_tracks_cost",
+                "cost_read_model_totals_bounded",
+                "cost_top_spenders_bounded",
+                "cost_by_model_bounded",
+                "tenant_cost_projection_bounded",
+            ],
         ),
         _surface(
             "assistant_kernel_planning",
@@ -803,6 +820,15 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "mcoi/mcoi_runtime/app/routers/llm/ab_test.py",
             ],
             "Model catalog and experiment control routes are declared as governed control surfaces.",
+            [
+                "model_catalog_list_bounded",
+                "auto_completion_routes_model",
+                "auto_completion_forced_model",
+                "ab_test_single_model_result",
+                "ab_test_two_models_cost_comparison",
+                "ab_test_summary_bounded",
+                "ab_test_failed_model_recorded",
+            ],
         ),
         _surface(
             "policy_version_registry",

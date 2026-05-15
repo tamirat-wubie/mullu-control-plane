@@ -32,6 +32,7 @@ WEBSITE_RECHECK_LOG_PATH = REPO_ROOT / "docs" / "WEBSITE_RECHECK_LOG.md"
 DOMAIN_ACQUISITION_PLAN_PATH = REPO_ROOT / "docs" / "DOMAIN_ACQUISITION_PLAN.md"
 PUBLIC_NAMING_REVIEW_PACKET_PATH = REPO_ROOT / "docs" / "PUBLIC_NAMING_REVIEW_PACKET.md"
 PUBLIC_NAMING_ARTIFACT_MANIFEST_PATH = REPO_ROOT / "docs" / "PUBLIC_NAMING_ARTIFACT_MANIFEST.md"
+OFFICIAL_CLEARANCE_ACCESS_LOG_PATH = REPO_ROOT / "docs" / "OFFICIAL_CLEARANCE_ACCESS_LOG_2026-05-15.md"
 READINESS_SCHEMA_PATH = REPO_ROOT / "schemas" / "public_naming_readiness.schema.json"
 CLEARANCE_SCHEMA_PATH = REPO_ROOT / "schemas" / "mullu_name_clearance_draft.schema.json"
 
@@ -69,6 +70,7 @@ REQUIRED_CLOSED_GATES = {
     "readiness_report",
     "transition_planner",
     "naming_schemas",
+    "official_clearance_access_log",
 }
 
 REQUIRED_OPEN_GATES = {
@@ -97,6 +99,7 @@ REQUIRED_EVIDENCE_DOCS = {
     "docs/PUBLIC_NAMING_READINESS.md",
     "docs/NAMING_MIGRATION_PLAN.md",
     "docs/NAME_CLEARANCE_PRELIMINARY.md",
+    "docs/OFFICIAL_CLEARANCE_ACCESS_LOG_2026-05-15.md",
     "docs/TRADEMARK_SEARCH_RUNBOOK.md",
     "docs/TSDR_EVIDENCE_TEMPLATE.md",
     "docs/DOMAIN_ACQUISITION_PLAN.md",
@@ -467,6 +470,45 @@ def validate_public_naming_review_packet(packet_path: Path = PUBLIC_NAMING_REVIE
     _require(not missing_conditional_routes, f"review packet missing conditional website routes: {missing_conditional_routes}")
 
 
+def validate_official_clearance_access_log(log_path: Path = OFFICIAL_CLEARANCE_ACCESS_LOG_PATH) -> None:
+    log_text = log_path.read_text(encoding="utf-8")
+    validate_no_forbidden_terminology(_display_path(log_path), log_text)
+
+    required_literals = (
+        "2026-05-15",
+        "USPTO Trademark Search",
+        "USPTO TSDR",
+        "WIPO Global Brand Database",
+        "EUIPO eSearch plus / TMview",
+        "Beginning October 2",
+        "API key",
+        "99518598",
+        "99264214",
+        "85772539",
+        "85494313",
+        "85222451",
+        "mullu.ai",
+        "mullu.app",
+        "mullu.dev",
+        "getmullu.com",
+        "mullu.mullusi.com",
+        "No clearance gate is closed by this log",
+    )
+    missing_literals = sorted(literal for literal in required_literals if literal not in log_text)
+    _require(not missing_literals, f"official clearance access log missing literals: {missing_literals}")
+
+    open_gate_literals = (
+        "uspto_search",
+        "wipo_search",
+        "euipo_tmview_search",
+        "close_variant_review",
+        "domain_ownership",
+        "legal_review",
+    )
+    missing_gates = sorted(gate for gate in open_gate_literals if gate not in log_text)
+    _require(not missing_gates, f"official clearance access log missing open gates: {missing_gates}")
+
+
 def validate_public_naming_artifact_manifest(
     manifest_path: Path = PUBLIC_NAMING_ARTIFACT_MANIFEST_PATH,
 ) -> None:
@@ -507,6 +549,7 @@ def validate_public_naming_readiness(witness_path: Path = WITNESS_PATH) -> None:
     validate_website_recheck_log()
     validate_domain_acquisition_plan()
     validate_public_naming_review_packet()
+    validate_official_clearance_access_log()
     validate_public_naming_artifact_manifest()
 
     _require(witness.get("product_name") == "Mullu", "product_name must be Mullu")

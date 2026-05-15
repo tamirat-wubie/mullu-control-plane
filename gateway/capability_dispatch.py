@@ -805,6 +805,8 @@ def _command_run(
         "workspace_mount": receipt.workspace_mount,
         "forbidden_effects_observed": receipt.forbidden_effects_observed,
         "verification_status": receipt.verification_status,
+        "changed_file_count": receipt.changed_file_count,
+        "changed_file_refs": list(receipt.changed_file_refs),
         "evidence_refs": list(receipt.evidence_refs),
     }
     return {

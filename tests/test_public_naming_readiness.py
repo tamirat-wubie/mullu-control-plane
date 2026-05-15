@@ -34,6 +34,7 @@ from scripts.validate_public_naming_readiness import (  # noqa: E402
     PRODUCT_ROUTE_DEPLOYMENT_HANDOFF_PATH,
     PRODUCT_ROUTE_DRAFT_PATH,
     READINESS_SCHEMA_PATH,
+    OFFICIAL_CLEARANCE_ACCESS_LOG_PATH,
     WEBSITE_DEPLOYMENT_EVIDENCE_LOG_PATH,
     WEBSITE_DEPLOYMENT_EVIDENCE_SUCCESS_PATH,
     WEBSITE_RECHECK_LOG_PATH,
@@ -48,6 +49,7 @@ from scripts.validate_public_naming_readiness import (  # noqa: E402
     validate_public_launch_copy,
     validate_public_naming_readiness,
     validate_public_naming_review_packet,
+    validate_official_clearance_access_log,
     validate_tsdr_evidence_template,
     validate_website_deployment_evidence_log,
     validate_website_deployment_success_log,
@@ -461,6 +463,22 @@ def test_required_official_searches_keep_uspto_serials_and_classes() -> None:
 
 def test_public_naming_review_packet_contains_required_review_inputs() -> None:
     validate_public_naming_review_packet()
+
+
+def test_official_clearance_access_log_preserves_open_clearance_gates() -> None:
+    validate_official_clearance_access_log()
+
+
+def test_official_clearance_access_log_rejects_missing_api_key_boundary(tmp_path: Path) -> None:
+    log_path = tmp_path / "OFFICIAL_CLEARANCE_ACCESS_LOG_2026-05-15.md"
+    log_text = OFFICIAL_CLEARANCE_ACCESS_LOG_PATH.read_text(encoding="utf-8").replace(
+        "API key",
+        "access token",
+    )
+    log_path.write_text(log_text, encoding="utf-8")
+
+    with pytest.raises(AssertionError, match="missing literals"):
+        validate_official_clearance_access_log(log_path)
 
 
 def test_public_naming_review_packet_rejects_missing_serial(tmp_path: Path) -> None:

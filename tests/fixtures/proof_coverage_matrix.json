@@ -784,42 +784,12 @@
   },
   "evidence_quality": {
     "by_strength": {
-      "classified_with_quality_gaps": 13,
-      "strong": 98,
+      "classified_with_quality_gaps": 10,
+      "strong": 101,
       "unproven": 0
     },
-    "quality_gap_count": 13,
+    "quality_gap_count": 10,
     "quality_gaps": [
-      {
-        "coverage_state": "witnessed",
-        "evidence_file_count": 2,
-        "gaps": [
-          "missing_runtime_witness"
-        ],
-        "runtime_witness_count": 0,
-        "strength": "classified_with_quality_gaps",
-        "surface_id": "llm_chat_workflow"
-      },
-      {
-        "coverage_state": "witnessed",
-        "evidence_file_count": 3,
-        "gaps": [
-          "missing_runtime_witness"
-        ],
-        "runtime_witness_count": 0,
-        "strength": "classified_with_quality_gaps",
-        "surface_id": "cost_budget_read_models"
-      },
-      {
-        "coverage_state": "witnessed",
-        "evidence_file_count": 2,
-        "gaps": [
-          "missing_runtime_witness"
-        ],
-        "runtime_witness_count": 0,
-        "strength": "classified_with_quality_gaps",
-        "surface_id": "model_experiment_control"
-      },
       {
         "coverage_state": "witnessed",
         "evidence_file_count": 4,
@@ -2788,7 +2758,15 @@
         "/api/v1/chat/workflow/history"
       ],
       "request_proof": "request_proof",
-      "runtime_witnesses": [],
+      "runtime_witnesses": [
+        "chat_completion_governed",
+        "streaming_chat_returns_sse",
+        "streaming_chat_multi_turn_history_preserved",
+        "streaming_chat_governed",
+        "streaming_chat_contains_budget_witnesses",
+        "streaming_chat_exception_sanitized",
+        "chat_workflow_history_bounded"
+      ],
       "surface_id": "llm_chat_workflow"
     },
     {
@@ -2810,7 +2788,14 @@
         "/api/v1/costs/{tenant_id}/projection"
       ],
       "request_proof": "read_model",
-      "runtime_witnesses": [],
+      "runtime_witnesses": [
+        "budget_summary_bounded",
+        "safe_completion_tracks_cost",
+        "cost_read_model_totals_bounded",
+        "cost_top_spenders_bounded",
+        "cost_by_model_bounded",
+        "tenant_cost_projection_bounded"
+      ],
       "surface_id": "cost_budget_read_models"
     },
     {
@@ -3386,7 +3371,15 @@
         "/api/v1/ab-test/summary"
       ],
       "request_proof": "request_proof",
-      "runtime_witnesses": [],
+      "runtime_witnesses": [
+        "model_catalog_list_bounded",
+        "auto_completion_routes_model",
+        "auto_completion_forced_model",
+        "ab_test_single_model_result",
+        "ab_test_two_models_cost_comparison",
+        "ab_test_summary_bounded",
+        "ab_test_failed_model_recorded"
+      ],
       "surface_id": "model_experiment_control"
     },
     {

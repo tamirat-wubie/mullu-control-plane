@@ -21,6 +21,7 @@ Invariants: `Mullu` remains internally aligned only; paid public launch remains 
 | Input | Required reviewer action |
 | --- | --- |
 | `docs/mullu-name-clearance-draft.json` | Fill official search outcomes, final legal decision, and launch effect |
+| `docs/OFFICIAL_CLEARANCE_ACCESS_LOG_2026-05-15.md` | Review blocked official API/RDAP access attempts and required replacement evidence |
 | `docs/TSDR_EVIDENCE_TEMPLATE.md` | Capture official USPTO/TSDR status for each required `MULU` serial |
 | `docs/DOMAIN_OWNERSHIP_RECORD_TEMPLATE.md` | Record registrar, DNS, renewal, and security evidence |
 | `docs/WEBSITE_DEPLOYMENT_EVIDENCE_TEMPLATE.md` | Record live route, HTTPS, copy, and site-not-found checks |

@@ -39,6 +39,7 @@ from gateway.capability_isolation import (  # noqa: E402
 )
 from gateway.command_spine import canonical_hash, capability_passport_for  # noqa: E402
 from gateway.mcp_capabilities import register_mcp_capabilities  # noqa: E402
+from scripts.validate_sandbox_execution_receipt import validate_sandbox_execution_receipt  # noqa: E402
 from mcoi_runtime.contracts.governed_capability_fabric import (  # noqa: E402
     CapabilityCertificationStatus,
     CapabilityRegistryEntry,
@@ -251,10 +252,10 @@ class StubSandboxRunner:
             capability_id=request.capability_id,
             sandbox_id="docker-rootless",
             image="mullu-agent-runner:latest",
-            command_hash="command-hash",
-            docker_args_hash="docker-args-hash",
-            stdout_hash="stdout-hash",
-            stderr_hash="stderr-hash",
+            command_hash="a" * 64,
+            docker_args_hash="b" * 64,
+            stdout_hash="c" * 64,
+            stderr_hash="d" * 64,
             returncode=0,
             network_disabled=True,
             read_only_rootfs=True,
@@ -503,7 +504,7 @@ def test_dispatcher_executes_registered_enterprise_capability() -> None:
     assert result["task_id"].startswith("task-")
 
 
-def test_computer_command_run_uses_sandbox_runner() -> None:
+def test_computer_command_run_uses_sandbox_runner(tmp_path: Path) -> None:
     sandbox_runner = StubSandboxRunner()
     dispatcher = SkillDispatcher()
     register_computer_capabilities(dispatcher, sandbox_runner=sandbox_runner)
@@ -522,8 +523,15 @@ def test_computer_command_run_uses_sandbox_runner() -> None:
     assert result["verification_status"] == "passed"
     assert result["sandbox_execution_receipt"]["network_disabled"] is True
     assert result["sandbox_execution_receipt"]["workspace_mount"] == "/workspace"
+    assert result["sandbox_execution_receipt"]["changed_file_count"] == 0
+    assert result["sandbox_execution_receipt"]["changed_file_refs"] == []
     assert sandbox_runner.requests[0].capability_id == "computer.command.run"
     assert sandbox_runner.requests[0].argv == ("python", "--version")
+    receipt_path = tmp_path / "sandbox-command-receipt.json"
+    receipt_path.write_text(json.dumps(result["sandbox_execution_receipt"]), encoding="utf-8")
+    validation = validate_sandbox_execution_receipt(receipt_path, capability_prefix="computer.")
+    assert validation.valid is True
+    assert validation.blockers == ()
 
 
 def test_computer_command_run_fails_closed_without_sandbox_runner() -> None:

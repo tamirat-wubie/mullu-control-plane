@@ -14,6 +14,7 @@ Invariants: every listed artifact must exist; paid public launch remains blocked
 | `docs/PUBLIC_NAMING_READINESS.md` | Readiness gate definition |
 | `docs/NAMING_MIGRATION_PLAN.md` | Naming migration rules |
 | `docs/NAME_CLEARANCE_PRELIMINARY.md` | Preliminary non-legal clearance sweep |
+| `docs/OFFICIAL_CLEARANCE_ACCESS_LOG_2026-05-15.md` | Official trademark/domain access attempt log |
 | `docs/TRADEMARK_SEARCH_RUNBOOK.md` | Official trademark search procedure |
 | `docs/TSDR_EVIDENCE_TEMPLATE.md` | USPTO/TSDR close-variant evidence template |
 | `docs/DOMAIN_ACQUISITION_PLAN.md` | Domain candidate and routing plan |
