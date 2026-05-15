@@ -23,6 +23,7 @@
     "website_checklist",
     "website_deployment_evidence_template",
     "website_deployment_probe",
+    "website_deployment_verification",
     "website_recheck_log",
     "state_transition_rules",
     "handoff_summary",
@@ -48,7 +49,6 @@
     "domain_ownership",
     "legal_review",
     "homepage_update",
-    "website_deployment_verification",
     "app_title_update",
     "sdk_api_stability_review"
   ],

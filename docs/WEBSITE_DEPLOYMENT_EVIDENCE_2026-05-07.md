@@ -3,7 +3,7 @@
 Purpose: record direct live-route evidence for Mullusi company and Mullu product launch routes.
 Governance scope: homepage state, product route state, DNS state, HTTP status, launch blockers, and public naming readiness.
 Dependencies: `docs/WEBSITE_DEPLOYMENT_EVIDENCE_TEMPLATE.md`, `docs/PUBLIC_NAMING_READINESS.md`.
-Invariants: this evidence does not clear `website_deployment_verification`; the product launch route remains blocked until an intentional Mullu route is live.
+Invariants: this evidence closes `website_deployment_verification` only for the `/mullu` fallback route after the 2026-05-15 HTTP 200 probe; paid public launch remains blocked until the remaining public naming gates close.
 
 ## Probe Summary
 
@@ -11,7 +11,7 @@ Invariants: this evidence does not clear `website_deployment_verification`; the 
 | --- | --- |
 | Probe date | 2026-05-07 |
 | Probe method | `Resolve-DnsName`, `curl.exe -I -L`, and body fetch with `curl.exe -L` |
-| Result | `website_deployment_verification` not cleared |
+| Result | `website_deployment_verification` closed for `/mullu`; paid launch remains blocked |
 | Homepage update | `homepage_update` remains open |
 | Paid launch route | not cleared |
 
@@ -59,6 +59,21 @@ from live deployment witness claims.
 | `https://mullusi.com/mullu` | HTTP 404 from current environment | Product route still not live |
 | Live-route tracking issue | `https://github.com/tamirat-wubie/mullusi/issues/87` | Keep deployment verification open |
 
+## 2026-05-15 Live Route Closure Probe
+
+PR #88 restored the route literals required by the public naming readiness
+witness and merged into `tamirat-wubie/mullusi` `main` at commit
+`93b7a6de942241424564f686aebee023a469ecde`.
+
+| Check | Observed result | Decision |
+| --- | --- | --- |
+| `tamirat-wubie/mullusi` PR #88 | Merged and `fast-check` passed | Website repo source aligned with governed artifact |
+| `https://mullusi.com/mullu` | HTTP 200 from current environment | Product fallback route is live |
+| Body literal: `Mullu, by Mullusi` | Present | First-reference product boundary verified |
+| Body literal: `Mullu CLI` | Present | Public product-surface literal verified |
+| Body literal: `Mullu Control Plane` | Present | Admin/product surface literal verified |
+| `website_deployment_verification` | Closed for `/mullu` route | Paid public launch remains blocked by remaining gates |
+
 ## Pages Source Discovery
 
 DNS now shows:
@@ -86,17 +101,17 @@ not sufficient to close the deployment gate until the Pages source that backs
 
 The public company homepage is live, but the product launch route is not ready.
 
-The `website_deployment_verification` gate remains open because:
+The original 2026-05-07 and earlier 2026-05-15 probes kept
+`website_deployment_verification` open because:
 
 1. `https://mullusi.com/mullu` returns HTTP 404 after redirect.
 2. `https://mullu.mullusi.com` has no DNS record.
 3. The live homepage does not yet present the first-reference product boundary: `Mullu, by Mullusi`.
 4. The homepage remains company/ecosystem oriented rather than flagship product oriented.
 
-## Required Fix Before Closing Gate
+## Remaining Public Launch Work
 
-1. Publish an intentional product page at `https://mullusi.com/mullu`, or configure `https://mullu.mullusi.com`.
-2. Put `Mullu, by Mullusi` on the selected product route.
-3. Keep `Mullusi` as the company/governance authority.
-4. Confirm route returns HTTP 200 with HTTPS and no GitHub Pages 404 content.
-5. Re-run route probes and replace this failed evidence with passing deployment evidence.
+1. Keep `Mullusi` as the company/governance authority.
+2. Keep `/mullu` as the private-beta fallback route until standalone product DNS is intentionally configured.
+3. Close `mullu.mullusi.com` only after DNS, HTTPS, and body probes pass.
+4. Keep paid public launch blocked until trademark, legal, domain ownership, app-title, and SDK/API stability gates close.

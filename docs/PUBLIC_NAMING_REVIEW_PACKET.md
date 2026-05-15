@@ -39,9 +39,14 @@ Invariants: `Mullu` remains internally aligned only; paid public launch remains 
 | `domain_ownership` | Registrar and DNS ownership evidence for selected product route |
 | `legal_review` | Qualified legal/trademark conclusion |
 | `homepage_update` | Approved page copy or explicit waitlist/private-beta state |
-| `website_deployment_verification` | Live route evidence proving no site-not-found or parked-domain page |
 | `app_title_update` | User-facing app title update after authorization |
 | `sdk_api_stability_review` | Confirmation that technical `Mullu Platform` contracts remain intentional |
+
+## Closed Website Evidence
+
+| Gate | Evidence recorded |
+| --- | --- |
+| `website_deployment_verification` | `https://mullusi.com/mullu` returned HTTP 200 on 2026-05-15 and contained `Mullu, by Mullusi`, `Mullu CLI`, and `Mullu Control Plane` |
 
 ## Required TSDR Serials
 

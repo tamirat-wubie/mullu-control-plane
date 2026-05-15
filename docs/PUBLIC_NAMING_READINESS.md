@@ -16,13 +16,14 @@ Invariants: `Mullu` is the product name only after clearance; `Mullusi` remains 
 | Blocked generic names | `Mullusi Handler`, `Mullusi Work`, `Mullusi Operator`, and `Mullu AI` are blocked as public product names | Closed |
 | Public copy | Launch-ready homepage copy exists | Closed |
 | Product route draft | Deploy-ready `/mullu/index.html` product page exists and remains private beta | Closed |
-| Product route deployment handoff | Product route copied to sibling website repo target; live deployment still blocked | Closed with blocker |
+| Product route deployment handoff | Product route copied to sibling website repo target and verified live at `/mullu` | Closed |
 | Trademark runbook | Official search procedure exists | Closed |
 | TSDR evidence template | Official USPTO close-variant serial capture template exists | Closed |
 | Domain plan | Domain acquisition and routing plan exists | Closed |
 | Website checklist | Public-site update checklist exists | Closed |
 | Website deployment evidence template | Live-route verification template exists | Closed |
-| Website deployment probe | Direct route evidence recorded; product routes are not yet ready | Closed with blocker |
+| Website deployment probe | Direct route evidence recorded; `/mullu` fallback route returns HTTP 200 with intentional product copy | Closed |
+| Website deployment verification | `https://mullusi.com/mullu` verified live and not site-not-found | Closed |
 | Website recheck log | Non-authoritative public index signal is recorded without closing deployment verification | Closed |
 | State transition rules | Launch-state mutation rules exist | Closed |
 | Handoff summary | Reviewer-facing public naming handoff exists | Closed |
@@ -46,7 +47,6 @@ Invariants: `Mullu` is the product name only after clearance; `Mullusi` remains 
 | Domain ownership | Primary or fallback product domain acquired | Open |
 | Legal review | Counsel or qualified trademark review completed | Open |
 | Homepage update | `mullusi.com` or product landing page updated | Open |
-| Website deployment verification | `mullusi.com` and any product route verified live and not site-not-found | Open |
 | App title update | User-facing app title uses `Mullu` | Open |
 | SDK/API stability review | Technical contracts intentionally keep `Mullu Platform` where required | Open |
 
@@ -105,9 +105,11 @@ The current deployment handoff target is:
 ../mullusi/mullu/index.html
 ```
 
-This target is not a live-route pass by itself; `website_deployment_verification`
-remains open until `https://mullusi.com/mullu` returns intentional product
-content with HTTP 200.
+This target is now verified live for the `/mullu` fallback route:
+`https://mullusi.com/mullu` returns HTTP 200 and contains intentional product
+copy including `Mullu, by Mullusi`, `Mullu CLI`, and `Mullu Control Plane`.
+This does not clear standalone product subdomain, legal, domain ownership,
+homepage, app-title, or SDK/API stability gates.
 
 ## Launch Decision
 
