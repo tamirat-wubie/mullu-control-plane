@@ -784,32 +784,12 @@
   },
   "evidence_quality": {
     "by_strength": {
-      "classified_with_quality_gaps": 15,
-      "strong": 96,
+      "classified_with_quality_gaps": 13,
+      "strong": 98,
       "unproven": 0
     },
-    "quality_gap_count": 15,
+    "quality_gap_count": 13,
     "quality_gaps": [
-      {
-        "coverage_state": "witnessed",
-        "evidence_file_count": 7,
-        "gaps": [
-          "missing_runtime_witness"
-        ],
-        "runtime_witness_count": 0,
-        "strength": "classified_with_quality_gaps",
-        "surface_id": "llm_streaming"
-      },
-      {
-        "coverage_state": "witnessed",
-        "evidence_file_count": 2,
-        "gaps": [
-          "missing_runtime_witness"
-        ],
-        "runtime_witness_count": 0,
-        "strength": "classified_with_quality_gaps",
-        "surface_id": "llm_completion"
-      },
       {
         "coverage_state": "witnessed",
         "evidence_file_count": 2,
@@ -2724,7 +2704,15 @@
         "/api/v1/chat/stream"
       ],
       "request_proof": "request_proof",
-      "runtime_witnesses": [],
+      "runtime_witnesses": [
+        "stream_returns_sse",
+        "stream_contains_content",
+        "stream_contains_budget_witnesses",
+        "stream_budget_reservation_and_settlement",
+        "stream_budget_cutoff_stops_delivery",
+        "streaming_chat_returns_sse",
+        "streaming_chat_exception_sanitized"
+      ],
       "surface_id": "llm_streaming"
     },
     {
@@ -2774,7 +2762,15 @@
         "/api/v1/complete/auto"
       ],
       "request_proof": "request_proof",
-      "runtime_witnesses": [],
+      "runtime_witnesses": [
+        "completion_returns_action_proof",
+        "completion_records_budget_ledger",
+        "completion_failure_is_bounded",
+        "safe_completion_tracks_cost",
+        "safe_completion_exception_sanitized",
+        "auto_completion_routes_model",
+        "auto_completion_exception_sanitized"
+      ],
       "surface_id": "llm_completion"
     },
     {

@@ -90,10 +90,13 @@ def test_evidence_quality_report_tracks_witness_strength_gaps() -> None:
     assert evidence_quality["quality_gap_count"] == len(evidence_quality["quality_gaps"])
     assert evidence_quality["by_strength"]["strong"] >= 1
     assert evidence_quality["by_strength"]["classified_with_quality_gaps"] >= 1
-    assert "llm_streaming" in quality_gaps
-    assert quality_gaps["llm_streaming"]["gaps"] == ["missing_runtime_witness"]
-    assert quality_gaps["llm_streaming"]["evidence_file_count"] >= 1
-    assert quality_gaps["llm_streaming"]["runtime_witness_count"] == 0
+    assert evidence_quality["quality_gap_count"] == 13
+    assert "llm_streaming" not in quality_gaps
+    assert "llm_completion" not in quality_gaps
+    assert "llm_chat_workflow" in quality_gaps
+    assert quality_gaps["llm_chat_workflow"]["gaps"] == ["missing_runtime_witness"]
+    assert quality_gaps["llm_chat_workflow"]["evidence_file_count"] >= 1
+    assert quality_gaps["llm_chat_workflow"]["runtime_witness_count"] == 0
 
 
 def test_declared_routes_have_explicit_coverage_classification() -> None:
