@@ -200,16 +200,16 @@ A future durable receipt store could be added (e.g., PostgreSQL append
 table, or by hashing receipts into the audit ledger). Until then,
 clients must persist their own receipt copies if they need them.
 
-### 3. Receipts are externally verifiable
+### 3. Receipts prove external transition truth
 
-There is no `mcoi verify-receipt` analogue of `mcoi verify-ledger`. A
-client who receives a receipt in an HTTP response cannot, today, run a
-local verifier to confirm the receipt is internally consistent or that
-its `causal_parent` chains to a known prior receipt.
+The `mcoi verify-receipt-chain <input>` verifier now recomputes receipt
+hashes, receipt ids, replay tokens, and `causal_parent` linkage for
+exported JSON or JSONL receipt chains. A client who receives receipts
+can run a local verifier to confirm internal consistency.
 
-A future verifier would mirror the LEDGER_SPEC pattern: pure function,
-CLI tool, exit-code discipline, nightly drill. The spec for it does
-not yet exist.
+This does not prove the external truth of the transition. It proves only
+that the exported receipt fields are mutually consistent and chain to
+the supplied `genesis` or `--anchor-hash` parent.
 
 ### 4. Receipts capture the full state
 
@@ -226,7 +226,7 @@ content; this is a follow-up document.
 |-----|----------|-----------------|--------|
 | Gateway webhooks bypass receipt emission | High | `GatewayReceiptMiddleware` in `gateway/receipt_middleware.py` | **Closed (G10.1)** |
 | Receipts not persisted | High | Add `ReceiptStore` protocol mirroring `AuditStore`; wire to PostgreSQL in production profile. | Open |
-| No external receipt verifier | Medium | After persistence: implement `mcoi verify-receipt-chain` mirroring `mcoi verify-ledger`. | Open |
+| No external receipt verifier | Medium | After persistence: implement `mcoi verify-receipt-chain` mirroring `mcoi verify-ledger`. | **Closed** — `mcoi verify-receipt-chain` verifies exported JSON/JSONL receipt chains for receipt hash, receipt id, replay token, and causal-parent linkage. |
 | Rust ↔ Python protocol drift caught only by code review | Medium | Add a contract test that both implementations produce the same `receipt_hash` for the same input. | **Closed** — paired tests in `maf-kernel/src/lib.rs` and `mcoi/tests/test_proof_hash_contract.py` pin the canonical content to a hardcoded SHA-256 constant on each side. Drift on either side fails the matching test. |
 | State-hash content layout undocumented | Medium | Write `STATE_HASH_SPEC.md` mirroring the entry-hash section of LEDGER_SPEC.md. | **Closed** — `docs/STATE_HASH_SPEC.md` documents the canonical content layout (`state:entity_id:timestamp`), the Python implementation in `proof_bridge.py::_state_hash`, the absence of a Rust mirror, and three sub-gaps for future work (Rust mirror, structured entity fields, external verifier). |
 | Receipt persistence architectural seam | High | Define a `ReceiptStore` Protocol so a durable backend can plug in without touching ProofBridge core logic. (Separate from picking the durable shape.) | **Closed** — `mcoi/mcoi_runtime/contracts/receipt_store.py` defines `ReceiptStore` (base class with no-op defaults, mirroring AuditStore's pattern) and `InMemoryReceiptStore` (default, preserves pre-Protocol FIFO eviction at MAX_LINEAGE_ENTRIES). `ProofBridge` wired to use the Protocol via injection. The durable storage SHAPE decision (PostgreSQL append table vs ledger-hashed) is still the operator's call, but the architectural blocker is removed: a `PostgresReceiptStore` is now a drop-in subclass. |
