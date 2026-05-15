@@ -46,12 +46,14 @@ def _append_bounded_warning(warnings: list[str], component: str, exc: Exception)
 
 def _validate_db_backend_for_env(db_backend: str, env: str) -> str | None:
     """Validate the persistence backend against environment posture."""
-    if db_backend == "memory" and env in ("pilot", "production"):
+    normalized_backend = db_backend.strip().lower()
+    normalized_env = env.strip().lower()
+    if normalized_backend == "memory" and normalized_env in ("pilot", "production"):
         raise RuntimeError(
-            f"MULLU_DB_BACKEND=memory is not allowed in {env} environment. "
+            f"MULLU_DB_BACKEND=memory is not allowed in {normalized_env} environment. "
             "Set MULLU_DB_BACKEND=postgresql to ensure governance state survives restarts."
         )
-    if db_backend == "memory" and env not in ("local_dev", "test", ""):
+    if normalized_backend == "memory" and normalized_env not in ("local_dev", "test", ""):
         return (
             "MULLU_DB_BACKEND=memory in non-dev environment. "
             "All state will be lost on restart. Set MULLU_DB_BACKEND=postgresql for production."

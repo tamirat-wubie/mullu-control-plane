@@ -96,3 +96,17 @@ def test_bootstrap_server_context_rejects_unencrypted_production_postgres() -> N
             bootstrap_foundation_services_fn=lambda **kwargs: object(),
             bootstrap_governance_runtime_fn=lambda **kwargs: SimpleNamespace(shell_policy=object()),
         )
+
+
+def test_resolve_env_normalizes_known_environment_case_and_spacing() -> None:
+    assert server_context.resolve_env({"MULLU_ENV": " Production "}) == "production"
+    assert server_context.resolve_env({"MULLU_ENV": "PILOT"}) == "pilot"
+    assert server_context.resolve_env({"MULLU_ENV": "Local_Dev"}) == "local_dev"
+
+
+def test_resolve_env_normalizes_unknown_environment_before_fallback_policy() -> None:
+    resolved = server_context.resolve_env({"MULLU_ENV": " Sandbox-Preview "})
+
+    assert resolved == "sandbox-preview"
+    assert resolved not in server_context.KNOWN_ENVS
+    assert resolved != " Sandbox-Preview "

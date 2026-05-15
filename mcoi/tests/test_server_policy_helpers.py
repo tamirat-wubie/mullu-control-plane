@@ -38,6 +38,18 @@ def test_db_backend_rejects_memory_in_production() -> None:
     assert "production" in message
 
 
+def test_db_backend_normalizes_case_before_policy_check() -> None:
+    with pytest.raises(
+        RuntimeError,
+        match="^MULLU_DB_BACKEND=memory is not allowed in production environment\\.",
+    ) as exc_info:
+        server_policy._validate_db_backend_for_env(" Memory ", " Production ")
+
+    message = str(exc_info.value)
+    assert "Memory" not in message
+    assert "Production" not in message
+
+
 def test_db_backend_warns_for_unknown_non_dev_env() -> None:
     warning = server_policy._validate_db_backend_for_env("memory", "staging")
     assert warning is not None

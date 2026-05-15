@@ -1,5 +1,7 @@
 """Phase 214C — Graceful shutdown tests."""
 
+import threading
+
 import pytest
 from mcoi_runtime.core.graceful_shutdown import ShutdownManager
 
@@ -50,3 +52,60 @@ class TestShutdownManager:
         s = mgr.summary()
         assert s["hooks"] == 1
         assert s["shutdown_complete"] is False
+
+    def test_register_rejects_invalid_hook_contracts(self):
+        mgr = ShutdownManager()
+        mgr.register("valid", lambda: {})
+
+        with pytest.raises(ValueError, match="name"):
+            mgr.register("", lambda: {})
+        with pytest.raises(ValueError, match="unique"):
+            mgr.register("valid", lambda: {})
+        with pytest.raises(ValueError, match="callable"):
+            mgr.register("not-callable", None)
+        with pytest.raises(ValueError, match="priority"):
+            mgr.register("bad-priority", lambda: {}, priority=True)
+        with pytest.raises(ValueError, match="timeout_seconds"):
+            mgr.register("bad-timeout", lambda: {}, timeout_seconds=0)
+
+    def test_hook_result_cannot_override_manager_status_fields(self):
+        mgr = ShutdownManager()
+        mgr.register(
+            "save-state",
+            lambda: {"hook": "spoofed", "status": "spoofed", "saved": True},
+        )
+
+        result = mgr.execute()
+        hook_result = result.results[0]
+
+        assert hook_result["hook"] == "save-state"
+        assert hook_result["status"] == "ok"
+        assert hook_result["saved"] is True
+
+    def test_slow_hook_times_out_without_blocking_later_hooks(self):
+        mgr = ShutdownManager()
+        release = threading.Event()
+        order: list[str] = []
+
+        def slow_hook():
+            order.append("slow")
+            release.wait(timeout=1.0)
+            return {"released": release.is_set()}
+
+        def fast_hook():
+            order.append("fast")
+            return {"done": True}
+
+        mgr.register("slow", slow_hook, priority=100, timeout_seconds=0.01)
+        mgr.register("fast", fast_hook, priority=1)
+
+        result = mgr.execute()
+        release.set()
+        timed_out = next(item for item in result.results if item["hook"] == "slow")
+        fast = next(item for item in result.results if item["hook"] == "fast")
+
+        assert order == ["slow", "fast"]
+        assert result.hooks_succeeded == 1
+        assert result.hooks_failed == 1
+        assert timed_out["error"] == "shutdown hook timeout"
+        assert fast["status"] == "ok"

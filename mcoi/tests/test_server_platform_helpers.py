@@ -6,6 +6,8 @@ Invariants: platform wiring remains deterministic, bounded, and auditable.
 
 from __future__ import annotations
 
+import pytest
+
 from mcoi_runtime.app import server_platform
 
 
@@ -41,6 +43,30 @@ def test_bootstrap_primary_store_applies_sqlite_migrations() -> None:
     assert bootstrap.warning is None
     assert bootstrap.migrations_applied == ("001-init",)
     assert warnings_seen == []
+
+
+def test_bootstrap_primary_store_normalizes_backend_and_rejects_unknown() -> None:
+    created: dict[str, object] = {}
+
+    bootstrap = server_platform.bootstrap_primary_store(
+        env="local_dev",
+        runtime_env={"MULLU_DB_BACKEND": " SQLite "},
+        clock=lambda: "2026-01-01T00:00:00Z",
+        validate_db_backend_for_env=lambda backend, env: None,
+        create_store_fn=lambda **kwargs: created.setdefault("kwargs", kwargs) or object(),
+        create_platform_migration_engine_fn=lambda **kwargs: object(),
+    )
+
+    assert bootstrap.db_backend == "sqlite"
+    assert created["kwargs"]["backend"] == "sqlite"
+    with pytest.raises(RuntimeError, match="^MULLU_DB_BACKEND must be memory, sqlite, or postgresql$"):
+        server_platform.bootstrap_primary_store(
+            env="local_dev",
+            runtime_env={"MULLU_DB_BACKEND": "mongo"},
+            clock=lambda: "2026-01-01T00:00:00Z",
+            validate_db_backend_for_env=lambda backend, env: None,
+            create_store_fn=lambda **kwargs: object(),
+        )
 
 
 def test_bootstrap_governance_runtime_wires_services_and_local_policy() -> None:
@@ -224,3 +250,35 @@ def test_bootstrap_governance_runtime_builds_jwt_authenticator() -> None:
     assert captured["config"]["audience"] == "aud-a"
     assert captured["config"]["signing_key"] == b"secret"
     assert captured["config"]["tenant_claim"] == "tenant"
+
+
+def test_bootstrap_governance_runtime_rejects_invalid_jwt_secret_with_bounded_error() -> None:
+    with pytest.raises(RuntimeError, match="^MULLU_JWT_SECRET must be valid base64$") as exc_info:
+        server_platform.bootstrap_governance_runtime(
+            env="production",
+            runtime_env={"MULLU_JWT_SECRET": "not valid base64!"},
+            db_backend="postgresql",
+            clock=lambda: "2026-01-01T00:00:00Z",
+            field_encryptor=None,
+            allow_unknown_tenants=False,
+            create_governance_stores_fn=lambda **kwargs: {
+                "budget": object(),
+                "rate_limit": object(),
+                "audit": object(),
+                "tenant_gating": object(),
+            },
+            tenant_budget_manager_cls=lambda **kwargs: object(),
+            governance_metrics_engine_cls=lambda **kwargs: object(),
+            rate_limiter_cls=lambda **kwargs: object(),
+            rate_limit_config_cls=lambda **kwargs: object(),
+            audit_trail_cls=lambda **kwargs: object(),
+            tenant_gating_registry_cls=lambda **kwargs: object(),
+            sandboxed_policy=object(),
+            local_dev_policy=object(),
+            pilot_prod_policy=object(),
+            pilot_prod_disabled_policy=object(),
+            jwt_authenticator_cls=lambda config: object(),
+            oidc_config_cls=lambda **kwargs: object(),
+        )
+
+    assert "not valid base64" not in str(exc_info.value)

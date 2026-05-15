@@ -6,6 +6,8 @@ Invariants: capability service wiring remains deterministic and auditable.
 
 from __future__ import annotations
 
+import pytest
+
 from mcoi_runtime.app import server_capabilities
 
 
@@ -208,3 +210,21 @@ def test_bootstrap_capability_services_exposes_enabled_manifest_registry() -> No
     assert read_model["admission_count"] == 6
     assert "software_dev.change.run" in read_model["capability_ids"]
     assert observability.sources["capability_manifest_registry"]() == read_model
+
+
+def test_capability_manifest_registry_missing_directory_error_is_bounded() -> None:
+    with pytest.raises(
+        ValueError,
+        match="^capability manifest registry startup failed \\(directory_not_found\\)$",
+    ) as exc_info:
+        server_capabilities._build_capability_manifest_registry_view(
+            runtime_env={
+                "MULLU_CAPABILITY_MANIFEST_REGISTRY_ENABLED": "true",
+                "MULLU_CAPABILITY_MANIFEST_DIR": "capabilities/software_dev/missing_manifests",
+            },
+            clock=lambda: "2026-05-13T00:00:00+00:00",
+        )
+
+    message = str(exc_info.value)
+    assert "missing_manifests" not in message
+    assert "capabilities/software_dev" not in message
