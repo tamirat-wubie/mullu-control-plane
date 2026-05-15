@@ -1132,6 +1132,20 @@ def build_parser() -> argparse.ArgumentParser:
         ),
     )
 
+    verify_receipt_chain_parser = subparsers.add_parser(
+        "verify-receipt-chain",
+        help="Verify an exported transition receipt chain (JSON or JSONL)",
+    )
+    verify_receipt_chain_parser.add_argument(
+        "input",
+        help="Path to JSON/JSONL receipt export",
+    )
+    verify_receipt_chain_parser.add_argument(
+        "--anchor-hash",
+        default=None,
+        help="Expected causal_parent for the first receipt; defaults to genesis",
+    )
+
     return parser
 
 
@@ -1513,6 +1527,163 @@ def _verify_single_state_hash_record(
     return 1
 
 
+def verify_receipt_chain_command(args: argparse.Namespace) -> int:
+    """Verify internal consistency of an exported transition receipt chain.
+
+    Exit codes:
+      0 - receipt chain is internally consistent
+      1 - hash, replay token, receipt id, or causal-parent mismatch
+      2 - input error: missing file, invalid JSON, non-object record
+      3 - schema error: required receipt fields missing or non-string
+    """
+    input_path = Path(args.input)
+    if not input_path.exists():
+        print(f"error: file not found: {input_path}")
+        return 2
+
+    try:
+        receipts = _load_receipt_chain_export(input_path)
+    except json.JSONDecodeError as exc:
+        print(f"error: invalid JSON: {exc.msg}")
+        return 2
+    except OSError as exc:
+        print(f"error: cannot read {input_path}: {exc.strerror}")
+        return 2
+    except TypeError as exc:
+        print(f"error: {exc}")
+        return 2
+
+    if not receipts:
+        print("error: receipt export contains no receipts")
+        return 3
+
+    return _verify_receipt_chain_records(receipts, anchor_hash=args.anchor_hash)
+
+
+def _load_receipt_chain_export(input_path: Path) -> list[Mapping[str, Any]]:
+    raw = input_path.read_text(encoding="utf-8")
+    stripped = raw.strip()
+    if not stripped:
+        return []
+
+    if input_path.suffix.lower() != ".jsonl" and (stripped.startswith("[") or stripped.startswith("{")):
+        payload = json.loads(stripped)
+        return _extract_receipts_from_json_payload(payload)
+
+    receipts: list[Mapping[str, Any]] = []
+    for line_no, raw_line in enumerate(raw.splitlines(), start=1):
+        line = raw_line.strip()
+        if not line:
+            continue
+        payload = json.loads(line)
+        extracted = _extract_receipts_from_json_payload(payload)
+        if len(extracted) != 1:
+            raise TypeError(f"line {line_no} must contain exactly one receipt or proof capsule")
+        receipts.extend(extracted)
+    return receipts
+
+
+def _extract_receipts_from_json_payload(payload: Any) -> list[Mapping[str, Any]]:
+    if isinstance(payload, list):
+        receipts: list[Mapping[str, Any]] = []
+        for index, item in enumerate(payload):
+            extracted = _extract_receipts_from_json_payload(item)
+            if len(extracted) != 1:
+                raise TypeError(f"array item {index} must contain exactly one receipt or proof capsule")
+            receipts.extend(extracted)
+        return receipts
+
+    if not isinstance(payload, dict):
+        raise TypeError("receipt export records must be JSON objects")
+
+    if isinstance(payload.get("receipts"), list):
+        return _extract_receipts_from_json_payload(payload["receipts"])
+
+    receipt = payload.get("receipt") if isinstance(payload.get("receipt"), dict) else payload
+    if not isinstance(receipt, dict):
+        raise TypeError("proof capsule receipt must be a JSON object")
+    return [receipt]
+
+
+def _verify_receipt_chain_records(
+    receipts: list[Mapping[str, Any]],
+    *,
+    anchor_hash: str | None,
+) -> int:
+    expected_parent = anchor_hash or "genesis"
+    for index, receipt in enumerate(receipts):
+        try:
+            values = _require_text_fields(
+                receipt,
+                (
+                    "receipt_id",
+                    "entity_id",
+                    "from_state",
+                    "to_state",
+                    "action",
+                    "before_state_hash",
+                    "after_state_hash",
+                    "replay_token",
+                    "causal_parent",
+                    "issued_at",
+                    "receipt_hash",
+                ),
+            )
+        except ValueError as exc:
+            print(f"error: receipt[{index}] field {exc.args[0]!r} must be a non-empty string")
+            return 3
+
+        receipt_hash = _receipt_content_hash(values)
+        replay_token = _receipt_replay_token(values)
+        expected_receipt_id = f"rcpt-{receipt_hash[:16]}"
+
+        if values["receipt_hash"] != receipt_hash:
+            return _print_receipt_chain_failure(index, "receipt_hash", receipt_hash, values["receipt_hash"])
+        if values["receipt_id"] != expected_receipt_id:
+            return _print_receipt_chain_failure(index, "receipt_id", expected_receipt_id, values["receipt_id"])
+        if values["replay_token"] != replay_token:
+            return _print_receipt_chain_failure(index, "replay_token", replay_token, values["replay_token"])
+        if values["causal_parent"] != expected_parent:
+            return _print_receipt_chain_failure(index, "causal_parent", expected_parent, values["causal_parent"])
+
+        expected_parent = values["receipt_hash"]
+
+    print(f"OK  receipt chain verified - {len(receipts)} receipts, chain intact")
+    return 0
+
+
+def _receipt_content_hash(values: Mapping[str, str]) -> str:
+    from hashlib import sha256
+
+    content = (
+        f"{values['entity_id']}:{values['from_state']}:{values['to_state']}:"
+        f"{values['action']}:{values['before_state_hash']}:{values['after_state_hash']}:"
+        f"{values['causal_parent']}"
+    )
+    return sha256(content.encode()).hexdigest()
+
+
+def _receipt_replay_token(values: Mapping[str, str]) -> str:
+    from hashlib import sha256
+
+    content = (
+        f"{values['entity_id']}:{values['from_state']}:{values['to_state']}:"
+        f"{values['action']}:{values['before_state_hash']}:{values['after_state_hash']}:"
+        f"{values['causal_parent']}"
+    )
+    token_content = f"{content}:{values['issued_at']}"
+    return f"replay-{sha256(token_content.encode()).hexdigest()[:16]}"
+
+
+def _print_receipt_chain_failure(index: int, field_name: str, expected: str, observed: str) -> int:
+    print("FAIL receipt chain verification failed")
+    print(f"  receipt_index: {index}")
+    print(f"  field: {field_name}")
+    print(f"  expected: {expected}")
+    print(f"  observed: {observed}")
+    return 1
+
+
 def _open_sqlite_for_migrations(db_url: str):
     """Open a sqlite connection from a sqlite:///<path> URL.
 
@@ -1624,6 +1795,7 @@ def main(argv: list[str] | None = None) -> int:
         "demo": demo_command,
         "verify-ledger": verify_ledger_command,
         "verify-state-hash": verify_state_hash_command,
+        "verify-receipt-chain": verify_receipt_chain_command,
         "migrate": migrate_command,
         "software-receipts": software_receipts_command,
         "mil-audit": mil_audit_command,
