@@ -190,6 +190,12 @@ def test_representative_routes_are_not_unclassified() -> None:
     assert classified_routes["/commands/{command_id}/capability-admission"]["surface_id"] == "gateway_capability_fabric"
     assert classified_routes["/commands/{command_id}/authority"]["surface_id"] == "authority_obligation_mesh"
     assert classified_routes["/capability/execute"]["surface_id"] == "capability_worker_execution"
+    assert classified_routes["/browser/execute"]["surface_id"] == "restricted_adapter_worker_boundaries"
+    assert classified_routes["/document/execute"]["surface_id"] == "restricted_adapter_worker_boundaries"
+    assert classified_routes["/email-calendar/execute"]["surface_id"] == "restricted_adapter_worker_boundaries"
+    assert classified_routes["/messaging/execute"]["surface_id"] == "restricted_adapter_worker_boundaries"
+    assert classified_routes["/phone/execute"]["surface_id"] == "restricted_adapter_worker_boundaries"
+    assert classified_routes["/voice/execute"]["surface_id"] == "restricted_adapter_worker_boundaries"
     assert classified_routes["/evidence/bundles/{command_id}"]["surface_id"] == "trust_ledger"
     assert classified_routes["/api/v1/data-governance/evaluate"]["surface_id"] == "data_governance_controls"
     assert classified_routes["/api/v1/compliance/audit-package"]["surface_id"] == "compliance_evidence_exports"
@@ -746,6 +752,42 @@ def test_capability_worker_execution_surface_is_witnessed() -> None:
     assert "non_isolated_boundary_rejected" in witnesses
     assert "local_smoke_stub_bound_to_local_environment" in witnesses
     assert "capability_worker_execution" in closure_actions["classify_gateway_capability_admission_routes"]["surfaces"]
+
+
+def test_restricted_adapter_worker_boundary_surface_is_witnessed() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    worker_surface = surfaces["restricted_adapter_worker_boundaries"]
+    witnesses = set(worker_surface["runtime_witnesses"])
+
+    assert worker_surface["coverage_state"] == "witnessed"
+    assert worker_surface["request_proof"] == "request_proof"
+    assert worker_surface["action_proof"] == "action_proof"
+    assert worker_surface["audit"] == "audit_chain"
+    assert {
+        "/browser/execute",
+        "/document/execute",
+        "/email-calendar/execute",
+        "/messaging/execute",
+        "/phone/execute",
+        "/voice/execute",
+    }.issubset(set(worker_surface["representative_paths"]))
+    assert {
+        "gateway/browser_worker.py",
+        "gateway/document_worker.py",
+        "gateway/email_calendar_worker.py",
+        "gateway/messaging_worker.py",
+        "gateway/phone_worker.py",
+        "gateway/voice_worker.py",
+    }.issubset(set(worker_surface["evidence_files"]))
+    assert {
+        "browser_worker_parse_error_detail_is_bounded",
+        "document_worker_parse_error_detail_is_bounded",
+        "email_calendar_worker_parse_error_detail_is_bounded",
+        "messaging_worker_parse_error_detail_is_bounded",
+        "phone_worker_parse_error_detail_is_bounded",
+        "voice_worker_parse_error_detail_is_bounded",
+    }.issubset(witnesses)
 
 
 def test_data_governance_controls_surface_is_witnessed() -> None:

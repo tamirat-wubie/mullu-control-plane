@@ -17,6 +17,7 @@ from typing import Any, Callable
 
 from mcoi_runtime.contracts._base import thaw_value
 
+from ._serialization import loads_strict_json
 from .errors import (
     CorruptedDataError,
     PathTraversalError,
@@ -163,8 +164,8 @@ class SnapshotStore:
             raise SnapshotNotFoundError("snapshot not found")
 
         try:
-            meta_raw = json.loads(meta_path.read_text(encoding="utf-8"))
-        except (json.JSONDecodeError, OSError) as exc:
+            meta_raw = loads_strict_json(meta_path.read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, OSError, ValueError) as exc:
             raise CorruptedDataError(_bounded_store_error("malformed snapshot metadata", exc)) from exc
 
         if not isinstance(meta_raw, dict):
@@ -184,8 +185,8 @@ class SnapshotStore:
             raise CorruptedDataError("snapshot metadata id mismatch")
 
         try:
-            data_raw = json.loads(data_path.read_text(encoding="utf-8"))
-        except (json.JSONDecodeError, OSError) as exc:
+            data_raw = loads_strict_json(data_path.read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, OSError, ValueError) as exc:
             raise CorruptedDataError(_bounded_store_error("malformed snapshot data", exc)) from exc
 
         if not isinstance(data_raw, dict):
@@ -214,7 +215,7 @@ class SnapshotStore:
             if not meta_path.exists():
                 continue
             try:
-                meta_raw = json.loads(meta_path.read_text(encoding="utf-8"))
+                meta_raw = loads_strict_json(meta_path.read_text(encoding="utf-8"))
                 metadata = SnapshotMetadata(
                     snapshot_id=meta_raw["snapshot_id"],
                     created_at=meta_raw["created_at"],
@@ -226,7 +227,7 @@ class SnapshotStore:
                 results.append(metadata)
             except CorruptedDataError:
                 raise
-            except (json.JSONDecodeError, KeyError, TypeError, OSError, PersistenceError):
+            except (json.JSONDecodeError, KeyError, TypeError, OSError, ValueError, PersistenceError):
                 raise CorruptedDataError("malformed snapshot metadata")
 
         return tuple(results)
