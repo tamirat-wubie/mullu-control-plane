@@ -68,6 +68,19 @@ clearance posture: official USPTO/TSDR review by serial number and attorney
 confusion analysis are now mandatory before `public_paid_launch_allowed` can
 become true.
 
+## Public Web Update 2026-05-15
+
+| Source surface | Result | Decision impact |
+| --- | --- | --- |
+| Direct route probe for `https://mullusi.com/mullu/` | Returns HTTP 200 with intentional `Mullu, by Mullusi` private-beta product content | Close `website_deployment_verification` for the fallback product route |
+| Sitemap probe for `https://mullusi.com/sitemap.xml` | Returns HTTP 200 and includes `https://mullusi.com/mullu/` | Confirms product route is published in the public site map |
+| Website source repository | `mullusi/mullusi-site` commit `ea4159d Add Mullu product route` | Confirms the live custom-domain Pages source |
+| Pages deployment | `Validate Site` run `25919014515` and `pages-build-deployment` run `25919013720` completed successfully | Confirms deployment pipeline passed |
+
+This update resolves the website-route readiness issue for private-beta access
+only. It does not clear trademark, domain ownership, legal review, app-title, or
+SDK/API stability gates.
+
 ## Close-Variant Records To Verify
 
 | Serial | Mark | Preliminary risk | Required action |
@@ -101,7 +114,7 @@ Before public launch or paid-user rollout, complete:
 4. Registrar availability checks for `mullu.ai`, `mullu.app`, `mullu.dev`, and `getmullu.com`.
 5. Common-law search across GitHub, npm, PyPI, Chrome Web Store, Microsoft Edge Add-ons, Firefox Add-ons, Product Hunt, Crunchbase, LinkedIn, and major app stores.
 6. Confusion analysis against `Mullu TV`, `The Last Mullu`, and close-variant `MULU` marks.
-7. Direct deployment verification for `mullusi.com` and any product landing route.
+7. Direct deployment verification for new public routes or domains not covered by the 2026-05-15 fallback-route evidence.
 
 ## Official Search Tools
 
@@ -152,7 +165,7 @@ registrar checks close.
 | Preliminary public web collision scan | Passed with review items |
 | Exact-domain indexed-result scan | No indexed blockers found |
 | Close-variant `MULU` review | High review item |
-| `mullusi.com` deployment signal | Requires direct verification |
+| `mullusi.com/mullu` deployment signal | Passed for private-beta fallback route |
 | DNS availability | Inconclusive |
 | Registrar availability | Not checked |
 | Trademark clearance | Not checked |

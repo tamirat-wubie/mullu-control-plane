@@ -27,6 +27,7 @@ PRODUCT_ROUTE_DEPLOYMENT_HANDOFF_PATH = REPO_ROOT / "docs" / "PRODUCT_ROUTE_DEPL
 TSDR_EVIDENCE_TEMPLATE_PATH = REPO_ROOT / "docs" / "TSDR_EVIDENCE_TEMPLATE.md"
 WEBSITE_DEPLOYMENT_EVIDENCE_TEMPLATE_PATH = REPO_ROOT / "docs" / "WEBSITE_DEPLOYMENT_EVIDENCE_TEMPLATE.md"
 WEBSITE_DEPLOYMENT_EVIDENCE_LOG_PATH = REPO_ROOT / "docs" / "WEBSITE_DEPLOYMENT_EVIDENCE_2026-05-07.md"
+WEBSITE_DEPLOYMENT_EVIDENCE_SUCCESS_PATH = REPO_ROOT / "docs" / "WEBSITE_DEPLOYMENT_EVIDENCE_2026-05-15.md"
 WEBSITE_RECHECK_LOG_PATH = REPO_ROOT / "docs" / "WEBSITE_RECHECK_LOG.md"
 DOMAIN_ACQUISITION_PLAN_PATH = REPO_ROOT / "docs" / "DOMAIN_ACQUISITION_PLAN.md"
 PUBLIC_NAMING_REVIEW_PACKET_PATH = REPO_ROOT / "docs" / "PUBLIC_NAMING_REVIEW_PACKET.md"
@@ -50,7 +51,9 @@ REQUIRED_CLOSED_GATES = {
     "website_checklist",
     "website_deployment_evidence_template",
     "website_deployment_probe",
+    "website_deployment_verification",
     "website_recheck_log",
+    "homepage_update",
     "state_transition_rules",
     "handoff_summary",
     "pr_summary",
@@ -75,8 +78,6 @@ REQUIRED_OPEN_GATES = {
     "close_variant_review",
     "domain_ownership",
     "legal_review",
-    "homepage_update",
-    "website_deployment_verification",
     "app_title_update",
     "sdk_api_stability_review",
 }
@@ -102,6 +103,7 @@ REQUIRED_EVIDENCE_DOCS = {
     "docs/WEBSITE_UPDATE_CHECKLIST.md",
     "docs/WEBSITE_DEPLOYMENT_EVIDENCE_TEMPLATE.md",
     "docs/WEBSITE_DEPLOYMENT_EVIDENCE_2026-05-07.md",
+    "docs/WEBSITE_DEPLOYMENT_EVIDENCE_2026-05-15.md",
     "docs/WEBSITE_RECHECK_LOG.md",
     "docs/PUBLIC_NAMING_STATE_TRANSITION.md",
     "docs/PUBLIC_NAMING_HANDOFF.md",
@@ -249,19 +251,17 @@ def validate_product_route_deployment_handoff(
 
     required_literals = (
         "site/mullu/index.html",
-        "../mullusi/mullu/index.html",
+        "../mullusi_website/mullu/index.html",
         "https://mullusi.com/mullu",
         "origin/main",
-        "https://github.com/tamirat-wubie/mullusi/pull/84",
-        "product/mullu-route",
-        "https://github.com/tamirat-wubie/mullusi/pull/85",
-        "39014fd",
-        "closed as redundant",
+        "https://github.com/mullusi/mullusi-site.git",
+        "ea4159d",
+        "25919014515",
+        "25919013720",
         "mullusi.github.io",
-        "repository not found",
         "Mullu, by Mullusi",
         "private beta",
-        "not yet live",
+        "HTTP 200",
         "website_deployment_verification",
     )
     missing_literals = sorted(literal for literal in required_literals if literal not in handoff_text)
@@ -332,6 +332,38 @@ def validate_website_deployment_evidence_log(
     )
 
 
+def validate_website_deployment_success_log(
+    log_path: Path = WEBSITE_DEPLOYMENT_EVIDENCE_SUCCESS_PATH,
+) -> None:
+    log_text = log_path.read_text(encoding="utf-8")
+    validate_no_forbidden_terminology(_display_path(log_path), log_text)
+
+    required_literals = (
+        "2026-05-15",
+        "https://mullusi.com/mullu/",
+        "HTTP 200",
+        "Mullu, by Mullusi",
+        "private beta",
+        "Request access",
+        "Symbols are atomic. Meaning is relational. Traversal is governed. Judgment is earned.",
+        "mullusi/mullusi-site",
+        "ea4159d",
+        "Validate Site",
+        "25919014515",
+        "pages-build-deployment",
+        "25919013720",
+        "https://mullusi.com/sitemap.xml",
+        "website_deployment_verification",
+        "homepage_update",
+    )
+    missing_literals = sorted(literal for literal in required_literals if literal not in log_text)
+    _require(not missing_literals, f"website deployment success log missing literals: {missing_literals}")
+    _require(
+        "paid public launch remains blocked" in log_text,
+        "website deployment success log must preserve paid-launch blocker",
+    )
+
+
 def validate_website_recheck_log(log_path: Path = WEBSITE_RECHECK_LOG_PATH) -> None:
     log_text = log_path.read_text(encoding="utf-8")
     validate_no_forbidden_terminology(_display_path(log_path), log_text)
@@ -342,13 +374,11 @@ def validate_website_recheck_log(log_path: Path = WEBSITE_RECHECK_LOG_PATH) -> N
         "GitHub Pages site-not-found",
         "non-authoritative",
         "website_deployment_verification",
+        "superseded by direct live-route evidence",
     )
     missing_literals = sorted(literal for literal in required_literals if literal not in log_text)
     _require(not missing_literals, f"website recheck log missing literals: {missing_literals}")
-    _require(
-        "Direct route verification still required" in log_text,
-        "website recheck log must keep direct route verification open",
-    )
+    _require("2026-05-15" in log_text, "website recheck log must reference the superseding live evidence")
 
 
 def validate_domain_acquisition_plan(plan_path: Path = DOMAIN_ACQUISITION_PLAN_PATH) -> None:
@@ -470,6 +500,7 @@ def validate_public_naming_readiness(witness_path: Path = WITNESS_PATH) -> None:
     validate_tsdr_evidence_template()
     validate_website_deployment_evidence_template()
     validate_website_deployment_evidence_log()
+    validate_website_deployment_success_log()
     validate_website_recheck_log()
     validate_domain_acquisition_plan()
     validate_public_naming_review_packet()

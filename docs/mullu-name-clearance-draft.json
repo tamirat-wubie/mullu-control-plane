@@ -15,7 +15,7 @@
     "preliminary_public_web_collision_scan": "passed_with_review_items",
     "close_variant_mulu_review": "high_review_item",
     "exact_domain_indexed_result_scan": "no_indexed_blockers_found",
-    "mullusi_com_deployment_signal": "requires_direct_verification",
+    "mullusi_com_deployment_signal": "verified_private_beta_route",
     "dns_availability": "inconclusive",
     "registrar_availability": "not_checked",
     "trademark_clearance": "not_checked",
@@ -150,7 +150,7 @@
       "domain": "mullusi.com/mullu",
       "priority": 6,
       "role": "company-site fallback",
-      "status": "site_route_required"
+      "status": "site_route_verified"
     }
   ],
   "stop_conditions": [
@@ -168,8 +168,7 @@
     "complete close-variant MULU confusion analysis",
     "verify close-variant MULU serials in USPTO TSDR",
     "run registrar availability checks",
-    "verify mullusi.com deployment state",
-    "record domain ownership evidence",
+    "record domain ownership evidence for selected route",
     "complete legal/trademark review",
     "update public-naming-readiness.json only after evidence closes"
   ]

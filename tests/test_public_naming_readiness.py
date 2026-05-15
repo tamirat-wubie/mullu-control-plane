@@ -35,6 +35,7 @@ from scripts.validate_public_naming_readiness import (  # noqa: E402
     PRODUCT_ROUTE_DRAFT_PATH,
     READINESS_SCHEMA_PATH,
     WEBSITE_DEPLOYMENT_EVIDENCE_LOG_PATH,
+    WEBSITE_DEPLOYMENT_EVIDENCE_SUCCESS_PATH,
     WEBSITE_RECHECK_LOG_PATH,
     WITNESS_PATH,
     validate_no_forbidden_terminology,
@@ -49,6 +50,7 @@ from scripts.validate_public_naming_readiness import (  # noqa: E402
     validate_public_naming_review_packet,
     validate_tsdr_evidence_template,
     validate_website_deployment_evidence_log,
+    validate_website_deployment_success_log,
     validate_website_deployment_evidence_template,
     validate_website_recheck_log,
 )
@@ -242,7 +244,7 @@ def test_product_route_deployment_handoff_preserves_live_blocker() -> None:
 def test_product_route_deployment_handoff_rejects_missing_target(tmp_path: Path) -> None:
     handoff_path = tmp_path / "PRODUCT_ROUTE_DEPLOYMENT_HANDOFF.md"
     handoff_text = PRODUCT_ROUTE_DEPLOYMENT_HANDOFF_PATH.read_text(encoding="utf-8").replace(
-        "../mullusi/mullu/index.html",
+        "../mullusi_website/mullu/index.html",
         "../mullusi/index.html",
     )
     handoff_path.write_text(handoff_text, encoding="utf-8")
@@ -306,7 +308,7 @@ def test_website_deployment_template_contains_required_routes() -> None:
     validate_website_deployment_evidence_template()
 
 
-def test_website_deployment_evidence_log_preserves_failed_product_routes() -> None:
+def test_website_deployment_evidence_log_preserves_failed_historical_product_routes() -> None:
     validate_website_deployment_evidence_log()
 
 
@@ -322,19 +324,35 @@ def test_website_deployment_evidence_log_rejects_cleared_gate(tmp_path: Path) ->
         validate_website_deployment_evidence_log(log_path)
 
 
-def test_website_recheck_log_preserves_open_deployment_gate() -> None:
-    validate_website_recheck_log()
+def test_website_deployment_success_log_closes_private_beta_route() -> None:
+    validate_website_deployment_success_log()
 
 
-def test_website_recheck_log_rejects_missing_direct_verification(tmp_path: Path) -> None:
-    log_path = tmp_path / "WEBSITE_RECHECK_LOG.md"
-    log_text = WEBSITE_RECHECK_LOG_PATH.read_text(encoding="utf-8").replace(
-        "Direct route verification still required",
-        "Route verification complete",
+def test_website_deployment_success_log_rejects_missing_paid_launch_blocker(tmp_path: Path) -> None:
+    log_path = tmp_path / "WEBSITE_DEPLOYMENT_EVIDENCE_2026-05-15.md"
+    log_text = WEBSITE_DEPLOYMENT_EVIDENCE_SUCCESS_PATH.read_text(encoding="utf-8").replace(
+        "paid public launch remains blocked",
+        "paid public launch is allowed",
     )
     log_path.write_text(log_text, encoding="utf-8")
 
-    with pytest.raises(AssertionError, match="direct route verification"):
+    with pytest.raises(AssertionError, match="paid-launch blocker"):
+        validate_website_deployment_success_log(log_path)
+
+
+def test_website_recheck_log_preserves_historical_warning_boundary() -> None:
+    validate_website_recheck_log()
+
+
+def test_website_recheck_log_rejects_missing_superseding_evidence(tmp_path: Path) -> None:
+    log_path = tmp_path / "WEBSITE_RECHECK_LOG.md"
+    log_text = WEBSITE_RECHECK_LOG_PATH.read_text(encoding="utf-8").replace(
+        "superseded by direct live-route evidence",
+        "still the active route authority",
+    )
+    log_path.write_text(log_text, encoding="utf-8")
+
+    with pytest.raises(AssertionError, match="website recheck log missing literals"):
         validate_website_recheck_log(log_path)
 
 

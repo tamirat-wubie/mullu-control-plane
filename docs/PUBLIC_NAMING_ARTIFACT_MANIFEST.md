@@ -20,6 +20,7 @@ Invariants: every listed artifact must exist; paid public launch remains blocked
 | `docs/WEBSITE_UPDATE_CHECKLIST.md` | Public-site update requirements |
 | `docs/WEBSITE_DEPLOYMENT_EVIDENCE_TEMPLATE.md` | Live route verification template |
 | `docs/WEBSITE_DEPLOYMENT_EVIDENCE_2026-05-07.md` | Direct route probe evidence showing product routes still blocked |
+| `docs/WEBSITE_DEPLOYMENT_EVIDENCE_2026-05-15.md` | Direct route probe evidence showing the private-beta product route is live |
 | `docs/WEBSITE_RECHECK_LOG.md` | Non-authoritative public index recheck log |
 | `docs/PUBLIC_NAMING_STATE_TRANSITION.md` | Launch-state mutation rules |
 | `docs/PUBLIC_NAMING_HANDOFF.md` | Reviewer handoff summary |
