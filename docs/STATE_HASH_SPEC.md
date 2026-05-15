@@ -110,20 +110,13 @@ serialization of structured entity fields (e.g. tenant config, budget
 balance, policy hash). Such an extension requires a new schema version
 and cross-language implementation.
 
-### 2. Rust kernel computes state hashes
+### 2. Rust kernel fully validates state-log truth
 
 The Rust `maf-kernel` implementation in `maf/rust/crates/maf-kernel/src/lib.rs`
-treats `before_state_hash` and `after_state_hash` as opaque
-caller-provided strings. **The Rust kernel does NOT compute state
-hashes.** Only the Python `ProofBridge._state_hash` implements the
-construction. A Rust-side state-hash function would be required for
-true cross-language certification of state inputs (parallel to how
-the receipt-hash function `sha256_hex` is mirrored on both sides).
-
-When such a function is added, this spec's "Canonical state-hash content
-layout" section becomes the cross-language contract — the existing
-contract test pattern can be extended to lock state-hash equality
-between languages for a known fixture.
+now exposes `state_hash(state, entity_id, timestamp)`, mirroring Python
+`ProofBridge._state_hash`. This guarantees byte-level cross-language
+construction of the v1 hash, but it does not independently prove that
+the caller supplied an authoritative state, entity, or timestamp.
 
 ### 3. State hashes are externally verifiable as "the entity was in this state"
 
@@ -138,7 +131,7 @@ ledger spec describes: the chain proves *internal* consistency, not
 
 | Gap | Severity | Resolution path | Status |
 |-----|----------|-----------------|--------|
-| Rust kernel does not implement state-hash construction | Medium | Add `fn state_hash(state, entity_id, timestamp) -> String` to `maf-kernel` mirroring Python `_state_hash`; add a paired contract test pinning a known fixture. | Open |
+| Rust kernel does not implement state-hash construction | Medium | Add `fn state_hash(state, entity_id, timestamp) -> String` to `maf-kernel` mirroring Python `_state_hash`; add a paired contract test pinning a known fixture. | Closed |
 | State-hash content is structurally minimal (state + entity_id + timestamp only) | Low | Define a v2 canonical layout that includes selected entity fields (tenant config hash, budget hash, policy version) and bump schema version. | Open — design needed |
 | No external verifier for state-hash consistency | Medium | After Rust mirror lands: implement `mcoi verify-state-hash` mirroring `mcoi verify-ledger`. | Open — depends on row 1 |
 
