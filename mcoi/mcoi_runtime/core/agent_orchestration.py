@@ -17,9 +17,10 @@ Invariants:
 from __future__ import annotations
 
 import uuid
+from collections.abc import Iterable, Mapping
 from dataclasses import dataclass, field
 from enum import Enum, unique
-from typing import Any, Callable, Iterable, Mapping
+from typing import Any, Callable
 
 
 def _classify_orchestration_exception(exc: Exception) -> str:
@@ -33,6 +34,15 @@ def _classify_orchestration_exception(exc: Exception) -> str:
     if isinstance(exc, ValueError):
         return f"proposal validation error ({error_type})"
     return f"proposal execution error ({error_type})"
+
+
+_GOVERNED_RESULT_KEYS = frozenset({
+    "proposal_id",
+    "proof_id",
+    "success",
+    "error",
+    "suppressed_executor_keys",
+})
 
 
 @unique
@@ -183,6 +193,13 @@ class HandoffProof:
         }
 
 
+@dataclass(frozen=True)
+class SanitizedExecutorResult:
+    """Executor output after governed result keys are suppressed."""
+    output: dict[str, Any]
+    suppressed_keys: tuple[str, ...]
+
+
 class AgentOrchestrator:
     """Governs multi-agent coordination, consensus, and handoffs."""
 
@@ -322,6 +339,7 @@ class AgentOrchestrator:
                     result = executor(proposal)
                 else:
                     result = {"status": "executed", "proposal_id": proposal.proposal_id}
+                safe_result = _sanitize_executor_result(result)
                 proof = self._build_dispatch_proof(
                     plan=plan,
                     proposal=proposal,
@@ -330,12 +348,15 @@ class AgentOrchestrator:
                     quorum_met=True,
                 )
                 plan.dispatch_proofs.append(proof)
-                plan.results.append({
+                result_record = {
                     "proposal_id": proposal.proposal_id,
                     "proof_id": proof.proof_id,
                     "success": True,
-                    **result,
-                })
+                    **safe_result.output,
+                }
+                if safe_result.suppressed_keys:
+                    result_record["suppressed_executor_keys"] = safe_result.suppressed_keys
+                plan.results.append(result_record)
             except Exception as e:
                 proof = self._build_dispatch_proof(
                     plan=plan,
@@ -589,6 +610,23 @@ def _capability_ids_from_manifest_read_model(read_model: Mapping[str, Any] | Non
     if not isinstance(raw_ids, (tuple, list)):
         return ()
     return tuple(str(capability_id).strip() for capability_id in raw_ids if str(capability_id).strip())
+
+
+def _sanitize_executor_result(raw_result: Mapping[str, Any]) -> SanitizedExecutorResult:
+    if not isinstance(raw_result, Mapping):
+        raise TypeError("executor output must be a mapping")
+    output: dict[str, Any] = {}
+    suppressed_keys: list[str] = []
+    for key, value in raw_result.items():
+        normalized_key = str(key)
+        if normalized_key in _GOVERNED_RESULT_KEYS:
+            suppressed_keys.append(normalized_key)
+            continue
+        output[normalized_key] = value
+    return SanitizedExecutorResult(
+        output=output,
+        suppressed_keys=tuple(suppressed_keys),
+    )
 
 
 def _count_by_value(values: Iterable[str]) -> dict[str, int]:
