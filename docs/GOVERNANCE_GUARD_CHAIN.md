@@ -273,13 +273,30 @@ name the same temporal decision.
 
 ## What this spec does NOT claim
 
-### 1. Guards beyond the nine HTTP guard slots are not covered
+### 1. Guards beyond the nine HTTP guard slots are named as policy checkpoints
 
 `Session policy`, `output content safety`, `PII redaction`, and
 `closed-session check` are real enforcement mechanisms but are not
-part of the "guard chain" terminology. They run as adjacent checks
-inside `GovernedSession`. A future v2 could extend the chain
-abstraction to cover them; today they are documented but separate.
+part of the HTTP "guard chain" terminology. They run as adjacent checks
+inside `GovernedSession`.
+
+Spec v2 represents both guard-chain slots and adjacent session checks as
+policy checkpoints:
+
+| Phase | Surface | Checkpoints |
+|-------|---------|-------------|
+| pre-dispatch | HTTP guard chain | `api_key`, `jwt`, `tenant`, `tenant_gating`, `rbac`, `Lambda_input_safety`, `temporal`, `rate_limit`, `budget` |
+| pre-dispatch | session adjacent | `closed_check`, `policy`, `tenant_gating`, `rbac`, `rate_limit`, `Lambda_input_safety`, `budget`, `proof` |
+| dispatch | session adjacent | `llm_call` |
+| post-dispatch | session adjacent | `Lambda_output_safety`, `pii_redaction`, `audit` |
+
+`mcoi_runtime.governance.guards.policy_checkpoint` is the executable
+contract for this generalized checkpoint model. It does not change
+runtime behavior; it makes the existing enforcement surface reviewable
+and testable. `mcoi/tests/test_policy_checkpoint_contract.py` fails if
+the named checkpoint order drifts, if duplicate checkpoint identifiers
+appear in one contract, or if output safety and PII redaction stop being
+explicit post-dispatch mutating checkpoints.
 
 ### 2. The chain proves admission, not action correctness
 
@@ -310,7 +327,7 @@ of scope for the chain).
 | RBAC silently bypassed when `access_runtime` bootstrap fails in pilot/production | **High** | Refuse to boot in pilot/production if `access_runtime is None` | **Closed (G4.1, this PR)** |
 | README claims "7-Guard Chain" but the HTTP chain has nine guard slots when JWT is configured | Low | README/spec correction | **Closed (G4.0/G4.2)** |
 | HTTP and session chains have different orders and different guard sets, which is documented here but not enforced by tests | Medium | Add a test that asserts the canonical order of each chain by name; fail if a future refactor reorders them | **Closed** — `mcoi/tests/test_guard_chain_order_contract.py` asserts the exact HTTP guard-name order and the exact `GovernedSession.llm`, `execute`, and `query` check/proof/operation/audit order. |
-| Output content safety and PII redaction are not in the "chain" abstraction even though they enforce real policy | Low | Spec v2 — extend chain to a generalized notion of "policy checkpoint" covering pre-dispatch, dispatch, and post-dispatch | Open |
+| Output content safety and PII redaction are not in the "chain" abstraction even though they enforce real policy | Low | Spec v2 -- extend chain to a generalized notion of "policy checkpoint" covering pre-dispatch, dispatch, and post-dispatch | **Closed** -- `mcoi_runtime.governance.guards.policy_checkpoint` declares HTTP and session policy checkpoints by phase, while `mcoi/tests/test_policy_checkpoint_contract.py` pins post-dispatch `Lambda_output_safety` and `pii_redaction` as mutating checkpoints before audit. |
 | No CI check enumerates `/api/v1/*` routes and asserts each flows through `GovernanceMiddleware` | Medium | Mirror the gap from MAF_RECEIPT_COVERAGE.md — `scripts/validate_guard_chain_coverage.py` | **Closed** — `scripts/validate_guard_chain_coverage.py` builds the assembled default router set, asserts `GovernanceMiddleware` is installed, verifies every `/api/v1/*` route is non-exempt and covered by the middleware prefix rule, and is pinned by `tests/test_validate_guard_chain_coverage.py`. |
 | No external verifier reads an audit trail and reproves "every entry was preceded by chain admission" | Medium | After ledger persistence and receipt persistence ship: cross-verifier that joins audit + receipt streams | Open |
 
