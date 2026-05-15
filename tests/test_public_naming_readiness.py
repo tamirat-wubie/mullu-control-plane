@@ -31,6 +31,7 @@ from scripts.validate_public_naming_readiness import (  # noqa: E402
     REQUIRED_OPEN_GATES,
     REQUIRED_TSDR_SERIALS,
     REQUIRED_WEBSITE_ROUTES,
+    HOMEPAGE_UPDATE_EVIDENCE_PATH,
     OFFICIAL_CLEARANCE_ACCESS_LOG_PATH,
     PRODUCT_ROUTE_DEPLOYMENT_HANDOFF_PATH,
     PRODUCT_ROUTE_DRAFT_PATH,
@@ -43,6 +44,7 @@ from scripts.validate_public_naming_readiness import (  # noqa: E402
     validate_clearance_domain_candidates,
     validate_clearance_official_searches,
     validate_domain_acquisition_plan,
+    validate_homepage_update_evidence,
     validate_product_route_draft,
     validate_product_route_deployment_handoff,
     validate_official_clearance_access_log,
@@ -467,6 +469,22 @@ def test_sdk_api_stability_review_rejects_missing_platform_term(tmp_path: Path) 
 
     with pytest.raises(AssertionError, match="SDK/API stability review missing literals"):
         validate_sdk_api_stability_review(review_path)
+
+
+def test_homepage_update_evidence_closes_private_beta_page_gate() -> None:
+    validate_homepage_update_evidence()
+
+
+def test_homepage_update_evidence_rejects_paid_launch_boundary_removal(tmp_path: Path) -> None:
+    evidence_path = tmp_path / "HOMEPAGE_UPDATE_EVIDENCE_2026-05-15.md"
+    evidence_text = HOMEPAGE_UPDATE_EVIDENCE_PATH.read_text(encoding="utf-8").replace(
+        "This is not a paid launch homepage",
+        "This is a launch homepage",
+    )
+    evidence_path.write_text(evidence_text, encoding="utf-8")
+
+    with pytest.raises(AssertionError, match="private-beta launch boundary"):
+        validate_homepage_update_evidence(evidence_path)
 
 
 def test_public_naming_review_packet_rejects_missing_serial(tmp_path: Path) -> None:

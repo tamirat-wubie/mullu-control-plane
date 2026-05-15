@@ -41,7 +41,8 @@
     "transition_planner",
     "naming_schemas",
     "official_clearance_access_log",
-    "sdk_api_stability_review"
+    "sdk_api_stability_review",
+    "homepage_update"
   ],
   "open_gates": [
     "uspto_search",
@@ -50,7 +51,6 @@
     "close_variant_review",
     "domain_ownership",
     "legal_review",
-    "homepage_update",
     "app_title_update"
   ],
   "blocked_public_names": [
@@ -82,6 +82,7 @@
     "docs/PUBLIC_NAMING_READINESS.md",
     "docs/NAMING_MIGRATION_PLAN.md",
     "docs/NAME_CLEARANCE_PRELIMINARY.md",
+    "docs/HOMEPAGE_UPDATE_EVIDENCE_2026-05-15.md",
     "docs/OFFICIAL_CLEARANCE_ACCESS_LOG_2026-05-15.md",
     "docs/SDK_API_STABILITY_REVIEW_2026-05-15.md",
     "docs/TRADEMARK_SEARCH_RUNBOOK.md",

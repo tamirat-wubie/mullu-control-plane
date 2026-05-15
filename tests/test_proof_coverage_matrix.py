@@ -129,6 +129,9 @@ def test_witness_integrity_report_tracks_exact_test_anchors() -> None:
     assert surfaces["governed_session"]["unanchored_witness_count"] == 0
     assert surfaces["lineage_query_api"]["unanchored_witness_count"] == 0
     assert surfaces["physical_action_boundary"]["unanchored_witness_count"] == 0
+    assert surfaces["restricted_adapter_worker_boundaries"]["unanchored_witness_count"] == 0
+    assert surfaces["operational_platform_read_models"]["exact_test_anchor_count"] >= 25
+    assert surfaces["operational_platform_read_models"]["unanchored_witness_count"] == 2
 
 
 def test_declared_routes_have_explicit_coverage_classification() -> None:
@@ -489,7 +492,7 @@ def test_remaining_declared_route_groups_are_witnessed() -> None:
             "classify_operational_platform_read_model_routes",
             ("/api/v1/bootstrap", "/api/v1/circuit-breaker", "/api/v1/llm/history"),
             "mcoi/mcoi_runtime/app/routers/llm/admin.py",
-            "llm_history_window_bounded",
+            "history_after_completion",
         ),
         (
             "operational_platform_read_models",
@@ -503,35 +506,35 @@ def test_remaining_declared_route_groups_are_witnessed() -> None:
             "classify_operational_platform_read_model_routes",
             ("/api/v1/flags", "/api/v1/flags/{flag_id}"),
             "mcoi/mcoi_runtime/app/routers/ops/feature_flags.py",
-            "missing_feature_flag_defaults_closed",
+            "check_flag_unknown",
         ),
         (
             "operational_platform_read_models",
             "classify_operational_platform_read_model_routes",
             ("/api/v1/metrics", "/api/v1/grafana/dashboard"),
             "mcoi/mcoi_runtime/app/routers/ops/metrics.py",
-            "metrics_snapshot_bounded",
+            "get_metrics",
         ),
         (
             "operational_platform_read_models",
             "classify_operational_platform_read_model_routes",
             ("/api/v1/rate-limit/status", "/api/v1/rate-limits/{client_id}"),
             "mcoi/mcoi_runtime/app/routers/ops/rate_limit.py",
-            "rate_limit_read_model_non_mutating",
+            "rate_limit_status",
         ),
         (
             "operational_platform_read_models",
             "classify_operational_platform_read_model_routes",
             ("/api/v1/sla", "/api/v1/sla/violations"),
             "mcoi/mcoi_runtime/app/routers/data/sla.py",
-            "sla_read_model_non_mutating",
+            "sla_summary_endpoint_returns_bounded_governed_read_model",
         ),
         (
             "operational_platform_read_models",
             "classify_operational_platform_read_model_routes",
             ("/gateway/status",),
             "gateway/server.py",
-            "gateway_status_governed",
+            "health",
         ),
         (
             "conversation_memory_lifecycle",
@@ -2041,10 +2044,11 @@ def test_rate_limit_read_model_surface_exposes_bounded_status_and_headers() -> N
     assert "mcoi/tests/test_rate_limiter.py" in rate_surface["evidence_files"]
     assert "mcoi/tests/test_server_phase202.py" in rate_surface["evidence_files"]
     assert "mcoi/tests/test_rate_limit_headers.py" in rate_surface["evidence_files"]
-    assert "rate_limit_status_reports_allowed_and_active_buckets" in witnesses
-    assert "rate_limit_headers_project_limit_remaining_reset" in witnesses
-    assert "rate_limit_header_peek_does_not_consume" in witnesses
-    assert "atomic_rate_limit_store_bounds_concurrent_consumption" in witnesses
+    assert "rate_limit_status" in witnesses
+    assert "status" in witnesses
+    assert "to_headers" in witnesses
+    assert "peek_does_not_consume" in witnesses
+    assert "consume_decrements" in witnesses
     assert route_records["/api/v1/rate-limit/status"]["coverage_state"] == "witnessed"
     assert route_records["/api/v1/rate-limit/status"]["surface_id"] == "operational_platform_read_models"
     assert route_records["/api/v1/rate-limits/{client_id}"]["coverage_state"] == "witnessed"
@@ -2072,11 +2076,11 @@ def test_feature_flag_read_model_surface_exposes_bounded_flag_checks() -> None:
     assert "mcoi/mcoi_runtime/core/feature_flags.py" in flag_surface["evidence_files"]
     assert "mcoi/tests/test_server_phase220.py" in flag_surface["evidence_files"]
     assert "mcoi/tests/test_feature_flags.py" in flag_surface["evidence_files"]
-    assert "feature_flags_list_returns_registered_flags" in witnesses
-    assert "feature_flags_summary_counts_enabled_disabled" in witnesses
-    assert "feature_flag_check_enabled" in witnesses
-    assert "feature_flag_unknown_returns_disabled" in witnesses
-    assert "feature_flag_tenant_override_respected" in witnesses
+    assert "list_flags" in witnesses
+    assert "summary" in witnesses
+    assert "check_flag_enabled" in witnesses
+    assert "check_flag_unknown" in witnesses
+    assert "tenant_override" in witnesses
     assert route_records["/api/v1/flags"]["coverage_state"] == "witnessed"
     assert route_records["/api/v1/flags"]["surface_id"] == "operational_platform_read_models"
     assert route_records["/api/v1/flags/{flag_id}"]["coverage_state"] == "witnessed"

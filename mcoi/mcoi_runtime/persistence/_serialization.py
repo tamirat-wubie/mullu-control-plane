@@ -24,6 +24,20 @@ RecordT = TypeVar("RecordT")
 _MAX_DESERIALIZATION_DEPTH = 32
 
 
+def _reject_json_constant(value: str) -> None:
+    raise ValueError("non-finite JSON value")
+
+
+def loads_strict_json(json_str: str) -> Any:
+    """Parse JSON while rejecting non-standard NaN and Infinity constants."""
+    return json.loads(json_str, parse_constant=_reject_json_constant)
+
+
+def load_strict_json(stream: Any) -> Any:
+    """Parse a JSON stream while rejecting non-standard NaN and Infinity constants."""
+    return json.load(stream, parse_constant=_reject_json_constant)
+
+
 def _bounded_error(summary: str, exc: BaseException) -> str:
     return f"{summary} ({type(exc).__name__})"
 
@@ -92,8 +106,8 @@ def deserialize_record(json_str: str, record_type: Type[RecordT]) -> RecordT:
         raise CorruptedDataError("record_type must be a dataclass class")
 
     try:
-        raw = json.loads(json_str)
-    except (json.JSONDecodeError, TypeError) as exc:
+        raw = loads_strict_json(json_str)
+    except (json.JSONDecodeError, TypeError, ValueError) as exc:
         raise CorruptedDataError(_bounded_error("malformed JSON", exc)) from exc
 
     if not isinstance(raw, dict):

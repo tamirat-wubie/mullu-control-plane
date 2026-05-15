@@ -84,7 +84,10 @@ def test_document_canonical_json_rejects_nonfinite_metadata() -> None:
     with pytest.raises(ValueError, match="WHQR document must serialize to deterministic canonical JSON") as excinfo:
         document.canonical_json()
 
-    assert "nan" not in str(excinfo.value).lower()
+    message = str(excinfo.value)
+    assert "canonical JSON" in message
+    assert "confidence" not in message
+    assert "nan" not in message.lower()
 
 
 def test_contract_validation_and_metadata_fail_closed() -> None:

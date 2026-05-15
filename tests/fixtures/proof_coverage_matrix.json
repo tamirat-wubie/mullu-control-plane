@@ -769,7 +769,7 @@
   ],
   "coverage_summary": {
     "by_action_proof": {
-      "action_proof": 95,
+      "action_proof": 96,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 16,
@@ -777,7 +777,7 @@
     },
     "by_audit": {
       "action_proof": 0,
-      "audit_chain": 109,
+      "audit_chain": 110,
       "gap": 0,
       "read_model": 4,
       "request_proof": 0
@@ -785,21 +785,21 @@
     "by_coverage_state": {
       "proven": 1,
       "unproven": 0,
-      "witnessed": 112
+      "witnessed": 113
     },
     "by_request_proof": {
       "action_proof": 1,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 18,
-      "request_proof": 94
+      "request_proof": 95
     },
-    "surface_count": 113
+    "surface_count": 114
   },
   "evidence_quality": {
     "by_strength": {
       "classified_with_quality_gaps": 0,
-      "strong": 113,
+      "strong": 114,
       "unproven": 0
     },
     "quality_gap_count": 0,
@@ -2573,6 +2573,44 @@
       "audit": "audit_chain",
       "coverage_state": "witnessed",
       "evidence_files": [
+        "gateway/browser_worker.py",
+        "gateway/document_worker.py",
+        "gateway/email_calendar_worker.py",
+        "gateway/voice_worker.py",
+        "tests/test_gateway/test_browser_worker.py",
+        "tests/test_gateway/test_document_worker.py",
+        "tests/test_gateway/test_email_calendar_worker.py",
+        "tests/test_gateway/test_voice_worker.py"
+      ],
+      "notes": "Restricted browser, document, email/calendar, and voice workers reject unsigned requests, execute only signed governed actions, emit receipt-bearing signed responses, and bound malformed request details without echoing submitted payloads.",
+      "representative_paths": [
+        "/browser/execute",
+        "/document/execute",
+        "/email-calendar/execute",
+        "/voice/execute"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "browser_worker_rejects_bad_signature",
+        "browser_worker_executes_signed_open_request",
+        "browser_worker_parse_error_detail_is_bounded",
+        "document_worker_rejects_bad_signature",
+        "document_worker_executes_signed_extract_text_request",
+        "document_worker_parse_error_detail_is_bounded",
+        "email_calendar_worker_rejects_bad_signature",
+        "email_calendar_worker_executes_signed_draft_request",
+        "email_calendar_worker_parse_error_detail_is_bounded",
+        "voice_worker_rejects_bad_signature",
+        "voice_worker_executes_signed_intent_classification_request",
+        "voice_worker_parse_error_detail_is_bounded"
+      ],
+      "surface_id": "restricted_adapter_worker_boundaries"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
         "mcoi/mcoi_runtime/app/routers/llm/completion.py",
         "mcoi/mcoi_runtime/app/routers/llm/chat.py",
         "mcoi/mcoi_runtime/app/streaming.py",
@@ -2756,6 +2794,7 @@
         "mcoi/tests/test_feature_flags.py",
         "mcoi/tests/test_rate_limit_headers.py",
         "mcoi/tests/test_rate_limiter.py",
+        "mcoi/tests/test_grafana_dashboard.py",
         "mcoi/tests/test_server_phase199.py",
         "mcoi/tests/test_server_phase200.py",
         "mcoi/tests/test_server_phase202.py",
@@ -2763,6 +2802,7 @@
         "mcoi/tests/test_server_phase213.py",
         "mcoi/tests/test_server_phase220.py",
         "mcoi/tests/test_sla_monitor.py",
+        "mcoi/tests/test_sla_router.py",
         "tests/test_gateway/test_webhooks.py"
       ],
       "notes": "Operational platform read-model routes aggregate bounded bootstrap, LLM history, dependency, feature-flag, metric, rate-limit, SLA, and gateway status state without mutation authority.",
@@ -2784,35 +2824,33 @@
       ],
       "request_proof": "read_model",
       "runtime_witnesses": [
-        "bootstrap_info_bounded",
-        "bootstrap_reports_stub_provider",
-        "llm_circuit_breaker_status_bounded",
-        "llm_history_window_bounded",
+        "bootstrap_info",
+        "bootstrap_has_stub",
+        "circuit_breaker_status",
+        "history_empty",
+        "history_after_completion",
         "dependency_graph_startup_order_bounded",
         "dependency_impact_analysis_bounded",
-        "feature_flags_list_bounded",
-        "feature_flags_summary_counts_enabled_disabled",
-        "feature_flags_list_returns_registered_flags",
-        "feature_flag_check_enabled",
-        "feature_flag_unknown_returns_disabled",
-        "feature_flag_tenant_override_respected",
-        "feature_flag_lookup_bounded",
-        "missing_feature_flag_defaults_closed",
-        "metrics_snapshot_bounded",
-        "metrics_read_model_bounded",
-        "grafana_dashboard_export_bounded",
-        "rate_limit_status_bounded",
-        "rate_limit_status_reports_allowed_and_active_buckets",
-        "rate_limit_client_headers_bounded",
-        "rate_limit_headers_project_limit_remaining_reset",
-        "rate_limit_header_peek_does_not_consume",
-        "atomic_rate_limit_store_bounds_concurrent_consumption",
-        "rate_limit_read_model_non_mutating",
-        "sla_summary_bounded",
-        "sla_violations_bounded",
-        "sla_read_model_non_mutating",
-        "gateway_status_governed",
-        "gateway_status_bounded"
+        "list_flags",
+        "summary",
+        "check_flag_enabled",
+        "check_flag_unknown",
+        "tenant_override",
+        "default_disabled",
+        "get_metrics",
+        "metrics_track_requests",
+        "build_default",
+        "default_json_roundtrip",
+        "rate_limit_status",
+        "status",
+        "to_headers",
+        "peek_does_not_consume",
+        "consume_decrements",
+        "exhaustion_triggers_retry_after",
+        "sla_summary_endpoint_returns_bounded_governed_read_model",
+        "sla_violations_endpoint_filters_by_sla_id",
+        "violations_filtered",
+        "health"
       ],
       "surface_id": "operational_platform_read_models"
     },
@@ -6262,8 +6300,8 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 124,
-    "runtime_witness_count": 966,
+    "exact_test_anchor_count": 161,
+    "runtime_witness_count": 976,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -6307,6 +6345,87 @@
           "non_isolated_boundary_rejected",
           "local_smoke_stub_bound_to_local_environment"
         ]
+      },
+      {
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "tests/test_gateway/test_browser_worker.py::test_browser_worker_rejects_bad_signature"
+            ],
+            "witness": "browser_worker_rejects_bad_signature"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_browser_worker.py::test_browser_worker_executes_signed_open_request"
+            ],
+            "witness": "browser_worker_executes_signed_open_request"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_browser_worker.py::test_browser_worker_parse_error_detail_is_bounded"
+            ],
+            "witness": "browser_worker_parse_error_detail_is_bounded"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_document_worker.py::test_document_worker_rejects_bad_signature"
+            ],
+            "witness": "document_worker_rejects_bad_signature"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_document_worker.py::test_document_worker_executes_signed_extract_text_request"
+            ],
+            "witness": "document_worker_executes_signed_extract_text_request"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_document_worker.py::test_document_worker_parse_error_detail_is_bounded"
+            ],
+            "witness": "document_worker_parse_error_detail_is_bounded"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_email_calendar_worker.py::test_email_calendar_worker_rejects_bad_signature"
+            ],
+            "witness": "email_calendar_worker_rejects_bad_signature"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_email_calendar_worker.py::test_email_calendar_worker_executes_signed_draft_request"
+            ],
+            "witness": "email_calendar_worker_executes_signed_draft_request"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_email_calendar_worker.py::test_email_calendar_worker_parse_error_detail_is_bounded"
+            ],
+            "witness": "email_calendar_worker_parse_error_detail_is_bounded"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_voice_worker.py::test_voice_worker_rejects_bad_signature"
+            ],
+            "witness": "voice_worker_rejects_bad_signature"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_voice_worker.py::test_voice_worker_executes_signed_intent_classification_request"
+            ],
+            "witness": "voice_worker_executes_signed_intent_classification_request"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_voice_worker.py::test_voice_worker_parse_error_detail_is_bounded"
+            ],
+            "witness": "voice_worker_parse_error_detail_is_bounded"
+          }
+        ],
+        "exact_test_anchor_count": 12,
+        "runtime_witness_count": 12,
+        "surface_id": "restricted_adapter_worker_boundaries",
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
       },
       {
         "anchored_witnesses": [
@@ -6427,41 +6546,169 @@
         ]
       },
       {
-        "anchored_witnesses": [],
-        "exact_test_anchor_count": 0,
-        "runtime_witness_count": 29,
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "mcoi/tests/test_server_phase200.py::test_bootstrap_info"
+            ],
+            "witness": "bootstrap_info"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_server_phase200.py::test_bootstrap_has_stub"
+            ],
+            "witness": "bootstrap_has_stub"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_server_phase212.py::test_circuit_breaker_status"
+            ],
+            "witness": "circuit_breaker_status"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_server_phase199.py::test_history_empty"
+            ],
+            "witness": "history_empty"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_server_phase199.py::test_history_after_completion"
+            ],
+            "witness": "history_after_completion"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_feature_flags.py::test_list_flags",
+              "mcoi/tests/test_server_phase220.py::test_list_flags"
+            ],
+            "witness": "list_flags"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_feature_flags.py::test_summary",
+              "mcoi/tests/test_rate_limit_headers.py::test_summary",
+              "mcoi/tests/test_sla_monitor.py::test_summary"
+            ],
+            "witness": "summary"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_server_phase220.py::test_check_flag_enabled"
+            ],
+            "witness": "check_flag_enabled"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_server_phase220.py::test_check_flag_unknown"
+            ],
+            "witness": "check_flag_unknown"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_feature_flags.py::test_tenant_override"
+            ],
+            "witness": "tenant_override"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_feature_flags.py::test_default_disabled"
+            ],
+            "witness": "default_disabled"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_server_phase202.py::test_get_metrics"
+            ],
+            "witness": "get_metrics"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_server_phase202.py::test_metrics_track_requests"
+            ],
+            "witness": "metrics_track_requests"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_grafana_dashboard.py::test_build_default"
+            ],
+            "witness": "build_default"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_grafana_dashboard.py::test_default_json_roundtrip"
+            ],
+            "witness": "default_json_roundtrip"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_server_phase202.py::test_rate_limit_status"
+            ],
+            "witness": "rate_limit_status"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_rate_limiter.py::test_status",
+              "tests/test_gateway/test_webhooks.py::test_status"
+            ],
+            "witness": "status"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_rate_limit_headers.py::test_to_headers"
+            ],
+            "witness": "to_headers"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_rate_limit_headers.py::test_peek_does_not_consume"
+            ],
+            "witness": "peek_does_not_consume"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_rate_limit_headers.py::test_consume_decrements"
+            ],
+            "witness": "consume_decrements"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_rate_limit_headers.py::test_exhaustion_triggers_retry_after"
+            ],
+            "witness": "exhaustion_triggers_retry_after"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_sla_router.py::test_sla_summary_endpoint_returns_bounded_governed_read_model"
+            ],
+            "witness": "sla_summary_endpoint_returns_bounded_governed_read_model"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_sla_router.py::test_sla_violations_endpoint_filters_by_sla_id"
+            ],
+            "witness": "sla_violations_endpoint_filters_by_sla_id"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_sla_monitor.py::test_violations_filtered"
+            ],
+            "witness": "violations_filtered"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_webhooks.py::test_health"
+            ],
+            "witness": "health"
+          }
+        ],
+        "exact_test_anchor_count": 25,
+        "runtime_witness_count": 27,
         "surface_id": "operational_platform_read_models",
-        "unanchored_witness_count": 29,
+        "unanchored_witness_count": 2,
         "unanchored_witnesses": [
-          "bootstrap_info_bounded",
-          "bootstrap_reports_stub_provider",
-          "llm_circuit_breaker_status_bounded",
-          "llm_history_window_bounded",
           "dependency_graph_startup_order_bounded",
-          "dependency_impact_analysis_bounded",
-          "feature_flags_list_bounded",
-          "feature_flags_summary_counts_enabled_disabled",
-          "feature_flags_list_returns_registered_flags",
-          "feature_flag_check_enabled",
-          "feature_flag_unknown_returns_disabled",
-          "feature_flag_tenant_override_respected",
-          "feature_flag_lookup_bounded",
-          "missing_feature_flag_defaults_closed",
-          "metrics_snapshot_bounded",
-          "metrics_read_model_bounded",
-          "grafana_dashboard_export_bounded",
-          "rate_limit_status_bounded",
-          "rate_limit_status_reports_allowed_and_active_buckets",
-          "rate_limit_client_headers_bounded",
-          "rate_limit_headers_project_limit_remaining_reset",
-          "rate_limit_header_peek_does_not_consume",
-          "atomic_rate_limit_store_bounds_concurrent_consumption",
-          "rate_limit_read_model_non_mutating",
-          "sla_summary_bounded",
-          "sla_violations_bounded",
-          "sla_read_model_non_mutating",
-          "gateway_status_governed",
-          "gateway_status_bounded"
+          "dependency_impact_analysis_bounded"
         ]
       },
       {
@@ -8886,6 +9133,6 @@
         ]
       }
     ],
-    "unanchored_witness_count": 842
+    "unanchored_witness_count": 815
   }
 }

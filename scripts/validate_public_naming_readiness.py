@@ -33,6 +33,8 @@ PUBLIC_NAMING_REVIEW_PACKET_PATH = REPO_ROOT / "docs" / "PUBLIC_NAMING_REVIEW_PA
 PUBLIC_NAMING_ARTIFACT_MANIFEST_PATH = REPO_ROOT / "docs" / "PUBLIC_NAMING_ARTIFACT_MANIFEST.md"
 OFFICIAL_CLEARANCE_ACCESS_LOG_PATH = REPO_ROOT / "docs" / "OFFICIAL_CLEARANCE_ACCESS_LOG_2026-05-15.md"
 SDK_API_STABILITY_REVIEW_PATH = REPO_ROOT / "docs" / "SDK_API_STABILITY_REVIEW_2026-05-15.md"
+HOMEPAGE_UPDATE_EVIDENCE_PATH = REPO_ROOT / "docs" / "HOMEPAGE_UPDATE_EVIDENCE_2026-05-15.md"
+APP_TITLE_UPDATE_EVIDENCE_PATH = REPO_ROOT / "docs" / "APP_TITLE_UPDATE_EVIDENCE_2026-05-15.md"
 READINESS_SCHEMA_PATH = REPO_ROOT / "schemas" / "public_naming_readiness.schema.json"
 CLEARANCE_SCHEMA_PATH = REPO_ROOT / "schemas" / "mullu_name_clearance_draft.schema.json"
 
@@ -71,6 +73,8 @@ REQUIRED_CLOSED_GATES = {
     "naming_schemas",
     "official_clearance_access_log",
     "sdk_api_stability_review",
+    "homepage_update",
+    "app_title_update",
 }
 
 REQUIRED_OPEN_GATES = {
@@ -80,8 +84,6 @@ REQUIRED_OPEN_GATES = {
     "close_variant_review",
     "domain_ownership",
     "legal_review",
-    "homepage_update",
-    "app_title_update",
 }
 
 BLOCKED_PUBLIC_NAMES = {
@@ -99,6 +101,8 @@ REQUIRED_EVIDENCE_DOCS = {
     "docs/PUBLIC_NAMING_READINESS.md",
     "docs/NAMING_MIGRATION_PLAN.md",
     "docs/NAME_CLEARANCE_PRELIMINARY.md",
+    "docs/APP_TITLE_UPDATE_EVIDENCE_2026-05-15.md",
+    "docs/HOMEPAGE_UPDATE_EVIDENCE_2026-05-15.md",
     "docs/OFFICIAL_CLEARANCE_ACCESS_LOG_2026-05-15.md",
     "docs/SDK_API_STABILITY_REVIEW_2026-05-15.md",
     "docs/TRADEMARK_SEARCH_RUNBOOK.md",
@@ -342,6 +346,57 @@ def validate_sdk_api_stability_review(review_path: Path = SDK_API_STABILITY_REVI
     )
 
 
+def validate_homepage_update_evidence(evidence_path: Path = HOMEPAGE_UPDATE_EVIDENCE_PATH) -> None:
+    evidence_text = evidence_path.read_text(encoding="utf-8")
+    validate_no_forbidden_terminology(_display_path(evidence_path), evidence_text)
+
+    required_literals = (
+        "2026-05-15",
+        "homepage_update",
+        "https://mullusi.com/mullu/",
+        "HTTP 200",
+        "Mullu, by Mullusi",
+        "private beta",
+        "request access",
+        "Symbols are atomic. Meaning is relational. Traversal is governed. Judgment is earned.",
+        "Mullu CLI",
+        "Mullu Code",
+        "Mullu Desk",
+        "Mullu Control Plane",
+        "https://mullusi.com/sitemap.xml",
+        "paid public launch remains blocked",
+    )
+    missing_literals = sorted(literal for literal in required_literals if literal not in evidence_text)
+    _require(not missing_literals, f"homepage update evidence missing literals: {missing_literals}")
+    _require(
+        "This is not a paid launch homepage" in evidence_text,
+        "homepage update evidence must preserve private-beta launch boundary",
+    )
+
+
+def validate_app_title_update_evidence(evidence_path: Path = APP_TITLE_UPDATE_EVIDENCE_PATH) -> None:
+    evidence_text = evidence_path.read_text(encoding="utf-8")
+    validate_no_forbidden_terminology(_display_path(evidence_path), evidence_text)
+
+    required_literals = (
+        "2026-05-15",
+        "app_title_update",
+        "<title>Mullu, by Mullusi - Governed Symbolic Systems</title>",
+        "<title>Mullu Authority Operator Console</title>",
+        "<title>Mullu Physical Promotion Receipts</title>",
+        "<title>Mullu Universal Action Proofs</title>",
+        "<title>Mullu Operator Capabilities</title>",
+        "docs/SDK_API_STABILITY_REVIEW_2026-05-15.md",
+        "Mullu Platform",
+        "paid public launch remains blocked",
+    )
+    missing_literals = sorted(literal for literal in required_literals if literal not in evidence_text)
+    _require(not missing_literals, f"app title update evidence missing literals: {missing_literals}")
+
+    blocked_title_names = sorted(name for name in BLOCKED_PUBLIC_NAMES if f"<title>{name}" in evidence_text)
+    _require(not blocked_title_names, f"blocked names appear as app titles: {blocked_title_names}")
+
+
 def validate_tsdr_evidence_template(template_path: Path = TSDR_EVIDENCE_TEMPLATE_PATH) -> None:
     template_text = template_path.read_text(encoding="utf-8")
     validate_no_forbidden_terminology(_display_path(template_path), template_text)
@@ -550,6 +605,8 @@ def validate_public_naming_readiness(witness_path: Path = WITNESS_PATH) -> None:
     validate_public_naming_review_packet()
     validate_official_clearance_access_log()
     validate_sdk_api_stability_review()
+    validate_homepage_update_evidence()
+    validate_app_title_update_evidence()
     validate_public_naming_artifact_manifest()
 
     _require(witness.get("product_name") == "Mullu", "product_name must be Mullu")

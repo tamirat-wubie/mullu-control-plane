@@ -120,6 +120,27 @@ def test_browser_worker_rejects_bad_signature() -> None:
     assert response.json()["detail"] == "invalid browser request signature"
 
 
+def test_browser_worker_parse_error_detail_is_bounded() -> None:
+    secret = "browser-secret"
+    body = b'{"request_id":"secret-token-from-browser"'
+    app = create_browser_worker_app(adapter=FakeBrowserAdapter(), signing_secret=secret)
+    client = TestClient(app)
+
+    response = client.post(
+        "/browser/execute",
+        content=body,
+        headers={"X-Mullu-Browser-Signature": sign_capability_payload(body, secret)},
+    )
+    detail = response.json()["detail"]
+
+    assert response.status_code == 422
+    assert detail["error"] == "invalid browser execution request"
+    assert detail["error_code"] == "invalid_browser_execution_request"
+    assert detail["governed"] is True
+    assert "secret-token-from-browser" not in response.text
+    assert "X-Mullu-Browser-Response-Signature" not in response.headers
+
+
 def test_browser_worker_blocks_disallowed_domain_before_adapter() -> None:
     secret = "browser-secret"
     adapter = FakeBrowserAdapter()

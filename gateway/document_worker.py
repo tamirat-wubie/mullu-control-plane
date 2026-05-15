@@ -130,6 +130,34 @@ class DocumentActionResponse:
     error: str = ""
 
 
+_DOCUMENT_WORKER_ERROR_CODES = {
+    "document request body must be an object": (
+        "invalid document request body",
+        "invalid_document_request_body",
+    ),
+    "rows must be an array": (
+        "invalid document request rows",
+        "invalid_document_request_rows",
+    ),
+    "rows entries must be objects": (
+        "invalid document request rows",
+        "invalid_document_request_rows",
+    ),
+    "metadata must be an object": (
+        "invalid document request metadata",
+        "invalid_document_request_metadata",
+    ),
+}
+
+
+def _document_worker_error_detail(exc: BaseException) -> dict[str, object]:
+    error, error_code = _DOCUMENT_WORKER_ERROR_CODES.get(
+        str(exc),
+        ("invalid document execution request", "invalid_document_execution_request"),
+    )
+    return {"error": error, "error_code": error_code, "governed": True}
+
+
 def create_document_worker_app(
     *,
     registry: ArtifactParserRegistry | None = None,
@@ -166,7 +194,7 @@ def create_document_worker_app(
                 raise RuntimeError("document request body must be an object")
             document_request = document_action_request_from_mapping(raw)
         except (KeyError, TypeError, UnicodeDecodeError, json.JSONDecodeError, RuntimeError, ValueError) as exc:
-            raise HTTPException(422, detail=str(exc)) from exc
+            raise HTTPException(422, detail=_document_worker_error_detail(exc)) from exc
 
         response = execute_document_request(
             document_request,

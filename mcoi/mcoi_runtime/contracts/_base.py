@@ -183,6 +183,7 @@ class ContractRecord:
         try:
             return json.dumps(
                 self.to_json_dict(),
+                sort_keys=True,
                 ensure_ascii=True,
                 separators=(",", ":"),
                 allow_nan=False,

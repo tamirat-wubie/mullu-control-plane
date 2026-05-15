@@ -170,6 +170,11 @@ class TestPlanLifecycle:
         plan = orchestrator.create_plan("agent-a", "goal")
         with pytest.raises(ValueError, match="empty plan"):
             orchestrator.submit_for_voting(plan.plan_id)
+        assert len(plan.submission_proofs) == 1
+        assert plan.submission_proofs[0].decision == "rejected"
+        assert plan.submission_proofs[0].reason == "empty plan"
+        assert plan.submission_proofs[0].proposal_count == 0
+        assert plan.submission_proofs[0].quorum_possible is False
 
 
 class TestVotingAndConsensus:
@@ -180,6 +185,31 @@ class TestVotingAndConsensus:
         ))
         orchestrator.submit_for_voting(plan.plan_id)
         assert plan.phase == OrchestrationPhase.VOTING
+        assert len(plan.submission_proofs) == 1
+        assert plan.submission_proofs[0].decision == "accepted"
+        assert plan.submission_proofs[0].reason == "submitted for voting"
+        assert plan.submission_proofs[0].from_phase == "planning"
+        assert plan.submission_proofs[0].to_phase == "voting"
+        assert plan.submission_proofs[0].proposal_count == 1
+        assert plan.submission_proofs[0].voter_count == 3
+        assert plan.submission_proofs[0].quorum_possible is True
+
+    def test_submit_for_voting_wrong_phase_records_proof(self, orchestrator):
+        plan = orchestrator.create_plan("agent-a", "goal")
+        orchestrator.add_proposal(plan.plan_id, AgentProposal(
+            proposal_id="p1", agent_id="agent-a", action="a", description="d",
+        ))
+        orchestrator.submit_for_voting(plan.plan_id)
+
+        with pytest.raises(ValueError, match="^plan not accepting submission$") as exc_info:
+            orchestrator.submit_for_voting(plan.plan_id)
+
+        assert OrchestrationPhase.VOTING.value not in str(exc_info.value)
+        assert len(plan.submission_proofs) == 2
+        assert plan.submission_proofs[-1].decision == "rejected"
+        assert plan.submission_proofs[-1].reason == "plan not accepting submission"
+        assert plan.submission_proofs[-1].from_phase == "voting"
+        assert plan.submission_proofs[-1].to_phase == "voting"
 
     def test_cast_vote(self, orchestrator):
         plan = orchestrator.create_plan("agent-a", "goal")
@@ -578,6 +608,8 @@ class TestSummary:
         assert s["proposal_decisions"] == {"accepted": 1}
         assert s["vote_proofs"] == 2
         assert s["vote_decisions"] == {"accepted": 2}
+        assert s["submission_proofs"] == 1
+        assert s["submission_decisions"] == {"accepted": 1}
 
     def test_plan_to_dict(self, orchestrator):
         plan = orchestrator.create_plan("agent-a", "goal")
@@ -587,6 +619,7 @@ class TestSummary:
         assert d["approval_count"] == 0
         assert d["proposal_proofs"] == []
         assert d["vote_proofs"] == []
+        assert d["submission_proofs"] == []
         assert d["dispatch_proofs"] == []
 
     def test_plan_to_dict_includes_dispatch_proofs(self, orchestrator):
@@ -623,6 +656,7 @@ class TestSummary:
         assert model["summary"]["plans_by_phase"] == {"completed": 1}
         assert model["summary"]["proposal_decisions"] == {"accepted": 1}
         assert model["summary"]["vote_decisions"] == {"accepted": 2}
+        assert model["summary"]["submission_decisions"] == {"accepted": 1}
         assert model["summary"]["dispatch_decisions"] == {"executed": 1}
         assert model["summary"]["handoff_decisions"] == {
             "transferred": 1,
@@ -630,8 +664,10 @@ class TestSummary:
         }
         assert len(model["recent_proposal_proofs"]) == 1
         assert len(model["recent_vote_proofs"]) == 1
+        assert len(model["recent_submission_proofs"]) == 1
         assert len(model["recent_dispatch_proofs"]) == 1
         assert len(model["recent_handoff_proofs"]) == 1
         assert model["recent_proposal_proofs"][0]["decision"] == "accepted"
         assert model["recent_vote_proofs"][0]["agent_id"] == "agent-b"
+        assert model["recent_submission_proofs"][0]["decision"] == "accepted"
         assert model["recent_handoff_proofs"][0]["decision"] == "blocked"
