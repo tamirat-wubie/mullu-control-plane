@@ -3,60 +3,54 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Mullu, by Mullusi - Governed Symbolic Intelligence</title>
-  <meta name="description" content="Mullu is the flagship governed symbolic intelligence product by Mullusi for personal, team, enterprise, and deployment work.">
+  <title>Mullu, by Mullusi - Governed Symbolic Systems</title>
+  <meta name="description" content="Mullu is the flagship governed symbolic intelligence product by Mullusi, with explicit proof, audit, policy, and production-claim boundaries.">
   <style>
     :root {
       color-scheme: dark;
-      --bg: #070806;
-      --panel: #10120d;
-      --line: #283124;
-      --text: #ece7d8;
-      --muted: #aaa38f;
-      --gold: #d6ad48;
-      --green: #54c99a;
-      --violet: #9283ff;
+      --bg: #080908;
+      --panel: #131714;
+      --panel-2: #191d1a;
+      --line: #313a34;
+      --text: #f2eee3;
+      --muted: #b8b2a3;
+      --gold: #d7ad45;
+      --green: #5fc89b;
+      --blue: #79a8ff;
+      --red: #e0716f;
     }
 
     * { box-sizing: border-box; }
+
     body {
       margin: 0;
       background: var(--bg);
       color: var(--text);
-      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
-      line-height: 1.6;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.55;
     }
 
     a { color: inherit; }
 
-    header, main, footer {
-      width: min(1120px, calc(100% - 32px));
-      margin: 0 auto;
-    }
-
-    header {
-      min-height: 100vh;
-      display: grid;
-      align-content: center;
-      gap: 40px;
-      padding: 72px 0 48px;
-    }
-
     nav {
-      position: fixed;
+      position: sticky;
       top: 0;
-      left: 0;
-      right: 0;
-      z-index: 2;
-      border-bottom: 1px solid rgba(214, 173, 72, 0.18);
-      background: rgba(7, 8, 6, 0.88);
-      backdrop-filter: blur(12px);
+      z-index: 10;
+      border-bottom: 1px solid rgba(215, 173, 69, 0.24);
+      background: rgba(8, 9, 8, 0.9);
+      backdrop-filter: blur(14px);
+    }
+
+    .nav-inner,
+    header,
+    section,
+    footer {
+      width: min(1180px, calc(100% - 32px));
+      margin: 0 auto;
     }
 
     .nav-inner {
-      width: min(1120px, calc(100% - 32px));
       height: 64px;
-      margin: 0 auto;
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -65,54 +59,84 @@
 
     .brand {
       color: var(--gold);
-      font-weight: 700;
-      letter-spacing: 0.18em;
-      text-transform: uppercase;
+      font-weight: 760;
+      letter-spacing: 0.12em;
       text-decoration: none;
+      text-transform: uppercase;
     }
 
     .nav-links {
       display: flex;
-      gap: 20px;
+      gap: 18px;
       color: var(--muted);
-      font-size: 13px;
+      font-size: 14px;
     }
 
     .nav-links a { text-decoration: none; }
     .nav-links a:hover { color: var(--gold); }
 
+    header {
+      min-height: calc(100vh - 64px);
+      display: grid;
+      grid-template-columns: minmax(0, 1.05fr) minmax(360px, 0.95fr);
+      gap: 48px;
+      align-items: center;
+      padding: 72px 0 56px;
+    }
+
     .eyebrow {
       color: var(--green);
       font-size: 13px;
-      letter-spacing: 0.24em;
+      font-weight: 700;
+      letter-spacing: 0.2em;
       text-transform: uppercase;
     }
 
+    h1,
+    h2,
+    h3,
+    p { margin-top: 0; }
+
     h1 {
-      max-width: 940px;
-      margin: 0;
-      font-size: clamp(48px, 10vw, 124px);
-      line-height: 0.92;
+      max-width: 780px;
+      margin-bottom: 24px;
+      font-size: clamp(48px, 8vw, 104px);
+      line-height: 0.96;
       letter-spacing: 0;
     }
 
-    .law {
-      max-width: 740px;
+    h2 {
+      margin-bottom: 18px;
+      font-size: clamp(30px, 4vw, 54px);
+      line-height: 1.06;
+      letter-spacing: 0;
+    }
+
+    h3 {
+      margin-bottom: 8px;
       color: var(--gold);
-      font-size: clamp(20px, 4vw, 42px);
-      line-height: 1.18;
+      font-size: 18px;
+      letter-spacing: 0;
     }
 
     .lede {
       max-width: 760px;
       color: var(--muted);
-      font-size: 18px;
+      font-size: 19px;
+    }
+
+    .law {
+      max-width: 760px;
+      color: var(--gold);
+      font-size: 20px;
+      font-weight: 650;
     }
 
     .actions {
       display: flex;
       flex-wrap: wrap;
       gap: 12px;
+      margin-top: 30px;
     }
 
     .button {
@@ -124,69 +148,159 @@
       color: var(--text);
       text-decoration: none;
       font-size: 14px;
+      font-weight: 650;
     }
 
     .button.primary {
       border-color: var(--gold);
       background: var(--gold);
-      color: #121006;
-      font-weight: 700;
+      color: #141007;
     }
 
-    section {
-      padding: 72px 0;
-      border-top: 1px solid rgba(214, 173, 72, 0.16);
-    }
-
-    h2 {
-      margin: 0 0 24px;
-      font-size: clamp(28px, 5vw, 56px);
-      line-height: 1.05;
-      letter-spacing: 0;
-    }
-
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 14px;
-    }
-
-    .surface {
-      min-height: 180px;
-      padding: 22px;
+    .system-map,
+    .card,
+    .step,
+    .status-table {
       border: 1px solid var(--line);
       background: var(--panel);
     }
 
-    .surface h3 {
-      margin: 0 0 10px;
-      color: var(--gold);
-      font-size: 18px;
+    .system-map {
+      padding: 22px;
     }
 
-    .surface p {
-      margin: 0;
+    .map-title {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 18px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .map-layers {
+      display: grid;
+      gap: 10px;
+    }
+
+    .layer {
+      display: grid;
+      grid-template-columns: 116px minmax(0, 1fr);
+      gap: 12px;
+      align-items: center;
+      padding: 14px;
+      border: 1px solid var(--line);
+      background: var(--panel-2);
+    }
+
+    .layer strong {
+      color: var(--text);
+      font-size: 14px;
+    }
+
+    .layer span {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    section {
+      padding: 76px 0;
+      border-top: 1px solid rgba(215, 173, 69, 0.18);
+    }
+
+    .section-head {
+      max-width: 820px;
+      margin-bottom: 30px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .card {
+      min-height: 170px;
+      padding: 22px;
+    }
+
+    .card p,
+    .card li {
       color: var(--muted);
       font-size: 14px;
     }
 
-    .proof {
-      display: grid;
-      grid-template-columns: 0.8fr 1.2fr;
-      gap: 24px;
-      align-items: start;
+    .badge-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 16px;
     }
 
-    .proof-list {
-      margin: 0;
-      padding: 0;
-      list-style: none;
+    .badge {
+      border: 1px solid var(--line);
+      padding: 6px 9px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .status-table {
+      width: 100%;
+      border-collapse: collapse;
+      overflow: hidden;
+    }
+
+    .status-table th,
+    .status-table td {
+      padding: 16px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      vertical-align: top;
+      font-size: 14px;
+    }
+
+    .status-table th {
+      color: var(--gold);
+      font-weight: 720;
+      background: var(--panel-2);
+    }
+
+    .status-table td {
       color: var(--muted);
     }
 
-    .proof-list li {
-      padding: 14px 0;
-      border-bottom: 1px solid var(--line);
+    .state-ready { color: var(--green); font-weight: 720; }
+    .state-blocked { color: var(--red); font-weight: 720; }
+    .state-design { color: var(--blue); font-weight: 720; }
+
+    .timeline {
+      display: grid;
+      gap: 12px;
+      counter-reset: step;
+    }
+
+    .step {
+      display: grid;
+      grid-template-columns: 52px minmax(0, 1fr);
+      gap: 16px;
+      padding: 18px;
+    }
+
+    .step::before {
+      counter-increment: step;
+      content: counter(step);
+      display: grid;
+      place-items: center;
+      width: 36px;
+      height: 36px;
+      border: 1px solid var(--gold);
+      color: var(--gold);
+      font-weight: 800;
+    }
+
+    .step p {
+      color: var(--muted);
+      font-size: 14px;
     }
 
     footer {
@@ -194,18 +308,26 @@
       justify-content: space-between;
       gap: 24px;
       padding: 40px 0 56px;
+      border-top: 1px solid rgba(215, 173, 69, 0.18);
       color: var(--muted);
       font-size: 13px;
     }
 
-    .status {
-      color: var(--violet);
-    }
+    @media (max-width: 900px) {
+      header,
+      .grid {
+        grid-template-columns: 1fr;
+      }
 
-    @media (max-width: 820px) {
       .nav-links { display: none; }
-      .grid, .proof { grid-template-columns: 1fr; }
-      footer { flex-direction: column; }
+
+      .layer {
+        grid-template-columns: 1fr;
+      }
+
+      footer {
+        flex-direction: column;
+      }
     }
   </style>
 </head>
@@ -214,80 +336,239 @@
     <div class="nav-inner">
       <a class="brand" href="/">Mullusi</a>
       <div class="nav-links">
-        <a href="#surfaces">Surfaces</a>
-        <a href="#governance">Governance</a>
-        <a href="mailto:hello@mullusi.com">Contact</a>
+        <a href="#boundary">Boundary</a>
+        <a href="#products">Products</a>
+        <a href="#proof">Proof</a>
+        <a href="#roadmap">Roadmap</a>
       </div>
     </div>
   </nav>
 
   <header>
     <div>
-      <div class="eyebrow">Mullu, by Mullusi</div>
-      <h1>Mullu</h1>
+      <div class="eyebrow">Mullusi umbrella - Mullu product</div>
+      <h1>Governed symbolic systems for accountable work.</h1>
+      <p class="lede">
+        Mullusi is the company, research, governance, and trust umbrella.
+        Mullu is the private beta flagship product: a governed control plane for
+        policy-bound orchestration, audit trails, budget enforcement, proof
+        receipts, and deployment witness evidence.
+      </p>
+      <p class="law">Symbols are atomic. Meaning is relational. Traversal is governed. Judgment is earned.</p>
+      <div class="actions">
+        <a class="button primary" href="#proof">Review proof boundary</a>
+        <a class="button" href="mailto:hello@mullusi.com?subject=Mullu%20private%20beta%20access">Request access</a>
+      </div>
     </div>
-    <div class="law">Symbols are atomic. Meaning is relational. Traversal is governed. Judgment is earned.</div>
-    <p class="lede">
-      Governed symbolic intelligence for real work: personal operations,
-      enterprise workflows, deployment, research, code, documents,
-      communication, and proof-backed execution.
-    </p>
-    <div class="actions">
-      <a class="button primary" href="mailto:hello@mullusi.com?subject=Mullu%20private%20beta%20access">Request access</a>
-      <a class="button" href="https://docs.mullusi.com">Read architecture</a>
-    </div>
-    <p class="status">private beta while trademark, domain, and deployment gates complete.</p>
+
+    <aside class="system-map" aria-label="Mullusi and Mullu structure map">
+      <div class="map-title">
+        <strong>Structure of structures</strong>
+        <span>public route draft</span>
+      </div>
+      <div class="map-layers">
+        <div class="layer">
+          <strong>Mullusi</strong>
+          <span>company, governance authority, research, public trust surface</span>
+        </div>
+        <div class="layer">
+          <strong>Mullu</strong>
+          <span>governed symbolic intelligence platform and flagship product</span>
+        </div>
+        <div class="layer">
+          <strong>Products</strong>
+          <span>Govern, Control Plane, Inspect, CLI, Code, Desk, MAF, SCCE, VIRECAI, Mfidel, dashboard, sandbox</span>
+        </div>
+        <div class="layer">
+          <strong>Evidence</strong>
+          <span>status witness, proof matrix, schemas, release notes, deployment witness</span>
+        </div>
+      </div>
+    </aside>
   </header>
 
   <main>
-    <section id="surfaces">
-      <h2>One product, governed surfaces.</h2>
+    <section id="boundary">
+      <div class="section-head">
+        <div class="eyebrow">Brand and claim boundary</div>
+        <h2>Separate the umbrella from the product.</h2>
+        <p class="lede">
+          The public site should make one distinction impossible to miss:
+          Mullusi owns the trust frame; Mullu is the product people evaluate,
+          adopt, operate, and buy.
+        </p>
+      </div>
       <div class="grid">
-        <article class="surface">
+        <article class="card">
+          <h3>Mullusi</h3>
+          <p>
+            Use Mullusi for the company, research, governance doctrine,
+            ecosystem surfaces, billing, support, and production trust boundary.
+          </p>
+          <div class="badge-row">
+            <span class="badge">mullusi.com</span>
+            <span class="badge">docs.mullusi.com</span>
+            <span class="badge">api.mullusi.com</span>
+          </div>
+        </article>
+        <article class="card">
           <h3>Mullu</h3>
-          <p>Governed work across files, research, workflows, deployment, connectors, and memory.</p>
+          <p>
+            Use Mullu for the governed symbolic intelligence product:
+            sessions, agents, tools, policy, budgets, audit, memory, and proofs.
+          </p>
+          <div class="badge-row">
+            <span class="badge">product</span>
+            <span class="badge">platform</span>
+            <span class="badge">operator surface</span>
+          </div>
         </article>
-        <article class="surface">
-          <h3>Mullu Inspect</h3>
-          <p>Symbolic browser inspection and evidence capture for public and internal surfaces.</p>
-        </article>
-        <article class="surface">
-          <h3>Mullu CLI</h3>
-          <p>Terminal-native governed execution with traceable commands and bounded effects.</p>
-        </article>
-        <article class="surface">
-          <h3>Mullu Code</h3>
-          <p>Repository work, code authoring, review, tests, and release support.</p>
-        </article>
-        <article class="surface">
-          <h3>Mullu Desk</h3>
-          <p>Computer-use workflows across documents, local apps, and workspace actions.</p>
-        </article>
-        <article class="surface">
-          <h3>Mullu Control Plane</h3>
-          <p>Enterprise governance, approval, audit, budgets, lineage, and deployment controls.</p>
+        <article class="card">
+          <h3>Public claims</h3>
+          <p>
+            State repository-verified capability separately from live production
+            runtime claims. Do not claim public production closure until the
+            deployment witness is published.
+          </p>
+          <div class="badge-row">
+            <span class="badge">verified repo</span>
+            <span class="badge">pending runtime</span>
+            <span class="badge">signed witness required</span>
+          </div>
         </article>
       </div>
     </section>
 
-    <section id="governance">
-      <div class="proof">
-        <div>
-          <div class="eyebrow">Governed execution</div>
-          <h2>Work should leave proof.</h2>
-        </div>
-        <ul class="proof-list">
-          <li>Every governed action is auditable, budget-controlled, policy-enforced, and approval-gated when risk requires it.</li>
-          <li>Mullu preserves the causal chain behind work: who asked, what changed, which constraints applied, what evidence closed the task, and what memory was admitted afterward.</li>
-          <li>Mullusi remains the company and governance authority behind the product, research, audit, and infrastructure layers.</li>
-        </ul>
+    <section id="products">
+      <div class="section-head">
+        <div class="eyebrow">Product architecture</div>
+        <h2>Show the product family without flattening it.</h2>
+      </div>
+      <div class="grid">
+        <article class="card">
+          <h3>Mullu Govern</h3>
+          <p>Policy, RBAC, budgets, content safety, audit, proof receipts, and deployment witness controls.</p>
+        </article>
+        <article class="card">
+          <h3>Mullu Control Plane</h3>
+          <p>Governed orchestration runtime for sessions, policy decisions, proof routes, budget checks, and audit closure.</p>
+        </article>
+        <article class="card">
+          <h3>Mullu Inspect</h3>
+          <p>Symbolic browser inspection, route evidence, public surface checks, and launch verification.</p>
+        </article>
+        <article class="card">
+          <h3>Mullu CLI</h3>
+          <p>Operator command surface for local checks, release evidence, repository validation, and governed runbook execution.</p>
+        </article>
+        <article class="card">
+          <h3>Mullu Code</h3>
+          <p>Structured development workflow for code review, implementation traces, validation commands, and proof-linked changes.</p>
+        </article>
+        <article class="card">
+          <h3>Mullu Desk</h3>
+          <p>Human-facing operator workspace for approvals, support intake, status review, and private beta access workflows.</p>
+        </article>
+        <article class="card">
+          <h3>MAF</h3>
+          <p>Mullu Agentic Framework runtime substrate for governed worker and capability execution.</p>
+        </article>
+        <article class="card">
+          <h3>SCCE</h3>
+          <p>Symbolic Constraint Cognition Engine for tension, grounding, value, resource, and stability checks.</p>
+        </article>
+        <article class="card">
+          <h3>Mfidel</h3>
+          <p>Atomic fidel substrate for Ethiopian-script symbolic processing. No decomposition, no root-letter model.</p>
+        </article>
+        <article class="card">
+          <h3>VIRECAI</h3>
+          <p>Symbolic video and reality-recording format for governed observation, lineage, and replay evidence.</p>
+        </article>
+      </div>
+    </section>
+
+    <section id="proof">
+      <div class="section-head">
+        <div class="eyebrow">Evidence surface</div>
+        <h2>The site should expose proof state, not hide it.</h2>
+      </div>
+      <table class="status-table">
+        <thead>
+          <tr>
+            <th>Surface</th>
+            <th>Current public state</th>
+            <th>Website handling</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Repository proof matrix</td>
+            <td><span class="state-ready">Verified in repo</span></td>
+            <td>Link to proof coverage, schemas, status witness, release notes, and limitations.</td>
+          </tr>
+          <tr>
+            <td>Production runtime</td>
+            <td><span class="state-blocked">Not published</span></td>
+            <td>State that live deployment witness closure is pending DNS, secrets, target variables, and signed endpoints.</td>
+          </tr>
+          <tr>
+            <td>Product route</td>
+            <td><span class="state-design">Design-ready</span></td>
+            <td>Publish `/mullu` as the product fallback route before standalone product domains are promoted.</td>
+          </tr>
+          <tr>
+            <td>Dashboard and sandbox</td>
+            <td><span class="state-design">Route-boundary dependent</span></td>
+            <td>Do not present these as live production surfaces until route probes and witness evidence are recorded.</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section id="roadmap">
+      <div class="section-head">
+        <div class="eyebrow">Design and implementation order</div>
+        <h2>Design now. Implement in evidence-bound phases.</h2>
+      </div>
+      <div class="timeline">
+        <article class="step">
+          <div>
+            <h3>Information architecture</h3>
+            <p>Lock the Mullusi/Mullu distinction, product taxonomy, proof pages, docs route, dashboard route, and sandbox route.</p>
+          </div>
+        </article>
+        <article class="step">
+          <div>
+            <h3>Static public route</h3>
+            <p>Ship a plain, auditable `/mullu` product page that makes the production boundary explicit and avoids unsupported runtime claims.</p>
+          </div>
+        </article>
+        <article class="step">
+          <div>
+            <h3>Proof-backed pages</h3>
+            <p>Generate status, release, proof matrix, security, and limitation pages from repository artifacts instead of hand-written claims.</p>
+          </div>
+        </article>
+        <article class="step">
+          <div>
+            <h3>Live witness integration</h3>
+            <p>After issue #330 closes, expose live `/health`, `/gateway/witness`, and `/runtime/conformance` state on the proof page.</p>
+          </div>
+        </article>
+        <article class="step">
+          <div>
+            <h3>Application surfaces</h3>
+            <p>Promote dashboard, sandbox, API, and product domains only after route ownership, security headers, auth, and witness evidence are recorded.</p>
+          </div>
+        </article>
       </div>
     </section>
   </main>
 
   <footer>
     <div>Mullu, by Mullusi</div>
-    <div>Symbols are atomic. Meaning is relational. Traversal is governed. Judgment is earned.</div>
+    <div>Repository-verified claims and live-runtime claims remain separate until deployment witness publication closes.</div>
   </footer>
 </body>
 </html>
