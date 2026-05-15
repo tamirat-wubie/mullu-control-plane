@@ -22,19 +22,24 @@ import json
 import os
 import re
 import subprocess
+import sys
 import time
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Protocol
 
-from scripts.dispatch_deployment_witness import (
+REPO_ROOT = Path(__file__).resolve().parents[1]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
+from scripts.dispatch_deployment_witness import (  # noqa: E402
     DEFAULT_CONFORMANCE_SECRET_NAME as DEFAULT_DEPLOYMENT_CONFORMANCE_SECRET_NAME,
     DEFAULT_DEPLOYMENT_WITNESS_SECRET_NAME as DEFAULT_PUBLICATION_WITNESS_SECRET_NAME,
     DEFAULT_REPOSITORY,
     VALID_ENVIRONMENTS,
 )
-from scripts.render_gateway_ingress import PLACEHOLDER_HOST
+from scripts.render_gateway_ingress import PLACEHOLDER_HOST  # noqa: E402
 
 DEFAULT_WORKFLOW_FILE = "gateway-publication.yml"
 DEFAULT_WORKFLOW_NAME = "Gateway Publication Orchestration"

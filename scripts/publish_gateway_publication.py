@@ -20,11 +20,16 @@ import argparse
 import json
 import os
 import subprocess
+import sys
 from dataclasses import dataclass
 from pathlib import Path
 
-from scripts.dispatch_deployment_witness import DEFAULT_REPOSITORY, VALID_ENVIRONMENTS
-from scripts.dispatch_gateway_publication import (
+REPO_ROOT = Path(__file__).resolve().parents[1]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
+from scripts.dispatch_deployment_witness import DEFAULT_REPOSITORY, VALID_ENVIRONMENTS  # noqa: E402
+from scripts.dispatch_gateway_publication import (  # noqa: E402
     DEFAULT_ARTIFACT_NAME,
     DEFAULT_CONFORMANCE_SECRET_NAME,
     DEFAULT_DEPLOYMENT_WITNESS_SECRET_NAME,
@@ -39,7 +44,7 @@ from scripts.dispatch_gateway_publication import (
     dispatch_gateway_publication,
     load_readiness_dispatch_inputs,
 )
-from scripts.report_gateway_publication_readiness import (
+from scripts.report_gateway_publication_readiness import (  # noqa: E402
     GatewayPublicationReadiness,
     Resolver,
     report_gateway_publication_readiness,
