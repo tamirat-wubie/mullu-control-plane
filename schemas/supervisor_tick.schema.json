@@ -1,0 +1,156 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:supervisor-tick:1",
+  "title": "Supervisor Tick",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "tick_id",
+    "tick_number",
+    "phase_sequence",
+    "events_polled",
+    "obligations_evaluated",
+    "deadlines_checked",
+    "reactions_fired",
+    "decisions",
+    "outcome",
+    "errors",
+    "started_at",
+    "completed_at",
+    "duration_ms"
+  ],
+  "properties": {
+    "tick_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "tick_number": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "phase_sequence": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/supervisor_phase"
+      }
+    },
+    "events_polled": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "obligations_evaluated": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "deadlines_checked": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "reactions_fired": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "decisions": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/supervisor_decision"
+      }
+    },
+    "outcome": {
+      "$ref": "#/$defs/tick_outcome"
+    },
+    "errors": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "started_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "completed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "duration_ms": {
+      "type": "integer",
+      "minimum": 0
+    }
+  },
+  "$defs": {
+    "supervisor_phase": {
+      "type": "string",
+      "enum": [
+        "idle",
+        "polling",
+        "evaluating_obligations",
+        "evaluating_deadlines",
+        "waking_work",
+        "running_reactions",
+        "reasoning",
+        "acting",
+        "checkpointing",
+        "emitting_heartbeat",
+        "paused",
+        "degraded",
+        "halted"
+      ]
+    },
+    "tick_outcome": {
+      "type": "string",
+      "enum": [
+        "healthy",
+        "work_done",
+        "idle_tick",
+        "backpressure_applied",
+        "livelock_detected",
+        "governance_blocked",
+        "error",
+        "halted"
+      ]
+    },
+    "supervisor_decision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "decision_id",
+        "action_type",
+        "target_id",
+        "reason",
+        "governance_approved",
+        "decided_at",
+        "metadata"
+      ],
+      "properties": {
+        "decision_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "action_type": {
+          "type": "string",
+          "minLength": 1
+        },
+        "target_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1
+        },
+        "governance_approved": {
+          "type": "boolean"
+        },
+        "decided_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "metadata": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:livelock-record:1",
+  "title": "Livelock Record",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "livelock_id",
+    "tick_number",
+    "repeated_pattern",
+    "repeat_count",
+    "strategy_applied",
+    "resolved",
+    "detected_at",
+    "resolution_detail"
+  ],
+  "properties": {
+    "livelock_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "tick_number": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "repeated_pattern": {
+      "type": "string",
+      "minLength": 1
+    },
+    "repeat_count": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "strategy_applied": {
+      "type": "string",
+      "enum": [
+        "escalate",
+        "pause",
+        "halt",
+        "skip_and_log"
+      ]
+    },
+    "resolved": {
+      "type": "boolean"
+    },
+    "detected_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "resolution_detail": {
+      "type": "string"
+    }
+  }
+}

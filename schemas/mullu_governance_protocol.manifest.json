@@ -527,6 +527,24 @@
       "surface": "simulation"
     },
     {
+      "schema_id": "supervisor-tick",
+      "path": "schemas/supervisor_tick.schema.json",
+      "urn": "urn:mullusi:schema:supervisor-tick:1",
+      "surface": "supervisor"
+    },
+    {
+      "schema_id": "supervisor-checkpoint",
+      "path": "schemas/supervisor_checkpoint.schema.json",
+      "urn": "urn:mullusi:schema:supervisor-checkpoint:1",
+      "surface": "supervisor"
+    },
+    {
+      "schema_id": "livelock-record",
+      "path": "schemas/livelock_record.schema.json",
+      "urn": "urn:mullusi:schema:livelock-record:1",
+      "surface": "supervisor"
+    },
+    {
       "schema_id": "streaming-budget-enforcement",
       "path": "schemas/streaming_budget_enforcement.schema.json",
       "urn": "urn:mullusi:schema:streaming-budget-enforcement:1",

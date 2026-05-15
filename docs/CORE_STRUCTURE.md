@@ -62,8 +62,8 @@ mcoi/mcoi_runtime/                    MCOI runtime (Python)
 ├── persistence/       Stores, migrations, snapshots
 └── pilot/             Deployment profiles
 
-schemas/               16 canonical JSON schemas (cross-language anchors)
-integration/           16 canonical fixtures (round-trip verified)
+schemas/               22 canonical shared JSON schemas (cross-language anchors)
+integration/           22 canonical shared fixtures (round-trip verified)
 gateway/               Channel webhook surface (separate FastAPI app)
 skills/                Capability modules (creative, enterprise, financial)
 ```
@@ -132,7 +132,7 @@ have canonical schemas in `schemas/`:
 Schema status notes:
 
 - **Governance DSL** (`PolicyRule`, `PolicyBundle`, `PolicyEvaluationTrace`) — covered by `schemas/policy_rule.schema.json`, `schemas/policy_bundle.schema.json`, `schemas/policy_evaluation_trace.schema.json`, canonical fixtures, and `scripts/validate_schemas.py --strict`.
-- **Supervisor contracts** (`SupervisorTick`, `LivelockRecord`, `CheckpointStatus`) — do not yet have canonical schemas.
+- **Supervisor contracts** (`SupervisorTick`, `LivelockRecord`, `CheckpointStatus`) — covered by `schemas/supervisor_tick.schema.json`, `schemas/supervisor_checkpoint.schema.json`, `schemas/livelock_record.schema.json`, canonical fixtures, Python contract round-trips, and Rust parity checks.
 
 Remaining unschematized categories rely on contract-code parity and
 review until future PRs add schemas.
@@ -164,7 +164,7 @@ language and replacing it with a reference to the current spec set.**
 |-----|----------|-----------------|--------|
 | `ProofCapsule.lineage_depth` is `u32` in Rust and `int` in Python | Medium | Either: (a) align Python to a bounded `NewType` matching `u32`, or (b) document the asymmetry as canonical with the Python-side validation as the boundary check. **This PR adds a regression test asserting validation rejects negatives.** | Mitigation tested |
 | Governance DSL (PolicyRule etc.) lacks canonical JSON schemas | Medium | Add `schemas/policy_rule.schema.json`, `schemas/policy_bundle.schema.json`, ensure `validate_schemas.py` exercises them | **Closed** — `policy_rule`, `policy_bundle`, and `policy_evaluation_trace` schemas are fixture-backed and exercised by strict schema validation. |
-| Supervisor contracts lack canonical JSON schemas | Medium | Same pattern as Governance DSL | Open |
+| Supervisor contracts lack canonical JSON schemas | Medium | Same pattern as Governance DSL | **Closed** — supervisor tick, checkpoint/status, and livelock schemas are fixture-backed and exercised by strict schema validation. |
 | `00_platform_overview.md` says "no runtime behavior in Milestone 0" | Low | Update doc to reference the current spec set. **This PR closes.** | **Closed (this PR)** |
 | Cross-language round-trip is not asserted in a single end-to-end test (Python serialize → Rust deserialize → byte-identical) | Low | Add `tests/test_cross_language_roundtrip.py` running both Python and Rust subprocess + comparing | Open (low priority — implicit coverage exists) |
 

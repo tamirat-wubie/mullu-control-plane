@@ -1,0 +1,20 @@
+{
+  "checkpoint_id": "cp-42",
+  "tick_number": 42,
+  "phase": "checkpointing",
+  "status": "valid",
+  "open_obligation_ids": [
+    "obl-42",
+    "obl-43"
+  ],
+  "pending_event_count": 2,
+  "consecutive_errors": 0,
+  "consecutive_idle_ticks": 1,
+  "recent_tick_outcomes": [
+    "work_done",
+    "healthy",
+    "idle_tick"
+  ],
+  "state_hash": "state-hash-42",
+  "created_at": "2025-01-01T00:42:10+00:00"
+}

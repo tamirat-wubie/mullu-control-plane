@@ -1,0 +1,10 @@
+{
+  "livelock_id": "ll-42",
+  "tick_number": 44,
+  "repeated_pattern": "approval_wait_loop",
+  "repeat_count": 3,
+  "strategy_applied": "escalate",
+  "resolved": true,
+  "detected_at": "2025-01-01T00:44:00+00:00",
+  "resolution_detail": "Escalated to operator review queue"
+}
