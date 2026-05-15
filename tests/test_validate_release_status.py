@@ -271,6 +271,7 @@ def test_ci_workflow_runs_protocol_manifest_gate() -> None:
     assert ".change_assurance/deployment_publication_closure_validation.json" in REQUIRED_CI_LITERALS
     assert "python scripts/validate_logic_governance_application.py" in REQUIRED_CI_LITERALS
     assert "python scripts/validate_governed_runtime_promotion.py --output .change_assurance/governed_runtime_promotion_readiness.json" in REQUIRED_CI_LITERALS
+    assert "cargo build --release" in REQUIRED_CI_LITERALS
     assert any(
         "validate_general_agent_promotion_closure_plan.py" in literal
         for literal in REQUIRED_CI_LITERALS
@@ -301,6 +302,7 @@ def test_ci_workflow_runs_protocol_manifest_gate() -> None:
     assert content.count("python scripts/validate_gateway_ingress_manifest.py --allow-placeholder") == 2
     assert content.count("python scripts/validate_reflective_contracts.py") == 1
     assert content.count("python scripts/validate_logic_governance_application.py") == 1
+    assert content.count("cargo build --release") == 1
     assert "Validate protocol manifest" in content
     assert "Validate proof coverage matrix" in content
     assert "Proof coverage matrix check" in content
@@ -308,6 +310,7 @@ def test_ci_workflow_runs_protocol_manifest_gate() -> None:
     assert "Validate logic governance application" in content
     assert "Gateway ingress manifest check" in content
     assert "Reflective Contract Guard" in content
+    assert "Rust build check" in content
     assert "test -f schemas/deployment_publication_closure_validation.schema.json" in content
     assert "Upload build verification deployment publication closure validation" in content
 
