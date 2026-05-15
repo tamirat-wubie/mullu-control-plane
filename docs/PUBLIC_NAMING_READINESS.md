@@ -13,7 +13,7 @@ Invariants: `Mullu` is the product name only after clearance; `Mullusi` remains 
 | Company boundary | `Mullusi` is documented as company, ecosystem, governance authority | Closed |
 | Platform boundary | `Mullu Platform` is reserved for developer, SDK, API, deployment, and architecture contexts | Closed |
 | Admin boundary | `Mullu Control Plane` is documented as admin/governance/deployment surface | Closed |
-| Blocked generic names | `Mullusi Handler`, `Mullusi Work`, `Mullusi Operator`, and `Mullu AI` are blocked as public product names | Closed |
+| Blocked generic names | `Mullusi Handler`, `Mullusi Work`, `Mullusi Operator`, and `Mullu Generic` are blocked as public product names | Closed |
 | Public copy | Launch-ready homepage copy exists | Closed |
 | Product route draft | Deploy-ready `/mullu/index.html` product page exists and remains private beta | Closed |
 | Product route deployment handoff | Product route deployed to the live website source repository and verified | Closed |

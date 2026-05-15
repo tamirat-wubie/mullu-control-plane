@@ -88,7 +88,7 @@ BLOCKED_PUBLIC_NAMES = {
     "Mullusi Handler",
     "Mullusi Work",
     "Mullusi Operator",
-    "Mullu AI",
+    "Mullu Generic",
 }
 
 REQUIRED_EVIDENCE_DOCS = {
