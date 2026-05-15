@@ -1,0 +1,12 @@
+{
+  "decision_id": "ontology-decision-2026-05-08",
+  "tenant_id": "tenant-mullu-primary",
+  "conflict_ref": "conflict-status-semantics",
+  "disposition": "merge",
+  "reason": "Canonical lifecycle status preserves shared customer-account semantics.",
+  "decided_at": "2026-05-08T09:30:00+00:00",
+  "metadata": {
+    "decider": "ontology-governor-1",
+    "scope": "tenant"
+  }
+}

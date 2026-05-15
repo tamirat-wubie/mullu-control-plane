@@ -289,6 +289,23 @@ from mcoi_runtime.contracts.ledger_runtime import (
     WalletRecord,
     WalletStatus,
 )
+from mcoi_runtime.contracts.ontology_runtime import (
+    AlignmentStrength,
+    ConceptKind,
+    ConceptRecord,
+    ConceptRelation,
+    EntityAlignment,
+    MappingDisposition,
+    OntologyAssessment,
+    OntologyClosureReport,
+    OntologyDecision,
+    OntologySnapshot,
+    OntologyStatus,
+    OntologyViolation,
+    SchemaMapping,
+    SemanticConflict,
+    SemanticConflictStatus,
+)
 from mcoi_runtime.contracts.recovery import RecoveryRecord
 
 
@@ -2381,6 +2398,136 @@ def _build_ledger_closure_report(payload: dict) -> LedgerClosureReport:
     )
 
 
+def _build_concept_record(payload: dict) -> ConceptRecord:
+    return ConceptRecord(
+        concept_id=payload["concept_id"],
+        tenant_id=payload["tenant_id"],
+        display_name=payload["display_name"],
+        kind=ConceptKind(payload["kind"]),
+        canonical_form=payload["canonical_form"],
+        status=OntologyStatus(payload["status"]),
+        created_at=payload["created_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_concept_relation(payload: dict) -> ConceptRelation:
+    return ConceptRelation(
+        relation_id=payload["relation_id"],
+        tenant_id=payload["tenant_id"],
+        parent_ref=payload["parent_ref"],
+        child_ref=payload["child_ref"],
+        kind=ConceptKind(payload["kind"]),
+        strength=AlignmentStrength(payload["strength"]),
+        created_at=payload["created_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_schema_mapping(payload: dict) -> SchemaMapping:
+    return SchemaMapping(
+        mapping_id=payload["mapping_id"],
+        tenant_id=payload["tenant_id"],
+        source_schema=payload["source_schema"],
+        target_schema=payload["target_schema"],
+        disposition=MappingDisposition(payload["disposition"]),
+        field_count=payload["field_count"],
+        created_at=payload["created_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_entity_alignment(payload: dict) -> EntityAlignment:
+    return EntityAlignment(
+        alignment_id=payload["alignment_id"],
+        tenant_id=payload["tenant_id"],
+        source_ref=payload["source_ref"],
+        target_ref=payload["target_ref"],
+        strength=AlignmentStrength(payload["strength"]),
+        confidence=payload["confidence"],
+        created_at=payload["created_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_semantic_conflict(payload: dict) -> SemanticConflict:
+    return SemanticConflict(
+        conflict_id=payload["conflict_id"],
+        tenant_id=payload["tenant_id"],
+        concept_a_ref=payload["concept_a_ref"],
+        concept_b_ref=payload["concept_b_ref"],
+        status=SemanticConflictStatus(payload["status"]),
+        reason=payload["reason"],
+        detected_at=payload["detected_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_ontology_decision(payload: dict) -> OntologyDecision:
+    return OntologyDecision(
+        decision_id=payload["decision_id"],
+        tenant_id=payload["tenant_id"],
+        conflict_ref=payload["conflict_ref"],
+        disposition=payload["disposition"],
+        reason=payload["reason"],
+        decided_at=payload["decided_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_ontology_assessment(payload: dict) -> OntologyAssessment:
+    return OntologyAssessment(
+        assessment_id=payload["assessment_id"],
+        tenant_id=payload["tenant_id"],
+        total_concepts=payload["total_concepts"],
+        total_mappings=payload["total_mappings"],
+        total_conflicts=payload["total_conflicts"],
+        alignment_score=payload["alignment_score"],
+        assessed_at=payload["assessed_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_ontology_violation(payload: dict) -> OntologyViolation:
+    return OntologyViolation(
+        violation_id=payload["violation_id"],
+        tenant_id=payload["tenant_id"],
+        operation=payload["operation"],
+        reason=payload["reason"],
+        detected_at=payload["detected_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_ontology_snapshot(payload: dict) -> OntologySnapshot:
+    return OntologySnapshot(
+        snapshot_id=payload["snapshot_id"],
+        tenant_id=payload["tenant_id"],
+        total_concepts=payload["total_concepts"],
+        total_relations=payload["total_relations"],
+        total_mappings=payload["total_mappings"],
+        total_alignments=payload["total_alignments"],
+        total_conflicts=payload["total_conflicts"],
+        total_violations=payload["total_violations"],
+        captured_at=payload["captured_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_ontology_closure_report(payload: dict) -> OntologyClosureReport:
+    return OntologyClosureReport(
+        report_id=payload["report_id"],
+        tenant_id=payload["tenant_id"],
+        total_concepts=payload["total_concepts"],
+        total_mappings=payload["total_mappings"],
+        total_alignments=payload["total_alignments"],
+        total_conflicts=payload["total_conflicts"],
+        total_violations=payload["total_violations"],
+        created_at=payload["created_at"],
+        metadata=payload["metadata"],
+    )
+
+
 @pytest.mark.parametrize(
     ("fixture_name", "builder"),
     [
@@ -2479,6 +2626,16 @@ def _build_ledger_closure_report(payload: dict) -> LedgerClosureReport:
         ("marketplace_closure_report.json", _build_marketplace_closure_report),
         ("marketplace_snapshot.json", _build_marketplace_snapshot),
         ("marketplace_violation.json", _build_marketplace_violation),
+        ("concept_record.json", _build_concept_record),
+        ("concept_relation.json", _build_concept_relation),
+        ("schema_mapping.json", _build_schema_mapping),
+        ("entity_alignment.json", _build_entity_alignment),
+        ("semantic_conflict.json", _build_semantic_conflict),
+        ("ontology_decision.json", _build_ontology_decision),
+        ("ontology_assessment.json", _build_ontology_assessment),
+        ("ontology_violation.json", _build_ontology_violation),
+        ("ontology_snapshot.json", _build_ontology_snapshot),
+        ("ontology_closure_report.json", _build_ontology_closure_report),
         ("payment_record.json", _build_payment_record),
         ("package_record.json", _build_package_record),
         ("penalty_record.json", _build_penalty_record),

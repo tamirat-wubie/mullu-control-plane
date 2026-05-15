@@ -1,0 +1,15 @@
+{
+  "snapshot_id": "ontology-snapshot-2026-05-08",
+  "tenant_id": "tenant-mullu-primary",
+  "total_concepts": 8,
+  "total_relations": 5,
+  "total_mappings": 3,
+  "total_alignments": 4,
+  "total_conflicts": 1,
+  "total_violations": 1,
+  "captured_at": "2026-05-08T10:00:00+00:00",
+  "metadata": {
+    "scope": "tenant",
+    "namespace": "commerce"
+  }
+}

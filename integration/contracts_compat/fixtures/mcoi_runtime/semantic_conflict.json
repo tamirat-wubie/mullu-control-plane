@@ -1,0 +1,13 @@
+{
+  "conflict_id": "conflict-status-semantics",
+  "tenant_id": "tenant-mullu-primary",
+  "concept_a_ref": "concept-customer-status",
+  "concept_b_ref": "concept-account-status",
+  "status": "detected",
+  "reason": "Status concepts diverge on active and suspended semantics.",
+  "detected_at": "2026-05-08T09:20:00+00:00",
+  "metadata": {
+    "scope": "account-lifecycle",
+    "source": "ontology-review"
+  }
+}
