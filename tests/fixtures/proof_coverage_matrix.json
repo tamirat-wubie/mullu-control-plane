@@ -324,6 +324,13 @@
       ]
     },
     {
+      "action_id": "bind_workflow_lifecycle_mutations_to_effect_receipts",
+      "status": "closed",
+      "surfaces": [
+        "workflow_execution_lifecycle"
+      ]
+    },
+    {
       "action_id": "classify_agent_chain_execution_routes",
       "status": "closed",
       "surfaces": [
@@ -4069,14 +4076,16 @@
       "audit": "audit_chain",
       "coverage_state": "witnessed",
       "evidence_files": [
+        "gateway/workflow_orchestration.py",
         "mcoi/mcoi_runtime/app/routers/workflow.py",
         "mcoi/mcoi_runtime/core/agent_workflow.py",
         "mcoi/mcoi_runtime/core/traced_workflow.py",
+        "tests/test_gateway/test_workflow_orchestration.py",
         "mcoi/tests/test_agent_workflow.py",
         "mcoi/tests/test_traced_workflow.py",
         "mcoi/tests/test_server_phase205.py"
       ],
-      "notes": "Workflow execution routes execute governed multi-agent workflows with action proof receipts, expose bounded history read models, and produce replay-traced workflow runs.",
+      "notes": "Workflow execution routes execute governed multi-agent workflows with action proof receipts, expose bounded history read models, produce replay-traced workflow runs, and record workflow lifecycle mutation receipts as bounded Effect Assurance evidence.",
       "representative_paths": [
         "/api/v1/execute",
         "/api/v1/session",
@@ -4097,6 +4106,9 @@
         "workflow_success_records_audit",
         "workflow_failure_records_audit",
         "workflow_errors_sanitized",
+        "workflow_lifecycle_mutation_receipts_emitted",
+        "workflow_failure_compensation_receipts_emitted",
+        "workflow_mutation_receipt_closes_effect_assurance",
         "traced_workflow_emits_replay_trace",
         "traced_workflow_recorder_errors_sanitized",
         "legacy_execute_emits_action_proof",
