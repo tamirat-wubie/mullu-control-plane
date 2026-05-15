@@ -2,12 +2,12 @@
 
 import pytest
 
+from mcoi_runtime.contracts.effect_assurance import ExpectedEffect, ReconciliationStatus
+from mcoi_runtime.contracts.execution import ExecutionOutcome, ExecutionResult
 from mcoi_runtime.contracts.job import (
     AssignmentRecord,
-    DeadlineRecord,
     FollowUpRecord,
     JobDescriptor,
-    JobExecutionRecord,
     JobPauseRecord,
     JobPriority,
     JobResumeRecord,
@@ -17,6 +17,7 @@ from mcoi_runtime.contracts.job import (
     SlaStatus,
     WorkQueueEntry,
 )
+from mcoi_runtime.core.effect_assurance import EffectAssuranceGate
 from mcoi_runtime.core.jobs import JobEngine, WorkQueue
 from mcoi_runtime.core.invariants import RuntimeCoreInvariantError
 
@@ -255,6 +256,31 @@ class TestJobLifecycleCreateStartComplete:
         assert record.status == JobStatus.COMPLETED
         assert record.outcome_summary == "all done"
 
+    def test_lifecycle_records_bounded_mutation_receipts(self):
+        engine = JobEngine(clock=_make_clock([_T0, _T1, _T2, _T3]))
+        desc, _ = engine.create_job("Secret Name", "secret description", JobPriority.HIGH)
+        engine.start_job(desc.job_id)
+        engine.complete_job(desc.job_id, "secret completion")
+
+        receipts = engine.mutation_receipts()
+
+        assert tuple(receipt.effect_name for receipt in receipts) == (
+            "job_created",
+            "job_started",
+            "job_completed",
+        )
+        assert receipts[0].previous_status is None
+        assert receipts[0].new_status == "created"
+        assert receipts[1].previous_status == "created"
+        assert receipts[1].new_status == "in_progress"
+        assert receipts[2].previous_status == "in_progress"
+        assert receipts[2].new_status == "completed"
+        assert receipts[0].metadata["priority"] == "high"
+        assert receipts[2].metadata["outcome_summary_hash"]
+        assert "Secret Name" not in str(receipts[0].to_dict())
+        assert "secret description" not in str(receipts[0].to_dict())
+        assert "secret completion" not in str(receipts[2].to_dict())
+
 
 class TestJobLifecycleCreateStartPauseResumeComplete:
     def test_pause_resume_complete(self):
@@ -271,6 +297,32 @@ class TestJobLifecycleCreateStartPauseResumeComplete:
         assert isinstance(resume_rec, JobResumeRecord)
         state, exec_rec = engine.complete_job(desc.job_id, "done after resume")
         assert state.status == JobStatus.COMPLETED
+
+    def test_pause_resume_failure_and_cancel_receipts_are_bounded(self):
+        engine = JobEngine(clock=_make_clock([_T0, _T1, _T2, _T3, _T4, _T5, _T6]))
+        desc, _ = engine.create_job("A", "desc", JobPriority.NORMAL)
+        engine.start_job(desc.job_id)
+        engine.pause_job(desc.job_id, PauseReason.AWAITING_RESPONSE)
+        engine.resume_job(desc.job_id, "secret-person", "secret resume reason")
+        engine.fail_job(desc.job_id, ("secret failure",))
+
+        receipts = engine.mutation_receipts()
+
+        assert tuple(receipt.effect_name for receipt in receipts) == (
+            "job_created",
+            "job_started",
+            "job_paused",
+            "job_resumed",
+            "job_failed",
+        )
+        assert receipts[2].metadata["pause_reason"] == "awaiting_response"
+        assert receipts[3].metadata["resumed_by_id_hash"]
+        assert receipts[3].metadata["reason_hash"]
+        assert receipts[4].metadata["error_count"] == 1
+        assert receipts[4].metadata["errors_hash"]
+        assert "secret-person" not in str(receipts[3].to_dict())
+        assert "secret resume reason" not in str(receipts[3].to_dict())
+        assert "secret failure" not in str(receipts[4].to_dict())
 
 
 class TestJobLifecycleCreateStartFail:
@@ -290,6 +342,12 @@ class TestJobCancellation:
         desc, _ = engine.create_job("A", "desc", JobPriority.NORMAL)
         state = engine.cancel_job(desc.job_id, "no longer needed")
         assert state.status == JobStatus.CANCELLED
+        receipt = engine.mutation_receipts()[-1]
+        assert receipt.effect_name == "job_cancelled"
+        assert receipt.previous_status == "created"
+        assert receipt.new_status == "cancelled"
+        assert receipt.metadata["reason_hash"]
+        assert "no longer needed" not in str(receipt.to_dict())
 
     def test_cancel_from_in_progress(self):
         engine = JobEngine(clock=_make_clock([_T0, _T0, _T1, _T2]))
@@ -599,6 +657,11 @@ class TestRestoreAndListingHelpers:
         assert engine.get_job_state("job-restored") is state
         assert engine.list_job_descriptors() == (descriptor,)
         assert engine.list_job_states() == (state,)
+        receipt = engine.mutation_receipts()[-1]
+        assert receipt.effect_name == "job_restored"
+        assert receipt.job_id == "job-restored"
+        assert receipt.new_status == "in_progress"
+        assert receipt.metadata["sla_status"] == "on_track"
 
     def test_restore_job_rejects_mismatched_identity(self):
         engine = JobEngine(clock=_fixed_clock())
@@ -621,6 +684,61 @@ class TestRestoreAndListingHelpers:
 
         assert engine.list_job_descriptors() == ()
         assert engine.list_job_states() == ()
+
+    def test_job_receipts_convert_to_effect_records(self):
+        engine = JobEngine(clock=_make_clock([_T0]))
+        desc, _ = engine.create_job("A", "desc", JobPriority.NORMAL)
+
+        effect = engine.effect_records(limit=1)[0]
+
+        assert effect.name == "job_created"
+        assert effect.details["source"] == "job_engine"
+        assert effect.details["job_id"] == desc.job_id
+        assert effect.details["evidence_ref"].startswith("job-receipt:")
+        assert effect.details["new_status"] == "created"
+
+    def test_job_mutation_receipt_closes_effect_assurance(self):
+        engine = JobEngine(clock=_make_clock([_T0]))
+        gate = EffectAssuranceGate(clock=lambda: _T1)
+        plan = gate.create_plan(
+            command_id="cmd-job-create",
+            tenant_id="tenant-1",
+            capability_id="job.create",
+            expected_effects=(
+                ExpectedEffect(
+                    effect_id="job_created",
+                    name="job_created",
+                    target_ref="job:A",
+                    required=True,
+                    verification_method="job_mutation_receipt",
+                ),
+            ),
+            forbidden_effects=("job_invalid_transition_committed",),
+        )
+
+        engine.create_job("A", "desc", JobPriority.NORMAL)
+        execution = ExecutionResult(
+            execution_id="exec-job-create",
+            goal_id="goal-job-create",
+            status=ExecutionOutcome.SUCCEEDED,
+            actual_effects=engine.effect_records(limit=1),
+            assumed_effects=(),
+            started_at=_T0,
+            finished_at=_T1,
+        )
+        observed = gate.observe(execution)
+        verification = gate.verify(plan=plan, execution_result=execution, observed_effects=observed)
+        reconciliation = gate.reconcile(
+            plan=plan,
+            observed_effects=observed,
+            verification_result=verification,
+        )
+
+        assert reconciliation.status is ReconciliationStatus.MATCH
+        assert reconciliation.matched_effects == ("job_created",)
+        assert reconciliation.missing_effects == ()
+        assert reconciliation.unexpected_effects == ()
+        assert verification.evidence[0].uri.startswith("job-receipt:")
 
 
 # ============================================================
