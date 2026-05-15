@@ -91,8 +91,13 @@ def test_list_modules_returns_armed_count_zero_initially():
 
 def test_get_unknown_capability_returns_404():
     client = _client()
-    resp = client.get("/api/v1/god-mode/capabilities/ghost/missing")
+    resp = client.get("/api/v1/god-mode/capabilities/ghost/secret-token-capability")
+    detail = resp.json()["detail"]
+
     assert resp.status_code == 404
+    assert detail["error_code"] == "capability_not_found"
+    assert detail["governed"] is True
+    assert "secret-token-capability" not in resp.text
 
 
 # --- Registration agreements ---
@@ -224,9 +229,14 @@ def test_consume_ticket_invalid_outcome_400():
     tid = _issue_ticket(client, "replay", "mutate_recorder")
     resp = client.post(
         f"/api/v1/god-mode/tickets/{tid}/consume",
-        json={"outcome": "approved"},
+        json={"outcome": "secret-token-outcome"},
     )
+    detail = resp.json()["detail"]
+
     assert resp.status_code == 400
+    assert detail["error_code"] == "invalid_outcome"
+    assert detail["governed"] is True
+    assert "secret-token-outcome" not in resp.text
 
 
 def test_double_consume_rejected():
