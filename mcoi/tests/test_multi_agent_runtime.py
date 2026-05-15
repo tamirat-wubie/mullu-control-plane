@@ -30,6 +30,28 @@ def test_delegate_work(client: TestClient) -> None:
     assert data["governed"] is True
 
 
+def test_delegate_error_detail_is_bounded(client: TestClient) -> None:
+    payload = {
+        "delegation_id": "secret-token-delegation",
+        "delegator_id": "agent-a",
+        "delegate_id": "agent-b",
+        "goal_id": "goal-1",
+        "action_scope": "analyze",
+    }
+
+    first = client.post("/api/v1/multi-agent/delegate", json=payload)
+    second = client.post("/api/v1/multi-agent/delegate", json=payload)
+    detail = second.json()["detail"]
+
+    assert first.status_code == 200
+    assert second.status_code == 400
+    assert detail["error"] == "delegation failed"
+    assert detail["error_code"] == "delegation_error"
+    assert detail["governed"] is True
+    assert "failure_class" in detail
+    assert "secret-token-delegation" not in second.text
+
+
 def test_resolve_delegation(client: TestClient) -> None:
     client.post("/api/v1/multi-agent/delegate", json={
         "delegation_id": "del-resolve-1",
@@ -45,6 +67,20 @@ def test_resolve_delegation(client: TestClient) -> None:
     })
     assert resp.status_code == 200
     assert resp.json()["status"] == "accepted"
+
+
+def test_invalid_delegation_status_detail_is_bounded(client: TestClient) -> None:
+    resp = client.post("/api/v1/multi-agent/delegate/resolve", json={
+        "delegation_id": "secret-token-delegation",
+        "status": "secret-token-status",
+        "reason": "not used",
+    })
+    detail = resp.json()["detail"]
+
+    assert resp.status_code == 400
+    assert detail["error_code"] == "invalid_status"
+    assert detail["governed"] is True
+    assert "secret-token-status" not in resp.text
 
 
 def test_record_handoff(client: TestClient) -> None:
@@ -73,6 +109,22 @@ def test_record_merge(client: TestClient) -> None:
     assert resp.json()["outcome"] == "merged"
 
 
+def test_invalid_merge_outcome_detail_is_bounded(client: TestClient) -> None:
+    resp = client.post("/api/v1/multi-agent/merge", json={
+        "merge_id": "mg-secret",
+        "goal_id": "goal-3",
+        "source_ids": ["src-1", "src-2"],
+        "outcome": "secret-token-outcome",
+        "reason": "not used",
+    })
+    detail = resp.json()["detail"]
+
+    assert resp.status_code == 400
+    assert detail["error_code"] == "invalid_outcome"
+    assert detail["governed"] is True
+    assert "secret-token-outcome" not in resp.text
+
+
 def test_record_conflict(client: TestClient) -> None:
     resp = client.post("/api/v1/multi-agent/conflict", json={
         "conflict_id": "cf-http-1",
@@ -82,6 +134,21 @@ def test_record_conflict(client: TestClient) -> None:
     })
     assert resp.status_code == 200
     assert resp.json()["strategy"] == "escalate"
+
+
+def test_invalid_conflict_strategy_detail_is_bounded(client: TestClient) -> None:
+    resp = client.post("/api/v1/multi-agent/conflict", json={
+        "conflict_id": "cf-secret",
+        "goal_id": "goal-4",
+        "conflicting_ids": ["a", "b"],
+        "strategy": "secret-token-strategy",
+    })
+    detail = resp.json()["detail"]
+
+    assert resp.status_code == 400
+    assert detail["error_code"] == "invalid_strategy"
+    assert detail["governed"] is True
+    assert "secret-token-strategy" not in resp.text
 
 
 def test_unresolved_conflicts(client: TestClient) -> None:

@@ -1794,6 +1794,37 @@ def proof_coverage_matrix() -> dict[str, Any]:
             ],
         ),
         _surface(
+            "job_engine_lifecycle",
+            [
+                "JobEngine.create_job",
+                "JobEngine.start_job",
+                "JobEngine.pause_job",
+                "JobEngine.resume_job",
+                "JobEngine.complete_job",
+                "JobEngine.fail_job",
+                "JobEngine.cancel_job",
+                "JobEngine.restore_job",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "mcoi/mcoi_runtime/core/jobs.py",
+                "mcoi/mcoi_runtime/contracts/job.py",
+                "mcoi/tests/test_job_core.py",
+            ],
+            "Job engine lifecycle mutations record create, restore, start, pause, resume, complete, fail, and cancel receipts as bounded evidence that can close Effect Assurance observation.",
+            [
+                "job_create_mutation_receipt_emitted",
+                "job_start_mutation_receipt_emitted",
+                "job_pause_resume_mutation_receipts_emitted",
+                "job_terminal_mutation_receipts_emitted",
+                "job_restore_mutation_receipt_emitted",
+                "job_mutation_receipt_closes_effect_assurance",
+            ],
+        ),
+        _surface(
             "authority_obligation_mesh",
             [
                 "/authority/witness",
@@ -3799,6 +3830,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
         {
             "action_id": "bind_approval_engine_mutations_to_effect_receipts",
             "surfaces": ["approval_engine_lifecycle"],
+            "status": "closed",
+        },
+        {
+            "action_id": "bind_job_engine_mutations_to_effect_receipts",
+            "surfaces": ["job_engine_lifecycle"],
             "status": "closed",
         },
         {

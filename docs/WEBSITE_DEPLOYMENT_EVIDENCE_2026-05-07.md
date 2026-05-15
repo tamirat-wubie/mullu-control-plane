@@ -74,6 +74,23 @@ witness and merged into `tamirat-wubie/mullusi` `main` at commit
 | Body literal: `Mullu Control Plane` | Present | Admin/product surface literal verified |
 | `website_deployment_verification` | Closed for `/mullu` route | Paid public launch remains blocked by remaining gates |
 
+## 2026-05-15 Proof Boundary Route Probe
+
+PR #89 added a static public proof boundary page at `/proof/` and linked the
+Mullu product route to it. The page separates verified route evidence, pending
+runtime witness evidence, and paid-public-launch blockers.
+
+| Check | Observed result | Decision |
+| --- | --- | --- |
+| `tamirat-wubie/mullusi` PR #89 | Merged and `fast-check` passed | Website repo source contains `/proof/index.html` |
+| `https://mullusi.com/proof` | HTTP 404 from current environment | Proof route publication remains pending |
+| `https://mullusi.com/proof/` | HTTP 404 from current environment | Proof route publication remains pending |
+| `https://www.mullusi.com/proof/` | HTTP 404 from current environment | Proof route publication remains pending |
+| Proof-route tracking issue | `https://github.com/tamirat-wubie/mullusi/issues/90` | Keep proof route verification open |
+
+This does not reopen the already verified `/mullu` fallback route. It records a
+separate publication gap for the new `/proof/` page.
+
 ## Pages Source Discovery
 
 DNS now shows:

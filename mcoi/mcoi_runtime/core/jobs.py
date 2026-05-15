@@ -12,8 +12,11 @@ Invariants:
 
 from __future__ import annotations
 
+import hashlib
+import json
+from dataclasses import dataclass, field
 from datetime import datetime, timedelta
-from typing import Callable
+from typing import Any, Callable
 
 from mcoi_runtime.contracts.job import (
     AssignmentRecord,
@@ -72,6 +75,52 @@ def _assert_transition(current: JobStatus, target: JobStatus) -> None:
     allowed = _VALID_TRANSITIONS.get(current, frozenset())
     if target not in allowed:
         raise RuntimeCoreInvariantError("invalid job state transition")
+
+
+@dataclass(frozen=True, slots=True)
+class JobMutationReceipt:
+    """Observed job lifecycle mutation receipt."""
+
+    receipt_id: str
+    mutation_type: str
+    effect_name: str
+    job_id: str
+    evidence_ref: str
+    previous_status: str | None
+    new_status: str
+    recorded_at: str
+    metadata: dict[str, Any] = field(default_factory=dict)
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "receipt_id": self.receipt_id,
+            "mutation_type": self.mutation_type,
+            "effect_name": self.effect_name,
+            "job_id": self.job_id,
+            "evidence_ref": self.evidence_ref,
+            "previous_status": self.previous_status,
+            "new_status": self.new_status,
+            "recorded_at": self.recorded_at,
+            "metadata": dict(self.metadata),
+        }
+
+    def to_effect_record(self) -> Any:
+        from mcoi_runtime.contracts.execution import EffectRecord
+
+        return EffectRecord(
+            name=self.effect_name,
+            details={
+                "receipt_id": self.receipt_id,
+                "mutation_type": self.mutation_type,
+                "job_id": self.job_id,
+                "evidence_ref": self.evidence_ref,
+                "previous_status": self.previous_status,
+                "new_status": self.new_status,
+                "observed_at": self.recorded_at,
+                "metadata": dict(self.metadata),
+                "source": "job_engine",
+            },
+        )
 
 
 class WorkQueue:
@@ -198,6 +247,7 @@ class JobEngine:
         self._clock = clock
         self._jobs: dict[str, JobDescriptor] = {}
         self._states: dict[str, JobState] = {}
+        self._mutation_receipts: list[JobMutationReceipt] = []
 
     # --- Job creation ---
 
@@ -239,6 +289,23 @@ class JobEngine:
         )
         self._jobs[job_id] = descriptor
         self._states[job_id] = state
+        self._record_mutation_receipt(
+            mutation_type="create_job",
+            effect_name="job_created",
+            job_id=job_id,
+            previous_status=None,
+            new_status=JobStatus.CREATED,
+            recorded_at=now,
+            metadata={
+                "name_hash": _sha256_text(name),
+                "description_hash": _sha256_text(description),
+                "priority": priority.value,
+                "goal_id_hash": _sha256_optional_text(goal_id),
+                "workflow_id_hash": _sha256_optional_text(workflow_id),
+                "deadline_present": deadline is not None,
+                "sla_target_minutes": sla_target_minutes,
+            },
+        )
         return descriptor, state
 
     def restore_job(
@@ -267,6 +334,23 @@ class JobEngine:
             )
         self._jobs[descriptor.job_id] = descriptor
         self._states[state.job_id] = state
+        self._record_mutation_receipt(
+            mutation_type="restore_job",
+            effect_name="job_restored",
+            job_id=descriptor.job_id,
+            previous_status=None,
+            new_status=state.status,
+            recorded_at=state.updated_at or descriptor.created_at,
+            metadata={
+                "name_hash": _sha256_text(descriptor.name),
+                "description_hash": _sha256_text(descriptor.description),
+                "priority": descriptor.priority.value,
+                "goal_id_hash": _sha256_optional_text(descriptor.goal_id),
+                "workflow_id_hash": _sha256_optional_text(descriptor.workflow_id),
+                "deadline_present": descriptor.deadline is not None,
+                "sla_status": state.sla_status.value,
+            },
+        )
         return descriptor, state
 
     def get_job_descriptor(self, job_id: str) -> JobDescriptor | None:
@@ -300,7 +384,15 @@ class JobEngine:
             raise RuntimeCoreInvariantError("job not found")
         return descriptor
 
-    def _transition(self, job_id: str, target: JobStatus) -> JobState:
+    def _transition(
+        self,
+        job_id: str,
+        target: JobStatus,
+        *,
+        mutation_type: str | None = None,
+        effect_name: str | None = None,
+        metadata: dict[str, Any] | None = None,
+    ) -> JobState:
         current = self._get_state(job_id)
         _assert_transition(current.status, target)
         now = self._clock()
@@ -311,6 +403,15 @@ class JobEngine:
             updated_at=now,
         )
         self._states[job_id] = new_state
+        self._record_mutation_receipt(
+            mutation_type=mutation_type or f"transition_to_{target.value}",
+            effect_name=effect_name or f"job_{target.value}",
+            job_id=job_id,
+            previous_status=current.status,
+            new_status=target,
+            recorded_at=now,
+            metadata=metadata or {},
+        )
         return new_state
 
     # --- Lifecycle ---
@@ -332,9 +433,23 @@ class JobEngine:
                 updated_at=now,
             )
             self._states[job_id] = new_state
+            self._record_mutation_receipt(
+                mutation_type="start_job",
+                effect_name="job_started",
+                job_id=job_id,
+                previous_status=current.status,
+                new_status=JobStatus.IN_PROGRESS,
+                recorded_at=now,
+                metadata={},
+            )
             return new_state
         if current.status == JobStatus.ASSIGNED:
-            return self._transition(job_id, JobStatus.IN_PROGRESS)
+            return self._transition(
+                job_id,
+                JobStatus.IN_PROGRESS,
+                mutation_type="start_job",
+                effect_name="job_started",
+            )
         # Any other state: use the normal transition validator (will raise)
         _assert_transition(current.status, JobStatus.IN_PROGRESS)
         return self._transition(job_id, JobStatus.IN_PROGRESS)
@@ -352,6 +467,15 @@ class JobEngine:
             updated_at=now,
         )
         self._states[job_id] = new_state
+        self._record_mutation_receipt(
+            mutation_type="pause_job",
+            effect_name="job_paused",
+            job_id=job_id,
+            previous_status=current.status,
+            new_status=JobStatus.PAUSED,
+            recorded_at=now,
+            metadata={"pause_reason": reason.value},
+        )
         record = JobPauseRecord(
             job_id=job_id,
             reason=reason,
@@ -368,7 +492,16 @@ class JobEngine:
         """Resume a paused job back to in_progress."""
         ensure_non_empty_text("resumed_by_id", resumed_by_id)
         ensure_non_empty_text("reason", reason)
-        new_state = self._transition(job_id, JobStatus.IN_PROGRESS)
+        new_state = self._transition(
+            job_id,
+            JobStatus.IN_PROGRESS,
+            mutation_type="resume_job",
+            effect_name="job_resumed",
+            metadata={
+                "resumed_by_id_hash": _sha256_text(resumed_by_id),
+                "reason_hash": _sha256_text(reason),
+            },
+        )
         now = self._clock()
         record = JobResumeRecord(
             job_id=job_id,
@@ -387,7 +520,13 @@ class JobEngine:
         ensure_non_empty_text("outcome_summary", outcome_summary)
         descriptor = self._get_descriptor(job_id)
         current = self._get_state(job_id)
-        new_state = self._transition(job_id, JobStatus.COMPLETED)
+        new_state = self._transition(
+            job_id,
+            JobStatus.COMPLETED,
+            mutation_type="complete_job",
+            effect_name="job_completed",
+            metadata={"outcome_summary_hash": _sha256_text(outcome_summary)},
+        )
         now = self._clock()
         exec_id = stable_identifier("job-exec", {
             "job_id": job_id,
@@ -411,7 +550,16 @@ class JobEngine:
         """Mark a job as failed with error details."""
         descriptor = self._get_descriptor(job_id)
         current = self._get_state(job_id)
-        new_state = self._transition(job_id, JobStatus.FAILED)
+        new_state = self._transition(
+            job_id,
+            JobStatus.FAILED,
+            mutation_type="fail_job",
+            effect_name="job_failed",
+            metadata={
+                "error_count": len(errors),
+                "errors_hash": _sha256_json(tuple(errors)),
+            },
+        )
         now = self._clock()
         exec_id = stable_identifier("job-exec", {
             "job_id": job_id,
@@ -431,7 +579,13 @@ class JobEngine:
     def cancel_job(self, job_id: str, reason: str) -> JobState:
         """Cancel a job. Allowed from any state except archived."""
         ensure_non_empty_text("reason", reason)
-        return self._transition(job_id, JobStatus.CANCELLED)
+        return self._transition(
+            job_id,
+            JobStatus.CANCELLED,
+            mutation_type="cancel_job",
+            effect_name="job_cancelled",
+            metadata={"reason_hash": _sha256_text(reason)},
+        )
 
     # --- SLA evaluation ---
 
@@ -503,6 +657,45 @@ class JobEngine:
             scheduled_at=scheduled_at,
         )
 
+    def mutation_receipts(self, limit: int = 50) -> tuple[JobMutationReceipt, ...]:
+        """Return recent job lifecycle mutation receipts in append order."""
+        return tuple(self._mutation_receipts[-limit:])
+
+    def effect_records(self, limit: int = 50) -> tuple[Any, ...]:
+        """Return recent mutation receipts as execution actual-effect records."""
+        return tuple(receipt.to_effect_record() for receipt in self.mutation_receipts(limit=limit))
+
+    def _record_mutation_receipt(
+        self,
+        *,
+        mutation_type: str,
+        effect_name: str,
+        job_id: str,
+        previous_status: JobStatus | None,
+        new_status: JobStatus,
+        recorded_at: str,
+        metadata: dict[str, Any],
+    ) -> JobMutationReceipt:
+        receipt_id = _receipt_id(
+            mutation_type=mutation_type,
+            job_id=job_id,
+            recorded_at=recorded_at,
+            ordinal=len(self._mutation_receipts),
+        )
+        receipt = JobMutationReceipt(
+            receipt_id=receipt_id,
+            mutation_type=mutation_type,
+            effect_name=effect_name,
+            job_id=job_id,
+            evidence_ref=f"job-receipt:{receipt_id}",
+            previous_status=previous_status.value if previous_status is not None else None,
+            new_status=new_status.value,
+            recorded_at=recorded_at,
+            metadata=metadata,
+        )
+        self._mutation_receipts.append(receipt)
+        return receipt
+
     # --- Overdue and stale detection ---
 
     def find_overdue_jobs(self, now: str) -> list[str]:
@@ -548,3 +741,32 @@ class JobEngine:
             if now_dt - updated_dt > threshold:
                 stale.append(job_id)
         return stale
+
+
+def _sha256_text(value: str) -> str:
+    return hashlib.sha256(value.encode("utf-8")).hexdigest()
+
+
+def _sha256_optional_text(value: str | None) -> str | None:
+    return None if value is None else _sha256_text(value)
+
+
+def _sha256_json(value: Any) -> str:
+    payload = json.dumps(value, sort_keys=True, ensure_ascii=True, separators=(",", ":"))
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+
+
+def _receipt_id(*, mutation_type: str, job_id: str, recorded_at: str, ordinal: int) -> str:
+    payload = json.dumps(
+        {
+            "mutation_type": mutation_type,
+            "job_id": job_id,
+            "recorded_at": recorded_at,
+            "ordinal": ordinal,
+        },
+        sort_keys=True,
+        ensure_ascii=True,
+        separators=(",", ":"),
+    )
+    digest = hashlib.sha256(payload.encode("utf-8")).hexdigest()[:16]
+    return f"job-{mutation_type}-{digest}"

@@ -949,6 +949,36 @@ def test_approval_engine_lifecycle_surface_records_effect_receipts() -> None:
     assert closure_actions["bind_approval_engine_mutations_to_effect_receipts"]["status"] == "closed"
 
 
+def test_job_engine_lifecycle_surface_records_effect_receipts() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    job_surface = surfaces["job_engine_lifecycle"]
+    witnesses = set(job_surface["runtime_witnesses"])
+
+    assert job_surface["coverage_state"] == "witnessed"
+    assert job_surface["request_proof"] == "request_proof"
+    assert job_surface["action_proof"] == "action_proof"
+    assert "JobEngine.create_job" in job_surface["representative_paths"]
+    assert "JobEngine.start_job" in job_surface["representative_paths"]
+    assert "JobEngine.pause_job" in job_surface["representative_paths"]
+    assert "JobEngine.resume_job" in job_surface["representative_paths"]
+    assert "JobEngine.complete_job" in job_surface["representative_paths"]
+    assert "JobEngine.fail_job" in job_surface["representative_paths"]
+    assert "JobEngine.cancel_job" in job_surface["representative_paths"]
+    assert "JobEngine.restore_job" in job_surface["representative_paths"]
+    assert "mcoi/mcoi_runtime/core/jobs.py" in job_surface["evidence_files"]
+    assert "mcoi/mcoi_runtime/contracts/job.py" in job_surface["evidence_files"]
+    assert "mcoi/tests/test_job_core.py" in job_surface["evidence_files"]
+    assert "job_create_mutation_receipt_emitted" in witnesses
+    assert "job_start_mutation_receipt_emitted" in witnesses
+    assert "job_pause_resume_mutation_receipts_emitted" in witnesses
+    assert "job_terminal_mutation_receipts_emitted" in witnesses
+    assert "job_restore_mutation_receipt_emitted" in witnesses
+    assert "job_mutation_receipt_closes_effect_assurance" in witnesses
+    assert closure_actions["bind_job_engine_mutations_to_effect_receipts"]["status"] == "closed"
+
+
 def test_authority_obligation_mesh_binds_command_authority_read_model() -> None:
     matrix = _load_fixture()
     surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
