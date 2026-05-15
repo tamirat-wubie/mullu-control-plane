@@ -92,7 +92,7 @@ def test_declared_routes_have_explicit_coverage_classification() -> None:
     assert all(record["coverage_state"] != "unproven" for record in report["routes"])
 
 
-def test_aggregate_operational_surface_does_not_override_specific_route_owners() -> None:
+def test_operational_platform_surface_owns_operational_read_model_routes() -> None:
     matrix = _load_fixture()
     surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
     route_records = {
@@ -106,10 +106,10 @@ def test_aggregate_operational_surface_does_not_override_specific_route_owners()
     }
 
     assert aggregate_routes
-    assert all(route_records[route]["surface_id"] != "operational_platform_read_models" for route in aggregate_routes)
-    assert route_records["/api/v1/rate-limit/status"]["surface_id"] == "rate_limit_read_models"
-    assert route_records["/api/v1/flags"]["surface_id"] == "feature_flag_read_models"
-    assert route_records["/gateway/status"]["surface_id"] == "gateway_status_read_model"
+    assert all(route_records[route]["surface_id"] == "operational_platform_read_models" for route in aggregate_routes)
+    assert route_records["/api/v1/rate-limit/status"]["surface_id"] == "operational_platform_read_models"
+    assert route_records["/api/v1/flags"]["surface_id"] == "operational_platform_read_models"
+    assert route_records["/gateway/status"]["surface_id"] == "operational_platform_read_models"
 
 
 def test_representative_routes_are_not_unclassified() -> None:
@@ -196,10 +196,10 @@ def test_representative_routes_are_not_unclassified() -> None:
     assert classified_routes["/api/v1/tools/invoke"]["surface_id"] == "tool_invocation"
     assert classified_routes["/api/v1/output/parse"]["surface_id"] == "structured_output_validation"
     assert classified_routes["/api/v1/output/schemas"]["surface_id"] == "structured_output_validation"
-    assert classified_routes["/api/v1/rate-limit/status"]["surface_id"] == "rate_limit_read_models"
-    assert classified_routes["/api/v1/rate-limits/{client_id}"]["surface_id"] == "rate_limit_read_models"
-    assert classified_routes["/api/v1/flags"]["surface_id"] == "feature_flag_read_models"
-    assert classified_routes["/api/v1/flags/{flag_id}"]["surface_id"] == "feature_flag_read_models"
+    assert classified_routes["/api/v1/rate-limit/status"]["surface_id"] == "operational_platform_read_models"
+    assert classified_routes["/api/v1/rate-limits/{client_id}"]["surface_id"] == "operational_platform_read_models"
+    assert classified_routes["/api/v1/flags"]["surface_id"] == "operational_platform_read_models"
+    assert classified_routes["/api/v1/flags/{flag_id}"]["surface_id"] == "operational_platform_read_models"
     assert classified_routes["/api/v1/traces"]["surface_id"] == "trace_observability_read_models"
     assert classified_routes["/api/v1/traces/slow"]["surface_id"] == "trace_observability_read_models"
     assert classified_routes["/api/v1/traces/summary"]["surface_id"] == "trace_observability_read_models"
@@ -254,16 +254,16 @@ def test_representative_routes_are_not_unclassified() -> None:
     assert classified_routes["/api/v1/rbac/identities"]["surface_id"] == "rbac_access_governance"
     assert classified_routes["/api/v1/rbac/roles"]["surface_id"] == "rbac_access_governance"
     assert classified_routes["/api/v1/rbac/bindings"]["surface_id"] == "rbac_access_governance"
-    assert classified_routes["/api/v1/bootstrap"]["surface_id"] == "llm_admin_observability"
-    assert classified_routes["/api/v1/circuit-breaker"]["surface_id"] == "llm_admin_observability"
-    assert classified_routes["/api/v1/llm/history"]["surface_id"] == "llm_admin_observability"
+    assert classified_routes["/api/v1/bootstrap"]["surface_id"] == "operational_platform_read_models"
+    assert classified_routes["/api/v1/circuit-breaker"]["surface_id"] == "operational_platform_read_models"
+    assert classified_routes["/api/v1/llm/history"]["surface_id"] == "operational_platform_read_models"
     assert classified_routes["/api/v1/conversation/message"]["surface_id"] == "conversation_memory_lifecycle"
     assert classified_routes["/api/v1/conversation/{conversation_id}"]["surface_id"] == "conversation_memory_lifecycle"
     assert classified_routes["/api/v1/conversations"]["surface_id"] == "conversation_memory_lifecycle"
     assert classified_routes["/api/v1/coordination/checkpoint"]["surface_id"] == "coordination_checkpoint_lifecycle"
     assert classified_routes["/api/v1/coordination/restore"]["surface_id"] == "coordination_checkpoint_lifecycle"
-    assert classified_routes["/api/v1/dependencies"]["surface_id"] == "dependency_graph_read_models"
-    assert classified_routes["/api/v1/dependencies/{name}/impact"]["surface_id"] == "dependency_graph_read_models"
+    assert classified_routes["/api/v1/dependencies"]["surface_id"] == "operational_platform_read_models"
+    assert classified_routes["/api/v1/dependencies/{name}/impact"]["surface_id"] == "operational_platform_read_models"
     assert (
         classified_routes["/api/v1/engineering-puzzle/candidates/judge"]["surface_id"]
         == "engineering_puzzle_governance"
@@ -271,22 +271,22 @@ def test_representative_routes_are_not_unclassified() -> None:
     assert classified_routes["/api/v1/engineering-puzzle/goal-delta"]["surface_id"] == "engineering_puzzle_governance"
     assert classified_routes["/api/v1/export"]["surface_id"] == "data_export_lifecycle"
     assert classified_routes["/api/v1/export/sources"]["surface_id"] == "data_export_lifecycle"
-    assert classified_routes["/api/v1/flags"]["surface_id"] == "feature_flag_read_models"
-    assert classified_routes["/api/v1/flags/{flag_id}"]["surface_id"] == "feature_flag_read_models"
-    assert classified_routes["/api/v1/metrics"]["surface_id"] == "operational_telemetry_read_models"
-    assert classified_routes["/api/v1/grafana/dashboard"]["surface_id"] == "operational_telemetry_read_models"
+    assert classified_routes["/api/v1/flags"]["surface_id"] == "operational_platform_read_models"
+    assert classified_routes["/api/v1/flags/{flag_id}"]["surface_id"] == "operational_platform_read_models"
+    assert classified_routes["/api/v1/metrics"]["surface_id"] == "operational_platform_read_models"
+    assert classified_routes["/api/v1/grafana/dashboard"]["surface_id"] == "operational_platform_read_models"
     assert classified_routes["/api/v1/prompts"]["surface_id"] == "prompt_template_lifecycle"
     assert classified_routes["/api/v1/prompts/render"]["surface_id"] == "prompt_template_lifecycle"
-    assert classified_routes["/api/v1/rate-limit/status"]["surface_id"] == "rate_limit_read_models"
-    assert classified_routes["/api/v1/rate-limits/{client_id}"]["surface_id"] == "rate_limit_read_models"
+    assert classified_routes["/api/v1/rate-limit/status"]["surface_id"] == "operational_platform_read_models"
+    assert classified_routes["/api/v1/rate-limits/{client_id}"]["surface_id"] == "operational_platform_read_models"
     assert classified_routes["/api/v1/replay/traces"]["surface_id"] == "replay_trace_read_models"
     assert classified_routes["/api/v1/schemas"]["surface_id"] == "schema_validation_registry"
     assert classified_routes["/api/v1/schemas/validate"]["surface_id"] == "schema_validation_registry"
     assert classified_routes["/api/v1/search"]["surface_id"] == "semantic_search_read_models"
     assert classified_routes["/api/v1/search/stats"]["surface_id"] == "semantic_search_read_models"
-    assert classified_routes["/api/v1/sla"]["surface_id"] == "sla_monitoring_read_models"
-    assert classified_routes["/api/v1/sla/violations"]["surface_id"] == "sla_monitoring_read_models"
-    assert classified_routes["/gateway/status"]["surface_id"] == "gateway_status_read_model"
+    assert classified_routes["/api/v1/sla"]["surface_id"] == "operational_platform_read_models"
+    assert classified_routes["/api/v1/sla/violations"]["surface_id"] == "operational_platform_read_models"
+    assert classified_routes["/gateway/status"]["surface_id"] == "operational_platform_read_models"
 
 
 def test_runtime_config_management_surface_is_witnessed() -> None:
@@ -430,50 +430,50 @@ def test_remaining_declared_route_groups_are_witnessed() -> None:
     }
     expected_groups = (
         (
-            "llm_admin_observability",
-            "classify_llm_admin_observability_routes",
+            "operational_platform_read_models",
+            "classify_operational_platform_read_model_routes",
             ("/api/v1/bootstrap", "/api/v1/circuit-breaker", "/api/v1/llm/history"),
             "mcoi/mcoi_runtime/app/routers/llm/admin.py",
             "llm_history_window_bounded",
         ),
         (
-            "dependency_graph_read_models",
-            "classify_dependency_graph_routes",
+            "operational_platform_read_models",
+            "classify_operational_platform_read_model_routes",
             ("/api/v1/dependencies", "/api/v1/dependencies/{name}/impact"),
             "mcoi/mcoi_runtime/app/routers/ops/dependencies.py",
             "dependency_impact_analysis_bounded",
         ),
         (
-            "feature_flag_read_models",
-            "classify_feature_flag_routes",
+            "operational_platform_read_models",
+            "classify_operational_platform_read_model_routes",
             ("/api/v1/flags", "/api/v1/flags/{flag_id}"),
             "mcoi/mcoi_runtime/app/routers/ops/feature_flags.py",
             "missing_feature_flag_defaults_closed",
         ),
         (
-            "operational_telemetry_read_models",
-            "classify_operational_telemetry_routes",
+            "operational_platform_read_models",
+            "classify_operational_platform_read_model_routes",
             ("/api/v1/metrics", "/api/v1/grafana/dashboard"),
             "mcoi/mcoi_runtime/app/routers/ops/metrics.py",
             "metrics_snapshot_bounded",
         ),
         (
-            "rate_limit_read_models",
-            "classify_rate_limit_read_model_routes",
+            "operational_platform_read_models",
+            "classify_operational_platform_read_model_routes",
             ("/api/v1/rate-limit/status", "/api/v1/rate-limits/{client_id}"),
             "mcoi/mcoi_runtime/app/routers/ops/rate_limit.py",
             "rate_limit_read_model_non_mutating",
         ),
         (
-            "sla_monitoring_read_models",
-            "classify_sla_monitoring_routes",
+            "operational_platform_read_models",
+            "classify_operational_platform_read_model_routes",
             ("/api/v1/sla", "/api/v1/sla/violations"),
             "mcoi/mcoi_runtime/app/routers/data/sla.py",
             "sla_read_model_non_mutating",
         ),
         (
-            "gateway_status_read_model",
-            "classify_gateway_status_route",
+            "operational_platform_read_models",
+            "classify_operational_platform_read_model_routes",
             ("/gateway/status",),
             "gateway/server.py",
             "gateway_status_governed",

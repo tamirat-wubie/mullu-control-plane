@@ -963,7 +963,7 @@
       {
         "coverage_state": "witnessed",
         "route": "/api/v1/bootstrap",
-        "surface_id": "llm_admin_observability"
+        "surface_id": "operational_platform_read_models"
       },
       {
         "coverage_state": "witnessed",
@@ -1028,7 +1028,7 @@
       {
         "coverage_state": "witnessed",
         "route": "/api/v1/circuit-breaker",
-        "surface_id": "llm_admin_observability"
+        "surface_id": "operational_platform_read_models"
       },
       {
         "coverage_state": "witnessed",
@@ -1303,12 +1303,12 @@
       {
         "coverage_state": "witnessed",
         "route": "/api/v1/dependencies",
-        "surface_id": "dependency_graph_read_models"
+        "surface_id": "operational_platform_read_models"
       },
       {
         "coverage_state": "witnessed",
         "route": "/api/v1/dependencies/{name}/impact",
-        "surface_id": "dependency_graph_read_models"
+        "surface_id": "operational_platform_read_models"
       },
       {
         "coverage_state": "witnessed",
@@ -1408,12 +1408,12 @@
       {
         "coverage_state": "witnessed",
         "route": "/api/v1/flags",
-        "surface_id": "feature_flag_read_models"
+        "surface_id": "operational_platform_read_models"
       },
       {
         "coverage_state": "witnessed",
         "route": "/api/v1/flags/{flag_id}",
-        "surface_id": "feature_flag_read_models"
+        "surface_id": "operational_platform_read_models"
       },
       {
         "coverage_state": "witnessed",
@@ -1488,7 +1488,7 @@
       {
         "coverage_state": "witnessed",
         "route": "/api/v1/grafana/dashboard",
-        "surface_id": "operational_telemetry_read_models"
+        "surface_id": "operational_platform_read_models"
       },
       {
         "coverage_state": "witnessed",
@@ -1593,7 +1593,7 @@
       {
         "coverage_state": "witnessed",
         "route": "/api/v1/llm/history",
-        "surface_id": "llm_admin_observability"
+        "surface_id": "operational_platform_read_models"
       },
       {
         "coverage_state": "witnessed",
@@ -1618,7 +1618,7 @@
       {
         "coverage_state": "witnessed",
         "route": "/api/v1/metrics",
-        "surface_id": "operational_telemetry_read_models"
+        "surface_id": "operational_platform_read_models"
       },
       {
         "coverage_state": "witnessed",
@@ -1843,12 +1843,12 @@
       {
         "coverage_state": "witnessed",
         "route": "/api/v1/rate-limit/status",
-        "surface_id": "rate_limit_read_models"
+        "surface_id": "operational_platform_read_models"
       },
       {
         "coverage_state": "witnessed",
         "route": "/api/v1/rate-limits/{client_id}",
-        "surface_id": "rate_limit_read_models"
+        "surface_id": "operational_platform_read_models"
       },
       {
         "coverage_state": "witnessed",
@@ -2053,12 +2053,12 @@
       {
         "coverage_state": "witnessed",
         "route": "/api/v1/sla",
-        "surface_id": "sla_monitoring_read_models"
+        "surface_id": "operational_platform_read_models"
       },
       {
         "coverage_state": "witnessed",
         "route": "/api/v1/sla/violations",
-        "surface_id": "sla_monitoring_read_models"
+        "surface_id": "operational_platform_read_models"
       },
       {
         "coverage_state": "witnessed",
@@ -2408,7 +2408,7 @@
       {
         "coverage_state": "witnessed",
         "route": "/gateway/status",
-        "surface_id": "gateway_status_read_model"
+        "surface_id": "operational_platform_read_models"
       },
       {
         "coverage_state": "witnessed",
@@ -2746,9 +2746,11 @@
         "mcoi/mcoi_runtime/app/routers/ops/rate_limit.py",
         "mcoi/mcoi_runtime/core/feature_flags.py",
         "mcoi/mcoi_runtime/core/rate_limit_headers.py",
+        "mcoi/mcoi_runtime/core/rate_limit_middleware.py",
         "mcoi/mcoi_runtime/governance/guards/rate_limit.py",
         "mcoi/tests/test_feature_flags.py",
         "mcoi/tests/test_rate_limit_headers.py",
+        "mcoi/tests/test_rate_limiter.py",
         "mcoi/tests/test_server_phase199.py",
         "mcoi/tests/test_server_phase200.py",
         "mcoi/tests/test_server_phase202.py",

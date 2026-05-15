@@ -284,9 +284,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "mcoi/mcoi_runtime/app/routers/ops/rate_limit.py",
                 "mcoi/mcoi_runtime/core/feature_flags.py",
                 "mcoi/mcoi_runtime/core/rate_limit_headers.py",
+                "mcoi/mcoi_runtime/core/rate_limit_middleware.py",
                 "mcoi/mcoi_runtime/governance/guards/rate_limit.py",
                 "mcoi/tests/test_feature_flags.py",
                 "mcoi/tests/test_rate_limit_headers.py",
+                "mcoi/tests/test_rate_limiter.py",
                 "mcoi/tests/test_server_phase199.py",
                 "mcoi/tests/test_server_phase200.py",
                 "mcoi/tests/test_server_phase202.py",
@@ -4450,6 +4452,11 @@ def _surface_for_route(route: str, surfaces: list[dict[str, Any]]) -> dict[str, 
     """Return the surface that explicitly covers a declared route."""
     for surface in surfaces:
         if surface["surface_id"] == "operational_platform_read_models":
+            for path in surface["representative_paths"]:
+                if path.startswith("/") and path == route:
+                    return surface
+            continue
+        if surface["surface_id"] in AGGREGATE_ROUTE_SURFACE_IDS:
             continue
         for path in surface["representative_paths"]:
             if not path.startswith("/"):
@@ -4457,7 +4464,7 @@ def _surface_for_route(route: str, surfaces: list[dict[str, Any]]) -> dict[str, 
             if path == route:
                 return surface
     for surface in surfaces:
-        if surface["surface_id"] == "operational_platform_read_models":
+        if surface["surface_id"] in AGGREGATE_ROUTE_SURFACE_IDS:
             continue
         for path in surface["representative_paths"]:
             if path.startswith("/") and path.endswith("*") and route.startswith(path[:-1]):
