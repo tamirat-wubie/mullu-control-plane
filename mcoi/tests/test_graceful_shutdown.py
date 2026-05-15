@@ -23,6 +23,19 @@ class TestShutdownManager:
         mgr.execute()
         assert order == ["high", "mid", "low"]
 
+    def test_equal_priority_hooks_run_lifo(self):
+        mgr = ShutdownManager()
+        order: list[str] = []
+        mgr.register("first", lambda: (order.append("first"), {})[1], priority=10)
+        mgr.register("second", lambda: (order.append("second"), {})[1], priority=10)
+        mgr.register("third", lambda: (order.append("third"), {})[1], priority=10)
+
+        result = mgr.execute()
+
+        assert order == ["third", "second", "first"]
+        assert mgr.hook_names() == ["third", "second", "first"]
+        assert result.hooks_run == 3
+
     def test_hook_failure(self):
         mgr = ShutdownManager()
         mgr.register("ok", lambda: {"ok": True})
@@ -98,6 +111,36 @@ class TestShutdownManager:
         assert hook_result["status"] == "error"
         assert hook_result["error"] == "shutdown hook error (TypeError)"
         assert "raw-secret-value" not in str(hook_result)
+
+    def test_execute_is_idempotent_and_registration_closes(self):
+        mgr = ShutdownManager()
+        calls: list[str] = []
+        mgr.register("persist", lambda: (calls.append("persist"), {"persisted": True})[1])
+
+        first = mgr.execute()
+        second = mgr.execute()
+
+        with pytest.raises(RuntimeError, match="registration closed"):
+            mgr.register("late", lambda: {})
+        assert first is second
+        assert calls == ["persist"]
+        assert mgr.summary()["shutdown_started"] is True
+        assert mgr.summary()["shutdown_complete"] is True
+
+    def test_hook_can_observe_shutdown_summary_without_deadlock(self):
+        mgr = ShutdownManager()
+        observed: list[dict[str, object]] = []
+        mgr.register(
+            "observe",
+            lambda: (observed.append(mgr.summary()), {"observed": True})[1],
+            timeout_seconds=0.2,
+        )
+
+        result = mgr.execute()
+
+        assert result.hooks_succeeded == 1
+        assert observed[0]["shutdown_started"] is True
+        assert observed[0]["shutdown_complete"] is False
 
     def test_slow_hook_times_out_without_blocking_later_hooks(self):
         mgr = ShutdownManager()

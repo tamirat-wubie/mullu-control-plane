@@ -345,26 +345,46 @@ class TestHandoffs:
                                        required_capabilities=("search",),
                                        payload={"doc_id": "123"})
         assert result.success
+        assert result.proof_id == "handoff:1"
         assert result.payload["doc_id"] == "123"
+        proofs = orchestrator.handoff_proofs()
+        assert proofs[0]["proof_id"] == result.proof_id
+        assert proofs[0]["decision"] == "transferred"
+        assert proofs[0]["target_capable"] is True
 
     def test_handoff_missing_capability(self, orchestrator):
         result = orchestrator.handoff("agent-a", "agent-b",
                                        required_capabilities=("deploy",))
         assert not result.success
+        assert result.proof_id == "handoff:1"
         assert result.error == "target agent lacks required capabilities"
         assert "deploy" not in result.error
+        proofs = orchestrator.handoff_proofs()
+        assert proofs[0]["decision"] == "blocked"
+        assert proofs[0]["target_capable"] is False
+        assert proofs[0]["required_capability_count"] == 1
 
     def test_handoff_unknown_source(self, orchestrator):
         result = orchestrator.handoff("ghost", "agent-a")
         assert not result.success
+        assert result.proof_id == "handoff:1"
         assert result.error == "source agent unavailable"
         assert "ghost" not in result.error
+        proofs = orchestrator.handoff_proofs()
+        assert proofs[0]["source_registered"] is False
+        assert proofs[0]["target_registered"] is True
+        assert proofs[0]["reason"] == "source agent unavailable"
 
     def test_handoff_unknown_target(self, orchestrator):
         result = orchestrator.handoff("agent-a", "ghost")
         assert not result.success
+        assert result.proof_id == "handoff:1"
         assert result.error == "target agent unavailable"
         assert "ghost" not in result.error
+        proofs = orchestrator.handoff_proofs()
+        assert proofs[0]["source_registered"] is True
+        assert proofs[0]["target_registered"] is False
+        assert proofs[0]["reason"] == "target agent unavailable"
 
     def test_handoff_blocks_unmanifested_required_capability(self):
         orch = AgentOrchestrator(
@@ -379,8 +399,30 @@ class TestHandoffs:
         result = orch.handoff("agent-a", "agent-b", required_capabilities=("deploy",))
 
         assert result.success is False
+        assert result.proof_id == "handoff:1"
         assert result.error == "required capabilities are not manifest admitted"
         assert "deploy" not in result.error
+        proofs = orch.handoff_proofs()
+        assert proofs[0]["manifest_gated"] is True
+        assert proofs[0]["manifest_admitted"] is False
+        assert proofs[0]["reason"] == "required capabilities are not manifest admitted"
+
+    def test_handoff_summary_counts_attempts_and_successes(self, orchestrator):
+        orchestrator.handoff("agent-a", "agent-c", required_capabilities=("search",))
+        orchestrator.handoff("agent-a", "agent-b", required_capabilities=("deploy",))
+
+        summary = orchestrator.summary()
+
+        assert summary["total_handoffs"] == 2
+        assert summary["successful_handoffs"] == 1
+        assert summary["handoff_proofs"] == 2
+
+    def test_handoff_proofs_limit_is_bounded(self, orchestrator):
+        orchestrator.handoff("agent-a", "agent-c", required_capabilities=("search",))
+        orchestrator.handoff("agent-a", "agent-b", required_capabilities=("deploy",))
+
+        assert orchestrator.handoff_proofs(limit=0) == []
+        assert [proof["proof_id"] for proof in orchestrator.handoff_proofs(limit=1)] == ["handoff:2"]
 
     def test_find_capable_agents(self, orchestrator):
         agents = orchestrator.find_capable_agents(("code", "deploy"))

@@ -371,6 +371,7 @@ def agent_handoff(req: HandoffRequest):
         "from_agent": result.from_agent,
         "to_agent": result.to_agent,
         "success": result.success,
+        "proof_id": result.proof_id,
         "error": result.error,
         "governed": True,
     }

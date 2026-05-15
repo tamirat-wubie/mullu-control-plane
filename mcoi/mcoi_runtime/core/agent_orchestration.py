@@ -7,6 +7,7 @@ Dependencies: agent_protocol, agent_chain.
 Invariants:
   - All orchestration decisions are auditable.
   - Agent handoffs require capability matching.
+  - Handoff attempts carry bounded proof records.
   - Proposals require a registered proposer with matching capabilities.
   - Dispatch results carry bounded proof records.
   - Consensus requires quorum (majority of registered agents).
@@ -145,6 +146,40 @@ class HandoffResult:
     success: bool
     payload: dict[str, Any] = field(default_factory=dict)
     error: str = ""
+    proof_id: str = ""
+
+
+@dataclass
+class HandoffProof:
+    """Bounded proof record for an agent-to-agent handoff decision."""
+    proof_id: str
+    from_agent: str
+    to_agent: str
+    decision: str
+    reason: str
+    checked_at: str
+    source_registered: bool
+    target_registered: bool
+    target_capable: bool
+    manifest_admitted: bool
+    manifest_gated: bool
+    required_capability_count: int
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "proof_id": self.proof_id,
+            "from_agent": self.from_agent,
+            "to_agent": self.to_agent,
+            "decision": self.decision,
+            "reason": self.reason,
+            "checked_at": self.checked_at,
+            "source_registered": self.source_registered,
+            "target_registered": self.target_registered,
+            "target_capable": self.target_capable,
+            "manifest_admitted": self.manifest_admitted,
+            "manifest_gated": self.manifest_gated,
+            "required_capability_count": self.required_capability_count,
+        }
 
 
 class AgentOrchestrator:
@@ -158,6 +193,7 @@ class AgentOrchestrator:
         self._admitted_capabilities: frozenset[str] | None = _normalize_admitted_capabilities(admitted_capabilities)
         self._plans: dict[str, OrchestrationPlan] = {}
         self._handoffs: list[HandoffResult] = []
+        self._handoff_proofs: list[HandoffProof] = []
         self._total_plans = 0
         self._total_handoffs = 0
 
@@ -322,22 +358,44 @@ class AgentOrchestrator:
     def handoff(self, from_agent: str, to_agent: str,
                 required_capabilities: tuple[str, ...] = (),
                 payload: dict[str, Any] | None = None) -> HandoffResult:
-        if from_agent not in self._capabilities:
-            return HandoffResult(from_agent, to_agent, False, error="source agent unavailable")
-        if to_agent not in self._capabilities:
-            return HandoffResult(from_agent, to_agent, False, error="target agent unavailable")
+        handoff_error = self._handoff_admission_error(
+            from_agent,
+            to_agent,
+            required_capabilities,
+        )
+        if handoff_error:
+            proof = self._build_handoff_proof(
+                from_agent=from_agent,
+                to_agent=to_agent,
+                required_capabilities=required_capabilities,
+                decision="blocked",
+                reason=handoff_error,
+            )
+            self._handoff_proofs.append(proof)
+            self._total_handoffs += 1
+            return HandoffResult(
+                from_agent,
+                to_agent,
+                False,
+                proof_id=proof.proof_id,
+                error=handoff_error,
+            )
 
-        target_caps = set(self._capabilities[to_agent])
-        missing = set(required_capabilities) - target_caps
-        if missing:
-            return HandoffResult(from_agent, to_agent, False,
-                                 error="target agent lacks required capabilities")
-        unavailable = self._unadmitted_capabilities(required_capabilities)
-        if unavailable:
-            return HandoffResult(from_agent, to_agent, False,
-                                 error="required capabilities are not manifest admitted")
-
-        result = HandoffResult(from_agent, to_agent, True, payload=payload or {})
+        proof = self._build_handoff_proof(
+            from_agent=from_agent,
+            to_agent=to_agent,
+            required_capabilities=required_capabilities,
+            decision="transferred",
+            reason="handoff admitted",
+        )
+        self._handoff_proofs.append(proof)
+        result = HandoffResult(
+            from_agent,
+            to_agent,
+            True,
+            proof_id=proof.proof_id,
+            payload=payload or {},
+        )
         self._handoffs.append(result)
         self._total_handoffs += 1
         return result
@@ -351,6 +409,11 @@ class AgentOrchestrator:
     def get_plan(self, plan_id: str) -> OrchestrationPlan | None:
         return self._plans.get(plan_id)
 
+    def handoff_proofs(self, limit: int = 50) -> list[dict[str, Any]]:
+        if limit <= 0:
+            return []
+        return [proof.to_dict() for proof in self._handoff_proofs[-limit:]]
+
     def summary(self) -> dict[str, Any]:
         return {
             "registered_agents": self.agent_count,
@@ -360,6 +423,8 @@ class AgentOrchestrator:
                                                OrchestrationPhase.VOTING,
                                                OrchestrationPhase.EXECUTING)),
             "total_handoffs": self._total_handoffs,
+            "successful_handoffs": len(self._handoffs),
+            "handoff_proofs": len(self._handoff_proofs),
             "manifest_gated": self.manifest_gated,
             "admitted_capability_count": (
                 0 if self._admitted_capabilities is None else len(self._admitted_capabilities)
@@ -400,6 +465,22 @@ class AgentOrchestrator:
             return "proposal requires unadmitted capabilities"
         return ""
 
+    def _handoff_admission_error(
+        self,
+        from_agent: str,
+        to_agent: str,
+        required_capabilities: tuple[str, ...],
+    ) -> str:
+        if from_agent not in self._capabilities:
+            return "source agent unavailable"
+        if to_agent not in self._capabilities:
+            return "target agent unavailable"
+        if self._missing_agent_capabilities(to_agent, required_capabilities):
+            return "target agent lacks required capabilities"
+        if self._unadmitted_capabilities(required_capabilities):
+            return "required capabilities are not manifest admitted"
+        return ""
+
     def _build_dispatch_proof(
         self,
         *,
@@ -430,6 +511,38 @@ class AgentOrchestrator:
             quorum_met=quorum_met,
             agent_registered=agent_registered,
             agent_capable=agent_capable,
+            manifest_admitted=manifest_admitted,
+            manifest_gated=self.manifest_gated,
+            required_capability_count=len(required_capabilities),
+        )
+
+    def _build_handoff_proof(
+        self,
+        *,
+        from_agent: str,
+        to_agent: str,
+        required_capabilities: tuple[str, ...],
+        decision: str,
+        reason: str,
+    ) -> HandoffProof:
+        source_registered = from_agent in self._capabilities
+        target_registered = to_agent in self._capabilities
+        target_capable = bool(
+            target_registered
+            and not self._missing_agent_capabilities(to_agent, required_capabilities)
+        )
+        manifest_admitted = not self._unadmitted_capabilities(required_capabilities)
+        proof_index = len(self._handoff_proofs) + 1
+        return HandoffProof(
+            proof_id=f"handoff:{proof_index}",
+            from_agent=from_agent,
+            to_agent=to_agent,
+            decision=decision,
+            reason=reason,
+            checked_at=self._clock(),
+            source_registered=source_registered,
+            target_registered=target_registered,
+            target_capable=target_capable,
             manifest_admitted=manifest_admitted,
             manifest_gated=self.manifest_gated,
             required_capability_count=len(required_capabilities),
