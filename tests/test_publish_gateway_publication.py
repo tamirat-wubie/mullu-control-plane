@@ -107,6 +107,33 @@ class FakeRunner:
         raise AssertionError(f"unexpected command: {command}")
 
 
+class FailingWorkflowRunRunner(FakeRunner):
+    """Runner that fails after readiness but before publication dispatch settles."""
+
+    def __call__(
+        self,
+        command: list[str],
+        *,
+        check: bool,
+        capture_output: bool,
+        text: bool,
+    ) -> subprocess.CompletedProcess[str]:
+        if command[:3] == ["gh", "workflow", "run"]:
+            self.commands.append(command)
+            raise subprocess.CalledProcessError(
+                returncode=7,
+                cmd=command,
+                output="stdout-secret-token",
+                stderr="stderr-secret-token",
+            )
+        return super().__call__(
+            command,
+            check=check,
+            capture_output=capture_output,
+            text=text,
+        )
+
+
 def test_publish_writes_ready_report_without_dispatch(tmp_path: Path) -> None:
     runner = FakeRunner(kubeconfig_secret_present=False)
     report_path = tmp_path / "readiness.json"
@@ -174,6 +201,38 @@ def test_publish_dispatches_from_written_readiness_report(tmp_path: Path) -> Non
     assert receipt["dispatch_performed"] is True
     assert receipt["dispatch_run_id"] == 4567
     assert receipt["dispatch_conclusion"] == "success"
+
+
+def test_publish_writes_failure_receipt_when_dispatch_raises(tmp_path: Path) -> None:
+    runner = FailingWorkflowRunRunner()
+    report_path = tmp_path / "readiness.json"
+    receipt_path = tmp_path / "receipt.json"
+
+    with pytest.raises(RuntimeError) as exc_info:
+        publish_gateway_publication(
+            gateway_host="gateway.mullusi.com",
+            gateway_url="https://gateway.mullusi.com",
+            expected_environment="pilot",
+            dispatch=True,
+            readiness_report_path=report_path,
+            receipt_output_path=receipt_path,
+            download_dir=tmp_path / "artifact",
+            poll_seconds=1,
+            runner=runner,
+            resolver=_resolve_ok,
+        )
+    receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
+
+    assert str(exc_info.value) == "command failed: gh workflow run: exit_code=7"
+    assert report_path.exists()
+    assert receipt_path.exists()
+    assert receipt["resolution_state"] == "dispatch-failed"
+    assert receipt["dispatch_requested"] is True
+    assert receipt["dispatch_performed"] is False
+    assert receipt["dispatch_error"] == "dispatch_failed"
+    assert receipt["readiness_ready"] is True
+    assert "stdout-secret-token" not in json.dumps(receipt)
+    assert "stderr-secret-token" not in json.dumps(receipt)
 
 
 def test_publish_blocks_dispatch_when_readiness_fails(tmp_path: Path) -> None:

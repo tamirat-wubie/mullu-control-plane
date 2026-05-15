@@ -32,7 +32,7 @@ DEFAULT_VALIDATION_OUTPUT = (
     Path(".change_assurance") / "gateway_publication_receipt_validation.json"
 )
 VALID_RESOLUTION_STATES = frozenset(
-    {"ready-only", "blocked-not-ready", "dispatched", "not-ready"}
+    {"ready-only", "blocked-not-ready", "dispatched", "dispatch-failed", "not-ready"}
 )
 
 
@@ -148,6 +148,7 @@ def _check_required_fields(payload: dict[str, Any]) -> ReceiptValidationStep:
     required_fields = {
         "artifact_dir": str,
         "dispatch_conclusion": str,
+        "dispatch_error": str,
         "dispatch_performed": bool,
         "dispatch_requested": bool,
         "dispatch_run_id": int,
@@ -220,8 +221,11 @@ def _expected_resolution_state(payload: dict[str, Any]) -> str:
     dispatch_performed = payload.get("dispatch_performed")
     dispatch_requested = payload.get("dispatch_requested")
     readiness_ready = payload.get("readiness_ready")
+    dispatch_error = str(payload.get("dispatch_error", ""))
     if dispatch_performed is True:
         return "dispatched"
+    if dispatch_requested is True and readiness_ready is True and dispatch_error:
+        return "dispatch-failed"
     if dispatch_requested is True:
         return "blocked-not-ready" if readiness_ready is False else "invalid"
     if readiness_ready is True:
@@ -328,6 +332,7 @@ def _check_dispatch_consistency(payload: dict[str, Any]) -> ReceiptValidationSte
     dispatch_run_url = str(payload.get("dispatch_run_url", ""))
     dispatch_status = str(payload.get("dispatch_status", ""))
     dispatch_conclusion = str(payload.get("dispatch_conclusion", ""))
+    dispatch_error = str(payload.get("dispatch_error", ""))
     artifact_dir = str(payload.get("artifact_dir", ""))
 
     if dispatch_performed is True:
@@ -352,7 +357,18 @@ def _check_dispatch_consistency(payload: dict[str, Any]) -> ReceiptValidationSte
             )
         return ReceiptValidationStep("dispatch consistency", True, "dispatched")
 
+    if dispatch_requested is True and payload.get("readiness_ready") is True:
+        if dispatch_error != "dispatch_failed":
+            return ReceiptValidationStep(
+                "dispatch consistency",
+                False,
+                "missing=dispatch_error",
+            )
+        return ReceiptValidationStep("dispatch consistency", True, "dispatch-failed")
+
     forbidden = []
+    if dispatch_error:
+        forbidden.append("dispatch_error")
     if isinstance(dispatch_run_id, int) and dispatch_run_id != 0:
         forbidden.append("dispatch_run_id")
     for field_name, value in (

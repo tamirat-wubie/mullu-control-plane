@@ -271,13 +271,27 @@ def test_dispatch_gateway_publication_rejects_invalid_host() -> None:
     assert runner.commands == []
 
 
+def test_dispatch_gateway_publication_rejects_gateway_url_path() -> None:
+    runner = FakeRunner()
+
+    with pytest.raises(RuntimeError, match="must not include path"):
+        dispatch_gateway_publication(
+            gateway_host="gateway.mullusi.com",
+            gateway_url="https://gateway.mullusi.com/private-path",
+            expected_environment="pilot",
+            runner=runner,
+        )
+
+    assert runner.commands == []
+
+
 def test_dispatch_gateway_publication_command_failure_is_bounded(tmp_path: Path) -> None:
     runner = FailingWorkflowRunRunner()
 
     with pytest.raises(RuntimeError) as exc_info:
         dispatch_gateway_publication(
             gateway_host="gateway.mullusi.com",
-            gateway_url="https://gateway.mullusi.com/private-path",
+            gateway_url="https://gateway.mullusi.com",
             expected_environment="pilot",
             dispatch_witness=True,
             download_dir=tmp_path / "artifact",
@@ -289,7 +303,7 @@ def test_dispatch_gateway_publication_command_failure_is_bounded(tmp_path: Path)
     assert message == "command failed: gh workflow run: exit_code=7"
     assert "stdout-secret-token" not in message
     assert "stderr-secret-token" not in message
-    assert "gateway.mullusi.com/private-path" not in message
+    assert "gateway.mullusi.com" not in message
     assert any(command[:3] == ["gh", "workflow", "run"] for command in runner.commands)
     assert not any(command[:3] == ["gh", "run", "download"] for command in runner.commands)
     assert not (tmp_path / "artifact").exists()
