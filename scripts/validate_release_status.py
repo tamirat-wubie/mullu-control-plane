@@ -81,6 +81,7 @@ REQUIRED_CI_LITERALS: tuple[str, ...] = (
     "python scripts/validate_public_repository_surface.py --local-only",
     "python scripts/validate_release_status.py",
     "python scripts/validate_release_status.py --strict",
+    "python scripts/validate_reflective_contracts.py",
     "python scripts/run_red_team_harness.py --output .change_assurance/red_team_harness.json --min-pass-rate 1.0",
     "red-team-harness-witness",
     "python -m pytest tests/test_gateway tests/test_pilot_proof_slice.py -q",
