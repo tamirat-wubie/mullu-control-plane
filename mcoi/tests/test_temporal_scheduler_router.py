@@ -145,6 +145,25 @@ def test_invalid_risk_and_missing_schedule_fail_closed() -> None:
     assert missing.json()["detail"]["error_code"] == "schedule_not_found"
 
 
+def test_create_temporal_schedule_error_detail_is_bounded() -> None:
+    client = _client(MutableClock("2026-05-04T13:00:00+00:00"))
+
+    class LeakyScheduler:
+        def register(self, *args: object, **kwargs: object) -> object:
+            raise ValueError("secret-token-from-scheduler")
+
+    deps.set("temporal_scheduler", LeakyScheduler())
+
+    response = client.post("/api/v1/temporal/schedules", json=_request())
+    detail = response.json()["detail"]
+
+    assert response.status_code == 400
+    assert detail["error"] == "invalid temporal schedule"
+    assert detail["error_code"] == "invalid_temporal_schedule"
+    assert detail["governed"] is True
+    assert "secret-token-from-scheduler" not in response.text
+
+
 def test_default_routers_include_temporal_scheduler_summary() -> None:
     _install_deps(MutableClock("2026-05-04T13:00:00+00:00"))
     app = FastAPI()

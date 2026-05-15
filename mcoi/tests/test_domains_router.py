@@ -134,6 +134,37 @@ def test_business_invalid_dollar_impact_400(client):
     assert r.status_code == 400
 
 
+def test_business_process_value_error_detail_is_bounded(client, monkeypatch):
+    def fail_with_sensitive_detail(req, capture=None):
+        raise ValueError("secret-token-from-domain")
+
+    monkeypatch.setattr(
+        "mcoi_runtime.app.routers.domains.business.business_run_with_ucja",
+        fail_with_sensitive_detail,
+    )
+
+    r = client.post(
+        "/domains/business-process/process",
+        json={
+            "kind": "approval",
+            "summary": "approve marketing budget Q3",
+            "process_id": "proc-001",
+            "initiator": "alice",
+            "approval_chain": ["manager-bob"],
+            "affected_systems": ["erp"],
+            "acceptance_criteria": ["budget_within_cap"],
+            "dollar_impact": 50000.0,
+        },
+    )
+    detail = r.json()["detail"]
+
+    assert r.status_code == 400
+    assert detail["error"] == "invalid domain request"
+    assert detail["error_code"] == "invalid_business_process_request"
+    assert detail["governed"] is True
+    assert "secret-token-from-domain" not in r.text
+
+
 # ---- scientific_research ----
 
 
