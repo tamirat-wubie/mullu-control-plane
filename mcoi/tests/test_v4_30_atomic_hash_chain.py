@@ -27,7 +27,6 @@ overwriting.
 """
 from __future__ import annotations
 
-import os
 import threading
 from pathlib import Path
 
@@ -154,6 +153,34 @@ class TestAppendRetry:
         e1 = store.append(compute_content_hash("b"))
         assert e1.sequence_number == 1
         assert e1.previous_hash == e0.chain_hash
+
+    def test_append_backs_off_between_contention_retries(
+        self, store: HashChainStore, monkeypatch
+    ):
+        real_write = _atomic_write_exclusive
+        attempts = {"count": 0}
+        sleeps: list[float] = []
+
+        def collide_then_write(path, content):
+            attempts["count"] += 1
+            if attempts["count"] <= 3:
+                return False
+            return real_write(path, content)
+
+        monkeypatch.setattr(
+            "mcoi_runtime.persistence.hash_chain._atomic_write_exclusive",
+            collide_then_write,
+        )
+        monkeypatch.setattr(
+            "mcoi_runtime.persistence.hash_chain.time.sleep",
+            lambda delay: sleeps.append(delay),
+        )
+
+        entry = store.append(compute_content_hash("eventual-winner"))
+
+        assert entry.sequence_number == 0
+        assert attempts["count"] == 4
+        assert sleeps == [0.001, 0.002, 0.003]
 
     def test_append_chain_remains_valid_after_recoveries(
         self, store: HashChainStore
