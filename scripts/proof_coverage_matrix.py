@@ -145,6 +145,15 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "docs/41_streaming_budget_enforcement.md",
             ],
             "SSE responses include precharge, first-byte, chunk-debit, and final-reconcile proof identifiers.",
+            [
+                "stream_returns_sse",
+                "stream_contains_content",
+                "stream_contains_budget_witnesses",
+                "stream_budget_reservation_and_settlement",
+                "stream_budget_cutoff_stops_delivery",
+                "streaming_chat_returns_sse",
+                "streaming_chat_exception_sanitized",
+            ],
         ),
         _surface(
             "code_intelligence_operator_read_model",
@@ -190,6 +199,15 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "mcoi/mcoi_runtime/core/proof_bridge.py",
             ],
             "Completion routes are governed through budget, model routing, and proof bridge checks.",
+            [
+                "completion_returns_action_proof",
+                "completion_records_budget_ledger",
+                "completion_failure_is_bounded",
+                "safe_completion_tracks_cost",
+                "safe_completion_exception_sanitized",
+                "auto_completion_routes_model",
+                "auto_completion_exception_sanitized",
+            ],
         ),
         _surface(
             "llm_chat_workflow",
