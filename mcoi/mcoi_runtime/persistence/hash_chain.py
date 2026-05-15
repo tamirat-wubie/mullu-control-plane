@@ -9,7 +9,7 @@ from __future__ import annotations
 import hashlib
 import os
 import tempfile
-import time
+import time as _time
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
@@ -28,6 +28,14 @@ GENESIS_PREVIOUS_HASH = "0" * 64  # 64 hex zeros for the genesis entry
 APPEND_MAX_CONTENTION_RETRIES = 64
 APPEND_CONTENTION_BACKOFF_SECONDS = 0.001
 APPEND_CONTENTION_BACKOFF_MAX_SECONDS = 0.02
+_TIME_MODULE = _time
+time = _TIME_MODULE
+
+
+def __getattr__(name: str) -> object:
+    if name == "time":
+        return _TIME_MODULE
+    raise AttributeError(name)
 
 
 def _bounded_store_error(summary: str, exc: BaseException) -> str:
@@ -131,7 +139,7 @@ def _sleep_after_contention(attempt: int) -> None:
         APPEND_CONTENTION_BACKOFF_SECONDS * (attempt + 1),
         APPEND_CONTENTION_BACKOFF_MAX_SECONDS,
     )
-    time.sleep(delay)
+    _TIME_MODULE.sleep(delay)
 
 
 class HashChainStore:
