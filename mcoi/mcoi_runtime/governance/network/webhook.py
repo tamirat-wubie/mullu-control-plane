@@ -20,6 +20,8 @@ from typing import Any, Callable
 import hmac
 import json
 
+from mcoi_runtime.governance.network.ssrf import is_private_url as _is_private_url
+
 
 class WebhookEvent(str):
     """Known webhook event types."""
@@ -65,12 +67,47 @@ class WebhookDelivery:
     created_at: str
 
 
-# v4.29.0 (audit F9): SSRF policy unified with adapters/http_connector via
-# core/ssrf_policy. Pre-v4.29 this module had a much weaker check —
-# no DNS resolution, no IPv6 link-local, missing Azure / Alibaba / DO
-# metadata hostnames. That gap is closed by importing from the shared
-# module.
-from mcoi_runtime.governance.network.ssrf import is_private_url as _is_private_url
+@dataclass(frozen=True, slots=True)
+class WebhookMutationReceipt:
+    """Evidence record for webhook subscription and delivery state mutations."""
+
+    receipt_id: str
+    mutation_type: str
+    effect_name: str
+    tenant_id: str
+    subject_ref: str
+    evidence_ref: str
+    before_count: int
+    after_count: int
+    recorded_at: str
+    metadata: dict[str, Any]
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "receipt_id": self.receipt_id,
+            "mutation_type": self.mutation_type,
+            "effect_name": self.effect_name,
+            "tenant_id": self.tenant_id,
+            "subject_ref": self.subject_ref,
+            "evidence_ref": self.evidence_ref,
+            "before_count": self.before_count,
+            "after_count": self.after_count,
+            "recorded_at": self.recorded_at,
+            "metadata": dict(self.metadata),
+        }
+
+    def to_effect_record(self) -> Any:
+        from mcoi_runtime.contracts.execution import EffectRecord
+
+        return EffectRecord(
+            name=self.effect_name,
+            details={
+                "effect_id": self.effect_name,
+                "source": "webhook_manager",
+                "evidence_ref": self.evidence_ref,
+                "observed_value": self.to_dict(),
+            },
+        )
 
 
 class WebhookManager:
@@ -86,6 +123,7 @@ class WebhookManager:
         self._clock = clock
         self._subscriptions: dict[str, WebhookSubscription] = {}
         self._deliveries: list[WebhookDelivery] = []
+        self._mutation_receipts: list[WebhookMutationReceipt] = []
         self._delivery_counter: int = 0
 
     def subscribe(self, sub: WebhookSubscription) -> WebhookSubscription:
@@ -94,11 +132,43 @@ class WebhookManager:
             raise ValueError("subscription already exists")
         if _is_private_url(sub.url):
             raise ValueError("webhook URL rejected: private/internal address not allowed")
+        before_count = len(self._subscriptions)
         self._subscriptions[sub.subscription_id] = sub
+        self._record_mutation(
+            mutation_type="subscribe",
+            effect_name="webhook_subscription_registered",
+            tenant_id=sub.tenant_id,
+            subject_ref=f"webhook-subscription:{sub.subscription_id}",
+            before_count=before_count,
+            after_count=len(self._subscriptions),
+            metadata={
+                "event_count": len(sub.events),
+                "enabled": sub.enabled,
+                "target_url_hash": _sha256_text(sub.url),
+                "secret_present": bool(sub.secret),
+            },
+        )
         return sub
 
     def unsubscribe(self, subscription_id: str) -> bool:
-        return self._subscriptions.pop(subscription_id, None) is not None
+        before_count = len(self._subscriptions)
+        removed = self._subscriptions.pop(subscription_id, None)
+        if removed is None:
+            return False
+        self._record_mutation(
+            mutation_type="unsubscribe",
+            effect_name="webhook_subscription_removed",
+            tenant_id=removed.tenant_id,
+            subject_ref=f"webhook-subscription:{subscription_id}",
+            before_count=before_count,
+            after_count=len(self._subscriptions),
+            metadata={
+                "event_count": len(removed.events),
+                "enabled": removed.enabled,
+                "target_url_hash": _sha256_text(removed.url),
+            },
+        )
+        return True
 
     def get_subscription(self, subscription_id: str) -> WebhookSubscription | None:
         return self._subscriptions.get(subscription_id)
@@ -153,15 +223,37 @@ class WebhookManager:
                 created_at=self._clock(),
             )
             self._deliveries.append(delivery)
+            self._record_mutation(
+                mutation_type="emit",
+                effect_name="webhook_delivery_queued",
+                tenant_id=sub.tenant_id,
+                subject_ref=f"webhook-delivery:{delivery_id}",
+                before_count=len(self._deliveries) - 1,
+                after_count=len(self._deliveries),
+                metadata={
+                    "subscription_id_hash": _sha256_text(sub.subscription_id),
+                    "event": event,
+                    "payload_hash": _sha256_json(payload),
+                    "signature_present": bool(signature),
+                },
+            )
             deliveries.append(delivery)
 
         if len(self._deliveries) > self._MAX_DELIVERIES:
             self._deliveries = self._deliveries[-self._MAX_DELIVERIES:]
+        if len(self._mutation_receipts) > self._MAX_DELIVERIES:
+            self._mutation_receipts = self._mutation_receipts[-self._MAX_DELIVERIES:]
 
         return deliveries
 
     def delivery_history(self, limit: int = 50) -> list[WebhookDelivery]:
         return self._deliveries[-limit:]
+
+    def mutation_receipts(self, limit: int = 50) -> tuple[WebhookMutationReceipt, ...]:
+        return tuple(self._mutation_receipts[-limit:])
+
+    def effect_records(self, limit: int = 50) -> tuple[Any, ...]:
+        return tuple(receipt.to_effect_record() for receipt in self.mutation_receipts(limit=limit))
 
     @property
     def subscription_count(self) -> int:
@@ -175,5 +267,52 @@ class WebhookManager:
         return {
             "subscriptions": self.subscription_count,
             "deliveries": self.delivery_count,
+            "mutation_receipts": len(self._mutation_receipts),
             "events": list(EVENTS.keys()),
         }
+
+    def _record_mutation(
+        self,
+        *,
+        mutation_type: str,
+        effect_name: str,
+        tenant_id: str,
+        subject_ref: str,
+        before_count: int,
+        after_count: int,
+        metadata: dict[str, Any],
+    ) -> WebhookMutationReceipt:
+        recorded_at = self._clock()
+        material = {
+            "mutation_type": mutation_type,
+            "effect_name": effect_name,
+            "tenant_id": tenant_id,
+            "subject_ref": subject_ref,
+            "before_count": before_count,
+            "after_count": after_count,
+            "metadata": metadata,
+            "recorded_at": recorded_at,
+        }
+        receipt_hash = _sha256_json(material)
+        receipt = WebhookMutationReceipt(
+            receipt_id=f"webhook-mutation-receipt-{receipt_hash[:16]}",
+            mutation_type=mutation_type,
+            effect_name=effect_name,
+            tenant_id=tenant_id,
+            subject_ref=subject_ref,
+            evidence_ref=f"webhook-mutation:{receipt_hash[:16]}",
+            before_count=before_count,
+            after_count=after_count,
+            recorded_at=recorded_at,
+            metadata=metadata,
+        )
+        self._mutation_receipts.append(receipt)
+        return receipt
+
+
+def _sha256_text(value: str) -> str:
+    return sha256(value.encode("utf-8", errors="replace")).hexdigest()
+
+
+def _sha256_json(value: Any) -> str:
+    return _sha256_text(json.dumps(value, sort_keys=True, default=str, separators=(",", ":")))

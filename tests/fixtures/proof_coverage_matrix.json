@@ -3326,6 +3326,7 @@
         "mcoi/mcoi_runtime/core/webhook_retry.py",
         "mcoi/tests/test_server_phase205.py",
         "mcoi/tests/test_e2e_integration.py",
+        "mcoi/tests/test_webhook_system.py",
         "mcoi/tests/test_webhook_retry.py"
       ],
       "notes": "API webhook management routes bind subscription mutation, tenant-scoped subscription read models, delivery history, retry summary, dead-letter read models, and workflow delivery evidence to governed runtime state, audit records, and bounded retry failure evidence.",
@@ -3340,11 +3341,15 @@
       "runtime_witnesses": [
         "webhook_subscribe_records_audit",
         "webhook_subscription_audited",
+        "webhook_subscription_mutation_receipt_emitted",
         "webhook_list_is_tenant_scoped",
         "webhook_subscription_list_bounded",
         "webhook_delivery_history_is_bounded",
+        "webhook_delivery_mutation_receipts_exposed",
         "webhook_delivery_history_bounded",
         "webhook_flow_records_delivery",
+        "webhook_delivery_queue_mutation_receipt_emitted",
+        "webhook_mutation_receipt_closes_effect_assurance",
         "webhook_retry_summary_is_bounded",
         "webhook_retry_summary_governed",
         "webhook_dead_letters_are_explicit",
