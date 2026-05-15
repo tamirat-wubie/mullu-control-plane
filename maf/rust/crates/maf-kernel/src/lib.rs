@@ -495,11 +495,21 @@ impl StateMachineSpec {
     }
 }
 
+/// Compute the canonical v1 state hash described in `docs/STATE_HASH_SPEC.md`.
+///
+/// Contract: SHA-256 over the exact UTF-8 bytes of
+/// `"{state}:{entity_id}:{timestamp}"`, returned as 64 lowercase hex
+/// characters. This mirrors `ProofBridge._state_hash` on the Python side.
+pub fn state_hash(state: &str, entity_id: &str, timestamp: &str) -> String {
+    sha256_hex(&format!("{}:{}:{}", state, entity_id, timestamp))
+}
+
 /// Compute SHA-256 hex digest of the input string. Matches Python's
 /// `hashlib.sha256(input.encode()).hexdigest()` byte-for-byte: this equality
-/// is the cross-language receipt-hash contract enforced by
-/// `receipt_hash_matches_python_sha256` in this crate's tests and
-/// `tests/test_proof_hash_contract.py` on the Python side.
+/// is the cross-language receipt-hash and state-hash contract enforced by
+/// `receipt_hash_matches_python_sha256` and `state_hash_matches_python_sha256`
+/// in this crate's tests and `tests/test_proof_hash_contract.py` on the
+/// Python side.
 fn sha256_hex(input: &str) -> String {
     use sha2::{Digest, Sha256};
     let mut hasher = Sha256::new();
@@ -2611,6 +2621,26 @@ mod tests {
         // Locking it in addition to receipt_hash catches any drift in the
         // replay-token derivation that the receipt_hash alone wouldn't surface.
         assert_eq!(capsule.receipt.replay_token, "replay-4c4180b2fd61031d");
+    }
+
+    /// Cross-language contract: the Rust state_hash MUST equal the Python
+    /// ProofBridge._state_hash output for the same canonical inputs.
+    /// Both sides hash `state:entity_id:timestamp` with SHA-256.
+    #[test]
+    fn state_hash_matches_python_sha256() {
+        // SHA-256 of "evaluating:request:tenant-alpha:/v1/govern:2026-04-28T00:00:00Z"
+        const EXPECTED: &str = "965b4f39a0784ee6858ff1e38a591b741edb48787395f2391e2089dbfadc534d";
+        let digest = state_hash(
+            "evaluating",
+            "request:tenant-alpha:/v1/govern",
+            "2026-04-28T00:00:00Z",
+        );
+
+        assert_eq!(digest, EXPECTED);
+        assert_eq!(digest.len(), 64);
+        assert!(digest
+            .chars()
+            .all(|c| c.is_ascii_hexdigit() && !c.is_ascii_uppercase()));
     }
 
     #[test]
