@@ -77,6 +77,25 @@ def test_protocol_manifest_indexes_policy_dsl_schemas() -> None:
     assert trace_entry["surface"] == "policy"
 
 
+def test_protocol_manifest_indexes_supervisor_contract_schemas() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    tick_entry = entries["supervisor-tick"]
+    checkpoint_entry = entries["supervisor-checkpoint"]
+    livelock_entry = entries["livelock-record"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert tick_entry["path"] == "schemas/supervisor_tick.schema.json"
+    assert tick_entry["urn"] == "urn:mullusi:schema:supervisor-tick:1"
+    assert tick_entry["surface"] == "supervisor"
+    assert checkpoint_entry["path"] == "schemas/supervisor_checkpoint.schema.json"
+    assert checkpoint_entry["urn"] == "urn:mullusi:schema:supervisor-checkpoint:1"
+    assert checkpoint_entry["surface"] == "supervisor"
+    assert livelock_entry["path"] == "schemas/livelock_record.schema.json"
+    assert livelock_entry["urn"] == "urn:mullusi:schema:livelock-record:1"
+    assert livelock_entry["surface"] == "supervisor"
+
+
 def test_protocol_manifest_indexes_connector_self_healing_receipt() -> None:
     manifest = load_manifest()
     entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}

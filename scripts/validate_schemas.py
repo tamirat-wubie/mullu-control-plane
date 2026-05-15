@@ -88,6 +88,18 @@ SCHEMA_CONTRACT_MAP: dict[str, tuple[str, str]] = {
         "mcoi_runtime.contracts.governance",
         "PolicyEvaluationTrace",
     ),
+    "supervisor_tick.schema.json": (
+        "mcoi_runtime.contracts.supervisor",
+        "SupervisorTick",
+    ),
+    "supervisor_checkpoint.schema.json": (
+        "mcoi_runtime.contracts.supervisor",
+        "SupervisorCheckpoint",
+    ),
+    "livelock_record.schema.json": (
+        "mcoi_runtime.contracts.supervisor",
+        "LivelockRecord",
+    ),
     "replay_record.schema.json": (
         "mcoi_runtime.contracts.replay",
         "ReplayRecord",
@@ -190,6 +202,29 @@ RUST_SCHEMA_CONTRACT_MAP: dict[str, RustContractMapping] = {
             ),
             "bindings": NestedRustMapping(struct_name="WorkflowBinding"),
         },
+    ),
+    "supervisor_tick.schema.json": RustContractMapping(
+        source=REPO_ROOT / "maf" / "rust" / "crates" / "maf-supervisor" / "src" / "lib.rs",
+        struct_name="SupervisorTick",
+        enum_fields={
+            "outcome": "TickOutcome",
+            "phase_sequence": "SupervisorPhase",
+        },
+        nested_fields={"decisions": NestedRustMapping(struct_name="SupervisorDecision")},
+    ),
+    "supervisor_checkpoint.schema.json": RustContractMapping(
+        source=REPO_ROOT / "maf" / "rust" / "crates" / "maf-supervisor" / "src" / "lib.rs",
+        struct_name="SupervisorCheckpoint",
+        enum_fields={
+            "phase": "SupervisorPhase",
+            "status": "CheckpointStatus",
+            "recent_tick_outcomes": "TickOutcome",
+        },
+    ),
+    "livelock_record.schema.json": RustContractMapping(
+        source=REPO_ROOT / "maf" / "rust" / "crates" / "maf-supervisor" / "src" / "lib.rs",
+        struct_name="LivelockRecord",
+        enum_fields={"strategy_applied": "LivelockStrategy"},
     ),
 }
 
@@ -519,6 +554,30 @@ def _resolve_local_schema_ref(root_schema: dict[str, Any], ref: str) -> dict[str
     return current
 
 
+def _resolved_property_schema(root_schema: dict[str, Any], property_schema: dict[str, Any]) -> dict[str, Any]:
+    if "$ref" in property_schema:
+        return _resolve_local_schema_ref(root_schema, str(property_schema["$ref"]))
+    return property_schema
+
+
+def _schema_enum_values(root_schema: dict[str, Any], property_schema: dict[str, Any]) -> set[str]:
+    resolved_schema = _resolved_property_schema(root_schema, property_schema)
+    if resolved_schema.get("type") == "array":
+        item_schema = resolved_schema.get("items", {})
+        if isinstance(item_schema, dict):
+            return _schema_enum_values(root_schema, item_schema)
+        return set()
+    return set(resolved_schema.get("enum", []))
+
+
+def _schema_array_item_schema(root_schema: dict[str, Any], property_schema: dict[str, Any]) -> dict[str, Any]:
+    resolved_schema = _resolved_property_schema(root_schema, property_schema)
+    item_schema = resolved_schema.get("items", {})
+    if isinstance(item_schema, dict):
+        return _resolved_property_schema(root_schema, item_schema)
+    return {}
+
+
 def _check_fixture_schema_coverage(schema: dict[str, Any], instance: Any, path: str = "$") -> list[str]:
     if not schema or "anyOf" in schema or "$ref" in schema:
         return []
@@ -751,6 +810,74 @@ def _build_policy_evaluation_trace(payload: dict[str, Any]) -> Any:
         actions_produced=tuple(_build_policy_action(action) for action in payload["actions_produced"]),
         evaluated_at=payload["evaluated_at"],
         metadata=payload["metadata"],
+    )
+
+
+def _build_supervisor_decision(payload: dict[str, Any]) -> Any:
+    from mcoi_runtime.contracts.supervisor import SupervisorDecision
+
+    return SupervisorDecision(
+        decision_id=payload["decision_id"],
+        action_type=payload["action_type"],
+        target_id=payload["target_id"],
+        reason=payload["reason"],
+        governance_approved=payload["governance_approved"],
+        decided_at=payload["decided_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_supervisor_tick(payload: dict[str, Any]) -> Any:
+    from mcoi_runtime.contracts.supervisor import SupervisorPhase, SupervisorTick, TickOutcome
+
+    return SupervisorTick(
+        tick_id=payload["tick_id"],
+        tick_number=payload["tick_number"],
+        phase_sequence=tuple(SupervisorPhase(phase) for phase in payload["phase_sequence"]),
+        events_polled=payload["events_polled"],
+        obligations_evaluated=payload["obligations_evaluated"],
+        deadlines_checked=payload["deadlines_checked"],
+        reactions_fired=payload["reactions_fired"],
+        decisions=tuple(_build_supervisor_decision(decision) for decision in payload["decisions"]),
+        outcome=TickOutcome(payload["outcome"]),
+        errors=tuple(payload["errors"]),
+        started_at=payload["started_at"],
+        completed_at=payload["completed_at"],
+        duration_ms=payload["duration_ms"],
+    )
+
+
+def _build_supervisor_checkpoint(payload: dict[str, Any]) -> Any:
+    from mcoi_runtime.contracts.supervisor import CheckpointStatus, SupervisorCheckpoint
+    from mcoi_runtime.contracts.supervisor import SupervisorPhase, TickOutcome
+
+    return SupervisorCheckpoint(
+        checkpoint_id=payload["checkpoint_id"],
+        tick_number=payload["tick_number"],
+        phase=SupervisorPhase(payload["phase"]),
+        status=CheckpointStatus(payload["status"]),
+        open_obligation_ids=tuple(payload["open_obligation_ids"]),
+        pending_event_count=payload["pending_event_count"],
+        consecutive_errors=payload["consecutive_errors"],
+        consecutive_idle_ticks=payload["consecutive_idle_ticks"],
+        recent_tick_outcomes=tuple(TickOutcome(outcome) for outcome in payload["recent_tick_outcomes"]),
+        state_hash=payload["state_hash"],
+        created_at=payload["created_at"],
+    )
+
+
+def _build_livelock_record(payload: dict[str, Any]) -> Any:
+    from mcoi_runtime.contracts.supervisor import LivelockRecord, LivelockStrategy
+
+    return LivelockRecord(
+        livelock_id=payload["livelock_id"],
+        tick_number=payload["tick_number"],
+        repeated_pattern=payload["repeated_pattern"],
+        repeat_count=payload["repeat_count"],
+        strategy_applied=LivelockStrategy(payload["strategy_applied"]),
+        resolved=payload["resolved"],
+        detected_at=payload["detected_at"],
+        resolution_detail=payload["resolution_detail"],
     )
 
 
@@ -998,6 +1125,9 @@ FIXTURE_BUILDERS: dict[str, SharedFixtureBuilder] = {
     "policy_rule.schema.json": _build_policy_rule,
     "policy_bundle.schema.json": _build_policy_bundle,
     "policy_evaluation_trace.schema.json": _build_policy_evaluation_trace,
+    "supervisor_tick.schema.json": _build_supervisor_tick,
+    "supervisor_checkpoint.schema.json": _build_supervisor_checkpoint,
+    "livelock_record.schema.json": _build_livelock_record,
     "execution_result.schema.json": _build_execution_result,
     "model_invocation.schema.json": _build_model_invocation,
     "model_response.schema.json": _build_model_response,
@@ -1111,7 +1241,7 @@ def check_rust_contract_parity(strict: bool = False) -> list[str]:
                 )
 
         for property_name, enum_name in mapping.enum_fields.items():
-            schema_enum = set(schema["properties"][property_name].get("enum", []))
+            schema_enum = _schema_enum_values(schema, schema["properties"][property_name])
             try:
                 rust_enum = _extract_rust_enum_values(source_text, enum_name)
             except ValueError:
@@ -1124,7 +1254,7 @@ def check_rust_contract_parity(strict: bool = False) -> list[str]:
                 )
 
         for property_name, nested_mapping in mapping.nested_fields.items():
-            nested_schema = schema["properties"][property_name]["items"]
+            nested_schema = _schema_array_item_schema(schema, schema["properties"][property_name])
             nested_properties = set(nested_schema.get("properties", {}).keys())
             nested_required = set(nested_schema.get("required", []))
             try:

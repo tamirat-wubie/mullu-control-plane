@@ -1,0 +1,110 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:supervisor-checkpoint:1",
+  "title": "Supervisor Checkpoint",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "checkpoint_id",
+    "tick_number",
+    "phase",
+    "status",
+    "open_obligation_ids",
+    "pending_event_count",
+    "consecutive_errors",
+    "consecutive_idle_ticks",
+    "recent_tick_outcomes",
+    "state_hash",
+    "created_at"
+  ],
+  "properties": {
+    "checkpoint_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "tick_number": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "phase": {
+      "$ref": "#/$defs/supervisor_phase"
+    },
+    "status": {
+      "$ref": "#/$defs/checkpoint_status"
+    },
+    "open_obligation_ids": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "pending_event_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "consecutive_errors": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "consecutive_idle_ticks": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "recent_tick_outcomes": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/tick_outcome"
+      }
+    },
+    "state_hash": {
+      "type": "string",
+      "minLength": 1
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "$defs": {
+    "checkpoint_status": {
+      "type": "string",
+      "enum": [
+        "valid",
+        "stale",
+        "corrupted"
+      ]
+    },
+    "supervisor_phase": {
+      "type": "string",
+      "enum": [
+        "idle",
+        "polling",
+        "evaluating_obligations",
+        "evaluating_deadlines",
+        "waking_work",
+        "running_reactions",
+        "reasoning",
+        "acting",
+        "checkpointing",
+        "emitting_heartbeat",
+        "paused",
+        "degraded",
+        "halted"
+      ]
+    },
+    "tick_outcome": {
+      "type": "string",
+      "enum": [
+        "healthy",
+        "work_done",
+        "idle_tick",
+        "backpressure_applied",
+        "livelock_detected",
+        "governance_blocked",
+        "error",
+        "halted"
+      ]
+    }
+  }
+}

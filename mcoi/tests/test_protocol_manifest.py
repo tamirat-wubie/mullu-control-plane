@@ -65,6 +65,9 @@ def test_protocol_manifest_is_valid() -> None:
     temporal_memory_refresh_entry = entries["temporal-memory-refresh-receipt"]
     scheduler_entry = entries["temporal-scheduler-receipt"]
     simulation_entry = entries["simulation-receipt"]
+    supervisor_tick_entry = entries["supervisor-tick"]
+    supervisor_checkpoint_entry = entries["supervisor-checkpoint"]
+    livelock_entry = entries["livelock-record"]
     workflow_mining_entry = entries["workflow-mining-report"]
     worker_mesh_entry = entries["worker-mesh"]
     world_state_entry = entries["world-state"]
@@ -76,7 +79,7 @@ def test_protocol_manifest_is_valid() -> None:
     assert manifest["protocol_id"] == PROTOCOL_ID
     assert manifest["protocol_name"] == "Mullu Governance Protocol"
     assert manifest["protocol_uri_scheme"] == "mgp://"
-    assert len(manifest["schemas"]) == 124
+    assert len(manifest["schemas"]) == 127
     assert agent_identity_entry["path"] == "schemas/agent_identity.schema.json"
     assert agent_identity_entry["urn"] == "urn:mullusi:schema:agent-identity:1"
     assert agent_identity_entry["surface"] == "identity"
@@ -227,6 +230,15 @@ def test_protocol_manifest_is_valid() -> None:
     assert simulation_entry["path"] == "schemas/simulation_receipt.schema.json"
     assert simulation_entry["urn"] == "urn:mullusi:schema:simulation-receipt:1"
     assert simulation_entry["surface"] == "simulation"
+    assert supervisor_tick_entry["path"] == "schemas/supervisor_tick.schema.json"
+    assert supervisor_tick_entry["urn"] == "urn:mullusi:schema:supervisor-tick:1"
+    assert supervisor_tick_entry["surface"] == "supervisor"
+    assert supervisor_checkpoint_entry["path"] == "schemas/supervisor_checkpoint.schema.json"
+    assert supervisor_checkpoint_entry["urn"] == "urn:mullusi:schema:supervisor-checkpoint:1"
+    assert supervisor_checkpoint_entry["surface"] == "supervisor"
+    assert livelock_entry["path"] == "schemas/livelock_record.schema.json"
+    assert livelock_entry["urn"] == "urn:mullusi:schema:livelock-record:1"
+    assert livelock_entry["surface"] == "supervisor"
     assert workflow_mining_entry["path"] == "schemas/workflow_mining_report.schema.json"
     assert workflow_mining_entry["urn"] == "urn:mullusi:schema:workflow-mining-report:1"
     assert workflow_mining_entry["surface"] == "workflow"
