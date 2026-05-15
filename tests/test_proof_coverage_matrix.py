@@ -2164,6 +2164,7 @@ def test_operational_health_surface_exposes_bounded_read_models() -> None:
     assert "mcoi/tests/test_deep_health.py" in health_surface["evidence_files"]
     assert "mcoi/tests/test_health_aggregator.py" in health_surface["evidence_files"]
     assert "mcoi/tests/test_health_check_agg.py" in health_surface["evidence_files"]
+    assert "mcoi/tests/test_operational_health_read_models.py" in health_surface["evidence_files"]
     assert "mcoi/tests/test_phase232.py" in health_surface["evidence_files"]
     assert "deep_health_components_bounded" in witnesses
     assert "health_score_range_bounded" in witnesses
