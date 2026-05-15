@@ -33,6 +33,9 @@ def test_protocol_manifest_is_valid() -> None:
     economic_intelligence_entry = entries["economic-intelligence-snapshot"]
     federated_control_entry = entries["federated-control-snapshot"]
     memory_lattice_entry = entries["memory-lattice"]
+    policy_rule_entry = entries["policy-rule"]
+    policy_bundle_entry = entries["policy-bundle"]
+    policy_evaluation_trace_entry = entries["policy-evaluation-trace"]
     policy_proof_entry = entries["policy-proof-report"]
     trust_ledger_entry = entries["trust-ledger-bundle"]
     trust_anchor_entry = entries["trust-ledger-anchor-receipt"]
@@ -73,7 +76,7 @@ def test_protocol_manifest_is_valid() -> None:
     assert manifest["protocol_id"] == PROTOCOL_ID
     assert manifest["protocol_name"] == "Mullu Governance Protocol"
     assert manifest["protocol_uri_scheme"] == "mgp://"
-    assert len(manifest["schemas"]) == 121
+    assert len(manifest["schemas"]) == 124
     assert agent_identity_entry["path"] == "schemas/agent_identity.schema.json"
     assert agent_identity_entry["urn"] == "urn:mullusi:schema:agent-identity:1"
     assert agent_identity_entry["surface"] == "identity"
@@ -116,6 +119,15 @@ def test_protocol_manifest_is_valid() -> None:
     assert memory_lattice_entry["path"] == "schemas/memory_lattice.schema.json"
     assert memory_lattice_entry["urn"] == "urn:mullusi:schema:memory-lattice:1"
     assert memory_lattice_entry["surface"] == "memory"
+    assert policy_rule_entry["path"] == "schemas/policy_rule.schema.json"
+    assert policy_rule_entry["urn"] == "urn:mullusi:schema:policy-rule:1"
+    assert policy_rule_entry["surface"] == "policy"
+    assert policy_bundle_entry["path"] == "schemas/policy_bundle.schema.json"
+    assert policy_bundle_entry["urn"] == "urn:mullusi:schema:policy-bundle:1"
+    assert policy_bundle_entry["surface"] == "policy"
+    assert policy_evaluation_trace_entry["path"] == "schemas/policy_evaluation_trace.schema.json"
+    assert policy_evaluation_trace_entry["urn"] == "urn:mullusi:schema:policy-evaluation-trace:1"
+    assert policy_evaluation_trace_entry["surface"] == "policy"
     assert policy_proof_entry["path"] == "schemas/policy_proof_report.schema.json"
     assert policy_proof_entry["urn"] == "urn:mullusi:schema:policy-proof-report:1"
     assert policy_proof_entry["surface"] == "policy"

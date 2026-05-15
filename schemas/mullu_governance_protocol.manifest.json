@@ -431,6 +431,24 @@
       "surface": "policy"
     },
     {
+      "schema_id": "policy-rule",
+      "path": "schemas/policy_rule.schema.json",
+      "urn": "urn:mullusi:schema:policy-rule:1",
+      "surface": "policy"
+    },
+    {
+      "schema_id": "policy-bundle",
+      "path": "schemas/policy_bundle.schema.json",
+      "urn": "urn:mullusi:schema:policy-bundle:1",
+      "surface": "policy"
+    },
+    {
+      "schema_id": "policy-evaluation-trace",
+      "path": "schemas/policy_evaluation_trace.schema.json",
+      "urn": "urn:mullusi:schema:policy-evaluation-trace:1",
+      "surface": "policy"
+    },
+    {
       "schema_id": "policy-proof-report",
       "path": "schemas/policy_proof_report.schema.json",
       "urn": "urn:mullusi:schema:policy-proof-report:1",
