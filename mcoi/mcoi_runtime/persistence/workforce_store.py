@@ -26,7 +26,7 @@ from mcoi_runtime.contracts.workforce_runtime import (
 from mcoi_runtime.core.invariants import RuntimeCoreInvariantError
 from mcoi_runtime.core.workforce_runtime import WorkforceRuntimeEngine
 
-from ._serialization import deserialize_record, serialize_record
+from ._serialization import deserialize_record, loads_strict_json, serialize_record
 from .errors import CorruptedDataError, PersistenceError, PersistenceWriteError
 
 
@@ -60,7 +60,7 @@ def _atomic_write(path: Path, content: str) -> None:
 
 
 def _record_payload(record: object) -> dict[str, Any]:
-    payload = json.loads(serialize_record(record))
+    payload = loads_strict_json(serialize_record(record))
     if not isinstance(payload, dict):
         raise PersistenceError("serialized workforce record must be a JSON object")
     return payload
@@ -118,8 +118,8 @@ class WorkforceStore:
         if not path.exists():
             raise CorruptedDataError("workforce runtime file not found")
         try:
-            payload = json.loads(path.read_text(encoding="utf-8"))
-        except (json.JSONDecodeError, OSError) as exc:
+            payload = loads_strict_json(path.read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, OSError, ValueError) as exc:
             raise CorruptedDataError(_bounded_store_error("malformed workforce runtime file", exc)) from exc
         if not isinstance(payload, dict):
             raise CorruptedDataError("workforce runtime payload must be a JSON object")

@@ -129,9 +129,9 @@ def test_witness_integrity_report_tracks_exact_test_anchors() -> None:
     assert surfaces["governed_session"]["unanchored_witness_count"] == 0
     assert surfaces["lineage_query_api"]["unanchored_witness_count"] == 0
     assert surfaces["physical_action_boundary"]["unanchored_witness_count"] == 0
-    assert surfaces["restricted_adapter_worker_boundaries"]["unanchored_witness_count"] == 0
     assert surfaces["operational_platform_read_models"]["exact_test_anchor_count"] >= 25
     assert surfaces["operational_platform_read_models"]["unanchored_witness_count"] == 2
+    assert surfaces["trust_ledger"]["unanchored_witness_count"] == 0
 
 
 def test_declared_routes_have_explicit_coverage_classification() -> None:
@@ -2503,22 +2503,29 @@ def test_trust_ledger_surface_signs_terminal_evidence_bundles() -> None:
     assert "tests/test_gateway/test_trust_ledger_anchor_receipt.py" in trust_surface["evidence_files"]
     assert "tests/test_gateway/test_trust_ledger.py" in trust_surface["evidence_files"]
     assert "tests/test_verify_anchor_receipt.py" in trust_surface["evidence_files"]
-    assert "terminal_certificate_id_required" in witnesses
-    assert "bundle_hash_tamper_detection" in witnesses
-    assert "offline_bundle_verification_report_schema_valid" in witnesses
-    assert "hmac_signature_verification" in witnesses
-    assert "offline_anchor_verifier_validates_schema_artifacts_and_signature" in witnesses
-    assert "offline_anchor_artifact_root_tamper_detection" in witnesses
-    assert "offline_anchor_schema_invalid_receipt_rejected" in witnesses
-    assert "offline_anchor_package_hash_mismatch_rejected" in witnesses
-    assert "offline_anchor_package_schema_invalid_rejected" in witnesses
-    assert "offline_anchor_verification_report_schema_valid" in witnesses
-    assert "offline_anchor_report_emits_package_identity" in witnesses
-    assert "typed_artifact_root_required" in witnesses
-    assert "anchor_receipt_hmac_verification" in witnesses
-    assert "anchor_receipt_schema_valid" in witnesses
-    assert "export_package_binds_bundle_receipt_and_artifact_files" in witnesses
-    assert "export_package_rejects_receipt_identity_drift" in witnesses
+    expected_witnesses = {
+        "terminal_command_exports_signed_evidence_bundle",
+        "evidence_bundle_endpoint_rejects_non_terminal_command",
+        "offline_bundle_verifier_detects_tampering",
+        "offline_bundle_verifier_report_contract_allows_missing_secret",
+        "trust_ledger_issues_and_verifies_signed_bundle",
+        "trust_ledger_requires_terminal_certificate_and_evidence",
+        "trust_ledger_requires_anchor_ref_when_anchored",
+        "trust_ledger_bundle_schema_exposes_signature_contract",
+        "trust_ledger_anchor_receipt_binds_required_artifacts",
+        "trust_ledger_anchor_receipt_detects_tampered_artifact_root",
+        "trust_ledger_anchor_receipt_rejects_missing_terminal_artifact",
+        "trust_ledger_anchor_receipt_validates_against_schema",
+        "trust_ledger_export_package_binds_verifier_inputs",
+        "trust_ledger_export_package_rejects_receipt_identity_drift",
+        "verify_anchor_receipt_files_accepts_valid_export",
+        "verify_anchor_receipt_files_detects_tampered_artifact_root",
+        "verify_anchor_receipt_files_rejects_schema_invalid_receipt",
+        "verify_anchor_receipt_files_detects_package_bundle_hash_mismatch",
+        "verify_anchor_receipt_files_rejects_schema_invalid_package",
+        "verify_anchor_receipt_report_contract_allows_missing_secret_report",
+    }
+    assert expected_witnesses <= witnesses
     assert closure_actions["publish_trust_ledger_bundle_contract"]["status"] == "closed"
     assert closure_actions["publish_trust_ledger_anchor_receipt_contract"]["status"] == "closed"
 

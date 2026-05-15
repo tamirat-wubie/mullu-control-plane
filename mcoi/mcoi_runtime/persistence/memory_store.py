@@ -26,6 +26,7 @@ from mcoi_runtime.core.memory import (
     WorkingMemory,
 )
 
+from ._serialization import loads_strict_json
 from .errors import CorruptedDataError, PersistenceError, PersistenceWriteError
 
 
@@ -72,8 +73,8 @@ def _load_payload(path: Path, *, label: str) -> dict[str, Any]:
     if not path.exists():
         raise CorruptedDataError("memory store file not found")
     try:
-        raw = json.loads(path.read_text(encoding="utf-8"))
-    except (json.JSONDecodeError, OSError) as exc:
+        raw = loads_strict_json(path.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError, ValueError) as exc:
         raise CorruptedDataError(_bounded_store_error("malformed memory store file", exc)) from exc
     if not isinstance(raw, dict):
         raise CorruptedDataError("memory store payload must be a JSON object")

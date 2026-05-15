@@ -55,6 +55,23 @@ def test_deserialize_malformed_json_raises() -> None:
         deserialize_record("not json", TraceEntry)
 
 
+def test_deserialize_rejects_nonfinite_json_constants_with_bounded_error() -> None:
+    raw = (
+        '{"event_type":"test_event","goal_id":"goal-1","parent_trace_id":null,'
+        '"registry_hash":"registry-hash-1","state_hash":"state-hash-1",'
+        '"subject_id":"subject-1","timestamp":"2026-03-19T00:00:00+00:00",'
+        '"trace_id":"trace-1","score":NaN}'
+    )
+
+    with pytest.raises(CorruptedDataError, match=r"^malformed JSON \(ValueError\)$") as excinfo:
+        deserialize_record(raw, TraceEntry)
+
+    message = str(excinfo.value)
+    assert message == "malformed JSON (ValueError)"
+    assert "nan" not in message.lower()
+    assert "score" not in message
+
+
 def test_deserialize_empty_string_raises() -> None:
     with pytest.raises(CorruptedDataError):
         deserialize_record("", TraceEntry)

@@ -24,6 +24,7 @@ from pathlib import Path
 from types import MappingProxyType
 from typing import Any, Callable
 
+from ._serialization import loads_strict_json
 from .errors import CorruptedDataError, PathTraversalError, PersistenceError, PersistenceWriteError
 
 
@@ -185,8 +186,8 @@ class StatePersistence:
             return None
 
         try:
-            wrapper = json.loads(file_path.read_text(encoding="utf-8"))
-        except (json.JSONDecodeError, OSError) as exc:
+            wrapper = loads_strict_json(file_path.read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, OSError, ValueError) as exc:
             raise CorruptedDataError(_bounded_store_error("malformed state file", exc)) from exc
 
         if not isinstance(wrapper, dict):

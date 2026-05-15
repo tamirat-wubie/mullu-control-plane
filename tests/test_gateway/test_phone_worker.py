@@ -118,6 +118,27 @@ def test_phone_worker_rejects_bad_signature() -> None:
     assert "X-Mullu-Phone-Response-Signature" not in response.headers
 
 
+def test_phone_worker_parse_error_detail_is_bounded() -> None:
+    secret = "phone-secret"
+    body = b'{"request_id":"secret-token-from-phone"'
+    app = create_phone_worker_app(adapter=FakePhoneAdapter(), signing_secret=secret)
+    client = TestClient(app)
+
+    response = client.post(
+        "/phone/execute",
+        content=body,
+        headers={"X-Mullu-Phone-Signature": sign_capability_payload(body, secret)},
+    )
+    detail = response.json()["detail"]
+
+    assert response.status_code == 422
+    assert detail["error"] == "invalid phone execution request"
+    assert detail["error_code"] == "invalid_phone_execution_request"
+    assert detail["governed"] is True
+    assert "secret-token-from-phone" not in response.text
+    assert "X-Mullu-Phone-Response-Signature" not in response.headers
+
+
 def test_call_place_requires_approval_before_adapter() -> None:
     request = phone_action_request_from_mapping(
         _payload(

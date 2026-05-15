@@ -11,6 +11,7 @@ Invariants:
   - Proposals require a registered proposer with matching capabilities.
   - Proposal and vote mutations carry bounded proof records.
   - Voting submission transitions carry bounded proof records.
+  - Execution readiness transitions carry bounded proof records.
   - Dispatch results carry bounded proof records.
   - Observability read models are bounded and aggregated.
   - Consensus requires quorum (majority of registered agents).
@@ -203,6 +204,41 @@ class VotingSubmissionProof:
 
 
 @dataclass
+class ExecutionReadinessProof:
+    """Bounded proof record for a voting-to-execution transition."""
+    proof_id: str
+    plan_id: str
+    decision: str
+    reason: str
+    checked_at: str
+    from_phase: str
+    to_phase: str
+    proposal_count: int
+    vote_count: int
+    approval_count: int
+    rejection_count: int
+    voter_count: int
+    quorum_met: bool
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "proof_id": self.proof_id,
+            "plan_id": self.plan_id,
+            "decision": self.decision,
+            "reason": self.reason,
+            "checked_at": self.checked_at,
+            "from_phase": self.from_phase,
+            "to_phase": self.to_phase,
+            "proposal_count": self.proposal_count,
+            "vote_count": self.vote_count,
+            "approval_count": self.approval_count,
+            "rejection_count": self.rejection_count,
+            "voter_count": self.voter_count,
+            "quorum_met": self.quorum_met,
+        }
+
+
+@dataclass
 class OrchestrationPlan:
     """A multi-agent execution plan requiring consensus."""
     plan_id: str
@@ -215,6 +251,7 @@ class OrchestrationPlan:
     proposal_proofs: list[ProposalProof] = field(default_factory=list)
     vote_proofs: list[VoteProof] = field(default_factory=list)
     submission_proofs: list[VotingSubmissionProof] = field(default_factory=list)
+    execution_proofs: list[ExecutionReadinessProof] = field(default_factory=list)
     dispatch_proofs: list[DispatchProof] = field(default_factory=list)
     created_at: str = ""
 
@@ -243,6 +280,7 @@ class OrchestrationPlan:
             "proposal_proofs": [proof.to_dict() for proof in self.proposal_proofs],
             "vote_proofs": [proof.to_dict() for proof in self.vote_proofs],
             "submission_proofs": [proof.to_dict() for proof in self.submission_proofs],
+            "execution_proofs": [proof.to_dict() for proof in self.execution_proofs],
             "dispatch_proofs": [proof.to_dict() for proof in self.dispatch_proofs],
             "created_at": self.created_at,
         }
@@ -499,8 +537,24 @@ class AgentOrchestrator:
         if not plan:
             raise ValueError("plan unavailable")
         if plan.phase != OrchestrationPhase.VOTING:
+            plan.execution_proofs.append(
+                self._build_execution_readiness_proof(
+                    plan=plan,
+                    decision="rejected",
+                    reason="plan not ready for execution",
+                    to_phase=plan.phase,
+                )
+            )
             raise ValueError("plan not ready for execution")
         if not plan.has_quorum(self.agent_count):
+            plan.execution_proofs.append(
+                self._build_execution_readiness_proof(
+                    plan=plan,
+                    decision="blocked",
+                    reason="consensus quorum not met",
+                    to_phase=OrchestrationPhase.FAILED,
+                )
+            )
             proof = self._build_dispatch_proof(
                 plan=plan,
                 proposal=None,
@@ -512,6 +566,14 @@ class AgentOrchestrator:
             plan.phase = OrchestrationPhase.FAILED
             return plan
 
+        plan.execution_proofs.append(
+            self._build_execution_readiness_proof(
+                plan=plan,
+                decision="accepted",
+                reason="execution admitted",
+                to_phase=OrchestrationPhase.EXECUTING,
+            )
+        )
         plan.phase = OrchestrationPhase.EXECUTING
         for proposal in sorted(plan.proposals, key=lambda p: -p.priority):
             admission_error = self._proposal_admission_error(proposal)
@@ -634,6 +696,7 @@ class AgentOrchestrator:
             "recent_proposal_proofs": self._recent_proposal_proofs(proof_limit),
             "recent_vote_proofs": self._recent_vote_proofs(proof_limit),
             "recent_submission_proofs": self._recent_submission_proofs(proof_limit),
+            "recent_execution_proofs": self._recent_execution_proofs(proof_limit),
             "recent_dispatch_proofs": self._recent_dispatch_proofs(proof_limit),
             "recent_handoff_proofs": self.handoff_proofs(limit=proof_limit),
         }
@@ -686,6 +749,12 @@ class AgentOrchestrator:
                 for plan in self._plans.values()
                 for proof in plan.submission_proofs
             ),
+            "execution_proofs": sum(len(p.execution_proofs) for p in self._plans.values()),
+            "execution_decisions": _count_by_value(
+                proof.decision
+                for plan in self._plans.values()
+                for proof in plan.execution_proofs
+            ),
         }
 
     def _recent_proposal_proofs(self, limit: int) -> list[dict[str, Any]]:
@@ -715,6 +784,16 @@ class AgentOrchestrator:
             proof
             for plan in self._plans.values()
             for proof in plan.submission_proofs
+        ]
+        return [proof.to_dict() for proof in proofs[-limit:]]
+
+    def _recent_execution_proofs(self, limit: int) -> list[dict[str, Any]]:
+        if limit <= 0:
+            return []
+        proofs = [
+            proof
+            for plan in self._plans.values()
+            for proof in plan.execution_proofs
         ]
         return [proof.to_dict() for proof in proofs[-limit:]]
 
@@ -838,6 +917,31 @@ class AgentOrchestrator:
             proposal_count=len(plan.proposals),
             voter_count=self.agent_count,
             quorum_possible=self.agent_count > 0 and bool(plan.proposals),
+        )
+
+    def _build_execution_readiness_proof(
+        self,
+        *,
+        plan: OrchestrationPlan,
+        decision: str,
+        reason: str,
+        to_phase: OrchestrationPhase,
+    ) -> ExecutionReadinessProof:
+        proof_index = len(plan.execution_proofs) + 1
+        return ExecutionReadinessProof(
+            proof_id=f"{plan.plan_id}:execution:{proof_index}",
+            plan_id=plan.plan_id,
+            decision=decision,
+            reason=reason,
+            checked_at=self._clock(),
+            from_phase=plan.phase.value,
+            to_phase=to_phase.value,
+            proposal_count=len(plan.proposals),
+            vote_count=len(plan.votes),
+            approval_count=plan.approval_count,
+            rejection_count=plan.rejection_count,
+            voter_count=self.agent_count,
+            quorum_met=plan.has_quorum(self.agent_count),
         )
 
     def _handoff_admission_error(

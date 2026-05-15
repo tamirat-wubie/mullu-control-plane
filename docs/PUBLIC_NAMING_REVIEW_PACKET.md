@@ -21,6 +21,7 @@ Invariants: `Mullu` remains internally aligned only; paid public launch remains 
 | Input | Required reviewer action |
 | --- | --- |
 | `docs/mullu-name-clearance-draft.json` | Fill official search outcomes, final legal decision, and launch effect |
+| `docs/APP_TITLE_UPDATE_EVIDENCE_2026-05-15.md` | Confirm user-facing app title surfaces already use `Mullu` |
 | `docs/HOMEPAGE_UPDATE_EVIDENCE_2026-05-15.md` | Confirm the private-beta product landing page already satisfies the page-update gate |
 | `docs/OFFICIAL_CLEARANCE_ACCESS_LOG_2026-05-15.md` | Review blocked official API/RDAP access attempts and required replacement evidence |
 | `docs/SDK_API_STABILITY_REVIEW_2026-05-15.md` | Confirm technical `Mullu Platform` contract names remain intentional |
@@ -41,13 +42,13 @@ Invariants: `Mullu` remains internally aligned only; paid public launch remains 
 | `close_variant_review` | Legal confusion analysis for required `MULU` records |
 | `domain_ownership` | Registrar and DNS ownership evidence for selected product route |
 | `legal_review` | Qualified legal/trademark conclusion |
-| `app_title_update` | User-facing app title update after authorization |
 
 ## Closed Website Evidence
 
 | Gate | Evidence recorded |
 | --- | --- |
 | `website_deployment_verification` | `https://mullusi.com/mullu` returned HTTP 200 on 2026-05-15 and contained `Mullu, by Mullusi`, `Mullu CLI`, and `Mullu Control Plane` |
+| `app_title_update` | `docs/APP_TITLE_UPDATE_EVIDENCE_2026-05-15.md` records user-facing app titles using `Mullu` |
 | `homepage_update` | `docs/HOMEPAGE_UPDATE_EVIDENCE_2026-05-15.md` records the live private-beta product landing page |
 | `sdk_api_stability_review` | `docs/SDK_API_STABILITY_REVIEW_2026-05-15.md` records OpenAPI/SDK contract stability for `Mullu Platform` |
 

@@ -303,6 +303,15 @@ class TestPlanExecution:
         assert result.results[0]["proof_id"] == result.dispatch_proofs[0].proof_id
         assert result.dispatch_proofs[0].decision == "executed"
         assert result.dispatch_proofs[0].reason == "proposal dispatched"
+        assert len(result.execution_proofs) == 1
+        assert result.execution_proofs[0].decision == "accepted"
+        assert result.execution_proofs[0].reason == "execution admitted"
+        assert result.execution_proofs[0].from_phase == "voting"
+        assert result.execution_proofs[0].to_phase == "executing"
+        assert result.execution_proofs[0].proposal_count == 1
+        assert result.execution_proofs[0].vote_count == 2
+        assert result.execution_proofs[0].approval_count == 2
+        assert result.execution_proofs[0].quorum_met is True
 
     def test_execute_without_quorum_fails(self, orchestrator):
         plan = orchestrator.create_plan("agent-a", "goal")
@@ -318,6 +327,14 @@ class TestPlanExecution:
         assert result.dispatch_proofs[0].decision == "blocked"
         assert result.dispatch_proofs[0].reason == "consensus quorum not met"
         assert result.dispatch_proofs[0].quorum_met is False
+        assert len(result.execution_proofs) == 1
+        assert result.execution_proofs[0].decision == "blocked"
+        assert result.execution_proofs[0].reason == "consensus quorum not met"
+        assert result.execution_proofs[0].from_phase == "voting"
+        assert result.execution_proofs[0].to_phase == "failed"
+        assert result.execution_proofs[0].approval_count == 1
+        assert result.execution_proofs[0].voter_count == 3
+        assert result.execution_proofs[0].quorum_met is False
 
     def test_execute_with_custom_executor(self, orchestrator):
         plan = orchestrator.create_plan("agent-a", "goal")
@@ -456,6 +473,12 @@ class TestPlanExecution:
         with pytest.raises(ValueError, match="^plan not ready for execution$") as exc_info:
             orchestrator.execute_plan(plan.plan_id)
         assert OrchestrationPhase.PLANNING.value not in str(exc_info.value)
+        assert len(plan.execution_proofs) == 1
+        assert plan.execution_proofs[0].decision == "rejected"
+        assert plan.execution_proofs[0].reason == "plan not ready for execution"
+        assert plan.execution_proofs[0].from_phase == "planning"
+        assert plan.execution_proofs[0].to_phase == "planning"
+        assert plan.execution_proofs[0].quorum_met is False
 
     def test_execute_plan_unavailable_is_bounded(self, orchestrator):
         with pytest.raises(ValueError, match="^plan unavailable$") as exc_info:
@@ -610,6 +633,8 @@ class TestSummary:
         assert s["vote_decisions"] == {"accepted": 2}
         assert s["submission_proofs"] == 1
         assert s["submission_decisions"] == {"accepted": 1}
+        assert s["execution_proofs"] == 1
+        assert s["execution_decisions"] == {"accepted": 1}
 
     def test_plan_to_dict(self, orchestrator):
         plan = orchestrator.create_plan("agent-a", "goal")
@@ -620,6 +645,7 @@ class TestSummary:
         assert d["proposal_proofs"] == []
         assert d["vote_proofs"] == []
         assert d["submission_proofs"] == []
+        assert d["execution_proofs"] == []
         assert d["dispatch_proofs"] == []
 
     def test_plan_to_dict_includes_dispatch_proofs(self, orchestrator):
@@ -657,6 +683,7 @@ class TestSummary:
         assert model["summary"]["proposal_decisions"] == {"accepted": 1}
         assert model["summary"]["vote_decisions"] == {"accepted": 2}
         assert model["summary"]["submission_decisions"] == {"accepted": 1}
+        assert model["summary"]["execution_decisions"] == {"accepted": 1}
         assert model["summary"]["dispatch_decisions"] == {"executed": 1}
         assert model["summary"]["handoff_decisions"] == {
             "transferred": 1,
@@ -665,9 +692,11 @@ class TestSummary:
         assert len(model["recent_proposal_proofs"]) == 1
         assert len(model["recent_vote_proofs"]) == 1
         assert len(model["recent_submission_proofs"]) == 1
+        assert len(model["recent_execution_proofs"]) == 1
         assert len(model["recent_dispatch_proofs"]) == 1
         assert len(model["recent_handoff_proofs"]) == 1
         assert model["recent_proposal_proofs"][0]["decision"] == "accepted"
         assert model["recent_vote_proofs"][0]["agent_id"] == "agent-b"
         assert model["recent_submission_proofs"][0]["decision"] == "accepted"
+        assert model["recent_execution_proofs"][0]["decision"] == "accepted"
         assert model["recent_handoff_proofs"][0]["decision"] == "blocked"

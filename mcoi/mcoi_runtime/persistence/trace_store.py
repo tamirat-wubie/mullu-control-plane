@@ -14,7 +14,7 @@ from typing import TYPE_CHECKING
 
 from mcoi_runtime.contracts.trace import TraceEntry
 
-from ._serialization import serialize_record
+from ._serialization import loads_strict_json, serialize_record
 from .errors import (
     CorruptedDataError,
     PathTraversalError,
@@ -55,8 +55,8 @@ def _atomic_write(path: Path, content: str) -> None:
 def _load_trace_file(path: Path, *, expected_trace_id: str | None = None) -> TraceEntry:
     """Load and validate a single trace entry JSON file."""
     try:
-        raw = json.loads(path.read_text(encoding="utf-8"))
-    except (json.JSONDecodeError, OSError) as exc:
+        raw = loads_strict_json(path.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError, ValueError) as exc:
         raise CorruptedDataError(_bounded_store_error("malformed trace file", exc)) from exc
 
     if not isinstance(raw, dict):

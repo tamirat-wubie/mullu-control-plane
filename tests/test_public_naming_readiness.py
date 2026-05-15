@@ -31,6 +31,7 @@ from scripts.validate_public_naming_readiness import (  # noqa: E402
     REQUIRED_OPEN_GATES,
     REQUIRED_TSDR_SERIALS,
     REQUIRED_WEBSITE_ROUTES,
+    APP_TITLE_UPDATE_EVIDENCE_PATH,
     HOMEPAGE_UPDATE_EVIDENCE_PATH,
     OFFICIAL_CLEARANCE_ACCESS_LOG_PATH,
     PRODUCT_ROUTE_DEPLOYMENT_HANDOFF_PATH,
@@ -43,6 +44,7 @@ from scripts.validate_public_naming_readiness import (  # noqa: E402
     validate_no_forbidden_terminology,
     validate_clearance_domain_candidates,
     validate_clearance_official_searches,
+    validate_app_title_update_evidence,
     validate_domain_acquisition_plan,
     validate_homepage_update_evidence,
     validate_product_route_draft,
@@ -485,6 +487,22 @@ def test_homepage_update_evidence_rejects_paid_launch_boundary_removal(tmp_path:
 
     with pytest.raises(AssertionError, match="private-beta launch boundary"):
         validate_homepage_update_evidence(evidence_path)
+
+
+def test_app_title_update_evidence_closes_user_facing_title_gate() -> None:
+    validate_app_title_update_evidence()
+
+
+def test_app_title_update_evidence_rejects_missing_console_title(tmp_path: Path) -> None:
+    evidence_path = tmp_path / "APP_TITLE_UPDATE_EVIDENCE_2026-05-15.md"
+    evidence_text = APP_TITLE_UPDATE_EVIDENCE_PATH.read_text(encoding="utf-8").replace(
+        "<title>Mullu Authority Operator Console</title>",
+        "<title>Operator Console</title>",
+    )
+    evidence_path.write_text(evidence_text, encoding="utf-8")
+
+    with pytest.raises(AssertionError, match="app title update evidence missing literals"):
+        validate_app_title_update_evidence(evidence_path)
 
 
 def test_public_naming_review_packet_rejects_missing_serial(tmp_path: Path) -> None:

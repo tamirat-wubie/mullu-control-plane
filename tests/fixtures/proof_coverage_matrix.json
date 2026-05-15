@@ -810,9 +810,9 @@
     "by_coverage_state": {
       "proven": 12,
       "unproven": 0,
-      "witnessed": 323
+      "witnessed": 329
     },
-    "route_count": 335,
+    "route_count": 341,
     "routes": [
       {
         "coverage_state": "witnessed",
@@ -2315,6 +2315,11 @@
         "surface_id": "authority_obligation_mesh"
       },
       {
+        "coverage_state": "witnessed",
+        "route": "/browser/execute",
+        "surface_id": "restricted_adapter_worker_boundaries"
+      },
+      {
         "coverage_state": "proven",
         "route": "/capability-fabric/admission-audits",
         "surface_id": "gateway_capability_fabric"
@@ -2376,6 +2381,16 @@
       },
       {
         "coverage_state": "witnessed",
+        "route": "/document/execute",
+        "surface_id": "restricted_adapter_worker_boundaries"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/email-calendar/execute",
+        "surface_id": "restricted_adapter_worker_boundaries"
+      },
+      {
+        "coverage_state": "witnessed",
         "route": "/evidence/bundles/{command_id}",
         "surface_id": "trust_ledger"
       },
@@ -2388,6 +2403,16 @@
         "coverage_state": "witnessed",
         "route": "/gateway/witness",
         "surface_id": "gateway_runtime_witness"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/messaging/execute",
+        "surface_id": "restricted_adapter_worker_boundaries"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/phone/execute",
+        "surface_id": "restricted_adapter_worker_boundaries"
       },
       {
         "coverage_state": "witnessed",
@@ -2443,6 +2468,11 @@
         "coverage_state": "witnessed",
         "route": "/runtime/witness",
         "surface_id": "gateway_runtime_witness"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/voice/execute",
+        "surface_id": "restricted_adapter_worker_boundaries"
       },
       {
         "coverage_state": "witnessed",
@@ -2576,17 +2606,23 @@
         "gateway/browser_worker.py",
         "gateway/document_worker.py",
         "gateway/email_calendar_worker.py",
+        "gateway/messaging_worker.py",
+        "gateway/phone_worker.py",
         "gateway/voice_worker.py",
         "tests/test_gateway/test_browser_worker.py",
         "tests/test_gateway/test_document_worker.py",
         "tests/test_gateway/test_email_calendar_worker.py",
+        "tests/test_gateway/test_messaging_worker.py",
+        "tests/test_gateway/test_phone_worker.py",
         "tests/test_gateway/test_voice_worker.py"
       ],
-      "notes": "Restricted browser, document, email/calendar, and voice workers reject unsigned requests, execute only signed governed actions, emit receipt-bearing signed responses, and bound malformed request details without echoing submitted payloads.",
+      "notes": "Restricted browser, document, email/calendar, messaging, phone, and voice workers reject unsigned requests, execute only signed governed actions, emit receipt-bearing signed responses, and bound malformed request details without echoing submitted payloads.",
       "representative_paths": [
         "/browser/execute",
         "/document/execute",
         "/email-calendar/execute",
+        "/messaging/execute",
+        "/phone/execute",
         "/voice/execute"
       ],
       "request_proof": "request_proof",
@@ -2600,6 +2636,12 @@
         "email_calendar_worker_rejects_bad_signature",
         "email_calendar_worker_executes_signed_draft_request",
         "email_calendar_worker_parse_error_detail_is_bounded",
+        "messaging_worker_rejects_bad_signature",
+        "messaging_worker_executes_signed_draft_request",
+        "messaging_worker_parse_error_detail_is_bounded",
+        "phone_worker_rejects_bad_signature",
+        "phone_worker_executes_signed_receive_request",
+        "phone_worker_parse_error_detail_is_bounded",
         "voice_worker_rejects_bad_signature",
         "voice_worker_executes_signed_intent_classification_request",
         "voice_worker_parse_error_detail_is_bounded"
@@ -5204,28 +5246,37 @@
       ],
       "request_proof": "request_proof",
       "runtime_witnesses": [
-        "terminal_certificate_id_required",
-        "evidence_refs_required",
-        "evidence_bundle_endpoint_requires_terminal_certificate",
-        "offline_bundle_verifier_validates_schema_hash_and_signature",
-        "offline_bundle_verification_report_schema_valid",
-        "offline_anchor_verifier_validates_schema_artifacts_and_signature",
-        "bundle_hash_tamper_detection",
-        "hmac_signature_verification",
-        "anchored_bundle_requires_external_anchor_ref",
-        "typed_artifact_root_required",
-        "offline_anchor_artifact_root_tamper_detection",
-        "offline_anchor_schema_invalid_receipt_rejected",
-        "offline_anchor_package_hash_mismatch_rejected",
-        "offline_anchor_package_schema_invalid_rejected",
-        "offline_anchor_verification_report_schema_valid",
-        "offline_anchor_report_emits_package_identity",
-        "anchor_receipt_hmac_verification",
-        "anchor_receipt_schema_valid",
-        "anchor_receipt_non_terminal_marker_required",
-        "export_package_binds_bundle_receipt_and_artifact_files",
-        "export_package_rejects_receipt_identity_drift",
-        "trust_ledger_bundle_schema_valid"
+        "terminal_command_exports_signed_evidence_bundle",
+        "evidence_bundle_endpoint_rejects_non_terminal_command",
+        "offline_bundle_verifier_detects_tampering",
+        "offline_bundle_verifier_report_contract_allows_missing_secret",
+        "trust_ledger_issues_and_verifies_signed_bundle",
+        "trust_ledger_detects_tampered_bundle_content",
+        "trust_ledger_detects_wrong_secret_signature",
+        "trust_ledger_requires_terminal_certificate_and_evidence",
+        "trust_ledger_rejects_non_proof_evidence_refs",
+        "trust_ledger_requires_anchor_ref_when_anchored",
+        "trust_ledger_bundle_schema_exposes_signature_contract",
+        "trust_ledger_bundle_schema_rejects_non_proof_evidence_ref",
+        "trust_ledger_anchor_receipt_binds_required_artifacts",
+        "trust_ledger_anchor_receipt_detects_tampered_artifact_root",
+        "trust_ledger_anchor_receipt_rejects_missing_terminal_artifact",
+        "trust_ledger_anchor_receipt_rejects_non_proof_artifact_evidence_ref",
+        "trust_ledger_anchor_receipt_rejects_command_identity_drift",
+        "trust_ledger_anchor_receipt_rejects_non_canonical_receipt_id",
+        "trust_ledger_anchor_receipt_validates_against_schema",
+        "trust_ledger_anchor_receipt_schema_rejects_non_canonical_bundle_id",
+        "trust_ledger_export_package_binds_verifier_inputs",
+        "trust_ledger_export_package_rejects_receipt_identity_drift",
+        "verify_anchor_receipt_files_accepts_valid_export",
+        "verify_anchor_receipt_files_detects_tampered_artifact_root",
+        "verify_anchor_receipt_files_rejects_schema_invalid_receipt",
+        "verify_anchor_receipt_files_rejects_schema_invalid_artifacts",
+        "verify_anchor_receipt_files_detects_package_bundle_hash_mismatch",
+        "verify_anchor_receipt_files_rejects_schema_invalid_package",
+        "verify_anchor_receipt_files_rejects_package_hash_mismatch",
+        "verify_anchor_receipt_cli_reports_valid_export",
+        "verify_anchor_receipt_report_contract_allows_missing_secret_report"
       ],
       "surface_id": "trust_ledger"
     },
@@ -6300,8 +6351,8 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 161,
-    "runtime_witness_count": 976,
+    "exact_test_anchor_count": 198,
+    "runtime_witness_count": 991,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -6404,6 +6455,42 @@
           },
           {
             "anchors": [
+              "tests/test_gateway/test_messaging_worker.py::test_messaging_worker_rejects_bad_signature"
+            ],
+            "witness": "messaging_worker_rejects_bad_signature"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_messaging_worker.py::test_messaging_worker_executes_signed_draft_request"
+            ],
+            "witness": "messaging_worker_executes_signed_draft_request"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_messaging_worker.py::test_messaging_worker_parse_error_detail_is_bounded"
+            ],
+            "witness": "messaging_worker_parse_error_detail_is_bounded"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_phone_worker.py::test_phone_worker_rejects_bad_signature"
+            ],
+            "witness": "phone_worker_rejects_bad_signature"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_phone_worker.py::test_phone_worker_executes_signed_receive_request"
+            ],
+            "witness": "phone_worker_executes_signed_receive_request"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_phone_worker.py::test_phone_worker_parse_error_detail_is_bounded"
+            ],
+            "witness": "phone_worker_parse_error_detail_is_bounded"
+          },
+          {
+            "anchors": [
               "tests/test_gateway/test_voice_worker.py::test_voice_worker_rejects_bad_signature"
             ],
             "witness": "voice_worker_rejects_bad_signature"
@@ -6421,8 +6508,8 @@
             "witness": "voice_worker_parse_error_detail_is_bounded"
           }
         ],
-        "exact_test_anchor_count": 12,
-        "runtime_witness_count": 12,
+        "exact_test_anchor_count": 18,
+        "runtime_witness_count": 18,
         "surface_id": "restricted_adapter_worker_boundaries",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []
@@ -8113,35 +8200,199 @@
         ]
       },
       {
-        "anchored_witnesses": [],
-        "exact_test_anchor_count": 0,
-        "runtime_witness_count": 22,
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "tests/test_gateway/test_evidence_bundle_endpoint.py::test_terminal_command_exports_signed_evidence_bundle"
+            ],
+            "witness": "terminal_command_exports_signed_evidence_bundle"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_evidence_bundle_endpoint.py::test_evidence_bundle_endpoint_rejects_non_terminal_command"
+            ],
+            "witness": "evidence_bundle_endpoint_rejects_non_terminal_command"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_evidence_bundle_endpoint.py::test_offline_bundle_verifier_detects_tampering"
+            ],
+            "witness": "offline_bundle_verifier_detects_tampering"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_evidence_bundle_endpoint.py::test_offline_bundle_verifier_report_contract_allows_missing_secret"
+            ],
+            "witness": "offline_bundle_verifier_report_contract_allows_missing_secret"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_trust_ledger.py::test_trust_ledger_issues_and_verifies_signed_bundle"
+            ],
+            "witness": "trust_ledger_issues_and_verifies_signed_bundle"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_trust_ledger.py::test_trust_ledger_detects_tampered_bundle_content"
+            ],
+            "witness": "trust_ledger_detects_tampered_bundle_content"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_trust_ledger.py::test_trust_ledger_detects_wrong_secret_signature"
+            ],
+            "witness": "trust_ledger_detects_wrong_secret_signature"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_trust_ledger.py::test_trust_ledger_requires_terminal_certificate_and_evidence"
+            ],
+            "witness": "trust_ledger_requires_terminal_certificate_and_evidence"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_trust_ledger.py::test_trust_ledger_rejects_non_proof_evidence_refs"
+            ],
+            "witness": "trust_ledger_rejects_non_proof_evidence_refs"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_trust_ledger.py::test_trust_ledger_requires_anchor_ref_when_anchored"
+            ],
+            "witness": "trust_ledger_requires_anchor_ref_when_anchored"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_trust_ledger.py::test_trust_ledger_bundle_schema_exposes_signature_contract"
+            ],
+            "witness": "trust_ledger_bundle_schema_exposes_signature_contract"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_trust_ledger.py::test_trust_ledger_bundle_schema_rejects_non_proof_evidence_ref"
+            ],
+            "witness": "trust_ledger_bundle_schema_rejects_non_proof_evidence_ref"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_trust_ledger_anchor_receipt.py::test_trust_ledger_anchor_receipt_binds_required_artifacts"
+            ],
+            "witness": "trust_ledger_anchor_receipt_binds_required_artifacts"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_trust_ledger_anchor_receipt.py::test_trust_ledger_anchor_receipt_detects_tampered_artifact_root"
+            ],
+            "witness": "trust_ledger_anchor_receipt_detects_tampered_artifact_root"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_trust_ledger_anchor_receipt.py::test_trust_ledger_anchor_receipt_rejects_missing_terminal_artifact"
+            ],
+            "witness": "trust_ledger_anchor_receipt_rejects_missing_terminal_artifact"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_trust_ledger_anchor_receipt.py::test_trust_ledger_anchor_receipt_rejects_non_proof_artifact_evidence_ref"
+            ],
+            "witness": "trust_ledger_anchor_receipt_rejects_non_proof_artifact_evidence_ref"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_trust_ledger_anchor_receipt.py::test_trust_ledger_anchor_receipt_rejects_command_identity_drift"
+            ],
+            "witness": "trust_ledger_anchor_receipt_rejects_command_identity_drift"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_trust_ledger_anchor_receipt.py::test_trust_ledger_anchor_receipt_rejects_non_canonical_receipt_id"
+            ],
+            "witness": "trust_ledger_anchor_receipt_rejects_non_canonical_receipt_id"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_trust_ledger_anchor_receipt.py::test_trust_ledger_anchor_receipt_validates_against_schema"
+            ],
+            "witness": "trust_ledger_anchor_receipt_validates_against_schema"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_trust_ledger_anchor_receipt.py::test_trust_ledger_anchor_receipt_schema_rejects_non_canonical_bundle_id"
+            ],
+            "witness": "trust_ledger_anchor_receipt_schema_rejects_non_canonical_bundle_id"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_trust_ledger_anchor_receipt.py::test_trust_ledger_export_package_binds_verifier_inputs"
+            ],
+            "witness": "trust_ledger_export_package_binds_verifier_inputs"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_trust_ledger_anchor_receipt.py::test_trust_ledger_export_package_rejects_receipt_identity_drift"
+            ],
+            "witness": "trust_ledger_export_package_rejects_receipt_identity_drift"
+          },
+          {
+            "anchors": [
+              "tests/test_verify_anchor_receipt.py::test_verify_anchor_receipt_files_accepts_valid_export"
+            ],
+            "witness": "verify_anchor_receipt_files_accepts_valid_export"
+          },
+          {
+            "anchors": [
+              "tests/test_verify_anchor_receipt.py::test_verify_anchor_receipt_files_detects_tampered_artifact_root"
+            ],
+            "witness": "verify_anchor_receipt_files_detects_tampered_artifact_root"
+          },
+          {
+            "anchors": [
+              "tests/test_verify_anchor_receipt.py::test_verify_anchor_receipt_files_rejects_schema_invalid_receipt"
+            ],
+            "witness": "verify_anchor_receipt_files_rejects_schema_invalid_receipt"
+          },
+          {
+            "anchors": [
+              "tests/test_verify_anchor_receipt.py::test_verify_anchor_receipt_files_rejects_schema_invalid_artifacts"
+            ],
+            "witness": "verify_anchor_receipt_files_rejects_schema_invalid_artifacts"
+          },
+          {
+            "anchors": [
+              "tests/test_verify_anchor_receipt.py::test_verify_anchor_receipt_files_detects_package_bundle_hash_mismatch"
+            ],
+            "witness": "verify_anchor_receipt_files_detects_package_bundle_hash_mismatch"
+          },
+          {
+            "anchors": [
+              "tests/test_verify_anchor_receipt.py::test_verify_anchor_receipt_files_rejects_schema_invalid_package"
+            ],
+            "witness": "verify_anchor_receipt_files_rejects_schema_invalid_package"
+          },
+          {
+            "anchors": [
+              "tests/test_verify_anchor_receipt.py::test_verify_anchor_receipt_files_rejects_package_hash_mismatch"
+            ],
+            "witness": "verify_anchor_receipt_files_rejects_package_hash_mismatch"
+          },
+          {
+            "anchors": [
+              "tests/test_verify_anchor_receipt.py::test_verify_anchor_receipt_cli_reports_valid_export"
+            ],
+            "witness": "verify_anchor_receipt_cli_reports_valid_export"
+          },
+          {
+            "anchors": [
+              "tests/test_verify_anchor_receipt.py::test_verify_anchor_receipt_report_contract_allows_missing_secret_report"
+            ],
+            "witness": "verify_anchor_receipt_report_contract_allows_missing_secret_report"
+          }
+        ],
+        "exact_test_anchor_count": 31,
+        "runtime_witness_count": 31,
         "surface_id": "trust_ledger",
-        "unanchored_witness_count": 22,
-        "unanchored_witnesses": [
-          "terminal_certificate_id_required",
-          "evidence_refs_required",
-          "evidence_bundle_endpoint_requires_terminal_certificate",
-          "offline_bundle_verifier_validates_schema_hash_and_signature",
-          "offline_bundle_verification_report_schema_valid",
-          "offline_anchor_verifier_validates_schema_artifacts_and_signature",
-          "bundle_hash_tamper_detection",
-          "hmac_signature_verification",
-          "anchored_bundle_requires_external_anchor_ref",
-          "typed_artifact_root_required",
-          "offline_anchor_artifact_root_tamper_detection",
-          "offline_anchor_schema_invalid_receipt_rejected",
-          "offline_anchor_package_hash_mismatch_rejected",
-          "offline_anchor_package_schema_invalid_rejected",
-          "offline_anchor_verification_report_schema_valid",
-          "offline_anchor_report_emits_package_identity",
-          "anchor_receipt_hmac_verification",
-          "anchor_receipt_schema_valid",
-          "anchor_receipt_non_terminal_marker_required",
-          "export_package_binds_bundle_receipt_and_artifact_files",
-          "export_package_rejects_receipt_identity_drift",
-          "trust_ledger_bundle_schema_valid"
-        ]
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
       },
       {
         "anchored_witnesses": [],
@@ -9133,6 +9384,6 @@
         ]
       }
     ],
-    "unanchored_witness_count": 815
+    "unanchored_witness_count": 793
   }
 }

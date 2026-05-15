@@ -20,6 +20,7 @@ from mcoi_runtime.contracts._base import thaw_value
 from mcoi_runtime.core.invariants import RuntimeCoreInvariantError
 from mcoi_runtime.core.registry_store import RegistryEntry, RegistryLifecycle, RegistryStore
 
+from ._serialization import loads_strict_json
 from .errors import CorruptedDataError, PersistenceError, PersistenceWriteError
 
 
@@ -141,8 +142,8 @@ class RegistryBackend:
             raise CorruptedDataError("registry file not found")
 
         try:
-            raw = json.loads(path.read_text(encoding="utf-8"))
-        except (json.JSONDecodeError, OSError) as exc:
+            raw = loads_strict_json(path.read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, OSError, ValueError) as exc:
             raise CorruptedDataError(_bounded_store_error("malformed registry file", exc)) from exc
 
         if not isinstance(raw, dict) or "entries" not in raw:
