@@ -49,6 +49,13 @@
       ]
     },
     {
+      "action_id": "bind_approval_engine_mutations_to_effect_receipts",
+      "status": "closed",
+      "surfaces": [
+        "approval_engine_lifecycle"
+      ]
+    },
+    {
       "action_id": "classify_authority_operator_controls",
       "status": "closed",
       "surfaces": [
@@ -755,7 +762,7 @@
   ],
   "coverage_summary": {
     "by_action_proof": {
-      "action_proof": 93,
+      "action_proof": 94,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 16,
@@ -763,7 +770,7 @@
     },
     "by_audit": {
       "action_proof": 0,
-      "audit_chain": 107,
+      "audit_chain": 108,
       "gap": 0,
       "read_model": 4,
       "request_proof": 0
@@ -771,21 +778,21 @@
     "by_coverage_state": {
       "proven": 1,
       "unproven": 0,
-      "witnessed": 110
+      "witnessed": 111
     },
     "by_request_proof": {
       "action_proof": 1,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 18,
-      "request_proof": 92
+      "request_proof": 93
     },
-    "surface_count": 111
+    "surface_count": 112
   },
   "evidence_quality": {
     "by_strength": {
       "classified_with_quality_gaps": 10,
-      "strong": 101,
+      "strong": 102,
       "unproven": 0
     },
     "quality_gap_count": 10,
@@ -4256,6 +4263,34 @@
       "request_proof": "request_proof",
       "runtime_witnesses": [],
       "surface_id": "gateway_approval_resolution"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "mcoi/mcoi_runtime/core/approval.py",
+        "mcoi/mcoi_runtime/contracts/approval.py",
+        "mcoi/tests/test_approval.py"
+      ],
+      "notes": "Approval engine lifecycle mutations register request, decision, consumption, revocation, and override receipts as bounded evidence that can close Effect Assurance observation.",
+      "representative_paths": [
+        "ApprovalEngine.submit_request",
+        "ApprovalEngine.record_decision",
+        "ApprovalEngine.consume_approval",
+        "ApprovalEngine.revoke",
+        "ApprovalEngine.record_override"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "approval_request_mutation_receipt_emitted",
+        "approval_decision_mutation_receipt_emitted",
+        "approval_consumption_mutation_receipt_emitted",
+        "approval_revocation_mutation_receipt_emitted",
+        "approval_override_mutation_receipt_emitted",
+        "approval_mutation_receipt_closes_effect_assurance"
+      ],
+      "surface_id": "approval_engine_lifecycle"
     },
     {
       "action_proof": "action_proof",

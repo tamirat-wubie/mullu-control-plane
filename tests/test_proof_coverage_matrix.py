@@ -894,6 +894,33 @@ def test_authority_operator_controls_surface_is_witnessed() -> None:
     assert closure_actions["classify_authority_operator_controls"]["status"] == "closed"
 
 
+def test_approval_engine_lifecycle_surface_records_effect_receipts() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    approval_surface = surfaces["approval_engine_lifecycle"]
+    witnesses = set(approval_surface["runtime_witnesses"])
+
+    assert approval_surface["coverage_state"] == "witnessed"
+    assert approval_surface["request_proof"] == "request_proof"
+    assert approval_surface["action_proof"] == "action_proof"
+    assert "ApprovalEngine.submit_request" in approval_surface["representative_paths"]
+    assert "ApprovalEngine.record_decision" in approval_surface["representative_paths"]
+    assert "ApprovalEngine.consume_approval" in approval_surface["representative_paths"]
+    assert "ApprovalEngine.revoke" in approval_surface["representative_paths"]
+    assert "ApprovalEngine.record_override" in approval_surface["representative_paths"]
+    assert "mcoi/mcoi_runtime/core/approval.py" in approval_surface["evidence_files"]
+    assert "mcoi/mcoi_runtime/contracts/approval.py" in approval_surface["evidence_files"]
+    assert "mcoi/tests/test_approval.py" in approval_surface["evidence_files"]
+    assert "approval_request_mutation_receipt_emitted" in witnesses
+    assert "approval_decision_mutation_receipt_emitted" in witnesses
+    assert "approval_consumption_mutation_receipt_emitted" in witnesses
+    assert "approval_revocation_mutation_receipt_emitted" in witnesses
+    assert "approval_override_mutation_receipt_emitted" in witnesses
+    assert "approval_mutation_receipt_closes_effect_assurance" in witnesses
+    assert closure_actions["bind_approval_engine_mutations_to_effect_receipts"]["status"] == "closed"
+
+
 def test_authority_obligation_mesh_binds_command_authority_read_model() -> None:
     matrix = _load_fixture()
     surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}

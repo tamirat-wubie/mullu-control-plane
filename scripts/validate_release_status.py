@@ -73,6 +73,7 @@ REQUIRED_CI_LITERALS: tuple[str, ...] = (
     "python scripts/validate_protocol_manifest.py",
     "python scripts/validate_logic_governance_application.py",
     "python scripts/proof_coverage_matrix.py --check",
+    "python scripts/validate_terminal_closure_certificate.py --json",
     "python scripts/validate_artifacts.py",
     "python scripts/validate_schemas.py --strict",
     "python scripts/validate_artifacts.py --strict",

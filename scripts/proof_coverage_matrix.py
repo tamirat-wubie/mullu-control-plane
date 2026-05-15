@@ -1721,6 +1721,34 @@ def proof_coverage_matrix() -> dict[str, Any]:
             "Approval resolution exposes protected operator paths and audited chain state.",
         ),
         _surface(
+            "approval_engine_lifecycle",
+            [
+                "ApprovalEngine.submit_request",
+                "ApprovalEngine.record_decision",
+                "ApprovalEngine.consume_approval",
+                "ApprovalEngine.revoke",
+                "ApprovalEngine.record_override",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "mcoi/mcoi_runtime/core/approval.py",
+                "mcoi/mcoi_runtime/contracts/approval.py",
+                "mcoi/tests/test_approval.py",
+            ],
+            "Approval engine lifecycle mutations register request, decision, consumption, revocation, and override receipts as bounded evidence that can close Effect Assurance observation.",
+            [
+                "approval_request_mutation_receipt_emitted",
+                "approval_decision_mutation_receipt_emitted",
+                "approval_consumption_mutation_receipt_emitted",
+                "approval_revocation_mutation_receipt_emitted",
+                "approval_override_mutation_receipt_emitted",
+                "approval_mutation_receipt_closes_effect_assurance",
+            ],
+        ),
+        _surface(
             "authority_obligation_mesh",
             [
                 "/authority/witness",
@@ -3675,6 +3703,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
         {
             "action_id": "bound_authority_read_models_to_paginated_windows",
             "surfaces": ["gateway_approval_resolution", "authority_obligation_mesh"],
+            "status": "closed",
+        },
+        {
+            "action_id": "bind_approval_engine_mutations_to_effect_receipts",
+            "surfaces": ["approval_engine_lifecycle"],
             "status": "closed",
         },
         {
