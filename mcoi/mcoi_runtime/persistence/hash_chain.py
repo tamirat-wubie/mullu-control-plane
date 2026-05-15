@@ -9,6 +9,7 @@ from __future__ import annotations
 import hashlib
 import os
 import tempfile
+import time
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
@@ -24,6 +25,9 @@ from .errors import (
 )
 
 GENESIS_PREVIOUS_HASH = "0" * 64  # 64 hex zeros for the genesis entry
+APPEND_MAX_CONTENTION_RETRIES = 64
+APPEND_CONTENTION_BACKOFF_SECONDS = 0.001
+APPEND_CONTENTION_BACKOFF_MAX_SECONDS = 0.02
 
 
 def _bounded_store_error(summary: str, exc: BaseException) -> str:
@@ -119,6 +123,15 @@ def compute_chain_hash(sequence_number: int, content_hash: str, previous_hash: s
 def compute_content_hash(content: str) -> str:
     """Compute SHA-256 hash of arbitrary string content."""
     return hashlib.sha256(content.encode("utf-8")).hexdigest()
+
+
+def _sleep_after_contention(attempt: int) -> None:
+    """Yield between append collisions so concurrent writers can make progress."""
+    delay = min(
+        APPEND_CONTENTION_BACKOFF_SECONDS * (attempt + 1),
+        APPEND_CONTENTION_BACKOFF_MAX_SECONDS,
+    )
+    time.sleep(delay)
 
 
 class HashChainStore:
@@ -234,7 +247,7 @@ class HashChainStore:
         ``O_EXCL`` syscall, the loser re-reads, and the chain stays
         linear.
         """
-        max_attempts = 64
+        max_attempts = APPEND_MAX_CONTENTION_RETRIES
         for _attempt in range(max_attempts):
             try:
                 entry = self.try_append(content_hash)
@@ -247,6 +260,8 @@ class HashChainStore:
             if entry is not None:
                 return entry
             # Collision: another writer claimed this sequence. Loop.
+            if _attempt + 1 < max_attempts:
+                _sleep_after_contention(_attempt)
         raise PersistenceWriteError(
             f"hash chain append failed after {max_attempts} contention retries"
         )
