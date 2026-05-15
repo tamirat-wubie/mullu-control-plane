@@ -19,12 +19,12 @@ from mcoi_runtime.contracts.roles import TeamQueueState
 from mcoi_runtime.core.invariants import RuntimeCoreInvariantError
 from mcoi_runtime.core.team_runtime import TeamEngine
 
-from ._serialization import deserialize_record, serialize_record
+from ._serialization import deserialize_record, loads_strict_json, serialize_record
 from .errors import CorruptedDataError, PersistenceError, PersistenceWriteError
 
 
 def _deterministic_json(payload: object) -> str:
-    return json.dumps(payload, sort_keys=True, ensure_ascii=True, separators=(",", ":"))
+    return json.dumps(payload, sort_keys=True, ensure_ascii=True, separators=(",", ":"), allow_nan=False)
 
 
 def _bounded_store_error(summary: str, exc: BaseException) -> str:
@@ -53,7 +53,7 @@ def _atomic_write(path: Path, content: str) -> None:
 
 
 def _queue_state_payload(state: TeamQueueState) -> dict[str, object]:
-    payload = json.loads(serialize_record(state))
+    payload = loads_strict_json(serialize_record(state))
     if not isinstance(payload, dict):
         raise PersistenceError("serialized team queue state must be a JSON object")
     return payload
@@ -88,8 +88,8 @@ class TeamQueueStore:
         if not path.exists():
             raise CorruptedDataError("team queue state file not found")
         try:
-            payload = json.loads(path.read_text(encoding="utf-8"))
-        except (json.JSONDecodeError, OSError) as exc:
+            payload = loads_strict_json(path.read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, OSError, ValueError) as exc:
             raise CorruptedDataError(_bounded_store_error("malformed team queue state file", exc)) from exc
         if not isinstance(payload, dict):
             raise CorruptedDataError("team queue state payload must be a JSON object")

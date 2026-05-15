@@ -241,10 +241,13 @@ def _normalize_git_ref(value: str, field_name: str) -> str:
     ref = require_non_empty_text(value, field_name).strip()
     if ref.startswith("/") or ref.endswith("/") or "//" in ref:
         raise ValueError(f"{field_name}_invalid_git_ref")
+    if ref == "@" or "@{" in ref or ".." in ref:
+        raise ValueError(f"{field_name}_invalid_git_ref")
     if ref.startswith(".") or ref.endswith(".") or ref.endswith(".lock"):
         raise ValueError(f"{field_name}_invalid_git_ref")
-    if any(part in {"", ".", ".."} for part in ref.split("/")):
-        raise ValueError(f"{field_name}_invalid_git_ref")
+    for part in ref.split("/"):
+        if part in {"", ".", ".."} or part.startswith(".") or part.endswith(".lock"):
+            raise ValueError(f"{field_name}_invalid_git_ref")
     if any(char in frozenset(" ~^:?*[]\\") or ord(char) < 32 for char in ref):
         raise ValueError(f"{field_name}_invalid_git_ref")
     return ref

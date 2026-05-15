@@ -136,3 +136,20 @@ class TestAgentErrorContracts:
         assert data["error_code"] == "plan_not_found"
         assert data["governed"] is True
         assert "plan-missing-123" not in str(resp.json())
+
+    def test_orchestration_handoff_returns_proof_id(self, client):
+        resp = client.post(
+            "/api/v1/orchestration/handoff",
+            json={
+                "from_agent": "llm-agent",
+                "to_agent": "code-agent",
+                "required_capabilities": ["code_execution"],
+                "payload": {"task": "unit"},
+            },
+        )
+
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["success"] is True
+        assert data["proof_id"].startswith("handoff:")
+        assert data["governed"] is True

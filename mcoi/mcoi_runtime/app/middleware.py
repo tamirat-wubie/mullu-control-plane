@@ -258,12 +258,20 @@ class GovernanceMiddleware(BaseHTTPMiddleware):
 
         if not result.allowed:
             if self._on_reject:
-                self._on_reject({
-                    "path": path,
-                    "tenant_id": tenant_id,
-                    "guard": result.blocking_guard,
-                    "reason": result.reason,
-                })
+                try:
+                    self._on_reject({
+                        "path": path,
+                        "tenant_id": tenant_id,
+                        "guard": result.blocking_guard,
+                        "reason": result.reason,
+                    })
+                except Exception as exc:
+                    if self._metrics_fn:
+                        self._metrics_fn("reject_callback_failures", 1)
+                    _log.warning(
+                        "reject callback failed (%s)",
+                        type(exc).__name__,
+                    )
 
             if result.blocking_guard == "rate_limit":
                 status_code = 429
@@ -283,12 +291,20 @@ class GovernanceMiddleware(BaseHTTPMiddleware):
 
         # Guards passed - record allowed request for audit completeness
         if self._on_allow:
-            self._on_allow({
-                "path": path,
-                "tenant_id": context.get("tenant_id", ""),
-                "method": request.method,
-                "latency_ms": round(latency_ms, 2),
-            })
+            try:
+                self._on_allow({
+                    "path": path,
+                    "tenant_id": context.get("tenant_id", ""),
+                    "method": request.method,
+                    "latency_ms": round(latency_ms, 2),
+                })
+            except Exception as exc:
+                if self._metrics_fn:
+                    self._metrics_fn("allow_callback_failures", 1)
+                _log.warning(
+                    "allow callback failed (%s)",
+                    type(exc).__name__,
+                )
 
         # Guards passed - proceed to endpoint
         response = await call_next(request)

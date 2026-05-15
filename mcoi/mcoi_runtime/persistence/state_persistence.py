@@ -24,6 +24,7 @@ from pathlib import Path
 from types import MappingProxyType
 from typing import Any, Callable
 
+from ._serialization import loads_strict_json
 from .errors import CorruptedDataError, PathTraversalError, PersistenceError, PersistenceWriteError
 
 
@@ -76,7 +77,7 @@ def _copy_state_data(data: object) -> dict[str, Any]:
 
 def _deterministic_json(data: Any) -> str:
     try:
-        return json.dumps(data, sort_keys=True, ensure_ascii=True, separators=(",", ":"))
+        return json.dumps(data, sort_keys=True, ensure_ascii=True, separators=(",", ":"), allow_nan=False)
     except (TypeError, ValueError) as exc:
         raise PersistenceError(_bounded_store_error("state data is not JSON serializable", exc)) from exc
 
@@ -185,8 +186,8 @@ class StatePersistence:
             return None
 
         try:
-            wrapper = json.loads(file_path.read_text(encoding="utf-8"))
-        except (json.JSONDecodeError, OSError) as exc:
+            wrapper = loads_strict_json(file_path.read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, OSError, ValueError) as exc:
             raise CorruptedDataError(_bounded_store_error("malformed state file", exc)) from exc
 
         if not isinstance(wrapper, dict):

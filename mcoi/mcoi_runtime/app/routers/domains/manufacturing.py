@@ -1,11 +1,12 @@
 """Manufacturing domain endpoint."""
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel, Field
 
 from mcoi_runtime.app.routers.domains._common import (
     DomainOutcome,
+    _domain_error_400,
     _gate_or_blocked_outcome,
     _kind_or_400,
     _maybe_persist_run,
@@ -66,8 +67,8 @@ def process_manufacturing(
         )
         captured: list = [] if persist_run else None
         out = manufacturing_run_with_ucja(req, capture=captured)
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+    except ValueError as exc:
+        raise _domain_error_400("manufacturing") from exc
     risk_flags = list(out.risk_flags)
     run_id = _maybe_persist_run(
         tenant_id, persist_run, captured or [], risk_flags,

@@ -114,6 +114,27 @@ def test_voice_worker_rejects_bad_signature() -> None:
     assert "X-Mullu-Voice-Response-Signature" not in response.headers
 
 
+def test_voice_worker_parse_error_detail_is_bounded() -> None:
+    secret = "voice-secret"
+    body = b'{"request_id":"secret-token-from-voice"'
+    app = create_voice_worker_app(adapter=FakeVoiceAdapter(), signing_secret=secret)
+    client = TestClient(app)
+
+    response = client.post(
+        "/voice/execute",
+        content=body,
+        headers={"X-Mullu-Voice-Signature": sign_capability_payload(body, secret)},
+    )
+    detail = response.json()["detail"]
+
+    assert response.status_code == 422
+    assert detail["error"] == "invalid voice execution request"
+    assert detail["error_code"] == "invalid_voice_execution_request"
+    assert detail["governed"] is True
+    assert "secret-token-from-voice" not in response.text
+    assert "X-Mullu-Voice-Response-Signature" not in response.headers
+
+
 def test_voice_worker_speech_to_text_redacts_and_does_not_store_audio() -> None:
     request = voice_action_request_from_mapping(
         _payload(

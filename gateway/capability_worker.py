@@ -37,6 +37,46 @@ from gateway.capability_dispatch import (
 )
 
 
+_CAPABILITY_WORKER_ERROR_CODES = {
+    "capability request body must be an object": (
+        "invalid capability request body",
+        "invalid_capability_request_body",
+    ),
+    "capability request requires boundary": (
+        "invalid capability request boundary",
+        "invalid_capability_request_boundary",
+    ),
+    "capability request requires intent": (
+        "invalid capability request intent",
+        "invalid_capability_request_intent",
+    ),
+    "capability request is malformed": (
+        "malformed capability request",
+        "malformed_capability_request",
+    ),
+    "capability request input hash mismatch": (
+        "capability request input hash mismatch",
+        "capability_input_hash_mismatch",
+    ),
+    "restricted worker requires an isolated capability boundary": (
+        "isolated capability boundary required",
+        "isolated_capability_boundary_required",
+    ),
+    "restricted worker requires isolated_worker execution plane": (
+        "isolated worker execution plane required",
+        "isolated_worker_execution_plane_required",
+    ),
+}
+
+
+def _capability_worker_error_detail(exc: BaseException) -> dict[str, object]:
+    error, error_code = _CAPABILITY_WORKER_ERROR_CODES.get(
+        str(exc),
+        ("invalid capability execution request", "invalid_capability_execution_request"),
+    )
+    return {"error": error, "error_code": error_code, "governed": True}
+
+
 def create_capability_worker_app(
     *,
     dispatcher: CapabilityDispatcher | None = None,
@@ -73,13 +113,15 @@ def create_capability_worker_app(
             execution_request = capability_execution_request_from_mapping(raw)
             if not execution_request.boundary.isolation_required:
                 raise RuntimeError("restricted worker requires an isolated capability boundary")
+            if execution_request.boundary.execution_plane != "isolated_worker":
+                raise RuntimeError("restricted worker requires isolated_worker execution plane")
             intent = CapabilityIntent(
                 str(execution_request.intent["skill"]),
                 str(execution_request.intent["action"]),
                 dict(execution_request.intent.get("params", {})),
             )
         except (UnicodeDecodeError, json.JSONDecodeError, KeyError, RuntimeError) as exc:
-            raise HTTPException(422, detail=str(exc)) from exc
+            raise HTTPException(422, detail=_capability_worker_error_detail(exc)) from exc
 
         result, receipt = worker.execute(
             intent=intent,

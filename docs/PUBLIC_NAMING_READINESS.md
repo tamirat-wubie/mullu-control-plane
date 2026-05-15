@@ -2,7 +2,7 @@
 
 Purpose: define the release gate for exposing `Mullu` as the public product name.
 Governance scope: brand clearance, domain ownership, website copy, SDK/API terminology, admin surfaces, and product launch evidence.
-Dependencies: `docs/PRODUCT_IDENTITY.md`, `docs/PUBLIC_LAUNCH_COPY.md`, `docs/NAME_CLEARANCE_PRELIMINARY.md`, `docs/NAMING_MIGRATION_PLAN.md`, `docs/TRADEMARK_SEARCH_RUNBOOK.md`, `docs/DOMAIN_ACQUISITION_PLAN.md`, `docs/WEBSITE_UPDATE_CHECKLIST.md`, `docs/WEBSITE_RECHECK_LOG.md`, `docs/PUBLIC_NAMING_STATE_TRANSITION.md`, `docs/PUBLIC_NAMING_HANDOFF.md`, `docs/CLEARANCE_PACKET_TEMPLATE.md`, `docs/DOMAIN_OWNERSHIP_RECORD_TEMPLATE.md`, `docs/public-naming-readiness.json`.
+Dependencies: `docs/PRODUCT_IDENTITY.md`, `docs/PUBLIC_LAUNCH_COPY.md`, `docs/NAME_CLEARANCE_PRELIMINARY.md`, `docs/APP_TITLE_UPDATE_EVIDENCE_2026-05-15.md`, `docs/HOMEPAGE_UPDATE_EVIDENCE_2026-05-15.md`, `docs/OFFICIAL_CLEARANCE_ACCESS_LOG_2026-05-15.md`, `docs/SDK_API_STABILITY_REVIEW_2026-05-15.md`, `docs/NAMING_MIGRATION_PLAN.md`, `docs/TRADEMARK_SEARCH_RUNBOOK.md`, `docs/DOMAIN_ACQUISITION_PLAN.md`, `docs/WEBSITE_UPDATE_CHECKLIST.md`, `docs/WEBSITE_RECHECK_LOG.md`, `docs/PUBLIC_NAMING_STATE_TRANSITION.md`, `docs/PUBLIC_NAMING_HANDOFF.md`, `docs/CLEARANCE_PACKET_TEMPLATE.md`, `docs/DOMAIN_OWNERSHIP_RECORD_TEMPLATE.md`, `docs/public-naming-readiness.json`.
 Invariants: `Mullu` is the product name only after clearance; `Mullusi` remains the company and governance authority; `Mullu Platform` remains valid for developer contracts and architecture surfaces.
 
 ## Readiness Gates
@@ -13,7 +13,7 @@ Invariants: `Mullu` is the product name only after clearance; `Mullusi` remains 
 | Company boundary | `Mullusi` is documented as company, ecosystem, governance authority | Closed |
 | Platform boundary | `Mullu Platform` is reserved for developer, SDK, API, deployment, and architecture contexts | Closed |
 | Admin boundary | `Mullu Control Plane` is documented as admin/governance/deployment surface | Closed |
-| Blocked generic names | `Mullusi Handler`, `Mullusi Work`, `Mullusi Operator`, and `Mullu AI` are blocked as public product names | Closed |
+| Blocked generic names | `Mullusi Handler`, `Mullusi Work`, `Mullusi Operator`, and `Mullu Generic` are blocked as public product names | Closed |
 | Public copy | Launch-ready homepage copy exists | Closed |
 | Product route draft | Deploy-ready `/mullu/index.html` product page exists and remains private beta | Closed |
 | Product route deployment handoff | Product route copied to sibling website repo target and verified live at `/mullu` | Closed |
@@ -39,6 +39,10 @@ Invariants: `Mullu` is the product name only after clearance; `Mullusi` remains 
 | Readiness report | CLI report summarizes open launch blockers | Closed |
 | Transition planner | CLI planner derives remaining launch-state actions | Closed |
 | Naming schemas | JSON schemas exist for readiness witness and clearance draft | Closed |
+| Official clearance access log | USPTO/TSDR and domain access attempts are recorded without closing legal gates | Closed |
+| SDK/API stability review | Technical contracts intentionally keep `Mullu Platform` where required | Closed |
+| Homepage update | Product landing page updated at `https://mullusi.com/mullu/` with private-beta copy | Closed |
+| App title update | User-facing app title surfaces use `Mullu` | Closed |
 | Preliminary web search | Obvious public conflicts recorded | Closed with review items |
 | Close-variant review | `MULU` software/service-adjacent public records captured for official review | Open |
 | USPTO search | Exact and similar marks checked | Open |
@@ -46,9 +50,6 @@ Invariants: `Mullu` is the product name only after clearance; `Mullusi` remains 
 | EUIPO/TMview search | Exact and similar marks checked | Open |
 | Domain ownership | Primary or fallback product domain acquired | Open |
 | Legal review | Counsel or qualified trademark review completed | Open |
-| Homepage update | `mullusi.com` or product landing page updated | Open |
-| App title update | User-facing app title uses `Mullu` | Open |
-| SDK/API stability review | Technical contracts intentionally keep `Mullu Platform` where required | Open |
 
 ## Keep Technical Contracts Stable
 
@@ -102,14 +103,14 @@ must remain private beta or request-access copy, not a paid public launch page.
 The current deployment handoff target is:
 
 ```text
-../mullusi/mullu/index.html
+../mullusi_website/mullu/index.html
 ```
 
 This target is now verified live for the `/mullu` fallback route:
 `https://mullusi.com/mullu` returns HTTP 200 and contains intentional product
 copy including `Mullu, by Mullusi`, `Mullu CLI`, and `Mullu Control Plane`.
 This does not clear standalone product subdomain, legal, domain ownership,
-homepage, app-title, or SDK/API stability gates.
+homepage, or app-title gates.
 
 ## Launch Decision
 

@@ -118,6 +118,27 @@ def test_messaging_worker_rejects_bad_signature() -> None:
     assert "X-Mullu-Messaging-Response-Signature" not in response.headers
 
 
+def test_messaging_worker_parse_error_detail_is_bounded() -> None:
+    secret = "messaging-secret"
+    body = b'{"request_id":"secret-token-from-messaging"'
+    app = create_messaging_worker_app(adapter=FakeMessagingAdapter(), signing_secret=secret)
+    client = TestClient(app)
+
+    response = client.post(
+        "/messaging/execute",
+        content=body,
+        headers={"X-Mullu-Messaging-Signature": sign_capability_payload(body, secret)},
+    )
+    detail = response.json()["detail"]
+
+    assert response.status_code == 422
+    assert detail["error"] == "invalid messaging execution request"
+    assert detail["error_code"] == "invalid_messaging_execution_request"
+    assert detail["governed"] is True
+    assert "secret-token-from-messaging" not in response.text
+    assert "X-Mullu-Messaging-Response-Signature" not in response.headers
+
+
 def test_sms_send_requires_approval_before_adapter() -> None:
     request = messaging_action_request_from_mapping(
         _payload(

@@ -146,9 +146,10 @@ def test_lineage_artifact_permalink_resolves_persisted_dag(client) -> None:
 
 
 def test_lineage_resolve_rejects_invalid_uri(client) -> None:
-    response = client.post("/api/v1/lineage/resolve", json={"uri": "https://trace/lineage-http-trace"})
+    response = client.post("/api/v1/lineage/resolve", json={"uri": "https://secret-token/lineage-http-trace"})
     data = response.json()["detail"]
 
     assert response.status_code == 422
     assert data["error_code"] == "invalid_lineage_uri"
     assert data["governed"] is True
+    assert "secret-token" not in response.text

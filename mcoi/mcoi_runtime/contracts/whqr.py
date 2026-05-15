@@ -243,7 +243,15 @@ class WHQRDocument:
         return self.root
 
     def canonical_json(self) -> str:
-        return json.dumps(_canonical(self), sort_keys=True, separators=(",", ":"))
+        try:
+            return json.dumps(
+                _canonical(self),
+                sort_keys=True,
+                separators=(",", ":"),
+                allow_nan=False,
+            )
+        except (TypeError, ValueError) as exc:
+            raise ValueError("WHQR document must serialize to deterministic canonical JSON") from exc
 
     def canonical_hash(self) -> str:
         return "sha256:" + hashlib.sha256(self.canonical_json().encode("utf-8")).hexdigest()

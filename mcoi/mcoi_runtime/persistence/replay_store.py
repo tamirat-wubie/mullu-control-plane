@@ -20,6 +20,7 @@ from mcoi_runtime.core.replay_engine import (
     ReplayRecord,
 )
 
+from ._serialization import loads_strict_json
 from .errors import (
     CorruptedDataError,
     PathTraversalError,
@@ -36,7 +37,7 @@ def _bounded_store_error(summary: str, exc: BaseException) -> str:
 
 
 def _deterministic_json(data: Any) -> str:
-    return json.dumps(data, sort_keys=True, ensure_ascii=True, separators=(",", ":"))
+    return json.dumps(data, sort_keys=True, ensure_ascii=True, separators=(",", ":"), allow_nan=False)
 
 
 def _atomic_write(path: Path, content: str) -> None:
@@ -202,8 +203,8 @@ class ReplayStore:
             raise PersistenceError("replay record not found")
 
         try:
-            raw = json.loads(path.read_text(encoding="utf-8"))
-        except (json.JSONDecodeError, OSError) as exc:
+            raw = loads_strict_json(path.read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, OSError, ValueError) as exc:
             raise CorruptedDataError(_bounded_store_error("malformed replay file", exc)) from exc
 
         if not isinstance(raw, dict):
@@ -230,8 +231,8 @@ class ReplayStore:
         for file_path in sorted(self._base_path.iterdir()):
             if file_path.is_file() and file_path.suffix == ".json":
                 try:
-                    raw = json.loads(file_path.read_text(encoding="utf-8"))
-                except (json.JSONDecodeError, OSError) as exc:
+                    raw = loads_strict_json(file_path.read_text(encoding="utf-8"))
+                except (json.JSONDecodeError, OSError, ValueError) as exc:
                     raise CorruptedDataError(_bounded_store_error("malformed replay file", exc)) from exc
                 if not isinstance(raw, dict):
                     raise CorruptedDataError("replay file must be a JSON object")

@@ -19,7 +19,7 @@ from mcoi_runtime.contracts.workflow import WorkflowDescriptor, WorkflowExecutio
 from mcoi_runtime.core.invariants import RuntimeCoreInvariantError
 from mcoi_runtime.core.workflow import WorkflowEngine
 
-from ._serialization import deserialize_record, serialize_record
+from ._serialization import deserialize_record, loads_strict_json, serialize_record
 from .errors import (
     CorruptedDataError,
     PathTraversalError,
@@ -32,7 +32,7 @@ _DESCRIPTOR_PREFIX = "workflow-descriptor--"
 
 
 def _deterministic_json(payload: object) -> str:
-    return json.dumps(payload, sort_keys=True, ensure_ascii=True, separators=(",", ":"))
+    return json.dumps(payload, sort_keys=True, ensure_ascii=True, separators=(",", ":"), allow_nan=False)
 
 
 def _bounded_store_error(summary: str, exc: BaseException) -> str:
@@ -176,11 +176,11 @@ class WorkflowStore:
             self.save_execution_record(record)
         payload = {
             "descriptors": [
-                json.loads(serialize_record(descriptor))
+                loads_strict_json(serialize_record(descriptor))
                 for descriptor in descriptors
             ],
             "execution_records": [
-                json.loads(serialize_record(record))
+                loads_strict_json(serialize_record(record))
                 for record in execution_records
             ],
         }
@@ -210,9 +210,9 @@ class WorkflowStore:
         if not path.exists():
             raise CorruptedDataError(f"workflow runtime file not found: {path}")
         try:
-            payload = json.loads(path.read_text(encoding="utf-8"))
-        except (json.JSONDecodeError, OSError) as exc:
-            raise CorruptedDataError(f"malformed workflow runtime file: {exc}") from exc
+            payload = loads_strict_json(path.read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, OSError, ValueError) as exc:
+            raise CorruptedDataError(_bounded_store_error("malformed workflow runtime file", exc)) from exc
         if not isinstance(payload, dict):
             raise CorruptedDataError("workflow runtime payload must be a JSON object")
 

@@ -101,6 +101,27 @@ def test_document_worker_rejects_bad_signature() -> None:
     assert "X-Mullu-Document-Response-Signature" not in response.headers
 
 
+def test_document_worker_parse_error_detail_is_bounded() -> None:
+    secret = "document-secret"
+    body = b'{"request_id":"secret-token-from-document"'
+    app = create_document_worker_app(signing_secret=secret)
+    client = TestClient(app)
+
+    response = client.post(
+        "/document/execute",
+        content=body,
+        headers={"X-Mullu-Document-Signature": sign_capability_payload(body, secret)},
+    )
+    detail = response.json()["detail"]
+
+    assert response.status_code == 422
+    assert detail["error"] == "invalid document execution request"
+    assert detail["error_code"] == "invalid_document_execution_request"
+    assert detail["governed"] is True
+    assert "secret-token-from-document" not in response.text
+    assert "X-Mullu-Document-Response-Signature" not in response.headers
+
+
 def test_document_worker_extracts_tables_from_csv() -> None:
     request = document_action_request_from_mapping(
         _payload(

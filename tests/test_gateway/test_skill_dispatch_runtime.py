@@ -39,6 +39,7 @@ from gateway.capability_isolation import (  # noqa: E402
 )
 from gateway.command_spine import canonical_hash, capability_passport_for  # noqa: E402
 from gateway.mcp_capabilities import register_mcp_capabilities  # noqa: E402
+from scripts.validate_sandbox_execution_receipt import validate_sandbox_execution_receipt  # noqa: E402
 from mcoi_runtime.contracts.governed_capability_fabric import (  # noqa: E402
     CapabilityCertificationStatus,
     CapabilityRegistryEntry,
@@ -159,6 +160,30 @@ class StubCapabilityWorkerTransport(CapabilityWorkerTransport):
         )
 
 
+class IsolationMismatchCapabilityWorkerTransport(StubCapabilityWorkerTransport):
+    """Worker transport fixture that downgrades the isolation receipt bit."""
+
+    def submit(self, request):
+        response = super().submit(request)
+        bad_receipt = CapabilityExecutionReceipt(
+            receipt_id=response.receipt.receipt_id,
+            capability_id=response.receipt.capability_id,
+            execution_plane=response.receipt.execution_plane,
+            isolation_required=not request.boundary.isolation_required,
+            worker_id=response.receipt.worker_id,
+            input_hash=response.receipt.input_hash,
+            output_hash=response.receipt.output_hash,
+            evidence_refs=response.receipt.evidence_refs,
+        )
+        return CapabilityExecutionResponse(
+            request_id=response.request_id,
+            status=response.status,
+            result=response.result,
+            receipt=bad_receipt,
+            error=response.error,
+        )
+
+
 class PlatformWithFinancialProvider:
     """Platform stub exposing a direct financial provider."""
 
@@ -227,10 +252,10 @@ class StubSandboxRunner:
             capability_id=request.capability_id,
             sandbox_id="docker-rootless",
             image="mullu-agent-runner:latest",
-            command_hash="command-hash",
-            docker_args_hash="docker-args-hash",
-            stdout_hash="stdout-hash",
-            stderr_hash="stderr-hash",
+            command_hash="a" * 64,
+            docker_args_hash="b" * 64,
+            stdout_hash="c" * 64,
+            stderr_hash="d" * 64,
             returncode=0,
             network_disabled=True,
             read_only_rootfs=True,
@@ -479,7 +504,7 @@ def test_dispatcher_executes_registered_enterprise_capability() -> None:
     assert result["task_id"].startswith("task-")
 
 
-def test_computer_command_run_uses_sandbox_runner() -> None:
+def test_computer_command_run_uses_sandbox_runner(tmp_path: Path) -> None:
     sandbox_runner = StubSandboxRunner()
     dispatcher = SkillDispatcher()
     register_computer_capabilities(dispatcher, sandbox_runner=sandbox_runner)
@@ -498,8 +523,15 @@ def test_computer_command_run_uses_sandbox_runner() -> None:
     assert result["verification_status"] == "passed"
     assert result["sandbox_execution_receipt"]["network_disabled"] is True
     assert result["sandbox_execution_receipt"]["workspace_mount"] == "/workspace"
+    assert result["sandbox_execution_receipt"]["changed_file_count"] == 0
+    assert result["sandbox_execution_receipt"]["changed_file_refs"] == []
     assert sandbox_runner.requests[0].capability_id == "computer.command.run"
     assert sandbox_runner.requests[0].argv == ("python", "--version")
+    receipt_path = tmp_path / "sandbox-command-receipt.json"
+    receipt_path.write_text(json.dumps(result["sandbox_execution_receipt"]), encoding="utf-8")
+    validation = validate_sandbox_execution_receipt(receipt_path, capability_prefix="computer.")
+    assert validation.valid is True
+    assert validation.blockers == ()
 
 
 def test_computer_command_run_fails_closed_without_sandbox_runner() -> None:
@@ -656,6 +688,24 @@ def test_remote_capability_executor_validates_worker_receipt() -> None:
     assert result["capability_execution_receipt"]["receipt_id"] == receipt.receipt_id
     assert receipt.worker_id == "restricted-worker-1"
     assert receipt.evidence_refs[0].startswith("restricted_worker:")
+    assert len(transport.requests) == 1
+
+
+def test_remote_capability_executor_rejects_isolation_receipt_mismatch() -> None:
+    transport = IsolationMismatchCapabilityWorkerTransport()
+    executor = RemoteCapabilityExecutionExecutor(transport)
+    boundary = CapabilityIsolationPolicy(environment="pilot").boundary_for(
+        capability_passport_for("financial.send_payment"),
+    )
+
+    with pytest.raises(RuntimeError, match="^capability worker receipt isolation mismatch$"):
+        executor.execute(
+            intent=SkillIntent("financial", "send_payment", {"amount": "50"}),
+            tenant_id="tenant-1",
+            identity_id="identity-1",
+            boundary=boundary,
+        )
+
     assert len(transport.requests) == 1
 
 

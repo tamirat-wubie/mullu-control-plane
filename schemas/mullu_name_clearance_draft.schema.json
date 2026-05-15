@@ -19,6 +19,7 @@
     "known_public_uses",
     "official_searches",
     "domain_candidates",
+    "gate_closure_requirements",
     "stop_conditions",
     "required_next_actions"
   ],
@@ -192,6 +193,38 @@
         }
       }
     },
+    "gate_closure_requirements": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "uspto_search",
+        "wipo_search",
+        "euipo_tmview_search",
+        "close_variant_review",
+        "domain_ownership",
+        "legal_review"
+      ],
+      "properties": {
+        "uspto_search": {
+          "$ref": "#/$defs/gate_closure_requirement"
+        },
+        "wipo_search": {
+          "$ref": "#/$defs/gate_closure_requirement"
+        },
+        "euipo_tmview_search": {
+          "$ref": "#/$defs/gate_closure_requirement"
+        },
+        "close_variant_review": {
+          "$ref": "#/$defs/gate_closure_requirement"
+        },
+        "domain_ownership": {
+          "$ref": "#/$defs/gate_closure_requirement"
+        },
+        "legal_review": {
+          "$ref": "#/$defs/gate_closure_requirement"
+        }
+      }
+    },
     "stop_conditions": {
       "type": "array",
       "items": {
@@ -204,6 +237,44 @@
       "items": {
         "type": "string",
         "minLength": 1
+      }
+    }
+  },
+  "$defs": {
+    "gate_closure_requirement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "required_evidence",
+        "closure_authority",
+        "closure_blocker"
+      ],
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": [
+            "open",
+            "blocked",
+            "complete"
+          ]
+        },
+        "required_evidence": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "closure_authority": {
+          "type": "string",
+          "minLength": 1
+        },
+        "closure_blocker": {
+          "type": "string",
+          "minLength": 1
+        }
       }
     }
   }

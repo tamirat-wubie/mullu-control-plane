@@ -217,6 +217,86 @@ class TestServerPersistenceWiring:
         assert "restore secret detail" not in str(result)
         assert all("restore secret detail" not in message for message in logged)
 
+    def test_startup_restore_malformed_snapshots_are_bounded(self):
+        logged: list[str] = []
+
+        class Persistence:
+            def load(self, state_type):
+                if state_type == "budgets":
+                    return SimpleNamespace(data=["tenant-secret"])
+                if state_type == "audit_summary":
+                    return SimpleNamespace(data=["audit-secret"])
+                return None
+
+        class Logger:
+            def log(self, level, message):
+                logged.append(str(message))
+
+        class Levels:
+            INFO = "info"
+            WARNING = "warning"
+
+        def append_warning(warnings, context, exc):
+            warnings.append(f"{context} failed ({type(exc).__name__})")
+
+        result = restore_state_on_startup(
+            tenant_budget_mgr=SimpleNamespace(),
+            state_persistence=Persistence(),
+            platform_logger=Logger(),
+            log_levels=Levels,
+            append_bounded_warning=append_warning,
+        )
+
+        assert result["warnings"] == (
+            "startup budgets payload failed (TypeError)",
+            "startup audit summary payload failed (TypeError)",
+        )
+        assert "tenant-secret" not in str(result)
+        assert "audit-secret" not in str(result)
+        assert all("secret" not in message for message in logged)
+
+    def test_shutdown_flush_malformed_runtime_state_is_bounded(self):
+        logged: list[str] = []
+
+        class Persistence:
+            def save(self, state_type, data):
+                return SimpleNamespace(state_type=state_type, data=data)
+
+        class CostAnalytics:
+            def summary(self):
+                raise RuntimeError("cost secret")
+
+        class Logger:
+            def log(self, level, message):
+                logged.append(str(message))
+
+        class Levels:
+            INFO = "info"
+            WARNING = "warning"
+
+        def append_warning(warnings, context, exc):
+            warnings.append(f"{context} failed ({type(exc).__name__})")
+
+        result = flush_state_on_shutdown(
+            tenant_budget_mgr=SimpleNamespace(_budgets=["budget-secret"]),
+            state_persistence=Persistence(),
+            audit_trail=SimpleNamespace(),
+            cost_analytics=CostAnalytics(),
+            platform_logger=Logger(),
+            log_levels=Levels,
+            append_bounded_warning=append_warning,
+        )
+
+        assert result["flushed"] is False
+        assert result["budgets"] == 0
+        assert result["audit_sequence"] == 0
+        assert result["warnings"] == (
+            "shutdown budgets snapshot failed (TypeError)",
+            "shutdown cost analytics flush failed (RuntimeError)",
+        )
+        assert "secret" not in str(result)
+        assert all("secret" not in message for message in logged)
+
     def test_close_governance_stores_reports_bounded_warnings(self, monkeypatch):
         os.environ["MULLU_ENV"] = "local_dev"
         os.environ["MULLU_DB_BACKEND"] = "memory"

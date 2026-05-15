@@ -4,7 +4,7 @@ from __future__ import annotations
 import json
 import pytest
 from pathlib import Path
-from uuid import UUID, uuid4
+from uuid import uuid4
 
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
@@ -20,21 +20,11 @@ from mcoi_runtime.substrate.constructs import (
     Boundary,
     Causation,
     Change,
-    Composition,
-    Conservation,
     Constraint,
     Coupling,
-    Decision,
-    Emergence,
     Equilibrium,
-    Evolution,
-    Execution,
-    Inference,
-    Integrity,
     Interaction,
-    Learning,
     MfidelSignature,
-    Observation,
     Pattern,
     Resonance,
     Source,
@@ -422,6 +412,15 @@ def test_store_persistence_methods_require_attached_backend():
 
 @pytest.fixture
 def client(tmp_dir) -> TestClient:
+    from mcoi_runtime.app.routers.musia_auth import (
+        configure_musia_auth,
+        configure_musia_dev_mode,
+        configure_musia_jwt,
+    )
+
+    configure_musia_auth(None)
+    configure_musia_jwt(None)
+    configure_musia_dev_mode(True)
     reset_registry()
     configure_persistence(str(tmp_dir))
     app = FastAPI()

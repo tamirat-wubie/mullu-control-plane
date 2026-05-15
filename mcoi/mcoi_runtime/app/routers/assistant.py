@@ -105,7 +105,7 @@ def compile_finance_ops_assistant_plan(req: FinanceOpsAssistantPlanRequest):
             now=now,
         )
     except RuntimeCoreInvariantError as exc:
-        raise HTTPException(400, detail=_assistant_error_detail(str(exc), "invalid_assistant_plan")) from exc
+        raise HTTPException(400, detail=_assistant_error_detail("invalid assistant plan", "invalid_assistant_plan")) from exc
 
     return {
         "profile": profile.to_dict(),

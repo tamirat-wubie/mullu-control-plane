@@ -37,9 +37,11 @@ from mcoi_runtime.governance.audit.trail import (
 # the public API; reaching into private internals stays on the canonical
 # core path. Phase 4 will move the implementation here too.
 from mcoi_runtime.governance.audit.trail import _canonical_hash_v1
-from mcoi_runtime.governance.guards.rate_limit import RateLimitStore
+from mcoi_runtime.governance.guards.rate_limit import RateLimitConfig, RateLimitStore
 from mcoi_runtime.governance.guards.budget import BudgetStore
 from mcoi_runtime.governance.guards.tenant_gating import TenantGate, TenantGatingStore, TenantStatus
+
+from ._serialization import loads_strict_json
 
 
 # â•â•â• Schema Definitions â•â•â•
@@ -523,7 +525,10 @@ class PostgresAuditStore(_PostgresBase, AuditStore):
 
     def _encrypt_detail(self, detail: dict[str, Any]) -> str:
         """Encrypt detail dict if encryptor is available, else return JSON."""
-        detail_json = json.dumps(detail, sort_keys=True, default=str)
+        try:
+            detail_json = json.dumps(detail, sort_keys=True, allow_nan=False)
+        except (TypeError, ValueError) as exc:
+            raise _bounded_detail_crypto_error("serialization", exc) from exc
         if self._field_encryptor is not None:
             try:
                 return self._field_encryptor.encrypt(detail_json)
@@ -537,12 +542,12 @@ class PostgresAuditStore(_PostgresBase, AuditStore):
             try:
                 if self._field_encryptor.is_encrypted(stored):
                     decrypted = self._field_encryptor.decrypt(stored)
-                    return json.loads(decrypted)
+                    return loads_strict_json(decrypted)
             except Exception as exc:
                 raise _bounded_detail_crypto_error("decryption", exc) from exc
         if isinstance(stored, str):
             try:
-                return json.loads(stored)
+                return loads_strict_json(stored)
             except Exception as exc:
                 raise _bounded_detail_crypto_error("parse", exc) from exc
         return stored  # Already parsed (psycopg2 JSONB)
@@ -936,7 +941,7 @@ class InMemoryRateLimitStore(RateLimitStore):
         self,
         bucket_key: str,
         tokens: int,
-        config: "RateLimitConfig",
+        config: RateLimitConfig,
     ) -> tuple[bool, float] | None:
         # F11: store-owned bucket state with single-process atomicity.
         # The lock spans refill + check + decrement so concurrent

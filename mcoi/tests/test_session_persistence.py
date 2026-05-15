@@ -103,6 +103,17 @@ class TestSessionCheckpoint:
         assert restored is not None
         assert restored.context_messages == ()
 
+    def test_non_finite_total_cost_rejected_before_hash(self):
+        cp = self._checkpoint(total_cost=float("nan"))
+
+        with pytest.raises(ValueError, match=r"^session checkpoint must be deterministic JSON$") as excinfo:
+            cp.to_dict()
+
+        message = str(excinfo.value)
+        assert "nan" not in message.lower()
+        assert "total_cost" not in message
+        assert "deterministic JSON" in message
+
 
 # ── InMemorySessionStore ───────────────────────────────────────
 
@@ -130,6 +141,14 @@ class TestInMemorySessionStore:
         loaded = store.load("gs-abc")
         assert loaded is not None
         assert loaded.session_id == "gs-abc"
+
+    def test_save_rejects_non_finite_checkpoint(self):
+        store = self._store()
+        cp = self._checkpoint(total_cost=float("nan"))
+
+        assert store.save(cp) is False
+        assert store.load("gs-abc") is None
+        assert store.session_count == 0
 
     def test_load_not_found(self):
         store = self._store()

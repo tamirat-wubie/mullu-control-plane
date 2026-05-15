@@ -1128,7 +1128,13 @@ def check_python_fixture_round_trip() -> list[str]:
             errors.append(
                 f"{schema_file}: Python contract JSON surface diverges from canonical fixture"
             )
-        canonical_text = json.dumps(fixture, ensure_ascii=True, separators=(",", ":"))
+        canonical_text = json.dumps(
+            fixture,
+            sort_keys=True,
+            ensure_ascii=True,
+            separators=(",", ":"),
+            allow_nan=False,
+        )
         rendered_text = contract.to_json()
         if rendered_text != canonical_text:
             errors.append(

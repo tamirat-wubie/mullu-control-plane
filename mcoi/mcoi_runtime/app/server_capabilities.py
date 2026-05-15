@@ -55,6 +55,11 @@ _REPO_ROOT = Path(__file__).resolve().parents[3]
 _DEFAULT_CAPABILITY_MANIFEST_DIR = _REPO_ROOT / "capabilities" / "software_dev" / "manifests"
 
 
+def _manifest_registry_startup_error(reason: str) -> ValueError:
+    """Return a bounded manifest-registry startup failure."""
+    return ValueError(f"capability manifest registry startup failed ({reason})")
+
+
 @dataclass(frozen=True)
 class CapabilityBootstrap:
     """Capability bootstrap result."""
@@ -1108,7 +1113,7 @@ def _build_capability_manifest_registry_view(
     )
     manifest_dir = _resolve_manifest_directory(manifest_dir_raw)
     if not manifest_dir.is_dir():
-        raise ValueError(f"capability manifest directory not found: {manifest_dir}")
+        raise _manifest_registry_startup_error("directory_not_found")
 
     registry = CapabilityManifestRegistry(repo_root=_REPO_ROOT, clock=clock)
     admissions = registry.admit_directory(
@@ -1121,18 +1126,14 @@ def _build_capability_manifest_registry_view(
         ),
     )
     if not admissions:
-        raise ValueError(f"capability manifest directory contains no manifests: {manifest_dir}")
+        raise _manifest_registry_startup_error("no_manifests")
     rejected = tuple(
         admission
         for admission in admissions
         if admission.status is CapabilityManifestAdmissionStatus.REJECTED
     )
     if rejected:
-        details = "; ".join(
-            f"{admission.source_ref}:{','.join(admission.errors)}"
-            for admission in rejected
-        )
-        raise ValueError(f"capability manifest admission failed: {details}")
+        raise _manifest_registry_startup_error("admission_rejected")
     return CapabilityManifestRegistryView(
         configured=True,
         registry=registry,

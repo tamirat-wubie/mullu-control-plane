@@ -200,6 +200,26 @@ class UnavailableVoiceAdapter:
         )
 
 
+_VOICE_WORKER_ERROR_CODES = {
+    "voice request body must be an object": (
+        "invalid voice request body",
+        "invalid_voice_request_body",
+    ),
+    "metadata must be an object": (
+        "invalid voice request metadata",
+        "invalid_voice_request_metadata",
+    ),
+}
+
+
+def _voice_worker_error_detail(exc: BaseException) -> dict[str, object]:
+    error, error_code = _VOICE_WORKER_ERROR_CODES.get(
+        str(exc),
+        ("invalid voice execution request", "invalid_voice_execution_request"),
+    )
+    return {"error": error, "error_code": error_code, "governed": True}
+
+
 def create_voice_worker_app(
     *,
     adapter: VoiceProcessingAdapter | None = None,
@@ -235,7 +255,7 @@ def create_voice_worker_app(
                 raise RuntimeError("voice request body must be an object")
             voice_request = voice_action_request_from_mapping(raw)
         except (KeyError, TypeError, UnicodeDecodeError, json.JSONDecodeError, RuntimeError, ValueError) as exc:
-            raise HTTPException(422, detail=str(exc)) from exc
+            raise HTTPException(422, detail=_voice_worker_error_detail(exc)) from exc
 
         response = execute_voice_request(voice_request, adapter=resolved_adapter, policy=resolved_policy)
         response_body = json.dumps(

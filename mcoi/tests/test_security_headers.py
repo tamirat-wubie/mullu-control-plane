@@ -79,6 +79,12 @@ class TestBuildSecurityHeaders:
         assert "python" not in headers["Server"].lower()
         assert "uvicorn" not in headers["Server"].lower()
 
+    def test_custom_headers_cannot_override_server_identity(self):
+        cfg = SecurityHeadersConfig(custom_headers={"Server": "uvicorn-secret"})
+        headers = build_security_headers(cfg)
+        assert headers["Server"] == "mullu"
+        assert "uvicorn-secret" not in headers["Server"]
+
 
 # ── SecurityHeadersConfig ──────────────────────────────────────
 

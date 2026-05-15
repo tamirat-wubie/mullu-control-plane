@@ -5,8 +5,9 @@ Purpose: Durable storage for requests, ledger entries, and session state.
 from __future__ import annotations
 import sqlite3
 import json
-from pathlib import Path
 from typing import Any
+
+from ._serialization import loads_strict_json
 
 class SQLiteStore:
     def __init__(self, db_path: str = "mullu.db"):
@@ -51,7 +52,14 @@ class SQLiteStore:
         from datetime import datetime, timezone
         cur = self._conn.execute(
             "INSERT INTO ledger (entry_type, actor_id, tenant_id, content, content_hash, created_at) VALUES (?, ?, ?, ?, ?, ?)",
-            (entry_type, actor_id, tenant_id, json.dumps(content, sort_keys=True), content_hash, datetime.now(timezone.utc).isoformat()),
+            (
+                entry_type,
+                actor_id,
+                tenant_id,
+                json.dumps(content, sort_keys=True, allow_nan=False),
+                content_hash,
+                datetime.now(timezone.utc).isoformat(),
+            ),
         )
         self._conn.commit()
         return cur.lastrowid
@@ -61,7 +69,7 @@ class SQLiteStore:
             "SELECT id, entry_type, actor_id, content, content_hash, created_at FROM ledger WHERE tenant_id = ? ORDER BY id DESC LIMIT ?",
             (tenant_id, limit),
         ).fetchall()
-        return [{"id": r[0], "type": r[1], "actor": r[2], "content": json.loads(r[3]), "hash": r[4], "at": r[5]} for r in rows]
+        return [{"id": r[0], "type": r[1], "actor": r[2], "content": loads_strict_json(r[3]), "hash": r[4], "at": r[5]} for r in rows]
 
     def ledger_count(self, tenant_id: str | None = None) -> int:
         if tenant_id:

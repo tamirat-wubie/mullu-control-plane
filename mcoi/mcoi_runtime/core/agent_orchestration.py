@@ -6,18 +6,25 @@ Purpose: Coordinate multi-agent workflows with governed handoffs, capability
 Dependencies: agent_protocol, agent_chain.
 Invariants:
   - All orchestration decisions are auditable.
+  - Agent registry mutations carry bounded proof records.
   - Agent handoffs require capability matching.
+  - Handoff attempts carry bounded proof records.
   - Proposals require a registered proposer with matching capabilities.
+  - Proposal and vote mutations carry bounded proof records.
+  - Voting submission transitions carry bounded proof records.
+  - Execution readiness transitions carry bounded proof records.
   - Dispatch results carry bounded proof records.
+  - Observability read models are bounded and aggregated.
   - Consensus requires quorum (majority of registered agents).
   - Plans are immutable once approved.
 """
 from __future__ import annotations
 
 import uuid
+from collections.abc import Iterable, Mapping
 from dataclasses import dataclass, field
 from enum import Enum, unique
-from typing import Any, Callable, Mapping
+from typing import Any, Callable
 
 
 def _classify_orchestration_exception(exc: Exception) -> str:
@@ -31,6 +38,15 @@ def _classify_orchestration_exception(exc: Exception) -> str:
     if isinstance(exc, ValueError):
         return f"proposal validation error ({error_type})"
     return f"proposal execution error ({error_type})"
+
+
+_GOVERNED_RESULT_KEYS = frozenset({
+    "proposal_id",
+    "proof_id",
+    "success",
+    "error",
+    "suppressed_executor_keys",
+})
 
 
 @unique
@@ -98,6 +114,165 @@ class DispatchProof:
 
 
 @dataclass
+class ProposalProof:
+    """Bounded proof record for a proposal admission decision."""
+    proof_id: str
+    plan_id: str
+    proposal_id: str
+    agent_id: str
+    decision: str
+    reason: str
+    checked_at: str
+    plan_phase: str
+    agent_registered: bool
+    agent_capable: bool
+    manifest_admitted: bool
+    manifest_gated: bool
+    required_capability_count: int
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "proof_id": self.proof_id,
+            "plan_id": self.plan_id,
+            "proposal_id": self.proposal_id,
+            "agent_id": self.agent_id,
+            "decision": self.decision,
+            "reason": self.reason,
+            "checked_at": self.checked_at,
+            "plan_phase": self.plan_phase,
+            "agent_registered": self.agent_registered,
+            "agent_capable": self.agent_capable,
+            "manifest_admitted": self.manifest_admitted,
+            "manifest_gated": self.manifest_gated,
+            "required_capability_count": self.required_capability_count,
+        }
+
+
+@dataclass
+class VoteProof:
+    """Bounded proof record for a vote mutation decision."""
+    proof_id: str
+    plan_id: str
+    agent_id: str
+    vote: str
+    decision: str
+    reason: str
+    checked_at: str
+    plan_phase: str
+    voter_registered: bool
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "proof_id": self.proof_id,
+            "plan_id": self.plan_id,
+            "agent_id": self.agent_id,
+            "vote": self.vote,
+            "decision": self.decision,
+            "reason": self.reason,
+            "checked_at": self.checked_at,
+            "plan_phase": self.plan_phase,
+            "voter_registered": self.voter_registered,
+        }
+
+
+@dataclass
+class VotingSubmissionProof:
+    """Bounded proof record for a planning-to-voting transition."""
+    proof_id: str
+    plan_id: str
+    decision: str
+    reason: str
+    checked_at: str
+    from_phase: str
+    to_phase: str
+    proposal_count: int
+    voter_count: int
+    quorum_possible: bool
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "proof_id": self.proof_id,
+            "plan_id": self.plan_id,
+            "decision": self.decision,
+            "reason": self.reason,
+            "checked_at": self.checked_at,
+            "from_phase": self.from_phase,
+            "to_phase": self.to_phase,
+            "proposal_count": self.proposal_count,
+            "voter_count": self.voter_count,
+            "quorum_possible": self.quorum_possible,
+        }
+
+
+@dataclass
+class ExecutionReadinessProof:
+    """Bounded proof record for a voting-to-execution transition."""
+    proof_id: str
+    plan_id: str
+    decision: str
+    reason: str
+    checked_at: str
+    from_phase: str
+    to_phase: str
+    proposal_count: int
+    vote_count: int
+    approval_count: int
+    rejection_count: int
+    voter_count: int
+    quorum_met: bool
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "proof_id": self.proof_id,
+            "plan_id": self.plan_id,
+            "decision": self.decision,
+            "reason": self.reason,
+            "checked_at": self.checked_at,
+            "from_phase": self.from_phase,
+            "to_phase": self.to_phase,
+            "proposal_count": self.proposal_count,
+            "vote_count": self.vote_count,
+            "approval_count": self.approval_count,
+            "rejection_count": self.rejection_count,
+            "voter_count": self.voter_count,
+            "quorum_met": self.quorum_met,
+        }
+
+
+@dataclass
+class AgentRegistryProof:
+    """Bounded proof record for agent registry mutations."""
+    proof_id: str
+    agent_id: str
+    action: str
+    decision: str
+    reason: str
+    checked_at: str
+    previous_registered: bool
+    current_registered: bool
+    previous_capability_count: int
+    current_capability_count: int
+    manifest_gated: bool
+    admitted_capability_count: int
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "proof_id": self.proof_id,
+            "agent_id": self.agent_id,
+            "action": self.action,
+            "decision": self.decision,
+            "reason": self.reason,
+            "checked_at": self.checked_at,
+            "previous_registered": self.previous_registered,
+            "current_registered": self.current_registered,
+            "previous_capability_count": self.previous_capability_count,
+            "current_capability_count": self.current_capability_count,
+            "manifest_gated": self.manifest_gated,
+            "admitted_capability_count": self.admitted_capability_count,
+        }
+
+
+@dataclass
 class OrchestrationPlan:
     """A multi-agent execution plan requiring consensus."""
     plan_id: str
@@ -107,6 +282,10 @@ class OrchestrationPlan:
     votes: dict[str, Vote] = field(default_factory=dict)
     phase: OrchestrationPhase = OrchestrationPhase.PLANNING
     results: list[dict[str, Any]] = field(default_factory=list)
+    proposal_proofs: list[ProposalProof] = field(default_factory=list)
+    vote_proofs: list[VoteProof] = field(default_factory=list)
+    submission_proofs: list[VotingSubmissionProof] = field(default_factory=list)
+    execution_proofs: list[ExecutionReadinessProof] = field(default_factory=list)
     dispatch_proofs: list[DispatchProof] = field(default_factory=list)
     created_at: str = ""
 
@@ -132,6 +311,10 @@ class OrchestrationPlan:
             "approval_count": self.approval_count,
             "rejection_count": self.rejection_count,
             "results": self.results,
+            "proposal_proofs": [proof.to_dict() for proof in self.proposal_proofs],
+            "vote_proofs": [proof.to_dict() for proof in self.vote_proofs],
+            "submission_proofs": [proof.to_dict() for proof in self.submission_proofs],
+            "execution_proofs": [proof.to_dict() for proof in self.execution_proofs],
             "dispatch_proofs": [proof.to_dict() for proof in self.dispatch_proofs],
             "created_at": self.created_at,
         }
@@ -145,6 +328,47 @@ class HandoffResult:
     success: bool
     payload: dict[str, Any] = field(default_factory=dict)
     error: str = ""
+    proof_id: str = ""
+
+
+@dataclass
+class HandoffProof:
+    """Bounded proof record for an agent-to-agent handoff decision."""
+    proof_id: str
+    from_agent: str
+    to_agent: str
+    decision: str
+    reason: str
+    checked_at: str
+    source_registered: bool
+    target_registered: bool
+    target_capable: bool
+    manifest_admitted: bool
+    manifest_gated: bool
+    required_capability_count: int
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "proof_id": self.proof_id,
+            "from_agent": self.from_agent,
+            "to_agent": self.to_agent,
+            "decision": self.decision,
+            "reason": self.reason,
+            "checked_at": self.checked_at,
+            "source_registered": self.source_registered,
+            "target_registered": self.target_registered,
+            "target_capable": self.target_capable,
+            "manifest_admitted": self.manifest_admitted,
+            "manifest_gated": self.manifest_gated,
+            "required_capability_count": self.required_capability_count,
+        }
+
+
+@dataclass(frozen=True)
+class SanitizedExecutorResult:
+    """Executor output after governed result keys are suppressed."""
+    output: dict[str, Any]
+    suppressed_keys: tuple[str, ...]
 
 
 class AgentOrchestrator:
@@ -158,6 +382,8 @@ class AgentOrchestrator:
         self._admitted_capabilities: frozenset[str] | None = _normalize_admitted_capabilities(admitted_capabilities)
         self._plans: dict[str, OrchestrationPlan] = {}
         self._handoffs: list[HandoffResult] = []
+        self._handoff_proofs: list[HandoffProof] = []
+        self._registration_proofs: list[AgentRegistryProof] = []
         self._total_plans = 0
         self._total_handoffs = 0
 
@@ -177,10 +403,40 @@ class AgentOrchestrator:
         )
 
     def register_agent(self, agent_id: str, capabilities: tuple[str, ...]) -> None:
-        self._capabilities[agent_id] = capabilities
+        previous_capabilities = self._capabilities.get(agent_id)
+        current_capabilities = tuple(capabilities)
+        self._capabilities[agent_id] = current_capabilities
+        self._registration_proofs.append(
+            self._build_registration_proof(
+                agent_id=agent_id,
+                action="register",
+                decision="updated" if previous_capabilities is not None else "registered",
+                reason=(
+                    "agent capabilities updated"
+                    if previous_capabilities is not None
+                    else "agent registered"
+                ),
+                previous_capabilities=previous_capabilities,
+                current_capabilities=current_capabilities,
+            )
+        )
 
     def unregister_agent(self, agent_id: str) -> None:
-        self._capabilities.pop(agent_id, None)
+        previous_capabilities = self._capabilities.pop(agent_id, None)
+        self._registration_proofs.append(
+            self._build_registration_proof(
+                agent_id=agent_id,
+                action="unregister",
+                decision="unregistered" if previous_capabilities is not None else "ignored",
+                reason=(
+                    "agent unregistered"
+                    if previous_capabilities is not None
+                    else "agent unavailable"
+                ),
+                previous_capabilities=previous_capabilities,
+                current_capabilities=None,
+            )
+        )
 
     @property
     def agent_count(self) -> int:
@@ -212,18 +468,78 @@ class AgentOrchestrator:
         if not plan:
             raise ValueError("plan unavailable")
         if plan.phase != OrchestrationPhase.PLANNING:
+            plan.proposal_proofs.append(
+                self._build_proposal_proof(
+                    plan=plan,
+                    proposal=proposal,
+                    decision="rejected",
+                    reason="plan not accepting proposals",
+                )
+            )
             raise ValueError("plan not accepting proposals")
+        if any(existing.proposal_id == proposal.proposal_id for existing in plan.proposals):
+            plan.proposal_proofs.append(
+                self._build_proposal_proof(
+                    plan=plan,
+                    proposal=proposal,
+                    decision="rejected",
+                    reason="proposal already recorded",
+                )
+            )
+            raise ValueError("proposal already recorded")
         admission_error = self._proposal_admission_error(proposal)
         if admission_error:
+            plan.proposal_proofs.append(
+                self._build_proposal_proof(
+                    plan=plan,
+                    proposal=proposal,
+                    decision="rejected",
+                    reason=admission_error,
+                )
+            )
             raise ValueError(admission_error)
         plan.proposals.append(proposal)
+        plan.proposal_proofs.append(
+            self._build_proposal_proof(
+                plan=plan,
+                proposal=proposal,
+                decision="accepted",
+                reason="proposal admitted",
+            )
+        )
 
     def submit_for_voting(self, plan_id: str) -> None:
         plan = self._plans.get(plan_id)
         if not plan:
             raise ValueError("plan unavailable")
+        if plan.phase != OrchestrationPhase.PLANNING:
+            plan.submission_proofs.append(
+                self._build_submission_proof(
+                    plan=plan,
+                    decision="rejected",
+                    reason="plan not accepting submission",
+                    to_phase=plan.phase,
+                )
+            )
+            raise ValueError("plan not accepting submission")
         if not plan.proposals:
+            plan.submission_proofs.append(
+                self._build_submission_proof(
+                    plan=plan,
+                    decision="rejected",
+                    reason="empty plan",
+                    to_phase=plan.phase,
+                )
+            )
             raise ValueError("Cannot vote on empty plan")
+        plan.submission_proofs.append(
+            self._build_submission_proof(
+                plan=plan,
+                decision="accepted",
+                reason="submitted for voting",
+                to_phase=OrchestrationPhase.VOTING,
+            )
+        )
         plan.phase = OrchestrationPhase.VOTING
 
     def cast_vote(self, plan_id: str, agent_id: str, vote: Vote) -> None:
@@ -231,10 +547,48 @@ class AgentOrchestrator:
         if not plan:
             raise ValueError("plan unavailable")
         if plan.phase != OrchestrationPhase.VOTING:
+            plan.vote_proofs.append(
+                self._build_vote_proof(
+                    plan=plan,
+                    agent_id=agent_id,
+                    vote=vote,
+                    decision="rejected",
+                    reason="plan not accepting votes",
+                )
+            )
             raise ValueError("plan not accepting votes")
         if agent_id not in self._capabilities:
+            plan.vote_proofs.append(
+                self._build_vote_proof(
+                    plan=plan,
+                    agent_id=agent_id,
+                    vote=vote,
+                    decision="rejected",
+                    reason="voting agent unavailable",
+                )
+            )
             raise ValueError("voting agent unavailable")
+        if agent_id in plan.votes:
+            plan.vote_proofs.append(
+                self._build_vote_proof(
+                    plan=plan,
+                    agent_id=agent_id,
+                    vote=vote,
+                    decision="rejected",
+                    reason="vote already recorded",
+                )
+            )
+            raise ValueError("vote already recorded")
         plan.votes[agent_id] = vote
+        plan.vote_proofs.append(
+            self._build_vote_proof(
+                plan=plan,
+                agent_id=agent_id,
+                vote=vote,
+                decision="accepted",
+                reason="vote recorded",
+            )
+        )
 
     def check_consensus(self, plan_id: str) -> bool:
         plan = self._plans.get(plan_id)
@@ -248,8 +602,24 @@ class AgentOrchestrator:
         if not plan:
             raise ValueError("plan unavailable")
         if plan.phase != OrchestrationPhase.VOTING:
+            plan.execution_proofs.append(
+                self._build_execution_readiness_proof(
+                    plan=plan,
+                    decision="rejected",
+                    reason="plan not ready for execution",
+                    to_phase=plan.phase,
+                )
+            )
             raise ValueError("plan not ready for execution")
         if not plan.has_quorum(self.agent_count):
+            plan.execution_proofs.append(
+                self._build_execution_readiness_proof(
+                    plan=plan,
+                    decision="blocked",
+                    reason="consensus quorum not met",
+                    to_phase=OrchestrationPhase.FAILED,
+                )
+            )
             proof = self._build_dispatch_proof(
                 plan=plan,
                 proposal=None,
@@ -261,6 +631,14 @@ class AgentOrchestrator:
             plan.phase = OrchestrationPhase.FAILED
             return plan
 
+        plan.execution_proofs.append(
+            self._build_execution_readiness_proof(
+                plan=plan,
+                decision="accepted",
+                reason="execution admitted",
+                to_phase=OrchestrationPhase.EXECUTING,
+            )
+        )
         plan.phase = OrchestrationPhase.EXECUTING
         for proposal in sorted(plan.proposals, key=lambda p: -p.priority):
             admission_error = self._proposal_admission_error(proposal)
@@ -285,6 +663,7 @@ class AgentOrchestrator:
                     result = executor(proposal)
                 else:
                     result = {"status": "executed", "proposal_id": proposal.proposal_id}
+                safe_result = _sanitize_executor_result(result)
                 proof = self._build_dispatch_proof(
                     plan=plan,
                     proposal=proposal,
@@ -293,12 +672,15 @@ class AgentOrchestrator:
                     quorum_met=True,
                 )
                 plan.dispatch_proofs.append(proof)
-                plan.results.append({
+                result_record = {
                     "proposal_id": proposal.proposal_id,
                     "proof_id": proof.proof_id,
                     "success": True,
-                    **result,
-                })
+                    **safe_result.output,
+                }
+                if safe_result.suppressed_keys:
+                    result_record["suppressed_executor_keys"] = safe_result.suppressed_keys
+                plan.results.append(result_record)
             except Exception as e:
                 proof = self._build_dispatch_proof(
                     plan=plan,
@@ -322,22 +704,44 @@ class AgentOrchestrator:
     def handoff(self, from_agent: str, to_agent: str,
                 required_capabilities: tuple[str, ...] = (),
                 payload: dict[str, Any] | None = None) -> HandoffResult:
-        if from_agent not in self._capabilities:
-            return HandoffResult(from_agent, to_agent, False, error="source agent unavailable")
-        if to_agent not in self._capabilities:
-            return HandoffResult(from_agent, to_agent, False, error="target agent unavailable")
+        handoff_error = self._handoff_admission_error(
+            from_agent,
+            to_agent,
+            required_capabilities,
+        )
+        if handoff_error:
+            proof = self._build_handoff_proof(
+                from_agent=from_agent,
+                to_agent=to_agent,
+                required_capabilities=required_capabilities,
+                decision="blocked",
+                reason=handoff_error,
+            )
+            self._handoff_proofs.append(proof)
+            self._total_handoffs += 1
+            return HandoffResult(
+                from_agent,
+                to_agent,
+                False,
+                proof_id=proof.proof_id,
+                error=handoff_error,
+            )
 
-        target_caps = set(self._capabilities[to_agent])
-        missing = set(required_capabilities) - target_caps
-        if missing:
-            return HandoffResult(from_agent, to_agent, False,
-                                 error="target agent lacks required capabilities")
-        unavailable = self._unadmitted_capabilities(required_capabilities)
-        if unavailable:
-            return HandoffResult(from_agent, to_agent, False,
-                                 error="required capabilities are not manifest admitted")
-
-        result = HandoffResult(from_agent, to_agent, True, payload=payload or {})
+        proof = self._build_handoff_proof(
+            from_agent=from_agent,
+            to_agent=to_agent,
+            required_capabilities=required_capabilities,
+            decision="transferred",
+            reason="handoff admitted",
+        )
+        self._handoff_proofs.append(proof)
+        result = HandoffResult(
+            from_agent,
+            to_agent,
+            True,
+            proof_id=proof.proof_id,
+            payload=payload or {},
+        )
         self._handoffs.append(result)
         self._total_handoffs += 1
         return result
@@ -351,21 +755,132 @@ class AgentOrchestrator:
     def get_plan(self, plan_id: str) -> OrchestrationPlan | None:
         return self._plans.get(plan_id)
 
+    def read_model(self, proof_limit: int = 20) -> dict[str, Any]:
+        return {
+            "summary": self.summary(),
+            "recent_registration_proofs": self.registration_proofs(limit=proof_limit),
+            "recent_proposal_proofs": self._recent_proposal_proofs(proof_limit),
+            "recent_vote_proofs": self._recent_vote_proofs(proof_limit),
+            "recent_submission_proofs": self._recent_submission_proofs(proof_limit),
+            "recent_execution_proofs": self._recent_execution_proofs(proof_limit),
+            "recent_dispatch_proofs": self._recent_dispatch_proofs(proof_limit),
+            "recent_handoff_proofs": self.handoff_proofs(limit=proof_limit),
+        }
+
+    def handoff_proofs(self, limit: int = 50) -> list[dict[str, Any]]:
+        if limit <= 0:
+            return []
+        return [proof.to_dict() for proof in self._handoff_proofs[-limit:]]
+
+    def registration_proofs(self, limit: int = 50) -> list[dict[str, Any]]:
+        if limit <= 0:
+            return []
+        return [proof.to_dict() for proof in self._registration_proofs[-limit:]]
+
     def summary(self) -> dict[str, Any]:
         return {
             "registered_agents": self.agent_count,
+            "registration_proofs": len(self._registration_proofs),
+            "registration_decisions": _count_by_value(
+                proof.decision for proof in self._registration_proofs
+            ),
             "total_plans": self._total_plans,
             "active_plans": sum(1 for p in self._plans.values()
                                 if p.phase in (OrchestrationPhase.PLANNING,
                                                OrchestrationPhase.VOTING,
                                                OrchestrationPhase.EXECUTING)),
+            "plans_by_phase": _count_by_value(p.phase.value for p in self._plans.values()),
             "total_handoffs": self._total_handoffs,
+            "successful_handoffs": len(self._handoffs),
+            "handoff_proofs": len(self._handoff_proofs),
+            "handoff_decisions": _count_by_value(
+                proof.decision for proof in self._handoff_proofs
+            ),
             "manifest_gated": self.manifest_gated,
             "admitted_capability_count": (
                 0 if self._admitted_capabilities is None else len(self._admitted_capabilities)
             ),
             "dispatch_proofs": sum(len(p.dispatch_proofs) for p in self._plans.values()),
+            "dispatch_decisions": _count_by_value(
+                proof.decision
+                for plan in self._plans.values()
+                for proof in plan.dispatch_proofs
+            ),
+            "proposal_proofs": sum(len(p.proposal_proofs) for p in self._plans.values()),
+            "proposal_decisions": _count_by_value(
+                proof.decision
+                for plan in self._plans.values()
+                for proof in plan.proposal_proofs
+            ),
+            "vote_proofs": sum(len(p.vote_proofs) for p in self._plans.values()),
+            "vote_decisions": _count_by_value(
+                proof.decision
+                for plan in self._plans.values()
+                for proof in plan.vote_proofs
+            ),
+            "submission_proofs": sum(len(p.submission_proofs) for p in self._plans.values()),
+            "submission_decisions": _count_by_value(
+                proof.decision
+                for plan in self._plans.values()
+                for proof in plan.submission_proofs
+            ),
+            "execution_proofs": sum(len(p.execution_proofs) for p in self._plans.values()),
+            "execution_decisions": _count_by_value(
+                proof.decision
+                for plan in self._plans.values()
+                for proof in plan.execution_proofs
+            ),
         }
+
+    def _recent_proposal_proofs(self, limit: int) -> list[dict[str, Any]]:
+        if limit <= 0:
+            return []
+        proofs = [
+            proof
+            for plan in self._plans.values()
+            for proof in plan.proposal_proofs
+        ]
+        return [proof.to_dict() for proof in proofs[-limit:]]
+
+    def _recent_vote_proofs(self, limit: int) -> list[dict[str, Any]]:
+        if limit <= 0:
+            return []
+        proofs = [
+            proof
+            for plan in self._plans.values()
+            for proof in plan.vote_proofs
+        ]
+        return [proof.to_dict() for proof in proofs[-limit:]]
+
+    def _recent_submission_proofs(self, limit: int) -> list[dict[str, Any]]:
+        if limit <= 0:
+            return []
+        proofs = [
+            proof
+            for plan in self._plans.values()
+            for proof in plan.submission_proofs
+        ]
+        return [proof.to_dict() for proof in proofs[-limit:]]
+
+    def _recent_execution_proofs(self, limit: int) -> list[dict[str, Any]]:
+        if limit <= 0:
+            return []
+        proofs = [
+            proof
+            for plan in self._plans.values()
+            for proof in plan.execution_proofs
+        ]
+        return [proof.to_dict() for proof in proofs[-limit:]]
+
+    def _recent_dispatch_proofs(self, limit: int) -> list[dict[str, Any]]:
+        if limit <= 0:
+            return []
+        proofs = [
+            proof
+            for plan in self._plans.values()
+            for proof in plan.dispatch_proofs
+        ]
+        return [proof.to_dict() for proof in proofs[-limit:]]
 
     def _unadmitted_capabilities(self, required: tuple[str, ...]) -> tuple[str, ...]:
         if self._admitted_capabilities is None:
@@ -398,6 +913,158 @@ class AgentOrchestrator:
             return "proposal agent lacks required capabilities"
         if self._unadmitted_capabilities(proposal.required_capabilities):
             return "proposal requires unadmitted capabilities"
+        return ""
+
+    def _build_proposal_proof(
+        self,
+        *,
+        plan: OrchestrationPlan,
+        proposal: AgentProposal,
+        decision: str,
+        reason: str,
+    ) -> ProposalProof:
+        required_capabilities = proposal.required_capabilities
+        agent_registered = proposal.agent_id in self._capabilities
+        agent_capable = bool(
+            agent_registered
+            and not self._missing_agent_capabilities(
+                proposal.agent_id,
+                required_capabilities,
+            )
+        )
+        manifest_admitted = not self._unadmitted_capabilities(required_capabilities)
+        proof_index = len(plan.proposal_proofs) + 1
+        return ProposalProof(
+            proof_id=f"{plan.plan_id}:proposal:{proof_index}",
+            plan_id=plan.plan_id,
+            proposal_id=proposal.proposal_id,
+            agent_id=proposal.agent_id,
+            decision=decision,
+            reason=reason,
+            checked_at=self._clock(),
+            plan_phase=plan.phase.value,
+            agent_registered=agent_registered,
+            agent_capable=agent_capable,
+            manifest_admitted=manifest_admitted,
+            manifest_gated=self.manifest_gated,
+            required_capability_count=len(required_capabilities),
+        )
+
+    def _build_vote_proof(
+        self,
+        *,
+        plan: OrchestrationPlan,
+        agent_id: str,
+        vote: Vote,
+        decision: str,
+        reason: str,
+    ) -> VoteProof:
+        proof_index = len(plan.vote_proofs) + 1
+        return VoteProof(
+            proof_id=f"{plan.plan_id}:vote:{proof_index}",
+            plan_id=plan.plan_id,
+            agent_id=agent_id,
+            vote=vote.value,
+            decision=decision,
+            reason=reason,
+            checked_at=self._clock(),
+            plan_phase=plan.phase.value,
+            voter_registered=agent_id in self._capabilities,
+        )
+
+    def _build_submission_proof(
+        self,
+        *,
+        plan: OrchestrationPlan,
+        decision: str,
+        reason: str,
+        to_phase: OrchestrationPhase,
+    ) -> VotingSubmissionProof:
+        proof_index = len(plan.submission_proofs) + 1
+        return VotingSubmissionProof(
+            proof_id=f"{plan.plan_id}:submission:{proof_index}",
+            plan_id=plan.plan_id,
+            decision=decision,
+            reason=reason,
+            checked_at=self._clock(),
+            from_phase=plan.phase.value,
+            to_phase=to_phase.value,
+            proposal_count=len(plan.proposals),
+            voter_count=self.agent_count,
+            quorum_possible=self.agent_count > 0 and bool(plan.proposals),
+        )
+
+    def _build_execution_readiness_proof(
+        self,
+        *,
+        plan: OrchestrationPlan,
+        decision: str,
+        reason: str,
+        to_phase: OrchestrationPhase,
+    ) -> ExecutionReadinessProof:
+        proof_index = len(plan.execution_proofs) + 1
+        return ExecutionReadinessProof(
+            proof_id=f"{plan.plan_id}:execution:{proof_index}",
+            plan_id=plan.plan_id,
+            decision=decision,
+            reason=reason,
+            checked_at=self._clock(),
+            from_phase=plan.phase.value,
+            to_phase=to_phase.value,
+            proposal_count=len(plan.proposals),
+            vote_count=len(plan.votes),
+            approval_count=plan.approval_count,
+            rejection_count=plan.rejection_count,
+            voter_count=self.agent_count,
+            quorum_met=plan.has_quorum(self.agent_count),
+        )
+
+    def _build_registration_proof(
+        self,
+        *,
+        agent_id: str,
+        action: str,
+        decision: str,
+        reason: str,
+        previous_capabilities: tuple[str, ...] | None,
+        current_capabilities: tuple[str, ...] | None,
+    ) -> AgentRegistryProof:
+        proof_index = len(self._registration_proofs) + 1
+        return AgentRegistryProof(
+            proof_id=f"registry:{proof_index}",
+            agent_id=agent_id,
+            action=action,
+            decision=decision,
+            reason=reason,
+            checked_at=self._clock(),
+            previous_registered=previous_capabilities is not None,
+            current_registered=current_capabilities is not None,
+            previous_capability_count=(
+                0 if previous_capabilities is None else len(previous_capabilities)
+            ),
+            current_capability_count=(
+                0 if current_capabilities is None else len(current_capabilities)
+            ),
+            manifest_gated=self.manifest_gated,
+            admitted_capability_count=(
+                0 if self._admitted_capabilities is None else len(self._admitted_capabilities)
+            ),
+        )
+
+    def _handoff_admission_error(
+        self,
+        from_agent: str,
+        to_agent: str,
+        required_capabilities: tuple[str, ...],
+    ) -> str:
+        if from_agent not in self._capabilities:
+            return "source agent unavailable"
+        if to_agent not in self._capabilities:
+            return "target agent unavailable"
+        if self._missing_agent_capabilities(to_agent, required_capabilities):
+            return "target agent lacks required capabilities"
+        if self._unadmitted_capabilities(required_capabilities):
+            return "required capabilities are not manifest admitted"
         return ""
 
     def _build_dispatch_proof(
@@ -435,6 +1102,38 @@ class AgentOrchestrator:
             required_capability_count=len(required_capabilities),
         )
 
+    def _build_handoff_proof(
+        self,
+        *,
+        from_agent: str,
+        to_agent: str,
+        required_capabilities: tuple[str, ...],
+        decision: str,
+        reason: str,
+    ) -> HandoffProof:
+        source_registered = from_agent in self._capabilities
+        target_registered = to_agent in self._capabilities
+        target_capable = bool(
+            target_registered
+            and not self._missing_agent_capabilities(to_agent, required_capabilities)
+        )
+        manifest_admitted = not self._unadmitted_capabilities(required_capabilities)
+        proof_index = len(self._handoff_proofs) + 1
+        return HandoffProof(
+            proof_id=f"handoff:{proof_index}",
+            from_agent=from_agent,
+            to_agent=to_agent,
+            decision=decision,
+            reason=reason,
+            checked_at=self._clock(),
+            source_registered=source_registered,
+            target_registered=target_registered,
+            target_capable=target_capable,
+            manifest_admitted=manifest_admitted,
+            manifest_gated=self.manifest_gated,
+            required_capability_count=len(required_capabilities),
+        )
+
 
 def _normalize_admitted_capabilities(values: tuple[str, ...] | None) -> frozenset[str] | None:
     if values is None:
@@ -449,3 +1148,27 @@ def _capability_ids_from_manifest_read_model(read_model: Mapping[str, Any] | Non
     if not isinstance(raw_ids, (tuple, list)):
         return ()
     return tuple(str(capability_id).strip() for capability_id in raw_ids if str(capability_id).strip())
+
+
+def _sanitize_executor_result(raw_result: Mapping[str, Any]) -> SanitizedExecutorResult:
+    if not isinstance(raw_result, Mapping):
+        raise TypeError("executor output must be a mapping")
+    output: dict[str, Any] = {}
+    suppressed_keys: list[str] = []
+    for key, value in raw_result.items():
+        normalized_key = str(key)
+        if normalized_key in _GOVERNED_RESULT_KEYS:
+            suppressed_keys.append(normalized_key)
+            continue
+        output[normalized_key] = value
+    return SanitizedExecutorResult(
+        output=output,
+        suppressed_keys=tuple(suppressed_keys),
+    )
+
+
+def _count_by_value(values: Iterable[str]) -> dict[str, int]:
+    counts: dict[str, int] = {}
+    for value in values:
+        counts[value] = counts.get(value, 0) + 1
+    return counts

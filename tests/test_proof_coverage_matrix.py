@@ -18,10 +18,12 @@ from scripts.proof_coverage_matrix import (
     DOC_OUTPUT,
     REPO_ROOT,
     discover_declared_routes,
+    evidence_quality_report,
     operator_document,
     route_coverage_report,
     proof_coverage_matrix,
     validate_matrix_routes,
+    witness_integrity_report,
 )
 
 
@@ -76,6 +78,63 @@ def test_coverage_summary_matches_surfaces() -> None:
     assert summary["by_coverage_state"]["witnessed"] >= 1
 
 
+def test_evidence_quality_report_tracks_witness_strength_gaps() -> None:
+    matrix = _load_fixture()
+    evidence_quality = matrix["evidence_quality"]
+    quality_gaps = {
+        record["surface_id"]: record
+        for record in evidence_quality["quality_gaps"]
+    }
+
+    assert evidence_quality == evidence_quality_report(matrix["surfaces"])
+    assert sum(evidence_quality["by_strength"].values()) == len(matrix["surfaces"])
+    assert evidence_quality["quality_gap_count"] == len(evidence_quality["quality_gaps"])
+    assert evidence_quality["by_strength"]["strong"] >= 1
+    assert evidence_quality["by_strength"]["classified_with_quality_gaps"] == 0
+    assert evidence_quality["quality_gap_count"] == 0
+    assert "llm_streaming" not in quality_gaps
+    assert "llm_completion" not in quality_gaps
+    assert "llm_chat_workflow" not in quality_gaps
+    assert "cost_budget_read_models" not in quality_gaps
+    assert "model_experiment_control" not in quality_gaps
+    assert "policy_version_registry" not in quality_gaps
+    assert "pilot_provisioning" not in quality_gaps
+    assert "hosted_demo_sandbox" not in quality_gaps
+    assert "gateway_webhook_ingress" not in quality_gaps
+    assert "gateway_approval_resolution" not in quality_gaps
+    assert "replay_determinism" not in quality_gaps
+    assert "tool_invocation" not in quality_gaps
+    assert "governed_session" not in quality_gaps
+    assert "health_docs_exempt" not in quality_gaps
+    assert "lineage_query_api" not in quality_gaps
+
+
+def test_witness_integrity_report_tracks_exact_test_anchors() -> None:
+    matrix = _load_fixture()
+    witness_integrity = matrix["witness_integrity"]
+    surfaces = {
+        record["surface_id"]: record
+        for record in witness_integrity["surfaces"]
+    }
+
+    assert witness_integrity == witness_integrity_report(matrix["surfaces"])
+    assert witness_integrity["runtime_witness_count"] >= witness_integrity["exact_test_anchor_count"]
+    assert witness_integrity["runtime_witness_count"] == (
+        witness_integrity["exact_test_anchor_count"] + witness_integrity["unanchored_witness_count"]
+    )
+    assert surfaces["policy_version_registry"]["unanchored_witness_count"] == 0
+    assert surfaces["pilot_provisioning"]["unanchored_witness_count"] == 0
+    assert surfaces["hosted_demo_sandbox"]["unanchored_witness_count"] == 0
+    assert surfaces["replay_determinism"]["unanchored_witness_count"] == 0
+    assert surfaces["governed_session"]["unanchored_witness_count"] == 0
+    assert surfaces["lineage_query_api"]["unanchored_witness_count"] == 0
+    assert surfaces["physical_action_boundary"]["unanchored_witness_count"] == 0
+    assert surfaces["operational_platform_read_models"]["exact_test_anchor_count"] >= 25
+    assert surfaces["operational_platform_read_models"]["unanchored_witness_count"] == 2
+    assert surfaces["trust_ledger"]["unanchored_witness_count"] == 0
+    assert surfaces["gateway_runtime_witness"]["unanchored_witness_count"] == 0
+
+
 def test_declared_routes_have_explicit_coverage_classification() -> None:
     matrix = _load_fixture()
     report = matrix["route_coverage"]
@@ -92,7 +151,7 @@ def test_declared_routes_have_explicit_coverage_classification() -> None:
     assert all(record["coverage_state"] != "unproven" for record in report["routes"])
 
 
-def test_aggregate_operational_surface_does_not_override_specific_route_owners() -> None:
+def test_operational_platform_surface_owns_operational_read_model_routes() -> None:
     matrix = _load_fixture()
     surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
     route_records = {
@@ -106,10 +165,10 @@ def test_aggregate_operational_surface_does_not_override_specific_route_owners()
     }
 
     assert aggregate_routes
-    assert all(route_records[route]["surface_id"] != "operational_platform_read_models" for route in aggregate_routes)
-    assert route_records["/api/v1/rate-limit/status"]["surface_id"] == "rate_limit_read_models"
-    assert route_records["/api/v1/flags"]["surface_id"] == "feature_flag_read_models"
-    assert route_records["/gateway/status"]["surface_id"] == "gateway_status_read_model"
+    assert all(route_records[route]["surface_id"] == "operational_platform_read_models" for route in aggregate_routes)
+    assert route_records["/api/v1/rate-limit/status"]["surface_id"] == "operational_platform_read_models"
+    assert route_records["/api/v1/flags"]["surface_id"] == "operational_platform_read_models"
+    assert route_records["/gateway/status"]["surface_id"] == "operational_platform_read_models"
 
 
 def test_representative_routes_are_not_unclassified() -> None:
@@ -132,6 +191,12 @@ def test_representative_routes_are_not_unclassified() -> None:
     assert classified_routes["/commands/{command_id}/capability-admission"]["surface_id"] == "gateway_capability_fabric"
     assert classified_routes["/commands/{command_id}/authority"]["surface_id"] == "authority_obligation_mesh"
     assert classified_routes["/capability/execute"]["surface_id"] == "capability_worker_execution"
+    assert classified_routes["/browser/execute"]["surface_id"] == "restricted_adapter_worker_boundaries"
+    assert classified_routes["/document/execute"]["surface_id"] == "restricted_adapter_worker_boundaries"
+    assert classified_routes["/email-calendar/execute"]["surface_id"] == "restricted_adapter_worker_boundaries"
+    assert classified_routes["/messaging/execute"]["surface_id"] == "restricted_adapter_worker_boundaries"
+    assert classified_routes["/phone/execute"]["surface_id"] == "restricted_adapter_worker_boundaries"
+    assert classified_routes["/voice/execute"]["surface_id"] == "restricted_adapter_worker_boundaries"
     assert classified_routes["/evidence/bundles/{command_id}"]["surface_id"] == "trust_ledger"
     assert classified_routes["/api/v1/data-governance/evaluate"]["surface_id"] == "data_governance_controls"
     assert classified_routes["/api/v1/compliance/audit-package"]["surface_id"] == "compliance_evidence_exports"
@@ -196,10 +261,10 @@ def test_representative_routes_are_not_unclassified() -> None:
     assert classified_routes["/api/v1/tools/invoke"]["surface_id"] == "tool_invocation"
     assert classified_routes["/api/v1/output/parse"]["surface_id"] == "structured_output_validation"
     assert classified_routes["/api/v1/output/schemas"]["surface_id"] == "structured_output_validation"
-    assert classified_routes["/api/v1/rate-limit/status"]["surface_id"] == "rate_limit_read_models"
-    assert classified_routes["/api/v1/rate-limits/{client_id}"]["surface_id"] == "rate_limit_read_models"
-    assert classified_routes["/api/v1/flags"]["surface_id"] == "feature_flag_read_models"
-    assert classified_routes["/api/v1/flags/{flag_id}"]["surface_id"] == "feature_flag_read_models"
+    assert classified_routes["/api/v1/rate-limit/status"]["surface_id"] == "operational_platform_read_models"
+    assert classified_routes["/api/v1/rate-limits/{client_id}"]["surface_id"] == "operational_platform_read_models"
+    assert classified_routes["/api/v1/flags"]["surface_id"] == "operational_platform_read_models"
+    assert classified_routes["/api/v1/flags/{flag_id}"]["surface_id"] == "operational_platform_read_models"
     assert classified_routes["/api/v1/traces"]["surface_id"] == "trace_observability_read_models"
     assert classified_routes["/api/v1/traces/slow"]["surface_id"] == "trace_observability_read_models"
     assert classified_routes["/api/v1/traces/summary"]["surface_id"] == "trace_observability_read_models"
@@ -254,16 +319,16 @@ def test_representative_routes_are_not_unclassified() -> None:
     assert classified_routes["/api/v1/rbac/identities"]["surface_id"] == "rbac_access_governance"
     assert classified_routes["/api/v1/rbac/roles"]["surface_id"] == "rbac_access_governance"
     assert classified_routes["/api/v1/rbac/bindings"]["surface_id"] == "rbac_access_governance"
-    assert classified_routes["/api/v1/bootstrap"]["surface_id"] == "llm_admin_observability"
-    assert classified_routes["/api/v1/circuit-breaker"]["surface_id"] == "llm_admin_observability"
-    assert classified_routes["/api/v1/llm/history"]["surface_id"] == "llm_admin_observability"
+    assert classified_routes["/api/v1/bootstrap"]["surface_id"] == "operational_platform_read_models"
+    assert classified_routes["/api/v1/circuit-breaker"]["surface_id"] == "operational_platform_read_models"
+    assert classified_routes["/api/v1/llm/history"]["surface_id"] == "operational_platform_read_models"
     assert classified_routes["/api/v1/conversation/message"]["surface_id"] == "conversation_memory_lifecycle"
     assert classified_routes["/api/v1/conversation/{conversation_id}"]["surface_id"] == "conversation_memory_lifecycle"
     assert classified_routes["/api/v1/conversations"]["surface_id"] == "conversation_memory_lifecycle"
     assert classified_routes["/api/v1/coordination/checkpoint"]["surface_id"] == "coordination_checkpoint_lifecycle"
     assert classified_routes["/api/v1/coordination/restore"]["surface_id"] == "coordination_checkpoint_lifecycle"
-    assert classified_routes["/api/v1/dependencies"]["surface_id"] == "dependency_graph_read_models"
-    assert classified_routes["/api/v1/dependencies/{name}/impact"]["surface_id"] == "dependency_graph_read_models"
+    assert classified_routes["/api/v1/dependencies"]["surface_id"] == "operational_platform_read_models"
+    assert classified_routes["/api/v1/dependencies/{name}/impact"]["surface_id"] == "operational_platform_read_models"
     assert (
         classified_routes["/api/v1/engineering-puzzle/candidates/judge"]["surface_id"]
         == "engineering_puzzle_governance"
@@ -271,22 +336,22 @@ def test_representative_routes_are_not_unclassified() -> None:
     assert classified_routes["/api/v1/engineering-puzzle/goal-delta"]["surface_id"] == "engineering_puzzle_governance"
     assert classified_routes["/api/v1/export"]["surface_id"] == "data_export_lifecycle"
     assert classified_routes["/api/v1/export/sources"]["surface_id"] == "data_export_lifecycle"
-    assert classified_routes["/api/v1/flags"]["surface_id"] == "feature_flag_read_models"
-    assert classified_routes["/api/v1/flags/{flag_id}"]["surface_id"] == "feature_flag_read_models"
-    assert classified_routes["/api/v1/metrics"]["surface_id"] == "operational_telemetry_read_models"
-    assert classified_routes["/api/v1/grafana/dashboard"]["surface_id"] == "operational_telemetry_read_models"
+    assert classified_routes["/api/v1/flags"]["surface_id"] == "operational_platform_read_models"
+    assert classified_routes["/api/v1/flags/{flag_id}"]["surface_id"] == "operational_platform_read_models"
+    assert classified_routes["/api/v1/metrics"]["surface_id"] == "operational_platform_read_models"
+    assert classified_routes["/api/v1/grafana/dashboard"]["surface_id"] == "operational_platform_read_models"
     assert classified_routes["/api/v1/prompts"]["surface_id"] == "prompt_template_lifecycle"
     assert classified_routes["/api/v1/prompts/render"]["surface_id"] == "prompt_template_lifecycle"
-    assert classified_routes["/api/v1/rate-limit/status"]["surface_id"] == "rate_limit_read_models"
-    assert classified_routes["/api/v1/rate-limits/{client_id}"]["surface_id"] == "rate_limit_read_models"
+    assert classified_routes["/api/v1/rate-limit/status"]["surface_id"] == "operational_platform_read_models"
+    assert classified_routes["/api/v1/rate-limits/{client_id}"]["surface_id"] == "operational_platform_read_models"
     assert classified_routes["/api/v1/replay/traces"]["surface_id"] == "replay_trace_read_models"
     assert classified_routes["/api/v1/schemas"]["surface_id"] == "schema_validation_registry"
     assert classified_routes["/api/v1/schemas/validate"]["surface_id"] == "schema_validation_registry"
     assert classified_routes["/api/v1/search"]["surface_id"] == "semantic_search_read_models"
     assert classified_routes["/api/v1/search/stats"]["surface_id"] == "semantic_search_read_models"
-    assert classified_routes["/api/v1/sla"]["surface_id"] == "sla_monitoring_read_models"
-    assert classified_routes["/api/v1/sla/violations"]["surface_id"] == "sla_monitoring_read_models"
-    assert classified_routes["/gateway/status"]["surface_id"] == "gateway_status_read_model"
+    assert classified_routes["/api/v1/sla"]["surface_id"] == "operational_platform_read_models"
+    assert classified_routes["/api/v1/sla/violations"]["surface_id"] == "operational_platform_read_models"
+    assert classified_routes["/gateway/status"]["surface_id"] == "operational_platform_read_models"
 
 
 def test_runtime_config_management_surface_is_witnessed() -> None:
@@ -430,53 +495,53 @@ def test_remaining_declared_route_groups_are_witnessed() -> None:
     }
     expected_groups = (
         (
-            "llm_admin_observability",
-            "classify_llm_admin_observability_routes",
+            "operational_platform_read_models",
+            "classify_operational_platform_read_model_routes",
             ("/api/v1/bootstrap", "/api/v1/circuit-breaker", "/api/v1/llm/history"),
             "mcoi/mcoi_runtime/app/routers/llm/admin.py",
-            "llm_history_window_bounded",
+            "history_after_completion",
         ),
         (
-            "dependency_graph_read_models",
-            "classify_dependency_graph_routes",
+            "operational_platform_read_models",
+            "classify_operational_platform_read_model_routes",
             ("/api/v1/dependencies", "/api/v1/dependencies/{name}/impact"),
             "mcoi/mcoi_runtime/app/routers/ops/dependencies.py",
             "dependency_impact_analysis_bounded",
         ),
         (
-            "feature_flag_read_models",
-            "classify_feature_flag_routes",
+            "operational_platform_read_models",
+            "classify_operational_platform_read_model_routes",
             ("/api/v1/flags", "/api/v1/flags/{flag_id}"),
             "mcoi/mcoi_runtime/app/routers/ops/feature_flags.py",
-            "missing_feature_flag_defaults_closed",
+            "check_flag_unknown",
         ),
         (
-            "operational_telemetry_read_models",
-            "classify_operational_telemetry_routes",
+            "operational_platform_read_models",
+            "classify_operational_platform_read_model_routes",
             ("/api/v1/metrics", "/api/v1/grafana/dashboard"),
             "mcoi/mcoi_runtime/app/routers/ops/metrics.py",
-            "metrics_snapshot_bounded",
+            "get_metrics",
         ),
         (
-            "rate_limit_read_models",
-            "classify_rate_limit_read_model_routes",
+            "operational_platform_read_models",
+            "classify_operational_platform_read_model_routes",
             ("/api/v1/rate-limit/status", "/api/v1/rate-limits/{client_id}"),
             "mcoi/mcoi_runtime/app/routers/ops/rate_limit.py",
-            "rate_limit_read_model_non_mutating",
+            "rate_limit_status",
         ),
         (
-            "sla_monitoring_read_models",
-            "classify_sla_monitoring_routes",
+            "operational_platform_read_models",
+            "classify_operational_platform_read_model_routes",
             ("/api/v1/sla", "/api/v1/sla/violations"),
             "mcoi/mcoi_runtime/app/routers/data/sla.py",
-            "sla_read_model_non_mutating",
+            "sla_summary_endpoint_returns_bounded_governed_read_model",
         ),
         (
-            "gateway_status_read_model",
-            "classify_gateway_status_route",
+            "operational_platform_read_models",
+            "classify_operational_platform_read_model_routes",
             ("/gateway/status",),
             "gateway/server.py",
-            "gateway_status_governed",
+            "health",
         ),
         (
             "conversation_memory_lifecycle",
@@ -688,6 +753,42 @@ def test_capability_worker_execution_surface_is_witnessed() -> None:
     assert "non_isolated_boundary_rejected" in witnesses
     assert "local_smoke_stub_bound_to_local_environment" in witnesses
     assert "capability_worker_execution" in closure_actions["classify_gateway_capability_admission_routes"]["surfaces"]
+
+
+def test_restricted_adapter_worker_boundary_surface_is_witnessed() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    worker_surface = surfaces["restricted_adapter_worker_boundaries"]
+    witnesses = set(worker_surface["runtime_witnesses"])
+
+    assert worker_surface["coverage_state"] == "witnessed"
+    assert worker_surface["request_proof"] == "request_proof"
+    assert worker_surface["action_proof"] == "action_proof"
+    assert worker_surface["audit"] == "audit_chain"
+    assert {
+        "/browser/execute",
+        "/document/execute",
+        "/email-calendar/execute",
+        "/messaging/execute",
+        "/phone/execute",
+        "/voice/execute",
+    }.issubset(set(worker_surface["representative_paths"]))
+    assert {
+        "gateway/browser_worker.py",
+        "gateway/document_worker.py",
+        "gateway/email_calendar_worker.py",
+        "gateway/messaging_worker.py",
+        "gateway/phone_worker.py",
+        "gateway/voice_worker.py",
+    }.issubset(set(worker_surface["evidence_files"]))
+    assert {
+        "browser_worker_parse_error_detail_is_bounded",
+        "document_worker_parse_error_detail_is_bounded",
+        "email_calendar_worker_parse_error_detail_is_bounded",
+        "messaging_worker_parse_error_detail_is_bounded",
+        "phone_worker_parse_error_detail_is_bounded",
+        "voice_worker_parse_error_detail_is_bounded",
+    }.issubset(witnesses)
 
 
 def test_data_governance_controls_surface_is_witnessed() -> None:
@@ -1147,13 +1248,13 @@ def test_gateway_runtime_witness_covers_orchestration_receipts() -> None:
     assert "tests/test_validate_gateway_publication_receipt.py" in runtime_surface["evidence_files"]
     assert "tests/test_validate_deployment_publication_closure.py" in runtime_surface["evidence_files"]
     assert "tests/test_validate_protocol_manifest.py" in runtime_surface["evidence_files"]
-    assert "deployment_witness_orchestration_receipt" in runtime_surface["runtime_witnesses"]
-    assert "latest_anchor_read_model_schema_valid" in runtime_surface["runtime_witnesses"]
-    assert "runtime_witness_schema_valid" in runtime_surface["runtime_witnesses"]
-    assert "deployment_publication_closure_validation_schema" in runtime_surface["runtime_witnesses"]
-    assert "deployment_orchestration_validation_schema" in runtime_surface["runtime_witnesses"]
-    assert "gateway_publication_readiness_schema" in runtime_surface["runtime_witnesses"]
-    assert "gateway_publication_receipt_validation_schema" in runtime_surface["runtime_witnesses"]
+    assert "orchestrate_deployment_witness_renders_and_provisions" in runtime_surface["runtime_witnesses"]
+    assert "latest_anchor_read_model" in runtime_surface["runtime_witnesses"]
+    assert "runtime_witness_alias" in runtime_surface["runtime_witnesses"]
+    assert "closure_validation_report_matches_public_schema_for_not_published" in runtime_surface["runtime_witnesses"]
+    assert "orchestration_validation_report_matches_public_schema" in runtime_surface["runtime_witnesses"]
+    assert "readiness_report_matches_public_schema" in runtime_surface["runtime_witnesses"]
+    assert "receipt_validation_report_matches_public_schema" in runtime_surface["runtime_witnesses"]
     assert closure_actions["publish_deployment_orchestration_receipt_contract"]["status"] == "closed"
 
 
@@ -1166,13 +1267,12 @@ def test_gateway_runtime_witness_covers_publication_responsibility_debt() -> Non
     assert "schemas/deployment_witness.schema.json" in runtime_surface["evidence_files"]
     assert "scripts/validate_deployment_publication_closure.py" in runtime_surface["evidence_files"]
     assert "tests/test_validate_deployment_publication_closure.py" in runtime_surface["evidence_files"]
-    assert "responsibility_debt_clear" in witnesses
-    assert "runtime_responsibility_debt_clear" in witnesses
-    assert "authority_responsibility_debt_clear" in witnesses
-    assert "authority_overdue_approval_chain_count" in witnesses
-    assert "authority_overdue_obligation_count" in witnesses
-    assert "authority_escalated_obligation_count" in witnesses
-    assert "authority_unowned_high_risk_capability_count" in witnesses
+    assert "collect_deployment_witness_rejects_responsibility_debt" in witnesses
+    assert "collect_deployment_witness_rejects_runtime_responsibility_debt" in witnesses
+    assert "preflight_deployment_witness_rejects_responsibility_debt" in witnesses
+    assert "preflight_deployment_witness_rejects_runtime_witness_responsibility_debt" in witnesses
+    assert "published_status_rejects_authority_responsibility_debt" in witnesses
+    assert "published_status_rejects_runtime_responsibility_debt" in witnesses
 
 
 def test_production_evidence_plane_is_witnessed_and_schema_backed() -> None:
@@ -1510,6 +1610,7 @@ def test_capability_manifest_registry_surface_admits_governed_manifests() -> Non
     assert "capability_manifest_schema_valid" in witnesses
     assert "software_dev_manifests_admit_locally" in witnesses
     assert "effect_manifest_requires_sandbox_rollback" in witnesses
+    assert "hot_reload_metadata_enforced" in witnesses
     assert "production_hot_reload_denied_for_effect_manifest" in witnesses
     assert "fabric_projects_local_manifest_registry" in witnesses
     assert "fabric_rejects_production_hot_reload_manifest_registry" in witnesses
@@ -1967,7 +2068,7 @@ def test_rate_limit_read_model_surface_exposes_bounded_status_and_headers() -> N
     matrix = _load_fixture()
     surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
     closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
-    rate_surface = surfaces["rate_limit_read_models"]
+    rate_surface = surfaces["operational_platform_read_models"]
     witnesses = set(rate_surface["runtime_witnesses"])
     route_records = {
         record["route"]: record
@@ -1985,22 +2086,23 @@ def test_rate_limit_read_model_surface_exposes_bounded_status_and_headers() -> N
     assert "mcoi/tests/test_rate_limiter.py" in rate_surface["evidence_files"]
     assert "mcoi/tests/test_server_phase202.py" in rate_surface["evidence_files"]
     assert "mcoi/tests/test_rate_limit_headers.py" in rate_surface["evidence_files"]
-    assert "rate_limit_status_reports_allowed_and_active_buckets" in witnesses
-    assert "rate_limit_headers_project_limit_remaining_reset" in witnesses
-    assert "rate_limit_header_peek_does_not_consume" in witnesses
-    assert "atomic_rate_limit_store_bounds_concurrent_consumption" in witnesses
+    assert "rate_limit_status" in witnesses
+    assert "status" in witnesses
+    assert "to_headers" in witnesses
+    assert "peek_does_not_consume" in witnesses
+    assert "consume_decrements" in witnesses
     assert route_records["/api/v1/rate-limit/status"]["coverage_state"] == "witnessed"
-    assert route_records["/api/v1/rate-limit/status"]["surface_id"] == "rate_limit_read_models"
+    assert route_records["/api/v1/rate-limit/status"]["surface_id"] == "operational_platform_read_models"
     assert route_records["/api/v1/rate-limits/{client_id}"]["coverage_state"] == "witnessed"
-    assert route_records["/api/v1/rate-limits/{client_id}"]["surface_id"] == "rate_limit_read_models"
-    assert closure_actions["classify_rate_limit_read_model_routes"]["status"] == "closed"
+    assert route_records["/api/v1/rate-limits/{client_id}"]["surface_id"] == "operational_platform_read_models"
+    assert closure_actions["classify_operational_platform_read_model_routes"]["status"] == "closed"
 
 
 def test_feature_flag_read_model_surface_exposes_bounded_flag_checks() -> None:
     matrix = _load_fixture()
     surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
     closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
-    flag_surface = surfaces["feature_flag_read_models"]
+    flag_surface = surfaces["operational_platform_read_models"]
     witnesses = set(flag_surface["runtime_witnesses"])
     route_records = {
         record["route"]: record
@@ -2016,16 +2118,16 @@ def test_feature_flag_read_model_surface_exposes_bounded_flag_checks() -> None:
     assert "mcoi/mcoi_runtime/core/feature_flags.py" in flag_surface["evidence_files"]
     assert "mcoi/tests/test_server_phase220.py" in flag_surface["evidence_files"]
     assert "mcoi/tests/test_feature_flags.py" in flag_surface["evidence_files"]
-    assert "feature_flags_list_returns_registered_flags" in witnesses
-    assert "feature_flags_summary_counts_enabled_disabled" in witnesses
-    assert "feature_flag_check_enabled" in witnesses
-    assert "feature_flag_unknown_returns_disabled" in witnesses
-    assert "feature_flag_tenant_override_respected" in witnesses
+    assert "list_flags" in witnesses
+    assert "summary" in witnesses
+    assert "check_flag_enabled" in witnesses
+    assert "check_flag_unknown" in witnesses
+    assert "tenant_override" in witnesses
     assert route_records["/api/v1/flags"]["coverage_state"] == "witnessed"
-    assert route_records["/api/v1/flags"]["surface_id"] == "feature_flag_read_models"
+    assert route_records["/api/v1/flags"]["surface_id"] == "operational_platform_read_models"
     assert route_records["/api/v1/flags/{flag_id}"]["coverage_state"] == "witnessed"
-    assert route_records["/api/v1/flags/{flag_id}"]["surface_id"] == "feature_flag_read_models"
-    assert closure_actions["classify_feature_flag_routes"]["status"] == "closed"
+    assert route_records["/api/v1/flags/{flag_id}"]["surface_id"] == "operational_platform_read_models"
+    assert closure_actions["classify_operational_platform_read_model_routes"]["status"] == "closed"
 
 
 def test_operational_health_surface_exposes_bounded_read_models() -> None:
@@ -2449,22 +2551,29 @@ def test_trust_ledger_surface_signs_terminal_evidence_bundles() -> None:
     assert "tests/test_gateway/test_trust_ledger_anchor_receipt.py" in trust_surface["evidence_files"]
     assert "tests/test_gateway/test_trust_ledger.py" in trust_surface["evidence_files"]
     assert "tests/test_verify_anchor_receipt.py" in trust_surface["evidence_files"]
-    assert "terminal_certificate_id_required" in witnesses
-    assert "bundle_hash_tamper_detection" in witnesses
-    assert "offline_bundle_verification_report_schema_valid" in witnesses
-    assert "hmac_signature_verification" in witnesses
-    assert "offline_anchor_verifier_validates_schema_artifacts_and_signature" in witnesses
-    assert "offline_anchor_artifact_root_tamper_detection" in witnesses
-    assert "offline_anchor_schema_invalid_receipt_rejected" in witnesses
-    assert "offline_anchor_package_hash_mismatch_rejected" in witnesses
-    assert "offline_anchor_package_schema_invalid_rejected" in witnesses
-    assert "offline_anchor_verification_report_schema_valid" in witnesses
-    assert "offline_anchor_report_emits_package_identity" in witnesses
-    assert "typed_artifact_root_required" in witnesses
-    assert "anchor_receipt_hmac_verification" in witnesses
-    assert "anchor_receipt_schema_valid" in witnesses
-    assert "export_package_binds_bundle_receipt_and_artifact_files" in witnesses
-    assert "export_package_rejects_receipt_identity_drift" in witnesses
+    expected_witnesses = {
+        "terminal_command_exports_signed_evidence_bundle",
+        "evidence_bundle_endpoint_rejects_non_terminal_command",
+        "offline_bundle_verifier_detects_tampering",
+        "offline_bundle_verifier_report_contract_allows_missing_secret",
+        "trust_ledger_issues_and_verifies_signed_bundle",
+        "trust_ledger_requires_terminal_certificate_and_evidence",
+        "trust_ledger_requires_anchor_ref_when_anchored",
+        "trust_ledger_bundle_schema_exposes_signature_contract",
+        "trust_ledger_anchor_receipt_binds_required_artifacts",
+        "trust_ledger_anchor_receipt_detects_tampered_artifact_root",
+        "trust_ledger_anchor_receipt_rejects_missing_terminal_artifact",
+        "trust_ledger_anchor_receipt_validates_against_schema",
+        "trust_ledger_export_package_binds_verifier_inputs",
+        "trust_ledger_export_package_rejects_receipt_identity_drift",
+        "verify_anchor_receipt_files_accepts_valid_export",
+        "verify_anchor_receipt_files_detects_tampered_artifact_root",
+        "verify_anchor_receipt_files_rejects_schema_invalid_receipt",
+        "verify_anchor_receipt_files_detects_package_bundle_hash_mismatch",
+        "verify_anchor_receipt_files_rejects_schema_invalid_package",
+        "verify_anchor_receipt_report_contract_allows_missing_secret_report",
+    }
+    assert expected_witnesses <= witnesses
     assert closure_actions["publish_trust_ledger_bundle_contract"]["status"] == "closed"
     assert closure_actions["publish_trust_ledger_anchor_receipt_contract"]["status"] == "closed"
 
@@ -2539,30 +2648,28 @@ def test_physical_action_boundary_surface_blocks_dispatch_without_safety_control
     assert "tests/test_gateway/test_physical_worker_canary.py" in physical_surface["evidence_files"]
     assert "tests/test_preflight_physical_capability_promotion.py" in physical_surface["evidence_files"]
     assert "tests/test_produce_physical_worker_canary.py" in physical_surface["evidence_files"]
-    assert "physical_capability_pack_fixture_not_default_loaded" in witnesses
-    assert "physical_sandbox_replay_admitted_without_production_gate" in witnesses
-    assert "live_physical_capability_rejected_by_production_gate" in witnesses
-    assert "physical_pack_projects_sandbox_only_evidence" in witnesses
-    assert "physical_promotion_preflight_blocks_fixture_live_claim" in witnesses
-    assert "physical_promotion_preflight_requires_live_safety_evidence" in witnesses
-    assert "physical_promotion_preflight_accepts_full_evidence" in witnesses
-    assert "physical_promotion_preflight_allows_sandbox_only_pack" in witnesses
-    assert "physical_capsule_admission_runs_promotion_preflight" in witnesses
-    assert "physical_capsule_admission_keeps_registry_unmutated_on_preflight_failure" in witnesses
-    assert "physical_promotion_receipt_binds_forge_handoff_registry_preflight" in witnesses
-    assert "physical_promotion_receipt_schema_valid" in witnesses
-    assert "physical_promotion_receipt_cli_emits_schema_valid_bundle" in witnesses
-    assert "physical_promotion_receipt_cli_blocks_missing_live_refs" in witnesses
-    assert "physical_promotion_receipt_operator_endpoint_emits_bundle" in witnesses
-    assert "physical_promotion_receipt_operator_endpoint_blocks_missing_live_refs" in witnesses
-    assert "physical_promotion_receipt_jsonl_store_persists" in witnesses
-    assert "physical_promotion_receipt_store_fails_closed_on_invalid_record" in witnesses
-    assert "physical_promotion_receipt_operator_console_renders_ledger" in witnesses
-    assert "hardware_identity_required" in witnesses
-    assert "emergency_stop_required" in witnesses
-    assert "physical_dispatch_blocked_until_controls_complete" in witnesses
-    assert "physical_worker_canary_uses_sandbox_handler" in witnesses
-    assert "physical_worker_canary_artifact_hash_bound" in witnesses
+    expected_witnesses = {
+        "physical_boundary_blocks_without_simulation",
+        "physical_boundary_blocks_live_effects_without_certification",
+        "physical_boundary_requires_operator_review_when_approval_missing",
+        "physical_action_receipt_matches_schema",
+        "physical_fixture_pack_is_not_loaded_by_default",
+        "physical_fixture_pack_allows_sandbox_replay_when_production_gate_disabled",
+        "physical_fixture_pack_blocks_live_promotion_when_production_gate_enabled",
+        "physical_fixture_pack_projects_sandbox_only_gateway_evidence",
+        "physical_capability_promotion_preflight_blocks_live_fixture_by_default",
+        "physical_capability_promotion_preflight_passes_with_full_evidence",
+        "physical_capability_promotion_preflight_allows_sandbox_only_pack",
+        "capsule_installer_runs_physical_preflight_before_registry_mutation",
+        "capsule_installer_returns_rejected_receipt_without_registry_mutation",
+        "physical_capability_promotion_receipt_binds_ready_chain",
+        "operator_physical_promotion_receipt_endpoint_emits_ready_bundle",
+        "operator_physical_promotion_receipt_endpoint_blocks_missing_live_refs",
+        "physical_promotion_receipt_jsonl_store_fails_closed_on_invalid_record",
+        "physical_worker_canary_blocks_missing_receipt_and_allows_sandbox_replay",
+        "physical_worker_canary_evidence_and_hash_are_stable",
+    }
+    assert expected_witnesses <= witnesses
     assert closure_actions["publish_physical_action_receipt_contract"]["status"] == "closed"
 
 

@@ -122,6 +122,27 @@ def test_email_calendar_worker_rejects_bad_signature() -> None:
     assert "X-Mullu-Email-Calendar-Response-Signature" not in response.headers
 
 
+def test_email_calendar_worker_parse_error_detail_is_bounded() -> None:
+    secret = "email-calendar-secret"
+    body = b'{"request_id":"secret-token-from-email-calendar"'
+    app = create_email_calendar_worker_app(adapter=FakeEmailCalendarAdapter(), signing_secret=secret)
+    client = TestClient(app)
+
+    response = client.post(
+        "/email-calendar/execute",
+        content=body,
+        headers={"X-Mullu-Email-Calendar-Signature": sign_capability_payload(body, secret)},
+    )
+    detail = response.json()["detail"]
+
+    assert response.status_code == 422
+    assert detail["error"] == "invalid email/calendar execution request"
+    assert detail["error_code"] == "invalid_email_calendar_execution_request"
+    assert detail["governed"] is True
+    assert "secret-token-from-email-calendar" not in response.text
+    assert "X-Mullu-Email-Calendar-Response-Signature" not in response.headers
+
+
 def test_email_send_requires_approval_before_adapter() -> None:
     request = email_calendar_action_request_from_mapping(
         _payload(

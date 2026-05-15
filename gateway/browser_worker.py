@@ -175,6 +175,22 @@ class UnavailableBrowserAdapter:
         )
 
 
+_BROWSER_WORKER_ERROR_CODES = {
+    "browser request body must be an object": (
+        "invalid browser request body",
+        "invalid_browser_request_body",
+    ),
+}
+
+
+def _browser_worker_error_detail(exc: BaseException) -> dict[str, object]:
+    error, error_code = _BROWSER_WORKER_ERROR_CODES.get(
+        str(exc),
+        ("invalid browser execution request", "invalid_browser_execution_request"),
+    )
+    return {"error": error, "error_code": error_code, "governed": True}
+
+
 def create_browser_worker_app(
     *,
     adapter: BrowserAutomationAdapter | None = None,
@@ -210,7 +226,7 @@ def create_browser_worker_app(
                 raise RuntimeError("browser request body must be an object")
             browser_request = browser_action_request_from_mapping(raw)
         except (UnicodeDecodeError, json.JSONDecodeError, RuntimeError, ValueError) as exc:
-            raise HTTPException(422, detail=str(exc)) from exc
+            raise HTTPException(422, detail=_browser_worker_error_detail(exc)) from exc
 
         response = execute_browser_request(browser_request, adapter=resolved_adapter, policy=resolved_policy)
         response_body = json.dumps(

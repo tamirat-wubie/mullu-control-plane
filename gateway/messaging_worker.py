@@ -196,6 +196,22 @@ class UnavailableMessagingAdapter:
         )
 
 
+_MESSAGING_WORKER_ERROR_CODES = {
+    "messaging request body must be an object": (
+        "invalid messaging request body",
+        "invalid_messaging_request_body",
+    ),
+}
+
+
+def _messaging_worker_error_detail(exc: BaseException) -> dict[str, object]:
+    error, error_code = _MESSAGING_WORKER_ERROR_CODES.get(
+        str(exc),
+        ("invalid messaging execution request", "invalid_messaging_execution_request"),
+    )
+    return {"error": error, "error_code": error_code, "governed": True}
+
+
 def create_messaging_worker_app(
     *,
     adapter: MessagingConnectorAdapter | None = None,
@@ -231,7 +247,7 @@ def create_messaging_worker_app(
                 raise RuntimeError("messaging request body must be an object")
             action_request = messaging_action_request_from_mapping(raw)
         except (UnicodeDecodeError, json.JSONDecodeError, RuntimeError, ValueError, KeyError) as exc:
-            raise HTTPException(422, detail=str(exc)) from exc
+            raise HTTPException(422, detail=_messaging_worker_error_detail(exc)) from exc
 
         response = execute_messaging_request(action_request, adapter=resolved_adapter, policy=resolved_policy)
         response_body = json.dumps(

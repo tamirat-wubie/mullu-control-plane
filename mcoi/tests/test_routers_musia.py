@@ -23,8 +23,16 @@ def client() -> TestClient:
         router as constructs_router,
     )
     from mcoi_runtime.app.routers.mfidel import router as mfidel_router
+    from mcoi_runtime.app.routers.musia_auth import (
+        configure_musia_auth,
+        configure_musia_dev_mode,
+        configure_musia_jwt,
+    )
     from mcoi_runtime.app.routers.ucja import router as ucja_router
 
+    configure_musia_auth(None)
+    configure_musia_jwt(None)
+    configure_musia_dev_mode(True)
     reset_registry()
     app = FastAPI()
     app.include_router(mfidel_router)

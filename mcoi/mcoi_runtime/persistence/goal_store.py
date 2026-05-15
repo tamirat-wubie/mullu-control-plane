@@ -247,7 +247,7 @@ class GoalStore:
             "plans": [plan.to_json_dict() for plan in plans],
             "replans": [record.to_json_dict() for record in replans],
         }
-        return json.dumps(payload, sort_keys=True, ensure_ascii=True, separators=(",", ":"))
+        return json.dumps(payload, sort_keys=True, ensure_ascii=True, separators=(",", ":"), allow_nan=False)
 
     def load_state(self) -> "GoalRuntimeState":
         """Load persisted goal runtime records from deterministic artifact directories."""

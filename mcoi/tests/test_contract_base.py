@@ -8,14 +8,23 @@ Invariants:
 
 from __future__ import annotations
 
+from dataclasses import dataclass
+
 import pytest
 
 from mcoi_runtime.contracts._base import (
+    ContractRecord,
     require_datetime_text,
     require_non_empty_tuple,
     require_non_empty_text,
     require_non_negative_int,
 )
+
+
+@dataclass(frozen=True)
+class ContractProbe(ContractRecord):
+    z_field: str
+    a_field: dict[str, float]
 
 
 def test_known_field_label_preserves_schema_stable_message() -> None:
@@ -58,3 +67,24 @@ def test_unknown_tuple_field_label_is_bounded() -> None:
     with pytest.raises(ValueError, match=r"^value must be an array$") as excinfo:
         require_non_empty_tuple(123, "private_items")  # type: ignore[arg-type]
     assert "private_items" not in str(excinfo.value)
+
+
+def test_contract_record_to_json_is_sorted_and_deterministic() -> None:
+    record = ContractProbe(z_field="last", a_field={"b": 2.0, "a": 1.0})
+    serialized = record.to_json()
+
+    assert serialized == '{"a_field":{"a":1.0,"b":2.0},"z_field":"last"}'
+    assert serialized.index("a_field") < serialized.index("z_field")
+    assert serialized == record.to_json()
+
+
+def test_contract_record_to_json_rejects_non_finite_float() -> None:
+    record = ContractProbe(z_field="last", a_field={"secret_metric": float("inf")})
+
+    with pytest.raises(ValueError) as excinfo:
+        record.to_json()
+
+    message = str(excinfo.value)
+    assert message == "contract record must be deterministic JSON"
+    assert "secret_metric" not in message
+    assert "Infinity" not in message

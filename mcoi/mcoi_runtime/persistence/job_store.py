@@ -20,12 +20,12 @@ from mcoi_runtime.contracts.job import JobDescriptor, JobState
 from mcoi_runtime.core.invariants import RuntimeCoreInvariantError
 from mcoi_runtime.core.jobs import JobEngine
 
-from ._serialization import deserialize_record, serialize_record
+from ._serialization import deserialize_record, loads_strict_json, serialize_record
 from .errors import CorruptedDataError, PersistenceError, PersistenceWriteError
 
 
 def _deterministic_json(payload: object) -> str:
-    return json.dumps(payload, sort_keys=True, ensure_ascii=True, separators=(",", ":"))
+    return json.dumps(payload, sort_keys=True, ensure_ascii=True, separators=(",", ":"), allow_nan=False)
 
 
 def _bounded_store_error(summary: str, exc: BaseException) -> str:
@@ -54,7 +54,7 @@ def _atomic_write(path: Path, content: str) -> None:
 
 
 def _record_payload(record: object) -> dict[str, object]:
-    payload = json.loads(serialize_record(record))
+    payload = loads_strict_json(serialize_record(record))
     if not isinstance(payload, dict):
         raise PersistenceError("serialized job record must be a JSON object")
     return payload
@@ -107,8 +107,8 @@ class JobStore:
         if not path.exists():
             raise CorruptedDataError("job runtime file not found")
         try:
-            payload = json.loads(path.read_text(encoding="utf-8"))
-        except (json.JSONDecodeError, OSError) as exc:
+            payload = loads_strict_json(path.read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, OSError, ValueError) as exc:
             raise CorruptedDataError(_bounded_store_error("malformed job runtime file", exc)) from exc
         if not isinstance(payload, dict):
             raise CorruptedDataError("job runtime payload must be a JSON object")

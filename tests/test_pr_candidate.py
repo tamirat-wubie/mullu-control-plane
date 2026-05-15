@@ -46,6 +46,24 @@ def test_local_git_command_contract_rejects_push_and_invalid_refs() -> None:
     assert "head_branch_invalid_git_ref" in str(intent_info.value)
 
 
+def test_pull_request_candidate_rejects_git_ref_edge_cases_before_command_admission() -> None:
+    graph = _invoice_graph()
+
+    with pytest.raises(ValueError) as double_dot_info:
+        build_pull_request_candidate(graph, repository="tamirat-wubie/mullu-control-plane", candidate_branch="feature..invoice", software_receipt_refs=("receipt:closed",), quality_gate_refs=("gate:unit_tests",))
+    with pytest.raises(ValueError) as hidden_component_info:
+        build_pull_request_candidate(graph, repository="tamirat-wubie/mullu-control-plane", candidate_branch="feature/.hidden", software_receipt_refs=("receipt:closed",), quality_gate_refs=("gate:unit_tests",))
+    with pytest.raises(ValueError) as lock_component_info:
+        build_pull_request_candidate(graph, repository="tamirat-wubie/mullu-control-plane", base_branch="release.lock/next", software_receipt_refs=("receipt:closed",), quality_gate_refs=("gate:unit_tests",))
+    with pytest.raises(ValueError) as reflog_info:
+        PullRequestOpenIntent("intent", "repo", "Title", "Body", "main", "feature@{invoice}", "github.open_pull_request", "review-1")
+
+    assert "branch_name_invalid_git_ref" in str(double_dot_info.value)
+    assert "branch_name_invalid_git_ref" in str(hidden_component_info.value)
+    assert "base_branch_invalid_git_ref" in str(lock_component_info.value)
+    assert "head_branch_invalid_git_ref" in str(reflog_info.value)
+
+
 def test_build_pull_request_candidate_emits_review_packet_and_pending_intent() -> None:
     candidate = _candidate()
     command_ids = tuple(command.command_id for command in candidate.commit_candidate.local_commands)

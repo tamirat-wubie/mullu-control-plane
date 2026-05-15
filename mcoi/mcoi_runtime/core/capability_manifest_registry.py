@@ -179,6 +179,8 @@ class CapabilityManifestRegistry:
             errors.append("effect_bearing_capability_requires_rollback")
         if manifest.effect_bearing and manifest.risk in _EFFECT_RISKS and not manifest.policy_refs:
             errors.append("effect_bearing_capability_requires_policy_refs")
+        if hot_reload:
+            errors.extend(_hot_reload_metadata_errors(manifest, environment=environment))
         if hot_reload and environment == "production" and manifest.effect_bearing:
             errors.append("production_hot_reload_denied_for_effect_bearing_capability")
         if environment == "production" and manifest.maturity not in _PRODUCTION_MATURITY:
@@ -261,3 +263,20 @@ def _has_test_or_proof_evidence(evidence_refs: tuple[str, ...]) -> bool:
         ref.startswith(("tests/", "mcoi/tests/", "proof://"))
         for ref in evidence_refs
     )
+
+
+def _hot_reload_metadata_errors(manifest: CapabilityManifest, *, environment: str) -> tuple[str, ...]:
+    metadata = manifest.metadata
+    allowed_environments = metadata.get("hot_reload_allowed_environments") if isinstance(metadata, Mapping) else None
+    errors: list[str] = []
+    if isinstance(allowed_environments, (str, bytes)) or not isinstance(allowed_environments, (tuple, list)):
+        errors.append("hot_reload_allowed_environments_required")
+    else:
+        normalized_allowed = tuple(str(item).strip() for item in allowed_environments if str(item).strip())
+        if not normalized_allowed:
+            errors.append("hot_reload_allowed_environments_required")
+        elif environment not in normalized_allowed:
+            errors.append(f"hot_reload_environment_not_allowed:{environment}")
+    if environment == "production" and metadata.get("production_hot_reload_allowed") is not True:
+        errors.append("production_hot_reload_denied_by_manifest_metadata")
+    return tuple(errors)

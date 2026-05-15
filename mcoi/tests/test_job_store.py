@@ -97,6 +97,23 @@ def test_job_store_fails_closed_on_mismatched_descriptor_and_state_sets(tmp_path
     assert payload_path.exists() is True
 
 
+def test_job_store_rejects_non_standard_json_constants(tmp_path: Path) -> None:
+    store = JobStore(tmp_path / "jobs")
+    payload_path = tmp_path / "jobs" / "job_runtime.json"
+    payload_path.parent.mkdir(parents=True, exist_ok=True)
+    payload_path.write_text(
+        '{"descriptors":[],"states":[],"secret_metric":NaN}',
+        encoding="utf-8",
+    )
+
+    with pytest.raises(CorruptedDataError, match=r"^malformed job runtime file \(ValueError\)$") as excinfo:
+        store.load_state()
+
+    message = str(excinfo.value)
+    assert "secret_metric" not in message
+    assert "NaN" not in message
+
+
 def test_job_store_missing_file_error_is_bounded(tmp_path: Path) -> None:
     store = JobStore(tmp_path / "jobs")
 

@@ -178,9 +178,39 @@ def test_route_validation_error_returns_400_without_event_emit(
     )
 
     assert response.status_code == 400
-    assert response.json()["detail"] == "rollback_plan is required"
+    detail = response.json()["detail"]
+    assert detail["error"] == "invalid engineering puzzle candidate judgment"
+    assert detail["error_code"] == "invalid_candidate_judgment"
+    assert detail["governed"] is True
     assert event_spine.event_count == 0
     assert "rollback_plan" not in candidate
+
+
+def test_candidate_value_error_detail_is_bounded(
+    isolated_client: TestClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    control = EngineeringPuzzleControlSurface(EventSpineEngine())
+
+    def fail_with_sensitive_detail(payload: dict[str, object]) -> dict[str, object]:
+        raise ValueError("secret-token-from-kernel")
+
+    monkeypatch.setattr(control, "judge_candidate", fail_with_sensitive_detail)
+    deps.set("engineering_puzzle_control", control)
+
+    response = isolated_client.post(
+        "/api/v1/engineering-puzzle/candidates/judge",
+        json={
+            "puzzle": _puzzle_payload(),
+            "candidate": _candidate_payload(),
+            "confidence_floor": 0.9,
+        },
+    )
+
+    assert response.status_code == 400
+    assert response.json()["detail"]["error_code"] == "invalid_candidate_judgment"
+    assert response.json()["detail"]["governed"] is True
+    assert "secret-token-from-kernel" not in response.text
 
 
 def test_invalid_control_surface_type_returns_500(

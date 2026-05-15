@@ -13,6 +13,7 @@ from __future__ import annotations
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
+from mcoi_runtime.app.routers import assistant as assistant_router_module
 from mcoi_runtime.app.routers.assistant import router
 from mcoi_runtime.app.routers.deps import deps
 from mcoi_runtime.app.server_http import include_default_routers
@@ -116,8 +117,27 @@ def test_invalid_finance_ops_plan_fails_closed() -> None:
     )
 
     assert response.status_code == 400
+    assert response.json()["detail"]["error"] == "invalid assistant plan"
     assert response.json()["detail"]["error_code"] == "invalid_assistant_plan"
     assert response.json()["detail"]["governed"] is True
+
+
+def test_finance_ops_plan_error_detail_is_bounded(monkeypatch) -> None:
+    client = _client()
+
+    def fail_goal(*args: object, **kwargs: object) -> object:
+        raise assistant_router_module.RuntimeCoreInvariantError("secret-token-from-assistant")
+
+    monkeypatch.setattr(assistant_router_module, "finance_ops_invoice_payment_goal", fail_goal)
+
+    response = client.post("/api/v1/assistant/finance-ops/plans", json=_plan_request())
+    detail = response.json()["detail"]
+
+    assert response.status_code == 400
+    assert detail["error"] == "invalid assistant plan"
+    assert detail["error_code"] == "invalid_assistant_plan"
+    assert detail["governed"] is True
+    assert "secret-token-from-assistant" not in response.text
 
 
 def test_default_routers_include_assistant_kernel_paths() -> None:

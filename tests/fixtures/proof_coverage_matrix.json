@@ -155,55 +155,6 @@
       ]
     },
     {
-      "action_id": "classify_llm_admin_observability_routes",
-      "status": "closed",
-      "surfaces": [
-        "llm_admin_observability"
-      ]
-    },
-    {
-      "action_id": "classify_dependency_graph_routes",
-      "status": "closed",
-      "surfaces": [
-        "dependency_graph_read_models"
-      ]
-    },
-    {
-      "action_id": "classify_feature_flag_routes",
-      "status": "closed",
-      "surfaces": [
-        "feature_flag_read_models"
-      ]
-    },
-    {
-      "action_id": "classify_operational_telemetry_routes",
-      "status": "closed",
-      "surfaces": [
-        "operational_telemetry_read_models"
-      ]
-    },
-    {
-      "action_id": "classify_rate_limit_read_model_routes",
-      "status": "closed",
-      "surfaces": [
-        "rate_limit_read_models"
-      ]
-    },
-    {
-      "action_id": "classify_sla_monitoring_routes",
-      "status": "closed",
-      "surfaces": [
-        "sla_monitoring_read_models"
-      ]
-    },
-    {
-      "action_id": "classify_gateway_status_route",
-      "status": "closed",
-      "surfaces": [
-        "gateway_status_read_model"
-      ]
-    },
-    {
       "action_id": "classify_conversation_memory_routes",
       "status": "closed",
       "surfaces": [
@@ -825,15 +776,15 @@
   ],
   "coverage_summary": {
     "by_action_proof": {
-      "action_proof": 95,
+      "action_proof": 96,
       "audit_chain": 0,
       "gap": 0,
-      "read_model": 23,
+      "read_model": 16,
       "request_proof": 2
     },
     "by_audit": {
       "action_proof": 0,
-      "audit_chain": 116,
+      "audit_chain": 110,
       "gap": 0,
       "read_model": 4,
       "request_proof": 0
@@ -841,25 +792,34 @@
     "by_coverage_state": {
       "proven": 1,
       "unproven": 0,
-      "witnessed": 119
+      "witnessed": 113
     },
     "by_request_proof": {
       "action_proof": 1,
       "audit_chain": 0,
       "gap": 0,
-      "read_model": 25,
-      "request_proof": 94
+      "read_model": 18,
+      "request_proof": 95
     },
-    "surface_count": 120
+    "surface_count": 114
+  },
+  "evidence_quality": {
+    "by_strength": {
+      "classified_with_quality_gaps": 0,
+      "strong": 114,
+      "unproven": 0
+    },
+    "quality_gap_count": 0,
+    "quality_gaps": []
   },
   "generated_by": "scripts/proof_coverage_matrix.py",
   "route_coverage": {
     "by_coverage_state": {
       "proven": 12,
       "unproven": 0,
-      "witnessed": 323
+      "witnessed": 329
     },
-    "route_count": 335,
+    "route_count": 341,
     "routes": [
       {
         "coverage_state": "witnessed",
@@ -984,7 +944,7 @@
       {
         "coverage_state": "witnessed",
         "route": "/api/v1/bootstrap",
-        "surface_id": "llm_admin_observability"
+        "surface_id": "operational_platform_read_models"
       },
       {
         "coverage_state": "witnessed",
@@ -1049,7 +1009,7 @@
       {
         "coverage_state": "witnessed",
         "route": "/api/v1/circuit-breaker",
-        "surface_id": "llm_admin_observability"
+        "surface_id": "operational_platform_read_models"
       },
       {
         "coverage_state": "witnessed",
@@ -1324,12 +1284,12 @@
       {
         "coverage_state": "witnessed",
         "route": "/api/v1/dependencies",
-        "surface_id": "dependency_graph_read_models"
+        "surface_id": "operational_platform_read_models"
       },
       {
         "coverage_state": "witnessed",
         "route": "/api/v1/dependencies/{name}/impact",
-        "surface_id": "dependency_graph_read_models"
+        "surface_id": "operational_platform_read_models"
       },
       {
         "coverage_state": "witnessed",
@@ -1429,12 +1389,12 @@
       {
         "coverage_state": "witnessed",
         "route": "/api/v1/flags",
-        "surface_id": "feature_flag_read_models"
+        "surface_id": "operational_platform_read_models"
       },
       {
         "coverage_state": "witnessed",
         "route": "/api/v1/flags/{flag_id}",
-        "surface_id": "feature_flag_read_models"
+        "surface_id": "operational_platform_read_models"
       },
       {
         "coverage_state": "witnessed",
@@ -1509,7 +1469,7 @@
       {
         "coverage_state": "witnessed",
         "route": "/api/v1/grafana/dashboard",
-        "surface_id": "operational_telemetry_read_models"
+        "surface_id": "operational_platform_read_models"
       },
       {
         "coverage_state": "witnessed",
@@ -1614,7 +1574,7 @@
       {
         "coverage_state": "witnessed",
         "route": "/api/v1/llm/history",
-        "surface_id": "llm_admin_observability"
+        "surface_id": "operational_platform_read_models"
       },
       {
         "coverage_state": "witnessed",
@@ -1639,7 +1599,7 @@
       {
         "coverage_state": "witnessed",
         "route": "/api/v1/metrics",
-        "surface_id": "operational_telemetry_read_models"
+        "surface_id": "operational_platform_read_models"
       },
       {
         "coverage_state": "witnessed",
@@ -1864,12 +1824,12 @@
       {
         "coverage_state": "witnessed",
         "route": "/api/v1/rate-limit/status",
-        "surface_id": "rate_limit_read_models"
+        "surface_id": "operational_platform_read_models"
       },
       {
         "coverage_state": "witnessed",
         "route": "/api/v1/rate-limits/{client_id}",
-        "surface_id": "rate_limit_read_models"
+        "surface_id": "operational_platform_read_models"
       },
       {
         "coverage_state": "witnessed",
@@ -2074,12 +2034,12 @@
       {
         "coverage_state": "witnessed",
         "route": "/api/v1/sla",
-        "surface_id": "sla_monitoring_read_models"
+        "surface_id": "operational_platform_read_models"
       },
       {
         "coverage_state": "witnessed",
         "route": "/api/v1/sla/violations",
-        "surface_id": "sla_monitoring_read_models"
+        "surface_id": "operational_platform_read_models"
       },
       {
         "coverage_state": "witnessed",
@@ -2362,6 +2322,11 @@
         "surface_id": "authority_obligation_mesh"
       },
       {
+        "coverage_state": "witnessed",
+        "route": "/browser/execute",
+        "surface_id": "restricted_adapter_worker_boundaries"
+      },
+      {
         "coverage_state": "proven",
         "route": "/capability-fabric/admission-audits",
         "surface_id": "gateway_capability_fabric"
@@ -2423,18 +2388,38 @@
       },
       {
         "coverage_state": "witnessed",
+        "route": "/document/execute",
+        "surface_id": "restricted_adapter_worker_boundaries"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/email-calendar/execute",
+        "surface_id": "restricted_adapter_worker_boundaries"
+      },
+      {
+        "coverage_state": "witnessed",
         "route": "/evidence/bundles/{command_id}",
         "surface_id": "trust_ledger"
       },
       {
         "coverage_state": "witnessed",
         "route": "/gateway/status",
-        "surface_id": "gateway_status_read_model"
+        "surface_id": "operational_platform_read_models"
       },
       {
         "coverage_state": "witnessed",
         "route": "/gateway/witness",
         "surface_id": "gateway_runtime_witness"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/messaging/execute",
+        "surface_id": "restricted_adapter_worker_boundaries"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/phone/execute",
+        "surface_id": "restricted_adapter_worker_boundaries"
       },
       {
         "coverage_state": "witnessed",
@@ -2490,6 +2475,11 @@
         "coverage_state": "witnessed",
         "route": "/runtime/witness",
         "surface_id": "gateway_runtime_witness"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/voice/execute",
+        "surface_id": "restricted_adapter_worker_boundaries"
       },
       {
         "coverage_state": "witnessed",
@@ -2620,6 +2610,56 @@
       "audit": "audit_chain",
       "coverage_state": "witnessed",
       "evidence_files": [
+        "gateway/browser_worker.py",
+        "gateway/document_worker.py",
+        "gateway/email_calendar_worker.py",
+        "gateway/messaging_worker.py",
+        "gateway/phone_worker.py",
+        "gateway/voice_worker.py",
+        "tests/test_gateway/test_browser_worker.py",
+        "tests/test_gateway/test_document_worker.py",
+        "tests/test_gateway/test_email_calendar_worker.py",
+        "tests/test_gateway/test_messaging_worker.py",
+        "tests/test_gateway/test_phone_worker.py",
+        "tests/test_gateway/test_voice_worker.py"
+      ],
+      "notes": "Restricted browser, document, email/calendar, messaging, phone, and voice workers reject unsigned requests, execute only signed governed actions, emit receipt-bearing signed responses, and bound malformed request details without echoing submitted payloads.",
+      "representative_paths": [
+        "/browser/execute",
+        "/document/execute",
+        "/email-calendar/execute",
+        "/messaging/execute",
+        "/phone/execute",
+        "/voice/execute"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "browser_worker_rejects_bad_signature",
+        "browser_worker_executes_signed_open_request",
+        "browser_worker_parse_error_detail_is_bounded",
+        "document_worker_rejects_bad_signature",
+        "document_worker_executes_signed_extract_text_request",
+        "document_worker_parse_error_detail_is_bounded",
+        "email_calendar_worker_rejects_bad_signature",
+        "email_calendar_worker_executes_signed_draft_request",
+        "email_calendar_worker_parse_error_detail_is_bounded",
+        "messaging_worker_rejects_bad_signature",
+        "messaging_worker_executes_signed_draft_request",
+        "messaging_worker_parse_error_detail_is_bounded",
+        "phone_worker_rejects_bad_signature",
+        "phone_worker_executes_signed_receive_request",
+        "phone_worker_parse_error_detail_is_bounded",
+        "voice_worker_rejects_bad_signature",
+        "voice_worker_executes_signed_intent_classification_request",
+        "voice_worker_parse_error_detail_is_bounded"
+      ],
+      "surface_id": "restricted_adapter_worker_boundaries"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
         "mcoi/mcoi_runtime/app/routers/llm/completion.py",
         "mcoi/mcoi_runtime/app/routers/llm/chat.py",
         "mcoi/mcoi_runtime/app/streaming.py",
@@ -2634,7 +2674,15 @@
         "/api/v1/chat/stream"
       ],
       "request_proof": "request_proof",
-      "runtime_witnesses": [],
+      "runtime_witnesses": [
+        "stream_returns_sse",
+        "stream_contains_content",
+        "stream_contains_budget_witnesses",
+        "stream_budget_reservation_and_settlement",
+        "stream_budget_cutoff_stops_delivery",
+        "streaming_chat_returns_sse",
+        "streaming_chat_exception_sanitized"
+      ],
       "surface_id": "llm_streaming"
     },
     {
@@ -2684,7 +2732,15 @@
         "/api/v1/complete/auto"
       ],
       "request_proof": "request_proof",
-      "runtime_witnesses": [],
+      "runtime_witnesses": [
+        "completion_returns_action_proof",
+        "completion_records_budget_ledger",
+        "completion_failure_is_bounded",
+        "safe_completion_tracks_cost",
+        "safe_completion_exception_sanitized",
+        "auto_completion_routes_model",
+        "auto_completion_exception_sanitized"
+      ],
       "surface_id": "llm_completion"
     },
     {
@@ -2702,7 +2758,15 @@
         "/api/v1/chat/workflow/history"
       ],
       "request_proof": "request_proof",
-      "runtime_witnesses": [],
+      "runtime_witnesses": [
+        "chat_completion_governed",
+        "streaming_chat_returns_sse",
+        "streaming_chat_multi_turn_history_preserved",
+        "streaming_chat_governed",
+        "streaming_chat_contains_budget_witnesses",
+        "streaming_chat_exception_sanitized",
+        "chat_workflow_history_bounded"
+      ],
       "surface_id": "llm_chat_workflow"
     },
     {
@@ -2724,7 +2788,14 @@
         "/api/v1/costs/{tenant_id}/projection"
       ],
       "request_proof": "read_model",
-      "runtime_witnesses": [],
+      "runtime_witnesses": [
+        "budget_summary_bounded",
+        "safe_completion_tracks_cost",
+        "cost_read_model_totals_bounded",
+        "cost_top_spenders_bounded",
+        "cost_by_model_bounded",
+        "tenant_cost_projection_bounded"
+      ],
       "surface_id": "cost_budget_read_models"
     },
     {
@@ -2767,9 +2838,12 @@
         "mcoi/mcoi_runtime/app/routers/ops/rate_limit.py",
         "mcoi/mcoi_runtime/core/feature_flags.py",
         "mcoi/mcoi_runtime/core/rate_limit_headers.py",
+        "mcoi/mcoi_runtime/core/rate_limit_middleware.py",
         "mcoi/mcoi_runtime/governance/guards/rate_limit.py",
         "mcoi/tests/test_feature_flags.py",
         "mcoi/tests/test_rate_limit_headers.py",
+        "mcoi/tests/test_rate_limiter.py",
+        "mcoi/tests/test_grafana_dashboard.py",
         "mcoi/tests/test_server_phase199.py",
         "mcoi/tests/test_server_phase200.py",
         "mcoi/tests/test_server_phase202.py",
@@ -2777,6 +2851,7 @@
         "mcoi/tests/test_server_phase213.py",
         "mcoi/tests/test_server_phase220.py",
         "mcoi/tests/test_sla_monitor.py",
+        "mcoi/tests/test_sla_router.py",
         "tests/test_gateway/test_webhooks.py"
       ],
       "notes": "Operational platform read-model routes aggregate bounded bootstrap, LLM history, dependency, feature-flag, metric, rate-limit, SLA, and gateway status state without mutation authority.",
@@ -2798,208 +2873,35 @@
       ],
       "request_proof": "read_model",
       "runtime_witnesses": [
-        "bootstrap_info_bounded",
-        "bootstrap_reports_stub_provider",
-        "llm_circuit_breaker_status_bounded",
-        "llm_history_window_bounded",
+        "bootstrap_info",
+        "bootstrap_has_stub",
+        "circuit_breaker_status",
+        "history_empty",
+        "history_after_completion",
         "dependency_graph_startup_order_bounded",
         "dependency_impact_analysis_bounded",
-        "feature_flags_list_bounded",
-        "feature_flags_summary_counts_enabled_disabled",
-        "feature_flags_list_returns_registered_flags",
-        "feature_flag_check_enabled",
-        "feature_flag_unknown_returns_disabled",
-        "feature_flag_tenant_override_respected",
-        "feature_flag_lookup_bounded",
-        "missing_feature_flag_defaults_closed",
-        "metrics_snapshot_bounded",
-        "metrics_read_model_bounded",
-        "grafana_dashboard_export_bounded",
-        "rate_limit_status_bounded",
-        "rate_limit_status_reports_allowed_and_active_buckets",
-        "rate_limit_client_headers_bounded",
-        "rate_limit_headers_project_limit_remaining_reset",
-        "rate_limit_header_peek_does_not_consume",
-        "atomic_rate_limit_store_bounds_concurrent_consumption",
-        "rate_limit_read_model_non_mutating",
-        "sla_summary_bounded",
-        "sla_violations_bounded",
-        "sla_read_model_non_mutating",
-        "gateway_status_governed",
-        "gateway_status_bounded"
+        "list_flags",
+        "summary",
+        "check_flag_enabled",
+        "check_flag_unknown",
+        "tenant_override",
+        "default_disabled",
+        "get_metrics",
+        "metrics_track_requests",
+        "build_default",
+        "default_json_roundtrip",
+        "rate_limit_status",
+        "status",
+        "to_headers",
+        "peek_does_not_consume",
+        "consume_decrements",
+        "exhaustion_triggers_retry_after",
+        "sla_summary_endpoint_returns_bounded_governed_read_model",
+        "sla_violations_endpoint_filters_by_sla_id",
+        "violations_filtered",
+        "health"
       ],
       "surface_id": "operational_platform_read_models"
-    },
-    {
-      "action_proof": "read_model",
-      "audit": "audit_chain",
-      "coverage_state": "witnessed",
-      "evidence_files": [
-        "mcoi/mcoi_runtime/app/routers/llm/admin.py",
-        "mcoi/tests/test_server_phase199.py",
-        "mcoi/tests/test_server_phase200.py",
-        "mcoi/tests/test_server_phase212.py",
-        "mcoi/tests/test_server_phase213.py"
-      ],
-      "notes": "LLM admin observability routes expose bounded bootstrap inventory, circuit-breaker state, and invocation history without mutation authority.",
-      "representative_paths": [
-        "/api/v1/bootstrap",
-        "/api/v1/circuit-breaker",
-        "/api/v1/llm/history"
-      ],
-      "request_proof": "read_model",
-      "runtime_witnesses": [
-        "bootstrap_info_bounded",
-        "bootstrap_reports_stub_provider",
-        "llm_circuit_breaker_status_bounded",
-        "llm_history_window_bounded"
-      ],
-      "surface_id": "llm_admin_observability"
-    },
-    {
-      "action_proof": "read_model",
-      "audit": "audit_chain",
-      "coverage_state": "witnessed",
-      "evidence_files": [
-        "mcoi/mcoi_runtime/app/routers/ops/dependencies.py",
-        "mcoi/mcoi_runtime/core/dependency_graph.py",
-        "mcoi/tests/test_dependency_graph.py",
-        "mcoi/tests/test_server_registry_helpers.py"
-      ],
-      "notes": "Dependency graph routes expose startup ordering and bounded failure-impact read models.",
-      "representative_paths": [
-        "/api/v1/dependencies",
-        "/api/v1/dependencies/{name}/impact"
-      ],
-      "request_proof": "read_model",
-      "runtime_witnesses": [
-        "dependency_graph_startup_order_bounded",
-        "dependency_impact_analysis_bounded"
-      ],
-      "surface_id": "dependency_graph_read_models"
-    },
-    {
-      "action_proof": "read_model",
-      "audit": "audit_chain",
-      "coverage_state": "witnessed",
-      "evidence_files": [
-        "mcoi/mcoi_runtime/app/routers/ops/feature_flags.py",
-        "mcoi/mcoi_runtime/core/feature_flags.py",
-        "mcoi/tests/test_feature_flags.py",
-        "mcoi/tests/test_server_phase220.py"
-      ],
-      "notes": "Feature-flag routes expose bounded flag lists and closed defaults for missing flag lookups.",
-      "representative_paths": [
-        "/api/v1/flags",
-        "/api/v1/flags/{flag_id}"
-      ],
-      "request_proof": "read_model",
-      "runtime_witnesses": [
-        "feature_flags_list_bounded",
-        "feature_flags_list_returns_registered_flags",
-        "feature_flags_summary_counts_enabled_disabled",
-        "feature_flag_lookup_bounded",
-        "feature_flag_check_enabled",
-        "feature_flag_unknown_returns_disabled",
-        "feature_flag_tenant_override_respected",
-        "missing_feature_flag_defaults_closed"
-      ],
-      "surface_id": "feature_flag_read_models"
-    },
-    {
-      "action_proof": "read_model",
-      "audit": "audit_chain",
-      "coverage_state": "witnessed",
-      "evidence_files": [
-        "mcoi/mcoi_runtime/app/routers/ops/metrics.py",
-        "mcoi/mcoi_runtime/core/prometheus_exporter.py",
-        "mcoi/tests/test_governance_metrics.py",
-        "mcoi/tests/test_platform_metrics.py",
-        "mcoi/tests/test_server_phase202.py"
-      ],
-      "notes": "Operational telemetry routes expose bounded metric snapshots and dashboard exports without mutating runtime state.",
-      "representative_paths": [
-        "/api/v1/metrics",
-        "/api/v1/grafana/dashboard"
-      ],
-      "request_proof": "read_model",
-      "runtime_witnesses": [
-        "metrics_snapshot_bounded",
-        "metrics_read_model_bounded",
-        "grafana_dashboard_export_bounded"
-      ],
-      "surface_id": "operational_telemetry_read_models"
-    },
-    {
-      "action_proof": "read_model",
-      "audit": "audit_chain",
-      "coverage_state": "witnessed",
-      "evidence_files": [
-        "mcoi/mcoi_runtime/app/routers/ops/rate_limit.py",
-        "mcoi/mcoi_runtime/core/rate_limit_headers.py",
-        "mcoi/mcoi_runtime/core/rate_limit_middleware.py",
-        "mcoi/tests/test_rate_limiter.py",
-        "mcoi/tests/test_rate_limit_headers.py",
-        "mcoi/tests/test_server_phase202.py"
-      ],
-      "notes": "Rate-limit read-model routes expose global and client-scoped token state without consuming request budget.",
-      "representative_paths": [
-        "/api/v1/rate-limit/status",
-        "/api/v1/rate-limits/{client_id}"
-      ],
-      "request_proof": "read_model",
-      "runtime_witnesses": [
-        "rate_limit_status_bounded",
-        "rate_limit_status_reports_allowed_and_active_buckets",
-        "rate_limit_client_headers_bounded",
-        "rate_limit_headers_project_limit_remaining_reset",
-        "rate_limit_header_peek_does_not_consume",
-        "atomic_rate_limit_store_bounds_concurrent_consumption",
-        "rate_limit_read_model_non_mutating"
-      ],
-      "surface_id": "rate_limit_read_models"
-    },
-    {
-      "action_proof": "read_model",
-      "audit": "audit_chain",
-      "coverage_state": "witnessed",
-      "evidence_files": [
-        "mcoi/mcoi_runtime/app/routers/data/sla.py",
-        "mcoi/mcoi_runtime/core/sla_monitor.py",
-        "mcoi/tests/test_sla_monitor.py"
-      ],
-      "notes": "SLA monitoring routes expose bounded summaries and violations without mutating monitor state.",
-      "representative_paths": [
-        "/api/v1/sla",
-        "/api/v1/sla/violations"
-      ],
-      "request_proof": "read_model",
-      "runtime_witnesses": [
-        "sla_summary_bounded",
-        "sla_violations_bounded",
-        "sla_read_model_non_mutating"
-      ],
-      "surface_id": "sla_monitoring_read_models"
-    },
-    {
-      "action_proof": "read_model",
-      "audit": "audit_chain",
-      "coverage_state": "witnessed",
-      "evidence_files": [
-        "gateway/server.py",
-        "gateway/router.py",
-        "tests/test_gateway/test_webhooks.py"
-      ],
-      "notes": "Gateway status exposes bounded gateway health and route state as a non-mutating read model.",
-      "representative_paths": [
-        "/gateway/status"
-      ],
-      "request_proof": "read_model",
-      "runtime_witnesses": [
-        "gateway_status_governed",
-        "gateway_status_bounded"
-      ],
-      "surface_id": "gateway_status_read_model"
     },
     {
       "action_proof": "action_proof",
@@ -3469,7 +3371,15 @@
         "/api/v1/ab-test/summary"
       ],
       "request_proof": "request_proof",
-      "runtime_witnesses": [],
+      "runtime_witnesses": [
+        "model_catalog_list_bounded",
+        "auto_completion_routes_model",
+        "auto_completion_forced_model",
+        "ab_test_single_model_result",
+        "ab_test_two_models_cost_comparison",
+        "ab_test_summary_bounded",
+        "ab_test_failed_model_recorded"
+      ],
       "surface_id": "model_experiment_control"
     },
     {
@@ -3492,7 +3402,16 @@
         "/api/v1/policies/{policy_id}/shadow/{shadow_version}"
       ],
       "request_proof": "request_proof",
-      "runtime_witnesses": [],
+      "runtime_witnesses": [
+        "policy_version_register_and_fetch",
+        "policy_version_promote_diff_shadow_and_rollback",
+        "policy_version_routes_fail_closed",
+        "policy_artifact_hash_is_deterministic",
+        "policy_registry_promotes_and_rolls_back_versions",
+        "policy_diff_reports_changed_and_added_rules",
+        "shadow_governance_compares_without_promoting",
+        "registry_fails_closed_on_unknown_versions"
+      ],
       "surface_id": "policy_version_registry"
     },
     {
@@ -3512,7 +3431,16 @@
         "/api/v1/pilots/provisions/{pilot_id}"
       ],
       "request_proof": "request_proof",
-      "runtime_witnesses": [],
+      "runtime_witnesses": [
+        "initialize_pilot_writes_complete_artifact_set",
+        "initialize_pilot_is_deterministic_for_same_inputs",
+        "build_pilot_scaffold_has_no_filesystem_side_effects",
+        "pilot_provision_registry_persists_bounded_records",
+        "initialize_pilot_fails_closed_on_existing_files",
+        "pilot_provision_endpoint_returns_audited_scaffold",
+        "pilot_provision_history_routes_return_accepted_records",
+        "pilot_provision_detail_fails_closed_for_missing_record"
+      ],
       "surface_id": "pilot_provisioning"
     },
     {
@@ -3533,7 +3461,16 @@
         "/api/v1/sandbox/policy-evaluations"
       ],
       "request_proof": "read_model",
-      "runtime_witnesses": [],
+      "runtime_witnesses": [
+        "sandbox_summary_is_deterministic",
+        "sandbox_lineage_contains_bounded_causal_graph",
+        "sandbox_policy_evaluations_are_read_only",
+        "sandbox_summary_route",
+        "sandbox_traces_route",
+        "sandbox_lineage_route",
+        "sandbox_missing_lineage_route_fails_closed",
+        "sandbox_policy_evaluations_route"
+      ],
       "surface_id": "hosted_demo_sandbox"
     },
     {
@@ -4331,7 +4268,12 @@
         "/webhook/telegram"
       ],
       "request_proof": "request_proof",
-      "runtime_witnesses": [],
+      "runtime_witnesses": [
+        "receive_with_message_returns_request_receipt",
+        "receive_with_message",
+        "ignored_update_returns_request_receipt",
+        "receive_with_command_returns_request_receipt"
+      ],
       "surface_id": "gateway_webhook_ingress"
     },
     {
@@ -4349,7 +4291,14 @@
         "/authority/approval-chains"
       ],
       "request_proof": "request_proof",
-      "runtime_witnesses": [],
+      "runtime_witnesses": [
+        "approve_unknown_request",
+        "approve_valid_request",
+        "authority_approval_chain_read_model",
+        "expire_overdue_authority_approval_chains_records_transition",
+        "production_approval_callback_requires_secret",
+        "approval_callback_denies_unauthorized_resolver"
+      ],
       "surface_id": "gateway_approval_resolution"
     },
     {
@@ -4495,6 +4444,7 @@
         "schemas/latest_anchor_read_model.schema.json",
         "schemas/runtime_witness.schema.json",
         "schemas/mullu_governance_protocol.manifest.json",
+        "tests/test_gateway/test_webhooks.py",
         "tests/test_orchestrate_deployment_witness.py",
         "tests/test_report_gateway_publication_readiness.py",
         "tests/test_validate_gateway_publication_receipt.py",
@@ -4513,24 +4463,28 @@
       ],
       "request_proof": "read_model",
       "runtime_witnesses": [
-        "latest_command_event_hash",
-        "latest_anchor_read_model_schema_valid",
-        "runtime_witness_schema_valid",
-        "latest_terminal_certificate_id",
-        "responsibility_debt_clear",
-        "runtime_responsibility_debt_clear",
-        "open_obligation_count",
-        "overdue_obligation_count",
-        "authority_responsibility_debt_clear",
-        "authority_overdue_approval_chain_count",
-        "authority_overdue_obligation_count",
-        "authority_escalated_obligation_count",
-        "authority_unowned_high_risk_capability_count",
-        "deployment_witness_orchestration_receipt",
-        "deployment_publication_closure_validation_schema",
-        "deployment_orchestration_validation_schema",
-        "gateway_publication_readiness_schema",
-        "gateway_publication_receipt_validation_schema"
+        "gateway_witness",
+        "runtime_witness_alias",
+        "latest_anchor_read_model",
+        "runtime_self_reflex_read_models_do_not_mutate",
+        "collect_deployment_witness_publishes_with_verified_signature",
+        "collect_deployment_witness_rejects_responsibility_debt",
+        "collect_deployment_witness_rejects_runtime_responsibility_debt",
+        "preflight_deployment_witness_rejects_responsibility_debt",
+        "preflight_deployment_witness_rejects_runtime_witness_responsibility_debt",
+        "published_status_rejects_authority_responsibility_debt",
+        "published_status_rejects_runtime_responsibility_debt",
+        "orchestrate_deployment_witness_renders_and_provisions",
+        "orchestration_receipt_schema_matches_cli_output",
+        "orchestration_validation_report_matches_public_schema",
+        "closure_validation_report_matches_public_schema_for_not_published",
+        "readiness_report_matches_public_schema",
+        "receipt_validation_report_matches_public_schema",
+        "protocol_manifest_indexes_deployment_orchestration_validation",
+        "protocol_manifest_indexes_deployment_publication_closure_validation",
+        "protocol_manifest_indexes_gateway_publication_readiness",
+        "protocol_manifest_indexes_gateway_publication_receipt_validation",
+        "protocol_manifest_indexes_runtime_witness_and_latest_anchor"
       ],
       "surface_id": "gateway_runtime_witness"
     },
@@ -4837,6 +4791,7 @@
         "manifest_missing_policy_rejected",
         "manifest_unresolved_schema_rejected",
         "effect_manifest_requires_sandbox_rollback",
+        "hot_reload_metadata_enforced",
         "production_hot_reload_denied_for_effect_manifest",
         "fabric_projects_local_manifest_registry",
         "fabric_rejects_production_hot_reload_manifest_registry"
@@ -5308,28 +5263,37 @@
       ],
       "request_proof": "request_proof",
       "runtime_witnesses": [
-        "terminal_certificate_id_required",
-        "evidence_refs_required",
-        "evidence_bundle_endpoint_requires_terminal_certificate",
-        "offline_bundle_verifier_validates_schema_hash_and_signature",
-        "offline_bundle_verification_report_schema_valid",
-        "offline_anchor_verifier_validates_schema_artifacts_and_signature",
-        "bundle_hash_tamper_detection",
-        "hmac_signature_verification",
-        "anchored_bundle_requires_external_anchor_ref",
-        "typed_artifact_root_required",
-        "offline_anchor_artifact_root_tamper_detection",
-        "offline_anchor_schema_invalid_receipt_rejected",
-        "offline_anchor_package_hash_mismatch_rejected",
-        "offline_anchor_package_schema_invalid_rejected",
-        "offline_anchor_verification_report_schema_valid",
-        "offline_anchor_report_emits_package_identity",
-        "anchor_receipt_hmac_verification",
-        "anchor_receipt_schema_valid",
-        "anchor_receipt_non_terminal_marker_required",
-        "export_package_binds_bundle_receipt_and_artifact_files",
-        "export_package_rejects_receipt_identity_drift",
-        "trust_ledger_bundle_schema_valid"
+        "terminal_command_exports_signed_evidence_bundle",
+        "evidence_bundle_endpoint_rejects_non_terminal_command",
+        "offline_bundle_verifier_detects_tampering",
+        "offline_bundle_verifier_report_contract_allows_missing_secret",
+        "trust_ledger_issues_and_verifies_signed_bundle",
+        "trust_ledger_detects_tampered_bundle_content",
+        "trust_ledger_detects_wrong_secret_signature",
+        "trust_ledger_requires_terminal_certificate_and_evidence",
+        "trust_ledger_rejects_non_proof_evidence_refs",
+        "trust_ledger_requires_anchor_ref_when_anchored",
+        "trust_ledger_bundle_schema_exposes_signature_contract",
+        "trust_ledger_bundle_schema_rejects_non_proof_evidence_ref",
+        "trust_ledger_anchor_receipt_binds_required_artifacts",
+        "trust_ledger_anchor_receipt_detects_tampered_artifact_root",
+        "trust_ledger_anchor_receipt_rejects_missing_terminal_artifact",
+        "trust_ledger_anchor_receipt_rejects_non_proof_artifact_evidence_ref",
+        "trust_ledger_anchor_receipt_rejects_command_identity_drift",
+        "trust_ledger_anchor_receipt_rejects_non_canonical_receipt_id",
+        "trust_ledger_anchor_receipt_validates_against_schema",
+        "trust_ledger_anchor_receipt_schema_rejects_non_canonical_bundle_id",
+        "trust_ledger_export_package_binds_verifier_inputs",
+        "trust_ledger_export_package_rejects_receipt_identity_drift",
+        "verify_anchor_receipt_files_accepts_valid_export",
+        "verify_anchor_receipt_files_detects_tampered_artifact_root",
+        "verify_anchor_receipt_files_rejects_schema_invalid_receipt",
+        "verify_anchor_receipt_files_rejects_schema_invalid_artifacts",
+        "verify_anchor_receipt_files_detects_package_bundle_hash_mismatch",
+        "verify_anchor_receipt_files_rejects_schema_invalid_package",
+        "verify_anchor_receipt_files_rejects_package_hash_mismatch",
+        "verify_anchor_receipt_cli_reports_valid_export",
+        "verify_anchor_receipt_report_contract_allows_missing_secret_report"
       ],
       "surface_id": "trust_ledger"
     },
@@ -5419,36 +5383,41 @@
       ],
       "request_proof": "request_proof",
       "runtime_witnesses": [
-        "physical_action_receipt_schema_valid",
-        "physical_capability_pack_fixture_not_default_loaded",
-        "physical_sandbox_replay_admitted_without_production_gate",
-        "live_physical_capability_rejected_by_production_gate",
-        "physical_pack_projects_sandbox_only_evidence",
-        "physical_promotion_preflight_blocks_fixture_live_claim",
-        "physical_promotion_preflight_requires_live_safety_evidence",
-        "physical_promotion_preflight_accepts_full_evidence",
-        "physical_promotion_preflight_allows_sandbox_only_pack",
-        "physical_capsule_admission_runs_promotion_preflight",
-        "physical_capsule_admission_keeps_registry_unmutated_on_preflight_failure",
-        "physical_promotion_receipt_binds_forge_handoff_registry_preflight",
-        "physical_promotion_receipt_schema_valid",
-        "physical_promotion_receipt_cli_emits_schema_valid_bundle",
-        "physical_promotion_receipt_cli_blocks_missing_live_refs",
-        "physical_promotion_receipt_operator_endpoint_emits_bundle",
-        "physical_promotion_receipt_operator_endpoint_blocks_missing_live_refs",
-        "physical_promotion_receipt_jsonl_store_persists",
-        "physical_promotion_receipt_store_fails_closed_on_invalid_record",
-        "physical_promotion_receipt_operator_console_renders_ledger",
-        "hardware_identity_required",
-        "safety_envelope_required",
-        "manual_override_required",
-        "emergency_stop_required",
-        "simulation_pass_required",
-        "operator_approval_required",
-        "sensor_confirmation_required",
-        "physical_dispatch_blocked_until_controls_complete",
-        "physical_worker_canary_uses_sandbox_handler",
-        "physical_worker_canary_artifact_hash_bound"
+        "physical_boundary_allows_sandbox_replay_with_full_controls",
+        "physical_boundary_blocks_without_simulation",
+        "physical_boundary_blocks_live_effects_without_certification",
+        "physical_boundary_requires_operator_review_when_approval_missing",
+        "physical_action_receipt_matches_schema",
+        "physical_fixture_pack_is_not_loaded_by_default",
+        "physical_fixture_pack_allows_sandbox_replay_when_production_gate_disabled",
+        "physical_fixture_pack_blocks_live_promotion_when_production_gate_enabled",
+        "physical_fixture_pack_projects_sandbox_only_gateway_evidence",
+        "physical_capability_promotion_preflight_blocks_live_fixture_by_default",
+        "physical_capability_promotion_preflight_passes_with_full_evidence",
+        "physical_capability_promotion_preflight_allows_sandbox_only_pack",
+        "physical_capability_promotion_preflight_cli_outputs_json",
+        "capsule_installer_runs_physical_preflight_before_registry_mutation",
+        "capsule_installer_returns_rejected_receipt_without_registry_mutation",
+        "capsule_installer_admits_physical_capsule_when_preflight_passes",
+        "capsule_admission_operator_endpoint_blocks_physical_preflight_failure",
+        "capsule_admission_operator_endpoint_accepts_physical_safety_refs_from_handoff",
+        "physical_capability_promotion_receipt_binds_ready_chain",
+        "operator_physical_promotion_receipt_endpoint_emits_ready_bundle",
+        "operator_physical_promotion_receipt_endpoint_persists_jsonl_ledger",
+        "operator_physical_promotion_receipt_console_renders_ledger",
+        "operator_physical_promotion_receipt_endpoint_blocks_missing_live_refs",
+        "physical_promotion_receipt_jsonl_store_lists_newest_with_filters",
+        "physical_promotion_receipt_jsonl_store_fails_closed_on_invalid_record",
+        "emit_physical_capability_promotion_receipt_accepts_fixture_refs",
+        "emit_physical_capability_promotion_receipt_blocks_missing_refs",
+        "emit_physical_capability_promotion_receipt_blocks_missing_physical_safety_refs",
+        "emit_physical_capability_promotion_receipt_cli_outputs_json",
+        "emit_physical_capability_promotion_receipt_cli_strict_blocks_missing_refs",
+        "physical_worker_canary_blocks_missing_receipt_and_allows_sandbox_replay",
+        "physical_worker_canary_artifact_preserves_no_effect_proof",
+        "physical_worker_canary_evidence_and_hash_are_stable",
+        "produce_physical_worker_canary_writes_artifact",
+        "physical_worker_canary_cli_strict_passes"
       ],
       "surface_id": "physical_action_boundary"
     },
@@ -6205,7 +6174,15 @@
         "/api/v1/replay/{trace_id}/determinism"
       ],
       "request_proof": "request_proof",
-      "runtime_witnesses": [],
+      "runtime_witnesses": [
+        "replay_determinism_endpoint_returns_match_report",
+        "replay_determinism_endpoint_reports_unknown_operation",
+        "replay_determinism_endpoint_missing_trace_fails_closed",
+        "harness_reports_deterministic_match",
+        "harness_report_hash_is_deterministic",
+        "harness_reports_sequence_gap_before_replay",
+        "harness_reports_operation_errors_bounded"
+      ],
       "surface_id": "replay_determinism"
     },
     {
@@ -6225,6 +6202,9 @@
         "examples/mcp_capability_manifest.json",
         "examples/mcp_operator_handoff_checklist.json",
         "docs/55_mcp_capability_manifest.md",
+        "mcoi/tests/test_server_phase212.py",
+        "mcoi/tests/test_server_phase213.py",
+        "mcoi/tests/test_server_runtime_helpers.py",
         "tests/test_gateway/test_mcp_capability_fabric.py",
         "tests/test_validate_mcp_capability_manifest.py",
         "tests/test_validate_mcp_operator_checklist.py"
@@ -6235,7 +6215,17 @@
         "/api/v1/workflow/tools"
       ],
       "request_proof": "request_proof",
-      "runtime_witnesses": [],
+      "runtime_witnesses": [
+        "invoke_tool",
+        "invoke_tool_rejects_unsafe_expression",
+        "invoke_unknown_tool",
+        "tool_history",
+        "tool_workflow",
+        "tool_workflow_tool_calls_include_policy_receipts",
+        "register_default_tools_registers_calculator_and_time",
+        "validate_mcp_capability_manifest_accepts_example",
+        "validate_mcp_operator_checklist_accepts_example"
+      ],
       "surface_id": "tool_invocation"
     },
     {
@@ -6254,7 +6244,16 @@
         "GovernedSession.query"
       ],
       "request_proof": "request_proof",
-      "runtime_witnesses": [],
+      "runtime_witnesses": [
+        "query_generates_proof",
+        "execute_generates_proof",
+        "query_returns_request_envelope_proof",
+        "execute_returns_request_envelope_proof",
+        "llm_result_metadata_has_request_envelope_proof",
+        "query_proof_failure_is_audited_and_blocks_operation",
+        "execute_proof_failure_blocks_dispatch",
+        "llm_proof_failure_blocks_llm_bridge"
+      ],
       "surface_id": "governed_session"
     },
     {
@@ -6262,7 +6261,8 @@
       "audit": "read_model",
       "coverage_state": "witnessed",
       "evidence_files": [
-        "gateway/server.py"
+        "gateway/server.py",
+        "tests/test_gateway/test_webhooks.py"
       ],
       "notes": "Operational liveness and documentation surfaces are outside the proof-critical path.",
       "representative_paths": [
@@ -6272,7 +6272,9 @@
         "/redoc"
       ],
       "request_proof": "read_model",
-      "runtime_witnesses": [],
+      "runtime_witnesses": [
+        "health"
+      ],
       "surface_id": "health_docs_exempt"
     },
     {
@@ -6297,7 +6299,15 @@
         "/api/v1/lineage/artifact/{artifact_id}"
       ],
       "request_proof": "read_model",
-      "runtime_witnesses": [],
+      "runtime_witnesses": [
+        "lineage_resolve_route_returns_trace_document",
+        "lineage_trace_permalink_route_returns_document",
+        "lineage_output_permalink_returns_unresolved_document",
+        "lineage_output_permalink_resolves_indexed_trace",
+        "lineage_command_permalink_resolves_indexed_trace",
+        "lineage_artifact_permalink_resolves_persisted_dag",
+        "lineage_resolve_rejects_invalid_uri"
+      ],
       "surface_id": "lineage_query_api"
     },
     {
@@ -6356,5 +6366,3167 @@
       ],
       "surface_id": "god_mode_lifecycle"
     }
-  ]
+  ],
+  "witness_integrity": {
+    "exact_test_anchor_count": 221,
+    "runtime_witness_count": 998,
+    "surfaces": [
+      {
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "tests/test_gateway/test_webhooks.py::test_command_capability_admission_read_model_reports_accepted_witness"
+            ],
+            "witness": "command_capability_admission_read_model_reports_accepted_witness"
+          }
+        ],
+        "exact_test_anchor_count": 1,
+        "runtime_witness_count": 13,
+        "surface_id": "gateway_capability_fabric",
+        "unanchored_witness_count": 12,
+        "unanchored_witnesses": [
+          "command_lifecycle_events_are_hash_linked",
+          "terminal_closure_requires_evidence_refs",
+          "successful_response_is_bound_to_response_evidence_closure",
+          "universal_action_proof_replays_from_command_events",
+          "operator_universal_action_read_model_filters_command_proofs",
+          "operator_universal_action_console_renders_replay_state",
+          "capability_admission_audits_filter_status",
+          "capsule_compiler_emits_certification_evidence_manifest",
+          "capsule_installer_stamps_admission_receipt",
+          "capsule_admission_operator_endpoint_lists_receipt",
+          "invalid_capsule_admission_preserves_registry_state",
+          "physical_capsule_admission_runs_promotion_preflight"
+        ]
+      },
+      {
+        "anchored_witnesses": [],
+        "exact_test_anchor_count": 0,
+        "runtime_witness_count": 6,
+        "surface_id": "capability_worker_execution",
+        "unanchored_witness_count": 6,
+        "unanchored_witnesses": [
+          "signed_capability_request_required",
+          "response_signature_verified",
+          "input_hash_mismatch_rejected",
+          "intent_boundary_mismatch_rejected",
+          "non_isolated_boundary_rejected",
+          "local_smoke_stub_bound_to_local_environment"
+        ]
+      },
+      {
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "tests/test_gateway/test_browser_worker.py::test_browser_worker_rejects_bad_signature"
+            ],
+            "witness": "browser_worker_rejects_bad_signature"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_browser_worker.py::test_browser_worker_executes_signed_open_request"
+            ],
+            "witness": "browser_worker_executes_signed_open_request"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_browser_worker.py::test_browser_worker_parse_error_detail_is_bounded"
+            ],
+            "witness": "browser_worker_parse_error_detail_is_bounded"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_document_worker.py::test_document_worker_rejects_bad_signature"
+            ],
+            "witness": "document_worker_rejects_bad_signature"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_document_worker.py::test_document_worker_executes_signed_extract_text_request"
+            ],
+            "witness": "document_worker_executes_signed_extract_text_request"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_document_worker.py::test_document_worker_parse_error_detail_is_bounded"
+            ],
+            "witness": "document_worker_parse_error_detail_is_bounded"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_email_calendar_worker.py::test_email_calendar_worker_rejects_bad_signature"
+            ],
+            "witness": "email_calendar_worker_rejects_bad_signature"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_email_calendar_worker.py::test_email_calendar_worker_executes_signed_draft_request"
+            ],
+            "witness": "email_calendar_worker_executes_signed_draft_request"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_email_calendar_worker.py::test_email_calendar_worker_parse_error_detail_is_bounded"
+            ],
+            "witness": "email_calendar_worker_parse_error_detail_is_bounded"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_messaging_worker.py::test_messaging_worker_rejects_bad_signature"
+            ],
+            "witness": "messaging_worker_rejects_bad_signature"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_messaging_worker.py::test_messaging_worker_executes_signed_draft_request"
+            ],
+            "witness": "messaging_worker_executes_signed_draft_request"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_messaging_worker.py::test_messaging_worker_parse_error_detail_is_bounded"
+            ],
+            "witness": "messaging_worker_parse_error_detail_is_bounded"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_phone_worker.py::test_phone_worker_rejects_bad_signature"
+            ],
+            "witness": "phone_worker_rejects_bad_signature"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_phone_worker.py::test_phone_worker_executes_signed_receive_request"
+            ],
+            "witness": "phone_worker_executes_signed_receive_request"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_phone_worker.py::test_phone_worker_parse_error_detail_is_bounded"
+            ],
+            "witness": "phone_worker_parse_error_detail_is_bounded"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_voice_worker.py::test_voice_worker_rejects_bad_signature"
+            ],
+            "witness": "voice_worker_rejects_bad_signature"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_voice_worker.py::test_voice_worker_executes_signed_intent_classification_request"
+            ],
+            "witness": "voice_worker_executes_signed_intent_classification_request"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_voice_worker.py::test_voice_worker_parse_error_detail_is_bounded"
+            ],
+            "witness": "voice_worker_parse_error_detail_is_bounded"
+          }
+        ],
+        "exact_test_anchor_count": 18,
+        "runtime_witness_count": 18,
+        "surface_id": "restricted_adapter_worker_boundaries",
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
+      },
+      {
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "mcoi/tests/test_server_phase200.py::test_stream_returns_sse"
+            ],
+            "witness": "stream_returns_sse"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_server_phase200.py::test_stream_contains_content"
+            ],
+            "witness": "stream_contains_content"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_server_phase200.py::test_stream_contains_budget_witnesses"
+            ],
+            "witness": "stream_contains_budget_witnesses"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_streaming.py::test_stream_budget_cutoff_stops_delivery"
+            ],
+            "witness": "stream_budget_cutoff_stops_delivery"
+          }
+        ],
+        "exact_test_anchor_count": 4,
+        "runtime_witness_count": 7,
+        "surface_id": "llm_streaming",
+        "unanchored_witness_count": 3,
+        "unanchored_witnesses": [
+          "stream_budget_reservation_and_settlement",
+          "streaming_chat_returns_sse",
+          "streaming_chat_exception_sanitized"
+        ]
+      },
+      {
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "tests/test_gateway/test_code_intelligence_read_model.py::test_code_intelligence_operator_endpoint_fails_closed_for_missing_file"
+            ],
+            "witness": "code_intelligence_operator_endpoint_fails_closed_for_missing_file"
+          }
+        ],
+        "exact_test_anchor_count": 1,
+        "runtime_witness_count": 5,
+        "surface_id": "code_intelligence_operator_read_model",
+        "unanchored_witness_count": 4,
+        "unanchored_witnesses": [
+          "code_intelligence_repo_map_detects_routes_schemas_dependencies",
+          "code_context_bundle_bounds_symbols_tests_and_edges",
+          "code_context_missing_affected_file_fails_closed",
+          "code_intelligence_operator_read_model_hides_source_content"
+        ]
+      },
+      {
+        "anchored_witnesses": [],
+        "exact_test_anchor_count": 0,
+        "runtime_witness_count": 7,
+        "surface_id": "llm_completion",
+        "unanchored_witness_count": 7,
+        "unanchored_witnesses": [
+          "completion_returns_action_proof",
+          "completion_records_budget_ledger",
+          "completion_failure_is_bounded",
+          "safe_completion_tracks_cost",
+          "safe_completion_exception_sanitized",
+          "auto_completion_routes_model",
+          "auto_completion_exception_sanitized"
+        ]
+      },
+      {
+        "anchored_witnesses": [],
+        "exact_test_anchor_count": 0,
+        "runtime_witness_count": 7,
+        "surface_id": "llm_chat_workflow",
+        "unanchored_witness_count": 7,
+        "unanchored_witnesses": [
+          "chat_completion_governed",
+          "streaming_chat_returns_sse",
+          "streaming_chat_multi_turn_history_preserved",
+          "streaming_chat_governed",
+          "streaming_chat_contains_budget_witnesses",
+          "streaming_chat_exception_sanitized",
+          "chat_workflow_history_bounded"
+        ]
+      },
+      {
+        "anchored_witnesses": [],
+        "exact_test_anchor_count": 0,
+        "runtime_witness_count": 6,
+        "surface_id": "cost_budget_read_models",
+        "unanchored_witness_count": 6,
+        "unanchored_witnesses": [
+          "budget_summary_bounded",
+          "safe_completion_tracks_cost",
+          "cost_read_model_totals_bounded",
+          "cost_top_spenders_bounded",
+          "cost_by_model_bounded",
+          "tenant_cost_projection_bounded"
+        ]
+      },
+      {
+        "anchored_witnesses": [],
+        "exact_test_anchor_count": 0,
+        "runtime_witness_count": 5,
+        "surface_id": "assistant_kernel_planning",
+        "unanchored_witness_count": 5,
+        "unanchored_witnesses": [
+          "assistant_profiles_read_model_bounded",
+          "finance_ops_plan_requires_active_consent",
+          "finance_ops_plan_projects_operator_queue",
+          "assistant_plan_never_grants_execution_authority",
+          "assistant_plan_errors_sanitized"
+        ]
+      },
+      {
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "mcoi/tests/test_server_phase200.py::test_bootstrap_info"
+            ],
+            "witness": "bootstrap_info"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_server_phase200.py::test_bootstrap_has_stub"
+            ],
+            "witness": "bootstrap_has_stub"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_server_phase212.py::test_circuit_breaker_status"
+            ],
+            "witness": "circuit_breaker_status"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_server_phase199.py::test_history_empty"
+            ],
+            "witness": "history_empty"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_server_phase199.py::test_history_after_completion"
+            ],
+            "witness": "history_after_completion"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_feature_flags.py::test_list_flags",
+              "mcoi/tests/test_server_phase220.py::test_list_flags"
+            ],
+            "witness": "list_flags"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_feature_flags.py::test_summary",
+              "mcoi/tests/test_rate_limit_headers.py::test_summary",
+              "mcoi/tests/test_sla_monitor.py::test_summary"
+            ],
+            "witness": "summary"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_server_phase220.py::test_check_flag_enabled"
+            ],
+            "witness": "check_flag_enabled"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_server_phase220.py::test_check_flag_unknown"
+            ],
+            "witness": "check_flag_unknown"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_feature_flags.py::test_tenant_override"
+            ],
+            "witness": "tenant_override"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_feature_flags.py::test_default_disabled"
+            ],
+            "witness": "default_disabled"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_server_phase202.py::test_get_metrics"
+            ],
+            "witness": "get_metrics"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_server_phase202.py::test_metrics_track_requests"
+            ],
+            "witness": "metrics_track_requests"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_grafana_dashboard.py::test_build_default"
+            ],
+            "witness": "build_default"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_grafana_dashboard.py::test_default_json_roundtrip"
+            ],
+            "witness": "default_json_roundtrip"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_server_phase202.py::test_rate_limit_status"
+            ],
+            "witness": "rate_limit_status"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_rate_limiter.py::test_status",
+              "tests/test_gateway/test_webhooks.py::test_status"
+            ],
+            "witness": "status"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_rate_limit_headers.py::test_to_headers"
+            ],
+            "witness": "to_headers"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_rate_limit_headers.py::test_peek_does_not_consume"
+            ],
+            "witness": "peek_does_not_consume"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_rate_limit_headers.py::test_consume_decrements"
+            ],
+            "witness": "consume_decrements"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_rate_limit_headers.py::test_exhaustion_triggers_retry_after"
+            ],
+            "witness": "exhaustion_triggers_retry_after"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_sla_router.py::test_sla_summary_endpoint_returns_bounded_governed_read_model"
+            ],
+            "witness": "sla_summary_endpoint_returns_bounded_governed_read_model"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_sla_router.py::test_sla_violations_endpoint_filters_by_sla_id"
+            ],
+            "witness": "sla_violations_endpoint_filters_by_sla_id"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_sla_monitor.py::test_violations_filtered"
+            ],
+            "witness": "violations_filtered"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_webhooks.py::test_health"
+            ],
+            "witness": "health"
+          }
+        ],
+        "exact_test_anchor_count": 25,
+        "runtime_witness_count": 27,
+        "surface_id": "operational_platform_read_models",
+        "unanchored_witness_count": 2,
+        "unanchored_witnesses": [
+          "dependency_graph_startup_order_bounded",
+          "dependency_impact_analysis_bounded"
+        ]
+      },
+      {
+        "anchored_witnesses": [],
+        "exact_test_anchor_count": 0,
+        "runtime_witness_count": 13,
+        "surface_id": "conversation_memory_lifecycle",
+        "unanchored_witness_count": 13,
+        "unanchored_witnesses": [
+          "conversation_message_appends_count",
+          "conversation_history_read_model_bounded",
+          "missing_conversation_bounded_404",
+          "conversation_list_read_model_bounded",
+          "conversation_store_tenant_filter",
+          "conversation_message_append_increments_count",
+          "conversation_history_returns_messages_and_summary",
+          "conversation_missing_read_is_bounded",
+          "conversation_multi_turn_history_preserved",
+          "conversation_list_summary_bounded",
+          "conversation_store_tenant_filtering",
+          "conversation_memory_state_hash_changes",
+          "conversation_memory_pruning_bounded"
+        ]
+      },
+      {
+        "anchored_witnesses": [],
+        "exact_test_anchor_count": 0,
+        "runtime_witness_count": 10,
+        "surface_id": "coordination_checkpoint_lifecycle",
+        "unanchored_witness_count": 10,
+        "unanchored_witnesses": [
+          "coordination_checkpoint_audited",
+          "coordination_restore_load_governed",
+          "coordination_restore_resumes_checkpoint",
+          "coordination_checkpoint_save_governed",
+          "coordination_checkpoint_lease_bound",
+          "coordination_store_path_traversal_rejected",
+          "coordination_restore_policy_checked",
+          "coordination_policy_drift_requires_review",
+          "coordination_restore_missing_bounded",
+          "coordination_restore_missing_is_bounded"
+        ]
+      },
+      {
+        "anchored_witnesses": [],
+        "exact_test_anchor_count": 0,
+        "runtime_witness_count": 3,
+        "surface_id": "engineering_puzzle_governance",
+        "unanchored_witness_count": 3,
+        "unanchored_witnesses": [
+          "engineering_goal_delta_classified",
+          "engineering_candidate_judgment_governed",
+          "engineering_puzzle_errors_sanitized"
+        ]
+      },
+      {
+        "anchored_witnesses": [],
+        "exact_test_anchor_count": 0,
+        "runtime_witness_count": 4,
+        "surface_id": "data_export_lifecycle",
+        "unanchored_witness_count": 4,
+        "unanchored_witnesses": [
+          "data_export_sources_allowlisted",
+          "data_export_format_validated",
+          "data_export_limit_bounded",
+          "data_export_errors_sanitized"
+        ]
+      },
+      {
+        "anchored_witnesses": [],
+        "exact_test_anchor_count": 0,
+        "runtime_witness_count": 4,
+        "surface_id": "prompt_template_lifecycle",
+        "unanchored_witness_count": 4,
+        "unanchored_witnesses": [
+          "prompt_template_list_bounded",
+          "prompt_render_variables_validated",
+          "prompt_execution_failure_sanitized",
+          "prompt_execution_records_budgeted_result"
+        ]
+      },
+      {
+        "anchored_witnesses": [],
+        "exact_test_anchor_count": 0,
+        "runtime_witness_count": 3,
+        "surface_id": "replay_trace_read_models",
+        "unanchored_witness_count": 3,
+        "unanchored_witnesses": [
+          "replay_trace_list_bounded",
+          "replay_trace_hash_projected",
+          "replay_trace_summary_non_mutating"
+        ]
+      },
+      {
+        "anchored_witnesses": [],
+        "exact_test_anchor_count": 0,
+        "runtime_witness_count": 3,
+        "surface_id": "schema_validation_registry",
+        "unanchored_witness_count": 3,
+        "unanchored_witnesses": [
+          "schema_registry_list_bounded",
+          "schema_validation_errors_explicit",
+          "schema_validation_result_typed"
+        ]
+      },
+      {
+        "anchored_witnesses": [],
+        "exact_test_anchor_count": 0,
+        "runtime_witness_count": 3,
+        "surface_id": "semantic_search_read_models",
+        "unanchored_witness_count": 3,
+        "unanchored_witnesses": [
+          "semantic_search_limit_bounded",
+          "semantic_search_scores_projected",
+          "semantic_search_stats_bounded"
+        ]
+      },
+      {
+        "anchored_witnesses": [],
+        "exact_test_anchor_count": 0,
+        "runtime_witness_count": 15,
+        "surface_id": "tenant_governance_lifecycle",
+        "unanchored_witness_count": 15,
+        "unanchored_witnesses": [
+          "tenant_budget_create_emits_action_proof",
+          "tenant_budget_create_records_audit",
+          "tenant_budget_read_models_scoped_by_tenant",
+          "tenant_ledger_queries_bounded",
+          "tenant_registry_lifecycle_errors_sanitized",
+          "tenant_register_emits_action_proof",
+          "tenant_status_update_emits_action_proof",
+          "tenant_gate_read_models_governed",
+          "tenant_gate_persistence_read_model_included",
+          "tenant_usage_read_model_scoped",
+          "tenant_analytics_read_model_scoped",
+          "tenant_isolation_verify_governed",
+          "tenant_isolation_audits_bounded",
+          "tenant_quota_read_models_bounded",
+          "tenant_partition_read_model_bounded"
+        ]
+      },
+      {
+        "anchored_witnesses": [],
+        "exact_test_anchor_count": 0,
+        "runtime_witness_count": 6,
+        "surface_id": "rbac_access_governance",
+        "unanchored_witness_count": 6,
+        "unanchored_witnesses": [
+          "rbac_identity_registration_governed",
+          "rbac_role_registration_governed",
+          "rbac_role_binding_governed",
+          "rbac_identity_creation_audited",
+          "rbac_summary_bounded",
+          "rbac_errors_sanitized"
+        ]
+      },
+      {
+        "anchored_witnesses": [],
+        "exact_test_anchor_count": 0,
+        "runtime_witness_count": 14,
+        "surface_id": "runtime_config_management",
+        "unanchored_witness_count": 14,
+        "unanchored_witnesses": [
+          "config_read_model_hash_bound",
+          "config_current_read_model_hash_bound",
+          "config_history_versions_bounded",
+          "config_history_bounded",
+          "config_update_applies_atomically",
+          "config_update_audited",
+          "config_update_emits_event_and_audit",
+          "config_update_emits_event",
+          "config_rollback_requires_known_version",
+          "config_rollback_version_checked",
+          "config_watcher_errors_are_bounded",
+          "config_watcher_status_bounded",
+          "config_drift_secret_changes_are_critical",
+          "config_drift_summary_bounded"
+        ]
+      },
+      {
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "mcoi/tests/test_webhook_system.py::test_webhook_mutation_receipt_closes_effect_assurance"
+            ],
+            "witness": "webhook_mutation_receipt_closes_effect_assurance"
+          }
+        ],
+        "exact_test_anchor_count": 1,
+        "runtime_witness_count": 17,
+        "surface_id": "webhooks_proof_surface",
+        "unanchored_witness_count": 16,
+        "unanchored_witnesses": [
+          "webhook_subscribe_records_audit",
+          "webhook_subscription_audited",
+          "webhook_subscription_mutation_receipt_emitted",
+          "webhook_list_is_tenant_scoped",
+          "webhook_subscription_list_bounded",
+          "webhook_delivery_history_is_bounded",
+          "webhook_delivery_mutation_receipts_exposed",
+          "webhook_delivery_history_bounded",
+          "webhook_flow_records_delivery",
+          "webhook_delivery_queue_mutation_receipt_emitted",
+          "webhook_retry_summary_is_bounded",
+          "webhook_retry_summary_governed",
+          "webhook_dead_letters_are_explicit",
+          "webhook_dead_letters_bounded",
+          "webhook_workflow_delivery_witnessed",
+          "webhook_delivery_errors_are_sanitized"
+        ]
+      },
+      {
+        "anchored_witnesses": [],
+        "exact_test_anchor_count": 0,
+        "runtime_witness_count": 5,
+        "surface_id": "operator_console_read_models",
+        "unanchored_witness_count": 5,
+        "unanchored_witnesses": [
+          "console_home_returns_governed_runtime_vitals",
+          "console_runs_bounds_recent_audit_entries",
+          "console_audit_exposes_chain_intact_read_model",
+          "console_checkpoints_expose_persisted_state_summary",
+          "console_provider_and_scheduler_views_are_read_only"
+        ]
+      },
+      {
+        "anchored_witnesses": [],
+        "exact_test_anchor_count": 0,
+        "runtime_witness_count": 14,
+        "surface_id": "agent_adapter_protocol",
+        "unanchored_witness_count": 14,
+        "unanchored_witnesses": [
+          "agent_register_emits_governed_identity",
+          "agent_register_emits_audit_record",
+          "agent_heartbeat_requires_registered_agent",
+          "agent_action_request_runs_guard_chain",
+          "agent_action_result_records_outcome",
+          "agent_action_result_closes_tracked_action",
+          "agent_goal_context_propagates_to_action_request",
+          "agent_goal_context_propagates_to_response_and_audit",
+          "agent_checkpoint_restore_errors_are_bounded",
+          "agent_checkpoint_restore_roundtrip_governed",
+          "agent_adapter_summary_is_governed_read_model",
+          "agent_adapter_summary_bounded",
+          "builtin_agent_registry_read_models_governed",
+          "agent_error_contracts_bounded"
+        ]
+      },
+      {
+        "anchored_witnesses": [],
+        "exact_test_anchor_count": 0,
+        "runtime_witness_count": 7,
+        "surface_id": "model_experiment_control",
+        "unanchored_witness_count": 7,
+        "unanchored_witnesses": [
+          "model_catalog_list_bounded",
+          "auto_completion_routes_model",
+          "auto_completion_forced_model",
+          "ab_test_single_model_result",
+          "ab_test_two_models_cost_comparison",
+          "ab_test_summary_bounded",
+          "ab_test_failed_model_recorded"
+        ]
+      },
+      {
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "mcoi/tests/test_policy_version_endpoints.py::test_policy_version_register_and_fetch"
+            ],
+            "witness": "policy_version_register_and_fetch"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_policy_version_endpoints.py::test_policy_version_promote_diff_shadow_and_rollback"
+            ],
+            "witness": "policy_version_promote_diff_shadow_and_rollback"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_policy_version_endpoints.py::test_policy_version_routes_fail_closed"
+            ],
+            "witness": "policy_version_routes_fail_closed"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_policy_versioning.py::test_policy_artifact_hash_is_deterministic"
+            ],
+            "witness": "policy_artifact_hash_is_deterministic"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_policy_versioning.py::test_policy_registry_promotes_and_rolls_back_versions"
+            ],
+            "witness": "policy_registry_promotes_and_rolls_back_versions"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_policy_versioning.py::test_policy_diff_reports_changed_and_added_rules"
+            ],
+            "witness": "policy_diff_reports_changed_and_added_rules"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_policy_versioning.py::test_shadow_governance_compares_without_promoting"
+            ],
+            "witness": "shadow_governance_compares_without_promoting"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_policy_versioning.py::test_registry_fails_closed_on_unknown_versions"
+            ],
+            "witness": "registry_fails_closed_on_unknown_versions"
+          }
+        ],
+        "exact_test_anchor_count": 8,
+        "runtime_witness_count": 8,
+        "surface_id": "policy_version_registry",
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
+      },
+      {
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "mcoi/tests/test_pilot_init.py::test_initialize_pilot_writes_complete_artifact_set"
+            ],
+            "witness": "initialize_pilot_writes_complete_artifact_set"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_pilot_init.py::test_initialize_pilot_is_deterministic_for_same_inputs"
+            ],
+            "witness": "initialize_pilot_is_deterministic_for_same_inputs"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_pilot_init.py::test_build_pilot_scaffold_has_no_filesystem_side_effects"
+            ],
+            "witness": "build_pilot_scaffold_has_no_filesystem_side_effects"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_pilot_init.py::test_pilot_provision_registry_persists_bounded_records"
+            ],
+            "witness": "pilot_provision_registry_persists_bounded_records"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_pilot_init.py::test_initialize_pilot_fails_closed_on_existing_files"
+            ],
+            "witness": "initialize_pilot_fails_closed_on_existing_files"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_pilot_init.py::test_pilot_provision_endpoint_returns_audited_scaffold"
+            ],
+            "witness": "pilot_provision_endpoint_returns_audited_scaffold"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_pilot_init.py::test_pilot_provision_history_routes_return_accepted_records"
+            ],
+            "witness": "pilot_provision_history_routes_return_accepted_records"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_pilot_init.py::test_pilot_provision_detail_fails_closed_for_missing_record"
+            ],
+            "witness": "pilot_provision_detail_fails_closed_for_missing_record"
+          }
+        ],
+        "exact_test_anchor_count": 8,
+        "runtime_witness_count": 8,
+        "surface_id": "pilot_provisioning",
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
+      },
+      {
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "mcoi/tests/test_hosted_demo_sandbox.py::test_sandbox_summary_is_deterministic"
+            ],
+            "witness": "sandbox_summary_is_deterministic"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_hosted_demo_sandbox.py::test_sandbox_lineage_contains_bounded_causal_graph"
+            ],
+            "witness": "sandbox_lineage_contains_bounded_causal_graph"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_hosted_demo_sandbox.py::test_sandbox_policy_evaluations_are_read_only"
+            ],
+            "witness": "sandbox_policy_evaluations_are_read_only"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_hosted_demo_sandbox.py::test_sandbox_summary_route"
+            ],
+            "witness": "sandbox_summary_route"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_hosted_demo_sandbox.py::test_sandbox_traces_route"
+            ],
+            "witness": "sandbox_traces_route"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_hosted_demo_sandbox.py::test_sandbox_lineage_route"
+            ],
+            "witness": "sandbox_lineage_route"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_hosted_demo_sandbox.py::test_sandbox_missing_lineage_route_fails_closed"
+            ],
+            "witness": "sandbox_missing_lineage_route_fails_closed"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_hosted_demo_sandbox.py::test_sandbox_policy_evaluations_route"
+            ],
+            "witness": "sandbox_policy_evaluations_route"
+          }
+        ],
+        "exact_test_anchor_count": 8,
+        "runtime_witness_count": 8,
+        "surface_id": "hosted_demo_sandbox",
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
+      },
+      {
+        "anchored_witnesses": [],
+        "exact_test_anchor_count": 0,
+        "runtime_witness_count": 7,
+        "surface_id": "federated_control_plane",
+        "unanchored_witness_count": 7,
+        "unanchored_witnesses": [
+          "signed_policy_metadata_only_sync",
+          "invalid_signature_denied_before_local_acceptance",
+          "policy_not_allowed_for_cluster_denied",
+          "unsynced_policy_denied_locally",
+          "tenant_region_mismatch_denied_locally",
+          "central_data_transfer_forbidden",
+          "federated_snapshot_schema_valid"
+        ]
+      },
+      {
+        "anchored_witnesses": [],
+        "exact_test_anchor_count": 0,
+        "runtime_witness_count": 14,
+        "surface_id": "finance_approval_packets",
+        "unanchored_witness_count": 14,
+        "unanchored_witnesses": [
+          "finance_packet_policy_reasons_explicit",
+          "blocked_packet_emits_no_effect",
+          "approval_action_binds_approval_effect_and_closure_refs",
+          "payment_handoff_prepared_without_live_payment_claim",
+          "payment_receipt_and_ledger_reconciliation_required_for_payment_closure",
+          "payment_closure_receipt_validator_blocks_unbound_evidence",
+          "payment_closure_receipt_producer_emits_ready_sandbox_evidence",
+          "payment_provider_binding_receipt_redacts_credentials_and_scopes_provider",
+          "payment_closure_producer_consumes_provider_binding_receipt",
+          "payment_closure_validator_verifies_provider_binding_receipt_object",
+          "payment_closure_receipt_producer_requires_provider_binding_for_nonsandbox",
+          "payment_closure_example_evidence_validates_provider_binding_chain",
+          "packet_proof_requires_policy_evidence_and_closure_for_closed_states",
+          "operator_read_model_bounds_visible_packets_and_counts"
+        ]
+      },
+      {
+        "anchored_witnesses": [],
+        "exact_test_anchor_count": 0,
+        "runtime_witness_count": 3,
+        "surface_id": "data_governance_controls",
+        "unanchored_witness_count": 3,
+        "unanchored_witnesses": [
+          "data_governance_state_hash",
+          "data_governance_action_proof",
+          "tenant_visible_violation_read_model"
+        ]
+      },
+      {
+        "anchored_witnesses": [],
+        "exact_test_anchor_count": 0,
+        "runtime_witness_count": 3,
+        "surface_id": "compliance_evidence_exports",
+        "unanchored_witness_count": 3,
+        "unanchored_witnesses": [
+          "compliance_package_hash",
+          "audit_chain_verification",
+          "self_audited_export_event"
+        ]
+      },
+      {
+        "anchored_witnesses": [],
+        "exact_test_anchor_count": 0,
+        "runtime_witness_count": 7,
+        "surface_id": "audit_chain_api",
+        "unanchored_witness_count": 7,
+        "unanchored_witnesses": [
+          "audit_chain_verify_endpoint",
+          "audit_summary_read_model",
+          "audit_anchor_checkpoint_created",
+          "audit_anchor_verification_endpoint",
+          "audit_anchor_history_read_model",
+          "audit_chain_hash_linked",
+          "audit_logs_read_model_bounded"
+        ]
+      },
+      {
+        "anchored_witnesses": [],
+        "exact_test_anchor_count": 0,
+        "runtime_witness_count": 6,
+        "surface_id": "event_bus_operations",
+        "unanchored_witness_count": 6,
+        "unanchored_witnesses": [
+          "event_publish_hash_bound",
+          "event_history_filter_bounded",
+          "event_summary_bounded",
+          "event_store_summary_governed",
+          "pipeline_completion_event_visible",
+          "config_update_event_visible"
+        ]
+      },
+      {
+        "anchored_witnesses": [],
+        "exact_test_anchor_count": 0,
+        "runtime_witness_count": 5,
+        "surface_id": "api_key_lifecycle",
+        "unanchored_witness_count": 5,
+        "unanchored_witnesses": [
+          "api_key_create_rejects_wildcard_when_disabled",
+          "api_key_create_rejects_empty_scopes",
+          "api_key_revoke_missing_is_bounded",
+          "api_key_rotation_links_old_and_new_keys",
+          "api_key_expiration_and_stale_detection"
+        ]
+      },
+      {
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "mcoi/tests/test_autonomous_fixes.py::test_proof_bridge_registered_in_deps"
+            ],
+            "witness": "proof_bridge_registered_in_deps"
+          }
+        ],
+        "exact_test_anchor_count": 1,
+        "runtime_witness_count": 6,
+        "surface_id": "ops_proof_surface",
+        "unanchored_witness_count": 5,
+        "unanchored_witnesses": [
+          "ops_benchmarks_return_governed_summary",
+          "ops_benchmark_results_have_metrics",
+          "ops_import_analysis_returns_dependency_summary",
+          "ops_import_depth_distribution_bounded",
+          "ops_proof_bridge_status_governed"
+        ]
+      },
+      {
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "mcoi/tests/test_task_queue.py::test_task_queue_mutation_receipt_closes_effect_assurance"
+            ],
+            "witness": "task_queue_mutation_receipt_closes_effect_assurance"
+          }
+        ],
+        "exact_test_anchor_count": 1,
+        "runtime_witness_count": 11,
+        "surface_id": "task_queue_lifecycle",
+        "unanchored_witness_count": 10,
+        "unanchored_witnesses": [
+          "task_queue_priority_order",
+          "task_queue_depth_bounded",
+          "task_queue_submit_endpoint",
+          "task_queue_submit_mutation_receipt_emitted",
+          "task_queue_process_endpoint",
+          "task_queue_process_mutation_receipts_emitted",
+          "task_queue_empty_process_bounded",
+          "task_queue_result_retrieval",
+          "task_queue_missing_result_bounded",
+          "task_queue_errors_sanitized"
+        ]
+      },
+      {
+        "anchored_witnesses": [],
+        "exact_test_anchor_count": 0,
+        "runtime_witness_count": 6,
+        "surface_id": "trace_observability_read_models",
+        "unanchored_witness_count": 6,
+        "unanchored_witnesses": [
+          "request_trace_summary_bounded",
+          "request_trace_lookup_bounded",
+          "missing_trace_returns_governed_404",
+          "slow_trace_projection_bounded",
+          "otel_trace_summary_bounded",
+          "trace_context_roundtrip_tested"
+        ]
+      },
+      {
+        "anchored_witnesses": [],
+        "exact_test_anchor_count": 0,
+        "runtime_witness_count": 6,
+        "surface_id": "agent_memory_lifecycle",
+        "unanchored_witness_count": 6,
+        "unanchored_witnesses": [
+          "agent_memory_store_bounded",
+          "agent_memory_search_relevance_scored",
+          "agent_memory_tenant_isolation",
+          "agent_memory_capacity_eviction",
+          "agent_memory_summary_bounded",
+          "agent_memory_forget_removes_entry"
+        ]
+      },
+      {
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "mcoi/tests/test_explanation_engine.py::test_explain_action_returns_explanation_id"
+            ],
+            "witness": "explain_action_returns_explanation_id"
+          }
+        ],
+        "exact_test_anchor_count": 1,
+        "runtime_witness_count": 7,
+        "surface_id": "governance_explanation_lifecycle",
+        "unanchored_witness_count": 6,
+        "unanchored_witnesses": [
+          "explain_action_guard_chain_path_reported",
+          "explain_audit_entry_allowed_and_denied",
+          "explain_audit_entry_goal_context_preserved",
+          "explanation_cache_bounded",
+          "explain_action_endpoint_governed",
+          "explain_summary_endpoint_governed"
+        ]
+      },
+      {
+        "anchored_witnesses": [],
+        "exact_test_anchor_count": 0,
+        "runtime_witness_count": 6,
+        "surface_id": "tool_registry_read_models",
+        "unanchored_witness_count": 6,
+        "unanchored_witnesses": [
+          "tool_registry_list_returns_registered_tools",
+          "tool_registry_category_filter_bounded",
+          "tool_llm_format_exports_input_schema",
+          "tool_history_returns_bounded_summary",
+          "tool_invocation_history_limit_applied",
+          "tool_invoke_separate_action_proof_surface"
+        ]
+      },
+      {
+        "anchored_witnesses": [],
+        "exact_test_anchor_count": 0,
+        "runtime_witness_count": 7,
+        "surface_id": "structured_output_validation",
+        "unanchored_witness_count": 7,
+        "unanchored_witnesses": [
+          "structured_output_parse_valid_json",
+          "structured_output_parse_invalid_json",
+          "structured_output_parse_unknown_schema_bounded",
+          "structured_output_parse_markdown_json",
+          "structured_output_schema_registration_validated",
+          "structured_output_endpoint_parse_valid_and_invalid",
+          "structured_output_schema_list_bounded"
+        ]
+      },
+      {
+        "anchored_witnesses": [],
+        "exact_test_anchor_count": 0,
+        "runtime_witness_count": 17,
+        "surface_id": "operational_health_read_models",
+        "unanchored_witness_count": 17,
+        "unanchored_witnesses": [
+          "deep_health_components_bounded",
+          "health_score_range_bounded",
+          "health_score_components_weighted",
+          "health_v2_degraded_state_supported",
+          "health_v2_exception_sanitized",
+          "health_v3_weighted_aggregation",
+          "health_v3_recovery_tracking",
+          "health_routes_return_read_models",
+          "ops_dashboard_read_model_bounded",
+          "production_readiness_checks_bounded",
+          "monitoring_vitals_read_model_bounded",
+          "shutdown_info_read_model_bounded",
+          "correlation_summary_read_model_bounded",
+          "idempotency_summary_read_model_bounded",
+          "deployment_readiness_read_model_bounded",
+          "release_info_read_model_bounded",
+          "system_snapshot_read_model_bounded"
+        ]
+      },
+      {
+        "anchored_witnesses": [],
+        "exact_test_anchor_count": 0,
+        "runtime_witness_count": 8,
+        "surface_id": "agent_orchestration_lifecycle",
+        "unanchored_witness_count": 8,
+        "unanchored_witnesses": [
+          "orchestration_summary_bounded",
+          "orchestration_plan_created_for_registered_agent",
+          "orchestration_unknown_initiator_bounded",
+          "orchestration_missing_plan_bounded",
+          "orchestration_handoff_capability_checked",
+          "orchestration_handoff_errors_sanitized",
+          "orchestration_quorum_required",
+          "orchestration_executor_errors_sanitized"
+        ]
+      },
+      {
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "tests/test_gateway/test_workflow_orchestration.py::test_workflow_mutation_receipt_closes_effect_assurance"
+            ],
+            "witness": "workflow_mutation_receipt_closes_effect_assurance"
+          }
+        ],
+        "exact_test_anchor_count": 1,
+        "runtime_witness_count": 18,
+        "surface_id": "workflow_execution_lifecycle",
+        "unanchored_witness_count": 17,
+        "unanchored_witnesses": [
+          "workflow_execute_emits_action_proof",
+          "workflow_invalid_capability_bounded",
+          "workflow_history_bounded",
+          "workflow_success_records_audit",
+          "workflow_failure_records_audit",
+          "workflow_errors_sanitized",
+          "workflow_lifecycle_mutation_receipts_emitted",
+          "workflow_failure_compensation_receipts_emitted",
+          "traced_workflow_emits_replay_trace",
+          "traced_workflow_recorder_errors_sanitized",
+          "legacy_execute_emits_action_proof",
+          "session_read_model_bounded",
+          "ledger_read_model_bounded",
+          "pipeline_execution_emits_action_proof",
+          "pipeline_history_bounded",
+          "template_read_models_bounded",
+          "template_execution_governed"
+        ]
+      },
+      {
+        "anchored_witnesses": [],
+        "exact_test_anchor_count": 0,
+        "runtime_witness_count": 8,
+        "surface_id": "agent_chain_execution_lifecycle",
+        "unanchored_witness_count": 8,
+        "unanchored_witnesses": [
+          "chain_execute_single_step",
+          "chain_execute_two_steps",
+          "chain_prev_template_propagates_output",
+          "chain_halt_on_failure_bounded",
+          "chain_skip_on_failure_continues",
+          "chain_returned_failure_redacted",
+          "chain_history_bounded",
+          "chain_endpoint_governed"
+        ]
+      },
+      {
+        "anchored_witnesses": [],
+        "exact_test_anchor_count": 0,
+        "runtime_witness_count": 8,
+        "surface_id": "certification_daemon_lifecycle",
+        "unanchored_witness_count": 8,
+        "unanchored_witnesses": [
+          "daemon_status_bounded",
+          "daemon_tick_interval_gated",
+          "daemon_force_runs_when_disabled",
+          "daemon_force_returns_chain_hash",
+          "daemon_history_bounded",
+          "daemon_health_degrades_on_failures",
+          "daemon_exceptions_sanitized",
+          "daemon_endpoint_contracts_governed"
+        ]
+      },
+      {
+        "anchored_witnesses": [],
+        "exact_test_anchor_count": 0,
+        "runtime_witness_count": 8,
+        "surface_id": "live_path_certification_lifecycle",
+        "unanchored_witness_count": 8,
+        "unanchored_witnesses": [
+          "certification_run_emits_action_proof",
+          "certification_run_returns_chain_hash",
+          "certification_run_records_five_steps",
+          "certification_steps_named",
+          "certification_history_bounded",
+          "certification_chain_hash_deterministic",
+          "certification_failures_bounded",
+          "certification_partial_failure_recorded"
+        ]
+      },
+      {
+        "anchored_witnesses": [],
+        "exact_test_anchor_count": 0,
+        "runtime_witness_count": 8,
+        "surface_id": "runtime_state_persistence_lifecycle",
+        "unanchored_witness_count": 8,
+        "unanchored_witnesses": [
+          "state_save_returns_hash_bound_snapshot",
+          "state_load_roundtrip",
+          "state_load_missing_bounded",
+          "state_list_summary_bounded",
+          "state_save_rejects_path_traversal",
+          "state_load_rejects_path_traversal",
+          "state_hash_mismatch_rejected",
+          "state_atomic_write_verified"
+        ]
+      },
+      {
+        "anchored_witnesses": [],
+        "exact_test_anchor_count": 0,
+        "runtime_witness_count": 11,
+        "surface_id": "runbook_learning_lifecycle",
+        "unanchored_witness_count": 11,
+        "unanchored_witnesses": [
+          "patterns_detected_from_audit_trail",
+          "promotion_requires_detected_pattern",
+          "approval_required_before_activation",
+          "retirement_requires_active_runbook",
+          "promote_and_approve_audit_records",
+          "mil_audit_replay_admits_runbook",
+          "mil_audit_operator_checklist_validated",
+          "mil_audit_runbook_preflight_ready",
+          "sanitized_runbook_error_details",
+          "runbook_pattern_read_models_bounded",
+          "runbook_responses_governed"
+        ]
+      },
+      {
+        "anchored_witnesses": [],
+        "exact_test_anchor_count": 0,
+        "runtime_witness_count": 7,
+        "surface_id": "software_outcome_learning",
+        "unanchored_witness_count": 7,
+        "unanchored_witnesses": [
+          "software_learning_schema_default_enabled",
+          "passed_gates_yield_procedural_memory",
+          "failed_gates_yield_hashed_risk_memory",
+          "raw_logs_rejected_before_planning_use",
+          "rollback_failure_defers_learning",
+          "planning_projection_requires_admitted_matching_decision",
+          "software_learning_errors_are_bounded"
+        ]
+      },
+      {
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "tests/test_gateway/test_webhooks.py::test_receive_with_message_returns_request_receipt",
+              "tests/test_gateway/test_webhooks.py::test_receive_with_message_returns_request_receipt"
+            ],
+            "witness": "receive_with_message_returns_request_receipt"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_webhooks.py::test_receive_with_message"
+            ],
+            "witness": "receive_with_message"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_webhooks.py::test_ignored_update_returns_request_receipt"
+            ],
+            "witness": "ignored_update_returns_request_receipt"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_webhooks.py::test_receive_with_command_returns_request_receipt"
+            ],
+            "witness": "receive_with_command_returns_request_receipt"
+          }
+        ],
+        "exact_test_anchor_count": 4,
+        "runtime_witness_count": 4,
+        "surface_id": "gateway_webhook_ingress",
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
+      },
+      {
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "tests/test_gateway/test_webhooks.py::test_approve_unknown_request"
+            ],
+            "witness": "approve_unknown_request"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_webhooks.py::test_approve_valid_request"
+            ],
+            "witness": "approve_valid_request"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_webhooks.py::test_authority_approval_chain_read_model"
+            ],
+            "witness": "authority_approval_chain_read_model"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_webhooks.py::test_expire_overdue_authority_approval_chains_records_transition"
+            ],
+            "witness": "expire_overdue_authority_approval_chains_records_transition"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_webhooks.py::test_production_approval_callback_requires_secret"
+            ],
+            "witness": "production_approval_callback_requires_secret"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_webhooks.py::test_approval_callback_denies_unauthorized_resolver"
+            ],
+            "witness": "approval_callback_denies_unauthorized_resolver"
+          }
+        ],
+        "exact_test_anchor_count": 6,
+        "runtime_witness_count": 6,
+        "surface_id": "gateway_approval_resolution",
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
+      },
+      {
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "mcoi/tests/test_approval.py::test_approval_mutation_receipt_closes_effect_assurance"
+            ],
+            "witness": "approval_mutation_receipt_closes_effect_assurance"
+          }
+        ],
+        "exact_test_anchor_count": 1,
+        "runtime_witness_count": 6,
+        "surface_id": "approval_engine_lifecycle",
+        "unanchored_witness_count": 5,
+        "unanchored_witnesses": [
+          "approval_request_mutation_receipt_emitted",
+          "approval_decision_mutation_receipt_emitted",
+          "approval_consumption_mutation_receipt_emitted",
+          "approval_revocation_mutation_receipt_emitted",
+          "approval_override_mutation_receipt_emitted"
+        ]
+      },
+      {
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "mcoi/tests/test_job_core.py::test_job_mutation_receipt_closes_effect_assurance"
+            ],
+            "witness": "job_mutation_receipt_closes_effect_assurance"
+          }
+        ],
+        "exact_test_anchor_count": 1,
+        "runtime_witness_count": 6,
+        "surface_id": "job_engine_lifecycle",
+        "unanchored_witness_count": 5,
+        "unanchored_witnesses": [
+          "job_create_mutation_receipt_emitted",
+          "job_start_mutation_receipt_emitted",
+          "job_pause_resume_mutation_receipts_emitted",
+          "job_terminal_mutation_receipts_emitted",
+          "job_restore_mutation_receipt_emitted"
+        ]
+      },
+      {
+        "anchored_witnesses": [],
+        "exact_test_anchor_count": 0,
+        "runtime_witness_count": 5,
+        "surface_id": "authority_obligation_mesh",
+        "unanchored_witness_count": 5,
+        "unanchored_witnesses": [
+          "pending_approval_chain_count",
+          "open_obligation_count",
+          "overdue_obligation_count",
+          "escalated_obligation_count",
+          "command_authority_read_model_bound_to_approval_chain"
+        ]
+      },
+      {
+        "anchored_witnesses": [],
+        "exact_test_anchor_count": 0,
+        "runtime_witness_count": 5,
+        "surface_id": "authority_operator_controls",
+        "unanchored_witness_count": 5,
+        "unanchored_witnesses": [
+          "operator_access_guard",
+          "operator_audit_events",
+          "ownership_policy_read_models",
+          "approval_expiration_witness",
+          "obligation_satisfaction_escalation_witness"
+        ]
+      },
+      {
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "tests/test_gateway/test_webhooks.py::test_gateway_witness"
+            ],
+            "witness": "gateway_witness"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_webhooks.py::test_runtime_witness_alias"
+            ],
+            "witness": "runtime_witness_alias"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_webhooks.py::test_latest_anchor_read_model"
+            ],
+            "witness": "latest_anchor_read_model"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_webhooks.py::test_runtime_self_reflex_read_models_do_not_mutate"
+            ],
+            "witness": "runtime_self_reflex_read_models_do_not_mutate"
+          },
+          {
+            "anchors": [
+              "tests/test_collect_deployment_witness.py::test_collect_deployment_witness_publishes_with_verified_signature"
+            ],
+            "witness": "collect_deployment_witness_publishes_with_verified_signature"
+          },
+          {
+            "anchors": [
+              "tests/test_collect_deployment_witness.py::test_collect_deployment_witness_rejects_responsibility_debt"
+            ],
+            "witness": "collect_deployment_witness_rejects_responsibility_debt"
+          },
+          {
+            "anchors": [
+              "tests/test_collect_deployment_witness.py::test_collect_deployment_witness_rejects_runtime_responsibility_debt"
+            ],
+            "witness": "collect_deployment_witness_rejects_runtime_responsibility_debt"
+          },
+          {
+            "anchors": [
+              "tests/test_preflight_deployment_witness.py::test_preflight_deployment_witness_rejects_responsibility_debt"
+            ],
+            "witness": "preflight_deployment_witness_rejects_responsibility_debt"
+          },
+          {
+            "anchors": [
+              "tests/test_preflight_deployment_witness.py::test_preflight_deployment_witness_rejects_runtime_witness_responsibility_debt"
+            ],
+            "witness": "preflight_deployment_witness_rejects_runtime_witness_responsibility_debt"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_deployment_publication_closure.py::test_published_status_rejects_authority_responsibility_debt",
+              "tests/test_validate_deployment_publication_closure.py::test_published_status_rejects_authority_responsibility_debt"
+            ],
+            "witness": "published_status_rejects_authority_responsibility_debt"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_deployment_publication_closure.py::test_published_status_rejects_runtime_responsibility_debt",
+              "tests/test_validate_deployment_publication_closure.py::test_published_status_rejects_runtime_responsibility_debt"
+            ],
+            "witness": "published_status_rejects_runtime_responsibility_debt"
+          },
+          {
+            "anchors": [
+              "tests/test_orchestrate_deployment_witness.py::test_orchestrate_deployment_witness_renders_and_provisions"
+            ],
+            "witness": "orchestrate_deployment_witness_renders_and_provisions"
+          },
+          {
+            "anchors": [
+              "tests/test_orchestrate_deployment_witness.py::test_orchestration_receipt_schema_matches_cli_output"
+            ],
+            "witness": "orchestration_receipt_schema_matches_cli_output"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_deployment_orchestration_receipt.py::test_orchestration_validation_report_matches_public_schema"
+            ],
+            "witness": "orchestration_validation_report_matches_public_schema"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_deployment_publication_closure.py::test_closure_validation_report_matches_public_schema_for_not_published",
+              "tests/test_validate_deployment_publication_closure.py::test_closure_validation_report_matches_public_schema_for_not_published"
+            ],
+            "witness": "closure_validation_report_matches_public_schema_for_not_published"
+          },
+          {
+            "anchors": [
+              "tests/test_report_gateway_publication_readiness.py::test_readiness_report_matches_public_schema"
+            ],
+            "witness": "readiness_report_matches_public_schema"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_gateway_publication_receipt.py::test_receipt_validation_report_matches_public_schema"
+            ],
+            "witness": "receipt_validation_report_matches_public_schema"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_protocol_manifest.py::test_protocol_manifest_indexes_deployment_orchestration_validation"
+            ],
+            "witness": "protocol_manifest_indexes_deployment_orchestration_validation"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_protocol_manifest.py::test_protocol_manifest_indexes_deployment_publication_closure_validation"
+            ],
+            "witness": "protocol_manifest_indexes_deployment_publication_closure_validation"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_protocol_manifest.py::test_protocol_manifest_indexes_gateway_publication_readiness"
+            ],
+            "witness": "protocol_manifest_indexes_gateway_publication_readiness"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_protocol_manifest.py::test_protocol_manifest_indexes_gateway_publication_receipt_validation"
+            ],
+            "witness": "protocol_manifest_indexes_gateway_publication_receipt_validation"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_protocol_manifest.py::test_protocol_manifest_indexes_runtime_witness_and_latest_anchor"
+            ],
+            "witness": "protocol_manifest_indexes_runtime_witness_and_latest_anchor"
+          }
+        ],
+        "exact_test_anchor_count": 22,
+        "runtime_witness_count": 22,
+        "surface_id": "gateway_runtime_witness",
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
+      },
+      {
+        "anchored_witnesses": [],
+        "exact_test_anchor_count": 0,
+        "runtime_witness_count": 14,
+        "surface_id": "runtime_conformance_attestation",
+        "unanchored_witness_count": 14,
+        "unanchored_witnesses": [
+          "gateway_witness_valid",
+          "runtime_witness_valid",
+          "runtime_conformance_certificate_schema_valid",
+          "runtime_conformance_collector_schema_valid",
+          "proof_coverage_unclassified_routes_reported",
+          "command_closure_canary_passed",
+          "capability_admission_canary_passed",
+          "dangerous_capability_isolation_canary_passed",
+          "lineage_query_canary_passed",
+          "authority_responsibility_debt_clear",
+          "authority_directory_sync_receipt_valid",
+          "capability_plan_bundle_canary_passed",
+          "physical_worker_canary_passed",
+          "physical_worker_canary_artifact_hash_bound"
+        ]
+      },
+      {
+        "anchored_witnesses": [],
+        "exact_test_anchor_count": 0,
+        "runtime_witness_count": 4,
+        "surface_id": "proof_route_gap_triage",
+        "unanchored_witness_count": 4,
+        "unanchored_witnesses": [
+          "unclassified_routes_grouped_by_family",
+          "route_gap_triage_binds_source_files_and_methods",
+          "closure_candidates_ranked_deterministically",
+          "triage_report_check_detects_stale_output"
+        ]
+      },
+      {
+        "anchored_witnesses": [],
+        "exact_test_anchor_count": 0,
+        "runtime_witness_count": 10,
+        "surface_id": "production_evidence_plane",
+        "unanchored_witness_count": 10,
+        "unanchored_witnesses": [
+          "gateway_health_schema_valid",
+          "signed_production_evidence_witness",
+          "capability_evidence_schema_valid",
+          "audit_verification_schema_valid",
+          "proof_verification_schema_valid",
+          "deployment_collection_requires_production_evidence",
+          "live_physical_safety_evidence_derived_from_registry",
+          "live_physical_capability_requires_safety_evidence",
+          "sandbox_physical_capability_remains_non_production",
+          "missing_production_evidence_fails_closed"
+        ]
+      },
+      {
+        "anchored_witnesses": [],
+        "exact_test_anchor_count": 0,
+        "runtime_witness_count": 9,
+        "surface_id": "runtime_reflex_engine",
+        "unanchored_witness_count": 9,
+        "unanchored_witnesses": [
+          "operator_only_access",
+          "mutation_applied_false",
+          "certification_handoff_required",
+          "protected_surfaces_auto_promote_false",
+          "signed_reflex_witness",
+          "reflex_deployment_witness_schema",
+          "reflex_validator_receipt_schema",
+          "offline_reflex_witness_replay",
+          "reflex_validator_receipt_artifact"
+        ]
+      },
+      {
+        "anchored_witnesses": [],
+        "exact_test_anchor_count": 0,
+        "runtime_witness_count": 11,
+        "surface_id": "governed_operational_intelligence",
+        "unanchored_witness_count": 11,
+        "unanchored_witnesses": [
+          "world_assertions_require_source_evidence",
+          "knowledge_entity_routes_governed",
+          "knowledge_link_routes_governed",
+          "knowledge_contradiction_routes_governed",
+          "knowledge_summary_route_bounded",
+          "policy_simulation_routes_governed",
+          "policy_simulation_history_summary_bounded",
+          "goal_plan_certificate_hash_bound",
+          "simulation_receipt_schema_valid",
+          "open_world_contradictions_block_execution",
+          "high_risk_controls_projected_before_execution"
+        ]
+      },
+      {
+        "anchored_witnesses": [],
+        "exact_test_anchor_count": 0,
+        "runtime_witness_count": 10,
+        "surface_id": "capability_forge",
+        "unanchored_witness_count": 10,
+        "unanchored_witnesses": [
+          "candidate_promotion_blocked",
+          "candidate_schema_valid",
+          "candidate_certification_handoff_emits_maturity_bundle",
+          "certification_handoff_installs_evidence_without_maturity_claim",
+          "certification_handoff_batch_preserves_capsule_admission_gate",
+          "physical_candidate_declares_live_safety_evidence_requirements",
+          "physical_handoff_installs_live_safety_evidence",
+          "high_risk_approval_policy_required",
+          "effect_bearing_candidate_requires_sandbox",
+          "effect_bearing_candidate_requires_recovery_path"
+        ]
+      },
+      {
+        "anchored_witnesses": [],
+        "exact_test_anchor_count": 0,
+        "runtime_witness_count": 8,
+        "surface_id": "capability_maturity_assessment",
+        "unanchored_witness_count": 8,
+        "unanchored_witnesses": [
+          "certification_evidence_synthesizes_maturity_extension",
+          "maturity_derived_from_evidence",
+          "registry_read_model_exposes_maturity",
+          "default_pack_C6_examples_projected",
+          "effect_bearing_production_requires_live_write",
+          "production_requires_worker_deployment_recovery",
+          "autonomy_requires_C7_controls",
+          "capability_maturity_schema_valid"
+        ]
+      },
+      {
+        "anchored_witnesses": [],
+        "exact_test_anchor_count": 0,
+        "runtime_witness_count": 9,
+        "surface_id": "capability_manifest_registry",
+        "unanchored_witness_count": 9,
+        "unanchored_witnesses": [
+          "capability_manifest_schema_valid",
+          "software_dev_manifests_admit_locally",
+          "manifest_missing_policy_rejected",
+          "manifest_unresolved_schema_rejected",
+          "effect_manifest_requires_sandbox_rollback",
+          "hot_reload_metadata_enforced",
+          "production_hot_reload_denied_for_effect_manifest",
+          "fabric_projects_local_manifest_registry",
+          "fabric_rejects_production_hot_reload_manifest_registry"
+        ]
+      },
+      {
+        "anchored_witnesses": [],
+        "exact_test_anchor_count": 0,
+        "runtime_witness_count": 13,
+        "surface_id": "networked_worker_mesh",
+        "unanchored_witness_count": 13,
+        "unanchored_witnesses": [
+          "active_lease_required",
+          "tenant_capability_operation_budget_checked",
+          "forbidden_operations_override_allowed",
+          "code_worker_exact_lease_command_required",
+          "code_worker_blocks_network_shell_and_risky_git",
+          "code_worker_receipt_binds_sandbox_evidence",
+          "physical_action_receipt_required_for_physical_workers",
+          "physical_worker_canary_blocks_without_receipt",
+          "physical_worker_canary_passed",
+          "physical_worker_canary_uses_sandbox_handler",
+          "worker_evidence_refs_required",
+          "worker_receipt_not_terminal_closure",
+          "worker_mesh_schema_valid"
+        ]
+      },
+      {
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "tests/test_software_dev_capability_pack.py::test_software_dev_input_schemas_reject_boundary_violations"
+            ],
+            "witness": "software_dev_input_schemas_reject_boundary_violations"
+          },
+          {
+            "anchors": [
+              "tests/test_software_dev_capability_pack.py::test_software_dev_output_schemas_reject_effect_overclaims"
+            ],
+            "witness": "software_dev_output_schemas_reject_effect_overclaims"
+          },
+          {
+            "anchors": [
+              "tests/test_software_dev_capability_pack.py::test_software_dev_named_loader_installs_only_software_dev_domain"
+            ],
+            "witness": "software_dev_named_loader_installs_only_software_dev_domain"
+          }
+        ],
+        "exact_test_anchor_count": 3,
+        "runtime_witness_count": 15,
+        "surface_id": "software_dev_capability_pack",
+        "unanchored_witness_count": 12,
+        "unanchored_witnesses": [
+          "software_dev_pack_fixture_not_default_loaded",
+          "software_dev_capability_entries_schema_valid",
+          "software_dev_input_schema_refs_materialized",
+          "software_dev_output_schema_refs_materialized",
+          "software_dev_capsule_refs_match_pack_capabilities",
+          "software_dev_pack_explicit_fabric_admits_known_capabilities",
+          "software_dev_gate_projects_manifest_registry",
+          "software_dev_direct_deployment_capability_absent",
+          "software_dev_read_only_records_non_mutating",
+          "software_dev_effectful_records_require_sandbox_approval",
+          "software_dev_pr_candidate_blocks_git_push",
+          "software_dev_production_ready_overclaim_rejected"
+        ]
+      },
+      {
+        "anchored_witnesses": [],
+        "exact_test_anchor_count": 0,
+        "runtime_witness_count": 8,
+        "surface_id": "agent_identity",
+        "unanchored_witness_count": 8,
+        "unanchored_witnesses": [
+          "owner_tenant_identity_required",
+          "capability_scope_conflict_denied",
+          "self_approval_forbidden",
+          "policy_mutation_forbidden",
+          "delegation_requires_lease",
+          "agent_budget_enforced",
+          "reputation_update_requires_evidence",
+          "agent_identity_schema_valid"
+        ]
+      },
+      {
+        "anchored_witnesses": [],
+        "exact_test_anchor_count": 0,
+        "runtime_witness_count": 6,
+        "surface_id": "claim_verification",
+        "unanchored_witness_count": 6,
+        "unanchored_witnesses": [
+          "claim_type_declared",
+          "source_evidence_required",
+          "contradictions_block_execution",
+          "stale_claims_block_execution",
+          "high_risk_requires_independent_support",
+          "claim_verification_schema_valid"
+        ]
+      },
+      {
+        "anchored_witnesses": [],
+        "exact_test_anchor_count": 0,
+        "runtime_witness_count": 6,
+        "surface_id": "governed_connector_framework",
+        "unanchored_witness_count": 6,
+        "unanchored_witnesses": [
+          "connector_registration_typed",
+          "connector_invocation_guard_chain_checked",
+          "connector_lifecycle_disable_enable_bounded",
+          "connector_history_summary_bounded",
+          "connector_errors_sanitized",
+          "connector_invocation_audited"
+        ]
+      },
+      {
+        "anchored_witnesses": [],
+        "exact_test_anchor_count": 0,
+        "runtime_witness_count": 6,
+        "surface_id": "governed_background_scheduler",
+        "unanchored_witness_count": 6,
+        "unanchored_witnesses": [
+          "scheduler_job_registration_typed",
+          "scheduler_execute_guard_chain_checked",
+          "scheduler_lifecycle_controls_bounded",
+          "scheduler_history_summary_bounded",
+          "scheduler_errors_sanitized",
+          "scheduler_execution_audited"
+        ]
+      },
+      {
+        "anchored_witnesses": [],
+        "exact_test_anchor_count": 0,
+        "runtime_witness_count": 8,
+        "surface_id": "multi_agent_coordination_runtime",
+        "unanchored_witness_count": 8,
+        "unanchored_witnesses": [
+          "multi_agent_delegation_tracked",
+          "multi_agent_delegation_resolution_validated",
+          "multi_agent_handoff_preserves_context",
+          "multi_agent_merge_outcome_typed",
+          "multi_agent_conflict_strategy_typed",
+          "multi_agent_unresolved_conflicts_bounded",
+          "multi_agent_summary_bounded",
+          "multi_agent_errors_sanitized"
+        ]
+      },
+      {
+        "anchored_witnesses": [],
+        "exact_test_anchor_count": 0,
+        "runtime_witness_count": 6,
+        "surface_id": "connector_self_healing",
+        "unanchored_witness_count": 6,
+        "unanchored_witnesses": [
+          "provider_success_not_assumed",
+          "write_failures_require_operator_review",
+          "missing_receipt_revokes_capability",
+          "fallback_provider_requires_certification",
+          "read_only_degradation_bounded",
+          "connector_self_healing_schema_valid"
+        ]
+      },
+      {
+        "anchored_witnesses": [],
+        "exact_test_anchor_count": 0,
+        "runtime_witness_count": 5,
+        "surface_id": "collaboration_cases",
+        "unanchored_witness_count": 5,
+        "unanchored_witnesses": [
+          "approval_separation_required",
+          "pending_controls_block_case_closure",
+          "decider_authority_required",
+          "case_closure_not_terminal_command_closure",
+          "collaboration_case_schema_valid"
+        ]
+      },
+      {
+        "anchored_witnesses": [],
+        "exact_test_anchor_count": 0,
+        "runtime_witness_count": 5,
+        "surface_id": "capability_maturity",
+        "unanchored_witness_count": 5,
+        "unanchored_witnesses": [
+          "maturity_derived_from_evidence",
+          "effect_bearing_c6_requires_live_write",
+          "production_requires_c6_or_c7",
+          "autonomy_requires_c7",
+          "capability_maturity_schema_valid"
+        ]
+      },
+      {
+        "anchored_witnesses": [],
+        "exact_test_anchor_count": 0,
+        "runtime_witness_count": 7,
+        "surface_id": "policy_prover",
+        "unanchored_witness_count": 7,
+        "unanchored_witnesses": [
+          "payment_requires_approval_counterexample",
+          "tenant_isolation_counterexample",
+          "shell_requires_sandbox_counterexample",
+          "provider_url_approved_counterexample",
+          "memory_requires_admission_counterexample",
+          "unknown_property_fails_closed",
+          "policy_proof_report_schema_valid"
+        ]
+      },
+      {
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "tests/test_gateway/test_memory_lattice.py::test_contradiction_and_stale_memory_block_execution"
+            ],
+            "witness": "contradiction_and_stale_memory_block_execution"
+          }
+        ],
+        "exact_test_anchor_count": 1,
+        "runtime_witness_count": 6,
+        "surface_id": "memory_lattice",
+        "unanchored_witness_count": 5,
+        "unanchored_witnesses": [
+          "raw_event_memory_not_directly_admitted",
+          "semantic_memory_requires_learning_admission",
+          "policy_memory_requires_authority_ref",
+          "preference_memory_tenant_owner_scoped",
+          "memory_lattice_schema_valid"
+        ]
+      },
+      {
+        "anchored_witnesses": [],
+        "exact_test_anchor_count": 0,
+        "runtime_witness_count": 6,
+        "surface_id": "workflow_mining",
+        "unanchored_witness_count": 6,
+        "unanchored_witnesses": [
+          "repeated_trace_pattern_required",
+          "workflow_draft_activation_blocked",
+          "operator_review_required",
+          "sandbox_replay_required",
+          "risky_pattern_requires_approval_rules",
+          "workflow_mining_report_schema_valid"
+        ]
+      },
+      {
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "tests/test_gateway/test_evidence_bundle_endpoint.py::test_terminal_command_exports_signed_evidence_bundle"
+            ],
+            "witness": "terminal_command_exports_signed_evidence_bundle"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_evidence_bundle_endpoint.py::test_evidence_bundle_endpoint_rejects_non_terminal_command"
+            ],
+            "witness": "evidence_bundle_endpoint_rejects_non_terminal_command"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_evidence_bundle_endpoint.py::test_offline_bundle_verifier_detects_tampering"
+            ],
+            "witness": "offline_bundle_verifier_detects_tampering"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_evidence_bundle_endpoint.py::test_offline_bundle_verifier_report_contract_allows_missing_secret"
+            ],
+            "witness": "offline_bundle_verifier_report_contract_allows_missing_secret"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_trust_ledger.py::test_trust_ledger_issues_and_verifies_signed_bundle"
+            ],
+            "witness": "trust_ledger_issues_and_verifies_signed_bundle"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_trust_ledger.py::test_trust_ledger_detects_tampered_bundle_content"
+            ],
+            "witness": "trust_ledger_detects_tampered_bundle_content"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_trust_ledger.py::test_trust_ledger_detects_wrong_secret_signature"
+            ],
+            "witness": "trust_ledger_detects_wrong_secret_signature"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_trust_ledger.py::test_trust_ledger_requires_terminal_certificate_and_evidence"
+            ],
+            "witness": "trust_ledger_requires_terminal_certificate_and_evidence"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_trust_ledger.py::test_trust_ledger_rejects_non_proof_evidence_refs"
+            ],
+            "witness": "trust_ledger_rejects_non_proof_evidence_refs"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_trust_ledger.py::test_trust_ledger_requires_anchor_ref_when_anchored"
+            ],
+            "witness": "trust_ledger_requires_anchor_ref_when_anchored"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_trust_ledger.py::test_trust_ledger_bundle_schema_exposes_signature_contract"
+            ],
+            "witness": "trust_ledger_bundle_schema_exposes_signature_contract"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_trust_ledger.py::test_trust_ledger_bundle_schema_rejects_non_proof_evidence_ref"
+            ],
+            "witness": "trust_ledger_bundle_schema_rejects_non_proof_evidence_ref"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_trust_ledger_anchor_receipt.py::test_trust_ledger_anchor_receipt_binds_required_artifacts"
+            ],
+            "witness": "trust_ledger_anchor_receipt_binds_required_artifacts"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_trust_ledger_anchor_receipt.py::test_trust_ledger_anchor_receipt_detects_tampered_artifact_root"
+            ],
+            "witness": "trust_ledger_anchor_receipt_detects_tampered_artifact_root"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_trust_ledger_anchor_receipt.py::test_trust_ledger_anchor_receipt_rejects_missing_terminal_artifact"
+            ],
+            "witness": "trust_ledger_anchor_receipt_rejects_missing_terminal_artifact"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_trust_ledger_anchor_receipt.py::test_trust_ledger_anchor_receipt_rejects_non_proof_artifact_evidence_ref"
+            ],
+            "witness": "trust_ledger_anchor_receipt_rejects_non_proof_artifact_evidence_ref"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_trust_ledger_anchor_receipt.py::test_trust_ledger_anchor_receipt_rejects_command_identity_drift"
+            ],
+            "witness": "trust_ledger_anchor_receipt_rejects_command_identity_drift"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_trust_ledger_anchor_receipt.py::test_trust_ledger_anchor_receipt_rejects_non_canonical_receipt_id"
+            ],
+            "witness": "trust_ledger_anchor_receipt_rejects_non_canonical_receipt_id"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_trust_ledger_anchor_receipt.py::test_trust_ledger_anchor_receipt_validates_against_schema"
+            ],
+            "witness": "trust_ledger_anchor_receipt_validates_against_schema"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_trust_ledger_anchor_receipt.py::test_trust_ledger_anchor_receipt_schema_rejects_non_canonical_bundle_id"
+            ],
+            "witness": "trust_ledger_anchor_receipt_schema_rejects_non_canonical_bundle_id"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_trust_ledger_anchor_receipt.py::test_trust_ledger_export_package_binds_verifier_inputs"
+            ],
+            "witness": "trust_ledger_export_package_binds_verifier_inputs"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_trust_ledger_anchor_receipt.py::test_trust_ledger_export_package_rejects_receipt_identity_drift"
+            ],
+            "witness": "trust_ledger_export_package_rejects_receipt_identity_drift"
+          },
+          {
+            "anchors": [
+              "tests/test_verify_anchor_receipt.py::test_verify_anchor_receipt_files_accepts_valid_export"
+            ],
+            "witness": "verify_anchor_receipt_files_accepts_valid_export"
+          },
+          {
+            "anchors": [
+              "tests/test_verify_anchor_receipt.py::test_verify_anchor_receipt_files_detects_tampered_artifact_root"
+            ],
+            "witness": "verify_anchor_receipt_files_detects_tampered_artifact_root"
+          },
+          {
+            "anchors": [
+              "tests/test_verify_anchor_receipt.py::test_verify_anchor_receipt_files_rejects_schema_invalid_receipt"
+            ],
+            "witness": "verify_anchor_receipt_files_rejects_schema_invalid_receipt"
+          },
+          {
+            "anchors": [
+              "tests/test_verify_anchor_receipt.py::test_verify_anchor_receipt_files_rejects_schema_invalid_artifacts"
+            ],
+            "witness": "verify_anchor_receipt_files_rejects_schema_invalid_artifacts"
+          },
+          {
+            "anchors": [
+              "tests/test_verify_anchor_receipt.py::test_verify_anchor_receipt_files_detects_package_bundle_hash_mismatch"
+            ],
+            "witness": "verify_anchor_receipt_files_detects_package_bundle_hash_mismatch"
+          },
+          {
+            "anchors": [
+              "tests/test_verify_anchor_receipt.py::test_verify_anchor_receipt_files_rejects_schema_invalid_package"
+            ],
+            "witness": "verify_anchor_receipt_files_rejects_schema_invalid_package"
+          },
+          {
+            "anchors": [
+              "tests/test_verify_anchor_receipt.py::test_verify_anchor_receipt_files_rejects_package_hash_mismatch"
+            ],
+            "witness": "verify_anchor_receipt_files_rejects_package_hash_mismatch"
+          },
+          {
+            "anchors": [
+              "tests/test_verify_anchor_receipt.py::test_verify_anchor_receipt_cli_reports_valid_export"
+            ],
+            "witness": "verify_anchor_receipt_cli_reports_valid_export"
+          },
+          {
+            "anchors": [
+              "tests/test_verify_anchor_receipt.py::test_verify_anchor_receipt_report_contract_allows_missing_secret_report"
+            ],
+            "witness": "verify_anchor_receipt_report_contract_allows_missing_secret_report"
+          }
+        ],
+        "exact_test_anchor_count": 31,
+        "runtime_witness_count": 31,
+        "surface_id": "trust_ledger",
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
+      },
+      {
+        "anchored_witnesses": [],
+        "exact_test_anchor_count": 0,
+        "runtime_witness_count": 5,
+        "surface_id": "domain_operating_pack",
+        "unanchored_witness_count": 5,
+        "unanchored_witnesses": [
+          "builtin_domain_pack_catalog_complete",
+          "finance_ops_pack_declares_governed_artifacts",
+          "high_risk_pack_requires_approval_roles",
+          "certified_pack_requires_evidence_refs",
+          "domain_operating_pack_schema_valid"
+        ]
+      },
+      {
+        "anchored_witnesses": [],
+        "exact_test_anchor_count": 0,
+        "runtime_witness_count": 4,
+        "surface_id": "multimodal_operating_layer",
+        "unanchored_witness_count": 4,
+        "unanchored_witnesses": [
+          "multimodal_receipt_schema_valid",
+          "external_send_blocked_by_default",
+          "sensitive_voice_requires_redaction_evidence",
+          "unknown_modality_fails_closed"
+        ]
+      },
+      {
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "tests/test_gateway/test_physical_action_boundary.py::test_physical_boundary_allows_sandbox_replay_with_full_controls"
+            ],
+            "witness": "physical_boundary_allows_sandbox_replay_with_full_controls"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_physical_action_boundary.py::test_physical_boundary_blocks_without_simulation"
+            ],
+            "witness": "physical_boundary_blocks_without_simulation"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_physical_action_boundary.py::test_physical_boundary_blocks_live_effects_without_certification"
+            ],
+            "witness": "physical_boundary_blocks_live_effects_without_certification"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_physical_action_boundary.py::test_physical_boundary_requires_operator_review_when_approval_missing"
+            ],
+            "witness": "physical_boundary_requires_operator_review_when_approval_missing"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_physical_action_boundary.py::test_physical_action_receipt_matches_schema"
+            ],
+            "witness": "physical_action_receipt_matches_schema"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_physical_capability_pack.py::test_physical_fixture_pack_is_not_loaded_by_default"
+            ],
+            "witness": "physical_fixture_pack_is_not_loaded_by_default"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_physical_capability_pack.py::test_physical_fixture_pack_allows_sandbox_replay_when_production_gate_disabled"
+            ],
+            "witness": "physical_fixture_pack_allows_sandbox_replay_when_production_gate_disabled"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_physical_capability_pack.py::test_physical_fixture_pack_blocks_live_promotion_when_production_gate_enabled"
+            ],
+            "witness": "physical_fixture_pack_blocks_live_promotion_when_production_gate_enabled"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_physical_capability_pack.py::test_physical_fixture_pack_projects_sandbox_only_gateway_evidence"
+            ],
+            "witness": "physical_fixture_pack_projects_sandbox_only_gateway_evidence"
+          },
+          {
+            "anchors": [
+              "tests/test_preflight_physical_capability_promotion.py::test_physical_capability_promotion_preflight_blocks_live_fixture_by_default"
+            ],
+            "witness": "physical_capability_promotion_preflight_blocks_live_fixture_by_default"
+          },
+          {
+            "anchors": [
+              "tests/test_preflight_physical_capability_promotion.py::test_physical_capability_promotion_preflight_passes_with_full_evidence"
+            ],
+            "witness": "physical_capability_promotion_preflight_passes_with_full_evidence"
+          },
+          {
+            "anchors": [
+              "tests/test_preflight_physical_capability_promotion.py::test_physical_capability_promotion_preflight_allows_sandbox_only_pack"
+            ],
+            "witness": "physical_capability_promotion_preflight_allows_sandbox_only_pack"
+          },
+          {
+            "anchors": [
+              "tests/test_preflight_physical_capability_promotion.py::test_physical_capability_promotion_preflight_cli_outputs_json"
+            ],
+            "witness": "physical_capability_promotion_preflight_cli_outputs_json"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_capability_capsule_installer.py::test_capsule_installer_runs_physical_preflight_before_registry_mutation"
+            ],
+            "witness": "capsule_installer_runs_physical_preflight_before_registry_mutation"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_capability_capsule_installer.py::test_capsule_installer_returns_rejected_receipt_without_registry_mutation"
+            ],
+            "witness": "capsule_installer_returns_rejected_receipt_without_registry_mutation"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_capability_capsule_installer.py::test_capsule_installer_admits_physical_capsule_when_preflight_passes"
+            ],
+            "witness": "capsule_installer_admits_physical_capsule_when_preflight_passes"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_capability_capsule_installer.py::test_capsule_admission_operator_endpoint_blocks_physical_preflight_failure"
+            ],
+            "witness": "capsule_admission_operator_endpoint_blocks_physical_preflight_failure"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_capability_capsule_installer.py::test_capsule_admission_operator_endpoint_accepts_physical_safety_refs_from_handoff"
+            ],
+            "witness": "capsule_admission_operator_endpoint_accepts_physical_safety_refs_from_handoff"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_physical_capability_promotion_receipt.py::test_physical_capability_promotion_receipt_binds_ready_chain"
+            ],
+            "witness": "physical_capability_promotion_receipt_binds_ready_chain"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_physical_capability_promotion_receipt.py::test_operator_physical_promotion_receipt_endpoint_emits_ready_bundle"
+            ],
+            "witness": "operator_physical_promotion_receipt_endpoint_emits_ready_bundle"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_physical_capability_promotion_receipt.py::test_operator_physical_promotion_receipt_endpoint_persists_jsonl_ledger"
+            ],
+            "witness": "operator_physical_promotion_receipt_endpoint_persists_jsonl_ledger"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_physical_capability_promotion_receipt.py::test_operator_physical_promotion_receipt_console_renders_ledger"
+            ],
+            "witness": "operator_physical_promotion_receipt_console_renders_ledger"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_physical_capability_promotion_receipt.py::test_operator_physical_promotion_receipt_endpoint_blocks_missing_live_refs"
+            ],
+            "witness": "operator_physical_promotion_receipt_endpoint_blocks_missing_live_refs"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_physical_capability_promotion_receipt.py::test_physical_promotion_receipt_jsonl_store_lists_newest_with_filters"
+            ],
+            "witness": "physical_promotion_receipt_jsonl_store_lists_newest_with_filters"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_physical_capability_promotion_receipt.py::test_physical_promotion_receipt_jsonl_store_fails_closed_on_invalid_record"
+            ],
+            "witness": "physical_promotion_receipt_jsonl_store_fails_closed_on_invalid_record"
+          },
+          {
+            "anchors": [
+              "tests/test_emit_physical_capability_promotion_receipt.py::test_emit_physical_capability_promotion_receipt_accepts_fixture_refs"
+            ],
+            "witness": "emit_physical_capability_promotion_receipt_accepts_fixture_refs"
+          },
+          {
+            "anchors": [
+              "tests/test_emit_physical_capability_promotion_receipt.py::test_emit_physical_capability_promotion_receipt_blocks_missing_refs"
+            ],
+            "witness": "emit_physical_capability_promotion_receipt_blocks_missing_refs"
+          },
+          {
+            "anchors": [
+              "tests/test_emit_physical_capability_promotion_receipt.py::test_emit_physical_capability_promotion_receipt_blocks_missing_physical_safety_refs"
+            ],
+            "witness": "emit_physical_capability_promotion_receipt_blocks_missing_physical_safety_refs"
+          },
+          {
+            "anchors": [
+              "tests/test_emit_physical_capability_promotion_receipt.py::test_emit_physical_capability_promotion_receipt_cli_outputs_json"
+            ],
+            "witness": "emit_physical_capability_promotion_receipt_cli_outputs_json"
+          },
+          {
+            "anchors": [
+              "tests/test_emit_physical_capability_promotion_receipt.py::test_emit_physical_capability_promotion_receipt_cli_strict_blocks_missing_refs"
+            ],
+            "witness": "emit_physical_capability_promotion_receipt_cli_strict_blocks_missing_refs"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_physical_worker_canary.py::test_physical_worker_canary_blocks_missing_receipt_and_allows_sandbox_replay"
+            ],
+            "witness": "physical_worker_canary_blocks_missing_receipt_and_allows_sandbox_replay"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_physical_worker_canary.py::test_physical_worker_canary_artifact_preserves_no_effect_proof"
+            ],
+            "witness": "physical_worker_canary_artifact_preserves_no_effect_proof"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_physical_worker_canary.py::test_physical_worker_canary_evidence_and_hash_are_stable"
+            ],
+            "witness": "physical_worker_canary_evidence_and_hash_are_stable"
+          },
+          {
+            "anchors": [
+              "tests/test_produce_physical_worker_canary.py::test_produce_physical_worker_canary_writes_artifact"
+            ],
+            "witness": "produce_physical_worker_canary_writes_artifact"
+          },
+          {
+            "anchors": [
+              "tests/test_produce_physical_worker_canary.py::test_physical_worker_canary_cli_strict_passes"
+            ],
+            "witness": "physical_worker_canary_cli_strict_passes"
+          }
+        ],
+        "exact_test_anchor_count": 35,
+        "runtime_witness_count": 35,
+        "surface_id": "physical_action_boundary",
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
+      },
+      {
+        "anchored_witnesses": [],
+        "exact_test_anchor_count": 0,
+        "runtime_witness_count": 13,
+        "surface_id": "temporal_kernel",
+        "unanchored_witness_count": 13,
+        "unanchored_witnesses": [
+          "runtime_clock_injected",
+          "monotonic_duration_measured",
+          "future_schedule_defers",
+          "approval_expiry_denies",
+          "stale_evidence_escalates",
+          "budget_window_checked",
+          "causal_preconditions_required",
+          "temporal_scheduler_routes_governed",
+          "schedule_read_models_persisted",
+          "worker_tick_certifies_proofs",
+          "cancel_emits_terminal_receipt",
+          "temporal_receipt_schema_valid",
+          "receipt_not_terminal_closure"
+        ]
+      },
+      {
+        "anchored_witnesses": [],
+        "exact_test_anchor_count": 0,
+        "runtime_witness_count": 8,
+        "surface_id": "temporal_evidence_freshness",
+        "unanchored_witness_count": 8,
+        "unanchored_witnesses": [
+          "evidence_age_computed_from_runtime_clock",
+          "freshness_window_required_for_dispatch",
+          "stale_required_evidence_triggers_refresh",
+          "missing_required_evidence_blocks_dispatch",
+          "revoked_or_unverified_high_risk_evidence_blocks",
+          "expiring_evidence_warns_before_dispatch",
+          "temporal_evidence_freshness_receipt_schema_valid",
+          "receipt_not_terminal_closure"
+        ]
+      },
+      {
+        "anchored_witnesses": [],
+        "exact_test_anchor_count": 0,
+        "runtime_witness_count": 10,
+        "surface_id": "temporal_resolution",
+        "unanchored_witness_count": 10,
+        "unanchored_witnesses": [
+          "runtime_clock_owns_phrase_resolution",
+          "original_text_preserved",
+          "tenant_timezone_controls_local_resolution",
+          "relative_duration_resolved_from_injected_now",
+          "ambiguous_low_risk_phrase_uses_safe_default",
+          "ambiguous_high_risk_phrase_requires_clarification",
+          "business_day_resolution_skips_weekends_and_holidays",
+          "unsupported_phrase_fails_closed",
+          "temporal_resolution_receipt_schema_valid",
+          "receipt_not_terminal_closure"
+        ]
+      },
+      {
+        "anchored_witnesses": [],
+        "exact_test_anchor_count": 0,
+        "runtime_witness_count": 10,
+        "surface_id": "temporal_sla",
+        "unanchored_witness_count": 10,
+        "unanchored_witnesses": [
+          "runtime_clock_owns_sla_deadlines",
+          "business_time_deadlines_skip_closed_windows",
+          "approaching_deadline_warns_before_breach",
+          "breached_deadline_emits_escalation_reason",
+          "outside_business_window_holds_normal_dispatch",
+          "sla_evidence_and_scope_checked",
+          "sla_summary_read_model_bounded",
+          "sla_violations_read_model_bounded",
+          "temporal_sla_receipt_schema_valid",
+          "receipt_not_terminal_closure"
+        ]
+      },
+      {
+        "anchored_witnesses": [],
+        "exact_test_anchor_count": 0,
+        "runtime_witness_count": 8,
+        "surface_id": "temporal_reapproval",
+        "unanchored_witness_count": 8,
+        "unanchored_witnesses": [
+          "runtime_clock_owns_reapproval_time",
+          "high_risk_approval_roles_required",
+          "expired_approval_requires_reapproval",
+          "revoked_or_out_of_scope_approval_blocks_dispatch",
+          "missing_approval_role_requires_reapproval",
+          "low_risk_action_does_not_require_reapproval",
+          "temporal_reapproval_receipt_schema_valid",
+          "receipt_not_terminal_closure"
+        ]
+      },
+      {
+        "anchored_witnesses": [],
+        "exact_test_anchor_count": 0,
+        "runtime_witness_count": 9,
+        "surface_id": "temporal_dispatch_window",
+        "unanchored_witness_count": 9,
+        "unanchored_witnesses": [
+          "runtime_clock_owns_dispatch_window_time",
+          "tenant_timezone_resolved",
+          "allowed_window_required_for_high_risk_dispatch",
+          "outside_allowed_window_defers_dispatch",
+          "active_blackout_defers_dispatch",
+          "holiday_closure_defers_dispatch",
+          "source_reapproval_bound_for_high_risk_dispatch",
+          "temporal_dispatch_window_receipt_schema_valid",
+          "receipt_not_terminal_closure"
+        ]
+      },
+      {
+        "anchored_witnesses": [],
+        "exact_test_anchor_count": 0,
+        "runtime_witness_count": 9,
+        "surface_id": "temporal_budget_window",
+        "unanchored_witness_count": 9,
+        "unanchored_witnesses": [
+          "runtime_clock_owns_budget_window_time",
+          "tenant_timezone_resolves_budget_period",
+          "daily_weekly_monthly_budget_resets_computed",
+          "spend_snapshot_period_matches_active_window",
+          "projected_spend_blocks_over_limit_dispatch",
+          "future_budget_window_defers_dispatch",
+          "source_reapproval_bound_for_high_risk_budget_window",
+          "temporal_budget_window_receipt_schema_valid",
+          "receipt_not_terminal_closure"
+        ]
+      },
+      {
+        "anchored_witnesses": [],
+        "exact_test_anchor_count": 0,
+        "runtime_witness_count": 9,
+        "surface_id": "temporal_causal_order",
+        "unanchored_witness_count": 9,
+        "unanchored_witnesses": [
+          "runtime_clock_owns_causal_order_time",
+          "required_events_must_be_present",
+          "tenant_and_command_scope_checked",
+          "predecessor_edges_checked",
+          "out_of_order_events_block_dispatch",
+          "future_events_block_dispatch",
+          "high_risk_source_receipts_bound",
+          "temporal_causal_order_receipt_schema_valid",
+          "receipt_not_terminal_closure"
+        ]
+      },
+      {
+        "anchored_witnesses": [],
+        "exact_test_anchor_count": 0,
+        "runtime_witness_count": 8,
+        "surface_id": "temporal_monotonic_duration",
+        "unanchored_witness_count": 8,
+        "unanchored_witnesses": [
+          "runtime_monotonic_clock_owns_duration_truth",
+          "wall_clock_not_used_for_duration",
+          "duration_limit_exceeded_blocks_dispatch",
+          "cooldown_lower_bound_defers_dispatch",
+          "monotonic_clock_regression_blocks_dispatch",
+          "high_risk_source_receipts_bound",
+          "temporal_monotonic_duration_receipt_schema_valid",
+          "receipt_not_terminal_closure"
+        ]
+      },
+      {
+        "anchored_witnesses": [],
+        "exact_test_anchor_count": 0,
+        "runtime_witness_count": 9,
+        "surface_id": "temporal_accepted_risk_expiry",
+        "unanchored_witness_count": 9,
+        "unanchored_witnesses": [
+          "runtime_clock_owns_accepted_risk_expiry",
+          "expired_accepted_risk_blocks_dispatch",
+          "revoked_or_closed_accepted_risk_blocks_dispatch",
+          "tenant_command_and_action_scope_checked",
+          "review_obligation_required",
+          "accepted_risk_evidence_refs_required",
+          "high_risk_source_receipts_bound",
+          "temporal_accepted_risk_expiry_receipt_schema_valid",
+          "receipt_not_terminal_closure"
+        ]
+      },
+      {
+        "anchored_witnesses": [],
+        "exact_test_anchor_count": 0,
+        "runtime_witness_count": 11,
+        "surface_id": "temporal_credential_expiry",
+        "unanchored_witness_count": 11,
+        "unanchored_witnesses": [
+          "runtime_clock_owns_credential_expiry",
+          "expired_credentials_block_dispatch",
+          "revoked_credentials_block_dispatch",
+          "provider_and_credential_scope_checked",
+          "rotation_pending_warns_before_dispatch",
+          "rotation_overdue_blocks_dispatch",
+          "credential_evidence_refs_required",
+          "secret_value_absence_verified",
+          "high_risk_source_receipts_bound",
+          "temporal_credential_expiry_receipt_schema_valid",
+          "receipt_not_terminal_closure"
+        ]
+      },
+      {
+        "anchored_witnesses": [],
+        "exact_test_anchor_count": 0,
+        "runtime_witness_count": 11,
+        "surface_id": "temporal_retention_window",
+        "unanchored_witness_count": 11,
+        "unanchored_witnesses": [
+          "runtime_clock_owns_retention_timing",
+          "delete_before_delete_after_defers_action",
+          "archive_and_anonymize_wait_for_retention_until",
+          "legal_hold_blocks_lifecycle_action",
+          "overdue_retention_action_warns",
+          "tenant_scope_checked",
+          "retention_policy_ref_required",
+          "subject_evidence_refs_required",
+          "high_risk_source_receipts_bound",
+          "temporal_retention_window_receipt_schema_valid",
+          "receipt_not_terminal_closure"
+        ]
+      },
+      {
+        "anchored_witnesses": [],
+        "exact_test_anchor_count": 0,
+        "runtime_witness_count": 10,
+        "surface_id": "temporal_rate_limit_window",
+        "unanchored_witness_count": 10,
+        "unanchored_witnesses": [
+          "runtime_clock_owns_rate_limit_window",
+          "tenant_endpoint_identity_scope_checked",
+          "active_window_admits_sufficient_tokens",
+          "exhausted_window_emits_retry_after",
+          "future_window_defers_dispatch",
+          "burst_limit_blocks_overlarge_request",
+          "stale_rate_limit_snapshot_blocks_dispatch",
+          "high_risk_source_receipts_bound",
+          "temporal_rate_limit_window_receipt_schema_valid",
+          "receipt_not_terminal_closure"
+        ]
+      },
+      {
+        "anchored_witnesses": [],
+        "exact_test_anchor_count": 0,
+        "runtime_witness_count": 10,
+        "surface_id": "temporal_retry_window",
+        "unanchored_witness_count": 10,
+        "unanchored_witnesses": [
+          "runtime_clock_owns_retry_window",
+          "retry_after_floor_checked",
+          "cooldown_window_defers_early_retry",
+          "max_attempts_block_exhausted_retry",
+          "expired_retry_window_blocks_dispatch",
+          "tenant_command_scope_checked",
+          "terminal_failure_blocks_retry",
+          "high_risk_source_receipts_bound",
+          "temporal_retry_window_receipt_schema_valid",
+          "receipt_not_terminal_closure"
+        ]
+      },
+      {
+        "anchored_witnesses": [],
+        "exact_test_anchor_count": 0,
+        "runtime_witness_count": 10,
+        "surface_id": "temporal_lease_window",
+        "unanchored_witness_count": 10,
+        "unanchored_witnesses": [
+          "runtime_clock_owns_lease_window",
+          "tenant_command_resource_worker_scope_checked",
+          "active_lease_admits_dispatch",
+          "near_expiry_lease_requires_renewal_warning",
+          "expired_lease_blocks_dispatch",
+          "released_or_revoked_lease_blocks_dispatch",
+          "fencing_token_required",
+          "high_risk_source_receipts_bound",
+          "temporal_lease_window_receipt_schema_valid",
+          "receipt_not_terminal_closure"
+        ]
+      },
+      {
+        "anchored_witnesses": [],
+        "exact_test_anchor_count": 0,
+        "runtime_witness_count": 10,
+        "surface_id": "temporal_idempotency_window",
+        "unanchored_witness_count": 10,
+        "unanchored_witnesses": [
+          "runtime_clock_owns_idempotency_window",
+          "new_idempotency_key_admits_dispatch",
+          "matching_replay_admits_uncommitted_dispatch",
+          "committed_effect_blocks_duplicate_dispatch",
+          "expired_idempotency_window_blocks_dispatch",
+          "request_fingerprint_mismatch_blocks_replay",
+          "tenant_command_action_scope_checked",
+          "high_risk_source_receipts_bound",
+          "temporal_idempotency_window_receipt_schema_valid",
+          "receipt_not_terminal_closure"
+        ]
+      },
+      {
+        "anchored_witnesses": [],
+        "exact_test_anchor_count": 0,
+        "runtime_witness_count": 9,
+        "surface_id": "temporal_memory",
+        "unanchored_witness_count": 9,
+        "unanchored_witnesses": [
+          "memory_age_computed_from_runtime_clock",
+          "stale_memory_requires_refresh",
+          "validity_window_blocks_expired_memory",
+          "superseded_memory_not_usable",
+          "confidence_decay_blocks_weak_memory",
+          "tenant_owner_scope_checked",
+          "allowed_use_checked",
+          "temporal_memory_receipt_schema_valid",
+          "receipt_not_terminal_closure"
+        ]
+      },
+      {
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_missed_run.py::test_expired_command_emits_missed_run_receipt"
+            ],
+            "witness": "expired_command_emits_missed_run_receipt"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_missed_run.py::test_duplicate_dispatched_run_requires_terminal_receipt"
+            ],
+            "witness": "duplicate_dispatched_run_requires_terminal_receipt"
+          }
+        ],
+        "exact_test_anchor_count": 2,
+        "runtime_witness_count": 9,
+        "surface_id": "temporal_missed_run",
+        "unanchored_witness_count": 7,
+        "unanchored_witnesses": [
+          "runtime_clock_owns_missed_run_time",
+          "late_within_grace_preserves_dispatch_eligibility",
+          "recovery_due_requires_review_actions",
+          "tenant_command_action_scope_checked",
+          "high_risk_source_receipts_bound",
+          "temporal_missed_run_receipt_schema_valid",
+          "receipt_not_terminal_closure"
+        ]
+      },
+      {
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_recurrence_window.py::test_duplicate_candidate_requires_terminal_receipt"
+            ],
+            "witness": "duplicate_candidate_requires_terminal_receipt"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_recurrence_window.py::test_high_risk_due_candidate_requires_reapproval_source"
+            ],
+            "witness": "high_risk_due_candidate_requires_reapproval_source"
+          }
+        ],
+        "exact_test_anchor_count": 2,
+        "runtime_witness_count": 10,
+        "surface_id": "temporal_recurrence_window",
+        "unanchored_witness_count": 8,
+        "unanchored_witnesses": [
+          "runtime_clock_owns_recurrence_window_time",
+          "tenant_timezone_preserved_across_dst",
+          "candidate_must_match_next_occurrence",
+          "future_candidate_defers_dispatch",
+          "completed_series_blocks_dispatch",
+          "monthly_end_of_month_clamped",
+          "temporal_recurrence_window_receipt_schema_valid",
+          "receipt_not_terminal_closure"
+        ]
+      },
+      {
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_memory_refresh.py::test_stale_memory_creates_bounded_refresh_task"
+            ],
+            "witness": "stale_memory_creates_bounded_refresh_task"
+          }
+        ],
+        "exact_test_anchor_count": 1,
+        "runtime_witness_count": 7,
+        "surface_id": "temporal_memory_refresh",
+        "unanchored_witness_count": 6,
+        "unanchored_witnesses": [
+          "usable_memory_does_not_create_refresh_task",
+          "evidence_type_coverage_gates_review_readiness",
+          "invalid_refresh_policy_blocks_task_creation",
+          "superseded_memory_blocks_reactivation",
+          "temporal_memory_refresh_receipt_schema_valid",
+          "receipt_not_terminal_closure"
+        ]
+      },
+      {
+        "anchored_witnesses": [],
+        "exact_test_anchor_count": 0,
+        "runtime_witness_count": 10,
+        "surface_id": "temporal_scheduler",
+        "unanchored_witness_count": 10,
+        "unanchored_witnesses": [
+          "scheduled_command_requires_execute_at",
+          "idempotency_required",
+          "lease_acquired_before_dispatch",
+          "future_schedule_defers",
+          "missed_run_receipt_emitted",
+          "retry_window_checked",
+          "high_risk_reapproval_required",
+          "active_lease_blocks_duplicate_execution",
+          "temporal_scheduler_receipt_schema_valid",
+          "receipt_not_terminal_closure"
+        ]
+      },
+      {
+        "anchored_witnesses": [],
+        "exact_test_anchor_count": 0,
+        "runtime_witness_count": 6,
+        "surface_id": "policy_proof_report",
+        "unanchored_witness_count": 6,
+        "unanchored_witnesses": [
+          "bounded_policy_cases_required",
+          "empty_invariants_rejected",
+          "counterexamples_are_concrete",
+          "proved_report_has_no_counterexamples",
+          "policy_weakening_forbidden",
+          "policy_proof_schema_valid"
+        ]
+      },
+      {
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "tests/test_gateway/test_autonomous_capability_upgrade.py::test_health_signal_requires_evidence_refs"
+            ],
+            "witness": "health_signal_requires_evidence_refs"
+          }
+        ],
+        "exact_test_anchor_count": 1,
+        "runtime_witness_count": 4,
+        "surface_id": "autonomous_capability_upgrade",
+        "unanchored_witness_count": 3,
+        "unanchored_witnesses": [
+          "upgrade_candidates_are_promotion_blocked",
+          "critical_governance_changes_require_second_approval",
+          "capability_upgrade_plan_schema_valid"
+        ]
+      },
+      {
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "tests/test_gateway/test_autonomous_test_generation.py::test_failure_trace_requires_evidence_refs"
+            ],
+            "witness": "failure_trace_requires_evidence_refs"
+          }
+        ],
+        "exact_test_anchor_count": 1,
+        "runtime_witness_count": 4,
+        "surface_id": "autonomous_test_generation",
+        "unanchored_witness_count": 3,
+        "unanchored_witnesses": [
+          "high_risk_failures_generate_governance_variants",
+          "plans_are_activation_blocked",
+          "autonomous_test_generation_plan_schema_valid"
+        ]
+      },
+      {
+        "anchored_witnesses": [],
+        "exact_test_anchor_count": 0,
+        "runtime_witness_count": 4,
+        "surface_id": "capability_plan_evidence_bundle",
+        "unanchored_witness_count": 4,
+        "unanchored_witnesses": [
+          "plan_terminal_certificate",
+          "plan_evidence_bundle",
+          "plan_witnesses",
+          "plan_recovery_attempts"
+        ]
+      },
+      {
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "mcoi/tests/test_replay_determinism_endpoints.py::test_replay_determinism_endpoint_returns_match_report"
+            ],
+            "witness": "replay_determinism_endpoint_returns_match_report"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_replay_determinism_endpoints.py::test_replay_determinism_endpoint_reports_unknown_operation"
+            ],
+            "witness": "replay_determinism_endpoint_reports_unknown_operation"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_replay_determinism_endpoints.py::test_replay_determinism_endpoint_missing_trace_fails_closed"
+            ],
+            "witness": "replay_determinism_endpoint_missing_trace_fails_closed"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_replay_determinism_harness.py::test_harness_reports_deterministic_match"
+            ],
+            "witness": "harness_reports_deterministic_match"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_replay_determinism_harness.py::test_harness_report_hash_is_deterministic"
+            ],
+            "witness": "harness_report_hash_is_deterministic"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_replay_determinism_harness.py::test_harness_reports_sequence_gap_before_replay"
+            ],
+            "witness": "harness_reports_sequence_gap_before_replay"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_replay_determinism_harness.py::test_harness_reports_operation_errors_bounded"
+            ],
+            "witness": "harness_reports_operation_errors_bounded"
+          }
+        ],
+        "exact_test_anchor_count": 7,
+        "runtime_witness_count": 7,
+        "surface_id": "replay_determinism",
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
+      },
+      {
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "mcoi/tests/test_server_phase212.py::test_invoke_tool"
+            ],
+            "witness": "invoke_tool"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_server_phase212.py::test_invoke_tool_rejects_unsafe_expression"
+            ],
+            "witness": "invoke_tool_rejects_unsafe_expression"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_server_phase212.py::test_invoke_unknown_tool"
+            ],
+            "witness": "invoke_unknown_tool"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_server_phase212.py::test_tool_history"
+            ],
+            "witness": "tool_history"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_server_phase213.py::test_tool_workflow"
+            ],
+            "witness": "tool_workflow"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_server_phase213.py::test_tool_workflow_tool_calls_include_policy_receipts"
+            ],
+            "witness": "tool_workflow_tool_calls_include_policy_receipts"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_server_runtime_helpers.py::test_register_default_tools_registers_calculator_and_time"
+            ],
+            "witness": "register_default_tools_registers_calculator_and_time"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_mcp_capability_manifest.py::test_validate_mcp_capability_manifest_accepts_example"
+            ],
+            "witness": "validate_mcp_capability_manifest_accepts_example"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_mcp_operator_checklist.py::test_validate_mcp_operator_checklist_accepts_example"
+            ],
+            "witness": "validate_mcp_operator_checklist_accepts_example"
+          }
+        ],
+        "exact_test_anchor_count": 9,
+        "runtime_witness_count": 9,
+        "surface_id": "tool_invocation",
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
+      },
+      {
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "mcoi/tests/test_governed_session.py::test_query_generates_proof"
+            ],
+            "witness": "query_generates_proof"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_governed_session.py::test_execute_generates_proof"
+            ],
+            "witness": "execute_generates_proof"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_governed_session.py::test_query_returns_request_envelope_proof"
+            ],
+            "witness": "query_returns_request_envelope_proof"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_governed_session.py::test_execute_returns_request_envelope_proof"
+            ],
+            "witness": "execute_returns_request_envelope_proof"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_governed_session.py::test_llm_result_metadata_has_request_envelope_proof"
+            ],
+            "witness": "llm_result_metadata_has_request_envelope_proof"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_governed_session.py::test_query_proof_failure_is_audited_and_blocks_operation"
+            ],
+            "witness": "query_proof_failure_is_audited_and_blocks_operation"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_governed_session.py::test_execute_proof_failure_blocks_dispatch"
+            ],
+            "witness": "execute_proof_failure_blocks_dispatch"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_governed_session.py::test_llm_proof_failure_blocks_llm_bridge"
+            ],
+            "witness": "llm_proof_failure_blocks_llm_bridge"
+          }
+        ],
+        "exact_test_anchor_count": 8,
+        "runtime_witness_count": 8,
+        "surface_id": "governed_session",
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
+      },
+      {
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "tests/test_gateway/test_webhooks.py::test_health"
+            ],
+            "witness": "health"
+          }
+        ],
+        "exact_test_anchor_count": 1,
+        "runtime_witness_count": 1,
+        "surface_id": "health_docs_exempt",
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
+      },
+      {
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "mcoi/tests/test_server_lineage.py::test_lineage_resolve_route_returns_trace_document"
+            ],
+            "witness": "lineage_resolve_route_returns_trace_document"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_server_lineage.py::test_lineage_trace_permalink_route_returns_document"
+            ],
+            "witness": "lineage_trace_permalink_route_returns_document"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_server_lineage.py::test_lineage_output_permalink_returns_unresolved_document"
+            ],
+            "witness": "lineage_output_permalink_returns_unresolved_document"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_server_lineage.py::test_lineage_output_permalink_resolves_indexed_trace"
+            ],
+            "witness": "lineage_output_permalink_resolves_indexed_trace"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_server_lineage.py::test_lineage_command_permalink_resolves_indexed_trace"
+            ],
+            "witness": "lineage_command_permalink_resolves_indexed_trace"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_server_lineage.py::test_lineage_artifact_permalink_resolves_persisted_dag"
+            ],
+            "witness": "lineage_artifact_permalink_resolves_persisted_dag"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_server_lineage.py::test_lineage_resolve_rejects_invalid_uri"
+            ],
+            "witness": "lineage_resolve_rejects_invalid_uri"
+          }
+        ],
+        "exact_test_anchor_count": 7,
+        "runtime_witness_count": 7,
+        "surface_id": "lineage_query_api",
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
+      },
+      {
+        "anchored_witnesses": [],
+        "exact_test_anchor_count": 0,
+        "runtime_witness_count": 14,
+        "surface_id": "god_mode_lifecycle",
+        "unanchored_witness_count": 14,
+        "unanchored_witnesses": [
+          "god_mode_capability_keys_are_unique",
+          "god_mode_every_capability_declares_at_least_one_bypass",
+          "god_mode_catastrophic_caps_require_dual_control",
+          "god_mode_catastrophic_caps_are_one_shot",
+          "god_mode_catastrophic_caps_have_short_ttl",
+          "god_mode_secrets_capabilities_use_strictest_floor",
+          "god_mode_agree_to_register_arms_capability",
+          "god_mode_issue_ticket_requires_armed",
+          "god_mode_double_consume_rejected",
+          "god_mode_consume_ticket_emits_receipt",
+          "god_mode_revoke_ticket_blocks_consume",
+          "god_mode_withdraw_agreement_reverts_state",
+          "god_mode_two_distinct_agreements_arm_capability",
+          "god_mode_end_to_end_consent_chain"
+        ]
+      }
+    ],
+    "unanchored_witness_count": 777
+  }
 }

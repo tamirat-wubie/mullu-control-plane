@@ -14,12 +14,17 @@ Invariants: every listed artifact must exist; paid public launch remains blocked
 | `docs/PUBLIC_NAMING_READINESS.md` | Readiness gate definition |
 | `docs/NAMING_MIGRATION_PLAN.md` | Naming migration rules |
 | `docs/NAME_CLEARANCE_PRELIMINARY.md` | Preliminary non-legal clearance sweep |
+| `docs/APP_TITLE_UPDATE_EVIDENCE_2026-05-15.md` | User-facing app title update evidence |
+| `docs/HOMEPAGE_UPDATE_EVIDENCE_2026-05-15.md` | Private-beta product landing page update evidence |
+| `docs/OFFICIAL_CLEARANCE_ACCESS_LOG_2026-05-15.md` | Official trademark/domain access attempt log |
+| `docs/SDK_API_STABILITY_REVIEW_2026-05-15.md` | SDK/API technical contract naming stability review |
 | `docs/TRADEMARK_SEARCH_RUNBOOK.md` | Official trademark search procedure |
 | `docs/TSDR_EVIDENCE_TEMPLATE.md` | USPTO/TSDR close-variant evidence template |
 | `docs/DOMAIN_ACQUISITION_PLAN.md` | Domain candidate and routing plan |
 | `docs/WEBSITE_UPDATE_CHECKLIST.md` | Public-site update requirements |
 | `docs/WEBSITE_DEPLOYMENT_EVIDENCE_TEMPLATE.md` | Live route verification template |
 | `docs/WEBSITE_DEPLOYMENT_EVIDENCE_2026-05-07.md` | Direct route probe evidence showing product routes still blocked |
+| `docs/WEBSITE_DEPLOYMENT_EVIDENCE_2026-05-15.md` | Direct route probe evidence showing the private-beta product route is live |
 | `docs/WEBSITE_RECHECK_LOG.md` | Non-authoritative public index recheck log |
 | `docs/PUBLIC_NAMING_STATE_TRANSITION.md` | Launch-state mutation rules |
 | `docs/PUBLIC_NAMING_HANDOFF.md` | Reviewer handoff summary |

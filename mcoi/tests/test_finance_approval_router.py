@@ -174,7 +174,8 @@ def test_payment_finalization_requires_provider_and_ledger_evidence_without_muta
 
     assert rejected.status_code == 400
     assert rejected.json()["detail"]["error_code"] == "finance_approval_failed"
-    assert "provider receipt and ledger reconciliation evidence" in rejected.json()["detail"]["error"]
+    assert rejected.json()["detail"]["error"] == "finance approval failed"
+    assert rejected.json()["detail"]["governed"] is True
     assert fetched.json()["packet"]["state"] == "approved"
     assert fetched.json()["approvals"] == []
     assert fetched.json()["effects"] == []
@@ -235,7 +236,7 @@ def test_approval_rejects_conflicting_handoff_modes_without_mutation() -> None:
     assert rejected.status_code == 400
     assert rejected.json()["detail"]["error_code"] == "finance_approval_failed"
     assert rejected.json()["detail"]["governed"] is True
-    assert "only one handoff type" in rejected.json()["detail"]["error"]
+    assert rejected.json()["detail"]["error"] == "finance approval failed"
     assert fetched.json()["packet"]["state"] == "approved"
     assert fetched.json()["approvals"] == []
     assert fetched.json()["effects"] == []

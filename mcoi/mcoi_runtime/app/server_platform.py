@@ -15,6 +15,7 @@ Invariants:
 from __future__ import annotations
 
 import base64
+import binascii
 import warnings
 from dataclasses import dataclass
 from typing import Any, Callable, Mapping
@@ -33,6 +34,29 @@ from mcoi_runtime.governance.guards.tenant_gating import TenantGatingRegistry
 from mcoi_runtime.persistence.migrations import create_platform_migration_engine
 from mcoi_runtime.persistence.postgres_governance_stores import create_governance_stores
 from mcoi_runtime.persistence.postgres_store import create_store
+
+_VALID_DB_BACKENDS = frozenset({"memory", "sqlite", "postgresql"})
+
+
+def _normalize_db_backend(value: str) -> str:
+    """Return a canonical persistence backend name."""
+    normalized = value.strip().lower()
+    if not normalized:
+        return "memory"
+    if normalized not in _VALID_DB_BACKENDS:
+        raise RuntimeError("MULLU_DB_BACKEND must be memory, sqlite, or postgresql")
+    return normalized
+
+
+def _decode_jwt_secret(value: str) -> bytes:
+    """Decode a configured JWT signing secret with bounded error text."""
+    try:
+        decoded = base64.b64decode(value, validate=True)
+    except (binascii.Error, ValueError) as exc:
+        raise RuntimeError("MULLU_JWT_SECRET must be valid base64") from exc
+    if not decoded:
+        raise RuntimeError("MULLU_JWT_SECRET must decode to non-empty bytes")
+    return decoded
 
 
 @dataclass(frozen=True)
@@ -76,7 +100,7 @@ def bootstrap_primary_store(
     warnings_module: Any = warnings,
 ) -> PrimaryStoreBootstrap:
     """Create the primary persistence store and apply SQLite migrations when needed."""
-    db_backend = runtime_env.get("MULLU_DB_BACKEND", "memory")
+    db_backend = _normalize_db_backend(runtime_env.get("MULLU_DB_BACKEND", "memory"))
     warning = validate_db_backend_for_env(db_backend, env)
     if warning:
         warnings_module.warn(warning, stacklevel=1)
@@ -184,7 +208,7 @@ def bootstrap_governance_runtime(
             config_cls(
                 issuer=runtime_env.get("MULLU_JWT_ISSUER", "mullu"),
                 audience=runtime_env.get("MULLU_JWT_AUDIENCE", "mullu-api"),
-                signing_key=base64.b64decode(jwt_secret),
+                signing_key=_decode_jwt_secret(jwt_secret),
                 tenant_claim=runtime_env.get("MULLU_JWT_TENANT_CLAIM", "tenant_id"),
             )
         )

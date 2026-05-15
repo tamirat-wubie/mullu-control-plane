@@ -181,6 +181,22 @@ class UnavailablePhoneAdapter:
         )
 
 
+_PHONE_WORKER_ERROR_CODES = {
+    "phone request body must be an object": (
+        "invalid phone request body",
+        "invalid_phone_request_body",
+    ),
+}
+
+
+def _phone_worker_error_detail(exc: BaseException) -> dict[str, object]:
+    error, error_code = _PHONE_WORKER_ERROR_CODES.get(
+        str(exc),
+        ("invalid phone execution request", "invalid_phone_execution_request"),
+    )
+    return {"error": error, "error_code": error_code, "governed": True}
+
+
 def create_phone_worker_app(
     *,
     adapter: PhoneConnectorAdapter | None = None,
@@ -216,7 +232,7 @@ def create_phone_worker_app(
                 raise RuntimeError("phone request body must be an object")
             action_request = phone_action_request_from_mapping(raw)
         except (UnicodeDecodeError, json.JSONDecodeError, RuntimeError, ValueError, KeyError) as exc:
-            raise HTTPException(422, detail=str(exc)) from exc
+            raise HTTPException(422, detail=_phone_worker_error_detail(exc)) from exc
 
         response = execute_phone_request(action_request, adapter=resolved_adapter, policy=resolved_policy)
         response_body = json.dumps(

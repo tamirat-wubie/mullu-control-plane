@@ -41,7 +41,7 @@ _log = logging.getLogger(__name__)
 #
 # v4.35 routes every read through ``resolve_env``. Behavior:
 #
-# - MULLU_ENV set to a known value: return it (unchanged).
+# - MULLU_ENV set to a known value: return the canonical lowercase value.
 # - MULLU_ENV unset/empty + MULLU_ENV_REQUIRED=true (or =1/yes/on):
 #   raise ``EnvBindingError``. Production deployments set this flag
 #   in the manifest so a missing MULLU_ENV is a hard boot failure
@@ -49,12 +49,17 @@ _log = logging.getLogger(__name__)
 # - MULLU_ENV unset/empty + flag not set: log a CRITICAL warning and
 #   fall through to "local_dev" (preserves existing behavior for
 #   tests and dev workflows).
-# - MULLU_ENV set to an unknown value: log an ERROR, return the value
-#   as-is (downstream code already falls to ``sandboxed`` shell policy
-#   for unknowns).
+# - MULLU_ENV set to an unknown value: log an ERROR, return the normalized
+#   value (downstream code already falls to ``sandboxed`` shell policy for
+#   unknowns).
 KNOWN_ENVS = frozenset({"local_dev", "test", "pilot", "production"})
 
 _TRUTHY = frozenset({"true", "1", "yes", "on"})
+
+
+def _normalize_env_name(value: str) -> str:
+    """Return a canonical environment name for policy checks."""
+    return value.strip().lower()
 
 
 class EnvBindingError(RuntimeError):
@@ -66,11 +71,12 @@ def resolve_env(runtime_env: Mapping[str, str]) -> str:
 
     See module-level docstring for behavior table.
     """
-    raw = runtime_env.get("MULLU_ENV", "").strip()
+    raw = runtime_env.get("MULLU_ENV", "")
+    normalized = _normalize_env_name(raw)
     required = (
         runtime_env.get("MULLU_ENV_REQUIRED", "").strip().lower() in _TRUTHY
     )
-    if not raw:
+    if not normalized:
         if required:
             raise EnvBindingError(
                 "MULLU_ENV is not set and MULLU_ENV_REQUIRED=true; "
@@ -82,13 +88,13 @@ def resolve_env(runtime_env: Mapping[str, str]) -> str:
             "production) to silence this warning."
         )
         return "local_dev"
-    if raw not in KNOWN_ENVS:
+    if normalized not in KNOWN_ENVS:
         _log.error(
             "MULLU_ENV=%r is not a known environment %s; downstream "
             "policies will fall to sandboxed defaults",
-            raw, sorted(KNOWN_ENVS),
+            normalized, sorted(KNOWN_ENVS),
         )
-    return raw
+    return normalized
 
 
 @dataclass(frozen=True)

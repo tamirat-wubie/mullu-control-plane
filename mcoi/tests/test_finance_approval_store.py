@@ -156,3 +156,19 @@ def test_file_store_rejects_malformed_payload(tmp_path) -> None:
         FileFinanceApprovalPacketStore(path)
     assert path.exists()
     assert "incomplete" in path.read_text(encoding="utf-8")
+
+
+def test_file_store_rejects_nonfinite_json_constants_with_bounded_error(tmp_path) -> None:
+    path = tmp_path / "finance_approval.json"
+    path.write_text('{"cases":Infinity,"decisions":[],"approvals":[],"effects":[]}', encoding="utf-8")
+
+    with pytest.raises(
+        CorruptedDataError,
+        match=r"^malformed finance approval store file \(ValueError\)$",
+    ) as excinfo:
+        FileFinanceApprovalPacketStore(path)
+
+    message = str(excinfo.value)
+    assert message == "malformed finance approval store file (ValueError)"
+    assert "infinity" not in message.lower()
+    assert "cases" not in message

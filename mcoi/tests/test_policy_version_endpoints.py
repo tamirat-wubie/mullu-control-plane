@@ -104,3 +104,25 @@ def test_policy_version_routes_fail_closed(client: TestClient) -> None:
     assert missing_promote.json()["detail"]["error_code"] == "policy_version_promotion_failed"
     assert missing_fetch.status_code == 404
     assert missing_fetch.json()["detail"]["governed"] is True
+
+
+def test_policy_version_error_detail_is_bounded(client: TestClient) -> None:
+    from mcoi_runtime.app.routers.deps import deps
+
+    original_registry = deps.policy_version_registry
+
+    class LeakyRegistry:
+        def promote(self, policy_id: str, version: str) -> object:
+            raise ValueError("secret-token-from-policy-registry")
+
+    deps.set("policy_version_registry", LeakyRegistry())
+    try:
+        response = client.post("/api/v1/policies/endpoint-policy/versions/leaky/promote")
+    finally:
+        deps.set("policy_version_registry", original_registry)
+
+    detail = response.json()["detail"]
+    assert response.status_code == 400
+    assert detail["error_code"] == "policy_version_promotion_failed"
+    assert detail["governed"] is True
+    assert "secret-token-from-policy-registry" not in response.text

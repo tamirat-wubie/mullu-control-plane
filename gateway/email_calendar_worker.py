@@ -194,6 +194,26 @@ class UnavailableEmailCalendarAdapter:
         )
 
 
+_EMAIL_CALENDAR_WORKER_ERROR_CODES = {
+    "email/calendar request body must be an object": (
+        "invalid email/calendar request body",
+        "invalid_email_calendar_request_body",
+    ),
+    "metadata must be an object": (
+        "invalid email/calendar request metadata",
+        "invalid_email_calendar_request_metadata",
+    ),
+}
+
+
+def _email_calendar_worker_error_detail(exc: BaseException) -> dict[str, object]:
+    error, error_code = _EMAIL_CALENDAR_WORKER_ERROR_CODES.get(
+        str(exc),
+        ("invalid email/calendar execution request", "invalid_email_calendar_execution_request"),
+    )
+    return {"error": error, "error_code": error_code, "governed": True}
+
+
 def create_email_calendar_worker_app(
     *,
     adapter: EmailCalendarConnectorAdapter | None = None,
@@ -229,7 +249,7 @@ def create_email_calendar_worker_app(
                 raise RuntimeError("email/calendar request body must be an object")
             action_request = email_calendar_action_request_from_mapping(raw)
         except (UnicodeDecodeError, json.JSONDecodeError, RuntimeError, ValueError, KeyError) as exc:
-            raise HTTPException(422, detail=str(exc)) from exc
+            raise HTTPException(422, detail=_email_calendar_worker_error_detail(exc)) from exc
 
         response = execute_email_calendar_request(action_request, adapter=resolved_adapter, policy=resolved_policy)
         response_body = json.dumps(

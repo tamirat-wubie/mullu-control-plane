@@ -21,6 +21,7 @@ from mcoi_runtime.contracts.software_dev_loop import (
     SoftwareChangeReceiptStage,
 )
 
+from ._serialization import loads_strict_json
 from .errors import CorruptedDataError, PersistenceError, PersistenceWriteError
 
 
@@ -29,7 +30,7 @@ def _bounded_store_error(summary: str, exc: BaseException) -> str:
 
 
 def _deterministic_json(payload: Any) -> str:
-    return json.dumps(payload, sort_keys=True, ensure_ascii=True, separators=(",", ":"))
+    return json.dumps(payload, sort_keys=True, ensure_ascii=True, separators=(",", ":"), allow_nan=False)
 
 
 def _atomic_write(path: Path, content: str) -> None:
@@ -243,8 +244,8 @@ class FileSoftwareChangeReceiptStore(SoftwareChangeReceiptStore):
         if not self._path.exists():
             return
         try:
-            raw = json.loads(self._path.read_text(encoding="utf-8"))
-        except (json.JSONDecodeError, OSError) as exc:
+            raw = loads_strict_json(self._path.read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, OSError, ValueError) as exc:
             raise CorruptedDataError(
                 _bounded_store_error("malformed software receipt store file", exc),
             ) from exc

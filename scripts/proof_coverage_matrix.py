@@ -10,6 +10,7 @@ to declared application routes or explicit wildcard families.
 from __future__ import annotations
 
 import argparse
+import ast
 import json
 import os
 import re
@@ -23,7 +24,6 @@ ASSURANCE_OUTPUT = REPO_ROOT / ".change_assurance" / "proof_coverage_matrix.json
 ROUTE_PATTERN = re.compile(r"@(?:router|app)\.(?:get|post|put|delete|patch)\(\s*[\"']([^\"']+)[\"']")
 ROUTER_PREFIX_PATTERN = re.compile(r"APIRouter\([^)]*prefix\s*=\s*[\"']([^\"']+)[\"']")
 FRAMEWORK_GENERATED_ROUTES = frozenset({"/docs", "/openapi.json", "/redoc"})
-AGGREGATE_ROUTE_SURFACE_IDS = frozenset({"operational_platform_read_models"})
 COVERAGE_LEVELS = ["gap", "read_model", "request_proof", "action_proof", "audit_chain"]
 COVERAGE_STATES = ["proven", "witnessed", "unproven"]
 
@@ -130,6 +130,56 @@ def proof_coverage_matrix() -> dict[str, Any]:
             ],
         ),
         _surface(
+            "restricted_adapter_worker_boundaries",
+            [
+                "/browser/execute",
+                "/document/execute",
+                "/email-calendar/execute",
+                "/messaging/execute",
+                "/phone/execute",
+                "/voice/execute",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "gateway/browser_worker.py",
+                "gateway/document_worker.py",
+                "gateway/email_calendar_worker.py",
+                "gateway/messaging_worker.py",
+                "gateway/phone_worker.py",
+                "gateway/voice_worker.py",
+                "tests/test_gateway/test_browser_worker.py",
+                "tests/test_gateway/test_document_worker.py",
+                "tests/test_gateway/test_email_calendar_worker.py",
+                "tests/test_gateway/test_messaging_worker.py",
+                "tests/test_gateway/test_phone_worker.py",
+                "tests/test_gateway/test_voice_worker.py",
+            ],
+            "Restricted browser, document, email/calendar, messaging, phone, and voice workers reject unsigned requests, execute only signed governed actions, emit receipt-bearing signed responses, and bound malformed request details without echoing submitted payloads.",
+            [
+                "browser_worker_rejects_bad_signature",
+                "browser_worker_executes_signed_open_request",
+                "browser_worker_parse_error_detail_is_bounded",
+                "document_worker_rejects_bad_signature",
+                "document_worker_executes_signed_extract_text_request",
+                "document_worker_parse_error_detail_is_bounded",
+                "email_calendar_worker_rejects_bad_signature",
+                "email_calendar_worker_executes_signed_draft_request",
+                "email_calendar_worker_parse_error_detail_is_bounded",
+                "messaging_worker_rejects_bad_signature",
+                "messaging_worker_executes_signed_draft_request",
+                "messaging_worker_parse_error_detail_is_bounded",
+                "phone_worker_rejects_bad_signature",
+                "phone_worker_executes_signed_receive_request",
+                "phone_worker_parse_error_detail_is_bounded",
+                "voice_worker_rejects_bad_signature",
+                "voice_worker_executes_signed_intent_classification_request",
+                "voice_worker_parse_error_detail_is_bounded",
+            ],
+        ),
+        _surface(
             "llm_streaming",
             ["/api/v1/stream", "/api/v1/chat/stream"],
             "request_proof",
@@ -146,6 +196,15 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "docs/41_streaming_budget_enforcement.md",
             ],
             "SSE responses include precharge, first-byte, chunk-debit, and final-reconcile proof identifiers.",
+            [
+                "stream_returns_sse",
+                "stream_contains_content",
+                "stream_contains_budget_witnesses",
+                "stream_budget_reservation_and_settlement",
+                "stream_budget_cutoff_stops_delivery",
+                "streaming_chat_returns_sse",
+                "streaming_chat_exception_sanitized",
+            ],
         ),
         _surface(
             "code_intelligence_operator_read_model",
@@ -191,6 +250,15 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "mcoi/mcoi_runtime/core/proof_bridge.py",
             ],
             "Completion routes are governed through budget, model routing, and proof bridge checks.",
+            [
+                "completion_returns_action_proof",
+                "completion_records_budget_ledger",
+                "completion_failure_is_bounded",
+                "safe_completion_tracks_cost",
+                "safe_completion_exception_sanitized",
+                "auto_completion_routes_model",
+                "auto_completion_exception_sanitized",
+            ],
         ),
         _surface(
             "llm_chat_workflow",
@@ -204,6 +272,15 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "mcoi/mcoi_runtime/core/proof_bridge.py",
             ],
             "Chat and workflow routes preserve governed request and action proof boundaries.",
+            [
+                "chat_completion_governed",
+                "streaming_chat_returns_sse",
+                "streaming_chat_multi_turn_history_preserved",
+                "streaming_chat_governed",
+                "streaming_chat_contains_budget_witnesses",
+                "streaming_chat_exception_sanitized",
+                "chat_workflow_history_bounded",
+            ],
         ),
         _surface(
             "cost_budget_read_models",
@@ -225,6 +302,14 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "mcoi/mcoi_runtime/governance/guards/budget.py",
             ],
             "Budget and cost surfaces expose bounded read models over governed spend state.",
+            [
+                "budget_summary_bounded",
+                "safe_completion_tracks_cost",
+                "cost_read_model_totals_bounded",
+                "cost_top_spenders_bounded",
+                "cost_by_model_bounded",
+                "tenant_cost_projection_bounded",
+            ],
         ),
         _surface(
             "assistant_kernel_planning",
@@ -284,9 +369,12 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "mcoi/mcoi_runtime/app/routers/ops/rate_limit.py",
                 "mcoi/mcoi_runtime/core/feature_flags.py",
                 "mcoi/mcoi_runtime/core/rate_limit_headers.py",
+                "mcoi/mcoi_runtime/core/rate_limit_middleware.py",
                 "mcoi/mcoi_runtime/governance/guards/rate_limit.py",
                 "mcoi/tests/test_feature_flags.py",
                 "mcoi/tests/test_rate_limit_headers.py",
+                "mcoi/tests/test_rate_limiter.py",
+                "mcoi/tests/test_grafana_dashboard.py",
                 "mcoi/tests/test_server_phase199.py",
                 "mcoi/tests/test_server_phase200.py",
                 "mcoi/tests/test_server_phase202.py",
@@ -294,176 +382,39 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "mcoi/tests/test_server_phase213.py",
                 "mcoi/tests/test_server_phase220.py",
                 "mcoi/tests/test_sla_monitor.py",
+                "mcoi/tests/test_sla_router.py",
                 "tests/test_gateway/test_webhooks.py",
             ],
             "Operational platform read-model routes aggregate bounded bootstrap, LLM history, dependency, feature-flag, metric, rate-limit, SLA, and gateway status state without mutation authority.",
             [
-                "bootstrap_info_bounded",
-                "bootstrap_reports_stub_provider",
-                "llm_circuit_breaker_status_bounded",
-                "llm_history_window_bounded",
+                "bootstrap_info",
+                "bootstrap_has_stub",
+                "circuit_breaker_status",
+                "history_empty",
+                "history_after_completion",
                 "dependency_graph_startup_order_bounded",
                 "dependency_impact_analysis_bounded",
-                "feature_flags_list_bounded",
-                "feature_flags_summary_counts_enabled_disabled",
-                "feature_flags_list_returns_registered_flags",
-                "feature_flag_check_enabled",
-                "feature_flag_unknown_returns_disabled",
-                "feature_flag_tenant_override_respected",
-                "feature_flag_lookup_bounded",
-                "missing_feature_flag_defaults_closed",
-                "metrics_snapshot_bounded",
-                "metrics_read_model_bounded",
-                "grafana_dashboard_export_bounded",
-                "rate_limit_status_bounded",
-                "rate_limit_status_reports_allowed_and_active_buckets",
-                "rate_limit_client_headers_bounded",
-                "rate_limit_headers_project_limit_remaining_reset",
-                "rate_limit_header_peek_does_not_consume",
-                "atomic_rate_limit_store_bounds_concurrent_consumption",
-                "rate_limit_read_model_non_mutating",
-                "sla_summary_bounded",
-                "sla_violations_bounded",
-                "sla_read_model_non_mutating",
-                "gateway_status_governed",
-                "gateway_status_bounded",
+                "list_flags",
+                "summary",
+                "check_flag_enabled",
+                "check_flag_unknown",
+                "tenant_override",
+                "default_disabled",
+                "get_metrics",
+                "metrics_track_requests",
+                "build_default",
+                "default_json_roundtrip",
+                "rate_limit_status",
+                "status",
+                "to_headers",
+                "peek_does_not_consume",
+                "consume_decrements",
+                "exhaustion_triggers_retry_after",
+                "sla_summary_endpoint_returns_bounded_governed_read_model",
+                "sla_violations_endpoint_filters_by_sla_id",
+                "violations_filtered",
+                "health",
             ],
-        ),
-        _surface(
-            "llm_admin_observability",
-            ["/api/v1/bootstrap", "/api/v1/circuit-breaker", "/api/v1/llm/history"],
-            "read_model",
-            "read_model",
-            "audit_chain",
-            "witnessed",
-            [
-                "mcoi/mcoi_runtime/app/routers/llm/admin.py",
-                "mcoi/tests/test_server_phase199.py",
-                "mcoi/tests/test_server_phase200.py",
-                "mcoi/tests/test_server_phase212.py",
-                "mcoi/tests/test_server_phase213.py",
-            ],
-            "LLM admin observability routes expose bounded bootstrap inventory, circuit-breaker state, and invocation history without mutation authority.",
-            [
-                "bootstrap_info_bounded",
-                "bootstrap_reports_stub_provider",
-                "llm_circuit_breaker_status_bounded",
-                "llm_history_window_bounded",
-            ],
-        ),
-        _surface(
-            "dependency_graph_read_models",
-            ["/api/v1/dependencies", "/api/v1/dependencies/{name}/impact"],
-            "read_model",
-            "read_model",
-            "audit_chain",
-            "witnessed",
-            [
-                "mcoi/mcoi_runtime/app/routers/ops/dependencies.py",
-                "mcoi/mcoi_runtime/core/dependency_graph.py",
-                "mcoi/tests/test_dependency_graph.py",
-                "mcoi/tests/test_server_registry_helpers.py",
-            ],
-            "Dependency graph routes expose startup ordering and bounded failure-impact read models.",
-            ["dependency_graph_startup_order_bounded", "dependency_impact_analysis_bounded"],
-        ),
-        _surface(
-            "feature_flag_read_models",
-            ["/api/v1/flags", "/api/v1/flags/{flag_id}"],
-            "read_model",
-            "read_model",
-            "audit_chain",
-            "witnessed",
-            [
-                "mcoi/mcoi_runtime/app/routers/ops/feature_flags.py",
-                "mcoi/mcoi_runtime/core/feature_flags.py",
-                "mcoi/tests/test_feature_flags.py",
-                "mcoi/tests/test_server_phase220.py",
-            ],
-            "Feature-flag routes expose bounded flag lists and closed defaults for missing flag lookups.",
-            [
-                "feature_flags_list_bounded",
-                "feature_flags_list_returns_registered_flags",
-                "feature_flags_summary_counts_enabled_disabled",
-                "feature_flag_lookup_bounded",
-                "feature_flag_check_enabled",
-                "feature_flag_unknown_returns_disabled",
-                "feature_flag_tenant_override_respected",
-                "missing_feature_flag_defaults_closed",
-            ],
-        ),
-        _surface(
-            "operational_telemetry_read_models",
-            ["/api/v1/metrics", "/api/v1/grafana/dashboard"],
-            "read_model",
-            "read_model",
-            "audit_chain",
-            "witnessed",
-            [
-                "mcoi/mcoi_runtime/app/routers/ops/metrics.py",
-                "mcoi/mcoi_runtime/core/prometheus_exporter.py",
-                "mcoi/tests/test_governance_metrics.py",
-                "mcoi/tests/test_platform_metrics.py",
-                "mcoi/tests/test_server_phase202.py",
-            ],
-            "Operational telemetry routes expose bounded metric snapshots and dashboard exports without mutating runtime state.",
-            ["metrics_snapshot_bounded", "metrics_read_model_bounded", "grafana_dashboard_export_bounded"],
-        ),
-        _surface(
-            "rate_limit_read_models",
-            ["/api/v1/rate-limit/status", "/api/v1/rate-limits/{client_id}"],
-            "read_model",
-            "read_model",
-            "audit_chain",
-            "witnessed",
-            [
-                "mcoi/mcoi_runtime/app/routers/ops/rate_limit.py",
-                "mcoi/mcoi_runtime/core/rate_limit_headers.py",
-                "mcoi/mcoi_runtime/core/rate_limit_middleware.py",
-                "mcoi/tests/test_rate_limiter.py",
-                "mcoi/tests/test_rate_limit_headers.py",
-                "mcoi/tests/test_server_phase202.py",
-            ],
-            "Rate-limit read-model routes expose global and client-scoped token state without consuming request budget.",
-            [
-                "rate_limit_status_bounded",
-                "rate_limit_status_reports_allowed_and_active_buckets",
-                "rate_limit_client_headers_bounded",
-                "rate_limit_headers_project_limit_remaining_reset",
-                "rate_limit_header_peek_does_not_consume",
-                "atomic_rate_limit_store_bounds_concurrent_consumption",
-                "rate_limit_read_model_non_mutating",
-            ],
-        ),
-        _surface(
-            "sla_monitoring_read_models",
-            ["/api/v1/sla", "/api/v1/sla/violations"],
-            "read_model",
-            "read_model",
-            "audit_chain",
-            "witnessed",
-            [
-                "mcoi/mcoi_runtime/app/routers/data/sla.py",
-                "mcoi/mcoi_runtime/core/sla_monitor.py",
-                "mcoi/tests/test_sla_monitor.py",
-            ],
-            "SLA monitoring routes expose bounded summaries and violations without mutating monitor state.",
-            ["sla_summary_bounded", "sla_violations_bounded", "sla_read_model_non_mutating"],
-        ),
-        _surface(
-            "gateway_status_read_model",
-            ["/gateway/status"],
-            "read_model",
-            "read_model",
-            "audit_chain",
-            "witnessed",
-            [
-                "gateway/server.py",
-                "gateway/router.py",
-                "tests/test_gateway/test_webhooks.py",
-            ],
-            "Gateway status exposes bounded gateway health and route state as a non-mutating read model.",
-            ["gateway_status_governed", "gateway_status_bounded"],
         ),
         _surface(
             "conversation_memory_lifecycle",
@@ -920,6 +871,15 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "mcoi/mcoi_runtime/app/routers/llm/ab_test.py",
             ],
             "Model catalog and experiment control routes are declared as governed control surfaces.",
+            [
+                "model_catalog_list_bounded",
+                "auto_completion_routes_model",
+                "auto_completion_forced_model",
+                "ab_test_single_model_result",
+                "ab_test_two_models_cost_comparison",
+                "ab_test_summary_bounded",
+                "ab_test_failed_model_recorded",
+            ],
         ),
         _surface(
             "policy_version_registry",
@@ -942,6 +902,16 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "mcoi/tests/test_policy_versioning.py",
             ],
             "Policy version routes expose immutable artifact registration, promotion, rollback, diff, and shadow evaluation.",
+            [
+                "policy_version_register_and_fetch",
+                "policy_version_promote_diff_shadow_and_rollback",
+                "policy_version_routes_fail_closed",
+                "policy_artifact_hash_is_deterministic",
+                "policy_registry_promotes_and_rolls_back_versions",
+                "policy_diff_reports_changed_and_added_rules",
+                "shadow_governance_compares_without_promoting",
+                "registry_fails_closed_on_unknown_versions",
+            ],
         ),
         _surface(
             "pilot_provisioning",
@@ -961,6 +931,16 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "docs/47_one_command_pilot_bringup.md",
             ],
             "Pilot provisioning returns deterministic scaffold artifacts, persists accepted provision records, and exposes bounded operator history read models.",
+            [
+                "initialize_pilot_writes_complete_artifact_set",
+                "initialize_pilot_is_deterministic_for_same_inputs",
+                "build_pilot_scaffold_has_no_filesystem_side_effects",
+                "pilot_provision_registry_persists_bounded_records",
+                "initialize_pilot_fails_closed_on_existing_files",
+                "pilot_provision_endpoint_returns_audited_scaffold",
+                "pilot_provision_history_routes_return_accepted_records",
+                "pilot_provision_detail_fails_closed_for_missing_record",
+            ],
         ),
         _surface(
             "hosted_demo_sandbox",
@@ -981,6 +961,16 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "docs/48_hosted_demo_sandbox.md",
             ],
             "Hosted demo sandbox exposes deterministic read-only traces, lineage projections, and policy evaluations without runtime mutation.",
+            [
+                "sandbox_summary_is_deterministic",
+                "sandbox_lineage_contains_bounded_causal_graph",
+                "sandbox_policy_evaluations_are_read_only",
+                "sandbox_summary_route",
+                "sandbox_traces_route",
+                "sandbox_lineage_route",
+                "sandbox_missing_lineage_route_fails_closed",
+                "sandbox_policy_evaluations_route",
+            ],
         ),
         _surface(
             "federated_control_plane",
@@ -1801,6 +1791,12 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "tests/test_gateway/test_webhooks.py",
             ],
             "Webhook ingress binds tenant resolution, command ledger, and event-log evidence.",
+            [
+                "receive_with_message_returns_request_receipt",
+                "receive_with_message",
+                "ignored_update_returns_request_receipt",
+                "receive_with_command_returns_request_receipt",
+            ],
         ),
         _surface(
             "gateway_approval_resolution",
@@ -1815,6 +1811,14 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "tests/test_gateway/test_webhooks.py",
             ],
             "Approval resolution exposes protected operator paths and audited chain state.",
+            [
+                "approve_unknown_request",
+                "approve_valid_request",
+                "authority_approval_chain_read_model",
+                "expire_overdue_authority_approval_chains_records_transition",
+                "production_approval_callback_requires_secret",
+                "approval_callback_denies_unauthorized_resolver",
+            ],
         ),
         _surface(
             "approval_engine_lifecycle",
@@ -1962,6 +1966,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "schemas/latest_anchor_read_model.schema.json",
                 "schemas/runtime_witness.schema.json",
                 "schemas/mullu_governance_protocol.manifest.json",
+                "tests/test_gateway/test_webhooks.py",
                 "tests/test_orchestrate_deployment_witness.py",
                 "tests/test_report_gateway_publication_readiness.py",
                 "tests/test_validate_gateway_publication_receipt.py",
@@ -1974,24 +1979,28 @@ def proof_coverage_matrix() -> dict[str, Any]:
             ],
             "Runtime witness surfaces publish bounded operational and responsibility debt state; deployment witnesses require raw runtime and authority debt-clear evidence before publication closure, and orchestration receipts bind ingress render, MCP checklist validation, preflight, dispatch evidence, schema contract validation, and post-run receipt validation before deployment witness readiness.",
             [
-                "latest_command_event_hash",
-                "latest_anchor_read_model_schema_valid",
-                "runtime_witness_schema_valid",
-                "latest_terminal_certificate_id",
-                "responsibility_debt_clear",
-                "runtime_responsibility_debt_clear",
-                "open_obligation_count",
-                "overdue_obligation_count",
-                "authority_responsibility_debt_clear",
-                "authority_overdue_approval_chain_count",
-                "authority_overdue_obligation_count",
-                "authority_escalated_obligation_count",
-                "authority_unowned_high_risk_capability_count",
-                "deployment_witness_orchestration_receipt",
-                "deployment_publication_closure_validation_schema",
-                "deployment_orchestration_validation_schema",
-                "gateway_publication_readiness_schema",
-                "gateway_publication_receipt_validation_schema",
+                "gateway_witness",
+                "runtime_witness_alias",
+                "latest_anchor_read_model",
+                "runtime_self_reflex_read_models_do_not_mutate",
+                "collect_deployment_witness_publishes_with_verified_signature",
+                "collect_deployment_witness_rejects_responsibility_debt",
+                "collect_deployment_witness_rejects_runtime_responsibility_debt",
+                "preflight_deployment_witness_rejects_responsibility_debt",
+                "preflight_deployment_witness_rejects_runtime_witness_responsibility_debt",
+                "published_status_rejects_authority_responsibility_debt",
+                "published_status_rejects_runtime_responsibility_debt",
+                "orchestrate_deployment_witness_renders_and_provisions",
+                "orchestration_receipt_schema_matches_cli_output",
+                "orchestration_validation_report_matches_public_schema",
+                "closure_validation_report_matches_public_schema_for_not_published",
+                "readiness_report_matches_public_schema",
+                "receipt_validation_report_matches_public_schema",
+                "protocol_manifest_indexes_deployment_orchestration_validation",
+                "protocol_manifest_indexes_deployment_publication_closure_validation",
+                "protocol_manifest_indexes_gateway_publication_readiness",
+                "protocol_manifest_indexes_gateway_publication_receipt_validation",
+                "protocol_manifest_indexes_runtime_witness_and_latest_anchor",
             ],
         ),
         _surface(
@@ -2296,6 +2305,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "manifest_missing_policy_rejected",
                 "manifest_unresolved_schema_rejected",
                 "effect_manifest_requires_sandbox_rollback",
+                "hot_reload_metadata_enforced",
                 "production_hot_reload_denied_for_effect_manifest",
                 "fabric_projects_local_manifest_registry",
                 "fabric_rejects_production_hot_reload_manifest_registry",
@@ -2767,28 +2777,37 @@ def proof_coverage_matrix() -> dict[str, Any]:
             ],
             "Trust ledger signs terminal-closure evidence bundles, exposes operator bundle export, verifies exported bundle and anchor receipt files offline, emits external anchor receipts, and packages verifier inputs with content hashes for portable audit review.",
             [
-                "terminal_certificate_id_required",
-                "evidence_refs_required",
-                "evidence_bundle_endpoint_requires_terminal_certificate",
-                "offline_bundle_verifier_validates_schema_hash_and_signature",
-                "offline_bundle_verification_report_schema_valid",
-                "offline_anchor_verifier_validates_schema_artifacts_and_signature",
-                "bundle_hash_tamper_detection",
-                "hmac_signature_verification",
-                "anchored_bundle_requires_external_anchor_ref",
-                "typed_artifact_root_required",
-                "offline_anchor_artifact_root_tamper_detection",
-                "offline_anchor_schema_invalid_receipt_rejected",
-                "offline_anchor_package_hash_mismatch_rejected",
-                "offline_anchor_package_schema_invalid_rejected",
-                "offline_anchor_verification_report_schema_valid",
-                "offline_anchor_report_emits_package_identity",
-                "anchor_receipt_hmac_verification",
-                "anchor_receipt_schema_valid",
-                "anchor_receipt_non_terminal_marker_required",
-                "export_package_binds_bundle_receipt_and_artifact_files",
-                "export_package_rejects_receipt_identity_drift",
-                "trust_ledger_bundle_schema_valid",
+                "terminal_command_exports_signed_evidence_bundle",
+                "evidence_bundle_endpoint_rejects_non_terminal_command",
+                "offline_bundle_verifier_detects_tampering",
+                "offline_bundle_verifier_report_contract_allows_missing_secret",
+                "trust_ledger_issues_and_verifies_signed_bundle",
+                "trust_ledger_detects_tampered_bundle_content",
+                "trust_ledger_detects_wrong_secret_signature",
+                "trust_ledger_requires_terminal_certificate_and_evidence",
+                "trust_ledger_rejects_non_proof_evidence_refs",
+                "trust_ledger_requires_anchor_ref_when_anchored",
+                "trust_ledger_bundle_schema_exposes_signature_contract",
+                "trust_ledger_bundle_schema_rejects_non_proof_evidence_ref",
+                "trust_ledger_anchor_receipt_binds_required_artifacts",
+                "trust_ledger_anchor_receipt_detects_tampered_artifact_root",
+                "trust_ledger_anchor_receipt_rejects_missing_terminal_artifact",
+                "trust_ledger_anchor_receipt_rejects_non_proof_artifact_evidence_ref",
+                "trust_ledger_anchor_receipt_rejects_command_identity_drift",
+                "trust_ledger_anchor_receipt_rejects_non_canonical_receipt_id",
+                "trust_ledger_anchor_receipt_validates_against_schema",
+                "trust_ledger_anchor_receipt_schema_rejects_non_canonical_bundle_id",
+                "trust_ledger_export_package_binds_verifier_inputs",
+                "trust_ledger_export_package_rejects_receipt_identity_drift",
+                "verify_anchor_receipt_files_accepts_valid_export",
+                "verify_anchor_receipt_files_detects_tampered_artifact_root",
+                "verify_anchor_receipt_files_rejects_schema_invalid_receipt",
+                "verify_anchor_receipt_files_rejects_schema_invalid_artifacts",
+                "verify_anchor_receipt_files_detects_package_bundle_hash_mismatch",
+                "verify_anchor_receipt_files_rejects_schema_invalid_package",
+                "verify_anchor_receipt_files_rejects_package_hash_mismatch",
+                "verify_anchor_receipt_cli_reports_valid_export",
+                "verify_anchor_receipt_report_contract_allows_missing_secret_report",
             ],
         ),
         _surface(
@@ -2878,36 +2897,41 @@ def proof_coverage_matrix() -> dict[str, Any]:
             ],
             "Physical action boundary emits schema-backed pre-dispatch receipts that block physical-world side effects unless hardware identity, safety envelope, manual override, emergency stop, simulation, operator approval, sensor confirmation, and safe-state controls are present; checked-in physical capability fixtures stay outside default loading, admit sandbox replay only when production readiness is not required, reject live physical promotion by default, and require promotion preflight evidence before any live production claim.",
             [
-                "physical_action_receipt_schema_valid",
-                "physical_capability_pack_fixture_not_default_loaded",
-                "physical_sandbox_replay_admitted_without_production_gate",
-                "live_physical_capability_rejected_by_production_gate",
-                "physical_pack_projects_sandbox_only_evidence",
-                "physical_promotion_preflight_blocks_fixture_live_claim",
-                "physical_promotion_preflight_requires_live_safety_evidence",
-                "physical_promotion_preflight_accepts_full_evidence",
-                "physical_promotion_preflight_allows_sandbox_only_pack",
-                "physical_capsule_admission_runs_promotion_preflight",
-                "physical_capsule_admission_keeps_registry_unmutated_on_preflight_failure",
-                "physical_promotion_receipt_binds_forge_handoff_registry_preflight",
-                "physical_promotion_receipt_schema_valid",
-                "physical_promotion_receipt_cli_emits_schema_valid_bundle",
-                "physical_promotion_receipt_cli_blocks_missing_live_refs",
-                "physical_promotion_receipt_operator_endpoint_emits_bundle",
-                "physical_promotion_receipt_operator_endpoint_blocks_missing_live_refs",
-                "physical_promotion_receipt_jsonl_store_persists",
-                "physical_promotion_receipt_store_fails_closed_on_invalid_record",
-                "physical_promotion_receipt_operator_console_renders_ledger",
-                "hardware_identity_required",
-                "safety_envelope_required",
-                "manual_override_required",
-                "emergency_stop_required",
-                "simulation_pass_required",
-                "operator_approval_required",
-                "sensor_confirmation_required",
-                "physical_dispatch_blocked_until_controls_complete",
-                "physical_worker_canary_uses_sandbox_handler",
-                "physical_worker_canary_artifact_hash_bound",
+                "physical_boundary_allows_sandbox_replay_with_full_controls",
+                "physical_boundary_blocks_without_simulation",
+                "physical_boundary_blocks_live_effects_without_certification",
+                "physical_boundary_requires_operator_review_when_approval_missing",
+                "physical_action_receipt_matches_schema",
+                "physical_fixture_pack_is_not_loaded_by_default",
+                "physical_fixture_pack_allows_sandbox_replay_when_production_gate_disabled",
+                "physical_fixture_pack_blocks_live_promotion_when_production_gate_enabled",
+                "physical_fixture_pack_projects_sandbox_only_gateway_evidence",
+                "physical_capability_promotion_preflight_blocks_live_fixture_by_default",
+                "physical_capability_promotion_preflight_passes_with_full_evidence",
+                "physical_capability_promotion_preflight_allows_sandbox_only_pack",
+                "physical_capability_promotion_preflight_cli_outputs_json",
+                "capsule_installer_runs_physical_preflight_before_registry_mutation",
+                "capsule_installer_returns_rejected_receipt_without_registry_mutation",
+                "capsule_installer_admits_physical_capsule_when_preflight_passes",
+                "capsule_admission_operator_endpoint_blocks_physical_preflight_failure",
+                "capsule_admission_operator_endpoint_accepts_physical_safety_refs_from_handoff",
+                "physical_capability_promotion_receipt_binds_ready_chain",
+                "operator_physical_promotion_receipt_endpoint_emits_ready_bundle",
+                "operator_physical_promotion_receipt_endpoint_persists_jsonl_ledger",
+                "operator_physical_promotion_receipt_console_renders_ledger",
+                "operator_physical_promotion_receipt_endpoint_blocks_missing_live_refs",
+                "physical_promotion_receipt_jsonl_store_lists_newest_with_filters",
+                "physical_promotion_receipt_jsonl_store_fails_closed_on_invalid_record",
+                "emit_physical_capability_promotion_receipt_accepts_fixture_refs",
+                "emit_physical_capability_promotion_receipt_blocks_missing_refs",
+                "emit_physical_capability_promotion_receipt_blocks_missing_physical_safety_refs",
+                "emit_physical_capability_promotion_receipt_cli_outputs_json",
+                "emit_physical_capability_promotion_receipt_cli_strict_blocks_missing_refs",
+                "physical_worker_canary_blocks_missing_receipt_and_allows_sandbox_replay",
+                "physical_worker_canary_artifact_preserves_no_effect_proof",
+                "physical_worker_canary_evidence_and_hash_are_stable",
+                "produce_physical_worker_canary_writes_artifact",
+                "physical_worker_canary_cli_strict_passes",
             ],
         ),
         _surface(
@@ -3662,6 +3686,15 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "docs/03_trace_and_replay.md",
             ],
             "Replay determinism route emits governed reports over completed traces with bounded operation specs.",
+            [
+                "replay_determinism_endpoint_returns_match_report",
+                "replay_determinism_endpoint_reports_unknown_operation",
+                "replay_determinism_endpoint_missing_trace_fails_closed",
+                "harness_reports_deterministic_match",
+                "harness_report_hash_is_deterministic",
+                "harness_reports_sequence_gap_before_replay",
+                "harness_reports_operation_errors_bounded",
+            ],
         ),
         _surface(
             "tool_invocation",
@@ -3683,11 +3716,25 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "examples/mcp_capability_manifest.json",
                 "examples/mcp_operator_handoff_checklist.json",
                 "docs/55_mcp_capability_manifest.md",
+                "mcoi/tests/test_server_phase212.py",
+                "mcoi/tests/test_server_phase213.py",
+                "mcoi/tests/test_server_runtime_helpers.py",
                 "tests/test_gateway/test_mcp_capability_fabric.py",
                 "tests/test_validate_mcp_capability_manifest.py",
                 "tests/test_validate_mcp_operator_checklist.py",
             ],
             "Tool invocation and MCP capability import bind action proof ids, capability policy receipts, authority-obligation ownership records, validated operator manifests, and machine-readable handoff checklists.",
+            [
+                "invoke_tool",
+                "invoke_tool_rejects_unsafe_expression",
+                "invoke_unknown_tool",
+                "tool_history",
+                "tool_workflow",
+                "tool_workflow_tool_calls_include_policy_receipts",
+                "register_default_tools_registers_calculator_and_time",
+                "validate_mcp_capability_manifest_accepts_example",
+                "validate_mcp_operator_checklist_accepts_example",
+            ],
         ),
         _surface(
             "governed_session",
@@ -3702,6 +3749,16 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "mcoi/tests/test_governed_session.py",
             ],
             "Session entry points return request-envelope proofs and retain action proof lineage.",
+            [
+                "query_generates_proof",
+                "execute_generates_proof",
+                "query_returns_request_envelope_proof",
+                "execute_returns_request_envelope_proof",
+                "llm_result_metadata_has_request_envelope_proof",
+                "query_proof_failure_is_audited_and_blocks_operation",
+                "execute_proof_failure_blocks_dispatch",
+                "llm_proof_failure_blocks_llm_bridge",
+            ],
         ),
         _surface(
             "health_docs_exempt",
@@ -3710,8 +3767,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
             "read_model",
             "read_model",
             "witnessed",
-            ["gateway/server.py"],
+            ["gateway/server.py", "tests/test_gateway/test_webhooks.py"],
             "Operational liveness and documentation surfaces are outside the proof-critical path.",
+            [
+                "health",
+            ],
         ),
         _surface(
             "lineage_query_api",
@@ -3736,6 +3796,15 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "schemas/replay_record.schema.json",
             ],
             "Lineage query API resolves read-only lineage:// URIs with bounded output, command, graph, and policy-version read models.",
+            [
+                "lineage_resolve_route_returns_trace_document",
+                "lineage_trace_permalink_route_returns_document",
+                "lineage_output_permalink_returns_unresolved_document",
+                "lineage_output_permalink_resolves_indexed_trace",
+                "lineage_command_permalink_resolves_indexed_trace",
+                "lineage_artifact_permalink_resolves_persisted_dag",
+                "lineage_resolve_rejects_invalid_uri",
+            ],
         ),
         _surface(
             "god_mode_lifecycle",
@@ -3905,41 +3974,6 @@ def proof_coverage_matrix() -> dict[str, Any]:
         {
             "action_id": "classify_operational_platform_read_model_routes",
             "surfaces": ["operational_platform_read_models"],
-            "status": "closed",
-        },
-        {
-            "action_id": "classify_llm_admin_observability_routes",
-            "surfaces": ["llm_admin_observability"],
-            "status": "closed",
-        },
-        {
-            "action_id": "classify_dependency_graph_routes",
-            "surfaces": ["dependency_graph_read_models"],
-            "status": "closed",
-        },
-        {
-            "action_id": "classify_feature_flag_routes",
-            "surfaces": ["feature_flag_read_models"],
-            "status": "closed",
-        },
-        {
-            "action_id": "classify_operational_telemetry_routes",
-            "surfaces": ["operational_telemetry_read_models"],
-            "status": "closed",
-        },
-        {
-            "action_id": "classify_rate_limit_read_model_routes",
-            "surfaces": ["rate_limit_read_models"],
-            "status": "closed",
-        },
-        {
-            "action_id": "classify_sla_monitoring_routes",
-            "surfaces": ["sla_monitoring_read_models"],
-            "status": "closed",
-        },
-        {
-            "action_id": "classify_gateway_status_route",
-            "surfaces": ["gateway_status_read_model"],
             "status": "closed",
         },
         {
@@ -4381,6 +4415,8 @@ def proof_coverage_matrix() -> dict[str, Any]:
         "coverage_levels": COVERAGE_LEVELS,
         "coverage_states": COVERAGE_STATES,
         "coverage_summary": coverage_summary(surfaces),
+        "evidence_quality": evidence_quality_report(surfaces),
+        "witness_integrity": witness_integrity_report(surfaces),
         "surfaces": surfaces,
         "route_coverage": route_coverage_report(surfaces, discover_declared_routes()),
         "closure_actions": closure_actions,
@@ -4459,6 +4495,119 @@ def coverage_summary(surfaces: list[dict[str, Any]]) -> dict[str, Any]:
     }
 
 
+def evidence_quality_report(surfaces: list[dict[str, Any]]) -> dict[str, Any]:
+    """Return witness-strength gaps for classified proof surfaces."""
+    quality_records: list[dict[str, Any]] = []
+    by_strength = {
+        "strong": 0,
+        "classified_with_quality_gaps": 0,
+        "unproven": 0,
+    }
+
+    for surface in surfaces:
+        evidence_files = surface.get("evidence_files", [])
+        runtime_witnesses = surface.get("runtime_witnesses", [])
+        gaps: list[str] = []
+        if surface["coverage_state"] == "unproven":
+            gaps.append("surface_unproven")
+        if surface["coverage_state"] in {"proven", "witnessed"} and not evidence_files:
+            gaps.append("missing_evidence_file")
+        if surface["coverage_state"] in {"proven", "witnessed"} and not runtime_witnesses:
+            gaps.append("missing_runtime_witness")
+
+        if surface["coverage_state"] == "unproven":
+            strength = "unproven"
+        elif gaps:
+            strength = "classified_with_quality_gaps"
+        else:
+            strength = "strong"
+        by_strength[strength] += 1
+        if gaps:
+            quality_records.append(
+                {
+                    "surface_id": surface["surface_id"],
+                    "coverage_state": surface["coverage_state"],
+                    "strength": strength,
+                    "gaps": gaps,
+                    "evidence_file_count": len(evidence_files),
+                    "runtime_witness_count": len(runtime_witnesses),
+                }
+            )
+
+    return {
+        "by_strength": by_strength,
+        "quality_gap_count": len(quality_records),
+        "quality_gaps": quality_records,
+    }
+
+
+def witness_integrity_report(
+    surfaces: list[dict[str, Any]],
+    repo_root: Path = REPO_ROOT,
+) -> dict[str, Any]:
+    """Return exact test-function anchors for runtime witness labels."""
+    surface_records: list[dict[str, Any]] = []
+    anchored_count = 0
+    unanchored_count = 0
+    witness_count = 0
+
+    for surface in surfaces:
+        test_anchors = _test_function_anchors(surface.get("evidence_files", []), repo_root=repo_root)
+        anchored_witnesses: list[dict[str, Any]] = []
+        unanchored_witnesses: list[str] = []
+        for witness in surface.get("runtime_witnesses", []):
+            witness_count += 1
+            matching_anchors = test_anchors.get(witness, [])
+            if matching_anchors:
+                anchored_count += 1
+                anchored_witnesses.append({"witness": witness, "anchors": matching_anchors})
+                continue
+            unanchored_count += 1
+            unanchored_witnesses.append(witness)
+        if anchored_witnesses or unanchored_witnesses:
+            surface_records.append(
+                {
+                    "surface_id": surface["surface_id"],
+                    "runtime_witness_count": len(surface.get("runtime_witnesses", [])),
+                    "exact_test_anchor_count": len(anchored_witnesses),
+                    "unanchored_witness_count": len(unanchored_witnesses),
+                    "anchored_witnesses": anchored_witnesses,
+                    "unanchored_witnesses": unanchored_witnesses,
+                }
+            )
+
+    return {
+        "runtime_witness_count": witness_count,
+        "exact_test_anchor_count": anchored_count,
+        "unanchored_witness_count": unanchored_count,
+        "surfaces": surface_records,
+    }
+
+
+def _test_function_anchors(evidence_files: list[str], repo_root: Path = REPO_ROOT) -> dict[str, list[str]]:
+    anchors: dict[str, list[str]] = {}
+    for evidence_file in evidence_files:
+        if not evidence_file.endswith(".py"):
+            continue
+        if "/test" not in evidence_file.replace("\\", "/"):
+            continue
+        evidence_path = repo_root / evidence_file
+        if not evidence_path.exists():
+            continue
+        try:
+            parsed = ast.parse(evidence_path.read_text(encoding="utf-8"))
+        except SyntaxError:
+            continue
+        for node in ast.walk(parsed):
+            if not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                continue
+            if not node.name.startswith("test_"):
+                continue
+            witness = node.name.removeprefix("test_")
+            anchors.setdefault(witness, []).append(f"{evidence_file}::{node.name}")
+    return anchors
+
+
 def discover_declared_routes(repo_root: Path = REPO_ROOT) -> set[str]:
     route_roots = [repo_root / "mcoi" / "mcoi_runtime" / "app" / "routers", repo_root / "gateway"]
     routes = set(FRAMEWORK_GENERATED_ROUTES)
@@ -4524,6 +4673,12 @@ def _proof_relevant_routes(routes: set[str]) -> tuple[str, ...]:
         "/capability",
         "/commands",
         "/evidence",
+        "/browser",
+        "/document",
+        "/email-calendar",
+        "/messaging",
+        "/phone",
+        "/voice",
     )
     return tuple(route for route in routes if route.startswith(prefixes))
 
@@ -4531,16 +4686,12 @@ def _proof_relevant_routes(routes: set[str]) -> tuple[str, ...]:
 def _surface_for_route(route: str, surfaces: list[dict[str, Any]]) -> dict[str, Any] | None:
     """Return the surface that explicitly covers a declared route."""
     for surface in surfaces:
-        if surface["surface_id"] == "operational_platform_read_models":
-            continue
         for path in surface["representative_paths"]:
             if not path.startswith("/"):
                 continue
             if path == route:
                 return surface
     for surface in surfaces:
-        if surface["surface_id"] == "operational_platform_read_models":
-            continue
         for path in surface["representative_paths"]:
             if path.startswith("/") and path.endswith("*") and route.startswith(path[:-1]):
                 return surface
@@ -4590,6 +4741,8 @@ def _markdown_cell(value: object) -> str:
 def operator_document(matrix: dict[str, Any]) -> str:
     """Return the operator-readable proof coverage witness."""
     summary = matrix["coverage_summary"]
+    evidence_quality = matrix["evidence_quality"]
+    witness_integrity = matrix["witness_integrity"]
     route_coverage = matrix["route_coverage"]
     route_count = route_coverage["route_count"]
     unclassified_count = route_coverage["unclassified_route_count"]
@@ -4635,6 +4788,65 @@ def operator_document(matrix: dict[str, Any]) -> str:
             f"| Classified declared routes | {classified_count} |",
             f"| Unclassified declared routes | {unclassified_count} |",
             "",
+            "Evidence quality audit:",
+            "",
+            "| Metric | Count |",
+            "|---|---:|",
+            f"| Strong classified surfaces | {evidence_quality['by_strength']['strong']} |",
+            (
+                "| Classified surfaces with quality gaps | "
+                f"{evidence_quality['by_strength']['classified_with_quality_gaps']} |"
+            ),
+            f"| Unproven surfaces | {evidence_quality['by_strength']['unproven']} |",
+            f"| Evidence quality gaps | {evidence_quality['quality_gap_count']} |",
+            "",
+            "Witness integrity audit:",
+            "",
+            "| Metric | Count |",
+            "|---|---:|",
+            f"| Runtime witness labels | {witness_integrity['runtime_witness_count']} |",
+            f"| Exact test anchors | {witness_integrity['exact_test_anchor_count']} |",
+            f"| Unanchored witness labels | {witness_integrity['unanchored_witness_count']} |",
+            "",
+            "Evidence quality gaps:",
+        ]
+    )
+    if evidence_quality["quality_gaps"]:
+        lines.extend(["", "| Surface | Strength | Gaps | Evidence files | Runtime witnesses |", "|---|---|---|---:|---:|"])
+        for record in evidence_quality["quality_gaps"]:
+            lines.append(
+                "| `{}` | {} | {} | {} | {} |".format(
+                    record["surface_id"],
+                    _markdown_cell(record["strength"]),
+                    _markdown_cell(record["gaps"]),
+                    record["evidence_file_count"],
+                    record["runtime_witness_count"],
+                )
+            )
+    else:
+        lines.append("none")
+
+    lines.extend(["", "Witness integrity gaps:"])
+    unanchored_surfaces = [
+        record for record in witness_integrity["surfaces"] if record["unanchored_witness_count"]
+    ]
+    if unanchored_surfaces:
+        lines.extend(["", "| Surface | Exact anchors | Unanchored | Unanchored labels |", "|---|---:|---:|---|"])
+        for record in unanchored_surfaces:
+            lines.append(
+                "| `{}` | {} | {} | {} |".format(
+                    record["surface_id"],
+                    record["exact_test_anchor_count"],
+                    record["unanchored_witness_count"],
+                    _markdown_cell(record["unanchored_witnesses"]),
+                )
+            )
+    else:
+        lines.append("none")
+
+    lines.extend(
+        [
+            "",
             "Resolved closure actions:",
             "",
         ]
@@ -4652,11 +4864,20 @@ def operator_document(matrix: dict[str, Any]) -> str:
     else:
         lines.append("none")
 
-    open_issue = (
-        f"{unclassified_count} proof-relevant declared routes remain unclassified and are marked unproven in the machine witness"
-        if unclassified_count
-        else "none"
-    )
+    open_issues = []
+    if unclassified_count:
+        open_issues.append(
+            f"{unclassified_count} proof-relevant declared routes remain unclassified and are marked unproven in the machine witness"
+        )
+    if evidence_quality["quality_gap_count"]:
+        open_issues.append(
+            f"{evidence_quality['quality_gap_count']} classified surfaces need stronger runtime-witness labels"
+        )
+    if witness_integrity["unanchored_witness_count"]:
+        open_issues.append(
+            f"{witness_integrity['unanchored_witness_count']} runtime-witness labels lack exact test-function anchors"
+        )
+    open_issue = "; ".join(open_issues) if open_issues else "none"
     verified_invariants = [
         "route declarations",
         "route-level coverage classification",
@@ -4676,6 +4897,10 @@ def operator_document(matrix: dict[str, Any]) -> str:
             (
                 "  Next action: classify remaining unproven declared routes into named proof surfaces or explicit exemptions"
                 if unclassified_count
+                else "  Next action: strengthen classified surfaces that still lack runtime-witness labels"
+                if evidence_quality["quality_gap_count"]
+                else "  Next action: bind unanchored runtime-witness labels to exact test-function anchors"
+                if witness_integrity["unanchored_witness_count"]
                 else "  Next action: advance sandboxed capability-worker execution closure"
             ),
             "",
