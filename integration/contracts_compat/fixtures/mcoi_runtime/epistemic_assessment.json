@@ -1,0 +1,13 @@
+{
+  "assessment_id": "epistemic-assessment-42",
+  "tenant_id": "tenant-mullu-primary",
+  "total_claims": 4,
+  "total_sources": 2,
+  "total_conflicts": 1,
+  "avg_trust": 0.79,
+  "assessed_at": "2026-05-09T08:30:00+00:00",
+  "metadata": {
+    "scope": "tenant",
+    "cycle": "daily"
+  }
+}

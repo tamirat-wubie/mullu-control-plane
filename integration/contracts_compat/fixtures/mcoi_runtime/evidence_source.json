@@ -1,0 +1,13 @@
+{
+  "source_id": "source-runtime-log-42",
+  "tenant_id": "tenant-mullu-primary",
+  "display_name": "Runtime Billing Health Log",
+  "origin": "system_log",
+  "reliability_score": 0.91,
+  "claim_count": 3,
+  "created_at": "2026-05-09T08:05:00+00:00",
+  "metadata": {
+    "system": "billing-runtime",
+    "channel": "audit-log"
+  }
+}
