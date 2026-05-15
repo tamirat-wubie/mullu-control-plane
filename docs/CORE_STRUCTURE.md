@@ -33,7 +33,7 @@ round-trip tests. Crediting existing work is part of the discipline.
 | "MCOI's Python contracts mirror MAF's Rust types" | **Mostly verified.** Field names match across the audited types (TransitionReceipt, GuardVerdict, ProofCapsule, EventRecord, PolicyRule). One field-type mismatch: `ProofCapsule.lineage_depth` is `u32` in Rust and `int` in Python. Mitigated by Python-side validation (`require_non_negative_int`). |
 | "Kept in sync via JSON schema compatibility tests" | **Verified.** `scripts/validate_schemas.py --strict` validates 16 fixture round-trips through Python contracts AND Rust contract surfaces. Runs in CI. |
 | "Round-trip serialization tests in both languages" | **Verified.** `mcoi/tests/test_contract_round_trip_generated.py` (23 tests) covers Python-side round-trips. `maf-kernel/tests/substrate_bench.rs:93-129` covers Rust-side. **Cross-language** round-trip (Python writes → Rust reads, vice versa) is implicit via the shared fixtures + `validate_schemas.py`. |
-| "Shared definitions live in `docs/` and `schemas/`" | **Conditionally true.** 16 canonical fixtures + 22 schemas exist. Of the 9 categories listed in `MAF_BOUNDARY.md` "What Belongs in MAF", these are NOT yet schematized: Governance DSL (`PolicyRule`, `PolicyBundle`, `PolicyEvaluationTrace`), Supervisor contracts (`SupervisorTick`, `LivelockRecord`, `CheckpointStatus`). |
+| "Shared definitions live in `docs/` and `schemas/`" | **Conditionally true.** Canonical fixtures and schemas exist for shared runtime contracts. Of the 9 categories listed in `MAF_BOUNDARY.md` "What Belongs in MAF", the remaining unschematized family is Supervisor contracts (`SupervisorTick`, `LivelockRecord`, `CheckpointStatus`). |
 | "MCOI → MAF dependency direction" | **Verified.** Python contracts import only stdlib + internal validators. No imports from `core/`, `app/`, `adapters/`, `persistence/` into `contracts/`. Inverse direction (MAF importing MCOI) verified clean above. |
 | "Contracts contain pure types, no runtime behavior" | **Mostly verified.** `proof.py`, `governance.py`, `event.py` import only `dataclasses`, `enum`, `_base` validators. `proof.py` contains `certify_transition()` — a pure deterministic function with no side effects, no I/O. Acceptable as "contract logic" because it's reusable and stateless. |
 | "No runtime behavior is implemented in Milestone 0" (`docs/00_platform_overview.md:24`) | **NOT a claim today.** The platform has 47K+ tests of runtime behavior across both substrate and control plane. **This PR closes the doc-staleness gap.** |
@@ -129,15 +129,13 @@ have canonical schemas in `schemas/`:
 - Orchestration types — yes (workflow, plan)
 - Learning contracts — yes (learning_admission)
 
-These do NOT have canonical schemas:
+Schema status notes:
 
-- **Governance DSL** (`PolicyRule`, `PolicyBundle`, `PolicyEvaluationTrace`) — defined in Python contracts and Rust structs but no `schemas/policy_rule.schema.json`.
-- **Supervisor contracts** (`SupervisorTick`, `LivelockRecord`, `CheckpointStatus`) — same situation.
+- **Governance DSL** (`PolicyRule`, `PolicyBundle`, `PolicyEvaluationTrace`) — covered by `schemas/policy_rule.schema.json`, `schemas/policy_bundle.schema.json`, `schemas/policy_evaluation_trace.schema.json`, canonical fixtures, and `scripts/validate_schemas.py --strict`.
+- **Supervisor contracts** (`SupervisorTick`, `LivelockRecord`, `CheckpointStatus`) — do not yet have canonical schemas.
 
-These categories rely on contract-code parity (which `validate_schemas.py`
-checks for fields it knows about) and on the Python-Rust pair of
-`PolicyRule` definitions staying in sync via review. A future PR
-should add schemas for these categories.
+Remaining unschematized categories rely on contract-code parity and
+review until future PRs add schemas.
 
 ### 3. The platform is in "Milestone 0"
 
@@ -165,7 +163,7 @@ language and replacing it with a reference to the current spec set.**
 | Gap | Severity | Resolution path | Status |
 |-----|----------|-----------------|--------|
 | `ProofCapsule.lineage_depth` is `u32` in Rust and `int` in Python | Medium | Either: (a) align Python to a bounded `NewType` matching `u32`, or (b) document the asymmetry as canonical with the Python-side validation as the boundary check. **This PR adds a regression test asserting validation rejects negatives.** | Mitigation tested |
-| Governance DSL (PolicyRule etc.) lacks canonical JSON schemas | Medium | Add `schemas/policy_rule.schema.json`, `schemas/policy_bundle.schema.json`, ensure `validate_schemas.py` exercises them | Open |
+| Governance DSL (PolicyRule etc.) lacks canonical JSON schemas | Medium | Add `schemas/policy_rule.schema.json`, `schemas/policy_bundle.schema.json`, ensure `validate_schemas.py` exercises them | **Closed** — `policy_rule`, `policy_bundle`, and `policy_evaluation_trace` schemas are fixture-backed and exercised by strict schema validation. |
 | Supervisor contracts lack canonical JSON schemas | Medium | Same pattern as Governance DSL | Open |
 | `00_platform_overview.md` says "no runtime behavior in Milestone 0" | Low | Update doc to reference the current spec set. **This PR closes.** | **Closed (this PR)** |
 | Cross-language round-trip is not asserted in a single end-to-end test (Python serialize → Rust deserialize → byte-identical) | Low | Add `tests/test_cross_language_roundtrip.py` running both Python and Rust subprocess + comparing | Open (low priority — implicit coverage exists) |

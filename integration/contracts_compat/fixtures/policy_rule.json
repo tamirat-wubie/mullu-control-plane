@@ -1,0 +1,33 @@
+{
+  "rule_id": "rule-approval-admin",
+  "name": "Require admin approval",
+  "description": "Require approval for admin-scoped actions.",
+  "effect": "require_approval",
+  "conditions": [
+    {
+      "field_path": "subject.role",
+      "operator": "eq",
+      "expected_value": "admin"
+    }
+  ],
+  "actions": [
+    {
+      "action_id": "action-approve",
+      "kind": "set_approval_required",
+      "parameters": {
+        "required": true
+      }
+    }
+  ],
+  "scope": {
+    "scope_id": "scope-global",
+    "kind": "global",
+    "ref_id": null,
+    "description": ""
+  },
+  "priority": 10,
+  "enabled": true,
+  "metadata": {
+    "owner": "governance"
+  }
+}

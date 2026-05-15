@@ -1,0 +1,33 @@
+{
+  "trace_id": "trace-policy-eval-1",
+  "bundle_id": "bundle-governance-1",
+  "subject_id": "actor-1",
+  "context_snapshot": {
+    "subject": {
+      "role": "admin"
+    }
+  },
+  "rules_evaluated": 1,
+  "rules_matched": 1,
+  "rules_fired": 1,
+  "matched_rule_ids": [
+    "rule-approval-admin"
+  ],
+  "fired_rule_ids": [
+    "rule-approval-admin"
+  ],
+  "final_effect": "require_approval",
+  "actions_produced": [
+    {
+      "action_id": "action-approve",
+      "kind": "set_approval_required",
+      "parameters": {
+        "required": true
+      }
+    }
+  ],
+  "evaluated_at": "2026-03-20T12:00:00+00:00",
+  "metadata": {
+    "source": "fixture"
+  }
+}
