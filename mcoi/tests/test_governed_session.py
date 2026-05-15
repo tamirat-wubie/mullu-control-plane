@@ -358,6 +358,19 @@ class TestSessionProof:
         assert envelope["proof_receipt_id"]
         assert envelope["proof_hash"]
 
+    def test_query_audit_records_request_envelope_proof(self):
+        trail = AuditTrail(clock=_clock)
+        p = _platform(audit_trail=trail)
+        session = p.connect(identity_id="user1", tenant_id="t1")
+        result = session.query("tenants")
+        query_entry = trail.query(action="session.query", limit=1)[0]
+
+        audit_envelope = query_entry.detail["request_envelope_proof"]
+        assert audit_envelope == result["request_envelope_proof"]
+        assert audit_envelope["endpoint"] == "session/query"
+        assert audit_envelope["decision"] == "allowed"
+        assert audit_envelope["proof_receipt_id"]
+
     def test_execute_returns_request_envelope_proof(self):
         p = _platform()
         session = p.connect(identity_id="user1", tenant_id="t1")
@@ -390,6 +403,30 @@ class TestSessionProof:
         assert envelope["decision"] == "allowed"
         assert envelope["proof_receipt_id"]
         assert envelope["proof_hash"]
+
+    def test_llm_audit_records_request_envelope_proof(self):
+        class StubLLMBridge:
+            def complete(self, *args, **kwargs):
+                return LLMResult(
+                    content="ok",
+                    input_tokens=1,
+                    output_tokens=1,
+                    cost=0.001,
+                    model_name="stub-model",
+                    provider=LLMProvider.STUB,
+                )
+
+        trail = AuditTrail(clock=_clock)
+        p = _platform(llm_bridge=StubLLMBridge(), audit_trail=trail)
+        session = p.connect(identity_id="user1", tenant_id="t1")
+        result = session.llm("hello")
+        llm_entry = trail.query(action="session.llm", limit=1)[0]
+
+        audit_envelope = llm_entry.detail["request_envelope_proof"]
+        assert audit_envelope == result.metadata["request_envelope_proof"]
+        assert audit_envelope["endpoint"] == "session/llm"
+        assert audit_envelope["decision"] == "allowed"
+        assert audit_envelope["proof_receipt_id"]
 
     def test_llm_cache_is_partitioned_by_policy_context(self):
         class CountingLLMBridge:
