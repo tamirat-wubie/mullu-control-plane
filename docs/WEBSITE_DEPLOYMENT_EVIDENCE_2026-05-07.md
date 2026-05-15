@@ -45,6 +45,20 @@ This means either GitHub Pages had not yet published the route, the cache had
 not expired, or the live site is sourced from a different repository/branch than
 `tamirat-wubie/mullusi` `origin/main`.
 
+## 2026-05-15 Route Update Probe
+
+PR #86 updated the product route on `tamirat-wubie/mullusi` `main` at commit
+`7965ae4e393457017611f6bd4e9b1f3e6dea4940`. The route copy now makes the
+Mullusi/Mullu boundary explicit and keeps repository-verified claims separate
+from live deployment witness claims.
+
+| Check | Observed result | Decision |
+| --- | --- | --- |
+| `tamirat-wubie/mullusi` PR #86 | Merged and `fast-check` passed | Website repo source updated |
+| `gh api repos/tamirat-wubie/mullusi/pages` | HTTP 404 | This repository is not configured as the active Pages site |
+| `https://mullusi.com/mullu` | HTTP 404 from current environment | Product route still not live |
+| Live-route tracking issue | `https://github.com/tamirat-wubie/mullusi/issues/87` | Keep deployment verification open |
+
 ## Pages Source Discovery
 
 DNS now shows:

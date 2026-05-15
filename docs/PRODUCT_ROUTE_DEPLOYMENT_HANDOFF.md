@@ -13,9 +13,11 @@ Invariants: this handoff does not close `website_deployment_verification`; the r
 | Website repo copy target | `../mullusi/mullu/index.html` |
 | Intended live route | `https://mullusi.com/mullu` |
 | Website main branch | `origin/main` |
-| Merged PR carrying route | `https://github.com/tamirat-wubie/mullusi/pull/84` |
-| Main commit carrying route | `39014fd` |
+| Initial merged PR carrying route | `https://github.com/tamirat-wubie/mullusi/pull/84` |
+| Current merged PR carrying route boundary update | `https://github.com/tamirat-wubie/mullusi/pull/86` |
+| Current main commit carrying route | `7965ae4e393457017611f6bd4e9b1f3e6dea4940` |
 | Redundant route PR | `https://github.com/tamirat-wubie/mullusi/pull/85` closed after route appeared on `origin/main` |
+| Live-route blocker issue | `https://github.com/tamirat-wubie/mullusi/issues/87` |
 | DNS Pages target | `mullusi.github.io` |
 | Pages source access | `https://github.com/mullusi/mullusi.github.io.git` returned repository not found from current session |
 | Product first reference | `Mullu, by Mullusi` |
@@ -56,6 +58,13 @@ strict-typing fixes, passed `fast-check`, and merged first. After PR #84 merged,
 `mullu/index.html` was already present on `origin/main` at commit `39014fd`, so
 PR #85 was closed as redundant.
 
+PR #86 later replaced the product route copy with a clearer Mullusi/Mullu
+boundary: Mullusi is the company, research, governance, and trust umbrella;
+Mullu is the flagship governed symbolic intelligence product. It also added
+explicit public claim handling for repository-verified evidence versus the
+unpublished live deployment witness. PR #86 passed `fast-check` and merged into
+`tamirat-wubie/mullusi` `main` at `7965ae4e393457017611f6bd4e9b1f3e6dea4940`.
+
 The earlier accidental product-route push to `ci/optimize-actions-minutes` was
 removed with a lease-protected branch update before PR #84 was repaired and
 merged.
@@ -67,3 +76,5 @@ merged.
 3. Re-run direct probes for `https://mullusi.com/mullu` after publish propagation.
 4. Replace the failed `HTTP 404` evidence with passing `HTTP 200` evidence.
 5. Keep `website_deployment_verification` open until the live route is verified.
+
+Tracking issue: `https://github.com/tamirat-wubie/mullusi/issues/87`.
