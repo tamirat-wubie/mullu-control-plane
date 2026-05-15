@@ -14,6 +14,7 @@ Invariants:
 
 from __future__ import annotations
 
+from contextlib import suppress
 from dataclasses import dataclass
 import math
 import queue
@@ -30,6 +31,16 @@ def _classify_shutdown_exception(exc: Exception) -> str:
 def _classify_shutdown_timeout() -> str:
     """Return a bounded shutdown hook timeout message."""
     return "shutdown hook timeout"
+
+
+def _put_hook_result(
+    result_queue: queue.Queue[tuple[str, dict[str, Any] | Exception]],
+    status: str,
+    payload: dict[str, Any] | Exception,
+) -> None:
+    """Record the first hook result without leaking daemon-thread errors."""
+    with suppress(queue.Full):
+        result_queue.put_nowait((status, payload))
 
 
 @dataclass(frozen=True, slots=True)
@@ -148,9 +159,9 @@ class ShutdownManager:
                 result = hook.fn()
                 if not isinstance(result, dict):
                     raise TypeError("shutdown hook must return a dict")
-                result_queue.put_nowait(("ok", result))
+                _put_hook_result(result_queue, "ok", result)
             except Exception as exc:
-                result_queue.put_nowait(("error", exc))
+                _put_hook_result(result_queue, "error", exc)
 
         thread = threading.Thread(
             target=run_hook,

@@ -67,6 +67,9 @@ class TestShutdownManager:
             mgr.register("bad-priority", lambda: {}, priority=True)
         with pytest.raises(ValueError, match="timeout_seconds"):
             mgr.register("bad-timeout", lambda: {}, timeout_seconds=0)
+        assert mgr.hook_count == 1
+        assert mgr.hook_names() == ["valid"]
+        assert mgr.summary()["shutdown_complete"] is False
 
     def test_hook_result_cannot_override_manager_status_fields(self):
         mgr = ShutdownManager()
@@ -81,6 +84,20 @@ class TestShutdownManager:
         assert hook_result["hook"] == "save-state"
         assert hook_result["status"] == "ok"
         assert hook_result["saved"] is True
+
+    def test_hook_non_dict_result_is_bounded_error(self):
+        mgr = ShutdownManager()
+        mgr.register("bad-result", lambda: "raw-secret-value")
+
+        result = mgr.execute()
+        hook_result = result.results[0]
+
+        assert result.hooks_succeeded == 0
+        assert result.hooks_failed == 1
+        assert hook_result["hook"] == "bad-result"
+        assert hook_result["status"] == "error"
+        assert hook_result["error"] == "shutdown hook error (TypeError)"
+        assert "raw-secret-value" not in str(hook_result)
 
     def test_slow_hook_times_out_without_blocking_later_hooks(self):
         mgr = ShutdownManager()
