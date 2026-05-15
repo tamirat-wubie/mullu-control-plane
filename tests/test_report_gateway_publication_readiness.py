@@ -247,6 +247,22 @@ def test_report_rejects_invalid_explicit_host_before_gh_commands() -> None:
     assert runner.workflow_state == "active"
 
 
+def test_report_rejects_gateway_url_path_before_gh_commands() -> None:
+    runner = FakeRunner()
+
+    with pytest.raises(RuntimeError, match="must not include path"):
+        report_gateway_publication_readiness(
+            gateway_url="https://gateway.mullusi.com/private-path",
+            expected_environment="pilot",
+            runner=runner,
+            resolver=_resolve_ok,
+        )
+
+    assert runner.commands == []
+    assert runner.runtime_secret_present is True
+    assert runner.workflow_state == "active"
+
+
 def test_report_marks_inactive_workflow_not_ready() -> None:
     runner = FakeRunner(workflow_state="disabled_manually")
 

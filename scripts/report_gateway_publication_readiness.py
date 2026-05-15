@@ -221,13 +221,13 @@ def _resolve_inputs(
     repository: str,
     runner: CommandRunner,
 ) -> ResolvedInputs:
+    normalized_gateway_url = _normalize_gateway_url(gateway_url)
     variables_required = not gateway_host.strip() or not expected_environment.strip()
     variables = (
         _read_repository_variables(repository=repository, runner=runner)
         if variables_required
         else {}
     )
-    normalized_gateway_url = _normalize_gateway_url(gateway_url)
 
     if gateway_host.strip():
         normalized_gateway_host = _require_gateway_host(gateway_host)
@@ -412,9 +412,18 @@ def _normalize_gateway_url(gateway_url: str) -> str:
     normalized = gateway_url.strip().rstrip("/")
     if not normalized:
         return ""
-    if not normalized.startswith(("https://", "http://")):
-        raise RuntimeError("gateway URL must start with http:// or https://")
-    return normalized
+    parsed = urlparse(normalized)
+    if parsed.scheme not in {"http", "https"} or not parsed.hostname:
+        raise RuntimeError("gateway URL must include scheme and hostname")
+    try:
+        has_port = parsed.port is not None
+    except ValueError as exc:
+        raise RuntimeError("gateway URL must not include port") from exc
+    if has_port:
+        raise RuntimeError("gateway URL must not include port")
+    if parsed.path not in {"", "/"} or parsed.params or parsed.query or parsed.fragment:
+        raise RuntimeError("gateway URL must not include path, query, or fragment")
+    return f"{parsed.scheme}://{_require_gateway_host(parsed.hostname)}"
 
 
 def _derive_host_from_url(gateway_url: str) -> str:

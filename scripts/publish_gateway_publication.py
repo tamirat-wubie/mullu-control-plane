@@ -58,6 +58,7 @@ class GatewayPublicationPublish:
     dispatch_requested: bool
     dispatch: GatewayPublicationDispatch | None
     receipt_path: Path
+    dispatch_error: str = ""
 
 
 def publish_gateway_publication(
@@ -121,28 +122,40 @@ def publish_gateway_publication(
         readiness_report_path,
         repository=repository,
     )
-    dispatch_result = dispatch_gateway_publication(
-        gateway_host=dispatch_inputs.gateway_host,
-        gateway_url=dispatch_inputs.gateway_url,
-        expected_environment=dispatch_inputs.expected_environment,
-        apply_ingress=dispatch_inputs.apply_ingress,
-        dispatch_witness=dispatch_inputs.dispatch_witness,
-        skip_preflight_endpoint_probes=(
-            dispatch_inputs.skip_preflight_endpoint_probes
-        ),
-        repository=dispatch_inputs.repository,
-        workflow_file=workflow_file,
-        workflow_name=workflow_name,
-        runtime_secret_name=runtime_secret_name,
-        conformance_secret_name=conformance_secret_name,
-        deployment_witness_secret_name=deployment_witness_secret_name,
-        kubeconfig_secret_name=kubeconfig_secret_name,
-        artifact_name=artifact_name,
-        download_dir=download_dir,
-        timeout_seconds=timeout_seconds,
-        poll_seconds=poll_seconds,
-        runner=command_runner,
-    )
+    try:
+        dispatch_result = dispatch_gateway_publication(
+            gateway_host=dispatch_inputs.gateway_host,
+            gateway_url=dispatch_inputs.gateway_url,
+            expected_environment=dispatch_inputs.expected_environment,
+            apply_ingress=dispatch_inputs.apply_ingress,
+            dispatch_witness=dispatch_inputs.dispatch_witness,
+            skip_preflight_endpoint_probes=(
+                dispatch_inputs.skip_preflight_endpoint_probes
+            ),
+            repository=dispatch_inputs.repository,
+            workflow_file=workflow_file,
+            workflow_name=workflow_name,
+            runtime_secret_name=runtime_secret_name,
+            conformance_secret_name=conformance_secret_name,
+            deployment_witness_secret_name=deployment_witness_secret_name,
+            kubeconfig_secret_name=kubeconfig_secret_name,
+            artifact_name=artifact_name,
+            download_dir=download_dir,
+            timeout_seconds=timeout_seconds,
+            poll_seconds=poll_seconds,
+            runner=command_runner,
+        )
+    except RuntimeError:
+        result = GatewayPublicationPublish(
+            readiness_report_path=readiness_report_path,
+            readiness=readiness,
+            dispatch_requested=dispatch,
+            dispatch=None,
+            receipt_path=receipt_output_path,
+            dispatch_error="dispatch_failed",
+        )
+        write_gateway_publication_receipt(result, receipt_output_path)
+        raise
     result = GatewayPublicationPublish(
         readiness_report_path=readiness_report_path,
         readiness=readiness,
@@ -175,6 +188,7 @@ def _receipt_payload(result: GatewayPublicationPublish) -> dict[str, object]:
         "dispatch_conclusion": dispatch.conclusion if dispatch else "",
         "dispatch_performed": dispatch is not None,
         "dispatch_requested": result.dispatch_requested,
+        "dispatch_error": result.dispatch_error,
         "dispatch_run_id": dispatch.run_id if dispatch else 0,
         "dispatch_run_url": dispatch.run_url if dispatch else "",
         "dispatch_status": dispatch.status if dispatch else "",
@@ -193,6 +207,8 @@ def _receipt_payload(result: GatewayPublicationPublish) -> dict[str, object]:
 def _resolution_state(result: GatewayPublicationPublish) -> str:
     if result.dispatch:
         return "dispatched"
+    if result.dispatch_error:
+        return "dispatch-failed"
     if result.dispatch_requested:
         return "blocked-not-ready"
     if result.readiness.ready:
