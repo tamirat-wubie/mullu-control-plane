@@ -18,6 +18,7 @@ from scripts.proof_coverage_matrix import (
     DOC_OUTPUT,
     REPO_ROOT,
     discover_declared_routes,
+    evidence_quality_report,
     operator_document,
     route_coverage_report,
     proof_coverage_matrix,
@@ -74,6 +75,25 @@ def test_coverage_summary_matches_surfaces() -> None:
     assert summary["by_coverage_state"]["unproven"] == 0
     assert summary["by_coverage_state"]["proven"] >= 1
     assert summary["by_coverage_state"]["witnessed"] >= 1
+
+
+def test_evidence_quality_report_tracks_witness_strength_gaps() -> None:
+    matrix = _load_fixture()
+    evidence_quality = matrix["evidence_quality"]
+    quality_gaps = {
+        record["surface_id"]: record
+        for record in evidence_quality["quality_gaps"]
+    }
+
+    assert evidence_quality == evidence_quality_report(matrix["surfaces"])
+    assert sum(evidence_quality["by_strength"].values()) == len(matrix["surfaces"])
+    assert evidence_quality["quality_gap_count"] == len(evidence_quality["quality_gaps"])
+    assert evidence_quality["by_strength"]["strong"] >= 1
+    assert evidence_quality["by_strength"]["classified_with_quality_gaps"] >= 1
+    assert "llm_streaming" in quality_gaps
+    assert quality_gaps["llm_streaming"]["gaps"] == ["missing_runtime_witness"]
+    assert quality_gaps["llm_streaming"]["evidence_file_count"] >= 1
+    assert quality_gaps["llm_streaming"]["runtime_witness_count"] == 0
 
 
 def test_declared_routes_have_explicit_coverage_classification() -> None:

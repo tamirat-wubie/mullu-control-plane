@@ -14,6 +14,17 @@ from starlette.middleware.cors import CORSMiddleware
 from starlette.requests import Request as StarletteRequest
 from starlette.responses import JSONResponse as StarletteJSONResponse
 
+_DEV_CORS_ENVS = frozenset({"local_dev", "test"})
+
+
+def _cors_allow_origins(cors_origins: list[str], env: str) -> list[str]:
+    """Return the effective CORS allowlist with fail-closed non-dev fallback."""
+    if cors_origins:
+        return cors_origins
+    if env.strip().lower() in _DEV_CORS_ENVS:
+        return ["*"]
+    return []
+
 
 def configure_cors_middleware(
     *,
@@ -31,7 +42,7 @@ def configure_cors_middleware(
         warnings_module.warn(cors_warning, stacklevel=1)
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=cors_origins or ["*"],
+        allow_origins=_cors_allow_origins(cors_origins, env),
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
@@ -52,11 +63,17 @@ def install_global_exception_handler(
         request: StarletteRequest,
         exc: Exception,
     ) -> StarletteJSONResponse:
-        metrics.inc("errors_total")
-        platform_logger.log(
-            log_levels.ERROR,
-            f"Unhandled exception on {request.url.path}: {type(exc).__name__}",
-        )
+        try:
+            metrics.inc("errors_total")
+        except Exception:
+            pass
+        try:
+            platform_logger.log(
+                log_levels.ERROR,
+                f"Unhandled exception on {request.url.path}: {type(exc).__name__}",
+            )
+        except Exception:
+            pass
         return StarletteJSONResponse(
             status_code=500,
             content={

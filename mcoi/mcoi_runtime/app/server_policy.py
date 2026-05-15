@@ -74,23 +74,25 @@ def _resolve_cors_origins(raw_value: str | None, env: str) -> list[str]:
 
 def _validate_cors_origins_for_env(origins: list[str], env: str) -> str | None:
     """Validate CORS posture against environment expectations."""
+    normalized_env = env.strip().lower()
+    normalized_origins = [origin.strip() for origin in origins]
     # Fail-closed: wildcard origins are forbidden in pilot/production.
     # CORS "*" combined with credentialed requests is a documented
     # cross-origin attack vector; explicit allowlists are required.
-    if "*" in origins and env in ("pilot", "production"):
+    if "*" in normalized_origins and normalized_env in ("pilot", "production"):
         raise RuntimeError(
-            f"MULLU_CORS_ORIGINS contains wildcard '*' in {env!r} environment. "
+            f"MULLU_CORS_ORIGINS contains wildcard '*' in {normalized_env!r} environment. "
             "Wildcards are forbidden in pilot/production. "
             "Set explicit origins (for example https://app.mullu.io)."
         )
-    if origins:
+    if normalized_origins:
         return None
-    if env in ("pilot", "production"):
+    if normalized_env in ("pilot", "production"):
         raise RuntimeError(
             "MULLU_CORS_ORIGINS must be set in pilot or production environment. "
             "Set explicit origins (for example https://app.mullu.io) for governed CORS."
         )
-    if env not in ("local_dev", "test", ""):
+    if normalized_env not in ("local_dev", "test", ""):
         return (
             "MULLU_CORS_ORIGINS is empty in non-dev environment. "
             "Set explicit origins (for example https://app.mullu.io) for production CORS."

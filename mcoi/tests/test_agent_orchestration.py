@@ -476,7 +476,10 @@ class TestSummary:
         assert s["registered_agents"] == 3
         assert s["total_plans"] == 1
         assert s["active_plans"] == 0
+        assert s["plans_by_phase"] == {"completed": 1}
         assert s["dispatch_proofs"] == 1
+        assert s["dispatch_decisions"] == {"executed": 1}
+        assert s["handoff_decisions"] == {}
 
     def test_plan_to_dict(self, orchestrator):
         plan = orchestrator.create_plan("agent-a", "goal")
@@ -502,3 +505,27 @@ class TestSummary:
         assert data["dispatch_proofs"][0]["proof_id"] == result.results[0]["proof_id"]
         assert data["dispatch_proofs"][0]["decision"] == "executed"
         assert data["dispatch_proofs"][0]["required_capability_count"] == 0
+
+    def test_read_model_bounds_recent_proofs_and_aggregates_decisions(self, orchestrator):
+        plan = orchestrator.create_plan("agent-a", "goal")
+        orchestrator.add_proposal(plan.plan_id, AgentProposal(
+            proposal_id="p1", agent_id="agent-a", action="search", description="d",
+        ))
+        orchestrator.submit_for_voting(plan.plan_id)
+        orchestrator.cast_vote(plan.plan_id, "agent-a", Vote.APPROVE)
+        orchestrator.cast_vote(plan.plan_id, "agent-b", Vote.APPROVE)
+        orchestrator.execute_plan(plan.plan_id)
+        orchestrator.handoff("agent-a", "agent-c", required_capabilities=("search",))
+        orchestrator.handoff("agent-a", "agent-b", required_capabilities=("deploy",))
+
+        model = orchestrator.read_model(proof_limit=1)
+
+        assert model["summary"]["plans_by_phase"] == {"completed": 1}
+        assert model["summary"]["dispatch_decisions"] == {"executed": 1}
+        assert model["summary"]["handoff_decisions"] == {
+            "transferred": 1,
+            "blocked": 1,
+        }
+        assert len(model["recent_dispatch_proofs"]) == 1
+        assert len(model["recent_handoff_proofs"]) == 1
+        assert model["recent_handoff_proofs"][0]["decision"] == "blocked"

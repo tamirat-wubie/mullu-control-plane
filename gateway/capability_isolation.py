@@ -562,6 +562,10 @@ def _validate_worker_response(
         raise RuntimeError("capability worker receipt capability mismatch")
     if receipt.execution_plane != request.boundary.execution_plane:
         raise RuntimeError("capability worker receipt plane mismatch")
+    if receipt.isolation_required != request.boundary.isolation_required:
+        raise RuntimeError("capability worker receipt isolation mismatch")
+    if request.boundary.isolation_required and receipt.execution_plane != "isolated_worker":
+        raise RuntimeError("capability worker receipt isolated plane required")
     if receipt.input_hash != request.input_hash:
         raise RuntimeError("capability worker receipt input mismatch")
     if not receipt.evidence_refs:

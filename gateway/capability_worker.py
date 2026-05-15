@@ -73,6 +73,8 @@ def create_capability_worker_app(
             execution_request = capability_execution_request_from_mapping(raw)
             if not execution_request.boundary.isolation_required:
                 raise RuntimeError("restricted worker requires an isolated capability boundary")
+            if execution_request.boundary.execution_plane != "isolated_worker":
+                raise RuntimeError("restricted worker requires isolated_worker execution plane")
             intent = CapabilityIntent(
                 str(execution_request.intent["skill"]),
                 str(execution_request.intent["action"]),

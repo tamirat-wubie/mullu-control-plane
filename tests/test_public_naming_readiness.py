@@ -206,6 +206,7 @@ def test_public_naming_transition_plan_outputs_remaining_actions(capsys: pytest.
     assert "Evidence artifact count:" in output
     assert "uspto_search" in output
     assert "domain_ownership" in output
+    assert "mullusi.com/mullu: site_route_verified" not in output
     assert "Set public_paid_launch_allowed to true" in output
     assert "STATUS: transition_blocked" in output
 
@@ -234,6 +235,17 @@ def test_product_route_draft_rejects_blocked_public_name(tmp_path: Path) -> None
     route_path.write_text(route_text, encoding="utf-8")
 
     with pytest.raises(AssertionError, match="blocked public names leaked"):
+        validate_product_route_draft(route_path)
+
+
+def test_product_route_draft_rejects_conflict_markers(tmp_path: Path) -> None:
+    route_path = tmp_path / "index.html"
+    route_path.write_text(
+        PRODUCT_ROUTE_DRAFT_PATH.read_text(encoding="utf-8") + "\n<<<<<<< HEAD\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(AssertionError, match="conflict markers"):
         validate_product_route_draft(route_path)
 
 

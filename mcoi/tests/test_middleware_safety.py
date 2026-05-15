@@ -335,6 +335,56 @@ def test_middleware_witnesses_decision_log_failures() -> None:
     assert "secret-decision-log-failure" not in str(resp.json())
 
 
+def test_middleware_witnesses_reject_callback_failures() -> None:
+    chain = GovernanceGuardChain()
+    metric_calls: list[tuple[str, int]] = []
+
+    def deny(_context: dict[str, object]) -> GuardResult:
+        return GuardResult(allowed=False, guard_name="deny", reason="blocked")
+
+    def broken_reject(_context: dict[str, object]) -> None:
+        raise RuntimeError("secret-reject-callback")
+
+    chain.add(GovernanceGuard("deny", deny))
+    client = _client_with_chain(
+        chain,
+        metrics_fn=lambda name, value: metric_calls.append((name, value)),
+        on_reject=broken_reject,
+    )
+
+    resp = client.post("/api/v1/echo", json={"prompt": "hello"})
+
+    assert resp.status_code == 403
+    assert resp.json()["error"] == "blocked"
+    assert ("reject_callback_failures", 1) in metric_calls
+    assert "secret-reject-callback" not in str(resp.json())
+
+
+def test_middleware_witnesses_allow_callback_failures() -> None:
+    chain = GovernanceGuardChain()
+    metric_calls: list[tuple[str, int]] = []
+
+    def allow(_context: dict[str, object]) -> GuardResult:
+        return GuardResult(allowed=True, guard_name="allow")
+
+    def broken_allow(_context: dict[str, object]) -> None:
+        raise RuntimeError("secret-allow-callback")
+
+    chain.add(GovernanceGuard("allow", allow))
+    client = _client_with_chain(
+        chain,
+        metrics_fn=lambda name, value: metric_calls.append((name, value)),
+        on_allow=broken_allow,
+    )
+
+    resp = client.post("/api/v1/echo", json={"prompt": "hello"})
+
+    assert resp.status_code == 200
+    assert resp.json()["ok"] is True
+    assert ("allow_callback_failures", 1) in metric_calls
+    assert "secret-allow-callback" not in str(resp.json())
+
+
 def test_middleware_witnesses_request_analytics_failures() -> None:
     chain = GovernanceGuardChain()
     metric_calls: list[tuple[str, int]] = []

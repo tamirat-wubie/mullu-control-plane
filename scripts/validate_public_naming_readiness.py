@@ -218,6 +218,9 @@ def validate_public_launch_copy(copy_path: Path = PUBLIC_LAUNCH_COPY_PATH) -> No
 def validate_product_route_draft(route_path: Path = PRODUCT_ROUTE_DRAFT_PATH) -> None:
     route_text = route_path.read_text(encoding="utf-8")
     validate_no_forbidden_terminology(_display_path(route_path), route_text)
+    conflict_markers = ("<<<<<<<", "=======", ">>>>>>>")
+    leaked_markers = sorted(marker for marker in conflict_markers if marker in route_text)
+    _require(not leaked_markers, f"product route draft contains conflict markers: {leaked_markers}")
 
     leaked_names = sorted(name for name in BLOCKED_PUBLIC_NAMES if name in route_text)
     _require(not leaked_names, f"blocked public names leaked into product route draft: {leaked_names}")

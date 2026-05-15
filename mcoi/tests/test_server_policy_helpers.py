@@ -124,6 +124,15 @@ def test_validate_cors_rejects_wildcard_in_production() -> None:
         server_policy._validate_cors_origins_for_env(["*"], "pilot")
 
 
+def test_validate_cors_normalizes_wildcard_and_environment() -> None:
+    with pytest.raises(RuntimeError, match="wildcard '\\*'") as exc_info:
+        server_policy._validate_cors_origins_for_env([" * "], " Production ")
+
+    message = str(exc_info.value)
+    assert "production" in message
+    assert " Production " not in message
+
+
 def test_validate_cors_allows_wildcard_in_dev() -> None:
     """Wildcard is allowed in dev/test environments."""
     # No exception expected

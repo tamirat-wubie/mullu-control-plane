@@ -782,6 +782,166 @@
     },
     "surface_count": 111
   },
+  "evidence_quality": {
+    "by_strength": {
+      "classified_with_quality_gaps": 15,
+      "strong": 96,
+      "unproven": 0
+    },
+    "quality_gap_count": 15,
+    "quality_gaps": [
+      {
+        "coverage_state": "witnessed",
+        "evidence_file_count": 7,
+        "gaps": [
+          "missing_runtime_witness"
+        ],
+        "runtime_witness_count": 0,
+        "strength": "classified_with_quality_gaps",
+        "surface_id": "llm_streaming"
+      },
+      {
+        "coverage_state": "witnessed",
+        "evidence_file_count": 2,
+        "gaps": [
+          "missing_runtime_witness"
+        ],
+        "runtime_witness_count": 0,
+        "strength": "classified_with_quality_gaps",
+        "surface_id": "llm_completion"
+      },
+      {
+        "coverage_state": "witnessed",
+        "evidence_file_count": 2,
+        "gaps": [
+          "missing_runtime_witness"
+        ],
+        "runtime_witness_count": 0,
+        "strength": "classified_with_quality_gaps",
+        "surface_id": "llm_chat_workflow"
+      },
+      {
+        "coverage_state": "witnessed",
+        "evidence_file_count": 3,
+        "gaps": [
+          "missing_runtime_witness"
+        ],
+        "runtime_witness_count": 0,
+        "strength": "classified_with_quality_gaps",
+        "surface_id": "cost_budget_read_models"
+      },
+      {
+        "coverage_state": "witnessed",
+        "evidence_file_count": 2,
+        "gaps": [
+          "missing_runtime_witness"
+        ],
+        "runtime_witness_count": 0,
+        "strength": "classified_with_quality_gaps",
+        "surface_id": "model_experiment_control"
+      },
+      {
+        "coverage_state": "witnessed",
+        "evidence_file_count": 4,
+        "gaps": [
+          "missing_runtime_witness"
+        ],
+        "runtime_witness_count": 0,
+        "strength": "classified_with_quality_gaps",
+        "surface_id": "policy_version_registry"
+      },
+      {
+        "coverage_state": "witnessed",
+        "evidence_file_count": 4,
+        "gaps": [
+          "missing_runtime_witness"
+        ],
+        "runtime_witness_count": 0,
+        "strength": "classified_with_quality_gaps",
+        "surface_id": "pilot_provisioning"
+      },
+      {
+        "coverage_state": "witnessed",
+        "evidence_file_count": 4,
+        "gaps": [
+          "missing_runtime_witness"
+        ],
+        "runtime_witness_count": 0,
+        "strength": "classified_with_quality_gaps",
+        "surface_id": "hosted_demo_sandbox"
+      },
+      {
+        "coverage_state": "witnessed",
+        "evidence_file_count": 3,
+        "gaps": [
+          "missing_runtime_witness"
+        ],
+        "runtime_witness_count": 0,
+        "strength": "classified_with_quality_gaps",
+        "surface_id": "gateway_webhook_ingress"
+      },
+      {
+        "coverage_state": "witnessed",
+        "evidence_file_count": 3,
+        "gaps": [
+          "missing_runtime_witness"
+        ],
+        "runtime_witness_count": 0,
+        "strength": "classified_with_quality_gaps",
+        "surface_id": "gateway_approval_resolution"
+      },
+      {
+        "coverage_state": "witnessed",
+        "evidence_file_count": 5,
+        "gaps": [
+          "missing_runtime_witness"
+        ],
+        "runtime_witness_count": 0,
+        "strength": "classified_with_quality_gaps",
+        "surface_id": "replay_determinism"
+      },
+      {
+        "coverage_state": "witnessed",
+        "evidence_file_count": 15,
+        "gaps": [
+          "missing_runtime_witness"
+        ],
+        "runtime_witness_count": 0,
+        "strength": "classified_with_quality_gaps",
+        "surface_id": "tool_invocation"
+      },
+      {
+        "coverage_state": "witnessed",
+        "evidence_file_count": 3,
+        "gaps": [
+          "missing_runtime_witness"
+        ],
+        "runtime_witness_count": 0,
+        "strength": "classified_with_quality_gaps",
+        "surface_id": "governed_session"
+      },
+      {
+        "coverage_state": "witnessed",
+        "evidence_file_count": 1,
+        "gaps": [
+          "missing_runtime_witness"
+        ],
+        "runtime_witness_count": 0,
+        "strength": "classified_with_quality_gaps",
+        "surface_id": "health_docs_exempt"
+      },
+      {
+        "coverage_state": "witnessed",
+        "evidence_file_count": 7,
+        "gaps": [
+          "missing_runtime_witness"
+        ],
+        "runtime_witness_count": 0,
+        "strength": "classified_with_quality_gaps",
+        "surface_id": "lineage_query_api"
+      }
+    ]
+  },
   "generated_by": "scripts/proof_coverage_matrix.py",
   "route_coverage": {
     "by_coverage_state": {

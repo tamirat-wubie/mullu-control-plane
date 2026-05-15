@@ -10,6 +10,7 @@ Invariants:
   - Handoff attempts carry bounded proof records.
   - Proposals require a registered proposer with matching capabilities.
   - Dispatch results carry bounded proof records.
+  - Observability read models are bounded and aggregated.
   - Consensus requires quorum (majority of registered agents).
   - Plans are immutable once approved.
 """
@@ -18,7 +19,7 @@ from __future__ import annotations
 import uuid
 from dataclasses import dataclass, field
 from enum import Enum, unique
-from typing import Any, Callable, Mapping
+from typing import Any, Callable, Iterable, Mapping
 
 
 def _classify_orchestration_exception(exc: Exception) -> str:
@@ -409,6 +410,13 @@ class AgentOrchestrator:
     def get_plan(self, plan_id: str) -> OrchestrationPlan | None:
         return self._plans.get(plan_id)
 
+    def read_model(self, proof_limit: int = 20) -> dict[str, Any]:
+        return {
+            "summary": self.summary(),
+            "recent_dispatch_proofs": self._recent_dispatch_proofs(proof_limit),
+            "recent_handoff_proofs": self.handoff_proofs(limit=proof_limit),
+        }
+
     def handoff_proofs(self, limit: int = 50) -> list[dict[str, Any]]:
         if limit <= 0:
             return []
@@ -422,15 +430,34 @@ class AgentOrchestrator:
                                 if p.phase in (OrchestrationPhase.PLANNING,
                                                OrchestrationPhase.VOTING,
                                                OrchestrationPhase.EXECUTING)),
+            "plans_by_phase": _count_by_value(p.phase.value for p in self._plans.values()),
             "total_handoffs": self._total_handoffs,
             "successful_handoffs": len(self._handoffs),
             "handoff_proofs": len(self._handoff_proofs),
+            "handoff_decisions": _count_by_value(
+                proof.decision for proof in self._handoff_proofs
+            ),
             "manifest_gated": self.manifest_gated,
             "admitted_capability_count": (
                 0 if self._admitted_capabilities is None else len(self._admitted_capabilities)
             ),
             "dispatch_proofs": sum(len(p.dispatch_proofs) for p in self._plans.values()),
+            "dispatch_decisions": _count_by_value(
+                proof.decision
+                for plan in self._plans.values()
+                for proof in plan.dispatch_proofs
+            ),
         }
+
+    def _recent_dispatch_proofs(self, limit: int) -> list[dict[str, Any]]:
+        if limit <= 0:
+            return []
+        proofs = [
+            proof
+            for plan in self._plans.values()
+            for proof in plan.dispatch_proofs
+        ]
+        return [proof.to_dict() for proof in proofs[-limit:]]
 
     def _unadmitted_capabilities(self, required: tuple[str, ...]) -> tuple[str, ...]:
         if self._admitted_capabilities is None:
@@ -562,3 +589,10 @@ def _capability_ids_from_manifest_read_model(read_model: Mapping[str, Any] | Non
     if not isinstance(raw_ids, (tuple, list)):
         return ()
     return tuple(str(capability_id).strip() for capability_id in raw_ids if str(capability_id).strip())
+
+
+def _count_by_value(values: Iterable[str]) -> dict[str, int]:
+    counts: dict[str, int] = {}
+    for value in values:
+        counts[value] = counts.get(value, 0) + 1
+    return counts

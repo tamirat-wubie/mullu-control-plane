@@ -253,6 +253,29 @@ def test_capability_worker_rejects_non_isolated_boundary() -> None:
     assert "restricted worker requires an isolated capability boundary" in response.json()["detail"]
 
 
+def test_capability_worker_rejects_gateway_process_boundary_even_when_isolated() -> None:
+    secret = "worker-secret"
+    payload = json.loads(_request_body().decode("utf-8"))
+    payload["boundary"]["isolation_required"] = True
+    payload["boundary"]["execution_plane"] = "gateway_process"
+    body = _body_from_payload(_rehash_payload(payload))
+    app = create_capability_worker_app(
+        dispatcher=SkillDispatcher(payment_executor=SettlingPaymentExecutor()),
+        signing_secret=secret,
+        worker_id="restricted-worker-test",
+    )
+    client = TestClient(app)
+
+    response = client.post(
+        "/capability/execute",
+        content=body,
+        headers={"X-Mullu-Capability-Signature": sign_capability_payload(body, secret)},
+    )
+
+    assert response.status_code == 422
+    assert "restricted worker requires isolated_worker execution plane" in response.json()["detail"]
+
+
 def test_default_capability_worker_smoke_stub_is_local_only(monkeypatch) -> None:
     secret = "local-worker-secret"
     monkeypatch.setenv("MULLU_ENV", "local_dev")

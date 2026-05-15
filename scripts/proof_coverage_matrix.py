@@ -4132,6 +4132,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
         "coverage_levels": COVERAGE_LEVELS,
         "coverage_states": COVERAGE_STATES,
         "coverage_summary": coverage_summary(surfaces),
+        "evidence_quality": evidence_quality_report(surfaces),
         "surfaces": surfaces,
         "route_coverage": route_coverage_report(surfaces, discover_declared_routes()),
         "closure_actions": closure_actions,
@@ -4207,6 +4208,52 @@ def coverage_summary(surfaces: list[dict[str, Any]]) -> dict[str, Any]:
         "by_request_proof": by_request_proof,
         "by_action_proof": by_action_proof,
         "by_audit": by_audit,
+    }
+
+
+def evidence_quality_report(surfaces: list[dict[str, Any]]) -> dict[str, Any]:
+    """Return witness-strength gaps for classified proof surfaces."""
+    quality_records: list[dict[str, Any]] = []
+    by_strength = {
+        "strong": 0,
+        "classified_with_quality_gaps": 0,
+        "unproven": 0,
+    }
+
+    for surface in surfaces:
+        evidence_files = surface.get("evidence_files", [])
+        runtime_witnesses = surface.get("runtime_witnesses", [])
+        gaps: list[str] = []
+        if surface["coverage_state"] == "unproven":
+            gaps.append("surface_unproven")
+        if surface["coverage_state"] in {"proven", "witnessed"} and not evidence_files:
+            gaps.append("missing_evidence_file")
+        if surface["coverage_state"] in {"proven", "witnessed"} and not runtime_witnesses:
+            gaps.append("missing_runtime_witness")
+
+        if surface["coverage_state"] == "unproven":
+            strength = "unproven"
+        elif gaps:
+            strength = "classified_with_quality_gaps"
+        else:
+            strength = "strong"
+        by_strength[strength] += 1
+        if gaps:
+            quality_records.append(
+                {
+                    "surface_id": surface["surface_id"],
+                    "coverage_state": surface["coverage_state"],
+                    "strength": strength,
+                    "gaps": gaps,
+                    "evidence_file_count": len(evidence_files),
+                    "runtime_witness_count": len(runtime_witnesses),
+                }
+            )
+
+    return {
+        "by_strength": by_strength,
+        "quality_gap_count": len(quality_records),
+        "quality_gaps": quality_records,
     }
 
 
@@ -4337,6 +4384,7 @@ def _markdown_cell(value: object) -> str:
 def operator_document(matrix: dict[str, Any]) -> str:
     """Return the operator-readable proof coverage witness."""
     summary = matrix["coverage_summary"]
+    evidence_quality = matrix["evidence_quality"]
     route_coverage = matrix["route_coverage"]
     route_count = route_coverage["route_count"]
     unclassified_count = route_coverage["unclassified_route_count"]
@@ -4382,6 +4430,39 @@ def operator_document(matrix: dict[str, Any]) -> str:
             f"| Classified declared routes | {classified_count} |",
             f"| Unclassified declared routes | {unclassified_count} |",
             "",
+            "Evidence quality audit:",
+            "",
+            "| Metric | Count |",
+            "|---|---:|",
+            f"| Strong classified surfaces | {evidence_quality['by_strength']['strong']} |",
+            (
+                "| Classified surfaces with quality gaps | "
+                f"{evidence_quality['by_strength']['classified_with_quality_gaps']} |"
+            ),
+            f"| Unproven surfaces | {evidence_quality['by_strength']['unproven']} |",
+            f"| Evidence quality gaps | {evidence_quality['quality_gap_count']} |",
+            "",
+            "Evidence quality gaps:",
+        ]
+    )
+    if evidence_quality["quality_gaps"]:
+        lines.extend(["", "| Surface | Strength | Gaps | Evidence files | Runtime witnesses |", "|---|---|---|---:|---:|"])
+        for record in evidence_quality["quality_gaps"]:
+            lines.append(
+                "| `{}` | {} | {} | {} | {} |".format(
+                    record["surface_id"],
+                    _markdown_cell(record["strength"]),
+                    _markdown_cell(record["gaps"]),
+                    record["evidence_file_count"],
+                    record["runtime_witness_count"],
+                )
+            )
+    else:
+        lines.append("none")
+
+    lines.extend(
+        [
+            "",
             "Resolved closure actions:",
             "",
         ]
@@ -4399,11 +4480,16 @@ def operator_document(matrix: dict[str, Any]) -> str:
     else:
         lines.append("none")
 
-    open_issue = (
-        f"{unclassified_count} proof-relevant declared routes remain unclassified and are marked unproven in the machine witness"
-        if unclassified_count
-        else "none"
-    )
+    open_issues = []
+    if unclassified_count:
+        open_issues.append(
+            f"{unclassified_count} proof-relevant declared routes remain unclassified and are marked unproven in the machine witness"
+        )
+    if evidence_quality["quality_gap_count"]:
+        open_issues.append(
+            f"{evidence_quality['quality_gap_count']} classified surfaces need stronger runtime-witness labels"
+        )
+    open_issue = "; ".join(open_issues) if open_issues else "none"
     verified_invariants = [
         "route declarations",
         "route-level coverage classification",
@@ -4423,6 +4509,8 @@ def operator_document(matrix: dict[str, Any]) -> str:
             (
                 "  Next action: classify remaining unproven declared routes into named proof surfaces or explicit exemptions"
                 if unclassified_count
+                else "  Next action: strengthen classified surfaces that still lack runtime-witness labels"
+                if evidence_quality["quality_gap_count"]
                 else "  Next action: advance sandboxed capability-worker execution closure"
             ),
             "",

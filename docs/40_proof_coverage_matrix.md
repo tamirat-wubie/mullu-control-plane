@@ -130,6 +130,35 @@ Coverage summary:
 | Classified declared routes | 335 |
 | Unclassified declared routes | 0 |
 
+Evidence quality audit:
+
+| Metric | Count |
+|---|---:|
+| Strong classified surfaces | 96 |
+| Classified surfaces with quality gaps | 15 |
+| Unproven surfaces | 0 |
+| Evidence quality gaps | 15 |
+
+Evidence quality gaps:
+
+| Surface | Strength | Gaps | Evidence files | Runtime witnesses |
+|---|---|---|---:|---:|
+| `llm_streaming` | classified_with_quality_gaps | missing_runtime_witness | 7 | 0 |
+| `llm_completion` | classified_with_quality_gaps | missing_runtime_witness | 2 | 0 |
+| `llm_chat_workflow` | classified_with_quality_gaps | missing_runtime_witness | 2 | 0 |
+| `cost_budget_read_models` | classified_with_quality_gaps | missing_runtime_witness | 3 | 0 |
+| `model_experiment_control` | classified_with_quality_gaps | missing_runtime_witness | 2 | 0 |
+| `policy_version_registry` | classified_with_quality_gaps | missing_runtime_witness | 4 | 0 |
+| `pilot_provisioning` | classified_with_quality_gaps | missing_runtime_witness | 4 | 0 |
+| `hosted_demo_sandbox` | classified_with_quality_gaps | missing_runtime_witness | 4 | 0 |
+| `gateway_webhook_ingress` | classified_with_quality_gaps | missing_runtime_witness | 3 | 0 |
+| `gateway_approval_resolution` | classified_with_quality_gaps | missing_runtime_witness | 3 | 0 |
+| `replay_determinism` | classified_with_quality_gaps | missing_runtime_witness | 5 | 0 |
+| `tool_invocation` | classified_with_quality_gaps | missing_runtime_witness | 15 | 0 |
+| `governed_session` | classified_with_quality_gaps | missing_runtime_witness | 3 | 0 |
+| `health_docs_exempt` | classified_with_quality_gaps | missing_runtime_witness | 1 | 0 |
+| `lineage_query_api` | classified_with_quality_gaps | missing_runtime_witness | 7 | 0 |
+
 Resolved closure actions:
 
 1. `bind_tool_arguments_to_capability_policy_receipts`
@@ -243,5 +272,5 @@ none
 STATUS:
   Completeness: 100%
   Invariants verified: route declarations, route-level coverage classification, coverage levels, coverage states, closure action mapping, schema contract validation, deployment orchestration receipt schema contract
-  Open issues: none
-  Next action: advance sandboxed capability-worker execution closure
+  Open issues: 15 classified surfaces need stronger runtime-witness labels
+  Next action: strengthen classified surfaces that still lack runtime-witness labels

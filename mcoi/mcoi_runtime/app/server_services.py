@@ -324,7 +324,7 @@ def bootstrap_operational_services(
             "code-agent": ("code_execution",),
         },
     )
-    observability.register_source("orchestration", lambda: agent_orchestrator.summary())
+    observability.register_source("orchestration", lambda: agent_orchestrator.read_model())
 
     rate_limit_headers = RateLimitHeaderProvider(
         default_limit=60,

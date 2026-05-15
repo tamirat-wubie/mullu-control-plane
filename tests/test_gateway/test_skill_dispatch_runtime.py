@@ -159,6 +159,30 @@ class StubCapabilityWorkerTransport(CapabilityWorkerTransport):
         )
 
 
+class IsolationMismatchCapabilityWorkerTransport(StubCapabilityWorkerTransport):
+    """Worker transport fixture that downgrades the isolation receipt bit."""
+
+    def submit(self, request):
+        response = super().submit(request)
+        bad_receipt = CapabilityExecutionReceipt(
+            receipt_id=response.receipt.receipt_id,
+            capability_id=response.receipt.capability_id,
+            execution_plane=response.receipt.execution_plane,
+            isolation_required=not request.boundary.isolation_required,
+            worker_id=response.receipt.worker_id,
+            input_hash=response.receipt.input_hash,
+            output_hash=response.receipt.output_hash,
+            evidence_refs=response.receipt.evidence_refs,
+        )
+        return CapabilityExecutionResponse(
+            request_id=response.request_id,
+            status=response.status,
+            result=response.result,
+            receipt=bad_receipt,
+            error=response.error,
+        )
+
+
 class PlatformWithFinancialProvider:
     """Platform stub exposing a direct financial provider."""
 
@@ -656,6 +680,24 @@ def test_remote_capability_executor_validates_worker_receipt() -> None:
     assert result["capability_execution_receipt"]["receipt_id"] == receipt.receipt_id
     assert receipt.worker_id == "restricted-worker-1"
     assert receipt.evidence_refs[0].startswith("restricted_worker:")
+    assert len(transport.requests) == 1
+
+
+def test_remote_capability_executor_rejects_isolation_receipt_mismatch() -> None:
+    transport = IsolationMismatchCapabilityWorkerTransport()
+    executor = RemoteCapabilityExecutionExecutor(transport)
+    boundary = CapabilityIsolationPolicy(environment="pilot").boundary_for(
+        capability_passport_for("financial.send_payment"),
+    )
+
+    with pytest.raises(RuntimeError, match="^capability worker receipt isolation mismatch$"):
+        executor.execute(
+            intent=SkillIntent("financial", "send_payment", {"amount": "50"}),
+            tenant_id="tenant-1",
+            identity_id="identity-1",
+            boundary=boundary,
+        )
+
     assert len(transport.requests) == 1
 
 

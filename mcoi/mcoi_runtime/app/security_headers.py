@@ -147,11 +147,12 @@ def build_security_headers(config: SecurityHeadersConfig | None = None) -> dict[
     if cfg.is_production:
         headers["Strict-Transport-Security"] = cfg.effective_hsts
 
-    # Remove Server header to avoid version leakage
-    headers["Server"] = "mullu"
-
     # Custom overrides
     headers.update(cfg.custom_headers)
+
+    # Remove Server header to avoid version leakage. This value is fixed
+    # even when custom headers are configured.
+    headers["Server"] = "mullu"
 
     return headers
 
