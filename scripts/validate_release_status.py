@@ -67,6 +67,7 @@ REQUIRED_CI_LITERALS: tuple[str, ...] = (
     'python -m pytest --tb=short -q -m "not soak"',
     'python -m pytest -m soak --tb=short -q',
     "cargo test",
+    "cargo build --release",
     "cargo fmt -- --check",
     "cargo clippy -- -D warnings",
     "python scripts/validate_schemas.py",
