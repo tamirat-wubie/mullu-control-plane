@@ -11,11 +11,14 @@ in-memory implementation tests).
 """
 from __future__ import annotations
 
+import json
+
 import pytest
 
 from mcoi_runtime.contracts.proof import CausalLineage
 from mcoi_runtime.contracts.receipt_store import (
     InMemoryReceiptStore,
+    JsonlReceiptStore,
     ReceiptStore,
 )
 from mcoi_runtime.core.proof_bridge import ProofBridge
@@ -36,6 +39,16 @@ def _lineage(entity_id: str = "e1", depth: int = 1) -> CausalLineage:
     )
 
 
+def _proof(endpoint: str = "/api/test"):
+    bridge = ProofBridge(clock=_clock)
+    return bridge.certify_governance_decision(
+        tenant_id="t1",
+        endpoint=endpoint,
+        guard_results=[{"guard_name": "g1", "allowed": True, "reason": "ok"}],
+        decision="allowed",
+    )
+
+
 # ── Base class: degraded-no-op semantics ─────────────────────────────
 
 
@@ -52,6 +65,12 @@ class TestReceiptStoreBaseClass:
         s.record_lineage("e1", _lineage("e1"))
         # Still no lineage — base class is a black hole.
         assert s.get_lineage("e1") is None
+
+    def test_record_receipt_is_noop(self):
+        receipt = _proof().capsule.receipt
+        s = ReceiptStore()
+        s.record_receipt(receipt)
+        assert s.get_receipt(receipt.receipt_id) is None
 
     def test_evict_oldest_is_noop(self):
         s = ReceiptStore()
@@ -74,6 +93,10 @@ class TestReceiptStoreBaseClass:
             s.record_lineage("e1", "bad")  # type: ignore[arg-type]
         with pytest.raises(ValueError, match="entity_id"):
             s.has_lineage("")
+        with pytest.raises(ValueError, match="receipt"):
+            s.record_receipt("bad")  # type: ignore[arg-type]
+        with pytest.raises(ValueError, match="receipt_id"):
+            s.get_receipt("")
 
 
 # ── InMemoryReceiptStore: working implementation ─────────────────────
@@ -146,6 +169,100 @@ class TestInMemoryReceiptStore:
         with pytest.raises(ValueError, match="match"):
             s.record_lineage("e1", _lineage("other"))
 
+    def test_record_then_get_receipt(self):
+        receipt = _proof().capsule.receipt
+        s = InMemoryReceiptStore()
+        s.record_receipt(receipt)
+        result = s.get_receipt(receipt.receipt_id)
+        assert result is receipt
+        assert result.receipt_id == receipt.receipt_id
+        assert result.receipt_hash == receipt.receipt_hash
+
+    def test_record_receipt_overwrites_same_id(self):
+        receipt = _proof().capsule.receipt
+        s = InMemoryReceiptStore()
+        s.record_receipt(receipt)
+        s.record_receipt(receipt)
+        result = s.get_receipt(receipt.receipt_id)
+        assert result is receipt
+        assert result.receipt_id == receipt.receipt_id
+        assert s.get_receipt("missing") is None
+
+
+# ── JsonlReceiptStore: durable append-only implementation ────────────
+
+
+class TestJsonlReceiptStore:
+    def test_persists_receipt_and_lineage_across_reopen(self, tmp_path):
+        path = tmp_path / "receipts.jsonl"
+        store = JsonlReceiptStore(path)
+        bridge = ProofBridge(clock=_clock, store=store)
+        proof = bridge.certify_governance_decision(
+            tenant_id="t1", endpoint="/api/test",
+            guard_results=[{"guard_name": "g1", "allowed": True, "reason": "ok"}],
+            decision="allowed",
+        )
+
+        reopened = JsonlReceiptStore(path)
+        receipt = reopened.get_receipt(proof.capsule.receipt.receipt_id)
+        lineage = reopened.get_lineage("request:t1:/api/test")
+        assert receipt is not None
+        assert receipt.receipt_hash == proof.receipt_hash
+        assert lineage is not None
+        assert lineage.depth == 1
+
+    def test_append_only_file_records_typed_events(self, tmp_path):
+        path = tmp_path / "receipts.jsonl"
+        store = JsonlReceiptStore(path)
+        receipt = _proof().capsule.receipt
+        store.record_receipt(receipt)
+        store.record_lineage(receipt.entity_id, _lineage(receipt.entity_id))
+
+        lines = path.read_text(encoding="utf-8").splitlines()
+        assert len(lines) == 2
+        assert '"type":"receipt_record"' in lines[0]
+        assert '"type":"lineage_upsert"' in lines[1]
+
+    def test_replays_eviction_events(self, tmp_path):
+        path = tmp_path / "receipts.jsonl"
+        store = JsonlReceiptStore(path, max_entries=2)
+        bridge = ProofBridge(clock=_clock, store=store)
+        for n in range(3):
+            bridge.certify_governance_decision(
+                tenant_id=f"t{n}", endpoint="/api/test",
+                guard_results=[{"guard_name": "g1", "allowed": True, "reason": "ok"}],
+                decision="allowed",
+            )
+
+        reopened = JsonlReceiptStore(path, max_entries=2)
+        assert len(reopened) == 2
+        assert reopened.get_lineage("request:t0:/api/test") is None
+        assert reopened.get_lineage("request:t1:/api/test") is not None
+        assert reopened.get_lineage("request:t2:/api/test") is not None
+
+    def test_rejects_malformed_jsonl(self, tmp_path):
+        path = tmp_path / "receipts.jsonl"
+        path.write_text("{not-json}\n", encoding="utf-8")
+        with pytest.raises(ValueError, match="malformed"):
+            JsonlReceiptStore(path)
+
+    def test_rejects_unsupported_event_type(self, tmp_path):
+        path = tmp_path / "receipts.jsonl"
+        path.write_text('{"type":"unknown"}\n', encoding="utf-8")
+        with pytest.raises(ValueError, match="unsupported event type"):
+            JsonlReceiptStore(path)
+
+    def test_rejects_malformed_receipt_guard(self, tmp_path):
+        path = tmp_path / "receipts.jsonl"
+        receipt = _proof().capsule.receipt.to_json_dict()
+        receipt["guard_verdicts"] = ["bad"]
+        path.write_text(
+            '{"receipt":' + json.dumps(receipt) + ',"type":"receipt_record"}\n',
+            encoding="utf-8",
+        )
+        with pytest.raises(ValueError, match="guard_verdicts"):
+            JsonlReceiptStore(path)
+
 
 # ── ProofBridge ↔ ReceiptStore wiring ────────────────────────────────
 
@@ -193,6 +310,19 @@ class TestProofBridgeUsesStore:
         lineage = bridge.get_lineage("request:t1:/api/test")
         assert lineage is not None
         assert lineage.depth == 1
+
+    def test_certify_records_receipt_in_store(self):
+        store = InMemoryReceiptStore()
+        bridge = ProofBridge(clock=_clock, store=store)
+        proof = bridge.certify_governance_decision(
+            tenant_id="t1", endpoint="/api/test",
+            guard_results=[{"guard_name": "g1", "allowed": True, "reason": ""}],
+            decision="allowed",
+        )
+        stored = store.get_receipt(proof.capsule.receipt.receipt_id)
+        assert stored is proof.capsule.receipt
+        assert stored.receipt_hash == proof.receipt_hash
+        assert bridge.receipt_count == 1
 
     def test_disabled_store_makes_bridge_lineage_free(self):
         """A bare ReceiptStore() base-class instance disables all lineage
