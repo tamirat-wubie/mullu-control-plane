@@ -116,6 +116,7 @@ class DeploymentWitnessOrchestrationReceipt:
     dispatch_requested: bool
     dispatch_run_id: int | None
     dispatch_conclusion: str
+    dispatch_error: str
     mcp_operator_checklist_required: bool
     mcp_operator_checklist_valid: bool | None
     mcp_operator_checklist_path: str
@@ -213,28 +214,30 @@ def orchestrate_deployment_witness(
             raise RuntimeError(
                 "deployment witness preflight failed: " + "; ".join(failed_steps)
             )
-    dispatch_result = (
-        dispatch_deployment_witness(
-            gateway_url=target.gateway_url,
-            expected_environment=target.expected_environment,
-            repository=repository,
-            workflow_file=workflow_file,
-            workflow_name=workflow_name,
-            secret_name=secret_name,
-            conformance_secret_name=conformance_secret_name,
-            deployment_witness_secret_name=deployment_witness_secret_name,
-            runtime_secret_present=runtime_secret_present,
-            conformance_secret_present=conformance_secret_present,
-            deployment_witness_secret_present=deployment_witness_secret_present,
-            artifact_name=artifact_name,
-            download_dir=download_dir,
-            timeout_seconds=timeout_seconds,
-            poll_seconds=poll_seconds,
-            runner=command_runner,
-        )
-        if dispatch
-        else None
-    )
+    dispatch_result: DispatchResult | None = None
+    dispatch_error = ""
+    if dispatch:
+        try:
+            dispatch_result = dispatch_deployment_witness(
+                gateway_url=target.gateway_url,
+                expected_environment=target.expected_environment,
+                repository=repository,
+                workflow_file=workflow_file,
+                workflow_name=workflow_name,
+                secret_name=secret_name,
+                conformance_secret_name=conformance_secret_name,
+                deployment_witness_secret_name=deployment_witness_secret_name,
+                runtime_secret_present=runtime_secret_present,
+                conformance_secret_present=conformance_secret_present,
+                deployment_witness_secret_present=deployment_witness_secret_present,
+                artifact_name=artifact_name,
+                download_dir=download_dir,
+                timeout_seconds=timeout_seconds,
+                poll_seconds=poll_seconds,
+                runner=command_runner,
+            )
+        except RuntimeError:
+            dispatch_error = "dispatch_failed"
     return DeploymentWitnessOrchestration(
         ingress=ingress,
         target=target,
@@ -247,6 +250,7 @@ def orchestrate_deployment_witness(
             dispatch=dispatch_result,
             preflight_required=require_preflight,
             dispatch_requested=dispatch,
+            dispatch_error=dispatch_error,
             mcp_operator_checklist_required=require_mcp_operator_checklist,
             mcp_operator_checklist_valid=checklist_valid,
             mcp_operator_checklist_path=mcp_operator_checklist_path,
@@ -375,6 +379,9 @@ def main(argv: list[str] | None = None) -> int:
         print(f"orchestration_receipt_path: {receipt_path}")
     if orchestration.preflight is not None:
         print(f"preflight_ready: {str(orchestration.preflight.ready).lower()}")
+    if orchestration.receipt.dispatch_error:
+        print(f"deployment_witness_dispatch_error: {orchestration.receipt.dispatch_error}")
+        return 1
     if orchestration.dispatch is None:
         print("deployment_witness_dispatch: skipped")
         return 0
@@ -394,6 +401,7 @@ def _orchestration_receipt(
     dispatch: DispatchResult | None,
     preflight_required: bool,
     dispatch_requested: bool,
+    dispatch_error: str,
     mcp_operator_checklist_required: bool,
     mcp_operator_checklist_valid: bool | None,
     mcp_operator_checklist_path: Path,
@@ -407,7 +415,11 @@ def _orchestration_receipt(
             if preflight is not None
             else "preflight:not_run"
         ),
-        "dispatch:requested" if dispatch_requested else "dispatch:skipped",
+        (
+            "dispatch:failed"
+            if dispatch_error
+            else ("dispatch:requested" if dispatch_requested else "dispatch:skipped")
+        ),
         (
             f"mcp_operator_checklist:valid:{str(mcp_operator_checklist_valid).lower()}"
             if mcp_operator_checklist_required
@@ -417,6 +429,8 @@ def _orchestration_receipt(
     if dispatch is not None:
         evidence_refs.append(f"deployment_witness_run:{dispatch.run_id}")
         evidence_refs.append(f"deployment_witness_artifact:{dispatch.artifact_dir}")
+    if dispatch_error:
+        evidence_refs.append(f"dispatch_error:{dispatch_error}")
     payload = {
         "gateway_host": ingress.host,
         "gateway_url": target.gateway_url,
@@ -429,6 +443,7 @@ def _orchestration_receipt(
         "dispatch_requested": dispatch_requested,
         "dispatch_run_id": dispatch.run_id if dispatch is not None else None,
         "dispatch_conclusion": dispatch.conclusion if dispatch is not None else "",
+        "dispatch_error": dispatch_error,
         "mcp_operator_checklist_required": mcp_operator_checklist_required,
         "mcp_operator_checklist_valid": mcp_operator_checklist_valid,
         "mcp_operator_checklist_path": str(mcp_operator_checklist_path),

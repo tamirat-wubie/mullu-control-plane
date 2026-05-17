@@ -17,6 +17,7 @@
     "dispatch_requested",
     "dispatch_run_id",
     "dispatch_conclusion",
+    "dispatch_error",
     "mcp_operator_checklist_required",
     "mcp_operator_checklist_valid",
     "mcp_operator_checklist_path",
@@ -81,6 +82,9 @@
       ]
     },
     "dispatch_conclusion": {
+      "type": "string"
+    },
+    "dispatch_error": {
       "type": "string"
     },
     "mcp_operator_checklist_required": {

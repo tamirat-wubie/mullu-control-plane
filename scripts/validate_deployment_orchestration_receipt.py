@@ -178,6 +178,7 @@ def _check_required_fields(payload: dict[str, Any]) -> OrchestrationReceiptValid
         "preflight_required": bool,
         "dispatch_requested": bool,
         "dispatch_conclusion": str,
+        "dispatch_error": str,
         "mcp_operator_checklist_required": bool,
         "mcp_operator_checklist_path": str,
         "evidence_refs": list,

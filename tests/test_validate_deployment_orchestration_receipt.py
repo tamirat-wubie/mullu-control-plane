@@ -116,6 +116,31 @@ def test_orchestration_receipt_rejects_dispatch_success_policy(tmp_path: Path) -
     assert success_step.detail == "requested=true conclusion=not-success"
 
 
+def test_dispatch_failed_receipt_is_valid_but_fails_dispatch_policy(tmp_path: Path) -> None:
+    receipt_path = tmp_path / "orchestration.json"
+    _write_receipt(
+        receipt_path,
+        dispatch_requested=True,
+        dispatch_error="dispatch_failed",
+    )
+
+    validation = validate_deployment_orchestration_receipt(
+        receipt_path=receipt_path,
+        require_dispatch=True,
+        require_success=True,
+    )
+    schema_step = _step(validation, "schema contract")
+    dispatch_step = _step(validation, "require dispatch")
+    success_step = _step(validation, "require success")
+
+    assert validation.valid is False
+    assert schema_step.passed is True
+    assert dispatch_step.passed is False
+    assert success_step.passed is False
+    assert dispatch_step.detail == "requested=true run_id=missing"
+    assert success_step.detail == "requested=true conclusion=missing"
+
+
 def test_orchestration_receipt_rejects_missing_evidence_refs(tmp_path: Path) -> None:
     receipt_path = tmp_path / "orchestration.json"
     _write_receipt(receipt_path)
@@ -242,6 +267,7 @@ def test_orchestration_receipt_schema_accepts_canonical_fixture(tmp_path: Path) 
     assert errors == []
     assert schema["title"] == "Deployment Orchestration Receipt"
     assert "mcp_operator_checklist_valid" in schema["required"]
+    assert "dispatch_error" in schema["required"]
     assert schema["properties"]["evidence_refs"]["minItems"] == 5
 
 
@@ -351,6 +377,7 @@ def _write_receipt(
     dispatch_requested: bool = False,
     dispatch_run_id: int | None = None,
     dispatch_conclusion: str = "",
+    dispatch_error: str = "",
 ) -> None:
     payload = {
         "receipt_id": "deployment-witness-orchestration-0123456789abcdef",
@@ -365,6 +392,7 @@ def _write_receipt(
         "dispatch_requested": dispatch_requested,
         "dispatch_run_id": dispatch_run_id,
         "dispatch_conclusion": dispatch_conclusion,
+        "dispatch_error": dispatch_error,
         "mcp_operator_checklist_required": mcp_checklist_required,
         "mcp_operator_checklist_valid": mcp_checklist_valid,
         "mcp_operator_checklist_path": "examples/mcp_operator_handoff_checklist.json",
@@ -372,7 +400,11 @@ def _write_receipt(
             "ingress_render:.change_assurance/rendered-ingress.yaml",
             f"deployment_target:{DEFAULT_REPOSITORY}",
             f"preflight:ready:{str(preflight_ready).lower()}",
-            "dispatch:requested" if dispatch_requested else "dispatch:skipped",
+            (
+                "dispatch:failed"
+                if dispatch_error
+                else ("dispatch:requested" if dispatch_requested else "dispatch:skipped")
+            ),
             (
                 f"mcp_operator_checklist:valid:{str(mcp_checklist_valid).lower()}"
                 if mcp_checklist_required
@@ -380,6 +412,8 @@ def _write_receipt(
             ),
         ],
     }
+    if dispatch_error:
+        payload["evidence_refs"].append(f"dispatch_error:{dispatch_error}")
     receipt_path.write_text(json.dumps(payload), encoding="utf-8")
 
 
