@@ -54,5 +54,8 @@ def test_staging_activation_runbook_binds_witness_and_rollback() -> None:
     assert "scripts/collect_governed_swarm_staging_activation_witness.py" in text
     assert ".github/workflows/governed-swarm-staging-witness.yml" in text
     assert "self-hosted" in text
+    assert "test -d /opt/mullu/mullu-governed-swarm/mcoi/mcoi_runtime/swarm" in text
+    assert "test -r /var/lib/mullu/governed-swarm/swarm-runs.jsonl" in text
+    assert "governed-swarm-route-preflight.json" in text
     assert "schemas/governed_swarm_staging_activation_witness.schema.json" in text
     assert "MULLU_GOVERNED_SWARM_ENABLED=false" in text

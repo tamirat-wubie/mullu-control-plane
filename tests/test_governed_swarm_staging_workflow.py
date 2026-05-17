@@ -27,6 +27,10 @@ def test_governed_swarm_staging_workflow_collects_validated_witness() -> None:
     assert "runs-on: ${{ inputs.runner_label }}" in workflow
     assert "MULLU_GOVERNED_SWARM_RUNTIME_PATH" in workflow
     assert "MULLU_GOVERNED_SWARM_AUDIT_STORE_PATH" in workflow
+    assert "Preflight self-hosted staging witness inputs" in workflow
+    assert 'test -d "$MULLU_GOVERNED_SWARM_RUNTIME_PATH/mcoi_runtime/swarm"' in workflow
+    assert 'test -f "$MULLU_GOVERNED_SWARM_AUDIT_STORE_PATH"' in workflow
+    assert 'test -r "$MULLU_GOVERNED_SWARM_AUDIT_STORE_PATH"' in workflow
     assert "python scripts/collect_governed_swarm_staging_activation_witness.py" in workflow
     assert '--audit-store-path "$MULLU_GOVERNED_SWARM_AUDIT_STORE_PATH"' in workflow
     assert "python scripts/validate_governed_swarm_staging_activation_witness.py" in workflow
