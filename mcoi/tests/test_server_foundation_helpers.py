@@ -10,6 +10,8 @@ import hashlib
 import json
 from types import SimpleNamespace
 
+import pytest
+
 from mcoi_runtime.app import server_foundation
 from mcoi_runtime.contracts.receipt_store import JsonlReceiptStore
 
@@ -35,6 +37,51 @@ def test_receipt_store_from_env_builds_jsonl_store(tmp_path) -> None:
     assert isinstance(receipt_store, JsonlReceiptStore)
     assert receipt_store.path == receipt_path
     assert receipt_path.parent.exists()
+
+
+def test_receipt_store_from_env_rejects_directory_path(tmp_path) -> None:
+    receipt_directory = tmp_path / "receipts"
+    receipt_directory.mkdir()
+
+    with pytest.raises(server_foundation.FoundationConfigurationError) as exc_info:
+        server_foundation.receipt_store_from_env(
+            {
+                server_foundation.RECEIPT_STORE_JSONL_ENV: str(
+                    receipt_directory
+                )
+            }
+        )
+
+    assert server_foundation.RECEIPT_STORE_JSONL_ENV in str(exc_info.value)
+    assert "JSONL file path" in str(exc_info.value)
+    assert receipt_directory.is_dir()
+
+
+def test_receipt_store_from_env_rejects_control_character_path(tmp_path) -> None:
+    unsafe_path = f"{tmp_path}\nreceipts.jsonl"
+
+    with pytest.raises(server_foundation.FoundationConfigurationError) as exc_info:
+        server_foundation.receipt_store_from_env(
+            {server_foundation.RECEIPT_STORE_JSONL_ENV: unsafe_path}
+        )
+
+    assert server_foundation.RECEIPT_STORE_JSONL_ENV in str(exc_info.value)
+    assert "control characters" in str(exc_info.value)
+    assert "receipts.jsonl" in unsafe_path
+
+
+def test_receipt_store_from_env_wraps_malformed_jsonl_replay(tmp_path) -> None:
+    receipt_path = tmp_path / "receipts.jsonl"
+    receipt_path.write_text("{not-json}\n", encoding="utf-8")
+
+    with pytest.raises(server_foundation.FoundationConfigurationError) as exc_info:
+        server_foundation.receipt_store_from_env(
+            {server_foundation.RECEIPT_STORE_JSONL_ENV: str(receipt_path)}
+        )
+
+    assert server_foundation.RECEIPT_STORE_JSONL_ENV in str(exc_info.value)
+    assert "could not initialize receipt store" in str(exc_info.value)
+    assert isinstance(exc_info.value.__cause__, ValueError)
 
 
 def test_bootstrap_foundation_services_wires_llm_certification_and_safety() -> None:

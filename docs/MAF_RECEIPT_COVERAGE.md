@@ -193,7 +193,10 @@ The default `ProofBridge` store is in-memory and service restart drops
 that default state. `JsonlReceiptStore` is the first durable backend:
 when explicitly injected or configured through
 `MULLU_RECEIPT_STORE_JSONL_PATH`, it persists emitted receipts and
-lineage as append-only JSONL events and replays them on startup.
+lineage as append-only JSONL events and replays them on startup. The
+environment-configured path fails closed during foundation bootstrap if
+it contains control characters, points at an existing directory, or
+cannot replay an existing JSONL file.
 
 Production database wiring is still not a claim. Until a production
 profile wires a database-backed store (e.g., PostgreSQL append table, or
