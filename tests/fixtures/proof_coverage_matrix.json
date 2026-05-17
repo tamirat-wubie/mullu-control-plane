@@ -63,6 +63,13 @@
       ]
     },
     {
+      "action_id": "persist_effect_graph_commit_receipts",
+      "status": "closed",
+      "surfaces": [
+        "effect_assurance_graph_commit"
+      ]
+    },
+    {
       "action_id": "bind_job_engine_mutations_to_effect_receipts",
       "status": "closed",
       "surfaces": [
@@ -4476,18 +4483,21 @@
         "mcoi/mcoi_runtime/core/operational_graph.py",
         "mcoi/tests/test_effect_assurance_core.py"
       ],
-      "notes": "Effect Assurance graph commits emit bounded receipts for MATCH-only operational graph mutation and expose those receipts as actual effects for observation.",
+      "notes": "Effect Assurance graph commits emit bounded durable receipts for MATCH-only operational graph mutation and expose those receipts as actual effects for observation.",
       "representative_paths": [
         "EffectAssuranceGate.commit_graph",
         "EffectAssuranceGate.graph_commit_receipts",
-        "EffectAssuranceGate.graph_commit_effect_records"
+        "EffectAssuranceGate.graph_commit_effect_records",
+        "InMemoryEffectGraphCommitReceiptStore",
+        "JsonlEffectGraphCommitReceiptStore"
       ],
       "request_proof": "request_proof",
       "runtime_witnesses": [
         "effect_graph_commit_requires_match",
         "effect_graph_commit_receipt_emitted",
         "effect_graph_commit_receipt_converts_to_actual_effect",
-        "effect_graph_commit_receipt_closes_effect_assurance"
+        "effect_graph_commit_receipt_closes_effect_assurance",
+        "effect_graph_commit_receipt_store_replays_records"
       ],
       "surface_id": "effect_assurance_graph_commit"
     },
@@ -6590,7 +6600,7 @@
   ],
   "witness_integrity": {
     "exact_test_anchor_count": 420,
-    "runtime_witness_count": 1027,
+    "runtime_witness_count": 1028,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -8754,14 +8764,15 @@
       {
         "anchored_witnesses": [],
         "exact_test_anchor_count": 0,
-        "runtime_witness_count": 4,
+        "runtime_witness_count": 5,
         "surface_id": "effect_assurance_graph_commit",
-        "unanchored_witness_count": 4,
+        "unanchored_witness_count": 5,
         "unanchored_witnesses": [
           "effect_graph_commit_requires_match",
           "effect_graph_commit_receipt_emitted",
           "effect_graph_commit_receipt_converts_to_actual_effect",
-          "effect_graph_commit_receipt_closes_effect_assurance"
+          "effect_graph_commit_receipt_closes_effect_assurance",
+          "effect_graph_commit_receipt_store_replays_records"
         ]
       },
       {
@@ -10788,6 +10799,6 @@
         ]
       }
     ],
-    "unanchored_witness_count": 607
+    "unanchored_witness_count": 608
   }
 }
