@@ -23,8 +23,9 @@ from scripts.plan_finance_approval_live_handoff import (
 )
 
 
-def test_current_finance_handoff_plan_scopes_to_email_calendar() -> None:
-    plan = plan_finance_approval_live_handoff()
+def test_current_finance_handoff_plan_scopes_to_email_calendar(tmp_path: Path) -> None:
+    evidence_path = _write_open_email_calendar_adapter_evidence(tmp_path)
+    plan = plan_finance_approval_live_handoff(adapter_evidence_path=evidence_path)
     actions_by_blocker = {action.blocker: action for action in plan.actions}
 
     assert plan.ready is False
@@ -32,9 +33,27 @@ def test_current_finance_handoff_plan_scopes_to_email_calendar() -> None:
     assert plan.action_count >= 1
     assert plan.plan_id.startswith("finance-live-handoff-plan-")
     assert "email_calendar_live_evidence_missing" in plan.blockers
+    assert "MULLU_EMAIL_CALENDAR_WORKER_URL" in actions_by_blocker[
+        "email_calendar_dependency_missing:EMAIL_CALENDAR_CONNECTOR_TOKEN"
+    ].command
+    assert "EMAIL_CALENDAR_CONNECTOR_SCOPE_ID" in actions_by_blocker[
+        "email_calendar_dependency_missing:EMAIL_CALENDAR_CONNECTOR_TOKEN"
+    ].command
     assert actions_by_blocker[
         "email_calendar_dependency_missing:EMAIL_CALENDAR_CONNECTOR_TOKEN"
     ].approval_required is True
+    assert (
+        "worker_endpoint_presence_attestation"
+        in actions_by_blocker[
+            "email_calendar_dependency_missing:EMAIL_CALENDAR_CONNECTOR_TOKEN"
+        ].evidence_required
+    )
+    assert (
+        "worker_secret_presence_attestation"
+        in actions_by_blocker[
+            "email_calendar_dependency_missing:EMAIL_CALENDAR_CONNECTOR_TOKEN"
+        ].evidence_required
+    )
     assert (
         "finance_approval_email_calendar_binding_receipt.json"
         in actions_by_blocker[
@@ -100,11 +119,12 @@ def test_finance_handoff_plan_empty_when_email_calendar_evidence_closed(tmp_path
 
 
 def test_finance_handoff_plan_writer_and_cli_emit_json(tmp_path: Path, capsys) -> None:
+    evidence_path = _write_open_email_calendar_adapter_evidence(tmp_path)
     output_path = tmp_path / "finance_approval_live_handoff_plan.json"
-    plan = plan_finance_approval_live_handoff()
+    plan = plan_finance_approval_live_handoff(adapter_evidence_path=evidence_path)
 
     written = write_finance_live_handoff_plan(plan, output_path)
-    exit_code = main(["--output", str(output_path), "--json"])
+    exit_code = main(["--adapter-evidence", str(evidence_path), "--output", str(output_path), "--json"])
     captured = capsys.readouterr()
     written_payload = json.loads(output_path.read_text(encoding="utf-8"))
     stdout_payload = json.loads(captured.out)
@@ -114,3 +134,32 @@ def test_finance_handoff_plan_writer_and_cli_emit_json(tmp_path: Path, capsys) -
     assert written_payload["plan_id"] == stdout_payload["plan_id"]
     assert written_payload["action_count"] == 2
     assert stdout_payload["ready"] is False
+
+
+def _write_open_email_calendar_adapter_evidence(tmp_path: Path) -> Path:
+    evidence_path = tmp_path / "capability_adapter_evidence.json"
+    evidence_path.write_text(
+        json.dumps(
+            {
+                "adapters": [
+                    {
+                        "adapter_id": "document.production_parsers",
+                        "status": "closed",
+                        "blockers": [],
+                        "evidence_refs": ["document_live_receipt.json"],
+                    },
+                    {
+                        "adapter_id": "communication.email_calendar_worker",
+                        "status": "open",
+                        "blockers": [
+                            "email_calendar_dependency_missing:EMAIL_CALENDAR_CONNECTOR_TOKEN",
+                            "email_calendar_live_evidence_missing",
+                        ],
+                        "evidence_refs": [],
+                    },
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+    return evidence_path

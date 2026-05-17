@@ -632,6 +632,13 @@ def test_finance_approval_packet_surface_is_witnessed() -> None:
     assert "mcoi/mcoi_runtime/contracts/finance_approval_packet.py" in finance_surface["evidence_files"]
     assert "mcoi/tests/test_finance_approval_packet.py" in finance_surface["evidence_files"]
     assert "mcoi/tests/test_finance_approval_router.py" in finance_surface["evidence_files"]
+    assert "schemas/finance_approval_email_calendar_binding_receipt.schema.json" in finance_surface["evidence_files"]
+    assert "scripts/plan_finance_approval_live_handoff.py" in finance_surface["evidence_files"]
+    assert "scripts/emit_finance_approval_email_calendar_binding_receipt.py" in finance_surface["evidence_files"]
+    assert "scripts/validate_finance_approval_email_calendar_binding_receipt.py" in finance_surface["evidence_files"]
+    assert "tests/test_plan_finance_approval_live_handoff.py" in finance_surface["evidence_files"]
+    assert "tests/test_emit_finance_approval_email_calendar_binding_receipt.py" in finance_surface["evidence_files"]
+    assert "tests/test_validate_finance_approval_email_calendar_binding_receipt.py" in finance_surface["evidence_files"]
     assert "schemas/finance_approval_payment_provider_binding_receipt.schema.json" in finance_surface["evidence_files"]
     assert "schemas/finance_approval_payment_closure_receipt.schema.json" in finance_surface["evidence_files"]
     assert "scripts/emit_finance_approval_payment_provider_binding_receipt.py" in finance_surface["evidence_files"]
@@ -649,6 +656,7 @@ def test_finance_approval_packet_surface_is_witnessed() -> None:
     assert "blocked_packet_emits_no_effect" in witnesses
     assert "approval_action_binds_approval_effect_and_closure_refs" in witnesses
     assert "payment_handoff_prepared_without_live_payment_claim" in witnesses
+    assert "email_calendar_binding_receipt_requires_worker_token_and_readonly_scope" in witnesses
     assert "payment_receipt_and_ledger_reconciliation_required_for_payment_closure" in witnesses
     assert "payment_closure_receipt_validator_blocks_unbound_evidence" in witnesses
     assert "payment_closure_receipt_producer_emits_ready_sandbox_evidence" in witnesses

@@ -12,6 +12,11 @@
     "ready",
     "accepted_binding_names",
     "present_binding_names",
+    "required_binding_groups",
+    "satisfied_binding_groups",
+    "read_only_scope_witness_names",
+    "invalid_scope_witness_names",
+    "readiness_blockers",
     "binding_count",
     "bindings"
   ],
@@ -37,15 +42,21 @@
     },
     "accepted_binding_names": {
       "type": "array",
-      "minItems": 4,
-      "maxItems": 4,
+      "minItems": 10,
+      "maxItems": 10,
       "items": {
         "type": "string",
         "enum": [
+          "MULLU_EMAIL_CALENDAR_WORKER_URL",
+          "MULLU_EMAIL_CALENDAR_WORKER_SECRET",
           "EMAIL_CALENDAR_CONNECTOR_TOKEN",
           "GMAIL_ACCESS_TOKEN",
           "GOOGLE_CALENDAR_ACCESS_TOKEN",
-          "MICROSOFT_GRAPH_ACCESS_TOKEN"
+          "MICROSOFT_GRAPH_ACCESS_TOKEN",
+          "EMAIL_CALENDAR_CONNECTOR_SCOPE_ID",
+          "GMAIL_SCOPE_ID",
+          "GOOGLE_CALENDAR_SCOPE_ID",
+          "MICROSOFT_GRAPH_SCOPE_ID"
         ]
       }
     },
@@ -54,21 +65,54 @@
       "items": {
         "type": "string",
         "enum": [
+          "MULLU_EMAIL_CALENDAR_WORKER_URL",
+          "MULLU_EMAIL_CALENDAR_WORKER_SECRET",
           "EMAIL_CALENDAR_CONNECTOR_TOKEN",
           "GMAIL_ACCESS_TOKEN",
           "GOOGLE_CALENDAR_ACCESS_TOKEN",
-          "MICROSOFT_GRAPH_ACCESS_TOKEN"
+          "MICROSOFT_GRAPH_ACCESS_TOKEN",
+          "EMAIL_CALENDAR_CONNECTOR_SCOPE_ID",
+          "GMAIL_SCOPE_ID",
+          "GOOGLE_CALENDAR_SCOPE_ID",
+          "MICROSOFT_GRAPH_SCOPE_ID"
         ]
+      }
+    },
+    "required_binding_groups": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 4,
+      "items": {
+        "$ref": "#/$defs/binding_group"
+      }
+    },
+    "satisfied_binding_groups": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/binding_group"
+      }
+    },
+    "read_only_scope_witness_names": {
+      "$ref": "#/$defs/scope_witness_name_array"
+    },
+    "invalid_scope_witness_names": {
+      "$ref": "#/$defs/scope_witness_name_array"
+    },
+    "readiness_blockers": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
       }
     },
     "binding_count": {
       "type": "integer",
-      "const": 4
+      "const": 10
     },
     "bindings": {
       "type": "array",
-      "minItems": 4,
-      "maxItems": 4,
+      "minItems": 10,
+      "maxItems": 10,
       "items": {
         "type": "object",
         "additionalProperties": false,
@@ -76,6 +120,7 @@
           "name",
           "present",
           "binding_kind",
+          "binding_group",
           "risk",
           "approval_required",
           "receipt_projection",
@@ -85,10 +130,16 @@
           "name": {
             "type": "string",
             "enum": [
+              "MULLU_EMAIL_CALENDAR_WORKER_URL",
+              "MULLU_EMAIL_CALENDAR_WORKER_SECRET",
               "EMAIL_CALENDAR_CONNECTOR_TOKEN",
               "GMAIL_ACCESS_TOKEN",
               "GOOGLE_CALENDAR_ACCESS_TOKEN",
-              "MICROSOFT_GRAPH_ACCESS_TOKEN"
+              "MICROSOFT_GRAPH_ACCESS_TOKEN",
+              "EMAIL_CALENDAR_CONNECTOR_SCOPE_ID",
+              "GMAIL_SCOPE_ID",
+              "GOOGLE_CALENDAR_SCOPE_ID",
+              "MICROSOFT_GRAPH_SCOPE_ID"
             ]
           },
           "present": {
@@ -96,7 +147,14 @@
           },
           "binding_kind": {
             "type": "string",
-            "const": "secret"
+            "enum": [
+              "endpoint",
+              "secret",
+              "scope_witness"
+            ]
+          },
+          "binding_group": {
+            "$ref": "#/$defs/binding_group"
           },
           "risk": {
             "type": "string",
@@ -115,6 +173,29 @@
             "const": false
           }
         }
+      }
+    }
+  },
+  "$defs": {
+    "binding_group": {
+      "type": "string",
+      "enum": [
+        "worker_endpoint",
+        "worker_secret",
+        "connector_token",
+        "read_only_scope_witness"
+      ]
+    },
+    "scope_witness_name_array": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "EMAIL_CALENDAR_CONNECTOR_SCOPE_ID",
+          "GMAIL_SCOPE_ID",
+          "GOOGLE_CALENDAR_SCOPE_ID",
+          "MICROSOFT_GRAPH_SCOPE_ID"
+        ]
       }
     }
   }

@@ -44,6 +44,9 @@ def test_finance_runbook_documents_strict_promotion_boundary() -> None:
     assert "Email/calendar recovery requires three operator bindings" in content
     assert "examples\\finance_email_calendar_recovery.env.example" in content
     assert "validate it before replacing secret placeholders" in content
+    assert "binding-name presence for the email/calendar worker endpoint" in content
+    assert "scope witness classification as read-only or invalid by binding name" in content
+    assert "never serializes worker URLs, token values, secrets, or scope values" in content
     assert "MULLU_EMAIL_CALENDAR_WORKER_URL and MULLU_EMAIL_CALENDAR_WORKER_SECRET" in content
     assert "EMAIL_CALENDAR_CONNECTOR_SCOPE_ID=gmail.readonly" in content
     assert "GOOGLE_CALENDAR_SCOPE_ID=calendar.events.readonly" in content
