@@ -38,22 +38,23 @@ if str(_SCRIPTS) not in sys.path:
 
 from validate_receipt_coverage import compute_buckets  # noqa: E402
 
-# Baseline established at 2026-04-28 by the first run of the validator.
-# All baseline routes are MUSIA surfaces (cognition, constructs, domains,
-# musia/governance, musia/tenants, ucja) plus gateway/capability_worker.
-# These routes do not flow through GovernanceMiddleware (which filters on
-# /api/) and are not covered by GatewayReceiptMiddleware (which filters
-# on /webhook/ and /authority/).
+# Baseline ratcheted on 2026-05-16 after validate_receipt_coverage.py was
+# brought back into alignment with MusiaReceiptMiddleware's deployed certified
+# prefixes. MUSIA routes now classify as MIDDLEWARE_MUSIA.
+#
+# The remaining uncovered route is the standalone restricted capability worker
+# endpoint:
+#   POST /capability/execute (gateway/capability_worker.py)
+# It is not mounted through the governed MCOI app or GatewayReceiptMiddleware.
 #
 # Resolution paths (any of):
-#   1. Move the routes under /api/ — covers them via GovernanceMiddleware.
-#   2. Add a MUSIA-side receipt middleware that mirrors GovernanceMiddleware.
-#   3. Add explicit EXCLUSIONS entries in scripts/validate_receipt_coverage.py
-#      with per-route justification.
+#   1. Wrap create_capability_worker_app with receipt middleware, OR
+#   2. emit a direct receipt for worker boundary admission, OR
+#   3. add an explicit exclusion with written justification.
 #
-# Whatever path is taken, the baseline ratchets DOWN as routes move out
-# of UNCOVERED. The number can only fall toward zero through code review.
-EXPECTED_UNCOVERED_BASELINE = 23
+# Keep this number monotonic non-increasing. If a repair reduces uncovered
+# routes, ratchet this baseline down in the same change.
+EXPECTED_UNCOVERED_BASELINE = 1
 
 
 def test_uncovered_count_matches_baseline():
