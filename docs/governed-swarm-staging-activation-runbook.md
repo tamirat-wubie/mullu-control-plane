@@ -112,6 +112,17 @@ python scripts/validate_governed_swarm_staging_activation_witness.py \
   --witness docs/governed-swarm-staging-activation-witness-example.json
 ```
 
+Collect a live staging witness:
+
+```bash
+python scripts/collect_governed_swarm_staging_activation_witness.py \
+  --staging-url "$MULLU_STAGING_URL" \
+  --control-plane-commit "<deployed-control-plane-commit>" \
+  --runtime-path "/opt/mullu/mullu-governed-swarm/mcoi" \
+  --audit-store-path "/var/lib/mullu/governed-swarm/swarm-runs.jsonl" \
+  --output ".change_assurance/governed_swarm_staging_activation_witness.json"
+```
+
 For a real staging activation, store the collected witness under `.change_assurance/` or the deployment evidence store, then run the same validator against that file.
 
 ## Rollback

@@ -51,5 +51,6 @@ def test_staging_activation_runbook_binds_witness_and_rollback() -> None:
     assert "MULLU_GOVERNED_SWARM_ENABLED=true" in text
     assert "MULLU_GOVERNED_SWARM_AUDIT_STORE_PATH" in text
     assert "/api/v1/swarm/invoice-runs" in text
+    assert "scripts/collect_governed_swarm_staging_activation_witness.py" in text
     assert "schemas/governed_swarm_staging_activation_witness.schema.json" in text
     assert "MULLU_GOVERNED_SWARM_ENABLED=false" in text
