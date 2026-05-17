@@ -3,8 +3,8 @@
 Purpose: isolate early LLM, certification, safety, proof, and tenant-ledger
 bootstrap from the main server module.
 Governance scope: [OCE, CDCV, CQTE, UWMA]
-Dependencies: llm bootstrap, certification services, safety services, and
-tenant ledger helpers.
+Dependencies: llm bootstrap, certification services, safety services, proof
+receipt storage, and tenant ledger helpers.
 Invariants:
   - LLM ledger writes remain deterministic and hashed.
   - Certification daemon config stays env-driven and bounded.
@@ -15,10 +15,12 @@ from __future__ import annotations
 from dataclasses import dataclass
 import hashlib
 import json
+from pathlib import Path
 from typing import Any, Callable, Mapping
 
 from mcoi_runtime.app.llm_bootstrap import LLMConfig, bootstrap_llm
 from mcoi_runtime.app.streaming import StreamingAdapter
+from mcoi_runtime.contracts.receipt_store import JsonlReceiptStore, ReceiptStore
 from mcoi_runtime.core.certification_daemon import (
     CertificationConfig,
     CertificationDaemon,
@@ -44,6 +46,16 @@ class FoundationServicesBootstrap:
     tenant_ledger: Any
 
 
+def receipt_store_from_env(runtime_env: Mapping[str, str]) -> ReceiptStore | None:
+    """Build an optional durable receipt store from runtime environment."""
+
+    jsonl_path = str(runtime_env.get("MULLU_RECEIPT_STORE_JSONL_PATH", "")).strip()
+    if not jsonl_path:
+        return None
+
+    return JsonlReceiptStore(Path(jsonl_path))
+
+
 def bootstrap_foundation_services(
     *,
     clock: Callable[[], str],
@@ -58,6 +70,9 @@ def bootstrap_foundation_services(
     pii_scanner_cls: type[Any] = PIIScanner,
     build_default_safety_chain_fn: Callable[[], Any] = build_default_safety_chain,
     proof_bridge_cls: type[Any] = ProofBridge,
+    receipt_store_from_env_fn: Callable[
+        [Mapping[str, str]], Any | None
+    ] = receipt_store_from_env,
     tenant_ledger_cls: type[Any] = TenantLedger,
     hashlib_module: Any = hashlib,
     json_module: Any = json,
@@ -116,7 +131,11 @@ def bootstrap_foundation_services(
         enabled=runtime_env.get("MULLU_PII_SCAN", "true").lower() == "true",
     )
     content_safety_chain = build_default_safety_chain_fn()
-    proof_bridge = proof_bridge_cls(clock=clock)
+    receipt_store = receipt_store_from_env_fn(runtime_env)
+    if receipt_store is None:
+        proof_bridge = proof_bridge_cls(clock=clock)
+    else:
+        proof_bridge = proof_bridge_cls(clock=clock, store=receipt_store)
     tenant_ledger = tenant_ledger_cls(clock=clock)
 
     return FoundationServicesBootstrap(

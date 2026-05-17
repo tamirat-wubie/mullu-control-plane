@@ -24,7 +24,7 @@ exactly what's claimed, what's verified, and what's NOT.
 | "Every governance decision produces a transition receipt." | **Verified** for the HTTP entry surface. 100% of `/api/v1/*` endpoints certified via `GovernanceMiddleware`. 100% of gateway `POST /webhook/*`, `POST /authority/*`, `POST /capability-fabric/*`, and `POST /capability-plans/*` recovery endpoints certified via `GatewayReceiptMiddleware` (closed in commit shipping G10.1 and extended for plan recovery and capsule admission). |
 | "Transition receipts are deterministically hashed." | **Verified** — both Rust and Python implementations hash receipt content with SHA-256 in a fixed canonical order. Cross-language equality is locked by `maf-kernel::receipt_hash_matches_python_sha256` and `mcoi/tests/test_proof_hash_contract.py`, which both assert against the same hardcoded SHA-256 constant. |
 | "The Rust MAF substrate certifies the Python control plane." | **NOT a claim today.** Python does not call into Rust. Both sides implement the same protocol independently. Receipts emitted by Python are not (currently) cross-verified by Rust. |
-| "Receipts are persisted." | **Bounded claim only.** Default `ProofBridge` still uses in-memory storage, but `JsonlReceiptStore` provides an append-only durable backend for emitted receipts and lineage when explicitly injected. Production PostgreSQL wiring is still not claimed. |
+| "Receipts are persisted." | **Bounded claim only.** Default `ProofBridge` still uses in-memory storage, but `JsonlReceiptStore` provides an append-only durable backend for emitted receipts and lineage when explicitly injected or configured with `MULLU_RECEIPT_STORE_JSONL_PATH`. Production PostgreSQL wiring is still not claimed. |
 | "Receipts are tamper-evident under hash-chain integrity." | **NOT a claim for receipts.** The audit ledger (LEDGER_SPEC.md) provides hash-chain integrity for audit entries. Individual receipts have a `causal_parent` field but no global verifier exists for receipt chains. |
 
 When citing receipts in compliance documentation, cite the specific
@@ -191,8 +191,9 @@ done** and is not represented as done.
 
 The default `ProofBridge` store is in-memory and service restart drops
 that default state. `JsonlReceiptStore` is the first durable backend:
-when explicitly injected, it persists emitted receipts and lineage as
-append-only JSONL events and replays them on startup.
+when explicitly injected or configured through
+`MULLU_RECEIPT_STORE_JSONL_PATH`, it persists emitted receipts and
+lineage as append-only JSONL events and replays them on startup.
 
 Production database wiring is still not a claim. Until a production
 profile wires a database-backed store (e.g., PostgreSQL append table, or
@@ -225,7 +226,7 @@ content; this is a follow-up document.
 | Gap | Severity | Resolution path | Status |
 |-----|----------|-----------------|--------|
 | Gateway webhooks bypass receipt emission | High | `GatewayReceiptMiddleware` in `gateway/receipt_middleware.py` | **Closed (G10.1)** |
-| Receipts not persisted | High | Add `ReceiptStore` protocol mirroring `AuditStore`; wire to PostgreSQL in production profile. | Partially closed — `JsonlReceiptStore` persists emitted receipts and lineage as append-only JSONL when injected into `ProofBridge`; production PostgreSQL profile wiring remains open. |
+| Receipts not persisted | High | Add `ReceiptStore` protocol mirroring `AuditStore`; wire to PostgreSQL in production profile. | Partially closed — `JsonlReceiptStore` persists emitted receipts and lineage as append-only JSONL when injected into `ProofBridge` or configured through `MULLU_RECEIPT_STORE_JSONL_PATH`; production PostgreSQL profile wiring remains open. |
 | No external receipt verifier | Medium | After persistence: implement `mcoi verify-receipt-chain` mirroring `mcoi verify-ledger`. | **Closed** — `mcoi verify-receipt-chain` verifies exported JSON/JSONL receipt chains for receipt hash, receipt id, replay token, and causal-parent linkage. |
 | Rust ↔ Python protocol drift caught only by code review | Medium | Add a contract test that both implementations produce the same `receipt_hash` for the same input. | **Closed** — paired tests in `maf-kernel/src/lib.rs` and `mcoi/tests/test_proof_hash_contract.py` pin the canonical content to a hardcoded SHA-256 constant on each side. Drift on either side fails the matching test. |
 | State-hash content layout undocumented | Medium | Write `STATE_HASH_SPEC.md` mirroring the entry-hash section of LEDGER_SPEC.md. | **Closed** — `docs/STATE_HASH_SPEC.md` documents the canonical content layout (`state:entity_id:timestamp`), the Python implementation in `proof_bridge.py::_state_hash`, the absence of a Rust mirror, and three sub-gaps for future work (Rust mirror, structured entity fields, external verifier). |
