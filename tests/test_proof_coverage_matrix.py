@@ -137,6 +137,7 @@ def test_witness_integrity_report_tracks_exact_test_anchors() -> None:
     assert surfaces["operational_platform_read_models"]["exact_test_anchor_count"] >= 25
     assert surfaces["operational_platform_read_models"]["unanchored_witness_count"] == 0
     assert surfaces["trust_ledger"]["unanchored_witness_count"] == 0
+    assert surfaces["conversation_memory_lifecycle"]["unanchored_witness_count"] == 0
     assert surfaces["gateway_runtime_witness"]["unanchored_witness_count"] == 0
     assert surfaces["workflow_execution_lifecycle"]["unanchored_witness_count"] == 0
     assert surfaces["webhooks_proof_surface"]["unanchored_witness_count"] == 0
@@ -144,8 +145,13 @@ def test_witness_integrity_report_tracks_exact_test_anchors() -> None:
     assert surfaces["multimodal_operating_layer"]["unanchored_witness_count"] == 0
     assert surfaces["runtime_conformance_attestation"]["unanchored_witness_count"] == 0
     assert surfaces["finance_approval_packets"]["unanchored_witness_count"] == 0
+    assert surfaces["god_mode_lifecycle"]["unanchored_witness_count"] == 0
     assert surfaces["agent_adapter_protocol"]["exact_test_anchor_count"] == 14
     assert surfaces["agent_adapter_protocol"]["unanchored_witness_count"] == 0
+    assert surfaces["effect_assurance_graph_commit"]["exact_test_anchor_count"] == 5
+    assert surfaces["effect_assurance_graph_commit"]["unanchored_witness_count"] == 0
+    assert surfaces["proof_route_gap_triage"]["exact_test_anchor_count"] == 4
+    assert surfaces["proof_route_gap_triage"]["unanchored_witness_count"] == 0
     assert surfaces["tool_registry_read_models"]["unanchored_witness_count"] == 0
 
 

@@ -37,8 +37,10 @@ HOMEPAGE_UPDATE_EVIDENCE_PATH = REPO_ROOT / "docs" / "HOMEPAGE_UPDATE_EVIDENCE_2
 APP_TITLE_UPDATE_EVIDENCE_PATH = REPO_ROOT / "docs" / "APP_TITLE_UPDATE_EVIDENCE_2026-05-15.md"
 CLEARANCE_EVIDENCE_CAPTURE_PLAN_PATH = REPO_ROOT / "docs" / "CLEARANCE_EVIDENCE_CAPTURE_PLAN_2026-05-15.md"
 CLEARANCE_EVIDENCE_ROOT = REPO_ROOT / "docs" / "clearance-evidence" / "mullu" / "2026-05-15"
+CAPTURE_REQUIREMENTS_PATH = CLEARANCE_EVIDENCE_ROOT / "capture-requirements.json"
 READINESS_SCHEMA_PATH = REPO_ROOT / "schemas" / "public_naming_readiness.schema.json"
 CLEARANCE_SCHEMA_PATH = REPO_ROOT / "schemas" / "mullu_name_clearance_draft.schema.json"
+CAPTURE_REQUIREMENTS_SCHEMA_PATH = REPO_ROOT / "schemas" / "mullu_clearance_capture_requirements.schema.json"
 
 
 REQUIRED_CLOSED_GATES = {
@@ -108,6 +110,8 @@ REQUIRED_EVIDENCE_DOCS = {
     "docs/APP_TITLE_UPDATE_EVIDENCE_2026-05-15.md",
     "docs/CLEARANCE_EVIDENCE_CAPTURE_PLAN_2026-05-15.md",
     "docs/clearance-evidence/mullu/2026-05-15/README.md",
+    "docs/clearance-evidence/mullu/2026-05-15/CAPTURE_INDEX.md",
+    "docs/clearance-evidence/mullu/2026-05-15/capture-requirements.json",
     "docs/clearance-evidence/mullu/2026-05-15/01-uspto/README.md",
     "docs/clearance-evidence/mullu/2026-05-15/01-uspto/decision.md",
     "docs/clearance-evidence/mullu/2026-05-15/02-wipo/README.md",
@@ -141,6 +145,7 @@ REQUIRED_EVIDENCE_DOCS = {
     "docs/mullu-name-clearance-draft.json",
     "schemas/public_naming_readiness.schema.json",
     "schemas/mullu_name_clearance_draft.schema.json",
+    "schemas/mullu_clearance_capture_requirements.schema.json",
     "scripts/validate_public_naming_readiness.py",
     "scripts/report_public_naming_readiness.py",
     "scripts/plan_public_naming_transition.py",
@@ -437,6 +442,8 @@ def validate_clearance_evidence_capture_plan(plan_path: Path = CLEARANCE_EVIDENC
         "04-close-variant-mulu/",
         "05-domain-ownership/",
         "06-legal-review/",
+        "CAPTURE_INDEX.md",
+        "capture-requirements.json",
         "uspto_search",
         "wipo_search",
         "euipo_tmview_search",
@@ -469,6 +476,27 @@ def validate_clearance_evidence_scaffold(evidence_root: Path = CLEARANCE_EVIDENC
     _require(
         "paid public launch remains blocked" in root_text,
         "clearance evidence root must preserve paid launch block",
+    )
+    capture_index_path = evidence_root / "CAPTURE_INDEX.md"
+    _require(capture_index_path.exists(), f"clearance evidence capture index missing: {_display_path(capture_index_path)}")
+    capture_index_text = capture_index_path.read_text(encoding="utf-8")
+    validate_no_forbidden_terminology(_display_path(capture_index_path), capture_index_text)
+    required_index_literals = (
+        "uspto-search-mullu.pdf",
+        "wipo-search-mullu.pdf",
+        "euipo-search-mullu.pdf",
+        "tmview-search-mullu.pdf",
+        "tsdr-99518598.pdf",
+        "registrar-ownership.pdf",
+        "legal-review-decision.pdf",
+        "paid public launch remains blocked",
+    )
+    missing_index_literals = sorted(literal for literal in required_index_literals if literal not in capture_index_text)
+    _require(not missing_index_literals, f"clearance evidence capture index missing literals: {missing_index_literals}")
+    capture_requirements_path = evidence_root / "capture-requirements.json"
+    _require(
+        capture_requirements_path.exists(),
+        f"clearance evidence capture requirements missing: {_display_path(capture_requirements_path)}",
     )
 
     for directory_name in REQUIRED_CLEARANCE_EVIDENCE_DIRS:
@@ -696,6 +724,94 @@ def validate_public_naming_artifact_manifest(
     _require("python .\\scripts\\validate_release_status.py" in manifest_text, "manifest missing release validator command")
 
 
+def validate_capture_requirements(requirements_path: Path = CAPTURE_REQUIREMENTS_PATH) -> None:
+    requirements = json.loads(requirements_path.read_text(encoding="utf-8"))
+    _validate_top_level_required(requirements, CAPTURE_REQUIREMENTS_SCHEMA_PATH)
+    _require(requirements.get("product_name") == "Mullu", "capture requirements product mismatch")
+    _require(requirements.get("company_brand") == "Mullusi", "capture requirements company mismatch")
+    _require(requirements.get("public_paid_launch_allowed") is False, "capture requirements must block public launch")
+    _require(
+        requirements.get("evidence_root") == "docs/clearance-evidence/mullu/2026-05-15/",
+        "capture requirements evidence root mismatch",
+    )
+    _require(
+        "Do not close any remaining gate" in str(requirements.get("mutation_rule", "")),
+        "capture requirements mutation rule must block gate closure",
+    )
+
+    expected_directories = {
+        "uspto_search": "01-uspto/",
+        "wipo_search": "02-wipo/",
+        "euipo_tmview_search": "03-euipo-tmview/",
+        "close_variant_review": "04-close-variant-mulu/",
+        "domain_ownership": "05-domain-ownership/",
+        "legal_review": "06-legal-review/",
+    }
+    required_files_by_gate = {
+        "uspto_search": {
+            "uspto-search-mullu.pdf",
+            "uspto-search-mullusi.pdf",
+            "uspto-search-mullu-by-mullusi.pdf",
+            "uspto-search-mullu-surfaces.pdf",
+            "uspto-search-mulu.pdf",
+            "decision.md",
+        },
+        "wipo_search": {
+            "wipo-search-mullu.pdf",
+            "wipo-search-mullusi.pdf",
+            "wipo-search-mullu-by-mullusi.pdf",
+            "decision.md",
+        },
+        "euipo_tmview_search": {
+            "euipo-search-mullu.pdf",
+            "euipo-search-mullusi.pdf",
+            "euipo-search-mullu-by-mullusi.pdf",
+            "tmview-search-mullu.pdf",
+            "tmview-search-mullusi.pdf",
+            "tmview-search-mullu-by-mullusi.pdf",
+            "decision.md",
+        },
+        "close_variant_review": {
+            "tsdr-99518598.pdf",
+            "tsdr-99264214.pdf",
+            "tsdr-85772539.pdf",
+            "tsdr-85494313.pdf",
+            "tsdr-85222451.pdf",
+            "mulu-confusion-analysis.md",
+            "decision.md",
+        },
+        "domain_ownership": {
+            "registrar-ownership.pdf",
+            "dns-zone-control.pdf",
+            "https-certificate.pdf",
+            "renewal-and-lock-controls.pdf",
+            "decision.md",
+        },
+        "legal_review": {
+            "legal-review-decision.pdf",
+            "reviewed-evidence-list.md",
+            "decision.md",
+        },
+    }
+
+    gates = requirements.get("gates", [])
+    _require(isinstance(gates, list), "capture requirements gates must be a list")
+    gates_by_name = {gate.get("gate"): gate for gate in gates if isinstance(gate, dict)}
+    _require(REQUIRED_OPEN_GATES <= set(gates_by_name), f"capture requirements missing gates: {sorted(REQUIRED_OPEN_GATES - set(gates_by_name))}")
+
+    for gate_name in sorted(REQUIRED_OPEN_GATES):
+        gate = gates_by_name[gate_name]
+        _require(gate.get("directory") == expected_directories[gate_name], f"{gate_name} capture directory mismatch")
+        _require(gate.get("status") == "pending", f"{gate_name} capture status must remain pending")
+        _require(str(gate.get("authority", "")).strip(), f"{gate_name} capture authority is required")
+        required_files = set(gate.get("required_files", []))
+        missing_required_files = sorted(required_files_by_gate[gate_name] - required_files)
+        _require(not missing_required_files, f"{gate_name} capture requirements missing files: {missing_required_files}")
+        decision_fields = set(gate.get("decision_fields", []))
+        _require("decision" in decision_fields, f"{gate_name} capture requirements missing decision field")
+        _require("launch_impact" in decision_fields, f"{gate_name} capture requirements missing launch impact field")
+
+
 def _validate_top_level_required(payload: dict[str, object], schema_path: Path) -> None:
     schema = json.loads(schema_path.read_text(encoding="utf-8"))
     if jsonschema is not None:
@@ -728,6 +844,7 @@ def validate_public_naming_readiness(witness_path: Path = WITNESS_PATH) -> None:
     validate_homepage_update_evidence()
     validate_app_title_update_evidence()
     validate_clearance_evidence_capture_plan()
+    validate_capture_requirements()
     validate_public_naming_artifact_manifest()
 
     _require(witness.get("product_name") == "Mullu", "product_name must be Mullu")

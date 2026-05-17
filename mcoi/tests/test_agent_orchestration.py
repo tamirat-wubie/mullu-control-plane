@@ -209,6 +209,9 @@ class TestPlanLifecycle:
 
     def test_get_plan_records_lookup_proofs(self, orchestrator):
         plan = orchestrator.create_plan("agent-a", "goal")
+        orchestrator.add_proposal(plan.plan_id, AgentProposal(
+            proposal_id="p1", agent_id="agent-a", action="search", description="d",
+        ))
 
         assert orchestrator.get_plan(plan.plan_id) is plan
         assert orchestrator.get_plan("missing-plan") is None
@@ -219,11 +222,20 @@ class TestPlanLifecycle:
         assert proofs[0]["plan_id"] == plan.plan_id
         assert proofs[0]["plan_available"] is True
         assert proofs[0]["plan_phase"] == "planning"
+        assert proofs[0]["total_plan_count"] == 1
         assert proofs[0]["active_plan_count"] == 1
+        assert proofs[0]["active_proposal_count"] == 1
+        assert proofs[0]["plan_lookup_proof_count_before"] == 0
+        assert proofs[0]["plan_lookup_proof_count_after"] == 1
         assert proofs[1]["action"] == "get_plan"
         assert proofs[1]["plan_id"] == ""
         assert proofs[1]["plan_available"] is False
         assert proofs[1]["reason"] == "plan unavailable"
+        assert proofs[1]["total_plan_count"] == 1
+        assert proofs[1]["active_plan_count"] == 1
+        assert proofs[1]["active_proposal_count"] == 1
+        assert proofs[1]["plan_lookup_proof_count_before"] == 1
+        assert proofs[1]["plan_lookup_proof_count_after"] == 2
         assert "missing-plan" not in repr(proofs[1])
 
     def test_plan_lookup_proofs_limit_is_bounded(self, orchestrator):
@@ -418,6 +430,11 @@ class TestPlanLifecycle:
         assert proofs[0]["decision"] == "unavailable"
         assert proofs[0]["plan_id"] == ""
         assert proofs[0]["plan_available"] is False
+        assert proofs[0]["total_plan_count"] == 0
+        assert proofs[0]["active_plan_count"] == 0
+        assert proofs[0]["active_proposal_count"] == 0
+        assert proofs[0]["plan_lookup_proof_count_before"] == 0
+        assert proofs[0]["plan_lookup_proof_count_after"] == 1
 
 
 class TestCapabilityPolicy:

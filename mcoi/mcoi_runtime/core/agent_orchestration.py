@@ -11,6 +11,7 @@ Invariants:
   - Plan creation admission carries bounded proof records.
   - Plan creation proofs carry bounded active-surface transition counts.
   - Plan lookup observations carry bounded proof records.
+  - Plan lookup proofs carry bounded active-surface records.
   - Manifest binding bootstrap carries bounded proof records.
   - Capability admission policy changes carry bounded proof records.
   - Capability policy proofs carry bounded runtime impact counts.
@@ -610,6 +611,9 @@ class PlanLookupProof:
     registered_agent_count: int
     total_plan_count: int
     active_plan_count: int
+    active_proposal_count: int
+    plan_lookup_proof_count_before: int
+    plan_lookup_proof_count_after: int
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -624,6 +628,9 @@ class PlanLookupProof:
             "registered_agent_count": self.registered_agent_count,
             "total_plan_count": self.total_plan_count,
             "active_plan_count": self.active_plan_count,
+            "active_proposal_count": self.active_proposal_count,
+            "plan_lookup_proof_count_before": self.plan_lookup_proof_count_before,
+            "plan_lookup_proof_count_after": self.plan_lookup_proof_count_after,
         }
 
 
@@ -2146,7 +2153,8 @@ class AgentOrchestrator:
         decision: str,
         reason: str,
     ) -> PlanLookupProof:
-        proof_index = len(self._plan_lookup_proofs) + 1
+        plan_lookup_proof_count_before = len(self._plan_lookup_proofs)
+        proof_index = plan_lookup_proof_count_before + 1
         return PlanLookupProof(
             proof_id=f"plan-lookup:{proof_index}",
             action=action,
@@ -2159,6 +2167,9 @@ class AgentOrchestrator:
             registered_agent_count=self.agent_count,
             total_plan_count=self._total_plans,
             active_plan_count=self._active_plan_count(),
+            active_proposal_count=self._active_proposal_count(),
+            plan_lookup_proof_count_before=plan_lookup_proof_count_before,
+            plan_lookup_proof_count_after=plan_lookup_proof_count_before + 1,
         )
 
     def _build_manifest_binding_proof(

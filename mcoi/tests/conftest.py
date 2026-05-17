@@ -21,16 +21,28 @@ for import_root in (REPO_ROOT, MCOI_ROOT):
 
 
 # v4.26.0 (audit P0): the production resolver now fails closed when no
-# auth is configured. Tests that call ``configure_musia_auth(None)`` to
-# reset state would otherwise hit the fail-closed path. This autouse
-# fixture restores the legacy "tests run in dev mode" default.
+# auth is configured. The session-wide server import below installs real
+# auth singletons, so tests that mount bare MUSIA routers must explicitly
+# start from an unauthenticated local-dev baseline. Tests that verify auth
+# behavior configure their own API-key/JWT state after this fixture runs.
 # Individual tests that want to verify the fail-closed behavior can call
 # ``configure_musia_dev_mode(False)`` inside their body.
 @pytest.fixture(autouse=True)
 def _allow_musia_dev_mode_in_tests():
-    from mcoi_runtime.app.routers.musia_auth import configure_musia_dev_mode
-    configure_musia_dev_mode(True)
+    _reset_musia_auth_for_tests()
     yield
+    _reset_musia_auth_for_tests()
+
+
+def _reset_musia_auth_for_tests() -> None:
+    from mcoi_runtime.app.routers.musia_auth import (
+        configure_musia_auth,
+        configure_musia_dev_mode,
+        configure_musia_jwt,
+    )
+
+    configure_musia_auth(None)
+    configure_musia_jwt(None)
     configure_musia_dev_mode(True)
 
 
@@ -64,8 +76,10 @@ def _router_deps_baseline():
 def _isolate_router_deps(_router_deps_baseline):
     from mcoi_runtime.app.routers.deps import deps
     _restore_router_deps_baseline(deps, _router_deps_baseline)
+    _reset_musia_auth_for_tests()
     yield
     _restore_router_deps_baseline(deps, _router_deps_baseline)
+    _reset_musia_auth_for_tests()
 
 
 def _restore_router_deps_baseline(deps, baseline: dict[str, object]) -> None:

@@ -59,6 +59,21 @@ class PersistedReplayValidator:
     def _bounded_persistence_reason(self, prefix: str, exc: Exception) -> str:
         return f"{prefix}:{type(exc).__name__}"
 
+    def _validate_trace_hash_binding(
+        self,
+        validation: ReplayValidationResult,
+        trace_hash_matches: bool | None,
+    ) -> ReplayValidationResult:
+        if trace_hash_matches is not False:
+            return validation
+
+        return ReplayValidationResult(
+            ready=False,
+            reasons=(*validation.reasons, "trace_source_hash_mismatch"),
+            artifacts=(),
+            verdict=validation.verdict if not validation.ready else ReplayVerdict.STATE_MISMATCH,
+        )
+
     def validate(
         self,
         replay_id: str,
@@ -111,6 +126,8 @@ class PersistedReplayValidator:
             validation = self._replay_engine.validate_with_context(record, context)
         else:
             validation = self._replay_engine.validate(record)
+
+        validation = self._validate_trace_hash_binding(validation, trace_hash_matches)
 
         return PersistedReplayResult(
             replay_id=record.replay_id,

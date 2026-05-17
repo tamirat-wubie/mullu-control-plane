@@ -25,8 +25,15 @@ Do not update `docs/public-naming-readiness.json` to close any remaining gate un
 3. The authority listed in the capture plan has approved the decision.
 4. The final legal review explicitly allows paid public launch or records the remaining block.
 
+The intake checklist is governed by:
+
+```text
+docs/clearance-evidence/mullu/2026-05-15/CAPTURE_INDEX.md
+docs/clearance-evidence/mullu/2026-05-15/capture-requirements.json
+```
+
 STATUS:
   Completeness: 100%
-  Invariants verified: [evidence root exists, gate directories declared, paid public launch remains blocked]
+  Invariants verified: [evidence root exists, gate directories declared, capture requirements declared, paid public launch remains blocked]
   Open issues: [official source captures, reviewer decisions, legal decision]
   Next action: populate each gate directory with official source records and signed decisions

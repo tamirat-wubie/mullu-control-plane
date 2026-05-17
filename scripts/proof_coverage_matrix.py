@@ -450,6 +450,13 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "conversation_list_read_model_bounded",
                 "conversation_store_tenant_filter",
             ],
+            runtime_witness_anchor_aliases={
+                "conversation_message_appends_count": ["add_message"],
+                "conversation_history_read_model_bounded": ["get_conversation"],
+                "missing_conversation_bounded_404": ["get_missing_conversation"],
+                "conversation_list_read_model_bounded": ["list_conversations"],
+                "conversation_store_tenant_filter": ["list_by_tenant"],
+            },
         ),
         _surface(
             "coordination_checkpoint_lifecycle",
@@ -1356,6 +1363,16 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "conversation_memory_state_hash_changes",
                 "conversation_memory_pruning_bounded",
             ],
+            runtime_witness_anchor_aliases={
+                "conversation_message_append_increments_count": ["add_message"],
+                "conversation_history_returns_messages_and_summary": ["get_conversation", "summary"],
+                "conversation_missing_read_is_bounded": ["get_missing"],
+                "conversation_multi_turn_history_preserved": ["multi_turn"],
+                "conversation_list_summary_bounded": ["list_conversations", "summary"],
+                "conversation_store_tenant_filtering": ["list_by_tenant"],
+                "conversation_memory_state_hash_changes": ["state_hash"],
+                "conversation_memory_pruning_bounded": ["pruning"],
+            },
         ),
         _surface(
             "ops_proof_surface",
@@ -2010,6 +2027,21 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "effect_graph_commit_receipt_closes_effect_assurance",
                 "effect_graph_commit_receipt_store_replays_records",
             ],
+            {
+                "effect_graph_commit_requires_match": ["graph_commit_requires_match"],
+                "effect_graph_commit_receipt_emitted": [
+                    "graph_commit_writes_command_verification_and_evidence_nodes"
+                ],
+                "effect_graph_commit_receipt_converts_to_actual_effect": [
+                    "graph_commit_receipts_convert_to_effect_records"
+                ],
+                "effect_graph_commit_receipt_closes_effect_assurance": [
+                    "graph_commit_receipt_closes_effect_assurance"
+                ],
+                "effect_graph_commit_receipt_store_replays_records": [
+                    "jsonl_graph_commit_receipt_store_replays_records"
+                ],
+            },
         ),
         _surface(
             "job_engine_lifecycle",
@@ -4075,20 +4107,20 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "revocations are first-class, irreversible-as-events."
             ),
             [
-                "god_mode_capability_keys_are_unique",
-                "god_mode_every_capability_declares_at_least_one_bypass",
-                "god_mode_catastrophic_caps_require_dual_control",
-                "god_mode_catastrophic_caps_are_one_shot",
-                "god_mode_catastrophic_caps_have_short_ttl",
-                "god_mode_secrets_capabilities_use_strictest_floor",
-                "god_mode_agree_to_register_arms_capability",
-                "god_mode_issue_ticket_requires_armed",
-                "god_mode_double_consume_rejected",
-                "god_mode_consume_ticket_emits_receipt",
-                "god_mode_revoke_ticket_blocks_consume",
-                "god_mode_withdraw_agreement_reverts_state",
-                "god_mode_two_distinct_agreements_arm_capability",
-                "god_mode_end_to_end_consent_chain",
+                "capability_keys_are_unique",
+                "every_capability_declares_at_least_one_bypass",
+                "catastrophic_caps_require_dual_control",
+                "catastrophic_caps_are_one_shot",
+                "catastrophic_caps_have_short_ttl",
+                "secrets_capabilities_use_strictest_floor",
+                "agree_to_register_arms_capability",
+                "issue_ticket_requires_armed",
+                "double_consume_rejected",
+                "consume_ticket_emits_receipt",
+                "revoke_ticket_blocks_consume",
+                "withdraw_agreement_reverts_state",
+                "two_distinct_agreements_arm_capability",
+                "end_to_end_consent_chain",
             ],
         ),
     ]
