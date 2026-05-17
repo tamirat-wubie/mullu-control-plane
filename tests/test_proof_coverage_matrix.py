@@ -2513,6 +2513,30 @@ def test_policy_prover_surface_reports_counterexamples() -> None:
     assert closure_actions["publish_policy_prover_counterexample_contract"]["status"] == "closed"
 
 
+def test_shell_execution_adapter_surface_closes_effect_assurance() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    shell_surface = surfaces["shell_execution_adapter"]
+    witnesses = set(shell_surface["runtime_witnesses"])
+
+    assert shell_surface["coverage_state"] == "witnessed"
+    assert shell_surface["request_proof"] == "request_proof"
+    assert shell_surface["action_proof"] == "action_proof"
+    assert "ShellExecutor.execute" in shell_surface["representative_paths"]
+    assert "ShellExecutionReceipt" in shell_surface["representative_paths"]
+    assert "ShellSandboxPolicy" in shell_surface["representative_paths"]
+    assert "mcoi/mcoi_runtime/adapters/shell_executor.py" in shell_surface["evidence_files"]
+    assert "mcoi/mcoi_runtime/contracts/shell_execution.py" in shell_surface["evidence_files"]
+    assert "mcoi/tests/test_shell_executor.py" in shell_surface["evidence_files"]
+    assert "shell_executor_argv_only" in witnesses
+    assert "shell_policy_denial_receipt_emitted" in witnesses
+    assert "shell_sandbox_denial_receipt_emitted" in witnesses
+    assert "shell_receipt_becomes_effect_assurance_evidence_ref" in witnesses
+    assert "shell_receipt_closes_effect_assurance" in witnesses
+    assert closure_actions["bind_shell_execution_receipts_to_effect_assurance"]["status"] == "closed"
+
+
 def test_memory_lattice_surface_gates_planning_and_execution() -> None:
     matrix = _load_fixture()
     surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}

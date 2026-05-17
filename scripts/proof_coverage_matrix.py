@@ -2710,6 +2710,31 @@ def proof_coverage_matrix() -> dict[str, Any]:
             ],
         ),
         _surface(
+            "shell_execution_adapter",
+            [
+                "ShellExecutor.execute",
+                "ShellExecutionReceipt",
+                "ShellSandboxPolicy",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "mcoi/mcoi_runtime/adapters/shell_executor.py",
+                "mcoi/mcoi_runtime/contracts/shell_execution.py",
+                "mcoi/tests/test_shell_executor.py",
+            ],
+            "Shell execution is argv-only, policy/sandbox gated, receipt-backed, and exposes shell receipts as actual effects that can close Effect Assurance.",
+            [
+                "shell_executor_argv_only",
+                "shell_policy_denial_receipt_emitted",
+                "shell_sandbox_denial_receipt_emitted",
+                "shell_receipt_becomes_effect_assurance_evidence_ref",
+                "shell_receipt_closes_effect_assurance",
+            ],
+        ),
+        _surface(
             "memory_lattice",
             [
                 "MemoryLatticeGate.assess",
@@ -4274,6 +4299,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
         {
             "action_id": "publish_policy_prover_counterexample_contract",
             "surfaces": ["policy_prover"],
+            "status": "closed",
+        },
+        {
+            "action_id": "bind_shell_execution_receipts_to_effect_assurance",
+            "surfaces": ["shell_execution_adapter"],
             "status": "closed",
         },
         {

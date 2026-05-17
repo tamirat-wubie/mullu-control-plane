@@ -545,6 +545,13 @@
       ]
     },
     {
+      "action_id": "bind_shell_execution_receipts_to_effect_assurance",
+      "status": "closed",
+      "surfaces": [
+        "shell_execution_adapter"
+      ]
+    },
+    {
       "action_id": "publish_memory_lattice_admission_contract",
       "status": "closed",
       "surfaces": [
@@ -783,7 +790,7 @@
   ],
   "coverage_summary": {
     "by_action_proof": {
-      "action_proof": 97,
+      "action_proof": 98,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 16,
@@ -791,7 +798,7 @@
     },
     "by_audit": {
       "action_proof": 0,
-      "audit_chain": 111,
+      "audit_chain": 112,
       "gap": 0,
       "read_model": 4,
       "request_proof": 0
@@ -799,21 +806,21 @@
     "by_coverage_state": {
       "proven": 1,
       "unproven": 0,
-      "witnessed": 114
+      "witnessed": 115
     },
     "by_request_proof": {
       "action_proof": 1,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 18,
-      "request_proof": 96
+      "request_proof": 97
     },
-    "surface_count": 115
+    "surface_count": 116
   },
   "evidence_quality": {
     "by_strength": {
       "classified_with_quality_gaps": 0,
-      "strong": 115,
+      "strong": 116,
       "unproven": 0
     },
     "quality_gap_count": 0,
@@ -5208,6 +5215,31 @@
       "audit": "audit_chain",
       "coverage_state": "witnessed",
       "evidence_files": [
+        "mcoi/mcoi_runtime/adapters/shell_executor.py",
+        "mcoi/mcoi_runtime/contracts/shell_execution.py",
+        "mcoi/tests/test_shell_executor.py"
+      ],
+      "notes": "Shell execution is argv-only, policy/sandbox gated, receipt-backed, and exposes shell receipts as actual effects that can close Effect Assurance.",
+      "representative_paths": [
+        "ShellExecutor.execute",
+        "ShellExecutionReceipt",
+        "ShellSandboxPolicy"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "shell_executor_argv_only",
+        "shell_policy_denial_receipt_emitted",
+        "shell_sandbox_denial_receipt_emitted",
+        "shell_receipt_becomes_effect_assurance_evidence_ref",
+        "shell_receipt_closes_effect_assurance"
+      ],
+      "surface_id": "shell_execution_adapter"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
         "docs/62_governed_operational_intelligence.md",
         "gateway/memory_lattice.py",
         "schemas/memory_lattice.schema.json",
@@ -6400,8 +6432,8 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 238,
-    "runtime_witness_count": 1002,
+    "exact_test_anchor_count": 240,
+    "runtime_witness_count": 1007,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -8440,6 +8472,31 @@
         "anchored_witnesses": [
           {
             "anchors": [
+              "mcoi/tests/test_shell_executor.py::test_shell_receipt_becomes_effect_assurance_evidence_ref"
+            ],
+            "witness": "shell_receipt_becomes_effect_assurance_evidence_ref"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_shell_executor.py::test_shell_receipt_closes_effect_assurance"
+            ],
+            "witness": "shell_receipt_closes_effect_assurance"
+          }
+        ],
+        "exact_test_anchor_count": 2,
+        "runtime_witness_count": 5,
+        "surface_id": "shell_execution_adapter",
+        "unanchored_witness_count": 3,
+        "unanchored_witnesses": [
+          "shell_executor_argv_only",
+          "shell_policy_denial_receipt_emitted",
+          "shell_sandbox_denial_receipt_emitted"
+        ]
+      },
+      {
+        "anchored_witnesses": [
+          {
+            "anchors": [
               "tests/test_gateway/test_memory_lattice.py::test_contradiction_and_stale_memory_block_execution"
             ],
             "witness": "contradiction_and_stale_memory_block_execution"
@@ -9657,6 +9714,6 @@
         ]
       }
     ],
-    "unanchored_witness_count": 764
+    "unanchored_witness_count": 767
   }
 }
