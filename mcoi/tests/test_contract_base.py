@@ -81,7 +81,7 @@ def test_contract_record_to_json_is_sorted_and_deterministic() -> None:
 def test_contract_record_to_json_rejects_non_finite_float() -> None:
     record = ContractProbe(z_field="last", a_field={"secret_metric": float("inf")})
 
-    with pytest.raises(ValueError) as excinfo:
+    with pytest.raises(ValueError, match=r"^contract record must be deterministic JSON$") as excinfo:
         record.to_json()
 
     message = str(excinfo.value)
