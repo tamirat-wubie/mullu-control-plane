@@ -24,7 +24,7 @@ exactly what's claimed, what's verified, and what's NOT.
 | "Every governance decision produces a transition receipt." | **Verified** for the HTTP entry surface. 100% of `/api/v1/*` endpoints certified via `GovernanceMiddleware`. 100% of gateway `POST /webhook/*`, `POST /authority/*`, `POST /capability-fabric/*`, and `POST /capability-plans/*` recovery endpoints certified via `GatewayReceiptMiddleware` (closed in commit shipping G10.1 and extended for plan recovery and capsule admission). |
 | "Transition receipts are deterministically hashed." | **Verified** — both Rust and Python implementations hash receipt content with SHA-256 in a fixed canonical order. Cross-language equality is locked by `maf-kernel::receipt_hash_matches_python_sha256` and `mcoi/tests/test_proof_hash_contract.py`, which both assert against the same hardcoded SHA-256 constant. |
 | "The Rust MAF substrate certifies the Python control plane." | **NOT a claim today.** Python does not call into Rust. Both sides implement the same protocol independently. Receipts emitted by Python are not (currently) cross-verified by Rust. |
-| "Receipts are persisted." | **NOT a claim today.** `ProofBridge._lineage` is an in-memory dict. Service restart loses the lineage. Receipts shipped to clients in HTTP responses are not retained server-side. |
+| "Receipts are persisted." | **Bounded claim only.** Default `ProofBridge` still uses in-memory storage, but `JsonlReceiptStore` provides an append-only durable backend for emitted receipts and lineage when explicitly injected. Production PostgreSQL wiring is still not claimed. |
 | "Receipts are tamper-evident under hash-chain integrity." | **NOT a claim for receipts.** The audit ledger (LEDGER_SPEC.md) provides hash-chain integrity for audit entries. Individual receipts have a `causal_parent` field but no global verifier exists for receipt chains. |
 
 When citing receipts in compliance documentation, cite the specific
@@ -189,16 +189,16 @@ done** and is not represented as done.
 
 ### 2. Receipts are persisted
 
-`ProofBridge._lineage` is an in-memory `dict[str, CausalLineage]`.
-Service restart drops it. Receipts shipped in HTTP responses are not
-retained server-side. The only persistent record of a governance
-decision is the audit-trail entry in `AuditTrail` (which is in-memory
-unless an `AuditStore` is wired and which is itself separate from the
-receipt — see LEDGER_SPEC.md).
+The default `ProofBridge` store is in-memory and service restart drops
+that default state. `JsonlReceiptStore` is the first durable backend:
+when explicitly injected, it persists emitted receipts and lineage as
+append-only JSONL events and replays them on startup.
 
-A future durable receipt store could be added (e.g., PostgreSQL append
-table, or by hashing receipts into the audit ledger). Until then,
-clients must persist their own receipt copies if they need them.
+Production database wiring is still not a claim. Until a production
+profile wires a database-backed store (e.g., PostgreSQL append table, or
+by hashing receipts into the audit ledger), default receipts should be
+treated as response-time proof objects rather than production durable
+compliance records.
 
 ### 3. Receipts prove external transition truth
 
@@ -225,11 +225,11 @@ content; this is a follow-up document.
 | Gap | Severity | Resolution path | Status |
 |-----|----------|-----------------|--------|
 | Gateway webhooks bypass receipt emission | High | `GatewayReceiptMiddleware` in `gateway/receipt_middleware.py` | **Closed (G10.1)** |
-| Receipts not persisted | High | Add `ReceiptStore` protocol mirroring `AuditStore`; wire to PostgreSQL in production profile. | Open |
+| Receipts not persisted | High | Add `ReceiptStore` protocol mirroring `AuditStore`; wire to PostgreSQL in production profile. | Partially closed — `JsonlReceiptStore` persists emitted receipts and lineage as append-only JSONL when injected into `ProofBridge`; production PostgreSQL profile wiring remains open. |
 | No external receipt verifier | Medium | After persistence: implement `mcoi verify-receipt-chain` mirroring `mcoi verify-ledger`. | **Closed** — `mcoi verify-receipt-chain` verifies exported JSON/JSONL receipt chains for receipt hash, receipt id, replay token, and causal-parent linkage. |
 | Rust ↔ Python protocol drift caught only by code review | Medium | Add a contract test that both implementations produce the same `receipt_hash` for the same input. | **Closed** — paired tests in `maf-kernel/src/lib.rs` and `mcoi/tests/test_proof_hash_contract.py` pin the canonical content to a hardcoded SHA-256 constant on each side. Drift on either side fails the matching test. |
 | State-hash content layout undocumented | Medium | Write `STATE_HASH_SPEC.md` mirroring the entry-hash section of LEDGER_SPEC.md. | **Closed** — `docs/STATE_HASH_SPEC.md` documents the canonical content layout (`state:entity_id:timestamp`), the Python implementation in `proof_bridge.py::_state_hash`, the absence of a Rust mirror, and three sub-gaps for future work (Rust mirror, structured entity fields, external verifier). |
-| Receipt persistence architectural seam | High | Define a `ReceiptStore` Protocol so a durable backend can plug in without touching ProofBridge core logic. (Separate from picking the durable shape.) | **Closed** — `mcoi/mcoi_runtime/contracts/receipt_store.py` defines `ReceiptStore` (base class with no-op defaults, mirroring AuditStore's pattern) and `InMemoryReceiptStore` (default, preserves pre-Protocol FIFO eviction at MAX_LINEAGE_ENTRIES). `ProofBridge` wired to use the Protocol via injection. The durable storage SHAPE decision (PostgreSQL append table vs ledger-hashed) is still the operator's call, but the architectural blocker is removed: a `PostgresReceiptStore` is now a drop-in subclass. |
+| Receipt persistence architectural seam | High | Define a `ReceiptStore` Protocol so a durable backend can plug in without touching ProofBridge core logic. (Separate from picking the durable shape.) | **Closed** — `mcoi/mcoi_runtime/contracts/receipt_store.py` defines `ReceiptStore` (base class with no-op defaults, mirroring AuditStore's pattern), `InMemoryReceiptStore` (default, preserves pre-Protocol FIFO eviction at MAX_LINEAGE_ENTRIES), and `JsonlReceiptStore` (append-only durable receipt + lineage JSONL replay). `ProofBridge` records emitted receipts and lineage through the Protocol via injection. The production storage shape decision (PostgreSQL append table vs ledger-hashed) is still the operator's call, but the architectural blocker is removed. |
 | Replay token has no verifier | Low-Medium | Surfaced by audit 2026-04-28: every receipt has a `replay_token` field but no code anywhere consumes it. Field name implies a contract the codebase doesn't honor. | **Closed** — `ProofBridge.verify_replay_token(receipt) -> bool` (static) reconstructs the token from the receipt's content + issued_at and compares. Holds the token-internal-consistency half of replay validation; a real replay system that derives its own token and compares would close the loop. |
 | Coverage invariant not CI-enforced | Medium | Add `scripts/validate_receipt_coverage.py` enumerating routes and asserting each has a known emission path or is in the "Acknowledged exclusions" list. | **Closed** — `scripts/validate_receipt_coverage.py` enumerates every state-mutating route and classifies it as MIDDLEWARE_API / MIDDLEWARE_GATEWAY / MIDDLEWARE_MUSIA / EXCLUDED / UNCOVERED. The ratchet test `mcoi/tests/test_receipt_coverage_invariant.py` pins the UNCOVERED count to zero; any drift fails the test, so coverage regressions are reviewer-visible. The script supports `--strict` for CI gating. |
 | MUSIA + gateway-internal routes not on the receipt path | High | MUSIA state-mutating routes (`/cognition`, `/constructs`, `/domains`, `/musia/*`, `/ucja`) are classified as covered by `MusiaReceiptMiddleware`. The standalone capability worker route `POST /capability/execute` in `gateway/capability_worker.py` is covered by `GatewayReceiptMiddleware`, installed by `create_capability_worker_app` with a worker-local `ProofBridge` when no platform bridge is supplied. The ratchet test (`mcoi/tests/test_receipt_coverage_invariant.py`) pins the uncovered count to zero. | **Closed** — ratcheted to zero uncovered routes on 2026-05-16 |
