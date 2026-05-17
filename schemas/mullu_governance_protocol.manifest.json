@@ -203,6 +203,12 @@
       "surface": "deployment"
     },
     {
+      "schema_id": "public-production-health-declaration",
+      "path": "schemas/public_production_health_declaration.schema.json",
+      "urn": "urn:mullusi:schema:public-production-health-declaration:1",
+      "surface": "deployment"
+    },
+    {
       "schema_id": "deployment-witness",
       "path": "schemas/deployment_witness.schema.json",
       "urn": "urn:mullusi:schema:deployment-witness:1",
@@ -524,6 +530,12 @@
       "schema_id": "runtime-conformance-certificate",
       "path": "schemas/runtime_conformance_certificate.schema.json",
       "urn": "urn:mullusi:schema:runtime-conformance-certificate:1",
+      "surface": "conformance"
+    },
+    {
+      "schema_id": "runtime-conformance-collection",
+      "path": "schemas/runtime_conformance_collection.schema.json",
+      "urn": "urn:mullusi:schema:runtime-conformance-collection:1",
       "surface": "conformance"
     },
     {

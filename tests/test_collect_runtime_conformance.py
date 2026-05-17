@@ -21,10 +21,15 @@ import hmac
 import json
 from typing import Any
 
+import pytest
+
 from scripts.collect_runtime_conformance import (
+    CollectionStep,
+    RuntimeConformanceCollection,
     collect_runtime_conformance,
     main,
     write_runtime_conformance,
+    _validate_runtime_conformance_collection_schema,
 )
 
 
@@ -466,6 +471,29 @@ def test_write_runtime_conformance_persists_json(tmp_path, monkeypatch) -> None:
     assert written == output_path
     assert loaded["collection_id"] == collection.collection_id
     assert loaded["certificate"]["certificate_id"] == "conf-0123456789abcdef"
+    assert _validate_runtime_conformance_collection_schema(loaded) == ()
+
+
+def test_write_runtime_conformance_rejects_collection_schema_drift(tmp_path) -> None:
+    collection = RuntimeConformanceCollection(
+        collection_id="runtime-conformance-collection-drift",
+        collected_at="2026-04-25T12:00:00+00:00",
+        gateway_url="http://localhost:8001",
+        endpoint_status=200,
+        certificate_status="conformant",
+        signature_status="verified",
+        certificate={},
+        steps=(CollectionStep(name="runtime conformance endpoint", passed=True, detail="ok"),),
+        errors=(),
+    )
+    output_path = tmp_path / "runtime_conformance_certificate.json"
+
+    with pytest.raises(RuntimeError) as exc:
+        write_runtime_conformance(collection, output_path)
+
+    assert "runtime conformance collection schema validation failed" in str(exc.value)
+    assert not output_path.exists()
+    assert collection.collection_id.endswith("drift")
 
 
 def test_runtime_conformance_cli_writes_collection(tmp_path, monkeypatch, capsys) -> None:

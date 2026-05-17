@@ -15,6 +15,11 @@ on:
         options:
           - pilot
           - production
+      operator_approval_ref:
+        description: "Approval reference required to apply public health declaration"
+        required: false
+        default: ""
+        type: string
 
 # v4.22.0: opt into Node.js 24 for the deprecated actions/* runtime.
 env:
@@ -51,6 +56,26 @@ jobs:
             --accept-workflow-file \
             --output .change_assurance/deployment_witness_preflight.json
 
+      - name: Collect live runtime conformance
+        env:
+          MULLU_RUNTIME_CONFORMANCE_SECRET: ${{ secrets.MULLU_RUNTIME_CONFORMANCE_SECRET }}
+          MULLU_AUTHORITY_OPERATOR_SECRET: ${{ secrets.MULLU_AUTHORITY_OPERATOR_SECRET }}
+        run: |
+          python scripts/collect_runtime_conformance.py \
+            --gateway-url "${{ inputs.gateway_url }}" \
+            --conformance-secret "$MULLU_RUNTIME_CONFORMANCE_SECRET" \
+            --authority-operator-secret "$MULLU_AUTHORITY_OPERATOR_SECRET" \
+            --expected-environment "${{ inputs.expected_environment }}" \
+            --output .change_assurance/runtime_conformance_certificate.json
+
+      - name: Upload runtime conformance collection
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: runtime-conformance-collection
+          path: .change_assurance/runtime_conformance_certificate.json
+          if-no-files-found: warn
+
       - name: Collect live deployment witness
         env:
           MULLU_RUNTIME_WITNESS_SECRET: ${{ secrets.MULLU_RUNTIME_WITNESS_SECRET }}
@@ -65,6 +90,16 @@ jobs:
             --expected-environment "${{ inputs.expected_environment }}" \
             --require-production-evidence \
             --output .change_assurance/deployment_witness.json
+
+      - name: Apply public production health declaration
+        if: ${{ inputs.operator_approval_ref != '' }}
+        run: |
+          python scripts/apply_deployment_publication_status.py \
+            --operator-approval-ref "${{ inputs.operator_approval_ref }}" \
+            --receipt-output .change_assurance/public_production_health_declaration.json
+          python scripts/validate_deployment_publication_closure.py \
+            --declaration-receipt .change_assurance/public_production_health_declaration.json \
+            --output .change_assurance/deployment_publication_closure_validation.json
 
       - name: Upload deployment witness preflight
         if: always()
@@ -81,3 +116,13 @@ jobs:
           name: deployment-witness
           path: .change_assurance/deployment_witness.json
           if-no-files-found: error
+
+      - name: Upload public production health declaration
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: public-production-health-declaration
+          path: |
+            .change_assurance/public_production_health_declaration.json
+            .change_assurance/deployment_publication_closure_validation.json
+          if-no-files-found: warn

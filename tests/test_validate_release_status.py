@@ -57,8 +57,19 @@ def test_deployment_witness_workflow_carries_conformance_secret_handoff() -> Non
     assert ".change_assurance/deployment_witness_preflight.json" in content
     assert "deployment-witness-preflight" in content
     assert "MULLU_RUNTIME_CONFORMANCE_SECRET" in content
+    assert "MULLU_AUTHORITY_OPERATOR_SECRET" in content
+    assert "python scripts/collect_runtime_conformance.py" in content
+    assert '--authority-operator-secret "$MULLU_AUTHORITY_OPERATOR_SECRET"' in content
+    assert ".change_assurance/runtime_conformance_certificate.json" in content
+    assert "runtime-conformance-collection" in content
     assert '--conformance-secret "$MULLU_RUNTIME_CONFORMANCE_SECRET"' in content
     assert "python scripts/collect_deployment_witness.py" in content
+    assert "operator_approval_ref" in content
+    assert "python scripts/apply_deployment_publication_status.py" in content
+    assert "--operator-approval-ref \"${{ inputs.operator_approval_ref }}\"" in content
+    assert ".change_assurance/public_production_health_declaration.json" in content
+    assert "--declaration-receipt .change_assurance/public_production_health_declaration.json" in content
+    assert "public-production-health-declaration" in content
 
 
 def test_release_public_surface_requires_orchestration_receipt_anchors() -> None:
@@ -93,7 +104,13 @@ def test_release_public_surface_requires_orchestration_receipt_anchors() -> None
         in literal
         for literal in deployment_literals
     )
+    assert any("collect_runtime_conformance.py" in literal for literal in deployment_literals)
+    assert ".change_assurance/runtime_conformance_certificate.json" in deployment_literals
+    assert "schemas/runtime_conformance_collection.schema.json" in deployment_literals
     assert ".change_assurance/deployment_publication_closure_validation.json" in deployment_literals
+    assert any("apply_deployment_publication_status.py" in literal for literal in deployment_literals)
+    assert ".change_assurance/public_production_health_declaration.json" in deployment_literals
+    assert "schemas/public_production_health_declaration.schema.json" in deployment_literals
     assert any("plan_capability_adapter_closure.py" in literal for literal in deployment_literals)
     assert any("plan_deployment_publication_closure.py" in literal for literal in deployment_literals)
     assert any("validate_deployment_publication_closure_plan_schema.py" in literal for literal in deployment_literals)
@@ -134,6 +151,7 @@ def test_status_document_reflects_deployment_runtime_input_gap() -> None:
     assert "python scripts/validate_logic_governance_application.py" in REQUIRED_CI_LITERALS
     assert "Refresh deployment runtime input witness (#466)" in content
     assert "MULLU_GATEWAY_URL" in content
+    assert "MULLU_AUTHORITY_OPERATOR_SECRET" in content
     assert "deployment_claim: published" in content
     assert "docs/59_general_agent_promotion_handoff_packet.md" in content
     assert "examples/general_agent_promotion_handoff_packet.json" in content

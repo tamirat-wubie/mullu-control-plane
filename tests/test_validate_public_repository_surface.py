@@ -54,11 +54,18 @@ def test_deployment_status_requires_orchestration_receipt_validation() -> None:
     assert "responsibility_debt_clear=true" in content
     assert "runtime_responsibility_debt_clear=true" in content
     assert "authority_responsibility_debt_clear=true" in content
+    assert "python scripts/collect_runtime_conformance.py --gateway-url \"$MULLU_GATEWAY_URL\" --conformance-secret \"$MULLU_RUNTIME_CONFORMANCE_SECRET\" --authority-operator-secret \"$MULLU_AUTHORITY_OPERATOR_SECRET\" --output .change_assurance/runtime_conformance_certificate.json" in content
+    assert ".change_assurance/runtime_conformance_certificate.json" in content
+    assert "schemas/runtime_conformance_collection.schema.json" in content
+    assert "GitHub Actions secret name `MULLU_AUTHORITY_OPERATOR_SECRET` is present; secret value is not printed" in content
     assert "python scripts/plan_capability_adapter_closure.py --json" in content
     assert "python scripts/plan_deployment_publication_closure.py --json" in content
     assert "python scripts/validate_deployment_publication_closure_plan_schema.py --strict" in content
     assert "python scripts/validate_deployment_publication_closure.py --output .change_assurance/deployment_publication_closure_validation.json" in content
     assert ".change_assurance/deployment_publication_closure_validation.json" in content
+    assert "python scripts/apply_deployment_publication_status.py --operator-approval-ref \"$MULLU_DEPLOYMENT_PUBLICATION_APPROVAL_REF\" --receipt-output .change_assurance/public_production_health_declaration.json" in content
+    assert ".change_assurance/public_production_health_declaration.json" in content
+    assert "schemas/public_production_health_declaration.schema.json" in content
     assert "python scripts/plan_general_agent_promotion_closure.py --json" in content
     assert "python scripts/validate_general_agent_promotion_closure_plan_schema.py --strict" in content
     assert "python scripts/validate_general_agent_promotion_closure_plan.py --strict" in content
@@ -179,8 +186,19 @@ def test_deployment_witness_workflow_requires_conformance_secret_handoff() -> No
     assert ".change_assurance/deployment_witness_preflight.json" in content
     assert "deployment-witness-preflight" in content
     assert "MULLU_RUNTIME_CONFORMANCE_SECRET" in content
+    assert "MULLU_AUTHORITY_OPERATOR_SECRET" in content
+    assert "python scripts/collect_runtime_conformance.py" in content
+    assert '--authority-operator-secret "$MULLU_AUTHORITY_OPERATOR_SECRET"' in content
+    assert ".change_assurance/runtime_conformance_certificate.json" in content
+    assert "runtime-conformance-collection" in content
     assert '--conformance-secret "$MULLU_RUNTIME_CONFORMANCE_SECRET"' in content
     assert ".change_assurance/deployment_witness.json" in content
+    assert "operator_approval_ref" in content
+    assert "python scripts/apply_deployment_publication_status.py" in content
+    assert "--operator-approval-ref \"${{ inputs.operator_approval_ref }}\"" in content
+    assert ".change_assurance/public_production_health_declaration.json" in content
+    assert "--declaration-receipt .change_assurance/public_production_health_declaration.json" in content
+    assert "public-production-health-declaration" in content
 
 
 def test_governance_protocol_doc_is_public_surface_anchor() -> None:
@@ -213,6 +231,7 @@ def test_governance_protocol_doc_is_public_surface_anchor() -> None:
     assert "Deployment handoff receipts are public contracts" in content
     assert "Deployment publication closure validation reports are public contracts" in content
     assert "Deployment publication closure plans are public contracts" in content
+    assert "Public production health declaration receipts are public contracts" in content
     assert "Deployment orchestration receipt validation reports are public contracts" in content
     assert "Gateway publication readiness reports are public contracts" in content
     assert "Gateway publication receipt validation reports are public contracts" in content
