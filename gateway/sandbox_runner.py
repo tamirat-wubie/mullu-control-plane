@@ -435,6 +435,8 @@ def _validate_text_tuple(values: tuple[str, ...], field_name: str) -> None:
         raise ValueError(f"{field_name} must contain at least one item")
     for value in values:
         _require_text(value, field_name)
+        if any(ord(character) < 32 for character in value):
+            raise ValueError(f"{field_name} contains forbidden characters")
 
 
 def _normalize_argv(values: object) -> tuple[str, ...]:

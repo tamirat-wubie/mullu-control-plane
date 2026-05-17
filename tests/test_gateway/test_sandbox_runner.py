@@ -302,6 +302,16 @@ def test_sandbox_request_rejects_scalar_argv_shape() -> None:
         )
 
 
+def test_sandbox_request_rejects_control_character_argv_item() -> None:
+    with pytest.raises(ValueError, match="^argv contains forbidden characters$"):
+        SandboxCommandRequest(
+            request_id="sandbox-request-6d",
+            tenant_id="tenant-1",
+            capability_id="computer.command.run",
+            argv=("python", "line1\nline2"),
+        )
+
+
 def test_sandbox_request_accepts_list_argv_as_explicit_argv_array() -> None:
     request = SandboxCommandRequest(
         request_id="sandbox-request-6c",
