@@ -174,13 +174,12 @@ class DockerRootlessSandboxRunner:
         clock: Callable[[], str] | None = None,
         platform_system: Callable[[], str] = platform.system,
     ) -> None:
+        _require_text(host_workspace_root, "host_workspace_root")
         self._host_workspace_root = Path(host_workspace_root).resolve(strict=False)
         self._profile = profile or SandboxRunnerProfile()
         self._runner = runner
         self._clock = clock or (lambda: "")
         self._platform_system = platform_system
-        if not str(self._host_workspace_root):
-            raise ValueError("host_workspace_root is required")
         if not self._host_workspace_root.exists():
             raise ValueError("host_workspace_root must exist")
         if not self._host_workspace_root.is_dir():
@@ -435,6 +434,8 @@ def _validate_text_tuple(values: tuple[str, ...], field_name: str) -> None:
         raise ValueError(f"{field_name} must contain at least one item")
     for value in values:
         _require_text(value, field_name)
+        if any(ord(character) < 32 for character in value):
+            raise ValueError(f"{field_name} contains forbidden characters")
 
 
 def _normalize_argv(values: object) -> tuple[str, ...]:

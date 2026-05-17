@@ -33,6 +33,28 @@ python scripts/plan_public_naming_transition.py
 
 The next operational-intelligence extension is specified in [`docs/62_governed_operational_intelligence.md`](docs/62_governed_operational_intelligence.md): world-state graph, goal compiler, causal simulator, capability forge, worker mesh, maturity levels, policy prover, memory lattice, trust ledger, and domain operating packs.
 
+## Governed Swarm Runtime
+
+The control plane can expose the governed swarm work surface when explicitly
+configured. It is disabled by default and requires an append-only audit store:
+
+```text
+MULLU_GOVERNED_SWARM_ENABLED=true
+MULLU_GOVERNED_SWARM_AUDIT_STORE_PATH=<persistent-jsonl-path>
+MULLU_GOVERNED_SWARM_RUNTIME_PATH=<runtime-root-containing-mcoi_runtime/swarm>
+```
+
+When enabled, the first route family is the governed invoice swarm:
+
+```text
+POST /api/v1/swarm/invoice-runs
+GET  /api/v1/swarm/runs/{run_id}
+GET  /api/v1/swarm/runs
+```
+
+Use [`examples/governed_swarm_control_plane.env.example`](examples/governed_swarm_control_plane.env.example)
+for the deployment template.
+
 ## Production Claim Boundary
 
 | Surface | Current public claim | Evidence boundary |

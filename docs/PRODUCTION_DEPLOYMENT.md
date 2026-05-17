@@ -127,6 +127,32 @@ Variables are grouped by purpose. Every row marks whether the variable is **requ
 | `MULLU_CERT_INTERVAL` | optional | `300` (seconds) | Certification cadence. Set to `0` in tests to disable. |
 | `MULLU_PII_SCAN` | optional | `true` | PII scanner on input/output content. |
 
+### Governed swarm route mount
+
+| Variable | Required | Default | Notes |
+|---|---|---|---|
+| `MULLU_GOVERNED_SWARM_ENABLED` | optional | unset / disabled | Optional governed swarm route mount. The route surface is disabled by default and mounts only when explicitly truthy. |
+| `MULLU_GOVERNED_SWARM_AUDIT_STORE_PATH` | yes, if enabled | unset | Append-only JSONL audit store for governed swarm run receipts. Use persistent storage in pilot and production. |
+| `MULLU_GOVERNED_SWARM_RUNTIME_PATH` | optional | unset | External runtime bridge. Set to a runtime root containing `mcoi_runtime/swarm`, such as the `mcoi` directory from `mullu-governed-swarm`. |
+
+Enabled routes:
+
+```text
+POST /api/v1/swarm/invoice-runs
+GET  /api/v1/swarm/runs/{run_id}
+GET  /api/v1/swarm/runs
+```
+
+Operational rule:
+
+```text
+No audit store path, no governed swarm mount.
+No runtime path containing mcoi_runtime/swarm, no external runtime bridge.
+```
+
+Use `examples/governed_swarm_control_plane.env.example` as the redacted
+operator template for this feature.
+
 ### State directories
 
 | Variable | Required | Default | Notes |

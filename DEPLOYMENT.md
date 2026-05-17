@@ -57,6 +57,32 @@
 | `MULLU_CAPABILITY_WORKER_URL` | unset | Restricted worker endpoint for dangerous capability execution, for example `http://capability-worker:8010/capability/execute` |
 | `MULLU_CAPABILITY_WORKER_SECRET` | unset | HMAC secret shared by gateway and restricted capability worker |
 | `MULLU_CAPABILITY_WORKER_TIMEOUT_SECONDS` | `10.0` | HTTP timeout for restricted capability worker calls |
+| `MULLU_GOVERNED_SWARM_ENABLED` | `false` | Optional governed swarm route mount. The swarm surface is disabled by default and mounts only when this flag is truthy. |
+| `MULLU_GOVERNED_SWARM_AUDIT_STORE_PATH` | unset | Required when governed swarm is enabled. Use a persistent JSONL audit path for `/api/v1/swarm/*` run receipts. |
+| `MULLU_GOVERNED_SWARM_RUNTIME_PATH` | unset | Optional external runtime bridge. Set to the governed swarm runtime root containing `mcoi_runtime/swarm`, for example the `mcoi` directory from `mullu-governed-swarm`. |
+
+### Governed Swarm Route Mount
+
+The governed swarm route surface is disabled by default. When enabled, the
+control plane mounts the external governed swarm runtime behind the existing
+FastAPI governance boundary:
+
+```text
+POST /api/v1/swarm/invoice-runs
+GET  /api/v1/swarm/runs/{run_id}
+GET  /api/v1/swarm/runs
+```
+
+Minimum local activation:
+
+```powershell
+$env:MULLU_GOVERNED_SWARM_ENABLED="true"
+$env:MULLU_GOVERNED_SWARM_AUDIT_STORE_PATH="C:\tmp\mullu-swarm-runs.jsonl"
+$env:MULLU_GOVERNED_SWARM_RUNTIME_PATH="C:\tmp\governed-swarm-parent-repo\mcoi"
+```
+
+Use `examples/governed_swarm_control_plane.env.example` as the redacted
+operator template. The runtime path must contain `mcoi_runtime/swarm`.
 
 ## Scaling Boundary
 
