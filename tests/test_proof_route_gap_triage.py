@@ -10,6 +10,9 @@ as deterministic JSON.
 from __future__ import annotations
 
 import json
+import subprocess
+import sys
+from pathlib import Path
 
 from scripts.proof_coverage_matrix import CANONICAL_OUTPUT
 from scripts.proof_route_gap_triage import (
@@ -19,6 +22,9 @@ from scripts.proof_route_gap_triage import (
     route_family,
     write_gap_triage_report,
 )
+
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
 
 
 def test_gap_triage_report_preserves_canonical_unclassified_routes() -> None:
@@ -40,6 +46,104 @@ def test_gap_triage_report_preserves_canonical_unclassified_routes() -> None:
             family["route_family"],
         ),
     )
+
+
+def test_unclassified_routes_grouped_by_family() -> None:
+    matrix = _matrix_with_unclassified_routes(
+        "/api/v1/agent/register",
+        "/api/v1/agent/heartbeat",
+        "/api/v1/config",
+    )
+    declarations = [
+        RouteDeclaration("/api/v1/agent/register", "POST", "mcoi/mcoi_runtime/app/routers/agent.py"),
+        RouteDeclaration("/api/v1/agent/heartbeat", "GET", "mcoi/mcoi_runtime/app/routers/agent.py"),
+        RouteDeclaration("/api/v1/config", "GET", "mcoi/mcoi_runtime/app/routers/ops/config.py"),
+    ]
+
+    report = build_gap_triage_report(matrix, declarations)
+    family_counts = {
+        family["route_family"]: family["unclassified_route_count"]
+        for family in report["ranked_families"]
+    }
+
+    assert report["total_unclassified_route_count"] == 3
+    assert report["route_family_count"] == 2
+    assert family_counts == {"/api/v1/agent": 2, "/api/v1/config": 1}
+    assert report["status"] == "open"
+
+
+def test_route_gap_triage_binds_source_files_and_methods() -> None:
+    matrix = _matrix_with_unclassified_routes(
+        "/api/v1/agent/register",
+        "/api/v1/agent/heartbeat",
+    )
+    declarations = [
+        RouteDeclaration("/api/v1/agent/register", "POST", "mcoi/mcoi_runtime/app/routers/agent.py"),
+        RouteDeclaration("/api/v1/agent/heartbeat", "GET", "mcoi/mcoi_runtime/app/routers/agent.py"),
+    ]
+
+    report = build_gap_triage_report(matrix, declarations)
+    family = report["ranked_families"][0]
+
+    assert family["route_family"] == "/api/v1/agent"
+    assert family["http_methods"] == ["GET", "POST"]
+    assert family["source_files"] == ["mcoi/mcoi_runtime/app/routers/agent.py"]
+    assert family["sample_routes"] == ["/api/v1/agent/heartbeat", "/api/v1/agent/register"]
+
+
+def test_closure_candidates_ranked_deterministically() -> None:
+    matrix = _matrix_with_unclassified_routes(
+        "/api/v1/search/stats",
+        "/api/v1/agent/register",
+        "/api/v1/agent/heartbeat",
+        "/api/v1/search/history",
+    )
+    declarations = [
+        RouteDeclaration("/api/v1/search/stats", "GET", "mcoi/mcoi_runtime/app/routers/data/search.py"),
+        RouteDeclaration("/api/v1/agent/register", "POST", "mcoi/mcoi_runtime/app/routers/agent.py"),
+        RouteDeclaration("/api/v1/agent/heartbeat", "GET", "mcoi/mcoi_runtime/app/routers/agent.py"),
+        RouteDeclaration("/api/v1/search/history", "GET", "mcoi/mcoi_runtime/app/routers/data/search.py"),
+    ]
+
+    first_report = build_gap_triage_report(matrix, declarations)
+    second_report = build_gap_triage_report(matrix, list(reversed(declarations)))
+    ranked_families = first_report["ranked_families"]
+
+    assert first_report == second_report
+    assert [family["route_family"] for family in ranked_families] == ["/api/v1/agent", "/api/v1/search"]
+    assert [family["risk_class"] for family in ranked_families] == ["effect_bearing", "read_model"]
+    assert ranked_families[0]["closure_candidate_id"] == "classify_agent_routes"
+
+
+def test_triage_report_check_detects_stale_output(tmp_path) -> None:
+    matrix_path = tmp_path / "matrix.json"
+    output_path = tmp_path / "proof_route_gap_triage.json"
+    matrix_path.write_text(
+        json.dumps(_matrix_with_unclassified_routes("/api/v1/config/update"), sort_keys=True),
+        encoding="utf-8",
+    )
+    output_path.write_text("{}\n", encoding="utf-8")
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            str(REPO_ROOT / "scripts" / "proof_route_gap_triage.py"),
+            "--matrix",
+            str(matrix_path),
+            "--output",
+            str(output_path),
+            "--check",
+        ],
+        cwd=REPO_ROOT,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+    assert result.returncode != 0
+    assert "is stale" in result.stderr
+    assert str(output_path) in result.stderr
+    assert output_path.read_text(encoding="utf-8") == "{}\n"
 
 
 def test_gap_triage_groups_api_family_and_detects_effect_routes() -> None:
@@ -118,3 +222,21 @@ def test_gap_triage_report_writer_uses_sorted_json(tmp_path) -> None:
     assert output_path.read_text(encoding="utf-8").endswith("\n")
     assert payload["ranked_families"][0]["route_family"] == "/api/v1/config"
     assert payload["ranked_families"][0]["suggested_surface_id"] == "config_proof_surface"
+
+
+def _matrix_with_unclassified_routes(*routes: str) -> dict:
+    return {
+        "generated_by": "fixture",
+        "route_coverage": {
+            "route_count": len(routes),
+            "unclassified_route_count": len(routes),
+            "routes": [
+                {
+                    "route": route,
+                    "surface_id": "unclassified_declared_route",
+                    "coverage_state": "unproven",
+                }
+                for route in routes
+            ],
+        },
+    }
