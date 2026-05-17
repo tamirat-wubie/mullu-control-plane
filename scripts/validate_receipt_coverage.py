@@ -87,11 +87,15 @@ GATEWAY_CERTIFIED_PREFIXES = (
     "/capability-plans/",
 )
 
-# Mirrors the new software receipt prefix in
-# mcoi/mcoi_runtime/app/musia_receipt_middleware.py::_CERTIFIED_PREFIXES.
-# The pre-existing MUSIA route debt remains intentionally visible in
-# UNCOVERED until a dedicated coverage ratchet slice moves it down.
-MUSIA_CERTIFIED_PREFIXES = ("/software/receipts/",)
+# Mirrors mcoi/mcoi_runtime/app/musia_receipt_middleware.py::_CERTIFIED_PREFIXES.
+MUSIA_CERTIFIED_PREFIXES = (
+    "/cognition/",
+    "/constructs/",
+    "/domains/",
+    "/musia/",
+    "/software/receipts/",
+    "/ucja/",
+)
 
 # Direct receipt emitters: route_path -> justification.
 # These routes are state-mutating, but their mutation is the governed
