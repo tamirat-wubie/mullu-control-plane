@@ -98,7 +98,7 @@ class CertificationDaemon:
         self._config = config or CertificationConfig()
         self._health = CertificationHealth()
         self._history: list[dict[str, Any]] = []
-        self._last_tick_time: float = 0.0
+        self._last_tick_time: float | None = None
 
         # Certification step functions
         self._api_handle_fn = api_handle_fn
@@ -128,6 +128,8 @@ class CertificationDaemon:
         """Check if enough time has passed since last certification."""
         if not self._config.enabled:
             return False
+        if self._last_tick_time is None:
+            return True
         elapsed = time.monotonic() - self._last_tick_time
         return elapsed >= self._config.interval_seconds
 
@@ -189,7 +191,7 @@ class CertificationDaemon:
                 health_window=self._config.health_window,
                 enabled=True,
             )
-        self._last_tick_time = 0.0
+        self._last_tick_time = None
         result = self.tick()
         if not saved_enabled:
             self._config = CertificationConfig(

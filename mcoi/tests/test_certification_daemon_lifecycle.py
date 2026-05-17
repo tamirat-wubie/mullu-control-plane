@@ -18,7 +18,12 @@ import json
 from mcoi_runtime.adapters.llm_adapter import StubLLMBackend
 from mcoi_runtime.contracts.llm import LLMBudget
 from mcoi_runtime.core.certification_daemon import CertificationConfig, CertificationDaemon
-from mcoi_runtime.core.live_path_certification import LivePathCertifier
+from mcoi_runtime.core.live_path_certification import (
+    CertificationChain,
+    CertificationStatus,
+    CertificationStep,
+    LivePathCertifier,
+)
 from mcoi_runtime.core.llm_integration import LLMIntegrationBridge
 from mcoi_runtime.persistence.postgres_store import InMemoryStore
 
@@ -82,7 +87,27 @@ def test_daemon_status_bounded() -> None:
 
 
 def test_daemon_tick_interval_gated() -> None:
-    daemon = _daemon(interval_seconds=9999.0)
+    class PassingCertifier:
+        def run_full_certification(self, **_: object) -> CertificationChain:
+            step = CertificationStep(
+                step_id="interval-gate-step",
+                name="interval_gate",
+                status=CertificationStatus.PASSED,
+                proof_hash=hashlib.sha256(b"interval-gate-proof").hexdigest(),
+            )
+            return CertificationChain(
+                chain_id="interval-gate-chain",
+                steps=(step,),
+                chain_hash=hashlib.sha256(b"interval-gate-chain").hexdigest(),
+                certified_at=FIXED_CLOCK_VALUE,
+                all_passed=True,
+            )
+
+    daemon = CertificationDaemon(
+        certifier=PassingCertifier(),  # type: ignore[arg-type]
+        clock=_fixed_clock,
+        config=CertificationConfig(enabled=True, interval_seconds=9999.0),
+    )
 
     first_chain = daemon.tick()
     should_run_after_tick = daemon.should_run()
