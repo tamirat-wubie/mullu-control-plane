@@ -157,6 +157,7 @@ def _validate_environment_binding_actions(
             continue
         _validate_environment_binding_action(action, binding_contract, errors)
         observed_names.append(str(action.get("name", "")))
+    _validate_no_duplicate_strings(observed_names, "environment_binding_actions names", errors)
     if tuple(observed_names) != missing_environment_variables:
         errors.append(
             "environment_binding_actions names must match missing_environment_variables: "
@@ -246,7 +247,19 @@ def _string_tuple(raw_value: Any, field_name: str, errors: list[str]) -> tuple[s
     if not all(isinstance(item, str) for item in raw_value):
         errors.append(f"{field_name} entries must be strings")
         return ()
+    _validate_no_duplicate_strings(raw_value, field_name, errors)
     return tuple(raw_value)
+
+
+def _validate_no_duplicate_strings(values: list[str], field_name: str, errors: list[str]) -> None:
+    observed: set[str] = set()
+    duplicates: list[str] = []
+    for value in values:
+        if value in observed and value not in duplicates:
+            duplicates.append(value)
+        observed.add(value)
+    if duplicates:
+        errors.append(f"{field_name} entries must be unique: duplicates={duplicates}")
 
 
 def _load_environment_binding_contract(
