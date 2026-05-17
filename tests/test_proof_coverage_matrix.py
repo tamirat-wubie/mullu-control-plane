@@ -137,6 +137,7 @@ def test_witness_integrity_report_tracks_exact_test_anchors() -> None:
     assert surfaces["operational_platform_read_models"]["exact_test_anchor_count"] >= 25
     assert surfaces["operational_platform_read_models"]["unanchored_witness_count"] == 0
     assert surfaces["trust_ledger"]["unanchored_witness_count"] == 0
+    assert surfaces["conversation_memory_lifecycle"]["unanchored_witness_count"] == 0
     assert surfaces["gateway_runtime_witness"]["unanchored_witness_count"] == 0
     assert surfaces["workflow_execution_lifecycle"]["unanchored_witness_count"] == 0
     assert surfaces["webhooks_proof_surface"]["unanchored_witness_count"] == 0

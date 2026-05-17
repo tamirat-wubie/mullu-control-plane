@@ -2948,6 +2948,49 @@
         "/api/v1/conversations"
       ],
       "request_proof": "request_proof",
+      "runtime_witness_anchor_aliases": {
+        "conversation_history_read_model_bounded": [
+          "get_conversation"
+        ],
+        "conversation_history_returns_messages_and_summary": [
+          "get_conversation",
+          "summary"
+        ],
+        "conversation_list_read_model_bounded": [
+          "list_conversations"
+        ],
+        "conversation_list_summary_bounded": [
+          "list_conversations",
+          "summary"
+        ],
+        "conversation_memory_pruning_bounded": [
+          "pruning"
+        ],
+        "conversation_memory_state_hash_changes": [
+          "state_hash"
+        ],
+        "conversation_message_append_increments_count": [
+          "add_message"
+        ],
+        "conversation_message_appends_count": [
+          "add_message"
+        ],
+        "conversation_missing_read_is_bounded": [
+          "get_missing"
+        ],
+        "conversation_multi_turn_history_preserved": [
+          "multi_turn"
+        ],
+        "conversation_store_tenant_filter": [
+          "list_by_tenant"
+        ],
+        "conversation_store_tenant_filtering": [
+          "list_by_tenant"
+        ],
+        "missing_conversation_bounded_404": [
+          "get_missing_conversation"
+        ]
+      },
       "runtime_witnesses": [
         "conversation_message_appends_count",
         "conversation_history_read_model_bounded",
@@ -6632,26 +6675,26 @@
       ],
       "request_proof": "action_proof",
       "runtime_witnesses": [
-        "god_mode_capability_keys_are_unique",
-        "god_mode_every_capability_declares_at_least_one_bypass",
-        "god_mode_catastrophic_caps_require_dual_control",
-        "god_mode_catastrophic_caps_are_one_shot",
-        "god_mode_catastrophic_caps_have_short_ttl",
-        "god_mode_secrets_capabilities_use_strictest_floor",
-        "god_mode_agree_to_register_arms_capability",
-        "god_mode_issue_ticket_requires_armed",
-        "god_mode_double_consume_rejected",
-        "god_mode_consume_ticket_emits_receipt",
-        "god_mode_revoke_ticket_blocks_consume",
-        "god_mode_withdraw_agreement_reverts_state",
-        "god_mode_two_distinct_agreements_arm_capability",
-        "god_mode_end_to_end_consent_chain"
+        "capability_keys_are_unique",
+        "every_capability_declares_at_least_one_bypass",
+        "catastrophic_caps_require_dual_control",
+        "catastrophic_caps_are_one_shot",
+        "catastrophic_caps_have_short_ttl",
+        "secrets_capabilities_use_strictest_floor",
+        "agree_to_register_arms_capability",
+        "issue_ticket_requires_armed",
+        "double_consume_rejected",
+        "consume_ticket_emits_receipt",
+        "revoke_ticket_blocks_consume",
+        "withdraw_agreement_reverts_state",
+        "two_distinct_agreements_arm_capability",
+        "end_to_end_consent_chain"
       ],
       "surface_id": "god_mode_lifecycle"
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 439,
+    "exact_test_anchor_count": 466,
     "runtime_witness_count": 1029,
     "surfaces": [
       {
@@ -7148,26 +7191,96 @@
         "unanchored_witnesses": []
       },
       {
-        "anchored_witnesses": [],
-        "exact_test_anchor_count": 0,
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "mcoi/tests/test_server_phase208.py::test_add_message",
+              "mcoi/tests/test_conversation_memory.py::test_add_message"
+            ],
+            "witness": "conversation_message_appends_count"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_server_phase208.py::test_get_conversation"
+            ],
+            "witness": "conversation_history_read_model_bounded"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_server_phase208.py::test_get_missing_conversation"
+            ],
+            "witness": "missing_conversation_bounded_404"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_server_phase208.py::test_list_conversations"
+            ],
+            "witness": "conversation_list_read_model_bounded"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_conversation_memory.py::test_list_by_tenant"
+            ],
+            "witness": "conversation_store_tenant_filter"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_server_phase208.py::test_add_message",
+              "mcoi/tests/test_conversation_memory.py::test_add_message"
+            ],
+            "witness": "conversation_message_append_increments_count"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_server_phase208.py::test_get_conversation",
+              "mcoi/tests/test_conversation_memory.py::test_summary"
+            ],
+            "witness": "conversation_history_returns_messages_and_summary"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_conversation_memory.py::test_get_missing"
+            ],
+            "witness": "conversation_missing_read_is_bounded"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_server_phase208.py::test_multi_turn",
+              "mcoi/tests/test_conversation_memory.py::test_multi_turn"
+            ],
+            "witness": "conversation_multi_turn_history_preserved"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_server_phase208.py::test_list_conversations",
+              "mcoi/tests/test_conversation_memory.py::test_summary"
+            ],
+            "witness": "conversation_list_summary_bounded"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_conversation_memory.py::test_list_by_tenant"
+            ],
+            "witness": "conversation_store_tenant_filtering"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_conversation_memory.py::test_state_hash"
+            ],
+            "witness": "conversation_memory_state_hash_changes"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_conversation_memory.py::test_pruning"
+            ],
+            "witness": "conversation_memory_pruning_bounded"
+          }
+        ],
+        "exact_test_anchor_count": 13,
         "runtime_witness_count": 13,
         "surface_id": "conversation_memory_lifecycle",
-        "unanchored_witness_count": 13,
-        "unanchored_witnesses": [
-          "conversation_message_appends_count",
-          "conversation_history_read_model_bounded",
-          "missing_conversation_bounded_404",
-          "conversation_list_read_model_bounded",
-          "conversation_store_tenant_filter",
-          "conversation_message_append_increments_count",
-          "conversation_history_returns_messages_and_summary",
-          "conversation_missing_read_is_bounded",
-          "conversation_multi_turn_history_preserved",
-          "conversation_list_summary_bounded",
-          "conversation_store_tenant_filtering",
-          "conversation_memory_state_hash_changes",
-          "conversation_memory_pruning_bounded"
-        ]
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
       },
       {
         "anchored_witnesses": [],
@@ -10928,29 +11041,100 @@
         "unanchored_witnesses": []
       },
       {
-        "anchored_witnesses": [],
-        "exact_test_anchor_count": 0,
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "mcoi/tests/test_god_mode_invariants.py::test_capability_keys_are_unique"
+            ],
+            "witness": "capability_keys_are_unique"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_god_mode_invariants.py::test_every_capability_declares_at_least_one_bypass"
+            ],
+            "witness": "every_capability_declares_at_least_one_bypass"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_god_mode_invariants.py::test_catastrophic_caps_require_dual_control"
+            ],
+            "witness": "catastrophic_caps_require_dual_control"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_god_mode_invariants.py::test_catastrophic_caps_are_one_shot"
+            ],
+            "witness": "catastrophic_caps_are_one_shot"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_god_mode_invariants.py::test_catastrophic_caps_have_short_ttl"
+            ],
+            "witness": "catastrophic_caps_have_short_ttl"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_god_mode_invariants.py::test_secrets_capabilities_use_strictest_floor"
+            ],
+            "witness": "secrets_capabilities_use_strictest_floor"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_god_mode_router.py::test_agree_to_register_arms_capability"
+            ],
+            "witness": "agree_to_register_arms_capability"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_god_mode_router.py::test_issue_ticket_requires_armed"
+            ],
+            "witness": "issue_ticket_requires_armed"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_god_mode_router.py::test_double_consume_rejected"
+            ],
+            "witness": "double_consume_rejected"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_god_mode_router.py::test_consume_ticket_emits_receipt"
+            ],
+            "witness": "consume_ticket_emits_receipt"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_god_mode_router.py::test_revoke_ticket_blocks_consume"
+            ],
+            "witness": "revoke_ticket_blocks_consume"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_god_mode_registry.py::test_withdraw_agreement_reverts_state",
+              "mcoi/tests/test_god_mode_router.py::test_withdraw_agreement_reverts_state"
+            ],
+            "witness": "withdraw_agreement_reverts_state"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_god_mode_dual_control.py::test_two_distinct_agreements_arm_capability"
+            ],
+            "witness": "two_distinct_agreements_arm_capability"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_god_mode_router.py::test_end_to_end_consent_chain"
+            ],
+            "witness": "end_to_end_consent_chain"
+          }
+        ],
+        "exact_test_anchor_count": 14,
         "runtime_witness_count": 14,
         "surface_id": "god_mode_lifecycle",
-        "unanchored_witness_count": 14,
-        "unanchored_witnesses": [
-          "god_mode_capability_keys_are_unique",
-          "god_mode_every_capability_declares_at_least_one_bypass",
-          "god_mode_catastrophic_caps_require_dual_control",
-          "god_mode_catastrophic_caps_are_one_shot",
-          "god_mode_catastrophic_caps_have_short_ttl",
-          "god_mode_secrets_capabilities_use_strictest_floor",
-          "god_mode_agree_to_register_arms_capability",
-          "god_mode_issue_ticket_requires_armed",
-          "god_mode_double_consume_rejected",
-          "god_mode_consume_ticket_emits_receipt",
-          "god_mode_revoke_ticket_blocks_consume",
-          "god_mode_withdraw_agreement_reverts_state",
-          "god_mode_two_distinct_agreements_arm_capability",
-          "god_mode_end_to_end_consent_chain"
-        ]
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
       }
     ],
-    "unanchored_witness_count": 590
+    "unanchored_witness_count": 563
   }
 }
