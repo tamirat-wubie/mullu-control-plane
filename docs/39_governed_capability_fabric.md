@@ -39,6 +39,50 @@ Each registry entry carries the minimum information needed to execute an action 
 | `obligation_model` | Owner, due time, and escalation path |
 | `certification_status` | Lifecycle gate for admission |
 
+## GCI Execution Contract
+
+Runtime tool execution is now gated by a fixed GCI `CapabilityContract` before any executor, worker, or adapter can run. The contract is the runtime-local admission unit that binds capability identity to governance depth, effect class, source trust, and five cost/risk axes.
+
+| Field | Governance role |
+| --- | --- |
+| `capability` | Stable action identity used by the execution gate |
+| `layer` | Runtime layer that owns the action boundary |
+| `cap_level` | Capability autonomy or mutation level requested |
+| `gov_tier` | Governance depth available for this request |
+| `axis_T` | Temporal validity and freshness constraint |
+| `axis_E` | Economic or budget constraint |
+| `axis_C` | Cognitive/operator-review load constraint |
+| `axis_R` | Risk tier carried into admission |
+| `axis_V` | Effect class: `value_producing` or `effectful` |
+| `precond` | Preconditions that must hold before execution |
+| `fail_mode` | Explicit blocked or degraded behavior |
+| `reversible` | Whether the action can be reversed without compensation |
+| `intent_source` | Source-trust binding for authorization |
+
+The central admission rule is:
+
+```text
+enable(capability @ Cn)
+<=> gov_tier >= Gn
+AND axis_T, axis_E, axis_C, axis_R, axis_V are populated
+AND effectful requests are sourced from user_direct authorization
+```
+
+If the rule is not satisfied, `Phi_gov` blocks execution and the tool gateway records the denied path in the causal ledger. A command found in monitored content, a document, an email, or an external signal can inform planning, but it cannot become direct authorization for an effectful action.
+
+Value-producing capabilities may create information only. Effectful capabilities mutate external or durable state and require the stronger gate.
+
+| Capability | Effect class |
+| --- | --- |
+| summarize document | `value_producing` |
+| draft email | `value_producing` |
+| send email | `effectful` |
+| deploy service | `effectful` |
+| modify issue | `effectful` |
+| delete file | `effectful` |
+
+Reused plans, memory, repository state, deployment state, finance context, calendar facts, infrastructure facts, and security assumptions must pass `OP_reground` before they guide effectful execution. Digital state claims that affect closure must pass L2 reality verification because digital state and reality state can diverge.
+
 ## Maturity Projection
 
 Registry entries do not self-promote. Gateway-built fabric read models derive a `capability_maturity_assessment` from each installed entry and attach the C0-C7 summary to both the internal capability projection and the governed operator record. Certification can lift a capability to mock-evaluated maturity, but production readiness still requires explicit sandbox, live receipt, worker deployment, recovery, and autonomy evidence through `extensions.capability_maturity_evidence`.

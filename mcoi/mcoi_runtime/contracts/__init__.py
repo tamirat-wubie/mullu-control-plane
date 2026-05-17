@@ -5,6 +5,17 @@ Invariants: canonical shared contracts are adopted without reinterpretation.
 """
 
 from .capability import CapabilityDescriptor
+from .capability_contract import (
+    CapabilityAdmissionDecision,
+    CapabilityAdmissionStatus,
+    CapabilityContract,
+    EffectClass as CapabilityEffectClass,
+    IntentSource as CapabilityIntentSource,
+    default_capability_contract,
+    evaluate_capability_contract,
+    infer_effect_class,
+    op_govdepth,
+)
 from .connector import ConnectorDescriptor, ConnectorResult, ConnectorStatus
 from .connector_effects import ConnectorInvocationReceipt
 from .accepted_risk import (
@@ -1963,7 +1974,12 @@ from .pilot_deployment import (
 
 __all__ = [
     "AcceptedRiskState",
+    "CapabilityAdmissionDecision",
+    "CapabilityAdmissionStatus",
+    "CapabilityContract",
     "CapabilityDescriptor",
+    "CapabilityEffectClass",
+    "CapabilityIntentSource",
     "ConnectorDescriptor",
     "ConnectorInvocationReceipt",
     "ConnectorResult",
@@ -1980,6 +1996,7 @@ __all__ = [
     "RestoreOutcome",
     "RestoreStatus",
     "DecisionReason",
+    "EffectClass",
     "EffectRecord",
     "EffectPlan",
     "EffectReconciliation",
@@ -3657,4 +3674,8 @@ __all__ = [
     "TenantBootstrap",
     # --- proof substrate ---
     "certify_transition",
+    "default_capability_contract",
+    "evaluate_capability_contract",
+    "infer_effect_class",
+    "op_govdepth",
 ]

@@ -17,6 +17,8 @@ from __future__ import annotations
 from dataclasses import asdict, dataclass, field
 from typing import Any, Callable, Mapping
 
+from mcoi_runtime.contracts.capability_contract import IntentSource
+
 from .artifact_lineage_dag import ArtifactLineageDAG, ArtifactLineageNode, hash_artifact_payload
 from .causal_runtime_ledger import CausalLedgerEvent, CausalRuntimeLedger, hash_runtime_payload
 from .governed_tool_use import GovernedToolRegistry, ToolDefinition, ToolInvocationResult
@@ -76,6 +78,7 @@ class ToolGatewayRequest:
     cause_event_ids: tuple[str, ...] = ()
     produced_artifacts: tuple[ToolGatewayArtifactBinding, ...] = ()
     approval_id: str = ""
+    intent_source: IntentSource = IntentSource.USER_DIRECT
     metadata: Mapping[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
@@ -89,6 +92,8 @@ class ToolGatewayRequest:
             raise RuntimeCoreInvariantError("arguments must be an object")
         if not isinstance(self.metadata, Mapping):
             raise RuntimeCoreInvariantError("metadata must be an object")
+        if not isinstance(self.intent_source, IntentSource):
+            object.__setattr__(self, "intent_source", IntentSource(str(self.intent_source)))
         correlation_id = self.correlation_id or self.session_id
         object.__setattr__(self, "correlation_id", ensure_non_empty_text("correlation_id", correlation_id))
         object.__setattr__(self, "arguments", dict(self.arguments))
@@ -216,6 +221,7 @@ class GovernedToolGateway:
             tenant_id=request.tenant_id,
             budget_ref=request.budget_ref,
             audit_present=True,
+            intent_source=request.intent_source,
         )
         status = _status_for_registry_result(registry_result)
         output_hash = hash_runtime_payload(_receipt_output_payload(registry_result, status))
@@ -245,6 +251,7 @@ class GovernedToolGateway:
                 "session_id": request.session_id,
                 "budget_ref": request.budget_ref,
                 "approval_id": request.approval_id,
+                "intent_source": request.intent_source.value,
                 "permission_id": permission_id,
                 "reason_codes": reason_codes,
                 "gateway_metadata": dict(request.metadata),
@@ -369,6 +376,9 @@ def _constraint_refs(
     reason_codes: tuple[str, ...],
 ) -> tuple[str, ...]:
     refs = [f"tool:{request.tool_name}", f"budget:{request.budget_ref}"]
+    if registry_result.capability_decision is not None:
+        refs.append(f"capability:{registry_result.capability_decision.capability}")
+        refs.extend(f"capability_reason:{reason}" for reason in registry_result.capability_decision.reasons)
     if registry_result.permission_decision is not None:
         refs.append(f"permission:{registry_result.permission_decision.permission_id}")
     refs.extend(f"reason:{reason}" for reason in reason_codes)
