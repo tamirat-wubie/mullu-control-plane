@@ -145,6 +145,26 @@ def test_software_dev_output_schemas_reject_effect_overclaims() -> None:
     assert _validate_schema_instance(schemas_by_id["urn:mullusi:schema:pr-candidate:1"], pr_payload)
 
 
+def test_software_dev_pr_candidate_local_commands_are_git_local_only() -> None:
+    payload = _representative_software_dev_output_payloads()["urn:mullusi:schema:pr-candidate:1"]
+    schema = _software_dev_output_schemas_by_id()["urn:mullusi:schema:pr-candidate:1"]
+    push_payload = deepcopy(payload)
+    cli_payload = deepcopy(payload)
+    metadata_payload = deepcopy(payload)
+
+    push_payload["commit_candidate"]["local_commands"][0]["command"] = ["git", "push", "origin", "feature/x"]
+    cli_payload["commit_candidate"]["local_commands"][0]["command"] = ["gh", "pr", "create"]
+    del metadata_payload["commit_candidate"]["local_commands"][0]["metadata"]["push_allowed"]
+
+    push_errors = _validate_schema_instance(schema, push_payload)
+    cli_errors = _validate_schema_instance(schema, cli_payload)
+    metadata_errors = _validate_schema_instance(schema, metadata_payload)
+
+    assert any("$.commit_candidate.local_commands[0].command[1]" in error for error in push_errors)
+    assert any("$.commit_candidate.local_commands[0].command[0]" in error for error in cli_errors)
+    assert any("$.commit_candidate.local_commands[0].metadata: missing required fields ['push_allowed']" in error for error in metadata_errors)
+
+
 def test_software_dev_named_loader_installs_only_software_dev_domain() -> None:
     capsule = load_software_dev_domain_capsule()
     entries = load_software_dev_capability_entries()

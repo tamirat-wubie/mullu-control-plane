@@ -1820,6 +1820,7 @@ def test_software_dev_capability_pack_surface_requires_explicit_admission() -> N
     assert "software_dev_read_only_records_non_mutating" in witnesses
     assert "software_dev_effectful_records_require_sandbox_approval" in witnesses
     assert "software_dev_pr_candidate_blocks_git_push" in witnesses
+    assert "software_dev_pr_candidate_local_commands_are_git_local_only" in witnesses
     assert "software_dev_production_ready_overclaim_rejected" in witnesses
     assert closure_actions["publish_software_dev_capability_pack_contract"]["status"] == "closed"
 
