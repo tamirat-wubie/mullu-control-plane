@@ -28,6 +28,7 @@ from mcoi_runtime.contracts.capability_contract import (
     evaluate_capability_contract,
 )
 
+from .capability_contract_coverage import CapabilityContractCoverageReport, audit_capability_contract_coverage
 from .tool_permission_primitives import (
     ToolPermissionDecision,
     ToolPermissionRegistry,
@@ -52,8 +53,10 @@ class ToolDefinition:
     gov_tier: int = 1
     cap_level: int = 1
     intent_source: IntentSource = IntentSource.USER_DIRECT
+    capability_contract_explicit: bool = field(default=False, init=False)
 
     def __post_init__(self) -> None:
+        object.__setattr__(self, "capability_contract_explicit", self.capability_contract is not None)
         if self.capability_contract is None:
             object.__setattr__(
                 self,
@@ -347,3 +350,7 @@ class GovernedToolRegistry:
             "total_denied": self._total_denied,
             "active_sessions": len(self._session_usage),
         }
+
+    def capability_contract_coverage(self) -> CapabilityContractCoverageReport:
+        """Return a deterministic GCI coverage audit for registered tools."""
+        return audit_capability_contract_coverage(self._tools.values())
