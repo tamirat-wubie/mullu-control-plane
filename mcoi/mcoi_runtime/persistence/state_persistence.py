@@ -82,8 +82,12 @@ def _deterministic_json(data: Any) -> str:
         raise PersistenceError(_bounded_store_error("state data is not JSON serializable", exc)) from exc
 
 
+def _content_hash(json_str: str) -> str:
+    return sha256(json_str.encode("utf-8")).hexdigest()
+
+
 def _state_hash(data: Mapping[str, Any]) -> str:
-    return sha256(_deterministic_json(_thaw_state_value(data)).encode("ascii")).hexdigest()
+    return _content_hash(_deterministic_json(_thaw_state_value(data)))
 
 
 def _atomic_write(path: Path, content: str) -> None:

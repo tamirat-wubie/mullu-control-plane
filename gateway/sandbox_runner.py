@@ -113,9 +113,10 @@ class SandboxCommandRequest:
             raise ValueError("cwd must be inside /workspace")
         object.__setattr__(self, "environment", dict(self.environment))
         for key, value in self.environment.items():
-            _validate_environment_key(str(key))
-            if not isinstance(value, str):
-                raise ValueError("environment values must be strings")
+            if not isinstance(key, str):
+                raise ValueError("environment keys must be strings")
+            _validate_environment_key(key)
+            _validate_environment_value(value)
 
 
 @dataclass(frozen=True, slots=True)
@@ -408,6 +409,13 @@ def _validate_environment_key(value: str) -> None:
         raise ValueError("environment key contains forbidden characters")
 
 
+def _validate_environment_value(value: str) -> None:
+    if not isinstance(value, str):
+        raise ValueError("environment values must be strings")
+    if "\x00" in value or any(ord(character) < 32 for character in value):
+        raise ValueError("environment value contains forbidden characters")
+
+
 def _contains_mount_delimiter_or_control(value: str) -> bool:
     return "," in value or any(ord(character) < 32 for character in value)
 
@@ -423,15 +431,42 @@ def _workspace_snapshot(root: Path) -> dict[str, str]:
     snapshot: dict[str, str] = {}
     if not root.exists() or not root.is_dir():
         return snapshot
-    for path in sorted(root.rglob("*")):
-        if not path.is_file() or ".git" in path.relative_to(root).parts:
-            continue
-        relative_path = path.relative_to(root).as_posix()
+    pending_directories = [root]
+    while pending_directories:
+        directory = pending_directories.pop()
         try:
-            snapshot[relative_path] = hashlib.sha256(path.read_bytes()).hexdigest()
+            children = sorted(directory.iterdir(), key=lambda child: child.as_posix())
         except OSError:
-            snapshot[relative_path] = "unreadable"
+            continue
+        for path in children:
+            try:
+                relative_path = path.relative_to(root)
+            except ValueError:
+                continue
+            relative_path_text = relative_path.as_posix()
+            if ".git" in relative_path.parts:
+                continue
+            if path.is_symlink():
+                snapshot[relative_path_text] = _symlink_snapshot_value(path)
+                continue
+            if path.is_dir():
+                pending_directories.append(path)
+                continue
+            if not path.is_file():
+                continue
+            try:
+                snapshot[relative_path_text] = hashlib.sha256(path.read_bytes()).hexdigest()
+            except OSError:
+                snapshot[relative_path_text] = "unreadable"
     return snapshot
+
+
+def _symlink_snapshot_value(path: Path) -> str:
+    try:
+        target = path.readlink().as_posix()
+    except OSError:
+        return "symlink:unreadable"
+    return f"symlink:{_sha256(target)}"
 
 
 def _changed_file_refs(before: Mapping[str, str], after: Mapping[str, str]) -> tuple[str, ...]:

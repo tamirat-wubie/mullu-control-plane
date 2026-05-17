@@ -314,10 +314,21 @@ def _validate_actions(actions: tuple[AdapterClosureAction, ...]) -> None:
 def _load_evidence(path: Path) -> dict[str, Any]:
     if not path.exists():
         raise FileNotFoundError(f"adapter evidence report missing: {path}")
-    payload = json.loads(path.read_text(encoding="utf-8"))
+    try:
+        payload = _loads_strict_json(path.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, ValueError) as exc:
+        raise ValueError("adapter evidence JSON parse failed") from exc
     if not isinstance(payload, dict):
         raise ValueError("adapter evidence root must be an object")
     return payload
+
+
+def _loads_strict_json(raw: str) -> Any:
+    return json.loads(raw, parse_constant=_reject_json_constant)
+
+
+def _reject_json_constant(raw_constant: str) -> None:
+    raise ValueError("non-finite JSON constants are not permitted")
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:

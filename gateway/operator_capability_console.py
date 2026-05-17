@@ -19,6 +19,10 @@ from html import escape
 from typing import Any
 
 
+CAPABILITY_IMPROVEMENT_PORTFOLIO_SCHEMA_REF = "urn:mullusi:schema:capability-improvement-portfolio:1"
+CAPABILITY_IMPROVEMENT_PORTFOLIO_HREF = "/runtime/self/capability-improvement-portfolio"
+
+
 def build_operator_capability_read_model(
     *,
     capability_admission_gate: Any | None = None,
@@ -69,6 +73,14 @@ def build_operator_capability_read_model(
         "admission_audit_status_filter": admission_status.strip(),
         "admission_audit_page": audit_page_meta,
         "plan_summary": plan_summary,
+        "improvement_portfolio": {
+            "enabled": True,
+            "href": CAPABILITY_IMPROVEMENT_PORTFOLIO_HREF,
+            "schema_ref": CAPABILITY_IMPROVEMENT_PORTFOLIO_SCHEMA_REF,
+            "mutation_applied": False,
+            "activation_blocked": True,
+            "operator_review_required": True,
+        },
     }
 
 
@@ -96,6 +108,9 @@ def render_operator_capability_console(read_model: dict[str, Any]) -> str:
         "</tr>"
         for item in read_model.get("admission_audits", ())
     )
+    portfolio = read_model.get("improvement_portfolio", {})
+    portfolio_href = escape(str(portfolio.get("href", CAPABILITY_IMPROVEMENT_PORTFOLIO_HREF)))
+    portfolio_schema = escape(str(portfolio.get("schema_ref", CAPABILITY_IMPROVEMENT_PORTFOLIO_SCHEMA_REF)))
     return f"""<!doctype html>
 <html lang="en">
 <head>
@@ -119,6 +134,11 @@ def render_operator_capability_console(read_model: dict[str, Any]) -> str:
     <span class="metric">Sandbox required: {int(read_model.get("sandbox_required_count", 0))}</span>
     <span class="metric">Raw tools exposed: {escape(str(read_model.get("raw_tool_surface_exposed", False)).lower())}</span>
   </header>
+  <nav>
+    <a href="{portfolio_href}">Capability improvement portfolio</a>
+    <span class="metric">Schema: {portfolio_schema}</span>
+    <span class="metric">Activation blocked: {escape(str(portfolio.get("activation_blocked", True)).lower())}</span>
+  </nav>
   <section>
     <h2>Governed Capability Records</h2>
     <table>

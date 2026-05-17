@@ -15,6 +15,8 @@ import json
 import sys
 from pathlib import Path
 
+import pytest
+
 _ROOT = Path(__file__).resolve().parent.parent
 if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))
@@ -167,6 +169,18 @@ def test_adapter_closure_plan_writer_and_cli_emit_json(tmp_path: Path, capsys) -
     assert "voice_dependency_missing:OPENAI_API_KEY" in payload["blockers"]
     assert all(action["verification_command"] for action in payload["actions"])
     assert all(action["receipt_validator"] for action in payload["actions"])
+
+
+def test_adapter_closure_plan_rejects_nonfinite_evidence_json(tmp_path: Path) -> None:
+    evidence_path = tmp_path / "capability_adapter_evidence.json"
+    evidence_path.write_text('{"ready": false, "score": Infinity}', encoding="utf-8")
+
+    with pytest.raises(ValueError) as excinfo:
+        plan_capability_adapter_closure(evidence_path)
+
+    assert "adapter evidence JSON parse failed" in str(excinfo.value)
+    assert "Infinity" not in str(excinfo.value)
+    assert evidence_path.exists()
 
 
 def _blocked_evidence() -> dict[str, object]:

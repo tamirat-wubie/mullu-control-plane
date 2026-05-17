@@ -67,9 +67,23 @@ def _normalize_relative_path(path_text: str) -> str:
         normalized = normalized[2:]
     if normalized == ".":
         return "."
-    if normalized.startswith("/") or ".." in PurePosixPath(normalized).parts:
+    if (
+        normalized.startswith("/")
+        or _has_windows_drive_prefix(normalized)
+        or ".." in PurePosixPath(normalized).parts
+    ):
         raise ValueError("path must stay inside repository root")
     return normalized
+
+
+def _has_windows_drive_prefix(normalized_path: str) -> bool:
+    parts = PurePosixPath(normalized_path).parts
+    return bool(
+        parts
+        and len(parts[0]) == 2
+        and parts[0][1] == ":"
+        and parts[0][0].isalpha()
+    )
 
 
 def _freeze_path_tuple(values: tuple[str, ...], field_name: str) -> tuple[str, ...]:

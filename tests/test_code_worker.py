@@ -53,6 +53,8 @@ def test_code_worker_lease_contract_is_frozen_and_json_safe() -> None:
         _lease(allowed_commands=())
     with pytest.raises(ValueError):
         _lease(allowed_paths=("../outside",))
+    with pytest.raises(ValueError):
+        _lease(allowed_paths=("C:/outside",))
     with pytest.raises(Exception):
         lease.allowed_paths += ("tests",)  # type: ignore[misc]
 
@@ -393,6 +395,47 @@ def test_sandboxed_code_worker_blocks_cwd_outside_repository_boundary(
     assert "../outside" not in result.stderr
 
 
+def test_sandboxed_code_worker_blocks_windows_drive_paths_without_dispatch(
+    tmp_path: Path,
+) -> None:
+    (tmp_path / "src").mkdir()
+    dispatched = False
+
+    def fake_runner(argv, **kwargs):  # noqa: ANN001, ANN202
+        nonlocal dispatched
+        dispatched = True
+        return subprocess.CompletedProcess(argv, 0, stdout="", stderr="")
+
+    worker = SandboxedCodeWorker(
+        workspace_root=str(tmp_path),
+        clock=lambda: "2026-05-07T12:00:00+00:00",
+        runner=fake_runner,
+    )
+
+    argv_result = worker.execute_command(
+        _lease(allowed_paths=(".",), allowed_commands=(("python", "C:/outside.py"),)),
+        command_id="cmd-3f",
+        argv=("python", "C:/outside.py"),
+        cwd="src",
+    )
+    cwd_result = worker.execute_command(
+        _lease(allowed_paths=(".",)),
+        command_id="cmd-3g",
+        argv=("python", "src/task.py"),
+        cwd="C:/outside",
+    )
+
+    assert dispatched is False
+    assert argv_result.status is CodeWorkerReceiptStatus.BLOCKED
+    assert cwd_result.status is CodeWorkerReceiptStatus.BLOCKED
+    assert argv_result.receipt.sandbox_receipt_id is None
+    assert cwd_result.receipt.sandbox_receipt_id is None
+    assert argv_result.receipt.violation_reasons[0].startswith("argv_path_outside_repository_boundary:")
+    assert cwd_result.receipt.violation_reasons[0].startswith("cwd_outside_repository_boundary:")
+    assert "C:/outside" not in argv_result.stderr
+    assert "C:/outside" not in cwd_result.stderr
+
+
 def test_sandboxed_code_worker_blocks_flag_embedded_path_violations(
     tmp_path: Path,
 ) -> None:
@@ -461,6 +504,24 @@ def test_sandboxed_code_worker_blocks_network_and_risky_git_without_dispatch(
         argv=("git", "push", "origin", "main"),
         cwd="src",
     )
+    git_remote_read_result = worker.execute_command(
+        _lease(allowed_commands=(("git", "ls-remote", "origin"),)),
+        command_id="cmd-5b",
+        argv=("git", "ls-remote", "origin"),
+        cwd="src",
+    )
+    git_workspace_escape_result = worker.execute_command(
+        _lease(allowed_commands=(("git", "-C", "..", "status"),)),
+        command_id="cmd-5c",
+        argv=("git", "-C", "..", "status"),
+        cwd="src",
+    )
+    git_remote_argument_result = worker.execute_command(
+        _lease(allowed_paths=(".",), allowed_commands=(("git", "status", "ssh://example.invalid/repo.git"),)),
+        command_id="cmd-5d",
+        argv=("git", "status", "ssh://example.invalid/repo.git"),
+        cwd=".",
+    )
 
     assert dispatched is False
     assert network_result.status is CodeWorkerReceiptStatus.BLOCKED
@@ -468,6 +529,12 @@ def test_sandboxed_code_worker_blocks_network_and_risky_git_without_dispatch(
     assert git_result.status is CodeWorkerReceiptStatus.BLOCKED
     assert git_result.receipt.violation_reasons == ("denied_git_subcommand:push",)
     assert git_result.receipt.sandbox_receipt_id is None
+    assert git_remote_read_result.status is CodeWorkerReceiptStatus.BLOCKED
+    assert git_remote_read_result.receipt.violation_reasons == ("denied_git_subcommand:ls-remote",)
+    assert git_workspace_escape_result.status is CodeWorkerReceiptStatus.BLOCKED
+    assert git_workspace_escape_result.receipt.violation_reasons == ("denied_git_global_option:-C",)
+    assert git_remote_argument_result.status is CodeWorkerReceiptStatus.BLOCKED
+    assert git_remote_argument_result.receipt.violation_reasons == ("denied_git_remote_argument",)
 
 
 def test_sandboxed_code_worker_blocks_expired_lease_and_linux_only_sandbox(

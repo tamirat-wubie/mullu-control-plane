@@ -15,6 +15,8 @@ import json
 import sys
 from pathlib import Path
 
+import pytest
+
 _ROOT = Path(__file__).resolve().parent.parent
 if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))
@@ -50,7 +52,7 @@ def test_deployment_closure_plan_maps_publication_blockers(tmp_path: Path) -> No
 def test_deployment_closure_plan_preserves_unknown_deployment_blocker(tmp_path: Path) -> None:
     readiness_path = tmp_path / "general_agent_promotion_readiness.json"
     readiness_path.write_text(
-        json.dumps({"ready": False, "blockers": ["deployment_dns_not_verified"]}),
+        json.dumps({"ready": False, "blockers": ["deployment_custom_unknown"]}),
         encoding="utf-8",
     )
 
@@ -58,9 +60,52 @@ def test_deployment_closure_plan_preserves_unknown_deployment_blocker(tmp_path: 
     action = plan.actions[0]
 
     assert plan.action_count == 1
-    assert action.blocker == "deployment_dns_not_verified"
+    assert action.blocker == "deployment_custom_unknown"
     assert action.action_type == "manual-review"
     assert action.approval_required is True
+
+
+def test_deployment_closure_plan_maps_gateway_readiness_steps(tmp_path: Path) -> None:
+    readiness_path = tmp_path / "gateway_publication_readiness.json"
+    readiness_path.write_text(
+        json.dumps(
+            {
+                "ready": False,
+                "steps": [
+                    {
+                        "name": "deployment witness secret",
+                        "passed": False,
+                        "detail": "missing=MULLU_DEPLOYMENT_WITNESS_SECRET",
+                    },
+                    {
+                        "name": "dns resolution",
+                        "passed": False,
+                        "detail": "failed:resolution_error",
+                    },
+                    {
+                        "name": "runtime witness secret",
+                        "passed": True,
+                        "detail": "present",
+                    },
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    plan = plan_deployment_publication_closure(readiness_path)
+    actions_by_blocker = {action.blocker: action for action in plan.actions}
+
+    assert plan.action_count == 2
+    assert plan.blockers == (
+        "deployment_witness_secret_missing",
+        "deployment_dns_not_verified",
+    )
+    assert actions_by_blocker["deployment_witness_secret_missing"].action_type == "secret-binding"
+    assert actions_by_blocker["deployment_witness_secret_missing"].approval_required is True
+    assert "do not print or serialize" in actions_by_blocker["deployment_witness_secret_missing"].command
+    assert actions_by_blocker["deployment_dns_not_verified"].action_type == "dns-verification"
+    assert "deployment_witness_preflight" in actions_by_blocker["deployment_dns_not_verified"].evidence_required
 
 
 def test_deployment_closure_plan_maps_responsibility_debt_blockers(tmp_path: Path) -> None:
@@ -110,6 +155,18 @@ def test_deployment_closure_plan_writer_and_cli_emit_json(tmp_path: Path, capsys
     assert payload["action_count"] == 2
     assert stdout_payload["plan_id"] == payload["plan_id"]
     assert "production_health_not_declared" in payload["blockers"]
+
+
+def test_deployment_closure_plan_rejects_nonfinite_readiness_json(tmp_path: Path) -> None:
+    readiness_path = tmp_path / "general_agent_promotion_readiness.json"
+    readiness_path.write_text('{"ready": false, "score": Infinity}', encoding="utf-8")
+
+    with pytest.raises(ValueError) as excinfo:
+        plan_deployment_publication_closure(readiness_path)
+
+    assert "promotion readiness JSON parse failed" in str(excinfo.value)
+    assert "Infinity" not in str(excinfo.value)
+    assert readiness_path.exists()
 
 
 def _blocked_readiness() -> dict[str, object]:

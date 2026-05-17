@@ -451,6 +451,14 @@ def _validate_schema_instance(
         max_items = schema.get("maxItems")
         if isinstance(max_items, int) and len(instance) > max_items:
             errors.append(f"{path}: expected at most {max_items} item(s)")
+        if schema.get("uniqueItems") is True:
+            seen_items: set[str] = set()
+            for item in instance:
+                item_fingerprint = json.dumps(item, sort_keys=True, separators=(",", ":"), default=str)
+                if item_fingerprint in seen_items:
+                    errors.append(f"{path}: array items must be unique")
+                    break
+                seen_items.add(item_fingerprint)
         item_schema = schema.get("items", {})
         if isinstance(item_schema, list):
             for index, item in enumerate(instance[: len(item_schema)]):

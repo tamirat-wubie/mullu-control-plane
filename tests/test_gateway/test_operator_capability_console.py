@@ -63,6 +63,9 @@ def test_operator_capability_read_model_projects_governed_records_only() -> None
     assert read_model["autonomy_ready_count"] == 0
     assert read_model["sandbox_required_count"] == 6
     assert read_model["admission_audit_page"]["limit"] == 2
+    assert read_model["improvement_portfolio"]["href"] == "/runtime/self/capability-improvement-portfolio"
+    assert read_model["improvement_portfolio"]["mutation_applied"] is False
+    assert read_model["improvement_portfolio"]["activation_blocked"] is True
     assert all("extensions" not in item for item in read_model["capabilities"])
     assert all("input_schema_ref" not in item for item in read_model["capabilities"])
     assert all(item["maturity_level"] == "C3" for item in read_model["capabilities"])
@@ -87,10 +90,12 @@ def test_operator_capability_endpoint_reports_default_fabric() -> None:
     assert payload["maturity_counts"]["C3"] >= 1
     assert payload["production_ready_count"] == 0
     assert payload["admission_audit_page"]["limit"] == 1
+    assert payload["improvement_portfolio"]["schema_ref"] == "urn:mullusi:schema:capability-improvement-portfolio:1"
+    assert payload["improvement_portfolio"]["operator_review_required"] is True
     assert all(item["domain"] == "browser" for item in payload["capabilities"])
 
 
-def test_operator_capability_html_console_is_read_only() -> None:
+def test_operator_console_links_capability_improvement_portfolio() -> None:
     gate = build_default_capability_admission_gate(clock=_clock)
     app = create_gateway_app(
         platform=StubPlatform(),
@@ -108,3 +113,6 @@ def test_operator_capability_html_console_is_read_only() -> None:
     assert "Maturity" in response.text
     assert "Production ready: 0" in response.text
     assert "Raw tools exposed: false" in response.text
+    assert "Capability improvement portfolio" in response.text
+    assert "/runtime/self/capability-improvement-portfolio" in response.text
+    assert "Activation blocked: true" in response.text

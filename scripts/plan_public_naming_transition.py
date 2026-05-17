@@ -37,6 +37,19 @@ def _read_json(path: Path) -> dict[str, object]:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
+def _print_gate_requirement(gate: str, requirements: dict[str, object]) -> None:
+    requirement = requirements.get(gate)
+    if not isinstance(requirement, dict):
+        print("    evidence: missing structured closure requirement")
+        return
+
+    print(f"    authority: {requirement['closure_authority']}")
+    print(f"    blocker: {requirement['closure_blocker']}")
+    print("    evidence:")
+    for evidence in requirement["required_evidence"]:
+        print(f"      * {evidence}")
+
+
 def main() -> int:
     readiness = _read_json(READINESS_PATH)
     clearance = _read_json(CLEARANCE_PATH)
@@ -44,6 +57,7 @@ def main() -> int:
     open_gates = list(readiness["open_gates"])
     official_searches = list(clearance["official_searches"])
     domain_candidates = list(clearance["domain_candidates"])
+    gate_closure_requirements = dict(clearance.get("gate_closure_requirements", {}))
 
     print("Mullu Public Naming Transition Plan")
     print("===================================")
@@ -58,6 +72,8 @@ def main() -> int:
     print("Required gate closures:")
     for gate in open_gates:
         print(f"  - {gate}: {GATE_ACTIONS.get(gate, 'Record closure evidence.')}")
+        if isinstance(gate, str):
+            _print_gate_requirement(gate, gate_closure_requirements)
     print()
 
     print("Official search evidence still required:")

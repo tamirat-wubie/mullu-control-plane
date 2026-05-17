@@ -62,6 +62,24 @@ def test_deployment_closure_plan_schema_rejects_count_drift(tmp_path: Path) -> N
     assert "action_count does not match actions length" in validation.errors
 
 
+def test_deployment_closure_plan_schema_rejects_nonfinite_json_constants(tmp_path: Path) -> None:
+    plan_path = tmp_path / "deployment_publication_closure_plan.json"
+    plan_path.write_text(
+        '{"plan_id": "deployment-publication-closure-plan-x", "score": Infinity}',
+        encoding="utf-8",
+    )
+
+    validation = validate_deployment_publication_closure_plan_schema(
+        plan_path=plan_path,
+        schema_path=SCHEMA_PATH,
+    )
+    serialized_errors = json.dumps(validation.errors, sort_keys=True)
+
+    assert validation.ok is False
+    assert "deployment closure plan JSON parse failed" in validation.errors
+    assert "Infinity" not in serialized_errors
+
+
 def test_deployment_closure_plan_schema_rejects_missing_publication_proof(
     tmp_path: Path,
 ) -> None:
@@ -96,6 +114,83 @@ def test_deployment_closure_plan_schema_rejects_uncovered_blocker(tmp_path: Path
     assert validation.ok is False
     assert validation.blocker_count == 3
     assert any("deployment_authority_responsibility_debt_present" in error for error in validation.errors)
+
+
+def test_deployment_closure_plan_schema_accepts_runtime_input_actions(tmp_path: Path) -> None:
+    plan_path = tmp_path / "deployment_publication_closure_plan.json"
+    payload = _valid_plan()
+    payload["blockers"] = [
+        "deployment_witness_secret_missing",
+        "deployment_dns_not_verified",
+    ]
+    payload["action_count"] = 2
+    payload["actions"] = [
+        {
+            "action_id": "provision-deployment-witness-secret",
+            "blocker": "deployment_witness_secret_missing",
+            "action_type": "secret-binding",
+            "command": (
+                "Provision GitHub Actions secret MULLU_DEPLOYMENT_WITNESS_SECRET; "
+                "do not print or serialize the secret value."
+            ),
+            "evidence_required": [
+                "gh_secret_list_presence:MULLU_DEPLOYMENT_WITNESS_SECRET",
+                "deployment_witness_preflight",
+            ],
+            "risk_level": "high",
+            "approval_required": True,
+        },
+        {
+            "action_id": "verify-gateway-dns",
+            "blocker": "deployment_dns_not_verified",
+            "action_type": "dns-verification",
+            "command": "Resolve $MULLU_GATEWAY_HOST and rerun deployment preflight.",
+            "evidence_required": [
+                "dns_resolution_receipt",
+                "deployment_witness_preflight",
+            ],
+            "risk_level": "high",
+            "approval_required": True,
+        },
+    ]
+    plan_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    validation = validate_deployment_publication_closure_plan_schema(
+        plan_path=plan_path,
+        schema_path=SCHEMA_PATH,
+    )
+
+    assert validation.ok is True
+    assert validation.errors == ()
+    assert validation.action_count == 2
+
+
+def test_deployment_closure_plan_schema_rejects_secret_serialization_gap(tmp_path: Path) -> None:
+    plan_path = tmp_path / "deployment_publication_closure_plan.json"
+    payload = _valid_plan()
+    payload["blockers"] = ["deployment_witness_secret_missing"]
+    payload["action_count"] = 1
+    payload["actions"] = [
+        {
+            "action_id": "provision-deployment-witness-secret",
+            "blocker": "deployment_witness_secret_missing",
+            "action_type": "secret-binding",
+            "command": "Provision GitHub Actions secret MULLU_DEPLOYMENT_WITNESS_SECRET.",
+            "evidence_required": ["deployment_witness_preflight"],
+            "risk_level": "high",
+            "approval_required": True,
+        }
+    ]
+    plan_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    validation = validate_deployment_publication_closure_plan_schema(
+        plan_path=plan_path,
+        schema_path=SCHEMA_PATH,
+    )
+
+    assert validation.ok is False
+    assert any("secret presence evidence" in error for error in validation.errors)
+    assert any("no-secret-serialization guard" in error for error in validation.errors)
 
 
 def test_deployment_closure_plan_schema_writer_and_cli_honor_strict(

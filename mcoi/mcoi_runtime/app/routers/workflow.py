@@ -123,7 +123,15 @@ def execute(req: ExecuteRequest, session_id: str = Header(default="")):
     resp = deps.surface.handle_request(api_req)
     if resp.status_code >= 400:
         raise HTTPException(status_code=resp.status_code, detail=resp.body)
-    return resp.body
+    response_body = dict(resp.body)
+    response_body["action_proof"] = _certify_action_proof(
+        endpoint="/api/v1/execute",
+        tenant_id=req.tenant_id,
+        actor_id=req.actor_id,
+        action=req.action,
+        succeeded=True,
+    )
+    return response_body
 
 
 @router.post("/api/v1/session")

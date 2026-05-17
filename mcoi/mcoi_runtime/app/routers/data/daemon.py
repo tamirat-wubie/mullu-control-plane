@@ -11,7 +11,7 @@ router = APIRouter()
 @router.get("/api/v1/daemon/status")
 def daemon_status():
     """Certification daemon health and run status."""
-    return deps.cert_daemon.status()
+    return {**deps.cert_daemon.status(), "governed": True}
 
 
 @router.post("/api/v1/daemon/tick")
@@ -19,11 +19,12 @@ def daemon_tick():
     """Trigger a single certification daemon tick."""
     chain = deps.cert_daemon.tick()
     if chain is None:
-        return {"ran": False, "reason": "disabled or interval not elapsed"}
+        return {"ran": False, "reason": "disabled or interval not elapsed", "governed": True}
     return {
         "ran": True,
         "chain_id": chain.chain_id,
         "all_passed": chain.all_passed,
+        "governed": True,
     }
 
 
@@ -32,10 +33,11 @@ def daemon_force():
     """Force an immediate certification run regardless of interval."""
     chain = deps.cert_daemon.force_run()
     if chain is None:
-        return {"ran": False}
+        return {"ran": False, "governed": True}
     return {
         "ran": True,
         "chain_id": chain.chain_id,
         "all_passed": chain.all_passed,
         "chain_hash": chain.chain_hash,
+        "governed": True,
     }

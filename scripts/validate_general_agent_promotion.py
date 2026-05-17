@@ -531,8 +531,8 @@ def _check_capability_adapter_evidence(adapter_evidence_path: Path) -> Promotion
             blocker_id="adapter_evidence_not_closed",
         )
     try:
-        payload = json.loads(adapter_evidence_path.read_text(encoding="utf-8"))
-    except json.JSONDecodeError:
+        payload = _loads_strict_json(adapter_evidence_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError, ValueError):
         return PromotionCheck(
             name="capability adapter closure evidence",
             passed=False,
@@ -582,6 +582,16 @@ def _check_capability_adapter_evidence(adapter_evidence_path: Path) -> Promotion
         evidence_refs=(str(adapter_evidence_path),),
         blocker_id="" if passed else "adapter_evidence_not_closed",
     )
+
+
+def _loads_strict_json(raw: str) -> Any:
+    """Load deterministic JSON while rejecting non-finite constants."""
+    return json.loads(raw, parse_constant=_reject_json_constant)
+
+
+def _reject_json_constant(constant: str) -> None:
+    """Reject JSON constants outside the deterministic JSON subset."""
+    raise ValueError("non-finite JSON constant is not allowed")
 
 
 def _check_browser_adapter_closure(

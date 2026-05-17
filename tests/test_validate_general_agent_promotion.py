@@ -112,6 +112,23 @@ def test_promotion_bounds_malformed_adapter_evidence_detail(tmp_path: Path) -> N
     assert "secret-adapter-evidence-token" not in adapter_evidence.detail
 
 
+def test_promotion_rejects_nonfinite_adapter_evidence_json(tmp_path: Path) -> None:
+    adapter_evidence_path = tmp_path / "capability_adapter_evidence.json"
+    adapter_evidence_path.write_text('{"ready":true,"score":Infinity}', encoding="utf-8")
+
+    readiness = validate_general_agent_promotion(
+        repo_root=_ROOT,
+        adapter_evidence_path=adapter_evidence_path,
+    )
+    checks_by_name = {check.name: check for check in readiness.checks}
+    adapter_evidence = checks_by_name["capability adapter closure evidence"]
+
+    assert adapter_evidence.passed is False
+    assert adapter_evidence.blocker_id == "adapter_evidence_not_closed"
+    assert adapter_evidence.detail == "capability adapter evidence JSON parse failed"
+    assert "Infinity" not in adapter_evidence.detail
+
+
 def test_deployment_publication_checks_accept_published_witness(tmp_path: Path) -> None:
     deployment_status = tmp_path / "DEPLOYMENT_STATUS.md"
     deployment_witness = tmp_path / "deployment_witness.json"

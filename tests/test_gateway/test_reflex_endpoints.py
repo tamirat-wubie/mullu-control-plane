@@ -19,9 +19,12 @@ from fastapi.testclient import TestClient
 from gateway.server import create_gateway_app
 from mcoi_runtime.governance.audit.decision_log import GovernanceDecisionLog
 from scripts.validate_reflex_deployment_witness import validate_reflex_deployment_witness
+from scripts.validate_schemas import _load_schema, _validate_schema_instance
 
 
 DT = "2026-05-04T12:00:00+00:00"
+ROOT = Path(__file__).resolve().parents[2]
+PORTFOLIO_SCHEMA_PATH = ROOT / "schemas" / "capability_improvement_portfolio.schema.json"
 
 
 def _certificate_payload() -> dict[str, object]:
@@ -111,6 +114,52 @@ def test_reflex_diagnose_evaluate_and_propose_are_non_mutating() -> None:
     assert propose.status_code == 200
     assert propose.json()["mutation_applied"] is False
     assert propose.json()["candidate_count"] >= 1
+
+
+def test_capability_improvement_portfolio_endpoint_read_only() -> None:
+    app = create_gateway_app(platform=StubPlatform())
+    client = TestClient(app)
+
+    response = client.get("/runtime/self/capability-improvement-portfolio?max_candidates=2")
+    payload = response.json()
+    portfolio = payload["portfolio"]
+    errors = _validate_schema_instance(_load_schema(PORTFOLIO_SCHEMA_PATH), portfolio)
+
+    assert response.status_code == 200
+    assert errors == []
+    assert payload["schema_ref"] == "urn:mullusi:schema:capability-improvement-portfolio:1"
+    assert payload["mutation_applied"] is False
+    assert payload["activation_blocked"] is True
+    assert payload["operator_review_required"] is True
+    assert payload["plan_count"] == 2
+    assert portfolio["metadata"]["observed_signal_count"] == 3
+    assert portfolio["metadata"]["selected_candidate_count"] == 2
+    assert portfolio["metadata"]["autonomous_direct_deploy_allowed"] is False
+
+
+def test_reflex_capability_improvement_portfolio_rejects_invalid_limit() -> None:
+    app = create_gateway_app(platform=StubPlatform())
+    client = TestClient(app)
+
+    response = client.get("/runtime/self/capability-improvement-portfolio?max_candidates=0")
+
+    assert response.status_code == 400
+    assert response.json()["detail"] == "max_candidates must be positive"
+    assert client.get("/runtime/self/capability-improvement-portfolio?max_candidates=1").json()["plan_count"] == 1
+
+
+def test_capability_improvement_portfolio_endpoint_operator_guarded(monkeypatch) -> None:
+    monkeypatch.setenv("MULLU_ENV", "production")
+    monkeypatch.setenv("MULLU_REQUIRE_PERSISTENT_TENANT_IDENTITY", "false")
+    monkeypatch.setenv("MULLU_REQUIRE_PERSISTENT_AUTHORITY_MESH", "false")
+    monkeypatch.delenv("MULLU_AUTHORITY_OPERATOR_SECRET", raising=False)
+    app = create_gateway_app(platform=StubPlatform())
+    client = TestClient(app)
+
+    response = client.get("/runtime/self/capability-improvement-portfolio")
+
+    assert response.status_code == 403
+    assert response.json()["detail"] == "Authority operator access not authorized"
 
 
 def test_reflex_certify_returns_handoff_not_self_certificate() -> None:

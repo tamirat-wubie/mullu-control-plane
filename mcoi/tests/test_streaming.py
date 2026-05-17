@@ -119,7 +119,7 @@ class TestStreamingAdapter:
         assert meta.data["request_id"] == "req-42"
         assert done.data["request_id"] == "req-42"
 
-    def test_stream_carries_budget_reservation_and_settlement(self):
+    def test_stream_budget_reservation_and_settlement(self):
         adapter = StreamingAdapter(clock=fixed_clock, chunk_size=100)
         events = list(
             adapter.stream_result(

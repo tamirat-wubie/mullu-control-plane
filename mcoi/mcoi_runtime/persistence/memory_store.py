@@ -38,6 +38,10 @@ def _deterministic_json(data: Any) -> str:
     return json.dumps(data, sort_keys=True, ensure_ascii=True, separators=(",", ":"), allow_nan=False)
 
 
+def _content_hash(json_str: str) -> str:
+    return sha256(json_str.encode("utf-8")).hexdigest()
+
+
 def _atomic_write(path: Path, content: str) -> None:
     """Write content to a file atomically via temp-file-then-rename."""
     parent = path.parent
@@ -124,7 +128,7 @@ class MemoryStore:
         }
         content = _deterministic_json(payload)
         _atomic_write(self._working_path(), content)
-        return sha256(content.encode("ascii", "ignore")).hexdigest()
+        return _content_hash(content)
 
     def save_episodic(self, memory: EpisodicMemory) -> str:
         if not isinstance(memory, EpisodicMemory):
@@ -134,7 +138,7 @@ class MemoryStore:
         }
         content = _deterministic_json(payload)
         _atomic_write(self._episodic_path(), content)
-        return sha256(content.encode("ascii", "ignore")).hexdigest()
+        return _content_hash(content)
 
     def save_all(
         self,

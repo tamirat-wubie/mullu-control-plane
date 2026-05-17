@@ -9,6 +9,7 @@ Invariants:
   - Preflight step names and step_count match the governed handoff sequence.
   - Report blockers are derived from failed steps.
   - Missing environment variables imply the required environment binding blocker.
+  - Missing environment variables emit matching presence-only closure actions.
   - Production readiness is never claimed by this preflight report.
 """
 
@@ -47,6 +48,7 @@ class PromotionHandoffPreflightValidation:
     step_count: int
     blockers: tuple[str, ...]
     missing_environment_variables: tuple[str, ...]
+    environment_binding_action_count: int
     errors: tuple[str, ...]
 
     def as_dict(self) -> dict[str, Any]:
@@ -73,6 +75,7 @@ def validate_general_agent_promotion_handoff_preflight(
     _validate_scalar_fields(report, errors)
     _validate_steps(steps, errors)
     _validate_derived_fields(report, steps, errors)
+    _validate_environment_binding_actions(report, errors)
     if require_ready and report.get("ready") is not True:
         errors.append("ready must be true")
     return _validation_result(report_path, report, errors)
@@ -130,6 +133,74 @@ def _validate_derived_fields(report: dict[str, Any], steps: Any, errors: list[st
         errors.append("missing_environment_variables require required environment bindings blocker")
 
 
+def _validate_environment_binding_actions(report: dict[str, Any], errors: list[str]) -> None:
+    missing_environment_variables = _string_tuple(
+        report.get("missing_environment_variables", ()),
+        "missing_environment_variables",
+        errors,
+    )
+    raw_actions = report.get("environment_binding_actions")
+    if not isinstance(raw_actions, list):
+        errors.append("environment_binding_actions must be a list")
+        return
+    observed_names: list[str] = []
+    for action in raw_actions:
+        if not isinstance(action, dict):
+            errors.append("environment_binding_actions entries must be objects")
+            continue
+        _validate_environment_binding_action(action, errors)
+        observed_names.append(str(action.get("name", "")))
+    if tuple(observed_names) != missing_environment_variables:
+        errors.append(
+            "environment_binding_actions names must match missing_environment_variables: "
+            f"expected={list(missing_environment_variables)}"
+        )
+    if not missing_environment_variables and raw_actions:
+        errors.append("environment_binding_actions must be empty when no environment variables are missing")
+
+
+def _validate_environment_binding_action(action: dict[str, Any], errors: list[str]) -> None:
+    required_fields = (
+        "name",
+        "binding_kind",
+        "risk",
+        "approval_required",
+        "required_for",
+        "receipt_projection",
+        "verification_command",
+    )
+    for field_name in required_fields:
+        if field_name not in action:
+            errors.append(f"environment binding action missing {field_name}")
+    if not isinstance(action.get("name"), str) or not action.get("name", "").strip():
+        errors.append("environment binding action name must be a non-empty string")
+    if action.get("binding_kind") not in {"artifact_path", "audio_path", "url", "secret"}:
+        errors.append(f"{action.get('name', 'unnamed')} binding_kind is invalid")
+    if action.get("risk") not in {"medium", "high", "critical"}:
+        errors.append(f"{action.get('name', 'unnamed')} risk is invalid")
+    if not isinstance(action.get("approval_required"), bool):
+        errors.append(f"{action.get('name', 'unnamed')} approval_required must be a boolean")
+    required_for = action.get("required_for")
+    if not isinstance(required_for, list) or not required_for or not all(isinstance(item, str) for item in required_for):
+        errors.append(f"{action.get('name', 'unnamed')} required_for must be a non-empty string list")
+    if action.get("receipt_projection") != "name_and_presence_only":
+        errors.append(f"{action.get('name', 'unnamed')} receipt_projection must be name_and_presence_only")
+    verification_command = action.get("verification_command")
+    if not isinstance(verification_command, str) or not verification_command.strip():
+        errors.append(f"{action.get('name', 'unnamed')} verification_command must be a non-empty string")
+        return
+    if "without printing or serializing" not in verification_command:
+        errors.append(f"{action.get('name', 'unnamed')} verification_command must forbid value serialization")
+    if "emit_general_agent_promotion_environment_binding_receipt.py" not in verification_command:
+        errors.append(f"{action.get('name', 'unnamed')} verification_command must emit binding receipt")
+    if "validate_general_agent_promotion_environment_binding_receipt.py" not in verification_command:
+        errors.append(f"{action.get('name', 'unnamed')} verification_command must validate binding receipt")
+    if " --require-ready" not in verification_command:
+        errors.append(f"{action.get('name', 'unnamed')} verification_command must require ready receipt")
+    if any(forbidden in action for forbidden in ("value", "secret_value", "token", "credential")):
+        errors.append(f"{action.get('name', 'unnamed')} action must not carry serialized values")
+
+
 def _string_tuple(raw_value: Any, field_name: str, errors: list[str]) -> tuple[str, ...]:
     if not isinstance(raw_value, list):
         errors.append(f"{field_name} must be a list")
@@ -157,23 +228,36 @@ def _validation_result(
             "missing_environment_variables",
             [],
         ),
+        environment_binding_action_count=(
+            len(report.get("environment_binding_actions", ()))
+            if isinstance(report.get("environment_binding_actions"), list)
+            else 0
+        ),
         errors=tuple(errors),
     )
 
 
 def _load_json_object(path: Path, errors: list[str]) -> dict[str, Any]:
     try:
-        parsed = json.loads(path.read_text(encoding="utf-8"))
+        parsed = _loads_strict_json(path.read_text(encoding="utf-8"))
     except OSError:
         errors.append("preflight report could not be read")
         return {}
-    except json.JSONDecodeError:
+    except (json.JSONDecodeError, ValueError):
         errors.append("preflight report must be JSON")
         return {}
     if not isinstance(parsed, dict):
         errors.append("preflight report root must be an object")
         return {}
     return parsed
+
+
+def _loads_strict_json(raw: str) -> Any:
+    return json.loads(raw, parse_constant=_reject_json_constant)
+
+
+def _reject_json_constant(raw_constant: str) -> None:
+    raise ValueError("non-finite JSON constants are not permitted")
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:

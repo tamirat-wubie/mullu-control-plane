@@ -7,6 +7,7 @@ Invariants: no partial writes, fail closed on malformed data, deterministic hash
 from __future__ import annotations
 
 import json
+from hashlib import sha256
 from pathlib import Path
 
 import pytest
@@ -17,6 +18,7 @@ from mcoi_runtime.persistence import (
     SnapshotNotFoundError,
     SnapshotStore,
 )
+from mcoi_runtime.persistence.snapshot_store import _content_hash
 
 
 def test_save_and_load_snapshot(tmp_path: Path) -> None:
@@ -39,6 +41,15 @@ def test_save_snapshot_produces_deterministic_hash(tmp_path: Path) -> None:
     meta1 = store.save_snapshot("snap-1", data)
     meta2 = store.save_snapshot("snap-2", data)
     assert meta1.content_hash == meta2.content_hash
+
+
+def test_snapshot_content_hash_preserves_non_ascii_fidel_bytes() -> None:
+    content = '{"fidel":"ሀ"}'
+    digest = _content_hash(content)
+
+    assert digest == sha256(content.encode("utf-8")).hexdigest()
+    assert digest != sha256(content.encode("ascii", "ignore")).hexdigest()
+    assert len(digest) == 64
 
 
 def test_load_nonexistent_snapshot_raises(tmp_path: Path) -> None:

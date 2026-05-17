@@ -6,6 +6,7 @@ receipt-bound sandbox verification.
 
 from __future__ import annotations
 
+import hashlib
 from pathlib import Path
 import subprocess
 
@@ -15,6 +16,7 @@ from gateway.sandbox_runner import (
     DockerRootlessSandboxRunner,
     SandboxCommandRequest,
     SandboxRunnerProfile,
+    _workspace_snapshot,
 )
 
 
@@ -94,6 +96,29 @@ def test_sandbox_runner_receipt_witnesses_workspace_changes(tmp_path: Path) -> N
     assert len(result.receipt.changed_file_refs) == 1
     assert result.receipt.changed_file_refs[0].startswith("workspace_diff:")
     assert result.receipt.forbidden_effects_observed is False
+
+
+def test_workspace_snapshot_records_symlink_without_reading_target(tmp_path: Path) -> None:
+    workspace = tmp_path / "workspace"
+    outside = tmp_path / "outside"
+    workspace.mkdir()
+    outside.mkdir()
+    (workspace / "regular.txt").write_text("inside\n", encoding="utf-8")
+    (outside / "secret.txt").write_text("outside\n", encoding="utf-8")
+    link_path = workspace / "linked-secret.txt"
+    try:
+        link_path.symlink_to(outside / "secret.txt")
+    except (NotImplementedError, OSError) as exc:
+        pytest.skip(f"symlink creation unavailable: {type(exc).__name__}")
+
+    snapshot = _workspace_snapshot(workspace)
+
+    assert "regular.txt" in snapshot
+    assert "linked-secret.txt" in snapshot
+    assert snapshot["linked-secret.txt"].startswith("symlink:")
+    assert snapshot["linked-secret.txt"] != hashlib.sha256(
+        (outside / "secret.txt").read_bytes()
+    ).hexdigest()
 
 
 def test_sandbox_runner_blocks_on_non_linux_without_launch(tmp_path: Path) -> None:
@@ -243,6 +268,28 @@ def test_sandbox_request_rejects_invalid_environment_key() -> None:
             capability_id="computer.command.run",
             argv=("python", "--version"),
             environment={"BAD=KEY": "value"},
+        )
+
+
+def test_sandbox_request_rejects_non_string_environment_key() -> None:
+    with pytest.raises(ValueError, match="^environment keys must be strings$"):
+        SandboxCommandRequest(
+            request_id="sandbox-request-7b",
+            tenant_id="tenant-1",
+            capability_id="computer.command.run",
+            argv=("python", "--version"),
+            environment={1: "value"},  # type: ignore[dict-item]
+        )
+
+
+def test_sandbox_request_rejects_control_character_environment_value() -> None:
+    with pytest.raises(ValueError, match="^environment value contains forbidden characters$"):
+        SandboxCommandRequest(
+            request_id="sandbox-request-7c",
+            tenant_id="tenant-1",
+            capability_id="computer.command.run",
+            argv=("python", "--version"),
+            environment={"SAFE_KEY": "line1\nline2"},
         )
 
 

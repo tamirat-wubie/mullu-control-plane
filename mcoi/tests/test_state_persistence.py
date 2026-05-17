@@ -3,11 +3,12 @@
 import json
 import os
 import tempfile
+from hashlib import sha256
 
 import pytest
 
 from mcoi_runtime.persistence import CorruptedDataError, PathTraversalError, PersistenceError
-from mcoi_runtime.persistence.state_persistence import StatePersistence
+from mcoi_runtime.persistence.state_persistence import StatePersistence, _content_hash
 
 def FIXED_CLOCK():
     return "2026-03-26T12:00:00Z"
@@ -33,6 +34,14 @@ class TestStatePersistence:
         assert snap.state_type == "config"
         assert snap.state_hash
         assert snap.saved_at
+
+    def test_content_hash_preserves_non_ascii_fidel_bytes(self):
+        content = '{"fidel":"ሀ"}'
+        digest = _content_hash(content)
+
+        assert digest == sha256(content.encode("utf-8")).hexdigest()
+        assert digest != sha256(content.encode("ascii", "ignore")).hexdigest()
+        assert len(digest) == 64
 
     def test_save_rejects_non_dict_data(self):
         sp, _ = self._persistence()

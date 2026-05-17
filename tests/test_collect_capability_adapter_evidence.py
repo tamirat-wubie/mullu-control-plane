@@ -62,6 +62,17 @@ def test_load_receipt_bounds_malformed_json_detail(tmp_path: Path) -> None:
     assert "secret-value" not in detail
 
 
+def test_load_receipt_rejects_nonfinite_json_constants(tmp_path: Path) -> None:
+    receipt_path = tmp_path / "receipt.json"
+    receipt_path.write_text('{"status":"passed","score":Infinity}', encoding="utf-8")
+
+    payload, detail = _load_receipt(receipt_path)
+
+    assert payload == {}
+    assert detail == "receipt JSON parse failed"
+    assert "Infinity" not in detail
+
+
 def test_adapter_evidence_uses_worker_dependency_contract_before_host_imports(tmp_path: Path) -> None:
     report = collect_capability_adapter_evidence(
         repo_root=_ROOT,

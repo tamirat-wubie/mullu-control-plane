@@ -103,7 +103,7 @@ class TestToolWorkflowEndpoint:
 
 
 class TestStreamingChat:
-    def test_streaming_chat(self, client):
+    def test_streaming_chat_returns_sse(self, client):
         resp = client.post("/api/v1/chat/stream", json={
             "conversation_id": "stream-1", "message": "Hello",
         })
@@ -146,7 +146,7 @@ class TestStreamingChat:
         assert '"budget_id": "default"' in body
         assert '"budget_settlement"' in body
 
-    def test_streaming_chat_exception_is_sanitized(self, client, monkeypatch):
+    def test_streaming_chat_exception_sanitized(self, client, monkeypatch):
         from mcoi_runtime.app.routers.deps import deps
 
         def boom(*args, **kwargs):

@@ -136,7 +136,7 @@ class CertificationDaemon:
 
         Returns the chain if run, None if skipped (disabled or too early).
         """
-        if not self._config.enabled:
+        if not self.should_run():
             return None
 
         self._last_tick_time = time.monotonic()
@@ -180,6 +180,7 @@ class CertificationDaemon:
     def force_run(self) -> CertificationChain | None:
         """Force an immediate certification regardless of interval."""
         saved_enabled = self._config.enabled
+        saved_last_tick_time = self._last_tick_time
         # Temporarily enable if disabled
         if not saved_enabled:
             self._config = CertificationConfig(
@@ -188,6 +189,7 @@ class CertificationDaemon:
                 health_window=self._config.health_window,
                 enabled=True,
             )
+        self._last_tick_time = 0.0
         result = self.tick()
         if not saved_enabled:
             self._config = CertificationConfig(
@@ -196,6 +198,8 @@ class CertificationDaemon:
                 health_window=self._config.health_window,
                 enabled=False,
             )
+        if result is None:
+            self._last_tick_time = saved_last_tick_time
         return result
 
     def _record_result(self, chain: CertificationChain) -> None:

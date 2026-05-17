@@ -26,15 +26,18 @@ def client():
 
 
 class TestDataGovernanceEndpoints:
-    def test_summary_endpoint_exposes_runtime_posture(self, client):
+    def test_data_governance_state_hash(self, client):
         resp = client.get("/api/v1/data-governance/summary")
+        summary = resp.json()["summary"]
 
         assert resp.status_code == 200
         assert resp.json()["governed"] is True
-        assert "state_hash" in resp.json()["summary"]
+        assert len(summary["state_hash"]) == 64
+        assert summary["records"] >= 0
+        assert summary["violations"] >= 0
         assert resp.json()["tenant"] is None
 
-    def test_classify_and_register_controls(self, client):
+    def test_data_governance_action_proof(self, client):
         tenant_id = "dg-http-controls"
 
         record_resp = client.post("/api/v1/data-governance/classify", json={
@@ -62,10 +65,14 @@ class TestDataGovernanceEndpoints:
 
         assert record_resp.status_code == 200
         assert record_resp.json()["record"]["classification"] == "pii"
+        assert record_resp.json()["action_proof"]["proof_phase"] == "data.classify"
+        assert record_resp.json()["action_proof"]["proof_receipt_id"]
         assert policy_resp.status_code == 200
         assert policy_resp.json()["policy"]["disposition"] == "redact"
+        assert policy_resp.json()["action_proof"]["proof_hash"]
         assert residency_resp.status_code == 200
         assert residency_resp.json()["constraint"]["allowed_regions"] == ["us"]
+        assert residency_resp.json()["action_proof"]["succeeded"] is True
 
     def test_rule_registration_and_redacted_evaluation(self, client):
         tenant_id = "dg-http-redaction"
@@ -103,7 +110,7 @@ class TestDataGovernanceEndpoints:
         assert eval_resp.json()["decision"]["decision"] == "redacted"
         assert eval_resp.json()["decision"]["redaction_level"] == "hash"
 
-    def test_residency_denial_is_visible_in_tenant_summary(self, client):
+    def test_tenant_visible_violation_read_model(self, client):
         tenant_id = "dg-http-denial"
 
         client.post("/api/v1/data-governance/classify", json={
@@ -133,5 +140,7 @@ class TestDataGovernanceEndpoints:
         assert eval_resp.json()["decision"]["decision"] == "denied"
         assert "residency constraint" in eval_resp.json()["decision"]["reason"]
         assert summary_resp.status_code == 200
+        assert summary_resp.json()["tenant"]["tenant_id"] == tenant_id
         assert summary_resp.json()["tenant"]["violation_count"] == 1
         assert summary_resp.json()["tenant"]["records"][0]["data_id"] == "dg-http-record-denial"
+        assert summary_resp.json()["tenant"]["violations"][0]["operation"] == "connector_transfer"

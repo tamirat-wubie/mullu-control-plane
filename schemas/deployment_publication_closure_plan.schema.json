@@ -75,6 +75,11 @@
             "publish-witness",
             "status-update",
             "responsibility-debt-closure",
+            "secret-binding",
+            "repository-variable-binding",
+            "dns-verification",
+            "endpoint-verification",
+            "workflow-repair",
             "manual-review"
           ]
         },

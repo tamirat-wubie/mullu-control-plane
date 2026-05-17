@@ -28,10 +28,12 @@ from scripts.validate_public_naming_readiness import (  # noqa: E402
     REQUIRED_CLOSED_GATES,
     REQUIRED_EVIDENCE_DOCS,
     REQUIRED_OFFICIAL_SEARCHES,
+    REQUIRED_CLEARANCE_EVIDENCE_DIRS,
     REQUIRED_OPEN_GATES,
     REQUIRED_TSDR_SERIALS,
     REQUIRED_WEBSITE_ROUTES,
     APP_TITLE_UPDATE_EVIDENCE_PATH,
+    CLEARANCE_EVIDENCE_CAPTURE_PLAN_PATH,
     HOMEPAGE_UPDATE_EVIDENCE_PATH,
     OFFICIAL_CLEARANCE_ACCESS_LOG_PATH,
     PRODUCT_ROUTE_DEPLOYMENT_HANDOFF_PATH,
@@ -43,6 +45,8 @@ from scripts.validate_public_naming_readiness import (  # noqa: E402
     WITNESS_PATH,
     validate_no_forbidden_terminology,
     validate_clearance_domain_candidates,
+    validate_clearance_evidence_capture_plan,
+    validate_clearance_evidence_scaffold,
     validate_clearance_gate_closure_requirements,
     validate_clearance_official_searches,
     validate_app_title_update_evidence,
@@ -520,6 +524,47 @@ def test_app_title_update_evidence_rejects_missing_console_title(tmp_path: Path)
 
     with pytest.raises(AssertionError, match="app title update evidence missing literals"):
         validate_app_title_update_evidence(evidence_path)
+
+
+def test_clearance_evidence_capture_plan_preserves_remaining_gate_paths() -> None:
+    validate_clearance_evidence_capture_plan()
+
+
+def test_clearance_evidence_scaffold_preserves_pending_decisions() -> None:
+    validate_clearance_evidence_scaffold()
+
+
+def test_clearance_evidence_scaffold_rejects_missing_decision(tmp_path: Path) -> None:
+    evidence_root = tmp_path / "clearance-evidence" / "mullu" / "2026-05-15"
+    evidence_root.mkdir(parents=True)
+    (evidence_root / "README.md").write_text(
+        "paid public launch remains blocked\n",
+        encoding="utf-8",
+    )
+    for directory_name in REQUIRED_CLEARANCE_EVIDENCE_DIRS:
+        evidence_dir = evidence_root / directory_name
+        evidence_dir.mkdir()
+        (evidence_dir / "README.md").write_text("Pending capture\n", encoding="utf-8")
+        (evidence_dir / "decision.md").write_text(
+            "Decision | Pending\nPaid public launch remains blocked\n",
+            encoding="utf-8",
+        )
+    (evidence_root / "01-uspto" / "decision.md").unlink()
+
+    with pytest.raises(AssertionError, match="clearance evidence decision missing"):
+        validate_clearance_evidence_scaffold(evidence_root)
+
+
+def test_clearance_evidence_capture_plan_rejects_missing_mutation_boundary(tmp_path: Path) -> None:
+    plan_path = tmp_path / "CLEARANCE_EVIDENCE_CAPTURE_PLAN_2026-05-15.md"
+    plan_text = CLEARANCE_EVIDENCE_CAPTURE_PLAN_PATH.read_text(encoding="utf-8").replace(
+        "Do not update `docs/public-naming-readiness.json`",
+        "Update `docs/public-naming-readiness.json`",
+    )
+    plan_path.write_text(plan_text, encoding="utf-8")
+
+    with pytest.raises(AssertionError, match="witness mutation boundary"):
+        validate_clearance_evidence_capture_plan(plan_path)
 
 
 def test_public_naming_review_packet_rejects_missing_serial(tmp_path: Path) -> None:
