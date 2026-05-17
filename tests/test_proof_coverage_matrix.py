@@ -143,6 +143,7 @@ def test_witness_integrity_report_tracks_exact_test_anchors() -> None:
     assert surfaces["tenant_governance_lifecycle"]["unanchored_witness_count"] == 0
     assert surfaces["multimodal_operating_layer"]["unanchored_witness_count"] == 0
     assert surfaces["runtime_conformance_attestation"]["unanchored_witness_count"] == 0
+    assert surfaces["finance_approval_packets"]["unanchored_witness_count"] == 0
     assert surfaces["tool_registry_read_models"]["unanchored_witness_count"] == 0
 
 
@@ -689,7 +690,7 @@ def test_finance_approval_packet_surface_is_witnessed() -> None:
     finance_integrity = {
         record["surface_id"]: record
         for record in matrix["witness_integrity"]["surfaces"]
-    }["finance_approval_packet"]
+    }["finance_approval_packets"]
     assert finance_integrity["exact_test_anchor_count"] == 15
     assert finance_integrity["unanchored_witness_count"] == 0
     assert closure_actions["classify_finance_approval_packet_routes"]["status"] == "closed"

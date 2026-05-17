@@ -3622,22 +3622,69 @@
         "/api/v1/finance/approval-packets/{case_id}/proof"
       ],
       "request_proof": "request_proof",
+      "runtime_witness_anchor_aliases": {
+        "approval_action_binds_approval_effect_and_closure_refs": [
+          "approval_creates_effect_and_closed_proof"
+        ],
+        "blocked_packet_emits_no_effect": [
+          "blocked_fixture_requires_review_and_emits_no_effect"
+        ],
+        "email_calendar_binding_receipt_requires_worker_token_and_readonly_scope": [
+          "finance_email_calendar_binding_receipt_blocks_without_worker_and_scope"
+        ],
+        "finance_packet_policy_reasons_explicit": [
+          "create_list_get_and_proof_blocked_packet"
+        ],
+        "operator_read_model_bounds_visible_packets_and_counts": [
+          "operator_read_model_summarizes_blocked_and_closed_packets"
+        ],
+        "packet_proof_requires_policy_evidence_and_closure_for_closed_states": [
+          "proof_export_fails_for_closed_packet_without_closure_certificate"
+        ],
+        "payment_closure_example_evidence_validates_provider_binding_chain": [
+          "finance_payment_closure_example_binds_provider_receipt"
+        ],
+        "payment_closure_producer_consumes_provider_binding_receipt": [
+          "produce_payment_closure_receipt_derives_binding_ref_from_ready_receipt"
+        ],
+        "payment_closure_receipt_producer_emits_ready_sandbox_evidence": [
+          "produce_payment_closure_receipt_emits_ready_sandbox_receipt"
+        ],
+        "payment_closure_receipt_producer_requires_provider_binding_for_nonsandbox": [
+          "produce_payment_closure_receipt_requires_non_sandbox_provider_binding"
+        ],
+        "payment_closure_receipt_validator_blocks_unbound_evidence": [
+          "validate_payment_closure_receipt_rejects_missing_ledger_evidence"
+        ],
+        "payment_closure_validator_verifies_provider_binding_receipt_object": [
+          "validate_payment_closure_receipt_accepts_ready_provider_binding_receipt"
+        ],
+        "payment_handoff_prepared_without_live_payment_claim": [
+          "approval_can_create_payment_handoff_without_live_payment_claim"
+        ],
+        "payment_provider_binding_receipt_redacts_credentials_and_scopes_provider": [
+          "payment_provider_binding_receipt_records_presence_without_values"
+        ],
+        "payment_receipt_and_ledger_reconciliation_required_for_payment_closure": [
+          "payment_finalization_requires_provider_and_ledger_evidence_without_mutation"
+        ]
+      },
       "runtime_witnesses": [
-        "create_list_get_and_proof_blocked_packet",
-        "blocked_fixture_requires_review_and_emits_no_effect",
-        "approval_creates_effect_and_closed_proof",
-        "approval_can_create_payment_handoff_without_live_payment_claim",
-        "finance_email_calendar_binding_receipt_blocks_without_worker_and_scope",
-        "payment_finalization_requires_provider_and_ledger_evidence_without_mutation",
-        "validate_payment_closure_receipt_rejects_missing_ledger_evidence",
-        "produce_payment_closure_receipt_emits_ready_sandbox_receipt",
-        "payment_provider_binding_receipt_records_presence_without_values",
-        "produce_payment_closure_receipt_derives_binding_ref_from_ready_receipt",
-        "validate_payment_closure_receipt_accepts_ready_provider_binding_receipt",
-        "produce_payment_closure_receipt_requires_non_sandbox_provider_binding",
-        "finance_payment_closure_example_binds_provider_receipt",
-        "proof_export_fails_for_closed_packet_without_closure_certificate",
-        "operator_read_model_summarizes_blocked_and_closed_packets"
+        "finance_packet_policy_reasons_explicit",
+        "blocked_packet_emits_no_effect",
+        "approval_action_binds_approval_effect_and_closure_refs",
+        "payment_handoff_prepared_without_live_payment_claim",
+        "email_calendar_binding_receipt_requires_worker_token_and_readonly_scope",
+        "payment_receipt_and_ledger_reconciliation_required_for_payment_closure",
+        "payment_closure_receipt_validator_blocks_unbound_evidence",
+        "payment_closure_receipt_producer_emits_ready_sandbox_evidence",
+        "payment_provider_binding_receipt_redacts_credentials_and_scopes_provider",
+        "payment_closure_producer_consumes_provider_binding_receipt",
+        "payment_closure_validator_verifies_provider_binding_receipt_object",
+        "payment_closure_receipt_producer_requires_provider_binding_for_nonsandbox",
+        "payment_closure_example_evidence_validates_provider_binding_chain",
+        "packet_proof_requires_policy_evidence_and_closure_for_closed_states",
+        "operator_read_model_bounds_visible_packets_and_counts"
       ],
       "surface_id": "finance_approval_packets"
     },
@@ -7796,91 +7843,91 @@
             "anchors": [
               "mcoi/tests/test_finance_approval_router.py::test_create_list_get_and_proof_blocked_packet"
             ],
-            "witness": "create_list_get_and_proof_blocked_packet"
+            "witness": "finance_packet_policy_reasons_explicit"
           },
           {
             "anchors": [
               "mcoi/tests/test_finance_approval_packet.py::test_blocked_fixture_requires_review_and_emits_no_effect"
             ],
-            "witness": "blocked_fixture_requires_review_and_emits_no_effect"
+            "witness": "blocked_packet_emits_no_effect"
           },
           {
             "anchors": [
               "mcoi/tests/test_finance_approval_router.py::test_approval_creates_effect_and_closed_proof"
             ],
-            "witness": "approval_creates_effect_and_closed_proof"
+            "witness": "approval_action_binds_approval_effect_and_closure_refs"
           },
           {
             "anchors": [
               "mcoi/tests/test_finance_approval_router.py::test_approval_can_create_payment_handoff_without_live_payment_claim"
             ],
-            "witness": "approval_can_create_payment_handoff_without_live_payment_claim"
+            "witness": "payment_handoff_prepared_without_live_payment_claim"
           },
           {
             "anchors": [
               "tests/test_emit_finance_approval_email_calendar_binding_receipt.py::test_finance_email_calendar_binding_receipt_blocks_without_worker_and_scope"
             ],
-            "witness": "finance_email_calendar_binding_receipt_blocks_without_worker_and_scope"
+            "witness": "email_calendar_binding_receipt_requires_worker_token_and_readonly_scope"
           },
           {
             "anchors": [
               "mcoi/tests/test_finance_approval_router.py::test_payment_finalization_requires_provider_and_ledger_evidence_without_mutation"
             ],
-            "witness": "payment_finalization_requires_provider_and_ledger_evidence_without_mutation"
+            "witness": "payment_receipt_and_ledger_reconciliation_required_for_payment_closure"
           },
           {
             "anchors": [
               "tests/test_validate_finance_approval_payment_closure_receipt.py::test_validate_payment_closure_receipt_rejects_missing_ledger_evidence"
             ],
-            "witness": "validate_payment_closure_receipt_rejects_missing_ledger_evidence"
+            "witness": "payment_closure_receipt_validator_blocks_unbound_evidence"
           },
           {
             "anchors": [
               "tests/test_produce_finance_approval_payment_closure_receipt.py::test_produce_payment_closure_receipt_emits_ready_sandbox_receipt"
             ],
-            "witness": "produce_payment_closure_receipt_emits_ready_sandbox_receipt"
+            "witness": "payment_closure_receipt_producer_emits_ready_sandbox_evidence"
           },
           {
             "anchors": [
               "tests/test_emit_finance_approval_payment_provider_binding_receipt.py::test_payment_provider_binding_receipt_records_presence_without_values"
             ],
-            "witness": "payment_provider_binding_receipt_records_presence_without_values"
+            "witness": "payment_provider_binding_receipt_redacts_credentials_and_scopes_provider"
           },
           {
             "anchors": [
               "tests/test_produce_finance_approval_payment_closure_receipt.py::test_produce_payment_closure_receipt_derives_binding_ref_from_ready_receipt"
             ],
-            "witness": "produce_payment_closure_receipt_derives_binding_ref_from_ready_receipt"
+            "witness": "payment_closure_producer_consumes_provider_binding_receipt"
           },
           {
             "anchors": [
               "tests/test_validate_finance_approval_payment_closure_receipt.py::test_validate_payment_closure_receipt_accepts_ready_provider_binding_receipt"
             ],
-            "witness": "validate_payment_closure_receipt_accepts_ready_provider_binding_receipt"
+            "witness": "payment_closure_validator_verifies_provider_binding_receipt_object"
           },
           {
             "anchors": [
               "tests/test_produce_finance_approval_payment_closure_receipt.py::test_produce_payment_closure_receipt_requires_non_sandbox_provider_binding"
             ],
-            "witness": "produce_payment_closure_receipt_requires_non_sandbox_provider_binding"
+            "witness": "payment_closure_receipt_producer_requires_provider_binding_for_nonsandbox"
           },
           {
             "anchors": [
               "tests/test_finance_payment_provider_binding_examples.py::test_finance_payment_closure_example_binds_provider_receipt"
             ],
-            "witness": "finance_payment_closure_example_binds_provider_receipt"
+            "witness": "payment_closure_example_evidence_validates_provider_binding_chain"
           },
           {
             "anchors": [
               "mcoi/tests/test_finance_approval_packet.py::test_proof_export_fails_for_closed_packet_without_closure_certificate"
             ],
-            "witness": "proof_export_fails_for_closed_packet_without_closure_certificate"
+            "witness": "packet_proof_requires_policy_evidence_and_closure_for_closed_states"
           },
           {
             "anchors": [
               "mcoi/tests/test_finance_approval_router.py::test_operator_read_model_summarizes_blocked_and_closed_packets"
             ],
-            "witness": "operator_read_model_summarizes_blocked_and_closed_packets"
+            "witness": "operator_read_model_bounds_visible_packets_and_counts"
           }
         ],
         "exact_test_anchor_count": 15,
