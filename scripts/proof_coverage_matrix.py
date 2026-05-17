@@ -2628,7 +2628,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "tests/test_software_dev_capability_pack.py",
                 "tests/test_software_gate_planner.py",
             ],
-            "Software-development capability pack keeps repo intelligence, context building, gate planning, governed change execution, app task graph planning, and PR candidate preparation behind explicit capsule admission; default packs do not load it, read-only capabilities expose no execution authority, and effectful capabilities require sandboxing, approval, receipts, recovery evidence, and direct-deployment denial.",
+            "Software-development capability pack keeps repo intelligence, context building, gate planning, governed change execution, app task graph planning, and PR candidate preparation behind explicit capsule admission; default packs do not load it, read-only capabilities expose no execution authority, effectful capabilities require sandboxing, approval, receipts, recovery evidence, and direct-deployment denial, and PR candidate commands remain local git-only with push disabled.",
             [
                 "software_dev_pack_fixture_not_default_loaded",
                 "software_dev_capability_entries_schema_valid",
@@ -2644,6 +2644,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "software_dev_read_only_records_non_mutating",
                 "software_dev_effectful_records_require_sandbox_approval",
                 "software_dev_pr_candidate_blocks_git_push",
+                "software_dev_pr_candidate_local_commands_are_git_local_only",
                 "software_dev_production_ready_overclaim_rejected",
             ],
         ),
