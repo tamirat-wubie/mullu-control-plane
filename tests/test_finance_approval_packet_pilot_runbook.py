@@ -42,6 +42,7 @@ def test_finance_runbook_documents_strict_promotion_boundary() -> None:
     assert "validates the aggregate handoff chain" in content
     assert "validates the operator summary schema" in content
     assert "Email/calendar recovery requires three operator bindings" in content
+    assert "finance_email_calendar_binding_receipt_not_ready" in content
     assert "examples\\finance_email_calendar_recovery.env.example" in content
     assert "validate it before replacing secret placeholders" in content
     assert "binding-name presence for the email/calendar worker endpoint" in content

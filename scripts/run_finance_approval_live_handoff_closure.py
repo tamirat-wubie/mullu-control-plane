@@ -191,6 +191,7 @@ def _closure_commands() -> tuple[FinanceLiveHandoffClosureCommand, ...]:
             purpose="Refresh the finance live handoff plan after evidence collection.",
             command=(
                 "python scripts/plan_finance_approval_live_handoff.py "
+                "--binding-receipt .change_assurance/finance_approval_email_calendar_binding_receipt.json "
                 "--output .change_assurance/finance_approval_live_handoff_plan.json --json"
             ),
             required_before_next=True,

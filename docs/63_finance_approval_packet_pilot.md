@@ -269,7 +269,7 @@ python scripts\validate_protocol_manifest.py
 Expected result:
 
 ```text
-protocol manifest ok: 128 schemas
+protocol manifest ok: 130 schemas
 ```
 
 Finance pilot readiness verification:
@@ -296,7 +296,7 @@ python scripts\validate_finance_approval_live_handoff_plan_schema.py --strict --
 Current expected actions before live email/calendar closure:
 
 ```text
-email_calendar_dependency_missing:EMAIL_CALENDAR_CONNECTOR_TOKEN
+finance_email_calendar_binding_receipt_not_ready
 email_calendar_live_evidence_missing
 ```
 

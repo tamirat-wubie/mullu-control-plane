@@ -685,6 +685,7 @@ def test_finance_approval_packet_surface_is_witnessed() -> None:
     assert "approval_action_binds_approval_effect_and_closure_refs" in witnesses
     assert "payment_handoff_prepared_without_live_payment_claim" in witnesses
     assert "email_calendar_binding_receipt_requires_worker_token_and_readonly_scope" in witnesses
+    assert "email_calendar_handoff_plan_requires_binding_receipt_ready" in witnesses
     assert "payment_receipt_and_ledger_reconciliation_required_for_payment_closure" in witnesses
     assert "payment_closure_receipt_validator_blocks_unbound_evidence" in witnesses
     assert "payment_closure_receipt_producer_emits_ready_sandbox_evidence" in witnesses
@@ -699,7 +700,7 @@ def test_finance_approval_packet_surface_is_witnessed() -> None:
         record["surface_id"]: record
         for record in matrix["witness_integrity"]["surfaces"]
     }["finance_approval_packets"]
-    assert finance_integrity["exact_test_anchor_count"] == 15
+    assert finance_integrity["exact_test_anchor_count"] == 16
     assert finance_integrity["unanchored_witness_count"] == 0
     assert closure_actions["classify_finance_approval_packet_routes"]["status"] == "closed"
 

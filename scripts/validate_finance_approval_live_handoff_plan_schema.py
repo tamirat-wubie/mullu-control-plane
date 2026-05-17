@@ -35,6 +35,7 @@ DEFAULT_PLAN = REPO_ROOT / ".change_assurance" / "finance_approval_live_handoff_
 DEFAULT_OUTPUT = REPO_ROOT / ".change_assurance" / "finance_approval_live_handoff_plan_schema_validation.json"
 ALLOWED_BLOCKERS = frozenset(
     {
+        "finance_email_calendar_binding_receipt_not_ready",
         "email_calendar_dependency_missing:EMAIL_CALENDAR_CONNECTOR_TOKEN",
         "email_calendar_live_evidence_missing",
         "email_calendar_evidence_not_closed",
@@ -50,6 +51,7 @@ class FinanceLiveHandoffPlanSchemaValidation:
     errors: tuple[str, ...]
     plan_path: str
     schema_path: str
+    ready: bool
     action_count: int
     approval_required_action_count: int
     blocker_count: int
@@ -85,6 +87,8 @@ def validate_finance_approval_live_handoff_plan_schema(
         errors.append("action_count does not match actions length")
     if plan.get("ready") is True and (actions or blockers):
         errors.append("ready finance handoff plan must not contain blockers or actions")
+    if plan.get("ready") is False and not blockers:
+        errors.append("non-ready finance handoff plan requires blockers")
     if plan.get("ready") is False and blockers and not actions:
         errors.append("non-ready finance handoff plan requires closure actions")
     _validate_finance_blocker_scope(blockers, errors)
@@ -98,6 +102,7 @@ def validate_finance_approval_live_handoff_plan_schema(
         errors=errors,
         actions=actions,
         blockers=blockers,
+        plan_ready=plan.get("ready") is True,
     )
 
 
@@ -141,7 +146,7 @@ def _validate_blocker_coverage(
 
 def _validate_email_calendar_credential_action(actions: tuple[dict[str, Any], ...], errors: list[str]) -> None:
     for index, action in enumerate(actions):
-        if action.get("blocker") != "email_calendar_dependency_missing:EMAIL_CALENDAR_CONNECTOR_TOKEN":
+        if not _is_email_calendar_binding_blocker(str(action.get("blocker", ""))):
             continue
         evidence_required = {str(item) for item in action.get("evidence_required", ())}
         if action.get("action_type") != "credential":
@@ -157,7 +162,18 @@ def _validate_email_calendar_credential_action(actions: tuple[dict[str, Any], ..
         for token in required_verification_tokens:
             if token not in verification_command:
                 errors.append(f"email/calendar credential action {index} verification_command missing token {token}")
-        missing_evidence = sorted({"connector_scope_attestation", "secret_presence_attestation"} - evidence_required)
+        receipt_validator = str(action.get("receipt_validator", ""))
+        if "finance_email_calendar_binding_receipt.ready" not in receipt_validator:
+            errors.append(f"email/calendar credential action {index} receipt_validator missing binding readiness")
+        missing_evidence = sorted(
+            {
+                "worker_endpoint_presence_attestation",
+                "worker_secret_presence_attestation",
+                "connector_scope_attestation",
+                "secret_presence_attestation",
+            }
+            - evidence_required
+        )
         if "finance_approval_email_calendar_binding_receipt.json" not in evidence_required:
             errors.append(
                 f"email/calendar credential action {index} evidence_required missing "
@@ -211,12 +227,14 @@ def _validation_result(
     errors: list[str],
     actions: tuple[dict[str, Any], ...],
     blockers: tuple[str, ...],
+    plan_ready: bool = False,
 ) -> FinanceLiveHandoffPlanSchemaValidation:
     return FinanceLiveHandoffPlanSchemaValidation(
         ok=not errors,
         errors=tuple(errors),
         plan_path=str(plan_path),
         schema_path=str(schema_path),
+        ready=plan_ready and not blockers and not actions,
         action_count=len(actions),
         approval_required_action_count=sum(1 for action in actions if action.get("approval_required") is True),
         blocker_count=len(blockers),
@@ -237,6 +255,13 @@ def _blockers(plan: dict[str, Any], errors: list[str]) -> tuple[str, ...]:
         errors.append("blockers must be a list")
         return ()
     return tuple(str(blocker) for blocker in blockers)
+
+
+def _is_email_calendar_binding_blocker(blocker: str) -> bool:
+    return blocker in {
+        "finance_email_calendar_binding_receipt_not_ready",
+        "email_calendar_dependency_missing:EMAIL_CALENDAR_CONNECTOR_TOKEN",
+    }
 
 
 def _load_json_object(path: Path, label: str, errors: list[str]) -> dict[str, Any]:
