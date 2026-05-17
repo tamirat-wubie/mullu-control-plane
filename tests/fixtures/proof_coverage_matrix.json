@@ -4587,6 +4587,23 @@
         "JsonlEffectGraphCommitReceiptStore"
       ],
       "request_proof": "request_proof",
+      "runtime_witness_anchor_aliases": {
+        "effect_graph_commit_receipt_closes_effect_assurance": [
+          "graph_commit_receipt_closes_effect_assurance"
+        ],
+        "effect_graph_commit_receipt_converts_to_actual_effect": [
+          "graph_commit_receipts_convert_to_effect_records"
+        ],
+        "effect_graph_commit_receipt_emitted": [
+          "graph_commit_writes_command_verification_and_evidence_nodes"
+        ],
+        "effect_graph_commit_receipt_store_replays_records": [
+          "jsonl_graph_commit_receipt_store_replays_records"
+        ],
+        "effect_graph_commit_requires_match": [
+          "graph_commit_requires_match"
+        ]
+      },
       "runtime_witnesses": [
         "effect_graph_commit_requires_match",
         "effect_graph_commit_receipt_emitted",
@@ -6694,7 +6711,7 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 466,
+    "exact_test_anchor_count": 471,
     "runtime_witness_count": 1029,
     "surfaces": [
       {
@@ -9007,18 +9024,43 @@
         ]
       },
       {
-        "anchored_witnesses": [],
-        "exact_test_anchor_count": 0,
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "mcoi/tests/test_effect_assurance_core.py::test_graph_commit_requires_match"
+            ],
+            "witness": "effect_graph_commit_requires_match"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_effect_assurance_core.py::test_graph_commit_writes_command_verification_and_evidence_nodes"
+            ],
+            "witness": "effect_graph_commit_receipt_emitted"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_effect_assurance_core.py::test_graph_commit_receipts_convert_to_effect_records"
+            ],
+            "witness": "effect_graph_commit_receipt_converts_to_actual_effect"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_effect_assurance_core.py::test_graph_commit_receipt_closes_effect_assurance"
+            ],
+            "witness": "effect_graph_commit_receipt_closes_effect_assurance"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_effect_assurance_core.py::test_jsonl_graph_commit_receipt_store_replays_records"
+            ],
+            "witness": "effect_graph_commit_receipt_store_replays_records"
+          }
+        ],
+        "exact_test_anchor_count": 5,
         "runtime_witness_count": 5,
         "surface_id": "effect_assurance_graph_commit",
-        "unanchored_witness_count": 5,
-        "unanchored_witnesses": [
-          "effect_graph_commit_requires_match",
-          "effect_graph_commit_receipt_emitted",
-          "effect_graph_commit_receipt_converts_to_actual_effect",
-          "effect_graph_commit_receipt_closes_effect_assurance",
-          "effect_graph_commit_receipt_store_replays_records"
-        ]
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
       },
       {
         "anchored_witnesses": [
@@ -11135,6 +11177,6 @@
         "unanchored_witnesses": []
       }
     ],
-    "unanchored_witness_count": 563
+    "unanchored_witness_count": 558
   }
 }

@@ -2027,6 +2027,21 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "effect_graph_commit_receipt_closes_effect_assurance",
                 "effect_graph_commit_receipt_store_replays_records",
             ],
+            {
+                "effect_graph_commit_requires_match": ["graph_commit_requires_match"],
+                "effect_graph_commit_receipt_emitted": [
+                    "graph_commit_writes_command_verification_and_evidence_nodes"
+                ],
+                "effect_graph_commit_receipt_converts_to_actual_effect": [
+                    "graph_commit_receipts_convert_to_effect_records"
+                ],
+                "effect_graph_commit_receipt_closes_effect_assurance": [
+                    "graph_commit_receipt_closes_effect_assurance"
+                ],
+                "effect_graph_commit_receipt_store_replays_records": [
+                    "jsonl_graph_commit_receipt_store_replays_records"
+                ],
+            },
         ),
         _surface(
             "job_engine_lifecycle",

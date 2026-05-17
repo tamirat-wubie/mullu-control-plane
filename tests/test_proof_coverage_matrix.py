@@ -148,7 +148,7 @@ def test_witness_integrity_report_tracks_exact_test_anchors() -> None:
     assert surfaces["god_mode_lifecycle"]["unanchored_witness_count"] == 0
     assert surfaces["agent_adapter_protocol"]["exact_test_anchor_count"] == 14
     assert surfaces["agent_adapter_protocol"]["unanchored_witness_count"] == 0
-    assert surfaces["effect_assurance_graph_commit"]["exact_test_anchor_count"] == 4
+    assert surfaces["effect_assurance_graph_commit"]["exact_test_anchor_count"] == 5
     assert surfaces["effect_assurance_graph_commit"]["unanchored_witness_count"] == 0
     assert surfaces["proof_route_gap_triage"]["exact_test_anchor_count"] == 4
     assert surfaces["proof_route_gap_triage"]["unanchored_witness_count"] == 0

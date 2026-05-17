@@ -149,8 +149,8 @@ Witness integrity audit:
 | Metric | Count |
 |---|---:|
 | Runtime witness labels | 1029 |
-| Exact test anchors | 466 |
-| Unanchored witness labels | 563 |
+| Exact test anchors | 471 |
+| Unanchored witness labels | 558 |
 
 Evidence quality gaps:
 none
@@ -185,7 +185,6 @@ Witness integrity gaps:
 | `runbook_learning_lifecycle` | 0 | 11 | patterns_detected_from_audit_trail, promotion_requires_detected_pattern, approval_required_before_activation, retirement_requires_active_runbook, promote_and_approve_audit_records, mil_audit_replay_admits_runbook, mil_audit_operator_checklist_validated, mil_audit_runbook_preflight_ready, sanitized_runbook_error_details, runbook_pattern_read_models_bounded, runbook_responses_governed |
 | `software_outcome_learning` | 0 | 7 | software_learning_schema_default_enabled, passed_gates_yield_procedural_memory, failed_gates_yield_hashed_risk_memory, raw_logs_rejected_before_planning_use, rollback_failure_defers_learning, planning_projection_requires_admitted_matching_decision, software_learning_errors_are_bounded |
 | `approval_engine_lifecycle` | 1 | 5 | approval_request_mutation_receipt_emitted, approval_decision_mutation_receipt_emitted, approval_consumption_mutation_receipt_emitted, approval_revocation_mutation_receipt_emitted, approval_override_mutation_receipt_emitted |
-| `effect_assurance_graph_commit` | 0 | 5 | effect_graph_commit_requires_match, effect_graph_commit_receipt_emitted, effect_graph_commit_receipt_converts_to_actual_effect, effect_graph_commit_receipt_closes_effect_assurance, effect_graph_commit_receipt_store_replays_records |
 | `job_engine_lifecycle` | 1 | 5 | job_create_mutation_receipt_emitted, job_start_mutation_receipt_emitted, job_pause_resume_mutation_receipts_emitted, job_terminal_mutation_receipts_emitted, job_restore_mutation_receipt_emitted |
 | `authority_obligation_mesh` | 0 | 5 | pending_approval_chain_count, open_obligation_count, overdue_obligation_count, escalated_obligation_count, command_authority_read_model_bound_to_approval_chain |
 | `authority_operator_controls` | 0 | 5 | operator_access_guard, operator_audit_events, ownership_policy_read_models, approval_expiration_witness, obligation_satisfaction_escalation_witness |
@@ -352,5 +351,5 @@ none
 STATUS:
   Completeness: 100%
   Invariants verified: route declarations, route-level coverage classification, coverage levels, coverage states, closure action mapping, schema contract validation, deployment orchestration receipt schema contract
-  Open issues: 563 runtime-witness labels lack exact test-function anchors
+  Open issues: 558 runtime-witness labels lack exact test-function anchors
   Next action: bind unanchored runtime-witness labels to exact test-function anchors
