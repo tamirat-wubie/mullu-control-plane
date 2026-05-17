@@ -123,6 +123,14 @@ python scripts/collect_governed_swarm_staging_activation_witness.py \
   --output ".change_assurance/governed_swarm_staging_activation_witness.json"
 ```
 
+The same collection can be launched from GitHub Actions:
+
+```text
+.github/workflows/governed-swarm-staging-witness.yml
+```
+
+Use the default `self-hosted` runner label unless the selected runner can both reach the staging control-plane URL and read `MULLU_GOVERNED_SWARM_AUDIT_STORE_PATH`. A hosted runner can probe the route but cannot prove audit persistence unless the audit JSONL is mounted or otherwise present at the configured path.
+
 For a real staging activation, store the collected witness under `.change_assurance/` or the deployment evidence store, then run the same validator against that file.
 
 ## Rollback
