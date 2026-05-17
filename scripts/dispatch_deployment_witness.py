@@ -26,6 +26,7 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Protocol
+from urllib.parse import urlparse
 
 DEFAULT_REPOSITORY = "tamirat-wubie/mullu-control-plane"
 DEFAULT_WORKFLOW_FILE = "deployment-witness.yml"
@@ -160,9 +161,18 @@ def _require_gateway_url(gateway_url: str) -> str:
     normalized = gateway_url.strip().rstrip("/")
     if not normalized:
         raise RuntimeError("gateway URL is required")
-    if not normalized.startswith(("https://", "http://")):
-        raise RuntimeError("gateway URL must start with http:// or https://")
-    return normalized
+    parsed = urlparse(normalized)
+    if parsed.scheme not in {"http", "https"} or not parsed.hostname:
+        raise RuntimeError("gateway URL must include scheme and hostname")
+    try:
+        has_port = parsed.port is not None
+    except ValueError as exc:
+        raise RuntimeError("gateway URL must not include port") from exc
+    if has_port:
+        raise RuntimeError("gateway URL must not include port")
+    if parsed.path not in {"", "/"} or parsed.params or parsed.query or parsed.fragment:
+        raise RuntimeError("gateway URL must not include path, query, or fragment")
+    return f"{parsed.scheme}://{parsed.hostname.lower()}"
 
 
 def _require_expected_environment(expected_environment: str) -> None:

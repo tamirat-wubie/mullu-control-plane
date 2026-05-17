@@ -270,7 +270,7 @@ def test_dispatch_deployment_witness_command_failure_is_bounded(tmp_path: Path) 
 
     with pytest.raises(RuntimeError) as exc_info:
         dispatch_deployment_witness(
-            gateway_url="https://gateway.example.com/private-path",
+            gateway_url="https://gateway.example.com",
             expected_environment="pilot",
             download_dir=tmp_path / "artifact",
             poll_seconds=1,
@@ -281,10 +281,36 @@ def test_dispatch_deployment_witness_command_failure_is_bounded(tmp_path: Path) 
     assert message == "command failed: gh workflow run: exit_code=7"
     assert "stdout-secret-token" not in message
     assert "stderr-secret-token" not in message
-    assert "gateway.example.com/private-path" not in message
+    assert "gateway.example.com" not in message
     assert any(command[:3] == ["gh", "workflow", "run"] for command in runner.commands)
     assert not any(command[:3] == ["gh", "run", "download"] for command in runner.commands)
     assert not (tmp_path / "artifact").exists()
+
+
+def test_dispatch_deployment_witness_rejects_gateway_url_path_before_remote_reads() -> None:
+    runner = FakeRunner()
+
+    with pytest.raises(RuntimeError, match="must not include path"):
+        dispatch_deployment_witness(
+            gateway_url="https://gateway.example.com/private-path",
+            expected_environment="pilot",
+            runner=runner,
+        )
+
+    assert runner.commands == []
+
+
+def test_dispatch_deployment_witness_rejects_gateway_url_query_before_remote_reads() -> None:
+    runner = FakeRunner()
+
+    with pytest.raises(RuntimeError, match="must not include path"):
+        dispatch_deployment_witness(
+            gateway_url="https://gateway.example.com?token=secret",
+            expected_environment="pilot",
+            runner=runner,
+        )
+
+    assert runner.commands == []
 
 
 def test_cli_reports_missing_gateway_url(monkeypatch, capsys) -> None:
