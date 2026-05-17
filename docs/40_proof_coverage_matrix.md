@@ -148,8 +148,8 @@ Witness integrity audit:
 | Metric | Count |
 |---|---:|
 | Runtime witness labels | 1002 |
-| Exact test anchors | 221 |
-| Unanchored witness labels | 781 |
+| Exact test anchors | 238 |
+| Unanchored witness labels | 764 |
 
 Evidence quality gaps:
 none
@@ -196,7 +196,6 @@ Witness integrity gaps:
 | `governance_explanation_lifecycle` | 1 | 6 | explain_action_guard_chain_path_reported, explain_audit_entry_allowed_and_denied, explain_audit_entry_goal_context_preserved, explanation_cache_bounded, explain_action_endpoint_governed, explain_summary_endpoint_governed |
 | `tool_registry_read_models` | 0 | 6 | tool_registry_list_returns_registered_tools, tool_registry_category_filter_bounded, tool_llm_format_exports_input_schema, tool_history_returns_bounded_summary, tool_invocation_history_limit_applied, tool_invoke_separate_action_proof_surface |
 | `structured_output_validation` | 0 | 7 | structured_output_parse_valid_json, structured_output_parse_invalid_json, structured_output_parse_unknown_schema_bounded, structured_output_parse_markdown_json, structured_output_schema_registration_validated, structured_output_endpoint_parse_valid_and_invalid, structured_output_schema_list_bounded |
-| `operational_health_read_models` | 0 | 17 | deep_health_components_bounded, health_score_range_bounded, health_score_components_weighted, health_v2_degraded_state_supported, health_v2_exception_sanitized, health_v3_weighted_aggregation, health_v3_recovery_tracking, health_routes_return_read_models, ops_dashboard_read_model_bounded, production_readiness_checks_bounded, monitoring_vitals_read_model_bounded, shutdown_info_read_model_bounded, correlation_summary_read_model_bounded, idempotency_summary_read_model_bounded, deployment_readiness_read_model_bounded, release_info_read_model_bounded, system_snapshot_read_model_bounded |
 | `agent_orchestration_lifecycle` | 0 | 8 | orchestration_summary_bounded, orchestration_plan_created_for_registered_agent, orchestration_unknown_initiator_bounded, orchestration_missing_plan_bounded, orchestration_handoff_capability_checked, orchestration_handoff_errors_sanitized, orchestration_quorum_required, orchestration_executor_errors_sanitized |
 | `workflow_execution_lifecycle` | 1 | 17 | workflow_execute_emits_action_proof, workflow_invalid_capability_bounded, workflow_history_bounded, workflow_success_records_audit, workflow_failure_records_audit, workflow_errors_sanitized, workflow_lifecycle_mutation_receipts_emitted, workflow_failure_compensation_receipts_emitted, traced_workflow_emits_replay_trace, traced_workflow_recorder_errors_sanitized, legacy_execute_emits_action_proof, session_read_model_bounded, ledger_read_model_bounded, pipeline_execution_emits_action_proof, pipeline_history_bounded, template_read_models_bounded, template_execution_governed |
 | `agent_chain_execution_lifecycle` | 0 | 8 | chain_execute_single_step, chain_execute_two_steps, chain_prev_template_propagates_output, chain_halt_on_failure_bounded, chain_skip_on_failure_continues, chain_returned_failure_redacted, chain_history_bounded, chain_endpoint_governed |
@@ -377,5 +376,5 @@ none
 STATUS:
   Completeness: 100%
   Invariants verified: route declarations, route-level coverage classification, coverage levels, coverage states, closure action mapping, schema contract validation, deployment orchestration receipt schema contract
-  Open issues: 781 runtime-witness labels lack exact test-function anchors
+  Open issues: 764 runtime-witness labels lack exact test-function anchors
   Next action: bind unanchored runtime-witness labels to exact test-function anchors

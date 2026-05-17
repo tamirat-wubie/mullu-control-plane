@@ -1479,6 +1479,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "mcoi/tests/test_deep_health.py",
                 "mcoi/tests/test_health_aggregator.py",
                 "mcoi/tests/test_health_check_agg.py",
+                "mcoi/tests/test_operational_health_read_models.py",
                 "mcoi/tests/test_phase232.py",
                 "mcoi/tests/test_server_phase205.py",
                 "mcoi/tests/test_server_phase210.py",

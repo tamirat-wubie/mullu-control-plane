@@ -27,6 +27,7 @@
         "ready-only",
         "blocked-not-ready",
         "dispatched",
+        "dispatch-failed",
         "not-ready",
         "missing",
         "invalid"

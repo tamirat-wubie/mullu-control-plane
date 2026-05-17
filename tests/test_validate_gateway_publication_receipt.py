@@ -136,6 +136,40 @@ def test_blocked_not_ready_receipt_is_valid_but_fails_ready_policy(tmp_path: Pat
     assert ready_step.detail == "readiness_ready=false"
 
 
+def test_dispatch_failed_receipt_is_valid_but_fails_dispatch_policy(tmp_path: Path) -> None:
+    receipt_path = tmp_path / "receipt.json"
+    output_path = tmp_path / "validation.json"
+    _write_receipt(
+        receipt_path,
+        resolution_state="dispatch-failed",
+        readiness_ready=True,
+        dispatch_requested=True,
+        dispatch_error="dispatch_failed",
+    )
+
+    validation = validate_gateway_publication_receipt(
+        receipt_path=receipt_path,
+        require_ready=True,
+        require_dispatched=True,
+        require_success=True,
+    )
+    write_receipt_validation_report(validation, output_path)
+    report = json.loads(output_path.read_text(encoding="utf-8"))
+    schema = _load_schema(
+        Path("schemas/gateway_publication_receipt_validation.schema.json")
+    )
+
+    assert validation.valid is False
+    assert validation.resolution_state == "dispatch-failed"
+    assert report["resolution_state"] == "dispatch-failed"
+    assert _validate_schema_instance(schema, report) == []
+    assert _step(validation, "resolution state").passed is True
+    assert _step(validation, "dispatch consistency").detail == "dispatch-failed"
+    assert _step(validation, "require ready").passed is True
+    assert _step(validation, "require dispatched").passed is False
+    assert _step(validation, "require success").passed is False
+
+
 def test_receipt_readiness_mismatch_is_invalid(tmp_path: Path) -> None:
     receipt_path = tmp_path / "receipt.json"
     _write_receipt(receipt_path, resolution_state="ready-only", readiness_ready=True)
@@ -342,6 +376,7 @@ def _write_receipt(
     dispatch_requested: bool = False,
     dispatch_performed: bool = False,
     dispatch_conclusion: str = "",
+    dispatch_error: str = "",
 ) -> None:
     readiness = {
         "repository": DEFAULT_REPOSITORY,
@@ -364,6 +399,7 @@ def _write_receipt(
         if dispatch_performed
         else "",
         "dispatch_conclusion": dispatch_conclusion,
+        "dispatch_error": dispatch_error,
         "dispatch_performed": dispatch_performed,
         "dispatch_requested": dispatch_requested,
         "dispatch_run_id": 4567 if dispatch_performed else 0,

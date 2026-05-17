@@ -3924,6 +3924,7 @@
         "mcoi/tests/test_deep_health.py",
         "mcoi/tests/test_health_aggregator.py",
         "mcoi/tests/test_health_check_agg.py",
+        "mcoi/tests/test_operational_health_read_models.py",
         "mcoi/tests/test_phase232.py",
         "mcoi/tests/test_server_phase205.py",
         "mcoi/tests/test_server_phase210.py"
@@ -6399,7 +6400,7 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 221,
+    "exact_test_anchor_count": 238,
     "runtime_witness_count": 1002,
     "surfaces": [
       {
@@ -7518,30 +7519,115 @@
         ]
       },
       {
-        "anchored_witnesses": [],
-        "exact_test_anchor_count": 0,
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "mcoi/tests/test_operational_health_read_models.py::test_deep_health_components_bounded"
+            ],
+            "witness": "deep_health_components_bounded"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_operational_health_read_models.py::test_health_score_range_bounded"
+            ],
+            "witness": "health_score_range_bounded"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_operational_health_read_models.py::test_health_score_components_weighted"
+            ],
+            "witness": "health_score_components_weighted"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_operational_health_read_models.py::test_health_v2_degraded_state_supported"
+            ],
+            "witness": "health_v2_degraded_state_supported"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_operational_health_read_models.py::test_health_v2_exception_sanitized"
+            ],
+            "witness": "health_v2_exception_sanitized"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_operational_health_read_models.py::test_health_v3_weighted_aggregation"
+            ],
+            "witness": "health_v3_weighted_aggregation"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_operational_health_read_models.py::test_health_v3_recovery_tracking"
+            ],
+            "witness": "health_v3_recovery_tracking"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_operational_health_read_models.py::test_health_routes_return_read_models"
+            ],
+            "witness": "health_routes_return_read_models"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_operational_health_read_models.py::test_ops_dashboard_read_model_bounded"
+            ],
+            "witness": "ops_dashboard_read_model_bounded"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_operational_health_read_models.py::test_production_readiness_checks_bounded"
+            ],
+            "witness": "production_readiness_checks_bounded"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_operational_health_read_models.py::test_monitoring_vitals_read_model_bounded"
+            ],
+            "witness": "monitoring_vitals_read_model_bounded"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_operational_health_read_models.py::test_shutdown_info_read_model_bounded"
+            ],
+            "witness": "shutdown_info_read_model_bounded"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_operational_health_read_models.py::test_correlation_summary_read_model_bounded"
+            ],
+            "witness": "correlation_summary_read_model_bounded"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_operational_health_read_models.py::test_idempotency_summary_read_model_bounded"
+            ],
+            "witness": "idempotency_summary_read_model_bounded"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_operational_health_read_models.py::test_deployment_readiness_read_model_bounded"
+            ],
+            "witness": "deployment_readiness_read_model_bounded"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_operational_health_read_models.py::test_release_info_read_model_bounded"
+            ],
+            "witness": "release_info_read_model_bounded"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_operational_health_read_models.py::test_system_snapshot_read_model_bounded"
+            ],
+            "witness": "system_snapshot_read_model_bounded"
+          }
+        ],
+        "exact_test_anchor_count": 17,
         "runtime_witness_count": 17,
         "surface_id": "operational_health_read_models",
-        "unanchored_witness_count": 17,
-        "unanchored_witnesses": [
-          "deep_health_components_bounded",
-          "health_score_range_bounded",
-          "health_score_components_weighted",
-          "health_v2_degraded_state_supported",
-          "health_v2_exception_sanitized",
-          "health_v3_weighted_aggregation",
-          "health_v3_recovery_tracking",
-          "health_routes_return_read_models",
-          "ops_dashboard_read_model_bounded",
-          "production_readiness_checks_bounded",
-          "monitoring_vitals_read_model_bounded",
-          "shutdown_info_read_model_bounded",
-          "correlation_summary_read_model_bounded",
-          "idempotency_summary_read_model_bounded",
-          "deployment_readiness_read_model_bounded",
-          "release_info_read_model_bounded",
-          "system_snapshot_read_model_bounded"
-        ]
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
       },
       {
         "anchored_witnesses": [],
@@ -9571,6 +9657,6 @@
         ]
       }
     ],
-    "unanchored_witness_count": 781
+    "unanchored_witness_count": 764
   }
 }
