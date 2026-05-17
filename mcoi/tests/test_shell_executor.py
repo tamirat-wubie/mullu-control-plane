@@ -13,6 +13,7 @@ import pytest
 
 from mcoi_runtime.adapters.executor_base import ExecutionRequest
 from mcoi_runtime.adapters.shell_executor import ShellExecutor, ShellSandboxPolicy
+from mcoi_runtime.contracts.effect_assurance import ExpectedEffect, ReconciliationStatus
 from mcoi_runtime.contracts.execution import ExecutionOutcome
 from mcoi_runtime.contracts.shell_policy import ShellCommandPolicy
 from mcoi_runtime.core.effect_assurance import EffectAssuranceGate
@@ -319,3 +320,46 @@ def test_shell_receipt_becomes_effect_assurance_evidence_ref() -> None:
     assert observed[0].evidence_ref == receipt["evidence_ref"]
     assert observed[0].observed_value["receipt_id"] == receipt["receipt_id"]
     assert observed[0].source == "execution-7"
+
+
+def test_shell_receipt_closes_effect_assurance() -> None:
+    def fake_runner(*args: object, **kwargs: object) -> subprocess.CompletedProcess[str]:
+        return subprocess.CompletedProcess(args[0], 0, stdout="observed", stderr="")
+
+    executor = ShellExecutor(runner=fake_runner, clock=lambda: "2026-03-18T12:00:00+00:00")
+    result = executor.execute(
+        ExecutionRequest(
+            execution_id="execution-8",
+            goal_id="goal-8",
+            argv=("echo", "observed"),
+        )
+    )
+    gate = EffectAssuranceGate(clock=lambda: "2026-03-18T12:00:01+00:00")
+    plan = gate.create_plan(
+        command_id="cmd-shell-8",
+        tenant_id="tenant-1",
+        capability_id="shell_command",
+        expected_effects=(
+            ExpectedEffect(
+                effect_id="process_completed",
+                name="process_completed",
+                target_ref="shell:execution-8",
+                required=True,
+                verification_method="shell_execution_receipt",
+            ),
+        ),
+        forbidden_effects=("process_spawned_without_receipt",),
+    )
+
+    observed = gate.observe(result)
+    verification = gate.verify(plan=plan, execution_result=result, observed_effects=observed)
+    reconciliation = gate.reconcile(
+        plan=plan,
+        observed_effects=observed,
+        verification_result=verification,
+    )
+
+    assert reconciliation.status is ReconciliationStatus.MATCH
+    assert reconciliation.matched_effects == ("process_completed",)
+    assert reconciliation.missing_effects == ()
+    assert verification.evidence[0].uri.startswith("shell-receipt:execution-8:")
