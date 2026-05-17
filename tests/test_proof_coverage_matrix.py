@@ -3462,7 +3462,9 @@ def test_autonomous_test_generation_surface_keeps_plans_activation_blocked() -> 
     assert "schemas/autonomous_test_generation_plan.schema.json" in generation_surface["evidence_files"]
     assert "tests/test_gateway/test_autonomous_test_generation.py" in generation_surface["evidence_files"]
     assert "failure_trace_requires_evidence_refs" in witnesses
+    assert "generation_requires_matching_certified_trace" in witnesses
     assert "plans_are_activation_blocked" in witnesses
+    assert "schema_rejects_unanchored_empty_generation_plan" in witnesses
     assert "autonomous_test_generation_plan_schema_valid" in witnesses
     assert closure_actions["publish_autonomous_test_generation_plan_contract"]["status"] == "closed"
 

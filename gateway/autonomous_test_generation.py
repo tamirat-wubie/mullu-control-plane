@@ -10,6 +10,7 @@ Invariants:
   - Test plans are proposals, not executed tests or automatic promotions.
   - Every generated case is causally anchored to one failure trace.
   - Every failure trace must carry evidence references.
+  - Every plan must contain at least one matching certified trace and case.
   - High-risk failures generate governance, replay, and operator-review cases.
   - Generated plans remain activation-blocked until reviewed and certified.
 """
@@ -150,11 +151,13 @@ class TestGenerationPlan:
     def __post_init__(self) -> None:
         _require_text(self.plan_id, "plan_id")
         _require_text(self.tenant_id, "tenant_id")
-        object.__setattr__(self, "source_trace_ids", _normalize_text_tuple(self.source_trace_ids, "source_trace_ids", allow_empty=True))
+        object.__setattr__(self, "source_trace_ids", _normalize_text_tuple(self.source_trace_ids, "source_trace_ids"))
         object.__setattr__(self, "cases", tuple(self.cases))
         object.__setattr__(self, "coverage_requirements", _normalize_text_tuple(self.coverage_requirements, "coverage_requirements"))
         object.__setattr__(self, "replay_library_refs", _normalize_text_tuple(self.replay_library_refs, "replay_library_refs", allow_empty=True))
         object.__setattr__(self, "metadata", dict(self.metadata))
+        if not self.cases:
+            raise ValueError("cases_required")
         if not self.operator_review_required:
             raise ValueError("operator_review_required")
         if not self.activation_blocked:
@@ -175,6 +178,8 @@ class AutonomousTestGenerationEngine:
             (trace for trace in traces if trace.tenant_id == tenant_id),
             key=lambda trace: trace.trace_id,
         ))
+        if not tenant_traces:
+            raise ValueError("matching_failure_traces_required")
         cases: list[GeneratedTestCase] = []
         for trace in tenant_traces:
             cases.extend(_cases_for_trace(trace))
