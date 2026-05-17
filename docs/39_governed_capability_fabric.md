@@ -83,6 +83,8 @@ Value-producing capabilities may create information only. Effectful capabilities
 
 Reused plans, memory, repository state, deployment state, finance context, calendar facts, infrastructure facts, and security assumptions must pass `OP_reground` before they guide effectful execution. Digital state claims that affect closure must pass L2 reality verification because digital state and reality state can diverge.
 
+`GovernedToolRegistry.capability_contract_coverage()` exposes the runtime read model for this gate. Operators can inspect registered tool count, enabled tool count, explicit versus synthesized contract count, blocked contract count, per-tool admission status, and rejected reasons without invoking any tool. A complete report means every registered tool has a populated `CapabilityContract` that satisfies the CxG grid; a blocked report identifies the exact `Phi_gov` reason before execution is possible.
+
 ## Maturity Projection
 
 Registry entries do not self-promote. Gateway-built fabric read models derive a `capability_maturity_assessment` from each installed entry and attach the C0-C7 summary to both the internal capability projection and the governed operator record. Certification can lift a capability to mock-evaluated maturity, but production readiness still requires explicit sandbox, live receipt, worker deployment, recovery, and autonomy evidence through `extensions.capability_maturity_evidence`.

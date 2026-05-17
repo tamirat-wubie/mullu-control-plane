@@ -1,5 +1,6 @@
 """Governed Tool Use Tests — LLM function calling governance."""
 
+from mcoi_runtime.contracts import CapabilityContract, CapabilityEffectClass, CapabilityIntentSource
 from mcoi_runtime.core.governed_tool_use import (
     GovernedToolRegistry,
     ToolDefinition,
@@ -163,3 +164,49 @@ class TestRegistryManagement:
         s = r.summary()
         assert s["registered_tools"] == 1
         assert s["total_invocations"] == 1
+
+    def test_capability_contract_coverage_reports_synthesized_contracts(self):
+        r = _registry()
+        r.register(_tool("summarize_doc"))
+        r.register(_tool("send_email", declared_effects=("email_sent",), requires_approval=True))
+
+        report = r.capability_contract_coverage()
+        body = report.to_dict()
+
+        assert report.complete is True
+        assert report.tool_count == 2
+        assert report.covered_tool_count == 2
+        assert report.explicit_contract_count == 0
+        assert report.synthesized_contract_count == 2
+        assert body["records"][0]["tool_name"] == "send_email"
+        assert body["records"][0]["covered"] is True
+
+    def test_capability_contract_coverage_reports_blocked_contracts(self):
+        blocked_contract = CapabilityContract(
+            capability="deploy_service",
+            layer="runtime_tool",
+            cap_level=3,
+            gov_tier=1,
+            axis_T="current_episode",
+            axis_E="bounded_by_budget_ref",
+            axis_C="bounded_by_schema",
+            axis_R="high",
+            axis_V=CapabilityEffectClass.EFFECTFUL,
+            precond=("registered",),
+            fail_mode=("phi_gov_block",),
+            reversible=False,
+            intent_source=CapabilityIntentSource.USER_DIRECT,
+        )
+        r = _registry()
+        r.register(_tool("deploy_service", capability_contract=blocked_contract))
+
+        report = r.capability_contract_coverage()
+        body = report.to_dict()
+
+        assert report.complete is False
+        assert report.tool_count == 1
+        assert report.covered_tool_count == 0
+        assert report.explicit_contract_count == 1
+        assert report.blocked_tool_count == 1
+        assert body["issues"][0]["tool_name"] == "deploy_service"
+        assert body["issues"][0]["reasons"] == ["governance_tier_below_capability_level"]
