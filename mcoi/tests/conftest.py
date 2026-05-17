@@ -52,15 +52,36 @@ def _router_deps_baseline():
     os.environ.setdefault("MULLU_CERT_INTERVAL", "0")
     import mcoi_runtime.app.server  # noqa: F401 — triggers deps registration
     from mcoi_runtime.app.routers.deps import deps
-    return dict(deps._store)
+    llm_bridge = deps._store.get("llm_bridge")
+    return {
+        "store": dict(deps._store),
+        "llm_bridge_complete": getattr(llm_bridge, "complete", None),
+        "llm_bridge_chat": getattr(llm_bridge, "chat", None),
+    }
 
 
 @pytest.fixture(autouse=True)
 def _isolate_router_deps(_router_deps_baseline):
     from mcoi_runtime.app.routers.deps import deps
+    _restore_router_deps_baseline(deps, _router_deps_baseline)
     yield
+    _restore_router_deps_baseline(deps, _router_deps_baseline)
+
+
+def _restore_router_deps_baseline(deps, baseline: dict[str, object]) -> None:
+    baseline_store = baseline["store"]
+    if not isinstance(baseline_store, dict):
+        raise TypeError("router deps baseline store must be a dict")
     deps._store.clear()
-    deps._store.update(_router_deps_baseline)
+    deps._store.update(baseline_store)
+    llm_bridge = deps._store.get("llm_bridge")
+    if llm_bridge is not None:
+        llm_complete = baseline.get("llm_bridge_complete")
+        llm_chat = baseline.get("llm_bridge_chat")
+        if llm_complete is not None:
+            llm_bridge.complete = llm_complete
+        if llm_chat is not None:
+            llm_bridge.chat = llm_chat
     # Singletons in the baseline carry their own internal state (replay
     # traces, audit ledger entries, etc.). Reset the ones tests depend on.
     recorder = deps._store.get("replay_recorder")
