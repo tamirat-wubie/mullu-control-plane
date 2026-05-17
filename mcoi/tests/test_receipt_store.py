@@ -71,6 +71,8 @@ class TestReceiptStoreBaseClass:
         s = ReceiptStore()
         s.record_receipt(receipt)
         assert s.get_receipt(receipt.receipt_id) is None
+        assert s.receipt_count == 0
+        assert s.latest_receipt_hash == "genesis"
 
     def test_evict_oldest_is_noop(self):
         s = ReceiptStore()
@@ -188,6 +190,21 @@ class TestInMemoryReceiptStore:
         assert result.receipt_id == receipt.receipt_id
         assert s.get_receipt("missing") is None
 
+    def test_receipt_count_and_latest_hash_track_insertions(self):
+        s = InMemoryReceiptStore()
+        first = _proof("/api/first").capsule.receipt
+        second = _proof("/api/second").capsule.receipt
+        assert s.receipt_count == 0
+        assert s.latest_receipt_hash == "genesis"
+
+        s.record_receipt(first)
+        assert s.receipt_count == 1
+        assert s.latest_receipt_hash == first.receipt_hash
+
+        s.record_receipt(second)
+        assert s.receipt_count == 2
+        assert s.latest_receipt_hash == second.receipt_hash
+
 
 # ── JsonlReceiptStore: durable append-only implementation ────────────
 
@@ -239,6 +256,38 @@ class TestJsonlReceiptStore:
         assert reopened.get_lineage("request:t0:/api/test") is None
         assert reopened.get_lineage("request:t1:/api/test") is not None
         assert reopened.get_lineage("request:t2:/api/test") is not None
+
+    def test_reopened_store_resumes_proof_bridge_causal_parent(self, tmp_path):
+        path = tmp_path / "receipts.jsonl"
+        first_store = JsonlReceiptStore(path)
+        first_bridge = ProofBridge(clock=_clock, store=first_store)
+        first_proof = first_bridge.certify_governance_decision(
+            tenant_id="t1", endpoint="/api/first",
+            guard_results=[{"guard_name": "g1", "allowed": True, "reason": "ok"}],
+            decision="allowed",
+        )
+
+        reopened_store = JsonlReceiptStore(path)
+        resumed_bridge = ProofBridge(clock=_clock, store=reopened_store)
+        resumed_summary = resumed_bridge.summary()
+        second_proof = resumed_bridge.certify_governance_decision(
+            tenant_id="t1", endpoint="/api/second",
+            guard_results=[{"guard_name": "g1", "allowed": True, "reason": "ok"}],
+            decision="allowed",
+        )
+        fresh_bridge = ProofBridge(clock=_clock, store=JsonlReceiptStore(tmp_path / "fresh.jsonl"))
+        fresh_second_proof = fresh_bridge.certify_governance_decision(
+            tenant_id="t1", endpoint="/api/second",
+            guard_results=[{"guard_name": "g1", "allowed": True, "reason": "ok"}],
+            decision="allowed",
+        )
+
+        assert reopened_store.receipt_count == 2
+        assert resumed_summary["receipt_count"] == 1
+        assert resumed_summary["last_receipt_hash"] == first_proof.receipt_hash[:16]
+        assert resumed_bridge.receipt_count == 2
+        assert second_proof.capsule.receipt.causal_parent != fresh_second_proof.capsule.receipt.causal_parent
+        assert second_proof.receipt_hash != fresh_second_proof.receipt_hash
 
     def test_rejects_malformed_jsonl(self, tmp_path):
         path = tmp_path / "receipts.jsonl"

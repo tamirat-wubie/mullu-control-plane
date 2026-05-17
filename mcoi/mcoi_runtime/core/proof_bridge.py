@@ -154,8 +154,8 @@ class ProofBridge:
         self._store: ReceiptStore = store if store is not None else InMemoryReceiptStore(
             max_entries=self.MAX_LINEAGE_ENTRIES,
         )
-        self._receipt_count: int = 0
-        self._last_receipt_hash: str = "genesis"
+        self._receipt_count: int = self._store.receipt_count
+        self._last_receipt_hash: str = self._store.latest_receipt_hash
         self._lock = threading.Lock()
 
     def certify_governance_decision(

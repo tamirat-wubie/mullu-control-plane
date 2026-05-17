@@ -108,6 +108,16 @@ class ReceiptStore:
         _require_receipt_id(receipt_id)
         return None
 
+    @property
+    def receipt_count(self) -> int:
+        """Number of receipts tracked by this store."""
+        return 0
+
+    @property
+    def latest_receipt_hash(self) -> str:
+        """Most recent persisted receipt hash, or genesis if empty."""
+        return "genesis"
+
     def evict_oldest(self) -> None:
         """Remove the oldest entity's lineage to free capacity.
 
@@ -169,6 +179,16 @@ class InMemoryReceiptStore(ReceiptStore):
     def get_receipt(self, receipt_id: str) -> TransitionReceipt | None:
         receipt_id = _require_receipt_id(receipt_id)
         return self._receipts.get(receipt_id)
+
+    @property
+    def receipt_count(self) -> int:
+        return len(self._receipts)
+
+    @property
+    def latest_receipt_hash(self) -> str:
+        if not self._receipts:
+            return "genesis"
+        return next(reversed(self._receipts.values())).receipt_hash
 
     def evict_oldest(self) -> None:
         if not self._lineage:
