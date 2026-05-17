@@ -32,8 +32,14 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 class FakeRunner:
     """Deterministic kubectl and GitHub CLI runner fixture."""
 
-    def __init__(self, *, run_conclusion: str = "success") -> None:
+    def __init__(
+        self,
+        *,
+        run_conclusion: str = "success",
+        fail_workflow_run: bool = False,
+    ) -> None:
         self.run_conclusion = run_conclusion
+        self.fail_workflow_run = fail_workflow_run
         self.commands: list[list[str]] = []
 
     def __call__(
@@ -82,6 +88,8 @@ class FakeRunner:
                 ],
             )
         if command[:3] == ["gh", "workflow", "run"]:
+            if self.fail_workflow_run:
+                raise subprocess.CalledProcessError(1, command)
             return _completed(command, "")
         if command[:3] == ["gh", "run", "list"]:
             return _completed(
@@ -170,10 +178,35 @@ def test_orchestrate_deployment_witness_can_apply_and_dispatch(tmp_path: Path) -
     assert orchestration.receipt.dispatch_requested is True
     assert orchestration.receipt.dispatch_run_id == 5678
     assert orchestration.receipt.dispatch_conclusion == "success"
+    assert orchestration.receipt.dispatch_error == ""
     assert "deployment_witness_run:5678" in orchestration.receipt.evidence_refs
     assert any(command[:3] == ["kubectl", "apply", "-f"] for command in runner.commands)
     assert any(command[:3] == ["gh", "workflow", "run"] for command in runner.commands)
     assert any(command[:3] == ["gh", "run", "download"] for command in runner.commands)
+
+
+def test_orchestrate_deployment_witness_records_dispatch_failure(tmp_path: Path) -> None:
+    runner = FakeRunner(fail_workflow_run=True)
+
+    orchestration = orchestrate_deployment_witness(
+        gateway_host="gateway.mullusi.com",
+        expected_environment="pilot",
+        rendered_ingress_output=tmp_path / "ingress.yaml",
+        dispatch=True,
+        download_dir=tmp_path / "artifact",
+        poll_seconds=1,
+        runner=runner,
+    )
+
+    assert orchestration.dispatch is None
+    assert orchestration.receipt.dispatch_requested is True
+    assert orchestration.receipt.dispatch_run_id is None
+    assert orchestration.receipt.dispatch_conclusion == ""
+    assert orchestration.receipt.dispatch_error == "dispatch_failed"
+    assert "dispatch:failed" in orchestration.receipt.evidence_refs
+    assert "dispatch_error:dispatch_failed" in orchestration.receipt.evidence_refs
+    assert any(command[:3] == ["gh", "workflow", "run"] for command in runner.commands)
+    assert not any(command[:3] == ["gh", "run", "download"] for command in runner.commands)
 
 
 def test_orchestrate_deployment_witness_can_gate_dispatch_with_preflight(tmp_path: Path) -> None:
@@ -351,8 +384,45 @@ def test_cli_writes_orchestration_receipt(monkeypatch, tmp_path: Path, capsys) -
     assert payload["gateway_host"] == "gateway.mullusi.com"
     assert payload["gateway_url"] == "https://gateway.mullusi.com"
     assert payload["dispatch_requested"] is False
+    assert payload["dispatch_error"] == ""
     assert "dispatch:skipped" in payload["evidence_refs"]
     assert "orchestration_receipt_path" in captured.out
+
+
+def test_cli_writes_orchestration_receipt_when_dispatch_fails(
+    monkeypatch,
+    tmp_path: Path,
+    capsys,
+) -> None:
+    monkeypatch.setattr(
+        "scripts.orchestrate_deployment_witness.subprocess.run",
+        FakeRunner(fail_workflow_run=True),
+    )
+    receipt_path = tmp_path / "orchestration.json"
+
+    exit_code = main(
+        [
+            "--gateway-host",
+            "gateway.mullusi.com",
+            "--expected-environment",
+            "pilot",
+            "--rendered-ingress-output",
+            str(tmp_path / "ingress.yaml"),
+            "--dispatch",
+            "--orchestration-output",
+            str(receipt_path),
+        ]
+    )
+    captured = capsys.readouterr()
+    payload = json.loads(receipt_path.read_text(encoding="utf-8"))
+
+    assert exit_code == 1
+    assert receipt_path.exists()
+    assert payload["dispatch_requested"] is True
+    assert payload["dispatch_run_id"] is None
+    assert payload["dispatch_error"] == "dispatch_failed"
+    assert "dispatch:failed" in payload["evidence_refs"]
+    assert "deployment_witness_dispatch_error: dispatch_failed" in captured.out
 
 
 def test_cli_uses_orchestration_receipt_output_environment(
@@ -385,6 +455,7 @@ def test_cli_uses_orchestration_receipt_output_environment(
     assert payload["preflight_required"] is False
     assert payload["preflight_ready"] is None
     assert payload["dispatch_requested"] is False
+    assert payload["dispatch_error"] == ""
     assert payload["mcp_operator_checklist_required"] is False
     assert payload["mcp_operator_checklist_valid"] is None
     assert str(receipt_path) in captured.out
@@ -429,6 +500,7 @@ def test_orchestration_receipt_schema_matches_cli_output(
     assert isinstance(payload["mcp_operator_checklist_required"], bool)
     assert payload["preflight_ready"] is None or isinstance(payload["preflight_ready"], bool)
     assert payload["dispatch_run_id"] is None or isinstance(payload["dispatch_run_id"], int)
+    assert isinstance(payload["dispatch_error"], str)
     assert payload["mcp_operator_checklist_valid"] is None or isinstance(
         payload["mcp_operator_checklist_valid"],
         bool,
