@@ -5191,7 +5191,7 @@
         "tests/test_software_dev_capability_pack.py",
         "tests/test_software_gate_planner.py"
       ],
-      "notes": "Software-development capability pack keeps repo intelligence, context building, gate planning, governed change execution, app task graph planning, and PR candidate preparation behind explicit capsule admission; default packs do not load it, read-only capabilities expose no execution authority, and effectful capabilities require sandboxing, approval, receipts, recovery evidence, and direct-deployment denial.",
+      "notes": "Software-development capability pack keeps repo intelligence, context building, gate planning, governed change execution, app task graph planning, and PR candidate preparation behind explicit capsule admission; default packs do not load it, read-only capabilities expose no execution authority, effectful capabilities require sandboxing, approval, receipts, recovery evidence, and direct-deployment denial, and PR candidate commands remain local git-only with push disabled.",
       "representative_paths": [
         "load_software_dev_domain_capsule",
         "load_software_dev_capability_entries",
@@ -5219,6 +5219,7 @@
         "software_dev_read_only_records_non_mutating",
         "software_dev_effectful_records_require_sandbox_approval",
         "software_dev_pr_candidate_blocks_git_push",
+        "software_dev_pr_candidate_local_commands_are_git_local_only",
         "software_dev_production_ready_overclaim_rejected"
       ],
       "surface_id": "software_dev_capability_pack"
@@ -6459,7 +6460,7 @@
         "schemas/autonomous_test_generation_plan.schema.json",
         "tests/test_gateway/test_autonomous_test_generation.py"
       ],
-      "notes": "Autonomous test generation converts certified failure traces into activation-blocked, operator-review-required replay, policy, tenant, approval, budget, and sandbox test proposals.",
+      "notes": "Autonomous test generation converts matching certified failure traces into activation-blocked, operator-review-required replay, policy, tenant, approval, budget, and sandbox test proposals while rejecting unanchored empty plans.",
       "representative_paths": [
         "AutonomousTestGenerationEngine.generate",
         "FailureTrace",
@@ -6468,8 +6469,10 @@
       "request_proof": "request_proof",
       "runtime_witnesses": [
         "failure_trace_requires_evidence_refs",
+        "generation_requires_matching_certified_trace",
         "high_risk_failures_generate_governance_variants",
         "plans_are_activation_blocked",
+        "schema_rejects_unanchored_empty_generation_plan",
         "autonomous_test_generation_plan_schema_valid"
       ],
       "surface_id": "autonomous_test_generation"
@@ -6711,8 +6714,8 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 471,
-    "runtime_witness_count": 1029,
+    "exact_test_anchor_count": 474,
+    "runtime_witness_count": 1032,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -9603,10 +9606,16 @@
               "tests/test_software_dev_capability_pack.py::test_software_dev_named_loader_installs_only_software_dev_domain"
             ],
             "witness": "software_dev_named_loader_installs_only_software_dev_domain"
+          },
+          {
+            "anchors": [
+              "tests/test_software_dev_capability_pack.py::test_software_dev_pr_candidate_local_commands_are_git_local_only"
+            ],
+            "witness": "software_dev_pr_candidate_local_commands_are_git_local_only"
           }
         ],
-        "exact_test_anchor_count": 3,
-        "runtime_witness_count": 15,
+        "exact_test_anchor_count": 4,
+        "runtime_witness_count": 16,
         "surface_id": "software_dev_capability_pack",
         "unanchored_witness_count": 12,
         "unanchored_witnesses": [
@@ -10809,6 +10818,12 @@
           },
           {
             "anchors": [
+              "tests/test_gateway/test_autonomous_test_generation.py::test_generation_requires_matching_certified_trace"
+            ],
+            "witness": "generation_requires_matching_certified_trace"
+          },
+          {
+            "anchors": [
               "tests/test_gateway/test_autonomous_test_generation.py::test_high_risk_failures_generate_governance_variants"
             ],
             "witness": "high_risk_failures_generate_governance_variants"
@@ -10821,13 +10836,19 @@
           },
           {
             "anchors": [
+              "tests/test_gateway/test_autonomous_test_generation.py::test_schema_rejects_unanchored_empty_generation_plan"
+            ],
+            "witness": "schema_rejects_unanchored_empty_generation_plan"
+          },
+          {
+            "anchors": [
               "tests/test_gateway/test_autonomous_test_generation.py::test_autonomous_test_generation_plan_schema_valid"
             ],
             "witness": "autonomous_test_generation_plan_schema_valid"
           }
         ],
-        "exact_test_anchor_count": 4,
-        "runtime_witness_count": 4,
+        "exact_test_anchor_count": 6,
+        "runtime_witness_count": 6,
         "surface_id": "autonomous_test_generation",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []

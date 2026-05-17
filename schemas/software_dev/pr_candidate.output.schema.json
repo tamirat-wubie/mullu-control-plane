@@ -95,17 +95,27 @@
         "command": {
           "type": "array",
           "minItems": 2,
-          "items": {
-            "type": "string",
-            "minLength": 1
-          }
+          "items": [
+            {
+              "const": "git"
+            },
+            {
+              "enum": ["add", "commit", "diff", "restore", "status", "switch"]
+            }
+          ]
         },
         "requires_clean_worktree": {
           "type": "boolean"
         },
         "metadata": {
           "type": "object",
-          "additionalProperties": true
+          "additionalProperties": true,
+          "required": ["push_allowed"],
+          "properties": {
+            "push_allowed": {
+              "const": false
+            }
+          }
         }
       }
     },

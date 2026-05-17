@@ -1,4 +1,4 @@
-# Mullu Governance Protocol
+﻿# Mullu Governance Protocol
 
 Purpose: define the public Mullu Governance Protocol open schema surface and closed reference runtime boundary.
 Governance scope: [OCE, RAG, CDCV, CQTE, UWMA]
