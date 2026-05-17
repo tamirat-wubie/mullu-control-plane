@@ -269,7 +269,7 @@ python scripts\validate_protocol_manifest.py
 Expected result:
 
 ```text
-protocol manifest ok: 121 schemas
+protocol manifest ok: 128 schemas
 ```
 
 Finance pilot readiness verification:
@@ -321,7 +321,7 @@ python scripts\validate_finance_approval_operator_summary_schema.py --strict --j
 ```
 
 Use `examples\finance_email_calendar_recovery.env.example` as the redacted binding template; validate it before replacing secret placeholders through a secrets manager.
-The receipt records only token-name presence for `EMAIL_CALENDAR_CONNECTOR_TOKEN`, `GMAIL_ACCESS_TOKEN`, `GOOGLE_CALENDAR_ACCESS_TOKEN`, and `MICROSOFT_GRAPH_ACCESS_TOKEN`. It never serializes token values.
+The receipt records only binding-name presence for the email/calendar worker endpoint, worker signing secret, connector token family, and scope witness family. It also records scope witness classification as read-only or invalid by binding name. It never serializes worker URLs, token values, secrets, or scope values.
 Email/calendar recovery requires three operator bindings before rerunning the live receipt probe:
 
 ```text

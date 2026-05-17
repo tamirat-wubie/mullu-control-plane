@@ -1,17 +1,19 @@
 #!/usr/bin/env python3
 """Validate a redacted finance email/calendar binding receipt.
 
-Purpose: reject malformed, stale, or value-leaking connector token presence
-receipts before the finance approval live handoff proceeds.
-Governance scope: finance approval email/calendar token presence, redacted
-secret handling, accepted connector names, and schema conformance.
+Purpose: reject malformed, stale, incomplete, or value-leaking worker and
+connector binding receipts before the finance approval live handoff proceeds.
+Governance scope: finance approval email/calendar worker binding, connector
+token presence, read-only scope witness classification, redacted secret
+handling, accepted connector names, and schema conformance.
 Dependencies: .change_assurance/finance_approval_email_calendar_binding_receipt.json
 and schemas/finance_approval_email_calendar_binding_receipt.schema.json.
 Invariants:
   - Receipt values are never serialized.
-  - Accepted binding names are exactly the supported connector token names.
-  - The ready flag is derived from present_binding_names.
+  - Accepted binding names are exactly the supported worker, token, and scope names.
+  - The ready flag is derived from required binding groups and scope classification.
   - present_binding_names matches bindings with present=true.
+  - Present scope witnesses are classified exactly once as read-only or invalid.
 """
 
 from __future__ import annotations
@@ -29,8 +31,15 @@ if str(REPO_ROOT) not in sys.path:
 
 from scripts.emit_finance_approval_email_calendar_binding_receipt import (  # noqa: E402
     ACCEPTED_BINDING_NAMES,
+    BINDING_GROUP_BY_NAME,
+    BINDING_KIND_BY_NAME,
+    CONNECTOR_TOKEN_BINDING_NAMES,
     DEFAULT_OUTPUT as DEFAULT_RECEIPT,
     DEFAULT_SCHEMA,
+    REQUIRED_BINDING_GROUPS,
+    SCOPE_WITNESS_BINDING_NAMES,
+    WORKER_ENDPOINT_BINDING_NAMES,
+    WORKER_SECRET_BINDING_NAMES,
 )
 from scripts.validate_schemas import _validate_schema_instance  # noqa: E402
 
@@ -45,11 +54,21 @@ class FinanceEmailCalendarBindingReceiptValidation:
     receipt_path: str
     binding_count: int
     present_binding_names: tuple[str, ...]
+    required_binding_groups: tuple[str, ...]
+    satisfied_binding_groups: tuple[str, ...]
+    read_only_scope_witness_names: tuple[str, ...]
+    invalid_scope_witness_names: tuple[str, ...]
+    readiness_blockers: tuple[str, ...]
     errors: tuple[str, ...]
 
     def as_dict(self) -> dict[str, Any]:
         payload = asdict(self)
         payload["present_binding_names"] = list(self.present_binding_names)
+        payload["required_binding_groups"] = list(self.required_binding_groups)
+        payload["satisfied_binding_groups"] = list(self.satisfied_binding_groups)
+        payload["read_only_scope_witness_names"] = list(self.read_only_scope_witness_names)
+        payload["invalid_scope_witness_names"] = list(self.invalid_scope_witness_names)
+        payload["readiness_blockers"] = list(self.readiness_blockers)
         payload["errors"] = list(self.errors)
         return payload
 
@@ -82,11 +101,42 @@ def _validate_scalar_fields(receipt: dict[str, Any], errors: list[str]) -> None:
         errors.append("secret_serialization must be forbidden")
     accepted_names = tuple(str(name) for name in receipt.get("accepted_binding_names", ()) if isinstance(name, str))
     if accepted_names != ACCEPTED_BINDING_NAMES:
-        errors.append("accepted_binding_names must match supported connector token names")
-    present_names = tuple(str(name) for name in receipt.get("present_binding_names", ()) if isinstance(name, str))
-    expected_ready = bool(present_names)
+        errors.append("accepted_binding_names must match supported finance email/calendar binding names")
+    present_names = _string_tuple(receipt, "present_binding_names")
+    required_groups = _string_tuple(receipt, "required_binding_groups")
+    satisfied_groups = _string_tuple(receipt, "satisfied_binding_groups")
+    read_only_scope_names = _string_tuple(receipt, "read_only_scope_witness_names")
+    invalid_scope_names = _string_tuple(receipt, "invalid_scope_witness_names")
+    readiness_blockers = _string_tuple(receipt, "readiness_blockers")
+    if required_groups != REQUIRED_BINDING_GROUPS:
+        errors.append("required_binding_groups must match finance email/calendar readiness groups")
+    _validate_scope_classification(
+        present_names=present_names,
+        read_only_scope_names=read_only_scope_names,
+        invalid_scope_names=invalid_scope_names,
+        errors=errors,
+    )
+    expected_satisfied_groups = _expected_satisfied_groups(
+        present_names=present_names,
+        read_only_scope_names=read_only_scope_names,
+    )
+    if satisfied_groups != expected_satisfied_groups:
+        errors.append(
+            "satisfied_binding_groups must match present worker/token/read-only-scope groups: "
+            f"observed={list(satisfied_groups)} expected={list(expected_satisfied_groups)}"
+        )
+    expected_blockers = _expected_readiness_blockers(
+        satisfied_groups=expected_satisfied_groups,
+        invalid_scope_names=invalid_scope_names,
+    )
+    if readiness_blockers != expected_blockers:
+        errors.append(
+            "readiness_blockers must match missing groups and invalid scope witnesses: "
+            f"observed={list(readiness_blockers)} expected={list(expected_blockers)}"
+        )
+    expected_ready = not expected_blockers
     if receipt.get("ready") is not expected_ready:
-        errors.append(f"ready must be {expected_ready} based on present_binding_names")
+        errors.append(f"ready must be {expected_ready} based on required binding groups")
 
 
 def _validate_receipt_bindings(receipt: dict[str, Any], errors: list[str]) -> None:
@@ -105,8 +155,11 @@ def _validate_receipt_bindings(receipt: dict[str, Any], errors: list[str]) -> No
         if name in binding_by_name:
             errors.append(f"duplicate binding name {name}")
         binding_by_name[name] = binding
-        if binding.get("binding_kind") != "secret":
-            errors.append(f"{name} binding_kind must be secret")
+        expected_kind = BINDING_KIND_BY_NAME.get(name)
+        if binding.get("binding_kind") != expected_kind:
+            errors.append(f"{name} binding_kind must be {BINDING_KIND_BY_NAME.get(name, '<unknown>')}")
+        if binding.get("binding_group") != BINDING_GROUP_BY_NAME.get(name):
+            errors.append(f"{name} binding_group must be {BINDING_GROUP_BY_NAME.get(name, '<unknown>')}")
         if binding.get("risk") != "high":
             errors.append(f"{name} risk must be high")
         if binding.get("approval_required") is not True:
@@ -143,9 +196,78 @@ def _validation_result(
         receipt_id=str(receipt.get("receipt_id", "")),
         receipt_path=str(receipt_path),
         binding_count=int(receipt.get("binding_count", 0)) if isinstance(receipt.get("binding_count", 0), int) else 0,
-        present_binding_names=tuple(str(name) for name in present_names) if isinstance(present_names, list) else (),
+        present_binding_names=_string_tuple(receipt, "present_binding_names"),
+        required_binding_groups=_string_tuple(receipt, "required_binding_groups"),
+        satisfied_binding_groups=_string_tuple(receipt, "satisfied_binding_groups"),
+        read_only_scope_witness_names=_string_tuple(receipt, "read_only_scope_witness_names"),
+        invalid_scope_witness_names=_string_tuple(receipt, "invalid_scope_witness_names"),
+        readiness_blockers=_string_tuple(receipt, "readiness_blockers"),
         errors=tuple(errors),
     )
+
+
+def _string_tuple(receipt: dict[str, Any], field_name: str) -> tuple[str, ...]:
+    values = receipt.get(field_name, ())
+    return tuple(str(name) for name in values) if isinstance(values, list) else ()
+
+
+def _validate_scope_classification(
+    *,
+    present_names: tuple[str, ...],
+    read_only_scope_names: tuple[str, ...],
+    invalid_scope_names: tuple[str, ...],
+    errors: list[str],
+) -> None:
+    present_scope_names = set(present_names).intersection(SCOPE_WITNESS_BINDING_NAMES)
+    read_only_scope_set = set(read_only_scope_names)
+    invalid_scope_set = set(invalid_scope_names)
+    if not read_only_scope_set <= set(SCOPE_WITNESS_BINDING_NAMES):
+        errors.append(
+            "read_only_scope_witness_names must use accepted scope witness names: "
+            f"observed_only={sorted(read_only_scope_set - set(SCOPE_WITNESS_BINDING_NAMES))}"
+        )
+    if not invalid_scope_set <= set(SCOPE_WITNESS_BINDING_NAMES):
+        errors.append(
+            "invalid_scope_witness_names must use accepted scope witness names: "
+            f"observed_only={sorted(invalid_scope_set - set(SCOPE_WITNESS_BINDING_NAMES))}"
+        )
+    if read_only_scope_set.intersection(invalid_scope_set):
+        errors.append("scope witness names cannot be both read-only and invalid")
+    if present_scope_names != read_only_scope_set.union(invalid_scope_set):
+        errors.append(
+            "present scope witnesses must be classified exactly once: "
+            f"observed={sorted(read_only_scope_set.union(invalid_scope_set))} "
+            f"expected={sorted(present_scope_names)}"
+        )
+
+
+def _expected_satisfied_groups(
+    *,
+    present_names: tuple[str, ...],
+    read_only_scope_names: tuple[str, ...],
+) -> tuple[str, ...]:
+    present = set(present_names)
+    groups = set()
+    if present.intersection(WORKER_ENDPOINT_BINDING_NAMES):
+        groups.add("worker_endpoint")
+    if present.intersection(WORKER_SECRET_BINDING_NAMES):
+        groups.add("worker_secret")
+    if present.intersection(CONNECTOR_TOKEN_BINDING_NAMES):
+        groups.add("connector_token")
+    if read_only_scope_names:
+        groups.add("read_only_scope_witness")
+    return tuple(group for group in REQUIRED_BINDING_GROUPS if group in groups)
+
+
+def _expected_readiness_blockers(
+    *,
+    satisfied_groups: tuple[str, ...],
+    invalid_scope_names: tuple[str, ...],
+) -> tuple[str, ...]:
+    satisfied = set(satisfied_groups)
+    blockers = [f"missing_{group}" for group in REQUIRED_BINDING_GROUPS if group not in satisfied]
+    blockers.extend(f"invalid_scope_witness:{name}" for name in invalid_scope_names)
+    return tuple(blockers)
 
 
 def _load_json_object(path: Path, label: str, errors: list[str]) -> dict[str, Any]:

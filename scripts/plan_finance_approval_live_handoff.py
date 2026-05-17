@@ -147,9 +147,12 @@ def _action_for(blocker: str) -> FinanceLiveHandoffAction:
             blocker=blocker,
             action_type="credential",
             command=(
-                "Bind one scoped read-capable connector token in the governed worker secret store: "
+                "Bind the email/calendar worker endpoint, worker signing secret, one scoped read-capable "
+                "connector token, and one read-only scope witness in the governed worker secret store: "
+                "MULLU_EMAIL_CALENDAR_WORKER_URL, MULLU_EMAIL_CALENDAR_WORKER_SECRET, "
                 "EMAIL_CALENDAR_CONNECTOR_TOKEN, GMAIL_ACCESS_TOKEN, GOOGLE_CALENDAR_ACCESS_TOKEN, "
-                "or MICROSOFT_GRAPH_ACCESS_TOKEN. "
+                "or MICROSOFT_GRAPH_ACCESS_TOKEN, plus EMAIL_CALENDAR_CONNECTOR_SCOPE_ID, GMAIL_SCOPE_ID, "
+                "GOOGLE_CALENDAR_SCOPE_ID, or MICROSOFT_GRAPH_SCOPE_ID. "
                 "Then run python scripts/emit_finance_approval_email_calendar_binding_receipt.py --strict"
             ),
             verification_command=(
@@ -160,6 +163,8 @@ def _action_for(blocker: str) -> FinanceLiveHandoffAction:
             ),
             receipt_validator="adapter_evidence.communication.email_calendar_worker.dependency.EMAIL_CALENDAR_CONNECTOR_TOKEN",
             evidence_required=(
+                "worker_endpoint_presence_attestation",
+                "worker_secret_presence_attestation",
                 "connector_scope_attestation",
                 "secret_presence_attestation",
                 "finance_approval_email_calendar_binding_receipt.json",

@@ -35,8 +35,21 @@ from scripts.run_finance_approval_live_handoff_closure import (
 )
 
 
-def test_current_finance_live_handoff_preflight_blocks_absent_token() -> None:
-    report = preflight_finance_approval_live_handoff()
+def test_current_finance_live_handoff_preflight_blocks_absent_token(tmp_path: Path) -> None:
+    adapter_evidence = _write_document_only_adapter_evidence(tmp_path)
+    handoff_plan = _write_plan_for_adapter_evidence(tmp_path, adapter_evidence)
+    closure_run = _write_closure_run_for_ready_evidence(
+        tmp_path,
+        tmp_path / "missing_binding_receipt.json",
+        adapter_evidence,
+    )
+
+    report = preflight_finance_approval_live_handoff(
+        handoff_plan_path=handoff_plan,
+        binding_receipt_path=tmp_path / "missing_binding_receipt.json",
+        closure_run_path=closure_run,
+        adapter_evidence_path=adapter_evidence,
+    )
 
     assert report.ready is False
     assert report.readiness_level == "proof-pilot-ready"
@@ -50,7 +63,7 @@ def test_finance_live_handoff_preflight_accepts_ready_local_evidence(tmp_path: P
     handoff_plan = _write_plan_for_adapter_evidence(tmp_path, adapter_evidence)
     binding_receipt = tmp_path / "finance_binding_receipt.json"
     receipt, errors = emit_finance_approval_email_calendar_binding_receipt(
-        env_reader=lambda name: "present" if name == "GMAIL_ACCESS_TOKEN" else "",
+        env_reader=_ready_env,
     )
     write_finance_email_calendar_binding_receipt(receipt, binding_receipt)
     closure_run = _write_closure_run_for_ready_evidence(tmp_path, binding_receipt, adapter_evidence)
@@ -80,7 +93,7 @@ def test_finance_live_handoff_preflight_blocks_invalid_closure_run(tmp_path: Pat
     binding_receipt = tmp_path / "finance_binding_receipt.json"
     closure_run = tmp_path / "finance_closure_run.json"
     receipt, errors = emit_finance_approval_email_calendar_binding_receipt(
-        env_reader=lambda name: "present" if name == "GMAIL_ACCESS_TOKEN" else "",
+        env_reader=_ready_env,
     )
     write_finance_email_calendar_binding_receipt(receipt, binding_receipt)
     closure_run.write_text(
@@ -170,3 +183,39 @@ def _write_closed_adapter_evidence(tmp_path: Path) -> Path:
         encoding="utf-8",
     )
     return adapter_evidence
+
+
+def _write_document_only_adapter_evidence(tmp_path: Path) -> Path:
+    adapter_evidence = tmp_path / "capability_adapter_evidence_document_only.json"
+    adapter_evidence.write_text(
+        json.dumps(
+            {
+                "adapters": [
+                    {
+                        "adapter_id": "document.production_parsers",
+                        "status": "closed",
+                        "blockers": [],
+                        "evidence_refs": ["document_live_receipt.json"],
+                    },
+                    {
+                        "adapter_id": "communication.email_calendar_worker",
+                        "status": "open",
+                        "blockers": ["email_calendar_live_evidence_missing"],
+                        "evidence_refs": [],
+                    },
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+    return adapter_evidence
+
+
+def _ready_env(name: str) -> str:
+    values = {
+        "MULLU_EMAIL_CALENDAR_WORKER_URL": "https://email-calendar.internal/execute",
+        "MULLU_EMAIL_CALENDAR_WORKER_SECRET": "secret-worker-value",
+        "GMAIL_ACCESS_TOKEN": "secret-token-value",
+        "GMAIL_SCOPE_ID": "gmail.readonly",
+    }
+    return values.get(name, "")

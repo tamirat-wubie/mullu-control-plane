@@ -72,7 +72,7 @@ def test_finance_live_handoff_closure_orders_binding_before_live_receipt() -> No
 def test_finance_live_handoff_closure_accepts_ready_local_evidence(tmp_path: Path) -> None:
     binding_receipt = tmp_path / "finance_binding_receipt.json"
     receipt, errors = emit_finance_approval_email_calendar_binding_receipt(
-        env_reader=lambda name: "present" if name == "GMAIL_ACCESS_TOKEN" else "",
+        env_reader=_ready_env,
     )
     adapter_evidence = _write_closed_adapter_evidence(tmp_path)
     write_finance_email_calendar_binding_receipt(receipt, binding_receipt)
@@ -130,3 +130,13 @@ def _write_closed_adapter_evidence(tmp_path: Path) -> Path:
         encoding="utf-8",
     )
     return adapter_evidence
+
+
+def _ready_env(name: str) -> str:
+    values = {
+        "MULLU_EMAIL_CALENDAR_WORKER_URL": "https://email-calendar.internal/execute",
+        "MULLU_EMAIL_CALENDAR_WORKER_SECRET": "secret-worker-value",
+        "GMAIL_ACCESS_TOKEN": "secret-token-value",
+        "GMAIL_SCOPE_ID": "gmail.readonly",
+    }
+    return values.get(name, "")
