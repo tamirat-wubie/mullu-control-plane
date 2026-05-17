@@ -1,0 +1,101 @@
+name: Governed Swarm Staging Witness
+
+on:
+  workflow_dispatch:
+    inputs:
+      staging_url:
+        description: "Staging control-plane base URL, for example https://staging-api.example.com"
+        required: true
+        type: string
+      control_plane_commit:
+        description: "Deployed mullu-control-plane commit SHA"
+        required: true
+        type: string
+      runtime_path:
+        description: "Runtime checkout path containing mcoi_runtime/swarm"
+        required: true
+        default: "/opt/mullu/mullu-governed-swarm/mcoi"
+        type: string
+      audit_store_path:
+        description: "Local JSONL audit store path visible to the selected runner"
+        required: true
+        default: "/var/lib/mullu/governed-swarm/swarm-runs.jsonl"
+        type: string
+      environment:
+        description: "Activation environment recorded in the witness"
+        required: true
+        default: "staging"
+        type: choice
+        options:
+          - staging
+          - pilot
+      run_id:
+        description: "Optional deterministic run id for replayable staging probes"
+        required: false
+        default: ""
+        type: string
+      runner_label:
+        description: "Runner label with network access to staging and local audit-store access"
+        required: true
+        default: "self-hosted"
+        type: string
+
+# v4.22.0: opt into Node.js 24 for the deprecated actions/* runtime.
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
+jobs:
+  collect-governed-swarm-staging-witness:
+    name: Collect Governed Swarm Staging Witness
+    runs-on: ${{ inputs.runner_label }}
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.13
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Collect governed swarm staging activation witness
+        env:
+          MULLU_STAGING_URL: ${{ inputs.staging_url }}
+          MULLU_CONTROL_PLANE_COMMIT: ${{ inputs.control_plane_commit }}
+          MULLU_GOVERNED_SWARM_RUNTIME_PATH: ${{ inputs.runtime_path }}
+          MULLU_GOVERNED_SWARM_AUDIT_STORE_PATH: ${{ inputs.audit_store_path }}
+          MULLU_GOVERNED_SWARM_ENVIRONMENT: ${{ inputs.environment }}
+          MULLU_GOVERNED_SWARM_RUN_ID: ${{ inputs.run_id }}
+        run: |
+          mkdir -p .change_assurance
+          if [ -n "$MULLU_GOVERNED_SWARM_RUN_ID" ]; then
+            python scripts/collect_governed_swarm_staging_activation_witness.py \
+              --staging-url "$MULLU_STAGING_URL" \
+              --control-plane-commit "$MULLU_CONTROL_PLANE_COMMIT" \
+              --runtime-path "$MULLU_GOVERNED_SWARM_RUNTIME_PATH" \
+              --audit-store-path "$MULLU_GOVERNED_SWARM_AUDIT_STORE_PATH" \
+              --environment "$MULLU_GOVERNED_SWARM_ENVIRONMENT" \
+              --run-id "$MULLU_GOVERNED_SWARM_RUN_ID" \
+              --output .change_assurance/governed_swarm_staging_activation_witness.json
+          else
+            python scripts/collect_governed_swarm_staging_activation_witness.py \
+              --staging-url "$MULLU_STAGING_URL" \
+              --control-plane-commit "$MULLU_CONTROL_PLANE_COMMIT" \
+              --runtime-path "$MULLU_GOVERNED_SWARM_RUNTIME_PATH" \
+              --audit-store-path "$MULLU_GOVERNED_SWARM_AUDIT_STORE_PATH" \
+              --environment "$MULLU_GOVERNED_SWARM_ENVIRONMENT" \
+              --output .change_assurance/governed_swarm_staging_activation_witness.json
+          fi
+
+      - name: Validate governed swarm staging activation witness
+        if: always()
+        run: |
+          python scripts/validate_governed_swarm_staging_activation_witness.py \
+            --witness .change_assurance/governed_swarm_staging_activation_witness.json
+
+      - name: Upload governed swarm staging activation witness
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: governed-swarm-staging-activation-witness
+          path: .change_assurance/governed_swarm_staging_activation_witness.json
+          if-no-files-found: error
