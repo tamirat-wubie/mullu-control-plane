@@ -201,7 +201,9 @@ class CommandPolicy:
         "nc", "ncat", "telnet", "socat",
     )
     denied_git_subcommands: tuple[str, ...] = (
-        "push", "pull", "fetch", "clone", "remote", "submodule", "credential",
+        "archive", "clone", "credential", "daemon", "fetch", "ls-remote",
+        "p4", "pull", "push", "remote", "request-pull", "send-email",
+        "submodule", "svn",
     )
     max_timeout_seconds: int = 300
     max_output_bytes: int = 1_048_576
@@ -219,7 +221,17 @@ class CommandPolicy:
 _PYTHON_FAMILY: frozenset[str] = frozenset({"python", "python3", "py"})
 _NODE_FAMILY: frozenset[str] = frozenset({"node", "nodejs"})
 _GIT_GLOBAL_FLAGS_WITH_VALUE: frozenset[str] = frozenset(
-    {"-C", "-c", "--git-dir", "--work-tree", "--namespace", "--config-env"}
+    {"-C", "-c", "--exec-path", "--git-dir", "--work-tree", "--namespace", "--config-env"}
+)
+_DENIED_GIT_REMOTE_ARGUMENT_PREFIXES: tuple[str, ...] = (
+    "--receive-pack",
+    "--remote",
+    "--server-option",
+    "--upload-pack",
+    "git://",
+    "http://",
+    "https://",
+    "ssh://",
 )
 
 
@@ -254,6 +266,21 @@ def _scan_git_subcommand(args: list[str]) -> str | None:
     return None
 
 
+def _scan_denied_git_global_flag(args: list[str]) -> str | None:
+    """Return a denied git global option if present before the subcommand."""
+    for arg in args:
+        if not arg.startswith("-"):
+            return None
+        for flag in _GIT_GLOBAL_FLAGS_WITH_VALUE:
+            if arg == flag or arg.startswith(f"{flag}="):
+                return flag
+    return None
+
+
+def _has_denied_git_remote_argument(args: list[str]) -> bool:
+    return any(arg.lower().startswith(_DENIED_GIT_REMOTE_ARGUMENT_PREFIXES) for arg in args)
+
+
 def _validate_command_policy(
     command: list[str], policy: CommandPolicy,
 ) -> str | None:
@@ -273,9 +300,14 @@ def _validate_command_policy(
         return f"executable not allowlisted: {exe}"
 
     if exe == "git":
+        denied_global_flag = _scan_denied_git_global_flag(command[1:])
+        if denied_global_flag is not None:
+            return f"denied git global option: {denied_global_flag}"
         sub = _scan_git_subcommand(command[1:])
         if sub is not None and sub.lower() in policy.denied_git_subcommands:
             return f"denied git subcommand: {sub.lower()}"
+        if _has_denied_git_remote_argument(command[1:]):
+            return "denied git remote argument"
 
     if exe in _PYTHON_FAMILY:
         for arg in command[1:]:

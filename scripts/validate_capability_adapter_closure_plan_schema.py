@@ -204,14 +204,22 @@ def _load_json_object(path: Path, label: str, errors: list[str]) -> dict[str, An
         errors.append(f"{label} file missing: {path}")
         return {}
     try:
-        payload = json.loads(path.read_text(encoding="utf-8"))
-    except json.JSONDecodeError:
+        payload = _loads_strict_json(path.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, ValueError):
         errors.append(f"{label} JSON parse failed")
         return {}
     if not isinstance(payload, dict):
         errors.append(f"{label} JSON root must be an object")
         return {}
     return payload
+
+
+def _loads_strict_json(raw: str) -> Any:
+    return json.loads(raw, parse_constant=_reject_json_constant)
+
+
+def _reject_json_constant(raw_constant: str) -> None:
+    raise ValueError("non-finite JSON constants are not permitted")
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:

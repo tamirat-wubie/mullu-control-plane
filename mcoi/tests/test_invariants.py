@@ -6,8 +6,10 @@ Invariants: validation is explicit, deterministic, and side-effect free.
 
 from __future__ import annotations
 
+import json
 import math
 from dataclasses import dataclass
+from hashlib import sha256
 from types import MappingProxyType
 
 import pytest
@@ -226,6 +228,40 @@ class TestStableIdentifier:
         assert len(result) > 2
 
     def test_non_string_values_serialized(self) -> None:
-        # default=str handles non-JSON types
         result = stable_identifier("p", {"ts": "2026-03-20"})
         assert result.startswith("p-")
+
+    def test_non_ascii_payload_hashes_canonical_json(self) -> None:
+        payload = {"rank": 1, "symbol": "ሀ"}
+        encoded = json.dumps(
+            payload,
+            sort_keys=True,
+            ensure_ascii=True,
+            separators=(",", ":"),
+            allow_nan=False,
+        )
+        result = stable_identifier("p", payload)
+
+        assert result == f"p-{sha256(encoded.encode('utf-8')).hexdigest()[:12]}"
+        assert result.startswith("p-")
+        assert len(result) == len("p-") + 12
+
+    def test_non_finite_payload_rejected(self) -> None:
+        with pytest.raises(
+            RuntimeCoreInvariantError,
+            match=r"^stable identifier payload must be deterministic JSON$",
+        ) as excinfo:
+            stable_identifier("p", {"score": math.nan})
+
+        assert "score" not in str(excinfo.value)
+        assert "nan" not in str(excinfo.value).lower()
+
+    def test_non_json_payload_rejected(self) -> None:
+        with pytest.raises(
+            RuntimeCoreInvariantError,
+            match=r"^stable identifier payload must be deterministic JSON$",
+        ) as excinfo:
+            stable_identifier("p", {"tags": {"governed"}})
+
+        assert "governed" not in str(excinfo.value)
+        assert "set" not in str(excinfo.value).lower()

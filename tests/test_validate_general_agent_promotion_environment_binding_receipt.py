@@ -132,3 +132,18 @@ def test_validate_environment_binding_receipt_json_parse_error_is_bounded(tmp_pa
     assert result.valid is False
     assert "environment binding receipt must be JSON" in result.errors
     assert "secret-json-token" not in serialized_errors
+
+
+def test_validate_environment_binding_receipt_rejects_nonfinite_json_constants(tmp_path: Path) -> None:
+    receipt_path = tmp_path / "binding-receipt.json"
+    receipt_path.write_text(
+        '{"receipt_id": "general-agent-promotion-environment-binding-receipt-v1", "score": Infinity}',
+        encoding="utf-8",
+    )
+
+    result = validate_general_agent_promotion_environment_binding_receipt(receipt_path=receipt_path)
+    serialized_errors = json.dumps(result.errors, sort_keys=True)
+
+    assert result.valid is False
+    assert "environment binding receipt must be JSON" in result.errors
+    assert "Infinity" not in serialized_errors

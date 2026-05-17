@@ -28,6 +28,24 @@ def _print_list(title: str, values: list[object]) -> None:
         print(f"  - {value}")
 
 
+def _print_gate_requirements(open_gates: list[object], requirements: dict[str, object]) -> None:
+    print("Open gate evidence requirements:")
+    for gate in open_gates:
+        if not isinstance(gate, str):
+            continue
+        requirement = requirements.get(gate)
+        if not isinstance(requirement, dict):
+            print(f"  - {gate}: missing structured closure requirement")
+            continue
+
+        print(f"  - {gate}")
+        print(f"    authority: {requirement['closure_authority']}")
+        print(f"    blocker: {requirement['closure_blocker']}")
+        print("    evidence:")
+        for evidence in requirement["required_evidence"]:
+            print(f"      * {evidence}")
+
+
 def main() -> int:
     readiness = _read_json(READINESS_PATH)
     clearance = _read_json(CLEARANCE_PATH)
@@ -46,6 +64,12 @@ def main() -> int:
     print()
 
     _print_list("Open gates:", list(readiness["open_gates"]))
+    print()
+
+    _print_gate_requirements(
+        list(readiness["open_gates"]),
+        dict(clearance.get("gate_closure_requirements", {})),
+    )
     print()
 
     print("Official searches:")

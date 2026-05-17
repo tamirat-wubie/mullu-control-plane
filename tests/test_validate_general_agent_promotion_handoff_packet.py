@@ -128,3 +128,15 @@ def test_validate_promotion_handoff_packet_json_parse_error_is_bounded(tmp_path:
     assert result.valid is False
     assert "handoff packet must be JSON" in result.errors
     assert "secret-json-token" not in serialized_errors
+
+
+def test_validate_promotion_handoff_packet_rejects_nonfinite_json_constants(tmp_path: Path) -> None:
+    packet_path = tmp_path / "handoff-packet.json"
+    packet_path.write_text('{"packet_id": "general-agent-promotion-handoff-v1", "score": Infinity}', encoding="utf-8")
+
+    result = validate_general_agent_promotion_handoff_packet(packet_path=packet_path)
+    serialized_errors = json.dumps(result.errors, sort_keys=True)
+
+    assert result.valid is False
+    assert "handoff packet must be JSON" in result.errors
+    assert "Infinity" not in serialized_errors

@@ -626,12 +626,22 @@ def _load_receipt(path: Path) -> tuple[dict[str, Any], str]:
     if not path.exists():
         return {}, "receipt missing"
     try:
-        payload = json.loads(path.read_text(encoding="utf-8"))
-    except json.JSONDecodeError:
+        payload = _loads_strict_json(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError, ValueError):
         return {}, "receipt JSON parse failed"
     if not isinstance(payload, dict):
         return {}, "receipt JSON root must be an object"
     return payload, ""
+
+
+def _loads_strict_json(raw: str) -> Any:
+    """Load deterministic JSON while rejecting non-finite constants."""
+    return json.loads(raw, parse_constant=_reject_json_constant)
+
+
+def _reject_json_constant(constant: str) -> None:
+    """Reject JSON constants outside the deterministic JSON subset."""
+    raise ValueError("non-finite JSON constant is not allowed")
 
 
 def _passed_status(payload: dict[str, Any]) -> bool:

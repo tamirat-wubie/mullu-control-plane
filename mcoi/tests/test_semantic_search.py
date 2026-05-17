@@ -1,6 +1,5 @@
 """Phase 221A — Semantic search tests."""
 
-import pytest
 from mcoi_runtime.core.semantic_search import SemanticSearchEngine
 
 
@@ -16,12 +15,14 @@ class TestSemanticSearch:
         assert "d1" in ids
         assert "d2" in ids
 
-    def test_relevance_ranking(self):
+    def test_semantic_search_scores_projected(self):
         eng = SemanticSearchEngine()
         eng.index("d1", "Python Python Python programming")
         eng.index("d2", "Rust programming")
         results = eng.search("Python")
         assert results[0].doc_id == "d1"  # Higher TF for "python"
+        assert results[0].score > 0
+        assert results[0].score >= results[-1].score
 
     def test_no_results(self):
         eng = SemanticSearchEngine()
@@ -54,14 +55,15 @@ class TestSemanticSearch:
         results = eng.search("Python language")
         assert "python" in results[0].matched_terms
 
-    def test_limit(self):
+    def test_semantic_search_limit_bounded(self):
         eng = SemanticSearchEngine()
         for i in range(20):
             eng.index(f"d{i}", f"common term document {i}")
         results = eng.search("common term", limit=5)
         assert len(results) == 5
+        assert len(results) <= 5
 
-    def test_summary(self):
+    def test_semantic_search_stats_bounded(self):
         eng = SemanticSearchEngine()
         eng.index("d1", "hello world")
         s = eng.summary()

@@ -305,7 +305,7 @@ The Intelligence Plane improves the system without bypassing governed evolution.
 | `WorkflowMiningEngine` | Detects repeated human workflows and drafts governed templates | Cannot activate workflow without operator review |
 | `EconomicIntelligenceEngine` | Optimizes safe cost, risk, quality, latency, and review burden | Cannot choose cheaper route that violates controls |
 | `AutonomousTestGenerationEngine` | Converts failures into permanent replay and governance tests | Cannot suppress failing traces |
-| `AutonomousCapabilityUpgradeLoop` | Diagnoses, proposes, tests, and packages upgrades | Cannot deploy high-risk changes without certified approval |
+| `AutonomousCapabilityUpgradeLoop` | Diagnoses, ranks, and packages single-capability and whole-mesh upgrade portfolios | Cannot deploy high-risk changes without certified approval, operator review, and blocked-plan closure |
 | `ClaimVerificationEngine` | Separates observed facts, user claims, source claims, inferences, stale results, and contradictions | Cannot promote unverified claims into execution facts |
 
 Utility formula:

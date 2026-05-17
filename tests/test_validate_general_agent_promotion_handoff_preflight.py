@@ -21,6 +21,7 @@ def test_validate_handoff_preflight_accepts_ready_report(tmp_path: Path) -> None
     assert result.ready is True
     assert result.step_count == 10
     assert result.blockers == ()
+    assert result.environment_binding_action_count == 0
 
 
 def test_validate_handoff_preflight_accepts_blocked_missing_environment_report(tmp_path: Path) -> None:
@@ -33,6 +34,7 @@ def test_validate_handoff_preflight_accepts_blocked_missing_environment_report(t
     assert result.ready is False
     assert "required environment bindings" in result.blockers
     assert "MULLU_GATEWAY_URL" in result.missing_environment_variables
+    assert result.environment_binding_action_count == 1
 
 
 def test_validate_handoff_preflight_require_ready_rejects_blocked_report(tmp_path: Path) -> None:
@@ -62,6 +64,32 @@ def test_validate_handoff_preflight_rejects_stale_blocker_derivation(tmp_path: P
     assert any("missing_environment_variables require" in error for error in result.errors)
 
 
+def test_validate_handoff_preflight_rejects_missing_environment_action(tmp_path: Path) -> None:
+    report_path = tmp_path / "preflight.json"
+    payload = _blocked_report()
+    payload["environment_binding_actions"] = []
+    report_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    result = validate_general_agent_promotion_handoff_preflight(report_path=report_path)
+
+    assert result.valid is False
+    assert any("environment_binding_actions names must match" in error for error in result.errors)
+
+
+def test_validate_handoff_preflight_rejects_serialized_environment_value(tmp_path: Path) -> None:
+    report_path = tmp_path / "preflight.json"
+    payload = _blocked_report()
+    actions = list(payload["environment_binding_actions"])  # type: ignore[arg-type]
+    actions[0]["value"] = "do-not-serialize"  # type: ignore[index]
+    payload["environment_binding_actions"] = actions
+    report_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    result = validate_general_agent_promotion_handoff_preflight(report_path=report_path)
+
+    assert result.valid is False
+    assert any("must not carry serialized values" in error for error in result.errors)
+
+
 def test_validate_handoff_preflight_cli_outputs_json(tmp_path: Path, capsys) -> None:
     report_path = tmp_path / "preflight.json"
     report_path.write_text(json.dumps(_ready_report()), encoding="utf-8")
@@ -74,6 +102,7 @@ def test_validate_handoff_preflight_cli_outputs_json(tmp_path: Path, capsys) -> 
     assert payload["valid"] is True
     assert payload["ready"] is True
     assert payload["step_count"] == 10
+    assert payload["environment_binding_action_count"] == 0
 
 
 def test_validate_handoff_preflight_missing_file_error_is_bounded(tmp_path: Path) -> None:
@@ -99,11 +128,24 @@ def test_validate_handoff_preflight_json_parse_error_is_bounded(tmp_path: Path) 
     assert "secret-json-token" not in serialized
 
 
+def test_validate_handoff_preflight_rejects_nonfinite_json_constants(tmp_path: Path) -> None:
+    report_path = tmp_path / "preflight.json"
+    report_path.write_text('{"ready": true, "step_count": Infinity}', encoding="utf-8")
+
+    result = validate_general_agent_promotion_handoff_preflight(report_path=report_path)
+    serialized = json.dumps(result.as_dict(), sort_keys=True)
+
+    assert result.valid is False
+    assert "preflight report must be JSON" in result.errors
+    assert "Infinity" not in serialized
+
+
 def _ready_report() -> dict[str, object]:
     return {
         "blockers": [],
         "checked_at": "2026-05-01T12:00:00+00:00",
         "missing_environment_variables": [],
+        "environment_binding_actions": [],
         "production_ready": False,
         "readiness_level": "pilot-governed-core",
         "ready": True,
@@ -132,6 +174,28 @@ def _blocked_report() -> dict[str, object]:
     payload["ready"] = False
     payload["blockers"] = ["required environment bindings"]
     payload["missing_environment_variables"] = ["MULLU_GATEWAY_URL"]
+    payload["environment_binding_actions"] = [
+        {
+            "name": "MULLU_GATEWAY_URL",
+            "binding_kind": "url",
+            "risk": "high",
+            "approval_required": False,
+            "required_for": [
+                "deployment_witness_publication",
+                "public_health_declaration",
+                "handoff_preflight",
+            ],
+            "receipt_projection": "name_and_presence_only",
+            "verification_command": (
+                "Bind the environment variable in the operator runtime without printing or serializing its value, "
+                "then run: python scripts\\emit_general_agent_promotion_environment_binding_receipt.py "
+                "--output .change_assurance\\general_agent_promotion_environment_binding_receipt.json --json "
+                "&& python scripts\\validate_general_agent_promotion_environment_binding_receipt.py "
+                "--receipt .change_assurance\\general_agent_promotion_environment_binding_receipt.json "
+                "--require-ready --json"
+            ),
+        }
+    ]
     steps = list(payload["steps"])  # type: ignore[arg-type]
     steps[5] = {
         "detail": "missing=['MULLU_GATEWAY_URL']",

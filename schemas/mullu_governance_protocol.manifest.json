@@ -59,6 +59,12 @@
       "surface": "capability"
     },
     {
+      "schema_id": "capability-improvement-portfolio",
+      "path": "schemas/capability_improvement_portfolio.schema.json",
+      "urn": "urn:mullusi:schema:capability-improvement-portfolio:1",
+      "surface": "capability"
+    },
+    {
       "schema_id": "capability-candidate",
       "path": "schemas/capability_candidate.schema.json",
       "urn": "urn:mullusi:schema:capability-candidate:1",

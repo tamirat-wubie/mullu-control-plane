@@ -43,7 +43,8 @@
     "official_clearance_access_log",
     "sdk_api_stability_review",
     "homepage_update",
-    "app_title_update"
+    "app_title_update",
+    "clearance_evidence_capture_plan"
   ],
   "open_gates": [
     "uspto_search",
@@ -83,6 +84,7 @@
     "docs/NAMING_MIGRATION_PLAN.md",
     "docs/NAME_CLEARANCE_PRELIMINARY.md",
     "docs/APP_TITLE_UPDATE_EVIDENCE_2026-05-15.md",
+    "docs/CLEARANCE_EVIDENCE_CAPTURE_PLAN_2026-05-15.md",
     "docs/HOMEPAGE_UPDATE_EVIDENCE_2026-05-15.md",
     "docs/OFFICIAL_CLEARANCE_ACCESS_LOG_2026-05-15.md",
     "docs/SDK_API_STABILITY_REVIEW_2026-05-15.md",

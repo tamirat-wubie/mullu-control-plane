@@ -55,7 +55,7 @@ def _deterministic_json(data: Any) -> str:
 
 
 def _content_hash(json_str: str) -> str:
-    return sha256(json_str.encode("ascii", "ignore")).hexdigest()
+    return sha256(json_str.encode("utf-8")).hexdigest()
 
 
 def _atomic_write(path: Path, content: str) -> None:

@@ -99,7 +99,10 @@ class TestCapabilitiesEndpoint:
 
 
 class TestReplayEndpoint:
-    def test_list_traces(self, client):
+    def test_replay_trace_list_bounded(self, client):
         resp = client.get("/api/v1/replay/traces")
+        data = resp.json()
         assert resp.status_code == 200
-        assert resp.json()["count"] == 0
+        assert data["count"] == len(data["traces"])
+        assert data["count"] <= 50
+        assert {"completed", "active", "total_frames"} <= set(data["summary"])

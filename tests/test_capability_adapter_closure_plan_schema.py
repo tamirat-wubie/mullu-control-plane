@@ -77,6 +77,24 @@ def test_adapter_closure_plan_schema_bounds_malformed_json_detail(tmp_path: Path
     assert all("secret-plan-token" not in error for error in validation.errors)
 
 
+def test_adapter_closure_plan_schema_rejects_nonfinite_json_constants(tmp_path: Path) -> None:
+    plan_path = tmp_path / "capability_adapter_closure_plan.json"
+    plan_path.write_text(
+        '{"plan_id": "capability-adapter-closure-plan-x", "score": Infinity}',
+        encoding="utf-8",
+    )
+
+    validation = validate_capability_adapter_closure_plan_schema(
+        plan_path=plan_path,
+        schema_path=SCHEMA_PATH,
+    )
+    serialized_errors = json.dumps(validation.errors, sort_keys=True)
+
+    assert validation.ok is False
+    assert "adapter closure plan JSON parse failed" in validation.errors
+    assert "Infinity" not in serialized_errors
+
+
 def test_adapter_closure_plan_schema_rejects_missing_proof_contract(tmp_path: Path) -> None:
     plan_path = tmp_path / "capability_adapter_closure_plan.json"
     payload = _valid_plan()

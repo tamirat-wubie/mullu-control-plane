@@ -21,7 +21,7 @@ from __future__ import annotations
 import hashlib
 import json
 from dataclasses import asdict, dataclass, field, replace
-from typing import Any, Iterable
+from typing import Any, Iterable, Mapping
 
 
 MATURITY_LEVELS = ("C0", "C1", "C2", "C3", "C4", "C5", "C6", "C7")
@@ -200,6 +200,51 @@ class CapabilityUpgradePlan:
         return _json_ready(asdict(self))
 
 
+@dataclass(frozen=True, slots=True)
+class CapabilityImprovementPortfolio:
+    """Whole-mesh set of non-mutating capability improvement proposals."""
+
+    portfolio_id: str
+    generated_at: str
+    plans: tuple[CapabilityUpgradePlan, ...]
+    prioritized_capability_ids: tuple[str, ...]
+    systemic_weakness_codes: tuple[str, ...]
+    blocked_reasons: tuple[str, ...]
+    operator_review_required: bool
+    activation_blocked: bool
+    portfolio_hash: str = ""
+    metadata: dict[str, Any] = field(default_factory=dict)
+
+    def __post_init__(self) -> None:
+        _require_text(self.portfolio_id, "portfolio_id")
+        _require_text(self.generated_at, "generated_at")
+        plans = tuple(self.plans)
+        if not plans:
+            raise ValueError("portfolio_plans_required")
+        object.__setattr__(self, "plans", plans)
+        object.__setattr__(self, "prioritized_capability_ids", _normalize_text_tuple(self.prioritized_capability_ids, "prioritized_capability_ids"))
+        object.__setattr__(self, "systemic_weakness_codes", _normalize_text_tuple(self.systemic_weakness_codes, "systemic_weakness_codes", allow_empty=True))
+        object.__setattr__(self, "blocked_reasons", _normalize_text_tuple(self.blocked_reasons, "blocked_reasons"))
+        object.__setattr__(self, "metadata", dict(self.metadata))
+        _require_unique_tuple(self.prioritized_capability_ids, "portfolio_priority")
+        _require_unique_tuple(self.systemic_weakness_codes, "portfolio_systemic_weakness_codes")
+        _require_unique_tuple(self.blocked_reasons, "portfolio_blocked_reasons")
+        _require_unique_tuple(tuple(plan.capability_id for plan in plans), "portfolio_plan_capabilities")
+        plan_capability_ids = {plan.capability_id for plan in plans}
+        if set(self.prioritized_capability_ids) != plan_capability_ids:
+            raise ValueError("portfolio_priority_must_cover_plans")
+        if any(not plan.activation_blocked or not plan.candidate.promotion_blocked for plan in plans):
+            raise ValueError("portfolio_plans_must_remain_blocked")
+        if not self.operator_review_required:
+            raise ValueError("portfolio_operator_review_required")
+        if not self.activation_blocked:
+            raise ValueError("portfolio_activation_must_be_blocked")
+
+    def to_json_dict(self) -> dict[str, Any]:
+        """Return a JSON-schema compatible projection."""
+        return _json_ready(asdict(self))
+
+
 class AutonomousCapabilityUpgradeLoop:
     """Diagnose capability health and emit governed upgrade proposals."""
 
@@ -250,6 +295,63 @@ class AutonomousCapabilityUpgradeLoop:
             },
         )
         return _stamp_plan(plan)
+
+    def propose_portfolio(
+        self,
+        signals: Iterable[CapabilityHealthSignal],
+        *,
+        generated_at: str,
+        desired_maturity_level: str = "C6",
+        requested_change_classes: Iterable[str] = ("capability", "configuration"),
+        requested_change_classes_by_capability: Mapping[str, Iterable[str]] | None = None,
+        max_candidates: int | None = None,
+    ) -> CapabilityImprovementPortfolio:
+        """Return a ranked, activation-blocked improvement portfolio."""
+        _require_text(generated_at, "generated_at")
+        if max_candidates is not None and max_candidates < 1:
+            raise ValueError("max_candidates_positive")
+        normalized_signals = tuple(signals)
+        if not normalized_signals:
+            raise ValueError("portfolio_signals_required")
+        capability_ids = [signal.capability_id for signal in normalized_signals]
+        if len(set(capability_ids)) != len(capability_ids):
+            raise ValueError("duplicate_capability_signal")
+
+        class_overrides = requested_change_classes_by_capability or {}
+        plans = tuple(
+            self.propose(
+                signal,
+                desired_maturity_level=desired_maturity_level,
+                requested_change_classes=tuple(class_overrides.get(signal.capability_id, requested_change_classes)),
+            )
+            for signal in normalized_signals
+        )
+        ranked_plans = tuple(sorted(plans, key=_plan_priority_key))
+        if max_candidates is not None:
+            ranked_plans = ranked_plans[:max_candidates]
+        prioritized_capability_ids = tuple(plan.capability_id for plan in ranked_plans)
+        portfolio = CapabilityImprovementPortfolio(
+            portfolio_id="pending",
+            generated_at=generated_at,
+            plans=ranked_plans,
+            prioritized_capability_ids=prioritized_capability_ids,
+            systemic_weakness_codes=_systemic_weakness_codes(ranked_plans),
+            blocked_reasons=_portfolio_blocked_reasons(ranked_plans),
+            operator_review_required=True,
+            activation_blocked=True,
+            metadata={
+                "portfolio_is_not_execution": True,
+                "autonomous_proposal_allowed": True,
+                "autonomous_direct_deploy_allowed": False,
+                "direct_registry_mutation_allowed": False,
+                "systemic_detection": "repeated_weakness_codes",
+                "selected_candidate_count": len(ranked_plans),
+                "observed_signal_count": len(normalized_signals),
+                "severity_counts": _severity_counts(ranked_plans),
+                "evidence_ref_count": len({ref for plan in ranked_plans for ref in plan.health_signal.evidence_refs}),
+            },
+        )
+        return _stamp_portfolio(portfolio)
 
 
 def _diagnose(
@@ -401,6 +503,53 @@ def _blocked_reasons(candidate: UpgradeCandidate) -> tuple[str, ...]:
     return tuple(reasons)
 
 
+def _plan_priority_key(plan: CapabilityUpgradePlan) -> tuple[object, ...]:
+    signal = plan.health_signal
+    maturity_gap = MATURITY_RANK[plan.candidate.target_maturity_level] - MATURITY_RANK[signal.maturity_level]
+    latency_overage = max(0, signal.mean_latency_ms - 5000)
+    cost_overage = max(0.0, signal.cost_per_success - 1.0)
+    severity_rank = {"critical": 0, "high": 1, "medium": 2, "low": 3}
+    return (
+        severity_rank[plan.diagnosis.severity],
+        -signal.open_incidents,
+        -signal.failure_count,
+        -maturity_gap,
+        signal.success_rate,
+        -latency_overage,
+        -cost_overage,
+        plan.capability_id,
+    )
+
+
+def _systemic_weakness_codes(plans: tuple[CapabilityUpgradePlan, ...]) -> tuple[str, ...]:
+    counts: dict[str, int] = {}
+    for plan in plans:
+        for weakness_code in plan.diagnosis.weakness_codes:
+            counts[weakness_code] = counts.get(weakness_code, 0) + 1
+    return tuple(
+        weakness_code
+        for weakness_code, count in sorted(counts.items(), key=lambda item: (-item[1], item[0]))
+        if count > 1
+    )
+
+
+def _portfolio_blocked_reasons(plans: tuple[CapabilityUpgradePlan, ...]) -> tuple[str, ...]:
+    return _ordered_unique(
+        (
+            "portfolio_activation_blocked",
+            "portfolio_operator_review_required",
+            *(reason for plan in plans for reason in plan.blocked_reasons),
+        )
+    )
+
+
+def _severity_counts(plans: tuple[CapabilityUpgradePlan, ...]) -> dict[str, int]:
+    counts = {tier: 0 for tier in RISK_TIERS}
+    for plan in plans:
+        counts[plan.diagnosis.severity] += 1
+    return counts
+
+
 def _normalize_change_classes(values: tuple[str, ...]) -> tuple[str, ...]:
     normalized = _normalize_text_tuple(values, "change_classes")
     for value in normalized:
@@ -425,6 +574,16 @@ def _stamp_plan(plan: CapabilityUpgradePlan) -> CapabilityUpgradePlan:
     return replace(plan, plan_hash=_hash_payload(payload))
 
 
+def _stamp_portfolio(portfolio: CapabilityImprovementPortfolio) -> CapabilityImprovementPortfolio:
+    payload = asdict(replace(portfolio, portfolio_id="pending", portfolio_hash=""))
+    portfolio_hash = _hash_payload(payload)
+    return replace(
+        portfolio,
+        portfolio_id=f"capability-improvement-portfolio-{portfolio_hash[:16]}",
+        portfolio_hash=portfolio_hash,
+    )
+
+
 def _require_text(value: str, field_name: str) -> str:
     if not isinstance(value, str) or not value.strip():
         raise ValueError(f"{field_name}_required")
@@ -442,6 +601,11 @@ def _normalize_text_tuple(values: tuple[str, ...], field_name: str, *, allow_emp
     return normalized
 
 
+def _require_unique_tuple(values: tuple[str, ...], field_name: str) -> None:
+    if len(set(values)) != len(values):
+        raise ValueError(f"{field_name}_must_be_unique")
+
+
 def _hash_payload(payload: dict[str, Any]) -> str:
     encoded = json.dumps(payload, sort_keys=True, separators=(",", ":"), default=str).encode("utf-8")
     return hashlib.sha256(encoded).hexdigest()
@@ -449,6 +613,10 @@ def _hash_payload(payload: dict[str, Any]) -> str:
 
 def _safe_id(value: str) -> str:
     return "".join(char if char.isalnum() else "-" for char in value).strip("-").lower()
+
+
+def _ordered_unique(values: Iterable[str]) -> tuple[str, ...]:
+    return tuple(dict.fromkeys(values))
 
 
 def _json_ready(value: Any) -> Any:

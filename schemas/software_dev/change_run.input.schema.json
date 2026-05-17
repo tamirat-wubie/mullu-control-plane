@@ -150,7 +150,22 @@
           "type": "array",
           "minItems": 1,
           "items": {
-            "enum": ["push", "pull", "fetch", "clone", "remote", "submodule", "credential"]
+            "enum": [
+              "archive",
+              "clone",
+              "credential",
+              "daemon",
+              "fetch",
+              "ls-remote",
+              "p4",
+              "pull",
+              "push",
+              "remote",
+              "request-pull",
+              "send-email",
+              "submodule",
+              "svn"
+            ]
           }
         },
         "max_timeout_seconds": {

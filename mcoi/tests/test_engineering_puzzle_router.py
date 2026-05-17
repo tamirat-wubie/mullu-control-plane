@@ -110,7 +110,7 @@ def test_missing_control_surface_returns_503(isolated_client: TestClient) -> Non
     assert response.request.url.path.endswith("/candidates/judge")
 
 
-def test_candidate_judgment_route_returns_governed_envelope(
+def test_engineering_candidate_judgment_governed(
     isolated_client: TestClient,
 ) -> None:
     event_spine = EventSpineEngine()
@@ -134,7 +134,7 @@ def test_candidate_judgment_route_returns_governed_envelope(
     assert event_spine.event_count == 1
 
 
-def test_goal_mutation_route_returns_closed_and_active_puzzles(
+def test_engineering_goal_delta_classified(
     isolated_client: TestClient,
 ) -> None:
     event_spine = EventSpineEngine()
@@ -186,7 +186,7 @@ def test_route_validation_error_returns_400_without_event_emit(
     assert "rollback_plan" not in candidate
 
 
-def test_candidate_value_error_detail_is_bounded(
+def test_engineering_puzzle_errors_sanitized(
     isolated_client: TestClient,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

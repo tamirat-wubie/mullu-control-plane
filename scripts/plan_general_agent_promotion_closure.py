@@ -136,10 +136,21 @@ def _tag_action(action: dict[str, Any], *, source: str) -> dict[str, Any]:
 def _load_json_object(path: Path, label: str) -> dict[str, Any]:
     if not path.exists():
         raise FileNotFoundError(f"{label} file missing: {path}")
-    payload = json.loads(path.read_text(encoding="utf-8"))
+    try:
+        payload = _loads_strict_json(path.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, ValueError) as exc:
+        raise ValueError(f"{label} JSON parse failed") from exc
     if not isinstance(payload, dict):
         raise ValueError(f"{label} JSON root must be an object")
     return payload
+
+
+def _loads_strict_json(raw: str) -> Any:
+    return json.loads(raw, parse_constant=_reject_json_constant)
+
+
+def _reject_json_constant(raw_constant: str) -> None:
+    raise ValueError("non-finite JSON constants are not permitted")
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:

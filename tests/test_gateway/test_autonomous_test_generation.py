@@ -27,7 +27,7 @@ ROOT = Path(__file__).resolve().parents[2]
 SCHEMA_PATH = ROOT / "schemas" / "autonomous_test_generation_plan.schema.json"
 
 
-def test_approval_bypass_generates_permanent_governance_variants() -> None:
+def test_high_risk_failures_generate_governance_variants() -> None:
     plan = AutonomousTestGenerationEngine().generate(
         tenant_id="tenant-a",
         traces=(_trace(failure_type="approval_bypass", risk_tier="critical"),),
@@ -40,6 +40,19 @@ def test_approval_bypass_generates_permanent_governance_variants() -> None:
     assert {"approval", "prompt_injection", "tenant_boundary", "temporal", "channel_variant", "replay_fixture"}.issubset(test_types)
     assert {"expired_approval", "wrong_tenant", "channel:slack", "channel:whatsapp"}.issubset(mutations)
     assert all(case.evidence_refs == ("trace:evidence:1",) for case in plan.cases)
+
+
+def test_plans_are_activation_blocked() -> None:
+    plan = AutonomousTestGenerationEngine().generate(
+        tenant_id="tenant-a",
+        traces=(_trace(failure_type="verification_gap", risk_tier="critical"),),
+    )
+
+    assert plan.activation_blocked is True
+    assert plan.operator_review_required is True
+    assert plan.metadata["plan_is_not_execution"] is True
+    assert plan.cases
+    assert all(case.operator_review_required for case in plan.cases)
 
 
 def test_budget_failure_generates_budget_and_replay_cases() -> None:
@@ -71,7 +84,7 @@ def test_sandbox_escape_generates_sandbox_scenario_and_policy_case() -> None:
     assert "sandbox_scenario" in plan.coverage_requirements
 
 
-def test_autonomous_test_generation_plan_validates_against_schema() -> None:
+def test_autonomous_test_generation_plan_schema_valid() -> None:
     plan = AutonomousTestGenerationEngine().generate(
         tenant_id="tenant-a",
         traces=(_trace(failure_type="prompt_injection", risk_tier="high"),),

@@ -15,6 +15,7 @@ Invariants: every listed artifact must exist; paid public launch remains blocked
 | `docs/NAMING_MIGRATION_PLAN.md` | Naming migration rules |
 | `docs/NAME_CLEARANCE_PRELIMINARY.md` | Preliminary non-legal clearance sweep |
 | `docs/APP_TITLE_UPDATE_EVIDENCE_2026-05-15.md` | User-facing app title update evidence |
+| `docs/CLEARANCE_EVIDENCE_CAPTURE_PLAN_2026-05-15.md` | Remaining external-gate evidence capture plan |
 | `docs/HOMEPAGE_UPDATE_EVIDENCE_2026-05-15.md` | Private-beta product landing page update evidence |
 | `docs/OFFICIAL_CLEARANCE_ACCESS_LOG_2026-05-15.md` | Official trademark/domain access attempt log |
 | `docs/SDK_API_STABILITY_REVIEW_2026-05-15.md` | SDK/API technical contract naming stability review |

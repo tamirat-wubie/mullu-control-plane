@@ -846,12 +846,31 @@ class TestCommandPolicy:
             tmp_path, ["git", "-C", "/some/dir", "push", "origin", "main"],
         )
         assert rc == -1
-        assert "denied git subcommand: push" in stderr
+        assert "denied git global option: -C" in stderr
 
     def test_git_clone_is_blocked(self, tmp_path: Path):
         rc, _, stderr, _ = self._run(tmp_path, ["git", "clone", "https://example.com/r"])
         assert rc == -1
         assert "denied git subcommand: clone" in stderr
+
+    def test_git_network_read_and_remote_arguments_are_blocked(self, tmp_path: Path):
+        remote_read_root = tmp_path / "remote-read"
+        config_override_root = tmp_path / "config-override"
+        remote_argument_root = tmp_path / "remote-argument"
+        remote_read_root.mkdir()
+        config_override_root.mkdir()
+        remote_argument_root.mkdir()
+
+        remote_read = self._run(remote_read_root, ["git", "ls-remote", "origin"])
+        config_override = self._run(config_override_root, ["git", "-c", "credential.helper=store", "status"])
+        remote_argument = self._run(remote_argument_root, ["git", "status", "ssh://example.invalid/repo.git"])
+
+        assert remote_read[0] == -1
+        assert config_override[0] == -1
+        assert remote_argument[0] == -1
+        assert "denied git subcommand: ls-remote" in remote_read[2]
+        assert "denied git global option: -c" in config_override[2]
+        assert "denied git remote argument" in remote_argument[2]
 
     def test_git_status_is_allowed(self, tmp_path: Path, monkeypatch):
         # Stub subprocess.run so we don't actually invoke git; we just want

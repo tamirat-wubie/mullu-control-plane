@@ -75,6 +75,31 @@ class HandoffPreflightStep:
 
 
 @dataclass(frozen=True, slots=True)
+class EnvironmentBindingAction:
+    """Presence-only closure action for one missing environment binding."""
+
+    name: str
+    binding_kind: str
+    risk: str
+    approval_required: bool
+    required_for: tuple[str, ...]
+    receipt_projection: str
+    verification_command: str
+
+    def as_dict(self) -> dict[str, Any]:
+        """Return a JSON-ready action without secret or binding values."""
+        return {
+            "name": self.name,
+            "binding_kind": self.binding_kind,
+            "risk": self.risk,
+            "approval_required": self.approval_required,
+            "required_for": list(self.required_for),
+            "receipt_projection": self.receipt_projection,
+            "verification_command": self.verification_command,
+        }
+
+
+@dataclass(frozen=True, slots=True)
 class HandoffPreflightReport:
     """Full general-agent promotion handoff preflight report."""
 
@@ -84,6 +109,7 @@ class HandoffPreflightReport:
     steps: tuple[HandoffPreflightStep, ...]
     blockers: tuple[str, ...]
     missing_environment_variables: tuple[str, ...]
+    environment_binding_actions: tuple[EnvironmentBindingAction, ...]
     readiness_level: str
     production_ready: bool
 
@@ -96,6 +122,7 @@ class HandoffPreflightReport:
             "steps": [step.as_dict() for step in self.steps],
             "blockers": list(self.blockers),
             "missing_environment_variables": list(self.missing_environment_variables),
+            "environment_binding_actions": [action.as_dict() for action in self.environment_binding_actions],
             "readiness_level": self.readiness_level,
             "production_ready": self.production_ready,
         }
@@ -127,6 +154,10 @@ def preflight_general_agent_promotion_handoff(
         require_ready=True,
     )
     environment_step, missing_environment_variables = _required_environment_step(checklist_path, resolved_env_reader)
+    environment_binding_actions = _environment_binding_actions(
+        environment_bindings_path,
+        missing_environment_variables=missing_environment_variables,
+    )
     readiness_step, readiness_level, production_ready = _readiness_report_step(readiness_path)
     steps = [
         HandoffPreflightStep(
@@ -167,6 +198,7 @@ def preflight_general_agent_promotion_handoff(
         steps=tuple(steps),
         blockers=blockers,
         missing_environment_variables=missing_environment_variables,
+        environment_binding_actions=environment_binding_actions,
         readiness_level=readiness_level,
         production_ready=production_ready,
     )
@@ -201,6 +233,43 @@ def _required_environment_step(
         ),
         missing,
     )
+
+
+def _environment_binding_actions(
+    environment_bindings_path: Path,
+    *,
+    missing_environment_variables: tuple[str, ...],
+) -> tuple[EnvironmentBindingAction, ...]:
+    contract = _load_json_object(environment_bindings_path)
+    bindings = contract.get("bindings", ())
+    binding_by_name = {
+        str(binding.get("name", "")): binding
+        for binding in bindings
+        if isinstance(binding, dict) and isinstance(binding.get("name"), str)
+    }
+    actions: list[EnvironmentBindingAction] = []
+    for name in missing_environment_variables:
+        binding = binding_by_name.get(name, {})
+        required_for = binding.get("required_for", ())
+        actions.append(
+            EnvironmentBindingAction(
+                name=name,
+                binding_kind=str(binding.get("binding_kind", "unknown")),
+                risk=str(binding.get("risk", "unknown")),
+                approval_required=bool(binding.get("approval_required", True)),
+                required_for=tuple(str(item) for item in required_for) if isinstance(required_for, list) else (),
+                receipt_projection=str(binding.get("receipt_projection", "name_and_presence_only")),
+                verification_command=(
+                    "Bind the environment variable in the operator runtime without printing or serializing its value, "
+                    "then run: python scripts\\emit_general_agent_promotion_environment_binding_receipt.py "
+                    "--output .change_assurance\\general_agent_promotion_environment_binding_receipt.json --json "
+                    "&& python scripts\\validate_general_agent_promotion_environment_binding_receipt.py "
+                    "--receipt .change_assurance\\general_agent_promotion_environment_binding_receipt.json "
+                    "--require-ready --json"
+                ),
+            )
+        )
+    return tuple(actions)
 
 
 def _conditional_responsibility_debt_step(checklist_path: Path) -> HandoffPreflightStep:
@@ -344,10 +413,18 @@ def _load_report_payload(path: Path) -> tuple[dict[str, Any], str]:
 
 def _load_json_object(path: Path) -> dict[str, Any]:
     try:
-        payload = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError):
+        payload = _loads_strict_json(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError, ValueError):
         return {}
     return payload if isinstance(payload, dict) else {}
+
+
+def _loads_strict_json(raw: str) -> Any:
+    return json.loads(raw, parse_constant=_reject_json_constant)
+
+
+def _reject_json_constant(raw_constant: str) -> None:
+    raise ValueError("non-finite JSON constants are not permitted")
 
 
 def _validation_detail(errors: tuple[str, ...]) -> str:

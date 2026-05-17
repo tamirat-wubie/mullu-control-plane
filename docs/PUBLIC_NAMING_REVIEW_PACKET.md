@@ -22,6 +22,7 @@ Invariants: `Mullu` remains internally aligned only; paid public launch remains 
 | --- | --- |
 | `docs/mullu-name-clearance-draft.json` | Fill official search outcomes, final legal decision, and launch effect |
 | `docs/APP_TITLE_UPDATE_EVIDENCE_2026-05-15.md` | Confirm user-facing app title surfaces already use `Mullu` |
+| `docs/CLEARANCE_EVIDENCE_CAPTURE_PLAN_2026-05-15.md` | Populate the required evidence directory layout for the six remaining gates |
 | `docs/HOMEPAGE_UPDATE_EVIDENCE_2026-05-15.md` | Confirm the private-beta product landing page already satisfies the page-update gate |
 | `docs/OFFICIAL_CLEARANCE_ACCESS_LOG_2026-05-15.md` | Review blocked official API/RDAP access attempts and required replacement evidence |
 | `docs/SDK_API_STABILITY_REVIEW_2026-05-15.md` | Confirm technical `Mullu Platform` contract names remain intentional |
