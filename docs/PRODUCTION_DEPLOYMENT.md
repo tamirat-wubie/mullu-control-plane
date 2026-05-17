@@ -153,6 +153,14 @@ No runtime path containing mcoi_runtime/swarm, no external runtime bridge.
 Use `examples/governed_swarm_control_plane.env.example` as the redacted
 operator template for this feature.
 
+Current runtime release pin:
+
+```text
+Repository: tamirat-wubie/mullu-governed-swarm
+Tag: v0.1.0-governed-swarm
+Runtime path after checkout: <checkout>/mcoi
+```
+
 ### State directories
 
 | Variable | Required | Default | Notes |
