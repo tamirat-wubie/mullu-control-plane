@@ -24,6 +24,22 @@ Required subdirectories:
 06-legal-review/
 ```
 
+Required root files:
+
+```text
+README.md
+CAPTURE_INDEX.md
+capture-requirements.json
+```
+
+`CAPTURE_INDEX.md` must list every evidence directory, its pending/closed state,
+the required source authority, and the rule that paid public launch remains
+blocked until the matching official source captures and reviewer decisions are
+present.
+
+`capture-requirements.json` is the machine-readable counterpart validated by
+`schemas/mullu_clearance_capture_requirements.schema.json`.
+
 Each subdirectory must include:
 
 1. `README.md` describing source, date, reviewer, query terms, and decision.

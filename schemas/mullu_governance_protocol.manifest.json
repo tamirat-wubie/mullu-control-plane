@@ -791,6 +791,12 @@
       "surface": "release"
     },
     {
+      "schema_id": "mullu-clearance-capture-requirements",
+      "path": "schemas/mullu_clearance_capture_requirements.schema.json",
+      "urn": "urn:mullusi:schema:mullu-clearance-capture-requirements:1",
+      "surface": "release"
+    },
+    {
       "schema_id": "mullu-name-clearance-draft",
       "path": "schemas/mullu_name_clearance_draft.schema.json",
       "urn": "urn:mullusi:schema:mullu-name-clearance-draft:1",

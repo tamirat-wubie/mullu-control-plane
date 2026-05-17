@@ -1,0 +1,148 @@
+{
+  "schema_version": "1",
+  "requirements_id": "mullu-clearance-capture-requirements-2026-05-15",
+  "product_name": "Mullu",
+  "company_brand": "Mullusi",
+  "evidence_root": "docs/clearance-evidence/mullu/2026-05-15/",
+  "public_paid_launch_allowed": false,
+  "gates": [
+    {
+      "gate": "uspto_search",
+      "directory": "01-uspto/",
+      "authority": "product owner plus qualified trademark reviewer",
+      "required_files": [
+        "uspto-search-mullu.pdf",
+        "uspto-search-mullusi.pdf",
+        "uspto-search-mullu-by-mullusi.pdf",
+        "uspto-search-mullu-surfaces.pdf",
+        "uspto-search-mulu.pdf",
+        "decision.md"
+      ],
+      "decision_fields": [
+        "reviewer",
+        "review_date",
+        "evidence_files",
+        "result_count",
+        "highest_conflict_rating",
+        "decision",
+        "launch_impact"
+      ],
+      "status": "pending"
+    },
+    {
+      "gate": "wipo_search",
+      "directory": "02-wipo/",
+      "authority": "product owner plus qualified trademark reviewer",
+      "required_files": [
+        "wipo-search-mullu.pdf",
+        "wipo-search-mullusi.pdf",
+        "wipo-search-mullu-by-mullusi.pdf",
+        "decision.md"
+      ],
+      "decision_fields": [
+        "reviewer",
+        "review_date",
+        "evidence_files",
+        "collections_checked",
+        "highest_conflict_rating",
+        "decision",
+        "launch_impact"
+      ],
+      "status": "pending"
+    },
+    {
+      "gate": "euipo_tmview_search",
+      "directory": "03-euipo-tmview/",
+      "authority": "product owner plus qualified trademark reviewer",
+      "required_files": [
+        "euipo-search-mullu.pdf",
+        "euipo-search-mullusi.pdf",
+        "euipo-search-mullu-by-mullusi.pdf",
+        "tmview-search-mullu.pdf",
+        "tmview-search-mullusi.pdf",
+        "tmview-search-mullu-by-mullusi.pdf",
+        "decision.md"
+      ],
+      "decision_fields": [
+        "reviewer",
+        "review_date",
+        "evidence_files",
+        "jurisdictions_checked",
+        "highest_conflict_rating",
+        "decision",
+        "launch_impact"
+      ],
+      "status": "pending"
+    },
+    {
+      "gate": "close_variant_review",
+      "directory": "04-close-variant-mulu/",
+      "authority": "qualified trademark reviewer",
+      "required_files": [
+        "tsdr-99518598.pdf",
+        "tsdr-99264214.pdf",
+        "tsdr-85772539.pdf",
+        "tsdr-85494313.pdf",
+        "tsdr-85222451.pdf",
+        "mulu-confusion-analysis.md",
+        "decision.md"
+      ],
+      "decision_fields": [
+        "reviewer",
+        "review_date",
+        "evidence_files",
+        "serials_reviewed",
+        "confusion_analysis",
+        "highest_conflict_rating",
+        "decision",
+        "launch_impact"
+      ],
+      "status": "pending"
+    },
+    {
+      "gate": "domain_ownership",
+      "directory": "05-domain-ownership/",
+      "authority": "domain/DNS owner plus launch owner",
+      "required_files": [
+        "registrar-ownership.pdf",
+        "dns-zone-control.pdf",
+        "https-certificate.pdf",
+        "renewal-and-lock-controls.pdf",
+        "decision.md"
+      ],
+      "decision_fields": [
+        "selected_route",
+        "domain_dns_owner",
+        "review_date",
+        "evidence_files",
+        "registrar",
+        "dns_provider",
+        "renewal_control",
+        "security_controls",
+        "decision",
+        "launch_impact"
+      ],
+      "status": "pending"
+    },
+    {
+      "gate": "legal_review",
+      "directory": "06-legal-review/",
+      "authority": "qualified legal/trademark reviewer",
+      "required_files": [
+        "legal-review-decision.pdf",
+        "reviewed-evidence-list.md",
+        "decision.md"
+      ],
+      "decision_fields": [
+        "reviewer",
+        "review_date",
+        "reviewed_evidence_paths",
+        "decision",
+        "risk_controls",
+        "launch_impact"
+      ],
+      "status": "pending"
+    }
+  ],
+  "mutation_rule": "Do not close any remaining gate in docs/public-naming-readiness.json until the matching required files exist and the required authority has approved the decision."
+}

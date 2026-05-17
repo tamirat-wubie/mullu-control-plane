@@ -232,6 +232,40 @@ def test_persisted_replay_trace_hash_mismatch(tmp_path: Path) -> None:
 
     assert result.trace_found is True
     assert result.trace_hash_matches is False
+    assert result.validation.ready is False
+    assert result.validation.verdict is ReplayVerdict.STATE_MISMATCH
+    assert result.validation.reasons == ("trace_source_hash_mismatch",)
+    assert result.validation.artifacts == ()
+
+
+def test_persisted_replay_trace_hash_mismatch_preserves_base_failure(tmp_path: Path) -> None:
+    replay_store, trace_store, validator = _setup(tmp_path)
+    bad_record = ReplayRecord(
+        replay_id="replay-bad-trace",
+        trace_id="trace-1",
+        source_hash="source-1",
+        approved_effects=(
+            ReplayEffect(
+                effect_id="eff-1",
+                control=EffectControl.UNCONTROLLED_EXTERNAL,
+                artifact_id=None,
+            ),
+        ),
+        blocked_effects=(),
+        mode=ReplayMode.EFFECT_BEARING,
+        recorded_at="2026-03-19T00:00:00+00:00",
+        artifacts=(),
+    )
+
+    replay_store.save(bad_record)
+    trace_store.append(_make_trace_entry(state_hash="DIFFERENT-source-hash"))
+
+    result = validator.validate("replay-bad-trace")
+
+    assert result.trace_hash_matches is False
+    assert result.validation.ready is False
+    assert result.validation.verdict is ReplayVerdict.ARTIFACT_INCOMPLETE
+    assert "trace_source_hash_mismatch" in result.validation.reasons
 
 
 def test_persisted_replay_artifact_incomplete(tmp_path: Path) -> None:

@@ -22,6 +22,8 @@ if str(REPO_ROOT) not in sys.path:
 from scripts.validate_public_naming_readiness import (  # noqa: E402
     BLOCKED_PUBLIC_NAMES,
     CLEARANCE_SCHEMA_PATH,
+    CAPTURE_REQUIREMENTS_PATH,
+    CAPTURE_REQUIREMENTS_SCHEMA_PATH,
     CLEARANCE_DRAFT_PATH,
     CONDITIONAL_WEBSITE_ROUTES,
     REQUIRED_DOMAIN_CANDIDATES,
@@ -48,6 +50,7 @@ from scripts.validate_public_naming_readiness import (  # noqa: E402
     validate_clearance_evidence_capture_plan,
     validate_clearance_evidence_scaffold,
     validate_clearance_gate_closure_requirements,
+    validate_capture_requirements,
     validate_clearance_official_searches,
     validate_app_title_update_evidence,
     validate_domain_acquisition_plan,
@@ -148,11 +151,32 @@ def test_naming_witnesses_include_schema_required_fields() -> None:
     readiness_schema = json.loads(READINESS_SCHEMA_PATH.read_text(encoding="utf-8"))
     clearance_draft = json.loads(CLEARANCE_DRAFT_PATH.read_text(encoding="utf-8"))
     clearance_schema = json.loads(CLEARANCE_SCHEMA_PATH.read_text(encoding="utf-8"))
+    capture_requirements = json.loads(CAPTURE_REQUIREMENTS_PATH.read_text(encoding="utf-8"))
+    capture_requirements_schema = json.loads(CAPTURE_REQUIREMENTS_SCHEMA_PATH.read_text(encoding="utf-8"))
 
     assert set(readiness_schema["required"]) <= set(witness)
     assert set(clearance_schema["required"]) <= set(clearance_draft)
+    assert set(capture_requirements_schema["required"]) <= set(capture_requirements)
     assert readiness_schema["properties"]["product_name"]["const"] == "Mullu"
     assert clearance_schema["properties"]["candidate_name"]["const"] == "Mullu"
+    assert capture_requirements_schema["properties"]["product_name"]["const"] == "Mullu"
+
+
+def test_capture_requirements_preserve_gate_intake_contract() -> None:
+    validate_capture_requirements()
+
+
+def test_capture_requirements_reject_missing_gate_file(tmp_path: Path) -> None:
+    requirements_path = tmp_path / "capture-requirements.json"
+    requirements = json.loads(CAPTURE_REQUIREMENTS_PATH.read_text(encoding="utf-8"))
+    for gate in requirements["gates"]:
+        if gate["gate"] == "uspto_search":
+            gate["required_files"].remove("uspto-search-mullu.pdf")
+            break
+    requirements_path.write_text(json.dumps(requirements, indent=2), encoding="utf-8")
+
+    with pytest.raises(AssertionError, match="uspto_search capture requirements missing files"):
+        validate_capture_requirements(requirements_path)
 
 
 def test_public_naming_readiness_rejects_wrong_product_name(tmp_path: Path) -> None:
@@ -539,6 +563,25 @@ def test_clearance_evidence_scaffold_rejects_missing_decision(tmp_path: Path) ->
     evidence_root.mkdir(parents=True)
     (evidence_root / "README.md").write_text(
         "paid public launch remains blocked\n",
+        encoding="utf-8",
+    )
+    (evidence_root / "CAPTURE_INDEX.md").write_text(
+        "\n".join(
+            [
+                "uspto-search-mullu.pdf",
+                "wipo-search-mullu.pdf",
+                "euipo-search-mullu.pdf",
+                "tmview-search-mullu.pdf",
+                "tsdr-99518598.pdf",
+                "registrar-ownership.pdf",
+                "legal-review-decision.pdf",
+                "paid public launch remains blocked",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    (evidence_root / "capture-requirements.json").write_text(
+        CAPTURE_REQUIREMENTS_PATH.read_text(encoding="utf-8"),
         encoding="utf-8",
     )
     for directory_name in REQUIRED_CLEARANCE_EVIDENCE_DIRS:

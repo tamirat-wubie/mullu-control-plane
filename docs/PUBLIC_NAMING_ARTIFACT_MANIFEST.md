@@ -17,6 +17,8 @@ Invariants: every listed artifact must exist; paid public launch remains blocked
 | `docs/APP_TITLE_UPDATE_EVIDENCE_2026-05-15.md` | User-facing app title update evidence |
 | `docs/CLEARANCE_EVIDENCE_CAPTURE_PLAN_2026-05-15.md` | Remaining external-gate evidence capture plan |
 | `docs/clearance-evidence/mullu/2026-05-15/README.md` | Root pending evidence scaffold instructions |
+| `docs/clearance-evidence/mullu/2026-05-15/CAPTURE_INDEX.md` | Human-readable intake filename and mutation checklist |
+| `docs/clearance-evidence/mullu/2026-05-15/capture-requirements.json` | Machine-readable intake requirements for remaining open gates |
 | `docs/clearance-evidence/mullu/2026-05-15/01-uspto/README.md` | USPTO evidence capture instructions |
 | `docs/clearance-evidence/mullu/2026-05-15/01-uspto/decision.md` | USPTO pending decision record |
 | `docs/clearance-evidence/mullu/2026-05-15/02-wipo/README.md` | WIPO evidence capture instructions |
@@ -58,6 +60,7 @@ Invariants: every listed artifact must exist; paid public launch remains blocked
 | `docs/mullu-name-clearance-draft.json` | Draft name-clearance packet |
 | `schemas/public_naming_readiness.schema.json` | Readiness witness schema |
 | `schemas/mullu_name_clearance_draft.schema.json` | Clearance packet schema |
+| `schemas/mullu_clearance_capture_requirements.schema.json` | Capture requirements schema |
 
 ## Scripts And Tests
 
