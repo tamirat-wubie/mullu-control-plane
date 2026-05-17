@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import pytest
 
+from gateway.capability_fabric import build_default_capability_admission_gate
 from gateway.plan import (
     CapabilityPlan,
     CapabilityPlanBuilder,
@@ -31,6 +32,14 @@ from gateway.plan_ledger import (
     JsonFileCapabilityPlanLedgerStore,
     build_capability_plan_ledger_from_env,
 )
+
+
+def _clock() -> str:
+    return "2026-04-29T12:00:00+00:00"
+
+
+def _unused_passport_loader(capability_id: str):
+    raise AssertionError(f"loader must not be used: {capability_id}")
 
 
 def test_one_step_plan_projects_risk_and_evidence() -> None:
@@ -66,6 +75,52 @@ def test_builder_creates_one_step_plan_from_explicit_capability() -> None:
     assert plan.risk_tier == "medium"
     assert plan.approval_required is True
     assert plan.evidence_required == ("task_id",)
+
+
+def test_builder_can_validate_plan_steps_through_capability_admission_gate() -> None:
+    builder = CapabilityPlanBuilder(
+        capability_admission_gate=build_default_capability_admission_gate(clock=_clock),
+    )
+
+    plan = builder.build(
+        message='/run financial.send_payment {"amount": "50"}',
+        tenant_id="tenant-1",
+        identity_id="identity-1",
+    )
+
+    assert plan is not None
+    assert plan.metadata["admission_source"] == "governed_capability_registry"
+    assert plan.steps[0].capability_id == "financial.send_payment"
+    assert plan.risk_tier == "high"
+    assert plan.approval_required is True
+    assert plan.evidence_required == ("tx_id", "ledger_hash", "payment_state")
+
+
+def test_builder_rejects_plan_step_missing_from_capability_admission_gate() -> None:
+    builder = CapabilityPlanBuilder(
+        capability_admission_gate=build_default_capability_admission_gate(clock=_clock),
+    )
+
+    with pytest.raises(ValueError) as excinfo:
+        builder.build(
+            message="/run missing.capability {}",
+            tenant_id="tenant-1",
+            identity_id="identity-1",
+        )
+
+    assert "capability plan admission rejected" in str(excinfo.value)
+    assert "missing.capability" in str(excinfo.value)
+    assert "no installed capability" in str(excinfo.value)
+
+
+def test_builder_rejects_ambiguous_capability_authorities() -> None:
+    with pytest.raises(ValueError) as excinfo:
+        CapabilityPlanBuilder(
+            capability_passport_loader=_unused_passport_loader,
+            capability_admission_gate=build_default_capability_admission_gate(clock=_clock),
+        )
+
+    assert "one capability authority" in str(excinfo.value)
 
 
 def test_builder_decomposes_compound_goal_with_dependencies() -> None:
