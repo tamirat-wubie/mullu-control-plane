@@ -6651,7 +6651,7 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 435,
+    "exact_test_anchor_count": 439,
     "runtime_witness_count": 1029,
     "surfaces": [
       {
@@ -9257,17 +9257,37 @@
         "unanchored_witnesses": []
       },
       {
-        "anchored_witnesses": [],
-        "exact_test_anchor_count": 0,
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "tests/test_proof_route_gap_triage.py::test_unclassified_routes_grouped_by_family"
+            ],
+            "witness": "unclassified_routes_grouped_by_family"
+          },
+          {
+            "anchors": [
+              "tests/test_proof_route_gap_triage.py::test_route_gap_triage_binds_source_files_and_methods"
+            ],
+            "witness": "route_gap_triage_binds_source_files_and_methods"
+          },
+          {
+            "anchors": [
+              "tests/test_proof_route_gap_triage.py::test_closure_candidates_ranked_deterministically"
+            ],
+            "witness": "closure_candidates_ranked_deterministically"
+          },
+          {
+            "anchors": [
+              "tests/test_proof_route_gap_triage.py::test_triage_report_check_detects_stale_output"
+            ],
+            "witness": "triage_report_check_detects_stale_output"
+          }
+        ],
+        "exact_test_anchor_count": 4,
         "runtime_witness_count": 4,
         "surface_id": "proof_route_gap_triage",
-        "unanchored_witness_count": 4,
-        "unanchored_witnesses": [
-          "unclassified_routes_grouped_by_family",
-          "route_gap_triage_binds_source_files_and_methods",
-          "closure_candidates_ranked_deterministically",
-          "triage_report_check_detects_stale_output"
-        ]
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
       },
       {
         "anchored_witnesses": [],
@@ -10931,6 +10951,6 @@
         ]
       }
     ],
-    "unanchored_witness_count": 594
+    "unanchored_witness_count": 590
   }
 }

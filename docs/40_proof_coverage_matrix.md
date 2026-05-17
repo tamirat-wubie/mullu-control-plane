@@ -149,8 +149,8 @@ Witness integrity audit:
 | Metric | Count |
 |---|---:|
 | Runtime witness labels | 1029 |
-| Exact test anchors | 435 |
-| Unanchored witness labels | 594 |
+| Exact test anchors | 439 |
+| Unanchored witness labels | 590 |
 
 Evidence quality gaps:
 none
@@ -190,7 +190,6 @@ Witness integrity gaps:
 | `job_engine_lifecycle` | 1 | 5 | job_create_mutation_receipt_emitted, job_start_mutation_receipt_emitted, job_pause_resume_mutation_receipts_emitted, job_terminal_mutation_receipts_emitted, job_restore_mutation_receipt_emitted |
 | `authority_obligation_mesh` | 0 | 5 | pending_approval_chain_count, open_obligation_count, overdue_obligation_count, escalated_obligation_count, command_authority_read_model_bound_to_approval_chain |
 | `authority_operator_controls` | 0 | 5 | operator_access_guard, operator_audit_events, ownership_policy_read_models, approval_expiration_witness, obligation_satisfaction_escalation_witness |
-| `proof_route_gap_triage` | 0 | 4 | unclassified_routes_grouped_by_family, route_gap_triage_binds_source_files_and_methods, closure_candidates_ranked_deterministically, triage_report_check_detects_stale_output |
 | `production_evidence_plane` | 0 | 10 | gateway_health_schema_valid, signed_production_evidence_witness, capability_evidence_schema_valid, audit_verification_schema_valid, proof_verification_schema_valid, deployment_collection_requires_production_evidence, live_physical_safety_evidence_derived_from_registry, live_physical_capability_requires_safety_evidence, sandbox_physical_capability_remains_non_production, missing_production_evidence_fails_closed |
 | `runtime_reflex_engine` | 0 | 9 | operator_only_access, mutation_applied_false, certification_handoff_required, protected_surfaces_auto_promote_false, signed_reflex_witness, reflex_deployment_witness_schema, reflex_validator_receipt_schema, offline_reflex_witness_replay, reflex_validator_receipt_artifact |
 | `governed_operational_intelligence` | 0 | 11 | world_assertions_require_source_evidence, knowledge_entity_routes_governed, knowledge_link_routes_governed, knowledge_contradiction_routes_governed, knowledge_summary_route_bounded, policy_simulation_routes_governed, policy_simulation_history_summary_bounded, goal_plan_certificate_hash_bound, simulation_receipt_schema_valid, open_world_contradictions_block_execution, high_risk_controls_projected_before_execution |
@@ -355,5 +354,5 @@ none
 STATUS:
   Completeness: 100%
   Invariants verified: route declarations, route-level coverage classification, coverage levels, coverage states, closure action mapping, schema contract validation, deployment orchestration receipt schema contract
-  Open issues: 594 runtime-witness labels lack exact test-function anchors
+  Open issues: 590 runtime-witness labels lack exact test-function anchors
   Next action: bind unanchored runtime-witness labels to exact test-function anchors
