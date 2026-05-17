@@ -17,11 +17,13 @@ from __future__ import annotations
 import json
 import os
 from dataclasses import dataclass, field
+from datetime import UTC, datetime
 from typing import Any
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import Response
 
+from gateway.receipt_middleware import GatewayReceiptMiddleware
 from gateway.capability_isolation import (
     CapabilityExecutionResponse,
     LocalCapabilityExecutionWorker,
@@ -81,6 +83,7 @@ def create_capability_worker_app(
     *,
     dispatcher: CapabilityDispatcher | None = None,
     platform: Any = None,
+    proof_bridge: Any | None = None,
     signing_secret: str | None = None,
     worker_id: str = "restricted-capability-worker",
 ) -> FastAPI:
@@ -89,8 +92,20 @@ def create_capability_worker_app(
     if not secret:
         raise ValueError("capability worker signing secret is required")
     resolved_dispatcher = dispatcher or build_capability_dispatcher_from_platform(platform)
+    resolved_proof_bridge = proof_bridge
+    if resolved_proof_bridge is None and platform is not None:
+        resolved_proof_bridge = getattr(platform, "proof_bridge", None)
+    if resolved_proof_bridge is None:
+        from mcoi_runtime.core.proof_bridge import ProofBridge
+
+        resolved_proof_bridge = ProofBridge(clock=_utc_timestamp)
     worker = LocalCapabilityExecutionWorker(resolved_dispatcher, worker_id=worker_id)
     app = FastAPI(title="Mullu Capability Worker", version="1.0.0")
+    app.add_middleware(
+        GatewayReceiptMiddleware,
+        proof_bridge=resolved_proof_bridge,
+        certified_prefixes=("/capability/",),
+    )
 
     @app.get("/health")
     def health() -> dict[str, Any]:
@@ -155,6 +170,7 @@ def create_capability_worker_app(
 
     app.state.worker_id = worker_id
     app.state.dispatcher = resolved_dispatcher
+    app.state.proof_bridge = resolved_proof_bridge
     return app
 
 
@@ -171,6 +187,11 @@ def _transport_result(result: dict[str, Any] | None) -> dict[str, Any] | None:
             "capability_execution_request_id",
         }
     }
+
+
+def _utc_timestamp() -> str:
+    """Return an ISO-8601 UTC timestamp for worker-local receipts."""
+    return datetime.now(UTC).replace(microsecond=0).isoformat().replace("+00:00", "Z")
 
 
 def _default_app() -> FastAPI:

@@ -59,6 +59,7 @@ _log = logging.getLogger(__name__)
 _CERTIFIED_PREFIXES: tuple[str, ...] = (
     "/webhook/",
     "/authority/",
+    "/capability/",
     "/capability-fabric/",
     "/capability-plans/",
 )
@@ -83,6 +84,8 @@ def _channel_from_path(path: str) -> str:
         return "capability-fabric"
     if path.startswith("/capability-plans/"):
         return "capability-plans"
+    if path.startswith("/capability/"):
+        return "capability"
     return "other"
 
 

@@ -68,6 +68,16 @@ class SettlingPaymentExecutor:
         )
 
 
+class RecordingProofBridge:
+    """Captures capability worker boundary certification calls."""
+
+    def __init__(self) -> None:
+        self.calls: list[dict[str, Any]] = []
+
+    def certify_governance_decision(self, **kwargs: Any) -> None:
+        self.calls.append(dict(kwargs))
+
+
 def _request_body() -> bytes:
     boundary = CapabilityIsolationPolicy(environment="pilot").boundary_for(
         capability_passport_for("financial.send_payment"),
@@ -168,6 +178,31 @@ def test_capability_worker_executes_signed_payment_request() -> None:
     assert payload["receipt"]["evidence_refs"]
 
 
+def test_capability_worker_emits_transition_receipt_for_success() -> None:
+    secret = "worker-secret"
+    proof_bridge = RecordingProofBridge()
+    app = create_capability_worker_app(
+        dispatcher=SkillDispatcher(payment_executor=SettlingPaymentExecutor()),
+        proof_bridge=proof_bridge,
+        signing_secret=secret,
+        worker_id="restricted-worker-test",
+    )
+    client = TestClient(app)
+    body = _request_body()
+
+    response = client.post(
+        "/capability/execute",
+        content=body,
+        headers={"X-Mullu-Capability-Signature": sign_capability_payload(body, secret)},
+    )
+
+    assert response.status_code == 200
+    assert len(proof_bridge.calls) == 1
+    assert proof_bridge.calls[0]["endpoint"] == "/capability/execute"
+    assert proof_bridge.calls[0]["decision"] == "allowed"
+    assert proof_bridge.calls[0]["tenant_id"] == "gateway:capability"
+
+
 def test_capability_worker_rejects_bad_signature() -> None:
     app = create_capability_worker_app(
         dispatcher=SkillDispatcher(payment_executor=SettlingPaymentExecutor()),
@@ -184,6 +219,29 @@ def test_capability_worker_rejects_bad_signature() -> None:
 
     assert response.status_code == 403
     assert response.json()["detail"] == "invalid capability request signature"
+
+
+def test_capability_worker_emits_transition_receipt_for_bad_signature() -> None:
+    proof_bridge = RecordingProofBridge()
+    app = create_capability_worker_app(
+        dispatcher=SkillDispatcher(payment_executor=SettlingPaymentExecutor()),
+        proof_bridge=proof_bridge,
+        signing_secret="worker-secret",
+        worker_id="restricted-worker-test",
+    )
+    client = TestClient(app)
+
+    response = client.post(
+        "/capability/execute",
+        content=_request_body(),
+        headers={"X-Mullu-Capability-Signature": "hmac-sha256:bad"},
+    )
+
+    assert response.status_code == 403
+    assert len(proof_bridge.calls) == 1
+    assert proof_bridge.calls[0]["endpoint"] == "/capability/execute"
+    assert proof_bridge.calls[0]["decision"] == "denied"
+    assert proof_bridge.calls[0]["guard_results"][0]["reason"] == "http_403_response"
 
 
 def test_capability_worker_parse_error_detail_is_bounded() -> None:
