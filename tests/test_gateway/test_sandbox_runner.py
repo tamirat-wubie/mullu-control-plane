@@ -238,6 +238,14 @@ def test_sandbox_runner_rejects_host_root_workspace() -> None:
         )
 
 
+def test_sandbox_runner_rejects_blank_workspace_root() -> None:
+    with pytest.raises(ValueError, match="^host_workspace_root must be a non-empty string$"):
+        DockerRootlessSandboxRunner(
+            host_workspace_root=" ",
+            platform_system=lambda: "Linux",
+        )
+
+
 def test_sandbox_runner_rejects_missing_workspace(tmp_path: Path) -> None:
     missing_workspace = tmp_path / "missing-workspace"
 

@@ -174,13 +174,12 @@ class DockerRootlessSandboxRunner:
         clock: Callable[[], str] | None = None,
         platform_system: Callable[[], str] = platform.system,
     ) -> None:
+        _require_text(host_workspace_root, "host_workspace_root")
         self._host_workspace_root = Path(host_workspace_root).resolve(strict=False)
         self._profile = profile or SandboxRunnerProfile()
         self._runner = runner
         self._clock = clock or (lambda: "")
         self._platform_system = platform_system
-        if not str(self._host_workspace_root):
-            raise ValueError("host_workspace_root is required")
         if not self._host_workspace_root.exists():
             raise ValueError("host_workspace_root must exist")
         if not self._host_workspace_root.is_dir():
