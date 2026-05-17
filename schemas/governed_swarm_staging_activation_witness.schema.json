@@ -1,0 +1,217 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:governed-swarm-staging-activation-witness:1",
+  "title": "Governed Swarm Staging Activation Witness",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "witness_id",
+    "collected_at",
+    "environment",
+    "control_plane_repo",
+    "control_plane_commit",
+    "runtime_repo",
+    "runtime_release_tag",
+    "runtime_commit",
+    "runtime_path",
+    "feature_flags",
+    "route_probes",
+    "invoice_smoke",
+    "audit_store",
+    "rollback",
+    "outcome",
+    "errors"
+  ],
+  "properties": {
+    "witness_id": {
+      "type": "string",
+      "pattern": "^governed-swarm-staging-[0-9a-f]{16}$"
+    },
+    "collected_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "environment": {
+      "type": "string",
+      "enum": ["staging", "pilot"]
+    },
+    "control_plane_repo": {
+      "type": "string",
+      "const": "tamirat-wubie/mullu-control-plane"
+    },
+    "control_plane_commit": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}$"
+    },
+    "runtime_repo": {
+      "type": "string",
+      "const": "tamirat-wubie/mullu-governed-swarm"
+    },
+    "runtime_release_tag": {
+      "type": "string",
+      "const": "v0.1.0-governed-swarm"
+    },
+    "runtime_commit": {
+      "type": "string",
+      "const": "5882c5f24ca35fd5a133357b55b5411ebdc99dfb"
+    },
+    "runtime_path": {
+      "type": "string",
+      "pattern": "mcoi$"
+    },
+    "feature_flags": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "MULLU_GOVERNED_SWARM_ENABLED",
+        "MULLU_GOVERNED_SWARM_AUDIT_STORE_PATH",
+        "MULLU_GOVERNED_SWARM_RUNTIME_PATH"
+      ],
+      "properties": {
+        "MULLU_GOVERNED_SWARM_ENABLED": {
+          "type": "string",
+          "const": "true"
+        },
+        "MULLU_GOVERNED_SWARM_AUDIT_STORE_PATH": {
+          "type": "string",
+          "minLength": 1
+        },
+        "MULLU_GOVERNED_SWARM_RUNTIME_PATH": {
+          "type": "string",
+          "pattern": "mcoi$"
+        }
+      }
+    },
+    "route_probes": {
+      "type": "array",
+      "minItems": 3,
+      "items": {
+        "$ref": "#/$defs/route_probe"
+      }
+    },
+    "invoice_smoke": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "create_http_status",
+        "read_http_status",
+        "list_http_status",
+        "run_id",
+        "governed",
+        "terminal_status"
+      ],
+      "properties": {
+        "create_http_status": {
+          "type": "integer",
+          "const": 200
+        },
+        "read_http_status": {
+          "type": "integer",
+          "const": 200
+        },
+        "list_http_status": {
+          "type": "integer",
+          "const": 200
+        },
+        "run_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "governed": {
+          "type": "boolean",
+          "const": true
+        },
+        "terminal_status": {
+          "type": "string",
+          "enum": ["closed", "requires_approval", "review_required"]
+        }
+      }
+    },
+    "audit_store": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "exists",
+        "receipt_count",
+        "latest_receipt_has_closure"
+      ],
+      "properties": {
+        "path": {
+          "type": "string",
+          "minLength": 1
+        },
+        "exists": {
+          "type": "boolean",
+          "const": true
+        },
+        "receipt_count": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "latest_receipt_has_closure": {
+          "type": "boolean",
+          "const": true
+        }
+      }
+    },
+    "rollback": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "disable_flag",
+        "restart_required",
+        "audit_store_preserved"
+      ],
+      "properties": {
+        "disable_flag": {
+          "type": "string",
+          "const": "MULLU_GOVERNED_SWARM_ENABLED=false"
+        },
+        "restart_required": {
+          "type": "boolean",
+          "const": true
+        },
+        "audit_store_preserved": {
+          "type": "boolean",
+          "const": true
+        }
+      }
+    },
+    "outcome": {
+      "type": "string",
+      "enum": ["SolvedVerified", "AwaitingEvidence", "GovernanceBlocked"]
+    },
+    "errors": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "$defs": {
+    "route_probe": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["method", "path", "expected_http_status"],
+      "properties": {
+        "method": {
+          "type": "string",
+          "enum": ["GET", "POST"]
+        },
+        "path": {
+          "type": "string",
+          "enum": [
+            "/api/v1/swarm/invoice-runs",
+            "/api/v1/swarm/runs/{run_id}",
+            "/api/v1/swarm/runs"
+          ]
+        },
+        "expected_http_status": {
+          "type": "integer",
+          "const": 200
+        }
+      }
+    }
+  }
+}

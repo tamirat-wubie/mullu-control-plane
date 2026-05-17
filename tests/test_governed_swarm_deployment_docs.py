@@ -2,8 +2,8 @@
 
 Purpose: keep the feature-flagged governed swarm activation contract visible to operators.
 Governance scope: deployment docs, env example, and control-plane route activation.
-Dependencies: README, DEPLOYMENT guides, and governed swarm env example.
-Invariants: docs must name the enable flag, audit store, runtime path, release pin, and disabled-by-default boundary.
+Dependencies: README, DEPLOYMENT guides, governed swarm env example, and staging activation runbook.
+Invariants: docs must name the enable flag, audit store, runtime path, release pin, staging witness, and disabled-by-default boundary.
 """
 
 from __future__ import annotations
@@ -42,3 +42,14 @@ def test_deployment_docs_reference_governed_swarm_feature_flag_boundary() -> Non
     assert "disabled by default" in deployment
     assert "disabled by default" in production
     assert "/api/v1/swarm/invoice-runs" in production
+
+
+def test_staging_activation_runbook_binds_witness_and_rollback() -> None:
+    text = _read("docs/governed-swarm-staging-activation-runbook.md")
+
+    assert "v0.1.0-governed-swarm" in text
+    assert "MULLU_GOVERNED_SWARM_ENABLED=true" in text
+    assert "MULLU_GOVERNED_SWARM_AUDIT_STORE_PATH" in text
+    assert "/api/v1/swarm/invoice-runs" in text
+    assert "schemas/governed_swarm_staging_activation_witness.schema.json" in text
+    assert "MULLU_GOVERNED_SWARM_ENABLED=false" in text

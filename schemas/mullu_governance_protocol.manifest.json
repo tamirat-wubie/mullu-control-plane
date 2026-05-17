@@ -227,6 +227,12 @@
       "surface": "deployment"
     },
     {
+      "schema_id": "governed-swarm-staging-activation-witness",
+      "path": "schemas/governed_swarm_staging_activation_witness.schema.json",
+      "urn": "urn:mullusi:schema:governed-swarm-staging-activation-witness:1",
+      "surface": "deployment"
+    },
+    {
       "schema_id": "domain-capsule",
       "path": "schemas/domain_capsule.schema.json",
       "urn": "urn:mullusi:schema:domain-capsule:1",

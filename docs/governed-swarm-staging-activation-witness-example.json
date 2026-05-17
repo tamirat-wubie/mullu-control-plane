@@ -1,0 +1,54 @@
+{
+  "witness_id": "governed-swarm-staging-0123456789abcdef",
+  "collected_at": "2026-05-17T07:45:00Z",
+  "environment": "staging",
+  "control_plane_repo": "tamirat-wubie/mullu-control-plane",
+  "control_plane_commit": "9917a0aa07d638cc80ae14e17e07c33e6bbae246",
+  "runtime_repo": "tamirat-wubie/mullu-governed-swarm",
+  "runtime_release_tag": "v0.1.0-governed-swarm",
+  "runtime_commit": "5882c5f24ca35fd5a133357b55b5411ebdc99dfb",
+  "runtime_path": "/opt/mullu/mullu-governed-swarm/mcoi",
+  "feature_flags": {
+    "MULLU_GOVERNED_SWARM_ENABLED": "true",
+    "MULLU_GOVERNED_SWARM_AUDIT_STORE_PATH": "/var/lib/mullu/governed-swarm/swarm-runs.jsonl",
+    "MULLU_GOVERNED_SWARM_RUNTIME_PATH": "/opt/mullu/mullu-governed-swarm/mcoi"
+  },
+  "route_probes": [
+    {
+      "method": "POST",
+      "path": "/api/v1/swarm/invoice-runs",
+      "expected_http_status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/swarm/runs/{run_id}",
+      "expected_http_status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/swarm/runs",
+      "expected_http_status": 200
+    }
+  ],
+  "invoice_smoke": {
+    "create_http_status": 200,
+    "read_http_status": 200,
+    "list_http_status": 200,
+    "run_id": "swarm-run-staging-001",
+    "governed": true,
+    "terminal_status": "closed"
+  },
+  "audit_store": {
+    "path": "/var/lib/mullu/governed-swarm/swarm-runs.jsonl",
+    "exists": true,
+    "receipt_count": 1,
+    "latest_receipt_has_closure": true
+  },
+  "rollback": {
+    "disable_flag": "MULLU_GOVERNED_SWARM_ENABLED=false",
+    "restart_required": true,
+    "audit_store_preserved": true
+  },
+  "outcome": "SolvedVerified",
+  "errors": []
+}
