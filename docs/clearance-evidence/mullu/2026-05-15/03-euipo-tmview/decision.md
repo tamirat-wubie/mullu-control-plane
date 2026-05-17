@@ -21,8 +21,18 @@ Invariants: pending decision blocks paid public launch.
 
 Pending official EUIPO/TMview capture and qualified review.
 
+## Access Attempt Log
+
+| Date | Channel | Query / Target | Result | Gate impact |
+| --- | --- | --- | --- | --- |
+| 2026-05-17 | `https://www.euipo.europa.eu/en/search-ip` | EUIPO search entry reachability check | HTTP 200 | Does not close `euipo_tmview_search`; official result export or screenshot set still required |
+| 2026-05-17 | `https://www.tmdn.org/tmview/` | TMview portal reachability check | HTTP 200 | Does not close `euipo_tmview_search`; official result export or screenshot set still required |
+
+The official portals are reachable, but no official result export, screenshot
+set, or qualified reviewer conclusion is attached. The gate remains open.
+
 STATUS:
-  Completeness: 10%
-  Invariants verified: [pending state explicit, no clearance claimed]
-  Open issues: [official evidence, reviewer decision]
-  Next action: fill after EUIPO/TMview capture
+  Completeness: 20%
+  Invariants verified: [pending state explicit, no clearance claimed, access attempt logged]
+  Open issues: [official search result export, reviewer decision]
+  Next action: capture official EUIPO and TMview result evidence manually

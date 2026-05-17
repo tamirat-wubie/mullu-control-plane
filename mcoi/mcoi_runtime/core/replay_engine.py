@@ -111,10 +111,14 @@ class ReplayEngine:
     def validate(self, replay_record: ReplayRecord) -> ReplayValidationResult:
         """Validate artifact completeness and effect control. Original API preserved."""
         reasons: list[str] = []
-        artifact_ids = {artifact.artifact_id for artifact in replay_record.artifacts}
+        artifact_ids: set[str] = set()
 
         if not replay_record.artifacts:
             reasons.append("missing_artifacts")
+        for artifact in replay_record.artifacts:
+            if artifact.artifact_id in artifact_ids:
+                reasons.append("duplicate_artifact_id")
+            artifact_ids.add(artifact.artifact_id)
 
         for effect in replay_record.approved_effects:
             if effect.control is EffectControl.UNCONTROLLED_EXTERNAL:

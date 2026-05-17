@@ -12,9 +12,12 @@ from pathlib import Path
 
 import pytest
 
-TEST_ROOT = Path(__file__).resolve().parent.parent
-if str(TEST_ROOT) not in sys.path:
-    sys.path.insert(0, str(TEST_ROOT))
+MCOI_ROOT = Path(__file__).resolve().parent.parent
+REPO_ROOT = MCOI_ROOT.parent
+
+for import_root in (REPO_ROOT, MCOI_ROOT):
+    if str(import_root) not in sys.path:
+        sys.path.insert(0, str(import_root))
 
 
 # v4.26.0 (audit P0): the production resolver now fails closed when no

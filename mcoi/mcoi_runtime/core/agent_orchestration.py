@@ -15,6 +15,7 @@ Invariants:
   - Capability admission policy changes carry bounded proof records.
   - Capability policy proofs carry bounded runtime impact counts.
   - Capability discovery observations carry bounded proof records.
+  - Capability discovery proofs carry bounded active-surface records.
   - Agent handoffs require capability matching.
   - Handoff attempts carry bounded proof records.
   - Proposals require a registered proposer with matching capabilities.
@@ -24,6 +25,7 @@ Invariants:
   - Voting submission transitions carry bounded proof records.
   - Voting submission proofs carry bounded phase-surface transition records.
   - Consensus observations carry bounded proof records.
+  - Consensus proofs carry bounded threshold and active-surface records.
   - Execution readiness transitions carry bounded proof records.
   - Execution readiness proofs carry bounded phase-surface transition records.
   - Dispatch results carry bounded proof records.
@@ -521,6 +523,12 @@ class ConsensusObservationProof:
     approval_count: int
     rejection_count: int
     registered_agent_count: int
+    quorum_threshold: int
+    total_plan_count: int
+    active_plan_count: int
+    active_proposal_count: int
+    consensus_proof_count_before: int
+    consensus_proof_count_after: int
     quorum_met: bool
 
     def to_dict(self) -> dict[str, Any]:
@@ -537,6 +545,12 @@ class ConsensusObservationProof:
             "approval_count": self.approval_count,
             "rejection_count": self.rejection_count,
             "registered_agent_count": self.registered_agent_count,
+            "quorum_threshold": self.quorum_threshold,
+            "total_plan_count": self.total_plan_count,
+            "active_plan_count": self.active_plan_count,
+            "active_proposal_count": self.active_proposal_count,
+            "consensus_proof_count_before": self.consensus_proof_count_before,
+            "consensus_proof_count_after": self.consensus_proof_count_after,
             "quorum_met": self.quorum_met,
         }
 
@@ -553,6 +567,11 @@ class CapabilityDiscoveryProof:
     matched_agent_count: int
     manifest_gated: bool
     manifest_admitted: bool
+    total_plan_count: int
+    active_plan_count: int
+    active_proposal_count: int
+    capability_discovery_proof_count_before: int
+    capability_discovery_proof_count_after: int
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -565,6 +584,15 @@ class CapabilityDiscoveryProof:
             "matched_agent_count": self.matched_agent_count,
             "manifest_gated": self.manifest_gated,
             "manifest_admitted": self.manifest_admitted,
+            "total_plan_count": self.total_plan_count,
+            "active_plan_count": self.active_plan_count,
+            "active_proposal_count": self.active_proposal_count,
+            "capability_discovery_proof_count_before": (
+                self.capability_discovery_proof_count_before
+            ),
+            "capability_discovery_proof_count_after": (
+                self.capability_discovery_proof_count_after
+            ),
         }
 
 
@@ -1593,6 +1621,9 @@ class AgentOrchestrator:
     def _successful_result_count(plan: OrchestrationPlan) -> int:
         return sum(1 for result in plan.results if result.get("success"))
 
+    def _quorum_threshold(self) -> int:
+        return self.agent_count // 2 + 1
+
     def _active_phase(self, phase: OrchestrationPhase) -> bool:
         return phase in (
             OrchestrationPhase.PLANNING,
@@ -2033,7 +2064,8 @@ class AgentOrchestrator:
         decision: str,
         reason: str,
     ) -> ConsensusObservationProof:
-        proof_index = len(self._consensus_proofs) + 1
+        consensus_proof_count_before = len(self._consensus_proofs)
+        proof_index = consensus_proof_count_before + 1
         quorum_met = bool(plan is not None and plan.has_quorum(self.agent_count))
         return ConsensusObservationProof(
             proof_id=f"consensus:{proof_index}",
@@ -2048,6 +2080,12 @@ class AgentOrchestrator:
             approval_count=0 if plan is None else plan.approval_count,
             rejection_count=0 if plan is None else plan.rejection_count,
             registered_agent_count=self.agent_count,
+            quorum_threshold=self._quorum_threshold(),
+            total_plan_count=self._total_plans,
+            active_plan_count=self._active_plan_count(),
+            active_proposal_count=self._active_proposal_count(),
+            consensus_proof_count_before=consensus_proof_count_before,
+            consensus_proof_count_after=consensus_proof_count_before + 1,
             quorum_met=quorum_met,
         )
 
@@ -2060,7 +2098,8 @@ class AgentOrchestrator:
         reason: str,
         manifest_admitted: bool,
     ) -> CapabilityDiscoveryProof:
-        proof_index = len(self._capability_discovery_proofs) + 1
+        capability_discovery_proof_count_before = len(self._capability_discovery_proofs)
+        proof_index = capability_discovery_proof_count_before + 1
         return CapabilityDiscoveryProof(
             proof_id=f"capability-discovery:{proof_index}",
             decision=decision,
@@ -2071,6 +2110,15 @@ class AgentOrchestrator:
             matched_agent_count=matched_agent_count,
             manifest_gated=self.manifest_gated,
             manifest_admitted=manifest_admitted,
+            total_plan_count=self._total_plans,
+            active_plan_count=self._active_plan_count(),
+            active_proposal_count=self._active_proposal_count(),
+            capability_discovery_proof_count_before=(
+                capability_discovery_proof_count_before
+            ),
+            capability_discovery_proof_count_after=(
+                capability_discovery_proof_count_before + 1
+            ),
         )
 
     def _record_plan_lookup(

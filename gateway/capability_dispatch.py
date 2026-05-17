@@ -402,6 +402,15 @@ def _adapter_worker_result(*, plane: str, response: Any) -> dict[str, Any]:
         result = {}
     if not isinstance(receipt, dict):
         receipt = {}
+    verification_status = str(receipt.get("verification_status", ""))
+    evidence_refs = receipt.get("evidence_refs", ())
+    if not _valid_worker_evidence_refs(evidence_refs):
+        status = "failed"
+        error = error or "worker_receipt_evidence_invalid"
+        evidence_refs = ()
+    elif status == "succeeded" and verification_status != "passed":
+        status = "failed"
+        error = error or "worker_receipt_verification_failed"
     return {
         "response": f"{plane.capitalize()} action {status or 'completed'}.",
         "worker_plane": plane,
@@ -409,10 +418,16 @@ def _adapter_worker_result(*, plane: str, response: Any) -> dict[str, Any]:
         "worker_result": dict(result),
         "worker_receipt": dict(receipt),
         "worker_error": error,
-        "verification_status": str(receipt.get("verification_status", "")),
-        "evidence_refs": list(receipt.get("evidence_refs", ())),
+        "verification_status": verification_status,
+        "evidence_refs": list(evidence_refs),
         "receipt_status": status or "unknown",
     }
+
+
+def _valid_worker_evidence_refs(evidence_refs: Any) -> bool:
+    if not isinstance(evidence_refs, list | tuple) or not evidence_refs:
+        return False
+    return all(isinstance(ref, str) and bool(ref.strip()) for ref in evidence_refs)
 
 
 def _browser_payload(

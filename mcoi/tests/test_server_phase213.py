@@ -17,6 +17,9 @@ def client():
     os.environ["MULLU_ENV"] = "local_dev"
     os.environ["MULLU_DB_BACKEND"] = "memory"
     from mcoi_runtime.app.server import app
+    from mcoi_runtime.app.routers.deps import deps
+
+    deps.llm_circuit.reset()
     return TestClient(app)
 
 

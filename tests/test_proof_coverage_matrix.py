@@ -133,10 +133,17 @@ def test_witness_integrity_report_tracks_exact_test_anchors() -> None:
     assert surfaces["code_intelligence_operator_read_model"]["unanchored_witness_count"] == 0
     assert surfaces["data_export_lifecycle"]["exact_test_anchor_count"] >= 4
     assert surfaces["data_export_lifecycle"]["unanchored_witness_count"] == 0
+    assert surfaces["prompt_template_lifecycle"]["unanchored_witness_count"] == 0
     assert surfaces["operational_platform_read_models"]["exact_test_anchor_count"] >= 25
     assert surfaces["operational_platform_read_models"]["unanchored_witness_count"] == 0
     assert surfaces["trust_ledger"]["unanchored_witness_count"] == 0
     assert surfaces["gateway_runtime_witness"]["unanchored_witness_count"] == 0
+    assert surfaces["workflow_execution_lifecycle"]["unanchored_witness_count"] == 0
+    assert surfaces["webhooks_proof_surface"]["unanchored_witness_count"] == 0
+    assert surfaces["tenant_governance_lifecycle"]["unanchored_witness_count"] == 0
+    assert surfaces["multimodal_operating_layer"]["unanchored_witness_count"] == 0
+    assert surfaces["runtime_conformance_attestation"]["unanchored_witness_count"] == 0
+    assert surfaces["finance_approval_packets"]["unanchored_witness_count"] == 0
     assert surfaces["tool_registry_read_models"]["unanchored_witness_count"] == 0
 
 
@@ -680,6 +687,12 @@ def test_finance_approval_packet_surface_is_witnessed() -> None:
     assert "payment_closure_example_evidence_validates_provider_binding_chain" in witnesses
     assert "packet_proof_requires_policy_evidence_and_closure_for_closed_states" in witnesses
     assert "operator_read_model_bounds_visible_packets_and_counts" in witnesses
+    finance_integrity = {
+        record["surface_id"]: record
+        for record in matrix["witness_integrity"]["surfaces"]
+    }["finance_approval_packets"]
+    assert finance_integrity["exact_test_anchor_count"] == 15
+    assert finance_integrity["unanchored_witness_count"] == 0
     assert closure_actions["classify_finance_approval_packet_routes"]["status"] == "closed"
 
 
@@ -880,6 +893,11 @@ def test_tenant_governance_lifecycle_surface_is_witnessed() -> None:
     assert "mcoi/mcoi_runtime/governance/guards/tenant_gating.py" in tenant_surface["evidence_files"]
     assert "mcoi/tests/test_server_phase202.py" in tenant_surface["evidence_files"]
     assert "mcoi/tests/test_governance_endpoints.py" in tenant_surface["evidence_files"]
+    assert "mcoi/tests/test_usage_reporter.py" in tenant_surface["evidence_files"]
+    assert "mcoi/tests/test_tenant_analytics.py" in tenant_surface["evidence_files"]
+    assert "mcoi/tests/test_tenant_quota.py" in tenant_surface["evidence_files"]
+    assert "mcoi/tests/test_phase232.py" in tenant_surface["evidence_files"]
+    assert "mcoi/tests/test_server_capability_helpers.py" in tenant_surface["evidence_files"]
     assert "tenant_budget_create_emits_action_proof" in witnesses
     assert "tenant_budget_create_records_audit" in witnesses
     assert "tenant_budget_read_models_scoped_by_tenant" in witnesses
@@ -888,10 +906,19 @@ def test_tenant_governance_lifecycle_surface_is_witnessed() -> None:
     assert "tenant_register_emits_action_proof" in witnesses
     assert "tenant_status_update_emits_action_proof" in witnesses
     assert "tenant_gate_read_models_governed" in witnesses
+    assert "tenant_gate_persistence_read_model_included" in witnesses
     assert "tenant_usage_read_model_scoped" in witnesses
+    assert "tenant_analytics_read_model_scoped" in witnesses
+    assert "tenant_isolation_verify_governed" in witnesses
     assert "tenant_isolation_audits_bounded" in witnesses
     assert "tenant_quota_read_models_bounded" in witnesses
     assert "tenant_partition_read_model_bounded" in witnesses
+    tenant_integrity = {
+        record["surface_id"]: record
+        for record in matrix["witness_integrity"]["surfaces"]
+    }["tenant_governance_lifecycle"]
+    assert tenant_integrity["exact_test_anchor_count"] == 15
+    assert tenant_integrity["unanchored_witness_count"] == 0
     assert closure_actions["classify_tenant_governance_lifecycle_routes"]["status"] == "closed"
 
 
@@ -1451,14 +1478,15 @@ def test_capability_plan_evidence_bundle_surface_is_witnessed() -> None:
     assert "gateway/plan_ledger.py" in plan_surface["evidence_files"]
     assert "tests/test_gateway/test_plan.py" in plan_surface["evidence_files"]
     assert "plan_evidence_bundle" in plan_surface["runtime_witnesses"]
-    assert "capability_plan_bundle_canary_passed" in conformance_surface["runtime_witnesses"]
-    assert "physical_worker_canary_passed" in conformance_surface["runtime_witnesses"]
-    assert "physical_worker_canary_artifact_hash_bound" in conformance_surface["runtime_witnesses"]
+    assert "runtime_conformance_witnesses_capability_plan_bundle" in conformance_surface["runtime_witnesses"]
+    assert "physical_worker_canary_blocks_missing_receipt_and_allows_sandbox_replay" in conformance_surface["runtime_witnesses"]
+    assert "physical_worker_canary_evidence_and_hash_are_stable" in conformance_surface["runtime_witnesses"]
     assert "gateway/physical_worker_canary.py" in conformance_surface["evidence_files"]
     assert "scripts/produce_physical_worker_canary.py" in conformance_surface["evidence_files"]
-    assert "runtime_conformance_certificate_schema_valid" in conformance_surface["runtime_witnesses"]
-    assert "runtime_conformance_collector_schema_valid" in conformance_surface["runtime_witnesses"]
-    assert "proof_coverage_unclassified_routes_reported" in conformance_surface["runtime_witnesses"]
+    assert "tests/test_gateway/test_physical_worker_canary.py" in conformance_surface["evidence_files"]
+    assert "runtime_conformance_certificate_matches_schema" in conformance_surface["runtime_witnesses"]
+    assert "collect_runtime_conformance_rejects_schema_invalid_certificate" in conformance_surface["runtime_witnesses"]
+    assert "runtime_conformance_surfaces_unclassified_proof_routes" in conformance_surface["runtime_witnesses"]
     assert closure_actions["publish_capability_plan_evidence_bundles"]["status"] == "closed"
     assert "runtime_conformance_attestation" in closure_actions["publish_capability_plan_evidence_bundles"]["surfaces"]
 

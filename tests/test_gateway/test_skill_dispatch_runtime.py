@@ -4,7 +4,7 @@ Tests: platform-backed provider injection for governed skill dispatch.
 """
 
 from decimal import Decimal
-from dataclasses import dataclass, field
+from dataclasses import asdict, dataclass, field
 from typing import Any
 import json
 import sys
@@ -33,8 +33,10 @@ from gateway.capability_isolation import (  # noqa: E402
     HttpCapabilityWorkerTransport,
     LocalCapabilityExecutionWorker,
     RemoteCapabilityExecutionExecutor,
+    build_capability_execution_request,
     build_isolated_capability_executor_from_env,
     capability_execution_response_payload,
+    capability_execution_request_from_mapping,
     sign_capability_payload,
 )
 from gateway.command_spine import canonical_hash, capability_passport_for  # noqa: E402
@@ -782,6 +784,101 @@ def test_http_capability_transport_verifies_response_signature(monkeypatch) -> N
     assert response.status == "succeeded"
     assert response.receipt.receipt_id == "capability-receipt-transport"
     assert response.receipt.evidence_refs == ("restricted_worker:transport",)
+
+
+def test_capability_request_parser_rejects_string_isolation_flag() -> None:
+    boundary = CapabilityIsolationPolicy(environment="pilot").boundary_for(
+        capability_passport_for("financial.send_payment"),
+    )
+    request = build_capability_execution_request(
+        intent=SkillIntent("financial", "send_payment", {"amount": "50"}),
+        tenant_id="tenant-1",
+        identity_id="identity-1",
+        boundary=boundary,
+    )
+    payload = {
+        "request_id": request.request_id,
+        "tenant_id": request.tenant_id,
+        "identity_id": request.identity_id,
+        "command_id": request.command_id,
+        "conversation_id": request.conversation_id,
+        "intent": dict(request.intent),
+        "boundary": asdict(request.boundary),
+        "input_hash": request.input_hash,
+        "metadata": dict(request.metadata),
+    }
+    payload["boundary"]["isolation_required"] = "true"
+
+    with pytest.raises(RuntimeError, match="^capability request is malformed$"):
+        capability_execution_request_from_mapping(payload)
+
+    assert payload["boundary"]["isolation_required"] == "true"
+    assert payload["request_id"].startswith("capability-request-")
+
+
+def test_http_capability_transport_rejects_string_receipt_isolation_flag(monkeypatch) -> None:
+    secret = "transport-secret"
+    boundary = CapabilityExecutionBoundary(
+        capability_id="financial.send_payment",
+        execution_plane="isolated_worker",
+        isolation_required=True,
+        network_policy=("payment_provider",),
+        filesystem_policy="read_only",
+        max_runtime_seconds=30,
+        max_memory_mb=256,
+        service_account="capability-financial-send_payment",
+        evidence_required=("ledger_hash",),
+    )
+    request = CapabilityExecutionRequest(
+        request_id="capability-request-transport",
+        tenant_id="tenant-1",
+        identity_id="identity-1",
+        intent={"skill": "financial", "action": "send_payment", "params": {"amount": "50"}},
+        boundary=boundary,
+        input_hash="input-hash",
+    )
+    result = {"response": "ok", "receipt_status": "settled"}
+    receipt = CapabilityExecutionReceipt(
+        receipt_id="capability-receipt-transport",
+        capability_id=boundary.capability_id,
+        execution_plane=boundary.execution_plane,
+        isolation_required=True,
+        worker_id="restricted-worker-1",
+        input_hash=request.input_hash,
+        output_hash=canonical_hash(result),
+        evidence_refs=("restricted_worker:transport",),
+    )
+    response_payload = capability_execution_response_payload(
+        CapabilityExecutionResponse(
+            request_id=request.request_id,
+            status="succeeded",
+            result=result,
+            receipt=receipt,
+        ),
+    )
+    response_payload["receipt"]["isolation_required"] = "true"
+    response_body = json.dumps(response_payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
+
+    class StubHttpResponse:
+        headers = {"X-Mullu-Capability-Response-Signature": sign_capability_payload(response_body, secret)}
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc, traceback):
+            return False
+
+        def read(self):
+            return response_body
+
+    monkeypatch.setattr("urllib.request.urlopen", lambda http_request, timeout: StubHttpResponse())
+    transport = HttpCapabilityWorkerTransport(
+        endpoint_url="https://worker.invalid/capability/execute",
+        signing_secret=secret,
+    )
+
+    with pytest.raises(RuntimeError, match="^capability worker response is malformed$"):
+        transport.submit(request)
 
 
 def test_http_capability_transport_rejects_bad_response_signature(monkeypatch) -> None:

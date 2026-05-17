@@ -22,8 +22,27 @@ Invariants: pending decision blocks paid public launch.
 
 Pending registrar, DNS, HTTPS, and launch-owner review.
 
+## Access Attempt Log
+
+| Date | Channel | Query / Target | Result | Gate impact |
+| --- | --- | --- | --- | --- |
+| 2026-05-17 | DNS A lookup | `mullu.ai` | name does not exist | Does not close `domain_ownership`; registrar evidence still required |
+| 2026-05-17 | DNS A lookup | `mullu.app` | name does not exist | Does not close `domain_ownership`; registrar evidence still required |
+| 2026-05-17 | DNS A lookup | `mullu.dev` | name does not exist | Does not close `domain_ownership`; registrar evidence still required |
+| 2026-05-17 | DNS A lookup | `getmullu.com` | name does not exist | Does not close `domain_ownership`; registrar evidence still required |
+| 2026-05-17 | DNS A lookup | `mullu.mullusi.com` | name does not exist | Does not close `domain_ownership`; DNS zone evidence still required |
+| 2026-05-17 | DNS A lookup | `mullusi.com` | GitHub Pages A records observed | Confirms company site DNS response only |
+| 2026-05-17 | RDAP lookup | `mullu.ai` | HTTP 404 Not Found | Does not prove ownership or safe availability |
+| 2026-05-17 | RDAP lookup | `mullu.app` | HTTP 404 Not Found | Does not prove ownership or safe availability |
+| 2026-05-17 | RDAP lookup | `mullu.dev` | HTTP 404 Not Found | Does not prove ownership or safe availability |
+| 2026-05-17 | RDAP lookup | `getmullu.com` | HTTP 404 Not Found | Does not prove ownership or safe availability |
+
+DNS/RDAP checks did not find active public records for the preferred external
+product domains. That is not ownership evidence. The selected route still needs
+registrar, DNS, renewal, security-control, and launch-owner proof.
+
 STATUS:
-  Completeness: 10%
-  Invariants verified: [pending state explicit, no clearance claimed]
-  Open issues: [official evidence, owner decision]
-  Next action: fill after domain ownership capture
+  Completeness: 20%
+  Invariants verified: [pending state explicit, no clearance claimed, DNS/RDAP observations bounded]
+  Open issues: [registrar evidence, DNS zone evidence, owner decision]
+  Next action: acquire or verify selected domain route and attach ownership packet

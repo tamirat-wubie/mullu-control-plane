@@ -38,8 +38,9 @@ def _surface(
     evidence_files: list[str],
     notes: str,
     runtime_witnesses: list[str] | None = None,
+    runtime_witness_anchor_aliases: dict[str, list[str]] | None = None,
 ) -> dict[str, Any]:
-    return {
+    surface = {
         "surface_id": surface_id,
         "representative_paths": paths,
         "request_proof": request_proof,
@@ -50,6 +51,12 @@ def _surface(
         "notes": notes,
         "runtime_witnesses": runtime_witnesses or [],
     }
+    if runtime_witness_anchor_aliases:
+        surface["runtime_witness_anchor_aliases"] = {
+            witness: list(aliases)
+            for witness, aliases in runtime_witness_anchor_aliases.items()
+        }
+    return surface
 
 
 def proof_coverage_matrix() -> dict[str, Any]:
@@ -540,6 +547,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "mcoi/tests/test_prompt_template_engine.py",
                 "mcoi/tests/test_prompt_templates.py",
                 "mcoi/tests/test_server_phase209.py",
+                "mcoi/tests/test_prompt_template_lifecycle.py",
             ],
             "Prompt template routes list bounded template metadata, render declared variables, and sanitize optional execution failures behind the LLM circuit breaker.",
             [
@@ -650,6 +658,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "mcoi/tests/test_tenant_budget.py",
                 "mcoi/tests/test_tenant_gating.py",
                 "mcoi/tests/test_tenant_ledger.py",
+                "mcoi/tests/test_usage_reporter.py",
+                "mcoi/tests/test_tenant_analytics.py",
+                "mcoi/tests/test_tenant_quota.py",
+                "mcoi/tests/test_phase232.py",
+                "mcoi/tests/test_server_capability_helpers.py",
             ],
             "Tenant governance lifecycle routes bind budget mutation, tenant ledger and budget read models, registration, status transitions, and gate summaries to governed responses with audit records and bounded action proofs.",
             [
@@ -669,6 +682,27 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "tenant_quota_read_models_bounded",
                 "tenant_partition_read_model_bounded",
             ],
+            {
+                "tenant_budget_create_emits_action_proof": ["create_tenant_budget"],
+                "tenant_budget_create_records_audit": ["audit_after_budget_create"],
+                "tenant_budget_read_models_scoped_by_tenant": ["get_tenant_budget"],
+                "tenant_ledger_queries_bounded": ["get_tenant_ledger"],
+                "tenant_registry_lifecycle_errors_sanitized": ["register_invalid_status"],
+                "tenant_register_emits_action_proof": ["register_new_tenant"],
+                "tenant_status_update_emits_action_proof": ["suspend_tenant"],
+                "tenant_gate_read_models_governed": ["get_existing_gate"],
+                "tenant_gate_persistence_read_model_included": [
+                    "list_gates_includes_store_backed_entries"
+                ],
+                "tenant_usage_read_model_scoped": ["generate"],
+                "tenant_analytics_read_model_scoped": ["compute"],
+                "tenant_isolation_verify_governed": [
+                    "bootstrap_capability_services_wires_usage_templates_and_isolation"
+                ],
+                "tenant_isolation_audits_bounded": ["tenant_isolation"],
+                "tenant_quota_read_models_bounded": ["get_usage"],
+                "tenant_partition_read_model_bounded": ["max_partitions_error_is_bounded"],
+            },
         ),
         _surface(
             "rbac_access_governance",
@@ -1065,6 +1099,53 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "packet_proof_requires_policy_evidence_and_closure_for_closed_states",
                 "operator_read_model_bounds_visible_packets_and_counts",
             ],
+            {
+                "finance_packet_policy_reasons_explicit": [
+                    "create_list_get_and_proof_blocked_packet"
+                ],
+                "blocked_packet_emits_no_effect": [
+                    "blocked_fixture_requires_review_and_emits_no_effect"
+                ],
+                "approval_action_binds_approval_effect_and_closure_refs": [
+                    "approval_creates_effect_and_closed_proof"
+                ],
+                "payment_handoff_prepared_without_live_payment_claim": [
+                    "approval_can_create_payment_handoff_without_live_payment_claim"
+                ],
+                "email_calendar_binding_receipt_requires_worker_token_and_readonly_scope": [
+                    "finance_email_calendar_binding_receipt_blocks_without_worker_and_scope"
+                ],
+                "payment_receipt_and_ledger_reconciliation_required_for_payment_closure": [
+                    "payment_finalization_requires_provider_and_ledger_evidence_without_mutation"
+                ],
+                "payment_closure_receipt_validator_blocks_unbound_evidence": [
+                    "validate_payment_closure_receipt_rejects_missing_ledger_evidence"
+                ],
+                "payment_closure_receipt_producer_emits_ready_sandbox_evidence": [
+                    "produce_payment_closure_receipt_emits_ready_sandbox_receipt"
+                ],
+                "payment_provider_binding_receipt_redacts_credentials_and_scopes_provider": [
+                    "payment_provider_binding_receipt_records_presence_without_values"
+                ],
+                "payment_closure_producer_consumes_provider_binding_receipt": [
+                    "produce_payment_closure_receipt_derives_binding_ref_from_ready_receipt"
+                ],
+                "payment_closure_validator_verifies_provider_binding_receipt_object": [
+                    "validate_payment_closure_receipt_accepts_ready_provider_binding_receipt"
+                ],
+                "payment_closure_receipt_producer_requires_provider_binding_for_nonsandbox": [
+                    "produce_payment_closure_receipt_requires_non_sandbox_provider_binding"
+                ],
+                "payment_closure_example_evidence_validates_provider_binding_chain": [
+                    "finance_payment_closure_example_binds_provider_receipt"
+                ],
+                "packet_proof_requires_policy_evidence_and_closure_for_closed_states": [
+                    "proof_export_fails_for_closed_packet_without_closure_certificate"
+                ],
+                "operator_read_model_bounds_visible_packets_and_counts": [
+                    "operator_read_model_summarizes_blocked_and_closed_packets"
+                ],
+            },
         ),
         _surface(
             "data_governance_controls",
@@ -2061,25 +2142,28 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "scripts/validate_mcp_capability_manifest.py",
                 "schemas/runtime_conformance_certificate.schema.json",
                 "tests/test_gateway/test_conformance.py",
+                "tests/test_gateway/test_webhooks.py",
+                "tests/test_gateway/test_physical_worker_canary.py",
+                "mcoi/tests/test_server_lineage.py",
                 "tests/test_collect_runtime_conformance.py",
                 "tests/test_produce_physical_worker_canary.py",
             ],
             "Runtime conformance certificate binds live witness, closure, fabric, isolation, lineage, authority, physical worker canary proof, MCP manifest validity, proof-matrix route classification summary, document-drift checks, issuer schema self-validation, and collector schema validation into one signed attestation.",
             [
-                "gateway_witness_valid",
-                "runtime_witness_valid",
-                "runtime_conformance_certificate_schema_valid",
-                "runtime_conformance_collector_schema_valid",
-                "proof_coverage_unclassified_routes_reported",
-                "command_closure_canary_passed",
-                "capability_admission_canary_passed",
-                "dangerous_capability_isolation_canary_passed",
-                "lineage_query_canary_passed",
-                "authority_responsibility_debt_clear",
-                "authority_directory_sync_receipt_valid",
-                "capability_plan_bundle_canary_passed",
-                "physical_worker_canary_passed",
-                "physical_worker_canary_artifact_hash_bound",
+                "runtime_conformance_endpoint_returns_signed_gap_certificate",
+                "runtime_witness_endpoints_match_public_schema",
+                "runtime_conformance_certificate_matches_schema",
+                "collect_runtime_conformance_rejects_schema_invalid_certificate",
+                "runtime_conformance_surfaces_unclassified_proof_routes",
+                "collect_runtime_conformance_rejects_failed_core_canary",
+                "command_capability_admission_read_model_reports_accepted_witness",
+                "fabric_admission_blocks_uninstalled_runtime_intent",
+                "lineage_resolve_route_returns_trace_document",
+                "collect_runtime_conformance_rejects_unclear_responsibility_debt",
+                "runtime_conformance_accepts_valid_authority_directory_sync_receipt",
+                "runtime_conformance_witnesses_capability_plan_bundle",
+                "physical_worker_canary_blocks_missing_receipt_and_allows_sandbox_replay",
+                "physical_worker_canary_evidence_and_hash_are_stable",
             ],
         ),
         _surface(
@@ -4523,6 +4607,19 @@ def _ordered_unique(values: list[str]) -> list[str]:
     return unique_values
 
 
+def _merge_witness_anchor_aliases(
+    left: dict[str, list[str]] | None,
+    right: dict[str, list[str]] | None,
+) -> dict[str, list[str]]:
+    """Merge runtime witness anchor aliases without losing declaration order."""
+
+    merged: dict[str, list[str]] = {}
+    for aliases_by_witness in (left or {}, right or {}):
+        for witness, aliases in aliases_by_witness.items():
+            merged[witness] = _ordered_unique([*merged.get(witness, []), *aliases])
+    return merged
+
+
 def _merge_duplicate_surfaces(surfaces: list[dict[str, Any]]) -> list[dict[str, Any]]:
     merged: dict[str, dict[str, Any]] = {}
     ordered_ids: list[str] = []
@@ -4530,12 +4627,21 @@ def _merge_duplicate_surfaces(surfaces: list[dict[str, Any]]) -> list[dict[str, 
     for surface in surfaces:
         surface_id = surface["surface_id"]
         if surface_id not in merged:
-            merged[surface_id] = {
+            surface_record = {
                 **surface,
                 "representative_paths": list(surface["representative_paths"]),
                 "evidence_files": list(surface["evidence_files"]),
                 "runtime_witnesses": list(surface.get("runtime_witnesses", [])),
             }
+            anchor_aliases = _merge_witness_anchor_aliases(
+                None,
+                surface.get("runtime_witness_anchor_aliases"),
+            )
+            if anchor_aliases:
+                surface_record["runtime_witness_anchor_aliases"] = anchor_aliases
+            else:
+                surface_record.pop("runtime_witness_anchor_aliases", None)
+            merged[surface_id] = surface_record
             ordered_ids.append(surface_id)
             continue
         existing = merged[surface_id]
@@ -4549,6 +4655,14 @@ def _merge_duplicate_surfaces(surfaces: list[dict[str, Any]]) -> list[dict[str, 
         existing["runtime_witnesses"] = _ordered_unique(
             [*existing.get("runtime_witnesses", []), *surface.get("runtime_witnesses", [])]
         )
+        anchor_aliases = _merge_witness_anchor_aliases(
+            existing.get("runtime_witness_anchor_aliases"),
+            surface.get("runtime_witness_anchor_aliases"),
+        )
+        if anchor_aliases:
+            existing["runtime_witness_anchor_aliases"] = anchor_aliases
+        else:
+            existing.pop("runtime_witness_anchor_aliases", None)
     return [merged[surface_id] for surface_id in ordered_ids]
 
 
@@ -4642,11 +4756,15 @@ def witness_integrity_report(
 
     for surface in surfaces:
         test_anchors = _test_function_anchors(surface.get("evidence_files", []), repo_root=repo_root)
+        witness_anchor_aliases = surface.get("runtime_witness_anchor_aliases", {})
         anchored_witnesses: list[dict[str, Any]] = []
         unanchored_witnesses: list[str] = []
         for witness in surface.get("runtime_witnesses", []):
             witness_count += 1
-            matching_anchors = test_anchors.get(witness, [])
+            matching_anchors = list(test_anchors.get(witness, []))
+            for alias in witness_anchor_aliases.get(witness, []):
+                matching_anchors.extend(test_anchors.get(alias, []))
+            matching_anchors = _ordered_unique(matching_anchors)
             if matching_anchors:
                 anchored_count += 1
                 anchored_witnesses.append({"witness": witness, "anchors": matching_anchors})

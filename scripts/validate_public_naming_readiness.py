@@ -78,6 +78,7 @@ REQUIRED_CLOSED_GATES = {
     "homepage_update",
     "app_title_update",
     "clearance_evidence_capture_plan",
+    "clearance_evidence_scaffold",
 }
 
 REQUIRED_OPEN_GATES = {
@@ -106,6 +107,19 @@ REQUIRED_EVIDENCE_DOCS = {
     "docs/NAME_CLEARANCE_PRELIMINARY.md",
     "docs/APP_TITLE_UPDATE_EVIDENCE_2026-05-15.md",
     "docs/CLEARANCE_EVIDENCE_CAPTURE_PLAN_2026-05-15.md",
+    "docs/clearance-evidence/mullu/2026-05-15/README.md",
+    "docs/clearance-evidence/mullu/2026-05-15/01-uspto/README.md",
+    "docs/clearance-evidence/mullu/2026-05-15/01-uspto/decision.md",
+    "docs/clearance-evidence/mullu/2026-05-15/02-wipo/README.md",
+    "docs/clearance-evidence/mullu/2026-05-15/02-wipo/decision.md",
+    "docs/clearance-evidence/mullu/2026-05-15/03-euipo-tmview/README.md",
+    "docs/clearance-evidence/mullu/2026-05-15/03-euipo-tmview/decision.md",
+    "docs/clearance-evidence/mullu/2026-05-15/04-close-variant-mulu/README.md",
+    "docs/clearance-evidence/mullu/2026-05-15/04-close-variant-mulu/decision.md",
+    "docs/clearance-evidence/mullu/2026-05-15/05-domain-ownership/README.md",
+    "docs/clearance-evidence/mullu/2026-05-15/05-domain-ownership/decision.md",
+    "docs/clearance-evidence/mullu/2026-05-15/06-legal-review/README.md",
+    "docs/clearance-evidence/mullu/2026-05-15/06-legal-review/decision.md",
     "docs/HOMEPAGE_UPDATE_EVIDENCE_2026-05-15.md",
     "docs/OFFICIAL_CLEARANCE_ACCESS_LOG_2026-05-15.md",
     "docs/SDK_API_STABILITY_REVIEW_2026-05-15.md",

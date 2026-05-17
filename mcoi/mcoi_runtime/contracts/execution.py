@@ -11,6 +11,7 @@ from enum import StrEnum
 from typing import Any, Mapping
 
 from ._base import ContractRecord, freeze_value, require_datetime_text, require_non_empty_text
+from .verification import VerificationResult
 
 
 class ExecutionOutcome(StrEnum):
@@ -84,7 +85,7 @@ class AcceptedRiskState(ContractRecord):
 @dataclass(frozen=True, slots=True)
 class ExecutionClosure(ContractRecord):
     execution_result: ExecutionResult
-    verification_result: Any | None = None
+    verification_result: VerificationResult | None = None
     accepted_risk: AcceptedRiskState | None = None
 
     def __post_init__(self) -> None:

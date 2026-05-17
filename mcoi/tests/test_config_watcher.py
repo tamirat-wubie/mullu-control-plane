@@ -30,6 +30,30 @@ class TestJsonParser:
 
 
 class TestConfigFileWatcher:
+    def test_config_watcher_errors_are_bounded(self):
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
+            f.write("not json")
+            path = f.name
+
+        try:
+            watcher = ConfigFileWatcher()
+            watcher.watch(WatchedFile(path=path, parser=json_parser, on_change=lambda c: None))
+            reloaded = watcher.check_once()
+            summary = watcher.summary()
+            assert reloaded == []
+            assert summary["total_errors"] == 1
+            assert summary["files"][path]["last_error"] == "watch error (JSONDecodeError)"
+        finally:
+            os.unlink(path)
+
+    def test_config_watcher_status_bounded(self):
+        watcher = ConfigFileWatcher(poll_interval=2.5)
+        watcher.watch(WatchedFile(path="/tmp/config-status-anchor.json", parser=json_parser, on_change=lambda c: None))
+        summary = watcher.summary()
+        assert summary["watched_files"] == 1
+        assert summary["total_reloads"] == 0
+        assert summary["poll_interval"] == 2.5
+
     def test_watch_and_unwatch(self):
         watcher = ConfigFileWatcher()
         wf = WatchedFile(path="/tmp/test.json", parser=json_parser, on_change=lambda c: None)

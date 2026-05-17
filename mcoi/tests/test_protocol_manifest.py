@@ -7,13 +7,22 @@ Invariants: every schema is indexed once, URNs match, and runtime paths are non-
 """
 from __future__ import annotations
 
-from scripts.validate_protocol_manifest import (
-    CLOSED_SURFACE,
-    OPEN_SURFACE,
-    PROTOCOL_ID,
-    load_manifest,
-    validate_protocol_manifest,
-)
+import importlib
+import sys
+from pathlib import Path
+
+REPO_ROOT = Path(__file__).resolve().parents[2]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
+validate_protocol_manifest_module = importlib.import_module("scripts.validate_protocol_manifest")
+
+CLOSED_SURFACE = validate_protocol_manifest_module.CLOSED_SURFACE
+OPEN_SURFACE = validate_protocol_manifest_module.OPEN_SURFACE
+PROTOCOL_ID = validate_protocol_manifest_module.PROTOCOL_ID
+SCHEMA_DIR = validate_protocol_manifest_module.SCHEMA_DIR
+load_manifest = validate_protocol_manifest_module.load_manifest
+validate_protocol_manifest = validate_protocol_manifest_module.validate_protocol_manifest
 
 
 def test_protocol_manifest_is_valid() -> None:
@@ -79,7 +88,8 @@ def test_protocol_manifest_is_valid() -> None:
     assert manifest["protocol_id"] == PROTOCOL_ID
     assert manifest["protocol_name"] == "Mullu Governance Protocol"
     assert manifest["protocol_uri_scheme"] == "mgp://"
-    assert len(manifest["schemas"]) == 128
+    assert len(entries) == len(manifest["schemas"])
+    assert len(manifest["schemas"]) == len(tuple(SCHEMA_DIR.glob("*.schema.json")))
     assert agent_identity_entry["path"] == "schemas/agent_identity.schema.json"
     assert agent_identity_entry["urn"] == "urn:mullusi:schema:agent-identity:1"
     assert agent_identity_entry["surface"] == "identity"

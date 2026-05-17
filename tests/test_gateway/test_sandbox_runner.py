@@ -238,6 +238,27 @@ def test_sandbox_runner_rejects_host_root_workspace() -> None:
         )
 
 
+def test_sandbox_runner_rejects_missing_workspace(tmp_path: Path) -> None:
+    missing_workspace = tmp_path / "missing-workspace"
+
+    with pytest.raises(ValueError, match="^host_workspace_root must exist$"):
+        DockerRootlessSandboxRunner(
+            host_workspace_root=str(missing_workspace),
+            platform_system=lambda: "Linux",
+        )
+
+
+def test_sandbox_runner_rejects_file_workspace(tmp_path: Path) -> None:
+    file_workspace = tmp_path / "workspace.txt"
+    file_workspace.write_text("not a directory\n", encoding="utf-8")
+
+    with pytest.raises(ValueError, match="^host_workspace_root must be a directory$"):
+        DockerRootlessSandboxRunner(
+            host_workspace_root=str(file_workspace),
+            platform_system=lambda: "Linux",
+        )
+
+
 def test_sandbox_request_rejects_cwd_outside_workspace() -> None:
     with pytest.raises(ValueError, match="^cwd must be inside /workspace$"):
         SandboxCommandRequest(
@@ -258,6 +279,38 @@ def test_sandbox_request_rejects_workspace_traversal_cwd() -> None:
             argv=("python", "--version"),
             cwd="/workspace/../host",
         )
+
+
+def test_sandbox_request_rejects_control_character_cwd() -> None:
+    with pytest.raises(ValueError, match="^cwd contains forbidden characters$"):
+        SandboxCommandRequest(
+            request_id="sandbox-request-6a",
+            tenant_id="tenant-1",
+            capability_id="computer.command.run",
+            argv=("python", "--version"),
+            cwd="/workspace/app\nother",
+        )
+
+
+def test_sandbox_request_rejects_scalar_argv_shape() -> None:
+    with pytest.raises(ValueError, match="^argv must be an argv array$"):
+        SandboxCommandRequest(
+            request_id="sandbox-request-6b",
+            tenant_id="tenant-1",
+            capability_id="computer.command.run",
+            argv="python --version",  # type: ignore[arg-type]
+        )
+
+
+def test_sandbox_request_accepts_list_argv_as_explicit_argv_array() -> None:
+    request = SandboxCommandRequest(
+        request_id="sandbox-request-6c",
+        tenant_id="tenant-1",
+        capability_id="computer.command.run",
+        argv=["python", "--version"],  # type: ignore[arg-type]
+    )
+
+    assert request.argv == ("python", "--version")
 
 
 def test_sandbox_request_rejects_invalid_environment_key() -> None:

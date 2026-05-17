@@ -21,8 +21,21 @@ Invariants: pending decision blocks paid public launch.
 
 Pending official TSDR capture and qualified close-variant review.
 
+## Access Attempt Log
+
+| Date | Channel | Query / Target | Result | Gate impact |
+| --- | --- | --- | --- | --- |
+| 2026-05-17 | `https://tsdrapi.uspto.gov/ts/cd/casestatus/sn99518598/info.json` | TSDR serial status | timed out | Does not close `close_variant_review` |
+| 2026-05-17 | `https://tsdrapi.uspto.gov/ts/cd/casestatus/sn99264214/info.json` | TSDR serial status | HTTP 401 Unauthorized | Does not close `close_variant_review` |
+| 2026-05-17 | `https://tsdrapi.uspto.gov/ts/cd/casestatus/sn85772539/info.json` | TSDR serial status | HTTP 401 Unauthorized | Does not close `close_variant_review` |
+| 2026-05-17 | `https://tsdrapi.uspto.gov/ts/cd/casestatus/sn85494313/info.json` | TSDR serial status | HTTP 401 Unauthorized | Does not close `close_variant_review` |
+| 2026-05-17 | `https://tsdrapi.uspto.gov/ts/cd/casestatus/sn85222451/info.json` | TSDR serial status | HTTP 401 Unauthorized | Does not close `close_variant_review` |
+
+No official TSDR status packet or confusion analysis is attached. The gate
+remains open.
+
 STATUS:
-  Completeness: 10%
-  Invariants verified: [pending state explicit, no clearance claimed]
-  Open issues: [official evidence, reviewer decision]
-  Next action: fill after TSDR capture
+  Completeness: 20%
+  Invariants verified: [pending state explicit, no clearance claimed, access attempt logged]
+  Open issues: [official TSDR status packet, confusion analysis, reviewer decision]
+  Next action: capture official TSDR serial evidence manually or through authorized API access

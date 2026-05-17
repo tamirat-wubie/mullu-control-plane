@@ -44,6 +44,7 @@ Invariants: `Mullu` is the product name only after clearance; `Mullusi` remains 
 | Homepage update | Product landing page updated at `https://mullusi.com/mullu/` with private-beta copy | Closed |
 | App title update | User-facing app title surfaces use `Mullu` | Closed |
 | Clearance evidence capture plan | Remaining external-gate evidence paths and capture rules are documented | Closed |
+| Clearance evidence scaffold | Pending decision folders exist for each remaining external gate | Closed |
 | Preliminary web search | Obvious public conflicts recorded | Closed with review items |
 | Close-variant review | `MULU` software/service-adjacent public records captured for official review | Open |
 | USPTO search | Exact and similar marks checked | Open |

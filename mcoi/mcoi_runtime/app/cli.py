@@ -1611,12 +1611,15 @@ def _verify_receipt_chain_records(
     anchor_hash: str | None,
 ) -> int:
     expected_parent = anchor_hash or "genesis"
+    expected_entity_id = ""
+    expected_before_state_hash = ""
     for index, receipt in enumerate(receipts):
         try:
             values = _require_text_fields(
                 receipt,
                 (
                     "receipt_id",
+                    "machine_id",
                     "entity_id",
                     "from_state",
                     "to_state",
@@ -1645,8 +1648,20 @@ def _verify_receipt_chain_records(
             return _print_receipt_chain_failure(index, "replay_token", replay_token, values["replay_token"])
         if values["causal_parent"] != expected_parent:
             return _print_receipt_chain_failure(index, "causal_parent", expected_parent, values["causal_parent"])
+        if index == 0:
+            expected_entity_id = values["entity_id"]
+        elif values["entity_id"] != expected_entity_id:
+            return _print_receipt_chain_failure(index, "entity_id", expected_entity_id, values["entity_id"])
+        if expected_before_state_hash and values["before_state_hash"] != expected_before_state_hash:
+            return _print_receipt_chain_failure(
+                index,
+                "before_state_hash",
+                expected_before_state_hash,
+                values["before_state_hash"],
+            )
 
         expected_parent = values["receipt_hash"]
+        expected_before_state_hash = values["after_state_hash"]
 
     print(f"OK  receipt chain verified - {len(receipts)} receipts, chain intact")
     return 0

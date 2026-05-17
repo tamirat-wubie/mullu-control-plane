@@ -3047,7 +3047,8 @@
         "mcoi/mcoi_runtime/core/prompt_template_engine.py",
         "mcoi/tests/test_prompt_template_engine.py",
         "mcoi/tests/test_prompt_templates.py",
-        "mcoi/tests/test_server_phase209.py"
+        "mcoi/tests/test_server_phase209.py",
+        "mcoi/tests/test_prompt_template_lifecycle.py"
       ],
       "notes": "Prompt template routes list bounded template metadata, render declared variables, and sanitize optional execution failures behind the LLM circuit breaker.",
       "representative_paths": [
@@ -3143,7 +3144,12 @@
         "mcoi/tests/test_governance_endpoints.py",
         "mcoi/tests/test_tenant_budget.py",
         "mcoi/tests/test_tenant_gating.py",
-        "mcoi/tests/test_tenant_ledger.py"
+        "mcoi/tests/test_tenant_ledger.py",
+        "mcoi/tests/test_usage_reporter.py",
+        "mcoi/tests/test_tenant_analytics.py",
+        "mcoi/tests/test_tenant_quota.py",
+        "mcoi/tests/test_phase232.py",
+        "mcoi/tests/test_server_capability_helpers.py"
       ],
       "notes": "Tenant governance lifecycle routes bind budget mutation, tenant ledger and budget read models, registration, status transitions, and gate summaries to governed responses with audit records and bounded action proofs.",
       "representative_paths": [
@@ -3167,6 +3173,53 @@
         "/api/v1/tenant/gates"
       ],
       "request_proof": "request_proof",
+      "runtime_witness_anchor_aliases": {
+        "tenant_analytics_read_model_scoped": [
+          "compute"
+        ],
+        "tenant_budget_create_emits_action_proof": [
+          "create_tenant_budget"
+        ],
+        "tenant_budget_create_records_audit": [
+          "audit_after_budget_create"
+        ],
+        "tenant_budget_read_models_scoped_by_tenant": [
+          "get_tenant_budget"
+        ],
+        "tenant_gate_persistence_read_model_included": [
+          "list_gates_includes_store_backed_entries"
+        ],
+        "tenant_gate_read_models_governed": [
+          "get_existing_gate"
+        ],
+        "tenant_isolation_audits_bounded": [
+          "tenant_isolation"
+        ],
+        "tenant_isolation_verify_governed": [
+          "bootstrap_capability_services_wires_usage_templates_and_isolation"
+        ],
+        "tenant_ledger_queries_bounded": [
+          "get_tenant_ledger"
+        ],
+        "tenant_partition_read_model_bounded": [
+          "max_partitions_error_is_bounded"
+        ],
+        "tenant_quota_read_models_bounded": [
+          "get_usage"
+        ],
+        "tenant_register_emits_action_proof": [
+          "register_new_tenant"
+        ],
+        "tenant_registry_lifecycle_errors_sanitized": [
+          "register_invalid_status"
+        ],
+        "tenant_status_update_emits_action_proof": [
+          "suspend_tenant"
+        ],
+        "tenant_usage_read_model_scoped": [
+          "generate"
+        ]
+      },
       "runtime_witnesses": [
         "tenant_budget_create_emits_action_proof",
         "tenant_budget_create_records_audit",
@@ -3569,6 +3622,53 @@
         "/api/v1/finance/approval-packets/{case_id}/proof"
       ],
       "request_proof": "request_proof",
+      "runtime_witness_anchor_aliases": {
+        "approval_action_binds_approval_effect_and_closure_refs": [
+          "approval_creates_effect_and_closed_proof"
+        ],
+        "blocked_packet_emits_no_effect": [
+          "blocked_fixture_requires_review_and_emits_no_effect"
+        ],
+        "email_calendar_binding_receipt_requires_worker_token_and_readonly_scope": [
+          "finance_email_calendar_binding_receipt_blocks_without_worker_and_scope"
+        ],
+        "finance_packet_policy_reasons_explicit": [
+          "create_list_get_and_proof_blocked_packet"
+        ],
+        "operator_read_model_bounds_visible_packets_and_counts": [
+          "operator_read_model_summarizes_blocked_and_closed_packets"
+        ],
+        "packet_proof_requires_policy_evidence_and_closure_for_closed_states": [
+          "proof_export_fails_for_closed_packet_without_closure_certificate"
+        ],
+        "payment_closure_example_evidence_validates_provider_binding_chain": [
+          "finance_payment_closure_example_binds_provider_receipt"
+        ],
+        "payment_closure_producer_consumes_provider_binding_receipt": [
+          "produce_payment_closure_receipt_derives_binding_ref_from_ready_receipt"
+        ],
+        "payment_closure_receipt_producer_emits_ready_sandbox_evidence": [
+          "produce_payment_closure_receipt_emits_ready_sandbox_receipt"
+        ],
+        "payment_closure_receipt_producer_requires_provider_binding_for_nonsandbox": [
+          "produce_payment_closure_receipt_requires_non_sandbox_provider_binding"
+        ],
+        "payment_closure_receipt_validator_blocks_unbound_evidence": [
+          "validate_payment_closure_receipt_rejects_missing_ledger_evidence"
+        ],
+        "payment_closure_validator_verifies_provider_binding_receipt_object": [
+          "validate_payment_closure_receipt_accepts_ready_provider_binding_receipt"
+        ],
+        "payment_handoff_prepared_without_live_payment_claim": [
+          "approval_can_create_payment_handoff_without_live_payment_claim"
+        ],
+        "payment_provider_binding_receipt_redacts_credentials_and_scopes_provider": [
+          "payment_provider_binding_receipt_records_presence_without_values"
+        ],
+        "payment_receipt_and_ledger_reconciliation_required_for_payment_closure": [
+          "payment_finalization_requires_provider_and_ledger_evidence_without_mutation"
+        ]
+      },
       "runtime_witnesses": [
         "finance_packet_policy_reasons_explicit",
         "blocked_packet_emits_no_effect",
@@ -4562,6 +4662,9 @@
         "scripts/validate_mcp_capability_manifest.py",
         "schemas/runtime_conformance_certificate.schema.json",
         "tests/test_gateway/test_conformance.py",
+        "tests/test_gateway/test_webhooks.py",
+        "tests/test_gateway/test_physical_worker_canary.py",
+        "mcoi/tests/test_server_lineage.py",
         "tests/test_collect_runtime_conformance.py",
         "tests/test_produce_physical_worker_canary.py"
       ],
@@ -4571,20 +4674,20 @@
       ],
       "request_proof": "read_model",
       "runtime_witnesses": [
-        "gateway_witness_valid",
-        "runtime_witness_valid",
-        "runtime_conformance_certificate_schema_valid",
-        "runtime_conformance_collector_schema_valid",
-        "proof_coverage_unclassified_routes_reported",
-        "command_closure_canary_passed",
-        "capability_admission_canary_passed",
-        "dangerous_capability_isolation_canary_passed",
-        "lineage_query_canary_passed",
-        "authority_responsibility_debt_clear",
-        "authority_directory_sync_receipt_valid",
-        "capability_plan_bundle_canary_passed",
-        "physical_worker_canary_passed",
-        "physical_worker_canary_artifact_hash_bound"
+        "runtime_conformance_endpoint_returns_signed_gap_certificate",
+        "runtime_witness_endpoints_match_public_schema",
+        "runtime_conformance_certificate_matches_schema",
+        "collect_runtime_conformance_rejects_schema_invalid_certificate",
+        "runtime_conformance_surfaces_unclassified_proof_routes",
+        "collect_runtime_conformance_rejects_failed_core_canary",
+        "command_capability_admission_read_model_reports_accepted_witness",
+        "fabric_admission_blocks_uninstalled_runtime_intent",
+        "lineage_resolve_route_returns_trace_document",
+        "collect_runtime_conformance_rejects_unclear_responsibility_debt",
+        "runtime_conformance_accepts_valid_authority_directory_sync_receipt",
+        "runtime_conformance_witnesses_capability_plan_bundle",
+        "physical_worker_canary_blocks_missing_receipt_and_allows_sandbox_replay",
+        "physical_worker_canary_evidence_and_hash_are_stable"
       ],
       "surface_id": "runtime_conformance_attestation"
     },
@@ -6466,7 +6569,7 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 339,
+    "exact_test_anchor_count": 408,
     "runtime_witness_count": 1015,
     "surfaces": [
       {
@@ -7057,17 +7160,41 @@
         "unanchored_witnesses": []
       },
       {
-        "anchored_witnesses": [],
-        "exact_test_anchor_count": 0,
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "mcoi/tests/test_server_phase209.py::test_prompt_template_list_bounded",
+              "mcoi/tests/test_prompt_template_lifecycle.py::test_prompt_template_list_bounded"
+            ],
+            "witness": "prompt_template_list_bounded"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_server_phase209.py::test_prompt_render_variables_validated",
+              "mcoi/tests/test_prompt_template_lifecycle.py::test_prompt_render_variables_validated"
+            ],
+            "witness": "prompt_render_variables_validated"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_server_phase209.py::test_prompt_execution_failure_sanitized",
+              "mcoi/tests/test_prompt_template_lifecycle.py::test_prompt_execution_failure_sanitized"
+            ],
+            "witness": "prompt_execution_failure_sanitized"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_server_phase209.py::test_prompt_execution_records_budgeted_result",
+              "mcoi/tests/test_prompt_template_lifecycle.py::test_prompt_execution_records_budgeted_result"
+            ],
+            "witness": "prompt_execution_records_budgeted_result"
+          }
+        ],
+        "exact_test_anchor_count": 4,
         "runtime_witness_count": 4,
         "surface_id": "prompt_template_lifecycle",
-        "unanchored_witness_count": 4,
-        "unanchored_witnesses": [
-          "prompt_template_list_bounded",
-          "prompt_render_variables_validated",
-          "prompt_execution_failure_sanitized",
-          "prompt_execution_records_budgeted_result"
-        ]
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
       },
       {
         "anchored_witnesses": [
@@ -7151,28 +7278,104 @@
         "unanchored_witnesses": []
       },
       {
-        "anchored_witnesses": [],
-        "exact_test_anchor_count": 0,
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "mcoi/tests/test_server_phase202.py::test_create_tenant_budget"
+            ],
+            "witness": "tenant_budget_create_emits_action_proof"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_server_phase202.py::test_audit_after_budget_create"
+            ],
+            "witness": "tenant_budget_create_records_audit"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_server_phase202.py::test_get_tenant_budget"
+            ],
+            "witness": "tenant_budget_read_models_scoped_by_tenant"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_server_phase202.py::test_get_tenant_ledger"
+            ],
+            "witness": "tenant_ledger_queries_bounded"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_governance_endpoints.py::test_register_invalid_status"
+            ],
+            "witness": "tenant_registry_lifecycle_errors_sanitized"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_governance_endpoints.py::test_register_new_tenant",
+              "mcoi/tests/test_tenant_gating.py::test_register_new_tenant"
+            ],
+            "witness": "tenant_register_emits_action_proof"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_governance_endpoints.py::test_suspend_tenant"
+            ],
+            "witness": "tenant_status_update_emits_action_proof"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_governance_endpoints.py::test_get_existing_gate"
+            ],
+            "witness": "tenant_gate_read_models_governed"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_governance_endpoints.py::test_list_gates_includes_store_backed_entries"
+            ],
+            "witness": "tenant_gate_persistence_read_model_included"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_usage_reporter.py::test_generate"
+            ],
+            "witness": "tenant_usage_read_model_scoped"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_tenant_analytics.py::test_compute"
+            ],
+            "witness": "tenant_analytics_read_model_scoped"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_server_capability_helpers.py::test_bootstrap_capability_services_wires_usage_templates_and_isolation"
+            ],
+            "witness": "tenant_isolation_verify_governed"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_phase232.py::test_tenant_isolation"
+            ],
+            "witness": "tenant_isolation_audits_bounded"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_tenant_quota.py::test_get_usage"
+            ],
+            "witness": "tenant_quota_read_models_bounded"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_phase232.py::test_max_partitions_error_is_bounded"
+            ],
+            "witness": "tenant_partition_read_model_bounded"
+          }
+        ],
+        "exact_test_anchor_count": 15,
         "runtime_witness_count": 15,
         "surface_id": "tenant_governance_lifecycle",
-        "unanchored_witness_count": 15,
-        "unanchored_witnesses": [
-          "tenant_budget_create_emits_action_proof",
-          "tenant_budget_create_records_audit",
-          "tenant_budget_read_models_scoped_by_tenant",
-          "tenant_ledger_queries_bounded",
-          "tenant_registry_lifecycle_errors_sanitized",
-          "tenant_register_emits_action_proof",
-          "tenant_status_update_emits_action_proof",
-          "tenant_gate_read_models_governed",
-          "tenant_gate_persistence_read_model_included",
-          "tenant_usage_read_model_scoped",
-          "tenant_analytics_read_model_scoped",
-          "tenant_isolation_verify_governed",
-          "tenant_isolation_audits_bounded",
-          "tenant_quota_read_models_bounded",
-          "tenant_partition_read_model_bounded"
-        ]
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
       },
       {
         "anchored_witnesses": [],
@@ -7190,27 +7393,97 @@
         ]
       },
       {
-        "anchored_witnesses": [],
-        "exact_test_anchor_count": 0,
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "mcoi/tests/test_server_phase207.py::test_config_read_model_hash_bound"
+            ],
+            "witness": "config_read_model_hash_bound"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_server_phase207.py::test_config_current_read_model_hash_bound"
+            ],
+            "witness": "config_current_read_model_hash_bound"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_server_phase207.py::test_config_history_versions_bounded"
+            ],
+            "witness": "config_history_versions_bounded"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_server_phase207.py::test_config_history_bounded"
+            ],
+            "witness": "config_history_bounded"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_server_phase207.py::test_config_update_applies_atomically"
+            ],
+            "witness": "config_update_applies_atomically"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_server_phase207.py::test_config_update_audited"
+            ],
+            "witness": "config_update_audited"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_server_phase207.py::test_config_update_emits_event_and_audit"
+            ],
+            "witness": "config_update_emits_event_and_audit"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_server_phase207.py::test_config_update_emits_event"
+            ],
+            "witness": "config_update_emits_event"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_server_phase207.py::test_config_rollback_requires_known_version"
+            ],
+            "witness": "config_rollback_requires_known_version"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_server_phase207.py::test_config_rollback_version_checked"
+            ],
+            "witness": "config_rollback_version_checked"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_config_watcher.py::test_config_watcher_errors_are_bounded"
+            ],
+            "witness": "config_watcher_errors_are_bounded"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_config_watcher.py::test_config_watcher_status_bounded"
+            ],
+            "witness": "config_watcher_status_bounded"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_config_drift.py::test_config_drift_secret_changes_are_critical"
+            ],
+            "witness": "config_drift_secret_changes_are_critical"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_config_drift.py::test_config_drift_summary_bounded"
+            ],
+            "witness": "config_drift_summary_bounded"
+          }
+        ],
+        "exact_test_anchor_count": 14,
         "runtime_witness_count": 14,
         "surface_id": "runtime_config_management",
-        "unanchored_witness_count": 14,
-        "unanchored_witnesses": [
-          "config_read_model_hash_bound",
-          "config_current_read_model_hash_bound",
-          "config_history_versions_bounded",
-          "config_history_bounded",
-          "config_update_applies_atomically",
-          "config_update_audited",
-          "config_update_emits_event_and_audit",
-          "config_update_emits_event",
-          "config_rollback_requires_known_version",
-          "config_rollback_version_checked",
-          "config_watcher_errors_are_bounded",
-          "config_watcher_status_bounded",
-          "config_drift_secret_changes_are_critical",
-          "config_drift_summary_bounded"
-        ]
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
       },
       {
         "anchored_witnesses": [
@@ -7565,28 +7838,103 @@
         ]
       },
       {
-        "anchored_witnesses": [],
-        "exact_test_anchor_count": 0,
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "mcoi/tests/test_finance_approval_router.py::test_create_list_get_and_proof_blocked_packet"
+            ],
+            "witness": "finance_packet_policy_reasons_explicit"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_finance_approval_packet.py::test_blocked_fixture_requires_review_and_emits_no_effect"
+            ],
+            "witness": "blocked_packet_emits_no_effect"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_finance_approval_router.py::test_approval_creates_effect_and_closed_proof"
+            ],
+            "witness": "approval_action_binds_approval_effect_and_closure_refs"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_finance_approval_router.py::test_approval_can_create_payment_handoff_without_live_payment_claim"
+            ],
+            "witness": "payment_handoff_prepared_without_live_payment_claim"
+          },
+          {
+            "anchors": [
+              "tests/test_emit_finance_approval_email_calendar_binding_receipt.py::test_finance_email_calendar_binding_receipt_blocks_without_worker_and_scope"
+            ],
+            "witness": "email_calendar_binding_receipt_requires_worker_token_and_readonly_scope"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_finance_approval_router.py::test_payment_finalization_requires_provider_and_ledger_evidence_without_mutation"
+            ],
+            "witness": "payment_receipt_and_ledger_reconciliation_required_for_payment_closure"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_finance_approval_payment_closure_receipt.py::test_validate_payment_closure_receipt_rejects_missing_ledger_evidence"
+            ],
+            "witness": "payment_closure_receipt_validator_blocks_unbound_evidence"
+          },
+          {
+            "anchors": [
+              "tests/test_produce_finance_approval_payment_closure_receipt.py::test_produce_payment_closure_receipt_emits_ready_sandbox_receipt"
+            ],
+            "witness": "payment_closure_receipt_producer_emits_ready_sandbox_evidence"
+          },
+          {
+            "anchors": [
+              "tests/test_emit_finance_approval_payment_provider_binding_receipt.py::test_payment_provider_binding_receipt_records_presence_without_values"
+            ],
+            "witness": "payment_provider_binding_receipt_redacts_credentials_and_scopes_provider"
+          },
+          {
+            "anchors": [
+              "tests/test_produce_finance_approval_payment_closure_receipt.py::test_produce_payment_closure_receipt_derives_binding_ref_from_ready_receipt"
+            ],
+            "witness": "payment_closure_producer_consumes_provider_binding_receipt"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_finance_approval_payment_closure_receipt.py::test_validate_payment_closure_receipt_accepts_ready_provider_binding_receipt"
+            ],
+            "witness": "payment_closure_validator_verifies_provider_binding_receipt_object"
+          },
+          {
+            "anchors": [
+              "tests/test_produce_finance_approval_payment_closure_receipt.py::test_produce_payment_closure_receipt_requires_non_sandbox_provider_binding"
+            ],
+            "witness": "payment_closure_receipt_producer_requires_provider_binding_for_nonsandbox"
+          },
+          {
+            "anchors": [
+              "tests/test_finance_payment_provider_binding_examples.py::test_finance_payment_closure_example_binds_provider_receipt"
+            ],
+            "witness": "payment_closure_example_evidence_validates_provider_binding_chain"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_finance_approval_packet.py::test_proof_export_fails_for_closed_packet_without_closure_certificate"
+            ],
+            "witness": "packet_proof_requires_policy_evidence_and_closure_for_closed_states"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_finance_approval_router.py::test_operator_read_model_summarizes_blocked_and_closed_packets"
+            ],
+            "witness": "operator_read_model_bounds_visible_packets_and_counts"
+          }
+        ],
+        "exact_test_anchor_count": 15,
         "runtime_witness_count": 15,
         "surface_id": "finance_approval_packets",
-        "unanchored_witness_count": 15,
-        "unanchored_witnesses": [
-          "finance_packet_policy_reasons_explicit",
-          "blocked_packet_emits_no_effect",
-          "approval_action_binds_approval_effect_and_closure_refs",
-          "payment_handoff_prepared_without_live_payment_claim",
-          "email_calendar_binding_receipt_requires_worker_token_and_readonly_scope",
-          "payment_receipt_and_ledger_reconciliation_required_for_payment_closure",
-          "payment_closure_receipt_validator_blocks_unbound_evidence",
-          "payment_closure_receipt_producer_emits_ready_sandbox_evidence",
-          "payment_provider_binding_receipt_redacts_credentials_and_scopes_provider",
-          "payment_closure_producer_consumes_provider_binding_receipt",
-          "payment_closure_validator_verifies_provider_binding_receipt_object",
-          "payment_closure_receipt_producer_requires_provider_binding_for_nonsandbox",
-          "payment_closure_example_evidence_validates_provider_binding_chain",
-          "packet_proof_requires_policy_evidence_and_closure_for_closed_states",
-          "operator_read_model_bounds_visible_packets_and_counts"
-        ]
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
       },
       {
         "anchored_witnesses": [
@@ -8281,7 +8629,6 @@
         "anchored_witnesses": [
           {
             "anchors": [
-              "tests/test_gateway/test_webhooks.py::test_receive_with_message_returns_request_receipt",
               "tests/test_gateway/test_webhooks.py::test_receive_with_message_returns_request_receipt"
             ],
             "witness": "receive_with_message_returns_request_receipt"
@@ -8497,14 +8844,12 @@
           },
           {
             "anchors": [
-              "tests/test_validate_deployment_publication_closure.py::test_published_status_rejects_authority_responsibility_debt",
               "tests/test_validate_deployment_publication_closure.py::test_published_status_rejects_authority_responsibility_debt"
             ],
             "witness": "published_status_rejects_authority_responsibility_debt"
           },
           {
             "anchors": [
-              "tests/test_validate_deployment_publication_closure.py::test_published_status_rejects_runtime_responsibility_debt",
               "tests/test_validate_deployment_publication_closure.py::test_published_status_rejects_runtime_responsibility_debt"
             ],
             "witness": "published_status_rejects_runtime_responsibility_debt"
@@ -8529,7 +8874,6 @@
           },
           {
             "anchors": [
-              "tests/test_validate_deployment_publication_closure.py::test_closure_validation_report_matches_public_schema_for_not_published",
               "tests/test_validate_deployment_publication_closure.py::test_closure_validation_report_matches_public_schema_for_not_published"
             ],
             "witness": "closure_validation_report_matches_public_schema_for_not_published"
@@ -8584,27 +8928,97 @@
         "unanchored_witnesses": []
       },
       {
-        "anchored_witnesses": [],
-        "exact_test_anchor_count": 0,
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "tests/test_gateway/test_conformance.py::test_runtime_conformance_endpoint_returns_signed_gap_certificate"
+            ],
+            "witness": "runtime_conformance_endpoint_returns_signed_gap_certificate"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_conformance.py::test_runtime_witness_endpoints_match_public_schema"
+            ],
+            "witness": "runtime_witness_endpoints_match_public_schema"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_conformance.py::test_runtime_conformance_certificate_matches_schema"
+            ],
+            "witness": "runtime_conformance_certificate_matches_schema"
+          },
+          {
+            "anchors": [
+              "tests/test_collect_runtime_conformance.py::test_collect_runtime_conformance_rejects_schema_invalid_certificate"
+            ],
+            "witness": "collect_runtime_conformance_rejects_schema_invalid_certificate"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_conformance.py::test_runtime_conformance_surfaces_unclassified_proof_routes"
+            ],
+            "witness": "runtime_conformance_surfaces_unclassified_proof_routes"
+          },
+          {
+            "anchors": [
+              "tests/test_collect_runtime_conformance.py::test_collect_runtime_conformance_rejects_failed_core_canary"
+            ],
+            "witness": "collect_runtime_conformance_rejects_failed_core_canary"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_webhooks.py::test_command_capability_admission_read_model_reports_accepted_witness"
+            ],
+            "witness": "command_capability_admission_read_model_reports_accepted_witness"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_webhooks.py::test_fabric_admission_blocks_uninstalled_runtime_intent"
+            ],
+            "witness": "fabric_admission_blocks_uninstalled_runtime_intent"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_server_lineage.py::test_lineage_resolve_route_returns_trace_document"
+            ],
+            "witness": "lineage_resolve_route_returns_trace_document"
+          },
+          {
+            "anchors": [
+              "tests/test_collect_runtime_conformance.py::test_collect_runtime_conformance_rejects_unclear_responsibility_debt"
+            ],
+            "witness": "collect_runtime_conformance_rejects_unclear_responsibility_debt"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_conformance.py::test_runtime_conformance_accepts_valid_authority_directory_sync_receipt"
+            ],
+            "witness": "runtime_conformance_accepts_valid_authority_directory_sync_receipt"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_conformance.py::test_runtime_conformance_witnesses_capability_plan_bundle"
+            ],
+            "witness": "runtime_conformance_witnesses_capability_plan_bundle"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_physical_worker_canary.py::test_physical_worker_canary_blocks_missing_receipt_and_allows_sandbox_replay"
+            ],
+            "witness": "physical_worker_canary_blocks_missing_receipt_and_allows_sandbox_replay"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_physical_worker_canary.py::test_physical_worker_canary_evidence_and_hash_are_stable"
+            ],
+            "witness": "physical_worker_canary_evidence_and_hash_are_stable"
+          }
+        ],
+        "exact_test_anchor_count": 14,
         "runtime_witness_count": 14,
         "surface_id": "runtime_conformance_attestation",
-        "unanchored_witness_count": 14,
-        "unanchored_witnesses": [
-          "gateway_witness_valid",
-          "runtime_witness_valid",
-          "runtime_conformance_certificate_schema_valid",
-          "runtime_conformance_collector_schema_valid",
-          "proof_coverage_unclassified_routes_reported",
-          "command_closure_canary_passed",
-          "capability_admission_canary_passed",
-          "dangerous_capability_isolation_canary_passed",
-          "lineage_query_canary_passed",
-          "authority_responsibility_debt_clear",
-          "authority_directory_sync_receipt_valid",
-          "capability_plan_bundle_canary_passed",
-          "physical_worker_canary_passed",
-          "physical_worker_canary_artifact_hash_bound"
-        ]
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
       },
       {
         "anchored_witnesses": [],
@@ -8941,6 +9355,24 @@
         "anchored_witnesses": [
           {
             "anchors": [
+              "mcoi/tests/test_shell_executor.py::test_shell_executor_argv_only"
+            ],
+            "witness": "shell_executor_argv_only"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_shell_executor.py::test_shell_policy_denial_receipt_emitted"
+            ],
+            "witness": "shell_policy_denial_receipt_emitted"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_shell_executor.py::test_shell_sandbox_denial_receipt_emitted"
+            ],
+            "witness": "shell_sandbox_denial_receipt_emitted"
+          },
+          {
+            "anchors": [
               "mcoi/tests/test_shell_executor.py::test_shell_receipt_becomes_effect_assurance_evidence_ref"
             ],
             "witness": "shell_receipt_becomes_effect_assurance_evidence_ref"
@@ -8952,15 +9384,11 @@
             "witness": "shell_receipt_closes_effect_assurance"
           }
         ],
-        "exact_test_anchor_count": 2,
+        "exact_test_anchor_count": 5,
         "runtime_witness_count": 5,
         "surface_id": "shell_execution_adapter",
-        "unanchored_witness_count": 3,
-        "unanchored_witnesses": [
-          "shell_executor_argv_only",
-          "shell_policy_denial_receipt_emitted",
-          "shell_sandbox_denial_receipt_emitted"
-        ]
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
       },
       {
         "anchored_witnesses": [
@@ -9208,17 +9636,37 @@
         ]
       },
       {
-        "anchored_witnesses": [],
-        "exact_test_anchor_count": 0,
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "tests/test_gateway/test_multimodal_operating_layer.py::test_multimodal_receipt_schema_valid"
+            ],
+            "witness": "multimodal_receipt_schema_valid"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_multimodal_operating_layer.py::test_external_send_blocked_by_default"
+            ],
+            "witness": "external_send_blocked_by_default"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_multimodal_operating_layer.py::test_sensitive_voice_requires_redaction_evidence"
+            ],
+            "witness": "sensitive_voice_requires_redaction_evidence"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_multimodal_operating_layer.py::test_unknown_modality_fails_closed"
+            ],
+            "witness": "unknown_modality_fails_closed"
+          }
+        ],
+        "exact_test_anchor_count": 4,
         "runtime_witness_count": 4,
         "surface_id": "multimodal_operating_layer",
-        "unanchored_witness_count": 4,
-        "unanchored_witnesses": [
-          "multimodal_receipt_schema_valid",
-          "external_send_blocked_by_default",
-          "sensitive_voice_requires_redaction_evidence",
-          "unknown_modality_fails_closed"
-        ]
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
       },
       {
         "anchored_witnesses": [
@@ -10247,6 +10695,6 @@
         ]
       }
     ],
-    "unanchored_witness_count": 676
+    "unanchored_witness_count": 607
   }
 }

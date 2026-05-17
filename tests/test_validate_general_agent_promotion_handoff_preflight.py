@@ -76,6 +76,39 @@ def test_validate_handoff_preflight_rejects_missing_environment_action(tmp_path:
     assert any("environment_binding_actions names must match" in error for error in result.errors)
 
 
+def test_validate_handoff_preflight_rejects_duplicate_missing_environment_names(tmp_path: Path) -> None:
+    report_path = tmp_path / "preflight.json"
+    payload = _blocked_report()
+    payload["missing_environment_variables"] = ["MULLU_GATEWAY_URL", "MULLU_GATEWAY_URL"]
+    actions = list(payload["environment_binding_actions"])  # type: ignore[arg-type]
+    actions.append(dict(actions[0]))  # type: ignore[arg-type]
+    payload["environment_binding_actions"] = actions
+    report_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    result = validate_general_agent_promotion_handoff_preflight(report_path=report_path)
+
+    assert result.valid is False
+    assert any("missing_environment_variables entries must be unique" in error for error in result.errors)
+    assert any("environment_binding_actions names entries must be unique" in error for error in result.errors)
+
+
+def test_validate_handoff_preflight_rejects_duplicate_action_names_even_when_missing_names_are_unique(
+    tmp_path: Path,
+) -> None:
+    report_path = tmp_path / "preflight.json"
+    payload = _blocked_report()
+    actions = list(payload["environment_binding_actions"])  # type: ignore[arg-type]
+    actions.append(dict(actions[0]))  # type: ignore[arg-type]
+    payload["environment_binding_actions"] = actions
+    report_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    result = validate_general_agent_promotion_handoff_preflight(report_path=report_path)
+
+    assert result.valid is False
+    assert any("environment_binding_actions names entries must be unique" in error for error in result.errors)
+    assert any("environment_binding_actions names must match" in error for error in result.errors)
+
+
 def test_validate_handoff_preflight_rejects_serialized_environment_value(tmp_path: Path) -> None:
     report_path = tmp_path / "preflight.json"
     payload = _blocked_report()
@@ -88,6 +121,34 @@ def test_validate_handoff_preflight_rejects_serialized_environment_value(tmp_pat
 
     assert result.valid is False
     assert any("must not carry serialized values" in error for error in result.errors)
+
+
+def test_validate_handoff_preflight_rejects_environment_action_contract_drift(tmp_path: Path) -> None:
+    report_path = tmp_path / "preflight.json"
+    payload = _blocked_report()
+    actions = list(payload["environment_binding_actions"])  # type: ignore[arg-type]
+    actions[0]["risk"] = "medium"  # type: ignore[index]
+    payload["environment_binding_actions"] = actions
+    report_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    result = validate_general_agent_promotion_handoff_preflight(report_path=report_path)
+
+    assert result.valid is False
+    assert any("MULLU_GATEWAY_URL risk must match environment binding contract" in error for error in result.errors)
+
+
+def test_validate_handoff_preflight_rejects_environment_action_workflow_drift(tmp_path: Path) -> None:
+    report_path = tmp_path / "preflight.json"
+    payload = _blocked_report()
+    actions = list(payload["environment_binding_actions"])  # type: ignore[arg-type]
+    actions[0]["required_for"] = ["handoff_preflight"]  # type: ignore[index]
+    payload["environment_binding_actions"] = actions
+    report_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    result = validate_general_agent_promotion_handoff_preflight(report_path=report_path)
+
+    assert result.valid is False
+    assert any("MULLU_GATEWAY_URL required_for must match environment binding contract" in error for error in result.errors)
 
 
 def test_validate_handoff_preflight_cli_outputs_json(tmp_path: Path, capsys) -> None:

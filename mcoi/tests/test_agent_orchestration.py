@@ -611,6 +611,12 @@ class TestVotingAndConsensus:
         assert proofs[0]["vote_count"] == 2
         assert proofs[0]["approval_count"] == 2
         assert proofs[0]["registered_agent_count"] == 3
+        assert proofs[0]["quorum_threshold"] == 2
+        assert proofs[0]["total_plan_count"] == 1
+        assert proofs[0]["active_plan_count"] == 1
+        assert proofs[0]["active_proposal_count"] == 1
+        assert proofs[0]["consensus_proof_count_before"] == 0
+        assert proofs[0]["consensus_proof_count_after"] == 1
         assert proofs[0]["quorum_met"] is True
 
     def test_quorum_not_reached(self, orchestrator):
@@ -638,6 +644,13 @@ class TestVotingAndConsensus:
         assert proofs[0]["vote_count"] == 3
         assert proofs[0]["approval_count"] == 1
         assert proofs[0]["rejection_count"] == 2
+        assert proofs[0]["registered_agent_count"] == 3
+        assert proofs[0]["quorum_threshold"] == 2
+        assert proofs[0]["total_plan_count"] == 1
+        assert proofs[0]["active_plan_count"] == 1
+        assert proofs[0]["active_proposal_count"] == 1
+        assert proofs[0]["consensus_proof_count_before"] == 0
+        assert proofs[0]["consensus_proof_count_after"] == 1
         assert proofs[0]["quorum_met"] is False
 
     def test_check_consensus_unavailable_plan_records_proof(self, orchestrator):
@@ -650,6 +663,13 @@ class TestVotingAndConsensus:
         assert proofs[0]["plan_phase"] == ""
         assert proofs[0]["plan_available"] is False
         assert proofs[0]["vote_count"] == 0
+        assert proofs[0]["registered_agent_count"] == 3
+        assert proofs[0]["quorum_threshold"] == 2
+        assert proofs[0]["total_plan_count"] == 0
+        assert proofs[0]["active_plan_count"] == 0
+        assert proofs[0]["active_proposal_count"] == 0
+        assert proofs[0]["consensus_proof_count_before"] == 0
+        assert proofs[0]["consensus_proof_count_after"] == 1
         assert proofs[0]["quorum_met"] is False
 
     def test_consensus_proofs_limit_is_bounded(self, orchestrator):
@@ -1174,6 +1194,11 @@ class TestHandoffs:
         assert proofs[0]["matched_agent_count"] == 1
         assert proofs[0]["manifest_gated"] is False
         assert proofs[0]["manifest_admitted"] is True
+        assert proofs[0]["total_plan_count"] == 0
+        assert proofs[0]["active_plan_count"] == 0
+        assert proofs[0]["active_proposal_count"] == 0
+        assert proofs[0]["capability_discovery_proof_count_before"] == 0
+        assert proofs[0]["capability_discovery_proof_count_after"] == 1
         assert "code" not in repr(proofs[0])
         assert "agent-c" not in repr(proofs[0])
 
@@ -1193,6 +1218,11 @@ class TestHandoffs:
         assert proofs[0]["registered_agent_count"] == 3
         assert proofs[0]["matched_agent_count"] == 0
         assert proofs[0]["manifest_admitted"] is True
+        assert proofs[0]["total_plan_count"] == 0
+        assert proofs[0]["active_plan_count"] == 0
+        assert proofs[0]["active_proposal_count"] == 0
+        assert proofs[0]["capability_discovery_proof_count_before"] == 0
+        assert proofs[0]["capability_discovery_proof_count_after"] == 1
 
     def test_capability_discovery_proofs_limit_is_bounded(self, orchestrator):
         orchestrator.find_capable_agents(("llm",))
@@ -1222,6 +1252,11 @@ class TestHandoffs:
         assert proofs[-1]["manifest_gated"] is True
         assert proofs[-1]["manifest_admitted"] is False
         assert proofs[-1]["matched_agent_count"] == 0
+        assert proofs[-1]["total_plan_count"] == 0
+        assert proofs[-1]["active_plan_count"] == 0
+        assert proofs[-1]["active_proposal_count"] == 0
+        assert proofs[-1]["capability_discovery_proof_count_before"] == 1
+        assert proofs[-1]["capability_discovery_proof_count_after"] == 2
         assert "deploy" not in repr(proofs[-1])
 
     def test_manifest_read_model_builds_gated_orchestrator(self):

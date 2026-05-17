@@ -16,6 +16,19 @@ Invariants: every listed artifact must exist; paid public launch remains blocked
 | `docs/NAME_CLEARANCE_PRELIMINARY.md` | Preliminary non-legal clearance sweep |
 | `docs/APP_TITLE_UPDATE_EVIDENCE_2026-05-15.md` | User-facing app title update evidence |
 | `docs/CLEARANCE_EVIDENCE_CAPTURE_PLAN_2026-05-15.md` | Remaining external-gate evidence capture plan |
+| `docs/clearance-evidence/mullu/2026-05-15/README.md` | Root pending evidence scaffold instructions |
+| `docs/clearance-evidence/mullu/2026-05-15/01-uspto/README.md` | USPTO evidence capture instructions |
+| `docs/clearance-evidence/mullu/2026-05-15/01-uspto/decision.md` | USPTO pending decision record |
+| `docs/clearance-evidence/mullu/2026-05-15/02-wipo/README.md` | WIPO evidence capture instructions |
+| `docs/clearance-evidence/mullu/2026-05-15/02-wipo/decision.md` | WIPO pending decision record |
+| `docs/clearance-evidence/mullu/2026-05-15/03-euipo-tmview/README.md` | EUIPO/TMview evidence capture instructions |
+| `docs/clearance-evidence/mullu/2026-05-15/03-euipo-tmview/decision.md` | EUIPO/TMview pending decision record |
+| `docs/clearance-evidence/mullu/2026-05-15/04-close-variant-mulu/README.md` | Close-variant evidence capture instructions |
+| `docs/clearance-evidence/mullu/2026-05-15/04-close-variant-mulu/decision.md` | Close-variant pending decision record |
+| `docs/clearance-evidence/mullu/2026-05-15/05-domain-ownership/README.md` | Domain ownership evidence capture instructions |
+| `docs/clearance-evidence/mullu/2026-05-15/05-domain-ownership/decision.md` | Domain ownership pending decision record |
+| `docs/clearance-evidence/mullu/2026-05-15/06-legal-review/README.md` | Legal review evidence capture instructions |
+| `docs/clearance-evidence/mullu/2026-05-15/06-legal-review/decision.md` | Legal review pending decision record |
 | `docs/HOMEPAGE_UPDATE_EVIDENCE_2026-05-15.md` | Private-beta product landing page update evidence |
 | `docs/OFFICIAL_CLEARANCE_ACCESS_LOG_2026-05-15.md` | Official trademark/domain access attempt log |
 | `docs/SDK_API_STABILITY_REVIEW_2026-05-15.md` | SDK/API technical contract naming stability review |

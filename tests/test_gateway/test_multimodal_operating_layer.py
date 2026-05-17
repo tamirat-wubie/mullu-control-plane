@@ -45,6 +45,16 @@ def test_multimodal_layer_blocks_unknown_modality() -> None:
     assert receipt.worker_plane == ""
 
 
+def test_unknown_modality_fails_closed() -> None:
+    receipt = MultimodalOperatingLayer().evaluate(_request(modality="unknown", operation="inspect"))
+
+    assert receipt.status == "blocked"
+    assert receipt.reason == "modality_not_registered"
+    assert receipt.modality == "unknown"
+    assert receipt.worker_plane == ""
+    assert "modality_not_registered" in receipt.blocked_reasons
+
+
 def test_external_effect_requires_certified_worker_and_live_write_evidence() -> None:
     policy = ModalityWorkerPolicy(
         policy_id="multimodal-policy:email:test",
@@ -80,6 +90,34 @@ def test_multimodal_layer_blocks_uncertified_external_effects() -> None:
     assert "capability_maturity_below_C6" in receipt.blocked_reasons
 
 
+def test_external_send_blocked_by_default() -> None:
+    receipt = MultimodalOperatingLayer().evaluate(_request(modality="email", operation="send_external"))
+
+    assert receipt.status == "blocked"
+    assert receipt.reason == "operation_forbidden"
+    assert receipt.metadata["external_effects_allowed"] is False
+    assert receipt.metadata["production_certified"] is False
+    assert "external_effect_not_allowed" in receipt.blocked_reasons
+    assert "production_certification_required" in receipt.blocked_reasons
+
+
+def test_sensitive_voice_requires_redaction_evidence() -> None:
+    receipt = MultimodalOperatingLayer().evaluate(
+        _request(
+            modality="voice",
+            operation="transcribe",
+            sensitivity="restricted",
+            declared_controls=("tenant_binding", "source_reference", "worker_receipt", "terminal_closure"),
+        )
+    )
+
+    assert receipt.status == "requires_review"
+    assert receipt.reason == "pii_redaction_evidence_required"
+    assert "pii_redaction" in receipt.required_controls
+    assert "pii_redaction_evidence_required" in receipt.review_reasons
+    assert receipt.worker_plane == "voice"
+
+
 def test_multimodal_receipt_schema_exposes_source_preservation_contract() -> None:
     receipt = MultimodalOperatingLayer().evaluate(_request())
     schema = json.loads(SCHEMA_PATH.read_text(encoding="utf-8"))
@@ -88,6 +126,18 @@ def test_multimodal_receipt_schema_exposes_source_preservation_contract() -> Non
     assert schema["$id"] == "urn:mullusi:schema:multimodal-operation-receipt:1"
     assert schema["properties"]["terminal_closure_required"]["const"] is True
     assert receipt.receipt_schema_ref == "urn:mullusi:schema:multimodal-operation-receipt:1"
+
+
+def test_multimodal_receipt_schema_valid() -> None:
+    receipt = MultimodalOperatingLayer().evaluate(_request())
+    schema = json.loads(SCHEMA_PATH.read_text(encoding="utf-8"))
+    receipt_projection = receipt.to_json_dict()
+
+    assert set(schema["required"]).issubset(receipt_projection)
+    assert schema["properties"]["worker_receipt_required"]["const"] is True
+    assert receipt_projection["receipt_schema_ref"] == schema["$id"]
+    assert receipt_projection["source_reference_preserved"] is True
+    assert receipt_projection["terminal_closure_required"] is True
 
 
 def _request(**overrides: object) -> MultimodalOperationRequest:

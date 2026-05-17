@@ -13,6 +13,7 @@ from mcoi_runtime.core.replay_engine import (
     ReplayEngine,
     ReplayMode,
     ReplayRecord,
+    ReplayVerdict,
 )
 
 
@@ -66,4 +67,35 @@ def test_replay_engine_rejects_uncontrolled_or_incomplete_replay_records() -> No
     assert result.ready is False
     assert "missing_artifacts" in result.reasons
     assert "uncontrolled_effect_reexecution" in result.reasons
+    assert result.artifacts == ()
+
+
+def test_replay_engine_rejects_duplicate_artifact_ids() -> None:
+    engine = ReplayEngine()
+    record = ReplayRecord(
+        replay_id="replay-duplicate-artifact",
+        trace_id="trace-1",
+        source_hash="source-hash",
+        approved_effects=(
+            ReplayEffect(
+                effect_id="effect-1",
+                control=EffectControl.CONTROLLED,
+                artifact_id="artifact-1",
+            ),
+        ),
+        blocked_effects=(),
+        mode=ReplayMode.OBSERVATION_ONLY,
+        recorded_at="2026-05-17T12:00:00+00:00",
+        artifacts=(
+            ReplayArtifact(artifact_id="artifact-1", payload_digest="digest-a"),
+            ReplayArtifact(artifact_id="artifact-1", payload_digest="digest-b"),
+        ),
+    )
+
+    result = engine.validate(record)
+
+    assert result.ready is False
+    assert result.verdict is ReplayVerdict.ARTIFACT_INCOMPLETE
+    assert "duplicate_artifact_id" in result.reasons
+    assert not any("artifact-1" in reason for reason in result.reasons)
     assert result.artifacts == ()
