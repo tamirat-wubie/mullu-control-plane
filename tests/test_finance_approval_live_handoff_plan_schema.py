@@ -39,6 +39,7 @@ def test_finance_handoff_plan_schema_accepts_valid_plan(tmp_path: Path) -> None:
 
     assert validation.ok is True
     assert validation.errors == ()
+    assert validation.ready is False
     assert validation.action_count == 2
     assert validation.approval_required_action_count == 1
     assert validation.blocker_count == 2
@@ -105,6 +106,7 @@ def test_finance_handoff_plan_schema_requires_credential_approval(tmp_path: Path
 
     assert validation.ok is False
     assert any("must require approval" in error for error in validation.errors)
+    assert any("worker_endpoint_presence_attestation" in error for error in validation.errors)
     assert any("connector_scope_attestation" in error for error in validation.errors)
 
 
@@ -175,6 +177,7 @@ def test_finance_handoff_plan_schema_writer_and_cli_honor_strict(tmp_path: Path,
     assert exit_code == 0
     assert payload["ok"] is True
     assert stdout_payload["action_count"] == 2
+    assert stdout_payload["ready"] is False
 
 
 def _valid_plan() -> dict[str, object]:
@@ -184,18 +187,21 @@ def _valid_plan() -> dict[str, object]:
         "ready": False,
         "action_count": 2,
         "blockers": [
-            "email_calendar_dependency_missing:EMAIL_CALENDAR_CONNECTOR_TOKEN",
+            "finance_email_calendar_binding_receipt_not_ready",
             "email_calendar_live_evidence_missing",
         ],
         "actions": [
             {
-                "action_id": "finance-email-calendar-token-binding",
-                "blocker": "email_calendar_dependency_missing:EMAIL_CALENDAR_CONNECTOR_TOKEN",
+                "action_id": "finance-email-calendar-binding-readiness",
+                "blocker": "finance_email_calendar_binding_receipt_not_ready",
                 "action_type": "credential",
                 "command": (
-                    "Bind one scoped read-capable connector token in the governed worker secret store: "
+                    "Bind the email/calendar worker endpoint, worker signing secret, one scoped "
+                    "read-capable connector token, and one read-only scope witness in the governed worker secret store: "
+                    "MULLU_EMAIL_CALENDAR_WORKER_URL, MULLU_EMAIL_CALENDAR_WORKER_SECRET, "
                     "EMAIL_CALENDAR_CONNECTOR_TOKEN, GMAIL_ACCESS_TOKEN, GOOGLE_CALENDAR_ACCESS_TOKEN, "
-                    "or MICROSOFT_GRAPH_ACCESS_TOKEN."
+                    "or MICROSOFT_GRAPH_ACCESS_TOKEN, plus EMAIL_CALENDAR_CONNECTOR_SCOPE_ID, GMAIL_SCOPE_ID, "
+                    "GOOGLE_CALENDAR_SCOPE_ID, or MICROSOFT_GRAPH_SCOPE_ID."
                 ),
                 "verification_command": (
                     "python scripts/validate_finance_approval_email_calendar_binding_receipt.py "
@@ -203,8 +209,13 @@ def _valid_plan() -> dict[str, object]:
                     "python scripts/collect_capability_adapter_evidence.py "
                     "--output .change_assurance/capability_adapter_evidence.json"
                 ),
-                "receipt_validator": "adapter_evidence.communication.email_calendar_worker.dependency.EMAIL_CALENDAR_CONNECTOR_TOKEN",
+                "receipt_validator": (
+                    "finance_email_calendar_binding_receipt.valid && "
+                    "finance_email_calendar_binding_receipt.ready"
+                ),
                 "evidence_required": [
+                    "worker_endpoint_presence_attestation",
+                    "worker_secret_presence_attestation",
                     "connector_scope_attestation",
                     "secret_presence_attestation",
                     "finance_approval_email_calendar_binding_receipt.json",

@@ -104,8 +104,15 @@ def preflight_finance_approval_live_handoff(
     steps = (
         FinanceLiveHandoffPreflightStep(
             name="finance handoff plan schema validation",
-            passed=plan_validation.ok,
-            detail="ok=true" if plan_validation.ok else f"errors={list(plan_validation.errors)}",
+            passed=plan_validation.ok and plan_validation.ready,
+            detail=(
+                "ok=true ready=true"
+                if plan_validation.ok and plan_validation.ready
+                else (
+                    f"ok={plan_validation.ok} ready={plan_validation.ready} "
+                    f"blocker_count={plan_validation.blocker_count} errors={list(plan_validation.errors)}"
+                )
+            ),
         ),
         FinanceLiveHandoffPreflightStep(
             name="finance email/calendar binding receipt ready",

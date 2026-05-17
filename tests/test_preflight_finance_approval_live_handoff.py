@@ -54,18 +54,19 @@ def test_current_finance_live_handoff_preflight_blocks_absent_token(tmp_path: Pa
     assert report.ready is False
     assert report.readiness_level == "proof-pilot-ready"
     assert report.step_count == 4
+    assert "finance handoff plan schema validation" in report.blockers
     assert "finance email/calendar binding receipt ready" in report.blockers
     assert "finance approval pilot readiness" in report.blockers
 
 
 def test_finance_live_handoff_preflight_accepts_ready_local_evidence(tmp_path: Path) -> None:
     adapter_evidence = _write_closed_adapter_evidence(tmp_path)
-    handoff_plan = _write_plan_for_adapter_evidence(tmp_path, adapter_evidence)
     binding_receipt = tmp_path / "finance_binding_receipt.json"
     receipt, errors = emit_finance_approval_email_calendar_binding_receipt(
         env_reader=_ready_env,
     )
     write_finance_email_calendar_binding_receipt(receipt, binding_receipt)
+    handoff_plan = _write_plan_for_adapter_evidence(tmp_path, adapter_evidence, binding_receipt)
     closure_run = _write_closure_run_for_ready_evidence(tmp_path, binding_receipt, adapter_evidence)
 
     report = preflight_finance_approval_live_handoff(
@@ -142,9 +143,16 @@ def test_finance_live_handoff_preflight_writer_and_cli_honor_strict(tmp_path: Pa
     assert "finance email/calendar binding receipt ready" in payload["blockers"]
 
 
-def _write_plan_for_adapter_evidence(tmp_path: Path, adapter_evidence: Path) -> Path:
+def _write_plan_for_adapter_evidence(
+    tmp_path: Path,
+    adapter_evidence: Path,
+    binding_receipt: Path | None = None,
+) -> Path:
     handoff_plan = tmp_path / "finance_handoff_plan.json"
-    plan = plan_finance_approval_live_handoff(adapter_evidence_path=adapter_evidence)
+    plan = plan_finance_approval_live_handoff(
+        adapter_evidence_path=adapter_evidence,
+        binding_receipt_path=binding_receipt or tmp_path / "missing_binding_receipt.json",
+    )
     write_finance_live_handoff_plan(plan, handoff_plan)
     return handoff_plan
 

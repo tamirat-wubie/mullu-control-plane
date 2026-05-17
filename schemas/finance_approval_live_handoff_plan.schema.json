@@ -37,6 +37,7 @@
       "items": {
         "type": "string",
         "enum": [
+          "finance_email_calendar_binding_receipt_not_ready",
           "email_calendar_dependency_missing:EMAIL_CALENDAR_CONNECTOR_TOKEN",
           "email_calendar_live_evidence_missing",
           "email_calendar_evidence_not_closed"
@@ -72,6 +73,7 @@
         "blocker": {
           "type": "string",
           "enum": [
+            "finance_email_calendar_binding_receipt_not_ready",
             "email_calendar_dependency_missing:EMAIL_CALENDAR_CONNECTOR_TOKEN",
             "email_calendar_live_evidence_missing",
             "email_calendar_evidence_not_closed"

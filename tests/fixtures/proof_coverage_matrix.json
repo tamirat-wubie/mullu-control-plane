@@ -3688,6 +3688,9 @@
         "email_calendar_binding_receipt_requires_worker_token_and_readonly_scope": [
           "finance_email_calendar_binding_receipt_blocks_without_worker_and_scope"
         ],
+        "email_calendar_handoff_plan_requires_binding_receipt_ready": [
+          "current_finance_handoff_plan_scopes_to_email_calendar"
+        ],
         "finance_packet_policy_reasons_explicit": [
           "create_list_get_and_proof_blocked_packet"
         ],
@@ -3731,6 +3734,7 @@
         "approval_action_binds_approval_effect_and_closure_refs",
         "payment_handoff_prepared_without_live_payment_claim",
         "email_calendar_binding_receipt_requires_worker_token_and_readonly_scope",
+        "email_calendar_handoff_plan_requires_binding_receipt_ready",
         "payment_receipt_and_ledger_reconciliation_required_for_payment_closure",
         "payment_closure_receipt_validator_blocks_unbound_evidence",
         "payment_closure_receipt_producer_emits_ready_sandbox_evidence",
@@ -6647,8 +6651,8 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 434,
-    "runtime_witness_count": 1028,
+    "exact_test_anchor_count": 435,
+    "runtime_witness_count": 1029,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -8030,6 +8034,12 @@
           },
           {
             "anchors": [
+              "tests/test_plan_finance_approval_live_handoff.py::test_current_finance_handoff_plan_scopes_to_email_calendar"
+            ],
+            "witness": "email_calendar_handoff_plan_requires_binding_receipt_ready"
+          },
+          {
+            "anchors": [
               "mcoi/tests/test_finance_approval_router.py::test_payment_finalization_requires_provider_and_ledger_evidence_without_mutation"
             ],
             "witness": "payment_receipt_and_ledger_reconciliation_required_for_payment_closure"
@@ -8089,8 +8099,8 @@
             "witness": "operator_read_model_bounds_visible_packets_and_counts"
           }
         ],
-        "exact_test_anchor_count": 15,
-        "runtime_witness_count": 15,
+        "exact_test_anchor_count": 16,
+        "runtime_witness_count": 16,
         "surface_id": "finance_approval_packets",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []

@@ -35,6 +35,11 @@ from scripts.validate_finance_approval_pilot import (  # noqa: E402  # noqa: E40
     FinancePilotReadiness,
     validate_finance_approval_pilot,
 )
+from scripts.validate_finance_approval_email_calendar_binding_receipt import (  # noqa: E402
+    DEFAULT_RECEIPT as DEFAULT_BINDING_RECEIPT,
+    FinanceEmailCalendarBindingReceiptValidation,
+    validate_finance_approval_email_calendar_binding_receipt,
+)
 
 DEFAULT_OUTPUT = REPO_ROOT / ".change_assurance" / "finance_approval_live_handoff_plan.json"
 
@@ -83,24 +88,31 @@ class FinanceLiveHandoffPlan:
 def plan_finance_approval_live_handoff(
     *,
     adapter_evidence_path: Path = DEFAULT_ADAPTER_EVIDENCE,
+    binding_receipt_path: Path = DEFAULT_BINDING_RECEIPT,
 ) -> FinanceLiveHandoffPlan:
     """Return the finance-specific live email handoff closure plan."""
     readiness = validate_finance_approval_pilot(adapter_evidence_path=adapter_evidence_path)
+    binding_validation = validate_finance_approval_email_calendar_binding_receipt(
+        receipt_path=binding_receipt_path,
+        require_ready=True,
+    )
     email_check = _email_calendar_check(readiness)
-    blockers = _finance_email_blockers(readiness, email_check)
+    blockers = _finance_email_blockers(readiness, email_check, binding_validation)
     actions = tuple(_action_for(blocker) for blocker in blockers)
     _validate_actions(actions)
+    ready = readiness.ready and binding_validation.valid and binding_validation.ready
+    readiness_level = _plan_readiness_level(readiness, binding_validation)
     material = {
-        "readiness_level": readiness.readiness_level,
-        "ready": readiness.ready,
+        "readiness_level": readiness_level,
+        "ready": ready,
         "blockers": blockers,
         "actions": [action.as_dict() for action in actions],
     }
     digest = hashlib.sha256(json.dumps(material, sort_keys=True, separators=(",", ":")).encode("utf-8")).hexdigest()
     return FinanceLiveHandoffPlan(
         plan_id=f"finance-live-handoff-plan-{digest[:16]}",
-        readiness_level=readiness.readiness_level,
-        ready=readiness.ready,
+        readiness_level=readiness_level,
+        ready=ready,
         action_count=len(actions),
         blockers=blockers,
         actions=actions,
@@ -126,12 +138,18 @@ def _email_calendar_check(readiness: FinancePilotReadiness) -> dict[str, Any]:
     }
 
 
-def _finance_email_blockers(readiness: FinancePilotReadiness, email_check: dict[str, Any]) -> tuple[str, ...]:
-    if readiness.ready:
+def _finance_email_blockers(
+    readiness: FinancePilotReadiness,
+    email_check: dict[str, Any],
+    binding_validation: FinanceEmailCalendarBindingReceiptValidation,
+) -> tuple[str, ...]:
+    if readiness.ready and binding_validation.valid and binding_validation.ready:
         return ()
     blockers: list[str] = []
+    if not (binding_validation.valid and binding_validation.ready):
+        blockers.append("finance_email_calendar_binding_receipt_not_ready")
     detail = str(email_check.get("detail", ""))
-    if "EMAIL_CALENDAR_CONNECTOR_TOKEN" in detail:
+    if "EMAIL_CALENDAR_CONNECTOR_TOKEN" in detail and "finance_email_calendar_binding_receipt_not_ready" not in blockers:
         blockers.append("email_calendar_dependency_missing:EMAIL_CALENDAR_CONNECTOR_TOKEN")
     if email_check.get("passed") is not True:
         blockers.append("email_calendar_live_evidence_missing")
@@ -140,10 +158,24 @@ def _finance_email_blockers(readiness: FinancePilotReadiness, email_check: dict[
     return tuple(dict.fromkeys(blockers))
 
 
+def _plan_readiness_level(
+    readiness: FinancePilotReadiness,
+    binding_validation: FinanceEmailCalendarBindingReceiptValidation,
+) -> str:
+    if readiness.readiness_level == "not-ready":
+        return "not-ready"
+    if readiness.ready and binding_validation.valid and binding_validation.ready:
+        return "live-email-handoff-ready"
+    return "proof-pilot-ready"
+
+
 def _action_for(blocker: str) -> FinanceLiveHandoffAction:
-    if blocker == "email_calendar_dependency_missing:EMAIL_CALENDAR_CONNECTOR_TOKEN":
+    if blocker in {
+        "finance_email_calendar_binding_receipt_not_ready",
+        "email_calendar_dependency_missing:EMAIL_CALENDAR_CONNECTOR_TOKEN",
+    }:
         return FinanceLiveHandoffAction(
-            action_id="finance-email-calendar-token-binding",
+            action_id="finance-email-calendar-binding-readiness",
             blocker=blocker,
             action_type="credential",
             command=(
@@ -161,7 +193,10 @@ def _action_for(blocker: str) -> FinanceLiveHandoffAction:
                 "python scripts/collect_capability_adapter_evidence.py "
                 "--output .change_assurance/capability_adapter_evidence.json"
             ),
-            receipt_validator="adapter_evidence.communication.email_calendar_worker.dependency.EMAIL_CALENDAR_CONNECTOR_TOKEN",
+            receipt_validator=(
+                "finance_email_calendar_binding_receipt.valid && "
+                "finance_email_calendar_binding_receipt.ready"
+            ),
             evidence_required=(
                 "worker_endpoint_presence_attestation",
                 "worker_secret_presence_attestation",
@@ -215,6 +250,7 @@ def _validate_actions(actions: tuple[FinanceLiveHandoffAction, ...]) -> None:
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Plan finance approval live email handoff closure.")
     parser.add_argument("--adapter-evidence", default=str(DEFAULT_ADAPTER_EVIDENCE))
+    parser.add_argument("--binding-receipt", default=str(DEFAULT_BINDING_RECEIPT))
     parser.add_argument("--output", default=str(DEFAULT_OUTPUT))
     parser.add_argument("--json", action="store_true")
     return parser.parse_args(argv)
@@ -222,7 +258,10 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv)
-    plan = plan_finance_approval_live_handoff(adapter_evidence_path=Path(args.adapter_evidence))
+    plan = plan_finance_approval_live_handoff(
+        adapter_evidence_path=Path(args.adapter_evidence),
+        binding_receipt_path=Path(args.binding_receipt),
+    )
     write_finance_live_handoff_plan(plan, Path(args.output))
     if args.json:
         print(json.dumps(plan.as_dict(), indent=2, sort_keys=True))

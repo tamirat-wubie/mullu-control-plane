@@ -42,7 +42,7 @@ files are open wire contracts. Runtime modules under `mcoi/`, `gateway/`, and
 | `deployment_witness.schema.json` | Canonical live gateway deployment witness artifact |
 | `domain_capsule.schema.json` | Domain capsule operating-model package |
 | `effect_assurance.schema.json` | Canonical planned, observed, and reconciled effect record |
-| `finance_approval_email_calendar_binding_receipt.schema.json` | Canonical redacted connector-token presence receipt for finance live handoff |
+| `finance_approval_email_calendar_binding_receipt.schema.json` | Canonical redacted worker, connector-token, and read-only scope witness binding receipt for finance live handoff |
 | `finance_approval_email_calendar_live_receipt.schema.json` | Canonical redacted live email/calendar receipt for finance approval handoff evidence |
 | `finance_approval_handoff_packet.schema.json` | Canonical operator handoff packet for finance approval proof-pilot and live blockers |
 | `finance_approval_live_handoff_chain_validation.schema.json` | Canonical aggregate chain validation report for finance approval live handoff artifacts |
