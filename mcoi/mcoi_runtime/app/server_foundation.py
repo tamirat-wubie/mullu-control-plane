@@ -32,6 +32,13 @@ from mcoi_runtime.core.proof_bridge import ProofBridge
 from mcoi_runtime.persistence.tenant_ledger import TenantLedger
 
 
+RECEIPT_STORE_JSONL_ENV = "MULLU_RECEIPT_STORE_JSONL_PATH"
+
+
+class FoundationConfigurationError(ValueError):
+    """Raised when foundation service configuration fails closed."""
+
+
 @dataclass(frozen=True)
 class FoundationServicesBootstrap:
     """Foundation bootstrap result."""
@@ -49,11 +56,27 @@ class FoundationServicesBootstrap:
 def receipt_store_from_env(runtime_env: Mapping[str, str]) -> ReceiptStore | None:
     """Build an optional durable receipt store from runtime environment."""
 
-    jsonl_path = str(runtime_env.get("MULLU_RECEIPT_STORE_JSONL_PATH", "")).strip()
-    if not jsonl_path:
+    jsonl_path_text = str(runtime_env.get(RECEIPT_STORE_JSONL_ENV, "")).strip()
+    if not jsonl_path_text:
         return None
 
-    return JsonlReceiptStore(Path(jsonl_path))
+    if any(ord(character) < 32 for character in jsonl_path_text):
+        raise FoundationConfigurationError(
+            f"{RECEIPT_STORE_JSONL_ENV} must not contain control characters"
+        )
+
+    jsonl_path = Path(jsonl_path_text)
+    if jsonl_path.exists() and not jsonl_path.is_file():
+        raise FoundationConfigurationError(
+            f"{RECEIPT_STORE_JSONL_ENV} must point to a JSONL file path"
+        )
+
+    try:
+        return JsonlReceiptStore(jsonl_path)
+    except (OSError, ValueError) as exc:
+        raise FoundationConfigurationError(
+            f"{RECEIPT_STORE_JSONL_ENV} could not initialize receipt store"
+        ) from exc
 
 
 def bootstrap_foundation_services(
