@@ -164,8 +164,87 @@ def test_graph_commit_writes_command_verification_and_evidence_nodes():
     observed = gate.observe(result)
     verification = gate.verify(plan=plan, execution_result=result, observed_effects=observed)
     reconciliation = gate.reconcile(plan=plan, observed_effects=observed, verification_result=verification)
-    gate.commit_graph(plan=plan, observed_effects=observed, reconciliation=reconciliation)
+    receipt = gate.commit_graph(plan=plan, observed_effects=observed, reconciliation=reconciliation)
     nodes = graph.all_nodes()
     assert any(node.node_id == "command:cmd-1" for node in nodes)
     assert any(node.node_type is NodeType.VERIFICATION for node in nodes)
     assert any(node.node_id == "evidence:ledger:entry-1" for node in nodes)
+    assert receipt.effect_name == "effect_graph_committed"
+    assert receipt.command_id == "cmd-1"
+    assert receipt.effect_plan_id == plan.effect_plan_id
+    assert receipt.reconciliation_id == reconciliation.reconciliation_id
+    assert receipt.observed_effect_ids == ("ledger_entry_created",)
+    assert receipt.observed_evidence_refs == ("ledger:entry-1",)
+    assert receipt.before_node_count == 0
+    assert receipt.before_edge_count == 0
+    assert receipt.after_node_count >= 4
+    assert receipt.after_edge_count >= 4
+    assert receipt.metadata["node_delta"] == receipt.after_node_count
+    assert receipt.metadata["edge_delta"] == receipt.after_edge_count
+
+
+def test_graph_commit_receipts_convert_to_effect_records():
+    gate, _, plan = _gate_with_plan()
+    result = _execution(EffectRecord(name="ledger_entry_created", details={"evidence_ref": "ledger:entry-1"}))
+    observed = gate.observe(result)
+    verification = gate.verify(plan=plan, execution_result=result, observed_effects=observed)
+    reconciliation = gate.reconcile(plan=plan, observed_effects=observed, verification_result=verification)
+
+    receipt = gate.commit_graph(plan=plan, observed_effects=observed, reconciliation=reconciliation)
+    effect = gate.graph_commit_effect_records(limit=1)[0]
+
+    assert gate.graph_commit_receipts(limit=1) == (receipt,)
+    assert effect.name == "effect_graph_committed"
+    assert effect.details["source"] == "effect_assurance_graph_commit"
+    assert effect.details["evidence_ref"].startswith("effect-graph-commit:")
+    assert effect.details["command_id"] == "cmd-1"
+    assert effect.details["observed_effect_ids"] == ("ledger_entry_created",)
+
+
+def test_graph_commit_receipt_closes_effect_assurance():
+    gate, _, plan = _gate_with_plan()
+    result = _execution(EffectRecord(name="ledger_entry_created", details={"evidence_ref": "ledger:entry-1"}))
+    observed = gate.observe(result)
+    verification = gate.verify(plan=plan, execution_result=result, observed_effects=observed)
+    reconciliation = gate.reconcile(plan=plan, observed_effects=observed, verification_result=verification)
+    gate.commit_graph(plan=plan, observed_effects=observed, reconciliation=reconciliation)
+    commit_plan = gate.create_plan(
+        command_id="cmd-graph-commit",
+        tenant_id="tenant-1",
+        capability_id="effect_assurance.commit_graph",
+        expected_effects=(
+            ExpectedEffect(
+                effect_id="effect_graph_committed",
+                name="effect_graph_committed",
+                target_ref="graph:cmd-1",
+                required=True,
+                verification_method="effect_graph_commit_receipt",
+            ),
+        ),
+        forbidden_effects=("effect_graph_commit_without_match",),
+    )
+    commit_execution = ExecutionResult(
+        execution_id="exec-graph-commit",
+        goal_id="cmd-graph-commit",
+        status=ExecutionOutcome.SUCCEEDED,
+        actual_effects=gate.graph_commit_effect_records(limit=1),
+        assumed_effects=(),
+        started_at="2026-04-24T12:00:00+00:00",
+        finished_at="2026-04-24T12:00:01+00:00",
+    )
+
+    commit_observed = gate.observe(commit_execution)
+    commit_verification = gate.verify(
+        plan=commit_plan,
+        execution_result=commit_execution,
+        observed_effects=commit_observed,
+    )
+    commit_reconciliation = gate.reconcile(
+        plan=commit_plan,
+        observed_effects=commit_observed,
+        verification_result=commit_verification,
+    )
+
+    assert commit_reconciliation.status is ReconciliationStatus.MATCH
+    assert commit_reconciliation.matched_effects == ("effect_graph_committed",)
+    assert commit_verification.evidence[0].uri.startswith("effect-graph-commit:")

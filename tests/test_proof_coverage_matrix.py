@@ -996,6 +996,29 @@ def test_approval_engine_lifecycle_surface_records_effect_receipts() -> None:
     assert closure_actions["bind_approval_engine_mutations_to_effect_receipts"]["status"] == "closed"
 
 
+def test_effect_assurance_graph_commit_surface_records_effect_receipts() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    graph_commit_surface = surfaces["effect_assurance_graph_commit"]
+    witnesses = set(graph_commit_surface["runtime_witnesses"])
+
+    assert graph_commit_surface["coverage_state"] == "witnessed"
+    assert graph_commit_surface["request_proof"] == "request_proof"
+    assert graph_commit_surface["action_proof"] == "action_proof"
+    assert "EffectAssuranceGate.commit_graph" in graph_commit_surface["representative_paths"]
+    assert "EffectAssuranceGate.graph_commit_receipts" in graph_commit_surface["representative_paths"]
+    assert "EffectAssuranceGate.graph_commit_effect_records" in graph_commit_surface["representative_paths"]
+    assert "mcoi/mcoi_runtime/core/effect_assurance.py" in graph_commit_surface["evidence_files"]
+    assert "mcoi/mcoi_runtime/core/operational_graph.py" in graph_commit_surface["evidence_files"]
+    assert "mcoi/tests/test_effect_assurance_core.py" in graph_commit_surface["evidence_files"]
+    assert "effect_graph_commit_requires_match" in witnesses
+    assert "effect_graph_commit_receipt_emitted" in witnesses
+    assert "effect_graph_commit_receipt_converts_to_actual_effect" in witnesses
+    assert "effect_graph_commit_receipt_closes_effect_assurance" in witnesses
+    assert closure_actions["bind_effect_graph_commits_to_effect_receipts"]["status"] == "closed"
+
+
 def test_job_engine_lifecycle_surface_records_effect_receipts() -> None:
     matrix = _load_fixture()
     surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}

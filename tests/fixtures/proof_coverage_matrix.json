@@ -56,6 +56,13 @@
       ]
     },
     {
+      "action_id": "bind_effect_graph_commits_to_effect_receipts",
+      "status": "closed",
+      "surfaces": [
+        "effect_assurance_graph_commit"
+      ]
+    },
+    {
       "action_id": "bind_job_engine_mutations_to_effect_receipts",
       "status": "closed",
       "surfaces": [
@@ -776,7 +783,7 @@
   ],
   "coverage_summary": {
     "by_action_proof": {
-      "action_proof": 96,
+      "action_proof": 97,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 16,
@@ -784,7 +791,7 @@
     },
     "by_audit": {
       "action_proof": 0,
-      "audit_chain": 110,
+      "audit_chain": 111,
       "gap": 0,
       "read_model": 4,
       "request_proof": 0
@@ -792,21 +799,21 @@
     "by_coverage_state": {
       "proven": 1,
       "unproven": 0,
-      "witnessed": 113
+      "witnessed": 114
     },
     "by_request_proof": {
       "action_proof": 1,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 18,
-      "request_proof": 95
+      "request_proof": 96
     },
-    "surface_count": 114
+    "surface_count": 115
   },
   "evidence_quality": {
     "by_strength": {
       "classified_with_quality_gaps": 0,
-      "strong": 114,
+      "strong": 115,
       "unproven": 0
     },
     "quality_gap_count": 0,
@@ -4335,6 +4342,30 @@
       "audit": "audit_chain",
       "coverage_state": "witnessed",
       "evidence_files": [
+        "mcoi/mcoi_runtime/core/effect_assurance.py",
+        "mcoi/mcoi_runtime/core/operational_graph.py",
+        "mcoi/tests/test_effect_assurance_core.py"
+      ],
+      "notes": "Effect Assurance graph commits emit bounded receipts for MATCH-only operational graph mutation and expose those receipts as actual effects for observation.",
+      "representative_paths": [
+        "EffectAssuranceGate.commit_graph",
+        "EffectAssuranceGate.graph_commit_receipts",
+        "EffectAssuranceGate.graph_commit_effect_records"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "effect_graph_commit_requires_match",
+        "effect_graph_commit_receipt_emitted",
+        "effect_graph_commit_receipt_converts_to_actual_effect",
+        "effect_graph_commit_receipt_closes_effect_assurance"
+      ],
+      "surface_id": "effect_assurance_graph_commit"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
         "mcoi/mcoi_runtime/core/jobs.py",
         "mcoi/mcoi_runtime/contracts/job.py",
         "mcoi/tests/test_job_core.py"
@@ -6370,7 +6401,7 @@
   ],
   "witness_integrity": {
     "exact_test_anchor_count": 238,
-    "runtime_witness_count": 998,
+    "runtime_witness_count": 1002,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -7850,6 +7881,19 @@
           "approval_consumption_mutation_receipt_emitted",
           "approval_revocation_mutation_receipt_emitted",
           "approval_override_mutation_receipt_emitted"
+        ]
+      },
+      {
+        "anchored_witnesses": [],
+        "exact_test_anchor_count": 0,
+        "runtime_witness_count": 4,
+        "surface_id": "effect_assurance_graph_commit",
+        "unanchored_witness_count": 4,
+        "unanchored_witnesses": [
+          "effect_graph_commit_requires_match",
+          "effect_graph_commit_receipt_emitted",
+          "effect_graph_commit_receipt_converts_to_actual_effect",
+          "effect_graph_commit_receipt_closes_effect_assurance"
         ]
       },
       {
@@ -9613,6 +9657,6 @@
         ]
       }
     ],
-    "unanchored_witness_count": 760
+    "unanchored_witness_count": 764
   }
 }
