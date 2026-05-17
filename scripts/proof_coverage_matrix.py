@@ -896,6 +896,38 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "builtin_agent_registry_read_models_governed",
                 "agent_error_contracts_bounded",
             ],
+            {
+                "agent_register_emits_governed_identity": ["register_agent"],
+                "agent_register_emits_audit_record": ["register_agent"],
+                "agent_heartbeat_requires_registered_agent": ["heartbeat_registered_agent"],
+                "agent_action_request_runs_guard_chain": ["action_request_allowed"],
+                "agent_action_result_records_outcome": ["action_result_submitted"],
+                "agent_action_result_closes_tracked_action": ["full_governed_flow"],
+                "agent_goal_context_propagates_to_action_request": [
+                    "action_request_propagates_goal_hierarchy"
+                ],
+                "agent_goal_context_propagates_to_response_and_audit": [
+                    "action_request_propagates_goal_hierarchy"
+                ],
+                "agent_checkpoint_restore_errors_are_bounded": [
+                    "agent_restore_missing_checkpoint_is_bounded"
+                ],
+                "agent_checkpoint_restore_roundtrip_governed": [
+                    "agent_checkpoint_restore_roundtrip"
+                ],
+                "agent_adapter_summary_is_governed_read_model": ["adapter_summary"],
+                "agent_adapter_summary_bounded": ["adapter_summary"],
+                "builtin_agent_registry_read_models_governed": [
+                    "list_agents",
+                    "agent_tasks",
+                ],
+                "agent_error_contracts_bounded": [
+                    "heartbeat_unknown_agent_404",
+                    "action_request_unknown_agent_404",
+                    "action_result_unknown_action_404",
+                    "agent_restore_missing_checkpoint_is_bounded",
+                ],
+            },
         ),
         _surface(
             "model_experiment_control",

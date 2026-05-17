@@ -190,10 +190,12 @@ class TestV1_1Integration:
         """Safe complete → tool workflow → streaming chat → verify."""
         # Safe completion
         resp = client.post("/api/v1/complete/safe", json={"prompt": "test"})
+        assert resp.status_code == 200, resp.text
         assert resp.json()["governed"] is True
 
         # Tool workflow
         resp = client.post("/api/v1/workflow/tools", json={"prompt": "calc"})
+        assert resp.status_code == 200, resp.text
         assert resp.json()["governed"] is True
 
         # Streaming chat

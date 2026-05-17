@@ -144,6 +144,8 @@ def test_witness_integrity_report_tracks_exact_test_anchors() -> None:
     assert surfaces["multimodal_operating_layer"]["unanchored_witness_count"] == 0
     assert surfaces["runtime_conformance_attestation"]["unanchored_witness_count"] == 0
     assert surfaces["finance_approval_packets"]["unanchored_witness_count"] == 0
+    assert surfaces["agent_adapter_protocol"]["exact_test_anchor_count"] == 14
+    assert surfaces["agent_adapter_protocol"]["unanchored_witness_count"] == 0
     assert surfaces["tool_registry_read_models"]["unanchored_witness_count"] == 0
 
 
@@ -478,6 +480,12 @@ def test_agent_adapter_protocol_surface_is_witnessed() -> None:
     assert "agent_adapter_summary_is_governed_read_model" in witnesses
     assert "agent_adapter_summary_bounded" in witnesses
     assert "builtin_agent_registry_read_models_governed" in witnesses
+    agent_integrity = {
+        record["surface_id"]: record
+        for record in matrix["witness_integrity"]["surfaces"]
+    }["agent_adapter_protocol"]
+    assert agent_integrity["exact_test_anchor_count"] == 14
+    assert agent_integrity["unanchored_witness_count"] == 0
     assert closure_actions["classify_agent_adapter_protocol_routes"]["status"] == "closed"
 
 
