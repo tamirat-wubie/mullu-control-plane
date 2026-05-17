@@ -11,6 +11,30 @@ import json
 from types import SimpleNamespace
 
 from mcoi_runtime.app import server_foundation
+from mcoi_runtime.contracts.receipt_store import JsonlReceiptStore
+
+
+def test_receipt_store_from_env_returns_none_without_jsonl_path() -> None:
+    assert server_foundation.receipt_store_from_env({}) is None
+    assert (
+        server_foundation.receipt_store_from_env(
+            {"MULLU_RECEIPT_STORE_JSONL_PATH": "   "}
+        )
+        is None
+    )
+    assert server_foundation.receipt_store_from_env({"OTHER_SETTING": "x"}) is None
+
+
+def test_receipt_store_from_env_builds_jsonl_store(tmp_path) -> None:
+    receipt_path = tmp_path / "receipts" / "proof.jsonl"
+
+    receipt_store = server_foundation.receipt_store_from_env(
+        {"MULLU_RECEIPT_STORE_JSONL_PATH": str(receipt_path)}
+    )
+
+    assert isinstance(receipt_store, JsonlReceiptStore)
+    assert receipt_store.path == receipt_path
+    assert receipt_path.parent.exists()
 
 
 def test_bootstrap_foundation_services_wires_llm_certification_and_safety() -> None:
@@ -107,6 +131,69 @@ def test_bootstrap_foundation_services_wires_llm_certification_and_safety() -> N
     assert bootstrap.content_safety_chain is safety_chain
     assert bootstrap.proof_bridge.clock() == "2026-01-01T00:00:00Z"
     assert bootstrap.tenant_ledger.clock() == "2026-01-01T00:00:00Z"
+
+
+def test_bootstrap_foundation_services_wires_configured_receipt_store() -> None:
+    configured_receipt_store = object()
+
+    class FakeLLMConfig:
+        @classmethod
+        def from_env(cls) -> str:
+            return "cfg"
+
+    def fake_bootstrap_llm_fn(*, clock, config, ledger_sink):
+        return SimpleNamespace(
+            bridge=type(
+                "Bridge",
+                (),
+                {"complete": lambda self, prompt, budget_id: {"prompt": prompt}},
+            )()
+        )
+
+    class FakeCertificationConfig:
+        def __init__(self, *, interval_seconds: float, enabled: bool) -> None:
+            self.interval_seconds = interval_seconds
+            self.enabled = enabled
+
+    class FakeCertificationDaemon:
+        def __init__(self, **kwargs) -> None:
+            self.kwargs = kwargs
+
+    class FakeProofBridge:
+        def __init__(self, *, clock, store) -> None:
+            self.clock = clock
+            self.store = store
+
+    store = type(
+        "Store",
+        (),
+        {
+            "append_ledger": lambda self, *args: None,
+            "query_ledger": lambda self, tenant_id: [tenant_id],
+            "ledger_count": lambda self: 3,
+        },
+    )()
+
+    bootstrap = server_foundation.bootstrap_foundation_services(
+        clock=lambda: "2026-01-01T00:00:00Z",
+        runtime_env={"MULLU_RECEIPT_STORE_JSONL_PATH": "ignored-by-fake"},
+        store=store,
+        llm_config_cls=FakeLLMConfig,
+        bootstrap_llm_fn=fake_bootstrap_llm_fn,
+        live_path_certifier_cls=lambda **kwargs: object(),
+        streaming_adapter_cls=lambda **kwargs: object(),
+        certification_config_cls=FakeCertificationConfig,
+        certification_daemon_cls=FakeCertificationDaemon,
+        pii_scanner_cls=lambda **kwargs: object(),
+        build_default_safety_chain_fn=lambda: object(),
+        proof_bridge_cls=FakeProofBridge,
+        receipt_store_from_env_fn=lambda runtime_env: configured_receipt_store,
+        tenant_ledger_cls=lambda **kwargs: object(),
+    )
+
+    assert bootstrap.proof_bridge.store is configured_receipt_store
+    assert bootstrap.proof_bridge.clock() == "2026-01-01T00:00:00Z"
+    assert bootstrap.cert_daemon.kwargs["config"].interval_seconds == 300.0
 
 
 def test_bootstrap_foundation_services_hashes_ledger_entries_and_state() -> None:
