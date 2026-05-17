@@ -54,6 +54,33 @@ def test_shell_executor_runs_explicit_argv_without_shell_mode() -> None:
     assert captured["timeout"] == 5
 
 
+def test_shell_executor_argv_only() -> None:
+    captured: dict[str, object] = {}
+
+    def fake_runner(*args: object, **kwargs: object) -> subprocess.CompletedProcess[str]:
+        captured["argv"] = args[0]
+        captured["shell"] = kwargs["shell"]
+        captured["check"] = kwargs["check"]
+        return subprocess.CompletedProcess(args[0], 0, stdout="argv-ok", stderr="")
+
+    executor = ShellExecutor(runner=fake_runner, clock=lambda: "2026-03-18T12:00:00+00:00")
+    result = executor.execute(
+        ExecutionRequest(
+            execution_id="execution-argv-only",
+            goal_id="goal-argv-only",
+            argv=("python", "-c", "print('argv-ok')"),
+        )
+    )
+
+    receipt = result.metadata["shell_receipt"]
+    assert result.status is ExecutionOutcome.SUCCEEDED
+    assert captured["argv"] == ["python", "-c", "print('argv-ok')"]
+    assert captured["shell"] is False
+    assert captured["check"] is False
+    assert receipt["argv_summary"] == ("python", "-c", "print('argv-ok')")
+    assert receipt["command_hash"]
+
+
 def test_shell_executor_maps_timeout_to_typed_cancellation() -> None:
     def fake_runner(*args: object, **kwargs: object) -> subprocess.CompletedProcess[str]:
         raise subprocess.TimeoutExpired(cmd=args[0], timeout=kwargs["timeout"])
@@ -166,6 +193,46 @@ def test_shell_executor_bounds_policy_denial_message() -> None:
     assert receipt["outcome"] == "failed"
 
 
+def test_shell_policy_denial_receipt_emitted() -> None:
+    called = False
+
+    def fake_runner(*_args: object, **_kwargs: object) -> subprocess.CompletedProcess[str]:
+        nonlocal called
+        called = True
+        return subprocess.CompletedProcess(("python",), 0, stdout="should-not-run", stderr="")
+
+    executor = ShellExecutor(
+        runner=fake_runner,
+        clock=lambda: "2026-03-18T12:00:00+00:00",
+        policy_engine=ShellPolicyEngine(
+            ShellCommandPolicy(
+                policy_id="policy-deny-python",
+                allowed_executables=("echo",),
+            )
+        ),
+    )
+
+    result = executor.execute(
+        ExecutionRequest(
+            execution_id="execution-policy-denied",
+            goal_id="goal-policy-denied",
+            argv=("python", "-c", "print('blocked')"),
+        )
+    )
+
+    details = result.actual_effects[0].details
+    receipt = details["details"]["receipt"]
+    assert called is False
+    assert result.status is ExecutionOutcome.FAILED
+    assert result.actual_effects[0].name == "policy_denied"
+    assert details["code"] == "policy_denied"
+    assert receipt["receipt_id"].startswith("shell-receipt-")
+    assert receipt["policy_id"] == "policy-deny-python"
+    assert receipt["policy_verdict"] == "deny_executable"
+    assert receipt["metadata"]["failure_code"] == "policy_denied"
+    assert receipt["evidence_ref"].startswith("shell-receipt:execution-policy-denied:")
+
+
 def test_shell_executor_sandbox_denies_missing_required_cwd() -> None:
     executor = ShellExecutor(
         clock=lambda: "2026-03-18T12:00:00+00:00",
@@ -191,6 +258,51 @@ def test_shell_executor_sandbox_denies_missing_required_cwd() -> None:
     assert receipt["metadata"]["sandbox_id"] == "sandbox-1"
     assert receipt["metadata"]["failure_code"] == "sandbox_denied"
     assert receipt["metadata"]["environment_isolated"] is True
+
+
+def test_shell_sandbox_denial_receipt_emitted(tmp_path: Path) -> None:
+    allowed_root = tmp_path / "allowed"
+    blocked_root = tmp_path / "blocked"
+    allowed_root.mkdir()
+    blocked_root.mkdir()
+    called = False
+
+    def fake_runner(*_args: object, **_kwargs: object) -> subprocess.CompletedProcess[str]:
+        nonlocal called
+        called = True
+        return subprocess.CompletedProcess(("echo",), 0, stdout="should-not-run", stderr="")
+
+    executor = ShellExecutor(
+        runner=fake_runner,
+        clock=lambda: "2026-03-18T12:00:00+00:00",
+        sandbox_policy=ShellSandboxPolicy(
+            sandbox_id="sandbox-deny-cwd",
+            allowed_cwd_roots=(str(allowed_root),),
+            require_cwd=True,
+        ),
+    )
+
+    result = executor.execute(
+        ExecutionRequest(
+            execution_id="execution-sandbox-denied",
+            goal_id="goal-sandbox-denied",
+            argv=("echo", "blocked"),
+            cwd=str(blocked_root),
+        )
+    )
+
+    details = result.actual_effects[0].details
+    receipt = details["details"]["receipt"]
+    assert called is False
+    assert result.status is ExecutionOutcome.FAILED
+    assert result.actual_effects[0].name == "sandbox_denied"
+    assert details["code"] == "sandbox_denied"
+    assert details["details"]["reason"] == "cwd_outside_allowed_roots"
+    assert receipt["receipt_id"].startswith("shell-receipt-")
+    assert receipt["metadata"]["failure_code"] == "sandbox_denied"
+    assert receipt["metadata"]["sandbox_id"] == "sandbox-deny-cwd"
+    assert receipt["metadata"]["cwd_root_enforced"] is True
+    assert receipt["evidence_ref"].startswith("shell-receipt:execution-sandbox-denied:")
 
 
 def test_shell_executor_sandbox_denies_cwd_outside_allowed_root(tmp_path: Path) -> None:

@@ -3144,7 +3144,12 @@
         "mcoi/tests/test_governance_endpoints.py",
         "mcoi/tests/test_tenant_budget.py",
         "mcoi/tests/test_tenant_gating.py",
-        "mcoi/tests/test_tenant_ledger.py"
+        "mcoi/tests/test_tenant_ledger.py",
+        "mcoi/tests/test_usage_reporter.py",
+        "mcoi/tests/test_tenant_analytics.py",
+        "mcoi/tests/test_tenant_quota.py",
+        "mcoi/tests/test_phase232.py",
+        "mcoi/tests/test_server_capability_helpers.py"
       ],
       "notes": "Tenant governance lifecycle routes bind budget mutation, tenant ledger and budget read models, registration, status transitions, and gate summaries to governed responses with audit records and bounded action proofs.",
       "representative_paths": [
@@ -3168,6 +3173,53 @@
         "/api/v1/tenant/gates"
       ],
       "request_proof": "request_proof",
+      "runtime_witness_anchor_aliases": {
+        "tenant_analytics_read_model_scoped": [
+          "compute"
+        ],
+        "tenant_budget_create_emits_action_proof": [
+          "create_tenant_budget"
+        ],
+        "tenant_budget_create_records_audit": [
+          "audit_after_budget_create"
+        ],
+        "tenant_budget_read_models_scoped_by_tenant": [
+          "get_tenant_budget"
+        ],
+        "tenant_gate_persistence_read_model_included": [
+          "list_gates_includes_store_backed_entries"
+        ],
+        "tenant_gate_read_models_governed": [
+          "get_existing_gate"
+        ],
+        "tenant_isolation_audits_bounded": [
+          "tenant_isolation"
+        ],
+        "tenant_isolation_verify_governed": [
+          "bootstrap_capability_services_wires_usage_templates_and_isolation"
+        ],
+        "tenant_ledger_queries_bounded": [
+          "get_tenant_ledger"
+        ],
+        "tenant_partition_read_model_bounded": [
+          "max_partitions_error_is_bounded"
+        ],
+        "tenant_quota_read_models_bounded": [
+          "get_usage"
+        ],
+        "tenant_register_emits_action_proof": [
+          "register_new_tenant"
+        ],
+        "tenant_registry_lifecycle_errors_sanitized": [
+          "register_invalid_status"
+        ],
+        "tenant_status_update_emits_action_proof": [
+          "suspend_tenant"
+        ],
+        "tenant_usage_read_model_scoped": [
+          "generate"
+        ]
+      },
       "runtime_witnesses": [
         "tenant_budget_create_emits_action_proof",
         "tenant_budget_create_records_audit",
@@ -3571,21 +3623,21 @@
       ],
       "request_proof": "request_proof",
       "runtime_witnesses": [
-        "finance_packet_policy_reasons_explicit",
-        "blocked_packet_emits_no_effect",
-        "approval_action_binds_approval_effect_and_closure_refs",
-        "payment_handoff_prepared_without_live_payment_claim",
-        "email_calendar_binding_receipt_requires_worker_token_and_readonly_scope",
-        "payment_receipt_and_ledger_reconciliation_required_for_payment_closure",
-        "payment_closure_receipt_validator_blocks_unbound_evidence",
-        "payment_closure_receipt_producer_emits_ready_sandbox_evidence",
-        "payment_provider_binding_receipt_redacts_credentials_and_scopes_provider",
-        "payment_closure_producer_consumes_provider_binding_receipt",
-        "payment_closure_validator_verifies_provider_binding_receipt_object",
-        "payment_closure_receipt_producer_requires_provider_binding_for_nonsandbox",
-        "payment_closure_example_evidence_validates_provider_binding_chain",
-        "packet_proof_requires_policy_evidence_and_closure_for_closed_states",
-        "operator_read_model_bounds_visible_packets_and_counts"
+        "create_list_get_and_proof_blocked_packet",
+        "blocked_fixture_requires_review_and_emits_no_effect",
+        "approval_creates_effect_and_closed_proof",
+        "approval_can_create_payment_handoff_without_live_payment_claim",
+        "finance_email_calendar_binding_receipt_blocks_without_worker_and_scope",
+        "payment_finalization_requires_provider_and_ledger_evidence_without_mutation",
+        "validate_payment_closure_receipt_rejects_missing_ledger_evidence",
+        "produce_payment_closure_receipt_emits_ready_sandbox_receipt",
+        "payment_provider_binding_receipt_records_presence_without_values",
+        "produce_payment_closure_receipt_derives_binding_ref_from_ready_receipt",
+        "validate_payment_closure_receipt_accepts_ready_provider_binding_receipt",
+        "produce_payment_closure_receipt_requires_non_sandbox_provider_binding",
+        "finance_payment_closure_example_binds_provider_receipt",
+        "proof_export_fails_for_closed_packet_without_closure_certificate",
+        "operator_read_model_summarizes_blocked_and_closed_packets"
       ],
       "surface_id": "finance_approval_packets"
     },
@@ -6470,7 +6522,7 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 375,
+    "exact_test_anchor_count": 408,
     "runtime_witness_count": 1015,
     "surfaces": [
       {
@@ -7179,28 +7231,104 @@
         "unanchored_witnesses": []
       },
       {
-        "anchored_witnesses": [],
-        "exact_test_anchor_count": 0,
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "mcoi/tests/test_server_phase202.py::test_create_tenant_budget"
+            ],
+            "witness": "tenant_budget_create_emits_action_proof"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_server_phase202.py::test_audit_after_budget_create"
+            ],
+            "witness": "tenant_budget_create_records_audit"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_server_phase202.py::test_get_tenant_budget"
+            ],
+            "witness": "tenant_budget_read_models_scoped_by_tenant"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_server_phase202.py::test_get_tenant_ledger"
+            ],
+            "witness": "tenant_ledger_queries_bounded"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_governance_endpoints.py::test_register_invalid_status"
+            ],
+            "witness": "tenant_registry_lifecycle_errors_sanitized"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_governance_endpoints.py::test_register_new_tenant",
+              "mcoi/tests/test_tenant_gating.py::test_register_new_tenant"
+            ],
+            "witness": "tenant_register_emits_action_proof"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_governance_endpoints.py::test_suspend_tenant"
+            ],
+            "witness": "tenant_status_update_emits_action_proof"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_governance_endpoints.py::test_get_existing_gate"
+            ],
+            "witness": "tenant_gate_read_models_governed"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_governance_endpoints.py::test_list_gates_includes_store_backed_entries"
+            ],
+            "witness": "tenant_gate_persistence_read_model_included"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_usage_reporter.py::test_generate"
+            ],
+            "witness": "tenant_usage_read_model_scoped"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_tenant_analytics.py::test_compute"
+            ],
+            "witness": "tenant_analytics_read_model_scoped"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_server_capability_helpers.py::test_bootstrap_capability_services_wires_usage_templates_and_isolation"
+            ],
+            "witness": "tenant_isolation_verify_governed"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_phase232.py::test_tenant_isolation"
+            ],
+            "witness": "tenant_isolation_audits_bounded"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_tenant_quota.py::test_get_usage"
+            ],
+            "witness": "tenant_quota_read_models_bounded"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_phase232.py::test_max_partitions_error_is_bounded"
+            ],
+            "witness": "tenant_partition_read_model_bounded"
+          }
+        ],
+        "exact_test_anchor_count": 15,
         "runtime_witness_count": 15,
         "surface_id": "tenant_governance_lifecycle",
-        "unanchored_witness_count": 15,
-        "unanchored_witnesses": [
-          "tenant_budget_create_emits_action_proof",
-          "tenant_budget_create_records_audit",
-          "tenant_budget_read_models_scoped_by_tenant",
-          "tenant_ledger_queries_bounded",
-          "tenant_registry_lifecycle_errors_sanitized",
-          "tenant_register_emits_action_proof",
-          "tenant_status_update_emits_action_proof",
-          "tenant_gate_read_models_governed",
-          "tenant_gate_persistence_read_model_included",
-          "tenant_usage_read_model_scoped",
-          "tenant_analytics_read_model_scoped",
-          "tenant_isolation_verify_governed",
-          "tenant_isolation_audits_bounded",
-          "tenant_quota_read_models_bounded",
-          "tenant_partition_read_model_bounded"
-        ]
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
       },
       {
         "anchored_witnesses": [],
@@ -7663,28 +7791,103 @@
         ]
       },
       {
-        "anchored_witnesses": [],
-        "exact_test_anchor_count": 0,
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "mcoi/tests/test_finance_approval_router.py::test_create_list_get_and_proof_blocked_packet"
+            ],
+            "witness": "create_list_get_and_proof_blocked_packet"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_finance_approval_packet.py::test_blocked_fixture_requires_review_and_emits_no_effect"
+            ],
+            "witness": "blocked_fixture_requires_review_and_emits_no_effect"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_finance_approval_router.py::test_approval_creates_effect_and_closed_proof"
+            ],
+            "witness": "approval_creates_effect_and_closed_proof"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_finance_approval_router.py::test_approval_can_create_payment_handoff_without_live_payment_claim"
+            ],
+            "witness": "approval_can_create_payment_handoff_without_live_payment_claim"
+          },
+          {
+            "anchors": [
+              "tests/test_emit_finance_approval_email_calendar_binding_receipt.py::test_finance_email_calendar_binding_receipt_blocks_without_worker_and_scope"
+            ],
+            "witness": "finance_email_calendar_binding_receipt_blocks_without_worker_and_scope"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_finance_approval_router.py::test_payment_finalization_requires_provider_and_ledger_evidence_without_mutation"
+            ],
+            "witness": "payment_finalization_requires_provider_and_ledger_evidence_without_mutation"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_finance_approval_payment_closure_receipt.py::test_validate_payment_closure_receipt_rejects_missing_ledger_evidence"
+            ],
+            "witness": "validate_payment_closure_receipt_rejects_missing_ledger_evidence"
+          },
+          {
+            "anchors": [
+              "tests/test_produce_finance_approval_payment_closure_receipt.py::test_produce_payment_closure_receipt_emits_ready_sandbox_receipt"
+            ],
+            "witness": "produce_payment_closure_receipt_emits_ready_sandbox_receipt"
+          },
+          {
+            "anchors": [
+              "tests/test_emit_finance_approval_payment_provider_binding_receipt.py::test_payment_provider_binding_receipt_records_presence_without_values"
+            ],
+            "witness": "payment_provider_binding_receipt_records_presence_without_values"
+          },
+          {
+            "anchors": [
+              "tests/test_produce_finance_approval_payment_closure_receipt.py::test_produce_payment_closure_receipt_derives_binding_ref_from_ready_receipt"
+            ],
+            "witness": "produce_payment_closure_receipt_derives_binding_ref_from_ready_receipt"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_finance_approval_payment_closure_receipt.py::test_validate_payment_closure_receipt_accepts_ready_provider_binding_receipt"
+            ],
+            "witness": "validate_payment_closure_receipt_accepts_ready_provider_binding_receipt"
+          },
+          {
+            "anchors": [
+              "tests/test_produce_finance_approval_payment_closure_receipt.py::test_produce_payment_closure_receipt_requires_non_sandbox_provider_binding"
+            ],
+            "witness": "produce_payment_closure_receipt_requires_non_sandbox_provider_binding"
+          },
+          {
+            "anchors": [
+              "tests/test_finance_payment_provider_binding_examples.py::test_finance_payment_closure_example_binds_provider_receipt"
+            ],
+            "witness": "finance_payment_closure_example_binds_provider_receipt"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_finance_approval_packet.py::test_proof_export_fails_for_closed_packet_without_closure_certificate"
+            ],
+            "witness": "proof_export_fails_for_closed_packet_without_closure_certificate"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_finance_approval_router.py::test_operator_read_model_summarizes_blocked_and_closed_packets"
+            ],
+            "witness": "operator_read_model_summarizes_blocked_and_closed_packets"
+          }
+        ],
+        "exact_test_anchor_count": 15,
         "runtime_witness_count": 15,
         "surface_id": "finance_approval_packets",
-        "unanchored_witness_count": 15,
-        "unanchored_witnesses": [
-          "finance_packet_policy_reasons_explicit",
-          "blocked_packet_emits_no_effect",
-          "approval_action_binds_approval_effect_and_closure_refs",
-          "payment_handoff_prepared_without_live_payment_claim",
-          "email_calendar_binding_receipt_requires_worker_token_and_readonly_scope",
-          "payment_receipt_and_ledger_reconciliation_required_for_payment_closure",
-          "payment_closure_receipt_validator_blocks_unbound_evidence",
-          "payment_closure_receipt_producer_emits_ready_sandbox_evidence",
-          "payment_provider_binding_receipt_redacts_credentials_and_scopes_provider",
-          "payment_closure_producer_consumes_provider_binding_receipt",
-          "payment_closure_validator_verifies_provider_binding_receipt_object",
-          "payment_closure_receipt_producer_requires_provider_binding_for_nonsandbox",
-          "payment_closure_example_evidence_validates_provider_binding_chain",
-          "packet_proof_requires_policy_evidence_and_closure_for_closed_states",
-          "operator_read_model_bounds_visible_packets_and_counts"
-        ]
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
       },
       {
         "anchored_witnesses": [
@@ -8379,7 +8582,6 @@
         "anchored_witnesses": [
           {
             "anchors": [
-              "tests/test_gateway/test_webhooks.py::test_receive_with_message_returns_request_receipt",
               "tests/test_gateway/test_webhooks.py::test_receive_with_message_returns_request_receipt"
             ],
             "witness": "receive_with_message_returns_request_receipt"
@@ -8595,14 +8797,12 @@
           },
           {
             "anchors": [
-              "tests/test_validate_deployment_publication_closure.py::test_published_status_rejects_authority_responsibility_debt",
               "tests/test_validate_deployment_publication_closure.py::test_published_status_rejects_authority_responsibility_debt"
             ],
             "witness": "published_status_rejects_authority_responsibility_debt"
           },
           {
             "anchors": [
-              "tests/test_validate_deployment_publication_closure.py::test_published_status_rejects_runtime_responsibility_debt",
               "tests/test_validate_deployment_publication_closure.py::test_published_status_rejects_runtime_responsibility_debt"
             ],
             "witness": "published_status_rejects_runtime_responsibility_debt"
@@ -8627,7 +8827,6 @@
           },
           {
             "anchors": [
-              "tests/test_validate_deployment_publication_closure.py::test_closure_validation_report_matches_public_schema_for_not_published",
               "tests/test_validate_deployment_publication_closure.py::test_closure_validation_report_matches_public_schema_for_not_published"
             ],
             "witness": "closure_validation_report_matches_public_schema_for_not_published"
@@ -9109,6 +9308,24 @@
         "anchored_witnesses": [
           {
             "anchors": [
+              "mcoi/tests/test_shell_executor.py::test_shell_executor_argv_only"
+            ],
+            "witness": "shell_executor_argv_only"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_shell_executor.py::test_shell_policy_denial_receipt_emitted"
+            ],
+            "witness": "shell_policy_denial_receipt_emitted"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_shell_executor.py::test_shell_sandbox_denial_receipt_emitted"
+            ],
+            "witness": "shell_sandbox_denial_receipt_emitted"
+          },
+          {
+            "anchors": [
               "mcoi/tests/test_shell_executor.py::test_shell_receipt_becomes_effect_assurance_evidence_ref"
             ],
             "witness": "shell_receipt_becomes_effect_assurance_evidence_ref"
@@ -9120,15 +9337,11 @@
             "witness": "shell_receipt_closes_effect_assurance"
           }
         ],
-        "exact_test_anchor_count": 2,
+        "exact_test_anchor_count": 5,
         "runtime_witness_count": 5,
         "surface_id": "shell_execution_adapter",
-        "unanchored_witness_count": 3,
-        "unanchored_witnesses": [
-          "shell_executor_argv_only",
-          "shell_policy_denial_receipt_emitted",
-          "shell_sandbox_denial_receipt_emitted"
-        ]
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
       },
       {
         "anchored_witnesses": [
@@ -10435,6 +10648,6 @@
         ]
       }
     ],
-    "unanchored_witness_count": 640
+    "unanchored_witness_count": 607
   }
 }

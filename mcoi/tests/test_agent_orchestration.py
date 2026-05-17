@@ -1194,6 +1194,11 @@ class TestHandoffs:
         assert proofs[0]["matched_agent_count"] == 1
         assert proofs[0]["manifest_gated"] is False
         assert proofs[0]["manifest_admitted"] is True
+        assert proofs[0]["total_plan_count"] == 0
+        assert proofs[0]["active_plan_count"] == 0
+        assert proofs[0]["active_proposal_count"] == 0
+        assert proofs[0]["capability_discovery_proof_count_before"] == 0
+        assert proofs[0]["capability_discovery_proof_count_after"] == 1
         assert "code" not in repr(proofs[0])
         assert "agent-c" not in repr(proofs[0])
 
@@ -1213,6 +1218,11 @@ class TestHandoffs:
         assert proofs[0]["registered_agent_count"] == 3
         assert proofs[0]["matched_agent_count"] == 0
         assert proofs[0]["manifest_admitted"] is True
+        assert proofs[0]["total_plan_count"] == 0
+        assert proofs[0]["active_plan_count"] == 0
+        assert proofs[0]["active_proposal_count"] == 0
+        assert proofs[0]["capability_discovery_proof_count_before"] == 0
+        assert proofs[0]["capability_discovery_proof_count_after"] == 1
 
     def test_capability_discovery_proofs_limit_is_bounded(self, orchestrator):
         orchestrator.find_capable_agents(("llm",))
@@ -1242,6 +1252,11 @@ class TestHandoffs:
         assert proofs[-1]["manifest_gated"] is True
         assert proofs[-1]["manifest_admitted"] is False
         assert proofs[-1]["matched_agent_count"] == 0
+        assert proofs[-1]["total_plan_count"] == 0
+        assert proofs[-1]["active_plan_count"] == 0
+        assert proofs[-1]["active_proposal_count"] == 0
+        assert proofs[-1]["capability_discovery_proof_count_before"] == 1
+        assert proofs[-1]["capability_discovery_proof_count_after"] == 2
         assert "deploy" not in repr(proofs[-1])
 
     def test_manifest_read_model_builds_gated_orchestrator(self):

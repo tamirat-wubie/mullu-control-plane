@@ -189,8 +189,10 @@ def _receipt_errors(
     evidence_refs = receipt.get("evidence_refs")
     if not isinstance(evidence_refs, list) or not evidence_refs:
         errors.append("evidence_refs_empty")
-    elif not all(str(ref).startswith("sandbox_execution:") for ref in evidence_refs):
+    elif not all(isinstance(ref, str) and ref.startswith("sandbox_execution:") for ref in evidence_refs):
         errors.append("evidence_refs_not_sandbox_execution")
+    elif not any(ref == f"sandbox_execution:{receipt_id.removeprefix('sandbox-receipt-')}" for ref in evidence_refs):
+        errors.append("evidence_refs_do_not_match_receipt_id")
     return tuple(dict.fromkeys(errors))
 
 

@@ -108,6 +108,7 @@ class SandboxCommandRequest:
         _require_text(self.tenant_id, "tenant_id")
         _require_text(self.capability_id, "capability_id")
         object.__setattr__(self, "argv", _normalize_argv(self.argv))
+        _validate_container_path_text(self.cwd, "cwd")
         if not _is_workspace_container_path(self.cwd):
             raise ValueError("cwd must be inside /workspace")
         object.__setattr__(self, "environment", dict(self.environment))
@@ -180,6 +181,10 @@ class DockerRootlessSandboxRunner:
         self._platform_system = platform_system
         if not str(self._host_workspace_root):
             raise ValueError("host_workspace_root is required")
+        if not self._host_workspace_root.exists():
+            raise ValueError("host_workspace_root must exist")
+        if not self._host_workspace_root.is_dir():
+            raise ValueError("host_workspace_root must be a directory")
         _reject_forbidden_host_mount(str(self._host_workspace_root), self._profile)
 
     @property
@@ -400,6 +405,12 @@ def _is_workspace_container_path(value: str) -> bool:
         return False
     workspace = PurePosixPath("/workspace")
     return path == workspace or workspace in path.parents
+
+
+def _validate_container_path_text(value: str, field_name: str) -> None:
+    _require_text(value, field_name)
+    if any(ord(character) < 32 for character in value):
+        raise ValueError(f"{field_name} contains forbidden characters")
 
 
 def _validate_environment_key(value: str) -> None:

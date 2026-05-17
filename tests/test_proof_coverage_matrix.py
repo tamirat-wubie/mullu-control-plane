@@ -141,6 +141,7 @@ def test_witness_integrity_report_tracks_exact_test_anchors() -> None:
     assert surfaces["workflow_execution_lifecycle"]["unanchored_witness_count"] == 0
     assert surfaces["webhooks_proof_surface"]["unanchored_witness_count"] == 0
     assert surfaces["tenant_governance_lifecycle"]["unanchored_witness_count"] == 0
+    assert surfaces["multimodal_operating_layer"]["unanchored_witness_count"] == 0
     assert surfaces["runtime_conformance_attestation"]["unanchored_witness_count"] == 0
     assert surfaces["tool_registry_read_models"]["unanchored_witness_count"] == 0
 
@@ -685,6 +686,12 @@ def test_finance_approval_packet_surface_is_witnessed() -> None:
     assert "payment_closure_example_evidence_validates_provider_binding_chain" in witnesses
     assert "packet_proof_requires_policy_evidence_and_closure_for_closed_states" in witnesses
     assert "operator_read_model_bounds_visible_packets_and_counts" in witnesses
+    finance_integrity = {
+        record["surface_id"]: record
+        for record in matrix["witness_integrity"]["surfaces"]
+    }["finance_approval_packet"]
+    assert finance_integrity["exact_test_anchor_count"] == 15
+    assert finance_integrity["unanchored_witness_count"] == 0
     assert closure_actions["classify_finance_approval_packet_routes"]["status"] == "closed"
 
 
@@ -885,6 +892,11 @@ def test_tenant_governance_lifecycle_surface_is_witnessed() -> None:
     assert "mcoi/mcoi_runtime/governance/guards/tenant_gating.py" in tenant_surface["evidence_files"]
     assert "mcoi/tests/test_server_phase202.py" in tenant_surface["evidence_files"]
     assert "mcoi/tests/test_governance_endpoints.py" in tenant_surface["evidence_files"]
+    assert "mcoi/tests/test_usage_reporter.py" in tenant_surface["evidence_files"]
+    assert "mcoi/tests/test_tenant_analytics.py" in tenant_surface["evidence_files"]
+    assert "mcoi/tests/test_tenant_quota.py" in tenant_surface["evidence_files"]
+    assert "mcoi/tests/test_phase232.py" in tenant_surface["evidence_files"]
+    assert "mcoi/tests/test_server_capability_helpers.py" in tenant_surface["evidence_files"]
     assert "tenant_budget_create_emits_action_proof" in witnesses
     assert "tenant_budget_create_records_audit" in witnesses
     assert "tenant_budget_read_models_scoped_by_tenant" in witnesses
@@ -893,10 +905,19 @@ def test_tenant_governance_lifecycle_surface_is_witnessed() -> None:
     assert "tenant_register_emits_action_proof" in witnesses
     assert "tenant_status_update_emits_action_proof" in witnesses
     assert "tenant_gate_read_models_governed" in witnesses
+    assert "tenant_gate_persistence_read_model_included" in witnesses
     assert "tenant_usage_read_model_scoped" in witnesses
+    assert "tenant_analytics_read_model_scoped" in witnesses
+    assert "tenant_isolation_verify_governed" in witnesses
     assert "tenant_isolation_audits_bounded" in witnesses
     assert "tenant_quota_read_models_bounded" in witnesses
     assert "tenant_partition_read_model_bounded" in witnesses
+    tenant_integrity = {
+        record["surface_id"]: record
+        for record in matrix["witness_integrity"]["surfaces"]
+    }["tenant_governance_lifecycle"]
+    assert tenant_integrity["exact_test_anchor_count"] == 15
+    assert tenant_integrity["unanchored_witness_count"] == 0
     assert closure_actions["classify_tenant_governance_lifecycle_routes"]["status"] == "closed"
 
 

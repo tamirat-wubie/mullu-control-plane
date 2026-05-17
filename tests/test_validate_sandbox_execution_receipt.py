@@ -127,6 +127,40 @@ def test_validate_sandbox_execution_receipt_rejects_untyped_workspace_refs(
     assert "changed_file_refs_not_workspace_diff" in validation.detail
 
 
+def test_validate_sandbox_execution_receipt_rejects_unbound_evidence_refs(
+    tmp_path: Path,
+) -> None:
+    receipt_path = tmp_path / "bad-evidence-receipt.json"
+    result = _write_runner_receipt(receipt_path, tmp_path)
+    payload = asdict(result.receipt)
+    payload["evidence_refs"] = ["sandbox_execution:wrong-receipt"]
+    receipt_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    validation = validate_sandbox_execution_receipt(receipt_path)
+
+    assert validation.valid is False
+    assert validation.blockers == ("sandbox_receipt_invalid",)
+    assert "evidence_refs_do_not_match_receipt_id" in validation.detail
+    assert validation.receipt_id == result.receipt.receipt_id
+
+
+def test_validate_sandbox_execution_receipt_rejects_non_string_evidence_refs(
+    tmp_path: Path,
+) -> None:
+    receipt_path = tmp_path / "non-string-evidence-receipt.json"
+    result = _write_runner_receipt(receipt_path, tmp_path)
+    payload = asdict(result.receipt)
+    payload["evidence_refs"] = [7]
+    receipt_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    validation = validate_sandbox_execution_receipt(receipt_path)
+
+    assert validation.valid is False
+    assert validation.blockers == ("sandbox_receipt_invalid",)
+    assert "evidence_refs_not_sandbox_execution" in validation.detail
+    assert "evidence_refs_do_not_match_receipt_id" not in validation.detail
+
+
 def test_validate_sandbox_execution_receipt_rejects_workspace_changes_when_required(
     tmp_path: Path,
 ) -> None:

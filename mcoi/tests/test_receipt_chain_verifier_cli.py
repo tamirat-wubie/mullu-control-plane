@@ -137,6 +137,60 @@ def test_verify_receipt_chain_rejects_causal_parent_mismatch(tmp_path: Path, cap
     assert "field: causal_parent" in output
 
 
+def test_verify_receipt_chain_rejects_entity_mismatch(tmp_path: Path, capsys) -> None:
+    first, _second = _receipt_pair()
+    cross_entity = certify_transition(
+        _machine(),
+        entity_id="entity-2",
+        from_state="running",
+        to_state="done",
+        action="finish",
+        before_state_hash="after-1",
+        after_state_hash="after-2",
+        actor_id="tester",
+        reason="finish",
+        causal_parent=first.receipt_hash,
+        timestamp=TIMESTAMP,
+    ).receipt
+    input_path = _write_json(tmp_path / "bad-entity.json", [asdict(first), asdict(cross_entity)])
+
+    rc = main(["verify-receipt-chain", str(input_path)])
+    output = capsys.readouterr().out
+
+    assert rc == 1
+    assert "receipt_index: 1" in output
+    assert "field: entity_id" in output
+    assert "expected: entity-1" in output
+    assert "observed: entity-2" in output
+
+
+def test_verify_receipt_chain_rejects_state_hash_discontinuity(tmp_path: Path, capsys) -> None:
+    first, _second = _receipt_pair()
+    discontinuous = certify_transition(
+        _machine(),
+        entity_id="entity-1",
+        from_state="running",
+        to_state="done",
+        action="finish",
+        before_state_hash="unexpected-before",
+        after_state_hash="after-2",
+        actor_id="tester",
+        reason="finish",
+        causal_parent=first.receipt_hash,
+        timestamp=TIMESTAMP,
+    ).receipt
+    input_path = _write_json(tmp_path / "bad-state-hash.json", [asdict(first), asdict(discontinuous)])
+
+    rc = main(["verify-receipt-chain", str(input_path)])
+    output = capsys.readouterr().out
+
+    assert rc == 1
+    assert "receipt_index: 1" in output
+    assert "field: before_state_hash" in output
+    assert "expected: after-1" in output
+    assert "observed: unexpected-before" in output
+
+
 def test_verify_receipt_chain_rejects_missing_fields(tmp_path: Path, capsys) -> None:
     input_path = _write_json(tmp_path / "missing.json", [{"receipt_id": "rcpt-only"}])
 
