@@ -120,6 +120,32 @@ def test_strict_invariants_fail_without_approval_and_rollback_evidence() -> None
     assert "rollback_plan_ref" in report.violations[1]
 
 
+def test_empty_merge_reconciliation_does_not_fail_no_file_invariant() -> None:
+    command = _command(
+        affected_files=(),
+        affected_contracts=(),
+        affected_capabilities=(),
+        affected_invariants=(),
+        required_replays=(),
+        risk=ChangeRisk.LOW,
+        requires_approval=False,
+        rollback_required=False,
+        change_type=EvolutionChangeType.DOCUMENTATION,
+        metadata={
+            "base_ref": "HEAD^",
+            "head_ref": "HEAD",
+            "empty_merge_reconciliation": True,
+        },
+    )
+    report = check_invariants(command, approval_id=None, strict=True)
+
+    assert report.disposition is AssuranceDisposition.PASSED
+    assert report.violations == ()
+    replay_report = certify_replay(Path(__file__).resolve().parent.parent, command, strict=True)
+    certificate = create_certificate(command, report, replay_report, approval_id=None)
+    assert certificate_is_acceptable(certificate) is True
+
+
 def test_certificate_acceptance_requires_all_gates() -> None:
     command = _command(metadata={"base_ref": "main", "head_ref": "current", "rollback_plan_ref": "runbook-1"})
     invariant_report = check_invariants(command, approval_id="approval-1", strict=True)
