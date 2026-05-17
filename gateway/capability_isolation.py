@@ -324,6 +324,8 @@ class HttpCapabilityWorkerTransport:
             raw_response = json.loads(response_body.decode("utf-8"))
         except (UnicodeDecodeError, json.JSONDecodeError) as exc:
             raise RuntimeError("capability worker returned invalid JSON") from exc
+        if not isinstance(raw_response, dict):
+            raise RuntimeError("capability worker response must be an object")
         return _response_from_mapping(raw_response)
 
 
@@ -474,7 +476,7 @@ def capability_execution_request_from_mapping(raw: dict[str, Any]) -> Capability
         parsed_boundary = CapabilityExecutionBoundary(
             capability_id=str(boundary["capability_id"]),
             execution_plane=str(boundary["execution_plane"]),
-            isolation_required=bool(boundary["isolation_required"]),
+            isolation_required=_require_bool(boundary["isolation_required"], "boundary.isolation_required"),
             network_policy=tuple(boundary["network_policy"]),
             filesystem_policy=str(boundary["filesystem_policy"]),
             max_runtime_seconds=int(boundary["max_runtime_seconds"]),
@@ -532,7 +534,7 @@ def _response_from_mapping(raw: dict[str, Any]) -> CapabilityExecutionResponse:
             receipt_id=str(receipt["receipt_id"]),
             capability_id=str(receipt["capability_id"]),
             execution_plane=str(receipt["execution_plane"]),
-            isolation_required=bool(receipt["isolation_required"]),
+            isolation_required=_require_bool(receipt["isolation_required"], "receipt.isolation_required"),
             worker_id=str(receipt["worker_id"]),
             input_hash=str(receipt["input_hash"]),
             output_hash=str(receipt["output_hash"]),
@@ -584,6 +586,12 @@ def _validate_boundary_matches_intent(boundary: CapabilityExecutionBoundary, int
 def _require_non_empty_text(value: str, field_name: str) -> str:
     if not isinstance(value, str) or not value.strip():
         raise ValueError(f"{field_name} must be a non-empty string")
+    return value
+
+
+def _require_bool(value: Any, field_name: str) -> bool:
+    if not isinstance(value, bool):
+        raise ValueError(f"{field_name} must be a boolean")
     return value
 
 

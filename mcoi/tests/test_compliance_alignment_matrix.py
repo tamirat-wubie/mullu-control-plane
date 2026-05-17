@@ -7,9 +7,19 @@ Invariants: every mapped capability covers all target frameworks with repository
 """
 from __future__ import annotations
 
+import importlib
+import sys
 from pathlib import Path
 
-from scripts.compliance_alignment_matrix import TARGET_FRAMEWORKS, load_matrix, validate_matrix
+REPO_ROOT = Path(__file__).resolve().parents[2]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
+compliance_alignment_matrix = importlib.import_module("scripts.compliance_alignment_matrix")
+
+TARGET_FRAMEWORKS = compliance_alignment_matrix.TARGET_FRAMEWORKS
+load_matrix = compliance_alignment_matrix.load_matrix
+validate_matrix = compliance_alignment_matrix.validate_matrix
 
 
 def test_compliance_alignment_matrix_is_valid() -> None:

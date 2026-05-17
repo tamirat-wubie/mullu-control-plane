@@ -6,6 +6,7 @@ Invariants: canonical field names and enum values do not drift across runtimes.
 
 from __future__ import annotations
 
+import importlib
 import sys
 from pathlib import Path
 
@@ -14,7 +15,7 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from scripts import validate_schemas
+validate_schemas = importlib.import_module("scripts.validate_schemas")
 
 
 def test_shared_schemas_are_well_formed() -> None:

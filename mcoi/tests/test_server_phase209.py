@@ -88,6 +88,16 @@ class TestPromptEndpoints:
         assert "summarize" in ids
         assert "translate" in ids
 
+    def test_prompt_template_list_bounded(self, client):
+        resp = client.get("/api/v1/prompts", params={"category": "analysis"})
+
+        assert resp.status_code == 200
+        data = resp.json()
+        assert set(data) == {"templates", "summary"}
+        assert data["summary"]["total"] >= len(data["templates"])
+        assert all(set(template) == {"id", "name", "variables", "category", "version"} for template in data["templates"])
+        assert all(template["category"] == "analysis" for template in data["templates"])
+
     def test_render_only(self, client):
         resp = client.post("/api/v1/prompts/render", json={
             "template_id": "summarize",
@@ -97,6 +107,23 @@ class TestPromptEndpoints:
         data = resp.json()
         assert "quick brown fox" in data["prompt"]
         assert "llm_result" not in data  # Not executed
+
+    def test_prompt_render_variables_validated(self, client):
+        valid_resp = client.post("/api/v1/prompts/render", json={
+            "template_id": "summarize",
+            "variables": {"text": "The quick brown fox"},
+        })
+        invalid_resp = client.post("/api/v1/prompts/render", json={
+            "template_id": "translate",
+            "variables": {"text": "hello"},
+        })
+
+        assert valid_resp.status_code == 200
+        assert "quick brown fox" in valid_resp.json()["prompt"]
+        assert invalid_resp.status_code == 400
+        assert invalid_resp.json()["detail"]["error_code"] == "validation_error"
+        assert invalid_resp.json()["detail"]["governed"] is True
+        assert "language" not in str(invalid_resp.json())
 
     def test_render_and_execute(self, client):
         resp = client.post("/api/v1/prompts/render", json={
@@ -108,6 +135,24 @@ class TestPromptEndpoints:
         data = resp.json()
         assert "llm_result" in data
         assert data["llm_result"]["succeeded"] is True
+
+    def test_prompt_execution_records_budgeted_result(self, client):
+        resp = client.post("/api/v1/prompts/render", json={
+            "template_id": "summarize",
+            "variables": {"text": "Budgeted prompt execution"},
+            "execute": True,
+            "budget_id": "default",
+            "tenant_id": "prompt-budget-tenant",
+        })
+
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["template_id"] == "summarize"
+        assert "Budgeted prompt execution" in data["prompt"]
+        assert set(data["llm_result"]) == {"content", "model", "tokens", "cost", "succeeded"}
+        assert data["llm_result"]["succeeded"] is True
+        assert data["llm_result"]["tokens"] >= 0
+        assert data["llm_result"]["cost"] >= 0
 
     def test_render_missing_variable(self, client):
         resp = client.post("/api/v1/prompts/render", json={
@@ -140,6 +185,27 @@ class TestPromptEndpoints:
             "execute": True,
             "tenant_id": "prompt-tenant",
         })
+        assert resp.status_code == 503
+        data = resp.json()["detail"]
+        assert data["error"] == "LLM service unavailable"
+        assert data["error_code"] == "llm_service_unavailable"
+        assert data["governed"] is True
+        assert "prompt-provider-secret" not in str(resp.json())
+
+    def test_prompt_execution_failure_sanitized(self, client, monkeypatch):
+        from mcoi_runtime.app.routers.deps import deps
+
+        def boom(*args, **kwargs):
+            raise RuntimeError("prompt-provider-secret")
+
+        monkeypatch.setattr(deps.llm_bridge, "complete", boom)
+        resp = client.post("/api/v1/prompts/render", json={
+            "template_id": "summarize",
+            "variables": {"text": "Some long text"},
+            "execute": True,
+            "tenant_id": "prompt-tenant",
+        })
+
         assert resp.status_code == 503
         data = resp.json()["detail"]
         assert data["error"] == "LLM service unavailable"

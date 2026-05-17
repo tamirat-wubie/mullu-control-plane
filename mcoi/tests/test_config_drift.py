@@ -5,6 +5,23 @@ from mcoi_runtime.core.config_drift import ConfigDriftDetector, DriftItem, Drift
 
 
 class TestConfigDriftDetector:
+    def test_config_drift_secret_changes_are_critical(self):
+        d = ConfigDriftDetector()
+        d.set_expected({"api_secret": "before"})
+        report = d.detect({"api_secret": "after"})
+        assert report.has_drift is True
+        assert report.critical_count == 1
+        assert report.drifts[0].severity == DriftSeverity.CRITICAL
+
+    def test_config_drift_summary_bounded(self):
+        d = ConfigDriftDetector()
+        d.set_expected({"runtime_mode": "pilot"})
+        d.detect({"runtime_mode": "pilot"})
+        summary = d.summary()
+        assert summary["expected_keys"] == 1
+        assert summary["total_scans"] == 1
+        assert summary["total_drifts_found"] == 0
+
     def test_no_drift_when_matching(self):
         d = ConfigDriftDetector()
         d.set_expected({"key": "val", "num": 42})

@@ -52,6 +52,32 @@ class RecordingAdapterWorkerClient:
         )
 
 
+class InvalidReceiptAdapterWorkerClient:
+    """Worker client fixture that returns an invalid successful receipt."""
+
+    def __init__(self, *, verification_status: str = "passed", evidence_refs: Any = None) -> None:
+        self.verification_status = verification_status
+        self.evidence_refs = ["browser.extract_text:test"] if evidence_refs is None else evidence_refs
+
+    def execute(self, payload):
+        capability_id = str(payload["capability_id"])
+        request_id = str(payload["request_id"])
+        return AdapterWorkerResponse(
+            request_id=request_id,
+            status="succeeded",
+            result={"observed": capability_id},
+            receipt={
+                "request_id": request_id,
+                "tenant_id": str(payload["tenant_id"]),
+                "capability_id": capability_id,
+                "verification_status": self.verification_status,
+                "evidence_refs": self.evidence_refs,
+            },
+            error="",
+            raw={},
+        )
+
+
 class PlatformWithAdapterWorkerClients:
     """Platform fixture exposing adapter worker clients directly."""
 
@@ -167,6 +193,48 @@ def test_adapter_capability_fails_closed_without_worker_client() -> None:
     assert result["receipt_status"] == "worker_unavailable"
     assert result["worker_status"] == "unavailable"
     assert result["worker_plane"] == "browser"
+
+
+def test_adapter_capability_fails_closed_on_invalid_worker_receipt() -> None:
+    dispatcher = SkillDispatcher()
+    register_browser_capabilities(
+        dispatcher,
+        browser_worker_client=InvalidReceiptAdapterWorkerClient(evidence_refs=[" "]),
+    )
+
+    result = dispatcher.dispatch(
+        SkillIntent("browser", "extract_text", {"url": "https://docs.mullusi.com/guide"}),
+        tenant_id="tenant-1",
+        identity_id="identity-1",
+    )
+
+    assert result is not None
+    assert result["capability_id"] == "browser.extract_text"
+    assert result["receipt_status"] == "failed"
+    assert result["worker_status"] == "failed"
+    assert result["worker_error"] == "worker_receipt_evidence_invalid"
+    assert result["evidence_refs"] == []
+
+
+def test_adapter_capability_fails_closed_on_failed_worker_verification() -> None:
+    dispatcher = SkillDispatcher()
+    register_browser_capabilities(
+        dispatcher,
+        browser_worker_client=InvalidReceiptAdapterWorkerClient(verification_status="failed"),
+    )
+
+    result = dispatcher.dispatch(
+        SkillIntent("browser", "extract_text", {"url": "https://docs.mullusi.com/guide"}),
+        tenant_id="tenant-1",
+        identity_id="identity-1",
+    )
+
+    assert result is not None
+    assert result["capability_id"] == "browser.extract_text"
+    assert result["receipt_status"] == "failed"
+    assert result["worker_status"] == "failed"
+    assert result["worker_error"] == "worker_receipt_verification_failed"
+    assert result["verification_status"] == "failed"
 
 
 def test_platform_builder_registers_adapter_worker_clients(monkeypatch) -> None:

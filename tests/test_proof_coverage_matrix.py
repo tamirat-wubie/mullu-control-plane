@@ -133,10 +133,15 @@ def test_witness_integrity_report_tracks_exact_test_anchors() -> None:
     assert surfaces["code_intelligence_operator_read_model"]["unanchored_witness_count"] == 0
     assert surfaces["data_export_lifecycle"]["exact_test_anchor_count"] >= 4
     assert surfaces["data_export_lifecycle"]["unanchored_witness_count"] == 0
+    assert surfaces["prompt_template_lifecycle"]["unanchored_witness_count"] == 0
     assert surfaces["operational_platform_read_models"]["exact_test_anchor_count"] >= 25
     assert surfaces["operational_platform_read_models"]["unanchored_witness_count"] == 0
     assert surfaces["trust_ledger"]["unanchored_witness_count"] == 0
     assert surfaces["gateway_runtime_witness"]["unanchored_witness_count"] == 0
+    assert surfaces["workflow_execution_lifecycle"]["unanchored_witness_count"] == 0
+    assert surfaces["webhooks_proof_surface"]["unanchored_witness_count"] == 0
+    assert surfaces["tenant_governance_lifecycle"]["unanchored_witness_count"] == 0
+    assert surfaces["runtime_conformance_attestation"]["unanchored_witness_count"] == 0
     assert surfaces["tool_registry_read_models"]["unanchored_witness_count"] == 0
 
 
@@ -1451,14 +1456,15 @@ def test_capability_plan_evidence_bundle_surface_is_witnessed() -> None:
     assert "gateway/plan_ledger.py" in plan_surface["evidence_files"]
     assert "tests/test_gateway/test_plan.py" in plan_surface["evidence_files"]
     assert "plan_evidence_bundle" in plan_surface["runtime_witnesses"]
-    assert "capability_plan_bundle_canary_passed" in conformance_surface["runtime_witnesses"]
-    assert "physical_worker_canary_passed" in conformance_surface["runtime_witnesses"]
-    assert "physical_worker_canary_artifact_hash_bound" in conformance_surface["runtime_witnesses"]
+    assert "runtime_conformance_witnesses_capability_plan_bundle" in conformance_surface["runtime_witnesses"]
+    assert "physical_worker_canary_blocks_missing_receipt_and_allows_sandbox_replay" in conformance_surface["runtime_witnesses"]
+    assert "physical_worker_canary_evidence_and_hash_are_stable" in conformance_surface["runtime_witnesses"]
     assert "gateway/physical_worker_canary.py" in conformance_surface["evidence_files"]
     assert "scripts/produce_physical_worker_canary.py" in conformance_surface["evidence_files"]
-    assert "runtime_conformance_certificate_schema_valid" in conformance_surface["runtime_witnesses"]
-    assert "runtime_conformance_collector_schema_valid" in conformance_surface["runtime_witnesses"]
-    assert "proof_coverage_unclassified_routes_reported" in conformance_surface["runtime_witnesses"]
+    assert "tests/test_gateway/test_physical_worker_canary.py" in conformance_surface["evidence_files"]
+    assert "runtime_conformance_certificate_matches_schema" in conformance_surface["runtime_witnesses"]
+    assert "collect_runtime_conformance_rejects_schema_invalid_certificate" in conformance_surface["runtime_witnesses"]
+    assert "runtime_conformance_surfaces_unclassified_proof_routes" in conformance_surface["runtime_witnesses"]
     assert closure_actions["publish_capability_plan_evidence_bundles"]["status"] == "closed"
     assert "runtime_conformance_attestation" in closure_actions["publish_capability_plan_evidence_bundles"]["surfaces"]
 

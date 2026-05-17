@@ -611,6 +611,12 @@ class TestVotingAndConsensus:
         assert proofs[0]["vote_count"] == 2
         assert proofs[0]["approval_count"] == 2
         assert proofs[0]["registered_agent_count"] == 3
+        assert proofs[0]["quorum_threshold"] == 2
+        assert proofs[0]["total_plan_count"] == 1
+        assert proofs[0]["active_plan_count"] == 1
+        assert proofs[0]["active_proposal_count"] == 1
+        assert proofs[0]["consensus_proof_count_before"] == 0
+        assert proofs[0]["consensus_proof_count_after"] == 1
         assert proofs[0]["quorum_met"] is True
 
     def test_quorum_not_reached(self, orchestrator):
@@ -638,6 +644,13 @@ class TestVotingAndConsensus:
         assert proofs[0]["vote_count"] == 3
         assert proofs[0]["approval_count"] == 1
         assert proofs[0]["rejection_count"] == 2
+        assert proofs[0]["registered_agent_count"] == 3
+        assert proofs[0]["quorum_threshold"] == 2
+        assert proofs[0]["total_plan_count"] == 1
+        assert proofs[0]["active_plan_count"] == 1
+        assert proofs[0]["active_proposal_count"] == 1
+        assert proofs[0]["consensus_proof_count_before"] == 0
+        assert proofs[0]["consensus_proof_count_after"] == 1
         assert proofs[0]["quorum_met"] is False
 
     def test_check_consensus_unavailable_plan_records_proof(self, orchestrator):
@@ -650,6 +663,13 @@ class TestVotingAndConsensus:
         assert proofs[0]["plan_phase"] == ""
         assert proofs[0]["plan_available"] is False
         assert proofs[0]["vote_count"] == 0
+        assert proofs[0]["registered_agent_count"] == 3
+        assert proofs[0]["quorum_threshold"] == 2
+        assert proofs[0]["total_plan_count"] == 0
+        assert proofs[0]["active_plan_count"] == 0
+        assert proofs[0]["active_proposal_count"] == 0
+        assert proofs[0]["consensus_proof_count_before"] == 0
+        assert proofs[0]["consensus_proof_count_after"] == 1
         assert proofs[0]["quorum_met"] is False
 
     def test_consensus_proofs_limit_is_bounded(self, orchestrator):

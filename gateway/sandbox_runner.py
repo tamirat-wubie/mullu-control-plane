@@ -107,8 +107,7 @@ class SandboxCommandRequest:
         _require_text(self.request_id, "request_id")
         _require_text(self.tenant_id, "tenant_id")
         _require_text(self.capability_id, "capability_id")
-        object.__setattr__(self, "argv", tuple(self.argv))
-        _validate_text_tuple(self.argv, "argv")
+        object.__setattr__(self, "argv", _normalize_argv(self.argv))
         if not _is_workspace_container_path(self.cwd):
             raise ValueError("cwd must be inside /workspace")
         object.__setattr__(self, "environment", dict(self.environment))
@@ -425,6 +424,14 @@ def _validate_text_tuple(values: tuple[str, ...], field_name: str) -> None:
         raise ValueError(f"{field_name} must contain at least one item")
     for value in values:
         _require_text(value, field_name)
+
+
+def _normalize_argv(values: object) -> tuple[str, ...]:
+    if isinstance(values, (str, bytes)) or not isinstance(values, (tuple, list)):
+        raise ValueError("argv must be an argv array")
+    normalized = tuple(values)
+    _validate_text_tuple(normalized, "argv")
+    return normalized
 
 
 def _workspace_snapshot(root: Path) -> dict[str, str]:

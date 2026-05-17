@@ -9,7 +9,7 @@ Invariants:
   - Preflight step names and step_count match the governed handoff sequence.
   - Report blockers are derived from failed steps.
   - Missing environment variables imply the required environment binding blocker.
-  - Missing environment variables emit matching presence-only closure actions.
+  - Missing environment variables emit matching contract-backed presence-only closure actions.
   - Production readiness is never claimed by this preflight report.
 """
 
@@ -23,6 +23,7 @@ from typing import Any
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_REPORT = REPO_ROOT / ".change_assurance" / "general_agent_promotion_handoff_preflight.json"
+DEFAULT_ENVIRONMENT_BINDINGS = REPO_ROOT / "examples" / "general_agent_promotion_environment_bindings.json"
 EXPECTED_STEP_NAMES = (
     "operator checklist validation",
     "handoff packet validation",
@@ -63,6 +64,7 @@ class PromotionHandoffPreflightValidation:
 def validate_general_agent_promotion_handoff_preflight(
     *,
     report_path: Path = DEFAULT_REPORT,
+    environment_bindings_path: Path = DEFAULT_ENVIRONMENT_BINDINGS,
     require_ready: bool = False,
 ) -> PromotionHandoffPreflightValidation:
     """Validate one handoff preflight report."""
@@ -75,7 +77,8 @@ def validate_general_agent_promotion_handoff_preflight(
     _validate_scalar_fields(report, errors)
     _validate_steps(steps, errors)
     _validate_derived_fields(report, steps, errors)
-    _validate_environment_binding_actions(report, errors)
+    binding_contract = _load_environment_binding_contract(environment_bindings_path, errors)
+    _validate_environment_binding_actions(report, binding_contract, errors)
     if require_ready and report.get("ready") is not True:
         errors.append("ready must be true")
     return _validation_result(report_path, report, errors)
@@ -133,7 +136,11 @@ def _validate_derived_fields(report: dict[str, Any], steps: Any, errors: list[st
         errors.append("missing_environment_variables require required environment bindings blocker")
 
 
-def _validate_environment_binding_actions(report: dict[str, Any], errors: list[str]) -> None:
+def _validate_environment_binding_actions(
+    report: dict[str, Any],
+    binding_contract: dict[str, dict[str, Any]],
+    errors: list[str],
+) -> None:
     missing_environment_variables = _string_tuple(
         report.get("missing_environment_variables", ()),
         "missing_environment_variables",
@@ -148,7 +155,7 @@ def _validate_environment_binding_actions(report: dict[str, Any], errors: list[s
         if not isinstance(action, dict):
             errors.append("environment_binding_actions entries must be objects")
             continue
-        _validate_environment_binding_action(action, errors)
+        _validate_environment_binding_action(action, binding_contract, errors)
         observed_names.append(str(action.get("name", "")))
     if tuple(observed_names) != missing_environment_variables:
         errors.append(
@@ -159,7 +166,11 @@ def _validate_environment_binding_actions(report: dict[str, Any], errors: list[s
         errors.append("environment_binding_actions must be empty when no environment variables are missing")
 
 
-def _validate_environment_binding_action(action: dict[str, Any], errors: list[str]) -> None:
+def _validate_environment_binding_action(
+    action: dict[str, Any],
+    binding_contract: dict[str, dict[str, Any]],
+    errors: list[str],
+) -> None:
     required_fields = (
         "name",
         "binding_kind",
@@ -174,31 +185,58 @@ def _validate_environment_binding_action(action: dict[str, Any], errors: list[st
             errors.append(f"environment binding action missing {field_name}")
     if not isinstance(action.get("name"), str) or not action.get("name", "").strip():
         errors.append("environment binding action name must be a non-empty string")
+    name = str(action.get("name", ""))
     if action.get("binding_kind") not in {"artifact_path", "audio_path", "url", "secret"}:
-        errors.append(f"{action.get('name', 'unnamed')} binding_kind is invalid")
+        errors.append(f"{name or 'unnamed'} binding_kind is invalid")
     if action.get("risk") not in {"medium", "high", "critical"}:
-        errors.append(f"{action.get('name', 'unnamed')} risk is invalid")
+        errors.append(f"{name or 'unnamed'} risk is invalid")
     if not isinstance(action.get("approval_required"), bool):
-        errors.append(f"{action.get('name', 'unnamed')} approval_required must be a boolean")
+        errors.append(f"{name or 'unnamed'} approval_required must be a boolean")
     required_for = action.get("required_for")
     if not isinstance(required_for, list) or not required_for or not all(isinstance(item, str) for item in required_for):
-        errors.append(f"{action.get('name', 'unnamed')} required_for must be a non-empty string list")
+        errors.append(f"{name or 'unnamed'} required_for must be a non-empty string list")
     if action.get("receipt_projection") != "name_and_presence_only":
-        errors.append(f"{action.get('name', 'unnamed')} receipt_projection must be name_and_presence_only")
+        errors.append(f"{name or 'unnamed'} receipt_projection must be name_and_presence_only")
+    _validate_environment_binding_contract_match(action, binding_contract, errors)
     verification_command = action.get("verification_command")
     if not isinstance(verification_command, str) or not verification_command.strip():
-        errors.append(f"{action.get('name', 'unnamed')} verification_command must be a non-empty string")
+        errors.append(f"{name or 'unnamed'} verification_command must be a non-empty string")
         return
     if "without printing or serializing" not in verification_command:
-        errors.append(f"{action.get('name', 'unnamed')} verification_command must forbid value serialization")
+        errors.append(f"{name or 'unnamed'} verification_command must forbid value serialization")
     if "emit_general_agent_promotion_environment_binding_receipt.py" not in verification_command:
-        errors.append(f"{action.get('name', 'unnamed')} verification_command must emit binding receipt")
+        errors.append(f"{name or 'unnamed'} verification_command must emit binding receipt")
     if "validate_general_agent_promotion_environment_binding_receipt.py" not in verification_command:
-        errors.append(f"{action.get('name', 'unnamed')} verification_command must validate binding receipt")
+        errors.append(f"{name or 'unnamed'} verification_command must validate binding receipt")
     if " --require-ready" not in verification_command:
-        errors.append(f"{action.get('name', 'unnamed')} verification_command must require ready receipt")
+        errors.append(f"{name or 'unnamed'} verification_command must require ready receipt")
     if any(forbidden in action for forbidden in ("value", "secret_value", "token", "credential")):
-        errors.append(f"{action.get('name', 'unnamed')} action must not carry serialized values")
+        errors.append(f"{name or 'unnamed'} action must not carry serialized values")
+
+
+def _validate_environment_binding_contract_match(
+    action: dict[str, Any],
+    binding_contract: dict[str, dict[str, Any]],
+    errors: list[str],
+) -> None:
+    name = str(action.get("name", ""))
+    if not name:
+        return
+    expected = binding_contract.get(name)
+    if expected is None:
+        errors.append(f"{name} action is not declared in environment binding contract")
+        return
+    for field_name in ("binding_kind", "risk", "approval_required", "receipt_projection"):
+        if action.get(field_name) != expected.get(field_name):
+            errors.append(f"{name} {field_name} must match environment binding contract")
+    expected_required_for = expected.get("required_for", ())
+    observed_required_for = action.get("required_for", ())
+    if (
+        not isinstance(expected_required_for, list)
+        or not isinstance(observed_required_for, list)
+        or tuple(observed_required_for) != tuple(expected_required_for)
+    ):
+        errors.append(f"{name} required_for must match environment binding contract")
 
 
 def _string_tuple(raw_value: Any, field_name: str, errors: list[str]) -> tuple[str, ...]:
@@ -209,6 +247,32 @@ def _string_tuple(raw_value: Any, field_name: str, errors: list[str]) -> tuple[s
         errors.append(f"{field_name} entries must be strings")
         return ()
     return tuple(raw_value)
+
+
+def _load_environment_binding_contract(
+    environment_bindings_path: Path,
+    errors: list[str],
+) -> dict[str, dict[str, Any]]:
+    try:
+        parsed = _loads_strict_json(environment_bindings_path.read_text(encoding="utf-8"))
+    except OSError:
+        errors.append("environment binding contract could not be read")
+        return {}
+    except (json.JSONDecodeError, ValueError):
+        errors.append("environment binding contract must be JSON")
+        return {}
+    if not isinstance(parsed, dict):
+        errors.append("environment binding contract root must be an object")
+        return {}
+    bindings = parsed.get("bindings", ())
+    if not isinstance(bindings, list):
+        errors.append("environment binding contract bindings must be a list")
+        return {}
+    return {
+        str(binding.get("name", "")): binding
+        for binding in bindings
+        if isinstance(binding, dict) and isinstance(binding.get("name"), str)
+    }
 
 
 def _validation_result(
@@ -264,6 +328,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     """Parse preflight report validation CLI arguments."""
     parser = argparse.ArgumentParser(description="Validate general-agent promotion handoff preflight report.")
     parser.add_argument("--report", default=str(DEFAULT_REPORT))
+    parser.add_argument("--environment-bindings", default=str(DEFAULT_ENVIRONMENT_BINDINGS))
     parser.add_argument("--require-ready", action="store_true")
     parser.add_argument("--json", action="store_true")
     return parser.parse_args(argv)
@@ -274,6 +339,7 @@ def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv)
     result = validate_general_agent_promotion_handoff_preflight(
         report_path=Path(args.report),
+        environment_bindings_path=Path(args.environment_bindings),
         require_ready=args.require_ready,
     )
     if args.json:

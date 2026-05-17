@@ -260,6 +260,27 @@ def test_sandbox_request_rejects_workspace_traversal_cwd() -> None:
         )
 
 
+def test_sandbox_request_rejects_scalar_argv_shape() -> None:
+    with pytest.raises(ValueError, match="^argv must be an argv array$"):
+        SandboxCommandRequest(
+            request_id="sandbox-request-6b",
+            tenant_id="tenant-1",
+            capability_id="computer.command.run",
+            argv="python --version",  # type: ignore[arg-type]
+        )
+
+
+def test_sandbox_request_accepts_list_argv_as_explicit_argv_array() -> None:
+    request = SandboxCommandRequest(
+        request_id="sandbox-request-6c",
+        tenant_id="tenant-1",
+        capability_id="computer.command.run",
+        argv=["python", "--version"],  # type: ignore[arg-type]
+    )
+
+    assert request.argv == ("python", "--version")
+
+
 def test_sandbox_request_rejects_invalid_environment_key() -> None:
     with pytest.raises(ValueError, match="^environment key contains forbidden characters$"):
         SandboxCommandRequest(
