@@ -154,12 +154,35 @@ symbolic product. The route keeps public runtime readiness bounded as
 | Body literal: `/proof/` | Present | Homepage routes to public proof boundary |
 | Body literal: `AwaitingEvidence` | Present | Runtime witness boundary remains explicit |
 
+## 2026-05-16 Production Claim Boundary Closure
+
+`mullusi/mullusi-site` PR #3 added an explicit production-claim boundary to
+the active homepage and `/mullu/` product route. The section states that
+Mullusi is the umbrella company and governance authority, Mullu is the flagship
+governed product, and live runtime publication remains `AwaitingEvidence`
+until `/health`, `/gateway/witness`, and `/runtime/conformance` publish signed
+evidence.
+
+| Check | Observed result | Decision |
+| --- | --- | --- |
+| `mullusi/mullusi-site` PR #3 | Merged after `validate` passed | Active Pages source updated |
+| Active source commit | `854a561bd002192846da056154ad355163c71b19` | Production-claim boundary copy present on active `main` |
+| `https://mullusi.com/` | HTTP 200 from current environment | Company homepage is live |
+| Homepage literal: `Production Claim Boundary` | Present | Public claim boundary visible |
+| Homepage literal: `AwaitingEvidence` | Present | Runtime witness state remains explicit |
+| Homepage literal: `/gateway/witness` | Present | Required live witness endpoint named |
+| Homepage literal: `/runtime/conformance` | Present | Required runtime conformance endpoint named |
+| `https://mullusi.com/mullu/` | HTTP 200 from current environment | Product route is live |
+| Product literal: `Production Claim Boundary` | Present | Product page carries same claim boundary |
+| Product literal: `AwaitingEvidence` | Present | Product page does not overclaim production runtime |
+
 ## Decision
 
 The public company homepage, `/mullu/` product route, and `/proof/` public
 proof boundary route are live and aligned around Mullusi as umbrella and Mullu
-as flagship product. Paid public launch is still not ready because runtime
-witness, legal/domain, and broader app-surface gates remain open.
+as flagship product. The homepage and product route now carry a visible
+production-claim boundary. Paid public launch is still not ready because
+runtime witness, legal/domain, and broader app-surface gates remain open.
 
 The original 2026-05-07 and earlier 2026-05-15 probes kept
 `website_deployment_verification` open because:
