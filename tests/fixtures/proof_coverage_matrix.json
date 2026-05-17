@@ -6466,7 +6466,7 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 339,
+    "exact_test_anchor_count": 353,
     "runtime_witness_count": 1015,
     "surfaces": [
       {
@@ -7190,27 +7190,97 @@
         ]
       },
       {
-        "anchored_witnesses": [],
-        "exact_test_anchor_count": 0,
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "mcoi/tests/test_server_phase207.py::test_config_read_model_hash_bound"
+            ],
+            "witness": "config_read_model_hash_bound"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_server_phase207.py::test_config_current_read_model_hash_bound"
+            ],
+            "witness": "config_current_read_model_hash_bound"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_server_phase207.py::test_config_history_versions_bounded"
+            ],
+            "witness": "config_history_versions_bounded"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_server_phase207.py::test_config_history_bounded"
+            ],
+            "witness": "config_history_bounded"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_server_phase207.py::test_config_update_applies_atomically"
+            ],
+            "witness": "config_update_applies_atomically"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_server_phase207.py::test_config_update_audited"
+            ],
+            "witness": "config_update_audited"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_server_phase207.py::test_config_update_emits_event_and_audit"
+            ],
+            "witness": "config_update_emits_event_and_audit"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_server_phase207.py::test_config_update_emits_event"
+            ],
+            "witness": "config_update_emits_event"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_server_phase207.py::test_config_rollback_requires_known_version"
+            ],
+            "witness": "config_rollback_requires_known_version"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_server_phase207.py::test_config_rollback_version_checked"
+            ],
+            "witness": "config_rollback_version_checked"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_config_watcher.py::test_config_watcher_errors_are_bounded"
+            ],
+            "witness": "config_watcher_errors_are_bounded"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_config_watcher.py::test_config_watcher_status_bounded"
+            ],
+            "witness": "config_watcher_status_bounded"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_config_drift.py::test_config_drift_secret_changes_are_critical"
+            ],
+            "witness": "config_drift_secret_changes_are_critical"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_config_drift.py::test_config_drift_summary_bounded"
+            ],
+            "witness": "config_drift_summary_bounded"
+          }
+        ],
+        "exact_test_anchor_count": 14,
         "runtime_witness_count": 14,
         "surface_id": "runtime_config_management",
-        "unanchored_witness_count": 14,
-        "unanchored_witnesses": [
-          "config_read_model_hash_bound",
-          "config_current_read_model_hash_bound",
-          "config_history_versions_bounded",
-          "config_history_bounded",
-          "config_update_applies_atomically",
-          "config_update_audited",
-          "config_update_emits_event_and_audit",
-          "config_update_emits_event",
-          "config_rollback_requires_known_version",
-          "config_rollback_version_checked",
-          "config_watcher_errors_are_bounded",
-          "config_watcher_status_bounded",
-          "config_drift_secret_changes_are_critical",
-          "config_drift_summary_bounded"
-        ]
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
       },
       {
         "anchored_witnesses": [
@@ -10247,6 +10317,6 @@
         ]
       }
     ],
-    "unanchored_witness_count": 676
+    "unanchored_witness_count": 662
   }
 }

@@ -149,8 +149,8 @@ Witness integrity audit:
 | Metric | Count |
 |---|---:|
 | Runtime witness labels | 1015 |
-| Exact test anchors | 339 |
-| Unanchored witness labels | 676 |
+| Exact test anchors | 353 |
+| Unanchored witness labels | 662 |
 
 Evidence quality gaps:
 none
@@ -170,7 +170,6 @@ Witness integrity gaps:
 | `prompt_template_lifecycle` | 0 | 4 | prompt_template_list_bounded, prompt_render_variables_validated, prompt_execution_failure_sanitized, prompt_execution_records_budgeted_result |
 | `tenant_governance_lifecycle` | 0 | 15 | tenant_budget_create_emits_action_proof, tenant_budget_create_records_audit, tenant_budget_read_models_scoped_by_tenant, tenant_ledger_queries_bounded, tenant_registry_lifecycle_errors_sanitized, tenant_register_emits_action_proof, tenant_status_update_emits_action_proof, tenant_gate_read_models_governed, tenant_gate_persistence_read_model_included, tenant_usage_read_model_scoped, tenant_analytics_read_model_scoped, tenant_isolation_verify_governed, tenant_isolation_audits_bounded, tenant_quota_read_models_bounded, tenant_partition_read_model_bounded |
 | `rbac_access_governance` | 0 | 6 | rbac_identity_registration_governed, rbac_role_registration_governed, rbac_role_binding_governed, rbac_identity_creation_audited, rbac_summary_bounded, rbac_errors_sanitized |
-| `runtime_config_management` | 0 | 14 | config_read_model_hash_bound, config_current_read_model_hash_bound, config_history_versions_bounded, config_history_bounded, config_update_applies_atomically, config_update_audited, config_update_emits_event_and_audit, config_update_emits_event, config_rollback_requires_known_version, config_rollback_version_checked, config_watcher_errors_are_bounded, config_watcher_status_bounded, config_drift_secret_changes_are_critical, config_drift_summary_bounded |
 | `operator_console_read_models` | 0 | 5 | console_home_returns_governed_runtime_vitals, console_runs_bounds_recent_audit_entries, console_audit_exposes_chain_intact_read_model, console_checkpoints_expose_persisted_state_summary, console_provider_and_scheduler_views_are_read_only |
 | `agent_adapter_protocol` | 0 | 14 | agent_register_emits_governed_identity, agent_register_emits_audit_record, agent_heartbeat_requires_registered_agent, agent_action_request_runs_guard_chain, agent_action_result_records_outcome, agent_action_result_closes_tracked_action, agent_goal_context_propagates_to_action_request, agent_goal_context_propagates_to_response_and_audit, agent_checkpoint_restore_errors_are_bounded, agent_checkpoint_restore_roundtrip_governed, agent_adapter_summary_is_governed_read_model, agent_adapter_summary_bounded, builtin_agent_registry_read_models_governed, agent_error_contracts_bounded |
 | `model_experiment_control` | 0 | 7 | model_catalog_list_bounded, auto_completion_routes_model, auto_completion_forced_model, ab_test_single_model_result, ab_test_two_models_cost_comparison, ab_test_summary_bounded, ab_test_failed_model_recorded |
@@ -362,5 +361,5 @@ none
 STATUS:
   Completeness: 100%
   Invariants verified: route declarations, route-level coverage classification, coverage levels, coverage states, closure action mapping, schema contract validation, deployment orchestration receipt schema contract
-  Open issues: 676 runtime-witness labels lack exact test-function anchors
+  Open issues: 662 runtime-witness labels lack exact test-function anchors
   Next action: bind unanchored runtime-witness labels to exact test-function anchors
