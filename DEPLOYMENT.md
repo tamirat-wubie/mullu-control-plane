@@ -81,6 +81,14 @@ $env:MULLU_GOVERNED_SWARM_AUDIT_STORE_PATH="C:\tmp\mullu-swarm-runs.jsonl"
 $env:MULLU_GOVERNED_SWARM_RUNTIME_PATH="C:\tmp\governed-swarm-parent-repo\mcoi"
 ```
 
+Runtime release pin:
+
+```text
+Repository: tamirat-wubie/mullu-governed-swarm
+Tag: v0.1.0-governed-swarm
+Runtime path after checkout: <checkout>\mcoi
+```
+
 Use `examples/governed_swarm_control_plane.env.example` as the redacted
 operator template. The runtime path must contain `mcoi_runtime/swarm`.
 
