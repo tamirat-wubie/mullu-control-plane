@@ -83,6 +83,18 @@
       "surface": "capability"
     },
     {
+      "schema_id": "gci-capability-contract",
+      "path": "schemas/gci_capability_contract.schema.json",
+      "urn": "urn:mullusi:schema:gci-capability-contract:1",
+      "surface": "capability"
+    },
+    {
+      "schema_id": "gci-rejected-path-receipt",
+      "path": "schemas/gci_rejected_path_receipt.schema.json",
+      "urn": "urn:mullusi:schema:gci-rejected-path-receipt:1",
+      "surface": "capability"
+    },
+    {
       "schema_id": "capability-descriptor",
       "path": "schemas/capability_descriptor.schema.json",
       "urn": "urn:mullusi:schema:capability-descriptor:1",

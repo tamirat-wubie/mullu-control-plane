@@ -20,6 +20,14 @@ import threading
 from dataclasses import dataclass, field
 from typing import Any, Callable
 
+from mcoi_runtime.contracts.capability_contract import (
+    CapabilityAdmissionDecision,
+    CapabilityContract,
+    IntentSource,
+    default_capability_contract,
+    evaluate_capability_contract,
+)
+
 from .tool_permission_primitives import (
     ToolPermissionDecision,
     ToolPermissionRegistry,
@@ -29,7 +37,7 @@ from .tool_permission_primitives import (
 
 @dataclass(frozen=True, slots=True)
 class ToolDefinition:
-    """A governed tool that an LLM agent can invoke."""
+    """A governed tool that an agent can invoke."""
 
     name: str
     description: str
@@ -39,6 +47,29 @@ class ToolDefinition:
     requires_approval: bool = False
     risk_tier: str = "low"  # low, medium, high
     enabled: bool = True
+    capability_contract: CapabilityContract | None = None
+    declared_effects: tuple[str, ...] = ()
+    gov_tier: int = 1
+    cap_level: int = 1
+    intent_source: IntentSource = IntentSource.USER_DIRECT
+
+    def __post_init__(self) -> None:
+        if self.capability_contract is None:
+            object.__setattr__(
+                self,
+                "capability_contract",
+                default_capability_contract(
+                    capability=self.name,
+                    cap_level=self.cap_level,
+                    gov_tier=self.gov_tier,
+                    risk_tier=self.risk_tier,
+                    declared_effects=tuple(self.declared_effects),
+                    intent_source=self.intent_source,
+                    reversible=not self.requires_approval,
+                ),
+            )
+        if not isinstance(self.intent_source, IntentSource):
+            object.__setattr__(self, "intent_source", IntentSource(str(self.intent_source)))
 
 
 @dataclass(frozen=True, slots=True)
@@ -51,6 +82,7 @@ class ToolInvocationResult:
     error: str = ""
     audit_id: str = ""
     permission_decision: ToolPermissionDecision | None = None
+    capability_decision: CapabilityAdmissionDecision | None = None
 
 
 @dataclass
@@ -173,6 +205,7 @@ class GovernedToolRegistry:
         tenant_id: str = "",
         budget_ref: str = "default",
         audit_present: bool = True,
+        intent_source: IntentSource | str = IntentSource.USER_DIRECT,
     ) -> ToolInvocationResult:
         """Invoke a tool with full governance checks.
 
@@ -187,24 +220,40 @@ class GovernedToolRegistry:
                 error="tool not registered",
             )
 
-        # 2. Enabled check
+        # 2. Capability contract and CxG governance-grid check
+        capability_decision = evaluate_capability_contract(
+            tool.capability_contract,
+            request_intent_source=intent_source,
+        )
+        if not capability_decision.allowed:
+            self._record_usage(tool_name, session_id, denied=True)
+            return ToolInvocationResult(
+                tool_name=tool_name,
+                allowed=False,
+                error=";".join(capability_decision.reasons),
+                capability_decision=capability_decision,
+            )
+
+        # 3. Enabled check
         if not tool.enabled:
             self._record_usage(tool_name, session_id, denied=True)
             return ToolInvocationResult(
                 tool_name=tool_name, allowed=False,
                 error="tool is disabled",
+                capability_decision=capability_decision,
             )
 
-        # 3. Parameter validation
+        # 4. Parameter validation
         param_error = self._validate_params(tool, arguments)
         if param_error:
             self._record_usage(tool_name, session_id, denied=True)
             return ToolInvocationResult(
                 tool_name=tool_name, allowed=False,
                 error=param_error,
+                capability_decision=capability_decision,
             )
 
-        # 4. Permission primitive check
+        # 5. Permission primitive check
         permission_decision: ToolPermissionDecision | None = None
         if self._permission_registry is not None:
             permission_decision = self._permission_registry.evaluate(
@@ -223,27 +272,30 @@ class GovernedToolRegistry:
                     allowed=False,
                     error="tool permission denied",
                     permission_decision=permission_decision,
+                    capability_decision=capability_decision,
                 )
 
-        # 5. Session limit check
+        # 6. Session limit check
         if session_id and not self._check_session_limit(tool, session_id):
             self._record_usage(tool_name, session_id, denied=True)
             return ToolInvocationResult(
                 tool_name=tool_name, allowed=False,
                 error="session tool call limit reached",
                 permission_decision=permission_decision,
+                capability_decision=capability_decision,
             )
 
-        # 6. Approval check
+        # 7. Approval check
         if tool.requires_approval:
             self._record_usage(tool_name, session_id, denied=True)
             return ToolInvocationResult(
                 tool_name=tool_name, allowed=False,
                 error="tool requires approval",
                 permission_decision=permission_decision,
+                capability_decision=capability_decision,
             )
 
-        # 7. Execute
+        # 8. Execute
         exec_fn = executor or self._executors.get(tool_name)
         if exec_fn is None:
             self._record_usage(tool_name, session_id, error=True)
@@ -251,6 +303,7 @@ class GovernedToolRegistry:
                 tool_name=tool_name, allowed=True,
                 error="no executor registered",
                 permission_decision=permission_decision,
+                capability_decision=capability_decision,
             )
 
         try:
@@ -260,6 +313,7 @@ class GovernedToolRegistry:
                 tool_name=tool_name, allowed=True,
                 result=result,
                 permission_decision=permission_decision,
+                capability_decision=capability_decision,
             )
         except Exception as exc:
             self._record_usage(tool_name, session_id, error=True)
@@ -267,6 +321,7 @@ class GovernedToolRegistry:
                 tool_name=tool_name, allowed=True,
                 error=f"tool execution failed ({type(exc).__name__})",
                 permission_decision=permission_decision,
+                capability_decision=capability_decision,
             )
 
     def session_usage(self, session_id: str) -> dict[str, ToolUsageStats]:

@@ -1,0 +1,100 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:gci-capability-contract:1",
+  "title": "GCI Capability Contract",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "capability",
+    "layer",
+    "cap_level",
+    "gov_tier",
+    "axis_T",
+    "axis_E",
+    "axis_C",
+    "axis_R",
+    "axis_V",
+    "precond",
+    "fail_mode",
+    "reversible",
+    "intent_source",
+    "metadata"
+  ],
+  "properties": {
+    "capability": {
+      "type": "string",
+      "minLength": 1
+    },
+    "layer": {
+      "type": "string",
+      "minLength": 1
+    },
+    "cap_level": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "gov_tier": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "axis_T": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Temporal validity and freshness constraint."
+    },
+    "axis_E": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Economic cost or budget constraint."
+    },
+    "axis_C": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Cognitive load or operator-review constraint."
+    },
+    "axis_R": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Risk tier carried into admission."
+    },
+    "axis_V": {
+      "type": "string",
+      "enum": [
+        "value_producing",
+        "effectful"
+      ],
+      "description": "Effect class: information-only or world-mutating."
+    },
+    "precond": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "fail_mode": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "reversible": {
+      "type": "boolean"
+    },
+    "intent_source": {
+      "type": "string",
+      "enum": [
+        "user_direct",
+        "monitored_content",
+        "standing_rule",
+        "external_signal"
+      ]
+    },
+    "metadata": {
+      "type": "object"
+    }
+  }
+}
