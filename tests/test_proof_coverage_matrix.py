@@ -785,6 +785,7 @@ def test_capability_worker_execution_surface_is_witnessed() -> None:
     assert "input_hash_mismatch_rejected" in witnesses
     assert "intent_boundary_mismatch_rejected" in witnesses
     assert "non_isolated_boundary_rejected" in witnesses
+    assert "capability_worker_runs_computer_command_through_sandbox_receipt" in witnesses
     assert "local_smoke_stub_bound_to_local_environment" in witnesses
     assert "capability_worker_execution" in closure_actions["classify_gateway_capability_admission_routes"]["surfaces"]
 
@@ -1306,8 +1307,10 @@ def test_gateway_runtime_witness_covers_orchestration_receipts() -> None:
     assert runtime_surface["coverage_state"] == "witnessed"
     assert "scripts/orchestrate_deployment_witness.py" in runtime_surface["evidence_files"]
     assert ".github/workflows/gateway-publication.yml" in runtime_surface["evidence_files"]
+    assert ".github/workflows/deployment-witness.yml" in runtime_surface["evidence_files"]
     assert "schemas/deployment_orchestration_receipt.schema.json" in runtime_surface["evidence_files"]
     assert "schemas/deployment_publication_closure_validation.schema.json" in runtime_surface["evidence_files"]
+    assert "schemas/public_production_health_declaration.schema.json" in runtime_surface["evidence_files"]
     assert "schemas/deployment_orchestration_receipt_validation.schema.json" in runtime_surface["evidence_files"]
     assert "schemas/gateway_publication_readiness.schema.json" in runtime_surface["evidence_files"]
     assert "schemas/gateway_publication_receipt_validation.schema.json" in runtime_surface["evidence_files"]
@@ -1326,6 +1329,9 @@ def test_gateway_runtime_witness_covers_orchestration_receipts() -> None:
     assert "orchestration_validation_report_matches_public_schema" in runtime_surface["runtime_witnesses"]
     assert "readiness_report_matches_public_schema" in runtime_surface["runtime_witnesses"]
     assert "receipt_validation_report_matches_public_schema" in runtime_surface["runtime_witnesses"]
+    assert "protocol_manifest_indexes_public_production_health_declaration" in runtime_surface["runtime_witnesses"]
+    assert "apply_deployment_publication_status_updates_verified_claim" in runtime_surface["runtime_witnesses"]
+    assert "apply_deployment_publication_status_writes_receipt" in runtime_surface["runtime_witnesses"]
     assert closure_actions["publish_deployment_orchestration_receipt_contract"]["status"] == "closed"
 
 
@@ -1337,13 +1343,19 @@ def test_gateway_runtime_witness_covers_publication_responsibility_debt() -> Non
 
     assert "schemas/deployment_witness.schema.json" in runtime_surface["evidence_files"]
     assert "scripts/validate_deployment_publication_closure.py" in runtime_surface["evidence_files"]
+    assert "scripts/apply_deployment_publication_status.py" in runtime_surface["evidence_files"]
     assert "tests/test_validate_deployment_publication_closure.py" in runtime_surface["evidence_files"]
+    assert "tests/test_apply_deployment_publication_status.py" in runtime_surface["evidence_files"]
     assert "collect_deployment_witness_rejects_responsibility_debt" in witnesses
     assert "collect_deployment_witness_rejects_runtime_responsibility_debt" in witnesses
     assert "preflight_deployment_witness_rejects_responsibility_debt" in witnesses
     assert "preflight_deployment_witness_rejects_runtime_witness_responsibility_debt" in witnesses
     assert "published_status_rejects_authority_responsibility_debt" in witnesses
     assert "published_status_rejects_runtime_responsibility_debt" in witnesses
+    assert "apply_deployment_publication_status_blocks_missing_approval" in witnesses
+    assert "apply_deployment_publication_status_blocks_unpublished_witness" in witnesses
+    assert "published_status_report_accepts_declaration_receipt" in witnesses
+    assert "published_status_report_rejects_dry_run_declaration_receipt" in witnesses
 
 
 def test_production_evidence_plane_is_witnessed_and_schema_backed() -> None:
@@ -1487,6 +1499,12 @@ def test_capability_plan_evidence_bundle_surface_is_witnessed() -> None:
     assert "runtime_conformance_certificate_matches_schema" in conformance_surface["runtime_witnesses"]
     assert "collect_runtime_conformance_rejects_schema_invalid_certificate" in conformance_surface["runtime_witnesses"]
     assert "runtime_conformance_surfaces_unclassified_proof_routes" in conformance_surface["runtime_witnesses"]
+    assert ".github/workflows/deployment-witness.yml" in conformance_surface["evidence_files"]
+    assert "schemas/runtime_conformance_collection.schema.json" in conformance_surface["evidence_files"]
+    assert "deployment_witness_workflow_carries_conformance_secret_handoff" in conformance_surface["runtime_witnesses"]
+    assert "deployment_witness_workflow_requires_conformance_secret_handoff" in conformance_surface["runtime_witnesses"]
+    assert "write_runtime_conformance_persists_json" in conformance_surface["runtime_witnesses"]
+    assert "write_runtime_conformance_rejects_collection_schema_drift" in conformance_surface["runtime_witnesses"]
     assert closure_actions["publish_capability_plan_evidence_bundles"]["status"] == "closed"
     assert "runtime_conformance_attestation" in closure_actions["publish_capability_plan_evidence_bundles"]["surfaces"]
 

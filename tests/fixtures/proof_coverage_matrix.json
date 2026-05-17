@@ -2609,7 +2609,7 @@
         "gateway/capability_dispatch.py",
         "tests/test_gateway/test_capability_worker.py"
       ],
-      "notes": "Restricted capability worker execution accepts only signed, hash-bound, isolated capability requests and returns signed receipt-bearing execution responses.",
+      "notes": "Restricted capability worker execution accepts only signed, hash-bound, isolated capability requests and returns signed receipt-bearing execution responses, including sandbox receipts for computer command execution.",
       "representative_paths": [
         "/capability/execute"
       ],
@@ -2620,6 +2620,7 @@
         "input_hash_mismatch_rejected",
         "intent_boundary_mismatch_rejected",
         "non_isolated_boundary_rejected",
+        "capability_worker_runs_computer_command_through_sandbox_receipt",
         "local_smoke_stub_bound_to_local_environment"
       ],
       "surface_id": "capability_worker_execution"
@@ -4588,15 +4589,18 @@
       "evidence_files": [
         "gateway/server.py",
         ".github/workflows/gateway-publication.yml",
+        ".github/workflows/deployment-witness.yml",
         "scripts/orchestrate_deployment_witness.py",
         "scripts/preflight_deployment_witness.py",
         "scripts/collect_deployment_witness.py",
         "scripts/validate_deployment_publication_closure.py",
+        "scripts/apply_deployment_publication_status.py",
         "scripts/validate_mcp_capability_manifest.py",
         "scripts/validate_mcp_operator_checklist.py",
         "scripts/validate_gateway_publication_receipt.py",
         "scripts/validate_deployment_orchestration_receipt.py",
         "schemas/deployment_publication_closure_validation.schema.json",
+        "schemas/public_production_health_declaration.schema.json",
         "schemas/deployment_orchestration_receipt.schema.json",
         "schemas/deployment_orchestration_receipt_validation.schema.json",
         "schemas/gateway_publication_readiness.schema.json",
@@ -4611,12 +4615,13 @@
         "tests/test_validate_gateway_publication_receipt.py",
         "tests/test_validate_deployment_orchestration_receipt.py",
         "tests/test_validate_deployment_publication_closure.py",
+        "tests/test_apply_deployment_publication_status.py",
         "tests/test_validate_protocol_manifest.py",
         "tests/test_preflight_deployment_witness.py",
         "tests/test_collect_deployment_witness.py",
         "tests/test_validate_deployment_publication_closure.py"
       ],
-      "notes": "Runtime witness surfaces publish bounded operational and responsibility debt state; deployment witnesses require raw runtime and authority debt-clear evidence before publication closure, and orchestration receipts bind ingress render, MCP checklist validation, preflight, dispatch evidence, schema contract validation, and post-run receipt validation before deployment witness readiness.",
+      "notes": "Runtime witness surfaces publish bounded operational and responsibility debt state; deployment witnesses require raw runtime and authority debt-clear evidence before publication closure, public-health status mutation requires a matching published witness plus operator approval, and orchestration receipts bind ingress render, MCP checklist validation, preflight, dispatch evidence, schema contract validation, and post-run receipt validation before deployment witness readiness.",
       "representative_paths": [
         "/gateway/witness",
         "/runtime/witness",
@@ -4643,9 +4648,16 @@
         "receipt_validation_report_matches_public_schema",
         "protocol_manifest_indexes_deployment_orchestration_validation",
         "protocol_manifest_indexes_deployment_publication_closure_validation",
+        "protocol_manifest_indexes_public_production_health_declaration",
         "protocol_manifest_indexes_gateway_publication_readiness",
         "protocol_manifest_indexes_gateway_publication_receipt_validation",
-        "protocol_manifest_indexes_runtime_witness_and_latest_anchor"
+        "protocol_manifest_indexes_runtime_witness_and_latest_anchor",
+        "apply_deployment_publication_status_updates_verified_claim",
+        "apply_deployment_publication_status_blocks_missing_approval",
+        "apply_deployment_publication_status_blocks_unpublished_witness",
+        "apply_deployment_publication_status_writes_receipt",
+        "published_status_report_accepts_declaration_receipt",
+        "published_status_report_rejects_dry_run_declaration_receipt"
       ],
       "surface_id": "gateway_runtime_witness"
     },
@@ -4656,11 +4668,15 @@
       "evidence_files": [
         "gateway/server.py",
         "gateway/conformance.py",
+        ".github/workflows/deployment-witness.yml",
         "gateway/physical_worker_canary.py",
         "scripts/collect_runtime_conformance.py",
         "scripts/produce_physical_worker_canary.py",
         "scripts/validate_mcp_capability_manifest.py",
+        "tests/test_validate_release_status.py",
+        "tests/test_validate_public_repository_surface.py",
         "schemas/runtime_conformance_certificate.schema.json",
+        "schemas/runtime_conformance_collection.schema.json",
         "tests/test_gateway/test_conformance.py",
         "tests/test_gateway/test_webhooks.py",
         "tests/test_gateway/test_physical_worker_canary.py",
@@ -4687,7 +4703,11 @@
         "runtime_conformance_accepts_valid_authority_directory_sync_receipt",
         "runtime_conformance_witnesses_capability_plan_bundle",
         "physical_worker_canary_blocks_missing_receipt_and_allows_sandbox_replay",
-        "physical_worker_canary_evidence_and_hash_are_stable"
+        "physical_worker_canary_evidence_and_hash_are_stable",
+        "deployment_witness_workflow_carries_conformance_secret_handoff",
+        "deployment_witness_workflow_requires_conformance_secret_handoff",
+        "write_runtime_conformance_persists_json",
+        "write_runtime_conformance_rejects_collection_schema_drift"
       ],
       "surface_id": "runtime_conformance_attestation"
     },
@@ -6569,8 +6589,8 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 408,
-    "runtime_witness_count": 1015,
+    "exact_test_anchor_count": 420,
+    "runtime_witness_count": 1027,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -6601,9 +6621,16 @@
         ]
       },
       {
-        "anchored_witnesses": [],
-        "exact_test_anchor_count": 0,
-        "runtime_witness_count": 6,
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "tests/test_gateway/test_capability_worker.py::test_capability_worker_runs_computer_command_through_sandbox_receipt"
+            ],
+            "witness": "capability_worker_runs_computer_command_through_sandbox_receipt"
+          }
+        ],
+        "exact_test_anchor_count": 1,
+        "runtime_witness_count": 7,
         "surface_id": "capability_worker_execution",
         "unanchored_witness_count": 6,
         "unanchored_witnesses": [
@@ -8904,6 +8931,12 @@
           },
           {
             "anchors": [
+              "tests/test_validate_protocol_manifest.py::test_protocol_manifest_indexes_public_production_health_declaration"
+            ],
+            "witness": "protocol_manifest_indexes_public_production_health_declaration"
+          },
+          {
+            "anchors": [
               "tests/test_validate_protocol_manifest.py::test_protocol_manifest_indexes_gateway_publication_readiness"
             ],
             "witness": "protocol_manifest_indexes_gateway_publication_readiness"
@@ -8919,10 +8952,46 @@
               "tests/test_validate_protocol_manifest.py::test_protocol_manifest_indexes_runtime_witness_and_latest_anchor"
             ],
             "witness": "protocol_manifest_indexes_runtime_witness_and_latest_anchor"
+          },
+          {
+            "anchors": [
+              "tests/test_apply_deployment_publication_status.py::test_apply_deployment_publication_status_updates_verified_claim"
+            ],
+            "witness": "apply_deployment_publication_status_updates_verified_claim"
+          },
+          {
+            "anchors": [
+              "tests/test_apply_deployment_publication_status.py::test_apply_deployment_publication_status_blocks_missing_approval"
+            ],
+            "witness": "apply_deployment_publication_status_blocks_missing_approval"
+          },
+          {
+            "anchors": [
+              "tests/test_apply_deployment_publication_status.py::test_apply_deployment_publication_status_blocks_unpublished_witness"
+            ],
+            "witness": "apply_deployment_publication_status_blocks_unpublished_witness"
+          },
+          {
+            "anchors": [
+              "tests/test_apply_deployment_publication_status.py::test_apply_deployment_publication_status_writes_receipt"
+            ],
+            "witness": "apply_deployment_publication_status_writes_receipt"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_deployment_publication_closure.py::test_published_status_report_accepts_declaration_receipt"
+            ],
+            "witness": "published_status_report_accepts_declaration_receipt"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_deployment_publication_closure.py::test_published_status_report_rejects_dry_run_declaration_receipt"
+            ],
+            "witness": "published_status_report_rejects_dry_run_declaration_receipt"
           }
         ],
-        "exact_test_anchor_count": 22,
-        "runtime_witness_count": 22,
+        "exact_test_anchor_count": 29,
+        "runtime_witness_count": 29,
         "surface_id": "gateway_runtime_witness",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []
@@ -9012,10 +9081,34 @@
               "tests/test_gateway/test_physical_worker_canary.py::test_physical_worker_canary_evidence_and_hash_are_stable"
             ],
             "witness": "physical_worker_canary_evidence_and_hash_are_stable"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_release_status.py::test_deployment_witness_workflow_carries_conformance_secret_handoff"
+            ],
+            "witness": "deployment_witness_workflow_carries_conformance_secret_handoff"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_public_repository_surface.py::test_deployment_witness_workflow_requires_conformance_secret_handoff"
+            ],
+            "witness": "deployment_witness_workflow_requires_conformance_secret_handoff"
+          },
+          {
+            "anchors": [
+              "tests/test_collect_runtime_conformance.py::test_write_runtime_conformance_persists_json"
+            ],
+            "witness": "write_runtime_conformance_persists_json"
+          },
+          {
+            "anchors": [
+              "tests/test_collect_runtime_conformance.py::test_write_runtime_conformance_rejects_collection_schema_drift"
+            ],
+            "witness": "write_runtime_conformance_rejects_collection_schema_drift"
           }
         ],
-        "exact_test_anchor_count": 14,
-        "runtime_witness_count": 14,
+        "exact_test_anchor_count": 18,
+        "runtime_witness_count": 18,
         "surface_id": "runtime_conformance_attestation",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []

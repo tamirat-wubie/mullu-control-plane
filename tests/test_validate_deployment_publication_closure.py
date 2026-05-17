@@ -167,6 +167,7 @@ def test_closure_validation_report_bounds_witness_values(tmp_path: Path) -> None
     assert validation.valid is False
     assert any("signature_status mismatch" in error for error in validation.errors)
     assert "witness public health endpoint mismatch" in validation.errors
+    assert any("public production health declaration receipt missing" in error for error in validation.errors)
     assert "secret-signature-status" not in serialized
     assert "secret-public.example" not in serialized
     assert "secret-witness.example" not in serialized
@@ -236,6 +237,81 @@ def test_published_status_accepts_verified_witness() -> None:
     assert errors == []
     assert _published_witness()["deployment_claim"] == "published"
     assert _published_witness()["signature_status"] == "verified"
+
+
+def test_published_status_report_requires_declaration_receipt(tmp_path: Path) -> None:
+    deployment_status = tmp_path / "DEPLOYMENT_STATUS.md"
+    witness_path = tmp_path / "deployment_witness.json"
+    declaration_receipt_path = tmp_path / "public_production_health_declaration.json"
+    deployment_status.write_text(
+        _deployment_status("published", "https://gateway.example/health"),
+        encoding="utf-8",
+    )
+    witness_path.write_text(json.dumps(_published_witness()), encoding="utf-8")
+
+    validation = validate_deployment_publication_closure_report(
+        deployment_status_path=deployment_status,
+        witness_path=witness_path,
+        declaration_receipt_path=declaration_receipt_path,
+    )
+
+    assert validation.valid is False
+    assert len(validation.errors) == 1
+    assert "public production health declaration receipt missing" in validation.errors[0]
+    assert str(declaration_receipt_path) not in validation.errors[0]
+
+
+def test_published_status_report_accepts_declaration_receipt(tmp_path: Path) -> None:
+    deployment_status = tmp_path / "DEPLOYMENT_STATUS.md"
+    witness_path = tmp_path / "deployment_witness.json"
+    declaration_receipt_path = tmp_path / "public_production_health_declaration.json"
+    deployment_status.write_text(
+        _deployment_status("published", "https://gateway.example/health"),
+        encoding="utf-8",
+    )
+    witness_path.write_text(json.dumps(_published_witness()), encoding="utf-8")
+    declaration_receipt_path.write_text(
+        json.dumps(_declaration_receipt()),
+        encoding="utf-8",
+    )
+
+    validation = validate_deployment_publication_closure_report(
+        deployment_status_path=deployment_status,
+        witness_path=witness_path,
+        declaration_receipt_path=declaration_receipt_path,
+    )
+
+    assert validation.valid is True
+    assert validation.errors == ()
+    assert validation.witness_path == "provided_witness"
+
+
+def test_published_status_report_rejects_dry_run_declaration_receipt(
+    tmp_path: Path,
+) -> None:
+    deployment_status = tmp_path / "DEPLOYMENT_STATUS.md"
+    witness_path = tmp_path / "deployment_witness.json"
+    declaration_receipt_path = tmp_path / "public_production_health_declaration.json"
+    deployment_status.write_text(
+        _deployment_status("published", "https://gateway.example/health"),
+        encoding="utf-8",
+    )
+    witness_path.write_text(json.dumps(_published_witness()), encoding="utf-8")
+    declaration_receipt_path.write_text(
+        json.dumps(_declaration_receipt(dry_run=True, updated=False)),
+        encoding="utf-8",
+    )
+
+    validation = validate_deployment_publication_closure_report(
+        deployment_status_path=deployment_status,
+        witness_path=witness_path,
+        declaration_receipt_path=declaration_receipt_path,
+    )
+
+    assert validation.valid is False
+    assert len(validation.errors) == 2
+    assert any("dry-run cannot publish status" in error for error in validation.errors)
+    assert any("did not update status" in error for error in validation.errors)
 
 
 def test_published_status_rejects_http_gateway_witness() -> None:
@@ -428,7 +504,8 @@ def _deployment_status(state: str, public_health_endpoint: str) -> str:
 
 def _published_witness() -> dict[str, object]:
     return {
-        "witness_id": "deployment-witness-001",
+        "witness_id": "deployment-witness-0123456789abcdef",
+        "collected_at": "2026-05-15T00:00:00+00:00",
         "gateway_url": "https://gateway.example",
         "public_health_endpoint": "https://gateway.example/health",
         "health_http_status": 200,
@@ -460,5 +537,22 @@ def _published_witness() -> dict[str, object]:
             {"name": "gateway runtime witness", "passed": True, "detail": "ok"},
             {"name": "runtime conformance signature", "passed": True, "detail": "ok"},
         ],
+        "errors": [],
+    }
+
+
+def _declaration_receipt(
+    *,
+    dry_run: bool = False,
+    updated: bool = True,
+) -> dict[str, object]:
+    return {
+        "deployment_status_path": "provided_deployment_status",
+        "witness_path": "provided_witness",
+        "dry_run": dry_run,
+        "updated": updated,
+        "deployment_witness_state": "published",
+        "public_health_endpoint": "https://gateway.example/health",
+        "operator_approval_ref": "approval://deployment/publication/001",
         "errors": [],
     }

@@ -35,9 +35,15 @@ DEFAULT_WITNESS_PATH = REPO_ROOT / ".change_assurance" / "deployment_witness.jso
 DEFAULT_VALIDATION_OUTPUT = (
     REPO_ROOT / ".change_assurance" / "deployment_publication_closure_validation.json"
 )
+DEFAULT_DECLARATION_RECEIPT_PATH = (
+    REPO_ROOT / ".change_assurance" / "public_production_health_declaration.json"
+)
 DEPLOYMENT_WITNESS_SCHEMA_PATH = REPO_ROOT / "schemas" / "deployment_witness.schema.json"
 DEPLOYMENT_PUBLICATION_CLOSURE_VALIDATION_SCHEMA_PATH = (
     REPO_ROOT / "schemas" / "deployment_publication_closure_validation.schema.json"
+)
+PUBLIC_PRODUCTION_HEALTH_DECLARATION_SCHEMA_PATH = (
+    REPO_ROOT / "schemas" / "public_production_health_declaration.schema.json"
 )
 DEPLOYMENT_STATE_PATTERN = re.compile(
     r"^\*\*Deployment witness state:\*\*\s+`([^`]+)`$",
@@ -167,6 +173,7 @@ def validate_deployment_publication_closure_report(
     *,
     deployment_status_path: Path = DEFAULT_DEPLOYMENT_STATUS_PATH,
     witness_path: Path = DEFAULT_WITNESS_PATH,
+    declaration_receipt_path: Path = DEFAULT_DECLARATION_RECEIPT_PATH,
 ) -> DeploymentPublicationClosureValidation:
     """Build one deterministic deployment publication closure validation report."""
     errors: list[str] = []
@@ -188,6 +195,14 @@ def validate_deployment_publication_closure_report(
                 witness_path=witness_path,
             )
         )
+        if witness_payload is not None and _deployment_status_is_published(deployment_status_text):
+            errors.extend(
+                _validate_declaration_receipt_for_published_status(
+                    deployment_status_text=deployment_status_text,
+                    witness_payload=witness_payload,
+                    declaration_receipt_path=declaration_receipt_path,
+                )
+            )
 
     return DeploymentPublicationClosureValidation(
         deployment_status_path=_bounded_deployment_status_path(deployment_status_path),
@@ -245,6 +260,13 @@ def _bounded_witness_path(witness_path: Path) -> str:
     return "provided_witness"
 
 
+def _bounded_declaration_receipt_path(declaration_receipt_path: Path) -> str:
+    """Return a public-safe declaration receipt path label for reports."""
+    if declaration_receipt_path == DEFAULT_DECLARATION_RECEIPT_PATH:
+        return ".change_assurance/public_production_health_declaration.json"
+    return "provided_declaration_receipt"
+
+
 def _bounded_report_error(
     error: str,
     *,
@@ -269,6 +291,8 @@ def _split_public_error_prefix(error: str) -> tuple[str, str]:
         "provided_deployment_status: ",
         ".change_assurance/deployment_witness.json: ",
         "provided_witness: ",
+        ".change_assurance/public_production_health_declaration.json: ",
+        "provided_declaration_receipt: ",
     ):
         if error.startswith(prefix):
             return prefix, error.removeprefix(prefix)
@@ -290,6 +314,16 @@ def _bounded_report_error_detail(error_detail: str) -> str:
         "published deployment requires witness artifact",
         "witness JSON parse failed",
         "witness JSON root must be an object",
+        "public production health declaration receipt missing",
+        "public production health declaration receipt parse failed",
+        "public production health declaration receipt root must be an object",
+        "public production health declaration schema contract failed",
+        "public production health declaration receipt has errors",
+        "public production health declaration dry-run cannot publish status",
+        "public production health declaration did not update status",
+        "public production health declaration state mismatch",
+        "public production health declaration endpoint mismatch",
+        "public production health declaration approval missing",
         "published gateway_url must not be localhost",
         "published gateway_url must use https",
         "health_response_digest must be a sha256 digest",
@@ -340,6 +374,59 @@ def _validate_witness_schema(
         f"{witness_path}: schema contract: {error}"
         for error in _validate_schema_instance(schema, witness_payload)
     ]
+
+
+def _validate_declaration_receipt_for_published_status(
+    *,
+    deployment_status_text: str,
+    witness_payload: dict[str, Any],
+    declaration_receipt_path: Path,
+) -> list[str]:
+    label = _bounded_declaration_receipt_path(declaration_receipt_path)
+    payload, errors = _load_declaration_receipt_payload(declaration_receipt_path, label)
+    if errors or payload is None:
+        return errors
+    schema = _load_schema(PUBLIC_PRODUCTION_HEALTH_DECLARATION_SCHEMA_PATH)
+    schema_errors = _validate_schema_instance(schema, payload)
+    if schema_errors:
+        return [f"{label}: public production health declaration schema contract failed"]
+    errors = []
+    if payload.get("errors") != []:
+        errors.append(f"{label}: public production health declaration receipt has errors")
+    if payload.get("dry_run") is True:
+        errors.append(f"{label}: public production health declaration dry-run cannot publish status")
+    if payload.get("updated") is not True:
+        errors.append(f"{label}: public production health declaration did not update status")
+    if payload.get("deployment_witness_state") != "published":
+        errors.append(f"{label}: public production health declaration state mismatch")
+    expected_endpoint = str(witness_payload.get("public_health_endpoint", "")).strip()
+    status_endpoint_match = PUBLIC_HEALTH_PATTERN.search(deployment_status_text)
+    status_endpoint = status_endpoint_match.group(1).strip() if status_endpoint_match else ""
+    if payload.get("public_health_endpoint") != expected_endpoint or status_endpoint != expected_endpoint:
+        errors.append(f"{label}: public production health declaration endpoint mismatch")
+    if not str(payload.get("operator_approval_ref", "")).strip():
+        errors.append(f"{label}: public production health declaration approval missing")
+    return errors
+
+
+def _load_declaration_receipt_payload(
+    declaration_receipt_path: Path,
+    label: str,
+) -> tuple[dict[str, Any] | None, list[str]]:
+    if not declaration_receipt_path.exists():
+        return None, [f"{label}: public production health declaration receipt missing"]
+    try:
+        parsed = json.loads(declaration_receipt_path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return None, [f"{label}: public production health declaration receipt parse failed"]
+    if not isinstance(parsed, dict):
+        return None, [f"{label}: public production health declaration receipt root must be an object"]
+    return parsed, []
+
+
+def _deployment_status_is_published(deployment_status_text: str) -> bool:
+    match = DEPLOYMENT_STATE_PATTERN.search(deployment_status_text)
+    return match is not None and match.group(1).strip() == "published"
 
 
 def _validate_published_witness(
@@ -484,6 +571,11 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         help="Path to collected deployment witness JSON.",
     )
     parser.add_argument(
+        "--declaration-receipt",
+        default=str(DEFAULT_DECLARATION_RECEIPT_PATH),
+        help="Path to public production health declaration receipt JSON.",
+    )
+    parser.add_argument(
         "--output",
         default="",
         help=(
@@ -499,9 +591,11 @@ def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv)
     deployment_status_path = Path(args.deployment_status)
     witness_path = Path(args.witness)
+    declaration_receipt_path = Path(args.declaration_receipt)
     validation = validate_deployment_publication_closure_report(
         deployment_status_path=deployment_status_path,
         witness_path=witness_path,
+        declaration_receipt_path=declaration_receipt_path,
     )
     if args.output:
         write_deployment_publication_closure_validation_report(

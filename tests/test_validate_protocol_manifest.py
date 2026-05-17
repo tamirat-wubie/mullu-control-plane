@@ -190,6 +190,28 @@ def test_protocol_manifest_indexes_deployment_publication_closure_plan() -> None
     assert plan_entry["surface"] == "deployment"
 
 
+def test_protocol_manifest_indexes_public_production_health_declaration() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    declaration_entry = entries["public-production-health-declaration"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert declaration_entry["path"] == "schemas/public_production_health_declaration.schema.json"
+    assert declaration_entry["urn"] == "urn:mullusi:schema:public-production-health-declaration:1"
+    assert declaration_entry["surface"] == "deployment"
+
+
+def test_protocol_manifest_indexes_runtime_conformance_collection() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    collection_entry = entries["runtime-conformance-collection"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert collection_entry["path"] == "schemas/runtime_conformance_collection.schema.json"
+    assert collection_entry["urn"] == "urn:mullusi:schema:runtime-conformance-collection:1"
+    assert collection_entry["surface"] == "conformance"
+
+
 def test_protocol_manifest_indexes_effect_assurance_record() -> None:
     manifest = load_manifest()
     entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}

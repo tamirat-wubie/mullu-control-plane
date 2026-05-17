@@ -38,6 +38,7 @@ files are open wire contracts. Runtime modules under `mcoi/`, `gateway/`, and
 | `data_governance_snapshot.schema.json` | Canonical data governance lifecycle snapshot with decisions and retention controls |
 | `deployment_orchestration_receipt.schema.json` | Canonical gateway deployment handoff receipt |
 | `deployment_publication_closure_plan.schema.json` | Canonical deployment publication closure action plan |
+| `public_production_health_declaration.schema.json` | Canonical evidence-gated public production health declaration receipt |
 | `deployment_witness.schema.json` | Canonical live gateway deployment witness artifact |
 | `domain_capsule.schema.json` | Domain capsule operating-model package |
 | `effect_assurance.schema.json` | Canonical planned, observed, and reconciled effect record |
@@ -68,6 +69,7 @@ files are open wire contracts. Runtime modules under `mcoi/`, `gateway/`, and
 | `execution_result.schema.json` | Canonical execution outcome |
 | `trace_entry.schema.json` | Canonical causal audit entry |
 | `replay_record.schema.json` | Canonical replay and audit capture |
+| `runtime_conformance_collection.schema.json` | Canonical live runtime conformance collection envelope |
 | `runtime_witness.schema.json` | Canonical signed runtime witness for gateway closure and anchor state |
 | `simulation_receipt.schema.json` | Canonical causal simulation dry-run receipt |
 | `software_dev/capability_manifest.schema.json` | Governed manifest contract for admitting dynamic software-development capabilities |

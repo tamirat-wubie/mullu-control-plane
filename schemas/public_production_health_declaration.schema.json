@@ -1,0 +1,123 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:public-production-health-declaration:1",
+  "title": "Public Production Health Declaration",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "deployment_status_path",
+    "witness_path",
+    "dry_run",
+    "updated",
+    "deployment_witness_state",
+    "public_health_endpoint",
+    "operator_approval_ref",
+    "errors"
+  ],
+  "properties": {
+    "deployment_status_path": {
+      "type": "string",
+      "enum": [
+        "DEPLOYMENT_STATUS.md",
+        "provided_deployment_status"
+      ]
+    },
+    "witness_path": {
+      "type": "string",
+      "enum": [
+        ".change_assurance/deployment_witness.json",
+        "provided_witness"
+      ]
+    },
+    "dry_run": {
+      "type": "boolean"
+    },
+    "updated": {
+      "type": "boolean"
+    },
+    "deployment_witness_state": {
+      "type": "string",
+      "enum": [
+        "",
+        "published"
+      ]
+    },
+    "public_health_endpoint": {
+      "type": "string",
+      "maxLength": 512
+    },
+    "operator_approval_ref": {
+      "type": "string",
+      "maxLength": 512
+    },
+    "errors": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 1024
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "errors": {
+            "maxItems": 0
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "deployment_witness_state": {
+            "const": "published"
+          },
+          "public_health_endpoint": {
+            "type": "string",
+            "pattern": "^https://[^\\s]+/health$"
+          },
+          "operator_approval_ref": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "dry_run": {
+            "const": true
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "updated": {
+            "const": false
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "dry_run": {
+            "const": false
+          },
+          "errors": {
+            "maxItems": 0
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "updated": {
+            "const": true
+          }
+        }
+      }
+    }
+  ]
+}

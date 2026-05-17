@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import json
 import sys
-from dataclasses import dataclass, field
+from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any
 
@@ -25,7 +25,7 @@ from gateway.capability_isolation import (  # noqa: E402
 )
 from gateway.capability_worker import _default_app, create_capability_worker_app  # noqa: E402
 from gateway.command_spine import canonical_hash, capability_passport_for  # noqa: E402
-from gateway.skill_dispatch import SkillDispatcher  # noqa: E402
+from gateway.skill_dispatch import SkillDispatcher, register_computer_capabilities  # noqa: E402
 
 
 @dataclass(frozen=True, slots=True)
@@ -78,6 +78,53 @@ class RecordingProofBridge:
         self.calls.append(dict(kwargs))
 
 
+class StubSandboxRunner:
+    """Sandbox runner fixture that emits a bounded sandbox execution receipt."""
+
+    def __init__(self) -> None:
+        self.requests: list[Any] = []
+
+    def execute(self, request):
+        from gateway.sandbox_runner import SandboxCommandResult, SandboxExecutionReceipt
+
+        self.requests.append(request)
+        stdout = "Python 3\n"
+        stderr = ""
+        command_hash = canonical_hash({
+            "argv": list(request.argv),
+            "cwd": request.cwd,
+            "environment": dict(request.environment),
+        })
+        docker_args_hash = canonical_hash({
+            "image": "mullu-agent-runner:latest",
+            "network_disabled": True,
+            "read_only_rootfs": True,
+            "workspace_mount": "/workspace",
+        })
+        receipt = SandboxExecutionReceipt(
+            receipt_id=f"sandbox-receipt-{command_hash[:16]}",
+            request_id=request.request_id,
+            tenant_id=request.tenant_id,
+            capability_id=request.capability_id,
+            sandbox_id="docker-rootless",
+            image="mullu-agent-runner:latest",
+            command_hash=command_hash,
+            docker_args_hash=docker_args_hash,
+            stdout_hash=canonical_hash(stdout),
+            stderr_hash=canonical_hash(stderr),
+            returncode=0,
+            network_disabled=True,
+            read_only_rootfs=True,
+            workspace_mount="/workspace",
+            forbidden_effects_observed=False,
+            changed_file_count=0,
+            changed_file_refs=(),
+            verification_status="passed",
+            evidence_refs=("sandbox_execution:capability-worker",),
+        )
+        return SandboxCommandResult(status="succeeded", stdout=stdout, stderr=stderr, receipt=receipt)
+
+
 def _request_body() -> bytes:
     boundary = CapabilityIsolationPolicy(environment="pilot").boundary_for(
         capability_passport_for("financial.send_payment"),
@@ -122,6 +169,41 @@ def _request_body() -> bytes:
         },
         "input_hash": input_hash,
         "metadata": {},
+    }
+    return json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
+
+
+def _capability_request_body(
+    *,
+    intent: dict[str, Any],
+    boundary,
+    tenant_id: str = "tenant-1",
+    identity_id: str = "identity-1",
+    command_id: str = "",
+    conversation_id: str = "",
+    metadata: dict[str, Any] | None = None,
+) -> bytes:
+    request_metadata = dict(metadata or {})
+    boundary_payload = asdict(boundary)
+    input_hash = canonical_hash({
+        "intent": intent,
+        "tenant_id": tenant_id,
+        "identity_id": identity_id,
+        "command_id": command_id,
+        "conversation_id": conversation_id,
+        "boundary": boundary_payload,
+        "metadata": request_metadata,
+    })
+    payload = {
+        "request_id": f"capability-request-{canonical_hash({'intent': intent, 'input_hash': input_hash})[:16]}",
+        "tenant_id": tenant_id,
+        "identity_id": identity_id,
+        "command_id": command_id,
+        "conversation_id": conversation_id,
+        "intent": intent,
+        "boundary": boundary_payload,
+        "input_hash": input_hash,
+        "metadata": request_metadata,
     }
     return json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
 
@@ -201,6 +283,77 @@ def test_capability_worker_emits_transition_receipt_for_success() -> None:
     assert proof_bridge.calls[0]["endpoint"] == "/capability/execute"
     assert proof_bridge.calls[0]["decision"] == "allowed"
     assert proof_bridge.calls[0]["tenant_id"] == "gateway:capability"
+
+
+def test_capability_worker_runs_computer_command_through_sandbox_receipt() -> None:
+    secret = "worker-secret"
+    dispatcher = SkillDispatcher()
+    sandbox_runner = StubSandboxRunner()
+    register_computer_capabilities(dispatcher, sandbox_runner=sandbox_runner)
+    app = create_capability_worker_app(
+        dispatcher=dispatcher,
+        signing_secret=secret,
+        worker_id="restricted-sandbox-worker",
+    )
+    client = TestClient(app)
+    boundary = CapabilityIsolationPolicy(environment="pilot").boundary_for(
+        capability_passport_for("computer.command.run"),
+    )
+    intent = {
+        "skill": "computer",
+        "action": "command.run",
+        "params": {
+            "request_id": "sandbox-request-capability-worker",
+            "argv": ["python", "--version"],
+            "cwd": "/workspace",
+        },
+    }
+    body = _capability_request_body(
+        intent=intent,
+        boundary=boundary,
+        command_id="command-sandbox-worker",
+        metadata={"purpose": "sandboxed-capability-worker"},
+    )
+
+    response = client.post(
+        "/capability/execute",
+        content=body,
+        headers={
+            "Content-Type": "application/json",
+            "X-Mullu-Capability-Signature": sign_capability_payload(body, secret),
+        },
+    )
+
+    assert response.status_code == 200
+    assert verify_capability_signature(
+        response.content,
+        response.headers["X-Mullu-Capability-Response-Signature"],
+        secret,
+    )
+    payload = response.json()
+    result = payload["result"]
+    sandbox_receipt = result["sandbox_execution_receipt"]
+    worker_receipt = payload["receipt"]
+    assert payload["status"] == "succeeded"
+    assert result["sandbox_status"] == "succeeded"
+    assert result["verification_status"] == "passed"
+    assert result["sandbox_receipt_id"].startswith("sandbox-receipt-")
+    assert sandbox_receipt["network_disabled"] is True
+    assert sandbox_receipt["read_only_rootfs"] is True
+    assert sandbox_receipt["command_hash"] == canonical_hash({
+        "argv": ["python", "--version"],
+        "cwd": "/workspace",
+        "environment": {},
+    })
+    assert sandbox_receipt["stdout_hash"] == canonical_hash(result["sandbox_stdout"])
+    assert sandbox_receipt["stderr_hash"] == canonical_hash(result["sandbox_stderr"])
+    assert sandbox_receipt["evidence_refs"] == ["sandbox_execution:capability-worker"]
+    assert worker_receipt["worker_id"] == "restricted-sandbox-worker"
+    assert worker_receipt["capability_id"] == "computer.command.run"
+    assert worker_receipt["output_hash"] == canonical_hash(result)
+    assert worker_receipt["evidence_refs"]
+    assert sandbox_runner.requests[0].capability_id == "computer.command.run"
+    assert sandbox_runner.requests[0].argv == ("python", "--version")
 
 
 def test_capability_worker_rejects_bad_signature() -> None:

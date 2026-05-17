@@ -37,6 +37,11 @@ RUNTIME_CONFORMANCE_CERTIFICATE_SCHEMA_PATH = (
     / "schemas"
     / "runtime_conformance_certificate.schema.json"
 )
+RUNTIME_CONFORMANCE_COLLECTION_SCHEMA_PATH = (
+    Path(__file__).resolve().parent.parent
+    / "schemas"
+    / "runtime_conformance_collection.schema.json"
+)
 REQUIRED_CERTIFICATE_FIELDS = (
     "certificate_id",
     "environment",
@@ -124,6 +129,7 @@ class RuntimeConformanceCollection:
         """Return a JSON-serializable collection payload."""
         payload = asdict(self)
         payload["steps"] = [asdict(step) for step in self.steps]
+        payload["errors"] = list(self.errors)
         return payload
 
 
@@ -438,9 +444,16 @@ def collect_runtime_conformance(
 
 def write_runtime_conformance(collection: RuntimeConformanceCollection, output_path: Path) -> Path:
     """Write one runtime conformance collection JSON document."""
+    payload = collection.to_json_dict()
+    schema_errors = _validate_runtime_conformance_collection_schema(payload)
+    if schema_errors:
+        raise RuntimeError(
+            "runtime conformance collection schema validation failed: "
+            f"{len(schema_errors)} schema error(s)"
+        )
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(
-        json.dumps(collection.to_json_dict(), indent=2, sort_keys=True) + "\n",
+        json.dumps(payload, indent=2, sort_keys=True) + "\n",
         encoding="utf-8",
     )
     return output_path
@@ -500,6 +513,15 @@ def _validate_runtime_conformance_certificate_schema(payload: dict[str, Any]) ->
         schema = _load_schema(RUNTIME_CONFORMANCE_CERTIFICATE_SCHEMA_PATH)
     except (OSError, json.JSONDecodeError):
         return ("runtime_conformance_certificate_schema_unavailable",)
+    return tuple(_validate_schema_instance(schema, payload))
+
+
+def _validate_runtime_conformance_collection_schema(payload: dict[str, Any]) -> tuple[str, ...]:
+    """Validate the persisted collection envelope against the public schema."""
+    try:
+        schema = _load_schema(RUNTIME_CONFORMANCE_COLLECTION_SCHEMA_PATH)
+    except (OSError, json.JSONDecodeError):
+        return ("runtime_conformance_collection_schema_unavailable",)
     return tuple(_validate_schema_instance(schema, payload))
 
 
