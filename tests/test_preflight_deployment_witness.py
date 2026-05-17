@@ -447,6 +447,34 @@ def test_preflight_deployment_witness_rejects_invalid_host() -> None:
     assert runner.commands == []
 
 
+def test_preflight_deployment_witness_rejects_gateway_url_path_before_remote_reads() -> None:
+    runner = FakeRunner()
+
+    with pytest.raises(RuntimeError, match="must not include path"):
+        preflight_deployment_witness(
+            gateway_host="",
+            gateway_url="https://gateway.mullusi.com/private-path",
+            expected_environment="pilot",
+            runner=runner,
+        )
+
+    assert runner.commands == []
+
+
+def test_preflight_deployment_witness_rejects_gateway_url_query_before_remote_reads() -> None:
+    runner = FakeRunner()
+
+    with pytest.raises(RuntimeError, match="must not include path"):
+        preflight_deployment_witness(
+            gateway_host="",
+            gateway_url="https://gateway.mullusi.com?token=secret",
+            expected_environment="pilot",
+            runner=runner,
+        )
+
+    assert runner.commands == []
+
+
 def test_cli_writes_report_and_returns_not_ready(monkeypatch, tmp_path: Path, capsys) -> None:
     monkeypatch.setattr(
         "scripts.preflight_deployment_witness.subprocess.run",

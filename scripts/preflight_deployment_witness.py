@@ -125,10 +125,12 @@ def preflight_deployment_witness(
     command_runner = runner or subprocess.run
     dns_resolver = resolver or _resolve_host
     endpoint_getter = json_getter or _get_json
-    normalized_url = _require_gateway_url(gateway_url or f"https://{gateway_host.strip()}")
-    normalized_host = _require_gateway_host(
-        gateway_host or _gateway_host_from_url(normalized_url)
-    )
+    if gateway_host.strip():
+        normalized_host = _require_gateway_host(gateway_host)
+        normalized_url = _require_gateway_url(gateway_url or f"https://{normalized_host}")
+    else:
+        normalized_url = _require_gateway_url(gateway_url)
+        normalized_host = _require_gateway_host(_gateway_host_from_url(normalized_url))
     _require_expected_environment(expected_environment)
 
     steps = [
@@ -227,9 +229,18 @@ def _require_gateway_url(gateway_url: str) -> str:
     normalized = gateway_url.strip().rstrip("/")
     if not normalized:
         raise RuntimeError("gateway URL is required")
-    if not normalized.startswith(("https://", "http://")):
-        raise RuntimeError("gateway URL must start with http:// or https://")
-    return normalized
+    parsed = urllib.parse.urlsplit(normalized)
+    if parsed.scheme not in {"http", "https"} or not parsed.hostname:
+        raise RuntimeError("gateway URL must include scheme and hostname")
+    try:
+        has_port = parsed.port is not None
+    except ValueError as exc:
+        raise RuntimeError("gateway URL must not include port") from exc
+    if has_port:
+        raise RuntimeError("gateway URL must not include port")
+    if parsed.path not in {"", "/"} or parsed.query or parsed.fragment:
+        raise RuntimeError("gateway URL must not include path, query, or fragment")
+    return f"{parsed.scheme}://{parsed.hostname.lower()}"
 
 
 def _gateway_host_from_url(gateway_url: str) -> str:
