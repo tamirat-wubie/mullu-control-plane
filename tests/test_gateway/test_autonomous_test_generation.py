@@ -111,6 +111,41 @@ def test_failure_trace_requires_evidence_refs() -> None:
     assert AutonomousTestGenerationEngine is not None
 
 
+def test_generation_requires_matching_certified_trace() -> None:
+    engine = AutonomousTestGenerationEngine()
+    try:
+        engine.generate(tenant_id="tenant-a", traces=())
+    except ValueError as exc:
+        empty_error = str(exc)
+    else:
+        empty_error = ""
+
+    try:
+        engine.generate(tenant_id="tenant-a", traces=(_trace(tenant_id="tenant-b"),))
+    except ValueError as exc:
+        mismatch_error = str(exc)
+    else:
+        mismatch_error = ""
+
+    assert empty_error == "matching_failure_traces_required"
+    assert mismatch_error == "matching_failure_traces_required"
+    assert AutonomousTestGenerationEngine is not None
+
+
+def test_schema_rejects_unanchored_empty_generation_plan() -> None:
+    plan = AutonomousTestGenerationEngine().generate(
+        tenant_id="tenant-a",
+        traces=(_trace(failure_type="provider_failure", risk_tier="medium"),),
+    ).to_json_dict()
+    plan["source_trace_ids"] = []
+    plan["cases"] = []
+    errors = _validate_schema_instance(_load_schema(SCHEMA_PATH), plan)
+
+    assert "$.source_trace_ids: expected at least 1 item(s)" in errors
+    assert "$.cases: expected at least 1 item(s)" in errors
+    assert plan["activation_blocked"] is True
+
+
 def _trace(**overrides: object) -> FailureTrace:
     payload = {
         "trace_id": "failure-trace-1",

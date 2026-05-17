@@ -6459,7 +6459,7 @@
         "schemas/autonomous_test_generation_plan.schema.json",
         "tests/test_gateway/test_autonomous_test_generation.py"
       ],
-      "notes": "Autonomous test generation converts certified failure traces into activation-blocked, operator-review-required replay, policy, tenant, approval, budget, and sandbox test proposals.",
+      "notes": "Autonomous test generation converts matching certified failure traces into activation-blocked, operator-review-required replay, policy, tenant, approval, budget, and sandbox test proposals while rejecting unanchored empty plans.",
       "representative_paths": [
         "AutonomousTestGenerationEngine.generate",
         "FailureTrace",
@@ -6468,8 +6468,10 @@
       "request_proof": "request_proof",
       "runtime_witnesses": [
         "failure_trace_requires_evidence_refs",
+        "generation_requires_matching_certified_trace",
         "high_risk_failures_generate_governance_variants",
         "plans_are_activation_blocked",
+        "schema_rejects_unanchored_empty_generation_plan",
         "autonomous_test_generation_plan_schema_valid"
       ],
       "surface_id": "autonomous_test_generation"
@@ -6711,8 +6713,8 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 471,
-    "runtime_witness_count": 1029,
+    "exact_test_anchor_count": 473,
+    "runtime_witness_count": 1031,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -10809,6 +10811,12 @@
           },
           {
             "anchors": [
+              "tests/test_gateway/test_autonomous_test_generation.py::test_generation_requires_matching_certified_trace"
+            ],
+            "witness": "generation_requires_matching_certified_trace"
+          },
+          {
+            "anchors": [
               "tests/test_gateway/test_autonomous_test_generation.py::test_high_risk_failures_generate_governance_variants"
             ],
             "witness": "high_risk_failures_generate_governance_variants"
@@ -10821,13 +10829,19 @@
           },
           {
             "anchors": [
+              "tests/test_gateway/test_autonomous_test_generation.py::test_schema_rejects_unanchored_empty_generation_plan"
+            ],
+            "witness": "schema_rejects_unanchored_empty_generation_plan"
+          },
+          {
+            "anchors": [
               "tests/test_gateway/test_autonomous_test_generation.py::test_autonomous_test_generation_plan_schema_valid"
             ],
             "witness": "autonomous_test_generation_plan_schema_valid"
           }
         ],
-        "exact_test_anchor_count": 4,
-        "runtime_witness_count": 4,
+        "exact_test_anchor_count": 6,
+        "runtime_witness_count": 6,
         "surface_id": "autonomous_test_generation",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []
