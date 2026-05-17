@@ -110,12 +110,38 @@ def test_provision_deployment_target_rejects_invalid_environment() -> None:
     assert runner.commands == []
 
 
+def test_provision_deployment_target_rejects_gateway_url_path_before_writes() -> None:
+    runner = FakeRunner()
+
+    with pytest.raises(RuntimeError, match="must not include path"):
+        provision_deployment_target(
+            gateway_url="https://gateway.example.com/private-path",
+            expected_environment="pilot",
+            runner=runner,
+        )
+
+    assert runner.commands == []
+
+
+def test_provision_deployment_target_rejects_gateway_url_query_before_writes() -> None:
+    runner = FakeRunner()
+
+    with pytest.raises(RuntimeError, match="must not include path"):
+        provision_deployment_target(
+            gateway_url="https://gateway.example.com?token=secret",
+            expected_environment="pilot",
+            runner=runner,
+        )
+
+    assert runner.commands == []
+
+
 def test_provision_deployment_target_command_failure_is_bounded() -> None:
     runner = FailingRunner()
 
     with pytest.raises(RuntimeError) as exc_info:
         provision_deployment_target(
-            gateway_url="https://gateway.example.com/private-path",
+            gateway_url="https://gateway.example.com",
             expected_environment="pilot",
             runner=runner,
         )
@@ -124,7 +150,7 @@ def test_provision_deployment_target_command_failure_is_bounded() -> None:
     assert message == "failed to set GitHub variable MULLU_GATEWAY_URL: exit_code=7"
     assert "stdout-secret-token" not in message
     assert "stderr-secret-token" not in message
-    assert "gateway.example.com/private-path" not in message
+    assert "gateway.example.com" not in message
     assert len(runner.commands) == 1
 
 
@@ -134,4 +160,4 @@ def test_cli_reports_invalid_url(capsys) -> None:
 
     assert exit_code == 1
     assert "deployment target provisioning failed" in captured.out
-    assert "must start with" in captured.out
+    assert "must include scheme and hostname" in captured.out

@@ -17,7 +17,12 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any, Callable
 
-from gateway.command_spine import CapabilityPassport, canonical_hash, capability_passport_for
+from gateway.command_spine import (
+    CapabilityPassport,
+    canonical_hash,
+    capability_passport_for,
+    capability_passport_from_registry_entry,
+)
 from gateway.intent_resolver import CapabilityIntentResolver
 
 
@@ -57,9 +62,21 @@ class CapabilityPlanBuilder:
         *,
         resolver: CapabilityIntentResolver | None = None,
         capability_passport_loader: Callable[[str], CapabilityPassport] | None = None,
+        capability_admission_gate: Any | None = None,
     ) -> None:
+        if capability_passport_loader is not None and capability_admission_gate is not None:
+            raise ValueError("capability plan builder requires one capability authority")
         self._resolver = resolver or CapabilityIntentResolver()
-        self._capability_passport_loader = capability_passport_loader or capability_passport_for
+        self._capability_passport_loader = (
+            capability_passport_loader
+            or _passport_loader_from_admission_gate(capability_admission_gate)
+            or capability_passport_for
+        )
+        self._admission_source = (
+            "governed_capability_registry"
+            if capability_admission_gate is not None
+            else "capability_passport"
+        )
 
     def build(
         self,
@@ -103,6 +120,7 @@ class CapabilityPlanBuilder:
             metadata={
                 "step_count": len(validated_steps),
                 "builder": "deterministic_capability_plan_builder",
+                "admission_source": self._admission_source,
             },
         )
 
@@ -188,6 +206,27 @@ def _validate_steps_with_loader(
             raise ValueError(f"step {step.step_id} has unknown dependency: {missing_dependencies[0]}")
         declared.add(step.step_id)
     return steps
+
+
+def _passport_loader_from_admission_gate(
+    capability_admission_gate: Any | None,
+) -> Callable[[str], CapabilityPassport] | None:
+    if capability_admission_gate is None:
+        return None
+    admit = getattr(capability_admission_gate, "admit", None)
+    capability_for_intent = getattr(capability_admission_gate, "capability_for_intent", None)
+    if not callable(admit) or not callable(capability_for_intent):
+        raise ValueError("capability admission gate must expose admit and capability_for_intent")
+
+    def load_passport(capability_id: str) -> CapabilityPassport:
+        decision = admit(command_id=f"plan-builder:{capability_id}", intent_name=capability_id)
+        status = getattr(getattr(decision, "status", ""), "value", getattr(decision, "status", ""))
+        if status != "accepted":
+            reason = str(getattr(decision, "reason", "") or "capability registry admission rejected")
+            raise ValueError(f"capability plan admission rejected for {capability_id}: {reason}")
+        return capability_passport_from_registry_entry(capability_for_intent(capability_id))
+
+    return load_passport
 
 
 def _max_risk(
