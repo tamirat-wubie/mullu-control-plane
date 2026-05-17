@@ -57,6 +57,19 @@ jobs:
         with:
           python-version: "3.13"
 
+      - name: Preflight self-hosted staging witness inputs
+        env:
+          MULLU_STAGING_URL: ${{ inputs.staging_url }}
+          MULLU_CONTROL_PLANE_COMMIT: ${{ inputs.control_plane_commit }}
+          MULLU_GOVERNED_SWARM_RUNTIME_PATH: ${{ inputs.runtime_path }}
+          MULLU_GOVERNED_SWARM_AUDIT_STORE_PATH: ${{ inputs.audit_store_path }}
+        run: |
+          test -n "$MULLU_STAGING_URL"
+          test -n "$MULLU_CONTROL_PLANE_COMMIT"
+          test -d "$MULLU_GOVERNED_SWARM_RUNTIME_PATH/mcoi_runtime/swarm"
+          test -f "$MULLU_GOVERNED_SWARM_AUDIT_STORE_PATH"
+          test -r "$MULLU_GOVERNED_SWARM_AUDIT_STORE_PATH"
+
       - name: Collect governed swarm staging activation witness
         env:
           MULLU_STAGING_URL: ${{ inputs.staging_url }}

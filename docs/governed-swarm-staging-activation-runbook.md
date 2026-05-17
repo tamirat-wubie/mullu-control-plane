@@ -131,6 +131,17 @@ The same collection can be launched from GitHub Actions:
 
 Use the default `self-hosted` runner label unless the selected runner can both reach the staging control-plane URL and read `MULLU_GOVERNED_SWARM_AUDIT_STORE_PATH`. A hosted runner can probe the route but cannot prove audit persistence unless the audit JSONL is mounted or otherwise present at the configured path.
 
+Before dispatching the workflow, verify the selected runner has the required local surfaces:
+
+```bash
+test -d /opt/mullu/mullu-governed-swarm/mcoi/mcoi_runtime/swarm
+test -f /var/lib/mullu/governed-swarm/swarm-runs.jsonl
+test -r /var/lib/mullu/governed-swarm/swarm-runs.jsonl
+curl -sS "$MULLU_STAGING_URL/api/v1/swarm/runs" >/tmp/governed-swarm-route-preflight.json
+```
+
+The workflow repeats the filesystem checks before collecting the witness. If any preflight check fails, do not treat the failure as a route failure; fix runner placement, runtime checkout, audit mount, or staging network access first.
+
 For a real staging activation, store the collected witness under `.change_assurance/` or the deployment evidence store, then run the same validator against that file.
 
 ## Rollback
