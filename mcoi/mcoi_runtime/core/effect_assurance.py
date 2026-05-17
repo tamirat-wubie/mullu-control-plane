@@ -13,8 +13,10 @@ Invariants:
 
 from __future__ import annotations
 
+import json
 from collections.abc import Callable
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Any, Mapping
 
 from mcoi_runtime.contracts.effect_assurance import (
@@ -127,6 +129,139 @@ class EffectGraphCommitReceipt:
         )
 
 
+def _require_graph_commit_receipt(receipt: object) -> EffectGraphCommitReceipt:
+    if not isinstance(receipt, EffectGraphCommitReceipt):
+        raise ValueError("receipt must be an EffectGraphCommitReceipt instance")
+    return receipt
+
+
+def _require_positive_limit(limit: object) -> int:
+    if not isinstance(limit, int) or isinstance(limit, bool):
+        raise ValueError("limit must be an integer")
+    if limit < 1:
+        raise ValueError("limit must be >= 1")
+    return limit
+
+
+class EffectGraphCommitReceiptStore:
+    """Base graph-commit receipt store with degraded no-op semantics."""
+
+    def append(self, receipt: EffectGraphCommitReceipt) -> None:
+        """Persist an Effect Assurance graph commit receipt."""
+        _require_graph_commit_receipt(receipt)
+        return None
+
+    def list(self, *, limit: int = 50) -> tuple[EffectGraphCommitReceipt, ...]:
+        """Return recent graph commit receipts in append order."""
+        _require_positive_limit(limit)
+        return ()
+
+    @property
+    def receipt_count(self) -> int:
+        """Number of graph commit receipts tracked by this store."""
+        return 0
+
+
+class InMemoryEffectGraphCommitReceiptStore(EffectGraphCommitReceiptStore):
+    """Bounded in-memory graph commit receipt store."""
+
+    def __init__(self, *, max_records: int = 10_000) -> None:
+        self._max_records = _require_positive_limit(max_records)
+        self._receipts: list[EffectGraphCommitReceipt] = []
+
+    def append(self, receipt: EffectGraphCommitReceipt) -> None:
+        receipt = _require_graph_commit_receipt(receipt)
+        self._receipts.append(receipt)
+        if len(self._receipts) > self._max_records:
+            del self._receipts[0 : len(self._receipts) - self._max_records]
+
+    def list(self, *, limit: int = 50) -> tuple[EffectGraphCommitReceipt, ...]:
+        limit = _require_positive_limit(limit)
+        return tuple(self._receipts[-limit:])
+
+    @property
+    def receipt_count(self) -> int:
+        return len(self._receipts)
+
+
+class JsonlEffectGraphCommitReceiptStore(InMemoryEffectGraphCommitReceiptStore):
+    """Append-only JSONL store for Effect Assurance graph commit receipts."""
+
+    def __init__(self, path: str | Path, *, max_records: int = 10_000) -> None:
+        self._path = Path(path)
+        super().__init__(max_records=max_records)
+        self._path.parent.mkdir(parents=True, exist_ok=True)
+        if self._path.exists():
+            self._replay()
+
+    @property
+    def path(self) -> Path:
+        return self._path
+
+    def append(self, receipt: EffectGraphCommitReceipt) -> None:
+        receipt = _require_graph_commit_receipt(receipt)
+        super().append(receipt)
+        line = json.dumps(
+            {
+                "type": "effect_graph_commit_receipt",
+                "receipt": receipt.to_dict(),
+            },
+            sort_keys=True,
+            separators=(",", ":"),
+        )
+        with self._path.open("a", encoding="utf-8", newline="\n") as handle:
+            handle.write(line + "\n")
+            handle.flush()
+
+    def _replay(self) -> None:
+        for line_number, raw_line in enumerate(self._path.read_text(encoding="utf-8").splitlines(), start=1):
+            if not raw_line.strip():
+                continue
+            try:
+                event = json.loads(raw_line)
+            except json.JSONDecodeError as exc:
+                raise ValueError(f"effect graph commit receipt JSONL line {line_number} is malformed") from exc
+            if not isinstance(event, dict):
+                raise ValueError(f"effect graph commit receipt JSONL line {line_number} must be an object")
+            if event.get("type") != "effect_graph_commit_receipt":
+                raise ValueError(f"effect graph commit receipt JSONL line {line_number} has unsupported event type")
+            receipt_payload = event.get("receipt")
+            if not isinstance(receipt_payload, dict):
+                raise ValueError(f"effect graph commit receipt JSONL line {line_number} receipt must be an object")
+            InMemoryEffectGraphCommitReceiptStore.append(
+                self,
+                _effect_graph_commit_receipt_from_dict(receipt_payload),
+            )
+
+
+def _effect_graph_commit_receipt_from_dict(payload: Mapping[str, Any]) -> EffectGraphCommitReceipt:
+    metadata = payload.get("metadata", {})
+    if not isinstance(metadata, dict):
+        raise ValueError("effect graph commit receipt metadata must be an object")
+    return EffectGraphCommitReceipt(
+        receipt_id=str(payload.get("receipt_id", "")),
+        mutation_type=str(payload.get("mutation_type", "")),
+        effect_name=str(payload.get("effect_name", "")),
+        command_id=str(payload.get("command_id", "")),
+        effect_plan_id=str(payload.get("effect_plan_id", "")),
+        reconciliation_id=str(payload.get("reconciliation_id", "")),
+        evidence_ref=str(payload.get("evidence_ref", "")),
+        verification_result_id=(
+            str(payload["verification_result_id"])
+            if payload.get("verification_result_id") is not None
+            else None
+        ),
+        observed_effect_ids=tuple(str(value) for value in payload.get("observed_effect_ids", ())),
+        observed_evidence_refs=tuple(str(value) for value in payload.get("observed_evidence_refs", ())),
+        before_node_count=int(payload.get("before_node_count", -1)),
+        before_edge_count=int(payload.get("before_edge_count", -1)),
+        after_node_count=int(payload.get("after_node_count", -1)),
+        after_edge_count=int(payload.get("after_edge_count", -1)),
+        recorded_at=str(payload.get("recorded_at", "")),
+        metadata=dict(metadata),
+    )
+
+
 class EffectAssuranceGate:
     """Mandatory bridge from approved action to evidence-backed commit."""
 
@@ -136,11 +271,16 @@ class EffectAssuranceGate:
         clock: Callable[[], str],
         graph: OperationalGraph | None = None,
         simulation_engine: SimulationEngine | None = None,
+        graph_commit_receipt_store: EffectGraphCommitReceiptStore | None = None,
     ) -> None:
         self._clock = clock
         self._graph = graph
         self._simulation_engine = simulation_engine
-        self._graph_commit_receipts: list[EffectGraphCommitReceipt] = []
+        self._graph_commit_receipt_store = (
+            graph_commit_receipt_store
+            if graph_commit_receipt_store is not None
+            else InMemoryEffectGraphCommitReceiptStore()
+        )
 
     @property
     def graph_commit_available(self) -> bool:
@@ -149,7 +289,7 @@ class EffectAssuranceGate:
 
     def graph_commit_receipts(self, limit: int = 50) -> tuple[EffectGraphCommitReceipt, ...]:
         """Return recent Effect Assurance graph commit receipts in append order."""
-        return tuple(self._graph_commit_receipts[-limit:])
+        return self._graph_commit_receipt_store.list(limit=limit)
 
     def graph_commit_effect_records(self, limit: int = 50) -> tuple[EffectRecord, ...]:
         """Return recent graph commit receipts as execution actual-effect records."""
@@ -491,7 +631,7 @@ class EffectAssuranceGate:
                 "command_id": plan.command_id,
                 "effect_plan_id": plan.effect_plan_id,
                 "reconciliation_id": reconciliation.reconciliation_id,
-                "ordinal": len(self._graph_commit_receipts),
+                "ordinal": self._graph_commit_receipt_store.receipt_count,
                 "recorded_at": recorded_at,
             },
         )
@@ -516,7 +656,7 @@ class EffectAssuranceGate:
                 "edge_delta": after_edge_count - before_edge_count,
             },
         )
-        self._graph_commit_receipts.append(receipt)
+        self._graph_commit_receipt_store.append(receipt)
         return receipt
 
 

@@ -1954,6 +1954,8 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "EffectAssuranceGate.commit_graph",
                 "EffectAssuranceGate.graph_commit_receipts",
                 "EffectAssuranceGate.graph_commit_effect_records",
+                "InMemoryEffectGraphCommitReceiptStore",
+                "JsonlEffectGraphCommitReceiptStore",
             ],
             "request_proof",
             "action_proof",
@@ -1964,12 +1966,13 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "mcoi/mcoi_runtime/core/operational_graph.py",
                 "mcoi/tests/test_effect_assurance_core.py",
             ],
-            "Effect Assurance graph commits emit bounded receipts for MATCH-only operational graph mutation and expose those receipts as actual effects for observation.",
+            "Effect Assurance graph commits emit bounded durable receipts for MATCH-only operational graph mutation and expose those receipts as actual effects for observation.",
             [
                 "effect_graph_commit_requires_match",
                 "effect_graph_commit_receipt_emitted",
                 "effect_graph_commit_receipt_converts_to_actual_effect",
                 "effect_graph_commit_receipt_closes_effect_assurance",
+                "effect_graph_commit_receipt_store_replays_records",
             ],
         ),
         _surface(
@@ -4091,6 +4094,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
         },
         {
             "action_id": "bind_effect_graph_commits_to_effect_receipts",
+            "surfaces": ["effect_assurance_graph_commit"],
+            "status": "closed",
+        },
+        {
+            "action_id": "persist_effect_graph_commit_receipts",
             "surfaces": ["effect_assurance_graph_commit"],
             "status": "closed",
         },

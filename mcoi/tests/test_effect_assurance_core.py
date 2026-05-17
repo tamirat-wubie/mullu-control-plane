@@ -17,7 +17,12 @@ from mcoi_runtime.contracts.execution import EffectRecord, ExecutionOutcome, Exe
 from mcoi_runtime.contracts.graph import NodeType
 from mcoi_runtime.contracts.simulation import RiskLevel, VerdictType
 from mcoi_runtime.contracts.verification import VerificationStatus
-from mcoi_runtime.core.effect_assurance import EffectAssuranceGate
+from mcoi_runtime.core.effect_assurance import (
+    EffectAssuranceGate,
+    EffectGraphCommitReceiptStore,
+    InMemoryEffectGraphCommitReceiptStore,
+    JsonlEffectGraphCommitReceiptStore,
+)
 from mcoi_runtime.core.invariants import RuntimeCoreInvariantError
 from mcoi_runtime.core.operational_graph import OperationalGraph
 
@@ -248,3 +253,85 @@ def test_graph_commit_receipt_closes_effect_assurance():
     assert commit_reconciliation.status is ReconciliationStatus.MATCH
     assert commit_reconciliation.matched_effects == ("effect_graph_committed",)
     assert commit_verification.evidence[0].uri.startswith("effect-graph-commit:")
+
+
+def test_graph_commit_receipt_store_base_is_noop():
+    store = EffectGraphCommitReceiptStore()
+    gate, _, plan = _gate_with_plan()
+    result = _execution(EffectRecord(name="ledger_entry_created", details={"evidence_ref": "ledger:entry-1"}))
+    observed = gate.observe(result)
+    verification = gate.verify(plan=plan, execution_result=result, observed_effects=observed)
+    reconciliation = gate.reconcile(plan=plan, observed_effects=observed, verification_result=verification)
+    receipt = gate.commit_graph(plan=plan, observed_effects=observed, reconciliation=reconciliation)
+
+    store.append(receipt)
+
+    assert store.receipt_count == 0
+    assert store.list(limit=1) == ()
+    assert receipt.receipt_id.startswith("effect-graph-commit-receipt-")
+
+
+def test_in_memory_graph_commit_receipt_store_bounds_recent_records():
+    gate, _, plan = _gate_with_plan()
+    first_result = _execution(EffectRecord(name="ledger_entry_created", details={"evidence_ref": "ledger:entry-1"}))
+    first_observed = gate.observe(first_result)
+    first_verification = gate.verify(plan=plan, execution_result=first_result, observed_effects=first_observed)
+    first_reconciliation = gate.reconcile(
+        plan=plan,
+        observed_effects=first_observed,
+        verification_result=first_verification,
+    )
+    first_receipt = gate.commit_graph(
+        plan=plan,
+        observed_effects=first_observed,
+        reconciliation=first_reconciliation,
+    )
+    second_receipt = gate.commit_graph(
+        plan=plan,
+        observed_effects=first_observed,
+        reconciliation=first_reconciliation,
+    )
+    store = InMemoryEffectGraphCommitReceiptStore(max_records=1)
+
+    store.append(first_receipt)
+    store.append(second_receipt)
+
+    assert store.receipt_count == 1
+    assert store.list(limit=10) == (second_receipt,)
+    assert store.list(limit=1)[0].receipt_id == second_receipt.receipt_id
+
+
+def test_jsonl_graph_commit_receipt_store_replays_records(tmp_path):
+    path = tmp_path / "effect-graph-commit-receipts.jsonl"
+    store = JsonlEffectGraphCommitReceiptStore(path)
+    clock = _clock()
+    graph = OperationalGraph(clock=clock)
+    gate = EffectAssuranceGate(clock=clock, graph=graph, graph_commit_receipt_store=store)
+    plan = gate.create_plan(
+        command_id="cmd-1",
+        tenant_id="tenant-1",
+        capability_id="send_payment",
+        expected_effects=(_expected(),),
+        forbidden_effects=("duplicate_payment",),
+    )
+    result = _execution(EffectRecord(name="ledger_entry_created", details={"evidence_ref": "ledger:entry-1"}))
+    observed = gate.observe(result)
+    verification = gate.verify(plan=plan, execution_result=result, observed_effects=observed)
+    reconciliation = gate.reconcile(plan=plan, observed_effects=observed, verification_result=verification)
+    receipt = gate.commit_graph(plan=plan, observed_effects=observed, reconciliation=reconciliation)
+
+    reopened = JsonlEffectGraphCommitReceiptStore(path)
+    replayed = reopened.list(limit=1)[0]
+
+    assert reopened.receipt_count == 1
+    assert replayed.receipt_id == receipt.receipt_id
+    assert replayed.observed_evidence_refs == ("ledger:entry-1",)
+    assert replayed.to_effect_record().details["source"] == "effect_assurance_graph_commit"
+
+
+def test_jsonl_graph_commit_receipt_store_rejects_malformed_records(tmp_path):
+    path = tmp_path / "effect-graph-commit-receipts.jsonl"
+    path.write_text("{not-json}\n", encoding="utf-8")
+
+    with pytest.raises(ValueError, match="malformed"):
+        JsonlEffectGraphCommitReceiptStore(path)
