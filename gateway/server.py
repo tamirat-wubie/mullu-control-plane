@@ -57,6 +57,10 @@ from gateway.authority_obligation_mesh import (
     AuthorityObligationMesh,
     build_authority_obligation_mesh_store_from_env,
 )
+from gateway.autonomous_capability_upgrade import (
+    AutonomousCapabilityUpgradeLoop,
+    CapabilityHealthSignal,
+)
 from gateway.capability_capsule_installer import install_certified_capsule_with_handoff_evidence
 from gateway.capability_fabric import build_capability_admission_gate_from_env
 from gateway.capability_isolation import build_isolated_capability_executor_from_env
@@ -98,6 +102,7 @@ from mcoi_runtime.contracts.governed_capability_fabric import CapabilityRegistry
 
 _log = logging.getLogger(__name__)
 PHYSICAL_ACTION_RECEIPT_SCHEMA_REF = "urn:mullusi:schema:physical-action-receipt:1"
+CAPABILITY_IMPROVEMENT_PORTFOLIO_SCHEMA_REF = "urn:mullusi:schema:capability-improvement-portfolio:1"
 PHYSICAL_LIVE_SAFETY_EXTENSION_KEY = "physical_live_safety_evidence"
 PHYSICAL_CAPABILITY_PREFIXES = ("physical.", "iot.", "robotics.")
 REQUIRED_PHYSICAL_LIVE_SAFETY_FIELDS = (
@@ -1301,6 +1306,59 @@ def create_gateway_app(
             "candidates": candidates,
         }
 
+    def _capability_portfolio_health_signals(snapshot: RuntimeHealthSnapshot) -> tuple[CapabilityHealthSignal, ...]:
+        metrics = snapshot.metrics
+        evidence_refs = tuple(
+            f"{evidence.kind}:{evidence.ref_id}"
+            for evidence in snapshot.evidence_refs
+        ) or (f"runtime_health:{snapshot.snapshot_id}",)
+        requests = max(1, int(metrics.get("requests", 0)))
+        failures = int(metrics.get("failures", 0))
+        success_rate = max(0.0, min(1.0, 1.0 - (failures / requests)))
+        missing_approvals = int(metrics.get("missing_approvals", 0))
+        deployment_witness_missing = int(metrics.get("deployment_witness_missing", 0))
+        return (
+            CapabilityHealthSignal(
+                capability_id="gateway.command_execution",
+                observed_at=snapshot.captured_at,
+                maturity_level="C4",
+                success_rate=success_rate,
+                failure_count=failures,
+                mean_latency_ms=0,
+                cost_per_success=0.0,
+                open_incidents=1 if failures else 0,
+                blocker_codes=("gateway_failures_observed",) if failures else (),
+                evidence_refs=evidence_refs,
+                metadata={"source_snapshot_id": snapshot.snapshot_id},
+            ),
+            CapabilityHealthSignal(
+                capability_id="gateway.approval_flow",
+                observed_at=snapshot.captured_at,
+                maturity_level="C4",
+                success_rate=0.96 if missing_approvals else 1.0,
+                failure_count=missing_approvals,
+                mean_latency_ms=0,
+                cost_per_success=0.0,
+                open_incidents=1 if missing_approvals else 0,
+                blocker_codes=("missing_approvals",) if missing_approvals else (),
+                evidence_refs=evidence_refs,
+                metadata={"source_snapshot_id": snapshot.snapshot_id},
+            ),
+            CapabilityHealthSignal(
+                capability_id="gateway.deployment_witness",
+                observed_at=snapshot.captured_at,
+                maturity_level="C3" if deployment_witness_missing else "C6",
+                success_rate=0.90 if deployment_witness_missing else 1.0,
+                failure_count=deployment_witness_missing,
+                mean_latency_ms=0,
+                cost_per_success=0.0,
+                open_incidents=1 if deployment_witness_missing else 0,
+                blocker_codes=("deployment_witness_missing",) if deployment_witness_missing else (),
+                evidence_refs=evidence_refs,
+                metadata={"source_snapshot_id": snapshot.snapshot_id},
+            ),
+        )
+
     def _reflex_evidence_from_payload(payload: dict[str, Any]) -> ReflexEvidenceRef:
         return ReflexEvidenceRef(
             kind=str(payload.get("kind", "")).strip(),
@@ -1530,6 +1588,27 @@ def create_gateway_app(
             "candidates": [candidate.to_json_dict() for candidate in pipeline["candidates"]],
             "candidate_count": len(pipeline["candidates"]),
             "mutation_applied": False,
+        }
+
+    @app.get("/runtime/self/capability-improvement-portfolio")
+    def runtime_self_capability_improvement_portfolio(request: Request, max_candidates: int = 3):
+        _require_authority_operator(request)
+        if max_candidates < 1:
+            raise HTTPException(400, detail="max_candidates must be positive")
+        snapshot = _reflex_snapshot()
+        portfolio = AutonomousCapabilityUpgradeLoop().propose_portfolio(
+            _capability_portfolio_health_signals(snapshot),
+            generated_at=snapshot.captured_at,
+            max_candidates=max_candidates,
+        )
+        return {
+            "schema_ref": CAPABILITY_IMPROVEMENT_PORTFOLIO_SCHEMA_REF,
+            "portfolio": portfolio.to_json_dict(),
+            "portfolio_id": portfolio.portfolio_id,
+            "plan_count": len(portfolio.plans),
+            "mutation_applied": False,
+            "activation_blocked": portfolio.activation_blocked,
+            "operator_review_required": portfolio.operator_review_required,
         }
 
     @app.post("/runtime/self/certify")

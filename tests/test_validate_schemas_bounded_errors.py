@@ -44,3 +44,14 @@ def test_validate_schema_instance_bounds_unresolved_ref_detail() -> None:
 
     assert errors == ["$: unresolved schema ref"]
     assert all("secret-ref-token" not in error for error in errors)
+
+
+def test_validate_schema_instance_enforces_unique_array_items() -> None:
+    schema = {"type": "array", "uniqueItems": True, "items": {"type": "string"}}
+
+    duplicate_errors = _validate_schema_instance(schema, ["capability-a", "capability-a"])
+    unique_errors = _validate_schema_instance(schema, ["capability-a", "capability-b"])
+
+    assert duplicate_errors == ["$: array items must be unique"]
+    assert unique_errors == []
+    assert all("capability-a" not in error for error in duplicate_errors)

@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass
+from hashlib import sha256
 from pathlib import Path
 
 import pytest
@@ -17,7 +18,7 @@ from mcoi_runtime.persistence import (
     CorruptedDataError,
     RegistryBackend,
 )
-from mcoi_runtime.persistence.registry_backend import _entry_value_to_dict
+from mcoi_runtime.persistence.registry_backend import _content_hash, _entry_value_to_dict
 
 
 @dataclass(frozen=True, slots=True)
@@ -107,6 +108,15 @@ def test_save_empty_registry(tmp_path: Path) -> None:
 
     loaded = backend.load_registry()
     assert loaded.list() == ()
+
+
+def test_registry_content_hash_preserves_non_ascii_fidel_bytes() -> None:
+    content = '{"fidel":"ሀ"}'
+    digest = _content_hash(content)
+
+    assert digest == sha256(content.encode("utf-8")).hexdigest()
+    assert digest != sha256(content.encode("ascii", "ignore")).hexdigest()
+    assert len(digest) == 64
 
 
 def test_entry_value_to_dict_bounds_non_dataclass_value_error() -> None:

@@ -223,6 +223,28 @@ class ProductionSurface:
         self._total_requests: int = 0
         self._total_errors: int = 0
 
+    def make_api_request(
+        self,
+        *,
+        request_id: str,
+        method: str,
+        path: str,
+        actor_id: str,
+        tenant_id: str,
+        body: dict[str, Any] | None = None,
+        headers: dict[str, str] | None = None,
+    ) -> APIRequest:
+        """Construct a governed API request for router boundary adapters."""
+        return APIRequest(
+            request_id=request_id,
+            method=method,
+            path=path,
+            actor_id=actor_id,
+            tenant_id=tenant_id,
+            body=dict(body or {}),
+            headers=dict(headers or {}),
+        )
+
     def handle_request(self, request: APIRequest) -> APIResponse:
         self._total_requests += 1
         trace_id = request.request_id

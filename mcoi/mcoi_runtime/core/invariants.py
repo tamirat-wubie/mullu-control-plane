@@ -78,5 +78,19 @@ def freeze_mapping(value: Mapping[str, ValueT]) -> Mapping[str, ValueT]:
 
 
 def stable_identifier(prefix: str, payload: Mapping[str, Any]) -> str:
-    encoded = json.dumps(payload, sort_keys=True, separators=(",", ":"), default=str)
-    return f"{prefix}-{sha256(encoded.encode('ascii', 'ignore')).hexdigest()[:12]}"
+    ensure_non_empty_text("prefix", prefix)
+    if not isinstance(payload, Mapping):
+        raise RuntimeCoreInvariantError("payload must be a mapping")
+    try:
+        encoded = json.dumps(
+            payload,
+            sort_keys=True,
+            ensure_ascii=True,
+            separators=(",", ":"),
+            allow_nan=False,
+        )
+    except (TypeError, ValueError) as exc:
+        raise RuntimeCoreInvariantError(
+            "stable identifier payload must be deterministic JSON"
+        ) from exc
+    return f"{prefix}-{sha256(encoded.encode('utf-8')).hexdigest()[:12]}"

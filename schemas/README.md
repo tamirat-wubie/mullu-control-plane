@@ -30,6 +30,7 @@ files are open wire contracts. Runtime modules under `mcoi/`, `gateway/`, and
 | `capability_maturity.schema.json` | Canonical evidence-derived capability maturity assessment |
 | `collaboration_case.schema.json` | Canonical governed collaboration case with approval separation and non-terminal closure |
 | `capability_registry_entry.schema.json` | Universal governed capability registry entry |
+| `capability_improvement_portfolio.schema.json` | Canonical activation-blocked portfolio of ranked capability improvement proposals |
 | `capability_upgrade_plan.schema.json` | Canonical governed capability upgrade proposal plan |
 | `claim_verification_report.schema.json` | Canonical claim graph verification report for support, contradiction, freshness, and execution admission |
 | `commercial_metering_snapshot.schema.json` | Canonical commercial metering snapshot with plans, usage, provider costs, decisions, and tenant billing summaries |

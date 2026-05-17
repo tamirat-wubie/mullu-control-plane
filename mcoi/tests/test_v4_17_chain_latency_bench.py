@@ -152,23 +152,51 @@ def test_bench_first_failure_stops():
     Cost should approximate the 1-guard case, NOT the 5-guard case.
     This benchmark protects against accidentally evaluating all guards
     on rejection."""
+    visited_guards: list[str] = []
+
+    def counting_deny_guard(name: str) -> GovernanceGuard:
+        return GovernanceGuard(
+            name,
+            lambda c: (
+                visited_guards.append(name)
+                or GuardResult(
+                    allowed=False,
+                    guard_name=name,
+                    reason="bench-deny",
+                )
+            ),
+        )
+
+    def counting_allow_guard(name: str) -> GovernanceGuard:
+        return GovernanceGuard(
+            name,
+            lambda c: (
+                visited_guards.append(name)
+                or GuardResult(allowed=True, guard_name=name)
+            ),
+        )
+
     chain = GovernanceGuardChain()
-    chain.add(_deny_guard("first"))
+    chain.add(counting_deny_guard("first"))
     for i in range(4):
-        chain.add(_allow_guard(f"never_{i}"))
+        chain.add(counting_allow_guard(f"never_{i}"))
     validator = chain_to_validator(chain)
     delta, ctx, auth = _delta(), _ctx(), _auth()
 
+    iterations = 2000
+    warmup = 200
     result = benchmark(
         "write_chain_first_denies_5guards",
         lambda: validator(delta, ctx, auth),
-        iterations=2000, warmup=200,
+        iterations=iterations, warmup=warmup,
     )
     print(f"\n  {result.name}: mean={result.mean_us:.1f}us ops/s={result.ops_per_second:.0f}")
     print(f"  p95={result.p95_ns/1000:.1f}us p99={result.p99_ns/1000:.1f}us")
-    # If short-circuit broke, p99 would be near 5-guard pass cost.
-    # We just assert the absolute ceiling (regression guard).
-    assert result.p99_ns < 1_000_000
+    # The primary invariant is causal: a denial must not evaluate later
+    # guards. Absolute p99 has scheduler noise, especially on Windows.
+    assert visited_guards.count("first") == iterations + warmup
+    assert not any(name.startswith("never_") for name in visited_guards)
+    assert result.p95_ns < 1_000_000
 
 
 def test_bench_metrics_recording_overhead():

@@ -80,6 +80,26 @@ def test_validate_promotion_closure_plan_bounds_malformed_json_detail(tmp_path: 
     assert all("secret-aggregate-plan-token" not in error for error in validation.errors)
 
 
+def test_validate_promotion_closure_plan_rejects_nonfinite_json_constants(tmp_path: Path) -> None:
+    paths = _write_matching_artifacts(tmp_path)
+    paths["promotion"].write_text(
+        '{"readiness_level": "pilot-governed-core", "score": Infinity}',
+        encoding="utf-8",
+    )
+
+    validation = validate_general_agent_promotion_closure_plan(
+        promotion_plan_path=paths["promotion"],
+        readiness_path=paths["readiness"],
+        adapter_plan_path=paths["adapter"],
+        deployment_plan_path=paths["deployment"],
+    )
+    serialized_errors = json.dumps(validation.errors, sort_keys=True)
+
+    assert validation.ok is False
+    assert "promotion closure plan JSON parse failed" in validation.errors
+    assert "Infinity" not in serialized_errors
+
+
 def test_validate_promotion_closure_plan_rejects_proof_field_drift(tmp_path: Path) -> None:
     paths = _write_matching_artifacts(tmp_path)
     promotion = json.loads(paths["promotion"].read_text(encoding="utf-8"))

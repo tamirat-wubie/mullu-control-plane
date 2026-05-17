@@ -145,6 +145,24 @@ def _validate_action_proof_contract(
             evidence.endswith("_debt_clear") for evidence in evidence_required
         ):
             errors.append(f"responsibility-debt action {index} missing debt-clear evidence")
+        if action_type == "secret-binding":
+            if not any(evidence.startswith("gh_secret_list_presence:") for evidence in evidence_required):
+                errors.append(f"secret-binding action {index} missing secret presence evidence")
+            if "do not print or serialize" not in command:
+                errors.append(f"secret-binding action {index} command missing no-secret-serialization guard")
+        if action_type == "repository-variable-binding":
+            if not any(evidence.startswith("gh_variable_list_presence:") for evidence in evidence_required):
+                errors.append(f"repository-variable action {index} missing variable presence evidence")
+        if action_type == "dns-verification" and "dns_resolution_receipt" not in evidence_required:
+            errors.append(f"dns-verification action {index} missing dns_resolution_receipt")
+        if action_type == "endpoint-verification" and not {
+            "health_endpoint_receipt",
+            "runtime_witness_receipt",
+            "runtime_conformance_receipt",
+        } <= evidence_required:
+            errors.append(f"endpoint-verification action {index} missing endpoint evidence")
+        if action_type == "workflow-repair" and "workflow_state_active" not in evidence_required:
+            errors.append(f"workflow-repair action {index} missing workflow_state_active evidence")
 
 
 def _validate_blocker_coverage(
@@ -201,14 +219,22 @@ def _load_json_object(path: Path, label: str, errors: list[str]) -> dict[str, An
         errors.append(f"{label} file missing: {path}")
         return {}
     try:
-        payload = json.loads(path.read_text(encoding="utf-8"))
-    except json.JSONDecodeError:
+        payload = _loads_strict_json(path.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, ValueError):
         errors.append(f"{label} JSON parse failed")
         return {}
     if not isinstance(payload, dict):
         errors.append(f"{label} JSON root must be an object")
         return {}
     return payload
+
+
+def _loads_strict_json(raw: str) -> Any:
+    return json.loads(raw, parse_constant=_reject_json_constant)
+
+
+def _reject_json_constant(raw_constant: str) -> None:
+    raise ValueError("non-finite JSON constants are not permitted")
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:

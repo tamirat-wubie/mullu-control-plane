@@ -35,6 +35,8 @@ OFFICIAL_CLEARANCE_ACCESS_LOG_PATH = REPO_ROOT / "docs" / "OFFICIAL_CLEARANCE_AC
 SDK_API_STABILITY_REVIEW_PATH = REPO_ROOT / "docs" / "SDK_API_STABILITY_REVIEW_2026-05-15.md"
 HOMEPAGE_UPDATE_EVIDENCE_PATH = REPO_ROOT / "docs" / "HOMEPAGE_UPDATE_EVIDENCE_2026-05-15.md"
 APP_TITLE_UPDATE_EVIDENCE_PATH = REPO_ROOT / "docs" / "APP_TITLE_UPDATE_EVIDENCE_2026-05-15.md"
+CLEARANCE_EVIDENCE_CAPTURE_PLAN_PATH = REPO_ROOT / "docs" / "CLEARANCE_EVIDENCE_CAPTURE_PLAN_2026-05-15.md"
+CLEARANCE_EVIDENCE_ROOT = REPO_ROOT / "docs" / "clearance-evidence" / "mullu" / "2026-05-15"
 READINESS_SCHEMA_PATH = REPO_ROOT / "schemas" / "public_naming_readiness.schema.json"
 CLEARANCE_SCHEMA_PATH = REPO_ROOT / "schemas" / "mullu_name_clearance_draft.schema.json"
 
@@ -75,6 +77,7 @@ REQUIRED_CLOSED_GATES = {
     "sdk_api_stability_review",
     "homepage_update",
     "app_title_update",
+    "clearance_evidence_capture_plan",
 }
 
 REQUIRED_OPEN_GATES = {
@@ -102,6 +105,7 @@ REQUIRED_EVIDENCE_DOCS = {
     "docs/NAMING_MIGRATION_PLAN.md",
     "docs/NAME_CLEARANCE_PRELIMINARY.md",
     "docs/APP_TITLE_UPDATE_EVIDENCE_2026-05-15.md",
+    "docs/CLEARANCE_EVIDENCE_CAPTURE_PLAN_2026-05-15.md",
     "docs/HOMEPAGE_UPDATE_EVIDENCE_2026-05-15.md",
     "docs/OFFICIAL_CLEARANCE_ACCESS_LOG_2026-05-15.md",
     "docs/SDK_API_STABILITY_REVIEW_2026-05-15.md",
@@ -186,6 +190,15 @@ REQUIRED_OFFICIAL_SEARCHES = {
         "queries": {"MULLU", "MULLUSI", "Mullu by Mullusi"},
     },
 }
+
+REQUIRED_CLEARANCE_EVIDENCE_DIRS = (
+    "01-uspto",
+    "02-wipo",
+    "03-euipo-tmview",
+    "04-close-variant-mulu",
+    "05-domain-ownership",
+    "06-legal-review",
+)
 
 
 def _load_witness(witness_path: Path = WITNESS_PATH) -> dict[str, object]:
@@ -395,6 +408,73 @@ def validate_app_title_update_evidence(evidence_path: Path = APP_TITLE_UPDATE_EV
 
     blocked_title_names = sorted(name for name in BLOCKED_PUBLIC_NAMES if f"<title>{name}" in evidence_text)
     _require(not blocked_title_names, f"blocked names appear as app titles: {blocked_title_names}")
+
+
+def validate_clearance_evidence_capture_plan(plan_path: Path = CLEARANCE_EVIDENCE_CAPTURE_PLAN_PATH) -> None:
+    plan_text = plan_path.read_text(encoding="utf-8")
+    validate_no_forbidden_terminology(_display_path(plan_path), plan_text)
+
+    required_literals = (
+        "2026-05-15",
+        "docs/clearance-evidence/mullu/2026-05-15/",
+        "01-uspto/",
+        "02-wipo/",
+        "03-euipo-tmview/",
+        "04-close-variant-mulu/",
+        "05-domain-ownership/",
+        "06-legal-review/",
+        "uspto_search",
+        "wipo_search",
+        "euipo_tmview_search",
+        "close_variant_review",
+        "domain_ownership",
+        "legal_review",
+        "99518598",
+        "99264214",
+        "85772539",
+        "85494313",
+        "85222451",
+        "proceed_with_risk_controls",
+        "paid public launch is allowed or remains blocked",
+    )
+    missing_literals = sorted(literal for literal in required_literals if literal not in plan_text)
+    _require(not missing_literals, f"clearance evidence capture plan missing literals: {missing_literals}")
+    _require(
+        "Do not update `docs/public-naming-readiness.json`" in plan_text,
+        "clearance evidence capture plan must preserve witness mutation boundary",
+    )
+    validate_clearance_evidence_scaffold()
+
+
+def validate_clearance_evidence_scaffold(evidence_root: Path = CLEARANCE_EVIDENCE_ROOT) -> None:
+    _require(evidence_root.exists(), f"clearance evidence root missing: {_display_path(evidence_root)}")
+    root_readme = evidence_root / "README.md"
+    _require(root_readme.exists(), f"clearance evidence root README missing: {_display_path(root_readme)}")
+    root_text = root_readme.read_text(encoding="utf-8")
+    validate_no_forbidden_terminology(_display_path(root_readme), root_text)
+    _require(
+        "paid public launch remains blocked" in root_text,
+        "clearance evidence root must preserve paid launch block",
+    )
+
+    for directory_name in REQUIRED_CLEARANCE_EVIDENCE_DIRS:
+        evidence_dir = evidence_root / directory_name
+        readme_path = evidence_dir / "README.md"
+        decision_path = evidence_dir / "decision.md"
+        _require(evidence_dir.exists(), f"clearance evidence directory missing: {_display_path(evidence_dir)}")
+        _require(readme_path.exists(), f"clearance evidence README missing: {_display_path(readme_path)}")
+        _require(decision_path.exists(), f"clearance evidence decision missing: {_display_path(decision_path)}")
+
+        readme_text = readme_path.read_text(encoding="utf-8")
+        decision_text = decision_path.read_text(encoding="utf-8")
+        validate_no_forbidden_terminology(_display_path(readme_path), readme_text)
+        validate_no_forbidden_terminology(_display_path(decision_path), decision_text)
+        _require("Pending" in readme_text, f"{_display_path(readme_path)} must keep scaffold state pending")
+        _require("Decision | Pending" in decision_text, f"{_display_path(decision_path)} must keep decision pending")
+        _require(
+            "Paid public launch remains blocked" in decision_text,
+            f"{_display_path(decision_path)} must preserve paid launch block",
+        )
 
 
 def validate_tsdr_evidence_template(template_path: Path = TSDR_EVIDENCE_TEMPLATE_PATH) -> None:
@@ -633,6 +713,7 @@ def validate_public_naming_readiness(witness_path: Path = WITNESS_PATH) -> None:
     validate_sdk_api_stability_review()
     validate_homepage_update_evidence()
     validate_app_title_update_evidence()
+    validate_clearance_evidence_capture_plan()
     validate_public_naming_artifact_manifest()
 
     _require(witness.get("product_name") == "Mullu", "product_name must be Mullu")

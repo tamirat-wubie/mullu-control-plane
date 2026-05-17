@@ -75,10 +75,8 @@ class ShellPolicyEngine:
 
         # 4. absolute-path check
         if not self._policy.allow_absolute_paths:
-            for arg in argv[1:]:  # skip executable itself
-                if arg.startswith("/") or arg.startswith("\\") or (
-                    len(arg) >= 3 and arg[1] == ":" and arg[2] in ("/", "\\")
-                ):
+            for arg in argv:
+                if _is_absolute_or_drive_qualified_path(arg):
                     return ShellPolicyVerdict(
                         verdict="deny_absolute_path",
                         matched_rule="allow_absolute_paths=False",
@@ -109,3 +107,9 @@ class ShellPolicyEngine:
             matched_rule="all_checks_passed",
             argv_summary=summary,
         )
+
+
+def _is_absolute_or_drive_qualified_path(arg: str) -> bool:
+    if arg.startswith("/") or arg.startswith("\\"):
+        return True
+    return len(arg) >= 2 and arg[1] == ":" and arg[0].isalpha()

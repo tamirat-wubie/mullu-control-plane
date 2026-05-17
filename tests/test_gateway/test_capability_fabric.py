@@ -16,6 +16,7 @@ from pathlib import Path
 
 import pytest
 
+from gateway.capability_dispatch import CapabilityDispatcher, build_capability_dispatcher_from_platform
 from gateway.capability_fabric import (
     build_capability_admission_gate,
     build_capability_admission_gate_from_env,
@@ -248,6 +249,27 @@ def test_default_capability_admission_gate_accepts_pack_capabilities() -> None:
     assert deployment_publish_decision.owner_team == "platform-ops"
     assert rejected_decision.status.value == "rejected"
     assert rejected_decision.capability_id == ""
+
+
+def test_default_runtime_handlers_are_backed_by_capability_contracts() -> None:
+    default_dispatcher = build_capability_dispatcher_from_platform(None)
+    financial_dispatcher = CapabilityDispatcher(
+        financial_provider=object(),
+        payment_executor=object(),
+    )
+    runtime_handler_ids = {
+        *default_dispatcher._handlers,
+        *financial_dispatcher._handlers,
+    }
+    contract_ids = {
+        entry.capability_id
+        for entry in load_default_capability_entries()
+    }
+
+    assert "creative.document_generate" in runtime_handler_ids
+    assert "enterprise.task_schedule" in runtime_handler_ids
+    assert "financial.send_payment" in runtime_handler_ids
+    assert runtime_handler_ids <= contract_ids
 
 
 def test_default_capability_admission_gate_can_require_production_ready_maturity() -> None:

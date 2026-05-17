@@ -177,6 +177,25 @@ class TestShellPolicyEngine:
         verdict = engine.evaluate(("ls", "/etc/passwd"))
         assert verdict.verdict == "deny_absolute_path"
 
+    def test_absolute_executable_path_denied(self) -> None:
+        engine = ShellPolicyEngine(
+            _basic_policy(
+                allowed_executables=("python",),
+                allow_absolute_paths=False,
+            )
+        )
+        verdict = engine.evaluate(("/usr/bin/python", "script.py"))
+        assert verdict.verdict == "deny_absolute_path"
+        assert verdict.matched_rule == "allow_absolute_paths=False"
+
+    def test_windows_drive_qualified_path_denied(self) -> None:
+        engine = ShellPolicyEngine(_basic_policy(allow_absolute_paths=False))
+        absolute_drive = engine.evaluate(("ls", "C:/Windows/System32"))
+        drive_relative = engine.evaluate(("ls", "C:Windows/System32"))
+
+        assert absolute_drive.verdict == "deny_absolute_path"
+        assert drive_relative.verdict == "deny_absolute_path"
+
     def test_absolute_path_allowed_when_enabled(self) -> None:
         engine = ShellPolicyEngine(_basic_policy(allow_absolute_paths=True))
         verdict = engine.evaluate(("ls", "/etc"))

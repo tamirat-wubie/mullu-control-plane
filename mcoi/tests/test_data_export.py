@@ -29,12 +29,14 @@ class TestDataExportPipeline:
         assert pipeline.source_count == 1
         assert "audit" in pipeline.list_sources()
 
-    def test_export_json(self, pipeline):
+    def test_data_export_format_validated(self, pipeline):
         req = ExportRequest(source="audit", format=ExportFormat.JSON)
         result = pipeline.export(req)
         assert result.record_count == 3
         parsed = json.loads(result.content)
         assert len(parsed) == 3
+        assert result.format == ExportFormat.JSON
+        assert isinstance(parsed[0], dict)
         assert result.size_bytes > 0
 
     def test_export_csv(self, pipeline):
@@ -65,10 +67,12 @@ class TestDataExportPipeline:
         result = pipeline.export(req)
         assert result.record_count == 2
 
-    def test_limit(self, pipeline):
+    def test_data_export_limit_bounded(self, pipeline):
         req = ExportRequest(source="audit", format=ExportFormat.JSON, limit=1)
         result = pipeline.export(req)
         assert result.record_count == 1
+        assert len(json.loads(result.content)) == 1
+        assert result.size_bytes > 0
 
     def test_unknown_source(self, pipeline):
         req = ExportRequest(source="nonexistent", format=ExportFormat.JSON)

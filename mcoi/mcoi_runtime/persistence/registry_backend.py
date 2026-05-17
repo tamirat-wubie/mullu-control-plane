@@ -32,6 +32,10 @@ def _deterministic_json(data: Any) -> str:
     return json.dumps(data, sort_keys=True, ensure_ascii=True, separators=(",", ":"), allow_nan=False)
 
 
+def _content_hash(json_str: str) -> str:
+    return sha256(json_str.encode("utf-8")).hexdigest()
+
+
 def _atomic_write(path: Path, content: str) -> None:
     """Write content to a file atomically via temp-file-then-rename."""
     parent = path.parent
@@ -130,7 +134,7 @@ class RegistryBackend:
 
         payload = {"entries": serialized}
         content = _deterministic_json(payload)
-        content_hash = sha256(content.encode("ascii", "ignore")).hexdigest()
+        content_hash = _content_hash(content)
 
         _atomic_write(self._registry_path(), content)
 

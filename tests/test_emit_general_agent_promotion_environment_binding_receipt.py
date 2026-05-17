@@ -114,3 +114,20 @@ def test_environment_binding_receipt_contract_json_error_is_bounded(tmp_path: Pa
     assert receipt.ready is False
     assert "environment binding contract must be JSON" in errors
     assert "secret-json-token" not in serialized_errors
+
+
+def test_environment_binding_receipt_rejects_nonfinite_contract_json(tmp_path: Path) -> None:
+    contract_path = tmp_path / "environment-bindings.json"
+    contract_path.write_text(
+        '{"contract_id": "general-agent-promotion-environment-bindings-v1", "score": Infinity}',
+        encoding="utf-8",
+    )
+
+    receipt, errors = emit_general_agent_promotion_environment_binding_receipt(
+        contract_path=contract_path,
+    )
+    serialized_errors = json.dumps(errors, sort_keys=True)
+
+    assert receipt.ready is False
+    assert "environment binding contract must be JSON" in errors
+    assert "Infinity" not in serialized_errors

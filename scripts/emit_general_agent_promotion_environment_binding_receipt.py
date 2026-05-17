@@ -170,17 +170,25 @@ def _empty_receipt() -> EnvironmentBindingReceipt:
 
 def _load_json_object(path: Path, label: str, errors: list[str]) -> dict[str, Any]:
     try:
-        parsed = json.loads(path.read_text(encoding="utf-8"))
+        parsed = _loads_strict_json(path.read_text(encoding="utf-8"))
     except OSError:
         errors.append(f"{label} could not be read")
         return {}
-    except json.JSONDecodeError:
+    except (json.JSONDecodeError, ValueError):
         errors.append(f"{label} must be JSON")
         return {}
     if not isinstance(parsed, dict):
         errors.append(f"{label} root must be an object")
         return {}
     return parsed
+
+
+def _loads_strict_json(raw: str) -> Any:
+    return json.loads(raw, parse_constant=_reject_json_constant)
+
+
+def _reject_json_constant(raw_constant: str) -> None:
+    raise ValueError("non-finite JSON constants are not permitted")
 
 
 def _validation_clock() -> str:

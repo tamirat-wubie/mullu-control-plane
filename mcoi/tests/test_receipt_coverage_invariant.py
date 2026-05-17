@@ -42,19 +42,13 @@ from validate_receipt_coverage import compute_buckets  # noqa: E402
 # brought back into alignment with MusiaReceiptMiddleware's deployed certified
 # prefixes. MUSIA routes now classify as MIDDLEWARE_MUSIA.
 #
-# The remaining uncovered route is the standalone restricted capability worker
-# endpoint:
+# The final standalone restricted capability worker endpoint:
 #   POST /capability/execute (gateway/capability_worker.py)
-# It is not mounted through the governed MCOI app or GatewayReceiptMiddleware.
+# is covered by GatewayReceiptMiddleware installed by create_capability_worker_app.
 #
-# Resolution paths (any of):
-#   1. Wrap create_capability_worker_app with receipt middleware, OR
-#   2. emit a direct receipt for worker boundary admission, OR
-#   3. add an explicit exclusion with written justification.
-#
-# Keep this number monotonic non-increasing. If a repair reduces uncovered
-# routes, ratchet this baseline down in the same change.
-EXPECTED_UNCOVERED_BASELINE = 1
+# Keep this number at zero. Any new uncovered route must be covered or
+# explicitly excluded with written justification.
+EXPECTED_UNCOVERED_BASELINE = 0
 
 
 def test_uncovered_count_matches_baseline():

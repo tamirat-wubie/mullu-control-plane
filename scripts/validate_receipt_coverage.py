@@ -20,7 +20,7 @@ Coverage rules (matching the actual deployed middleware filters):
         EXEMPT_PATHS. Every request is certified by ProofBridge.
 
     MIDDLEWARE_GATEWAY
-        Path starts with "/webhook/" or "/authority/" — covered by
+        Path starts with a gateway certified prefix -- covered by
         gateway/receipt_middleware.py::GatewayReceiptMiddleware.
 
     MIDDLEWARE_MUSIA
@@ -83,6 +83,7 @@ MCOI_EXEMPT_PATHS = frozenset({"/health", "/ready", "/docs", "/openapi.json", "/
 GATEWAY_CERTIFIED_PREFIXES = (
     "/webhook/",
     "/authority/",
+    "/capability/",
     "/capability-fabric/",
     "/capability-plans/",
 )

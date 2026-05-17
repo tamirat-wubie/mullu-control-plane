@@ -545,6 +545,13 @@
       ]
     },
     {
+      "action_id": "bind_shell_execution_receipts_to_effect_assurance",
+      "status": "closed",
+      "surfaces": [
+        "shell_execution_adapter"
+      ]
+    },
+    {
       "action_id": "publish_memory_lattice_admission_contract",
       "status": "closed",
       "surfaces": [
@@ -783,7 +790,7 @@
   ],
   "coverage_summary": {
     "by_action_proof": {
-      "action_proof": 97,
+      "action_proof": 98,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 16,
@@ -791,7 +798,7 @@
     },
     "by_audit": {
       "action_proof": 0,
-      "audit_chain": 111,
+      "audit_chain": 112,
       "gap": 0,
       "read_model": 4,
       "request_proof": 0
@@ -799,21 +806,21 @@
     "by_coverage_state": {
       "proven": 1,
       "unproven": 0,
-      "witnessed": 114
+      "witnessed": 115
     },
     "by_request_proof": {
       "action_proof": 1,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 18,
-      "request_proof": 96
+      "request_proof": 97
     },
-    "surface_count": 115
+    "surface_count": 116
   },
   "evidence_quality": {
     "by_strength": {
       "classified_with_quality_gaps": 0,
-      "strong": 115,
+      "strong": 116,
       "unproven": 0
     },
     "quality_gap_count": 0,
@@ -824,9 +831,9 @@
     "by_coverage_state": {
       "proven": 12,
       "unproven": 0,
-      "witnessed": 329
+      "witnessed": 330
     },
-    "route_count": 341,
+    "route_count": 342,
     "routes": [
       {
         "coverage_state": "witnessed",
@@ -2435,6 +2442,11 @@
       },
       {
         "coverage_state": "witnessed",
+        "route": "/runtime/self/capability-improvement-portfolio",
+        "surface_id": "autonomous_capability_upgrade"
+      },
+      {
+        "coverage_state": "witnessed",
         "route": "/runtime/self/certify",
         "surface_id": "runtime_reflex_engine"
       },
@@ -2672,6 +2684,7 @@
         "mcoi/mcoi_runtime/app/streaming.py",
         "mcoi/tests/test_streaming.py",
         "mcoi/tests/test_server_phase200.py",
+        "mcoi/tests/test_server_phase213.py",
         "schemas/streaming_budget_enforcement.schema.json",
         "docs/41_streaming_budget_enforcement.md"
       ],
@@ -3257,7 +3270,9 @@
         "mcoi/tests/test_server_phase205.py",
         "mcoi/tests/test_e2e_integration.py",
         "mcoi/tests/test_webhook_system.py",
-        "mcoi/tests/test_webhook_retry.py"
+        "mcoi/tests/test_webhook_retry.py",
+        "mcoi/tests/test_webhook_dlq.py",
+        "tests/test_gateway/test_webhook_dlq.py"
       ],
       "notes": "API webhook management routes bind subscription mutation, tenant-scoped subscription read models, delivery history, retry summary, dead-letter read models, and workflow delivery evidence to governed runtime state, audit records, and bounded retry failure evidence.",
       "representative_paths": [
@@ -3269,23 +3284,23 @@
       ],
       "request_proof": "request_proof",
       "runtime_witnesses": [
-        "webhook_subscribe_records_audit",
-        "webhook_subscription_audited",
-        "webhook_subscription_mutation_receipt_emitted",
-        "webhook_list_is_tenant_scoped",
-        "webhook_subscription_list_bounded",
-        "webhook_delivery_history_is_bounded",
-        "webhook_delivery_mutation_receipts_exposed",
-        "webhook_delivery_history_bounded",
-        "webhook_flow_records_delivery",
-        "webhook_delivery_queue_mutation_receipt_emitted",
+        "subscribe",
+        "list_webhooks",
+        "duplicate_subscribe_error_is_bounded",
+        "emit_tenant_filter",
+        "multiple_subscriptions",
+        "webhook_deliveries",
+        "delivery_history",
+        "emit_queues_delivery",
+        "emit_with_secret_signature",
+        "disabled_subscription_skipped",
         "webhook_mutation_receipt_closes_effect_assurance",
-        "webhook_retry_summary_is_bounded",
-        "webhook_retry_summary_governed",
-        "webhook_dead_letters_are_explicit",
-        "webhook_dead_letters_bounded",
-        "webhook_workflow_delivery_witnessed",
-        "webhook_delivery_errors_are_sanitized"
+        "summary_fields",
+        "summary_reports_bounded_enqueue_reasons",
+        "dead_letters_list",
+        "bounded",
+        "retry_exhaustion_reports_bounded_failure_reasons",
+        "delivery_error_classifier_uses_stable_taxonomy"
       ],
       "surface_id": "webhooks_proof_surface"
     },
@@ -3870,7 +3885,8 @@
         "mcoi/mcoi_runtime/app/routers/data/tools.py",
         "mcoi/mcoi_runtime/core/tool_use.py",
         "mcoi/tests/test_server_phase212.py",
-        "mcoi/tests/test_tool_use.py"
+        "mcoi/tests/test_tool_use.py",
+        "mcoi/tests/test_tool_registry_read_models.py"
       ],
       "notes": "Tool registry read-model routes expose registered tool metadata, bounded invocation history, and LLM-compatible schemas while invocation remains governed by the tool_invocation action-proof surface.",
       "representative_paths": [
@@ -4036,7 +4052,10 @@
         "tests/test_gateway/test_workflow_orchestration.py",
         "mcoi/tests/test_agent_workflow.py",
         "mcoi/tests/test_traced_workflow.py",
-        "mcoi/tests/test_server_phase205.py"
+        "mcoi/tests/test_server_phase199.py",
+        "mcoi/tests/test_server_phase205.py",
+        "mcoi/tests/test_server_phase206.py",
+        "mcoi/tests/test_workflow_templates.py"
       ],
       "notes": "Workflow execution routes execute governed multi-agent workflows with action proof receipts, expose bounded history read models, produce replay-traced workflow runs, and record workflow lifecycle mutation receipts as bounded Effect Assurance evidence.",
       "representative_paths": [
@@ -4053,24 +4072,24 @@
       ],
       "request_proof": "request_proof",
       "runtime_witnesses": [
-        "workflow_execute_emits_action_proof",
-        "workflow_invalid_capability_bounded",
-        "workflow_history_bounded",
-        "workflow_success_records_audit",
-        "workflow_failure_records_audit",
-        "workflow_errors_sanitized",
-        "workflow_lifecycle_mutation_receipts_emitted",
-        "workflow_failure_compensation_receipts_emitted",
+        "execute_workflow",
+        "execute_workflow_bad_capability",
+        "workflow_history",
+        "audit_on_success",
+        "audit_on_failure",
+        "workflow_runtime_error_redacted",
+        "workflow_lifecycle_records_bounded_mutation_receipts",
+        "workflow_failure_and_compensation_receipts_are_bounded",
         "workflow_mutation_receipt_closes_effect_assurance",
-        "traced_workflow_emits_replay_trace",
-        "traced_workflow_recorder_errors_sanitized",
-        "legacy_execute_emits_action_proof",
-        "session_read_model_bounded",
-        "ledger_read_model_bounded",
-        "pipeline_execution_emits_action_proof",
-        "pipeline_history_bounded",
-        "template_read_models_bounded",
-        "template_execution_governed"
+        "execute_produces_trace",
+        "start_trace_failure_is_counted_and_workflow_runs",
+        "complete_failure_is_counted_and_partial_trace_discarded",
+        "create_session",
+        "ledger_returns_entries",
+        "execute_pipeline",
+        "pipeline_history",
+        "instantiate",
+        "list_by_category"
       ],
       "surface_id": "workflow_execution_lifecycle"
     },
@@ -4082,7 +4101,8 @@
         "mcoi/mcoi_runtime/app/routers/agent.py",
         "mcoi/mcoi_runtime/core/agent_chain.py",
         "mcoi/tests/test_agent_chain.py",
-        "mcoi/tests/test_server_phase215.py"
+        "mcoi/tests/test_server_phase215.py",
+        "mcoi/tests/test_agent_chain_execution_lifecycle.py"
       ],
       "notes": "Agent chain routes execute ordered multi-step LLM chains, propagate prior outputs through templates, publish bounded completion events, sanitize failure details, and expose bounded execution history.",
       "representative_paths": [
@@ -4110,7 +4130,8 @@
         "mcoi/mcoi_runtime/app/routers/data/daemon.py",
         "mcoi/mcoi_runtime/core/certification_daemon.py",
         "mcoi/tests/test_certification_daemon.py",
-        "mcoi/tests/test_server_phase200.py"
+        "mcoi/tests/test_server_phase200.py",
+        "mcoi/tests/test_certification_daemon_lifecycle.py"
       ],
       "notes": "Certification daemon routes expose bounded daemon status, run interval-gated certification ticks, and force immediate certification runs while preserving bounded health and history state.",
       "representative_paths": [
@@ -4793,6 +4814,7 @@
         "effect_bearing_production_requires_live_write",
         "production_requires_worker_deployment_recovery",
         "autonomy_requires_C7_controls",
+        "operator_console_links_capability_improvement_portfolio",
         "capability_maturity_schema_valid"
       ],
       "surface_id": "capability_maturity_assessment"
@@ -5210,6 +5232,31 @@
         "policy_proof_report_schema_valid"
       ],
       "surface_id": "policy_prover"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "mcoi/mcoi_runtime/adapters/shell_executor.py",
+        "mcoi/mcoi_runtime/contracts/shell_execution.py",
+        "mcoi/tests/test_shell_executor.py"
+      ],
+      "notes": "Shell execution is argv-only, policy/sandbox gated, receipt-backed, and exposes shell receipts as actual effects that can close Effect Assurance.",
+      "representative_paths": [
+        "ShellExecutor.execute",
+        "ShellExecutionReceipt",
+        "ShellSandboxPolicy"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "shell_executor_argv_only",
+        "shell_policy_denial_receipt_emitted",
+        "shell_sandbox_denial_receipt_emitted",
+        "shell_receipt_becomes_effect_assurance_evidence_ref",
+        "shell_receipt_closes_effect_assurance"
+      ],
+      "surface_id": "shell_execution_adapter"
     },
     {
       "action_proof": "action_proof",
@@ -6129,21 +6176,32 @@
       "coverage_state": "witnessed",
       "evidence_files": [
         "gateway/autonomous_capability_upgrade.py",
+        "schemas/capability_improvement_portfolio.schema.json",
         "schemas/capability_upgrade_plan.schema.json",
-        "tests/test_gateway/test_autonomous_capability_upgrade.py"
+        "tests/test_gateway/test_autonomous_capability_upgrade.py",
+        "tests/test_gateway/test_reflex_endpoints.py"
       ],
-      "notes": "Autonomous capability upgrade converts health signals into activation-blocked proposals that require evals, sandbox tests, ChangeCommand, ChangeCertificate, canary, terminal closure, and learning admission before promotion.",
+      "notes": "Autonomous capability upgrade converts health signals into activation-blocked single-capability proposals and whole-mesh portfolios through a guarded read-only endpoint that requires evals, sandbox tests, ChangeCommand, ChangeCertificate, canary, terminal closure, and learning admission before promotion.",
       "representative_paths": [
+        "/runtime/self/capability-improvement-portfolio",
         "AutonomousCapabilityUpgradeLoop.propose",
+        "AutonomousCapabilityUpgradeLoop.propose_portfolio",
         "CapabilityHealthSignal",
-        "CapabilityUpgradePlan"
+        "CapabilityUpgradePlan",
+        "CapabilityImprovementPortfolio"
       ],
       "request_proof": "request_proof",
       "runtime_witnesses": [
         "health_signal_requires_evidence_refs",
         "upgrade_candidates_are_promotion_blocked",
+        "capability_improvement_portfolios_are_activation_blocked",
+        "capability_improvement_portfolio_endpoint_operator_guarded",
+        "capability_improvement_portfolio_endpoint_read_only",
+        "capability_improvement_portfolio_identity_sets_are_unique",
+        "systemic_weaknesses_are_ranked",
         "critical_governance_changes_require_second_approval",
-        "capability_upgrade_plan_schema_valid"
+        "capability_upgrade_plan_schema_valid",
+        "capability_improvement_portfolio_schema_valid"
       ],
       "surface_id": "autonomous_capability_upgrade"
     },
@@ -6408,8 +6466,8 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 238,
-    "runtime_witness_count": 1003,
+    "exact_test_anchor_count": 339,
+    "runtime_witness_count": 1015,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -6593,23 +6651,61 @@
           },
           {
             "anchors": [
+              "mcoi/tests/test_streaming.py::test_stream_budget_reservation_and_settlement"
+            ],
+            "witness": "stream_budget_reservation_and_settlement"
+          },
+          {
+            "anchors": [
               "mcoi/tests/test_streaming.py::test_stream_budget_cutoff_stops_delivery"
             ],
             "witness": "stream_budget_cutoff_stops_delivery"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_server_phase213.py::test_streaming_chat_returns_sse"
+            ],
+            "witness": "streaming_chat_returns_sse"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_server_phase213.py::test_streaming_chat_exception_sanitized"
+            ],
+            "witness": "streaming_chat_exception_sanitized"
           }
         ],
-        "exact_test_anchor_count": 4,
+        "exact_test_anchor_count": 7,
         "runtime_witness_count": 7,
         "surface_id": "llm_streaming",
-        "unanchored_witness_count": 3,
-        "unanchored_witnesses": [
-          "stream_budget_reservation_and_settlement",
-          "streaming_chat_returns_sse",
-          "streaming_chat_exception_sanitized"
-        ]
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
       },
       {
         "anchored_witnesses": [
+          {
+            "anchors": [
+              "tests/test_gateway/test_code_intelligence_read_model.py::test_code_intelligence_repo_map_detects_routes_schemas_dependencies"
+            ],
+            "witness": "code_intelligence_repo_map_detects_routes_schemas_dependencies"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_code_intelligence_read_model.py::test_code_context_bundle_bounds_symbols_tests_and_edges"
+            ],
+            "witness": "code_context_bundle_bounds_symbols_tests_and_edges"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_code_intelligence_read_model.py::test_code_context_missing_affected_file_fails_closed"
+            ],
+            "witness": "code_context_missing_affected_file_fails_closed"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_code_intelligence_read_model.py::test_code_intelligence_operator_read_model_hides_source_content"
+            ],
+            "witness": "code_intelligence_operator_read_model_hides_source_content"
+          },
           {
             "anchors": [
               "tests/test_gateway/test_code_intelligence_read_model.py::test_code_intelligence_operator_endpoint_fails_closed_for_missing_file"
@@ -6617,16 +6713,11 @@
             "witness": "code_intelligence_operator_endpoint_fails_closed_for_missing_file"
           }
         ],
-        "exact_test_anchor_count": 1,
+        "exact_test_anchor_count": 5,
         "runtime_witness_count": 5,
         "surface_id": "code_intelligence_operator_read_model",
-        "unanchored_witness_count": 4,
-        "unanchored_witnesses": [
-          "code_intelligence_repo_map_detects_routes_schemas_dependencies",
-          "code_context_bundle_bounds_symbols_tests_and_edges",
-          "code_context_missing_affected_file_fails_closed",
-          "code_intelligence_operator_read_model_hides_source_content"
-        ]
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
       },
       {
         "anchored_witnesses": [],
@@ -6720,6 +6811,18 @@
               "mcoi/tests/test_server_phase199.py::test_history_after_completion"
             ],
             "witness": "history_after_completion"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_server_phase220.py::test_dependency_graph_startup_order_bounded"
+            ],
+            "witness": "dependency_graph_startup_order_bounded"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_server_phase220.py::test_dependency_impact_analysis_bounded"
+            ],
+            "witness": "dependency_impact_analysis_bounded"
           },
           {
             "anchors": [
@@ -6846,14 +6949,11 @@
             "witness": "health"
           }
         ],
-        "exact_test_anchor_count": 25,
+        "exact_test_anchor_count": 27,
         "runtime_witness_count": 27,
         "surface_id": "operational_platform_read_models",
-        "unanchored_witness_count": 2,
-        "unanchored_witnesses": [
-          "dependency_graph_startup_order_bounded",
-          "dependency_impact_analysis_bounded"
-        ]
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
       },
       {
         "anchored_witnesses": [],
@@ -6897,29 +6997,64 @@
         ]
       },
       {
-        "anchored_witnesses": [],
-        "exact_test_anchor_count": 0,
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "mcoi/tests/test_engineering_puzzle_router.py::test_engineering_goal_delta_classified"
+            ],
+            "witness": "engineering_goal_delta_classified"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_engineering_puzzle_router.py::test_engineering_candidate_judgment_governed"
+            ],
+            "witness": "engineering_candidate_judgment_governed"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_engineering_puzzle_router.py::test_engineering_puzzle_errors_sanitized"
+            ],
+            "witness": "engineering_puzzle_errors_sanitized"
+          }
+        ],
+        "exact_test_anchor_count": 3,
         "runtime_witness_count": 3,
         "surface_id": "engineering_puzzle_governance",
-        "unanchored_witness_count": 3,
-        "unanchored_witnesses": [
-          "engineering_goal_delta_classified",
-          "engineering_candidate_judgment_governed",
-          "engineering_puzzle_errors_sanitized"
-        ]
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
       },
       {
-        "anchored_witnesses": [],
-        "exact_test_anchor_count": 0,
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "mcoi/tests/test_server_phase216.py::test_data_export_sources_allowlisted"
+            ],
+            "witness": "data_export_sources_allowlisted"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_data_export.py::test_data_export_format_validated"
+            ],
+            "witness": "data_export_format_validated"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_data_export.py::test_data_export_limit_bounded"
+            ],
+            "witness": "data_export_limit_bounded"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_server_phase216.py::test_data_export_errors_sanitized"
+            ],
+            "witness": "data_export_errors_sanitized"
+          }
+        ],
+        "exact_test_anchor_count": 4,
         "runtime_witness_count": 4,
         "surface_id": "data_export_lifecycle",
-        "unanchored_witness_count": 4,
-        "unanchored_witnesses": [
-          "data_export_sources_allowlisted",
-          "data_export_format_validated",
-          "data_export_limit_bounded",
-          "data_export_errors_sanitized"
-        ]
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
       },
       {
         "anchored_witnesses": [],
@@ -6935,40 +7070,85 @@
         ]
       },
       {
-        "anchored_witnesses": [],
-        "exact_test_anchor_count": 0,
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "mcoi/tests/test_server_phase207.py::test_replay_trace_list_bounded"
+            ],
+            "witness": "replay_trace_list_bounded"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_server_phase208.py::test_replay_trace_hash_projected"
+            ],
+            "witness": "replay_trace_hash_projected"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_server_phase208.py::test_replay_trace_summary_non_mutating"
+            ],
+            "witness": "replay_trace_summary_non_mutating"
+          }
+        ],
+        "exact_test_anchor_count": 3,
         "runtime_witness_count": 3,
         "surface_id": "replay_trace_read_models",
-        "unanchored_witness_count": 3,
-        "unanchored_witnesses": [
-          "replay_trace_list_bounded",
-          "replay_trace_hash_projected",
-          "replay_trace_summary_non_mutating"
-        ]
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
       },
       {
-        "anchored_witnesses": [],
-        "exact_test_anchor_count": 0,
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "mcoi/tests/test_server_phase208.py::test_schema_registry_list_bounded"
+            ],
+            "witness": "schema_registry_list_bounded"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_server_phase208.py::test_schema_validation_errors_explicit"
+            ],
+            "witness": "schema_validation_errors_explicit"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_server_phase208.py::test_schema_validation_result_typed"
+            ],
+            "witness": "schema_validation_result_typed"
+          }
+        ],
+        "exact_test_anchor_count": 3,
         "runtime_witness_count": 3,
         "surface_id": "schema_validation_registry",
-        "unanchored_witness_count": 3,
-        "unanchored_witnesses": [
-          "schema_registry_list_bounded",
-          "schema_validation_errors_explicit",
-          "schema_validation_result_typed"
-        ]
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
       },
       {
-        "anchored_witnesses": [],
-        "exact_test_anchor_count": 0,
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "mcoi/tests/test_semantic_search.py::test_semantic_search_limit_bounded"
+            ],
+            "witness": "semantic_search_limit_bounded"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_semantic_search.py::test_semantic_search_scores_projected"
+            ],
+            "witness": "semantic_search_scores_projected"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_semantic_search.py::test_semantic_search_stats_bounded"
+            ],
+            "witness": "semantic_search_stats_bounded"
+          }
+        ],
+        "exact_test_anchor_count": 3,
         "runtime_witness_count": 3,
         "surface_id": "semantic_search_read_models",
-        "unanchored_witness_count": 3,
-        "unanchored_witnesses": [
-          "semantic_search_limit_bounded",
-          "semantic_search_scores_projected",
-          "semantic_search_stats_bounded"
-        ]
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
       },
       {
         "anchored_witnesses": [],
@@ -7036,33 +7216,113 @@
         "anchored_witnesses": [
           {
             "anchors": [
+              "mcoi/tests/test_server_phase205.py::test_subscribe",
+              "mcoi/tests/test_webhook_system.py::test_subscribe"
+            ],
+            "witness": "subscribe"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_server_phase205.py::test_list_webhooks"
+            ],
+            "witness": "list_webhooks"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_webhook_system.py::test_duplicate_subscribe_error_is_bounded"
+            ],
+            "witness": "duplicate_subscribe_error_is_bounded"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_webhook_system.py::test_emit_tenant_filter"
+            ],
+            "witness": "emit_tenant_filter"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_webhook_system.py::test_multiple_subscriptions"
+            ],
+            "witness": "multiple_subscriptions"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_server_phase205.py::test_webhook_deliveries"
+            ],
+            "witness": "webhook_deliveries"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_webhook_system.py::test_delivery_history"
+            ],
+            "witness": "delivery_history"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_webhook_system.py::test_emit_queues_delivery"
+            ],
+            "witness": "emit_queues_delivery"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_webhook_system.py::test_emit_with_secret_signature"
+            ],
+            "witness": "emit_with_secret_signature"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_webhook_system.py::test_disabled_subscription_skipped"
+            ],
+            "witness": "disabled_subscription_skipped"
+          },
+          {
+            "anchors": [
               "mcoi/tests/test_webhook_system.py::test_webhook_mutation_receipt_closes_effect_assurance"
             ],
             "witness": "webhook_mutation_receipt_closes_effect_assurance"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_webhook_dlq.py::test_summary_fields"
+            ],
+            "witness": "summary_fields"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_webhook_dlq.py::test_summary_reports_bounded_enqueue_reasons"
+            ],
+            "witness": "summary_reports_bounded_enqueue_reasons"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_webhook_retry.py::test_dead_letters_list"
+            ],
+            "witness": "dead_letters_list"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_webhook_dlq.py::test_bounded"
+            ],
+            "witness": "bounded"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_webhook_dlq.py::test_retry_exhaustion_reports_bounded_failure_reasons"
+            ],
+            "witness": "retry_exhaustion_reports_bounded_failure_reasons"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_webhook_dlq.py::test_delivery_error_classifier_uses_stable_taxonomy"
+            ],
+            "witness": "delivery_error_classifier_uses_stable_taxonomy"
           }
         ],
-        "exact_test_anchor_count": 1,
+        "exact_test_anchor_count": 17,
         "runtime_witness_count": 17,
         "surface_id": "webhooks_proof_surface",
-        "unanchored_witness_count": 16,
-        "unanchored_witnesses": [
-          "webhook_subscribe_records_audit",
-          "webhook_subscription_audited",
-          "webhook_subscription_mutation_receipt_emitted",
-          "webhook_list_is_tenant_scoped",
-          "webhook_subscription_list_bounded",
-          "webhook_delivery_history_is_bounded",
-          "webhook_delivery_mutation_receipts_exposed",
-          "webhook_delivery_history_bounded",
-          "webhook_flow_records_delivery",
-          "webhook_delivery_queue_mutation_receipt_emitted",
-          "webhook_retry_summary_is_bounded",
-          "webhook_retry_summary_governed",
-          "webhook_dead_letters_are_explicit",
-          "webhook_dead_letters_bounded",
-          "webhook_workflow_delivery_witnessed",
-          "webhook_delivery_errors_are_sanitized"
-        ]
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
       },
       {
         "anchored_witnesses": [],
@@ -7329,28 +7589,58 @@
         ]
       },
       {
-        "anchored_witnesses": [],
-        "exact_test_anchor_count": 0,
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "mcoi/tests/test_data_governance_endpoints.py::test_data_governance_state_hash"
+            ],
+            "witness": "data_governance_state_hash"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_data_governance_endpoints.py::test_data_governance_action_proof"
+            ],
+            "witness": "data_governance_action_proof"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_data_governance_endpoints.py::test_tenant_visible_violation_read_model"
+            ],
+            "witness": "tenant_visible_violation_read_model"
+          }
+        ],
+        "exact_test_anchor_count": 3,
         "runtime_witness_count": 3,
         "surface_id": "data_governance_controls",
-        "unanchored_witness_count": 3,
-        "unanchored_witnesses": [
-          "data_governance_state_hash",
-          "data_governance_action_proof",
-          "tenant_visible_violation_read_model"
-        ]
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
       },
       {
-        "anchored_witnesses": [],
-        "exact_test_anchor_count": 0,
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "mcoi/tests/test_compliance_export.py::test_compliance_package_hash"
+            ],
+            "witness": "compliance_package_hash"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_compliance_export.py::test_audit_chain_verification"
+            ],
+            "witness": "audit_chain_verification"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_compliance_export.py::test_self_audited_export_event"
+            ],
+            "witness": "self_audited_export_event"
+          }
+        ],
+        "exact_test_anchor_count": 3,
         "runtime_witness_count": 3,
         "surface_id": "compliance_evidence_exports",
-        "unanchored_witness_count": 3,
-        "unanchored_witnesses": [
-          "compliance_package_hash",
-          "audit_chain_verification",
-          "self_audited_export_event"
-        ]
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
       },
       {
         "anchored_witnesses": [],
@@ -7497,19 +7787,49 @@
         ]
       },
       {
-        "anchored_witnesses": [],
-        "exact_test_anchor_count": 0,
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "mcoi/tests/test_tool_registry_read_models.py::test_tool_registry_list_returns_registered_tools"
+            ],
+            "witness": "tool_registry_list_returns_registered_tools"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_tool_registry_read_models.py::test_tool_registry_category_filter_bounded"
+            ],
+            "witness": "tool_registry_category_filter_bounded"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_tool_registry_read_models.py::test_tool_llm_format_exports_input_schema"
+            ],
+            "witness": "tool_llm_format_exports_input_schema"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_tool_registry_read_models.py::test_tool_history_returns_bounded_summary"
+            ],
+            "witness": "tool_history_returns_bounded_summary"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_tool_registry_read_models.py::test_tool_invocation_history_limit_applied"
+            ],
+            "witness": "tool_invocation_history_limit_applied"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_tool_registry_read_models.py::test_tool_invoke_separate_action_proof_surface"
+            ],
+            "witness": "tool_invoke_separate_action_proof_surface"
+          }
+        ],
+        "exact_test_anchor_count": 6,
         "runtime_witness_count": 6,
         "surface_id": "tool_registry_read_models",
-        "unanchored_witness_count": 6,
-        "unanchored_witnesses": [
-          "tool_registry_list_returns_registered_tools",
-          "tool_registry_category_filter_bounded",
-          "tool_llm_format_exports_input_schema",
-          "tool_history_returns_bounded_summary",
-          "tool_invocation_history_limit_applied",
-          "tool_invoke_separate_action_proof_surface"
-        ]
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
       },
       {
         "anchored_witnesses": [],
@@ -7659,68 +7979,233 @@
         "anchored_witnesses": [
           {
             "anchors": [
+              "mcoi/tests/test_server_phase205.py::test_execute_workflow"
+            ],
+            "witness": "execute_workflow"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_server_phase205.py::test_execute_workflow_bad_capability"
+            ],
+            "witness": "execute_workflow_bad_capability"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_agent_workflow.py::test_workflow_history",
+              "mcoi/tests/test_server_phase205.py::test_workflow_history"
+            ],
+            "witness": "workflow_history"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_agent_workflow.py::test_audit_on_success"
+            ],
+            "witness": "audit_on_success"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_agent_workflow.py::test_audit_on_failure"
+            ],
+            "witness": "audit_on_failure"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_agent_workflow.py::test_workflow_runtime_error_redacted"
+            ],
+            "witness": "workflow_runtime_error_redacted"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_workflow_orchestration.py::test_workflow_lifecycle_records_bounded_mutation_receipts"
+            ],
+            "witness": "workflow_lifecycle_records_bounded_mutation_receipts"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_workflow_orchestration.py::test_workflow_failure_and_compensation_receipts_are_bounded"
+            ],
+            "witness": "workflow_failure_and_compensation_receipts_are_bounded"
+          },
+          {
+            "anchors": [
               "tests/test_gateway/test_workflow_orchestration.py::test_workflow_mutation_receipt_closes_effect_assurance"
             ],
             "witness": "workflow_mutation_receipt_closes_effect_assurance"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_traced_workflow.py::test_execute_produces_trace"
+            ],
+            "witness": "execute_produces_trace"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_traced_workflow.py::test_start_trace_failure_is_counted_and_workflow_runs"
+            ],
+            "witness": "start_trace_failure_is_counted_and_workflow_runs"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_traced_workflow.py::test_complete_failure_is_counted_and_partial_trace_discarded"
+            ],
+            "witness": "complete_failure_is_counted_and_partial_trace_discarded"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_server_phase199.py::test_create_session"
+            ],
+            "witness": "create_session"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_server_phase199.py::test_ledger_returns_entries"
+            ],
+            "witness": "ledger_returns_entries"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_server_phase206.py::test_execute_pipeline"
+            ],
+            "witness": "execute_pipeline"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_server_phase206.py::test_pipeline_history"
+            ],
+            "witness": "pipeline_history"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_workflow_templates.py::test_instantiate"
+            ],
+            "witness": "instantiate"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_workflow_templates.py::test_list_by_category"
+            ],
+            "witness": "list_by_category"
           }
         ],
-        "exact_test_anchor_count": 1,
+        "exact_test_anchor_count": 18,
         "runtime_witness_count": 18,
         "surface_id": "workflow_execution_lifecycle",
-        "unanchored_witness_count": 17,
-        "unanchored_witnesses": [
-          "workflow_execute_emits_action_proof",
-          "workflow_invalid_capability_bounded",
-          "workflow_history_bounded",
-          "workflow_success_records_audit",
-          "workflow_failure_records_audit",
-          "workflow_errors_sanitized",
-          "workflow_lifecycle_mutation_receipts_emitted",
-          "workflow_failure_compensation_receipts_emitted",
-          "traced_workflow_emits_replay_trace",
-          "traced_workflow_recorder_errors_sanitized",
-          "legacy_execute_emits_action_proof",
-          "session_read_model_bounded",
-          "ledger_read_model_bounded",
-          "pipeline_execution_emits_action_proof",
-          "pipeline_history_bounded",
-          "template_read_models_bounded",
-          "template_execution_governed"
-        ]
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
       },
       {
-        "anchored_witnesses": [],
-        "exact_test_anchor_count": 0,
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "mcoi/tests/test_agent_chain_execution_lifecycle.py::test_chain_execute_single_step"
+            ],
+            "witness": "chain_execute_single_step"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_agent_chain_execution_lifecycle.py::test_chain_execute_two_steps"
+            ],
+            "witness": "chain_execute_two_steps"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_agent_chain_execution_lifecycle.py::test_chain_prev_template_propagates_output"
+            ],
+            "witness": "chain_prev_template_propagates_output"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_agent_chain_execution_lifecycle.py::test_chain_halt_on_failure_bounded"
+            ],
+            "witness": "chain_halt_on_failure_bounded"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_agent_chain_execution_lifecycle.py::test_chain_skip_on_failure_continues"
+            ],
+            "witness": "chain_skip_on_failure_continues"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_agent_chain_execution_lifecycle.py::test_chain_returned_failure_redacted"
+            ],
+            "witness": "chain_returned_failure_redacted"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_agent_chain_execution_lifecycle.py::test_chain_history_bounded"
+            ],
+            "witness": "chain_history_bounded"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_agent_chain_execution_lifecycle.py::test_chain_endpoint_governed"
+            ],
+            "witness": "chain_endpoint_governed"
+          }
+        ],
+        "exact_test_anchor_count": 8,
         "runtime_witness_count": 8,
         "surface_id": "agent_chain_execution_lifecycle",
-        "unanchored_witness_count": 8,
-        "unanchored_witnesses": [
-          "chain_execute_single_step",
-          "chain_execute_two_steps",
-          "chain_prev_template_propagates_output",
-          "chain_halt_on_failure_bounded",
-          "chain_skip_on_failure_continues",
-          "chain_returned_failure_redacted",
-          "chain_history_bounded",
-          "chain_endpoint_governed"
-        ]
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
       },
       {
-        "anchored_witnesses": [],
-        "exact_test_anchor_count": 0,
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "mcoi/tests/test_certification_daemon_lifecycle.py::test_daemon_status_bounded"
+            ],
+            "witness": "daemon_status_bounded"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_certification_daemon_lifecycle.py::test_daemon_tick_interval_gated"
+            ],
+            "witness": "daemon_tick_interval_gated"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_certification_daemon_lifecycle.py::test_daemon_force_runs_when_disabled"
+            ],
+            "witness": "daemon_force_runs_when_disabled"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_certification_daemon_lifecycle.py::test_daemon_force_returns_chain_hash"
+            ],
+            "witness": "daemon_force_returns_chain_hash"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_certification_daemon_lifecycle.py::test_daemon_history_bounded"
+            ],
+            "witness": "daemon_history_bounded"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_certification_daemon_lifecycle.py::test_daemon_health_degrades_on_failures"
+            ],
+            "witness": "daemon_health_degrades_on_failures"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_certification_daemon_lifecycle.py::test_daemon_exceptions_sanitized"
+            ],
+            "witness": "daemon_exceptions_sanitized"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_certification_daemon_lifecycle.py::test_daemon_endpoint_contracts_governed"
+            ],
+            "witness": "daemon_endpoint_contracts_governed"
+          }
+        ],
+        "exact_test_anchor_count": 8,
         "runtime_witness_count": 8,
         "surface_id": "certification_daemon_lifecycle",
-        "unanchored_witness_count": 8,
-        "unanchored_witnesses": [
-          "daemon_status_bounded",
-          "daemon_tick_interval_gated",
-          "daemon_force_runs_when_disabled",
-          "daemon_force_returns_chain_hash",
-          "daemon_history_bounded",
-          "daemon_health_degrades_on_failures",
-          "daemon_exceptions_sanitized",
-          "daemon_endpoint_contracts_governed"
-        ]
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
       },
       {
         "anchored_witnesses": [],
@@ -8211,9 +8696,16 @@
         ]
       },
       {
-        "anchored_witnesses": [],
-        "exact_test_anchor_count": 0,
-        "runtime_witness_count": 8,
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "tests/test_gateway/test_operator_capability_console.py::test_operator_console_links_capability_improvement_portfolio"
+            ],
+            "witness": "operator_console_links_capability_improvement_portfolio"
+          }
+        ],
+        "exact_test_anchor_count": 1,
+        "runtime_witness_count": 9,
         "surface_id": "capability_maturity_assessment",
         "unanchored_witness_count": 8,
         "unanchored_witnesses": [
@@ -8443,6 +8935,31 @@
           "memory_requires_admission_counterexample",
           "unknown_property_fails_closed",
           "policy_proof_report_schema_valid"
+        ]
+      },
+      {
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "mcoi/tests/test_shell_executor.py::test_shell_receipt_becomes_effect_assurance_evidence_ref"
+            ],
+            "witness": "shell_receipt_becomes_effect_assurance_evidence_ref"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_shell_executor.py::test_shell_receipt_closes_effect_assurance"
+            ],
+            "witness": "shell_receipt_closes_effect_assurance"
+          }
+        ],
+        "exact_test_anchor_count": 2,
+        "runtime_witness_count": 5,
+        "surface_id": "shell_execution_adapter",
+        "unanchored_witness_count": 3,
+        "unanchored_witnesses": [
+          "shell_executor_argv_only",
+          "shell_policy_denial_receipt_emitted",
+          "shell_sandbox_denial_receipt_emitted"
         ]
       },
       {
@@ -9361,17 +9878,67 @@
               "tests/test_gateway/test_autonomous_capability_upgrade.py::test_health_signal_requires_evidence_refs"
             ],
             "witness": "health_signal_requires_evidence_refs"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_autonomous_capability_upgrade.py::test_upgrade_candidates_are_promotion_blocked"
+            ],
+            "witness": "upgrade_candidates_are_promotion_blocked"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_autonomous_capability_upgrade.py::test_capability_improvement_portfolios_are_activation_blocked"
+            ],
+            "witness": "capability_improvement_portfolios_are_activation_blocked"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_reflex_endpoints.py::test_capability_improvement_portfolio_endpoint_operator_guarded"
+            ],
+            "witness": "capability_improvement_portfolio_endpoint_operator_guarded"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_reflex_endpoints.py::test_capability_improvement_portfolio_endpoint_read_only"
+            ],
+            "witness": "capability_improvement_portfolio_endpoint_read_only"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_autonomous_capability_upgrade.py::test_capability_improvement_portfolio_identity_sets_are_unique"
+            ],
+            "witness": "capability_improvement_portfolio_identity_sets_are_unique"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_autonomous_capability_upgrade.py::test_systemic_weaknesses_are_ranked"
+            ],
+            "witness": "systemic_weaknesses_are_ranked"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_autonomous_capability_upgrade.py::test_critical_governance_changes_require_second_approval"
+            ],
+            "witness": "critical_governance_changes_require_second_approval"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_autonomous_capability_upgrade.py::test_capability_upgrade_plan_schema_valid"
+            ],
+            "witness": "capability_upgrade_plan_schema_valid"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_autonomous_capability_upgrade.py::test_capability_improvement_portfolio_schema_valid"
+            ],
+            "witness": "capability_improvement_portfolio_schema_valid"
           }
         ],
-        "exact_test_anchor_count": 1,
-        "runtime_witness_count": 4,
+        "exact_test_anchor_count": 10,
+        "runtime_witness_count": 10,
         "surface_id": "autonomous_capability_upgrade",
-        "unanchored_witness_count": 3,
-        "unanchored_witnesses": [
-          "upgrade_candidates_are_promotion_blocked",
-          "critical_governance_changes_require_second_approval",
-          "capability_upgrade_plan_schema_valid"
-        ]
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
       },
       {
         "anchored_witnesses": [
@@ -9380,17 +9947,31 @@
               "tests/test_gateway/test_autonomous_test_generation.py::test_failure_trace_requires_evidence_refs"
             ],
             "witness": "failure_trace_requires_evidence_refs"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_autonomous_test_generation.py::test_high_risk_failures_generate_governance_variants"
+            ],
+            "witness": "high_risk_failures_generate_governance_variants"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_autonomous_test_generation.py::test_plans_are_activation_blocked"
+            ],
+            "witness": "plans_are_activation_blocked"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_autonomous_test_generation.py::test_autonomous_test_generation_plan_schema_valid"
+            ],
+            "witness": "autonomous_test_generation_plan_schema_valid"
           }
         ],
-        "exact_test_anchor_count": 1,
+        "exact_test_anchor_count": 4,
         "runtime_witness_count": 4,
         "surface_id": "autonomous_test_generation",
-        "unanchored_witness_count": 3,
-        "unanchored_witnesses": [
-          "high_risk_failures_generate_governance_variants",
-          "plans_are_activation_blocked",
-          "autonomous_test_generation_plan_schema_valid"
-        ]
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
       },
       {
         "anchored_witnesses": [],
@@ -9666,6 +10247,6 @@
         ]
       }
     ],
-    "unanchored_witness_count": 765
+    "unanchored_witness_count": 676
   }
 }

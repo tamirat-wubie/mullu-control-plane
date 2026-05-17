@@ -48,6 +48,14 @@ def test_handoff_preflight_blocks_missing_environment_bindings(tmp_path: Path) -
     assert report.readiness_level == "pilot-governed-core"
     assert report.production_ready is False
     assert any("MULLU_GATEWAY_URL" in step.detail for step in report.steps)
+    assert len(report.environment_binding_actions) == len(REQUIRED_ENV)
+    gateway_action = next(action for action in report.environment_binding_actions if action.name == "MULLU_GATEWAY_URL")
+    assert gateway_action.binding_kind == "url"
+    assert gateway_action.risk == "high"
+    assert gateway_action.approval_required is False
+    assert "handoff_preflight" in gateway_action.required_for
+    assert "without printing or serializing" in gateway_action.verification_command
+    assert "validate_general_agent_promotion_environment_binding_receipt.py" in gateway_action.verification_command
 
 
 def test_handoff_preflight_accepts_valid_local_state(tmp_path: Path) -> None:
@@ -67,6 +75,7 @@ def test_handoff_preflight_accepts_valid_local_state(tmp_path: Path) -> None:
     assert report.blockers == ()
     assert report.checked_at == "2026-05-01T12:00:00+00:00"
     assert report.missing_environment_variables == ()
+    assert report.environment_binding_actions == ()
     assert {step.name for step in report.steps} == {
         "operator checklist validation",
         "handoff packet validation",
@@ -254,6 +263,28 @@ def test_handoff_preflight_rejects_schema_and_drift_count_disagreement(tmp_path:
     assert report.ready is False
     assert report.blockers == ("closure plan drift validation",)
     assert any("schema=" in step.detail for step in report.steps)
+
+
+def test_handoff_preflight_rejects_nonfinite_report_inputs(tmp_path: Path) -> None:
+    adapter_schema_validation, schema_validation, drift_validation, readiness = _write_valid_reports(tmp_path)
+    environment_binding_receipt = _write_valid_environment_binding_receipt(tmp_path)
+    schema_validation.write_text('{"ok": true, "action_count": Infinity}', encoding="utf-8")
+
+    report = preflight_general_agent_promotion_handoff(
+        environment_binding_receipt_path=environment_binding_receipt,
+        adapter_schema_validation_path=adapter_schema_validation,
+        schema_validation_path=schema_validation,
+        drift_validation_path=drift_validation,
+        readiness_path=readiness,
+        env_reader=lambda name: "present" if name in REQUIRED_ENV else "",
+    )
+    serialized_report = json.dumps(report.as_dict(), sort_keys=True)
+
+    assert report.ready is False
+    assert "closure plan schema validation" in report.blockers
+    assert "closure plan drift validation" in report.blockers
+    assert any("invalid_json_or_empty" in step.detail for step in report.steps)
+    assert "Infinity" not in serialized_report
 
 
 def test_handoff_preflight_rejects_conditional_responsibility_debt_drift(tmp_path: Path) -> None:

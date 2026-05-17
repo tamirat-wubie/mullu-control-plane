@@ -60,7 +60,42 @@ _DENIED_EXECUTABLES: frozenset[str] = frozenset(
     }
 )
 _DENIED_GIT_SUBCOMMANDS: frozenset[str] = frozenset(
-    {"push", "pull", "fetch", "clone", "remote", "submodule", "credential"}
+    {
+        "archive",
+        "clone",
+        "credential",
+        "daemon",
+        "fetch",
+        "ls-remote",
+        "p4",
+        "pull",
+        "push",
+        "remote",
+        "request-pull",
+        "send-email",
+        "submodule",
+        "svn",
+    }
+)
+_DENIED_GIT_GLOBAL_OPTIONS: frozenset[str] = frozenset(
+    {
+        "-C",
+        "-c",
+        "--config-env",
+        "--exec-path",
+        "--git-dir",
+        "--work-tree",
+    }
+)
+_DENIED_GIT_REMOTE_ARGUMENT_PREFIXES: tuple[str, ...] = (
+    "--receive-pack",
+    "--remote",
+    "--server-option",
+    "--upload-pack",
+    "git://",
+    "http://",
+    "https://",
+    "ssh://",
 )
 _SNAPSHOT_SKIP_DIR_NAMES: frozenset[str] = frozenset(
     {
@@ -314,9 +349,14 @@ def _admission_violations(
     if executable in _DENIED_EXECUTABLES:
         violations.append(f"denied_executable:{executable}")
     if executable == "git":
+        denied_global_option = _denied_git_global_option(argv[1:])
+        if denied_global_option is not None:
+            violations.append(f"denied_git_global_option:{denied_global_option}")
         git_subcommand = _git_subcommand(argv[1:])
         if git_subcommand in _DENIED_GIT_SUBCOMMANDS:
             violations.append(f"denied_git_subcommand:{git_subcommand}")
+        if _has_denied_git_remote_argument(argv[1:]):
+            violations.append("denied_git_remote_argument")
     if not _path_within_allowed(cwd, lease.allowed_paths):
         violations.append("cwd_outside_lease_allowed_paths")
     path_violation = _argv_path_violation(argv, lease.allowed_paths)
@@ -438,9 +478,23 @@ def _normalize_relative_path(path_text: str) -> str:
         normalized = normalized[2:]
     if normalized == ".":
         return "."
-    if normalized.startswith("/") or ".." in PurePosixPath(normalized).parts:
+    if (
+        normalized.startswith("/")
+        or _has_windows_drive_prefix(normalized)
+        or ".." in PurePosixPath(normalized).parts
+    ):
         raise ValueError("path must stay inside repository root")
     return normalized
+
+
+def _has_windows_drive_prefix(normalized_path: str) -> bool:
+    parts = PurePosixPath(normalized_path).parts
+    return bool(
+        parts
+        and len(parts[0]) == 2
+        and parts[0][1] == ":"
+        and parts[0][0].isalpha()
+    )
 
 
 def _container_cwd(relative_cwd: str) -> str:
@@ -563,6 +617,20 @@ def _git_subcommand(args: Sequence[str]) -> str | None:
             continue
         return arg.lower()
     return None
+
+
+def _denied_git_global_option(args: Sequence[str]) -> str | None:
+    for arg in args:
+        if not arg.startswith("-"):
+            return None
+        for option in _DENIED_GIT_GLOBAL_OPTIONS:
+            if arg == option or arg.startswith(f"{option}="):
+                return option
+    return None
+
+
+def _has_denied_git_remote_argument(args: Sequence[str]) -> bool:
+    return any(arg.lower().startswith(_DENIED_GIT_REMOTE_ARGUMENT_PREFIXES) for arg in args)
 
 
 def _bounded_violation(value: str) -> str:

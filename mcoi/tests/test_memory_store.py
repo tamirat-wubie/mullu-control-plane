@@ -10,13 +10,14 @@ Invariants:
 from __future__ import annotations
 
 import json
+from hashlib import sha256
 from pathlib import Path
 
 import pytest
 
 from mcoi_runtime.core.memory import EpisodicMemory, MemoryEntry, MemoryTier, WorkingMemory
 from mcoi_runtime.persistence.errors import CorruptedDataError
-from mcoi_runtime.persistence.memory_store import MemoryStore
+from mcoi_runtime.persistence.memory_store import MemoryStore, _content_hash
 
 
 def _working_entry(entry_id: str, *, category: str = "observation") -> MemoryEntry:
@@ -56,6 +57,15 @@ def test_memory_store_round_trip_preserves_capacity_and_order(tmp_path: Path) ->
     assert tuple(entry.entry_id for entry in restored_working.list_entries()) == ("w-1", "w-2")
     assert tuple(entry.entry_id for entry in restored_episodic.list_entries()) == ("e-2", "e-1")
     assert first_hashes == second_hashes
+
+
+def test_memory_content_hash_preserves_non_ascii_fidel_bytes() -> None:
+    content = '{"fidel":"ሀ"}'
+    digest = _content_hash(content)
+
+    assert digest == sha256(content.encode("utf-8")).hexdigest()
+    assert digest != sha256(content.encode("ascii", "ignore")).hexdigest()
+    assert len(digest) == 64
 
 
 def test_memory_store_allow_missing_restores_empty_tiers(tmp_path: Path) -> None:

@@ -51,6 +51,14 @@ class TestWorkflowErrorContracts:
 
 
 class TestDataErrorContracts:
+    def test_data_export_sources_allowlisted(self, client):
+        resp = client.get("/api/v1/export/sources")
+        data = resp.json()
+
+        assert resp.status_code == 200
+        assert data["governed"] is True
+        assert data["sources"] == ["audit"]
+
     def test_create_wildcard_api_key_returns_governed_validation_error(self, client):
         from mcoi_runtime.app.routers.deps import deps
         from mcoi_runtime.governance.auth.api_key import APIKeyManager
@@ -117,7 +125,7 @@ class TestDataErrorContracts:
         assert data["governed"] is True
         assert "key-missing-123" not in str(resp.json())
 
-    def test_export_invalid_format_returns_governed_validation_error(self, client):
+    def test_data_export_errors_sanitized(self, client):
         resp = client.post("/api/v1/export", json={"source": "audit", "format": "xml"})
         assert resp.status_code == 400
         data = resp.json()["detail"]

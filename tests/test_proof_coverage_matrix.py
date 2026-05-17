@@ -129,10 +129,15 @@ def test_witness_integrity_report_tracks_exact_test_anchors() -> None:
     assert surfaces["governed_session"]["unanchored_witness_count"] == 0
     assert surfaces["lineage_query_api"]["unanchored_witness_count"] == 0
     assert surfaces["physical_action_boundary"]["unanchored_witness_count"] == 0
+    assert surfaces["code_intelligence_operator_read_model"]["exact_test_anchor_count"] >= 5
+    assert surfaces["code_intelligence_operator_read_model"]["unanchored_witness_count"] == 0
+    assert surfaces["data_export_lifecycle"]["exact_test_anchor_count"] >= 4
+    assert surfaces["data_export_lifecycle"]["unanchored_witness_count"] == 0
     assert surfaces["operational_platform_read_models"]["exact_test_anchor_count"] >= 25
-    assert surfaces["operational_platform_read_models"]["unanchored_witness_count"] == 2
+    assert surfaces["operational_platform_read_models"]["unanchored_witness_count"] == 0
     assert surfaces["trust_ledger"]["unanchored_witness_count"] == 0
     assert surfaces["gateway_runtime_witness"]["unanchored_witness_count"] == 0
+    assert surfaces["tool_registry_read_models"]["unanchored_witness_count"] == 0
 
 
 def test_declared_routes_have_explicit_coverage_classification() -> None:
@@ -413,16 +418,24 @@ def test_webhooks_proof_surface_is_witnessed() -> None:
     assert "mcoi/tests/test_server_phase205.py" in webhooks_surface["evidence_files"]
     assert "mcoi/tests/test_webhook_system.py" in webhooks_surface["evidence_files"]
     assert "mcoi/tests/test_webhook_retry.py" in webhooks_surface["evidence_files"]
-    assert "webhook_subscribe_records_audit" in witnesses
-    assert "webhook_subscription_audited" in witnesses
-    assert "webhook_subscription_mutation_receipt_emitted" in witnesses
-    assert "webhook_delivery_history_is_bounded" in witnesses
-    assert "webhook_delivery_mutation_receipts_exposed" in witnesses
-    assert "webhook_delivery_history_bounded" in witnesses
-    assert "webhook_delivery_queue_mutation_receipt_emitted" in witnesses
     assert "webhook_mutation_receipt_closes_effect_assurance" in witnesses
-    assert "webhook_dead_letters_are_explicit" in witnesses
-    assert "webhook_delivery_errors_are_sanitized" in witnesses
+    assert "subscribe" in witnesses
+    assert "list_webhooks" in witnesses
+    assert "duplicate_subscribe_error_is_bounded" in witnesses
+    assert "emit_tenant_filter" in witnesses
+    assert "multiple_subscriptions" in witnesses
+    assert "webhook_deliveries" in witnesses
+    assert "delivery_history" in witnesses
+    assert "emit_queues_delivery" in witnesses
+    assert "emit_with_secret_signature" in witnesses
+    assert "disabled_subscription_skipped" in witnesses
+    assert "webhook_mutation_receipt_closes_effect_assurance" in witnesses
+    assert "summary_fields" in witnesses
+    assert "summary_reports_bounded_enqueue_reasons" in witnesses
+    assert "dead_letters_list" in witnesses
+    assert "bounded" in witnesses
+    assert "retry_exhaustion_reports_bounded_failure_reasons" in witnesses
+    assert "delivery_error_classifier_uses_stable_taxonomy" in witnesses
     assert route_records["/api/v1/webhooks/subscribe"]["coverage_state"] == "witnessed"
     assert route_records["/api/v1/webhooks/subscribe"]["surface_id"] == "webhooks_proof_surface"
     assert route_records["/api/v1/webhooks/retry/dead-letters"]["coverage_state"] == "witnessed"
@@ -2052,9 +2065,12 @@ def test_tool_registry_read_model_surface_keeps_invocation_separate() -> None:
     assert "mcoi/mcoi_runtime/app/routers/data/tools.py" in tool_surface["evidence_files"]
     assert "mcoi/mcoi_runtime/core/tool_use.py" in tool_surface["evidence_files"]
     assert "mcoi/tests/test_server_phase212.py" in tool_surface["evidence_files"]
+    assert "mcoi/tests/test_tool_registry_read_models.py" in tool_surface["evidence_files"]
     assert "tool_registry_list_returns_registered_tools" in witnesses
+    assert "tool_registry_category_filter_bounded" in witnesses
     assert "tool_llm_format_exports_input_schema" in witnesses
     assert "tool_history_returns_bounded_summary" in witnesses
+    assert "tool_invocation_history_limit_applied" in witnesses
     assert "tool_invoke_separate_action_proof_surface" in witnesses
     assert route_records["/api/v1/tools"]["surface_id"] == "tool_registry_read_models"
     assert route_records["/api/v1/tools/history"]["coverage_state"] == "witnessed"
@@ -2278,18 +2294,24 @@ def test_workflow_execution_lifecycle_surface_tracks_execution_history_and_traci
     assert "mcoi/tests/test_agent_workflow.py" in workflow_surface["evidence_files"]
     assert "mcoi/tests/test_traced_workflow.py" in workflow_surface["evidence_files"]
     assert "mcoi/tests/test_server_phase205.py" in workflow_surface["evidence_files"]
-    assert "workflow_execute_emits_action_proof" in witnesses
-    assert "workflow_invalid_capability_bounded" in witnesses
-    assert "workflow_history_bounded" in witnesses
-    assert "workflow_errors_sanitized" in witnesses
-    assert "workflow_lifecycle_mutation_receipts_emitted" in witnesses
-    assert "workflow_failure_compensation_receipts_emitted" in witnesses
+    assert "execute_workflow" in witnesses
+    assert "execute_workflow_bad_capability" in witnesses
+    assert "workflow_history" in witnesses
+    assert "audit_on_success" in witnesses
+    assert "audit_on_failure" in witnesses
+    assert "workflow_runtime_error_redacted" in witnesses
+    assert "workflow_lifecycle_records_bounded_mutation_receipts" in witnesses
+    assert "workflow_failure_and_compensation_receipts_are_bounded" in witnesses
     assert "workflow_mutation_receipt_closes_effect_assurance" in witnesses
-    assert "traced_workflow_emits_replay_trace" in witnesses
-    assert "traced_workflow_recorder_errors_sanitized" in witnesses
-    assert "legacy_execute_emits_action_proof" in witnesses
-    assert "pipeline_execution_emits_action_proof" in witnesses
-    assert "template_execution_governed" in witnesses
+    assert "execute_produces_trace" in witnesses
+    assert "start_trace_failure_is_counted_and_workflow_runs" in witnesses
+    assert "complete_failure_is_counted_and_partial_trace_discarded" in witnesses
+    assert "create_session" in witnesses
+    assert "ledger_returns_entries" in witnesses
+    assert "execute_pipeline" in witnesses
+    assert "pipeline_history" in witnesses
+    assert "instantiate" in witnesses
+    assert "list_by_category" in witnesses
     assert route_records["/api/v1/workflow/execute"]["coverage_state"] == "witnessed"
     assert route_records["/api/v1/workflow/execute"]["surface_id"] == "workflow_execution_lifecycle"
     assert route_records["/api/v1/workflow/traced"]["coverage_state"] == "witnessed"
@@ -2519,6 +2541,30 @@ def test_policy_prover_surface_reports_counterexamples() -> None:
     assert "shell_requires_sandbox_counterexample" in witnesses
     assert "unknown_property_fails_closed" in witnesses
     assert closure_actions["publish_policy_prover_counterexample_contract"]["status"] == "closed"
+
+
+def test_shell_execution_adapter_surface_closes_effect_assurance() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    shell_surface = surfaces["shell_execution_adapter"]
+    witnesses = set(shell_surface["runtime_witnesses"])
+
+    assert shell_surface["coverage_state"] == "witnessed"
+    assert shell_surface["request_proof"] == "request_proof"
+    assert shell_surface["action_proof"] == "action_proof"
+    assert "ShellExecutor.execute" in shell_surface["representative_paths"]
+    assert "ShellExecutionReceipt" in shell_surface["representative_paths"]
+    assert "ShellSandboxPolicy" in shell_surface["representative_paths"]
+    assert "mcoi/mcoi_runtime/adapters/shell_executor.py" in shell_surface["evidence_files"]
+    assert "mcoi/mcoi_runtime/contracts/shell_execution.py" in shell_surface["evidence_files"]
+    assert "mcoi/tests/test_shell_executor.py" in shell_surface["evidence_files"]
+    assert "shell_executor_argv_only" in witnesses
+    assert "shell_policy_denial_receipt_emitted" in witnesses
+    assert "shell_sandbox_denial_receipt_emitted" in witnesses
+    assert "shell_receipt_becomes_effect_assurance_evidence_ref" in witnesses
+    assert "shell_receipt_closes_effect_assurance" in witnesses
+    assert closure_actions["bind_shell_execution_receipts_to_effect_assurance"]["status"] == "closed"
 
 
 def test_memory_lattice_surface_gates_planning_and_execution() -> None:

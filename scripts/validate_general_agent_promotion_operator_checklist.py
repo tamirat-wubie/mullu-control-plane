@@ -92,6 +92,12 @@ REQUIRED_STEP_COMMAND_TOKENS = {
     ),
 }
 REQUIRED_STEP_EVIDENCE = {
+    "write_promotion_readiness": frozenset({
+        "readiness_level=pilot-governed-core",
+        "capability_count=63",
+        "capsule_count=12",
+        "production blockers explicit",
+    }),
     "validate_adapter_closure_plan_schema": frozenset({
         "capability_adapter_closure_plan_schema_validation.json ok=true",
         "adapter blocker coverage complete",
@@ -179,17 +185,25 @@ def validate_general_agent_promotion_operator_checklist(
 
 def _load_json_object(path: Path, errors: list[str]) -> dict[str, Any]:
     try:
-        parsed = json.loads(path.read_text(encoding="utf-8"))
+        parsed = _loads_strict_json(path.read_text(encoding="utf-8"))
     except OSError:
         errors.append("checklist could not be read")
         return {}
-    except json.JSONDecodeError:
+    except (json.JSONDecodeError, ValueError):
         errors.append("checklist must be JSON")
         return {}
     if not isinstance(parsed, dict):
         errors.append("checklist root must be an object")
         return {}
     return parsed
+
+
+def _loads_strict_json(raw: str) -> Any:
+    return json.loads(raw, parse_constant=_reject_json_constant)
+
+
+def _reject_json_constant(raw_constant: str) -> None:
+    raise ValueError("non-finite JSON constants are not permitted")
 
 
 def _require_superset(

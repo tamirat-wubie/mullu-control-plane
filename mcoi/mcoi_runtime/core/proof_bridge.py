@@ -293,6 +293,7 @@ class ProofBridge:
         # Update lineage
         self._receipt_count += 1
         self._last_receipt_hash = final_capsule.receipt.receipt_hash
+        self._store.record_receipt(final_capsule.receipt)
         self._update_lineage(entity_id, final_capsule.receipt, to_state)
 
         return GovernanceProof(
@@ -351,6 +352,7 @@ class ProofBridge:
 
         self._receipt_count += 1
         self._last_receipt_hash = capsule.receipt.receipt_hash
+        self._store.record_receipt(capsule.receipt)
         self._update_lineage(entity_id, capsule.receipt, to_state)
 
         return TemporalSchedulerProof(

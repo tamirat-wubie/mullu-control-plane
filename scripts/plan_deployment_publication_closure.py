@@ -77,11 +77,7 @@ def plan_deployment_publication_closure(
 ) -> DeploymentPublicationClosurePlan:
     """Build a deterministic plan for deployment publication blockers."""
     readiness = _load_json_object(readiness_path, "promotion readiness")
-    blockers = tuple(
-        blocker
-        for blocker in (str(item) for item in readiness.get("blockers", ()))
-        if blocker in _deployment_blockers() or blocker.startswith("deployment_")
-    )
+    blockers = _deployment_readiness_blockers(readiness)
     actions = tuple(_dedupe_actions([_action_for(blocker) for blocker in blockers]))
     plan_material = {
         "source_report_id": str(readiness.get("readiness_id", readiness.get("report_id", ""))),
@@ -117,6 +113,123 @@ def write_deployment_publication_closure_plan(
 
 
 def _action_for(blocker: str) -> DeploymentClosureAction:
+    if blocker == "deployment_witness_secret_missing":
+        return DeploymentClosureAction(
+            action_id="provision-deployment-witness-secret",
+            blocker=blocker,
+            action_type="secret-binding",
+            command=(
+                "Provision GitHub Actions secret MULLU_DEPLOYMENT_WITNESS_SECRET; "
+                "do not print or serialize the secret value."
+            ),
+            evidence_required=(
+                "gh_secret_list_presence:MULLU_DEPLOYMENT_WITNESS_SECRET",
+                "deployment_witness_preflight",
+            ),
+            risk_level="high",
+            approval_required=True,
+        )
+    if blocker == "deployment_runtime_witness_secret_missing":
+        return DeploymentClosureAction(
+            action_id="provision-runtime-witness-secret",
+            blocker=blocker,
+            action_type="secret-binding",
+            command=(
+                "Provision GitHub Actions secret MULLU_RUNTIME_WITNESS_SECRET; "
+                "do not print or serialize the secret value."
+            ),
+            evidence_required=(
+                "gh_secret_list_presence:MULLU_RUNTIME_WITNESS_SECRET",
+                "deployment_witness_preflight",
+            ),
+            risk_level="high",
+            approval_required=True,
+        )
+    if blocker == "deployment_runtime_conformance_secret_missing":
+        return DeploymentClosureAction(
+            action_id="provision-runtime-conformance-secret",
+            blocker=blocker,
+            action_type="secret-binding",
+            command=(
+                "Provision GitHub Actions secret MULLU_RUNTIME_CONFORMANCE_SECRET; "
+                "do not print or serialize the secret value."
+            ),
+            evidence_required=(
+                "gh_secret_list_presence:MULLU_RUNTIME_CONFORMANCE_SECRET",
+                "deployment_witness_preflight",
+            ),
+            risk_level="high",
+            approval_required=True,
+        )
+    if blocker == "deployment_repository_variables_mismatch":
+        return DeploymentClosureAction(
+            action_id="provision-deployment-target-variables",
+            blocker=blocker,
+            action_type="repository-variable-binding",
+            command=(
+                "python scripts/provision_deployment_target.py "
+                "--gateway-url \"$MULLU_GATEWAY_URL\" "
+                "--expected-environment \"$MULLU_EXPECTED_RUNTIME_ENV\""
+            ),
+            evidence_required=(
+                "gh_variable_list_presence:MULLU_GATEWAY_URL",
+                "gh_variable_list_presence:MULLU_EXPECTED_RUNTIME_ENV",
+                "deployment_witness_preflight",
+            ),
+            risk_level="high",
+            approval_required=True,
+        )
+    if blocker == "deployment_dns_not_verified":
+        return DeploymentClosureAction(
+            action_id="verify-gateway-dns",
+            blocker=blocker,
+            action_type="dns-verification",
+            command=(
+                "Resolve $MULLU_GATEWAY_HOST and rerun "
+                "python scripts/preflight_deployment_witness.py "
+                "--gateway-host \"$MULLU_GATEWAY_HOST\" "
+                "--gateway-url \"$MULLU_GATEWAY_URL\""
+            ),
+            evidence_required=(
+                "dns_resolution_receipt",
+                "deployment_witness_preflight",
+            ),
+            risk_level="high",
+            approval_required=True,
+        )
+    if blocker == "deployment_endpoint_contract_missing":
+        return DeploymentClosureAction(
+            action_id="verify-gateway-endpoint-contracts",
+            blocker=blocker,
+            action_type="endpoint-verification",
+            command=(
+                "Rerun deployment preflight with endpoint probes enabled and "
+                "collect /health, /gateway/witness, and /runtime/conformance evidence."
+            ),
+            evidence_required=(
+                "health_endpoint_receipt",
+                "runtime_witness_receipt",
+                "runtime_conformance_receipt",
+            ),
+            risk_level="high",
+            approval_required=True,
+        )
+    if blocker == "deployment_publication_workflow_unavailable":
+        return DeploymentClosureAction(
+            action_id="repair-deployment-publication-workflow",
+            blocker=blocker,
+            action_type="workflow-repair",
+            command=(
+                "Inspect .github/workflows/gateway-publication.yml and "
+                "deployment-witness.yml, restore active workflow state, then rerun readiness."
+            ),
+            evidence_required=(
+                "workflow_state_active",
+                "gateway_publication_readiness",
+            ),
+            risk_level="medium",
+            approval_required=True,
+        )
     if blocker == "deployment_witness_not_published":
         return DeploymentClosureAction(
             action_id="deployment-witness-publish-with-approval",
@@ -203,11 +316,55 @@ def _deployment_blockers() -> frozenset[str]:
     return frozenset(
         {
             "deployment_witness_not_published",
+            "deployment_witness_secret_missing",
+            "deployment_runtime_witness_secret_missing",
+            "deployment_runtime_conformance_secret_missing",
+            "deployment_repository_variables_mismatch",
+            "deployment_dns_not_verified",
+            "deployment_endpoint_contract_missing",
+            "deployment_publication_workflow_unavailable",
             "deployment_runtime_responsibility_debt_present",
             "deployment_authority_responsibility_debt_present",
             "production_health_not_declared",
         }
     )
+
+
+def _deployment_readiness_blockers(readiness: dict[str, Any]) -> tuple[str, ...]:
+    declared_blockers = [
+        blocker
+        for blocker in (str(item) for item in readiness.get("blockers", ()))
+        if blocker in _deployment_blockers() or blocker.startswith("deployment_")
+    ]
+    step_blockers = [
+        blocker
+        for step in readiness.get("steps", ())
+        if isinstance(step, dict) and step.get("passed") is not True
+        for blocker in _blockers_for_failed_step(step)
+    ]
+    return tuple(dict.fromkeys([*declared_blockers, *step_blockers]))
+
+
+def _blockers_for_failed_step(step: dict[str, Any]) -> tuple[str, ...]:
+    name = str(step.get("name", "")).casefold()
+    detail = str(step.get("detail", "")).casefold()
+    if name == "deployment witness secret" or "mullu_deployment_witness_secret" in detail:
+        return ("deployment_witness_secret_missing",)
+    if name == "runtime witness secret" or "mullu_runtime_witness_secret" in detail:
+        return ("deployment_runtime_witness_secret_missing",)
+    if name == "runtime conformance secret" or "mullu_runtime_conformance_secret" in detail:
+        return ("deployment_runtime_conformance_secret_missing",)
+    if name == "repository variables":
+        return ("deployment_repository_variables_mismatch",)
+    if name == "dns resolution":
+        return ("deployment_dns_not_verified",)
+    if name in {"gateway health endpoint", "gateway runtime witness endpoint", "runtime conformance endpoint"}:
+        return ("deployment_endpoint_contract_missing",)
+    if name in {"gateway publication workflow", "deployment witness workflow"}:
+        return ("deployment_publication_workflow_unavailable",)
+    if name == "kubeconfig secret":
+        return ("deployment_kubeconfig_secret_missing",)
+    return (f"deployment_{name.replace(' ', '_')}_failed",) if name else ("deployment_unknown_step_failed",)
 
 
 def _dedupe_actions(actions: list[DeploymentClosureAction]) -> list[DeploymentClosureAction]:
@@ -220,10 +377,21 @@ def _dedupe_actions(actions: list[DeploymentClosureAction]) -> list[DeploymentCl
 def _load_json_object(path: Path, label: str) -> dict[str, Any]:
     if not path.exists():
         raise FileNotFoundError(f"{label} file missing: {path}")
-    payload = json.loads(path.read_text(encoding="utf-8"))
+    try:
+        payload = _loads_strict_json(path.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, ValueError) as exc:
+        raise ValueError(f"{label} JSON parse failed") from exc
     if not isinstance(payload, dict):
         raise ValueError(f"{label} JSON root must be an object")
     return payload
+
+
+def _loads_strict_json(raw: str) -> Any:
+    return json.loads(raw, parse_constant=_reject_json_constant)
+
+
+def _reject_json_constant(raw_constant: str) -> None:
+    raise ValueError("non-finite JSON constants are not permitted")
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:

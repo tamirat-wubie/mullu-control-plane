@@ -496,8 +496,8 @@ def _validate_browser_sandbox_evidence(sandbox_evidence_ref: str) -> dict[str, A
         }
 
     try:
-        payload = json.loads(evidence_path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError):
+        payload = _loads_strict_json(evidence_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError, ValueError):
         return {
             "passed": False,
             "status": "failed",
@@ -559,6 +559,16 @@ def _validate_browser_sandbox_evidence(sandbox_evidence_ref: str) -> dict[str, A
         "receipt_id": receipt_id,
         "blockers": (),
     }
+
+
+def _loads_strict_json(raw: str) -> Any:
+    """Load deterministic JSON while rejecting non-finite constants."""
+    return json.loads(raw, parse_constant=_reject_json_constant)
+
+
+def _reject_json_constant(constant: str) -> None:
+    """Reject JSON constants outside the deterministic JSON subset."""
+    raise ValueError("non-finite JSON constant is not allowed")
 
 
 def _default_voice_executor() -> VoiceExecutor:

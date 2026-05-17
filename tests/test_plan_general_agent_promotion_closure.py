@@ -16,6 +16,8 @@ import json
 import sys
 from pathlib import Path
 
+import pytest
+
 _ROOT = Path(__file__).resolve().parent.parent
 if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))
@@ -46,6 +48,61 @@ def test_promotion_closure_plan_combines_adapter_and_deployment_actions(tmp_path
     assert source_types == {"adapter", "deployment"}
     assert "adapter_evidence_not_closed" in plan.blockers
     assert "production_health_not_declared" in plan.blockers
+
+
+def test_promotion_closure_plan_preserves_deployment_runtime_input_actions(tmp_path: Path) -> None:
+    readiness_path, adapter_plan_path, deployment_plan_path = _write_source_plans(tmp_path)
+    deployment_plan = json.loads(deployment_plan_path.read_text(encoding="utf-8"))
+    deployment_plan["blockers"] = [
+        "deployment_witness_secret_missing",
+        "deployment_dns_not_verified",
+    ]
+    deployment_plan["actions"] = [
+        {
+            "action_id": "provision-deployment-witness-secret",
+            "blocker": "deployment_witness_secret_missing",
+            "action_type": "secret-binding",
+            "command": (
+                "Provision GitHub Actions secret MULLU_DEPLOYMENT_WITNESS_SECRET; "
+                "do not print or serialize the secret value."
+            ),
+            "evidence_required": [
+                "gh_secret_list_presence:MULLU_DEPLOYMENT_WITNESS_SECRET",
+                "deployment_witness_preflight",
+            ],
+            "approval_required": True,
+        },
+        {
+            "action_id": "verify-gateway-dns",
+            "blocker": "deployment_dns_not_verified",
+            "action_type": "dns-verification",
+            "command": "Resolve $MULLU_GATEWAY_HOST and rerun deployment witness preflight.",
+            "evidence_required": [
+                "dns_resolution_receipt",
+                "deployment_witness_preflight",
+            ],
+            "approval_required": True,
+        },
+    ]
+    deployment_plan_path.write_text(json.dumps(deployment_plan), encoding="utf-8")
+
+    plan = plan_general_agent_promotion_closure(
+        readiness_path=readiness_path,
+        adapter_plan_path=adapter_plan_path,
+        deployment_plan_path=deployment_plan_path,
+    )
+    deployment_actions = {
+        action["action_id"]: action
+        for action in plan.actions
+        if action["source_plan_type"] == "deployment"
+    }
+
+    assert plan.total_action_count == 3
+    assert plan.approval_required_action_count == 3
+    assert deployment_actions["provision-deployment-witness-secret"]["action_type"] == "secret-binding"
+    assert deployment_actions["verify-gateway-dns"]["action_type"] == "dns-verification"
+    assert "deployment_witness_secret_missing" in plan.blockers
+    assert "deployment_dns_not_verified" in plan.blockers
 
 
 def test_promotion_closure_plan_writer_and_cli_emit_json(tmp_path: Path, capsys) -> None:
@@ -80,6 +137,25 @@ def test_promotion_closure_plan_writer_and_cli_emit_json(tmp_path: Path, capsys)
     assert payload["total_action_count"] == 3
     assert stdout_payload["plan_id"] == payload["plan_id"]
     assert payload["approval_required_action_count"] == 2
+
+
+def test_promotion_closure_plan_rejects_nonfinite_source_json(tmp_path: Path) -> None:
+    readiness_path, adapter_plan_path, deployment_plan_path = _write_source_plans(tmp_path)
+    readiness_path.write_text(
+        '{"ready": false, "readiness_level": "pilot-governed-core", "score": Infinity}',
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValueError) as excinfo:
+        plan_general_agent_promotion_closure(
+            readiness_path=readiness_path,
+            adapter_plan_path=adapter_plan_path,
+            deployment_plan_path=deployment_plan_path,
+        )
+
+    assert "promotion readiness JSON parse failed" in str(excinfo.value)
+    assert "Infinity" not in str(excinfo.value)
+    assert adapter_plan_path.exists()
 
 
 def _write_source_plans(tmp_path: Path) -> tuple[Path, Path, Path]:

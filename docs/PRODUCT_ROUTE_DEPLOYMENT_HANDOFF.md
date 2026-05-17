@@ -22,9 +22,11 @@ Invariants: this handoff closes `website_deployment_verification` only for the p
 | Current merged PR carrying launch literals | `https://github.com/tamirat-wubie/mullusi/pull/88` |
 | Current merged PR carrying active proof route | `https://github.com/mullusi/mullusi-site/pull/1` |
 | Current merged PR carrying active homepage boundary | `https://github.com/mullusi/mullusi-site/pull/2` |
+| Current merged PR carrying production-claim boundary | `https://github.com/mullusi/mullusi-site/pull/3` |
 | Current main commit carrying route | `93b7a6de942241424564f686aebee023a469ecde` |
 | Active Pages source commit carrying proof route | `c9badb0` |
 | Active Pages source commit carrying homepage boundary | `4866b0a` |
+| Active Pages source commit carrying production-claim boundary | `854a561bd002192846da056154ad355163c71b19` |
 | Redundant route PR | `https://github.com/tamirat-wubie/mullusi/pull/85` closed after route appeared on `origin/main` |
 | Live-route blocker issue | `https://github.com/tamirat-wubie/mullusi/issues/87` resolved by PR #88 live probe |
 | DNS Pages target | `mullusi.github.io` |
@@ -154,3 +156,24 @@ https://mullusi.com/ contains /mullu/, /proof/, and AwaitingEvidence
 This closes the homepage product-boundary copy gap. It does not close live
 runtime witness closure, standalone `mullu.mullusi.com` publication, legal
 clearance, paid launch readiness, or SDK/API stability review.
+
+## Production Claim Boundary Verification
+
+On 2026-05-16, `mullusi/mullusi-site` PR #3 was verified after merge. The
+active homepage and `/mullu/` product route both expose a production-claim
+boundary that separates company identity, product identity, and live runtime
+witness status.
+
+Direct probes from the current environment returned:
+
+```text
+https://mullusi.com/       HTTP 200, contains Production Claim Boundary and AwaitingEvidence
+https://mullusi.com/mullu/ HTTP 200, contains Production Claim Boundary and AwaitingEvidence
+```
+
+The active site validator now requires the production boundary section and the
+terms `Mullusi`, `Mullu`, `AwaitingEvidence`, `/health`, `/gateway/witness`,
+`/runtime/conformance`, and `/proof/` on both public pages.
+
+This closes the public website claim-boundary copy gap. It does not close live
+runtime witness closure, because the gateway endpoints remain unpublished.

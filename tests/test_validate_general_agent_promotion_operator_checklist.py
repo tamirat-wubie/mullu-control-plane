@@ -94,6 +94,27 @@ def test_validate_promotion_operator_checklist_rejects_missing_adapter_schema_ga
     assert any("validate_adapter_closure_plan_schema" in error for error in result.errors)
 
 
+def test_validate_promotion_operator_checklist_rejects_stale_readiness_count_evidence(
+    tmp_path: Path,
+) -> None:
+    checklist_path = tmp_path / "promotion_operator_checklist.json"
+    payload = json.loads(CHECKLIST_PATH.read_text(encoding="utf-8"))
+    for step in payload["required_commands"]:
+        if step["step_id"] == "write_promotion_readiness":
+            step["required_evidence"] = [
+                evidence for evidence in step["required_evidence"] if evidence != "capability_count=63"
+            ]
+            step["required_evidence"].append("capability_count=52")
+    checklist_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    result = validate_general_agent_promotion_operator_checklist(checklist_path)
+
+    assert result.valid is False
+    assert any("write_promotion_readiness required_evidence missing" in error for error in result.errors)
+    assert any("capability_count=63" in error for error in result.errors)
+    assert not any("capability_count=52" in error for error in result.errors)
+
+
 def test_validate_promotion_operator_checklist_missing_file_error_is_bounded(
     tmp_path: Path,
 ) -> None:
@@ -119,3 +140,20 @@ def test_validate_promotion_operator_checklist_json_parse_error_is_bounded(
     assert result.valid is False
     assert "checklist must be JSON" in result.errors
     assert "secret-json-token" not in serialized
+
+
+def test_validate_promotion_operator_checklist_rejects_nonfinite_json_constants(
+    tmp_path: Path,
+) -> None:
+    checklist_path = tmp_path / "checklist.json"
+    checklist_path.write_text(
+        '{"checklist_id": "general-agent-promotion-operator-v1", "score": Infinity}',
+        encoding="utf-8",
+    )
+
+    result = validate_general_agent_promotion_operator_checklist(checklist_path)
+    serialized = json.dumps(result.as_dict(), sort_keys=True)
+
+    assert result.valid is False
+    assert "checklist must be JSON" in result.errors
+    assert "Infinity" not in serialized

@@ -13,8 +13,8 @@ The current build moves Mullu from prompt-only extension toward governed capabil
 
 | Measure | Value |
 | --- | ---: |
-| Capability capsules | 10 capsules |
-| Governed capabilities | 52 capabilities |
+| Capability capsules | 12 capsules |
+| Governed capabilities | 63 capabilities |
 | Promotion readiness level | `pilot-governed-core` |
 
 The closure boundary is precise:
@@ -172,8 +172,8 @@ The generated readiness artifact reported:
 
 ```text
 readiness_level: pilot-governed-core
-capability_count: 52
-capsule_count: 10
+capability_count: 63
+capsule_count: 12
 ```
 
 STATUS:

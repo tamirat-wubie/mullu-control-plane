@@ -43,6 +43,10 @@ class TestAgentRegistration:
         assert proofs[0]["current_capability_count"] == 2
         assert proofs[0]["previous_registered"] is False
         assert proofs[0]["current_registered"] is True
+        assert proofs[0]["registered_agent_count"] == 1
+        assert proofs[0]["total_plan_count"] == 0
+        assert proofs[0]["active_plan_count"] == 0
+        assert proofs[0]["active_proposal_count"] == 0
 
     def test_register_existing_agent_records_update(self, orchestrator):
         orchestrator.register_agent("agent-a", ("deploy",))
@@ -59,6 +63,31 @@ class TestAgentRegistration:
         assert proofs[-1]["current_registered"] is True
         assert proofs[-1]["previous_capability_count"] == 2
         assert proofs[-1]["current_capability_count"] == 1
+        assert proofs[-1]["registered_agent_count"] == 3
+        assert proofs[-1]["total_plan_count"] == 0
+        assert proofs[-1]["active_plan_count"] == 0
+        assert proofs[-1]["active_proposal_count"] == 0
+
+    def test_register_existing_agent_records_active_plan_impact(self, orchestrator):
+        plan = orchestrator.create_plan("agent-a", "goal")
+        orchestrator.add_proposal(plan.plan_id, AgentProposal(
+            proposal_id="p1",
+            agent_id="agent-a",
+            action="search",
+            description="Search docs",
+            required_capabilities=("search",),
+        ))
+
+        orchestrator.register_agent("agent-a", ("search", "deploy"))
+        proof = orchestrator.registration_proofs()[-1]
+
+        assert proof["decision"] == "updated"
+        assert proof["registered_agent_count"] == 3
+        assert proof["total_plan_count"] == 1
+        assert proof["active_plan_count"] == 1
+        assert proof["active_proposal_count"] == 1
+        assert "search" not in repr(proof)
+        assert "deploy" not in repr(proof)
 
     def test_unregister(self, orchestrator):
         orchestrator.unregister_agent("agent-c")
@@ -73,6 +102,10 @@ class TestAgentRegistration:
         assert proofs[-1]["current_registered"] is False
         assert proofs[-1]["previous_capability_count"] == 3
         assert proofs[-1]["current_capability_count"] == 0
+        assert proofs[-1]["registered_agent_count"] == 2
+        assert proofs[-1]["total_plan_count"] == 0
+        assert proofs[-1]["active_plan_count"] == 0
+        assert proofs[-1]["active_proposal_count"] == 0
 
     def test_unregister_nonexistent(self, orchestrator):
         orchestrator.unregister_agent("ghost")  # no error
@@ -85,6 +118,9 @@ class TestAgentRegistration:
         assert proofs[-1]["reason"] == "agent unavailable"
         assert proofs[-1]["previous_registered"] is False
         assert proofs[-1]["current_registered"] is False
+        assert proofs[-1]["registered_agent_count"] == 3
+        assert proofs[-1]["active_plan_count"] == 0
+        assert proofs[-1]["active_proposal_count"] == 0
 
     def test_registration_proofs_limit_is_bounded(self, orchestrator):
         assert orchestrator.registration_proofs(limit=0) == []
@@ -97,14 +133,109 @@ class TestAgentRegistration:
 class TestPlanLifecycle:
     def test_create_plan(self, orchestrator):
         plan = orchestrator.create_plan("agent-a", "Summarize document")
+        proofs = orchestrator.plan_creation_proofs()
+
         assert plan.plan_id
         assert plan.phase == OrchestrationPhase.PLANNING
         assert plan.initiator_id == "agent-a"
+        assert len(proofs) == 1
+        assert proofs[0]["plan_id"] == plan.plan_id
+        assert proofs[0]["initiator_id"] == "agent-a"
+        assert proofs[0]["decision"] == "created"
+        assert proofs[0]["reason"] == "plan created"
+        assert proofs[0]["plan_phase"] == "planning"
+        assert proofs[0]["initiator_registered"] is True
+        assert proofs[0]["registered_agent_count"] == 3
+        assert proofs[0]["total_plan_count_before"] == 0
+        assert proofs[0]["total_plan_count_after"] == 1
+        assert proofs[0]["active_plan_count_before"] == 0
+        assert proofs[0]["active_plan_count_after"] == 1
+        assert proofs[0]["active_proposal_count_before"] == 0
+        assert proofs[0]["active_proposal_count_after"] == 0
+        assert "goal" not in proofs[0]
 
     def test_create_plan_unknown_agent(self, orchestrator):
         with pytest.raises(ValueError, match="^initiator agent unavailable$") as exc_info:
             orchestrator.create_plan("ghost", "goal")
+        proofs = orchestrator.plan_creation_proofs()
+
         assert "ghost" not in str(exc_info.value)
+        assert len(proofs) == 1
+        assert proofs[0]["plan_id"] == ""
+        assert proofs[0]["initiator_id"] == "ghost"
+        assert proofs[0]["decision"] == "rejected"
+        assert proofs[0]["reason"] == "initiator agent unavailable"
+        assert proofs[0]["plan_phase"] == ""
+        assert proofs[0]["initiator_registered"] is False
+        assert proofs[0]["total_plan_count_before"] == 0
+        assert proofs[0]["total_plan_count_after"] == 0
+        assert proofs[0]["active_plan_count_before"] == 0
+        assert proofs[0]["active_plan_count_after"] == 0
+        assert proofs[0]["active_proposal_count_before"] == 0
+        assert proofs[0]["active_proposal_count_after"] == 0
+        assert "goal" not in proofs[0]
+
+    def test_create_plan_records_existing_active_surface(self, orchestrator):
+        first = orchestrator.create_plan("agent-a", "goal")
+        orchestrator.add_proposal(first.plan_id, AgentProposal(
+            proposal_id="p1",
+            agent_id="agent-a",
+            action="search",
+            description="Search docs",
+            required_capabilities=("search",),
+        ))
+
+        second = orchestrator.create_plan("agent-b", "goal")
+        proof = orchestrator.plan_creation_proofs()[-1]
+
+        assert second.plan_id
+        assert proof["decision"] == "created"
+        assert proof["total_plan_count_before"] == 1
+        assert proof["total_plan_count_after"] == 2
+        assert proof["active_plan_count_before"] == 1
+        assert proof["active_plan_count_after"] == 2
+        assert proof["active_proposal_count_before"] == 1
+        assert proof["active_proposal_count_after"] == 1
+
+    def test_plan_creation_proofs_limit_is_bounded(self, orchestrator):
+        orchestrator.create_plan("agent-a", "goal")
+        orchestrator.create_plan("agent-b", "goal")
+
+        assert orchestrator.plan_creation_proofs(limit=0) == []
+        assert [
+            proof["proof_id"]
+            for proof in orchestrator.plan_creation_proofs(limit=1)
+        ] == ["plan-create:2"]
+
+    def test_get_plan_records_lookup_proofs(self, orchestrator):
+        plan = orchestrator.create_plan("agent-a", "goal")
+
+        assert orchestrator.get_plan(plan.plan_id) is plan
+        assert orchestrator.get_plan("missing-plan") is None
+        proofs = orchestrator.plan_lookup_proofs()
+
+        assert [proof["decision"] for proof in proofs] == ["found", "unavailable"]
+        assert proofs[0]["action"] == "get_plan"
+        assert proofs[0]["plan_id"] == plan.plan_id
+        assert proofs[0]["plan_available"] is True
+        assert proofs[0]["plan_phase"] == "planning"
+        assert proofs[0]["active_plan_count"] == 1
+        assert proofs[1]["action"] == "get_plan"
+        assert proofs[1]["plan_id"] == ""
+        assert proofs[1]["plan_available"] is False
+        assert proofs[1]["reason"] == "plan unavailable"
+        assert "missing-plan" not in repr(proofs[1])
+
+    def test_plan_lookup_proofs_limit_is_bounded(self, orchestrator):
+        plan = orchestrator.create_plan("agent-a", "goal")
+        orchestrator.get_plan(plan.plan_id)
+        orchestrator.get_plan("missing-plan")
+
+        assert orchestrator.plan_lookup_proofs(limit=0) == []
+        assert [
+            proof["proof_id"]
+            for proof in orchestrator.plan_lookup_proofs(limit=1)
+        ] == ["plan-lookup:2"]
 
     def test_add_proposal(self, orchestrator):
         plan = orchestrator.create_plan("agent-a", "goal")
@@ -115,8 +246,13 @@ class TestPlanLifecycle:
         orchestrator.add_proposal(plan.plan_id, proposal)
         assert len(plan.proposals) == 1
         assert len(plan.proposal_proofs) == 1
-        assert plan.proposal_proofs[0].decision == "accepted"
-        assert plan.proposal_proofs[0].reason == "proposal admitted"
+        proof = plan.proposal_proofs[0]
+        assert proof.decision == "accepted"
+        assert proof.reason == "proposal admitted"
+        assert proof.proposal_count_before == 0
+        assert proof.proposal_count_after == 1
+        assert proof.active_proposal_count_before == 0
+        assert proof.active_proposal_count_after == 1
 
     def test_add_proposal_wrong_phase(self, orchestrator):
         plan = orchestrator.create_plan("agent-a", "goal")
@@ -127,8 +263,13 @@ class TestPlanLifecycle:
         with pytest.raises(ValueError, match="^plan not accepting proposals$") as exc_info:
             orchestrator.add_proposal(plan.plan_id, proposal)
         assert OrchestrationPhase.VOTING.value not in str(exc_info.value)
-        assert plan.proposal_proofs[-1].decision == "rejected"
-        assert plan.proposal_proofs[-1].reason == "plan not accepting proposals"
+        proof = plan.proposal_proofs[-1]
+        assert proof.decision == "rejected"
+        assert proof.reason == "plan not accepting proposals"
+        assert proof.proposal_count_before == 1
+        assert proof.proposal_count_after == 1
+        assert proof.active_proposal_count_before == 1
+        assert proof.active_proposal_count_after == 1
 
     def test_add_proposal_rejects_duplicate_proposal_id(self, orchestrator):
         plan = orchestrator.create_plan("agent-a", "goal")
@@ -147,8 +288,13 @@ class TestPlanLifecycle:
 
         assert "p1" not in str(exc_info.value)
         assert len(plan.proposals) == 1
-        assert plan.proposal_proofs[-1].decision == "rejected"
-        assert plan.proposal_proofs[-1].reason == "proposal already recorded"
+        proof = plan.proposal_proofs[-1]
+        assert proof.decision == "rejected"
+        assert proof.reason == "proposal already recorded"
+        assert proof.proposal_count_before == 1
+        assert proof.proposal_count_after == 1
+        assert proof.active_proposal_count_before == 1
+        assert proof.active_proposal_count_after == 1
 
     def test_add_proposal_plan_unavailable(self, orchestrator):
         proposal = AgentProposal(
@@ -157,7 +303,16 @@ class TestPlanLifecycle:
         )
         with pytest.raises(ValueError, match="^plan unavailable$") as exc_info:
             orchestrator.add_proposal("missing-plan", proposal)
+        proofs = orchestrator.plan_lookup_proofs()
+
         assert "missing-plan" not in str(exc_info.value)
+        assert len(proofs) == 1
+        assert proofs[0]["action"] == "add_proposal"
+        assert proofs[0]["decision"] == "unavailable"
+        assert proofs[0]["reason"] == "plan unavailable"
+        assert proofs[0]["plan_id"] == ""
+        assert proofs[0]["plan_available"] is False
+        assert "missing-plan" not in repr(proofs[0])
 
     def test_add_proposal_rejects_unknown_proposer_before_voting(self, orchestrator):
         plan = orchestrator.create_plan("agent-a", "goal")
@@ -174,8 +329,13 @@ class TestPlanLifecycle:
 
         assert "ghost" not in str(exc_info.value)
         assert plan.proposals == []
-        assert plan.proposal_proofs[0].decision == "rejected"
-        assert plan.proposal_proofs[0].agent_registered is False
+        proof = plan.proposal_proofs[0]
+        assert proof.decision == "rejected"
+        assert proof.agent_registered is False
+        assert proof.proposal_count_before == 0
+        assert proof.proposal_count_after == 0
+        assert proof.active_proposal_count_before == 0
+        assert proof.active_proposal_count_after == 0
 
     def test_add_proposal_rejects_missing_agent_capability_before_voting(self, orchestrator):
         plan = orchestrator.create_plan("agent-a", "goal")
@@ -192,8 +352,13 @@ class TestPlanLifecycle:
 
         assert "deploy" not in str(exc_info.value)
         assert plan.proposals == []
-        assert plan.proposal_proofs[0].decision == "rejected"
-        assert plan.proposal_proofs[0].agent_capable is False
+        proof = plan.proposal_proofs[0]
+        assert proof.decision == "rejected"
+        assert proof.agent_capable is False
+        assert proof.proposal_count_before == 0
+        assert proof.proposal_count_after == 0
+        assert proof.active_proposal_count_before == 0
+        assert proof.active_proposal_count_after == 0
 
     def test_add_proposal_rejects_unmanifested_capability_before_voting(self):
         orch = AgentOrchestrator(
@@ -215,8 +380,13 @@ class TestPlanLifecycle:
 
         assert "deploy" not in str(exc_info.value)
         assert plan.proposals == []
-        assert plan.proposal_proofs[0].decision == "rejected"
-        assert plan.proposal_proofs[0].manifest_admitted is False
+        proof = plan.proposal_proofs[0]
+        assert proof.decision == "rejected"
+        assert proof.manifest_admitted is False
+        assert proof.proposal_count_before == 0
+        assert proof.proposal_count_after == 0
+        assert proof.active_proposal_count_before == 0
+        assert proof.active_proposal_count_after == 0
 
     def test_submit_empty_plan_fails(self, orchestrator):
         plan = orchestrator.create_plan("agent-a", "goal")
@@ -227,6 +397,123 @@ class TestPlanLifecycle:
         assert plan.submission_proofs[0].reason == "empty plan"
         assert plan.submission_proofs[0].proposal_count == 0
         assert plan.submission_proofs[0].quorum_possible is False
+        assert plan.submission_proofs[0].phase_changed is False
+        assert plan.submission_proofs[0].active_plan_count_before == 1
+        assert plan.submission_proofs[0].active_plan_count_after == 1
+        assert plan.submission_proofs[0].active_proposal_count_before == 0
+        assert plan.submission_proofs[0].active_proposal_count_after == 0
+        assert plan.submission_proofs[0].from_phase_plan_count_before == 1
+        assert plan.submission_proofs[0].from_phase_plan_count_after == 1
+        assert plan.submission_proofs[0].to_phase_plan_count_before == 1
+        assert plan.submission_proofs[0].to_phase_plan_count_after == 1
+
+    def test_submit_for_voting_plan_unavailable_records_lookup(self, orchestrator):
+        with pytest.raises(ValueError, match="^plan unavailable$") as exc_info:
+            orchestrator.submit_for_voting("missing-plan")
+        proofs = orchestrator.plan_lookup_proofs()
+
+        assert "missing-plan" not in str(exc_info.value)
+        assert len(proofs) == 1
+        assert proofs[0]["action"] == "submit_for_voting"
+        assert proofs[0]["decision"] == "unavailable"
+        assert proofs[0]["plan_id"] == ""
+        assert proofs[0]["plan_available"] is False
+
+
+class TestCapabilityPolicy:
+    def test_constructor_records_initial_manifest_binding(self):
+        orch = AgentOrchestrator(
+            clock=_clock,
+            agent_capabilities={"agent-a": ("search",)},
+            admitted_capabilities=("search", "deploy"),
+        )
+        proofs = orch.manifest_binding_proofs()
+
+        assert len(proofs) == 1
+        assert proofs[0]["proof_id"] == "manifest-binding:1"
+        assert proofs[0]["action"] == "initialize"
+        assert proofs[0]["decision"] == "gated"
+        assert proofs[0]["reason"] == "manifest binding gated"
+        assert proofs[0]["manifest_read_model_available"] is False
+        assert proofs[0]["raw_capability_count"] == 2
+        assert proofs[0]["admitted_capability_count"] == 2
+        assert proofs[0]["manifest_gated"] is True
+        assert proofs[0]["registered_agent_count"] == 1
+        assert "search" not in repr(proofs[0])
+        assert "deploy" not in repr(proofs[0])
+
+    def test_set_admitted_capabilities_records_policy_transitions(self, orchestrator):
+        orchestrator.set_admitted_capabilities(("search",))
+        orchestrator.set_admitted_capabilities(("search", "deploy"))
+        orchestrator.set_admitted_capabilities(("deploy", "search"))
+        orchestrator.set_admitted_capabilities(None)
+
+        proofs = orchestrator.capability_policy_proofs()
+
+        assert [proof["decision"] for proof in proofs] == [
+            "gated",
+            "updated",
+            "unchanged",
+            "ungated",
+        ]
+        assert proofs[0]["previous_manifest_gated"] is False
+        assert proofs[0]["current_manifest_gated"] is True
+        assert proofs[0]["previous_admitted_capability_count"] == 0
+        assert proofs[0]["current_admitted_capability_count"] == 1
+        assert proofs[0]["added_capability_count"] == 1
+        assert proofs[0]["removed_capability_count"] == 0
+        assert proofs[0]["registered_agent_count"] == 3
+        assert proofs[0]["total_plan_count"] == 0
+        assert proofs[0]["active_plan_count"] == 0
+        assert proofs[0]["active_proposal_count"] == 0
+        assert proofs[1]["previous_admitted_capability_count"] == 1
+        assert proofs[1]["current_admitted_capability_count"] == 2
+        assert proofs[1]["added_capability_count"] == 1
+        assert proofs[1]["removed_capability_count"] == 0
+        assert proofs[2]["reason"] == "capability policy unchanged"
+        assert proofs[2]["added_capability_count"] == 0
+        assert proofs[2]["removed_capability_count"] == 0
+        assert proofs[3]["previous_manifest_gated"] is True
+        assert proofs[3]["current_manifest_gated"] is False
+        assert proofs[3]["current_admitted_capability_count"] == 0
+        assert proofs[3]["removed_capability_count"] == 2
+
+    def test_capability_policy_proof_records_active_plan_impact(self, orchestrator):
+        plan = orchestrator.create_plan("agent-a", "goal")
+        orchestrator.add_proposal(plan.plan_id, AgentProposal(
+            proposal_id="p1",
+            agent_id="agent-a",
+            action="search",
+            description="Search docs",
+            required_capabilities=("search",),
+        ))
+
+        orchestrator.set_admitted_capabilities(("search",))
+        proof = orchestrator.capability_policy_proofs()[0]
+
+        assert proof["decision"] == "gated"
+        assert proof["registered_agent_count"] == 3
+        assert proof["total_plan_count"] == 1
+        assert proof["active_plan_count"] == 1
+        assert proof["active_proposal_count"] == 1
+        assert "search" not in repr(proof)
+
+    def test_capability_policy_proofs_limit_is_bounded(self, orchestrator):
+        orchestrator.set_admitted_capabilities(("search",))
+        orchestrator.set_admitted_capabilities(None)
+
+        assert orchestrator.capability_policy_proofs(limit=0) == []
+        assert [
+            proof["proof_id"]
+            for proof in orchestrator.capability_policy_proofs(limit=1)
+        ] == ["capability-policy:2"]
+
+    def test_manifest_binding_proofs_limit_is_bounded(self, orchestrator):
+        assert orchestrator.manifest_binding_proofs(limit=0) == []
+        assert [
+            proof["proof_id"]
+            for proof in orchestrator.manifest_binding_proofs(limit=1)
+        ] == ["manifest-binding:1"]
 
 
 class TestVotingAndConsensus:
@@ -245,6 +532,15 @@ class TestVotingAndConsensus:
         assert plan.submission_proofs[0].proposal_count == 1
         assert plan.submission_proofs[0].voter_count == 3
         assert plan.submission_proofs[0].quorum_possible is True
+        assert plan.submission_proofs[0].phase_changed is True
+        assert plan.submission_proofs[0].active_plan_count_before == 1
+        assert plan.submission_proofs[0].active_plan_count_after == 1
+        assert plan.submission_proofs[0].active_proposal_count_before == 1
+        assert plan.submission_proofs[0].active_proposal_count_after == 1
+        assert plan.submission_proofs[0].from_phase_plan_count_before == 1
+        assert plan.submission_proofs[0].from_phase_plan_count_after == 0
+        assert plan.submission_proofs[0].to_phase_plan_count_before == 0
+        assert plan.submission_proofs[0].to_phase_plan_count_after == 1
 
     def test_submit_for_voting_wrong_phase_records_proof(self, orchestrator):
         plan = orchestrator.create_plan("agent-a", "goal")
@@ -262,6 +558,15 @@ class TestVotingAndConsensus:
         assert plan.submission_proofs[-1].reason == "plan not accepting submission"
         assert plan.submission_proofs[-1].from_phase == "voting"
         assert plan.submission_proofs[-1].to_phase == "voting"
+        assert plan.submission_proofs[-1].phase_changed is False
+        assert plan.submission_proofs[-1].active_plan_count_before == 1
+        assert plan.submission_proofs[-1].active_plan_count_after == 1
+        assert plan.submission_proofs[-1].active_proposal_count_before == 1
+        assert plan.submission_proofs[-1].active_proposal_count_after == 1
+        assert plan.submission_proofs[-1].from_phase_plan_count_before == 1
+        assert plan.submission_proofs[-1].from_phase_plan_count_after == 1
+        assert plan.submission_proofs[-1].to_phase_plan_count_before == 1
+        assert plan.submission_proofs[-1].to_phase_plan_count_after == 1
 
     def test_cast_vote(self, orchestrator):
         plan = orchestrator.create_plan("agent-a", "goal")
@@ -274,6 +579,18 @@ class TestVotingAndConsensus:
         assert plan.approval_count == 2
         assert [proof.decision for proof in plan.vote_proofs] == ["accepted", "accepted"]
         assert [proof.vote for proof in plan.vote_proofs] == ["approve", "approve"]
+        assert plan.vote_proofs[0].vote_count_before == 0
+        assert plan.vote_proofs[0].vote_count_after == 1
+        assert plan.vote_proofs[0].approval_count_before == 0
+        assert plan.vote_proofs[0].approval_count_after == 1
+        assert plan.vote_proofs[0].rejection_count_before == 0
+        assert plan.vote_proofs[0].rejection_count_after == 0
+        assert plan.vote_proofs[1].vote_count_before == 1
+        assert plan.vote_proofs[1].vote_count_after == 2
+        assert plan.vote_proofs[1].approval_count_before == 1
+        assert plan.vote_proofs[1].approval_count_after == 2
+        assert plan.vote_proofs[1].rejection_count_before == 0
+        assert plan.vote_proofs[1].rejection_count_after == 0
 
     def test_quorum_reached(self, orchestrator):
         plan = orchestrator.create_plan("agent-a", "goal")
@@ -284,6 +601,17 @@ class TestVotingAndConsensus:
         orchestrator.cast_vote(plan.plan_id, "agent-a", Vote.APPROVE)
         orchestrator.cast_vote(plan.plan_id, "agent-b", Vote.APPROVE)
         assert orchestrator.check_consensus(plan.plan_id)
+        proofs = orchestrator.consensus_proofs()
+        assert len(proofs) == 1
+        assert proofs[0]["plan_id"] == plan.plan_id
+        assert proofs[0]["decision"] == "met"
+        assert proofs[0]["reason"] == "consensus quorum met"
+        assert proofs[0]["plan_phase"] == "voting"
+        assert proofs[0]["plan_available"] is True
+        assert proofs[0]["vote_count"] == 2
+        assert proofs[0]["approval_count"] == 2
+        assert proofs[0]["registered_agent_count"] == 3
+        assert proofs[0]["quorum_met"] is True
 
     def test_quorum_not_reached(self, orchestrator):
         plan = orchestrator.create_plan("agent-a", "goal")
@@ -294,15 +622,62 @@ class TestVotingAndConsensus:
         orchestrator.cast_vote(plan.plan_id, "agent-a", Vote.APPROVE)
         orchestrator.cast_vote(plan.plan_id, "agent-b", Vote.REJECT)
         orchestrator.cast_vote(plan.plan_id, "agent-c", Vote.REJECT)
+        vote_proof = plan.vote_proofs[-1]
         assert not orchestrator.check_consensus(plan.plan_id)
+        proofs = orchestrator.consensus_proofs()
+        assert vote_proof.vote_count_before == 2
+        assert vote_proof.vote_count_after == 3
+        assert vote_proof.approval_count_before == 1
+        assert vote_proof.approval_count_after == 1
+        assert vote_proof.rejection_count_before == 1
+        assert vote_proof.rejection_count_after == 2
+        assert len(proofs) == 1
+        assert proofs[0]["plan_id"] == plan.plan_id
+        assert proofs[0]["decision"] == "not_met"
+        assert proofs[0]["reason"] == "consensus quorum not met"
+        assert proofs[0]["vote_count"] == 3
+        assert proofs[0]["approval_count"] == 1
+        assert proofs[0]["rejection_count"] == 2
+        assert proofs[0]["quorum_met"] is False
+
+    def test_check_consensus_unavailable_plan_records_proof(self, orchestrator):
+        assert not orchestrator.check_consensus("missing-plan")
+        proofs = orchestrator.consensus_proofs()
+        assert len(proofs) == 1
+        assert proofs[0]["plan_id"] == ""
+        assert proofs[0]["decision"] == "unavailable"
+        assert proofs[0]["reason"] == "plan unavailable"
+        assert proofs[0]["plan_phase"] == ""
+        assert proofs[0]["plan_available"] is False
+        assert proofs[0]["vote_count"] == 0
+        assert proofs[0]["quorum_met"] is False
+
+    def test_consensus_proofs_limit_is_bounded(self, orchestrator):
+        first = orchestrator.create_plan("agent-a", "goal")
+        second = orchestrator.create_plan("agent-b", "goal")
+        orchestrator.check_consensus(first.plan_id)
+        orchestrator.check_consensus(second.plan_id)
+
+        assert orchestrator.consensus_proofs(limit=0) == []
+        assert [
+            proof["proof_id"]
+            for proof in orchestrator.consensus_proofs(limit=1)
+        ] == ["consensus:2"]
 
     def test_vote_wrong_phase(self, orchestrator):
         plan = orchestrator.create_plan("agent-a", "goal")
         with pytest.raises(ValueError, match="^plan not accepting votes$") as exc_info:
             orchestrator.cast_vote(plan.plan_id, "agent-a", Vote.APPROVE)
         assert OrchestrationPhase.PLANNING.value not in str(exc_info.value)
-        assert plan.vote_proofs[0].decision == "rejected"
-        assert plan.vote_proofs[0].reason == "plan not accepting votes"
+        proof = plan.vote_proofs[0]
+        assert proof.decision == "rejected"
+        assert proof.reason == "plan not accepting votes"
+        assert proof.vote_count_before == 0
+        assert proof.vote_count_after == 0
+        assert proof.approval_count_before == 0
+        assert proof.approval_count_after == 0
+        assert proof.rejection_count_before == 0
+        assert proof.rejection_count_after == 0
 
     def test_vote_unknown_agent(self, orchestrator):
         plan = orchestrator.create_plan("agent-a", "goal")
@@ -313,8 +688,15 @@ class TestVotingAndConsensus:
         with pytest.raises(ValueError, match="^voting agent unavailable$") as exc_info:
             orchestrator.cast_vote(plan.plan_id, "ghost", Vote.APPROVE)
         assert "ghost" not in str(exc_info.value)
-        assert plan.vote_proofs[0].decision == "rejected"
-        assert plan.vote_proofs[0].voter_registered is False
+        proof = plan.vote_proofs[0]
+        assert proof.decision == "rejected"
+        assert proof.voter_registered is False
+        assert proof.vote_count_before == 0
+        assert proof.vote_count_after == 0
+        assert proof.approval_count_before == 0
+        assert proof.approval_count_after == 0
+        assert proof.rejection_count_before == 0
+        assert proof.rejection_count_after == 0
 
     def test_vote_rejects_duplicate_voter(self, orchestrator):
         plan = orchestrator.create_plan("agent-a", "goal")
@@ -329,13 +711,27 @@ class TestVotingAndConsensus:
 
         assert "agent-a" not in str(exc_info.value)
         assert plan.votes["agent-a"] == Vote.APPROVE
-        assert plan.vote_proofs[-1].decision == "rejected"
-        assert plan.vote_proofs[-1].reason == "vote already recorded"
+        proof = plan.vote_proofs[-1]
+        assert proof.decision == "rejected"
+        assert proof.reason == "vote already recorded"
+        assert proof.vote_count_before == 1
+        assert proof.vote_count_after == 1
+        assert proof.approval_count_before == 1
+        assert proof.approval_count_after == 1
+        assert proof.rejection_count_before == 0
+        assert proof.rejection_count_after == 0
 
     def test_vote_plan_unavailable(self, orchestrator):
         with pytest.raises(ValueError, match="^plan unavailable$") as exc_info:
             orchestrator.cast_vote("missing-plan", "agent-a", Vote.APPROVE)
+        proofs = orchestrator.plan_lookup_proofs()
+
         assert "missing-plan" not in str(exc_info.value)
+        assert len(proofs) == 1
+        assert proofs[0]["action"] == "cast_vote"
+        assert proofs[0]["decision"] == "unavailable"
+        assert proofs[0]["plan_id"] == ""
+        assert proofs[0]["plan_available"] is False
 
 
 class TestPlanExecution:
@@ -355,6 +751,15 @@ class TestPlanExecution:
         assert result.results[0]["proof_id"] == result.dispatch_proofs[0].proof_id
         assert result.dispatch_proofs[0].decision == "executed"
         assert result.dispatch_proofs[0].reason == "proposal dispatched"
+        assert result.dispatch_proofs[0].suppressed_executor_key_count == 1
+        assert result.dispatch_proofs[0].dispatch_count_before == 0
+        assert result.dispatch_proofs[0].dispatch_count_after == 1
+        assert result.dispatch_proofs[0].result_count_before == 0
+        assert result.dispatch_proofs[0].result_count_after == 1
+        assert result.dispatch_proofs[0].successful_result_count_before == 0
+        assert result.dispatch_proofs[0].successful_result_count_after == 1
+        assert result.dispatch_proofs[0].failed_result_count_before == 0
+        assert result.dispatch_proofs[0].failed_result_count_after == 0
         assert len(result.execution_proofs) == 1
         assert result.execution_proofs[0].decision == "accepted"
         assert result.execution_proofs[0].reason == "execution admitted"
@@ -364,6 +769,35 @@ class TestPlanExecution:
         assert result.execution_proofs[0].vote_count == 2
         assert result.execution_proofs[0].approval_count == 2
         assert result.execution_proofs[0].quorum_met is True
+        assert result.execution_proofs[0].phase_changed is True
+        assert result.execution_proofs[0].active_plan_count_before == 1
+        assert result.execution_proofs[0].active_plan_count_after == 1
+        assert result.execution_proofs[0].active_proposal_count_before == 1
+        assert result.execution_proofs[0].active_proposal_count_after == 1
+        assert result.execution_proofs[0].from_phase_plan_count_before == 1
+        assert result.execution_proofs[0].from_phase_plan_count_after == 0
+        assert result.execution_proofs[0].to_phase_plan_count_before == 0
+        assert result.execution_proofs[0].to_phase_plan_count_after == 1
+        assert len(result.finalization_proofs) == 1
+        assert result.finalization_proofs[0].decision == "completed"
+        assert result.finalization_proofs[0].reason == "all dispatches succeeded"
+        assert result.finalization_proofs[0].from_phase == "executing"
+        assert result.finalization_proofs[0].to_phase == "completed"
+        assert result.finalization_proofs[0].proposal_count == 1
+        assert result.finalization_proofs[0].result_count == 1
+        assert result.finalization_proofs[0].successful_result_count == 1
+        assert result.finalization_proofs[0].failed_result_count == 0
+        assert result.finalization_proofs[0].dispatch_count == 1
+        assert result.finalization_proofs[0].quorum_met is True
+        assert result.finalization_proofs[0].phase_changed is True
+        assert result.finalization_proofs[0].active_plan_count_before == 1
+        assert result.finalization_proofs[0].active_plan_count_after == 0
+        assert result.finalization_proofs[0].active_proposal_count_before == 1
+        assert result.finalization_proofs[0].active_proposal_count_after == 0
+        assert result.finalization_proofs[0].from_phase_plan_count_before == 1
+        assert result.finalization_proofs[0].from_phase_plan_count_after == 0
+        assert result.finalization_proofs[0].to_phase_plan_count_before == 0
+        assert result.finalization_proofs[0].to_phase_plan_count_after == 1
 
     def test_execute_without_quorum_fails(self, orchestrator):
         plan = orchestrator.create_plan("agent-a", "goal")
@@ -379,6 +813,14 @@ class TestPlanExecution:
         assert result.dispatch_proofs[0].decision == "blocked"
         assert result.dispatch_proofs[0].reason == "consensus quorum not met"
         assert result.dispatch_proofs[0].quorum_met is False
+        assert result.dispatch_proofs[0].dispatch_count_before == 0
+        assert result.dispatch_proofs[0].dispatch_count_after == 1
+        assert result.dispatch_proofs[0].result_count_before == 0
+        assert result.dispatch_proofs[0].result_count_after == 0
+        assert result.dispatch_proofs[0].successful_result_count_before == 0
+        assert result.dispatch_proofs[0].successful_result_count_after == 0
+        assert result.dispatch_proofs[0].failed_result_count_before == 0
+        assert result.dispatch_proofs[0].failed_result_count_after == 0
         assert len(result.execution_proofs) == 1
         assert result.execution_proofs[0].decision == "blocked"
         assert result.execution_proofs[0].reason == "consensus quorum not met"
@@ -387,6 +829,32 @@ class TestPlanExecution:
         assert result.execution_proofs[0].approval_count == 1
         assert result.execution_proofs[0].voter_count == 3
         assert result.execution_proofs[0].quorum_met is False
+        assert result.execution_proofs[0].phase_changed is True
+        assert result.execution_proofs[0].active_plan_count_before == 1
+        assert result.execution_proofs[0].active_plan_count_after == 0
+        assert result.execution_proofs[0].active_proposal_count_before == 1
+        assert result.execution_proofs[0].active_proposal_count_after == 0
+        assert result.execution_proofs[0].from_phase_plan_count_before == 1
+        assert result.execution_proofs[0].from_phase_plan_count_after == 0
+        assert result.execution_proofs[0].to_phase_plan_count_before == 0
+        assert result.execution_proofs[0].to_phase_plan_count_after == 1
+        assert len(result.finalization_proofs) == 1
+        assert result.finalization_proofs[0].decision == "failed"
+        assert result.finalization_proofs[0].reason == "consensus quorum not met"
+        assert result.finalization_proofs[0].from_phase == "voting"
+        assert result.finalization_proofs[0].to_phase == "failed"
+        assert result.finalization_proofs[0].result_count == 0
+        assert result.finalization_proofs[0].dispatch_count == 1
+        assert result.finalization_proofs[0].quorum_met is False
+        assert result.finalization_proofs[0].phase_changed is True
+        assert result.finalization_proofs[0].active_plan_count_before == 1
+        assert result.finalization_proofs[0].active_plan_count_after == 0
+        assert result.finalization_proofs[0].active_proposal_count_before == 1
+        assert result.finalization_proofs[0].active_proposal_count_after == 0
+        assert result.finalization_proofs[0].from_phase_plan_count_before == 1
+        assert result.finalization_proofs[0].from_phase_plan_count_after == 0
+        assert result.finalization_proofs[0].to_phase_plan_count_before == 0
+        assert result.finalization_proofs[0].to_phase_plan_count_after == 1
 
     def test_execute_with_custom_executor(self, orchestrator):
         plan = orchestrator.create_plan("agent-a", "goal")
@@ -405,6 +873,11 @@ class TestPlanExecution:
         assert result.results[0]["proof_id"] == result.dispatch_proofs[0].proof_id
         assert result.dispatch_proofs[0].agent_registered is True
         assert result.dispatch_proofs[0].manifest_admitted is True
+        assert result.dispatch_proofs[0].suppressed_executor_key_count == 0
+        assert result.dispatch_proofs[0].result_count_before == 0
+        assert result.dispatch_proofs[0].result_count_after == 1
+        assert result.dispatch_proofs[0].successful_result_count_after == 1
+        assert result.dispatch_proofs[0].failed_result_count_after == 0
 
     def test_execute_suppresses_executor_reserved_result_keys(self, orchestrator):
         class SpoofedProofKey:
@@ -446,6 +919,11 @@ class TestPlanExecution:
             "suppressed_executor_keys",
             "proof_id",
         )
+        assert result.dispatch_proofs[0].suppressed_executor_key_count == 6
+        assert result.dispatch_proofs[0].result_count_before == 0
+        assert result.dispatch_proofs[0].result_count_after == 1
+        assert result.dispatch_proofs[0].successful_result_count_after == 1
+        assert result.dispatch_proofs[0].failed_result_count_after == 0
 
     def test_execute_with_failing_executor(self, orchestrator):
         plan = orchestrator.create_plan("agent-a", "goal")
@@ -465,6 +943,26 @@ class TestPlanExecution:
         assert result.results[0]["proof_id"] == result.dispatch_proofs[0].proof_id
         assert result.dispatch_proofs[0].decision == "failed"
         assert result.dispatch_proofs[0].reason == "executor error"
+        assert result.dispatch_proofs[0].dispatch_count_before == 0
+        assert result.dispatch_proofs[0].dispatch_count_after == 1
+        assert result.dispatch_proofs[0].result_count_before == 0
+        assert result.dispatch_proofs[0].result_count_after == 1
+        assert result.dispatch_proofs[0].successful_result_count_after == 0
+        assert result.dispatch_proofs[0].failed_result_count_after == 1
+        assert result.finalization_proofs[0].decision == "failed"
+        assert result.finalization_proofs[0].reason == "one or more dispatches failed"
+        assert result.finalization_proofs[0].failed_result_count == 1
+        assert result.finalization_proofs[0].from_phase == "executing"
+        assert result.finalization_proofs[0].to_phase == "failed"
+        assert result.finalization_proofs[0].phase_changed is True
+        assert result.finalization_proofs[0].active_plan_count_before == 1
+        assert result.finalization_proofs[0].active_plan_count_after == 0
+        assert result.finalization_proofs[0].active_proposal_count_before == 1
+        assert result.finalization_proofs[0].active_proposal_count_after == 0
+        assert result.finalization_proofs[0].from_phase_plan_count_before == 1
+        assert result.finalization_proofs[0].from_phase_plan_count_after == 0
+        assert result.finalization_proofs[0].to_phase_plan_count_before == 0
+        assert result.finalization_proofs[0].to_phase_plan_count_after == 1
 
     def test_execute_revalidates_proposal_agent_availability(self, orchestrator):
         plan = orchestrator.create_plan("agent-a", "goal")
@@ -488,6 +986,12 @@ class TestPlanExecution:
         assert result.results[0]["proof_id"] == result.dispatch_proofs[0].proof_id
         assert result.dispatch_proofs[0].agent_registered is False
         assert result.dispatch_proofs[0].decision == "blocked"
+        assert result.dispatch_proofs[0].result_count_before == 0
+        assert result.dispatch_proofs[0].result_count_after == 1
+        assert result.dispatch_proofs[0].successful_result_count_after == 0
+        assert result.dispatch_proofs[0].failed_result_count_after == 1
+        assert result.finalization_proofs[0].decision == "failed"
+        assert result.finalization_proofs[0].failed_result_count == 1
 
     def test_execute_revalidates_manifest_admission(self):
         orch = AgentOrchestrator(
@@ -512,6 +1016,7 @@ class TestPlanExecution:
         orch.set_admitted_capabilities(())
 
         result = orch.execute_plan(plan.plan_id)
+        policy_proofs = orch.capability_policy_proofs()
 
         assert result.phase == OrchestrationPhase.FAILED
         assert result.results[0]["success"] is False
@@ -519,6 +1024,21 @@ class TestPlanExecution:
         assert result.results[0]["proof_id"] == result.dispatch_proofs[0].proof_id
         assert result.dispatch_proofs[0].manifest_gated is True
         assert result.dispatch_proofs[0].manifest_admitted is False
+        assert result.dispatch_proofs[0].result_count_before == 0
+        assert result.dispatch_proofs[0].result_count_after == 1
+        assert result.dispatch_proofs[0].successful_result_count_after == 0
+        assert result.dispatch_proofs[0].failed_result_count_after == 1
+        assert len(policy_proofs) == 1
+        assert policy_proofs[0]["decision"] == "updated"
+        assert policy_proofs[0]["previous_admitted_capability_count"] == 1
+        assert policy_proofs[0]["current_admitted_capability_count"] == 0
+        assert policy_proofs[0]["removed_capability_count"] == 1
+        assert policy_proofs[0]["registered_agent_count"] == 2
+        assert policy_proofs[0]["total_plan_count"] == 1
+        assert policy_proofs[0]["active_plan_count"] == 1
+        assert policy_proofs[0]["active_proposal_count"] == 1
+        assert result.finalization_proofs[0].decision == "failed"
+        assert result.finalization_proofs[0].failed_result_count == 1
 
     def test_execute_plan_wrong_phase_is_bounded(self, orchestrator):
         plan = orchestrator.create_plan("agent-a", "goal")
@@ -531,11 +1051,28 @@ class TestPlanExecution:
         assert plan.execution_proofs[0].from_phase == "planning"
         assert plan.execution_proofs[0].to_phase == "planning"
         assert plan.execution_proofs[0].quorum_met is False
+        assert plan.execution_proofs[0].phase_changed is False
+        assert plan.execution_proofs[0].active_plan_count_before == 1
+        assert plan.execution_proofs[0].active_plan_count_after == 1
+        assert plan.execution_proofs[0].active_proposal_count_before == 0
+        assert plan.execution_proofs[0].active_proposal_count_after == 0
+        assert plan.execution_proofs[0].from_phase_plan_count_before == 1
+        assert plan.execution_proofs[0].from_phase_plan_count_after == 1
+        assert plan.execution_proofs[0].to_phase_plan_count_before == 1
+        assert plan.execution_proofs[0].to_phase_plan_count_after == 1
 
     def test_execute_plan_unavailable_is_bounded(self, orchestrator):
         with pytest.raises(ValueError, match="^plan unavailable$") as exc_info:
             orchestrator.execute_plan("missing-plan")
+        proofs = orchestrator.plan_lookup_proofs()
+
         assert "missing-plan" not in str(exc_info.value)
+        assert len(proofs) == 1
+        assert proofs[0]["action"] == "execute_plan"
+        assert proofs[0]["decision"] == "unavailable"
+        assert proofs[0]["reason"] == "plan unavailable"
+        assert proofs[0]["plan_id"] == ""
+        assert proofs[0]["plan_available"] is False
 
 
 class TestHandoffs:
@@ -625,11 +1162,47 @@ class TestHandoffs:
 
     def test_find_capable_agents(self, orchestrator):
         agents = orchestrator.find_capable_agents(("code", "deploy"))
+        proofs = orchestrator.capability_discovery_proofs()
+
         assert agents == ["agent-c"]
+        assert len(proofs) == 1
+        assert proofs[0]["proof_id"] == "capability-discovery:1"
+        assert proofs[0]["decision"] == "matched"
+        assert proofs[0]["reason"] == "capable agents matched"
+        assert proofs[0]["required_capability_count"] == 2
+        assert proofs[0]["registered_agent_count"] == 3
+        assert proofs[0]["matched_agent_count"] == 1
+        assert proofs[0]["manifest_gated"] is False
+        assert proofs[0]["manifest_admitted"] is True
+        assert "code" not in repr(proofs[0])
+        assert "agent-c" not in repr(proofs[0])
 
     def test_find_capable_agents_llm(self, orchestrator):
         agents = orchestrator.find_capable_agents(("llm",))
         assert set(agents) == {"agent-a", "agent-b"}
+
+    def test_find_capable_agents_records_empty_match(self, orchestrator):
+        agents = orchestrator.find_capable_agents(("deploy", "llm"))
+        proofs = orchestrator.capability_discovery_proofs()
+
+        assert agents == []
+        assert len(proofs) == 1
+        assert proofs[0]["decision"] == "empty"
+        assert proofs[0]["reason"] == "no capable agents matched"
+        assert proofs[0]["required_capability_count"] == 2
+        assert proofs[0]["registered_agent_count"] == 3
+        assert proofs[0]["matched_agent_count"] == 0
+        assert proofs[0]["manifest_admitted"] is True
+
+    def test_capability_discovery_proofs_limit_is_bounded(self, orchestrator):
+        orchestrator.find_capable_agents(("llm",))
+        orchestrator.find_capable_agents(("deploy", "llm"))
+
+        assert orchestrator.capability_discovery_proofs(limit=0) == []
+        assert [
+            proof["proof_id"]
+            for proof in orchestrator.capability_discovery_proofs(limit=1)
+        ] == ["capability-discovery:2"]
 
     def test_find_capable_agents_excludes_unmanifested_capabilities(self):
         orch = AgentOrchestrator(
@@ -643,6 +1216,13 @@ class TestHandoffs:
 
         assert orch.find_capable_agents(("search",)) == ["agent-a"]
         assert orch.find_capable_agents(("deploy",)) == []
+        proofs = orch.capability_discovery_proofs()
+        assert [proof["decision"] for proof in proofs] == ["matched", "blocked"]
+        assert proofs[-1]["reason"] == "required capabilities are not manifest admitted"
+        assert proofs[-1]["manifest_gated"] is True
+        assert proofs[-1]["manifest_admitted"] is False
+        assert proofs[-1]["matched_agent_count"] == 0
+        assert "deploy" not in repr(proofs[-1])
 
     def test_manifest_read_model_builds_gated_orchestrator(self):
         orch = AgentOrchestrator.from_manifest_read_model(
@@ -655,10 +1235,42 @@ class TestHandoffs:
         )
 
         summary = orch.summary()
+        binding_proofs = orch.manifest_binding_proofs()
+
         assert orch.manifest_gated is True
         assert summary["manifest_gated"] is True
         assert summary["admitted_capability_count"] == 1
+        assert summary["manifest_binding_decisions"] == {"gated": 1}
+        assert binding_proofs[0]["action"] == "from_manifest_read_model"
+        assert binding_proofs[0]["decision"] == "gated"
+        assert binding_proofs[0]["manifest_read_model_available"] is True
+        assert binding_proofs[0]["raw_capability_count"] == 1
+        assert binding_proofs[0]["admitted_capability_count"] == 1
+        assert binding_proofs[0]["registered_agent_count"] == 1
+        assert "search" not in repr(binding_proofs[0])
         assert orch.find_capable_agents(("deploy",)) == []
+        proofs = orch.capability_discovery_proofs()
+        assert proofs[0]["decision"] == "blocked"
+        assert proofs[0]["manifest_admitted"] is False
+
+    def test_manifest_read_model_none_records_ungated_binding(self):
+        orch = AgentOrchestrator.from_manifest_read_model(
+            clock=_clock,
+            agent_capabilities={"agent-a": ("search",)},
+            manifest_read_model=None,
+        )
+        proofs = orch.manifest_binding_proofs()
+
+        assert orch.manifest_gated is False
+        assert len(proofs) == 1
+        assert proofs[0]["action"] == "from_manifest_read_model"
+        assert proofs[0]["decision"] == "ungated"
+        assert proofs[0]["reason"] == "manifest binding ungated"
+        assert proofs[0]["manifest_read_model_available"] is False
+        assert proofs[0]["raw_capability_count"] == 0
+        assert proofs[0]["admitted_capability_count"] == 0
+        assert proofs[0]["manifest_gated"] is False
+        assert proofs[0]["registered_agent_count"] == 1
 
 
 class TestSummary:
@@ -675,6 +1287,18 @@ class TestSummary:
         assert s["registered_agents"] == 3
         assert s["registration_proofs"] == 3
         assert s["registration_decisions"] == {"registered": 3}
+        assert s["plan_creation_proofs"] == 1
+        assert s["plan_creation_decisions"] == {"created": 1}
+        assert s["capability_policy_proofs"] == 0
+        assert s["capability_policy_decisions"] == {}
+        assert s["consensus_proofs"] == 0
+        assert s["consensus_decisions"] == {}
+        assert s["capability_discovery_proofs"] == 0
+        assert s["capability_discovery_decisions"] == {}
+        assert s["plan_lookup_proofs"] == 0
+        assert s["plan_lookup_decisions"] == {}
+        assert s["manifest_binding_proofs"] == 1
+        assert s["manifest_binding_decisions"] == {"ungated": 1}
         assert s["total_plans"] == 1
         assert s["active_plans"] == 0
         assert s["plans_by_phase"] == {"completed": 1}
@@ -689,6 +1313,8 @@ class TestSummary:
         assert s["submission_decisions"] == {"accepted": 1}
         assert s["execution_proofs"] == 1
         assert s["execution_decisions"] == {"accepted": 1}
+        assert s["finalization_proofs"] == 1
+        assert s["finalization_decisions"] == {"completed": 1}
 
     def test_plan_to_dict(self, orchestrator):
         plan = orchestrator.create_plan("agent-a", "goal")
@@ -701,8 +1327,9 @@ class TestSummary:
         assert d["submission_proofs"] == []
         assert d["execution_proofs"] == []
         assert d["dispatch_proofs"] == []
+        assert d["finalization_proofs"] == []
 
-    def test_plan_to_dict_includes_dispatch_proofs(self, orchestrator):
+    def test_plan_to_dict_includes_dispatch_and_finalization_proofs(self, orchestrator):
         plan = orchestrator.create_plan("agent-a", "goal")
         orchestrator.add_proposal(plan.plan_id, AgentProposal(
             proposal_id="p1", agent_id="agent-a", action="search", description="d",
@@ -718,6 +1345,15 @@ class TestSummary:
         assert data["dispatch_proofs"][0]["proof_id"] == result.results[0]["proof_id"]
         assert data["dispatch_proofs"][0]["decision"] == "executed"
         assert data["dispatch_proofs"][0]["required_capability_count"] == 0
+        assert data["dispatch_proofs"][0]["suppressed_executor_key_count"] == 1
+        assert data["dispatch_proofs"][0]["dispatch_count_after"] == 1
+        assert data["dispatch_proofs"][0]["result_count_after"] == 1
+        assert data["dispatch_proofs"][0]["successful_result_count_after"] == 1
+        assert len(data["finalization_proofs"]) == 1
+        assert data["finalization_proofs"][0]["decision"] == "completed"
+        assert data["finalization_proofs"][0]["to_phase"] == "completed"
+        assert data["finalization_proofs"][0]["phase_changed"] is True
+        assert data["finalization_proofs"][0]["active_plan_count_after"] == 0
 
     def test_read_model_bounds_recent_proofs_and_aggregates_decisions(self, orchestrator):
         plan = orchestrator.create_plan("agent-a", "goal")
@@ -735,25 +1371,57 @@ class TestSummary:
 
         assert model["summary"]["plans_by_phase"] == {"completed": 1}
         assert model["summary"]["registration_decisions"] == {"registered": 3}
+        assert model["summary"]["plan_creation_decisions"] == {"created": 1}
+        assert model["summary"]["capability_policy_decisions"] == {}
+        assert model["summary"]["consensus_decisions"] == {}
+        assert model["summary"]["capability_discovery_decisions"] == {}
+        assert model["summary"]["plan_lookup_decisions"] == {}
+        assert model["summary"]["manifest_binding_decisions"] == {"ungated": 1}
         assert model["summary"]["proposal_decisions"] == {"accepted": 1}
         assert model["summary"]["vote_decisions"] == {"accepted": 2}
         assert model["summary"]["submission_decisions"] == {"accepted": 1}
         assert model["summary"]["execution_decisions"] == {"accepted": 1}
         assert model["summary"]["dispatch_decisions"] == {"executed": 1}
+        assert model["summary"]["finalization_decisions"] == {"completed": 1}
         assert model["summary"]["handoff_decisions"] == {
             "transferred": 1,
             "blocked": 1,
         }
         assert len(model["recent_proposal_proofs"]) == 1
         assert len(model["recent_registration_proofs"]) == 1
+        assert len(model["recent_plan_creation_proofs"]) == 1
+        assert len(model["recent_capability_policy_proofs"]) == 0
+        assert len(model["recent_consensus_proofs"]) == 0
+        assert len(model["recent_capability_discovery_proofs"]) == 0
+        assert len(model["recent_plan_lookup_proofs"]) == 0
+        assert len(model["recent_manifest_binding_proofs"]) == 1
         assert len(model["recent_vote_proofs"]) == 1
         assert len(model["recent_submission_proofs"]) == 1
         assert len(model["recent_execution_proofs"]) == 1
         assert len(model["recent_dispatch_proofs"]) == 1
+        assert len(model["recent_finalization_proofs"]) == 1
         assert len(model["recent_handoff_proofs"]) == 1
         assert model["recent_proposal_proofs"][0]["decision"] == "accepted"
+        assert model["recent_proposal_proofs"][0]["proposal_count_after"] == 1
         assert model["recent_registration_proofs"][0]["agent_id"] == "agent-c"
+        assert model["recent_plan_creation_proofs"][0]["plan_id"] == plan.plan_id
         assert model["recent_vote_proofs"][0]["agent_id"] == "agent-b"
+        assert model["recent_vote_proofs"][0]["vote_count_after"] == 2
+        assert model["recent_vote_proofs"][0]["approval_count_after"] == 2
         assert model["recent_submission_proofs"][0]["decision"] == "accepted"
+        assert model["recent_submission_proofs"][0]["phase_changed"] is True
+        assert model["recent_submission_proofs"][0]["from_phase_plan_count_after"] == 0
+        assert model["recent_submission_proofs"][0]["to_phase_plan_count_after"] == 1
         assert model["recent_execution_proofs"][0]["decision"] == "accepted"
+        assert model["recent_execution_proofs"][0]["phase_changed"] is True
+        assert model["recent_execution_proofs"][0]["from_phase_plan_count_after"] == 0
+        assert model["recent_execution_proofs"][0]["to_phase_plan_count_after"] == 1
+        assert model["recent_finalization_proofs"][0]["decision"] == "completed"
+        assert model["recent_finalization_proofs"][0]["phase_changed"] is True
+        assert model["recent_finalization_proofs"][0]["active_plan_count_after"] == 0
+        assert model["recent_finalization_proofs"][0]["active_proposal_count_after"] == 0
+        assert model["recent_dispatch_proofs"][0]["dispatch_count_after"] == 1
+        assert model["recent_dispatch_proofs"][0]["result_count_after"] == 1
+        assert model["recent_dispatch_proofs"][0]["successful_result_count_after"] == 1
+        assert model["recent_manifest_binding_proofs"][0]["decision"] == "ungated"
         assert model["recent_handoff_proofs"][0]["decision"] == "blocked"
