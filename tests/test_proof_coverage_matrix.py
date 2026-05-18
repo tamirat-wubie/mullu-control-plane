@@ -165,6 +165,8 @@ def test_witness_integrity_report_tracks_exact_test_anchors() -> None:
     assert surfaces["temporal_kernel"]["exact_test_anchor_count"] == 13
     assert surfaces["networked_worker_mesh"]["unanchored_witness_count"] == 0
     assert surfaces["networked_worker_mesh"]["exact_test_anchor_count"] == 13
+    assert surfaces["software_dev_capability_pack"]["unanchored_witness_count"] == 0
+    assert surfaces["software_dev_capability_pack"]["exact_test_anchor_count"] == 16
 
 
 def test_declared_routes_have_explicit_coverage_classification() -> None:
