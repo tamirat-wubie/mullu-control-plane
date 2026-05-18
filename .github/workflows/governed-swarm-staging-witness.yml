@@ -71,6 +71,12 @@ jobs:
             --audit-store-path "$MULLU_GOVERNED_SWARM_AUDIT_STORE_PATH" \
             --output .change_assurance/governed_swarm_staging_runner_preflight.json
 
+      - name: Validate governed swarm staging runner preflight
+        if: always()
+        run: |
+          python scripts/validate_governed_swarm_staging_runner_preflight.py \
+            --receipt .change_assurance/governed_swarm_staging_runner_preflight.json
+
       - name: Upload governed swarm staging runner preflight
         if: always()
         uses: actions/upload-artifact@v4

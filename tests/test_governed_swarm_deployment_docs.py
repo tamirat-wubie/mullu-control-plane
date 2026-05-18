@@ -55,6 +55,7 @@ def test_staging_activation_runbook_binds_witness_and_rollback() -> None:
     assert ".github/workflows/governed-swarm-staging-witness.yml" in text
     assert "self-hosted" in text
     assert "scripts/preflight_governed_swarm_staging_runner.py" in text
+    assert "scripts/validate_governed_swarm_staging_runner_preflight.py" in text
     assert "governed_swarm_staging_runner_preflight.json" in text
     assert "governed-swarm-route-preflight.json" in text
     assert "schemas/governed_swarm_staging_activation_witness.schema.json" in text

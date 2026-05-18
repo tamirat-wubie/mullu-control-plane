@@ -145,6 +145,13 @@ curl -sS "$MULLU_STAGING_URL/api/v1/swarm/runs" >/tmp/governed-swarm-route-prefl
 
 The workflow repeats the runner preflight and uploads `governed-swarm-staging-runner-preflight` before collecting the witness. If any preflight check fails, do not treat the failure as a route failure; fix runner placement, runtime checkout, audit mount, or staging network access first.
 
+Validate a saved runner preflight receipt:
+
+```bash
+python scripts/validate_governed_swarm_staging_runner_preflight.py \
+  --receipt ".change_assurance/governed_swarm_staging_runner_preflight.json"
+```
+
 For a real staging activation, store the collected witness under `.change_assurance/` or the deployment evidence store, then run the same validator against that file.
 
 ## Rollback

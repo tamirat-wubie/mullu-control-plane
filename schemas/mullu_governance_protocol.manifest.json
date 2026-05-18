@@ -233,6 +233,12 @@
       "surface": "deployment"
     },
     {
+      "schema_id": "governed-swarm-staging-runner-preflight",
+      "path": "schemas/governed_swarm_staging_runner_preflight.schema.json",
+      "urn": "urn:mullusi:schema:governed-swarm-staging-runner-preflight:1",
+      "surface": "deployment"
+    },
+    {
       "schema_id": "domain-capsule",
       "path": "schemas/domain_capsule.schema.json",
       "urn": "urn:mullusi:schema:domain-capsule:1",
