@@ -2658,6 +2658,46 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "worker_receipt_not_terminal_closure",
                 "worker_mesh_schema_valid",
             ],
+            runtime_witness_anchor_aliases={
+                "active_lease_required": ["worker_mesh_rejects_invalid_or_expired_leases"],
+                "tenant_capability_operation_budget_checked": [
+                    "worker_mesh_rejects_tenant_and_capability_mismatch",
+                    "worker_mesh_enforces_operation_and_cost_budgets",
+                ],
+                "forbidden_operations_override_allowed": [
+                    "worker_mesh_rejects_forbidden_operation_before_handler"
+                ],
+                "code_worker_exact_lease_command_required": [
+                    "sandboxed_code_worker_executes_exact_lease_command_with_receipt"
+                ],
+                "code_worker_blocks_network_shell_and_risky_git": [
+                    "sandboxed_code_worker_blocks_network_and_risky_git_without_dispatch"
+                ],
+                "code_worker_receipt_binds_sandbox_evidence": [
+                    "sandboxed_code_worker_executes_exact_lease_command_with_receipt"
+                ],
+                "physical_action_receipt_required_for_physical_workers": [
+                    "physical_worker_canary_blocks_missing_receipt_and_allows_sandbox_replay"
+                ],
+                "physical_worker_canary_blocks_without_receipt": [
+                    "physical_worker_canary_blocks_missing_receipt_and_allows_sandbox_replay"
+                ],
+                "physical_worker_canary_passed": [
+                    "physical_worker_canary_blocks_missing_receipt_and_allows_sandbox_replay"
+                ],
+                "physical_worker_canary_uses_sandbox_handler": [
+                    "physical_worker_canary_artifact_preserves_no_effect_proof"
+                ],
+                "worker_evidence_refs_required": [
+                    "worker_mesh_requires_evidence_for_successful_handler"
+                ],
+                "worker_receipt_not_terminal_closure": [
+                    "worker_mesh_dispatch_emits_schema_valid_non_terminal_receipt"
+                ],
+                "worker_mesh_schema_valid": [
+                    "worker_mesh_dispatch_emits_schema_valid_non_terminal_receipt"
+                ],
+            },
         ),
         _surface(
             "software_dev_capability_pack",
