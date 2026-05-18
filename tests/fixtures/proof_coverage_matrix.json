@@ -5893,6 +5893,47 @@
         "TrustedClock.monotonic_ns"
       ],
       "request_proof": "request_proof",
+      "runtime_witness_anchor_aliases": {
+        "approval_expiry_denies": [
+          "temporal_kernel_denies_expired_approval"
+        ],
+        "budget_window_checked": [
+          "temporal_kernel_denies_missing_causal_precondition_and_budget_window"
+        ],
+        "cancel_emits_terminal_receipt": [
+          "cancel_temporal_schedule_records_terminal_receipt"
+        ],
+        "causal_preconditions_required": [
+          "temporal_kernel_denies_missing_causal_precondition_and_budget_window"
+        ],
+        "future_schedule_defers": [
+          "temporal_kernel_defers_future_execution_without_terminal_closure"
+        ],
+        "monotonic_duration_measured": [
+          "temporal_kernel_allows_due_fresh_schema_valid_receipt"
+        ],
+        "receipt_not_terminal_closure": [
+          "temporal_kernel_defers_future_execution_without_terminal_closure"
+        ],
+        "runtime_clock_injected": [
+          "temporal_kernel_allows_due_fresh_schema_valid_receipt"
+        ],
+        "schedule_read_models_persisted": [
+          "create_list_and_get_temporal_schedule"
+        ],
+        "stale_evidence_escalates": [
+          "temporal_kernel_escalates_stale_evidence"
+        ],
+        "temporal_receipt_schema_valid": [
+          "temporal_kernel_allows_due_fresh_schema_valid_receipt"
+        ],
+        "temporal_scheduler_routes_governed": [
+          "default_routers_include_temporal_scheduler_summary"
+        ],
+        "worker_tick_certifies_proofs": [
+          "worker_tick_runs_due_schedule_and_returns_proofs"
+        ]
+      },
       "runtime_witnesses": [
         "runtime_clock_injected",
         "monotonic_duration_measured",
@@ -6835,7 +6876,7 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 509,
+    "exact_test_anchor_count": 522,
     "runtime_witness_count": 1035,
     "surfaces": [
       {
@@ -10590,26 +10631,91 @@
         "unanchored_witnesses": []
       },
       {
-        "anchored_witnesses": [],
-        "exact_test_anchor_count": 0,
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_kernel.py::test_temporal_kernel_allows_due_fresh_schema_valid_receipt"
+            ],
+            "witness": "runtime_clock_injected"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_kernel.py::test_temporal_kernel_allows_due_fresh_schema_valid_receipt"
+            ],
+            "witness": "monotonic_duration_measured"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_kernel.py::test_temporal_kernel_defers_future_execution_without_terminal_closure"
+            ],
+            "witness": "future_schedule_defers"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_kernel.py::test_temporal_kernel_denies_expired_approval"
+            ],
+            "witness": "approval_expiry_denies"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_kernel.py::test_temporal_kernel_escalates_stale_evidence"
+            ],
+            "witness": "stale_evidence_escalates"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_kernel.py::test_temporal_kernel_denies_missing_causal_precondition_and_budget_window"
+            ],
+            "witness": "budget_window_checked"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_kernel.py::test_temporal_kernel_denies_missing_causal_precondition_and_budget_window"
+            ],
+            "witness": "causal_preconditions_required"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_temporal_scheduler_router.py::test_default_routers_include_temporal_scheduler_summary"
+            ],
+            "witness": "temporal_scheduler_routes_governed"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_temporal_scheduler_router.py::test_create_list_and_get_temporal_schedule"
+            ],
+            "witness": "schedule_read_models_persisted"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_temporal_scheduler_router.py::test_worker_tick_runs_due_schedule_and_returns_proofs"
+            ],
+            "witness": "worker_tick_certifies_proofs"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_temporal_scheduler_router.py::test_cancel_temporal_schedule_records_terminal_receipt"
+            ],
+            "witness": "cancel_emits_terminal_receipt"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_kernel.py::test_temporal_kernel_allows_due_fresh_schema_valid_receipt"
+            ],
+            "witness": "temporal_receipt_schema_valid"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_kernel.py::test_temporal_kernel_defers_future_execution_without_terminal_closure"
+            ],
+            "witness": "receipt_not_terminal_closure"
+          }
+        ],
+        "exact_test_anchor_count": 13,
         "runtime_witness_count": 13,
         "surface_id": "temporal_kernel",
-        "unanchored_witness_count": 13,
-        "unanchored_witnesses": [
-          "runtime_clock_injected",
-          "monotonic_duration_measured",
-          "future_schedule_defers",
-          "approval_expiry_denies",
-          "stale_evidence_escalates",
-          "budget_window_checked",
-          "causal_preconditions_required",
-          "temporal_scheduler_routes_governed",
-          "schedule_read_models_persisted",
-          "worker_tick_certifies_proofs",
-          "cancel_emits_terminal_receipt",
-          "temporal_receipt_schema_valid",
-          "receipt_not_terminal_closure"
-        ]
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
       },
       {
         "anchored_witnesses": [],
@@ -11498,6 +11604,6 @@
         "unanchored_witnesses": []
       }
     ],
-    "unanchored_witness_count": 526
+    "unanchored_witness_count": 513
   }
 }

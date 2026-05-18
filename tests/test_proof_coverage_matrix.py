@@ -161,6 +161,8 @@ def test_witness_integrity_report_tracks_exact_test_anchors() -> None:
     assert surfaces["llm_completion"]["exact_test_anchor_count"] == 7
     assert surfaces["llm_chat_workflow"]["unanchored_witness_count"] == 0
     assert surfaces["llm_chat_workflow"]["exact_test_anchor_count"] == 7
+    assert surfaces["temporal_kernel"]["unanchored_witness_count"] == 0
+    assert surfaces["temporal_kernel"]["exact_test_anchor_count"] == 13
 
 
 def test_declared_routes_have_explicit_coverage_classification() -> None:

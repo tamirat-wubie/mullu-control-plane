@@ -149,8 +149,8 @@ Witness integrity audit:
 | Metric | Count |
 |---|---:|
 | Runtime witness labels | 1035 |
-| Exact test anchors | 509 |
-| Unanchored witness labels | 526 |
+| Exact test anchors | 522 |
+| Unanchored witness labels | 513 |
 
 Evidence quality gaps:
 none
@@ -204,7 +204,6 @@ Witness integrity gaps:
 | `memory_lattice` | 1 | 5 | raw_event_memory_not_directly_admitted, semantic_memory_requires_learning_admission, policy_memory_requires_authority_ref, preference_memory_tenant_owner_scoped, memory_lattice_schema_valid |
 | `workflow_mining` | 0 | 6 | repeated_trace_pattern_required, workflow_draft_activation_blocked, operator_review_required, sandbox_replay_required, risky_pattern_requires_approval_rules, workflow_mining_report_schema_valid |
 | `domain_operating_pack` | 0 | 5 | builtin_domain_pack_catalog_complete, finance_ops_pack_declares_governed_artifacts, high_risk_pack_requires_approval_roles, certified_pack_requires_evidence_refs, domain_operating_pack_schema_valid |
-| `temporal_kernel` | 0 | 13 | runtime_clock_injected, monotonic_duration_measured, future_schedule_defers, approval_expiry_denies, stale_evidence_escalates, budget_window_checked, causal_preconditions_required, temporal_scheduler_routes_governed, schedule_read_models_persisted, worker_tick_certifies_proofs, cancel_emits_terminal_receipt, temporal_receipt_schema_valid, receipt_not_terminal_closure |
 | `temporal_evidence_freshness` | 0 | 8 | evidence_age_computed_from_runtime_clock, freshness_window_required_for_dispatch, stale_required_evidence_triggers_refresh, missing_required_evidence_blocks_dispatch, revoked_or_unverified_high_risk_evidence_blocks, expiring_evidence_warns_before_dispatch, temporal_evidence_freshness_receipt_schema_valid, receipt_not_terminal_closure |
 | `temporal_resolution` | 0 | 10 | runtime_clock_owns_phrase_resolution, original_text_preserved, tenant_timezone_controls_local_resolution, relative_duration_resolved_from_injected_now, ambiguous_low_risk_phrase_uses_safe_default, ambiguous_high_risk_phrase_requires_clarification, business_day_resolution_skips_weekends_and_holidays, unsupported_phrase_fails_closed, temporal_resolution_receipt_schema_valid, receipt_not_terminal_closure |
 | `temporal_sla` | 0 | 10 | runtime_clock_owns_sla_deadlines, business_time_deadlines_skip_closed_windows, approaching_deadline_warns_before_breach, breached_deadline_emits_escalation_reason, outside_business_window_holds_normal_dispatch, sla_evidence_and_scope_checked, sla_summary_read_model_bounded, sla_violations_read_model_bounded, temporal_sla_receipt_schema_valid, receipt_not_terminal_closure |
@@ -347,5 +346,5 @@ none
 STATUS:
   Completeness: 100%
   Invariants verified: route declarations, route-level coverage classification, coverage levels, coverage states, closure action mapping, schema contract validation, deployment orchestration receipt schema contract
-  Open issues: 526 runtime-witness labels lack exact test-function anchors
+  Open issues: 513 runtime-witness labels lack exact test-function anchors
   Next action: bind unanchored runtime-witness labels to exact test-function anchors
