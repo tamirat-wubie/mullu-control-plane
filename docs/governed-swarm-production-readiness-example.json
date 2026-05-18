@@ -1,0 +1,78 @@
+{
+  "audit_store_path": "/var/lib/mullu/governed-swarm/swarm-runs.jsonl",
+  "blockers": [],
+  "checked_at": "2026-05-17T09:05:00Z",
+  "checks": [
+    {
+      "detail": "pilot readiness validates",
+      "name": "pilot_readiness_valid",
+      "passed": true
+    },
+    {
+      "detail": "ready=True level=pilot-ready",
+      "name": "pilot_readiness_ready",
+      "passed": true
+    },
+    {
+      "detail": "deployment witness validates",
+      "name": "deployment_witness_valid",
+      "passed": true
+    },
+    {
+      "detail": "deployment_claim=published",
+      "name": "deployment_witness_published",
+      "passed": true
+    },
+    {
+      "detail": "runtime_environment=production",
+      "name": "runtime_environment_production",
+      "passed": true
+    },
+    {
+      "detail": "health, runtime witness, signatures, and deployment errors are clear",
+      "name": "deployment_health_passing",
+      "passed": true
+    },
+    {
+      "detail": "runtime_responsibility_debt_clear=True",
+      "name": "runtime_responsibility_debt_clear",
+      "passed": true
+    },
+    {
+      "detail": "authority debt and overdue/escalated obligation counts are clear",
+      "name": "authority_responsibility_debt_clear",
+      "passed": true
+    },
+    {
+      "detail": "public production health declaration validates",
+      "name": "public_health_declaration_valid",
+      "passed": true
+    },
+    {
+      "detail": "dry_run=False updated=True state=published",
+      "name": "public_health_declaration_applied",
+      "passed": true
+    },
+    {
+      "detail": "witness_endpoint=https://api.mullusi.com/health declaration_endpoint=https://api.mullusi.com/health",
+      "name": "public_health_endpoint_match",
+      "passed": true
+    },
+    {
+      "detail": "target_environment=production",
+      "name": "production_target_bound",
+      "passed": true
+    }
+  ],
+  "control_plane_commit": "dffe0f68289147e09a84ab6cbbeb2b5230ca2bd8",
+  "deployment_witness_ref": "docs/governed-swarm-production-deployment-witness-example.json",
+  "outcome": "SolvedVerified",
+  "pilot_promotion_readiness_ref": "docs/governed-swarm-promotion-readiness-example.json",
+  "public_health_declaration_ref": "docs/governed-swarm-public-production-health-declaration-example.json",
+  "public_health_endpoint": "https://api.mullusi.com/health",
+  "readiness_id": "governed-swarm-production-0123456789abcdef",
+  "readiness_level": "production-ready",
+  "ready": true,
+  "runtime_path": "/opt/mullu/mullu-governed-swarm/mcoi",
+  "target_environment": "production"
+}
