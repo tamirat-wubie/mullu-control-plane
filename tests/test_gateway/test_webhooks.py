@@ -1667,9 +1667,11 @@ class TestGatewayStatus:
         invariant_ids = {witness["invariant_id"] for witness in witnesses}
         assert "command_lifecycle_events_are_hash_linked" in invariant_ids
         assert "terminal_closure_requires_evidence_refs" in invariant_ids
+        assert "successful_response_is_bound_to_response_evidence_closure" in invariant_ids
         assert all(witness["matrix_surface_id"] == "gateway_capability_fabric" for witness in witnesses)
         assert witnesses[0]["witness_refs"]
         assert witnesses[1]["evidence_refs"] == data["terminal_certificate"]["evidence_refs"]
+        assert data["terminal_certificate"]["response_evidence_closure_id"]
 
     def test_command_universal_action_proof_read_model(self, gateway_app, client):
         command = gateway_app.state.command_ledger.create_command(

@@ -2589,6 +2589,45 @@
         "install_certified_capsule_with_handoff_evidence"
       ],
       "request_proof": "request_proof",
+      "runtime_witness_anchor_aliases": {
+        "capability_admission_audits_filter_status": [
+          "fabric_admission_blocks_uninstalled_runtime_intent"
+        ],
+        "capsule_admission_operator_endpoint_lists_receipt": [
+          "capsule_admission_operator_endpoint_installs_and_lists_receipt"
+        ],
+        "capsule_compiler_emits_certification_evidence_manifest": [
+          "domain_capsule_compiler_emits_certification_evidence_manifest"
+        ],
+        "capsule_installer_stamps_admission_receipt": [
+          "capsule_installer_admits_certified_handoff_batch_with_receipt"
+        ],
+        "command_lifecycle_events_are_hash_linked": [
+          "command_closure_read_model"
+        ],
+        "invalid_capsule_admission_preserves_registry_state": [
+          "capsule_installer_returns_rejected_receipt_without_registry_mutation",
+          "capsule_admission_operator_endpoint_rejects_invalid_payload"
+        ],
+        "operator_universal_action_console_renders_replay_state": [
+          "operator_universal_actions_console_renders_proof_table"
+        ],
+        "operator_universal_action_read_model_filters_command_proofs": [
+          "operator_universal_actions_read_model_filters_proofs"
+        ],
+        "physical_capsule_admission_runs_promotion_preflight": [
+          "capsule_installer_runs_physical_preflight_before_registry_mutation"
+        ],
+        "successful_response_is_bound_to_response_evidence_closure": [
+          "command_closure_read_model"
+        ],
+        "terminal_closure_requires_evidence_refs": [
+          "command_closure_read_model"
+        ],
+        "universal_action_proof_replays_from_command_events": [
+          "command_universal_action_proof_read_model"
+        ]
+      },
       "runtime_witnesses": [
         "command_lifecycle_events_are_hash_linked",
         "terminal_closure_requires_evidence_refs",
@@ -6722,36 +6761,96 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 477,
+    "exact_test_anchor_count": 489,
     "runtime_witness_count": 1035,
     "surfaces": [
       {
         "anchored_witnesses": [
           {
             "anchors": [
+              "tests/test_gateway/test_webhooks.py::test_command_closure_read_model"
+            ],
+            "witness": "command_lifecycle_events_are_hash_linked"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_webhooks.py::test_command_closure_read_model"
+            ],
+            "witness": "terminal_closure_requires_evidence_refs"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_webhooks.py::test_command_closure_read_model"
+            ],
+            "witness": "successful_response_is_bound_to_response_evidence_closure"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_webhooks.py::test_command_universal_action_proof_read_model"
+            ],
+            "witness": "universal_action_proof_replays_from_command_events"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_webhooks.py::test_operator_universal_actions_read_model_filters_proofs"
+            ],
+            "witness": "operator_universal_action_read_model_filters_command_proofs"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_webhooks.py::test_operator_universal_actions_console_renders_proof_table"
+            ],
+            "witness": "operator_universal_action_console_renders_replay_state"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_webhooks.py::test_fabric_admission_blocks_uninstalled_runtime_intent"
+            ],
+            "witness": "capability_admission_audits_filter_status"
+          },
+          {
+            "anchors": [
               "tests/test_gateway/test_webhooks.py::test_command_capability_admission_read_model_reports_accepted_witness"
             ],
             "witness": "command_capability_admission_read_model_reports_accepted_witness"
+          },
+          {
+            "anchors": [
+              "tests/test_governed_capability_fabric.py::test_domain_capsule_compiler_emits_certification_evidence_manifest"
+            ],
+            "witness": "capsule_compiler_emits_certification_evidence_manifest"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_capability_capsule_installer.py::test_capsule_installer_admits_certified_handoff_batch_with_receipt"
+            ],
+            "witness": "capsule_installer_stamps_admission_receipt"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_capability_capsule_installer.py::test_capsule_admission_operator_endpoint_installs_and_lists_receipt"
+            ],
+            "witness": "capsule_admission_operator_endpoint_lists_receipt"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_capability_capsule_installer.py::test_capsule_installer_returns_rejected_receipt_without_registry_mutation",
+              "tests/test_gateway/test_capability_capsule_installer.py::test_capsule_admission_operator_endpoint_rejects_invalid_payload"
+            ],
+            "witness": "invalid_capsule_admission_preserves_registry_state"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_capability_capsule_installer.py::test_capsule_installer_runs_physical_preflight_before_registry_mutation"
+            ],
+            "witness": "physical_capsule_admission_runs_promotion_preflight"
           }
         ],
-        "exact_test_anchor_count": 1,
+        "exact_test_anchor_count": 13,
         "runtime_witness_count": 13,
         "surface_id": "gateway_capability_fabric",
-        "unanchored_witness_count": 12,
-        "unanchored_witnesses": [
-          "command_lifecycle_events_are_hash_linked",
-          "terminal_closure_requires_evidence_refs",
-          "successful_response_is_bound_to_response_evidence_closure",
-          "universal_action_proof_replays_from_command_events",
-          "operator_universal_action_read_model_filters_command_proofs",
-          "operator_universal_action_console_renders_replay_state",
-          "capability_admission_audits_filter_status",
-          "capsule_compiler_emits_certification_evidence_manifest",
-          "capsule_installer_stamps_admission_receipt",
-          "capsule_admission_operator_endpoint_lists_receipt",
-          "invalid_capsule_admission_preserves_registry_state",
-          "physical_capsule_admission_runs_promotion_preflight"
-        ]
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
       },
       {
         "anchored_witnesses": [
@@ -11224,6 +11323,6 @@
         "unanchored_witnesses": []
       }
     ],
-    "unanchored_witness_count": 558
+    "unanchored_witness_count": 546
   }
 }

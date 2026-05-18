@@ -112,6 +112,39 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "invalid_capsule_admission_preserves_registry_state",
                 "physical_capsule_admission_runs_promotion_preflight",
             ],
+            runtime_witness_anchor_aliases={
+                "command_lifecycle_events_are_hash_linked": ["command_closure_read_model"],
+                "terminal_closure_requires_evidence_refs": ["command_closure_read_model"],
+                "successful_response_is_bound_to_response_evidence_closure": ["command_closure_read_model"],
+                "universal_action_proof_replays_from_command_events": [
+                    "command_universal_action_proof_read_model",
+                ],
+                "operator_universal_action_read_model_filters_command_proofs": [
+                    "operator_universal_actions_read_model_filters_proofs",
+                ],
+                "operator_universal_action_console_renders_replay_state": [
+                    "operator_universal_actions_console_renders_proof_table",
+                ],
+                "capability_admission_audits_filter_status": [
+                    "fabric_admission_blocks_uninstalled_runtime_intent",
+                ],
+                "capsule_compiler_emits_certification_evidence_manifest": [
+                    "domain_capsule_compiler_emits_certification_evidence_manifest",
+                ],
+                "capsule_installer_stamps_admission_receipt": [
+                    "capsule_installer_admits_certified_handoff_batch_with_receipt",
+                ],
+                "capsule_admission_operator_endpoint_lists_receipt": [
+                    "capsule_admission_operator_endpoint_installs_and_lists_receipt",
+                ],
+                "invalid_capsule_admission_preserves_registry_state": [
+                    "capsule_installer_returns_rejected_receipt_without_registry_mutation",
+                    "capsule_admission_operator_endpoint_rejects_invalid_payload",
+                ],
+                "physical_capsule_admission_runs_promotion_preflight": [
+                    "capsule_installer_runs_physical_preflight_before_registry_mutation",
+                ],
+            },
         ),
         _surface(
             "capability_worker_execution",
