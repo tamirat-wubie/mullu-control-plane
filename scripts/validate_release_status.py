@@ -108,6 +108,7 @@ REQUIRED_CI_LITERALS: tuple[str, ...] = (
     "python scripts/validate_general_agent_promotion.py --output .change_assurance/general_agent_promotion_readiness.json",
     "python scripts/validate_governed_runtime_promotion.py --output .change_assurance/governed_runtime_promotion_readiness.json",
     "python scripts/validate_governed_swarm_promotion_readiness.py --staging-evidence-bundle docs/governed-swarm-staging-evidence-bundle-example.json --target-environment pilot --output .change_assurance/governed_swarm_promotion_readiness.json --strict",
+    "python scripts/validate_governed_swarm_production_readiness.py --pilot-readiness docs/governed-swarm-promotion-readiness-example.json --deployment-witness docs/governed-swarm-production-deployment-witness-example.json --public-health-declaration docs/governed-swarm-public-production-health-declaration-example.json --output .change_assurance/governed_swarm_production_readiness.json --strict",
     "python scripts/plan_capability_adapter_closure.py --output .change_assurance/capability_adapter_closure_plan.json",
     "python scripts/validate_capability_adapter_closure_plan_schema.py --output .change_assurance/capability_adapter_closure_plan_schema_validation.json --strict",
     "python scripts/plan_deployment_publication_closure.py --output .change_assurance/deployment_publication_closure_plan.json",

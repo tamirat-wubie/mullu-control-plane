@@ -1,0 +1,10 @@
+{
+  "deployment_status_path": "provided_deployment_status",
+  "deployment_witness_state": "published",
+  "dry_run": false,
+  "errors": [],
+  "operator_approval_ref": "approval://mullusi/governed-swarm-production-example",
+  "public_health_endpoint": "https://api.mullusi.com/health",
+  "updated": true,
+  "witness_path": "provided_witness"
+}

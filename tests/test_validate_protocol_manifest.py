@@ -201,6 +201,17 @@ def test_protocol_manifest_indexes_public_production_health_declaration() -> Non
     assert declaration_entry["surface"] == "deployment"
 
 
+def test_protocol_manifest_indexes_governed_swarm_production_readiness() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    readiness_entry = entries["governed-swarm-production-readiness"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert readiness_entry["path"] == "schemas/governed_swarm_production_readiness.schema.json"
+    assert readiness_entry["urn"] == "urn:mullusi:schema:governed-swarm-production-readiness:1"
+    assert readiness_entry["surface"] == "deployment"
+
+
 def test_protocol_manifest_indexes_runtime_conformance_collection() -> None:
     manifest = load_manifest()
     entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
