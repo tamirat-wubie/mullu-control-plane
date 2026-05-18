@@ -149,8 +149,8 @@ Witness integrity audit:
 | Metric | Count |
 |---|---:|
 | Runtime witness labels | 1035 |
-| Exact test anchors | 495 |
-| Unanchored witness labels | 540 |
+| Exact test anchors | 502 |
+| Unanchored witness labels | 533 |
 
 Evidence quality gaps:
 none
@@ -159,7 +159,6 @@ Witness integrity gaps:
 
 | Surface | Exact anchors | Unanchored | Unanchored labels |
 |---|---:|---:|---|
-| `llm_completion` | 0 | 7 | completion_returns_action_proof, completion_records_budget_ledger, completion_failure_is_bounded, safe_completion_tracks_cost, safe_completion_exception_sanitized, auto_completion_routes_model, auto_completion_exception_sanitized |
 | `llm_chat_workflow` | 0 | 7 | chat_completion_governed, streaming_chat_returns_sse, streaming_chat_multi_turn_history_preserved, streaming_chat_governed, streaming_chat_contains_budget_witnesses, streaming_chat_exception_sanitized, chat_workflow_history_bounded |
 | `cost_budget_read_models` | 0 | 6 | budget_summary_bounded, safe_completion_tracks_cost, cost_read_model_totals_bounded, cost_top_spenders_bounded, cost_by_model_bounded, tenant_cost_projection_bounded |
 | `assistant_kernel_planning` | 0 | 5 | assistant_profiles_read_model_bounded, finance_ops_plan_requires_active_consent, finance_ops_plan_projects_operator_queue, assistant_plan_never_grants_execution_authority, assistant_plan_errors_sanitized |
@@ -349,5 +348,5 @@ none
 STATUS:
   Completeness: 100%
   Invariants verified: route declarations, route-level coverage classification, coverage levels, coverage states, closure action mapping, schema contract validation, deployment orchestration receipt schema contract
-  Open issues: 540 runtime-witness labels lack exact test-function anchors
+  Open issues: 533 runtime-witness labels lack exact test-function anchors
   Next action: bind unanchored runtime-witness labels to exact test-function anchors

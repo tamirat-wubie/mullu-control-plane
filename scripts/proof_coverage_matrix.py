@@ -311,6 +311,9 @@ def proof_coverage_matrix() -> dict[str, Any]:
             [
                 "mcoi/mcoi_runtime/app/routers/llm/completion.py",
                 "mcoi/mcoi_runtime/core/proof_bridge.py",
+                "mcoi/tests/test_server_phase199.py",
+                "mcoi/tests/test_server_phase213.py",
+                "mcoi/tests/test_server_phase214.py",
             ],
             "Completion routes are governed through budget, model routing, and proof bridge checks.",
             [
@@ -322,6 +325,18 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "auto_completion_routes_model",
                 "auto_completion_exception_sanitized",
             ],
+            runtime_witness_anchor_aliases={
+                "completion_returns_action_proof": ["basic_completion"],
+                "completion_records_budget_ledger": ["ledger_after_completion"],
+                "completion_failure_is_bounded": [
+                    "completion_failure_result_is_structured",
+                    "completion_exception_is_sanitized",
+                ],
+                "safe_completion_tracks_cost": ["safe_complete_tracks_cost"],
+                "safe_completion_exception_sanitized": ["safe_complete_exception_is_sanitized"],
+                "auto_completion_routes_model": ["auto_complete"],
+                "auto_completion_exception_sanitized": ["auto_complete_exception_is_sanitized"],
+            },
         ),
         _surface(
             "llm_chat_workflow",
