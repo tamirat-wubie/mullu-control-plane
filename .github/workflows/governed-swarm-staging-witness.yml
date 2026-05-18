@@ -64,11 +64,20 @@ jobs:
           MULLU_GOVERNED_SWARM_RUNTIME_PATH: ${{ inputs.runtime_path }}
           MULLU_GOVERNED_SWARM_AUDIT_STORE_PATH: ${{ inputs.audit_store_path }}
         run: |
-          test -n "$MULLU_STAGING_URL"
-          test -n "$MULLU_CONTROL_PLANE_COMMIT"
-          test -d "$MULLU_GOVERNED_SWARM_RUNTIME_PATH/mcoi_runtime/swarm"
-          test -f "$MULLU_GOVERNED_SWARM_AUDIT_STORE_PATH"
-          test -r "$MULLU_GOVERNED_SWARM_AUDIT_STORE_PATH"
+          python scripts/preflight_governed_swarm_staging_runner.py \
+            --staging-url "$MULLU_STAGING_URL" \
+            --control-plane-commit "$MULLU_CONTROL_PLANE_COMMIT" \
+            --runtime-path "$MULLU_GOVERNED_SWARM_RUNTIME_PATH" \
+            --audit-store-path "$MULLU_GOVERNED_SWARM_AUDIT_STORE_PATH" \
+            --output .change_assurance/governed_swarm_staging_runner_preflight.json
+
+      - name: Upload governed swarm staging runner preflight
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: governed-swarm-staging-runner-preflight
+          path: .change_assurance/governed_swarm_staging_runner_preflight.json
+          if-no-files-found: warn
 
       - name: Collect governed swarm staging activation witness
         env:
