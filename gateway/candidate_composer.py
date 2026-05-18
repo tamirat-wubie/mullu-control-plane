@@ -423,3 +423,135 @@ class CandidateComposer:
         if evaluation.outcome != "passed":
             return None
         return self._adversarial_reviewer(signature, pipeline, evaluation, seed)
+
+
+@dataclass(frozen=True, slots=True)
+class CompositionSpec:
+    """A caller-declared ordered multi-capsule pipeline.
+
+    The Solver Forge composer does not invent compositions. A caller that
+    wants to compare multi-step pipelines declares each one explicitly as an
+    ordered sequence of registered capsule ids. Data flow between capsules is
+    the injected evaluator's responsibility, exactly as for single-capsule
+    pipelines — the composer owns orchestration, the evaluator owns subsystem
+    logic. The composer never decides how capsules chain; it only declares
+    that they do, in the order the caller stated.
+    """
+
+    pipeline_id: str
+    capsule_ids: tuple[str, ...]
+    description: str = ""
+
+    def __post_init__(self) -> None:
+        if not self.pipeline_id.strip():
+            raise ValueError("pipeline_id_required")
+        if not self.capsule_ids:
+            raise ValueError("composition_spec_requires_at_least_one_capsule")
+        object.__setattr__(self, "capsule_ids", tuple(self.capsule_ids))
+
+
+@dataclass(frozen=True, slots=True)
+class SkippedComposition:
+    """Why a declared composition spec was not composed into a pipeline."""
+
+    pipeline_id: str
+    reason: str
+    offending_capsule_id: str = ""
+
+
+class DeclaredCompositionComposer(CandidateComposer):
+    """Composer that emits caller-declared multi-capsule pipelines.
+
+    Overrides only ``compose_pipelines``. ``run()``, the evaluator gate, the
+    adversarial-review gate, per-pipeline seed fairness, the ledger, and the
+    comparison report are inherited unchanged from ``CandidateComposer`` — a
+    multi-capsule pipeline is recorded, gated, and scored exactly like a
+    single-capsule one.
+
+    Chain admissibility rule: EVERY capsule in a declared chain must be
+    admissible under the signature (allowed/forbidden method family AND risk
+    ceiling). A single inadmissible or unknown capsule poisons the whole
+    chain — you cannot run half a pipeline. Poisoned specs are not emitted;
+    the reasons are available via ``skipped_compositions()`` for audit,
+    mirroring how the base composer surfaces ``skipped_capsule_ids``.
+
+    Baseline contract: ``run()`` still detects the baseline as the pipeline
+    whose ``method_families == (signature.baseline_method_family,)`` — a
+    single-element tuple. A caller that wants a baseline MUST include a
+    single-capsule ``CompositionSpec`` for the baseline family. Multi-capsule
+    pipelines can never be mistaken for the baseline. Comparison without a
+    baseline yields no winners (same rule as the base composer).
+    """
+
+    def __init__(
+        self,
+        ledger: CandidateLedger,
+        *,
+        capsules: tuple[MethodCapsule, ...] = (),
+        adversarial_reviewer: AdversarialReviewCallback | None = None,
+        compositions: tuple[CompositionSpec, ...] = (),
+    ) -> None:
+        super().__init__(
+            ledger,
+            capsules=capsules,
+            adversarial_reviewer=adversarial_reviewer,
+        )
+        self._compositions = tuple(compositions)
+        self._skipped: list[SkippedComposition] = []
+
+    def skipped_compositions(self) -> tuple[SkippedComposition, ...]:
+        """Specs not composed in the most recent ``compose_pipelines`` call."""
+        return tuple(self._skipped)
+
+    def compose_pipelines(
+        self, signature: ProblemSignature
+    ) -> tuple[CandidatePipeline, ...]:
+        self._skipped = []
+        composed: list[CandidatePipeline] = []
+        for spec in self._compositions:
+            resolved: list[MethodCapsule] = []
+            poisoned = False
+            for capsule_id in spec.capsule_ids:
+                capsule = self._capsules.get(capsule_id)
+                if capsule is None:
+                    self._skipped.append(
+                        SkippedComposition(
+                            pipeline_id=spec.pipeline_id,
+                            reason="unknown_capsule_id",
+                            offending_capsule_id=capsule_id,
+                        )
+                    )
+                    poisoned = True
+                    break
+                if not signature.admits_method_family(capsule.method_family):
+                    self._skipped.append(
+                        SkippedComposition(
+                            pipeline_id=spec.pipeline_id,
+                            reason="capsule_method_family_not_admissible",
+                            offending_capsule_id=capsule_id,
+                        )
+                    )
+                    poisoned = True
+                    break
+                if not _capsule_admits_risk(capsule, signature.risk):
+                    self._skipped.append(
+                        SkippedComposition(
+                            pipeline_id=spec.pipeline_id,
+                            reason="capsule_risk_ceiling_below_signature_risk",
+                            offending_capsule_id=capsule_id,
+                        )
+                    )
+                    poisoned = True
+                    break
+                resolved.append(capsule)
+            if poisoned:
+                continue
+            composed.append(
+                CandidatePipeline(
+                    pipeline_id=spec.pipeline_id,
+                    method_families=tuple(c.method_family for c in resolved),
+                    capsule_ids=spec.capsule_ids,
+                    description=spec.description,
+                )
+            )
+        return tuple(composed)
