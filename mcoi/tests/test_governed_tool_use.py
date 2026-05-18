@@ -5,6 +5,7 @@ from mcoi_runtime.core.governed_tool_use import (
     GovernedToolRegistry,
     ToolDefinition,
 )
+from mcoi_runtime.governance.audit.rejected_path_records import RejectedPathRecorder
 
 
 def _registry(**kw):
@@ -267,3 +268,39 @@ class TestRegistryManagement:
         assert body["allowed_count"] == 2
         assert body["blocked_count"] == 0
         assert [record["tool_name"] for record in body["records"]] == ["b", "c"]
+
+    def test_blocked_tool_decision_records_rejected_path_receipt(self):
+        recorder = RejectedPathRecorder()
+        r = _registry(rejected_path_recorder=recorder)
+        r.register(_tool("send_email", declared_effects=("email_sent",)), executor=_executor)
+
+        result = r.invoke(
+            "send_email",
+            {},
+            session_id="session-1",
+            tenant_id="tenant-1",
+            intent_source=CapabilityIntentSource.MONITORED_CONTENT,
+        )
+        records = recorder.list_records()
+
+        assert result.allowed is False
+        assert len(records) == 1
+        assert records[0].record_id.startswith("gci-rejected-path-")
+        assert records[0].capability == "send_email"
+        assert records[0].actor_id == "session-1"
+        assert records[0].occurred_at == "2026-04-07T12:00:00Z"
+        assert records[0].reason == "capability_contract:effectful_action_requires_user_direct_intent_source"
+
+    def test_rejected_path_recorder_can_be_bound_after_registry_creation(self):
+        recorder = RejectedPathRecorder()
+        r = _registry()
+        r.bind_rejected_path_recorder(recorder)
+
+        result = r.invoke("unknown_tool", {}, tenant_id="tenant-1")
+        records = recorder.list_records()
+
+        assert result.allowed is False
+        assert len(records) == 1
+        assert records[0].capability == "unknown"
+        assert records[0].actor_id == "tenant-1"
+        assert records[0].reason == "allowlist:tool_not_registered"
