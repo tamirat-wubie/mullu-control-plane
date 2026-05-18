@@ -3871,6 +3871,46 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "temporal_retention_window_receipt_schema_valid",
                 "receipt_not_terminal_closure",
             ],
+            runtime_witness_anchor_aliases={
+                "runtime_clock_owns_retention_timing": [
+                    "retention_window_allows_delete_at_due_boundary",
+                    "retention_window_blocks_invalid_or_future_record",
+                ],
+                "delete_before_delete_after_defers_action": [
+                    "retention_window_defers_delete_before_delete_after"
+                ],
+                "archive_and_anonymize_wait_for_retention_until": [
+                    "retention_window_allows_archive_after_retention_until"
+                ],
+                "legal_hold_blocks_lifecycle_action": [
+                    "retention_window_blocks_legal_hold_wrong_tenant_missing_evidence_and_sources"
+                ],
+                "overdue_retention_action_warns": [
+                    "retention_window_marks_overdue_after_warning_window"
+                ],
+                "tenant_scope_checked": [
+                    "retention_window_blocks_legal_hold_wrong_tenant_missing_evidence_and_sources"
+                ],
+                "retention_policy_ref_required": [
+                    "retention_window_blocks_invalid_or_future_record",
+                    "retention_window_blocks_legal_hold_wrong_tenant_missing_evidence_and_sources",
+                ],
+                "subject_evidence_refs_required": [
+                    "retention_window_blocks_legal_hold_wrong_tenant_missing_evidence_and_sources"
+                ],
+                "high_risk_source_receipts_bound": [
+                    "retention_window_allows_archive_after_retention_until",
+                    "retention_window_blocks_legal_hold_wrong_tenant_missing_evidence_and_sources",
+                ],
+                "temporal_retention_window_receipt_schema_valid": [
+                    "retention_window_allows_delete_at_due_boundary",
+                    "retention_window_marks_low_risk_action_not_required",
+                ],
+                "receipt_not_terminal_closure": [
+                    "retention_window_marks_low_risk_action_not_required",
+                    "retention_window_allows_delete_at_due_boundary",
+                ],
+            },
         ),
         _surface(
             "temporal_rate_limit_window",
