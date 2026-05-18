@@ -149,8 +149,8 @@ Witness integrity audit:
 | Metric | Count |
 |---|---:|
 | Runtime witness labels | 1035 |
-| Exact test anchors | 591 |
-| Unanchored witness labels | 444 |
+| Exact test anchors | 601 |
+| Unanchored witness labels | 434 |
 
 Evidence quality gaps:
 none
@@ -185,7 +185,6 @@ Witness integrity gaps:
 | `authority_operator_controls` | 0 | 5 | operator_access_guard, operator_audit_events, ownership_policy_read_models, approval_expiration_witness, obligation_satisfaction_escalation_witness |
 | `production_evidence_plane` | 0 | 10 | gateway_health_schema_valid, signed_production_evidence_witness, capability_evidence_schema_valid, audit_verification_schema_valid, proof_verification_schema_valid, deployment_collection_requires_production_evidence, live_physical_safety_evidence_derived_from_registry, live_physical_capability_requires_safety_evidence, sandbox_physical_capability_remains_non_production, missing_production_evidence_fails_closed |
 | `runtime_reflex_engine` | 0 | 9 | operator_only_access, mutation_applied_false, certification_handoff_required, protected_surfaces_auto_promote_false, signed_reflex_witness, reflex_deployment_witness_schema, reflex_validator_receipt_schema, offline_reflex_witness_replay, reflex_validator_receipt_artifact |
-| `capability_forge` | 0 | 10 | candidate_promotion_blocked, candidate_schema_valid, candidate_certification_handoff_emits_maturity_bundle, certification_handoff_installs_evidence_without_maturity_claim, certification_handoff_batch_preserves_capsule_admission_gate, physical_candidate_declares_live_safety_evidence_requirements, physical_handoff_installs_live_safety_evidence, high_risk_approval_policy_required, effect_bearing_candidate_requires_sandbox, effect_bearing_candidate_requires_recovery_path |
 | `capability_maturity_assessment` | 1 | 8 | certification_evidence_synthesizes_maturity_extension, maturity_derived_from_evidence, registry_read_model_exposes_maturity, default_pack_C6_examples_projected, effect_bearing_production_requires_live_write, production_requires_worker_deployment_recovery, autonomy_requires_C7_controls, capability_maturity_schema_valid |
 | `capability_manifest_registry` | 0 | 9 | capability_manifest_schema_valid, software_dev_manifests_admit_locally, manifest_missing_policy_rejected, manifest_unresolved_schema_rejected, effect_manifest_requires_sandbox_rollback, hot_reload_metadata_enforced, production_hot_reload_denied_for_effect_manifest, fabric_projects_local_manifest_registry, fabric_rejects_production_hot_reload_manifest_registry |
 | `agent_identity` | 0 | 8 | owner_tenant_identity_required, capability_scope_conflict_denied, self_approval_forbidden, policy_mutation_forbidden, delegation_requires_lease, agent_budget_enforced, reputation_update_requires_evidence, agent_identity_schema_valid |
@@ -340,5 +339,5 @@ none
 STATUS:
   Completeness: 100%
   Invariants verified: route declarations, route-level coverage classification, coverage levels, coverage states, closure action mapping, schema contract validation, deployment orchestration receipt schema contract
-  Open issues: 444 runtime-witness labels lack exact test-function anchors
+  Open issues: 434 runtime-witness labels lack exact test-function anchors
   Next action: bind unanchored runtime-witness labels to exact test-function anchors

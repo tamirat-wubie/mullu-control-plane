@@ -5216,6 +5216,44 @@
         "install_certification_handoff_evidence_batch"
       ],
       "request_proof": "request_proof",
+      "runtime_witness_anchor_aliases": {
+        "candidate_certification_handoff_emits_maturity_bundle": [
+          "capability_forge_builds_certification_handoff_for_maturity_synthesis"
+        ],
+        "candidate_promotion_blocked": [
+          "capability_forge_rejects_candidate_self_promotion",
+          "capability_candidate_schema_rejects_unblocked_candidate"
+        ],
+        "candidate_schema_valid": [
+          "capability_forge_creates_schema_valid_candidate_package"
+        ],
+        "certification_handoff_batch_preserves_capsule_admission_gate": [
+          "capability_forge_installs_handoff_evidence_batch_with_audit_hash",
+          "capability_forge_handoff_batch_rejects_coverage_drift",
+          "capability_forge_handoff_install_rejects_gate_bypasses"
+        ],
+        "certification_handoff_installs_evidence_without_maturity_claim": [
+          "capability_forge_installs_handoff_as_certification_evidence_only"
+        ],
+        "effect_bearing_candidate_requires_recovery_path": [
+          "capability_forge_rejects_effect_bearing_package_without_recovery"
+        ],
+        "effect_bearing_candidate_requires_sandbox": [
+          "capability_forge_certification_handoff_rejects_missing_required_refs",
+          "capability_forge_rejects_missing_required_eval"
+        ],
+        "high_risk_approval_policy_required": [
+          "capability_forge_projects_high_risk_controls",
+          "capability_forge_certification_handoff_rejects_missing_required_refs"
+        ],
+        "physical_candidate_declares_live_safety_evidence_requirements": [
+          "capability_forge_generates_physical_safety_evidence_requirements",
+          "capability_forge_rejects_physical_candidate_missing_safety_requirement"
+        ],
+        "physical_handoff_installs_live_safety_evidence": [
+          "capability_forge_installs_physical_safety_refs_from_handoff"
+        ]
+      },
       "runtime_witnesses": [
         "candidate_promotion_blocked",
         "candidate_schema_valid",
@@ -7126,7 +7164,7 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 591,
+    "exact_test_anchor_count": 601,
     "runtime_witness_count": 1035,
     "surfaces": [
       {
@@ -10209,23 +10247,79 @@
         "unanchored_witnesses": []
       },
       {
-        "anchored_witnesses": [],
-        "exact_test_anchor_count": 0,
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "tests/test_gateway/test_capability_forge.py::test_capability_forge_rejects_candidate_self_promotion",
+              "tests/test_gateway/test_capability_forge.py::test_capability_candidate_schema_rejects_unblocked_candidate"
+            ],
+            "witness": "candidate_promotion_blocked"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_capability_forge.py::test_capability_forge_creates_schema_valid_candidate_package"
+            ],
+            "witness": "candidate_schema_valid"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_capability_forge.py::test_capability_forge_builds_certification_handoff_for_maturity_synthesis"
+            ],
+            "witness": "candidate_certification_handoff_emits_maturity_bundle"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_capability_forge.py::test_capability_forge_installs_handoff_as_certification_evidence_only"
+            ],
+            "witness": "certification_handoff_installs_evidence_without_maturity_claim"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_capability_forge.py::test_capability_forge_installs_handoff_evidence_batch_with_audit_hash",
+              "tests/test_gateway/test_capability_forge.py::test_capability_forge_handoff_batch_rejects_coverage_drift",
+              "tests/test_gateway/test_capability_forge.py::test_capability_forge_handoff_install_rejects_gate_bypasses"
+            ],
+            "witness": "certification_handoff_batch_preserves_capsule_admission_gate"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_capability_forge.py::test_capability_forge_generates_physical_safety_evidence_requirements",
+              "tests/test_gateway/test_capability_forge.py::test_capability_forge_rejects_physical_candidate_missing_safety_requirement"
+            ],
+            "witness": "physical_candidate_declares_live_safety_evidence_requirements"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_capability_forge.py::test_capability_forge_installs_physical_safety_refs_from_handoff"
+            ],
+            "witness": "physical_handoff_installs_live_safety_evidence"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_capability_forge.py::test_capability_forge_projects_high_risk_controls",
+              "tests/test_gateway/test_capability_forge.py::test_capability_forge_certification_handoff_rejects_missing_required_refs"
+            ],
+            "witness": "high_risk_approval_policy_required"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_capability_forge.py::test_capability_forge_certification_handoff_rejects_missing_required_refs",
+              "tests/test_gateway/test_capability_forge.py::test_capability_forge_rejects_missing_required_eval"
+            ],
+            "witness": "effect_bearing_candidate_requires_sandbox"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_capability_forge.py::test_capability_forge_rejects_effect_bearing_package_without_recovery"
+            ],
+            "witness": "effect_bearing_candidate_requires_recovery_path"
+          }
+        ],
+        "exact_test_anchor_count": 10,
         "runtime_witness_count": 10,
         "surface_id": "capability_forge",
-        "unanchored_witness_count": 10,
-        "unanchored_witnesses": [
-          "candidate_promotion_blocked",
-          "candidate_schema_valid",
-          "candidate_certification_handoff_emits_maturity_bundle",
-          "certification_handoff_installs_evidence_without_maturity_claim",
-          "certification_handoff_batch_preserves_capsule_admission_gate",
-          "physical_candidate_declares_live_safety_evidence_requirements",
-          "physical_handoff_installs_live_safety_evidence",
-          "high_risk_approval_policy_required",
-          "effect_bearing_candidate_requires_sandbox",
-          "effect_bearing_candidate_requires_recovery_path"
-        ]
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
       },
       {
         "anchored_witnesses": [
@@ -12229,6 +12323,6 @@
         "unanchored_witnesses": []
       }
     ],
-    "unanchored_witness_count": 444
+    "unanchored_witness_count": 434
   }
 }

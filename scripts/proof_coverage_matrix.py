@@ -2617,6 +2617,44 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "effect_bearing_candidate_requires_sandbox",
                 "effect_bearing_candidate_requires_recovery_path",
             ],
+            runtime_witness_anchor_aliases={
+                "candidate_promotion_blocked": [
+                    "capability_forge_rejects_candidate_self_promotion",
+                    "capability_candidate_schema_rejects_unblocked_candidate",
+                ],
+                "candidate_schema_valid": [
+                    "capability_forge_creates_schema_valid_candidate_package"
+                ],
+                "candidate_certification_handoff_emits_maturity_bundle": [
+                    "capability_forge_builds_certification_handoff_for_maturity_synthesis"
+                ],
+                "certification_handoff_installs_evidence_without_maturity_claim": [
+                    "capability_forge_installs_handoff_as_certification_evidence_only"
+                ],
+                "certification_handoff_batch_preserves_capsule_admission_gate": [
+                    "capability_forge_installs_handoff_evidence_batch_with_audit_hash",
+                    "capability_forge_handoff_batch_rejects_coverage_drift",
+                    "capability_forge_handoff_install_rejects_gate_bypasses",
+                ],
+                "physical_candidate_declares_live_safety_evidence_requirements": [
+                    "capability_forge_generates_physical_safety_evidence_requirements",
+                    "capability_forge_rejects_physical_candidate_missing_safety_requirement",
+                ],
+                "physical_handoff_installs_live_safety_evidence": [
+                    "capability_forge_installs_physical_safety_refs_from_handoff"
+                ],
+                "high_risk_approval_policy_required": [
+                    "capability_forge_projects_high_risk_controls",
+                    "capability_forge_certification_handoff_rejects_missing_required_refs",
+                ],
+                "effect_bearing_candidate_requires_sandbox": [
+                    "capability_forge_certification_handoff_rejects_missing_required_refs",
+                    "capability_forge_rejects_missing_required_eval",
+                ],
+                "effect_bearing_candidate_requires_recovery_path": [
+                    "capability_forge_rejects_effect_bearing_package_without_recovery"
+                ],
+            },
         ),
         _surface(
             "capability_maturity_assessment",

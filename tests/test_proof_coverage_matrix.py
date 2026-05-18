@@ -175,6 +175,8 @@ def test_witness_integrity_report_tracks_exact_test_anchors() -> None:
     assert surfaces["temporal_credential_expiry"]["exact_test_anchor_count"] == 11
     assert surfaces["temporal_retention_window"]["unanchored_witness_count"] == 0
     assert surfaces["temporal_retention_window"]["exact_test_anchor_count"] == 11
+    assert surfaces["capability_forge"]["unanchored_witness_count"] == 0
+    assert surfaces["capability_forge"]["exact_test_anchor_count"] == 10
 
 
 def test_declared_routes_have_explicit_coverage_classification() -> None:
