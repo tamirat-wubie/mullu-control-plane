@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import threading
 from dataclasses import dataclass, field
+from datetime import datetime, timezone
 from typing import Any, Callable
 
 from mcoi_runtime.contracts.capability_contract import (
@@ -27,8 +28,10 @@ from mcoi_runtime.contracts.capability_contract import (
     default_capability_contract,
     evaluate_capability_contract,
 )
+from mcoi_runtime.governance.audit.rejected_path_records import RejectedPathRecord, RejectedPathRecorder
 
 from .capability_contract_coverage import CapabilityContractCoverageReport, audit_capability_contract_coverage
+from .invariants import stable_identifier
 from .tool_permission_primitives import (
     ToolPermissionDecision,
     ToolPermissionRegistry,
@@ -154,7 +157,13 @@ class GovernedToolRegistry:
         )
     """
 
-    def __init__(self, *, clock: Callable[[], str] | None = None, max_decision_records: int = 100) -> None:
+    def __init__(
+        self,
+        *,
+        clock: Callable[[], str] | None = None,
+        max_decision_records: int = 100,
+        rejected_path_recorder: RejectedPathRecorder | None = None,
+    ) -> None:
         self._tools: dict[str, ToolDefinition] = {}
         self._executors: dict[str, Callable[[str, dict[str, Any]], Any]] = {}
         self._session_usage: dict[str, dict[str, ToolUsageStats]] = {}  # session_id → {tool_name → stats}
@@ -163,12 +172,17 @@ class GovernedToolRegistry:
         self._total_invocations = 0
         self._total_denied = 0
         self._permission_registry: ToolPermissionRegistry | None = None
+        self._rejected_path_recorder = rejected_path_recorder
         self._max_decision_records = max(1, int(max_decision_records))
         self._decision_records: list[ToolDecisionRecord] = []
 
     def bind_permission_registry(self, registry: ToolPermissionRegistry) -> None:
         """Attach tenant/tool permission primitives to invocation checks."""
         self._permission_registry = registry
+
+    def bind_rejected_path_recorder(self, recorder: RejectedPathRecorder) -> None:
+        """Attach append-only Phi_gov rejected-path recording to blocked decisions."""
+        self._rejected_path_recorder = recorder
 
     def register(
         self,
@@ -232,7 +246,13 @@ class GovernedToolRegistry:
                 self._total_invocations += 1
                 if error:
                     stats.error_count += 1
-            stats.last_called_at = self._clock()
+            stats.last_called_at = self._observed_at()
+
+    def _observed_at(self) -> str:
+        observed_at = self._clock()
+        if observed_at:
+            return observed_at
+        return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
 
     def _record_decision(
         self,
@@ -248,8 +268,10 @@ class GovernedToolRegistry:
     ) -> None:
         contract = tool.capability_contract if tool is not None else None
         source = intent_source if isinstance(intent_source, IntentSource) else IntentSource(str(intent_source))
+        observed_at = self._observed_at()
+        capability = contract.capability if contract is not None else "unknown"
         record = ToolDecisionRecord(
-            observed_at=self._clock(),
+            observed_at=observed_at,
             tool_name=tool_name,
             allowed=allowed,
             stage=stage,
@@ -257,7 +279,7 @@ class GovernedToolRegistry:
             session_id=session_id,
             tenant_id=tenant_id or "system",
             intent_source=source.value,
-            capability=contract.capability if contract is not None else "unknown",
+            capability=capability,
             effect_class=contract.axis_V.value if contract is not None else "unknown",
             cap_level=contract.cap_level if contract is not None else 0,
             gov_tier=contract.gov_tier if contract is not None else 0,
@@ -266,6 +288,51 @@ class GovernedToolRegistry:
             self._decision_records.append(record)
             if len(self._decision_records) > self._max_decision_records:
                 del self._decision_records[: len(self._decision_records) - self._max_decision_records]
+        if not allowed:
+            self._record_rejected_path(
+                capability=capability,
+                tool_name=tool_name,
+                stage=stage,
+                reasons=reasons,
+                session_id=session_id,
+                tenant_id=tenant_id,
+                occurred_at=observed_at,
+            )
+
+    def _record_rejected_path(
+        self,
+        *,
+        capability: str,
+        tool_name: str,
+        stage: str,
+        reasons: tuple[str, ...],
+        session_id: str,
+        tenant_id: str,
+        occurred_at: str,
+    ) -> None:
+        if self._rejected_path_recorder is None:
+            return
+        actor_id = session_id or tenant_id or "system"
+        reason = f"{stage}:{';'.join(reasons)}"
+        record_id = stable_identifier(
+            "gci-rejected-path",
+            {
+                "actor_id": actor_id,
+                "capability": capability,
+                "occurred_at": occurred_at,
+                "reason": reason,
+                "tool_name": tool_name,
+            },
+        )
+        self._rejected_path_recorder.append(
+            RejectedPathRecord(
+                record_id=record_id,
+                capability=capability,
+                actor_id=actor_id,
+                reason=reason,
+                occurred_at=occurred_at,
+            )
+        )
 
     def invoke(
         self,
