@@ -2864,7 +2864,10 @@
       "coverage_state": "witnessed",
       "evidence_files": [
         "mcoi/mcoi_runtime/app/routers/llm/chat.py",
-        "mcoi/mcoi_runtime/core/proof_bridge.py"
+        "mcoi/mcoi_runtime/core/proof_bridge.py",
+        "mcoi/tests/test_server_phase209.py",
+        "mcoi/tests/test_server_phase210.py",
+        "mcoi/tests/test_server_phase213.py"
       ],
       "notes": "Chat and workflow routes preserve governed request and action proof boundaries.",
       "representative_paths": [
@@ -2873,6 +2876,29 @@
         "/api/v1/chat/workflow/history"
       ],
       "request_proof": "request_proof",
+      "runtime_witness_anchor_aliases": {
+        "chat_completion_governed": [
+          "single_turn"
+        ],
+        "chat_workflow_history_bounded": [
+          "chat_workflow_history"
+        ],
+        "streaming_chat_contains_budget_witnesses": [
+          "streaming_chat_contains_budget_witnesses"
+        ],
+        "streaming_chat_exception_sanitized": [
+          "streaming_chat_exception_sanitized"
+        ],
+        "streaming_chat_governed": [
+          "streaming_chat_governed"
+        ],
+        "streaming_chat_multi_turn_history_preserved": [
+          "streaming_chat_multi_turn"
+        ],
+        "streaming_chat_returns_sse": [
+          "streaming_chat_returns_sse"
+        ]
+      },
       "runtime_witnesses": [
         "chat_completion_governed",
         "streaming_chat_returns_sse",
@@ -6809,7 +6835,7 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 502,
+    "exact_test_anchor_count": 509,
     "runtime_witness_count": 1035,
     "surfaces": [
       {
@@ -7212,20 +7238,55 @@
         "unanchored_witnesses": []
       },
       {
-        "anchored_witnesses": [],
-        "exact_test_anchor_count": 0,
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "mcoi/tests/test_server_phase209.py::test_single_turn"
+            ],
+            "witness": "chat_completion_governed"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_server_phase213.py::test_streaming_chat_returns_sse"
+            ],
+            "witness": "streaming_chat_returns_sse"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_server_phase213.py::test_streaming_chat_multi_turn"
+            ],
+            "witness": "streaming_chat_multi_turn_history_preserved"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_server_phase213.py::test_streaming_chat_governed"
+            ],
+            "witness": "streaming_chat_governed"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_server_phase213.py::test_streaming_chat_contains_budget_witnesses"
+            ],
+            "witness": "streaming_chat_contains_budget_witnesses"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_server_phase213.py::test_streaming_chat_exception_sanitized"
+            ],
+            "witness": "streaming_chat_exception_sanitized"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_server_phase210.py::test_chat_workflow_history"
+            ],
+            "witness": "chat_workflow_history_bounded"
+          }
+        ],
+        "exact_test_anchor_count": 7,
         "runtime_witness_count": 7,
         "surface_id": "llm_chat_workflow",
-        "unanchored_witness_count": 7,
-        "unanchored_witnesses": [
-          "chat_completion_governed",
-          "streaming_chat_returns_sse",
-          "streaming_chat_multi_turn_history_preserved",
-          "streaming_chat_governed",
-          "streaming_chat_contains_budget_witnesses",
-          "streaming_chat_exception_sanitized",
-          "chat_workflow_history_bounded"
-        ]
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
       },
       {
         "anchored_witnesses": [],
@@ -11437,6 +11498,6 @@
         "unanchored_witnesses": []
       }
     ],
-    "unanchored_witness_count": 533
+    "unanchored_witness_count": 526
   }
 }

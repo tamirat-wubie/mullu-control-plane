@@ -149,8 +149,8 @@ Witness integrity audit:
 | Metric | Count |
 |---|---:|
 | Runtime witness labels | 1035 |
-| Exact test anchors | 502 |
-| Unanchored witness labels | 533 |
+| Exact test anchors | 509 |
+| Unanchored witness labels | 526 |
 
 Evidence quality gaps:
 none
@@ -159,7 +159,6 @@ Witness integrity gaps:
 
 | Surface | Exact anchors | Unanchored | Unanchored labels |
 |---|---:|---:|---|
-| `llm_chat_workflow` | 0 | 7 | chat_completion_governed, streaming_chat_returns_sse, streaming_chat_multi_turn_history_preserved, streaming_chat_governed, streaming_chat_contains_budget_witnesses, streaming_chat_exception_sanitized, chat_workflow_history_bounded |
 | `cost_budget_read_models` | 0 | 6 | budget_summary_bounded, safe_completion_tracks_cost, cost_read_model_totals_bounded, cost_top_spenders_bounded, cost_by_model_bounded, tenant_cost_projection_bounded |
 | `assistant_kernel_planning` | 0 | 5 | assistant_profiles_read_model_bounded, finance_ops_plan_requires_active_consent, finance_ops_plan_projects_operator_queue, assistant_plan_never_grants_execution_authority, assistant_plan_errors_sanitized |
 | `coordination_checkpoint_lifecycle` | 0 | 10 | coordination_checkpoint_audited, coordination_restore_load_governed, coordination_restore_resumes_checkpoint, coordination_checkpoint_save_governed, coordination_checkpoint_lease_bound, coordination_store_path_traversal_rejected, coordination_restore_policy_checked, coordination_policy_drift_requires_review, coordination_restore_missing_bounded, coordination_restore_missing_is_bounded |
@@ -348,5 +347,5 @@ none
 STATUS:
   Completeness: 100%
   Invariants verified: route declarations, route-level coverage classification, coverage levels, coverage states, closure action mapping, schema contract validation, deployment orchestration receipt schema contract
-  Open issues: 533 runtime-witness labels lack exact test-function anchors
+  Open issues: 526 runtime-witness labels lack exact test-function anchors
   Next action: bind unanchored runtime-witness labels to exact test-function anchors
