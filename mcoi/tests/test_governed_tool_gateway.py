@@ -20,6 +20,7 @@ from mcoi_runtime.core.governed_tool_gateway import (
 from mcoi_runtime.core.governed_tool_use import GovernedToolRegistry, ToolDefinition
 from mcoi_runtime.core.invariants import RuntimeCoreInvariantError
 from mcoi_runtime.core.tool_permission_primitives import ToolCallPermission, ToolPermissionRegistry
+from mcoi_runtime.governance.audit.rejected_path_records import RejectedPathRecorder
 
 
 def _clock() -> str:
@@ -82,6 +83,27 @@ def test_gateway_records_denied_unregistered_tool() -> None:
     assert "not registered" in result.registry_result.error
     assert result.ledger_event.outcome == "denied"
     assert "denial:tool not registered" in result.ledger_event.constraint_refs
+
+
+def test_gateway_records_denied_tool_in_rejected_path_recorder() -> None:
+    recorder = RejectedPathRecorder()
+    gateway = GovernedToolGateway(
+        registry=GovernedToolRegistry(clock=_clock),
+        ledger=CausalRuntimeLedger(clock=_clock),
+        rejected_path_recorder=recorder,
+    )
+
+    result = gateway.invoke(_request(tool_name="shell.run", arguments={"command": "whoami"}))
+    records = recorder.list_records()
+
+    assert result.allowed is False
+    assert result.status == "denied"
+    assert len(records) == 1
+    assert records[0].record_id.startswith("gci-rejected-path-")
+    assert records[0].capability == "unknown"
+    assert records[0].actor_id == "session-1"
+    assert records[0].occurred_at == "2026-05-13T12:30:00+00:00"
+    assert records[0].reason == "allowlist:tool_not_registered"
 
 
 def test_gateway_blocks_unknown_cause_before_executor_runs() -> None:

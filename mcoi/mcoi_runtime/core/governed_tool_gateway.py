@@ -18,6 +18,7 @@ from dataclasses import asdict, dataclass, field
 from typing import Any, Callable, Mapping
 
 from mcoi_runtime.contracts.capability_contract import IntentSource
+from mcoi_runtime.governance.audit.rejected_path_records import RejectedPathRecorder
 
 from .artifact_lineage_dag import ArtifactLineageDAG, ArtifactLineageNode, hash_artifact_payload
 from .causal_runtime_ledger import CausalLedgerEvent, CausalRuntimeLedger, hash_runtime_payload
@@ -167,8 +168,14 @@ class GovernedToolGateway:
         registry: GovernedToolRegistry | None = None,
         ledger: CausalRuntimeLedger,
         artifact_lineage: ArtifactLineageDAG | None = None,
+        rejected_path_recorder: RejectedPathRecorder | None = None,
     ) -> None:
-        self._registry = registry or GovernedToolRegistry(clock=lambda: "")
+        self._registry = registry or GovernedToolRegistry(
+            clock=lambda: "",
+            rejected_path_recorder=rejected_path_recorder,
+        )
+        if registry is not None and rejected_path_recorder is not None:
+            registry.bind_rejected_path_recorder(rejected_path_recorder)
         self._ledger = ledger
         self._artifact_lineage = artifact_lineage
 
