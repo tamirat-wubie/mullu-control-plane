@@ -135,6 +135,16 @@ from .knowledge_ingestion import (
     ProcedureStep,
 )
 from .learning import LearningAdmissionDecision, LearningAdmissionStatus
+from .operational_math import (
+    OperationalMathControl,
+    OperationalMathLoopIteration,
+    OperationalMathLoopResult,
+    OperationalMathLoopStatus,
+    OperationalMathPrinciple,
+    OperationalMathPriority,
+    OperationalMathRole,
+    OperationalMathTarget,
+)
 from .plan import Plan, PlanItem
 from .policy import DecisionReason, PolicyDecision, PolicyDecisionStatus
 from .recovery import RecoveryRecord
