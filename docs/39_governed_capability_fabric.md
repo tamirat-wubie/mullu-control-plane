@@ -85,6 +85,8 @@ Reused plans, memory, repository state, deployment state, finance context, calen
 
 `GovernedToolRegistry.capability_contract_coverage()` exposes the runtime read model for this gate. Operators can inspect registered tool count, enabled tool count, explicit versus synthesized contract count, blocked contract count, per-tool admission status, and rejected reasons without invoking any tool. A complete report means every registered tool has a populated `CapabilityContract` that satisfies the CxG grid; a blocked report identifies the exact `Phi_gov` reason before execution is possible.
 
+`GovernedToolRegistry.decision_read_model()` exposes the bounded live operator view of recent tool decisions. It shows allowed count, blocked count, decision stage, source trust, effect class, capability level, governance tier, and reasons such as `effectful_action_requires_user_direct_intent_source`. This is visibility only; durable rejected-path receipts remain the audit authority for long-term evidence.
+
 ## Maturity Projection
 
 Registry entries do not self-promote. Gateway-built fabric read models derive a `capability_maturity_assessment` from each installed entry and attach the C0-C7 summary to both the internal capability projection and the governed operator record. Certification can lift a capability to mock-evaluated maturity, but production readiness still requires explicit sandbox, live receipt, worker deployment, recovery, and autonomy evidence through `extensions.capability_maturity_evidence`.
