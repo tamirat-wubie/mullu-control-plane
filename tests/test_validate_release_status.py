@@ -289,6 +289,7 @@ def test_ci_workflow_runs_protocol_manifest_gate() -> None:
     assert ".change_assurance/deployment_publication_closure_validation.json" in REQUIRED_CI_LITERALS
     assert "python scripts/validate_logic_governance_application.py" in REQUIRED_CI_LITERALS
     assert "python scripts/validate_governed_runtime_promotion.py --output .change_assurance/governed_runtime_promotion_readiness.json" in REQUIRED_CI_LITERALS
+    assert "python scripts/validate_governed_swarm_promotion_readiness.py --staging-evidence-bundle docs/governed-swarm-staging-evidence-bundle-example.json --target-environment pilot --output .change_assurance/governed_swarm_promotion_readiness.json --strict" in REQUIRED_CI_LITERALS
     assert "cargo build --release" in REQUIRED_CI_LITERALS
     assert any(
         "validate_general_agent_promotion_closure_plan.py" in literal
@@ -370,6 +371,18 @@ def test_ci_workflow_runs_promotion_handoff_packet_gate() -> None:
     assert "general_agent_promotion_environment_binding_receipt.json" in content
     assert "general_agent_promotion_handoff_preflight.json" in content
     assert "Validate general-agent promotion closure plan" in content
+
+
+def test_ci_workflow_runs_governed_swarm_promotion_readiness_gate() -> None:
+    content = CI_WORKFLOW_PATH.read_text(encoding="utf-8")
+
+    errors = validate_ci_workflow_text(content)
+
+    assert errors == []
+    assert any("validate_governed_swarm_promotion_readiness.py" in literal for literal in REQUIRED_CI_LITERALS)
+    assert content.count("validate_governed_swarm_promotion_readiness.py") == 2
+    assert "governed-swarm-staging-evidence-bundle-example.json" in content
+    assert ".change_assurance/governed_swarm_promotion_readiness.json" in content
 
 
 def test_ci_workflow_runs_mil_audit_runbook_workflow_gate() -> None:
