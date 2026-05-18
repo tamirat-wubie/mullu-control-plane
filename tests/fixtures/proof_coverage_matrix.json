@@ -6538,7 +6538,10 @@
       "evidence_files": [
         "mcoi/mcoi_runtime/app/routers/data/tools.py",
         "mcoi/mcoi_runtime/app/routers/workflow.py",
+        "mcoi/mcoi_runtime/core/governed_tool_gateway.py",
+        "mcoi/mcoi_runtime/core/governed_tool_use.py",
         "mcoi/mcoi_runtime/core/tool_use.py",
+        "mcoi/mcoi_runtime/governance/audit/rejected_path_records.py",
         "mcoi/mcoi_runtime/mcp/capability_bridge.py",
         "gateway/mcp_operator_read_model.py",
         "gateway/mcp_capability_fabric.py",
@@ -6548,6 +6551,8 @@
         "examples/mcp_capability_manifest.json",
         "examples/mcp_operator_handoff_checklist.json",
         "docs/55_mcp_capability_manifest.md",
+        "mcoi/tests/test_governed_tool_gateway.py",
+        "mcoi/tests/test_governed_tool_use.py",
         "mcoi/tests/test_server_phase212.py",
         "mcoi/tests/test_server_phase213.py",
         "mcoi/tests/test_server_runtime_helpers.py",
@@ -6555,7 +6560,7 @@
         "tests/test_validate_mcp_capability_manifest.py",
         "tests/test_validate_mcp_operator_checklist.py"
       ],
-      "notes": "Tool invocation and MCP capability import bind action proof ids, capability policy receipts, authority-obligation ownership records, validated operator manifests, and machine-readable handoff checklists.",
+      "notes": "Tool invocation and MCP capability import bind action proof ids, capability policy receipts, rejected-path receipts, authority-obligation ownership records, validated operator manifests, and machine-readable handoff checklists.",
       "representative_paths": [
         "/api/v1/tools/invoke",
         "/api/v1/workflow/tools"
@@ -6568,6 +6573,9 @@
         "tool_history",
         "tool_workflow",
         "tool_workflow_tool_calls_include_policy_receipts",
+        "gateway_records_denied_tool_in_rejected_path_recorder",
+        "blocked_tool_decision_records_rejected_path_receipt",
+        "rejected_path_recorder_can_be_bound_after_registry_creation",
         "register_default_tools_registers_calculator_and_time",
         "validate_mcp_capability_manifest_accepts_example",
         "validate_mcp_operator_checklist_accepts_example"
@@ -6714,8 +6722,8 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 474,
-    "runtime_witness_count": 1032,
+    "exact_test_anchor_count": 477,
+    "runtime_witness_count": 1035,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -10957,6 +10965,24 @@
           },
           {
             "anchors": [
+              "mcoi/tests/test_governed_tool_gateway.py::test_gateway_records_denied_tool_in_rejected_path_recorder"
+            ],
+            "witness": "gateway_records_denied_tool_in_rejected_path_recorder"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_governed_tool_use.py::test_blocked_tool_decision_records_rejected_path_receipt"
+            ],
+            "witness": "blocked_tool_decision_records_rejected_path_receipt"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_governed_tool_use.py::test_rejected_path_recorder_can_be_bound_after_registry_creation"
+            ],
+            "witness": "rejected_path_recorder_can_be_bound_after_registry_creation"
+          },
+          {
+            "anchors": [
               "mcoi/tests/test_server_runtime_helpers.py::test_register_default_tools_registers_calculator_and_time"
             ],
             "witness": "register_default_tools_registers_calculator_and_time"
@@ -10974,8 +11000,8 @@
             "witness": "validate_mcp_operator_checklist_accepts_example"
           }
         ],
-        "exact_test_anchor_count": 9,
-        "runtime_witness_count": 9,
+        "exact_test_anchor_count": 12,
+        "runtime_witness_count": 12,
         "surface_id": "tool_invocation",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []

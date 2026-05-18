@@ -2145,6 +2145,24 @@ def test_tool_registry_read_model_surface_keeps_invocation_separate() -> None:
     assert closure_actions["classify_tool_registry_read_model_routes"]["status"] == "closed"
 
 
+def test_tool_invocation_surface_anchors_rejected_path_receipts() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    tool_surface = surfaces["tool_invocation"]
+    witnesses = set(tool_surface["runtime_witnesses"])
+
+    assert tool_surface["coverage_state"] == "witnessed"
+    assert "mcoi/mcoi_runtime/core/governed_tool_gateway.py" in tool_surface["evidence_files"]
+    assert "mcoi/mcoi_runtime/core/governed_tool_use.py" in tool_surface["evidence_files"]
+    assert "mcoi/mcoi_runtime/governance/audit/rejected_path_records.py" in tool_surface["evidence_files"]
+    assert "mcoi/tests/test_governed_tool_gateway.py" in tool_surface["evidence_files"]
+    assert "mcoi/tests/test_governed_tool_use.py" in tool_surface["evidence_files"]
+    assert "gateway_records_denied_tool_in_rejected_path_recorder" in witnesses
+    assert "blocked_tool_decision_records_rejected_path_receipt" in witnesses
+    assert "rejected_path_recorder_can_be_bound_after_registry_creation" in witnesses
+    assert "rejected-path receipts" in tool_surface["notes"]
+
+
 def test_structured_output_validation_surface_is_witnessed() -> None:
     matrix = _load_fixture()
     surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
