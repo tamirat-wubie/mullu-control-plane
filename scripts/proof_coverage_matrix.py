@@ -1982,6 +1982,54 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "runbook_pattern_read_models_bounded",
                 "runbook_responses_governed",
             ],
+            runtime_witness_anchor_aliases={
+                "patterns_detected_from_audit_trail": [
+                    "analyze_detects_patterns",
+                    "analyze_endpoint",
+                ],
+                "promotion_requires_detected_pattern": [
+                    "promote_creates_candidate",
+                    "promote_unknown_pattern_raises",
+                ],
+                "approval_required_before_activation": [
+                    "activate_requires_approved",
+                    "cannot_activate_candidate",
+                    "approve_requires_candidate",
+                ],
+                "retirement_requires_active_runbook": [
+                    "cannot_retire_non_active_runbook",
+                    "cannot_retire_already_retired_runbook",
+                    "retire_endpoint_rejects_non_active_runbook",
+                ],
+                "promote_and_approve_audit_records": [
+                    "promote_creates_candidate",
+                    "approve_requires_candidate",
+                ],
+                "mil_audit_replay_admits_runbook": [
+                    "mil_audit_router_admits_replay_backed_runbook"
+                ],
+                "mil_audit_operator_checklist_validated": [
+                    "validate_mil_audit_runbook_operator_checklist_accepts_example",
+                    "validate_mil_audit_runbook_operator_checklist_rejects_missing_step",
+                ],
+                "mil_audit_runbook_preflight_ready": [
+                    "mil_audit_runbook_preflight_accepts_valid_local_state",
+                    "mil_audit_runbook_preflight_blocks_missing_record",
+                ],
+                "sanitized_runbook_error_details": [
+                    "promote_endpoint_sanitizes_unknown_pattern",
+                    "approve_endpoint_sanitizes_unknown_runbook",
+                    "activate_endpoint_sanitizes_unknown_runbook",
+                ],
+                "runbook_pattern_read_models_bounded": [
+                    "list_runbooks_endpoint",
+                    "runbooks_summary_endpoint",
+                ],
+                "runbook_responses_governed": [
+                    "list_runbooks_invalid_status_fails_closed",
+                    "mil_audit_router_missing_store_fails_closed",
+                ],
+            },
         ),
         _surface(
             "software_outcome_learning",
@@ -2499,6 +2547,43 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "open_world_contradictions_block_execution",
                 "high_risk_controls_projected_before_execution",
             ],
+            runtime_witness_anchor_aliases={
+                "world_assertions_require_source_evidence": [
+                    "world_state_store_rejects_unsourced_assertion",
+                    "world_state_schema_rejects_entity_without_evidence",
+                ],
+                "knowledge_entity_routes_governed": [
+                    "add_entity_endpoint",
+                    "query_entities_endpoint",
+                    "query_entities_invalid_type_fails_closed_without_leakage",
+                ],
+                "knowledge_link_routes_governed": ["add_link_endpoint"],
+                "knowledge_contradiction_routes_governed": [
+                    "contradiction_endpoints_emit_governed_read_model"
+                ],
+                "knowledge_summary_route_bounded": ["knowledge_summary_endpoint"],
+                "policy_simulation_routes_governed": ["simulate_endpoint"],
+                "policy_simulation_history_summary_bounded": [
+                    "simulation_history_endpoint",
+                    "simulation_summary_endpoint",
+                    "history_bounded",
+                ],
+                "goal_plan_certificate_hash_bound": [
+                    "goal_compiler_compiles_high_risk_payment_with_controls",
+                    "goal_schema_accepts_compiled_goal_plan",
+                ],
+                "simulation_receipt_schema_valid": [
+                    "simulation_receipt_schema_accepts_dry_run_receipt"
+                ],
+                "open_world_contradictions_block_execution": [
+                    "causal_simulator_blocks_open_world_contradictions",
+                    "world_state_contradiction_blocks_planning_and_execution_claims",
+                ],
+                "high_risk_controls_projected_before_execution": [
+                    "causal_simulator_projects_high_risk_controls",
+                    "goal_compiler_compiles_high_risk_payment_with_controls",
+                ],
+            },
         ),
         _surface(
             "capability_forge",

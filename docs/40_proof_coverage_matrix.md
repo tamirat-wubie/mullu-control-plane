@@ -149,8 +149,8 @@ Witness integrity audit:
 | Metric | Count |
 |---|---:|
 | Runtime witness labels | 1035 |
-| Exact test anchors | 547 |
-| Unanchored witness labels | 488 |
+| Exact test anchors | 569 |
+| Unanchored witness labels | 466 |
 
 Evidence quality gaps:
 none
@@ -178,7 +178,6 @@ Witness integrity gaps:
 | `agent_orchestration_lifecycle` | 0 | 8 | orchestration_summary_bounded, orchestration_plan_created_for_registered_agent, orchestration_unknown_initiator_bounded, orchestration_missing_plan_bounded, orchestration_handoff_capability_checked, orchestration_handoff_errors_sanitized, orchestration_quorum_required, orchestration_executor_errors_sanitized |
 | `live_path_certification_lifecycle` | 0 | 8 | certification_run_emits_action_proof, certification_run_returns_chain_hash, certification_run_records_five_steps, certification_steps_named, certification_history_bounded, certification_chain_hash_deterministic, certification_failures_bounded, certification_partial_failure_recorded |
 | `runtime_state_persistence_lifecycle` | 0 | 8 | state_save_returns_hash_bound_snapshot, state_load_roundtrip, state_load_missing_bounded, state_list_summary_bounded, state_save_rejects_path_traversal, state_load_rejects_path_traversal, state_hash_mismatch_rejected, state_atomic_write_verified |
-| `runbook_learning_lifecycle` | 0 | 11 | patterns_detected_from_audit_trail, promotion_requires_detected_pattern, approval_required_before_activation, retirement_requires_active_runbook, promote_and_approve_audit_records, mil_audit_replay_admits_runbook, mil_audit_operator_checklist_validated, mil_audit_runbook_preflight_ready, sanitized_runbook_error_details, runbook_pattern_read_models_bounded, runbook_responses_governed |
 | `software_outcome_learning` | 0 | 7 | software_learning_schema_default_enabled, passed_gates_yield_procedural_memory, failed_gates_yield_hashed_risk_memory, raw_logs_rejected_before_planning_use, rollback_failure_defers_learning, planning_projection_requires_admitted_matching_decision, software_learning_errors_are_bounded |
 | `approval_engine_lifecycle` | 1 | 5 | approval_request_mutation_receipt_emitted, approval_decision_mutation_receipt_emitted, approval_consumption_mutation_receipt_emitted, approval_revocation_mutation_receipt_emitted, approval_override_mutation_receipt_emitted |
 | `job_engine_lifecycle` | 1 | 5 | job_create_mutation_receipt_emitted, job_start_mutation_receipt_emitted, job_pause_resume_mutation_receipts_emitted, job_terminal_mutation_receipts_emitted, job_restore_mutation_receipt_emitted |
@@ -186,7 +185,6 @@ Witness integrity gaps:
 | `authority_operator_controls` | 0 | 5 | operator_access_guard, operator_audit_events, ownership_policy_read_models, approval_expiration_witness, obligation_satisfaction_escalation_witness |
 | `production_evidence_plane` | 0 | 10 | gateway_health_schema_valid, signed_production_evidence_witness, capability_evidence_schema_valid, audit_verification_schema_valid, proof_verification_schema_valid, deployment_collection_requires_production_evidence, live_physical_safety_evidence_derived_from_registry, live_physical_capability_requires_safety_evidence, sandbox_physical_capability_remains_non_production, missing_production_evidence_fails_closed |
 | `runtime_reflex_engine` | 0 | 9 | operator_only_access, mutation_applied_false, certification_handoff_required, protected_surfaces_auto_promote_false, signed_reflex_witness, reflex_deployment_witness_schema, reflex_validator_receipt_schema, offline_reflex_witness_replay, reflex_validator_receipt_artifact |
-| `governed_operational_intelligence` | 0 | 11 | world_assertions_require_source_evidence, knowledge_entity_routes_governed, knowledge_link_routes_governed, knowledge_contradiction_routes_governed, knowledge_summary_route_bounded, policy_simulation_routes_governed, policy_simulation_history_summary_bounded, goal_plan_certificate_hash_bound, simulation_receipt_schema_valid, open_world_contradictions_block_execution, high_risk_controls_projected_before_execution |
 | `capability_forge` | 0 | 10 | candidate_promotion_blocked, candidate_schema_valid, candidate_certification_handoff_emits_maturity_bundle, certification_handoff_installs_evidence_without_maturity_claim, certification_handoff_batch_preserves_capsule_admission_gate, physical_candidate_declares_live_safety_evidence_requirements, physical_handoff_installs_live_safety_evidence, high_risk_approval_policy_required, effect_bearing_candidate_requires_sandbox, effect_bearing_candidate_requires_recovery_path |
 | `capability_maturity_assessment` | 1 | 8 | certification_evidence_synthesizes_maturity_extension, maturity_derived_from_evidence, registry_read_model_exposes_maturity, default_pack_C6_examples_projected, effect_bearing_production_requires_live_write, production_requires_worker_deployment_recovery, autonomy_requires_C7_controls, capability_maturity_schema_valid |
 | `capability_manifest_registry` | 0 | 9 | capability_manifest_schema_valid, software_dev_manifests_admit_locally, manifest_missing_policy_rejected, manifest_unresolved_schema_rejected, effect_manifest_requires_sandbox_rollback, hot_reload_metadata_enforced, production_hot_reload_denied_for_effect_manifest, fabric_projects_local_manifest_registry, fabric_rejects_production_hot_reload_manifest_registry |
@@ -344,5 +342,5 @@ none
 STATUS:
   Completeness: 100%
   Invariants verified: route declarations, route-level coverage classification, coverage levels, coverage states, closure action mapping, schema contract validation, deployment orchestration receipt schema contract
-  Open issues: 488 runtime-witness labels lack exact test-function anchors
+  Open issues: 466 runtime-witness labels lack exact test-function anchors
   Next action: bind unanchored runtime-witness labels to exact test-function anchors
