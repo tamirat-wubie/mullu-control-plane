@@ -1,0 +1,62 @@
+{
+  "activation_outcome": "SolvedVerified",
+  "activation_witness_ref": "docs/governed-swarm-staging-activation-witness-example.json",
+  "audit_store_path": "/var/lib/mullu/governed-swarm/swarm-runs.jsonl",
+  "bundle_id": "governed-swarm-staging-bundle-6c3f8fc1a5e34f30",
+  "control_plane_commit": "dffe0f68289147e09a84ab6cbbeb2b5230ca2bd8",
+  "cross_checks": [
+    {
+      "detail": "runner preflight validates",
+      "name": "runner_preflight_valid",
+      "passed": true
+    },
+    {
+      "detail": "activation witness validates",
+      "name": "activation_witness_valid",
+      "passed": true
+    },
+    {
+      "detail": "dffe0f68289147e09a84ab6cbbeb2b5230ca2bd8 == dffe0f68289147e09a84ab6cbbeb2b5230ca2bd8",
+      "name": "control_plane_commit_match",
+      "passed": true
+    },
+    {
+      "detail": "/opt/mullu/mullu-governed-swarm/mcoi == /opt/mullu/mullu-governed-swarm/mcoi",
+      "name": "runtime_path_match",
+      "passed": true
+    },
+    {
+      "detail": "/var/lib/mullu/governed-swarm/swarm-runs.jsonl == /var/lib/mullu/governed-swarm/swarm-runs.jsonl",
+      "name": "audit_store_path_match",
+      "passed": true
+    },
+    {
+      "detail": "runner ready=True",
+      "name": "runner_ready",
+      "passed": true
+    },
+    {
+      "detail": "activation outcome=SolvedVerified",
+      "name": "activation_solved",
+      "passed": true
+    },
+    {
+      "detail": "environment=staging",
+      "name": "environment_bound",
+      "passed": true
+    },
+    {
+      "detail": "staging_url=https://staging-api.example.com",
+      "name": "staging_url_bound",
+      "passed": true
+    }
+  ],
+  "environment": "staging",
+  "errors": [],
+  "outcome": "SolvedVerified",
+  "runner_preflight_ref": "docs/governed-swarm-staging-runner-preflight-example.json",
+  "runner_ready": true,
+  "runtime_path": "/opt/mullu/mullu-governed-swarm/mcoi",
+  "staging_url": "https://staging-api.example.com",
+  "validated_at": "2026-05-17T08:20:00Z"
+}

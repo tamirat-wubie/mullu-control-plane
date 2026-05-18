@@ -3,7 +3,7 @@
   "collected_at": "2026-05-17T07:45:00Z",
   "environment": "staging",
   "control_plane_repo": "tamirat-wubie/mullu-control-plane",
-  "control_plane_commit": "9917a0aa07d638cc80ae14e17e07c33e6bbae246",
+  "control_plane_commit": "dffe0f68289147e09a84ab6cbbeb2b5230ca2bd8",
   "runtime_repo": "tamirat-wubie/mullu-governed-swarm",
   "runtime_release_tag": "v0.1.0-governed-swarm",
   "runtime_commit": "5882c5f24ca35fd5a133357b55b5411ebdc99dfb",
