@@ -169,6 +169,27 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "capability_worker_runs_computer_command_through_sandbox_receipt",
                 "local_smoke_stub_bound_to_local_environment",
             ],
+            runtime_witness_anchor_aliases={
+                "signed_capability_request_required": [
+                    "capability_worker_rejects_bad_signature",
+                    "capability_worker_executes_signed_payment_request",
+                ],
+                "response_signature_verified": [
+                    "capability_worker_executes_signed_payment_request",
+                ],
+                "input_hash_mismatch_rejected": [
+                    "capability_worker_rejects_tampered_input_hash",
+                ],
+                "intent_boundary_mismatch_rejected": [
+                    "capability_worker_rejects_intent_boundary_mismatch",
+                ],
+                "non_isolated_boundary_rejected": [
+                    "capability_worker_rejects_non_isolated_boundary",
+                ],
+                "local_smoke_stub_bound_to_local_environment": [
+                    "default_capability_worker_smoke_stub_is_local_only",
+                ],
+            },
         ),
         _surface(
             "restricted_adapter_worker_boundaries",

@@ -2660,6 +2660,27 @@
         "/capability/execute"
       ],
       "request_proof": "request_proof",
+      "runtime_witness_anchor_aliases": {
+        "input_hash_mismatch_rejected": [
+          "capability_worker_rejects_tampered_input_hash"
+        ],
+        "intent_boundary_mismatch_rejected": [
+          "capability_worker_rejects_intent_boundary_mismatch"
+        ],
+        "local_smoke_stub_bound_to_local_environment": [
+          "default_capability_worker_smoke_stub_is_local_only"
+        ],
+        "non_isolated_boundary_rejected": [
+          "capability_worker_rejects_non_isolated_boundary"
+        ],
+        "response_signature_verified": [
+          "capability_worker_executes_signed_payment_request"
+        ],
+        "signed_capability_request_required": [
+          "capability_worker_rejects_bad_signature",
+          "capability_worker_executes_signed_payment_request"
+        ]
+      },
       "runtime_witnesses": [
         "signed_capability_request_required",
         "response_signature_verified",
@@ -6761,7 +6782,7 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 489,
+    "exact_test_anchor_count": 495,
     "runtime_witness_count": 1035,
     "surfaces": [
       {
@@ -6856,23 +6877,53 @@
         "anchored_witnesses": [
           {
             "anchors": [
+              "tests/test_gateway/test_capability_worker.py::test_capability_worker_rejects_bad_signature",
+              "tests/test_gateway/test_capability_worker.py::test_capability_worker_executes_signed_payment_request"
+            ],
+            "witness": "signed_capability_request_required"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_capability_worker.py::test_capability_worker_executes_signed_payment_request"
+            ],
+            "witness": "response_signature_verified"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_capability_worker.py::test_capability_worker_rejects_tampered_input_hash"
+            ],
+            "witness": "input_hash_mismatch_rejected"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_capability_worker.py::test_capability_worker_rejects_intent_boundary_mismatch"
+            ],
+            "witness": "intent_boundary_mismatch_rejected"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_capability_worker.py::test_capability_worker_rejects_non_isolated_boundary"
+            ],
+            "witness": "non_isolated_boundary_rejected"
+          },
+          {
+            "anchors": [
               "tests/test_gateway/test_capability_worker.py::test_capability_worker_runs_computer_command_through_sandbox_receipt"
             ],
             "witness": "capability_worker_runs_computer_command_through_sandbox_receipt"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_capability_worker.py::test_default_capability_worker_smoke_stub_is_local_only"
+            ],
+            "witness": "local_smoke_stub_bound_to_local_environment"
           }
         ],
-        "exact_test_anchor_count": 1,
+        "exact_test_anchor_count": 7,
         "runtime_witness_count": 7,
         "surface_id": "capability_worker_execution",
-        "unanchored_witness_count": 6,
-        "unanchored_witnesses": [
-          "signed_capability_request_required",
-          "response_signature_verified",
-          "input_hash_mismatch_rejected",
-          "intent_boundary_mismatch_rejected",
-          "non_isolated_boundary_rejected",
-          "local_smoke_stub_bound_to_local_environment"
-        ]
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
       },
       {
         "anchored_witnesses": [
@@ -11323,6 +11374,6 @@
         "unanchored_witnesses": []
       }
     ],
-    "unanchored_witness_count": 546
+    "unanchored_witness_count": 540
   }
 }

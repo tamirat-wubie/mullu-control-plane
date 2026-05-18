@@ -149,8 +149,8 @@ Witness integrity audit:
 | Metric | Count |
 |---|---:|
 | Runtime witness labels | 1035 |
-| Exact test anchors | 489 |
-| Unanchored witness labels | 546 |
+| Exact test anchors | 495 |
+| Unanchored witness labels | 540 |
 
 Evidence quality gaps:
 none
@@ -159,7 +159,6 @@ Witness integrity gaps:
 
 | Surface | Exact anchors | Unanchored | Unanchored labels |
 |---|---:|---:|---|
-| `capability_worker_execution` | 1 | 6 | signed_capability_request_required, response_signature_verified, input_hash_mismatch_rejected, intent_boundary_mismatch_rejected, non_isolated_boundary_rejected, local_smoke_stub_bound_to_local_environment |
 | `llm_completion` | 0 | 7 | completion_returns_action_proof, completion_records_budget_ledger, completion_failure_is_bounded, safe_completion_tracks_cost, safe_completion_exception_sanitized, auto_completion_routes_model, auto_completion_exception_sanitized |
 | `llm_chat_workflow` | 0 | 7 | chat_completion_governed, streaming_chat_returns_sse, streaming_chat_multi_turn_history_preserved, streaming_chat_governed, streaming_chat_contains_budget_witnesses, streaming_chat_exception_sanitized, chat_workflow_history_bounded |
 | `cost_budget_read_models` | 0 | 6 | budget_summary_bounded, safe_completion_tracks_cost, cost_read_model_totals_bounded, cost_top_spenders_bounded, cost_by_model_bounded, tenant_cost_projection_bounded |
@@ -350,5 +349,5 @@ none
 STATUS:
   Completeness: 100%
   Invariants verified: route declarations, route-level coverage classification, coverage levels, coverage states, closure action mapping, schema contract validation, deployment orchestration receipt schema contract
-  Open issues: 546 runtime-witness labels lack exact test-function anchors
+  Open issues: 540 runtime-witness labels lack exact test-function anchors
   Next action: bind unanchored runtime-witness labels to exact test-function anchors
