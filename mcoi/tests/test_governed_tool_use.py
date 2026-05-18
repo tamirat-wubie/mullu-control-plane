@@ -210,3 +210,60 @@ class TestRegistryManagement:
         assert report.blocked_tool_count == 1
         assert body["issues"][0]["tool_name"] == "deploy_service"
         assert body["issues"][0]["reasons"] == ["governance_tier_below_capability_level"]
+
+    def test_decision_read_model_reports_allowed_and_blocked_tool_decisions(self):
+        blocked_contract = CapabilityContract(
+            capability="send_email",
+            layer="runtime_tool",
+            cap_level=1,
+            gov_tier=1,
+            axis_T="current_episode",
+            axis_E="bounded_by_budget_ref",
+            axis_C="bounded_by_schema",
+            axis_R="medium",
+            axis_V=CapabilityEffectClass.EFFECTFUL,
+            precond=("registered",),
+            fail_mode=("phi_gov_block",),
+            reversible=False,
+            intent_source=CapabilityIntentSource.USER_DIRECT,
+        )
+        r = _registry()
+        r.register(_tool("summarize_doc"), executor=_executor)
+        r.register(_tool("send_email", capability_contract=blocked_contract), executor=_executor)
+
+        allowed = r.invoke("summarize_doc", {}, session_id="s1", tenant_id="tenant-1")
+        blocked = r.invoke(
+            "send_email",
+            {},
+            session_id="s1",
+            tenant_id="tenant-1",
+            intent_source=CapabilityIntentSource.MONITORED_CONTENT,
+        )
+        body = r.decision_read_model()
+
+        assert allowed.allowed is True
+        assert blocked.allowed is False
+        assert body["decision_count"] == 2
+        assert body["allowed_count"] == 1
+        assert body["blocked_count"] == 1
+        assert body["records"][0]["stage"] == "executed"
+        assert body["records"][0]["effect_class"] == "value_producing"
+        assert body["records"][1]["stage"] == "capability_contract"
+        assert body["records"][1]["intent_source"] == "monitored_content"
+        assert body["records"][1]["reasons"] == ["effectful_action_requires_user_direct_intent_source"]
+
+    def test_decision_read_model_is_bounded(self):
+        r = _registry(max_decision_records=2)
+        r.register(_tool("a"), executor=_executor)
+        r.register(_tool("b"), executor=_executor)
+        r.register(_tool("c"), executor=_executor)
+
+        r.invoke("a", {})
+        r.invoke("b", {})
+        r.invoke("c", {})
+        body = r.decision_read_model(limit=10)
+
+        assert body["decision_count"] == 2
+        assert body["allowed_count"] == 2
+        assert body["blocked_count"] == 0
+        assert [record["tool_name"] for record in body["records"]] == ["b", "c"]

@@ -98,6 +98,40 @@ class ToolUsageStats:
     last_called_at: str = ""
 
 
+@dataclass(frozen=True, slots=True)
+class ToolDecisionRecord:
+    """Bounded operator read model for one governed tool decision."""
+
+    observed_at: str
+    tool_name: str
+    allowed: bool
+    stage: str
+    reasons: tuple[str, ...]
+    session_id: str
+    tenant_id: str
+    intent_source: str
+    capability: str
+    effect_class: str
+    cap_level: int
+    gov_tier: int
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "observed_at": self.observed_at,
+            "tool_name": self.tool_name,
+            "allowed": self.allowed,
+            "stage": self.stage,
+            "reasons": list(self.reasons),
+            "session_id": self.session_id,
+            "tenant_id": self.tenant_id,
+            "intent_source": self.intent_source,
+            "capability": self.capability,
+            "effect_class": self.effect_class,
+            "cap_level": self.cap_level,
+            "gov_tier": self.gov_tier,
+        }
+
+
 class GovernedToolRegistry:
     """Registry of allowed tools with governance controls.
 
@@ -120,7 +154,7 @@ class GovernedToolRegistry:
         )
     """
 
-    def __init__(self, *, clock: Callable[[], str] | None = None) -> None:
+    def __init__(self, *, clock: Callable[[], str] | None = None, max_decision_records: int = 100) -> None:
         self._tools: dict[str, ToolDefinition] = {}
         self._executors: dict[str, Callable[[str, dict[str, Any]], Any]] = {}
         self._session_usage: dict[str, dict[str, ToolUsageStats]] = {}  # session_id → {tool_name → stats}
@@ -129,6 +163,8 @@ class GovernedToolRegistry:
         self._total_invocations = 0
         self._total_denied = 0
         self._permission_registry: ToolPermissionRegistry | None = None
+        self._max_decision_records = max(1, int(max_decision_records))
+        self._decision_records: list[ToolDecisionRecord] = []
 
     def bind_permission_registry(self, registry: ToolPermissionRegistry) -> None:
         """Attach tenant/tool permission primitives to invocation checks."""
@@ -198,6 +234,39 @@ class GovernedToolRegistry:
                     stats.error_count += 1
             stats.last_called_at = self._clock()
 
+    def _record_decision(
+        self,
+        *,
+        tool_name: str,
+        tool: ToolDefinition | None,
+        allowed: bool,
+        stage: str,
+        reasons: tuple[str, ...],
+        session_id: str,
+        tenant_id: str,
+        intent_source: IntentSource | str,
+    ) -> None:
+        contract = tool.capability_contract if tool is not None else None
+        source = intent_source if isinstance(intent_source, IntentSource) else IntentSource(str(intent_source))
+        record = ToolDecisionRecord(
+            observed_at=self._clock(),
+            tool_name=tool_name,
+            allowed=allowed,
+            stage=stage,
+            reasons=reasons,
+            session_id=session_id,
+            tenant_id=tenant_id or "system",
+            intent_source=source.value,
+            capability=contract.capability if contract is not None else "unknown",
+            effect_class=contract.axis_V.value if contract is not None else "unknown",
+            cap_level=contract.cap_level if contract is not None else 0,
+            gov_tier=contract.gov_tier if contract is not None else 0,
+        )
+        with self._lock:
+            self._decision_records.append(record)
+            if len(self._decision_records) > self._max_decision_records:
+                del self._decision_records[: len(self._decision_records) - self._max_decision_records]
+
     def invoke(
         self,
         tool_name: str,
@@ -218,6 +287,16 @@ class GovernedToolRegistry:
         tool = self._tools.get(tool_name)
         if tool is None:
             self._record_usage(tool_name, session_id, denied=True)
+            self._record_decision(
+                tool_name=tool_name,
+                tool=None,
+                allowed=False,
+                stage="allowlist",
+                reasons=("tool_not_registered",),
+                session_id=session_id,
+                tenant_id=tenant_id,
+                intent_source=intent_source,
+            )
             return ToolInvocationResult(
                 tool_name=tool_name, allowed=False,
                 error="tool not registered",
@@ -230,6 +309,16 @@ class GovernedToolRegistry:
         )
         if not capability_decision.allowed:
             self._record_usage(tool_name, session_id, denied=True)
+            self._record_decision(
+                tool_name=tool_name,
+                tool=tool,
+                allowed=False,
+                stage="capability_contract",
+                reasons=capability_decision.reasons,
+                session_id=session_id,
+                tenant_id=tenant_id,
+                intent_source=intent_source,
+            )
             return ToolInvocationResult(
                 tool_name=tool_name,
                 allowed=False,
@@ -240,6 +329,16 @@ class GovernedToolRegistry:
         # 3. Enabled check
         if not tool.enabled:
             self._record_usage(tool_name, session_id, denied=True)
+            self._record_decision(
+                tool_name=tool_name,
+                tool=tool,
+                allowed=False,
+                stage="enabled",
+                reasons=("tool_disabled",),
+                session_id=session_id,
+                tenant_id=tenant_id,
+                intent_source=intent_source,
+            )
             return ToolInvocationResult(
                 tool_name=tool_name, allowed=False,
                 error="tool is disabled",
@@ -250,6 +349,16 @@ class GovernedToolRegistry:
         param_error = self._validate_params(tool, arguments)
         if param_error:
             self._record_usage(tool_name, session_id, denied=True)
+            self._record_decision(
+                tool_name=tool_name,
+                tool=tool,
+                allowed=False,
+                stage="parameters",
+                reasons=(param_error.replace(" ", "_"),),
+                session_id=session_id,
+                tenant_id=tenant_id,
+                intent_source=intent_source,
+            )
             return ToolInvocationResult(
                 tool_name=tool_name, allowed=False,
                 error=param_error,
@@ -270,6 +379,16 @@ class GovernedToolRegistry:
             )
             if not permission_decision.allowed:
                 self._record_usage(tool_name, session_id, denied=True)
+                self._record_decision(
+                    tool_name=tool_name,
+                    tool=tool,
+                    allowed=False,
+                    stage="permission",
+                    reasons=("tool_permission_denied",),
+                    session_id=session_id,
+                    tenant_id=tenant_id,
+                    intent_source=intent_source,
+                )
                 return ToolInvocationResult(
                     tool_name=tool_name,
                     allowed=False,
@@ -281,6 +400,16 @@ class GovernedToolRegistry:
         # 6. Session limit check
         if session_id and not self._check_session_limit(tool, session_id):
             self._record_usage(tool_name, session_id, denied=True)
+            self._record_decision(
+                tool_name=tool_name,
+                tool=tool,
+                allowed=False,
+                stage="session_limit",
+                reasons=("session_tool_call_limit_reached",),
+                session_id=session_id,
+                tenant_id=tenant_id,
+                intent_source=intent_source,
+            )
             return ToolInvocationResult(
                 tool_name=tool_name, allowed=False,
                 error="session tool call limit reached",
@@ -291,6 +420,16 @@ class GovernedToolRegistry:
         # 7. Approval check
         if tool.requires_approval:
             self._record_usage(tool_name, session_id, denied=True)
+            self._record_decision(
+                tool_name=tool_name,
+                tool=tool,
+                allowed=False,
+                stage="approval",
+                reasons=("tool_requires_approval",),
+                session_id=session_id,
+                tenant_id=tenant_id,
+                intent_source=intent_source,
+            )
             return ToolInvocationResult(
                 tool_name=tool_name, allowed=False,
                 error="tool requires approval",
@@ -302,6 +441,16 @@ class GovernedToolRegistry:
         exec_fn = executor or self._executors.get(tool_name)
         if exec_fn is None:
             self._record_usage(tool_name, session_id, error=True)
+            self._record_decision(
+                tool_name=tool_name,
+                tool=tool,
+                allowed=True,
+                stage="executor_missing",
+                reasons=("no_executor_registered",),
+                session_id=session_id,
+                tenant_id=tenant_id,
+                intent_source=intent_source,
+            )
             return ToolInvocationResult(
                 tool_name=tool_name, allowed=True,
                 error="no executor registered",
@@ -312,6 +461,16 @@ class GovernedToolRegistry:
         try:
             result = exec_fn(tool_name, arguments)
             self._record_usage(tool_name, session_id)
+            self._record_decision(
+                tool_name=tool_name,
+                tool=tool,
+                allowed=True,
+                stage="executed",
+                reasons=("tool_executed",),
+                session_id=session_id,
+                tenant_id=tenant_id,
+                intent_source=intent_source,
+            )
             return ToolInvocationResult(
                 tool_name=tool_name, allowed=True,
                 result=result,
@@ -320,6 +479,16 @@ class GovernedToolRegistry:
             )
         except Exception as exc:
             self._record_usage(tool_name, session_id, error=True)
+            self._record_decision(
+                tool_name=tool_name,
+                tool=tool,
+                allowed=True,
+                stage="execution_error",
+                reasons=(f"tool_execution_failed:{type(exc).__name__}",),
+                session_id=session_id,
+                tenant_id=tenant_id,
+                intent_source=intent_source,
+            )
             return ToolInvocationResult(
                 tool_name=tool_name, allowed=True,
                 error=f"tool execution failed ({type(exc).__name__})",
@@ -354,3 +523,17 @@ class GovernedToolRegistry:
     def capability_contract_coverage(self) -> CapabilityContractCoverageReport:
         """Return a deterministic GCI coverage audit for registered tools."""
         return audit_capability_contract_coverage(self._tools.values())
+
+    def decision_read_model(self, *, limit: int = 50) -> dict[str, Any]:
+        """Return a bounded operator read model of recent tool decisions."""
+        bounded_limit = max(0, int(limit))
+        with self._lock:
+            records = tuple(self._decision_records[-bounded_limit:] if bounded_limit else ())
+        allowed_count = sum(1 for record in records if record.allowed)
+        blocked_count = sum(1 for record in records if not record.allowed)
+        return {
+            "decision_count": len(records),
+            "allowed_count": allowed_count,
+            "blocked_count": blocked_count,
+            "records": [record.to_dict() for record in records],
+        }
