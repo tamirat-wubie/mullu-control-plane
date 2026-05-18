@@ -6405,6 +6405,45 @@
         "TemporalCredentialExpiryReceipt"
       ],
       "request_proof": "request_proof",
+      "runtime_witness_anchor_aliases": {
+        "credential_evidence_refs_required": [
+          "credential_expiry_blocks_wrong_scope_revoked_missing_evidence_and_sources"
+        ],
+        "expired_credentials_block_dispatch": [
+          "credential_expiry_blocks_expired_credential"
+        ],
+        "high_risk_source_receipts_bound": [
+          "credential_expiry_allows_high_risk_active_scoped_unexpired_credential",
+          "credential_expiry_blocks_wrong_scope_revoked_missing_evidence_and_sources"
+        ],
+        "provider_and_credential_scope_checked": [
+          "credential_expiry_blocks_wrong_scope_revoked_missing_evidence_and_sources"
+        ],
+        "receipt_not_terminal_closure": [
+          "credential_expiry_marks_low_risk_action_not_required",
+          "credential_expiry_allows_high_risk_active_scoped_unexpired_credential"
+        ],
+        "revoked_credentials_block_dispatch": [
+          "credential_expiry_blocks_wrong_scope_revoked_missing_evidence_and_sources"
+        ],
+        "rotation_overdue_blocks_dispatch": [
+          "credential_expiry_blocks_future_or_rotation_overdue_credential"
+        ],
+        "rotation_pending_warns_before_dispatch": [
+          "credential_expiry_marks_near_expiry_as_rotation_pending"
+        ],
+        "runtime_clock_owns_credential_expiry": [
+          "credential_expiry_allows_high_risk_active_scoped_unexpired_credential",
+          "credential_expiry_blocks_expired_credential"
+        ],
+        "secret_value_absence_verified": [
+          "credential_expiry_rejects_secret_material_in_metadata"
+        ],
+        "temporal_credential_expiry_receipt_schema_valid": [
+          "credential_expiry_allows_high_risk_active_scoped_unexpired_credential",
+          "credential_expiry_marks_low_risk_action_not_required"
+        ]
+      },
       "runtime_witnesses": [
         "runtime_clock_owns_credential_expiry",
         "expired_credentials_block_dispatch",
@@ -7047,7 +7086,7 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 569,
+    "exact_test_anchor_count": 580,
     "runtime_witness_count": 1035,
     "surfaces": [
       {
@@ -11306,24 +11345,83 @@
         ]
       },
       {
-        "anchored_witnesses": [],
-        "exact_test_anchor_count": 0,
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_credential_expiry.py::test_credential_expiry_allows_high_risk_active_scoped_unexpired_credential",
+              "tests/test_gateway/test_temporal_credential_expiry.py::test_credential_expiry_blocks_expired_credential"
+            ],
+            "witness": "runtime_clock_owns_credential_expiry"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_credential_expiry.py::test_credential_expiry_blocks_expired_credential"
+            ],
+            "witness": "expired_credentials_block_dispatch"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_credential_expiry.py::test_credential_expiry_blocks_wrong_scope_revoked_missing_evidence_and_sources"
+            ],
+            "witness": "revoked_credentials_block_dispatch"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_credential_expiry.py::test_credential_expiry_blocks_wrong_scope_revoked_missing_evidence_and_sources"
+            ],
+            "witness": "provider_and_credential_scope_checked"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_credential_expiry.py::test_credential_expiry_marks_near_expiry_as_rotation_pending"
+            ],
+            "witness": "rotation_pending_warns_before_dispatch"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_credential_expiry.py::test_credential_expiry_blocks_future_or_rotation_overdue_credential"
+            ],
+            "witness": "rotation_overdue_blocks_dispatch"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_credential_expiry.py::test_credential_expiry_blocks_wrong_scope_revoked_missing_evidence_and_sources"
+            ],
+            "witness": "credential_evidence_refs_required"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_credential_expiry.py::test_credential_expiry_rejects_secret_material_in_metadata"
+            ],
+            "witness": "secret_value_absence_verified"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_credential_expiry.py::test_credential_expiry_allows_high_risk_active_scoped_unexpired_credential",
+              "tests/test_gateway/test_temporal_credential_expiry.py::test_credential_expiry_blocks_wrong_scope_revoked_missing_evidence_and_sources"
+            ],
+            "witness": "high_risk_source_receipts_bound"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_credential_expiry.py::test_credential_expiry_allows_high_risk_active_scoped_unexpired_credential",
+              "tests/test_gateway/test_temporal_credential_expiry.py::test_credential_expiry_marks_low_risk_action_not_required"
+            ],
+            "witness": "temporal_credential_expiry_receipt_schema_valid"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_credential_expiry.py::test_credential_expiry_marks_low_risk_action_not_required",
+              "tests/test_gateway/test_temporal_credential_expiry.py::test_credential_expiry_allows_high_risk_active_scoped_unexpired_credential"
+            ],
+            "witness": "receipt_not_terminal_closure"
+          }
+        ],
+        "exact_test_anchor_count": 11,
         "runtime_witness_count": 11,
         "surface_id": "temporal_credential_expiry",
-        "unanchored_witness_count": 11,
-        "unanchored_witnesses": [
-          "runtime_clock_owns_credential_expiry",
-          "expired_credentials_block_dispatch",
-          "revoked_credentials_block_dispatch",
-          "provider_and_credential_scope_checked",
-          "rotation_pending_warns_before_dispatch",
-          "rotation_overdue_blocks_dispatch",
-          "credential_evidence_refs_required",
-          "secret_value_absence_verified",
-          "high_risk_source_receipts_bound",
-          "temporal_credential_expiry_receipt_schema_valid",
-          "receipt_not_terminal_closure"
-        ]
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
       },
       {
         "anchored_witnesses": [],
@@ -12031,6 +12129,6 @@
         "unanchored_witnesses": []
       }
     ],
-    "unanchored_witness_count": 466
+    "unanchored_witness_count": 455
   }
 }
