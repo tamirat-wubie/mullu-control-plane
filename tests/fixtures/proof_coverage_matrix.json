@@ -5091,6 +5091,49 @@
         "/api/v1/simulate/summary"
       ],
       "request_proof": "request_proof",
+      "runtime_witness_anchor_aliases": {
+        "goal_plan_certificate_hash_bound": [
+          "goal_compiler_compiles_high_risk_payment_with_controls",
+          "goal_schema_accepts_compiled_goal_plan"
+        ],
+        "high_risk_controls_projected_before_execution": [
+          "causal_simulator_projects_high_risk_controls",
+          "goal_compiler_compiles_high_risk_payment_with_controls"
+        ],
+        "knowledge_contradiction_routes_governed": [
+          "contradiction_endpoints_emit_governed_read_model"
+        ],
+        "knowledge_entity_routes_governed": [
+          "add_entity_endpoint",
+          "query_entities_endpoint",
+          "query_entities_invalid_type_fails_closed_without_leakage"
+        ],
+        "knowledge_link_routes_governed": [
+          "add_link_endpoint"
+        ],
+        "knowledge_summary_route_bounded": [
+          "knowledge_summary_endpoint"
+        ],
+        "open_world_contradictions_block_execution": [
+          "causal_simulator_blocks_open_world_contradictions",
+          "world_state_contradiction_blocks_planning_and_execution_claims"
+        ],
+        "policy_simulation_history_summary_bounded": [
+          "simulation_history_endpoint",
+          "simulation_summary_endpoint",
+          "history_bounded"
+        ],
+        "policy_simulation_routes_governed": [
+          "simulate_endpoint"
+        ],
+        "simulation_receipt_schema_valid": [
+          "simulation_receipt_schema_accepts_dry_run_receipt"
+        ],
+        "world_assertions_require_source_evidence": [
+          "world_state_store_rejects_unsourced_assertion",
+          "world_state_schema_rejects_entity_without_evidence"
+        ]
+      },
       "runtime_witnesses": [
         "world_assertions_require_source_evidence",
         "knowledge_entity_routes_governed",
@@ -6956,7 +6999,7 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 547,
+    "exact_test_anchor_count": 558,
     "runtime_witness_count": 1035,
     "surfaces": [
       {
@@ -9888,24 +9931,87 @@
         ]
       },
       {
-        "anchored_witnesses": [],
-        "exact_test_anchor_count": 0,
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "tests/test_gateway/test_world_state.py::test_world_state_store_rejects_unsourced_assertion",
+              "tests/test_gateway/test_world_state.py::test_world_state_schema_rejects_entity_without_evidence"
+            ],
+            "witness": "world_assertions_require_source_evidence"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_knowledge_graph.py::test_add_entity_endpoint",
+              "mcoi/tests/test_knowledge_graph.py::test_query_entities_endpoint",
+              "mcoi/tests/test_knowledge_graph.py::test_query_entities_invalid_type_fails_closed_without_leakage"
+            ],
+            "witness": "knowledge_entity_routes_governed"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_knowledge_graph.py::test_add_link_endpoint"
+            ],
+            "witness": "knowledge_link_routes_governed"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_knowledge_graph.py::test_contradiction_endpoints_emit_governed_read_model"
+            ],
+            "witness": "knowledge_contradiction_routes_governed"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_knowledge_graph.py::test_knowledge_summary_endpoint"
+            ],
+            "witness": "knowledge_summary_route_bounded"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_policy_sandbox.py::test_simulate_endpoint"
+            ],
+            "witness": "policy_simulation_routes_governed"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_policy_sandbox.py::test_simulation_history_endpoint",
+              "mcoi/tests/test_policy_sandbox.py::test_simulation_summary_endpoint",
+              "mcoi/tests/test_policy_sandbox.py::test_history_bounded"
+            ],
+            "witness": "policy_simulation_history_summary_bounded"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_goal_compiler.py::test_goal_compiler_compiles_high_risk_payment_with_controls",
+              "tests/test_gateway/test_goal_compiler.py::test_goal_schema_accepts_compiled_goal_plan"
+            ],
+            "witness": "goal_plan_certificate_hash_bound"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_causal_simulator.py::test_simulation_receipt_schema_accepts_dry_run_receipt"
+            ],
+            "witness": "simulation_receipt_schema_valid"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_causal_simulator.py::test_causal_simulator_blocks_open_world_contradictions",
+              "tests/test_gateway/test_world_state.py::test_world_state_contradiction_blocks_planning_and_execution_claims"
+            ],
+            "witness": "open_world_contradictions_block_execution"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_causal_simulator.py::test_causal_simulator_projects_high_risk_controls",
+              "tests/test_gateway/test_goal_compiler.py::test_goal_compiler_compiles_high_risk_payment_with_controls"
+            ],
+            "witness": "high_risk_controls_projected_before_execution"
+          }
+        ],
+        "exact_test_anchor_count": 11,
         "runtime_witness_count": 11,
         "surface_id": "governed_operational_intelligence",
-        "unanchored_witness_count": 11,
-        "unanchored_witnesses": [
-          "world_assertions_require_source_evidence",
-          "knowledge_entity_routes_governed",
-          "knowledge_link_routes_governed",
-          "knowledge_contradiction_routes_governed",
-          "knowledge_summary_route_bounded",
-          "policy_simulation_routes_governed",
-          "policy_simulation_history_summary_bounded",
-          "goal_plan_certificate_hash_bound",
-          "simulation_receipt_schema_valid",
-          "open_world_contradictions_block_execution",
-          "high_risk_controls_projected_before_execution"
-        ]
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
       },
       {
         "anchored_witnesses": [],
@@ -11809,6 +11915,6 @@
         "unanchored_witnesses": []
       }
     ],
-    "unanchored_witness_count": 488
+    "unanchored_witness_count": 477
   }
 }
