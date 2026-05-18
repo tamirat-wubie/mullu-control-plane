@@ -1982,6 +1982,54 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "runbook_pattern_read_models_bounded",
                 "runbook_responses_governed",
             ],
+            runtime_witness_anchor_aliases={
+                "patterns_detected_from_audit_trail": [
+                    "analyze_detects_patterns",
+                    "analyze_endpoint",
+                ],
+                "promotion_requires_detected_pattern": [
+                    "promote_creates_candidate",
+                    "promote_unknown_pattern_raises",
+                ],
+                "approval_required_before_activation": [
+                    "activate_requires_approved",
+                    "cannot_activate_candidate",
+                    "approve_requires_candidate",
+                ],
+                "retirement_requires_active_runbook": [
+                    "cannot_retire_non_active_runbook",
+                    "cannot_retire_already_retired_runbook",
+                    "retire_endpoint_rejects_non_active_runbook",
+                ],
+                "promote_and_approve_audit_records": [
+                    "promote_creates_candidate",
+                    "approve_requires_candidate",
+                ],
+                "mil_audit_replay_admits_runbook": [
+                    "mil_audit_router_admits_replay_backed_runbook"
+                ],
+                "mil_audit_operator_checklist_validated": [
+                    "validate_mil_audit_runbook_operator_checklist_accepts_example",
+                    "validate_mil_audit_runbook_operator_checklist_rejects_missing_step",
+                ],
+                "mil_audit_runbook_preflight_ready": [
+                    "mil_audit_runbook_preflight_accepts_valid_local_state",
+                    "mil_audit_runbook_preflight_blocks_missing_record",
+                ],
+                "sanitized_runbook_error_details": [
+                    "promote_endpoint_sanitizes_unknown_pattern",
+                    "approve_endpoint_sanitizes_unknown_runbook",
+                    "activate_endpoint_sanitizes_unknown_runbook",
+                ],
+                "runbook_pattern_read_models_bounded": [
+                    "list_runbooks_endpoint",
+                    "runbooks_summary_endpoint",
+                ],
+                "runbook_responses_governed": [
+                    "list_runbooks_invalid_status_fails_closed",
+                    "mil_audit_router_missing_store_fails_closed",
+                ],
+            },
         ),
         _surface(
             "software_outcome_learning",
