@@ -1,0 +1,37 @@
+{
+  "audit_store_path": "/var/lib/mullu/governed-swarm/swarm-runs.jsonl",
+  "checked_at": "2026-05-17T08:15:00Z",
+  "checks": [
+    {
+      "detail": "staging-api.example.com",
+      "name": "staging_url",
+      "passed": true
+    },
+    {
+      "detail": "dffe0f68289147e09a84ab6cbbeb2b5230ca2bd8",
+      "name": "control_plane_commit",
+      "passed": true
+    },
+    {
+      "detail": "/opt/mullu/mullu-governed-swarm/mcoi/mcoi_runtime/swarm",
+      "name": "runtime_bridge",
+      "passed": true
+    },
+    {
+      "detail": "/var/lib/mullu/governed-swarm/swarm-runs.jsonl",
+      "name": "audit_store_exists",
+      "passed": true
+    },
+    {
+      "detail": "/var/lib/mullu/governed-swarm/swarm-runs.jsonl",
+      "name": "audit_store_readable",
+      "passed": true
+    }
+  ],
+  "control_plane_commit": "dffe0f68289147e09a84ab6cbbeb2b5230ca2bd8",
+  "outcome": "SolvedVerified",
+  "ready": true,
+  "receipt_id": "governed-swarm-runner-preflight-0123456789abcdef",
+  "runtime_path": "/opt/mullu/mullu-governed-swarm/mcoi",
+  "staging_url": "https://staging-api.example.com"
+}

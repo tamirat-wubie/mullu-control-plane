@@ -99,6 +99,8 @@ Invariants: schemas and wire contracts are public; runtime implementation remain
 76. Mullu clearance capture requirements are public contracts when they preserve remaining naming-clearance evidence intake, reviewer authority, and paid-launch blockers in machine-readable form.
 77. GCI capability contracts are public contracts when they bind capability identity, governance tier, T/E/C/R/V axes, effect class, source trust, preconditions, failure modes, and reversibility before execution admission.
 78. GCI rejected-path receipts are public contracts when they record `Phi_gov` capability blocks, source-trust failures, missing axes, governance-depth failures, and causal ledger bindings without executing the target action.
+79. Governed swarm staging activation witnesses are public contracts when they bind feature flags, runtime release pins, route probes, audit-store closure, rollback preservation, and terminal activation evidence.
+80. Governed swarm staging runner preflight receipts are public contracts when they prove the selected runner can see the staging URL input, deployed control-plane commit, runtime bridge, and audit JSONL before witness collection.
 
 ## Verification
 
@@ -111,7 +113,7 @@ python scripts\validate_protocol_manifest.py
 Expected result:
 
 ```text
-protocol manifest ok: 134 schemas
+protocol manifest ok: 135 schemas
 ```
 
 STATUS:

@@ -29,6 +29,7 @@ def test_governed_swarm_staging_workflow_collects_validated_witness() -> None:
     assert "MULLU_GOVERNED_SWARM_AUDIT_STORE_PATH" in workflow
     assert "Preflight self-hosted staging witness inputs" in workflow
     assert "python scripts/preflight_governed_swarm_staging_runner.py" in workflow
+    assert "python scripts/validate_governed_swarm_staging_runner_preflight.py" in workflow
     assert ".change_assurance/governed_swarm_staging_runner_preflight.json" in workflow
     assert "governed-swarm-staging-runner-preflight" in workflow
     assert "python scripts/collect_governed_swarm_staging_activation_witness.py" in workflow
