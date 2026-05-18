@@ -3303,6 +3303,43 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "temporal_receipt_schema_valid",
                 "receipt_not_terminal_closure",
             ],
+            runtime_witness_anchor_aliases={
+                "runtime_clock_injected": [
+                    "temporal_kernel_allows_due_fresh_schema_valid_receipt"
+                ],
+                "monotonic_duration_measured": [
+                    "temporal_kernel_allows_due_fresh_schema_valid_receipt"
+                ],
+                "future_schedule_defers": [
+                    "temporal_kernel_defers_future_execution_without_terminal_closure"
+                ],
+                "approval_expiry_denies": ["temporal_kernel_denies_expired_approval"],
+                "stale_evidence_escalates": ["temporal_kernel_escalates_stale_evidence"],
+                "budget_window_checked": [
+                    "temporal_kernel_denies_missing_causal_precondition_and_budget_window"
+                ],
+                "causal_preconditions_required": [
+                    "temporal_kernel_denies_missing_causal_precondition_and_budget_window"
+                ],
+                "temporal_scheduler_routes_governed": [
+                    "default_routers_include_temporal_scheduler_summary"
+                ],
+                "schedule_read_models_persisted": [
+                    "create_list_and_get_temporal_schedule"
+                ],
+                "worker_tick_certifies_proofs": [
+                    "worker_tick_runs_due_schedule_and_returns_proofs"
+                ],
+                "cancel_emits_terminal_receipt": [
+                    "cancel_temporal_schedule_records_terminal_receipt"
+                ],
+                "temporal_receipt_schema_valid": [
+                    "temporal_kernel_allows_due_fresh_schema_valid_receipt"
+                ],
+                "receipt_not_terminal_closure": [
+                    "temporal_kernel_defers_future_execution_without_terminal_closure"
+                ],
+            },
         ),
         _surface(
             "temporal_evidence_freshness",
