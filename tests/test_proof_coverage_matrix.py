@@ -153,6 +153,8 @@ def test_witness_integrity_report_tracks_exact_test_anchors() -> None:
     assert surfaces["proof_route_gap_triage"]["exact_test_anchor_count"] == 4
     assert surfaces["proof_route_gap_triage"]["unanchored_witness_count"] == 0
     assert surfaces["tool_registry_read_models"]["unanchored_witness_count"] == 0
+    assert surfaces["gateway_capability_fabric"]["unanchored_witness_count"] == 0
+    assert surfaces["gateway_capability_fabric"]["exact_test_anchor_count"] == 13
 
 
 def test_declared_routes_have_explicit_coverage_classification() -> None:

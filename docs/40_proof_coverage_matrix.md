@@ -149,8 +149,8 @@ Witness integrity audit:
 | Metric | Count |
 |---|---:|
 | Runtime witness labels | 1035 |
-| Exact test anchors | 477 |
-| Unanchored witness labels | 558 |
+| Exact test anchors | 489 |
+| Unanchored witness labels | 546 |
 
 Evidence quality gaps:
 none
@@ -159,7 +159,6 @@ Witness integrity gaps:
 
 | Surface | Exact anchors | Unanchored | Unanchored labels |
 |---|---:|---:|---|
-| `gateway_capability_fabric` | 1 | 12 | command_lifecycle_events_are_hash_linked, terminal_closure_requires_evidence_refs, successful_response_is_bound_to_response_evidence_closure, universal_action_proof_replays_from_command_events, operator_universal_action_read_model_filters_command_proofs, operator_universal_action_console_renders_replay_state, capability_admission_audits_filter_status, capsule_compiler_emits_certification_evidence_manifest, capsule_installer_stamps_admission_receipt, capsule_admission_operator_endpoint_lists_receipt, invalid_capsule_admission_preserves_registry_state, physical_capsule_admission_runs_promotion_preflight |
 | `capability_worker_execution` | 1 | 6 | signed_capability_request_required, response_signature_verified, input_hash_mismatch_rejected, intent_boundary_mismatch_rejected, non_isolated_boundary_rejected, local_smoke_stub_bound_to_local_environment |
 | `llm_completion` | 0 | 7 | completion_returns_action_proof, completion_records_budget_ledger, completion_failure_is_bounded, safe_completion_tracks_cost, safe_completion_exception_sanitized, auto_completion_routes_model, auto_completion_exception_sanitized |
 | `llm_chat_workflow` | 0 | 7 | chat_completion_governed, streaming_chat_returns_sse, streaming_chat_multi_turn_history_preserved, streaming_chat_governed, streaming_chat_contains_budget_witnesses, streaming_chat_exception_sanitized, chat_workflow_history_bounded |
@@ -351,5 +350,5 @@ none
 STATUS:
   Completeness: 100%
   Invariants verified: route declarations, route-level coverage classification, coverage levels, coverage states, closure action mapping, schema contract validation, deployment orchestration receipt schema contract
-  Open issues: 558 runtime-witness labels lack exact test-function anchors
+  Open issues: 546 runtime-witness labels lack exact test-function anchors
   Next action: bind unanchored runtime-witness labels to exact test-function anchors
