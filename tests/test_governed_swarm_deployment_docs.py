@@ -59,7 +59,19 @@ def test_staging_activation_runbook_binds_witness_and_rollback() -> None:
     assert "governed_swarm_staging_runner_preflight.json" in text
     assert "scripts/validate_governed_swarm_staging_evidence_bundle.py" in text
     assert "governed_swarm_staging_evidence_bundle.json" in text
+    assert "scripts/validate_governed_swarm_promotion_readiness.py" in text
+    assert "governed_swarm_promotion_readiness.json" in text
     assert "governed-swarm-route-preflight.json" in text
     assert "schemas/governed_swarm_staging_activation_witness.schema.json" in text
     assert "schemas/governed_swarm_staging_evidence_bundle.schema.json" in text
+    assert "schemas/governed_swarm_promotion_readiness.schema.json" in text
     assert "MULLU_GOVERNED_SWARM_ENABLED=false" in text
+
+
+def test_production_docs_block_governed_swarm_production_overclaim() -> None:
+    text = _read("docs/PRODUCTION_DEPLOYMENT.md")
+
+    assert "Pilot promotion requires a SolvedVerified governed swarm staging evidence bundle" in text
+    assert "Production promotion is not granted by the staging promotion report" in text
+    assert "scripts/validate_governed_swarm_promotion_readiness.py" in text
+    assert "governed_swarm_promotion_readiness.json" in text
