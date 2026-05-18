@@ -120,10 +120,26 @@ jobs:
           python scripts/validate_governed_swarm_staging_activation_witness.py \
             --witness .change_assurance/governed_swarm_staging_activation_witness.json
 
+      - name: Build governed swarm staging evidence bundle
+        if: always()
+        run: |
+          python scripts/validate_governed_swarm_staging_evidence_bundle.py \
+            --runner-preflight .change_assurance/governed_swarm_staging_runner_preflight.json \
+            --activation-witness .change_assurance/governed_swarm_staging_activation_witness.json \
+            --bundle-output .change_assurance/governed_swarm_staging_evidence_bundle.json
+
       - name: Upload governed swarm staging activation witness
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: governed-swarm-staging-activation-witness
           path: .change_assurance/governed_swarm_staging_activation_witness.json
+          if-no-files-found: error
+
+      - name: Upload governed swarm staging evidence bundle
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: governed-swarm-staging-evidence-bundle
+          path: .change_assurance/governed_swarm_staging_evidence_bundle.json
           if-no-files-found: error

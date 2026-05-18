@@ -152,6 +152,29 @@ python scripts/validate_governed_swarm_staging_runner_preflight.py \
   --receipt ".change_assurance/governed_swarm_staging_runner_preflight.json"
 ```
 
+Bind the runner preflight and activation witness into one governed staging evidence bundle:
+
+```bash
+python scripts/validate_governed_swarm_staging_evidence_bundle.py \
+  --runner-preflight ".change_assurance/governed_swarm_staging_runner_preflight.json" \
+  --activation-witness ".change_assurance/governed_swarm_staging_activation_witness.json" \
+  --bundle-output ".change_assurance/governed_swarm_staging_evidence_bundle.json"
+```
+
+The bundle validates against:
+
+```text
+schemas/governed_swarm_staging_evidence_bundle.schema.json
+```
+
+Example:
+
+```text
+docs/governed-swarm-staging-evidence-bundle-example.json
+```
+
+The workflow uploads `governed-swarm-staging-evidence-bundle` after both source artifacts validate and cross-checks the deployed commit, runtime path, audit path, staging URL, runner readiness, and terminal activation outcome.
+
 For a real staging activation, store the collected witness under `.change_assurance/` or the deployment evidence store, then run the same validator against that file.
 
 ## Rollback
@@ -179,6 +202,6 @@ Do not delete `MULLU_GOVERNED_SWARM_AUDIT_STORE_PATH` during rollback. The audit
 
 STATUS:
   Completeness: 100%
-  Invariants verified: [release pin named, feature flags named, smoke route named, audit receipt required, rollback preserves audit evidence]
+  Invariants verified: [release pin named, feature flags named, smoke route named, audit receipt required, runner preflight bound, staging evidence bundle bound, rollback preserves audit evidence]
   Open issues: [real staging endpoint must provide the collected witness]
   Next action: execute this runbook in staging and validate the collected witness.
