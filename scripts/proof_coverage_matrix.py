@@ -2487,6 +2487,43 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "sandbox_physical_capability_remains_non_production",
                 "missing_production_evidence_fails_closed",
             ],
+            runtime_witness_anchor_aliases={
+                "gateway_health_schema_valid": [
+                    "gateway_health_matches_public_schema"
+                ],
+                "signed_production_evidence_witness": [
+                    "deployment_witness_is_signed_and_reports_missing_runtime_evidence",
+                    "collect_deployment_witness_publishes_with_verified_signature",
+                ],
+                "capability_evidence_schema_valid": [
+                    "capabilities_evidence_reports_disabled_registry"
+                ],
+                "audit_verification_schema_valid": [
+                    "audit_and_proof_verify_surface_anchor_gap"
+                ],
+                "proof_verification_schema_valid": [
+                    "audit_and_proof_verify_surface_anchor_gap"
+                ],
+                "deployment_collection_requires_production_evidence": [
+                    "collect_deployment_witness_requires_production_evidence_plane"
+                ],
+                "live_physical_safety_evidence_derived_from_registry": [
+                    "live_physical_capability_evidence_is_derived_from_registry_extension"
+                ],
+                "live_physical_capability_requires_safety_evidence": [
+                    "collect_deployment_witness_rejects_live_physical_capability_without_safety_evidence",
+                    "physical_capability_policy_blocks_live_physical_without_safety_evidence",
+                    "live_physical_capability_without_registry_safety_refs_remains_blocked",
+                ],
+                "sandbox_physical_capability_remains_non_production": [
+                    "physical_capability_policy_allows_sandbox_only_physical_capability",
+                    "collect_deployment_witness_allows_sandbox_physical_capability_without_live_claim",
+                ],
+                "missing_production_evidence_fails_closed": [
+                    "collect_deployment_witness_rejects_missing_production_evidence_secret",
+                    "collect_deployment_witness_fails_closed_without_secret",
+                ],
+            },
         ),
         _surface(
             "runtime_reflex_engine",

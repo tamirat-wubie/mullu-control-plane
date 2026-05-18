@@ -5082,6 +5082,43 @@
         "/proof/verify"
       ],
       "request_proof": "read_model",
+      "runtime_witness_anchor_aliases": {
+        "audit_verification_schema_valid": [
+          "audit_and_proof_verify_surface_anchor_gap"
+        ],
+        "capability_evidence_schema_valid": [
+          "capabilities_evidence_reports_disabled_registry"
+        ],
+        "deployment_collection_requires_production_evidence": [
+          "collect_deployment_witness_requires_production_evidence_plane"
+        ],
+        "gateway_health_schema_valid": [
+          "gateway_health_matches_public_schema"
+        ],
+        "live_physical_capability_requires_safety_evidence": [
+          "collect_deployment_witness_rejects_live_physical_capability_without_safety_evidence",
+          "physical_capability_policy_blocks_live_physical_without_safety_evidence",
+          "live_physical_capability_without_registry_safety_refs_remains_blocked"
+        ],
+        "live_physical_safety_evidence_derived_from_registry": [
+          "live_physical_capability_evidence_is_derived_from_registry_extension"
+        ],
+        "missing_production_evidence_fails_closed": [
+          "collect_deployment_witness_rejects_missing_production_evidence_secret",
+          "collect_deployment_witness_fails_closed_without_secret"
+        ],
+        "proof_verification_schema_valid": [
+          "audit_and_proof_verify_surface_anchor_gap"
+        ],
+        "sandbox_physical_capability_remains_non_production": [
+          "physical_capability_policy_allows_sandbox_only_physical_capability",
+          "collect_deployment_witness_allows_sandbox_physical_capability_without_live_claim"
+        ],
+        "signed_production_evidence_witness": [
+          "deployment_witness_is_signed_and_reports_missing_runtime_evidence",
+          "collect_deployment_witness_publishes_with_verified_signature"
+        ]
+      },
       "runtime_witnesses": [
         "gateway_health_schema_valid",
         "signed_production_evidence_witness",
@@ -7203,7 +7240,7 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 611,
+    "exact_test_anchor_count": 621,
     "runtime_witness_count": 1035,
     "surfaces": [
       {
@@ -10223,23 +10260,78 @@
         "unanchored_witnesses": []
       },
       {
-        "anchored_witnesses": [],
-        "exact_test_anchor_count": 0,
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "tests/test_gateway/test_production_evidence.py::test_gateway_health_matches_public_schema"
+            ],
+            "witness": "gateway_health_schema_valid"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_production_evidence.py::test_deployment_witness_is_signed_and_reports_missing_runtime_evidence",
+              "tests/test_collect_deployment_witness.py::test_collect_deployment_witness_publishes_with_verified_signature"
+            ],
+            "witness": "signed_production_evidence_witness"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_production_evidence.py::test_capabilities_evidence_reports_disabled_registry"
+            ],
+            "witness": "capability_evidence_schema_valid"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_production_evidence.py::test_audit_and_proof_verify_surface_anchor_gap"
+            ],
+            "witness": "audit_verification_schema_valid"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_production_evidence.py::test_audit_and_proof_verify_surface_anchor_gap"
+            ],
+            "witness": "proof_verification_schema_valid"
+          },
+          {
+            "anchors": [
+              "tests/test_collect_deployment_witness.py::test_collect_deployment_witness_requires_production_evidence_plane"
+            ],
+            "witness": "deployment_collection_requires_production_evidence"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_production_evidence.py::test_live_physical_capability_evidence_is_derived_from_registry_extension"
+            ],
+            "witness": "live_physical_safety_evidence_derived_from_registry"
+          },
+          {
+            "anchors": [
+              "tests/test_collect_deployment_witness.py::test_collect_deployment_witness_rejects_live_physical_capability_without_safety_evidence",
+              "tests/test_collect_deployment_witness.py::test_physical_capability_policy_blocks_live_physical_without_safety_evidence",
+              "tests/test_gateway/test_production_evidence.py::test_live_physical_capability_without_registry_safety_refs_remains_blocked"
+            ],
+            "witness": "live_physical_capability_requires_safety_evidence"
+          },
+          {
+            "anchors": [
+              "tests/test_collect_deployment_witness.py::test_physical_capability_policy_allows_sandbox_only_physical_capability",
+              "tests/test_collect_deployment_witness.py::test_collect_deployment_witness_allows_sandbox_physical_capability_without_live_claim"
+            ],
+            "witness": "sandbox_physical_capability_remains_non_production"
+          },
+          {
+            "anchors": [
+              "tests/test_collect_deployment_witness.py::test_collect_deployment_witness_rejects_missing_production_evidence_secret",
+              "tests/test_collect_deployment_witness.py::test_collect_deployment_witness_fails_closed_without_secret"
+            ],
+            "witness": "missing_production_evidence_fails_closed"
+          }
+        ],
+        "exact_test_anchor_count": 10,
         "runtime_witness_count": 10,
         "surface_id": "production_evidence_plane",
-        "unanchored_witness_count": 10,
-        "unanchored_witnesses": [
-          "gateway_health_schema_valid",
-          "signed_production_evidence_witness",
-          "capability_evidence_schema_valid",
-          "audit_verification_schema_valid",
-          "proof_verification_schema_valid",
-          "deployment_collection_requires_production_evidence",
-          "live_physical_safety_evidence_derived_from_registry",
-          "live_physical_capability_requires_safety_evidence",
-          "sandbox_physical_capability_remains_non_production",
-          "missing_production_evidence_fails_closed"
-        ]
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
       },
       {
         "anchored_witnesses": [],
@@ -12419,6 +12511,6 @@
         "unanchored_witnesses": []
       }
     ],
-    "unanchored_witness_count": 424
+    "unanchored_witness_count": 414
   }
 }
