@@ -199,6 +199,8 @@ docs/governed-swarm-promotion-readiness-example.json
 
 Use this report only for pilot promotion. Production remains blocked here and must pass the broader deployment witness and public production health declaration gates.
 
+The workflow also emits this report as `governed-swarm-pilot-promotion-readiness` after the staging evidence bundle validates.
+
 For a real staging activation, store the collected witness under `.change_assurance/` or the deployment evidence store, then run the same validator against that file.
 
 ## Rollback
