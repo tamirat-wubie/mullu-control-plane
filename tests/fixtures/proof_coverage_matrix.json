@@ -3140,6 +3140,45 @@
         "/api/v1/coordination/restore"
       ],
       "request_proof": "request_proof",
+      "runtime_witness_anchor_aliases": {
+        "coordination_checkpoint_audited": [
+          "checkpoint_appears_in_audit",
+          "restore_appears_in_audit"
+        ],
+        "coordination_checkpoint_lease_bound": [
+          "expired_lease_rejected"
+        ],
+        "coordination_checkpoint_save_governed": [
+          "save_checkpoint",
+          "save_restore_round_trip"
+        ],
+        "coordination_policy_drift_requires_review": [
+          "policy_pack_drift_needs_review"
+        ],
+        "coordination_restore_load_governed": [
+          "restore_checkpoint",
+          "save_restore_round_trip"
+        ],
+        "coordination_restore_missing_bounded": [
+          "restore_missing_checkpoint_returns_404",
+          "restore_without_store_raises"
+        ],
+        "coordination_restore_missing_is_bounded": [
+          "restore_missing_checkpoint_returns_404",
+          "restore_without_store_raises"
+        ],
+        "coordination_restore_policy_checked": [
+          "policy_pack_drift_needs_review"
+        ],
+        "coordination_restore_resumes_checkpoint": [
+          "restore_checkpoint",
+          "idempotent_restore",
+          "empty_state_round_trip"
+        ],
+        "coordination_store_path_traversal_rejected": [
+          "path_traversal_blocked"
+        ]
+      },
       "runtime_witnesses": [
         "coordination_checkpoint_audited",
         "coordination_restore_load_governed",
@@ -7164,7 +7203,7 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 601,
+    "exact_test_anchor_count": 611,
     "runtime_witness_count": 1035,
     "surfaces": [
       {
@@ -7914,23 +7953,80 @@
         "unanchored_witnesses": []
       },
       {
-        "anchored_witnesses": [],
-        "exact_test_anchor_count": 0,
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "mcoi/tests/test_coordination_http_endpoints.py::test_checkpoint_appears_in_audit",
+              "mcoi/tests/test_coordination_http_endpoints.py::test_restore_appears_in_audit"
+            ],
+            "witness": "coordination_checkpoint_audited"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_coordination_http_endpoints.py::test_restore_checkpoint",
+              "mcoi/tests/test_coordination_engine_persistence.py::test_save_restore_round_trip"
+            ],
+            "witness": "coordination_restore_load_governed"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_coordination_http_endpoints.py::test_restore_checkpoint",
+              "mcoi/tests/test_coordination_engine_persistence.py::test_idempotent_restore",
+              "mcoi/tests/test_coordination_engine_persistence.py::test_empty_state_round_trip"
+            ],
+            "witness": "coordination_restore_resumes_checkpoint"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_coordination_http_endpoints.py::test_save_checkpoint",
+              "mcoi/tests/test_coordination_engine_persistence.py::test_save_restore_round_trip"
+            ],
+            "witness": "coordination_checkpoint_save_governed"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_coordination_engine_persistence.py::test_expired_lease_rejected"
+            ],
+            "witness": "coordination_checkpoint_lease_bound"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_coordination_checkpoint_persistence.py::test_path_traversal_blocked"
+            ],
+            "witness": "coordination_store_path_traversal_rejected"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_coordination_engine_persistence.py::test_policy_pack_drift_needs_review"
+            ],
+            "witness": "coordination_restore_policy_checked"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_coordination_engine_persistence.py::test_policy_pack_drift_needs_review"
+            ],
+            "witness": "coordination_policy_drift_requires_review"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_coordination_http_endpoints.py::test_restore_missing_checkpoint_returns_404",
+              "mcoi/tests/test_coordination_engine_persistence.py::test_restore_without_store_raises"
+            ],
+            "witness": "coordination_restore_missing_bounded"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_coordination_http_endpoints.py::test_restore_missing_checkpoint_returns_404",
+              "mcoi/tests/test_coordination_engine_persistence.py::test_restore_without_store_raises"
+            ],
+            "witness": "coordination_restore_missing_is_bounded"
+          }
+        ],
+        "exact_test_anchor_count": 10,
         "runtime_witness_count": 10,
         "surface_id": "coordination_checkpoint_lifecycle",
-        "unanchored_witness_count": 10,
-        "unanchored_witnesses": [
-          "coordination_checkpoint_audited",
-          "coordination_restore_load_governed",
-          "coordination_restore_resumes_checkpoint",
-          "coordination_checkpoint_save_governed",
-          "coordination_checkpoint_lease_bound",
-          "coordination_store_path_traversal_rejected",
-          "coordination_restore_policy_checked",
-          "coordination_policy_drift_requires_review",
-          "coordination_restore_missing_bounded",
-          "coordination_restore_missing_is_bounded"
-        ]
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
       },
       {
         "anchored_witnesses": [
@@ -12323,6 +12419,6 @@
         "unanchored_witnesses": []
       }
     ],
-    "unanchored_witness_count": 434
+    "unanchored_witness_count": 424
   }
 }
