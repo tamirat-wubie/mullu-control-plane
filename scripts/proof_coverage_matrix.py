@@ -573,6 +573,43 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "coordination_restore_missing_bounded",
                 "coordination_restore_missing_is_bounded",
             ],
+            runtime_witness_anchor_aliases={
+                "coordination_checkpoint_audited": [
+                    "checkpoint_appears_in_audit",
+                    "restore_appears_in_audit",
+                ],
+                "coordination_restore_load_governed": [
+                    "restore_checkpoint",
+                    "save_restore_round_trip",
+                ],
+                "coordination_restore_resumes_checkpoint": [
+                    "restore_checkpoint",
+                    "idempotent_restore",
+                    "empty_state_round_trip",
+                ],
+                "coordination_checkpoint_save_governed": [
+                    "save_checkpoint",
+                    "save_restore_round_trip",
+                ],
+                "coordination_checkpoint_lease_bound": ["expired_lease_rejected"],
+                "coordination_store_path_traversal_rejected": [
+                    "path_traversal_blocked"
+                ],
+                "coordination_restore_policy_checked": [
+                    "policy_pack_drift_needs_review"
+                ],
+                "coordination_policy_drift_requires_review": [
+                    "policy_pack_drift_needs_review"
+                ],
+                "coordination_restore_missing_bounded": [
+                    "restore_missing_checkpoint_returns_404",
+                    "restore_without_store_raises",
+                ],
+                "coordination_restore_missing_is_bounded": [
+                    "restore_missing_checkpoint_returns_404",
+                    "restore_without_store_raises",
+                ],
+            },
         ),
         _surface(
             "engineering_puzzle_governance",
