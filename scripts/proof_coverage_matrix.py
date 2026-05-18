@@ -348,6 +348,9 @@ def proof_coverage_matrix() -> dict[str, Any]:
             [
                 "mcoi/mcoi_runtime/app/routers/llm/chat.py",
                 "mcoi/mcoi_runtime/core/proof_bridge.py",
+                "mcoi/tests/test_server_phase209.py",
+                "mcoi/tests/test_server_phase210.py",
+                "mcoi/tests/test_server_phase213.py",
             ],
             "Chat and workflow routes preserve governed request and action proof boundaries.",
             [
@@ -359,6 +362,17 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "streaming_chat_exception_sanitized",
                 "chat_workflow_history_bounded",
             ],
+            runtime_witness_anchor_aliases={
+                "chat_completion_governed": ["single_turn"],
+                "streaming_chat_returns_sse": ["streaming_chat_returns_sse"],
+                "streaming_chat_multi_turn_history_preserved": ["streaming_chat_multi_turn"],
+                "streaming_chat_governed": ["streaming_chat_governed"],
+                "streaming_chat_contains_budget_witnesses": [
+                    "streaming_chat_contains_budget_witnesses",
+                ],
+                "streaming_chat_exception_sanitized": ["streaming_chat_exception_sanitized"],
+                "chat_workflow_history_bounded": ["chat_workflow_history"],
+            },
         ),
         _surface(
             "cost_budget_read_models",
