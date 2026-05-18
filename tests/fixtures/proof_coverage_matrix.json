@@ -5359,6 +5359,44 @@
         "software_dev.pr_candidate.prepare"
       ],
       "request_proof": "request_proof",
+      "runtime_witness_anchor_aliases": {
+        "software_dev_capability_entries_schema_valid": [
+          "software_dev_capability_entries_are_schema_valid"
+        ],
+        "software_dev_capsule_refs_match_pack_capabilities": [
+          "software_dev_capsule_references_exact_pack_capabilities"
+        ],
+        "software_dev_direct_deployment_capability_absent": [
+          "software_dev_capsule_references_exact_pack_capabilities"
+        ],
+        "software_dev_effectful_records_require_sandbox_approval": [
+          "software_dev_governed_records_bind_read_and_effect_boundaries"
+        ],
+        "software_dev_gate_projects_manifest_registry": [
+          "software_dev_named_loader_projects_manifest_registry_when_configured"
+        ],
+        "software_dev_input_schema_refs_materialized": [
+          "software_dev_input_schema_refs_are_materialized_and_strict"
+        ],
+        "software_dev_output_schema_refs_materialized": [
+          "software_dev_output_schema_refs_are_materialized_and_strict"
+        ],
+        "software_dev_pack_explicit_fabric_admits_known_capabilities": [
+          "software_dev_pack_installs_through_explicit_capability_fabric"
+        ],
+        "software_dev_pack_fixture_not_default_loaded": [
+          "software_dev_fixture_pack_is_not_loaded_by_default"
+        ],
+        "software_dev_pr_candidate_blocks_git_push": [
+          "local_git_command_contract_rejects_push_and_invalid_refs"
+        ],
+        "software_dev_production_ready_overclaim_rejected": [
+          "software_dev_pack_blocks_production_ready_overclaim"
+        ],
+        "software_dev_read_only_records_non_mutating": [
+          "software_dev_governed_records_bind_read_and_effect_boundaries"
+        ]
+      },
       "runtime_witnesses": [
         "software_dev_pack_fixture_not_default_loaded",
         "software_dev_capability_entries_schema_valid",
@@ -6918,7 +6956,7 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 535,
+    "exact_test_anchor_count": 547,
     "runtime_witness_count": 1035,
     "surfaces": [
       {
@@ -10022,9 +10060,33 @@
         "anchored_witnesses": [
           {
             "anchors": [
+              "tests/test_software_dev_capability_pack.py::test_software_dev_fixture_pack_is_not_loaded_by_default"
+            ],
+            "witness": "software_dev_pack_fixture_not_default_loaded"
+          },
+          {
+            "anchors": [
+              "tests/test_software_dev_capability_pack.py::test_software_dev_capability_entries_are_schema_valid"
+            ],
+            "witness": "software_dev_capability_entries_schema_valid"
+          },
+          {
+            "anchors": [
+              "tests/test_software_dev_capability_pack.py::test_software_dev_input_schema_refs_are_materialized_and_strict"
+            ],
+            "witness": "software_dev_input_schema_refs_materialized"
+          },
+          {
+            "anchors": [
               "tests/test_software_dev_capability_pack.py::test_software_dev_input_schemas_reject_boundary_violations"
             ],
             "witness": "software_dev_input_schemas_reject_boundary_violations"
+          },
+          {
+            "anchors": [
+              "tests/test_software_dev_capability_pack.py::test_software_dev_output_schema_refs_are_materialized_and_strict"
+            ],
+            "witness": "software_dev_output_schema_refs_materialized"
           },
           {
             "anchors": [
@@ -10040,29 +10102,64 @@
           },
           {
             "anchors": [
+              "tests/test_software_dev_capability_pack.py::test_software_dev_capsule_references_exact_pack_capabilities"
+            ],
+            "witness": "software_dev_capsule_refs_match_pack_capabilities"
+          },
+          {
+            "anchors": [
+              "tests/test_software_dev_capability_pack.py::test_software_dev_pack_installs_through_explicit_capability_fabric"
+            ],
+            "witness": "software_dev_pack_explicit_fabric_admits_known_capabilities"
+          },
+          {
+            "anchors": [
+              "tests/test_software_dev_capability_pack.py::test_software_dev_named_loader_projects_manifest_registry_when_configured"
+            ],
+            "witness": "software_dev_gate_projects_manifest_registry"
+          },
+          {
+            "anchors": [
+              "tests/test_software_dev_capability_pack.py::test_software_dev_capsule_references_exact_pack_capabilities"
+            ],
+            "witness": "software_dev_direct_deployment_capability_absent"
+          },
+          {
+            "anchors": [
+              "tests/test_software_dev_capability_pack.py::test_software_dev_governed_records_bind_read_and_effect_boundaries"
+            ],
+            "witness": "software_dev_read_only_records_non_mutating"
+          },
+          {
+            "anchors": [
+              "tests/test_software_dev_capability_pack.py::test_software_dev_governed_records_bind_read_and_effect_boundaries"
+            ],
+            "witness": "software_dev_effectful_records_require_sandbox_approval"
+          },
+          {
+            "anchors": [
+              "tests/test_pr_candidate.py::test_local_git_command_contract_rejects_push_and_invalid_refs"
+            ],
+            "witness": "software_dev_pr_candidate_blocks_git_push"
+          },
+          {
+            "anchors": [
               "tests/test_software_dev_capability_pack.py::test_software_dev_pr_candidate_local_commands_are_git_local_only"
             ],
             "witness": "software_dev_pr_candidate_local_commands_are_git_local_only"
+          },
+          {
+            "anchors": [
+              "tests/test_software_dev_capability_pack.py::test_software_dev_pack_blocks_production_ready_overclaim"
+            ],
+            "witness": "software_dev_production_ready_overclaim_rejected"
           }
         ],
-        "exact_test_anchor_count": 4,
+        "exact_test_anchor_count": 16,
         "runtime_witness_count": 16,
         "surface_id": "software_dev_capability_pack",
-        "unanchored_witness_count": 12,
-        "unanchored_witnesses": [
-          "software_dev_pack_fixture_not_default_loaded",
-          "software_dev_capability_entries_schema_valid",
-          "software_dev_input_schema_refs_materialized",
-          "software_dev_output_schema_refs_materialized",
-          "software_dev_capsule_refs_match_pack_capabilities",
-          "software_dev_pack_explicit_fabric_admits_known_capabilities",
-          "software_dev_gate_projects_manifest_registry",
-          "software_dev_direct_deployment_capability_absent",
-          "software_dev_read_only_records_non_mutating",
-          "software_dev_effectful_records_require_sandbox_approval",
-          "software_dev_pr_candidate_blocks_git_push",
-          "software_dev_production_ready_overclaim_rejected"
-        ]
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
       },
       {
         "anchored_witnesses": [],
@@ -11712,6 +11809,6 @@
         "unanchored_witnesses": []
       }
     ],
-    "unanchored_witness_count": 500
+    "unanchored_witness_count": 488
   }
 }

@@ -2770,6 +2770,44 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "software_dev_pr_candidate_local_commands_are_git_local_only",
                 "software_dev_production_ready_overclaim_rejected",
             ],
+            runtime_witness_anchor_aliases={
+                "software_dev_pack_fixture_not_default_loaded": [
+                    "software_dev_fixture_pack_is_not_loaded_by_default"
+                ],
+                "software_dev_capability_entries_schema_valid": [
+                    "software_dev_capability_entries_are_schema_valid"
+                ],
+                "software_dev_input_schema_refs_materialized": [
+                    "software_dev_input_schema_refs_are_materialized_and_strict"
+                ],
+                "software_dev_output_schema_refs_materialized": [
+                    "software_dev_output_schema_refs_are_materialized_and_strict"
+                ],
+                "software_dev_capsule_refs_match_pack_capabilities": [
+                    "software_dev_capsule_references_exact_pack_capabilities"
+                ],
+                "software_dev_pack_explicit_fabric_admits_known_capabilities": [
+                    "software_dev_pack_installs_through_explicit_capability_fabric"
+                ],
+                "software_dev_gate_projects_manifest_registry": [
+                    "software_dev_named_loader_projects_manifest_registry_when_configured"
+                ],
+                "software_dev_direct_deployment_capability_absent": [
+                    "software_dev_capsule_references_exact_pack_capabilities"
+                ],
+                "software_dev_read_only_records_non_mutating": [
+                    "software_dev_governed_records_bind_read_and_effect_boundaries"
+                ],
+                "software_dev_effectful_records_require_sandbox_approval": [
+                    "software_dev_governed_records_bind_read_and_effect_boundaries"
+                ],
+                "software_dev_pr_candidate_blocks_git_push": [
+                    "local_git_command_contract_rejects_push_and_invalid_refs"
+                ],
+                "software_dev_production_ready_overclaim_rejected": [
+                    "software_dev_pack_blocks_production_ready_overclaim"
+                ],
+            },
         ),
         _surface(
             "agent_identity",
