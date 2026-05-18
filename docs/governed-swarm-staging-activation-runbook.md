@@ -134,13 +134,16 @@ Use the default `self-hosted` runner label unless the selected runner can both r
 Before dispatching the workflow, verify the selected runner has the required local surfaces:
 
 ```bash
-test -d /opt/mullu/mullu-governed-swarm/mcoi/mcoi_runtime/swarm
-test -f /var/lib/mullu/governed-swarm/swarm-runs.jsonl
-test -r /var/lib/mullu/governed-swarm/swarm-runs.jsonl
+python scripts/preflight_governed_swarm_staging_runner.py \
+  --staging-url "$MULLU_STAGING_URL" \
+  --control-plane-commit "<deployed-control-plane-commit>" \
+  --runtime-path "/opt/mullu/mullu-governed-swarm/mcoi" \
+  --audit-store-path "/var/lib/mullu/governed-swarm/swarm-runs.jsonl" \
+  --output ".change_assurance/governed_swarm_staging_runner_preflight.json"
 curl -sS "$MULLU_STAGING_URL/api/v1/swarm/runs" >/tmp/governed-swarm-route-preflight.json
 ```
 
-The workflow repeats the filesystem checks before collecting the witness. If any preflight check fails, do not treat the failure as a route failure; fix runner placement, runtime checkout, audit mount, or staging network access first.
+The workflow repeats the runner preflight and uploads `governed-swarm-staging-runner-preflight` before collecting the witness. If any preflight check fails, do not treat the failure as a route failure; fix runner placement, runtime checkout, audit mount, or staging network access first.
 
 For a real staging activation, store the collected witness under `.change_assurance/` or the deployment evidence store, then run the same validator against that file.
 
