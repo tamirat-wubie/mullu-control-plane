@@ -149,8 +149,8 @@ Witness integrity audit:
 | Metric | Count |
 |---|---:|
 | Runtime witness labels | 1035 |
-| Exact test anchors | 558 |
-| Unanchored witness labels | 477 |
+| Exact test anchors | 569 |
+| Unanchored witness labels | 466 |
 
 Evidence quality gaps:
 none
@@ -178,7 +178,6 @@ Witness integrity gaps:
 | `agent_orchestration_lifecycle` | 0 | 8 | orchestration_summary_bounded, orchestration_plan_created_for_registered_agent, orchestration_unknown_initiator_bounded, orchestration_missing_plan_bounded, orchestration_handoff_capability_checked, orchestration_handoff_errors_sanitized, orchestration_quorum_required, orchestration_executor_errors_sanitized |
 | `live_path_certification_lifecycle` | 0 | 8 | certification_run_emits_action_proof, certification_run_returns_chain_hash, certification_run_records_five_steps, certification_steps_named, certification_history_bounded, certification_chain_hash_deterministic, certification_failures_bounded, certification_partial_failure_recorded |
 | `runtime_state_persistence_lifecycle` | 0 | 8 | state_save_returns_hash_bound_snapshot, state_load_roundtrip, state_load_missing_bounded, state_list_summary_bounded, state_save_rejects_path_traversal, state_load_rejects_path_traversal, state_hash_mismatch_rejected, state_atomic_write_verified |
-| `runbook_learning_lifecycle` | 0 | 11 | patterns_detected_from_audit_trail, promotion_requires_detected_pattern, approval_required_before_activation, retirement_requires_active_runbook, promote_and_approve_audit_records, mil_audit_replay_admits_runbook, mil_audit_operator_checklist_validated, mil_audit_runbook_preflight_ready, sanitized_runbook_error_details, runbook_pattern_read_models_bounded, runbook_responses_governed |
 | `software_outcome_learning` | 0 | 7 | software_learning_schema_default_enabled, passed_gates_yield_procedural_memory, failed_gates_yield_hashed_risk_memory, raw_logs_rejected_before_planning_use, rollback_failure_defers_learning, planning_projection_requires_admitted_matching_decision, software_learning_errors_are_bounded |
 | `approval_engine_lifecycle` | 1 | 5 | approval_request_mutation_receipt_emitted, approval_decision_mutation_receipt_emitted, approval_consumption_mutation_receipt_emitted, approval_revocation_mutation_receipt_emitted, approval_override_mutation_receipt_emitted |
 | `job_engine_lifecycle` | 1 | 5 | job_create_mutation_receipt_emitted, job_start_mutation_receipt_emitted, job_pause_resume_mutation_receipts_emitted, job_terminal_mutation_receipts_emitted, job_restore_mutation_receipt_emitted |
@@ -343,5 +342,5 @@ none
 STATUS:
   Completeness: 100%
   Invariants verified: route declarations, route-level coverage classification, coverage levels, coverage states, closure action mapping, schema contract validation, deployment orchestration receipt schema contract
-  Open issues: 477 runtime-witness labels lack exact test-function anchors
+  Open issues: 466 runtime-witness labels lack exact test-function anchors
   Next action: bind unanchored runtime-witness labels to exact test-function anchors
