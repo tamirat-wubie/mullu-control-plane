@@ -1,0 +1,46 @@
+{
+  "audit_store_path": "/var/lib/mullu/governed-swarm/swarm-runs.jsonl",
+  "blockers": [],
+  "checked_at": "2026-05-17T08:25:00Z",
+  "checks": [
+    {
+      "detail": "staging evidence bundle validates",
+      "name": "staging_evidence_bundle_valid",
+      "passed": true
+    },
+    {
+      "detail": "bundle outcome=SolvedVerified",
+      "name": "staging_evidence_solved",
+      "passed": true
+    },
+    {
+      "detail": "runner_ready=True",
+      "name": "runner_ready_bound",
+      "passed": true
+    },
+    {
+      "detail": "activation_outcome=SolvedVerified",
+      "name": "activation_outcome_solved",
+      "passed": true
+    },
+    {
+      "detail": "target_environment=pilot",
+      "name": "target_environment_allowed",
+      "passed": true
+    },
+    {
+      "detail": "pilot promotion can use staging evidence bundle",
+      "name": "production_witness_required",
+      "passed": true
+    }
+  ],
+  "control_plane_commit": "dffe0f68289147e09a84ab6cbbeb2b5230ca2bd8",
+  "outcome": "SolvedVerified",
+  "readiness_id": "governed-swarm-promotion-895a5da68b298905",
+  "readiness_level": "pilot-ready",
+  "ready": true,
+  "runtime_path": "/opt/mullu/mullu-governed-swarm/mcoi",
+  "staging_evidence_bundle_ref": "docs/governed-swarm-staging-evidence-bundle-example.json",
+  "staging_url": "https://staging-api.example.com",
+  "target_environment": "pilot"
+}

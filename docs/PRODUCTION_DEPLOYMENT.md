@@ -161,6 +161,25 @@ Tag: v0.1.0-governed-swarm
 Runtime path after checkout: <checkout>/mcoi
 ```
 
+Promotion rule:
+
+```text
+Pilot promotion requires a SolvedVerified governed swarm staging evidence bundle
+and a SolvedVerified governed swarm promotion readiness report.
+Production promotion is not granted by the staging promotion report; production
+must also pass the deployment witness and public production health declaration gates.
+```
+
+Validation command:
+
+```bash
+python scripts/validate_governed_swarm_promotion_readiness.py \
+  --staging-evidence-bundle ".change_assurance/governed_swarm_staging_evidence_bundle.json" \
+  --target-environment pilot \
+  --output ".change_assurance/governed_swarm_promotion_readiness.json" \
+  --strict
+```
+
 ### State directories
 
 | Variable | Required | Default | Notes |

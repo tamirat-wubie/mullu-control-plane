@@ -1,0 +1,107 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:governed-swarm-promotion-readiness:1",
+  "title": "Governed Swarm Promotion Readiness",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "readiness_id",
+    "checked_at",
+    "target_environment",
+    "staging_evidence_bundle_ref",
+    "control_plane_commit",
+    "runtime_path",
+    "audit_store_path",
+    "staging_url",
+    "ready",
+    "readiness_level",
+    "outcome",
+    "checks",
+    "blockers"
+  ],
+  "properties": {
+    "readiness_id": {
+      "type": "string",
+      "pattern": "^governed-swarm-promotion-[0-9a-f]{16}$"
+    },
+    "checked_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "target_environment": {
+      "type": "string",
+      "enum": ["pilot", "production"]
+    },
+    "staging_evidence_bundle_ref": {
+      "type": "string",
+      "minLength": 1
+    },
+    "control_plane_commit": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}$"
+    },
+    "runtime_path": {
+      "type": "string",
+      "pattern": "mcoi$"
+    },
+    "audit_store_path": {
+      "type": "string",
+      "minLength": 1
+    },
+    "staging_url": {
+      "type": "string",
+      "pattern": "^https?://.+"
+    },
+    "ready": {
+      "type": "boolean"
+    },
+    "readiness_level": {
+      "type": "string",
+      "enum": ["pilot-ready", "promotion-blocked"]
+    },
+    "outcome": {
+      "type": "string",
+      "enum": ["SolvedVerified", "AwaitingEvidence", "GovernanceBlocked"]
+    },
+    "checks": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/check"
+      }
+    },
+    "blockers": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "$defs": {
+    "check": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "passed", "detail"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "enum": [
+            "staging_evidence_bundle_valid",
+            "staging_evidence_solved",
+            "runner_ready_bound",
+            "activation_outcome_solved",
+            "target_environment_allowed",
+            "production_witness_required"
+          ]
+        },
+        "passed": {
+          "type": "boolean"
+        },
+        "detail": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    }
+  }
+}

@@ -239,6 +239,12 @@
       "surface": "deployment"
     },
     {
+      "schema_id": "governed-swarm-promotion-readiness",
+      "path": "schemas/governed_swarm_promotion_readiness.schema.json",
+      "urn": "urn:mullusi:schema:governed-swarm-promotion-readiness:1",
+      "surface": "deployment"
+    },
+    {
       "schema_id": "governed-swarm-staging-runner-preflight",
       "path": "schemas/governed_swarm_staging_runner_preflight.schema.json",
       "urn": "urn:mullusi:schema:governed-swarm-staging-runner-preflight:1",
