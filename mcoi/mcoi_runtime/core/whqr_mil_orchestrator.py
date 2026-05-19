@@ -5,12 +5,16 @@ Invariants: every stage is explicit; failures stop at their boundary; side effec
 """
 from __future__ import annotations
 from dataclasses import dataclass
-from typing import Any, Mapping
+from typing import Any, Callable, Mapping
 from mcoi_runtime.contracts.goal import GoalDescriptor
+from mcoi_runtime.contracts.meta_reasoning import ReplanRecommendation
+from mcoi_runtime.core.adaptive_reasoning import ComplexityAssessment
 from mcoi_runtime.contracts.whqr import WHQRDocument, WHQRExpr, WHRole
 from mcoi_runtime.contracts.mil import MILProgram
 from mcoi_runtime.core.governed_dispatcher import GovernedDispatchResult, GovernedDispatcher
 from mcoi_runtime.core.memory import EpisodicMemory
+from mcoi_runtime.core.meta_reasoning import MetaReasoningEngine
+from mcoi_runtime.core.meta_reasoning_integration import MetaReasoningBridge
 from mcoi_runtime.core.mil_audit_reconstruction import MILAuditReconstruction, reconstruct_mil_audit
 from mcoi_runtime.core.mil_dispatcher_bridge import dispatch_verified_mil
 from mcoi_runtime.core.mil_learning_admission import MILLearningAdmissionResult, admit_mil_terminal_learning
@@ -31,19 +35,36 @@ class WHQRMILOrchestrationResult:
     audit_reconstruction: MILAuditReconstruction | None
     completed: bool
     next_step: str
+    replan_recommendation: ReplanRecommendation | None = None
+    complexity_assessment: ComplexityAssessment | None = None
 
-def run_whqr_mil_orchestration(*,expr:WHQRExpr,goal:GoalDescriptor,subject_id:str,issued_at:str,governed:GovernedDispatcher,certifier:TerminalClosureCertifier,episodic:EpisodicMemory,actor_id:str,intent_id:str,template:Mapping[str,Any],bindings:Mapping[str,str],context:WHQREvaluationContext|None=None,required_roles:tuple[WHRole,...]=(),capability:str="capability.pending",mode:str="simulation",case_id:str|None=None)->WHQRMILOrchestrationResult:
+def run_whqr_mil_orchestration(*,expr:WHQRExpr,goal:GoalDescriptor,subject_id:str,issued_at:str,governed:GovernedDispatcher,certifier:TerminalClosureCertifier,episodic:EpisodicMemory,actor_id:str,intent_id:str,template:Mapping[str,Any],bindings:Mapping[str,str],context:WHQREvaluationContext|None=None,required_roles:tuple[WHRole,...]=(),capability:str="capability.pending",mode:str="simulation",meta_reasoning:MetaReasoningEngine|None=None,complexity_classifier:Callable[[str],ComplexityAssessment]|None=None,case_id:str|None=None)->WHQRMILOrchestrationResult:
     document=WHQRDocument(root=expr)
     goal_compilation=compile_goal_from_whqr(expr,goal,subject_id=subject_id,issued_at=issued_at,context=context,required_roles=required_roles)
     if not goal_compilation.ready_for_mil:
         return WHQRMILOrchestrationResult(document,goal_compilation,None,None,None,None,None,False,goal_compilation.next_step)
-    program=compile_mil_from_whqr_goal(goal_compilation,issued_at=issued_at,capability=capability)
+    if meta_reasoning is not None:
+        replan=MetaReasoningBridge.gate_goal_capability(meta_reasoning,capability_id=capability,affected_entity_id=goal.goal_id)
+        if replan is not None:
+            return WHQRMILOrchestrationResult(document,goal_compilation,None,None,None,None,None,False,"meta_reasoning_replan",replan)
+    # Cognition metering: classify the goal and stamp the complexity tier
+    # into the MIL program metadata. Advisory only — it never alters control
+    # flow or blocks; provider routing reads it to meter model spend.
+    complexity=complexity_classifier(goal.description) if complexity_classifier is not None else None
+    extra_metadata=None if complexity is None else {
+        "complexity.level":complexity.level.value,
+        "complexity.confidence":complexity.confidence,
+        "complexity.reason":complexity.reason,
+        "complexity.suggested_model":complexity.suggested_model,
+        "complexity.suggested_max_tokens":complexity.suggested_max_tokens,
+    }
+    program=compile_mil_from_whqr_goal(goal_compilation,issued_at=issued_at,capability=capability,extra_metadata=extra_metadata)
     dispatch_result=dispatch_verified_mil(program,governed,actor_id=actor_id,intent_id=intent_id,template=template,bindings=bindings,mode=mode)
     if dispatch_result.blocked:
-        return WHQRMILOrchestrationResult(document,goal_compilation,program,dispatch_result,None,None,None,False,"dispatch_blocked")
+        return WHQRMILOrchestrationResult(document,goal_compilation,program,dispatch_result,None,None,None,False,"dispatch_blocked",complexity_assessment=complexity)
     terminal=certify_mil_dispatch_result(program,dispatch_result,certifier,case_id=case_id)
     learning=admit_mil_terminal_learning(terminal,episodic,issued_at=issued_at)
     if learning.memory_entry is None:
-        return WHQRMILOrchestrationResult(document,goal_compilation,program,dispatch_result,terminal,learning,None,False,"learning_deferred")
+        return WHQRMILOrchestrationResult(document,goal_compilation,program,dispatch_result,terminal,learning,None,False,"learning_deferred",complexity_assessment=complexity)
     audit=reconstruct_mil_audit(terminal,learning,whqr_document=document,recorded_at=issued_at)
-    return WHQRMILOrchestrationResult(document,goal_compilation,program,dispatch_result,terminal,learning,audit,True,"complete")
+    return WHQRMILOrchestrationResult(document,goal_compilation,program,dispatch_result,terminal,learning,audit,True,"complete",complexity_assessment=complexity)
