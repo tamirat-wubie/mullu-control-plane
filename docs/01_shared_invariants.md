@@ -1,5 +1,12 @@
 # Shared Invariants
 
+> **In one box:** The promises the system can *never* break, written as plain
+> testable rules (e.g. "the same situation always produces the same plan",
+> "nothing researched can run without passing the gate"). These are the safety
+> guarantees in their rawest form — see them explained with an analogy in the
+> [Plain-English Overview](explain/PLAIN_ENGLISH.md). Unknown word? →
+> [Glossary](GLOSSARY.md). *(Doc type: Reference.)*
+
 Scope: MAF Core, MCOI Runtime, and Shared Contracts.
 
 These invariants are mandatory and mechanically testable:

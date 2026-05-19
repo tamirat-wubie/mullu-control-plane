@@ -1,5 +1,10 @@
 # 29 Team Runtime
 
+> **In one box:** How jobs are assigned across roles and worker capacity — the
+> "who picks up which task" machinery. New here? →
+> [Plain-English Overview](explain/PLAIN_ENGLISH.md); unknown word? →
+> [Glossary](GLOSSARY.md). *(Doc type: Reference.)*
+
 ## Purpose
 
 The team runtime subsystem governs role-based job assignment, worker capacity

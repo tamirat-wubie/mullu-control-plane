@@ -1,5 +1,12 @@
 # Deployment Matrix
 
+> **In one box:** Which deployment shapes ("profiles") are supported and what
+> each needs — pick the row that matches where you want to run Mullu. For the
+> 5-minute local version instead, see the
+> [Quickstart](docs/QUICKSTART.md). New to all this? →
+> [Plain-English Overview](docs/explain/PLAIN_ENGLISH.md).
+> *(Doc type: Reference / Operations.)*
+
 ## Profiles
 
 | Profile | DB Backend | LLM Backend | CORS | Secrets | Use Case |

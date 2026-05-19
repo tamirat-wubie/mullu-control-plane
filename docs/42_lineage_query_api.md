@@ -1,5 +1,10 @@
 # Lineage Query API
 
+> **In one box:** A way to ask "what caused this output?" and get back every
+> governed action that led to it ([lineage](GLOSSARY.md#lineage)), via a
+> `lineage://` address. New here? →
+> [Plain-English Overview](explain/PLAIN_ENGLISH.md). *(Doc type: Reference.)*
+
 Purpose: define `lineage://` URI semantics for querying every governed action
 that causally contributed to a symbolic intelligence output.
 

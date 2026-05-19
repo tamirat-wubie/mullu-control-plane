@@ -1,5 +1,10 @@
 # 26 Knowledge Ingestion
 
+> **In one box:** How the system turns past work into reusable lessons —
+> extracting procedures and failure patterns — without letting unvetted
+> knowledge act (that gate is [05](05_learning_admission.md)). New here? →
+> [Plain-English Overview](explain/PLAIN_ENGLISH.md). *(Doc type: Reference.)*
+
 ## Purpose
 
 Extract procedures, methods, best practices, and failure patterns from

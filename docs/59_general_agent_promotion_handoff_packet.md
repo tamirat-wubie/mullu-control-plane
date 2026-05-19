@@ -1,4 +1,8 @@
 <!--
+> **In one box:** The single starting point that bundles the operator
+> checklist, runbook, plans, and proofs for general-agent promotion. New? See
+> the Plain-English Overview (docs/explain/PLAIN_ENGLISH.md). *(Doc type: How-to.)*
+
 Purpose: Single entry-point handoff packet for general-agent promotion closure execution.
 Governance scope: Operator checklist, runbook, closure plans, validation reports, blockers, and final promotion proof.
 Dependencies: docs/58_general_agent_promotion_operator_runbook.md, examples/general_agent_promotion_operator_checklist.json, .change_assurance promotion closure artifacts.

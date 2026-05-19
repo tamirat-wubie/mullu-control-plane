@@ -1,5 +1,12 @@
 # Shared Contracts
 
+> **In one box:** The exact agreed "shapes" of the core data that different
+> parts of the system pass to each other (like the description of a
+> [capability](GLOSSARY.md#capability--capability-plane)). This is look-up
+> material — open it when you need precise field names and rules, not when you
+> want the big picture (for that, read the
+> [Plain-English Overview](explain/PLAIN_ENGLISH.md)). *(Doc type: Reference.)*
+
 These are the canonical cross-cutting contracts. MAF Core and MCOI Runtime must not redefine them.
 
 ## CapabilityDescriptor

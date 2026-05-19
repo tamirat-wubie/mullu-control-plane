@@ -1,5 +1,10 @@
 # 36 - Closure Memory Promotion
 
+> **In one box:** How a provably-finished piece of work
+> ([closure](GLOSSARY.md#closure)) becomes a permanent, append-only memory
+> record. New here? → [Plain-English Overview](explain/PLAIN_ENGLISH.md).
+> *(Doc type: Reference.)*
+
 ## Purpose
 
 Closure memory promotion turns verified closure outcomes into append-only

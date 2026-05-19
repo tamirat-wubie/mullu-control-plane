@@ -1,5 +1,11 @@
 # Code Automation Plane
 
+> **In one box:** How Mullu is allowed to edit code and files — strictly inside
+> a declared workspace folder, never outside it. The "it can touch code, but
+> only in a fenced yard" rule. New here? →
+> [Plain-English Overview](explain/PLAIN_ENGLISH.md); unknown word? →
+> [Glossary](GLOSSARY.md). *(Doc type: Reference.)*
+
 Scope: governed local code/repository automation. All file mutation is bounded to a declared workspace root.
 
 ## 1. Purpose

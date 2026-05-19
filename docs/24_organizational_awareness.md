@@ -1,5 +1,10 @@
 # 24 -- Organizational Awareness Layer
 
+> **In one box:** Gives the runtime a map of the organization (teams, roles,
+> who-owns-what) so decisions and routing respect real org structure. New here?
+> → [Plain-English Overview](explain/PLAIN_ENGLISH.md); unknown word? →
+> [Glossary](GLOSSARY.md). *(Doc type: Reference.)*
+
 ## Purpose
 
 The organizational awareness layer provides the runtime with a directory of

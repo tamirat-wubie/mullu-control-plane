@@ -1,4 +1,9 @@
 <!--
+> **In one box:** Step-by-step for operators to execute the general-agent
+> promotion closure. It deliberately does not claim production-ready until
+> evidence validates. New? See the Plain-English Overview
+> (docs/explain/PLAIN_ENGLISH.md). *(Doc type: How-to.)*
+
 Purpose: Operator runbook for executing the governed general-agent promotion closure plan.
 Governance scope: Adapter evidence, credential binding, deployment witness publication, health declaration, and promotion validation.
 Dependencies: scripts/collect_capability_adapter_evidence.py, scripts/plan_general_agent_promotion_closure.py, scripts/validate_general_agent_promotion_closure_plan_schema.py, scripts/validate_general_agent_promotion_closure_plan.py, DEPLOYMENT_STATUS.md.
