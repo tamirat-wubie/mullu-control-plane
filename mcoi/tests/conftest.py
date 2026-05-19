@@ -23,12 +23,29 @@ if str(TEST_ROOT) not in sys.path:
 # fixture restores the legacy "tests run in dev mode" default.
 # Individual tests that want to verify the fail-closed behavior can call
 # ``configure_musia_dev_mode(False)`` inside their body.
+#
+# Dev mode alone is NOT enough: resolve_musia_auth only takes the dev
+# wildcard branch when is_auth_configured() is False. A prior test that
+# installs an APIKeyManager / JWTAuthenticator without teardown leaves
+# is_auth_configured() True, so every later dev-mode test gets 401. Reset
+# all three musia_auth globals around each test so the pollution can't
+# cross test boundaries.
 @pytest.fixture(autouse=True)
 def _allow_musia_dev_mode_in_tests():
-    from mcoi_runtime.app.routers.musia_auth import configure_musia_dev_mode
-    configure_musia_dev_mode(True)
+    from mcoi_runtime.app.routers.musia_auth import (
+        configure_musia_auth,
+        configure_musia_dev_mode,
+        configure_musia_jwt,
+    )
+
+    def _reset() -> None:
+        configure_musia_auth(None)
+        configure_musia_jwt(None)
+        configure_musia_dev_mode(True)
+
+    _reset()
     yield
-    configure_musia_dev_mode(True)
+    _reset()
 
 
 # ═══ Shared Fixtures ═══
