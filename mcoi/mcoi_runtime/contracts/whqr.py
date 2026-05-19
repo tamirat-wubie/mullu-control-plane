@@ -19,6 +19,9 @@ SEMANTICS_HASH = "sha256:whqr-v0.1.0-split-gates-side-effect-free"
 
 
 class WHRole(StrEnum):
+    # Additive vocabulary only: split-gate semantics are unchanged, so
+    # SEMANTICS_HASH is intentionally NOT bumped (bumping would invalidate
+    # every already-persisted WHQR document hash for no semantic gain).
     WHO = "who"
     WHAT = "what"
     WHY = "why"
@@ -28,6 +31,17 @@ class WHRole(StrEnum):
     WHICH = "which"
     HOW_MUCH = "how_much"
     UNDER_WHAT_CONDITIONS = "under_what_conditions"
+    WHOM = "whom"
+    WHOSE = "whose"
+    HOW_MANY = "how_many"
+    HOW_LONG = "how_long"
+    HOW_OFTEN = "how_often"
+    WHAT_IF = "what_if"
+    WHY_NOT = "why_not"
+    WHAT_ELSE = "what_else"
+    SO_WHAT = "so_what"
+    BY_WHAT_MEANS = "by_what_means"
+    ACCORDING_TO_WHOM = "according_to_whom"
 
 
 class LogicalOp(StrEnum):
