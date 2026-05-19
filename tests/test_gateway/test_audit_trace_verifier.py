@@ -473,6 +473,89 @@ def test_verifier_command_without_terminal_certificate_is_valid_but_marked():
     assert verification.all_links_verified is True
 
 
+def test_verifier_certificate_hash_passes_canonical_lifecycle():
+    ledger, command_id = _ledger_through_terminal_closure()
+    verification = AuditTraceVerifier(ledger).verify_certificate_hash(command_id)
+    assert verification.certificate_present is True
+    assert verification.hash_matches is True
+    assert verification.closure_binding_valid is True
+    assert verification.recomputed_certificate_id == verification.certificate_id
+    assert verification.fully_verified is True
+    assert verification.failures == ()
+
+
+def test_verifier_certificate_hash_detects_tampered_disposition():
+    # Insider/incident: a stored certificate's disposition is flipped to
+    # COMMITTED while its certificate_id (content-addressed over the
+    # original disposition) is left stale. Recomputation catches it.
+    ledger, command_id = _ledger_through_terminal_closure()
+    cert = ledger._terminal_certificates[command_id]
+    tampered = replace(cert, disposition=ClosureDisposition.REQUIRES_REVIEW)
+    ledger._terminal_certificates[command_id] = tampered
+
+    verification = AuditTraceVerifier(ledger).verify_certificate_hash(command_id)
+
+    assert verification.hash_matches is False
+    assert verification.recomputed_certificate_id != verification.certificate_id
+    assert "certificate_hash_mismatch" in verification.failures
+
+
+def test_verifier_certificate_hash_detects_tampered_metadata():
+    ledger, command_id = _ledger_through_terminal_closure()
+    cert = ledger._terminal_certificates[command_id]
+    poisoned_metadata = {**cert.metadata, "injected": "by-insider"}
+    tampered = replace(cert, metadata=poisoned_metadata)
+    ledger._terminal_certificates[command_id] = tampered
+
+    verification = AuditTraceVerifier(ledger).verify_certificate_hash(command_id)
+
+    assert verification.hash_matches is False
+    assert "certificate_hash_mismatch" in verification.failures
+
+
+def test_verifier_certificate_hash_detects_closure_binding_mismatch():
+    # The certificate carries response_evidence_closure_id but the
+    # ledger's response_evidence_closed event is tampered so the closure
+    # no longer hashes to that id.
+    ledger, command_id = _ledger_through_terminal_closure()
+    for index, event in enumerate(ledger._events):
+        if event.command_id == command_id and event.detail.get("cause") == "response_evidence_closed":
+            poisoned = dict(event.detail)
+            closure = dict(poisoned["response_evidence_closure"])
+            closure["evidence_hash"] = "tampered-evidence-hash"
+            poisoned["response_evidence_closure"] = closure
+            ledger._events[index] = replace(event, detail=poisoned)
+            break
+
+    verification = AuditTraceVerifier(ledger).verify_certificate_hash(command_id)
+
+    assert verification.closure_binding_valid is False
+    assert "certificate_closure_binding_mismatch" in verification.failures
+
+
+def test_verifier_certificate_hash_absent_certificate_is_informational():
+    ledger = CommandLedger(
+        clock=lambda: "2026-04-24T12:00:00+00:00",
+        store=InMemoryCommandLedgerStore(),
+    )
+    command = ledger.create_command(
+        tenant_id="tenant-1",
+        actor_id="identity-1",
+        source="web",
+        conversation_id="conv-1",
+        idempotency_key="idem-no-cert-hash",
+        intent="llm_completion",
+        payload={"body": "no cert"},
+    )
+    ledger.transition(command.command_id, CommandState.ALLOWED, risk_tier="low")
+
+    verification = AuditTraceVerifier(ledger).verify_certificate_hash(command.command_id)
+
+    assert verification.certificate_present is False
+    assert verification.failures == ()
+    assert verification.fully_verified is True
+
+
 def test_verifier_replay_state_passes_canonical_lifecycle():
     ledger, command_id = _ledger_through_terminal_closure()
     verification = AuditTraceVerifier(ledger).verify_replay_state_consistency(command_id)
@@ -623,6 +706,8 @@ def test_verifier_verify_all_composes_every_method():
     assert report.approval.fully_verified is True
     assert report.tenant.fully_isolated is True
     assert report.replay.fully_replayed is True
+    assert report.certificate_hash.fully_verified is True
+    assert report.certificate_hash.hash_matches is True
     assert report.anchor is not None and report.anchor.failures == ()
     assert report.bundle is not None and report.bundle.fully_verified is True
 

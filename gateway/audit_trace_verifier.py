@@ -109,6 +109,94 @@ class AuditTraceVerifier:
             failures=tuple(failures),
         )
 
+    def verify_certificate_hash(self, command_id: str) -> "CertificateHashVerification":
+        """Recompute the terminal certificate's content hash and confirm
+        certificate_id matches.
+
+        certificate_id is f"terminal-closure-{canonical_hash(seed)[:16]}"
+        where the seed includes the FULL response_evidence_closure — which
+        the certificate itself does not retain (it keeps only the closure's
+        hash as response_evidence_closure_id). Recomputation therefore
+        reconstructs the closure from the ledger's response_evidence_closed
+        event and additionally confirms that closure hashes to the
+        certificate's stored response_evidence_closure_id. This catches a
+        tampered certificate (flipped disposition, altered metadata, swapped
+        case_id) carrying a stale certificate_id.
+        """
+        command = self._ledger.get(command_id)
+        if command is None:
+            return CertificateHashVerification(
+                command_id=command_id,
+                certificate_present=False,
+                certificate_id="",
+                recomputed_certificate_id="",
+                hash_matches=False,
+                closure_binding_valid=True,
+                failures=("command_not_found",),
+            )
+        certificate = self._ledger.terminal_certificate_for(command_id)
+        if certificate is None:
+            # Absence of a terminal certificate is informational, not a
+            # failure (most commands are verified before terminal closure).
+            return CertificateHashVerification(
+                command_id=command_id,
+                certificate_present=False,
+                certificate_id="",
+                recomputed_certificate_id="",
+                hash_matches=True,
+                closure_binding_valid=True,
+                failures=(),
+            )
+
+        failures: list[str] = []
+        closure_dict = self._reconstruct_response_evidence_closure(command_id)
+
+        # Closure-binding: if the certificate carries a closure id, the
+        # reconstructed closure must hash to it.
+        closure_binding_valid = True
+        if certificate.response_evidence_closure_id:
+            if closure_dict is None:
+                closure_binding_valid = False
+                failures.append("certificate_closure_unrecoverable")
+            elif canonical_hash(closure_dict) != certificate.response_evidence_closure_id:
+                closure_binding_valid = False
+                failures.append("certificate_closure_binding_mismatch")
+
+        recomputed = canonical_hash({
+            "command_id": certificate.command_id,
+            "disposition": certificate.disposition.value,
+            "evidence_refs": certificate.evidence_refs,
+            "response_evidence_closure": closure_dict,
+            "case_id": certificate.case_id,
+            "accepted_risk_id": certificate.accepted_risk_id,
+            "compensation_outcome_id": certificate.compensation_outcome_id,
+            "metadata": certificate.metadata,
+        })
+        recomputed_certificate_id = f"terminal-closure-{recomputed[:16]}"
+        hash_matches = recomputed_certificate_id == certificate.certificate_id
+        if not hash_matches:
+            failures.append("certificate_hash_mismatch")
+
+        return CertificateHashVerification(
+            command_id=command_id,
+            certificate_present=True,
+            certificate_id=certificate.certificate_id,
+            recomputed_certificate_id=recomputed_certificate_id,
+            hash_matches=hash_matches,
+            closure_binding_valid=closure_binding_valid,
+            failures=tuple(failures),
+        )
+
+    def _reconstruct_response_evidence_closure(self, command_id: str):
+        # The full ResponseEvidenceClosure is stored as a dict in the
+        # response_evidence_closed transition-event detail. Return the most
+        # recent one, or None if the command never closed response evidence.
+        for event in reversed(self._ledger.events_for(command_id)):
+            closure = event.detail.get("response_evidence_closure")
+            if isinstance(closure, dict):
+                return closure
+        return None
+
     def _verify_event_hashes(
         self,
         events: list[CommandEvent],
@@ -422,6 +510,7 @@ class AuditTraceVerifier:
         approval = self.verify_approval_chain(command_id, obligation_mesh=obligation_mesh)
         tenant = self.verify_tenant_isolation(command_id)
         replay = self.verify_replay_state_consistency(command_id)
+        certificate_hash = self.verify_certificate_hash(command_id)
         anchor: AnchorVerification | None = None
         if anchor_id:
             if not anchor_signing_secret:
@@ -438,6 +527,7 @@ class AuditTraceVerifier:
         all_failures.extend(approval.failures)
         all_failures.extend(tenant.failures)
         all_failures.extend(replay.failures)
+        all_failures.extend(certificate_hash.failures)
         if anchor is not None:
             all_failures.extend(anchor.failures)
         if bundle_check is not None:
@@ -449,6 +539,7 @@ class AuditTraceVerifier:
             approval=approval,
             tenant=tenant,
             replay=replay,
+            certificate_hash=certificate_hash,
             anchor=anchor,
             bundle=bundle_check,
             failures=tuple(all_failures),
@@ -485,6 +576,24 @@ class AnchorVerification:
     merkle_root_valid: bool
     signature_valid: bool
     failures: tuple[str, ...]
+
+
+@dataclass(frozen=True, slots=True)
+class CertificateHashVerification:
+    """Bounded outcome of recomputing a terminal certificate's content hash."""
+
+    command_id: str
+    certificate_present: bool
+    certificate_id: str
+    recomputed_certificate_id: str
+    hash_matches: bool
+    closure_binding_valid: bool
+    failures: tuple[str, ...]
+
+    @property
+    def fully_verified(self) -> bool:
+        """True iff zero structured failures."""
+        return not self.failures
 
 
 @dataclass(frozen=True, slots=True)
@@ -533,6 +642,7 @@ class FullVerification:
     approval: "ApprovalChainVerification"
     tenant: "TenantIsolationVerification"
     replay: "ReplayStateVerification"
+    certificate_hash: "CertificateHashVerification"
     anchor: "AnchorVerification | None"
     bundle: "TrustBundleVerification | None"
     failures: tuple[str, ...]
