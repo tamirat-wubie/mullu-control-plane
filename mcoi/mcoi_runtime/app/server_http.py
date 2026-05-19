@@ -124,12 +124,14 @@ def include_default_routers(app: FastAPI) -> None:
     from mcoi_runtime.app.routers.software_receipts import router as software_receipts_router
     from mcoi_runtime.app.routers.tenant import router as tenant_router
     from mcoi_runtime.app.routers.temporal_scheduler import router as temporal_scheduler_router
+    from mcoi_runtime.app.routers.trust import router as trust_router
     from mcoi_runtime.app.routers.ucja import router as ucja_router
     from mcoi_runtime.app.routers.workflow import router as workflow_router
 
     app.include_router(health_router)
     app.include_router(llm_router)
     app.include_router(lineage_router)
+    app.include_router(trust_router)
     app.include_router(tenant_router)
     app.include_router(audit_router)
     app.include_router(workflow_router)
