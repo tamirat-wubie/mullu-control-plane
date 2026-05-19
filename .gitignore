@@ -32,6 +32,7 @@ env/
 ENV/
 .env
 .env.*
+!.env.example
 mullusi.yml
 dist/
 build/

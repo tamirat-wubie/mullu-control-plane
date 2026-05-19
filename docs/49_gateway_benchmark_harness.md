@@ -1,5 +1,9 @@
 # Gateway Benchmark Harness
 
+> **In one box:** How gateway overhead is measured against comparable tools
+> (LiteLLM, Portkey-style), repeatably. For performance evaluation. New here? →
+> [Plain-English Overview](explain/PLAIN_ENGLISH.md). *(Doc type: Reference.)*
+
 Purpose: define the deterministic benchmark harness for comparing Mullusi gateway overhead against LiteLLM and Portkey-style baselines.
 Governance scope: [OCE, RAG, CDCV, CQTE, UWMA]
 Dependencies: `mcoi_runtime.core.gateway_benchmark_harness`, `scripts/benchmark_gateway_overhead.py`.

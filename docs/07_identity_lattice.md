@@ -1,5 +1,11 @@
 # Identity Lattice
 
+> **In one box:** Every entity (a tenant, a workspace, a task) gets a stable,
+> typed ID. Without an identity a thing can't be traced or audited — so this
+> page defines the ID system that makes accountability possible. Plain-words
+> context is in the [Plain-English Overview](explain/PLAIN_ENGLISH.md).
+> *(Doc type: Reference.)*
+
 Scope: all Mullu Platform modules. Every addressable entity MUST have a stable, typed identity.
 
 Identity is the root of traceability. If an entity cannot be identified, it cannot be traced, replayed, or audited.

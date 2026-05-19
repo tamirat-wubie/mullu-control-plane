@@ -2,6 +2,13 @@
 
 **Every governed action is auditable, budget-controlled, policy-enforced, and approval-gated.**
 
+> 🧭 **New here, or not technical? → [Start at `docs/START_HERE.md`](docs/START_HERE.md).**
+> It routes any reader — non-technical, new developer, operator, or
+> decision-maker — to the right page at the right depth. Brand-new readers
+> should begin with the jargon-free
+> [Plain-English Overview](docs/explain/PLAIN_ENGLISH.md); every special word in
+> the docs is defined in one sentence in the [Glossary](docs/GLOSSARY.md).
+
 Mullu is the flagship product by Mullusi: governed symbolic intelligence for
 personal, team, enterprise, and deployment work. This repository provides the
 Mullu Control Plane: gateway, approvals, status, traces, budgets, lineage, and

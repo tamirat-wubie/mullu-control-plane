@@ -1,5 +1,10 @@
 # Threaded Communication Layer
 
+> **In one box:** How back-and-forth conversation works — clarifying questions,
+> follow-ups, and status updates — across a task's whole life. New here? →
+> [Plain-English Overview](explain/PLAIN_ENGLISH.md); unknown word? →
+> [Glossary](GLOSSARY.md). *(Doc type: Reference.)*
+
 Scope: all Mullu Platform modules that manage multi-turn conversations, clarification requests, follow-ups, and status reporting.
 
 The Threaded Communication Layer maintains structured, multi-turn conversations between agents, operators, and system components. Every message belongs to a thread. Every thread has a lifecycle. No message may exist without thread context.

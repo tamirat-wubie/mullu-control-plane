@@ -1,5 +1,11 @@
 # Memory Hierarchy
 
+> **In one box:** The system's memory is layered into tiers with different
+> trust levels and retention; you can't shortcut data straight into a
+> higher-trust tier. This page defines the tiers and the rules for promoting
+> data between them. Unknown word? → [Glossary](GLOSSARY.md).
+> *(Doc type: Reference.)*
+
 Scope: all Mullu Platform modules that store, retrieve, or reason over retained data.
 
 Memory is organized into tiers. Each tier has distinct mutability, retention, trust level, and promotion rules. No tier may be bypassed by writing directly to a higher tier.

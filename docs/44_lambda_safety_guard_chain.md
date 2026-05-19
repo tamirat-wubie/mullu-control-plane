@@ -1,5 +1,10 @@
 # Lambda Safety Guard Chain
 
+> **In one box:** The specific stages that catch prompt-injection attacks and
+> scrub unsafe output. This is *one* safety layer — it does **not** replace
+> authorization, [budget](GLOSSARY.md#budget-spend-budget), or policy. New here?
+> → [Plain-English Overview](explain/PLAIN_ENGLISH.md). *(Doc type: Reference.)*
+
 Purpose: define the explicit safety stages for prompt injection detection and output scrubbing.
 
 Governance scope: request and response safety only. These stages do not replace authorization, budget enforcement, or policy evaluation.

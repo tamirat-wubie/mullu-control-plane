@@ -1,5 +1,10 @@
 # 23 — Secrets / Config Lifecycle
 
+> **In one box:** How passwords and keys are sourced, scoped, masked in logs,
+> and kept out of places they could leak. New here? →
+> [Plain-English Overview](explain/PLAIN_ENGLISH.md); unknown word? →
+> [Glossary](GLOSSARY.md). *(Doc type: Reference.)*
+
 ## Purpose
 
 Govern how secrets are sourced, scoped, masked, and protected from

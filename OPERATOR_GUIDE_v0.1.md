@@ -1,5 +1,11 @@
 # Mullu Platform MCOI Runtime -- Operator Guide v0.1.0
 
+> **In one box:** The day-to-day handbook for the person *running* Mullu in
+> production — what to watch, what's normal, and what to do when it isn't.
+> Assumes you've done the [Tutorial](docs/tutorials/01_first_governed_task.md)
+> and read the [Plain-English Overview](docs/explain/PLAIN_ENGLISH.md). Unknown
+> word? → [Glossary](docs/GLOSSARY.md). *(Doc type: How-to / Operations.)*
+
 **Version:** 0.1.0 (internal alpha)
 **Date:** 2026-03-19
 

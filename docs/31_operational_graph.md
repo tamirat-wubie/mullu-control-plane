@@ -1,5 +1,10 @@
 # 31 — Operational Graph
 
+> **In one box:** The one master map that ties all the moving parts together so
+> they can be reasoned about as a whole. New here? →
+> [Plain-English Overview](explain/PLAIN_ENGLISH.md); unknown word? →
+> [Glossary](GLOSSARY.md). *(Doc type: Reference.)*
+
 ## Purpose
 
 The operational graph is the single canonical structure that unifies all platform

@@ -1,4 +1,9 @@
 <!--
+> **In one box:** A human-readable scorecard of the general-agent buildout —
+> what's done, what's blocked, with evidence. Operator/status artifact; if
+> you're new, start at the Plain-English Overview (docs/explain/PLAIN_ENGLISH.md)
+> and the Glossary (docs/GLOSSARY.md). *(Doc type: Reference.)*
+
 Purpose: Human-readable closure manifest for the governed general-agent capability buildout.
 Governance scope: Records the capability families, readiness stamp, production blockers, and verification evidence.
 Dependencies: docs/56_general_agent_capability_roadmap.md, scripts/validate_general_agent_promotion.py, scripts/plan_capability_adapter_closure.py, scripts/plan_deployment_publication_closure.py, scripts/plan_general_agent_promotion_closure.py, scripts/validate_general_agent_promotion_closure_plan.py, capability packs, capsules, gateway tests.

@@ -1,5 +1,9 @@
 # Public Demo Surface Validation
 
+> **In one box:** The checklist that must pass before evaluator-facing demo
+> surfaces are considered ready — an operational gate. New here? →
+> [Plain-English Overview](explain/PLAIN_ENGLISH.md). *(Doc type: How-to.)*
+
 Purpose: define the local readiness gate for evaluator-facing demo surfaces.
 
 Governance scope: sandbox read models, federation read model, replay

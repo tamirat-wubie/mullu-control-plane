@@ -1,5 +1,10 @@
 # 27 -- Mfidel Semantic Overlay Layer
 
+> **In one box:** An extra meaning layer ("Mfidel") the runtime uses to
+> interpret concepts consistently. Advanced/internal — safe to skip on a first
+> read. New here? → [Plain-English Overview](explain/PLAIN_ENGLISH.md); unknown
+> word? → [Glossary](GLOSSARY.md). *(Doc type: Reference.)*
+
 Status: Phase 22D
 Module: `mcoi_runtime.core.mfidel_semantics`
 

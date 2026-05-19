@@ -1,5 +1,11 @@
 # Provider Configuration
 
+> **In one box:** How external providers (API keys, model hosts, chat channels)
+> are configured and scoped — the settings side of the
+> [external integration plane](10_external_integration_plane.md). New here? →
+> [Plain-English Overview](explain/PLAIN_ENGLISH.md); unknown word? →
+> [Glossary](GLOSSARY.md). *(Doc type: Reference.)*
+
 Scope: all Mullu Platform modules that connect to external providers (APIs, communication services, model hosts).
 
 Providers are the bridge between governed abstractions and real external systems. Without explicit provider configuration and credential scope, integrations become ungoverned side channels.

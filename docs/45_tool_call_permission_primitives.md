@@ -1,5 +1,10 @@
 # Tool-Call Permission Primitives
 
+> **In one box:** The fine-grained rules for which tools an agent may call, with
+> which arguments, for which tenant — the lock-and-key for tool use. New here? →
+> [Plain-English Overview](explain/PLAIN_ENGLISH.md); unknown word? →
+> [Glossary](GLOSSARY.md). *(Doc type: Reference.)*
+
 Purpose: define the tenant-scoped capability grammar for governed tool calls.
 
 Governance scope: agent tool invocation, argument-schema matching, budget

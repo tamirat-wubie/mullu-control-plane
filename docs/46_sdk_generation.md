@@ -1,5 +1,10 @@
 # SDK Generation
 
+> **In one box:** How the official Python and TypeScript client libraries are
+> auto-generated from the API spec, so they always match the governed surface.
+> Mostly for developers. New here? →
+> [Plain-English Overview](explain/PLAIN_ENGLISH.md). *(Doc type: Reference.)*
+
 Purpose: define Python and TypeScript SDK generation from the governed OpenAPI
 document.
 
