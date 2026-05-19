@@ -195,14 +195,27 @@ class TestCrossLanguageSerialization:
             actor_id="actor", reason="start", timestamp="2026-03-27T12:00:00Z",
         )
         r = capsule.receipt
-        # Verify all field names match Rust serde snake_case
+        # Verify all field names match Rust serde snake_case.
+        # `signature`/`signing_key_id` are the additive authenticity
+        # extension (contracts/receipt_signing.py). They serialize only
+        # when populated (TransitionReceipt.to_json_dict drops them when
+        # empty), so unsigned wire output stays byte-identical and the
+        # Rust mirror declares them `#[serde(default)]` — same forward-
+        # compat pattern as TransitionAuditRecord.metadata.
         expected_keys = {
             "receipt_id", "machine_id", "entity_id", "from_state", "to_state",
             "action", "before_state_hash", "after_state_hash", "guard_verdicts",
             "verdict", "replay_token", "causal_parent", "issued_at", "receipt_hash",
+            "signature", "signing_key_id",
         }
         actual_keys = {f.name for f in r.__dataclass_fields__.values()}
         assert expected_keys == actual_keys
+
+        # The serialized (wire) form of an unsigned receipt must NOT carry
+        # the authenticity keys — that is what preserves Rust parity.
+        wire_keys = set(r.to_json_dict().keys())
+        assert "signature" not in wire_keys
+        assert "signing_key_id" not in wire_keys
 
     def test_verdict_enum_values_match_rust(self):
         """Verify Python enum values match Rust serde snake_case output."""

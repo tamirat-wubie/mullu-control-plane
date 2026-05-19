@@ -347,4 +347,6 @@ def _receipt_from_json(payload: dict[str, Any]) -> TransitionReceipt:
         causal_parent=str(payload.get("causal_parent", "")),
         issued_at=str(payload.get("issued_at", "")),
         receipt_hash=str(payload.get("receipt_hash", "")),
+        signature=str(payload.get("signature", "")),
+        signing_key_id=str(payload.get("signing_key_id", "")),
     )

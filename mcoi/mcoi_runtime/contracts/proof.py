@@ -22,6 +22,7 @@ from ._base import (
     require_non_empty_text,
     require_non_negative_int,
 )
+from .receipt_signing import ReceiptSigner, default_signer
 from .state_machine import TransitionAuditRecord, TransitionVerdict
 
 
@@ -73,6 +74,11 @@ class TransitionReceipt(ContractRecord):
     causal_parent: str
     issued_at: str
     receipt_hash: str
+    # Authenticity layer (additive, optional). Empty strings == "unsigned",
+    # which is the pre-signing default and is byte-identical on the wire.
+    # See contracts/receipt_signing.py: the signature is over receipt_hash.
+    signature: str = ""
+    signing_key_id: str = ""
 
     def __post_init__(self) -> None:
         for f in ("receipt_id", "machine_id", "entity_id", "from_state",
@@ -83,6 +89,33 @@ class TransitionReceipt(ContractRecord):
             raise ValueError("verdict must be a TransitionVerdict value")
         object.__setattr__(self, "issued_at", require_datetime_text(self.issued_at, "issued_at"))
         object.__setattr__(self, "receipt_hash", require_non_empty_text(self.receipt_hash, "receipt_hash"))
+        if not isinstance(self.signature, str):
+            raise ValueError("signature must be a string ('' when unsigned)")
+        if not isinstance(self.signing_key_id, str):
+            raise ValueError("signing_key_id must be a string ('' when unsigned)")
+
+    @staticmethod
+    def _drop_empty_auth(data: dict[str, Any]) -> dict[str, Any]:
+        # Authenticity fields are an additive extension. When a receipt is
+        # unsigned they are omitted entirely so the serialized form is
+        # byte-identical to the pre-signing wire format — preserving
+        # cross-language (Rust serde) parity for every receipt Rust
+        # currently produces. A *signed* receipt carries them; the Rust
+        # mirror declares them `#[serde(default)]`, the same forward-
+        # compatibility pattern already used for TransitionAuditRecord.metadata.
+        if not data.get("signature"):
+            data.pop("signature", None)
+            data.pop("signing_key_id", None)
+        return data
+
+    # NB: explicit base calls, not super() — @dataclass(slots=True)
+    # replaces the class object, which breaks zero-arg super()'s
+    # __class__ closure cell.
+    def to_dict(self) -> dict[str, Any]:
+        return self._drop_empty_auth(ContractRecord.to_dict(self))
+
+    def to_json_dict(self) -> dict[str, Any]:
+        return self._drop_empty_auth(ContractRecord.to_json_dict(self))
 
 
 # ---------------------------------------------------------------------------
@@ -150,6 +183,7 @@ def certify_transition(
     reason: str,
     causal_parent: str = "genesis",
     timestamp: str,
+    signer: ReceiptSigner | None = None,
 ) -> ProofCapsule:
     """Certify a transition: check legality, evaluate guards, produce receipt.
 
@@ -187,6 +221,12 @@ def certify_transition(
     receipt_id = f"rcpt-{receipt_hash[:16]}"
     replay_token = f"replay-{hashlib.sha256(f'{content}:{timestamp}'.encode()).hexdigest()[:16]}"
 
+    # Authenticity: sign the content-address. With no key configured the
+    # default signer is a no-op and signature/key_id stay "" (unsigned),
+    # so existing callers and wire format are unaffected.
+    active_signer = signer if signer is not None else default_signer()
+    signature, signing_key_id = active_signer.sign(receipt_hash)
+
     receipt = TransitionReceipt(
         receipt_id=receipt_id,
         machine_id=spec.machine_id,
@@ -202,6 +242,8 @@ def certify_transition(
         causal_parent=causal_parent,
         issued_at=timestamp,
         receipt_hash=receipt_hash,
+        signature=signature,
+        signing_key_id=signing_key_id,
     )
 
     audit = TransitionAuditRecord(
