@@ -27,6 +27,7 @@ from mcoi_runtime.contracts.proof import (
     ProofCapsule,
     TransitionReceipt,
     certify_transition,
+    receipt_content,
 )
 from mcoi_runtime.contracts._base import ContractRecord
 from mcoi_runtime.contracts.receipt_signing import (
@@ -563,12 +564,7 @@ class ProofBridge:
 
     def verify_receipt(self, receipt: TransitionReceipt) -> bool:
         """Verify a receipt's hash matches its content."""
-        content = (
-            f"{receipt.entity_id}:{receipt.from_state}:{receipt.to_state}:"
-            f"{receipt.action}:{receipt.before_state_hash}:{receipt.after_state_hash}:"
-            f"{receipt.causal_parent}"
-        )
-        expected = hashlib.sha256(content.encode()).hexdigest()
+        expected = hashlib.sha256(receipt_content(receipt).encode()).hexdigest()
         return expected == receipt.receipt_hash
 
     @staticmethod
@@ -594,13 +590,9 @@ class ProofBridge:
         acceptable for its surface, rather than this code pretending an
         unverifiable receipt is trustworthy.
         """
-        content = (
-            f"{receipt.entity_id}:{receipt.from_state}:{receipt.to_state}:"
-            f"{receipt.action}:{receipt.before_state_hash}:"
-            f"{receipt.after_state_hash}:{receipt.causal_parent}"
-        )
         integrity_ok = (
-            hashlib.sha256(content.encode()).hexdigest() == receipt.receipt_hash
+            hashlib.sha256(receipt_content(receipt).encode()).hexdigest()
+            == receipt.receipt_hash
         )
         replay_token_ok = ProofBridge.verify_replay_token(receipt)
 
@@ -663,11 +655,7 @@ class ProofBridge:
         receipt = proof.capsule.receipt
 
         def _content_hash(r: TransitionReceipt) -> str:
-            content = (
-                f"{r.entity_id}:{r.from_state}:{r.to_state}:{r.action}:"
-                f"{r.before_state_hash}:{r.after_state_hash}:{r.causal_parent}"
-            )
-            return hashlib.sha256(content.encode()).hexdigest()
+            return hashlib.sha256(receipt_content(r).encode()).hexdigest()
 
         chain_integrity_ok = _content_hash(receipt) == receipt.receipt_hash
         replay_token_ok = ProofBridge.verify_replay_token(receipt)
@@ -760,12 +748,7 @@ class ProofBridge:
         What it DOES prove: the token is consistent with its own
         content fields.
         """
-        content = (
-            f"{receipt.entity_id}:{receipt.from_state}:{receipt.to_state}:"
-            f"{receipt.action}:{receipt.before_state_hash}:{receipt.after_state_hash}:"
-            f"{receipt.causal_parent}"
-        )
-        formatted = f"{content}:{receipt.issued_at}"
+        formatted = f"{receipt_content(receipt)}:{receipt.issued_at}"
         expected = f"replay-{hashlib.sha256(formatted.encode()).hexdigest()[:16]}"
         return expected == receipt.replay_token
 

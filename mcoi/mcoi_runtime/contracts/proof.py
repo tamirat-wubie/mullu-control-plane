@@ -165,6 +165,48 @@ class ProofCapsule(ContractRecord):
 
 
 # ---------------------------------------------------------------------------
+# Canonical transition-content (single source of truth)
+# ---------------------------------------------------------------------------
+
+
+def transition_content(
+    *,
+    entity_id: str,
+    from_state: str,
+    to_state: str,
+    action: str,
+    before_state_hash: str,
+    after_state_hash: str,
+    causal_parent: str,
+) -> str:
+    """The exact string a transition receipt is hashed, replay-tokened,
+    and signed over. This is the ONLY place the field order/separator is
+    defined: receipt_hash, replay_token, the Ed25519 signature, and every
+    verifier derive identity from this. Any drift here silently
+    invalidates every signature and hash in existence — never inline it.
+    Mirrors the Rust `maf-kernel` content layout.
+    """
+    return (
+        f"{entity_id}:{from_state}:{to_state}:{action}:"
+        f"{before_state_hash}:{after_state_hash}:{causal_parent}"
+    )
+
+
+def receipt_content(receipt: TransitionReceipt) -> str:
+    """`transition_content` for an existing receipt — what every verifier
+    recomputes to check a receipt's integrity against its own hash."""
+    return transition_content(
+        entity_id=receipt.entity_id,
+        from_state=receipt.from_state,
+        to_state=receipt.to_state,
+        action=receipt.action,
+        before_state_hash=receipt.before_state_hash,
+        after_state_hash=receipt.after_state_hash,
+        causal_parent=receipt.causal_parent,
+    )
+
+
+# ---------------------------------------------------------------------------
 # Certification helper
 # ---------------------------------------------------------------------------
 
@@ -216,7 +258,15 @@ def certify_transition(
         verdict = TransitionVerdict.DENIED_GUARD_FAILED
 
     # Build receipt
-    content = f"{entity_id}:{from_state}:{to_state}:{action}:{before_state_hash}:{after_state_hash}:{causal_parent}"
+    content = transition_content(
+        entity_id=entity_id,
+        from_state=from_state,
+        to_state=to_state,
+        action=action,
+        before_state_hash=before_state_hash,
+        after_state_hash=after_state_hash,
+        causal_parent=causal_parent,
+    )
     receipt_hash = hashlib.sha256(content.encode()).hexdigest()
     receipt_id = f"rcpt-{receipt_hash[:16]}"
     replay_token = f"replay-{hashlib.sha256(f'{content}:{timestamp}'.encode()).hexdigest()[:16]}"
