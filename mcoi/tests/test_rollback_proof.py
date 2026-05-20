@@ -139,7 +139,8 @@ def test_forged_rollback_receipt_hash_fails_verification():
         forged, store=store, lineage=bridge.get_lineage(_ENTITY)
     )
     assert not v.ok
-    assert "hash mismatch" in v.reason
+    assert not v.chain_integrity_ok
+    assert v.reason == "rollback verification failed"
 
 
 def test_target_hash_claim_must_match_store():
