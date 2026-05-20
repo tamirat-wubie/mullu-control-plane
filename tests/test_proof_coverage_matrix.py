@@ -181,6 +181,8 @@ def test_witness_integrity_report_tracks_exact_test_anchors() -> None:
     assert surfaces["temporal_sla"]["exact_test_anchor_count"] == 10
     assert surfaces["temporal_resolution"]["unanchored_witness_count"] == 0
     assert surfaces["temporal_resolution"]["exact_test_anchor_count"] == 10
+    assert surfaces["temporal_scheduler"]["unanchored_witness_count"] == 0
+    assert surfaces["temporal_scheduler"]["exact_test_anchor_count"] == 10
     assert surfaces["capability_forge"]["unanchored_witness_count"] == 0
     assert surfaces["capability_forge"]["exact_test_anchor_count"] == 10
     assert surfaces["coordination_checkpoint_lifecycle"]["unanchored_witness_count"] == 0

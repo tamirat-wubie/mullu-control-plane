@@ -7036,6 +7036,38 @@
         "TemporalSchedulerReceipt"
       ],
       "request_proof": "request_proof",
+      "runtime_witness_anchor_aliases": {
+        "active_lease_blocks_duplicate_execution": [
+          "scheduler_blocks_existing_active_lease"
+        ],
+        "future_schedule_defers": [
+          "scheduler_future_command_defers_without_lease"
+        ],
+        "high_risk_reapproval_required": [
+          "scheduler_blocks_high_risk_missing_recheck_evidence"
+        ],
+        "idempotency_required": [
+          "scheduler_blocks_missing_execute_at_idempotency_and_recurrence_rule"
+        ],
+        "lease_acquired_before_dispatch": [
+          "scheduler_due_command_acquires_schema_valid_lease"
+        ],
+        "missed_run_receipt_emitted": [
+          "scheduler_expired_command_emits_missed_run_receipt"
+        ],
+        "receipt_not_terminal_closure": [
+          "scheduler_due_command_acquires_schema_valid_lease"
+        ],
+        "retry_window_checked": [
+          "scheduler_retry_waits_until_retry_after_window"
+        ],
+        "scheduled_command_requires_execute_at": [
+          "scheduler_blocks_missing_execute_at_idempotency_and_recurrence_rule"
+        ],
+        "temporal_scheduler_receipt_schema_valid": [
+          "scheduler_due_command_acquires_schema_valid_lease"
+        ]
+      },
       "runtime_witnesses": [
         "scheduled_command_requires_execute_at",
         "idempotency_required",
@@ -7422,7 +7454,7 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 673,
+    "exact_test_anchor_count": 683,
     "runtime_witness_count": 1047,
     "surfaces": [
       {
@@ -12390,23 +12422,73 @@
         ]
       },
       {
-        "anchored_witnesses": [],
-        "exact_test_anchor_count": 0,
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_scheduler.py::test_scheduler_blocks_missing_execute_at_idempotency_and_recurrence_rule"
+            ],
+            "witness": "scheduled_command_requires_execute_at"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_scheduler.py::test_scheduler_blocks_missing_execute_at_idempotency_and_recurrence_rule"
+            ],
+            "witness": "idempotency_required"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_scheduler.py::test_scheduler_due_command_acquires_schema_valid_lease"
+            ],
+            "witness": "lease_acquired_before_dispatch"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_scheduler.py::test_scheduler_future_command_defers_without_lease"
+            ],
+            "witness": "future_schedule_defers"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_scheduler.py::test_scheduler_expired_command_emits_missed_run_receipt"
+            ],
+            "witness": "missed_run_receipt_emitted"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_scheduler.py::test_scheduler_retry_waits_until_retry_after_window"
+            ],
+            "witness": "retry_window_checked"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_scheduler.py::test_scheduler_blocks_high_risk_missing_recheck_evidence"
+            ],
+            "witness": "high_risk_reapproval_required"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_scheduler.py::test_scheduler_blocks_existing_active_lease"
+            ],
+            "witness": "active_lease_blocks_duplicate_execution"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_scheduler.py::test_scheduler_due_command_acquires_schema_valid_lease"
+            ],
+            "witness": "temporal_scheduler_receipt_schema_valid"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_scheduler.py::test_scheduler_due_command_acquires_schema_valid_lease"
+            ],
+            "witness": "receipt_not_terminal_closure"
+          }
+        ],
+        "exact_test_anchor_count": 10,
         "runtime_witness_count": 10,
         "surface_id": "temporal_scheduler",
-        "unanchored_witness_count": 10,
-        "unanchored_witnesses": [
-          "scheduled_command_requires_execute_at",
-          "idempotency_required",
-          "lease_acquired_before_dispatch",
-          "future_schedule_defers",
-          "missed_run_receipt_emitted",
-          "retry_window_checked",
-          "high_risk_reapproval_required",
-          "active_lease_blocks_duplicate_execution",
-          "temporal_scheduler_receipt_schema_valid",
-          "receipt_not_terminal_closure"
-        ]
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
       },
       {
         "anchored_witnesses": [],
@@ -12981,6 +13063,6 @@
         "unanchored_witnesses": []
       }
     ],
-    "unanchored_witness_count": 374
+    "unanchored_witness_count": 364
   }
 }

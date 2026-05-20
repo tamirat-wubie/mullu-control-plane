@@ -4406,6 +4406,38 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "temporal_scheduler_receipt_schema_valid",
                 "receipt_not_terminal_closure",
             ],
+            runtime_witness_anchor_aliases={
+                "scheduled_command_requires_execute_at": [
+                    "scheduler_blocks_missing_execute_at_idempotency_and_recurrence_rule"
+                ],
+                "idempotency_required": [
+                    "scheduler_blocks_missing_execute_at_idempotency_and_recurrence_rule"
+                ],
+                "lease_acquired_before_dispatch": [
+                    "scheduler_due_command_acquires_schema_valid_lease"
+                ],
+                "future_schedule_defers": [
+                    "scheduler_future_command_defers_without_lease"
+                ],
+                "missed_run_receipt_emitted": [
+                    "scheduler_expired_command_emits_missed_run_receipt"
+                ],
+                "retry_window_checked": [
+                    "scheduler_retry_waits_until_retry_after_window"
+                ],
+                "high_risk_reapproval_required": [
+                    "scheduler_blocks_high_risk_missing_recheck_evidence"
+                ],
+                "active_lease_blocks_duplicate_execution": [
+                    "scheduler_blocks_existing_active_lease"
+                ],
+                "temporal_scheduler_receipt_schema_valid": [
+                    "scheduler_due_command_acquires_schema_valid_lease"
+                ],
+                "receipt_not_terminal_closure": [
+                    "scheduler_due_command_acquires_schema_valid_lease"
+                ],
+            },
         ),
         _surface(
             "policy_proof_report",
