@@ -7454,7 +7454,7 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 687,
+    "exact_test_anchor_count": 694,
     "runtime_witness_count": 1047,
     "surfaces": [
       {
@@ -10784,24 +10784,34 @@
         "anchored_witnesses": [
           {
             "anchors": [
+              "tests/test_gateway/test_capability_maturity.py::test_maturity_derived_from_evidence"
+            ],
+            "witness": "maturity_derived_from_evidence"
+          },
+          {
+            "anchors": [
               "tests/test_gateway/test_operator_capability_console.py::test_operator_console_links_capability_improvement_portfolio"
             ],
             "witness": "operator_console_links_capability_improvement_portfolio"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_capability_maturity.py::test_capability_maturity_schema_valid"
+            ],
+            "witness": "capability_maturity_schema_valid"
           }
         ],
-        "exact_test_anchor_count": 1,
+        "exact_test_anchor_count": 3,
         "runtime_witness_count": 9,
         "surface_id": "capability_maturity_assessment",
-        "unanchored_witness_count": 8,
+        "unanchored_witness_count": 6,
         "unanchored_witnesses": [
           "certification_evidence_synthesizes_maturity_extension",
-          "maturity_derived_from_evidence",
           "registry_read_model_exposes_maturity",
           "default_pack_C6_examples_projected",
           "effect_bearing_production_requires_live_write",
           "production_requires_worker_deployment_recovery",
-          "autonomy_requires_C7_controls",
-          "capability_maturity_schema_valid"
+          "autonomy_requires_C7_controls"
         ]
       },
       {
@@ -11124,18 +11134,43 @@
         ]
       },
       {
-        "anchored_witnesses": [],
-        "exact_test_anchor_count": 0,
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "tests/test_gateway/test_capability_maturity.py::test_maturity_derived_from_evidence"
+            ],
+            "witness": "maturity_derived_from_evidence"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_capability_maturity.py::test_effect_bearing_c6_requires_live_write"
+            ],
+            "witness": "effect_bearing_c6_requires_live_write"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_capability_maturity.py::test_production_requires_c6_or_c7"
+            ],
+            "witness": "production_requires_c6_or_c7"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_capability_maturity.py::test_autonomy_requires_c7"
+            ],
+            "witness": "autonomy_requires_c7"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_capability_maturity.py::test_capability_maturity_schema_valid"
+            ],
+            "witness": "capability_maturity_schema_valid"
+          }
+        ],
+        "exact_test_anchor_count": 5,
         "runtime_witness_count": 5,
         "surface_id": "capability_maturity",
-        "unanchored_witness_count": 5,
-        "unanchored_witnesses": [
-          "maturity_derived_from_evidence",
-          "effect_bearing_c6_requires_live_write",
-          "production_requires_c6_or_c7",
-          "autonomy_requires_c7",
-          "capability_maturity_schema_valid"
-        ]
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
       },
       {
         "anchored_witnesses": [],
@@ -13083,6 +13118,6 @@
         "unanchored_witnesses": []
       }
     ],
-    "unanchored_witness_count": 360
+    "unanchored_witness_count": 353
   }
 }

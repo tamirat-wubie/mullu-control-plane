@@ -187,6 +187,8 @@ def test_witness_integrity_report_tracks_exact_test_anchors() -> None:
     assert surfaces["temporal_scheduler"]["exact_test_anchor_count"] == 10
     assert surfaces["capability_forge"]["unanchored_witness_count"] == 0
     assert surfaces["capability_forge"]["exact_test_anchor_count"] == 10
+    assert surfaces["capability_maturity"]["unanchored_witness_count"] == 0
+    assert surfaces["capability_maturity"]["exact_test_anchor_count"] == 5
     assert surfaces["coordination_checkpoint_lifecycle"]["unanchored_witness_count"] == 0
     assert surfaces["coordination_checkpoint_lifecycle"]["exact_test_anchor_count"] == 10
     assert surfaces["production_evidence_plane"]["unanchored_witness_count"] == 0
@@ -2682,7 +2684,9 @@ def test_capability_maturity_surface_is_evidence_derived() -> None:
     assert "tests/test_gateway/test_capability_maturity.py" in maturity_surface["evidence_files"]
     assert "maturity_derived_from_evidence" in witnesses
     assert "effect_bearing_c6_requires_live_write" in witnesses
+    assert "production_requires_c6_or_c7" in witnesses
     assert "autonomy_requires_c7" in witnesses
+    assert "capability_maturity_schema_valid" in witnesses
     assert closure_actions["publish_capability_maturity_contract"]["status"] == "closed"
 
 

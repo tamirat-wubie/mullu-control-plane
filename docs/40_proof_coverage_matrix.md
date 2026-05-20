@@ -150,8 +150,8 @@ Witness integrity audit:
 | Metric | Count |
 |---|---:|
 | Runtime witness labels | 1047 |
-| Exact test anchors | 687 |
-| Unanchored witness labels | 360 |
+| Exact test anchors | 694 |
+| Unanchored witness labels | 353 |
 
 Evidence quality gaps:
 none
@@ -183,7 +183,7 @@ Witness integrity gaps:
 | `authority_obligation_mesh` | 0 | 5 | pending_approval_chain_count, open_obligation_count, overdue_obligation_count, escalated_obligation_count, command_authority_read_model_bound_to_approval_chain |
 | `authority_operator_controls` | 0 | 5 | operator_access_guard, operator_audit_events, ownership_policy_read_models, approval_expiration_witness, obligation_satisfaction_escalation_witness |
 | `runtime_reflex_engine` | 0 | 9 | operator_only_access, mutation_applied_false, certification_handoff_required, protected_surfaces_auto_promote_false, signed_reflex_witness, reflex_deployment_witness_schema, reflex_validator_receipt_schema, offline_reflex_witness_replay, reflex_validator_receipt_artifact |
-| `capability_maturity_assessment` | 1 | 8 | certification_evidence_synthesizes_maturity_extension, maturity_derived_from_evidence, registry_read_model_exposes_maturity, default_pack_C6_examples_projected, effect_bearing_production_requires_live_write, production_requires_worker_deployment_recovery, autonomy_requires_C7_controls, capability_maturity_schema_valid |
+| `capability_maturity_assessment` | 3 | 6 | certification_evidence_synthesizes_maturity_extension, registry_read_model_exposes_maturity, default_pack_C6_examples_projected, effect_bearing_production_requires_live_write, production_requires_worker_deployment_recovery, autonomy_requires_C7_controls |
 | `capability_manifest_registry` | 0 | 9 | capability_manifest_schema_valid, software_dev_manifests_admit_locally, manifest_missing_policy_rejected, manifest_unresolved_schema_rejected, effect_manifest_requires_sandbox_rollback, hot_reload_metadata_enforced, production_hot_reload_denied_for_effect_manifest, fabric_projects_local_manifest_registry, fabric_rejects_production_hot_reload_manifest_registry |
 | `agent_identity` | 0 | 8 | owner_tenant_identity_required, capability_scope_conflict_denied, self_approval_forbidden, policy_mutation_forbidden, delegation_requires_lease, agent_budget_enforced, reputation_update_requires_evidence, agent_identity_schema_valid |
 | `claim_verification` | 0 | 6 | claim_type_declared, source_evidence_required, contradictions_block_execution, stale_claims_block_execution, high_risk_requires_independent_support, claim_verification_schema_valid |
@@ -192,7 +192,6 @@ Witness integrity gaps:
 | `multi_agent_coordination_runtime` | 0 | 8 | multi_agent_delegation_tracked, multi_agent_delegation_resolution_validated, multi_agent_handoff_preserves_context, multi_agent_merge_outcome_typed, multi_agent_conflict_strategy_typed, multi_agent_unresolved_conflicts_bounded, multi_agent_summary_bounded, multi_agent_errors_sanitized |
 | `connector_self_healing` | 0 | 6 | provider_success_not_assumed, write_failures_require_operator_review, missing_receipt_revokes_capability, fallback_provider_requires_certification, read_only_degradation_bounded, connector_self_healing_schema_valid |
 | `collaboration_cases` | 0 | 5 | approval_separation_required, pending_controls_block_case_closure, decider_authority_required, case_closure_not_terminal_command_closure, collaboration_case_schema_valid |
-| `capability_maturity` | 0 | 5 | maturity_derived_from_evidence, effect_bearing_c6_requires_live_write, production_requires_c6_or_c7, autonomy_requires_c7, capability_maturity_schema_valid |
 | `policy_prover` | 0 | 7 | payment_requires_approval_counterexample, tenant_isolation_counterexample, shell_requires_sandbox_counterexample, provider_url_approved_counterexample, memory_requires_admission_counterexample, unknown_property_fails_closed, policy_proof_report_schema_valid |
 | `memory_lattice` | 1 | 5 | raw_event_memory_not_directly_admitted, semantic_memory_requires_learning_admission, policy_memory_requires_authority_ref, preference_memory_tenant_owner_scoped, memory_lattice_schema_valid |
 | `workflow_mining` | 0 | 6 | repeated_trace_pattern_required, workflow_draft_activation_blocked, operator_review_required, sandbox_replay_required, risky_pattern_requires_approval_rules, workflow_mining_report_schema_valid |
@@ -333,5 +332,5 @@ none
 STATUS:
   Completeness: 100%
   Invariants verified: route declarations, route-level coverage classification, coverage levels, coverage states, closure action mapping, schema contract validation, deployment orchestration receipt schema contract
-  Open issues: 360 runtime-witness labels lack exact test-function anchors
+  Open issues: 353 runtime-witness labels lack exact test-function anchors
   Next action: bind unanchored runtime-witness labels to exact test-function anchors
