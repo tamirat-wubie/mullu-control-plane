@@ -696,19 +696,14 @@ class ProofBridge:
                 return ReceiptSignatureStatus.UNSIGNED
             return ReceiptSignatureStatus.NO_VERIFIER_KEY
 
-        reasons: list[str] = []
-        if not chain_integrity_ok:
-            reasons.append("rollback receipt hash mismatch")
-        if not target_in_lineage:
-            reasons.append("target not in entity lineage")
-        if not target_resolved:
-            reasons.append("target receipt unresolved")
-        elif not target_integrity_ok:
-            reasons.append("target receipt integrity failed")
-        if target_resolved and not target_binding_ok:
-            reasons.append("rollback not bound to target")
-        if not replay_token_ok:
-            reasons.append("replay token mismatch")
+        verification_failed = not (
+            chain_integrity_ok
+            and target_in_lineage
+            and target_resolved
+            and target_integrity_ok
+            and target_binding_ok
+            and replay_token_ok
+        )
 
         return RollbackVerification(
             chain_integrity_ok=chain_integrity_ok,
@@ -719,7 +714,7 @@ class ProofBridge:
             replay_token_ok=replay_token_ok,
             rollback_signature=_sig_status(receipt),
             target_signature=_sig_status(target),
-            reason="; ".join(reasons),
+            reason="rollback verification failed" if verification_failed else "",
         )
 
     @staticmethod
