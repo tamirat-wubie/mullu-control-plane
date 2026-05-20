@@ -1,5 +1,10 @@
 # Authority Directory Sync
 
+> **In one box:** How an outside org directory (who-can-approve-what) is safely
+> imported into Mullu's authority mesh, within strict bounds. New here? →
+> [Plain-English Overview](explain/PLAIN_ENGLISH.md); unknown word? →
+> [Glossary](GLOSSARY.md). *(Doc type: Reference.)*
+
 Purpose: define the bounded import contract that maps external organization
 directories into the gateway authority-obligation mesh.
 

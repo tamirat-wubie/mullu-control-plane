@@ -1,5 +1,11 @@
 # World State Plane
 
+> **In one box:** The system's structured model of "what is currently true in
+> the world" — the agent's map of reality that it reasons over before acting.
+> This page defines how that model is maintained and queried. One-sentence
+> version: [world-state plane](GLOSSARY.md#world-state-plane).
+> *(Doc type: Reference.)*
+
 Scope: all Mullu Platform modules that maintain or query the canonical representation of the current environment.
 
 Without a world-state plane, the platform treats observations as isolated evidence fragments. The world-state plane turns typed evidence into situational understanding — entities, dependencies, contradictions, and confidence.

@@ -1,5 +1,10 @@
 # Deterministic Serialization Policy
 
+> **In one box:** The rule that data is always written the exact same way every
+> time, so hashes match and the [audit trail](GLOSSARY.md#audit-trail-hash-chain)
+> stays tamper-evident. Unglamorous but load-bearing. New here? →
+> [Plain-English Overview](explain/PLAIN_ENGLISH.md). *(Doc type: Reference.)*
+
 Scope: all Mullu Platform modules that persist, hash, compare, or transmit structured data.
 
 Deterministic serialization is a platform invariant, not a convenience. Without it, persistence, replay, trace comparison, hash comparison, ID preservation, and cross-runtime compatibility all become unreliable.

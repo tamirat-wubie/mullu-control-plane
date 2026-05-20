@@ -1,5 +1,10 @@
 # Red-Team Harness
 
+> **In one box:** An automated attacker that tries to break governance before
+> each release — if it gets through, the release is blocked. New here? →
+> [Plain-English Overview](explain/PLAIN_ENGLISH.md); unknown word? →
+> [Glossary](GLOSSARY.md). *(Doc type: Reference.)*
+
 Purpose: define the deterministic release-gate harness for adversarial governance checks.
 Governance scope: [OCE, RAG, CDCV, CQTE, UWMA]
 Dependencies: `mcoi_runtime.core.red_team_harness`, content safety chain, streaming budget protocol, tool permission primitives.

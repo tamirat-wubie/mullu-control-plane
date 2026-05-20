@@ -1,5 +1,11 @@
 # Meta-Reasoning Plane
 
+> **In one box:** The part that watches and adjusts *how the system itself
+> thinks* — it checks and tunes the platform's own reasoning rather than doing
+> the task work directly. Think "the part that double-checks its own thinking."
+> Brand new? Start at the [Plain-English Overview](explain/PLAIN_ENGLISH.md).
+> *(Doc type: Reference.)*
+
 Scope: all Mullu Platform modules that evaluate and adjust the platform's own reasoning processes.
 
 Without meta-reasoning, the platform operates blindly — it does not know what it can do reliably, what is degraded, or when to escalate. The meta-reasoning plane gives the system self-knowledge.

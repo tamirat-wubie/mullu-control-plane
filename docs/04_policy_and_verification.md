@@ -1,5 +1,11 @@
 # Policy and Verification
 
+> **In one box:** How an action is checked *before* it is allowed to run
+> ([the gate](GLOSSARY.md#approval-gate)) and confirmed *after*. Nothing
+> executes without an explicit "allow" — this page is the rulebook for that
+> gate. The plain-words version is rule #1 in the
+> [Plain-English Overview](explain/PLAIN_ENGLISH.md). *(Doc type: Reference.)*
+
 Policy gate precedes execution. Verification closes execution.
 
 ## Policy rules

@@ -1,5 +1,10 @@
 # Error Taxonomy
 
+> **In one box:** Every error must be classified, traced to a source, and
+> labelled with whether it can be recovered from. This page is the required
+> structure for errors, so failures are never mysterious or untraceable.
+> Unknown word? → [Glossary](GLOSSARY.md). *(Doc type: Reference.)*
+
 Scope: all Mullu Platform modules. Every error MUST be classifiable, attributable, and actionable.
 
 An unclassified error is a platform defect. An error without a source plane is untraceable. An error without a recoverability class leaves the caller guessing.

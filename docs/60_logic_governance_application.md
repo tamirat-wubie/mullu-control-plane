@@ -1,5 +1,10 @@
 # Logic Governance Application
 
+> **In one box:** How formal logic and proof are applied across control-plane
+> changes, runtime governance, [Phi traversal](GLOSSARY.md#phi-traversal-spine),
+> and Mfidel work. Advanced/internal. New here? →
+> [Plain-English Overview](explain/PLAIN_ENGLISH.md). *(Doc type: Explanation.)*
+
 Purpose: define how formal logic is applied across Mullu control-plane changes,
 runtime governance, proof coverage, Phi traversal, and Mfidel substrate work.
 

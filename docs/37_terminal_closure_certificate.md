@@ -1,5 +1,10 @@
 # 37 - Terminal Closure Certificate
 
+> **In one box:** The final, signed "this task is fully done and proven"
+> certificate — the [proof receipt](GLOSSARY.md#proof-receipt--execution-receipt)
+> for a whole task. New here? →
+> [Plain-English Overview](explain/PLAIN_ENGLISH.md). *(Doc type: Reference.)*
+
 ## Purpose
 
 The terminal closure certificate is the final proof envelope for an
