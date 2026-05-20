@@ -271,6 +271,7 @@ DEPLOYMENT_WITNESS_WORKFLOW_REQUIRED_LITERALS = (
     "workflow_dispatch",
     "gateway_url",
     "operator_approval_ref",
+    "governed_swarm_pilot_readiness_path",
     "MULLU_RUNTIME_WITNESS_SECRET",
     "MULLU_RUNTIME_CONFORMANCE_SECRET",
     "MULLU_DEPLOYMENT_WITNESS_SECRET",
@@ -296,6 +297,13 @@ DEPLOYMENT_WITNESS_WORKFLOW_REQUIRED_LITERALS = (
     "--declaration-receipt .change_assurance/public_production_health_declaration.json",
     ".change_assurance/deployment_publication_closure_validation.json",
     "public-production-health-declaration",
+    "python scripts/validate_governed_swarm_production_readiness.py",
+    '--pilot-readiness "${{ inputs.governed_swarm_pilot_readiness_path }}"',
+    "--deployment-witness .change_assurance/deployment_witness.json",
+    "--public-health-declaration .change_assurance/public_production_health_declaration.json",
+    "--output .change_assurance/governed_swarm_production_readiness.json",
+    "governed-swarm-production-readiness",
+    ".change_assurance/governed_swarm_production_readiness.json",
     "actions/upload-artifact@v4",
 )
 GATEWAY_PUBLICATION_WORKFLOW_REQUIRED_LITERALS = (

@@ -65,11 +65,19 @@ def test_deployment_witness_workflow_carries_conformance_secret_handoff() -> Non
     assert '--conformance-secret "$MULLU_RUNTIME_CONFORMANCE_SECRET"' in content
     assert "python scripts/collect_deployment_witness.py" in content
     assert "operator_approval_ref" in content
+    assert "governed_swarm_pilot_readiness_path" in content
     assert "python scripts/apply_deployment_publication_status.py" in content
     assert "--operator-approval-ref \"${{ inputs.operator_approval_ref }}\"" in content
     assert ".change_assurance/public_production_health_declaration.json" in content
     assert "--declaration-receipt .change_assurance/public_production_health_declaration.json" in content
     assert "public-production-health-declaration" in content
+    assert "python scripts/validate_governed_swarm_production_readiness.py" in content
+    assert '--pilot-readiness "${{ inputs.governed_swarm_pilot_readiness_path }}"' in content
+    assert "--deployment-witness .change_assurance/deployment_witness.json" in content
+    assert "--public-health-declaration .change_assurance/public_production_health_declaration.json" in content
+    assert "--output .change_assurance/governed_swarm_production_readiness.json" in content
+    assert "governed-swarm-production-readiness" in content
+    assert ".change_assurance/governed_swarm_production_readiness.json" in content
 
 
 def test_release_public_surface_requires_orchestration_receipt_anchors() -> None:

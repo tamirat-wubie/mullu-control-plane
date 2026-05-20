@@ -20,6 +20,11 @@ on:
         required: false
         default: ""
         type: string
+      governed_swarm_pilot_readiness_path:
+        description: "Pilot readiness JSON used as the governed swarm production prerequisite"
+        required: false
+        default: "docs/governed-swarm-promotion-readiness-example.json"
+        type: string
 
 # v4.22.0: opt into Node.js 24 for the deprecated actions/* runtime.
 env:
@@ -101,6 +106,16 @@ jobs:
             --declaration-receipt .change_assurance/public_production_health_declaration.json \
             --output .change_assurance/deployment_publication_closure_validation.json
 
+      - name: Validate governed swarm live production readiness
+        if: ${{ inputs.expected_environment == 'production' && inputs.operator_approval_ref != '' }}
+        run: |
+          python scripts/validate_governed_swarm_production_readiness.py \
+            --pilot-readiness "${{ inputs.governed_swarm_pilot_readiness_path }}" \
+            --deployment-witness .change_assurance/deployment_witness.json \
+            --public-health-declaration .change_assurance/public_production_health_declaration.json \
+            --output .change_assurance/governed_swarm_production_readiness.json \
+            --strict
+
       - name: Upload deployment witness preflight
         if: always()
         uses: actions/upload-artifact@v4
@@ -125,4 +140,12 @@ jobs:
           path: |
             .change_assurance/public_production_health_declaration.json
             .change_assurance/deployment_publication_closure_validation.json
+          if-no-files-found: warn
+
+      - name: Upload governed swarm production readiness
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: governed-swarm-production-readiness
+          path: .change_assurance/governed_swarm_production_readiness.json
           if-no-files-found: warn
