@@ -3801,6 +3801,45 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "temporal_credential_expiry_receipt_schema_valid",
                 "receipt_not_terminal_closure",
             ],
+            runtime_witness_anchor_aliases={
+                "runtime_clock_owns_credential_expiry": [
+                    "credential_expiry_allows_high_risk_active_scoped_unexpired_credential",
+                    "credential_expiry_blocks_expired_credential",
+                ],
+                "expired_credentials_block_dispatch": [
+                    "credential_expiry_blocks_expired_credential"
+                ],
+                "revoked_credentials_block_dispatch": [
+                    "credential_expiry_blocks_wrong_scope_revoked_missing_evidence_and_sources"
+                ],
+                "provider_and_credential_scope_checked": [
+                    "credential_expiry_blocks_wrong_scope_revoked_missing_evidence_and_sources"
+                ],
+                "rotation_pending_warns_before_dispatch": [
+                    "credential_expiry_marks_near_expiry_as_rotation_pending"
+                ],
+                "rotation_overdue_blocks_dispatch": [
+                    "credential_expiry_blocks_future_or_rotation_overdue_credential"
+                ],
+                "credential_evidence_refs_required": [
+                    "credential_expiry_blocks_wrong_scope_revoked_missing_evidence_and_sources"
+                ],
+                "secret_value_absence_verified": [
+                    "credential_expiry_rejects_secret_material_in_metadata"
+                ],
+                "high_risk_source_receipts_bound": [
+                    "credential_expiry_allows_high_risk_active_scoped_unexpired_credential",
+                    "credential_expiry_blocks_wrong_scope_revoked_missing_evidence_and_sources",
+                ],
+                "temporal_credential_expiry_receipt_schema_valid": [
+                    "credential_expiry_allows_high_risk_active_scoped_unexpired_credential",
+                    "credential_expiry_marks_low_risk_action_not_required",
+                ],
+                "receipt_not_terminal_closure": [
+                    "credential_expiry_marks_low_risk_action_not_required",
+                    "credential_expiry_allows_high_risk_active_scoped_unexpired_credential",
+                ],
+            },
         ),
         _surface(
             "temporal_retention_window",
@@ -3832,6 +3871,46 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "temporal_retention_window_receipt_schema_valid",
                 "receipt_not_terminal_closure",
             ],
+            runtime_witness_anchor_aliases={
+                "runtime_clock_owns_retention_timing": [
+                    "retention_window_allows_delete_at_due_boundary",
+                    "retention_window_blocks_invalid_or_future_record",
+                ],
+                "delete_before_delete_after_defers_action": [
+                    "retention_window_defers_delete_before_delete_after"
+                ],
+                "archive_and_anonymize_wait_for_retention_until": [
+                    "retention_window_allows_archive_after_retention_until"
+                ],
+                "legal_hold_blocks_lifecycle_action": [
+                    "retention_window_blocks_legal_hold_wrong_tenant_missing_evidence_and_sources"
+                ],
+                "overdue_retention_action_warns": [
+                    "retention_window_marks_overdue_after_warning_window"
+                ],
+                "tenant_scope_checked": [
+                    "retention_window_blocks_legal_hold_wrong_tenant_missing_evidence_and_sources"
+                ],
+                "retention_policy_ref_required": [
+                    "retention_window_blocks_invalid_or_future_record",
+                    "retention_window_blocks_legal_hold_wrong_tenant_missing_evidence_and_sources",
+                ],
+                "subject_evidence_refs_required": [
+                    "retention_window_blocks_legal_hold_wrong_tenant_missing_evidence_and_sources"
+                ],
+                "high_risk_source_receipts_bound": [
+                    "retention_window_allows_archive_after_retention_until",
+                    "retention_window_blocks_legal_hold_wrong_tenant_missing_evidence_and_sources",
+                ],
+                "temporal_retention_window_receipt_schema_valid": [
+                    "retention_window_allows_delete_at_due_boundary",
+                    "retention_window_marks_low_risk_action_not_required",
+                ],
+                "receipt_not_terminal_closure": [
+                    "retention_window_marks_low_risk_action_not_required",
+                    "retention_window_allows_delete_at_due_boundary",
+                ],
+            },
         ),
         _surface(
             "temporal_rate_limit_window",
