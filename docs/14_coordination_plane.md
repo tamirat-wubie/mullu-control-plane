@@ -1,5 +1,10 @@
 # Coordination Plane
 
+> **In one box:** How work is coordinated when more than one agent, role, or
+> human is involved — who does what, in what order, under the same gates. New
+> here? → [Plain-English Overview](explain/PLAIN_ENGLISH.md); unknown word? →
+> [Glossary](GLOSSARY.md). *(Doc type: Reference.)*
+
 Scope: all Mullu Platform modules that orchestrate work across multiple agents, roles, or human participants.
 
 Without coordination, each agent operates in isolation. The coordination plane gives the system collaboration — delegation, handoff, merge, conflict resolution, and provenance-preserving multi-party workflows.

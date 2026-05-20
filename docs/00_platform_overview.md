@@ -1,5 +1,12 @@
 # Platform Overview
 
+> **In one box:** This is the map. It says which parts of the code count as the
+> [control plane](GLOSSARY.md#control-plane) (the decide / check / record layer)
+> and which names mean what (Mullu vs Mullu Platform vs Mullu Control Plane).
+> Read it when you're unsure *where a responsibility lives*. Brand new? Read the
+> jargon-free [Plain-English Overview](explain/PLAIN_ENGLISH.md) first.
+> *(Doc type: Reference.)*
+
 Purpose: define the repository boundary for the Mullu Control Plane.
 Governance scope: Milestone 0 shared foundation.
 Dependencies: `docs/PRODUCT_BOUNDARY.md`, `docs/01_shared_invariants.md`, `docs/02_shared_contracts.md`.

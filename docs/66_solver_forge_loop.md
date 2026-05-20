@@ -1,5 +1,13 @@
 # Solver Forge Loop
 
+> **In one box:** How Mullu *discovers* which solution to a problem is worth
+> packaging — candidates are built, compared on real evidence, and adversarially
+> reviewed before being handed to the
+> [capability forge](GLOSSARY.md#capability-forge--solver-forge). Crucially it
+> **never** auto-installs anything: new power is earned, not assumed. New here?
+> See the [Plain-English Overview](explain/PLAIN_ENGLISH.md).
+> *(Doc type: Explanation.)*
+
 Purpose: define how candidate method pipelines are typed, composed, compared under evidence, adversarially reviewed, and handed to the existing Capability Forge so that the Mullu platform can discover *which* solution to a problem class is worth packaging without ever auto-promoting it.
 Governance scope: candidate-only experimentation upstream of the capability registry and the C0–C7 maturity ladder. The loop never installs capabilities, never mutates the registry, never unblocks promotion.
 Dependencies: `docs/39_governed_capability_fabric.md`, `docs/53_red_team_harness.md`, `docs/56_general_agent_capability_roadmap.md`, `docs/62_governed_operational_intelligence.md`.

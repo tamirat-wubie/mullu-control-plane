@@ -1,5 +1,10 @@
 # 30 -- Organizational Function Runtime
 
+> **In one box:** Reusable, policy-bound "org functions" — standardized
+> operations a team can run repeatedly under governance. New here? →
+> [Plain-English Overview](explain/PLAIN_ENGLISH.md); unknown word? →
+> [Glossary](GLOSSARY.md). *(Doc type: Reference.)*
+
 ## Purpose
 
 Organizational functions are reusable, policy-bound operational units that

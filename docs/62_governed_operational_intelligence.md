@@ -1,5 +1,12 @@
 # Governed Operational Intelligence Extension
 
+> **In one box:** The roadmap for Mullu's *next* layer — moving from "safely do
+> one task" to "safely run ongoing operations" (world model, goal compiler,
+> simulator, [capability forge](GLOSSARY.md#capability-forge--solver-forge),
+> worker mesh, trust ledger). This is forward-looking design, not the current
+> beginner path — for that, see the
+> [Plain-English Overview](explain/PLAIN_ENGLISH.md). *(Doc type: Explanation.)*
+
 Purpose: define the next Mullu platform layer that moves from governed task execution to governed operational intelligence.
 Governance scope: world state, goal compilation, simulation, capability certification, worker mesh execution, memory admission, utility routing, collaboration cases, and external proof anchoring.
 Dependencies: `docs/31_operational_graph.md`, `docs/33_governed_evolution.md`, `docs/37_terminal_closure_certificate.md`, `docs/38_closure_learning_admission.md`, `docs/39_governed_capability_fabric.md`, `docs/56_general_agent_capability_roadmap.md`, `KNOWN_LIMITATIONS_v0.1.md`, and `SECURITY_MODEL_v0.1.md`.

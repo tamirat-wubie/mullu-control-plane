@@ -1,5 +1,11 @@
 # Pilot Workflows v0.1
 
+> **In one box:** Three concrete, controlled end-to-end workflows that prove
+> Mullu works as a whole system — good worked examples to follow after the
+> [Tutorial](docs/tutorials/01_first_governed_task.md). New here? →
+> [Plain-English Overview](docs/explain/PLAIN_ENGLISH.md); unknown word? →
+> [Glossary](docs/GLOSSARY.md). *(Doc type: How-to.)*
+
 Three controlled pilot workflows that prove the platform works as a system.
 
 ## Pilot 1: Approval-Gated Command

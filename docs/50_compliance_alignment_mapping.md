@@ -1,5 +1,10 @@
 # Compliance Alignment Mapping
 
+> **In one box:** Which Mullu controls line up with SOC 2, HIPAA, the EU AI Act,
+> and ISO/IEC 42001 — the "is this compliant?" map, useful for decision-makers
+> and auditors. New here? → [Plain-English Overview](explain/PLAIN_ENGLISH.md).
+> *(Doc type: Reference.)*
+
 Purpose: map Mullusi control-plane capabilities to SOC 2, HIPAA Security Rule, EU Act, and ISO/IEC 42001 alignment areas.
 Governance scope: [OCE, RAG, CDCV, CQTE, UWMA]
 Dependencies: `tests/fixtures/compliance_alignment_matrix.json`, `scripts/compliance_alignment_matrix.py`.

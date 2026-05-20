@@ -1,5 +1,11 @@
 # Pilot Operations Guide v0.1
 
+> **In one box:** How to actually run a Mullu pilot day-to-day — the operational
+> companion to the [Pilot Checklist](PILOT_CHECKLIST_v0.1.md) and
+> [Pilot Workflows](PILOT_WORKFLOWS_v0.1.md). New here? →
+> [Plain-English Overview](docs/explain/PLAIN_ENGLISH.md); unknown word? →
+> [Glossary](docs/GLOSSARY.md). *(Doc type: How-to / Operations.)*
+
 ## Overview
 
 This guide covers operating the Mullu Platform MCOI Runtime during controlled pilot use. It assumes familiarity with the OPERATOR_GUIDE_v0.1.md basics and should be used together with PILOT_WORKFLOWS_v0.1.md and PILOT_CHECKLIST_v0.1.md.

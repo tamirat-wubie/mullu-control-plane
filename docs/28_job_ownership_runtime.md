@@ -1,5 +1,10 @@
 # 28 Job Ownership Runtime
 
+> **In one box:** How a unit of work gets an owner and a queue, so nothing is
+> dropped or done twice. New here? →
+> [Plain-English Overview](explain/PLAIN_ENGLISH.md); unknown word? →
+> [Glossary](GLOSSARY.md). *(Doc type: Reference.)*
+
 ## Purpose
 
 The job ownership runtime provides persistent job ownership, work queues,

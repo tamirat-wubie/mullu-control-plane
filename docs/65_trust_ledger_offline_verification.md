@@ -1,5 +1,11 @@
 # Trust Ledger Offline Verification
 
+> **In one box:** How someone can independently check Mullu's
+> [proof receipts](GLOSSARY.md#proof-receipt--execution-receipt) and
+> [trust ledger](GLOSSARY.md#trust-ledger) *without* access to the live system —
+> "don't trust us, verify it yourself, even offline." This is the
+> operator/auditor replay path. *(Doc type: Reference.)*
+
 Purpose: define the operator replay path for signed trust-ledger evidence bundles
 and external anchor receipts.
 

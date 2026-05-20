@@ -1,5 +1,10 @@
 # Proof Route Gap Triage
 
+> **In one box:** A shortcut for finding API routes that lack proof coverage
+> and ranking them into batches to fix — a maintenance/triage tool that pairs
+> with the [Proof Coverage Matrix](40_proof_coverage_matrix.md). New here? →
+> [Plain-English Overview](explain/PLAIN_ENGLISH.md). *(Doc type: Reference.)*
+
 Purpose: define the deterministic shortcut for converting unclassified declared
 routes into ranked proof-closure batches.
 

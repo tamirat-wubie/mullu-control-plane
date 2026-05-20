@@ -1,5 +1,12 @@
 # Pilot Checklist v0.1
 
+> **In one box:** A tick-box list to confirm everything is ready before running
+> a real pilot — go down it in order. Pairs with the
+> [Pilot Operations Guide](PILOT_OPERATIONS_GUIDE_v0.1.md) and
+> [Pilot Workflows](PILOT_WORKFLOWS_v0.1.md). New here? →
+> [Plain-English Overview](docs/explain/PLAIN_ENGLISH.md).
+> *(Doc type: How-to / Operations.)*
+
 ## Pre-flight
 
 - [ ] All Python tests pass (`pytest -q`)

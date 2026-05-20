@@ -1,5 +1,11 @@
 # Skill System
 
+> **In one box:** A [skill](GLOSSARY.md#skill--skill-boundary) is a defined unit
+> of "something Mullu knows how to do." This page explains how skills are built
+> from governed capabilities into reusable, checkable, promotable units — and
+> the hard edge that stops the AI doing anything outside its authorized skills
+> (its "job description"). *(Doc type: Reference.)*
+
 Scope: MCOI Runtime and future verticals. The skill system composes governed capabilities into reusable, verifiable, promotable automation units.
 
 ## 1. Purpose

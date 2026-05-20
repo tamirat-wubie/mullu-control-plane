@@ -1,5 +1,11 @@
 # Operational Runbook
 
+> **In one box:** The "when X happens, do Y" emergency and routine-operations
+> manual for operators — startup checks, health, recovery steps. Not a learning
+> doc; if you're new, start at the
+> [Documentation Hub](docs/START_HERE.md). Unknown word? →
+> [Glossary](docs/GLOSSARY.md). *(Doc type: How-to / Operations.)*
+
 ## Startup Checks
 
 ### Verify the platform started correctly
