@@ -16,6 +16,8 @@ solvers, invariants, bounds, controllers, metrics, and verification gates.
 | `OperationalMathLoopEngine` | Applies missing requirements one principle per iteration. |
 | `OperationalMathLoopIteration` | Records added roles, added controls, tension before/after, and proof refs. |
 | `OperationalMathLoopResult` | Records saturation or remaining gaps without silent completion. |
+| `OperationalMathReceiptStore` | Stores JSON loop receipts with append-only, idempotent receipt-id semantics. |
+| `operational_math` observability source | Exposes store counts, latest receipt posture, and review signals through the server dashboard. |
 
 ## Algorithm
 
@@ -49,7 +51,7 @@ solvers, invariants, bounds, controllers, metrics, and verification gates.
 Focused test contract:
 
 ```powershell
-python -m pytest mcoi/tests/test_operational_math_loop.py mcoi/tests/test_operational_math_cli.py
+python -m pytest mcoi/tests/test_operational_math_loop.py mcoi/tests/test_operational_math_cli.py mcoi/tests/test_operational_math_receipt_store.py mcoi/tests/test_operational_math_observability.py
 ```
 
 ## Receipt CLI
@@ -66,6 +68,12 @@ Persist the same receipt:
 python -m mcoi_runtime.app.operational_math_cli --receipt-path ../.tmp/operational-math-loop-receipt.json
 ```
 
+Append the receipt into the operational math receipt store:
+
+```powershell
+python -m mcoi_runtime.app.operational_math_cli --store-path ../.tmp/operational-math-receipts.json
+```
+
 Persist a dashboard-safe projection for operator visibility:
 
 ```powershell
@@ -78,6 +86,14 @@ Projection behavior:
 | --- | --- |
 | `SolvedVerified` and no unresolved principles | `requires_operator_review = false` |
 | `AwaitingEvidence` or unresolved principles | `requires_operator_review = true` with review signals |
+
+Server wiring:
+
+| Binding | Value |
+| --- | --- |
+| Dependency key | `operational_math_receipt_store` |
+| Optional durable path | `MULLU_OPERATIONAL_MATH_RECEIPT_STORE_PATH` |
+| Dashboard source | `operational_math` |
 
 Expected proof outcome:
 

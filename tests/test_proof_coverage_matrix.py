@@ -165,6 +165,8 @@ def test_witness_integrity_report_tracks_exact_test_anchors() -> None:
     assert surfaces["temporal_kernel"]["exact_test_anchor_count"] == 13
     assert surfaces["networked_worker_mesh"]["unanchored_witness_count"] == 0
     assert surfaces["networked_worker_mesh"]["exact_test_anchor_count"] == 13
+    assert surfaces["task_queue_lifecycle"]["unanchored_witness_count"] == 0
+    assert surfaces["task_queue_lifecycle"]["exact_test_anchor_count"] == 11
     assert surfaces["software_dev_capability_pack"]["unanchored_witness_count"] == 0
     assert surfaces["software_dev_capability_pack"]["exact_test_anchor_count"] == 16
     assert surfaces["governed_operational_intelligence"]["unanchored_witness_count"] == 0
@@ -2205,19 +2207,27 @@ def test_operational_math_loop_surface_anchors_receipts_and_projection() -> None
     assert math_surface["action_proof"] == "action_proof"
     assert "OperationalMathLoopEngine.apply_all" in math_surface["representative_paths"]
     assert "mcoi_runtime.app.operational_math_cli" in math_surface["representative_paths"]
+    assert "OperationalMathReceiptStore" in math_surface["representative_paths"]
     assert "docs/operational_math_loop.md" in math_surface["evidence_files"]
     assert "mcoi/mcoi_runtime/contracts/operational_math.py" in math_surface["evidence_files"]
     assert "mcoi/mcoi_runtime/core/operational_math_loop.py" in math_surface["evidence_files"]
+    assert "mcoi/mcoi_runtime/persistence/operational_math_receipt_store.py" in math_surface["evidence_files"]
     assert "mcoi/mcoi_runtime/app/operational_math_cli.py" in math_surface["evidence_files"]
     assert "mcoi/mcoi_runtime/app/operational_math_observability.py" in math_surface["evidence_files"]
+    assert "mcoi/mcoi_runtime/app/server.py" in math_surface["evidence_files"]
     assert "mcoi/tests/test_operational_math_loop.py" in math_surface["evidence_files"]
     assert "mcoi/tests/test_operational_math_cli.py" in math_surface["evidence_files"]
+    assert "mcoi/tests/test_operational_math_receipt_store.py" in math_surface["evidence_files"]
     assert "mcoi/tests/test_operational_math_observability.py" in math_surface["evidence_files"]
     assert "operational_math_loop_applies_all_audit_principles" in witnesses
     assert "operational_math_loop_stops_at_iteration_budget_with_open_gaps" in witnesses
     assert "operational_math_cli_writes_dashboard_projection" in witnesses
+    assert "operational_math_cli_appends_receipt_store" in witnesses
+    assert "memory_store_appends_queries_and_summarizes_receipts" in witnesses
+    assert "file_store_persists_and_reloads_receipts" in witnesses
+    assert "server_wires_operational_math_store_into_dashboard" in witnesses
     assert "summary_marks_incomplete_receipt_for_review" in witnesses
-    assert "without silent completion" in math_surface["notes"]
+    assert "append-only JSON receipt stores" in math_surface["notes"]
     assert closure_actions["anchor_operational_math_loop_receipts_and_projection"]["status"] == "closed"
 
 
