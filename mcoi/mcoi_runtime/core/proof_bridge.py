@@ -27,6 +27,12 @@ from mcoi_runtime.contracts.proof import (
     ProofCapsule,
     TransitionReceipt,
     certify_transition,
+    receipt_content,
+)
+from mcoi_runtime.contracts._base import ContractRecord
+from mcoi_runtime.contracts.receipt_signing import (
+    Ed25519ReceiptVerifier,
+    ReceiptSignatureStatus,
 )
 from mcoi_runtime.contracts.receipt_store import (
     InMemoryReceiptStore,
@@ -96,6 +102,70 @@ TEMPORAL_SCHEDULER_MACHINE = StateMachineSpec(
 )
 
 
+ROLLBACK_MACHINE = StateMachineSpec(
+    machine_id="rollback-operation",
+    name="Rollback Operation Machine",
+    version="1.0.0",
+    states=("pending", "rolled_back", "rejected"),
+    initial_state="pending",
+    terminal_states=("rolled_back", "rejected"),
+    transitions=(
+        TransitionRule(from_state="pending", to_state="rolled_back", action="rollback_applied"),
+        TransitionRule(from_state="pending", to_state="rejected", action="rollback_rejected"),
+    ),
+)
+
+
+@dataclass(frozen=True, slots=True)
+class RollbackProof:
+    """Proof that an entity was deliberately reverted to a state that was
+    *previously attested by a receipt in its own causal lineage*.
+
+    This is not a history rewrite: the rollback is a NEW signed receipt
+    appended to the chain that *cites* the historical receipt it restores
+    to. Everything it claims is independently re-derivable from the
+    receipt + store + lineage by `ProofBridge.verify_rollback_proof`.
+    """
+
+    capsule: ProofCapsule
+    entity_id: str
+    target_receipt_id: str
+    target_receipt_hash: str
+    restored_to_state: str
+    receipt_hash: str
+
+
+@dataclass(frozen=True, slots=True)
+class RollbackVerification:
+    """Independent re-verification result for a RollbackProof.
+
+    `ok` is True only when every mandatory invariant holds. Signature
+    status is reported separately so a surface decides whether an
+    unsigned-but-otherwise-valid rollback is acceptable for it.
+    """
+
+    chain_integrity_ok: bool
+    target_in_lineage: bool
+    target_resolved: bool
+    target_integrity_ok: bool
+    target_binding_ok: bool
+    replay_token_ok: bool
+    rollback_signature: ReceiptSignatureStatus
+    target_signature: ReceiptSignatureStatus
+    reason: str = ""
+
+    @property
+    def ok(self) -> bool:
+        return (
+            self.chain_integrity_ok
+            and self.target_in_lineage
+            and self.target_resolved
+            and self.target_integrity_ok
+            and self.target_binding_ok
+            and self.replay_token_ok
+        )
+
+
 @dataclass(frozen=True, slots=True)
 class GovernanceProof:
     """Proof that a governance decision was made correctly.
@@ -122,6 +192,32 @@ class TemporalSchedulerProof:
     tenant_id: str
     schedule_id: str
     receipt_hash: str
+
+
+@dataclass(frozen=True, slots=True)
+class ReceiptVerification(ContractRecord):
+    """Structured, serializable verdict from `fully_verify_receipt`.
+
+    `fully_trusted` is true iff content integrity, replay-token
+    consistency, and a cryptographically valid signature all hold.
+    `signature_status` is the raw `ReceiptSignatureStatus` value so a
+    caller can distinguish "unsigned" from "tampered" from "no key".
+    """
+
+    receipt_id: str
+    integrity_ok: bool
+    replay_token_ok: bool
+    signature_status: str
+    fully_trusted: bool
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.receipt_id, str) or not self.receipt_id:
+            raise ValueError("receipt_id must be a non-empty string")
+        for f in ("integrity_ok", "replay_token_ok", "fully_trusted"):
+            if not isinstance(getattr(self, f), bool):
+                raise ValueError(f"{f} must be a boolean")
+        if not isinstance(self.signature_status, str) or not self.signature_status:
+            raise ValueError("signature_status must be a non-empty string")
 
 
 class ProofBridge:
@@ -211,6 +307,104 @@ class ProofBridge:
                 run_receipt=run_receipt,
                 actor_id=actor_id,
             )
+
+    def certify_rollback(
+        self,
+        *,
+        entity_id: str,
+        target_receipt_id: str,
+        actor_id: str = "system",
+        reason: str = "",
+    ) -> RollbackProof:
+        """Certify a provable rollback of `entity_id` to the state attested
+        by `target_receipt_id` (which must already be in that entity's
+        causal lineage).
+
+        Raises ValueError when there is nothing legitimate to prove:
+          - the entity has no lineage,
+          - the target is not in the entity's receipt chain (rolling back
+            to a receipt outside the proven history is not a rollback,
+            it is fabrication),
+          - the target receipt cannot be resolved from the store, or
+          - the target receipt fails its own integrity check.
+
+        On success the rollback is emitted as a NEW signed, chained
+        receipt (append-only — history is never rewritten) that cites the
+        target. Authenticity comes for free from the configured receipt
+        signer; with no key configured the rollback is still a valid,
+        verifiable, unsigned proof.
+        """
+        with self._lock:
+            return self._certify_rollback_locked(
+                entity_id=entity_id,
+                target_receipt_id=target_receipt_id,
+                actor_id=actor_id,
+                reason=reason,
+            )
+
+    def _certify_rollback_locked(
+        self,
+        *,
+        entity_id: str,
+        target_receipt_id: str,
+        actor_id: str,
+        reason: str,
+    ) -> RollbackProof:
+        """Internal rollback certification; must be called under self._lock."""
+        lineage = self._store.get_lineage(entity_id)
+        if lineage is None:
+            raise ValueError("cannot roll back an entity with no lineage")
+        if target_receipt_id not in lineage.receipt_chain:
+            raise ValueError("rollback target is not in the entity's lineage")
+        target = self._store.get_receipt(target_receipt_id)
+        if target is None:
+            raise ValueError("rollback target receipt is not resolvable from the store")
+        if not self.verify_receipt(target):
+            raise ValueError("rollback target receipt failed its integrity check")
+
+        timestamp = self._clock()
+        guard = GuardVerdict(
+            guard_id="rollback_target",
+            passed=True,
+            reason=reason or f"rollback to {target_receipt_id}",
+            detail={
+                "target_receipt_id": target.receipt_id,
+                "target_receipt_hash": target.receipt_hash,
+                "target_to_state": target.to_state,
+                "target_after_state_hash": target.after_state_hash,
+                "rolled_back_entity": entity_id,
+            },
+        )
+        capsule = certify_transition(
+            ROLLBACK_MACHINE,
+            entity_id=entity_id,
+            from_state="pending",
+            to_state="rolled_back",
+            action="rollback_applied",
+            before_state_hash=self._state_hash("pending", entity_id, timestamp),
+            after_state_hash=self._state_hash("rolled_back", entity_id, timestamp),
+            guards=(guard,),
+            actor_id=actor_id,
+            reason=reason or f"rollback to {target_receipt_id}",
+            causal_parent=self._last_receipt_hash,
+            timestamp=timestamp,
+        )
+
+        self._receipt_count += 1
+        self._last_receipt_hash = capsule.receipt.receipt_hash
+        self._store.record_receipt(capsule.receipt)
+        # Append-only: the rollback extends the lineage forward, it does
+        # not truncate or rewrite the chain it reverts past.
+        self._update_lineage(entity_id, capsule.receipt, "rolled_back")
+
+        return RollbackProof(
+            capsule=capsule,
+            entity_id=entity_id,
+            target_receipt_id=target.receipt_id,
+            target_receipt_hash=target.receipt_hash,
+            restored_to_state=target.to_state,
+            receipt_hash=capsule.receipt.receipt_hash,
+        )
 
     def _certify_locked(
         self,
@@ -370,13 +564,163 @@ class ProofBridge:
 
     def verify_receipt(self, receipt: TransitionReceipt) -> bool:
         """Verify a receipt's hash matches its content."""
-        content = (
-            f"{receipt.entity_id}:{receipt.from_state}:{receipt.to_state}:"
-            f"{receipt.action}:{receipt.before_state_hash}:{receipt.after_state_hash}:"
-            f"{receipt.causal_parent}"
-        )
-        expected = hashlib.sha256(content.encode()).hexdigest()
+        expected = hashlib.sha256(receipt_content(receipt).encode()).hexdigest()
         return expected == receipt.receipt_hash
+
+    @staticmethod
+    def fully_verify_receipt(
+        receipt: TransitionReceipt,
+        verifier: Ed25519ReceiptVerifier | None = None,
+    ) -> "ReceiptVerification":
+        """One auditable verdict over a receipt: integrity + replay-token
+        + authenticity, in a single call.
+
+        Today a caller wanting full assurance must stitch three separate
+        checks (`verify_receipt`, `verify_replay_token`,
+        `verify_receipt_signature`) and combine them by hand — easy to
+        get subtly wrong at a trust boundary. This is the single
+        operation a boundary / CLI / external auditor calls. It is a
+        @staticmethod and pure, so an offline third party with only the
+        receipt and the published verification key can run it.
+
+        `fully_trusted` is deliberately strict: integrity AND replay-token
+        AND a cryptographically VALID signature. An unsigned receipt is
+        reported honestly (integrity may still be True) but is NOT
+        `fully_trusted` — the caller decides whether unsigned is
+        acceptable for its surface, rather than this code pretending an
+        unverifiable receipt is trustworthy.
+        """
+        integrity_ok = (
+            hashlib.sha256(receipt_content(receipt).encode()).hexdigest()
+            == receipt.receipt_hash
+        )
+        replay_token_ok = ProofBridge.verify_replay_token(receipt)
+
+        if verifier is not None:
+            status = verifier.verify(receipt)
+        elif receipt.signature:
+            status = ReceiptSignatureStatus.NO_VERIFIER_KEY
+        else:
+            status = ReceiptSignatureStatus.UNSIGNED
+
+        fully_trusted = (
+            integrity_ok
+            and replay_token_ok
+            and status is ReceiptSignatureStatus.SIGNED_VALID
+        )
+        return ReceiptVerification(
+            receipt_id=receipt.receipt_id,
+            integrity_ok=integrity_ok,
+            replay_token_ok=replay_token_ok,
+            signature_status=status.value,
+            fully_trusted=fully_trusted,
+        )
+
+    @staticmethod
+    def verify_receipt_signature(
+        receipt: TransitionReceipt,
+        verifier: Ed25519ReceiptVerifier,
+    ) -> ReceiptSignatureStatus:
+        """Authenticity check: does the receipt's signature verify under a
+        trusted public key?
+
+        This is orthogonal to `verify_receipt` (integrity: does the hash
+        match the content). A trust boundary wanting full assurance checks
+        both — integrity proves the hash is the content-address, the
+        signature proves an authorized kernel key endorsed that hash.
+        Returns a status rather than a bool so the caller decides whether
+        UNSIGNED / NO_VERIFIER_KEY is acceptable for its surface.
+        """
+        return verifier.verify(receipt)
+
+    @staticmethod
+    def verify_rollback_proof(
+        proof: RollbackProof,
+        *,
+        store: ReceiptStore,
+        lineage: CausalLineage,
+        signature_verifier: Ed25519ReceiptVerifier | None = None,
+    ) -> RollbackVerification:
+        """Independently re-derive every claim a RollbackProof makes.
+
+        A proof is only as strong as a third party's ability to re-check
+        it from primary artifacts. This recomputes the rollback receipt's
+        content hash, confirms the cited target is genuinely in the
+        entity's lineage, re-resolves and re-verifies the target receipt,
+        confirms the rollback receipt is *bound* to that exact target,
+        and re-derives the replay token — using nothing the proof asserts
+        about itself. Signature status is reported, not folded into `ok`,
+        so the caller's surface decides if unsigned is acceptable.
+        """
+        receipt = proof.capsule.receipt
+
+        def _content_hash(r: TransitionReceipt) -> str:
+            return hashlib.sha256(receipt_content(r).encode()).hexdigest()
+
+        chain_integrity_ok = _content_hash(receipt) == receipt.receipt_hash
+        replay_token_ok = ProofBridge.verify_replay_token(receipt)
+
+        target_in_lineage = (
+            lineage.entity_id == proof.entity_id
+            and proof.target_receipt_id in lineage.receipt_chain
+        )
+
+        target = store.get_receipt(proof.target_receipt_id)
+        target_resolved = target is not None
+        target_integrity_ok = bool(
+            target_resolved
+            and _content_hash(target) == target.receipt_hash
+            and target.receipt_hash == proof.target_receipt_hash
+        )
+
+        detail: dict[str, Any] = {}
+        for guard in receipt.guard_verdicts:
+            if guard.guard_id == "rollback_target":
+                detail = dict(guard.detail)
+                break
+        target_binding_ok = bool(
+            target_resolved
+            and detail.get("target_receipt_id") == target.receipt_id
+            and detail.get("target_receipt_hash") == target.receipt_hash
+            and detail.get("target_to_state") == target.to_state
+            and detail.get("target_after_state_hash") == target.after_state_hash
+            and proof.restored_to_state == target.to_state
+        )
+
+        def _sig_status(r: TransitionReceipt | None) -> ReceiptSignatureStatus:
+            if r is None:
+                return ReceiptSignatureStatus.UNSIGNED
+            if signature_verifier is not None:
+                return signature_verifier.verify(r)
+            if not r.signature:
+                return ReceiptSignatureStatus.UNSIGNED
+            return ReceiptSignatureStatus.NO_VERIFIER_KEY
+
+        reasons: list[str] = []
+        if not chain_integrity_ok:
+            reasons.append("rollback receipt hash mismatch")
+        if not target_in_lineage:
+            reasons.append("target not in entity lineage")
+        if not target_resolved:
+            reasons.append("target receipt unresolved")
+        elif not target_integrity_ok:
+            reasons.append("target receipt integrity failed")
+        if target_resolved and not target_binding_ok:
+            reasons.append("rollback not bound to target")
+        if not replay_token_ok:
+            reasons.append("replay token mismatch")
+
+        return RollbackVerification(
+            chain_integrity_ok=chain_integrity_ok,
+            target_in_lineage=target_in_lineage,
+            target_resolved=target_resolved,
+            target_integrity_ok=target_integrity_ok,
+            target_binding_ok=target_binding_ok,
+            replay_token_ok=replay_token_ok,
+            rollback_signature=_sig_status(receipt),
+            target_signature=_sig_status(target),
+            reason="; ".join(reasons),
+        )
 
     @staticmethod
     def verify_replay_token(receipt: TransitionReceipt) -> bool:
@@ -404,12 +748,7 @@ class ProofBridge:
         What it DOES prove: the token is consistent with its own
         content fields.
         """
-        content = (
-            f"{receipt.entity_id}:{receipt.from_state}:{receipt.to_state}:"
-            f"{receipt.action}:{receipt.before_state_hash}:{receipt.after_state_hash}:"
-            f"{receipt.causal_parent}"
-        )
-        formatted = f"{content}:{receipt.issued_at}"
+        formatted = f"{receipt_content(receipt)}:{receipt.issued_at}"
         expected = f"replay-{hashlib.sha256(formatted.encode()).hexdigest()[:16]}"
         return expected == receipt.replay_token
 
@@ -440,6 +779,17 @@ class ProofBridge:
                 "causal_parent": receipt.causal_parent,
                 "issued_at": receipt.issued_at,
                 "receipt_hash": receipt.receipt_hash,
+                # Authenticity fields are emitted only when the receipt is
+                # actually signed, so unsigned output stays byte-identical
+                # to the pre-signing wire format (Rust serde parity).
+                **(
+                    {
+                        "signature": receipt.signature,
+                        "signing_key_id": receipt.signing_key_id,
+                    }
+                    if receipt.signature
+                    else {}
+                ),
             },
             "audit_record": {
                 "audit_id": audit.audit_id,
@@ -493,6 +843,17 @@ class ProofBridge:
                 "causal_parent": receipt.causal_parent,
                 "issued_at": receipt.issued_at,
                 "receipt_hash": receipt.receipt_hash,
+                # Authenticity fields are emitted only when the receipt is
+                # actually signed, so unsigned output stays byte-identical
+                # to the pre-signing wire format (Rust serde parity).
+                **(
+                    {
+                        "signature": receipt.signature,
+                        "signing_key_id": receipt.signing_key_id,
+                    }
+                    if receipt.signature
+                    else {}
+                ),
             },
             "audit_record": {
                 "audit_id": audit.audit_id,
@@ -512,6 +873,65 @@ class ProofBridge:
             "tenant_id": proof.tenant_id,
             "schedule_id": proof.schedule_id,
             "scheduler_receipt_id": proof.scheduler_receipt.receipt_id,
+        }
+
+    def serialize_rollback_proof(self, proof: RollbackProof) -> dict[str, Any]:
+        """Serialize a rollback proof. Signature keys appear only when the
+        rollback receipt is actually signed (same unsigned-byte-identical
+        rule as serialize_proof)."""
+        receipt = proof.capsule.receipt
+        audit = proof.capsule.audit_record
+        return {
+            "receipt": {
+                "receipt_id": receipt.receipt_id,
+                "machine_id": receipt.machine_id,
+                "entity_id": receipt.entity_id,
+                "from_state": receipt.from_state,
+                "to_state": receipt.to_state,
+                "action": receipt.action,
+                "before_state_hash": receipt.before_state_hash,
+                "after_state_hash": receipt.after_state_hash,
+                "guard_verdicts": [
+                    {
+                        "guard_id": v.guard_id,
+                        "passed": v.passed,
+                        "reason": v.reason,
+                        "detail": dict(v.detail),
+                    }
+                    for v in receipt.guard_verdicts
+                ],
+                "verdict": receipt.verdict.value,
+                "replay_token": receipt.replay_token,
+                "causal_parent": receipt.causal_parent,
+                "issued_at": receipt.issued_at,
+                "receipt_hash": receipt.receipt_hash,
+                **(
+                    {
+                        "signature": receipt.signature,
+                        "signing_key_id": receipt.signing_key_id,
+                    }
+                    if receipt.signature
+                    else {}
+                ),
+            },
+            "audit_record": {
+                "audit_id": audit.audit_id,
+                "machine_id": audit.machine_id,
+                "entity_id": audit.entity_id,
+                "from_state": audit.from_state,
+                "to_state": audit.to_state,
+                "action": audit.action,
+                "verdict": audit.verdict.value,
+                "actor_id": audit.actor_id,
+                "reason": audit.reason,
+                "transitioned_at": audit.transitioned_at,
+                "metadata": dict(audit.metadata),
+            },
+            "lineage_depth": proof.capsule.lineage_depth,
+            "entity_id": proof.entity_id,
+            "target_receipt_id": proof.target_receipt_id,
+            "target_receipt_hash": proof.target_receipt_hash,
+            "restored_to_state": proof.restored_to_state,
         }
 
     @property

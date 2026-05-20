@@ -67,6 +67,17 @@ _INTENTIONALLY_OPEN: dict[tuple[str, str], str] = {
         "If per-tenant data ever lands here, gate at musia.read."
     ),
 
+    # Public trust boundary — the verification key is deliberately
+    # unauthenticated: its entire purpose is to let an external party
+    # verify signed receipts WITHOUT trusting/authenticating to this
+    # process. Exposes only the Ed25519 public key + key_id (or an
+    # honest unsigned marker); no secret, no per-tenant data, no state.
+    ("GET", "/trust/verification-key"): (
+        "Public Ed25519 verification key; intentionally open so third "
+        "parties can independently verify receipts. No secret/tenant "
+        "data — publishing the public half is the point."
+    ),
+
     # OpenAPI / schema introspection (FastAPI defaults; not from our routers)
     # — noted here for completeness; FastAPI mounts these automatically.
 }
