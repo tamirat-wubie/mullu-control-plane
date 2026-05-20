@@ -42,6 +42,46 @@ def _unused_passport_loader(capability_id: str):
     raise AssertionError(f"loader must not be used: {capability_id}")
 
 
+def _certified_two_step_plan_fixture():
+    plan = CapabilityPlan(
+        plan_id="plan-proof-bundle",
+        tenant_id="tenant-1",
+        identity_id="identity-1",
+        goal="search policy then notify",
+        steps=(
+            CapabilityPlanStep(
+                step_id="step-1",
+                capability_id="enterprise.knowledge_search",
+                params={"query": "policy"},
+            ),
+            CapabilityPlanStep(
+                step_id="step-2",
+                capability_id="enterprise.notification_send",
+                params={"body": "notify"},
+                depends_on=("step-1",),
+            ),
+        ),
+        risk_tier="medium",
+        approval_required=True,
+        evidence_required=("total_chunks_searched", "receipt_status"),
+    )
+
+    def execute_step(step: CapabilityPlanStep, completed):
+        return CapabilityPlanStepResult(
+            step_id=step.step_id,
+            capability_id=step.capability_id,
+            succeeded=True,
+            command_id=f"cmd-{step.step_id}",
+            terminal_certificate_id=f"terminal-{step.step_id}",
+            output={"completed_dependencies": tuple(completed)},
+        )
+
+    execution = CapabilityPlanExecutor(execute_step).execute(plan)
+    ledger = CapabilityPlanLedger(clock=lambda: "2026-04-29T12:00:00+00:00")
+    certificate = ledger.certify(plan=plan, execution=execution)
+    return plan, execution, ledger, certificate
+
+
 def test_one_step_plan_projects_risk_and_evidence() -> None:
     plan = one_step_plan(
         capability_id="financial.send_payment",
@@ -542,6 +582,133 @@ def test_plan_ledger_certifies_successful_multi_step_execution() -> None:
     assert read_model["plan_witness_count"] == 1
     assert witnesses[0].certificate_id == certificate.certificate_id
     assert witnesses[0].detail["cause"] == "plan_terminal_certificate_issued"
+
+
+def test_plan_terminal_certificate() -> None:
+    plan, execution, ledger, certificate = _certified_two_step_plan_fixture()
+
+    assert execution.succeeded is True
+    assert certificate.certificate_id.startswith("plan-cert-")
+    assert certificate.plan_id == plan.plan_id
+    assert certificate.tenant_id == "tenant-1"
+    assert certificate.identity_id == "identity-1"
+    assert certificate.disposition == "committed"
+    assert certificate.step_count == 2
+    assert certificate.step_command_ids == ("cmd-step-1", "cmd-step-2")
+    assert certificate.step_terminal_certificate_ids == ("terminal-step-1", "terminal-step-2")
+    assert certificate.evidence_hash == execution.evidence_hash
+    assert certificate.metadata["risk_tier"] == "medium"
+    assert certificate.metadata["approval_required"] is True
+    assert certificate.metadata["evidence_required"] == ("total_chunks_searched", "receipt_status")
+    assert ledger.certificate_for(plan.plan_id) == certificate
+
+
+def test_plan_evidence_bundle() -> None:
+    plan, execution, ledger, certificate = _certified_two_step_plan_fixture()
+    witness = ledger.witnesses_for(plan.plan_id)[0]
+    attempt = ledger.record_recovery_attempt(
+        plan_id=plan.plan_id,
+        recovery_action="operator_review",
+        status="succeeded",
+        reason="post_closure_evidence_reviewed",
+        witness_id=witness.witness_id,
+        terminal_certificate_id=certificate.certificate_id,
+        detail={"review_id": "review-1"},
+    )
+
+    bundle = ledger.export_evidence_bundle(plan_id=plan.plan_id)
+
+    assert bundle.bundle_id.startswith("plan-evidence-bundle-")
+    assert bundle.bundle_hash
+    assert bundle.plan_id == plan.plan_id
+    assert bundle.certificate_id == certificate.certificate_id
+    assert bundle.disposition == "committed"
+    assert bundle.step_count == 2
+    assert bundle.step_command_ids == certificate.step_command_ids
+    assert bundle.step_terminal_certificate_ids == certificate.step_terminal_certificate_ids
+    assert bundle.plan_evidence_hash == execution.evidence_hash
+    assert bundle.witness_ids == (witness.witness_id,)
+    assert bundle.recovery_attempt_ids == (attempt.attempt_id,)
+    assert f"plan_terminal_certificate:{certificate.certificate_id}" in bundle.evidence_refs
+    assert f"plan_evidence_hash:{execution.evidence_hash}" in bundle.evidence_refs
+    assert "step_command:cmd-step-1" in bundle.evidence_refs
+    assert "step_terminal_certificate:terminal-step-2" in bundle.evidence_refs
+    assert f"plan_witness:{witness.witness_id}" in bundle.evidence_refs
+    assert f"plan_recovery_attempt:{attempt.attempt_id}" in bundle.evidence_refs
+
+
+def test_plan_witnesses() -> None:
+    plan, _, ledger, certificate = _certified_two_step_plan_fixture()
+    failed_plan = one_step_plan(
+        capability_id="creative.data_analyze",
+        params={"csv": "a,b\n1,2\n"},
+        tenant_id="tenant-1",
+        identity_id="identity-1",
+        goal="analyze",
+    )
+    failed_execution = CapabilityPlanExecutor(
+        lambda step, completed: CapabilityPlanStepResult(
+            step_id=step.step_id,
+            capability_id=step.capability_id,
+            succeeded=False,
+            command_id="cmd-failed",
+            error="reconciliation_failed",
+        )
+    ).execute(failed_plan)
+
+    failure_witness = ledger.record_failure(plan=failed_plan, execution=failed_execution)
+    witnesses = ledger.witnesses_for()
+    success_witness = ledger.witnesses_for(plan.plan_id)[0]
+    read_model = ledger.read_model()
+
+    assert len(witnesses) == 2
+    assert success_witness.plan_id == plan.plan_id
+    assert success_witness.succeeded is True
+    assert success_witness.certificate_id == certificate.certificate_id
+    assert success_witness.detail["cause"] == "plan_terminal_certificate_issued"
+    assert failure_witness.plan_id == failed_plan.plan_id
+    assert failure_witness.succeeded is False
+    assert failure_witness.certificate_id == ""
+    assert failure_witness.detail["cause"] == "plan_execution_failed"
+    assert failure_witness.detail["recovery_decision"]["recovery_action"] == "retry_or_review"
+    assert read_model["plan_witness_count"] == 2
+    assert read_model["failed_plan_witness_count"] == 1
+
+
+def test_plan_recovery_attempts() -> None:
+    ledger = CapabilityPlanLedger(clock=lambda: "2026-04-29T12:00:00+00:00")
+
+    blocked_attempt = ledger.record_recovery_attempt(
+        plan_id="plan-1",
+        recovery_action="wait_for_approval",
+        status="blocked",
+        reason="approval_wait_command_not_terminal",
+        witness_id="plan-witness-1",
+        detail={"command_id": "cmd-1"},
+    )
+    succeeded_attempt = ledger.record_recovery_attempt(
+        plan_id="plan-1",
+        recovery_action="wait_for_approval",
+        status="succeeded",
+        reason="plan_recovered",
+        witness_id="plan-witness-1",
+        terminal_certificate_id="plan-cert-1",
+        detail={"command_id": "cmd-1"},
+    )
+    read_model = ledger.read_model()
+    filtered = ledger.read_model(recovery_attempt_status="blocked")
+
+    assert blocked_attempt.attempt_id.startswith("plan-recovery-attempt-")
+    assert blocked_attempt.plan_id == "plan-1"
+    assert blocked_attempt.status == "blocked"
+    assert blocked_attempt.witness_id == "plan-witness-1"
+    assert succeeded_attempt.terminal_certificate_id == "plan-cert-1"
+    assert ledger.recovery_attempts_for("plan-1") == (blocked_attempt, succeeded_attempt)
+    assert read_model["recovery_attempt_count"] == 2
+    assert read_model["recovery_attempt_status_counts"] == {"blocked": 1, "succeeded": 1}
+    assert filtered["recovery_attempt_status_filter"] == "blocked"
+    assert len(filtered["recovery_attempts"]) == 1
+    assert filtered["recovery_attempts"][0]["attempt_id"] == blocked_attempt.attempt_id
 
 
 def test_plan_ledger_rejects_missing_evidence_bundle() -> None:

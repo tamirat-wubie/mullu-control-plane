@@ -150,8 +150,8 @@ Witness integrity audit:
 | Metric | Count |
 |---|---:|
 | Runtime witness labels | 1047 |
-| Exact test anchors | 683 |
-| Unanchored witness labels | 364 |
+| Exact test anchors | 687 |
+| Unanchored witness labels | 360 |
 
 Evidence quality gaps:
 none
@@ -212,7 +212,6 @@ Witness integrity gaps:
 | `temporal_recurrence_window` | 2 | 8 | runtime_clock_owns_recurrence_window_time, tenant_timezone_preserved_across_dst, candidate_must_match_next_occurrence, future_candidate_defers_dispatch, completed_series_blocks_dispatch, monthly_end_of_month_clamped, temporal_recurrence_window_receipt_schema_valid, receipt_not_terminal_closure |
 | `temporal_memory_refresh` | 1 | 6 | usable_memory_does_not_create_refresh_task, evidence_type_coverage_gates_review_readiness, invalid_refresh_policy_blocks_task_creation, superseded_memory_blocks_reactivation, temporal_memory_refresh_receipt_schema_valid, receipt_not_terminal_closure |
 | `policy_proof_report` | 0 | 6 | bounded_policy_cases_required, empty_invariants_rejected, counterexamples_are_concrete, proved_report_has_no_counterexamples, policy_weakening_forbidden, policy_proof_schema_valid |
-| `capability_plan_evidence_bundle` | 0 | 4 | plan_terminal_certificate, plan_evidence_bundle, plan_witnesses, plan_recovery_attempts |
 
 Resolved closure actions:
 
@@ -334,5 +333,5 @@ none
 STATUS:
   Completeness: 100%
   Invariants verified: route declarations, route-level coverage classification, coverage levels, coverage states, closure action mapping, schema contract validation, deployment orchestration receipt schema contract
-  Open issues: 364 runtime-witness labels lack exact test-function anchors
+  Open issues: 360 runtime-witness labels lack exact test-function anchors
   Next action: bind unanchored runtime-witness labels to exact test-function anchors

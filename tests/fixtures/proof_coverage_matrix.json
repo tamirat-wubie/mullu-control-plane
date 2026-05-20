@@ -7454,7 +7454,7 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 683,
+    "exact_test_anchor_count": 687,
     "runtime_witness_count": 1047,
     "surfaces": [
       {
@@ -12620,17 +12620,37 @@
         "unanchored_witnesses": []
       },
       {
-        "anchored_witnesses": [],
-        "exact_test_anchor_count": 0,
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "tests/test_gateway/test_plan.py::test_plan_terminal_certificate"
+            ],
+            "witness": "plan_terminal_certificate"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_plan.py::test_plan_evidence_bundle"
+            ],
+            "witness": "plan_evidence_bundle"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_plan.py::test_plan_witnesses"
+            ],
+            "witness": "plan_witnesses"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_plan.py::test_plan_recovery_attempts"
+            ],
+            "witness": "plan_recovery_attempts"
+          }
+        ],
+        "exact_test_anchor_count": 4,
         "runtime_witness_count": 4,
         "surface_id": "capability_plan_evidence_bundle",
-        "unanchored_witness_count": 4,
-        "unanchored_witnesses": [
-          "plan_terminal_certificate",
-          "plan_evidence_bundle",
-          "plan_witnesses",
-          "plan_recovery_attempts"
-        ]
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
       },
       {
         "anchored_witnesses": [
@@ -13063,6 +13083,6 @@
         "unanchored_witnesses": []
       }
     ],
-    "unanchored_witness_count": 364
+    "unanchored_witness_count": 360
   }
 }

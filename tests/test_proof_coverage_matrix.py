@@ -157,6 +157,8 @@ def test_witness_integrity_report_tracks_exact_test_anchors() -> None:
     assert surfaces["gateway_capability_fabric"]["exact_test_anchor_count"] == 13
     assert surfaces["capability_worker_execution"]["unanchored_witness_count"] == 0
     assert surfaces["capability_worker_execution"]["exact_test_anchor_count"] == 7
+    assert surfaces["capability_plan_evidence_bundle"]["unanchored_witness_count"] == 0
+    assert surfaces["capability_plan_evidence_bundle"]["exact_test_anchor_count"] == 4
     assert surfaces["llm_completion"]["unanchored_witness_count"] == 0
     assert surfaces["llm_completion"]["exact_test_anchor_count"] == 7
     assert surfaces["llm_chat_workflow"]["unanchored_witness_count"] == 0
@@ -1537,6 +1539,7 @@ def test_capability_plan_evidence_bundle_surface_is_witnessed() -> None:
     plan_surface = surfaces["capability_plan_evidence_bundle"]
     conformance_surface = surfaces["runtime_conformance_attestation"]
     closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    witnesses = set(plan_surface["runtime_witnesses"])
 
     assert plan_surface["coverage_state"] == "witnessed"
     assert plan_surface["request_proof"] == "request_proof"
@@ -1544,7 +1547,10 @@ def test_capability_plan_evidence_bundle_surface_is_witnessed() -> None:
     assert "/capability-plans/{plan_id}/closure" in plan_surface["representative_paths"]
     assert "gateway/plan_ledger.py" in plan_surface["evidence_files"]
     assert "tests/test_gateway/test_plan.py" in plan_surface["evidence_files"]
-    assert "plan_evidence_bundle" in plan_surface["runtime_witnesses"]
+    assert "plan_terminal_certificate" in witnesses
+    assert "plan_evidence_bundle" in witnesses
+    assert "plan_witnesses" in witnesses
+    assert "plan_recovery_attempts" in witnesses
     assert "runtime_conformance_witnesses_capability_plan_bundle" in conformance_surface["runtime_witnesses"]
     assert "physical_worker_canary_blocks_missing_receipt_and_allows_sandbox_replay" in conformance_surface["runtime_witnesses"]
     assert "physical_worker_canary_evidence_and_hash_are_stable" in conformance_surface["runtime_witnesses"]
