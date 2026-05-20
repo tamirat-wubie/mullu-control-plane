@@ -6287,6 +6287,38 @@
         "TemporalResolutionReceipt"
       ],
       "request_proof": "request_proof",
+      "runtime_witness_anchor_aliases": {
+        "ambiguous_high_risk_phrase_requires_clarification": [
+          "temporal_resolution_high_risk_ambiguous_tomorrow_requires_clarification"
+        ],
+        "ambiguous_low_risk_phrase_uses_safe_default": [
+          "temporal_resolution_low_risk_ambiguous_tomorrow_uses_safe_default"
+        ],
+        "business_day_resolution_skips_weekends_and_holidays": [
+          "temporal_resolution_business_days_skip_weekend_and_holiday"
+        ],
+        "original_text_preserved": [
+          "temporal_resolution_resolves_tomorrow_explicit_time_in_tenant_timezone"
+        ],
+        "receipt_not_terminal_closure": [
+          "temporal_resolution_resolves_relative_duration_from_runtime_now"
+        ],
+        "relative_duration_resolved_from_injected_now": [
+          "temporal_resolution_resolves_relative_duration_from_runtime_now"
+        ],
+        "runtime_clock_owns_phrase_resolution": [
+          "temporal_resolution_resolves_relative_duration_from_runtime_now"
+        ],
+        "temporal_resolution_receipt_schema_valid": [
+          "temporal_resolution_resolves_relative_duration_from_runtime_now"
+        ],
+        "tenant_timezone_controls_local_resolution": [
+          "temporal_resolution_resolves_tomorrow_explicit_time_in_tenant_timezone"
+        ],
+        "unsupported_phrase_fails_closed": [
+          "temporal_resolution_unsupported_phrase_fails_closed"
+        ]
+      },
       "runtime_witnesses": [
         "runtime_clock_owns_phrase_resolution",
         "original_text_preserved",
@@ -7311,7 +7343,7 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 638,
+    "exact_test_anchor_count": 648,
     "runtime_witness_count": 1042,
     "surfaces": [
       {
@@ -11594,23 +11626,73 @@
         ]
       },
       {
-        "anchored_witnesses": [],
-        "exact_test_anchor_count": 0,
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_resolution.py::test_temporal_resolution_resolves_relative_duration_from_runtime_now"
+            ],
+            "witness": "runtime_clock_owns_phrase_resolution"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_resolution.py::test_temporal_resolution_resolves_tomorrow_explicit_time_in_tenant_timezone"
+            ],
+            "witness": "original_text_preserved"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_resolution.py::test_temporal_resolution_resolves_tomorrow_explicit_time_in_tenant_timezone"
+            ],
+            "witness": "tenant_timezone_controls_local_resolution"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_resolution.py::test_temporal_resolution_resolves_relative_duration_from_runtime_now"
+            ],
+            "witness": "relative_duration_resolved_from_injected_now"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_resolution.py::test_temporal_resolution_low_risk_ambiguous_tomorrow_uses_safe_default"
+            ],
+            "witness": "ambiguous_low_risk_phrase_uses_safe_default"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_resolution.py::test_temporal_resolution_high_risk_ambiguous_tomorrow_requires_clarification"
+            ],
+            "witness": "ambiguous_high_risk_phrase_requires_clarification"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_resolution.py::test_temporal_resolution_business_days_skip_weekend_and_holiday"
+            ],
+            "witness": "business_day_resolution_skips_weekends_and_holidays"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_resolution.py::test_temporal_resolution_unsupported_phrase_fails_closed"
+            ],
+            "witness": "unsupported_phrase_fails_closed"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_resolution.py::test_temporal_resolution_resolves_relative_duration_from_runtime_now"
+            ],
+            "witness": "temporal_resolution_receipt_schema_valid"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_resolution.py::test_temporal_resolution_resolves_relative_duration_from_runtime_now"
+            ],
+            "witness": "receipt_not_terminal_closure"
+          }
+        ],
+        "exact_test_anchor_count": 10,
         "runtime_witness_count": 10,
         "surface_id": "temporal_resolution",
-        "unanchored_witness_count": 10,
-        "unanchored_witnesses": [
-          "runtime_clock_owns_phrase_resolution",
-          "original_text_preserved",
-          "tenant_timezone_controls_local_resolution",
-          "relative_duration_resolved_from_injected_now",
-          "ambiguous_low_risk_phrase_uses_safe_default",
-          "ambiguous_high_risk_phrase_requires_clarification",
-          "business_day_resolution_skips_weekends_and_holidays",
-          "unsupported_phrase_fails_closed",
-          "temporal_resolution_receipt_schema_valid",
-          "receipt_not_terminal_closure"
-        ]
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
       },
       {
         "anchored_witnesses": [
@@ -12683,6 +12765,6 @@
         "unanchored_witnesses": []
       }
     ],
-    "unanchored_witness_count": 404
+    "unanchored_witness_count": 394
   }
 }

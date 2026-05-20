@@ -181,6 +181,62 @@ def test_dispatch_deployment_witness_uses_repository_variables(tmp_path: Path) -
     assert "expected_environment=production" in workflow_run_command
 
 
+def test_dispatch_deployment_witness_passes_governed_swarm_production_inputs(
+    tmp_path: Path,
+) -> None:
+    runner = FakeRunner()
+
+    result = dispatch_deployment_witness(
+        gateway_url="https://gateway.example.com",
+        expected_environment="production",
+        operator_approval_ref="approval://deployment/publication/001",
+        governed_swarm_pilot_readiness_path="evidence/pilot-readiness.json",
+        download_dir=tmp_path / "artifact",
+        poll_seconds=1,
+        runner=runner,
+    )
+
+    workflow_run_command = next(
+        command for command in runner.commands if command[:3] == ["gh", "workflow", "run"]
+    )
+    download_commands = [
+        command for command in runner.commands if command[:3] == ["gh", "run", "download"]
+    ]
+    assert result.conclusion == "success"
+    assert "expected_environment=production" in workflow_run_command
+    assert "operator_approval_ref=approval://deployment/publication/001" in workflow_run_command
+    assert "governed_swarm_pilot_readiness_path=evidence/pilot-readiness.json" in workflow_run_command
+    assert len(download_commands) == 2
+    assert "deployment-witness" in download_commands[0]
+    assert "governed-swarm-production-readiness" in download_commands[1]
+
+
+def test_dispatch_deployment_witness_omits_governed_swarm_inputs_without_approval(
+    tmp_path: Path,
+) -> None:
+    runner = FakeRunner()
+
+    result = dispatch_deployment_witness(
+        gateway_url="https://gateway.example.com",
+        expected_environment="production",
+        download_dir=tmp_path / "artifact",
+        poll_seconds=1,
+        runner=runner,
+    )
+
+    workflow_run_command = next(
+        command for command in runner.commands if command[:3] == ["gh", "workflow", "run"]
+    )
+    download_commands = [
+        command for command in runner.commands if command[:3] == ["gh", "run", "download"]
+    ]
+    assert result.conclusion == "success"
+    assert not any("operator_approval_ref=" in token for token in workflow_run_command)
+    assert not any("governed_swarm_pilot_readiness_path=" in token for token in workflow_run_command)
+    assert len(download_commands) == 1
+    assert "deployment-witness" in download_commands[0]
+
+
 def test_dispatch_deployment_witness_fails_before_dispatch_without_secret(tmp_path: Path) -> None:
     runner = FakeRunner(secret_present=False)
 

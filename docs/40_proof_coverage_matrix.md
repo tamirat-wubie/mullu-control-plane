@@ -150,8 +150,8 @@ Witness integrity audit:
 | Metric | Count |
 |---|---:|
 | Runtime witness labels | 1042 |
-| Exact test anchors | 638 |
-| Unanchored witness labels | 404 |
+| Exact test anchors | 648 |
+| Unanchored witness labels | 394 |
 
 Evidence quality gaps:
 none
@@ -199,7 +199,6 @@ Witness integrity gaps:
 | `workflow_mining` | 0 | 6 | repeated_trace_pattern_required, workflow_draft_activation_blocked, operator_review_required, sandbox_replay_required, risky_pattern_requires_approval_rules, workflow_mining_report_schema_valid |
 | `domain_operating_pack` | 0 | 5 | builtin_domain_pack_catalog_complete, finance_ops_pack_declares_governed_artifacts, high_risk_pack_requires_approval_roles, certified_pack_requires_evidence_refs, domain_operating_pack_schema_valid |
 | `temporal_evidence_freshness` | 0 | 8 | evidence_age_computed_from_runtime_clock, freshness_window_required_for_dispatch, stale_required_evidence_triggers_refresh, missing_required_evidence_blocks_dispatch, revoked_or_unverified_high_risk_evidence_blocks, expiring_evidence_warns_before_dispatch, temporal_evidence_freshness_receipt_schema_valid, receipt_not_terminal_closure |
-| `temporal_resolution` | 0 | 10 | runtime_clock_owns_phrase_resolution, original_text_preserved, tenant_timezone_controls_local_resolution, relative_duration_resolved_from_injected_now, ambiguous_low_risk_phrase_uses_safe_default, ambiguous_high_risk_phrase_requires_clarification, business_day_resolution_skips_weekends_and_holidays, unsupported_phrase_fails_closed, temporal_resolution_receipt_schema_valid, receipt_not_terminal_closure |
 | `temporal_reapproval` | 0 | 8 | runtime_clock_owns_reapproval_time, high_risk_approval_roles_required, expired_approval_requires_reapproval, revoked_or_out_of_scope_approval_blocks_dispatch, missing_approval_role_requires_reapproval, low_risk_action_does_not_require_reapproval, temporal_reapproval_receipt_schema_valid, receipt_not_terminal_closure |
 | `temporal_dispatch_window` | 0 | 9 | runtime_clock_owns_dispatch_window_time, tenant_timezone_resolved, allowed_window_required_for_high_risk_dispatch, outside_allowed_window_defers_dispatch, active_blackout_defers_dispatch, holiday_closure_defers_dispatch, source_reapproval_bound_for_high_risk_dispatch, temporal_dispatch_window_receipt_schema_valid, receipt_not_terminal_closure |
 | `temporal_budget_window` | 0 | 9 | runtime_clock_owns_budget_window_time, tenant_timezone_resolves_budget_period, daily_weekly_monthly_budget_resets_computed, spend_snapshot_period_matches_active_window, projected_spend_blocks_over_limit_dispatch, future_budget_window_defers_dispatch, source_reapproval_bound_for_high_risk_budget_window, temporal_budget_window_receipt_schema_valid, receipt_not_terminal_closure |
@@ -338,5 +337,5 @@ none
 STATUS:
   Completeness: 100%
   Invariants verified: route declarations, route-level coverage classification, coverage levels, coverage states, closure action mapping, schema contract validation, deployment orchestration receipt schema contract
-  Open issues: 404 runtime-witness labels lack exact test-function anchors
+  Open issues: 394 runtime-witness labels lack exact test-function anchors
   Next action: bind unanchored runtime-witness labels to exact test-function anchors
