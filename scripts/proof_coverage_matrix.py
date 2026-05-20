@@ -4640,11 +4640,53 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "end_to_end_consent_chain",
             ],
         ),
+        _surface(
+            "operational_math_loop",
+            [
+                "OperationalMathLoopEngine.apply_all",
+                "mcoi_runtime.app.operational_math_cli",
+                "mcoi_runtime.app.operational_math_observability",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "docs/operational_math_loop.md",
+                "mcoi/mcoi_runtime/contracts/operational_math.py",
+                "mcoi/mcoi_runtime/core/operational_math_loop.py",
+                "mcoi/mcoi_runtime/app/operational_math_cli.py",
+                "mcoi/mcoi_runtime/app/operational_math_observability.py",
+                "mcoi/tests/test_operational_math_loop.py",
+                "mcoi/tests/test_operational_math_cli.py",
+                "mcoi/tests/test_operational_math_observability.py",
+            ],
+            (
+                "Operational math converts the F1-F10 audit into bounded roles, "
+                "controls, proof references, event-spine records, JSON receipts, "
+                "and dashboard-safe operator review projections without silent "
+                "completion when unresolved principles remain."
+            ),
+            [
+                "operational_math_loop_applies_all_audit_principles",
+                "operational_math_loop_stops_at_iteration_budget_with_open_gaps",
+                "operational_math_cli_emits_saturated_receipt",
+                "operational_math_cli_reports_bounded_incomplete_receipt",
+                "operational_math_cli_writes_dashboard_projection",
+                "summary_marks_incomplete_receipt_for_review",
+                "registers_operational_math_observability_source",
+            ],
+        ),
     ]
     closure_actions = [
         {
             "action_id": "bind_tool_arguments_to_capability_policy_receipts",
             "surfaces": ["tool_invocation", "gateway_capability_fabric"],
+            "status": "closed",
+        },
+        {
+            "action_id": "anchor_operational_math_loop_receipts_and_projection",
+            "surfaces": ["operational_math_loop"],
             "status": "closed",
         },
         {

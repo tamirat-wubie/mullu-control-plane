@@ -9,6 +9,13 @@
       ]
     },
     {
+      "action_id": "anchor_operational_math_loop_receipts_and_projection",
+      "status": "closed",
+      "surfaces": [
+        "operational_math_loop"
+      ]
+    },
+    {
       "action_id": "bind_mcp_capabilities_to_authority_obligation_records",
       "status": "closed",
       "surfaces": [
@@ -797,7 +804,7 @@
   ],
   "coverage_summary": {
     "by_action_proof": {
-      "action_proof": 98,
+      "action_proof": 99,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 16,
@@ -805,7 +812,7 @@
     },
     "by_audit": {
       "action_proof": 0,
-      "audit_chain": 112,
+      "audit_chain": 113,
       "gap": 0,
       "read_model": 4,
       "request_proof": 0
@@ -813,21 +820,21 @@
     "by_coverage_state": {
       "proven": 1,
       "unproven": 0,
-      "witnessed": 115
+      "witnessed": 116
     },
     "by_request_proof": {
       "action_proof": 1,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 18,
-      "request_proof": 97
+      "request_proof": 98
     },
-    "surface_count": 116
+    "surface_count": 117
   },
   "evidence_quality": {
     "by_strength": {
       "classified_with_quality_gaps": 0,
-      "strong": 116,
+      "strong": 117,
       "unproven": 0
     },
     "quality_gap_count": 0,
@@ -7269,11 +7276,43 @@
         "end_to_end_consent_chain"
       ],
       "surface_id": "god_mode_lifecycle"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "docs/operational_math_loop.md",
+        "mcoi/mcoi_runtime/contracts/operational_math.py",
+        "mcoi/mcoi_runtime/core/operational_math_loop.py",
+        "mcoi/mcoi_runtime/app/operational_math_cli.py",
+        "mcoi/mcoi_runtime/app/operational_math_observability.py",
+        "mcoi/tests/test_operational_math_loop.py",
+        "mcoi/tests/test_operational_math_cli.py",
+        "mcoi/tests/test_operational_math_observability.py"
+      ],
+      "notes": "Operational math converts the F1-F10 audit into bounded roles, controls, proof references, event-spine records, JSON receipts, and dashboard-safe operator review projections without silent completion when unresolved principles remain.",
+      "representative_paths": [
+        "OperationalMathLoopEngine.apply_all",
+        "mcoi_runtime.app.operational_math_cli",
+        "mcoi_runtime.app.operational_math_observability"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "operational_math_loop_applies_all_audit_principles",
+        "operational_math_loop_stops_at_iteration_budget_with_open_gaps",
+        "operational_math_cli_emits_saturated_receipt",
+        "operational_math_cli_reports_bounded_incomplete_receipt",
+        "operational_math_cli_writes_dashboard_projection",
+        "summary_marks_incomplete_receipt_for_review",
+        "registers_operational_math_observability_source"
+      ],
+      "surface_id": "operational_math_loop"
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 631,
-    "runtime_witness_count": 1035,
+    "exact_test_anchor_count": 638,
+    "runtime_witness_count": 1042,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -12589,6 +12628,57 @@
         "exact_test_anchor_count": 14,
         "runtime_witness_count": 14,
         "surface_id": "god_mode_lifecycle",
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
+      },
+      {
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "mcoi/tests/test_operational_math_loop.py::test_operational_math_loop_applies_all_audit_principles"
+            ],
+            "witness": "operational_math_loop_applies_all_audit_principles"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_operational_math_loop.py::test_operational_math_loop_stops_at_iteration_budget_with_open_gaps"
+            ],
+            "witness": "operational_math_loop_stops_at_iteration_budget_with_open_gaps"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_operational_math_cli.py::test_operational_math_cli_emits_saturated_receipt"
+            ],
+            "witness": "operational_math_cli_emits_saturated_receipt"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_operational_math_cli.py::test_operational_math_cli_reports_bounded_incomplete_receipt"
+            ],
+            "witness": "operational_math_cli_reports_bounded_incomplete_receipt"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_operational_math_cli.py::test_operational_math_cli_writes_dashboard_projection"
+            ],
+            "witness": "operational_math_cli_writes_dashboard_projection"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_operational_math_observability.py::test_summary_marks_incomplete_receipt_for_review"
+            ],
+            "witness": "summary_marks_incomplete_receipt_for_review"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_operational_math_observability.py::test_registers_operational_math_observability_source"
+            ],
+            "witness": "registers_operational_math_observability_source"
+          }
+        ],
+        "exact_test_anchor_count": 7,
+        "runtime_witness_count": 7,
+        "surface_id": "operational_math_loop",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []
       }
