@@ -179,6 +179,8 @@ def test_witness_integrity_report_tracks_exact_test_anchors() -> None:
     assert surfaces["capability_forge"]["exact_test_anchor_count"] == 10
     assert surfaces["coordination_checkpoint_lifecycle"]["unanchored_witness_count"] == 0
     assert surfaces["coordination_checkpoint_lifecycle"]["exact_test_anchor_count"] == 10
+    assert surfaces["production_evidence_plane"]["unanchored_witness_count"] == 0
+    assert surfaces["production_evidence_plane"]["exact_test_anchor_count"] == 10
 
 
 def test_declared_routes_have_explicit_coverage_classification() -> None:

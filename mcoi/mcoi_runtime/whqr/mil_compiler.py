@@ -6,6 +6,8 @@ Invariants: compilation preserves policy status; generated instruction dependenc
 
 from __future__ import annotations
 
+from typing import Any, Mapping
+
 from mcoi_runtime.contracts.mil import MILInstruction, MILOpcode, MILProgram
 from mcoi_runtime.contracts.policy import PolicyDecision
 from mcoi_runtime.core.mil_static_verifier import MILStaticReport, verify_mil_program
@@ -19,6 +21,7 @@ def compile_mil_from_policy_decision(
     capability: str,
     issued_at: str,
     effect_subject: str | None = None,
+    extra_metadata: Mapping[str, Any] | None = None,
 ) -> MILProgram:
     if not isinstance(decision, PolicyDecision):
         raise ValueError("decision must be a PolicyDecision")
@@ -52,16 +55,19 @@ def compile_mil_from_policy_decision(
             depends_on=("verify-effect",),
         ),
     )
+    # Caller-supplied advisory metadata (e.g. complexity tier) is merged
+    # underneath the compiler-owned keys: base keys always win so the
+    # compiler/capability identity cannot be spoofed by the caller.
+    metadata: dict[str, Any] = dict(extra_metadata) if extra_metadata else {}
+    metadata["compiler"] = "whqr_policy_mil_compiler"
+    metadata["capability"] = capability
     return MILProgram(
         program_id,
         decision.goal_id,
         decision,
         instructions,
         issued_at,
-        metadata={
-            "compiler": "whqr_policy_mil_compiler",
-            "capability": capability,
-        },
+        metadata=metadata,
     )
 
 
@@ -88,6 +94,7 @@ def compile_mil_from_whqr_goal(
     *,
     issued_at: str,
     capability: str = "capability.pending",
+    extra_metadata: Mapping[str, Any] | None = None,
 ) -> MILProgram:
     if not compilation.ready_for_mil:
         raise ValueError(f"WHQR goal is not ready for MIL compilation: {compilation.next_step}")
@@ -97,4 +104,5 @@ def compile_mil_from_whqr_goal(
         capability=capability,
         issued_at=issued_at,
         effect_subject=compilation.goal.goal_id,
+        extra_metadata=extra_metadata,
     )
