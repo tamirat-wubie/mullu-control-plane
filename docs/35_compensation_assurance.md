@@ -1,5 +1,10 @@
 # 35 - Compensation Assurance
 
+> **In one box:** How the system makes things right after something went
+> wrong — governed undo/repair, not silent patching. New here? →
+> [Plain-English Overview](explain/PLAIN_ENGLISH.md); unknown word? →
+> [Glossary](GLOSSARY.md). *(Doc type: Reference.)*
+
 ## Purpose
 
 Compensation assurance governs recovery actions after an original effect

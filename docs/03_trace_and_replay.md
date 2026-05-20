@@ -1,5 +1,11 @@
 # Trace and Replay
 
+> **In one box:** How every decision and action is recorded
+> ([trace](GLOSSARY.md#lineage)) and how that record can be safely re-run
+> ([replay](GLOSSARY.md#replay)). This is the "security camera + rewind button"
+> described in everyday words in the
+> [Plain-English Overview](explain/PLAIN_ENGLISH.md). *(Doc type: Reference.)*
+
 Trace is the causal record. Replay is a controlled reconstruction of that record.
 
 ## Trace rules

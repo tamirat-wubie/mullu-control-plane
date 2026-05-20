@@ -1,5 +1,10 @@
 # Federated Control Plane
 
+> **In one box:** How multiple regional Mullu instances share one signed
+> rulebook while still enforcing locally — enterprise/multi-region architecture.
+> New here? → [Plain-English Overview](explain/PLAIN_ENGLISH.md); unknown word?
+> → [Glossary](GLOSSARY.md). *(Doc type: Reference.)*
+
 Purpose: define the enterprise architecture for multi-region Mullusi instances that share a signed policy registry while enforcing locally.
 Governance scope: [OCE, RAG, CDCV, CQTE, UWMA]
 Dependencies: `mcoi_runtime.core.federated_control_plane`, policy version registry, region routing, data-governance residency constraints.

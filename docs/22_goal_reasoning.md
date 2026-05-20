@@ -1,5 +1,10 @@
 # 22 Goal Reasoning Layer
 
+> **In one box:** How a vague request ("handle the renewal") is broken down
+> into concrete, checkable steps *before* anything runs. New here? →
+> [Plain-English Overview](explain/PLAIN_ENGLISH.md); unknown word? →
+> [Glossary](GLOSSARY.md). *(Doc type: Reference.)*
+
 ## Purpose
 
 The goal reasoning layer decomposes ambiguous, high-level goals into concrete

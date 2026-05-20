@@ -1,5 +1,10 @@
 # Closure Learning Admission
 
+> **In one box:** The gate that decides which finished-and-proven outcomes are
+> allowed to become reusable lessons (pairs with
+> [05](05_learning_admission.md) and [36](36_closure_memory_promotion.md)). New
+> here? → [Plain-English Overview](explain/PLAIN_ENGLISH.md). *(Doc type: Reference.)*
+
 Closure learning admission is the bridge from terminal closure memory to reusable
 knowledge.
 

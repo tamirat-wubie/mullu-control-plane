@@ -1,5 +1,11 @@
 # Capability Planes
 
+> **In one box:** The system is divided into "planes" — bounded areas of
+> responsibility (governance, execution, and so on), each with strict edges it
+> must not cross. This page lists every plane and what each one may and may
+> *not* do. See [capability](GLOSSARY.md#capability--capability-plane) in the
+> Glossary for the one-sentence version. *(Doc type: Reference.)*
+
 Scope: all Mullu Platform modules. Each plane is a bounded domain of responsibility.
 
 A plane owns its artifacts, defines its inputs and outputs, and declares what it MUST NOT do. No plane may bypass another plane's contract boundaries.

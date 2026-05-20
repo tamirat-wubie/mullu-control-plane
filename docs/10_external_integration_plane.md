@@ -1,5 +1,11 @@
 # External Integration Plane (MXI)
 
+> **In one box:** The controlled doorway to systems *outside* Mullu
+> (third-party APIs and services). Anything crossing the platform boundary goes
+> through here so it stays governed. Brand new? → the jargon-free
+> [Plain-English Overview](explain/PLAIN_ENGLISH.md); unknown word? →
+> [Glossary](GLOSSARY.md). *(Doc type: Reference.)*
+
 Scope: all Mullu Platform modules that connect to systems outside the platform boundary.
 
 The External Integration Plane governs connections to APIs, SaaS services, databases, browsers, LLMs, and any other system outside the platform trust boundary. Every external interaction passes through this plane. No module may contact an external system directly.

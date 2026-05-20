@@ -1,5 +1,11 @@
 ﻿# Mullu Governance Protocol
 
+> **In one box:** The public, open *rules schema* anyone can read and validate
+> against, plus where the closed reference runtime boundary sits — "here is our
+> governance contract, in the open." New here? →
+> [Plain-English Overview](explain/PLAIN_ENGLISH.md); unknown word? →
+> [Glossary](GLOSSARY.md). *(Doc type: Reference.)*
+
 Purpose: define the public Mullu Governance Protocol open schema surface and closed reference runtime boundary.
 Governance scope: [OCE, RAG, CDCV, CQTE, UWMA]
 Dependencies: `schemas/mullu_governance_protocol.manifest.json`, `scripts/validate_protocol_manifest.py`, shared JSON schemas.

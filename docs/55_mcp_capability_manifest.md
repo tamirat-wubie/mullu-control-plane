@@ -1,5 +1,10 @@
 # MCP Capability Manifest
 
+> **In one box:** How external MCP tools are brought in as governed
+> [capabilities](GLOSSARY.md#capability--capability-plane) with certified
+> authority records — not just plugged in raw. New here? →
+> [Plain-English Overview](explain/PLAIN_ENGLISH.md). *(Doc type: Reference.)*
+
 Purpose: define the operator-facing contract for importing MCP tools into the
 gateway capability fabric with certified authority-obligation records.
 Governance scope: MCP capability certification, command admission, team

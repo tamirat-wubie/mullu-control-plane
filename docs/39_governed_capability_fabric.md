@@ -1,5 +1,10 @@
 # Governed Capability Fabric
 
+> **In one box:** The shared "plug" that turns any domain's work into a governed
+> [capability](GLOSSARY.md#capability--capability-plane) the platform can run
+> safely — the connector between domain packs and the governed core. New here?
+> → [Plain-English Overview](explain/PLAIN_ENGLISH.md). *(Doc type: Reference.)*
+
 Purpose: define the shared contract surface that turns domain work into governed capability execution.
 Governance scope: capability registry entries, domain capsules, capsule compiler inputs, authority, evidence, recovery, and obligation routing.
 Dependencies: `docs/06_capability_planes.md`, `docs/31_operational_graph.md`, `docs/37_terminal_closure_certificate.md`, `schemas/capability_registry_entry.schema.json`, and `schemas/domain_capsule.schema.json`.

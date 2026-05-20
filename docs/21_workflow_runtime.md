@@ -1,5 +1,10 @@
 # 21 - Cross-Plane Workflow Runtime
 
+> **In one box:** How several [skills](GLOSSARY.md#skill--skill-boundary) are
+> chained into one larger workflow that still passes every gate at every step.
+> New here? → [Plain-English Overview](explain/PLAIN_ENGLISH.md); unknown word?
+> → [Glossary](GLOSSARY.md). *(Doc type: Reference.)*
+
 ## Purpose
 
 The cross-plane workflow runtime composes skills across capability planes into

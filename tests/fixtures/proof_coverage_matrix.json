@@ -3140,6 +3140,45 @@
         "/api/v1/coordination/restore"
       ],
       "request_proof": "request_proof",
+      "runtime_witness_anchor_aliases": {
+        "coordination_checkpoint_audited": [
+          "checkpoint_appears_in_audit",
+          "restore_appears_in_audit"
+        ],
+        "coordination_checkpoint_lease_bound": [
+          "expired_lease_rejected"
+        ],
+        "coordination_checkpoint_save_governed": [
+          "save_checkpoint",
+          "save_restore_round_trip"
+        ],
+        "coordination_policy_drift_requires_review": [
+          "policy_pack_drift_needs_review"
+        ],
+        "coordination_restore_load_governed": [
+          "restore_checkpoint",
+          "save_restore_round_trip"
+        ],
+        "coordination_restore_missing_bounded": [
+          "restore_missing_checkpoint_returns_404",
+          "restore_without_store_raises"
+        ],
+        "coordination_restore_missing_is_bounded": [
+          "restore_missing_checkpoint_returns_404",
+          "restore_without_store_raises"
+        ],
+        "coordination_restore_policy_checked": [
+          "policy_pack_drift_needs_review"
+        ],
+        "coordination_restore_resumes_checkpoint": [
+          "restore_checkpoint",
+          "idempotent_restore",
+          "empty_state_round_trip"
+        ],
+        "coordination_store_path_traversal_rejected": [
+          "path_traversal_blocked"
+        ]
+      },
       "runtime_witnesses": [
         "coordination_checkpoint_audited",
         "coordination_restore_load_governed",
@@ -4559,6 +4598,54 @@
         "/api/v1/mil-audit/runbooks/{runbook_id}"
       ],
       "request_proof": "request_proof",
+      "runtime_witness_anchor_aliases": {
+        "approval_required_before_activation": [
+          "activate_requires_approved",
+          "cannot_activate_candidate",
+          "approve_requires_candidate"
+        ],
+        "mil_audit_operator_checklist_validated": [
+          "validate_mil_audit_runbook_operator_checklist_accepts_example",
+          "validate_mil_audit_runbook_operator_checklist_rejects_missing_step"
+        ],
+        "mil_audit_replay_admits_runbook": [
+          "mil_audit_router_admits_replay_backed_runbook"
+        ],
+        "mil_audit_runbook_preflight_ready": [
+          "mil_audit_runbook_preflight_accepts_valid_local_state",
+          "mil_audit_runbook_preflight_blocks_missing_record"
+        ],
+        "patterns_detected_from_audit_trail": [
+          "analyze_detects_patterns",
+          "analyze_endpoint"
+        ],
+        "promote_and_approve_audit_records": [
+          "promote_creates_candidate",
+          "approve_requires_candidate"
+        ],
+        "promotion_requires_detected_pattern": [
+          "promote_creates_candidate",
+          "promote_unknown_pattern_raises"
+        ],
+        "retirement_requires_active_runbook": [
+          "cannot_retire_non_active_runbook",
+          "cannot_retire_already_retired_runbook",
+          "retire_endpoint_rejects_non_active_runbook"
+        ],
+        "runbook_pattern_read_models_bounded": [
+          "list_runbooks_endpoint",
+          "runbooks_summary_endpoint"
+        ],
+        "runbook_responses_governed": [
+          "list_runbooks_invalid_status_fails_closed",
+          "mil_audit_router_missing_store_fails_closed"
+        ],
+        "sanitized_runbook_error_details": [
+          "promote_endpoint_sanitizes_unknown_pattern",
+          "approve_endpoint_sanitizes_unknown_runbook",
+          "activate_endpoint_sanitizes_unknown_runbook"
+        ]
+      },
       "runtime_witnesses": [
         "patterns_detected_from_audit_trail",
         "promotion_requires_detected_pattern",
@@ -4995,6 +5082,43 @@
         "/proof/verify"
       ],
       "request_proof": "read_model",
+      "runtime_witness_anchor_aliases": {
+        "audit_verification_schema_valid": [
+          "audit_and_proof_verify_surface_anchor_gap"
+        ],
+        "capability_evidence_schema_valid": [
+          "capabilities_evidence_reports_disabled_registry"
+        ],
+        "deployment_collection_requires_production_evidence": [
+          "collect_deployment_witness_requires_production_evidence_plane"
+        ],
+        "gateway_health_schema_valid": [
+          "gateway_health_matches_public_schema"
+        ],
+        "live_physical_capability_requires_safety_evidence": [
+          "collect_deployment_witness_rejects_live_physical_capability_without_safety_evidence",
+          "physical_capability_policy_blocks_live_physical_without_safety_evidence",
+          "live_physical_capability_without_registry_safety_refs_remains_blocked"
+        ],
+        "live_physical_safety_evidence_derived_from_registry": [
+          "live_physical_capability_evidence_is_derived_from_registry_extension"
+        ],
+        "missing_production_evidence_fails_closed": [
+          "collect_deployment_witness_rejects_missing_production_evidence_secret",
+          "collect_deployment_witness_fails_closed_without_secret"
+        ],
+        "proof_verification_schema_valid": [
+          "audit_and_proof_verify_surface_anchor_gap"
+        ],
+        "sandbox_physical_capability_remains_non_production": [
+          "physical_capability_policy_allows_sandbox_only_physical_capability",
+          "collect_deployment_witness_allows_sandbox_physical_capability_without_live_claim"
+        ],
+        "signed_production_evidence_witness": [
+          "deployment_witness_is_signed_and_reports_missing_runtime_evidence",
+          "collect_deployment_witness_publishes_with_verified_signature"
+        ]
+      },
       "runtime_witnesses": [
         "gateway_health_schema_valid",
         "signed_production_evidence_witness",
@@ -5091,6 +5215,49 @@
         "/api/v1/simulate/summary"
       ],
       "request_proof": "request_proof",
+      "runtime_witness_anchor_aliases": {
+        "goal_plan_certificate_hash_bound": [
+          "goal_compiler_compiles_high_risk_payment_with_controls",
+          "goal_schema_accepts_compiled_goal_plan"
+        ],
+        "high_risk_controls_projected_before_execution": [
+          "causal_simulator_projects_high_risk_controls",
+          "goal_compiler_compiles_high_risk_payment_with_controls"
+        ],
+        "knowledge_contradiction_routes_governed": [
+          "contradiction_endpoints_emit_governed_read_model"
+        ],
+        "knowledge_entity_routes_governed": [
+          "add_entity_endpoint",
+          "query_entities_endpoint",
+          "query_entities_invalid_type_fails_closed_without_leakage"
+        ],
+        "knowledge_link_routes_governed": [
+          "add_link_endpoint"
+        ],
+        "knowledge_summary_route_bounded": [
+          "knowledge_summary_endpoint"
+        ],
+        "open_world_contradictions_block_execution": [
+          "causal_simulator_blocks_open_world_contradictions",
+          "world_state_contradiction_blocks_planning_and_execution_claims"
+        ],
+        "policy_simulation_history_summary_bounded": [
+          "simulation_history_endpoint",
+          "simulation_summary_endpoint",
+          "history_bounded"
+        ],
+        "policy_simulation_routes_governed": [
+          "simulate_endpoint"
+        ],
+        "simulation_receipt_schema_valid": [
+          "simulation_receipt_schema_accepts_dry_run_receipt"
+        ],
+        "world_assertions_require_source_evidence": [
+          "world_state_store_rejects_unsourced_assertion",
+          "world_state_schema_rejects_entity_without_evidence"
+        ]
+      },
       "runtime_witnesses": [
         "world_assertions_require_source_evidence",
         "knowledge_entity_routes_governed",
@@ -5125,6 +5292,44 @@
         "install_certification_handoff_evidence_batch"
       ],
       "request_proof": "request_proof",
+      "runtime_witness_anchor_aliases": {
+        "candidate_certification_handoff_emits_maturity_bundle": [
+          "capability_forge_builds_certification_handoff_for_maturity_synthesis"
+        ],
+        "candidate_promotion_blocked": [
+          "capability_forge_rejects_candidate_self_promotion",
+          "capability_candidate_schema_rejects_unblocked_candidate"
+        ],
+        "candidate_schema_valid": [
+          "capability_forge_creates_schema_valid_candidate_package"
+        ],
+        "certification_handoff_batch_preserves_capsule_admission_gate": [
+          "capability_forge_installs_handoff_evidence_batch_with_audit_hash",
+          "capability_forge_handoff_batch_rejects_coverage_drift",
+          "capability_forge_handoff_install_rejects_gate_bypasses"
+        ],
+        "certification_handoff_installs_evidence_without_maturity_claim": [
+          "capability_forge_installs_handoff_as_certification_evidence_only"
+        ],
+        "effect_bearing_candidate_requires_recovery_path": [
+          "capability_forge_rejects_effect_bearing_package_without_recovery"
+        ],
+        "effect_bearing_candidate_requires_sandbox": [
+          "capability_forge_certification_handoff_rejects_missing_required_refs",
+          "capability_forge_rejects_missing_required_eval"
+        ],
+        "high_risk_approval_policy_required": [
+          "capability_forge_projects_high_risk_controls",
+          "capability_forge_certification_handoff_rejects_missing_required_refs"
+        ],
+        "physical_candidate_declares_live_safety_evidence_requirements": [
+          "capability_forge_generates_physical_safety_evidence_requirements",
+          "capability_forge_rejects_physical_candidate_missing_safety_requirement"
+        ],
+        "physical_handoff_installs_live_safety_evidence": [
+          "capability_forge_installs_physical_safety_refs_from_handoff"
+        ]
+      },
       "runtime_witnesses": [
         "candidate_promotion_blocked",
         "candidate_schema_valid",
@@ -6314,6 +6519,45 @@
         "TemporalCredentialExpiryReceipt"
       ],
       "request_proof": "request_proof",
+      "runtime_witness_anchor_aliases": {
+        "credential_evidence_refs_required": [
+          "credential_expiry_blocks_wrong_scope_revoked_missing_evidence_and_sources"
+        ],
+        "expired_credentials_block_dispatch": [
+          "credential_expiry_blocks_expired_credential"
+        ],
+        "high_risk_source_receipts_bound": [
+          "credential_expiry_allows_high_risk_active_scoped_unexpired_credential",
+          "credential_expiry_blocks_wrong_scope_revoked_missing_evidence_and_sources"
+        ],
+        "provider_and_credential_scope_checked": [
+          "credential_expiry_blocks_wrong_scope_revoked_missing_evidence_and_sources"
+        ],
+        "receipt_not_terminal_closure": [
+          "credential_expiry_marks_low_risk_action_not_required",
+          "credential_expiry_allows_high_risk_active_scoped_unexpired_credential"
+        ],
+        "revoked_credentials_block_dispatch": [
+          "credential_expiry_blocks_wrong_scope_revoked_missing_evidence_and_sources"
+        ],
+        "rotation_overdue_blocks_dispatch": [
+          "credential_expiry_blocks_future_or_rotation_overdue_credential"
+        ],
+        "rotation_pending_warns_before_dispatch": [
+          "credential_expiry_marks_near_expiry_as_rotation_pending"
+        ],
+        "runtime_clock_owns_credential_expiry": [
+          "credential_expiry_allows_high_risk_active_scoped_unexpired_credential",
+          "credential_expiry_blocks_expired_credential"
+        ],
+        "secret_value_absence_verified": [
+          "credential_expiry_rejects_secret_material_in_metadata"
+        ],
+        "temporal_credential_expiry_receipt_schema_valid": [
+          "credential_expiry_allows_high_risk_active_scoped_unexpired_credential",
+          "credential_expiry_marks_low_risk_action_not_required"
+        ]
+      },
       "runtime_witnesses": [
         "runtime_clock_owns_credential_expiry",
         "expired_credentials_block_dispatch",
@@ -6345,6 +6589,46 @@
         "TemporalRetentionWindowReceipt"
       ],
       "request_proof": "request_proof",
+      "runtime_witness_anchor_aliases": {
+        "archive_and_anonymize_wait_for_retention_until": [
+          "retention_window_allows_archive_after_retention_until"
+        ],
+        "delete_before_delete_after_defers_action": [
+          "retention_window_defers_delete_before_delete_after"
+        ],
+        "high_risk_source_receipts_bound": [
+          "retention_window_allows_archive_after_retention_until",
+          "retention_window_blocks_legal_hold_wrong_tenant_missing_evidence_and_sources"
+        ],
+        "legal_hold_blocks_lifecycle_action": [
+          "retention_window_blocks_legal_hold_wrong_tenant_missing_evidence_and_sources"
+        ],
+        "overdue_retention_action_warns": [
+          "retention_window_marks_overdue_after_warning_window"
+        ],
+        "receipt_not_terminal_closure": [
+          "retention_window_marks_low_risk_action_not_required",
+          "retention_window_allows_delete_at_due_boundary"
+        ],
+        "retention_policy_ref_required": [
+          "retention_window_blocks_invalid_or_future_record",
+          "retention_window_blocks_legal_hold_wrong_tenant_missing_evidence_and_sources"
+        ],
+        "runtime_clock_owns_retention_timing": [
+          "retention_window_allows_delete_at_due_boundary",
+          "retention_window_blocks_invalid_or_future_record"
+        ],
+        "subject_evidence_refs_required": [
+          "retention_window_blocks_legal_hold_wrong_tenant_missing_evidence_and_sources"
+        ],
+        "temporal_retention_window_receipt_schema_valid": [
+          "retention_window_allows_delete_at_due_boundary",
+          "retention_window_marks_low_risk_action_not_required"
+        ],
+        "tenant_scope_checked": [
+          "retention_window_blocks_legal_hold_wrong_tenant_missing_evidence_and_sources"
+        ]
+      },
       "runtime_witnesses": [
         "runtime_clock_owns_retention_timing",
         "delete_before_delete_after_defers_action",
@@ -6956,7 +7240,7 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 547,
+    "exact_test_anchor_count": 621,
     "runtime_witness_count": 1035,
     "surfaces": [
       {
@@ -7706,23 +7990,80 @@
         "unanchored_witnesses": []
       },
       {
-        "anchored_witnesses": [],
-        "exact_test_anchor_count": 0,
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "mcoi/tests/test_coordination_http_endpoints.py::test_checkpoint_appears_in_audit",
+              "mcoi/tests/test_coordination_http_endpoints.py::test_restore_appears_in_audit"
+            ],
+            "witness": "coordination_checkpoint_audited"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_coordination_http_endpoints.py::test_restore_checkpoint",
+              "mcoi/tests/test_coordination_engine_persistence.py::test_save_restore_round_trip"
+            ],
+            "witness": "coordination_restore_load_governed"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_coordination_http_endpoints.py::test_restore_checkpoint",
+              "mcoi/tests/test_coordination_engine_persistence.py::test_idempotent_restore",
+              "mcoi/tests/test_coordination_engine_persistence.py::test_empty_state_round_trip"
+            ],
+            "witness": "coordination_restore_resumes_checkpoint"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_coordination_http_endpoints.py::test_save_checkpoint",
+              "mcoi/tests/test_coordination_engine_persistence.py::test_save_restore_round_trip"
+            ],
+            "witness": "coordination_checkpoint_save_governed"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_coordination_engine_persistence.py::test_expired_lease_rejected"
+            ],
+            "witness": "coordination_checkpoint_lease_bound"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_coordination_checkpoint_persistence.py::test_path_traversal_blocked"
+            ],
+            "witness": "coordination_store_path_traversal_rejected"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_coordination_engine_persistence.py::test_policy_pack_drift_needs_review"
+            ],
+            "witness": "coordination_restore_policy_checked"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_coordination_engine_persistence.py::test_policy_pack_drift_needs_review"
+            ],
+            "witness": "coordination_policy_drift_requires_review"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_coordination_http_endpoints.py::test_restore_missing_checkpoint_returns_404",
+              "mcoi/tests/test_coordination_engine_persistence.py::test_restore_without_store_raises"
+            ],
+            "witness": "coordination_restore_missing_bounded"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_coordination_http_endpoints.py::test_restore_missing_checkpoint_returns_404",
+              "mcoi/tests/test_coordination_engine_persistence.py::test_restore_without_store_raises"
+            ],
+            "witness": "coordination_restore_missing_is_bounded"
+          }
+        ],
+        "exact_test_anchor_count": 10,
         "runtime_witness_count": 10,
         "surface_id": "coordination_checkpoint_lifecycle",
-        "unanchored_witness_count": 10,
-        "unanchored_witnesses": [
-          "coordination_checkpoint_audited",
-          "coordination_restore_load_governed",
-          "coordination_restore_resumes_checkpoint",
-          "coordination_checkpoint_save_governed",
-          "coordination_checkpoint_lease_bound",
-          "coordination_store_path_traversal_rejected",
-          "coordination_restore_policy_checked",
-          "coordination_policy_drift_requires_review",
-          "coordination_restore_missing_bounded",
-          "coordination_restore_missing_is_bounded"
-        ]
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
       },
       {
         "anchored_witnesses": [
@@ -9295,24 +9636,92 @@
         ]
       },
       {
-        "anchored_witnesses": [],
-        "exact_test_anchor_count": 0,
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "mcoi/tests/test_runbook_learning.py::test_analyze_detects_patterns",
+              "mcoi/tests/test_runbook_learning.py::test_analyze_endpoint"
+            ],
+            "witness": "patterns_detected_from_audit_trail"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_runbook_learning.py::test_promote_creates_candidate",
+              "mcoi/tests/test_runbook_learning.py::test_promote_unknown_pattern_raises"
+            ],
+            "witness": "promotion_requires_detected_pattern"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_runbook_learning.py::test_activate_requires_approved",
+              "mcoi/tests/test_runbook_learning.py::test_cannot_activate_candidate",
+              "mcoi/tests/test_runbook_learning.py::test_approve_requires_candidate"
+            ],
+            "witness": "approval_required_before_activation"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_runbook_learning.py::test_cannot_retire_non_active_runbook",
+              "mcoi/tests/test_runbook_learning.py::test_cannot_retire_already_retired_runbook",
+              "mcoi/tests/test_runbook_learning.py::test_retire_endpoint_rejects_non_active_runbook"
+            ],
+            "witness": "retirement_requires_active_runbook"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_runbook_learning.py::test_promote_creates_candidate",
+              "mcoi/tests/test_runbook_learning.py::test_approve_requires_candidate"
+            ],
+            "witness": "promote_and_approve_audit_records"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_mil_audit_router.py::test_mil_audit_router_admits_replay_backed_runbook"
+            ],
+            "witness": "mil_audit_replay_admits_runbook"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_mil_audit_runbook_operator_checklist.py::test_validate_mil_audit_runbook_operator_checklist_accepts_example",
+              "tests/test_validate_mil_audit_runbook_operator_checklist.py::test_validate_mil_audit_runbook_operator_checklist_rejects_missing_step"
+            ],
+            "witness": "mil_audit_operator_checklist_validated"
+          },
+          {
+            "anchors": [
+              "tests/test_preflight_mil_audit_runbook_workflow.py::test_mil_audit_runbook_preflight_accepts_valid_local_state",
+              "tests/test_preflight_mil_audit_runbook_workflow.py::test_mil_audit_runbook_preflight_blocks_missing_record"
+            ],
+            "witness": "mil_audit_runbook_preflight_ready"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_runbook_learning.py::test_promote_endpoint_sanitizes_unknown_pattern",
+              "mcoi/tests/test_runbook_learning.py::test_approve_endpoint_sanitizes_unknown_runbook",
+              "mcoi/tests/test_runbook_learning.py::test_activate_endpoint_sanitizes_unknown_runbook"
+            ],
+            "witness": "sanitized_runbook_error_details"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_runbook_learning.py::test_list_runbooks_endpoint",
+              "mcoi/tests/test_runbook_learning.py::test_runbooks_summary_endpoint"
+            ],
+            "witness": "runbook_pattern_read_models_bounded"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_runbook_learning.py::test_list_runbooks_invalid_status_fails_closed",
+              "mcoi/tests/test_mil_audit_router.py::test_mil_audit_router_missing_store_fails_closed"
+            ],
+            "witness": "runbook_responses_governed"
+          }
+        ],
+        "exact_test_anchor_count": 11,
         "runtime_witness_count": 11,
         "surface_id": "runbook_learning_lifecycle",
-        "unanchored_witness_count": 11,
-        "unanchored_witnesses": [
-          "patterns_detected_from_audit_trail",
-          "promotion_requires_detected_pattern",
-          "approval_required_before_activation",
-          "retirement_requires_active_runbook",
-          "promote_and_approve_audit_records",
-          "mil_audit_replay_admits_runbook",
-          "mil_audit_operator_checklist_validated",
-          "mil_audit_runbook_preflight_ready",
-          "sanitized_runbook_error_details",
-          "runbook_pattern_read_models_bounded",
-          "runbook_responses_governed"
-        ]
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
       },
       {
         "anchored_witnesses": [],
@@ -9851,23 +10260,78 @@
         "unanchored_witnesses": []
       },
       {
-        "anchored_witnesses": [],
-        "exact_test_anchor_count": 0,
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "tests/test_gateway/test_production_evidence.py::test_gateway_health_matches_public_schema"
+            ],
+            "witness": "gateway_health_schema_valid"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_production_evidence.py::test_deployment_witness_is_signed_and_reports_missing_runtime_evidence",
+              "tests/test_collect_deployment_witness.py::test_collect_deployment_witness_publishes_with_verified_signature"
+            ],
+            "witness": "signed_production_evidence_witness"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_production_evidence.py::test_capabilities_evidence_reports_disabled_registry"
+            ],
+            "witness": "capability_evidence_schema_valid"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_production_evidence.py::test_audit_and_proof_verify_surface_anchor_gap"
+            ],
+            "witness": "audit_verification_schema_valid"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_production_evidence.py::test_audit_and_proof_verify_surface_anchor_gap"
+            ],
+            "witness": "proof_verification_schema_valid"
+          },
+          {
+            "anchors": [
+              "tests/test_collect_deployment_witness.py::test_collect_deployment_witness_requires_production_evidence_plane"
+            ],
+            "witness": "deployment_collection_requires_production_evidence"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_production_evidence.py::test_live_physical_capability_evidence_is_derived_from_registry_extension"
+            ],
+            "witness": "live_physical_safety_evidence_derived_from_registry"
+          },
+          {
+            "anchors": [
+              "tests/test_collect_deployment_witness.py::test_collect_deployment_witness_rejects_live_physical_capability_without_safety_evidence",
+              "tests/test_collect_deployment_witness.py::test_physical_capability_policy_blocks_live_physical_without_safety_evidence",
+              "tests/test_gateway/test_production_evidence.py::test_live_physical_capability_without_registry_safety_refs_remains_blocked"
+            ],
+            "witness": "live_physical_capability_requires_safety_evidence"
+          },
+          {
+            "anchors": [
+              "tests/test_collect_deployment_witness.py::test_physical_capability_policy_allows_sandbox_only_physical_capability",
+              "tests/test_collect_deployment_witness.py::test_collect_deployment_witness_allows_sandbox_physical_capability_without_live_claim"
+            ],
+            "witness": "sandbox_physical_capability_remains_non_production"
+          },
+          {
+            "anchors": [
+              "tests/test_collect_deployment_witness.py::test_collect_deployment_witness_rejects_missing_production_evidence_secret",
+              "tests/test_collect_deployment_witness.py::test_collect_deployment_witness_fails_closed_without_secret"
+            ],
+            "witness": "missing_production_evidence_fails_closed"
+          }
+        ],
+        "exact_test_anchor_count": 10,
         "runtime_witness_count": 10,
         "surface_id": "production_evidence_plane",
-        "unanchored_witness_count": 10,
-        "unanchored_witnesses": [
-          "gateway_health_schema_valid",
-          "signed_production_evidence_witness",
-          "capability_evidence_schema_valid",
-          "audit_verification_schema_valid",
-          "proof_verification_schema_valid",
-          "deployment_collection_requires_production_evidence",
-          "live_physical_safety_evidence_derived_from_registry",
-          "live_physical_capability_requires_safety_evidence",
-          "sandbox_physical_capability_remains_non_production",
-          "missing_production_evidence_fails_closed"
-        ]
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
       },
       {
         "anchored_witnesses": [],
@@ -9888,43 +10352,162 @@
         ]
       },
       {
-        "anchored_witnesses": [],
-        "exact_test_anchor_count": 0,
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "tests/test_gateway/test_world_state.py::test_world_state_store_rejects_unsourced_assertion",
+              "tests/test_gateway/test_world_state.py::test_world_state_schema_rejects_entity_without_evidence"
+            ],
+            "witness": "world_assertions_require_source_evidence"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_knowledge_graph.py::test_add_entity_endpoint",
+              "mcoi/tests/test_knowledge_graph.py::test_query_entities_endpoint",
+              "mcoi/tests/test_knowledge_graph.py::test_query_entities_invalid_type_fails_closed_without_leakage"
+            ],
+            "witness": "knowledge_entity_routes_governed"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_knowledge_graph.py::test_add_link_endpoint"
+            ],
+            "witness": "knowledge_link_routes_governed"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_knowledge_graph.py::test_contradiction_endpoints_emit_governed_read_model"
+            ],
+            "witness": "knowledge_contradiction_routes_governed"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_knowledge_graph.py::test_knowledge_summary_endpoint"
+            ],
+            "witness": "knowledge_summary_route_bounded"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_policy_sandbox.py::test_simulate_endpoint"
+            ],
+            "witness": "policy_simulation_routes_governed"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_policy_sandbox.py::test_simulation_history_endpoint",
+              "mcoi/tests/test_policy_sandbox.py::test_simulation_summary_endpoint",
+              "mcoi/tests/test_policy_sandbox.py::test_history_bounded"
+            ],
+            "witness": "policy_simulation_history_summary_bounded"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_goal_compiler.py::test_goal_compiler_compiles_high_risk_payment_with_controls",
+              "tests/test_gateway/test_goal_compiler.py::test_goal_schema_accepts_compiled_goal_plan"
+            ],
+            "witness": "goal_plan_certificate_hash_bound"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_causal_simulator.py::test_simulation_receipt_schema_accepts_dry_run_receipt"
+            ],
+            "witness": "simulation_receipt_schema_valid"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_causal_simulator.py::test_causal_simulator_blocks_open_world_contradictions",
+              "tests/test_gateway/test_world_state.py::test_world_state_contradiction_blocks_planning_and_execution_claims"
+            ],
+            "witness": "open_world_contradictions_block_execution"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_causal_simulator.py::test_causal_simulator_projects_high_risk_controls",
+              "tests/test_gateway/test_goal_compiler.py::test_goal_compiler_compiles_high_risk_payment_with_controls"
+            ],
+            "witness": "high_risk_controls_projected_before_execution"
+          }
+        ],
+        "exact_test_anchor_count": 11,
         "runtime_witness_count": 11,
         "surface_id": "governed_operational_intelligence",
-        "unanchored_witness_count": 11,
-        "unanchored_witnesses": [
-          "world_assertions_require_source_evidence",
-          "knowledge_entity_routes_governed",
-          "knowledge_link_routes_governed",
-          "knowledge_contradiction_routes_governed",
-          "knowledge_summary_route_bounded",
-          "policy_simulation_routes_governed",
-          "policy_simulation_history_summary_bounded",
-          "goal_plan_certificate_hash_bound",
-          "simulation_receipt_schema_valid",
-          "open_world_contradictions_block_execution",
-          "high_risk_controls_projected_before_execution"
-        ]
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
       },
       {
-        "anchored_witnesses": [],
-        "exact_test_anchor_count": 0,
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "tests/test_gateway/test_capability_forge.py::test_capability_forge_rejects_candidate_self_promotion",
+              "tests/test_gateway/test_capability_forge.py::test_capability_candidate_schema_rejects_unblocked_candidate"
+            ],
+            "witness": "candidate_promotion_blocked"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_capability_forge.py::test_capability_forge_creates_schema_valid_candidate_package"
+            ],
+            "witness": "candidate_schema_valid"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_capability_forge.py::test_capability_forge_builds_certification_handoff_for_maturity_synthesis"
+            ],
+            "witness": "candidate_certification_handoff_emits_maturity_bundle"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_capability_forge.py::test_capability_forge_installs_handoff_as_certification_evidence_only"
+            ],
+            "witness": "certification_handoff_installs_evidence_without_maturity_claim"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_capability_forge.py::test_capability_forge_installs_handoff_evidence_batch_with_audit_hash",
+              "tests/test_gateway/test_capability_forge.py::test_capability_forge_handoff_batch_rejects_coverage_drift",
+              "tests/test_gateway/test_capability_forge.py::test_capability_forge_handoff_install_rejects_gate_bypasses"
+            ],
+            "witness": "certification_handoff_batch_preserves_capsule_admission_gate"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_capability_forge.py::test_capability_forge_generates_physical_safety_evidence_requirements",
+              "tests/test_gateway/test_capability_forge.py::test_capability_forge_rejects_physical_candidate_missing_safety_requirement"
+            ],
+            "witness": "physical_candidate_declares_live_safety_evidence_requirements"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_capability_forge.py::test_capability_forge_installs_physical_safety_refs_from_handoff"
+            ],
+            "witness": "physical_handoff_installs_live_safety_evidence"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_capability_forge.py::test_capability_forge_projects_high_risk_controls",
+              "tests/test_gateway/test_capability_forge.py::test_capability_forge_certification_handoff_rejects_missing_required_refs"
+            ],
+            "witness": "high_risk_approval_policy_required"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_capability_forge.py::test_capability_forge_certification_handoff_rejects_missing_required_refs",
+              "tests/test_gateway/test_capability_forge.py::test_capability_forge_rejects_missing_required_eval"
+            ],
+            "witness": "effect_bearing_candidate_requires_sandbox"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_capability_forge.py::test_capability_forge_rejects_effect_bearing_package_without_recovery"
+            ],
+            "witness": "effect_bearing_candidate_requires_recovery_path"
+          }
+        ],
+        "exact_test_anchor_count": 10,
         "runtime_witness_count": 10,
         "surface_id": "capability_forge",
-        "unanchored_witness_count": 10,
-        "unanchored_witnesses": [
-          "candidate_promotion_blocked",
-          "candidate_schema_valid",
-          "candidate_certification_handoff_emits_maturity_bundle",
-          "certification_handoff_installs_evidence_without_maturity_claim",
-          "certification_handoff_batch_preserves_capsule_admission_gate",
-          "physical_candidate_declares_live_safety_evidence_requirements",
-          "physical_handoff_installs_live_safety_evidence",
-          "high_risk_approval_policy_required",
-          "effect_bearing_candidate_requires_sandbox",
-          "effect_bearing_candidate_requires_recovery_path"
-        ]
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
       },
       {
         "anchored_witnesses": [
@@ -11084,44 +11667,163 @@
         ]
       },
       {
-        "anchored_witnesses": [],
-        "exact_test_anchor_count": 0,
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_credential_expiry.py::test_credential_expiry_allows_high_risk_active_scoped_unexpired_credential",
+              "tests/test_gateway/test_temporal_credential_expiry.py::test_credential_expiry_blocks_expired_credential"
+            ],
+            "witness": "runtime_clock_owns_credential_expiry"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_credential_expiry.py::test_credential_expiry_blocks_expired_credential"
+            ],
+            "witness": "expired_credentials_block_dispatch"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_credential_expiry.py::test_credential_expiry_blocks_wrong_scope_revoked_missing_evidence_and_sources"
+            ],
+            "witness": "revoked_credentials_block_dispatch"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_credential_expiry.py::test_credential_expiry_blocks_wrong_scope_revoked_missing_evidence_and_sources"
+            ],
+            "witness": "provider_and_credential_scope_checked"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_credential_expiry.py::test_credential_expiry_marks_near_expiry_as_rotation_pending"
+            ],
+            "witness": "rotation_pending_warns_before_dispatch"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_credential_expiry.py::test_credential_expiry_blocks_future_or_rotation_overdue_credential"
+            ],
+            "witness": "rotation_overdue_blocks_dispatch"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_credential_expiry.py::test_credential_expiry_blocks_wrong_scope_revoked_missing_evidence_and_sources"
+            ],
+            "witness": "credential_evidence_refs_required"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_credential_expiry.py::test_credential_expiry_rejects_secret_material_in_metadata"
+            ],
+            "witness": "secret_value_absence_verified"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_credential_expiry.py::test_credential_expiry_allows_high_risk_active_scoped_unexpired_credential",
+              "tests/test_gateway/test_temporal_credential_expiry.py::test_credential_expiry_blocks_wrong_scope_revoked_missing_evidence_and_sources"
+            ],
+            "witness": "high_risk_source_receipts_bound"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_credential_expiry.py::test_credential_expiry_allows_high_risk_active_scoped_unexpired_credential",
+              "tests/test_gateway/test_temporal_credential_expiry.py::test_credential_expiry_marks_low_risk_action_not_required"
+            ],
+            "witness": "temporal_credential_expiry_receipt_schema_valid"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_credential_expiry.py::test_credential_expiry_marks_low_risk_action_not_required",
+              "tests/test_gateway/test_temporal_credential_expiry.py::test_credential_expiry_allows_high_risk_active_scoped_unexpired_credential"
+            ],
+            "witness": "receipt_not_terminal_closure"
+          }
+        ],
+        "exact_test_anchor_count": 11,
         "runtime_witness_count": 11,
         "surface_id": "temporal_credential_expiry",
-        "unanchored_witness_count": 11,
-        "unanchored_witnesses": [
-          "runtime_clock_owns_credential_expiry",
-          "expired_credentials_block_dispatch",
-          "revoked_credentials_block_dispatch",
-          "provider_and_credential_scope_checked",
-          "rotation_pending_warns_before_dispatch",
-          "rotation_overdue_blocks_dispatch",
-          "credential_evidence_refs_required",
-          "secret_value_absence_verified",
-          "high_risk_source_receipts_bound",
-          "temporal_credential_expiry_receipt_schema_valid",
-          "receipt_not_terminal_closure"
-        ]
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
       },
       {
-        "anchored_witnesses": [],
-        "exact_test_anchor_count": 0,
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_retention_window.py::test_retention_window_allows_delete_at_due_boundary",
+              "tests/test_gateway/test_temporal_retention_window.py::test_retention_window_blocks_invalid_or_future_record"
+            ],
+            "witness": "runtime_clock_owns_retention_timing"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_retention_window.py::test_retention_window_defers_delete_before_delete_after"
+            ],
+            "witness": "delete_before_delete_after_defers_action"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_retention_window.py::test_retention_window_allows_archive_after_retention_until"
+            ],
+            "witness": "archive_and_anonymize_wait_for_retention_until"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_retention_window.py::test_retention_window_blocks_legal_hold_wrong_tenant_missing_evidence_and_sources"
+            ],
+            "witness": "legal_hold_blocks_lifecycle_action"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_retention_window.py::test_retention_window_marks_overdue_after_warning_window"
+            ],
+            "witness": "overdue_retention_action_warns"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_retention_window.py::test_retention_window_blocks_legal_hold_wrong_tenant_missing_evidence_and_sources"
+            ],
+            "witness": "tenant_scope_checked"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_retention_window.py::test_retention_window_blocks_invalid_or_future_record",
+              "tests/test_gateway/test_temporal_retention_window.py::test_retention_window_blocks_legal_hold_wrong_tenant_missing_evidence_and_sources"
+            ],
+            "witness": "retention_policy_ref_required"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_retention_window.py::test_retention_window_blocks_legal_hold_wrong_tenant_missing_evidence_and_sources"
+            ],
+            "witness": "subject_evidence_refs_required"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_retention_window.py::test_retention_window_allows_archive_after_retention_until",
+              "tests/test_gateway/test_temporal_retention_window.py::test_retention_window_blocks_legal_hold_wrong_tenant_missing_evidence_and_sources"
+            ],
+            "witness": "high_risk_source_receipts_bound"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_retention_window.py::test_retention_window_allows_delete_at_due_boundary",
+              "tests/test_gateway/test_temporal_retention_window.py::test_retention_window_marks_low_risk_action_not_required"
+            ],
+            "witness": "temporal_retention_window_receipt_schema_valid"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_retention_window.py::test_retention_window_marks_low_risk_action_not_required",
+              "tests/test_gateway/test_temporal_retention_window.py::test_retention_window_allows_delete_at_due_boundary"
+            ],
+            "witness": "receipt_not_terminal_closure"
+          }
+        ],
+        "exact_test_anchor_count": 11,
         "runtime_witness_count": 11,
         "surface_id": "temporal_retention_window",
-        "unanchored_witness_count": 11,
-        "unanchored_witnesses": [
-          "runtime_clock_owns_retention_timing",
-          "delete_before_delete_after_defers_action",
-          "archive_and_anonymize_wait_for_retention_until",
-          "legal_hold_blocks_lifecycle_action",
-          "overdue_retention_action_warns",
-          "tenant_scope_checked",
-          "retention_policy_ref_required",
-          "subject_evidence_refs_required",
-          "high_risk_source_receipts_bound",
-          "temporal_retention_window_receipt_schema_valid",
-          "receipt_not_terminal_closure"
-        ]
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
       },
       {
         "anchored_witnesses": [],
@@ -11809,6 +12511,6 @@
         "unanchored_witnesses": []
       }
     ],
-    "unanchored_witness_count": 488
+    "unanchored_witness_count": 414
   }
 }

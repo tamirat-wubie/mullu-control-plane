@@ -573,6 +573,43 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "coordination_restore_missing_bounded",
                 "coordination_restore_missing_is_bounded",
             ],
+            runtime_witness_anchor_aliases={
+                "coordination_checkpoint_audited": [
+                    "checkpoint_appears_in_audit",
+                    "restore_appears_in_audit",
+                ],
+                "coordination_restore_load_governed": [
+                    "restore_checkpoint",
+                    "save_restore_round_trip",
+                ],
+                "coordination_restore_resumes_checkpoint": [
+                    "restore_checkpoint",
+                    "idempotent_restore",
+                    "empty_state_round_trip",
+                ],
+                "coordination_checkpoint_save_governed": [
+                    "save_checkpoint",
+                    "save_restore_round_trip",
+                ],
+                "coordination_checkpoint_lease_bound": ["expired_lease_rejected"],
+                "coordination_store_path_traversal_rejected": [
+                    "path_traversal_blocked"
+                ],
+                "coordination_restore_policy_checked": [
+                    "policy_pack_drift_needs_review"
+                ],
+                "coordination_policy_drift_requires_review": [
+                    "policy_pack_drift_needs_review"
+                ],
+                "coordination_restore_missing_bounded": [
+                    "restore_missing_checkpoint_returns_404",
+                    "restore_without_store_raises",
+                ],
+                "coordination_restore_missing_is_bounded": [
+                    "restore_missing_checkpoint_returns_404",
+                    "restore_without_store_raises",
+                ],
+            },
         ),
         _surface(
             "engineering_puzzle_governance",
@@ -1982,6 +2019,54 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "runbook_pattern_read_models_bounded",
                 "runbook_responses_governed",
             ],
+            runtime_witness_anchor_aliases={
+                "patterns_detected_from_audit_trail": [
+                    "analyze_detects_patterns",
+                    "analyze_endpoint",
+                ],
+                "promotion_requires_detected_pattern": [
+                    "promote_creates_candidate",
+                    "promote_unknown_pattern_raises",
+                ],
+                "approval_required_before_activation": [
+                    "activate_requires_approved",
+                    "cannot_activate_candidate",
+                    "approve_requires_candidate",
+                ],
+                "retirement_requires_active_runbook": [
+                    "cannot_retire_non_active_runbook",
+                    "cannot_retire_already_retired_runbook",
+                    "retire_endpoint_rejects_non_active_runbook",
+                ],
+                "promote_and_approve_audit_records": [
+                    "promote_creates_candidate",
+                    "approve_requires_candidate",
+                ],
+                "mil_audit_replay_admits_runbook": [
+                    "mil_audit_router_admits_replay_backed_runbook"
+                ],
+                "mil_audit_operator_checklist_validated": [
+                    "validate_mil_audit_runbook_operator_checklist_accepts_example",
+                    "validate_mil_audit_runbook_operator_checklist_rejects_missing_step",
+                ],
+                "mil_audit_runbook_preflight_ready": [
+                    "mil_audit_runbook_preflight_accepts_valid_local_state",
+                    "mil_audit_runbook_preflight_blocks_missing_record",
+                ],
+                "sanitized_runbook_error_details": [
+                    "promote_endpoint_sanitizes_unknown_pattern",
+                    "approve_endpoint_sanitizes_unknown_runbook",
+                    "activate_endpoint_sanitizes_unknown_runbook",
+                ],
+                "runbook_pattern_read_models_bounded": [
+                    "list_runbooks_endpoint",
+                    "runbooks_summary_endpoint",
+                ],
+                "runbook_responses_governed": [
+                    "list_runbooks_invalid_status_fails_closed",
+                    "mil_audit_router_missing_store_fails_closed",
+                ],
+            },
         ),
         _surface(
             "software_outcome_learning",
@@ -2402,6 +2487,43 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "sandbox_physical_capability_remains_non_production",
                 "missing_production_evidence_fails_closed",
             ],
+            runtime_witness_anchor_aliases={
+                "gateway_health_schema_valid": [
+                    "gateway_health_matches_public_schema"
+                ],
+                "signed_production_evidence_witness": [
+                    "deployment_witness_is_signed_and_reports_missing_runtime_evidence",
+                    "collect_deployment_witness_publishes_with_verified_signature",
+                ],
+                "capability_evidence_schema_valid": [
+                    "capabilities_evidence_reports_disabled_registry"
+                ],
+                "audit_verification_schema_valid": [
+                    "audit_and_proof_verify_surface_anchor_gap"
+                ],
+                "proof_verification_schema_valid": [
+                    "audit_and_proof_verify_surface_anchor_gap"
+                ],
+                "deployment_collection_requires_production_evidence": [
+                    "collect_deployment_witness_requires_production_evidence_plane"
+                ],
+                "live_physical_safety_evidence_derived_from_registry": [
+                    "live_physical_capability_evidence_is_derived_from_registry_extension"
+                ],
+                "live_physical_capability_requires_safety_evidence": [
+                    "collect_deployment_witness_rejects_live_physical_capability_without_safety_evidence",
+                    "physical_capability_policy_blocks_live_physical_without_safety_evidence",
+                    "live_physical_capability_without_registry_safety_refs_remains_blocked",
+                ],
+                "sandbox_physical_capability_remains_non_production": [
+                    "physical_capability_policy_allows_sandbox_only_physical_capability",
+                    "collect_deployment_witness_allows_sandbox_physical_capability_without_live_claim",
+                ],
+                "missing_production_evidence_fails_closed": [
+                    "collect_deployment_witness_rejects_missing_production_evidence_secret",
+                    "collect_deployment_witness_fails_closed_without_secret",
+                ],
+            },
         ),
         _surface(
             "runtime_reflex_engine",
@@ -2499,6 +2621,43 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "open_world_contradictions_block_execution",
                 "high_risk_controls_projected_before_execution",
             ],
+            runtime_witness_anchor_aliases={
+                "world_assertions_require_source_evidence": [
+                    "world_state_store_rejects_unsourced_assertion",
+                    "world_state_schema_rejects_entity_without_evidence",
+                ],
+                "knowledge_entity_routes_governed": [
+                    "add_entity_endpoint",
+                    "query_entities_endpoint",
+                    "query_entities_invalid_type_fails_closed_without_leakage",
+                ],
+                "knowledge_link_routes_governed": ["add_link_endpoint"],
+                "knowledge_contradiction_routes_governed": [
+                    "contradiction_endpoints_emit_governed_read_model"
+                ],
+                "knowledge_summary_route_bounded": ["knowledge_summary_endpoint"],
+                "policy_simulation_routes_governed": ["simulate_endpoint"],
+                "policy_simulation_history_summary_bounded": [
+                    "simulation_history_endpoint",
+                    "simulation_summary_endpoint",
+                    "history_bounded",
+                ],
+                "goal_plan_certificate_hash_bound": [
+                    "goal_compiler_compiles_high_risk_payment_with_controls",
+                    "goal_schema_accepts_compiled_goal_plan",
+                ],
+                "simulation_receipt_schema_valid": [
+                    "simulation_receipt_schema_accepts_dry_run_receipt"
+                ],
+                "open_world_contradictions_block_execution": [
+                    "causal_simulator_blocks_open_world_contradictions",
+                    "world_state_contradiction_blocks_planning_and_execution_claims",
+                ],
+                "high_risk_controls_projected_before_execution": [
+                    "causal_simulator_projects_high_risk_controls",
+                    "goal_compiler_compiles_high_risk_payment_with_controls",
+                ],
+            },
         ),
         _surface(
             "capability_forge",
@@ -2532,6 +2691,44 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "effect_bearing_candidate_requires_sandbox",
                 "effect_bearing_candidate_requires_recovery_path",
             ],
+            runtime_witness_anchor_aliases={
+                "candidate_promotion_blocked": [
+                    "capability_forge_rejects_candidate_self_promotion",
+                    "capability_candidate_schema_rejects_unblocked_candidate",
+                ],
+                "candidate_schema_valid": [
+                    "capability_forge_creates_schema_valid_candidate_package"
+                ],
+                "candidate_certification_handoff_emits_maturity_bundle": [
+                    "capability_forge_builds_certification_handoff_for_maturity_synthesis"
+                ],
+                "certification_handoff_installs_evidence_without_maturity_claim": [
+                    "capability_forge_installs_handoff_as_certification_evidence_only"
+                ],
+                "certification_handoff_batch_preserves_capsule_admission_gate": [
+                    "capability_forge_installs_handoff_evidence_batch_with_audit_hash",
+                    "capability_forge_handoff_batch_rejects_coverage_drift",
+                    "capability_forge_handoff_install_rejects_gate_bypasses",
+                ],
+                "physical_candidate_declares_live_safety_evidence_requirements": [
+                    "capability_forge_generates_physical_safety_evidence_requirements",
+                    "capability_forge_rejects_physical_candidate_missing_safety_requirement",
+                ],
+                "physical_handoff_installs_live_safety_evidence": [
+                    "capability_forge_installs_physical_safety_refs_from_handoff"
+                ],
+                "high_risk_approval_policy_required": [
+                    "capability_forge_projects_high_risk_controls",
+                    "capability_forge_certification_handoff_rejects_missing_required_refs",
+                ],
+                "effect_bearing_candidate_requires_sandbox": [
+                    "capability_forge_certification_handoff_rejects_missing_required_refs",
+                    "capability_forge_rejects_missing_required_eval",
+                ],
+                "effect_bearing_candidate_requires_recovery_path": [
+                    "capability_forge_rejects_effect_bearing_package_without_recovery"
+                ],
+            },
         ),
         _surface(
             "capability_maturity_assessment",
@@ -3716,6 +3913,45 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "temporal_credential_expiry_receipt_schema_valid",
                 "receipt_not_terminal_closure",
             ],
+            runtime_witness_anchor_aliases={
+                "runtime_clock_owns_credential_expiry": [
+                    "credential_expiry_allows_high_risk_active_scoped_unexpired_credential",
+                    "credential_expiry_blocks_expired_credential",
+                ],
+                "expired_credentials_block_dispatch": [
+                    "credential_expiry_blocks_expired_credential"
+                ],
+                "revoked_credentials_block_dispatch": [
+                    "credential_expiry_blocks_wrong_scope_revoked_missing_evidence_and_sources"
+                ],
+                "provider_and_credential_scope_checked": [
+                    "credential_expiry_blocks_wrong_scope_revoked_missing_evidence_and_sources"
+                ],
+                "rotation_pending_warns_before_dispatch": [
+                    "credential_expiry_marks_near_expiry_as_rotation_pending"
+                ],
+                "rotation_overdue_blocks_dispatch": [
+                    "credential_expiry_blocks_future_or_rotation_overdue_credential"
+                ],
+                "credential_evidence_refs_required": [
+                    "credential_expiry_blocks_wrong_scope_revoked_missing_evidence_and_sources"
+                ],
+                "secret_value_absence_verified": [
+                    "credential_expiry_rejects_secret_material_in_metadata"
+                ],
+                "high_risk_source_receipts_bound": [
+                    "credential_expiry_allows_high_risk_active_scoped_unexpired_credential",
+                    "credential_expiry_blocks_wrong_scope_revoked_missing_evidence_and_sources",
+                ],
+                "temporal_credential_expiry_receipt_schema_valid": [
+                    "credential_expiry_allows_high_risk_active_scoped_unexpired_credential",
+                    "credential_expiry_marks_low_risk_action_not_required",
+                ],
+                "receipt_not_terminal_closure": [
+                    "credential_expiry_marks_low_risk_action_not_required",
+                    "credential_expiry_allows_high_risk_active_scoped_unexpired_credential",
+                ],
+            },
         ),
         _surface(
             "temporal_retention_window",
@@ -3747,6 +3983,46 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "temporal_retention_window_receipt_schema_valid",
                 "receipt_not_terminal_closure",
             ],
+            runtime_witness_anchor_aliases={
+                "runtime_clock_owns_retention_timing": [
+                    "retention_window_allows_delete_at_due_boundary",
+                    "retention_window_blocks_invalid_or_future_record",
+                ],
+                "delete_before_delete_after_defers_action": [
+                    "retention_window_defers_delete_before_delete_after"
+                ],
+                "archive_and_anonymize_wait_for_retention_until": [
+                    "retention_window_allows_archive_after_retention_until"
+                ],
+                "legal_hold_blocks_lifecycle_action": [
+                    "retention_window_blocks_legal_hold_wrong_tenant_missing_evidence_and_sources"
+                ],
+                "overdue_retention_action_warns": [
+                    "retention_window_marks_overdue_after_warning_window"
+                ],
+                "tenant_scope_checked": [
+                    "retention_window_blocks_legal_hold_wrong_tenant_missing_evidence_and_sources"
+                ],
+                "retention_policy_ref_required": [
+                    "retention_window_blocks_invalid_or_future_record",
+                    "retention_window_blocks_legal_hold_wrong_tenant_missing_evidence_and_sources",
+                ],
+                "subject_evidence_refs_required": [
+                    "retention_window_blocks_legal_hold_wrong_tenant_missing_evidence_and_sources"
+                ],
+                "high_risk_source_receipts_bound": [
+                    "retention_window_allows_archive_after_retention_until",
+                    "retention_window_blocks_legal_hold_wrong_tenant_missing_evidence_and_sources",
+                ],
+                "temporal_retention_window_receipt_schema_valid": [
+                    "retention_window_allows_delete_at_due_boundary",
+                    "retention_window_marks_low_risk_action_not_required",
+                ],
+                "receipt_not_terminal_closure": [
+                    "retention_window_marks_low_risk_action_not_required",
+                    "retention_window_allows_delete_at_due_boundary",
+                ],
+            },
         ),
         _surface(
             "temporal_rate_limit_window",

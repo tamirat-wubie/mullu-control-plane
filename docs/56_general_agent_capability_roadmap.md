@@ -1,5 +1,10 @@
 # General Agent Capability Roadmap
 
+> **In one box:** The roadmap separating what Mullu can be *taught* versus what
+> must be *built* to become a general agent — forward-looking planning, not the
+> current beginner path. New here? →
+> [Plain-English Overview](explain/PLAIN_ENGLISH.md). *(Doc type: Explanation.)*
+
 Purpose: separate teachable skills from build-required capabilities for Mullu general-agent promotion.
 Governance scope: capability registry expansion, skill admission, worker boundaries, approval gates, execution receipts, and production witness closure.
 Dependencies: `docs/19_skill_system.md`, `docs/39_governed_capability_fabric.md`, `KNOWN_LIMITATIONS_v0.1.md`, `SECURITY_MODEL_v0.1.md`, and `DEPLOYMENT_STATUS.md`.

@@ -1,5 +1,10 @@
 # Hosted Demo Sandbox
 
+> **In one box:** A safe, read-only hosted place for evaluators to try Mullu
+> without installing anything — good for decision-makers. For the big picture
+> first, see the [Plain-English Overview](explain/PLAIN_ENGLISH.md).
+> *(Doc type: How-to.)*
+
 Purpose: define the read-only hosted sandbox surface for evaluators at
 `sandbox.mullusi.com`.
 

@@ -22,6 +22,7 @@ from mcoi_runtime.contracts.meta_reasoning import (
     EscalationRecommendation,
     EscalationSeverity,
     MetaReasoningSnapshot,
+    ReplanReason,
     ReplanRecommendation,
     SubsystemHealth,
     UncertaintyReport,
@@ -275,3 +276,42 @@ class MetaReasoningBridge:
                 reports.append(report)
 
         return tuple(reports)
+
+    @staticmethod
+    def gate_goal_capability(
+        engine: MetaReasoningEngine,
+        *,
+        capability_id: str,
+        affected_entity_id: str,
+    ) -> ReplanRecommendation | None:
+        """Pre-execution gate for the capability a goal will dispatch to.
+
+        Returns a ReplanRecommendation when the target capability is in
+        meta-reasoning degraded mode (historical confidence below the
+        engine threshold), else None.
+
+        Advisory only — this composes existing engine reads
+        (is_degraded / get_confidence) and never executes or mutates
+        platform state. The caller decides whether to halt; the safe
+        default (halt before MIL compilation) is enforced by the caller,
+        not by this method.
+        """
+        if not engine.is_degraded(capability_id):
+            return None
+
+        confidence = engine.get_confidence(capability_id)
+        point = confidence.overall_confidence if confidence is not None else 0.0
+        now = engine.clock()
+        return ReplanRecommendation(
+            recommendation_id=stable_identifier("meta-gate", {
+                "capability": capability_id,
+                "entity": affected_entity_id,
+                "at": now,
+            }),
+            reason=ReplanReason.SUBSYSTEM_DEGRADED,
+            description="target capability in meta-reasoning degraded mode",
+            affected_entity_id=affected_entity_id,
+            severity=EscalationSeverity.HIGH,
+            confidence_at_assessment=point,
+            created_at=now,
+        )

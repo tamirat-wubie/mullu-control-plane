@@ -1,5 +1,10 @@
 # 34 - Accepted Risk Closure
 
+> **In one box:** When something can't be fully proven safe, this is the
+> *bounded, recorded* way to consciously accept the risk — instead of silently
+> ignoring it. See [closure](GLOSSARY.md#closure). New here? →
+> [Plain-English Overview](explain/PLAIN_ENGLISH.md). *(Doc type: Reference.)*
+
 ## Purpose
 
 Accepted risk is the bounded closure path for unresolved verification or effect

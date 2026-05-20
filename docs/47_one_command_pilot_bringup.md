@@ -1,5 +1,10 @@
 # One-Command Pilot Bring-Up
 
+> **In one box:** A single command (`mcoi pilot init`) that scaffolds a
+> ready-to-run governed pilot bundle. Use this when you want a pilot up fast.
+> Prefer the hand-held [Tutorial](tutorials/01_first_governed_task.md) if this
+> is your first time. *(Doc type: How-to.)*
+
 Purpose: define `mcoi pilot init` as the local scaffold command for a governed
 pilot bundle.
 

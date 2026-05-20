@@ -14,12 +14,13 @@ Invariants:
 
 from __future__ import annotations
 
+import ast
 import json
 from dataclasses import asdict
 from pathlib import Path
 from typing import Any
 
-from gateway.goal_compiler import GoalCompiler
+from gateway.goal_compiler import CompiledGoalPlan, GoalCompiler, GoalPlanCertificate
 from gateway.world_state import WorldState
 from scripts.validate_schemas import _load_schema, _validate_schema_instance
 
@@ -131,6 +132,68 @@ def test_goal_schema_rejects_step_without_preconditions() -> None:
     assert "at least 1 item" in errors[0]
     assert payload["steps"][0]["capability_id"] == "enterprise.knowledge_search"
     assert payload["certificate"]["step_count"] == 1
+
+
+_FORBIDDEN_SURFACE = (
+    "execute",
+    "dispatch",
+    "run",
+    "promote",
+    "deploy",
+    "install",
+    "apply",
+    "commit",
+    "certify_and",
+)
+
+
+def test_goal_compiler_exposes_no_execution_surface() -> None:
+    # Boundary lock (Solver-Forge attribute-exclusion idiom): this is a
+    # plan/simulation compiler. Its only public operation is `compile`;
+    # it must never grow an execute/dispatch/promote path.
+    public_callables = {
+        name
+        for name in dir(GoalCompiler)
+        if not name.startswith("_") and callable(getattr(GoalCompiler, name))
+    }
+    assert public_callables == {"compile"}
+
+    for surface in (GoalCompiler, CompiledGoalPlan, GoalPlanCertificate):
+        names = {name for name in dir(surface) if not name.startswith("_")}
+        offending = {
+            name
+            for name in names
+            for token in _FORBIDDEN_SURFACE
+            if token in name.lower()
+        }
+        assert offending == set(), f"{surface.__name__} leaked execution surface: {offending}"
+
+
+def test_goal_compiler_import_boundary_is_causal_simulator_only() -> None:
+    # Static import-boundary lock: no router/server/live-path module may
+    # import this compiler. Exactly one non-test gateway module
+    # (causal_simulator) is permitted to consume it. Wiring it into the
+    # execution spine fails here by design.
+    gateway_dir = ROOT / "gateway"
+    importers: set[str] = set()
+    for path in sorted(gateway_dir.glob("*.py")):
+        if path.name == "goal_compiler.py":
+            continue
+        tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+        for node in ast.walk(tree):
+            if isinstance(node, ast.ImportFrom) and (node.module or "").endswith(
+                "gateway.goal_compiler"
+            ):
+                importers.add(path.stem)
+            elif isinstance(node, ast.Import):
+                for alias in node.names:
+                    if alias.name.endswith("gateway.goal_compiler"):
+                        importers.add(path.stem)
+
+    assert importers == {"causal_simulator"}, (
+        "gateway.goal_compiler must be imported only by causal_simulator; "
+        f"found unexpected importers: {sorted(importers - {'causal_simulator'})}"
+    )
 
 
 def _world_state() -> WorldState:

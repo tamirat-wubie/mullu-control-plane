@@ -1,5 +1,10 @@
 # Finance Approval Packet Pilot
 
+> **In one box:** How to run the finance-approval pilot end-to-end: invoice
+> packet → policy check → approval → effect → proof. A concrete worked example
+> of governance over money. New here? →
+> [Plain-English Overview](explain/PLAIN_ENGLISH.md). *(Doc type: How-to.)*
+
 Purpose: operate the governed finance approval packet pilot from invoice packet creation through policy evaluation, approval, effect handoff, proof export, and operator read-model inspection.
 Governance scope: finance packet contracts, policy decisions, approval/effect receipts, persistent packet store, proof export, and route proof coverage.
 Dependencies: `mcoi_runtime.app.routers.finance_approval`, `mcoi_runtime.persistence.finance_approval_store`, `schemas/finance_approval_packet_proof.schema.json`, `examples/finance_approval_packet_blocked.json`, and `examples/finance_approval_packet_success.json`.

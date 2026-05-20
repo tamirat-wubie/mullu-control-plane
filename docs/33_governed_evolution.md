@@ -1,5 +1,10 @@
 # 33 - Governed Evolution Layer
 
+> **In one box:** Even changes to Mullu *itself* must pass governance —
+> upgrades aren't exempt from the rules. New here? →
+> [Plain-English Overview](explain/PLAIN_ENGLISH.md); unknown word? →
+> [Glossary](GLOSSARY.md). *(Doc type: Reference.)*
+
 ## Purpose
 
 The governed evolution layer makes changes to the platform first-class governed

@@ -1,8 +1,27 @@
 """Gateway goal compiler.
 
-Purpose: Compile user intent into governed goals, subgoals, plan DAG steps,
-    preconditions, postconditions, evidence obligations, rollback obligations,
-    approval requirements, and a deterministic plan certificate.
+Purpose: Compile a natural-language message into a governed goal, subgoals,
+    plan DAG steps, preconditions, postconditions, evidence obligations,
+    rollback obligations, approval requirements, and a deterministic plan
+    certificate.
+
+Boundary (read before wiring this anywhere):
+    This is the GATEWAY PLANNING / SIMULATION lineage. It produces a plan
+    and a certificate; it never executes, dispatches, promotes, or commits
+    anything. Its sole non-test consumer is `gateway.causal_simulator`,
+    which uses the compiled plan for what-if analysis.
+
+    It is NOT the live execution spine. The production acting path is
+    `mcoi_runtime.whqr.goal_compiler.compile_goal_from_whqr` →
+    `mcoi_runtime.core.whqr_mil_orchestrator.run_whqr_mil_orchestration`
+    (WHQR expression → MIL program → governed dispatch → terminal
+    certificate → learning → audit). That spine — not this module — is
+    where meta-reasoning gating and complexity metering are wired.
+
+    Do not import this module from a router or server-wiring module. The
+    one-consumer boundary is enforced by
+    `tests/test_gateway/test_goal_compiler.py`; wiring it into execution
+    will fail that suite by design.
 Governance scope: goal admission, plan-step gating, evidence projection,
     capability passport binding, rollback coverage, and world-state anchoring.
 Dependencies: gateway.plan, gateway.command_spine, and optional world state
@@ -14,6 +33,9 @@ Invariants:
   - Mutating or high-risk steps require rollback, compensation, or review.
   - Medium and high risk steps carry explicit approval requirements.
   - The certificate hash is derived from the compiled goal and plan.
+  - This module emits plans only; it exposes no execute/dispatch/promote
+    surface and is imported by exactly one non-test module
+    (gateway.causal_simulator).
 """
 
 from __future__ import annotations
