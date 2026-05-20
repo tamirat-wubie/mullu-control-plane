@@ -6317,6 +6317,38 @@
         "TemporalSlaReceipt"
       ],
       "request_proof": "request_proof",
+      "runtime_witness_anchor_aliases": {
+        "approaching_deadline_warns_before_breach": [
+          "temporal_sla_warns_when_response_deadline_approaches"
+        ],
+        "breached_deadline_emits_escalation_reason": [
+          "temporal_sla_breaches_response_deadline"
+        ],
+        "business_time_deadlines_skip_closed_windows": [
+          "temporal_sla_business_time_skips_closed_window"
+        ],
+        "outside_business_window_holds_normal_dispatch": [
+          "temporal_sla_holds_normal_dispatch_outside_business_window"
+        ],
+        "receipt_not_terminal_closure": [
+          "temporal_sla_allows_on_track_schema_valid_receipt"
+        ],
+        "runtime_clock_owns_sla_deadlines": [
+          "temporal_sla_allows_on_track_schema_valid_receipt"
+        ],
+        "sla_evidence_and_scope_checked": [
+          "temporal_sla_blocks_missing_evidence_and_high_severity_contacts"
+        ],
+        "sla_summary_read_model_bounded": [
+          "sla_summary_endpoint_returns_bounded_governed_read_model"
+        ],
+        "sla_violations_read_model_bounded": [
+          "sla_violations_endpoint_filters_by_sla_id"
+        ],
+        "temporal_sla_receipt_schema_valid": [
+          "temporal_sla_allows_on_track_schema_valid_receipt"
+        ]
+      },
       "runtime_witnesses": [
         "runtime_clock_owns_sla_deadlines",
         "business_time_deadlines_skip_closed_windows",
@@ -7240,7 +7272,7 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 621,
+    "exact_test_anchor_count": 631,
     "runtime_witness_count": 1035,
     "surfaces": [
       {
@@ -11542,23 +11574,73 @@
         ]
       },
       {
-        "anchored_witnesses": [],
-        "exact_test_anchor_count": 0,
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_sla.py::test_temporal_sla_allows_on_track_schema_valid_receipt"
+            ],
+            "witness": "runtime_clock_owns_sla_deadlines"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_sla.py::test_temporal_sla_business_time_skips_closed_window"
+            ],
+            "witness": "business_time_deadlines_skip_closed_windows"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_sla.py::test_temporal_sla_warns_when_response_deadline_approaches"
+            ],
+            "witness": "approaching_deadline_warns_before_breach"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_sla.py::test_temporal_sla_breaches_response_deadline"
+            ],
+            "witness": "breached_deadline_emits_escalation_reason"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_sla.py::test_temporal_sla_holds_normal_dispatch_outside_business_window"
+            ],
+            "witness": "outside_business_window_holds_normal_dispatch"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_sla.py::test_temporal_sla_blocks_missing_evidence_and_high_severity_contacts"
+            ],
+            "witness": "sla_evidence_and_scope_checked"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_sla_router.py::test_sla_summary_endpoint_returns_bounded_governed_read_model"
+            ],
+            "witness": "sla_summary_read_model_bounded"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_sla_router.py::test_sla_violations_endpoint_filters_by_sla_id"
+            ],
+            "witness": "sla_violations_read_model_bounded"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_sla.py::test_temporal_sla_allows_on_track_schema_valid_receipt"
+            ],
+            "witness": "temporal_sla_receipt_schema_valid"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_sla.py::test_temporal_sla_allows_on_track_schema_valid_receipt"
+            ],
+            "witness": "receipt_not_terminal_closure"
+          }
+        ],
+        "exact_test_anchor_count": 10,
         "runtime_witness_count": 10,
         "surface_id": "temporal_sla",
-        "unanchored_witness_count": 10,
-        "unanchored_witnesses": [
-          "runtime_clock_owns_sla_deadlines",
-          "business_time_deadlines_skip_closed_windows",
-          "approaching_deadline_warns_before_breach",
-          "breached_deadline_emits_escalation_reason",
-          "outside_business_window_holds_normal_dispatch",
-          "sla_evidence_and_scope_checked",
-          "sla_summary_read_model_bounded",
-          "sla_violations_read_model_bounded",
-          "temporal_sla_receipt_schema_valid",
-          "receipt_not_terminal_closure"
-        ]
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
       },
       {
         "anchored_witnesses": [],
@@ -12511,6 +12593,6 @@
         "unanchored_witnesses": []
       }
     ],
-    "unanchored_witness_count": 414
+    "unanchored_witness_count": 404
   }
 }

@@ -3710,6 +3710,38 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "temporal_sla_receipt_schema_valid",
                 "receipt_not_terminal_closure",
             ],
+            runtime_witness_anchor_aliases={
+                "runtime_clock_owns_sla_deadlines": [
+                    "temporal_sla_allows_on_track_schema_valid_receipt"
+                ],
+                "business_time_deadlines_skip_closed_windows": [
+                    "temporal_sla_business_time_skips_closed_window"
+                ],
+                "approaching_deadline_warns_before_breach": [
+                    "temporal_sla_warns_when_response_deadline_approaches"
+                ],
+                "breached_deadline_emits_escalation_reason": [
+                    "temporal_sla_breaches_response_deadline"
+                ],
+                "outside_business_window_holds_normal_dispatch": [
+                    "temporal_sla_holds_normal_dispatch_outside_business_window"
+                ],
+                "sla_evidence_and_scope_checked": [
+                    "temporal_sla_blocks_missing_evidence_and_high_severity_contacts"
+                ],
+                "sla_summary_read_model_bounded": [
+                    "sla_summary_endpoint_returns_bounded_governed_read_model"
+                ],
+                "sla_violations_read_model_bounded": [
+                    "sla_violations_endpoint_filters_by_sla_id"
+                ],
+                "temporal_sla_receipt_schema_valid": [
+                    "temporal_sla_allows_on_track_schema_valid_receipt"
+                ],
+                "receipt_not_terminal_closure": [
+                    "temporal_sla_allows_on_track_schema_valid_receipt"
+                ],
+            },
         ),
         _surface(
             "temporal_reapproval",
