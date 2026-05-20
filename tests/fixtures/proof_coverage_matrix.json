@@ -2963,6 +2963,27 @@
         "/api/v1/assistant/finance-ops/plans"
       ],
       "request_proof": "request_proof",
+      "runtime_witness_anchor_aliases": {
+        "assistant_plan_errors_sanitized": [
+          "invalid_finance_ops_plan_fails_closed",
+          "finance_ops_plan_error_detail_is_bounded"
+        ],
+        "assistant_plan_never_grants_execution_authority": [
+          "finance_ops_plan_blocks_without_active_payment_consent",
+          "finance_ops_plan_with_consent_projects_dispatch_ready_controls",
+          "assistant_kernel_compiles_finance_ops_plan_with_consent_and_controls"
+        ],
+        "assistant_profiles_read_model_bounded": [
+          "assistant_profiles_read_model_exposes_finance_ops_profile",
+          "builtin_finance_ops_profile_preserves_skill_capability_boundary"
+        ],
+        "finance_ops_plan_projects_operator_queue": [
+          "finance_ops_plan_with_consent_projects_dispatch_ready_controls"
+        ],
+        "finance_ops_plan_requires_active_consent": [
+          "finance_ops_plan_blocks_without_active_payment_consent"
+        ]
+      },
       "runtime_witnesses": [
         "assistant_profiles_read_model_bounded",
         "finance_ops_plan_requires_active_consent",
@@ -6797,6 +6818,38 @@
         "TemporalLeaseWindowReceipt"
       ],
       "request_proof": "request_proof",
+      "runtime_witness_anchor_aliases": {
+        "active_lease_admits_dispatch": [
+          "lease_window_allows_active_scoped_lease"
+        ],
+        "expired_lease_blocks_dispatch": [
+          "lease_window_blocks_expired_lease_without_dispatch"
+        ],
+        "fencing_token_required": [
+          "lease_window_blocks_scope_mismatch_missing_evidence_fencing_and_closed_lease"
+        ],
+        "high_risk_source_receipts_bound": [
+          "lease_window_blocks_scope_mismatch_missing_evidence_fencing_and_closed_lease"
+        ],
+        "near_expiry_lease_requires_renewal_warning": [
+          "lease_window_warns_when_lease_is_inside_renewal_grace_window"
+        ],
+        "receipt_not_terminal_closure": [
+          "lease_window_allows_active_scoped_lease"
+        ],
+        "released_or_revoked_lease_blocks_dispatch": [
+          "lease_window_blocks_scope_mismatch_missing_evidence_fencing_and_closed_lease"
+        ],
+        "runtime_clock_owns_lease_window": [
+          "lease_window_allows_active_scoped_lease"
+        ],
+        "temporal_lease_window_receipt_schema_valid": [
+          "lease_window_allows_active_scoped_lease"
+        ],
+        "tenant_command_resource_worker_scope_checked": [
+          "lease_window_blocks_scope_mismatch_missing_evidence_fencing_and_closed_lease"
+        ]
+      },
       "runtime_witnesses": [
         "runtime_clock_owns_lease_window",
         "tenant_command_resource_worker_scope_checked",
@@ -7390,7 +7443,7 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 663,
+    "exact_test_anchor_count": 678,
     "runtime_witness_count": 1047,
     "surfaces": [
       {
@@ -7859,18 +7912,47 @@
         ]
       },
       {
-        "anchored_witnesses": [],
-        "exact_test_anchor_count": 0,
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "mcoi/tests/test_assistant_router.py::test_assistant_profiles_read_model_exposes_finance_ops_profile",
+              "tests/test_assistant_kernel.py::test_builtin_finance_ops_profile_preserves_skill_capability_boundary"
+            ],
+            "witness": "assistant_profiles_read_model_bounded"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_assistant_router.py::test_finance_ops_plan_blocks_without_active_payment_consent"
+            ],
+            "witness": "finance_ops_plan_requires_active_consent"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_assistant_router.py::test_finance_ops_plan_with_consent_projects_dispatch_ready_controls"
+            ],
+            "witness": "finance_ops_plan_projects_operator_queue"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_assistant_router.py::test_finance_ops_plan_blocks_without_active_payment_consent",
+              "mcoi/tests/test_assistant_router.py::test_finance_ops_plan_with_consent_projects_dispatch_ready_controls",
+              "tests/test_assistant_kernel.py::test_assistant_kernel_compiles_finance_ops_plan_with_consent_and_controls"
+            ],
+            "witness": "assistant_plan_never_grants_execution_authority"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_assistant_router.py::test_invalid_finance_ops_plan_fails_closed",
+              "mcoi/tests/test_assistant_router.py::test_finance_ops_plan_error_detail_is_bounded"
+            ],
+            "witness": "assistant_plan_errors_sanitized"
+          }
+        ],
+        "exact_test_anchor_count": 5,
         "runtime_witness_count": 5,
         "surface_id": "assistant_kernel_planning",
-        "unanchored_witness_count": 5,
-        "unanchored_witnesses": [
-          "assistant_profiles_read_model_bounded",
-          "finance_ops_plan_requires_active_consent",
-          "finance_ops_plan_projects_operator_queue",
-          "assistant_plan_never_grants_execution_authority",
-          "assistant_plan_errors_sanitized"
-        ]
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
       },
       {
         "anchored_witnesses": [
@@ -12121,23 +12203,73 @@
         ]
       },
       {
-        "anchored_witnesses": [],
-        "exact_test_anchor_count": 0,
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_lease_window.py::test_lease_window_allows_active_scoped_lease"
+            ],
+            "witness": "runtime_clock_owns_lease_window"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_lease_window.py::test_lease_window_blocks_scope_mismatch_missing_evidence_fencing_and_closed_lease"
+            ],
+            "witness": "tenant_command_resource_worker_scope_checked"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_lease_window.py::test_lease_window_allows_active_scoped_lease"
+            ],
+            "witness": "active_lease_admits_dispatch"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_lease_window.py::test_lease_window_warns_when_lease_is_inside_renewal_grace_window"
+            ],
+            "witness": "near_expiry_lease_requires_renewal_warning"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_lease_window.py::test_lease_window_blocks_expired_lease_without_dispatch"
+            ],
+            "witness": "expired_lease_blocks_dispatch"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_lease_window.py::test_lease_window_blocks_scope_mismatch_missing_evidence_fencing_and_closed_lease"
+            ],
+            "witness": "released_or_revoked_lease_blocks_dispatch"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_lease_window.py::test_lease_window_blocks_scope_mismatch_missing_evidence_fencing_and_closed_lease"
+            ],
+            "witness": "fencing_token_required"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_lease_window.py::test_lease_window_blocks_scope_mismatch_missing_evidence_fencing_and_closed_lease"
+            ],
+            "witness": "high_risk_source_receipts_bound"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_lease_window.py::test_lease_window_allows_active_scoped_lease"
+            ],
+            "witness": "temporal_lease_window_receipt_schema_valid"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_lease_window.py::test_lease_window_allows_active_scoped_lease"
+            ],
+            "witness": "receipt_not_terminal_closure"
+          }
+        ],
+        "exact_test_anchor_count": 10,
         "runtime_witness_count": 10,
         "surface_id": "temporal_lease_window",
-        "unanchored_witness_count": 10,
-        "unanchored_witnesses": [
-          "runtime_clock_owns_lease_window",
-          "tenant_command_resource_worker_scope_checked",
-          "active_lease_admits_dispatch",
-          "near_expiry_lease_requires_renewal_warning",
-          "expired_lease_blocks_dispatch",
-          "released_or_revoked_lease_blocks_dispatch",
-          "fencing_token_required",
-          "high_risk_source_receipts_bound",
-          "temporal_lease_window_receipt_schema_valid",
-          "receipt_not_terminal_closure"
-        ]
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
       },
       {
         "anchored_witnesses": [
@@ -12899,6 +13031,6 @@
         "unanchored_witnesses": []
       }
     ],
-    "unanchored_witness_count": 384
+    "unanchored_witness_count": 369
   }
 }

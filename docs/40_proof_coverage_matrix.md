@@ -150,8 +150,8 @@ Witness integrity audit:
 | Metric | Count |
 |---|---:|
 | Runtime witness labels | 1047 |
-| Exact test anchors | 663 |
-| Unanchored witness labels | 384 |
+| Exact test anchors | 678 |
+| Unanchored witness labels | 369 |
 
 Evidence quality gaps:
 none
@@ -161,7 +161,6 @@ Witness integrity gaps:
 | Surface | Exact anchors | Unanchored | Unanchored labels |
 |---|---:|---:|---|
 | `cost_budget_read_models` | 0 | 6 | budget_summary_bounded, safe_completion_tracks_cost, cost_read_model_totals_bounded, cost_top_spenders_bounded, cost_by_model_bounded, tenant_cost_projection_bounded |
-| `assistant_kernel_planning` | 0 | 5 | assistant_profiles_read_model_bounded, finance_ops_plan_requires_active_consent, finance_ops_plan_projects_operator_queue, assistant_plan_never_grants_execution_authority, assistant_plan_errors_sanitized |
 | `rbac_access_governance` | 0 | 6 | rbac_identity_registration_governed, rbac_role_registration_governed, rbac_role_binding_governed, rbac_identity_creation_audited, rbac_summary_bounded, rbac_errors_sanitized |
 | `operator_console_read_models` | 0 | 5 | console_home_returns_governed_runtime_vitals, console_runs_bounds_recent_audit_entries, console_audit_exposes_chain_intact_read_model, console_checkpoints_expose_persisted_state_summary, console_provider_and_scheduler_views_are_read_only |
 | `model_experiment_control` | 0 | 7 | model_catalog_list_bounded, auto_completion_routes_model, auto_completion_forced_model, ab_test_single_model_result, ab_test_two_models_cost_comparison, ab_test_summary_bounded, ab_test_failed_model_recorded |
@@ -207,7 +206,6 @@ Witness integrity gaps:
 | `temporal_accepted_risk_expiry` | 0 | 9 | runtime_clock_owns_accepted_risk_expiry, expired_accepted_risk_blocks_dispatch, revoked_or_closed_accepted_risk_blocks_dispatch, tenant_command_and_action_scope_checked, review_obligation_required, accepted_risk_evidence_refs_required, high_risk_source_receipts_bound, temporal_accepted_risk_expiry_receipt_schema_valid, receipt_not_terminal_closure |
 | `temporal_rate_limit_window` | 0 | 10 | runtime_clock_owns_rate_limit_window, tenant_endpoint_identity_scope_checked, active_window_admits_sufficient_tokens, exhausted_window_emits_retry_after, future_window_defers_dispatch, burst_limit_blocks_overlarge_request, stale_rate_limit_snapshot_blocks_dispatch, high_risk_source_receipts_bound, temporal_rate_limit_window_receipt_schema_valid, receipt_not_terminal_closure |
 | `temporal_retry_window` | 0 | 10 | runtime_clock_owns_retry_window, retry_after_floor_checked, cooldown_window_defers_early_retry, max_attempts_block_exhausted_retry, expired_retry_window_blocks_dispatch, tenant_command_scope_checked, terminal_failure_blocks_retry, high_risk_source_receipts_bound, temporal_retry_window_receipt_schema_valid, receipt_not_terminal_closure |
-| `temporal_lease_window` | 0 | 10 | runtime_clock_owns_lease_window, tenant_command_resource_worker_scope_checked, active_lease_admits_dispatch, near_expiry_lease_requires_renewal_warning, expired_lease_blocks_dispatch, released_or_revoked_lease_blocks_dispatch, fencing_token_required, high_risk_source_receipts_bound, temporal_lease_window_receipt_schema_valid, receipt_not_terminal_closure |
 | `temporal_memory` | 0 | 9 | memory_age_computed_from_runtime_clock, stale_memory_requires_refresh, validity_window_blocks_expired_memory, superseded_memory_not_usable, confidence_decay_blocks_weak_memory, tenant_owner_scope_checked, allowed_use_checked, temporal_memory_receipt_schema_valid, receipt_not_terminal_closure |
 | `temporal_missed_run` | 2 | 7 | runtime_clock_owns_missed_run_time, late_within_grace_preserves_dispatch_eligibility, recovery_due_requires_review_actions, tenant_command_action_scope_checked, high_risk_source_receipts_bound, temporal_missed_run_receipt_schema_valid, receipt_not_terminal_closure |
 | `temporal_recurrence_window` | 2 | 8 | runtime_clock_owns_recurrence_window_time, tenant_timezone_preserved_across_dst, candidate_must_match_next_occurrence, future_candidate_defers_dispatch, completed_series_blocks_dispatch, monthly_end_of_month_clamped, temporal_recurrence_window_receipt_schema_valid, receipt_not_terminal_closure |
@@ -336,5 +334,5 @@ none
 STATUS:
   Completeness: 100%
   Invariants verified: route declarations, route-level coverage classification, coverage levels, coverage states, closure action mapping, schema contract validation, deployment orchestration receipt schema contract
-  Open issues: 384 runtime-witness labels lack exact test-function anchors
+  Open issues: 369 runtime-witness labels lack exact test-function anchors
   Next action: bind unanchored runtime-witness labels to exact test-function anchors
