@@ -3695,6 +3695,38 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "temporal_resolution_receipt_schema_valid",
                 "receipt_not_terminal_closure",
             ],
+            runtime_witness_anchor_aliases={
+                "runtime_clock_owns_phrase_resolution": [
+                    "temporal_resolution_resolves_relative_duration_from_runtime_now"
+                ],
+                "original_text_preserved": [
+                    "temporal_resolution_resolves_tomorrow_explicit_time_in_tenant_timezone"
+                ],
+                "tenant_timezone_controls_local_resolution": [
+                    "temporal_resolution_resolves_tomorrow_explicit_time_in_tenant_timezone"
+                ],
+                "relative_duration_resolved_from_injected_now": [
+                    "temporal_resolution_resolves_relative_duration_from_runtime_now"
+                ],
+                "ambiguous_low_risk_phrase_uses_safe_default": [
+                    "temporal_resolution_low_risk_ambiguous_tomorrow_uses_safe_default"
+                ],
+                "ambiguous_high_risk_phrase_requires_clarification": [
+                    "temporal_resolution_high_risk_ambiguous_tomorrow_requires_clarification"
+                ],
+                "business_day_resolution_skips_weekends_and_holidays": [
+                    "temporal_resolution_business_days_skip_weekend_and_holiday"
+                ],
+                "unsupported_phrase_fails_closed": [
+                    "temporal_resolution_unsupported_phrase_fails_closed"
+                ],
+                "temporal_resolution_receipt_schema_valid": [
+                    "temporal_resolution_resolves_relative_duration_from_runtime_now"
+                ],
+                "receipt_not_terminal_closure": [
+                    "temporal_resolution_resolves_relative_duration_from_runtime_now"
+                ],
+            },
         ),
         _surface(
             "temporal_sla",
