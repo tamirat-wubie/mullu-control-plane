@@ -1,5 +1,10 @@
 # Temporal Scheduler Runbook
 
+> **In one box:** How to operate scheduled, time-delayed governed actions —
+> admission, persistence, worker execution, receipts. Operator how-to; pairs
+> with the [Temporal Plane](13_temporal_plane.md). New here? →
+> [Plain-English Overview](explain/PLAIN_ENGLISH.md). *(Doc type: How-to.)*
+
 Purpose: operate governed scheduled temporal actions across API admission,
 persistence, worker execution, receipts, and proof certification.
 Governance scope: temporal scheduler runtime, store, worker, background loop,

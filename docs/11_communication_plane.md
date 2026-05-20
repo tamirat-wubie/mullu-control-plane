@@ -1,5 +1,10 @@
 # Communication Plane (MCCI)
 
+> **In one box:** How parts of the system — and the outside chat channels —
+> exchange structured messages safely and in a recorded way. New here? →
+> [Plain-English Overview](explain/PLAIN_ENGLISH.md); unknown word? →
+> [Glossary](GLOSSARY.md). *(Doc type: Reference.)*
+
 Scope: all Mullu Platform modules that send or receive structured messages.
 
 The Communication Plane manages structured message exchange: approvals, escalations, notifications, and explanations. It does not handle free-form email or arbitrary messaging. Every outbound message passes through this plane. No module may send a message to a user, agent, or external party directly.

@@ -1,5 +1,10 @@
 # Governed Semantic Cache Protocol
 
+> **In one box:** How identical or equivalent model answers are safely reused to
+> save cost — without ever treating a cached answer as trusted truth or skipping
+> governance. New here? → [Plain-English Overview](explain/PLAIN_ENGLISH.md).
+> *(Doc type: Reference.)*
+
 Purpose: define cache reuse for model responses when prompts are identical or semantically equivalent under the same governance context.
 
 Governance scope: response reuse only. Cached responses are not trusted world state and do not bypass request-envelope governance.

@@ -1,5 +1,10 @@
 # Streaming Budget Enforcement Protocol
 
+> **In one box:** How the [budget](GLOSSARY.md#budget-spend-budget) is enforced
+> even when an answer streams in and the final cost isn't known until the end —
+> it predicts and debits as it goes. New here? →
+> [Plain-English Overview](explain/PLAIN_ENGLISH.md). *(Doc type: Reference.)*
+
 Purpose: define predictive debit semantics for streamed symbolic intelligence
 responses where final provider usage is only known after completion.
 

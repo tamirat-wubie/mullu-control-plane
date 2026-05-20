@@ -1,5 +1,10 @@
 # Temporal Plane
 
+> **In one box:** How the system handles things that span time — delays,
+> schedules, timeouts, "do this later" — so time-based actions stay governed
+> and replayable. New here? → [Plain-English Overview](explain/PLAIN_ENGLISH.md);
+> unknown word? → [Glossary](GLOSSARY.md). *(Doc type: Reference.)*
+
 Scope: all Mullu Platform modules that operate across time boundaries.
 
 Without temporal awareness, the platform is limited to single-turn request-response. The temporal plane gives the system time — delayed actions, waiting states, recurring tasks, resumable work, and deadline awareness.

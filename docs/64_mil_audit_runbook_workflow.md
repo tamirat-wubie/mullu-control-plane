@@ -1,5 +1,10 @@
 # MIL Audit Runbook Workflow
 
+> **In one box:** How an operator turns a verified audit record into a
+> replayable procedural runbook. Operator how-to. New here? →
+> [Plain-English Overview](explain/PLAIN_ENGLISH.md); unknown word? →
+> [Glossary](GLOSSARY.md). *(Doc type: How-to.)*
+
 Purpose: Operator workflow for turning a verified MIL audit record into a replay-backed procedural runbook.
 Governance scope: MIL audit records, persisted trace spines, persisted replay records, learning admission, and durable runbook storage.
 Dependencies: `MILAuditStore`, `TraceStore`, `ReplayStore`, `RunbookStore`, `RunbookLibrary`, `PersistedReplayValidator`.
