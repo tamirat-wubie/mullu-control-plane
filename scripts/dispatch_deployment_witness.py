@@ -35,9 +35,11 @@ DEFAULT_SECRET_NAME = "MULLU_RUNTIME_WITNESS_SECRET"
 DEFAULT_CONFORMANCE_SECRET_NAME = "MULLU_RUNTIME_CONFORMANCE_SECRET"
 DEFAULT_DEPLOYMENT_WITNESS_SECRET_NAME = "MULLU_DEPLOYMENT_WITNESS_SECRET"
 DEFAULT_ARTIFACT_NAME = "deployment-witness"
+DEFAULT_GOVERNED_SWARM_ARTIFACT_NAME = "governed-swarm-production-readiness"
 DEFAULT_DOWNLOAD_DIR = Path(".change_assurance") / "deployment-witness-artifact"
 DEFAULT_GATEWAY_URL_VARIABLE = "MULLU_GATEWAY_URL"
 DEFAULT_EXPECTED_ENVIRONMENT_VARIABLE = "MULLU_EXPECTED_RUNTIME_ENV"
+DEFAULT_GOVERNED_SWARM_PILOT_READINESS_PATH = "docs/governed-swarm-promotion-readiness-example.json"
 VALID_ENVIRONMENTS = ("pilot", "production")
 
 
@@ -79,7 +81,10 @@ def dispatch_deployment_witness(
     runtime_secret_present: bool = False,
     conformance_secret_present: bool = False,
     deployment_witness_secret_present: bool = False,
+    operator_approval_ref: str = "",
+    governed_swarm_pilot_readiness_path: str = DEFAULT_GOVERNED_SWARM_PILOT_READINESS_PATH,
     artifact_name: str = DEFAULT_ARTIFACT_NAME,
+    governed_swarm_artifact_name: str = DEFAULT_GOVERNED_SWARM_ARTIFACT_NAME,
     download_dir: Path = DEFAULT_DOWNLOAD_DIR,
     timeout_seconds: int = 600,
     poll_seconds: int = 10,
@@ -115,9 +120,7 @@ def dispatch_deployment_witness(
     )
 
     dispatched_at = _utc_now()
-    _run_checked(
-        command_runner,
-        [
+    dispatch_command = [
             "gh",
             "workflow",
             "run",
@@ -130,8 +133,16 @@ def dispatch_deployment_witness(
             f"gateway_url={normalized_gateway_url}",
             "--field",
             f"expected_environment={resolved_environment}",
-        ],
-    )
+    ]
+    if operator_approval_ref.strip():
+        dispatch_command.extend(["--field", f"operator_approval_ref={operator_approval_ref.strip()}"])
+        dispatch_command.extend(
+            [
+                "--field",
+                f"governed_swarm_pilot_readiness_path={governed_swarm_pilot_readiness_path.strip()}",
+            ]
+        )
+    _run_checked(command_runner, dispatch_command)
     run_id = _wait_for_dispatched_run(
         repository=repository,
         workflow_file=workflow_file,
@@ -148,6 +159,14 @@ def dispatch_deployment_witness(
         download_dir=download_dir,
         runner=command_runner,
     )
+    if resolved_environment == "production" and operator_approval_ref.strip():
+        _download_artifact(
+            repository=repository,
+            run_id=run_id,
+            artifact_name=governed_swarm_artifact_name,
+            download_dir=download_dir,
+            runner=command_runner,
+        )
     return DispatchResult(
         run_id=run_id,
         run_url=str(final_payload.get("url", "")),
@@ -399,7 +418,16 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--accept-runtime-secret-env", action="store_true")
     parser.add_argument("--accept-conformance-secret-env", action="store_true")
     parser.add_argument("--accept-deployment-witness-secret-env", action="store_true")
+    parser.add_argument("--operator-approval-ref", default=os.environ.get("MULLU_DEPLOYMENT_PUBLICATION_APPROVAL_REF", ""))
+    parser.add_argument(
+        "--governed-swarm-pilot-readiness-path",
+        default=os.environ.get(
+            "MULLU_GOVERNED_SWARM_PILOT_READINESS_PATH",
+            DEFAULT_GOVERNED_SWARM_PILOT_READINESS_PATH,
+        ),
+    )
     parser.add_argument("--artifact-name", default=DEFAULT_ARTIFACT_NAME)
+    parser.add_argument("--governed-swarm-artifact-name", default=DEFAULT_GOVERNED_SWARM_ARTIFACT_NAME)
     parser.add_argument("--download-dir", default=str(DEFAULT_DOWNLOAD_DIR))
     parser.add_argument("--timeout-seconds", type=int, default=600)
     parser.add_argument("--poll-seconds", type=int, default=10)
@@ -431,7 +459,10 @@ def main(argv: list[str] | None = None) -> int:
                 args.accept_deployment_witness_secret_env
                 and bool(os.environ.get("MULLU_DEPLOYMENT_WITNESS_SECRET"))
             ),
+            operator_approval_ref=args.operator_approval_ref,
+            governed_swarm_pilot_readiness_path=args.governed_swarm_pilot_readiness_path,
             artifact_name=args.artifact_name,
+            governed_swarm_artifact_name=args.governed_swarm_artifact_name,
             download_dir=Path(args.download_dir),
             timeout_seconds=args.timeout_seconds,
             poll_seconds=args.poll_seconds,
