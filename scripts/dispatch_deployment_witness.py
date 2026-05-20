@@ -22,7 +22,7 @@ import json
 import os
 import subprocess
 import time
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Protocol
@@ -66,6 +66,62 @@ class DispatchResult:
     status: str
     conclusion: str
     artifact_dir: Path
+
+
+@dataclass(frozen=True, slots=True)
+class DispatchPlan:
+    """Non-effecting deployment witness dispatch plan."""
+
+    repository: str
+    workflow_file: str
+    gateway_url: str
+    expected_environment: str
+    dispatch_command: list[str]
+    artifact_names: list[str]
+    artifact_dir: Path
+    governed_swarm_production_readiness_required: bool
+
+
+def build_deployment_witness_dispatch_plan(
+    *,
+    gateway_url: str,
+    expected_environment: str,
+    repository: str = DEFAULT_REPOSITORY,
+    workflow_file: str = DEFAULT_WORKFLOW_FILE,
+    operator_approval_ref: str = "",
+    governed_swarm_pilot_readiness_path: str = DEFAULT_GOVERNED_SWARM_PILOT_READINESS_PATH,
+    artifact_name: str = DEFAULT_ARTIFACT_NAME,
+    governed_swarm_artifact_name: str = DEFAULT_GOVERNED_SWARM_ARTIFACT_NAME,
+    download_dir: Path = DEFAULT_DOWNLOAD_DIR,
+) -> DispatchPlan:
+    """Build the workflow dispatch and artifact collection plan without side effects."""
+    normalized_gateway_url = _require_gateway_url(gateway_url)
+    _require_expected_environment(expected_environment)
+    dispatch_command = _build_dispatch_command(
+        repository=repository,
+        workflow_file=workflow_file,
+        gateway_url=normalized_gateway_url,
+        expected_environment=expected_environment,
+        operator_approval_ref=operator_approval_ref,
+        governed_swarm_pilot_readiness_path=governed_swarm_pilot_readiness_path,
+    )
+    artifact_names = [artifact_name]
+    readiness_required = _requires_governed_swarm_production_readiness(
+        expected_environment=expected_environment,
+        operator_approval_ref=operator_approval_ref,
+    )
+    if readiness_required:
+        artifact_names.append(governed_swarm_artifact_name)
+    return DispatchPlan(
+        repository=repository,
+        workflow_file=workflow_file,
+        gateway_url=normalized_gateway_url,
+        expected_environment=expected_environment,
+        dispatch_command=dispatch_command,
+        artifact_names=artifact_names,
+        artifact_dir=download_dir,
+        governed_swarm_production_readiness_required=readiness_required,
+    )
 
 
 def dispatch_deployment_witness(
@@ -120,28 +176,14 @@ def dispatch_deployment_witness(
     )
 
     dispatched_at = _utc_now()
-    dispatch_command = [
-            "gh",
-            "workflow",
-            "run",
-            workflow_file,
-            "--repo",
-            repository,
-            "--ref",
-            "main",
-            "--field",
-            f"gateway_url={normalized_gateway_url}",
-            "--field",
-            f"expected_environment={resolved_environment}",
-    ]
-    if operator_approval_ref.strip():
-        dispatch_command.extend(["--field", f"operator_approval_ref={operator_approval_ref.strip()}"])
-        dispatch_command.extend(
-            [
-                "--field",
-                f"governed_swarm_pilot_readiness_path={governed_swarm_pilot_readiness_path.strip()}",
-            ]
-        )
+    dispatch_command = _build_dispatch_command(
+        repository=repository,
+        workflow_file=workflow_file,
+        gateway_url=normalized_gateway_url,
+        expected_environment=resolved_environment,
+        operator_approval_ref=operator_approval_ref,
+        governed_swarm_pilot_readiness_path=governed_swarm_pilot_readiness_path,
+    )
     _run_checked(command_runner, dispatch_command)
     run_id = _wait_for_dispatched_run(
         repository=repository,
@@ -159,7 +201,10 @@ def dispatch_deployment_witness(
         download_dir=download_dir,
         runner=command_runner,
     )
-    if resolved_environment == "production" and operator_approval_ref.strip():
+    if _requires_governed_swarm_production_readiness(
+        expected_environment=resolved_environment,
+        operator_approval_ref=operator_approval_ref,
+    ):
         _download_artifact(
             repository=repository,
             run_id=run_id,
@@ -174,6 +219,48 @@ def dispatch_deployment_witness(
         conclusion=str(final_payload.get("conclusion", "")),
         artifact_dir=artifact_dir,
     )
+
+
+def _build_dispatch_command(
+    *,
+    repository: str,
+    workflow_file: str,
+    gateway_url: str,
+    expected_environment: str,
+    operator_approval_ref: str,
+    governed_swarm_pilot_readiness_path: str,
+) -> list[str]:
+    command = [
+        "gh",
+        "workflow",
+        "run",
+        workflow_file,
+        "--repo",
+        repository,
+        "--ref",
+        "main",
+        "--field",
+        f"gateway_url={gateway_url}",
+        "--field",
+        f"expected_environment={expected_environment}",
+    ]
+    if operator_approval_ref.strip():
+        command.extend(["--field", f"operator_approval_ref={operator_approval_ref.strip()}"])
+        command.extend(
+            [
+                "--field",
+                f"governed_swarm_pilot_readiness_path={governed_swarm_pilot_readiness_path.strip()}",
+            ]
+        )
+    return command
+
+
+def _requires_governed_swarm_production_readiness(
+    *,
+    expected_environment: str,
+    operator_approval_ref: str,
+) -> bool:
+    return expected_environment == "production" and bool(operator_approval_ref.strip())
 
 
 def _require_gateway_url(gateway_url: str) -> str:
@@ -431,12 +518,41 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--download-dir", default=str(DEFAULT_DOWNLOAD_DIR))
     parser.add_argument("--timeout-seconds", type=int, default=600)
     parser.add_argument("--poll-seconds", type=int, default=10)
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Print the non-effecting dispatch plan and do not call GitHub.",
+    )
     return parser.parse_args(argv)
 
 
 def main(argv: list[str] | None = None) -> int:
     """CLI entry point for workflow dispatch and artifact collection."""
     args = parse_args(argv)
+    if args.dry_run:
+        try:
+            plan = build_deployment_witness_dispatch_plan(
+                gateway_url=args.gateway_url,
+                expected_environment=args.expected_environment,
+                repository=args.repo,
+                workflow_file=args.workflow_file,
+                operator_approval_ref=args.operator_approval_ref,
+                governed_swarm_pilot_readiness_path=args.governed_swarm_pilot_readiness_path,
+                artifact_name=args.artifact_name,
+                governed_swarm_artifact_name=args.governed_swarm_artifact_name,
+                download_dir=Path(args.download_dir),
+            )
+        except RuntimeError as exc:
+            message = str(exc)
+            detail = message if message.startswith("gateway URL ") else ""
+            print("deployment witness dry-run failed" + (f": {detail}" if detail else ""))
+            return 1
+
+        payload = asdict(plan)
+        payload["artifact_dir"] = str(plan.artifact_dir)
+        print(json.dumps(payload, indent=2, sort_keys=True))
+        return 0
+
     try:
         result = dispatch_deployment_witness(
             gateway_url=args.gateway_url,
