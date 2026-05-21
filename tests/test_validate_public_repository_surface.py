@@ -13,6 +13,10 @@ Invariants:
 
 from __future__ import annotations
 
+import subprocess
+
+import pytest
+
 from scripts.validate_public_repository_surface import (
     DEPLOYMENT_STATUS_REQUIRED_LITERALS,
     DEPLOYMENT_WITNESS_WORKFLOW_PATH,
@@ -30,6 +34,8 @@ from scripts.validate_public_repository_surface import (
     PRODUCT_BOUNDARY_REQUIRED_LITERALS,
     REPO_ROOT,
     STATUS_REQUIRED_LITERALS,
+    _parse_json_object,
+    read_json_url_with_gh,
     validate_required_document_text,
 )
 from scripts.validate_protocol_manifest import load_manifest
@@ -310,3 +316,57 @@ def test_required_document_text_reports_missing_orchestration_literal() -> None:
     assert "validate_deployment_orchestration_receipt.py" in errors[0]
     assert "deployment_witness_orchestration_validation.json" in errors[0]
     assert "Gateway Publication Orchestration" not in errors[0]
+
+
+def test_github_cli_fallback_error_is_bounded(monkeypatch: pytest.MonkeyPatch) -> None:
+    secret_url = "https://api.github.com/repos/tamirat-wubie/mullu-control-plane?token=secret-token"
+
+    def _fake_run(*_args, **_kwargs):
+        return subprocess.CompletedProcess(
+            ["gh", "api", "repos/tamirat-wubie/mullu-control-plane"],
+            7,
+            stdout="",
+            stderr="provider returned secret-token in stderr",
+        )
+
+    monkeypatch.setattr(
+        "scripts.validate_public_repository_surface.subprocess.run",
+        _fake_run,
+    )
+
+    with pytest.raises(RuntimeError) as exc_info:
+        read_json_url_with_gh(
+            secret_url,
+            prior_failure="network failure: secret-token",
+        )
+
+    message = str(exc_info.value)
+    assert message == "github_api: network_failure; gh_cli_fallback_failed: github_cli_exit_7"
+    assert "secret-token" not in message
+    assert "mullu-control-plane" not in message
+
+
+def test_github_cli_unsupported_url_error_is_bounded() -> None:
+    with pytest.raises(RuntimeError) as exc_info:
+        read_json_url_with_gh(
+            "https://example.invalid/private-path?token=secret-token",
+            prior_failure="request timed out",
+        )
+
+    message = str(exc_info.value)
+    assert message == "github_api: request_timed_out; no_github_cli_fallback_path"
+    assert "secret-token" not in message
+    assert "private-path" not in message
+
+
+def test_json_parse_error_source_is_bounded() -> None:
+    with pytest.raises(RuntimeError) as exc_info:
+        _parse_json_object(
+            source="https://api.github.com/repos/tamirat-wubie/mullu-control-plane?token=secret-token",
+            payload="{not-json",
+        )
+
+    message = str(exc_info.value)
+    assert message == "github_api: response was not valid JSON"
+    assert "secret-token" not in message
+    assert "mullu-control-plane" not in message
