@@ -7,6 +7,7 @@ Invariants:
   - The loop remains bounded by max_iterations.
   - JSON receipts preserve solver outcome and unresolved principle ids.
   - Receipt file writes are explicit and parent directories must already exist.
+  - Receipt store writes use deterministic append-only persistence.
 """
 
 from __future__ import annotations
@@ -26,6 +27,10 @@ from mcoi_runtime.contracts.operational_math import (
 from mcoi_runtime.core.event_spine import EventSpineEngine
 from mcoi_runtime.core.operational_math_loop import OperationalMathLoopEngine
 from mcoi_runtime.app.operational_math_observability import summarize_operational_math_receipt
+from mcoi_runtime.persistence.errors import PersistenceError
+from mcoi_runtime.persistence.operational_math_receipt_store import (
+    FileOperationalMathReceiptStore,
+)
 
 
 def _now_iso() -> str:
@@ -107,6 +112,12 @@ def main(argv: list[str] | None = None) -> int:
         help="optional .json path where the receipt is written",
     )
     parser.add_argument(
+        "--store-path",
+        type=Path,
+        default=None,
+        help="optional .json path for the append-only operational math receipt store",
+    )
+    parser.add_argument(
         "--projection-path",
         type=Path,
         default=None,
@@ -127,11 +138,13 @@ def main(argv: list[str] | None = None) -> int:
         )
         result = engine.apply_all(target)
         receipt = build_operational_math_receipt(result, event_count=event_spine.event_count)
+        if args.store_path is not None:
+            FileOperationalMathReceiptStore(args.store_path).append(receipt)
         if args.receipt_path is not None:
             _write_json_document(receipt, args.receipt_path)
         if args.projection_path is not None:
             _write_json_document(summarize_operational_math_receipt(receipt), args.projection_path)
-    except (OSError, ValueError) as exc:
+    except (OSError, PersistenceError, ValueError) as exc:
         sys.stderr.write(f"STATUS: failed\nerror: {exc}\n")
         return 1
 

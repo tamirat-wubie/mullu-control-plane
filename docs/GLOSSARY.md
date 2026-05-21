@@ -14,7 +14,7 @@ back whenever a term trips you up. Terms are alphabetical. Each entry is:
 
 ### 8-guard chain
 A fixed sequence of eight automatic checks that every action must pass before it
-is allowed to run. *(This is the core safety mechanism — the AI cannot skip
+is allowed to run. *(This is the core safety mechanism — the symbolic intelligence runtime cannot skip
 it.)* → [04_policy_and_verification.md](04_policy_and_verification.md)
 
 ### Approval gate
@@ -30,7 +30,7 @@ detectable. *(This is the "security camera" — it makes the past trustworthy.)*
 
 ### Budget (spend budget)
 A hard limit on money (or other resources) for a task; when it's exhausted,
-Mullu stops rather than continuing. *(The AI cannot raise its own limit.)* →
+Mullu stops rather than continuing. *(The symbolic intelligence runtime cannot raise its own limit.)* →
 [01_shared_invariants.md](01_shared_invariants.md)
 
 ### Capability / capability plane
@@ -140,7 +140,7 @@ Re-running a recorded history exactly, to see precisely what happened and why.
 
 ### Skill / skill boundary
 A defined unit of "something Mullu knows how to do", and the hard edge that
-keeps it from doing things outside its authorized skills. *(The AI's "job
+keeps it from doing things outside its authorized skills. *(The symbolic intelligence runtime's "job
 description".)* → [19_skill_system.md](19_skill_system.md)
 
 ### Symbolic intelligence

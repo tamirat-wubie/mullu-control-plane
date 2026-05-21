@@ -146,7 +146,7 @@ Before public launch or paid-user rollout, complete:
 | Owner pair | `MULLUSI`, `Mullusi`, `Mullu by Mullusi` |
 | Surface family | `Mullu Inspect`, `Mullu CLI`, `Mullu Code`, `Mullu Desk`, `Mullu Control Plane` |
 | Similar spelling | `Mulu`, `Mullu`, `Muluu`, `Mullus`, `Mullusi` |
-| Sound-alike | `Moolu`, `Mulu`, `Mulu AI`, `Mullu AI` |
+| Sound-alike | `Moolu`, `Mulu`, `Mulu Generic`, `Mullu Generic` |
 
 ## Provisional Decision
 

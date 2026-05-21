@@ -9,6 +9,9 @@ from mcoi_runtime.app.operational_math_observability import (
     register_operational_math_observability,
     summarize_operational_math_receipt,
 )
+from mcoi_runtime.persistence.operational_math_receipt_store import (
+    OperationalMathReceiptStore,
+)
 
 
 class FakeObservability:
@@ -87,6 +90,42 @@ def test_registers_operational_math_observability_source() -> None:
     assert summary["governed"] is True
 
 
+def test_registers_operational_math_store_observability_source() -> None:
+    observability = FakeObservability()
+    receipt_store = OperationalMathReceiptStore()
+    receipt_store.append(_receipt())
+
+    register_operational_math_observability(
+        observability=observability,
+        receipt_store=receipt_store,
+    )
+    source = observability.sources[OPERATIONAL_MATH_OBSERVABILITY_SOURCE]
+    summary = source()
+
+    assert summary["source"] == OPERATIONAL_MATH_OBSERVABILITY_SOURCE
+    assert summary["total_receipts"] == 1
+    assert summary["latest_receipt_id"] == "operational_math_loop_receipt:result-1"
+    assert summary["passed_receipt_count"] == 1
+    assert summary["requires_operator_review"] is False
+    assert summary["governed"] is True
+
+
+def test_server_wires_operational_math_store_into_dashboard() -> None:
+    from mcoi_runtime.app.routers.deps import deps
+    from mcoi_runtime.persistence.operational_math_receipt_store import (
+        OperationalMathReceiptStore,
+    )
+
+    receipt_store = deps.get("operational_math_receipt_store")
+    summary = deps.observability.collect(OPERATIONAL_MATH_OBSERVABILITY_SOURCE)
+
+    assert isinstance(receipt_store, OperationalMathReceiptStore)
+    assert summary["source"] == OPERATIONAL_MATH_OBSERVABILITY_SOURCE
+    assert summary["total_receipts"] >= 0
+    assert summary["requires_operator_review"] in (True, False)
+    assert summary["governed"] is True
+
+
 def test_observability_registration_rejects_invalid_surfaces() -> None:
     with pytest.raises(TypeError):
         register_operational_math_observability(
@@ -98,6 +137,12 @@ def test_observability_registration_rejects_invalid_surfaces() -> None:
         register_operational_math_observability(
             observability=FakeObservability(),
             receipt_provider=object(),  # type: ignore[arg-type]
+        )
+
+    with pytest.raises(TypeError):
+        register_operational_math_observability(
+            observability=FakeObservability(),
+            receipt_store=object(),  # type: ignore[arg-type]
         )
 
 

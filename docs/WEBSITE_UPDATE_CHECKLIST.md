@@ -21,7 +21,7 @@ Invariants: `Mullu` is the product; `Mullusi` is the company and governance auth
 1. Use `Mullu` after the first-reference line.
 2. Explain surfaces: Mullu, Mullu Inspect, Mullu CLI, Mullu Code, Mullu Desk, Mullu Control Plane.
 3. Keep `Mullusi` in footer, governance, audit, research, and company contexts.
-4. Avoid generic product names: `Mullusi Handler`, `Mullusi Work`, `Mullusi Operator`, `Mullu AI`.
+4. Avoid generic product names: `Mullusi Handler`, `Mullusi Work`, `Mullusi Operator`, `Mullu Generic`.
 5. Avoid overpromising live production status before deployment witness exists.
 
 ## Trust and Governance Copy

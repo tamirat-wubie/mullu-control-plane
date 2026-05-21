@@ -76,7 +76,7 @@ Invoke-RestMethod -Method Post `
 requires review**, with policy reasons such as `budget_exceeded_actor_limit`
 (per the spec, stale vendor evidence and high risk also raise reasons). It did
 **not** become payable. You just watched the [budget](../GLOSSARY.md#budget-spend-budget)
-invariant — *"the AI cannot raise its own limit"* — enforced mechanically.
+invariant — *"the symbolic intelligence runtime cannot raise its own limit"* — enforced mechanically.
 
 > One of the pilot's stated invariants is: *blocked or review-bound packets
 > emit no [effect](../GLOSSARY.md#effect) receipts.* Nothing happened in the

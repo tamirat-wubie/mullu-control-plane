@@ -7,7 +7,7 @@ Invariants: technical contract surfaces remain stable unless a versioned compati
 
 ## Decision Boundary
 
-Mullu is the public product name. Mullu Platform remains the `platform_term` where existing SDK/API contracts, schema references, OpenAPI metadata, generated client expectations, or integration documentation require a stable technical name.
+Mullu is the proprietary product name. Mullu Platform remains the `platform_term` where existing SDK/API contracts, schema references, OpenAPI metadata, generated client expectations, or integration documentation require a stable technical name.
 
 Do not rename technical contract surfaces solely for public naming cleanup.
 

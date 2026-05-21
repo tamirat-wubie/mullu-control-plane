@@ -1,24 +1,28 @@
 #!/usr/bin/env python3
-"""Validate the public GitHub repository surface for governed reflection.
+"""Validate the proprietary GitHub repository metadata surface for governed reflection.
 
-Purpose: compare versioned public-surface witnesses with GitHub metadata and
+Purpose: compare versioned proprietary-surface witnesses with GitHub metadata and
 latest-release state.
 Governance scope: repository description, topics, latest release, deployment
-status witness, and required public documents.
+status witness, authenticated metadata access, and required proprietary
+documents.
 Dependencies: Python standard library, GITHUB_SURFACE.md, DEPLOYMENT_STATUS.md,
-STATUS.md, and GitHub public REST endpoints.
+STATUS.md, GitHub REST endpoints, and optional authenticated GitHub CLI access.
 Invariants:
-  - Public metadata must match the versioned witness.
+  - Repository metadata must match the versioned proprietary witness.
   - Latest release must match the governed release tag.
   - Deployment health must remain explicitly not-published until endpoint
     evidence is declared.
-  - No required public witness document may be absent.
+  - No required proprietary witness document may be absent.
+  - Private repository metadata must be verified through authenticated access,
+    not treated as a public endpoint.
 """
 
 from __future__ import annotations
 
 import json
 import os
+import subprocess
 import sys
 from pathlib import Path
 from typing import Any
@@ -45,7 +49,7 @@ def expected_protocol_manifest_result() -> str:
 EXPECTED_PROTOCOL_MANIFEST_RESULT = expected_protocol_manifest_result()
 
 EXPECTED_DESCRIPTION = (
-    "Governed symbolic intelligence control plane - multi-tenant LLM orchestration "
+    "Proprietary Mullusi symbolic intelligence control plane - multi-tenant governed orchestration "
     "with budget enforcement, audit trails, and policy-driven governance"
 )
 EXPECTED_LATEST_RELEASE = "v3.13.3"
@@ -339,11 +343,56 @@ CI_WORKFLOW_REQUIRED_LITERALS = (
 )
 
 
+def _parse_json_object(*, source: str, payload: str) -> dict[str, Any]:
+    """Parse one JSON object response with causal source context."""
+    try:
+        parsed = json.loads(payload)
+    except json.JSONDecodeError as exc:
+        raise RuntimeError(f"{source}: response was not valid JSON") from exc
+    if not isinstance(parsed, dict):
+        raise RuntimeError(f"{source}: response root was not an object")
+    return parsed
+
+
+def _github_api_path(url: str) -> str | None:
+    """Return the GitHub API path accepted by gh api for a known GitHub URL."""
+    prefix = "https://api.github.com/"
+    if not url.startswith(prefix):
+        return None
+    api_path = url.removeprefix(prefix).strip("/")
+    return api_path or None
+
+
+def read_json_url_with_gh(url: str, *, prior_failure: str) -> dict[str, Any]:
+    """Read one GitHub JSON endpoint through authenticated GitHub CLI access."""
+    api_path = _github_api_path(url)
+    if api_path is None:
+        raise RuntimeError(f"{url}: {prior_failure}; no GitHub CLI fallback path")
+    try:
+        result = subprocess.run(
+            ["gh", "api", api_path],
+            cwd=REPO_ROOT,
+            capture_output=True,
+            text=True,
+            timeout=15,
+            check=False,
+        )
+    except FileNotFoundError as exc:
+        raise RuntimeError(f"{url}: {prior_failure}; gh CLI not available") from exc
+    except subprocess.TimeoutExpired as exc:
+        raise RuntimeError(f"{url}: {prior_failure}; gh CLI request timed out") from exc
+    if result.returncode != 0:
+        stderr = " ".join(result.stderr.split())
+        detail = stderr or f"exit code {result.returncode}"
+        raise RuntimeError(f"{url}: {prior_failure}; gh CLI fallback failed: {detail}")
+    return _parse_json_object(source=f"gh api {api_path}", payload=result.stdout)
+
+
 def read_json_url(url: str) -> dict[str, Any]:
-    """Read one GitHub JSON endpoint with explicit timeout and error context."""
+    """Read one GitHub JSON endpoint with authenticated fallback and context."""
     headers = {
         "Accept": "application/vnd.github+json",
-        "User-Agent": "mullu-public-surface-validator",
+        "User-Agent": "mullu-repository-surface-validator",
     }
     token = os.environ.get("GITHUB_TOKEN") or os.environ.get("GH_TOKEN")
     if token:
@@ -357,23 +406,23 @@ def read_json_url(url: str) -> dict[str, Any]:
         with urlopen(request, timeout=10) as response:
             payload = response.read().decode("utf-8")
     except HTTPError as exc:
-        raise RuntimeError(f"{url}: GitHub returned HTTP {exc.code}") from exc
+        return read_json_url_with_gh(
+            url,
+            prior_failure=f"GitHub returned HTTP {exc.code}",
+        )
     except URLError as exc:
-        raise RuntimeError(f"{url}: network failure: {exc.reason}") from exc
+        return read_json_url_with_gh(
+            url,
+            prior_failure=f"network failure: {exc.reason}",
+        )
     except TimeoutError as exc:
-        raise RuntimeError(f"{url}: request timed out") from exc
+        return read_json_url_with_gh(url, prior_failure="request timed out")
 
-    try:
-        parsed = json.loads(payload)
-    except json.JSONDecodeError as exc:
-        raise RuntimeError(f"{url}: response was not valid JSON") from exc
-    if not isinstance(parsed, dict):
-        raise RuntimeError(f"{url}: response root was not an object")
-    return parsed
+    return _parse_json_object(source=url, payload=payload)
 
 
 def validate_repository_payload(payload: dict[str, Any]) -> list[str]:
-    """Validate public repository metadata against the governed witness."""
+    """Validate repository metadata against the governed proprietary witness."""
     errors: list[str] = []
 
     description = payload.get("description")
@@ -413,7 +462,7 @@ def validate_required_document_text(
     content: str,
     required_literals: tuple[str, ...],
 ) -> list[str]:
-    """Validate one public witness document has required local anchors."""
+    """Validate one repository witness document has required local anchors."""
     missing_literals = tuple(
         literal for literal in required_literals if literal not in content
     )
@@ -423,7 +472,7 @@ def validate_required_document_text(
 
 
 def validate_local_public_documents() -> list[str]:
-    """Validate required public witness documents and deployment-health anchors."""
+    """Validate required repository witness documents and deployment-health anchors."""
     errors: list[str] = []
 
     for document_name in REQUIRED_PUBLIC_DOCUMENTS:
@@ -530,7 +579,7 @@ def validate_local_public_documents() -> list[str]:
 
 
 def validate_public_repository_surface(*, live: bool = True) -> list[str]:
-    """Validate local witnesses and, when enabled, live GitHub public state."""
+    """Validate local witnesses and, when enabled, live GitHub metadata state."""
     errors = validate_local_public_documents()
     if not live:
         return errors
@@ -550,7 +599,7 @@ def main() -> None:
     local_only = "--local-only" in sys.argv
     errors = validate_public_repository_surface(live=not local_only)
 
-    print("=== Public Repository Surface Validation ===")
+    print("=== Repository Metadata Surface Validation ===")
     print("  repository:     tamirat-wubie/mullu-control-plane")
     print(f"  latest release: {EXPECTED_LATEST_RELEASE}")
     print(f"  live checks:    {'disabled' if local_only else 'enabled'}")
@@ -561,7 +610,7 @@ def main() -> None:
             print(f"  X {error}")
         sys.exit(1)
 
-    print("\nALL PUBLIC SURFACE GATES PASSED")
+    print("\nALL REPOSITORY METADATA GATES PASSED")
     sys.exit(0)
 
 
