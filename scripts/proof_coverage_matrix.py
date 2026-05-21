@@ -860,6 +860,18 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "rbac_summary_bounded",
                 "rbac_errors_sanitized",
             ],
+            runtime_witness_anchor_aliases={
+                "rbac_identity_registration_governed": ["create_identity"],
+                "rbac_role_registration_governed": ["create_role"],
+                "rbac_role_binding_governed": ["bind_role"],
+                "rbac_identity_creation_audited": ["identity_creation_audited"],
+                "rbac_summary_bounded": ["rbac_summary"],
+                "rbac_errors_sanitized": [
+                    "unknown_identity_denied",
+                    "disabled_identity_denied",
+                    "authenticated_evaluation_failure_fails_closed",
+                ],
+            },
         ),
         _surface(
             "runtime_config_management",

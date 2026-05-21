@@ -3468,6 +3468,28 @@
         "/api/v1/rbac/summary"
       ],
       "request_proof": "request_proof",
+      "runtime_witness_anchor_aliases": {
+        "rbac_errors_sanitized": [
+          "unknown_identity_denied",
+          "disabled_identity_denied",
+          "authenticated_evaluation_failure_fails_closed"
+        ],
+        "rbac_identity_creation_audited": [
+          "identity_creation_audited"
+        ],
+        "rbac_identity_registration_governed": [
+          "create_identity"
+        ],
+        "rbac_role_binding_governed": [
+          "bind_role"
+        ],
+        "rbac_role_registration_governed": [
+          "create_role"
+        ],
+        "rbac_summary_bounded": [
+          "rbac_summary"
+        ]
+      },
       "runtime_witnesses": [
         "rbac_identity_registration_governed",
         "rbac_role_registration_governed",
@@ -7454,7 +7476,7 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 694,
+    "exact_test_anchor_count": 705,
     "runtime_witness_count": 1047,
     "surfaces": [
       {
@@ -8558,19 +8580,51 @@
         "unanchored_witnesses": []
       },
       {
-        "anchored_witnesses": [],
-        "exact_test_anchor_count": 0,
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "mcoi/tests/test_rbac_endpoints.py::test_create_identity"
+            ],
+            "witness": "rbac_identity_registration_governed"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_rbac_endpoints.py::test_create_role"
+            ],
+            "witness": "rbac_role_registration_governed"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_rbac_endpoints.py::test_bind_role"
+            ],
+            "witness": "rbac_role_binding_governed"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_rbac_endpoints.py::test_identity_creation_audited"
+            ],
+            "witness": "rbac_identity_creation_audited"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_rbac_endpoints.py::test_rbac_summary"
+            ],
+            "witness": "rbac_summary_bounded"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_rbac_guard.py::test_unknown_identity_denied",
+              "mcoi/tests/test_rbac_guard.py::test_disabled_identity_denied",
+              "mcoi/tests/test_rbac_guard.py::test_authenticated_evaluation_failure_fails_closed"
+            ],
+            "witness": "rbac_errors_sanitized"
+          }
+        ],
+        "exact_test_anchor_count": 6,
         "runtime_witness_count": 6,
         "surface_id": "rbac_access_governance",
-        "unanchored_witness_count": 6,
-        "unanchored_witnesses": [
-          "rbac_identity_registration_governed",
-          "rbac_role_registration_governed",
-          "rbac_role_binding_governed",
-          "rbac_identity_creation_audited",
-          "rbac_summary_bounded",
-          "rbac_errors_sanitized"
-        ]
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
       },
       {
         "anchored_witnesses": [
@@ -11459,18 +11513,43 @@
         "unanchored_witnesses": []
       },
       {
-        "anchored_witnesses": [],
-        "exact_test_anchor_count": 0,
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "tests/test_gateway/test_domain_operating_pack.py::test_builtin_domain_pack_catalog_complete"
+            ],
+            "witness": "builtin_domain_pack_catalog_complete"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_domain_operating_pack.py::test_finance_ops_pack_declares_governed_artifacts"
+            ],
+            "witness": "finance_ops_pack_declares_governed_artifacts"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_domain_operating_pack.py::test_high_risk_pack_requires_approval_roles"
+            ],
+            "witness": "high_risk_pack_requires_approval_roles"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_domain_operating_pack.py::test_certified_pack_requires_evidence_refs"
+            ],
+            "witness": "certified_pack_requires_evidence_refs"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_domain_operating_pack.py::test_domain_operating_pack_schema_valid"
+            ],
+            "witness": "domain_operating_pack_schema_valid"
+          }
+        ],
+        "exact_test_anchor_count": 5,
         "runtime_witness_count": 5,
         "surface_id": "domain_operating_pack",
-        "unanchored_witness_count": 5,
-        "unanchored_witnesses": [
-          "builtin_domain_pack_catalog_complete",
-          "finance_ops_pack_declares_governed_artifacts",
-          "high_risk_pack_requires_approval_roles",
-          "certified_pack_requires_evidence_refs",
-          "domain_operating_pack_schema_valid"
-        ]
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
       },
       {
         "anchored_witnesses": [
@@ -13118,6 +13197,6 @@
         "unanchored_witnesses": []
       }
     ],
-    "unanchored_witness_count": 353
+    "unanchored_witness_count": 342
   }
 }
