@@ -42,6 +42,8 @@ from scripts.dispatch_deployment_witness import (  # noqa: E402
     DEFAULT_CONFORMANCE_SECRET_NAME,
     DEFAULT_DEPLOYMENT_WITNESS_SECRET_NAME,
     DEFAULT_DOWNLOAD_DIR,
+    DEFAULT_GOVERNED_SWARM_ARTIFACT_NAME,
+    DEFAULT_GOVERNED_SWARM_PILOT_READINESS_PATH,
     DEFAULT_SECRET_NAME,
     DEFAULT_WORKFLOW_FILE,
     DEFAULT_WORKFLOW_NAME,
@@ -149,7 +151,10 @@ def orchestrate_deployment_witness(
     runtime_secret_present: bool = False,
     conformance_secret_present: bool = False,
     deployment_witness_secret_present: bool = False,
+    operator_approval_ref: str = "",
+    governed_swarm_pilot_readiness_path: str = DEFAULT_GOVERNED_SWARM_PILOT_READINESS_PATH,
     artifact_name: str = DEFAULT_ARTIFACT_NAME,
+    governed_swarm_artifact_name: str = DEFAULT_GOVERNED_SWARM_ARTIFACT_NAME,
     download_dir: Path = DEFAULT_DOWNLOAD_DIR,
     timeout_seconds: int = 600,
     poll_seconds: int = 10,
@@ -230,7 +235,10 @@ def orchestrate_deployment_witness(
                 runtime_secret_present=runtime_secret_present,
                 conformance_secret_present=conformance_secret_present,
                 deployment_witness_secret_present=deployment_witness_secret_present,
+                operator_approval_ref=operator_approval_ref,
+                governed_swarm_pilot_readiness_path=governed_swarm_pilot_readiness_path,
                 artifact_name=artifact_name,
+                governed_swarm_artifact_name=governed_swarm_artifact_name,
                 download_dir=download_dir,
                 timeout_seconds=timeout_seconds,
                 poll_seconds=poll_seconds,
@@ -307,7 +315,16 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--accept-runtime-secret-env", action="store_true")
     parser.add_argument("--accept-conformance-secret-env", action="store_true")
     parser.add_argument("--accept-deployment-witness-secret-env", action="store_true")
+    parser.add_argument("--operator-approval-ref", default=os.environ.get("MULLU_DEPLOYMENT_PUBLICATION_APPROVAL_REF", ""))
+    parser.add_argument(
+        "--governed-swarm-pilot-readiness-path",
+        default=os.environ.get(
+            "MULLU_GOVERNED_SWARM_PILOT_READINESS_PATH",
+            DEFAULT_GOVERNED_SWARM_PILOT_READINESS_PATH,
+        ),
+    )
     parser.add_argument("--artifact-name", default=DEFAULT_ARTIFACT_NAME)
+    parser.add_argument("--governed-swarm-artifact-name", default=DEFAULT_GOVERNED_SWARM_ARTIFACT_NAME)
     parser.add_argument("--download-dir", default=str(DEFAULT_DOWNLOAD_DIR))
     parser.add_argument("--timeout-seconds", type=int, default=600)
     parser.add_argument("--poll-seconds", type=int, default=10)
@@ -348,7 +365,10 @@ def main(argv: list[str] | None = None) -> int:
                 args.accept_deployment_witness_secret_env
                 and bool(os.environ.get("MULLU_DEPLOYMENT_WITNESS_SECRET"))
             ),
+            operator_approval_ref=args.operator_approval_ref,
+            governed_swarm_pilot_readiness_path=args.governed_swarm_pilot_readiness_path,
             artifact_name=args.artifact_name,
+            governed_swarm_artifact_name=args.governed_swarm_artifact_name,
             download_dir=Path(args.download_dir),
             timeout_seconds=args.timeout_seconds,
             poll_seconds=args.poll_seconds,
