@@ -36,6 +36,7 @@ Migration note (read carefully if writing a durable subclass):
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 from typing import Any
 
@@ -222,8 +223,17 @@ class JsonlReceiptStore(InMemoryReceiptStore):
       - Runtime writes append only; in-memory indexes are derived state.
     """
 
-    def __init__(self, path: str | Path, *, max_entries: int = InMemoryReceiptStore.DEFAULT_MAX_ENTRIES) -> None:
+    def __init__(
+        self,
+        path: str | Path,
+        *,
+        max_entries: int = InMemoryReceiptStore.DEFAULT_MAX_ENTRIES,
+        sync_on_write: bool = False,
+    ) -> None:
+        if not isinstance(sync_on_write, bool):
+            raise ValueError("sync_on_write must be a boolean")
         self._path = Path(path)
+        self._sync_on_write = sync_on_write
         super().__init__(max_entries=max_entries)
         self._path.parent.mkdir(parents=True, exist_ok=True)
         if self._path.exists():
@@ -232,6 +242,10 @@ class JsonlReceiptStore(InMemoryReceiptStore):
     @property
     def path(self) -> Path:
         return self._path
+
+    @property
+    def sync_on_write(self) -> bool:
+        return self._sync_on_write
 
     def record_lineage(self, entity_id: str, lineage: CausalLineage) -> None:
         super().record_lineage(entity_id, lineage)
@@ -264,6 +278,8 @@ class JsonlReceiptStore(InMemoryReceiptStore):
         with self._path.open("a", encoding="utf-8", newline="\n") as handle:
             handle.write(line + "\n")
             handle.flush()
+            if self._sync_on_write:
+                os.fsync(handle.fileno())
 
     def _replay(self) -> None:
         for line_number, raw_line in enumerate(self._path.read_text(encoding="utf-8").splitlines(), start=1):

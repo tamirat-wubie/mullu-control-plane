@@ -45,7 +45,7 @@ def expected_protocol_manifest_result() -> str:
 EXPECTED_PROTOCOL_MANIFEST_RESULT = expected_protocol_manifest_result()
 
 EXPECTED_DESCRIPTION = (
-    "Governed symbolic intelligence control plane - multi-tenant LLM orchestration "
+    "Proprietary Mullusi symbolic intelligence control plane - multi-tenant governed orchestration "
     "with budget enforcement, audit trails, and policy-driven governance"
 )
 EXPECTED_LATEST_RELEASE = "v3.13.3"

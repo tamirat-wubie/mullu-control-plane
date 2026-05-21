@@ -203,7 +203,7 @@ DEPLOYMENT_MATRIX_REQUIRED_LITERALS: tuple[str, ...] = (
 PUBLIC_SURFACE_DOCUMENT_REQUIRED_LITERALS: dict[str, tuple[str, ...]] = {
     "GITHUB_SURFACE.md": (
         "GitHub Surface Witness",
-        "Governed symbolic intelligence control plane",
+        "Proprietary Mullusi symbolic intelligence control plane",
         "v3.13.3",
         "symbolic-intelligence",
         "docs/PRODUCT_BOUNDARY.md",

@@ -196,7 +196,10 @@ when explicitly injected or configured through
 lineage as append-only JSONL events and replays them on startup. The
 environment-configured path fails closed during foundation bootstrap if
 it contains control characters, points at an existing directory, or
-cannot replay an existing JSONL file.
+cannot replay an existing JSONL file. Foundation bootstrap enables
+JSONL `fsync` by default through `MULLU_RECEIPT_STORE_JSONL_SYNC=true`;
+operators may set it to `false` only when they explicitly accept the
+weaker local-crash durability profile.
 
 Production database wiring is still not a claim. Until a production
 profile wires a database-backed store (e.g., PostgreSQL append table, or

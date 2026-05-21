@@ -11,7 +11,7 @@ Invariants: Metadata claims are explicit, machine-checkable, and bounded to the
 # GitHub Surface Witness
 
 **Repository:** `tamirat-wubie/mullu-control-plane`
-**Expected description:** `Governed symbolic intelligence control plane - multi-tenant LLM orchestration with budget enforcement, audit trails, and policy-driven governance`
+**Expected description:** `Proprietary Mullusi symbolic intelligence control plane - multi-tenant governed orchestration with budget enforcement, audit trails, and policy-driven governance`
 **Expected latest release:** `v3.13.3`
 
 ## Required Topics
