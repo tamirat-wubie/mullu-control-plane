@@ -149,8 +149,8 @@ Witness integrity audit:
 
 | Metric | Count |
 |---|---:|
-| Runtime witness labels | 1048 |
-| Exact test anchors | 721 |
+| Runtime witness labels | 1049 |
+| Exact test anchors | 722 |
 | Unanchored witness labels | 327 |
 
 Evidence quality gaps:
