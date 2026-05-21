@@ -148,7 +148,7 @@ def test_witness_integrity_report_tracks_exact_test_anchors() -> None:
     assert surfaces["god_mode_lifecycle"]["unanchored_witness_count"] == 0
     assert surfaces["agent_adapter_protocol"]["exact_test_anchor_count"] == 14
     assert surfaces["agent_adapter_protocol"]["unanchored_witness_count"] == 0
-    assert surfaces["effect_assurance_graph_commit"]["exact_test_anchor_count"] == 5
+    assert surfaces["effect_assurance_graph_commit"]["exact_test_anchor_count"] == 6
     assert surfaces["effect_assurance_graph_commit"]["unanchored_witness_count"] == 0
     assert surfaces["proof_route_gap_triage"]["exact_test_anchor_count"] == 4
     assert surfaces["proof_route_gap_triage"]["unanchored_witness_count"] == 0
@@ -1131,16 +1131,23 @@ def test_effect_assurance_graph_commit_surface_records_effect_receipts() -> None
     assert "EffectAssuranceGate.graph_commit_effect_records" in graph_commit_surface["representative_paths"]
     assert "InMemoryEffectGraphCommitReceiptStore" in graph_commit_surface["representative_paths"]
     assert "JsonlEffectGraphCommitReceiptStore" in graph_commit_surface["representative_paths"]
+    assert "bootstrap_runtime" in graph_commit_surface["representative_paths"]
+    assert "AppConfig.effect_graph_commit_receipt_store_path" in graph_commit_surface["representative_paths"]
     assert "mcoi/mcoi_runtime/core/effect_assurance.py" in graph_commit_surface["evidence_files"]
     assert "mcoi/mcoi_runtime/core/operational_graph.py" in graph_commit_surface["evidence_files"]
+    assert "mcoi/mcoi_runtime/app/bootstrap.py" in graph_commit_surface["evidence_files"]
+    assert "mcoi/mcoi_runtime/app/config.py" in graph_commit_surface["evidence_files"]
     assert "mcoi/tests/test_effect_assurance_core.py" in graph_commit_surface["evidence_files"]
+    assert "mcoi/tests/test_bootstrap.py" in graph_commit_surface["evidence_files"]
     assert "effect_graph_commit_requires_match" in witnesses
     assert "effect_graph_commit_receipt_emitted" in witnesses
     assert "effect_graph_commit_receipt_converts_to_actual_effect" in witnesses
     assert "effect_graph_commit_receipt_closes_effect_assurance" in witnesses
     assert "effect_graph_commit_receipt_store_replays_records" in witnesses
+    assert "bootstrap_wires_durable_effect_graph_commit_receipt_store" in witnesses
     assert closure_actions["bind_effect_graph_commits_to_effect_receipts"]["status"] == "closed"
     assert closure_actions["persist_effect_graph_commit_receipts"]["status"] == "closed"
+    assert closure_actions["wire_effect_graph_commit_receipt_store_into_bootstrap"]["status"] == "closed"
 
 
 def test_job_engine_lifecycle_surface_records_effect_receipts() -> None:

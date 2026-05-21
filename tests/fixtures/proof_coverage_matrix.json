@@ -77,6 +77,13 @@
       ]
     },
     {
+      "action_id": "wire_effect_graph_commit_receipt_store_into_bootstrap",
+      "status": "closed",
+      "surfaces": [
+        "effect_assurance_graph_commit"
+      ]
+    },
+    {
       "action_id": "bind_job_engine_mutations_to_effect_receipts",
       "status": "closed",
       "surfaces": [
@@ -4858,18 +4865,26 @@
       "evidence_files": [
         "mcoi/mcoi_runtime/core/effect_assurance.py",
         "mcoi/mcoi_runtime/core/operational_graph.py",
-        "mcoi/tests/test_effect_assurance_core.py"
+        "mcoi/mcoi_runtime/app/bootstrap.py",
+        "mcoi/mcoi_runtime/app/config.py",
+        "mcoi/tests/test_effect_assurance_core.py",
+        "mcoi/tests/test_bootstrap.py"
       ],
-      "notes": "Effect Assurance graph commits emit bounded durable receipts for MATCH-only operational graph mutation and expose those receipts as actual effects for observation.",
+      "notes": "Effect Assurance graph commits emit bounded durable receipts for MATCH-only operational graph mutation, expose those receipts as actual effects for observation, and can be wired into runtime bootstrap through explicit configuration.",
       "representative_paths": [
         "EffectAssuranceGate.commit_graph",
         "EffectAssuranceGate.graph_commit_receipts",
         "EffectAssuranceGate.graph_commit_effect_records",
         "InMemoryEffectGraphCommitReceiptStore",
-        "JsonlEffectGraphCommitReceiptStore"
+        "JsonlEffectGraphCommitReceiptStore",
+        "bootstrap_runtime",
+        "AppConfig.effect_graph_commit_receipt_store_path"
       ],
       "request_proof": "request_proof",
       "runtime_witness_anchor_aliases": {
+        "bootstrap_wires_durable_effect_graph_commit_receipt_store": [
+          "bootstrap_runtime_wires_durable_effect_graph_commit_receipt_store"
+        ],
         "effect_graph_commit_receipt_closes_effect_assurance": [
           "graph_commit_receipt_closes_effect_assurance"
         ],
@@ -4891,7 +4906,8 @@
         "effect_graph_commit_receipt_emitted",
         "effect_graph_commit_receipt_converts_to_actual_effect",
         "effect_graph_commit_receipt_closes_effect_assurance",
-        "effect_graph_commit_receipt_store_replays_records"
+        "effect_graph_commit_receipt_store_replays_records",
+        "bootstrap_wires_durable_effect_graph_commit_receipt_store"
       ],
       "surface_id": "effect_assurance_graph_commit"
     },
@@ -10272,10 +10288,16 @@
               "mcoi/tests/test_effect_assurance_core.py::test_jsonl_graph_commit_receipt_store_replays_records"
             ],
             "witness": "effect_graph_commit_receipt_store_replays_records"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_bootstrap.py::test_bootstrap_runtime_wires_durable_effect_graph_commit_receipt_store"
+            ],
+            "witness": "bootstrap_wires_durable_effect_graph_commit_receipt_store"
           }
         ],
-        "exact_test_anchor_count": 5,
-        "runtime_witness_count": 5,
+        "exact_test_anchor_count": 6,
+        "runtime_witness_count": 6,
         "surface_id": "effect_assurance_graph_commit",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []
