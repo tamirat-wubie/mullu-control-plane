@@ -10,6 +10,7 @@ Invariants:
 from __future__ import annotations
 
 from dataclasses import dataclass
+from pathlib import Path
 from types import MappingProxyType
 from typing import Callable, Mapping
 
@@ -21,7 +22,10 @@ from mcoi_runtime.adapters.shell_executor import ShellExecutor, ShellSandboxPoli
 from mcoi_runtime.contracts.policy import DecisionReason, PolicyDecision, PolicyDecisionStatus
 from mcoi_runtime.contracts.template import TemplateReference
 from mcoi_runtime.core.dispatcher import Dispatcher
-from mcoi_runtime.core.effect_assurance import EffectAssuranceGate
+from mcoi_runtime.core.effect_assurance import (
+    EffectAssuranceGate,
+    JsonlEffectGraphCommitReceiptStore,
+)
 from mcoi_runtime.core.case_runtime import CaseRuntimeEngine
 from mcoi_runtime.core.evidence_merger import EvidenceMerger
 from mcoi_runtime.core.event_spine import EventSpineEngine
@@ -60,6 +64,30 @@ from mcoi_runtime.persistence.workflow_store import WorkflowStore
 
 from .config import AppConfig
 from .policy_packs import PolicyPackRegistry
+
+
+def _effect_graph_commit_receipt_store_from_config(
+    app_config: AppConfig,
+) -> JsonlEffectGraphCommitReceiptStore | None:
+    """Build optional durable Effect Assurance graph-commit receipt storage."""
+    path_text = app_config.effect_graph_commit_receipt_store_path
+    if path_text is None:
+        return None
+    if any(ord(character) < 32 for character in path_text):
+        raise RuntimeCoreInvariantError(
+            "effect_graph_commit_receipt_store_path must not contain control characters"
+        )
+    path = Path(path_text)
+    if path.exists() and not path.is_file():
+        raise RuntimeCoreInvariantError(
+            "effect_graph_commit_receipt_store_path must point to a JSONL file path"
+        )
+    try:
+        return JsonlEffectGraphCommitReceiptStore(path)
+    except (OSError, ValueError) as exc:
+        raise RuntimeCoreInvariantError(
+            "effect_graph_commit_receipt_store_path could not initialize receipt store"
+        ) from exc
 
 
 @dataclass(frozen=True, slots=True)
@@ -255,8 +283,17 @@ def bootstrap_runtime(
         if app_config.effect_assurance_required
         else None
     )
+    graph_commit_receipt_store = (
+        _effect_graph_commit_receipt_store_from_config(app_config)
+        if operational_graph is not None
+        else None
+    )
     effect_assurance = (
-        EffectAssuranceGate(clock=runtime_clock, graph=operational_graph)
+        EffectAssuranceGate(
+            clock=runtime_clock,
+            graph=operational_graph,
+            graph_commit_receipt_store=graph_commit_receipt_store,
+        )
         if operational_graph is not None
         else None
     )
