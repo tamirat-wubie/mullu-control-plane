@@ -2,16 +2,17 @@
 """Produce a finance approval pilot handoff packet.
 
 Purpose: aggregate the finance proof witness, live handoff plan, connector
-binding receipt, closure run, preflight report, and readiness report into one bounded
-operator handoff artifact.
+binding receipt, live email/calendar receipt, closure run, preflight report, and
+readiness report into one bounded operator handoff artifact.
 Governance scope: finance approval packet proof-pilot handoff, live blocker
 visibility, claim boundary preservation, and artifact reference integrity.
 Dependencies: finance approval pilot witness, live handoff plan, email/calendar
-binding receipt, live handoff closure run, live handoff preflight, and readiness
-validation.
+binding receipt, email/calendar live receipt, live handoff closure run, live
+handoff preflight, and readiness validation.
 Invariants:
   - Packet production does not execute live adapter receipts.
   - Packet status is derived from source artifacts.
+  - Live email/calendar receipt readiness is required for packet readiness.
   - Must-not-claim boundaries from the witness are preserved.
   - Missing artifacts remain blockers instead of being inferred.
 """
@@ -31,6 +32,10 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from scripts.validate_finance_approval_pilot import DEFAULT_ADAPTER_EVIDENCE, validate_finance_approval_pilot  # noqa: E402
+from scripts.validate_finance_approval_email_calendar_live_receipt import (  # noqa: E402
+    DEFAULT_EMAIL_CALENDAR_RECEIPT,
+    validate_finance_approval_email_calendar_live_receipt,
+)
 
 DEFAULT_WITNESS = REPO_ROOT / ".change_assurance" / "finance_approval_pilot_witness.json"
 DEFAULT_HANDOFF_PLAN = REPO_ROOT / ".change_assurance" / "finance_approval_live_handoff_plan.json"
@@ -63,6 +68,7 @@ def produce_finance_approval_handoff_packet(
     witness_path: Path = DEFAULT_WITNESS,
     handoff_plan_path: Path = DEFAULT_HANDOFF_PLAN,
     binding_receipt_path: Path = DEFAULT_BINDING_RECEIPT,
+    live_receipt_path: Path = DEFAULT_EMAIL_CALENDAR_RECEIPT,
     closure_run_path: Path = DEFAULT_CLOSURE_RUN,
     preflight_path: Path = DEFAULT_PREFLIGHT,
     adapter_evidence_path: Path = DEFAULT_ADAPTER_EVIDENCE,
@@ -71,30 +77,42 @@ def produce_finance_approval_handoff_packet(
     witness = _load_json(witness_path)
     handoff_plan = _load_json(handoff_plan_path)
     binding_receipt = _load_json(binding_receipt_path)
+    live_receipt = _load_json(live_receipt_path)
     closure_run = _load_json(closure_run_path)
     preflight = _load_json(preflight_path)
     readiness = validate_finance_approval_pilot(adapter_evidence_path=adapter_evidence_path)
+    live_receipt_validation = validate_finance_approval_email_calendar_live_receipt(receipt_path=live_receipt_path)
     artifacts = (
         _artifact("pilot_witness", witness_path, witness, "status"),
         _artifact("live_handoff_plan", handoff_plan_path, handoff_plan, "readiness_level"),
         _artifact("email_calendar_binding_receipt", binding_receipt_path, binding_receipt, "ready"),
+        _live_receipt_artifact(live_receipt_path, live_receipt, live_receipt_validation.ready),
         _artifact("live_handoff_closure_run", closure_run_path, closure_run, "status"),
         _artifact("live_handoff_preflight", preflight_path, preflight, "ready"),
     )
     artifact_blockers = tuple(f"{artifact.name}_missing" for artifact in artifacts if not artifact.present)
+    live_receipt_blockers = _live_receipt_blockers(live_receipt_validation)
     blocker_values = tuple(
         dict.fromkeys(
             [
                 *artifact_blockers,
+                *live_receipt_blockers,
                 *[str(blocker) for blocker in preflight.get("blockers", ())],
                 *[str(blocker) for blocker in readiness.blockers],
             ]
         )
     )
-    packet_ready = preflight.get("ready") is True and readiness.ready and not artifact_blockers
+    packet_ready = (
+        preflight.get("ready") is True
+        and readiness.ready
+        and live_receipt_validation.ready
+        and not artifact_blockers
+    )
     claim_boundary = witness.get("claim_boundary", {}) if isinstance(witness.get("claim_boundary", {}), dict) else {}
     packet_material = {
         "witness_id": witness.get("witness_id", ""),
+        "live_receipt_id": live_receipt.get("receipt_id", ""),
+        "live_receipt_ready": live_receipt_validation.ready,
         "closure_run_id": closure_run.get("run_id", ""),
         "preflight_ready": preflight.get("ready") is True,
         "readiness_level": readiness.readiness_level,
@@ -115,6 +133,9 @@ def produce_finance_approval_handoff_packet(
             "mode": "live-email-handoff" if packet_ready else "proof-pilot-blocked",
             "readiness_blockers": _promotion_readiness_blockers(
                 artifacts=artifacts,
+                live_receipt_ready=live_receipt_validation.ready,
+                live_receipt_status=live_receipt_validation.status,
+                live_receipt_blockers=live_receipt_validation.blockers,
                 closure_run=closure_run,
                 preflight=preflight,
                 readiness_ready=readiness.ready,
@@ -138,6 +159,7 @@ def produce_finance_approval_handoff_packet(
         },
         "next_actions": _next_actions(
             binding_receipt=binding_receipt,
+            live_receipt_ready=live_receipt_validation.ready,
             closure_run=closure_run,
             preflight=preflight,
             readiness_ready=readiness.ready,
@@ -163,9 +185,32 @@ def _artifact(name: str, path: Path, payload: dict[str, Any], status_field: str)
     return HandoffArtifact(name=name, path=str(path), present=True, status=status)
 
 
+def _live_receipt_artifact(path: Path, payload: dict[str, Any], live_receipt_ready: bool) -> HandoffArtifact:
+    if not payload:
+        return HandoffArtifact(name="email_calendar_live_receipt", path=str(path), present=False, status="missing")
+    return HandoffArtifact(
+        name="email_calendar_live_receipt",
+        path=str(path),
+        present=True,
+        status="ready" if live_receipt_ready else "blocked",
+    )
+
+
+def _live_receipt_blockers(live_receipt_validation: Any) -> tuple[str, ...]:
+    if live_receipt_validation.ready:
+        return ()
+    if not live_receipt_validation.valid:
+        return ("email_calendar_live_receipt_invalid",)
+    return (
+        "email_calendar_live_receipt_not_ready",
+        *[str(blocker) for blocker in live_receipt_validation.blockers],
+    )
+
+
 def _next_actions(
     *,
     binding_receipt: dict[str, Any],
+    live_receipt_ready: bool,
     closure_run: dict[str, Any],
     preflight: dict[str, Any],
     readiness_ready: bool,
@@ -174,6 +219,8 @@ def _next_actions(
     if binding_receipt.get("ready") is not True:
         actions.append("bind one scoped email/calendar connector token")
         actions.append("emit and validate finance email/calendar binding receipt with --require-ready")
+    if not live_receipt_ready:
+        actions.append("produce and validate read-only email/calendar live receipt with --require-ready")
     if closure_run.get("status") != "ready":
         actions.append("generate and validate finance live handoff closure run")
     if preflight.get("ready") is not True:
@@ -186,6 +233,9 @@ def _next_actions(
 def _promotion_readiness_blockers(
     *,
     artifacts: tuple[HandoffArtifact, ...],
+    live_receipt_ready: bool,
+    live_receipt_status: str,
+    live_receipt_blockers: tuple[str, ...],
     closure_run: dict[str, Any],
     preflight: dict[str, Any],
     readiness_ready: bool,
@@ -195,6 +245,11 @@ def _promotion_readiness_blockers(
     blockers = list(blocker_values)
     missing = [f"{artifact.name}_missing" for artifact in artifacts if not artifact.present]
     blockers.extend(missing)
+    if not live_receipt_ready:
+        blockers.append(
+            "finance email/calendar live receipt not ready: "
+            f"status={live_receipt_status or 'missing'} blockers={list(live_receipt_blockers)}"
+        )
     if closure_run.get("status") != "ready":
         blockers.append(f"finance closure run not ready: status={closure_run.get('status', 'missing')}")
     if preflight.get("ready") is not True:
@@ -229,6 +284,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--witness", default=str(DEFAULT_WITNESS))
     parser.add_argument("--handoff-plan", default=str(DEFAULT_HANDOFF_PLAN))
     parser.add_argument("--binding-receipt", default=str(DEFAULT_BINDING_RECEIPT))
+    parser.add_argument("--live-receipt", default=str(DEFAULT_EMAIL_CALENDAR_RECEIPT))
     parser.add_argument("--closure-run", default=str(DEFAULT_CLOSURE_RUN))
     parser.add_argument("--preflight", default=str(DEFAULT_PREFLIGHT))
     parser.add_argument("--adapter-evidence", default=str(DEFAULT_ADAPTER_EVIDENCE))
@@ -244,6 +300,7 @@ def main(argv: list[str] | None = None) -> int:
         witness_path=Path(args.witness),
         handoff_plan_path=Path(args.handoff_plan),
         binding_receipt_path=Path(args.binding_receipt),
+        live_receipt_path=Path(args.live_receipt),
         closure_run_path=Path(args.closure_run),
         preflight_path=Path(args.preflight),
         adapter_evidence_path=Path(args.adapter_evidence),

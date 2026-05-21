@@ -27,6 +27,7 @@ def test_finance_runbook_documents_strict_promotion_boundary() -> None:
     expected_manifest_result = f"protocol manifest ok: {len(manifest['schemas'])} schemas"
 
     assert "python scripts\\validate_finance_approval_email_calendar_live_receipt.py --require-ready --json" in content
+    assert "python scripts\\produce_finance_approval_handoff_packet.py --live-receipt .change_assurance\\email_calendar_live_receipt.json" in content
     assert "python scripts\\validate_finance_approval_live_handoff_chain.py --strict --json" in content
     assert "python scripts\\validate_finance_approval_live_handoff_chain.py --strict --require-ready --json" in content
     assert "python scripts\\produce_finance_approval_operator_summary.py --output .change_assurance\\finance_approval_operator_summary.json --strict --json" in content
@@ -36,6 +37,8 @@ def test_finance_runbook_documents_strict_promotion_boundary() -> None:
     assert "operator summary is a redacted read-only artifact" in content
     assert "`ok=true` means the packet artifacts are structurally usable" in content
     assert "`ready=false` means live handoff promotion remains blocked" in content
+    assert "packet must include the `email_calendar_live_receipt` artifact" in content
+    assert "passed, read-only, worker-bound, and effect-free" in content
     assert "17-command dry-run artifact" in content
     assert "validates the redacted recovery env template before binding receipt emission" in content
     assert "only live connector touchpoint" in content

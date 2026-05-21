@@ -54,6 +54,7 @@ def test_finance_live_handoff_closure_orders_binding_before_live_receipt() -> No
     ].command
     assert step_ids.index("10_run_preflight") < step_ids.index("11_validate_preflight_schema")
     assert step_ids.index("11_validate_preflight_schema") < step_ids.index("12_produce_handoff_packet")
+    assert "--live-receipt .change_assurance/email_calendar_live_receipt.json" in run.commands[11].command
     assert step_ids.index("13_validate_handoff_packet_schema") < step_ids.index("14_validate_handoff_chain")
     assert step_ids.index("14_validate_handoff_chain") < step_ids.index("15_validate_handoff_chain_schema")
     assert step_ids.index("15_validate_handoff_chain_schema") < step_ids.index("16_produce_operator_summary")

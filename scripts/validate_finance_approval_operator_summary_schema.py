@@ -38,6 +38,7 @@ REQUIRED_ARTIFACT_STATUSES = (
     "pilot_witness",
     "live_handoff_plan",
     "email_calendar_binding_receipt",
+    "email_calendar_live_receipt",
     "live_handoff_closure_run",
     "live_handoff_preflight",
 )
