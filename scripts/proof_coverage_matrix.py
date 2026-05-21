@@ -4322,6 +4322,38 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "temporal_lease_window_receipt_schema_valid",
                 "receipt_not_terminal_closure",
             ],
+            runtime_witness_anchor_aliases={
+                "runtime_clock_owns_lease_window": [
+                    "lease_window_allows_active_scoped_lease"
+                ],
+                "tenant_command_resource_worker_scope_checked": [
+                    "lease_window_blocks_scope_mismatch_missing_evidence_fencing_and_closed_lease"
+                ],
+                "active_lease_admits_dispatch": [
+                    "lease_window_allows_active_scoped_lease"
+                ],
+                "near_expiry_lease_requires_renewal_warning": [
+                    "lease_window_warns_when_lease_is_inside_renewal_grace_window"
+                ],
+                "expired_lease_blocks_dispatch": [
+                    "lease_window_blocks_expired_lease_without_dispatch"
+                ],
+                "released_or_revoked_lease_blocks_dispatch": [
+                    "lease_window_blocks_scope_mismatch_missing_evidence_fencing_and_closed_lease"
+                ],
+                "fencing_token_required": [
+                    "lease_window_blocks_scope_mismatch_missing_evidence_fencing_and_closed_lease"
+                ],
+                "high_risk_source_receipts_bound": [
+                    "lease_window_blocks_scope_mismatch_missing_evidence_fencing_and_closed_lease"
+                ],
+                "temporal_lease_window_receipt_schema_valid": [
+                    "lease_window_allows_active_scoped_lease"
+                ],
+                "receipt_not_terminal_closure": [
+                    "lease_window_allows_active_scoped_lease"
+                ],
+            },
         ),
         _surface(
             "temporal_idempotency_window",
