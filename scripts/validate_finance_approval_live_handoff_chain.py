@@ -105,6 +105,7 @@ def validate_finance_approval_live_handoff_chain(
     )
     packet_validation = validate_finance_approval_handoff_packet_schema(
         packet_path=packet_path,
+        expected_live_receipt_path=live_receipt_path,
     )
     manifest_errors = tuple(validate_protocol_manifest(load_manifest()))
     checks = (

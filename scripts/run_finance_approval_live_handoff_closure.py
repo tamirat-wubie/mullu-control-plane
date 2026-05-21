@@ -223,9 +223,10 @@ def _closure_commands() -> tuple[FinanceLiveHandoffClosureCommand, ...]:
         ),
         FinanceLiveHandoffClosureCommand(
             step_id="12_produce_handoff_packet",
-            purpose="Produce the bounded finance approval handoff packet.",
+            purpose="Produce the bounded finance approval handoff packet with live receipt evidence bound.",
             command=(
                 "python scripts/produce_finance_approval_handoff_packet.py "
+                "--live-receipt .change_assurance/email_calendar_live_receipt.json "
                 "--output .change_assurance/finance_approval_handoff_packet.json --json"
             ),
             required_before_next=True,
