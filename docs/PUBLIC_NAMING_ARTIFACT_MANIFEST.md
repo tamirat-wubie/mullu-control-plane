@@ -47,6 +47,8 @@ Invariants: every listed artifact must exist; paid public launch remains blocked
 | `docs/PUBLIC_NAMING_PR_SUMMARY.md` | PR and release summary |
 | `docs/PUBLIC_NAMING_REVIEW_PACKET.md` | Human review packet |
 | `docs/PUBLIC_NAMING_ARTIFACT_MANIFEST.md` | Naming package inventory |
+| `docs/PUBLIC_NAMING_DECISION_2026-05-20.md` | Current governed decision: Mullu approved internally/private beta, paid public launch blocked |
+| `docs/public-naming-decision-2026-05-20.json` | Machine-readable naming decision witness |
 | `docs/CLEARANCE_PACKET_TEMPLATE.md` | Final clearance packet template |
 | `docs/DOMAIN_OWNERSHIP_RECORD_TEMPLATE.md` | Domain ownership evidence template |
 | `site/mullu/index.html` | Deploy-ready private-beta product route draft |
@@ -59,6 +61,7 @@ Invariants: every listed artifact must exist; paid public launch remains blocked
 | `docs/public-naming-readiness.json` | Readiness witness |
 | `docs/mullu-name-clearance-draft.json` | Draft name-clearance packet |
 | `schemas/public_naming_readiness.schema.json` | Readiness witness schema |
+| `schemas/public_naming_decision.schema.json` | Public naming decision schema |
 | `schemas/mullu_name_clearance_draft.schema.json` | Clearance packet schema |
 | `schemas/mullu_clearance_capture_requirements.schema.json` | Capture requirements schema |
 | `schemas/mullu_clearance_capture_readiness_report.schema.json` | Capture-readiness report schema |
