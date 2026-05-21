@@ -392,6 +392,9 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "mcoi/mcoi_runtime/app/routers/llm/admin.py",
                 "mcoi/mcoi_runtime/app/routers/llm/costs.py",
                 "mcoi/mcoi_runtime/governance/guards/budget.py",
+                "mcoi/tests/test_server_phase199.py",
+                "mcoi/tests/test_server_phase209.py",
+                "mcoi/tests/test_server_phase213.py",
             ],
             "Budget and cost surfaces expose bounded read models over governed spend state.",
             [
@@ -402,6 +405,14 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "cost_by_model_bounded",
                 "tenant_cost_projection_bounded",
             ],
+            runtime_witness_anchor_aliases={
+                "budget_summary_bounded": ["budget_summary"],
+                "safe_completion_tracks_cost": ["safe_complete_tracks_cost"],
+                "cost_read_model_totals_bounded": ["cost_summary", "tenant_costs"],
+                "cost_top_spenders_bounded": ["top_spenders"],
+                "cost_by_model_bounded": ["costs_by_model"],
+                "tenant_cost_projection_bounded": ["cost_projection"],
+            },
         ),
         _surface(
             "assistant_kernel_planning",
