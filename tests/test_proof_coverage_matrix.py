@@ -713,12 +713,21 @@ def test_finance_approval_packet_surface_is_witnessed() -> None:
     assert "mcoi/tests/test_finance_approval_packet.py" in finance_surface["evidence_files"]
     assert "mcoi/tests/test_finance_approval_router.py" in finance_surface["evidence_files"]
     assert "schemas/finance_approval_email_calendar_binding_receipt.schema.json" in finance_surface["evidence_files"]
+    assert "schemas/finance_approval_email_calendar_live_receipt.schema.json" in finance_surface["evidence_files"]
+    assert "schemas/finance_approval_handoff_packet.schema.json" in finance_surface["evidence_files"]
+    assert "schemas/finance_approval_live_handoff_chain_validation.schema.json" in finance_surface["evidence_files"]
     assert "scripts/plan_finance_approval_live_handoff.py" in finance_surface["evidence_files"]
     assert "scripts/emit_finance_approval_email_calendar_binding_receipt.py" in finance_surface["evidence_files"]
     assert "scripts/validate_finance_approval_email_calendar_binding_receipt.py" in finance_surface["evidence_files"]
+    assert "scripts/produce_finance_approval_handoff_packet.py" in finance_surface["evidence_files"]
+    assert "scripts/validate_finance_approval_handoff_packet_schema.py" in finance_surface["evidence_files"]
+    assert "scripts/validate_finance_approval_live_handoff_chain.py" in finance_surface["evidence_files"]
     assert "tests/test_plan_finance_approval_live_handoff.py" in finance_surface["evidence_files"]
     assert "tests/test_emit_finance_approval_email_calendar_binding_receipt.py" in finance_surface["evidence_files"]
     assert "tests/test_validate_finance_approval_email_calendar_binding_receipt.py" in finance_surface["evidence_files"]
+    assert "tests/test_produce_finance_approval_handoff_packet.py" in finance_surface["evidence_files"]
+    assert "tests/test_finance_approval_handoff_packet_schema.py" in finance_surface["evidence_files"]
+    assert "tests/test_validate_finance_approval_live_handoff_chain.py" in finance_surface["evidence_files"]
     assert "schemas/finance_approval_payment_provider_binding_receipt.schema.json" in finance_surface["evidence_files"]
     assert "schemas/finance_approval_payment_closure_receipt.schema.json" in finance_surface["evidence_files"]
     assert "scripts/emit_finance_approval_payment_provider_binding_receipt.py" in finance_surface["evidence_files"]
@@ -738,6 +747,7 @@ def test_finance_approval_packet_surface_is_witnessed() -> None:
     assert "payment_handoff_prepared_without_live_payment_claim" in witnesses
     assert "email_calendar_binding_receipt_requires_worker_token_and_readonly_scope" in witnesses
     assert "email_calendar_handoff_plan_requires_binding_receipt_ready" in witnesses
+    assert "email_calendar_handoff_packet_requires_live_receipt_ready" in witnesses
     assert "payment_receipt_and_ledger_reconciliation_required_for_payment_closure" in witnesses
     assert "payment_closure_receipt_validator_blocks_unbound_evidence" in witnesses
     assert "payment_closure_receipt_producer_emits_ready_sandbox_evidence" in witnesses
@@ -752,7 +762,7 @@ def test_finance_approval_packet_surface_is_witnessed() -> None:
         record["surface_id"]: record
         for record in matrix["witness_integrity"]["surfaces"]
     }["finance_approval_packets"]
-    assert finance_integrity["exact_test_anchor_count"] == 16
+    assert finance_integrity["exact_test_anchor_count"] == 17
     assert finance_integrity["unanchored_witness_count"] == 0
     assert closure_actions["classify_finance_approval_packet_routes"]["status"] == "closed"
 

@@ -1231,12 +1231,21 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "mcoi/tests/test_finance_approval_packet.py",
                 "mcoi/tests/test_finance_approval_router.py",
                 "schemas/finance_approval_email_calendar_binding_receipt.schema.json",
+                "schemas/finance_approval_email_calendar_live_receipt.schema.json",
+                "schemas/finance_approval_handoff_packet.schema.json",
+                "schemas/finance_approval_live_handoff_chain_validation.schema.json",
                 "scripts/plan_finance_approval_live_handoff.py",
                 "scripts/emit_finance_approval_email_calendar_binding_receipt.py",
                 "scripts/validate_finance_approval_email_calendar_binding_receipt.py",
+                "scripts/produce_finance_approval_handoff_packet.py",
+                "scripts/validate_finance_approval_handoff_packet_schema.py",
+                "scripts/validate_finance_approval_live_handoff_chain.py",
                 "tests/test_plan_finance_approval_live_handoff.py",
                 "tests/test_emit_finance_approval_email_calendar_binding_receipt.py",
                 "tests/test_validate_finance_approval_email_calendar_binding_receipt.py",
+                "tests/test_produce_finance_approval_handoff_packet.py",
+                "tests/test_finance_approval_handoff_packet_schema.py",
+                "tests/test_validate_finance_approval_live_handoff_chain.py",
                 "schemas/finance_approval_payment_provider_binding_receipt.schema.json",
                 "schemas/finance_approval_payment_closure_receipt.schema.json",
                 "scripts/emit_finance_approval_payment_provider_binding_receipt.py",
@@ -1261,6 +1270,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "payment_handoff_prepared_without_live_payment_claim",
                 "email_calendar_binding_receipt_requires_worker_token_and_readonly_scope",
                 "email_calendar_handoff_plan_requires_binding_receipt_ready",
+                "email_calendar_handoff_packet_requires_live_receipt_ready",
                 "payment_receipt_and_ledger_reconciliation_required_for_payment_closure",
                 "payment_closure_receipt_validator_blocks_unbound_evidence",
                 "payment_closure_receipt_producer_emits_ready_sandbox_evidence",
@@ -1290,6 +1300,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 ],
                 "email_calendar_handoff_plan_requires_binding_receipt_ready": [
                     "current_finance_handoff_plan_scopes_to_email_calendar"
+                ],
+                "email_calendar_handoff_packet_requires_live_receipt_ready": [
+                    "finance_handoff_packet_requires_ready_live_receipt",
+                    "finance_handoff_packet_schema_rejects_live_receipt_status_drift",
+                    "finance_live_handoff_chain_rejects_packet_live_receipt_path_mismatch",
                 ],
                 "payment_receipt_and_ledger_reconciliation_required_for_payment_closure": [
                     "payment_finalization_requires_provider_and_ledger_evidence_without_mutation"
