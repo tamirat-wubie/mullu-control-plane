@@ -125,6 +125,9 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
 
+      - name: Validate proprietary boundary
+        run: python scripts/validate_proprietary_boundary.py
+
       - name: Validate deployment publication closure
         run: |
           mkdir -p .change_assurance
@@ -304,6 +307,9 @@ jobs:
 
       - name: Public repository surface check
         run: python scripts/validate_public_repository_surface.py --local-only
+
+      - name: Proprietary boundary check
+        run: python scripts/validate_proprietary_boundary.py
 
       - name: Deployment publication closure check
         run: |
