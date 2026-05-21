@@ -1,4 +1,4 @@
-﻿"""Purpose: admit terminally certified MIL outcomes into learning memory.
+"""Purpose: admit terminally certified MIL outcomes into learning memory.
 Governance scope: only closed MIL outcomes with terminal certificates may become episodic memory anchors.
 Dependencies: learning contracts, memory core, terminal closure contracts, and MIL terminal certificate bundles.
 Invariants: no uncertified execution result is retained; review-required closures defer learning admission.

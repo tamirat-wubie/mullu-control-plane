@@ -1,4 +1,4 @@
-﻿"""Purpose: pure WHQR semantic evaluator.
+"""Purpose: pure WHQR semantic evaluator.
 Governance scope: resolve WHQR trees to split gate results before policy or MIL execution.
 Dependencies: WHQR contracts and runtime invariant errors.
 Invariants: no side effects, no tool calls, unresolved negation fails closed.

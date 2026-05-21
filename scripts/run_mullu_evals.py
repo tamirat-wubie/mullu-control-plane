@@ -1,4 +1,4 @@
-﻿"""Run deterministic Mullu governance eval suites.
+"""Run deterministic Mullu governance eval suites.
 
 Purpose: execute strict promotion-blocking eval suites for governance,
 tenant isolation, payments, prompt injection, PII, memory, temporal, and tools.

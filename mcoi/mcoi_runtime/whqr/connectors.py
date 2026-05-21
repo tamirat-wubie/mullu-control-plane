@@ -1,4 +1,4 @@
-﻿"""Purpose: compile WHQR connectors into explicit logical and semantic assertions.
+"""Purpose: compile WHQR connectors into explicit logical and semantic assertions.
 Governance scope: reveal causal, temporal, conditional, and concessive relations before policy execution.
 Dependencies: WHQR contracts.
 Invariants: connectors do not execute effects; because always emits a causal assertion.

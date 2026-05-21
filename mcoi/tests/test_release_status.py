@@ -877,6 +877,19 @@ def test_scan_source_hygiene_text_rejects_mojibake_marker() -> None:
     assert "sample.py" in errors[0]
 
 
+def test_scan_source_hygiene_text_rejects_utf8_bom() -> None:
+    path = REPO_ROOT / "sample.py"
+
+    errors = validate_release_status.scan_source_hygiene_text(
+        path,
+        '\ufeff"""BOM-prefixed source."""\n',
+    )
+
+    assert len(errors) == 1
+    assert "contains mojibake marker utf8_byte_order_mark" in errors[0]
+    assert "sample.py" in errors[0]
+
+
 def test_validate_source_hygiene_passes_for_current_repo() -> None:
     errors = validate_release_status.validate_source_hygiene()
 

@@ -1,4 +1,4 @@
-﻿"""Purpose: static validation for WHQR trees before governance adoption.
+"""Purpose: static validation for WHQR trees before governance adoption.
 Governance scope: reject unresolved role coverage gaps, invalid negation scope, and causal cycles.
 Dependencies: WHQR contracts and connector compiler.
 Invariants: static checks are pure and report all detected issue classes once.

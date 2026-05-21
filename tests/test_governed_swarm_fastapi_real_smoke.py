@@ -1,4 +1,4 @@
-﻿"""Optional real FastAPI smoke test for governed swarm routing.
+"""Optional real FastAPI smoke test for governed swarm routing.
 
 Purpose: verify the enabled governed swarm router works through FastAPI and
 TestClient when gateway dependencies are installed.

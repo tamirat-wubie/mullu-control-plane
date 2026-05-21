@@ -423,6 +423,7 @@ LINE_COMMENT_PATTERNS: tuple[re.Pattern[str], ...] = (
     re.compile(r"/\*\s*(TODO|FIXME|HACK)\b"),
 )
 MOJIBAKE_SOURCE_MARKERS: tuple[tuple[str, str], ...] = (
+    ("\ufeff", "utf8_byte_order_mark"),
     ("\u00e2", "utf8_decoded_as_latin1_lead_byte"),
     ("\u00c3", "utf8_decoded_as_latin1_prefix"),
     ("\u00c2", "utf8_decoded_as_latin1_continuation"),
