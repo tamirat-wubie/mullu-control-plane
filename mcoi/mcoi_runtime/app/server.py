@@ -1,4 +1,4 @@
-﻿"""Phase 200 â€” Governed HTTP Server (FastAPI).
+"""Phase 200 - Governed HTTP Server (FastAPI).
 
 Purpose: HTTP boundary for the governed platform. All requests enter governed execution.
     Phase 199: LLM completion, certification, persistence-backed ledger, budget reporting.
@@ -192,9 +192,9 @@ app = create_governed_app(
 )
 
 
-# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-# Dependency injection â€” register all subsystems into deps container
-# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# =============================================================================
+# Dependency injection - register all subsystems into deps container
+# =============================================================================
 _dependency_bootstrap = bootstrap_dependency_registry(
     deps_container=deps,
     clock=_clock,
@@ -335,9 +335,9 @@ god_mode_engine = install_god_mode(deps, audit_trail=audit_trail)
 deps.set("god_mode_engine", god_mode_engine)
 
 
-# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-# Include routers â€” all route handlers live in routers/ modules
-# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# =============================================================================
+# Include routers - all route handlers live in routers/ modules
+# =============================================================================
 
 _lifecycle_bootstrap = bootstrap_server_lifecycle(
     app=app,
