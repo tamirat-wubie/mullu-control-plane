@@ -1,0 +1,17 @@
+# Purpose: require Mullusi ownership review for proprietary boundary files.
+# Governance scope: license, notice, package metadata, CI, and boundary validators.
+# Dependencies: GitHub CODEOWNERS resolution and the tamirat-wubie account.
+# Invariants: ownership and licensing surfaces cannot change without owner review.
+
+/LICENSE @tamirat-wubie
+/NOTICE @tamirat-wubie
+/GITHUB_SURFACE.md @tamirat-wubie
+/STATUS.md @tamirat-wubie
+/docs/PRODUCT_BOUNDARY.md @tamirat-wubie
+/mcoi/pyproject.toml @tamirat-wubie
+/sdk/typescript/package.json @tamirat-wubie
+/maf/rust/crates/*/Cargo.toml @tamirat-wubie
+/scripts/validate_public_repository_surface.py @tamirat-wubie
+/scripts/validate_proprietary_boundary.py @tamirat-wubie
+/.github/workflows/ci.yml @tamirat-wubie
+/.github/CODEOWNERS @tamirat-wubie
