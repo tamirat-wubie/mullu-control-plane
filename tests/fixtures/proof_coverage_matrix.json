@@ -6969,6 +6969,38 @@
         "TemporalLeaseWindowReceipt"
       ],
       "request_proof": "request_proof",
+      "runtime_witness_anchor_aliases": {
+        "active_lease_admits_dispatch": [
+          "lease_window_allows_active_scoped_lease"
+        ],
+        "expired_lease_blocks_dispatch": [
+          "lease_window_blocks_expired_lease_without_dispatch"
+        ],
+        "fencing_token_required": [
+          "lease_window_blocks_scope_mismatch_missing_evidence_fencing_and_closed_lease"
+        ],
+        "high_risk_source_receipts_bound": [
+          "lease_window_blocks_scope_mismatch_missing_evidence_fencing_and_closed_lease"
+        ],
+        "near_expiry_lease_requires_renewal_warning": [
+          "lease_window_warns_when_lease_is_inside_renewal_grace_window"
+        ],
+        "receipt_not_terminal_closure": [
+          "lease_window_allows_active_scoped_lease"
+        ],
+        "released_or_revoked_lease_blocks_dispatch": [
+          "lease_window_blocks_scope_mismatch_missing_evidence_fencing_and_closed_lease"
+        ],
+        "runtime_clock_owns_lease_window": [
+          "lease_window_allows_active_scoped_lease"
+        ],
+        "temporal_lease_window_receipt_schema_valid": [
+          "lease_window_allows_active_scoped_lease"
+        ],
+        "tenant_command_resource_worker_scope_checked": [
+          "lease_window_blocks_scope_mismatch_missing_evidence_fencing_and_closed_lease"
+        ]
+      },
       "runtime_witnesses": [
         "runtime_clock_owns_lease_window",
         "tenant_command_resource_worker_scope_checked",
@@ -7594,7 +7626,7 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 732,
+    "exact_test_anchor_count": 742,
     "runtime_witness_count": 1049,
     "surfaces": [
       {
@@ -12611,23 +12643,73 @@
         "unanchored_witnesses": []
       },
       {
-        "anchored_witnesses": [],
-        "exact_test_anchor_count": 0,
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_lease_window.py::test_lease_window_allows_active_scoped_lease"
+            ],
+            "witness": "runtime_clock_owns_lease_window"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_lease_window.py::test_lease_window_blocks_scope_mismatch_missing_evidence_fencing_and_closed_lease"
+            ],
+            "witness": "tenant_command_resource_worker_scope_checked"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_lease_window.py::test_lease_window_allows_active_scoped_lease"
+            ],
+            "witness": "active_lease_admits_dispatch"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_lease_window.py::test_lease_window_warns_when_lease_is_inside_renewal_grace_window"
+            ],
+            "witness": "near_expiry_lease_requires_renewal_warning"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_lease_window.py::test_lease_window_blocks_expired_lease_without_dispatch"
+            ],
+            "witness": "expired_lease_blocks_dispatch"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_lease_window.py::test_lease_window_blocks_scope_mismatch_missing_evidence_fencing_and_closed_lease"
+            ],
+            "witness": "released_or_revoked_lease_blocks_dispatch"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_lease_window.py::test_lease_window_blocks_scope_mismatch_missing_evidence_fencing_and_closed_lease"
+            ],
+            "witness": "fencing_token_required"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_lease_window.py::test_lease_window_blocks_scope_mismatch_missing_evidence_fencing_and_closed_lease"
+            ],
+            "witness": "high_risk_source_receipts_bound"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_lease_window.py::test_lease_window_allows_active_scoped_lease"
+            ],
+            "witness": "temporal_lease_window_receipt_schema_valid"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_lease_window.py::test_lease_window_allows_active_scoped_lease"
+            ],
+            "witness": "receipt_not_terminal_closure"
+          }
+        ],
+        "exact_test_anchor_count": 10,
         "runtime_witness_count": 10,
         "surface_id": "temporal_lease_window",
-        "unanchored_witness_count": 10,
-        "unanchored_witnesses": [
-          "runtime_clock_owns_lease_window",
-          "tenant_command_resource_worker_scope_checked",
-          "active_lease_admits_dispatch",
-          "near_expiry_lease_requires_renewal_warning",
-          "expired_lease_blocks_dispatch",
-          "released_or_revoked_lease_blocks_dispatch",
-          "fencing_token_required",
-          "high_risk_source_receipts_bound",
-          "temporal_lease_window_receipt_schema_valid",
-          "receipt_not_terminal_closure"
-        ]
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
       },
       {
         "anchored_witnesses": [
@@ -13459,6 +13541,6 @@
         "unanchored_witnesses": []
       }
     ],
-    "unanchored_witness_count": 317
+    "unanchored_witness_count": 307
   }
 }
