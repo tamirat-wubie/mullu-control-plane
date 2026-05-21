@@ -26,6 +26,7 @@ import subprocess
 import sys
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlparse
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
@@ -348,26 +349,61 @@ def _parse_json_object(*, source: str, payload: str) -> dict[str, Any]:
     try:
         parsed = json.loads(payload)
     except json.JSONDecodeError as exc:
-        raise RuntimeError(f"{source}: response was not valid JSON") from exc
+        raise RuntimeError(f"{_bounded_source_label(source)}: response was not valid JSON") from exc
     if not isinstance(parsed, dict):
-        raise RuntimeError(f"{source}: response root was not an object")
+        raise RuntimeError(f"{_bounded_source_label(source)}: response root was not an object")
     return parsed
 
 
 def _github_api_path(url: str) -> str | None:
     """Return the GitHub API path accepted by gh api for a known GitHub URL."""
-    prefix = "https://api.github.com/"
-    if not url.startswith(prefix):
+    parsed = urlparse(url)
+    if parsed.scheme != "https" or parsed.netloc != "api.github.com":
         return None
-    api_path = url.removeprefix(prefix).strip("/")
+    api_path = parsed.path.strip("/")
     return api_path or None
+
+
+def _bounded_source_label(source: str) -> str:
+    """Return a public-safe source label for operator-visible errors."""
+    if source.startswith("gh api "):
+        return "github_cli_api"
+    if source == REPOSITORY_API_URL:
+        return "github_repository_api"
+    if source == LATEST_RELEASE_API_URL:
+        return "github_latest_release_api"
+    if _github_api_path(source) is not None:
+        return "github_api"
+    return "provided_source"
+
+
+def _bounded_prior_failure(prior_failure: str) -> str:
+    """Return a bounded network failure reason without provider detail."""
+    if prior_failure.startswith("GitHub returned HTTP "):
+        status_code = prior_failure.removeprefix("GitHub returned HTTP ").strip()
+        return (
+            f"github_http_{status_code}"
+            if status_code.isdigit()
+            else "github_http_error"
+        )
+    if prior_failure == "request timed out":
+        return "request_timed_out"
+    if prior_failure.startswith("network failure"):
+        return "network_failure"
+    return "request_failed"
+
+
+def _bounded_gh_failure(result: subprocess.CompletedProcess[str]) -> str:
+    """Return a bounded GitHub CLI failure reason."""
+    return f"github_cli_exit_{result.returncode}"
 
 
 def read_json_url_with_gh(url: str, *, prior_failure: str) -> dict[str, Any]:
     """Read one GitHub JSON endpoint through authenticated GitHub CLI access."""
     api_path = _github_api_path(url)
+    failure_reason = _bounded_prior_failure(prior_failure)
     if api_path is None:
-        raise RuntimeError(f"{url}: {prior_failure}; no GitHub CLI fallback path")
+        raise RuntimeError(f"github_api: {failure_reason}; no_github_cli_fallback_path")
     try:
         result = subprocess.run(
             ["gh", "api", api_path],
@@ -378,13 +414,14 @@ def read_json_url_with_gh(url: str, *, prior_failure: str) -> dict[str, Any]:
             check=False,
         )
     except FileNotFoundError as exc:
-        raise RuntimeError(f"{url}: {prior_failure}; gh CLI not available") from exc
+        raise RuntimeError(f"github_api: {failure_reason}; github_cli_unavailable") from exc
     except subprocess.TimeoutExpired as exc:
-        raise RuntimeError(f"{url}: {prior_failure}; gh CLI request timed out") from exc
+        raise RuntimeError(f"github_api: {failure_reason}; github_cli_timed_out") from exc
     if result.returncode != 0:
-        stderr = " ".join(result.stderr.split())
-        detail = stderr or f"exit code {result.returncode}"
-        raise RuntimeError(f"{url}: {prior_failure}; gh CLI fallback failed: {detail}")
+        raise RuntimeError(
+            f"github_api: {failure_reason}; gh_cli_fallback_failed: "
+            f"{_bounded_gh_failure(result)}"
+        )
     return _parse_json_object(source=f"gh api {api_path}", payload=result.stdout)
 
 
@@ -413,7 +450,7 @@ def read_json_url(url: str) -> dict[str, Any]:
     except URLError as exc:
         return read_json_url_with_gh(
             url,
-            prior_failure=f"network failure: {exc.reason}",
+            prior_failure="network failure",
         )
     except TimeoutError as exc:
         return read_json_url_with_gh(url, prior_failure="request timed out")
