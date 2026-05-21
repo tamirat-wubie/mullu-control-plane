@@ -36,6 +36,16 @@ def test_validate_repository_payload_accepts_expected_metadata() -> None:
     )
 
 
+def test_github_api_path_supports_authenticated_fallback_endpoint() -> None:
+    api_path = validate_public_repository_surface._github_api_path(
+        "https://api.github.com/repos/tamirat-wubie/mullu-control-plane/releases/latest"
+    )
+
+    assert api_path == "repos/tamirat-wubie/mullu-control-plane/releases/latest"
+    assert validate_public_repository_surface._github_api_path("https://example.com/x") is None
+    assert validate_public_repository_surface._github_api_path("https://api.github.com/") is None
+
+
 def test_validate_repository_payload_rejects_mismatch_and_legacy_topic() -> None:
     errors = validate_public_repository_surface.validate_repository_payload(
         {

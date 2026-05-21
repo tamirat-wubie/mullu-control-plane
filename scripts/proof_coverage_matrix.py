@@ -1557,6 +1557,28 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "task_queue_missing_result_bounded",
                 "task_queue_errors_sanitized",
             ],
+            runtime_witness_anchor_aliases={
+                "task_queue_priority_order": ["priority_order"],
+                "task_queue_depth_bounded": ["max_depth", "queue_status"],
+                "task_queue_submit_endpoint": ["submit"],
+                "task_queue_submit_mutation_receipt_emitted": [
+                    "submit",
+                    "submit_records_bounded_mutation_receipt",
+                ],
+                "task_queue_process_endpoint": ["process"],
+                "task_queue_process_mutation_receipts_emitted": [
+                    "process",
+                    "process_records_dequeue_and_result_receipts",
+                ],
+                "task_queue_empty_process_bounded": ["process_empty", "pop_empty"],
+                "task_queue_result_retrieval": ["get_result"],
+                "task_queue_missing_result_bounded": ["get_missing_result"],
+                "task_queue_errors_sanitized": [
+                    "process_failure",
+                    "process_timeout_failure_is_sanitized",
+                    "record_result_sanitizes_manual_error",
+                ],
+            },
         ),
         _surface(
             "trace_observability_read_models",
@@ -4207,6 +4229,38 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "temporal_idempotency_window_receipt_schema_valid",
                 "receipt_not_terminal_closure",
             ],
+            runtime_witness_anchor_aliases={
+                "runtime_clock_owns_idempotency_window": [
+                    "idempotency_window_admits_new_key_with_runtime_window"
+                ],
+                "new_idempotency_key_admits_dispatch": [
+                    "idempotency_window_admits_new_key_with_runtime_window"
+                ],
+                "matching_replay_admits_uncommitted_dispatch": [
+                    "idempotency_window_admits_matching_uncommitted_replay"
+                ],
+                "committed_effect_blocks_duplicate_dispatch": [
+                    "idempotency_window_blocks_duplicate_committed_effect_without_dispatch"
+                ],
+                "expired_idempotency_window_blocks_dispatch": [
+                    "idempotency_window_blocks_expired_replay_window"
+                ],
+                "request_fingerprint_mismatch_blocks_replay": [
+                    "idempotency_window_blocks_scope_fingerprint_evidence_and_source_gaps"
+                ],
+                "tenant_command_action_scope_checked": [
+                    "idempotency_window_blocks_scope_fingerprint_evidence_and_source_gaps"
+                ],
+                "high_risk_source_receipts_bound": [
+                    "idempotency_window_blocks_scope_fingerprint_evidence_and_source_gaps"
+                ],
+                "temporal_idempotency_window_receipt_schema_valid": [
+                    "idempotency_window_admits_new_key_with_runtime_window"
+                ],
+                "receipt_not_terminal_closure": [
+                    "idempotency_window_admits_new_key_with_runtime_window"
+                ],
+            },
         ),
         _surface(
             "temporal_memory",
@@ -4352,6 +4406,38 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "temporal_scheduler_receipt_schema_valid",
                 "receipt_not_terminal_closure",
             ],
+            runtime_witness_anchor_aliases={
+                "scheduled_command_requires_execute_at": [
+                    "scheduler_blocks_missing_execute_at_idempotency_and_recurrence_rule"
+                ],
+                "idempotency_required": [
+                    "scheduler_blocks_missing_execute_at_idempotency_and_recurrence_rule"
+                ],
+                "lease_acquired_before_dispatch": [
+                    "scheduler_due_command_acquires_schema_valid_lease"
+                ],
+                "future_schedule_defers": [
+                    "scheduler_future_command_defers_without_lease"
+                ],
+                "missed_run_receipt_emitted": [
+                    "scheduler_expired_command_emits_missed_run_receipt"
+                ],
+                "retry_window_checked": [
+                    "scheduler_retry_waits_until_retry_after_window"
+                ],
+                "high_risk_reapproval_required": [
+                    "scheduler_blocks_high_risk_missing_recheck_evidence"
+                ],
+                "active_lease_blocks_duplicate_execution": [
+                    "scheduler_blocks_existing_active_lease"
+                ],
+                "temporal_scheduler_receipt_schema_valid": [
+                    "scheduler_due_command_acquires_schema_valid_lease"
+                ],
+                "receipt_not_terminal_closure": [
+                    "scheduler_due_command_acquires_schema_valid_lease"
+                ],
+            },
         ),
         _surface(
             "policy_proof_report",
@@ -4672,11 +4758,62 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "end_to_end_consent_chain",
             ],
         ),
+        _surface(
+            "operational_math_loop",
+            [
+                "OperationalMathLoopEngine.apply_all",
+                "mcoi_runtime.app.operational_math_cli",
+                "mcoi_runtime.app.operational_math_observability",
+                "OperationalMathReceiptStore",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "docs/operational_math_loop.md",
+                "mcoi/mcoi_runtime/contracts/operational_math.py",
+                "mcoi/mcoi_runtime/core/operational_math_loop.py",
+                "mcoi/mcoi_runtime/persistence/operational_math_receipt_store.py",
+                "mcoi/mcoi_runtime/app/operational_math_cli.py",
+                "mcoi/mcoi_runtime/app/operational_math_observability.py",
+                "mcoi/mcoi_runtime/app/server.py",
+                "mcoi/tests/test_operational_math_loop.py",
+                "mcoi/tests/test_operational_math_cli.py",
+                "mcoi/tests/test_operational_math_receipt_store.py",
+                "mcoi/tests/test_operational_math_observability.py",
+            ],
+            (
+                "Operational math converts the F1-F10 audit into bounded roles, "
+                "controls, proof references, event-spine records, append-only JSON "
+                "receipt stores, and dashboard-safe operator review projections "
+                "without silent completion when unresolved principles remain."
+            ),
+            [
+                "operational_math_loop_applies_all_audit_principles",
+                "operational_math_loop_stops_at_iteration_budget_with_open_gaps",
+                "operational_math_cli_emits_saturated_receipt",
+                "operational_math_cli_reports_bounded_incomplete_receipt",
+                "operational_math_cli_writes_dashboard_projection",
+                "operational_math_cli_appends_receipt_store",
+                "memory_store_appends_queries_and_summarizes_receipts",
+                "file_store_persists_and_reloads_receipts",
+                "summary_marks_incomplete_receipt_for_review",
+                "registers_operational_math_observability_source",
+                "registers_operational_math_store_observability_source",
+                "server_wires_operational_math_store_into_dashboard",
+            ],
+        ),
     ]
     closure_actions = [
         {
             "action_id": "bind_tool_arguments_to_capability_policy_receipts",
             "surfaces": ["tool_invocation", "gateway_capability_fabric"],
+            "status": "closed",
+        },
+        {
+            "action_id": "anchor_operational_math_loop_receipts_and_projection",
+            "surfaces": ["operational_math_loop"],
             "status": "closed",
         },
         {

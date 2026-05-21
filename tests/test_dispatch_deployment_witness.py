@@ -19,7 +19,11 @@ from pathlib import Path
 
 import pytest
 
-from scripts.dispatch_deployment_witness import dispatch_deployment_witness, main
+from scripts.dispatch_deployment_witness import (
+    build_deployment_witness_dispatch_plan,
+    dispatch_deployment_witness,
+    main,
+)
 
 
 class FakeRunner:
@@ -237,6 +241,41 @@ def test_dispatch_deployment_witness_omits_governed_swarm_inputs_without_approva
     assert "deployment-witness" in download_commands[0]
 
 
+def test_build_deployment_witness_dispatch_plan_is_non_effecting(tmp_path: Path) -> None:
+    plan = build_deployment_witness_dispatch_plan(
+        gateway_url="https://Gateway.Example.Com/",
+        expected_environment="production",
+        operator_approval_ref="approval://deployment/publication/001",
+        governed_swarm_pilot_readiness_path="evidence/pilot-readiness.json",
+        download_dir=tmp_path / "artifact",
+    )
+
+    assert plan.gateway_url == "https://gateway.example.com"
+    assert plan.expected_environment == "production"
+    assert plan.governed_swarm_production_readiness_required is True
+    assert "operator_approval_ref=approval://deployment/publication/001" in plan.dispatch_command
+    assert "governed_swarm_pilot_readiness_path=evidence/pilot-readiness.json" in plan.dispatch_command
+    assert plan.artifact_names == [
+        "deployment-witness",
+        "governed-swarm-production-readiness",
+    ]
+
+
+def test_build_deployment_witness_dispatch_plan_omits_readiness_artifact_without_approval(
+    tmp_path: Path,
+) -> None:
+    plan = build_deployment_witness_dispatch_plan(
+        gateway_url="https://gateway.example.com",
+        expected_environment="production",
+        download_dir=tmp_path / "artifact",
+    )
+
+    assert plan.governed_swarm_production_readiness_required is False
+    assert not any("operator_approval_ref=" in token for token in plan.dispatch_command)
+    assert not any("governed_swarm_pilot_readiness_path=" in token for token in plan.dispatch_command)
+    assert plan.artifact_names == ["deployment-witness"]
+
+
 def test_dispatch_deployment_witness_fails_before_dispatch_without_secret(tmp_path: Path) -> None:
     runner = FakeRunner(secret_present=False)
 
@@ -381,6 +420,42 @@ def test_cli_reports_missing_gateway_url(monkeypatch, capsys) -> None:
     assert exit_code == 1
     assert "deployment witness dispatch failed" in captured.out
     assert "gateway URL is required" in captured.out
+
+
+def test_cli_dry_run_prints_dispatch_plan_without_remote_calls(monkeypatch, capsys, tmp_path: Path) -> None:
+    runner = FakeRunner()
+    monkeypatch.setattr(
+        "scripts.dispatch_deployment_witness.subprocess.run",
+        runner,
+    )
+
+    exit_code = main(
+        [
+            "--dry-run",
+            "--gateway-url",
+            "https://gateway.example.com/",
+            "--expected-environment",
+            "production",
+            "--operator-approval-ref",
+            "approval://deployment/publication/001",
+            "--governed-swarm-pilot-readiness-path",
+            "evidence/pilot-readiness.json",
+            "--download-dir",
+            str(tmp_path / "artifact"),
+        ]
+    )
+    captured = capsys.readouterr()
+    payload = json.loads(captured.out)
+
+    assert exit_code == 0
+    assert runner.commands == []
+    assert payload["gateway_url"] == "https://gateway.example.com"
+    assert payload["expected_environment"] == "production"
+    assert payload["governed_swarm_production_readiness_required"] is True
+    assert payload["artifact_names"] == [
+        "deployment-witness",
+        "governed-swarm-production-readiness",
+    ]
 
 
 def _completed(command: list[str], payload: object) -> subprocess.CompletedProcess[str]:

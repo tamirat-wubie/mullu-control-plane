@@ -32,6 +32,10 @@ from .software_change_receipt_store import (
     FileSoftwareChangeReceiptStore,
     SoftwareChangeReceiptStore,
 )
+from .operational_math_receipt_store import (
+    FileOperationalMathReceiptStore,
+    OperationalMathReceiptStore,
+)
 from .team_registry_store import TeamRegistryState, TeamRegistryStore
 from .team_queue_store import TeamQueueStore
 from .temporal_scheduler_store import (
@@ -68,7 +72,9 @@ __all__ = [
     "SnapshotNotFoundError",
     "SnapshotStore",
     "FileSoftwareChangeReceiptStore",
+    "FileOperationalMathReceiptStore",
     "FileTemporalSchedulerStore",
+    "OperationalMathReceiptStore",
     "SoftwareChangeReceiptStore",
     "TeamRegistryState",
     "TeamRegistryStore",

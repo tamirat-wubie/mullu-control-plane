@@ -1,6 +1,6 @@
 """Purpose: dashboard projection for operational mathematics receipts.
 Governance scope: read-only receipt projection and observability registration.
-Dependencies: observability-compatible register_source and JSON receipt maps.
+Dependencies: observability-compatible register_source, receipt stores, and JSON maps.
 Invariants:
   - Projection never mutates the source receipt.
   - Missing or unresolved principles are surfaced as review signals.
@@ -12,6 +12,10 @@ from __future__ import annotations
 
 from collections.abc import Callable, Mapping
 from typing import Any
+
+from mcoi_runtime.persistence.operational_math_receipt_store import (
+    OperationalMathReceiptStore,
+)
 
 
 OPERATIONAL_MATH_OBSERVABILITY_SOURCE = "operational_math"
@@ -57,15 +61,24 @@ def summarize_operational_math_receipt(receipt: Mapping[str, Any]) -> dict[str, 
 def register_operational_math_observability(
     *,
     observability: Any,
-    receipt_provider: Callable[[], Mapping[str, Any]],
+    receipt_provider: Callable[[], Mapping[str, Any]] | None = None,
+    receipt_store: OperationalMathReceiptStore | None = None,
 ) -> None:
     """Register a read-only operational math receipt projection source."""
 
     register_source = getattr(observability, "register_source", None)
     if not callable(register_source):
         raise TypeError("observability must provide register_source")
+    if receipt_store is not None:
+        if not isinstance(receipt_store, OperationalMathReceiptStore):
+            raise TypeError("receipt_store must be an OperationalMathReceiptStore")
+        register_source(
+            OPERATIONAL_MATH_OBSERVABILITY_SOURCE,
+            lambda: receipt_store.summary(),
+        )
+        return
     if not callable(receipt_provider):
-        raise TypeError("receipt_provider must be callable")
+        raise TypeError("receipt_provider must be callable when receipt_store is absent")
     register_source(
         OPERATIONAL_MATH_OBSERVABILITY_SOURCE,
         lambda: summarize_operational_math_receipt(receipt_provider()),

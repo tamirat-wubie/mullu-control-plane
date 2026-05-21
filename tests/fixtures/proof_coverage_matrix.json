@@ -9,6 +9,13 @@
       ]
     },
     {
+      "action_id": "anchor_operational_math_loop_receipts_and_projection",
+      "status": "closed",
+      "surfaces": [
+        "operational_math_loop"
+      ]
+    },
+    {
       "action_id": "bind_mcp_capabilities_to_authority_obligation_records",
       "status": "closed",
       "surfaces": [
@@ -797,7 +804,7 @@
   ],
   "coverage_summary": {
     "by_action_proof": {
-      "action_proof": 98,
+      "action_proof": 99,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 16,
@@ -805,7 +812,7 @@
     },
     "by_audit": {
       "action_proof": 0,
-      "audit_chain": 112,
+      "audit_chain": 113,
       "gap": 0,
       "read_model": 4,
       "request_proof": 0
@@ -813,21 +820,21 @@
     "by_coverage_state": {
       "proven": 1,
       "unproven": 0,
-      "witnessed": 115
+      "witnessed": 116
     },
     "by_request_proof": {
       "action_proof": 1,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 18,
-      "request_proof": 97
+      "request_proof": 98
     },
-    "surface_count": 116
+    "surface_count": 117
   },
   "evidence_quality": {
     "by_strength": {
       "classified_with_quality_gaps": 0,
-      "strong": 116,
+      "strong": 117,
       "unproven": 0
     },
     "quality_gap_count": 0,
@@ -4136,6 +4143,44 @@
         "/api/v1/queue/submit"
       ],
       "request_proof": "request_proof",
+      "runtime_witness_anchor_aliases": {
+        "task_queue_depth_bounded": [
+          "max_depth",
+          "queue_status"
+        ],
+        "task_queue_empty_process_bounded": [
+          "process_empty",
+          "pop_empty"
+        ],
+        "task_queue_errors_sanitized": [
+          "process_failure",
+          "process_timeout_failure_is_sanitized",
+          "record_result_sanitizes_manual_error"
+        ],
+        "task_queue_missing_result_bounded": [
+          "get_missing_result"
+        ],
+        "task_queue_priority_order": [
+          "priority_order"
+        ],
+        "task_queue_process_endpoint": [
+          "process"
+        ],
+        "task_queue_process_mutation_receipts_emitted": [
+          "process",
+          "process_records_dequeue_and_result_receipts"
+        ],
+        "task_queue_result_retrieval": [
+          "get_result"
+        ],
+        "task_queue_submit_endpoint": [
+          "submit"
+        ],
+        "task_queue_submit_mutation_receipt_emitted": [
+          "submit",
+          "submit_records_bounded_mutation_receipt"
+        ]
+      },
       "runtime_witnesses": [
         "task_queue_priority_order",
         "task_queue_depth_bounded",
@@ -6814,6 +6859,38 @@
         "TemporalIdempotencyWindowReceipt"
       ],
       "request_proof": "request_proof",
+      "runtime_witness_anchor_aliases": {
+        "committed_effect_blocks_duplicate_dispatch": [
+          "idempotency_window_blocks_duplicate_committed_effect_without_dispatch"
+        ],
+        "expired_idempotency_window_blocks_dispatch": [
+          "idempotency_window_blocks_expired_replay_window"
+        ],
+        "high_risk_source_receipts_bound": [
+          "idempotency_window_blocks_scope_fingerprint_evidence_and_source_gaps"
+        ],
+        "matching_replay_admits_uncommitted_dispatch": [
+          "idempotency_window_admits_matching_uncommitted_replay"
+        ],
+        "new_idempotency_key_admits_dispatch": [
+          "idempotency_window_admits_new_key_with_runtime_window"
+        ],
+        "receipt_not_terminal_closure": [
+          "idempotency_window_admits_new_key_with_runtime_window"
+        ],
+        "request_fingerprint_mismatch_blocks_replay": [
+          "idempotency_window_blocks_scope_fingerprint_evidence_and_source_gaps"
+        ],
+        "runtime_clock_owns_idempotency_window": [
+          "idempotency_window_admits_new_key_with_runtime_window"
+        ],
+        "temporal_idempotency_window_receipt_schema_valid": [
+          "idempotency_window_admits_new_key_with_runtime_window"
+        ],
+        "tenant_command_action_scope_checked": [
+          "idempotency_window_blocks_scope_fingerprint_evidence_and_source_gaps"
+        ]
+      },
       "runtime_witnesses": [
         "runtime_clock_owns_idempotency_window",
         "new_idempotency_key_admits_dispatch",
@@ -6959,6 +7036,38 @@
         "TemporalSchedulerReceipt"
       ],
       "request_proof": "request_proof",
+      "runtime_witness_anchor_aliases": {
+        "active_lease_blocks_duplicate_execution": [
+          "scheduler_blocks_existing_active_lease"
+        ],
+        "future_schedule_defers": [
+          "scheduler_future_command_defers_without_lease"
+        ],
+        "high_risk_reapproval_required": [
+          "scheduler_blocks_high_risk_missing_recheck_evidence"
+        ],
+        "idempotency_required": [
+          "scheduler_blocks_missing_execute_at_idempotency_and_recurrence_rule"
+        ],
+        "lease_acquired_before_dispatch": [
+          "scheduler_due_command_acquires_schema_valid_lease"
+        ],
+        "missed_run_receipt_emitted": [
+          "scheduler_expired_command_emits_missed_run_receipt"
+        ],
+        "receipt_not_terminal_closure": [
+          "scheduler_due_command_acquires_schema_valid_lease"
+        ],
+        "retry_window_checked": [
+          "scheduler_retry_waits_until_retry_after_window"
+        ],
+        "scheduled_command_requires_execute_at": [
+          "scheduler_blocks_missing_execute_at_idempotency_and_recurrence_rule"
+        ],
+        "temporal_scheduler_receipt_schema_valid": [
+          "scheduler_due_command_acquires_schema_valid_lease"
+        ]
+      },
       "runtime_witnesses": [
         "scheduled_command_requires_execute_at",
         "idempotency_required",
@@ -7301,11 +7410,52 @@
         "end_to_end_consent_chain"
       ],
       "surface_id": "god_mode_lifecycle"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "docs/operational_math_loop.md",
+        "mcoi/mcoi_runtime/contracts/operational_math.py",
+        "mcoi/mcoi_runtime/core/operational_math_loop.py",
+        "mcoi/mcoi_runtime/persistence/operational_math_receipt_store.py",
+        "mcoi/mcoi_runtime/app/operational_math_cli.py",
+        "mcoi/mcoi_runtime/app/operational_math_observability.py",
+        "mcoi/mcoi_runtime/app/server.py",
+        "mcoi/tests/test_operational_math_loop.py",
+        "mcoi/tests/test_operational_math_cli.py",
+        "mcoi/tests/test_operational_math_receipt_store.py",
+        "mcoi/tests/test_operational_math_observability.py"
+      ],
+      "notes": "Operational math converts the F1-F10 audit into bounded roles, controls, proof references, event-spine records, append-only JSON receipt stores, and dashboard-safe operator review projections without silent completion when unresolved principles remain.",
+      "representative_paths": [
+        "OperationalMathLoopEngine.apply_all",
+        "mcoi_runtime.app.operational_math_cli",
+        "mcoi_runtime.app.operational_math_observability",
+        "OperationalMathReceiptStore"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "operational_math_loop_applies_all_audit_principles",
+        "operational_math_loop_stops_at_iteration_budget_with_open_gaps",
+        "operational_math_cli_emits_saturated_receipt",
+        "operational_math_cli_reports_bounded_incomplete_receipt",
+        "operational_math_cli_writes_dashboard_projection",
+        "operational_math_cli_appends_receipt_store",
+        "memory_store_appends_queries_and_summarizes_receipts",
+        "file_store_persists_and_reloads_receipts",
+        "summary_marks_incomplete_receipt_for_review",
+        "registers_operational_math_observability_source",
+        "registers_operational_math_store_observability_source",
+        "server_wires_operational_math_store_into_dashboard"
+      ],
+      "surface_id": "operational_math_loop"
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 641,
-    "runtime_witness_count": 1035,
+    "exact_test_anchor_count": 694,
+    "runtime_witness_count": 1047,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -9170,27 +9320,84 @@
         "anchored_witnesses": [
           {
             "anchors": [
+              "mcoi/tests/test_task_queue.py::test_priority_order"
+            ],
+            "witness": "task_queue_priority_order"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_task_queue.py::test_max_depth",
+              "mcoi/tests/test_server_phase215.py::test_queue_status"
+            ],
+            "witness": "task_queue_depth_bounded"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_server_phase215.py::test_submit"
+            ],
+            "witness": "task_queue_submit_endpoint"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_server_phase215.py::test_submit",
+              "mcoi/tests/test_task_queue.py::test_submit_records_bounded_mutation_receipt"
+            ],
+            "witness": "task_queue_submit_mutation_receipt_emitted"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_server_phase215.py::test_process"
+            ],
+            "witness": "task_queue_process_endpoint"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_server_phase215.py::test_process",
+              "mcoi/tests/test_task_queue.py::test_process_records_dequeue_and_result_receipts"
+            ],
+            "witness": "task_queue_process_mutation_receipts_emitted"
+          },
+          {
+            "anchors": [
               "mcoi/tests/test_task_queue.py::test_task_queue_mutation_receipt_closes_effect_assurance"
             ],
             "witness": "task_queue_mutation_receipt_closes_effect_assurance"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_task_queue.py::test_process_empty",
+              "mcoi/tests/test_server_phase215.py::test_process_empty",
+              "mcoi/tests/test_task_queue.py::test_pop_empty"
+            ],
+            "witness": "task_queue_empty_process_bounded"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_task_queue.py::test_get_result",
+              "mcoi/tests/test_server_phase215.py::test_get_result"
+            ],
+            "witness": "task_queue_result_retrieval"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_server_phase215.py::test_get_missing_result"
+            ],
+            "witness": "task_queue_missing_result_bounded"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_task_queue.py::test_process_failure",
+              "mcoi/tests/test_task_queue.py::test_process_timeout_failure_is_sanitized",
+              "mcoi/tests/test_task_queue.py::test_record_result_sanitizes_manual_error"
+            ],
+            "witness": "task_queue_errors_sanitized"
           }
         ],
-        "exact_test_anchor_count": 1,
+        "exact_test_anchor_count": 11,
         "runtime_witness_count": 11,
         "surface_id": "task_queue_lifecycle",
-        "unanchored_witness_count": 10,
-        "unanchored_witnesses": [
-          "task_queue_priority_order",
-          "task_queue_depth_bounded",
-          "task_queue_submit_endpoint",
-          "task_queue_submit_mutation_receipt_emitted",
-          "task_queue_process_endpoint",
-          "task_queue_process_mutation_receipts_emitted",
-          "task_queue_empty_process_bounded",
-          "task_queue_result_retrieval",
-          "task_queue_missing_result_bounded",
-          "task_queue_errors_sanitized"
-        ]
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
       },
       {
         "anchored_witnesses": [],
@@ -10577,24 +10784,34 @@
         "anchored_witnesses": [
           {
             "anchors": [
+              "tests/test_gateway/test_capability_maturity.py::test_maturity_derived_from_evidence"
+            ],
+            "witness": "maturity_derived_from_evidence"
+          },
+          {
+            "anchors": [
               "tests/test_gateway/test_operator_capability_console.py::test_operator_console_links_capability_improvement_portfolio"
             ],
             "witness": "operator_console_links_capability_improvement_portfolio"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_capability_maturity.py::test_capability_maturity_schema_valid"
+            ],
+            "witness": "capability_maturity_schema_valid"
           }
         ],
-        "exact_test_anchor_count": 1,
+        "exact_test_anchor_count": 3,
         "runtime_witness_count": 9,
         "surface_id": "capability_maturity_assessment",
-        "unanchored_witness_count": 8,
+        "unanchored_witness_count": 6,
         "unanchored_witnesses": [
           "certification_evidence_synthesizes_maturity_extension",
-          "maturity_derived_from_evidence",
           "registry_read_model_exposes_maturity",
           "default_pack_C6_examples_projected",
           "effect_bearing_production_requires_live_write",
           "production_requires_worker_deployment_recovery",
-          "autonomy_requires_C7_controls",
-          "capability_maturity_schema_valid"
+          "autonomy_requires_C7_controls"
         ]
       },
       {
@@ -10917,18 +11134,43 @@
         ]
       },
       {
-        "anchored_witnesses": [],
-        "exact_test_anchor_count": 0,
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "tests/test_gateway/test_capability_maturity.py::test_maturity_derived_from_evidence"
+            ],
+            "witness": "maturity_derived_from_evidence"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_capability_maturity.py::test_effect_bearing_c6_requires_live_write"
+            ],
+            "witness": "effect_bearing_c6_requires_live_write"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_capability_maturity.py::test_production_requires_c6_or_c7"
+            ],
+            "witness": "production_requires_c6_or_c7"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_capability_maturity.py::test_autonomy_requires_c7"
+            ],
+            "witness": "autonomy_requires_c7"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_capability_maturity.py::test_capability_maturity_schema_valid"
+            ],
+            "witness": "capability_maturity_schema_valid"
+          }
+        ],
+        "exact_test_anchor_count": 5,
         "runtime_witness_count": 5,
         "surface_id": "capability_maturity",
-        "unanchored_witness_count": 5,
-        "unanchored_witnesses": [
-          "maturity_derived_from_evidence",
-          "effect_bearing_c6_requires_live_write",
-          "production_requires_c6_or_c7",
-          "autonomy_requires_c7",
-          "capability_maturity_schema_valid"
-        ]
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
       },
       {
         "anchored_witnesses": [],
@@ -12047,23 +12289,73 @@
         ]
       },
       {
-        "anchored_witnesses": [],
-        "exact_test_anchor_count": 0,
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_idempotency_window.py::test_idempotency_window_admits_new_key_with_runtime_window"
+            ],
+            "witness": "runtime_clock_owns_idempotency_window"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_idempotency_window.py::test_idempotency_window_admits_new_key_with_runtime_window"
+            ],
+            "witness": "new_idempotency_key_admits_dispatch"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_idempotency_window.py::test_idempotency_window_admits_matching_uncommitted_replay"
+            ],
+            "witness": "matching_replay_admits_uncommitted_dispatch"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_idempotency_window.py::test_idempotency_window_blocks_duplicate_committed_effect_without_dispatch"
+            ],
+            "witness": "committed_effect_blocks_duplicate_dispatch"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_idempotency_window.py::test_idempotency_window_blocks_expired_replay_window"
+            ],
+            "witness": "expired_idempotency_window_blocks_dispatch"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_idempotency_window.py::test_idempotency_window_blocks_scope_fingerprint_evidence_and_source_gaps"
+            ],
+            "witness": "request_fingerprint_mismatch_blocks_replay"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_idempotency_window.py::test_idempotency_window_blocks_scope_fingerprint_evidence_and_source_gaps"
+            ],
+            "witness": "tenant_command_action_scope_checked"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_idempotency_window.py::test_idempotency_window_blocks_scope_fingerprint_evidence_and_source_gaps"
+            ],
+            "witness": "high_risk_source_receipts_bound"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_idempotency_window.py::test_idempotency_window_admits_new_key_with_runtime_window"
+            ],
+            "witness": "temporal_idempotency_window_receipt_schema_valid"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_idempotency_window.py::test_idempotency_window_admits_new_key_with_runtime_window"
+            ],
+            "witness": "receipt_not_terminal_closure"
+          }
+        ],
+        "exact_test_anchor_count": 10,
         "runtime_witness_count": 10,
         "surface_id": "temporal_idempotency_window",
-        "unanchored_witness_count": 10,
-        "unanchored_witnesses": [
-          "runtime_clock_owns_idempotency_window",
-          "new_idempotency_key_admits_dispatch",
-          "matching_replay_admits_uncommitted_dispatch",
-          "committed_effect_blocks_duplicate_dispatch",
-          "expired_idempotency_window_blocks_dispatch",
-          "request_fingerprint_mismatch_blocks_replay",
-          "tenant_command_action_scope_checked",
-          "high_risk_source_receipts_bound",
-          "temporal_idempotency_window_receipt_schema_valid",
-          "receipt_not_terminal_closure"
-        ]
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
       },
       {
         "anchored_witnesses": [],
@@ -12165,23 +12457,73 @@
         ]
       },
       {
-        "anchored_witnesses": [],
-        "exact_test_anchor_count": 0,
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_scheduler.py::test_scheduler_blocks_missing_execute_at_idempotency_and_recurrence_rule"
+            ],
+            "witness": "scheduled_command_requires_execute_at"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_scheduler.py::test_scheduler_blocks_missing_execute_at_idempotency_and_recurrence_rule"
+            ],
+            "witness": "idempotency_required"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_scheduler.py::test_scheduler_due_command_acquires_schema_valid_lease"
+            ],
+            "witness": "lease_acquired_before_dispatch"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_scheduler.py::test_scheduler_future_command_defers_without_lease"
+            ],
+            "witness": "future_schedule_defers"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_scheduler.py::test_scheduler_expired_command_emits_missed_run_receipt"
+            ],
+            "witness": "missed_run_receipt_emitted"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_scheduler.py::test_scheduler_retry_waits_until_retry_after_window"
+            ],
+            "witness": "retry_window_checked"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_scheduler.py::test_scheduler_blocks_high_risk_missing_recheck_evidence"
+            ],
+            "witness": "high_risk_reapproval_required"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_scheduler.py::test_scheduler_blocks_existing_active_lease"
+            ],
+            "witness": "active_lease_blocks_duplicate_execution"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_scheduler.py::test_scheduler_due_command_acquires_schema_valid_lease"
+            ],
+            "witness": "temporal_scheduler_receipt_schema_valid"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_scheduler.py::test_scheduler_due_command_acquires_schema_valid_lease"
+            ],
+            "witness": "receipt_not_terminal_closure"
+          }
+        ],
+        "exact_test_anchor_count": 10,
         "runtime_witness_count": 10,
         "surface_id": "temporal_scheduler",
-        "unanchored_witness_count": 10,
-        "unanchored_witnesses": [
-          "scheduled_command_requires_execute_at",
-          "idempotency_required",
-          "lease_acquired_before_dispatch",
-          "future_schedule_defers",
-          "missed_run_receipt_emitted",
-          "retry_window_checked",
-          "high_risk_reapproval_required",
-          "active_lease_blocks_duplicate_execution",
-          "temporal_scheduler_receipt_schema_valid",
-          "receipt_not_terminal_closure"
-        ]
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
       },
       {
         "anchored_witnesses": [],
@@ -12313,17 +12655,37 @@
         "unanchored_witnesses": []
       },
       {
-        "anchored_witnesses": [],
-        "exact_test_anchor_count": 0,
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "tests/test_gateway/test_plan.py::test_plan_terminal_certificate"
+            ],
+            "witness": "plan_terminal_certificate"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_plan.py::test_plan_evidence_bundle"
+            ],
+            "witness": "plan_evidence_bundle"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_plan.py::test_plan_witnesses"
+            ],
+            "witness": "plan_witnesses"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_plan.py::test_plan_recovery_attempts"
+            ],
+            "witness": "plan_recovery_attempts"
+          }
+        ],
+        "exact_test_anchor_count": 4,
         "runtime_witness_count": 4,
         "surface_id": "capability_plan_evidence_bundle",
-        "unanchored_witness_count": 4,
-        "unanchored_witnesses": [
-          "plan_terminal_certificate",
-          "plan_evidence_bundle",
-          "plan_witnesses",
-          "plan_recovery_attempts"
-        ]
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
       },
       {
         "anchored_witnesses": [
@@ -12673,8 +13035,89 @@
         "surface_id": "god_mode_lifecycle",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []
+      },
+      {
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "mcoi/tests/test_operational_math_loop.py::test_operational_math_loop_applies_all_audit_principles"
+            ],
+            "witness": "operational_math_loop_applies_all_audit_principles"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_operational_math_loop.py::test_operational_math_loop_stops_at_iteration_budget_with_open_gaps"
+            ],
+            "witness": "operational_math_loop_stops_at_iteration_budget_with_open_gaps"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_operational_math_cli.py::test_operational_math_cli_emits_saturated_receipt"
+            ],
+            "witness": "operational_math_cli_emits_saturated_receipt"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_operational_math_cli.py::test_operational_math_cli_reports_bounded_incomplete_receipt"
+            ],
+            "witness": "operational_math_cli_reports_bounded_incomplete_receipt"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_operational_math_cli.py::test_operational_math_cli_writes_dashboard_projection"
+            ],
+            "witness": "operational_math_cli_writes_dashboard_projection"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_operational_math_cli.py::test_operational_math_cli_appends_receipt_store"
+            ],
+            "witness": "operational_math_cli_appends_receipt_store"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_operational_math_receipt_store.py::test_memory_store_appends_queries_and_summarizes_receipts"
+            ],
+            "witness": "memory_store_appends_queries_and_summarizes_receipts"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_operational_math_receipt_store.py::test_file_store_persists_and_reloads_receipts"
+            ],
+            "witness": "file_store_persists_and_reloads_receipts"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_operational_math_observability.py::test_summary_marks_incomplete_receipt_for_review"
+            ],
+            "witness": "summary_marks_incomplete_receipt_for_review"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_operational_math_observability.py::test_registers_operational_math_observability_source"
+            ],
+            "witness": "registers_operational_math_observability_source"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_operational_math_observability.py::test_registers_operational_math_store_observability_source"
+            ],
+            "witness": "registers_operational_math_store_observability_source"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_operational_math_observability.py::test_server_wires_operational_math_store_into_dashboard"
+            ],
+            "witness": "server_wires_operational_math_store_into_dashboard"
+          }
+        ],
+        "exact_test_anchor_count": 12,
+        "runtime_witness_count": 12,
+        "surface_id": "operational_math_loop",
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
       }
     ],
-    "unanchored_witness_count": 394
+    "unanchored_witness_count": 353
   }
 }
