@@ -4213,6 +4213,38 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "temporal_retry_window_receipt_schema_valid",
                 "receipt_not_terminal_closure",
             ],
+            runtime_witness_anchor_aliases={
+                "runtime_clock_owns_retry_window": [
+                    "retry_window_allows_eligible_retry_after_cooldown"
+                ],
+                "retry_after_floor_checked": [
+                    "retry_window_blocks_scope_mismatch_missing_evidence_sources_and_bad_floor"
+                ],
+                "cooldown_window_defers_early_retry": [
+                    "retry_window_defers_before_retry_after_due_time"
+                ],
+                "max_attempts_block_exhausted_retry": [
+                    "retry_window_blocks_exhausted_attempt_budget"
+                ],
+                "expired_retry_window_blocks_dispatch": [
+                    "retry_window_blocks_expired_or_terminal_retry_state"
+                ],
+                "tenant_command_scope_checked": [
+                    "retry_window_blocks_scope_mismatch_missing_evidence_sources_and_bad_floor"
+                ],
+                "terminal_failure_blocks_retry": [
+                    "retry_window_blocks_expired_or_terminal_retry_state"
+                ],
+                "high_risk_source_receipts_bound": [
+                    "retry_window_blocks_scope_mismatch_missing_evidence_sources_and_bad_floor"
+                ],
+                "temporal_retry_window_receipt_schema_valid": [
+                    "retry_window_allows_eligible_retry_after_cooldown"
+                ],
+                "receipt_not_terminal_closure": [
+                    "retry_window_allows_eligible_retry_after_cooldown"
+                ],
+            },
         ),
         _surface(
             "temporal_lease_window",

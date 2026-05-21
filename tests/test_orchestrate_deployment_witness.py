@@ -185,6 +185,39 @@ def test_orchestrate_deployment_witness_can_apply_and_dispatch(tmp_path: Path) -
     assert any(command[:3] == ["gh", "run", "download"] for command in runner.commands)
 
 
+def test_orchestrate_deployment_witness_passes_governed_swarm_production_inputs(
+    tmp_path: Path,
+) -> None:
+    runner = FakeRunner()
+
+    orchestration = orchestrate_deployment_witness(
+        gateway_host="gateway.mullusi.com",
+        expected_environment="production",
+        rendered_ingress_output=tmp_path / "ingress.yaml",
+        dispatch=True,
+        operator_approval_ref="approval://deployment/publication/001",
+        governed_swarm_pilot_readiness_path="evidence/pilot-readiness.json",
+        download_dir=tmp_path / "artifact",
+        poll_seconds=1,
+        runner=runner,
+    )
+
+    workflow_run_command = next(
+        command for command in runner.commands if command[:3] == ["gh", "workflow", "run"]
+    )
+    download_commands = [
+        command for command in runner.commands if command[:3] == ["gh", "run", "download"]
+    ]
+    assert orchestration.dispatch is not None
+    assert orchestration.dispatch.conclusion == "success"
+    assert "expected_environment=production" in workflow_run_command
+    assert "operator_approval_ref=approval://deployment/publication/001" in workflow_run_command
+    assert "governed_swarm_pilot_readiness_path=evidence/pilot-readiness.json" in workflow_run_command
+    assert len(download_commands) == 2
+    assert "deployment-witness" in download_commands[0]
+    assert "governed-swarm-production-readiness" in download_commands[1]
+
+
 def test_orchestrate_deployment_witness_records_dispatch_failure(tmp_path: Path) -> None:
     runner = FakeRunner(fail_workflow_run=True)
 
@@ -423,6 +456,52 @@ def test_cli_writes_orchestration_receipt_when_dispatch_fails(
     assert payload["dispatch_error"] == "dispatch_failed"
     assert "dispatch:failed" in payload["evidence_refs"]
     assert "deployment_witness_dispatch_error: dispatch_failed" in captured.out
+
+
+def test_cli_passes_governed_swarm_production_inputs(
+    monkeypatch,
+    tmp_path: Path,
+    capsys,
+) -> None:
+    runner = FakeRunner()
+    monkeypatch.setattr(
+        "scripts.orchestrate_deployment_witness.subprocess.run",
+        runner,
+    )
+    receipt_path = tmp_path / "orchestration.json"
+
+    exit_code = main(
+        [
+            "--gateway-host",
+            "gateway.mullusi.com",
+            "--expected-environment",
+            "production",
+            "--rendered-ingress-output",
+            str(tmp_path / "ingress.yaml"),
+            "--dispatch",
+            "--operator-approval-ref",
+            "approval://deployment/publication/001",
+            "--governed-swarm-pilot-readiness-path",
+            "evidence/pilot-readiness.json",
+            "--download-dir",
+            str(tmp_path / "artifact"),
+            "--orchestration-output",
+            str(receipt_path),
+        ]
+    )
+    captured = capsys.readouterr()
+    workflow_run_command = next(
+        command for command in runner.commands if command[:3] == ["gh", "workflow", "run"]
+    )
+    download_commands = [
+        command for command in runner.commands if command[:3] == ["gh", "run", "download"]
+    ]
+
+    assert exit_code == 0
+    assert "deployment_witness_run" in captured.out
+    assert "operator_approval_ref=approval://deployment/publication/001" in workflow_run_command
+    assert "governed_swarm_pilot_readiness_path=evidence/pilot-readiness.json" in workflow_run_command
+    assert len(download_commands) == 2
 
 
 def test_cli_uses_orchestration_receipt_output_environment(

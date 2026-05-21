@@ -6860,6 +6860,38 @@
         "TemporalRetryWindowReceipt"
       ],
       "request_proof": "request_proof",
+      "runtime_witness_anchor_aliases": {
+        "cooldown_window_defers_early_retry": [
+          "retry_window_defers_before_retry_after_due_time"
+        ],
+        "expired_retry_window_blocks_dispatch": [
+          "retry_window_blocks_expired_or_terminal_retry_state"
+        ],
+        "high_risk_source_receipts_bound": [
+          "retry_window_blocks_scope_mismatch_missing_evidence_sources_and_bad_floor"
+        ],
+        "max_attempts_block_exhausted_retry": [
+          "retry_window_blocks_exhausted_attempt_budget"
+        ],
+        "receipt_not_terminal_closure": [
+          "retry_window_allows_eligible_retry_after_cooldown"
+        ],
+        "retry_after_floor_checked": [
+          "retry_window_blocks_scope_mismatch_missing_evidence_sources_and_bad_floor"
+        ],
+        "runtime_clock_owns_retry_window": [
+          "retry_window_allows_eligible_retry_after_cooldown"
+        ],
+        "temporal_retry_window_receipt_schema_valid": [
+          "retry_window_allows_eligible_retry_after_cooldown"
+        ],
+        "tenant_command_scope_checked": [
+          "retry_window_blocks_scope_mismatch_missing_evidence_sources_and_bad_floor"
+        ],
+        "terminal_failure_blocks_retry": [
+          "retry_window_blocks_expired_or_terminal_retry_state"
+        ]
+      },
       "runtime_witnesses": [
         "runtime_clock_owns_retry_window",
         "retry_after_floor_checked",
@@ -7515,7 +7547,7 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 711,
+    "exact_test_anchor_count": 721,
     "runtime_witness_count": 1048,
     "surfaces": [
       {
@@ -12405,23 +12437,73 @@
         ]
       },
       {
-        "anchored_witnesses": [],
-        "exact_test_anchor_count": 0,
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_retry_window.py::test_retry_window_allows_eligible_retry_after_cooldown"
+            ],
+            "witness": "runtime_clock_owns_retry_window"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_retry_window.py::test_retry_window_blocks_scope_mismatch_missing_evidence_sources_and_bad_floor"
+            ],
+            "witness": "retry_after_floor_checked"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_retry_window.py::test_retry_window_defers_before_retry_after_due_time"
+            ],
+            "witness": "cooldown_window_defers_early_retry"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_retry_window.py::test_retry_window_blocks_exhausted_attempt_budget"
+            ],
+            "witness": "max_attempts_block_exhausted_retry"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_retry_window.py::test_retry_window_blocks_expired_or_terminal_retry_state"
+            ],
+            "witness": "expired_retry_window_blocks_dispatch"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_retry_window.py::test_retry_window_blocks_scope_mismatch_missing_evidence_sources_and_bad_floor"
+            ],
+            "witness": "tenant_command_scope_checked"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_retry_window.py::test_retry_window_blocks_expired_or_terminal_retry_state"
+            ],
+            "witness": "terminal_failure_blocks_retry"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_retry_window.py::test_retry_window_blocks_scope_mismatch_missing_evidence_sources_and_bad_floor"
+            ],
+            "witness": "high_risk_source_receipts_bound"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_retry_window.py::test_retry_window_allows_eligible_retry_after_cooldown"
+            ],
+            "witness": "temporal_retry_window_receipt_schema_valid"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_retry_window.py::test_retry_window_allows_eligible_retry_after_cooldown"
+            ],
+            "witness": "receipt_not_terminal_closure"
+          }
+        ],
+        "exact_test_anchor_count": 10,
         "runtime_witness_count": 10,
         "surface_id": "temporal_retry_window",
-        "unanchored_witness_count": 10,
-        "unanchored_witnesses": [
-          "runtime_clock_owns_retry_window",
-          "retry_after_floor_checked",
-          "cooldown_window_defers_early_retry",
-          "max_attempts_block_exhausted_retry",
-          "expired_retry_window_blocks_dispatch",
-          "tenant_command_scope_checked",
-          "terminal_failure_blocks_retry",
-          "high_risk_source_receipts_bound",
-          "temporal_retry_window_receipt_schema_valid",
-          "receipt_not_terminal_closure"
-        ]
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
       },
       {
         "anchored_witnesses": [],
@@ -13272,6 +13354,6 @@
         "unanchored_witnesses": []
       }
     ],
-    "unanchored_witness_count": 337
+    "unanchored_witness_count": 327
   }
 }
