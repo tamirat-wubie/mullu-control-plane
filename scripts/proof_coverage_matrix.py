@@ -4198,6 +4198,38 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "temporal_rate_limit_window_receipt_schema_valid",
                 "receipt_not_terminal_closure",
             ],
+            runtime_witness_anchor_aliases={
+                "runtime_clock_owns_rate_limit_window": [
+                    "rate_limit_window_allows_active_window_with_sufficient_tokens"
+                ],
+                "tenant_endpoint_identity_scope_checked": [
+                    "rate_limit_window_blocks_scope_mismatch_missing_evidence_sources_and_burst"
+                ],
+                "active_window_admits_sufficient_tokens": [
+                    "rate_limit_window_allows_active_window_with_sufficient_tokens"
+                ],
+                "exhausted_window_emits_retry_after": [
+                    "rate_limit_window_throttles_exhausted_window_with_retry_after"
+                ],
+                "future_window_defers_dispatch": [
+                    "rate_limit_window_defers_future_window_until_start"
+                ],
+                "burst_limit_blocks_overlarge_request": [
+                    "rate_limit_window_blocks_scope_mismatch_missing_evidence_sources_and_burst"
+                ],
+                "stale_rate_limit_snapshot_blocks_dispatch": [
+                    "rate_limit_window_blocks_expired_or_invalid_snapshot"
+                ],
+                "high_risk_source_receipts_bound": [
+                    "rate_limit_window_blocks_scope_mismatch_missing_evidence_sources_and_burst"
+                ],
+                "temporal_rate_limit_window_receipt_schema_valid": [
+                    "rate_limit_window_allows_active_window_with_sufficient_tokens"
+                ],
+                "receipt_not_terminal_closure": [
+                    "rate_limit_window_allows_active_window_with_sufficient_tokens"
+                ],
+            },
         ),
         _surface(
             "temporal_retry_window",
