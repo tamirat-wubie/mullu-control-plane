@@ -833,9 +833,21 @@
       "surface": "release"
     },
     {
+      "schema_id": "public-naming-decision",
+      "path": "schemas/public_naming_decision.schema.json",
+      "urn": "urn:mullusi:schema:public-naming-decision:1",
+      "surface": "release"
+    },
+    {
       "schema_id": "mullu-clearance-capture-requirements",
       "path": "schemas/mullu_clearance_capture_requirements.schema.json",
       "urn": "urn:mullusi:schema:mullu-clearance-capture-requirements:1",
+      "surface": "release"
+    },
+    {
+      "schema_id": "mullu-clearance-capture-readiness-report",
+      "path": "schemas/mullu_clearance_capture_readiness_report.schema.json",
+      "urn": "urn:mullusi:schema:mullu-clearance-capture-readiness-report:1",
       "surface": "release"
     },
     {
