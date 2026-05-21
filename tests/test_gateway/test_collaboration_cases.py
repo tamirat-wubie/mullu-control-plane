@@ -121,6 +121,76 @@ def test_collaboration_closure_rejects_terminal_claim() -> None:
     assert "terminal" in error
 
 
+def test_approval_separation_required() -> None:
+    try:
+        _manager().open_case(
+            case_id="case-invoice-1",
+            tenant_id="tenant-a",
+            requester_id="finance-admin",
+            subject="vendor invoice review",
+            approval_decider_id="finance-admin",
+            decider_authority_ref="authority://finance-admin",
+            controls=(_control(),),
+            evidence_refs=("proof://invoice-extracted",),
+        )
+    except ValueError as exc:
+        error = str(exc)
+    else:
+        error = ""
+
+    assert error == "approval_separation_required"
+    assert error.endswith("required")
+    assert error.startswith("approval")
+
+
+def test_pending_controls_block_case_closure() -> None:
+    case = _case()
+    closure = _manager().close_case(case, closed_by="finance-admin")
+
+    assert closure.closure_allowed is False
+    assert closure.status == "blocked"
+    assert closure.blocked_reasons == ("pending_controls_block_case_closure",)
+    assert "proof://invoice-extracted" in closure.evidence_refs
+    assert closure.closure_is_terminal is False
+    assert closure.closure_hash
+
+
+def test_decider_authority_required() -> None:
+    case = _case_with_resolved_control()
+    closure = _manager().close_case(case, closed_by="user-requester")
+
+    assert closure.closure_allowed is False
+    assert closure.status == "blocked"
+    assert closure.blocked_reasons == ("decider_authority_required",)
+    assert closure.evidence_refs == ("proof://invoice-extracted", "proof://manager-approved")
+    assert closure.closure_is_terminal is False
+    assert closure.closure_hash
+
+
+def test_case_closure_not_terminal_command_closure() -> None:
+    closure = _manager().close_case(_case_with_resolved_control(), closed_by="finance-admin")
+
+    assert closure.closure_allowed is True
+    assert closure.status == "closed"
+    assert closure.closure_is_terminal is False
+    assert closure.blocked_reasons == ()
+    assert closure.evidence_refs == ("proof://invoice-extracted", "proof://manager-approved")
+    assert closure.closure_hash
+
+
+def test_collaboration_case_schema_valid() -> None:
+    case = _case_with_resolved_control()
+    payload = case.to_json_dict()
+    errors = _validate_schema_instance(_load_schema(SCHEMA_PATH), payload)
+
+    assert errors == []
+    assert payload["closure_is_terminal"] is False
+    assert payload["controls"][0]["status"] == "resolved"
+    assert payload["metadata"]["approval_separation_required"] is True
+    assert payload["metadata"]["pending_controls_block_case_closure"] is True
+    assert payload["metadata"]["decider_authority_required"] is True
+
+
 def _manager() -> CollaborationCaseManager:
     return CollaborationCaseManager()
 

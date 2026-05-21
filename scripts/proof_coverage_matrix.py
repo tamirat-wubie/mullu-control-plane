@@ -860,6 +860,18 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "rbac_summary_bounded",
                 "rbac_errors_sanitized",
             ],
+            runtime_witness_anchor_aliases={
+                "rbac_identity_registration_governed": ["create_identity"],
+                "rbac_role_registration_governed": ["create_role"],
+                "rbac_role_binding_governed": ["bind_role"],
+                "rbac_identity_creation_audited": ["identity_creation_audited"],
+                "rbac_summary_bounded": ["rbac_summary"],
+                "rbac_errors_sanitized": [
+                    "unknown_identity_denied",
+                    "disabled_identity_denied",
+                    "authenticated_evaluation_failure_fails_closed",
+                ],
+            },
         ),
         _surface(
             "runtime_config_management",
@@ -3232,6 +3244,29 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "case_closure_not_terminal_command_closure",
                 "collaboration_case_schema_valid",
             ],
+            runtime_witness_anchor_aliases={
+                "approval_separation_required": [
+                    "approval_separation_required",
+                    "self_approval_is_blocked",
+                ],
+                "pending_controls_block_case_closure": [
+                    "pending_controls_block_case_closure",
+                    "pending_control_blocks_case_closure",
+                ],
+                "decider_authority_required": [
+                    "decider_authority_required",
+                    "non_decider_case_closure_is_blocked",
+                ],
+                "case_closure_not_terminal_command_closure": [
+                    "case_closure_not_terminal_command_closure",
+                    "resolved_control_allows_non_terminal_closure",
+                    "collaboration_closure_rejects_terminal_claim",
+                ],
+                "collaboration_case_schema_valid": [
+                    "collaboration_case_schema_valid",
+                    "collaboration_case_schema_export_validates",
+                ],
+            },
         ),
         _surface(
             "capability_maturity",
