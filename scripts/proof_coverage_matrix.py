@@ -4445,6 +4445,35 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "temporal_memory_receipt_schema_valid",
                 "receipt_not_terminal_closure",
             ],
+            runtime_witness_anchor_aliases={
+                "memory_age_computed_from_runtime_clock": [
+                    "temporal_memory_allows_fresh_valid_schema_receipt"
+                ],
+                "stale_memory_requires_refresh": [
+                    "temporal_memory_requires_refresh_for_stale_evidence"
+                ],
+                "validity_window_blocks_expired_memory": [
+                    "temporal_memory_blocks_expired_forbidden_high_risk_use"
+                ],
+                "superseded_memory_not_usable": [
+                    "temporal_memory_blocks_superseded_record_without_deleting_history"
+                ],
+                "confidence_decay_blocks_weak_memory": [
+                    "temporal_memory_blocks_when_confidence_decays_below_minimum"
+                ],
+                "tenant_owner_scope_checked": [
+                    "temporal_memory_blocks_tenant_and_owner_scope_mismatch"
+                ],
+                "allowed_use_checked": [
+                    "temporal_memory_blocks_expired_forbidden_high_risk_use"
+                ],
+                "temporal_memory_receipt_schema_valid": [
+                    "temporal_memory_allows_fresh_valid_schema_receipt"
+                ],
+                "receipt_not_terminal_closure": [
+                    "temporal_memory_allows_fresh_valid_schema_receipt"
+                ],
+            },
         ),
         _surface(
             "temporal_missed_run",
