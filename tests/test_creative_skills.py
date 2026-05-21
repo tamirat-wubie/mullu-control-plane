@@ -83,11 +83,11 @@ class TestDocumentGenerator:
         gen = DocumentGenerator()
         doc = gen.generate_from_llm(
             DocumentType.REPORT, "write a report",
-            "This is the AI-generated report content.",
+            "This is the symbolic-intelligence-generated report content.",
             tenant_id="t1",
         )
         assert doc.template_id == "llm-generated"
-        assert "AI-generated" in doc.body
+        assert "symbolic-intelligence-generated" in doc.body
 
     def test_generated_count(self):
         gen = DocumentGenerator()

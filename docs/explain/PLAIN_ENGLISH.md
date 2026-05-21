@@ -1,6 +1,6 @@
 # Mullu, Explained in Plain English
 
-> **In one box:** Mullu is software that lets an AI assistant do *real* tasks for
+> **In one box:** Mullu is software that lets a symbolic intelligence assistant do *real* tasks for
 > you (send an email, pay an invoice, make a document, crunch some data) — but
 > only inside strict, automatic safety rules. Every single thing it does is
 > checked before it happens, written down permanently, and kept inside limits
@@ -13,15 +13,15 @@
 
 ## The problem it solves
 
-An AI that can *talk* is useful but limited. An AI that can *act* — actually
+A symbolic intelligence system that can *talk* is useful but limited. A symbolic intelligence system that can *act* — actually
 send the email, actually move the money — is far more useful, but also scary:
 What if it sends the wrong email? What if it spends too much? What if nobody can
 tell later what it did or why?
 
-Most "AI agents" answer this with "trust us, it'll probably be fine." Mullu
-answers it with **structure**: the AI is never allowed to act freely. It works
+Most "symbolic intelligence agents" answer this with "trust us, it'll probably be fine." Mullu
+answers it with **structure**: the symbolic intelligence runtime is never allowed to act freely. It works
 the way a careful organization works — with approvals, budgets, records, and
-hard limits that the AI itself cannot remove.
+hard limits that the symbolic intelligence runtime itself cannot remove.
 
 ## An analogy
 
@@ -40,7 +40,7 @@ operates under four unbreakable office rules:
    they've been authorized for. They can't wander off and do something random.
 
 The clever part: these four rules are enforced by the *building itself*, not by
-the employee's good intentions. The AI can be as smart or as confused as it
+the employee's good intentions. The symbolic intelligence runtime can be as smart or as confused as it
 likes — it still cannot get past the rules.
 
 (In the project's own words those four rules show up as the **approval gate**,
@@ -64,7 +64,7 @@ trustworthy record of how it got there.
 ## What it is **not**
 
 - It is **not** a chatbot that only talks. It does real work.
-- It is **not** an AI you have to blindly trust. The safety is mechanical, not a
+- It is **not** a symbolic intelligence system you have to blindly trust. The safety is mechanical, not a
   promise.
 - It is **not** "set it loose and hope." Nothing consequential happens without
   passing the gates.

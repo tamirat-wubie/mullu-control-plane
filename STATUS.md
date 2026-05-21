@@ -1,5 +1,5 @@
 <!--
-Purpose: Public repository status witness for GitHub-visible state.
+Purpose: Proprietary repository status witness for GitHub-visible state.
 Governance scope: Branch, release, CI, and change-assurance reflection.
 Dependencies: README.md, RELEASE_CHECKLIST_v0.1.md, .github/workflows/ci.yml,
   scripts/validate_release_status.py, scripts/validate_protocol_manifest.py.
@@ -35,7 +35,7 @@ Invariants: Claims are bounded to named witnesses; gaps are explicit; status
 | Governed runtime promotion witness | `scripts/validate_governed_runtime_promotion.py` provides a domain-neutral terminal validation command over the existing governed promotion readiness contract | Reflected |
 | Operational witness | Runtime deployment and live health remain unpublished; the repository landing page now exposes that boundary and routes closure evidence to `DEPLOYMENT_STATUS.md` | Partially reflected |
 
-## Required Public Anchors
+## Required Proprietary Anchors
 
 The GitHub page is sufficient only when these anchors are present and current:
 
@@ -71,7 +71,7 @@ The GitHub page is sufficient only when these anchors are present and current:
 |---|---|
 | Branch freshness | `git status --short --branch` |
 | Remote head | `git ls-remote origin refs/heads/main` |
-| Public repository surface | `python scripts/validate_public_repository_surface.py` |
+| Proprietary repository surface | `python scripts/validate_public_repository_surface.py` |
 | Protocol manifest | `python scripts/validate_protocol_manifest.py` |
 | Logic governance application | `python scripts/validate_logic_governance_application.py` |
 | Release status | `python scripts/validate_release_status.py --strict` |
