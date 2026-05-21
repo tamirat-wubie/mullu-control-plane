@@ -191,6 +191,8 @@ def test_witness_integrity_report_tracks_exact_test_anchors() -> None:
     assert surfaces["temporal_rate_limit_window"]["exact_test_anchor_count"] == 10
     assert surfaces["temporal_lease_window"]["unanchored_witness_count"] == 0
     assert surfaces["temporal_lease_window"]["exact_test_anchor_count"] == 10
+    assert surfaces["temporal_memory"]["unanchored_witness_count"] == 0
+    assert surfaces["temporal_memory"]["exact_test_anchor_count"] == 9
     assert surfaces["capability_forge"]["unanchored_witness_count"] == 0
     assert surfaces["capability_forge"]["exact_test_anchor_count"] == 10
     assert surfaces["capability_maturity"]["unanchored_witness_count"] == 0

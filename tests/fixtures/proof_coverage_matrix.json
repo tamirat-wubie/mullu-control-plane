@@ -7093,6 +7093,35 @@
         "TemporalMemoryReceipt"
       ],
       "request_proof": "request_proof",
+      "runtime_witness_anchor_aliases": {
+        "allowed_use_checked": [
+          "temporal_memory_blocks_expired_forbidden_high_risk_use"
+        ],
+        "confidence_decay_blocks_weak_memory": [
+          "temporal_memory_blocks_when_confidence_decays_below_minimum"
+        ],
+        "memory_age_computed_from_runtime_clock": [
+          "temporal_memory_allows_fresh_valid_schema_receipt"
+        ],
+        "receipt_not_terminal_closure": [
+          "temporal_memory_allows_fresh_valid_schema_receipt"
+        ],
+        "stale_memory_requires_refresh": [
+          "temporal_memory_requires_refresh_for_stale_evidence"
+        ],
+        "superseded_memory_not_usable": [
+          "temporal_memory_blocks_superseded_record_without_deleting_history"
+        ],
+        "temporal_memory_receipt_schema_valid": [
+          "temporal_memory_allows_fresh_valid_schema_receipt"
+        ],
+        "tenant_owner_scope_checked": [
+          "temporal_memory_blocks_tenant_and_owner_scope_mismatch"
+        ],
+        "validity_window_blocks_expired_memory": [
+          "temporal_memory_blocks_expired_forbidden_high_risk_use"
+        ]
+      },
       "runtime_witnesses": [
         "memory_age_computed_from_runtime_clock",
         "stale_memory_requires_refresh",
@@ -7626,7 +7655,7 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 742,
+    "exact_test_anchor_count": 751,
     "runtime_witness_count": 1049,
     "surfaces": [
       {
@@ -12781,22 +12810,67 @@
         "unanchored_witnesses": []
       },
       {
-        "anchored_witnesses": [],
-        "exact_test_anchor_count": 0,
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_memory.py::test_temporal_memory_allows_fresh_valid_schema_receipt"
+            ],
+            "witness": "memory_age_computed_from_runtime_clock"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_memory.py::test_temporal_memory_requires_refresh_for_stale_evidence"
+            ],
+            "witness": "stale_memory_requires_refresh"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_memory.py::test_temporal_memory_blocks_expired_forbidden_high_risk_use"
+            ],
+            "witness": "validity_window_blocks_expired_memory"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_memory.py::test_temporal_memory_blocks_superseded_record_without_deleting_history"
+            ],
+            "witness": "superseded_memory_not_usable"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_memory.py::test_temporal_memory_blocks_when_confidence_decays_below_minimum"
+            ],
+            "witness": "confidence_decay_blocks_weak_memory"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_memory.py::test_temporal_memory_blocks_tenant_and_owner_scope_mismatch"
+            ],
+            "witness": "tenant_owner_scope_checked"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_memory.py::test_temporal_memory_blocks_expired_forbidden_high_risk_use"
+            ],
+            "witness": "allowed_use_checked"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_memory.py::test_temporal_memory_allows_fresh_valid_schema_receipt"
+            ],
+            "witness": "temporal_memory_receipt_schema_valid"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_memory.py::test_temporal_memory_allows_fresh_valid_schema_receipt"
+            ],
+            "witness": "receipt_not_terminal_closure"
+          }
+        ],
+        "exact_test_anchor_count": 9,
         "runtime_witness_count": 9,
         "surface_id": "temporal_memory",
-        "unanchored_witness_count": 9,
-        "unanchored_witnesses": [
-          "memory_age_computed_from_runtime_clock",
-          "stale_memory_requires_refresh",
-          "validity_window_blocks_expired_memory",
-          "superseded_memory_not_usable",
-          "confidence_decay_blocks_weak_memory",
-          "tenant_owner_scope_checked",
-          "allowed_use_checked",
-          "temporal_memory_receipt_schema_valid",
-          "receipt_not_terminal_closure"
-        ]
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
       },
       {
         "anchored_witnesses": [
@@ -13541,6 +13615,6 @@
         "unanchored_witnesses": []
       }
     ],
-    "unanchored_witness_count": 307
+    "unanchored_witness_count": 298
   }
 }

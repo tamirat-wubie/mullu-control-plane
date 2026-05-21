@@ -89,6 +89,24 @@ def test_temporal_memory_blocks_expired_forbidden_high_risk_use() -> None:
     assert receipt.metadata["memory_usable"] is False
 
 
+def test_temporal_memory_blocks_tenant_and_owner_scope_mismatch() -> None:
+    receipt = TemporalMemory(FixedClock()).evaluate(
+        _request(
+            replace(
+                _record(),
+                tenant_id="tenant-other",
+                owner_id="operator-other",
+            )
+        )
+    )
+
+    assert receipt.status == "blocked"
+    assert "memory_tenant_mismatch" in receipt.temporal_violations
+    assert "memory_owner_mismatch" in receipt.temporal_violations
+    assert "tenant_owner_scope" in receipt.required_controls
+    assert receipt.metadata["memory_usable"] is False
+
+
 def test_temporal_memory_blocks_superseded_record_without_deleting_history() -> None:
     receipt = TemporalMemory(FixedClock()).evaluate(
         _request(replace(_record(), superseded_by="mem-vendor-preference-v2"))
