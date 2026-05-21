@@ -24,6 +24,7 @@ from scripts.validate_public_naming_readiness import (  # noqa: E402
     CLEARANCE_SCHEMA_PATH,
     CAPTURE_REQUIREMENTS_PATH,
     CAPTURE_REQUIREMENTS_SCHEMA_PATH,
+    CAPTURE_READINESS_REPORT_SCHEMA_PATH,
     CLEARANCE_DRAFT_PATH,
     CONDITIONAL_WEBSITE_ROUTES,
     REQUIRED_DOMAIN_CANDIDATES,
@@ -69,6 +70,10 @@ from scripts.validate_public_naming_readiness import (  # noqa: E402
     validate_website_recheck_log,
 )
 from scripts.report_public_naming_readiness import main as report_public_naming_readiness  # noqa: E402
+from scripts.report_clearance_capture_readiness import (  # noqa: E402
+    build_capture_readiness,
+    main as report_clearance_capture_readiness,
+)
 from scripts.plan_public_naming_transition import main as plan_public_naming_transition  # noqa: E402
 from scripts import validate_release_status as release_status  # noqa: E402
 
@@ -229,6 +234,89 @@ def test_public_naming_readiness_report_outputs_blocked_status(capsys: pytest.Ca
     assert "Closed gate count:" in output
     assert "Evidence artifact count:" in output
     assert "STATUS: blocked" in output
+
+
+def test_clearance_capture_readiness_report_outputs_missing_files(capsys: pytest.CaptureFixture[str]) -> None:
+    exit_code = report_clearance_capture_readiness([])
+    output = capsys.readouterr().out
+
+    assert exit_code == 0
+    assert "Mullu Clearance Capture Readiness" in output
+    assert "Paid public launch allowed: False" in output
+    assert "uspto_search:" in output
+    assert "uspto-search-mullu.pdf" in output
+    assert "Required files missing:" in output
+    assert "STATUS: blocked" in output
+
+
+def test_clearance_capture_readiness_strict_blocks_missing_files(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    exit_code = report_clearance_capture_readiness(["--strict"])
+    output = capsys.readouterr().out
+
+    assert exit_code == 1
+    assert "Mullu Clearance Capture Readiness" in output
+    assert "STATUS: blocked" in output
+
+
+def test_clearance_capture_readiness_report_outputs_json(capsys: pytest.CaptureFixture[str]) -> None:
+    exit_code = report_clearance_capture_readiness(["--json"])
+    payload = json.loads(capsys.readouterr().out)
+    report_schema = json.loads(CAPTURE_READINESS_REPORT_SCHEMA_PATH.read_text(encoding="utf-8"))
+
+    assert exit_code == 0
+    assert set(report_schema["required"]) <= set(payload)
+    assert payload["product_name"] == "Mullu"
+    assert payload["company_brand"] == "Mullusi"
+    assert payload["public_paid_launch_allowed"] is False
+    assert payload["required_files_missing"] > 0
+    assert payload["status"] == "blocked"
+
+
+def test_clearance_capture_readiness_writes_receipt(tmp_path: Path) -> None:
+    receipt_path = tmp_path / "capture-readiness.json"
+    exit_code = report_clearance_capture_readiness(["--receipt-path", str(receipt_path)])
+    payload = json.loads(receipt_path.read_text(encoding="utf-8"))
+
+    assert exit_code == 0
+    assert receipt_path.exists()
+    assert payload["product_name"] == "Mullu"
+    assert payload["public_paid_launch_allowed"] is False
+    assert payload["status"] == "blocked"
+
+
+def test_clearance_capture_readiness_strict_writes_receipt_before_blocking(tmp_path: Path) -> None:
+    receipt_path = tmp_path / "strict-capture-readiness.json"
+    exit_code = report_clearance_capture_readiness(["--strict", "--receipt-path", str(receipt_path)])
+    payload = json.loads(receipt_path.read_text(encoding="utf-8"))
+
+    assert exit_code == 1
+    assert receipt_path.exists()
+    assert payload["required_files_missing"] > 0
+    assert payload["status"] == "blocked"
+
+
+def test_clearance_capture_readiness_all_present(tmp_path: Path) -> None:
+    requirements = json.loads(CAPTURE_REQUIREMENTS_PATH.read_text(encoding="utf-8"))
+    evidence_root = tmp_path / "docs" / "clearance-evidence" / "mullu" / "2026-05-15"
+    requirements["evidence_root"] = str(evidence_root)
+    requirements_path = tmp_path / "docs" / "clearance-evidence" / "mullu" / "2026-05-15" / "capture-requirements.json"
+    requirements_path.parent.mkdir(parents=True)
+    requirements_path.write_text(json.dumps(requirements, indent=2), encoding="utf-8")
+
+    for gate in requirements["gates"]:
+        gate_dir = evidence_root / gate["directory"]
+        gate_dir.mkdir(parents=True, exist_ok=True)
+        for required_file in gate["required_files"]:
+            (gate_dir / required_file).write_text("evidence placeholder\n", encoding="utf-8")
+
+    report = build_capture_readiness(requirements_path)
+
+    assert report["required_files_present"] == report["required_files_total"]
+    assert report["required_files_missing"] == 0
+    assert all(gate["status"] == "capture_ready_for_review" for gate in report["gates"])
+    assert report["status"] == "capture_ready_for_review"
 
 
 def test_public_naming_transition_plan_outputs_remaining_actions(capsys: pytest.CaptureFixture[str]) -> None:

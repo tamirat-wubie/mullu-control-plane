@@ -2,7 +2,7 @@
 
 Purpose: inventory the complete public naming package for review, release, and future drift checks.
 Governance scope: product identity, public copy, clearance evidence, website/domain evidence, schemas, validators, reports, planners, and tests.
-Dependencies: `docs/public-naming-readiness.json`, `scripts/validate_public_naming_readiness.py`, `tests/test_public_naming_readiness.py`.
+Dependencies: `docs/public-naming-readiness.json`, `scripts/validate_public_naming_readiness.py`, `scripts/report_clearance_capture_readiness.py`, `tests/test_public_naming_readiness.py`.
 Invariants: every listed artifact must exist; paid public launch remains blocked until open clearance gates close.
 
 ## Documents
@@ -61,12 +61,14 @@ Invariants: every listed artifact must exist; paid public launch remains blocked
 | `schemas/public_naming_readiness.schema.json` | Readiness witness schema |
 | `schemas/mullu_name_clearance_draft.schema.json` | Clearance packet schema |
 | `schemas/mullu_clearance_capture_requirements.schema.json` | Capture requirements schema |
+| `schemas/mullu_clearance_capture_readiness_report.schema.json` | Capture-readiness report schema |
 
 ## Scripts And Tests
 
 | Artifact | Role |
 | --- | --- |
 | `scripts/validate_public_naming_readiness.py` | Primary launch-gate validator |
+| `scripts/report_clearance_capture_readiness.py` | Read-only required-file intake report for remaining clearance gates |
 | `scripts/report_public_naming_readiness.py` | Human-readable readiness report |
 | `scripts/plan_public_naming_transition.py` | Remaining-action planner |
 | `tests/test_public_naming_readiness.py` | Regression tests for naming gates |
@@ -75,6 +77,7 @@ Invariants: every listed artifact must exist; paid public launch remains blocked
 
 ```powershell
 python .\scripts\validate_public_naming_readiness.py
+python .\scripts\report_clearance_capture_readiness.py
 python .\scripts\report_public_naming_readiness.py
 python .\scripts\plan_public_naming_transition.py
 python -m pytest tests\test_public_naming_readiness.py -q

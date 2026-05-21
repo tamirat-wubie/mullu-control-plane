@@ -41,6 +41,7 @@ CAPTURE_REQUIREMENTS_PATH = CLEARANCE_EVIDENCE_ROOT / "capture-requirements.json
 READINESS_SCHEMA_PATH = REPO_ROOT / "schemas" / "public_naming_readiness.schema.json"
 CLEARANCE_SCHEMA_PATH = REPO_ROOT / "schemas" / "mullu_name_clearance_draft.schema.json"
 CAPTURE_REQUIREMENTS_SCHEMA_PATH = REPO_ROOT / "schemas" / "mullu_clearance_capture_requirements.schema.json"
+CAPTURE_READINESS_REPORT_SCHEMA_PATH = REPO_ROOT / "schemas" / "mullu_clearance_capture_readiness_report.schema.json"
 
 
 REQUIRED_CLOSED_GATES = {
@@ -146,7 +147,9 @@ REQUIRED_EVIDENCE_DOCS = {
     "schemas/public_naming_readiness.schema.json",
     "schemas/mullu_name_clearance_draft.schema.json",
     "schemas/mullu_clearance_capture_requirements.schema.json",
+    "schemas/mullu_clearance_capture_readiness_report.schema.json",
     "scripts/validate_public_naming_readiness.py",
+    "scripts/report_clearance_capture_readiness.py",
     "scripts/report_public_naming_readiness.py",
     "scripts/plan_public_naming_transition.py",
     "tests/test_public_naming_readiness.py",
@@ -721,6 +724,10 @@ def validate_public_naming_artifact_manifest(
     missing_artifacts = sorted(artifact for artifact in REQUIRED_EVIDENCE_DOCS if artifact not in manifest_text)
     _require(not missing_artifacts, f"artifact manifest missing evidence docs: {missing_artifacts}")
     _require("python .\\scripts\\validate_public_naming_readiness.py" in manifest_text, "manifest missing readiness validator command")
+    _require(
+        "python .\\scripts\\report_clearance_capture_readiness.py" in manifest_text,
+        "manifest missing clearance capture reporter command",
+    )
     _require("python .\\scripts\\validate_release_status.py" in manifest_text, "manifest missing release validator command")
 
 

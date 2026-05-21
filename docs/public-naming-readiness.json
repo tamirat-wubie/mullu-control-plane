@@ -123,7 +123,9 @@
     "schemas/public_naming_readiness.schema.json",
     "schemas/mullu_name_clearance_draft.schema.json",
     "schemas/mullu_clearance_capture_requirements.schema.json",
+    "schemas/mullu_clearance_capture_readiness_report.schema.json",
     "scripts/validate_public_naming_readiness.py",
+    "scripts/report_clearance_capture_readiness.py",
     "scripts/report_public_naming_readiness.py",
     "scripts/plan_public_naming_transition.py",
     "tests/test_public_naming_readiness.py"
