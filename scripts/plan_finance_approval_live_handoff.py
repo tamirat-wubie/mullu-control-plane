@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env python3
+#!/usr/bin/env python3
 """Plan finance approval packet live email handoff closure.
 
 Purpose: convert finance approval pilot readiness blockers into the exact

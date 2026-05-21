@@ -1,4 +1,4 @@
-﻿"""Purpose: verify WHQR contract, evaluator, connector compiler, and static checks.
+"""Purpose: verify WHQR contract, evaluator, connector compiler, and static checks.
 Governance scope: side-effect-free WHQR trees, split gates, deterministic serialization, explicit connector lowering, and static validation.
 Dependencies: WHQR contracts and WHQR pure helpers.
 Invariants: truth is not permission; missing evidence is unknown; connectors compile to assertions; static checks catch cycles and unsafe negation.
