@@ -6845,6 +6845,38 @@
         "TemporalRateLimitWindowReceipt"
       ],
       "request_proof": "request_proof",
+      "runtime_witness_anchor_aliases": {
+        "active_window_admits_sufficient_tokens": [
+          "rate_limit_window_allows_active_window_with_sufficient_tokens"
+        ],
+        "burst_limit_blocks_overlarge_request": [
+          "rate_limit_window_blocks_scope_mismatch_missing_evidence_sources_and_burst"
+        ],
+        "exhausted_window_emits_retry_after": [
+          "rate_limit_window_throttles_exhausted_window_with_retry_after"
+        ],
+        "future_window_defers_dispatch": [
+          "rate_limit_window_defers_future_window_until_start"
+        ],
+        "high_risk_source_receipts_bound": [
+          "rate_limit_window_blocks_scope_mismatch_missing_evidence_sources_and_burst"
+        ],
+        "receipt_not_terminal_closure": [
+          "rate_limit_window_allows_active_window_with_sufficient_tokens"
+        ],
+        "runtime_clock_owns_rate_limit_window": [
+          "rate_limit_window_allows_active_window_with_sufficient_tokens"
+        ],
+        "stale_rate_limit_snapshot_blocks_dispatch": [
+          "rate_limit_window_blocks_expired_or_invalid_snapshot"
+        ],
+        "temporal_rate_limit_window_receipt_schema_valid": [
+          "rate_limit_window_allows_active_window_with_sufficient_tokens"
+        ],
+        "tenant_endpoint_identity_scope_checked": [
+          "rate_limit_window_blocks_scope_mismatch_missing_evidence_sources_and_burst"
+        ]
+      },
       "runtime_witnesses": [
         "runtime_clock_owns_rate_limit_window",
         "tenant_endpoint_identity_scope_checked",
@@ -7562,8 +7594,8 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 721,
-    "runtime_witness_count": 1048,
+    "exact_test_anchor_count": 732,
+    "runtime_witness_count": 1049,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -12441,23 +12473,73 @@
         "unanchored_witnesses": []
       },
       {
-        "anchored_witnesses": [],
-        "exact_test_anchor_count": 0,
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_rate_limit_window.py::test_rate_limit_window_allows_active_window_with_sufficient_tokens"
+            ],
+            "witness": "runtime_clock_owns_rate_limit_window"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_rate_limit_window.py::test_rate_limit_window_blocks_scope_mismatch_missing_evidence_sources_and_burst"
+            ],
+            "witness": "tenant_endpoint_identity_scope_checked"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_rate_limit_window.py::test_rate_limit_window_allows_active_window_with_sufficient_tokens"
+            ],
+            "witness": "active_window_admits_sufficient_tokens"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_rate_limit_window.py::test_rate_limit_window_throttles_exhausted_window_with_retry_after"
+            ],
+            "witness": "exhausted_window_emits_retry_after"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_rate_limit_window.py::test_rate_limit_window_defers_future_window_until_start"
+            ],
+            "witness": "future_window_defers_dispatch"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_rate_limit_window.py::test_rate_limit_window_blocks_scope_mismatch_missing_evidence_sources_and_burst"
+            ],
+            "witness": "burst_limit_blocks_overlarge_request"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_rate_limit_window.py::test_rate_limit_window_blocks_expired_or_invalid_snapshot"
+            ],
+            "witness": "stale_rate_limit_snapshot_blocks_dispatch"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_rate_limit_window.py::test_rate_limit_window_blocks_scope_mismatch_missing_evidence_sources_and_burst"
+            ],
+            "witness": "high_risk_source_receipts_bound"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_rate_limit_window.py::test_rate_limit_window_allows_active_window_with_sufficient_tokens"
+            ],
+            "witness": "temporal_rate_limit_window_receipt_schema_valid"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_rate_limit_window.py::test_rate_limit_window_allows_active_window_with_sufficient_tokens"
+            ],
+            "witness": "receipt_not_terminal_closure"
+          }
+        ],
+        "exact_test_anchor_count": 10,
         "runtime_witness_count": 10,
         "surface_id": "temporal_rate_limit_window",
-        "unanchored_witness_count": 10,
-        "unanchored_witnesses": [
-          "runtime_clock_owns_rate_limit_window",
-          "tenant_endpoint_identity_scope_checked",
-          "active_window_admits_sufficient_tokens",
-          "exhausted_window_emits_retry_after",
-          "future_window_defers_dispatch",
-          "burst_limit_blocks_overlarge_request",
-          "stale_rate_limit_snapshot_blocks_dispatch",
-          "high_risk_source_receipts_bound",
-          "temporal_rate_limit_window_receipt_schema_valid",
-          "receipt_not_terminal_closure"
-        ]
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
       },
       {
         "anchored_witnesses": [
@@ -13377,6 +13459,6 @@
         "unanchored_witnesses": []
       }
     ],
-    "unanchored_witness_count": 327
+    "unanchored_witness_count": 317
   }
 }

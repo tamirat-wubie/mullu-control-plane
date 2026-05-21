@@ -149,9 +149,9 @@ Witness integrity audit:
 
 | Metric | Count |
 |---|---:|
-| Runtime witness labels | 1048 |
-| Exact test anchors | 721 |
-| Unanchored witness labels | 327 |
+| Runtime witness labels | 1049 |
+| Exact test anchors | 732 |
+| Unanchored witness labels | 317 |
 
 Evidence quality gaps:
 none
@@ -200,7 +200,6 @@ Witness integrity gaps:
 | `temporal_causal_order` | 0 | 9 | runtime_clock_owns_causal_order_time, required_events_must_be_present, tenant_and_command_scope_checked, predecessor_edges_checked, out_of_order_events_block_dispatch, future_events_block_dispatch, high_risk_source_receipts_bound, temporal_causal_order_receipt_schema_valid, receipt_not_terminal_closure |
 | `temporal_monotonic_duration` | 0 | 8 | runtime_monotonic_clock_owns_duration_truth, wall_clock_not_used_for_duration, duration_limit_exceeded_blocks_dispatch, cooldown_lower_bound_defers_dispatch, monotonic_clock_regression_blocks_dispatch, high_risk_source_receipts_bound, temporal_monotonic_duration_receipt_schema_valid, receipt_not_terminal_closure |
 | `temporal_accepted_risk_expiry` | 0 | 9 | runtime_clock_owns_accepted_risk_expiry, expired_accepted_risk_blocks_dispatch, revoked_or_closed_accepted_risk_blocks_dispatch, tenant_command_and_action_scope_checked, review_obligation_required, accepted_risk_evidence_refs_required, high_risk_source_receipts_bound, temporal_accepted_risk_expiry_receipt_schema_valid, receipt_not_terminal_closure |
-| `temporal_rate_limit_window` | 0 | 10 | runtime_clock_owns_rate_limit_window, tenant_endpoint_identity_scope_checked, active_window_admits_sufficient_tokens, exhausted_window_emits_retry_after, future_window_defers_dispatch, burst_limit_blocks_overlarge_request, stale_rate_limit_snapshot_blocks_dispatch, high_risk_source_receipts_bound, temporal_rate_limit_window_receipt_schema_valid, receipt_not_terminal_closure |
 | `temporal_lease_window` | 0 | 10 | runtime_clock_owns_lease_window, tenant_command_resource_worker_scope_checked, active_lease_admits_dispatch, near_expiry_lease_requires_renewal_warning, expired_lease_blocks_dispatch, released_or_revoked_lease_blocks_dispatch, fencing_token_required, high_risk_source_receipts_bound, temporal_lease_window_receipt_schema_valid, receipt_not_terminal_closure |
 | `temporal_memory` | 0 | 9 | memory_age_computed_from_runtime_clock, stale_memory_requires_refresh, validity_window_blocks_expired_memory, superseded_memory_not_usable, confidence_decay_blocks_weak_memory, tenant_owner_scope_checked, allowed_use_checked, temporal_memory_receipt_schema_valid, receipt_not_terminal_closure |
 | `temporal_missed_run` | 2 | 7 | runtime_clock_owns_missed_run_time, late_within_grace_preserves_dispatch_eligibility, recovery_due_requires_review_actions, tenant_command_action_scope_checked, high_risk_source_receipts_bound, temporal_missed_run_receipt_schema_valid, receipt_not_terminal_closure |
@@ -329,5 +328,5 @@ none
 STATUS:
   Completeness: 100%
   Invariants verified: route declarations, route-level coverage classification, coverage levels, coverage states, closure action mapping, schema contract validation, deployment orchestration receipt schema contract
-  Open issues: 327 runtime-witness labels lack exact test-function anchors
+  Open issues: 317 runtime-witness labels lack exact test-function anchors
   Next action: bind unanchored runtime-witness labels to exact test-function anchors
