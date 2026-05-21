@@ -19,6 +19,7 @@ _APP_CONFIG_KEYS = frozenset(
         "policy_pack_id",
         "policy_pack_version",
         "effect_assurance_required",
+        "effect_graph_commit_receipt_store_path",
         "shell_sandbox_enabled",
         "shell_sandbox_id",
         "shell_allowed_cwd_roots",
@@ -66,6 +67,7 @@ class AppConfig:
     policy_pack_id: str | None = None
     policy_pack_version: str | None = None
     effect_assurance_required: bool = False
+    effect_graph_commit_receipt_store_path: str | None = None
     shell_sandbox_enabled: bool = False
     shell_sandbox_id: str = "local"
     shell_allowed_cwd_roots: tuple[str, ...] = ()
@@ -100,6 +102,15 @@ class AppConfig:
             )
         if not isinstance(self.effect_assurance_required, bool):
             raise ValueError("effect_assurance_required must be a boolean")
+        if self.effect_graph_commit_receipt_store_path is not None:
+            object.__setattr__(
+                self,
+                "effect_graph_commit_receipt_store_path",
+                _require_text(
+                    self.effect_graph_commit_receipt_store_path,
+                    "effect_graph_commit_receipt_store_path",
+                ),
+            )
         if not isinstance(self.shell_sandbox_enabled, bool):
             raise ValueError("shell_sandbox_enabled must be a boolean")
         object.__setattr__(self, "shell_sandbox_id", _require_text(self.shell_sandbox_id, "shell_sandbox_id"))
@@ -142,6 +153,7 @@ class AppConfig:
             policy_pack_id=normalized.get("policy_pack_id"),
             policy_pack_version=normalized.get("policy_pack_version"),
             effect_assurance_required=normalized.get("effect_assurance_required", False),
+            effect_graph_commit_receipt_store_path=normalized.get("effect_graph_commit_receipt_store_path"),
             shell_sandbox_enabled=normalized.get("shell_sandbox_enabled", False),
             shell_sandbox_id=normalized.get("shell_sandbox_id", "local"),
             shell_allowed_cwd_roots=normalized.get("shell_allowed_cwd_roots", ()),
