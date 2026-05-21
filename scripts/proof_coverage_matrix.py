@@ -2211,6 +2211,8 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "EffectAssuranceGate.graph_commit_effect_records",
                 "InMemoryEffectGraphCommitReceiptStore",
                 "JsonlEffectGraphCommitReceiptStore",
+                "bootstrap_runtime",
+                "AppConfig.effect_graph_commit_receipt_store_path",
             ],
             "request_proof",
             "action_proof",
@@ -2219,15 +2221,19 @@ def proof_coverage_matrix() -> dict[str, Any]:
             [
                 "mcoi/mcoi_runtime/core/effect_assurance.py",
                 "mcoi/mcoi_runtime/core/operational_graph.py",
+                "mcoi/mcoi_runtime/app/bootstrap.py",
+                "mcoi/mcoi_runtime/app/config.py",
                 "mcoi/tests/test_effect_assurance_core.py",
+                "mcoi/tests/test_bootstrap.py",
             ],
-            "Effect Assurance graph commits emit bounded durable receipts for MATCH-only operational graph mutation and expose those receipts as actual effects for observation.",
+            "Effect Assurance graph commits emit bounded durable receipts for MATCH-only operational graph mutation, expose those receipts as actual effects for observation, and can be wired into runtime bootstrap through explicit configuration.",
             [
                 "effect_graph_commit_requires_match",
                 "effect_graph_commit_receipt_emitted",
                 "effect_graph_commit_receipt_converts_to_actual_effect",
                 "effect_graph_commit_receipt_closes_effect_assurance",
                 "effect_graph_commit_receipt_store_replays_records",
+                "bootstrap_wires_durable_effect_graph_commit_receipt_store",
             ],
             {
                 "effect_graph_commit_requires_match": ["graph_commit_requires_match"],
@@ -2242,6 +2248,9 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 ],
                 "effect_graph_commit_receipt_store_replays_records": [
                     "jsonl_graph_commit_receipt_store_replays_records"
+                ],
+                "bootstrap_wires_durable_effect_graph_commit_receipt_store": [
+                    "bootstrap_runtime_wires_durable_effect_graph_commit_receipt_store"
                 ],
             },
         ),
@@ -4920,6 +4929,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
         },
         {
             "action_id": "persist_effect_graph_commit_receipts",
+            "surfaces": ["effect_assurance_graph_commit"],
+            "status": "closed",
+        },
+        {
+            "action_id": "wire_effect_graph_commit_receipt_store_into_bootstrap",
             "surfaces": ["effect_assurance_graph_commit"],
             "status": "closed",
         },
