@@ -863,6 +863,20 @@ def test_scan_source_hygiene_text_rejects_bare_except_and_marker() -> None:
     assert any("contains source hygiene marker TODO" in error for error in errors)
 
 
+def test_scan_source_hygiene_text_rejects_mojibake_marker() -> None:
+    path = REPO_ROOT / "sample.py"
+    corrupted_dash = "\u00e2\u20ac\u201d"
+
+    errors = validate_release_status.scan_source_hygiene_text(
+        path,
+        f'"""Broken {corrupted_dash} header."""\n',
+    )
+
+    assert len(errors) == 1
+    assert "contains mojibake marker utf8_decoded_as_latin1_lead_byte" in errors[0]
+    assert "sample.py" in errors[0]
+
+
 def test_validate_source_hygiene_passes_for_current_repo() -> None:
     errors = validate_release_status.validate_source_hygiene()
 

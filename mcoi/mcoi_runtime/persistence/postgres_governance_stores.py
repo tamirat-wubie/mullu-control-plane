@@ -1,11 +1,11 @@
-﻿"""Phase 1A/2D â€” PostgreSQL Governance Stores.
+"""Phase 1A/2D - PostgreSQL Governance Stores.
 
 Purpose: Production-grade PostgreSQL implementations for governance
     externalization stores: BudgetStore, AuditStore, RateLimitStore,
     and TenantGatingStore. These replace the in-memory stubs, making
     governance state durable and consistent across replicas.
 Governance scope: persistence backend only.
-Dependencies: psycopg2 (optional â€” graceful fallback to no-op stubs).
+Dependencies: psycopg2 (optional - graceful fallback to no-op stubs).
 Invariants:
   - Same interface contracts as the stub base classes.
   - All writes are transactional (auto-commit per operation).
@@ -44,7 +44,7 @@ from mcoi_runtime.governance.guards.tenant_gating import TenantGate, TenantGatin
 from ._serialization import loads_strict_json
 
 
-# â•â•â• Schema Definitions â•â•â•
+# --- Schema Definitions ---
 
 GOVERNANCE_MIGRATIONS: list[str] = [
     # Migration 1: Budget table
@@ -136,7 +136,7 @@ class _PostgresBase:
     throughput. Pre-v4.36 every governance store opened a single
     PostgreSQL connection and serialized every operation behind
     ``self._lock``. Under N concurrent writers the effective
-    throughput was bounded by 1 connection × 1 cursor at a time.
+    throughput was bounded by 1 connection x 1 cursor at a time.
 
     When ``pool_size > 1`` the base class allocates a
     ``psycopg2.pool.ThreadedConnectionPool`` and acquires a connection
@@ -230,7 +230,7 @@ class _PostgresBase:
 
     @contextmanager
     def _connection(self) -> Iterator[Any]:
-        """Yield a connection — pooled if configured, single otherwise.
+        """Yield a connection - pooled if configured, single otherwise.
 
         On the pool path the connection is returned to the pool on
         context exit (success or exception). On the single-conn path
@@ -350,7 +350,7 @@ class _PostgresBase:
                 self._conn = None
 
 
-# â•â•â• PostgresBudgetStore â•â•â•
+# --- PostgresBudgetStore ---
 
 
 class PostgresBudgetStore(_PostgresBase, BudgetStore):
@@ -433,13 +433,13 @@ class PostgresBudgetStore(_PostgresBase, BudgetStore):
         ``WHERE spent + cost <= max_cost`` clause. Two replicas could
         both read ``spent=$5``, both compute ``$5 + $1 = $6``, both
         UPSERT ``$6``. Real spend ``$7``, stored ``$6``. The hard limit
-        was, in practice, soft by N (replicas × in-flight requests).
+        was, in practice, soft by N (replicas x in-flight requests).
 
-        v4.27 replaces this with a single ``UPDATE … WHERE spent + $1 <=
-        max_cost RETURNING …``. The DB row is the only source of truth;
+        v4.27 replaces this with a single ``UPDATE ... WHERE spent + $1 <=
+        max_cost RETURNING ...``. The DB row is the only source of truth;
         in-memory snapshots are out of the write path. Two replicas can
         now race a transaction, but at most ``floor((max_cost -
-        current_spent) / cost)`` succeed — every other call sees zero
+        current_spent) / cost)`` succeed - every other call sees zero
         rows returned and treats it as exhaustion.
         """
         if self._conn is None:
@@ -462,7 +462,7 @@ class PostgresBudgetStore(_PostgresBase, BudgetStore):
         if row is None:
             # Either no row exists, or the WHERE clause rejected
             # (spent + cost > max_cost). Both are "exhaustion" from the
-            # caller's perspective — the manager pre-flighted the row
+            # caller's perspective - the manager pre-flighted the row
             # via ensure_budget so no-row case shouldn't arise in
             # practice.
             return None
@@ -497,7 +497,7 @@ class PostgresBudgetStore(_PostgresBase, BudgetStore):
         ]
 
 
-# â•â•â• PostgresAuditStore â•â•â•
+# --- PostgresAuditStore ---
 
 
 class PostgresAuditStore(_PostgresBase, AuditStore):
@@ -621,7 +621,7 @@ class PostgresAuditStore(_PostgresBase, AuditStore):
                 return cur.fetchone()[0]
 
 
-# â•â•â• PostgresRateLimitStore â•â•â•
+# --- PostgresRateLimitStore ---
 
 
 class PostgresRateLimitStore(_PostgresBase, RateLimitStore):
@@ -676,7 +676,7 @@ class PostgresRateLimitStore(_PostgresBase, RateLimitStore):
         return {"allowed": int(row[0]), "denied": int(row[1])}
 
 
-# â•â•â• PostgresTenantGatingStore â•â•â•
+# --- PostgresTenantGatingStore ---
 
 
 class PostgresTenantGatingStore(_PostgresBase, TenantGatingStore):
@@ -750,7 +750,7 @@ class PostgresTenantGatingStore(_PostgresBase, TenantGatingStore):
         ]
 
 
-# â•â•â• In-Memory Governance Stores (for testing without PostgreSQL) â•â•â•
+# --- In-Memory Governance Stores (for testing without PostgreSQL) ---
 
 
 class InMemoryBudgetStore(BudgetStore):
@@ -811,7 +811,7 @@ class InMemoryAuditStore(AuditStore):
     """In-memory audit store for testing.
 
     v4.28.0+ (audit F3): also persists checkpoints. Single most recent
-    checkpoint is kept (matches the ``AuditTrail._anchor`` semantics —
+    checkpoint is kept (matches the ``AuditTrail._anchor`` semantics -
     each new prune supersedes the previous anchor).
 
     v4.31.0+ (audit F4): owns sequence allocation and chain-head
@@ -834,7 +834,7 @@ class InMemoryAuditStore(AuditStore):
         # try_append paths share consistent storage.
         with self._append_lock:
             self._entries.append(entry)
-            # Track chain state if the appended entry is monotonic —
+            # Track chain state if the appended entry is monotonic -
             # otherwise the legacy caller is responsible for its own
             # sequencing.
             if entry.sequence > self._sequence:
@@ -869,7 +869,7 @@ class InMemoryAuditStore(AuditStore):
         # F4: store-owned sequence + chain head, lock-guarded so
         # concurrent AuditTrail callers (multiple workers, threads)
         # cannot fork the chain. The lock spans allocate-sequence,
-        # read-prev-hash, compute-entry-hash, persist — so two
+        # read-prev-hash, compute-entry-hash, persist - so two
         # callers strictly serialize at the store, never both
         # producing the same sequence with different previous_hash.
         # Cross-process atomicity needs PostgresAuditStore.
@@ -945,7 +945,7 @@ class InMemoryRateLimitStore(RateLimitStore):
     ) -> tuple[bool, float] | None:
         # F11: store-owned bucket state with single-process atomicity.
         # The lock spans refill + check + decrement so concurrent
-        # callers strictly serialize at the bucket — no last-write-wins
+        # callers strictly serialize at the bucket - no last-write-wins
         # window. Cross-process atomicity needs PostgresRateLimitStore.
         if tokens > config.burst_limit:
             with self._bucket_lock:
@@ -987,7 +987,7 @@ class InMemoryTenantGatingStore(TenantGatingStore):
         return sorted(self._gates.values(), key=lambda g: g.tenant_id)
 
 
-# â•â•â• Factory â•â•â•
+# --- Factory ---
 
 
 class GovernanceStoreBundle:
@@ -1036,13 +1036,13 @@ def create_governance_stores(
     Returns GovernanceStoreBundle with keys: "budget", "audit", "rate_limit", "tenant_gating".
 
     Backends:
-    - "memory" â†’ In-memory stores (testing/development)
-    - "postgresql" â†’ PostgreSQL stores (production)
+    - "memory" -> In-memory stores (testing/development)
+    - "postgresql" -> PostgreSQL stores (production)
 
     v4.36.0 (audit F12): ``pool_size > 1`` enables a
     ``ThreadedConnectionPool`` per store for write-throughput scaling.
     Each of the 4 stores gets its own pool with the configured cap;
-    operators sizing should account for ``4 × pool_size`` total
+    operators sizing should account for ``4 x pool_size`` total
     connections to PostgreSQL. Default 1 preserves legacy single-conn
     behavior (one shared connection per store, serialized via
     ``self._lock``).

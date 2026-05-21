@@ -422,6 +422,12 @@ LINE_COMMENT_PATTERNS: tuple[re.Pattern[str], ...] = (
     re.compile(r"//\s*(TODO|FIXME|HACK)\b"),
     re.compile(r"/\*\s*(TODO|FIXME|HACK)\b"),
 )
+MOJIBAKE_SOURCE_MARKERS: tuple[tuple[str, str], ...] = (
+    ("\u00e2", "utf8_decoded_as_latin1_lead_byte"),
+    ("\u00c3", "utf8_decoded_as_latin1_prefix"),
+    ("\u00c2", "utf8_decoded_as_latin1_continuation"),
+    ("\ufffd", "replacement_character"),
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -752,6 +758,11 @@ def scan_source_hygiene_text(path: Path, content: str) -> list[str]:
             errors.append(
                 f"{relative_path}: contains source hygiene marker {match.group(1)}"
             )
+            break
+
+    for marker, label in MOJIBAKE_SOURCE_MARKERS:
+        if marker in content:
+            errors.append(f"{relative_path}: contains mojibake marker {label}")
             break
 
     return errors
