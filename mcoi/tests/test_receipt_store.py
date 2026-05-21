@@ -15,6 +15,7 @@ import json
 
 import pytest
 
+from mcoi_runtime.contracts import receipt_store as receipt_store_module
 from mcoi_runtime.contracts.proof import CausalLineage
 from mcoi_runtime.contracts.receipt_store import (
     InMemoryReceiptStore,
@@ -210,6 +211,40 @@ class TestInMemoryReceiptStore:
 
 
 class TestJsonlReceiptStore:
+    def test_sync_on_write_defaults_off(self, tmp_path):
+        path = tmp_path / "receipts.jsonl"
+        store = JsonlReceiptStore(path)
+
+        assert store.sync_on_write is False
+        assert store.path == path
+        assert store.receipt_count == 0
+
+    def test_sync_on_write_calls_fsync_for_appends(self, tmp_path, monkeypatch):
+        path = tmp_path / "receipts.jsonl"
+        fsync_calls: list[int] = []
+
+        def fake_fsync(file_descriptor: int) -> None:
+            fsync_calls.append(file_descriptor)
+
+        monkeypatch.setattr(receipt_store_module.os, "fsync", fake_fsync)
+        store = JsonlReceiptStore(path, sync_on_write=True)
+        receipt = _proof().capsule.receipt
+
+        store.record_receipt(receipt)
+
+        assert store.sync_on_write is True
+        assert len(fsync_calls) == 1
+        assert path.read_text(encoding="utf-8").count("receipt_record") == 1
+
+    def test_sync_on_write_must_be_boolean(self, tmp_path):
+        path = tmp_path / "receipts.jsonl"
+
+        with pytest.raises(ValueError, match="sync_on_write"):
+            JsonlReceiptStore(path, sync_on_write="true")  # type: ignore[arg-type]
+
+        assert not path.exists()
+        assert path.parent.exists()
+
     def test_persists_receipt_and_lineage_across_reopen(self, tmp_path):
         path = tmp_path / "receipts.jsonl"
         store = JsonlReceiptStore(path)
