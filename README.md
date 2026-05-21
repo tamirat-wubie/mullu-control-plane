@@ -14,6 +14,10 @@ personal, team, enterprise, and deployment work. This repository provides the
 Mullu Control Plane: gateway, approvals, status, traces, budgets, lineage, and
 deployment controls.
 
+Mullu is a proprietary invention of Tamirat Wubie for use under the Mullusi
+company boundary. This repository and its generated artifacts are not free for
+public use; see [LICENSE](LICENSE) for the governing authorization terms.
+
 Users interact through messaging channels (WhatsApp, Telegram, Slack, Discord,
 Web). Mullu executes bounded real-world tasks -- email, payments, document
 generation, data analysis -- under deterministic governance: 8-guard chain,
@@ -343,7 +347,7 @@ kubectl apply -f k8s/
 
 ## Repository Status
 
-The public repository surface is bounded by a versioned status witness:
+The proprietary repository surface is bounded by a versioned status witness:
 [STATUS.md](STATUS.md). That witness names the audited branch head, release
 alignment, CI gates, governance checks, and known reflection gaps.
 
@@ -376,4 +380,4 @@ regenerates the artifact before checking freshness.
 
 ## License
 
-See [LICENSE](LICENSE).
+Proprietary. See [LICENSE](LICENSE). Not free for public use; authorized use is governed by Mullusi.

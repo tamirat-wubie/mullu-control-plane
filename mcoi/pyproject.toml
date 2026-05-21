@@ -5,6 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "mcoi-runtime"
 version = "4.45.0"
+license = { text = "Mullusi Proprietary. All rights reserved." }
 description = "MCOI Runtime — MUSIA Universal Symbolic Causal Intelligence Runtime for the Mullu Platform."
 requires-python = ">=3.12"
 dependencies = []

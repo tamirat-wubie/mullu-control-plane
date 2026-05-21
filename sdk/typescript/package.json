@@ -2,6 +2,7 @@
   "name": "@mullusi/client",
   "version": "0.1.0",
   "private": true,
+  "license": "UNLICENSED",
   "type": "module",
   "scripts": {
     "generate": "npx @hey-api/openapi-ts -i ../openapi/mullu.openapi.json -o ./src -c ./openapi-ts.config.ts"

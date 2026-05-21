@@ -1,6 +1,6 @@
 """Purpose: verify public repository-surface validation remains fail-closed.
 Governance scope: GitHub metadata witness, latest release witness, deployment
-status witness, and required public documents.
+status witness, and required proprietary documents.
 Dependencies: scripts.validate_public_repository_surface only.
 Invariants:
   - Metadata mismatches are explicit.
@@ -32,7 +32,7 @@ def test_validate_repository_payload_accepts_expected_metadata() -> None:
     assert errors == []
     assert len(errors) == 0
     assert validate_public_repository_surface.EXPECTED_DESCRIPTION.startswith(
-        "Governed symbolic intelligence control plane"
+        "Proprietary Mullusi symbolic intelligence control plane"
     )
 
 

@@ -83,7 +83,7 @@ Do not use:
 Mullusi Handler
 Mullusi Work
 Mullusi Operator
-Mullu AI
+Mullu Generic
 ```
 
 ## Launch Constraint

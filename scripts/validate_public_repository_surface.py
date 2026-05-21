@@ -1,18 +1,18 @@
 #!/usr/bin/env python3
-"""Validate the public GitHub repository surface for governed reflection.
+"""Validate the proprietary GitHub repository metadata surface for governed reflection.
 
-Purpose: compare versioned public-surface witnesses with GitHub metadata and
+Purpose: compare versioned proprietary-surface witnesses with GitHub metadata and
 latest-release state.
 Governance scope: repository description, topics, latest release, deployment
-status witness, and required public documents.
+status witness, and required proprietary documents.
 Dependencies: Python standard library, GITHUB_SURFACE.md, DEPLOYMENT_STATUS.md,
 STATUS.md, and GitHub public REST endpoints.
 Invariants:
-  - Public metadata must match the versioned witness.
+  - Repository metadata must match the versioned proprietary witness.
   - Latest release must match the governed release tag.
   - Deployment health must remain explicitly not-published until endpoint
     evidence is declared.
-  - No required public witness document may be absent.
+  - No required proprietary witness document may be absent.
 """
 
 from __future__ import annotations
@@ -45,7 +45,7 @@ def expected_protocol_manifest_result() -> str:
 EXPECTED_PROTOCOL_MANIFEST_RESULT = expected_protocol_manifest_result()
 
 EXPECTED_DESCRIPTION = (
-    "Governed symbolic intelligence control plane - multi-tenant LLM orchestration "
+    "Proprietary Mullusi symbolic intelligence control plane - multi-tenant governed orchestration "
     "with budget enforcement, audit trails, and policy-driven governance"
 )
 EXPECTED_LATEST_RELEASE = "v3.13.3"
