@@ -3244,6 +3244,29 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "case_closure_not_terminal_command_closure",
                 "collaboration_case_schema_valid",
             ],
+            runtime_witness_anchor_aliases={
+                "approval_separation_required": [
+                    "approval_separation_required",
+                    "self_approval_is_blocked",
+                ],
+                "pending_controls_block_case_closure": [
+                    "pending_controls_block_case_closure",
+                    "pending_control_blocks_case_closure",
+                ],
+                "decider_authority_required": [
+                    "decider_authority_required",
+                    "non_decider_case_closure_is_blocked",
+                ],
+                "case_closure_not_terminal_command_closure": [
+                    "case_closure_not_terminal_command_closure",
+                    "resolved_control_allows_non_terminal_closure",
+                    "collaboration_closure_rejects_terminal_claim",
+                ],
+                "collaboration_case_schema_valid": [
+                    "collaboration_case_schema_valid",
+                    "collaboration_case_schema_export_validates",
+                ],
+            },
         ),
         _surface(
             "capability_maturity",

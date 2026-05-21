@@ -5885,6 +5885,29 @@
         "CollaborationControl"
       ],
       "request_proof": "request_proof",
+      "runtime_witness_anchor_aliases": {
+        "approval_separation_required": [
+          "approval_separation_required",
+          "self_approval_is_blocked"
+        ],
+        "case_closure_not_terminal_command_closure": [
+          "case_closure_not_terminal_command_closure",
+          "resolved_control_allows_non_terminal_closure",
+          "collaboration_closure_rejects_terminal_claim"
+        ],
+        "collaboration_case_schema_valid": [
+          "collaboration_case_schema_valid",
+          "collaboration_case_schema_export_validates"
+        ],
+        "decider_authority_required": [
+          "decider_authority_required",
+          "non_decider_case_closure_is_blocked"
+        ],
+        "pending_controls_block_case_closure": [
+          "pending_controls_block_case_closure",
+          "pending_control_blocks_case_closure"
+        ]
+      },
       "runtime_witnesses": [
         "approval_separation_required",
         "pending_controls_block_case_closure",
@@ -7476,7 +7499,7 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 705,
+    "exact_test_anchor_count": 710,
     "runtime_witness_count": 1047,
     "surfaces": [
       {
@@ -11174,18 +11197,48 @@
         ]
       },
       {
-        "anchored_witnesses": [],
-        "exact_test_anchor_count": 0,
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "tests/test_gateway/test_collaboration_cases.py::test_approval_separation_required",
+              "tests/test_gateway/test_collaboration_cases.py::test_self_approval_is_blocked"
+            ],
+            "witness": "approval_separation_required"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_collaboration_cases.py::test_pending_controls_block_case_closure",
+              "tests/test_gateway/test_collaboration_cases.py::test_pending_control_blocks_case_closure"
+            ],
+            "witness": "pending_controls_block_case_closure"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_collaboration_cases.py::test_decider_authority_required",
+              "tests/test_gateway/test_collaboration_cases.py::test_non_decider_case_closure_is_blocked"
+            ],
+            "witness": "decider_authority_required"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_collaboration_cases.py::test_case_closure_not_terminal_command_closure",
+              "tests/test_gateway/test_collaboration_cases.py::test_collaboration_closure_rejects_terminal_claim"
+            ],
+            "witness": "case_closure_not_terminal_command_closure"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_collaboration_cases.py::test_collaboration_case_schema_valid",
+              "tests/test_gateway/test_collaboration_cases.py::test_collaboration_case_schema_export_validates"
+            ],
+            "witness": "collaboration_case_schema_valid"
+          }
+        ],
+        "exact_test_anchor_count": 5,
         "runtime_witness_count": 5,
         "surface_id": "collaboration_cases",
-        "unanchored_witness_count": 5,
-        "unanchored_witnesses": [
-          "approval_separation_required",
-          "pending_controls_block_case_closure",
-          "decider_authority_required",
-          "case_closure_not_terminal_command_closure",
-          "collaboration_case_schema_valid"
-        ]
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
       },
       {
         "anchored_witnesses": [
@@ -13197,6 +13250,6 @@
         "unanchored_witnesses": []
       }
     ],
-    "unanchored_witness_count": 342
+    "unanchored_witness_count": 337
   }
 }
