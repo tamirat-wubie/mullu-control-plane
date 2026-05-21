@@ -31,6 +31,7 @@ WEBSITE_RECHECK_LOG_PATH = REPO_ROOT / "docs" / "WEBSITE_RECHECK_LOG.md"
 DOMAIN_ACQUISITION_PLAN_PATH = REPO_ROOT / "docs" / "DOMAIN_ACQUISITION_PLAN.md"
 PUBLIC_NAMING_REVIEW_PACKET_PATH = REPO_ROOT / "docs" / "PUBLIC_NAMING_REVIEW_PACKET.md"
 PUBLIC_NAMING_ARTIFACT_MANIFEST_PATH = REPO_ROOT / "docs" / "PUBLIC_NAMING_ARTIFACT_MANIFEST.md"
+PUBLIC_NAMING_DECISION_PATH = REPO_ROOT / "docs" / "PUBLIC_NAMING_DECISION_2026-05-20.md"
 OFFICIAL_CLEARANCE_ACCESS_LOG_PATH = REPO_ROOT / "docs" / "OFFICIAL_CLEARANCE_ACCESS_LOG_2026-05-15.md"
 SDK_API_STABILITY_REVIEW_PATH = REPO_ROOT / "docs" / "SDK_API_STABILITY_REVIEW_2026-05-15.md"
 HOMEPAGE_UPDATE_EVIDENCE_PATH = REPO_ROOT / "docs" / "HOMEPAGE_UPDATE_EVIDENCE_2026-05-15.md"
@@ -141,6 +142,7 @@ REQUIRED_EVIDENCE_DOCS = {
     "docs/PUBLIC_NAMING_PR_SUMMARY.md",
     "docs/PUBLIC_NAMING_REVIEW_PACKET.md",
     "docs/PUBLIC_NAMING_ARTIFACT_MANIFEST.md",
+    "docs/PUBLIC_NAMING_DECISION_2026-05-20.md",
     "docs/CLEARANCE_PACKET_TEMPLATE.md",
     "docs/DOMAIN_OWNERSHIP_RECORD_TEMPLATE.md",
     "docs/mullu-name-clearance-draft.json",
@@ -729,6 +731,26 @@ def validate_public_naming_artifact_manifest(
         "manifest missing clearance capture reporter command",
     )
     _require("python .\\scripts\\validate_release_status.py" in manifest_text, "manifest missing release validator command")
+
+
+def validate_public_naming_decision(decision_path: Path = PUBLIC_NAMING_DECISION_PATH) -> None:
+    decision_text = decision_path.read_text(encoding="utf-8")
+    validate_no_forbidden_terminology(_display_path(decision_path), decision_text)
+    required_literals = (
+        "Use `Mullu` as the flagship product name.",
+        "Use `Mullu, by Mullusi` on first public reference.",
+        "Keep `Mullusi` as the company, ecosystem, and governance authority.",
+        "| Paid public launch | Blocked |",
+        "Required files missing: 26",
+        "public_paid_launch_allowed",
+        "cleared_for_public_launch",
+        "Mullusi Handler",
+        "Mullusi Work",
+        "Mullusi Operator",
+        "Mullu Generic",
+    )
+    missing_literals = sorted(literal for literal in required_literals if literal not in decision_text)
+    _require(not missing_literals, f"public naming decision missing literals: {missing_literals}")
 
 
 def validate_capture_requirements(requirements_path: Path = CAPTURE_REQUIREMENTS_PATH) -> None:

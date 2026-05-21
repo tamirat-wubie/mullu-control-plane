@@ -839,6 +839,12 @@
       "surface": "release"
     },
     {
+      "schema_id": "mullu-clearance-capture-readiness-report",
+      "path": "schemas/mullu_clearance_capture_readiness_report.schema.json",
+      "urn": "urn:mullusi:schema:mullu-clearance-capture-readiness-report:1",
+      "surface": "release"
+    },
+    {
       "schema_id": "mullu-name-clearance-draft",
       "path": "schemas/mullu_name_clearance_draft.schema.json",
       "urn": "urn:mullusi:schema:mullu-name-clearance-draft:1",
