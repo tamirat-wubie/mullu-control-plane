@@ -189,6 +189,10 @@ def test_witness_integrity_report_tracks_exact_test_anchors() -> None:
     assert surfaces["capability_forge"]["exact_test_anchor_count"] == 10
     assert surfaces["capability_maturity"]["unanchored_witness_count"] == 0
     assert surfaces["capability_maturity"]["exact_test_anchor_count"] == 5
+    assert surfaces["domain_operating_pack"]["unanchored_witness_count"] == 0
+    assert surfaces["domain_operating_pack"]["exact_test_anchor_count"] == 5
+    assert surfaces["collaboration_cases"]["unanchored_witness_count"] == 0
+    assert surfaces["collaboration_cases"]["exact_test_anchor_count"] == 5
     assert surfaces["coordination_checkpoint_lifecycle"]["unanchored_witness_count"] == 0
     assert surfaces["coordination_checkpoint_lifecycle"]["exact_test_anchor_count"] == 10
     assert surfaces["production_evidence_plane"]["unanchored_witness_count"] == 0
@@ -2836,7 +2840,9 @@ def test_domain_operating_pack_surface_requires_certification_evidence() -> None
     assert "schemas/domain_operating_pack.schema.json" in pack_surface["evidence_files"]
     assert "tests/test_gateway/test_domain_operating_pack.py" in pack_surface["evidence_files"]
     assert "builtin_domain_pack_catalog_complete" in witnesses
+    assert "finance_ops_pack_declares_governed_artifacts" in witnesses
     assert "high_risk_pack_requires_approval_roles" in witnesses
+    assert "certified_pack_requires_evidence_refs" in witnesses
     assert "domain_operating_pack_schema_valid" in witnesses
     assert closure_actions["publish_domain_operating_pack_contract"]["status"] == "closed"
 
