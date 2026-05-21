@@ -249,6 +249,7 @@ class TestDefaultPermissionSeeding:
         count1 = seed_default_permissions(engine)
         count2 = seed_default_permissions(engine)
         # Second call should skip all (already exist)
+        assert count1 >= 8
         assert count2 == 0
 
     def test_admin_role_has_wildcard(self):
