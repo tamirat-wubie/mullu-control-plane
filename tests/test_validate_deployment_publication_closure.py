@@ -221,8 +221,20 @@ def test_load_witness_payload_bounds_malformed_json_detail(tmp_path: Path) -> No
     payload, errors = load_witness_payload(witness_path)
 
     assert payload is None
-    assert errors == [f"{witness_path}: witness JSON parse failed"]
+    assert errors == ["provided_witness: witness JSON parse failed"]
     assert all("secret-witness-token" not in error for error in errors)
+    assert all(str(witness_path) not in error for error in errors)
+
+
+def test_load_witness_payload_bounds_non_object_json_path(tmp_path: Path) -> None:
+    witness_path = tmp_path / "secret-witness-path.json"
+    witness_path.write_text('["not", "object"]', encoding="utf-8")
+
+    payload, errors = load_witness_payload(witness_path)
+
+    assert payload is None
+    assert errors == ["provided_witness: witness JSON root must be an object"]
+    assert "secret-witness-path" not in str(errors)
 
 
 def test_published_status_accepts_verified_witness() -> None:
@@ -463,6 +475,33 @@ def test_cli_accepts_current_not_published_status_without_witness(tmp_path, caps
     assert exit_code == 0
     assert "DEPLOYMENT PUBLICATION CLOSURE OK" in captured.out
     assert not witness_path.exists()
+
+
+def test_cli_failure_bounds_provided_paths(tmp_path: Path, capsys) -> None:
+    deployment_status = tmp_path / "secret-deployment-status.md"
+    witness_path = tmp_path / "secret-witness-path.json"
+    deployment_status.write_text(
+        _deployment_status("published", "https://gateway.example/health"),
+        encoding="utf-8",
+    )
+    witness_path.write_text('{"secret": "secret-witness-token",', encoding="utf-8")
+
+    exit_code = main(
+        [
+            "--deployment-status",
+            str(deployment_status),
+            "--witness",
+            str(witness_path),
+        ]
+    )
+    captured = capsys.readouterr()
+
+    assert exit_code == 1
+    assert "provided_deployment_status" in captured.out
+    assert "provided_witness" in captured.out
+    assert "secret-deployment-status" not in captured.out
+    assert "secret-witness-path" not in captured.out
+    assert "secret-witness-token" not in captured.out
 
 
 def test_cli_writes_optional_closure_validation_report(tmp_path: Path) -> None:

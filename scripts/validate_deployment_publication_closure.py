@@ -158,14 +158,15 @@ def validate_publication_closure(
 
 def load_witness_payload(witness_path: Path) -> tuple[dict[str, Any] | None, list[str]]:
     """Load a witness artifact if present, returning explicit parse errors."""
+    label = _bounded_witness_path(witness_path)
     if not witness_path.exists():
         return None, []
     try:
         parsed = json.loads(witness_path.read_text(encoding="utf-8"))
     except json.JSONDecodeError:
-        return None, [f"{witness_path}: witness JSON parse failed"]
+        return None, [f"{label}: witness JSON parse failed"]
     if not isinstance(parsed, dict):
-        return None, [f"{witness_path}: witness JSON root must be an object"]
+        return None, [f"{label}: witness JSON root must be an object"]
     return parsed, []
 
 
@@ -604,8 +605,8 @@ def main(argv: list[str] | None = None) -> int:
         )
 
     print("=== Deployment Publication Closure Validation ===")
-    print(f"  deployment status: {deployment_status_path}")
-    print(f"  witness:           {witness_path}")
+    print(f"  deployment status: {validation.deployment_status_path}")
+    print(f"  witness:           {validation.witness_path}")
     if not validation.valid:
         print(f"\nFAILED - {len(validation.errors)} error(s):")
         for error in validation.errors:
