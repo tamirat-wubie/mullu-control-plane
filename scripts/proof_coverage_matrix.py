@@ -428,6 +428,24 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "assistant_plan_never_grants_execution_authority",
                 "assistant_plan_errors_sanitized",
             ],
+            runtime_witness_anchor_aliases={
+                "assistant_profiles_read_model_bounded": [
+                    "assistant_profiles_read_model_exposes_finance_ops_profile"
+                ],
+                "finance_ops_plan_requires_active_consent": [
+                    "finance_ops_plan_blocks_without_active_payment_consent"
+                ],
+                "finance_ops_plan_projects_operator_queue": [
+                    "finance_ops_plan_with_consent_projects_dispatch_ready_controls"
+                ],
+                "assistant_plan_never_grants_execution_authority": [
+                    "assistant_kernel_blocks_missing_capability_before_execution"
+                ],
+                "assistant_plan_errors_sanitized": [
+                    "invalid_finance_ops_plan_fails_closed",
+                    "finance_ops_plan_error_detail_is_bounded",
+                ],
+            },
         ),
         _surface(
             "operational_platform_read_models",

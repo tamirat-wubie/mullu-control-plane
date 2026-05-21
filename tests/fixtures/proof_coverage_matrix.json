@@ -2963,6 +2963,24 @@
         "/api/v1/assistant/finance-ops/plans"
       ],
       "request_proof": "request_proof",
+      "runtime_witness_anchor_aliases": {
+        "assistant_plan_errors_sanitized": [
+          "invalid_finance_ops_plan_fails_closed",
+          "finance_ops_plan_error_detail_is_bounded"
+        ],
+        "assistant_plan_never_grants_execution_authority": [
+          "assistant_kernel_blocks_missing_capability_before_execution"
+        ],
+        "assistant_profiles_read_model_bounded": [
+          "assistant_profiles_read_model_exposes_finance_ops_profile"
+        ],
+        "finance_ops_plan_projects_operator_queue": [
+          "finance_ops_plan_with_consent_projects_dispatch_ready_controls"
+        ],
+        "finance_ops_plan_requires_active_consent": [
+          "finance_ops_plan_blocks_without_active_payment_consent"
+        ]
+      },
       "runtime_witnesses": [
         "assistant_profiles_read_model_bounded",
         "finance_ops_plan_requires_active_consent",
@@ -7454,7 +7472,7 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 694,
+    "exact_test_anchor_count": 699,
     "runtime_witness_count": 1047,
     "surfaces": [
       {
@@ -7923,18 +7941,44 @@
         ]
       },
       {
-        "anchored_witnesses": [],
-        "exact_test_anchor_count": 0,
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "mcoi/tests/test_assistant_router.py::test_assistant_profiles_read_model_exposes_finance_ops_profile"
+            ],
+            "witness": "assistant_profiles_read_model_bounded"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_assistant_router.py::test_finance_ops_plan_blocks_without_active_payment_consent"
+            ],
+            "witness": "finance_ops_plan_requires_active_consent"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_assistant_router.py::test_finance_ops_plan_with_consent_projects_dispatch_ready_controls"
+            ],
+            "witness": "finance_ops_plan_projects_operator_queue"
+          },
+          {
+            "anchors": [
+              "tests/test_assistant_kernel.py::test_assistant_kernel_blocks_missing_capability_before_execution"
+            ],
+            "witness": "assistant_plan_never_grants_execution_authority"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_assistant_router.py::test_invalid_finance_ops_plan_fails_closed",
+              "mcoi/tests/test_assistant_router.py::test_finance_ops_plan_error_detail_is_bounded"
+            ],
+            "witness": "assistant_plan_errors_sanitized"
+          }
+        ],
+        "exact_test_anchor_count": 5,
         "runtime_witness_count": 5,
         "surface_id": "assistant_kernel_planning",
-        "unanchored_witness_count": 5,
-        "unanchored_witnesses": [
-          "assistant_profiles_read_model_bounded",
-          "finance_ops_plan_requires_active_consent",
-          "finance_ops_plan_projects_operator_queue",
-          "assistant_plan_never_grants_execution_authority",
-          "assistant_plan_errors_sanitized"
-        ]
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
       },
       {
         "anchored_witnesses": [
@@ -13118,6 +13162,6 @@
         "unanchored_witnesses": []
       }
     ],
-    "unanchored_witness_count": 353
+    "unanchored_witness_count": 348
   }
 }
