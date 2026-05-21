@@ -1,0 +1,44 @@
+{
+  "schema_version": "1",
+  "decision_id": "mullu-public-naming-decision-2026-05-20",
+  "decision_date": "2026-05-20",
+  "timezone": "America/New_York",
+  "product_name": "Mullu",
+  "company_brand": "Mullusi",
+  "first_reference": "Mullu, by Mullusi",
+  "platform_term": "Mullu Platform",
+  "decision": "proceed_internal_private_beta",
+  "public_paid_launch_allowed": false,
+  "approved_scopes": [
+    "internal_alignment",
+    "private_beta",
+    "request_access_product_route",
+    "research_product_planning"
+  ],
+  "blocked_scopes": [
+    "paid_public_launch",
+    "public_paid_advertising",
+    "domain_forwarded_paid_product_traffic"
+  ],
+  "blocked_public_names": [
+    "Mullusi Handler",
+    "Mullusi Work",
+    "Mullusi Operator",
+    "Mullu Generic"
+  ],
+  "open_gates": [
+    "uspto_search",
+    "wipo_search",
+    "euipo_tmview_search",
+    "close_variant_review",
+    "domain_ownership",
+    "legal_review"
+  ],
+  "capture_readiness": {
+    "required_files_present": 6,
+    "required_files_total": 32,
+    "required_files_missing": 26,
+    "status": "blocked"
+  },
+  "mutation_rule": "Do not set public_paid_launch_allowed to true, do not set status to cleared_for_public_launch, and do not close remaining gates until official evidence and authority decisions are recorded."
+}
