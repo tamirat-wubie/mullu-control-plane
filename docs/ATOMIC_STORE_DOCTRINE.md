@@ -1,8 +1,8 @@
 # Atomic Store Doctrine — v1
 
-**Status:** Doctrine, distilled from four shipped fracture closures (v4.27, v4.29, v4.30, v4.31).
+**Status:** Doctrine, distilled from four fracture closures (F2, F11, F15, F4) across six releases (v4.27, v4.29, v4.30, v4.31, v4.34, v4.40).
 **Companion documents:** `docs/LEDGER_SPEC.md`, `docs/GOVERNANCE_GUARD_CHAIN.md`
-**Last updated:** v4.31.0 (2026-04)
+**Last updated:** v4.40.0 (2026-04)
 
 ## Purpose
 
@@ -16,12 +16,15 @@ The platform repeatedly hits the same shape of bug:
 
 Four audit fractures had this shape:
 
-| Fracture | Release | Stored object       | Lost invariant                             |
-| -------- | ------- | ------------------- | ------------------------------------------ |
-| F2       | v4.27   | LLM budget          | hard cost cap                              |
-| F11      | v4.29   | Rate limit bucket   | per-tenant tokens-per-second               |
-| F15      | v4.30   | Filesystem chain    | linear append-only sequence                |
-| F4       | v4.31   | Audit log chain     | tamper-evident hash linkage                |
+| Fracture | Release(s)     | Stored object       | Lost invariant                              |
+| -------- | -------------- | ------------------- | ------------------------------------------- |
+| F2       | v4.27          | LLM budget          | hard cost cap                               |
+| F11      | v4.29 + v4.34  | Rate limit bucket   | per-tenant + per-identity tokens-per-second |
+| F15      | v4.30 + v4.40  | Filesystem chain    | linear append-only sequence                 |
+| F4       | v4.31          | Audit log chain     | tamper-evident hash linkage                 |
+
+(F11 spans v4.29 tenant-level + v4.34 identity-level; F15 spans
+v4.30 initial close + v4.40 empty-file-race refinement.)
 
 Four examples is enough to call it a pattern. This document codifies
 the recipe so a fifth fracture (or a custom store added by a fork)
