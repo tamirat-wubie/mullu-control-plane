@@ -133,6 +133,29 @@ def _snapshot_to_prometheus(
         samples=[({}, len(snap.recent_rejections))],
     ))
 
+    # Φ_gov overall-verdict families (USCL v3.3 / A1). Separate from the chain
+    # families above — these count the overall Φ_gov decision per construct
+    # write (Φ_agent + cascade + external), including the A1 escalation/route
+    # signals, which the chain counters never see.
+    families.append(_format_metric_family(
+        name=f"{prefix}_phi_gov_decisions_total",
+        help_text="Overall Phi_gov verdicts for construct writes, by verdict.",
+        metric_type="counter",
+        samples=[
+            ({"verdict": v}, n)
+            for v, n in sorted(snap.phi_gov_decisions.items())
+        ],
+    ))
+    families.append(_format_metric_family(
+        name=f"{prefix}_phi_gov_denials_total",
+        help_text="Phi_gov write denials by normalised reason category.",
+        metric_type="counter",
+        samples=[
+            ({"category": c}, n)
+            for c, n in sorted(snap.phi_gov_denials_by_category.items())
+        ],
+    ))
+
     # Latency histograms by surface (v4.21.0+).
     # Prometheus convention: <metric_base>_bucket{le="<upper>"} for
     # cumulative bucket counts, plus _sum and _count. The +Inf bucket

@@ -79,6 +79,10 @@ class GovernanceMetricsSnapshot:
     runs_by_surface_tenant_verdict: dict[tuple[str, str, str], int] = field(
         default_factory=dict
     )
+    # Φ_gov overall-verdict counters (USCL v3.3 / A1). Separate from the chain
+    # counters above; never included in total_runs/total_denials.
+    phi_gov_decisions: dict[str, int] = field(default_factory=dict)
+    phi_gov_denials_by_category: dict[str, int] = field(default_factory=dict)
 
     def total_runs(self) -> int:
         return sum(self.runs_by_surface_verdict.values())
@@ -193,6 +197,8 @@ class GovernanceMetricsSnapshot:
             ],
             "total_runs": self.total_runs(),
             "total_denials": self.total_denials(),
+            "phi_gov_decisions": dict(self.phi_gov_decisions),
+            "phi_gov_denials_by_category": dict(self.phi_gov_denials_by_category),
             "latency_by_surface": {
                 surface: {
                     "upper_bounds": list(hist.upper_bounds),
