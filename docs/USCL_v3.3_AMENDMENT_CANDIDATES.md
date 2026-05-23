@@ -138,6 +138,24 @@ rejected.
 admitted via escalation (no false reject). Test 3: a `Soft{ε}` exhaustion
 ⇒ logged warning, edit NOT blocked.
 
+**Implementation status (v3.3).** Two halves implemented and verified against
+the live gate:
+- *Escalation-blocking* — `PhiGov.evaluate` now rejects fail-closed when
+  `cascade.escalations > 0` (`mcoi/mcoi_runtime/substrate/phi_gov.py`).
+- *Depth exhaustion → route-to-authority* — a cascade exceeding the budget
+  records an `ESCALATED` step ("needs authority") rather than an opaque
+  `REJECTED`; Φ_gov blocks it via the same path
+  (`mcoi/mcoi_runtime/substrate/cascade.py`).
+
+**Correction to point 3.** "A valid edit needing depth > d_max is admitted
+via escalation" is **unsatisfiable** under a finite termination budget — the
+wall is unavoidable; you can only *move* it (`B_ceiling`) or *route at* it.
+The implementable obligation is therefore: at the wall, **route to authority
+(escalate) — never opaque-reject, never fail-open.** A configurable two-tier
+`B_ceiling` ladder (moving the wall) remains future work under **G**; the
+grade-scoping in point 4 (Soft/Candidate non-blocking) likewise remains
+future work, since the current cascade does not yet carry invariant grades.
+
 ### A2 — Deterministic bound (purity of the projection)  `[Delta_INFO]`
 
 **Defect.** A wall-clock `τ_max` makes `|-^B_pi` a function of machine

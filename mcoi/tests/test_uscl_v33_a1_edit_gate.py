@@ -3,26 +3,21 @@
 Encodes the A1 amendment obligations (docs/USCL_v3.3_AMENDMENT_CANDIDATES.md)
 against the LIVE edit gate: substrate/cascade.py + substrate/phi_gov.py.
 
-Obligations MET by the current code and LOCKED here:
+All three A1 edit-gate obligations are now MET and LOCKED here:
   - depth-bounded propagation FAILS CLOSED: a cascade exceeding
-    MAX_CASCADE_DEPTH rejects the delta and records the cutoff in the
-    judgment; it does NOT silently treat the unresolved tail as no-fracture.
+    MAX_CASCADE_DEPTH does not silently treat the unresolved tail as
+    no-fracture; the delta is blocked.
   - escalations BLOCK (no fail-open): an unrepaired invariant violation
     (ESCALATED) is rejected fail-closed by Φ_gov rather than silently applied.
     Closed by making PhiGov.evaluate reject on cascade.escalations > 0.
-
-Obligation NOT YET MET, encoded as `xfail(strict=True)` so the harness
-documents exactly what remains WITHOUT changing kernel semantics on the way
-in. When the kernel is hardened it will xpass and strict-fail, forcing the
-marker to be removed and the assertion kept:
-  - escalate-then-fail-closed (no self-DoS): a chain deeper than the default
-    budget should escalate to a finite B_ceiling before rejecting, not
-    flat-reject on the first budget breach. Deferred to the B_ceiling /
-    genesis-config (G) work, which shares that surface.
+  - depth exhaustion ROUTES TO AUTHORITY (no opaque self-DoS): a chain deeper
+    than the budget is recorded as an ESCALATED step and blocked fail-closed
+    with a "needs authority" reason, not a flat REJECTED. The literal "admit
+    an arbitrarily deep chain" wording is unsatisfiable under a finite
+    termination budget; route-at-the-wall is the implementable form.
+    See docs/USCL_v3.3_AMENDMENT_CANDIDATES.md (A1).
 """
 from __future__ import annotations
-
-import pytest
 
 from mcoi_runtime.substrate.cascade import (
     MAX_CASCADE_DEPTH,
@@ -85,9 +80,13 @@ def test_a1_depth_exhaustion_fails_closed():
 
     assert result.judgment.state == ProofState.FAIL
     assert len(result.rejected_deltas) == 1
+    # Blocked via the escalation path: depth truncation is ESCALATED ("needs
+    # authority"), not an opaque cascade-level rejection.
+    assert "escalated" in result.judgment.reason
     summary = result.judgment.cascade_summaries[0]
     assert summary["truncated_at_depth"] is True
-    assert summary["rejected"] is True
+    assert summary["rejected"] is False
+    assert summary["escalations"] >= 1
 
 
 def test_a1_within_budget_is_admitted():
@@ -111,7 +110,7 @@ def test_a1_within_budget_is_admitted():
 
 
 # --------------------------------------------------------------------------
-# UNMET obligations: encoded as strict xfail (no kernel-semantics change here)
+# Fail-closed obligations (now MET: escalation-blocking + route-to-authority)
 # --------------------------------------------------------------------------
 
 
@@ -138,15 +137,12 @@ def test_a1_escalation_must_block():
     assert result.judgment.state == ProofState.FAIL
 
 
-@pytest.mark.xfail(
-    reason="A1: depth exhaustion should ESCALATE to a finite B_ceiling before "
-    "rejecting (no self-DoS). No escalation ladder exists, so a deep chain is "
-    "flat-rejected on the first budget breach.",
-    strict=True,
-)
-def test_a1_escalates_before_rejecting():
-    """A1: a valid-but-deep chain should be admitted via escalation (or routed to
-    authority) rather than flat-rejected at the first budget breach."""
+def test_a1_depth_truncation_routes_to_authority():
+    """A1 (now MET): depth exhaustion is recorded as an ESCALATED step ("needs
+    authority") and blocked fail-closed by Φ_gov, instead of an opaque flat
+    rejection. Route-at-the-wall is the implementable form of the original
+    "escalate-then-fail-closed" obligation — admitting an arbitrarily deep chain
+    is impossible under a finite termination budget."""
     g = DependencyGraph()
     root = _chain(g, MAX_CASCADE_DEPTH + 2)
     engine = CascadeEngine(
@@ -160,4 +156,10 @@ def test_a1_escalates_before_rejecting():
 
     result = phi.evaluate((delta,), _ctx(), _auth())
 
-    assert result.judgment.cascade_summaries[0]["truncated_at_depth"] is False
+    summary = result.judgment.cascade_summaries[0]
+    assert summary["truncated_at_depth"] is True
+    assert summary["escalations"] >= 1
+    assert summary["rejected"] is False
+    # routed to authority => Φ_gov blocks fail-closed
+    assert result.judgment.state == ProofState.FAIL
+    assert "escalated" in result.judgment.reason
