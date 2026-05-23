@@ -263,9 +263,10 @@ class CascadeEngine:
                     reason="invariant violated; no auto-repair available",
                 )
             )
-            # Escalation does NOT auto-reject the cascade — Φ_gov decides
-            # whether escalations are blocking. The cascade walk continues
-            # so the operator gets a complete picture.
+            # Escalation does NOT auto-reject within the cascade walk — the
+            # walk continues so the operator gets a complete picture. Φ_gov
+            # treats any unresolved escalation as blocking (fail-closed); see
+            # PhiGov.evaluate (USCL v3.3 / A1).
 
         return result
 

@@ -3,22 +3,22 @@
 Encodes the A1 amendment obligations (docs/USCL_v3.3_AMENDMENT_CANDIDATES.md)
 against the LIVE edit gate: substrate/cascade.py + substrate/phi_gov.py.
 
-Two obligations are ALREADY MET by the current code and are LOCKED here:
+Obligations MET by the current code and LOCKED here:
   - depth-bounded propagation FAILS CLOSED: a cascade exceeding
     MAX_CASCADE_DEPTH rejects the delta and records the cutoff in the
     judgment; it does NOT silently treat the unresolved tail as no-fracture.
+  - escalations BLOCK (no fail-open): an unrepaired invariant violation
+    (ESCALATED) is rejected fail-closed by Φ_gov rather than silently applied.
+    Closed by making PhiGov.evaluate reject on cascade.escalations > 0.
 
-Two obligations are NOT YET MET and are encoded as `xfail(strict=True)` so the
-harness documents exactly what "A1 done" requires WITHOUT changing kernel
-semantics on the way in. When the kernel is hardened these will xpass and
-strict-fail, forcing the xfail marker to be removed and the assertion kept:
-  - escalations must BLOCK (no fail-open): PhiGov.evaluate inspects only
-    cascade.rejected and ignores cascade.escalations, so an unrepaired
-    invariant violation (ESCALATED) passes the gate. Latent today because the
-    default invariant checker is permissive; real per-type checkers expose it.
+Obligation NOT YET MET, encoded as `xfail(strict=True)` so the harness
+documents exactly what remains WITHOUT changing kernel semantics on the way
+in. When the kernel is hardened it will xpass and strict-fail, forcing the
+marker to be removed and the assertion kept:
   - escalate-then-fail-closed (no self-DoS): a chain deeper than the default
     budget should escalate to a finite B_ceiling before rejecting, not
-    flat-reject on the first budget breach.
+    flat-reject on the first budget breach. Deferred to the B_ceiling /
+    genesis-config (G) work, which shares that surface.
 """
 from __future__ import annotations
 
@@ -115,15 +115,10 @@ def test_a1_within_budget_is_admitted():
 # --------------------------------------------------------------------------
 
 
-@pytest.mark.xfail(
-    reason="A1: an unresolved invariant violation (ESCALATED) must BLOCK the "
-    "edit. PhiGov.evaluate currently checks only cascade.rejected and ignores "
-    "cascade.escalations -> latent fail-open.",
-    strict=True,
-)
 def test_a1_escalation_must_block():
     """One dependent whose invariant is violated with NO auto-repair => ESCALATED.
-    A1 requires the edit to be blocked; today it is approved."""
+    A1 obligation (now MET): the edit is blocked fail-closed rather than silently
+    approved. Φ_gov rejects on cascade.escalations > 0."""
     g = DependencyGraph()
     root = State(configuration={"n": 0})
     g.register(root)
