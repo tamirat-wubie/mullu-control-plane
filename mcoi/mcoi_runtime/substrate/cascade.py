@@ -14,7 +14,9 @@ The Φ_gov wrapper itself lives at runtime/governance/phi_gov.py; this module
 is the substrate-level engine.
 
 Loop bounds: cascades are terminated by depth limit (default 16) and by
-visited-set tracking. Cycles never produce infinite cascades.
+visited-set tracking. Cycles never produce infinite cascades. Depth
+truncation is recorded as an ESCALATED step (route-to-authority), so Φ_gov
+still blocks it fail-closed rather than letting it through (USCL v3.3 / A1).
 """
 from __future__ import annotations
 
@@ -196,14 +198,21 @@ class CascadeEngine:
             visited.add(current_id)
 
             if depth > self._max_depth:
+                # Route-to-authority (USCL v3.3 / A1): a chain deeper than the
+                # budget cannot be validated automatically without breaking the
+                # termination guarantee, and that wall is unavoidable for any
+                # finite budget. Record an ESCALATED step (not an opaque
+                # REJECTED) so Φ_gov blocks fail-closed with a clear
+                # "needs authority: depth exceeded" signal rather than a flat
+                # reject. Φ_gov rejects on escalations (see PhiGov.evaluate).
                 result.truncated_at_depth = True
-                result.rejected = True
+                result.escalations += 1
                 result.steps.append(
                     CascadeStep(
                         construct_id=current_id,
                         construct_type=self._type_of(current_id),
-                        outcome=CascadeOutcome.REJECTED,
-                        reason="depth_limit_exceeded",
+                        outcome=CascadeOutcome.ESCALATED,
+                        reason="depth_limit_exceeded_needs_authority",
                     )
                 )
                 break
