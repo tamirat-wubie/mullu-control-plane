@@ -19,7 +19,7 @@ from dataclasses import asdict, dataclass, field, replace
 from datetime import datetime, timezone
 from typing import Any, Callable, Protocol
 
-from gateway.approval import ApprovalRequest, ApprovalRouter, ApprovalStatus
+from gateway.approval import ApprovalRequest, ApprovalRouter, ApprovalStatus, RiskTier, _max_risk
 from gateway.authority import evaluate_approval_authority
 from gateway.authority_obligation_mesh import ApprovalChain, ApprovalChainStatus, AuthorityObligationMesh
 from gateway.capability_isolation import CapabilityIsolationPolicy, IsolatedCapabilityExecutor
@@ -340,6 +340,46 @@ class GatewayRouter:
         self._error_count += 1
         self._error_reasons[reason_code] = self._error_reasons.get(reason_code, 0) + 1
 
+    def _required_approval_tier(self, intent_name: str) -> RiskTier | None:
+        """Resolve the approval tier a capability passport *declares it requires*.
+
+        A passport's ``requires`` field may include a token like
+        ``approval:high_risk``. That is the capability author's explicit,
+        machine-readable statement that this action must clear a high-risk
+        approval gate. The keyword risk classifier (a heuristic over free
+        text) can silently under-classify such an action — e.g.
+        ``classify_risk('financial.refund', 'refund tx-1')`` returns LOW —
+        which would auto-approve an action the passport says needs approval.
+
+        This returns the declared approval tier so ``request_approval`` can
+        use it as a floor. Capabilities governed by a *different* mechanism
+        (e.g. ``signed_worker_receipt`` for isolated browser/computer/shell
+        capabilities) carry no ``approval:*`` token and therefore get no
+        floor here — their gate is the isolation-worker receipt, not human
+        approval.
+
+        Defensive: any failure to resolve the passport returns None, so
+        approval falls back to keyword classification alone — a lookup
+        failure never blocks a request.
+        """
+        try:
+            passport = self._commands.capability_passport_for_intent(intent_name)
+        except Exception:  # noqa: BLE001 — passport lookup must never break approval
+            return None
+        declared: list[RiskTier] = []
+        for requirement in getattr(passport, "requires", ()) or ():
+            if not isinstance(requirement, str) or not requirement.startswith("approval:"):
+                continue
+            token = requirement.split(":", 1)[1].strip().lower()
+            tier_name = token[:-5] if token.endswith("_risk") else token  # high_risk -> high
+            try:
+                declared.append(RiskTier(tier_name))
+            except ValueError:
+                continue
+        if not declared:
+            return None
+        return _max_risk(*declared)
+
     def _observe_gateway_response(
         self,
         *,
@@ -511,6 +551,7 @@ class GatewayRouter:
                 command_id=command.command_id,
                 payload_hash=command.payload_hash,
                 policy_version=command.policy_version,
+                passport_risk_tier=self._required_approval_tier(command.intent),
             )
             if approval.status == ApprovalStatus.PENDING:
                 self._commands.transition(
@@ -1011,6 +1052,7 @@ class GatewayRouter:
             command_id=command.command_id,
             payload_hash=command.payload_hash,
             policy_version=command.policy_version,
+            passport_risk_tier=self._required_approval_tier(command.intent),
         )
         if approval.status == ApprovalStatus.PENDING:
             self._commands.transition(
