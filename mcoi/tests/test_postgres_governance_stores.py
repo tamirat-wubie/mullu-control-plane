@@ -401,6 +401,24 @@ class TestPostgresAuditStoreStructure:
         assert store.query() == []
         assert store.count() == 0
 
+    def test_try_append_overrides_base(self):
+        # F4 cross-replica path: doctrine override-detection must see
+        # PostgresAuditStore.try_append as a real override.
+        assert PostgresAuditStore.try_append is not AuditStore.try_append
+
+    def test_try_append_returns_none_without_connection(self):
+        # Fail-closed when disconnected — the dispatcher treats None as
+        # denial, which is governance-correct when the backend is down.
+        store = PostgresAuditStore.__new__(PostgresAuditStore)
+        store._conn = None
+        store._available = False
+        store._lock = __import__("threading").Lock()
+        result = store.try_append(
+            action="a", actor_id="x", tenant_id="t", target="/",
+            outcome="success", detail={}, recorded_at="2026-01-01",
+        )
+        assert result is None
+
     def test_encrypt_detail_fails_closed_when_encryptor_breaks(self):
         class BrokenEncryptor:
             def encrypt(self, _detail_json: str) -> str:
@@ -489,6 +507,33 @@ class TestPostgresRateLimitStoreStructure:
         store._lock = __import__("threading").Lock()
         store.record_decision("key", True)  # Should not raise
         assert store.get_counters() == {"allowed": 0, "denied": 0}
+
+    def test_try_consume_overrides_base(self):
+        # F11 cross-replica path: doctrine override-detection must see
+        # PostgresRateLimitStore.try_consume as a real override.
+        assert PostgresRateLimitStore.try_consume is not RateLimitStore.try_consume
+
+    def test_try_consume_returns_none_without_connection(self):
+        # Within burst limit + disconnected → None (fail-closed denial).
+        store = PostgresRateLimitStore.__new__(PostgresRateLimitStore)
+        store._conn = None
+        store._available = False
+        store._lock = __import__("threading").Lock()
+        result = store.try_consume("k", 1, RateLimitConfig(max_tokens=10))
+        assert result is None
+
+    def test_try_consume_burst_guard_rejects_without_connection(self):
+        # A request larger than the burst limit is rejected before any
+        # DB touch — returns (False, 0.0), never None, never raises.
+        store = PostgresRateLimitStore.__new__(PostgresRateLimitStore)
+        store._conn = None
+        store._available = False
+        store._lock = __import__("threading").Lock()
+        allowed, remaining = store.try_consume(
+            "k", 999, RateLimitConfig(max_tokens=10, burst_limit=5)
+        )
+        assert allowed is False
+        assert remaining == 0.0
 
 
 class TestPostgresBaseWarnings:
