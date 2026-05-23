@@ -2866,6 +2866,36 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "fabric_projects_local_manifest_registry",
                 "fabric_rejects_production_hot_reload_manifest_registry",
             ],
+            runtime_witness_anchor_aliases={
+                "capability_manifest_schema_valid": [
+                    "software_dev_capability_manifests_are_schema_valid",
+                ],
+                "software_dev_manifests_admit_locally": [
+                    "capability_manifest_registry_admits_software_dev_directory_locally",
+                ],
+                "manifest_missing_policy_rejected": [
+                    "capability_manifest_registry_rejects_missing_policy_refs",
+                ],
+                "manifest_unresolved_schema_rejected": [
+                    "capability_manifest_registry_rejects_unresolved_schema_refs",
+                ],
+                "effect_manifest_requires_sandbox_rollback": [
+                    "capability_manifest_registry_blocks_effects_without_sandbox_and_rollback",
+                ],
+                "hot_reload_metadata_enforced": [
+                    "capability_manifest_registry_enforces_hot_reload_metadata_environment",
+                    "capability_manifest_registry_requires_hot_reload_metadata",
+                ],
+                "production_hot_reload_denied_for_effect_manifest": [
+                    "capability_manifest_registry_blocks_production_hot_reload_for_effects",
+                ],
+                "fabric_projects_local_manifest_registry": [
+                    "capability_fabric_env_loader_projects_local_manifest_registry",
+                ],
+                "fabric_rejects_production_hot_reload_manifest_registry": [
+                    "capability_fabric_env_loader_rejects_production_hot_reload_for_manifest_registry",
+                ],
+            },
         ),
         _surface(
             "networked_worker_mesh",
