@@ -83,6 +83,14 @@ def classify_risk(action: str, body: str) -> RiskTier:
 
     Uses regex word boundaries to avoid false positives on substrings
     (e.g., "deleted_at" won't match "delete").
+
+    NOTE: This is a *heuristic* over free-text. It under-classifies any
+    privileged action whose natural phrasing avoids the keyword set
+    (e.g. "refund the transaction tx-1" → LOW even though the
+    financial.refund capability passport declares HIGH). Callers that
+    know the bound capability should pass its declared risk_tier as a
+    floor via ``ApprovalRouter.request_approval(passport_risk_tier=...)``;
+    see ``_max_risk``.
     """
     text = f"{action} {body}"
 
@@ -93,6 +101,28 @@ def classify_risk(action: str, body: str) -> RiskTier:
         return RiskTier.MEDIUM
 
     return RiskTier.LOW
+
+
+_RISK_ORDER: dict[RiskTier, int] = {
+    RiskTier.LOW: 0,
+    RiskTier.MEDIUM: 1,
+    RiskTier.HIGH: 2,
+}
+
+
+def _max_risk(*tiers: RiskTier | None) -> RiskTier:
+    """Return the highest-severity tier among the inputs, ignoring None.
+
+    Used to compose the keyword heuristic with the capability passport's
+    structurally-declared risk. The passport is a *floor* (the action's
+    inherent risk is known from its contract); the keyword classifier can
+    only *escalate* above that floor, never de-escalate below it.
+    """
+    best = RiskTier.LOW
+    for tier in tiers:
+        if tier is not None and _RISK_ORDER[tier] > _RISK_ORDER[best]:
+            best = tier
+    return best
 
 
 class ApprovalRouter:
@@ -230,13 +260,22 @@ class ApprovalRouter:
         command_id: str = "",
         payload_hash: str = "",
         policy_version: str = "",
+        passport_risk_tier: RiskTier | None = None,
     ) -> ApprovalRequest:
         """Classify risk and create an approval request.
 
         Low-risk: returns immediately with APPROVED status.
         Medium/High-risk: returns PENDING — caller must wait for resolve().
+
+        ``passport_risk_tier`` is the structurally-declared risk of the
+        bound capability (e.g. ``financial.refund`` passport → HIGH). When
+        provided it acts as a *floor*: the keyword heuristic may escalate
+        above it but can never de-escalate below it. This closes the gap
+        where a privileged action auto-approves because its free-text
+        phrasing happens to avoid the risk-keyword set.
         """
-        risk = classify_risk(action_description, body)
+        keyword_risk = classify_risk(action_description, body)
+        risk = _max_risk(keyword_risk, passport_risk_tier)
         now = self._clock()
         self._prune_expired_pending(now)
         request_id = f"apr-{hashlib.sha256(f'{tenant_id}:{identity_id}:{now}'.encode()).hexdigest()[:12]}"
