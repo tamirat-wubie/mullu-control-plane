@@ -65,6 +65,12 @@
       "surface": "capability"
     },
     {
+      "schema_id": "self-improvement-cycle-report",
+      "path": "schemas/self_improvement_cycle_report.schema.json",
+      "urn": "urn:mullusi:schema:self-improvement-cycle-report:1",
+      "surface": "capability"
+    },
+    {
       "schema_id": "capability-candidate",
       "path": "schemas/capability_candidate.schema.json",
       "urn": "urn:mullusi:schema:capability-candidate:1",
