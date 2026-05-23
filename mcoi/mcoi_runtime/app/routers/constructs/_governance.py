@@ -6,7 +6,7 @@ from uuid import UUID
 from fastapi import HTTPException
 
 from mcoi_runtime.app.routers.constructs._registry import _DEFAULT_AUTHORITY
-from mcoi_runtime.substrate.cascade import CascadeEngine
+from mcoi_runtime.substrate.cascade import CascadeEngine, registry_dispatch_checker
 from mcoi_runtime.substrate.constructs import ConstructBase
 from mcoi_runtime.substrate.phi_gov import (
     GovernanceContext,
@@ -37,7 +37,13 @@ def _phi_gov_for(state: TenantState) -> PhiGov:
 
     return PhiGov(
         graph=state.graph,
-        cascade_engine=CascadeEngine(state.graph),
+        # Route cascade invariant checks through the per-type validator
+        # registry. Empty by default => identical to the permissive default,
+        # so this is behavior-preserving until a type is registered.
+        # (docs/INVARIANT_VALIDATOR_ROLLOUT_PROPOSAL.md)
+        cascade_engine=CascadeEngine(
+            state.graph, invariant_checker=registry_dispatch_checker
+        ),
         phi_agent=state.phi_agent,
         external_validators=external_validators,
     )

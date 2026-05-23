@@ -159,6 +159,52 @@ def default_auto_repairer(
     return None
 
 
+# ---- Per-type invariant validator registry (opt-in, default-off) ----
+#
+# Maps a construct type to a per-type InvariantChecker. EMPTY by default, so
+# ``registry_dispatch_checker`` behaves exactly like ``default_invariant_checker``
+# (permissive) until a type is registered — wiring it into a write path is
+# therefore behavior-preserving on day one. Validators are universal,
+# tenant-independent structural predicates; per-tenant *enablement* is a
+# separate future Sigma-config concern, not baked in here.
+#
+# Registration is config-time (startup / governed config), not concurrent with
+# cascade reads, so the plain dict needs no lock for its intended use.
+# See docs/INVARIANT_VALIDATOR_ROLLOUT_PROPOSAL.md.
+INVARIANT_VALIDATORS: dict[Any, InvariantChecker] = {}
+
+
+def register_invariant_validator(
+    construct_type: Any, checker: InvariantChecker
+) -> None:
+    """Register a per-type invariant validator (opt-in). ``construct_type`` is
+    the ``ConstructBase.type`` enum member matched against a dependent's type."""
+    INVARIANT_VALIDATORS[construct_type] = checker
+
+
+def unregister_invariant_validator(construct_type: Any) -> None:
+    """Remove a per-type validator if present (rollback / disable)."""
+    INVARIANT_VALIDATORS.pop(construct_type, None)
+
+
+def clear_invariant_validators() -> None:
+    """Remove all registered validators (test isolation / full disable)."""
+    INVARIANT_VALIDATORS.clear()
+
+
+def registry_dispatch_checker(
+    dependent: ConstructBase, changed: ConstructBase
+) -> bool:
+    """Invariant check that dispatches to a per-type validator when one is
+    registered for the dependent's type, else falls back to the permissive
+    default. With an empty registry this is exactly ``default_invariant_checker``,
+    so it is safe to use as a drop-in checker without changing behavior."""
+    checker = INVARIANT_VALIDATORS.get(dependent.type)
+    if checker is None:
+        return default_invariant_checker(dependent, changed)
+    return checker(dependent, changed)
+
+
 # ---- Cascade engine ----
 
 
