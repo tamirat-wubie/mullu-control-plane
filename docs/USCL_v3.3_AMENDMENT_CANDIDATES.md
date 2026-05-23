@@ -452,3 +452,74 @@ Per-amendment ratification gate (process unchanged):
 [ ] PHI_CANONICAL_SPEC.md cross-reference added only AFTER ratification;
     this doc is the staging surface, not a kernel edit.
 ```
+
+---
+
+## 6. Implementation status (evidence-based, audited against live code)
+
+After A1 landed, each remaining amendment was audited against the actual
+runtime to separate "real gap in existing code" from "forward constraint on a
+layer not yet built." Result:
+
+```text
+A1  DONE         Edit gate (substrate/cascade.py + substrate/phi_gov.py).
+                 The ONLY amendment that mapped to a real defect in existing,
+                 load-bearing code. Fixed + merged:
+                   #744 obligation harness
+                   #745 escalation fail-closed (no fail-open)
+                   #746 depth -> route-to-authority (no opaque self-DoS)
+                 All 3 edit-gate obligations enforced by passing tests; 0 xfail.
+
+A4  ALREADY MET  No fix needed. Append-only integrity, fail-closed replay, and
+                 honest incomplete-reporting already exist and are heavily
+                 tested:
+                   - persistence/hash_chain.py: immutable per-sequence files,
+                     O_EXCL atomic append, contiguous-sequence + linkage +
+                     chain-hash validation, fail-closed validate(); no
+                     delete/mutate/evict path exists.
+                   - core/replay_engine.py: ReplayVerdict.ARTIFACT_INCOMPLETE
+                     + missing_artifact reasons == A4's "ReplayUnavailable, not
+                     silently-partial" obligation.
+                   - journal_replay / persisted_replay / replay_store:
+                     "fail closed on missing or corrupted artifacts".
+                   - ~19 replay/chain/ledger/audit test files.
+                 The compaction-availability RISK A4 raised does NOT exist
+                 here: the chain is append-forever with NO eviction/compaction
+                 path. Snapshot-supersession (A4 pt 3) is therefore a FUTURE
+                 OPTIMIZATION, relevant only IF compaction is ever introduced
+                 — not a current gap.
+
+A2 \            FORWARD CONSTRAINTS on D_Phi (the derived-view deriver) and the
+A3  >  PENDING  S^Phi exposure/label layer, which is GREENFIELD: no D_Phi /
+A5 /   BUILD    OntView / PhiView / B_ceiling / eps_class exists in the runtime
+C1              today. These cannot be harness-then-fixed against live code;
+C2              they become live obligations only when/if the S^Phi derived-
+G               view layer is built. Foundations they must reuse already exist:
+                 - A2 determinism: docs/15_deterministic_serialization_policy.md
+                   + core/replay_determinism_harness.py
+                 - A5 O(1) anchor: STATE_HASH_SPEC.md + persistence/hash_chain
+                 - G genesis: DMRS GENESIS precedence (PHI_CANONICAL_SPEC 3.4)
+```
+
+### 6.1 What this means for next steps
+
+The high-value, code-grounded work is **done**. A1 was the only amendment that
+mapped to a real defect in existing code; it is fixed and merged. A4 was
+already satisfied by mature persistence/replay machinery.
+
+Everything else (A2, A3, A5, C1, C2, G) constrains the **S^Φ derived-view
+layer, which has not been built.** Discharging those obligations is therefore
+not a patch — it is the *feature project of building the derived-view layer
+itself* (`D_Φ`, the bounded exposure path `Γ^∂`, the label map `L^Φ`, and the
+genesis config). That is a deliberate, design-gated decision — **not autopilot
+work**:
+
+- it is a new subsystem, not a fix to existing behavior;
+- it needs a product decision: is a read-only governed projection over the
+  substrate wanted now, what consumes it, and at what cost;
+- until it is built, A2/A3/A5/C1/C2/G remain **specified-but-dormant**, and the
+  kernel is fully governed without them — A1 closed the only live gap.
+
+**Recommendation:** treat the S^Φ derived-view layer as a separate, scoped
+proposal with its own design review; this document remains its specification.
+No further amendment work is autopilot-safe until that build decision is made.
