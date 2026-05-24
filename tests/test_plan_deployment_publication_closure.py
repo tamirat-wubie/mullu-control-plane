@@ -106,6 +106,8 @@ def test_deployment_closure_plan_maps_gateway_readiness_steps(tmp_path: Path) ->
     assert "do not print or serialize" in actions_by_blocker["deployment_witness_secret_missing"].command
     assert actions_by_blocker["deployment_dns_not_verified"].action_type == "dns-verification"
     assert "deployment_witness_preflight" in actions_by_blocker["deployment_dns_not_verified"].evidence_required
+    assert "collect_gateway_dns_resolution_receipt.py" in actions_by_blocker["deployment_dns_not_verified"].command
+    assert ".change_assurance/gateway_dns_resolution_receipt.json" in actions_by_blocker["deployment_dns_not_verified"].command
 
 
 def test_deployment_closure_plan_maps_responsibility_debt_blockers(tmp_path: Path) -> None:

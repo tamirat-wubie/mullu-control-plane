@@ -185,7 +185,10 @@ def _action_for(blocker: str) -> DeploymentClosureAction:
             blocker=blocker,
             action_type="dns-verification",
             command=(
-                "Resolve $MULLU_GATEWAY_HOST and rerun "
+                "python scripts/collect_gateway_dns_resolution_receipt.py "
+                "--host \"$MULLU_GATEWAY_HOST\" "
+                "--output .change_assurance/gateway_dns_resolution_receipt.json "
+                "--json && "
                 "python scripts/preflight_deployment_witness.py "
                 "--gateway-host \"$MULLU_GATEWAY_HOST\" "
                 "--gateway-url \"$MULLU_GATEWAY_URL\""
