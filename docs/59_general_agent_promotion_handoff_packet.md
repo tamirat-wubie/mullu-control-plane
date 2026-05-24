@@ -18,10 +18,10 @@ This packet is the operator entry point for the remaining promotion work. It bin
 | Field | Current value |
 | --- | --- |
 | Readiness level | `pilot-governed-core` |
-| Capability capsules | 12 |
-| Governed capabilities | 63 |
-| Aggregate closure actions | 7 |
-| Approval-required actions | 4 |
+| Capability capsules | 10 |
+| Governed capabilities | 52 |
+| Aggregate closure actions | 13 |
+| Approval-required actions | 9 |
 | Closure plan schema validation | `ok=true` |
 | Closure plan drift validation | `ok=true` |
 | Production promotion | blocked |
@@ -42,8 +42,29 @@ This packet is the operator entry point for the remaining promotion work. It bin
 | Handoff preflight | `scripts/preflight_general_agent_promotion_handoff.py` |
 | Handoff preflight validator | `scripts/validate_general_agent_promotion_handoff_preflight.py` |
 | Aggregate closure plan | `.change_assurance/general_agent_promotion_closure_plan.json` |
+| Capability improvement portfolio | `.change_assurance/capability_improvement_portfolio.json` |
+| Closure chain runner | `scripts/run_general_agent_promotion_closure_chain.py` |
 | Schema validation report | `.change_assurance/general_agent_promotion_closure_plan_schema_validation.json` |
 | Drift validation report | `.change_assurance/general_agent_promotion_closure_plan_validation.json` |
+| Live-evidence queue planner | `scripts/plan_general_agent_promotion_live_evidence_queue.py` |
+| Live-evidence queue | `.change_assurance/general_agent_promotion_live_evidence_queue.json` |
+| Terminal approval receipt | `.change_assurance/general_agent_promotion_terminal_approvals.json` |
+| Terminal approval receipt schema | `schemas/general_agent_promotion_terminal_approvals.schema.json` |
+| Terminal approval receipt validator | `scripts/validate_general_agent_promotion_terminal_approvals.py` |
+| Terminal certificate gate planner | `scripts/plan_general_agent_promotion_terminal_certificate_gate.py` |
+| Terminal certificate gate | `.change_assurance/general_agent_promotion_terminal_certificate_gate.json` |
+| Terminal certificate candidate planner | `scripts/plan_general_agent_promotion_terminal_certificate_candidates.py` |
+| Terminal certificate candidates schema | `schemas/general_agent_promotion_terminal_certificate_candidates.schema.json` |
+| Terminal certificate candidates | `.change_assurance/general_agent_promotion_terminal_certificate_candidates.json` |
+| Terminal evidence reconciliation planner | `scripts/reconcile_general_agent_promotion_terminal_evidence.py` |
+| Terminal evidence reconciliation schema | `schemas/general_agent_promotion_terminal_evidence_reconciliation.schema.json` |
+| Terminal evidence reconciliation | `.change_assurance/general_agent_promotion_terminal_evidence_reconciliation.json` |
+| Terminal minting gate planner | `scripts/gate_general_agent_promotion_terminal_minting.py` |
+| Terminal minting gate schema | `schemas/general_agent_promotion_terminal_minting_gate.schema.json` |
+| Terminal minting gate | `.change_assurance/general_agent_promotion_terminal_minting_gate.json` |
+| Terminal certificate minting executor | `scripts/mint_general_agent_promotion_terminal_certificates.py` |
+| Terminal certificate minting run schema | `schemas/general_agent_promotion_terminal_certificate_minting_run.schema.json` |
+| Terminal certificate minting run | `.change_assurance/general_agent_promotion_terminal_certificate_minting_run.json` |
 | Readiness report | `.change_assurance/general_agent_promotion_readiness.json` |
 | Preflight report | `.change_assurance/general_agent_promotion_handoff_preflight.json` |
 | Environment binding receipt | `.change_assurance/general_agent_promotion_environment_binding_receipt.json` |
@@ -57,6 +78,11 @@ voice_adapter_not_closed
 email_calendar_adapter_not_closed
 deployment_witness_not_published
 production_health_not_declared
+capability_improvement_required:financial.refund
+capability_improvement_required:computer.command.run
+capability_improvement_required:browser.submit
+capability_improvement_required:connector.postgres.write.with_approval
+capability_improvement_required:creative.data_analyze
 ```
 
 ## Approval-Required Actions
@@ -73,15 +99,24 @@ production_health_not_declared
 1. Validate the machine-readable handoff packet.
 2. Validate the operator checklist.
 3. Regenerate adapter evidence and readiness.
-4. Regenerate adapter, deployment, and aggregate closure plans.
-5. Validate aggregate closure plan schema.
-6. Validate aggregate closure plan drift.
-7. Emit and validate the redacted environment binding receipt.
-8. Complete dependency and credential actions with approval where required.
-9. Produce live adapter receipts.
-10. Publish deployment witness with approval only after runtime and authority responsibility debt are clear.
-11. Update `DEPLOYMENT_STATUS.md` only after published witness, debt-clear witness fields, and matching health probe evidence exist.
-12. Run final strict promotion validation.
+4. Run the closure artifact chain to regenerate adapter, deployment, portfolio, aggregate, schema, drift, live-evidence queue, terminal certificate gate, terminal certificate candidate, terminal evidence reconciliation, and terminal minting gate artifacts.
+5. Review the activation-blocked capability improvement portfolio.
+6. Inspect the live-evidence queue before executing any closure command.
+7. Validate the terminal approval receipt when approval refs are supplied.
+8. Inspect the terminal certificate gate before executing any closure command.
+9. Inspect terminal certificate candidates and verify minting remains false.
+10. Inspect terminal evidence reconciliation and verify minting readiness remains blocked until live receipts match candidate evidence.
+11. Inspect terminal minting gate and verify minting readiness remains blocked until reconciliation is ready and explicit authority is supplied.
+12. Run the terminal certificate minting executor only after the terminal minting gate is ready.
+13. Validate aggregate closure plan schema.
+14. Validate aggregate closure plan drift.
+15. Emit and validate the redacted environment binding receipt.
+16. Re-run the live-evidence queue, terminal certificate gate, terminal certificate candidate, terminal evidence reconciliation, and terminal minting gate planners if bindings, approvals, receipts, or authority refs changed after the closure chain.
+17. Complete dependency, credential, deployment, and portfolio actions with approval where required.
+18. Produce live adapter receipts.
+19. Publish deployment witness with approval only after runtime and authority responsibility debt are clear.
+20. Update `DEPLOYMENT_STATUS.md` only after published witness, debt-clear witness fields, and matching health probe evidence exist.
+21. Run final strict promotion validation.
 
 Browser adapter evidence remains open unless the adapter evidence report preserves both `browser-sandbox-evidence-*` and `sandbox-receipt-*` refs from the browser sandbox proof.
 
@@ -95,6 +130,6 @@ The terminal command must not pass until live adapter evidence, deployment witne
 
 STATUS:
   Completeness: 99%
-  Invariants verified: [single handoff entry point, machine-readable handoff packet linked, checklist linked, runbook linked, validation reports linked, blockers explicit, production readiness not claimed]
+  Invariants verified: [single handoff entry point, machine-readable handoff packet linked, checklist linked, runbook linked, validation reports linked, live-evidence queue linked, terminal approval receipt contract linked, terminal certificate gate linked, terminal certificate candidate contract linked, terminal evidence reconciliation contract linked, terminal minting gate contract linked, terminal certificate minting run contract linked, blockers explicit, production readiness not claimed]
   Open issues: [external dependencies, governed credentials, live adapter receipts, deployment witness publication, public health probe]
   Next action: execute the validated checklist and runbook in the credentialed adapter-worker and deployment environment
