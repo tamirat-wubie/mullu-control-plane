@@ -1,13 +1,14 @@
-"""Purpose: memory mesh engine — durable cumulative intelligence store.
+"""Purpose: memory mesh engine - durable cumulative intelligence store.
 Governance scope: memory record CRUD, linking, promotion, decay, conflict
     detection, metadata node/edge management, and structured retrieval.
 Dependencies: memory_mesh contracts, metadata_mesh contracts, core invariants.
 Invariants:
   - All mutations are construct-then-commit (atomic append).
-  - Public getters return frozen snapshots — callers cannot mutate engine state.
+  - Public getters return frozen snapshots - callers cannot mutate engine state.
   - IDs are unique per collection; duplicate inserts raise RuntimeCoreInvariantError.
   - Self-referential links/edges are rejected by contract __post_init__.
-  - Decay is explicit — no silent expiration.
+  - Decay is explicit - no silent expiration.
+  - Invalid timestamp parse paths emit bounded validation witnesses.
   - Conflicts are surfaced, never silently resolved.
   - state_hash is deterministic over ordered records.
 """
@@ -46,6 +47,16 @@ def _now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
+def _parse_iso_datetime_text(value: Any) -> datetime:
+    if not isinstance(value, str):
+        raise ValueError("timestamp must be text")
+    return datetime.fromisoformat(value.replace("Z", "+00:00"))
+
+
+def _bounded_value_hash(value: Any) -> str:
+    return sha256(repr(value).encode()).hexdigest()
+
+
 class MemoryMeshEngine:
     """Durable cumulative intelligence store.
 
@@ -63,6 +74,28 @@ class MemoryMeshEngine:
         self._nodes: dict[str, MetadataNode] = {}
         self._edges: dict[str, MetadataEdge] = {}
         self._decay_log: list[dict[str, Any]] = []
+        self._validation_log: list[dict[str, Any]] = []
+
+    def _record_timestamp_validation_failure(
+        self,
+        *,
+        operation: str,
+        target_kind: str,
+        target_id: str,
+        field_name: str,
+        field_value: Any,
+        observed_at: str | None = None,
+    ) -> None:
+        self._validation_log.append({
+            "action": "timestamp_validation_failure",
+            "operation": operation,
+            "target_kind": target_kind,
+            "target_id_hash": _bounded_value_hash(target_id),
+            "field_name": field_name,
+            "field_value_hash": _bounded_value_hash(field_value),
+            "reason": "invalid_iso8601_datetime",
+            "observed_at": observed_at or _now_iso(),
+        })
 
     # ------------------------------------------------------------------
     # Memory CRUD
@@ -166,11 +199,18 @@ class MemoryMeshEngine:
         for mem in list(self._memories.values()):
             if mem.expires_at is not None:
                 try:
-                    exp_dt = datetime.fromisoformat(mem.expires_at.replace("Z", "+00:00"))
+                    exp_dt = _parse_iso_datetime_text(mem.expires_at)
                     if exp_dt <= now:
                         expired.append(mem.memory_id)
                 except ValueError:
-                    pass
+                    self._record_timestamp_validation_failure(
+                        operation="apply_decay",
+                        target_kind="memory",
+                        target_id=mem.memory_id,
+                        field_name="expires_at",
+                        field_value=mem.expires_at,
+                        observed_at=now_iso,
+                    )
         for mid in expired:
             self._decay_log.append({
                 "action": "memory_decay",
@@ -181,9 +221,14 @@ class MemoryMeshEngine:
         return tuple(expired)
 
     @property
-    def decay_log(self) -> tuple[dict[str, Any], ...]:
+    def decay_log(self) -> tuple[Mapping[str, Any], ...]:
         """Return an immutable snapshot of the decay audit log."""
-        return tuple(self._decay_log)
+        return tuple(MappingProxyType(dict(entry)) for entry in self._decay_log)
+
+    @property
+    def validation_log(self) -> tuple[Mapping[str, Any], ...]:
+        """Return immutable bounded validation witnesses."""
+        return tuple(MappingProxyType(dict(entry)) for entry in self._validation_log)
 
     # ------------------------------------------------------------------
     # Memory supersession
@@ -272,18 +317,30 @@ class MemoryMeshEngine:
         # Filter by as_of (only records created before as_of)
         if query.as_of is not None:
             try:
-                as_of_dt = datetime.fromisoformat(query.as_of.replace("Z", "+00:00"))
+                as_of_dt = _parse_iso_datetime_text(query.as_of)
                 filtered = []
                 for m in candidates:
                     try:
-                        m_dt = datetime.fromisoformat(m.created_at.replace("Z", "+00:00"))
+                        m_dt = _parse_iso_datetime_text(m.created_at)
                         if m_dt <= as_of_dt:
                             filtered.append(m)
                     except ValueError:
-                        pass
+                        self._record_timestamp_validation_failure(
+                            operation="retrieve",
+                            target_kind="memory",
+                            target_id=m.memory_id,
+                            field_name="created_at",
+                            field_value=m.created_at,
+                        )
                 candidates = filtered
             except ValueError:
-                pass
+                self._record_timestamp_validation_failure(
+                    operation="retrieve",
+                    target_kind="query",
+                    target_id=query.query_id,
+                    field_name="as_of",
+                    field_value=query.as_of,
+                )
 
         # Sort by confidence descending for deterministic ordering
         candidates.sort(key=lambda m: (-m.confidence, m.memory_id))
@@ -380,5 +437,14 @@ class MemoryMeshEngine:
             parts.append(f"edg:{eid}")
         for entry in self._decay_log:
             parts.append(f"decay:{entry['memory_id']}")
+        for entry in self._validation_log:
+            parts.append(
+                "validation:"
+                f"{entry['operation']}:"
+                f"{entry['target_kind']}:"
+                f"{entry['field_name']}:"
+                f"{entry['target_id_hash']}:"
+                f"{entry['field_value_hash']}"
+            )
         payload = "|".join(parts)
         return sha256(payload.encode()).hexdigest()

@@ -5,7 +5,8 @@
   "license": "UNLICENSED",
   "type": "module",
   "scripts": {
-    "generate": "npx @hey-api/openapi-ts -i ../openapi/mullu.openapi.json -o ./src -c ./openapi-ts.config.ts"
+    "generate": "npx @hey-api/openapi-ts -i ../openapi/mullu.openapi.json -o ./src -c ./openapi-ts.config.ts",
+    "verify": "node ./scripts/verify-package.mjs"
   },
   "devDependencies": {
     "@hey-api/openapi-ts": "^0.78.0",

@@ -64,8 +64,9 @@ WORKFLOW_DIR = REPO_ROOT / ".github" / "workflows"
 
 REQUIRED_CI_LITERALS: tuple[str, ...] = (
     'branches: [main, "codex/*", "phase-*", "maf/*", "mcoi/*", "infra/*"]',
-    'python -m pytest --tb=short -q -m "not soak"',
-    'python -m pytest -m soak --tb=short -q',
+    "python ../scripts/run_mcoi_shards.py",
+    "python ../scripts/run_mcoi_shards.py --soak-only",
+    "npm run verify",
     "cargo test",
     "cargo build --release",
     "cargo fmt -- --check",

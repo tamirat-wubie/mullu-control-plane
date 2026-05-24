@@ -368,8 +368,11 @@ this repository.
 ## Tests
 
 ```bash
-cd mcoi && python -m pytest tests/ -q          # MCOI runtime tests
-cd .. && python -m pytest tests/ -q             # Gateway + financial + creative + enterprise
+python scripts/run_mcoi_shards.py               # MCOI runtime tests, deterministic local shards
+python scripts/run_mcoi_shards.py --soak-only   # MCOI local soak lane
+python -m pytest tests/ -q                      # Gateway + financial + creative + enterprise
+cargo test --manifest-path maf/rust/Cargo.toml  # Rust MAF contracts
+(cd sdk/typescript && npm run verify)           # TypeScript SDK package surface
 python scripts/generate_test_inventory.py --check
 ```
 

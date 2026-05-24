@@ -150,8 +150,8 @@ Witness integrity audit:
 | Metric | Count |
 |---|---:|
 | Runtime witness labels | 1052 |
-| Exact test anchors | 763 |
-| Unanchored witness labels | 289 |
+| Exact test anchors | 783 |
+| Unanchored witness labels | 269 |
 
 Evidence quality gaps:
 none
@@ -160,8 +160,6 @@ Witness integrity gaps:
 
 | Surface | Exact anchors | Unanchored | Unanchored labels |
 |---|---:|---:|---|
-| `cost_budget_read_models` | 0 | 6 | budget_summary_bounded, safe_completion_tracks_cost, cost_read_model_totals_bounded, cost_top_spenders_bounded, cost_by_model_bounded, tenant_cost_projection_bounded |
-| `assistant_kernel_planning` | 0 | 5 | assistant_profiles_read_model_bounded, finance_ops_plan_requires_active_consent, finance_ops_plan_projects_operator_queue, assistant_plan_never_grants_execution_authority, assistant_plan_errors_sanitized |
 | `operator_console_read_models` | 0 | 5 | console_home_returns_governed_runtime_vitals, console_runs_bounds_recent_audit_entries, console_audit_exposes_chain_intact_read_model, console_checkpoints_expose_persisted_state_summary, console_provider_and_scheduler_views_are_read_only |
 | `model_experiment_control` | 0 | 7 | model_catalog_list_bounded, auto_completion_routes_model, auto_completion_forced_model, ab_test_single_model_result, ab_test_two_models_cost_comparison, ab_test_summary_bounded, ab_test_failed_model_recorded |
 | `federated_control_plane` | 0 | 7 | signed_policy_metadata_only_sync, invalid_signature_denied_before_local_acceptance, policy_not_allowed_for_cluster_denied, unsynced_policy_denied_locally, tenant_region_mismatch_denied_locally, central_data_transfer_forbidden, federated_snapshot_schema_valid |
@@ -181,7 +179,6 @@ Witness integrity gaps:
 | `job_engine_lifecycle` | 1 | 5 | job_create_mutation_receipt_emitted, job_start_mutation_receipt_emitted, job_pause_resume_mutation_receipts_emitted, job_terminal_mutation_receipts_emitted, job_restore_mutation_receipt_emitted |
 | `authority_obligation_mesh` | 0 | 5 | pending_approval_chain_count, open_obligation_count, overdue_obligation_count, escalated_obligation_count, command_authority_read_model_bound_to_approval_chain |
 | `authority_operator_controls` | 0 | 5 | operator_access_guard, operator_audit_events, ownership_policy_read_models, approval_expiration_witness, obligation_satisfaction_escalation_witness |
-| `runtime_reflex_engine` | 0 | 9 | operator_only_access, mutation_applied_false, certification_handoff_required, protected_surfaces_auto_promote_false, signed_reflex_witness, reflex_deployment_witness_schema, reflex_validator_receipt_schema, offline_reflex_witness_replay, reflex_validator_receipt_artifact |
 | `capability_maturity_assessment` | 3 | 6 | certification_evidence_synthesizes_maturity_extension, registry_read_model_exposes_maturity, default_pack_C6_examples_projected, effect_bearing_production_requires_live_write, production_requires_worker_deployment_recovery, autonomy_requires_C7_controls |
 | `agent_identity` | 0 | 8 | owner_tenant_identity_required, capability_scope_conflict_denied, self_approval_forbidden, policy_mutation_forbidden, delegation_requires_lease, agent_budget_enforced, reputation_update_requires_evidence, agent_identity_schema_valid |
 | `claim_verification` | 0 | 6 | claim_type_declared, source_evidence_required, contradictions_block_execution, stale_claims_block_execution, high_risk_requires_independent_support, claim_verification_schema_valid |
@@ -325,5 +322,5 @@ none
 STATUS:
   Completeness: 100%
   Invariants verified: route declarations, route-level coverage classification, coverage levels, coverage states, closure action mapping, schema contract validation, deployment orchestration receipt schema contract
-  Open issues: 289 runtime-witness labels lack exact test-function anchors
+  Open issues: 269 runtime-witness labels lack exact test-function anchors
   Next action: bind unanchored runtime-witness labels to exact test-function anchors
