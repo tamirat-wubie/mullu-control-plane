@@ -6,7 +6,10 @@ Invariants: stored records round-trip; chain hashes validate; tampered payloads 
 
 from __future__ import annotations
 
+import logging
+
 import pytest
+import mcoi_runtime.persistence.mil_audit_store as mil_audit_store
 
 from mcoi_runtime.contracts.learning import LearningAdmissionDecision, LearningAdmissionStatus
 from mcoi_runtime.contracts.mil import MILInstruction, MILOpcode, MILProgram
@@ -45,6 +48,22 @@ def _program() -> MILProgram:
         instructions,
         "2026-05-06T12:00:01Z",
     )
+
+
+def test_atomic_record_cleanup_failure_is_logged_bounded(tmp_path, monkeypatch, caplog) -> None:
+    target = tmp_path / "records" / "record-1.json"
+
+    def fail_unlink(_tmp_path):
+        raise OSError("secret cleanup path")
+
+    monkeypatch.setattr(mil_audit_store.os, "unlink", fail_unlink)
+    with caplog.at_level(logging.WARNING, logger=mil_audit_store.__name__):
+        mil_audit_store._atomic_write_exclusive(target, "{}")
+
+    assert target.read_text(encoding="utf-8") == "{}"
+    assert any(record.message == "MIL audit temp cleanup failed" for record in caplog.records)
+    assert any(getattr(record, "error_type", "") == "OSError" for record in caplog.records)
+    assert all("secret cleanup path" not in record.message for record in caplog.records)
 
 
 def test_append_round_trips_mil_audit_record(tmp_path) -> None:

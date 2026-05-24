@@ -6,6 +6,7 @@ Invariants: records are immutable; record content hashes must match chain entrie
 
 from __future__ import annotations
 
+import logging
 import os
 import tempfile
 from dataclasses import dataclass
@@ -37,6 +38,8 @@ from .errors import (
 from .hash_chain import HashChainStore, compute_content_hash
 from .replay_store import ReplayStore
 from .trace_store import TraceStore
+
+_LOG = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True, slots=True)
@@ -412,8 +415,11 @@ def _atomic_write_exclusive(path: Path, content: str) -> None:
     finally:
         try:
             os.unlink(tmp_path)
-        except OSError:
-            pass
+        except OSError as exc:
+            _LOG.warning(
+                "MIL audit temp cleanup failed",
+                extra={"error_type": type(exc).__name__},
+            )
 
 
 def _freeze_text_tuple(values: tuple[str, ...], field_name: str) -> tuple[str, ...]:
