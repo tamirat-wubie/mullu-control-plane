@@ -18,6 +18,10 @@
     "dispatch_run_id",
     "dispatch_conclusion",
     "dispatch_error",
+    "operator_approval_ref",
+    "governed_swarm_pilot_readiness_path",
+    "governed_swarm_artifact_name",
+    "governed_swarm_production_readiness_required",
     "mcp_operator_checklist_required",
     "mcp_operator_checklist_valid",
     "mcp_operator_checklist_path",
@@ -86,6 +90,20 @@
     },
     "dispatch_error": {
       "type": "string"
+    },
+    "operator_approval_ref": {
+      "type": "string"
+    },
+    "governed_swarm_pilot_readiness_path": {
+      "type": "string",
+      "minLength": 1
+    },
+    "governed_swarm_artifact_name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "governed_swarm_production_readiness_required": {
+      "type": "boolean"
     },
     "mcp_operator_checklist_required": {
       "type": "boolean"
@@ -160,6 +178,44 @@
           "contains": {
             "type": "string",
             "pattern": "^mcp_operator_checklist:"
+          }
+        }
+      }
+    },
+    {
+      "properties": {
+        "evidence_refs": {
+          "contains": {
+            "type": "string",
+            "pattern": "^governed_swarm_production_readiness:"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "governed_swarm_production_readiness_required": {
+            "const": true
+          }
+        },
+        "required": [
+          "governed_swarm_production_readiness_required"
+        ]
+      },
+      "then": {
+        "properties": {
+          "operator_approval_ref": {
+            "minLength": 1
+          },
+          "expected_environment": {
+            "const": "production"
+          },
+          "evidence_refs": {
+            "contains": {
+              "type": "string",
+              "const": "governed_swarm_production_readiness:required"
+            }
           }
         }
       }

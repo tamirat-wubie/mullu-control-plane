@@ -179,7 +179,11 @@ def test_orchestrate_deployment_witness_can_apply_and_dispatch(tmp_path: Path) -
     assert orchestration.receipt.dispatch_run_id == 5678
     assert orchestration.receipt.dispatch_conclusion == "success"
     assert orchestration.receipt.dispatch_error == ""
+    assert orchestration.receipt.governed_swarm_production_readiness_required is False
+    assert orchestration.receipt.operator_approval_ref == ""
+    assert orchestration.receipt.governed_swarm_artifact_name == "governed-swarm-production-readiness"
     assert "deployment_witness_run:5678" in orchestration.receipt.evidence_refs
+    assert "governed_swarm_production_readiness:not_required" in orchestration.receipt.evidence_refs
     assert any(command[:3] == ["kubectl", "apply", "-f"] for command in runner.commands)
     assert any(command[:3] == ["gh", "workflow", "run"] for command in runner.commands)
     assert any(command[:3] == ["gh", "run", "download"] for command in runner.commands)
@@ -210,6 +214,11 @@ def test_orchestrate_deployment_witness_passes_governed_swarm_production_inputs(
     ]
     assert orchestration.dispatch is not None
     assert orchestration.dispatch.conclusion == "success"
+    assert orchestration.receipt.operator_approval_ref == "approval://deployment/publication/001"
+    assert orchestration.receipt.governed_swarm_pilot_readiness_path == "evidence/pilot-readiness.json"
+    assert orchestration.receipt.governed_swarm_artifact_name == "governed-swarm-production-readiness"
+    assert orchestration.receipt.governed_swarm_production_readiness_required is True
+    assert "governed_swarm_production_readiness:required" in orchestration.receipt.evidence_refs
     assert "expected_environment=production" in workflow_run_command
     assert "operator_approval_ref=approval://deployment/publication/001" in workflow_run_command
     assert "governed_swarm_pilot_readiness_path=evidence/pilot-readiness.json" in workflow_run_command
@@ -454,6 +463,7 @@ def test_cli_writes_orchestration_receipt_when_dispatch_fails(
     assert payload["dispatch_requested"] is True
     assert payload["dispatch_run_id"] is None
     assert payload["dispatch_error"] == "dispatch_failed"
+    assert payload["governed_swarm_production_readiness_required"] is False
     assert "dispatch:failed" in payload["evidence_refs"]
     assert "deployment_witness_dispatch_error: dispatch_failed" in captured.out
 
@@ -496,11 +506,17 @@ def test_cli_passes_governed_swarm_production_inputs(
     download_commands = [
         command for command in runner.commands if command[:3] == ["gh", "run", "download"]
     ]
+    payload = json.loads(receipt_path.read_text(encoding="utf-8"))
 
     assert exit_code == 0
     assert "deployment_witness_run" in captured.out
     assert "operator_approval_ref=approval://deployment/publication/001" in workflow_run_command
     assert "governed_swarm_pilot_readiness_path=evidence/pilot-readiness.json" in workflow_run_command
+    assert payload["operator_approval_ref"] == "approval://deployment/publication/001"
+    assert payload["governed_swarm_pilot_readiness_path"] == "evidence/pilot-readiness.json"
+    assert payload["governed_swarm_artifact_name"] == "governed-swarm-production-readiness"
+    assert payload["governed_swarm_production_readiness_required"] is True
+    assert "governed_swarm_production_readiness:required" in payload["evidence_refs"]
     assert len(download_commands) == 2
 
 
@@ -535,6 +551,7 @@ def test_cli_uses_orchestration_receipt_output_environment(
     assert payload["preflight_ready"] is None
     assert payload["dispatch_requested"] is False
     assert payload["dispatch_error"] == ""
+    assert payload["governed_swarm_production_readiness_required"] is False
     assert payload["mcp_operator_checklist_required"] is False
     assert payload["mcp_operator_checklist_valid"] is None
     assert str(receipt_path) in captured.out
@@ -580,6 +597,10 @@ def test_orchestration_receipt_schema_matches_cli_output(
     assert payload["preflight_ready"] is None or isinstance(payload["preflight_ready"], bool)
     assert payload["dispatch_run_id"] is None or isinstance(payload["dispatch_run_id"], int)
     assert isinstance(payload["dispatch_error"], str)
+    assert isinstance(payload["operator_approval_ref"], str)
+    assert isinstance(payload["governed_swarm_pilot_readiness_path"], str)
+    assert isinstance(payload["governed_swarm_artifact_name"], str)
+    assert isinstance(payload["governed_swarm_production_readiness_required"], bool)
     assert payload["mcp_operator_checklist_valid"] is None or isinstance(
         payload["mcp_operator_checklist_valid"],
         bool,
