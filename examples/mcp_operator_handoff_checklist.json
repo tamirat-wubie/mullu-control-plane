@@ -7,6 +7,9 @@
     "MULLU_MCP_CAPABILITY_MANIFEST_PATH",
     "MULLU_GATEWAY_URL",
     "MULLU_GATEWAY_HOST",
+    "MULLU_GATEWAY_DNS_TARGET",
+    "MULLU_GATEWAY_DNS_RECORD_TYPE",
+    "MULLU_DNS_PROVIDER",
     "MULLU_RUNTIME_CONFORMANCE_SECRET",
     "MULLU_AUTHORITY_OPERATOR_SECRET",
     "MULLU_DEPLOYMENT_ORCHESTRATION_OUTPUT"
@@ -52,6 +55,16 @@
         "mcp_capability_manifest_valid=true",
         "capability_plan_bundle_canary_passed=true",
         "mcp_capability_manifest_invalid not in open_conformance_gaps"
+      ]
+    },
+    {
+      "step_id": "validate_gateway_dns_target_binding",
+      "command": "python scripts\\emit_gateway_dns_target_binding_receipt.py --gateway-url \"$MULLU_GATEWAY_URL\" --expected-environment pilot --dns-target \"$MULLU_GATEWAY_DNS_TARGET\" --dns-record-type \"$MULLU_GATEWAY_DNS_RECORD_TYPE\" --dns-provider \"$MULLU_DNS_PROVIDER\" --output .change_assurance\\gateway_dns_target_binding_receipt.json --json && python scripts\\validate_gateway_dns_target_binding_receipt.py --receipt .change_assurance\\gateway_dns_target_binding_receipt.json --output .change_assurance\\gateway_dns_target_binding_validation.json --expected-gateway-url \"$MULLU_GATEWAY_URL\" --expected-environment pilot --require-ready",
+      "required_evidence": [
+        "target binding ready=true",
+        "target binding validation valid=true",
+        "require ready step passed",
+        "dns provider declared"
       ]
     },
     {

@@ -26,6 +26,9 @@ REQUIRED_ENVIRONMENT_VARIABLES = frozenset({
     "MULLU_MCP_CAPABILITY_MANIFEST_PATH",
     "MULLU_GATEWAY_URL",
     "MULLU_GATEWAY_HOST",
+    "MULLU_GATEWAY_DNS_TARGET",
+    "MULLU_GATEWAY_DNS_RECORD_TYPE",
+    "MULLU_DNS_PROVIDER",
     "MULLU_RUNTIME_CONFORMANCE_SECRET",
     "MULLU_AUTHORITY_OPERATOR_SECRET",
     "MULLU_DEPLOYMENT_ORCHESTRATION_OUTPUT",
@@ -35,6 +38,7 @@ REQUIRED_STEP_IDS = frozenset({
     "inspect_operator_read_model",
     "inspect_mcp_execution_evidence_bundle",
     "collect_runtime_conformance",
+    "validate_gateway_dns_target_binding",
     "validate_gateway_dns_resolution",
     "run_deployment_preflight",
     "write_orchestration_receipt",
@@ -83,6 +87,12 @@ REQUIRED_STEP_EVIDENCE = {
         "mcp_capability_manifest_valid=true",
         "capability_plan_bundle_canary_passed=true",
     }),
+    "validate_gateway_dns_target_binding": frozenset({
+        "target binding ready=true",
+        "target binding validation valid=true",
+        "require ready step passed",
+        "dns provider declared",
+    }),
     "validate_gateway_dns_resolution": frozenset({
         "dns receipt resolved=true",
         "dns receipt validation valid=true",
@@ -113,6 +123,11 @@ REQUIRED_STEP_COMMAND_TOKENS = {
     "inspect_operator_read_model": ("/mcp/operator/read-model", "X-Mullu-Authority-Secret"),
     "inspect_mcp_execution_evidence_bundle": ("/mcp/operator/evidence-bundles/", "X-Mullu-Authority-Secret"),
     "collect_runtime_conformance": ("collect_runtime_conformance.py", "--authority-operator-secret"),
+    "validate_gateway_dns_target_binding": (
+        "emit_gateway_dns_target_binding_receipt.py",
+        "validate_gateway_dns_target_binding_receipt.py",
+        "--require-ready",
+    ),
     "validate_gateway_dns_resolution": (
         "collect_gateway_dns_resolution_receipt.py",
         "validate_gateway_dns_resolution_receipt.py",

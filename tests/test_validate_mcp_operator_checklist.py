@@ -19,7 +19,7 @@ def test_validate_mcp_operator_checklist_accepts_example() -> None:
 
     assert result.valid is True
     assert result.checklist_id == "mcp-operator-handoff-v1"
-    assert result.step_count == 8
+    assert result.step_count == 9
     assert result.errors == ()
 
 
@@ -48,7 +48,7 @@ def test_validate_mcp_operator_checklist_cli_outputs_json(capsys) -> None:
     assert exit_code == 0
     assert payload["valid"] is True
     assert payload["checklist_id"] == "mcp-operator-handoff-v1"
-    assert payload["step_count"] == 8
+    assert payload["step_count"] == 9
     assert payload["errors"] == []
 
 
@@ -79,7 +79,7 @@ def test_validate_mcp_operator_checklist_rejects_missing_step_evidence(tmp_path:
     result = validate_mcp_operator_checklist(checklist_path)
 
     assert result.valid is False
-    assert result.step_count == 8
+    assert result.step_count == 9
     assert any("collect_runtime_conformance required_evidence missing" in error for error in result.errors)
     assert any("capability_plan_bundle_canary_passed=true" in error for error in result.errors)
 
@@ -95,7 +95,7 @@ def test_validate_mcp_operator_checklist_rejects_command_token_drift(tmp_path: P
     result = validate_mcp_operator_checklist(checklist_path)
 
     assert result.valid is False
-    assert result.step_count == 8
+    assert result.step_count == 9
     assert any("inspect_mcp_execution_evidence_bundle command missing token" in error for error in result.errors)
     assert any("/mcp/operator/evidence-bundles/" in error for error in result.errors)
 
@@ -112,9 +112,46 @@ def test_validate_mcp_operator_checklist_rejects_missing_dns_validation_gate(tmp
     result = validate_mcp_operator_checklist(checklist_path)
 
     assert result.valid is False
-    assert result.step_count == 7
+    assert result.step_count == 8
     assert any("validate_gateway_dns_resolution" in error for error in result.errors)
     assert result.checklist_path == checklist_path
+
+
+def test_validate_mcp_operator_checklist_rejects_missing_dns_target_binding_gate(tmp_path: Path) -> None:
+    checklist_path = tmp_path / "mcp_operator_handoff_checklist.json"
+    payload = json.loads(Path("examples/mcp_operator_handoff_checklist.json").read_text(encoding="utf-8"))
+    payload["required_commands"] = [
+        step for step in payload["required_commands"]
+        if step["step_id"] != "validate_gateway_dns_target_binding"
+    ]
+    checklist_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    result = validate_mcp_operator_checklist(checklist_path)
+
+    assert result.valid is False
+    assert result.step_count == 8
+    assert any("validate_gateway_dns_target_binding" in error for error in result.errors)
+    assert result.checklist_path == checklist_path
+
+
+def test_validate_mcp_operator_checklist_rejects_dns_target_binding_without_require_ready(
+    tmp_path: Path,
+) -> None:
+    checklist_path = tmp_path / "mcp_operator_handoff_checklist.json"
+    payload = json.loads(Path("examples/mcp_operator_handoff_checklist.json").read_text(encoding="utf-8"))
+    for step in payload["required_commands"]:
+        if step["step_id"] == "validate_gateway_dns_target_binding":
+            step["command"] = step["command"].replace(" --require-ready", "")
+    checklist_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    result = validate_mcp_operator_checklist(checklist_path)
+
+    assert result.valid is False
+    assert result.step_count == 9
+    assert any(
+        "validate_gateway_dns_target_binding command missing token --require-ready" in error
+        for error in result.errors
+    )
 
 
 def test_validate_mcp_operator_checklist_rejects_dns_command_without_require_resolved(tmp_path: Path) -> None:
@@ -128,7 +165,7 @@ def test_validate_mcp_operator_checklist_rejects_dns_command_without_require_res
     result = validate_mcp_operator_checklist(checklist_path)
 
     assert result.valid is False
-    assert result.step_count == 8
+    assert result.step_count == 9
     assert any("validate_gateway_dns_resolution command missing token --require-resolved" in error for error in result.errors)
 
 
@@ -141,7 +178,7 @@ def test_validate_mcp_operator_checklist_rejects_duplicate_step_id(tmp_path: Pat
     result = validate_mcp_operator_checklist(checklist_path)
 
     assert result.valid is False
-    assert result.step_count == 9
+    assert result.step_count == 10
     assert any("duplicate required_commands step_id validate_manifest" in error for error in result.errors)
     assert checklist_path.name == "mcp_operator_handoff_checklist.json"
 

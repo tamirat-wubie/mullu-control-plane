@@ -180,9 +180,25 @@ Required signed certificate evidence:
 | `capability_plan_bundle_canary_passed` | `true` |
 | `open_conformance_gaps` | Must not include `mcp_capability_manifest_invalid` |
 
-5. Collect and validate gateway DNS before deployment preflight.
+5. Bind, collect, and validate gateway DNS before deployment preflight.
 
 ```powershell
+python scripts\emit_gateway_dns_target_binding_receipt.py `
+  --gateway-url "$env:MULLU_GATEWAY_URL" `
+  --expected-environment pilot `
+  --dns-target "$env:MULLU_GATEWAY_DNS_TARGET" `
+  --dns-record-type "$env:MULLU_GATEWAY_DNS_RECORD_TYPE" `
+  --dns-provider "$env:MULLU_DNS_PROVIDER" `
+  --output .change_assurance\gateway_dns_target_binding_receipt.json `
+  --json
+
+python scripts\validate_gateway_dns_target_binding_receipt.py `
+  --receipt .change_assurance\gateway_dns_target_binding_receipt.json `
+  --output .change_assurance\gateway_dns_target_binding_validation.json `
+  --expected-gateway-url "$env:MULLU_GATEWAY_URL" `
+  --expected-environment pilot `
+  --require-ready
+
 python scripts\collect_gateway_dns_resolution_receipt.py `
   --gateway-url "$env:MULLU_GATEWAY_URL" `
   --output .change_assurance\gateway_dns_resolution_receipt.json `
@@ -194,9 +210,10 @@ python scripts\validate_gateway_dns_resolution_receipt.py `
   --require-resolved
 ```
 
-The DNS validation report must return `valid=true`, `resolved=true`, and
-`address_count>0`. Deployment witness preflight and orchestration remain
-blocked until this gate passes.
+The DNS target binding validation must return `valid=true` before any DNS
+record is published. The DNS validation report must then return `valid=true`,
+`resolved=true`, and `address_count>0`. Deployment witness preflight and
+orchestration remain blocked until both gates pass.
 
 6. Run deployment witness preflight before dispatch.
 
@@ -269,12 +286,13 @@ as closed.
 | `MCP manifest requires a configured string field` | Missing tenant, owner, escalation, certification, or tool string | Fill the required field and re-run validation |
 | `mcp_capability_manifest_invalid` | Runtime conformance rejected the configured manifest | Fix manifest, restart gateway, collect conformance again |
 | `mcp_manifest_valid=false` in deployment witness | Signed conformance says the manifest is invalid | Do not dispatch deployment witness until conformance is clean |
+| `gateway DNS target binding validation valid=false` | DNS target, record type, or provider is missing | Bind `MULLU_GATEWAY_DNS_TARGET`, `MULLU_GATEWAY_DNS_RECORD_TYPE`, and `MULLU_DNS_PROVIDER`, then rerun target binding validation with `--require-ready` |
 | `gateway DNS resolution validation valid=false` | DNS receipt is unresolved or lacks address evidence | Publish DNS for the gateway host, then rerun DNS receipt collection and `validate_gateway_dns_resolution_receipt.py --require-resolved` |
 | `mcp_manifest_configured=false` in read model | Gateway was not started with `MULLU_MCP_CAPABILITY_MANIFEST_PATH` | Set the environment variable and restart |
 | `capability_plan_bundle_canary_passed=false` | Runtime conformance cannot export a plan evidence bundle | Keep deployment blocked until `/capability-plans/{plan_id}/closure` returns `plan_evidence_bundle` |
 
 STATUS:
   Completeness: 100%
-  Invariants verified: [certified import, ownership binding, approval policy, escalation policy, startup binding, operator read model, runtime conformance witness, capability plan evidence bundle canary, gateway DNS receipt validation require-resolved gate, deployment preflight gate, machine-readable handoff checklist, deployment orchestration receipt]
+  Invariants verified: [certified import, ownership binding, approval policy, escalation policy, startup binding, operator read model, runtime conformance witness, capability plan evidence bundle canary, gateway DNS target binding require-ready gate, gateway DNS receipt validation require-resolved gate, deployment preflight gate, machine-readable handoff checklist, deployment orchestration receipt]
   Open issues: none
   Next action: publish an environment-specific manifest and collect signed conformance evidence
