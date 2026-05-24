@@ -155,6 +155,8 @@ def test_constructs_create_change_rejects_unknown_state_ref(client):
         },
     )
     assert r.status_code == 400
+    detail = r.json()["detail"]
+    assert detail["error"] == "referenced_state_not_found"
 
 
 def test_constructs_get_by_id(client):
@@ -218,6 +220,10 @@ def test_constructs_create_constraint_validates_violation_response(client):
         },
     )
     assert r.status_code == 400
+    detail = r.json()["detail"]
+    assert detail["error_code"] == "invalid_constraint_construct"
+    assert detail["governed"] is True
+    assert "explode" not in r.text
 
 
 # ---- Φ_gov on the construct write path ----

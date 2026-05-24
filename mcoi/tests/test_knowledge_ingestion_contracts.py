@@ -149,6 +149,10 @@ class TestProcedureStep:
         with pytest.raises(ValueError, match="step_order"):
             ProcedureStep(step_order=-1, description="bad")
 
+    def test_boolean_step_order_rejected(self):
+        with pytest.raises(ValueError, match="step_order"):
+            ProcedureStep(step_order=True, description="bad")
+
     def test_empty_description_rejected(self):
         with pytest.raises(ValueError, match="description"):
             ProcedureStep(step_order=0, description="")
@@ -240,6 +244,10 @@ class TestProcedureCandidate:
         with pytest.raises(ValueError, match="steps must contain"):
             _procedure(steps=())
 
+    def test_steps_reject_scalar_text(self):
+        with pytest.raises(ValueError, match="steps must be an array"):
+            _procedure(steps="step one")
+
     def test_multiple_steps(self):
         p = _procedure(steps=(_step(0, "A"), _step(1, "B"), _step(2, "C")))
         assert len(p.steps) == 3
@@ -247,8 +255,7 @@ class TestProcedureCandidate:
     def test_non_step_element_error_is_bounded(self):
         with pytest.raises(ValueError) as exc:
             _procedure(steps=("not-a-step",))
-        assert str(exc.value) == "steps must contain only ProcedureStep instances"
-        assert "steps[0]" not in str(exc.value)
+        assert str(exc.value) == "steps[0] must be a ProcedureStep"
         assert "not-a-step" not in str(exc.value)
 
     def test_preconditions_and_postconditions(self):
@@ -259,9 +266,19 @@ class TestProcedureCandidate:
         assert p.preconditions == ("system is up",)
         assert p.postconditions == ("file exists",)
 
+    def test_preconditions_reject_scalar_and_blank_items(self):
+        with pytest.raises(ValueError, match="preconditions must be an array"):
+            _procedure(preconditions="system is up")
+        with pytest.raises(ValueError, match=r"preconditions\[0\]"):
+            _procedure(preconditions=("",))
+
     def test_missing_parts_tracked(self):
         p = _procedure(missing_parts=("step 3 unclear", "approval chain unknown"))
         assert len(p.missing_parts) == 2
+
+    def test_missing_parts_reject_scalar_text(self):
+        with pytest.raises(ValueError, match="missing_parts must be an array"):
+            _procedure(missing_parts="approval chain unknown")
 
     def test_default_lifecycle_is_candidate(self):
         p = _procedure()
@@ -321,11 +338,35 @@ class TestMethodPattern:
                 description="D", applicability="A", steps=("s",), created_at=NOW,
             )
 
+    def test_source_ids_reject_scalar_and_blank_items(self):
+        with pytest.raises(ValueError, match="source_ids must be an array"):
+            MethodPattern(
+                pattern_id="mp-1", source_ids="src-1", name="P",
+                description="D", applicability="A", steps=("s",), created_at=NOW,
+            )
+        with pytest.raises(ValueError, match=r"source_ids\[0\]"):
+            MethodPattern(
+                pattern_id="mp-2", source_ids=("",), name="P",
+                description="D", applicability="A", steps=("s",), created_at=NOW,
+            )
+
     def test_empty_steps_rejected(self):
         with pytest.raises(ValueError, match="steps"):
             MethodPattern(
                 pattern_id="mp-1", source_ids=("src-1",), name="P",
                 description="D", applicability="A", steps=(), created_at=NOW,
+            )
+
+    def test_steps_reject_scalar_and_blank_items(self):
+        with pytest.raises(ValueError, match="steps must be an array"):
+            MethodPattern(
+                pattern_id="mp-1", source_ids=("src-1",), name="P",
+                description="D", applicability="A", steps="s", created_at=NOW,
+            )
+        with pytest.raises(ValueError, match=r"steps\[0\]"):
+            MethodPattern(
+                pattern_id="mp-2", source_ids=("src-1",), name="P",
+                description="D", applicability="A", steps=("",), created_at=NOW,
             )
 
     def test_frozen(self):
@@ -359,12 +400,34 @@ class TestBestPracticeRecord:
                 recommendations=("rec A",), created_at=NOW,
             )
 
+    def test_conditions_reject_scalar_and_blank_items(self):
+        with pytest.raises(ValueError, match="conditions must be an array"):
+            BestPracticeRecord(
+                practice_id="bp-1", source_ids=("src-1",), name="BP",
+                description="Desc", conditions="condition A",
+                recommendations=("rec A",), created_at=NOW,
+            )
+        with pytest.raises(ValueError, match=r"conditions\[0\]"):
+            BestPracticeRecord(
+                practice_id="bp-2", source_ids=("src-1",), name="BP",
+                description="Desc", conditions=("",),
+                recommendations=("rec A",), created_at=NOW,
+            )
+
     def test_empty_recommendations_rejected(self):
         with pytest.raises(ValueError, match="recommendations"):
             BestPracticeRecord(
                 practice_id="bp-1", source_ids=("src-1",), name="BP",
                 description="Desc", conditions=("c",),
                 recommendations=(), created_at=NOW,
+            )
+
+    def test_recommendations_reject_scalar_text(self):
+        with pytest.raises(ValueError, match="recommendations must be an array"):
+            BestPracticeRecord(
+                practice_id="bp-1", source_ids=("src-1",), name="BP",
+                description="Desc", conditions=("c",),
+                recommendations="rec A", created_at=NOW,
             )
 
     def test_frozen(self):
@@ -397,6 +460,20 @@ class TestFailurePattern:
             FailurePattern(
                 pattern_id="fp-1", source_ids=("src-1",), name="FP",
                 trigger_conditions=(), failure_mode="OOM",
+                recommended_response="Scale up", created_at=NOW,
+            )
+
+    def test_trigger_conditions_reject_scalar_and_blank_items(self):
+        with pytest.raises(ValueError, match="trigger_conditions must be an array"):
+            FailurePattern(
+                pattern_id="fp-1", source_ids=("src-1",), name="FP",
+                trigger_conditions="high load", failure_mode="OOM",
+                recommended_response="Scale up", created_at=NOW,
+            )
+        with pytest.raises(ValueError, match=r"trigger_conditions\[0\]"):
+            FailurePattern(
+                pattern_id="fp-2", source_ids=("src-1",), name="FP",
+                trigger_conditions=("",), failure_mode="OOM",
                 recommended_response="Scale up", created_at=NOW,
             )
 

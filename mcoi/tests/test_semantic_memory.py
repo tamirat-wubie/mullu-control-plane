@@ -63,6 +63,24 @@ def _admission(
     )
 
 
+def test_knowledge_record_rejects_malformed_evidence_array():
+    with pytest.raises(ValueError, match="evidence must be an array"):
+        KnowledgeRecord(
+            knowledge_id="knowledge-semantic-1",
+            subject_id="tenant-1",
+            content_hash="hash-semantic-1",
+            evidence="evidence",
+        )
+
+    with pytest.raises(ValueError, match=r"evidence\[0\]"):
+        KnowledgeRecord(
+            knowledge_id="knowledge-semantic-1",
+            subject_id="tenant-1",
+            content_hash="hash-semantic-1",
+            evidence=("not-evidence",),
+        )
+
+
 def test_admits_semantic_memory_with_learning_admission_and_sources():
     store = SemanticMemoryStore(clock=_clock())
     entry = store.admit(

@@ -20,7 +20,7 @@ def test_validate_promotion_handoff_packet_accepts_example() -> None:
     assert result.valid is True
     assert result.packet_id == "general-agent-promotion-handoff-v1"
     assert result.open_blocker_count == 6
-    assert result.approval_required_count == 4
+    assert result.approval_required_count == 9
     assert result.errors == ()
 
 
@@ -76,8 +76,8 @@ def test_validate_promotion_handoff_packet_rejects_count_drift(tmp_path: Path) -
     result = validate_general_agent_promotion_handoff_packet(packet_path=packet_path)
 
     assert result.valid is False
-    assert result.approval_required_count == 4
-    assert any("approval_required_actions must be 4" in error for error in result.errors)
+    assert result.approval_required_count == 9
+    assert any("approval_required_actions must be 9" in error for error in result.errors)
     assert any("approval_required_actions does not match" in error for error in result.errors)
 
 
@@ -104,7 +104,7 @@ def test_validate_promotion_handoff_packet_cli_outputs_json(capsys) -> None:
     assert payload["valid"] is True
     assert payload["packet_id"] == "general-agent-promotion-handoff-v1"
     assert payload["open_blocker_count"] == 6
-    assert payload["approval_required_count"] == 4
+    assert payload["approval_required_count"] == 9
 
 
 def test_validate_promotion_handoff_packet_missing_file_error_is_bounded(tmp_path: Path) -> None:

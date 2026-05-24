@@ -1,0 +1,195 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:general-agent-promotion-terminal-minting-gate:1",
+  "title": "General Agent Promotion Terminal Minting Gate",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "minting_gate_id",
+    "generated_at",
+    "source_reconciliation_path",
+    "source_reconciliation_id",
+    "authority_ref_present",
+    "authority_ref",
+    "ready_for_terminal_certificate_minting",
+    "candidate_count",
+    "admitted_candidate_count",
+    "blocked_candidate_count",
+    "blocked_reasons",
+    "candidates",
+    "metadata"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "minting_gate_id": {
+      "type": "string",
+      "pattern": "^general-agent-promotion-terminal-minting-gate-[0-9a-f]{16}$"
+    },
+    "generated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "source_reconciliation_path": {
+      "type": "string",
+      "minLength": 1
+    },
+    "source_reconciliation_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "authority_ref_present": {
+      "type": "boolean"
+    },
+    "authority_ref": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "minLength": 1
+    },
+    "ready_for_terminal_certificate_minting": {
+      "type": "boolean"
+    },
+    "candidate_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "admitted_candidate_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "blocked_candidate_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "blocked_reasons": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "candidates": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/minting_candidate"
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "minting_gate_is_not_execution",
+        "terminal_certificates_minted",
+        "secret_values_serialized",
+        "source_reconciliation_hash",
+        "reconciliation_schema_id",
+        "terminal_certificate_schema_id",
+        "authority_model"
+      ],
+      "properties": {
+        "minting_gate_is_not_execution": {
+          "type": "boolean",
+          "const": true
+        },
+        "terminal_certificates_minted": {
+          "type": "boolean",
+          "const": false
+        },
+        "secret_values_serialized": {
+          "type": "boolean",
+          "const": false
+        },
+        "source_reconciliation_hash": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "reconciliation_schema_id": {
+          "type": "string",
+          "const": "urn:mullusi:schema:general-agent-promotion-terminal-evidence-reconciliation:1"
+        },
+        "terminal_certificate_schema_id": {
+          "type": "string",
+          "const": "urn:mullusi:schema:terminal-closure-certificate:1"
+        },
+        "authority_model": {
+          "type": "string",
+          "const": "explicit_operator_authority_required"
+        }
+      }
+    }
+  },
+  "$defs": {
+    "minting_candidate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "candidate_id",
+        "source_action_id",
+        "minting_gate_status",
+        "ready_for_terminal_certificate_minting",
+        "certificate_minted",
+        "execution_performed",
+        "authority_ref_present",
+        "receipt_refs",
+        "blocked_reasons",
+        "prospective_certificate_id"
+      ],
+      "properties": {
+        "candidate_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source_action_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "minting_gate_status": {
+          "type": "string",
+          "enum": [
+            "admitted_for_terminal_certificate_minting",
+            "blocked_missing_authority",
+            "blocked_reconciliation_not_ready",
+            "blocked_invalid_reconciliation"
+          ]
+        },
+        "ready_for_terminal_certificate_minting": {
+          "type": "boolean"
+        },
+        "certificate_minted": {
+          "type": "boolean",
+          "const": false
+        },
+        "execution_performed": {
+          "type": "boolean",
+          "const": false
+        },
+        "authority_ref_present": {
+          "type": "boolean"
+        },
+        "receipt_refs": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "blocked_reasons": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "prospective_certificate_id": {
+          "type": "string",
+          "pattern": "^terminal-closure-certificate-[0-9a-f]{16}$"
+        }
+      }
+    }
+  }
+}

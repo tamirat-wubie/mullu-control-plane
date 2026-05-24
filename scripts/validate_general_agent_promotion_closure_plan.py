@@ -2,31 +2,39 @@
 """Validate full general-agent promotion closure plan consistency.
 
 Purpose: prove the aggregate closure plan faithfully reflects readiness,
-adapter closure, and deployment closure source plans.
+adapter closure, deployment closure, and optional portfolio source plans.
 Governance scope: [OCE, RAG, CDCV, CQTE, UWMA, PRS]
 Dependencies: .change_assurance/general_agent_promotion_closure_plan.json,
-adapter closure plan, deployment publication closure plan, and promotion readiness.
+adapter closure plan, deployment publication closure plan, optional capability
+improvement portfolio, and promotion readiness.
 Invariants:
   - Every source action appears exactly once in the aggregate plan.
   - Adapter closure actions preserve verification commands and receipt validators.
   - Approval counts are derived from action payloads, not trusted blindly.
   - Source readiness and readiness level match the readiness artifact.
+  - Portfolio-derived actions preserve approval and proof fields.
 """
 
 from __future__ import annotations
 
 import argparse
 import json
+import sys
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
 DEFAULT_READINESS = REPO_ROOT / ".change_assurance" / "general_agent_promotion_readiness.json"
 DEFAULT_ADAPTER_PLAN = REPO_ROOT / ".change_assurance" / "capability_adapter_closure_plan.json"
 DEFAULT_DEPLOYMENT_PLAN = REPO_ROOT / ".change_assurance" / "deployment_publication_closure_plan.json"
+DEFAULT_PORTFOLIO_PLAN = REPO_ROOT / ".change_assurance" / "capability_improvement_portfolio.json"
 DEFAULT_PROMOTION_PLAN = REPO_ROOT / ".change_assurance" / "general_agent_promotion_closure_plan.json"
 DEFAULT_OUTPUT = REPO_ROOT / ".change_assurance" / "general_agent_promotion_closure_plan_validation.json"
+
+from scripts.plan_general_agent_promotion_closure import _portfolio_actions  # noqa: E402
 
 
 @dataclass(frozen=True, slots=True)
@@ -54,6 +62,7 @@ def validate_general_agent_promotion_closure_plan(
     readiness_path: Path = DEFAULT_READINESS,
     adapter_plan_path: Path = DEFAULT_ADAPTER_PLAN,
     deployment_plan_path: Path = DEFAULT_DEPLOYMENT_PLAN,
+    portfolio_plan_path: Path | None = None,
 ) -> ClosurePlanValidation:
     """Validate aggregate promotion closure plan consistency."""
     errors: list[str] = []
@@ -61,6 +70,11 @@ def validate_general_agent_promotion_closure_plan(
     readiness = _load_json_object(readiness_path, "promotion readiness", errors)
     adapter_plan = _load_json_object(adapter_plan_path, "adapter closure plan", errors)
     deployment_plan = _load_json_object(deployment_plan_path, "deployment publication closure plan", errors)
+    portfolio_plan = (
+        _load_json_object(portfolio_plan_path, "capability improvement portfolio", errors)
+        if portfolio_plan_path is not None
+        else None
+    )
     if not all((promotion_plan, readiness, adapter_plan, deployment_plan)):
         return _validation_result(
             promotion_plan_path=promotion_plan_path,
@@ -72,6 +86,7 @@ def validate_general_agent_promotion_closure_plan(
     expected_actions = (
         *_source_actions(adapter_plan, source_plan_type="adapter", errors=errors),
         *_source_actions(deployment_plan, source_plan_type="deployment", errors=errors),
+        *_portfolio_source_actions(portfolio_plan, errors=errors),
     )
     observed_actions = _observed_actions(promotion_plan, errors)
     _validate_scalar_fields(
@@ -232,6 +247,18 @@ def _source_actions(
     return tuple(tagged)
 
 
+def _portfolio_source_actions(
+    portfolio_plan: dict[str, Any] | None,
+    *,
+    errors: list[str],
+) -> tuple[dict[str, Any], ...]:
+    try:
+        return _portfolio_actions(portfolio_plan)
+    except ValueError as exc:
+        errors.append(str(exc))
+        return ()
+
+
 def _observed_actions(
     promotion_plan: dict[str, Any],
     errors: list[str],
@@ -246,7 +273,7 @@ def _observed_actions(
             errors.append(f"promotion closure action {index} must be an object")
             continue
         source_plan_type = action.get("source_plan_type")
-        if source_plan_type not in {"adapter", "deployment"}:
+        if source_plan_type not in {"adapter", "deployment", "portfolio"}:
             errors.append(f"promotion closure action {index} has invalid source_plan_type")
         observed.append(action)
     return tuple(observed)
@@ -308,6 +335,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--readiness", default=str(DEFAULT_READINESS))
     parser.add_argument("--adapter-plan", default=str(DEFAULT_ADAPTER_PLAN))
     parser.add_argument("--deployment-plan", default=str(DEFAULT_DEPLOYMENT_PLAN))
+    parser.add_argument("--portfolio-plan", default="")
     parser.add_argument("--output", default=str(DEFAULT_OUTPUT))
     parser.add_argument("--json", action="store_true")
     parser.add_argument("--strict", action="store_true")
@@ -322,6 +350,7 @@ def main(argv: list[str] | None = None) -> int:
         readiness_path=Path(args.readiness),
         adapter_plan_path=Path(args.adapter_plan),
         deployment_plan_path=Path(args.deployment_plan),
+        portfolio_plan_path=Path(args.portfolio_plan) if str(args.portfolio_plan).strip() else None,
     )
     write_general_agent_promotion_closure_plan_validation(validation, Path(args.output))
     if args.json:

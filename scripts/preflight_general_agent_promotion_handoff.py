@@ -57,6 +57,7 @@ EXPECTED_CAPABILITY_COUNT = 63
 EXPECTED_CAPSULE_COUNT = 12
 EXPECTED_READINESS_LEVEL = "pilot-governed-core"
 EXPECTED_SOURCE_PLAN_TYPES = ("adapter", "deployment")
+OPTIONAL_SOURCE_PLAN_TYPES = ("portfolio",)
 
 EnvReader = Callable[[str], str | None]
 
@@ -322,17 +323,20 @@ def _closure_schema_report_step(path: Path) -> HandoffPreflightStep:
     if error:
         return HandoffPreflightStep(name="closure plan schema validation", passed=False, detail=error)
     action_count = payload.get("action_count")
+    source_plan_types = tuple(payload.get("source_plan_types", ()))
+    approval_required_count = payload.get("approval_required_action_count")
     passed = (
         payload.get("ok") is True
         and isinstance(action_count, int)
         and action_count > 0
-        and payload.get("approval_required_action_count") == EXPECTED_APPROVAL_REQUIRED_ACTION_COUNT
-        and tuple(payload.get("source_plan_types", ())) == EXPECTED_SOURCE_PLAN_TYPES
+        and isinstance(approval_required_count, int)
+        and approval_required_count >= EXPECTED_APPROVAL_REQUIRED_ACTION_COUNT
+        and _source_plan_types_allowed(source_plan_types)
     )
     expected_detail = (
         f"ok=true action_count={action_count} "
-        f"approval_required_action_count={EXPECTED_APPROVAL_REQUIRED_ACTION_COUNT} "
-        "source_plan_types=['adapter', 'deployment']"
+        f"approval_required_action_count={approval_required_count} "
+        f"source_plan_types={list(source_plan_types)}"
     )
     detail = expected_detail if passed else f"expected {expected_detail}; observed={_public_report_projection(payload)}"
     return HandoffPreflightStep(name="closure plan schema validation", passed=passed, detail=detail)
@@ -348,20 +352,25 @@ def _closure_drift_report_step(path: Path, *, schema_validation_path: Path) -> H
     expected_action_count = payload.get("expected_action_count")
     observed_action_count = payload.get("observed_action_count")
     schema_action_count = schema_payload.get("action_count")
+    schema_approval_count = schema_payload.get("approval_required_action_count")
+    expected_approval_count = payload.get("expected_approval_required_count")
+    observed_approval_count = payload.get("observed_approval_required_count")
     passed = (
         payload.get("ok") is True
         and isinstance(expected_action_count, int)
         and expected_action_count > 0
         and schema_action_count == expected_action_count
         and observed_action_count == expected_action_count
-        and payload.get("expected_approval_required_count") == EXPECTED_APPROVAL_REQUIRED_ACTION_COUNT
-        and payload.get("observed_approval_required_count") == EXPECTED_APPROVAL_REQUIRED_ACTION_COUNT
+        and isinstance(schema_approval_count, int)
+        and schema_approval_count >= EXPECTED_APPROVAL_REQUIRED_ACTION_COUNT
+        and expected_approval_count == schema_approval_count
+        and observed_approval_count == schema_approval_count
     )
     expected_detail = (
         f"ok=true expected_action_count={expected_action_count} "
         f"observed_action_count={observed_action_count} "
-        f"expected_approval_required_count={EXPECTED_APPROVAL_REQUIRED_ACTION_COUNT} "
-        f"observed_approval_required_count={EXPECTED_APPROVAL_REQUIRED_ACTION_COUNT}"
+        f"expected_approval_required_count={expected_approval_count} "
+        f"observed_approval_required_count={observed_approval_count}"
     )
     detail = (
         expected_detail
@@ -373,6 +382,14 @@ def _closure_drift_report_step(path: Path, *, schema_validation_path: Path) -> H
         )
     )
     return HandoffPreflightStep(name="closure plan drift validation", passed=passed, detail=detail)
+
+
+def _source_plan_types_allowed(source_plan_types: tuple[Any, ...]) -> bool:
+    observed = tuple(str(source_plan_type) for source_plan_type in source_plan_types)
+    if not set(EXPECTED_SOURCE_PLAN_TYPES).issubset(observed):
+        return False
+    allowed = set(EXPECTED_SOURCE_PLAN_TYPES).union(OPTIONAL_SOURCE_PLAN_TYPES)
+    return all(source_plan_type in allowed for source_plan_type in observed)
 
 
 def _readiness_report_step(path: Path) -> tuple[HandoffPreflightStep, str, bool]:

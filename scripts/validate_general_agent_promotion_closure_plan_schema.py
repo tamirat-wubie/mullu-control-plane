@@ -12,6 +12,7 @@ Invariants:
   - Action counts are derived from the action list, not trusted blindly.
   - Approval-required counts are recomputed from action payloads.
   - Non-empty plans must contain adapter and deployment source actions.
+  - Portfolio source actions must carry approval and proof fields.
 """
 
 from __future__ import annotations
@@ -86,12 +87,14 @@ def validate_general_agent_promotion_closure_plan_schema(
     if action_count and {"adapter", "deployment"} - set(source_plan_types):
         errors.append("non-empty promotion closure plan must include adapter and deployment source actions")
     for index, action in enumerate(actions):
-        if action.get("source_plan_type") != "adapter":
-            continue
-        if not str(action.get("verification_command", "")).strip():
-            errors.append(f"adapter action {index} missing verification_command")
-        if not str(action.get("receipt_validator", "")).strip():
-            errors.append(f"adapter action {index} missing receipt_validator")
+        source_plan_type = action.get("source_plan_type")
+        if source_plan_type in {"adapter", "portfolio"}:
+            if not str(action.get("verification_command", "")).strip():
+                errors.append(f"{source_plan_type} action {index} missing verification_command")
+            if not str(action.get("receipt_validator", "")).strip():
+                errors.append(f"{source_plan_type} action {index} missing receipt_validator")
+        if source_plan_type == "portfolio" and action.get("approval_required") is not True:
+            errors.append(f"portfolio action {index} must require approval")
 
     return _validation_result(
         plan_path=plan_path,

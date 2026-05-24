@@ -16,7 +16,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import StrEnum
-from typing import Any, Mapping
+from typing import Any, Mapping, TypeVar, cast
 
 from ._base import (
     ContractRecord,
@@ -26,6 +26,43 @@ from ._base import (
     require_non_negative_int,
     require_unit_float,
 )
+
+
+ContractT = TypeVar("ContractT", bound=ContractRecord)
+
+
+def _freeze_text_array(
+    values: object,
+    field_name: str,
+    *,
+    allow_empty: bool = True,
+) -> tuple[str, ...]:
+    if isinstance(values, (str, bytes)) or not isinstance(values, (tuple, list)):
+        raise ValueError(f"{field_name} must be an array")
+    frozen = cast(tuple[Any, ...], freeze_value(list(values)))
+    if not allow_empty and not frozen:
+        raise ValueError(f"{field_name} must contain at least one item")
+    for idx, value in enumerate(frozen):
+        require_non_empty_text(value, f"{field_name}[{idx}]")
+    return cast(tuple[str, ...], frozen)
+
+
+def _freeze_contract_array(
+    values: object,
+    field_name: str,
+    record_type: type[ContractT],
+    *,
+    allow_empty: bool = True,
+) -> tuple[ContractT, ...]:
+    if isinstance(values, (str, bytes)) or not isinstance(values, (tuple, list)):
+        raise ValueError(f"{field_name} must be an array")
+    frozen = cast(tuple[Any, ...], freeze_value(list(values)))
+    if not allow_empty and not frozen:
+        raise ValueError(f"{field_name} must contain at least one item")
+    for idx, value in enumerate(frozen):
+        if not isinstance(value, record_type):
+            raise ValueError(f"{field_name}[{idx}] must be a {record_type.__name__}")
+    return cast(tuple[ContractT, ...], frozen)
 
 
 class ContradictionStrategy(StrEnum):
@@ -68,10 +105,11 @@ class StateEntity(ContractRecord):
         if not isinstance(self.attributes, Mapping):
             raise ValueError("attributes must be a mapping")
         object.__setattr__(self, "attributes", freeze_value(self.attributes))
-        if not self.evidence_ids:
-            raise ValueError("evidence_ids must contain at least one item")
-        for eid in self.evidence_ids:
-            require_non_empty_text(eid, "evidence_id")
+        object.__setattr__(
+            self,
+            "evidence_ids",
+            _freeze_text_array(self.evidence_ids, "evidence_ids", allow_empty=False),
+        )
         if len(set(self.evidence_ids)) != len(self.evidence_ids):
             raise ValueError("evidence_ids must be unique")
         object.__setattr__(self, "confidence", require_unit_float(self.confidence, "confidence"))
@@ -95,8 +133,13 @@ class EntityRelation(ContractRecord):
             object.__setattr__(self, field_name, require_non_empty_text(getattr(self, field_name), field_name))
         if self.source_entity_id == self.target_entity_id:
             raise ValueError("self-referential relations are prohibited")
-        if not self.evidence_ids:
-            raise ValueError("evidence_ids must contain at least one item")
+        object.__setattr__(
+            self,
+            "evidence_ids",
+            _freeze_text_array(self.evidence_ids, "evidence_ids", allow_empty=False),
+        )
+        if len(set(self.evidence_ids)) != len(self.evidence_ids):
+            raise ValueError("evidence_ids must be unique")
         object.__setattr__(self, "confidence", require_unit_float(self.confidence, "confidence"))
 
 
@@ -115,10 +158,19 @@ class ContradictionRecord(ContractRecord):
     def __post_init__(self) -> None:
         for field_name in ("contradiction_id", "entity_id", "attribute"):
             object.__setattr__(self, field_name, require_non_empty_text(getattr(self, field_name), field_name))
+        object.__setattr__(
+            self,
+            "conflicting_evidence_ids",
+            _freeze_text_array(self.conflicting_evidence_ids, "conflicting_evidence_ids"),
+        )
         if len(self.conflicting_evidence_ids) < 2:
             raise ValueError("contradiction requires at least two conflicting evidence IDs")
+        if len(set(self.conflicting_evidence_ids)) != len(self.conflicting_evidence_ids):
+            raise ValueError("conflicting_evidence_ids must be unique")
         if not isinstance(self.strategy, ContradictionStrategy):
             raise ValueError("strategy must be a ContradictionStrategy value")
+        if not isinstance(self.resolved, bool):
+            raise ValueError("resolved must be a boolean")
 
 
 # ---------------------------------------------------------------------------
@@ -165,10 +217,13 @@ class DerivedFact(ContractRecord):
         for f in ("fact_id", "entity_id", "attribute", "derivation_rule"):
             object.__setattr__(self, f, require_non_empty_text(getattr(self, f), f))
         object.__setattr__(self, "derived_value", freeze_value(self.derived_value))
-        if not self.source_entity_ids:
-            raise ValueError("source_entity_ids must contain at least one item")
-        for sid in self.source_entity_ids:
-            require_non_empty_text(sid, "source_entity_id")
+        object.__setattr__(
+            self,
+            "source_entity_ids",
+            _freeze_text_array(self.source_entity_ids, "source_entity_ids", allow_empty=False),
+        )
+        if len(set(self.source_entity_ids)) != len(self.source_entity_ids):
+            raise ValueError("source_entity_ids must be unique")
         object.__setattr__(self, "confidence", require_unit_float(self.confidence, "confidence"))
         object.__setattr__(self, "derived_at", require_datetime_text(self.derived_at, "derived_at"))
 
@@ -216,11 +271,11 @@ class ConflictSet(ContractRecord):
     def __post_init__(self) -> None:
         object.__setattr__(self, "conflict_set_id", require_non_empty_text(self.conflict_set_id, "conflict_set_id"))
         object.__setattr__(self, "entity_id", require_non_empty_text(self.entity_id, "entity_id"))
-        if not self.contradictions:
-            raise ValueError("contradictions must contain at least one item")
-        for item in self.contradictions:
-            if not isinstance(item, ContradictionRecord):
-                raise ValueError("each contradiction must be a ContradictionRecord instance")
+        object.__setattr__(
+            self,
+            "contradictions",
+            _freeze_contract_array(self.contradictions, "contradictions", ContradictionRecord, allow_empty=False),
+        )
         if not isinstance(self.overall_strategy, ContradictionStrategy):
             raise ValueError("overall_strategy must be a ContradictionStrategy value")
         object.__setattr__(self, "created_at", require_datetime_text(self.created_at, "created_at"))
@@ -318,31 +373,42 @@ class WorldStateSnapshot(ContractRecord):
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "snapshot_id", require_non_empty_text(self.snapshot_id, "snapshot_id"))
-        object.__setattr__(self, "entities", freeze_value(list(self.entities)))
-        for item in self.entities:
-            if not isinstance(item, StateEntity):
-                raise ValueError("each entity must be a StateEntity instance")
-        object.__setattr__(self, "relations", freeze_value(list(self.relations)))
-        for item in self.relations:
-            if not isinstance(item, EntityRelation):
-                raise ValueError("each relation must be an EntityRelation instance")
-        object.__setattr__(self, "derived_facts", freeze_value(list(self.derived_facts)))
-        for item in self.derived_facts:
-            if not isinstance(item, DerivedFact):
-                raise ValueError("each derived_fact must be a DerivedFact instance")
         object.__setattr__(
-            self, "unresolved_contradictions", freeze_value(list(self.unresolved_contradictions)),
+            self,
+            "entities",
+            _freeze_contract_array(self.entities, "entities", StateEntity),
         )
-        for item in self.unresolved_contradictions:
-            if not isinstance(item, ContradictionRecord):
-                raise ValueError("each unresolved_contradiction must be a ContradictionRecord")
-        object.__setattr__(self, "expected_states", freeze_value(list(self.expected_states)))
-        for item in self.expected_states:
-            if not isinstance(item, ExpectedState):
-                raise ValueError("each expected_state must be an ExpectedState instance")
+        object.__setattr__(
+            self,
+            "relations",
+            _freeze_contract_array(self.relations, "relations", EntityRelation),
+        )
+        object.__setattr__(
+            self,
+            "derived_facts",
+            _freeze_contract_array(self.derived_facts, "derived_facts", DerivedFact),
+        )
+        object.__setattr__(
+            self,
+            "unresolved_contradictions",
+            _freeze_contract_array(
+                self.unresolved_contradictions,
+                "unresolved_contradictions",
+                ContradictionRecord,
+            ),
+        )
+        object.__setattr__(
+            self,
+            "expected_states",
+            _freeze_contract_array(self.expected_states, "expected_states", ExpectedState),
+        )
         object.__setattr__(self, "state_hash", require_non_empty_text(self.state_hash, "state_hash"))
         object.__setattr__(self, "entity_count", require_non_negative_int(self.entity_count, "entity_count"))
         object.__setattr__(self, "relation_count", require_non_negative_int(self.relation_count, "relation_count"))
+        if self.entity_count != len(self.entities):
+            raise ValueError("entity_count must match entities length")
+        if self.relation_count != len(self.relations):
+            raise ValueError("relation_count must match relations length")
         object.__setattr__(
             self, "overall_confidence", require_unit_float(self.overall_confidence, "overall_confidence"),
         )

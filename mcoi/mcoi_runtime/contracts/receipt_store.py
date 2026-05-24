@@ -76,6 +76,26 @@ def _require_positive_int(value: object, field_name: str) -> int:
     return value
 
 
+def _require_entity_id(entity_id: object) -> str:
+    if not isinstance(entity_id, str) or not entity_id.strip():
+        raise ValueError("entity_id must be a non-empty string")
+    return entity_id
+
+
+def _require_lineage(lineage: object) -> CausalLineage:
+    if not isinstance(lineage, CausalLineage):
+        raise ValueError("lineage must be a CausalLineage instance")
+    return lineage
+
+
+def _require_positive_int(value: object, field_name: str) -> int:
+    if not isinstance(value, int) or isinstance(value, bool):
+        raise ValueError(f"{field_name} must be an integer")
+    if value < 1:
+        raise ValueError(f"{field_name} must be >= 1")
+    return value
+
+
 class ReceiptStore:
     """Base class for causal-lineage storage backends. Defaults are
     no-ops; subclasses override only the operations they support.

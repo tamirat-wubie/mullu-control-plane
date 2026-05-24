@@ -46,6 +46,40 @@ def test_promotion_closure_plan_schema_accepts_valid_plan(tmp_path: Path) -> Non
     assert validation.source_plan_types == ("adapter", "deployment")
 
 
+def test_promotion_closure_plan_schema_accepts_portfolio_source_actions(tmp_path: Path) -> None:
+    plan_path = tmp_path / "general_agent_promotion_closure_plan.json"
+    payload = _valid_plan()
+    payload["source_plans"].append(".change_assurance/capability_improvement_portfolio.json")  # type: ignore[index, union-attr]
+    payload["actions"].append(  # type: ignore[index, union-attr]
+        {
+            "action_id": "capability-improvement-browser-open-0123456789abcdef",
+            "action_type": "capability-improvement",
+            "blocker": "capability_improvement_required:browser.open",
+            "command": "Review activation-blocked improvement plan.",
+            "verification_command": "python -m pytest tests/test_gateway/test_autonomous_capability_upgrade.py -q",
+            "receipt_validator": "capability_improvement_portfolio:portfolio-hash:plan-id",
+            "evidence_required": ["capability_health:browser.open"],
+            "risk_level": "critical",
+            "approval_required": True,
+            "source_plan_type": "portfolio",
+        }
+    )
+    payload["total_action_count"] = 3
+    payload["approval_required_action_count"] = 2
+    plan_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    validation = validate_general_agent_promotion_closure_plan_schema(
+        plan_path=plan_path,
+        schema_path=SCHEMA_PATH,
+    )
+
+    assert validation.ok is True
+    assert validation.errors == ()
+    assert validation.action_count == 3
+    assert validation.approval_required_action_count == 2
+    assert validation.source_plan_types == ("adapter", "deployment", "portfolio")
+
+
 def test_promotion_closure_plan_schema_rejects_missing_source_tag(tmp_path: Path) -> None:
     plan_path = tmp_path / "general_agent_promotion_closure_plan.json"
     payload = _valid_plan()
@@ -128,6 +162,37 @@ def test_promotion_closure_plan_schema_rejects_adapter_without_proof_contract(
     assert validation.ok is False
     assert "adapter action 0 missing verification_command" in validation.errors
     assert "adapter action 0 missing receipt_validator" in validation.errors
+
+
+def test_promotion_closure_plan_schema_rejects_portfolio_without_approval(
+    tmp_path: Path,
+) -> None:
+    plan_path = tmp_path / "general_agent_promotion_closure_plan.json"
+    payload = _valid_plan()
+    payload["actions"].append(  # type: ignore[index, union-attr]
+        {
+            "action_id": "capability-improvement-browser-open-0123456789abcdef",
+            "action_type": "capability-improvement",
+            "blocker": "capability_improvement_required:browser.open",
+            "command": "Review activation-blocked improvement plan.",
+            "verification_command": "python -m pytest tests/test_gateway/test_autonomous_capability_upgrade.py -q",
+            "receipt_validator": "capability_improvement_portfolio:portfolio-hash:plan-id",
+            "risk_level": "critical",
+            "approval_required": False,
+            "source_plan_type": "portfolio",
+        }
+    )
+    payload["total_action_count"] = 3
+    payload["approval_required_action_count"] = 1
+    plan_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    validation = validate_general_agent_promotion_closure_plan_schema(
+        plan_path=plan_path,
+        schema_path=SCHEMA_PATH,
+    )
+
+    assert validation.ok is False
+    assert "portfolio action 2 must require approval" in validation.errors
 
 
 def test_promotion_closure_plan_schema_writer_and_cli_honor_strict(tmp_path: Path, capsys) -> None:

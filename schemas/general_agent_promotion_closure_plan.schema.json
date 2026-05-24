@@ -118,7 +118,8 @@
           "type": "string",
           "enum": [
             "adapter",
-            "deployment"
+            "deployment",
+            "portfolio"
           ]
         }
       }

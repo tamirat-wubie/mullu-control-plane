@@ -1,0 +1,197 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:general-agent-promotion-terminal-evidence-reconciliation:1",
+  "title": "General Agent Promotion Terminal Evidence Reconciliation",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "reconciliation_id",
+    "generated_at",
+    "source_candidate_path",
+    "source_candidate_set_id",
+    "ready_for_terminal_certificate_minting",
+    "candidate_count",
+    "reconciled_candidate_count",
+    "blocked_candidate_count",
+    "missing_evidence_count",
+    "blocked_reasons",
+    "candidates",
+    "metadata"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "reconciliation_id": {
+      "type": "string",
+      "pattern": "^general-agent-promotion-terminal-evidence-reconciliation-[0-9a-f]{16}$"
+    },
+    "generated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "source_candidate_path": {
+      "type": "string",
+      "minLength": 1
+    },
+    "source_candidate_set_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "ready_for_terminal_certificate_minting": {
+      "type": "boolean"
+    },
+    "candidate_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "reconciled_candidate_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "blocked_candidate_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "missing_evidence_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "blocked_reasons": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "candidates": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/reconciled_candidate"
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "reconciliation_is_not_execution",
+        "terminal_certificates_minted",
+        "secret_values_serialized",
+        "source_candidate_hash",
+        "candidate_schema_id",
+        "terminal_certificate_schema_id"
+      ],
+      "properties": {
+        "reconciliation_is_not_execution": {
+          "type": "boolean",
+          "const": true
+        },
+        "terminal_certificates_minted": {
+          "type": "boolean",
+          "const": false
+        },
+        "secret_values_serialized": {
+          "type": "boolean",
+          "const": false
+        },
+        "source_candidate_hash": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "candidate_schema_id": {
+          "type": "string",
+          "const": "urn:mullusi:schema:general-agent-promotion-terminal-certificate-candidates:1"
+        },
+        "terminal_certificate_schema_id": {
+          "type": "string",
+          "const": "urn:mullusi:schema:terminal-closure-certificate:1"
+        }
+      }
+    }
+  },
+  "$defs": {
+    "reconciled_candidate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "candidate_id",
+        "source_action_id",
+        "reconciliation_status",
+        "ready_for_terminal_certificate_minting",
+        "certificate_minted",
+        "execution_performed",
+        "evidence_required",
+        "evidence_matched",
+        "missing_evidence",
+        "receipt_refs",
+        "blocked_reasons"
+      ],
+      "properties": {
+        "candidate_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source_action_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "reconciliation_status": {
+          "type": "string",
+          "enum": [
+            "reconciled",
+            "blocked_missing_evidence",
+            "blocked_invalid_candidates"
+          ]
+        },
+        "ready_for_terminal_certificate_minting": {
+          "type": "boolean"
+        },
+        "certificate_minted": {
+          "type": "boolean",
+          "const": false
+        },
+        "execution_performed": {
+          "type": "boolean",
+          "const": false
+        },
+        "evidence_required": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "evidence_matched": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "missing_evidence": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "receipt_refs": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "blocked_reasons": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    }
+  }
+}
