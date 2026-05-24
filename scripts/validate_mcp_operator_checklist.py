@@ -35,6 +35,7 @@ REQUIRED_STEP_IDS = frozenset({
     "inspect_operator_read_model",
     "inspect_mcp_execution_evidence_bundle",
     "collect_runtime_conformance",
+    "validate_gateway_dns_resolution",
     "run_deployment_preflight",
     "write_orchestration_receipt",
     "validate_orchestration_receipt",
@@ -82,6 +83,12 @@ REQUIRED_STEP_EVIDENCE = {
         "mcp_capability_manifest_valid=true",
         "capability_plan_bundle_canary_passed=true",
     }),
+    "validate_gateway_dns_resolution": frozenset({
+        "dns receipt resolved=true",
+        "dns receipt validation valid=true",
+        "require resolved step passed",
+        "address_count>0",
+    }),
     "run_deployment_preflight": frozenset({
         "runtime conformance endpoint step passed",
         "plan_bundle_passed=True",
@@ -106,6 +113,11 @@ REQUIRED_STEP_COMMAND_TOKENS = {
     "inspect_operator_read_model": ("/mcp/operator/read-model", "X-Mullu-Authority-Secret"),
     "inspect_mcp_execution_evidence_bundle": ("/mcp/operator/evidence-bundles/", "X-Mullu-Authority-Secret"),
     "collect_runtime_conformance": ("collect_runtime_conformance.py", "--authority-operator-secret"),
+    "validate_gateway_dns_resolution": (
+        "collect_gateway_dns_resolution_receipt.py",
+        "validate_gateway_dns_resolution_receipt.py",
+        "--require-resolved",
+    ),
     "run_deployment_preflight": ("preflight_deployment_witness.py", "--mcp-capability-manifest"),
     "write_orchestration_receipt": (
         "orchestrate_deployment_witness.py",

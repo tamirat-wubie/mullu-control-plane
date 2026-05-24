@@ -146,6 +146,8 @@ DEPLOYMENT_STATUS_REQUIRED_LITERALS = (
     ".github/workflows/gateway-publication.yml",
     "python scripts/report_gateway_publication_readiness.py --gateway-url \"$MULLU_GATEWAY_URL\" --dispatch-witness",
     "python scripts/dispatch_gateway_publication.py --readiness-report .change_assurance/gateway_publication_readiness.json",
+    "python scripts/collect_gateway_dns_resolution_receipt.py --gateway-url \"$MULLU_GATEWAY_URL\" --output .change_assurance/gateway_dns_resolution_receipt.json --json",
+    "python scripts/validate_gateway_dns_resolution_receipt.py --receipt .change_assurance/gateway_dns_resolution_receipt.json --output .change_assurance/gateway_dns_resolution_receipt_validation.json --require-resolved",
     "python scripts/publish_gateway_publication.py --gateway-url \"$MULLU_GATEWAY_URL\" --dispatch-witness --dispatch --receipt-output .change_assurance/gateway_publication_receipt.json",
     ".change_assurance/gateway_publication_receipt.json",
     "python scripts/validate_gateway_publication_receipt.py --receipt .change_assurance/gateway_publication_receipt.json --require-ready --require-dispatched --require-success",
