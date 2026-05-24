@@ -150,8 +150,8 @@ Witness integrity audit:
 | Metric | Count |
 |---|---:|
 | Runtime witness labels | 1049 |
-| Exact test anchors | 751 |
-| Unanchored witness labels | 298 |
+| Exact test anchors | 760 |
+| Unanchored witness labels | 289 |
 
 Evidence quality gaps:
 none
@@ -183,7 +183,6 @@ Witness integrity gaps:
 | `authority_operator_controls` | 0 | 5 | operator_access_guard, operator_audit_events, ownership_policy_read_models, approval_expiration_witness, obligation_satisfaction_escalation_witness |
 | `runtime_reflex_engine` | 0 | 9 | operator_only_access, mutation_applied_false, certification_handoff_required, protected_surfaces_auto_promote_false, signed_reflex_witness, reflex_deployment_witness_schema, reflex_validator_receipt_schema, offline_reflex_witness_replay, reflex_validator_receipt_artifact |
 | `capability_maturity_assessment` | 3 | 6 | certification_evidence_synthesizes_maturity_extension, registry_read_model_exposes_maturity, default_pack_C6_examples_projected, effect_bearing_production_requires_live_write, production_requires_worker_deployment_recovery, autonomy_requires_C7_controls |
-| `capability_manifest_registry` | 0 | 9 | capability_manifest_schema_valid, software_dev_manifests_admit_locally, manifest_missing_policy_rejected, manifest_unresolved_schema_rejected, effect_manifest_requires_sandbox_rollback, hot_reload_metadata_enforced, production_hot_reload_denied_for_effect_manifest, fabric_projects_local_manifest_registry, fabric_rejects_production_hot_reload_manifest_registry |
 | `agent_identity` | 0 | 8 | owner_tenant_identity_required, capability_scope_conflict_denied, self_approval_forbidden, policy_mutation_forbidden, delegation_requires_lease, agent_budget_enforced, reputation_update_requires_evidence, agent_identity_schema_valid |
 | `claim_verification` | 0 | 6 | claim_type_declared, source_evidence_required, contradictions_block_execution, stale_claims_block_execution, high_risk_requires_independent_support, claim_verification_schema_valid |
 | `governed_connector_framework` | 0 | 6 | connector_registration_typed, connector_invocation_guard_chain_checked, connector_lifecycle_disable_enable_bounded, connector_history_summary_bounded, connector_errors_sanitized, connector_invocation_audited |
@@ -326,5 +325,5 @@ none
 STATUS:
   Completeness: 100%
   Invariants verified: route declarations, route-level coverage classification, coverage levels, coverage states, closure action mapping, schema contract validation, deployment orchestration receipt schema contract
-  Open issues: 298 runtime-witness labels lack exact test-function anchors
+  Open issues: 289 runtime-witness labels lack exact test-function anchors
   Next action: bind unanchored runtime-witness labels to exact test-function anchors

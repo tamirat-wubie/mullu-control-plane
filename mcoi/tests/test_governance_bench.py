@@ -5,6 +5,7 @@ Tests: Benchmark harness, result structure, governance subsystem latency,
 """
 
 import pytest
+import mcoi_runtime.core.governance_bench as governance_bench
 from mcoi_runtime.core.governance_bench import (
     BenchResult,
     BenchSuite,
@@ -34,6 +35,15 @@ class TestBenchmarkHarness:
         assert result.median_ns > 0
         assert result.p95_ns >= result.median_ns
         assert result.p99_ns >= result.p95_ns
+
+    def test_zero_resolution_samples_are_floored(self, monkeypatch):
+        monkeypatch.setattr(governance_bench.time, "perf_counter_ns", lambda: 100)
+
+        result = benchmark("test", lambda: None, iterations=5, warmup=0)
+
+        assert result.min_ns == 1
+        assert result.median_ns == 1
+        assert result.p99_ns == 1
 
     def test_mean_us_conversion(self):
         result = benchmark("test", lambda: None, iterations=100, warmup=10)

@@ -1,0 +1,647 @@
+{
+  "_meta": {
+    "adapter_count": 15,
+    "note": "Golden output snapshots. Regenerate with `python -m mcoi.tools.export_adapter_snapshots` when an adapter's behavior changes deliberately. audit_trail_id is excluded (non-deterministic UUID)."
+  },
+  "adapters": {
+    "software_dev": {
+      "translate": {
+        "purpose_statement": "eliminate_defect: fix off-by-one in pagination",
+        "authority_required": [
+          "repo_write_access",
+          "branch_push_access"
+        ],
+        "observer_required": [
+          "code_reviewer"
+        ],
+        "constraint_set": [
+          {
+            "domain": "software_correctness",
+            "restriction": "regression_test_added",
+            "violation_response": "block"
+          }
+        ],
+        "boundary": {
+          "inside_predicate": "file ∈ {svc/page.py} ∧ repo = acme/svc ∧ branch = main",
+          "permeability": "selective"
+        }
+      },
+      "run": {
+        "governance_status": "approved",
+        "protocol": [
+          "Read current state of 1 affected file(s)",
+          "Infer required changes to satisfy 1 criteria",
+          "Select implementation approach",
+          "Apply transformations within boundary [acme/svc:main]",
+          "Run validation suite (tests, lint, type-check)",
+          "Submit for code review"
+        ],
+        "risk_flags": []
+      }
+    },
+    "business_process": {
+      "translate": {
+        "purpose_statement": "issue_authoritative_approval: vendor onboarding",
+        "authority_required": [
+          "approver:bob"
+        ],
+        "observer_required": [
+          "approval_recorder"
+        ],
+        "constraint_set": [
+          {
+            "domain": "business_correctness",
+            "restriction": "vendor_kyc_complete",
+            "violation_response": "block"
+          }
+        ],
+        "boundary": {
+          "inside_predicate": "process_id = PROC-001 ∧ systems ⊆ {vendor-mgmt}",
+          "permeability": "selective"
+        }
+      },
+      "run": {
+        "governance_status": "approved",
+        "protocol": [
+          "Capture initial state of process PROC-001",
+          "Apply business policy to derive required action",
+          "Decide approval/rejection per policy",
+          "Apply approval action within process boundary",
+          "Route to approver: bob",
+          "Record approval and validate completion criteria",
+          "Persist outcome to audit log"
+        ],
+        "risk_flags": []
+      }
+    },
+    "scientific_research": {
+      "translate": {
+        "purpose_statement": "extract_inference_from_evidence: analysis of correlation X~Y",
+        "authority_required": [
+          "peer_reviewer:dr-rev"
+        ],
+        "observer_required": [
+          "peer_review_committee"
+        ],
+        "constraint_set": [
+          {
+            "domain": "research_correctness",
+            "restriction": "p_lt_005",
+            "violation_response": "block"
+          },
+          {
+            "domain": "statistical_significance",
+            "restriction": "reject_null_at_alpha_0.0500",
+            "violation_response": "escalate"
+          },
+          {
+            "domain": "replication",
+            "restriction": "replications_completed >= 1",
+            "violation_response": "escalate"
+          },
+          {
+            "domain": "statistical_power",
+            "restriction": "power >= 0.8",
+            "violation_response": "warn"
+          }
+        ],
+        "boundary": {
+          "inside_predicate": "study_id = STUDY-001 ∧ corpus ⊆ {dataset-A}",
+          "permeability": "closed"
+        }
+      },
+      "run": {
+        "governance_status": "approved",
+        "protocol": [
+          "Capture initial state of study STUDY-001",
+          "Apply statistical inference at α=0.0500",
+          "Decide accept/reject hypothesis",
+          "Apply analysis action to corpus (1 item(s))",
+          "Submit for peer review: dr-rev",
+          "Validate replications complete (≥ 1)",
+          "Persist research outcome to study log"
+        ],
+        "risk_flags": []
+      }
+    },
+    "manufacturing": {
+      "translate": {
+        "purpose_statement": "join_components_into_unit: assemble unit batch",
+        "authority_required": [
+          "quality_engineer:qe-bob",
+          "operator:op-alice"
+        ],
+        "observer_required": [
+          "iso:ISO_9001"
+        ],
+        "constraint_set": [
+          {
+            "domain": "production_correctness",
+            "restriction": "yield_above_target",
+            "violation_response": "block"
+          },
+          {
+            "domain": "yield",
+            "restriction": "batch_yield >= 0.95",
+            "violation_response": "warn"
+          }
+        ],
+        "boundary": {
+          "inside_predicate": "line_id = LINE-A ∧ parts ⊆ {PN-001}",
+          "permeability": "selective"
+        }
+      },
+      "run": {
+        "governance_status": "approved",
+        "protocol": [
+          "Capture initial state of line LINE-A",
+          "Apply control-chart inference to current run",
+          "Decide accept/rework/scrap per acceptance criteria",
+          "Execute assembly on 1 part(s)",
+          "Route to quality engineer: qe-bob",
+          "Verify ISO ISO_9001 compliance",
+          "Inspect outcome against acceptance criteria",
+          "Persist outcome to line audit log"
+        ],
+        "risk_flags": []
+      }
+    },
+    "healthcare": {
+      "translate": {
+        "purpose_statement": "issue_pharmaceutical_intervention: ACE inhibitor",
+        "authority_required": [
+          "clinician:dr-smith",
+          "specialist:dr-cardio"
+        ],
+        "observer_required": [
+          "medical_record_audit",
+          "patient_consent:written"
+        ],
+        "constraint_set": [
+          {
+            "domain": "clinical_correctness",
+            "restriction": "indication_present",
+            "violation_response": "block"
+          }
+        ],
+        "boundary": {
+          "inside_predicate": "encounter_id = enc-001 ∧ records ⊆ {mrn-1}",
+          "permeability": "closed"
+        }
+      },
+      "run": {
+        "governance_status": "approved",
+        "protocol": [
+          "Document initial state of encounter enc-001",
+          "Apply clinical guideline to current presentation",
+          "Decide clinical course of action",
+          "Execute prescription",
+          "Confirm written patient consent on file",
+          "Consult specialist: dr-cardio",
+          "Validate clinical outcome against acceptance criteria",
+          "Send prescription to pharmacy of record",
+          "Persist outcome to medical record"
+        ],
+        "risk_flags": [
+          "prescription_irreversible — confirm before execution"
+        ]
+      }
+    },
+    "education": {
+      "translate": {
+        "purpose_statement": "construct_evaluation_instrument: design midterm assessment",
+        "authority_required": [
+          "instructor:prof-alice",
+          "committee:prof-bob"
+        ],
+        "observer_required": [
+          "registrar_audit",
+          "learner:learner-1"
+        ],
+        "constraint_set": [
+          {
+            "domain": "instructional_correctness",
+            "restriction": "rubric_passed",
+            "violation_response": "block"
+          },
+          {
+            "domain": "learning_objectives",
+            "restriction": "all_objectives_assessed:1",
+            "violation_response": "warn"
+          }
+        ],
+        "boundary": {
+          "inside_predicate": "course_id = MATH-101 ∧ learners ⊆ {learner-1}",
+          "permeability": "closed"
+        }
+      },
+      "run": {
+        "governance_status": "approved",
+        "protocol": [
+          "Capture initial state for course MATH-101",
+          "Infer learning outcomes from current evidence",
+          "Decide pass/fail/needs-improvement per rubric",
+          "Execute assessment_design for 1 learner(s)",
+          "Route to curriculum committee: prof-bob",
+          "Validate outcome against learning objectives",
+          "Persist outcome to learning management system"
+        ],
+        "risk_flags": [
+          "no_accessibility_requirements_declared — ADA/equivalent compliance unverified"
+        ]
+      }
+    },
+    "finance": {
+      "translate": {
+        "purpose_statement": "execute_irrevocable_funds_transfer: vendor payment",
+        "authority_required": [
+          "officer:alice",
+          "approver:bob"
+        ],
+        "observer_required": [
+          "transaction_journal_audit",
+          "regulator:SOX",
+          "jurisdiction:US"
+        ],
+        "constraint_set": [
+          {
+            "domain": "financial_correctness",
+            "restriction": "balance_sufficient",
+            "violation_response": "block"
+          }
+        ],
+        "boundary": {
+          "inside_predicate": "transaction_id = TX-001 ∧ accounts ⊆ {1001}",
+          "permeability": "closed"
+        }
+      },
+      "run": {
+        "governance_status": "approved",
+        "protocol": [
+          "Capture initial ledger state for transaction TX-001",
+          "Apply accounting rule and regulatory regime to action",
+          "Decide whether to post the financial action",
+          "Execute wire_transfer",
+          "Approver signoff: bob",
+          "Validate posting against acceptance criteria",
+          "Transmit wire instruction via SWIFT/Fedwire of record",
+          "Persist posted entry to immutable journal"
+        ],
+        "risk_flags": [
+          "wire_transfer_irreversible — confirm before execution"
+        ]
+      }
+    },
+    "legal": {
+      "translate": {
+        "purpose_statement": "initiate_judicial_proceeding: breach of contract",
+        "authority_required": [
+          "counsel:alice",
+          "co_counsel:bob"
+        ],
+        "observer_required": [
+          "matter_audit",
+          "jurisdiction:US-NY-FED",
+          "court:SDNY",
+          "client:acme",
+          "opposing:widget"
+        ],
+        "constraint_set": [
+          {
+            "domain": "legal_correctness",
+            "restriction": "jurisdiction_proper",
+            "violation_response": "block"
+          }
+        ],
+        "boundary": {
+          "inside_predicate": "matter_id = M-001 ∧ jurisdiction = US-NY-FED",
+          "permeability": "closed"
+        }
+      },
+      "run": {
+        "governance_status": "approved",
+        "protocol": [
+          "Capture initial matter state for M-001",
+          "Apply governing law and precedent to the action",
+          "Decide whether to proceed with the legal action",
+          "Execute case_filing",
+          "Co-counsel signoff: bob",
+          "Validate work product against acceptance criteria",
+          "File complaint with clerk of SDNY",
+          "Persist outcome to matter file and time records"
+        ],
+        "risk_flags": [
+          "case_filing_irreversible — confirm before execution"
+        ]
+      }
+    },
+    "public_sector": {
+      "translate": {
+        "purpose_statement": "grant_authorization_to_act: construction permit",
+        "authority_required": [
+          "official:alice",
+          "reviewer:bob"
+        ],
+        "observer_required": [
+          "civic_audit",
+          "ombudsman",
+          "agency:DBI-SF",
+          "jurisdiction:US-CA-SF",
+          "statute:CODE"
+        ],
+        "constraint_set": [
+          {
+            "domain": "civic_correctness",
+            "restriction": "zoning_ok",
+            "violation_response": "block"
+          }
+        ],
+        "boundary": {
+          "inside_predicate": "case_id = P-001 ∧ agency = DBI-SF",
+          "permeability": "closed"
+        }
+      },
+      "run": {
+        "governance_status": "approved",
+        "protocol": [
+          "Open case record for P-001",
+          "Apply statutory authority and agency policy to the facts",
+          "Decide on the civic action",
+          "Execute permit_issuance",
+          "Confirm notice-and-hearing record on file",
+          "Reviewer signoff: bob",
+          "Validate decision against acceptance criteria",
+          "Issue permit and post to public registry",
+          "Persist final action to case file and ombudsman log"
+        ],
+        "risk_flags": [
+          "permit_issuance_irreversible — confirm before issuance"
+        ]
+      }
+    },
+    "logistics": {
+      "translate": {
+        "purpose_statement": "release_shipment_into_transit: domestic shipment",
+        "authority_required": [
+          "dispatcher:alice",
+          "carrier:ups"
+        ],
+        "observer_required": [
+          "shipment_log",
+          "shipper:acme",
+          "consignee:widget",
+          "origin:US",
+          "destination:US",
+          "chain_of_custody_attestation"
+        ],
+        "constraint_set": [
+          {
+            "domain": "logistics_correctness",
+            "restriction": "manifest_signed",
+            "violation_response": "block"
+          }
+        ],
+        "boundary": {
+          "inside_predicate": "shipment_id = SHIP-001 ∧ skus ⊆ {SKU-1}",
+          "permeability": "closed"
+        }
+      },
+      "run": {
+        "governance_status": "approved",
+        "protocol": [
+          "Capture initial state for shipment SHIP-001",
+          "Apply Incoterms / carrier contract to handoff",
+          "Decide whether to proceed with the logistics action",
+          "Execute shipment_dispatch",
+          "Carrier handoff signoff: ups",
+          "Validate against acceptance criteria",
+          "Release shipment to first-mile carrier",
+          "Persist event to immutable shipment ledger"
+        ],
+        "risk_flags": [
+          "shipment_dispatch_irreversible — confirm before execution"
+        ]
+      }
+    },
+    "energy": {
+      "translate": {
+        "purpose_statement": "commit_generation_setpoint: ramp Unit 3",
+        "authority_required": [
+          "operator:alice",
+          "approver:sup"
+        ],
+        "observer_required": [
+          "control_room_log",
+          "balancing_authority:CAISO",
+          "territory:PG&E",
+          "jurisdiction:FERC",
+          "regulator:NERC_BAL",
+          "reliability_coordinator"
+        ],
+        "constraint_set": [
+          {
+            "domain": "energy_correctness",
+            "restriction": "frequency_within_band",
+            "violation_response": "block"
+          },
+          {
+            "domain": "rc_engagement",
+            "restriction": "reliability_coordinator_engaged",
+            "violation_response": "escalate"
+          },
+          {
+            "domain": "regulatory",
+            "restriction": "compliance_with:NERC_BAL",
+            "violation_response": "escalate"
+          }
+        ],
+        "boundary": {
+          "inside_predicate": "operation_id = OP-001 ∧ assets ⊆ {GEN-3}",
+          "permeability": "closed"
+        }
+      },
+      "run": {
+        "governance_status": "approved",
+        "protocol": [
+          "Capture initial grid state for op OP-001",
+          "Apply reliability standards to current operating state",
+          "Decide on energy action",
+          "Execute generation_dispatch",
+          "Confirm N-1 contingency analysis on file",
+          "Coordinate with reliability coordinator",
+          "Approver signoff: sup",
+          "Validate against acceptance criteria",
+          "Issue setpoint to generator and confirm response",
+          "Persist event to operating log and settlement record"
+        ],
+        "risk_flags": [
+          "reliability_critical_generation_dispatch — RC engagement required",
+          "generation_dispatch_irreversible — physical commit; confirm before execution"
+        ]
+      }
+    },
+    "cybersecurity": {
+      "translate": {
+        "purpose_statement": "coordinate_response_to_security_event: lateral movement alert",
+        "authority_required": [
+          "analyst:alice",
+          "escalation:ir-mgr"
+        ],
+        "observer_required": [
+          "soc_audit",
+          "blue_team_log"
+        ],
+        "constraint_set": [
+          {
+            "domain": "secops_correctness",
+            "restriction": "playbook_followed",
+            "violation_response": "block"
+          }
+        ],
+        "boundary": {
+          "inside_predicate": "incident_id = INC-001 ∧ assets ⊆ {host-001}",
+          "permeability": "closed"
+        }
+      },
+      "run": {
+        "governance_status": "approved",
+        "protocol": [
+          "Capture initial security state for incident INC-001",
+          "Apply security playbook to current evidence",
+          "Decide on security action",
+          "Execute incident_response",
+          "Escalation signoff: ir-mgr",
+          "Validate response against acceptance criteria",
+          "Persist incident timeline to case management system"
+        ],
+        "risk_flags": []
+      }
+    },
+    "insurance": {
+      "translate": {
+        "purpose_statement": "evaluate_risk_for_coverage: auto policy review",
+        "authority_required": [
+          "agent:alice",
+          "approver:senior-uw"
+        ],
+        "observer_required": [
+          "policy_audit",
+          "line_of_business:auto",
+          "jurisdiction:US-CA",
+          "regulator:CA-DOI",
+          "policyholder:john-doe",
+          "sanctions_compliance"
+        ],
+        "constraint_set": [
+          {
+            "domain": "insurance_correctness",
+            "restriction": "risk_acceptable",
+            "violation_response": "block"
+          }
+        ],
+        "boundary": {
+          "inside_predicate": "case_id = POL-001 ∧ line_of_business = auto",
+          "permeability": "closed"
+        }
+      },
+      "run": {
+        "governance_status": "approved",
+        "protocol": [
+          "Open case record for POL-001",
+          "Apply policy form and actuarial guidance to facts",
+          "Decide on insurance action",
+          "Execute underwriting",
+          "Sanctions screening clear",
+          "Approver signoff: senior-uw",
+          "Validate against acceptance criteria",
+          "Persist event to policy admin and accounting systems"
+        ],
+        "risk_flags": []
+      }
+    },
+    "environmental": {
+      "translate": {
+        "purpose_statement": "verify_compliance_with_permit: quarterly permit check",
+        "authority_required": [
+          "officer:alice",
+          "reviewer:internal-audit"
+        ],
+        "observer_required": [
+          "ehs_audit",
+          "regulator:EPA",
+          "regime:CAA",
+          "jurisdiction:US-FED",
+          "operator:acme-mfg"
+        ],
+        "constraint_set": [
+          {
+            "domain": "environmental_correctness",
+            "restriction": "permit_terms_met",
+            "violation_response": "block"
+          }
+        ],
+        "boundary": {
+          "inside_predicate": "facility_id = FAC-001 ∧ media ⊆ {air}",
+          "permeability": "closed"
+        }
+      },
+      "run": {
+        "governance_status": "approved",
+        "protocol": [
+          "Capture initial environmental state for facility FAC-001",
+          "Apply permit conditions and disclosure standards to data",
+          "Decide on environmental action",
+          "Execute permit_compliance_check",
+          "Reviewer signoff: internal-audit",
+          "Validate against acceptance criteria",
+          "Persist event to environmental management system"
+        ],
+        "risk_flags": []
+      }
+    },
+    "construction": {
+      "translate": {
+        "purpose_statement": "request_clarification_from_design: clarification on beam dimension",
+        "authority_required": [
+          "pm:alice",
+          "approver:super"
+        ],
+        "observer_required": [
+          "project_audit",
+          "gc:acme-build",
+          "owner:dev-corp",
+          "permit_authority:DBI-SF",
+          "jurisdiction:US-CA-SF",
+          "trade:structural",
+          "safety_officer"
+        ],
+        "constraint_set": [
+          {
+            "domain": "construction_correctness",
+            "restriction": "response_time_within_sla",
+            "violation_response": "block"
+          }
+        ],
+        "boundary": {
+          "inside_predicate": "project_id = PROJ-001 ∧ drawings ⊆ {S-101}",
+          "permeability": "closed"
+        }
+      },
+      "run": {
+        "governance_status": "approved",
+        "protocol": [
+          "Capture initial state for project PROJ-001",
+          "Apply contract documents and applicable code",
+          "Decide on construction action",
+          "Execute rfi",
+          "Confirm permit on file with DBI-SF",
+          "Approver signoff: super",
+          "Validate against acceptance criteria",
+          "Issue RFI to design team and track response time",
+          "Persist event to project record and daily log"
+        ],
+        "risk_flags": []
+      }
+    }
+  }
+}

@@ -23,6 +23,7 @@ from mcoi_runtime.contracts.change_assurance import (
 )
 from mcoi_runtime.core.change_assurance import (
     analyze_blast_radius,
+    build_change_command,
     certificate_is_acceptable,
     certify_replay,
     check_invariants,
@@ -144,6 +145,80 @@ def test_empty_merge_reconciliation_does_not_fail_no_file_invariant() -> None:
     replay_report = certify_replay(Path(__file__).resolve().parent.parent, command, strict=True)
     certificate = create_certificate(command, report, replay_report, approval_id=None)
     assert certificate_is_acceptable(certificate) is True
+
+
+def test_empty_tree_reconciliation_does_not_fail_no_file_invariant() -> None:
+    command = _command(
+        affected_files=(),
+        affected_contracts=(),
+        affected_capabilities=(),
+        affected_invariants=(),
+        required_replays=(),
+        risk=ChangeRisk.LOW,
+        requires_approval=False,
+        rollback_required=False,
+        change_type=EvolutionChangeType.DOCUMENTATION,
+        metadata={
+            "base_ref": "HEAD^",
+            "head_ref": "HEAD",
+            "empty_tree_reconciliation": True,
+        },
+    )
+
+    report = check_invariants(command, approval_id=None, strict=True)
+    replay_report = certify_replay(Path(__file__).resolve().parent.parent, command, strict=True)
+    certificate = create_certificate(command, report, replay_report, approval_id=None)
+
+    assert report.disposition is AssuranceDisposition.PASSED
+    assert report.violations == ()
+    assert replay_report.disposition is AssuranceDisposition.PASSED
+    assert certificate_is_acceptable(certificate) is True
+
+
+def test_build_change_command_records_empty_tree_reconciliation(monkeypatch: pytest.MonkeyPatch) -> None:
+    base_commit = "a" * 40
+    head_commit = "b" * 40
+    tree_id = "c" * 40
+
+    def fake_run_git(repo_root: object, args: list[str]) -> str:
+        assert repo_root is not None
+        if args == ["rev-parse", "--abbrev-ref", "HEAD"]:
+            return "main"
+        if args == ["rev-parse", "HEAD^"]:
+            return base_commit
+        if args == ["rev-parse", "HEAD"]:
+            return head_commit
+        if args == ["diff", "--name-only", "HEAD^", "HEAD", "--"]:
+            return ""
+        raise AssertionError(f"unexpected git args: {args}")
+
+    def fake_optional_git(repo_root: object, args: list[str]) -> str | None:
+        assert repo_root is not None
+        if args == ["rev-list", "--parents", "-n", "1", head_commit]:
+            return f"{head_commit} {base_commit}"
+        if args in (
+            ["rev-parse", f"{base_commit}^{{tree}}"],
+            ["rev-parse", f"{head_commit}^{{tree}}"],
+        ):
+            return tree_id
+        if args == ["config", "user.email"]:
+            return "ci@mullusi.com"
+        raise AssertionError(f"unexpected optional git args: {args}")
+
+    monkeypatch.setattr(change_assurance_core, "_run_git", fake_run_git)
+    monkeypatch.setattr(change_assurance_core, "_optional_git", fake_optional_git)
+
+    command = build_change_command(
+        repo_root=object(),  # type: ignore[arg-type]
+        base_ref="HEAD^",
+        head_ref="HEAD",
+        rollback_plan_ref="RELEASE_CHECKLIST_v0.1.md",
+    )
+
+    assert command.affected_files == ()
+    assert command.metadata["empty_tree_reconciliation"] is True
+    assert command.metadata["rollback_plan_ref"] == "RELEASE_CHECKLIST_v0.1.md"
+    assert command.requires_approval is False
 
 
 def test_certificate_acceptance_requires_all_gates() -> None:

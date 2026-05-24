@@ -5508,6 +5508,36 @@
         "CapabilityManifestAdmission"
       ],
       "request_proof": "request_proof",
+      "runtime_witness_anchor_aliases": {
+        "capability_manifest_schema_valid": [
+          "software_dev_capability_manifests_are_schema_valid"
+        ],
+        "effect_manifest_requires_sandbox_rollback": [
+          "capability_manifest_registry_blocks_effects_without_sandbox_and_rollback"
+        ],
+        "fabric_projects_local_manifest_registry": [
+          "capability_fabric_env_loader_projects_local_manifest_registry"
+        ],
+        "fabric_rejects_production_hot_reload_manifest_registry": [
+          "capability_fabric_env_loader_rejects_production_hot_reload_for_manifest_registry"
+        ],
+        "hot_reload_metadata_enforced": [
+          "capability_manifest_registry_enforces_hot_reload_metadata_environment",
+          "capability_manifest_registry_requires_hot_reload_metadata"
+        ],
+        "manifest_missing_policy_rejected": [
+          "capability_manifest_registry_rejects_missing_policy_refs"
+        ],
+        "manifest_unresolved_schema_rejected": [
+          "capability_manifest_registry_rejects_unresolved_schema_refs"
+        ],
+        "production_hot_reload_denied_for_effect_manifest": [
+          "capability_manifest_registry_blocks_production_hot_reload_for_effects"
+        ],
+        "software_dev_manifests_admit_locally": [
+          "capability_manifest_registry_admits_software_dev_directory_locally"
+        ]
+      },
       "runtime_witnesses": [
         "capability_manifest_schema_valid",
         "software_dev_manifests_admit_locally",
@@ -7655,7 +7685,7 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 751,
+    "exact_test_anchor_count": 760,
     "runtime_witness_count": 1049,
     "surfaces": [
       {
@@ -11062,22 +11092,68 @@
         ]
       },
       {
-        "anchored_witnesses": [],
-        "exact_test_anchor_count": 0,
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "tests/test_software_dev_capability_manifest_registry.py::test_software_dev_capability_manifests_are_schema_valid"
+            ],
+            "witness": "capability_manifest_schema_valid"
+          },
+          {
+            "anchors": [
+              "tests/test_software_dev_capability_manifest_registry.py::test_capability_manifest_registry_admits_software_dev_directory_locally"
+            ],
+            "witness": "software_dev_manifests_admit_locally"
+          },
+          {
+            "anchors": [
+              "tests/test_software_dev_capability_manifest_registry.py::test_capability_manifest_registry_rejects_missing_policy_refs"
+            ],
+            "witness": "manifest_missing_policy_rejected"
+          },
+          {
+            "anchors": [
+              "tests/test_software_dev_capability_manifest_registry.py::test_capability_manifest_registry_rejects_unresolved_schema_refs"
+            ],
+            "witness": "manifest_unresolved_schema_rejected"
+          },
+          {
+            "anchors": [
+              "tests/test_software_dev_capability_manifest_registry.py::test_capability_manifest_registry_blocks_effects_without_sandbox_and_rollback"
+            ],
+            "witness": "effect_manifest_requires_sandbox_rollback"
+          },
+          {
+            "anchors": [
+              "tests/test_software_dev_capability_manifest_registry.py::test_capability_manifest_registry_enforces_hot_reload_metadata_environment",
+              "tests/test_software_dev_capability_manifest_registry.py::test_capability_manifest_registry_requires_hot_reload_metadata"
+            ],
+            "witness": "hot_reload_metadata_enforced"
+          },
+          {
+            "anchors": [
+              "tests/test_software_dev_capability_manifest_registry.py::test_capability_manifest_registry_blocks_production_hot_reload_for_effects"
+            ],
+            "witness": "production_hot_reload_denied_for_effect_manifest"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_capability_fabric.py::test_capability_fabric_env_loader_projects_local_manifest_registry"
+            ],
+            "witness": "fabric_projects_local_manifest_registry"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_capability_fabric.py::test_capability_fabric_env_loader_rejects_production_hot_reload_for_manifest_registry"
+            ],
+            "witness": "fabric_rejects_production_hot_reload_manifest_registry"
+          }
+        ],
+        "exact_test_anchor_count": 9,
         "runtime_witness_count": 9,
         "surface_id": "capability_manifest_registry",
-        "unanchored_witness_count": 9,
-        "unanchored_witnesses": [
-          "capability_manifest_schema_valid",
-          "software_dev_manifests_admit_locally",
-          "manifest_missing_policy_rejected",
-          "manifest_unresolved_schema_rejected",
-          "effect_manifest_requires_sandbox_rollback",
-          "hot_reload_metadata_enforced",
-          "production_hot_reload_denied_for_effect_manifest",
-          "fabric_projects_local_manifest_registry",
-          "fabric_rejects_production_hot_reload_manifest_registry"
-        ]
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
       },
       {
         "anchored_witnesses": [
@@ -13615,6 +13691,6 @@
         "unanchored_witnesses": []
       }
     ],
-    "unanchored_witness_count": 298
+    "unanchored_witness_count": 289
   }
 }

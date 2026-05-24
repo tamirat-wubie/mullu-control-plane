@@ -86,13 +86,21 @@ GOVERNANCE_MIGRATIONS: list[str] = [
         ON governance_audit_entries(outcome);
     """,
 
-    # Migration 3: Rate limit decisions table
+    # Migration 3: Rate limit decisions table + token-bucket state
+    # (governance_rate_buckets added for the F11 cross-replica atomic
+    # path — try_consume. Idempotent CREATE IF NOT EXISTS, so existing
+    # deployments gain the table on next startup with no manual step.)
     """
     CREATE TABLE IF NOT EXISTS governance_rate_decisions (
         bucket_key TEXT PRIMARY KEY,
         allowed_count INTEGER NOT NULL DEFAULT 0,
         denied_count INTEGER NOT NULL DEFAULT 0,
         last_updated TEXT NOT NULL
+    );
+    CREATE TABLE IF NOT EXISTS governance_rate_buckets (
+        bucket_key TEXT PRIMARY KEY,
+        tokens DOUBLE PRECISION NOT NULL,
+        last_refill DOUBLE PRECISION NOT NULL
     );
     """,
 
@@ -112,6 +120,12 @@ GOVERNANCE_MIGRATIONS: list[str] = [
 
 def _now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
+
+# F4 cross-replica atomic audit append (PostgresAuditStore.try_append):
+# a fixed transaction-scoped advisory-lock key that serializes all
+# hash-chain appends. The chain is global and inherently serial, so a
+# single constant key is correct. Value is arbitrary but stable.
+_AUDIT_CHAIN_LOCK_KEY = 0x4D554C4C5541  # "MULLUA" — must not collide with other advisory locks
 
 _log = _logging.getLogger(__name__)
 
@@ -620,6 +634,99 @@ class PostgresAuditStore(_PostgresBase, AuditStore):
                 cur.execute("SELECT COUNT(*) FROM governance_audit_entries")
                 return cur.fetchone()[0]
 
+    def try_append(
+        self,
+        *,
+        action: str,
+        actor_id: str,
+        tenant_id: str,
+        target: str,
+        outcome: str,
+        detail: dict[str, Any],
+        recorded_at: str,
+    ) -> AuditEntry | None:
+        """F4 cross-replica atomic audit append.
+
+        Pre-this-change every AuditTrail allocated its own per-process
+        ``_sequence`` and chain head — N workers writing to one shared
+        DB produced a forked chain (two entries per sequence, each
+        linking to a different predecessor). The InMemoryAuditStore
+        primitive (v4.31) fixed this within one process via a
+        ``threading.Lock``; this override extends it across processes.
+
+        A hash chain is inherently serial — entry N+1's ``entry_hash``
+        depends on entry N's, so appends cannot be parallelized. A
+        transaction-scoped ``pg_advisory_xact_lock`` serializes all
+        chain appends at the DB: read chain head, compute the next
+        entry via the canonical hash helper (writer/verifier parity per
+        LEDGER_SPEC.md), insert, commit (releasing the lock). Two
+        workers racing produce a strictly linear chain, not a fork.
+
+        Returns the persisted ``AuditEntry`` (sequence is DB-allocated),
+        or ``None`` only when the store is disconnected.
+        """
+        if self._conn is None:
+            return None
+        with self._connection() as conn:
+            with conn.cursor() as cur:
+                # Serialize chain appends. Transaction-scoped: released
+                # automatically on commit/rollback. The chain is global,
+                # so a single constant lock key serializes all writers.
+                cur.execute(
+                    "SELECT pg_advisory_xact_lock(%s)", (_AUDIT_CHAIN_LOCK_KEY,)
+                )
+                cur.execute(
+                    "SELECT sequence, entry_hash FROM governance_audit_entries "
+                    "ORDER BY sequence DESC LIMIT 1"
+                )
+                head = cur.fetchone()
+                if head is None:
+                    sequence = 1
+                    previous_hash = sha256(b"genesis").hexdigest()
+                else:
+                    sequence = int(head[0]) + 1
+                    previous_hash = head[1]
+                source = {
+                    "sequence": sequence,
+                    "action": action,
+                    "actor_id": actor_id,
+                    "tenant_id": tenant_id,
+                    "target": target,
+                    "outcome": outcome,
+                    "detail": detail,
+                    "previous_hash": previous_hash,
+                    "recorded_at": recorded_at,
+                }
+                entry_hash = _canonical_hash_v1(source)
+                entry = AuditEntry(
+                    entry_id=f"audit-{sequence}",
+                    sequence=sequence,
+                    action=action,
+                    actor_id=actor_id,
+                    tenant_id=tenant_id,
+                    target=target,
+                    outcome=outcome,
+                    detail=detail,
+                    entry_hash=entry_hash,
+                    previous_hash=previous_hash,
+                    recorded_at=recorded_at,
+                )
+                detail_stored = self._encrypt_detail(detail)
+                cur.execute(
+                    "INSERT INTO governance_audit_entries "
+                    "(entry_id, sequence, action, actor_id, tenant_id, target, "
+                    "outcome, detail, entry_hash, previous_hash, recorded_at) "
+                    "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
+                    (
+                        entry.entry_id, entry.sequence, entry.action,
+                        entry.actor_id, entry.tenant_id, entry.target,
+                        entry.outcome, detail_stored,
+                        entry.entry_hash, entry.previous_hash, entry.recorded_at,
+                    ),
+                )
+                conn.commit()
+        return entry
+
 
 # --- PostgresRateLimitStore ---
 
@@ -674,6 +781,85 @@ class PostgresRateLimitStore(_PostgresBase, RateLimitStore):
                 )
                 row = cur.fetchone()
         return {"allowed": int(row[0]), "denied": int(row[1])}
+
+    def try_consume(
+        self,
+        bucket_key: str,
+        tokens: int,
+        config: RateLimitConfig,
+    ) -> tuple[bool, float] | None:
+        """F11 cross-replica atomic token-bucket enforcement.
+
+        The InMemoryRateLimitStore.try_consume primitive (v4.29) is
+        single-process — N replicas each hold their own bucket, so the
+        effective cap is N x max_tokens. This override moves bucket
+        state to the DB row and performs refill+check+decrement in a
+        single atomic ``UPDATE ... WHERE`` (mirrors the v4.27
+        PostgresBudgetStore.try_record_spend pattern). The DB row is
+        the only source of truth; no replica trusts a local snapshot.
+
+        Time base: ``last_refill`` is stored as epoch seconds and the
+        elapsed term is computed against a single Python ``time.time()``
+        captured per call (consistent for the INSERT-then-UPDATE pair).
+
+        Returns ``(True, remaining)`` on success, ``(False, remaining)``
+        when the bucket lacks tokens, and ``None`` only when the store
+        is disconnected (the dispatcher treats None as fail-closed
+        denial — governance-correct when the backend is unreachable).
+        """
+        # Burst guard: a request larger than the burst limit can never
+        # succeed regardless of bucket state. Reject without a DB touch,
+        # matching InMemoryRateLimitStore.
+        if tokens > config.burst_limit:
+            return False, 0.0
+        if self._conn is None:
+            return None
+        now_epoch = time.time()
+        max_tokens = float(config.max_tokens)
+        refill_rate = float(config.refill_rate)
+        with self._connection() as conn:
+            with conn.cursor() as cur:
+                # Ensure the bucket row exists, initialized full. No-op
+                # if a concurrent caller already created it.
+                cur.execute(
+                    "INSERT INTO governance_rate_buckets "
+                    "(bucket_key, tokens, last_refill) "
+                    "VALUES (%s, %s, %s) "
+                    "ON CONFLICT (bucket_key) DO NOTHING",
+                    (bucket_key, max_tokens, now_epoch),
+                )
+                # Atomic refill + check + decrement. The WHERE clause
+                # rejects the spend if the refilled balance is below the
+                # request; RETURNING gives the post-decrement balance.
+                cur.execute(
+                    "UPDATE governance_rate_buckets "
+                    "SET tokens = LEAST(%s, tokens + (%s - last_refill) * %s) - %s, "
+                    "    last_refill = %s "
+                    "WHERE bucket_key = %s "
+                    "  AND LEAST(%s, tokens + (%s - last_refill) * %s) >= %s "
+                    "RETURNING tokens",
+                    (
+                        max_tokens, now_epoch, refill_rate, tokens,
+                        now_epoch,
+                        bucket_key,
+                        max_tokens, now_epoch, refill_rate, tokens,
+                    ),
+                )
+                row = cur.fetchone()
+                if row is not None:
+                    conn.commit()
+                    return True, float(row[0])
+                # Denied: read the current (refilled) balance for an
+                # accurate remaining without mutating it.
+                cur.execute(
+                    "SELECT LEAST(%s, tokens + (%s - last_refill) * %s) "
+                    "FROM governance_rate_buckets WHERE bucket_key = %s",
+                    (max_tokens, now_epoch, refill_rate, bucket_key),
+                )
+                rem_row = cur.fetchone()
+                conn.commit()
+        remaining = float(rem_row[0]) if rem_row is not None else 0.0
+        return False, remaining
 
 
 # --- PostgresTenantGatingStore ---

@@ -101,8 +101,9 @@ def benchmark(
         t0 = time.perf_counter_ns()
         fn()
         t1 = time.perf_counter_ns()
-        timings_ns.append(t1 - t0)
-    total = time.monotonic() - start_total
+        elapsed_ns = t1 - t0
+        timings_ns.append(elapsed_ns if elapsed_ns > 0 else 1)
+    total = max(time.monotonic() - start_total, 1e-12)
 
     timings_ns.sort()
     mean = statistics.mean(timings_ns)
