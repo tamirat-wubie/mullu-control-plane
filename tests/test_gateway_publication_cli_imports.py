@@ -21,6 +21,7 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 
 def test_gateway_publication_operator_scripts_print_help_from_repo_root() -> None:
     scripts = [
+        "scripts/collect_gateway_dns_resolution_receipt.py",
         "scripts/dispatch_gateway_publication.py",
         "scripts/publish_gateway_publication.py",
         "scripts/report_gateway_publication_readiness.py",
