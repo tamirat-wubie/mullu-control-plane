@@ -4,11 +4,12 @@ Purpose: project governed capability status, admission audits, and plan
     recovery signals into read-only operator surfaces.
 Governance scope: operator visibility only; no capability execution or raw
     tool descriptors are exposed.
-Dependencies: capability admission gate, command ledger, and plan ledger read
-    models.
+Dependencies: capability admission gate, autonomous capability upgrade loop,
+    command ledger, and plan ledger read models.
 Invariants:
   - Surface is observational and side-effect free.
   - Capabilities are projected from governed records only.
+  - Improvement portfolios are activation-blocked proposal witnesses only.
   - Raw capability fabric extensions and schema internals are not exposed.
   - Pagination is bounded and deterministic.
 """
@@ -17,6 +18,11 @@ from __future__ import annotations
 
 from html import escape
 from typing import Any
+
+from gateway.autonomous_capability_upgrade import (
+    AutonomousCapabilityUpgradeLoop,
+    CapabilityHealthSignal,
+)
 
 
 CAPABILITY_IMPROVEMENT_PORTFOLIO_SCHEMA_REF = "urn:mullusi:schema:capability-improvement-portfolio:1"
@@ -33,6 +39,9 @@ def build_operator_capability_read_model(
     admission_status: str = "",
     audit_limit: int = 100,
     audit_offset: int = 0,
+    include_improvement_portfolio: bool = False,
+    improvement_generated_at: str = "1970-01-01T00:00:00+00:00",
+    improvement_candidate_limit: int = 5,
 ) -> dict[str, Any]:
     """Build the general operator capability read model."""
     domain_filter = domain.strip()
@@ -52,6 +61,15 @@ def build_operator_capability_read_model(
         offset=_bounded_offset(audit_offset),
     )
     plan_summary = _plan_summary(plan_ledger)
+    improvement_portfolio = (
+        _improvement_portfolio_summary(
+            capabilities,
+            generated_at=improvement_generated_at,
+            limit=improvement_candidate_limit,
+        )
+        if include_improvement_portfolio and capabilities
+        else _default_improvement_portfolio()
+    )
     return {
         "enabled": capability_admission_gate is not None,
         "capability_surface": "governed_capability_records",
@@ -73,14 +91,7 @@ def build_operator_capability_read_model(
         "admission_audit_status_filter": admission_status.strip(),
         "admission_audit_page": audit_page_meta,
         "plan_summary": plan_summary,
-        "improvement_portfolio": {
-            "enabled": True,
-            "href": CAPABILITY_IMPROVEMENT_PORTFOLIO_HREF,
-            "schema_ref": CAPABILITY_IMPROVEMENT_PORTFOLIO_SCHEMA_REF,
-            "mutation_applied": False,
-            "activation_blocked": True,
-            "operator_review_required": True,
-        },
+        "improvement_portfolio": improvement_portfolio,
     }
 
 
@@ -111,6 +122,28 @@ def render_operator_capability_console(read_model: dict[str, Any]) -> str:
     portfolio = read_model.get("improvement_portfolio", {})
     portfolio_href = escape(str(portfolio.get("href", CAPABILITY_IMPROVEMENT_PORTFOLIO_HREF)))
     portfolio_schema = escape(str(portfolio.get("schema_ref", CAPABILITY_IMPROVEMENT_PORTFOLIO_SCHEMA_REF)))
+    improvement_rows = "\n".join(
+        "<tr>"
+        f"<td>{escape(str(item.get('capability_id', '')))}</td>"
+        f"<td>{escape(str(item.get('severity', '')))}</td>"
+        f"<td>{escape(str(item.get('target_maturity_level', '')))}</td>"
+        f"<td>{escape(', '.join(str(code) for code in item.get('weakness_codes', ())))}</td>"
+        "</tr>"
+        for item in portfolio.get("top_plans", ())
+    )
+    improvement_section = ""
+    if portfolio.get("surface") == "activation_blocked_capability_improvement_portfolio":
+        improvement_section = f"""
+  <section>
+    <h2>Improvement Portfolio</h2>
+    <span class="metric">Operator review: {escape(str(portfolio.get("operator_review_required", True)).lower())}</span>
+    <span class="metric">Plans: {int(portfolio.get("plan_count", 0))}</span>
+    <span class="metric">Systemic weakness: {escape(', '.join(str(code) for code in portfolio.get("systemic_weakness_codes", ())))}</span>
+    <table>
+      <thead><tr><th>Capability</th><th>Severity</th><th>Target</th><th>Weakness</th></tr></thead>
+      <tbody>{improvement_rows}</tbody>
+    </table>
+  </section>"""
     return f"""<!doctype html>
 <html lang="en">
 <head>
@@ -146,6 +179,7 @@ def render_operator_capability_console(read_model: dict[str, Any]) -> str:
       <tbody>{capability_rows}</tbody>
     </table>
   </section>
+  {improvement_section}
   <section>
     <h2>Admission Audits</h2>
     <table>
@@ -201,6 +235,105 @@ def _plan_summary(plan_ledger: Any | None) -> dict[str, Any]:
         "failed_plan_witness_count": int(read_model.get("failed_plan_witness_count", 0)),
         "recovery_attempt_count": int(read_model.get("recovery_attempt_count", 0)),
     }
+
+
+def _default_improvement_portfolio() -> dict[str, Any]:
+    return {
+        "enabled": True,
+        "href": CAPABILITY_IMPROVEMENT_PORTFOLIO_HREF,
+        "schema_ref": CAPABILITY_IMPROVEMENT_PORTFOLIO_SCHEMA_REF,
+        "mutation_applied": False,
+        "activation_blocked": True,
+        "operator_review_required": True,
+    }
+
+
+def _improvement_portfolio_summary(
+    capabilities: list[dict[str, Any]],
+    *,
+    generated_at: str,
+    limit: int,
+) -> dict[str, Any]:
+    signals = tuple(
+        signal
+        for item in capabilities
+        if (signal := _health_signal_from_capability(item, generated_at=generated_at)) is not None
+    )
+    if not signals:
+        return _default_improvement_portfolio()
+    portfolio = AutonomousCapabilityUpgradeLoop().propose_portfolio(
+        signals,
+        generated_at=generated_at,
+        max_candidates=_bounded_limit(limit),
+    )
+    top_plans = [
+        {
+            "plan_id": plan.plan_id,
+            "capability_id": plan.capability_id,
+            "severity": plan.diagnosis.severity,
+            "target_maturity_level": plan.candidate.target_maturity_level,
+            "weakness_codes": list(plan.diagnosis.weakness_codes),
+            "blocked_reasons": list(plan.blocked_reasons),
+        }
+        for plan in portfolio.plans
+    ]
+    return {
+        "enabled": True,
+        "href": CAPABILITY_IMPROVEMENT_PORTFOLIO_HREF,
+        "schema_ref": CAPABILITY_IMPROVEMENT_PORTFOLIO_SCHEMA_REF,
+        "mutation_applied": False,
+        "surface": "activation_blocked_capability_improvement_portfolio",
+        "portfolio_id": portfolio.portfolio_id,
+        "generated_at": portfolio.generated_at,
+        "plan_count": len(portfolio.plans),
+        "prioritized_capability_ids": list(portfolio.prioritized_capability_ids),
+        "systemic_weakness_codes": list(portfolio.systemic_weakness_codes),
+        "blocked_reasons": list(portfolio.blocked_reasons),
+        "operator_review_required": portfolio.operator_review_required,
+        "activation_blocked": portfolio.activation_blocked,
+        "portfolio_hash": portfolio.portfolio_hash,
+        "metadata": dict(portfolio.metadata),
+        "top_plans": top_plans,
+    }
+
+
+def _health_signal_from_capability(
+    item: dict[str, Any],
+    *,
+    generated_at: str,
+) -> CapabilityHealthSignal | None:
+    capability_id = str(item.get("capability_id") or "").strip()
+    if not capability_id:
+        return None
+    blocker_codes: list[str] = []
+    if item.get("production_ready") is not True:
+        blocker_codes.append("production_certification_missing")
+    if item.get("requires_sandbox") is True:
+        blocker_codes.append("sandbox_receipt_required")
+    if item.get("receipt_required") is True:
+        blocker_codes.append("receipt_closure_required")
+    if item.get("requires_approval") is True:
+        blocker_codes.append("operator_approval_required")
+    evidence_refs = [f"capability_registry:{capability_id}"]
+    maturity_ref = str(item.get("maturity_assessment_id") or "").strip()
+    if maturity_ref:
+        evidence_refs.append(f"capability_maturity:{maturity_ref}")
+    return CapabilityHealthSignal(
+        capability_id=capability_id,
+        observed_at=generated_at,
+        maturity_level=str(item.get("maturity_level") or "C0"),
+        success_rate=1.0,
+        failure_count=0,
+        mean_latency_ms=0,
+        cost_per_success=float(item.get("max_cost", 0.0) or 0.0),
+        open_incidents=0,
+        blocker_codes=tuple(blocker_codes),
+        evidence_refs=tuple(evidence_refs),
+        metadata={
+            "source_surface": "operator_capability_console",
+            "risk_level": str(item.get("risk_level") or ""),
+        },
+    )
 
 
 def _counts(items: list[dict[str, Any]], key: str) -> dict[str, int]:
