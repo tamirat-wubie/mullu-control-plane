@@ -2,7 +2,7 @@
 
 Purpose: define the release gate for exposing `Mullu` as the public product name.
 Governance scope: brand clearance, domain ownership, website copy, SDK/API terminology, admin surfaces, and product launch evidence.
-Dependencies: `docs/PRODUCT_IDENTITY.md`, `docs/PUBLIC_LAUNCH_COPY.md`, `docs/NAME_CLEARANCE_PRELIMINARY.md`, `docs/APP_TITLE_UPDATE_EVIDENCE_2026-05-15.md`, `docs/HOMEPAGE_UPDATE_EVIDENCE_2026-05-15.md`, `docs/OFFICIAL_CLEARANCE_ACCESS_LOG_2026-05-15.md`, `docs/SDK_API_STABILITY_REVIEW_2026-05-15.md`, `docs/NAMING_MIGRATION_PLAN.md`, `docs/TRADEMARK_SEARCH_RUNBOOK.md`, `docs/DOMAIN_ACQUISITION_PLAN.md`, `docs/WEBSITE_UPDATE_CHECKLIST.md`, `docs/WEBSITE_RECHECK_LOG.md`, `docs/PUBLIC_NAMING_STATE_TRANSITION.md`, `docs/PUBLIC_NAMING_HANDOFF.md`, `docs/CLEARANCE_PACKET_TEMPLATE.md`, `docs/DOMAIN_OWNERSHIP_RECORD_TEMPLATE.md`, `docs/public-naming-readiness.json`.
+Dependencies: `docs/PRODUCT_IDENTITY.md`, `docs/PUBLIC_LAUNCH_COPY.md`, `docs/NAME_CLEARANCE_PRELIMINARY.md`, `docs/APP_TITLE_UPDATE_EVIDENCE_2026-05-15.md`, `docs/HOMEPAGE_UPDATE_EVIDENCE_2026-05-15.md`, `docs/OFFICIAL_CLEARANCE_ACCESS_LOG_2026-05-15.md`, `docs/SDK_API_STABILITY_REVIEW_2026-05-15.md`, `docs/NAMING_MIGRATION_PLAN.md`, `docs/TRADEMARK_SEARCH_RUNBOOK.md`, `docs/DOMAIN_ACQUISITION_PLAN.md`, `docs/WEBSITE_UPDATE_CHECKLIST.md`, `docs/WEBSITE_RECHECK_LOG.md`, `docs/WEBSITE_DEPLOYMENT_EVIDENCE_2026-05-24.md`, `docs/PUBLIC_NAMING_STATE_TRANSITION.md`, `docs/PUBLIC_NAMING_HANDOFF.md`, `docs/CLEARANCE_PACKET_TEMPLATE.md`, `docs/DOMAIN_OWNERSHIP_RECORD_TEMPLATE.md`, `docs/public-naming-readiness.json`.
 Invariants: `Mullu` is the product name only after clearance; `Mullusi` remains the company and governance authority; `Mullu Platform` remains valid for developer contracts and architecture surfaces.
 
 ## Readiness Gates
@@ -113,6 +113,11 @@ This target is now verified live for the `/mullu` fallback route:
 copy including `Mullu, by Mullusi`, `Mullu CLI`, and `Mullu Control Plane`.
 This does not clear standalone product subdomain, legal, domain ownership,
 homepage, or app-title gates.
+
+The current public-route evidence is recorded in
+[`docs/WEBSITE_DEPLOYMENT_EVIDENCE_2026-05-24.md`](WEBSITE_DEPLOYMENT_EVIDENCE_2026-05-24.md).
+That evidence keeps website publication separate from API and production-runtime
+publication, which remains blocked by deployment witness issue `#330`.
 
 ## Launch Decision
 
