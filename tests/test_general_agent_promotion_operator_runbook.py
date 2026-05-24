@@ -41,7 +41,9 @@ def test_runbook_names_required_closure_artifacts_and_counts() -> None:
     assert "adapter`, `deployment`, `portfolio" in runbook_text
     assert "run_general_agent_promotion_closure_chain.py" in runbook_text
     assert "collect_gateway_dns_resolution_receipt.py" in runbook_text
+    assert "validate_gateway_dns_resolution_receipt.py" in runbook_text
     assert ".change_assurance\\gateway_dns_resolution_receipt.json" in runbook_text
+    assert ".change_assurance\\gateway_dns_resolution_receipt_validation.json" in runbook_text
     assert ".change_assurance\\capability_improvement_portfolio.json" in runbook_text
     assert "plan_general_agent_promotion_live_evidence_queue.py" in runbook_text
     assert ".change_assurance\\general_agent_promotion_live_evidence_queue.json" in runbook_text
@@ -70,7 +72,10 @@ def test_runbook_keeps_status_mutation_evidence_gated() -> None:
     runbook_text = _runbook_text()
 
     assert "Do not update `DEPLOYMENT_STATUS.md`" in runbook_text
-    assert "The DNS receipt must report `resolved=true` before publication dispatch." in runbook_text
+    assert "The DNS receipt validation must report `valid=true` with `--require-resolved`" in runbook_text
+    assert "before publication dispatch" in runbook_text
+    assert "validate_gateway_dns_resolution_receipt.py --require-resolved" in runbook_text
+    assert "gateway DNS receipt validation require-resolved gate" in runbook_text
     assert "Gateway DNS receipt is unresolved" in runbook_text
     assert "deployment_claim=published" in runbook_text
     assert "runtime_responsibility_debt_clear=true" in runbook_text

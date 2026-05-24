@@ -6,7 +6,7 @@
 
 Purpose: Operator runbook for executing the governed general-agent promotion closure plan.
 Governance scope: Adapter evidence, credential binding, deployment witness publication, health declaration, and promotion validation.
-Dependencies: scripts/collect_capability_adapter_evidence.py, scripts/run_general_agent_promotion_closure_chain.py, scripts/plan_general_agent_promotion_closure.py, scripts/plan_general_agent_promotion_live_evidence_queue.py, scripts/validate_general_agent_promotion_terminal_approvals.py, scripts/plan_general_agent_promotion_terminal_certificate_gate.py, scripts/plan_general_agent_promotion_terminal_certificate_candidates.py, scripts/reconcile_general_agent_promotion_terminal_evidence.py, scripts/collect_gateway_dns_resolution_receipt.py, scripts/validate_general_agent_promotion_closure_plan_schema.py, scripts/validate_general_agent_promotion_closure_plan.py, DEPLOYMENT_STATUS.md.
+Dependencies: scripts/collect_capability_adapter_evidence.py, scripts/run_general_agent_promotion_closure_chain.py, scripts/plan_general_agent_promotion_closure.py, scripts/plan_general_agent_promotion_live_evidence_queue.py, scripts/validate_general_agent_promotion_terminal_approvals.py, scripts/plan_general_agent_promotion_terminal_certificate_gate.py, scripts/plan_general_agent_promotion_terminal_certificate_candidates.py, scripts/reconcile_general_agent_promotion_terminal_evidence.py, scripts/collect_gateway_dns_resolution_receipt.py, scripts/validate_gateway_dns_resolution_receipt.py, scripts/validate_general_agent_promotion_closure_plan_schema.py, scripts/validate_general_agent_promotion_closure_plan.py, DEPLOYMENT_STATUS.md.
 Invariants: Does not claim production readiness before live evidence, approval, and publication closure validate.
 -->
 
@@ -162,14 +162,16 @@ The generic sandbox receipt gate must also report `valid=true`; it proves the ne
 
 ```powershell
 python scripts\collect_gateway_dns_resolution_receipt.py --gateway-url "$env:MULLU_GATEWAY_URL" --output .change_assurance\gateway_dns_resolution_receipt.json --json
+python scripts\validate_gateway_dns_resolution_receipt.py --receipt .change_assurance\gateway_dns_resolution_receipt.json --output .change_assurance\gateway_dns_resolution_receipt_validation.json --require-resolved
 python scripts\publish_gateway_publication.py --gateway-url "$env:MULLU_GATEWAY_URL" --dispatch-witness --dispatch --receipt-output .change_assurance\gateway_publication_receipt.json
 python scripts\validate_gateway_publication_receipt.py --receipt .change_assurance\gateway_publication_receipt.json --require-ready --require-dispatched --require-success
 python scripts\validate_deployment_publication_closure.py
 ```
 
-The DNS receipt must report `resolved=true` before publication dispatch. If it
-reports `resolved=false`, publish an A, AAAA, or CNAME record for the gateway
-host and rerun the receipt before any deployment witness command.
+The DNS receipt validation must report `valid=true` with `--require-resolved`
+before publication dispatch. If it reports `resolved=false`, publish an A,
+AAAA, or CNAME record for the gateway host and rerun the receipt plus validator
+before any deployment witness command.
 
 15. Update `DEPLOYMENT_STATUS.md` only when `.change_assurance/deployment_witness.json` has `deployment_claim=published`, `runtime_responsibility_debt_clear=true`, `authority_responsibility_debt_clear=true`, and the public health endpoint equals `<gateway_url>/health`.
 
@@ -189,12 +191,12 @@ python scripts\validate_general_agent_promotion.py --strict --output .change_ass
 | Credential action lacks approval | Do not bind the secret and keep promotion blocked |
 | Live receipt fails | Preserve the failed receipt and blocker |
 | Deployment witness is not published | Do not update `DEPLOYMENT_STATUS.md` |
-| Gateway DNS receipt is unresolved | Do not publish deployment witness; publish DNS and rerun `collect_gateway_dns_resolution_receipt.py` |
+| Gateway DNS receipt is unresolved | Do not publish deployment witness; publish DNS and rerun `collect_gateway_dns_resolution_receipt.py` plus `validate_gateway_dns_resolution_receipt.py --require-resolved` |
 | Runtime or authority responsibility debt is not clear | Do not publish deployment witness and inspect `/authority/responsibility` |
 | Health endpoint mismatch | Do not claim public production health |
 
 STATUS:
   Completeness: 99%
-  Invariants verified: [aggregate plan validation before execution, live-evidence queue classified before execution, terminal approval receipt schema-validated when present, terminal certificate gate checked before execution, terminal certificate candidates are non-minting, terminal evidence reconciliation gates minting readiness, terminal minting gate requires explicit authority, terminal certificate minting executor requires ready gate, credential approval required, live receipts required, deployment status mutation evidence-gated, production promotion validation terminal]
+  Invariants verified: [aggregate plan validation before execution, live-evidence queue classified before execution, terminal approval receipt schema-validated when present, terminal certificate gate checked before execution, terminal certificate candidates are non-minting, terminal evidence reconciliation gates minting readiness, terminal minting gate requires explicit authority, terminal certificate minting executor requires ready gate, credential approval required, live receipts required, gateway DNS receipt validation require-resolved gate, deployment status mutation evidence-gated, production promotion validation terminal]
   Open issues: [external dependencies, governed credentials, live deployment witness, public health probe]
   Next action: execute this runbook in the credentialed adapter-worker and deployment environment
