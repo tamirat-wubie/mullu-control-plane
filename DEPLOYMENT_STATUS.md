@@ -43,6 +43,10 @@ Invariants: Absence of live deployment evidence is explicit; no production healt
 | Gateway publication publisher | `scripts/publish_gateway_publication.py` writes readiness evidence, then optionally dispatches from that report through the handoff contract | Reflected |
 | Gateway publication receipt | `.change_assurance/gateway_publication_receipt.json` records the publisher terminal local decision state and dispatch run metadata when present | Reflected |
 | Gateway publication receipt validator | `scripts/validate_gateway_publication_receipt.py` validates receipt structure, readiness consistency, policy gates, and writes a validation report | Reflected |
+| Deployment upstream blocker receipt | `scripts/emit_deployment_upstream_blocker_receipt.py` records upstream API/DNS readiness blockers before DNS publication | Reflected |
+| Deployment upstream blocker validator | `scripts/validate_deployment_upstream_blocker_receipt.py --require-ready` blocks DNS publication while upstream API provisioning or DNS publication is not allowed | Reflected |
+| Gateway DNS target binding receipt | `scripts/emit_gateway_dns_target_binding_receipt.py` records the selected gateway host, URL, environment, DNS record type, target, and provider before DNS publication | Reflected |
+| Gateway DNS target binding validator | `scripts/validate_gateway_dns_target_binding_receipt.py --require-ready` blocks DNS publication when the origin target, record type, or provider is missing or structurally invalid | Reflected |
 | Gateway publication dispatcher | `scripts/dispatch_gateway_publication.py` verifies publication workflow prerequisites, including runtime witness, conformance, deployment witness, and apply-ingress kubeconfig secret gates, dispatches `.github/workflows/gateway-publication.yml`, and downloads the witness artifact | Reflected |
 | Deployment witness dispatcher | `scripts/dispatch_deployment_witness.py` verifies runtime witness, conformance, and deployment witness secrets, dispatches the workflow, and downloads the artifact | Reflected |
 | Deployment witness orchestrator | `scripts/orchestrate_deployment_witness.py` composes ingress render, target variable provisioning, MCP operator checklist validation, optional preflight gating, optional dispatch, and orchestration receipt output | Reflected |
@@ -90,6 +94,7 @@ Invariants: Absence of live deployment evidence is explicit; no production healt
 | Deployment witness secret | GitHub Actions secret name `MULLU_DEPLOYMENT_WITNESS_SECRET` is present; secret value is not printed |
 | Authority operator secret | GitHub Actions secret name `MULLU_AUTHORITY_OPERATOR_SECRET` is present; secret value is not printed |
 | Deployment target variables | GitHub repository variables `MULLU_GATEWAY_URL=https://api.mullusi.com` and `MULLU_EXPECTED_RUNTIME_ENV=pilot` are set |
+| Upstream API readiness | `api.mullusi.com` remains `AwaitingEvidence` until upstream recovery, runtime host, managed PostgreSQL, secret store, TLS, rollback, and DNS publication authority gates are closed |
 | Deployment witness workflow runs | No `deployment-witness.yml` workflow runs are currently recorded |
 | Gateway publication workflow runs | No `gateway-publication.yml` workflow runs are currently recorded |
 
@@ -129,6 +134,10 @@ Before this witness can claim public deployment health, the repository must name
 | Gateway publication workflow | `.github/workflows/gateway-publication.yml` |
 | Gateway publication readiness | `python scripts/report_gateway_publication_readiness.py --gateway-url "$MULLU_GATEWAY_URL" --dispatch-witness` |
 | Gateway publication readiness handoff | `python scripts/dispatch_gateway_publication.py --readiness-report .change_assurance/gateway_publication_readiness.json` |
+| Deployment upstream blocker receipt | `python scripts/emit_deployment_upstream_blocker_receipt.py --target-gateway-url "$MULLU_GATEWAY_URL" --output .change_assurance/deployment_upstream_blocker_receipt.json --json` |
+| Deployment upstream blocker validation | `python scripts/validate_deployment_upstream_blocker_receipt.py --receipt .change_assurance/deployment_upstream_blocker_receipt.json --output .change_assurance/deployment_upstream_blocker_receipt_validation.json --require-ready` |
+| Gateway DNS target binding receipt | `python scripts/emit_gateway_dns_target_binding_receipt.py --gateway-host "$MULLU_GATEWAY_HOST" --gateway-url "$MULLU_GATEWAY_URL" --expected-environment "$MULLU_EXPECTED_RUNTIME_ENV" --record-type "$MULLU_GATEWAY_DNS_RECORD_TYPE" --target "$MULLU_GATEWAY_DNS_TARGET" --provider "$MULLU_DNS_PROVIDER" --output .change_assurance/gateway_dns_target_binding_receipt.json --json` |
+| Gateway DNS target binding validation | `python scripts/validate_gateway_dns_target_binding_receipt.py --receipt .change_assurance/gateway_dns_target_binding_receipt.json --output .change_assurance/gateway_dns_target_binding_receipt_validation.json --require-ready` |
 | Gateway DNS resolution receipt | `python scripts/collect_gateway_dns_resolution_receipt.py --gateway-url "$MULLU_GATEWAY_URL" --output .change_assurance/gateway_dns_resolution_receipt.json --json` |
 | Gateway DNS resolution validation | `python scripts/validate_gateway_dns_resolution_receipt.py --receipt .change_assurance/gateway_dns_resolution_receipt.json --output .change_assurance/gateway_dns_resolution_receipt_validation.json --require-resolved` |
 | Gateway publication publisher | `python scripts/publish_gateway_publication.py --gateway-url "$MULLU_GATEWAY_URL" --dispatch-witness --dispatch --receipt-output .change_assurance/gateway_publication_receipt.json` |

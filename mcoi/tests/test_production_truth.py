@@ -136,8 +136,33 @@ def test_create_anchor_endpoint(client) -> None:
     assert "anchor_id" in data or "error" in data
 
 
+def test_verify_anchor_endpoint(client) -> None:
+    client.post("/api/v1/tenant/budget", json={"tenant_id": "anchor-verify"})
+    anchor_resp = client.post("/api/v1/audit/anchor?limit=100")
+    anchor_body = anchor_resp.json()
+    if "anchor_id" not in anchor_body:
+        pytest.skip("audit anchor endpoint had no entries to anchor")
+
+    resp = client.post(f"/api/v1/audit/anchor/{anchor_body['anchor_id']}/verify?limit=100")
+    data = resp.json()
+
+    assert resp.status_code == 200
+    assert data["governed"] is True
+    assert "valid" in data
+
+
 def test_list_anchors_endpoint(client) -> None:
     client.post("/api/v1/audit/anchor?limit=50")
     resp = client.get("/api/v1/audit/anchors")
     assert resp.status_code == 200
     assert resp.json()["governed"] is True
+
+
+def test_logs_read_model_bounded(client) -> None:
+    resp = client.get("/api/v1/logs?count=10&min_level=INFO")
+    data = resp.json()
+
+    assert resp.status_code == 200
+    assert data["governed"] is True
+    assert "logs" in data
+    assert "summary" in data

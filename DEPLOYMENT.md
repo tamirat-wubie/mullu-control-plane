@@ -374,6 +374,46 @@ The validator checks receipt structure, internal readiness consistency, terminal
 state, optional expected repository/host/URL/environment values, and writes
 `.change_assurance/gateway_publication_receipt_validation.json`.
 
+Before DNS publication or witness dispatch, preserve the upstream API/DNS
+readiness state. This fails closed while recovery, runtime host, managed
+PostgreSQL, secret store, TLS, rollback, or DNS publication authority gates are
+still open:
+
+```bash
+python scripts/emit_deployment_upstream_blocker_receipt.py \
+  --target-gateway-url "$MULLU_GATEWAY_URL" \
+  --output .change_assurance/deployment_upstream_blocker_receipt.json
+
+python scripts/validate_deployment_upstream_blocker_receipt.py \
+  --receipt .change_assurance/deployment_upstream_blocker_receipt.json \
+  --output .change_assurance/deployment_upstream_blocker_receipt_validation.json \
+  --require-ready
+```
+
+After the upstream blocker validator passes, bind the intended gateway DNS
+origin target into an explicit receipt:
+
+```bash
+python scripts/emit_gateway_dns_target_binding_receipt.py \
+  --gateway-host "$MULLU_GATEWAY_HOST" \
+  --gateway-url "$MULLU_GATEWAY_URL" \
+  --expected-environment "$MULLU_EXPECTED_RUNTIME_ENV" \
+  --record-type "$MULLU_GATEWAY_DNS_RECORD_TYPE" \
+  --target "$MULLU_GATEWAY_DNS_TARGET" \
+  --provider "$MULLU_DNS_PROVIDER" \
+  --output .change_assurance/gateway_dns_target_binding_receipt.json
+
+python scripts/validate_gateway_dns_target_binding_receipt.py \
+  --receipt .change_assurance/gateway_dns_target_binding_receipt.json \
+  --output .change_assurance/gateway_dns_target_binding_receipt_validation.json \
+  --require-ready
+```
+
+The target-binding validator must pass before DNS resolution is treated as
+actionable. For `A` records the target must be an IPv4 address, for `AAAA`
+records it must be an IPv6 address, and for `CNAME` records it must be a
+hostname.
+
 To dispatch that GitHub workflow from a local operator shell and download the
 `gateway-publication-witness` artifact, run:
 

@@ -10,6 +10,7 @@ Invariants:
   - Default execution excludes soak, live-provider, PostgreSQL, and SMTP lanes.
   - Soak execution remains explicit and still excludes live/infra lanes.
   - Shard targets are deterministic and bounded by directory or filename prefix.
+  - Oversized filename prefixes are split into deterministic sub-shards.
   - No shell command construction is used for test execution.
 """
 
@@ -86,7 +87,11 @@ SHARDS: tuple[ShardSpec, ...] = (
     ShardSpec("m", "top-level tests with filenames test_m*"),
     ShardSpec("n", "top-level tests with filenames test_n*"),
     ShardSpec("o", "top-level tests with filenames test_o*"),
-    ShardSpec("p", "top-level tests with filenames test_p*"),
+    ShardSpec("pa-pe", "top-level tests with filenames test_pa* through test_pe*"),
+    ShardSpec("ph-pl", "top-level tests with filenames test_ph* through test_pl*"),
+    ShardSpec("po", "top-level tests with filenames test_po*"),
+    ShardSpec("pr", "top-level tests with filenames test_pr*"),
+    ShardSpec("pu", "top-level tests with filenames test_pu*"),
     ShardSpec("r", "top-level tests with filenames test_r*"),
     ShardSpec("s", "top-level tests with filenames test_s*"),
     ShardSpec("t", "top-level tests with filenames test_t*"),
@@ -95,6 +100,13 @@ SHARDS: tuple[ShardSpec, ...] = (
     ShardSpec("w", "top-level tests with filenames test_w*"),
 )
 SHARD_BY_NAME = {shard.name: shard for shard in SHARDS}
+PREFIX_SHARD_FILTERS: dict[str, tuple[str, ...]] = {
+    "pa-pe": ("pa", "pb", "pc", "pd", "pe"),
+    "ph-pl": ("ph", "pi", "pj", "pk", "pl"),
+    "po": ("po",),
+    "pr": ("pr",),
+    "pu": ("pu",),
+}
 
 
 def shard_names() -> tuple[str, ...]:
@@ -108,6 +120,14 @@ def resolve_shard_files(shard_name: str) -> tuple[Path, ...]:
         raise ValueError(f"unknown MCOI shard: {shard_name}")
     if shard_name == "intent_substrate":
         return _relative_paths(sorted((MCOI_TESTS / "intent_substrate").glob("test_*.py")))
+    if shard_name in PREFIX_SHARD_FILTERS:
+        prefixes = PREFIX_SHARD_FILTERS[shard_name]
+        files = [
+            path
+            for path in sorted(MCOI_TESTS.glob("test_*.py"))
+            if _filename_stem(path).startswith(prefixes)
+        ]
+        return _relative_paths(files)
     allowed_letters = _letters_for_shard(shard_name)
     files = [
         path
@@ -159,6 +179,7 @@ def run_shards(
     soak_only: bool = False,
     extra_pytest_args: Sequence[str] = (),
     dry_run: bool = False,
+    emit_progress: bool = True,
     runner: CommandRunner = subprocess.run,
 ) -> tuple[ShardRun, ...]:
     """Run selected MCOI shards and return execution receipts."""
@@ -166,12 +187,21 @@ def run_shards(
     shard_sequence = () if soak_only else tuple(selected_shards)
     for shard_name in shard_sequence:
         command = build_shard_command(shard_name, extra_pytest_args=extra_pytest_args)
-        runs.append(_execute_command(shard_name, command, len(resolve_shard_files(shard_name)), dry_run, runner))
+        runs.append(
+            _execute_command(
+                shard_name,
+                command,
+                len(resolve_shard_files(shard_name)),
+                dry_run,
+                runner,
+                emit_progress=emit_progress,
+            )
+        )
         if runs[-1].returncode != 0:
             return tuple(runs)
     if include_soak or soak_only:
         command = build_soak_command(extra_pytest_args=extra_pytest_args)
-        runs.append(_execute_command("soak", command, 1, dry_run, runner))
+        runs.append(_execute_command("soak", command, 1, dry_run, runner, emit_progress=emit_progress))
     return tuple(runs)
 
 
@@ -181,8 +211,13 @@ def _execute_command(
     target_count: int,
     dry_run: bool,
     runner: CommandRunner,
+    *,
+    emit_progress: bool,
 ) -> ShardRun:
     started = time.perf_counter()
+    if emit_progress:
+        mode = "DRY-RUN" if dry_run else "RUN"
+        print(f"[{mode}] {shard_name}: targets={target_count}", flush=True)
     if dry_run:
         return ShardRun(
             shard=shard_name,
@@ -206,6 +241,9 @@ def _execute_command(
         print(completed.stdout, end="")
     if completed.stderr:
         print(completed.stderr, end="", file=sys.stderr)
+    if emit_progress:
+        status = "PASS" if completed.returncode == 0 else "FAIL"
+        print(f"[{status}] {shard_name}: elapsed={elapsed:.2f}s", flush=True)
     return ShardRun(
         shard=shard_name,
         command=command,
@@ -227,10 +265,17 @@ def _letters_for_shard(shard_name: str) -> frozenset[str]:
 
 
 def _filename_letter(path: Path) -> str:
+    stem = _filename_stem(path)
+    if not stem:
+        return ""
+    return stem[0]
+
+
+def _filename_stem(path: Path) -> str:
     stem = path.stem.lower()
     if not stem.startswith("test_") or len(stem) <= len("test_"):
         return ""
-    return stem[len("test_")]
+    return stem[len("test_"):]
 
 
 def _relative_paths(paths: Iterable[Path]) -> tuple[Path, ...]:
@@ -280,11 +325,10 @@ def main(argv: Sequence[str] | None = None) -> int:
         soak_only=bool(args.soak_only),
         extra_pytest_args=tuple(args.pytest_arg),
         dry_run=bool(args.dry_run),
+        emit_progress=not bool(args.json),
     )
     if args.json:
         print(json.dumps([run.as_dict() for run in runs], indent=2, sort_keys=True))
-    else:
-        _print_text_summary(runs)
     return 0 if all(run.returncode == 0 for run in runs) else 1
 
 

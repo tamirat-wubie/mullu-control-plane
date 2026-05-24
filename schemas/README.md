@@ -39,6 +39,7 @@ files are open wire contracts. Runtime modules under `mcoi/`, `gateway/`, and
 | `data_governance_snapshot.schema.json` | Canonical data governance lifecycle snapshot with decisions and retention controls |
 | `deployment_orchestration_receipt.schema.json` | Canonical gateway deployment handoff receipt |
 | `deployment_publication_closure_plan.schema.json` | Canonical deployment publication closure action plan |
+| `deployment_upstream_blocker_receipt.schema.json` | Canonical upstream API/DNS readiness blocker receipt for deployment publication |
 | `public_production_health_declaration.schema.json` | Canonical evidence-gated public production health declaration receipt |
 | `deployment_witness.schema.json` | Canonical live gateway deployment witness artifact |
 | `domain_capsule.schema.json` | Domain capsule operating-model package |
@@ -69,6 +70,7 @@ files are open wire contracts. Runtime modules under `mcoi/`, `gateway/`, and
 | `general_agent_promotion_terminal_certificate_minting_run.schema.json` | Canonical terminal certificate minting run receipt |
 | `general_agent_promotion_handoff_packet.schema.json` | Canonical promotion handoff packet |
 | `gateway_dns_resolution_receipt.schema.json` | Canonical gateway DNS resolution receipt for deployment publication gates |
+| `gateway_dns_target_binding_receipt.schema.json` | Canonical gateway DNS target binding receipt for publication handoff |
 | `gateway_health.schema.json` | Canonical public gateway health read model |
 | `gateway_observability_snapshot.schema.json` | Canonical gateway observability summary with bounded run metrics |
 | `goal.schema.json` | Canonical governed goal compilation contract |

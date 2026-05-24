@@ -16,22 +16,72 @@ env:
 
 jobs:
   python-tests:
-    name: Python Tests (${{ matrix.os }}, Python ${{ matrix.python-version }})
+    name: Python Tests (MCOI shard ${{ matrix.mcoi-shard }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        mcoi-shard:
+          - intent_substrate
+          - a-c
+          - d
+          - e
+          - f
+          - g
+          - h
+          - i
+          - j
+          - k
+          - l
+          - m
+          - n
+          - o
+          - pa-pe
+          - ph-pl
+          - po
+          - pr
+          - pu
+          - r
+          - s
+          - t
+          - u
+          - v
+          - w
+    defaults:
+      run:
+        working-directory: mcoi
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.13
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Upgrade pip
+        run: python -m pip install --upgrade pip
+
+      - name: Install dependencies
+        run: python -m pip install -e ".[dev]"
+
+      - name: Run MCOI shard
+        run: python ../scripts/run_mcoi_shards.py --shard "${{ matrix.mcoi-shard }}"
+
+  python-compatibility:
+    name: Python Compatibility (${{ matrix.os }}, Python ${{ matrix.python-version }})
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 45
+    timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
         include:
           - os: ubuntu-latest
             python-version: "3.12"
-            run-soak: false
-          - os: ubuntu-latest
-            python-version: "3.13"
-            run-soak: true
+            mcoi-shard: n
           - os: windows-latest
             python-version: "3.13"
-            run-soak: false
+            mcoi-shard: n
     defaults:
       run:
         working-directory: mcoi
@@ -49,12 +99,45 @@ jobs:
       - name: Install dependencies
         run: python -m pip install -e ".[dev]"
 
-      - name: Run main test suite
-        run: python ../scripts/run_mcoi_shards.py
+      - name: Run compatibility shard
+        run: python ../scripts/run_mcoi_shards.py --shard "${{ matrix.mcoi-shard }}"
+
+  python-soak-tests:
+    name: Python Soak Tests (ubuntu-latest, Python 3.13)
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    defaults:
+      run:
+        working-directory: mcoi
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.13
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Upgrade pip
+        run: python -m pip install --upgrade pip
+
+      - name: Install dependencies
+        run: python -m pip install -e ".[dev]"
 
       - name: Run soak tests
-        if: matrix.run-soak
         run: python ../scripts/run_mcoi_shards.py --soak-only
+
+  python-required-status:
+    name: Python Tests (ubuntu-latest, Python 3.13)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    needs: [python-tests, python-compatibility, python-soak-tests]
+    if: always()
+    steps:
+      - name: Confirm bounded Python gates passed
+        run: |
+          test "${{ needs.python-tests.result }}" = "success"
+          test "${{ needs.python-compatibility.result }}" = "success"
+          test "${{ needs.python-soak-tests.result }}" = "success"
 
   typescript-sdk:
     name: TypeScript SDK Verification
@@ -281,7 +364,7 @@ jobs:
     name: Build Verification
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    needs: [python-tests, rust-tests, schema-validation, gateway-closure, reflective-contract-guard, red-team-release-gate]
+    needs: [python-required-status, typescript-sdk, rust-tests, schema-validation, gateway-closure, reflective-contract-guard, red-team-release-gate]
     steps:
       - uses: actions/checkout@v4
         with:

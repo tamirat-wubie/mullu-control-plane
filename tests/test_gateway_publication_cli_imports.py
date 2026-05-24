@@ -23,9 +23,13 @@ def test_gateway_publication_operator_scripts_print_help_from_repo_root() -> Non
     scripts = [
         "scripts/collect_gateway_dns_resolution_receipt.py",
         "scripts/dispatch_gateway_publication.py",
+        "scripts/emit_deployment_upstream_blocker_receipt.py",
+        "scripts/emit_gateway_dns_target_binding_receipt.py",
         "scripts/publish_gateway_publication.py",
         "scripts/report_gateway_publication_readiness.py",
+        "scripts/validate_deployment_upstream_blocker_receipt.py",
         "scripts/validate_gateway_dns_resolution_receipt.py",
+        "scripts/validate_gateway_dns_target_binding_receipt.py",
     ]
 
     for script in scripts:

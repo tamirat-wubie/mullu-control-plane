@@ -34,7 +34,11 @@ def test_deployment_closure_plan_maps_publication_blockers(tmp_path: Path) -> No
     readiness_path.write_text(json.dumps(_blocked_readiness()), encoding="utf-8")
     deployment_status_path.write_text("**Deployment witness state:** `not-published`\n", encoding="utf-8")
 
-    plan = plan_deployment_publication_closure(readiness_path, deployment_status_path)
+    plan = plan_deployment_publication_closure(
+        readiness_path,
+        deployment_status_path,
+        upstream_blocker_receipt_path=tmp_path / "missing_upstream_receipt.json",
+    )
     actions_by_blocker = {action.blocker: action for action in plan.actions}
 
     assert plan.source_ready is False
@@ -56,7 +60,10 @@ def test_deployment_closure_plan_preserves_unknown_deployment_blocker(tmp_path: 
         encoding="utf-8",
     )
 
-    plan = plan_deployment_publication_closure(readiness_path)
+    plan = plan_deployment_publication_closure(
+        readiness_path,
+        upstream_blocker_receipt_path=tmp_path / "missing_upstream_receipt.json",
+    )
     action = plan.actions[0]
 
     assert plan.action_count == 1
@@ -93,7 +100,10 @@ def test_deployment_closure_plan_maps_gateway_readiness_steps(tmp_path: Path) ->
         encoding="utf-8",
     )
 
-    plan = plan_deployment_publication_closure(readiness_path)
+    plan = plan_deployment_publication_closure(
+        readiness_path,
+        upstream_blocker_receipt_path=tmp_path / "missing_upstream_receipt.json",
+    )
     actions_by_blocker = {action.blocker: action for action in plan.actions}
 
     assert plan.action_count == 2
@@ -105,8 +115,24 @@ def test_deployment_closure_plan_maps_gateway_readiness_steps(tmp_path: Path) ->
     assert actions_by_blocker["deployment_witness_secret_missing"].approval_required is True
     assert "do not print or serialize" in actions_by_blocker["deployment_witness_secret_missing"].command
     assert actions_by_blocker["deployment_dns_not_verified"].action_type == "dns-verification"
+    assert "MULLU_GATEWAY_DNS_TARGET" in actions_by_blocker["deployment_dns_not_verified"].command
+    assert "MULLU_GATEWAY_DNS_RECORD_TYPE" in actions_by_blocker["deployment_dns_not_verified"].command
+    assert "MULLU_DNS_PROVIDER" in actions_by_blocker["deployment_dns_not_verified"].command
+    assert "A, AAAA, or CNAME" in actions_by_blocker["deployment_dns_not_verified"].command
+    assert "gateway_dns_target_binding_receipt" in actions_by_blocker[
+        "deployment_dns_not_verified"
+    ].evidence_required
+    assert "gateway_dns_target_binding_validation" in actions_by_blocker[
+        "deployment_dns_not_verified"
+    ].evidence_required
     assert "deployment_witness_preflight" in actions_by_blocker["deployment_dns_not_verified"].evidence_required
     assert "dns_resolution_receipt_validation" in actions_by_blocker["deployment_dns_not_verified"].evidence_required
+    assert "emit_gateway_dns_target_binding_receipt.py" in actions_by_blocker[
+        "deployment_dns_not_verified"
+    ].command
+    assert "validate_gateway_dns_target_binding_receipt.py" in actions_by_blocker[
+        "deployment_dns_not_verified"
+    ].command
     assert "collect_gateway_dns_resolution_receipt.py" in actions_by_blocker["deployment_dns_not_verified"].command
     assert "validate_gateway_dns_resolution_receipt.py" in actions_by_blocker["deployment_dns_not_verified"].command
     assert "--require-resolved" in actions_by_blocker["deployment_dns_not_verified"].command
@@ -129,7 +155,10 @@ def test_deployment_closure_plan_maps_responsibility_debt_blockers(tmp_path: Pat
         encoding="utf-8",
     )
 
-    plan = plan_deployment_publication_closure(readiness_path)
+    plan = plan_deployment_publication_closure(
+        readiness_path,
+        upstream_blocker_receipt_path=tmp_path / "missing_upstream_receipt.json",
+    )
     actions_by_blocker = {action.blocker: action for action in plan.actions}
 
     assert plan.action_count == 2
@@ -144,14 +173,105 @@ def test_deployment_closure_plan_maps_responsibility_debt_blockers(tmp_path: Pat
     ].command
 
 
+def test_deployment_closure_plan_maps_kubeconfig_secret_step(tmp_path: Path) -> None:
+    readiness_path = tmp_path / "gateway_publication_readiness.json"
+    readiness_path.write_text(
+        json.dumps(
+            {
+                "ready": False,
+                "steps": [
+                    {
+                        "name": "kubeconfig secret",
+                        "passed": False,
+                        "detail": "missing=MULLU_KUBECONFIG_B64",
+                    },
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    plan = plan_deployment_publication_closure(
+        readiness_path,
+        upstream_blocker_receipt_path=tmp_path / "missing_upstream_receipt.json",
+    )
+    action = plan.actions[0]
+
+    assert plan.action_count == 1
+    assert plan.blockers == ("deployment_kubeconfig_secret_missing",)
+    assert action.action_id == "provision-gateway-publication-kubeconfig"
+    assert action.action_type == "secret-binding"
+    assert action.approval_required is True
+    assert action.risk_level == "high"
+    assert "MULLU_KUBECONFIG_B64" in action.command
+    assert "do not print or serialize" in action.command
+    assert "gh_secret_list_presence:MULLU_KUBECONFIG_B64" in action.evidence_required
+
+
+def test_deployment_closure_plan_maps_upstream_blocker_receipt(tmp_path: Path) -> None:
+    readiness_path = tmp_path / "general_agent_promotion_readiness.json"
+    upstream_receipt_path = tmp_path / "deployment_upstream_blocker_receipt.json"
+    readiness_path.write_text(json.dumps({"ready": False, "blockers": []}), encoding="utf-8")
+    upstream_receipt_path.write_text(
+        json.dumps(
+            {
+                "receipt_id": "deployment-upstream-blocker-0123456789abcdef",
+                "target_gateway_host": "api.mullusi.com",
+                "target_gateway_url": "https://api.mullusi.com",
+                "upstream_repository": "mullusi/mullusi-site",
+                "upstream_gate": "api-production-readiness-gate",
+                "upstream_state": "AwaitingEvidence",
+                "api_provisioning_allowed": False,
+                "dns_publication_allowed": False,
+                "ready": False,
+                "checked_at_utc": "2026-05-24T12:00:00Z",
+                "blockers": ["private_recovery_inventory_missing"],
+                "evidence_refs": ["issue-330-comment-4530008851"],
+                "next_actions": ["complete private recovery inventory outside Git"],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    plan = plan_deployment_publication_closure(
+        readiness_path,
+        upstream_blocker_receipt_path=upstream_receipt_path,
+    )
+    action = plan.actions[0]
+
+    assert plan.action_count == 1
+    assert plan.blockers == ("deployment_upstream_api_gate_not_ready",)
+    assert action.action_id == "close-upstream-api-readiness-gate"
+    assert action.action_type == "upstream-gate-closure"
+    assert action.approval_required is True
+    assert "emit_deployment_upstream_blocker_receipt.py" in action.command
+    assert "validate_deployment_upstream_blocker_receipt.py" in action.command
+    assert "deployment_upstream_blocker_receipt" in action.evidence_required
+    assert "dns_publication_authority" in action.evidence_required
+
+
 def test_deployment_closure_plan_writer_and_cli_emit_json(tmp_path: Path, capsys) -> None:
     readiness_path = tmp_path / "general_agent_promotion_readiness.json"
     output_path = tmp_path / "deployment_publication_closure_plan.json"
     readiness_path.write_text(json.dumps(_blocked_readiness()), encoding="utf-8")
-    plan = plan_deployment_publication_closure(readiness_path)
+    missing_upstream_receipt_path = tmp_path / "missing_upstream_receipt.json"
+    plan = plan_deployment_publication_closure(
+        readiness_path,
+        upstream_blocker_receipt_path=missing_upstream_receipt_path,
+    )
 
     written = write_deployment_publication_closure_plan(plan, output_path)
-    exit_code = main(["--readiness", str(readiness_path), "--output", str(output_path), "--json"])
+    exit_code = main(
+        [
+            "--readiness",
+            str(readiness_path),
+            "--upstream-blocker-receipt",
+            str(missing_upstream_receipt_path),
+            "--output",
+            str(output_path),
+            "--json",
+        ]
+    )
     captured = capsys.readouterr()
     payload = json.loads(output_path.read_text(encoding="utf-8"))
     stdout_payload = json.loads(captured.out)

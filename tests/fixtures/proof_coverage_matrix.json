@@ -4188,6 +4188,31 @@
         "/api/v1/logs"
       ],
       "request_proof": "read_model",
+      "runtime_witness_anchor_aliases": {
+        "audit_anchor_checkpoint_created": [
+          "create_anchor_endpoint"
+        ],
+        "audit_anchor_history_read_model": [
+          "list_anchors_endpoint"
+        ],
+        "audit_anchor_verification_endpoint": [
+          "verify_anchor_endpoint"
+        ],
+        "audit_chain_hash_linked": [
+          "hash_chain",
+          "verify_valid_chain",
+          "post_prune_chain_still_verifies"
+        ],
+        "audit_chain_verify_endpoint": [
+          "audit_verify"
+        ],
+        "audit_logs_read_model_bounded": [
+          "logs_read_model_bounded"
+        ],
+        "audit_summary_read_model": [
+          "audit_summary"
+        ]
+      },
       "runtime_witnesses": [
         "audit_chain_verify_endpoint",
         "audit_summary_read_model",
@@ -4216,6 +4241,27 @@
         "/api/v1/events/summary"
       ],
       "request_proof": "request_proof",
+      "runtime_witness_anchor_aliases": {
+        "config_update_event_visible": [
+          "config_update_emits_event",
+          "config_update_emits_event_and_audit"
+        ],
+        "event_history_filter_bounded": [
+          "filter_events_by_type"
+        ],
+        "event_publish_hash_bound": [
+          "publish_event"
+        ],
+        "event_store_summary_governed": [
+          "event_store_summary_governed"
+        ],
+        "event_summary_bounded": [
+          "events_summary"
+        ],
+        "pipeline_completion_event_visible": [
+          "pipeline_emits_event"
+        ]
+      },
       "runtime_witnesses": [
         "event_publish_hash_bound",
         "event_history_filter_bounded",
@@ -4242,6 +4288,24 @@
         "/api/v1/api-keys/{key_id}"
       ],
       "request_proof": "request_proof",
+      "runtime_witness_anchor_aliases": {
+        "api_key_create_rejects_empty_scopes": [
+          "create_api_key_empty_scopes_returns_governed_validation_error"
+        ],
+        "api_key_create_rejects_wildcard_when_disabled": [
+          "create_wildcard_api_key_returns_governed_validation_error"
+        ],
+        "api_key_expiration_and_stale_detection": [
+          "prune_expired",
+          "stale_keys_detected"
+        ],
+        "api_key_revoke_missing_is_bounded": [
+          "revoke_missing_api_key_returns_governed_not_found"
+        ],
+        "api_key_rotation_links_old_and_new_keys": [
+          "rotate_links_old_to_new"
+        ]
+      },
       "runtime_witnesses": [
         "api_key_create_rejects_wildcard_when_disabled",
         "api_key_create_rejects_empty_scopes",
@@ -4272,6 +4336,23 @@
         "/api/v1/ops/proof-bridge"
       ],
       "request_proof": "request_proof",
+      "runtime_witness_anchor_aliases": {
+        "ops_benchmark_results_have_metrics": [
+          "benchmark_results_have_metrics"
+        ],
+        "ops_benchmarks_return_governed_summary": [
+          "run_benchmarks"
+        ],
+        "ops_import_analysis_returns_dependency_summary": [
+          "analyze_imports"
+        ],
+        "ops_import_depth_distribution_bounded": [
+          "imports_depth_distribution"
+        ],
+        "ops_proof_bridge_status_governed": [
+          "proof_bridge_status"
+        ]
+      },
       "runtime_witnesses": [
         "ops_benchmarks_return_governed_summary",
         "ops_benchmark_results_have_metrics",
@@ -5126,6 +5207,10 @@
         "scripts/orchestrate_deployment_witness.py",
         "scripts/preflight_deployment_witness.py",
         "scripts/collect_deployment_witness.py",
+        "scripts/emit_gateway_dns_target_binding_receipt.py",
+        "scripts/validate_gateway_dns_target_binding_receipt.py",
+        "scripts/emit_deployment_upstream_blocker_receipt.py",
+        "scripts/validate_deployment_upstream_blocker_receipt.py",
         "scripts/collect_gateway_dns_resolution_receipt.py",
         "scripts/validate_deployment_publication_closure.py",
         "scripts/apply_deployment_publication_status.py",
@@ -5138,6 +5223,8 @@
         "schemas/public_production_health_declaration.schema.json",
         "schemas/deployment_orchestration_receipt.schema.json",
         "schemas/deployment_orchestration_receipt_validation.schema.json",
+        "schemas/gateway_dns_target_binding_receipt.schema.json",
+        "schemas/deployment_upstream_blocker_receipt.schema.json",
         "schemas/gateway_dns_resolution_receipt.schema.json",
         "schemas/gateway_publication_readiness.schema.json",
         "schemas/gateway_publication_receipt_validation.schema.json",
@@ -5147,6 +5234,10 @@
         "schemas/mullu_governance_protocol.manifest.json",
         "tests/test_gateway/test_webhooks.py",
         "tests/test_orchestrate_deployment_witness.py",
+        "tests/test_emit_gateway_dns_target_binding_receipt.py",
+        "tests/test_validate_gateway_dns_target_binding_receipt.py",
+        "tests/test_emit_deployment_upstream_blocker_receipt.py",
+        "tests/test_validate_deployment_upstream_blocker_receipt.py",
         "tests/test_collect_gateway_dns_resolution_receipt.py",
         "tests/test_report_gateway_publication_readiness.py",
         "tests/test_validate_gateway_dns_resolution_receipt.py",
@@ -5181,6 +5272,10 @@
         "orchestrate_deployment_witness_renders_and_provisions",
         "orchestration_receipt_schema_matches_cli_output",
         "orchestration_validation_report_matches_public_schema",
+        "gateway_dns_target_binding_receipt_matches_public_schema",
+        "gateway_dns_target_binding_validation_report_writes_bounded_result",
+        "deployment_upstream_blocker_receipt_matches_public_schema",
+        "deployment_upstream_blocker_validation_accepts_ready_receipt",
         "gateway_dns_resolution_receipt_matches_public_schema",
         "gateway_dns_receipt_validation_report_writes_bounded_result",
         "closure_validation_report_matches_public_schema_for_not_published",
@@ -5190,6 +5285,8 @@
         "protocol_manifest_indexes_deployment_publication_closure_validation",
         "protocol_manifest_indexes_public_production_health_declaration",
         "protocol_manifest_indexes_gateway_publication_readiness",
+        "protocol_manifest_indexes_gateway_dns_target_binding_receipt",
+        "protocol_manifest_indexes_deployment_upstream_blocker_receipt",
         "protocol_manifest_indexes_gateway_dns_resolution_receipt",
         "protocol_manifest_indexes_gateway_publication_receipt_validation",
         "protocol_manifest_indexes_runtime_witness_and_latest_anchor",
@@ -7848,8 +7945,8 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 802,
-    "runtime_witness_count": 1052,
+    "exact_test_anchor_count": 831,
+    "runtime_witness_count": 1058,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -9843,52 +9940,176 @@
         "unanchored_witnesses": []
       },
       {
-        "anchored_witnesses": [],
-        "exact_test_anchor_count": 0,
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "mcoi/tests/test_server_phase202.py::test_audit_verify"
+            ],
+            "witness": "audit_chain_verify_endpoint"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_server_phase202.py::test_audit_summary"
+            ],
+            "witness": "audit_summary_read_model"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_production_truth.py::test_create_anchor_endpoint"
+            ],
+            "witness": "audit_anchor_checkpoint_created"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_production_truth.py::test_verify_anchor_endpoint"
+            ],
+            "witness": "audit_anchor_verification_endpoint"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_production_truth.py::test_list_anchors_endpoint"
+            ],
+            "witness": "audit_anchor_history_read_model"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_audit_trail.py::test_hash_chain",
+              "mcoi/tests/test_audit_trail.py::test_verify_valid_chain",
+              "mcoi/tests/test_v4_28_audit_checkpoint.py::test_post_prune_chain_still_verifies"
+            ],
+            "witness": "audit_chain_hash_linked"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_production_truth.py::test_logs_read_model_bounded"
+            ],
+            "witness": "audit_logs_read_model_bounded"
+          }
+        ],
+        "exact_test_anchor_count": 7,
         "runtime_witness_count": 7,
         "surface_id": "audit_chain_api",
-        "unanchored_witness_count": 7,
-        "unanchored_witnesses": [
-          "audit_chain_verify_endpoint",
-          "audit_summary_read_model",
-          "audit_anchor_checkpoint_created",
-          "audit_anchor_verification_endpoint",
-          "audit_anchor_history_read_model",
-          "audit_chain_hash_linked",
-          "audit_logs_read_model_bounded"
-        ]
-      },
-      {
-        "anchored_witnesses": [],
-        "exact_test_anchor_count": 0,
-        "runtime_witness_count": 6,
-        "surface_id": "event_bus_operations",
-        "unanchored_witness_count": 6,
-        "unanchored_witnesses": [
-          "event_publish_hash_bound",
-          "event_history_filter_bounded",
-          "event_summary_bounded",
-          "event_store_summary_governed",
-          "pipeline_completion_event_visible",
-          "config_update_event_visible"
-        ]
-      },
-      {
-        "anchored_witnesses": [],
-        "exact_test_anchor_count": 0,
-        "runtime_witness_count": 5,
-        "surface_id": "api_key_lifecycle",
-        "unanchored_witness_count": 5,
-        "unanchored_witnesses": [
-          "api_key_create_rejects_wildcard_when_disabled",
-          "api_key_create_rejects_empty_scopes",
-          "api_key_revoke_missing_is_bounded",
-          "api_key_rotation_links_old_and_new_keys",
-          "api_key_expiration_and_stale_detection"
-        ]
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
       },
       {
         "anchored_witnesses": [
+          {
+            "anchors": [
+              "mcoi/tests/test_server_phase206.py::test_publish_event"
+            ],
+            "witness": "event_publish_hash_bound"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_server_phase206.py::test_filter_events_by_type"
+            ],
+            "witness": "event_history_filter_bounded"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_server_phase206.py::test_events_summary"
+            ],
+            "witness": "event_summary_bounded"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_server_phase206.py::test_event_store_summary_governed"
+            ],
+            "witness": "event_store_summary_governed"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_server_phase206.py::test_pipeline_emits_event"
+            ],
+            "witness": "pipeline_completion_event_visible"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_server_phase207.py::test_config_update_emits_event",
+              "mcoi/tests/test_server_phase207.py::test_config_update_emits_event_and_audit"
+            ],
+            "witness": "config_update_event_visible"
+          }
+        ],
+        "exact_test_anchor_count": 6,
+        "runtime_witness_count": 6,
+        "surface_id": "event_bus_operations",
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
+      },
+      {
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "mcoi/tests/test_server_phase216.py::test_create_wildcard_api_key_returns_governed_validation_error"
+            ],
+            "witness": "api_key_create_rejects_wildcard_when_disabled"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_server_phase216.py::test_create_api_key_empty_scopes_returns_governed_validation_error"
+            ],
+            "witness": "api_key_create_rejects_empty_scopes"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_server_phase216.py::test_revoke_missing_api_key_returns_governed_not_found"
+            ],
+            "witness": "api_key_revoke_missing_is_bounded"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_api_key_lifecycle.py::test_rotate_links_old_to_new"
+            ],
+            "witness": "api_key_rotation_links_old_and_new_keys"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_api_key_lifecycle.py::test_prune_expired",
+              "mcoi/tests/test_api_key_lifecycle.py::test_stale_keys_detected"
+            ],
+            "witness": "api_key_expiration_and_stale_detection"
+          }
+        ],
+        "exact_test_anchor_count": 5,
+        "runtime_witness_count": 5,
+        "surface_id": "api_key_lifecycle",
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
+      },
+      {
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "mcoi/tests/test_governance_endpoints.py::test_run_benchmarks"
+            ],
+            "witness": "ops_benchmarks_return_governed_summary"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_governance_endpoints.py::test_benchmark_results_have_metrics"
+            ],
+            "witness": "ops_benchmark_results_have_metrics"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_governance_endpoints.py::test_analyze_imports"
+            ],
+            "witness": "ops_import_analysis_returns_dependency_summary"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_governance_endpoints.py::test_imports_depth_distribution"
+            ],
+            "witness": "ops_import_depth_distribution_bounded"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_governance_endpoints.py::test_proof_bridge_status"
+            ],
+            "witness": "ops_proof_bridge_status_governed"
+          },
           {
             "anchors": [
               "mcoi/tests/test_autonomous_fixes.py::test_proof_bridge_registered_in_deps"
@@ -9896,17 +10117,11 @@
             "witness": "proof_bridge_registered_in_deps"
           }
         ],
-        "exact_test_anchor_count": 1,
+        "exact_test_anchor_count": 6,
         "runtime_witness_count": 6,
         "surface_id": "ops_proof_surface",
-        "unanchored_witness_count": 5,
-        "unanchored_witnesses": [
-          "ops_benchmarks_return_governed_summary",
-          "ops_benchmark_results_have_metrics",
-          "ops_import_analysis_returns_dependency_summary",
-          "ops_import_depth_distribution_bounded",
-          "ops_proof_bridge_status_governed"
-        ]
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
       },
       {
         "anchored_witnesses": [
@@ -10883,6 +11098,30 @@
           },
           {
             "anchors": [
+              "tests/test_validate_gateway_dns_target_binding_receipt.py::test_gateway_dns_target_binding_receipt_matches_public_schema"
+            ],
+            "witness": "gateway_dns_target_binding_receipt_matches_public_schema"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_gateway_dns_target_binding_receipt.py::test_gateway_dns_target_binding_validation_report_writes_bounded_result"
+            ],
+            "witness": "gateway_dns_target_binding_validation_report_writes_bounded_result"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_deployment_upstream_blocker_receipt.py::test_deployment_upstream_blocker_receipt_matches_public_schema"
+            ],
+            "witness": "deployment_upstream_blocker_receipt_matches_public_schema"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_deployment_upstream_blocker_receipt.py::test_deployment_upstream_blocker_validation_accepts_ready_receipt"
+            ],
+            "witness": "deployment_upstream_blocker_validation_accepts_ready_receipt"
+          },
+          {
+            "anchors": [
               "tests/test_validate_gateway_dns_resolution_receipt.py::test_gateway_dns_resolution_receipt_matches_public_schema"
             ],
             "witness": "gateway_dns_resolution_receipt_matches_public_schema"
@@ -10934,6 +11173,18 @@
               "tests/test_validate_protocol_manifest.py::test_protocol_manifest_indexes_gateway_publication_readiness"
             ],
             "witness": "protocol_manifest_indexes_gateway_publication_readiness"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_protocol_manifest.py::test_protocol_manifest_indexes_gateway_dns_target_binding_receipt"
+            ],
+            "witness": "protocol_manifest_indexes_gateway_dns_target_binding_receipt"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_protocol_manifest.py::test_protocol_manifest_indexes_deployment_upstream_blocker_receipt"
+            ],
+            "witness": "protocol_manifest_indexes_deployment_upstream_blocker_receipt"
           },
           {
             "anchors": [
@@ -10990,8 +11241,8 @@
             "witness": "published_status_report_rejects_dry_run_declaration_receipt"
           }
         ],
-        "exact_test_anchor_count": 32,
-        "runtime_witness_count": 32,
+        "exact_test_anchor_count": 38,
+        "runtime_witness_count": 38,
         "surface_id": "gateway_runtime_witness",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []
@@ -14088,6 +14339,6 @@
         "unanchored_witnesses": []
       }
     ],
-    "unanchored_witness_count": 250
+    "unanchored_witness_count": 227
   }
 }

@@ -139,6 +139,14 @@ def test_witness_integrity_report_tracks_exact_test_anchors() -> None:
     assert surfaces["model_experiment_control"]["unanchored_witness_count"] == 0
     assert surfaces["federated_control_plane"]["exact_test_anchor_count"] == 7
     assert surfaces["federated_control_plane"]["unanchored_witness_count"] == 0
+    assert surfaces["audit_chain_api"]["exact_test_anchor_count"] == 7
+    assert surfaces["audit_chain_api"]["unanchored_witness_count"] == 0
+    assert surfaces["event_bus_operations"]["exact_test_anchor_count"] == 6
+    assert surfaces["event_bus_operations"]["unanchored_witness_count"] == 0
+    assert surfaces["api_key_lifecycle"]["exact_test_anchor_count"] == 5
+    assert surfaces["api_key_lifecycle"]["unanchored_witness_count"] == 0
+    assert surfaces["ops_proof_surface"]["exact_test_anchor_count"] == 6
+    assert surfaces["ops_proof_surface"]["unanchored_witness_count"] == 0
     assert surfaces["code_intelligence_operator_read_model"]["exact_test_anchor_count"] >= 5
     assert surfaces["code_intelligence_operator_read_model"]["unanchored_witness_count"] == 0
     assert surfaces["data_export_lifecycle"]["exact_test_anchor_count"] >= 4
@@ -1408,6 +1416,10 @@ def test_gateway_runtime_witness_covers_orchestration_receipts() -> None:
 
     assert runtime_surface["coverage_state"] == "witnessed"
     assert "scripts/orchestrate_deployment_witness.py" in runtime_surface["evidence_files"]
+    assert "scripts/emit_gateway_dns_target_binding_receipt.py" in runtime_surface["evidence_files"]
+    assert "scripts/validate_gateway_dns_target_binding_receipt.py" in runtime_surface["evidence_files"]
+    assert "scripts/emit_deployment_upstream_blocker_receipt.py" in runtime_surface["evidence_files"]
+    assert "scripts/validate_deployment_upstream_blocker_receipt.py" in runtime_surface["evidence_files"]
     assert "scripts/collect_gateway_dns_resolution_receipt.py" in runtime_surface["evidence_files"]
     assert "scripts/validate_gateway_dns_resolution_receipt.py" in runtime_surface["evidence_files"]
     assert ".github/workflows/gateway-publication.yml" in runtime_surface["evidence_files"]
@@ -1416,6 +1428,8 @@ def test_gateway_runtime_witness_covers_orchestration_receipts() -> None:
     assert "schemas/deployment_publication_closure_validation.schema.json" in runtime_surface["evidence_files"]
     assert "schemas/public_production_health_declaration.schema.json" in runtime_surface["evidence_files"]
     assert "schemas/deployment_orchestration_receipt_validation.schema.json" in runtime_surface["evidence_files"]
+    assert "schemas/gateway_dns_target_binding_receipt.schema.json" in runtime_surface["evidence_files"]
+    assert "schemas/deployment_upstream_blocker_receipt.schema.json" in runtime_surface["evidence_files"]
     assert "schemas/gateway_dns_resolution_receipt.schema.json" in runtime_surface["evidence_files"]
     assert "schemas/gateway_publication_readiness.schema.json" in runtime_surface["evidence_files"]
     assert "schemas/gateway_publication_receipt_validation.schema.json" in runtime_surface["evidence_files"]
@@ -1423,6 +1437,10 @@ def test_gateway_runtime_witness_covers_orchestration_receipts() -> None:
     assert "schemas/runtime_witness.schema.json" in runtime_surface["evidence_files"]
     assert "schemas/mullu_governance_protocol.manifest.json" in runtime_surface["evidence_files"]
     assert "tests/test_orchestrate_deployment_witness.py" in runtime_surface["evidence_files"]
+    assert "tests/test_emit_gateway_dns_target_binding_receipt.py" in runtime_surface["evidence_files"]
+    assert "tests/test_validate_gateway_dns_target_binding_receipt.py" in runtime_surface["evidence_files"]
+    assert "tests/test_emit_deployment_upstream_blocker_receipt.py" in runtime_surface["evidence_files"]
+    assert "tests/test_validate_deployment_upstream_blocker_receipt.py" in runtime_surface["evidence_files"]
     assert "tests/test_collect_gateway_dns_resolution_receipt.py" in runtime_surface["evidence_files"]
     assert "tests/test_report_gateway_publication_readiness.py" in runtime_surface["evidence_files"]
     assert "tests/test_validate_gateway_dns_resolution_receipt.py" in runtime_surface["evidence_files"]
@@ -1434,11 +1452,17 @@ def test_gateway_runtime_witness_covers_orchestration_receipts() -> None:
     assert "runtime_witness_alias" in runtime_surface["runtime_witnesses"]
     assert "closure_validation_report_matches_public_schema_for_not_published" in runtime_surface["runtime_witnesses"]
     assert "orchestration_validation_report_matches_public_schema" in runtime_surface["runtime_witnesses"]
+    assert "gateway_dns_target_binding_receipt_matches_public_schema" in runtime_surface["runtime_witnesses"]
+    assert "gateway_dns_target_binding_validation_report_writes_bounded_result" in runtime_surface["runtime_witnesses"]
+    assert "deployment_upstream_blocker_receipt_matches_public_schema" in runtime_surface["runtime_witnesses"]
+    assert "deployment_upstream_blocker_validation_accepts_ready_receipt" in runtime_surface["runtime_witnesses"]
     assert "gateway_dns_resolution_receipt_matches_public_schema" in runtime_surface["runtime_witnesses"]
     assert "gateway_dns_receipt_validation_report_writes_bounded_result" in runtime_surface["runtime_witnesses"]
     assert "readiness_report_matches_public_schema" in runtime_surface["runtime_witnesses"]
     assert "receipt_validation_report_matches_public_schema" in runtime_surface["runtime_witnesses"]
     assert "protocol_manifest_indexes_public_production_health_declaration" in runtime_surface["runtime_witnesses"]
+    assert "protocol_manifest_indexes_gateway_dns_target_binding_receipt" in runtime_surface["runtime_witnesses"]
+    assert "protocol_manifest_indexes_deployment_upstream_blocker_receipt" in runtime_surface["runtime_witnesses"]
     assert "protocol_manifest_indexes_gateway_dns_resolution_receipt" in runtime_surface["runtime_witnesses"]
     assert "apply_deployment_publication_status_updates_verified_claim" in runtime_surface["runtime_witnesses"]
     assert "apply_deployment_publication_status_writes_receipt" in runtime_surface["runtime_witnesses"]

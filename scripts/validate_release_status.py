@@ -64,8 +64,11 @@ WORKFLOW_DIR = REPO_ROOT / ".github" / "workflows"
 
 REQUIRED_CI_LITERALS: tuple[str, ...] = (
     'branches: [main, "codex/*", "phase-*", "maf/*", "mcoi/*", "infra/*"]',
-    "python ../scripts/run_mcoi_shards.py",
+    "mcoi-shard:",
+    'python ../scripts/run_mcoi_shards.py --shard "${{ matrix.mcoi-shard }}"',
     "python ../scripts/run_mcoi_shards.py --soak-only",
+    "Python Tests (ubuntu-latest, Python 3.13)",
+    "needs: [python-tests, python-compatibility, python-soak-tests]",
     "npm run verify",
     "cargo test",
     "cargo build --release",
@@ -245,6 +248,10 @@ PUBLIC_SURFACE_DOCUMENT_REQUIRED_LITERALS: dict[str, tuple[str, ...]] = {
         "schemas/proof_verification_endpoint.schema.json",
         ".github/workflows/deployment-witness.yml",
         ".github/workflows/gateway-publication.yml",
+        "python scripts/emit_deployment_upstream_blocker_receipt.py --target-gateway-url \"$MULLU_GATEWAY_URL\" --output .change_assurance/deployment_upstream_blocker_receipt.json --json",
+        "python scripts/validate_deployment_upstream_blocker_receipt.py --receipt .change_assurance/deployment_upstream_blocker_receipt.json --output .change_assurance/deployment_upstream_blocker_receipt_validation.json --require-ready",
+        "python scripts/emit_gateway_dns_target_binding_receipt.py --gateway-host \"$MULLU_GATEWAY_HOST\" --gateway-url \"$MULLU_GATEWAY_URL\" --expected-environment \"$MULLU_EXPECTED_RUNTIME_ENV\" --record-type \"$MULLU_GATEWAY_DNS_RECORD_TYPE\" --target \"$MULLU_GATEWAY_DNS_TARGET\" --provider \"$MULLU_DNS_PROVIDER\" --output .change_assurance/gateway_dns_target_binding_receipt.json --json",
+        "python scripts/validate_gateway_dns_target_binding_receipt.py --receipt .change_assurance/gateway_dns_target_binding_receipt.json --output .change_assurance/gateway_dns_target_binding_receipt_validation.json --require-ready",
         "python scripts/collect_gateway_dns_resolution_receipt.py --gateway-url \"$MULLU_GATEWAY_URL\" --output .change_assurance/gateway_dns_resolution_receipt.json --json",
         "python scripts/validate_gateway_dns_resolution_receipt.py --receipt .change_assurance/gateway_dns_resolution_receipt.json --output .change_assurance/gateway_dns_resolution_receipt_validation.json --require-resolved",
         "python scripts/orchestrate_deployment_witness.py --gateway-host \"$MULLU_GATEWAY_HOST\" --expected-environment pilot --apply-ingress --require-preflight --require-mcp-operator-checklist --dispatch --orchestration-output \"$MULLU_DEPLOYMENT_ORCHESTRATION_OUTPUT\"",
@@ -286,6 +293,7 @@ PUBLIC_SURFACE_DOCUMENT_REQUIRED_LITERALS: dict[str, tuple[str, ...]] = {
         "GitHub Actions secret name `MULLU_DEPLOYMENT_WITNESS_SECRET` is present; secret value is not printed",
         "GitHub Actions secret name `MULLU_AUTHORITY_OPERATOR_SECRET` is present; secret value is not printed",
         "GitHub repository variables `MULLU_GATEWAY_URL=https://api.mullusi.com` and `MULLU_EXPECTED_RUNTIME_ENV=pilot` are set",
+        "`api.mullusi.com` remains `AwaitingEvidence` until upstream recovery, runtime host, managed PostgreSQL, secret store, TLS, rollback, and DNS publication authority gates are closed",
         "No `deployment-witness.yml` workflow runs are currently recorded",
     ),
 }
