@@ -1,0 +1,120 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:gateway-dns-resolution-receipt:1",
+  "title": "Gateway DNS Resolution Receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "receipt_id",
+    "host",
+    "checked_at_utc",
+    "resolved",
+    "addresses",
+    "error",
+    "next_action"
+  ],
+  "properties": {
+    "receipt_id": {
+      "type": "string",
+      "pattern": "^gateway-dns-resolution-[0-9a-f]{16}$"
+    },
+    "host": {
+      "type": "string",
+      "minLength": 4,
+      "maxLength": 253,
+      "pattern": "^[a-z0-9](?:[a-z0-9.-]{0,251}[a-z0-9])$",
+      "not": {
+        "const": "gateway.example.com"
+      }
+    },
+    "checked_at_utc": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$"
+    },
+    "resolved": {
+      "type": "boolean"
+    },
+    "addresses": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 128
+      },
+      "uniqueItems": true
+    },
+    "error": {
+      "anyOf": [
+        {
+          "type": "string",
+          "enum": [
+            "resolution_error"
+          ]
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "next_action": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 160
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "resolved": {
+            "const": true
+          }
+        },
+        "required": [
+          "resolved"
+        ]
+      },
+      "then": {
+        "properties": {
+          "addresses": {
+            "type": "array",
+            "minItems": 1
+          },
+          "error": {
+            "type": "null"
+          },
+          "next_action": {
+            "const": "rerun deployment witness preflight with endpoint probes enabled"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "resolved": {
+            "const": false
+          }
+        },
+        "required": [
+          "resolved"
+        ]
+      },
+      "then": {
+        "properties": {
+          "addresses": {
+            "type": "array",
+            "maxItems": 0
+          },
+          "error": {
+            "const": "resolution_error"
+          },
+          "next_action": {
+            "const": "publish a DNS A, AAAA, or CNAME record for the gateway host, then rerun this receipt"
+          }
+        }
+      }
+    }
+  ]
+}

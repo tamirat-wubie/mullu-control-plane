@@ -68,6 +68,7 @@ files are open wire contracts. Runtime modules under `mcoi/`, `gateway/`, and
 | `general_agent_promotion_terminal_minting_gate.schema.json` | Canonical terminal certificate minting admission gate |
 | `general_agent_promotion_terminal_certificate_minting_run.schema.json` | Canonical terminal certificate minting run receipt |
 | `general_agent_promotion_handoff_packet.schema.json` | Canonical promotion handoff packet |
+| `gateway_dns_resolution_receipt.schema.json` | Canonical gateway DNS resolution receipt for deployment publication gates |
 | `gateway_health.schema.json` | Canonical public gateway health read model |
 | `gateway_observability_snapshot.schema.json` | Canonical gateway observability summary with bounded run metrics |
 | `goal.schema.json` | Canonical governed goal compilation contract |

@@ -365,6 +365,12 @@
       "surface": "deployment"
     },
     {
+      "schema_id": "gateway-dns-resolution-receipt",
+      "path": "schemas/gateway_dns_resolution_receipt.schema.json",
+      "urn": "urn:mullusi:schema:gateway-dns-resolution-receipt:1",
+      "surface": "deployment"
+    },
+    {
       "schema_id": "gateway-observability-snapshot",
       "path": "schemas/gateway_observability_snapshot.schema.json",
       "urn": "urn:mullusi:schema:gateway-observability-snapshot:1",
