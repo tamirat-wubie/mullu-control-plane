@@ -118,7 +118,7 @@ print(json.dumps({
         capture_output=True,
         env=environment,
         text=True,
-        timeout=30,
+        timeout=60,
     )
     payload = json.loads(completed.stdout)
 

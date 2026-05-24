@@ -2931,7 +2931,10 @@
       "evidence_files": [
         "mcoi/mcoi_runtime/app/routers/llm/admin.py",
         "mcoi/mcoi_runtime/app/routers/llm/costs.py",
-        "mcoi/mcoi_runtime/governance/guards/budget.py"
+        "mcoi/mcoi_runtime/governance/guards/budget.py",
+        "mcoi/tests/test_server_phase199.py",
+        "mcoi/tests/test_server_phase209.py",
+        "mcoi/tests/test_server_phase213.py"
       ],
       "notes": "Budget and cost surfaces expose bounded read models over governed spend state.",
       "representative_paths": [
@@ -2943,6 +2946,26 @@
         "/api/v1/costs/{tenant_id}/projection"
       ],
       "request_proof": "read_model",
+      "runtime_witness_anchor_aliases": {
+        "budget_summary_bounded": [
+          "budget_summary"
+        ],
+        "cost_by_model_bounded": [
+          "costs_by_model"
+        ],
+        "cost_read_model_totals_bounded": [
+          "cost_summary"
+        ],
+        "cost_top_spenders_bounded": [
+          "top_spenders"
+        ],
+        "safe_completion_tracks_cost": [
+          "safe_complete_tracks_cost"
+        ],
+        "tenant_cost_projection_bounded": [
+          "cost_projection"
+        ]
+      },
       "runtime_witnesses": [
         "budget_summary_bounded",
         "safe_completion_tracks_cost",
@@ -2970,6 +2993,24 @@
         "/api/v1/assistant/finance-ops/plans"
       ],
       "request_proof": "request_proof",
+      "runtime_witness_anchor_aliases": {
+        "assistant_plan_errors_sanitized": [
+          "finance_ops_plan_error_detail_is_bounded"
+        ],
+        "assistant_plan_never_grants_execution_authority": [
+          "finance_ops_plan_with_consent_projects_dispatch_ready_controls",
+          "finance_ops_plan_blocks_without_active_payment_consent"
+        ],
+        "assistant_profiles_read_model_bounded": [
+          "assistant_profiles_read_model_exposes_finance_ops_profile"
+        ],
+        "finance_ops_plan_projects_operator_queue": [
+          "finance_ops_plan_with_consent_projects_dispatch_ready_controls"
+        ],
+        "finance_ops_plan_requires_active_consent": [
+          "finance_ops_plan_blocks_without_active_payment_consent"
+        ]
+      },
       "runtime_witnesses": [
         "assistant_profiles_read_model_bounded",
         "finance_ops_plan_requires_active_consent",
@@ -5270,6 +5311,48 @@
         "/runtime/self/witness"
       ],
       "request_proof": "read_model",
+      "runtime_witness_anchor_aliases": {
+        "certification_handoff_required": [
+          "reflex_certify_returns_handoff_not_self_certificate",
+          "reflex_certification_handoff_is_non_mutating_and_cli_ready"
+        ],
+        "mutation_applied_false": [
+          "reflex_diagnose_evaluate_and_propose_are_non_mutating",
+          "runtime_self_reflex_read_models_do_not_mutate",
+          "reflex_certification_handoff_is_non_mutating_and_cli_ready"
+        ],
+        "offline_reflex_witness_replay": [
+          "validate_reflex_deployment_witness_accepts_export_envelope",
+          "reflex_deployment_witness_query_returns_replay_status",
+          "reflex_sandbox_bundle_runs_declared_replays_without_side_effects"
+        ],
+        "operator_only_access": [
+          "reflex_health_and_inspect_are_operator_guarded_local",
+          "reflex_endpoints_fail_closed_without_operator_in_production"
+        ],
+        "protected_surfaces_auto_promote_false": [
+          "upgrade_planner_blocks_protected_surfaces_from_auto_promotion",
+          "protected_candidate_canary_handoff_routes_to_human_approval",
+          "reflex_candidate_builds_governed_change_command_for_protected_surface"
+        ],
+        "reflex_deployment_witness_schema": [
+          "reflex_deployment_witness_envelope_schema_accepts_fixture",
+          "validate_reflex_deployment_witness_rejects_schema_violation"
+        ],
+        "reflex_validator_receipt_artifact": [
+          "reflex_validator_receipt_accepts_passing_junit",
+          "reflex_validator_receipt_cli_writes_json"
+        ],
+        "reflex_validator_receipt_schema": [
+          "reflex_validator_receipt_schema_accepts_passing_receipt",
+          "reflex_validator_receipt_schema_accepts_failed_receipt"
+        ],
+        "signed_reflex_witness": [
+          "reflex_deployment_witness_verifier_accepts_signed_witness",
+          "validate_reflex_deployment_witness_accepts_signed_witness",
+          "reflex_witness_is_signed_and_binds_pipeline_counts"
+        ]
+      },
       "runtime_witnesses": [
         "operator_only_access",
         "mutation_applied_false",
@@ -7693,7 +7776,7 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 763,
+    "exact_test_anchor_count": 783,
     "runtime_witness_count": 1052,
     "surfaces": [
       {
@@ -8147,33 +8230,89 @@
         "unanchored_witnesses": []
       },
       {
-        "anchored_witnesses": [],
-        "exact_test_anchor_count": 0,
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "mcoi/tests/test_server_phase199.py::test_budget_summary"
+            ],
+            "witness": "budget_summary_bounded"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_server_phase213.py::test_safe_complete_tracks_cost"
+            ],
+            "witness": "safe_completion_tracks_cost"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_server_phase209.py::test_cost_summary"
+            ],
+            "witness": "cost_read_model_totals_bounded"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_server_phase209.py::test_top_spenders"
+            ],
+            "witness": "cost_top_spenders_bounded"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_server_phase209.py::test_costs_by_model"
+            ],
+            "witness": "cost_by_model_bounded"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_server_phase209.py::test_cost_projection"
+            ],
+            "witness": "tenant_cost_projection_bounded"
+          }
+        ],
+        "exact_test_anchor_count": 6,
         "runtime_witness_count": 6,
         "surface_id": "cost_budget_read_models",
-        "unanchored_witness_count": 6,
-        "unanchored_witnesses": [
-          "budget_summary_bounded",
-          "safe_completion_tracks_cost",
-          "cost_read_model_totals_bounded",
-          "cost_top_spenders_bounded",
-          "cost_by_model_bounded",
-          "tenant_cost_projection_bounded"
-        ]
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
       },
       {
-        "anchored_witnesses": [],
-        "exact_test_anchor_count": 0,
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "mcoi/tests/test_assistant_router.py::test_assistant_profiles_read_model_exposes_finance_ops_profile"
+            ],
+            "witness": "assistant_profiles_read_model_bounded"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_assistant_router.py::test_finance_ops_plan_blocks_without_active_payment_consent"
+            ],
+            "witness": "finance_ops_plan_requires_active_consent"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_assistant_router.py::test_finance_ops_plan_with_consent_projects_dispatch_ready_controls"
+            ],
+            "witness": "finance_ops_plan_projects_operator_queue"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_assistant_router.py::test_finance_ops_plan_with_consent_projects_dispatch_ready_controls",
+              "mcoi/tests/test_assistant_router.py::test_finance_ops_plan_blocks_without_active_payment_consent"
+            ],
+            "witness": "assistant_plan_never_grants_execution_authority"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_assistant_router.py::test_finance_ops_plan_error_detail_is_bounded"
+            ],
+            "witness": "assistant_plan_errors_sanitized"
+          }
+        ],
+        "exact_test_anchor_count": 5,
         "runtime_witness_count": 5,
         "surface_id": "assistant_kernel_planning",
-        "unanchored_witness_count": 5,
-        "unanchored_witnesses": [
-          "assistant_profiles_read_model_bounded",
-          "finance_ops_plan_requires_active_consent",
-          "finance_ops_plan_projects_operator_queue",
-          "assistant_plan_never_grants_execution_authority",
-          "assistant_plan_errors_sanitized"
-        ]
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
       },
       {
         "anchored_witnesses": [
@@ -10908,22 +11047,80 @@
         "unanchored_witnesses": []
       },
       {
-        "anchored_witnesses": [],
-        "exact_test_anchor_count": 0,
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "tests/test_gateway/test_reflex_endpoints.py::test_reflex_health_and_inspect_are_operator_guarded_local",
+              "tests/test_gateway/test_reflex_endpoints.py::test_reflex_endpoints_fail_closed_without_operator_in_production"
+            ],
+            "witness": "operator_only_access"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_reflex_endpoints.py::test_reflex_diagnose_evaluate_and_propose_are_non_mutating",
+              "tests/test_gateway/test_webhooks.py::test_runtime_self_reflex_read_models_do_not_mutate",
+              "tests/test_reflex_engine.py::test_reflex_certification_handoff_is_non_mutating_and_cli_ready"
+            ],
+            "witness": "mutation_applied_false"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_reflex_endpoints.py::test_reflex_certify_returns_handoff_not_self_certificate",
+              "tests/test_reflex_engine.py::test_reflex_certification_handoff_is_non_mutating_and_cli_ready"
+            ],
+            "witness": "certification_handoff_required"
+          },
+          {
+            "anchors": [
+              "tests/test_reflex_engine.py::test_upgrade_planner_blocks_protected_surfaces_from_auto_promotion",
+              "tests/test_reflex_engine.py::test_protected_candidate_canary_handoff_routes_to_human_approval",
+              "tests/test_reflex_engine.py::test_reflex_candidate_builds_governed_change_command_for_protected_surface"
+            ],
+            "witness": "protected_surfaces_auto_promote_false"
+          },
+          {
+            "anchors": [
+              "tests/test_reflex_engine.py::test_reflex_deployment_witness_verifier_accepts_signed_witness",
+              "tests/test_validate_reflex_deployment_witness.py::test_validate_reflex_deployment_witness_accepts_signed_witness",
+              "tests/test_gateway/test_reflex_endpoints.py::test_reflex_witness_is_signed_and_binds_pipeline_counts"
+            ],
+            "witness": "signed_reflex_witness"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_reflex_deployment_witness.py::test_reflex_deployment_witness_envelope_schema_accepts_fixture",
+              "tests/test_validate_reflex_deployment_witness.py::test_validate_reflex_deployment_witness_rejects_schema_violation"
+            ],
+            "witness": "reflex_deployment_witness_schema"
+          },
+          {
+            "anchors": [
+              "tests/test_emit_reflex_deployment_witness_validator_receipt.py::test_reflex_validator_receipt_schema_accepts_passing_receipt",
+              "tests/test_emit_reflex_deployment_witness_validator_receipt.py::test_reflex_validator_receipt_schema_accepts_failed_receipt"
+            ],
+            "witness": "reflex_validator_receipt_schema"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_reflex_deployment_witness.py::test_validate_reflex_deployment_witness_accepts_export_envelope",
+              "tests/test_gateway/test_reflex_endpoints.py::test_reflex_deployment_witness_query_returns_replay_status",
+              "tests/test_reflex_engine.py::test_reflex_sandbox_bundle_runs_declared_replays_without_side_effects"
+            ],
+            "witness": "offline_reflex_witness_replay"
+          },
+          {
+            "anchors": [
+              "tests/test_emit_reflex_deployment_witness_validator_receipt.py::test_reflex_validator_receipt_accepts_passing_junit",
+              "tests/test_emit_reflex_deployment_witness_validator_receipt.py::test_reflex_validator_receipt_cli_writes_json"
+            ],
+            "witness": "reflex_validator_receipt_artifact"
+          }
+        ],
+        "exact_test_anchor_count": 9,
         "runtime_witness_count": 9,
         "surface_id": "runtime_reflex_engine",
-        "unanchored_witness_count": 9,
-        "unanchored_witnesses": [
-          "operator_only_access",
-          "mutation_applied_false",
-          "certification_handoff_required",
-          "protected_surfaces_auto_promote_false",
-          "signed_reflex_witness",
-          "reflex_deployment_witness_schema",
-          "reflex_validator_receipt_schema",
-          "offline_reflex_witness_replay",
-          "reflex_validator_receipt_artifact"
-        ]
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
       },
       {
         "anchored_witnesses": [
@@ -13717,6 +13914,6 @@
         "unanchored_witnesses": []
       }
     ],
-    "unanchored_witness_count": 289
+    "unanchored_witness_count": 269
   }
 }

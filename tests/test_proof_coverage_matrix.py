@@ -129,6 +129,10 @@ def test_witness_integrity_report_tracks_exact_test_anchors() -> None:
     assert surfaces["governed_session"]["unanchored_witness_count"] == 0
     assert surfaces["lineage_query_api"]["unanchored_witness_count"] == 0
     assert surfaces["physical_action_boundary"]["unanchored_witness_count"] == 0
+    assert surfaces["cost_budget_read_models"]["exact_test_anchor_count"] == 6
+    assert surfaces["cost_budget_read_models"]["unanchored_witness_count"] == 0
+    assert surfaces["assistant_kernel_planning"]["exact_test_anchor_count"] == 5
+    assert surfaces["assistant_kernel_planning"]["unanchored_witness_count"] == 0
     assert surfaces["code_intelligence_operator_read_model"]["exact_test_anchor_count"] >= 5
     assert surfaces["code_intelligence_operator_read_model"]["unanchored_witness_count"] == 0
     assert surfaces["data_export_lifecycle"]["exact_test_anchor_count"] >= 4
@@ -144,6 +148,8 @@ def test_witness_integrity_report_tracks_exact_test_anchors() -> None:
     assert surfaces["tenant_governance_lifecycle"]["unanchored_witness_count"] == 0
     assert surfaces["multimodal_operating_layer"]["unanchored_witness_count"] == 0
     assert surfaces["runtime_conformance_attestation"]["unanchored_witness_count"] == 0
+    assert surfaces["runtime_reflex_engine"]["unanchored_witness_count"] == 0
+    assert surfaces["runtime_reflex_engine"]["exact_test_anchor_count"] == 9
     assert surfaces["finance_approval_packets"]["unanchored_witness_count"] == 0
     assert surfaces["god_mode_lifecycle"]["unanchored_witness_count"] == 0
     assert surfaces["agent_adapter_protocol"]["exact_test_anchor_count"] == 14

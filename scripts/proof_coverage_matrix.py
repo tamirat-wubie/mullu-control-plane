@@ -392,6 +392,9 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "mcoi/mcoi_runtime/app/routers/llm/admin.py",
                 "mcoi/mcoi_runtime/app/routers/llm/costs.py",
                 "mcoi/mcoi_runtime/governance/guards/budget.py",
+                "mcoi/tests/test_server_phase199.py",
+                "mcoi/tests/test_server_phase209.py",
+                "mcoi/tests/test_server_phase213.py",
             ],
             "Budget and cost surfaces expose bounded read models over governed spend state.",
             [
@@ -402,6 +405,14 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "cost_by_model_bounded",
                 "tenant_cost_projection_bounded",
             ],
+            runtime_witness_anchor_aliases={
+                "budget_summary_bounded": ["budget_summary"],
+                "safe_completion_tracks_cost": ["safe_complete_tracks_cost"],
+                "cost_read_model_totals_bounded": ["cost_summary"],
+                "cost_top_spenders_bounded": ["top_spenders"],
+                "cost_by_model_bounded": ["costs_by_model"],
+                "tenant_cost_projection_bounded": ["cost_projection"],
+            },
         ),
         _surface(
             "assistant_kernel_planning",
@@ -428,6 +439,24 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "assistant_plan_never_grants_execution_authority",
                 "assistant_plan_errors_sanitized",
             ],
+            runtime_witness_anchor_aliases={
+                "assistant_profiles_read_model_bounded": [
+                    "assistant_profiles_read_model_exposes_finance_ops_profile",
+                ],
+                "finance_ops_plan_requires_active_consent": [
+                    "finance_ops_plan_blocks_without_active_payment_consent",
+                ],
+                "finance_ops_plan_projects_operator_queue": [
+                    "finance_ops_plan_with_consent_projects_dispatch_ready_controls",
+                ],
+                "assistant_plan_never_grants_execution_authority": [
+                    "finance_ops_plan_with_consent_projects_dispatch_ready_controls",
+                    "finance_ops_plan_blocks_without_active_payment_consent",
+                ],
+                "assistant_plan_errors_sanitized": [
+                    "finance_ops_plan_error_detail_is_bounded",
+                ],
+            },
         ),
         _surface(
             "operational_platform_read_models",
@@ -2634,6 +2663,48 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "offline_reflex_witness_replay",
                 "reflex_validator_receipt_artifact",
             ],
+            runtime_witness_anchor_aliases={
+                "operator_only_access": [
+                    "reflex_health_and_inspect_are_operator_guarded_local",
+                    "reflex_endpoints_fail_closed_without_operator_in_production",
+                ],
+                "mutation_applied_false": [
+                    "reflex_diagnose_evaluate_and_propose_are_non_mutating",
+                    "runtime_self_reflex_read_models_do_not_mutate",
+                    "reflex_certification_handoff_is_non_mutating_and_cli_ready",
+                ],
+                "certification_handoff_required": [
+                    "reflex_certify_returns_handoff_not_self_certificate",
+                    "reflex_certification_handoff_is_non_mutating_and_cli_ready",
+                ],
+                "protected_surfaces_auto_promote_false": [
+                    "upgrade_planner_blocks_protected_surfaces_from_auto_promotion",
+                    "protected_candidate_canary_handoff_routes_to_human_approval",
+                    "reflex_candidate_builds_governed_change_command_for_protected_surface",
+                ],
+                "signed_reflex_witness": [
+                    "reflex_deployment_witness_verifier_accepts_signed_witness",
+                    "validate_reflex_deployment_witness_accepts_signed_witness",
+                    "reflex_witness_is_signed_and_binds_pipeline_counts",
+                ],
+                "reflex_deployment_witness_schema": [
+                    "reflex_deployment_witness_envelope_schema_accepts_fixture",
+                    "validate_reflex_deployment_witness_rejects_schema_violation",
+                ],
+                "reflex_validator_receipt_schema": [
+                    "reflex_validator_receipt_schema_accepts_passing_receipt",
+                    "reflex_validator_receipt_schema_accepts_failed_receipt",
+                ],
+                "offline_reflex_witness_replay": [
+                    "validate_reflex_deployment_witness_accepts_export_envelope",
+                    "reflex_deployment_witness_query_returns_replay_status",
+                    "reflex_sandbox_bundle_runs_declared_replays_without_side_effects",
+                ],
+                "reflex_validator_receipt_artifact": [
+                    "reflex_validator_receipt_accepts_passing_junit",
+                    "reflex_validator_receipt_cli_writes_json",
+                ],
+            },
         ),
         _surface(
             "governed_operational_intelligence",

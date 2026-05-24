@@ -256,6 +256,8 @@ class TestMemoryMeshEngine:
         assert e.decay_log[0]["action"] == "memory_decay"
         assert e.decay_log[0]["memory_id"] == "m1"
         assert "decayed_at" in e.decay_log[0]
+        with pytest.raises(TypeError):
+            e.decay_log[0]["action"] = "mutated"
 
     def test_apply_decay_keeps_unexpired(self):
         e = MemoryMeshEngine()
@@ -263,6 +265,26 @@ class TestMemoryMeshEngine:
         removed = e.apply_decay()
         assert len(removed) == 0
         assert e.memory_count == 1
+
+    def test_apply_decay_records_invalid_expires_at_witness(self):
+        e = MemoryMeshEngine()
+        rec = e.add_memory(_mem("m1", expires_at="2099-01-01T00:00:00+00:00"))
+        object.__setattr__(rec, "expires_at", "corrupt-expiry")
+
+        removed = e.apply_decay()
+
+        assert removed == ()
+        assert e.memory_count == 1
+        assert len(e.validation_log) == 1
+        witness = e.validation_log[0]
+        assert witness["action"] == "timestamp_validation_failure"
+        assert witness["operation"] == "apply_decay"
+        assert witness["target_kind"] == "memory"
+        assert witness["field_name"] == "expires_at"
+        assert "field_value_hash" in witness
+        assert "corrupt-expiry" not in str(witness)
+        with pytest.raises(TypeError):
+            witness["reason"] = "mutated"
 
     # -- supersession --
 
@@ -401,6 +423,44 @@ class TestMemoryMeshEngine:
         result = e.retrieve(q)
         # Same confidence => sorted by ID ascending
         assert result.matched_ids == ("m-a", "m-b")
+
+    def test_retrieve_records_invalid_created_at_witness(self):
+        e = MemoryMeshEngine()
+        rec = e.add_memory(_mem("m1"))
+        object.__setattr__(rec, "created_at", "bad-created-at")
+        q = MemoryRetrievalQuery(query_id="q1", as_of=LATER)
+
+        result = e.retrieve(q)
+
+        assert result.total == 0
+        assert result.matched_ids == ()
+        assert len(e.validation_log) == 1
+        witness = e.validation_log[0]
+        assert witness["action"] == "timestamp_validation_failure"
+        assert witness["operation"] == "retrieve"
+        assert witness["target_kind"] == "memory"
+        assert witness["field_name"] == "created_at"
+        assert "field_value_hash" in witness
+        assert "bad-created-at" not in str(witness)
+
+    def test_retrieve_records_invalid_query_as_of_witness(self):
+        e = MemoryMeshEngine()
+        e.add_memory(_mem("m1"))
+        q = MemoryRetrievalQuery(query_id="q1", as_of=LATER)
+        object.__setattr__(q, "as_of", "bad-as-of")
+
+        result = e.retrieve(q)
+
+        assert result.total == 1
+        assert result.matched_ids == ("m1",)
+        assert len(e.validation_log) == 1
+        witness = e.validation_log[0]
+        assert witness["action"] == "timestamp_validation_failure"
+        assert witness["operation"] == "retrieve"
+        assert witness["target_kind"] == "query"
+        assert witness["field_name"] == "as_of"
+        assert "field_value_hash" in witness
+        assert "bad-as-of" not in str(witness)
 
     # -- metadata nodes and edges --
 

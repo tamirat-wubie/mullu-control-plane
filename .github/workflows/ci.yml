@@ -50,11 +50,29 @@ jobs:
         run: python -m pip install -e ".[dev]"
 
       - name: Run main test suite
-        run: python -m pytest --tb=short -q -m "not soak"
+        run: python ../scripts/run_mcoi_shards.py
 
       - name: Run soak tests
         if: matrix.run-soak
-        run: python -m pytest -m soak --tb=short -q
+        run: python ../scripts/run_mcoi_shards.py --soak-only
+
+  typescript-sdk:
+    name: TypeScript SDK Verification
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: sdk/typescript
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - name: Verify SDK package surface
+        run: npm run verify
 
   rust-tests:
     name: Rust Tests

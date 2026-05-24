@@ -1,0 +1,199 @@
+#!/usr/bin/env python3
+"""Refresh local, non-secret assurance artifacts.
+
+Purpose: regenerate local proof and adapter-evidence witnesses that can drift
+during development without requiring live provider credentials.
+Governance scope: document adapter receipt, aggregate adapter evidence, proof
+coverage witness, protocol manifest validation, and finance proof-pilot
+readiness.
+Dependencies: repository-local assurance scripts and Python subprocess.
+Invariants:
+  - The default step set performs no external writes and requires no secrets.
+  - Live email/calendar, voice, browser, PostgreSQL, and SMTP evidence remains
+    blocked unless separately supplied by operator-controlled live lanes.
+  - Each step returns an explicit command receipt; failures are not hidden.
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import subprocess
+import sys
+import time
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Callable, Sequence
+
+REPO_ROOT = Path(__file__).resolve().parent.parent
+
+
+@dataclass(frozen=True, slots=True)
+class AssuranceStep:
+    """One local assurance refresh step."""
+
+    name: str
+    command: tuple[str, ...]
+    purpose: str
+
+
+@dataclass(frozen=True, slots=True)
+class AssuranceStepResult:
+    """Execution receipt for one local assurance step."""
+
+    name: str
+    command: tuple[str, ...]
+    returncode: int
+    elapsed_seconds: float
+    stdout_tail: str
+    stderr_tail: str
+    dry_run: bool = False
+
+    def as_dict(self) -> dict[str, object]:
+        return {
+            "name": self.name,
+            "command": list(self.command),
+            "returncode": self.returncode,
+            "elapsed_seconds": round(self.elapsed_seconds, 3),
+            "stdout_tail": self.stdout_tail,
+            "stderr_tail": self.stderr_tail,
+            "dry_run": self.dry_run,
+        }
+
+
+CommandRunner = Callable[..., subprocess.CompletedProcess[str]]
+
+
+LOCAL_ASSURANCE_STEPS: tuple[AssuranceStep, ...] = (
+    AssuranceStep(
+        name="document_live_receipt",
+        command=(
+            sys.executable,
+            "scripts/produce_capability_adapter_live_receipts.py",
+            "--target",
+            "document",
+            "--document-output",
+            ".change_assurance/document_live_receipt.json",
+            "--json",
+        ),
+        purpose="regenerate deterministic document parser live receipt",
+    ),
+    AssuranceStep(
+        name="capability_adapter_evidence",
+        command=(
+            sys.executable,
+            "scripts/collect_capability_adapter_evidence.py",
+            "--output",
+            ".change_assurance/capability_adapter_evidence.json",
+            "--json",
+        ),
+        purpose="recollect aggregate adapter evidence from local receipts",
+    ),
+    AssuranceStep(
+        name="proof_coverage_matrix",
+        command=(sys.executable, "scripts/proof_coverage_matrix.py"),
+        purpose="refresh canonical and assurance proof coverage witnesses",
+    ),
+    AssuranceStep(
+        name="protocol_manifest",
+        command=(sys.executable, "scripts/validate_protocol_manifest.py"),
+        purpose="validate protocol manifest schema index",
+    ),
+    AssuranceStep(
+        name="finance_pilot_readiness",
+        command=(sys.executable, "scripts/validate_finance_approval_pilot.py", "--json"),
+        purpose="validate proof-pilot finance readiness without live handoff claim",
+    ),
+    AssuranceStep(
+        name="finance_pilot_witness",
+        command=(
+            sys.executable,
+            "scripts/produce_finance_approval_pilot_witness.py",
+            "--output",
+            ".change_assurance/finance_approval_pilot_witness.json",
+            "--json",
+        ),
+        purpose="regenerate deterministic finance approval pilot witness",
+    ),
+)
+
+
+def run_refresh(
+    *,
+    steps: Sequence[AssuranceStep] = LOCAL_ASSURANCE_STEPS,
+    dry_run: bool = False,
+    runner: CommandRunner = subprocess.run,
+) -> tuple[AssuranceStepResult, ...]:
+    """Run local assurance refresh steps in governed order."""
+    results: list[AssuranceStepResult] = []
+    for step in steps:
+        result = _run_step(step, dry_run=dry_run, runner=runner)
+        results.append(result)
+        if result.returncode != 0:
+            break
+    return tuple(results)
+
+
+def _run_step(step: AssuranceStep, *, dry_run: bool, runner: CommandRunner) -> AssuranceStepResult:
+    started = time.perf_counter()
+    if dry_run:
+        return AssuranceStepResult(
+            name=step.name,
+            command=step.command,
+            returncode=0,
+            elapsed_seconds=0.0,
+            stdout_tail="",
+            stderr_tail="",
+            dry_run=True,
+        )
+    completed = runner(
+        list(step.command),
+        cwd=str(REPO_ROOT),
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    elapsed = time.perf_counter() - started
+    if completed.stdout:
+        print(completed.stdout, end="")
+    if completed.stderr:
+        print(completed.stderr, end="", file=sys.stderr)
+    return AssuranceStepResult(
+        name=step.name,
+        command=step.command,
+        returncode=int(completed.returncode),
+        elapsed_seconds=elapsed,
+        stdout_tail=_tail(completed.stdout),
+        stderr_tail=_tail(completed.stderr),
+    )
+
+
+def _tail(value: str, *, max_chars: int = 4000) -> str:
+    if len(value) <= max_chars:
+        return value
+    return value[-max_chars:]
+
+
+def _print_text_summary(results: Sequence[AssuranceStepResult]) -> None:
+    for result in results:
+        status = "PASS" if result.returncode == 0 else "FAIL"
+        dry = " dry-run" if result.dry_run else ""
+        print(f"[{status}] {result.name}{dry}: elapsed={result.elapsed_seconds:.2f}s")
+
+
+def main(argv: Sequence[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
+    parser.add_argument("--dry-run", action="store_true", help="Print planned steps without executing.")
+    parser.add_argument("--json", action="store_true", help="Emit machine-readable step receipts.")
+    args = parser.parse_args(argv)
+
+    results = run_refresh(dry_run=bool(args.dry_run))
+    if args.json:
+        print(json.dumps([result.as_dict() for result in results], indent=2, sort_keys=True))
+    else:
+        _print_text_summary(results)
+    return 0 if all(result.returncode == 0 for result in results) else 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
