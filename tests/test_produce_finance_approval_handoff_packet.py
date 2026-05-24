@@ -55,6 +55,7 @@ def test_finance_handoff_packet_reports_missing_artifacts(tmp_path: Path) -> Non
         witness_path=missing_path,
         handoff_plan_path=missing_path,
         binding_receipt_path=missing_path,
+        live_receipt_path=missing_path,
         closure_run_path=missing_path,
         preflight_path=missing_path,
         adapter_evidence_path=missing_path,
