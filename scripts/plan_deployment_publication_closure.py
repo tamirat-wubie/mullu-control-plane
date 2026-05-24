@@ -189,12 +189,17 @@ def _action_for(blocker: str) -> DeploymentClosureAction:
                 "--host \"$MULLU_GATEWAY_HOST\" "
                 "--output .change_assurance/gateway_dns_resolution_receipt.json "
                 "--json && "
+                "python scripts/validate_gateway_dns_resolution_receipt.py "
+                "--receipt .change_assurance/gateway_dns_resolution_receipt.json "
+                "--output .change_assurance/gateway_dns_resolution_receipt_validation.json "
+                "--require-resolved && "
                 "python scripts/preflight_deployment_witness.py "
                 "--gateway-host \"$MULLU_GATEWAY_HOST\" "
                 "--gateway-url \"$MULLU_GATEWAY_URL\""
             ),
             evidence_required=(
                 "dns_resolution_receipt",
+                "dns_resolution_receipt_validation",
                 "deployment_witness_preflight",
             ),
             risk_level="high",
