@@ -115,6 +115,18 @@ def _is_merge_commit(repo_root: Path, commit_ref: str) -> bool:
     return len(parent_line.split()) > 2
 
 
+def _commit_tree_id(repo_root: Path, commit_ref: str) -> str | None:
+    """Return the tree identifier for one commit ref, or None when unresolved."""
+    return _optional_git(repo_root, ["rev-parse", f"{commit_ref}^{{tree}}"])
+
+
+def _has_equivalent_tree(repo_root: Path, base_commit: str, head_commit: str) -> bool:
+    """Return whether base and head resolve to the same repository tree."""
+    base_tree = _commit_tree_id(repo_root, base_commit)
+    head_tree = _commit_tree_id(repo_root, head_commit)
+    return base_tree is not None and base_tree == head_tree
+
+
 def _stable_json_file(path: Path, payload: dict[str, object]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(
@@ -301,6 +313,7 @@ def build_change_command(
     head_commit = _run_git(repo_root, ["rev-parse", "HEAD" if head_ref == "current" else head_ref])
     affected_files = discover_changed_files(repo_root, base_ref, head_ref)
     empty_merge_reconciliation = not affected_files and _is_merge_commit(repo_root, head_commit)
+    empty_tree_reconciliation = not affected_files and _has_equivalent_tree(repo_root, base_commit, head_commit)
     change_type, risk, contracts, capabilities, invariants, replays = classify_changed_files(affected_files)
     author = author_id or _optional_git(repo_root, ["config", "user.email"]) or "unknown-author"
     command_payload = {
@@ -330,6 +343,7 @@ def build_change_command(
             "base_ref": base_ref,
             "head_ref": head_ref,
             **({"empty_merge_reconciliation": True} if empty_merge_reconciliation else {}),
+            **({"empty_tree_reconciliation": True} if empty_tree_reconciliation else {}),
             **({"rollback_plan_ref": rollback_plan_ref} if rollback_plan_ref else {}),
         },
     )
@@ -355,7 +369,11 @@ def analyze_blast_radius(command: ChangeCommand) -> BlastRadiusReport:
 def check_invariants(command: ChangeCommand, approval_id: str | None, strict: bool) -> InvariantCheckReport:
     """Evaluate hard governed-evolution invariants against a ChangeCommand."""
     violations: list[str] = []
-    if not command.affected_files and command.metadata.get("empty_merge_reconciliation") is not True:
+    empty_diff_reconciled = (
+        command.metadata.get("empty_merge_reconciliation") is True
+        or command.metadata.get("empty_tree_reconciliation") is True
+    )
+    if not command.affected_files and not empty_diff_reconciled:
         violations.append("ChangeCommand has no affected files.")
     if command.requires_approval and strict and not approval_id:
         violations.append("High-risk ChangeCommand requires approval_id in strict mode.")
