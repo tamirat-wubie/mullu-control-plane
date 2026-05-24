@@ -154,7 +154,13 @@ def test_cascade_terminates_at_depth_limit():
     )
     result = engine.cascade(states[0].id)
     assert result.truncated_at_depth is True
-    assert result.rejected is True
+    # USCL v3.3 / A1: depth exhaustion ROUTES TO AUTHORITY (ESCALATED), not an
+    # opaque rejection. The CascadeResult.rejected flag is reserved for explicit
+    # global-consistency rejection; Φ_gov blocks depth truncation via escalation.
+    assert result.rejected is False
+    assert result.escalations >= 1
+    assert result.steps[-1].outcome is CascadeOutcome.ESCALATED
+    assert result.steps[-1].reason == "depth_limit_exceeded_needs_authority"
 
 
 def test_cascade_handles_cycles():

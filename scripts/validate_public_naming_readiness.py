@@ -31,6 +31,8 @@ WEBSITE_RECHECK_LOG_PATH = REPO_ROOT / "docs" / "WEBSITE_RECHECK_LOG.md"
 DOMAIN_ACQUISITION_PLAN_PATH = REPO_ROOT / "docs" / "DOMAIN_ACQUISITION_PLAN.md"
 PUBLIC_NAMING_REVIEW_PACKET_PATH = REPO_ROOT / "docs" / "PUBLIC_NAMING_REVIEW_PACKET.md"
 PUBLIC_NAMING_ARTIFACT_MANIFEST_PATH = REPO_ROOT / "docs" / "PUBLIC_NAMING_ARTIFACT_MANIFEST.md"
+PUBLIC_NAMING_DECISION_PATH = REPO_ROOT / "docs" / "PUBLIC_NAMING_DECISION_2026-05-20.md"
+PUBLIC_NAMING_DECISION_WITNESS_PATH = REPO_ROOT / "docs" / "public-naming-decision-2026-05-20.json"
 OFFICIAL_CLEARANCE_ACCESS_LOG_PATH = REPO_ROOT / "docs" / "OFFICIAL_CLEARANCE_ACCESS_LOG_2026-05-15.md"
 SDK_API_STABILITY_REVIEW_PATH = REPO_ROOT / "docs" / "SDK_API_STABILITY_REVIEW_2026-05-15.md"
 HOMEPAGE_UPDATE_EVIDENCE_PATH = REPO_ROOT / "docs" / "HOMEPAGE_UPDATE_EVIDENCE_2026-05-15.md"
@@ -39,8 +41,10 @@ CLEARANCE_EVIDENCE_CAPTURE_PLAN_PATH = REPO_ROOT / "docs" / "CLEARANCE_EVIDENCE_
 CLEARANCE_EVIDENCE_ROOT = REPO_ROOT / "docs" / "clearance-evidence" / "mullu" / "2026-05-15"
 CAPTURE_REQUIREMENTS_PATH = CLEARANCE_EVIDENCE_ROOT / "capture-requirements.json"
 READINESS_SCHEMA_PATH = REPO_ROOT / "schemas" / "public_naming_readiness.schema.json"
+PUBLIC_NAMING_DECISION_SCHEMA_PATH = REPO_ROOT / "schemas" / "public_naming_decision.schema.json"
 CLEARANCE_SCHEMA_PATH = REPO_ROOT / "schemas" / "mullu_name_clearance_draft.schema.json"
 CAPTURE_REQUIREMENTS_SCHEMA_PATH = REPO_ROOT / "schemas" / "mullu_clearance_capture_requirements.schema.json"
+CAPTURE_READINESS_REPORT_SCHEMA_PATH = REPO_ROOT / "schemas" / "mullu_clearance_capture_readiness_report.schema.json"
 
 
 REQUIRED_CLOSED_GATES = {
@@ -140,13 +144,18 @@ REQUIRED_EVIDENCE_DOCS = {
     "docs/PUBLIC_NAMING_PR_SUMMARY.md",
     "docs/PUBLIC_NAMING_REVIEW_PACKET.md",
     "docs/PUBLIC_NAMING_ARTIFACT_MANIFEST.md",
+    "docs/PUBLIC_NAMING_DECISION_2026-05-20.md",
+    "docs/public-naming-decision-2026-05-20.json",
     "docs/CLEARANCE_PACKET_TEMPLATE.md",
     "docs/DOMAIN_OWNERSHIP_RECORD_TEMPLATE.md",
     "docs/mullu-name-clearance-draft.json",
     "schemas/public_naming_readiness.schema.json",
+    "schemas/public_naming_decision.schema.json",
     "schemas/mullu_name_clearance_draft.schema.json",
     "schemas/mullu_clearance_capture_requirements.schema.json",
+    "schemas/mullu_clearance_capture_readiness_report.schema.json",
     "scripts/validate_public_naming_readiness.py",
+    "scripts/report_clearance_capture_readiness.py",
     "scripts/report_public_naming_readiness.py",
     "scripts/plan_public_naming_transition.py",
     "tests/test_public_naming_readiness.py",
@@ -721,7 +730,85 @@ def validate_public_naming_artifact_manifest(
     missing_artifacts = sorted(artifact for artifact in REQUIRED_EVIDENCE_DOCS if artifact not in manifest_text)
     _require(not missing_artifacts, f"artifact manifest missing evidence docs: {missing_artifacts}")
     _require("python .\\scripts\\validate_public_naming_readiness.py" in manifest_text, "manifest missing readiness validator command")
+    _require(
+        "python .\\scripts\\report_clearance_capture_readiness.py" in manifest_text,
+        "manifest missing clearance capture reporter command",
+    )
     _require("python .\\scripts\\validate_release_status.py" in manifest_text, "manifest missing release validator command")
+
+
+def validate_public_naming_decision(
+    decision_path: Path = PUBLIC_NAMING_DECISION_PATH,
+    witness_path: Path = PUBLIC_NAMING_DECISION_WITNESS_PATH,
+) -> None:
+    _require(decision_path.exists(), f"public naming decision missing: {_display_path(decision_path)}")
+    _require(decision_path.is_file(), f"public naming decision is not a file: {_display_path(decision_path)}")
+    _require(witness_path.exists(), f"public naming decision witness missing: {_display_path(witness_path)}")
+    _require(witness_path.is_file(), f"public naming decision witness is not a file: {_display_path(witness_path)}")
+    decision_text = decision_path.read_text(encoding="utf-8")
+    validate_no_forbidden_terminology(_display_path(decision_path), decision_text)
+    required_literals = (
+        "Use `Mullu` as the flagship product name.",
+        "Use `Mullu, by Mullusi` on first public reference.",
+        "Keep `Mullusi` as the company, ecosystem, and governance authority.",
+        "| Paid public launch | Blocked |",
+        "Required files missing: 26",
+        "public_paid_launch_allowed",
+        "cleared_for_public_launch",
+        "Mullusi Handler",
+        "Mullusi Work",
+        "Mullusi Operator",
+        "Mullu Generic",
+    )
+    missing_literals = sorted(literal for literal in required_literals if literal not in decision_text)
+    _require(not missing_literals, f"public naming decision missing literals: {missing_literals}")
+
+    witness = json.loads(witness_path.read_text(encoding="utf-8"))
+    _validate_top_level_required(witness, PUBLIC_NAMING_DECISION_SCHEMA_PATH)
+    _require(witness.get("product_name") == "Mullu", "public naming decision product mismatch")
+    _require(witness.get("company_brand") == "Mullusi", "public naming decision company mismatch")
+    _require(witness.get("first_reference") == "Mullu, by Mullusi", "public naming decision first reference mismatch")
+    _require(witness.get("platform_term") == "Mullu Platform", "public naming decision platform term mismatch")
+    _require(witness.get("decision") == "proceed_internal_private_beta", "public naming decision status mismatch")
+    _require(witness.get("public_paid_launch_allowed") is False, "public naming decision must block paid launch")
+    _require(REQUIRED_OPEN_GATES <= set(witness.get("open_gates", [])), "public naming decision missing open gates")
+    _require("paid_public_launch" in witness.get("blocked_scopes", []), "public naming decision must block paid public launch")
+    capture_readiness = witness.get("capture_readiness", {})
+    _require(isinstance(capture_readiness, dict), "public naming decision capture_readiness must be an object")
+    _require(capture_readiness.get("required_files_missing") == 26, "public naming decision missing-file count mismatch")
+    _require(capture_readiness.get("status") == "blocked", "public naming decision capture readiness must be blocked")
+
+
+def validate_public_naming_decision_witness(
+    witness_path: Path = PUBLIC_NAMING_DECISION_WITNESS_PATH,
+) -> None:
+    decision_witness = json.loads(witness_path.read_text(encoding="utf-8"))
+    _validate_top_level_required(decision_witness, PUBLIC_NAMING_DECISION_SCHEMA_PATH)
+    _require(decision_witness.get("product_name") == "Mullu", "decision witness product mismatch")
+    _require(decision_witness.get("company_brand") == "Mullusi", "decision witness company mismatch")
+    _require(decision_witness.get("first_reference") == "Mullu, by Mullusi", "decision witness first reference mismatch")
+    _require(decision_witness.get("decision") == "proceed_internal_private_beta", "decision witness decision mismatch")
+    _require(decision_witness.get("public_paid_launch_allowed") is False, "decision witness must block paid launch")
+    approved_scopes = set(decision_witness.get("approved_scopes", []))
+    blocked_scopes = set(decision_witness.get("blocked_scopes", []))
+    open_gates = set(decision_witness.get("open_gates", []))
+    blocked_names = set(decision_witness.get("blocked_public_names", []))
+    _require(
+        {"internal_alignment", "private_beta", "request_access_product_route", "research_product_planning"} <= approved_scopes,
+        "decision witness missing approved scopes",
+    )
+    _require(
+        {"paid_public_launch", "public_paid_advertising", "domain_forwarded_paid_product_traffic"} <= blocked_scopes,
+        "decision witness missing blocked scopes",
+    )
+    _require(REQUIRED_OPEN_GATES <= open_gates, f"decision witness missing open gates: {sorted(REQUIRED_OPEN_GATES - open_gates)}")
+    _require(BLOCKED_PUBLIC_NAMES <= blocked_names, f"decision witness missing blocked names: {sorted(BLOCKED_PUBLIC_NAMES - blocked_names)}")
+    capture_readiness = decision_witness.get("capture_readiness", {})
+    _require(isinstance(capture_readiness, dict), "decision witness capture_readiness must be an object")
+    _require(capture_readiness.get("required_files_present") == 6, "decision witness present file count mismatch")
+    _require(capture_readiness.get("required_files_total") == 32, "decision witness total file count mismatch")
+    _require(capture_readiness.get("required_files_missing") == 26, "decision witness missing file count mismatch")
+    _require(capture_readiness.get("status") == "blocked", "decision witness capture status must remain blocked")
 
 
 def validate_capture_requirements(requirements_path: Path = CAPTURE_REQUIREMENTS_PATH) -> None:
@@ -845,6 +932,8 @@ def validate_public_naming_readiness(witness_path: Path = WITNESS_PATH) -> None:
     validate_app_title_update_evidence()
     validate_clearance_evidence_capture_plan()
     validate_capture_requirements()
+    validate_public_naming_decision()
+    validate_public_naming_decision_witness()
     validate_public_naming_artifact_manifest()
 
     _require(witness.get("product_name") == "Mullu", "product_name must be Mullu")

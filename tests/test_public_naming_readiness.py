@@ -14,6 +14,7 @@ from pathlib import Path
 import sys
 
 import pytest
+from jsonschema import Draft202012Validator
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
@@ -24,6 +25,7 @@ from scripts.validate_public_naming_readiness import (  # noqa: E402
     CLEARANCE_SCHEMA_PATH,
     CAPTURE_REQUIREMENTS_PATH,
     CAPTURE_REQUIREMENTS_SCHEMA_PATH,
+    CAPTURE_READINESS_REPORT_SCHEMA_PATH,
     CLEARANCE_DRAFT_PATH,
     CONDITIONAL_WEBSITE_ROUTES,
     REQUIRED_DOMAIN_CANDIDATES,
@@ -38,6 +40,9 @@ from scripts.validate_public_naming_readiness import (  # noqa: E402
     CLEARANCE_EVIDENCE_CAPTURE_PLAN_PATH,
     HOMEPAGE_UPDATE_EVIDENCE_PATH,
     OFFICIAL_CLEARANCE_ACCESS_LOG_PATH,
+    PUBLIC_NAMING_DECISION_PATH,
+    PUBLIC_NAMING_DECISION_SCHEMA_PATH,
+    PUBLIC_NAMING_DECISION_WITNESS_PATH,
     PRODUCT_ROUTE_DEPLOYMENT_HANDOFF_PATH,
     PRODUCT_ROUTE_DRAFT_PATH,
     READINESS_SCHEMA_PATH,
@@ -59,6 +64,8 @@ from scripts.validate_public_naming_readiness import (  # noqa: E402
     validate_product_route_deployment_handoff,
     validate_official_clearance_access_log,
     validate_public_naming_artifact_manifest,
+    validate_public_naming_decision,
+    validate_public_naming_decision_witness,
     validate_public_launch_copy,
     validate_public_naming_readiness,
     validate_public_naming_review_packet,
@@ -69,12 +76,22 @@ from scripts.validate_public_naming_readiness import (  # noqa: E402
     validate_website_recheck_log,
 )
 from scripts.report_public_naming_readiness import main as report_public_naming_readiness  # noqa: E402
+from scripts.report_clearance_capture_readiness import (  # noqa: E402
+    build_capture_readiness,
+    main as report_clearance_capture_readiness,
+)
 from scripts.plan_public_naming_transition import main as plan_public_naming_transition  # noqa: E402
 from scripts import validate_release_status as release_status  # noqa: E402
 
 
 def _load_witness() -> dict[str, object]:
     return json.loads(WITNESS_PATH.read_text(encoding="utf-8"))
+
+
+def _validate_capture_readiness_report(payload: dict[str, object]) -> None:
+    report_schema = json.loads(CAPTURE_READINESS_REPORT_SCHEMA_PATH.read_text(encoding="utf-8"))
+    Draft202012Validator.check_schema(report_schema)
+    Draft202012Validator(report_schema).validate(payload)
 
 
 def _write_witness(tmp_path: Path, witness: dict[str, object]) -> Path:
@@ -229,6 +246,91 @@ def test_public_naming_readiness_report_outputs_blocked_status(capsys: pytest.Ca
     assert "Closed gate count:" in output
     assert "Evidence artifact count:" in output
     assert "STATUS: blocked" in output
+
+
+def test_clearance_capture_readiness_report_outputs_missing_files(capsys: pytest.CaptureFixture[str]) -> None:
+    exit_code = report_clearance_capture_readiness([])
+    output = capsys.readouterr().out
+
+    assert exit_code == 0
+    assert "Mullu Clearance Capture Readiness" in output
+    assert "Paid public launch allowed: False" in output
+    assert "uspto_search:" in output
+    assert "uspto-search-mullu.pdf" in output
+    assert "Required files missing:" in output
+    assert "STATUS: blocked" in output
+
+
+def test_clearance_capture_readiness_strict_blocks_missing_files(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    exit_code = report_clearance_capture_readiness(["--strict"])
+    output = capsys.readouterr().out
+
+    assert exit_code == 1
+    assert "Mullu Clearance Capture Readiness" in output
+    assert "STATUS: blocked" in output
+
+
+def test_clearance_capture_readiness_report_outputs_json(capsys: pytest.CaptureFixture[str]) -> None:
+    exit_code = report_clearance_capture_readiness(["--json"])
+    payload = json.loads(capsys.readouterr().out)
+
+    assert exit_code == 0
+    _validate_capture_readiness_report(payload)
+    assert payload["product_name"] == "Mullu"
+    assert payload["company_brand"] == "Mullusi"
+    assert payload["public_paid_launch_allowed"] is False
+    assert payload["required_files_missing"] > 0
+    assert payload["status"] == "blocked"
+
+
+def test_clearance_capture_readiness_writes_receipt(tmp_path: Path) -> None:
+    receipt_path = tmp_path / "capture-readiness.json"
+    exit_code = report_clearance_capture_readiness(["--receipt-path", str(receipt_path)])
+    payload = json.loads(receipt_path.read_text(encoding="utf-8"))
+
+    assert exit_code == 0
+    assert receipt_path.exists()
+    _validate_capture_readiness_report(payload)
+    assert payload["product_name"] == "Mullu"
+    assert payload["public_paid_launch_allowed"] is False
+    assert payload["status"] == "blocked"
+
+
+def test_clearance_capture_readiness_strict_writes_receipt_before_blocking(tmp_path: Path) -> None:
+    receipt_path = tmp_path / "strict-capture-readiness.json"
+    exit_code = report_clearance_capture_readiness(["--strict", "--receipt-path", str(receipt_path)])
+    payload = json.loads(receipt_path.read_text(encoding="utf-8"))
+
+    assert exit_code == 1
+    assert receipt_path.exists()
+    _validate_capture_readiness_report(payload)
+    assert payload["required_files_missing"] > 0
+    assert payload["status"] == "blocked"
+
+
+def test_clearance_capture_readiness_all_present(tmp_path: Path) -> None:
+    requirements = json.loads(CAPTURE_REQUIREMENTS_PATH.read_text(encoding="utf-8"))
+    evidence_root = tmp_path / "docs" / "clearance-evidence" / "mullu" / "2026-05-15"
+    requirements["evidence_root"] = str(evidence_root)
+    requirements_path = tmp_path / "docs" / "clearance-evidence" / "mullu" / "2026-05-15" / "capture-requirements.json"
+    requirements_path.parent.mkdir(parents=True)
+    requirements_path.write_text(json.dumps(requirements, indent=2), encoding="utf-8")
+
+    for gate in requirements["gates"]:
+        gate_dir = evidence_root / gate["directory"]
+        gate_dir.mkdir(parents=True, exist_ok=True)
+        for required_file in gate["required_files"]:
+            (gate_dir / required_file).write_text("evidence placeholder\n", encoding="utf-8")
+
+    report = build_capture_readiness(requirements_path)
+
+    _validate_capture_readiness_report(report)
+    assert report["required_files_present"] == report["required_files_total"]
+    assert report["required_files_missing"] == 0
+    assert all(gate["status"] == "capture_ready_for_review" for gate in report["gates"])
+    assert report["status"] == "capture_ready_for_review"
 
 
 def test_public_naming_transition_plan_outputs_remaining_actions(capsys: pytest.CaptureFixture[str]) -> None:
@@ -484,6 +586,41 @@ def test_required_official_searches_keep_uspto_serials_and_classes() -> None:
 
 def test_public_naming_review_packet_contains_required_review_inputs() -> None:
     validate_public_naming_review_packet()
+
+
+def test_public_naming_decision_preserves_private_beta_decision() -> None:
+    validate_public_naming_decision()
+
+
+def test_public_naming_decision_witness_is_schema_valid() -> None:
+    validate_public_naming_decision_witness()
+    witness = json.loads(PUBLIC_NAMING_DECISION_WITNESS_PATH.read_text(encoding="utf-8"))
+    schema = json.loads(PUBLIC_NAMING_DECISION_SCHEMA_PATH.read_text(encoding="utf-8"))
+
+    Draft202012Validator.check_schema(schema)
+    Draft202012Validator(schema).validate(witness)
+
+    assert witness["product_name"] == "Mullu"
+    assert witness["company_brand"] == "Mullusi"
+    assert witness["public_paid_launch_allowed"] is False
+    assert witness["capture_readiness"]["status"] == "blocked"
+
+
+def test_public_naming_decision_rejects_paid_launch_unblock(tmp_path: Path) -> None:
+    decision_path = tmp_path / "PUBLIC_NAMING_DECISION_2026-05-20.md"
+    decision_text = PUBLIC_NAMING_DECISION_PATH.read_text(encoding="utf-8").replace(
+        "| Paid public launch | Blocked |",
+        "| Paid public launch | Approved |",
+    )
+    decision_path.write_text(decision_text, encoding="utf-8")
+
+    with pytest.raises(AssertionError, match="public naming decision missing literals"):
+        validate_public_naming_decision(decision_path)
+
+
+def test_public_naming_decision_missing_file_fails_closed(tmp_path: Path) -> None:
+    with pytest.raises(AssertionError, match="public naming decision missing"):
+        validate_public_naming_decision(tmp_path / "missing-decision.md")
 
 
 def test_official_clearance_access_log_preserves_open_clearance_gates() -> None:

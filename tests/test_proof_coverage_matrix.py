@@ -148,7 +148,7 @@ def test_witness_integrity_report_tracks_exact_test_anchors() -> None:
     assert surfaces["god_mode_lifecycle"]["unanchored_witness_count"] == 0
     assert surfaces["agent_adapter_protocol"]["exact_test_anchor_count"] == 14
     assert surfaces["agent_adapter_protocol"]["unanchored_witness_count"] == 0
-    assert surfaces["effect_assurance_graph_commit"]["exact_test_anchor_count"] == 5
+    assert surfaces["effect_assurance_graph_commit"]["exact_test_anchor_count"] == 6
     assert surfaces["effect_assurance_graph_commit"]["unanchored_witness_count"] == 0
     assert surfaces["proof_route_gap_triage"]["exact_test_anchor_count"] == 4
     assert surfaces["proof_route_gap_triage"]["unanchored_witness_count"] == 0
@@ -157,6 +157,8 @@ def test_witness_integrity_report_tracks_exact_test_anchors() -> None:
     assert surfaces["gateway_capability_fabric"]["exact_test_anchor_count"] == 13
     assert surfaces["capability_worker_execution"]["unanchored_witness_count"] == 0
     assert surfaces["capability_worker_execution"]["exact_test_anchor_count"] == 7
+    assert surfaces["capability_plan_evidence_bundle"]["unanchored_witness_count"] == 0
+    assert surfaces["capability_plan_evidence_bundle"]["exact_test_anchor_count"] == 4
     assert surfaces["llm_completion"]["unanchored_witness_count"] == 0
     assert surfaces["llm_completion"]["exact_test_anchor_count"] == 7
     assert surfaces["llm_chat_workflow"]["unanchored_witness_count"] == 0
@@ -165,6 +167,8 @@ def test_witness_integrity_report_tracks_exact_test_anchors() -> None:
     assert surfaces["temporal_kernel"]["exact_test_anchor_count"] == 13
     assert surfaces["networked_worker_mesh"]["unanchored_witness_count"] == 0
     assert surfaces["networked_worker_mesh"]["exact_test_anchor_count"] == 13
+    assert surfaces["task_queue_lifecycle"]["unanchored_witness_count"] == 0
+    assert surfaces["task_queue_lifecycle"]["exact_test_anchor_count"] == 11
     assert surfaces["software_dev_capability_pack"]["unanchored_witness_count"] == 0
     assert surfaces["software_dev_capability_pack"]["exact_test_anchor_count"] == 16
     assert surfaces["governed_operational_intelligence"]["unanchored_witness_count"] == 0
@@ -179,12 +183,30 @@ def test_witness_integrity_report_tracks_exact_test_anchors() -> None:
     assert surfaces["temporal_sla"]["exact_test_anchor_count"] == 10
     assert surfaces["temporal_resolution"]["unanchored_witness_count"] == 0
     assert surfaces["temporal_resolution"]["exact_test_anchor_count"] == 10
+    assert surfaces["temporal_scheduler"]["unanchored_witness_count"] == 0
+    assert surfaces["temporal_scheduler"]["exact_test_anchor_count"] == 10
+    assert surfaces["temporal_retry_window"]["unanchored_witness_count"] == 0
+    assert surfaces["temporal_retry_window"]["exact_test_anchor_count"] == 10
+    assert surfaces["temporal_rate_limit_window"]["unanchored_witness_count"] == 0
+    assert surfaces["temporal_rate_limit_window"]["exact_test_anchor_count"] == 10
+    assert surfaces["temporal_lease_window"]["unanchored_witness_count"] == 0
+    assert surfaces["temporal_lease_window"]["exact_test_anchor_count"] == 10
+    assert surfaces["temporal_memory"]["unanchored_witness_count"] == 0
+    assert surfaces["temporal_memory"]["exact_test_anchor_count"] == 9
     assert surfaces["capability_forge"]["unanchored_witness_count"] == 0
     assert surfaces["capability_forge"]["exact_test_anchor_count"] == 10
+    assert surfaces["capability_maturity"]["unanchored_witness_count"] == 0
+    assert surfaces["capability_maturity"]["exact_test_anchor_count"] == 5
+    assert surfaces["domain_operating_pack"]["unanchored_witness_count"] == 0
+    assert surfaces["domain_operating_pack"]["exact_test_anchor_count"] == 5
+    assert surfaces["collaboration_cases"]["unanchored_witness_count"] == 0
+    assert surfaces["collaboration_cases"]["exact_test_anchor_count"] == 5
     assert surfaces["coordination_checkpoint_lifecycle"]["unanchored_witness_count"] == 0
     assert surfaces["coordination_checkpoint_lifecycle"]["exact_test_anchor_count"] == 10
     assert surfaces["production_evidence_plane"]["unanchored_witness_count"] == 0
     assert surfaces["production_evidence_plane"]["exact_test_anchor_count"] == 10
+    assert surfaces["capability_manifest_registry"]["unanchored_witness_count"] == 0
+    assert surfaces["capability_manifest_registry"]["exact_test_anchor_count"] == 9
 
 
 def test_declared_routes_have_explicit_coverage_classification() -> None:
@@ -699,12 +721,21 @@ def test_finance_approval_packet_surface_is_witnessed() -> None:
     assert "mcoi/tests/test_finance_approval_packet.py" in finance_surface["evidence_files"]
     assert "mcoi/tests/test_finance_approval_router.py" in finance_surface["evidence_files"]
     assert "schemas/finance_approval_email_calendar_binding_receipt.schema.json" in finance_surface["evidence_files"]
+    assert "schemas/finance_approval_email_calendar_live_receipt.schema.json" in finance_surface["evidence_files"]
+    assert "schemas/finance_approval_handoff_packet.schema.json" in finance_surface["evidence_files"]
+    assert "schemas/finance_approval_live_handoff_chain_validation.schema.json" in finance_surface["evidence_files"]
     assert "scripts/plan_finance_approval_live_handoff.py" in finance_surface["evidence_files"]
     assert "scripts/emit_finance_approval_email_calendar_binding_receipt.py" in finance_surface["evidence_files"]
     assert "scripts/validate_finance_approval_email_calendar_binding_receipt.py" in finance_surface["evidence_files"]
+    assert "scripts/produce_finance_approval_handoff_packet.py" in finance_surface["evidence_files"]
+    assert "scripts/validate_finance_approval_handoff_packet_schema.py" in finance_surface["evidence_files"]
+    assert "scripts/validate_finance_approval_live_handoff_chain.py" in finance_surface["evidence_files"]
     assert "tests/test_plan_finance_approval_live_handoff.py" in finance_surface["evidence_files"]
     assert "tests/test_emit_finance_approval_email_calendar_binding_receipt.py" in finance_surface["evidence_files"]
     assert "tests/test_validate_finance_approval_email_calendar_binding_receipt.py" in finance_surface["evidence_files"]
+    assert "tests/test_produce_finance_approval_handoff_packet.py" in finance_surface["evidence_files"]
+    assert "tests/test_finance_approval_handoff_packet_schema.py" in finance_surface["evidence_files"]
+    assert "tests/test_validate_finance_approval_live_handoff_chain.py" in finance_surface["evidence_files"]
     assert "schemas/finance_approval_payment_provider_binding_receipt.schema.json" in finance_surface["evidence_files"]
     assert "schemas/finance_approval_payment_closure_receipt.schema.json" in finance_surface["evidence_files"]
     assert "scripts/emit_finance_approval_payment_provider_binding_receipt.py" in finance_surface["evidence_files"]
@@ -724,6 +755,7 @@ def test_finance_approval_packet_surface_is_witnessed() -> None:
     assert "payment_handoff_prepared_without_live_payment_claim" in witnesses
     assert "email_calendar_binding_receipt_requires_worker_token_and_readonly_scope" in witnesses
     assert "email_calendar_handoff_plan_requires_binding_receipt_ready" in witnesses
+    assert "email_calendar_handoff_packet_requires_live_receipt_ready" in witnesses
     assert "payment_receipt_and_ledger_reconciliation_required_for_payment_closure" in witnesses
     assert "payment_closure_receipt_validator_blocks_unbound_evidence" in witnesses
     assert "payment_closure_receipt_producer_emits_ready_sandbox_evidence" in witnesses
@@ -738,7 +770,7 @@ def test_finance_approval_packet_surface_is_witnessed() -> None:
         record["surface_id"]: record
         for record in matrix["witness_integrity"]["surfaces"]
     }["finance_approval_packets"]
-    assert finance_integrity["exact_test_anchor_count"] == 16
+    assert finance_integrity["exact_test_anchor_count"] == 17
     assert finance_integrity["unanchored_witness_count"] == 0
     assert closure_actions["classify_finance_approval_packet_routes"]["status"] == "closed"
 
@@ -1107,16 +1139,23 @@ def test_effect_assurance_graph_commit_surface_records_effect_receipts() -> None
     assert "EffectAssuranceGate.graph_commit_effect_records" in graph_commit_surface["representative_paths"]
     assert "InMemoryEffectGraphCommitReceiptStore" in graph_commit_surface["representative_paths"]
     assert "JsonlEffectGraphCommitReceiptStore" in graph_commit_surface["representative_paths"]
+    assert "bootstrap_runtime" in graph_commit_surface["representative_paths"]
+    assert "AppConfig.effect_graph_commit_receipt_store_path" in graph_commit_surface["representative_paths"]
     assert "mcoi/mcoi_runtime/core/effect_assurance.py" in graph_commit_surface["evidence_files"]
     assert "mcoi/mcoi_runtime/core/operational_graph.py" in graph_commit_surface["evidence_files"]
+    assert "mcoi/mcoi_runtime/app/bootstrap.py" in graph_commit_surface["evidence_files"]
+    assert "mcoi/mcoi_runtime/app/config.py" in graph_commit_surface["evidence_files"]
     assert "mcoi/tests/test_effect_assurance_core.py" in graph_commit_surface["evidence_files"]
+    assert "mcoi/tests/test_bootstrap.py" in graph_commit_surface["evidence_files"]
     assert "effect_graph_commit_requires_match" in witnesses
     assert "effect_graph_commit_receipt_emitted" in witnesses
     assert "effect_graph_commit_receipt_converts_to_actual_effect" in witnesses
     assert "effect_graph_commit_receipt_closes_effect_assurance" in witnesses
     assert "effect_graph_commit_receipt_store_replays_records" in witnesses
+    assert "bootstrap_wires_durable_effect_graph_commit_receipt_store" in witnesses
     assert closure_actions["bind_effect_graph_commits_to_effect_receipts"]["status"] == "closed"
     assert closure_actions["persist_effect_graph_commit_receipts"]["status"] == "closed"
+    assert closure_actions["wire_effect_graph_commit_receipt_store_into_bootstrap"]["status"] == "closed"
 
 
 def test_job_engine_lifecycle_surface_records_effect_receipts() -> None:
@@ -1533,6 +1572,7 @@ def test_capability_plan_evidence_bundle_surface_is_witnessed() -> None:
     plan_surface = surfaces["capability_plan_evidence_bundle"]
     conformance_surface = surfaces["runtime_conformance_attestation"]
     closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    witnesses = set(plan_surface["runtime_witnesses"])
 
     assert plan_surface["coverage_state"] == "witnessed"
     assert plan_surface["request_proof"] == "request_proof"
@@ -1540,7 +1580,10 @@ def test_capability_plan_evidence_bundle_surface_is_witnessed() -> None:
     assert "/capability-plans/{plan_id}/closure" in plan_surface["representative_paths"]
     assert "gateway/plan_ledger.py" in plan_surface["evidence_files"]
     assert "tests/test_gateway/test_plan.py" in plan_surface["evidence_files"]
-    assert "plan_evidence_bundle" in plan_surface["runtime_witnesses"]
+    assert "plan_terminal_certificate" in witnesses
+    assert "plan_evidence_bundle" in witnesses
+    assert "plan_witnesses" in witnesses
+    assert "plan_recovery_attempts" in witnesses
     assert "runtime_conformance_witnesses_capability_plan_bundle" in conformance_surface["runtime_witnesses"]
     assert "physical_worker_canary_blocks_missing_receipt_and_allows_sandbox_replay" in conformance_surface["runtime_witnesses"]
     assert "physical_worker_canary_evidence_and_hash_are_stable" in conformance_surface["runtime_witnesses"]
@@ -2195,6 +2238,42 @@ def test_tool_invocation_surface_anchors_rejected_path_receipts() -> None:
     assert "rejected-path receipts" in tool_surface["notes"]
 
 
+def test_operational_math_loop_surface_anchors_receipts_and_projection() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    math_surface = surfaces["operational_math_loop"]
+    witnesses = set(math_surface["runtime_witnesses"])
+
+    assert math_surface["coverage_state"] == "witnessed"
+    assert math_surface["request_proof"] == "request_proof"
+    assert math_surface["action_proof"] == "action_proof"
+    assert "OperationalMathLoopEngine.apply_all" in math_surface["representative_paths"]
+    assert "mcoi_runtime.app.operational_math_cli" in math_surface["representative_paths"]
+    assert "OperationalMathReceiptStore" in math_surface["representative_paths"]
+    assert "docs/operational_math_loop.md" in math_surface["evidence_files"]
+    assert "mcoi/mcoi_runtime/contracts/operational_math.py" in math_surface["evidence_files"]
+    assert "mcoi/mcoi_runtime/core/operational_math_loop.py" in math_surface["evidence_files"]
+    assert "mcoi/mcoi_runtime/persistence/operational_math_receipt_store.py" in math_surface["evidence_files"]
+    assert "mcoi/mcoi_runtime/app/operational_math_cli.py" in math_surface["evidence_files"]
+    assert "mcoi/mcoi_runtime/app/operational_math_observability.py" in math_surface["evidence_files"]
+    assert "mcoi/mcoi_runtime/app/server.py" in math_surface["evidence_files"]
+    assert "mcoi/tests/test_operational_math_loop.py" in math_surface["evidence_files"]
+    assert "mcoi/tests/test_operational_math_cli.py" in math_surface["evidence_files"]
+    assert "mcoi/tests/test_operational_math_receipt_store.py" in math_surface["evidence_files"]
+    assert "mcoi/tests/test_operational_math_observability.py" in math_surface["evidence_files"]
+    assert "operational_math_loop_applies_all_audit_principles" in witnesses
+    assert "operational_math_loop_stops_at_iteration_budget_with_open_gaps" in witnesses
+    assert "operational_math_cli_writes_dashboard_projection" in witnesses
+    assert "operational_math_cli_appends_receipt_store" in witnesses
+    assert "memory_store_appends_queries_and_summarizes_receipts" in witnesses
+    assert "file_store_persists_and_reloads_receipts" in witnesses
+    assert "server_wires_operational_math_store_into_dashboard" in witnesses
+    assert "summary_marks_incomplete_receipt_for_review" in witnesses
+    assert "append-only JSON receipt stores" in math_surface["notes"]
+    assert closure_actions["anchor_operational_math_loop_receipts_and_projection"]["status"] == "closed"
+
+
 def test_structured_output_validation_surface_is_witnessed() -> None:
     matrix = _load_fixture()
     surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
@@ -2636,7 +2715,9 @@ def test_capability_maturity_surface_is_evidence_derived() -> None:
     assert "tests/test_gateway/test_capability_maturity.py" in maturity_surface["evidence_files"]
     assert "maturity_derived_from_evidence" in witnesses
     assert "effect_bearing_c6_requires_live_write" in witnesses
+    assert "production_requires_c6_or_c7" in witnesses
     assert "autonomy_requires_c7" in witnesses
+    assert "capability_maturity_schema_valid" in witnesses
     assert closure_actions["publish_capability_maturity_contract"]["status"] == "closed"
 
 
@@ -2786,7 +2867,9 @@ def test_domain_operating_pack_surface_requires_certification_evidence() -> None
     assert "schemas/domain_operating_pack.schema.json" in pack_surface["evidence_files"]
     assert "tests/test_gateway/test_domain_operating_pack.py" in pack_surface["evidence_files"]
     assert "builtin_domain_pack_catalog_complete" in witnesses
+    assert "finance_ops_pack_declares_governed_artifacts" in witnesses
     assert "high_risk_pack_requires_approval_roles" in witnesses
+    assert "certified_pack_requires_evidence_refs" in witnesses
     assert "domain_operating_pack_schema_valid" in witnesses
     assert closure_actions["publish_domain_operating_pack_contract"]["status"] == "closed"
 

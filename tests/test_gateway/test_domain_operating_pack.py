@@ -87,3 +87,96 @@ def test_domain_operating_pack_schema_exposes_solution_surface() -> None:
     assert schema["$id"] == "urn:mullusi:schema:domain-operating-pack:1"
     assert "finance_ops" in schema["properties"]["domain"]["enum"]
     assert pack.pack_hash
+
+
+def test_builtin_domain_pack_catalog_complete() -> None:
+    catalog = DomainOperatingPackCompiler().catalog(builtin_domain_operating_pack_specs())
+    domains = {pack.domain for pack in catalog.packs}
+
+    assert len(catalog.packs) == 7
+    assert domains == {
+        "finance_ops",
+        "customer_support",
+        "compliance",
+        "research",
+        "healthcare_admin",
+        "education",
+        "manufacturing_ops",
+    }
+    assert all(pack.pack_id for pack in catalog.packs)
+    assert all(pack.pack_hash for pack in catalog.packs)
+    assert all(pack.activation_blocked for pack in catalog.packs)
+    assert catalog.catalog_id.startswith("domain-operating-pack-catalog-")
+    assert catalog.catalog_hash
+
+
+def test_finance_ops_pack_declares_governed_artifacts() -> None:
+    spec = next(spec for spec in builtin_domain_operating_pack_specs() if spec.domain == "finance_ops")
+    pack = DomainOperatingPackCompiler().compile(spec)
+
+    assert "schemas/finance_ops/invoice.extract.schema.json" in pack.schemas
+    assert "tenant_boundary" in pack.policies
+    assert "budget_gate" in pack.policies
+    assert "invoice.approval" in pack.workflows
+    assert "payment.execute.with_approval" in pack.workflows
+    assert "finance_ops.primary_connector" in pack.connectors
+    assert "approval_required" in pack.evals
+    assert "signed_evidence_bundle_required" in pack.risk_rules
+    assert "finance_admin" in pack.approval_roles
+    assert "terminal_certificate_export" in pack.evidence_exports
+    assert "operator_queue" in pack.dashboard_views
+
+
+def test_high_risk_pack_requires_approval_roles() -> None:
+    spec = replace(
+        next(spec for spec in builtin_domain_operating_pack_specs() if spec.domain == "finance_ops"),
+        approval_roles=(),
+    )
+    pack = DomainOperatingPackCompiler().compile(spec)
+    validation = DomainOperatingPackCompiler().validate(pack)
+
+    assert pack.domain == "finance_ops"
+    assert pack.activation_blocked is True
+    assert "high_risk_domain_requires_approval_roles" in pack.blocked_reasons
+    assert "certification_evidence_missing" in pack.blocked_reasons
+    assert validation.accepted is False
+    assert validation.reason == "domain_operating_pack_invalid"
+    assert "high_risk_domain_requires_approval_roles" in validation.errors
+
+
+def test_certified_pack_requires_evidence_refs() -> None:
+    missing_evidence_spec = replace(
+        next(spec for spec in builtin_domain_operating_pack_specs() if spec.domain == "customer_support"),
+        certification_status="certified",
+        certification_evidence_refs=(),
+    )
+    certified_spec = replace(
+        missing_evidence_spec,
+        certification_evidence_refs=("change_certificate:pack-support", "eval_bundle:support"),
+    )
+    blocked_pack = DomainOperatingPackCompiler().compile(missing_evidence_spec)
+    certified_pack = DomainOperatingPackCompiler().compile(certified_spec)
+    validation = DomainOperatingPackCompiler().validate(certified_pack)
+
+    assert blocked_pack.certification_status == "certified"
+    assert blocked_pack.activation_blocked is True
+    assert "certified_pack_requires_certification_evidence" in blocked_pack.blocked_reasons
+    assert "certification_evidence_missing" in blocked_pack.blocked_reasons
+    assert certified_pack.activation_blocked is False
+    assert certified_pack.certification_evidence_refs == ("change_certificate:pack-support", "eval_bundle:support")
+    assert validation.accepted is True
+    assert validation.reason == "domain_operating_pack_ready"
+
+
+def test_domain_operating_pack_schema_valid() -> None:
+    pack = DomainOperatingPackCompiler().compile(builtin_domain_operating_pack_specs()[0])
+    payload = asdict(pack)
+    schema = json.loads(SCHEMA_PATH.read_text(encoding="utf-8"))
+
+    assert schema["$id"] == "urn:mullusi:schema:domain-operating-pack:1"
+    assert set(schema["required"]).issubset(payload)
+    assert payload["domain"] in schema["properties"]["domain"]["enum"]
+    assert payload["certification_status"] in schema["properties"]["certification_status"]["enum"]
+    assert payload["activation_blocked"] is True
+    assert payload["blocked_reasons"]
+    assert payload["pack_hash"]

@@ -1,6 +1,6 @@
 """Purpose: verify public repository-surface validation remains fail-closed.
 Governance scope: GitHub metadata witness, latest release witness, deployment
-status witness, and required public documents.
+status witness, and required proprietary documents.
 Dependencies: scripts.validate_public_repository_surface only.
 Invariants:
   - Metadata mismatches are explicit.
@@ -32,8 +32,18 @@ def test_validate_repository_payload_accepts_expected_metadata() -> None:
     assert errors == []
     assert len(errors) == 0
     assert validate_public_repository_surface.EXPECTED_DESCRIPTION.startswith(
-        "Governed symbolic intelligence control plane"
+        "Proprietary Mullusi symbolic intelligence control plane"
     )
+
+
+def test_github_api_path_supports_authenticated_fallback_endpoint() -> None:
+    api_path = validate_public_repository_surface._github_api_path(
+        "https://api.github.com/repos/tamirat-wubie/mullu-control-plane/releases/latest"
+    )
+
+    assert api_path == "repos/tamirat-wubie/mullu-control-plane/releases/latest"
+    assert validate_public_repository_surface._github_api_path("https://example.com/x") is None
+    assert validate_public_repository_surface._github_api_path("https://api.github.com/") is None
 
 
 def test_validate_repository_payload_rejects_mismatch_and_legacy_topic() -> None:

@@ -19,10 +19,18 @@ import json
 from pathlib import Path
 
 from scripts.produce_finance_approval_operator_summary import produce_finance_approval_operator_summary
+from scripts.validate_finance_approval_live_handoff_chain import (
+    validate_finance_approval_live_handoff_chain,
+    write_finance_live_handoff_chain_validation,
+)
 from scripts.validate_finance_approval_operator_summary_schema import (
     main,
     validate_finance_approval_operator_summary_schema,
     write_finance_operator_summary_schema_validation,
+)
+from scripts.finance_approval_handoff_test_fixtures import (
+    produce_finance_handoff_packet_from_sources,
+    write_finance_handoff_sources,
 )
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -31,6 +39,7 @@ EXPECTED_ARTIFACT_STATUS_KEYS = {
     "pilot_witness",
     "live_handoff_plan",
     "email_calendar_binding_receipt",
+    "email_calendar_live_receipt",
     "live_handoff_closure_run",
     "live_handoff_preflight",
 }
@@ -45,7 +54,7 @@ EXPECTED_MUST_NOT_CLAIM = {
 
 def test_finance_operator_summary_schema_accepts_current_summary(tmp_path: Path) -> None:
     summary_path = tmp_path / "finance_operator_summary.json"
-    summary, errors = produce_finance_approval_operator_summary()
+    summary, errors = _summary(tmp_path)
     summary_path.write_text(json.dumps(summary), encoding="utf-8")
 
     validation = validate_finance_approval_operator_summary_schema(
@@ -83,7 +92,7 @@ def test_finance_operator_summary_public_schema_bounds_must_not_claim() -> None:
 
 def test_finance_operator_summary_schema_rejects_ready_drift(tmp_path: Path) -> None:
     summary_path = tmp_path / "finance_operator_summary.json"
-    summary, errors = produce_finance_approval_operator_summary()
+    summary, errors = _summary(tmp_path)
     summary["packet_ready"] = True
     summary["promotion_mode"] = "live-email-handoff"
     summary_path.write_text(json.dumps(summary), encoding="utf-8")
@@ -100,7 +109,7 @@ def test_finance_operator_summary_schema_rejects_ready_drift(tmp_path: Path) -> 
 
 def test_finance_operator_summary_schema_rejects_missing_promotion_command_token(tmp_path: Path) -> None:
     summary_path = tmp_path / "finance_operator_summary.json"
-    summary, errors = produce_finance_approval_operator_summary()
+    summary, errors = _summary(tmp_path)
     summary["strict_promotion_command"] = "python scripts/validate_finance_approval_live_handoff_chain.py"
     summary_path.write_text(json.dumps(summary), encoding="utf-8")
 
@@ -116,7 +125,7 @@ def test_finance_operator_summary_schema_rejects_missing_promotion_command_token
 
 def test_finance_operator_summary_schema_rejects_missing_promotion_json_token(tmp_path: Path) -> None:
     summary_path = tmp_path / "finance_operator_summary.json"
-    summary, errors = produce_finance_approval_operator_summary()
+    summary, errors = _summary(tmp_path)
     summary["strict_promotion_command"] = (
         "python scripts/validate_finance_approval_live_handoff_chain.py --strict --require-ready"
     )
@@ -134,7 +143,7 @@ def test_finance_operator_summary_schema_rejects_missing_promotion_json_token(tm
 
 def test_finance_operator_summary_schema_rejects_missing_artifact_status(tmp_path: Path) -> None:
     summary_path = tmp_path / "finance_operator_summary.json"
-    summary, errors = produce_finance_approval_operator_summary()
+    summary, errors = _summary(tmp_path)
     del summary["artifact_statuses"]["live_handoff_closure_run"]
     summary_path.write_text(json.dumps(summary), encoding="utf-8")
 
@@ -150,7 +159,7 @@ def test_finance_operator_summary_schema_rejects_missing_artifact_status(tmp_pat
 
 def test_finance_operator_summary_schema_rejects_unexpected_artifact_status(tmp_path: Path) -> None:
     summary_path = tmp_path / "finance_operator_summary.json"
-    summary, errors = produce_finance_approval_operator_summary()
+    summary, errors = _summary(tmp_path)
     summary["artifact_statuses"]["invented_live_delivery"] = "ready"
     summary_path.write_text(json.dumps(summary), encoding="utf-8")
 
@@ -167,7 +176,7 @@ def test_finance_operator_summary_schema_rejects_unexpected_artifact_status(tmp_
 
 def test_finance_operator_summary_schema_rejects_missing_full_claim_boundary(tmp_path: Path) -> None:
     summary_path = tmp_path / "finance_operator_summary.json"
-    summary, errors = produce_finance_approval_operator_summary()
+    summary, errors = _summary(tmp_path)
     summary["must_not_claim"].remove("bank settlement")
     summary_path.write_text(json.dumps(summary), encoding="utf-8")
 
@@ -183,7 +192,7 @@ def test_finance_operator_summary_schema_rejects_missing_full_claim_boundary(tmp
 
 def test_finance_operator_summary_schema_rejects_unexpected_claim_boundary(tmp_path: Path) -> None:
     summary_path = tmp_path / "finance_operator_summary.json"
-    summary, errors = produce_finance_approval_operator_summary()
+    summary, errors = _summary(tmp_path)
     summary["must_not_claim"].append("invented production claim")
     summary_path.write_text(json.dumps(summary), encoding="utf-8")
 
@@ -201,7 +210,7 @@ def test_finance_operator_summary_schema_rejects_unexpected_claim_boundary(tmp_p
 def test_finance_operator_summary_schema_writer_and_cli_honor_strict(tmp_path: Path, capsys) -> None:
     summary_path = tmp_path / "finance_operator_summary.json"
     output_path = tmp_path / "summary_schema_validation.json"
-    summary, errors = produce_finance_approval_operator_summary()
+    summary, errors = _summary(tmp_path)
     summary_path.write_text(json.dumps(summary), encoding="utf-8")
     validation = validate_finance_approval_operator_summary_schema(
         summary_path=summary_path,
@@ -230,3 +239,18 @@ def test_finance_operator_summary_schema_writer_and_cli_honor_strict(tmp_path: P
     assert exit_code == 0
     assert payload["ok"] is True
     assert stdout_payload["readiness_blocker_count"] == validation.readiness_blocker_count
+
+
+def _summary(tmp_path: Path) -> tuple[dict[str, object], tuple[str, ...]]:
+    paths = write_finance_handoff_sources(tmp_path, live_ready=False)
+    packet_path = tmp_path / "finance_handoff_packet.json"
+    chain_path = tmp_path / "finance_handoff_chain.json"
+    packet_path.write_text(json.dumps(produce_finance_handoff_packet_from_sources(paths)), encoding="utf-8")
+    chain = validate_finance_approval_live_handoff_chain(
+        closure_run_path=paths["closure_run"],
+        live_receipt_path=paths["live_receipt"],
+        preflight_path=paths["preflight"],
+        packet_path=packet_path,
+    )
+    write_finance_live_handoff_chain_validation(chain, chain_path)
+    return produce_finance_approval_operator_summary(packet_path=packet_path, chain_path=chain_path)

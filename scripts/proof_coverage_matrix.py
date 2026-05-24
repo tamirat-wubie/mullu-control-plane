@@ -860,6 +860,18 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "rbac_summary_bounded",
                 "rbac_errors_sanitized",
             ],
+            runtime_witness_anchor_aliases={
+                "rbac_identity_registration_governed": ["create_identity"],
+                "rbac_role_registration_governed": ["create_role"],
+                "rbac_role_binding_governed": ["bind_role"],
+                "rbac_identity_creation_audited": ["identity_creation_audited"],
+                "rbac_summary_bounded": ["rbac_summary"],
+                "rbac_errors_sanitized": [
+                    "unknown_identity_denied",
+                    "disabled_identity_denied",
+                    "authenticated_evaluation_failure_fails_closed",
+                ],
+            },
         ),
         _surface(
             "runtime_config_management",
@@ -1219,12 +1231,21 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "mcoi/tests/test_finance_approval_packet.py",
                 "mcoi/tests/test_finance_approval_router.py",
                 "schemas/finance_approval_email_calendar_binding_receipt.schema.json",
+                "schemas/finance_approval_email_calendar_live_receipt.schema.json",
+                "schemas/finance_approval_handoff_packet.schema.json",
+                "schemas/finance_approval_live_handoff_chain_validation.schema.json",
                 "scripts/plan_finance_approval_live_handoff.py",
                 "scripts/emit_finance_approval_email_calendar_binding_receipt.py",
                 "scripts/validate_finance_approval_email_calendar_binding_receipt.py",
+                "scripts/produce_finance_approval_handoff_packet.py",
+                "scripts/validate_finance_approval_handoff_packet_schema.py",
+                "scripts/validate_finance_approval_live_handoff_chain.py",
                 "tests/test_plan_finance_approval_live_handoff.py",
                 "tests/test_emit_finance_approval_email_calendar_binding_receipt.py",
                 "tests/test_validate_finance_approval_email_calendar_binding_receipt.py",
+                "tests/test_produce_finance_approval_handoff_packet.py",
+                "tests/test_finance_approval_handoff_packet_schema.py",
+                "tests/test_validate_finance_approval_live_handoff_chain.py",
                 "schemas/finance_approval_payment_provider_binding_receipt.schema.json",
                 "schemas/finance_approval_payment_closure_receipt.schema.json",
                 "scripts/emit_finance_approval_payment_provider_binding_receipt.py",
@@ -1249,6 +1270,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "payment_handoff_prepared_without_live_payment_claim",
                 "email_calendar_binding_receipt_requires_worker_token_and_readonly_scope",
                 "email_calendar_handoff_plan_requires_binding_receipt_ready",
+                "email_calendar_handoff_packet_requires_live_receipt_ready",
                 "payment_receipt_and_ledger_reconciliation_required_for_payment_closure",
                 "payment_closure_receipt_validator_blocks_unbound_evidence",
                 "payment_closure_receipt_producer_emits_ready_sandbox_evidence",
@@ -1278,6 +1300,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 ],
                 "email_calendar_handoff_plan_requires_binding_receipt_ready": [
                     "current_finance_handoff_plan_scopes_to_email_calendar"
+                ],
+                "email_calendar_handoff_packet_requires_live_receipt_ready": [
+                    "finance_handoff_packet_requires_ready_live_receipt",
+                    "finance_handoff_packet_schema_rejects_live_receipt_status_drift",
+                    "finance_live_handoff_chain_rejects_packet_live_receipt_path_mismatch",
                 ],
                 "payment_receipt_and_ledger_reconciliation_required_for_payment_closure": [
                     "payment_finalization_requires_provider_and_ledger_evidence_without_mutation"
@@ -1557,6 +1584,28 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "task_queue_missing_result_bounded",
                 "task_queue_errors_sanitized",
             ],
+            runtime_witness_anchor_aliases={
+                "task_queue_priority_order": ["priority_order"],
+                "task_queue_depth_bounded": ["max_depth", "queue_status"],
+                "task_queue_submit_endpoint": ["submit"],
+                "task_queue_submit_mutation_receipt_emitted": [
+                    "submit",
+                    "submit_records_bounded_mutation_receipt",
+                ],
+                "task_queue_process_endpoint": ["process"],
+                "task_queue_process_mutation_receipts_emitted": [
+                    "process",
+                    "process_records_dequeue_and_result_receipts",
+                ],
+                "task_queue_empty_process_bounded": ["process_empty", "pop_empty"],
+                "task_queue_result_retrieval": ["get_result"],
+                "task_queue_missing_result_bounded": ["get_missing_result"],
+                "task_queue_errors_sanitized": [
+                    "process_failure",
+                    "process_timeout_failure_is_sanitized",
+                    "record_result_sanitizes_manual_error",
+                ],
+            },
         ),
         _surface(
             "trace_observability_read_models",
@@ -2177,6 +2226,8 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "EffectAssuranceGate.graph_commit_effect_records",
                 "InMemoryEffectGraphCommitReceiptStore",
                 "JsonlEffectGraphCommitReceiptStore",
+                "bootstrap_runtime",
+                "AppConfig.effect_graph_commit_receipt_store_path",
             ],
             "request_proof",
             "action_proof",
@@ -2185,15 +2236,19 @@ def proof_coverage_matrix() -> dict[str, Any]:
             [
                 "mcoi/mcoi_runtime/core/effect_assurance.py",
                 "mcoi/mcoi_runtime/core/operational_graph.py",
+                "mcoi/mcoi_runtime/app/bootstrap.py",
+                "mcoi/mcoi_runtime/app/config.py",
                 "mcoi/tests/test_effect_assurance_core.py",
+                "mcoi/tests/test_bootstrap.py",
             ],
-            "Effect Assurance graph commits emit bounded durable receipts for MATCH-only operational graph mutation and expose those receipts as actual effects for observation.",
+            "Effect Assurance graph commits emit bounded durable receipts for MATCH-only operational graph mutation, expose those receipts as actual effects for observation, and can be wired into runtime bootstrap through explicit configuration.",
             [
                 "effect_graph_commit_requires_match",
                 "effect_graph_commit_receipt_emitted",
                 "effect_graph_commit_receipt_converts_to_actual_effect",
                 "effect_graph_commit_receipt_closes_effect_assurance",
                 "effect_graph_commit_receipt_store_replays_records",
+                "bootstrap_wires_durable_effect_graph_commit_receipt_store",
             ],
             {
                 "effect_graph_commit_requires_match": ["graph_commit_requires_match"],
@@ -2208,6 +2263,9 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 ],
                 "effect_graph_commit_receipt_store_replays_records": [
                     "jsonl_graph_commit_receipt_store_replays_records"
+                ],
+                "bootstrap_wires_durable_effect_graph_commit_receipt_store": [
+                    "bootstrap_runtime_wires_durable_effect_graph_commit_receipt_store"
                 ],
             },
         ),
@@ -2808,6 +2866,36 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "fabric_projects_local_manifest_registry",
                 "fabric_rejects_production_hot_reload_manifest_registry",
             ],
+            runtime_witness_anchor_aliases={
+                "capability_manifest_schema_valid": [
+                    "software_dev_capability_manifests_are_schema_valid",
+                ],
+                "software_dev_manifests_admit_locally": [
+                    "capability_manifest_registry_admits_software_dev_directory_locally",
+                ],
+                "manifest_missing_policy_rejected": [
+                    "capability_manifest_registry_rejects_missing_policy_refs",
+                ],
+                "manifest_unresolved_schema_rejected": [
+                    "capability_manifest_registry_rejects_unresolved_schema_refs",
+                ],
+                "effect_manifest_requires_sandbox_rollback": [
+                    "capability_manifest_registry_blocks_effects_without_sandbox_and_rollback",
+                ],
+                "hot_reload_metadata_enforced": [
+                    "capability_manifest_registry_enforces_hot_reload_metadata_environment",
+                    "capability_manifest_registry_requires_hot_reload_metadata",
+                ],
+                "production_hot_reload_denied_for_effect_manifest": [
+                    "capability_manifest_registry_blocks_production_hot_reload_for_effects",
+                ],
+                "fabric_projects_local_manifest_registry": [
+                    "capability_fabric_env_loader_projects_local_manifest_registry",
+                ],
+                "fabric_rejects_production_hot_reload_manifest_registry": [
+                    "capability_fabric_env_loader_rejects_production_hot_reload_for_manifest_registry",
+                ],
+            },
         ),
         _surface(
             "networked_worker_mesh",
@@ -3210,6 +3298,29 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "case_closure_not_terminal_command_closure",
                 "collaboration_case_schema_valid",
             ],
+            runtime_witness_anchor_aliases={
+                "approval_separation_required": [
+                    "approval_separation_required",
+                    "self_approval_is_blocked",
+                ],
+                "pending_controls_block_case_closure": [
+                    "pending_controls_block_case_closure",
+                    "pending_control_blocks_case_closure",
+                ],
+                "decider_authority_required": [
+                    "decider_authority_required",
+                    "non_decider_case_closure_is_blocked",
+                ],
+                "case_closure_not_terminal_command_closure": [
+                    "case_closure_not_terminal_command_closure",
+                    "resolved_control_allows_non_terminal_closure",
+                    "collaboration_closure_rejects_terminal_claim",
+                ],
+                "collaboration_case_schema_valid": [
+                    "collaboration_case_schema_valid",
+                    "collaboration_case_schema_export_validates",
+                ],
+            },
         ),
         _surface(
             "capability_maturity",
@@ -4117,6 +4228,38 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "temporal_rate_limit_window_receipt_schema_valid",
                 "receipt_not_terminal_closure",
             ],
+            runtime_witness_anchor_aliases={
+                "runtime_clock_owns_rate_limit_window": [
+                    "rate_limit_window_allows_active_window_with_sufficient_tokens"
+                ],
+                "tenant_endpoint_identity_scope_checked": [
+                    "rate_limit_window_blocks_scope_mismatch_missing_evidence_sources_and_burst"
+                ],
+                "active_window_admits_sufficient_tokens": [
+                    "rate_limit_window_allows_active_window_with_sufficient_tokens"
+                ],
+                "exhausted_window_emits_retry_after": [
+                    "rate_limit_window_throttles_exhausted_window_with_retry_after"
+                ],
+                "future_window_defers_dispatch": [
+                    "rate_limit_window_defers_future_window_until_start"
+                ],
+                "burst_limit_blocks_overlarge_request": [
+                    "rate_limit_window_blocks_scope_mismatch_missing_evidence_sources_and_burst"
+                ],
+                "stale_rate_limit_snapshot_blocks_dispatch": [
+                    "rate_limit_window_blocks_expired_or_invalid_snapshot"
+                ],
+                "high_risk_source_receipts_bound": [
+                    "rate_limit_window_blocks_scope_mismatch_missing_evidence_sources_and_burst"
+                ],
+                "temporal_rate_limit_window_receipt_schema_valid": [
+                    "rate_limit_window_allows_active_window_with_sufficient_tokens"
+                ],
+                "receipt_not_terminal_closure": [
+                    "rate_limit_window_allows_active_window_with_sufficient_tokens"
+                ],
+            },
         ),
         _surface(
             "temporal_retry_window",
@@ -4147,6 +4290,38 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "temporal_retry_window_receipt_schema_valid",
                 "receipt_not_terminal_closure",
             ],
+            runtime_witness_anchor_aliases={
+                "runtime_clock_owns_retry_window": [
+                    "retry_window_allows_eligible_retry_after_cooldown"
+                ],
+                "retry_after_floor_checked": [
+                    "retry_window_blocks_scope_mismatch_missing_evidence_sources_and_bad_floor"
+                ],
+                "cooldown_window_defers_early_retry": [
+                    "retry_window_defers_before_retry_after_due_time"
+                ],
+                "max_attempts_block_exhausted_retry": [
+                    "retry_window_blocks_exhausted_attempt_budget"
+                ],
+                "expired_retry_window_blocks_dispatch": [
+                    "retry_window_blocks_expired_or_terminal_retry_state"
+                ],
+                "tenant_command_scope_checked": [
+                    "retry_window_blocks_scope_mismatch_missing_evidence_sources_and_bad_floor"
+                ],
+                "terminal_failure_blocks_retry": [
+                    "retry_window_blocks_expired_or_terminal_retry_state"
+                ],
+                "high_risk_source_receipts_bound": [
+                    "retry_window_blocks_scope_mismatch_missing_evidence_sources_and_bad_floor"
+                ],
+                "temporal_retry_window_receipt_schema_valid": [
+                    "retry_window_allows_eligible_retry_after_cooldown"
+                ],
+                "receipt_not_terminal_closure": [
+                    "retry_window_allows_eligible_retry_after_cooldown"
+                ],
+            },
         ),
         _surface(
             "temporal_lease_window",
@@ -4177,6 +4352,38 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "temporal_lease_window_receipt_schema_valid",
                 "receipt_not_terminal_closure",
             ],
+            runtime_witness_anchor_aliases={
+                "runtime_clock_owns_lease_window": [
+                    "lease_window_allows_active_scoped_lease"
+                ],
+                "tenant_command_resource_worker_scope_checked": [
+                    "lease_window_blocks_scope_mismatch_missing_evidence_fencing_and_closed_lease"
+                ],
+                "active_lease_admits_dispatch": [
+                    "lease_window_allows_active_scoped_lease"
+                ],
+                "near_expiry_lease_requires_renewal_warning": [
+                    "lease_window_warns_when_lease_is_inside_renewal_grace_window"
+                ],
+                "expired_lease_blocks_dispatch": [
+                    "lease_window_blocks_expired_lease_without_dispatch"
+                ],
+                "released_or_revoked_lease_blocks_dispatch": [
+                    "lease_window_blocks_scope_mismatch_missing_evidence_fencing_and_closed_lease"
+                ],
+                "fencing_token_required": [
+                    "lease_window_blocks_scope_mismatch_missing_evidence_fencing_and_closed_lease"
+                ],
+                "high_risk_source_receipts_bound": [
+                    "lease_window_blocks_scope_mismatch_missing_evidence_fencing_and_closed_lease"
+                ],
+                "temporal_lease_window_receipt_schema_valid": [
+                    "lease_window_allows_active_scoped_lease"
+                ],
+                "receipt_not_terminal_closure": [
+                    "lease_window_allows_active_scoped_lease"
+                ],
+            },
         ),
         _surface(
             "temporal_idempotency_window",
@@ -4207,6 +4414,38 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "temporal_idempotency_window_receipt_schema_valid",
                 "receipt_not_terminal_closure",
             ],
+            runtime_witness_anchor_aliases={
+                "runtime_clock_owns_idempotency_window": [
+                    "idempotency_window_admits_new_key_with_runtime_window"
+                ],
+                "new_idempotency_key_admits_dispatch": [
+                    "idempotency_window_admits_new_key_with_runtime_window"
+                ],
+                "matching_replay_admits_uncommitted_dispatch": [
+                    "idempotency_window_admits_matching_uncommitted_replay"
+                ],
+                "committed_effect_blocks_duplicate_dispatch": [
+                    "idempotency_window_blocks_duplicate_committed_effect_without_dispatch"
+                ],
+                "expired_idempotency_window_blocks_dispatch": [
+                    "idempotency_window_blocks_expired_replay_window"
+                ],
+                "request_fingerprint_mismatch_blocks_replay": [
+                    "idempotency_window_blocks_scope_fingerprint_evidence_and_source_gaps"
+                ],
+                "tenant_command_action_scope_checked": [
+                    "idempotency_window_blocks_scope_fingerprint_evidence_and_source_gaps"
+                ],
+                "high_risk_source_receipts_bound": [
+                    "idempotency_window_blocks_scope_fingerprint_evidence_and_source_gaps"
+                ],
+                "temporal_idempotency_window_receipt_schema_valid": [
+                    "idempotency_window_admits_new_key_with_runtime_window"
+                ],
+                "receipt_not_terminal_closure": [
+                    "idempotency_window_admits_new_key_with_runtime_window"
+                ],
+            },
         ),
         _surface(
             "temporal_memory",
@@ -4236,6 +4475,35 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "temporal_memory_receipt_schema_valid",
                 "receipt_not_terminal_closure",
             ],
+            runtime_witness_anchor_aliases={
+                "memory_age_computed_from_runtime_clock": [
+                    "temporal_memory_allows_fresh_valid_schema_receipt"
+                ],
+                "stale_memory_requires_refresh": [
+                    "temporal_memory_requires_refresh_for_stale_evidence"
+                ],
+                "validity_window_blocks_expired_memory": [
+                    "temporal_memory_blocks_expired_forbidden_high_risk_use"
+                ],
+                "superseded_memory_not_usable": [
+                    "temporal_memory_blocks_superseded_record_without_deleting_history"
+                ],
+                "confidence_decay_blocks_weak_memory": [
+                    "temporal_memory_blocks_when_confidence_decays_below_minimum"
+                ],
+                "tenant_owner_scope_checked": [
+                    "temporal_memory_blocks_tenant_and_owner_scope_mismatch"
+                ],
+                "allowed_use_checked": [
+                    "temporal_memory_blocks_expired_forbidden_high_risk_use"
+                ],
+                "temporal_memory_receipt_schema_valid": [
+                    "temporal_memory_allows_fresh_valid_schema_receipt"
+                ],
+                "receipt_not_terminal_closure": [
+                    "temporal_memory_allows_fresh_valid_schema_receipt"
+                ],
+            },
         ),
         _surface(
             "temporal_missed_run",
@@ -4352,6 +4620,38 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "temporal_scheduler_receipt_schema_valid",
                 "receipt_not_terminal_closure",
             ],
+            runtime_witness_anchor_aliases={
+                "scheduled_command_requires_execute_at": [
+                    "scheduler_blocks_missing_execute_at_idempotency_and_recurrence_rule"
+                ],
+                "idempotency_required": [
+                    "scheduler_blocks_missing_execute_at_idempotency_and_recurrence_rule"
+                ],
+                "lease_acquired_before_dispatch": [
+                    "scheduler_due_command_acquires_schema_valid_lease"
+                ],
+                "future_schedule_defers": [
+                    "scheduler_future_command_defers_without_lease"
+                ],
+                "missed_run_receipt_emitted": [
+                    "scheduler_expired_command_emits_missed_run_receipt"
+                ],
+                "retry_window_checked": [
+                    "scheduler_retry_waits_until_retry_after_window"
+                ],
+                "high_risk_reapproval_required": [
+                    "scheduler_blocks_high_risk_missing_recheck_evidence"
+                ],
+                "active_lease_blocks_duplicate_execution": [
+                    "scheduler_blocks_existing_active_lease"
+                ],
+                "temporal_scheduler_receipt_schema_valid": [
+                    "scheduler_due_command_acquires_schema_valid_lease"
+                ],
+                "receipt_not_terminal_closure": [
+                    "scheduler_due_command_acquires_schema_valid_lease"
+                ],
+            },
         ),
         _surface(
             "policy_proof_report",
@@ -4672,11 +4972,62 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "end_to_end_consent_chain",
             ],
         ),
+        _surface(
+            "operational_math_loop",
+            [
+                "OperationalMathLoopEngine.apply_all",
+                "mcoi_runtime.app.operational_math_cli",
+                "mcoi_runtime.app.operational_math_observability",
+                "OperationalMathReceiptStore",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "docs/operational_math_loop.md",
+                "mcoi/mcoi_runtime/contracts/operational_math.py",
+                "mcoi/mcoi_runtime/core/operational_math_loop.py",
+                "mcoi/mcoi_runtime/persistence/operational_math_receipt_store.py",
+                "mcoi/mcoi_runtime/app/operational_math_cli.py",
+                "mcoi/mcoi_runtime/app/operational_math_observability.py",
+                "mcoi/mcoi_runtime/app/server.py",
+                "mcoi/tests/test_operational_math_loop.py",
+                "mcoi/tests/test_operational_math_cli.py",
+                "mcoi/tests/test_operational_math_receipt_store.py",
+                "mcoi/tests/test_operational_math_observability.py",
+            ],
+            (
+                "Operational math converts the F1-F10 audit into bounded roles, "
+                "controls, proof references, event-spine records, append-only JSON "
+                "receipt stores, and dashboard-safe operator review projections "
+                "without silent completion when unresolved principles remain."
+            ),
+            [
+                "operational_math_loop_applies_all_audit_principles",
+                "operational_math_loop_stops_at_iteration_budget_with_open_gaps",
+                "operational_math_cli_emits_saturated_receipt",
+                "operational_math_cli_reports_bounded_incomplete_receipt",
+                "operational_math_cli_writes_dashboard_projection",
+                "operational_math_cli_appends_receipt_store",
+                "memory_store_appends_queries_and_summarizes_receipts",
+                "file_store_persists_and_reloads_receipts",
+                "summary_marks_incomplete_receipt_for_review",
+                "registers_operational_math_observability_source",
+                "registers_operational_math_store_observability_source",
+                "server_wires_operational_math_store_into_dashboard",
+            ],
+        ),
     ]
     closure_actions = [
         {
             "action_id": "bind_tool_arguments_to_capability_policy_receipts",
             "surfaces": ["tool_invocation", "gateway_capability_fabric"],
+            "status": "closed",
+        },
+        {
+            "action_id": "anchor_operational_math_loop_receipts_and_projection",
+            "surfaces": ["operational_math_loop"],
             "status": "closed",
         },
         {
@@ -4716,6 +5067,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
         },
         {
             "action_id": "persist_effect_graph_commit_receipts",
+            "surfaces": ["effect_assurance_graph_commit"],
+            "status": "closed",
+        },
+        {
+            "action_id": "wire_effect_graph_commit_receipt_store_into_bootstrap",
             "surfaces": ["effect_assurance_graph_commit"],
             "status": "closed",
         },

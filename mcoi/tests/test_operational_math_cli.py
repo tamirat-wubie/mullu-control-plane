@@ -78,6 +78,26 @@ def test_operational_math_cli_writes_receipt_file(tmp_path) -> None:
     assert saved_receipt["status"] == "passed"
 
 
+def test_operational_math_cli_appends_receipt_store(tmp_path) -> None:
+    store_path = tmp_path / "operational-math-receipts.json"
+
+    exit_code, stdout_text, stderr_text = _run_cli(
+        "--timestamp",
+        FIXED_TS,
+        "--store-path",
+        str(store_path),
+    )
+    receipt = json.loads(stdout_text)
+    store_payload = json.loads(store_path.read_text(encoding="utf-8"))
+
+    assert exit_code == 0
+    assert stderr_text == ""
+    assert store_path.is_file()
+    assert store_payload["receipts"] == [receipt]
+    assert store_payload["receipts"][0]["status"] == "passed"
+    assert store_payload["receipts"][0]["solver_outcome"] == "SolvedVerified"
+
+
 def test_operational_math_cli_writes_dashboard_projection(tmp_path) -> None:
     projection_path = tmp_path / "operational-math-projection.json"
 

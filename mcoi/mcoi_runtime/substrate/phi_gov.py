@@ -259,6 +259,20 @@ class PhiGov:
                         f"cascade_rejected:depth_or_dependency_violation"
                     )
                     continue
+                # Fail-closed on unresolved escalations. An ESCALATED step is a
+                # dependent whose invariant is violated with no auto-repair; the
+                # cascade defers the decision to Φ_gov rather than mutating
+                # silently. Applying the Δ anyway would leave that invariant
+                # broken — the same silent-acceptance pattern Judgment forbids on
+                # the rejection side. Until an authority-routing path exists,
+                # Φ_gov blocks. (USCL v3.3 / A1.)
+                if cascade.escalations > 0:
+                    rejected.append(delta)
+                    rejection_reasons.append(
+                        f"cascade_escalated:{cascade.escalations}"
+                        "_unresolved_invariant_violation"
+                    )
+                    continue
 
         # Final judgment. The first specific rejection reason is surfaced
         # so callers can attribute denials without parsing rejected_deltas.

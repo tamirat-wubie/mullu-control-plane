@@ -14,7 +14,9 @@ The Φ_gov wrapper itself lives at runtime/governance/phi_gov.py; this module
 is the substrate-level engine.
 
 Loop bounds: cascades are terminated by depth limit (default 16) and by
-visited-set tracking. Cycles never produce infinite cascades.
+visited-set tracking. Cycles never produce infinite cascades. Depth
+truncation is recorded as an ESCALATED step (route-to-authority), so Φ_gov
+still blocks it fail-closed rather than letting it through (USCL v3.3 / A1).
 """
 from __future__ import annotations
 
@@ -157,6 +159,52 @@ def default_auto_repairer(
     return None
 
 
+# ---- Per-type invariant validator registry (opt-in, default-off) ----
+#
+# Maps a construct type to a per-type InvariantChecker. EMPTY by default, so
+# ``registry_dispatch_checker`` behaves exactly like ``default_invariant_checker``
+# (permissive) until a type is registered — wiring it into a write path is
+# therefore behavior-preserving on day one. Validators are universal,
+# tenant-independent structural predicates; per-tenant *enablement* is a
+# separate future Sigma-config concern, not baked in here.
+#
+# Registration is config-time (startup / governed config), not concurrent with
+# cascade reads, so the plain dict needs no lock for its intended use.
+# See docs/INVARIANT_VALIDATOR_ROLLOUT_PROPOSAL.md.
+INVARIANT_VALIDATORS: dict[Any, InvariantChecker] = {}
+
+
+def register_invariant_validator(
+    construct_type: Any, checker: InvariantChecker
+) -> None:
+    """Register a per-type invariant validator (opt-in). ``construct_type`` is
+    the ``ConstructBase.type`` enum member matched against a dependent's type."""
+    INVARIANT_VALIDATORS[construct_type] = checker
+
+
+def unregister_invariant_validator(construct_type: Any) -> None:
+    """Remove a per-type validator if present (rollback / disable)."""
+    INVARIANT_VALIDATORS.pop(construct_type, None)
+
+
+def clear_invariant_validators() -> None:
+    """Remove all registered validators (test isolation / full disable)."""
+    INVARIANT_VALIDATORS.clear()
+
+
+def registry_dispatch_checker(
+    dependent: ConstructBase, changed: ConstructBase
+) -> bool:
+    """Invariant check that dispatches to a per-type validator when one is
+    registered for the dependent's type, else falls back to the permissive
+    default. With an empty registry this is exactly ``default_invariant_checker``,
+    so it is safe to use as a drop-in checker without changing behavior."""
+    checker = INVARIANT_VALIDATORS.get(dependent.type)
+    if checker is None:
+        return default_invariant_checker(dependent, changed)
+    return checker(dependent, changed)
+
+
 # ---- Cascade engine ----
 
 
@@ -196,14 +244,21 @@ class CascadeEngine:
             visited.add(current_id)
 
             if depth > self._max_depth:
+                # Route-to-authority (USCL v3.3 / A1): a chain deeper than the
+                # budget cannot be validated automatically without breaking the
+                # termination guarantee, and that wall is unavoidable for any
+                # finite budget. Record an ESCALATED step (not an opaque
+                # REJECTED) so Φ_gov blocks fail-closed with a clear
+                # "needs authority: depth exceeded" signal rather than a flat
+                # reject. Φ_gov rejects on escalations (see PhiGov.evaluate).
                 result.truncated_at_depth = True
-                result.rejected = True
+                result.escalations += 1
                 result.steps.append(
                     CascadeStep(
                         construct_id=current_id,
                         construct_type=self._type_of(current_id),
-                        outcome=CascadeOutcome.REJECTED,
-                        reason="depth_limit_exceeded",
+                        outcome=CascadeOutcome.ESCALATED,
+                        reason="depth_limit_exceeded_needs_authority",
                     )
                 )
                 break
@@ -263,9 +318,10 @@ class CascadeEngine:
                     reason="invariant violated; no auto-repair available",
                 )
             )
-            # Escalation does NOT auto-reject the cascade — Φ_gov decides
-            # whether escalations are blocking. The cascade walk continues
-            # so the operator gets a complete picture.
+            # Escalation does NOT auto-reject within the cascade walk — the
+            # walk continues so the operator gets a complete picture. Φ_gov
+            # treats any unresolved escalation as blocking (fail-closed); see
+            # PhiGov.evaluate (USCL v3.3 / A1).
 
         return result
 

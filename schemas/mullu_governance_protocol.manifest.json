@@ -65,6 +65,12 @@
       "surface": "capability"
     },
     {
+      "schema_id": "self-improvement-cycle-report",
+      "path": "schemas/self_improvement_cycle_report.schema.json",
+      "urn": "urn:mullusi:schema:self-improvement-cycle-report:1",
+      "surface": "capability"
+    },
+    {
       "schema_id": "capability-candidate",
       "path": "schemas/capability_candidate.schema.json",
       "urn": "urn:mullusi:schema:capability-candidate:1",
@@ -833,9 +839,21 @@
       "surface": "release"
     },
     {
+      "schema_id": "public-naming-decision",
+      "path": "schemas/public_naming_decision.schema.json",
+      "urn": "urn:mullusi:schema:public-naming-decision:1",
+      "surface": "release"
+    },
+    {
       "schema_id": "mullu-clearance-capture-requirements",
       "path": "schemas/mullu_clearance_capture_requirements.schema.json",
       "urn": "urn:mullusi:schema:mullu-clearance-capture-requirements:1",
+      "surface": "release"
+    },
+    {
+      "schema_id": "mullu-clearance-capture-readiness-report",
+      "path": "schemas/mullu_clearance_capture_readiness_report.schema.json",
+      "urn": "urn:mullusi:schema:mullu-clearance-capture-readiness-report:1",
       "surface": "release"
     },
     {

@@ -1,4 +1,4 @@
-﻿"""Purpose: verify terminal closure certificates for governed MIL dispatch results.
+"""Purpose: verify terminal closure certificates for governed MIL dispatch results.
 Governance scope: MIL dispatch closure must bind execution, verification, reconciliation, and evidence into terminal certificate.
 Dependencies: MIL contracts, governed dispatch result, terminal certifier, and MIL terminal certificate adapter.
 Invariants: blocked dispatches fail closed; succeeded dispatches certify committed closure with ledger evidence.

@@ -63,7 +63,7 @@ preview output alone.
 | Product name uses `Mullu` |  |
 | Technical architecture uses `Mullu Platform` only where appropriate |  |
 | Admin surface uses `Mullu Control Plane` |  |
-| Blocked names are absent: `Mullusi Handler`, `Mullusi Work`, `Mullusi Operator`, `Mullu AI` |  |
+| Blocked names are absent: `Mullusi Handler`, `Mullusi Work`, `Mullusi Operator`, `Mullu Generic` |  |
 | Page is private beta, waitlist, or request-access until clearance closes |  |
 | No paid production availability claim appears before clearance |  |
 

@@ -1,0 +1,136 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:mullu-clearance-capture-readiness-report:1",
+  "title": "Mullu Clearance Capture Readiness Report",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "product_name",
+    "company_brand",
+    "evidence_root",
+    "public_paid_launch_allowed",
+    "required_files_present",
+    "required_files_total",
+    "required_files_missing",
+    "gates",
+    "status"
+  ],
+  "properties": {
+    "product_name": {
+      "type": "string",
+      "const": "Mullu"
+    },
+    "company_brand": {
+      "type": "string",
+      "const": "Mullusi"
+    },
+    "evidence_root": {
+      "type": "string",
+      "minLength": 1
+    },
+    "public_paid_launch_allowed": {
+      "type": "boolean",
+      "const": false
+    },
+    "required_files_present": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "required_files_total": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "required_files_missing": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "gates": {
+      "type": "array",
+      "minItems": 6,
+      "maxItems": 6,
+      "items": {
+        "$ref": "#/$defs/gate_report"
+      }
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "blocked",
+        "capture_ready_for_review"
+      ]
+    }
+  },
+  "$defs": {
+    "gate_report": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "gate",
+        "directory",
+        "authority",
+        "required_count",
+        "present_count",
+        "missing_count",
+        "present_files",
+        "missing_files",
+        "status"
+      ],
+      "properties": {
+        "gate": {
+          "type": "string",
+          "enum": [
+            "uspto_search",
+            "wipo_search",
+            "euipo_tmview_search",
+            "close_variant_review",
+            "domain_ownership",
+            "legal_review"
+          ]
+        },
+        "directory": {
+          "type": "string",
+          "minLength": 1
+        },
+        "authority": {
+          "type": "string",
+          "minLength": 1
+        },
+        "required_count": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "present_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "missing_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "present_files": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        },
+        "missing_files": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "blocked",
+            "capture_ready_for_review"
+          ]
+        }
+      }
+    }
+  }
+}

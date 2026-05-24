@@ -13,6 +13,8 @@ import pytest
 from mcoi_runtime.adapters.filesystem_observer import FilesystemObserver
 from mcoi_runtime.adapters.process_observer import ProcessObserver
 from mcoi_runtime.adapters.shell_executor import ShellExecutor
+from mcoi_runtime.contracts.effect_assurance import ExpectedEffect
+from mcoi_runtime.contracts.execution import EffectRecord, ExecutionOutcome, ExecutionResult
 from mcoi_runtime.contracts.goal import GoalDescriptor, GoalExecutionState, GoalPriority, GoalStatus, SubGoal
 from mcoi_runtime.app.bootstrap import bootstrap_runtime, build_policy_decision
 from mcoi_runtime.app.config import AppConfig
@@ -22,7 +24,7 @@ from mcoi_runtime.core.event_spine import EventSpineEngine
 from mcoi_runtime.core.invariants import RuntimeCoreInvariantError
 from mcoi_runtime.core.memory import EpisodicMemory, MemoryEntry, MemoryTier, WorkingMemory
 from mcoi_runtime.governance.policy.engine import PolicyInput
-from mcoi_runtime.core.effect_assurance import EffectAssuranceGate
+from mcoi_runtime.core.effect_assurance import EffectAssuranceGate, JsonlEffectGraphCommitReceiptStore
 from mcoi_runtime.core.jobs import JobEngine
 from mcoi_runtime.core.team_runtime import TeamEngine, WorkerRegistry
 from mcoi_runtime.core.verification_engine import VerificationEngine
@@ -83,6 +85,82 @@ def test_bootstrap_runtime_wires_effect_assurance_when_required() -> None:
     assert runtime.event_spine is not None
     assert runtime.case_runtime is not None
     assert runtime.config.effect_assurance_required is True
+
+
+def test_bootstrap_runtime_wires_durable_effect_graph_commit_receipt_store(tmp_path: Path) -> None:
+    receipt_path = tmp_path / "effect-assurance" / "graph-commits.jsonl"
+    runtime = bootstrap_runtime(
+        config=AppConfig(
+            effect_assurance_required=True,
+            effect_graph_commit_receipt_store_path=str(receipt_path),
+        ),
+        clock=iter(("2026-03-18T12:00:00+00:00",) * 20).__next__,
+    )
+
+    assert runtime.effect_assurance is not None
+    assert runtime.operational_graph is not None
+    plan = runtime.effect_assurance.create_plan(
+        command_id="cmd-1",
+        tenant_id="tenant-1",
+        capability_id="send_payment",
+        expected_effects=(
+            ExpectedEffect(
+                effect_id="ledger_entry_created",
+                name="ledger_entry_created",
+                target_ref="ledger:tenant-1",
+                required=True,
+                verification_method="ledger_lookup",
+            ),
+        ),
+        forbidden_effects=("duplicate_payment",),
+    )
+    result = ExecutionResult(
+        execution_id="exec-1",
+        goal_id="cmd-1",
+        status=ExecutionOutcome.SUCCEEDED,
+        actual_effects=(
+            EffectRecord(name="ledger_entry_created", details={"evidence_ref": "ledger:entry-1"}),
+        ),
+        assumed_effects=(),
+        started_at="2026-03-18T12:00:00+00:00",
+        finished_at="2026-03-18T12:00:01+00:00",
+    )
+    observed = runtime.effect_assurance.observe(result)
+    verification = runtime.effect_assurance.verify(
+        plan=plan,
+        execution_result=result,
+        observed_effects=observed,
+    )
+    reconciliation = runtime.effect_assurance.reconcile(
+        plan=plan,
+        observed_effects=observed,
+        verification_result=verification,
+    )
+
+    receipt = runtime.effect_assurance.commit_graph(
+        plan=plan,
+        observed_effects=observed,
+        reconciliation=reconciliation,
+    )
+    replayed = JsonlEffectGraphCommitReceiptStore(receipt_path).list(limit=1)
+
+    assert receipt_path.exists()
+    assert len(replayed) == 1
+    assert replayed[0].receipt_id == receipt.receipt_id
+    assert replayed[0].observed_evidence_refs == ("ledger:entry-1",)
+
+
+def test_bootstrap_runtime_rejects_invalid_effect_graph_commit_receipt_store_path(tmp_path: Path) -> None:
+    receipt_directory = tmp_path / "effect-assurance"
+    receipt_directory.mkdir()
+
+    with pytest.raises(RuntimeCoreInvariantError, match="JSONL file path"):
+        bootstrap_runtime(
+            config=AppConfig(
+                effect_assurance_required=True,
+                effect_graph_commit_receipt_store_path=str(receipt_directory),
+            )
+        )
 
 
 def test_bootstrap_runtime_wires_shell_sandbox_policy_when_configured(tmp_path: Path) -> None:

@@ -1,4 +1,4 @@
-﻿"""Phase 200 â€” Governed HTTP Server (FastAPI).
+"""Phase 200 - Governed HTTP Server (FastAPI).
 
 Purpose: HTTP boundary for the governed platform. All requests enter governed execution.
     Phase 199: LLM completion, certification, persistence-backed ledger, budget reporting.
@@ -41,6 +41,9 @@ from mcoi_runtime.app.server_runtime import (
 from mcoi_runtime.app.software_receipt_observability import (
     register_software_receipt_observability,
 )
+from mcoi_runtime.app.operational_math_observability import (
+    register_operational_math_observability,
+)
 from mcoi_runtime.app.software_receipt_review_queue import SoftwareReceiptReviewQueue
 from mcoi_runtime.core.review import ReviewEngine
 from mcoi_runtime.core.structured_logging import LogLevel
@@ -53,6 +56,10 @@ from mcoi_runtime.core.temporal_scheduler_worker import TemporalSchedulerWorker
 from mcoi_runtime.persistence.software_change_receipt_store import (
     FileSoftwareChangeReceiptStore,
     SoftwareChangeReceiptStore,
+)
+from mcoi_runtime.persistence.operational_math_receipt_store import (
+    FileOperationalMathReceiptStore,
+    OperationalMathReceiptStore,
 )
 from mcoi_runtime.persistence.finance_approval_store import (
     FileFinanceApprovalPacketStore,
@@ -185,9 +192,9 @@ app = create_governed_app(
 )
 
 
-# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-# Dependency injection â€” register all subsystems into deps container
-# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# =============================================================================
+# Dependency injection - register all subsystems into deps container
+# =============================================================================
 _dependency_bootstrap = bootstrap_dependency_registry(
     deps_container=deps,
     clock=_clock,
@@ -228,6 +235,18 @@ deps.set("software_receipt_review_queue", software_receipt_review_queue)
 register_software_receipt_observability(
     observability=observability,
     receipt_store=software_receipt_store,
+)
+
+_operational_math_receipt_store_path = os.environ.get("MULLU_OPERATIONAL_MATH_RECEIPT_STORE_PATH")
+operational_math_receipt_store = (
+    FileOperationalMathReceiptStore(Path(_operational_math_receipt_store_path))
+    if _operational_math_receipt_store_path
+    else OperationalMathReceiptStore()
+)
+deps.set("operational_math_receipt_store", operational_math_receipt_store)
+register_operational_math_observability(
+    observability=observability,
+    receipt_store=operational_math_receipt_store,
 )
 
 _temporal_scheduler_store_path = os.environ.get("MULLU_TEMPORAL_SCHEDULER_STORE_PATH")
@@ -316,9 +335,9 @@ god_mode_engine = install_god_mode(deps, audit_trail=audit_trail)
 deps.set("god_mode_engine", god_mode_engine)
 
 
-# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-# Include routers â€” all route handlers live in routers/ modules
-# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# =============================================================================
+# Include routers - all route handlers live in routers/ modules
+# =============================================================================
 
 _lifecycle_bootstrap = bootstrap_server_lifecycle(
     app=app,

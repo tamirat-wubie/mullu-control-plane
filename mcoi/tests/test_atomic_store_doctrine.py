@@ -46,17 +46,23 @@ from mcoi_runtime.persistence.postgres_governance_stores import (
     InMemoryAuditStore,
     InMemoryBudgetStore,
     InMemoryRateLimitStore,
+    PostgresAuditStore,
+    PostgresBudgetStore,
+    PostgresRateLimitStore,
 )
 
 
 @dataclass
 class DoctrineCase:
-    """One row of the four-fracture doctrine compliance table.
+    """One row of the doctrine compliance table.
 
     base_cls: the abstract store class that defines the contract.
     method_name: name of the atomic primitive (always starts with try_).
     in_memory_cls: the concrete in-memory implementation that
         overrides the primitive.
+    postgres_cls: the concrete Postgres implementation that overrides
+        the primitive for cross-replica enforcement. ``None`` while a
+        backend's Postgres path is still pending.
     """
 
     fracture: str
@@ -64,10 +70,15 @@ class DoctrineCase:
     base_cls: type
     method_name: str
     in_memory_cls: type
+    postgres_cls: type | None = None
 
 
 # ============================================================
-# The four shipped doctrine applications
+# The shipped doctrine applications
+#
+# in_memory_cls: single-process atomic reference (threading.Lock /
+#   O_EXCL). postgres_cls: cross-replica atomic path (conditional SQL
+#   UPDATE / advisory lock). Both must override the same try_* primitive.
 # ============================================================
 
 CASES: list[DoctrineCase] = [
@@ -77,6 +88,7 @@ CASES: list[DoctrineCase] = [
         base_cls=BudgetStore,
         method_name="try_record_spend",
         in_memory_cls=InMemoryBudgetStore,
+        postgres_cls=PostgresBudgetStore,
     ),
     DoctrineCase(
         fracture="F11",
@@ -84,6 +96,7 @@ CASES: list[DoctrineCase] = [
         base_cls=RateLimitStore,
         method_name="try_consume",
         in_memory_cls=InMemoryRateLimitStore,
+        postgres_cls=PostgresRateLimitStore,
     ),
     DoctrineCase(
         fracture="F4",
@@ -91,6 +104,7 @@ CASES: list[DoctrineCase] = [
         base_cls=AuditStore,
         method_name="try_append",
         in_memory_cls=InMemoryAuditStore,
+        postgres_cls=PostgresAuditStore,
     ),
 ]
 
@@ -140,6 +154,44 @@ class TestShape2_InMemoryOverrides:
             f"must be a real override of {case.base_cls.__name__}."
             f"{case.method_name} — currently inherits the base "
             f"sentinel-returning version."
+        )
+
+
+# ============================================================
+# Shape invariant 2b — Postgres (cross-replica) store overrides
+#
+# The in-memory store gives single-process atomicity; the Postgres
+# store gives cross-replica atomicity. Both must override the SAME
+# try_* primitive so the dispatcher's override-detection routes to
+# whichever store is wired. This invariant catches a Postgres path
+# that silently regresses to the base sentinel (which would make the
+# dispatcher fall through / fail-closed and silently lose cross-
+# replica enforcement).
+# ============================================================
+
+
+@pytest.mark.parametrize("case", CASES, ids=CASE_IDS)
+class TestShape2b_PostgresOverrides:
+    def test_postgres_path_present(self, case: DoctrineCase):
+        # Every shipped fracture in CASES now has a Postgres path.
+        # If a future fracture lands with postgres_cls=None, this is a
+        # visible reminder that cross-replica enforcement is pending.
+        assert case.postgres_cls is not None, (
+            f"{case.fracture} has no Postgres atomic path — cross-replica "
+            f"enforcement is pending. Set postgres_cls once it ships."
+        )
+
+    def test_postgres_subclass_inherits(self, case: DoctrineCase):
+        assert issubclass(case.postgres_cls, case.base_cls)
+
+    def test_postgres_overrides_atomic_primitive(self, case: DoctrineCase):
+        base_method = getattr(case.base_cls, case.method_name)
+        pg_method = getattr(case.postgres_cls, case.method_name)
+        assert pg_method is not base_method, (
+            f"{case.postgres_cls.__name__}.{case.method_name} "
+            f"must be a real override of {case.base_cls.__name__}."
+            f"{case.method_name} — a Postgres path that inherits the "
+            f"base sentinel silently loses cross-replica enforcement."
         )
 
 

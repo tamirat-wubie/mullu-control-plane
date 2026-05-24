@@ -11,8 +11,9 @@ Dependencies: schemas/finance_approval_handoff_packet.schema.json and
 Invariants:
   - Packet shape matches the public protocol schema.
   - Ready/status/blockers are mutually consistent.
-  - All five source artifact references are represented exactly once.
-  - Referenced plan, binding receipt, closure run, and preflight artifacts validate when present.
+  - All six source artifact references are represented exactly once.
+  - Referenced plan, binding receipt, live receipt, closure run, and preflight artifacts validate when present.
+  - A ready packet requires a ready read-only live email/calendar receipt.
   - Proof pilot states and must-not-claim boundaries are preserved.
 """
 
@@ -35,6 +36,9 @@ from scripts.validate_finance_approval_live_handoff_closure_run_schema import ( 
 from scripts.validate_finance_approval_email_calendar_binding_receipt import (  # noqa: E402
     validate_finance_approval_email_calendar_binding_receipt,
 )
+from scripts.validate_finance_approval_email_calendar_live_receipt import (  # noqa: E402
+    validate_finance_approval_email_calendar_live_receipt,
+)
 from scripts.validate_finance_approval_live_handoff_plan_schema import (  # noqa: E402
     validate_finance_approval_live_handoff_plan_schema,
 )
@@ -50,6 +54,7 @@ EXPECTED_ARTIFACTS = (
     "pilot_witness",
     "live_handoff_plan",
     "email_calendar_binding_receipt",
+    "email_calendar_live_receipt",
     "live_handoff_closure_run",
     "live_handoff_preflight",
 )
@@ -84,6 +89,7 @@ def validate_finance_approval_handoff_packet_schema(
     *,
     packet_path: Path = DEFAULT_PACKET,
     schema_path: Path = DEFAULT_SCHEMA,
+    expected_live_receipt_path: Path | None = None,
 ) -> FinanceHandoffPacketSchemaValidation:
     """Validate finance handoff packet schema and semantic consistency."""
     errors: list[str] = []
@@ -97,6 +103,7 @@ def validate_finance_approval_handoff_packet_schema(
     _validate_artifacts(packet, errors)
     _validate_handoff_plan_artifact(packet, packet_path, errors)
     _validate_binding_receipt_artifact(packet, packet_path, errors)
+    _validate_live_receipt_artifact(packet, packet_path, expected_live_receipt_path, errors)
     _validate_closure_run_artifact(packet, packet_path, errors)
     _validate_preflight_artifact(packet, packet_path, errors)
     _validate_promotion_boundary(packet, errors)
@@ -173,6 +180,34 @@ def _validate_binding_receipt_artifact(packet: dict[str, Any], packet_path: Path
         )
 
 
+def _validate_live_receipt_artifact(
+    packet: dict[str, Any],
+    packet_path: Path,
+    expected_live_receipt_path: Path | None,
+    errors: list[str],
+) -> None:
+    live_receipt_artifact = _artifact_by_name(packet, "email_calendar_live_receipt")
+    if not live_receipt_artifact or live_receipt_artifact.get("present") is not True:
+        return
+    receipt_path = _resolve_artifact_path(str(live_receipt_artifact.get("path", "")), packet_path)
+    if expected_live_receipt_path is not None and receipt_path.resolve() != expected_live_receipt_path.resolve():
+        errors.append(
+            "email_calendar_live_receipt artifact path must match validated live receipt path: "
+            f"artifact={receipt_path} expected={expected_live_receipt_path}"
+        )
+    validation = validate_finance_approval_email_calendar_live_receipt(receipt_path=receipt_path)
+    if not validation.valid:
+        errors.append(f"email_calendar_live_receipt schema invalid: {list(validation.errors)}")
+    expected_status = "ready" if validation.ready else "blocked"
+    if live_receipt_artifact.get("status") != expected_status:
+        errors.append(
+            "email_calendar_live_receipt artifact status must match live receipt readiness: "
+            f"artifact={live_receipt_artifact.get('status', '')} receipt={expected_status}"
+        )
+    if packet.get("ready") is True and not validation.ready:
+        errors.append("ready packet requires email_calendar_live_receipt artifact readiness")
+
+
 def _validate_closure_run_artifact(packet: dict[str, Any], packet_path: Path, errors: list[str]) -> None:
     closure_artifact = _artifact_by_name(packet, "live_handoff_closure_run")
     if not closure_artifact or closure_artifact.get("present") is not True:
@@ -229,6 +264,9 @@ def _validate_promotion_boundary(packet: dict[str, Any], errors: list[str]) -> N
         errors.append("promotion_boundary.ready=true requires no readiness_blockers")
     if not boundary_ready and not readiness_blockers:
         errors.append("promotion_boundary.ready=false requires readiness_blockers")
+    live_receipt_artifact = _artifact_by_name(packet, "email_calendar_live_receipt")
+    if boundary_ready and live_receipt_artifact.get("status") != "ready":
+        errors.append("promotion_boundary.ready=true requires email_calendar_live_receipt status=ready")
     strict_command = str(promotion_boundary.get("strict_promotion_command", ""))
     for token in (
         "validate_finance_approval_live_handoff_chain.py",

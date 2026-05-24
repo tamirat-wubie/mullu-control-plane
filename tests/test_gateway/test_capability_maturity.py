@@ -284,6 +284,114 @@ def test_read_model_projection_attaches_maturity_to_capabilities_and_records() -
     assert projected["autonomy_ready_count"] == 0
 
 
+def test_maturity_derived_from_evidence() -> None:
+    assessor = CapabilityMaturityAssessor()
+
+    c0_assessment = assessor.assess(CapabilityMaturityEvidence(capability_id="payments.send"))
+    c4_assessment = assessor.assess(_evidence(effect_bearing=True, live_write_receipt_valid=False))
+    c6_assessment = assessor.assess(_evidence(effect_bearing=True, live_write_receipt_valid=True))
+    c7_assessment = assessor.assess(
+        _evidence(
+            effect_bearing=True,
+            live_write_receipt_valid=True,
+            autonomy_controls_bounded=True,
+        )
+    )
+
+    assert c0_assessment.maturity_level == "C0"
+    assert c4_assessment.maturity_level == "C4"
+    assert c6_assessment.maturity_level == "C6"
+    assert c7_assessment.maturity_level == "C7"
+    assert c6_assessment.production_ready is True
+    assert c7_assessment.autonomy_ready is True
+
+
+def test_effect_bearing_c6_requires_live_write() -> None:
+    assessment = CapabilityMaturityAssessor().assess(
+        _evidence(effect_bearing=True, live_write_receipt_valid=False),
+    )
+
+    assert assessment.maturity_level == "C4"
+    assert assessment.production_ready is False
+    assert assessment.autonomy_ready is False
+    assert "effect_bearing_production_requires_live_write" in assessment.blockers
+    assert assessment.metadata["effect_bearing"] is True
+
+
+def test_production_requires_c6_or_c7() -> None:
+    c6_assessment = CapabilityMaturityAssessor().assess(
+        _evidence(effect_bearing=True, live_write_receipt_valid=True),
+    )
+    c7_assessment = CapabilityMaturityAssessor().assess(
+        _evidence(
+            effect_bearing=True,
+            live_write_receipt_valid=True,
+            autonomy_controls_bounded=True,
+        )
+    )
+
+    with pytest.raises(ValueError, match="^production_requires_C6_or_C7$"):
+        CapabilityMaturityAssessment(
+            assessment_id="assessment-1",
+            capability_id="payments.send",
+            maturity_level="C5",
+            production_ready=True,
+            autonomy_ready=False,
+            blockers=(),
+            evidence_refs=(),
+        )
+
+    assert c6_assessment.production_ready is True
+    assert c6_assessment.maturity_level == "C6"
+    assert c7_assessment.production_ready is True
+    assert c7_assessment.maturity_level == "C7"
+
+
+def test_autonomy_requires_c7() -> None:
+    c6_assessment = CapabilityMaturityAssessor().assess(
+        _evidence(effect_bearing=True, live_write_receipt_valid=True),
+    )
+    c7_assessment = CapabilityMaturityAssessor().assess(
+        _evidence(
+            effect_bearing=True,
+            live_write_receipt_valid=True,
+            autonomy_controls_bounded=True,
+        )
+    )
+
+    with pytest.raises(ValueError, match="^autonomy_requires_C7$"):
+        CapabilityMaturityAssessment(
+            assessment_id="assessment-1",
+            capability_id="payments.send",
+            maturity_level="C6",
+            production_ready=True,
+            autonomy_ready=True,
+            blockers=(),
+            evidence_refs=(),
+        )
+
+    assert c6_assessment.autonomy_ready is False
+    assert c6_assessment.blockers == ("autonomy_controls_missing",)
+    assert c7_assessment.autonomy_ready is True
+    assert c7_assessment.maturity_level == "C7"
+
+
+def test_capability_maturity_schema_valid() -> None:
+    assessment = CapabilityMaturityAssessor().assess(
+        _evidence(effect_bearing=True, live_write_receipt_valid=True),
+    )
+    payload = _json_payload(assessment)
+    schema = json.loads(SCHEMA_PATH.read_text(encoding="utf-8"))
+    errors = _validate_schema_instance(schema, payload)
+
+    assert errors == []
+    assert payload["assessment_id"].startswith("capability-maturity-")
+    assert payload["maturity_level"] == "C6"
+    assert payload["production_ready"] is True
+    assert payload["autonomy_ready"] is False
+    assert payload["metadata"]["assessment_is_not_promotion"] is True
+
+
 def _evidence(
     *,
     effect_bearing: bool,

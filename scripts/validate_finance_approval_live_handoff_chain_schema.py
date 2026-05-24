@@ -156,7 +156,7 @@ def _check_details_indicate_not_ready(checks: list[Any]) -> bool:
         if not isinstance(check, dict):
             continue
         detail = str(check.get("detail", ""))
-        if "ready=False" in detail or "status=blocked" in detail:
+        if "ready=False" in detail or "status=blocked" in detail or "status=failed" in detail:
             return True
         if any(f"blocker_count={count}" in detail for count in range(1, 100)):
             return True

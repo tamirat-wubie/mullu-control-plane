@@ -37,7 +37,7 @@ Run each term as exact mark, contains, and similar/phonetic where the tool suppo
 | Product pair | `Mullu by Mullusi`, `MULLU BY MULLUSI` |
 | Surface family | `Mullu Inspect`, `Mullu CLI`, `Mullu Code`, `Mullu Desk`, `Mullu Control Plane` |
 | Similar spelling | `Mulu`, `Muluu`, `Moolu`, `Mullus`, `Mullusi` |
-| Risky generic pair | `Mullu AI`, `Mulu AI`, `Mullu Agent`, `Mullu Copilot` |
+| Risky generic pair | `Mullu Generic`, `Mulu Generic`, `Mullu Agent`, `Mullu Copilot` |
 
 ## Nice Class Targets
 

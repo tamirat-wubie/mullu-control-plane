@@ -1,8 +1,8 @@
 # Atomic Store Doctrine — v1
 
-**Status:** Doctrine, distilled from four shipped fracture closures (v4.27, v4.29, v4.30, v4.31).
+**Status:** Doctrine, distilled from four fracture closures (F2, F11, F15, F4) across six releases (v4.27, v4.29, v4.30, v4.31, v4.34, v4.40).
 **Companion documents:** `docs/LEDGER_SPEC.md`, `docs/GOVERNANCE_GUARD_CHAIN.md`
-**Last updated:** v4.31.0 (2026-04)
+**Last updated:** v4.40.0 (2026-04)
 
 ## Purpose
 
@@ -16,12 +16,15 @@ The platform repeatedly hits the same shape of bug:
 
 Four audit fractures had this shape:
 
-| Fracture | Release | Stored object       | Lost invariant                             |
-| -------- | ------- | ------------------- | ------------------------------------------ |
-| F2       | v4.27   | LLM budget          | hard cost cap                              |
-| F11      | v4.29   | Rate limit bucket   | per-tenant tokens-per-second               |
-| F15      | v4.30   | Filesystem chain    | linear append-only sequence                |
-| F4       | v4.31   | Audit log chain     | tamper-evident hash linkage                |
+| Fracture | Release(s)     | Stored object       | Lost invariant                              |
+| -------- | -------------- | ------------------- | ------------------------------------------- |
+| F2       | v4.27          | LLM budget          | hard cost cap                               |
+| F11      | v4.29 + v4.34  | Rate limit bucket   | per-tenant + per-identity tokens-per-second |
+| F15      | v4.30 + v4.40  | Filesystem chain    | linear append-only sequence                 |
+| F4       | v4.31          | Audit log chain     | tamper-evident hash linkage                 |
+
+(F11 spans v4.29 tenant-level + v4.34 identity-level; F15 spans
+v4.30 initial close + v4.40 empty-file-race refinement.)
 
 Four examples is enough to call it a pattern. This document codifies
 the recipe so a fifth fracture (or a custom store added by a fork)
@@ -181,8 +184,11 @@ state. Reference: [RELEASE_NOTES_v4.29.0.md](../RELEASE_NOTES_v4.29.0.md).
 **Notable**: bucket state can live either in the limiter or in the
 store. When the store overrides, state migrates to the store; the
 limiter's `_buckets` dict stays empty for store-owned keys. The
-Postgres path was deferred — needs schema migration for `tokens` /
-`last_refill` columns.
+Postgres path (`PostgresRateLimitStore.try_consume`) is now shipped:
+a `governance_rate_buckets` row holds `(tokens, last_refill)`, and a
+single `UPDATE ... SET tokens = LEAST(max, tokens + elapsed*rate) -
+cost WHERE LEAST(...) >= cost RETURNING tokens` does refill, check,
+and decrement atomically — zero rows returned means denied.
 
 ### Example 3 — F15 / v4.30 + v4.40: `HashChainStore.try_append`
 
@@ -396,20 +402,36 @@ and dispatch semantics. The meta-test owns the shape.
 
 ## 7. Future fractures
 
-Candidates that look like they fit the doctrine:
+Shipped since the doctrine was first published:
 
-- **F11 (Postgres path)** — atomic SQL UPDATE for cross-replica rate
-  limit enforcement. Fits exactly. Pending schema migration.
-- **F11 (identity-level)** — extend `RateLimiter.check`'s identity
-  dispatch through the store (currently uses in-memory TokenBucket).
-  Fits exactly.
-- **F4 (Postgres path)** — atomic SQL for cross-replica audit
-  sequence allocation. Fits — needs `SERIAL`/identity column +
-  `FOR UPDATE` on chain-head row, or server-side hash via
-  `pgcrypto`. Pending.
+- **F11 (Postgres path)** — ✅ shipped. `PostgresRateLimitStore.try_consume`:
+  atomic refill+check+decrement in a single `UPDATE governance_rate_buckets
+  SET tokens = LEAST(max, tokens + elapsed*rate) - cost WHERE ... >= cost
+  RETURNING tokens`. Schema added `governance_rate_buckets(bucket_key,
+  tokens, last_refill)` via the idempotent migration. Mirrors the v4.27
+  budget pattern.
+- **F11 (identity-level)** — ✅ shipped (v4.34). Identity dispatch in
+  `RateLimiter.check` now routes through the store (same `store_owned`
+  flag as tenant-level).
+- **F4 (Postgres path)** — ✅ shipped. `PostgresAuditStore.try_append`:
+  a transaction-scoped `pg_advisory_xact_lock` serializes all chain
+  appends (the chain is inherently serial), then read-head + canonical
+  hash + insert + commit. No `SERIAL` column needed — the advisory lock
+  gives strict ordering and `entry_hash` stays Python-computed via the
+  same `_canonical_hash_v1` helper the in-process path uses.
+
+Remaining candidates that fit the doctrine:
+
 - **TenantGate state transitions** — if `TenantGatingStore` ever
   needs cross-replica conditional state changes (e.g., "gate to
   paused only if currently active"), the same doctrine applies.
+  `try_transition(tenant_id, from_status, to_status)` with a
+  conditional `UPDATE ... WHERE status = from_status` is the shape.
+
+Both the in-memory and Postgres paths for F2, F11, and F4 are now
+under the doctrine meta-test (`test_atomic_store_doctrine.py`,
+Shape 2 + Shape 2b) — a Postgres path that regresses to the base
+sentinel trips CI.
 
 Fractures that look related but don't fit:
 

@@ -1,7 +1,7 @@
 <!--
 Purpose: Versioned witness for GitHub repository metadata.
-Governance scope: public repository description, topics, latest release, and
-  required public-status documents.
+Governance scope: proprietary repository description, topics, latest release, and
+  required proprietary-status documents.
 Dependencies: STATUS.md, DEPLOYMENT_STATUS.md, docs/52_mullu_governance_protocol.md,
   scripts/validate_public_repository_surface.py.
 Invariants: Metadata claims are explicit, machine-checkable, and bounded to the
@@ -11,7 +11,7 @@ Invariants: Metadata claims are explicit, machine-checkable, and bounded to the
 # GitHub Surface Witness
 
 **Repository:** `tamirat-wubie/mullu-control-plane`
-**Expected description:** `Governed symbolic intelligence control plane - multi-tenant LLM orchestration with budget enforcement, audit trails, and policy-driven governance`
+**Expected description:** `Proprietary Mullusi symbolic intelligence control plane - multi-tenant governed orchestration with budget enforcement, audit trails, and policy-driven governance`
 **Expected latest release:** `v3.13.3`
 
 ## Required Topics
@@ -29,7 +29,7 @@ Invariants: Metadata claims are explicit, machine-checkable, and bounded to the
 | `rust` |
 | `symbolic-intelligence` |
 
-## Required Public Documents
+## Required Proprietary Documents
 
 | Document | Purpose |
 |---|---|
@@ -42,7 +42,7 @@ Invariants: Metadata claims are explicit, machine-checkable, and bounded to the
 
 | Check | Command |
 |---|---|
-| Public repository surface | `python scripts/validate_public_repository_surface.py` |
+| Proprietary repository surface | `python scripts/validate_public_repository_surface.py` |
 | Protocol manifest | `python scripts/validate_protocol_manifest.py` |
 | Governed runtime promotion | `python scripts/validate_governed_runtime_promotion.py --strict` |
 | Release gate anchoring | `python scripts/validate_release_status.py --strict` |

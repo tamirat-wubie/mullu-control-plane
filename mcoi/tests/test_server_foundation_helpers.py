@@ -36,7 +36,39 @@ def test_receipt_store_from_env_builds_jsonl_store(tmp_path) -> None:
 
     assert isinstance(receipt_store, JsonlReceiptStore)
     assert receipt_store.path == receipt_path
+    assert receipt_store.sync_on_write is True
     assert receipt_path.parent.exists()
+
+
+def test_receipt_store_from_env_allows_sync_disable(tmp_path) -> None:
+    receipt_path = tmp_path / "receipts" / "proof.jsonl"
+
+    receipt_store = server_foundation.receipt_store_from_env(
+        {
+            server_foundation.RECEIPT_STORE_JSONL_ENV: str(receipt_path),
+            server_foundation.RECEIPT_STORE_JSONL_SYNC_ENV: "false",
+        }
+    )
+
+    assert isinstance(receipt_store, JsonlReceiptStore)
+    assert receipt_store.sync_on_write is False
+    assert receipt_store.path == receipt_path
+
+
+def test_receipt_store_from_env_rejects_invalid_sync_flag(tmp_path) -> None:
+    receipt_path = tmp_path / "receipts" / "proof.jsonl"
+
+    with pytest.raises(server_foundation.FoundationConfigurationError) as exc_info:
+        server_foundation.receipt_store_from_env(
+            {
+                server_foundation.RECEIPT_STORE_JSONL_ENV: str(receipt_path),
+                server_foundation.RECEIPT_STORE_JSONL_SYNC_ENV: "sometimes",
+            }
+        )
+
+    assert server_foundation.RECEIPT_STORE_JSONL_SYNC_ENV in str(exc_info.value)
+    assert "boolean" in str(exc_info.value)
+    assert not receipt_path.exists()
 
 
 def test_receipt_store_from_env_rejects_directory_path(tmp_path) -> None:

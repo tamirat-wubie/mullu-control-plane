@@ -287,6 +287,33 @@ class MissingRecoveryLedger(CommandLedger):
 # ═══ Tenant Resolution ═══
 
 
+class TestRequiredApprovalTier:
+    """The router resolves a capability passport's declared approval
+    requirement (``approval:<tier>_risk``) so request_approval can floor
+    risk on it — closing the gap where keyword classification
+    under-classifies a privileged action the passport says needs approval.
+    """
+
+    def test_financial_capabilities_floor_to_high(self):
+        from gateway.approval import RiskTier
+        router = GatewayRouter(platform=StubPlatform())
+        # Both declare requires=(..., 'approval:high_risk', ...)
+        assert router._required_approval_tier("financial.refund") == RiskTier.HIGH
+        assert router._required_approval_tier("financial.send_payment") == RiskTier.HIGH
+
+    def test_isolation_gated_capability_has_no_approval_floor(self):
+        """browser/computer/shell capabilities are gated by signed worker
+        receipts, not approval — they carry no approval:* token, so the
+        router must NOT impose an approval floor on them."""
+        router = GatewayRouter(platform=StubPlatform())
+        # Resolves to None whether the intent is unknown or isolation-gated.
+        assert router._required_approval_tier("browser.open") is None
+
+    def test_unknown_intent_returns_none(self):
+        router = GatewayRouter(platform=StubPlatform())
+        assert router._required_approval_tier("does.not.exist") is None
+
+
 class TestTenantResolution:
     def test_resolve_known_tenant(self):
         router = GatewayRouter(platform=StubPlatform())

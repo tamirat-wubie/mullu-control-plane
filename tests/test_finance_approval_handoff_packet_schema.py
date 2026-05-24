@@ -16,11 +16,14 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from scripts.produce_finance_approval_handoff_packet import produce_finance_approval_handoff_packet
 from scripts.validate_finance_approval_handoff_packet_schema import (
     main,
     validate_finance_approval_handoff_packet_schema,
     write_finance_handoff_packet_schema_validation,
+)
+from scripts.finance_approval_handoff_test_fixtures import (
+    produce_finance_handoff_packet_from_sources,
+    write_finance_handoff_sources,
 )
 
 _ROOT = Path(__file__).resolve().parent.parent
@@ -29,7 +32,7 @@ SCHEMA_PATH = _ROOT / "schemas" / "finance_approval_handoff_packet.schema.json"
 
 def test_finance_handoff_packet_schema_accepts_current_packet(tmp_path: Path) -> None:
     packet_path = tmp_path / "finance_handoff_packet.json"
-    packet_path.write_text(json.dumps(produce_finance_approval_handoff_packet()), encoding="utf-8")
+    packet_path.write_text(json.dumps(_packet(tmp_path)), encoding="utf-8")
 
     validation = validate_finance_approval_handoff_packet_schema(
         packet_path=packet_path,
@@ -38,14 +41,30 @@ def test_finance_handoff_packet_schema_accepts_current_packet(tmp_path: Path) ->
 
     assert validation.ok is True
     assert validation.errors == ()
-    assert validation.artifact_count == 5
+    assert validation.artifact_count == 6
     assert validation.blocker_count >= 1
     assert validation.readiness_level in {"not-ready", "proof-pilot-ready"}
 
 
+def test_finance_handoff_packet_schema_accepts_ready_live_receipt_packet(tmp_path: Path) -> None:
+    packet_path = tmp_path / "finance_handoff_packet.json"
+    packet_path.write_text(json.dumps(_packet(tmp_path, live_ready=True)), encoding="utf-8")
+
+    validation = validate_finance_approval_handoff_packet_schema(
+        packet_path=packet_path,
+        schema_path=SCHEMA_PATH,
+    )
+
+    assert validation.ok is True
+    assert validation.errors == ()
+    assert validation.artifact_count == 6
+    assert validation.blocker_count == 0
+    assert validation.readiness_level == "live-email-handoff-ready"
+
+
 def test_finance_handoff_packet_schema_rejects_status_drift(tmp_path: Path) -> None:
     packet_path = tmp_path / "finance_handoff_packet.json"
-    packet = produce_finance_approval_handoff_packet()
+    packet = _packet(tmp_path)
     packet["status"] = "ready"
     packet_path.write_text(json.dumps(packet), encoding="utf-8")
 
@@ -60,7 +79,7 @@ def test_finance_handoff_packet_schema_rejects_status_drift(tmp_path: Path) -> N
 
 def test_finance_handoff_packet_schema_rejects_promotion_boundary_ready_drift(tmp_path: Path) -> None:
     packet_path = tmp_path / "finance_handoff_packet.json"
-    packet = produce_finance_approval_handoff_packet()
+    packet = _packet(tmp_path)
     packet["promotion_boundary"]["ready"] = True
     packet["promotion_boundary"]["mode"] = "live-email-handoff"
     packet["promotion_boundary"]["readiness_blockers"] = []
@@ -77,7 +96,7 @@ def test_finance_handoff_packet_schema_rejects_promotion_boundary_ready_drift(tm
 
 def test_finance_handoff_packet_schema_rejects_missing_promotion_command_token(tmp_path: Path) -> None:
     packet_path = tmp_path / "finance_handoff_packet.json"
-    packet = produce_finance_approval_handoff_packet()
+    packet = _packet(tmp_path)
     packet["promotion_boundary"]["strict_promotion_command"] = "python scripts/validate_finance_approval_live_handoff_chain.py"
     packet_path.write_text(json.dumps(packet), encoding="utf-8")
 
@@ -92,7 +111,7 @@ def test_finance_handoff_packet_schema_rejects_missing_promotion_command_token(t
 
 def test_finance_handoff_packet_schema_rejects_missing_artifact(tmp_path: Path) -> None:
     packet_path = tmp_path / "finance_handoff_packet.json"
-    packet = produce_finance_approval_handoff_packet()
+    packet = _packet(tmp_path)
     packet["artifacts"] = packet["artifacts"][:3]
     packet_path.write_text(json.dumps(packet), encoding="utf-8")
 
@@ -108,7 +127,7 @@ def test_finance_handoff_packet_schema_rejects_missing_artifact(tmp_path: Path) 
 def test_finance_handoff_packet_schema_rejects_invalid_closure_run_artifact(tmp_path: Path) -> None:
     packet_path = tmp_path / "finance_handoff_packet.json"
     closure_run_path = tmp_path / "finance_closure_run.json"
-    packet = produce_finance_approval_handoff_packet()
+    packet = _packet(tmp_path)
     closure_run_path.write_text(
         json.dumps(
             {
@@ -142,7 +161,7 @@ def test_finance_handoff_packet_schema_rejects_invalid_closure_run_artifact(tmp_
 def test_finance_handoff_packet_schema_rejects_invalid_handoff_plan_artifact(tmp_path: Path) -> None:
     packet_path = tmp_path / "finance_handoff_packet.json"
     plan_path = tmp_path / "finance_handoff_plan.json"
-    packet = produce_finance_approval_handoff_packet()
+    packet = _packet(tmp_path)
     plan_path.write_text(
         json.dumps(
             {
@@ -174,7 +193,7 @@ def test_finance_handoff_packet_schema_rejects_invalid_handoff_plan_artifact(tmp
 def test_finance_handoff_packet_schema_rejects_invalid_binding_receipt_artifact(tmp_path: Path) -> None:
     packet_path = tmp_path / "finance_handoff_packet.json"
     receipt_path = tmp_path / "finance_binding_receipt.json"
-    packet = produce_finance_approval_handoff_packet()
+    packet = _packet(tmp_path)
     receipt_path.write_text(
         json.dumps(
             {
@@ -208,8 +227,73 @@ def test_finance_handoff_packet_schema_rejects_invalid_binding_receipt_artifact(
 
 def test_finance_handoff_packet_schema_rejects_invalid_preflight_artifact(tmp_path: Path) -> None:
     packet_path = tmp_path / "finance_handoff_packet.json"
+    live_receipt_path = tmp_path / "email_calendar_live_receipt_invalid.json"
+    packet = _packet(tmp_path)
+    live_receipt_path.write_text(
+        json.dumps(
+            {
+                "receipt_id": "email-calendar-live-receipt-test",
+                "adapter_id": "communication.other_worker",
+                "status": "passed",
+                "verification_status": "passed",
+                "checked_at": "2026-05-01T12:00:00+00:00",
+                "external_write": False,
+                "blockers": [],
+            }
+        ),
+        encoding="utf-8",
+    )
+    for artifact in packet["artifacts"]:
+        if artifact["name"] == "email_calendar_live_receipt":
+            artifact["path"] = str(live_receipt_path)
+            artifact["status"] = "ready"
+    packet_path.write_text(json.dumps(packet), encoding="utf-8")
+
+    validation = validate_finance_approval_handoff_packet_schema(
+        packet_path=packet_path,
+        schema_path=SCHEMA_PATH,
+    )
+
+    assert validation.ok is False
+    assert any("email_calendar_live_receipt schema invalid" in error for error in validation.errors)
+
+
+def test_finance_handoff_packet_schema_rejects_live_receipt_status_drift(tmp_path: Path) -> None:
+    packet_path = tmp_path / "finance_handoff_packet.json"
+    packet = _packet(tmp_path)
+    for artifact in packet["artifacts"]:
+        if artifact["name"] == "email_calendar_live_receipt":
+            artifact["status"] = "ready"
+    packet_path.write_text(json.dumps(packet), encoding="utf-8")
+
+    validation = validate_finance_approval_handoff_packet_schema(
+        packet_path=packet_path,
+        schema_path=SCHEMA_PATH,
+    )
+
+    assert validation.ok is False
+    assert any("email_calendar_live_receipt artifact status must match" in error for error in validation.errors)
+
+
+def test_finance_handoff_packet_schema_rejects_live_receipt_path_mismatch(tmp_path: Path) -> None:
+    paths = write_finance_handoff_sources(tmp_path, live_ready=True)
+    packet_path = tmp_path / "finance_handoff_packet.json"
+    packet_path.write_text(json.dumps(produce_finance_handoff_packet_from_sources(paths)), encoding="utf-8")
+
+    validation = validate_finance_approval_handoff_packet_schema(
+        packet_path=packet_path,
+        schema_path=SCHEMA_PATH,
+        expected_live_receipt_path=tmp_path / "different_live_receipt.json",
+    )
+
+    assert validation.ok is False
+    assert any("artifact path must match validated live receipt path" in error for error in validation.errors)
+
+
+def test_finance_handoff_packet_schema_rejects_invalid_live_receipt_artifact(tmp_path: Path) -> None:
+    packet_path = tmp_path / "finance_handoff_packet.json"
     preflight_path = tmp_path / "finance_preflight.json"
-    packet = produce_finance_approval_handoff_packet()
+    packet = _packet(tmp_path)
     preflight_path.write_text(
         json.dumps(
             {
@@ -240,7 +324,7 @@ def test_finance_handoff_packet_schema_rejects_invalid_preflight_artifact(tmp_pa
 
 def test_finance_handoff_packet_schema_rejects_proof_summary_drift(tmp_path: Path) -> None:
     packet_path = tmp_path / "finance_handoff_packet.json"
-    packet = produce_finance_approval_handoff_packet()
+    packet = _packet(tmp_path)
     packet["proof_summary"]["successful_effect_refs"] = []
     packet_path.write_text(json.dumps(packet), encoding="utf-8")
 
@@ -255,7 +339,7 @@ def test_finance_handoff_packet_schema_rejects_proof_summary_drift(tmp_path: Pat
 
 def test_finance_handoff_packet_schema_rejects_missing_must_not_claim(tmp_path: Path) -> None:
     packet_path = tmp_path / "finance_handoff_packet.json"
-    packet = produce_finance_approval_handoff_packet()
+    packet = _packet(tmp_path)
     packet["claim_boundary"]["must_not_claim"].remove("live email delivery")
     packet_path.write_text(json.dumps(packet), encoding="utf-8")
 
@@ -271,7 +355,7 @@ def test_finance_handoff_packet_schema_rejects_missing_must_not_claim(tmp_path: 
 def test_finance_handoff_packet_schema_writer_and_cli_honor_strict(tmp_path: Path, capsys) -> None:
     packet_path = tmp_path / "finance_handoff_packet.json"
     output_path = tmp_path / "schema_validation.json"
-    packet_path.write_text(json.dumps(produce_finance_approval_handoff_packet()), encoding="utf-8")
+    packet_path.write_text(json.dumps(_packet(tmp_path)), encoding="utf-8")
     validation = validate_finance_approval_handoff_packet_schema(
         packet_path=packet_path,
         schema_path=SCHEMA_PATH,
@@ -297,4 +381,8 @@ def test_finance_handoff_packet_schema_writer_and_cli_honor_strict(tmp_path: Pat
     assert written == output_path
     assert exit_code == 0
     assert payload["ok"] is True
-    assert stdout_payload["artifact_count"] == 5
+    assert stdout_payload["artifact_count"] == 6
+
+
+def _packet(tmp_path: Path, *, live_ready: bool = False) -> dict[str, object]:
+    return produce_finance_handoff_packet_from_sources(write_finance_handoff_sources(tmp_path, live_ready=live_ready))

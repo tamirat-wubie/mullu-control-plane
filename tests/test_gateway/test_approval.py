@@ -45,6 +45,82 @@ class TestRiskClassification:
         assert classify_risk("read", "show me my calendar") == RiskTier.LOW
 
 
+# ═══ Passport-floor risk composition ═══
+
+
+class TestPassportRiskFloor:
+    """The keyword classifier is a heuristic over free text; the capability
+    passport declares the action's inherent risk. request_approval composes
+    them by taking the max — passport is a floor, keyword can only escalate.
+    """
+
+    def test_passport_floor_escalates_underclassified_high_risk(self):
+        """The core bug: a HIGH-risk capability whose phrasing avoids the
+        keyword set must NOT auto-approve. Without the floor,
+        classify_risk('financial.refund', 'refund the transaction tx-1')
+        returns LOW and the action auto-executes with no approval gate.
+        """
+        router = ApprovalRouter()
+        # Sanity: the keyword classifier alone under-classifies this.
+        assert classify_risk("financial.refund", "refund the transaction tx-1") == RiskTier.LOW
+        # With the passport floor, it correctly requires approval.
+        req = router.request_approval(
+            tenant_id="t1", identity_id="u1", channel="whatsapp",
+            action_description="financial.refund",
+            body="refund the transaction tx-1",
+            passport_risk_tier=RiskTier.HIGH,
+        )
+        assert req.status == ApprovalStatus.PENDING
+        assert req.risk_tier == RiskTier.HIGH
+
+    def test_send_payment_without_keyword_requires_approval(self):
+        router = ApprovalRouter()
+        assert classify_risk("financial.send_payment", "send 50 to account 9") == RiskTier.LOW
+        req = router.request_approval(
+            tenant_id="t1", identity_id="u1", channel="whatsapp",
+            action_description="financial.send_payment",
+            body="send 50 to account 9",
+            passport_risk_tier=RiskTier.HIGH,
+        )
+        assert req.status == ApprovalStatus.PENDING
+        assert req.risk_tier == RiskTier.HIGH
+
+    def test_keyword_can_escalate_above_passport_floor(self):
+        """Defense-in-depth: a LOW-passport action whose body contains a
+        high-risk keyword still escalates. The floor never caps the ceiling.
+        """
+        router = ApprovalRouter()
+        req = router.request_approval(
+            tenant_id="t1", identity_id="u1", channel="whatsapp",
+            action_description="some.read_only_capability",
+            body="please delete the production database",
+            passport_risk_tier=RiskTier.LOW,
+        )
+        assert req.status == ApprovalStatus.PENDING
+        assert req.risk_tier == RiskTier.HIGH
+
+    def test_no_passport_preserves_keyword_behaviour(self):
+        """Backward compatibility: omitting passport_risk_tier yields the
+        exact prior behavior (keyword-only)."""
+        router = ApprovalRouter()
+        low = router.request_approval(
+            tenant_id="t1", identity_id="u1", channel="whatsapp",
+            action_description="query", body="what time is it?",
+        )
+        assert low.status == ApprovalStatus.APPROVED
+        assert low.risk_tier == RiskTier.LOW
+
+    def test_passport_low_does_not_downgrade_keyword_high(self):
+        router = ApprovalRouter()
+        req = router.request_approval(
+            tenant_id="t1", identity_id="u1", channel="whatsapp",
+            action_description="delete_thing", body="remove all records",
+            passport_risk_tier=RiskTier.LOW,
+        )
+        # Keyword says HIGH (delete/remove); passport floor LOW must not lower it.
+        assert req.risk_tier == RiskTier.HIGH
+
+
 # ═══ Approval Lifecycle ═══
 
 

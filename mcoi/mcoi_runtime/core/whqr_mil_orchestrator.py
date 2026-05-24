@@ -1,4 +1,4 @@
-﻿"""Purpose: orchestrate WHQR-to-audit governed execution flow.
+"""Purpose: orchestrate WHQR-to-audit governed execution flow.
 Governance scope: compose semantic evaluation, MIL compilation, governed dispatch, terminal closure, learning admission, and audit reconstruction.
 Dependencies: WHQR contracts, MIL compiler, governed dispatcher bridge, terminal certificate, learning admission, and audit reconstruction.
 Invariants: every stage is explicit; failures stop at their boundary; side effects occur only inside governed dispatcher.

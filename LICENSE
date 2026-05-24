@@ -1,21 +1,26 @@
-MIT License
+Mullusi Proprietary License
 
-Copyright (c) 2026 Mullu Platform
+Copyright (c) 2026 Tamirat Wubie and Mullusi.
+All rights reserved.
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+This software, documentation, schemas, runtime contracts, generated artifacts,
+and related materials are proprietary to Tamirat Wubie and Mullusi. The product
+is an invention of Tamirat Wubie and is governed for use under the Mullusi
+company boundary.
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+This material is not free for public use and is not released under an open-source
+license. No license, permission, or rights are granted to use, copy, modify,
+publish, distribute, sublicense, sell, host, or otherwise exploit this material
+except under an explicit written agreement with Mullusi or documented internal
+Mullusi authorization.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+Authorized Mullusi company use must preserve governance controls, provenance
+records, ownership notices, confidential handling, and all applicable Mullusi
+policy gates.
+
+THE MATERIAL IS PROVIDED AS-IS FOR AUTHORIZED MULLUSI USE ONLY. TO THE MAXIMUM
+EXTENT PERMITTED BY LAW, TAMIRAT WUBIE AND MULLUSI DISCLAIM ALL WARRANTIES,
+EXPRESS OR IMPLIED, INCLUDING MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE,
+AND NON-INFRINGEMENT. IN NO EVENT SHALL TAMIRAT WUBIE OR MULLUSI BE LIABLE FOR
+UNAUTHORIZED USE, REDISTRIBUTION, OR CLAIMS ARISING FROM USE OUTSIDE AN EXPLICIT
+MULLUSI AUTHORIZATION.

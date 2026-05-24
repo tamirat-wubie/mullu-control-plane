@@ -33,6 +33,7 @@ from mcoi_runtime.persistence.tenant_ledger import TenantLedger
 
 
 RECEIPT_STORE_JSONL_ENV = "MULLU_RECEIPT_STORE_JSONL_PATH"
+RECEIPT_STORE_JSONL_SYNC_ENV = "MULLU_RECEIPT_STORE_JSONL_SYNC"
 
 
 class FoundationConfigurationError(ValueError):
@@ -71,12 +72,35 @@ def receipt_store_from_env(runtime_env: Mapping[str, str]) -> ReceiptStore | Non
             f"{RECEIPT_STORE_JSONL_ENV} must point to a JSONL file path"
         )
 
+    sync_on_write = _bool_from_env(
+        runtime_env,
+        RECEIPT_STORE_JSONL_SYNC_ENV,
+        default=True,
+    )
+
     try:
-        return JsonlReceiptStore(jsonl_path)
+        return JsonlReceiptStore(jsonl_path, sync_on_write=sync_on_write)
     except (OSError, ValueError) as exc:
         raise FoundationConfigurationError(
             f"{RECEIPT_STORE_JSONL_ENV} could not initialize receipt store"
         ) from exc
+
+
+def _bool_from_env(
+    runtime_env: Mapping[str, str],
+    field_name: str,
+    *,
+    default: bool,
+) -> bool:
+    raw_value = runtime_env.get(field_name)
+    if raw_value is None or not str(raw_value).strip():
+        return default
+    normalized = str(raw_value).strip().lower()
+    if normalized in {"1", "true", "yes", "on"}:
+        return True
+    if normalized in {"0", "false", "no", "off"}:
+        return False
+    raise FoundationConfigurationError(f"{field_name} must be a boolean")
 
 
 def bootstrap_foundation_services(
