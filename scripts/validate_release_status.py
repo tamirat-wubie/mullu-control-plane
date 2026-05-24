@@ -244,6 +244,8 @@ PUBLIC_SURFACE_DOCUMENT_REQUIRED_LITERALS: dict[str, tuple[str, ...]] = {
         "schemas/proof_verification_endpoint.schema.json",
         ".github/workflows/deployment-witness.yml",
         ".github/workflows/gateway-publication.yml",
+        "python scripts/collect_gateway_dns_resolution_receipt.py --gateway-url \"$MULLU_GATEWAY_URL\" --output .change_assurance/gateway_dns_resolution_receipt.json --json",
+        "python scripts/validate_gateway_dns_resolution_receipt.py --receipt .change_assurance/gateway_dns_resolution_receipt.json --output .change_assurance/gateway_dns_resolution_receipt_validation.json --require-resolved",
         "python scripts/orchestrate_deployment_witness.py --gateway-host \"$MULLU_GATEWAY_HOST\" --expected-environment pilot --apply-ingress --require-preflight --require-mcp-operator-checklist --dispatch --orchestration-output \"$MULLU_DEPLOYMENT_ORCHESTRATION_OUTPUT\"",
         ".change_assurance/deployment_witness_orchestration.json",
         "python scripts/validate_deployment_orchestration_receipt.py --receipt \"$MULLU_DEPLOYMENT_ORCHESTRATION_OUTPUT\" --require-mcp-operator-checklist --require-preflight --expected-environment pilot",

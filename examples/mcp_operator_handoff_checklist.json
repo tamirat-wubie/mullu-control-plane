@@ -55,6 +55,16 @@
       ]
     },
     {
+      "step_id": "validate_gateway_dns_resolution",
+      "command": "python scripts\\collect_gateway_dns_resolution_receipt.py --gateway-url \"$MULLU_GATEWAY_URL\" --output .change_assurance\\gateway_dns_resolution_receipt.json --json && python scripts\\validate_gateway_dns_resolution_receipt.py --receipt .change_assurance\\gateway_dns_resolution_receipt.json --output .change_assurance\\gateway_dns_resolution_receipt_validation.json --require-resolved",
+      "required_evidence": [
+        "dns receipt resolved=true",
+        "dns receipt validation valid=true",
+        "require resolved step passed",
+        "address_count>0"
+      ]
+    },
+    {
       "step_id": "run_deployment_preflight",
       "command": "python scripts\\preflight_deployment_witness.py --gateway-host \"$MULLU_GATEWAY_HOST\" --expected-environment pilot --mcp-capability-manifest \"$MULLU_MCP_CAPABILITY_MANIFEST_PATH\"",
       "required_evidence": [

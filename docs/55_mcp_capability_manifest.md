@@ -180,7 +180,25 @@ Required signed certificate evidence:
 | `capability_plan_bundle_canary_passed` | `true` |
 | `open_conformance_gaps` | Must not include `mcp_capability_manifest_invalid` |
 
-5. Run deployment witness preflight before dispatch.
+5. Collect and validate gateway DNS before deployment preflight.
+
+```powershell
+python scripts\collect_gateway_dns_resolution_receipt.py `
+  --gateway-url "$env:MULLU_GATEWAY_URL" `
+  --output .change_assurance\gateway_dns_resolution_receipt.json `
+  --json
+
+python scripts\validate_gateway_dns_resolution_receipt.py `
+  --receipt .change_assurance\gateway_dns_resolution_receipt.json `
+  --output .change_assurance\gateway_dns_resolution_receipt_validation.json `
+  --require-resolved
+```
+
+The DNS validation report must return `valid=true`, `resolved=true`, and
+`address_count>0`. Deployment witness preflight and orchestration remain
+blocked until this gate passes.
+
+6. Run deployment witness preflight before dispatch.
 
 ```powershell
 python scripts\preflight_deployment_witness.py `
@@ -193,7 +211,7 @@ The preflight must include a passing `mcp capability manifest` step and a passin
 `runtime conformance endpoint` step. If the configured manifest is invalid, both
 preflight readiness and deployment witness publication remain blocked.
 
-6. Require the MCP handoff checklist during orchestration.
+7. Require the MCP handoff checklist during orchestration.
 
 ```powershell
 python scripts\orchestrate_deployment_witness.py `
@@ -208,7 +226,7 @@ The orchestration receipt must include `mcp_operator_checklist_required=true`,
 `mcp_operator_checklist_valid=true`, and the
 `mcp_operator_checklist:valid:true` evidence reference.
 
-7. Persist the deployment orchestration receipt.
+8. Persist the deployment orchestration receipt.
 
 ```powershell
 python scripts\orchestrate_deployment_witness.py `
@@ -230,7 +248,7 @@ Required receipt evidence:
 | `preflight_ready` | `true` |
 | `evidence_refs` | Non-empty |
 
-8. Validate the orchestration receipt after the run.
+9. Validate the orchestration receipt after the run.
 
 ```powershell
 python scripts\validate_deployment_orchestration_receipt.py `
@@ -251,11 +269,12 @@ as closed.
 | `MCP manifest requires a configured string field` | Missing tenant, owner, escalation, certification, or tool string | Fill the required field and re-run validation |
 | `mcp_capability_manifest_invalid` | Runtime conformance rejected the configured manifest | Fix manifest, restart gateway, collect conformance again |
 | `mcp_manifest_valid=false` in deployment witness | Signed conformance says the manifest is invalid | Do not dispatch deployment witness until conformance is clean |
+| `gateway DNS resolution validation valid=false` | DNS receipt is unresolved or lacks address evidence | Publish DNS for the gateway host, then rerun DNS receipt collection and `validate_gateway_dns_resolution_receipt.py --require-resolved` |
 | `mcp_manifest_configured=false` in read model | Gateway was not started with `MULLU_MCP_CAPABILITY_MANIFEST_PATH` | Set the environment variable and restart |
 | `capability_plan_bundle_canary_passed=false` | Runtime conformance cannot export a plan evidence bundle | Keep deployment blocked until `/capability-plans/{plan_id}/closure` returns `plan_evidence_bundle` |
 
 STATUS:
   Completeness: 100%
-  Invariants verified: [certified import, ownership binding, approval policy, escalation policy, startup binding, operator read model, runtime conformance witness, capability plan evidence bundle canary, deployment preflight gate, machine-readable handoff checklist, deployment orchestration receipt]
+  Invariants verified: [certified import, ownership binding, approval policy, escalation policy, startup binding, operator read model, runtime conformance witness, capability plan evidence bundle canary, gateway DNS receipt validation require-resolved gate, deployment preflight gate, machine-readable handoff checklist, deployment orchestration receipt]
   Open issues: none
   Next action: publish an environment-specific manifest and collect signed conformance evidence
