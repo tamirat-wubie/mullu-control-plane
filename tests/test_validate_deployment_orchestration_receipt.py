@@ -48,6 +48,7 @@ def test_valid_orchestration_receipt_satisfies_handoff_policy(tmp_path: Path) ->
     assert payload["valid"] is True
     assert _step(validation, "require preflight").passed is True
     assert _step(validation, "require mcp operator checklist").passed is True
+    assert _step(validation, "governed swarm readiness").passed is True
 
 
 def test_orchestration_validation_report_matches_public_schema(tmp_path: Path) -> None:
@@ -139,6 +140,25 @@ def test_dispatch_failed_receipt_is_valid_but_fails_dispatch_policy(tmp_path: Pa
     assert success_step.passed is False
     assert dispatch_step.detail == "requested=true run_id=missing"
     assert success_step.detail == "requested=true conclusion=missing"
+
+
+def test_production_readiness_receipt_requires_approval_and_evidence(tmp_path: Path) -> None:
+    receipt_path = tmp_path / "orchestration.json"
+    _write_receipt(
+        receipt_path,
+        expected_environment="production",
+        operator_approval_ref="",
+        governed_swarm_production_readiness_required=True,
+    )
+
+    validation = validate_deployment_orchestration_receipt(receipt_path=receipt_path)
+    readiness_step = _step(validation, "governed swarm readiness")
+
+    assert validation.valid is False
+    assert readiness_step.passed is False
+    assert "required=true" in readiness_step.detail
+    assert "approval=missing" in readiness_step.detail
+    assert "environment=production" in readiness_step.detail
 
 
 def test_orchestration_receipt_rejects_missing_evidence_refs(tmp_path: Path) -> None:
@@ -251,7 +271,7 @@ def test_orchestration_receipt_schema_rejects_missing_evidence_prefix(
     assert validation.valid is False
     assert schema_step.passed is False
     assert evidence_step.passed is False
-    assert schema_step.detail == "schema-errors=1"
+    assert schema_step.detail == "schema-errors=2"
     assert "contains" not in schema_step.detail
     assert "dispatch:" in evidence_step.detail
 
@@ -268,6 +288,7 @@ def test_orchestration_receipt_schema_accepts_canonical_fixture(tmp_path: Path) 
     assert schema["title"] == "Deployment Orchestration Receipt"
     assert "mcp_operator_checklist_valid" in schema["required"]
     assert "dispatch_error" in schema["required"]
+    assert "governed_swarm_production_readiness_required" in schema["required"]
     assert schema["properties"]["evidence_refs"]["minItems"] == 5
 
 
@@ -378,12 +399,17 @@ def _write_receipt(
     dispatch_run_id: int | None = None,
     dispatch_conclusion: str = "",
     dispatch_error: str = "",
+    expected_environment: str = "pilot",
+    operator_approval_ref: str = "",
+    governed_swarm_pilot_readiness_path: str = "docs/governed-swarm-promotion-readiness-example.json",
+    governed_swarm_artifact_name: str = "governed-swarm-production-readiness",
+    governed_swarm_production_readiness_required: bool = False,
 ) -> None:
     payload = {
         "receipt_id": "deployment-witness-orchestration-0123456789abcdef",
         "gateway_host": "gateway.mullusi.com",
         "gateway_url": "https://gateway.mullusi.com",
-        "expected_environment": "pilot",
+        "expected_environment": expected_environment,
         "repository": DEFAULT_REPOSITORY,
         "rendered_ingress_output": ".change_assurance/rendered-ingress.yaml",
         "ingress_applied": False,
@@ -393,6 +419,10 @@ def _write_receipt(
         "dispatch_run_id": dispatch_run_id,
         "dispatch_conclusion": dispatch_conclusion,
         "dispatch_error": dispatch_error,
+        "operator_approval_ref": operator_approval_ref,
+        "governed_swarm_pilot_readiness_path": governed_swarm_pilot_readiness_path,
+        "governed_swarm_artifact_name": governed_swarm_artifact_name,
+        "governed_swarm_production_readiness_required": governed_swarm_production_readiness_required,
         "mcp_operator_checklist_required": mcp_checklist_required,
         "mcp_operator_checklist_valid": mcp_checklist_valid,
         "mcp_operator_checklist_path": "examples/mcp_operator_handoff_checklist.json",
@@ -409,6 +439,11 @@ def _write_receipt(
                 f"mcp_operator_checklist:valid:{str(mcp_checklist_valid).lower()}"
                 if mcp_checklist_required
                 else "mcp_operator_checklist:skipped"
+            ),
+            (
+                "governed_swarm_production_readiness:required"
+                if governed_swarm_production_readiness_required
+                else "governed_swarm_production_readiness:not_required"
             ),
         ],
     }

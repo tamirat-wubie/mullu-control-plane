@@ -17,6 +17,7 @@ from mcoi_runtime.contracts.execution import EffectRecord, ExecutionOutcome, Exe
 from mcoi_runtime.contracts.graph import NodeType
 from mcoi_runtime.contracts.simulation import RiskLevel, VerdictType
 from mcoi_runtime.contracts.verification import VerificationStatus
+from mcoi_runtime.core import effect_assurance as effect_assurance_module
 from mcoi_runtime.core.effect_assurance import (
     EffectAssuranceGate,
     EffectGraphCommitReceiptStore,
@@ -59,6 +60,27 @@ def _execution(*effects: EffectRecord) -> ExecutionResult:
         started_at="2026-04-24T12:00:00+00:00",
         finished_at="2026-04-24T12:00:01+00:00",
     )
+
+
+def _graph_commit_receipt():
+    store = InMemoryEffectGraphCommitReceiptStore()
+    gate, _, plan = _gate_with_plan()
+    result = _execution(EffectRecord(name="ledger_entry_created", details={"evidence_ref": "ledger:entry-1"}))
+    observed = gate.observe(result)
+    verification = gate.verify(plan=plan, execution_result=result, observed_effects=observed)
+    reconciliation = gate.reconcile(
+        plan=plan,
+        observed_effects=observed,
+        verification_result=verification,
+    )
+    receipt = gate.commit_graph(
+        plan=plan,
+        observed_effects=observed,
+        reconciliation=reconciliation,
+    )
+    store.append(receipt)
+    assert store.receipt_count == 1
+    return receipt
 
 
 def _gate_with_plan():
@@ -327,6 +349,43 @@ def test_jsonl_graph_commit_receipt_store_replays_records(tmp_path):
     assert replayed.receipt_id == receipt.receipt_id
     assert replayed.observed_evidence_refs == ("ledger:entry-1",)
     assert replayed.to_effect_record().details["source"] == "effect_assurance_graph_commit"
+
+
+def test_jsonl_graph_commit_receipt_store_sync_defaults_off(tmp_path):
+    path = tmp_path / "effect-graph-commit-receipts.jsonl"
+    store = JsonlEffectGraphCommitReceiptStore(path)
+    receipt = _graph_commit_receipt()
+
+    store.append(receipt)
+
+    assert store.sync_on_write is False
+    assert store.receipt_count == 1
+    assert path.exists()
+
+
+def test_jsonl_graph_commit_receipt_store_sync_calls_fsync(tmp_path, monkeypatch):
+    path = tmp_path / "effect-graph-commit-receipts.jsonl"
+    fsync_calls: list[int] = []
+
+    def _record_fsync(file_descriptor: int) -> None:
+        fsync_calls.append(file_descriptor)
+
+    monkeypatch.setattr(effect_assurance_module.os, "fsync", _record_fsync)
+    store = JsonlEffectGraphCommitReceiptStore(path, sync_on_write=True)
+    receipt = _graph_commit_receipt()
+
+    store.append(receipt)
+
+    assert store.sync_on_write is True
+    assert len(fsync_calls) == 1
+    assert fsync_calls[0] > 0
+
+
+def test_jsonl_graph_commit_receipt_store_sync_flag_must_be_boolean(tmp_path):
+    path = tmp_path / "effect-graph-commit-receipts.jsonl"
+
+    with pytest.raises(ValueError, match="sync_on_write must be a boolean"):
+        JsonlEffectGraphCommitReceiptStore(path, sync_on_write="true")  # type: ignore[arg-type]
 
 
 def test_jsonl_graph_commit_receipt_store_rejects_malformed_records(tmp_path):

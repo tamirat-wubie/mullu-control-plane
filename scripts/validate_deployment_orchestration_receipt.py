@@ -93,6 +93,7 @@ def validate_deployment_orchestration_receipt(
         ),
         _check_dispatch_policy(payload, require_dispatch=require_dispatch),
         _check_success_policy(payload, require_success=require_success),
+        _check_governed_swarm_readiness_policy(payload),
         _check_expected_value(
             payload=payload,
             field_name="repository",
@@ -179,6 +180,10 @@ def _check_required_fields(payload: dict[str, Any]) -> OrchestrationReceiptValid
         "dispatch_requested": bool,
         "dispatch_conclusion": str,
         "dispatch_error": str,
+        "operator_approval_ref": str,
+        "governed_swarm_pilot_readiness_path": str,
+        "governed_swarm_artifact_name": str,
+        "governed_swarm_production_readiness_required": bool,
         "mcp_operator_checklist_required": bool,
         "mcp_operator_checklist_path": str,
         "evidence_refs": list,
@@ -217,6 +222,8 @@ def _check_required_fields(payload: dict[str, Any]) -> OrchestrationReceiptValid
             "expected_environment",
             "repository",
             "rendered_ingress_output",
+            "governed_swarm_pilot_readiness_path",
+            "governed_swarm_artifact_name",
             "mcp_operator_checklist_path",
         )
         if not str(payload.get(field, "")).strip()
@@ -363,6 +370,49 @@ def _check_success_policy(
     )
 
 
+def _check_governed_swarm_readiness_policy(
+    payload: dict[str, Any],
+) -> OrchestrationReceiptValidationStep:
+    readiness_required = payload.get("governed_swarm_production_readiness_required")
+    approval_ref = str(payload.get("operator_approval_ref", "")).strip()
+    readiness_path = str(payload.get("governed_swarm_pilot_readiness_path", "")).strip()
+    artifact_name = str(payload.get("governed_swarm_artifact_name", "")).strip()
+    environment = payload.get("expected_environment")
+    refs = payload.get("evidence_refs", [])
+    required_ref_present = isinstance(refs, list) and (
+        "governed_swarm_production_readiness:required" in refs
+    )
+    not_required_ref_present = isinstance(refs, list) and (
+        "governed_swarm_production_readiness:not_required" in refs
+    )
+    if readiness_required is True:
+        passed = (
+            bool(approval_ref)
+            and bool(readiness_path)
+            and bool(artifact_name)
+            and environment == "production"
+            and required_ref_present
+        )
+        detail = (
+            f"required=true approval={_presence_state(approval_ref)} "
+            f"path={_presence_state(readiness_path)} "
+            f"artifact={_presence_state(artifact_name)} "
+            f"environment={_environment_state(environment)} "
+            f"evidence={_bool_state(required_ref_present)}"
+        )
+    elif readiness_required is False:
+        passed = not_required_ref_present
+        detail = f"required=false evidence={_bool_state(not_required_ref_present)}"
+    else:
+        passed = False
+        detail = "required=invalid"
+    return OrchestrationReceiptValidationStep(
+        "governed swarm readiness",
+        passed,
+        detail,
+    )
+
+
 def _check_expected_value(
     *,
     payload: dict[str, Any],
@@ -430,6 +480,20 @@ def _dispatch_conclusion_state(value: Any) -> str:
         return "missing"
     if isinstance(value, str):
         return "not-success"
+    return "invalid"
+
+
+def _presence_state(value: str) -> str:
+    return "present" if value else "missing"
+
+
+def _environment_state(value: Any) -> str:
+    if value == "production":
+        return "production"
+    if value == "pilot":
+        return "pilot"
+    if value in ("", None):
+        return "missing"
     return "invalid"
 
 

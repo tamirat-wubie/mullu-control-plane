@@ -27,8 +27,8 @@
     },
     "steps": {
       "type": "array",
-      "minItems": 12,
-      "maxItems": 12,
+      "minItems": 13,
+      "maxItems": 13,
       "items": {
         "type": "object",
         "additionalProperties": false,
@@ -49,6 +49,7 @@
               "require mcp operator checklist",
               "require dispatch",
               "require success",
+              "governed swarm readiness",
               "expected repository",
               "expected gateway_host",
               "expected gateway_url",
@@ -175,6 +176,23 @@
             "properties": {
               "name": {
                 "const": "require success"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "properties": {
+        "steps": {
+          "contains": {
+            "type": "object",
+            "required": [
+              "name"
+            ],
+            "properties": {
+              "name": {
+                "const": "governed swarm readiness"
               }
             }
           }

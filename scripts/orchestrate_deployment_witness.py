@@ -119,6 +119,10 @@ class DeploymentWitnessOrchestrationReceipt:
     dispatch_run_id: int | None
     dispatch_conclusion: str
     dispatch_error: str
+    operator_approval_ref: str
+    governed_swarm_pilot_readiness_path: str
+    governed_swarm_artifact_name: str
+    governed_swarm_production_readiness_required: bool
     mcp_operator_checklist_required: bool
     mcp_operator_checklist_valid: bool | None
     mcp_operator_checklist_path: str
@@ -259,6 +263,9 @@ def orchestrate_deployment_witness(
             preflight_required=require_preflight,
             dispatch_requested=dispatch,
             dispatch_error=dispatch_error,
+            operator_approval_ref=operator_approval_ref,
+            governed_swarm_pilot_readiness_path=governed_swarm_pilot_readiness_path,
+            governed_swarm_artifact_name=governed_swarm_artifact_name,
             mcp_operator_checklist_required=require_mcp_operator_checklist,
             mcp_operator_checklist_valid=checklist_valid,
             mcp_operator_checklist_path=mcp_operator_checklist_path,
@@ -422,10 +429,17 @@ def _orchestration_receipt(
     preflight_required: bool,
     dispatch_requested: bool,
     dispatch_error: str,
+    operator_approval_ref: str,
+    governed_swarm_pilot_readiness_path: str,
+    governed_swarm_artifact_name: str,
     mcp_operator_checklist_required: bool,
     mcp_operator_checklist_valid: bool | None,
     mcp_operator_checklist_path: Path,
 ) -> DeploymentWitnessOrchestrationReceipt:
+    readiness_required = (
+        target.expected_environment == "production"
+        and bool(operator_approval_ref.strip())
+    )
     evidence_refs = [
         f"ingress_render:{ingress.output_path}",
         f"deployment_target:{target.repository}",
@@ -444,6 +458,11 @@ def _orchestration_receipt(
             f"mcp_operator_checklist:valid:{str(mcp_operator_checklist_valid).lower()}"
             if mcp_operator_checklist_required
             else "mcp_operator_checklist:skipped"
+        ),
+        (
+            "governed_swarm_production_readiness:required"
+            if readiness_required
+            else "governed_swarm_production_readiness:not_required"
         ),
     ]
     if dispatch is not None:
@@ -464,6 +483,10 @@ def _orchestration_receipt(
         "dispatch_run_id": dispatch.run_id if dispatch is not None else None,
         "dispatch_conclusion": dispatch.conclusion if dispatch is not None else "",
         "dispatch_error": dispatch_error,
+        "operator_approval_ref": operator_approval_ref.strip(),
+        "governed_swarm_pilot_readiness_path": governed_swarm_pilot_readiness_path.strip(),
+        "governed_swarm_artifact_name": governed_swarm_artifact_name.strip(),
+        "governed_swarm_production_readiness_required": readiness_required,
         "mcp_operator_checklist_required": mcp_operator_checklist_required,
         "mcp_operator_checklist_valid": mcp_operator_checklist_valid,
         "mcp_operator_checklist_path": str(mcp_operator_checklist_path),

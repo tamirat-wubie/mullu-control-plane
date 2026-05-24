@@ -1,29 +1,42 @@
-"""ServiceCatalogStateView — adapter that exposes ServiceCatalogEngine
-tasks and requests as queryable entities for predicate evaluation.
+"""ServiceCatalogEngine adapters for the intent substrate.
 
-Entity ID convention:
-    "task:<task_id>"      -> FulfillmentTask attributes
-    "request:<request_id>" -> ServiceRequest attributes
+Purpose: expose service catalog requests and tasks to intent substrate
+observation and opt-in request status closure.
+Governance scope: OCE, RAG, CDCV, CQTE, UWMA, PRS.
+Dependencies: ServiceCatalogEngine, intent substrate closure protocols, and
+service catalog contract records.
+Invariants: adapter lookups are read-only; closure calls route through the
+catalog status transition helper; missing requests fail closed.
 
-Returned attribute mappings are stable, JSON-serializable, and
-contain only the fields predicates are likely to reference. Missing
-or unknown IDs return None (the StateView contract for "absent").
+Two adapters, two directions:
 
-Why this and not RequestStatusClosureAdapter (yet):
-    The catalog already has inline auto-fulfill logic at
-    service_catalog.py:660 that calls _update_request_status to
-    FULFILLED when all tasks complete. Adding a substrate-driven
-    closure would race with that. Replacing the inline logic is a
-    separate decision worth its own PR — this adapter focuses on the
-    safer step: letting substrate intents *observe* catalog state to
-    drive other lifecycle (e.g., close an obligation when a request
-    fulfills).
+  ServiceCatalogStateView (observation)
+    Exposes tasks/requests as queryable entities for predicate
+    evaluation. Entity ID convention:
+        "task:<task_id>"       -> FulfillmentTask attributes
+        "request:<request_id>" -> ServiceRequest attributes
+    Returned mappings are stable, JSON-serializable, and contain only
+    the fields predicates are likely to reference. Missing/unknown IDs
+    return None (the StateView contract for "absent").
 
-If you later want substrate-driven request closure, the adapter
-would be ~30 LOC: implement IntentClosure where is_open checks
-request.status not in _REQUEST_TERMINAL, close_success calls
-catalog._update_request_status(id, RequestStatus.FULFILLED), and
-close_precondition_failed calls catalog.cancel_request.
+  RequestStatusClosureAdapter (action) - OPT-IN
+    Drives a request's lifecycle: FULFILLED on success, CANCELLED on
+    precondition failure. intent_id == request_id.
+
+    This does NOT replace the catalog's inline synchronous auto-fulfill
+    at service_catalog.py:660 - that path still works exactly as
+    before. The adapter lets a caller route a *specific* request's
+    fulfillment through the substrate instead, gaining the two-
+    confirmation safety guarantee at the cost of asynchronous
+    fulfillment (event + confirm window + tick).
+
+    Migration note (deliberately NOT done here): to make the catalog's
+    fulfillment two-confirm-safe globally, the inline all(...) block at
+    service_catalog.py:660 would declare a substrate intent rather than
+    calling _update_request_status directly. That changes fulfillment
+    from synchronous to asynchronous and would require updating the
+    catalog's existing test suite - a behavior change left as a
+    maintainer decision, surfaced in the PR rather than forced.
 """
 
 from __future__ import annotations
@@ -32,6 +45,7 @@ from typing import Any, Mapping
 
 from mcoi_runtime.contracts.service_catalog import (
     FulfillmentStatus,
+    ServiceRequest,
     RequestStatus,
 )
 from mcoi_runtime.core.invariants import RuntimeCoreInvariantError
@@ -41,6 +55,12 @@ from ..primitives import EntityId
 
 _TASK_PREFIX = "task:"
 _REQUEST_PREFIX = "request:"
+
+_REQUEST_TERMINAL = (
+    RequestStatus.FULFILLED,
+    RequestStatus.DENIED,
+    RequestStatus.CANCELLED,
+)
 
 
 class ServiceCatalogStateView:
@@ -114,10 +134,58 @@ class ServiceCatalogStateView:
             "is_fulfilled": req.status == RequestStatus.FULFILLED,
             "is_denied": req.status == RequestStatus.DENIED,
             "is_cancelled": req.status == RequestStatus.CANCELLED,
-            "is_terminal": req.status
-            in (
-                RequestStatus.FULFILLED,
-                RequestStatus.DENIED,
-                RequestStatus.CANCELLED,
-            ),
+            "is_terminal": req.status in _REQUEST_TERMINAL,
         }
+
+
+class RequestStatusClosureAdapter:
+    """IntentClosure that drives ServiceCatalogEngine request lifecycle.
+
+    OPT-IN. Maps intent_id == request_id:
+
+      is_open(request_id)
+          -> request exists AND status not in _REQUEST_TERMINAL
+      close_success(request_id, reason)
+          -> _update_request_status(request_id, FULFILLED)
+      close_precondition_failed(request_id, reason)
+          -> _update_request_status(request_id, CANCELLED,
+                                    cancelled_by="intent_substrate")
+
+    Both transitions go through the catalog's internal
+    `_update_request_status` helper - the same one the inline auto-
+    fulfill at service_catalog.py:660 uses for FULFILLED. We do NOT use
+    the public `cancel_request` for the failure path because it carries
+    user-authorization and active-task guards that don't apply to a
+    substrate-determined precondition failure (a system event, not a
+    user cancellation). Going through the internal helper keeps the
+    semantics consistent with the existing inline fulfillment path.
+
+    This adapter does not modify or disable the catalog's inline auto-
+    fulfill. A caller wires it explicitly to route one request's
+    fulfillment through the substrate; the catalog's own logic still
+    handles every request not routed this way.
+    """
+
+    def __init__(self, catalog: ServiceCatalogEngine) -> None:
+        self._catalog = catalog
+
+    def is_open(self, request_id: EntityId) -> bool:
+        try:
+            req = self._catalog.get_request(request_id)
+        except RuntimeCoreInvariantError:
+            return False
+        return req.status not in _REQUEST_TERMINAL
+
+    def close_success(self, request_id: EntityId, reason: str) -> ServiceRequest:
+        return self._catalog._update_request_status(
+            request_id, RequestStatus.FULFILLED
+        )
+
+    def close_precondition_failed(
+        self, request_id: EntityId, reason: str
+    ) -> ServiceRequest:
+        return self._catalog._update_request_status(
+            request_id,
+            RequestStatus.CANCELLED,
+            cancelled_by="intent_substrate",
+        )

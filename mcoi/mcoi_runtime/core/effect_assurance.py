@@ -14,6 +14,7 @@ Invariants:
 from __future__ import annotations
 
 import json
+import os
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -187,8 +188,17 @@ class InMemoryEffectGraphCommitReceiptStore(EffectGraphCommitReceiptStore):
 class JsonlEffectGraphCommitReceiptStore(InMemoryEffectGraphCommitReceiptStore):
     """Append-only JSONL store for Effect Assurance graph commit receipts."""
 
-    def __init__(self, path: str | Path, *, max_records: int = 10_000) -> None:
+    def __init__(
+        self,
+        path: str | Path,
+        *,
+        max_records: int = 10_000,
+        sync_on_write: bool = False,
+    ) -> None:
+        if not isinstance(sync_on_write, bool):
+            raise ValueError("sync_on_write must be a boolean")
         self._path = Path(path)
+        self._sync_on_write = sync_on_write
         super().__init__(max_records=max_records)
         self._path.parent.mkdir(parents=True, exist_ok=True)
         if self._path.exists():
@@ -197,6 +207,10 @@ class JsonlEffectGraphCommitReceiptStore(InMemoryEffectGraphCommitReceiptStore):
     @property
     def path(self) -> Path:
         return self._path
+
+    @property
+    def sync_on_write(self) -> bool:
+        return self._sync_on_write
 
     def append(self, receipt: EffectGraphCommitReceipt) -> None:
         receipt = _require_graph_commit_receipt(receipt)
@@ -212,6 +226,8 @@ class JsonlEffectGraphCommitReceiptStore(InMemoryEffectGraphCommitReceiptStore):
         with self._path.open("a", encoding="utf-8", newline="\n") as handle:
             handle.write(line + "\n")
             handle.flush()
+            if self._sync_on_write:
+                os.fsync(handle.fileno())
 
     def _replay(self) -> None:
         for line_number, raw_line in enumerate(self._path.read_text(encoding="utf-8").splitlines(), start=1):
