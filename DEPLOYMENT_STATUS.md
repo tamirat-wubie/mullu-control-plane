@@ -9,7 +9,7 @@ Invariants: Absence of live deployment evidence is explicit; no production healt
 
 # Deployment Status Witness
 
-**Last audited:** 2026-05-17
+**Last audited:** 2026-05-24
 **Deployment witness state:** `not-published`
 **Public production health endpoint:** `not-declared`
 **Gateway health endpoint:** `/health`
@@ -87,9 +87,9 @@ Invariants: Absence of live deployment evidence is explicit; no production healt
 |---|---|
 | Runtime witness secret | GitHub Actions secret name `MULLU_RUNTIME_WITNESS_SECRET` is present; secret value is not printed |
 | Runtime conformance secret | GitHub Actions secret name `MULLU_RUNTIME_CONFORMANCE_SECRET` is present; secret value is not printed |
-| Deployment witness secret | GitHub Actions secret name `MULLU_DEPLOYMENT_WITNESS_SECRET` is missing; production evidence collection remains blocked |
+| Deployment witness secret | GitHub Actions secret name `MULLU_DEPLOYMENT_WITNESS_SECRET` is present; secret value is not printed |
 | Authority operator secret | GitHub Actions secret name `MULLU_AUTHORITY_OPERATOR_SECRET` is present; secret value is not printed |
-| Deployment target variables | GitHub repository variables `MULLU_GATEWAY_URL` and `MULLU_EXPECTED_RUNTIME_ENV` are not currently set |
+| Deployment target variables | GitHub repository variables `MULLU_GATEWAY_URL=https://api.mullusi.com` and `MULLU_EXPECTED_RUNTIME_ENV=pilot` are set |
 | Deployment witness workflow runs | No `deployment-witness.yml` workflow runs are currently recorded |
 | Gateway publication workflow runs | No `gateway-publication.yml` workflow runs are currently recorded |
 
