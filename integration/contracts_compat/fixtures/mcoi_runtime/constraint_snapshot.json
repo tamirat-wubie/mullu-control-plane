@@ -1,0 +1,15 @@
+{
+  "snapshot_id": "constraint-snapshot-routing-2026-05-08",
+  "tenant_id": "tenant-mullu-primary",
+  "total_constraints": 5,
+  "total_problems": 2,
+  "total_solutions": 2,
+  "total_nodes": 4,
+  "total_edges": 3,
+  "total_violations": 0,
+  "captured_at": "2026-05-08T15:39:00+00:00",
+  "metadata": {
+    "scope": "routing",
+    "captured_by": "constraint-monitor"
+  }
+}

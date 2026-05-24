@@ -1,0 +1,14 @@
+{
+  "violation_id": "access-violation-2026-05-08",
+  "identity_id": "identity-external-service",
+  "resource_type": "ledger_account",
+  "action": "export",
+  "scope_kind": "workspace",
+  "scope_ref_id": "workspace-enterprise-ops",
+  "reason": "Service identity attempted ledger export without an authorized role binding.",
+  "detected_at": "2026-05-08T13:05:00+00:00",
+  "metadata": {
+    "source": "policy-engine",
+    "severity": "high"
+  }
+}

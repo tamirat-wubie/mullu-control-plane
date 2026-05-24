@@ -1,0 +1,12 @@
+{
+  "decision_id": "causal-decision-routing-promotion-2026-05-08",
+  "tenant_id": "tenant-mullu-primary",
+  "attribution_ref": "attribution-routing-latency-2026-05-08",
+  "disposition": "promote_to_default",
+  "reason": "Strong attribution links the routing rule update to the measured latency improvement under governed pilot conditions.",
+  "decided_at": "2026-05-08T14:30:00+00:00",
+  "metadata": {
+    "profile": "pilot-prod",
+    "reviewed_by": "operator-release-1"
+  }
+}

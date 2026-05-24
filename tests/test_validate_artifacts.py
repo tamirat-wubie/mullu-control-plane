@@ -85,3 +85,37 @@ def test_validate_request_artifact_bounds_template_error_detail(
 
     assert errors == [f"{request_path.as_posix()}: invalid request template malformed_template"]
     assert all("secret-template-body" not in error for error in errors)
+
+
+def test_mcoi_contract_runtime_fixture_inventory_is_registered() -> None:
+    inventory = artifact_validator.discover_example_inventory()
+    actual_names = {path.name for path in inventory.mcoi_runtime_fixture_paths}
+    contract_fixture_names = set(artifact_validator.MCOI_CONTRACT_RUNTIME_FIXTURE_TYPES)
+
+    assert len(contract_fixture_names) == 68
+    assert contract_fixture_names <= actual_names
+    assert actual_names == set(artifact_validator.MCOI_RUNTIME_FIXTURE_VALIDATORS)
+
+
+def test_mcoi_contract_runtime_fixture_validator_accepts_imported_fixture() -> None:
+    fixture_path = Path("integration/contracts_compat/fixtures/mcoi_runtime/access_audit_record.json")
+
+    errors = artifact_validator.validate_mcoi_runtime_fixture(fixture_path)
+
+    assert errors == []
+    assert fixture_path.name in artifact_validator.MCOI_CONTRACT_RUNTIME_FIXTURE_TYPES
+    assert fixture_path.name in artifact_validator.MCOI_RUNTIME_FIXTURE_VALIDATORS
+
+
+def test_mcoi_contract_runtime_fixture_validator_bounds_enum_errors(tmp_path: Path) -> None:
+    fixture_path = Path("integration/contracts_compat/fixtures/mcoi_runtime/access_audit_record.json")
+    payload = json.loads(fixture_path.read_text(encoding="utf-8"))
+    payload["decision"] = "secret-invalid-decision"
+    invalid_fixture_path = tmp_path / fixture_path.name
+    invalid_fixture_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    errors = artifact_validator.validate_mcoi_runtime_fixture(invalid_fixture_path)
+
+    assert errors == [f"{invalid_fixture_path.as_posix()}: field 'decision' has invalid enum value"]
+    assert "secret-invalid-decision" not in errors[0]
+    assert "AccessDecision" not in errors[0]

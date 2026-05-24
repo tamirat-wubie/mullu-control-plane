@@ -22,10 +22,11 @@ from __future__ import annotations
 import json
 import re
 import sys
-from dataclasses import dataclass
+from dataclasses import dataclass, fields
 from datetime import datetime
+from enum import Enum
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any, Callable, get_type_hints
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -42,7 +43,89 @@ from mcoi_runtime.app.cli import _build_operator_request  # noqa: E402
 from mcoi_runtime.app.config import AppConfig  # noqa: E402
 from mcoi_runtime.app.policy_packs import PolicyPackRegistry  # noqa: E402
 from mcoi_runtime.app.profiles import list_profiles  # noqa: E402
+from mcoi_runtime.contracts.access_runtime import (  # noqa: E402
+    AccessAuditRecord,
+    AccessEvaluation,
+    AccessRequest,
+    AccessSnapshot,
+    AccessViolation,
+    DelegationRecord,
+    IdentityRecord,
+    PermissionRule,
+    RoleBinding,
+    RoleRecord,
+)
+from mcoi_runtime.contracts.availability import (  # noqa: E402
+    AvailabilityConflict,
+    AvailabilityRecord,
+    AvailabilityRoutingDecision,
+    BusinessHoursProfile,
+    MeetingDecision,
+    MeetingRecord,
+    MeetingRequest,
+    ResponseSLA,
+    SchedulingWindow,
+)
+from mcoi_runtime.contracts.causal_runtime import (  # noqa: E402
+    CausalAssessment,
+    CausalAttribution,
+    CausalClosureReport,
+    CausalDecision,
+    CausalEdge,
+    CausalNode,
+    CausalSnapshot,
+    CounterfactualScenario,
+    InterventionRecord,
+    PropagationRecord,
+)
+from mcoi_runtime.contracts.change_runtime import (  # noqa: E402
+    ChangeApprovalBinding,
+    ChangeEvidence,
+    ChangeExecution,
+    ChangeImpactAssessment,
+    ChangeOutcome,
+    ChangePlan,
+    ChangeRequest,
+    ChangeStep,
+    RollbackPlan,
+)
+from mcoi_runtime.contracts.constraint_runtime import (  # noqa: E402
+    AssignmentRecord,
+    ConstraintClosureReport,
+    ConstraintDefinition,
+    ConstraintSnapshot,
+    DependencyChain,
+    GraphEdge,
+    GraphNode,
+    ScheduleSlot,
+    SolverProblem,
+    SolverSolution,
+)
 from mcoi_runtime.contracts.document import DocumentVerificationStatus  # noqa: E402
+from mcoi_runtime.contracts.records_runtime import (  # noqa: E402
+    DisposalDecision,
+    DispositionReview,
+    LegalHoldRecord,
+    PreservationDecision,
+    RecordDescriptor,
+    RecordLink,
+    RecordSnapshot,
+    RecordViolation,
+    RecordsClosureReport,
+    RetentionSchedule,
+)
+from mcoi_runtime.contracts.tenant_runtime import (  # noqa: E402
+    BoundaryPolicy,
+    EnvironmentPromotion,
+    EnvironmentRecord,
+    IsolationViolation,
+    TenantClosureReport,
+    TenantDecision,
+    TenantHealth,
+    TenantRecord,
+    WorkspaceBinding,
+    WorkspaceRecord,
+)
 from mcoi_runtime.core.document import extract_json_fields, ingest_document, verify_extraction  # noqa: E402
 from mcoi_runtime.core.template_validator import TemplateValidationError, TemplateValidator  # noqa: E402
 
@@ -10533,6 +10616,139 @@ MCOI_RUNTIME_FIXTURE_VALIDATORS: dict[str, MCOIRuntimeFixtureValidator] = {
     "connector_cost_profile.json": _validate_connector_cost_profile_fixture,
     "cost_estimate.json": _validate_cost_estimate_fixture,
 }
+
+
+def _coerce_contract_fixture_field(value: Any, field_type: Any) -> Any:
+    """Convert JSON enum values into contract enum members when required."""
+    if isinstance(field_type, type) and issubclass(field_type, Enum):
+        return field_type(value)
+    return value
+
+
+def _validate_mcoi_contract_runtime_fixture(path: Path, record_type: type[Any]) -> list[str]:
+    """Validate a fixture by constructing and rendering its MCOI contract type."""
+    payload = _load_json_object(path, kind="MCOI runtime fixture")
+    expected_fields = tuple(field.name for field in fields(record_type))
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=expected_fields,
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+
+    type_hints = get_type_hints(record_type)
+    contract_kwargs: dict[str, Any] = {}
+    for field in fields(record_type):
+        try:
+            contract_kwargs[field.name] = _coerce_contract_fixture_field(
+                payload[field.name],
+                type_hints.get(field.name),
+            )
+        except ValueError:
+            errors.append(f"{_relative_path(path)}: field '{field.name}' has invalid enum value")
+
+    if errors:
+        return errors
+
+    try:
+        contract_record = record_type(**contract_kwargs)
+    except TypeError:
+        return [f"{_relative_path(path)}: runtime fixture has incompatible {record_type.__name__} shape"]
+    except ValueError:
+        return [f"{_relative_path(path)}: runtime fixture violates {record_type.__name__} contract"]
+
+    if contract_record.to_json_dict() != payload:
+        return [
+            f"{_relative_path(path)}: runtime fixture must round-trip exactly through "
+            f"{record_type.__name__}"
+        ]
+    return []
+
+
+def _mcoi_contract_fixture_validator(record_type: type[Any]) -> MCOIRuntimeFixtureValidator:
+    """Bind a contract type to the shared MCOI runtime fixture validator."""
+    return lambda path: _validate_mcoi_contract_runtime_fixture(path, record_type)
+
+
+MCOI_CONTRACT_RUNTIME_FIXTURE_TYPES: dict[str, type[Any]] = {
+    "access_audit_record.json": AccessAuditRecord,
+    "access_evaluation.json": AccessEvaluation,
+    "access_request.json": AccessRequest,
+    "access_snapshot.json": AccessSnapshot,
+    "access_violation.json": AccessViolation,
+    "assignment_record.json": AssignmentRecord,
+    "availability_conflict.json": AvailabilityConflict,
+    "availability_record.json": AvailabilityRecord,
+    "availability_routing_decision.json": AvailabilityRoutingDecision,
+    "boundary_policy.json": BoundaryPolicy,
+    "business_hours_profile.json": BusinessHoursProfile,
+    "causal_assessment.json": CausalAssessment,
+    "causal_attribution.json": CausalAttribution,
+    "causal_closure_report.json": CausalClosureReport,
+    "causal_decision.json": CausalDecision,
+    "causal_edge.json": CausalEdge,
+    "causal_node.json": CausalNode,
+    "causal_snapshot.json": CausalSnapshot,
+    "change_approval_binding.json": ChangeApprovalBinding,
+    "change_evidence.json": ChangeEvidence,
+    "change_execution.json": ChangeExecution,
+    "change_impact_assessment.json": ChangeImpactAssessment,
+    "change_outcome.json": ChangeOutcome,
+    "change_plan.json": ChangePlan,
+    "change_request.json": ChangeRequest,
+    "change_step.json": ChangeStep,
+    "constraint_closure_report.json": ConstraintClosureReport,
+    "constraint_definition.json": ConstraintDefinition,
+    "constraint_snapshot.json": ConstraintSnapshot,
+    "counterfactual_scenario.json": CounterfactualScenario,
+    "delegation_record.json": DelegationRecord,
+    "dependency_chain.json": DependencyChain,
+    "disposal_decision.json": DisposalDecision,
+    "disposition_review.json": DispositionReview,
+    "environment_promotion.json": EnvironmentPromotion,
+    "environment_record.json": EnvironmentRecord,
+    "graph_edge.json": GraphEdge,
+    "graph_node.json": GraphNode,
+    "identity_record.json": IdentityRecord,
+    "intervention_record.json": InterventionRecord,
+    "isolation_violation.json": IsolationViolation,
+    "legal_hold_record.json": LegalHoldRecord,
+    "meeting_decision.json": MeetingDecision,
+    "meeting_record.json": MeetingRecord,
+    "meeting_request.json": MeetingRequest,
+    "permission_rule.json": PermissionRule,
+    "preservation_decision.json": PreservationDecision,
+    "propagation_record.json": PropagationRecord,
+    "record_descriptor.json": RecordDescriptor,
+    "record_link.json": RecordLink,
+    "record_snapshot.json": RecordSnapshot,
+    "record_violation.json": RecordViolation,
+    "records_closure_report.json": RecordsClosureReport,
+    "response_sla.json": ResponseSLA,
+    "retention_schedule.json": RetentionSchedule,
+    "role_binding.json": RoleBinding,
+    "role_record.json": RoleRecord,
+    "rollback_plan.json": RollbackPlan,
+    "schedule_slot.json": ScheduleSlot,
+    "scheduling_window.json": SchedulingWindow,
+    "solver_problem.json": SolverProblem,
+    "solver_solution.json": SolverSolution,
+    "tenant_closure_report.json": TenantClosureReport,
+    "tenant_decision.json": TenantDecision,
+    "tenant_health.json": TenantHealth,
+    "tenant_record.json": TenantRecord,
+    "workspace_binding.json": WorkspaceBinding,
+    "workspace_record.json": WorkspaceRecord,
+}
+
+MCOI_RUNTIME_FIXTURE_VALIDATORS.update(
+    {
+        fixture_name: _mcoi_contract_fixture_validator(record_type)
+        for fixture_name, record_type in MCOI_CONTRACT_RUNTIME_FIXTURE_TYPES.items()
+    }
+)
 
 DOCUMENT_ARTIFACT_EXPECTATIONS: dict[str, tuple[str, ...]] = {
     "OPERATOR_GUIDE_v0.1.md": (

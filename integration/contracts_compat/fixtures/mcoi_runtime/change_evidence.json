@@ -1,0 +1,13 @@
+{
+  "evidence_id": "change-evidence-routing-rule-2026-05-07",
+  "change_id": "change-routing-rule-2026-05-07",
+  "kind": "metric_after",
+  "metric_name": "response_latency_ms",
+  "metric_value": 182.4,
+  "description": "Post-canary latency median remained below the approval threshold.",
+  "collected_at": "2026-05-07T13:00:00+00:00",
+  "metadata": {
+    "source": "metrics.mullusi.com",
+    "window_minutes": 30
+  }
+}

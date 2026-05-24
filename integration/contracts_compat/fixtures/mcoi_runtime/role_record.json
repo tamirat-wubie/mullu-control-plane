@@ -1,0 +1,16 @@
+{
+  "role_id": "role-workspace-operator",
+  "name": "Workspace Operator",
+  "kind": "operator",
+  "permissions": [
+    "workspace.read",
+    "workspace.write",
+    "change.approve"
+  ],
+  "description": "Operator role for governed workspace change and review activities.",
+  "created_at": "2026-05-07T12:02:00+00:00",
+  "metadata": {
+    "scope_kind": "workspace",
+    "managed_by": "access-governance"
+  }
+}

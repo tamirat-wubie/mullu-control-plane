@@ -1,0 +1,14 @@
+{
+  "solution_id": "solver-solution-routing-2026-05-08",
+  "tenant_id": "tenant-mullu-primary",
+  "problem_ref": "solver-problem-routing-2026-05-08",
+  "status": "solved",
+  "objective_value": 0.12,
+  "iterations": 18,
+  "duration_ms": 42.5,
+  "solved_at": "2026-05-08T15:33:00+00:00",
+  "metadata": {
+    "selected_connector": "connector-openai-primary",
+    "fallback_connector": "connector-anthropic-backup"
+  }
+}

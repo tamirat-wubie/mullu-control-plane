@@ -1,0 +1,13 @@
+{
+  "decision_id": "tenant-decision-2026-05-07",
+  "tenant_id": "tenant-mullu-primary",
+  "title": "Tighten production tenant boundaries",
+  "description": "Escalate connector isolation for governed production workspaces after policy review.",
+  "confidence": 0.92,
+  "decided_by": "tenant-governor-1",
+  "decided_at": "2026-05-07T10:10:00+00:00",
+  "metadata": {
+    "policy_pack": "strict-approval",
+    "review_ref": "tenant-review-2026-05-07"
+  }
+}

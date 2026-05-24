@@ -1,0 +1,12 @@
+{
+  "rollback_id": "rollback-routing-rule-2026-05-07",
+  "change_id": "change-routing-rule-2026-05-07",
+  "disposition": "not_needed",
+  "rollback_steps": [
+    "restore-routing-baseline",
+    "re-enable-fallback-priority"
+  ],
+  "reason": "Fallback coverage remained healthy throughout the phased rollout.",
+  "triggered_at": "2026-05-07T12:20:00+00:00",
+  "completed_at": ""
+}

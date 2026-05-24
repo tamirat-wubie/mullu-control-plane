@@ -1,0 +1,13 @@
+{
+  "attribution_id": "attribution-routing-latency-2026-05-08",
+  "tenant_id": "tenant-mullu-primary",
+  "outcome_ref": "outcome-latency-improvement-openai-primary",
+  "cause_ref": "node-routing-rule-openai-primary",
+  "strength": "strong",
+  "evidence_count": 4,
+  "created_at": "2026-05-08T14:20:00+00:00",
+  "metadata": {
+    "baseline_ms": 240.0,
+    "current_ms": 180.0
+  }
+}

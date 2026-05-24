@@ -1,0 +1,14 @@
+{
+  "report_id": "causal-closure-routing-2026-05-08",
+  "tenant_id": "tenant-mullu-primary",
+  "total_nodes": 6,
+  "total_edges": 5,
+  "total_interventions": 2,
+  "total_attributions": 3,
+  "total_violations": 0,
+  "created_at": "2026-05-08T14:45:00+00:00",
+  "metadata": {
+    "closed_by": "causal-governance",
+    "scope": "routing"
+  }
+}

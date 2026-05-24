@@ -1,0 +1,12 @@
+{
+  "profile_id": "business-hours-ops-lead",
+  "identity_ref": "contact-ops-lead",
+  "timezone": "America/New_York",
+  "weekday_start_hour": 9,
+  "weekday_end_hour": 17,
+  "weekend_available": false,
+  "quiet_start_hour": 22,
+  "quiet_end_hour": 7,
+  "emergency_override": true,
+  "created_at": "2026-05-07T12:05:00+00:00"
+}

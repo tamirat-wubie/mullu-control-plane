@@ -1,0 +1,13 @@
+{
+  "constraint_id": "constraint-latency-budget-2026-05-08",
+  "tenant_id": "tenant-mullu-primary",
+  "kind": "inequality",
+  "expression": "median_latency_ms <= 200",
+  "variable_refs": "median_latency_ms",
+  "priority": 5,
+  "created_at": "2026-05-08T15:30:00+00:00",
+  "metadata": {
+    "problem_ref": "solver-problem-routing-2026-05-08",
+    "scope": "routing"
+  }
+}

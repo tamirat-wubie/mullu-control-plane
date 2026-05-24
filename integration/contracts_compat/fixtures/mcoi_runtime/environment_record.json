@@ -1,0 +1,17 @@
+{
+  "environment_id": "env-core-production",
+  "workspace_id": "workspace-governed-core",
+  "kind": "production",
+  "name": "Core Production",
+  "promoted_from": "env-core-staging",
+  "connector_ids": [
+    "connector-openai-primary",
+    "connector-observability-core"
+  ],
+  "created_at": "2026-05-07T08:20:00+00:00",
+  "updated_at": "2026-05-07T10:40:00+00:00",
+  "metadata": {
+    "region": "us-east-1",
+    "profile": "pilot-prod"
+  }
+}

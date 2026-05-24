@@ -1,0 +1,16 @@
+{
+  "snapshot_id": "access-snapshot-workspace-enterprise-ops-2026-05",
+  "scope_ref_id": "workspace-enterprise-ops",
+  "total_identities": 12,
+  "total_roles": 5,
+  "total_bindings": 7,
+  "total_rules": 6,
+  "active_delegations": 2,
+  "total_violations": 1,
+  "total_evaluations": 18,
+  "captured_at": "2026-05-08T13:10:00+00:00",
+  "metadata": {
+    "scope_kind": "workspace",
+    "profile": "pilot-prod"
+  }
+}

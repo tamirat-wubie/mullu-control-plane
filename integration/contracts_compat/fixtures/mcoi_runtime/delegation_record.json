@@ -1,0 +1,16 @@
+{
+  "delegation_id": "delegation-backup-lead-2026-05-08",
+  "from_identity_id": "identity-ops-lead",
+  "to_identity_id": "identity-backup-lead",
+  "role_id": "role-workspace-operator",
+  "scope_kind": "workspace",
+  "scope_ref_id": "workspace-enterprise-ops",
+  "status": "active",
+  "expires_at": "2026-05-08T20:00:00+00:00",
+  "delegated_at": "2026-05-07T12:10:00+00:00",
+  "revoked_at": "",
+  "metadata": {
+    "reason": "Primary operator is traveling during summit coverage.",
+    "approved_by": "change-board-1"
+  }
+}

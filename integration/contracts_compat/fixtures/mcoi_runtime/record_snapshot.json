@@ -1,0 +1,16 @@
+{
+  "snapshot_id": "records-snapshot-2026-05-07",
+  "scope_ref_id": "tenant-mullu-primary",
+  "total_records": 24,
+  "total_schedules": 18,
+  "total_holds": 3,
+  "active_holds": 2,
+  "total_links": 21,
+  "total_disposals": 4,
+  "total_violations": 1,
+  "captured_at": "2026-05-07T11:00:00+00:00",
+  "metadata": {
+    "scope": "tenant",
+    "assessor": "records-governance"
+  }
+}

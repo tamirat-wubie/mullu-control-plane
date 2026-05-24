@@ -1,0 +1,11 @@
+{
+  "decision_id": "meeting-decision-q2-availability-review",
+  "request_id": "meeting-request-q2-availability-review",
+  "meeting_id": "meeting-q2-availability-review",
+  "scheduled": true,
+  "reason": "Backup lead window satisfied the coverage and quiet-hours constraints.",
+  "proposed_start": "2026-05-08T13:15:00+00:00",
+  "proposed_end": "2026-05-08T14:00:00+00:00",
+  "conflicts": [],
+  "decided_at": "2026-05-07T12:12:00+00:00"
+}

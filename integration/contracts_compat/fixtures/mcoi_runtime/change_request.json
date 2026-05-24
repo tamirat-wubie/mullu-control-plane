@@ -1,0 +1,20 @@
+{
+  "change_id": "change-routing-rule-2026-05-07",
+  "recommendation_id": "recommendation-routing-2026-05-07",
+  "change_type": "routing_rule",
+  "scope": "connector",
+  "scope_ref_id": "connector-openai-primary",
+  "title": "Promote lower-latency routing rule",
+  "description": "Shift connector-openai-primary into the governed routing path after recommendation review.",
+  "status": "approved",
+  "rollout_mode": "phased",
+  "priority": "high",
+  "requested_by": "operator-release-1",
+  "reason": "Reduce median response latency while preserving fallback coverage and approval traceability.",
+  "approval_required": true,
+  "created_at": "2026-05-07T12:00:00+00:00",
+  "metadata": {
+    "campaign_ref": "campaign-spring-2026",
+    "profile": "pilot-prod"
+  }
+}

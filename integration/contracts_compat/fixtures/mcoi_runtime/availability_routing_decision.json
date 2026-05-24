@@ -1,0 +1,11 @@
+{
+  "decision_id": "availability-routing-2026-05-08",
+  "identity_ref": "contact-ops-lead",
+  "resolution": "fallback_identity",
+  "channel_chosen": "slack",
+  "fallback_identity_ref": "contact-backup-lead",
+  "contact_at": "2026-05-08T13:30:00+00:00",
+  "reason": "Primary contact is temporarily unavailable, so the backup lead receives the high-priority thread.",
+  "priority_used": "high",
+  "decided_at": "2026-05-07T12:20:00+00:00"
+}

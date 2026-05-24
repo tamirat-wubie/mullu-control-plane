@@ -1,0 +1,12 @@
+{
+  "violation_id": "record-violation-2026-001",
+  "record_id": "record-governance-2026-042",
+  "tenant_id": "tenant-mullu-primary",
+  "operation": "dispose_record",
+  "reason": "A disposal attempt was requested while the legal hold remained active.",
+  "detected_at": "2026-05-07T11:05:00+00:00",
+  "metadata": {
+    "actor": "records-automation",
+    "severity": "medium"
+  }
+}

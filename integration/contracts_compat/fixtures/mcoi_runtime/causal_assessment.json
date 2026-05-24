@@ -1,0 +1,13 @@
+{
+  "assessment_id": "causal-assessment-routing-2026-05-08",
+  "tenant_id": "tenant-mullu-primary",
+  "total_nodes": 6,
+  "total_edges": 5,
+  "total_interventions": 2,
+  "attribution_coverage": 0.83,
+  "assessed_at": "2026-05-08T14:35:00+00:00",
+  "metadata": {
+    "scope": "routing",
+    "captured_by": "causal-monitor"
+  }
+}

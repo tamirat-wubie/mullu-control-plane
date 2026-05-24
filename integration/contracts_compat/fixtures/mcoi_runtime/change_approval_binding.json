@@ -1,0 +1,8 @@
+{
+  "approval_id": "change-approval-routing-rule-2026-05-07",
+  "change_id": "change-routing-rule-2026-05-07",
+  "approved_by": "change-board-1",
+  "approved": true,
+  "reason": "Latency and fallback evidence satisfied change board approval criteria.",
+  "approved_at": "2026-05-07T12:10:00+00:00"
+}
