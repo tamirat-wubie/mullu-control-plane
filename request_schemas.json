@@ -1,0 +1,1484 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Domain adapter request schemas",
+  "description": "JSON Schema for the request payload of each of the 15 domain adapters. Generated from the shared adapter registry by tools/export_request_schemas.py.",
+  "adapter_count": 15,
+  "schemas": {
+    "software_dev": {
+      "type": "object",
+      "title": "SoftwareRequest",
+      "description": "Request payload for the software_dev domain adapter.",
+      "properties": {
+        "kind": {
+          "type": "string",
+          "enum": [
+            "bug_fix",
+            "feature",
+            "refactor",
+            "deploy",
+            "review",
+            "investigate",
+            "test_generation",
+            "security_fix",
+            "docs",
+            "migration",
+            "dependency_update",
+            "rollback"
+          ],
+          "description": "One of the SoftwareWorkKind values."
+        },
+        "summary": {
+          "type": "string"
+        },
+        "repository": {
+          "type": "string"
+        },
+        "target_branch": {
+          "type": "string",
+          "default": "main"
+        },
+        "affected_files": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
+        "acceptance_criteria": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
+        "blast_radius": {
+          "type": "string",
+          "default": "module"
+        },
+        "reviewer_required": {
+          "type": "boolean",
+          "default": true
+        },
+        "mode": {
+          "type": "string",
+          "enum": [
+            "plan_only",
+            "dry_run",
+            "patch_only",
+            "patch_and_test",
+            "patch_test_review",
+            "commit_candidate"
+          ],
+          "default": "patch_test_review"
+        },
+        "quality_gates": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "unit_tests",
+              "integration_tests",
+              "lint",
+              "typecheck",
+              "security_scan",
+              "build",
+              "review"
+            ]
+          },
+          "default": [
+            "unit_tests",
+            "lint"
+          ]
+        },
+        "max_self_debug_iterations": {
+          "type": "integer",
+          "default": 3
+        },
+        "rollback_required": {
+          "type": "boolean",
+          "default": true
+        },
+        "sandbox_profile": {
+          "type": "string",
+          "default": "none"
+        },
+        "evidence_required": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            "workspace_snapshot",
+            "patch_result",
+            "test_result",
+            "review_record"
+          ]
+        }
+      },
+      "required": [
+        "kind",
+        "repository",
+        "summary"
+      ],
+      "additionalProperties": false
+    },
+    "business_process": {
+      "type": "object",
+      "title": "BusinessRequest",
+      "description": "Request payload for the business_process domain adapter.",
+      "properties": {
+        "kind": {
+          "type": "string",
+          "enum": [
+            "approval",
+            "escalation",
+            "sla_task",
+            "procurement",
+            "onboarding",
+            "offboarding",
+            "policy_change"
+          ],
+          "description": "One of the BusinessActionKind values."
+        },
+        "summary": {
+          "type": "string"
+        },
+        "process_id": {
+          "type": "string"
+        },
+        "initiator": {
+          "type": "string"
+        },
+        "approval_chain": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
+        "affected_systems": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
+        "acceptance_criteria": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
+        "dollar_impact": {
+          "type": "number",
+          "default": 0.0
+        },
+        "blast_radius": {
+          "type": "string",
+          "default": "department"
+        }
+      },
+      "required": [
+        "initiator",
+        "kind",
+        "process_id",
+        "summary"
+      ],
+      "additionalProperties": false
+    },
+    "scientific_research": {
+      "type": "object",
+      "title": "ResearchRequest",
+      "description": "Request payload for the scientific_research domain adapter.",
+      "properties": {
+        "kind": {
+          "type": "string",
+          "enum": [
+            "hypothesis_formation",
+            "experiment_design",
+            "data_collection",
+            "analysis",
+            "peer_review",
+            "publication",
+            "replication",
+            "retraction"
+          ],
+          "description": "One of the ResearchActionKind values."
+        },
+        "summary": {
+          "type": "string"
+        },
+        "study_id": {
+          "type": "string"
+        },
+        "principal_investigator": {
+          "type": "string"
+        },
+        "peer_reviewers": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
+        "affected_corpus": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
+        "acceptance_criteria": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
+        "confidence_threshold": {
+          "type": "number",
+          "default": 0.95
+        },
+        "minimum_replications": {
+          "type": "integer",
+          "default": 1
+        },
+        "statistical_power_target": {
+          "type": "number",
+          "default": 0.8
+        },
+        "blast_radius": {
+          "type": "string",
+          "default": "study"
+        }
+      },
+      "required": [
+        "kind",
+        "principal_investigator",
+        "study_id",
+        "summary"
+      ],
+      "additionalProperties": false
+    },
+    "manufacturing": {
+      "type": "object",
+      "title": "ManufacturingRequest",
+      "description": "Request payload for the manufacturing domain adapter.",
+      "properties": {
+        "kind": {
+          "type": "string",
+          "enum": [
+            "machining",
+            "assembly",
+            "quality_inspection",
+            "rework",
+            "scrap",
+            "recall",
+            "calibration",
+            "batch_release"
+          ],
+          "description": "One of the ManufacturingActionKind values."
+        },
+        "summary": {
+          "type": "string"
+        },
+        "line_id": {
+          "type": "string"
+        },
+        "operator_id": {
+          "type": "string"
+        },
+        "quality_engineer": {
+          "type": "string",
+          "default": ""
+        },
+        "iso_certifications": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
+        "affected_part_numbers": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
+        "acceptance_criteria": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
+        "expected_yield_pct": {
+          "type": "number",
+          "default": 0.95
+        },
+        "safety_critical": {
+          "type": "boolean",
+          "default": false
+        },
+        "blast_radius": {
+          "type": "string",
+          "default": "line"
+        }
+      },
+      "required": [
+        "kind",
+        "line_id",
+        "operator_id",
+        "summary"
+      ],
+      "additionalProperties": false
+    },
+    "healthcare": {
+      "type": "object",
+      "title": "ClinicalRequest",
+      "description": "Request payload for the healthcare domain adapter.",
+      "properties": {
+        "kind": {
+          "type": "string",
+          "enum": [
+            "assessment",
+            "diagnosis",
+            "prescription",
+            "procedure",
+            "surgery",
+            "discharge",
+            "reassessment",
+            "referral"
+          ],
+          "description": "One of the ClinicalActionKind values."
+        },
+        "summary": {
+          "type": "string"
+        },
+        "encounter_id": {
+          "type": "string"
+        },
+        "primary_clinician": {
+          "type": "string"
+        },
+        "consulting_specialists": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
+        "patient_consented": {
+          "type": "boolean",
+          "default": false
+        },
+        "consent_kind": {
+          "type": "string",
+          "default": ""
+        },
+        "affected_records": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
+        "acceptance_criteria": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
+        "contraindication_flags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
+        "is_emergency": {
+          "type": "boolean",
+          "default": false
+        },
+        "high_dose": {
+          "type": "boolean",
+          "default": false
+        },
+        "blast_radius": {
+          "type": "string",
+          "default": "encounter"
+        }
+      },
+      "required": [
+        "encounter_id",
+        "kind",
+        "primary_clinician",
+        "summary"
+      ],
+      "additionalProperties": false
+    },
+    "education": {
+      "type": "object",
+      "title": "EducationRequest",
+      "description": "Request payload for the education domain adapter.",
+      "properties": {
+        "kind": {
+          "type": "string",
+          "enum": [
+            "course_offering",
+            "enrollment",
+            "assessment_design",
+            "grading",
+            "grade_appeal",
+            "certification",
+            "accreditation",
+            "withdrawal"
+          ],
+          "description": "One of the EducationActionKind values."
+        },
+        "summary": {
+          "type": "string"
+        },
+        "course_id": {
+          "type": "string"
+        },
+        "instructor": {
+          "type": "string"
+        },
+        "curriculum_committee": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
+        "accreditation_body": {
+          "type": "string",
+          "default": ""
+        },
+        "affected_learners": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
+        "learning_objectives": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
+        "acceptance_criteria": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
+        "prerequisite_courses": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
+        "accessibility_requirements": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
+        "blast_radius": {
+          "type": "string",
+          "default": "course"
+        }
+      },
+      "required": [
+        "course_id",
+        "instructor",
+        "kind",
+        "summary"
+      ],
+      "additionalProperties": false
+    },
+    "finance": {
+      "type": "object",
+      "title": "FinancialRequest",
+      "description": "Request payload for the finance domain adapter.",
+      "properties": {
+        "kind": {
+          "type": "string",
+          "enum": [
+            "transaction",
+            "wire_transfer",
+            "trade",
+            "settlement",
+            "reconciliation",
+            "ledger_adjustment",
+            "kyc_aml_check",
+            "credit_decision",
+            "audit_review",
+            "disclosure"
+          ],
+          "description": "One of the FinancialActionKind values."
+        },
+        "summary": {
+          "type": "string"
+        },
+        "transaction_id": {
+          "type": "string"
+        },
+        "responsible_officer": {
+          "type": "string"
+        },
+        "approver_chain": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
+        "counterparty": {
+          "type": "string",
+          "default": ""
+        },
+        "amount": {
+          "type": "number",
+          "default": 0.0
+        },
+        "currency": {
+          "type": "string",
+          "default": ""
+        },
+        "jurisdiction": {
+          "type": "string",
+          "default": ""
+        },
+        "regulatory_regime": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
+        "affected_accounts": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
+        "acceptance_criteria": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
+        "aml_flags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
+        "requires_dual_control": {
+          "type": "boolean",
+          "default": false
+        },
+        "dual_control_satisfied": {
+          "type": "boolean",
+          "default": false
+        },
+        "is_high_value": {
+          "type": "boolean",
+          "default": false
+        },
+        "blast_radius": {
+          "type": "string",
+          "default": "transaction"
+        }
+      },
+      "required": [
+        "kind",
+        "responsible_officer",
+        "summary",
+        "transaction_id"
+      ],
+      "additionalProperties": false
+    },
+    "legal": {
+      "type": "object",
+      "title": "LegalRequest",
+      "description": "Request payload for the legal domain adapter.",
+      "properties": {
+        "kind": {
+          "type": "string",
+          "enum": [
+            "case_filing",
+            "motion",
+            "discovery",
+            "deposition",
+            "judgment",
+            "appeal",
+            "contract_review",
+            "contract_execution",
+            "compliance_review",
+            "opinion"
+          ],
+          "description": "One of the LegalActionKind values."
+        },
+        "summary": {
+          "type": "string"
+        },
+        "matter_id": {
+          "type": "string"
+        },
+        "lead_counsel": {
+          "type": "string"
+        },
+        "co_counsel": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
+        "client": {
+          "type": "string",
+          "default": ""
+        },
+        "opposing_party": {
+          "type": "string",
+          "default": ""
+        },
+        "jurisdiction": {
+          "type": "string",
+          "default": ""
+        },
+        "court": {
+          "type": "string",
+          "default": ""
+        },
+        "bar_admissions_required": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
+        "privileged": {
+          "type": "boolean",
+          "default": false
+        },
+        "acceptance_criteria": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
+        "conflict_flags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
+        "is_emergency": {
+          "type": "boolean",
+          "default": false
+        },
+        "statute_deadline_imminent": {
+          "type": "boolean",
+          "default": false
+        },
+        "blast_radius": {
+          "type": "string",
+          "default": "matter"
+        }
+      },
+      "required": [
+        "kind",
+        "lead_counsel",
+        "matter_id",
+        "summary"
+      ],
+      "additionalProperties": false
+    },
+    "public_sector": {
+      "type": "object",
+      "title": "CivicRequest",
+      "description": "Request payload for the public_sector domain adapter.",
+      "properties": {
+        "kind": {
+          "type": "string",
+          "enum": [
+            "permit_issuance",
+            "licensing",
+            "benefit_claim",
+            "grant_award",
+            "policy_enforcement",
+            "enforcement_action",
+            "inspection",
+            "rulemaking",
+            "citizen_service_request",
+            "records_request"
+          ],
+          "description": "One of the CivicActionKind values."
+        },
+        "summary": {
+          "type": "string"
+        },
+        "case_id": {
+          "type": "string"
+        },
+        "responsible_official": {
+          "type": "string"
+        },
+        "reviewer_chain": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
+        "applicant": {
+          "type": "string",
+          "default": ""
+        },
+        "agency": {
+          "type": "string",
+          "default": ""
+        },
+        "statute_authority": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
+        "jurisdiction": {
+          "type": "string",
+          "default": ""
+        },
+        "affected_records": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
+        "acceptance_criteria": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
+        "due_process_required": {
+          "type": "boolean",
+          "default": false
+        },
+        "due_process_completed": {
+          "type": "boolean",
+          "default": false
+        },
+        "public_comment_required": {
+          "type": "boolean",
+          "default": false
+        },
+        "public_comment_completed": {
+          "type": "boolean",
+          "default": false
+        },
+        "protected_class_present": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
+        "is_emergency": {
+          "type": "boolean",
+          "default": false
+        },
+        "blast_radius": {
+          "type": "string",
+          "default": "case"
+        }
+      },
+      "required": [
+        "case_id",
+        "kind",
+        "responsible_official",
+        "summary"
+      ],
+      "additionalProperties": false
+    },
+    "logistics": {
+      "type": "object",
+      "title": "LogisticsRequest",
+      "description": "Request payload for the logistics domain adapter.",
+      "properties": {
+        "kind": {
+          "type": "string",
+          "enum": [
+            "order_fulfillment",
+            "shipment_dispatch",
+            "route_assignment",
+            "carrier_handoff",
+            "customs_clearance",
+            "delivery",
+            "inventory_transfer",
+            "return_processing",
+            "inspection",
+            "warehouse_receipt"
+          ],
+          "description": "One of the LogisticsActionKind values."
+        },
+        "summary": {
+          "type": "string"
+        },
+        "shipment_id": {
+          "type": "string"
+        },
+        "responsible_dispatcher": {
+          "type": "string"
+        },
+        "carrier_chain": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
+        "shipper": {
+          "type": "string",
+          "default": ""
+        },
+        "consignee": {
+          "type": "string",
+          "default": ""
+        },
+        "origin": {
+          "type": "string",
+          "default": ""
+        },
+        "destination": {
+          "type": "string",
+          "default": ""
+        },
+        "modes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
+        "hazmat_class": {
+          "type": "string",
+          "default": ""
+        },
+        "temperature_controlled": {
+          "type": "boolean",
+          "default": false
+        },
+        "customs_required": {
+          "type": "boolean",
+          "default": false
+        },
+        "hs_codes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
+        "affected_skus": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
+        "acceptance_criteria": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
+        "chain_of_custody_intact": {
+          "type": "boolean",
+          "default": true
+        },
+        "is_expedited": {
+          "type": "boolean",
+          "default": false
+        },
+        "blast_radius": {
+          "type": "string",
+          "default": "shipment"
+        }
+      },
+      "required": [
+        "kind",
+        "responsible_dispatcher",
+        "shipment_id",
+        "summary"
+      ],
+      "additionalProperties": false
+    },
+    "energy": {
+      "type": "object",
+      "title": "EnergyRequest",
+      "description": "Request payload for the energy domain adapter.",
+      "properties": {
+        "kind": {
+          "type": "string",
+          "enum": [
+            "generation_dispatch",
+            "load_curtailment",
+            "outage_response",
+            "maintenance_window",
+            "interconnection_request",
+            "rate_filing",
+            "emergency_demand_response",
+            "meter_data_validation",
+            "carbon_reporting",
+            "grid_reconfiguration"
+          ],
+          "description": "One of the EnergyActionKind values."
+        },
+        "summary": {
+          "type": "string"
+        },
+        "operation_id": {
+          "type": "string"
+        },
+        "responsible_operator": {
+          "type": "string"
+        },
+        "approver_chain": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
+        "balancing_authority": {
+          "type": "string",
+          "default": ""
+        },
+        "service_territory": {
+          "type": "string",
+          "default": ""
+        },
+        "jurisdiction": {
+          "type": "string",
+          "default": ""
+        },
+        "regulatory_regime": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
+        "affected_assets": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
+        "megawatts": {
+          "type": "number",
+          "default": 0.0
+        },
+        "acceptance_criteria": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
+        "reliability_critical": {
+          "type": "boolean",
+          "default": false
+        },
+        "n_minus_1_compliant": {
+          "type": "boolean",
+          "default": true
+        },
+        "is_emergency": {
+          "type": "boolean",
+          "default": false
+        },
+        "blast_radius": {
+          "type": "string",
+          "default": "asset"
+        }
+      },
+      "required": [
+        "kind",
+        "operation_id",
+        "responsible_operator",
+        "summary"
+      ],
+      "additionalProperties": false
+    },
+    "cybersecurity": {
+      "type": "object",
+      "title": "SecOpsRequest",
+      "description": "Request payload for the cybersecurity domain adapter.",
+      "properties": {
+        "kind": {
+          "type": "string",
+          "enum": [
+            "incident_response",
+            "containment",
+            "eradication",
+            "recovery",
+            "vulnerability_remediation",
+            "access_review",
+            "change_review",
+            "forensic_investigation",
+            "threat_hunting",
+            "breach_notification"
+          ],
+          "description": "One of the SecOpsActionKind values."
+        },
+        "summary": {
+          "type": "string"
+        },
+        "incident_id": {
+          "type": "string"
+        },
+        "lead_analyst": {
+          "type": "string"
+        },
+        "escalation_chain": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
+        "affected_assets": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
+        "severity": {
+          "type": "string",
+          "default": "medium"
+        },
+        "cvss_score": {
+          "type": "number",
+          "default": 0.0
+        },
+        "data_classifications": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
+        "regulatory_regime": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
+        "jurisdiction": {
+          "type": "string",
+          "default": ""
+        },
+        "acceptance_criteria": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
+        "active_threat": {
+          "type": "boolean",
+          "default": false
+        },
+        "data_exfil_suspected": {
+          "type": "boolean",
+          "default": false
+        },
+        "is_emergency": {
+          "type": "boolean",
+          "default": false
+        },
+        "blast_radius": {
+          "type": "string",
+          "default": "host"
+        }
+      },
+      "required": [
+        "incident_id",
+        "kind",
+        "lead_analyst",
+        "summary"
+      ],
+      "additionalProperties": false
+    },
+    "insurance": {
+      "type": "object",
+      "title": "InsuranceRequest",
+      "description": "Request payload for the insurance domain adapter.",
+      "properties": {
+        "kind": {
+          "type": "string",
+          "enum": [
+            "underwriting",
+            "bind_policy",
+            "claim_intake",
+            "claim_adjudication",
+            "claim_payment",
+            "renewal",
+            "cancellation",
+            "rescission",
+            "reinsurance_cession",
+            "regulatory_filing"
+          ],
+          "description": "One of the InsuranceActionKind values."
+        },
+        "summary": {
+          "type": "string"
+        },
+        "case_id": {
+          "type": "string"
+        },
+        "responsible_agent": {
+          "type": "string"
+        },
+        "approver_chain": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
+        "policyholder": {
+          "type": "string",
+          "default": ""
+        },
+        "line_of_business": {
+          "type": "string",
+          "default": ""
+        },
+        "jurisdiction": {
+          "type": "string",
+          "default": ""
+        },
+        "regulatory_regime": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
+        "policy_number": {
+          "type": "string",
+          "default": ""
+        },
+        "claim_number": {
+          "type": "string",
+          "default": ""
+        },
+        "sum_insured": {
+          "type": "number",
+          "default": 0.0
+        },
+        "claim_amount": {
+          "type": "number",
+          "default": 0.0
+        },
+        "affected_policies": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
+        "acceptance_criteria": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
+        "sanctions_screened": {
+          "type": "boolean",
+          "default": false
+        },
+        "sanctions_hits": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
+        "reinsurance_required": {
+          "type": "boolean",
+          "default": false
+        },
+        "reinsurance_engaged": {
+          "type": "boolean",
+          "default": false
+        },
+        "is_emergency": {
+          "type": "boolean",
+          "default": false
+        },
+        "blast_radius": {
+          "type": "string",
+          "default": "policy"
+        }
+      },
+      "required": [
+        "case_id",
+        "kind",
+        "responsible_agent",
+        "summary"
+      ],
+      "additionalProperties": false
+    },
+    "environmental": {
+      "type": "object",
+      "title": "EnvironmentalRequest",
+      "description": "Request payload for the environmental domain adapter.",
+      "properties": {
+        "kind": {
+          "type": "string",
+          "enum": [
+            "emissions_reporting",
+            "permit_compliance_check",
+            "audit",
+            "remediation_plan",
+            "remediation_execution",
+            "incident_response",
+            "disclosure_filing",
+            "carbon_offset_purchase",
+            "impact_assessment",
+            "consent_decree_action"
+          ],
+          "description": "One of the EnvironmentalActionKind values."
+        },
+        "summary": {
+          "type": "string"
+        },
+        "facility_id": {
+          "type": "string"
+        },
+        "responsible_officer": {
+          "type": "string"
+        },
+        "reviewer_chain": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
+        "operator": {
+          "type": "string",
+          "default": ""
+        },
+        "regulatory_authority": {
+          "type": "string",
+          "default": ""
+        },
+        "regulatory_regime": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
+        "jurisdiction": {
+          "type": "string",
+          "default": ""
+        },
+        "affected_media": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
+        "affected_communities": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
+        "acceptance_criteria": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
+        "exceedance_present": {
+          "type": "boolean",
+          "default": false
+        },
+        "environmental_justice_concern": {
+          "type": "boolean",
+          "default": false
+        },
+        "third_party_verified": {
+          "type": "boolean",
+          "default": false
+        },
+        "is_emergency": {
+          "type": "boolean",
+          "default": false
+        },
+        "blast_radius": {
+          "type": "string",
+          "default": "facility"
+        }
+      },
+      "required": [
+        "facility_id",
+        "kind",
+        "responsible_officer",
+        "summary"
+      ],
+      "additionalProperties": false
+    },
+    "construction": {
+      "type": "object",
+      "title": "ConstructionRequest",
+      "description": "Request payload for the construction domain adapter.",
+      "properties": {
+        "kind": {
+          "type": "string",
+          "enum": [
+            "permit_application",
+            "rfi",
+            "change_order",
+            "submittal_review",
+            "inspection",
+            "milestone",
+            "lien_waiver",
+            "punch_list",
+            "substantial_completion",
+            "closeout"
+          ],
+          "description": "One of the ConstructionActionKind values."
+        },
+        "summary": {
+          "type": "string"
+        },
+        "project_id": {
+          "type": "string"
+        },
+        "project_manager": {
+          "type": "string"
+        },
+        "approver_chain": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
+        "general_contractor": {
+          "type": "string",
+          "default": ""
+        },
+        "owner": {
+          "type": "string",
+          "default": ""
+        },
+        "permit_authority": {
+          "type": "string",
+          "default": ""
+        },
+        "jurisdiction": {
+          "type": "string",
+          "default": ""
+        },
+        "trades_involved": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
+        "affected_drawings": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
+        "acceptance_criteria": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
+        "permit_on_file": {
+          "type": "boolean",
+          "default": false
+        },
+        "permit_required": {
+          "type": "boolean",
+          "default": true
+        },
+        "active_safety_incident": {
+          "type": "boolean",
+          "default": false
+        },
+        "multi_trade_coordinated": {
+          "type": "boolean",
+          "default": true
+        },
+        "weather_sensitive": {
+          "type": "boolean",
+          "default": false
+        },
+        "weather_window_open": {
+          "type": "boolean",
+          "default": true
+        },
+        "is_emergency": {
+          "type": "boolean",
+          "default": false
+        },
+        "blast_radius": {
+          "type": "string",
+          "default": "task"
+        }
+      },
+      "required": [
+        "kind",
+        "project_id",
+        "project_manager",
+        "summary"
+      ],
+      "additionalProperties": false
+    }
+  }
+}
