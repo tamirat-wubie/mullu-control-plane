@@ -311,6 +311,48 @@
       "surface": "promotion"
     },
     {
+      "schema_id": "general-agent-promotion-live-evidence-queue",
+      "path": "schemas/general_agent_promotion_live_evidence_queue.schema.json",
+      "urn": "urn:mullusi:schema:general-agent-promotion-live-evidence-queue:1",
+      "surface": "promotion"
+    },
+    {
+      "schema_id": "general-agent-promotion-terminal-approvals",
+      "path": "schemas/general_agent_promotion_terminal_approvals.schema.json",
+      "urn": "urn:mullusi:schema:general-agent-promotion-terminal-approvals:1",
+      "surface": "promotion"
+    },
+    {
+      "schema_id": "general-agent-promotion-terminal-certificate-gate",
+      "path": "schemas/general_agent_promotion_terminal_certificate_gate.schema.json",
+      "urn": "urn:mullusi:schema:general-agent-promotion-terminal-certificate-gate:1",
+      "surface": "promotion"
+    },
+    {
+      "schema_id": "general-agent-promotion-terminal-certificate-candidates",
+      "path": "schemas/general_agent_promotion_terminal_certificate_candidates.schema.json",
+      "urn": "urn:mullusi:schema:general-agent-promotion-terminal-certificate-candidates:1",
+      "surface": "promotion"
+    },
+    {
+      "schema_id": "general-agent-promotion-terminal-evidence-reconciliation",
+      "path": "schemas/general_agent_promotion_terminal_evidence_reconciliation.schema.json",
+      "urn": "urn:mullusi:schema:general-agent-promotion-terminal-evidence-reconciliation:1",
+      "surface": "promotion"
+    },
+    {
+      "schema_id": "general-agent-promotion-terminal-minting-gate",
+      "path": "schemas/general_agent_promotion_terminal_minting_gate.schema.json",
+      "urn": "urn:mullusi:schema:general-agent-promotion-terminal-minting-gate:1",
+      "surface": "promotion"
+    },
+    {
+      "schema_id": "general-agent-promotion-terminal-certificate-minting-run",
+      "path": "schemas/general_agent_promotion_terminal_certificate_minting_run.schema.json",
+      "urn": "urn:mullusi:schema:general-agent-promotion-terminal-certificate-minting-run:1",
+      "surface": "promotion"
+    },
+    {
       "schema_id": "general-agent-promotion-handoff-packet",
       "path": "schemas/general_agent_promotion_handoff_packet.schema.json",
       "urn": "urn:mullusi:schema:general-agent-promotion-handoff-packet:1",

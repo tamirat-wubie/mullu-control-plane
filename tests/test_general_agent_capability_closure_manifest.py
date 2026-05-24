@@ -47,6 +47,20 @@ def test_manifest_records_current_promotion_readiness_stamp() -> None:
     assert "scripts/validate_general_agent_promotion_closure_plan.py" in manifest_text
     assert "scripts/emit_general_agent_promotion_environment_binding_receipt.py" in manifest_text
     assert "scripts/validate_general_agent_promotion_environment_binding_receipt.py" in manifest_text
+    assert "scripts/plan_general_agent_promotion_live_evidence_queue.py" in manifest_text
+    assert "schemas/general_agent_promotion_live_evidence_queue.schema.json" in manifest_text
+    assert "scripts/validate_general_agent_promotion_terminal_approvals.py" in manifest_text
+    assert "schemas/general_agent_promotion_terminal_approvals.schema.json" in manifest_text
+    assert "scripts/plan_general_agent_promotion_terminal_certificate_gate.py" in manifest_text
+    assert "schemas/general_agent_promotion_terminal_certificate_gate.schema.json" in manifest_text
+    assert "scripts/plan_general_agent_promotion_terminal_certificate_candidates.py" in manifest_text
+    assert "schemas/general_agent_promotion_terminal_certificate_candidates.schema.json" in manifest_text
+    assert "scripts/reconcile_general_agent_promotion_terminal_evidence.py" in manifest_text
+    assert "schemas/general_agent_promotion_terminal_evidence_reconciliation.schema.json" in manifest_text
+    assert "scripts/gate_general_agent_promotion_terminal_minting.py" in manifest_text
+    assert "schemas/general_agent_promotion_terminal_minting_gate.schema.json" in manifest_text
+    assert "scripts/mint_general_agent_promotion_terminal_certificates.py" in manifest_text
+    assert "schemas/general_agent_promotion_terminal_certificate_minting_run.schema.json" in manifest_text
     assert "scripts/preflight_general_agent_promotion_handoff.py" in manifest_text
 
 
@@ -69,6 +83,13 @@ def test_manifest_preserves_open_blocker_traceability() -> None:
     assert ".change_assurance/general_agent_promotion_closure_plan.json" in manifest_text
     assert ".change_assurance/general_agent_promotion_closure_plan_schema_validation.json" in manifest_text
     assert ".change_assurance/general_agent_promotion_closure_plan_validation.json" in manifest_text
+    assert ".change_assurance/general_agent_promotion_live_evidence_queue.json" in manifest_text
+    assert ".change_assurance/general_agent_promotion_terminal_approvals.json" in manifest_text
+    assert ".change_assurance/general_agent_promotion_terminal_certificate_gate.json" in manifest_text
+    assert ".change_assurance/general_agent_promotion_terminal_certificate_candidates.json" in manifest_text
+    assert ".change_assurance/general_agent_promotion_terminal_evidence_reconciliation.json" in manifest_text
+    assert ".change_assurance/general_agent_promotion_terminal_minting_gate.json" in manifest_text
+    assert ".change_assurance/general_agent_promotion_terminal_certificate_minting_run.json" in manifest_text
     assert ".change_assurance/general_agent_promotion_environment_binding_receipt.json" in manifest_text
     assert ".change_assurance/general_agent_promotion_handoff_preflight.json" in manifest_text
     assert "STATUS:" in manifest_text

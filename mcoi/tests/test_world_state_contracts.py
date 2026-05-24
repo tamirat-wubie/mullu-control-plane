@@ -82,6 +82,60 @@ class TestDeltaKind:
 
 
 # ---------------------------------------------------------------------------
+# StateEntity and EntityRelation
+# ---------------------------------------------------------------------------
+
+
+class TestStateEntity:
+    def test_evidence_ids_reject_scalar_and_blank_items(self) -> None:
+        with pytest.raises(ValueError, match="evidence_ids must be an array"):
+            StateEntity(
+                entity_id="e-1",
+                entity_type="file",
+                attributes={},
+                evidence_ids="ev-1",
+            )
+        with pytest.raises(ValueError, match=r"evidence_ids\[0\]"):
+            StateEntity(
+                entity_id="e-1",
+                entity_type="file",
+                attributes={},
+                evidence_ids=("",),
+            )
+
+    def test_duplicate_evidence_ids_rejected(self) -> None:
+        with pytest.raises(ValueError, match="evidence_ids must be unique"):
+            StateEntity(
+                entity_id="e-1",
+                entity_type="file",
+                attributes={},
+                evidence_ids=("ev-1", "ev-1"),
+            )
+
+
+class TestEntityRelation:
+    def test_evidence_ids_reject_scalar_text(self) -> None:
+        with pytest.raises(ValueError, match="evidence_ids must be an array"):
+            EntityRelation(
+                relation_id="r-1",
+                source_entity_id="e-1",
+                target_entity_id="e-2",
+                relation_type="depends_on",
+                evidence_ids="ev-1",
+            )
+
+    def test_duplicate_evidence_ids_rejected(self) -> None:
+        with pytest.raises(ValueError, match="evidence_ids must be unique"):
+            EntityRelation(
+                relation_id="r-1",
+                source_entity_id="e-1",
+                target_entity_id="e-2",
+                relation_type="depends_on",
+                evidence_ids=("ev-1", "ev-1"),
+            )
+
+
+# ---------------------------------------------------------------------------
 # DerivedFact
 # ---------------------------------------------------------------------------
 
@@ -127,6 +181,30 @@ class TestDerivedFact:
                 derived_at=_TS,
             )
 
+    def test_source_entity_ids_reject_scalar_and_duplicates(self) -> None:
+        with pytest.raises(ValueError, match="source_entity_ids must be an array"):
+            DerivedFact(
+                fact_id="df-1",
+                entity_id="e-1",
+                attribute="health",
+                derived_value="healthy",
+                source_entity_ids="e-2",
+                derivation_rule="rule",
+                confidence=0.5,
+                derived_at=_TS,
+            )
+        with pytest.raises(ValueError, match="source_entity_ids must be unique"):
+            DerivedFact(
+                fact_id="df-2",
+                entity_id="e-1",
+                attribute="health",
+                derived_value="healthy",
+                source_entity_ids=("e-2", "e-2"),
+                derivation_rule="rule",
+                confidence=0.5,
+                derived_at=_TS,
+            )
+
     def test_confidence_above_one_raises(self) -> None:
         with pytest.raises(ValueError, match="confidence"):
             DerivedFact(
@@ -153,6 +231,44 @@ class TestDerivedFact:
         )
         with pytest.raises(AttributeError):
             f.confidence = 0.9  # type: ignore[misc]
+
+
+# ---------------------------------------------------------------------------
+# ContradictionRecord
+# ---------------------------------------------------------------------------
+
+
+class TestContradictionRecord:
+    def test_conflicting_evidence_ids_reject_scalar_and_duplicate_items(self) -> None:
+        with pytest.raises(ValueError, match="conflicting_evidence_ids must be an array"):
+            ContradictionRecord(
+                contradiction_id="c-1",
+                entity_id="e-1",
+                attribute="status",
+                conflicting_evidence_ids="ev-1",
+                strategy=ContradictionStrategy.ESCALATE,
+                resolved=False,
+            )
+        with pytest.raises(ValueError, match="conflicting_evidence_ids must be unique"):
+            ContradictionRecord(
+                contradiction_id="c-2",
+                entity_id="e-1",
+                attribute="status",
+                conflicting_evidence_ids=("ev-1", "ev-1"),
+                strategy=ContradictionStrategy.ESCALATE,
+                resolved=False,
+            )
+
+    def test_resolved_must_be_boolean(self) -> None:
+        with pytest.raises(ValueError, match="resolved"):
+            ContradictionRecord(
+                contradiction_id="c-3",
+                entity_id="e-1",
+                attribute="status",
+                conflicting_evidence_ids=("ev-1", "ev-2"),
+                strategy=ContradictionStrategy.ESCALATE,
+                resolved="false",
+            )
 
 
 # ---------------------------------------------------------------------------
@@ -249,6 +365,16 @@ class TestConflictSet:
                 conflict_set_id="cs-1",
                 entity_id="e-1",
                 contradictions=("not-a-contradiction",),  # type: ignore[arg-type]
+                overall_strategy=ContradictionStrategy.ESCALATE,
+                created_at=_TS,
+            )
+
+    def test_contradictions_reject_scalar_text(self) -> None:
+        with pytest.raises(ValueError, match="contradictions must be an array"):
+            ConflictSet(
+                conflict_set_id="cs-1",
+                entity_id="e-1",
+                contradictions="c-1",
                 overall_strategy=ContradictionStrategy.ESCALATE,
                 created_at=_TS,
             )
@@ -497,7 +623,7 @@ class TestWorldStateSnapshot:
             )
 
     def test_invalid_entity_type_raises(self) -> None:
-        with pytest.raises(ValueError, match="entity"):
+        with pytest.raises(ValueError, match="entities"):
             WorldStateSnapshot(
                 snapshot_id="wss-1",
                 entities=("not-an-entity",),  # type: ignore[arg-type]
@@ -507,6 +633,66 @@ class TestWorldStateSnapshot:
                 expected_states=(),
                 state_hash="abc",
                 entity_count=0,
+                relation_count=0,
+                overall_confidence=0.5,
+                captured_at=_TS,
+            )
+
+    def test_array_fields_reject_scalar_text(self) -> None:
+        with pytest.raises(ValueError, match="entities must be an array"):
+            WorldStateSnapshot(
+                snapshot_id="wss-1",
+                entities="entity",
+                relations=(),
+                derived_facts=(),
+                unresolved_contradictions=(),
+                expected_states=(),
+                state_hash="abc",
+                entity_count=0,
+                relation_count=0,
+                overall_confidence=0.5,
+                captured_at=_TS,
+            )
+        with pytest.raises(ValueError, match="relations must be an array"):
+            WorldStateSnapshot(
+                snapshot_id="wss-1",
+                entities=(),
+                relations="relation",
+                derived_facts=(),
+                unresolved_contradictions=(),
+                expected_states=(),
+                state_hash="abc",
+                entity_count=0,
+                relation_count=0,
+                overall_confidence=0.5,
+                captured_at=_TS,
+            )
+
+    def test_summary_counts_must_match_snapshot_arrays(self) -> None:
+        with pytest.raises(ValueError, match="entity_count"):
+            WorldStateSnapshot(
+                snapshot_id="wss-1",
+                entities=(_entity(),),
+                relations=(),
+                derived_facts=(),
+                unresolved_contradictions=(),
+                expected_states=(),
+                state_hash="abc",
+                entity_count=2,
+                relation_count=0,
+                overall_confidence=0.5,
+                captured_at=_TS,
+            )
+        with pytest.raises(ValueError, match="relation_count"):
+            WorldStateSnapshot(
+                snapshot_id="wss-2",
+                entities=(_entity(),),
+                relations=(_relation(),),
+                derived_facts=(),
+                unresolved_contradictions=(),
+                expected_states=(),
+                state_hash="abc",
+                entity_count=1,
                 relation_count=0,
                 overall_confidence=0.5,
                 captured_at=_TS,

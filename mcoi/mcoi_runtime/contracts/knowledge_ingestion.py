@@ -15,16 +15,53 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import StrEnum
-from typing import Any, Mapping
+from typing import Any, Mapping, TypeVar, cast
 
 from ._base import (
     ContractRecord,
     freeze_value,
     require_datetime_text,
     require_non_empty_text,
-    require_non_empty_tuple,
+    require_non_negative_int,
     require_unit_float,
 )
+
+
+ContractT = TypeVar("ContractT", bound=ContractRecord)
+
+
+def _freeze_text_array(
+    values: object,
+    field_name: str,
+    *,
+    allow_empty: bool = True,
+) -> tuple[str, ...]:
+    if isinstance(values, (str, bytes)) or not isinstance(values, (tuple, list)):
+        raise ValueError(f"{field_name} must be an array")
+    frozen = cast(tuple[Any, ...], freeze_value(list(values)))
+    if not allow_empty and not frozen:
+        raise ValueError(f"{field_name} must contain at least one item")
+    for idx, value in enumerate(frozen):
+        require_non_empty_text(value, f"{field_name}[{idx}]")
+    return cast(tuple[str, ...], frozen)
+
+
+def _freeze_contract_array(
+    values: object,
+    field_name: str,
+    record_type: type[ContractT],
+    *,
+    allow_empty: bool = True,
+) -> tuple[ContractT, ...]:
+    if isinstance(values, (str, bytes)) or not isinstance(values, (tuple, list)):
+        raise ValueError(f"{field_name} must be an array")
+    frozen = cast(tuple[Any, ...], freeze_value(list(values)))
+    if not allow_empty and not frozen:
+        raise ValueError(f"{field_name} must contain at least one item")
+    for idx, value in enumerate(frozen):
+        if not isinstance(value, record_type):
+            raise ValueError(f"{field_name}[{idx}] must be a {record_type.__name__}")
+    return cast(tuple[ContractT, ...], frozen)
 
 
 # --- Classification enums ---
@@ -84,8 +121,7 @@ class ProcedureStep(ContractRecord):
     verification_point: bool = False
 
     def __post_init__(self) -> None:
-        if not isinstance(self.step_order, int) or self.step_order < 0:
-            raise ValueError("step_order must be a non-negative integer")
+        object.__setattr__(self, "step_order", require_non_negative_int(self.step_order, "step_order"))
         object.__setattr__(self, "description", require_non_empty_text(self.description, "description"))
         if self.skill_id is not None:
             object.__setattr__(
@@ -141,16 +177,14 @@ class ProcedureCandidate(ContractRecord):
         object.__setattr__(self, "candidate_id", require_non_empty_text(self.candidate_id, "candidate_id"))
         object.__setattr__(self, "source_id", require_non_empty_text(self.source_id, "source_id"))
         object.__setattr__(self, "name", require_non_empty_text(self.name, "name"))
-        frozen_steps = freeze_value(list(self.steps))
-        if not frozen_steps:
-            raise ValueError("steps must contain at least one ProcedureStep")
-        for idx, step in enumerate(frozen_steps):
-            if not isinstance(step, ProcedureStep):
-                raise ValueError("steps must contain only ProcedureStep instances")
-        object.__setattr__(self, "steps", frozen_steps)
-        object.__setattr__(self, "preconditions", freeze_value(list(self.preconditions)))
-        object.__setattr__(self, "postconditions", freeze_value(list(self.postconditions)))
-        object.__setattr__(self, "missing_parts", freeze_value(list(self.missing_parts)))
+        object.__setattr__(
+            self,
+            "steps",
+            _freeze_contract_array(self.steps, "steps", ProcedureStep, allow_empty=False),
+        )
+        object.__setattr__(self, "preconditions", _freeze_text_array(self.preconditions, "preconditions"))
+        object.__setattr__(self, "postconditions", _freeze_text_array(self.postconditions, "postconditions"))
+        object.__setattr__(self, "missing_parts", _freeze_text_array(self.missing_parts, "missing_parts"))
         if self.confidence is not None and not isinstance(self.confidence, ConfidenceLevel):
             raise ValueError("confidence must be a ConfidenceLevel instance or None")
         if not isinstance(self.lifecycle, KnowledgeLifecycle):
@@ -174,11 +208,11 @@ class MethodPattern(ContractRecord):
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "pattern_id", require_non_empty_text(self.pattern_id, "pattern_id"))
-        object.__setattr__(self, "source_ids", require_non_empty_tuple(self.source_ids, "source_ids"))
+        object.__setattr__(self, "source_ids", _freeze_text_array(self.source_ids, "source_ids", allow_empty=False))
         object.__setattr__(self, "name", require_non_empty_text(self.name, "name"))
         object.__setattr__(self, "description", require_non_empty_text(self.description, "description"))
         object.__setattr__(self, "applicability", require_non_empty_text(self.applicability, "applicability"))
-        object.__setattr__(self, "steps", require_non_empty_tuple(self.steps, "steps"))
+        object.__setattr__(self, "steps", _freeze_text_array(self.steps, "steps", allow_empty=False))
         if self.confidence is not None and not isinstance(self.confidence, ConfidenceLevel):
             raise ValueError("confidence must be a ConfidenceLevel instance or None")
         if not isinstance(self.lifecycle, KnowledgeLifecycle):
@@ -202,11 +236,15 @@ class BestPracticeRecord(ContractRecord):
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "practice_id", require_non_empty_text(self.practice_id, "practice_id"))
-        object.__setattr__(self, "source_ids", require_non_empty_tuple(self.source_ids, "source_ids"))
+        object.__setattr__(self, "source_ids", _freeze_text_array(self.source_ids, "source_ids", allow_empty=False))
         object.__setattr__(self, "name", require_non_empty_text(self.name, "name"))
         object.__setattr__(self, "description", require_non_empty_text(self.description, "description"))
-        object.__setattr__(self, "conditions", require_non_empty_tuple(self.conditions, "conditions"))
-        object.__setattr__(self, "recommendations", require_non_empty_tuple(self.recommendations, "recommendations"))
+        object.__setattr__(self, "conditions", _freeze_text_array(self.conditions, "conditions", allow_empty=False))
+        object.__setattr__(
+            self,
+            "recommendations",
+            _freeze_text_array(self.recommendations, "recommendations", allow_empty=False),
+        )
         if self.confidence is not None and not isinstance(self.confidence, ConfidenceLevel):
             raise ValueError("confidence must be a ConfidenceLevel instance or None")
         if not isinstance(self.lifecycle, KnowledgeLifecycle):
@@ -230,9 +268,13 @@ class FailurePattern(ContractRecord):
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "pattern_id", require_non_empty_text(self.pattern_id, "pattern_id"))
-        object.__setattr__(self, "source_ids", require_non_empty_tuple(self.source_ids, "source_ids"))
+        object.__setattr__(self, "source_ids", _freeze_text_array(self.source_ids, "source_ids", allow_empty=False))
         object.__setattr__(self, "name", require_non_empty_text(self.name, "name"))
-        object.__setattr__(self, "trigger_conditions", require_non_empty_tuple(self.trigger_conditions, "trigger_conditions"))
+        object.__setattr__(
+            self,
+            "trigger_conditions",
+            _freeze_text_array(self.trigger_conditions, "trigger_conditions", allow_empty=False),
+        )
         object.__setattr__(self, "failure_mode", require_non_empty_text(self.failure_mode, "failure_mode"))
         object.__setattr__(self, "recommended_response", require_non_empty_text(self.recommended_response, "recommended_response"))
         if self.confidence is not None and not isinstance(self.confidence, ConfidenceLevel):

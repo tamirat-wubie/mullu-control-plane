@@ -2,8 +2,6 @@
 
 import pytest
 
-NOW = "2025-01-01T00:00:00+00:00"
-
 from mcoi_runtime.contracts.workflow import (
     StageExecutionResult,
     StageStatus,
@@ -17,6 +15,8 @@ from mcoi_runtime.contracts.workflow import (
     WorkflowTransition,
     WorkflowVerificationRecord,
 )
+
+NOW = "2025-01-01T00:00:00+00:00"
 
 
 # --- Helpers ---

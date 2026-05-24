@@ -60,8 +60,8 @@ def test_validate_promotion_operator_checklist_rejects_command_drift(tmp_path: P
     result = validate_general_agent_promotion_operator_checklist(checklist_path)
 
     assert result.valid is False
-    assert any("validate_general_agent_promotion_closure_plan_schema.py" in error for error in result.errors)
-    assert any("validate_general_agent_promotion_closure_plan.py" in error for error in result.errors)
+    assert any("run_general_agent_promotion_closure_chain.py" in error for error in result.errors)
+    assert any("--json" in error for error in result.errors)
     assert any("--strict" in error for error in result.errors)
 
 

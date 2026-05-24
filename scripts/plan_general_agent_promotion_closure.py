@@ -2,14 +2,17 @@
 """Plan full general-agent promotion closure.
 
 Purpose: combine adapter and deployment closure plans into one deterministic
-operator-facing promotion plan.
+operator-facing promotion plan, with optional activation-blocked improvement
+portfolio actions.
 Governance scope: [OCE, RAG, CDCV, CQTE, UWMA, PRS]
-Dependencies: adapter closure plan, deployment publication closure plan, and
-general-agent promotion readiness artifact.
+Dependencies: adapter closure plan, deployment publication closure plan,
+optional capability improvement portfolio, and general-agent promotion
+readiness artifact.
 Invariants:
   - Aggregation never claims production readiness.
   - Approval-required actions remain approval-required.
   - Source plan blockers and action counts remain traceable.
+  - Improvement portfolio actions remain operator review steps, not execution.
 """
 
 from __future__ import annotations
@@ -25,6 +28,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_READINESS = REPO_ROOT / ".change_assurance" / "general_agent_promotion_readiness.json"
 DEFAULT_ADAPTER_PLAN = REPO_ROOT / ".change_assurance" / "capability_adapter_closure_plan.json"
 DEFAULT_DEPLOYMENT_PLAN = REPO_ROOT / ".change_assurance" / "deployment_publication_closure_plan.json"
+DEFAULT_PORTFOLIO_PLAN = REPO_ROOT / ".change_assurance" / "capability_improvement_portfolio.json"
 DEFAULT_OUTPUT = REPO_ROOT / ".change_assurance" / "general_agent_promotion_closure_plan.json"
 
 
@@ -60,17 +64,26 @@ def plan_general_agent_promotion_closure(
     readiness_path: Path = DEFAULT_READINESS,
     adapter_plan_path: Path = DEFAULT_ADAPTER_PLAN,
     deployment_plan_path: Path = DEFAULT_DEPLOYMENT_PLAN,
+    portfolio_plan_path: Path | None = None,
 ) -> PromotionClosurePlan:
     """Combine current closure plans into one production-promotion plan."""
     readiness = _load_json_object(readiness_path, "promotion readiness")
     adapter_plan = _load_json_object(adapter_plan_path, "adapter closure plan")
     deployment_plan = _load_json_object(deployment_plan_path, "deployment publication closure plan")
+    portfolio_plan = (
+        _load_json_object(portfolio_plan_path, "capability improvement portfolio")
+        if portfolio_plan_path is not None
+        else None
+    )
     actions = tuple(
         _tag_action(action, source="adapter")
         for action in _action_items(adapter_plan)
     ) + tuple(
         _tag_action(action, source="deployment")
         for action in _action_items(deployment_plan)
+    ) + tuple(
+        portfolio_closure_action
+        for portfolio_closure_action in _portfolio_actions(portfolio_plan)
     )
     blockers = tuple(
         dict.fromkeys(
@@ -78,17 +91,23 @@ def plan_general_agent_promotion_closure(
                 *[str(blocker) for blocker in readiness.get("blockers", ())],
                 *[str(blocker) for blocker in adapter_plan.get("blockers", ())],
                 *[str(blocker) for blocker in deployment_plan.get("blockers", ())],
+                *[str(blocker) for blocker in (portfolio_plan or {}).get("blocked_reasons", ())],
             ]
         )
     )
+    source_plan_ids = [
+        str(adapter_plan.get("plan_id", "")),
+        str(deployment_plan.get("plan_id", "")),
+    ]
+    source_plan_paths = [str(adapter_plan_path), str(deployment_plan_path)]
+    if portfolio_plan_path is not None:
+        source_plan_ids.append(str((portfolio_plan or {}).get("portfolio_id", "")))
+        source_plan_paths.append(str(portfolio_plan_path))
     approval_required_count = sum(1 for action in actions if action.get("approval_required") is True)
     plan_material = {
         "readiness_level": str(readiness.get("readiness_level", "unknown")),
         "source_ready": readiness.get("ready") is True,
-        "source_plan_ids": (
-            str(adapter_plan.get("plan_id", "")),
-            str(deployment_plan.get("plan_id", "")),
-        ),
+        "source_plan_ids": tuple(source_plan_ids),
         "blockers": blockers,
         "actions": actions,
     }
@@ -101,7 +120,7 @@ def plan_general_agent_promotion_closure(
         source_ready=readiness.get("ready") is True,
         total_action_count=len(actions),
         approval_required_action_count=approval_required_count,
-        source_plans=(str(adapter_plan_path), str(deployment_plan_path)),
+        source_plans=tuple(source_plan_paths),
         blockers=blockers,
         actions=actions,
     )
@@ -133,6 +152,64 @@ def _tag_action(action: dict[str, Any], *, source: str) -> dict[str, Any]:
     return tagged
 
 
+def _portfolio_actions(portfolio_plan: dict[str, Any] | None) -> tuple[dict[str, Any], ...]:
+    if not portfolio_plan:
+        return ()
+    plans = portfolio_plan.get("plans", ())
+    if not isinstance(plans, list):
+        raise ValueError("capability improvement portfolio plans must be a list")
+    portfolio_hash = str(portfolio_plan.get("portfolio_hash", "")).strip()
+    portfolio_id = str(portfolio_plan.get("portfolio_id", "")).strip()
+    actions: list[dict[str, Any]] = []
+    for index, plan in enumerate(plans):
+        if not isinstance(plan, dict):
+            raise ValueError(f"capability improvement portfolio plan {index} must be an object")
+        capability_id = str(plan.get("capability_id", "")).strip()
+        if not capability_id:
+            raise ValueError(f"capability improvement portfolio plan {index} missing capability_id")
+        diagnosis = plan.get("diagnosis", {})
+        candidate = plan.get("candidate", {})
+        health_signal = plan.get("health_signal", {})
+        if not isinstance(diagnosis, dict) or not isinstance(candidate, dict) or not isinstance(health_signal, dict):
+            raise ValueError(f"capability improvement portfolio plan {index} shape invalid")
+        plan_id = str(plan.get("plan_id", "")).strip()
+        action_id = f"capability-improvement-{_safe_id(capability_id)}-{_safe_id(plan_id)[-16:]}"
+        evidence_required = tuple(
+            dict.fromkeys(
+                [
+                    *[str(ref) for ref in health_signal.get("evidence_refs", ()) if str(ref).strip()],
+                    *[str(ref) for ref in diagnosis.get("evidence_refs", ()) if str(ref).strip()],
+                    *[str(ref) for ref in plan.get("blocked_reasons", ()) if str(ref).strip()],
+                ]
+            )
+        )
+        actions.append(
+            {
+                "action_id": action_id,
+                "action_type": "capability-improvement",
+                "blocker": f"capability_improvement_required:{capability_id}",
+                "command": f"Review activation-blocked improvement plan {plan_id} for {capability_id}.",
+                "verification_command": (
+                    "python -m pytest tests/test_gateway/test_autonomous_capability_upgrade.py "
+                    "tests/test_gateway/test_operator_capability_console.py -q"
+                ),
+                "receipt_validator": f"capability_improvement_portfolio:{portfolio_hash}:{plan_id}",
+                "evidence_required": list(evidence_required),
+                "risk_level": str(diagnosis.get("severity", "medium")),
+                "approval_required": True,
+                "source_plan_type": "portfolio",
+            }
+        )
+    if portfolio_id and not actions:
+        raise ValueError("capability improvement portfolio has no plans")
+    return tuple(actions)
+
+
+def _safe_id(value: str) -> str:
+    normalized = "".join(char if char.isalnum() else "-" for char in value).strip("-").lower()
+    return normalized or "unknown"
+
+
 def _load_json_object(path: Path, label: str) -> dict[str, Any]:
     if not path.exists():
         raise FileNotFoundError(f"{label} file missing: {path}")
@@ -159,6 +236,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--readiness", default=str(DEFAULT_READINESS))
     parser.add_argument("--adapter-plan", default=str(DEFAULT_ADAPTER_PLAN))
     parser.add_argument("--deployment-plan", default=str(DEFAULT_DEPLOYMENT_PLAN))
+    parser.add_argument("--portfolio-plan", default="")
     parser.add_argument("--output", default=str(DEFAULT_OUTPUT))
     parser.add_argument("--json", action="store_true")
     return parser.parse_args(argv)
@@ -171,6 +249,7 @@ def main(argv: list[str] | None = None) -> int:
         readiness_path=Path(args.readiness),
         adapter_plan_path=Path(args.adapter_plan),
         deployment_plan_path=Path(args.deployment_plan),
+        portfolio_plan_path=Path(args.portfolio_plan) if str(args.portfolio_plan).strip() else None,
     )
     write_general_agent_promotion_closure_plan(plan, Path(args.output))
     if args.json:

@@ -89,6 +89,27 @@
         "adapter_schema_validation_report",
         "adapter_schema_validator",
         "aggregate_closure_plan",
+        "capability_improvement_portfolio",
+        "closure_chain_runner",
+        "live_evidence_queue",
+        "live_evidence_queue_planner",
+        "terminal_approval_receipt",
+        "terminal_approval_receipt_schema",
+        "terminal_approval_receipt_validator",
+        "terminal_certificate_gate",
+        "terminal_certificate_gate_planner",
+        "terminal_certificate_candidates",
+        "terminal_certificate_candidates_schema",
+        "terminal_certificate_candidates_planner",
+        "terminal_evidence_reconciliation",
+        "terminal_evidence_reconciliation_schema",
+        "terminal_evidence_reconciliation_planner",
+        "terminal_minting_gate",
+        "terminal_minting_gate_schema",
+        "terminal_minting_gate_planner",
+        "terminal_certificate_minting_run",
+        "terminal_certificate_minting_run_schema",
+        "terminal_certificate_minting_executor",
         "schema_validation_report",
         "drift_validation_report",
         "readiness_report",
@@ -141,6 +162,90 @@
           "minLength": 1
         },
         "aggregate_closure_plan": {
+          "type": "string",
+          "minLength": 1
+        },
+        "capability_improvement_portfolio": {
+          "type": "string",
+          "minLength": 1
+        },
+        "closure_chain_runner": {
+          "type": "string",
+          "minLength": 1
+        },
+        "live_evidence_queue": {
+          "type": "string",
+          "minLength": 1
+        },
+        "live_evidence_queue_planner": {
+          "type": "string",
+          "minLength": 1
+        },
+        "terminal_approval_receipt": {
+          "type": "string",
+          "minLength": 1
+        },
+        "terminal_approval_receipt_schema": {
+          "type": "string",
+          "minLength": 1
+        },
+        "terminal_approval_receipt_validator": {
+          "type": "string",
+          "minLength": 1
+        },
+        "terminal_certificate_gate": {
+          "type": "string",
+          "minLength": 1
+        },
+        "terminal_certificate_gate_planner": {
+          "type": "string",
+          "minLength": 1
+        },
+        "terminal_certificate_candidates": {
+          "type": "string",
+          "minLength": 1
+        },
+        "terminal_certificate_candidates_schema": {
+          "type": "string",
+          "minLength": 1
+        },
+        "terminal_certificate_candidates_planner": {
+          "type": "string",
+          "minLength": 1
+        },
+        "terminal_evidence_reconciliation": {
+          "type": "string",
+          "minLength": 1
+        },
+        "terminal_evidence_reconciliation_schema": {
+          "type": "string",
+          "minLength": 1
+        },
+        "terminal_evidence_reconciliation_planner": {
+          "type": "string",
+          "minLength": 1
+        },
+        "terminal_minting_gate": {
+          "type": "string",
+          "minLength": 1
+        },
+        "terminal_minting_gate_schema": {
+          "type": "string",
+          "minLength": 1
+        },
+        "terminal_minting_gate_planner": {
+          "type": "string",
+          "minLength": 1
+        },
+        "terminal_certificate_minting_run": {
+          "type": "string",
+          "minLength": 1
+        },
+        "terminal_certificate_minting_run_schema": {
+          "type": "string",
+          "minLength": 1
+        },
+        "terminal_certificate_minting_executor": {
           "type": "string",
           "minLength": 1
         },

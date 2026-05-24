@@ -1,0 +1,98 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:general-agent-promotion-terminal-approvals:1",
+  "title": "General Agent Promotion Terminal Approvals",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "receipt_id",
+    "checked_at",
+    "secret_serialization",
+    "approvals",
+    "metadata"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "receipt_id": {
+      "type": "string",
+      "const": "general-agent-promotion-terminal-approvals-v1"
+    },
+    "checked_at": {
+      "type": "string",
+      "minLength": 1
+    },
+    "secret_serialization": {
+      "type": "string",
+      "const": "forbidden"
+    },
+    "approvals": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "source_action_id",
+          "approval_ref",
+          "approved",
+          "scope",
+          "value_serialized"
+        ],
+        "properties": {
+          "source_action_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "approval_ref": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^approval://"
+          },
+          "approved": {
+            "type": "boolean",
+            "const": true
+          },
+          "scope": {
+            "type": "string",
+            "const": "terminal_certificate_gate"
+          },
+          "value_serialized": {
+            "type": "boolean",
+            "const": false
+          }
+        }
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "gate_is_not_execution",
+        "secret_values_serialized",
+        "approval_values_are_refs",
+        "terminal_certificate_gate_schema_id"
+      ],
+      "properties": {
+        "gate_is_not_execution": {
+          "type": "boolean",
+          "const": true
+        },
+        "secret_values_serialized": {
+          "type": "boolean",
+          "const": false
+        },
+        "approval_values_are_refs": {
+          "type": "boolean",
+          "const": true
+        },
+        "terminal_certificate_gate_schema_id": {
+          "type": "string",
+          "const": "urn:mullusi:schema:general-agent-promotion-terminal-certificate-gate:1"
+        }
+      }
+    }
+  }
+}

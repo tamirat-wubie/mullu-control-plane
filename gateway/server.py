@@ -2523,6 +2523,8 @@ def create_gateway_app(
         admission_status: str = "",
         audit_limit: int = 100,
         audit_offset: int = 0,
+        include_improvement_portfolio: bool = False,
+        improvement_candidate_limit: int = 5,
     ):
         _require_authority_operator(request)
         return build_operator_capability_read_model(
@@ -2534,6 +2536,9 @@ def create_gateway_app(
             admission_status=admission_status,
             audit_limit=audit_limit,
             audit_offset=audit_offset,
+            include_improvement_portfolio=include_improvement_portfolio,
+            improvement_generated_at=_clock(),
+            improvement_candidate_limit=improvement_candidate_limit,
         )
 
     @app.get("/operator/code-intelligence/read-model")
@@ -2568,6 +2573,8 @@ def create_gateway_app(
         admission_status: str = "",
         audit_limit: int = 100,
         audit_offset: int = 0,
+        include_improvement_portfolio: bool = False,
+        improvement_candidate_limit: int = 5,
     ):
         _require_authority_operator(request)
         read_model = build_operator_capability_read_model(
@@ -2579,6 +2586,9 @@ def create_gateway_app(
             admission_status=admission_status,
             audit_limit=audit_limit,
             audit_offset=audit_offset,
+            include_improvement_portfolio=include_improvement_portfolio,
+            improvement_generated_at=_clock(),
+            improvement_candidate_limit=improvement_candidate_limit,
         )
         return HTMLResponse(render_operator_capability_console(read_model))
 

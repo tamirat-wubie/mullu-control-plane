@@ -265,6 +265,36 @@ def test_example_inventory_covers_shipped_and_pilot_artifacts() -> None:
     assert "ledger_violation.json" in mcoi_runtime_fixture_names
     assert "ledger_assessment.json" in mcoi_runtime_fixture_names
     assert "ledger_closure_report.json" in mcoi_runtime_fixture_names
+    assert "concept_record.json" in mcoi_runtime_fixture_names
+    assert "concept_relation.json" in mcoi_runtime_fixture_names
+    assert "schema_mapping.json" in mcoi_runtime_fixture_names
+    assert "entity_alignment.json" in mcoi_runtime_fixture_names
+    assert "semantic_conflict.json" in mcoi_runtime_fixture_names
+    assert "ontology_decision.json" in mcoi_runtime_fixture_names
+    assert "ontology_assessment.json" in mcoi_runtime_fixture_names
+    assert "ontology_violation.json" in mcoi_runtime_fixture_names
+    assert "ontology_snapshot.json" in mcoi_runtime_fixture_names
+    assert "ontology_closure_report.json" in mcoi_runtime_fixture_names
+    assert "knowledge_claim.json" in mcoi_runtime_fixture_names
+    assert "evidence_source.json" in mcoi_runtime_fixture_names
+    assert "trust_assessment.json" in mcoi_runtime_fixture_names
+    assert "source_reliability_record.json" in mcoi_runtime_fixture_names
+    assert "claim_conflict.json" in mcoi_runtime_fixture_names
+    assert "epistemic_decision.json" in mcoi_runtime_fixture_names
+    assert "epistemic_assessment.json" in mcoi_runtime_fixture_names
+    assert "epistemic_violation.json" in mcoi_runtime_fixture_names
+    assert "epistemic_snapshot.json" in mcoi_runtime_fixture_names
+    assert "epistemic_closure_report.json" in mcoi_runtime_fixture_names
+    assert "belief_record.json" in mcoi_runtime_fixture_names
+    assert "uncertainty_hypothesis.json" in mcoi_runtime_fixture_names
+    assert "evidence_weight_record.json" in mcoi_runtime_fixture_names
+    assert "confidence_interval.json" in mcoi_runtime_fixture_names
+    assert "belief_update.json" in mcoi_runtime_fixture_names
+    assert "competing_hypothesis_set.json" in mcoi_runtime_fixture_names
+    assert "belief_decision.json" in mcoi_runtime_fixture_names
+    assert "uncertainty_assessment.json" in mcoi_runtime_fixture_names
+    assert "uncertainty_snapshot.json" in mcoi_runtime_fixture_names
+    assert "uncertainty_closure_report.json" in mcoi_runtime_fixture_names
     assert "approval_gated_command" in pilot_names
 
 
@@ -277,7 +307,7 @@ def test_validate_example_artifacts_strictly() -> None:
     assert len(inventory.request_paths) >= 3
     assert len(inventory.auxiliary_paths) >= 1
     assert len(inventory.maf_runtime_fixture_paths) >= 89
-    assert len(inventory.mcoi_runtime_fixture_paths) >= 151
+    assert len(inventory.mcoi_runtime_fixture_paths) >= 181
 
 
 def test_validate_maf_runtime_fixtures_strictly() -> None:
@@ -2593,6 +2623,410 @@ def test_validate_mcoi_runtime_fixture_rejects_ledger_closure_proof_overflow(tmp
 
     assert len(errors) == 1
     assert "total_proofs must not exceed total_transactions" in errors[0]
+    assert fixture_path.name in errors[0]
+
+
+def test_validate_mcoi_runtime_fixture_rejects_ontology_relation_self_loop(tmp_path: Path) -> None:
+    fixture_path = tmp_path / "concept_relation.json"
+    fixture_path.write_text(
+        json.dumps(
+            {
+                "relation_id": "relation-drift",
+                "tenant_id": "tenant-1",
+                "parent_ref": "concept-shared",
+                "child_ref": "concept-shared",
+                "kind": "relation",
+                "strength": "moderate",
+                "created_at": "2026-05-08T09:00:00+00:00",
+                "metadata": {"scope": "ontology"},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_artifacts.validate_mcoi_runtime_fixture(fixture_path)
+
+    assert len(errors) == 1
+    assert "parent_ref must not equal child_ref" in errors[0]
+    assert fixture_path.name in errors[0]
+
+
+def test_validate_mcoi_runtime_fixture_rejects_ontology_unmatched_mapping_with_fields(tmp_path: Path) -> None:
+    fixture_path = tmp_path / "schema_mapping.json"
+    fixture_path.write_text(
+        json.dumps(
+            {
+                "mapping_id": "mapping-drift",
+                "tenant_id": "tenant-1",
+                "source_schema": "source.schema.v1",
+                "target_schema": "target.schema.v1",
+                "disposition": "unmatched",
+                "field_count": 2,
+                "created_at": "2026-05-08T09:10:00+00:00",
+                "metadata": {"scope": "ontology"},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_artifacts.validate_mcoi_runtime_fixture(fixture_path)
+
+    assert len(errors) == 1
+    assert "unmatched mappings must keep field_count at 0" in errors[0]
+    assert fixture_path.name in errors[0]
+
+
+def test_validate_mcoi_runtime_fixture_rejects_ontology_self_alignment(tmp_path: Path) -> None:
+    fixture_path = tmp_path / "entity_alignment.json"
+    fixture_path.write_text(
+        json.dumps(
+            {
+                "alignment_id": "alignment-drift",
+                "tenant_id": "tenant-1",
+                "source_ref": "entity-shared",
+                "target_ref": "entity-shared",
+                "strength": "strong",
+                "confidence": 0.99,
+                "created_at": "2026-05-08T09:20:00+00:00",
+                "metadata": {"basis": "stable-id"},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_artifacts.validate_mcoi_runtime_fixture(fixture_path)
+
+    assert len(errors) == 1
+    assert "source_ref must not equal target_ref" in errors[0]
+    assert fixture_path.name in errors[0]
+
+
+def test_validate_mcoi_runtime_fixture_rejects_ontology_self_conflict(tmp_path: Path) -> None:
+    fixture_path = tmp_path / "semantic_conflict.json"
+    fixture_path.write_text(
+        json.dumps(
+            {
+                "conflict_id": "conflict-drift",
+                "tenant_id": "tenant-1",
+                "concept_a_ref": "concept-shared",
+                "concept_b_ref": "concept-shared",
+                "status": "detected",
+                "reason": "self conflict drift",
+                "detected_at": "2026-05-08T09:30:00+00:00",
+                "metadata": {"scope": "ontology"},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_artifacts.validate_mcoi_runtime_fixture(fixture_path)
+
+    assert len(errors) == 1
+    assert "concept_a_ref must not equal concept_b_ref" in errors[0]
+    assert fixture_path.name in errors[0]
+
+
+def test_validate_mcoi_runtime_fixture_rejects_ontology_snapshot_relation_underflow(tmp_path: Path) -> None:
+    fixture_path = tmp_path / "ontology_snapshot.json"
+    fixture_path.write_text(
+        json.dumps(
+            {
+                "snapshot_id": "ontology-snapshot-drift",
+                "tenant_id": "tenant-1",
+                "total_concepts": 1,
+                "total_relations": 2,
+                "total_mappings": 1,
+                "total_alignments": 1,
+                "total_conflicts": 0,
+                "total_violations": 0,
+                "captured_at": "2026-05-08T09:40:00+00:00",
+                "metadata": {"scope": "tenant"},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_artifacts.validate_mcoi_runtime_fixture(fixture_path)
+
+    assert len(errors) == 1
+    assert "total_relations require at least two concepts" in errors[0]
+    assert fixture_path.name in errors[0]
+
+
+def test_validate_mcoi_runtime_fixture_rejects_epistemic_reliability_noop_update(tmp_path: Path) -> None:
+    fixture_path = tmp_path / "source_reliability_record.json"
+    fixture_path.write_text(
+        json.dumps(
+            {
+                "record_id": "reliability-drift",
+                "tenant_id": "tenant-1",
+                "source_ref": "source-1",
+                "previous_score": 0.7,
+                "updated_score": 0.7,
+                "reason": "no effective change",
+                "updated_at": "2026-05-09T09:00:00+00:00",
+                "metadata": {"scope": "epistemic"},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_artifacts.validate_mcoi_runtime_fixture(fixture_path)
+
+    assert len(errors) == 1
+    assert "updated_score must differ from previous_score" in errors[0]
+    assert fixture_path.name in errors[0]
+
+
+def test_validate_mcoi_runtime_fixture_rejects_epistemic_self_conflict(tmp_path: Path) -> None:
+    fixture_path = tmp_path / "claim_conflict.json"
+    fixture_path.write_text(
+        json.dumps(
+            {
+                "conflict_id": "claim-conflict-drift",
+                "tenant_id": "tenant-1",
+                "claim_a_ref": "claim-shared",
+                "claim_b_ref": "claim-shared",
+                "disposition": "unresolved",
+                "resolution_basis": "",
+                "detected_at": "2026-05-09T09:05:00+00:00",
+                "metadata": {"scope": "epistemic"},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_artifacts.validate_mcoi_runtime_fixture(fixture_path)
+
+    assert len(errors) == 1
+    assert "claim_a_ref must not equal claim_b_ref" in errors[0]
+    assert fixture_path.name in errors[0]
+
+
+def test_validate_mcoi_runtime_fixture_rejects_epistemic_resolved_conflict_without_basis(tmp_path: Path) -> None:
+    fixture_path = tmp_path / "claim_conflict.json"
+    fixture_path.write_text(
+        json.dumps(
+            {
+                "conflict_id": "claim-conflict-no-basis",
+                "tenant_id": "tenant-1",
+                "claim_a_ref": "claim-a",
+                "claim_b_ref": "claim-b",
+                "disposition": "merged",
+                "resolution_basis": "",
+                "detected_at": "2026-05-09T09:10:00+00:00",
+                "metadata": {"scope": "epistemic"},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_artifacts.validate_mcoi_runtime_fixture(fixture_path)
+
+    assert len(errors) == 1
+    assert "resolved claim conflicts must carry resolution_basis" in errors[0]
+    assert fixture_path.name in errors[0]
+
+
+def test_validate_mcoi_runtime_fixture_rejects_epistemic_snapshot_assessment_overflow(tmp_path: Path) -> None:
+    fixture_path = tmp_path / "epistemic_snapshot.json"
+    fixture_path.write_text(
+        json.dumps(
+            {
+                "snapshot_id": "epistemic-snapshot-drift",
+                "tenant_id": "tenant-1",
+                "total_claims": 2,
+                "total_sources": 1,
+                "total_assessments": 3,
+                "total_conflicts": 1,
+                "total_reliability_updates": 1,
+                "total_violations": 0,
+                "captured_at": "2026-05-09T09:15:00+00:00",
+                "metadata": {"scope": "tenant"},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_artifacts.validate_mcoi_runtime_fixture(fixture_path)
+
+    assert len(errors) == 1
+    assert "total_assessments must not exceed total_claims" in errors[0]
+    assert fixture_path.name in errors[0]
+
+
+def test_validate_mcoi_runtime_fixture_rejects_epistemic_zero_claim_conflict_drift(tmp_path: Path) -> None:
+    fixture_path = tmp_path / "epistemic_closure_report.json"
+    fixture_path.write_text(
+        json.dumps(
+            {
+                "report_id": "epistemic-closure-drift",
+                "tenant_id": "tenant-1",
+                "total_claims": 0,
+                "total_sources": 1,
+                "total_conflicts": 1,
+                "total_violations": 0,
+                "created_at": "2026-05-09T09:20:00+00:00",
+                "metadata": {"period": "2026-05"},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_artifacts.validate_mcoi_runtime_fixture(fixture_path)
+
+    assert len(errors) == 1
+    assert "total_conflicts must be 0 when total_claims is 0" in errors[0]
+    assert fixture_path.name in errors[0]
+
+
+def test_validate_mcoi_runtime_fixture_rejects_uncertainty_interval_reverse_bounds(tmp_path: Path) -> None:
+    fixture_path = tmp_path / "confidence_interval.json"
+    fixture_path.write_text(
+        json.dumps(
+            {
+                "interval_id": "interval-drift",
+                "tenant_id": "tenant-1",
+                "belief_ref": "belief-1",
+                "lower": 0.8,
+                "upper": 0.3,
+                "confidence_level": 0.95,
+                "created_at": "2026-05-10T09:00:00+00:00",
+                "metadata": {"scope": "uncertainty"},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_artifacts.validate_mcoi_runtime_fixture(fixture_path)
+
+    assert len(errors) == 1
+    assert "lower must not exceed upper" in errors[0]
+    assert fixture_path.name in errors[0]
+
+
+def test_validate_mcoi_runtime_fixture_rejects_uncertainty_noop_belief_update(tmp_path: Path) -> None:
+    fixture_path = tmp_path / "belief_update.json"
+    fixture_path.write_text(
+        json.dumps(
+            {
+                "update_id": "belief-update-drift",
+                "tenant_id": "tenant-1",
+                "belief_ref": "belief-1",
+                "prior_confidence": 0.6,
+                "posterior_confidence": 0.6,
+                "evidence_ref": "evidence-1",
+                "updated_at": "2026-05-10T09:05:00+00:00",
+                "metadata": {"scope": "uncertainty"},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_artifacts.validate_mcoi_runtime_fixture(fixture_path)
+
+    assert len(errors) == 1
+    assert "posterior_confidence must differ from prior_confidence" in errors[0]
+    assert fixture_path.name in errors[0]
+
+
+def test_validate_mcoi_runtime_fixture_rejects_uncertainty_empty_hypothesis_set(tmp_path: Path) -> None:
+    fixture_path = tmp_path / "competing_hypothesis_set.json"
+    fixture_path.write_text(
+        json.dumps(
+            {
+                "set_id": "hypothesis-set-drift",
+                "tenant_id": "tenant-1",
+                "hypothesis_count": 0,
+                "leading_hypothesis_ref": "hypothesis-1",
+                "created_at": "2026-05-10T09:10:00+00:00",
+                "metadata": {"scope": "uncertainty"},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_artifacts.validate_mcoi_runtime_fixture(fixture_path)
+
+    assert len(errors) == 1
+    assert "hypothesis_count must be positive" in errors[0]
+    assert fixture_path.name in errors[0]
+
+
+def test_validate_mcoi_runtime_fixture_rejects_uncertainty_snapshot_without_beliefs(tmp_path: Path) -> None:
+    fixture_path = tmp_path / "uncertainty_snapshot.json"
+    fixture_path.write_text(
+        json.dumps(
+            {
+                "snapshot_id": "uncertainty-snapshot-drift",
+                "tenant_id": "tenant-1",
+                "total_beliefs": 0,
+                "total_hypotheses": 1,
+                "total_weights": 1,
+                "total_intervals": 0,
+                "total_updates": 0,
+                "total_violations": 0,
+                "captured_at": "2026-05-10T09:15:00+00:00",
+                "metadata": {"scope": "tenant"},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_artifacts.validate_mcoi_runtime_fixture(fixture_path)
+
+    assert len(errors) == 1
+    assert "derived uncertainty totals must be 0 when total_beliefs is 0" in errors[0]
+    assert fixture_path.name in errors[0]
+
+
+def test_validate_mcoi_runtime_fixture_rejects_uncertainty_closure_without_beliefs(tmp_path: Path) -> None:
+    fixture_path = tmp_path / "uncertainty_closure_report.json"
+    fixture_path.write_text(
+        json.dumps(
+            {
+                "report_id": "uncertainty-closure-drift",
+                "tenant_id": "tenant-1",
+                "total_beliefs": 0,
+                "total_hypotheses": 1,
+                "total_updates": 0,
+                "total_violations": 0,
+                "created_at": "2026-05-10T09:20:00+00:00",
+                "metadata": {"period": "2026-05"},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_artifacts.validate_mcoi_runtime_fixture(fixture_path)
+
+    assert len(errors) == 1
+    assert "hypothesis and update totals must be 0 when total_beliefs is 0" in errors[0]
+    assert fixture_path.name in errors[0]
+
+
+def test_validate_mcoi_runtime_fixture_rejects_uncertainty_assessment_without_beliefs(tmp_path: Path) -> None:
+    fixture_path = tmp_path / "uncertainty_assessment.json"
+    fixture_path.write_text(
+        json.dumps(
+            {
+                "assessment_id": "uncertainty-assessment-drift",
+                "tenant_id": "tenant-1",
+                "total_beliefs": 0,
+                "total_hypotheses": 1,
+                "total_updates": 0,
+                "avg_confidence": 0.0,
+                "assessed_at": "2026-05-10T09:17:00+00:00",
+                "metadata": {"scope": "tenant"},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_artifacts.validate_mcoi_runtime_fixture(fixture_path)
+
+    assert len(errors) == 1
+    assert "hypothesis and update totals must be 0 when total_beliefs is 0" in errors[0]
     assert fixture_path.name in errors[0]
 
 

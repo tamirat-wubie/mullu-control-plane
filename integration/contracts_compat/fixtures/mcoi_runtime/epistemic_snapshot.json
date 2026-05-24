@@ -1,0 +1,15 @@
+{
+  "snapshot_id": "epistemic-snapshot-42",
+  "tenant_id": "tenant-mullu-primary",
+  "total_claims": 4,
+  "total_sources": 2,
+  "total_assessments": 3,
+  "total_conflicts": 1,
+  "total_reliability_updates": 2,
+  "total_violations": 1,
+  "captured_at": "2026-05-09T08:40:00+00:00",
+  "metadata": {
+    "scope": "tenant",
+    "window": "2026-05-09"
+  }
+}

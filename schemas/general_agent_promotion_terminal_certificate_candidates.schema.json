@@ -1,0 +1,215 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:general-agent-promotion-terminal-certificate-candidates:1",
+  "title": "General Agent Promotion Terminal Certificate Candidates",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "candidate_set_id",
+    "generated_at",
+    "source_gate_path",
+    "source_gate_id",
+    "ready_for_candidate_review",
+    "ready_for_terminal_certificate_minting",
+    "gate_action_count",
+    "candidate_count",
+    "skipped_gate_action_count",
+    "blocked_gate_action_count",
+    "blocked_reasons",
+    "candidates",
+    "metadata"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "candidate_set_id": {
+      "type": "string",
+      "pattern": "^general-agent-promotion-terminal-certificate-candidates-[0-9a-f]{16}$"
+    },
+    "generated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "source_gate_path": {
+      "type": "string",
+      "minLength": 1
+    },
+    "source_gate_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "ready_for_candidate_review": {
+      "type": "boolean"
+    },
+    "ready_for_terminal_certificate_minting": {
+      "type": "boolean",
+      "const": false
+    },
+    "gate_action_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "candidate_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "skipped_gate_action_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "blocked_gate_action_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "blocked_reasons": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "candidates": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/candidate"
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "candidate_plan_is_not_execution",
+        "terminal_certificates_minted",
+        "secret_values_serialized",
+        "source_gate_ready",
+        "source_gate_hash",
+        "terminal_certificate_schema_id",
+        "terminal_certificate_gate_schema_id"
+      ],
+      "properties": {
+        "candidate_plan_is_not_execution": {
+          "type": "boolean",
+          "const": true
+        },
+        "terminal_certificates_minted": {
+          "type": "boolean",
+          "const": false
+        },
+        "secret_values_serialized": {
+          "type": "boolean",
+          "const": false
+        },
+        "source_gate_ready": {
+          "type": "boolean"
+        },
+        "source_gate_hash": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "terminal_certificate_schema_id": {
+          "type": "string",
+          "const": "urn:mullusi:schema:terminal-closure-certificate:1"
+        },
+        "terminal_certificate_gate_schema_id": {
+          "type": "string",
+          "const": "urn:mullusi:schema:general-agent-promotion-terminal-certificate-gate:1"
+        }
+      }
+    }
+  },
+  "$defs": {
+    "candidate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "candidate_id",
+        "source_gate_item_id",
+        "source_queue_item_id",
+        "source_action_id",
+        "source_plan_type",
+        "terminal_gate_status",
+        "approval_ref_present",
+        "approval_ref",
+        "evidence_required",
+        "receipt_validator",
+        "terminal_certificate_schema_id",
+        "minting_status",
+        "certificate_minted",
+        "execution_performed"
+      ],
+      "properties": {
+        "candidate_id": {
+          "type": "string",
+          "pattern": "^terminal-certificate-candidate-[0-9a-f]{16}$"
+        },
+        "source_gate_item_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source_queue_item_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source_action_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source_plan_type": {
+          "type": "string",
+          "enum": [
+            "adapter",
+            "deployment",
+            "portfolio"
+          ]
+        },
+        "terminal_gate_status": {
+          "type": "string",
+          "enum": [
+            "admitted_runnable",
+            "admitted_approved"
+          ]
+        },
+        "approval_ref_present": {
+          "type": "boolean"
+        },
+        "approval_ref": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1
+        },
+        "evidence_required": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "receipt_validator": {
+          "type": "string",
+          "minLength": 1
+        },
+        "terminal_certificate_schema_id": {
+          "type": "string",
+          "const": "urn:mullusi:schema:terminal-closure-certificate:1"
+        },
+        "minting_status": {
+          "type": "string",
+          "const": "candidate_only"
+        },
+        "certificate_minted": {
+          "type": "boolean",
+          "const": false
+        },
+        "execution_performed": {
+          "type": "boolean",
+          "const": false
+        }
+      }
+    }
+  }
+}

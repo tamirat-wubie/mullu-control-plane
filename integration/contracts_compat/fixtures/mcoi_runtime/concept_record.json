@@ -1,0 +1,13 @@
+{
+  "concept_id": "concept-customer-account",
+  "tenant_id": "tenant-mullu-primary",
+  "display_name": "Customer Account",
+  "kind": "entity",
+  "canonical_form": "customer_account",
+  "status": "active",
+  "created_at": "2026-05-08T09:00:00+00:00",
+  "metadata": {
+    "namespace": "commerce",
+    "version": "2026-05"
+  }
+}

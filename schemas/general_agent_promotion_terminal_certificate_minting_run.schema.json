@@ -1,0 +1,155 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:general-agent-promotion-terminal-certificate-minting-run:1",
+  "title": "General Agent Promotion Terminal Certificate Minting Run",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "minting_run_id",
+    "generated_at",
+    "source_minting_gate_path",
+    "source_minting_gate_id",
+    "ready_gate_required",
+    "terminal_certificates_minted",
+    "certificate_count",
+    "blocked_candidate_count",
+    "blocked_reasons",
+    "certificate_output_dir",
+    "certificates",
+    "metadata"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "minting_run_id": {
+      "type": "string",
+      "pattern": "^general-agent-promotion-terminal-certificate-minting-run-[0-9a-f]{16}$"
+    },
+    "generated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "source_minting_gate_path": {
+      "type": "string",
+      "minLength": 1
+    },
+    "source_minting_gate_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "ready_gate_required": {
+      "type": "boolean",
+      "const": true
+    },
+    "terminal_certificates_minted": {
+      "type": "boolean"
+    },
+    "certificate_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "blocked_candidate_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "blocked_reasons": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "certificate_output_dir": {
+      "type": "string",
+      "minLength": 1
+    },
+    "certificates": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/minted_certificate"
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "minting_executor_performed",
+        "secret_values_serialized",
+        "source_minting_gate_hash",
+        "minting_gate_schema_id",
+        "minting_run_schema_id",
+        "terminal_certificate_schema_id"
+      ],
+      "properties": {
+        "minting_executor_performed": {
+          "type": "boolean"
+        },
+        "secret_values_serialized": {
+          "type": "boolean",
+          "const": false
+        },
+        "source_minting_gate_hash": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "minting_gate_schema_id": {
+          "type": "string",
+          "const": "urn:mullusi:schema:general-agent-promotion-terminal-minting-gate:1"
+        },
+        "minting_run_schema_id": {
+          "type": "string",
+          "const": "urn:mullusi:schema:general-agent-promotion-terminal-certificate-minting-run:1"
+        },
+        "terminal_certificate_schema_id": {
+          "type": "string",
+          "const": "urn:mullusi:schema:terminal-closure-certificate:1"
+        }
+      }
+    }
+  },
+  "$defs": {
+    "minted_certificate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "candidate_id",
+        "source_action_id",
+        "certificate_id",
+        "certificate_path",
+        "schema_valid",
+        "validation_errors"
+      ],
+      "properties": {
+        "candidate_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source_action_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "certificate_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "certificate_path": {
+          "type": "string",
+          "minLength": 1
+        },
+        "schema_valid": {
+          "type": "boolean"
+        },
+        "validation_errors": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    }
+  }
+}

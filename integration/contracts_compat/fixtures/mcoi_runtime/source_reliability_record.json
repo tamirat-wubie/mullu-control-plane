@@ -1,0 +1,13 @@
+{
+  "record_id": "source-reliability-42",
+  "tenant_id": "tenant-mullu-primary",
+  "source_ref": "source-runtime-log-42",
+  "previous_score": 0.84,
+  "updated_score": 0.91,
+  "reason": "Cross-surface corroboration improved source confidence.",
+  "updated_at": "2026-05-09T08:15:00+00:00",
+  "metadata": {
+    "cycle": "daily",
+    "basis": "cross-check"
+  }
+}

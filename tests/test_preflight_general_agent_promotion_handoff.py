@@ -235,6 +235,49 @@ def test_handoff_preflight_accepts_matching_generated_action_count(tmp_path: Pat
     assert any("action_count=7" in step.detail for step in report.steps)
 
 
+def test_handoff_preflight_accepts_portfolio_source_plan_type(tmp_path: Path) -> None:
+    adapter_schema_validation, schema_validation, drift_validation, readiness = _write_valid_reports(tmp_path)
+    environment_binding_receipt = _write_valid_environment_binding_receipt(tmp_path)
+    schema_validation.write_text(
+        json.dumps(
+            {
+                "ok": True,
+                "action_count": 15,
+                "approval_required_action_count": 6,
+                "source_plan_types": ["adapter", "deployment", "portfolio"],
+            }
+        ),
+        encoding="utf-8",
+    )
+    drift_validation.write_text(
+        json.dumps(
+            {
+                "ok": True,
+                "expected_action_count": 15,
+                "observed_action_count": 15,
+                "expected_approval_required_count": 6,
+                "observed_approval_required_count": 6,
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    report = preflight_general_agent_promotion_handoff(
+        environment_binding_receipt_path=environment_binding_receipt,
+        adapter_schema_validation_path=adapter_schema_validation,
+        schema_validation_path=schema_validation,
+        drift_validation_path=drift_validation,
+        readiness_path=readiness,
+        env_reader=lambda name: "present" if name in REQUIRED_ENV else "",
+    )
+    step_details = {step.name: step.detail for step in report.steps}
+
+    assert report.ready is True
+    assert report.blockers == ()
+    assert "source_plan_types=['adapter', 'deployment', 'portfolio']" in step_details["closure plan schema validation"]
+    assert "expected_approval_required_count=6" in step_details["closure plan drift validation"]
+
+
 def test_handoff_preflight_rejects_schema_and_drift_count_disagreement(tmp_path: Path) -> None:
     adapter_schema_validation, schema_validation, drift_validation, readiness = _write_valid_reports(tmp_path, action_count=7)
     environment_binding_receipt = _write_valid_environment_binding_receipt(tmp_path)

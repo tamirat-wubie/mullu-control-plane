@@ -709,6 +709,52 @@ def test_protocol_manifest_indexes_promotion_environment_binding_receipt() -> No
     assert receipt_entry["surface"] == "promotion"
 
 
+def test_protocol_manifest_indexes_promotion_live_evidence_queue() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    queue_entry = entries["general-agent-promotion-live-evidence-queue"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert queue_entry["path"] == "schemas/general_agent_promotion_live_evidence_queue.schema.json"
+    assert queue_entry["urn"] == "urn:mullusi:schema:general-agent-promotion-live-evidence-queue:1"
+    assert queue_entry["surface"] == "promotion"
+
+
+def test_protocol_manifest_indexes_promotion_terminal_certificate_gate() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    approval_entry = entries["general-agent-promotion-terminal-approvals"]
+    gate_entry = entries["general-agent-promotion-terminal-certificate-gate"]
+    candidate_entry = entries["general-agent-promotion-terminal-certificate-candidates"]
+    reconciliation_entry = entries["general-agent-promotion-terminal-evidence-reconciliation"]
+    minting_gate_entry = entries["general-agent-promotion-terminal-minting-gate"]
+    minting_run_entry = entries["general-agent-promotion-terminal-certificate-minting-run"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert approval_entry["path"] == "schemas/general_agent_promotion_terminal_approvals.schema.json"
+    assert approval_entry["urn"] == "urn:mullusi:schema:general-agent-promotion-terminal-approvals:1"
+    assert approval_entry["surface"] == "promotion"
+    assert gate_entry["path"] == "schemas/general_agent_promotion_terminal_certificate_gate.schema.json"
+    assert gate_entry["urn"] == "urn:mullusi:schema:general-agent-promotion-terminal-certificate-gate:1"
+    assert gate_entry["surface"] == "promotion"
+    assert candidate_entry["path"] == "schemas/general_agent_promotion_terminal_certificate_candidates.schema.json"
+    assert candidate_entry["urn"] == "urn:mullusi:schema:general-agent-promotion-terminal-certificate-candidates:1"
+    assert candidate_entry["surface"] == "promotion"
+    assert reconciliation_entry["path"] == "schemas/general_agent_promotion_terminal_evidence_reconciliation.schema.json"
+    assert reconciliation_entry["urn"] == (
+        "urn:mullusi:schema:general-agent-promotion-terminal-evidence-reconciliation:1"
+    )
+    assert reconciliation_entry["surface"] == "promotion"
+    assert minting_gate_entry["path"] == "schemas/general_agent_promotion_terminal_minting_gate.schema.json"
+    assert minting_gate_entry["urn"] == "urn:mullusi:schema:general-agent-promotion-terminal-minting-gate:1"
+    assert minting_gate_entry["surface"] == "promotion"
+    assert minting_run_entry["path"] == "schemas/general_agent_promotion_terminal_certificate_minting_run.schema.json"
+    assert minting_run_entry["urn"] == (
+        "urn:mullusi:schema:general-agent-promotion-terminal-certificate-minting-run:1"
+    )
+    assert minting_run_entry["surface"] == "promotion"
+
+
 def test_protocol_manifest_indexes_promotion_handoff_packet() -> None:
     manifest = load_manifest()
     entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
@@ -1033,6 +1079,118 @@ def test_protocol_manifest_rejects_missing_promotion_environment_binding_receipt
     assert len(errors) == 1
     assert "manifest missing public schemas" in errors[0]
     assert "general_agent_promotion_environment_binding_receipt.schema.json" in errors[0]
+    assert "schemas/" in errors[0]
+
+
+def test_protocol_manifest_rejects_missing_promotion_live_evidence_queue_entry() -> None:
+    manifest = load_manifest()
+    manifest["schemas"] = [
+        entry
+        for entry in manifest["schemas"]
+        if entry["schema_id"] != "general-agent-promotion-live-evidence-queue"
+    ]
+
+    errors = validate_protocol_manifest(manifest)
+
+    assert len(errors) == 1
+    assert "manifest missing public schemas" in errors[0]
+    assert "general_agent_promotion_live_evidence_queue.schema.json" in errors[0]
+    assert "schemas/" in errors[0]
+
+
+def test_protocol_manifest_rejects_missing_promotion_terminal_certificate_gate_entry() -> None:
+    manifest = load_manifest()
+    manifest["schemas"] = [
+        entry
+        for entry in manifest["schemas"]
+        if entry["schema_id"] != "general-agent-promotion-terminal-certificate-gate"
+    ]
+
+    errors = validate_protocol_manifest(manifest)
+
+    assert len(errors) == 1
+    assert "manifest missing public schemas" in errors[0]
+    assert "general_agent_promotion_terminal_certificate_gate.schema.json" in errors[0]
+    assert "schemas/" in errors[0]
+
+
+def test_protocol_manifest_rejects_missing_promotion_terminal_approvals_entry() -> None:
+    manifest = load_manifest()
+    manifest["schemas"] = [
+        entry
+        for entry in manifest["schemas"]
+        if entry["schema_id"] != "general-agent-promotion-terminal-approvals"
+    ]
+
+    errors = validate_protocol_manifest(manifest)
+
+    assert len(errors) == 1
+    assert "manifest missing public schemas" in errors[0]
+    assert "general_agent_promotion_terminal_approvals.schema.json" in errors[0]
+    assert "schemas/" in errors[0]
+
+
+def test_protocol_manifest_rejects_missing_promotion_terminal_certificate_candidates_entry() -> None:
+    manifest = load_manifest()
+    manifest["schemas"] = [
+        entry
+        for entry in manifest["schemas"]
+        if entry["schema_id"] != "general-agent-promotion-terminal-certificate-candidates"
+    ]
+
+    errors = validate_protocol_manifest(manifest)
+
+    assert len(errors) == 1
+    assert "manifest missing public schemas" in errors[0]
+    assert "general_agent_promotion_terminal_certificate_candidates.schema.json" in errors[0]
+    assert "schemas/" in errors[0]
+
+
+def test_protocol_manifest_rejects_missing_promotion_terminal_evidence_reconciliation_entry() -> None:
+    manifest = load_manifest()
+    manifest["schemas"] = [
+        entry
+        for entry in manifest["schemas"]
+        if entry["schema_id"] != "general-agent-promotion-terminal-evidence-reconciliation"
+    ]
+
+    errors = validate_protocol_manifest(manifest)
+
+    assert len(errors) == 1
+    assert "manifest missing public schemas" in errors[0]
+    assert "general_agent_promotion_terminal_evidence_reconciliation.schema.json" in errors[0]
+    assert "schemas/" in errors[0]
+
+
+def test_protocol_manifest_rejects_missing_promotion_terminal_minting_gate_entry() -> None:
+    manifest = load_manifest()
+    manifest["schemas"] = [
+        entry
+        for entry in manifest["schemas"]
+        if entry["schema_id"] != "general-agent-promotion-terminal-minting-gate"
+    ]
+
+    errors = validate_protocol_manifest(manifest)
+
+    assert len(errors) == 1
+    assert "manifest missing public schemas" in errors[0]
+    assert "general_agent_promotion_terminal_minting_gate.schema.json" in errors[0]
+    assert "schemas/" in errors[0]
+
+
+def test_protocol_manifest_rejects_missing_promotion_terminal_certificate_minting_run_entry() -> None:
+    manifest = load_manifest()
+    manifest["schemas"] = [
+        entry
+        for entry in manifest["schemas"]
+        if entry["schema_id"] != "general-agent-promotion-terminal-certificate-minting-run"
+    ]
+
+    errors = validate_protocol_manifest(manifest)
+
+    assert len(errors) == 1
+    assert "manifest missing public schemas" in errors[0]
+    assert "general_agent_promotion_terminal_certificate_minting_run.schema.json" in errors[0]
     assert "schemas/" in errors[0]
 
 

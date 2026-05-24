@@ -27,6 +27,7 @@ files are open wire contracts. Runtime modules under `mcoi/`, `gateway/`, and
 | `capability_candidate.schema.json` | Canonical forge-generated candidate capability package |
 | `capability_descriptor.schema.json` | Canonical capability declaration |
 | `capability_evidence_endpoint.schema.json` | Canonical live gateway capability evidence projection |
+| `capability_improvement_portfolio.schema.json` | Canonical activation-blocked portfolio of prioritized capability upgrade proposals |
 | `capability_maturity.schema.json` | Canonical evidence-derived capability maturity assessment |
 | `collaboration_case.schema.json` | Canonical governed collaboration case with approval separation and non-terminal closure |
 | `capability_registry_entry.schema.json` | Universal governed capability registry entry |
@@ -59,6 +60,13 @@ files are open wire contracts. Runtime modules under `mcoi/`, `gateway/`, and
 | `general_agent_promotion_closure_plan.schema.json` | Canonical promotion closure action plan |
 | `general_agent_promotion_environment_bindings.schema.json` | Canonical presence-only operator environment binding contract |
 | `general_agent_promotion_environment_binding_receipt.schema.json` | Canonical presence-only operator environment binding receipt |
+| `general_agent_promotion_live_evidence_queue.schema.json` | Canonical non-executing promotion live-evidence queue |
+| `general_agent_promotion_terminal_approvals.schema.json` | Canonical terminal approval-ref receipt |
+| `general_agent_promotion_terminal_certificate_gate.schema.json` | Canonical non-executing terminal certificate admission gate |
+| `general_agent_promotion_terminal_certificate_candidates.schema.json` | Canonical non-executing terminal certificate candidate set |
+| `general_agent_promotion_terminal_evidence_reconciliation.schema.json` | Canonical terminal evidence reconciliation gate |
+| `general_agent_promotion_terminal_minting_gate.schema.json` | Canonical terminal certificate minting admission gate |
+| `general_agent_promotion_terminal_certificate_minting_run.schema.json` | Canonical terminal certificate minting run receipt |
 | `general_agent_promotion_handoff_packet.schema.json` | Canonical promotion handoff packet |
 | `gateway_health.schema.json` | Canonical public gateway health read model |
 | `gateway_observability_snapshot.schema.json` | Canonical gateway observability summary with bounded run metrics |

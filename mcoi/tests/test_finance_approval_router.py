@@ -15,6 +15,7 @@ from __future__ import annotations
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
+from mcoi_runtime.app.routers import finance_approval as finance_router_module
 from mcoi_runtime.app.routers.deps import deps
 from mcoi_runtime.app.routers.finance_approval import (
     reset_finance_approval_packets_for_tests,
@@ -279,6 +280,24 @@ def test_invalid_state_and_missing_packet_fail_closed() -> None:
     assert missing.json()["detail"]["error_code"] == "packet_not_found"
     assert invalid_limit.status_code == 400
     assert invalid_limit.json()["detail"]["error_code"] == "invalid_limit"
+
+
+def test_create_finance_packet_value_error_detail_is_bounded(monkeypatch) -> None:
+    client = _client()
+
+    def fail_risk(value: object) -> object:
+        raise ValueError("secret-token-from-risk")
+
+    monkeypatch.setattr(finance_router_module, "FinancePacketRisk", fail_risk)
+
+    response = client.post("/api/v1/finance/approval-packets", json=_blocked_request())
+    detail = response.json()["detail"]
+
+    assert response.status_code == 400
+    assert detail["error"] == "invalid finance packet"
+    assert detail["error_code"] == "invalid_finance_packet"
+    assert detail["governed"] is True
+    assert "secret-token-from-risk" not in response.text
 
 
 def test_default_routers_include_finance_approval_paths() -> None:

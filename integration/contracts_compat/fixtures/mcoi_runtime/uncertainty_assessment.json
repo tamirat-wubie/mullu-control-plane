@@ -1,0 +1,13 @@
+{
+  "assessment_id": "uncertainty-assessment-42",
+  "tenant_id": "tenant-mullu-primary",
+  "total_beliefs": 4,
+  "total_hypotheses": 3,
+  "total_updates": 5,
+  "avg_confidence": 0.66,
+  "assessed_at": "2026-05-10T09:15:00+00:00",
+  "metadata": {
+    "scope": "tenant",
+    "window": "2026-05-10"
+  }
+}

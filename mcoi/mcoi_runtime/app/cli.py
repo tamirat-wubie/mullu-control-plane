@@ -34,6 +34,7 @@ from .view_models import ExecutionSummaryView, RunSummaryView
 from mcoi_runtime.contracts.learning import LearningAdmissionDecision, LearningAdmissionStatus
 from mcoi_runtime.contracts.policy import DecisionReason
 from mcoi_runtime.contracts.software_dev_loop import SoftwareChangeReceiptStage
+from mcoi_runtime.core.interrogation_gait_cli import add_gait_parser, gait_command
 from mcoi_runtime.core.invariants import RuntimeCoreInvariantError, stable_identifier
 from mcoi_runtime.core.persisted_replay import PersistedReplayValidator
 from mcoi_runtime.core.replay_engine import ReplayContext
@@ -1145,6 +1146,7 @@ def build_parser() -> argparse.ArgumentParser:
         default=None,
         help="Expected causal_parent for the first receipt; defaults to genesis",
     )
+    add_gait_parser(subparsers)
 
     return parser
 
@@ -1814,6 +1816,7 @@ def main(argv: list[str] | None = None) -> int:
         "migrate": migrate_command,
         "software-receipts": software_receipts_command,
         "mil-audit": mil_audit_command,
+        "gait": gait_command,
     }
 
     handler = commands.get(args.command)

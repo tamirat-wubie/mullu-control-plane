@@ -24,6 +24,10 @@ from scripts.validate_general_agent_promotion_closure_plan import (  # noqa: E40
     validate_general_agent_promotion_closure_plan,
     write_general_agent_promotion_closure_plan_validation,
 )
+from scripts.plan_general_agent_promotion_closure import (  # noqa: E402
+    plan_general_agent_promotion_closure,
+    write_general_agent_promotion_closure_plan,
+)
 
 
 def test_validate_promotion_closure_plan_accepts_matching_sources(tmp_path: Path) -> None:
@@ -42,6 +46,33 @@ def test_validate_promotion_closure_plan_accepts_matching_sources(tmp_path: Path
     assert validation.observed_action_count == 3
     assert validation.expected_approval_required_count == 2
     assert validation.observed_approval_required_count == 2
+
+
+def test_validate_promotion_closure_plan_accepts_matching_portfolio_source(tmp_path: Path) -> None:
+    paths = _write_matching_artifacts(tmp_path)
+    portfolio = _write_portfolio_plan(tmp_path)
+    plan = plan_general_agent_promotion_closure(
+        readiness_path=paths["readiness"],
+        adapter_plan_path=paths["adapter"],
+        deployment_plan_path=paths["deployment"],
+        portfolio_plan_path=portfolio,
+    )
+    write_general_agent_promotion_closure_plan(plan, paths["promotion"])
+
+    validation = validate_general_agent_promotion_closure_plan(
+        promotion_plan_path=paths["promotion"],
+        readiness_path=paths["readiness"],
+        adapter_plan_path=paths["adapter"],
+        deployment_plan_path=paths["deployment"],
+        portfolio_plan_path=portfolio,
+    )
+
+    assert validation.ok is True
+    assert validation.errors == ()
+    assert validation.expected_action_count == 5
+    assert validation.observed_action_count == 5
+    assert validation.expected_approval_required_count == 4
+    assert validation.observed_approval_required_count == 4
 
 
 def test_validate_promotion_closure_plan_rejects_missing_source_action(tmp_path: Path) -> None:
@@ -246,4 +277,38 @@ def _write_matching_artifacts(tmp_path: Path) -> dict[str, Path]:
         "adapter": adapter,
         "deployment": deployment,
         "promotion": promotion,
+    }
+
+
+def _write_portfolio_plan(tmp_path: Path) -> Path:
+    portfolio = tmp_path / "capability_improvement_portfolio.json"
+    portfolio.write_text(
+        json.dumps(
+            {
+                "portfolio_id": "capability-improvement-portfolio-0123456789abcdef",
+                "portfolio_hash": "portfolio-hash",
+                "blocked_reasons": ["portfolio_activation_blocked"],
+                "plans": [
+                    _portfolio_source_plan("browser.open", "critical"),
+                    _portfolio_source_plan("email.send.with_approval", "high"),
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    return portfolio
+
+
+def _portfolio_source_plan(capability_id: str, severity: str) -> dict[str, object]:
+    safe_id = capability_id.replace(".", "-")
+    return {
+        "plan_id": f"capability-upgrade-plan-{safe_id[:16]:0<16}",
+        "capability_id": capability_id,
+        "health_signal": {"evidence_refs": [f"capability_health:{capability_id}"]},
+        "diagnosis": {
+            "severity": severity,
+            "evidence_refs": [f"capability_diagnosis:{capability_id}"],
+        },
+        "candidate": {"target_maturity_level": "C6"},
+        "blocked_reasons": ["terminal_closure_missing"],
     }

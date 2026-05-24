@@ -37,8 +37,31 @@ def test_runbook_names_required_closure_artifacts_and_counts() -> None:
     assert ".change_assurance\\general_agent_promotion_closure_plan_schema_validation.json" in runbook_text
     assert ".change_assurance\\general_agent_promotion_closure_plan_validation.json" in runbook_text
     assert f"Total closure actions | {aggregate_closure_actions}" in runbook_text
-    assert "Approval-required actions | 4" in runbook_text
-    assert "adapter`, `deployment" in runbook_text
+    assert f"Approval-required actions | {handoff_packet['approval_required_actions']}" in runbook_text
+    assert "adapter`, `deployment`, `portfolio" in runbook_text
+    assert "run_general_agent_promotion_closure_chain.py" in runbook_text
+    assert ".change_assurance\\capability_improvement_portfolio.json" in runbook_text
+    assert "plan_general_agent_promotion_live_evidence_queue.py" in runbook_text
+    assert ".change_assurance\\general_agent_promotion_live_evidence_queue.json" in runbook_text
+    assert "validate_general_agent_promotion_terminal_approvals.py" in runbook_text
+    assert ".change_assurance\\general_agent_promotion_terminal_approvals.json" in runbook_text
+    assert "plan_general_agent_promotion_terminal_certificate_gate.py" in runbook_text
+    assert ".change_assurance\\general_agent_promotion_terminal_certificate_gate.json" in runbook_text
+    assert "plan_general_agent_promotion_terminal_certificate_candidates.py" in runbook_text
+    assert ".change_assurance\\general_agent_promotion_terminal_certificate_candidates.json" in runbook_text
+    assert "reconcile_general_agent_promotion_terminal_evidence.py" in runbook_text
+    assert ".change_assurance\\general_agent_promotion_terminal_evidence_reconciliation.json" in runbook_text
+    assert "gate_general_agent_promotion_terminal_minting.py" in runbook_text
+    assert ".change_assurance\\general_agent_promotion_terminal_minting_gate.json" in runbook_text
+    assert "mint_general_agent_promotion_terminal_certificates.py" in runbook_text
+    assert ".change_assurance\\general_agent_promotion_terminal_certificate_minting_run.json" in runbook_text
+    assert "ready_for_terminal_certificate_minting=false" in runbook_text
+    assert "terminal certificate gate checked before execution" in runbook_text
+    assert "terminal certificate candidates are non-minting" in runbook_text
+    assert "terminal evidence reconciliation gates minting readiness" in runbook_text
+    assert "terminal minting gate requires explicit authority" in runbook_text
+    assert "terminal certificate minting executor requires ready gate" in runbook_text
+    assert "`approval_and_environment_blocked`" in runbook_text
 
 
 def test_runbook_keeps_status_mutation_evidence_gated() -> None:

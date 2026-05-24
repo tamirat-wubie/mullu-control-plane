@@ -1,0 +1,246 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:general-agent-promotion-live-evidence-queue:1",
+  "title": "General Agent Promotion Live Evidence Queue",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "queue_id",
+    "generated_at",
+    "source_plan_path",
+    "environment_contract_path",
+    "environment_binding_receipt_path",
+    "ready_to_execute",
+    "action_count",
+    "runnable_action_count",
+    "blocked_action_count",
+    "approval_required_action_count",
+    "missing_binding_count",
+    "missing_bindings",
+    "blocked_reasons",
+    "actions",
+    "metadata"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "queue_id": {
+      "type": "string",
+      "pattern": "^general-agent-promotion-live-evidence-queue-[0-9a-f]{16}$"
+    },
+    "generated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "source_plan_path": {
+      "type": "string",
+      "minLength": 1
+    },
+    "environment_contract_path": {
+      "type": "string",
+      "minLength": 1
+    },
+    "environment_binding_receipt_path": {
+      "type": "string",
+      "minLength": 1
+    },
+    "ready_to_execute": {
+      "type": "boolean"
+    },
+    "action_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "runnable_action_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "blocked_action_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "approval_required_action_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "missing_binding_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "missing_bindings": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "blocked_reasons": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "actions": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/queue_action"
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "queue_is_not_execution",
+        "secret_values_serialized",
+        "environment_receipt_present",
+        "environment_receipt_ready",
+        "contract_binding_count",
+        "source_plan_id",
+        "source_plan_hash"
+      ],
+      "properties": {
+        "queue_is_not_execution": {
+          "type": "boolean",
+          "const": true
+        },
+        "secret_values_serialized": {
+          "type": "boolean",
+          "const": false
+        },
+        "environment_receipt_present": {
+          "type": "boolean"
+        },
+        "environment_receipt_ready": {
+          "type": "boolean"
+        },
+        "contract_binding_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "source_plan_id": {
+          "type": "string"
+        },
+        "source_plan_hash": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      }
+    }
+  },
+  "$defs": {
+    "queue_action": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "queue_item_id",
+        "source_action_id",
+        "source_plan_type",
+        "action_type",
+        "blocker",
+        "execution_class",
+        "approval_required",
+        "required_bindings",
+        "missing_bindings",
+        "uncontracted_bindings",
+        "manual_parameters",
+        "blocked_reasons",
+        "command",
+        "evidence_required",
+        "receipt_validator"
+      ],
+      "properties": {
+        "queue_item_id": {
+          "type": "string",
+          "pattern": "^live-evidence-queue-item-[0-9]{2}-[a-z0-9-]+$"
+        },
+        "source_action_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source_plan_type": {
+          "type": "string",
+          "enum": [
+            "adapter",
+            "deployment",
+            "portfolio"
+          ]
+        },
+        "action_type": {
+          "type": "string",
+          "minLength": 1
+        },
+        "blocker": {
+          "type": "string",
+          "minLength": 1
+        },
+        "execution_class": {
+          "type": "string",
+          "enum": [
+            "runnable_local",
+            "requires_environment_binding",
+            "requires_approval",
+            "approval_and_environment_blocked",
+            "review_only"
+          ]
+        },
+        "approval_required": {
+          "type": "boolean"
+        },
+        "required_bindings": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "missing_bindings": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "uncontracted_bindings": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "manual_parameters": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "blocked_reasons": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "command": {
+          "type": "string",
+          "minLength": 1
+        },
+        "evidence_required": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "receipt_validator": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    }
+  }
+}

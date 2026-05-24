@@ -27,6 +27,13 @@ for import_root in (REPO_ROOT, MCOI_ROOT):
 # behavior configure their own API-key/JWT state after this fixture runs.
 # Individual tests that want to verify the fail-closed behavior can call
 # ``configure_musia_dev_mode(False)`` inside their body.
+#
+# Dev mode alone is NOT enough: resolve_musia_auth only takes the dev
+# wildcard branch when is_auth_configured() is False. A prior test that
+# installs an APIKeyManager / JWTAuthenticator without teardown leaves
+# is_auth_configured() True, so every later dev-mode test gets 401. Reset
+# all three musia_auth globals around each test so the pollution can't
+# cross test boundaries.
 @pytest.fixture(autouse=True)
 def _allow_musia_dev_mode_in_tests():
     _reset_musia_auth_for_tests()
