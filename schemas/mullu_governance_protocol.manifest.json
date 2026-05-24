@@ -221,6 +221,12 @@
       "surface": "deployment"
     },
     {
+      "schema_id": "deployment-upstream-blocker-receipt",
+      "path": "schemas/deployment_upstream_blocker_receipt.schema.json",
+      "urn": "urn:mullusi:schema:deployment-upstream-blocker-receipt:1",
+      "surface": "deployment"
+    },
+    {
       "schema_id": "public-production-health-declaration",
       "path": "schemas/public_production_health_declaration.schema.json",
       "urn": "urn:mullusi:schema:public-production-health-declaration:1",
@@ -368,6 +374,12 @@
       "schema_id": "gateway-dns-resolution-receipt",
       "path": "schemas/gateway_dns_resolution_receipt.schema.json",
       "urn": "urn:mullusi:schema:gateway-dns-resolution-receipt:1",
+      "surface": "deployment"
+    },
+    {
+      "schema_id": "gateway-dns-target-binding-receipt",
+      "path": "schemas/gateway_dns_target_binding_receipt.schema.json",
+      "urn": "urn:mullusi:schema:gateway-dns-target-binding-receipt:1",
       "surface": "deployment"
     },
     {

@@ -117,10 +117,12 @@ The adapter-closure planning path is:
 The deployment-closure planning path is:
 
 1. Read `.change_assurance/general_agent_promotion_readiness.json`.
-2. Preserve `deployment_witness_not_published` and `production_health_not_declared`.
-3. Map witness publication to an approval-gated `publish_gateway_publication.py` action.
-4. Map health declaration to an evidence-gated `DEPLOYMENT_STATUS.md` update action.
-5. Write `.change_assurance/deployment_publication_closure_plan.json` without mutating status.
+2. Read `.change_assurance/deployment_upstream_blocker_receipt.json` when present.
+3. Preserve upstream API/DNS readiness blockers before DNS or witness publication.
+4. Preserve `deployment_witness_not_published` and `production_health_not_declared`.
+5. Map witness publication to an approval-gated `publish_gateway_publication.py` action.
+6. Map health declaration to an evidence-gated `DEPLOYMENT_STATUS.md` update action.
+7. Write `.change_assurance/deployment_publication_closure_plan.json` without mutating status.
 
 The aggregate promotion-closure planning path is:
 

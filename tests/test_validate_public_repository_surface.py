@@ -69,6 +69,11 @@ def test_deployment_status_requires_orchestration_receipt_validation() -> None:
     assert "python scripts/validate_deployment_publication_closure_plan_schema.py --strict" in content
     assert "python scripts/validate_deployment_publication_closure.py --output .change_assurance/deployment_publication_closure_validation.json" in content
     assert ".change_assurance/deployment_publication_closure_validation.json" in content
+    assert "python scripts/emit_deployment_upstream_blocker_receipt.py --target-gateway-url \"$MULLU_GATEWAY_URL\" --output .change_assurance/deployment_upstream_blocker_receipt.json --json" in content
+    assert "python scripts/validate_deployment_upstream_blocker_receipt.py --receipt .change_assurance/deployment_upstream_blocker_receipt.json --output .change_assurance/deployment_upstream_blocker_receipt_validation.json --require-ready" in content
+    assert "`api.mullusi.com` remains `AwaitingEvidence` until upstream recovery" in content
+    assert "python scripts/emit_gateway_dns_target_binding_receipt.py --gateway-host \"$MULLU_GATEWAY_HOST\" --gateway-url \"$MULLU_GATEWAY_URL\" --expected-environment \"$MULLU_EXPECTED_RUNTIME_ENV\" --record-type \"$MULLU_GATEWAY_DNS_RECORD_TYPE\" --target \"$MULLU_GATEWAY_DNS_TARGET\" --provider \"$MULLU_DNS_PROVIDER\" --output .change_assurance/gateway_dns_target_binding_receipt.json --json" in content
+    assert "python scripts/validate_gateway_dns_target_binding_receipt.py --receipt .change_assurance/gateway_dns_target_binding_receipt.json --output .change_assurance/gateway_dns_target_binding_receipt_validation.json --require-ready" in content
     assert "python scripts/apply_deployment_publication_status.py --operator-approval-ref \"$MULLU_DEPLOYMENT_PUBLICATION_APPROVAL_REF\" --receipt-output .change_assurance/public_production_health_declaration.json" in content
     assert ".change_assurance/public_production_health_declaration.json" in content
     assert "schemas/public_production_health_declaration.schema.json" in content

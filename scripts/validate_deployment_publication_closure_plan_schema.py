@@ -153,6 +153,26 @@ def _validate_action_proof_contract(
         if action_type == "repository-variable-binding":
             if not any(evidence.startswith("gh_variable_list_presence:") for evidence in evidence_required):
                 errors.append(f"repository-variable action {index} missing variable presence evidence")
+        if action_type == "upstream-gate-closure":
+            required_evidence = {
+                "deployment_upstream_blocker_receipt",
+                "deployment_upstream_blocker_validation",
+                "upstream_recovery_completion_witness",
+                "api_runtime_host_readiness",
+                "dns_publication_authority",
+            }
+            missing_evidence = sorted(required_evidence - evidence_required)
+            if missing_evidence:
+                errors.append(
+                    f"upstream-gate action {index} evidence_required missing {missing_evidence}"
+                )
+            for token in (
+                "emit_deployment_upstream_blocker_receipt.py",
+                "validate_deployment_upstream_blocker_receipt.py",
+                "--require-ready",
+            ):
+                if token not in command:
+                    errors.append(f"upstream-gate action {index} command missing token {token}")
         if action_type == "dns-verification" and "dns_resolution_receipt" not in evidence_required:
             errors.append(f"dns-verification action {index} missing dns_resolution_receipt")
         if action_type == "endpoint-verification" and not {

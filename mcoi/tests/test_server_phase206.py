@@ -52,6 +52,13 @@ class TestEventBusEndpoints:
         assert resp.status_code == 200
         assert "total_events" in resp.json()
 
+    def test_event_store_summary_governed(self, client):
+        resp = client.get("/api/v1/events/store/summary")
+        data = resp.json()
+        assert resp.status_code == 200
+        assert data["governed"] is True
+        assert "event_store" in data
+
 
 class TestPipelineEndpoints:
     def test_execute_pipeline(self, client):

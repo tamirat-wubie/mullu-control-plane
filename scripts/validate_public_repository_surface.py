@@ -146,6 +146,10 @@ DEPLOYMENT_STATUS_REQUIRED_LITERALS = (
     ".github/workflows/gateway-publication.yml",
     "python scripts/report_gateway_publication_readiness.py --gateway-url \"$MULLU_GATEWAY_URL\" --dispatch-witness",
     "python scripts/dispatch_gateway_publication.py --readiness-report .change_assurance/gateway_publication_readiness.json",
+    "python scripts/emit_deployment_upstream_blocker_receipt.py --target-gateway-url \"$MULLU_GATEWAY_URL\" --output .change_assurance/deployment_upstream_blocker_receipt.json --json",
+    "python scripts/validate_deployment_upstream_blocker_receipt.py --receipt .change_assurance/deployment_upstream_blocker_receipt.json --output .change_assurance/deployment_upstream_blocker_receipt_validation.json --require-ready",
+    "python scripts/emit_gateway_dns_target_binding_receipt.py --gateway-host \"$MULLU_GATEWAY_HOST\" --gateway-url \"$MULLU_GATEWAY_URL\" --expected-environment \"$MULLU_EXPECTED_RUNTIME_ENV\" --record-type \"$MULLU_GATEWAY_DNS_RECORD_TYPE\" --target \"$MULLU_GATEWAY_DNS_TARGET\" --provider \"$MULLU_DNS_PROVIDER\" --output .change_assurance/gateway_dns_target_binding_receipt.json --json",
+    "python scripts/validate_gateway_dns_target_binding_receipt.py --receipt .change_assurance/gateway_dns_target_binding_receipt.json --output .change_assurance/gateway_dns_target_binding_receipt_validation.json --require-ready",
     "python scripts/collect_gateway_dns_resolution_receipt.py --gateway-url \"$MULLU_GATEWAY_URL\" --output .change_assurance/gateway_dns_resolution_receipt.json --json",
     "python scripts/validate_gateway_dns_resolution_receipt.py --receipt .change_assurance/gateway_dns_resolution_receipt.json --output .change_assurance/gateway_dns_resolution_receipt_validation.json --require-resolved",
     "python scripts/publish_gateway_publication.py --gateway-url \"$MULLU_GATEWAY_URL\" --dispatch-witness --dispatch --receipt-output .change_assurance/gateway_publication_receipt.json",
@@ -192,6 +196,7 @@ DEPLOYMENT_STATUS_REQUIRED_LITERALS = (
     "GitHub Actions secret name `MULLU_DEPLOYMENT_WITNESS_SECRET` is present; secret value is not printed",
     "GitHub Actions secret name `MULLU_AUTHORITY_OPERATOR_SECRET` is present; secret value is not printed",
     "GitHub repository variables `MULLU_GATEWAY_URL=https://api.mullusi.com` and `MULLU_EXPECTED_RUNTIME_ENV=pilot` are set",
+    "`api.mullusi.com` remains `AwaitingEvidence` until upstream recovery, runtime host, managed PostgreSQL, secret store, TLS, rollback, and DNS publication authority gates are closed",
     "No `deployment-witness.yml` workflow runs are currently recorded",
 )
 GOVERNANCE_PROTOCOL_REQUIRED_LITERALS = (
@@ -449,12 +454,12 @@ def read_json_url(url: str) -> dict[str, Any]:
             url,
             prior_failure=f"GitHub returned HTTP {exc.code}",
         )
-    except URLError as exc:
+    except URLError:
         return read_json_url_with_gh(
             url,
             prior_failure="network failure",
         )
-    except TimeoutError as exc:
+    except TimeoutError:
         return read_json_url_with_gh(url, prior_failure="request timed out")
 
     return _parse_json_object(source=url, payload=payload)

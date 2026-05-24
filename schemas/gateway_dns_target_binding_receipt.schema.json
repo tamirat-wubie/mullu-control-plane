@@ -1,0 +1,225 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:gateway-dns-target-binding-receipt:1",
+  "title": "Gateway DNS Target Binding Receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "receipt_id",
+    "gateway_host",
+    "gateway_url",
+    "expected_environment",
+    "record_type",
+    "target",
+    "target_kind",
+    "provider",
+    "binding_state",
+    "ready",
+    "checked_at_utc",
+    "next_action"
+  ],
+  "properties": {
+    "receipt_id": {
+      "type": "string",
+      "pattern": "^gateway-dns-target-binding-[0-9a-f]{16}$"
+    },
+    "gateway_host": {
+      "type": "string",
+      "minLength": 4,
+      "maxLength": 253,
+      "pattern": "^[a-z0-9](?:[a-z0-9.-]{0,251}[a-z0-9])$",
+      "not": {
+        "const": "gateway.example.com"
+      }
+    },
+    "gateway_url": {
+      "type": "string",
+      "pattern": "^https://[a-z0-9](?:[a-z0-9.-]{0,251}[a-z0-9])$"
+    },
+    "expected_environment": {
+      "type": "string",
+      "enum": [
+        "pilot",
+        "production"
+      ]
+    },
+    "record_type": {
+      "type": "string",
+      "enum": [
+        "",
+        "A",
+        "AAAA",
+        "CNAME"
+      ]
+    },
+    "target": {
+      "type": "string",
+      "maxLength": 253
+    },
+    "target_kind": {
+      "type": "string",
+      "enum": [
+        "missing",
+        "ipv4",
+        "ipv6",
+        "hostname"
+      ]
+    },
+    "provider": {
+      "type": "string",
+      "maxLength": 80
+    },
+    "binding_state": {
+      "type": "string",
+      "enum": [
+        "bound",
+        "missing-target",
+        "missing-record-type",
+        "missing-provider"
+      ]
+    },
+    "ready": {
+      "type": "boolean"
+    },
+    "checked_at_utc": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$"
+    },
+    "next_action": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 96
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "binding_state": {
+            "const": "bound"
+          }
+        },
+        "required": [
+          "binding_state"
+        ]
+      },
+      "then": {
+        "properties": {
+          "ready": {
+            "const": true
+          },
+          "record_type": {
+            "enum": [
+              "A",
+              "AAAA",
+              "CNAME"
+            ]
+          },
+          "target": {
+            "type": "string",
+            "minLength": 1
+          },
+          "target_kind": {
+            "enum": [
+              "ipv4",
+              "ipv6",
+              "hostname"
+            ]
+          },
+          "provider": {
+            "type": "string",
+            "minLength": 1
+          },
+          "next_action": {
+            "const": "publish DNS record and rerun gateway DNS resolution receipt"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "binding_state": {
+            "const": "missing-target"
+          }
+        },
+        "required": [
+          "binding_state"
+        ]
+      },
+      "then": {
+        "properties": {
+          "ready": {
+            "const": false
+          },
+          "target": {
+            "const": ""
+          },
+          "target_kind": {
+            "const": "missing"
+          },
+          "next_action": {
+            "const": "select gateway origin target before DNS publication"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "binding_state": {
+            "const": "missing-record-type"
+          }
+        },
+        "required": [
+          "binding_state"
+        ]
+      },
+      "then": {
+        "properties": {
+          "ready": {
+            "const": false
+          },
+          "record_type": {
+            "const": ""
+          },
+          "target_kind": {
+            "const": "missing"
+          },
+          "next_action": {
+            "const": "select DNS record type before DNS publication"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "binding_state": {
+            "const": "missing-provider"
+          }
+        },
+        "required": [
+          "binding_state"
+        ]
+      },
+      "then": {
+        "properties": {
+          "ready": {
+            "const": false
+          },
+          "provider": {
+            "const": ""
+          },
+          "target_kind": {
+            "const": "missing"
+          },
+          "next_action": {
+            "const": "record authoritative DNS provider before DNS publication"
+          }
+        }
+      }
+    }
+  ]
+}

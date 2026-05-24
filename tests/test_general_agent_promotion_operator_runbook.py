@@ -40,6 +40,17 @@ def test_runbook_names_required_closure_artifacts_and_counts() -> None:
     assert f"Approval-required actions | {handoff_packet['approval_required_actions']}" in runbook_text
     assert "adapter`, `deployment`, `portfolio" in runbook_text
     assert "run_general_agent_promotion_closure_chain.py" in runbook_text
+    assert "emit_deployment_upstream_blocker_receipt.py" in runbook_text
+    assert "validate_deployment_upstream_blocker_receipt.py" in runbook_text
+    assert ".change_assurance\\deployment_upstream_blocker_receipt.json" in runbook_text
+    assert ".change_assurance\\deployment_upstream_blocker_receipt_validation.json" in runbook_text
+    assert "emit_gateway_dns_target_binding_receipt.py" in runbook_text
+    assert "validate_gateway_dns_target_binding_receipt.py" in runbook_text
+    assert ".change_assurance\\gateway_dns_target_binding_receipt.json" in runbook_text
+    assert ".change_assurance\\gateway_dns_target_binding_receipt_validation.json" in runbook_text
+    assert "MULLU_GATEWAY_DNS_TARGET" in runbook_text
+    assert "MULLU_GATEWAY_DNS_RECORD_TYPE" in runbook_text
+    assert "MULLU_DNS_PROVIDER" in runbook_text
     assert "collect_gateway_dns_resolution_receipt.py" in runbook_text
     assert "validate_gateway_dns_resolution_receipt.py" in runbook_text
     assert ".change_assurance\\gateway_dns_resolution_receipt.json" in runbook_text
@@ -72,6 +83,14 @@ def test_runbook_keeps_status_mutation_evidence_gated() -> None:
     runbook_text = _runbook_text()
 
     assert "Do not update `DEPLOYMENT_STATUS.md`" in runbook_text
+    assert "The upstream blocker validation must report `valid=true` with `--require-ready`" in runbook_text
+    assert "validate_deployment_upstream_blocker_receipt.py --require-ready" in runbook_text
+    assert "upstream API/DNS validation require-ready gate" in runbook_text
+    assert "Upstream API/DNS readiness is not ready" in runbook_text
+    assert "The target-binding validation must report `valid=true` with `--require-ready`" in runbook_text
+    assert "validate_gateway_dns_target_binding_receipt.py --require-ready" in runbook_text
+    assert "gateway DNS target-binding validation require-ready gate" in runbook_text
+    assert "Gateway DNS target-binding receipt is not ready" in runbook_text
     assert "The DNS receipt validation must report `valid=true` with `--require-resolved`" in runbook_text
     assert "before publication dispatch" in runbook_text
     assert "validate_gateway_dns_resolution_receipt.py --require-resolved" in runbook_text

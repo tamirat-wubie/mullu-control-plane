@@ -26,10 +26,29 @@ def test_shard_inventory_is_deterministic_and_excludes_empty_prefixes() -> None:
 
     assert names[:2] == ("intent_substrate", "a-c")
     assert names[-4:] == ("t", "u", "v", "w")
+    assert "p" not in names
+    assert {"pa-pe", "ph-pl", "po", "pr", "pu"}.issubset(set(names))
     assert "q" not in names
     assert "x" not in names
     assert "y" not in names
     assert "z" not in names
+
+
+def test_non_soak_shards_cover_each_top_level_mcoi_file_once() -> None:
+    shard_paths = [
+        path
+        for shard_name in run_mcoi_shards.shard_names()
+        if shard_name != "intent_substrate"
+        for path in run_mcoi_shards.resolve_shard_files(shard_name)
+    ]
+    top_level_paths = tuple(
+        path.relative_to(run_mcoi_shards.MCOI_ROOT)
+        for path in sorted(run_mcoi_shards.MCOI_TESTS.glob("test_*.py"))
+    )
+
+    assert sorted(shard_paths) == sorted(top_level_paths)
+    assert len(shard_paths) == len(set(shard_paths))
+    assert any(path.name.startswith("test_postgres") for path in run_mcoi_shards.resolve_shard_files("po"))
 
 
 def test_non_soak_shard_command_has_local_marker_boundary() -> None:

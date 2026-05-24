@@ -116,6 +116,18 @@ def test_release_public_surface_requires_orchestration_receipt_anchors() -> None
     assert ".change_assurance/runtime_conformance_certificate.json" in deployment_literals
     assert "schemas/runtime_conformance_collection.schema.json" in deployment_literals
     assert ".change_assurance/deployment_publication_closure_validation.json" in deployment_literals
+    assert any("emit_deployment_upstream_blocker_receipt.py" in literal for literal in deployment_literals)
+    assert any("validate_deployment_upstream_blocker_receipt.py" in literal for literal in deployment_literals)
+    assert any("deployment_upstream_blocker_receipt.json" in literal for literal in deployment_literals)
+    assert any("api.mullusi.com" in literal and "AwaitingEvidence" in literal for literal in deployment_literals)
+    assert any("emit_gateway_dns_target_binding_receipt.py" in literal for literal in deployment_literals)
+    assert any("validate_gateway_dns_target_binding_receipt.py" in literal for literal in deployment_literals)
+    assert any("MULLU_GATEWAY_DNS_TARGET" in literal for literal in deployment_literals)
+    assert any("gateway_dns_target_binding_receipt.json" in literal for literal in deployment_literals)
+    assert any(
+        "gateway_dns_target_binding_receipt_validation.json" in literal
+        for literal in deployment_literals
+    )
     assert any("apply_deployment_publication_status.py" in literal for literal in deployment_literals)
     assert ".change_assurance/public_production_health_declaration.json" in deployment_literals
     assert "schemas/public_production_health_declaration.schema.json" in deployment_literals
@@ -290,6 +302,8 @@ def test_ci_workflow_runs_protocol_manifest_gate() -> None:
     assert "python scripts/validate_terminal_closure_certificate.py --json" in REQUIRED_CI_LITERALS
     assert "python scripts/validate_gateway_ingress_manifest.py --allow-placeholder" in REQUIRED_CI_LITERALS
     assert "python scripts/validate_reflective_contracts.py" in REQUIRED_CI_LITERALS
+    assert "Python Tests (ubuntu-latest, Python 3.13)" in REQUIRED_CI_LITERALS
+    assert "needs: [python-tests, python-compatibility, python-soak-tests]" in REQUIRED_CI_LITERALS
     assert "python scripts/validate_deployment_publication_closure.py --output .change_assurance/deployment_publication_closure_validation.json" in REQUIRED_CI_LITERALS
     assert "schemas/deployment_publication_closure_validation.schema.json" in REQUIRED_CI_LITERALS
     assert "deployment-publication-closure-validation" in REQUIRED_CI_LITERALS
@@ -330,6 +344,8 @@ def test_ci_workflow_runs_protocol_manifest_gate() -> None:
     assert content.count("python scripts/validate_gateway_ingress_manifest.py --allow-placeholder") == 2
     assert content.count("python scripts/validate_reflective_contracts.py") == 1
     assert content.count("python scripts/validate_logic_governance_application.py") == 1
+    assert content.count("Python Tests (ubuntu-latest, Python 3.13)") == 1
+    assert content.count("needs: [python-tests, python-compatibility, python-soak-tests]") == 1
     assert content.count("cargo build --release") == 1
     assert "Validate protocol manifest" in content
     assert "Validate proof coverage matrix" in content

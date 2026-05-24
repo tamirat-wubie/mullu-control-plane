@@ -193,6 +193,48 @@ def test_deployment_closure_plan_schema_rejects_secret_serialization_gap(tmp_pat
     assert any("no-secret-serialization guard" in error for error in validation.errors)
 
 
+def test_deployment_closure_plan_schema_accepts_upstream_gate_action(tmp_path: Path) -> None:
+    plan_path = tmp_path / "deployment_publication_closure_plan.json"
+    payload = _valid_plan()
+    payload["blockers"] = ["deployment_upstream_api_gate_not_ready"]
+    payload["action_count"] = 1
+    payload["actions"] = [
+        {
+            "action_id": "close-upstream-api-readiness-gate",
+            "blocker": "deployment_upstream_api_gate_not_ready",
+            "action_type": "upstream-gate-closure",
+            "command": (
+                "python scripts/emit_deployment_upstream_blocker_receipt.py "
+                "--target-gateway-url \"$MULLU_GATEWAY_URL\" "
+                "--output .change_assurance/deployment_upstream_blocker_receipt.json && "
+                "python scripts/validate_deployment_upstream_blocker_receipt.py "
+                "--receipt .change_assurance/deployment_upstream_blocker_receipt.json "
+                "--output .change_assurance/deployment_upstream_blocker_receipt_validation.json "
+                "--require-ready"
+            ),
+            "evidence_required": [
+                "deployment_upstream_blocker_receipt",
+                "deployment_upstream_blocker_validation",
+                "upstream_recovery_completion_witness",
+                "api_runtime_host_readiness",
+                "dns_publication_authority",
+            ],
+            "risk_level": "high",
+            "approval_required": True,
+        }
+    ]
+    plan_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    validation = validate_deployment_publication_closure_plan_schema(
+        plan_path=plan_path,
+        schema_path=SCHEMA_PATH,
+    )
+
+    assert validation.ok is True
+    assert validation.errors == ()
+    assert validation.action_count == 1
+
+
 def test_deployment_closure_plan_schema_writer_and_cli_honor_strict(
     tmp_path: Path,
     capsys,

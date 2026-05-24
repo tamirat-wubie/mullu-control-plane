@@ -77,6 +77,7 @@
             "responsibility-debt-closure",
             "secret-binding",
             "repository-variable-binding",
+            "upstream-gate-closure",
             "dns-verification",
             "endpoint-verification",
             "workflow-repair",

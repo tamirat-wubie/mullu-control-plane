@@ -28,18 +28,23 @@ import uuid
 
 import pytest
 
-POSTGRES_URL = os.environ.get(
-    "MULLU_DB_URL", "postgresql://mullu:mullu_dev_password@localhost:5432/mullu"
-)
-POSTGRES_AVAILABLE = False
-try:  # pragma: no cover - environment-dependent
-    import psycopg2
+POSTGRES_URL = os.environ.get("MULLU_DB_URL")
 
-    _conn = psycopg2.connect(POSTGRES_URL)
-    _conn.close()
-    POSTGRES_AVAILABLE = True
-except Exception:
-    POSTGRES_AVAILABLE = False
+
+def _postgres_available() -> bool:
+    if not POSTGRES_URL:
+        return False
+    try:  # pragma: no cover - environment-dependent
+        import psycopg2
+
+        conn = psycopg2.connect(POSTGRES_URL, connect_timeout=2)
+        conn.close()
+        return True
+    except Exception:
+        return False
+
+
+POSTGRES_AVAILABLE = _postgres_available()
 
 from mcoi_runtime.governance.guards.rate_limit import RateLimitConfig
 from mcoi_runtime.governance.audit.trail import verify_chain_from_entries
@@ -49,10 +54,13 @@ from mcoi_runtime.persistence.postgres_governance_stores import (
 )
 
 
-pytestmark = pytest.mark.skipif(
-    not POSTGRES_AVAILABLE,
-    reason="PostgreSQL not available (run docker-compose up -d postgres)",
-)
+pytestmark = [
+    pytest.mark.infra_pg,
+    pytest.mark.skipif(
+        not POSTGRES_AVAILABLE,
+        reason="PostgreSQL not available (run docker-compose up -d postgres)",
+    ),
+]
 
 
 # ============================================================
@@ -65,6 +73,7 @@ class TestPostgresRateLimitAtomic:
         """N threads, each on its own pooled connection (a replica
         stand-in), consume 1 token against max_tokens=10 with a
         negligible refill. Exactly 10 succeed — no overrun."""
+        assert POSTGRES_URL is not None
         store = PostgresRateLimitStore(POSTGRES_URL, pool_size=8)
         try:
             bucket = f"it-rl-{uuid.uuid4().hex}"
@@ -89,6 +98,7 @@ class TestPostgresRateLimitAtomic:
             store.close()
 
     def test_independent_buckets_do_not_interfere(self):
+        assert POSTGRES_URL is not None
         store = PostgresRateLimitStore(POSTGRES_URL, pool_size=4)
         try:
             cfg = RateLimitConfig(max_tokens=3, refill_rate=0.0001, burst_limit=5)
@@ -111,6 +121,7 @@ class TestPostgresAuditAtomic:
     def test_concurrent_append_no_chain_fork(self):
         """Multiple connections appending concurrently produce a
         strictly linear, fork-free chain (advisory-lock serialized)."""
+        assert POSTGRES_URL is not None
         store = PostgresAuditStore(POSTGRES_URL, pool_size=8)
         try:
             tenant = f"it-audit-{uuid.uuid4().hex}"

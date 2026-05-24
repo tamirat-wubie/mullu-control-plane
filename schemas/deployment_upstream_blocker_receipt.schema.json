@@ -1,0 +1,148 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:deployment-upstream-blocker-receipt:1",
+  "title": "Deployment Upstream Blocker Receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "receipt_id",
+    "target_gateway_host",
+    "target_gateway_url",
+    "upstream_repository",
+    "upstream_gate",
+    "upstream_state",
+    "api_provisioning_allowed",
+    "dns_publication_allowed",
+    "ready",
+    "checked_at_utc",
+    "blockers",
+    "evidence_refs",
+    "next_actions"
+  ],
+  "properties": {
+    "receipt_id": {
+      "type": "string",
+      "pattern": "^deployment-upstream-blocker-[0-9a-f]{16}$"
+    },
+    "target_gateway_host": {
+      "type": "string",
+      "minLength": 4,
+      "maxLength": 253,
+      "pattern": "^[a-z0-9](?:[a-z0-9.-]{0,251}[a-z0-9])$"
+    },
+    "target_gateway_url": {
+      "type": "string",
+      "pattern": "^https://[a-z0-9](?:[a-z0-9.-]{0,251}[a-z0-9])$"
+    },
+    "upstream_repository": {
+      "type": "string",
+      "pattern": "^[a-zA-Z0-9_.-]+/[a-zA-Z0-9_.-]+$"
+    },
+    "upstream_gate": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 96
+    },
+    "upstream_state": {
+      "type": "string",
+      "enum": [
+        "SolvedVerified",
+        "AwaitingEvidence",
+        "GovernanceBlocked",
+        "SafeHalt"
+      ]
+    },
+    "api_provisioning_allowed": {
+      "type": "boolean"
+    },
+    "dns_publication_allowed": {
+      "type": "boolean"
+    },
+    "ready": {
+      "type": "boolean"
+    },
+    "checked_at_utc": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$"
+    },
+    "blockers": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 128
+      },
+      "uniqueItems": true
+    },
+    "evidence_refs": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 256
+      },
+      "uniqueItems": true
+    },
+    "next_actions": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 160
+      },
+      "uniqueItems": true
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "ready": {
+            "const": true
+          }
+        },
+        "required": [
+          "ready"
+        ]
+      },
+      "then": {
+        "properties": {
+          "upstream_state": {
+            "const": "SolvedVerified"
+          },
+          "api_provisioning_allowed": {
+            "const": true
+          },
+          "dns_publication_allowed": {
+            "const": true
+          },
+          "blockers": {
+            "maxItems": 0
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "ready": {
+            "const": false
+          }
+        },
+        "required": [
+          "ready"
+        ]
+      },
+      "then": {
+        "properties": {
+          "blockers": {
+            "minItems": 1
+          }
+        }
+      }
+    }
+  ]
+}

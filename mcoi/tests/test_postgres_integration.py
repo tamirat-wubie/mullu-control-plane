@@ -1,35 +1,49 @@
 """Phase 218A — PostgresStore integration test.
 
 Requires Docker with PostgreSQL running. Skips automatically if unavailable.
-Run manually: docker-compose up -d postgres && pytest tests/test_postgres_integration.py -v
+Run manually:
+  docker-compose up -d postgres
+  MULLU_DB_URL=postgresql://mullu:mullu_dev_password@localhost:5432/mullu \
+      pytest -m infra_pg tests/test_postgres_integration.py -v
 """
 
 import os
 import pytest
 from mcoi_runtime.persistence.postgres_store import InMemoryStore, create_store
 
-# Try to detect if PostgreSQL is available
-POSTGRES_URL = os.environ.get("MULLU_DB_URL", "postgresql://mullu:mullu_dev_password@localhost:5432/mullu")
-POSTGRES_AVAILABLE = False
-
-try:
-    import psycopg2
-    conn = psycopg2.connect(POSTGRES_URL)
-    conn.close()
-    POSTGRES_AVAILABLE = True
-except Exception:
-    pass
+# Live PostgreSQL tests are opt-in. Without an explicit URL, collection never
+# attempts a localhost connection, which keeps default local shards bounded.
+POSTGRES_URL = os.environ.get("MULLU_DB_URL")
 
 
+def _postgres_available() -> bool:
+    if not POSTGRES_URL:
+        return False
+    try:
+        import psycopg2
+
+        conn = psycopg2.connect(POSTGRES_URL, connect_timeout=2)
+        conn.close()
+        return True
+    except Exception:
+        return False
+
+
+POSTGRES_AVAILABLE = _postgres_available()
+
+
+@pytest.mark.infra_pg
 @pytest.mark.skipif(not POSTGRES_AVAILABLE, reason="PostgreSQL not available (run docker-compose up -d postgres)")
 class TestPostgresStoreIntegration:
     """Integration tests against real PostgreSQL — skipped if Docker not running."""
 
     def test_create_store(self):
+        assert POSTGRES_URL is not None
         store = create_store(backend="postgresql", connection_string=POSTGRES_URL)
         assert store is not None
 
     def test_append_and_query_ledger(self):
+        assert POSTGRES_URL is not None
         store = create_store(backend="postgresql", connection_string=POSTGRES_URL)
         entry_id = store.append_ledger("test", "actor-1", "integration-test", {"key": "value"}, "hash123")
         assert entry_id > 0
@@ -37,11 +51,13 @@ class TestPostgresStoreIntegration:
         assert len(entries) >= 1
 
     def test_ledger_count(self):
+        assert POSTGRES_URL is not None
         store = create_store(backend="postgresql", connection_string=POSTGRES_URL)
         store.append_ledger("test", "actor-1", "count-test", {}, "hash")
         assert store.ledger_count("count-test") >= 1
 
     def test_save_session(self):
+        assert POSTGRES_URL is not None
         store = create_store(backend="postgresql", connection_string=POSTGRES_URL)
         store.save_session("sess-int-1", "actor-1", "test-tenant")
         # Should not raise

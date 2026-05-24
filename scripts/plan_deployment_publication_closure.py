@@ -5,7 +5,8 @@ Purpose: convert deployment promotion blockers into deterministic operator
 actions without changing public deployment status.
 Governance scope: [OCE, RAG, CDCV, CQTE, UWMA, PRS]
 Dependencies: .change_assurance/general_agent_promotion_readiness.json,
-DEPLOYMENT_STATUS.md, and deployment witness publication scripts.
+DEPLOYMENT_STATUS.md, optional upstream blocker receipt, and deployment witness
+publication scripts.
 Invariants:
   - Planning never flips DEPLOYMENT_STATUS.md to published.
   - Public health declaration requires a matching published witness gateway URL.
@@ -25,6 +26,9 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_READINESS = REPO_ROOT / ".change_assurance" / "general_agent_promotion_readiness.json"
 DEFAULT_DEPLOYMENT_STATUS = REPO_ROOT / "DEPLOYMENT_STATUS.md"
 DEFAULT_OUTPUT = REPO_ROOT / ".change_assurance" / "deployment_publication_closure_plan.json"
+DEFAULT_UPSTREAM_BLOCKER_RECEIPT = (
+    REPO_ROOT / ".change_assurance" / "deployment_upstream_blocker_receipt.json"
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -74,10 +78,18 @@ class DeploymentPublicationClosurePlan:
 def plan_deployment_publication_closure(
     readiness_path: Path = DEFAULT_READINESS,
     deployment_status_path: Path = DEFAULT_DEPLOYMENT_STATUS,
+    upstream_blocker_receipt_path: Path = DEFAULT_UPSTREAM_BLOCKER_RECEIPT,
 ) -> DeploymentPublicationClosurePlan:
     """Build a deterministic plan for deployment publication blockers."""
     readiness = _load_json_object(readiness_path, "promotion readiness")
-    blockers = _deployment_readiness_blockers(readiness)
+    blockers = tuple(
+        dict.fromkeys(
+            [
+                *_deployment_readiness_blockers(readiness),
+                *_deployment_upstream_blockers(upstream_blocker_receipt_path),
+            ]
+        )
+    )
     actions = tuple(_dedupe_actions([_action_for(blocker) for blocker in blockers]))
     plan_material = {
         "source_report_id": str(readiness.get("readiness_id", readiness.get("report_id", ""))),
@@ -185,6 +197,21 @@ def _action_for(blocker: str) -> DeploymentClosureAction:
             blocker=blocker,
             action_type="dns-verification",
             command=(
+                "Select the gateway origin target in MULLU_GATEWAY_DNS_TARGET; "
+                "publish an A, AAAA, or CNAME record for \"$MULLU_GATEWAY_HOST\" "
+                "through the authoritative DNS provider; first run "
+                "python scripts/emit_gateway_dns_target_binding_receipt.py "
+                "--gateway-host \"$MULLU_GATEWAY_HOST\" "
+                "--gateway-url \"$MULLU_GATEWAY_URL\" "
+                "--expected-environment \"$MULLU_EXPECTED_RUNTIME_ENV\" "
+                "--record-type \"$MULLU_GATEWAY_DNS_RECORD_TYPE\" "
+                "--target \"$MULLU_GATEWAY_DNS_TARGET\" "
+                "--provider \"$MULLU_DNS_PROVIDER\" "
+                "--output .change_assurance/gateway_dns_target_binding_receipt.json && "
+                "python scripts/validate_gateway_dns_target_binding_receipt.py "
+                "--receipt .change_assurance/gateway_dns_target_binding_receipt.json "
+                "--output .change_assurance/gateway_dns_target_binding_receipt_validation.json "
+                "--require-ready && "
                 "python scripts/collect_gateway_dns_resolution_receipt.py "
                 "--host \"$MULLU_GATEWAY_HOST\" "
                 "--output .change_assurance/gateway_dns_resolution_receipt.json "
@@ -198,9 +225,52 @@ def _action_for(blocker: str) -> DeploymentClosureAction:
                 "--gateway-url \"$MULLU_GATEWAY_URL\""
             ),
             evidence_required=(
+                "gateway_dns_target_binding_receipt",
+                "gateway_dns_target_binding_validation",
                 "dns_resolution_receipt",
                 "dns_resolution_receipt_validation",
                 "deployment_witness_preflight",
+            ),
+            risk_level="high",
+            approval_required=True,
+        )
+    if blocker == "deployment_upstream_api_gate_not_ready":
+        return DeploymentClosureAction(
+            action_id="close-upstream-api-readiness-gate",
+            blocker=blocker,
+            action_type="upstream-gate-closure",
+            command=(
+                "python scripts/emit_deployment_upstream_blocker_receipt.py "
+                "--target-gateway-url \"$MULLU_GATEWAY_URL\" "
+                "--output .change_assurance/deployment_upstream_blocker_receipt.json && "
+                "python scripts/validate_deployment_upstream_blocker_receipt.py "
+                "--receipt .change_assurance/deployment_upstream_blocker_receipt.json "
+                "--output .change_assurance/deployment_upstream_blocker_receipt_validation.json "
+                "--require-ready"
+            ),
+            evidence_required=(
+                "deployment_upstream_blocker_receipt",
+                "deployment_upstream_blocker_validation",
+                "upstream_recovery_completion_witness",
+                "api_runtime_host_readiness",
+                "dns_publication_authority",
+            ),
+            risk_level="high",
+            approval_required=True,
+        )
+    if blocker == "deployment_kubeconfig_secret_missing":
+        return DeploymentClosureAction(
+            action_id="provision-gateway-publication-kubeconfig",
+            blocker=blocker,
+            action_type="secret-binding",
+            command=(
+                "Provision GitHub Actions secret MULLU_KUBECONFIG_B64 only for "
+                "the target cluster that should receive the rendered gateway ingress; "
+                "do not print or serialize the kubeconfig value."
+            ),
+            evidence_required=(
+                "gh_secret_list_presence:MULLU_KUBECONFIG_B64",
+                "gateway_publication_readiness",
             ),
             risk_level="high",
             approval_required=True,
@@ -328,7 +398,9 @@ def _deployment_blockers() -> frozenset[str]:
             "deployment_runtime_witness_secret_missing",
             "deployment_runtime_conformance_secret_missing",
             "deployment_repository_variables_mismatch",
+            "deployment_upstream_api_gate_not_ready",
             "deployment_dns_not_verified",
+            "deployment_kubeconfig_secret_missing",
             "deployment_endpoint_contract_missing",
             "deployment_publication_workflow_unavailable",
             "deployment_runtime_responsibility_debt_present",
@@ -353,6 +425,24 @@ def _deployment_readiness_blockers(readiness: dict[str, Any]) -> tuple[str, ...]
     return tuple(dict.fromkeys([*declared_blockers, *step_blockers]))
 
 
+def _deployment_upstream_blockers(receipt_path: Path) -> tuple[str, ...]:
+    if not receipt_path.exists():
+        return ()
+    try:
+        receipt = _load_json_object(receipt_path, "deployment upstream blocker receipt")
+    except (FileNotFoundError, ValueError):
+        return ("deployment_upstream_api_gate_not_ready",)
+    if receipt.get("ready") is True:
+        return ()
+    if (
+        receipt.get("upstream_state") != "SolvedVerified"
+        or receipt.get("api_provisioning_allowed") is not True
+        or receipt.get("dns_publication_allowed") is not True
+    ):
+        return ("deployment_upstream_api_gate_not_ready",)
+    return ()
+
+
 def _blockers_for_failed_step(step: dict[str, Any]) -> tuple[str, ...]:
     name = str(step.get("name", "")).casefold()
     detail = str(step.get("detail", "")).casefold()
@@ -364,6 +454,8 @@ def _blockers_for_failed_step(step: dict[str, Any]) -> tuple[str, ...]:
         return ("deployment_runtime_conformance_secret_missing",)
     if name == "repository variables":
         return ("deployment_repository_variables_mismatch",)
+    if name == "upstream api readiness" or "api_provisioning_allowed=false" in detail:
+        return ("deployment_upstream_api_gate_not_ready",)
     if name == "dns resolution":
         return ("deployment_dns_not_verified",)
     if name in {"gateway health endpoint", "gateway runtime witness endpoint", "runtime conformance endpoint"}:
@@ -407,6 +499,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Plan deployment publication closure actions.")
     parser.add_argument("--readiness", default=str(DEFAULT_READINESS))
     parser.add_argument("--deployment-status", default=str(DEFAULT_DEPLOYMENT_STATUS))
+    parser.add_argument("--upstream-blocker-receipt", default=str(DEFAULT_UPSTREAM_BLOCKER_RECEIPT))
     parser.add_argument("--output", default=str(DEFAULT_OUTPUT))
     parser.add_argument("--json", action="store_true")
     return parser.parse_args(argv)
@@ -418,6 +511,7 @@ def main(argv: list[str] | None = None) -> int:
     plan = plan_deployment_publication_closure(
         readiness_path=Path(args.readiness),
         deployment_status_path=Path(args.deployment_status),
+        upstream_blocker_receipt_path=Path(args.upstream_blocker_receipt),
     )
     write_deployment_publication_closure_plan(plan, Path(args.output))
     if args.json:
