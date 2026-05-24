@@ -187,9 +187,9 @@ DEPLOYMENT_STATUS_REQUIRED_LITERALS = (
     "## GitHub Runtime Input State",
     "GitHub Actions secret name `MULLU_RUNTIME_WITNESS_SECRET` is present; secret value is not printed",
     "GitHub Actions secret name `MULLU_RUNTIME_CONFORMANCE_SECRET` is present; secret value is not printed",
-    "GitHub Actions secret name `MULLU_DEPLOYMENT_WITNESS_SECRET` is missing; production evidence collection remains blocked",
+    "GitHub Actions secret name `MULLU_DEPLOYMENT_WITNESS_SECRET` is present; secret value is not printed",
     "GitHub Actions secret name `MULLU_AUTHORITY_OPERATOR_SECRET` is present; secret value is not printed",
-    "GitHub repository variables `MULLU_GATEWAY_URL` and `MULLU_EXPECTED_RUNTIME_ENV` are not currently set",
+    "GitHub repository variables `MULLU_GATEWAY_URL=https://api.mullusi.com` and `MULLU_EXPECTED_RUNTIME_ENV=pilot` are set",
     "No `deployment-witness.yml` workflow runs are currently recorded",
 )
 GOVERNANCE_PROTOCOL_REQUIRED_LITERALS = (
