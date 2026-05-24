@@ -144,9 +144,34 @@ def test_deployment_closure_plan_schema_accepts_runtime_input_actions(tmp_path: 
             "action_id": "verify-gateway-dns",
             "blocker": "deployment_dns_not_verified",
             "action_type": "dns-verification",
-            "command": "Resolve $MULLU_GATEWAY_HOST and rerun deployment preflight.",
+            "command": (
+                "python scripts/emit_gateway_dns_target_binding_receipt.py "
+                "--gateway-host \"$MULLU_GATEWAY_HOST\" "
+                "--gateway-url \"$MULLU_GATEWAY_URL\" "
+                "--expected-environment \"$MULLU_EXPECTED_RUNTIME_ENV\" "
+                "--record-type \"$MULLU_GATEWAY_DNS_RECORD_TYPE\" "
+                "--target \"$MULLU_GATEWAY_DNS_TARGET\" "
+                "--provider \"$MULLU_DNS_PROVIDER\" "
+                "--output .change_assurance/gateway_dns_target_binding_receipt.json "
+                "--json && "
+                "python scripts/validate_gateway_dns_target_binding_receipt.py "
+                "--receipt .change_assurance/gateway_dns_target_binding_receipt.json "
+                "--output .change_assurance/gateway_dns_target_binding_receipt_validation.json "
+                "--require-ready && "
+                "python scripts/collect_gateway_dns_resolution_receipt.py "
+                "--host \"$MULLU_GATEWAY_HOST\" "
+                "--output .change_assurance/gateway_dns_resolution_receipt.json "
+                "--json && "
+                "python scripts/validate_gateway_dns_resolution_receipt.py "
+                "--receipt .change_assurance/gateway_dns_resolution_receipt.json "
+                "--output .change_assurance/gateway_dns_resolution_receipt_validation.json "
+                "--require-resolved"
+            ),
             "evidence_required": [
+                "gateway_dns_target_binding_receipt",
+                "gateway_dns_target_binding_validation",
                 "dns_resolution_receipt",
+                "dns_resolution_receipt_validation",
                 "deployment_witness_preflight",
             ],
             "risk_level": "high",

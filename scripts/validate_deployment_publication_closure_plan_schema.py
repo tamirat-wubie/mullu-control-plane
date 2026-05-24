@@ -173,8 +173,28 @@ def _validate_action_proof_contract(
             ):
                 if token not in command:
                     errors.append(f"upstream-gate action {index} command missing token {token}")
-        if action_type == "dns-verification" and "dns_resolution_receipt" not in evidence_required:
-            errors.append(f"dns-verification action {index} missing dns_resolution_receipt")
+        if action_type == "dns-verification":
+            required_evidence = {
+                "gateway_dns_target_binding_receipt",
+                "gateway_dns_target_binding_validation",
+                "dns_resolution_receipt",
+                "dns_resolution_receipt_validation",
+            }
+            missing_evidence = sorted(required_evidence - evidence_required)
+            if missing_evidence:
+                errors.append(
+                    f"dns-verification action {index} evidence_required missing {missing_evidence}"
+                )
+            for token in (
+                "emit_gateway_dns_target_binding_receipt.py",
+                "validate_gateway_dns_target_binding_receipt.py",
+                "collect_gateway_dns_resolution_receipt.py",
+                "validate_gateway_dns_resolution_receipt.py",
+                "--require-ready",
+                "--require-resolved",
+            ):
+                if token not in command:
+                    errors.append(f"dns-verification action {index} command missing token {token}")
         if action_type == "endpoint-verification" and not {
             "health_endpoint_receipt",
             "runtime_witness_receipt",
