@@ -81,7 +81,11 @@ def certify_gait(
             guard_id="gait_determinism",
             passed=True,
             reason=trace.spec.determinism.value,
-            detail={"selection": trace.spec.selection.value},
+            detail={
+                "phase": trace.spec.phase.value,
+                "selection": trace.spec.selection.value,
+                "topology": trace.spec.topology.value,
+            },
         ),
     )
 
@@ -95,7 +99,7 @@ def certify_gait(
         after_state_hash=after_hash,
         guards=guards,
         actor_id=actor_id,
-        reason=f"gait sealed: {trace.spec.phase.value}/{trace.spec.topology.value}",
+        reason="interrogation_gait_sealed",
         causal_parent=causal_parent,
         timestamp=timestamp,
     )

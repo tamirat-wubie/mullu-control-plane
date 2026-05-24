@@ -46,6 +46,10 @@ def test_certify_gait_allows_a_normal_trace_and_binds_the_witness() -> None:
     assert capsule.receipt.machine_id == "interrogation-gait"
     assert capsule.receipt.verdict is TransitionVerdict.ALLOWED
     assert capsule.receipt.to_state == "sealed"
+    assert capsule.audit_record.reason == "interrogation_gait_sealed"
+    determinism = next(g for g in capsule.receipt.guard_verdicts if g.guard_id == "gait_determinism")
+    assert determinism.detail["phase"] == "verify"
+    assert determinism.detail["topology"] == "cycle"
     assert verify_gait_proof(capsule, trace) is True
 
 
