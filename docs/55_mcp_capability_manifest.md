@@ -184,17 +184,19 @@ Required signed certificate evidence:
 
 ```powershell
 python scripts\emit_gateway_dns_target_binding_receipt.py `
+  --gateway-host "$env:MULLU_GATEWAY_HOST" `
   --gateway-url "$env:MULLU_GATEWAY_URL" `
   --expected-environment pilot `
-  --dns-target "$env:MULLU_GATEWAY_DNS_TARGET" `
-  --dns-record-type "$env:MULLU_GATEWAY_DNS_RECORD_TYPE" `
-  --dns-provider "$env:MULLU_DNS_PROVIDER" `
+  --record-type "$env:MULLU_GATEWAY_DNS_RECORD_TYPE" `
+  --target "$env:MULLU_GATEWAY_DNS_TARGET" `
+  --provider "$env:MULLU_DNS_PROVIDER" `
   --output .change_assurance\gateway_dns_target_binding_receipt.json `
   --json
 
 python scripts\validate_gateway_dns_target_binding_receipt.py `
   --receipt .change_assurance\gateway_dns_target_binding_receipt.json `
-  --output .change_assurance\gateway_dns_target_binding_validation.json `
+  --output .change_assurance\gateway_dns_target_binding_receipt_validation.json `
+  --expected-gateway-host "$env:MULLU_GATEWAY_HOST" `
   --expected-gateway-url "$env:MULLU_GATEWAY_URL" `
   --expected-environment pilot `
   --require-ready

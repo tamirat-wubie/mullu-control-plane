@@ -59,7 +59,7 @@
     },
     {
       "step_id": "validate_gateway_dns_target_binding",
-      "command": "python scripts\\emit_gateway_dns_target_binding_receipt.py --gateway-url \"$MULLU_GATEWAY_URL\" --expected-environment pilot --dns-target \"$MULLU_GATEWAY_DNS_TARGET\" --dns-record-type \"$MULLU_GATEWAY_DNS_RECORD_TYPE\" --dns-provider \"$MULLU_DNS_PROVIDER\" --output .change_assurance\\gateway_dns_target_binding_receipt.json --json && python scripts\\validate_gateway_dns_target_binding_receipt.py --receipt .change_assurance\\gateway_dns_target_binding_receipt.json --output .change_assurance\\gateway_dns_target_binding_validation.json --expected-gateway-url \"$MULLU_GATEWAY_URL\" --expected-environment pilot --require-ready",
+      "command": "python scripts\\emit_gateway_dns_target_binding_receipt.py --gateway-host \"$MULLU_GATEWAY_HOST\" --gateway-url \"$MULLU_GATEWAY_URL\" --expected-environment pilot --record-type \"$MULLU_GATEWAY_DNS_RECORD_TYPE\" --target \"$MULLU_GATEWAY_DNS_TARGET\" --provider \"$MULLU_DNS_PROVIDER\" --output .change_assurance\\gateway_dns_target_binding_receipt.json --json && python scripts\\validate_gateway_dns_target_binding_receipt.py --receipt .change_assurance\\gateway_dns_target_binding_receipt.json --output .change_assurance\\gateway_dns_target_binding_receipt_validation.json --expected-gateway-host \"$MULLU_GATEWAY_HOST\" --expected-gateway-url \"$MULLU_GATEWAY_URL\" --expected-environment pilot --require-ready",
       "required_evidence": [
         "target binding ready=true",
         "target binding validation valid=true",
