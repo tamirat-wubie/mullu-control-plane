@@ -777,6 +777,17 @@ def test_protocol_manifest_indexes_gateway_publication_readiness() -> None:
     assert readiness_entry["surface"] == "deployment"
 
 
+def test_protocol_manifest_indexes_gateway_dns_resolution_receipt() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    receipt_entry = entries["gateway-dns-resolution-receipt"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert receipt_entry["path"] == "schemas/gateway_dns_resolution_receipt.schema.json"
+    assert receipt_entry["urn"] == "urn:mullusi:schema:gateway-dns-resolution-receipt:1"
+    assert receipt_entry["surface"] == "deployment"
+
+
 def test_protocol_manifest_indexes_gateway_publication_receipt_validation() -> None:
     manifest = load_manifest()
     entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
