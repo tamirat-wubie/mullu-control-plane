@@ -133,6 +133,12 @@ def test_witness_integrity_report_tracks_exact_test_anchors() -> None:
     assert surfaces["cost_budget_read_models"]["unanchored_witness_count"] == 0
     assert surfaces["assistant_kernel_planning"]["exact_test_anchor_count"] == 5
     assert surfaces["assistant_kernel_planning"]["unanchored_witness_count"] == 0
+    assert surfaces["operator_console_read_models"]["exact_test_anchor_count"] == 5
+    assert surfaces["operator_console_read_models"]["unanchored_witness_count"] == 0
+    assert surfaces["model_experiment_control"]["exact_test_anchor_count"] == 7
+    assert surfaces["model_experiment_control"]["unanchored_witness_count"] == 0
+    assert surfaces["federated_control_plane"]["exact_test_anchor_count"] == 7
+    assert surfaces["federated_control_plane"]["unanchored_witness_count"] == 0
     assert surfaces["code_intelligence_operator_read_model"]["exact_test_anchor_count"] >= 5
     assert surfaces["code_intelligence_operator_read_model"]["unanchored_witness_count"] == 0
     assert surfaces["data_export_lifecycle"]["exact_test_anchor_count"] >= 4

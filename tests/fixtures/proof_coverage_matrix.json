@@ -3659,6 +3659,24 @@
         "/api/v1/console/scheduler"
       ],
       "request_proof": "read_model",
+      "runtime_witness_anchor_aliases": {
+        "console_audit_exposes_chain_intact_read_model": [
+          "console_audit"
+        ],
+        "console_checkpoints_expose_persisted_state_summary": [
+          "console_checkpoints"
+        ],
+        "console_home_returns_governed_runtime_vitals": [
+          "console_home"
+        ],
+        "console_provider_and_scheduler_views_are_read_only": [
+          "console_providers",
+          "console_scheduler"
+        ],
+        "console_runs_bounds_recent_audit_entries": [
+          "console_runs"
+        ]
+      },
       "runtime_witnesses": [
         "console_home_returns_governed_runtime_vitals",
         "console_runs_bounds_recent_audit_entries",
@@ -3765,7 +3783,9 @@
       "coverage_state": "witnessed",
       "evidence_files": [
         "mcoi/mcoi_runtime/app/routers/llm/admin.py",
-        "mcoi/mcoi_runtime/app/routers/llm/ab_test.py"
+        "mcoi/mcoi_runtime/app/routers/llm/ab_test.py",
+        "mcoi/tests/test_ab_testing.py",
+        "mcoi/tests/test_server_phase214.py"
       ],
       "notes": "Model catalog and experiment control routes are declared as governed control surfaces.",
       "representative_paths": [
@@ -3774,6 +3794,29 @@
         "/api/v1/ab-test/summary"
       ],
       "request_proof": "request_proof",
+      "runtime_witness_anchor_aliases": {
+        "ab_test_failed_model_recorded": [
+          "failed_model"
+        ],
+        "ab_test_single_model_result": [
+          "single_model"
+        ],
+        "ab_test_summary_bounded": [
+          "summary"
+        ],
+        "ab_test_two_models_cost_comparison": [
+          "two_models_cost"
+        ],
+        "auto_completion_forced_model": [
+          "force_model"
+        ],
+        "auto_completion_routes_model": [
+          "auto_complete"
+        ],
+        "model_catalog_list_bounded": [
+          "list_models"
+        ]
+      },
       "runtime_witnesses": [
         "model_catalog_list_bounded",
         "auto_completion_routes_model",
@@ -3895,6 +3938,35 @@
         "/api/v1/federation/summary"
       ],
       "request_proof": "read_model",
+      "runtime_witness_anchor_aliases": {
+        "central_data_transfer_forbidden": [
+          "signed_policy_syncs_to_allowed_region_without_data_transfer",
+          "federation_summary_endpoint_returns_schema_valid_read_model",
+          "local_enforcement_allows_matching_residency_after_sync"
+        ],
+        "federated_snapshot_schema_valid": [
+          "federated_control_snapshot_schema_exposes_locality_contract",
+          "federation_summary_endpoint_returns_schema_valid_read_model"
+        ],
+        "invalid_signature_denied_before_local_acceptance": [
+          "invalid_signature_is_denied_before_local_acceptance"
+        ],
+        "policy_not_allowed_for_cluster_denied": [
+          "policy_not_allowed_for_cluster_is_denied",
+          "policy_sync_denies_policy_not_allowed_for_cluster"
+        ],
+        "signed_policy_metadata_only_sync": [
+          "signed_policy_syncs_to_allowed_region_without_data_transfer",
+          "signed_policy_sync_preserves_residency_boundary"
+        ],
+        "tenant_region_mismatch_denied_locally": [
+          "tenant_region_mismatch_denies_locally",
+          "local_enforcement_denies_region_mismatch"
+        ],
+        "unsynced_policy_denied_locally": [
+          "local_enforcement_denies_unsynced_policy"
+        ]
+      },
       "runtime_witnesses": [
         "signed_policy_metadata_only_sync",
         "invalid_signature_denied_before_local_acceptance",
@@ -7776,7 +7848,7 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 783,
+    "exact_test_anchor_count": 802,
     "runtime_witness_count": 1052,
     "surfaces": [
       {
@@ -9188,18 +9260,44 @@
         "unanchored_witnesses": []
       },
       {
-        "anchored_witnesses": [],
-        "exact_test_anchor_count": 0,
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "mcoi/tests/test_operator_console.py::test_console_home"
+            ],
+            "witness": "console_home_returns_governed_runtime_vitals"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_operator_console.py::test_console_runs"
+            ],
+            "witness": "console_runs_bounds_recent_audit_entries"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_operator_console.py::test_console_audit"
+            ],
+            "witness": "console_audit_exposes_chain_intact_read_model"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_operator_console.py::test_console_checkpoints"
+            ],
+            "witness": "console_checkpoints_expose_persisted_state_summary"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_operator_console.py::test_console_providers",
+              "mcoi/tests/test_operator_console.py::test_console_scheduler"
+            ],
+            "witness": "console_provider_and_scheduler_views_are_read_only"
+          }
+        ],
+        "exact_test_anchor_count": 5,
         "runtime_witness_count": 5,
         "surface_id": "operator_console_read_models",
-        "unanchored_witness_count": 5,
-        "unanchored_witnesses": [
-          "console_home_returns_governed_runtime_vitals",
-          "console_runs_bounds_recent_audit_entries",
-          "console_audit_exposes_chain_intact_read_model",
-          "console_checkpoints_expose_persisted_state_summary",
-          "console_provider_and_scheduler_views_are_read_only"
-        ]
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
       },
       {
         "anchored_witnesses": [
@@ -9299,20 +9397,55 @@
         "unanchored_witnesses": []
       },
       {
-        "anchored_witnesses": [],
-        "exact_test_anchor_count": 0,
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "mcoi/tests/test_server_phase214.py::test_list_models"
+            ],
+            "witness": "model_catalog_list_bounded"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_server_phase214.py::test_auto_complete"
+            ],
+            "witness": "auto_completion_routes_model"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_server_phase214.py::test_force_model"
+            ],
+            "witness": "auto_completion_forced_model"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_ab_testing.py::test_single_model"
+            ],
+            "witness": "ab_test_single_model_result"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_ab_testing.py::test_two_models_cost"
+            ],
+            "witness": "ab_test_two_models_cost_comparison"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_ab_testing.py::test_summary"
+            ],
+            "witness": "ab_test_summary_bounded"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_ab_testing.py::test_failed_model"
+            ],
+            "witness": "ab_test_failed_model_recorded"
+          }
+        ],
+        "exact_test_anchor_count": 7,
         "runtime_witness_count": 7,
         "surface_id": "model_experiment_control",
-        "unanchored_witness_count": 7,
-        "unanchored_witnesses": [
-          "model_catalog_list_bounded",
-          "auto_completion_routes_model",
-          "auto_completion_forced_model",
-          "ab_test_single_model_result",
-          "ab_test_two_models_cost_comparison",
-          "ab_test_summary_bounded",
-          "ab_test_failed_model_recorded"
-        ]
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
       },
       {
         "anchored_witnesses": [
@@ -9486,20 +9619,61 @@
         "unanchored_witnesses": []
       },
       {
-        "anchored_witnesses": [],
-        "exact_test_anchor_count": 0,
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "tests/test_gateway/test_federated_control.py::test_signed_policy_syncs_to_allowed_region_without_data_transfer",
+              "mcoi/tests/test_federated_control_plane.py::test_signed_policy_sync_preserves_residency_boundary"
+            ],
+            "witness": "signed_policy_metadata_only_sync"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_federated_control.py::test_invalid_signature_is_denied_before_local_acceptance"
+            ],
+            "witness": "invalid_signature_denied_before_local_acceptance"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_federated_control.py::test_policy_not_allowed_for_cluster_is_denied",
+              "mcoi/tests/test_federated_control_plane.py::test_policy_sync_denies_policy_not_allowed_for_cluster"
+            ],
+            "witness": "policy_not_allowed_for_cluster_denied"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_federated_control.py::test_local_enforcement_denies_unsynced_policy"
+            ],
+            "witness": "unsynced_policy_denied_locally"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_federated_control.py::test_tenant_region_mismatch_denies_locally",
+              "mcoi/tests/test_federated_control_plane.py::test_local_enforcement_denies_region_mismatch"
+            ],
+            "witness": "tenant_region_mismatch_denied_locally"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_federated_control.py::test_signed_policy_syncs_to_allowed_region_without_data_transfer",
+              "tests/test_gateway/test_federated_control.py::test_federation_summary_endpoint_returns_schema_valid_read_model",
+              "mcoi/tests/test_federated_control_plane.py::test_local_enforcement_allows_matching_residency_after_sync"
+            ],
+            "witness": "central_data_transfer_forbidden"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_federated_control.py::test_federated_control_snapshot_schema_exposes_locality_contract",
+              "tests/test_gateway/test_federated_control.py::test_federation_summary_endpoint_returns_schema_valid_read_model"
+            ],
+            "witness": "federated_snapshot_schema_valid"
+          }
+        ],
+        "exact_test_anchor_count": 7,
         "runtime_witness_count": 7,
         "surface_id": "federated_control_plane",
-        "unanchored_witness_count": 7,
-        "unanchored_witnesses": [
-          "signed_policy_metadata_only_sync",
-          "invalid_signature_denied_before_local_acceptance",
-          "policy_not_allowed_for_cluster_denied",
-          "unsynced_policy_denied_locally",
-          "tenant_region_mismatch_denied_locally",
-          "central_data_transfer_forbidden",
-          "federated_snapshot_schema_valid"
-        ]
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
       },
       {
         "anchored_witnesses": [
@@ -13914,6 +14088,6 @@
         "unanchored_witnesses": []
       }
     ],
-    "unanchored_witness_count": 269
+    "unanchored_witness_count": 250
   }
 }

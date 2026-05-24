@@ -150,8 +150,8 @@ Witness integrity audit:
 | Metric | Count |
 |---|---:|
 | Runtime witness labels | 1052 |
-| Exact test anchors | 783 |
-| Unanchored witness labels | 269 |
+| Exact test anchors | 802 |
+| Unanchored witness labels | 250 |
 
 Evidence quality gaps:
 none
@@ -160,9 +160,6 @@ Witness integrity gaps:
 
 | Surface | Exact anchors | Unanchored | Unanchored labels |
 |---|---:|---:|---|
-| `operator_console_read_models` | 0 | 5 | console_home_returns_governed_runtime_vitals, console_runs_bounds_recent_audit_entries, console_audit_exposes_chain_intact_read_model, console_checkpoints_expose_persisted_state_summary, console_provider_and_scheduler_views_are_read_only |
-| `model_experiment_control` | 0 | 7 | model_catalog_list_bounded, auto_completion_routes_model, auto_completion_forced_model, ab_test_single_model_result, ab_test_two_models_cost_comparison, ab_test_summary_bounded, ab_test_failed_model_recorded |
-| `federated_control_plane` | 0 | 7 | signed_policy_metadata_only_sync, invalid_signature_denied_before_local_acceptance, policy_not_allowed_for_cluster_denied, unsynced_policy_denied_locally, tenant_region_mismatch_denied_locally, central_data_transfer_forbidden, federated_snapshot_schema_valid |
 | `audit_chain_api` | 0 | 7 | audit_chain_verify_endpoint, audit_summary_read_model, audit_anchor_checkpoint_created, audit_anchor_verification_endpoint, audit_anchor_history_read_model, audit_chain_hash_linked, audit_logs_read_model_bounded |
 | `event_bus_operations` | 0 | 6 | event_publish_hash_bound, event_history_filter_bounded, event_summary_bounded, event_store_summary_governed, pipeline_completion_event_visible, config_update_event_visible |
 | `api_key_lifecycle` | 0 | 5 | api_key_create_rejects_wildcard_when_disabled, api_key_create_rejects_empty_scopes, api_key_revoke_missing_is_bounded, api_key_rotation_links_old_and_new_keys, api_key_expiration_and_stale_detection |
@@ -322,5 +319,5 @@ none
 STATUS:
   Completeness: 100%
   Invariants verified: route declarations, route-level coverage classification, coverage levels, coverage states, closure action mapping, schema contract validation, deployment orchestration receipt schema contract
-  Open issues: 269 runtime-witness labels lack exact test-function anchors
+  Open issues: 250 runtime-witness labels lack exact test-function anchors
   Next action: bind unanchored runtime-witness labels to exact test-function anchors
