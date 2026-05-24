@@ -1,0 +1,13 @@
+{
+  "problem_id": "solver-problem-routing-2026-05-08",
+  "tenant_id": "tenant-mullu-primary",
+  "algorithm": "constraint_sat",
+  "constraint_count": 3,
+  "variable_count": 4,
+  "status": "solved",
+  "created_at": "2026-05-08T15:32:00+00:00",
+  "metadata": {
+    "domain": "routing",
+    "profile": "pilot-prod"
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "record_id": "record-governance-2026-042",
+  "tenant_id": "tenant-mullu-primary",
+  "kind": "evidence",
+  "title": "Release gate verification evidence",
+  "source_type": "verification_result",
+  "source_id": "verification-core-2026-05-07",
+  "authority": "compliance",
+  "evidence_grade": "primary",
+  "classification": "internal_governed",
+  "created_at": "2026-05-07T10:30:00+00:00",
+  "metadata": {
+    "case_ref": "case-governance-2026-042",
+    "retention_policy": "release-evidence-default"
+  }
+}

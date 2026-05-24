@@ -1,0 +1,14 @@
+{
+  "window_id": "meeting-window-backup-2026-05-08",
+  "identity_ref": "contact-backup-lead",
+  "window_type": "meeting",
+  "starts_at": "2026-05-08T13:00:00+00:00",
+  "ends_at": "2026-05-08T14:00:00+00:00",
+  "timezone": "America/New_York",
+  "capacity": 2,
+  "reserved": 1,
+  "metadata": {
+    "source": "calendar-sync",
+    "team": "ops"
+  }
+}

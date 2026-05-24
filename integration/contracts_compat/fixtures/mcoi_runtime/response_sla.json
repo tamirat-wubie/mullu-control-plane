@@ -1,0 +1,10 @@
+{
+  "sla_id": "response-sla-ops-lead",
+  "identity_ref": "contact-ops-lead",
+  "expectation": "within_sla",
+  "max_response_seconds": 14400,
+  "escalation_after_seconds": 7200,
+  "escalation_target": "contact-backup-lead",
+  "channel_preference": "email",
+  "created_at": "2026-05-07T12:15:00+00:00"
+}

@@ -1,0 +1,13 @@
+{
+  "decision_id": "disposal-decision-2026-042",
+  "record_id": "record-governance-2026-042",
+  "tenant_id": "tenant-mullu-primary",
+  "disposition": "deny",
+  "reason": "Disposal denied because retention is active and a legal hold is in place.",
+  "authority": "legal",
+  "decided_at": "2026-05-07T11:15:00+00:00",
+  "metadata": {
+    "hold_ref": "legal-hold-release-evidence-042",
+    "review_ref": "disposition-review-2026-042"
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "request_id": "access-request-change-approve-2026-05-08",
+  "identity_id": "identity-backup-lead",
+  "resource_type": "change_request",
+  "action": "approve",
+  "scope_kind": "workspace",
+  "scope_ref_id": "workspace-enterprise-ops",
+  "requested_at": "2026-05-08T13:00:00+00:00"
+}

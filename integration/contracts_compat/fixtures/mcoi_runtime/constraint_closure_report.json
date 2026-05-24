@@ -1,0 +1,14 @@
+{
+  "report_id": "constraint-closure-routing-2026-05-08",
+  "tenant_id": "tenant-mullu-primary",
+  "total_constraints": 5,
+  "total_problems": 2,
+  "total_solutions": 2,
+  "total_assignments": 3,
+  "total_violations": 0,
+  "created_at": "2026-05-08T15:40:00+00:00",
+  "metadata": {
+    "closed_by": "constraint-governance",
+    "scope": "routing"
+  }
+}

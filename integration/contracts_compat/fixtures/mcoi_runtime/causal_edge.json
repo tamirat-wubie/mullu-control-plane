@@ -1,0 +1,13 @@
+{
+  "edge_id": "edge-routing-to-latency-openai-primary",
+  "tenant_id": "tenant-mullu-primary",
+  "cause_ref": "node-routing-rule-openai-primary",
+  "effect_ref": "node-response-latency-openai-primary",
+  "kind": "direct",
+  "strength": "strong",
+  "created_at": "2026-05-08T14:05:00+00:00",
+  "metadata": {
+    "assessment_ref": "causal-assessment-routing-2026-05-08",
+    "scope": "routing"
+  }
+}

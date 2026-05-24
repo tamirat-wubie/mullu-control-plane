@@ -1,0 +1,12 @@
+{
+  "review_id": "disposition-review-2026-042",
+  "record_id": "record-governance-2026-042",
+  "reviewer_id": "records-officer-1",
+  "decision": "deny",
+  "reason": "Active legal hold blocks disposal at this time.",
+  "reviewed_at": "2026-05-07T10:45:00+00:00",
+  "metadata": {
+    "hold_ref": "legal-hold-release-evidence-042",
+    "review_cycle": "monthly"
+  }
+}

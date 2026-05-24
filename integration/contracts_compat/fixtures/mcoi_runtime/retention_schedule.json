@@ -1,0 +1,15 @@
+{
+  "schedule_id": "retention-release-evidence-042",
+  "record_id": "record-governance-2026-042",
+  "tenant_id": "tenant-mullu-primary",
+  "retention_days": 365,
+  "status": "active",
+  "disposal_disposition": "archive",
+  "scope_ref_id": "tenant-mullu-primary",
+  "created_at": "2026-05-07T10:35:00+00:00",
+  "expires_at": "2027-05-07T10:35:00+00:00",
+  "metadata": {
+    "schedule_owner": "records-governance",
+    "regime": "internal_alpha"
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "identity_id": "identity-ops-lead",
+  "name": "Operations Lead",
+  "kind": "operator",
+  "tenant_id": "tenant-mullu-primary",
+  "enabled": true,
+  "created_at": "2026-05-07T12:00:00+00:00",
+  "metadata": {
+    "workspace_id": "workspace-enterprise-ops",
+    "department": "operations"
+  }
+}

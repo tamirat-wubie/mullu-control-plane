@@ -1,0 +1,14 @@
+{
+  "report_id": "records-closure-2026-05",
+  "tenant_id": "tenant-mullu-primary",
+  "total_records": 24,
+  "total_preserved": 15,
+  "total_disposed": 4,
+  "total_held": 3,
+  "total_violations": 1,
+  "closed_at": "2026-05-31T23:59:00+00:00",
+  "metadata": {
+    "period": "2026-05",
+    "scope": "monthly"
+  }
+}

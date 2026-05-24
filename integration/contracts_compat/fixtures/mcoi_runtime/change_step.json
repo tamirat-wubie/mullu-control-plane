@@ -1,0 +1,16 @@
+{
+  "step_id": "change-step-canary-routing",
+  "plan_id": "change-plan-routing-rule-2026-05-07",
+  "change_id": "change-routing-rule-2026-05-07",
+  "ordinal": 2,
+  "action": "Promote connector-openai-primary to canary routing tier",
+  "target_ref_id": "connector-openai-primary",
+  "description": "Shift 25 percent of traffic to the candidate routing rule for governed observation.",
+  "status": "completed",
+  "started_at": "2026-05-07T12:30:00+00:00",
+  "completed_at": "2026-05-07T12:55:00+00:00",
+  "metadata": {
+    "phase": "canary",
+    "traffic_pct": 0.25
+  }
+}

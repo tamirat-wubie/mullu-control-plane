@@ -1,0 +1,15 @@
+{
+  "snapshot_id": "causal-snapshot-routing-2026-05-08",
+  "tenant_id": "tenant-mullu-primary",
+  "total_nodes": 6,
+  "total_edges": 5,
+  "total_interventions": 2,
+  "total_counterfactuals": 1,
+  "total_attributions": 3,
+  "total_violations": 0,
+  "captured_at": "2026-05-08T14:40:00+00:00",
+  "metadata": {
+    "scope": "routing",
+    "profile": "pilot-prod"
+  }
+}
