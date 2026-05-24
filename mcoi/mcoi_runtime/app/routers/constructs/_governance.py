@@ -6,15 +6,41 @@ from uuid import UUID
 from fastapi import HTTPException
 
 from mcoi_runtime.app.routers.constructs._registry import _DEFAULT_AUTHORITY
+from mcoi_runtime.app.routers.musia_governance_metrics import (
+    REGISTRY as _METRICS,
+    VERDICT_ALLOWED,
+    VERDICT_DENIED,
+)
 from mcoi_runtime.substrate.cascade import CascadeEngine, registry_dispatch_checker
 from mcoi_runtime.substrate.constructs import ConstructBase
 from mcoi_runtime.substrate.phi_gov import (
     GovernanceContext,
+    Judgment,
     PhiGov,
     ProofState,
     ProposedDelta,
 )
 from mcoi_runtime.substrate.registry_store import STORE, TenantState
+
+
+def _record_phi_gov_decision(judgment: Judgment) -> None:
+    """Record the overall Φ_gov verdict for a construct write into the dedicated
+    phi_gov decision counters.
+
+    Separate from the chain metrics (the external-guard bridge's ``write``
+    surface) — these capture the *overall* Φ_gov decision, including the A1
+    escalation/route signals the chain never sees. The denial ``category`` is
+    the normalised reason class (text before ``:``) to bound cardinality.
+    """
+    allowed = judgment.state == ProofState.PASS
+    _METRICS.record_phi_gov_decision(
+        verdict=VERDICT_ALLOWED if allowed else VERDICT_DENIED,
+        category=(
+            ""
+            if allowed
+            else (judgment.reason or "unknown").split(":", 1)[0] or "unknown"
+        ),
+    )
 
 
 def _phi_gov_for(state: TenantState) -> PhiGov:
@@ -101,6 +127,9 @@ def _governed_write(
     )
     phi = _phi_gov_for(state)
     result = phi.evaluate((delta,), ctx, _DEFAULT_AUTHORITY)
+    # Observability: record the overall Φ_gov verdict (incl. A1 signals) into
+    # the dedicated phi_gov decision counters, separate from the chain metrics.
+    _record_phi_gov_decision(result.judgment)
     if result.judgment.state == ProofState.PASS:
         state.graph.register(construct, depends_on=depends_on)
         # Consume a rate-limit slot only on successful registration.

@@ -47,6 +47,16 @@ class GovernanceMetricsRegistry:
         # sum_seconds, count). Cumulative count semantics (le=).
         self._latency_buckets: tuple[float, ...] = latency_buckets_seconds
         self._latency_state: dict[str, list[Any]] = {}
+        # Φ_gov overall-verdict counters (USCL v3.3 / A1 observability).
+        # DELIBERATELY SEPARATE from the chain counters above: these record the
+        # overall Φ_gov decision for a construct write (Φ_agent + cascade +
+        # external), not a chain invocation. Kept in their own fields so they
+        # never enter the chain aggregates (total_runs/total_denials/
+        # recent_rejections/denials_by_guard) — that separation is what makes
+        # them additive rather than a contract change. Exposed as their own
+        # metric families.
+        self._phi_gov_decisions: dict[str, int] = {}        # verdict -> count
+        self._phi_gov_denials_by_category: dict[str, int] = {}  # category -> count
 
     def _observe_latency_locked(
         self, surface: str, duration_seconds: float
@@ -156,6 +166,30 @@ class GovernanceMetricsRegistry:
                 d = max(0.0, duration_seconds)
                 self._observe_latency_locked(surface, d)
 
+    def record_phi_gov_decision(
+        self, *, verdict: str, category: str = ""
+    ) -> None:
+        """Record one overall Φ_gov verdict for a construct write.
+
+        ``verdict`` is ``VERDICT_ALLOWED`` or ``VERDICT_DENIED``. On a denial,
+        ``category`` is the normalised rejection-reason class (e.g.
+        ``cascade_escalated``, ``phi_agent_blocked_at``) used to attribute the
+        denial without high-cardinality reason strings.
+
+        Counted in dedicated fields only — never the chain aggregates.
+        """
+        if verdict not in (VERDICT_ALLOWED, VERDICT_DENIED):
+            raise ValueError(f"unknown verdict: {verdict!r}")
+        with self._lock:
+            self._phi_gov_decisions[verdict] = (
+                self._phi_gov_decisions.get(verdict, 0) + 1
+            )
+            if verdict == VERDICT_DENIED:
+                cat = category or "unknown"
+                self._phi_gov_denials_by_category[cat] = (
+                    self._phi_gov_denials_by_category.get(cat, 0) + 1
+                )
+
     def snapshot(self) -> GovernanceMetricsSnapshot:
         with self._lock:
             latency_by_surface: dict[str, LatencyHistogram] = {}
@@ -175,6 +209,10 @@ class GovernanceMetricsRegistry:
                 runs_by_surface_tenant_verdict=dict(
                     self._runs_by_surface_tenant_verdict
                 ),
+                phi_gov_decisions=dict(self._phi_gov_decisions),
+                phi_gov_denials_by_category=dict(
+                    self._phi_gov_denials_by_category
+                ),
             )
 
     def reset(self) -> None:
@@ -186,6 +224,8 @@ class GovernanceMetricsRegistry:
             self._denials_by_guard.clear()
             self._recent_rejections.clear()
             self._latency_state.clear()
+            self._phi_gov_decisions.clear()
+            self._phi_gov_denials_by_category.clear()
 
 
 REGISTRY = GovernanceMetricsRegistry()
