@@ -7,6 +7,7 @@ Invariants: chain is append-only; hash computation is deterministic; validation 
 from __future__ import annotations
 
 import hashlib
+import logging
 import os
 import tempfile
 import time as _time
@@ -30,6 +31,7 @@ APPEND_CONTENTION_BACKOFF_SECONDS = 0.001
 APPEND_CONTENTION_BACKOFF_MAX_SECONDS = 0.02
 _TIME_MODULE = _time
 time = _TIME_MODULE
+_LOG = logging.getLogger(__name__)
 
 
 def __getattr__(name: str) -> object:
@@ -115,8 +117,11 @@ def _atomic_write_exclusive(path: Path, content: str) -> bool:
         # garbage. Best-effort cleanup either way.
         try:
             os.unlink(tmp_path)
-        except OSError:
-            pass
+        except OSError as exc:
+            _LOG.warning(
+                "hash chain temp cleanup failed",
+                extra={"error_type": type(exc).__name__},
+            )
 
 
 def compute_chain_hash(sequence_number: int, content_hash: str, previous_hash: str) -> str:

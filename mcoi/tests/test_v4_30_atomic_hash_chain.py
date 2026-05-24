@@ -27,10 +27,12 @@ overwriting.
 """
 from __future__ import annotations
 
+import logging
 import threading
 from pathlib import Path
 
 import pytest
+import mcoi_runtime.persistence.hash_chain as hash_chain
 
 from mcoi_runtime.persistence.hash_chain import (
     GENESIS_PREVIOUS_HASH,
@@ -75,6 +77,21 @@ class TestAtomicWriteExclusive:
         path = tmp_path / "nested" / "deep" / "a.json"
         assert _atomic_write_exclusive(path, "hi") is True
         assert path.read_text() == "hi"
+
+    def test_temp_cleanup_failure_is_logged_bounded(self, tmp_path: Path, monkeypatch, caplog):
+        path = tmp_path / "a.json"
+
+        def fail_unlink(_tmp_path):
+            raise OSError("secret cleanup path")
+
+        monkeypatch.setattr(hash_chain.os, "unlink", fail_unlink)
+        with caplog.at_level(logging.WARNING, logger=hash_chain.__name__):
+            assert _atomic_write_exclusive(path, "hello") is True
+
+        assert path.read_text(encoding="utf-8") == "hello"
+        assert any(record.message == "hash chain temp cleanup failed" for record in caplog.records)
+        assert any(getattr(record, "error_type", "") == "OSError" for record in caplog.records)
+        assert all("secret cleanup path" not in record.message for record in caplog.records)
 
 
 # ============================================================

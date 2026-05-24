@@ -1021,6 +1021,16 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "console_checkpoints_expose_persisted_state_summary",
                 "console_provider_and_scheduler_views_are_read_only",
             ],
+            runtime_witness_anchor_aliases={
+                "console_home_returns_governed_runtime_vitals": ["console_home"],
+                "console_runs_bounds_recent_audit_entries": ["console_runs"],
+                "console_audit_exposes_chain_intact_read_model": ["console_audit"],
+                "console_checkpoints_expose_persisted_state_summary": ["console_checkpoints"],
+                "console_provider_and_scheduler_views_are_read_only": [
+                    "console_providers",
+                    "console_scheduler",
+                ],
+            },
         ),
         _surface(
             "agent_adapter_protocol",
@@ -1107,6 +1117,8 @@ def proof_coverage_matrix() -> dict[str, Any]:
             [
                 "mcoi/mcoi_runtime/app/routers/llm/admin.py",
                 "mcoi/mcoi_runtime/app/routers/llm/ab_test.py",
+                "mcoi/tests/test_ab_testing.py",
+                "mcoi/tests/test_server_phase214.py",
             ],
             "Model catalog and experiment control routes are declared as governed control surfaces.",
             [
@@ -1118,6 +1130,15 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "ab_test_summary_bounded",
                 "ab_test_failed_model_recorded",
             ],
+            runtime_witness_anchor_aliases={
+                "model_catalog_list_bounded": ["list_models"],
+                "auto_completion_routes_model": ["auto_complete"],
+                "auto_completion_forced_model": ["force_model"],
+                "ab_test_single_model_result": ["single_model"],
+                "ab_test_two_models_cost_comparison": ["two_models_cost"],
+                "ab_test_summary_bounded": ["summary"],
+                "ab_test_failed_model_recorded": ["failed_model"],
+            },
         ),
         _surface(
             "policy_version_registry",
@@ -1237,6 +1258,33 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "central_data_transfer_forbidden",
                 "federated_snapshot_schema_valid",
             ],
+            runtime_witness_anchor_aliases={
+                "signed_policy_metadata_only_sync": [
+                    "signed_policy_syncs_to_allowed_region_without_data_transfer",
+                    "signed_policy_sync_preserves_residency_boundary",
+                ],
+                "invalid_signature_denied_before_local_acceptance": [
+                    "invalid_signature_is_denied_before_local_acceptance",
+                ],
+                "policy_not_allowed_for_cluster_denied": [
+                    "policy_not_allowed_for_cluster_is_denied",
+                    "policy_sync_denies_policy_not_allowed_for_cluster",
+                ],
+                "unsynced_policy_denied_locally": ["local_enforcement_denies_unsynced_policy"],
+                "tenant_region_mismatch_denied_locally": [
+                    "tenant_region_mismatch_denies_locally",
+                    "local_enforcement_denies_region_mismatch",
+                ],
+                "central_data_transfer_forbidden": [
+                    "signed_policy_syncs_to_allowed_region_without_data_transfer",
+                    "federation_summary_endpoint_returns_schema_valid_read_model",
+                    "local_enforcement_allows_matching_residency_after_sync",
+                ],
+                "federated_snapshot_schema_valid": [
+                    "federated_control_snapshot_schema_exposes_locality_contract",
+                    "federation_summary_endpoint_returns_schema_valid_read_model",
+                ],
+            },
         ),
         _surface(
             "finance_approval_packets",
