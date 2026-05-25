@@ -34,19 +34,31 @@ DEFAULT_UPSTREAM_GATE = "api-production-readiness-gate"
 DEFAULT_BLOCKERS = (
     "private_recovery_inventory_missing",
     "recovery_witness_not_promoted",
+    "production_image_not_confirmed",
     "runtime_host_not_provisioned",
     "managed_postgres_not_provisioned",
+    "schema_not_applied",
     "secret_store_not_bound",
+    "deploy_env_check_not_ready",
+    "release_preflight_not_ready",
+    "persistence_check_not_ready",
+    "host_firewall_not_configured",
     "tls_preflight_not_closed",
     "rollback_path_not_verified",
+    "private_runtime_witness_not_ready",
+    "dns_authority_not_verified",
+    "runtime_witness_registry_has_no_closed_products",
 )
 DEFAULT_EVIDENCE_REFS = (
-    "issue-330-comment-4530008851",
-    "issue-330-comment-4530018818",
+    "mullusi-site-pr-58",
+    "mullusi-site-commit-d62895152902c3757c0df2538e4fdaa80624f2f5",
+    "issue-330-comment-4530610366",
+    "upstream-script:scripts/check-api-production-readiness.mjs",
 )
 DEFAULT_NEXT_ACTIONS = (
     "complete private recovery inventory outside Git",
     "promote upstream recovery witness after manual confirmations",
+    "run upstream check-api-production-readiness with all required evidence flags",
     "provision runtime host, managed PostgreSQL, secret store, TLS, and rollback path",
     "publish api.mullusi.com DNS only after upstream readiness passes",
 )
