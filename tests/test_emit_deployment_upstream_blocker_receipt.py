@@ -23,6 +23,9 @@ if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))
 
 from scripts.emit_deployment_upstream_blocker_receipt import (  # noqa: E402
+    DEFAULT_BLOCKERS,
+    DEFAULT_EVIDENCE_REFS,
+    DEFAULT_NEXT_ACTIONS,
     emit_deployment_upstream_blocker_receipt,
     main,
     write_deployment_upstream_blocker_receipt,
@@ -113,7 +116,14 @@ def test_deployment_upstream_blocker_cli_writes_blocked_receipt(tmp_path: Path, 
     assert exit_code == 1
     assert output_path.exists()
     assert payload["ready"] is False
+    assert payload["blockers"] == list(DEFAULT_BLOCKERS)
+    assert payload["evidence_refs"] == list(DEFAULT_EVIDENCE_REFS)
+    assert payload["next_actions"] == list(DEFAULT_NEXT_ACTIONS)
     assert "private_recovery_inventory_missing" in payload["blockers"]
+    assert "production_image_not_confirmed" in payload["blockers"]
+    assert "runtime_witness_registry_has_no_closed_products" in payload["blockers"]
+    assert "mullusi-site-pr-58" in payload["evidence_refs"]
+    assert "upstream-script:scripts/check-api-production-readiness.mjs" in payload["evidence_refs"]
 
 
 def test_deployment_upstream_blocker_cli_can_emit_ready_receipt(tmp_path: Path, capsys) -> None:

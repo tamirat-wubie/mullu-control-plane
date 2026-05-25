@@ -163,6 +163,9 @@ The generic sandbox receipt gate must also report `valid=true`; it proves the ne
 14. Publish deployment witness only after approval:
 
 ```powershell
+# From the upstream mullusi-site checkout, this must pass before DNS work.
+node scripts\check-api-production-readiness.mjs --require-ready --production-image-published --runtime-host-ready --managed-postgres-ready --schema-applied --production-secrets-stored --deploy-env-ready --release-preflight-ready --persistence-ready --host-firewall-configured --tls-certificate-ready --rollback-path-defined --private-runtime-witness-ready --dns-authority-ready
+
 python scripts\emit_deployment_upstream_blocker_receipt.py --target-gateway-url "$env:MULLU_GATEWAY_URL" --output .change_assurance\deployment_upstream_blocker_receipt.json --json
 python scripts\validate_deployment_upstream_blocker_receipt.py --receipt .change_assurance\deployment_upstream_blocker_receipt.json --output .change_assurance\deployment_upstream_blocker_receipt_validation.json --require-ready
 python scripts\emit_gateway_dns_target_binding_receipt.py --gateway-host "$env:MULLU_GATEWAY_HOST" --gateway-url "$env:MULLU_GATEWAY_URL" --expected-environment "$env:MULLU_EXPECTED_RUNTIME_ENV" --record-type "$env:MULLU_GATEWAY_DNS_RECORD_TYPE" --target "$env:MULLU_GATEWAY_DNS_TARGET" --provider "$env:MULLU_DNS_PROVIDER" --output .change_assurance\gateway_dns_target_binding_receipt.json --json
@@ -175,7 +178,8 @@ python scripts\validate_deployment_publication_closure.py
 ```
 
 The upstream blocker validation must report `valid=true` with `--require-ready`
-before DNS target selection is treated as actionable.
+before DNS target selection is treated as actionable. The upstream API reporter
+must also report ready before DNS target selection is treated as actionable.
 The target-binding validation must report `valid=true` with `--require-ready`
 before DNS publication is treated as actionable.
 The DNS receipt validation must report `valid=true` with `--require-resolved`
@@ -203,7 +207,7 @@ python scripts\validate_general_agent_promotion.py --strict --output .change_ass
 | Credential action lacks approval | Do not bind the secret and keep promotion blocked |
 | Live receipt fails | Preserve the failed receipt and blocker |
 | Deployment witness is not published | Do not update `DEPLOYMENT_STATUS.md` |
-| Upstream API/DNS readiness is not ready | Do not publish DNS; complete upstream recovery, runtime host, managed PostgreSQL, secret store, TLS, rollback, and DNS publication authority gates, then rerun `emit_deployment_upstream_blocker_receipt.py` plus `validate_deployment_upstream_blocker_receipt.py --require-ready` |
+| Upstream API/DNS readiness is not ready | Do not publish DNS; complete upstream recovery, runtime host, managed PostgreSQL, schema, secret store, preflight, persistence, firewall, TLS, rollback, private runtime witness, runtime witness closure, and DNS publication authority gates, then rerun the upstream `check-api-production-readiness.mjs --require-ready` command plus `emit_deployment_upstream_blocker_receipt.py` and `validate_deployment_upstream_blocker_receipt.py --require-ready` |
 | Gateway DNS target-binding receipt is not ready | Do not publish DNS; select `MULLU_GATEWAY_DNS_TARGET`, `MULLU_GATEWAY_DNS_RECORD_TYPE`, and `MULLU_DNS_PROVIDER`, then rerun `emit_gateway_dns_target_binding_receipt.py` plus `validate_gateway_dns_target_binding_receipt.py --require-ready` |
 | Gateway DNS receipt is unresolved | Do not publish deployment witness; publish DNS and rerun `collect_gateway_dns_resolution_receipt.py` plus `validate_gateway_dns_resolution_receipt.py --require-resolved` |
 | Runtime or authority responsibility debt is not clear | Do not publish deployment witness and inspect `/authority/responsibility` |
