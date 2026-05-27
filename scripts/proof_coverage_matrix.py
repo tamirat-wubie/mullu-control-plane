@@ -3718,6 +3718,29 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "reputation_update_requires_evidence",
                 "agent_identity_schema_valid",
             ],
+            runtime_witness_anchor_aliases={
+                "owner_tenant_identity_required": [
+                    "agent_identity_registers_schema_valid_accountable_record"
+                ],
+                "self_approval_forbidden": [
+                    "agent_identity_denies_self_approval_and_policy_mutation"
+                ],
+                "policy_mutation_forbidden": [
+                    "agent_identity_denies_self_approval_and_policy_mutation"
+                ],
+                "delegation_requires_lease": [
+                    "agent_identity_delegation_requires_lease_scope"
+                ],
+                "agent_budget_enforced": [
+                    "agent_identity_enforces_memory_and_budget_scope"
+                ],
+                "reputation_update_requires_evidence": [
+                    "agent_reputation_update_requires_evidence_and_stays_bounded"
+                ],
+                "agent_identity_schema_valid": [
+                    "agent_identity_registers_schema_valid_accountable_record"
+                ],
+            },
         ),
         _surface(
             "claim_verification",
@@ -3744,6 +3767,23 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "high_risk_requires_independent_support",
                 "claim_verification_schema_valid",
             ],
+            runtime_witness_anchor_aliases={
+                "claim_type_declared": [
+                    "claim_verification_report_schema_validates"
+                ],
+                "contradictions_block_execution": [
+                    "contradicted_claim_blocks_planning_and_execution"
+                ],
+                "stale_claims_block_execution": [
+                    "stale_claim_blocks_execution"
+                ],
+                "high_risk_requires_independent_support": [
+                    "high_risk_claim_requires_independent_support_sources"
+                ],
+                "claim_verification_schema_valid": [
+                    "claim_verification_report_schema_validates"
+                ],
+            },
         ),
         _surface(
             "governed_connector_framework",
@@ -3977,6 +4017,26 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "read_only_degradation_bounded",
                 "connector_self_healing_schema_valid",
             ],
+            runtime_witness_anchor_aliases={
+                "provider_success_not_assumed": [
+                    "retryable_provider_failure_emits_retry_receipt_not_success"
+                ],
+                "write_failures_require_operator_review": [
+                    "write_operation_failure_requires_operator_review"
+                ],
+                "missing_receipt_revokes_capability": [
+                    "missing_receipt_revokes_capability_until_proof_restored"
+                ],
+                "fallback_provider_requires_certification": [
+                    "fallback_provider_switch_requires_certification_and_fresh_receipt"
+                ],
+                "read_only_degradation_bounded": [
+                    "read_only_degradation_is_bounded_for_non_write_failure"
+                ],
+                "connector_self_healing_schema_valid": [
+                    "connector_self_healing_receipt_schema_validates"
+                ],
+            },
         ),
         _surface(
             "collaboration_cases",
@@ -4075,6 +4135,29 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "unknown_property_fails_closed",
                 "policy_proof_report_schema_valid",
             ],
+            runtime_witness_anchor_aliases={
+                "payment_requires_approval_counterexample": [
+                    "payment_requires_approval_counterexample"
+                ],
+                "tenant_isolation_counterexample": [
+                    "tenant_isolation_counterexample"
+                ],
+                "shell_requires_sandbox_counterexample": [
+                    "shell_requires_sandbox_counterexample"
+                ],
+                "provider_url_approved_counterexample": [
+                    "provider_url_approved_counterexample"
+                ],
+                "memory_requires_admission_counterexample": [
+                    "memory_requires_admission_counterexample"
+                ],
+                "unknown_property_fails_closed": [
+                    "unknown_property_fails_closed"
+                ],
+                "policy_proof_report_schema_valid": [
+                    "policy_proof_report_schema_valid"
+                ],
+            },
         ),
         _surface(
             "shell_execution_adapter",
@@ -4126,6 +4209,23 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "contradiction_and_stale_memory_block_execution",
                 "memory_lattice_schema_valid",
             ],
+            runtime_witness_anchor_aliases={
+                "raw_event_memory_not_directly_admitted": [
+                    "raw_event_memory_is_never_directly_admitted",
+                ],
+                "semantic_memory_requires_learning_admission": [
+                    "semantic_memory_requires_admitted_learning_decision",
+                ],
+                "policy_memory_requires_authority_ref": [
+                    "policy_memory_requires_policy_authority_ref",
+                ],
+                "preference_memory_tenant_owner_scoped": [
+                    "preference_memory_is_tenant_owner_scoped_and_not_execution_authority",
+                ],
+                "memory_lattice_schema_valid": [
+                    "memory_lattice_schema_exposes_admission_claim",
+                ],
+            },
         ),
         _surface(
             "workflow_mining",
@@ -4153,6 +4253,28 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "risky_pattern_requires_approval_rules",
                 "workflow_mining_report_schema_valid",
             ],
+            runtime_witness_anchor_aliases={
+                "repeated_trace_pattern_required": [
+                    "workflow_mining_detects_repeated_invoice_pattern",
+                    "workflow_mining_ignores_singletons_and_other_tenants",
+                ],
+                "workflow_draft_activation_blocked": [
+                    "workflow_mining_detects_repeated_invoice_pattern",
+                    "workflow_draft_rejects_unblocked_activation",
+                ],
+                "operator_review_required": [
+                    "workflow_mining_detects_repeated_invoice_pattern",
+                ],
+                "sandbox_replay_required": [
+                    "workflow_mining_detects_repeated_invoice_pattern",
+                ],
+                "risky_pattern_requires_approval_rules": [
+                    "workflow_mining_projects_governance_for_payment_pattern",
+                ],
+                "workflow_mining_report_schema_valid": [
+                    "workflow_mining_schema_exposes_draft_contract",
+                ],
+            },
         ),
         _surface(
             "trust_ledger",
@@ -4508,6 +4630,32 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "temporal_evidence_freshness_receipt_schema_valid",
                 "receipt_not_terminal_closure",
             ],
+            runtime_witness_anchor_aliases={
+                "evidence_age_computed_from_runtime_clock": [
+                    "evidence_freshness_allows_fresh_required_schema_receipt"
+                ],
+                "freshness_window_required_for_dispatch": [
+                    "freshness_window_required_for_dispatch"
+                ],
+                "stale_required_evidence_triggers_refresh": [
+                    "evidence_freshness_requires_refresh_for_stale_required_type"
+                ],
+                "missing_required_evidence_blocks_dispatch": [
+                    "evidence_freshness_blocks_missing_required_evidence"
+                ],
+                "revoked_or_unverified_high_risk_evidence_blocks": [
+                    "evidence_freshness_blocks_revoked_unverified_or_wrong_tenant_evidence"
+                ],
+                "expiring_evidence_warns_before_dispatch": [
+                    "evidence_freshness_warns_when_evidence_is_expiring_soon"
+                ],
+                "temporal_evidence_freshness_receipt_schema_valid": [
+                    "evidence_freshness_allows_fresh_required_schema_receipt"
+                ],
+                "receipt_not_terminal_closure": [
+                    "evidence_freshness_allows_fresh_required_schema_receipt"
+                ],
+            },
         ),
         _surface(
             "temporal_resolution",
@@ -4667,6 +4815,32 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "temporal_reapproval_receipt_schema_valid",
                 "receipt_not_terminal_closure",
             ],
+            runtime_witness_anchor_aliases={
+                "runtime_clock_owns_reapproval_time": [
+                    "temporal_reapproval_approves_valid_high_risk_grants_schema_receipt",
+                ],
+                "high_risk_approval_roles_required": [
+                    "temporal_reapproval_requires_missing_role_coverage",
+                ],
+                "expired_approval_requires_reapproval": [
+                    "temporal_reapproval_requires_fresh_approval_when_grant_expired",
+                ],
+                "revoked_or_out_of_scope_approval_blocks_dispatch": [
+                    "temporal_reapproval_blocks_invalid_or_unsafe_grants",
+                ],
+                "missing_approval_role_requires_reapproval": [
+                    "temporal_reapproval_requires_missing_role_coverage",
+                ],
+                "low_risk_action_does_not_require_reapproval": [
+                    "temporal_reapproval_marks_low_risk_action_not_required",
+                ],
+                "temporal_reapproval_receipt_schema_valid": [
+                    "temporal_reapproval_approves_valid_high_risk_grants_schema_receipt",
+                ],
+                "receipt_not_terminal_closure": [
+                    "temporal_reapproval_approves_valid_high_risk_grants_schema_receipt",
+                ],
+            },
         ),
         _surface(
             "temporal_dispatch_window",

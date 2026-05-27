@@ -72,6 +72,22 @@ def test_agent_identity_denies_self_approval_and_policy_mutation() -> None:
     assert policy_error == "policy_mutation_forbidden"
 
 
+def test_capability_scope_conflict_denied() -> None:
+    try:
+        _identity(
+            allowed_capabilities=("invoice.read", "payment.propose"),
+            forbidden_capabilities=("payment.propose",),
+        )
+    except ValueError as exc:
+        conflict_error = str(exc)
+    else:
+        conflict_error = ""
+
+    assert conflict_error == "capability_scope_conflict"
+    assert conflict_error != "policy_mutation_forbidden"
+    assert conflict_error.endswith("_conflict")
+
+
 def test_agent_identity_enforces_memory_and_budget_scope() -> None:
     registry = AgentIdentityRegistry(clock=lambda: "2026-05-05T12:00:00+00:00")
     registry.register(
