@@ -5492,6 +5492,28 @@
         "JobEngine.restore_job"
       ],
       "request_proof": "request_proof",
+      "runtime_witness_anchor_aliases": {
+        "job_create_mutation_receipt_emitted": [
+          "lifecycle_records_bounded_mutation_receipts",
+          "job_receipts_convert_to_effect_records",
+          "job_mutation_receipt_closes_effect_assurance"
+        ],
+        "job_pause_resume_mutation_receipts_emitted": [
+          "pause_resume_failure_and_cancel_receipts_are_bounded"
+        ],
+        "job_restore_mutation_receipt_emitted": [
+          "restore_job_registers_exact_descriptor_and_state"
+        ],
+        "job_start_mutation_receipt_emitted": [
+          "lifecycle_records_bounded_mutation_receipts",
+          "pause_resume_failure_and_cancel_receipts_are_bounded"
+        ],
+        "job_terminal_mutation_receipts_emitted": [
+          "lifecycle_records_bounded_mutation_receipts",
+          "pause_resume_failure_and_cancel_receipts_are_bounded",
+          "cancel_from_created"
+        ]
+      },
       "runtime_witnesses": [
         "job_create_mutation_receipt_emitted",
         "job_start_mutation_receipt_emitted",
@@ -5521,6 +5543,30 @@
         "/commands/{command_id}/authority"
       ],
       "request_proof": "request_proof",
+      "runtime_witness_anchor_aliases": {
+        "command_authority_read_model_bound_to_approval_chain": [
+          "authority_approval_chain_read_model",
+          "authority_obligation_and_escalation_read_models"
+        ],
+        "escalated_obligation_count": [
+          "review_terminal_certificate_opens_owned_obligation_and_escalates_when_overdue",
+          "escalate_overdue_authority_obligations_records_transition"
+        ],
+        "open_obligation_count": [
+          "review_terminal_certificate_opens_owned_obligation_and_escalates_when_overdue",
+          "authority_obligation_and_escalation_read_models",
+          "authority_witness_read_model"
+        ],
+        "overdue_obligation_count": [
+          "review_terminal_certificate_opens_owned_obligation_and_escalates_when_overdue",
+          "authority_obligation_and_escalation_read_models"
+        ],
+        "pending_approval_chain_count": [
+          "prepare_authority_binds_ownership_and_pending_approval_chain",
+          "authority_approval_chain_read_model",
+          "authority_witness_read_model"
+        ]
+      },
       "runtime_witnesses": [
         "pending_approval_chain_count",
         "open_obligation_count",
@@ -8655,7 +8701,7 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 1004,
+    "exact_test_anchor_count": 1014,
     "runtime_witness_count": 1114,
     "surfaces": [
       {
@@ -12039,36 +12085,97 @@
         "anchored_witnesses": [
           {
             "anchors": [
+              "mcoi/tests/test_job_core.py::test_lifecycle_records_bounded_mutation_receipts",
+              "mcoi/tests/test_job_core.py::test_job_receipts_convert_to_effect_records",
+              "mcoi/tests/test_job_core.py::test_job_mutation_receipt_closes_effect_assurance"
+            ],
+            "witness": "job_create_mutation_receipt_emitted"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_job_core.py::test_lifecycle_records_bounded_mutation_receipts",
+              "mcoi/tests/test_job_core.py::test_pause_resume_failure_and_cancel_receipts_are_bounded"
+            ],
+            "witness": "job_start_mutation_receipt_emitted"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_job_core.py::test_pause_resume_failure_and_cancel_receipts_are_bounded"
+            ],
+            "witness": "job_pause_resume_mutation_receipts_emitted"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_job_core.py::test_lifecycle_records_bounded_mutation_receipts",
+              "mcoi/tests/test_job_core.py::test_pause_resume_failure_and_cancel_receipts_are_bounded",
+              "mcoi/tests/test_job_core.py::test_cancel_from_created"
+            ],
+            "witness": "job_terminal_mutation_receipts_emitted"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_job_core.py::test_restore_job_registers_exact_descriptor_and_state"
+            ],
+            "witness": "job_restore_mutation_receipt_emitted"
+          },
+          {
+            "anchors": [
               "mcoi/tests/test_job_core.py::test_job_mutation_receipt_closes_effect_assurance"
             ],
             "witness": "job_mutation_receipt_closes_effect_assurance"
           }
         ],
-        "exact_test_anchor_count": 1,
+        "exact_test_anchor_count": 6,
         "runtime_witness_count": 6,
         "surface_id": "job_engine_lifecycle",
-        "unanchored_witness_count": 5,
-        "unanchored_witnesses": [
-          "job_create_mutation_receipt_emitted",
-          "job_start_mutation_receipt_emitted",
-          "job_pause_resume_mutation_receipts_emitted",
-          "job_terminal_mutation_receipts_emitted",
-          "job_restore_mutation_receipt_emitted"
-        ]
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
       },
       {
-        "anchored_witnesses": [],
-        "exact_test_anchor_count": 0,
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "tests/test_gateway/test_authority_obligation_mesh.py::test_prepare_authority_binds_ownership_and_pending_approval_chain",
+              "tests/test_gateway/test_webhooks.py::test_authority_approval_chain_read_model",
+              "tests/test_gateway/test_webhooks.py::test_authority_witness_read_model"
+            ],
+            "witness": "pending_approval_chain_count"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_authority_obligation_mesh.py::test_review_terminal_certificate_opens_owned_obligation_and_escalates_when_overdue",
+              "tests/test_gateway/test_webhooks.py::test_authority_obligation_and_escalation_read_models",
+              "tests/test_gateway/test_webhooks.py::test_authority_witness_read_model"
+            ],
+            "witness": "open_obligation_count"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_authority_obligation_mesh.py::test_review_terminal_certificate_opens_owned_obligation_and_escalates_when_overdue",
+              "tests/test_gateway/test_webhooks.py::test_authority_obligation_and_escalation_read_models"
+            ],
+            "witness": "overdue_obligation_count"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_authority_obligation_mesh.py::test_review_terminal_certificate_opens_owned_obligation_and_escalates_when_overdue",
+              "tests/test_gateway/test_webhooks.py::test_escalate_overdue_authority_obligations_records_transition"
+            ],
+            "witness": "escalated_obligation_count"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_webhooks.py::test_authority_approval_chain_read_model",
+              "tests/test_gateway/test_webhooks.py::test_authority_obligation_and_escalation_read_models"
+            ],
+            "witness": "command_authority_read_model_bound_to_approval_chain"
+          }
+        ],
+        "exact_test_anchor_count": 5,
         "runtime_witness_count": 5,
         "surface_id": "authority_obligation_mesh",
-        "unanchored_witness_count": 5,
-        "unanchored_witnesses": [
-          "pending_approval_chain_count",
-          "open_obligation_count",
-          "overdue_obligation_count",
-          "escalated_obligation_count",
-          "command_authority_read_model_bound_to_approval_chain"
-        ]
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
       },
       {
         "anchored_witnesses": [],
@@ -16087,6 +16194,6 @@
         "unanchored_witnesses": []
       }
     ],
-    "unanchored_witness_count": 110
+    "unanchored_witness_count": 100
   }
 }

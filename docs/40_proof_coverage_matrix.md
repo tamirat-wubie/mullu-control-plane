@@ -151,8 +151,8 @@ Witness integrity audit:
 | Metric | Count |
 |---|---:|
 | Runtime witness labels | 1114 |
-| Exact test anchors | 1004 |
-| Unanchored witness labels | 110 |
+| Exact test anchors | 1014 |
+| Unanchored witness labels | 100 |
 
 Evidence quality gaps:
 none
@@ -161,8 +161,6 @@ Witness integrity gaps:
 
 | Surface | Exact anchors | Unanchored | Unanchored labels |
 |---|---:|---:|---|
-| `job_engine_lifecycle` | 1 | 5 | job_create_mutation_receipt_emitted, job_start_mutation_receipt_emitted, job_pause_resume_mutation_receipts_emitted, job_terminal_mutation_receipts_emitted, job_restore_mutation_receipt_emitted |
-| `authority_obligation_mesh` | 0 | 5 | pending_approval_chain_count, open_obligation_count, overdue_obligation_count, escalated_obligation_count, command_authority_read_model_bound_to_approval_chain |
 | `authority_operator_controls` | 0 | 5 | operator_access_guard, operator_audit_events, ownership_policy_read_models, approval_expiration_witness, obligation_satisfaction_escalation_witness |
 | `capability_maturity_assessment` | 3 | 6 | certification_evidence_synthesizes_maturity_extension, registry_read_model_exposes_maturity, default_pack_C6_examples_projected, effect_bearing_production_requires_live_write, production_requires_worker_deployment_recovery, autonomy_requires_C7_controls |
 | `agent_identity` | 0 | 8 | owner_tenant_identity_required, capability_scope_conflict_denied, self_approval_forbidden, policy_mutation_forbidden, delegation_requires_lease, agent_budget_enforced, reputation_update_requires_evidence, agent_identity_schema_valid |
@@ -302,5 +300,5 @@ none
 STATUS:
   Completeness: 100%
   Invariants verified: route declarations, route-level coverage classification, coverage levels, coverage states, closure action mapping, schema contract validation, deployment orchestration receipt schema contract
-  Open issues: 110 runtime-witness labels lack exact test-function anchors
+  Open issues: 100 runtime-witness labels lack exact test-function anchors
   Next action: bind unanchored runtime-witness labels to exact test-function anchors
