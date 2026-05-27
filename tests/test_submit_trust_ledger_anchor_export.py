@@ -397,6 +397,42 @@ def test_submit_trust_ledger_anchor_export_requires_remote_preflight_receipt(tmp
     assert not ledger_path.exists()
 
 
+def test_submit_trust_ledger_anchor_export_blocks_invalid_remote_timeout_before_transport(
+    tmp_path: Path,
+) -> None:
+    export_paths = _write_anchor_export(tmp_path)
+    ledger_path = tmp_path / "submissions.jsonl"
+    transport = FakeTransparencyLogTransport()
+
+    report = submit_trust_ledger_anchor_export(
+        bundle_path=export_paths["bundle"],
+        receipt_path=export_paths["anchor_receipt"],
+        artifacts_path=export_paths["artifacts"],
+        package_path=export_paths["package"],
+        ledger_path=ledger_path,
+        operator_id="operator-1",
+        authority_ref="proof://approval-submit-anchor-1",
+        submitted_at="2026-05-05T12:20:00+00:00",
+        verification_secret="anchor-secret",
+        submission_secret="submission-secret",
+        signature_key_id="submission-key",
+        confirm_submit=True,
+        remote_submit_url="https://transparency.example/anchors",
+        allow_remote_submit=True,
+        remote_preflight_receipt_path=tmp_path / "remote_preflight.json",
+        remote_api_token="remote-token",
+        remote_timeout_seconds=float("inf"),
+        urlopen=transport,
+    )
+
+    assert report["valid"] is False
+    assert report["reason"] == "remote_timeout_seconds_invalid"
+    assert report["submitted"] is False
+    assert report["submission_receipt"] == {}
+    assert transport.request is None
+    assert not ledger_path.exists()
+
+
 def test_submit_trust_ledger_anchor_export_blocks_remote_transport_when_submission_ledger_locked(
     tmp_path: Path,
 ) -> None:
@@ -594,6 +630,53 @@ def test_submit_trust_ledger_anchor_export_blocks_remote_hash_mismatch(tmp_path:
     assert report["remote_submission"]["valid"] is False
     assert report["remote_submission"]["observed_submission_payload_hash"] == "0" * 64
     assert report["submission_receipt"] == {}
+    assert not ledger_path.exists()
+
+
+def test_submit_trust_ledger_anchor_export_blocks_nonfinite_remote_preflight_timeout(
+    tmp_path: Path,
+) -> None:
+    export_paths = _write_anchor_export(tmp_path)
+    ledger_path = tmp_path / "submissions.jsonl"
+    preflight_path = _write_remote_preflight(
+        tmp_path=tmp_path,
+        export_paths=export_paths,
+        ledger_path=ledger_path,
+        remote_timeout_seconds=3.0,
+    )
+    preflight_payload = json.loads(preflight_path.read_text(encoding="utf-8"))
+    preflight_payload["remote_timeout_seconds"] = float("nan")
+    preflight_path.write_text(json.dumps(preflight_payload), encoding="utf-8")
+    transport = FakeTransparencyLogTransport()
+
+    report = submit_trust_ledger_anchor_export(
+        bundle_path=export_paths["bundle"],
+        receipt_path=export_paths["anchor_receipt"],
+        artifacts_path=export_paths["artifacts"],
+        package_path=export_paths["package"],
+        ledger_path=ledger_path,
+        operator_id="operator-1",
+        authority_ref="proof://approval-submit-anchor-1",
+        submitted_at="2026-05-05T12:20:00+00:00",
+        verification_secret="anchor-secret",
+        submission_secret="submission-secret",
+        signature_key_id="submission-key",
+        confirm_submit=True,
+        remote_submit_url="https://transparency.example/anchors",
+        allow_remote_submit=True,
+        remote_preflight_receipt_path=preflight_path,
+        remote_api_token="remote-token",
+        remote_timeout_seconds=3.0,
+        urlopen=transport,
+    )
+
+    assert report["valid"] is False
+    assert report["reason"] == "remote_preflight_receipt_failed:remote_timeout_seconds_invalid"
+    assert report["remote_preflight"]["valid"] is False
+    assert report["remote_preflight"]["receipt_id"] == preflight_payload["receipt_id"]
+    assert report["remote_submission"]["reason"] == "remote_submission_blocked_by_preflight"
+    assert report["submission_receipt"] == {}
+    assert transport.request is None
     assert not ledger_path.exists()
 
 

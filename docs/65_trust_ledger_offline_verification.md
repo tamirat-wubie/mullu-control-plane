@@ -35,6 +35,8 @@ Invariants:
 - Anchor verification binds the receipt to the bundle id, bundle hash, artifact root, receipt id, receipt hash, and HMAC signature.
 - Anchor verifier JSON output validates against `trust_ledger_anchor_verification_report.schema.json` for both valid and fail-closed reports.
 - Anchor receipts do not replace terminal closure certificates.
+- OrgOS anchor export packaging validates generated export schemas before publishing files.
+- OrgOS anchor export packaging stages output files and rolls back partial publish failures.
 - Anchor submission requires explicit operator authority, prior package verification, and a signed hash-chained ledger receipt.
 - Remote submission preflight is read-only: it never posts to the transparency log and never appends to the local submission ledger.
 - Effect-bearing remote submission requires a matching preflight receipt before any HTTPS POST or local ledger append.
@@ -146,6 +148,22 @@ Fail-closed reasons include:
 | `anchor_receipt_hash_mismatch` | Receipt body no longer matches its receipt hash |
 | `anchor_signature_mismatch` | HMAC signature no longer matches the receipt |
 
+## OrgOS Anchor Packaging
+
+OrgOS event receipts may be packaged as optional supporting artifacts only after
+the terminal trust-ledger bundle and required terminal artifacts already exist.
+The packager validates the generated package schema before publishing any files,
+then writes through staged files so a publish failure does not leave a partial
+export surface.
+
+Packaging fail-closed reasons include:
+
+| Reason | Meaning |
+| --- | --- |
+| `package_schema_validation_failed` | The generated `package.json` would violate the public export-package schema; no export files are published |
+| `generated_export_schema_validation_failed` | A generated bundle, receipt, or artifact output would violate its public schema; no export files are published |
+| `anchor_export_publish_failed:*` | Staged output publishing failed and rollback was attempted before returning |
+
 ## Operator Procedure
 
 1. Export `bundle.json`, `anchor_receipt.json`, `artifacts.json`, and `package.json` from the same command closure.
@@ -201,7 +219,7 @@ Blocked conditions:
 | Outcome | Meaning |
 | --- | --- |
 | `AwaitingEvidence` | Required operator input, secret presence, or remote token evidence is missing |
-| `GovernanceBlocked` | Authority, URL, submitted timestamp, anchor export replay, or existing submission ledger replay failed |
+| `GovernanceBlocked` | Authority, URL, timeout, submitted timestamp, anchor export replay, or existing submission ledger replay failed |
 
 ## Governed Submission
 
@@ -292,6 +310,7 @@ Submission fail-closed reasons include:
 | `submission_ledger_stale_lock_seconds_invalid` | The requested stale-lock window is out of bounds |
 | `remote_submission_confirmation_required` | A remote URL was provided without `--allow-remote-submit` |
 | `remote_submit_url_must_be_https` | Remote submission endpoint was not HTTPS |
+| `remote_timeout_seconds_invalid` | Remote submission timeout was non-finite, zero, negative, or above the maximum |
 | `remote_api_token_required` | Remote submission was requested without a bearer token |
 | `remote_preflight_receipt_required` | Remote submission was requested without a preflight receipt |
 | `remote_preflight_receipt_failed:*` | The preflight receipt was unreadable, schema-invalid, blocked, stale, or mismatched the final payload |

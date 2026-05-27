@@ -8,12 +8,15 @@ Invariants:
   - OrgOS artifacts are supporting evidence only; they are never terminal closure.
   - A terminal trust-ledger bundle and required terminal artifacts must already exist.
   - Duplicate artifact identities fail closed.
+  - Generated export payloads are schema-validated before any output publish.
+  - Output publish stages all files and rolls back partial replaces on failure.
   - Output uses the canonical trust-ledger bundle, anchor receipt, artifacts, and package files.
 """
 
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import sys
@@ -29,6 +32,7 @@ from scripts.validate_schemas import _load_schema, _validate_schema_instance  # 
 
 
 BUNDLE_SCHEMA_PATH = ROOT / "schemas" / "trust_ledger_bundle.schema.json"
+ANCHOR_RECEIPT_SCHEMA_PATH = ROOT / "schemas" / "trust_ledger_anchor_receipt.schema.json"
 ARTIFACTS_SCHEMA_PATH = ROOT / "schemas" / "trust_ledger_evidence_artifacts.schema.json"
 PACKAGE_SCHEMA_PATH = ROOT / "schemas" / "trust_ledger_export_package.schema.json"
 
@@ -95,33 +99,70 @@ def package_orgos_anchor_export(
     except (KeyError, TypeError, ValueError) as exc:
         return _report(valid=False, reason=str(exc), schema_valid=True)
 
-    output_dir.mkdir(parents=True, exist_ok=True)
-    bundle_out = output_dir / "bundle.json"
-    receipt_out = output_dir / "anchor_receipt.json"
-    artifacts_out = output_dir / "artifacts.json"
-    package_out = output_dir / "package.json"
-    _write_json(bundle_out, bundle.to_json_dict())
-    _write_json(receipt_out, receipt.to_json_dict())
-    _write_json(artifacts_out, [artifact.to_json_dict() for artifact in merged_artifacts])
-    _write_json(package_out, package.to_json_dict())
-
-    package_errors = _validate_schema_instance(_load_schema(PACKAGE_SCHEMA_PATH), package.to_json_dict())
+    bundle_output = bundle.to_json_dict()
+    receipt_output = receipt.to_json_dict()
+    artifacts_output = [artifact.to_json_dict() for artifact in merged_artifacts]
+    package_output = package.to_json_dict()
+    package_errors = _validate_schema_instance(_load_schema(PACKAGE_SCHEMA_PATH), package_output)
+    if package_errors:
+        return _report(
+            valid=False,
+            reason="package_schema_validation_failed",
+            schema_valid=True,
+            schema_errors=package_errors,
+            bundle_id=bundle.bundle_id,
+            anchor_receipt_id=receipt.anchor_receipt_id,
+            package_id=package.package_id,
+            artifact_count=len(merged_artifacts),
+            orgos_artifact_count=len(orgos_artifacts),
+        )
+    output_schema_errors = _generated_export_schema_errors(
+        bundle_output=bundle_output,
+        receipt_output=receipt_output,
+        artifacts_output=artifacts_output,
+    )
+    if output_schema_errors:
+        return _report(
+            valid=False,
+            reason="generated_export_schema_validation_failed",
+            schema_valid=True,
+            schema_errors=output_schema_errors if strict else output_schema_errors[:10],
+            bundle_id=bundle.bundle_id,
+            anchor_receipt_id=receipt.anchor_receipt_id,
+            package_id=package.package_id,
+            artifact_count=len(merged_artifacts),
+            orgos_artifact_count=len(orgos_artifacts),
+        )
+    try:
+        output_files = _publish_anchor_export_files(
+            output_dir,
+            bundle_output=bundle_output,
+            receipt_output=receipt_output,
+            artifacts_output=artifacts_output,
+            package_output=package_output,
+        )
+    except RuntimeError as exc:
+        return _report(
+            valid=False,
+            reason=str(exc),
+            schema_valid=True,
+            bundle_id=bundle.bundle_id,
+            anchor_receipt_id=receipt.anchor_receipt_id,
+            package_id=package.package_id,
+            artifact_count=len(merged_artifacts),
+            orgos_artifact_count=len(orgos_artifacts),
+        )
     return _report(
-        valid=not package_errors,
-        reason="packaged" if not package_errors else "package_schema_validation_failed",
+        valid=True,
+        reason="packaged",
         schema_valid=True,
-        schema_errors=package_errors,
+        schema_errors=[],
         bundle_id=bundle.bundle_id,
         anchor_receipt_id=receipt.anchor_receipt_id,
         package_id=package.package_id,
         artifact_count=len(merged_artifacts),
         orgos_artifact_count=len(orgos_artifacts),
-        output_files={
-            "bundle": str(bundle_out),
-            "anchor_receipt": str(receipt_out),
-            "artifacts": str(artifacts_out),
-            "package": str(package_out),
-        },
+        output_files=output_files,
     )
 
 
@@ -192,6 +233,27 @@ def _schema_errors(
     errors.extend(
         f"orgos_artifacts:{error}"
         for error in _validate_schema_instance(_load_schema(ARTIFACTS_SCHEMA_PATH), orgos_artifacts_payload)
+    )
+    return errors
+
+
+def _generated_export_schema_errors(
+    *,
+    bundle_output: dict[str, Any],
+    receipt_output: dict[str, Any],
+    artifacts_output: list[Any],
+) -> list[str]:
+    errors = [
+        f"bundle:{error}"
+        for error in _validate_schema_instance(_load_schema(BUNDLE_SCHEMA_PATH), bundle_output)
+    ]
+    errors.extend(
+        f"anchor_receipt:{error}"
+        for error in _validate_schema_instance(_load_schema(ANCHOR_RECEIPT_SCHEMA_PATH), receipt_output)
+    )
+    errors.extend(
+        f"artifacts:{error}"
+        for error in _validate_schema_instance(_load_schema(ARTIFACTS_SCHEMA_PATH), artifacts_output)
     )
     return errors
 
@@ -291,6 +353,101 @@ def _report(
 def _write_json(path: Path, payload: Any) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
+
+def _publish_anchor_export_files(
+    output_dir: Path,
+    *,
+    bundle_output: dict[str, Any],
+    receipt_output: dict[str, Any],
+    artifacts_output: list[Any],
+    package_output: dict[str, Any],
+) -> dict[str, str]:
+    output_dir.mkdir(parents=True, exist_ok=True)
+    file_payloads: tuple[tuple[str, str, Any], ...] = (
+        ("bundle", "bundle.json", bundle_output),
+        ("anchor_receipt", "anchor_receipt.json", receipt_output),
+        ("artifacts", "artifacts.json", artifacts_output),
+        ("package", "package.json", package_output),
+    )
+    marker = _publish_marker(file_payloads)
+    staged_paths: dict[str, Path] = {}
+    output_paths: dict[str, Path] = {}
+    backup_paths: dict[Path, Path] = {}
+    replaced_paths: set[Path] = set()
+    created_paths: set[Path] = set()
+    try:
+        for label, file_name, payload in file_payloads:
+            staged_path = output_dir / f".{file_name}.{marker}.tmp"
+            _write_json(staged_path, payload)
+            staged_paths[label] = staged_path
+            output_paths[label] = output_dir / file_name
+        for label, target_path in output_paths.items():
+            if target_path.exists():
+                backup_path = output_dir / f".{target_path.name}.{marker}.bak"
+                os.replace(target_path, backup_path)
+                backup_paths[target_path] = backup_path
+            else:
+                created_paths.add(target_path)
+            os.replace(staged_paths[label], target_path)
+            replaced_paths.add(target_path)
+        for backup_path in backup_paths.values():
+            backup_path.unlink(missing_ok=True)
+    except OSError as exc:
+        rollback_errors = _rollback_anchor_export_publish(
+            staged_paths=tuple(staged_paths.values()),
+            backup_paths=backup_paths,
+            replaced_paths=replaced_paths,
+            created_paths=created_paths,
+        )
+        reason = f"anchor_export_publish_failed:{type(exc).__name__}"
+        if rollback_errors:
+            reason = f"{reason}:rollback_failed:{','.join(rollback_errors)}"
+        raise RuntimeError(reason) from exc
+    return {label: str(path) for label, path in output_paths.items()}
+
+
+def _rollback_anchor_export_publish(
+    *,
+    staged_paths: tuple[Path, ...],
+    backup_paths: dict[Path, Path],
+    replaced_paths: set[Path],
+    created_paths: set[Path],
+) -> list[str]:
+    errors: list[str] = []
+    for staged_path in staged_paths:
+        errors.extend(_unlink_safely(staged_path))
+    for target_path in replaced_paths:
+        errors.extend(_unlink_safely(target_path))
+    for target_path, backup_path in backup_paths.items():
+        if backup_path.exists():
+            try:
+                os.replace(backup_path, target_path)
+            except OSError as exc:
+                errors.append(f"restore:{target_path.name}:{type(exc).__name__}")
+    for target_path in created_paths:
+        if target_path.exists():
+            errors.extend(_unlink_safely(target_path))
+    for backup_path in backup_paths.values():
+        errors.extend(_unlink_safely(backup_path))
+    return errors
+
+
+def _unlink_safely(path: Path) -> list[str]:
+    try:
+        path.unlink(missing_ok=True)
+    except OSError as exc:
+        return [f"unlink:{path.name}:{type(exc).__name__}"]
+    return []
+
+
+def _publish_marker(file_payloads: tuple[tuple[str, str, Any], ...]) -> str:
+    payload = {
+        "pid": os.getpid(),
+        "files": [(label, file_name, payload) for label, file_name, payload in file_payloads],
+    }
+    encoded = json.dumps(payload, sort_keys=True, separators=(",", ":"), default=str).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()[:16]
 
 
 def main(argv: list[str] | None = None) -> int:
