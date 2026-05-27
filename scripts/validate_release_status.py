@@ -217,7 +217,7 @@ PUBLIC_SURFACE_DOCUMENT_REQUIRED_LITERALS: dict[str, tuple[str, ...]] = {
     ),
     "docs/PRODUCT_BOUNDARY.md": (
         "Product Boundary",
-        "Mullu is the flagship product",
+        "Mullu Govern is the public product",
         "Mullu Control Plane",
         "Mullu Platform",
         "Mullusi",
@@ -409,7 +409,7 @@ PUBLIC_NAMING_RELEASE_SURFACE_LITERALS: dict[str, tuple[str, ...]] = {
         "docs/PUBLIC_NAMING_ARTIFACT_MANIFEST.md",
         "python scripts/report_public_naming_readiness.py",
         "python scripts/plan_public_naming_transition.py",
-        "No paid public product launch under `Mullu` until clearance evidence is complete",
+        "No paid public product launch under `Mullu Govern` until clearance evidence is complete",
     ),
     "PILOT_CHECKLIST_v0.1.md": (
         "Public naming review packet has been checked",

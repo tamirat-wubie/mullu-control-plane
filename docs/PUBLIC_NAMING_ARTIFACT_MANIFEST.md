@@ -41,6 +41,7 @@ Invariants: every listed artifact must exist; paid public launch remains blocked
 | `docs/WEBSITE_DEPLOYMENT_EVIDENCE_TEMPLATE.md` | Live route verification template |
 | `docs/WEBSITE_DEPLOYMENT_EVIDENCE_2026-05-07.md` | Direct route probe evidence showing product routes still blocked |
 | `docs/WEBSITE_DEPLOYMENT_EVIDENCE_2026-05-15.md` | Direct route probe evidence showing the private-beta product route is live |
+| `docs/WEBSITE_LOCAL_BROWSER_VERIFICATION_2026-05-25.md` | Local browser verification for Mullu Govern static routes; not live launch evidence |
 | `docs/WEBSITE_RECHECK_LOG.md` | Non-authoritative public index recheck log |
 | `docs/PUBLIC_NAMING_STATE_TRANSITION.md` | Launch-state mutation rules |
 | `docs/PUBLIC_NAMING_HANDOFF.md` | Reviewer handoff summary |
@@ -49,10 +50,12 @@ Invariants: every listed artifact must exist; paid public launch remains blocked
 | `docs/PUBLIC_NAMING_ARTIFACT_MANIFEST.md` | Naming package inventory |
 | `docs/PUBLIC_NAMING_DECISION_2026-05-20.md` | Current governed decision: Mullu approved internally/private beta, paid public launch blocked |
 | `docs/public-naming-decision-2026-05-20.json` | Machine-readable naming decision witness |
+| `docs/PUBLIC_NAMING_DECISION_2026-05-25.md` | Current governed decision: Mullu Govern approved internally/private beta, paid public launch blocked |
+| `docs/public-naming-decision-2026-05-25.json` | Machine-readable Mullu Govern naming decision witness |
 | `docs/CLEARANCE_PACKET_TEMPLATE.md` | Final clearance packet template |
 | `docs/DOMAIN_OWNERSHIP_RECORD_TEMPLATE.md` | Domain ownership evidence template |
 | `site/mullu/index.html` | Deploy-ready private-beta product route draft |
-| `docs/PRODUCT_ROUTE_DEPLOYMENT_HANDOFF.md` | Copy target and post-deploy verification handoff |
+| `docs/PRODUCT_ROUTE_DEPLOYMENT_HANDOFF.md` | Copy target, post-deploy verification handoff, and current source-route first-reference boundary |
 
 ## Machine-Readable Evidence
 

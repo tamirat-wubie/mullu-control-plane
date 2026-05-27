@@ -1,4 +1,4 @@
-"""Plan the remaining transition steps for Mullu public naming launch.
+"""Plan the remaining transition steps for Mullu Govern public naming launch.
 
 Purpose: derive the evidence still required before the naming witness may move
 to `cleared_for_public_launch`.
@@ -28,7 +28,7 @@ GATE_ACTIONS = {
     "legal_review": "Record legal/trademark reviewer decision in the clearance packet.",
     "homepage_update": "Apply approved launch copy only after clearance closes or mark as waitlist/private beta.",
     "website_deployment_verification": "Verify mullusi.com and product routes are live and not site-not-found.",
-    "app_title_update": "Update user-facing app title to Mullu after launch authorization.",
+    "app_title_update": "Update product-facing app title to Mullu Govern after launch authorization.",
     "sdk_api_stability_review": "Confirm technical contracts keep Mullu Platform where required.",
 }
 
@@ -59,8 +59,10 @@ def main() -> int:
     domain_candidates = list(clearance["domain_candidates"])
     gate_closure_requirements = dict(clearance.get("gate_closure_requirements", {}))
 
-    print("Mullu Public Naming Transition Plan")
-    print("===================================")
+    print("Mullu Govern Public Naming Transition Plan")
+    print("==========================================")
+    print(f"Product: {readiness['product_name']}")
+    print(f"Suite/family: {readiness['suite_family']}")
     print(f"Current state: {readiness['status']}")
     print(f"Launch allowed: {readiness['public_paid_launch_allowed']}")
     print(f"Final decision: {clearance['final_decision']}")

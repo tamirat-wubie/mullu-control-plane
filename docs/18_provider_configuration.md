@@ -24,7 +24,7 @@ Define how external providers are registered, configured, credentialed, and gove
 
 - `integration` — external API/SaaS providers (MXI).
 - `communication` — message delivery providers (MCCI).
-- `model` — LLM/model inference providers (MMOI).
+- `model` — governed model inference providers (MMOI).
 
 ## Provider descriptor rules
 

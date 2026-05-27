@@ -1,11 +1,11 @@
 # Compliance Alignment Mapping
 
-> **In one box:** Which Mullu controls line up with SOC 2, HIPAA, the EU AI Act,
+> **In one box:** Which Mullu controls line up with SOC 2, HIPAA, EU high-risk system obligations,
 > and ISO/IEC 42001 — the "is this compliant?" map, useful for decision-makers
 > and auditors. New here? → [Plain-English Overview](explain/PLAIN_ENGLISH.md).
 > *(Doc type: Reference.)*
 
-Purpose: map Mullusi control-plane capabilities to SOC 2, HIPAA Security Rule, EU Act, and ISO/IEC 42001 alignment areas.
+Purpose: map Mullusi control-plane capabilities to SOC 2, HIPAA Security Rule, EU high-risk system obligations, and ISO/IEC 42001 alignment areas.
 Governance scope: [OCE, RAG, CDCV, CQTE, UWMA]
 Dependencies: `tests/fixtures/compliance_alignment_matrix.json`, `scripts/compliance_alignment_matrix.py`.
 Invariants: this document claims alignment only; it does not claim certification, attestation, audit completion, legal advice, or regulatory approval.
@@ -16,12 +16,12 @@ Invariants: this document claims alignment only; it does not claim certification
 |---|---|---|
 | SOC 2 | AICPA SOC service overview | Trust-service categories including security, availability, processing integrity, confidentiality, and privacy |
 | HIPAA Security Rule | HHS Security Rule overview | Administrative, physical, and technical safeguards for protected electronic health information |
-| EU Act | European Commission high-risk deployer obligations | Use instructions, human oversight, monitoring, logging, incident communication, and affected-person transparency |
+| EU high-risk system obligations | European Commission high-risk deployer obligations | Use instructions, human oversight, monitoring, logging, incident communication, and affected-person transparency |
 | ISO/IEC 42001 | ISO/IEC 42001 overview | Management system requirements for policy, risk, operation, performance evaluation, and continual improvement |
 
 ## Capability Map
 
-| Mullusi capability | SOC 2 alignment | HIPAA alignment | EU Act alignment | ISO/IEC 42001 alignment |
+| Mullusi capability | SOC 2 alignment | HIPAA alignment | EU high-risk system alignment | ISO/IEC 42001 alignment |
 |---|---|---|---|---|
 | Hash-chain audit | Auditability and tamper evidence | Electronic activity traceability | Operation records for trace review | Retained evidence for management review |
 | Lineage query API | Output decision-path reconstruction | Bounded trace read models | Causal record transparency | Managed lifecycle evidence |
@@ -36,7 +36,7 @@ Invariants: this document claims alignment only; it does not claim certification
 
 1. Mullusi does not claim SOC 2 certification through this mapping.
 2. Mullusi does not claim HIPAA compliance through this mapping.
-3. Mullusi does not claim EU Act conformity through this mapping.
+3. Mullusi does not claim EU high-risk system conformity through this mapping.
 4. Mullusi does not claim ISO/IEC 42001 certification through this mapping.
 5. External publication requires review by qualified compliance counsel or auditors.
 

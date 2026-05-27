@@ -24,7 +24,7 @@
 | `MULLU_JWT_SECRET` | HMAC signing key | base64 |
 | `MULLU_JWT_ISSUER` / `MULLU_JWT_AUDIENCE` | OIDC validation | `https://auth.example.com` / `mullu-api` |
 
-## Environment Variables (LLM — at least one required)
+## Environment Variables (model provider — at least one required)
 
 | Variable | Provider |
 |----------|----------|

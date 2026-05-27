@@ -1,11 +1,11 @@
 # General Agent Capability Roadmap
 
-> **In one box:** The roadmap separating what Mullu can be *taught* versus what
+> **In one box:** The roadmap separating what Mullu Govern can be *taught* versus what
 > must be *built* to become a general agent — forward-looking planning, not the
 > current beginner path. New here? →
 > [Plain-English Overview](explain/PLAIN_ENGLISH.md). *(Doc type: Explanation.)*
 
-Purpose: separate teachable skills from build-required capabilities for Mullu general-agent promotion.
+Purpose: separate teachable skills from build-required capabilities for Mullu Govern general-agent promotion.
 Governance scope: capability registry expansion, skill admission, worker boundaries, approval gates, execution receipts, and production witness closure.
 Dependencies: `docs/19_skill_system.md`, `docs/39_governed_capability_fabric.md`, `KNOWN_LIMITATIONS_v0.1.md`, `SECURITY_MODEL_v0.1.md`, and `DEPLOYMENT_STATUS.md`.
 Invariants:
@@ -17,7 +17,7 @@ Invariants:
 
 ## Architecture
 
-Mullu should not add loose tools. Mullu should admit governed capability families, then let skills compose those families under policy.
+Mullu Govern should not add loose tools. Mullu Govern should admit governed capability families, then let skills compose those families under policy.
 
 ```text
 User intent
@@ -496,7 +496,7 @@ Capability Workers
 
 ## Promotion Gate
 
-Mullu may claim general-agent readiness only when all required build families have:
+Mullu Govern may claim general-agent readiness only when all required build families have:
 
 1. A typed capability registry entry.
 2. A worker or connector implementation with bounded authority.

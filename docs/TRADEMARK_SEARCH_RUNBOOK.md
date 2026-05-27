@@ -1,6 +1,6 @@
 # Trademark Search Runbook
 
-Purpose: define the exact search procedure for clearing `Mullu` as the public product name.
+Purpose: define the exact search procedure for clearing `Mullu Govern` as the public product name and `Mullu` as the suite/family name.
 Governance scope: trademark search evidence, search variants, Nice classes, owner records, conflict notes, and launch-blocking decisions.
 Dependencies: `docs/PRODUCT_IDENTITY.md`, `docs/NAME_CLEARANCE_PRELIMINARY.md`, `docs/PUBLIC_NAMING_READINESS.md`.
 Invariants: this runbook is not legal advice; public paid launch remains blocked until qualified legal review closes.
@@ -9,10 +9,11 @@ Invariants: this runbook is not legal advice; public paid launch remains blocked
 
 | Field | Value |
 | --- | --- |
-| Product name | Mullu |
+| Product name | Mullu Govern |
+| Suite / family | Mullu |
 | Company / owner brand | Mullusi |
-| First public reference | Mullu, by Mullusi |
-| Product category | Governed symbolic intelligence for personal, enterprise, developer, and deployment work |
+| First public reference | Mullu Govern, by Mullusi |
+| Product category | Governed symbolic execution for workflows, approvals, budgets, audit trails, lineage, deployment controls, and proof-backed actions |
 
 ## Official Search Sources
 
@@ -32,10 +33,10 @@ Run each term as exact mark, contains, and similar/phonetic where the tool suppo
 
 | Group | Terms |
 | --- | --- |
-| Exact product | `MULLU`, `Mullu`, `mullu` |
+| Exact product | `MULLU GOVERN`, `Mullu Govern`, `mullu govern`, `MULLU`, `Mullu`, `mullu` |
 | Owner brand | `MULLUSI`, `Mullusi`, `mullusi` |
-| Product pair | `Mullu by Mullusi`, `MULLU BY MULLUSI` |
-| Surface family | `Mullu Inspect`, `Mullu CLI`, `Mullu Code`, `Mullu Desk`, `Mullu Control Plane` |
+| Product pair | `Mullu Govern by Mullusi`, `MULLU GOVERN BY MULLUSI`, `Mullu by Mullusi`, `MULLU BY MULLUSI` |
+| Surface family | `Mullu Govern`, `Mullu Proof`, `Mullu Ledger`, `Mullu Inspect`, `Mullu CLI`, `Mullu Code`, `Mullu Desk`, `Mullu Control Plane` |
 | Similar spelling | `Mulu`, `Muluu`, `Moolu`, `Mullus`, `Mullusi` |
 | Risky generic pair | `Mullu Generic`, `Mulu Generic`, `Mullu Agent`, `Mullu Copilot` |
 

@@ -2,8 +2,8 @@
 
 Purpose: record the deployment handoff for the Mullu private-beta product route.
 Governance scope: source artifact, copied website target, live-route publication, and post-deploy verification.
-Dependencies: `site/mullu/index.html`, `docs/WEBSITE_DEPLOYMENT_EVIDENCE_2026-05-07.md`, `docs/WEBSITE_DEPLOYMENT_EVIDENCE_2026-05-15.md`.
-Invariants: this handoff closes `website_deployment_verification` only for the private-beta `/mullu` fallback route; paid public launch remains blocked until the remaining public naming gates close.
+Dependencies: `site/mullu/index.html`, `docs/WEBSITE_DEPLOYMENT_EVIDENCE_2026-05-07.md`, `docs/WEBSITE_DEPLOYMENT_EVIDENCE_2026-05-15.md`, `docs/WEBSITE_LOCAL_BROWSER_VERIFICATION_2026-05-25.md`.
+Invariants: this handoff closes `website_deployment_verification` only for the historical private-beta `/mullu` fallback route; the current governed source draft uses `Mullu Govern, by Mullusi`; paid public launch remains blocked until the remaining public naming gates close.
 
 ## Source And Target
 
@@ -31,7 +31,8 @@ Invariants: this handoff closes `website_deployment_verification` only for the p
 | Live-route blocker issue | `https://github.com/tamirat-wubie/mullusi/issues/87` resolved by PR #88 live probe |
 | DNS Pages target | `mullusi.github.io` |
 | Pages source access | `gh api repos/mullusi/mullusi-site/pages` returns active Pages config for `https://mullusi.com/` from `main` path `/` |
-| Product first reference | `Mullu, by Mullusi` |
+| Historical live first reference | `Mullu, by Mullusi` |
+| Current governed source first reference | `Mullu Govern, by Mullusi` |
 | Launch posture | private beta / request access |
 | Live status | live route verified for `/`, `/mullu/`, and `/proof/`; HTTP 200 |
 
@@ -120,6 +121,21 @@ clearance, domain ownership, homepage update, app title update, or SDK/API
 stability review.
 
 Tracking issue: `https://github.com/tamirat-wubie/mullusi/issues/87`.
+
+## Current Governed Source Draft
+
+On 2026-05-25, the repository-local product route draft moved the product
+first-reference copy to:
+
+```text
+Mullu Govern, by Mullusi
+```
+
+The local browser verification record for this source draft is
+`docs/WEBSITE_LOCAL_BROWSER_VERIFICATION_2026-05-25.md`. That evidence verifies
+the repo-local `/mullu/` and `/proof/` route labels and responsive layout only.
+It does not update the historical 2026-05-15 live-route evidence and does not
+close trademark, domain ownership, legal review, or paid public launch gates.
 
 ## Live Proof Boundary Verification
 

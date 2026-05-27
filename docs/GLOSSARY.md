@@ -18,7 +18,7 @@ is allowed to run. *(This is the core safety mechanism — the symbolic intellig
 it.)* → [04_policy_and_verification.md](04_policy_and_verification.md)
 
 ### Approval gate
-The point where Mullu stops and waits for a human "yes" before doing something
+The point where Mullu Govern stops and waits for a human "yes" before doing something
 consequential. *(Nothing irreversible happens without passing this.)* →
 [04_policy_and_verification.md](04_policy_and_verification.md)
 
@@ -30,12 +30,12 @@ detectable. *(This is the "security camera" — it makes the past trustworthy.)*
 
 ### Budget (spend budget)
 A hard limit on money (or other resources) for a task; when it's exhausted,
-Mullu stops rather than continuing. *(The symbolic intelligence runtime cannot raise its own limit.)* →
+Mullu Govern stops rather than continuing. *(The symbolic intelligence runtime cannot raise its own limit.)* →
 [01_shared_invariants.md](01_shared_invariants.md)
 
 ### Capability / capability plane
-A specific kind of real-world thing Mullu is allowed to do (e.g. "send email",
-"make payment"), grouped into "planes" by category. *(Mullu can only do listed
+A specific kind of real-world thing Mullu Govern is allowed to do (e.g. "send email",
+"make payment"), grouped into "planes" by category. *(Mullu Govern can only do listed
 capabilities, nothing else.)* → [06_capability_planes.md](06_capability_planes.md)
 
 ### Capability forge / solver forge
@@ -56,11 +56,12 @@ finished and clean.")* → [01_shared_invariants.md](01_shared_invariants.md)
 
 ### Control plane
 The part of the system that decides, checks, and records — as opposed to the
-part that does raw work. *(This repository is mostly the control plane.)* →
+part that does raw work. *(Mullu Control Plane is the internal/admin technical
+surface behind Mullu Govern.)* →
 [00_platform_overview.md](00_platform_overview.md)
 
 ### Domain adapter / domain pack
-A plug-in that teaches Mullu the rules and tasks of one specific field (e.g. a
+A plug-in that teaches Mullu Govern the rules and tasks of one specific field (e.g. a
 particular industry workflow). *(Lets the same governed core serve many
 domains.)* → [06_capability_planes.md](06_capability_planes.md)
 
@@ -139,7 +140,7 @@ Re-running a recorded history exactly, to see precisely what happened and why.
 [03_trace_and_replay.md](03_trace_and_replay.md)
 
 ### Skill / skill boundary
-A defined unit of "something Mullu knows how to do", and the hard edge that
+A defined unit of "something Mullu Govern knows how to do", and the hard edge that
 keeps it from doing things outside its authorized skills. *(The symbolic intelligence runtime's "job
 description".)* → [19_skill_system.md](19_skill_system.md)
 

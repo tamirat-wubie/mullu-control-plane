@@ -105,7 +105,7 @@ def run_drill(base: str = "http://localhost:8000") -> list[DrillResult]:
         return data.get("tenant_id") == "drill-tenant", f"spent={data.get('spent', 0)}"
     step("4. Set tenant budget", set_budget)
 
-    # 5. LLM completion
+    # 5. Model completion
     def llm_complete():
         code, data = _post(f"{base}/api/v1/complete", {
             "prompt": "What is 2+2? Reply with just the number.",
@@ -116,7 +116,7 @@ def run_drill(base: str = "http://localhost:8000") -> list[DrillResult]:
             return False, f"complete returned {code}: {data}"
         return data.get("governed", False) and len(data.get("content", "")) > 0, \
             f"content={data.get('content', '')[:50]}, cost={data.get('cost', 0)}"
-    step("5. LLM completion", llm_complete)
+    step("5. Model completion", llm_complete)
 
     # 6. Verify audit trail
     def check_audit():

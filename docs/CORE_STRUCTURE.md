@@ -57,7 +57,7 @@ maf/rust/crates/                       MAF substrate (Rust)
 mcoi/mcoi_runtime/                    MCOI runtime (Python)
 ├── contracts/         Pure type mirrors of MAF (no runtime imports)
 ├── core/              Engines, managers, runtime behavior
-├── adapters/          LLM, HTTP, streaming connectors
+├── adapters/          Model-provider, HTTP, streaming connectors
 ├── app/               FastAPI server, routers, middleware
 ├── persistence/       Stores, migrations, snapshots
 └── pilot/             Deployment profiles
@@ -150,7 +150,7 @@ true. The platform implements:
 - Hash-chain audit trail with external verifier (LEDGER_SPEC.md)
 - Transition receipts on every governed action (MAF_RECEIPT_COVERAGE.md)
 - 9-slot governance chain with fail-closed semantics (GOVERNANCE_GUARD_CHAIN.md)
-- LLM provider integration (10 backends)
+- Model-provider integration (10 backends)
 - Field-level encryption at rest
 - Multi-tenant budget and quota management
 - Operator surfaces (CLI, dashboards, scheduler)

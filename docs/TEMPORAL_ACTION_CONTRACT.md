@@ -120,6 +120,6 @@ The scheduler path adds:
 The same rule still applies:
 
 ```text
-LLM/parser may interpret temporal language.
+Model/parser may interpret temporal language.
 Runtime clock and temporal policy decide temporal truth.
 ```

@@ -1,6 +1,6 @@
-# Mullu Control Plane — Quickstart Guide
+# Mullu Govern — Quickstart Guide
 
-Get the governed autonomous agent platform running in 5 minutes.
+Get the governed symbolic execution platform running in 5 minutes.
 
 ## Prerequisites
 
@@ -28,10 +28,10 @@ Expected: 46,000+ tests pass.
 ## 3. Start the API Server
 
 ```bash
-# Minimal (in-memory stores, no LLM)
+# Minimal (in-memory stores, no external provider)
 MULLU_ENV=local_dev uvicorn mcoi_runtime.app.server:app --port 8000
 
-# With LLM provider
+# With external provider credentials
 ANTHROPIC_API_KEY=sk-... uvicorn mcoi_runtime.app.server:app --port 8000
 ```
 

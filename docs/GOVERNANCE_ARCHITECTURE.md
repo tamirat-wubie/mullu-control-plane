@@ -216,7 +216,7 @@ For error codes operators see in production logs — `PRODUCTION_DEPLOYMENT.md` 
 - **It doesn't orchestrate sessions.** That's `core/governed_session.py`.
 - **It doesn't dispatch work to capabilities.** That's `core/governed_dispatcher.py`.
 - **It doesn't define what data tenants can see.** RBAC is in `governance/guards/access.py`, but the tenancy model + tenant directory live elsewhere.
-- **It doesn't talk to LLM providers.** That's `core/llm_*.py`.
+- **It does not talk to model providers.** That's `core/llm_*.py`.
 - **It doesn't emit telemetry to specific backends.** Metrics are in-process; export is a separate concern.
 
 If you find yourself wanting one of these things in `governance/`, the answer is probably "no, that belongs in `core/` or its own subsystem." The audit surface should stay focused.

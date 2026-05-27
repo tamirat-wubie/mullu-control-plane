@@ -9,7 +9,7 @@
 
 ## Profiles
 
-| Profile | DB Backend | LLM Backend | CORS | Secrets | Use Case |
+| Profile | DB Backend | Model Backend | CORS | Secrets | Use Case |
 |---------|-----------|-------------|------|---------|----------|
 | **local_dev** | SQLite (or memory) | stub | localhost:3000,8080 | Not required | Local development, unit tests |
 | **test** | memory | stub | localhost | Not required | CI, integration tests |
@@ -33,10 +33,10 @@
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `MULLU_LLM_BACKEND` | `stub` | LLM provider: `stub`, `anthropic`, `openai` |
+| `MULLU_LLM_BACKEND` | `stub` | Model provider backend: `stub`, `anthropic`, `openai` |
 | `MULLU_LLM_MODEL` | `claude-sonnet-4-20250514` | Default model |
-| `MULLU_LLM_BUDGET_MAX_COST` | `100.0` | Max LLM cost per budget |
-| `MULLU_LLM_BUDGET_MAX_CALLS` | `10000` | Max LLM calls per budget |
+| `MULLU_LLM_BUDGET_MAX_COST` | `100.0` | Max model-provider cost per budget |
+| `MULLU_LLM_BUDGET_MAX_CALLS` | `10000` | Max model-provider calls per budget |
 | `MULLU_STATE_DIR` | system temp | Directory for state snapshots |
 | `MULLU_CERT_INTERVAL` | `300` | Certification daemon interval (seconds) |
 | `MULLU_CERT_ENABLED` | `true` | Enable certification daemon |
@@ -534,7 +534,7 @@ The worker services expose:
 3. Set `MULLU_CORS_ORIGINS` to your frontend domain(s)
 4. Set `MULLU_ENCRYPTION_KEY` to a base64-encoded 32-byte key before startup
 5. Set `POSTGRES_PASSWORD` via secrets manager (not `.env`)
-6. Set `ANTHROPIC_API_KEY` or `OPENAI_API_KEY` for real LLM
+6. Set `ANTHROPIC_API_KEY` or `OPENAI_API_KEY` for a real model provider
 7. Verify with `curl /api/v1/readiness`
 8. Confirm API-key auth is enabled for `/api/*` or enforced by a trusted upstream gateway
 9. If gateway approvals use `/webhook/approve/{request_id}`, set `MULLU_GATEWAY_APPROVAL_SECRET` and send it via `X-Mullu-Approval-Secret`

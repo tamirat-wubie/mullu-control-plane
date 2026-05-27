@@ -1,6 +1,6 @@
 # Code Automation Plane
 
-> **In one box:** How Mullu is allowed to edit code and files — strictly inside
+> **In one box:** How Mullu Govern is allowed to edit code and files — strictly inside
 > a declared workspace folder, never outside it. The "it can touch code, but
 > only in a fenced yard" rule. New here? →
 > [Plain-English Overview](explain/PLAIN_ENGLISH.md); unknown word? →

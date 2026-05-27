@@ -1,6 +1,6 @@
-# Mullu Clearance Evidence 2026-05-15
+# Mullu Govern Clearance Evidence 2026-05-15
 
-Purpose: provide the controlled evidence root for Mullu public naming clearance artifacts.
+Purpose: provide the controlled evidence root for Mullu Govern public product clearance artifacts while preserving Mullu as the suite/family name.
 Governance scope: official trademark searches, close-variant serial review, domain ownership evidence, legal review, and launch-state mutation boundaries.
 Dependencies: `docs/CLEARANCE_EVIDENCE_CAPTURE_PLAN_2026-05-15.md`, `docs/CLEARANCE_PACKET_TEMPLATE.md`, `docs/OFFICIAL_CLEARANCE_ACCESS_LOG_2026-05-15.md`.
 Invariants: this directory structure does not close a clearance gate; paid public launch remains blocked until official evidence and authority decisions are recorded.

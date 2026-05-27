@@ -91,14 +91,14 @@ class TestValidation:
         cfg = MulluConfig()
         cfg.llm_provider = "stub"
         warnings = validate_config(cfg)
-        assert not any("LLM API key" in w for w in warnings)
+        assert not any("model provider API key" in w for w in warnings)
 
     def test_real_provider_without_key_warns(self):
         cfg = MulluConfig()
         cfg.llm_provider = "anthropic"
         cfg.llm_api_key = ""
         warnings = validate_config(cfg)
-        assert any("LLM API key" in w for w in warnings)
+        assert any("model provider API key" in w for w in warnings)
 
     def test_memory_backend_warns(self):
         cfg = MulluConfig()

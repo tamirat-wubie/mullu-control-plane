@@ -1,11 +1,13 @@
 {
   "schema_version": "1",
   "witness_id": "mullu-public-naming-readiness",
-  "product_name": "Mullu",
+  "product_name": "Mullu Govern",
+  "suite_family": "Mullu",
   "company_brand": "Mullusi",
-  "first_reference": "Mullu, by Mullusi",
+  "first_reference": "Mullu Govern, by Mullusi",
   "platform_term": "Mullu Platform",
   "admin_surface": "Mullu Control Plane",
+  "repository_name": "mullu-govern",
   "status": "internal_alignment_only",
   "public_paid_launch_allowed": false,
   "closed_gates": [
@@ -65,11 +67,14 @@
     "Mullu Platform",
     "Mullu Platform Configuration",
     "Mullu Platform MCOI Runtime",
+    "Mullu Control Plane",
     "MAF Core",
     "MCOI Runtime"
   ],
   "product_surfaces": [
-    "Mullu",
+    "Mullu Govern",
+    "Mullu Proof",
+    "Mullu Ledger",
     "Mullu Inspect",
     "Mullu CLI",
     "Mullu Code",
@@ -111,6 +116,7 @@
     "docs/WEBSITE_DEPLOYMENT_EVIDENCE_TEMPLATE.md",
     "docs/WEBSITE_DEPLOYMENT_EVIDENCE_2026-05-07.md",
     "docs/WEBSITE_DEPLOYMENT_EVIDENCE_2026-05-15.md",
+    "docs/WEBSITE_LOCAL_BROWSER_VERIFICATION_2026-05-25.md",
     "docs/WEBSITE_RECHECK_LOG.md",
     "docs/PUBLIC_NAMING_STATE_TRANSITION.md",
     "docs/PUBLIC_NAMING_HANDOFF.md",
@@ -119,6 +125,8 @@
     "docs/PUBLIC_NAMING_ARTIFACT_MANIFEST.md",
     "docs/PUBLIC_NAMING_DECISION_2026-05-20.md",
     "docs/public-naming-decision-2026-05-20.json",
+    "docs/PUBLIC_NAMING_DECISION_2026-05-25.md",
+    "docs/public-naming-decision-2026-05-25.json",
     "docs/CLEARANCE_PACKET_TEMPLATE.md",
     "docs/DOMAIN_OWNERSHIP_RECORD_TEMPLATE.md",
     "docs/mullu-name-clearance-draft.json",
@@ -134,7 +142,7 @@
     "tests/test_public_naming_readiness.py"
   ],
   "resolution": {
-    "decision": "Proceed internally with Mullu; block paid public launch until clearance closes.",
+    "decision": "Proceed internally with Mullu Govern; keep Mullu as suite/family; block paid public launch until clearance closes.",
     "required_next_action": "Fill clearance packet with official trademark search results and domain ownership evidence."
   }
 }

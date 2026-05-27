@@ -18,7 +18,7 @@ Four audit fractures had this shape:
 
 | Fracture | Release(s)     | Stored object       | Lost invariant                              |
 | -------- | -------------- | ------------------- | ------------------------------------------- |
-| F2       | v4.27          | LLM budget          | hard cost cap                               |
+| F2       | v4.27          | model budget        | hard cost cap                               |
 | F11      | v4.29 + v4.34  | Rate limit bucket   | per-tenant + per-identity tokens-per-second |
 | F15      | v4.30 + v4.40  | Filesystem chain    | linear append-only sequence                 |
 | F4       | v4.31          | Audit log chain     | tamper-evident hash linkage                 |

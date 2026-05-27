@@ -8,7 +8,7 @@
 
 Scope: all Mullu Platform modules that connect to systems outside the platform boundary.
 
-The External Integration Plane governs connections to APIs, SaaS services, databases, browsers, LLMs, and any other system outside the platform trust boundary. Every external interaction passes through this plane. No module may contact an external system directly.
+The External Integration Plane governs connections to APIs, SaaS services, databases, browsers, model providers, and any other system outside the platform trust boundary. Every external interaction passes through this plane. No module may contact an external system directly.
 
 ## Purpose
 

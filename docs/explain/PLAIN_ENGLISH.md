@@ -1,6 +1,6 @@
-# Mullu, Explained in Plain English
+# Mullu Govern, Explained in Plain English
 
-> **In one box:** Mullu is software that lets a symbolic intelligence assistant do *real* tasks for
+> **In one box:** Mullu Govern is software that lets a symbolic intelligence assistant do *real* tasks for
 > you (send an email, pay an invoice, make a document, crunch some data) — but
 > only inside strict, automatic safety rules. Every single thing it does is
 > checked before it happens, written down permanently, and kept inside limits
@@ -18,14 +18,14 @@ send the email, actually move the money — is far more useful, but also scary:
 What if it sends the wrong email? What if it spends too much? What if nobody can
 tell later what it did or why?
 
-Most "symbolic intelligence agents" answer this with "trust us, it'll probably be fine." Mullu
+Most "symbolic intelligence agents" answer this with "trust us, it'll probably be fine." Mullu Govern
 answers it with **structure**: the symbolic intelligence runtime is never allowed to act freely. It works
 the way a careful organization works — with approvals, budgets, records, and
 hard limits that the symbolic intelligence runtime itself cannot remove.
 
 ## An analogy
 
-Think of Mullu as **a brand-new, very capable employee on their first day**, who
+Think of Mullu Govern as **a brand-new, very capable employee on their first day**, who
 operates under four unbreakable office rules:
 
 1. **Nothing irreversible without a sign-off.** Before doing anything that
@@ -57,7 +57,7 @@ Discord, or a web page. You ask for something real, for example:
 - "Pay this invoice if it matches the contract."
 - "Pull last month's numbers into a one-page summary."
 
-Mullu figures out the steps, but **pauses at every consequential step to get
+Mullu Govern figures out the steps, but **pauses at every consequential step to get
 approval and stay inside your limits**. You get the result *plus* a complete,
 trustworthy record of how it got there.
 
@@ -75,7 +75,7 @@ trustworthy record of how it got there.
 You (chat app)
       │  "do this real task"
       ▼
-   Mullu  ──►  plans the steps
+   Mullu Govern  ──►  plans the steps
       │
       ▼
   For each step:  Is it allowed?  Within budget?  Approved?  ── no ──► stop & ask
@@ -104,4 +104,4 @@ about one of those boxes.
 
 Nothing above this line required any prior knowledge. If something here was
 still unclear, that's a documentation bug — the goal is that *anyone* can read
-this page and understand what Mullu is.
+this page and understand what Mullu Govern is.

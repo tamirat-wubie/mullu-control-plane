@@ -360,7 +360,7 @@ points for operators:
   expiration (default 1 hour), retry counts (max 3), and policy pack identity.
   On restore, expired leases are rejected, policy pack drift triggers operator
   review, and excessive retries cause abort.
-- LLM providers follow a 3-tier stack:
+- Model providers follow a 3-tier stack:
   - **Tier 1 (certified):** Anthropic (`ANTHROPIC_API_KEY`), OpenAI (`OPENAI_API_KEY`)
   - **Tier 2 (hosted free-tier):** Gemini (`GEMINI_API_KEY`) — cheap bulk inference, dev/testing
   - **Tier 3 (local/private):** Ollama (`OLLAMA_BASE_URL`, default `http://localhost:11434`) — offline fallback, private workloads

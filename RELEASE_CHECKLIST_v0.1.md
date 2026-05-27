@@ -73,7 +73,7 @@
 - [x] HTTP connector read timeout enforcement added (v3.9.1)
 - [x] API key auth with scopes, JWT auth, per-session RBAC checks
 - [x] Field-level encryption at rest (AES-256-GCM, optional cryptography dep)
-- [ ] Public paid launch under `Mullu` is blocked until trademark, domain, and legal clearance close
+- [ ] Public paid launch under `Mullu Govern` is blocked until trademark, domain, and legal clearance close
 
 ## Release Decision
 
@@ -90,5 +90,5 @@ Conditions for use:
 - Operator-supervised execution
 - Local/bounded provider configurations
 - Known limitations explicitly accepted by pilot participants
-- No paid public product launch under `Mullu` until clearance evidence is complete
+- No paid public product launch under `Mullu Govern` until clearance evidence is complete
 - Review `docs/PUBLIC_NAMING_REVIEW_PACKET.md` and `docs/PUBLIC_NAMING_ARTIFACT_MANIFEST.md` before any external launch decision

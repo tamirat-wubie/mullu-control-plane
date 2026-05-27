@@ -10,9 +10,12 @@
     "decision_date",
     "timezone",
     "product_name",
+    "suite_family",
     "company_brand",
     "first_reference",
     "platform_term",
+    "admin_surface",
+    "repository_name",
     "decision",
     "public_paid_launch_allowed",
     "approved_scopes",
@@ -41,6 +44,10 @@
     },
     "product_name": {
       "type": "string",
+      "const": "Mullu Govern"
+    },
+    "suite_family": {
+      "type": "string",
       "const": "Mullu"
     },
     "company_brand": {
@@ -49,11 +56,19 @@
     },
     "first_reference": {
       "type": "string",
-      "const": "Mullu, by Mullusi"
+      "const": "Mullu Govern, by Mullusi"
     },
     "platform_term": {
       "type": "string",
       "const": "Mullu Platform"
+    },
+    "admin_surface": {
+      "type": "string",
+      "const": "Mullu Control Plane"
+    },
+    "repository_name": {
+      "type": "string",
+      "const": "mullu-govern"
     },
     "decision": {
       "type": "string",
@@ -123,15 +138,15 @@
       "properties": {
         "required_files_present": {
           "type": "integer",
-          "minimum": 0
+          "const": 6
         },
         "required_files_total": {
           "type": "integer",
-          "const": 32
+          "const": 40
         },
         "required_files_missing": {
           "type": "integer",
-          "minimum": 0
+          "const": 34
         },
         "status": {
           "type": "string",

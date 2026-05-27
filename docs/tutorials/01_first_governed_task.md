@@ -1,6 +1,6 @@
 # Tutorial 1 — Your First Run, Step by Step
 
-> **In one box:** By the end of this page you will have Mullu installed and
+> **In one box:** By the end of this page you will have Mullu Govern installed and
 > running on your own computer, and you'll have seen its safety machinery with
 > your own eyes. Every command is explained in plain words: what it does, what
 > you should see, and what to do if it goes wrong. **No prior experience with
@@ -19,8 +19,8 @@ in the [Glossary](../GLOSSARY.md). You will not get stuck.
 
 | You need | Why | How to check |
 | --- | --- | --- |
-| Python 3.12 or newer | Mullu is written in Python | run `python --version` |
-| `pip` | installs Mullu's code | run `pip --version` |
+| Python 3.12 or newer | Mullu Govern's local runtime is written in Python | run `python --version` |
+| `pip` | installs the local runtime code | run `pip --version` |
 | A terminal | to type the commands below | PowerShell (Windows) or Terminal (Mac/Linux) |
 
 If `python --version` shows something older than 3.12, install a newer Python
@@ -49,7 +49,7 @@ cd mullu-control-plane
 
 ---
 
-## Step 2 — Install Mullu
+## Step 2 — Install Mullu Govern
 
 **What we're doing:** installing the core engine (its package name is `mcoi` —
 see [MCOI in the Glossary](../GLOSSARY.md#mcoi)) in "editable" mode, which means
@@ -73,7 +73,7 @@ something like `Successfully installed mcoi`. This can take a minute.
 ## Step 3 — Prove the install actually works (run the tests)
 
 **What we're doing:** running the project's own test suite. This is the fastest
-honest way to confirm your machine can run Mullu correctly — if thousands of its
+honest way to confirm your machine can run Mullu Govern correctly — if thousands of its
 own checks pass, your setup is sound.
 
 ```bash
@@ -97,8 +97,8 @@ problem is *not* an install problem — which saves you hours.
 
 ## Step 4 — Start the server
 
-**What we're doing:** starting Mullu's [control plane](../GLOSSARY.md#control-plane)
-in the safest possible mode — local, in-memory, no AI provider, no real money or
+**What we're doing:** starting Mullu Govern's internal [control plane](../GLOSSARY.md#control-plane)
+in the safest possible mode — local, in-memory, no external provider, no real money or
 external calls possible. Perfect for a first look.
 
 PowerShell (Windows) — note the env var is set on its own line:
@@ -137,14 +137,14 @@ http://localhost:8000/docs
 
 (If you changed the port in Step 4, change `8000` here to match.)
 
-**What you should see:** an interactive API page listing the operations Mullu
+**What you should see:** an interactive API page listing the operations Mullu Govern
 exposes. You don't need to understand every line — the point is: **it's running,
 and every capability it has is listed and explicit.** That visibility is not an
 accident; "nothing hidden" is one of the system's [invariants](../GLOSSARY.md#invariant).
 
 > ⚠️ In `local_dev` mode, the powerful surfaces (real payments, the
 > [governed swarm](../GLOSSARY.md#governed-swarm)) are **disabled by default**.
-> That is intentional and correct: Mullu does not expose consequential power
+> That is intentional and correct: Mullu Govern does not expose consequential power
 > until it is explicitly configured to. You just witnessed rule #1 of the
 > [Plain-English Overview](../explain/PLAIN_ENGLISH.md) in action.
 
@@ -159,7 +159,7 @@ Nothing was persisted, nothing external happened — by design.
 
 ## What you just learned
 
-- How to install and run Mullu safely on your own machine.
+- How to install and run Mullu Govern safely on your own machine.
 - That its safety isn't a promise — consequential power is *off until explicitly
   turned on*, and you saw that yourself in Step 5.
 - The vocabulary is no longer scary, because every term linked to one plain

@@ -1,6 +1,6 @@
 # Start Here
 
-**This is the front door to all Mullu documentation.** You do not need to know
+**This is the front door to all Mullu Govern documentation.** You do not need to know
 anything about this project to use this page. Find the row that sounds like you,
 read the one-line description, and click the link.
 
@@ -51,7 +51,7 @@ in the wrong room. Use the table above to pick the right room.
 
 ## 3. The "I'm brand new" path (do these in order)
 
-1. **[Plain-English Overview](explain/PLAIN_ENGLISH.md)** — what Mullu is, in
+1. **[Plain-English Overview](explain/PLAIN_ENGLISH.md)** — what Mullu Govern is, in
    everyday language, with an analogy. No setup, just reading.
 2. **[Tutorial 1: Your First Run](tutorials/01_first_governed_task.md)**
    — you install it and run it safely, every command explained, every term

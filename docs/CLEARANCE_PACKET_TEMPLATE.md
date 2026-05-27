@@ -1,6 +1,6 @@
-# Mullu Clearance Packet Template
+# Mullu Govern Clearance Packet Template
 
-Purpose: provide the evidence packet template for approving or rejecting public launch under the `Mullu` product name.
+Purpose: provide the evidence packet template for approving or rejecting public launch under the `Mullu Govern` product name while preserving `Mullu` as the suite/family name.
 Governance scope: trademark search results, domain ownership, conflict review, legal review, launch decision, and witness signatures.
 Dependencies: `docs/TRADEMARK_SEARCH_RUNBOOK.md`, `docs/DOMAIN_ACQUISITION_PLAN.md`, `docs/PUBLIC_NAMING_READINESS.md`.
 Invariants: no paid public launch may proceed without completed evidence, explicit decision, and retained source records.
@@ -10,7 +10,8 @@ Invariants: no paid public launch may proceed without completed evidence, explic
 | Field | Value |
 | --- | --- |
 | Packet ID | `mullu-name-clearance-YYYY-MM-DD` |
-| Candidate name | Mullu |
+| Candidate name | Mullu Govern |
+| Suite / family | Mullu |
 | Company / owner brand | Mullusi |
 | Prepared by |  |
 | Prepared date |  |
