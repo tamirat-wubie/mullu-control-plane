@@ -11,10 +11,13 @@ Invariants:
 
 from __future__ import annotations
 
+from dataclasses import replace
+
 import pytest
 
 from mcoi_runtime.app.bootstrap import bootstrap_runtime
 from mcoi_runtime.contracts.skill import EffectClass, SkillLifecycle
+from mcoi_runtime.core import default_skill_catalog as catalog_module
 from mcoi_runtime.core.default_skill_catalog import (
     default_skill_descriptors,
     register_default_skill_descriptors,
@@ -27,6 +30,9 @@ EXPECTED_SKILL_IDS = (
     "finance.approval_packet.v1",
     "document.intake_summary.v1",
     "software_dev.change_closure.v1",
+    "deployment.witness_publication.v1",
+    "adapter.evidence_closure.v1",
+    "workflow.governed_composition.v1",
 )
 
 
@@ -56,7 +62,39 @@ def test_default_skill_effect_classes_match_strongest_workflow_effect() -> None:
     assert descriptors["finance.approval_packet.v1"].effect_class is EffectClass.EXTERNAL_READ
     assert descriptors["document.intake_summary.v1"].effect_class is EffectClass.EXTERNAL_READ
     assert descriptors["software_dev.change_closure.v1"].effect_class is EffectClass.EXTERNAL_WRITE
-    assert descriptors["software_dev.change_closure.v1"].metadata["approval_expected"] is True
+    assert descriptors["deployment.witness_publication.v1"].effect_class is EffectClass.EXTERNAL_WRITE
+    assert descriptors["adapter.evidence_closure.v1"].effect_class is EffectClass.EXTERNAL_READ
+    assert descriptors["workflow.governed_composition.v1"].effect_class is EffectClass.EXTERNAL_WRITE
+    assert all(
+        descriptor.metadata["approval_expected"] is True
+        for descriptor in descriptors.values()
+        if descriptor.effect_class is EffectClass.EXTERNAL_WRITE
+    )
+
+
+def test_default_skill_provider_requirements_match_step_boundaries() -> None:
+    descriptors = default_skill_descriptors()
+
+    assert descriptors
+    assert all(
+        tuple(
+            sorted(
+                {
+                    step.provider_class_required
+                    for step in descriptor.steps
+                    if step.provider_class_required is not None
+                }
+            )
+        )
+        == tuple(sorted(descriptor.provider_requirements))
+        for descriptor in descriptors
+    )
+    assert all(
+        step.provider_class_required in descriptor.provider_requirements
+        for descriptor in descriptors
+        for step in descriptor.steps
+        if step.provider_class_required is not None
+    )
 
 
 def test_register_default_skill_descriptors_is_idempotent_for_identical_catalog() -> None:
@@ -102,6 +140,40 @@ def test_register_default_skill_descriptors_rejects_conflicting_existing_id() ->
     assert registry.get("document.intake_summary.v1") is None
 
 
+def test_register_default_skill_descriptors_rejects_provider_boundary_drift(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    broken = replace(default_skill_descriptors()[0], provider_requirements=())
+    monkeypatch.setattr(catalog_module, "default_skill_descriptors", lambda: (broken,))
+    registry = SkillRegistry()
+
+    with pytest.raises(RuntimeCoreInvariantError, match="provider boundary mismatch"):
+        register_default_skill_descriptors(registry)
+
+    assert registry.size == 0
+    assert registry.get("finance.approval_packet.v1") is None
+    assert broken.skill_id == "finance.approval_packet.v1"
+
+
+def test_register_default_skill_descriptors_rejects_external_write_without_approval(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    descriptor = default_skill_descriptors()[-1]
+    broken = replace(
+        descriptor,
+        metadata={**descriptor.metadata, "approval_expected": False},
+    )
+    monkeypatch.setattr(catalog_module, "default_skill_descriptors", lambda: (broken,))
+    registry = SkillRegistry()
+
+    with pytest.raises(RuntimeCoreInvariantError, match="approval boundary missing"):
+        register_default_skill_descriptors(registry)
+
+    assert registry.size == 0
+    assert registry.get("workflow.governed_composition.v1") is None
+    assert broken.effect_class is EffectClass.EXTERNAL_WRITE
+
+
 def test_bootstrap_installs_default_skill_catalog() -> None:
     runtime = bootstrap_runtime(clock=lambda: "2026-05-27T00:00:00+00:00")
 
@@ -111,3 +183,5 @@ def test_bootstrap_installs_default_skill_catalog() -> None:
     assert runtime.skill_registry.size == len(EXPECTED_SKILL_IDS)
     assert runtime.skill_registry.get("software_dev.change_closure.v1").metadata["risk_floor"] == "high"
     assert runtime.skill_registry.get("finance.approval_packet.v1").metadata["grants_new_capability_authority"] is False
+    assert runtime.skill_registry.get("deployment.witness_publication.v1").metadata["approval_expected"] is True
+    assert runtime.skill_registry.get("workflow.governed_composition.v1").metadata["approval_expected"] is True

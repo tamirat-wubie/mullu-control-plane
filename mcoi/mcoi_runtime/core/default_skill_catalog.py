@@ -33,6 +33,22 @@ _NO_NEW_AUTHORITY = {
     "catalog_version": _CATALOG_VERSION,
     "grants_new_capability_authority": False,
 }
+_POLICY_PRECONDITION_DESCRIPTIONS = {
+    "financial": "financial workflow policy permits descriptor selection",
+    "document": "document workflow policy permits descriptor selection",
+    "software_dev": "software_dev workflow policy permits descriptor selection",
+    "deployment": "deployment workflow policy permits descriptor selection",
+    "browser": "adapter evidence workflow policy permits descriptor selection",
+    "enterprise": "enterprise workflow policy permits descriptor selection",
+}
+_CAPABILITY_PRECONDITION_DESCRIPTIONS = {
+    "financial": "financial capability family is admitted in the governed registry",
+    "document": "document capability family is admitted in the governed registry",
+    "software_dev": "software_dev capability family is admitted in the governed registry",
+    "deployment": "deployment capability family is admitted in the governed registry",
+    "browser": "browser, document, and voice capability families are admitted in the governed registry",
+    "enterprise": "enterprise and creative capability families are admitted in the governed registry",
+}
 
 
 def default_skill_descriptors() -> tuple[SkillDescriptor, ...]:
@@ -41,6 +57,9 @@ def default_skill_descriptors() -> tuple[SkillDescriptor, ...]:
         _finance_approval_packet_skill(),
         _document_intake_summary_skill(),
         _software_change_closure_skill(),
+        _deployment_witness_publication_skill(),
+        _adapter_evidence_closure_skill(),
+        _workflow_governed_composition_skill(),
     )
 
 
@@ -48,6 +67,7 @@ def register_default_skill_descriptors(registry: SkillRegistry) -> tuple[SkillDe
     """Register default descriptors while rejecting conflicting pre-existing ids."""
     registered: list[SkillDescriptor] = []
     for descriptor in default_skill_descriptors():
+        _validate_default_descriptor(descriptor)
         existing = registry.get(descriptor.skill_id)
         if existing is None:
             registered.append(registry.register(descriptor))
@@ -58,17 +78,48 @@ def register_default_skill_descriptors(registry: SkillRegistry) -> tuple[SkillDe
     return tuple(registered)
 
 
+def _validate_default_descriptor(descriptor: SkillDescriptor) -> None:
+    """Fail closed if a built-in descriptor drifts beyond catalog authority."""
+    if descriptor.lifecycle is not SkillLifecycle.CANDIDATE:
+        raise RuntimeCoreInvariantError("default skill descriptor lifecycle rejected")
+    if descriptor.metadata.get("grants_new_capability_authority") is not False:
+        raise RuntimeCoreInvariantError("default skill descriptor authority grant rejected")
+
+    required_provider_classes = tuple(
+        sorted(
+            {
+                step.provider_class_required
+                for step in descriptor.steps
+                if step.provider_class_required is not None
+            }
+        )
+    )
+    if tuple(sorted(descriptor.provider_requirements)) != required_provider_classes:
+        raise RuntimeCoreInvariantError("default skill descriptor provider boundary mismatch")
+
+    if (
+        descriptor.effect_class is EffectClass.EXTERNAL_WRITE
+        and descriptor.metadata.get("approval_expected") is not True
+    ):
+        raise RuntimeCoreInvariantError("default skill descriptor approval boundary missing")
+
+
 def _policy_and_capability_preconditions(*, domain: str) -> tuple[SkillPrecondition, ...]:
+    try:
+        policy_description = _POLICY_PRECONDITION_DESCRIPTIONS[domain]
+        capability_description = _CAPABILITY_PRECONDITION_DESCRIPTIONS[domain]
+    except KeyError as exc:
+        raise RuntimeCoreInvariantError("unknown default skill domain") from exc
     return (
         SkillPrecondition(
             condition_id=f"{domain}.policy_allows",
             condition_type=PreconditionType.POLICY_ALLOWS,
-            description=f"{domain} workflow policy permits descriptor selection",
+            description=policy_description,
         ),
         SkillPrecondition(
             condition_id=f"{domain}.capability_available",
             condition_type=PreconditionType.CAPABILITY_AVAILABLE,
-            description=f"{domain} capability family is admitted in the governed registry",
+            description=capability_description,
         ),
     )
 
@@ -241,4 +292,162 @@ def _software_change_closure_skill() -> SkillDescriptor:
         ),
         confidence=0.25,
         metadata={**_NO_NEW_AUTHORITY, "risk_floor": "high", "approval_expected": True},
+    )
+
+
+def _deployment_witness_publication_skill() -> SkillDescriptor:
+    skill_id = "deployment.witness_publication.v1"
+    return SkillDescriptor(
+        skill_id=skill_id,
+        name="Deployment witness publication",
+        skill_class=SkillClass.COMPOSITE,
+        effect_class=EffectClass.EXTERNAL_WRITE,
+        determinism_class=DeterminismClass.INPUT_BOUNDED,
+        trust_class=TrustClass.TRUSTED_INTERNAL,
+        verification_strength=VerificationStrength.MANDATORY,
+        lifecycle=SkillLifecycle.CANDIDATE,
+        preconditions=_policy_and_capability_preconditions(domain="deployment"),
+        postconditions=_verification_postcondition(skill_id=skill_id),
+        steps=(
+            SkillStep(
+                step_id="collect_witness",
+                name="Collect deployment witness",
+                action_type="deployment.witness.collect",
+                output_keys=("deployment_witness_ref", "runtime_conformance_ref", "responsibility_debt"),
+                provider_class_required="deployment_witness_plane",
+            ),
+            SkillStep(
+                step_id="publish_witness",
+                name="Publish deployment witness with approval",
+                action_type="deployment.witness.publish.with_approval",
+                depends_on=("collect_witness",),
+                input_bindings={"deployment_witness_ref": "collect_witness.deployment_witness_ref"},
+                output_keys=("publication_receipt_ref", "public_health_ref"),
+                provider_class_required="deployment_witness_plane",
+            ),
+        ),
+        provider_requirements=("deployment_witness_plane",),
+        description=(
+            "Composes witness collection and approval-bound publication for "
+            "deployment health claims."
+        ),
+        confidence=0.25,
+        metadata={**_NO_NEW_AUTHORITY, "risk_floor": "high", "approval_expected": True},
+    )
+
+
+def _adapter_evidence_closure_skill() -> SkillDescriptor:
+    skill_id = "adapter.evidence_closure.v1"
+    return SkillDescriptor(
+        skill_id=skill_id,
+        name="Adapter evidence closure",
+        skill_class=SkillClass.COMPOSITE,
+        effect_class=EffectClass.EXTERNAL_READ,
+        determinism_class=DeterminismClass.INPUT_BOUNDED,
+        trust_class=TrustClass.TRUSTED_INTERNAL,
+        verification_strength=VerificationStrength.MANDATORY,
+        lifecycle=SkillLifecycle.CANDIDATE,
+        preconditions=_policy_and_capability_preconditions(domain="browser"),
+        postconditions=_verification_postcondition(skill_id=skill_id),
+        steps=(
+            SkillStep(
+                step_id="open_browser_probe",
+                name="Open browser probe",
+                action_type="browser.open",
+                output_keys=("url_after", "screenshot_after_ref"),
+                provider_class_required="browser_worker",
+            ),
+            SkillStep(
+                step_id="capture_browser_screenshot",
+                name="Capture browser evidence",
+                action_type="browser.screenshot",
+                depends_on=("open_browser_probe",),
+                output_keys=("screenshot_after_ref",),
+                provider_class_required="browser_worker",
+            ),
+            SkillStep(
+                step_id="extract_document_text",
+                name="Extract parser evidence",
+                action_type="document.extract_text",
+                output_keys=("document_id", "text_hash", "parser_id"),
+                provider_class_required="document_worker",
+            ),
+            SkillStep(
+                step_id="transcribe_voice_probe",
+                name="Transcribe voice evidence",
+                action_type="voice.speech_to_text",
+                output_keys=("transcript_ref", "provider_receipt_ref"),
+                provider_class_required="voice_worker",
+            ),
+            SkillStep(
+                step_id="confirm_voice_intent",
+                name="Confirm voice intent classification",
+                action_type="voice.intent_confirm",
+                depends_on=("transcribe_voice_probe",),
+                input_bindings={"transcript_ref": "transcribe_voice_probe.transcript_ref"},
+                output_keys=("confirmation_ref", "risk_class"),
+                provider_class_required="voice_worker",
+            ),
+        ),
+        provider_requirements=("browser_worker", "document_worker", "voice_worker"),
+        description=(
+            "Collects read-only browser, document, and voice adapter evidence before "
+            "promotion or production-readiness claims."
+        ),
+        confidence=0.25,
+        metadata={**_NO_NEW_AUTHORITY, "risk_floor": "medium"},
+    )
+
+
+def _workflow_governed_composition_skill() -> SkillDescriptor:
+    skill_id = "workflow.governed_composition.v1"
+    return SkillDescriptor(
+        skill_id=skill_id,
+        name="Governed workflow composition",
+        skill_class=SkillClass.COMPOSITE,
+        effect_class=EffectClass.EXTERNAL_WRITE,
+        determinism_class=DeterminismClass.INPUT_BOUNDED,
+        trust_class=TrustClass.TRUSTED_INTERNAL,
+        verification_strength=VerificationStrength.MANDATORY,
+        lifecycle=SkillLifecycle.CANDIDATE,
+        preconditions=_policy_and_capability_preconditions(domain="enterprise"),
+        postconditions=_verification_postcondition(skill_id=skill_id),
+        steps=(
+            SkillStep(
+                step_id="search_governance_context",
+                name="Search governance context",
+                action_type="enterprise.knowledge_search",
+                output_keys=("evidence_refs", "policy_refs"),
+                provider_class_required="enterprise_knowledge_base",
+            ),
+            SkillStep(
+                step_id="generate_workflow_artifact",
+                name="Generate workflow artifact",
+                action_type="creative.document_generate",
+                depends_on=("search_governance_context",),
+                input_bindings={"policy_refs": "search_governance_context.policy_refs"},
+                output_keys=("artifact_ref", "artifact_hash"),
+                provider_class_required="creative_document_generator",
+            ),
+            SkillStep(
+                step_id="schedule_followup",
+                name="Schedule workflow follow-up",
+                action_type="enterprise.task_schedule",
+                depends_on=("generate_workflow_artifact",),
+                input_bindings={"artifact_ref": "generate_workflow_artifact.artifact_ref"},
+                output_keys=("task_id", "schedule_receipt_ref"),
+                provider_class_required="enterprise_task_scheduler",
+            ),
+        ),
+        provider_requirements=(
+            "enterprise_knowledge_base",
+            "creative_document_generator",
+            "enterprise_task_scheduler",
+        ),
+        description=(
+            "Composes governance context, workflow artifact generation, and bounded "
+            "follow-up scheduling for multi-step automation design."
+        ),
+        confidence=0.25,
+        metadata={**_NO_NEW_AUTHORITY, "risk_floor": "medium", "approval_expected": True},
     )
