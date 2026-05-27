@@ -3562,6 +3562,42 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "scheduler_errors_sanitized",
                 "scheduler_execution_audited",
             ],
+            runtime_witness_anchor_aliases={
+                "scheduler_job_registration_typed": [
+                    "schedule_and_list_jobs",
+                    "schedule_job_endpoint",
+                    "invalid_schedule_type",
+                ],
+                "scheduler_execute_guard_chain_checked": [
+                    "execute_job_succeeds",
+                    "execute_job_guard_denied_is_bounded",
+                    "scheduler_execute_guard_denial_is_bounded",
+                    "scheduler_lifecycle_and_history_endpoints",
+                ],
+                "scheduler_lifecycle_controls_bounded": [
+                    "disable_enable_job",
+                    "unschedule_job",
+                    "scheduler_lifecycle_and_history_endpoints",
+                ],
+                "scheduler_history_summary_bounded": [
+                    "history_bounded",
+                    "summary",
+                    "scheduler_summary_endpoint",
+                    "scheduler_lifecycle_and_history_endpoints",
+                ],
+                "scheduler_errors_sanitized": [
+                    "execute_job_handler_not_found",
+                    "execute_job_handler_raises",
+                    "execute_nonexistent_job_error_is_bounded",
+                    "invalid_schedule_type_400",
+                    "invalid_schedule_type_is_bounded",
+                    "scheduler_execute_missing_handler_is_bounded",
+                    "scheduler_execute_guard_denial_is_bounded",
+                ],
+                "scheduler_execution_audited": [
+                    "execute_job_records_audit_trail",
+                ],
+            },
         ),
         _surface(
             "multi_agent_coordination_runtime",

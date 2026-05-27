@@ -6337,6 +6337,42 @@
         "/api/v1/scheduler/summary"
       ],
       "request_proof": "request_proof",
+      "runtime_witness_anchor_aliases": {
+        "scheduler_errors_sanitized": [
+          "execute_job_handler_not_found",
+          "execute_job_handler_raises",
+          "execute_nonexistent_job_error_is_bounded",
+          "invalid_schedule_type_400",
+          "invalid_schedule_type_is_bounded",
+          "scheduler_execute_missing_handler_is_bounded",
+          "scheduler_execute_guard_denial_is_bounded"
+        ],
+        "scheduler_execute_guard_chain_checked": [
+          "execute_job_succeeds",
+          "execute_job_guard_denied_is_bounded",
+          "scheduler_execute_guard_denial_is_bounded",
+          "scheduler_lifecycle_and_history_endpoints"
+        ],
+        "scheduler_execution_audited": [
+          "execute_job_records_audit_trail"
+        ],
+        "scheduler_history_summary_bounded": [
+          "history_bounded",
+          "summary",
+          "scheduler_summary_endpoint",
+          "scheduler_lifecycle_and_history_endpoints"
+        ],
+        "scheduler_job_registration_typed": [
+          "schedule_and_list_jobs",
+          "schedule_job_endpoint",
+          "invalid_schedule_type"
+        ],
+        "scheduler_lifecycle_controls_bounded": [
+          "disable_enable_job",
+          "unschedule_job",
+          "scheduler_lifecycle_and_history_endpoints"
+        ]
+      },
       "runtime_witnesses": [
         "scheduler_job_registration_typed",
         "scheduler_execute_guard_chain_checked",
@@ -8283,7 +8319,7 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 925,
+    "exact_test_anchor_count": 931,
     "runtime_witness_count": 1108,
     "surfaces": [
       {
@@ -12636,19 +12672,64 @@
         "unanchored_witnesses": []
       },
       {
-        "anchored_witnesses": [],
-        "exact_test_anchor_count": 0,
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "mcoi/tests/test_scheduler.py::test_schedule_and_list_jobs",
+              "mcoi/tests/test_scheduler.py::test_schedule_job_endpoint"
+            ],
+            "witness": "scheduler_job_registration_typed"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_scheduler.py::test_execute_job_succeeds",
+              "mcoi/tests/test_scheduler.py::test_execute_job_guard_denied_is_bounded",
+              "mcoi/tests/test_server_phase218.py::test_scheduler_execute_guard_denial_is_bounded",
+              "mcoi/tests/test_scheduler.py::test_scheduler_lifecycle_and_history_endpoints"
+            ],
+            "witness": "scheduler_execute_guard_chain_checked"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_scheduler.py::test_disable_enable_job",
+              "mcoi/tests/test_scheduler.py::test_unschedule_job",
+              "mcoi/tests/test_scheduler.py::test_scheduler_lifecycle_and_history_endpoints"
+            ],
+            "witness": "scheduler_lifecycle_controls_bounded"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_scheduler.py::test_history_bounded",
+              "mcoi/tests/test_scheduler.py::test_summary",
+              "mcoi/tests/test_scheduler.py::test_scheduler_summary_endpoint",
+              "mcoi/tests/test_scheduler.py::test_scheduler_lifecycle_and_history_endpoints"
+            ],
+            "witness": "scheduler_history_summary_bounded"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_scheduler.py::test_execute_job_handler_not_found",
+              "mcoi/tests/test_scheduler.py::test_execute_job_handler_raises",
+              "mcoi/tests/test_scheduler.py::test_execute_nonexistent_job_error_is_bounded",
+              "mcoi/tests/test_scheduler.py::test_invalid_schedule_type_400",
+              "mcoi/tests/test_server_phase217.py::test_invalid_schedule_type_is_bounded",
+              "mcoi/tests/test_server_phase218.py::test_scheduler_execute_missing_handler_is_bounded",
+              "mcoi/tests/test_server_phase218.py::test_scheduler_execute_guard_denial_is_bounded"
+            ],
+            "witness": "scheduler_errors_sanitized"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_scheduler.py::test_execute_job_records_audit_trail"
+            ],
+            "witness": "scheduler_execution_audited"
+          }
+        ],
+        "exact_test_anchor_count": 6,
         "runtime_witness_count": 6,
         "surface_id": "governed_background_scheduler",
-        "unanchored_witness_count": 6,
-        "unanchored_witnesses": [
-          "scheduler_job_registration_typed",
-          "scheduler_execute_guard_chain_checked",
-          "scheduler_lifecycle_controls_bounded",
-          "scheduler_history_summary_bounded",
-          "scheduler_errors_sanitized",
-          "scheduler_execution_audited"
-        ]
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
       },
       {
         "anchored_witnesses": [
@@ -15260,6 +15341,6 @@
         "unanchored_witnesses": []
       }
     ],
-    "unanchored_witness_count": 183
+    "unanchored_witness_count": 177
   }
 }
