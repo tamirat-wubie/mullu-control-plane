@@ -113,6 +113,7 @@ def include_default_routers(app: FastAPI) -> None:
     from mcoi_runtime.app.routers.musia_tenants import router as musia_tenants_router
     from mcoi_runtime.app.routers.multi_agent import router as multi_agent_router
     from mcoi_runtime.app.routers.ops import router as ops_router
+    from mcoi_runtime.app.routers.organization_kernel import router as organization_kernel_router
     from mcoi_runtime.app.routers.pilot import router as pilot_router
     from mcoi_runtime.app.routers.policy_versions import router as policy_versions_router
     from mcoi_runtime.app.routers.rbac import router as rbac_router
@@ -159,6 +160,7 @@ def include_default_routers(app: FastAPI) -> None:
     app.include_router(explain_router)
     app.include_router(multi_agent_router)
     app.include_router(knowledge_router)
+    app.include_router(organization_kernel_router)
     # MUSIA v4.x routers
     app.include_router(mfidel_router)
     app.include_router(constructs_router)

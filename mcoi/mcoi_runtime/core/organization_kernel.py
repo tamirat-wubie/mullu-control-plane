@@ -11,6 +11,7 @@ Invariants:
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from datetime import datetime
 from typing import Callable, Iterable
 
@@ -64,6 +65,68 @@ _NON_COMMITTED_TERMINAL_DISPOSITIONS = frozenset(
         TerminalClosureDisposition.REQUIRES_REVIEW,
     }
 )
+
+
+@dataclass(frozen=True, slots=True)
+class LatestPlanStepGateDecisionRef:
+    """Reference that preserves the latest gate decision per case step."""
+
+    case_id: str
+    step_id: str
+    decision_id: str
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "case_id", ensure_non_empty_text("case_id", self.case_id))
+        object.__setattr__(self, "step_id", ensure_non_empty_text("step_id", self.step_id))
+        object.__setattr__(self, "decision_id", ensure_non_empty_text("decision_id", self.decision_id))
+
+
+@dataclass(frozen=True, slots=True)
+class OrganizationKernelState:
+    """Exact serializable state witness for OrganizationKernel persistence."""
+
+    organizations: tuple[OrganizationProfile, ...] = ()
+    departments: tuple[DepartmentPack, ...] = ()
+    roles: tuple[OrganizationRole, ...] = ()
+    authority_rules: tuple[AuthorityRule, ...] = ()
+    capabilities: tuple[CapabilityBinding, ...] = ()
+    evidence_requirements: tuple[EvidenceRequirement, ...] = ()
+    cases: tuple[OrganizationCase, ...] = ()
+    plans: tuple[OrganizationPlan, ...] = ()
+    case_evidence: tuple[CaseEvidence, ...] = ()
+    approvals: tuple[ApprovalRecord, ...] = ()
+    gate_decisions: tuple[PlanStepGateDecision, ...] = ()
+    latest_gate_decisions: tuple[LatestPlanStepGateDecisionRef, ...] = ()
+    reconciliations: tuple[OrganizationEffectReconciliation, ...] = ()
+    closures: tuple[OrganizationTerminalClosure, ...] = ()
+    learning_bindings: tuple[LearningAdmissionBinding, ...] = ()
+    events: tuple[OrganizationCaseEvent, ...] = ()
+    event_sequence: int = 0
+
+    def __post_init__(self) -> None:
+        for field_name in (
+            "organizations",
+            "departments",
+            "roles",
+            "authority_rules",
+            "capabilities",
+            "evidence_requirements",
+            "cases",
+            "plans",
+            "case_evidence",
+            "approvals",
+            "gate_decisions",
+            "latest_gate_decisions",
+            "reconciliations",
+            "closures",
+            "learning_bindings",
+            "events",
+        ):
+            value = getattr(self, field_name)
+            if isinstance(value, (str, bytes)) or not isinstance(value, tuple):
+                raise ValueError(f"{field_name} must be a tuple")
+        if not isinstance(self.event_sequence, int) or self.event_sequence < len(self.events):
+            raise ValueError("event_sequence must cover emitted events")
 
 
 def _risk_allows(max_risk: OrganizationRisk, requested_risk: OrganizationRisk) -> bool:
@@ -449,6 +512,269 @@ class OrganizationKernel:
             return tuple(self._events)
         ensure_non_empty_text("case_id", case_id)
         return tuple(event for event in self._events if event.case_id == case_id)
+
+    def snapshot_state(self) -> OrganizationKernelState:
+        """Return an exact state witness for deterministic persistence."""
+        latest_gate_decisions = tuple(
+            LatestPlanStepGateDecisionRef(
+                case_id=case_id,
+                step_id=step_id,
+                decision_id=decision_id,
+            )
+            for (case_id, step_id), decision_id in sorted(self._latest_gate_by_step.items())
+        )
+        return OrganizationKernelState(
+            organizations=tuple(self._organizations[key] for key in sorted(self._organizations)),
+            departments=tuple(self._departments[key] for key in sorted(self._departments)),
+            roles=tuple(self._roles[key] for key in sorted(self._roles)),
+            authority_rules=tuple(self._authority_rules[key] for key in sorted(self._authority_rules)),
+            capabilities=tuple(self._capabilities[key] for key in sorted(self._capabilities)),
+            evidence_requirements=tuple(
+                self._evidence_requirements[key] for key in sorted(self._evidence_requirements)
+            ),
+            cases=tuple(self._cases[key] for key in sorted(self._cases)),
+            plans=tuple(self._plans[key] for key in sorted(self._plans)),
+            case_evidence=tuple(self._case_evidence[key] for key in sorted(self._case_evidence)),
+            approvals=tuple(self._approvals[key] for key in sorted(self._approvals)),
+            gate_decisions=tuple(
+                sorted(
+                    self._gate_decisions.values(),
+                    key=lambda decision: (decision.decided_at, decision.case_id, decision.step_id, decision.decision_id),
+                )
+            ),
+            latest_gate_decisions=latest_gate_decisions,
+            reconciliations=tuple(self._reconciliations[key] for key in sorted(self._reconciliations)),
+            closures=tuple(self._closures[key] for key in sorted(self._closures)),
+            learning_bindings=tuple(self._learning_bindings[key] for key in sorted(self._learning_bindings)),
+            events=tuple(self._events),
+            event_sequence=self._event_sequence,
+        )
+
+    def restore_state(self, state: OrganizationKernelState) -> OrganizationKernelState:
+        """Restore an exact persisted state into an empty organization kernel."""
+        if not isinstance(state, OrganizationKernelState):
+            raise RuntimeCoreInvariantError("organization kernel state unavailable")
+        if self._has_state():
+            raise RuntimeCoreInvariantError("organization kernel restore requires empty kernel")
+
+        candidate = OrganizationKernel(clock=self._clock)
+        candidate._organizations = candidate._keyed(state.organizations, "org_id", "organization")
+        candidate._departments = candidate._keyed(state.departments, "department_id", "department")
+        candidate._roles = candidate._keyed(state.roles, "role_id", "role")
+        candidate._authority_rules = candidate._keyed(state.authority_rules, "rule_id", "authority rule")
+        candidate._capabilities = candidate._keyed(state.capabilities, "capability_id", "capability")
+        candidate._evidence_requirements = candidate._keyed(
+            state.evidence_requirements,
+            "requirement_id",
+            "evidence requirement",
+        )
+        candidate._cases = candidate._keyed(state.cases, "case_id", "case")
+        candidate._plans = candidate._keyed(state.plans, "plan_id", "plan")
+        candidate._plan_by_case = candidate._keyed_plan_cases(state.plans)
+        candidate._case_evidence = candidate._keyed(state.case_evidence, "evidence_ref", "case evidence")
+        candidate._approvals = candidate._keyed(state.approvals, "approval_id", "approval")
+        candidate._gate_decisions = candidate._keyed(state.gate_decisions, "decision_id", "gate decision")
+        candidate._latest_gate_by_step = candidate._latest_gate_index(state.latest_gate_decisions)
+        candidate._reconciliations = candidate._keyed(
+            state.reconciliations,
+            "reconciliation_id",
+            "reconciliation",
+        )
+        candidate._closures = candidate._keyed(state.closures, "closure_id", "terminal closure")
+        candidate._learning_bindings = candidate._keyed(state.learning_bindings, "binding_id", "learning binding")
+        candidate._events = list(state.events)
+        candidate._event_sequence = state.event_sequence
+        candidate._validate_restored_state()
+
+        self._organizations = candidate._organizations
+        self._departments = candidate._departments
+        self._roles = candidate._roles
+        self._authority_rules = candidate._authority_rules
+        self._capabilities = candidate._capabilities
+        self._evidence_requirements = candidate._evidence_requirements
+        self._cases = candidate._cases
+        self._plans = candidate._plans
+        self._plan_by_case = candidate._plan_by_case
+        self._case_evidence = candidate._case_evidence
+        self._approvals = candidate._approvals
+        self._gate_decisions = candidate._gate_decisions
+        self._latest_gate_by_step = candidate._latest_gate_by_step
+        self._reconciliations = candidate._reconciliations
+        self._closures = candidate._closures
+        self._learning_bindings = candidate._learning_bindings
+        self._events = candidate._events
+        self._event_sequence = candidate._event_sequence
+        return state
+
+    def _has_state(self) -> bool:
+        return any(
+            (
+                self._organizations,
+                self._departments,
+                self._roles,
+                self._authority_rules,
+                self._capabilities,
+                self._evidence_requirements,
+                self._cases,
+                self._plans,
+                self._case_evidence,
+                self._approvals,
+                self._gate_decisions,
+                self._reconciliations,
+                self._closures,
+                self._learning_bindings,
+                self._events,
+            )
+        )
+
+    @staticmethod
+    def _keyed(items: tuple[object, ...], key_name: str, label: str) -> dict[str, object]:
+        keyed: dict[str, object] = {}
+        for item in items:
+            key = getattr(item, key_name, None)
+            if not isinstance(key, str) or not key.strip():
+                raise RuntimeCoreInvariantError(f"{label} restore id unavailable")
+            if key in keyed:
+                raise RuntimeCoreInvariantError(f"{label} restore id collision")
+            keyed[key] = item
+        return keyed
+
+    @staticmethod
+    def _keyed_plan_cases(plans: tuple[OrganizationPlan, ...]) -> dict[str, str]:
+        keyed: dict[str, str] = {}
+        for plan in plans:
+            existing = keyed.get(plan.case_id)
+            if existing is not None and existing != plan.plan_id:
+                raise RuntimeCoreInvariantError("case restore has multiple plans")
+            keyed[plan.case_id] = plan.plan_id
+        return keyed
+
+    @staticmethod
+    def _latest_gate_index(
+        latest_gate_refs: tuple[LatestPlanStepGateDecisionRef, ...],
+    ) -> dict[tuple[str, str], str]:
+        keyed: dict[tuple[str, str], str] = {}
+        for ref in latest_gate_refs:
+            key = (ref.case_id, ref.step_id)
+            if key in keyed:
+                raise RuntimeCoreInvariantError("latest gate decision restore collision")
+            keyed[key] = ref.decision_id
+        return keyed
+
+    def _validate_restored_state(self) -> None:
+        for department in self._departments.values():
+            if department.org_id not in self._organizations:
+                raise RuntimeCoreInvariantError("restored department organization unavailable")
+        for role in self._roles.values():
+            department = self._departments.get(role.department_id)
+            if department is None or department.org_id != role.org_id:
+                raise RuntimeCoreInvariantError("restored role department unavailable")
+        for rule in self._authority_rules.values():
+            role = self._roles.get(rule.role_id)
+            if role is None or role.org_id != rule.org_id or role.department_id != rule.department_id:
+                raise RuntimeCoreInvariantError("restored authority rule role mismatch")
+        for capability in self._capabilities.values():
+            department = self._departments.get(capability.department_id)
+            if department is None or department.org_id != capability.org_id:
+                raise RuntimeCoreInvariantError("restored capability department unavailable")
+            if capability.capability_id not in department.allowed_capabilities:
+                raise RuntimeCoreInvariantError("restored capability outside department mandate")
+        for requirement in self._evidence_requirements.values():
+            department = self._departments.get(requirement.department_id)
+            if department is None or department.org_id != requirement.org_id:
+                raise RuntimeCoreInvariantError("restored evidence requirement department unavailable")
+            if requirement.requirement_id not in department.required_evidence:
+                raise RuntimeCoreInvariantError("restored evidence requirement outside mandate")
+        for organization_case in self._cases.values():
+            self._validate_restored_case(organization_case)
+        for plan in self._plans.values():
+            organization_case = self._cases.get(plan.case_id)
+            if organization_case is None:
+                raise RuntimeCoreInvariantError("restored plan case unavailable")
+            for step in plan.steps:
+                self._validate_plan_step(organization_case, step)
+        for evidence in self._case_evidence.values():
+            self._validate_restored_evidence(evidence)
+        for approval in self._approvals.values():
+            self._validate_restored_approval(approval)
+        for decision in self._gate_decisions.values():
+            self._validate_restored_gate_decision(decision)
+        for (case_id, step_id), decision_id in self._latest_gate_by_step.items():
+            decision = self._gate_decisions.get(decision_id)
+            if decision is None or decision.case_id != case_id or decision.step_id != step_id:
+                raise RuntimeCoreInvariantError("restored latest gate decision mismatch")
+        for reconciliation in self._reconciliations.values():
+            if reconciliation.case_id not in self._cases:
+                raise RuntimeCoreInvariantError("restored reconciliation case unavailable")
+        for closure in self._closures.values():
+            organization_case = self._cases.get(closure.case_id)
+            reconciliation = self._reconciliations.get(closure.reconciliation_id)
+            if organization_case is None or reconciliation is None or reconciliation.case_id != closure.case_id:
+                raise RuntimeCoreInvariantError("restored terminal closure binding mismatch")
+            if organization_case.terminal_closure_id != closure.closure_id:
+                raise RuntimeCoreInvariantError("restored case terminal closure mismatch")
+        for organization_case in self._cases.values():
+            if organization_case.terminal_closure_id is not None and organization_case.terminal_closure_id not in self._closures:
+                raise RuntimeCoreInvariantError("restored case terminal closure unavailable")
+        for binding in self._learning_bindings.values():
+            closure = self._closures.get(binding.closure_id)
+            if closure is None or closure.case_id != binding.case_id:
+                raise RuntimeCoreInvariantError("restored learning binding closure mismatch")
+        if self._event_sequence < len(self._events):
+            raise RuntimeCoreInvariantError("restored event sequence is behind event count")
+        for event in self._events:
+            if event.case_id not in self._cases:
+                raise RuntimeCoreInvariantError("restored event case unavailable")
+
+    def _validate_restored_case(self, organization_case: OrganizationCase) -> None:
+        if organization_case.org_id not in self._organizations:
+            raise RuntimeCoreInvariantError("restored case organization unavailable")
+        department = self._departments.get(organization_case.department_id)
+        if department is None or department.org_id != organization_case.org_id:
+            raise RuntimeCoreInvariantError("restored case department unavailable")
+        if organization_case.case_type not in department.allowed_case_types:
+            raise RuntimeCoreInvariantError("restored case outside department mandate")
+        owner = self._roles.get(organization_case.owner_role_id)
+        if owner is None or owner.org_id != organization_case.org_id:
+            raise RuntimeCoreInvariantError("restored case owner unavailable")
+        for department_id in organization_case.assigned_department_ids:
+            assigned = self._departments.get(department_id)
+            if assigned is None or assigned.org_id != organization_case.org_id:
+                raise RuntimeCoreInvariantError("restored assigned department unavailable")
+            if organization_case.case_type not in assigned.allowed_case_types:
+                raise RuntimeCoreInvariantError("restored assigned department cannot handle case type")
+
+    def _validate_restored_evidence(self, evidence: CaseEvidence) -> None:
+        organization_case = self._cases.get(evidence.case_id)
+        requirement = self._evidence_requirements.get(evidence.requirement_id)
+        if organization_case is None or requirement is None:
+            raise RuntimeCoreInvariantError("restored evidence binding unavailable")
+        if requirement.org_id != organization_case.org_id or requirement.case_type != organization_case.case_type:
+            raise RuntimeCoreInvariantError("restored evidence case mismatch")
+        if requirement.department_id not in organization_case.assigned_department_ids:
+            raise RuntimeCoreInvariantError("restored evidence department not assigned")
+
+    def _validate_restored_approval(self, approval: ApprovalRecord) -> None:
+        organization_case = self._cases.get(approval.case_id)
+        role = self._roles.get(approval.role_id)
+        if organization_case is None or role is None or role.org_id != organization_case.org_id:
+            raise RuntimeCoreInvariantError("restored approval role unavailable")
+        if role.department_id not in organization_case.assigned_department_ids:
+            raise RuntimeCoreInvariantError("restored approval department not assigned")
+
+    def _validate_restored_gate_decision(self, decision: PlanStepGateDecision) -> None:
+        self._require_case(decision.case_id)
+        plan = self._require_case_plan(decision.case_id)
+        self._require_plan_step(plan, decision.step_id)
+        for rule_id in decision.authority_rule_ids:
+            if rule_id not in self._authority_rules:
+                raise RuntimeCoreInvariantError("restored gate authority unavailable")
+        for evidence_ref in decision.evidence_refs:
+            if evidence_ref not in self._case_evidence:
+                raise RuntimeCoreInvariantError("restored gate evidence unavailable")
+        for approval_ref in decision.approval_refs:
+            if approval_ref not in self._approvals:
+                raise RuntimeCoreInvariantError("restored gate approval unavailable")
 
     def _validate_plan_step(self, organization_case: OrganizationCase, step: PlanStep) -> None:
         if step.case_id != organization_case.case_id:
