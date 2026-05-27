@@ -33,6 +33,9 @@ EXPECTED_SKILL_IDS = (
     "deployment.witness_publication.v1",
     "adapter.evidence_closure.v1",
     "workflow.governed_composition.v1",
+    "incident.rollback_recovery.v1",
+    "release.pr_handoff_closure.v1",
+    "telemetry.monitoring_triage.v1",
 )
 
 
@@ -65,6 +68,9 @@ def test_default_skill_effect_classes_match_strongest_workflow_effect() -> None:
     assert descriptors["deployment.witness_publication.v1"].effect_class is EffectClass.EXTERNAL_WRITE
     assert descriptors["adapter.evidence_closure.v1"].effect_class is EffectClass.EXTERNAL_READ
     assert descriptors["workflow.governed_composition.v1"].effect_class is EffectClass.EXTERNAL_WRITE
+    assert descriptors["incident.rollback_recovery.v1"].effect_class is EffectClass.EXTERNAL_WRITE
+    assert descriptors["release.pr_handoff_closure.v1"].effect_class is EffectClass.EXTERNAL_WRITE
+    assert descriptors["telemetry.monitoring_triage.v1"].effect_class is EffectClass.EXTERNAL_READ
     assert all(
         descriptor.metadata["approval_expected"] is True
         for descriptor in descriptors.values()
@@ -158,7 +164,11 @@ def test_register_default_skill_descriptors_rejects_provider_boundary_drift(
 def test_register_default_skill_descriptors_rejects_external_write_without_approval(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    descriptor = default_skill_descriptors()[-1]
+    descriptor = next(
+        descriptor
+        for descriptor in default_skill_descriptors()
+        if descriptor.skill_id == "incident.rollback_recovery.v1"
+    )
     broken = replace(
         descriptor,
         metadata={**descriptor.metadata, "approval_expected": False},
@@ -170,7 +180,7 @@ def test_register_default_skill_descriptors_rejects_external_write_without_appro
         register_default_skill_descriptors(registry)
 
     assert registry.size == 0
-    assert registry.get("workflow.governed_composition.v1") is None
+    assert registry.get("incident.rollback_recovery.v1") is None
     assert broken.effect_class is EffectClass.EXTERNAL_WRITE
 
 
@@ -185,3 +195,6 @@ def test_bootstrap_installs_default_skill_catalog() -> None:
     assert runtime.skill_registry.get("finance.approval_packet.v1").metadata["grants_new_capability_authority"] is False
     assert runtime.skill_registry.get("deployment.witness_publication.v1").metadata["approval_expected"] is True
     assert runtime.skill_registry.get("workflow.governed_composition.v1").metadata["approval_expected"] is True
+    assert runtime.skill_registry.get("incident.rollback_recovery.v1").metadata["risk_floor"] == "critical"
+    assert runtime.skill_registry.get("release.pr_handoff_closure.v1").metadata["approval_expected"] is True
+    assert runtime.skill_registry.get("telemetry.monitoring_triage.v1").metadata["risk_floor"] == "medium"
