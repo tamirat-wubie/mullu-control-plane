@@ -5053,6 +5053,32 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "temporal_monotonic_duration_receipt_schema_valid",
                 "receipt_not_terminal_closure",
             ],
+            runtime_witness_anchor_aliases={
+                "runtime_monotonic_clock_owns_duration_truth": [
+                    "monotonic_duration_allows_high_risk_dispatch_inside_latency_bound",
+                ],
+                "wall_clock_not_used_for_duration": [
+                    "monotonic_duration_allows_high_risk_dispatch_inside_latency_bound",
+                ],
+                "duration_limit_exceeded_blocks_dispatch": [
+                    "monotonic_duration_blocks_when_timeout_limit_is_exceeded",
+                ],
+                "cooldown_lower_bound_defers_dispatch": [
+                    "monotonic_duration_defers_cooldown_until_lower_bound_elapsed",
+                ],
+                "monotonic_clock_regression_blocks_dispatch": [
+                    "monotonic_duration_blocks_regressed_clock_scope_evidence_and_missing_sources",
+                ],
+                "high_risk_source_receipts_bound": [
+                    "monotonic_duration_blocks_regressed_clock_scope_evidence_and_missing_sources",
+                ],
+                "temporal_monotonic_duration_receipt_schema_valid": [
+                    "monotonic_duration_allows_high_risk_dispatch_inside_latency_bound",
+                ],
+                "receipt_not_terminal_closure": [
+                    "monotonic_duration_allows_high_risk_dispatch_inside_latency_bound",
+                ],
+            },
         ),
         _surface(
             "temporal_accepted_risk_expiry",
