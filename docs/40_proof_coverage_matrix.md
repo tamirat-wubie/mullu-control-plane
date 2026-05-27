@@ -151,8 +151,8 @@ Witness integrity audit:
 | Metric | Count |
 |---|---:|
 | Runtime witness labels | 1109 |
-| Exact test anchors | 979 |
-| Unanchored witness labels | 130 |
+| Exact test anchors | 987 |
+| Unanchored witness labels | 122 |
 
 Evidence quality gaps:
 none
@@ -161,7 +161,6 @@ Witness integrity gaps:
 
 | Surface | Exact anchors | Unanchored | Unanchored labels |
 |---|---:|---:|---|
-| `live_path_certification_lifecycle` | 0 | 8 | certification_run_emits_action_proof, certification_run_returns_chain_hash, certification_run_records_five_steps, certification_steps_named, certification_history_bounded, certification_chain_hash_deterministic, certification_failures_bounded, certification_partial_failure_recorded |
 | `software_outcome_learning` | 0 | 7 | software_learning_schema_default_enabled, passed_gates_yield_procedural_memory, failed_gates_yield_hashed_risk_memory, raw_logs_rejected_before_planning_use, rollback_failure_defers_learning, planning_projection_requires_admitted_matching_decision, software_learning_errors_are_bounded |
 | `approval_engine_lifecycle` | 1 | 5 | approval_request_mutation_receipt_emitted, approval_decision_mutation_receipt_emitted, approval_consumption_mutation_receipt_emitted, approval_revocation_mutation_receipt_emitted, approval_override_mutation_receipt_emitted |
 | `job_engine_lifecycle` | 1 | 5 | job_create_mutation_receipt_emitted, job_start_mutation_receipt_emitted, job_pause_resume_mutation_receipts_emitted, job_terminal_mutation_receipts_emitted, job_restore_mutation_receipt_emitted |
@@ -305,5 +304,5 @@ none
 STATUS:
   Completeness: 100%
   Invariants verified: route declarations, route-level coverage classification, coverage levels, coverage states, closure action mapping, schema contract validation, deployment orchestration receipt schema contract
-  Open issues: 130 runtime-witness labels lack exact test-function anchors
+  Open issues: 122 runtime-witness labels lack exact test-function anchors
   Next action: bind unanchored runtime-witness labels to exact test-function anchors

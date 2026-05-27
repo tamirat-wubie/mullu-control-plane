@@ -2254,6 +2254,39 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "certification_failures_bounded",
                 "certification_partial_failure_recorded",
             ],
+            runtime_witness_anchor_aliases={
+                "certification_run_emits_action_proof": [
+                    "run_certification",
+                    "workflow_then_certification",
+                ],
+                "certification_run_returns_chain_hash": [
+                    "run_certification",
+                    "all_passed",
+                ],
+                "certification_run_records_five_steps": [
+                    "run_certification",
+                    "all_passed",
+                    "all_skipped",
+                ],
+                "certification_steps_named": [
+                    "certification_steps_have_names",
+                ],
+                "certification_history_bounded": [
+                    "certification_history",
+                ],
+                "certification_chain_hash_deterministic": [
+                    "chain_hash_deterministic",
+                ],
+                "certification_failures_bounded": [
+                    "failed_on_exception",
+                    "exception_is_bounded",
+                    "failed_on_error",
+                ],
+                "certification_partial_failure_recorded": [
+                    "partial_failure",
+                    "budget_exhaustion_during_certification",
+                ],
+            },
         ),
         _surface(
             "runtime_state_persistence_lifecycle",
