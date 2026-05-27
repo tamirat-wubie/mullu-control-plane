@@ -189,6 +189,18 @@ def test_witness_integrity_report_tracks_exact_test_anchors() -> None:
     assert surfaces["policy_prover"]["unanchored_witness_count"] == 0
     assert surfaces["temporal_evidence_freshness"]["exact_test_anchor_count"] == 8
     assert surfaces["temporal_evidence_freshness"]["unanchored_witness_count"] == 0
+    assert surfaces["temporal_reapproval"]["exact_test_anchor_count"] == 8
+    assert surfaces["temporal_reapproval"]["unanchored_witness_count"] == 0
+    assert surfaces["temporal_monotonic_duration"]["exact_test_anchor_count"] == 8
+    assert surfaces["temporal_monotonic_duration"]["unanchored_witness_count"] == 0
+    assert surfaces["temporal_missed_run"]["exact_test_anchor_count"] == 9
+    assert surfaces["temporal_missed_run"]["unanchored_witness_count"] == 0
+    assert surfaces["temporal_recurrence_window"]["exact_test_anchor_count"] == 10
+    assert surfaces["temporal_recurrence_window"]["unanchored_witness_count"] == 0
+    assert surfaces["temporal_memory_refresh"]["exact_test_anchor_count"] == 7
+    assert surfaces["temporal_memory_refresh"]["unanchored_witness_count"] == 0
+    assert surfaces["policy_proof_report"]["exact_test_anchor_count"] == 6
+    assert surfaces["policy_proof_report"]["unanchored_witness_count"] == 0
     assert surfaces["code_intelligence_operator_read_model"]["exact_test_anchor_count"] >= 5
     assert surfaces["code_intelligence_operator_read_model"]["unanchored_witness_count"] == 0
     assert surfaces["data_export_lifecycle"]["exact_test_anchor_count"] >= 4
@@ -3473,8 +3485,13 @@ def test_temporal_causal_order_surface_rechecks_required_event_order() -> None:
 def test_temporal_monotonic_duration_surface_rechecks_elapsed_time() -> None:
     matrix = _load_fixture()
     surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    witness_surfaces = {
+        surface["surface_id"]: surface
+        for surface in matrix["witness_integrity"]["surfaces"]
+    }
     closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
     duration_surface = surfaces["temporal_monotonic_duration"]
+    duration_witness_surface = witness_surfaces["temporal_monotonic_duration"]
     witnesses = set(duration_surface["runtime_witnesses"])
 
     assert duration_surface["coverage_state"] == "witnessed"
@@ -3493,6 +3510,9 @@ def test_temporal_monotonic_duration_surface_rechecks_elapsed_time() -> None:
     assert "monotonic_clock_regression_blocks_dispatch" in witnesses
     assert "high_risk_source_receipts_bound" in witnesses
     assert "temporal_monotonic_duration_receipt_schema_valid" in witnesses
+    assert "receipt_not_terminal_closure" in witnesses
+    assert duration_witness_surface["exact_test_anchor_count"] == 8
+    assert duration_witness_surface["unanchored_witness_count"] == 0
     assert closure_actions["publish_temporal_monotonic_duration_receipt_contract"]["status"] == "closed"
 
 
@@ -3696,8 +3716,13 @@ def test_temporal_idempotency_window_surface_blocks_duplicate_dispatch() -> None
 def test_temporal_missed_run_surface_emits_skip_and_recovery_receipts() -> None:
     matrix = _load_fixture()
     surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    witness_surfaces = {
+        surface["surface_id"]: surface
+        for surface in matrix["witness_integrity"]["surfaces"]
+    }
     closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
     missed_run_surface = surfaces["temporal_missed_run"]
+    missed_run_witness_surface = witness_surfaces["temporal_missed_run"]
     witnesses = set(missed_run_surface["runtime_witnesses"])
 
     assert missed_run_surface["coverage_state"] == "witnessed"
@@ -3717,7 +3742,46 @@ def test_temporal_missed_run_surface_emits_skip_and_recovery_receipts() -> None:
     assert "tenant_command_action_scope_checked" in witnesses
     assert "high_risk_source_receipts_bound" in witnesses
     assert "temporal_missed_run_receipt_schema_valid" in witnesses
+    assert "receipt_not_terminal_closure" in witnesses
+    assert missed_run_witness_surface["exact_test_anchor_count"] == 9
+    assert missed_run_witness_surface["unanchored_witness_count"] == 0
     assert closure_actions["publish_temporal_missed_run_receipt_contract"]["status"] == "closed"
+
+
+def test_temporal_recurrence_window_surface_emits_next_due_receipts() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    witness_surfaces = {
+        surface["surface_id"]: surface
+        for surface in matrix["witness_integrity"]["surfaces"]
+    }
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    recurrence_surface = surfaces["temporal_recurrence_window"]
+    recurrence_witness_surface = witness_surfaces["temporal_recurrence_window"]
+    witnesses = set(recurrence_surface["runtime_witnesses"])
+
+    assert recurrence_surface["coverage_state"] == "witnessed"
+    assert recurrence_surface["request_proof"] == "request_proof"
+    assert recurrence_surface["action_proof"] == "action_proof"
+    assert "evaluate_temporal_recurrence_window" in recurrence_surface["representative_paths"]
+    assert "RecurrenceWindowRequest" in recurrence_surface["representative_paths"]
+    assert "TemporalRecurrenceWindowReceipt" in recurrence_surface["representative_paths"]
+    assert "gateway/temporal_recurrence_window.py" in recurrence_surface["evidence_files"]
+    assert "schemas/temporal_recurrence_window_receipt.schema.json" in recurrence_surface["evidence_files"]
+    assert "tests/test_gateway/test_temporal_recurrence_window.py" in recurrence_surface["evidence_files"]
+    assert "runtime_clock_owns_recurrence_window_time" in witnesses
+    assert "tenant_timezone_preserved_across_dst" in witnesses
+    assert "candidate_must_match_next_occurrence" in witnesses
+    assert "future_candidate_defers_dispatch" in witnesses
+    assert "completed_series_blocks_dispatch" in witnesses
+    assert "duplicate_candidate_requires_terminal_receipt" in witnesses
+    assert "monthly_end_of_month_clamped" in witnesses
+    assert "high_risk_due_candidate_requires_reapproval_source" in witnesses
+    assert "temporal_recurrence_window_receipt_schema_valid" in witnesses
+    assert "receipt_not_terminal_closure" in witnesses
+    assert recurrence_witness_surface["exact_test_anchor_count"] == 10
+    assert recurrence_witness_surface["unanchored_witness_count"] == 0
+    assert closure_actions["publish_temporal_recurrence_window_receipt_contract"]["status"] == "closed"
 
 
 def test_temporal_memory_surface_blocks_stale_or_superseded_memory() -> None:
@@ -3748,8 +3812,13 @@ def test_temporal_memory_surface_blocks_stale_or_superseded_memory() -> None:
 def test_temporal_memory_refresh_surface_creates_bounded_refresh_work() -> None:
     matrix = _load_fixture()
     surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    witness_surfaces = {
+        surface["surface_id"]: surface
+        for surface in matrix["witness_integrity"]["surfaces"]
+    }
     closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
     refresh_surface = surfaces["temporal_memory_refresh"]
+    refresh_witness_surface = witness_surfaces["temporal_memory_refresh"]
     witnesses = set(refresh_surface["runtime_witnesses"])
 
     assert refresh_surface["coverage_state"] == "witnessed"
@@ -3767,6 +3836,9 @@ def test_temporal_memory_refresh_surface_creates_bounded_refresh_work() -> None:
     assert "invalid_refresh_policy_blocks_task_creation" in witnesses
     assert "superseded_memory_blocks_reactivation" in witnesses
     assert "temporal_memory_refresh_receipt_schema_valid" in witnesses
+    assert "receipt_not_terminal_closure" in witnesses
+    assert refresh_witness_surface["exact_test_anchor_count"] == 7
+    assert refresh_witness_surface["unanchored_witness_count"] == 0
     assert closure_actions["publish_temporal_memory_refresh_receipt_contract"]["status"] == "closed"
 
 
@@ -3800,8 +3872,13 @@ def test_temporal_scheduler_surface_requires_leases_and_retry_windows() -> None:
 def test_policy_proof_report_surface_is_counterexample_backed() -> None:
     matrix = _load_fixture()
     surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    witness_surfaces = {
+        surface["surface_id"]: surface
+        for surface in matrix["witness_integrity"]["surfaces"]
+    }
     closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
     policy_surface = surfaces["policy_proof_report"]
+    policy_witness_surface = witness_surfaces["policy_proof_report"]
     witnesses = set(policy_surface["runtime_witnesses"])
 
     assert policy_surface["coverage_state"] == "witnessed"
@@ -3817,6 +3894,8 @@ def test_policy_proof_report_surface_is_counterexample_backed() -> None:
     assert "proved_report_has_no_counterexamples" in witnesses
     assert "policy_weakening_forbidden" in witnesses
     assert "policy_proof_schema_valid" in witnesses
+    assert policy_witness_surface["exact_test_anchor_count"] == 6
+    assert policy_witness_surface["unanchored_witness_count"] == 0
     assert closure_actions["publish_policy_proof_report_contract"]["status"] == "closed"
 
 

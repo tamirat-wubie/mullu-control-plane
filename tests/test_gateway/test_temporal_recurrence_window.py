@@ -105,6 +105,8 @@ def test_daily_recurrence_preserves_local_time_across_dst_start():
     assert payload["expected_local_time"] == "2026-03-08T09:00:00-04:00"
     assert payload["candidate_local_time"] == "2026-03-08T09:00:00-04:00"
     assert payload["metadata"]["dispatch_allowed"] is True
+    assert payload["metadata"]["runtime_owns_time_truth"] is True
+    assert payload["metadata"]["receipt_is_not_terminal_closure"] is True
 
 
 def test_weekly_candidate_not_due_before_runtime_now():

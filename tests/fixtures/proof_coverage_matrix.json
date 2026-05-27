@@ -7885,6 +7885,32 @@
         "TemporalMonotonicDurationReceipt"
       ],
       "request_proof": "request_proof",
+      "runtime_witness_anchor_aliases": {
+        "cooldown_lower_bound_defers_dispatch": [
+          "monotonic_duration_defers_cooldown_until_lower_bound_elapsed"
+        ],
+        "duration_limit_exceeded_blocks_dispatch": [
+          "monotonic_duration_blocks_when_timeout_limit_is_exceeded"
+        ],
+        "high_risk_source_receipts_bound": [
+          "monotonic_duration_blocks_regressed_clock_scope_evidence_and_missing_sources"
+        ],
+        "monotonic_clock_regression_blocks_dispatch": [
+          "monotonic_duration_blocks_regressed_clock_scope_evidence_and_missing_sources"
+        ],
+        "receipt_not_terminal_closure": [
+          "monotonic_duration_allows_high_risk_dispatch_inside_latency_bound"
+        ],
+        "runtime_monotonic_clock_owns_duration_truth": [
+          "monotonic_duration_allows_high_risk_dispatch_inside_latency_bound"
+        ],
+        "temporal_monotonic_duration_receipt_schema_valid": [
+          "monotonic_duration_allows_high_risk_dispatch_inside_latency_bound"
+        ],
+        "wall_clock_not_used_for_duration": [
+          "monotonic_duration_allows_high_risk_dispatch_inside_latency_bound"
+        ]
+      },
       "runtime_witnesses": [
         "runtime_monotonic_clock_owns_duration_truth",
         "wall_clock_not_used_for_duration",
@@ -8419,6 +8445,36 @@
         "TemporalMissedRunReceipt"
       ],
       "request_proof": "request_proof",
+      "runtime_witness_anchor_aliases": {
+        "duplicate_dispatched_run_requires_terminal_receipt": [
+          "duplicate_dispatched_run_requires_terminal_receipt"
+        ],
+        "expired_command_emits_missed_run_receipt": [
+          "expired_command_emits_missed_run_receipt"
+        ],
+        "high_risk_source_receipts_bound": [
+          "high_risk_missed_run_blocks_without_required_sources_and_evidence"
+        ],
+        "late_within_grace_preserves_dispatch_eligibility": [
+          "late_within_grace_remains_dispatch_eligible"
+        ],
+        "receipt_not_terminal_closure": [
+          "expired_command_emits_missed_run_receipt"
+        ],
+        "recovery_due_requires_review_actions": [
+          "recovery_due_when_late_but_not_expired"
+        ],
+        "runtime_clock_owns_missed_run_time": [
+          "expired_command_emits_missed_run_receipt"
+        ],
+        "temporal_missed_run_receipt_schema_valid": [
+          "expired_command_emits_missed_run_receipt"
+        ],
+        "tenant_command_action_scope_checked": [
+          "high_risk_missed_run_blocks_without_required_sources_and_evidence",
+          "optional_policy_still_blocks_on_tenant_mismatch"
+        ]
+      },
       "runtime_witnesses": [
         "runtime_clock_owns_missed_run_time",
         "late_within_grace_preserves_dispatch_eligibility",
@@ -8448,6 +8504,39 @@
         "TemporalRecurrenceWindowReceipt"
       ],
       "request_proof": "request_proof",
+      "runtime_witness_anchor_aliases": {
+        "candidate_must_match_next_occurrence": [
+          "daily_recurrence_preserves_local_time_across_dst_start",
+          "mismatched_candidate_blocks_dispatch"
+        ],
+        "completed_series_blocks_dispatch": [
+          "count_completed_does_not_create_next_occurrence"
+        ],
+        "duplicate_candidate_requires_terminal_receipt": [
+          "duplicate_candidate_requires_terminal_receipt"
+        ],
+        "future_candidate_defers_dispatch": [
+          "weekly_candidate_not_due_before_runtime_now"
+        ],
+        "high_risk_due_candidate_requires_reapproval_source": [
+          "high_risk_due_candidate_requires_reapproval_source"
+        ],
+        "monthly_end_of_month_clamped": [
+          "monthly_recurrence_clamps_end_of_month"
+        ],
+        "receipt_not_terminal_closure": [
+          "daily_recurrence_preserves_local_time_across_dst_start"
+        ],
+        "runtime_clock_owns_recurrence_window_time": [
+          "daily_recurrence_preserves_local_time_across_dst_start"
+        ],
+        "temporal_recurrence_window_receipt_schema_valid": [
+          "daily_recurrence_preserves_local_time_across_dst_start"
+        ],
+        "tenant_timezone_preserved_across_dst": [
+          "daily_recurrence_preserves_local_time_across_dst_start"
+        ]
+      },
       "runtime_witnesses": [
         "runtime_clock_owns_recurrence_window_time",
         "tenant_timezone_preserved_across_dst",
@@ -8478,6 +8567,29 @@
         "TemporalMemoryRefreshReceipt"
       ],
       "request_proof": "request_proof",
+      "runtime_witness_anchor_aliases": {
+        "evidence_type_coverage_gates_review_readiness": [
+          "complete_refresh_evidence_is_ready_for_review"
+        ],
+        "invalid_refresh_policy_blocks_task_creation": [
+          "refresh_planning_blocks_invalid_policy_and_scope"
+        ],
+        "receipt_not_terminal_closure": [
+          "refresh_not_required_for_usable_memory_schema_receipt"
+        ],
+        "stale_memory_creates_bounded_refresh_task": [
+          "stale_memory_creates_bounded_refresh_task"
+        ],
+        "superseded_memory_blocks_reactivation": [
+          "superseded_memory_does_not_create_refresh_task"
+        ],
+        "temporal_memory_refresh_receipt_schema_valid": [
+          "refresh_not_required_for_usable_memory_schema_receipt"
+        ],
+        "usable_memory_does_not_create_refresh_task": [
+          "refresh_not_required_for_usable_memory_schema_receipt"
+        ]
+      },
       "runtime_witnesses": [
         "usable_memory_does_not_create_refresh_task",
         "stale_memory_creates_bounded_refresh_task",
@@ -8566,6 +8678,32 @@
         "PolicyProver.prove"
       ],
       "request_proof": "request_proof",
+      "runtime_witness_anchor_aliases": {
+        "bounded_policy_cases_required": [
+          "policy_prover_rejects_empty_inputs"
+        ],
+        "counterexamples_are_concrete": [
+          "policy_prover_reports_counterexamples_for_missing_or_mismatched_fields",
+          "payment_requires_approval_counterexample",
+          "tenant_isolation_counterexample",
+          "shell_requires_sandbox_counterexample",
+          "provider_url_approved_counterexample",
+          "memory_requires_admission_counterexample",
+          "unknown_property_fails_closed"
+        ],
+        "empty_invariants_rejected": [
+          "policy_prover_rejects_empty_inputs"
+        ],
+        "policy_proof_schema_valid": [
+          "policy_proof_report_schema_valid"
+        ],
+        "policy_weakening_forbidden": [
+          "policy_proof_report_schema_contract_is_bounded_and_non_weakening"
+        ],
+        "proved_report_has_no_counterexamples": [
+          "policy_prover_emits_proved_report_for_passing_cases"
+        ]
+      },
       "runtime_witnesses": [
         "bounded_policy_cases_required",
         "empty_invariants_rejected",
@@ -8923,7 +9061,7 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 1079,
+    "exact_test_anchor_count": 1114,
     "runtime_witness_count": 1114,
     "surfaces": [
       {
@@ -15434,21 +15572,61 @@
         "unanchored_witnesses": []
       },
       {
-        "anchored_witnesses": [],
-        "exact_test_anchor_count": 0,
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_monotonic_duration.py::test_monotonic_duration_allows_high_risk_dispatch_inside_latency_bound"
+            ],
+            "witness": "runtime_monotonic_clock_owns_duration_truth"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_monotonic_duration.py::test_monotonic_duration_allows_high_risk_dispatch_inside_latency_bound"
+            ],
+            "witness": "wall_clock_not_used_for_duration"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_monotonic_duration.py::test_monotonic_duration_blocks_when_timeout_limit_is_exceeded"
+            ],
+            "witness": "duration_limit_exceeded_blocks_dispatch"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_monotonic_duration.py::test_monotonic_duration_defers_cooldown_until_lower_bound_elapsed"
+            ],
+            "witness": "cooldown_lower_bound_defers_dispatch"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_monotonic_duration.py::test_monotonic_duration_blocks_regressed_clock_scope_evidence_and_missing_sources"
+            ],
+            "witness": "monotonic_clock_regression_blocks_dispatch"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_monotonic_duration.py::test_monotonic_duration_blocks_regressed_clock_scope_evidence_and_missing_sources"
+            ],
+            "witness": "high_risk_source_receipts_bound"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_monotonic_duration.py::test_monotonic_duration_allows_high_risk_dispatch_inside_latency_bound"
+            ],
+            "witness": "temporal_monotonic_duration_receipt_schema_valid"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_monotonic_duration.py::test_monotonic_duration_allows_high_risk_dispatch_inside_latency_bound"
+            ],
+            "witness": "receipt_not_terminal_closure"
+          }
+        ],
+        "exact_test_anchor_count": 8,
         "runtime_witness_count": 8,
         "surface_id": "temporal_monotonic_duration",
-        "unanchored_witness_count": 8,
-        "unanchored_witnesses": [
-          "runtime_monotonic_clock_owns_duration_truth",
-          "wall_clock_not_used_for_duration",
-          "duration_limit_exceeded_blocks_dispatch",
-          "cooldown_lower_bound_defers_dispatch",
-          "monotonic_clock_regression_blocks_dispatch",
-          "high_risk_source_receipts_bound",
-          "temporal_monotonic_duration_receipt_schema_valid",
-          "receipt_not_terminal_closure"
-        ]
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
       },
       {
         "anchored_witnesses": [
@@ -16018,6 +16196,18 @@
             "anchors": [
               "tests/test_gateway/test_temporal_missed_run.py::test_expired_command_emits_missed_run_receipt"
             ],
+            "witness": "runtime_clock_owns_missed_run_time"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_missed_run.py::test_late_within_grace_remains_dispatch_eligible"
+            ],
+            "witness": "late_within_grace_preserves_dispatch_eligibility"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_missed_run.py::test_expired_command_emits_missed_run_receipt"
+            ],
             "witness": "expired_command_emits_missed_run_receipt"
           },
           {
@@ -16025,24 +16215,78 @@
               "tests/test_gateway/test_temporal_missed_run.py::test_duplicate_dispatched_run_requires_terminal_receipt"
             ],
             "witness": "duplicate_dispatched_run_requires_terminal_receipt"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_missed_run.py::test_recovery_due_when_late_but_not_expired"
+            ],
+            "witness": "recovery_due_requires_review_actions"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_missed_run.py::test_high_risk_missed_run_blocks_without_required_sources_and_evidence",
+              "tests/test_gateway/test_temporal_missed_run.py::test_optional_policy_still_blocks_on_tenant_mismatch"
+            ],
+            "witness": "tenant_command_action_scope_checked"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_missed_run.py::test_high_risk_missed_run_blocks_without_required_sources_and_evidence"
+            ],
+            "witness": "high_risk_source_receipts_bound"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_missed_run.py::test_expired_command_emits_missed_run_receipt"
+            ],
+            "witness": "temporal_missed_run_receipt_schema_valid"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_missed_run.py::test_expired_command_emits_missed_run_receipt"
+            ],
+            "witness": "receipt_not_terminal_closure"
           }
         ],
-        "exact_test_anchor_count": 2,
+        "exact_test_anchor_count": 9,
         "runtime_witness_count": 9,
         "surface_id": "temporal_missed_run",
-        "unanchored_witness_count": 7,
-        "unanchored_witnesses": [
-          "runtime_clock_owns_missed_run_time",
-          "late_within_grace_preserves_dispatch_eligibility",
-          "recovery_due_requires_review_actions",
-          "tenant_command_action_scope_checked",
-          "high_risk_source_receipts_bound",
-          "temporal_missed_run_receipt_schema_valid",
-          "receipt_not_terminal_closure"
-        ]
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
       },
       {
         "anchored_witnesses": [
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_recurrence_window.py::test_daily_recurrence_preserves_local_time_across_dst_start"
+            ],
+            "witness": "runtime_clock_owns_recurrence_window_time"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_recurrence_window.py::test_daily_recurrence_preserves_local_time_across_dst_start"
+            ],
+            "witness": "tenant_timezone_preserved_across_dst"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_recurrence_window.py::test_daily_recurrence_preserves_local_time_across_dst_start",
+              "tests/test_gateway/test_temporal_recurrence_window.py::test_mismatched_candidate_blocks_dispatch"
+            ],
+            "witness": "candidate_must_match_next_occurrence"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_recurrence_window.py::test_weekly_candidate_not_due_before_runtime_now"
+            ],
+            "witness": "future_candidate_defers_dispatch"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_recurrence_window.py::test_count_completed_does_not_create_next_occurrence"
+            ],
+            "witness": "completed_series_blocks_dispatch"
+          },
           {
             "anchors": [
               "tests/test_gateway/test_temporal_recurrence_window.py::test_duplicate_candidate_requires_terminal_receipt"
@@ -16051,47 +16295,85 @@
           },
           {
             "anchors": [
+              "tests/test_gateway/test_temporal_recurrence_window.py::test_monthly_recurrence_clamps_end_of_month"
+            ],
+            "witness": "monthly_end_of_month_clamped"
+          },
+          {
+            "anchors": [
               "tests/test_gateway/test_temporal_recurrence_window.py::test_high_risk_due_candidate_requires_reapproval_source"
             ],
             "witness": "high_risk_due_candidate_requires_reapproval_source"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_recurrence_window.py::test_daily_recurrence_preserves_local_time_across_dst_start"
+            ],
+            "witness": "temporal_recurrence_window_receipt_schema_valid"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_recurrence_window.py::test_daily_recurrence_preserves_local_time_across_dst_start"
+            ],
+            "witness": "receipt_not_terminal_closure"
           }
         ],
-        "exact_test_anchor_count": 2,
+        "exact_test_anchor_count": 10,
         "runtime_witness_count": 10,
         "surface_id": "temporal_recurrence_window",
-        "unanchored_witness_count": 8,
-        "unanchored_witnesses": [
-          "runtime_clock_owns_recurrence_window_time",
-          "tenant_timezone_preserved_across_dst",
-          "candidate_must_match_next_occurrence",
-          "future_candidate_defers_dispatch",
-          "completed_series_blocks_dispatch",
-          "monthly_end_of_month_clamped",
-          "temporal_recurrence_window_receipt_schema_valid",
-          "receipt_not_terminal_closure"
-        ]
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
       },
       {
         "anchored_witnesses": [
           {
             "anchors": [
+              "tests/test_gateway/test_temporal_memory_refresh.py::test_refresh_not_required_for_usable_memory_schema_receipt"
+            ],
+            "witness": "usable_memory_does_not_create_refresh_task"
+          },
+          {
+            "anchors": [
               "tests/test_gateway/test_temporal_memory_refresh.py::test_stale_memory_creates_bounded_refresh_task"
             ],
             "witness": "stale_memory_creates_bounded_refresh_task"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_memory_refresh.py::test_complete_refresh_evidence_is_ready_for_review"
+            ],
+            "witness": "evidence_type_coverage_gates_review_readiness"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_memory_refresh.py::test_refresh_planning_blocks_invalid_policy_and_scope"
+            ],
+            "witness": "invalid_refresh_policy_blocks_task_creation"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_memory_refresh.py::test_superseded_memory_does_not_create_refresh_task"
+            ],
+            "witness": "superseded_memory_blocks_reactivation"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_memory_refresh.py::test_refresh_not_required_for_usable_memory_schema_receipt"
+            ],
+            "witness": "temporal_memory_refresh_receipt_schema_valid"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_memory_refresh.py::test_refresh_not_required_for_usable_memory_schema_receipt"
+            ],
+            "witness": "receipt_not_terminal_closure"
           }
         ],
-        "exact_test_anchor_count": 1,
+        "exact_test_anchor_count": 7,
         "runtime_witness_count": 7,
         "surface_id": "temporal_memory_refresh",
-        "unanchored_witness_count": 6,
-        "unanchored_witnesses": [
-          "usable_memory_does_not_create_refresh_task",
-          "evidence_type_coverage_gates_review_readiness",
-          "invalid_refresh_policy_blocks_task_creation",
-          "superseded_memory_blocks_reactivation",
-          "temporal_memory_refresh_receipt_schema_valid",
-          "receipt_not_terminal_closure"
-        ]
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
       },
       {
         "anchored_witnesses": [
@@ -16163,19 +16445,55 @@
         "unanchored_witnesses": []
       },
       {
-        "anchored_witnesses": [],
-        "exact_test_anchor_count": 0,
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "tests/test_gateway/test_policy_prover.py::test_policy_prover_rejects_empty_inputs"
+            ],
+            "witness": "bounded_policy_cases_required"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_policy_prover.py::test_policy_prover_rejects_empty_inputs"
+            ],
+            "witness": "empty_invariants_rejected"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_policy_prover.py::test_policy_prover_reports_counterexamples_for_missing_or_mismatched_fields",
+              "tests/test_gateway/test_policy_prover.py::test_payment_requires_approval_counterexample",
+              "tests/test_gateway/test_policy_prover.py::test_tenant_isolation_counterexample",
+              "tests/test_gateway/test_policy_prover.py::test_shell_requires_sandbox_counterexample",
+              "tests/test_gateway/test_policy_prover.py::test_provider_url_approved_counterexample",
+              "tests/test_gateway/test_policy_prover.py::test_memory_requires_admission_counterexample",
+              "tests/test_gateway/test_policy_prover.py::test_unknown_property_fails_closed"
+            ],
+            "witness": "counterexamples_are_concrete"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_policy_prover.py::test_policy_prover_emits_proved_report_for_passing_cases"
+            ],
+            "witness": "proved_report_has_no_counterexamples"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_policy_prover.py::test_policy_proof_report_schema_contract_is_bounded_and_non_weakening"
+            ],
+            "witness": "policy_weakening_forbidden"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_policy_prover.py::test_policy_proof_report_schema_valid"
+            ],
+            "witness": "policy_proof_schema_valid"
+          }
+        ],
+        "exact_test_anchor_count": 6,
         "runtime_witness_count": 6,
         "surface_id": "policy_proof_report",
-        "unanchored_witness_count": 6,
-        "unanchored_witnesses": [
-          "bounded_policy_cases_required",
-          "empty_invariants_rejected",
-          "counterexamples_are_concrete",
-          "proved_report_has_no_counterexamples",
-          "policy_weakening_forbidden",
-          "policy_proof_schema_valid"
-        ]
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
       },
       {
         "anchored_witnesses": [
@@ -16755,6 +17073,6 @@
         "unanchored_witnesses": []
       }
     ],
-    "unanchored_witness_count": 35
+    "unanchored_witness_count": 0
   }
 }

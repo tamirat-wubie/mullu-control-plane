@@ -5053,6 +5053,32 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "temporal_monotonic_duration_receipt_schema_valid",
                 "receipt_not_terminal_closure",
             ],
+            runtime_witness_anchor_aliases={
+                "runtime_monotonic_clock_owns_duration_truth": [
+                    "monotonic_duration_allows_high_risk_dispatch_inside_latency_bound",
+                ],
+                "wall_clock_not_used_for_duration": [
+                    "monotonic_duration_allows_high_risk_dispatch_inside_latency_bound",
+                ],
+                "duration_limit_exceeded_blocks_dispatch": [
+                    "monotonic_duration_blocks_when_timeout_limit_is_exceeded",
+                ],
+                "cooldown_lower_bound_defers_dispatch": [
+                    "monotonic_duration_defers_cooldown_until_lower_bound_elapsed",
+                ],
+                "monotonic_clock_regression_blocks_dispatch": [
+                    "monotonic_duration_blocks_regressed_clock_scope_evidence_and_missing_sources",
+                ],
+                "high_risk_source_receipts_bound": [
+                    "monotonic_duration_blocks_regressed_clock_scope_evidence_and_missing_sources",
+                ],
+                "temporal_monotonic_duration_receipt_schema_valid": [
+                    "monotonic_duration_allows_high_risk_dispatch_inside_latency_bound",
+                ],
+                "receipt_not_terminal_closure": [
+                    "monotonic_duration_allows_high_risk_dispatch_inside_latency_bound",
+                ],
+            },
         ),
         _surface(
             "temporal_accepted_risk_expiry",
@@ -5588,6 +5614,36 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "temporal_missed_run_receipt_schema_valid",
                 "receipt_not_terminal_closure",
             ],
+            runtime_witness_anchor_aliases={
+                "runtime_clock_owns_missed_run_time": [
+                    "expired_command_emits_missed_run_receipt",
+                ],
+                "late_within_grace_preserves_dispatch_eligibility": [
+                    "late_within_grace_remains_dispatch_eligible",
+                ],
+                "expired_command_emits_missed_run_receipt": [
+                    "expired_command_emits_missed_run_receipt",
+                ],
+                "duplicate_dispatched_run_requires_terminal_receipt": [
+                    "duplicate_dispatched_run_requires_terminal_receipt",
+                ],
+                "recovery_due_requires_review_actions": [
+                    "recovery_due_when_late_but_not_expired",
+                ],
+                "tenant_command_action_scope_checked": [
+                    "high_risk_missed_run_blocks_without_required_sources_and_evidence",
+                    "optional_policy_still_blocks_on_tenant_mismatch",
+                ],
+                "high_risk_source_receipts_bound": [
+                    "high_risk_missed_run_blocks_without_required_sources_and_evidence",
+                ],
+                "temporal_missed_run_receipt_schema_valid": [
+                    "expired_command_emits_missed_run_receipt",
+                ],
+                "receipt_not_terminal_closure": [
+                    "expired_command_emits_missed_run_receipt",
+                ],
+            },
         ),
         _surface(
             "temporal_recurrence_window",
@@ -5618,6 +5674,39 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "temporal_recurrence_window_receipt_schema_valid",
                 "receipt_not_terminal_closure",
             ],
+            runtime_witness_anchor_aliases={
+                "runtime_clock_owns_recurrence_window_time": [
+                    "daily_recurrence_preserves_local_time_across_dst_start",
+                ],
+                "tenant_timezone_preserved_across_dst": [
+                    "daily_recurrence_preserves_local_time_across_dst_start",
+                ],
+                "candidate_must_match_next_occurrence": [
+                    "daily_recurrence_preserves_local_time_across_dst_start",
+                    "mismatched_candidate_blocks_dispatch",
+                ],
+                "future_candidate_defers_dispatch": [
+                    "weekly_candidate_not_due_before_runtime_now",
+                ],
+                "completed_series_blocks_dispatch": [
+                    "count_completed_does_not_create_next_occurrence",
+                ],
+                "duplicate_candidate_requires_terminal_receipt": [
+                    "duplicate_candidate_requires_terminal_receipt",
+                ],
+                "monthly_end_of_month_clamped": [
+                    "monthly_recurrence_clamps_end_of_month",
+                ],
+                "high_risk_due_candidate_requires_reapproval_source": [
+                    "high_risk_due_candidate_requires_reapproval_source",
+                ],
+                "temporal_recurrence_window_receipt_schema_valid": [
+                    "daily_recurrence_preserves_local_time_across_dst_start",
+                ],
+                "receipt_not_terminal_closure": [
+                    "daily_recurrence_preserves_local_time_across_dst_start",
+                ],
+            },
         ),
         _surface(
             "temporal_memory_refresh",
@@ -5645,6 +5734,29 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "temporal_memory_refresh_receipt_schema_valid",
                 "receipt_not_terminal_closure",
             ],
+            runtime_witness_anchor_aliases={
+                "usable_memory_does_not_create_refresh_task": [
+                    "refresh_not_required_for_usable_memory_schema_receipt",
+                ],
+                "stale_memory_creates_bounded_refresh_task": [
+                    "stale_memory_creates_bounded_refresh_task",
+                ],
+                "evidence_type_coverage_gates_review_readiness": [
+                    "complete_refresh_evidence_is_ready_for_review",
+                ],
+                "invalid_refresh_policy_blocks_task_creation": [
+                    "refresh_planning_blocks_invalid_policy_and_scope",
+                ],
+                "superseded_memory_blocks_reactivation": [
+                    "superseded_memory_does_not_create_refresh_task",
+                ],
+                "temporal_memory_refresh_receipt_schema_valid": [
+                    "refresh_not_required_for_usable_memory_schema_receipt",
+                ],
+                "receipt_not_terminal_closure": [
+                    "refresh_not_required_for_usable_memory_schema_receipt",
+                ],
+            },
         ),
         _surface(
             "temporal_scheduler",
@@ -5732,6 +5844,32 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "policy_weakening_forbidden",
                 "policy_proof_schema_valid",
             ],
+            runtime_witness_anchor_aliases={
+                "bounded_policy_cases_required": [
+                    "policy_prover_rejects_empty_inputs",
+                ],
+                "empty_invariants_rejected": [
+                    "policy_prover_rejects_empty_inputs",
+                ],
+                "counterexamples_are_concrete": [
+                    "policy_prover_reports_counterexamples_for_missing_or_mismatched_fields",
+                    "payment_requires_approval_counterexample",
+                    "tenant_isolation_counterexample",
+                    "shell_requires_sandbox_counterexample",
+                    "provider_url_approved_counterexample",
+                    "memory_requires_admission_counterexample",
+                    "unknown_property_fails_closed",
+                ],
+                "proved_report_has_no_counterexamples": [
+                    "policy_prover_emits_proved_report_for_passing_cases",
+                ],
+                "policy_weakening_forbidden": [
+                    "policy_proof_report_schema_contract_is_bounded_and_non_weakening",
+                ],
+                "policy_proof_schema_valid": [
+                    "policy_proof_report_schema_valid",
+                ],
+            },
         ),
         _surface(
             "autonomous_capability_upgrade",
