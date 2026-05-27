@@ -5674,6 +5674,39 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "temporal_recurrence_window_receipt_schema_valid",
                 "receipt_not_terminal_closure",
             ],
+            runtime_witness_anchor_aliases={
+                "runtime_clock_owns_recurrence_window_time": [
+                    "daily_recurrence_preserves_local_time_across_dst_start",
+                ],
+                "tenant_timezone_preserved_across_dst": [
+                    "daily_recurrence_preserves_local_time_across_dst_start",
+                ],
+                "candidate_must_match_next_occurrence": [
+                    "daily_recurrence_preserves_local_time_across_dst_start",
+                    "mismatched_candidate_blocks_dispatch",
+                ],
+                "future_candidate_defers_dispatch": [
+                    "weekly_candidate_not_due_before_runtime_now",
+                ],
+                "completed_series_blocks_dispatch": [
+                    "count_completed_does_not_create_next_occurrence",
+                ],
+                "duplicate_candidate_requires_terminal_receipt": [
+                    "duplicate_candidate_requires_terminal_receipt",
+                ],
+                "monthly_end_of_month_clamped": [
+                    "monthly_recurrence_clamps_end_of_month",
+                ],
+                "high_risk_due_candidate_requires_reapproval_source": [
+                    "high_risk_due_candidate_requires_reapproval_source",
+                ],
+                "temporal_recurrence_window_receipt_schema_valid": [
+                    "daily_recurrence_preserves_local_time_across_dst_start",
+                ],
+                "receipt_not_terminal_closure": [
+                    "daily_recurrence_preserves_local_time_across_dst_start",
+                ],
+            },
         ),
         _surface(
             "temporal_memory_refresh",

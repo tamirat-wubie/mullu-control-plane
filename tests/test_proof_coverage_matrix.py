@@ -195,6 +195,8 @@ def test_witness_integrity_report_tracks_exact_test_anchors() -> None:
     assert surfaces["temporal_monotonic_duration"]["unanchored_witness_count"] == 0
     assert surfaces["temporal_missed_run"]["exact_test_anchor_count"] == 9
     assert surfaces["temporal_missed_run"]["unanchored_witness_count"] == 0
+    assert surfaces["temporal_recurrence_window"]["exact_test_anchor_count"] == 10
+    assert surfaces["temporal_recurrence_window"]["unanchored_witness_count"] == 0
     assert surfaces["code_intelligence_operator_read_model"]["exact_test_anchor_count"] >= 5
     assert surfaces["code_intelligence_operator_read_model"]["unanchored_witness_count"] == 0
     assert surfaces["data_export_lifecycle"]["exact_test_anchor_count"] >= 4
@@ -3740,6 +3742,42 @@ def test_temporal_missed_run_surface_emits_skip_and_recovery_receipts() -> None:
     assert missed_run_witness_surface["exact_test_anchor_count"] == 9
     assert missed_run_witness_surface["unanchored_witness_count"] == 0
     assert closure_actions["publish_temporal_missed_run_receipt_contract"]["status"] == "closed"
+
+
+def test_temporal_recurrence_window_surface_emits_next_due_receipts() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    witness_surfaces = {
+        surface["surface_id"]: surface
+        for surface in matrix["witness_integrity"]["surfaces"]
+    }
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    recurrence_surface = surfaces["temporal_recurrence_window"]
+    recurrence_witness_surface = witness_surfaces["temporal_recurrence_window"]
+    witnesses = set(recurrence_surface["runtime_witnesses"])
+
+    assert recurrence_surface["coverage_state"] == "witnessed"
+    assert recurrence_surface["request_proof"] == "request_proof"
+    assert recurrence_surface["action_proof"] == "action_proof"
+    assert "evaluate_temporal_recurrence_window" in recurrence_surface["representative_paths"]
+    assert "RecurrenceWindowRequest" in recurrence_surface["representative_paths"]
+    assert "TemporalRecurrenceWindowReceipt" in recurrence_surface["representative_paths"]
+    assert "gateway/temporal_recurrence_window.py" in recurrence_surface["evidence_files"]
+    assert "schemas/temporal_recurrence_window_receipt.schema.json" in recurrence_surface["evidence_files"]
+    assert "tests/test_gateway/test_temporal_recurrence_window.py" in recurrence_surface["evidence_files"]
+    assert "runtime_clock_owns_recurrence_window_time" in witnesses
+    assert "tenant_timezone_preserved_across_dst" in witnesses
+    assert "candidate_must_match_next_occurrence" in witnesses
+    assert "future_candidate_defers_dispatch" in witnesses
+    assert "completed_series_blocks_dispatch" in witnesses
+    assert "duplicate_candidate_requires_terminal_receipt" in witnesses
+    assert "monthly_end_of_month_clamped" in witnesses
+    assert "high_risk_due_candidate_requires_reapproval_source" in witnesses
+    assert "temporal_recurrence_window_receipt_schema_valid" in witnesses
+    assert "receipt_not_terminal_closure" in witnesses
+    assert recurrence_witness_surface["exact_test_anchor_count"] == 10
+    assert recurrence_witness_surface["unanchored_witness_count"] == 0
+    assert closure_actions["publish_temporal_recurrence_window_receipt_contract"]["status"] == "closed"
 
 
 def test_temporal_memory_surface_blocks_stale_or_superseded_memory() -> None:

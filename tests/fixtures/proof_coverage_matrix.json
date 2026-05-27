@@ -8504,6 +8504,39 @@
         "TemporalRecurrenceWindowReceipt"
       ],
       "request_proof": "request_proof",
+      "runtime_witness_anchor_aliases": {
+        "candidate_must_match_next_occurrence": [
+          "daily_recurrence_preserves_local_time_across_dst_start",
+          "mismatched_candidate_blocks_dispatch"
+        ],
+        "completed_series_blocks_dispatch": [
+          "count_completed_does_not_create_next_occurrence"
+        ],
+        "duplicate_candidate_requires_terminal_receipt": [
+          "duplicate_candidate_requires_terminal_receipt"
+        ],
+        "future_candidate_defers_dispatch": [
+          "weekly_candidate_not_due_before_runtime_now"
+        ],
+        "high_risk_due_candidate_requires_reapproval_source": [
+          "high_risk_due_candidate_requires_reapproval_source"
+        ],
+        "monthly_end_of_month_clamped": [
+          "monthly_recurrence_clamps_end_of_month"
+        ],
+        "receipt_not_terminal_closure": [
+          "daily_recurrence_preserves_local_time_across_dst_start"
+        ],
+        "runtime_clock_owns_recurrence_window_time": [
+          "daily_recurrence_preserves_local_time_across_dst_start"
+        ],
+        "temporal_recurrence_window_receipt_schema_valid": [
+          "daily_recurrence_preserves_local_time_across_dst_start"
+        ],
+        "tenant_timezone_preserved_across_dst": [
+          "daily_recurrence_preserves_local_time_across_dst_start"
+        ]
+      },
       "runtime_witnesses": [
         "runtime_clock_owns_recurrence_window_time",
         "tenant_timezone_preserved_across_dst",
@@ -8979,7 +9012,7 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 1094,
+    "exact_test_anchor_count": 1102,
     "runtime_witness_count": 1114,
     "surfaces": [
       {
@@ -16176,31 +16209,71 @@
         "anchored_witnesses": [
           {
             "anchors": [
+              "tests/test_gateway/test_temporal_recurrence_window.py::test_daily_recurrence_preserves_local_time_across_dst_start"
+            ],
+            "witness": "runtime_clock_owns_recurrence_window_time"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_recurrence_window.py::test_daily_recurrence_preserves_local_time_across_dst_start"
+            ],
+            "witness": "tenant_timezone_preserved_across_dst"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_recurrence_window.py::test_daily_recurrence_preserves_local_time_across_dst_start",
+              "tests/test_gateway/test_temporal_recurrence_window.py::test_mismatched_candidate_blocks_dispatch"
+            ],
+            "witness": "candidate_must_match_next_occurrence"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_recurrence_window.py::test_weekly_candidate_not_due_before_runtime_now"
+            ],
+            "witness": "future_candidate_defers_dispatch"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_recurrence_window.py::test_count_completed_does_not_create_next_occurrence"
+            ],
+            "witness": "completed_series_blocks_dispatch"
+          },
+          {
+            "anchors": [
               "tests/test_gateway/test_temporal_recurrence_window.py::test_duplicate_candidate_requires_terminal_receipt"
             ],
             "witness": "duplicate_candidate_requires_terminal_receipt"
           },
           {
             "anchors": [
+              "tests/test_gateway/test_temporal_recurrence_window.py::test_monthly_recurrence_clamps_end_of_month"
+            ],
+            "witness": "monthly_end_of_month_clamped"
+          },
+          {
+            "anchors": [
               "tests/test_gateway/test_temporal_recurrence_window.py::test_high_risk_due_candidate_requires_reapproval_source"
             ],
             "witness": "high_risk_due_candidate_requires_reapproval_source"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_recurrence_window.py::test_daily_recurrence_preserves_local_time_across_dst_start"
+            ],
+            "witness": "temporal_recurrence_window_receipt_schema_valid"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_recurrence_window.py::test_daily_recurrence_preserves_local_time_across_dst_start"
+            ],
+            "witness": "receipt_not_terminal_closure"
           }
         ],
-        "exact_test_anchor_count": 2,
+        "exact_test_anchor_count": 10,
         "runtime_witness_count": 10,
         "surface_id": "temporal_recurrence_window",
-        "unanchored_witness_count": 8,
-        "unanchored_witnesses": [
-          "runtime_clock_owns_recurrence_window_time",
-          "tenant_timezone_preserved_across_dst",
-          "candidate_must_match_next_occurrence",
-          "future_candidate_defers_dispatch",
-          "completed_series_blocks_dispatch",
-          "monthly_end_of_month_clamped",
-          "temporal_recurrence_window_receipt_schema_valid",
-          "receipt_not_terminal_closure"
-        ]
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
       },
       {
         "anchored_witnesses": [
@@ -16886,6 +16959,6 @@
         "unanchored_witnesses": []
       }
     ],
-    "unanchored_witness_count": 20
+    "unanchored_witness_count": 12
   }
 }
