@@ -179,6 +179,8 @@ def test_witness_integrity_report_tracks_exact_test_anchors() -> None:
     assert surfaces["authority_operator_controls"]["unanchored_witness_count"] == 0
     assert surfaces["agent_identity"]["exact_test_anchor_count"] == 8
     assert surfaces["agent_identity"]["unanchored_witness_count"] == 0
+    assert surfaces["claim_verification"]["exact_test_anchor_count"] == 6
+    assert surfaces["claim_verification"]["unanchored_witness_count"] == 0
     assert surfaces["code_intelligence_operator_read_model"]["exact_test_anchor_count"] >= 5
     assert surfaces["code_intelligence_operator_read_model"]["unanchored_witness_count"] == 0
     assert surfaces["data_export_lifecycle"]["exact_test_anchor_count"] >= 4
@@ -2072,8 +2074,13 @@ def test_agent_identity_surface_binds_owner_tenant_and_scope() -> None:
 def test_claim_verification_surface_gates_execution_admission() -> None:
     matrix = _load_fixture()
     surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    witness_surfaces = {
+        surface["surface_id"]: surface
+        for surface in matrix["witness_integrity"]["surfaces"]
+    }
     closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
     claim_surface = surfaces["claim_verification"]
+    claim_witness_surface = witness_surfaces["claim_verification"]
     witnesses = set(claim_surface["runtime_witnesses"])
 
     assert claim_surface["coverage_state"] == "witnessed"
@@ -2088,6 +2095,8 @@ def test_claim_verification_surface_gates_execution_admission() -> None:
     assert "stale_claims_block_execution" in witnesses
     assert "high_risk_requires_independent_support" in witnesses
     assert "claim_verification_schema_valid" in witnesses
+    assert claim_witness_surface["exact_test_anchor_count"] == 6
+    assert claim_witness_surface["unanchored_witness_count"] == 0
     assert closure_actions["publish_claim_verification_report_contract"]["status"] == "closed"
 
 

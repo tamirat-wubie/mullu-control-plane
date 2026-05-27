@@ -6592,6 +6592,23 @@
         "ClaimVerificationReport"
       ],
       "request_proof": "request_proof",
+      "runtime_witness_anchor_aliases": {
+        "claim_type_declared": [
+          "claim_verification_report_schema_validates"
+        ],
+        "claim_verification_schema_valid": [
+          "claim_verification_report_schema_validates"
+        ],
+        "contradictions_block_execution": [
+          "contradicted_claim_blocks_planning_and_execution"
+        ],
+        "high_risk_requires_independent_support": [
+          "high_risk_claim_requires_independent_support_sources"
+        ],
+        "stale_claims_block_execution": [
+          "stale_claim_blocks_execution"
+        ]
+      },
       "runtime_witnesses": [
         "claim_type_declared",
         "source_evidence_required",
@@ -8781,7 +8798,7 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 1036,
+    "exact_test_anchor_count": 1042,
     "runtime_witness_count": 1112,
     "surfaces": [
       {
@@ -13488,19 +13505,49 @@
         "unanchored_witnesses": []
       },
       {
-        "anchored_witnesses": [],
-        "exact_test_anchor_count": 0,
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "tests/test_gateway/test_claim_verification.py::test_claim_verification_report_schema_validates"
+            ],
+            "witness": "claim_type_declared"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_claim_verification.py::test_source_evidence_required"
+            ],
+            "witness": "source_evidence_required"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_claim_verification.py::test_contradicted_claim_blocks_planning_and_execution"
+            ],
+            "witness": "contradictions_block_execution"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_claim_verification.py::test_stale_claim_blocks_execution"
+            ],
+            "witness": "stale_claims_block_execution"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_claim_verification.py::test_high_risk_claim_requires_independent_support_sources"
+            ],
+            "witness": "high_risk_requires_independent_support"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_claim_verification.py::test_claim_verification_report_schema_validates"
+            ],
+            "witness": "claim_verification_schema_valid"
+          }
+        ],
+        "exact_test_anchor_count": 6,
         "runtime_witness_count": 6,
         "surface_id": "claim_verification",
-        "unanchored_witness_count": 6,
-        "unanchored_witnesses": [
-          "claim_type_declared",
-          "source_evidence_required",
-          "contradictions_block_execution",
-          "stale_claims_block_execution",
-          "high_risk_requires_independent_support",
-          "claim_verification_schema_valid"
-        ]
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
       },
       {
         "anchored_witnesses": [
@@ -16394,6 +16441,6 @@
         "unanchored_witnesses": []
       }
     ],
-    "unanchored_witness_count": 76
+    "unanchored_witness_count": 70
   }
 }
