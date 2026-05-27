@@ -451,6 +451,33 @@ def test_launch_gateway_pilot_deployment_witness_rejects_scoped_gateway_url(
     assert response.json()["detail"]["governed"] is True
 
 
+def test_launch_gateway_pilot_readiness_read_model_reports_missing_evidence(
+    tmp_path: Path,
+) -> None:
+    client, _store = _client(tmp_path)
+    _bootstrap_and_open_pilot(client)
+
+    response = client.get("/api/v1/cases/case.launch_gateway_pilot/launch-gateway-pilot/readiness")
+    payload = response.json()
+
+    assert response.status_code == 200
+    assert payload["case_status"] == "planned"
+    assert payload["terminal_status"] == "awaiting_evidence"
+    assert payload["ready_to_close"] is False
+    assert set(payload["missing_evidence"]) == {
+        "executive_objective",
+        "product_launch_boundary",
+        "engineering_health_endpoint",
+        "engineering_gateway_witness",
+        "engineering_runtime_conformance",
+        "security_public_claim_boundary",
+        "security_approval",
+        "finance_budget_check",
+    }
+    assert payload["approval_refs"] == []
+    assert {step["gate_status"] for step in payload["plan_steps"]} == {"not_evaluated"}
+
+
 def test_launch_gateway_pilot_readiness_packet_closes_after_verified_witness(
     tmp_path: Path,
     monkeypatch,
@@ -464,6 +491,7 @@ def test_launch_gateway_pilot_readiness_packet_closes_after_verified_witness(
         json=_readiness_closure_payload(),
     )
     fetched = client.get("/api/v1/cases/case.launch_gateway_pilot")
+    readiness = client.get("/api/v1/cases/case.launch_gateway_pilot/launch-gateway-pilot/readiness")
 
     assert response.status_code == 200
     assert response.json()["closure_status"] == "closed"
@@ -474,6 +502,11 @@ def test_launch_gateway_pilot_readiness_packet_closes_after_verified_witness(
     assert "approval:security-dual-control" in response.json()["closure"]["evidence_refs"]
     assert fetched.json()["case"]["status"] == "closed"
     assert fetched.json()["closure"]["terminal_certificate_id"] == "terminal:gateway-pilot-readiness"
+    assert readiness.status_code == 200
+    assert readiness.json()["terminal_status"] == "closed"
+    assert readiness.json()["ready_to_close"] is False
+    assert readiness.json()["missing_evidence"] == []
+    assert readiness.json()["closure"]["terminal_certificate_id"] == "terminal:gateway-pilot-readiness"
 
 
 def test_launch_gateway_pilot_readiness_packet_blocks_without_engineering_witness(
@@ -534,5 +567,6 @@ def test_default_routers_include_organization_kernel_paths() -> None:
     assert "/api/v1/orgs" in paths
     assert "/api/v1/cases" in paths
     assert "/api/v1/cases/{case_id}/launch-gateway-pilot/deployment-witness" in paths
+    assert "/api/v1/cases/{case_id}/launch-gateway-pilot/readiness" in paths
     assert "/api/v1/cases/{case_id}/launch-gateway-pilot/readiness-closure" in paths
     assert "/api/v1/cases/{case_id}/close" in paths

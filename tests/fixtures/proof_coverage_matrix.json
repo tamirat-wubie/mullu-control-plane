@@ -866,9 +866,9 @@
     "by_coverage_state": {
       "proven": 12,
       "unproven": 0,
-      "witnessed": 348
+      "witnessed": 349
     },
-    "route_count": 360,
+    "route_count": 361,
     "routes": [
       {
         "coverage_state": "witnessed",
@@ -1053,6 +1053,11 @@
       {
         "coverage_state": "witnessed",
         "route": "/api/v1/cases/{case_id}/launch-gateway-pilot/deployment-witness",
+        "surface_id": "orgos_case_governance_lifecycle"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/cases/{case_id}/launch-gateway-pilot/readiness",
         "surface_id": "orgos_case_governance_lifecycle"
       },
       {
@@ -5581,6 +5586,7 @@
         "/api/v1/cases/{case_id}/evidence",
         "/api/v1/cases/{case_id}/learning-admissions",
         "/api/v1/cases/{case_id}/launch-gateway-pilot/deployment-witness",
+        "/api/v1/cases/{case_id}/launch-gateway-pilot/readiness",
         "/api/v1/cases/{case_id}/launch-gateway-pilot/readiness-closure",
         "/api/v1/cases/{case_id}/plan",
         "/api/v1/cases/{case_id}/plan-steps/{step_id}/gate",
@@ -5602,6 +5608,7 @@
         "case_closure_requires_effect_reconciliation_match_for_committed",
         "learning_binding_requires_closed_case_and_admission_decision",
         "launch_gateway_pilot_collects_deployment_witness_and_allows_engineering_gate",
+        "launch_gateway_pilot_readiness_read_model_reports_missing_evidence",
         "launch_gateway_pilot_readiness_packet_closes_after_verified_witness",
         "launch_gateway_pilot_readiness_packet_blocks_without_engineering_witness",
         "jsonl_case_event_log_preserves_hash_chain"
@@ -8640,8 +8647,8 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 1001,
-    "runtime_witness_count": 1111,
+    "exact_test_anchor_count": 1002,
+    "runtime_witness_count": 1112,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -12145,6 +12152,12 @@
           },
           {
             "anchors": [
+              "mcoi/tests/test_organization_kernel_router.py::test_launch_gateway_pilot_readiness_read_model_reports_missing_evidence"
+            ],
+            "witness": "launch_gateway_pilot_readiness_read_model_reports_missing_evidence"
+          },
+          {
+            "anchors": [
               "mcoi/tests/test_organization_kernel_router.py::test_launch_gateway_pilot_readiness_packet_closes_after_verified_witness"
             ],
             "witness": "launch_gateway_pilot_readiness_packet_closes_after_verified_witness"
@@ -12162,8 +12175,8 @@
             "witness": "jsonl_case_event_log_preserves_hash_chain"
           }
         ],
-        "exact_test_anchor_count": 15,
-        "runtime_witness_count": 15,
+        "exact_test_anchor_count": 16,
+        "runtime_witness_count": 16,
         "surface_id": "orgos_case_governance_lifecycle",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []
