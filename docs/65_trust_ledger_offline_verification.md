@@ -38,6 +38,7 @@ Invariants:
 - Anchor submission requires explicit operator authority, prior package verification, and a signed hash-chained ledger receipt.
 - Remote submission preflight is read-only: it never posts to the transparency log and never appends to the local submission ledger.
 - Effect-bearing remote submission requires a matching preflight receipt before any HTTPS POST or local ledger append.
+- Submission ledger replay, optional remote submission, and local append execute under one cross-process lock.
 - Missing signing secrets fail closed.
 
 ## Export Inputs
@@ -286,6 +287,9 @@ Submission fail-closed reasons include:
 | `authority_ref_invalid` | The operator authority reference is missing or not a bounded `proof://` or `authority://` reference |
 | `submission_secret_required` | No submission HMAC secret was provided |
 | `anchor_verification_failed:*` | Offline anchor/package verification failed before submission |
+| `submission_ledger_lock_timeout` | Another process holds the submission-ledger replay/append lock |
+| `submission_ledger_lock_timeout_seconds_invalid` | The requested lock wait timeout is out of bounds |
+| `submission_ledger_stale_lock_seconds_invalid` | The requested stale-lock window is out of bounds |
 | `remote_submission_confirmation_required` | A remote URL was provided without `--allow-remote-submit` |
 | `remote_submit_url_must_be_https` | Remote submission endpoint was not HTTPS |
 | `remote_api_token_required` | Remote submission was requested without a bearer token |
