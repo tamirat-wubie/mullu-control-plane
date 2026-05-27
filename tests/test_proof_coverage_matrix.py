@@ -2949,6 +2949,8 @@ def test_trust_ledger_surface_signs_terminal_evidence_bundles() -> None:
         "submit_trust_ledger_anchor_export_blocks_tampered_package",
         "submit_trust_ledger_anchor_export_posts_remote_transparency_log",
         "submit_trust_ledger_anchor_export_blocks_remote_without_confirmation",
+        "submit_trust_ledger_anchor_export_requires_remote_preflight_receipt",
+        "submit_trust_ledger_anchor_export_blocks_remote_preflight_hash_mismatch",
         "submit_trust_ledger_anchor_export_blocks_remote_hash_mismatch",
         "verify_submission_ledger_detects_hash_drift",
         "submit_trust_ledger_anchor_export_cli_emits_submission_receipt",

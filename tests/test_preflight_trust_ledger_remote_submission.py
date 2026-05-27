@@ -89,6 +89,8 @@ def test_trust_ledger_remote_submission_preflight_projects_final_submit_payload_
         remote_submit_url="https://transparency.example/anchors",
         remote_api_token="remote-token",
     )
+    preflight_path = tmp_path / "remote_preflight.json"
+    write_trust_ledger_remote_submission_preflight_report(preflight, preflight_path)
     transport = FakeTransparencyLogTransport()
 
     submission = submit_trust_ledger_anchor_export(
@@ -106,6 +108,7 @@ def test_trust_ledger_remote_submission_preflight_projects_final_submit_payload_
         confirm_submit=True,
         remote_submit_url="https://transparency.example/anchors",
         allow_remote_submit=True,
+        remote_preflight_receipt_path=preflight_path,
         remote_api_token="remote-token",
         urlopen=transport,
     )

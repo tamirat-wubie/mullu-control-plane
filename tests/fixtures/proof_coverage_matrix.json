@@ -6494,7 +6494,7 @@
         "tests/test_preflight_trust_ledger_remote_submission.py",
         "tests/test_submit_trust_ledger_anchor_export.py"
       ],
-      "notes": "Trust ledger signs terminal-closure evidence bundles, exposes operator bundle export, verifies exported bundle and anchor receipt files offline, emits external anchor receipts, packages verifier inputs with content hashes for portable audit review, can merge verified optional OrgOS event receipts into terminal anchor exports without replacing closure, emits a read-only remote submission preflight receipt, and records operator-confirmed external anchor submissions in a signed hash-chained ledger after optional HTTPS transparency-log submission echoes the payload hash.",
+      "notes": "Trust ledger signs terminal-closure evidence bundles, exposes operator bundle export, verifies exported bundle and anchor receipt files offline, emits external anchor receipts, packages verifier inputs with content hashes for portable audit review, can merge verified optional OrgOS event receipts into terminal anchor exports without replacing closure, emits a read-only remote submission preflight receipt, and records operator-confirmed external anchor submissions in a signed hash-chained ledger after a matching preflight receipt gates optional HTTPS transparency-log submission and the remote endpoint echoes the payload hash.",
       "representative_paths": [
         "TrustLedger.issue",
         "TrustLedger.verify",
@@ -6562,6 +6562,8 @@
         "submit_trust_ledger_anchor_export_blocks_tampered_package",
         "submit_trust_ledger_anchor_export_posts_remote_transparency_log",
         "submit_trust_ledger_anchor_export_blocks_remote_without_confirmation",
+        "submit_trust_ledger_anchor_export_requires_remote_preflight_receipt",
+        "submit_trust_ledger_anchor_export_blocks_remote_preflight_hash_mismatch",
         "submit_trust_ledger_anchor_export_blocks_remote_hash_mismatch",
         "verify_submission_ledger_detects_hash_drift",
         "submit_trust_ledger_anchor_export_cli_emits_submission_receipt"
@@ -8074,8 +8076,8 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 862,
-    "runtime_witness_count": 1089,
+    "exact_test_anchor_count": 864,
+    "runtime_witness_count": 1091,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -12760,6 +12762,18 @@
           },
           {
             "anchors": [
+              "tests/test_submit_trust_ledger_anchor_export.py::test_submit_trust_ledger_anchor_export_requires_remote_preflight_receipt"
+            ],
+            "witness": "submit_trust_ledger_anchor_export_requires_remote_preflight_receipt"
+          },
+          {
+            "anchors": [
+              "tests/test_submit_trust_ledger_anchor_export.py::test_submit_trust_ledger_anchor_export_blocks_remote_preflight_hash_mismatch"
+            ],
+            "witness": "submit_trust_ledger_anchor_export_blocks_remote_preflight_hash_mismatch"
+          },
+          {
+            "anchors": [
               "tests/test_submit_trust_ledger_anchor_export.py::test_submit_trust_ledger_anchor_export_blocks_remote_hash_mismatch"
             ],
             "witness": "submit_trust_ledger_anchor_export_blocks_remote_hash_mismatch"
@@ -12777,8 +12791,8 @@
             "witness": "submit_trust_ledger_anchor_export_cli_emits_submission_receipt"
           }
         ],
-        "exact_test_anchor_count": 50,
-        "runtime_witness_count": 50,
+        "exact_test_anchor_count": 52,
+        "runtime_witness_count": 52,
         "surface_id": "trust_ledger",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []

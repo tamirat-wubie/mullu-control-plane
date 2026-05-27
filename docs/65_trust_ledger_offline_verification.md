@@ -37,6 +37,7 @@ Invariants:
 - Anchor receipts do not replace terminal closure certificates.
 - Anchor submission requires explicit operator authority, prior package verification, and a signed hash-chained ledger receipt.
 - Remote submission preflight is read-only: it never posts to the transparency log and never appends to the local submission ledger.
+- Effect-bearing remote submission requires a matching preflight receipt before any HTTPS POST or local ledger append.
 - Missing signing secrets fail closed.
 
 ## Export Inputs
@@ -237,6 +238,7 @@ python scripts/submit_trust_ledger_anchor_export.py \
   --submitted-at "2026-05-05T12:20:00+00:00" \
   --verification-secret "$MULLU_TRUST_LEDGER_ANCHOR_SECRET" \
   --submission-secret "$MULLU_TRUST_LEDGER_SUBMISSION_SECRET" \
+  --remote-preflight-receipt .change_assurance/trust_ledger_remote_submission_preflight.json \
   --remote-submit-url "https://transparency.example/anchors" \
   --remote-api-token "$MULLU_TRUST_LEDGER_REMOTE_SUBMISSION_TOKEN" \
   --allow-remote-submit \
@@ -257,6 +259,12 @@ The remote endpoint must return JSON containing:
 The local receipt is not written if the remote endpoint fails, returns a non-2xx
 status, emits invalid JSON, omits a valid external anchor ref, or fails to echo
 the submitted payload hash.
+
+The remote POST is not attempted unless the preflight receipt validates against
+`trust_ledger_remote_submission_preflight.schema.json`, reports
+`outcome=SolvedVerified`, and matches the final operator id, authority ref,
+remote URL, timeout, ledger sequence, previous ledger hash, and projected remote
+payload hash.
 
 Pass condition:
 
@@ -280,6 +288,8 @@ Submission fail-closed reasons include:
 | `remote_submission_confirmation_required` | A remote URL was provided without `--allow-remote-submit` |
 | `remote_submit_url_must_be_https` | Remote submission endpoint was not HTTPS |
 | `remote_api_token_required` | Remote submission was requested without a bearer token |
+| `remote_preflight_receipt_required` | Remote submission was requested without a preflight receipt |
+| `remote_preflight_receipt_failed:*` | The preflight receipt was unreadable, schema-invalid, blocked, stale, or mismatched the final payload |
 | `remote_submission_failed:*` | Remote transparency-log submission did not produce a matching payload-hash witness |
 | `submission_ledger_invalid:*` | Existing ledger replay failed before append |
 | `submission_receipt_schema_validation_failed` | The generated submission receipt violated the public schema |
