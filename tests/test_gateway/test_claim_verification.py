@@ -41,6 +41,19 @@ def test_observed_fact_with_source_evidence_verifies_for_execution() -> None:
     assert report.evidence_refs == ("proof://source-a",)
 
 
+def test_source_evidence_required() -> None:
+    try:
+        _source("source-a", "")
+    except ValueError as exc:
+        evidence_error = str(exc)
+    else:
+        evidence_error = ""
+
+    assert evidence_error == "evidence_refs_required"
+    assert evidence_error.endswith("_required")
+    assert evidence_error.startswith("evidence_refs")
+
+
 def test_user_claim_without_support_is_not_execution_eligible() -> None:
     report = ClaimVerificationEngine().verify(
         _claim(claim_kind=ClaimKind.USER_CLAIM, supported_by=()),

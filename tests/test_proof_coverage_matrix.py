@@ -177,6 +177,18 @@ def test_witness_integrity_report_tracks_exact_test_anchors() -> None:
     assert surfaces["authority_obligation_mesh"]["unanchored_witness_count"] == 0
     assert surfaces["authority_operator_controls"]["exact_test_anchor_count"] == 5
     assert surfaces["authority_operator_controls"]["unanchored_witness_count"] == 0
+    assert surfaces["agent_identity"]["exact_test_anchor_count"] == 8
+    assert surfaces["agent_identity"]["unanchored_witness_count"] == 0
+    assert surfaces["claim_verification"]["exact_test_anchor_count"] == 6
+    assert surfaces["claim_verification"]["unanchored_witness_count"] == 0
+    assert surfaces["connector_self_healing"]["exact_test_anchor_count"] == 6
+    assert surfaces["connector_self_healing"]["unanchored_witness_count"] == 0
+    assert surfaces["workflow_mining"]["exact_test_anchor_count"] == 6
+    assert surfaces["workflow_mining"]["unanchored_witness_count"] == 0
+    assert surfaces["policy_prover"]["exact_test_anchor_count"] == 7
+    assert surfaces["policy_prover"]["unanchored_witness_count"] == 0
+    assert surfaces["temporal_evidence_freshness"]["exact_test_anchor_count"] == 8
+    assert surfaces["temporal_evidence_freshness"]["unanchored_witness_count"] == 0
     assert surfaces["code_intelligence_operator_read_model"]["exact_test_anchor_count"] >= 5
     assert surfaces["code_intelligence_operator_read_model"]["unanchored_witness_count"] == 0
     assert surfaces["data_export_lifecycle"]["exact_test_anchor_count"] >= 4
@@ -261,6 +273,8 @@ def test_witness_integrity_report_tracks_exact_test_anchors() -> None:
     assert surfaces["domain_operating_pack"]["exact_test_anchor_count"] == 5
     assert surfaces["collaboration_cases"]["unanchored_witness_count"] == 0
     assert surfaces["collaboration_cases"]["exact_test_anchor_count"] == 5
+    assert surfaces["memory_lattice"]["unanchored_witness_count"] == 0
+    assert surfaces["memory_lattice"]["exact_test_anchor_count"] == 6
     assert surfaces["coordination_checkpoint_lifecycle"]["unanchored_witness_count"] == 0
     assert surfaces["coordination_checkpoint_lifecycle"]["exact_test_anchor_count"] == 10
     assert surfaces["production_evidence_plane"]["unanchored_witness_count"] == 0
@@ -2043,8 +2057,13 @@ def test_software_dev_capability_pack_surface_requires_explicit_admission() -> N
 def test_agent_identity_surface_binds_owner_tenant_and_scope() -> None:
     matrix = _load_fixture()
     surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    witness_surfaces = {
+        surface["surface_id"]: surface
+        for surface in matrix["witness_integrity"]["surfaces"]
+    }
     closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
     identity_surface = surfaces["agent_identity"]
+    identity_witness_surface = witness_surfaces["agent_identity"]
     witnesses = set(identity_surface["runtime_witnesses"])
 
     assert identity_surface["coverage_state"] == "witnessed"
@@ -2061,14 +2080,21 @@ def test_agent_identity_surface_binds_owner_tenant_and_scope() -> None:
     assert "delegation_requires_lease" in witnesses
     assert "agent_budget_enforced" in witnesses
     assert "agent_identity_schema_valid" in witnesses
+    assert identity_witness_surface["exact_test_anchor_count"] == 8
+    assert identity_witness_surface["unanchored_witness_count"] == 0
     assert closure_actions["publish_agent_identity_contract"]["status"] == "closed"
 
 
 def test_claim_verification_surface_gates_execution_admission() -> None:
     matrix = _load_fixture()
     surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    witness_surfaces = {
+        surface["surface_id"]: surface
+        for surface in matrix["witness_integrity"]["surfaces"]
+    }
     closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
     claim_surface = surfaces["claim_verification"]
+    claim_witness_surface = witness_surfaces["claim_verification"]
     witnesses = set(claim_surface["runtime_witnesses"])
 
     assert claim_surface["coverage_state"] == "witnessed"
@@ -2083,6 +2109,8 @@ def test_claim_verification_surface_gates_execution_admission() -> None:
     assert "stale_claims_block_execution" in witnesses
     assert "high_risk_requires_independent_support" in witnesses
     assert "claim_verification_schema_valid" in witnesses
+    assert claim_witness_surface["exact_test_anchor_count"] == 6
+    assert claim_witness_surface["unanchored_witness_count"] == 0
     assert closure_actions["publish_claim_verification_report_contract"]["status"] == "closed"
 
 
@@ -2799,8 +2827,13 @@ def test_runtime_state_persistence_lifecycle_surface_tracks_save_load_and_list()
 def test_connector_self_healing_surface_emits_bounded_recovery_receipts() -> None:
     matrix = _load_fixture()
     surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    witness_surfaces = {
+        surface["surface_id"]: surface
+        for surface in matrix["witness_integrity"]["surfaces"]
+    }
     closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
     healing_surface = surfaces["connector_self_healing"]
+    healing_witness_surface = witness_surfaces["connector_self_healing"]
     witnesses = set(healing_surface["runtime_witnesses"])
 
     assert healing_surface["coverage_state"] == "witnessed"
@@ -2814,6 +2847,8 @@ def test_connector_self_healing_surface_emits_bounded_recovery_receipts() -> Non
     assert "write_failures_require_operator_review" in witnesses
     assert "missing_receipt_revokes_capability" in witnesses
     assert "connector_self_healing_schema_valid" in witnesses
+    assert healing_witness_surface["exact_test_anchor_count"] == 6
+    assert healing_witness_surface["unanchored_witness_count"] == 0
     assert closure_actions["publish_connector_self_healing_receipt_contract"]["status"] == "closed"
 
 
@@ -2864,8 +2899,13 @@ def test_capability_maturity_surface_is_evidence_derived() -> None:
 def test_policy_prover_surface_reports_counterexamples() -> None:
     matrix = _load_fixture()
     surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    witness_surfaces = {
+        surface["surface_id"]: surface
+        for surface in matrix["witness_integrity"]["surfaces"]
+    }
     closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
     prover_surface = surfaces["policy_prover"]
+    prover_witness_surface = witness_surfaces["policy_prover"]
     witnesses = set(prover_surface["runtime_witnesses"])
 
     assert prover_surface["coverage_state"] == "witnessed"
@@ -2875,8 +2915,14 @@ def test_policy_prover_surface_reports_counterexamples() -> None:
     assert "schemas/policy_proof_report.schema.json" in prover_surface["evidence_files"]
     assert "tests/test_gateway/test_policy_prover.py" in prover_surface["evidence_files"]
     assert "payment_requires_approval_counterexample" in witnesses
+    assert "tenant_isolation_counterexample" in witnesses
     assert "shell_requires_sandbox_counterexample" in witnesses
+    assert "provider_url_approved_counterexample" in witnesses
+    assert "memory_requires_admission_counterexample" in witnesses
     assert "unknown_property_fails_closed" in witnesses
+    assert "policy_proof_report_schema_valid" in witnesses
+    assert prover_witness_surface["exact_test_anchor_count"] == 7
+    assert prover_witness_surface["unanchored_witness_count"] == 0
     assert closure_actions["publish_policy_prover_counterexample_contract"]["status"] == "closed"
 
 
@@ -2926,8 +2972,13 @@ def test_memory_lattice_surface_gates_planning_and_execution() -> None:
 def test_workflow_mining_surface_emits_blocked_drafts() -> None:
     matrix = _load_fixture()
     surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    witness_surfaces = {
+        surface["surface_id"]: surface
+        for surface in matrix["witness_integrity"]["surfaces"]
+    }
     closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
     mining_surface = surfaces["workflow_mining"]
+    mining_witness_surface = witness_surfaces["workflow_mining"]
     witnesses = set(mining_surface["runtime_witnesses"])
 
     assert mining_surface["coverage_state"] == "witnessed"
@@ -2939,6 +2990,8 @@ def test_workflow_mining_surface_emits_blocked_drafts() -> None:
     assert "workflow_draft_activation_blocked" in witnesses
     assert "operator_review_required" in witnesses
     assert "risky_pattern_requires_approval_rules" in witnesses
+    assert mining_witness_surface["exact_test_anchor_count"] == 6
+    assert mining_witness_surface["unanchored_witness_count"] == 0
     assert closure_actions["publish_workflow_mining_draft_contract"]["status"] == "closed"
 
 
@@ -3208,8 +3261,13 @@ def test_temporal_kernel_surface_owns_runtime_time_truth() -> None:
 def test_temporal_evidence_freshness_surface_rechecks_required_evidence() -> None:
     matrix = _load_fixture()
     surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    witness_surfaces = {
+        surface["surface_id"]: surface
+        for surface in matrix["witness_integrity"]["surfaces"]
+    }
     closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
     evidence_surface = surfaces["temporal_evidence_freshness"]
+    evidence_witness_surface = witness_surfaces["temporal_evidence_freshness"]
     witnesses = set(evidence_surface["runtime_witnesses"])
 
     assert evidence_surface["coverage_state"] == "witnessed"
@@ -3228,6 +3286,9 @@ def test_temporal_evidence_freshness_surface_rechecks_required_evidence() -> Non
     assert "revoked_or_unverified_high_risk_evidence_blocks" in witnesses
     assert "expiring_evidence_warns_before_dispatch" in witnesses
     assert "temporal_evidence_freshness_receipt_schema_valid" in witnesses
+    assert "receipt_not_terminal_closure" in witnesses
+    assert evidence_witness_surface["exact_test_anchor_count"] == 8
+    assert evidence_witness_surface["unanchored_witness_count"] == 0
     assert closure_actions["publish_temporal_evidence_freshness_receipt_contract"]["status"] == "closed"
 
 
@@ -3297,8 +3358,13 @@ def test_temporal_sla_surface_classifies_sla_read_models_and_receipts() -> None:
 def test_temporal_reapproval_surface_rechecks_execution_time_approval_grants() -> None:
     matrix = _load_fixture()
     surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    witness_surfaces = {
+        surface["surface_id"]: surface
+        for surface in matrix["witness_integrity"]["surfaces"]
+    }
     closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
     reapproval_surface = surfaces["temporal_reapproval"]
+    reapproval_witness_surface = witness_surfaces["temporal_reapproval"]
     witnesses = set(reapproval_surface["runtime_witnesses"])
 
     assert reapproval_surface["coverage_state"] == "witnessed"
@@ -3317,6 +3383,9 @@ def test_temporal_reapproval_surface_rechecks_execution_time_approval_grants() -
     assert "missing_approval_role_requires_reapproval" in witnesses
     assert "low_risk_action_does_not_require_reapproval" in witnesses
     assert "temporal_reapproval_receipt_schema_valid" in witnesses
+    assert "receipt_not_terminal_closure" in witnesses
+    assert reapproval_witness_surface["exact_test_anchor_count"] == 8
+    assert reapproval_witness_surface["unanchored_witness_count"] == 0
     assert closure_actions["publish_temporal_reapproval_receipt_contract"]["status"] == "closed"
 
 
