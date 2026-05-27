@@ -5,7 +5,7 @@ from __future__ import annotations
 import pytest
 
 try:
-    from fastapi import FastAPI
+    from fastapi import FastAPI, Request
     from fastapi.testclient import TestClient
     FASTAPI_AVAILABLE = True
 except ImportError:  # pragma: no cover - environment-dependent
@@ -153,6 +153,42 @@ def test_middleware_threads_temporal_action_to_guard_context() -> None:
 
     assert resp.status_code == 200
     assert resp.json()["ok"] is True
+
+
+def test_middleware_exposes_authenticated_context_to_routes() -> None:
+    if not FASTAPI_AVAILABLE:
+        pytest.skip("FastAPI not installed")
+
+    chain = GovernanceGuardChain()
+
+    def authenticate(context: dict[str, object]) -> GuardResult:
+        context["authenticated_subject"] = "operator-a"
+        context["authenticated_tenant_id"] = "tenant-a"
+        return GuardResult(allowed=True, guard_name="auth")
+
+    chain.add(GovernanceGuard("auth", authenticate))
+    app = FastAPI()
+
+    @app.post("/api/v1/actor-context")
+    def actor_context(request: Request) -> dict[str, object]:
+        context = request.state.governance_context
+        return {
+            "actor": context["authenticated_subject"],
+            "tenant": context["authenticated_tenant_id"],
+            "allowed": request.state.governance_decision_allowed,
+        }
+
+    app.add_middleware(GovernanceMiddleware, guard_chain=chain)
+    client = TestClient(app)
+
+    resp = client.post("/api/v1/actor-context", json={"prompt": "hello"})
+
+    assert resp.status_code == 200
+    assert resp.json() == {
+        "actor": "operator-a",
+        "tenant": "tenant-a",
+        "allowed": True,
+    }
 
 
 def test_middleware_invalid_temporal_action_fails_closed_with_temporal_guard() -> None:

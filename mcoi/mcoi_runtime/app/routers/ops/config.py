@@ -3,9 +3,10 @@ from __future__ import annotations
 
 from typing import Any
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Request
 from pydantic import BaseModel
 
+from mcoi_runtime.app.routers.auth_context import bind_claimed_actor
 from mcoi_runtime.app.routers.deps import deps
 
 router = APIRouter()
@@ -44,14 +45,21 @@ def config_history(limit: int = 10):
 
 
 @router.post("/api/v1/config/update")
-def update_config(req: ConfigUpdateRequest):
+def update_config(req: ConfigUpdateRequest, request: Request):
     """Hot-reload configuration via REST API."""
     deps.metrics.inc("requests_governed")
+    applied_by = bind_claimed_actor(
+        request,
+        req.applied_by,
+        default_claims=("api",),
+        error_code="config_actor_identity_mismatch",
+        error_message="applied_by does not match authenticated identity",
+    )
     result = deps.config_manager.update(
-        req.changes, applied_by=req.applied_by, description=req.description,
+        req.changes, applied_by=applied_by, description=req.description,
     )
     deps.audit_trail.record(
-        action="config.update", actor_id=req.applied_by,
+        action="config.update", actor_id=applied_by,
         tenant_id="system", target="config",
         outcome="success" if result.success else "denied",
         detail={"version": result.version, "changes": list(req.changes.keys())},
@@ -70,12 +78,19 @@ def update_config(req: ConfigUpdateRequest):
 
 
 @router.post("/api/v1/config/rollback")
-def rollback_config(req: ConfigRollbackRequest):
+def rollback_config(req: ConfigRollbackRequest, request: Request):
     """Rollback configuration to a previous version."""
     deps.metrics.inc("requests_governed")
-    result = deps.config_manager.rollback(req.to_version, applied_by=req.applied_by)
+    applied_by = bind_claimed_actor(
+        request,
+        req.applied_by,
+        default_claims=("api",),
+        error_code="config_actor_identity_mismatch",
+        error_message="applied_by does not match authenticated identity",
+    )
+    result = deps.config_manager.rollback(req.to_version, applied_by=applied_by)
     deps.audit_trail.record(
-        action="config.rollback", actor_id=req.applied_by,
+        action="config.rollback", actor_id=applied_by,
         tenant_id="system", target="config",
         outcome="success" if result.success else "denied",
         detail={"to_version": req.to_version},

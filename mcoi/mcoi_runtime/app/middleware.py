@@ -190,6 +190,8 @@ class GovernanceMiddleware(BaseHTTPMiddleware):
         start = time.monotonic()
         result = self._chain.evaluate(context)
         latency_ms = (time.monotonic() - start) * 1000
+        request.state.governance_context = dict(context)
+        request.state.governance_decision_allowed = result.allowed
 
         if self._metrics_fn:
             self._metrics_fn("requests_total", 1)

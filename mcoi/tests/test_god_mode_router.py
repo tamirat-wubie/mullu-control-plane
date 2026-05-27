@@ -19,12 +19,21 @@ _LONG = "x" * 60
 _VERY_LONG = "x" * 130
 
 
-def _client() -> TestClient:
+def _client(authenticated_actor: str | None = None) -> TestClient:
     fresh_registry = GodModeRegistry()
     install_default_capabilities(fresh_registry)
     set_registry(fresh_registry)
     set_engine(GodModeEngine(registry=fresh_registry))
     app = FastAPI()
+    if authenticated_actor is not None:
+        @app.middleware("http")
+        async def attach_governance_context(request, call_next):
+            request.state.governance_context = {
+                "authenticated_subject": authenticated_actor,
+                "authenticated_tenant_id": "tenant-a",
+            }
+            return await call_next(request)
+
     app.include_router(router)
     return TestClient(app)
 
@@ -133,6 +142,38 @@ def test_agree_unknown_capability_rejected():
         json={"actor_id": "alice", "justification": _VERY_LONG},
     )
     assert resp.status_code == 400
+
+
+def test_authenticated_actor_mismatch_rejected_for_registration():
+    client = _client(authenticated_actor="alice")
+    resp = client.post(
+        "/api/v1/god-mode/capabilities/replay/mutate_recorder/agree-to-register",
+        json={"actor_id": "bob", "justification": _VERY_LONG},
+    )
+    detail = resp.json()["detail"]
+
+    assert resp.status_code == 403
+    assert detail["governed"] is True
+    assert detail["error_code"] == "actor_identity_mismatch"
+    assert "bob" not in str(detail)
+
+
+def test_authenticated_actor_mismatch_rejected_for_ticket_issue():
+    client = _client(authenticated_actor="alice")
+    _agree(client, "replay", "mutate_recorder", actor="alice")
+    resp = client.post(
+        "/api/v1/god-mode/capabilities/replay/mutate_recorder/issue-ticket",
+        json={
+            "actor_id": "bob",
+            "justification": _VERY_LONG,
+            "target": {"tenant_id": "acme-7"},
+        },
+    )
+    detail = resp.json()["detail"]
+
+    assert resp.status_code == 403
+    assert detail["governed"] is True
+    assert detail["error_code"] == "actor_identity_mismatch"
 
 
 def test_withdraw_agreement_reverts_state():
