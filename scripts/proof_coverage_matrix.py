@@ -2726,6 +2726,30 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "escalated_obligation_count",
                 "command_authority_read_model_bound_to_approval_chain",
             ],
+            runtime_witness_anchor_aliases={
+                "pending_approval_chain_count": [
+                    "prepare_authority_binds_ownership_and_pending_approval_chain",
+                    "authority_approval_chain_read_model",
+                    "authority_witness_read_model",
+                ],
+                "open_obligation_count": [
+                    "review_terminal_certificate_opens_owned_obligation_and_escalates_when_overdue",
+                    "authority_obligation_and_escalation_read_models",
+                    "authority_witness_read_model",
+                ],
+                "overdue_obligation_count": [
+                    "review_terminal_certificate_opens_owned_obligation_and_escalates_when_overdue",
+                    "authority_obligation_and_escalation_read_models",
+                ],
+                "escalated_obligation_count": [
+                    "review_terminal_certificate_opens_owned_obligation_and_escalates_when_overdue",
+                    "escalate_overdue_authority_obligations_records_transition",
+                ],
+                "command_authority_read_model_bound_to_approval_chain": [
+                    "authority_approval_chain_read_model",
+                    "authority_obligation_and_escalation_read_models",
+                ],
+            },
         ),
         _surface(
             "authority_operator_controls",
