@@ -434,6 +434,19 @@ def _launch_gateway_readiness_gate_checks() -> tuple[tuple[str, tuple[str, ...],
     )
 
 
+def _launch_gateway_required_evidence_ids() -> tuple[str, ...]:
+    return (
+        "executive_objective",
+        "product_launch_boundary",
+        "engineering_health_endpoint",
+        "engineering_gateway_witness",
+        "engineering_runtime_conformance",
+        "security_public_claim_boundary",
+        "security_approval",
+        "finance_budget_check",
+    )
+
+
 def _admit_launch_gateway_readiness_packet(
     kernel: OrganizationKernel,
     *,
@@ -500,6 +513,95 @@ def _validate_launch_gateway_closure_request(req: LaunchGatewayPilotReadinessClo
         raise RuntimeCoreInvariantError("committed readiness closure requires matched observed effect")
     if not req.forbidden_effects_checked:
         raise RuntimeCoreInvariantError("committed readiness closure requires forbidden effect check")
+
+
+def _launch_gateway_readiness_model(kernel: OrganizationKernel, case_id: str) -> dict[str, Any]:
+    organization_case = _require_launch_gateway_pilot_case(kernel, case_id)
+    state = kernel.snapshot_state()
+    plan = next((item for item in state.plans if item.case_id == case_id), None)
+    closure = next((item for item in state.closures if item.case_id == case_id), None)
+    evidence_by_requirement = {
+        requirement_id: [
+            evidence for evidence in state.case_evidence
+            if evidence.case_id == case_id and evidence.requirement_id == requirement_id
+        ]
+        for requirement_id in _launch_gateway_required_evidence_ids()
+    }
+    requirements_by_id = {
+        requirement.requirement_id: requirement
+        for requirement in state.evidence_requirements
+        if requirement.case_type == LAUNCH_GATEWAY_PILOT_CASE_TYPE
+    }
+    gate_by_id = {decision.decision_id: decision for decision in state.gate_decisions}
+    latest_gate_by_step = {
+        ref.step_id: gate_by_id[ref.decision_id]
+        for ref in state.latest_gate_decisions
+        if ref.case_id == case_id and ref.decision_id in gate_by_id
+    }
+    approvals = [
+        approval for approval in state.approvals
+        if approval.case_id == case_id and approval.approval_scope == "security_approval"
+    ]
+    evidence_rows = []
+    for requirement_id in _launch_gateway_required_evidence_ids():
+        requirement = requirements_by_id.get(requirement_id)
+        refs = [evidence.evidence_ref for evidence in evidence_by_requirement[requirement_id]]
+        evidence_rows.append({
+            "requirement_id": requirement_id,
+            "department_id": requirement.department_id if requirement is not None else None,
+            "present": bool(refs),
+            "evidence_refs": refs,
+        })
+    plan_steps = plan.steps if plan is not None else ()
+    plan_step_rows = []
+    for step in plan_steps:
+        decision = latest_gate_by_step.get(step.step_id)
+        plan_step_rows.append({
+            "step_id": step.step_id,
+            "department_id": step.department_id,
+            "required_evidence": list(step.evidence_required),
+            "latest_gate_decision": _body(decision) if decision is not None else None,
+            "gate_status": decision.status.value if decision is not None else "not_evaluated",
+        })
+    missing_evidence = [
+        row["requirement_id"] for row in evidence_rows
+        if not row["present"]
+    ]
+    blocked_steps = [
+        row["step_id"] for row in plan_step_rows
+        if row["gate_status"] != PlanStepGateStatus.ALLOWED.value
+    ]
+    ready_to_close = (
+        closure is None
+        and not missing_evidence
+        and bool(approvals)
+        and not blocked_steps
+    )
+    if closure is not None:
+        terminal_status = "closed"
+    elif missing_evidence:
+        terminal_status = "awaiting_evidence"
+    elif not approvals:
+        terminal_status = "awaiting_approval"
+    elif blocked_steps:
+        terminal_status = "awaiting_gate"
+    else:
+        terminal_status = "ready_to_close"
+    return {
+        "case_id": organization_case.case_id,
+        "case_status": organization_case.status.value,
+        "plan_id": plan.plan_id if plan is not None else None,
+        "required_evidence": evidence_rows,
+        "missing_evidence": missing_evidence,
+        "approval_scope": "security_approval",
+        "approval_refs": [approval.approval_id for approval in approvals],
+        "plan_steps": plan_step_rows,
+        "blocked_steps": blocked_steps,
+        "ready_to_close": ready_to_close,
+        "terminal_status": terminal_status,
+        "closure": _body(closure) if closure is not None else None,
+        "governed": True,
+    }
 
 
 @router.post("/api/v1/orgs")
@@ -669,6 +771,13 @@ def collect_launch_gateway_pilot_deployment_witness(
         "gate_decision": _body(decision) if decision is not None else None,
         "governed": True,
     }
+
+
+@router.get("/api/v1/cases/{case_id}/launch-gateway-pilot/readiness")
+def get_launch_gateway_pilot_readiness(case_id: str):
+    """Return non-mutating readiness state for the Launch Gateway Pilot case."""
+    _inc_metric("requests_governed")
+    return _launch_gateway_readiness_model(_kernel(), case_id)
 
 
 @router.post("/api/v1/cases/{case_id}/launch-gateway-pilot/readiness-closure")
