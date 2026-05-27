@@ -12,7 +12,16 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Mapping, TYPE_CHECKING
 
-from mcoi_runtime.app.operator_loop import GoalRunReport, OperatorRunReport, SkillRunReport, WorkflowRunReport
+from mcoi_runtime.app.operator_loop import (
+    GoalRunReport,
+    OperatorRunReport,
+    SkillRunReport,
+    WorkflowRunReport,
+)
+from mcoi_runtime.app.operator_models import (
+    SkillPromotionReceiptReadReport,
+    SkillPromotionReceiptSummary,
+)
 from mcoi_runtime.contracts.job import JobDescriptor, JobState
 from mcoi_runtime.contracts.roles import TeamQueueState, WorkloadSnapshot
 from mcoi_runtime.core.coordination import CoordinationEngine
@@ -340,6 +349,62 @@ class SkillSummaryView:
             failed_step=failed_step,
             structured_errors=tuple(ErrorView.from_error(e) for e in report.structured_errors),
             lifecycle_transition_warning=report.lifecycle_transition_warning,
+        )
+
+
+@dataclass(frozen=True, slots=True)
+class SkillPromotionReceiptItemView:
+    """One promotion receipt row for operator display."""
+
+    evidence_id: str
+    skill_id: str
+    target_lifecycle: str
+    execution_record_count: int
+    evidence_ref_count: int
+    verification_count: int
+    created_at: str
+    reason: str
+
+    @staticmethod
+    def from_summary(summary: SkillPromotionReceiptSummary) -> "SkillPromotionReceiptItemView":
+        return SkillPromotionReceiptItemView(
+            evidence_id=summary.evidence_id,
+            skill_id=summary.skill_id,
+            target_lifecycle=summary.target_lifecycle.value,
+            execution_record_count=len(summary.execution_record_ids),
+            evidence_ref_count=len(summary.evidence_refs),
+            verification_count=len(summary.verification_ids),
+            created_at=summary.created_at,
+            reason=summary.reason,
+        )
+
+
+@dataclass(frozen=True, slots=True)
+class SkillPromotionReceiptReadView:
+    """Skill promotion receipt read model for operator display."""
+
+    request_id: str
+    store_configured: bool
+    receipt_count: int
+    skill_id_filter: str
+    target_lifecycle_filter: str | None
+    receipts: tuple[SkillPromotionReceiptItemView, ...]
+    structured_errors: tuple[ErrorView, ...]
+
+    @staticmethod
+    def from_report(report: SkillPromotionReceiptReadReport) -> "SkillPromotionReceiptReadView":
+        return SkillPromotionReceiptReadView(
+            request_id=report.request_id,
+            store_configured=report.store_configured,
+            receipt_count=report.receipt_count,
+            skill_id_filter=report.skill_id_filter,
+            target_lifecycle_filter=(
+                report.target_lifecycle_filter.value
+                if report.target_lifecycle_filter is not None
+                else None
+            ),
+            receipts=tuple(SkillPromotionReceiptItemView.from_summary(item) for item in report.receipts),
+            structured_errors=tuple(ErrorView.from_error(error) for error in report.errors),
         )
 
 
