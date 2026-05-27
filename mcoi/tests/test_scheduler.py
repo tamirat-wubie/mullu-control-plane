@@ -73,6 +73,38 @@ def test_execute_job_succeeds() -> None:
     assert execution.result == {"result": "ok"}
 
 
+def test_execute_job_records_audit_trail() -> None:
+    records: list[dict[str, object]] = []
+
+    class AuditTrail:
+        def record(self, **kwargs):
+            records.append(kwargs)
+
+    s = _make_scheduler(audit_trail=AuditTrail())
+    s.register_handler("test_handler", lambda job: {"result": "ok"})
+    s.schedule(ScheduledJob(
+        job_id="job-audit",
+        name="Audit Job",
+        schedule_type=JobSchedule.ONCE,
+        handler_name="test_handler",
+        tenant_id="tenant-a",
+        mission_id="mission-1",
+        goal_id="goal-1",
+    ))
+
+    execution = s.execute_job("job-audit")
+
+    assert execution.status == JobStatus.SUCCEEDED
+    assert len(records) == 1
+    assert records[0]["action"] == "scheduler.execute.test_handler"
+    assert records[0]["actor_id"] == "scheduler:job-audit"
+    assert records[0]["tenant_id"] == "tenant-a"
+    assert records[0]["target"] == "Audit Job"
+    assert records[0]["outcome"] == "succeeded"
+    assert records[0]["detail"]["mission_id"] == "mission-1"
+    assert records[0]["detail"]["goal_id"] == "goal-1"
+
+
 def test_execute_job_handler_not_found() -> None:
     s = _make_scheduler()
     s.schedule(_sample_job(handler_name="missing"))
@@ -192,6 +224,34 @@ def test_scheduler_summary_endpoint(client) -> None:
     data = resp.json()
     assert "total_jobs" in data
     assert data["governed"] is True
+
+
+def test_scheduler_lifecycle_and_history_endpoints(client) -> None:
+    client.post("/api/v1/scheduler/jobs", json={
+        "job_id": "life-job",
+        "name": "Lifecycle Job",
+        "schedule_type": "once",
+        "handler_name": "noop",
+    })
+
+    first_execution = client.post("/api/v1/scheduler/execute", json={"job_id": "life-job"})
+    disabled = client.post("/api/v1/scheduler/jobs/life-job/disable")
+    disabled_execution = client.post("/api/v1/scheduler/execute", json={"job_id": "life-job"})
+    enabled = client.post("/api/v1/scheduler/jobs/life-job/enable")
+    history = client.get("/api/v1/scheduler/history?limit=5")
+
+    assert first_execution.status_code == 200
+    assert first_execution.json()["status"] == "failed"
+    assert first_execution.json()["error"] == "handler not found"
+    assert disabled.status_code == 200
+    assert disabled.json()["enabled"] is False
+    assert disabled_execution.status_code == 200
+    assert disabled_execution.json()["status"] == "disabled"
+    assert enabled.status_code == 200
+    assert enabled.json()["enabled"] is True
+    assert history.status_code == 200
+    assert history.json()["governed"] is True
+    assert history.json()["count"] >= 2
 
 
 def test_invalid_schedule_type_400(client) -> None:

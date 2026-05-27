@@ -67,6 +67,10 @@ from .operator_models import (
     WorkflowResumeRequest,
     WorkflowRunReport,
 )
+from .skill_promotion_read_models import (
+    SkillPromotionReceiptReadReport,
+    SkillPromotionReceiptReadRequest,
+)
 from .operator_runners import (
     recover_coordination_state,
     read_skill_promotion_receipts,

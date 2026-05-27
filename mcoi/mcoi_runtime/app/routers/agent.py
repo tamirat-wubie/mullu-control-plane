@@ -328,6 +328,20 @@ def get_tracing_summary():
     return {"tracing": deps.request_tracer.summary(), "governed": True}
 
 
+@router.get("/api/v1/traces/slow")
+def get_slow_traces(threshold_ms: float = 1000.0):
+    """Return traces exceeding latency threshold."""
+    deps.metrics.inc("requests_governed")
+    return {"slow_traces": deps.request_tracer.slow_traces(threshold_ms), "governed": True}
+
+
+@router.get("/api/v1/traces/summary")
+def get_traces_summary():
+    """Return OpenTelemetry trace exporter summary."""
+    deps.metrics.inc("requests_governed")
+    return {"traces": deps.otel_exporter.summary(), "governed": True}
+
+
 @router.get("/api/v1/traces/{trace_id}")
 def get_trace(trace_id: str):
     """Return spans for a specific trace."""
@@ -340,13 +354,6 @@ def get_trace(trace_id: str):
         "spans": [s.to_dict() for s in spans],
         "governed": True,
     }
-
-
-@router.get("/api/v1/traces/slow")
-def get_slow_traces(threshold_ms: float = 1000.0):
-    """Return traces exceeding latency threshold."""
-    deps.metrics.inc("requests_governed")
-    return {"slow_traces": deps.request_tracer.slow_traces(threshold_ms), "governed": True}
 
 
 # ═══ Agent Orchestration ═════════════════════════════════════════════════

@@ -4546,6 +4546,30 @@
         "/api/v1/traces/{trace_id}"
       ],
       "request_proof": "read_model",
+      "runtime_witness_anchor_aliases": {
+        "missing_trace_returns_governed_404": [
+          "trace_lookup_missing_route_governed_404",
+          "get_nonexistent_trace"
+        ],
+        "otel_trace_summary_bounded": [
+          "otel_trace_summary_route_bounded"
+        ],
+        "request_trace_lookup_bounded": [
+          "trace_lookup_route_bounded",
+          "multiple_spans_same_trace"
+        ],
+        "request_trace_summary_bounded": [
+          "trace_summary_route_bounded",
+          "summary"
+        ],
+        "slow_trace_projection_bounded": [
+          "slow_trace_route_bounded",
+          "slow_traces_empty"
+        ],
+        "trace_context_roundtrip_tested": [
+          "roundtrip_headers"
+        ]
+      },
       "runtime_witnesses": [
         "request_trace_summary_bounded",
         "request_trace_lookup_bounded",
@@ -4961,6 +4985,39 @@
         "/api/v1/state/{state_type}"
       ],
       "request_proof": "request_proof",
+      "runtime_witness_anchor_aliases": {
+        "state_atomic_write_verified": [
+          "atomic_write"
+        ],
+        "state_hash_mismatch_rejected": [
+          "load_rejects_hash_mismatch"
+        ],
+        "state_list_summary_bounded": [
+          "list_states",
+          "summary"
+        ],
+        "state_load_missing_bounded": [
+          "load_missing",
+          "load_missing_state_returns_governed_not_found"
+        ],
+        "state_load_rejects_path_traversal": [
+          "load_rejects_path_traversal",
+          "load_rejects_invalid_state_type"
+        ],
+        "state_load_roundtrip": [
+          "save_and_load",
+          "complex_data"
+        ],
+        "state_save_rejects_path_traversal": [
+          "save_rejects_path_traversal",
+          "save_rejects_invalid_state_type"
+        ],
+        "state_save_returns_hash_bound_snapshot": [
+          "save",
+          "save_and_load",
+          "state_hash_changes"
+        ]
+      },
       "runtime_witnesses": [
         "state_save_returns_hash_bound_snapshot",
         "state_load_roundtrip",
@@ -6263,6 +6320,38 @@
         "/api/v1/connectors/{connector_id}/enable"
       ],
       "request_proof": "request_proof",
+      "runtime_witness_anchor_aliases": {
+        "connector_errors_sanitized": [
+          "invoke_handler_raises",
+          "invalid_connector_type_400",
+          "invalid_connector_type_is_bounded",
+          "connector_invoke_guard_denial_is_bounded"
+        ],
+        "connector_history_summary_bounded": [
+          "history_bounded",
+          "summary",
+          "connectors_summary_endpoint",
+          "connector_lifecycle_and_history_endpoints"
+        ],
+        "connector_invocation_audited": [
+          "invoke_records_audit_trail"
+        ],
+        "connector_invocation_guard_chain_checked": [
+          "invoke_success",
+          "invoke_connector_endpoint",
+          "invoke_guard_denied_is_bounded",
+          "connector_invoke_guard_denial_is_bounded"
+        ],
+        "connector_lifecycle_disable_enable_bounded": [
+          "disable_enable",
+          "connector_lifecycle_and_history_endpoints"
+        ],
+        "connector_registration_typed": [
+          "register_and_list",
+          "register_connector_endpoint",
+          "invalid_connector_type"
+        ]
+      },
       "runtime_witnesses": [
         "connector_registration_typed",
         "connector_invocation_guard_chain_checked",
@@ -6295,6 +6384,42 @@
         "/api/v1/scheduler/summary"
       ],
       "request_proof": "request_proof",
+      "runtime_witness_anchor_aliases": {
+        "scheduler_errors_sanitized": [
+          "execute_job_handler_not_found",
+          "execute_job_handler_raises",
+          "execute_nonexistent_job_error_is_bounded",
+          "invalid_schedule_type_400",
+          "invalid_schedule_type_is_bounded",
+          "scheduler_execute_missing_handler_is_bounded",
+          "scheduler_execute_guard_denial_is_bounded"
+        ],
+        "scheduler_execute_guard_chain_checked": [
+          "execute_job_succeeds",
+          "execute_job_guard_denied_is_bounded",
+          "scheduler_execute_guard_denial_is_bounded",
+          "scheduler_lifecycle_and_history_endpoints"
+        ],
+        "scheduler_execution_audited": [
+          "execute_job_records_audit_trail"
+        ],
+        "scheduler_history_summary_bounded": [
+          "history_bounded",
+          "summary",
+          "scheduler_summary_endpoint",
+          "scheduler_lifecycle_and_history_endpoints"
+        ],
+        "scheduler_job_registration_typed": [
+          "schedule_and_list_jobs",
+          "schedule_job_endpoint",
+          "invalid_schedule_type"
+        ],
+        "scheduler_lifecycle_controls_bounded": [
+          "disable_enable_job",
+          "unschedule_job",
+          "scheduler_lifecycle_and_history_endpoints"
+        ]
+      },
       "runtime_witnesses": [
         "scheduler_job_registration_typed",
         "scheduler_execute_guard_chain_checked",
@@ -6327,6 +6452,47 @@
         "/api/v1/multi-agent/summary"
       ],
       "request_proof": "request_proof",
+      "runtime_witness_anchor_aliases": {
+        "multi_agent_conflict_strategy_typed": [
+          "record_conflict",
+          "invalid_conflict_strategy_detail_is_bounded",
+          "invalid_conflict_strategy_is_bounded"
+        ],
+        "multi_agent_delegation_resolution_validated": [
+          "resolve_delegation",
+          "invalid_delegation_status_detail_is_bounded",
+          "invalid_resolution_status_is_bounded",
+          "missing_delegation_resolution_has_bounded_failure_class",
+          "full_cooperation_flow"
+        ],
+        "multi_agent_delegation_tracked": [
+          "delegate_work",
+          "full_cooperation_flow"
+        ],
+        "multi_agent_errors_sanitized": [
+          "delegate_error_detail_is_bounded",
+          "invalid_delegation_status_detail_is_bounded",
+          "invalid_merge_outcome_detail_is_bounded",
+          "invalid_conflict_strategy_detail_is_bounded",
+          "missing_delegation_resolution_has_bounded_failure_class"
+        ],
+        "multi_agent_handoff_preserves_context": [
+          "record_handoff",
+          "full_cooperation_flow"
+        ],
+        "multi_agent_merge_outcome_typed": [
+          "record_merge",
+          "invalid_merge_outcome_detail_is_bounded",
+          "invalid_merge_outcome_is_bounded",
+          "full_cooperation_flow"
+        ],
+        "multi_agent_summary_bounded": [
+          "multi_agent_summary"
+        ],
+        "multi_agent_unresolved_conflicts_bounded": [
+          "unresolved_conflicts"
+        ]
+      },
       "runtime_witnesses": [
         "multi_agent_delegation_tracked",
         "multi_agent_delegation_resolution_validated",
@@ -7190,6 +7356,36 @@
         "TemporalAcceptedRiskExpiryReceipt"
       ],
       "request_proof": "request_proof",
+      "runtime_witness_anchor_aliases": {
+        "accepted_risk_evidence_refs_required": [
+          "accepted_risk_expiry_blocks_wrong_scope_missing_evidence_and_sources"
+        ],
+        "expired_accepted_risk_blocks_dispatch": [
+          "accepted_risk_expiry_blocks_expired_record"
+        ],
+        "high_risk_source_receipts_bound": [
+          "accepted_risk_expiry_allows_high_risk_active_unexpired_record",
+          "accepted_risk_expiry_blocks_wrong_scope_missing_evidence_and_sources"
+        ],
+        "receipt_not_terminal_closure": [
+          "accepted_risk_expiry_allows_high_risk_active_unexpired_record"
+        ],
+        "review_obligation_required": [
+          "accepted_risk_grant_requires_review_obligation"
+        ],
+        "revoked_or_closed_accepted_risk_blocks_dispatch": [
+          "accepted_risk_expiry_blocks_revoked_and_closed_records"
+        ],
+        "runtime_clock_owns_accepted_risk_expiry": [
+          "accepted_risk_expiry_allows_high_risk_active_unexpired_record"
+        ],
+        "temporal_accepted_risk_expiry_receipt_schema_valid": [
+          "accepted_risk_expiry_allows_high_risk_active_unexpired_record"
+        ],
+        "tenant_command_and_action_scope_checked": [
+          "accepted_risk_expiry_blocks_wrong_scope_missing_evidence_and_sources"
+        ]
+      },
       "runtime_witnesses": [
         "runtime_clock_owns_accepted_risk_expiry",
         "expired_accepted_risk_blocks_dispatch",
@@ -8170,7 +8366,7 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 888,
+    "exact_test_anchor_count": 931,
     "runtime_witness_count": 1108,
     "surfaces": [
       {
@@ -10437,19 +10633,53 @@
         "unanchored_witnesses": []
       },
       {
-        "anchored_witnesses": [],
-        "exact_test_anchor_count": 0,
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "mcoi/tests/test_request_tracing.py::test_trace_summary_route_bounded",
+              "mcoi/tests/test_request_tracing.py::test_summary"
+            ],
+            "witness": "request_trace_summary_bounded"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_request_tracing.py::test_trace_lookup_route_bounded",
+              "mcoi/tests/test_request_tracing.py::test_multiple_spans_same_trace"
+            ],
+            "witness": "request_trace_lookup_bounded"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_request_tracing.py::test_trace_lookup_missing_route_governed_404",
+              "mcoi/tests/test_request_tracing.py::test_get_nonexistent_trace"
+            ],
+            "witness": "missing_trace_returns_governed_404"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_request_tracing.py::test_slow_trace_route_bounded",
+              "mcoi/tests/test_request_tracing.py::test_slow_traces_empty"
+            ],
+            "witness": "slow_trace_projection_bounded"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_request_tracing.py::test_otel_trace_summary_route_bounded"
+            ],
+            "witness": "otel_trace_summary_bounded"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_request_tracing.py::test_roundtrip_headers"
+            ],
+            "witness": "trace_context_roundtrip_tested"
+          }
+        ],
+        "exact_test_anchor_count": 6,
         "runtime_witness_count": 6,
         "surface_id": "trace_observability_read_models",
-        "unanchored_witness_count": 6,
-        "unanchored_witnesses": [
-          "request_trace_summary_bounded",
-          "request_trace_lookup_bounded",
-          "missing_trace_returns_governed_404",
-          "slow_trace_projection_bounded",
-          "otel_trace_summary_bounded",
-          "trace_context_roundtrip_tested"
-        ]
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
       },
       {
         "anchored_witnesses": [],
@@ -10969,21 +11199,72 @@
         ]
       },
       {
-        "anchored_witnesses": [],
-        "exact_test_anchor_count": 0,
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "mcoi/tests/test_state_persistence.py::test_save",
+              "mcoi/tests/test_state_persistence.py::test_save_and_load",
+              "mcoi/tests/test_server_phase212.py::test_save_and_load",
+              "mcoi/tests/test_state_persistence.py::test_state_hash_changes"
+            ],
+            "witness": "state_save_returns_hash_bound_snapshot"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_state_persistence.py::test_save_and_load",
+              "mcoi/tests/test_server_phase212.py::test_save_and_load",
+              "mcoi/tests/test_state_persistence.py::test_complex_data"
+            ],
+            "witness": "state_load_roundtrip"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_state_persistence.py::test_load_missing",
+              "mcoi/tests/test_server_phase212.py::test_load_missing",
+              "mcoi/tests/test_server_phase216.py::test_load_missing_state_returns_governed_not_found"
+            ],
+            "witness": "state_load_missing_bounded"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_state_persistence.py::test_list_states",
+              "mcoi/tests/test_server_phase212.py::test_list_states",
+              "mcoi/tests/test_state_persistence.py::test_summary"
+            ],
+            "witness": "state_list_summary_bounded"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_state_persistence.py::test_save_rejects_path_traversal",
+              "mcoi/tests/test_server_phase212.py::test_save_rejects_invalid_state_type"
+            ],
+            "witness": "state_save_rejects_path_traversal"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_state_persistence.py::test_load_rejects_path_traversal",
+              "mcoi/tests/test_server_phase212.py::test_load_rejects_invalid_state_type"
+            ],
+            "witness": "state_load_rejects_path_traversal"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_state_persistence.py::test_load_rejects_hash_mismatch"
+            ],
+            "witness": "state_hash_mismatch_rejected"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_state_persistence.py::test_atomic_write"
+            ],
+            "witness": "state_atomic_write_verified"
+          }
+        ],
+        "exact_test_anchor_count": 8,
         "runtime_witness_count": 8,
         "surface_id": "runtime_state_persistence_lifecycle",
-        "unanchored_witness_count": 8,
-        "unanchored_witnesses": [
-          "state_save_returns_hash_bound_snapshot",
-          "state_load_roundtrip",
-          "state_load_missing_bounded",
-          "state_list_summary_bounded",
-          "state_save_rejects_path_traversal",
-          "state_load_rejects_path_traversal",
-          "state_hash_mismatch_rejected",
-          "state_atomic_write_verified"
-        ]
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
       },
       {
         "anchored_witnesses": [
@@ -12382,51 +12663,192 @@
         ]
       },
       {
-        "anchored_witnesses": [],
-        "exact_test_anchor_count": 0,
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "mcoi/tests/test_connector_framework.py::test_register_and_list",
+              "mcoi/tests/test_connector_framework.py::test_register_connector_endpoint"
+            ],
+            "witness": "connector_registration_typed"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_connector_framework.py::test_invoke_success",
+              "mcoi/tests/test_connector_framework.py::test_invoke_connector_endpoint",
+              "mcoi/tests/test_connector_framework.py::test_invoke_guard_denied_is_bounded",
+              "mcoi/tests/test_server_phase218.py::test_connector_invoke_guard_denial_is_bounded"
+            ],
+            "witness": "connector_invocation_guard_chain_checked"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_connector_framework.py::test_disable_enable",
+              "mcoi/tests/test_connector_framework.py::test_connector_lifecycle_and_history_endpoints"
+            ],
+            "witness": "connector_lifecycle_disable_enable_bounded"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_connector_framework.py::test_history_bounded",
+              "mcoi/tests/test_connector_framework.py::test_summary",
+              "mcoi/tests/test_connector_framework.py::test_connectors_summary_endpoint",
+              "mcoi/tests/test_connector_framework.py::test_connector_lifecycle_and_history_endpoints"
+            ],
+            "witness": "connector_history_summary_bounded"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_connector_framework.py::test_invoke_handler_raises",
+              "mcoi/tests/test_connector_framework.py::test_invalid_connector_type_400",
+              "mcoi/tests/test_server_phase217.py::test_invalid_connector_type_is_bounded",
+              "mcoi/tests/test_server_phase218.py::test_connector_invoke_guard_denial_is_bounded"
+            ],
+            "witness": "connector_errors_sanitized"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_connector_framework.py::test_invoke_records_audit_trail"
+            ],
+            "witness": "connector_invocation_audited"
+          }
+        ],
+        "exact_test_anchor_count": 6,
         "runtime_witness_count": 6,
         "surface_id": "governed_connector_framework",
-        "unanchored_witness_count": 6,
-        "unanchored_witnesses": [
-          "connector_registration_typed",
-          "connector_invocation_guard_chain_checked",
-          "connector_lifecycle_disable_enable_bounded",
-          "connector_history_summary_bounded",
-          "connector_errors_sanitized",
-          "connector_invocation_audited"
-        ]
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
       },
       {
-        "anchored_witnesses": [],
-        "exact_test_anchor_count": 0,
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "mcoi/tests/test_scheduler.py::test_schedule_and_list_jobs",
+              "mcoi/tests/test_scheduler.py::test_schedule_job_endpoint"
+            ],
+            "witness": "scheduler_job_registration_typed"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_scheduler.py::test_execute_job_succeeds",
+              "mcoi/tests/test_scheduler.py::test_execute_job_guard_denied_is_bounded",
+              "mcoi/tests/test_server_phase218.py::test_scheduler_execute_guard_denial_is_bounded",
+              "mcoi/tests/test_scheduler.py::test_scheduler_lifecycle_and_history_endpoints"
+            ],
+            "witness": "scheduler_execute_guard_chain_checked"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_scheduler.py::test_disable_enable_job",
+              "mcoi/tests/test_scheduler.py::test_unschedule_job",
+              "mcoi/tests/test_scheduler.py::test_scheduler_lifecycle_and_history_endpoints"
+            ],
+            "witness": "scheduler_lifecycle_controls_bounded"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_scheduler.py::test_history_bounded",
+              "mcoi/tests/test_scheduler.py::test_summary",
+              "mcoi/tests/test_scheduler.py::test_scheduler_summary_endpoint",
+              "mcoi/tests/test_scheduler.py::test_scheduler_lifecycle_and_history_endpoints"
+            ],
+            "witness": "scheduler_history_summary_bounded"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_scheduler.py::test_execute_job_handler_not_found",
+              "mcoi/tests/test_scheduler.py::test_execute_job_handler_raises",
+              "mcoi/tests/test_scheduler.py::test_execute_nonexistent_job_error_is_bounded",
+              "mcoi/tests/test_scheduler.py::test_invalid_schedule_type_400",
+              "mcoi/tests/test_server_phase217.py::test_invalid_schedule_type_is_bounded",
+              "mcoi/tests/test_server_phase218.py::test_scheduler_execute_missing_handler_is_bounded",
+              "mcoi/tests/test_server_phase218.py::test_scheduler_execute_guard_denial_is_bounded"
+            ],
+            "witness": "scheduler_errors_sanitized"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_scheduler.py::test_execute_job_records_audit_trail"
+            ],
+            "witness": "scheduler_execution_audited"
+          }
+        ],
+        "exact_test_anchor_count": 6,
         "runtime_witness_count": 6,
         "surface_id": "governed_background_scheduler",
-        "unanchored_witness_count": 6,
-        "unanchored_witnesses": [
-          "scheduler_job_registration_typed",
-          "scheduler_execute_guard_chain_checked",
-          "scheduler_lifecycle_controls_bounded",
-          "scheduler_history_summary_bounded",
-          "scheduler_errors_sanitized",
-          "scheduler_execution_audited"
-        ]
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
       },
       {
-        "anchored_witnesses": [],
-        "exact_test_anchor_count": 0,
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "mcoi/tests/test_multi_agent_runtime.py::test_delegate_work",
+              "mcoi/tests/test_multi_agent_runtime.py::test_full_cooperation_flow"
+            ],
+            "witness": "multi_agent_delegation_tracked"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_multi_agent_runtime.py::test_resolve_delegation",
+              "mcoi/tests/test_multi_agent_runtime.py::test_invalid_delegation_status_detail_is_bounded",
+              "mcoi/tests/test_server_phase217.py::test_invalid_resolution_status_is_bounded",
+              "mcoi/tests/test_server_phase217.py::test_missing_delegation_resolution_has_bounded_failure_class",
+              "mcoi/tests/test_multi_agent_runtime.py::test_full_cooperation_flow"
+            ],
+            "witness": "multi_agent_delegation_resolution_validated"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_multi_agent_runtime.py::test_record_handoff",
+              "mcoi/tests/test_multi_agent_runtime.py::test_full_cooperation_flow"
+            ],
+            "witness": "multi_agent_handoff_preserves_context"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_multi_agent_runtime.py::test_record_merge",
+              "mcoi/tests/test_multi_agent_runtime.py::test_invalid_merge_outcome_detail_is_bounded",
+              "mcoi/tests/test_server_phase217.py::test_invalid_merge_outcome_is_bounded",
+              "mcoi/tests/test_multi_agent_runtime.py::test_full_cooperation_flow"
+            ],
+            "witness": "multi_agent_merge_outcome_typed"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_multi_agent_runtime.py::test_record_conflict",
+              "mcoi/tests/test_multi_agent_runtime.py::test_invalid_conflict_strategy_detail_is_bounded",
+              "mcoi/tests/test_server_phase217.py::test_invalid_conflict_strategy_is_bounded"
+            ],
+            "witness": "multi_agent_conflict_strategy_typed"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_multi_agent_runtime.py::test_unresolved_conflicts"
+            ],
+            "witness": "multi_agent_unresolved_conflicts_bounded"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_multi_agent_runtime.py::test_multi_agent_summary"
+            ],
+            "witness": "multi_agent_summary_bounded"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_multi_agent_runtime.py::test_delegate_error_detail_is_bounded",
+              "mcoi/tests/test_multi_agent_runtime.py::test_invalid_delegation_status_detail_is_bounded",
+              "mcoi/tests/test_multi_agent_runtime.py::test_invalid_merge_outcome_detail_is_bounded",
+              "mcoi/tests/test_multi_agent_runtime.py::test_invalid_conflict_strategy_detail_is_bounded",
+              "mcoi/tests/test_server_phase217.py::test_missing_delegation_resolution_has_bounded_failure_class"
+            ],
+            "witness": "multi_agent_errors_sanitized"
+          }
+        ],
+        "exact_test_anchor_count": 8,
         "runtime_witness_count": 8,
         "surface_id": "multi_agent_coordination_runtime",
-        "unanchored_witness_count": 8,
-        "unanchored_witnesses": [
-          "multi_agent_delegation_tracked",
-          "multi_agent_delegation_resolution_validated",
-          "multi_agent_handoff_preserves_context",
-          "multi_agent_merge_outcome_typed",
-          "multi_agent_conflict_strategy_typed",
-          "multi_agent_unresolved_conflicts_bounded",
-          "multi_agent_summary_bounded",
-          "multi_agent_errors_sanitized"
-        ]
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
       },
       {
         "anchored_witnesses": [],
@@ -13662,22 +14084,68 @@
         ]
       },
       {
-        "anchored_witnesses": [],
-        "exact_test_anchor_count": 0,
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_accepted_risk_expiry.py::test_accepted_risk_expiry_allows_high_risk_active_unexpired_record"
+            ],
+            "witness": "runtime_clock_owns_accepted_risk_expiry"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_accepted_risk_expiry.py::test_accepted_risk_expiry_blocks_expired_record"
+            ],
+            "witness": "expired_accepted_risk_blocks_dispatch"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_accepted_risk_expiry.py::test_accepted_risk_expiry_blocks_revoked_and_closed_records"
+            ],
+            "witness": "revoked_or_closed_accepted_risk_blocks_dispatch"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_accepted_risk_expiry.py::test_accepted_risk_expiry_blocks_wrong_scope_missing_evidence_and_sources"
+            ],
+            "witness": "tenant_command_and_action_scope_checked"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_accepted_risk_expiry.py::test_accepted_risk_grant_requires_review_obligation"
+            ],
+            "witness": "review_obligation_required"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_accepted_risk_expiry.py::test_accepted_risk_expiry_blocks_wrong_scope_missing_evidence_and_sources"
+            ],
+            "witness": "accepted_risk_evidence_refs_required"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_accepted_risk_expiry.py::test_accepted_risk_expiry_allows_high_risk_active_unexpired_record",
+              "tests/test_gateway/test_temporal_accepted_risk_expiry.py::test_accepted_risk_expiry_blocks_wrong_scope_missing_evidence_and_sources"
+            ],
+            "witness": "high_risk_source_receipts_bound"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_accepted_risk_expiry.py::test_accepted_risk_expiry_allows_high_risk_active_unexpired_record"
+            ],
+            "witness": "temporal_accepted_risk_expiry_receipt_schema_valid"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_accepted_risk_expiry.py::test_accepted_risk_expiry_allows_high_risk_active_unexpired_record"
+            ],
+            "witness": "receipt_not_terminal_closure"
+          }
+        ],
+        "exact_test_anchor_count": 9,
         "runtime_witness_count": 9,
         "surface_id": "temporal_accepted_risk_expiry",
-        "unanchored_witness_count": 9,
-        "unanchored_witnesses": [
-          "runtime_clock_owns_accepted_risk_expiry",
-          "expired_accepted_risk_blocks_dispatch",
-          "revoked_or_closed_accepted_risk_blocks_dispatch",
-          "tenant_command_and_action_scope_checked",
-          "review_obligation_required",
-          "accepted_risk_evidence_refs_required",
-          "high_risk_source_receipts_bound",
-          "temporal_accepted_risk_expiry_receipt_schema_valid",
-          "receipt_not_terminal_closure"
-        ]
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
       },
       {
         "anchored_witnesses": [
@@ -14920,6 +15388,6 @@
         "unanchored_witnesses": []
       }
     ],
-    "unanchored_witness_count": 220
+    "unanchored_witness_count": 177
   }
 }

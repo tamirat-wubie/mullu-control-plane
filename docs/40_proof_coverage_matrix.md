@@ -151,8 +151,8 @@ Witness integrity audit:
 | Metric | Count |
 |---|---:|
 | Runtime witness labels | 1108 |
-| Exact test anchors | 888 |
-| Unanchored witness labels | 220 |
+| Exact test anchors | 931 |
+| Unanchored witness labels | 177 |
 
 Evidence quality gaps:
 none
@@ -161,12 +161,10 @@ Witness integrity gaps:
 
 | Surface | Exact anchors | Unanchored | Unanchored labels |
 |---|---:|---:|---|
-| `trace_observability_read_models` | 0 | 6 | request_trace_summary_bounded, request_trace_lookup_bounded, missing_trace_returns_governed_404, slow_trace_projection_bounded, otel_trace_summary_bounded, trace_context_roundtrip_tested |
 | `agent_memory_lifecycle` | 0 | 6 | agent_memory_store_bounded, agent_memory_search_relevance_scored, agent_memory_tenant_isolation, agent_memory_capacity_eviction, agent_memory_summary_bounded, agent_memory_forget_removes_entry |
 | `governance_explanation_lifecycle` | 1 | 6 | explain_action_guard_chain_path_reported, explain_audit_entry_allowed_and_denied, explain_audit_entry_goal_context_preserved, explanation_cache_bounded, explain_action_endpoint_governed, explain_summary_endpoint_governed |
 | `agent_orchestration_lifecycle` | 0 | 8 | orchestration_summary_bounded, orchestration_plan_created_for_registered_agent, orchestration_unknown_initiator_bounded, orchestration_missing_plan_bounded, orchestration_handoff_capability_checked, orchestration_handoff_errors_sanitized, orchestration_quorum_required, orchestration_executor_errors_sanitized |
 | `live_path_certification_lifecycle` | 0 | 8 | certification_run_emits_action_proof, certification_run_returns_chain_hash, certification_run_records_five_steps, certification_steps_named, certification_history_bounded, certification_chain_hash_deterministic, certification_failures_bounded, certification_partial_failure_recorded |
-| `runtime_state_persistence_lifecycle` | 0 | 8 | state_save_returns_hash_bound_snapshot, state_load_roundtrip, state_load_missing_bounded, state_list_summary_bounded, state_save_rejects_path_traversal, state_load_rejects_path_traversal, state_hash_mismatch_rejected, state_atomic_write_verified |
 | `software_outcome_learning` | 0 | 7 | software_learning_schema_default_enabled, passed_gates_yield_procedural_memory, failed_gates_yield_hashed_risk_memory, raw_logs_rejected_before_planning_use, rollback_failure_defers_learning, planning_projection_requires_admitted_matching_decision, software_learning_errors_are_bounded |
 | `approval_engine_lifecycle` | 1 | 5 | approval_request_mutation_receipt_emitted, approval_decision_mutation_receipt_emitted, approval_consumption_mutation_receipt_emitted, approval_revocation_mutation_receipt_emitted, approval_override_mutation_receipt_emitted |
 | `job_engine_lifecycle` | 1 | 5 | job_create_mutation_receipt_emitted, job_start_mutation_receipt_emitted, job_pause_resume_mutation_receipts_emitted, job_terminal_mutation_receipts_emitted, job_restore_mutation_receipt_emitted |
@@ -175,9 +173,6 @@ Witness integrity gaps:
 | `capability_maturity_assessment` | 3 | 6 | certification_evidence_synthesizes_maturity_extension, registry_read_model_exposes_maturity, default_pack_C6_examples_projected, effect_bearing_production_requires_live_write, production_requires_worker_deployment_recovery, autonomy_requires_C7_controls |
 | `agent_identity` | 0 | 8 | owner_tenant_identity_required, capability_scope_conflict_denied, self_approval_forbidden, policy_mutation_forbidden, delegation_requires_lease, agent_budget_enforced, reputation_update_requires_evidence, agent_identity_schema_valid |
 | `claim_verification` | 0 | 6 | claim_type_declared, source_evidence_required, contradictions_block_execution, stale_claims_block_execution, high_risk_requires_independent_support, claim_verification_schema_valid |
-| `governed_connector_framework` | 0 | 6 | connector_registration_typed, connector_invocation_guard_chain_checked, connector_lifecycle_disable_enable_bounded, connector_history_summary_bounded, connector_errors_sanitized, connector_invocation_audited |
-| `governed_background_scheduler` | 0 | 6 | scheduler_job_registration_typed, scheduler_execute_guard_chain_checked, scheduler_lifecycle_controls_bounded, scheduler_history_summary_bounded, scheduler_errors_sanitized, scheduler_execution_audited |
-| `multi_agent_coordination_runtime` | 0 | 8 | multi_agent_delegation_tracked, multi_agent_delegation_resolution_validated, multi_agent_handoff_preserves_context, multi_agent_merge_outcome_typed, multi_agent_conflict_strategy_typed, multi_agent_unresolved_conflicts_bounded, multi_agent_summary_bounded, multi_agent_errors_sanitized |
 | `connector_self_healing` | 0 | 6 | provider_success_not_assumed, write_failures_require_operator_review, missing_receipt_revokes_capability, fallback_provider_requires_certification, read_only_degradation_bounded, connector_self_healing_schema_valid |
 | `policy_prover` | 0 | 7 | payment_requires_approval_counterexample, tenant_isolation_counterexample, shell_requires_sandbox_counterexample, provider_url_approved_counterexample, memory_requires_admission_counterexample, unknown_property_fails_closed, policy_proof_report_schema_valid |
 | `memory_lattice` | 1 | 5 | raw_event_memory_not_directly_admitted, semantic_memory_requires_learning_admission, policy_memory_requires_authority_ref, preference_memory_tenant_owner_scoped, memory_lattice_schema_valid |
@@ -188,7 +183,6 @@ Witness integrity gaps:
 | `temporal_budget_window` | 0 | 9 | runtime_clock_owns_budget_window_time, tenant_timezone_resolves_budget_period, daily_weekly_monthly_budget_resets_computed, spend_snapshot_period_matches_active_window, projected_spend_blocks_over_limit_dispatch, future_budget_window_defers_dispatch, source_reapproval_bound_for_high_risk_budget_window, temporal_budget_window_receipt_schema_valid, receipt_not_terminal_closure |
 | `temporal_causal_order` | 0 | 9 | runtime_clock_owns_causal_order_time, required_events_must_be_present, tenant_and_command_scope_checked, predecessor_edges_checked, out_of_order_events_block_dispatch, future_events_block_dispatch, high_risk_source_receipts_bound, temporal_causal_order_receipt_schema_valid, receipt_not_terminal_closure |
 | `temporal_monotonic_duration` | 0 | 8 | runtime_monotonic_clock_owns_duration_truth, wall_clock_not_used_for_duration, duration_limit_exceeded_blocks_dispatch, cooldown_lower_bound_defers_dispatch, monotonic_clock_regression_blocks_dispatch, high_risk_source_receipts_bound, temporal_monotonic_duration_receipt_schema_valid, receipt_not_terminal_closure |
-| `temporal_accepted_risk_expiry` | 0 | 9 | runtime_clock_owns_accepted_risk_expiry, expired_accepted_risk_blocks_dispatch, revoked_or_closed_accepted_risk_blocks_dispatch, tenant_command_and_action_scope_checked, review_obligation_required, accepted_risk_evidence_refs_required, high_risk_source_receipts_bound, temporal_accepted_risk_expiry_receipt_schema_valid, receipt_not_terminal_closure |
 | `temporal_missed_run` | 2 | 7 | runtime_clock_owns_missed_run_time, late_within_grace_preserves_dispatch_eligibility, recovery_due_requires_review_actions, tenant_command_action_scope_checked, high_risk_source_receipts_bound, temporal_missed_run_receipt_schema_valid, receipt_not_terminal_closure |
 | `temporal_recurrence_window` | 2 | 8 | runtime_clock_owns_recurrence_window_time, tenant_timezone_preserved_across_dst, candidate_must_match_next_occurrence, future_candidate_defers_dispatch, completed_series_blocks_dispatch, monthly_end_of_month_clamped, temporal_recurrence_window_receipt_schema_valid, receipt_not_terminal_closure |
 | `temporal_memory_refresh` | 1 | 6 | usable_memory_does_not_create_refresh_task, evidence_type_coverage_gates_review_readiness, invalid_refresh_policy_blocks_task_creation, superseded_memory_blocks_reactivation, temporal_memory_refresh_receipt_schema_valid, receipt_not_terminal_closure |
@@ -317,5 +311,5 @@ none
 STATUS:
   Completeness: 100%
   Invariants verified: route declarations, route-level coverage classification, coverage levels, coverage states, closure action mapping, schema contract validation, deployment orchestration receipt schema contract
-  Open issues: 220 runtime-witness labels lack exact test-function anchors
+  Open issues: 177 runtime-witness labels lack exact test-function anchors
   Next action: bind unanchored runtime-witness labels to exact test-function anchors

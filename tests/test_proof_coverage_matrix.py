@@ -147,8 +147,18 @@ def test_witness_integrity_report_tracks_exact_test_anchors() -> None:
     assert surfaces["api_key_lifecycle"]["unanchored_witness_count"] == 0
     assert surfaces["ops_proof_surface"]["exact_test_anchor_count"] == 6
     assert surfaces["ops_proof_surface"]["unanchored_witness_count"] == 0
+    assert surfaces["trace_observability_read_models"]["exact_test_anchor_count"] == 6
+    assert surfaces["trace_observability_read_models"]["unanchored_witness_count"] == 0
     assert surfaces["structured_output_validation"]["exact_test_anchor_count"] == 7
     assert surfaces["structured_output_validation"]["unanchored_witness_count"] == 0
+    assert surfaces["runtime_state_persistence_lifecycle"]["exact_test_anchor_count"] == 8
+    assert surfaces["runtime_state_persistence_lifecycle"]["unanchored_witness_count"] == 0
+    assert surfaces["multi_agent_coordination_runtime"]["exact_test_anchor_count"] == 8
+    assert surfaces["multi_agent_coordination_runtime"]["unanchored_witness_count"] == 0
+    assert surfaces["governed_connector_framework"]["exact_test_anchor_count"] == 6
+    assert surfaces["governed_connector_framework"]["unanchored_witness_count"] == 0
+    assert surfaces["governed_background_scheduler"]["exact_test_anchor_count"] == 6
+    assert surfaces["governed_background_scheduler"]["unanchored_witness_count"] == 0
     assert surfaces["code_intelligence_operator_read_model"]["exact_test_anchor_count"] >= 5
     assert surfaces["code_intelligence_operator_read_model"]["unanchored_witness_count"] == 0
     assert surfaces["data_export_lifecycle"]["exact_test_anchor_count"] >= 4
@@ -197,6 +207,8 @@ def test_witness_integrity_report_tracks_exact_test_anchors() -> None:
     assert surfaces["governed_operational_intelligence"]["exact_test_anchor_count"] == 11
     assert surfaces["runbook_learning_lifecycle"]["unanchored_witness_count"] == 0
     assert surfaces["runbook_learning_lifecycle"]["exact_test_anchor_count"] == 11
+    assert surfaces["temporal_accepted_risk_expiry"]["unanchored_witness_count"] == 0
+    assert surfaces["temporal_accepted_risk_expiry"]["exact_test_anchor_count"] == 9
     assert surfaces["temporal_credential_expiry"]["unanchored_witness_count"] == 0
     assert surfaces["temporal_credential_expiry"]["exact_test_anchor_count"] == 11
     assert surfaces["temporal_retention_window"]["unanchored_witness_count"] == 0

@@ -1758,6 +1758,30 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "otel_trace_summary_bounded",
                 "trace_context_roundtrip_tested",
             ],
+            runtime_witness_anchor_aliases={
+                "request_trace_summary_bounded": [
+                    "trace_summary_route_bounded",
+                    "summary",
+                ],
+                "request_trace_lookup_bounded": [
+                    "trace_lookup_route_bounded",
+                    "multiple_spans_same_trace",
+                ],
+                "missing_trace_returns_governed_404": [
+                    "trace_lookup_missing_route_governed_404",
+                    "get_nonexistent_trace",
+                ],
+                "slow_trace_projection_bounded": [
+                    "slow_trace_route_bounded",
+                    "slow_traces_empty",
+                ],
+                "otel_trace_summary_bounded": [
+                    "otel_trace_summary_route_bounded",
+                ],
+                "trace_context_roundtrip_tested": [
+                    "roundtrip_headers",
+                ],
+            },
         ),
         _surface(
             "agent_memory_lifecycle",
@@ -2175,6 +2199,40 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "state_hash_mismatch_rejected",
                 "state_atomic_write_verified",
             ],
+            runtime_witness_anchor_aliases={
+                "state_save_returns_hash_bound_snapshot": [
+                    "save",
+                    "save_and_load",
+                    "state_hash_changes",
+                ],
+                "state_load_roundtrip": [
+                    "save_and_load",
+                    "complex_data",
+                    "save_and_load",
+                ],
+                "state_load_missing_bounded": [
+                    "load_missing",
+                    "load_missing_state_returns_governed_not_found",
+                ],
+                "state_list_summary_bounded": [
+                    "list_states",
+                    "summary",
+                ],
+                "state_save_rejects_path_traversal": [
+                    "save_rejects_path_traversal",
+                    "save_rejects_invalid_state_type",
+                ],
+                "state_load_rejects_path_traversal": [
+                    "load_rejects_path_traversal",
+                    "load_rejects_invalid_state_type",
+                ],
+                "state_hash_mismatch_rejected": [
+                    "load_rejects_hash_mismatch",
+                ],
+                "state_atomic_write_verified": [
+                    "atomic_write",
+                ],
+            },
         ),
         _surface(
             "runbook_learning_lifecycle",
@@ -3452,6 +3510,38 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "connector_errors_sanitized",
                 "connector_invocation_audited",
             ],
+            runtime_witness_anchor_aliases={
+                "connector_registration_typed": [
+                    "register_and_list",
+                    "register_connector_endpoint",
+                    "invalid_connector_type",
+                ],
+                "connector_invocation_guard_chain_checked": [
+                    "invoke_success",
+                    "invoke_connector_endpoint",
+                    "invoke_guard_denied_is_bounded",
+                    "connector_invoke_guard_denial_is_bounded",
+                ],
+                "connector_lifecycle_disable_enable_bounded": [
+                    "disable_enable",
+                    "connector_lifecycle_and_history_endpoints",
+                ],
+                "connector_history_summary_bounded": [
+                    "history_bounded",
+                    "summary",
+                    "connectors_summary_endpoint",
+                    "connector_lifecycle_and_history_endpoints",
+                ],
+                "connector_errors_sanitized": [
+                    "invoke_handler_raises",
+                    "invalid_connector_type_400",
+                    "invalid_connector_type_is_bounded",
+                    "connector_invoke_guard_denial_is_bounded",
+                ],
+                "connector_invocation_audited": [
+                    "invoke_records_audit_trail",
+                ],
+            },
         ),
         _surface(
             "governed_background_scheduler",
@@ -3484,6 +3574,42 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "scheduler_errors_sanitized",
                 "scheduler_execution_audited",
             ],
+            runtime_witness_anchor_aliases={
+                "scheduler_job_registration_typed": [
+                    "schedule_and_list_jobs",
+                    "schedule_job_endpoint",
+                    "invalid_schedule_type",
+                ],
+                "scheduler_execute_guard_chain_checked": [
+                    "execute_job_succeeds",
+                    "execute_job_guard_denied_is_bounded",
+                    "scheduler_execute_guard_denial_is_bounded",
+                    "scheduler_lifecycle_and_history_endpoints",
+                ],
+                "scheduler_lifecycle_controls_bounded": [
+                    "disable_enable_job",
+                    "unschedule_job",
+                    "scheduler_lifecycle_and_history_endpoints",
+                ],
+                "scheduler_history_summary_bounded": [
+                    "history_bounded",
+                    "summary",
+                    "scheduler_summary_endpoint",
+                    "scheduler_lifecycle_and_history_endpoints",
+                ],
+                "scheduler_errors_sanitized": [
+                    "execute_job_handler_not_found",
+                    "execute_job_handler_raises",
+                    "execute_nonexistent_job_error_is_bounded",
+                    "invalid_schedule_type_400",
+                    "invalid_schedule_type_is_bounded",
+                    "scheduler_execute_missing_handler_is_bounded",
+                    "scheduler_execute_guard_denial_is_bounded",
+                ],
+                "scheduler_execution_audited": [
+                    "execute_job_records_audit_trail",
+                ],
+            },
         ),
         _surface(
             "multi_agent_coordination_runtime",
@@ -3518,6 +3644,47 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "multi_agent_summary_bounded",
                 "multi_agent_errors_sanitized",
             ],
+            runtime_witness_anchor_aliases={
+                "multi_agent_delegation_tracked": [
+                    "delegate_work",
+                    "full_cooperation_flow",
+                ],
+                "multi_agent_delegation_resolution_validated": [
+                    "resolve_delegation",
+                    "invalid_delegation_status_detail_is_bounded",
+                    "invalid_resolution_status_is_bounded",
+                    "missing_delegation_resolution_has_bounded_failure_class",
+                    "full_cooperation_flow",
+                ],
+                "multi_agent_handoff_preserves_context": [
+                    "record_handoff",
+                    "full_cooperation_flow",
+                ],
+                "multi_agent_merge_outcome_typed": [
+                    "record_merge",
+                    "invalid_merge_outcome_detail_is_bounded",
+                    "invalid_merge_outcome_is_bounded",
+                    "full_cooperation_flow",
+                ],
+                "multi_agent_conflict_strategy_typed": [
+                    "record_conflict",
+                    "invalid_conflict_strategy_detail_is_bounded",
+                    "invalid_conflict_strategy_is_bounded",
+                ],
+                "multi_agent_unresolved_conflicts_bounded": [
+                    "unresolved_conflicts",
+                ],
+                "multi_agent_summary_bounded": [
+                    "multi_agent_summary",
+                ],
+                "multi_agent_errors_sanitized": [
+                    "delegate_error_detail_is_bounded",
+                    "invalid_delegation_status_detail_is_bounded",
+                    "invalid_merge_outcome_detail_is_bounded",
+                    "invalid_conflict_strategy_detail_is_bounded",
+                    "missing_delegation_resolution_has_bounded_failure_class",
+                ],
+            },
         ),
         _surface(
             "connector_self_healing",
@@ -4378,6 +4545,36 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "temporal_accepted_risk_expiry_receipt_schema_valid",
                 "receipt_not_terminal_closure",
             ],
+            runtime_witness_anchor_aliases={
+                "runtime_clock_owns_accepted_risk_expiry": [
+                    "accepted_risk_expiry_allows_high_risk_active_unexpired_record"
+                ],
+                "expired_accepted_risk_blocks_dispatch": [
+                    "accepted_risk_expiry_blocks_expired_record"
+                ],
+                "revoked_or_closed_accepted_risk_blocks_dispatch": [
+                    "accepted_risk_expiry_blocks_revoked_and_closed_records"
+                ],
+                "tenant_command_and_action_scope_checked": [
+                    "accepted_risk_expiry_blocks_wrong_scope_missing_evidence_and_sources"
+                ],
+                "review_obligation_required": [
+                    "accepted_risk_grant_requires_review_obligation"
+                ],
+                "accepted_risk_evidence_refs_required": [
+                    "accepted_risk_expiry_blocks_wrong_scope_missing_evidence_and_sources"
+                ],
+                "high_risk_source_receipts_bound": [
+                    "accepted_risk_expiry_allows_high_risk_active_unexpired_record",
+                    "accepted_risk_expiry_blocks_wrong_scope_missing_evidence_and_sources",
+                ],
+                "temporal_accepted_risk_expiry_receipt_schema_valid": [
+                    "accepted_risk_expiry_allows_high_risk_active_unexpired_record"
+                ],
+                "receipt_not_terminal_closure": [
+                    "accepted_risk_expiry_allows_high_risk_active_unexpired_record"
+                ],
+            },
         ),
         _surface(
             "temporal_credential_expiry",

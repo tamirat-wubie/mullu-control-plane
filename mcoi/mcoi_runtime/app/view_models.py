@@ -12,13 +12,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Mapping, TYPE_CHECKING
 
-from mcoi_runtime.app.operator_loop import (
-    GoalRunReport,
-    OperatorRunReport,
-    SkillRunReport,
-    WorkflowRunReport,
-)
-from mcoi_runtime.app.operator_models import (
+from mcoi_runtime.app.operator_loop import GoalRunReport, OperatorRunReport, SkillRunReport, WorkflowRunReport
+from mcoi_runtime.app.skill_promotion_read_models import (
     SkillPromotionReceiptReadReport,
     SkillPromotionReceiptSummary,
 )
