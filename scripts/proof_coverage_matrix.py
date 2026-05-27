@@ -1808,6 +1808,29 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "agent_memory_summary_bounded",
                 "agent_memory_forget_removes_entry",
             ],
+            runtime_witness_anchor_aliases={
+                "agent_memory_store_bounded": [
+                    "store",
+                    "memory_store_endpoint_bounded",
+                ],
+                "agent_memory_search_relevance_scored": [
+                    "search",
+                    "memory_search_endpoint_relevance_scored",
+                ],
+                "agent_memory_tenant_isolation": [
+                    "tenant_isolation",
+                ],
+                "agent_memory_capacity_eviction": [
+                    "capacity_eviction",
+                ],
+                "agent_memory_summary_bounded": [
+                    "summary",
+                    "memory_summary_endpoint_bounded",
+                ],
+                "agent_memory_forget_removes_entry": [
+                    "forget",
+                ],
+            },
         ),
         _surface(
             "governance_explanation_lifecycle",
