@@ -104,6 +104,8 @@ def test_expired_command_emits_missed_run_receipt():
     assert payload["lateness_seconds"] == 3600
     assert "command_expired_before_execution" in payload["missed_reasons"]
     assert payload["metadata"]["dispatch_allowed"] is False
+    assert payload["metadata"]["runtime_owns_time_truth"] is True
+    assert payload["metadata"]["receipt_is_not_terminal_closure"] is True
     assert payload["terminal_closure_required"] is True
 
 

@@ -8445,6 +8445,36 @@
         "TemporalMissedRunReceipt"
       ],
       "request_proof": "request_proof",
+      "runtime_witness_anchor_aliases": {
+        "duplicate_dispatched_run_requires_terminal_receipt": [
+          "duplicate_dispatched_run_requires_terminal_receipt"
+        ],
+        "expired_command_emits_missed_run_receipt": [
+          "expired_command_emits_missed_run_receipt"
+        ],
+        "high_risk_source_receipts_bound": [
+          "high_risk_missed_run_blocks_without_required_sources_and_evidence"
+        ],
+        "late_within_grace_preserves_dispatch_eligibility": [
+          "late_within_grace_remains_dispatch_eligible"
+        ],
+        "receipt_not_terminal_closure": [
+          "expired_command_emits_missed_run_receipt"
+        ],
+        "recovery_due_requires_review_actions": [
+          "recovery_due_when_late_but_not_expired"
+        ],
+        "runtime_clock_owns_missed_run_time": [
+          "expired_command_emits_missed_run_receipt"
+        ],
+        "temporal_missed_run_receipt_schema_valid": [
+          "expired_command_emits_missed_run_receipt"
+        ],
+        "tenant_command_action_scope_checked": [
+          "high_risk_missed_run_blocks_without_required_sources_and_evidence",
+          "optional_policy_still_blocks_on_tenant_mismatch"
+        ]
+      },
       "runtime_witnesses": [
         "runtime_clock_owns_missed_run_time",
         "late_within_grace_preserves_dispatch_eligibility",
@@ -8949,7 +8979,7 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 1087,
+    "exact_test_anchor_count": 1094,
     "runtime_witness_count": 1114,
     "surfaces": [
       {
@@ -16084,6 +16114,18 @@
             "anchors": [
               "tests/test_gateway/test_temporal_missed_run.py::test_expired_command_emits_missed_run_receipt"
             ],
+            "witness": "runtime_clock_owns_missed_run_time"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_missed_run.py::test_late_within_grace_remains_dispatch_eligible"
+            ],
+            "witness": "late_within_grace_preserves_dispatch_eligibility"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_missed_run.py::test_expired_command_emits_missed_run_receipt"
+            ],
             "witness": "expired_command_emits_missed_run_receipt"
           },
           {
@@ -16091,21 +16133,44 @@
               "tests/test_gateway/test_temporal_missed_run.py::test_duplicate_dispatched_run_requires_terminal_receipt"
             ],
             "witness": "duplicate_dispatched_run_requires_terminal_receipt"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_missed_run.py::test_recovery_due_when_late_but_not_expired"
+            ],
+            "witness": "recovery_due_requires_review_actions"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_missed_run.py::test_high_risk_missed_run_blocks_without_required_sources_and_evidence",
+              "tests/test_gateway/test_temporal_missed_run.py::test_optional_policy_still_blocks_on_tenant_mismatch"
+            ],
+            "witness": "tenant_command_action_scope_checked"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_missed_run.py::test_high_risk_missed_run_blocks_without_required_sources_and_evidence"
+            ],
+            "witness": "high_risk_source_receipts_bound"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_missed_run.py::test_expired_command_emits_missed_run_receipt"
+            ],
+            "witness": "temporal_missed_run_receipt_schema_valid"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_missed_run.py::test_expired_command_emits_missed_run_receipt"
+            ],
+            "witness": "receipt_not_terminal_closure"
           }
         ],
-        "exact_test_anchor_count": 2,
+        "exact_test_anchor_count": 9,
         "runtime_witness_count": 9,
         "surface_id": "temporal_missed_run",
-        "unanchored_witness_count": 7,
-        "unanchored_witnesses": [
-          "runtime_clock_owns_missed_run_time",
-          "late_within_grace_preserves_dispatch_eligibility",
-          "recovery_due_requires_review_actions",
-          "tenant_command_action_scope_checked",
-          "high_risk_source_receipts_bound",
-          "temporal_missed_run_receipt_schema_valid",
-          "receipt_not_terminal_closure"
-        ]
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
       },
       {
         "anchored_witnesses": [
@@ -16821,6 +16886,6 @@
         "unanchored_witnesses": []
       }
     ],
-    "unanchored_witness_count": 27
+    "unanchored_witness_count": 20
   }
 }

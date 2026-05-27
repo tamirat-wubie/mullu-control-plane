@@ -5614,6 +5614,36 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "temporal_missed_run_receipt_schema_valid",
                 "receipt_not_terminal_closure",
             ],
+            runtime_witness_anchor_aliases={
+                "runtime_clock_owns_missed_run_time": [
+                    "expired_command_emits_missed_run_receipt",
+                ],
+                "late_within_grace_preserves_dispatch_eligibility": [
+                    "late_within_grace_remains_dispatch_eligible",
+                ],
+                "expired_command_emits_missed_run_receipt": [
+                    "expired_command_emits_missed_run_receipt",
+                ],
+                "duplicate_dispatched_run_requires_terminal_receipt": [
+                    "duplicate_dispatched_run_requires_terminal_receipt",
+                ],
+                "recovery_due_requires_review_actions": [
+                    "recovery_due_when_late_but_not_expired",
+                ],
+                "tenant_command_action_scope_checked": [
+                    "high_risk_missed_run_blocks_without_required_sources_and_evidence",
+                    "optional_policy_still_blocks_on_tenant_mismatch",
+                ],
+                "high_risk_source_receipts_bound": [
+                    "high_risk_missed_run_blocks_without_required_sources_and_evidence",
+                ],
+                "temporal_missed_run_receipt_schema_valid": [
+                    "expired_command_emits_missed_run_receipt",
+                ],
+                "receipt_not_terminal_closure": [
+                    "expired_command_emits_missed_run_receipt",
+                ],
+            },
         ),
         _surface(
             "temporal_recurrence_window",

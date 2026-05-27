@@ -193,6 +193,8 @@ def test_witness_integrity_report_tracks_exact_test_anchors() -> None:
     assert surfaces["temporal_reapproval"]["unanchored_witness_count"] == 0
     assert surfaces["temporal_monotonic_duration"]["exact_test_anchor_count"] == 8
     assert surfaces["temporal_monotonic_duration"]["unanchored_witness_count"] == 0
+    assert surfaces["temporal_missed_run"]["exact_test_anchor_count"] == 9
+    assert surfaces["temporal_missed_run"]["unanchored_witness_count"] == 0
     assert surfaces["code_intelligence_operator_read_model"]["exact_test_anchor_count"] >= 5
     assert surfaces["code_intelligence_operator_read_model"]["unanchored_witness_count"] == 0
     assert surfaces["data_export_lifecycle"]["exact_test_anchor_count"] >= 4
@@ -3708,8 +3710,13 @@ def test_temporal_idempotency_window_surface_blocks_duplicate_dispatch() -> None
 def test_temporal_missed_run_surface_emits_skip_and_recovery_receipts() -> None:
     matrix = _load_fixture()
     surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    witness_surfaces = {
+        surface["surface_id"]: surface
+        for surface in matrix["witness_integrity"]["surfaces"]
+    }
     closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
     missed_run_surface = surfaces["temporal_missed_run"]
+    missed_run_witness_surface = witness_surfaces["temporal_missed_run"]
     witnesses = set(missed_run_surface["runtime_witnesses"])
 
     assert missed_run_surface["coverage_state"] == "witnessed"
@@ -3729,6 +3736,9 @@ def test_temporal_missed_run_surface_emits_skip_and_recovery_receipts() -> None:
     assert "tenant_command_action_scope_checked" in witnesses
     assert "high_risk_source_receipts_bound" in witnesses
     assert "temporal_missed_run_receipt_schema_valid" in witnesses
+    assert "receipt_not_terminal_closure" in witnesses
+    assert missed_run_witness_surface["exact_test_anchor_count"] == 9
+    assert missed_run_witness_surface["unanchored_witness_count"] == 0
     assert closure_actions["publish_temporal_missed_run_receipt_contract"]["status"] == "closed"
 
 
