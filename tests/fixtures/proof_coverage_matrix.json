@@ -4618,6 +4618,36 @@
         "/api/v1/output/schemas"
       ],
       "request_proof": "request_proof",
+      "runtime_witness_anchor_aliases": {
+        "structured_output_endpoint_parse_valid_and_invalid": [
+          "parse_valid",
+          "parse_invalid"
+        ],
+        "structured_output_parse_invalid_json": [
+          "parse_no_json",
+          "parse_invalid"
+        ],
+        "structured_output_parse_markdown_json": [
+          "parse_markdown_json"
+        ],
+        "structured_output_parse_unknown_schema_bounded": [
+          "unknown_schema"
+        ],
+        "structured_output_parse_valid_json": [
+          "parse_valid_json",
+          "parse_valid"
+        ],
+        "structured_output_schema_list_bounded": [
+          "list_output_schemas",
+          "list_schemas",
+          "summary"
+        ],
+        "structured_output_schema_registration_validated": [
+          "register_rejects_unsupported_field_type",
+          "register_rejects_required_field_missing_from_schema",
+          "duplicate_register_is_bounded"
+        ]
+      },
       "runtime_witnesses": [
         "structured_output_parse_valid_json",
         "structured_output_parse_invalid_json",
@@ -8093,7 +8123,7 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 881,
+    "exact_test_anchor_count": 888,
     "runtime_witness_count": 1108,
     "surfaces": [
       {
@@ -10457,20 +10487,62 @@
         "unanchored_witnesses": []
       },
       {
-        "anchored_witnesses": [],
-        "exact_test_anchor_count": 0,
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "mcoi/tests/test_structured_output.py::test_parse_valid_json",
+              "mcoi/tests/test_server_phase212.py::test_parse_valid"
+            ],
+            "witness": "structured_output_parse_valid_json"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_structured_output.py::test_parse_no_json",
+              "mcoi/tests/test_server_phase212.py::test_parse_invalid"
+            ],
+            "witness": "structured_output_parse_invalid_json"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_structured_output.py::test_unknown_schema"
+            ],
+            "witness": "structured_output_parse_unknown_schema_bounded"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_structured_output.py::test_parse_markdown_json"
+            ],
+            "witness": "structured_output_parse_markdown_json"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_structured_output.py::test_register_rejects_unsupported_field_type",
+              "mcoi/tests/test_structured_output.py::test_register_rejects_required_field_missing_from_schema",
+              "mcoi/tests/test_structured_output.py::test_duplicate_register_is_bounded"
+            ],
+            "witness": "structured_output_schema_registration_validated"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_server_phase212.py::test_parse_valid",
+              "mcoi/tests/test_server_phase212.py::test_parse_invalid"
+            ],
+            "witness": "structured_output_endpoint_parse_valid_and_invalid"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_server_phase212.py::test_list_output_schemas",
+              "mcoi/tests/test_structured_output.py::test_list_schemas",
+              "mcoi/tests/test_structured_output.py::test_summary"
+            ],
+            "witness": "structured_output_schema_list_bounded"
+          }
+        ],
+        "exact_test_anchor_count": 7,
         "runtime_witness_count": 7,
         "surface_id": "structured_output_validation",
-        "unanchored_witness_count": 7,
-        "unanchored_witnesses": [
-          "structured_output_parse_valid_json",
-          "structured_output_parse_invalid_json",
-          "structured_output_parse_unknown_schema_bounded",
-          "structured_output_parse_markdown_json",
-          "structured_output_schema_registration_validated",
-          "structured_output_endpoint_parse_valid_and_invalid",
-          "structured_output_schema_list_bounded"
-        ]
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
       },
       {
         "anchored_witnesses": [
@@ -14801,6 +14873,6 @@
         "unanchored_witnesses": []
       }
     ],
-    "unanchored_witness_count": 227
+    "unanchored_witness_count": 220
   }
 }
