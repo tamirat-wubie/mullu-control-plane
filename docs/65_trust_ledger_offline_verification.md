@@ -285,7 +285,10 @@ The remote POST is not attempted unless the preflight receipt validates against
 `outcome=SolvedVerified`, and matches the final operator id, authority ref,
 remote URL, timeout, ledger sequence, previous ledger hash, and projected remote
 payload hash. The submitter also recomputes the canonical preflight receipt id
-and rejects receipt-id drift before any remote or ledger effect.
+and rejects receipt-id drift before any remote or ledger effect. The canonical
+preflight receipt id hash-binds the full anchor-verification report and
+submission-ledger replay state, so tampered readiness evidence cannot keep the
+same receipt identity.
 
 Pass condition:
 

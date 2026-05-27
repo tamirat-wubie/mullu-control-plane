@@ -2962,6 +2962,8 @@ def test_trust_ledger_surface_signs_terminal_evidence_bundles() -> None:
         "submit_trust_ledger_anchor_export_blocks_invalid_remote_timeout_before_transport",
         "submit_trust_ledger_anchor_export_blocks_remote_preflight_hash_mismatch",
         "submit_trust_ledger_anchor_export_blocks_remote_preflight_receipt_id_mismatch",
+        "submit_trust_ledger_anchor_export_blocks_remote_preflight_anchor_state_drift",
+        "submit_trust_ledger_anchor_export_blocks_remote_preflight_ledger_state_drift",
         "submit_trust_ledger_anchor_export_blocks_remote_preflight_checked_at_drift",
         "submit_trust_ledger_anchor_export_blocks_nonfinite_remote_preflight_timeout",
         "submit_trust_ledger_anchor_export_blocks_remote_hash_mismatch",
