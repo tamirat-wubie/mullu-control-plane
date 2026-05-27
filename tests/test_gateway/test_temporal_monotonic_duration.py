@@ -63,6 +63,7 @@ def test_monotonic_duration_allows_high_risk_dispatch_inside_latency_bound() -> 
     assert receipt.metadata["monotonic_used_for_duration"] is True
     assert receipt.metadata["wall_clock_not_used_for_duration"] is True
     assert receipt.metadata["dispatch_allowed"] is True
+    assert receipt.metadata["receipt_is_not_terminal_closure"] is True
     assert receipt.terminal_closure_required is True
 
 

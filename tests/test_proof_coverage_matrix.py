@@ -189,6 +189,10 @@ def test_witness_integrity_report_tracks_exact_test_anchors() -> None:
     assert surfaces["policy_prover"]["unanchored_witness_count"] == 0
     assert surfaces["temporal_evidence_freshness"]["exact_test_anchor_count"] == 8
     assert surfaces["temporal_evidence_freshness"]["unanchored_witness_count"] == 0
+    assert surfaces["temporal_reapproval"]["exact_test_anchor_count"] == 8
+    assert surfaces["temporal_reapproval"]["unanchored_witness_count"] == 0
+    assert surfaces["temporal_monotonic_duration"]["exact_test_anchor_count"] == 8
+    assert surfaces["temporal_monotonic_duration"]["unanchored_witness_count"] == 0
     assert surfaces["code_intelligence_operator_read_model"]["exact_test_anchor_count"] >= 5
     assert surfaces["code_intelligence_operator_read_model"]["unanchored_witness_count"] == 0
     assert surfaces["data_export_lifecycle"]["exact_test_anchor_count"] >= 4
@@ -3467,8 +3471,13 @@ def test_temporal_causal_order_surface_rechecks_required_event_order() -> None:
 def test_temporal_monotonic_duration_surface_rechecks_elapsed_time() -> None:
     matrix = _load_fixture()
     surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    witness_surfaces = {
+        surface["surface_id"]: surface
+        for surface in matrix["witness_integrity"]["surfaces"]
+    }
     closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
     duration_surface = surfaces["temporal_monotonic_duration"]
+    duration_witness_surface = witness_surfaces["temporal_monotonic_duration"]
     witnesses = set(duration_surface["runtime_witnesses"])
 
     assert duration_surface["coverage_state"] == "witnessed"
@@ -3487,6 +3496,9 @@ def test_temporal_monotonic_duration_surface_rechecks_elapsed_time() -> None:
     assert "monotonic_clock_regression_blocks_dispatch" in witnesses
     assert "high_risk_source_receipts_bound" in witnesses
     assert "temporal_monotonic_duration_receipt_schema_valid" in witnesses
+    assert "receipt_not_terminal_closure" in witnesses
+    assert duration_witness_surface["exact_test_anchor_count"] == 8
+    assert duration_witness_surface["unanchored_witness_count"] == 0
     assert closure_actions["publish_temporal_monotonic_duration_receipt_contract"]["status"] == "closed"
 
 
