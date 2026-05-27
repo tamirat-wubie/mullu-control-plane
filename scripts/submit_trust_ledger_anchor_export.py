@@ -37,6 +37,7 @@ from scripts.verify_anchor_receipt import verify_anchor_receipt_files  # noqa: E
 
 
 SUBMISSION_RECEIPT_SCHEMA_PATH = ROOT / "schemas" / "trust_ledger_anchor_submission_receipt.schema.json"
+REMOTE_PREFLIGHT_SCHEMA_PATH = ROOT / "schemas" / "trust_ledger_remote_submission_preflight.schema.json"
 ZERO_HASH = "0" * 64
 SUBMISSION_STATUS = "submitted"
 MAX_REMOTE_RESPONSE_BYTES = 65_536
@@ -61,6 +62,7 @@ def submit_trust_ledger_anchor_export(
     receipt_out: Path | None = None,
     remote_submit_url: str = "",
     allow_remote_submit: bool = False,
+    remote_preflight_receipt_path: Path | None = None,
     remote_api_token: str = "",
     remote_timeout_seconds: float = 10.0,
     urlopen: UrlOpen | None = None,
@@ -69,8 +71,8 @@ def submit_trust_ledger_anchor_export(
     """Verify one anchor export and append a signed submission receipt."""
     if not confirm_submit:
         return _report(valid=False, reason="operator_confirmation_required")
-    if not operator_id:
-        return _report(valid=False, reason="operator_id_required")
+    if not _operator_id_allowed(operator_id):
+        return _report(valid=False, reason="operator_id_invalid")
     if not _authority_ref_allowed(authority_ref):
         return _report(valid=False, reason="authority_ref_invalid")
     if not submitted_at:
@@ -85,6 +87,8 @@ def submit_trust_ledger_anchor_export(
         return _report(valid=False, reason="remote_submit_url_required")
     if allow_remote_submit and not remote_api_token:
         return _report(valid=False, reason="remote_api_token_required")
+    if allow_remote_submit and remote_preflight_receipt_path is None:
+        return _report(valid=False, reason="remote_preflight_receipt_required")
     remote_url_error = _validate_remote_submit_url(remote_submit_url) if remote_submit_url else ""
     if remote_url_error:
         return _report(valid=False, reason=remote_url_error)
@@ -131,6 +135,7 @@ def submit_trust_ledger_anchor_export(
 
     ledger_sequence = int(ledger_state["submission_count"]) + 1
     previous_submission_hash = str(ledger_state["latest_submission_hash"])
+    remote_preflight = _remote_preflight_report(valid=True, reason="remote_preflight_not_requested")
     remote_submission = _remote_submission_report(valid=True, reason="remote_submission_not_requested")
     external_anchor_ref = f"ledger://trust-ledger-anchor-submissions/{ledger_sequence}/{verification['anchor_receipt_id']}"
     metadata_extra: dict[str, Any] = {}
@@ -145,6 +150,31 @@ def submit_trust_ledger_anchor_export(
             ledger_sequence=ledger_sequence,
             previous_submission_hash=previous_submission_hash,
         )
+        remote_preflight = _verify_remote_preflight_receipt(
+            preflight_path=remote_preflight_receipt_path,
+            payload=remote_payload,
+            remote_submit_url=remote_submit_url,
+            remote_timeout_seconds=remote_timeout_seconds,
+            operator_id=operator_id,
+            authority_ref=authority_ref,
+            ledger_path=ledger_path,
+            ledger_sequence=ledger_sequence,
+            previous_submission_hash=previous_submission_hash,
+            strict=strict,
+        )
+        if remote_preflight["valid"] is not True:
+            return _report(
+                valid=False,
+                reason=f"remote_preflight_receipt_failed:{remote_preflight['reason']}",
+                anchor_verification=verification,
+                ledger_state=ledger_state,
+                remote_preflight=remote_preflight,
+                remote_submission=_remote_submission_report(
+                    valid=False,
+                    reason="remote_submission_blocked_by_preflight",
+                    submission_payload_hash=str(remote_payload["submission_payload_hash"]),
+                ),
+            )
         remote_submission = _submit_remote_transparency_log(
             submit_url=remote_submit_url,
             api_token=remote_api_token,
@@ -158,6 +188,7 @@ def submit_trust_ledger_anchor_export(
                 reason=f"remote_submission_failed:{remote_submission['reason']}",
                 anchor_verification=verification,
                 ledger_state=ledger_state,
+                remote_preflight=remote_preflight,
                 remote_submission=remote_submission,
             )
         external_anchor_ref = str(remote_submission["external_anchor_ref"])
@@ -167,6 +198,12 @@ def submit_trust_ledger_anchor_export(
             "remote_response_hash": remote_submission["remote_response_hash"],
             "remote_receipt_hash": remote_submission["remote_receipt_hash"],
             "remote_status_code": remote_submission["status_code"],
+            "remote_preflight_receipt_path": str(remote_preflight_receipt_path),
+            "remote_preflight_receipt_id": remote_preflight["receipt_id"],
+            "remote_preflight_checked_at": remote_preflight["checked_at"],
+            "remote_preflight_expected_payload_hash": remote_preflight[
+                "expected_remote_submission_payload_hash"
+            ],
         }
 
     submission_receipt = _build_submission_receipt(
@@ -193,6 +230,7 @@ def submit_trust_ledger_anchor_export(
             schema_errors=schema_errors if strict else schema_errors[:10],
             anchor_verification=verification,
             ledger_state=ledger_state,
+            remote_preflight=remote_preflight,
             remote_submission=remote_submission,
         )
 
@@ -210,6 +248,7 @@ def submit_trust_ledger_anchor_export(
         schema_errors=[],
         anchor_verification=verification,
         ledger_state=ledger_state,
+        remote_preflight=remote_preflight,
         remote_submission=remote_submission,
         submission_receipt=submission_receipt,
         output_files=output_files,
@@ -503,6 +542,143 @@ def _submit_remote_transparency_log(
     )
 
 
+def _verify_remote_preflight_receipt(
+    *,
+    preflight_path: Path | None,
+    payload: dict[str, Any],
+    remote_submit_url: str,
+    remote_timeout_seconds: float,
+    operator_id: str,
+    authority_ref: str,
+    ledger_path: Path,
+    ledger_sequence: int,
+    previous_submission_hash: str,
+    strict: bool,
+) -> dict[str, Any]:
+    if preflight_path is None:
+        return _remote_preflight_report(valid=False, reason="remote_preflight_receipt_required")
+
+    loaded = _read_json_object(preflight_path, "remote_preflight_receipt")
+    if loaded.get("reason"):
+        return _remote_preflight_report(
+            valid=False,
+            reason=str(loaded["reason"]),
+            receipt_path=str(preflight_path),
+        )
+
+    preflight = loaded["payload"]
+    schema_errors = _validate_schema_instance(_load_schema(REMOTE_PREFLIGHT_SCHEMA_PATH), preflight)
+    if schema_errors:
+        return _remote_preflight_report(
+            valid=False,
+            reason="remote_preflight_receipt_schema_validation_failed",
+            schema_valid=False,
+            schema_errors=schema_errors if strict else schema_errors[:10],
+            receipt_path=str(preflight_path),
+        )
+
+    expected_hash = str(preflight["expected_remote_submission_payload_hash"])
+    actual_hash = str(payload["submission_payload_hash"])
+    canonical_receipt_id = _remote_preflight_receipt_id(preflight)
+    if str(preflight["receipt_id"]) != canonical_receipt_id:
+        return _remote_preflight_report(
+            valid=False,
+            reason="receipt_id_mismatch",
+            schema_valid=True,
+            receipt_path=str(preflight_path),
+            receipt_id=str(preflight["receipt_id"]),
+            canonical_receipt_id=canonical_receipt_id,
+            checked_at=str(preflight["checked_at"]),
+            expected_remote_submission_payload_hash=expected_hash,
+            actual_remote_submission_payload_hash=actual_hash,
+            expected_remote_idempotency_key=str(preflight["expected_remote_idempotency_key"]),
+            actual_remote_idempotency_key=actual_hash,
+        )
+
+    expected_host = _remote_submit_host(remote_submit_url)
+    required_matches = (
+        ("ready", preflight["ready"], True),
+        ("outcome", preflight["outcome"], "SolvedVerified"),
+        ("operator_id", preflight["operator_id"], operator_id),
+        ("authority_ref", preflight["authority_ref"], authority_ref),
+        ("remote_submit_url", preflight["remote_submit_url"], remote_submit_url),
+        ("remote_submit_host", preflight["remote_submit_host"], expected_host),
+        ("remote_timeout_seconds", float(preflight["remote_timeout_seconds"]), float(remote_timeout_seconds)),
+        ("remote_api_token_present", preflight["remote_api_token_present"], True),
+        ("verification_secret_present", preflight["verification_secret_present"], True),
+        ("submission_secret_present", preflight["submission_secret_present"], True),
+        ("signature_key_id_present", preflight["signature_key_id_present"], True),
+        ("ledger_path", preflight["ledger_path"], str(ledger_path)),
+        ("next_ledger_sequence", int(preflight["next_ledger_sequence"]), ledger_sequence),
+        ("previous_submission_hash", preflight["previous_submission_hash"], previous_submission_hash),
+        ("expected_remote_submission_payload_hash", expected_hash, actual_hash),
+        ("expected_remote_idempotency_key", preflight["expected_remote_idempotency_key"], actual_hash),
+    )
+    for field_name, observed, expected in required_matches:
+        if observed != expected:
+            return _remote_preflight_report(
+                valid=False,
+                reason=f"{field_name}_mismatch",
+                schema_valid=True,
+                receipt_path=str(preflight_path),
+                receipt_id=str(preflight["receipt_id"]),
+                checked_at=str(preflight["checked_at"]),
+                expected_remote_submission_payload_hash=expected_hash,
+                actual_remote_submission_payload_hash=actual_hash,
+                expected_remote_idempotency_key=str(preflight["expected_remote_idempotency_key"]),
+                actual_remote_idempotency_key=actual_hash,
+            )
+
+    if preflight["blockers"] or preflight["hard_blockers"]:
+        return _remote_preflight_report(
+            valid=False,
+            reason="remote_preflight_receipt_has_blockers",
+            schema_valid=True,
+            receipt_path=str(preflight_path),
+            receipt_id=str(preflight["receipt_id"]),
+            checked_at=str(preflight["checked_at"]),
+            expected_remote_submission_payload_hash=expected_hash,
+            actual_remote_submission_payload_hash=actual_hash,
+            expected_remote_idempotency_key=str(preflight["expected_remote_idempotency_key"]),
+            actual_remote_idempotency_key=actual_hash,
+        )
+
+    metadata = preflight["metadata"]
+    metadata_matches = (
+        ("preflight_only", metadata["preflight_only"], True),
+        ("remote_submit_executed", metadata["remote_submit_executed"], False),
+        ("ledger_append_executed", metadata["ledger_append_executed"], False),
+        ("requires_operator_confirmation_for_submit", metadata["requires_operator_confirmation_for_submit"], True),
+    )
+    for field_name, observed, expected in metadata_matches:
+        if observed != expected:
+            return _remote_preflight_report(
+                valid=False,
+                reason=f"metadata_{field_name}_mismatch",
+                schema_valid=True,
+                receipt_path=str(preflight_path),
+                receipt_id=str(preflight["receipt_id"]),
+                checked_at=str(preflight["checked_at"]),
+                expected_remote_submission_payload_hash=expected_hash,
+                actual_remote_submission_payload_hash=actual_hash,
+                expected_remote_idempotency_key=str(preflight["expected_remote_idempotency_key"]),
+                actual_remote_idempotency_key=actual_hash,
+            )
+
+    return _remote_preflight_report(
+        valid=True,
+        reason="remote_preflight_receipt_verified",
+        receipt_path=str(preflight_path),
+        receipt_id=str(preflight["receipt_id"]),
+        canonical_receipt_id=canonical_receipt_id,
+        checked_at=str(preflight["checked_at"]),
+        expected_remote_submission_payload_hash=expected_hash,
+        actual_remote_submission_payload_hash=actual_hash,
+        expected_remote_idempotency_key=str(preflight["expected_remote_idempotency_key"]),
+        actual_remote_idempotency_key=actual_hash,
+    )
+
+
 def _read_json_object(path: Path, label: str) -> dict[str, Any]:
     try:
         payload = json.loads(path.read_text(encoding="utf-8"))
@@ -540,6 +716,12 @@ def _authority_ref_allowed(value: str) -> bool:
     return value.startswith(("proof://", "authority://"))
 
 
+def _operator_id_allowed(value: str) -> bool:
+    if not value or value.strip() != value or len(value) > 128:
+        return False
+    return not any(character.isspace() or ord(character) < 32 for character in value)
+
+
 def _validate_remote_submit_url(value: str) -> str:
     try:
         parsed = urllib.parse.urlparse(value)
@@ -554,6 +736,13 @@ def _validate_remote_submit_url(value: str) -> str:
     if parsed.query or parsed.fragment:
         return "remote_submit_url_query_fragment_forbidden"
     return ""
+
+
+def _remote_submit_host(value: str) -> str:
+    try:
+        return urllib.parse.urlparse(value).hostname or ""
+    except ValueError:
+        return ""
 
 
 def _external_anchor_ref_allowed(value: str) -> bool:
@@ -597,6 +786,51 @@ def _stable_hash(payload: Any) -> str:
     return hashlib.sha256(encoded).hexdigest()
 
 
+def _remote_preflight_receipt_id(preflight: dict[str, Any]) -> str:
+    anchor_verification = preflight.get("anchor_verification", {})
+    ledger_state = preflight.get("ledger_state", {})
+    metadata = preflight.get("metadata", {})
+    receipt_seed = {
+        "schema_version": int(preflight["schema_version"]),
+        "checked_at": str(preflight["checked_at"]),
+        "ready": bool(preflight["ready"]),
+        "outcome": str(preflight["outcome"]),
+        "operator_id": str(preflight["operator_id"]),
+        "authority_ref": str(preflight["authority_ref"]),
+        "remote_submit_url": str(preflight["remote_submit_url"]),
+        "remote_submit_host": str(preflight["remote_submit_host"]),
+        "remote_timeout_seconds": float(preflight["remote_timeout_seconds"]),
+        "remote_api_token_present": bool(preflight["remote_api_token_present"]),
+        "verification_secret_present": bool(preflight["verification_secret_present"]),
+        "submission_secret_present": bool(preflight["submission_secret_present"]),
+        "signature_key_id_present": bool(preflight["signature_key_id_present"]),
+        "ledger_path": str(preflight["ledger_path"]),
+        "next_ledger_sequence": int(preflight["next_ledger_sequence"]),
+        "previous_submission_hash": str(preflight["previous_submission_hash"]),
+        "expected_remote_submission_payload_hash": str(preflight["expected_remote_submission_payload_hash"]),
+        "expected_remote_idempotency_key": str(preflight["expected_remote_idempotency_key"]),
+        "steps": [
+            {
+                "name": str(step["name"]),
+                "passed": bool(step["passed"]),
+                "detail": str(step["detail"]),
+            }
+            for step in preflight["steps"]
+        ],
+        "blockers": [str(blocker) for blocker in preflight["blockers"]],
+        "hard_blockers": [str(blocker) for blocker in preflight["hard_blockers"]],
+        "anchor_verification_reason": str(anchor_verification.get("reason", "")),
+        "ledger_state_reason": str(ledger_state.get("reason", "")),
+        "metadata": {
+            "preflight_only": bool(metadata["preflight_only"]),
+            "remote_submit_executed": bool(metadata["remote_submit_executed"]),
+            "ledger_append_executed": bool(metadata["ledger_append_executed"]),
+            "requires_operator_confirmation_for_submit": bool(metadata["requires_operator_confirmation_for_submit"]),
+        },
+    }
+    return f"trust-ledger-remote-submission-preflight-{_stable_hash(receipt_seed)[:16]}"
+
+
 def _report(
     *,
     valid: bool,
@@ -607,6 +841,7 @@ def _report(
     anchor_verification: dict[str, Any] | None = None,
     ledger_state: dict[str, Any] | None = None,
     remote_submission: dict[str, Any] | None = None,
+    remote_preflight: dict[str, Any] | None = None,
     submission_receipt: dict[str, Any] | None = None,
     output_files: dict[str, str] | None = None,
 ) -> dict[str, Any]:
@@ -629,6 +864,7 @@ def _report(
         "signature_key_id": str(receipt.get("signature_key_id", "")),
         "anchor_verification": verification,
         "ledger_state": ledger_state or {},
+        "remote_preflight": remote_preflight or {},
         "remote_submission": remote_submission or {},
         "submission_receipt": receipt,
         "output_files": output_files or {},
@@ -679,6 +915,37 @@ def _remote_submission_report(
     }
 
 
+def _remote_preflight_report(
+    *,
+    valid: bool,
+    reason: str,
+    schema_valid: bool = True,
+    schema_errors: list[str] | None = None,
+    receipt_path: str = "",
+    receipt_id: str = "",
+    canonical_receipt_id: str = "",
+    checked_at: str = "",
+    expected_remote_submission_payload_hash: str = "",
+    actual_remote_submission_payload_hash: str = "",
+    expected_remote_idempotency_key: str = "",
+    actual_remote_idempotency_key: str = "",
+) -> dict[str, Any]:
+    return {
+        "valid": valid,
+        "reason": reason,
+        "schema_valid": schema_valid,
+        "schema_errors": schema_errors or [],
+        "receipt_path": receipt_path,
+        "receipt_id": receipt_id,
+        "canonical_receipt_id": canonical_receipt_id,
+        "checked_at": checked_at,
+        "expected_remote_submission_payload_hash": expected_remote_submission_payload_hash,
+        "actual_remote_submission_payload_hash": actual_remote_submission_payload_hash,
+        "expected_remote_idempotency_key": expected_remote_idempotency_key,
+        "actual_remote_idempotency_key": actual_remote_idempotency_key,
+    }
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Submit a verified trust-ledger anchor export")
     parser.add_argument("--bundle", required=True, type=Path, help="Path to trust-ledger bundle JSON")
@@ -707,6 +974,11 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--remote-submit-url", default="", help="Optional HTTPS transparency-log submission endpoint")
     parser.add_argument("--allow-remote-submit", action="store_true", help="Explicitly authorize remote HTTPS submit")
     parser.add_argument(
+        "--remote-preflight-receipt",
+        type=Path,
+        help="Required read-only preflight receipt for effect-bearing remote submission",
+    )
+    parser.add_argument(
         "--remote-api-token",
         default=os.environ.get("MULLU_TRUST_LEDGER_REMOTE_SUBMISSION_TOKEN", ""),
         help="Remote submission bearer token; defaults to MULLU_TRUST_LEDGER_REMOTE_SUBMISSION_TOKEN",
@@ -733,6 +1005,7 @@ def main(argv: list[str] | None = None) -> int:
         receipt_out=args.receipt_out,
         remote_submit_url=args.remote_submit_url,
         allow_remote_submit=args.allow_remote_submit,
+        remote_preflight_receipt_path=args.remote_preflight_receipt,
         remote_api_token=args.remote_api_token,
         remote_timeout_seconds=args.remote_timeout_seconds,
         strict=args.strict,

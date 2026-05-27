@@ -1,0 +1,132 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:trust-ledger-remote-submission-preflight:1",
+  "title": "Trust Ledger Remote Submission Preflight",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "receipt_id",
+    "checked_at",
+    "ready",
+    "outcome",
+    "operator_id",
+    "authority_ref",
+    "remote_submit_url",
+    "remote_submit_host",
+    "remote_timeout_seconds",
+    "remote_api_token_present",
+    "verification_secret_present",
+    "submission_secret_present",
+    "signature_key_id_present",
+    "ledger_path",
+    "next_ledger_sequence",
+    "previous_submission_hash",
+    "expected_remote_submission_payload_hash",
+    "expected_remote_idempotency_key",
+    "step_count",
+    "steps",
+    "blockers",
+    "hard_blockers",
+    "anchor_verification",
+    "ledger_state",
+    "metadata"
+  ],
+  "properties": {
+    "schema_version": {"type": "integer", "const": 1},
+    "receipt_id": {
+      "type": "string",
+      "pattern": "^trust-ledger-remote-submission-preflight-[0-9a-f]{16}$"
+    },
+    "checked_at": {"type": "string", "format": "date-time"},
+    "ready": {"type": "boolean"},
+    "outcome": {
+      "type": "string",
+      "enum": ["SolvedVerified", "AwaitingEvidence", "GovernanceBlocked"]
+    },
+    "operator_id": {"type": "string"},
+    "authority_ref": {"type": "string"},
+    "remote_submit_url": {"type": "string"},
+    "remote_submit_host": {"type": "string"},
+    "remote_timeout_seconds": {"type": "number"},
+    "remote_api_token_present": {"type": "boolean"},
+    "verification_secret_present": {"type": "boolean"},
+    "submission_secret_present": {"type": "boolean"},
+    "signature_key_id_present": {"type": "boolean"},
+    "ledger_path": {"type": "string", "minLength": 1},
+    "next_ledger_sequence": {"type": "integer", "minimum": 0},
+    "previous_submission_hash": {
+      "type": "string",
+      "pattern": "^([0-9a-f]{64})?$"
+    },
+    "expected_remote_submission_payload_hash": {
+      "type": "string",
+      "pattern": "^([0-9a-f]{64})?$"
+    },
+    "expected_remote_idempotency_key": {
+      "type": "string",
+      "pattern": "^([0-9a-f]{64})?$"
+    },
+    "step_count": {"type": "integer", "minimum": 12, "maximum": 12},
+    "steps": {
+      "type": "array",
+      "minItems": 12,
+      "maxItems": 12,
+      "items": {"$ref": "#/$defs/preflight_step"}
+    },
+    "blockers": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1}
+    },
+    "hard_blockers": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1}
+    },
+    "anchor_verification": {"type": "object", "additionalProperties": true},
+    "ledger_state": {"type": "object", "additionalProperties": true},
+    "metadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "preflight_only",
+        "remote_submit_executed",
+        "ledger_append_executed",
+        "requires_operator_confirmation_for_submit"
+      ],
+      "properties": {
+        "preflight_only": {"type": "boolean", "const": true},
+        "remote_submit_executed": {"type": "boolean", "const": false},
+        "ledger_append_executed": {"type": "boolean", "const": false},
+        "requires_operator_confirmation_for_submit": {"type": "boolean", "const": true}
+      }
+    }
+  },
+  "$defs": {
+    "preflight_step": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "passed", "detail"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "enum": [
+            "operator_identity",
+            "authority_ref",
+            "submitted_at",
+            "remote_submit_url",
+            "remote_api_token",
+            "remote_timeout_seconds",
+            "verification_secret",
+            "submission_secret",
+            "signature_key_id",
+            "anchor_export_verification",
+            "submission_ledger_replay",
+            "remote_payload_projection"
+          ]
+        },
+        "passed": {"type": "boolean"},
+        "detail": {"type": "string", "minLength": 1}
+      }
+    }
+  }
+}

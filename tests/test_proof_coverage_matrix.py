@@ -2895,8 +2895,10 @@ def test_trust_ledger_surface_signs_terminal_evidence_bundles() -> None:
     assert "gateway/trust_ledger.py" in trust_surface["evidence_files"]
     assert "scripts/verify_anchor_receipt.py" in trust_surface["evidence_files"]
     assert "scripts/package_orgos_anchor_export.py" in trust_surface["evidence_files"]
+    assert "scripts/preflight_trust_ledger_remote_submission.py" in trust_surface["evidence_files"]
     assert "scripts/submit_trust_ledger_anchor_export.py" in trust_surface["evidence_files"]
     assert "schemas/trust_ledger_anchor_receipt.schema.json" in trust_surface["evidence_files"]
+    assert "schemas/trust_ledger_remote_submission_preflight.schema.json" in trust_surface["evidence_files"]
     assert "schemas/trust_ledger_anchor_submission_receipt.schema.json" in trust_surface["evidence_files"]
     assert "schemas/trust_ledger_anchor_verification_report.schema.json" in trust_surface["evidence_files"]
     assert "schemas/trust_ledger_bundle.schema.json" in trust_surface["evidence_files"]
@@ -2908,6 +2910,7 @@ def test_trust_ledger_surface_signs_terminal_evidence_bundles() -> None:
     assert "tests/test_gateway/test_trust_ledger.py" in trust_surface["evidence_files"]
     assert "tests/test_verify_anchor_receipt.py" in trust_surface["evidence_files"]
     assert "tests/test_package_orgos_anchor_export.py" in trust_surface["evidence_files"]
+    assert "tests/test_preflight_trust_ledger_remote_submission.py" in trust_surface["evidence_files"]
     assert "tests/test_submit_trust_ledger_anchor_export.py" in trust_surface["evidence_files"]
     expected_witnesses = {
         "terminal_command_exports_signed_evidence_bundle",
@@ -2934,11 +2937,22 @@ def test_trust_ledger_surface_signs_terminal_evidence_bundles() -> None:
         "package_orgos_anchor_export_rejects_required_orgos_artifact",
         "package_orgos_anchor_export_rejects_missing_terminal_artifact",
         "package_orgos_anchor_export_cli_emits_verifiable_package",
+        "trust_ledger_remote_submission_preflight_accepts_ready_export",
+        "trust_ledger_remote_submission_preflight_projects_final_submit_payload_hash",
+        "trust_ledger_remote_submission_preflight_blocks_missing_remote_token",
+        "trust_ledger_remote_submission_preflight_blocks_tampered_package",
+        "trust_ledger_remote_submission_preflight_cli_writes_schema_checked_receipt",
+        "trust_ledger_remote_submission_preflight_writer_validates_schema",
         "submit_trust_ledger_anchor_export_records_signed_submission",
         "submit_trust_ledger_anchor_export_blocks_without_confirmation",
+        "submit_trust_ledger_anchor_export_blocks_unbounded_operator_id",
         "submit_trust_ledger_anchor_export_blocks_tampered_package",
         "submit_trust_ledger_anchor_export_posts_remote_transparency_log",
         "submit_trust_ledger_anchor_export_blocks_remote_without_confirmation",
+        "submit_trust_ledger_anchor_export_requires_remote_preflight_receipt",
+        "submit_trust_ledger_anchor_export_blocks_remote_preflight_hash_mismatch",
+        "submit_trust_ledger_anchor_export_blocks_remote_preflight_receipt_id_mismatch",
+        "submit_trust_ledger_anchor_export_blocks_remote_preflight_checked_at_drift",
         "submit_trust_ledger_anchor_export_blocks_remote_hash_mismatch",
         "verify_submission_ledger_detects_hash_drift",
         "submit_trust_ledger_anchor_export_cli_emits_submission_receipt",
@@ -2947,6 +2961,7 @@ def test_trust_ledger_surface_signs_terminal_evidence_bundles() -> None:
     assert closure_actions["publish_trust_ledger_bundle_contract"]["status"] == "closed"
     assert closure_actions["publish_trust_ledger_anchor_receipt_contract"]["status"] == "closed"
     assert closure_actions["publish_trust_ledger_anchor_submission_receipt_contract"]["status"] == "closed"
+    assert closure_actions["publish_trust_ledger_remote_submission_preflight_contract"]["status"] == "closed"
 
 
 def test_domain_operating_pack_surface_requires_certification_evidence() -> None:
