@@ -304,6 +304,9 @@ def test_representative_routes_are_not_unclassified() -> None:
     assert classified_routes["/api/v1/quotas/{tenant_id}"]["surface_id"] == "tenant_governance_lifecycle"
     assert classified_routes["/authority/operator"]["surface_id"] == "authority_operator_controls"
     assert classified_routes["/authority/ownership"]["surface_id"] == "authority_operator_controls"
+    assert classified_routes["/api/v1/orgs"]["surface_id"] == "orgos_case_governance_lifecycle"
+    assert classified_routes["/api/v1/cases/{case_id}/plan"]["surface_id"] == "orgos_case_governance_lifecycle"
+    assert classified_routes["/api/v1/orgos/replay"]["surface_id"] == "orgos_case_governance_lifecycle"
     assert classified_routes["/api/v1/temporal/schedules"]["surface_id"] == "temporal_kernel"
     assert classified_routes["/api/v1/temporal/worker/tick"]["surface_id"] == "temporal_kernel"
     assert classified_routes["/api/v1/knowledge/entities"]["surface_id"] == "governed_operational_intelligence"
@@ -480,6 +483,37 @@ def test_runtime_config_management_surface_is_witnessed() -> None:
     assert route_records["/api/v1/config/drift"]["coverage_state"] == "witnessed"
     assert route_records["/api/v1/config/drift"]["surface_id"] == "runtime_config_management"
     assert closure_actions["classify_runtime_config_management_routes"]["status"] == "closed"
+
+
+def test_orgos_case_governance_lifecycle_surface_is_witnessed() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    route_records = {
+        record["route"]: record
+        for record in matrix["route_coverage"]["routes"]
+    }
+    witness_records = {
+        record["surface_id"]: record
+        for record in matrix["witness_integrity"]["surfaces"]
+    }
+    surface = surfaces["orgos_case_governance_lifecycle"]
+    witnesses = set(surface["runtime_witnesses"])
+
+    assert surface["coverage_state"] == "witnessed"
+    assert surface["request_proof"] == "request_proof"
+    assert surface["action_proof"] == "action_proof"
+    assert surface["audit"] == "audit_chain"
+    assert "/api/v1/orgs" in surface["representative_paths"]
+    assert "/api/v1/cases/{case_id}/close" in surface["representative_paths"]
+    assert "/api/v1/orgos/replay" in surface["representative_paths"]
+    assert "gateway/orgos_kernel.py" in surface["evidence_files"]
+    assert "tests/test_gateway/test_orgos_api.py" in surface["evidence_files"]
+    assert "orgos_api_runs_launch_gateway_case_control_loop" in witnesses
+    assert "orgos_api_replays_projection_from_jsonl_event_log" in witnesses
+    assert "case_closure_requires_effect_reconciliation_match_for_committed" in witnesses
+    assert route_records["/api/v1/cases"]["surface_id"] == "orgos_case_governance_lifecycle"
+    assert route_records["/api/v1/orgos/read-model"]["coverage_state"] == "witnessed"
+    assert witness_records["orgos_case_governance_lifecycle"]["exact_test_anchor_count"] == 12
 
 
 def test_webhooks_proof_surface_is_witnessed() -> None:

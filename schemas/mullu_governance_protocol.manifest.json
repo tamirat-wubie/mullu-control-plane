@@ -809,6 +809,18 @@
       "surface": "closure"
     },
     {
+      "schema_id": "orgos-case-event",
+      "path": "schemas/orgos_case_event.schema.json",
+      "urn": "urn:mullusi:schema:orgos-case-event:1",
+      "surface": "orgos"
+    },
+    {
+      "schema_id": "orgos-case-event-log-verification-report",
+      "path": "schemas/orgos_case_event_log_verification_report.schema.json",
+      "urn": "urn:mullusi:schema:orgos-case-event-log-verification-report:1",
+      "surface": "orgos"
+    },
+    {
       "schema_id": "trust-ledger-bundle",
       "path": "schemas/trust_ledger_bundle.schema.json",
       "urn": "urn:mullusi:schema:trust-ledger-bundle:1",

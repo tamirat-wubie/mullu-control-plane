@@ -1,0 +1,213 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:orgos-case-event:1",
+  "title": "OrgOS Case Event",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "event_id",
+    "case_id",
+    "tenant_id",
+    "event_type",
+    "actor_id",
+    "payload",
+    "evidence_refs",
+    "occurred_at",
+    "receipt",
+    "prev_event_hash",
+    "event_hash",
+    "metadata"
+  ],
+  "properties": {
+    "event_id": {
+      "type": "string",
+      "pattern": "^orgos-event-[0-9]+$"
+    },
+    "case_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "tenant_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "event_type": {
+      "type": "string",
+      "enum": [
+        "organization_registered",
+        "department_registered",
+        "case_opened",
+        "case_updated",
+        "plan_step_added",
+        "authority_decision_recorded",
+        "evidence_added",
+        "closure_attempted",
+        "closure_decided",
+        "learning_bound",
+        "operator_note"
+      ]
+    },
+    "actor_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "payload": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "evidence_refs": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "occurred_at": {
+      "type": "string",
+      "minLength": 1
+    },
+    "receipt": {
+      "$ref": "#/$defs/orgos_case_event_receipt"
+    },
+    "prev_event_hash": {
+      "type": "string",
+      "pattern": "^(genesis|[0-9a-f]{64})$"
+    },
+    "event_hash": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  },
+  "$defs": {
+    "orgos_case_event_receipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "receipt_id",
+        "event_id",
+        "case_id",
+        "tenant_id",
+        "event_type",
+        "prev_event_hash",
+        "payload_hash",
+        "evidence_root_hash",
+        "issued_at",
+        "anchor_target",
+        "external_anchor_status",
+        "external_anchor_ref",
+        "signature_key_id",
+        "signature",
+        "receipt_hash",
+        "metadata"
+      ],
+      "properties": {
+        "receipt_id": {
+          "type": "string",
+          "pattern": "^orgos-event-receipt-[0-9a-f]{16}$"
+        },
+        "event_id": {
+          "type": "string",
+          "pattern": "^orgos-event-[0-9]+$"
+        },
+        "case_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "tenant_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "event_type": {
+          "type": "string",
+          "enum": [
+            "organization_registered",
+            "department_registered",
+            "case_opened",
+            "case_updated",
+            "plan_step_added",
+            "authority_decision_recorded",
+            "evidence_added",
+            "closure_attempted",
+            "closure_decided",
+            "learning_bound",
+            "operator_note"
+          ]
+        },
+        "prev_event_hash": {
+          "type": "string",
+          "pattern": "^(genesis|[0-9a-f]{64})$"
+        },
+        "payload_hash": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "evidence_root_hash": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "issued_at": {
+          "type": "string",
+          "minLength": 1
+        },
+        "anchor_target": {
+          "type": "string",
+          "enum": ["audit_chain", "transparency_log", "external_ledger", "regulatory_archive"]
+        },
+        "external_anchor_status": {
+          "type": "string",
+          "enum": ["not_requested", "pending", "anchored", "failed"]
+        },
+        "external_anchor_ref": {
+          "type": "string"
+        },
+        "signature_key_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "signature": {
+          "type": "string",
+          "pattern": "^hmac-sha256:.+"
+        },
+        "receipt_hash": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "metadata": {
+          "type": "object",
+          "additionalProperties": true,
+          "required": ["event_receipt_is_not_terminal_closure"],
+          "properties": {
+            "event_receipt_is_not_terminal_closure": {
+              "const": true
+            }
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "external_anchor_status": {
+                "const": "anchored"
+              }
+            },
+            "required": ["external_anchor_status"]
+          },
+          "then": {
+            "properties": {
+              "external_anchor_ref": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}
