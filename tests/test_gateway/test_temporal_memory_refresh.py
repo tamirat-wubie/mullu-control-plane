@@ -50,6 +50,8 @@ def test_refresh_not_required_for_usable_memory_schema_receipt() -> None:
     assert receipt.refresh_due_at == ""
     assert receipt.metadata["activation_blocked_until_refresh"] is False
     assert receipt.metadata["memory_refresh_task_created"] is False
+    assert receipt.metadata["runtime_owns_time_truth"] is True
+    assert receipt.metadata["receipt_is_not_terminal_closure"] is True
 
 
 def test_stale_memory_creates_bounded_refresh_task() -> None:

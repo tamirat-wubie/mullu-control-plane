@@ -5734,6 +5734,29 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "temporal_memory_refresh_receipt_schema_valid",
                 "receipt_not_terminal_closure",
             ],
+            runtime_witness_anchor_aliases={
+                "usable_memory_does_not_create_refresh_task": [
+                    "refresh_not_required_for_usable_memory_schema_receipt",
+                ],
+                "stale_memory_creates_bounded_refresh_task": [
+                    "stale_memory_creates_bounded_refresh_task",
+                ],
+                "evidence_type_coverage_gates_review_readiness": [
+                    "complete_refresh_evidence_is_ready_for_review",
+                ],
+                "invalid_refresh_policy_blocks_task_creation": [
+                    "refresh_planning_blocks_invalid_policy_and_scope",
+                ],
+                "superseded_memory_blocks_reactivation": [
+                    "superseded_memory_does_not_create_refresh_task",
+                ],
+                "temporal_memory_refresh_receipt_schema_valid": [
+                    "refresh_not_required_for_usable_memory_schema_receipt",
+                ],
+                "receipt_not_terminal_closure": [
+                    "refresh_not_required_for_usable_memory_schema_receipt",
+                ],
+            },
         ),
         _surface(
             "temporal_scheduler",
@@ -5821,6 +5844,32 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "policy_weakening_forbidden",
                 "policy_proof_schema_valid",
             ],
+            runtime_witness_anchor_aliases={
+                "bounded_policy_cases_required": [
+                    "policy_prover_rejects_empty_inputs",
+                ],
+                "empty_invariants_rejected": [
+                    "policy_prover_rejects_empty_inputs",
+                ],
+                "counterexamples_are_concrete": [
+                    "policy_prover_reports_counterexamples_for_missing_or_mismatched_fields",
+                    "payment_requires_approval_counterexample",
+                    "tenant_isolation_counterexample",
+                    "shell_requires_sandbox_counterexample",
+                    "provider_url_approved_counterexample",
+                    "memory_requires_admission_counterexample",
+                    "unknown_property_fails_closed",
+                ],
+                "proved_report_has_no_counterexamples": [
+                    "policy_prover_emits_proved_report_for_passing_cases",
+                ],
+                "policy_weakening_forbidden": [
+                    "policy_proof_report_schema_contract_is_bounded_and_non_weakening",
+                ],
+                "policy_proof_schema_valid": [
+                    "policy_proof_report_schema_valid",
+                ],
+            },
         ),
         _surface(
             "autonomous_capability_upgrade",

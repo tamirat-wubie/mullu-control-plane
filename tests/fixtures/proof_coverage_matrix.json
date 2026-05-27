@@ -8567,6 +8567,29 @@
         "TemporalMemoryRefreshReceipt"
       ],
       "request_proof": "request_proof",
+      "runtime_witness_anchor_aliases": {
+        "evidence_type_coverage_gates_review_readiness": [
+          "complete_refresh_evidence_is_ready_for_review"
+        ],
+        "invalid_refresh_policy_blocks_task_creation": [
+          "refresh_planning_blocks_invalid_policy_and_scope"
+        ],
+        "receipt_not_terminal_closure": [
+          "refresh_not_required_for_usable_memory_schema_receipt"
+        ],
+        "stale_memory_creates_bounded_refresh_task": [
+          "stale_memory_creates_bounded_refresh_task"
+        ],
+        "superseded_memory_blocks_reactivation": [
+          "superseded_memory_does_not_create_refresh_task"
+        ],
+        "temporal_memory_refresh_receipt_schema_valid": [
+          "refresh_not_required_for_usable_memory_schema_receipt"
+        ],
+        "usable_memory_does_not_create_refresh_task": [
+          "refresh_not_required_for_usable_memory_schema_receipt"
+        ]
+      },
       "runtime_witnesses": [
         "usable_memory_does_not_create_refresh_task",
         "stale_memory_creates_bounded_refresh_task",
@@ -8655,6 +8678,32 @@
         "PolicyProver.prove"
       ],
       "request_proof": "request_proof",
+      "runtime_witness_anchor_aliases": {
+        "bounded_policy_cases_required": [
+          "policy_prover_rejects_empty_inputs"
+        ],
+        "counterexamples_are_concrete": [
+          "policy_prover_reports_counterexamples_for_missing_or_mismatched_fields",
+          "payment_requires_approval_counterexample",
+          "tenant_isolation_counterexample",
+          "shell_requires_sandbox_counterexample",
+          "provider_url_approved_counterexample",
+          "memory_requires_admission_counterexample",
+          "unknown_property_fails_closed"
+        ],
+        "empty_invariants_rejected": [
+          "policy_prover_rejects_empty_inputs"
+        ],
+        "policy_proof_schema_valid": [
+          "policy_proof_report_schema_valid"
+        ],
+        "policy_weakening_forbidden": [
+          "policy_proof_report_schema_contract_is_bounded_and_non_weakening"
+        ],
+        "proved_report_has_no_counterexamples": [
+          "policy_prover_emits_proved_report_for_passing_cases"
+        ]
+      },
       "runtime_witnesses": [
         "bounded_policy_cases_required",
         "empty_invariants_rejected",
@@ -9012,7 +9061,7 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 1102,
+    "exact_test_anchor_count": 1114,
     "runtime_witness_count": 1114,
     "surfaces": [
       {
@@ -16279,23 +16328,52 @@
         "anchored_witnesses": [
           {
             "anchors": [
+              "tests/test_gateway/test_temporal_memory_refresh.py::test_refresh_not_required_for_usable_memory_schema_receipt"
+            ],
+            "witness": "usable_memory_does_not_create_refresh_task"
+          },
+          {
+            "anchors": [
               "tests/test_gateway/test_temporal_memory_refresh.py::test_stale_memory_creates_bounded_refresh_task"
             ],
             "witness": "stale_memory_creates_bounded_refresh_task"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_memory_refresh.py::test_complete_refresh_evidence_is_ready_for_review"
+            ],
+            "witness": "evidence_type_coverage_gates_review_readiness"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_memory_refresh.py::test_refresh_planning_blocks_invalid_policy_and_scope"
+            ],
+            "witness": "invalid_refresh_policy_blocks_task_creation"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_memory_refresh.py::test_superseded_memory_does_not_create_refresh_task"
+            ],
+            "witness": "superseded_memory_blocks_reactivation"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_memory_refresh.py::test_refresh_not_required_for_usable_memory_schema_receipt"
+            ],
+            "witness": "temporal_memory_refresh_receipt_schema_valid"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_memory_refresh.py::test_refresh_not_required_for_usable_memory_schema_receipt"
+            ],
+            "witness": "receipt_not_terminal_closure"
           }
         ],
-        "exact_test_anchor_count": 1,
+        "exact_test_anchor_count": 7,
         "runtime_witness_count": 7,
         "surface_id": "temporal_memory_refresh",
-        "unanchored_witness_count": 6,
-        "unanchored_witnesses": [
-          "usable_memory_does_not_create_refresh_task",
-          "evidence_type_coverage_gates_review_readiness",
-          "invalid_refresh_policy_blocks_task_creation",
-          "superseded_memory_blocks_reactivation",
-          "temporal_memory_refresh_receipt_schema_valid",
-          "receipt_not_terminal_closure"
-        ]
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
       },
       {
         "anchored_witnesses": [
@@ -16367,19 +16445,55 @@
         "unanchored_witnesses": []
       },
       {
-        "anchored_witnesses": [],
-        "exact_test_anchor_count": 0,
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "tests/test_gateway/test_policy_prover.py::test_policy_prover_rejects_empty_inputs"
+            ],
+            "witness": "bounded_policy_cases_required"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_policy_prover.py::test_policy_prover_rejects_empty_inputs"
+            ],
+            "witness": "empty_invariants_rejected"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_policy_prover.py::test_policy_prover_reports_counterexamples_for_missing_or_mismatched_fields",
+              "tests/test_gateway/test_policy_prover.py::test_payment_requires_approval_counterexample",
+              "tests/test_gateway/test_policy_prover.py::test_tenant_isolation_counterexample",
+              "tests/test_gateway/test_policy_prover.py::test_shell_requires_sandbox_counterexample",
+              "tests/test_gateway/test_policy_prover.py::test_provider_url_approved_counterexample",
+              "tests/test_gateway/test_policy_prover.py::test_memory_requires_admission_counterexample",
+              "tests/test_gateway/test_policy_prover.py::test_unknown_property_fails_closed"
+            ],
+            "witness": "counterexamples_are_concrete"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_policy_prover.py::test_policy_prover_emits_proved_report_for_passing_cases"
+            ],
+            "witness": "proved_report_has_no_counterexamples"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_policy_prover.py::test_policy_proof_report_schema_contract_is_bounded_and_non_weakening"
+            ],
+            "witness": "policy_weakening_forbidden"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_policy_prover.py::test_policy_proof_report_schema_valid"
+            ],
+            "witness": "policy_proof_schema_valid"
+          }
+        ],
+        "exact_test_anchor_count": 6,
         "runtime_witness_count": 6,
         "surface_id": "policy_proof_report",
-        "unanchored_witness_count": 6,
-        "unanchored_witnesses": [
-          "bounded_policy_cases_required",
-          "empty_invariants_rejected",
-          "counterexamples_are_concrete",
-          "proved_report_has_no_counterexamples",
-          "policy_weakening_forbidden",
-          "policy_proof_schema_valid"
-        ]
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
       },
       {
         "anchored_witnesses": [
@@ -16959,6 +17073,6 @@
         "unanchored_witnesses": []
       }
     ],
-    "unanchored_witness_count": 12
+    "unanchored_witness_count": 0
   }
 }
