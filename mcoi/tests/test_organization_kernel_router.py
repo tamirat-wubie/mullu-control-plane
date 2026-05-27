@@ -250,7 +250,12 @@ def _readiness_closure_payload() -> dict[str, Any]:
     }
 
 
-def _bind_verified_deployment_witness(client: TestClient, monkeypatch) -> None:
+def _bind_verified_deployment_witness(
+    client: TestClient,
+    monkeypatch,
+    *,
+    auto_gate_engineering_step: bool = True,
+) -> None:
     monkeypatch.setenv("MULLU_RUNTIME_WITNESS_SECRET", "runtime-secret")
     monkeypatch.setenv("MULLU_RUNTIME_CONFORMANCE_SECRET", "conformance-secret")
     witness_payload = _signed_runtime_witness(secret="runtime-secret")
@@ -271,12 +276,16 @@ def _bind_verified_deployment_witness(client: TestClient, monkeypatch) -> None:
         json={
             "gateway_url": "https://gateway.example",
             "expected_environment": "pilot",
+            "auto_gate_engineering_step": auto_gate_engineering_step,
             "metadata": {"operator_action": "collect_gateway_pilot_evidence"},
         },
     )
 
     assert response.status_code == 200
-    assert response.json()["gate_decision"]["status"] == "allowed"
+    if auto_gate_engineering_step:
+        assert response.json()["gate_decision"]["status"] == "allowed"
+    else:
+        assert response.json()["gate_decision"] is None
 
 
 def test_bootstrap_open_pilot_read_model_and_persistence(tmp_path: Path) -> None:
@@ -478,6 +487,87 @@ def test_launch_gateway_pilot_readiness_read_model_reports_missing_evidence(
     assert {step["gate_status"] for step in payload["plan_steps"]} == {"not_evaluated"}
 
 
+def test_launch_gateway_pilot_gate_preview_is_non_mutating(
+    tmp_path: Path,
+) -> None:
+    client, _store = _client(tmp_path)
+    _bootstrap_and_open_pilot(client)
+    before = client.get("/api/v1/cases/case.launch_gateway_pilot").json()
+
+    response = client.get("/api/v1/cases/case.launch_gateway_pilot/launch-gateway-pilot/gate-preview")
+    after = client.get("/api/v1/cases/case.launch_gateway_pilot").json()
+    preview_by_step = {
+        item["step_id"]: item
+        for item in response.json()["gate_preview"]
+    }
+
+    assert response.status_code == 200
+    assert response.json()["ready"] is False
+    assert response.json()["blocked_steps"] == [
+        "executive_objective_freeze",
+        "product_launch_boundary",
+        "engineering_runtime_witness",
+        "security_claim_boundary",
+        "finance_budget_check",
+    ]
+    assert preview_by_step["executive_objective_freeze"]["reason"] == "evidence_missing"
+    assert preview_by_step["product_launch_boundary"]["missing_preconditions"] == ["objective_frozen"]
+    assert before["events"] == after["events"]
+    assert before["gate_decisions"] == after["gate_decisions"] == []
+
+
+def test_launch_gateway_pilot_gate_preview_allows_without_writing_decisions(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    client, _store = _client(tmp_path)
+    _bootstrap_and_open_pilot(client)
+    _bind_verified_deployment_witness(client, monkeypatch, auto_gate_engineering_step=False)
+    for requirement_id in (
+        "executive_objective",
+        "product_launch_boundary",
+        "security_public_claim_boundary",
+        "security_approval",
+        "finance_budget_check",
+    ):
+        evidence = client.post(
+            "/api/v1/cases/case.launch_gateway_pilot/evidence",
+            json={
+                "evidence_ref": f"evidence:preview:{requirement_id}",
+                "requirement_id": requirement_id,
+                "submitted_by": "operator",
+            },
+        )
+        assert evidence.status_code == 200
+        assert evidence.json()["evidence"]["requirement_id"] == requirement_id
+        assert evidence.json()["governed"] is True
+    approval = client.post(
+        "/api/v1/cases/case.launch_gateway_pilot/approvals",
+        json={
+            "approval_id": "approval:preview-security",
+            "role_id": "executive.owner",
+            "approval_scope": "security_approval",
+            "approved_by": "human-executive",
+        },
+    )
+
+    response = client.get("/api/v1/cases/case.launch_gateway_pilot/launch-gateway-pilot/gate-preview")
+    fetched = client.get("/api/v1/cases/case.launch_gateway_pilot")
+    readiness = client.get("/api/v1/cases/case.launch_gateway_pilot/launch-gateway-pilot/readiness")
+
+    assert approval.status_code == 200
+    assert response.status_code == 200
+    assert response.json()["ready"] is True
+    assert response.json()["blocked_steps"] == []
+    assert {item["status"] for item in response.json()["gate_preview"]} == {"allowed"}
+    assert all(item["metadata"]["mutates_state"] is False for item in response.json()["gate_preview"])
+    assert fetched.json()["gate_decisions"] == []
+    assert readiness.json()["ready_to_close"] is False
+    assert readiness.json()["preview_ready_to_close"] is True
+    assert readiness.json()["terminal_status"] == "awaiting_gate"
+    assert readiness.json()["preview_terminal_status"] == "ready_to_close"
+
+
 def test_launch_gateway_pilot_readiness_packet_closes_after_verified_witness(
     tmp_path: Path,
     monkeypatch,
@@ -567,6 +657,7 @@ def test_default_routers_include_organization_kernel_paths() -> None:
     assert "/api/v1/orgs" in paths
     assert "/api/v1/cases" in paths
     assert "/api/v1/cases/{case_id}/launch-gateway-pilot/deployment-witness" in paths
+    assert "/api/v1/cases/{case_id}/launch-gateway-pilot/gate-preview" in paths
     assert "/api/v1/cases/{case_id}/launch-gateway-pilot/readiness" in paths
     assert "/api/v1/cases/{case_id}/launch-gateway-pilot/readiness-closure" in paths
     assert "/api/v1/cases/{case_id}/close" in paths

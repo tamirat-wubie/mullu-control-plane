@@ -515,11 +515,31 @@ def _validate_launch_gateway_closure_request(req: LaunchGatewayPilotReadinessClo
         raise RuntimeCoreInvariantError("committed readiness closure requires forbidden effect check")
 
 
+def _launch_gateway_gate_preview(kernel: OrganizationKernel, case_id: str) -> tuple[Any, ...]:
+    _require_launch_gateway_pilot_case(kernel, case_id)
+    previews = []
+    gate_status_by_step: dict[str, bool] = {}
+    for step_id, checked_preconditions, predecessor_step_id in _launch_gateway_readiness_gate_checks():
+        predecessor_allowed = (
+            predecessor_step_id is None
+            or gate_status_by_step.get(predecessor_step_id, False)
+        )
+        preview = kernel.preview_plan_step(
+            case_id=case_id,
+            step_id=step_id,
+            checked_preconditions=checked_preconditions if predecessor_allowed else (),
+        )
+        previews.append(preview)
+        gate_status_by_step[step_id] = preview.status is PlanStepGateStatus.ALLOWED
+    return tuple(previews)
+
+
 def _launch_gateway_readiness_model(kernel: OrganizationKernel, case_id: str) -> dict[str, Any]:
     organization_case = _require_launch_gateway_pilot_case(kernel, case_id)
     state = kernel.snapshot_state()
     plan = next((item for item in state.plans if item.case_id == case_id), None)
     closure = next((item for item in state.closures if item.case_id == case_id), None)
+    gate_preview = _launch_gateway_gate_preview(kernel, case_id)
     evidence_by_requirement = {
         requirement_id: [
             evidence for evidence in state.case_evidence
@@ -571,11 +591,21 @@ def _launch_gateway_readiness_model(kernel: OrganizationKernel, case_id: str) ->
         row["step_id"] for row in plan_step_rows
         if row["gate_status"] != PlanStepGateStatus.ALLOWED.value
     ]
+    preview_blocked_steps = [
+        preview.step_id for preview in gate_preview
+        if preview.status is not PlanStepGateStatus.ALLOWED
+    ]
     ready_to_close = (
         closure is None
         and not missing_evidence
         and bool(approvals)
         and not blocked_steps
+    )
+    preview_ready_to_close = (
+        closure is None
+        and not missing_evidence
+        and bool(approvals)
+        and not preview_blocked_steps
     )
     if closure is not None:
         terminal_status = "closed"
@@ -587,6 +617,16 @@ def _launch_gateway_readiness_model(kernel: OrganizationKernel, case_id: str) ->
         terminal_status = "awaiting_gate"
     else:
         terminal_status = "ready_to_close"
+    if closure is not None:
+        preview_terminal_status = "closed"
+    elif missing_evidence:
+        preview_terminal_status = "awaiting_evidence"
+    elif not approvals:
+        preview_terminal_status = "awaiting_approval"
+    elif preview_blocked_steps:
+        preview_terminal_status = "awaiting_gate"
+    else:
+        preview_terminal_status = "ready_to_close"
     return {
         "case_id": organization_case.case_id,
         "case_status": organization_case.status.value,
@@ -597,8 +637,12 @@ def _launch_gateway_readiness_model(kernel: OrganizationKernel, case_id: str) ->
         "approval_refs": [approval.approval_id for approval in approvals],
         "plan_steps": plan_step_rows,
         "blocked_steps": blocked_steps,
+        "gate_preview": [_body(preview) for preview in gate_preview],
+        "preview_blocked_steps": preview_blocked_steps,
         "ready_to_close": ready_to_close,
+        "preview_ready_to_close": preview_ready_to_close,
         "terminal_status": terminal_status,
+        "preview_terminal_status": preview_terminal_status,
         "closure": _body(closure) if closure is not None else None,
         "governed": True,
     }
@@ -769,6 +813,24 @@ def collect_launch_gateway_pilot_deployment_witness(
         "deployment_witness": witness.to_json_dict(),
         "admitted_evidence": [_body(evidence) for evidence in admitted],
         "gate_decision": _body(decision) if decision is not None else None,
+        "governed": True,
+    }
+
+
+@router.get("/api/v1/cases/{case_id}/launch-gateway-pilot/gate-preview")
+def get_launch_gateway_pilot_gate_preview(case_id: str):
+    """Return non-mutating plan-step gate previews for the Launch Gateway Pilot case."""
+    _inc_metric("requests_governed")
+    previews = _launch_gateway_gate_preview(_kernel(), case_id)
+    blocked_steps = [
+        preview.step_id for preview in previews
+        if preview.status is not PlanStepGateStatus.ALLOWED
+    ]
+    return {
+        "case_id": case_id,
+        "gate_preview": [_body(preview) for preview in previews],
+        "blocked_steps": blocked_steps,
+        "ready": not blocked_steps,
         "governed": True,
     }
 
