@@ -559,6 +559,82 @@ def test_submit_trust_ledger_anchor_export_blocks_remote_preflight_receipt_id_mi
     assert not ledger_path.exists()
 
 
+def test_submit_trust_ledger_anchor_export_blocks_remote_preflight_anchor_state_drift(tmp_path: Path) -> None:
+    export_paths = _write_anchor_export(tmp_path)
+    ledger_path = tmp_path / "submissions.jsonl"
+    preflight_path = _write_remote_preflight(tmp_path=tmp_path, export_paths=export_paths, ledger_path=ledger_path)
+    preflight_payload = json.loads(preflight_path.read_text(encoding="utf-8"))
+    preflight_payload["anchor_verification"]["bundle_id"] = "trust-bundle-0000000000000000"
+    preflight_path.write_text(json.dumps(preflight_payload), encoding="utf-8")
+    transport = FakeTransparencyLogTransport()
+
+    report = submit_trust_ledger_anchor_export(
+        bundle_path=export_paths["bundle"],
+        receipt_path=export_paths["anchor_receipt"],
+        artifacts_path=export_paths["artifacts"],
+        package_path=export_paths["package"],
+        ledger_path=ledger_path,
+        operator_id="operator-1",
+        authority_ref="proof://approval-submit-anchor-1",
+        submitted_at="2026-05-05T12:20:00+00:00",
+        verification_secret="anchor-secret",
+        submission_secret="submission-secret",
+        signature_key_id="submission-key",
+        confirm_submit=True,
+        remote_submit_url="https://transparency.example/anchors",
+        allow_remote_submit=True,
+        remote_preflight_receipt_path=preflight_path,
+        remote_api_token="remote-token",
+        urlopen=transport,
+    )
+
+    assert report["valid"] is False
+    assert report["reason"] == "remote_preflight_receipt_failed:receipt_id_mismatch"
+    assert report["remote_preflight"]["canonical_receipt_id"] != preflight_payload["receipt_id"]
+    assert report["remote_submission"]["reason"] == "remote_submission_blocked_by_preflight"
+    assert transport.request is None
+    assert report["submission_receipt"] == {}
+    assert not ledger_path.exists()
+
+
+def test_submit_trust_ledger_anchor_export_blocks_remote_preflight_ledger_state_drift(tmp_path: Path) -> None:
+    export_paths = _write_anchor_export(tmp_path)
+    ledger_path = tmp_path / "submissions.jsonl"
+    preflight_path = _write_remote_preflight(tmp_path=tmp_path, export_paths=export_paths, ledger_path=ledger_path)
+    preflight_payload = json.loads(preflight_path.read_text(encoding="utf-8"))
+    preflight_payload["ledger_state"]["submission_count"] = 7
+    preflight_path.write_text(json.dumps(preflight_payload), encoding="utf-8")
+    transport = FakeTransparencyLogTransport()
+
+    report = submit_trust_ledger_anchor_export(
+        bundle_path=export_paths["bundle"],
+        receipt_path=export_paths["anchor_receipt"],
+        artifacts_path=export_paths["artifacts"],
+        package_path=export_paths["package"],
+        ledger_path=ledger_path,
+        operator_id="operator-1",
+        authority_ref="proof://approval-submit-anchor-1",
+        submitted_at="2026-05-05T12:20:00+00:00",
+        verification_secret="anchor-secret",
+        submission_secret="submission-secret",
+        signature_key_id="submission-key",
+        confirm_submit=True,
+        remote_submit_url="https://transparency.example/anchors",
+        allow_remote_submit=True,
+        remote_preflight_receipt_path=preflight_path,
+        remote_api_token="remote-token",
+        urlopen=transport,
+    )
+
+    assert report["valid"] is False
+    assert report["reason"] == "remote_preflight_receipt_failed:receipt_id_mismatch"
+    assert report["remote_preflight"]["canonical_receipt_id"] != preflight_payload["receipt_id"]
+    assert report["remote_submission"]["reason"] == "remote_submission_blocked_by_preflight"
+    assert transport.request is None
+    assert report["submission_receipt"] == {}
+    assert not ledger_path.exists()
+
+
 def test_submit_trust_ledger_anchor_export_blocks_remote_preflight_checked_at_drift(tmp_path: Path) -> None:
     export_paths = _write_anchor_export(tmp_path)
     ledger_path = tmp_path / "submissions.jsonl"

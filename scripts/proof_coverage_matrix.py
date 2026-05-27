@@ -3729,7 +3729,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "tests/test_preflight_trust_ledger_remote_submission.py",
                 "tests/test_submit_trust_ledger_anchor_export.py",
             ],
-            "Trust ledger signs terminal-closure evidence bundles, exposes operator bundle export, verifies exported bundle and anchor receipt files offline, emits external anchor receipts, packages verifier inputs with content hashes for portable audit review, can merge verified optional OrgOS event receipts into terminal anchor exports without replacing closure, emits a read-only canonical remote submission preflight receipt, and records operator-confirmed external anchor submissions in a signed hash-chained ledger after a matching preflight receipt gates optional HTTPS transparency-log submission and the remote endpoint echoes the payload hash.",
+            "Trust ledger signs terminal-closure evidence bundles, exposes operator bundle export, verifies exported bundle and anchor receipt files offline, emits external anchor receipts, packages verifier inputs with content hashes for portable audit review, can merge verified optional OrgOS event receipts into terminal anchor exports without replacing closure, emits a read-only canonical remote submission preflight receipt whose identity binds verification and ledger state, and records operator-confirmed external anchor submissions in a signed hash-chained ledger after a matching preflight receipt gates optional HTTPS transparency-log submission and the remote endpoint echoes payload plus receipt hashes.",
             [
                 "terminal_command_exports_signed_evidence_bundle",
                 "evidence_bundle_endpoint_rejects_non_terminal_command",
@@ -3791,6 +3791,8 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "submit_trust_ledger_anchor_export_blocks_invalid_remote_timeout_before_transport",
                 "submit_trust_ledger_anchor_export_blocks_remote_preflight_hash_mismatch",
                 "submit_trust_ledger_anchor_export_blocks_remote_preflight_receipt_id_mismatch",
+                "submit_trust_ledger_anchor_export_blocks_remote_preflight_anchor_state_drift",
+                "submit_trust_ledger_anchor_export_blocks_remote_preflight_ledger_state_drift",
                 "submit_trust_ledger_anchor_export_blocks_remote_preflight_checked_at_drift",
                 "submit_trust_ledger_anchor_export_blocks_nonfinite_remote_preflight_timeout",
                 "submit_trust_ledger_anchor_export_blocks_remote_hash_mismatch",

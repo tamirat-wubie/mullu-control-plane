@@ -960,7 +960,9 @@ def _remote_preflight_receipt_id(preflight: dict[str, Any]) -> str:
         ],
         "blockers": [str(blocker) for blocker in preflight["blockers"]],
         "hard_blockers": [str(blocker) for blocker in preflight["hard_blockers"]],
+        "anchor_verification_hash": _stable_hash(anchor_verification),
         "anchor_verification_reason": str(anchor_verification.get("reason", "")),
+        "ledger_state_hash": _stable_hash(ledger_state),
         "ledger_state_reason": str(ledger_state.get("reason", "")),
         "metadata": {
             "preflight_only": bool(metadata["preflight_only"]),
