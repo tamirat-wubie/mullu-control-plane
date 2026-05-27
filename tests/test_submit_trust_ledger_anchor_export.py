@@ -91,6 +91,32 @@ def test_submit_trust_ledger_anchor_export_blocks_without_confirmation(tmp_path:
     assert not ledger_path.exists()
 
 
+def test_submit_trust_ledger_anchor_export_blocks_unbounded_operator_id(tmp_path: Path) -> None:
+    export_paths = _write_anchor_export(tmp_path)
+    ledger_path = tmp_path / "submissions.jsonl"
+
+    report = submit_trust_ledger_anchor_export(
+        bundle_path=export_paths["bundle"],
+        receipt_path=export_paths["anchor_receipt"],
+        artifacts_path=export_paths["artifacts"],
+        package_path=export_paths["package"],
+        ledger_path=ledger_path,
+        operator_id="operator 1",
+        authority_ref="proof://approval-submit-anchor-1",
+        submitted_at="2026-05-05T12:20:00+00:00",
+        verification_secret="anchor-secret",
+        submission_secret="submission-secret",
+        signature_key_id="submission-key",
+        confirm_submit=True,
+    )
+
+    assert report["valid"] is False
+    assert report["reason"] == "operator_id_invalid"
+    assert report["submitted"] is False
+    assert report["submission_receipt"] == {}
+    assert not ledger_path.exists()
+
+
 def test_submit_trust_ledger_anchor_export_blocks_tampered_package(tmp_path: Path) -> None:
     export_paths = _write_anchor_export(tmp_path)
     ledger_path = tmp_path / "submissions.jsonl"

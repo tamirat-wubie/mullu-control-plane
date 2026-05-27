@@ -45,7 +45,7 @@
     },
     "external_anchor_ref": {"type": "string", "pattern": "^(ledger|https)://[^\\s]+$"},
     "external_anchor_status": {"type": "string", "const": "submitted"},
-    "operator_id": {"type": "string", "minLength": 1},
+    "operator_id": {"type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[^\\s]+$"},
     "authority_ref": {"type": "string", "pattern": "^(proof|authority)://[^\\s]+$"},
     "submitted_at": {"type": "string", "format": "date-time"},
     "ledger_path": {"type": "string", "minLength": 1},

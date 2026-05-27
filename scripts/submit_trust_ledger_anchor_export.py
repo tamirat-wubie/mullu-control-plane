@@ -69,8 +69,8 @@ def submit_trust_ledger_anchor_export(
     """Verify one anchor export and append a signed submission receipt."""
     if not confirm_submit:
         return _report(valid=False, reason="operator_confirmation_required")
-    if not operator_id:
-        return _report(valid=False, reason="operator_id_required")
+    if not _operator_id_allowed(operator_id):
+        return _report(valid=False, reason="operator_id_invalid")
     if not _authority_ref_allowed(authority_ref):
         return _report(valid=False, reason="authority_ref_invalid")
     if not submitted_at:
@@ -538,6 +538,12 @@ def _authority_ref_allowed(value: str) -> bool:
     if any(character.isspace() or ord(character) < 32 for character in value):
         return False
     return value.startswith(("proof://", "authority://"))
+
+
+def _operator_id_allowed(value: str) -> bool:
+    if not value or value.strip() != value or len(value) > 128:
+        return False
+    return not any(character.isspace() or ord(character) < 32 for character in value)
 
 
 def _validate_remote_submit_url(value: str) -> str:

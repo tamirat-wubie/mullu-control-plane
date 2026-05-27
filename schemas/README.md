@@ -116,6 +116,7 @@ files are open wire contracts. Runtime modules under `mcoi/`, `gateway/`, and
 | `trust_ledger_bundle_verification_report.schema.json` | Canonical offline verifier report for trust ledger bundle replay |
 | `trust_ledger_evidence_artifacts.schema.json` | Canonical typed evidence artifact export for trust ledger anchor verification |
 | `trust_ledger_export_package.schema.json` | Canonical manifest binding trust ledger bundle, anchor receipt, and artifact export files |
+| `trust_ledger_remote_submission_preflight.schema.json` | Canonical read-only remote anchor submission preflight receipt |
 | `verification_result.schema.json` | Canonical verification closure |
 | `learning_admission.schema.json` | Canonical learning admission decision |
 | `latest_anchor_read_model.schema.json` | Canonical latest command-event anchor read model |

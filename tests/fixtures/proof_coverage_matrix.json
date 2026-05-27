@@ -802,6 +802,13 @@
       "surfaces": [
         "trust_ledger"
       ]
+    },
+    {
+      "action_id": "publish_trust_ledger_remote_submission_preflight_contract",
+      "status": "closed",
+      "surfaces": [
+        "trust_ledger"
+      ]
     }
   ],
   "coverage_levels": [
@@ -6469,8 +6476,10 @@
         "scripts/verify_evidence_bundle.py",
         "scripts/verify_anchor_receipt.py",
         "scripts/package_orgos_anchor_export.py",
+        "scripts/preflight_trust_ledger_remote_submission.py",
         "scripts/submit_trust_ledger_anchor_export.py",
         "schemas/trust_ledger_anchor_receipt.schema.json",
+        "schemas/trust_ledger_remote_submission_preflight.schema.json",
         "schemas/trust_ledger_anchor_submission_receipt.schema.json",
         "schemas/trust_ledger_anchor_verification_report.schema.json",
         "schemas/trust_ledger_bundle.schema.json",
@@ -6482,9 +6491,10 @@
         "tests/test_gateway/test_trust_ledger.py",
         "tests/test_verify_anchor_receipt.py",
         "tests/test_package_orgos_anchor_export.py",
+        "tests/test_preflight_trust_ledger_remote_submission.py",
         "tests/test_submit_trust_ledger_anchor_export.py"
       ],
-      "notes": "Trust ledger signs terminal-closure evidence bundles, exposes operator bundle export, verifies exported bundle and anchor receipt files offline, emits external anchor receipts, packages verifier inputs with content hashes for portable audit review, can merge verified optional OrgOS event receipts into terminal anchor exports without replacing closure, and records operator-confirmed external anchor submissions in a signed hash-chained ledger after optional HTTPS transparency-log submission echoes the payload hash.",
+      "notes": "Trust ledger signs terminal-closure evidence bundles, exposes operator bundle export, verifies exported bundle and anchor receipt files offline, emits external anchor receipts, packages verifier inputs with content hashes for portable audit review, can merge verified optional OrgOS event receipts into terminal anchor exports without replacing closure, emits a read-only remote submission preflight receipt, and records operator-confirmed external anchor submissions in a signed hash-chained ledger after optional HTTPS transparency-log submission echoes the payload hash.",
       "representative_paths": [
         "TrustLedger.issue",
         "TrustLedger.verify",
@@ -6495,8 +6505,10 @@
         "scripts/verify_evidence_bundle.py",
         "scripts/verify_anchor_receipt.py",
         "scripts/package_orgos_anchor_export.py",
+        "scripts/preflight_trust_ledger_remote_submission.py",
         "scripts/submit_trust_ledger_anchor_export.py",
         "TrustLedger.package_anchor_export",
+        "TrustLedgerRemoteSubmissionPreflightReport",
         "TrustLedgerBundle",
         "ExternalProofAnchorReceipt",
         "TrustLedgerExportPackage"
@@ -6538,8 +6550,14 @@
         "package_orgos_anchor_export_rejects_required_orgos_artifact",
         "package_orgos_anchor_export_rejects_missing_terminal_artifact",
         "package_orgos_anchor_export_cli_emits_verifiable_package",
+        "trust_ledger_remote_submission_preflight_accepts_ready_export",
+        "trust_ledger_remote_submission_preflight_blocks_missing_remote_token",
+        "trust_ledger_remote_submission_preflight_blocks_tampered_package",
+        "trust_ledger_remote_submission_preflight_cli_writes_schema_checked_receipt",
+        "trust_ledger_remote_submission_preflight_writer_validates_schema",
         "submit_trust_ledger_anchor_export_records_signed_submission",
         "submit_trust_ledger_anchor_export_blocks_without_confirmation",
+        "submit_trust_ledger_anchor_export_blocks_unbounded_operator_id",
         "submit_trust_ledger_anchor_export_blocks_tampered_package",
         "submit_trust_ledger_anchor_export_posts_remote_transparency_log",
         "submit_trust_ledger_anchor_export_blocks_remote_without_confirmation",
@@ -8055,8 +8073,8 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 855,
-    "runtime_witness_count": 1082,
+    "exact_test_anchor_count": 861,
+    "runtime_witness_count": 1088,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -12669,6 +12687,36 @@
           },
           {
             "anchors": [
+              "tests/test_preflight_trust_ledger_remote_submission.py::test_trust_ledger_remote_submission_preflight_accepts_ready_export"
+            ],
+            "witness": "trust_ledger_remote_submission_preflight_accepts_ready_export"
+          },
+          {
+            "anchors": [
+              "tests/test_preflight_trust_ledger_remote_submission.py::test_trust_ledger_remote_submission_preflight_blocks_missing_remote_token"
+            ],
+            "witness": "trust_ledger_remote_submission_preflight_blocks_missing_remote_token"
+          },
+          {
+            "anchors": [
+              "tests/test_preflight_trust_ledger_remote_submission.py::test_trust_ledger_remote_submission_preflight_blocks_tampered_package"
+            ],
+            "witness": "trust_ledger_remote_submission_preflight_blocks_tampered_package"
+          },
+          {
+            "anchors": [
+              "tests/test_preflight_trust_ledger_remote_submission.py::test_trust_ledger_remote_submission_preflight_cli_writes_schema_checked_receipt"
+            ],
+            "witness": "trust_ledger_remote_submission_preflight_cli_writes_schema_checked_receipt"
+          },
+          {
+            "anchors": [
+              "tests/test_preflight_trust_ledger_remote_submission.py::test_trust_ledger_remote_submission_preflight_writer_validates_schema"
+            ],
+            "witness": "trust_ledger_remote_submission_preflight_writer_validates_schema"
+          },
+          {
+            "anchors": [
               "tests/test_submit_trust_ledger_anchor_export.py::test_submit_trust_ledger_anchor_export_records_signed_submission"
             ],
             "witness": "submit_trust_ledger_anchor_export_records_signed_submission"
@@ -12678,6 +12726,12 @@
               "tests/test_submit_trust_ledger_anchor_export.py::test_submit_trust_ledger_anchor_export_blocks_without_confirmation"
             ],
             "witness": "submit_trust_ledger_anchor_export_blocks_without_confirmation"
+          },
+          {
+            "anchors": [
+              "tests/test_submit_trust_ledger_anchor_export.py::test_submit_trust_ledger_anchor_export_blocks_unbounded_operator_id"
+            ],
+            "witness": "submit_trust_ledger_anchor_export_blocks_unbounded_operator_id"
           },
           {
             "anchors": [
@@ -12716,8 +12770,8 @@
             "witness": "submit_trust_ledger_anchor_export_cli_emits_submission_receipt"
           }
         ],
-        "exact_test_anchor_count": 43,
-        "runtime_witness_count": 43,
+        "exact_test_anchor_count": 49,
+        "runtime_witness_count": 49,
         "surface_id": "trust_ledger",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []

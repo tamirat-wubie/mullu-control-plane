@@ -16,10 +16,12 @@ Dependencies:
 
 - `scripts/verify_evidence_bundle.py`
 - `scripts/verify_anchor_receipt.py`
+- `scripts/preflight_trust_ledger_remote_submission.py`
 - `scripts/submit_trust_ledger_anchor_export.py`
 - `schemas/trust_ledger_bundle.schema.json`
 - `schemas/trust_ledger_bundle_verification_report.schema.json`
 - `schemas/trust_ledger_anchor_receipt.schema.json`
+- `schemas/trust_ledger_remote_submission_preflight.schema.json`
 - `schemas/trust_ledger_anchor_submission_receipt.schema.json`
 - `schemas/trust_ledger_evidence_artifacts.schema.json`
 - `schemas/trust_ledger_export_package.schema.json`
@@ -34,6 +36,7 @@ Invariants:
 - Anchor verifier JSON output validates against `trust_ledger_anchor_verification_report.schema.json` for both valid and fail-closed reports.
 - Anchor receipts do not replace terminal closure certificates.
 - Anchor submission requires explicit operator authority, prior package verification, and a signed hash-chained ledger receipt.
+- Remote submission preflight is read-only: it never posts to the transparency log and never appends to the local submission ledger.
 - Missing signing secrets fail closed.
 
 ## Export Inputs
@@ -150,6 +153,51 @@ Fail-closed reasons include:
 5. Compare `command_id`, `terminal_certificate_id`, `bundle_id`, and `anchor_receipt_id` in the JSON reports.
 6. Treat any invalid report as `GovernanceBlocked` until the source export is regenerated or the tamper source is identified.
 
+## Remote Submission Preflight
+
+Before a real HTTPS transparency-log write, emit a read-only readiness receipt:
+
+```bash
+python scripts/preflight_trust_ledger_remote_submission.py \
+  --bundle bundle.json \
+  --receipt anchor_receipt.json \
+  --artifacts artifacts.json \
+  --package package.json \
+  --ledger-path external_anchor_submissions.jsonl \
+  --operator-id "$MULLU_OPERATOR_ID" \
+  --authority-ref "proof://approval/anchor-submit" \
+  --submitted-at "2026-05-05T12:20:00+00:00" \
+  --verification-secret "$MULLU_TRUST_LEDGER_ANCHOR_SECRET" \
+  --submission-secret "$MULLU_TRUST_LEDGER_SUBMISSION_SECRET" \
+  --signature-key-id "$MULLU_TRUST_LEDGER_SUBMISSION_KEY_ID" \
+  --remote-submit-url "$MULLU_TRUST_LEDGER_REMOTE_SUBMISSION_URL" \
+  --remote-api-token "$MULLU_TRUST_LEDGER_REMOTE_SUBMISSION_TOKEN" \
+  --output .change_assurance/trust_ledger_remote_submission_preflight.json \
+  --strict \
+  --json
+```
+
+Pass condition:
+
+```json
+{
+  "ready": true,
+  "outcome": "SolvedVerified",
+  "metadata": {
+    "preflight_only": true,
+    "remote_submit_executed": false,
+    "ledger_append_executed": false
+  }
+}
+```
+
+Blocked conditions:
+
+| Outcome | Meaning |
+| --- | --- |
+| `AwaitingEvidence` | Required operator input, secret presence, or remote token evidence is missing |
+| `GovernanceBlocked` | Authority, URL, submitted timestamp, anchor export replay, or existing submission ledger replay failed |
+
 ## Governed Submission
 
 Command:
@@ -222,6 +270,7 @@ Submission fail-closed reasons include:
 | Reason | Meaning |
 | --- | --- |
 | `operator_confirmation_required` | The operator did not pass `--confirm-submit`; no ledger append occurred |
+| `operator_id_invalid` | The operator id is missing, too long, or contains whitespace/control characters |
 | `authority_ref_invalid` | The operator authority reference is missing or not a bounded `proof://` or `authority://` reference |
 | `submission_secret_required` | No submission HMAC secret was provided |
 | `anchor_verification_failed:*` | Offline anchor/package verification failed before submission |
