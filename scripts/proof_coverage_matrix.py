@@ -2676,6 +2676,28 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "job_restore_mutation_receipt_emitted",
                 "job_mutation_receipt_closes_effect_assurance",
             ],
+            runtime_witness_anchor_aliases={
+                "job_create_mutation_receipt_emitted": [
+                    "lifecycle_records_bounded_mutation_receipts",
+                    "job_receipts_convert_to_effect_records",
+                    "job_mutation_receipt_closes_effect_assurance",
+                ],
+                "job_start_mutation_receipt_emitted": [
+                    "lifecycle_records_bounded_mutation_receipts",
+                    "pause_resume_failure_and_cancel_receipts_are_bounded",
+                ],
+                "job_pause_resume_mutation_receipts_emitted": [
+                    "pause_resume_failure_and_cancel_receipts_are_bounded",
+                ],
+                "job_terminal_mutation_receipts_emitted": [
+                    "lifecycle_records_bounded_mutation_receipts",
+                    "pause_resume_failure_and_cancel_receipts_are_bounded",
+                    "cancel_from_created",
+                ],
+                "job_restore_mutation_receipt_emitted": [
+                    "restore_job_registers_exact_descriptor_and_state",
+                ],
+            },
         ),
         _surface(
             "authority_obligation_mesh",
