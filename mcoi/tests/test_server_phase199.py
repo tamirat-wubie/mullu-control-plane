@@ -33,10 +33,11 @@ class TestHealthEndpoint:
         assert resp.status_code == 200
         data = resp.json()
         assert data["status"] == "healthy"
-        assert "llm_invocations" in data
-        assert "llm_total_cost" in data
-        assert "certifications" in data
-        assert "ledger_entries" in data
+        assert data["governed"] is True
+        assert "llm_invocations" not in data
+        assert "llm_total_cost" not in data
+        assert "certifications" not in data
+        assert "ledger_entries" not in data
 
     def test_ready_endpoint(self, client):
         resp = client.get("/ready")

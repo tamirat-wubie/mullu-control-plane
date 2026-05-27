@@ -17,12 +17,11 @@ router = APIRouter()
 
 @router.get("/health")
 def health():
-    h = deps.surface.health()
-    h["llm_invocations"] = deps.llm_bridge.invocation_count
-    h["llm_total_cost"] = round(deps.llm_bridge.total_cost, 6)
-    h["certifications"] = deps.certifier.chain_count
-    h["ledger_entries"] = deps.store.ledger_count()
-    return h
+    surface_health = deps.surface.health()
+    return {
+        "status": surface_health.get("status", "unknown"),
+        "governed": bool(surface_health.get("governed", True)),
+    }
 
 
 @router.get("/ready")

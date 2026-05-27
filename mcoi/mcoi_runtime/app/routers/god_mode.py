@@ -9,9 +9,10 @@ from __future__ import annotations
 
 from typing import Any
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, Field
 
+from mcoi_runtime.app.routers.auth_context import bind_claimed_actor
 from mcoi_runtime.contracts.god_mode import GodReceiptOutcome
 from mcoi_runtime.core.god_mode_engine import (
     GodModeEngineError,
@@ -183,14 +184,15 @@ def get_capability(module: str, name: str) -> dict[str, Any]:
 
 @router.post("/api/v1/god-mode/capabilities/{module}/{name}/agree-to-register")
 def agree_to_register(
-    module: str, name: str, req: AgreeToRegisterRequest
+    module: str, name: str, req: AgreeToRegisterRequest, request: Request
 ) -> dict[str, Any]:
     _ensure_seeded()
+    actor_id = bind_claimed_actor(request, req.actor_id)
     try:
         agreement = get_registry().agree_to_register(
             module=module,
             name=name,
-            actor_id=req.actor_id,
+            actor_id=actor_id,
             justification=req.justification,
         )
     except GodModeRegistryError as exc:
@@ -210,12 +212,13 @@ def agree_to_register(
 
 @router.post("/api/v1/god-mode/agreements/{agreement_id}/withdraw")
 def withdraw_agreement(
-    agreement_id: str, req: WithdrawRegistrationRequest
+    agreement_id: str, req: WithdrawRegistrationRequest, request: Request
 ) -> dict[str, Any]:
+    actor_id = bind_claimed_actor(request, req.actor_id)
     try:
         withdrawn = get_registry().withdraw_registration(
             agreement_id=agreement_id,
-            actor_id=req.actor_id,
+            actor_id=actor_id,
             reason=req.reason,
         )
     except GodModeRegistryError as exc:
@@ -234,8 +237,9 @@ def withdraw_agreement(
 
 @router.post("/api/v1/god-mode/capabilities/{module}/{name}/suspend")
 def suspend_capability(
-    module: str, name: str, req: SuspendCapabilityRequest
+    module: str, name: str, req: SuspendCapabilityRequest, request: Request
 ) -> dict[str, Any]:
+    actor_id = bind_claimed_actor(request, req.actor_id)
     try:
         get_registry().suspend(module, name)
     except GodModeRegistryError as exc:
@@ -248,7 +252,7 @@ def suspend_capability(
         "module": module,
         "name": name,
         "state": get_registry().state_of(module, name).value,
-        "actor_id": req.actor_id,
+        "actor_id": actor_id,
         "reason": req.reason,
     }
 
@@ -271,12 +275,13 @@ def resume_capability(module: str, name: str) -> dict[str, Any]:
 
 @router.post("/api/v1/god-mode/capabilities/{module}/{name}/issue-ticket")
 def issue_ticket(
-    module: str, name: str, req: IssueTicketRequest
+    module: str, name: str, req: IssueTicketRequest, request: Request
 ) -> dict[str, Any]:
     _ensure_seeded()
+    actor_id = bind_claimed_actor(request, req.actor_id)
     try:
         ticket, agreement = get_engine().issue_ticket(
-            actor_id=req.actor_id,
+            actor_id=actor_id,
             module=module,
             name=name,
             justification=req.justification,
@@ -364,11 +369,12 @@ def consume_ticket(ticket_id: str, req: ConsumeTicketRequest) -> dict[str, Any]:
 
 
 @router.post("/api/v1/god-mode/tickets/{ticket_id}/revoke")
-def revoke_ticket(ticket_id: str, req: RevokeTicketRequest) -> dict[str, Any]:
+def revoke_ticket(ticket_id: str, req: RevokeTicketRequest, request: Request) -> dict[str, Any]:
+    actor_id = bind_claimed_actor(request, req.actor_id)
     try:
         ticket = get_engine().revoke(
             ticket_id=ticket_id,
-            actor_id=req.actor_id,
+            actor_id=actor_id,
             reason=req.reason,
         )
     except GodModeEngineError as exc:

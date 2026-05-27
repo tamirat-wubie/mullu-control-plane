@@ -136,6 +136,40 @@ class TestDataErrorContracts:
 
 
 class TestAgentErrorContracts:
+    def test_orchestration_summary_endpoint_bounded(self, client):
+        resp = client.get("/api/v1/orchestration")
+
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["governed"] is True
+        assert "orchestration" in data
+        assert "registered_agents" in data["orchestration"]
+
+    def test_orchestration_plan_endpoint_creates_registered_agent_plan(self, client):
+        resp = client.post(
+            "/api/v1/orchestration/plans",
+            json={"initiator_id": "llm-agent", "goal": "route proof plan"},
+        )
+
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["governed"] is True
+        assert data["plan"]["initiator_id"] == "llm-agent"
+        assert data["plan"]["phase"] == "planning"
+
+    def test_orchestration_unknown_initiator_returns_governed_error(self, client):
+        resp = client.post(
+            "/api/v1/orchestration/plans",
+            json={"initiator_id": "ghost-agent", "goal": "route proof plan"},
+        )
+
+        assert resp.status_code == 400
+        data = resp.json()["detail"]
+        assert data["error"] == "invalid orchestration request"
+        assert data["error_code"] == "invalid_request"
+        assert data["governed"] is True
+        assert "ghost-agent" not in str(resp.json())
+
     def test_missing_orchestration_plan_returns_governed_not_found(self, client):
         resp = client.get("/api/v1/orchestration/plans/plan-missing-123")
         assert resp.status_code == 404
