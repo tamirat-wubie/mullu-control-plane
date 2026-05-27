@@ -52,6 +52,14 @@ def _plan_request(**overrides: object) -> dict[str, object]:
     return payload
 
 
+def _active_consent_plan_request() -> dict[str, object]:
+    return _plan_request(
+        consent_granted_by="finance-owner",
+        consent_expires_at="2026-05-13T12:00:00+00:00",
+        consent_evidence_refs=["approval:finance-owner"],
+    )
+
+
 def test_assistant_profiles_read_model_exposes_finance_ops_profile() -> None:
     client = _client()
 
@@ -87,11 +95,7 @@ def test_finance_ops_plan_with_consent_projects_dispatch_ready_controls() -> Non
 
     response = client.post(
         "/api/v1/assistant/finance-ops/plans",
-        json=_plan_request(
-            consent_granted_by="finance-owner",
-            consent_expires_at="2026-05-13T12:00:00+00:00",
-            consent_evidence_refs=["approval:finance-owner"],
-        ),
+        json=_active_consent_plan_request(),
     )
     body = response.json()
 
@@ -130,7 +134,7 @@ def test_finance_ops_plan_error_detail_is_bounded(monkeypatch) -> None:
 
     monkeypatch.setattr(assistant_router_module, "finance_ops_invoice_payment_goal", fail_goal)
 
-    response = client.post("/api/v1/assistant/finance-ops/plans", json=_plan_request())
+    response = client.post("/api/v1/assistant/finance-ops/plans", json=_active_consent_plan_request())
     detail = response.json()["detail"]
 
     assert response.status_code == 400
@@ -138,6 +142,7 @@ def test_finance_ops_plan_error_detail_is_bounded(monkeypatch) -> None:
     assert detail["error_code"] == "invalid_assistant_plan"
     assert detail["governed"] is True
     assert "secret-token-from-assistant" not in response.text
+    assert "approval:finance-owner" not in response.text
 
 
 def test_default_routers_include_assistant_kernel_paths() -> None:
