@@ -172,6 +172,41 @@ python scripts/submit_trust_ledger_anchor_export.py \
   --json
 ```
 
+For a real HTTPS transparency log, add the remote gate:
+
+```bash
+python scripts/submit_trust_ledger_anchor_export.py \
+  --bundle bundle.json \
+  --receipt anchor_receipt.json \
+  --artifacts artifacts.json \
+  --package package.json \
+  --ledger-path external_anchor_submissions.jsonl \
+  --operator-id "$MULLU_OPERATOR_ID" \
+  --authority-ref "proof://approval/anchor-submit" \
+  --submitted-at "2026-05-05T12:20:00+00:00" \
+  --verification-secret "$MULLU_TRUST_LEDGER_ANCHOR_SECRET" \
+  --submission-secret "$MULLU_TRUST_LEDGER_SUBMISSION_SECRET" \
+  --remote-submit-url "https://transparency.example/anchors" \
+  --remote-api-token "$MULLU_TRUST_LEDGER_REMOTE_SUBMISSION_TOKEN" \
+  --allow-remote-submit \
+  --confirm-submit \
+  --json
+```
+
+The remote endpoint must return JSON containing:
+
+```json
+{
+  "external_anchor_ref": "https://transparency.example/entries/1",
+  "observed_submission_payload_hash": "<same hash received in X-Mullu-Anchor-Submission-Hash>",
+  "remote_receipt_hash": "sha256:..."
+}
+```
+
+The local receipt is not written if the remote endpoint fails, returns a non-2xx
+status, emits invalid JSON, omits a valid external anchor ref, or fails to echo
+the submitted payload hash.
+
 Pass condition:
 
 ```json
@@ -190,6 +225,10 @@ Submission fail-closed reasons include:
 | `authority_ref_invalid` | The operator authority reference is missing or not a bounded `proof://` or `authority://` reference |
 | `submission_secret_required` | No submission HMAC secret was provided |
 | `anchor_verification_failed:*` | Offline anchor/package verification failed before submission |
+| `remote_submission_confirmation_required` | A remote URL was provided without `--allow-remote-submit` |
+| `remote_submit_url_must_be_https` | Remote submission endpoint was not HTTPS |
+| `remote_api_token_required` | Remote submission was requested without a bearer token |
+| `remote_submission_failed:*` | Remote transparency-log submission did not produce a matching payload-hash witness |
 | `submission_ledger_invalid:*` | Existing ledger replay failed before append |
 | `submission_receipt_schema_validation_failed` | The generated submission receipt violated the public schema |
 

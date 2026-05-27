@@ -43,7 +43,7 @@
       "type": "string",
       "enum": ["audit_chain", "transparency_log", "external_ledger", "regulatory_archive"]
     },
-    "external_anchor_ref": {"type": "string", "pattern": "^ledger://[^\\s]+$"},
+    "external_anchor_ref": {"type": "string", "pattern": "^(ledger|https)://[^\\s]+$"},
     "external_anchor_status": {"type": "string", "const": "submitted"},
     "operator_id": {"type": "string", "minLength": 1},
     "authority_ref": {"type": "string", "pattern": "^(proof|authority)://[^\\s]+$"},

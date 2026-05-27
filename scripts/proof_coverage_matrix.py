@@ -3724,7 +3724,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "tests/test_package_orgos_anchor_export.py",
                 "tests/test_submit_trust_ledger_anchor_export.py",
             ],
-            "Trust ledger signs terminal-closure evidence bundles, exposes operator bundle export, verifies exported bundle and anchor receipt files offline, emits external anchor receipts, packages verifier inputs with content hashes for portable audit review, can merge verified optional OrgOS event receipts into terminal anchor exports without replacing closure, and records operator-confirmed external anchor submissions in a signed hash-chained ledger.",
+            "Trust ledger signs terminal-closure evidence bundles, exposes operator bundle export, verifies exported bundle and anchor receipt files offline, emits external anchor receipts, packages verifier inputs with content hashes for portable audit review, can merge verified optional OrgOS event receipts into terminal anchor exports without replacing closure, and records operator-confirmed external anchor submissions in a signed hash-chained ledger after optional HTTPS transparency-log submission echoes the payload hash.",
             [
                 "terminal_command_exports_signed_evidence_bundle",
                 "evidence_bundle_endpoint_rejects_non_terminal_command",
@@ -3764,6 +3764,9 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "submit_trust_ledger_anchor_export_records_signed_submission",
                 "submit_trust_ledger_anchor_export_blocks_without_confirmation",
                 "submit_trust_ledger_anchor_export_blocks_tampered_package",
+                "submit_trust_ledger_anchor_export_posts_remote_transparency_log",
+                "submit_trust_ledger_anchor_export_blocks_remote_without_confirmation",
+                "submit_trust_ledger_anchor_export_blocks_remote_hash_mismatch",
                 "verify_submission_ledger_detects_hash_drift",
                 "submit_trust_ledger_anchor_export_cli_emits_submission_receipt",
             ],
