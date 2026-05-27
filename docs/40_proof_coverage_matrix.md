@@ -151,8 +151,8 @@ Witness integrity audit:
 | Metric | Count |
 |---|---:|
 | Runtime witness labels | 1111 |
-| Exact test anchors | 996 |
-| Unanchored witness labels | 115 |
+| Exact test anchors | 1001 |
+| Unanchored witness labels | 110 |
 
 Evidence quality gaps:
 none
@@ -161,7 +161,6 @@ Witness integrity gaps:
 
 | Surface | Exact anchors | Unanchored | Unanchored labels |
 |---|---:|---:|---|
-| `approval_engine_lifecycle` | 1 | 5 | approval_request_mutation_receipt_emitted, approval_decision_mutation_receipt_emitted, approval_consumption_mutation_receipt_emitted, approval_revocation_mutation_receipt_emitted, approval_override_mutation_receipt_emitted |
 | `job_engine_lifecycle` | 1 | 5 | job_create_mutation_receipt_emitted, job_start_mutation_receipt_emitted, job_pause_resume_mutation_receipts_emitted, job_terminal_mutation_receipts_emitted, job_restore_mutation_receipt_emitted |
 | `authority_obligation_mesh` | 0 | 5 | pending_approval_chain_count, open_obligation_count, overdue_obligation_count, escalated_obligation_count, command_authority_read_model_bound_to_approval_chain |
 | `authority_operator_controls` | 0 | 5 | operator_access_guard, operator_audit_events, ownership_policy_read_models, approval_expiration_witness, obligation_satisfaction_escalation_witness |
@@ -303,5 +302,5 @@ none
 STATUS:
   Completeness: 100%
   Invariants verified: route declarations, route-level coverage classification, coverage levels, coverage states, closure action mapping, schema contract validation, deployment orchestration receipt schema contract
-  Open issues: 115 runtime-witness labels lack exact test-function anchors
+  Open issues: 110 runtime-witness labels lack exact test-function anchors
   Next action: bind unanchored runtime-witness labels to exact test-function anchors
