@@ -4865,6 +4865,45 @@
         "/api/v1/orchestration/plans/{plan_id}"
       ],
       "request_proof": "request_proof",
+      "runtime_witness_anchor_aliases": {
+        "orchestration_executor_errors_sanitized": [
+          "execute_with_failing_executor",
+          "execute_suppresses_executor_reserved_result_keys"
+        ],
+        "orchestration_handoff_capability_checked": [
+          "successful_handoff",
+          "handoff_missing_capability",
+          "orchestration_handoff_returns_proof_id"
+        ],
+        "orchestration_handoff_errors_sanitized": [
+          "handoff_missing_capability",
+          "handoff_unknown_source",
+          "handoff_unknown_target",
+          "handoff_blocks_unmanifested_required_capability"
+        ],
+        "orchestration_missing_plan_bounded": [
+          "missing_orchestration_plan_returns_governed_not_found",
+          "get_plan_records_lookup_proofs"
+        ],
+        "orchestration_plan_created_for_registered_agent": [
+          "create_plan",
+          "orchestration_plan_endpoint_creates_registered_agent_plan"
+        ],
+        "orchestration_quorum_required": [
+          "quorum_reached",
+          "quorum_not_reached",
+          "execute_with_quorum",
+          "execute_without_quorum_fails"
+        ],
+        "orchestration_summary_bounded": [
+          "summary",
+          "orchestration_summary_endpoint_bounded"
+        ],
+        "orchestration_unknown_initiator_bounded": [
+          "create_plan_unknown_agent",
+          "orchestration_unknown_initiator_returns_governed_error"
+        ]
+      },
       "runtime_witnesses": [
         "orchestration_summary_bounded",
         "orchestration_plan_created_for_registered_agent",
@@ -8513,7 +8552,7 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 971,
+    "exact_test_anchor_count": 979,
     "runtime_witness_count": 1109,
     "surfaces": [
       {
@@ -11145,21 +11184,74 @@
         "unanchored_witnesses": []
       },
       {
-        "anchored_witnesses": [],
-        "exact_test_anchor_count": 0,
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "mcoi/tests/test_agent_orchestration.py::test_summary",
+              "mcoi/tests/test_server_phase216.py::test_orchestration_summary_endpoint_bounded"
+            ],
+            "witness": "orchestration_summary_bounded"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_agent_orchestration.py::test_create_plan",
+              "mcoi/tests/test_server_phase216.py::test_orchestration_plan_endpoint_creates_registered_agent_plan"
+            ],
+            "witness": "orchestration_plan_created_for_registered_agent"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_agent_orchestration.py::test_create_plan_unknown_agent",
+              "mcoi/tests/test_server_phase216.py::test_orchestration_unknown_initiator_returns_governed_error"
+            ],
+            "witness": "orchestration_unknown_initiator_bounded"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_server_phase216.py::test_missing_orchestration_plan_returns_governed_not_found",
+              "mcoi/tests/test_agent_orchestration.py::test_get_plan_records_lookup_proofs"
+            ],
+            "witness": "orchestration_missing_plan_bounded"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_agent_orchestration.py::test_successful_handoff",
+              "mcoi/tests/test_agent_orchestration.py::test_handoff_missing_capability",
+              "mcoi/tests/test_server_phase216.py::test_orchestration_handoff_returns_proof_id"
+            ],
+            "witness": "orchestration_handoff_capability_checked"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_agent_orchestration.py::test_handoff_missing_capability",
+              "mcoi/tests/test_agent_orchestration.py::test_handoff_unknown_source",
+              "mcoi/tests/test_agent_orchestration.py::test_handoff_unknown_target",
+              "mcoi/tests/test_agent_orchestration.py::test_handoff_blocks_unmanifested_required_capability"
+            ],
+            "witness": "orchestration_handoff_errors_sanitized"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_agent_orchestration.py::test_quorum_reached",
+              "mcoi/tests/test_agent_orchestration.py::test_quorum_not_reached",
+              "mcoi/tests/test_agent_orchestration.py::test_execute_with_quorum",
+              "mcoi/tests/test_agent_orchestration.py::test_execute_without_quorum_fails"
+            ],
+            "witness": "orchestration_quorum_required"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_agent_orchestration.py::test_execute_with_failing_executor",
+              "mcoi/tests/test_agent_orchestration.py::test_execute_suppresses_executor_reserved_result_keys"
+            ],
+            "witness": "orchestration_executor_errors_sanitized"
+          }
+        ],
+        "exact_test_anchor_count": 8,
         "runtime_witness_count": 8,
         "surface_id": "agent_orchestration_lifecycle",
-        "unanchored_witness_count": 8,
-        "unanchored_witnesses": [
-          "orchestration_summary_bounded",
-          "orchestration_plan_created_for_registered_agent",
-          "orchestration_unknown_initiator_bounded",
-          "orchestration_missing_plan_bounded",
-          "orchestration_handoff_capability_checked",
-          "orchestration_handoff_errors_sanitized",
-          "orchestration_quorum_required",
-          "orchestration_executor_errors_sanitized"
-        ]
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
       },
       {
         "anchored_witnesses": [
@@ -15748,6 +15840,6 @@
         "unanchored_witnesses": []
       }
     ],
-    "unanchored_witness_count": 138
+    "unanchored_witness_count": 130
   }
 }
