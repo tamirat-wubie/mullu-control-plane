@@ -69,6 +69,28 @@ def test_invoke_success() -> None:
     assert inv.error == ""
 
 
+def test_invoke_records_audit_trail() -> None:
+    records: list[dict[str, object]] = []
+
+    class AuditTrail:
+        def record(self, **kwargs):
+            records.append(kwargs)
+
+    fw = _make_framework(audit_trail=AuditTrail())
+    fw.register(_sample_connector(), lambda a, p: {"result": a})
+
+    inv = fw.invoke("c1", "fetch", {"key": "val"}, tenant_id="tenant-a", mission_id="mission-1", goal_id="goal-1")
+
+    assert inv.outcome == InvocationOutcome.SUCCESS
+    assert len(records) == 1
+    assert records[0]["action"] == "connector.invoke.fetch"
+    assert records[0]["actor_id"] == "connector:c1"
+    assert records[0]["tenant_id"] == "tenant-a"
+    assert records[0]["outcome"] == "success"
+    assert records[0]["detail"]["mission_id"] == "mission-1"
+    assert records[0]["detail"]["goal_id"] == "goal-1"
+
+
 def test_invoke_disabled_denied() -> None:
     fw = _make_framework()
     fw.register(_sample_connector(), lambda a, p: {})
@@ -175,6 +197,40 @@ def test_connectors_summary_endpoint(client) -> None:
     resp = client.get("/api/v1/connectors/summary")
     assert resp.status_code == 200
     assert "total_connectors" in resp.json()
+
+
+def test_connector_lifecycle_and_history_endpoints(client) -> None:
+    client.post("/api/v1/connectors/register", json={
+        "connector_id": "life-test",
+        "name": "Lifecycle Test",
+        "connector_type": "http_api",
+    })
+
+    first_invocation = client.post("/api/v1/connectors/invoke", json={
+        "connector_id": "life-test",
+        "action": "fetch",
+        "payload": {"url": "/before-disable"},
+    })
+    disabled = client.post("/api/v1/connectors/life-test/disable")
+    denied = client.post("/api/v1/connectors/invoke", json={
+        "connector_id": "life-test",
+        "action": "fetch",
+        "payload": {"url": "/while-disabled"},
+    })
+    enabled = client.post("/api/v1/connectors/life-test/enable")
+    history = client.get("/api/v1/connectors/history?limit=5")
+
+    assert first_invocation.status_code == 200
+    assert first_invocation.json()["outcome"] == "success"
+    assert disabled.status_code == 200
+    assert disabled.json()["status"] == "disabled"
+    assert denied.status_code == 200
+    assert denied.json()["outcome"] == "denied"
+    assert enabled.status_code == 200
+    assert enabled.json()["status"] == "healthy"
+    assert history.status_code == 200
+    assert history.json()["governed"] is True
+    assert history.json()["count"] >= 2
 
 
 def test_invalid_connector_type_400(client) -> None:

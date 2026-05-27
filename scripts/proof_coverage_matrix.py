@@ -3498,6 +3498,38 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "connector_errors_sanitized",
                 "connector_invocation_audited",
             ],
+            runtime_witness_anchor_aliases={
+                "connector_registration_typed": [
+                    "register_and_list",
+                    "register_connector_endpoint",
+                    "invalid_connector_type",
+                ],
+                "connector_invocation_guard_chain_checked": [
+                    "invoke_success",
+                    "invoke_connector_endpoint",
+                    "invoke_guard_denied_is_bounded",
+                    "connector_invoke_guard_denial_is_bounded",
+                ],
+                "connector_lifecycle_disable_enable_bounded": [
+                    "disable_enable",
+                    "connector_lifecycle_and_history_endpoints",
+                ],
+                "connector_history_summary_bounded": [
+                    "history_bounded",
+                    "summary",
+                    "connectors_summary_endpoint",
+                    "connector_lifecycle_and_history_endpoints",
+                ],
+                "connector_errors_sanitized": [
+                    "invoke_handler_raises",
+                    "invalid_connector_type_400",
+                    "invalid_connector_type_is_bounded",
+                    "connector_invoke_guard_denial_is_bounded",
+                ],
+                "connector_invocation_audited": [
+                    "invoke_records_audit_trail",
+                ],
+            },
         ),
         _surface(
             "governed_background_scheduler",
@@ -4465,6 +4497,36 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "temporal_accepted_risk_expiry_receipt_schema_valid",
                 "receipt_not_terminal_closure",
             ],
+            runtime_witness_anchor_aliases={
+                "runtime_clock_owns_accepted_risk_expiry": [
+                    "accepted_risk_expiry_allows_high_risk_active_unexpired_record"
+                ],
+                "expired_accepted_risk_blocks_dispatch": [
+                    "accepted_risk_expiry_blocks_expired_record"
+                ],
+                "revoked_or_closed_accepted_risk_blocks_dispatch": [
+                    "accepted_risk_expiry_blocks_revoked_and_closed_records"
+                ],
+                "tenant_command_and_action_scope_checked": [
+                    "accepted_risk_expiry_blocks_wrong_scope_missing_evidence_and_sources"
+                ],
+                "review_obligation_required": [
+                    "accepted_risk_grant_requires_review_obligation"
+                ],
+                "accepted_risk_evidence_refs_required": [
+                    "accepted_risk_expiry_blocks_wrong_scope_missing_evidence_and_sources"
+                ],
+                "high_risk_source_receipts_bound": [
+                    "accepted_risk_expiry_allows_high_risk_active_unexpired_record",
+                    "accepted_risk_expiry_blocks_wrong_scope_missing_evidence_and_sources",
+                ],
+                "temporal_accepted_risk_expiry_receipt_schema_valid": [
+                    "accepted_risk_expiry_allows_high_risk_active_unexpired_record"
+                ],
+                "receipt_not_terminal_closure": [
+                    "accepted_risk_expiry_allows_high_risk_active_unexpired_record"
+                ],
+            },
         ),
         _surface(
             "temporal_credential_expiry",

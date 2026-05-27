@@ -6273,6 +6273,38 @@
         "/api/v1/connectors/{connector_id}/enable"
       ],
       "request_proof": "request_proof",
+      "runtime_witness_anchor_aliases": {
+        "connector_errors_sanitized": [
+          "invoke_handler_raises",
+          "invalid_connector_type_400",
+          "invalid_connector_type_is_bounded",
+          "connector_invoke_guard_denial_is_bounded"
+        ],
+        "connector_history_summary_bounded": [
+          "history_bounded",
+          "summary",
+          "connectors_summary_endpoint",
+          "connector_lifecycle_and_history_endpoints"
+        ],
+        "connector_invocation_audited": [
+          "invoke_records_audit_trail"
+        ],
+        "connector_invocation_guard_chain_checked": [
+          "invoke_success",
+          "invoke_connector_endpoint",
+          "invoke_guard_denied_is_bounded",
+          "connector_invoke_guard_denial_is_bounded"
+        ],
+        "connector_lifecycle_disable_enable_bounded": [
+          "disable_enable",
+          "connector_lifecycle_and_history_endpoints"
+        ],
+        "connector_registration_typed": [
+          "register_and_list",
+          "register_connector_endpoint",
+          "invalid_connector_type"
+        ]
+      },
       "runtime_witnesses": [
         "connector_registration_typed",
         "connector_invocation_guard_chain_checked",
@@ -7241,6 +7273,36 @@
         "TemporalAcceptedRiskExpiryReceipt"
       ],
       "request_proof": "request_proof",
+      "runtime_witness_anchor_aliases": {
+        "accepted_risk_evidence_refs_required": [
+          "accepted_risk_expiry_blocks_wrong_scope_missing_evidence_and_sources"
+        ],
+        "expired_accepted_risk_blocks_dispatch": [
+          "accepted_risk_expiry_blocks_expired_record"
+        ],
+        "high_risk_source_receipts_bound": [
+          "accepted_risk_expiry_allows_high_risk_active_unexpired_record",
+          "accepted_risk_expiry_blocks_wrong_scope_missing_evidence_and_sources"
+        ],
+        "receipt_not_terminal_closure": [
+          "accepted_risk_expiry_allows_high_risk_active_unexpired_record"
+        ],
+        "review_obligation_required": [
+          "accepted_risk_grant_requires_review_obligation"
+        ],
+        "revoked_or_closed_accepted_risk_blocks_dispatch": [
+          "accepted_risk_expiry_blocks_revoked_and_closed_records"
+        ],
+        "runtime_clock_owns_accepted_risk_expiry": [
+          "accepted_risk_expiry_allows_high_risk_active_unexpired_record"
+        ],
+        "temporal_accepted_risk_expiry_receipt_schema_valid": [
+          "accepted_risk_expiry_allows_high_risk_active_unexpired_record"
+        ],
+        "tenant_command_and_action_scope_checked": [
+          "accepted_risk_expiry_blocks_wrong_scope_missing_evidence_and_sources"
+        ]
+      },
       "runtime_witnesses": [
         "runtime_clock_owns_accepted_risk_expiry",
         "expired_accepted_risk_blocks_dispatch",
@@ -8221,7 +8283,7 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 910,
+    "exact_test_anchor_count": 925,
     "runtime_witness_count": 1108,
     "surfaces": [
       {
@@ -12518,19 +12580,60 @@
         ]
       },
       {
-        "anchored_witnesses": [],
-        "exact_test_anchor_count": 0,
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "mcoi/tests/test_connector_framework.py::test_register_and_list",
+              "mcoi/tests/test_connector_framework.py::test_register_connector_endpoint"
+            ],
+            "witness": "connector_registration_typed"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_connector_framework.py::test_invoke_success",
+              "mcoi/tests/test_connector_framework.py::test_invoke_connector_endpoint",
+              "mcoi/tests/test_connector_framework.py::test_invoke_guard_denied_is_bounded",
+              "mcoi/tests/test_server_phase218.py::test_connector_invoke_guard_denial_is_bounded"
+            ],
+            "witness": "connector_invocation_guard_chain_checked"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_connector_framework.py::test_disable_enable",
+              "mcoi/tests/test_connector_framework.py::test_connector_lifecycle_and_history_endpoints"
+            ],
+            "witness": "connector_lifecycle_disable_enable_bounded"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_connector_framework.py::test_history_bounded",
+              "mcoi/tests/test_connector_framework.py::test_summary",
+              "mcoi/tests/test_connector_framework.py::test_connectors_summary_endpoint",
+              "mcoi/tests/test_connector_framework.py::test_connector_lifecycle_and_history_endpoints"
+            ],
+            "witness": "connector_history_summary_bounded"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_connector_framework.py::test_invoke_handler_raises",
+              "mcoi/tests/test_connector_framework.py::test_invalid_connector_type_400",
+              "mcoi/tests/test_server_phase217.py::test_invalid_connector_type_is_bounded",
+              "mcoi/tests/test_server_phase218.py::test_connector_invoke_guard_denial_is_bounded"
+            ],
+            "witness": "connector_errors_sanitized"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_connector_framework.py::test_invoke_records_audit_trail"
+            ],
+            "witness": "connector_invocation_audited"
+          }
+        ],
+        "exact_test_anchor_count": 6,
         "runtime_witness_count": 6,
         "surface_id": "governed_connector_framework",
-        "unanchored_witness_count": 6,
-        "unanchored_witnesses": [
-          "connector_registration_typed",
-          "connector_invocation_guard_chain_checked",
-          "connector_lifecycle_disable_enable_bounded",
-          "connector_history_summary_bounded",
-          "connector_errors_sanitized",
-          "connector_invocation_audited"
-        ]
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
       },
       {
         "anchored_witnesses": [],
@@ -13853,22 +13956,68 @@
         ]
       },
       {
-        "anchored_witnesses": [],
-        "exact_test_anchor_count": 0,
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_accepted_risk_expiry.py::test_accepted_risk_expiry_allows_high_risk_active_unexpired_record"
+            ],
+            "witness": "runtime_clock_owns_accepted_risk_expiry"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_accepted_risk_expiry.py::test_accepted_risk_expiry_blocks_expired_record"
+            ],
+            "witness": "expired_accepted_risk_blocks_dispatch"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_accepted_risk_expiry.py::test_accepted_risk_expiry_blocks_revoked_and_closed_records"
+            ],
+            "witness": "revoked_or_closed_accepted_risk_blocks_dispatch"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_accepted_risk_expiry.py::test_accepted_risk_expiry_blocks_wrong_scope_missing_evidence_and_sources"
+            ],
+            "witness": "tenant_command_and_action_scope_checked"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_accepted_risk_expiry.py::test_accepted_risk_grant_requires_review_obligation"
+            ],
+            "witness": "review_obligation_required"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_accepted_risk_expiry.py::test_accepted_risk_expiry_blocks_wrong_scope_missing_evidence_and_sources"
+            ],
+            "witness": "accepted_risk_evidence_refs_required"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_accepted_risk_expiry.py::test_accepted_risk_expiry_allows_high_risk_active_unexpired_record",
+              "tests/test_gateway/test_temporal_accepted_risk_expiry.py::test_accepted_risk_expiry_blocks_wrong_scope_missing_evidence_and_sources"
+            ],
+            "witness": "high_risk_source_receipts_bound"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_accepted_risk_expiry.py::test_accepted_risk_expiry_allows_high_risk_active_unexpired_record"
+            ],
+            "witness": "temporal_accepted_risk_expiry_receipt_schema_valid"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_accepted_risk_expiry.py::test_accepted_risk_expiry_allows_high_risk_active_unexpired_record"
+            ],
+            "witness": "receipt_not_terminal_closure"
+          }
+        ],
+        "exact_test_anchor_count": 9,
         "runtime_witness_count": 9,
         "surface_id": "temporal_accepted_risk_expiry",
-        "unanchored_witness_count": 9,
-        "unanchored_witnesses": [
-          "runtime_clock_owns_accepted_risk_expiry",
-          "expired_accepted_risk_blocks_dispatch",
-          "revoked_or_closed_accepted_risk_blocks_dispatch",
-          "tenant_command_and_action_scope_checked",
-          "review_obligation_required",
-          "accepted_risk_evidence_refs_required",
-          "high_risk_source_receipts_bound",
-          "temporal_accepted_risk_expiry_receipt_schema_valid",
-          "receipt_not_terminal_closure"
-        ]
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
       },
       {
         "anchored_witnesses": [
@@ -15111,6 +15260,6 @@
         "unanchored_witnesses": []
       }
     ],
-    "unanchored_witness_count": 198
+    "unanchored_witness_count": 183
   }
 }

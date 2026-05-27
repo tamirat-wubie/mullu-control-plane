@@ -20,6 +20,8 @@ from __future__ import annotations
 from dataclasses import asdict, replace
 from pathlib import Path
 
+import pytest
+
 from gateway.temporal_accepted_risk_expiry import (
     AcceptedRiskGrant,
     TemporalAcceptedRiskExpiry,
@@ -55,6 +57,8 @@ def test_accepted_risk_expiry_allows_high_risk_active_unexpired_record() -> None
     assert receipt.seconds_until_expiry == 5400
     assert receipt.accepted_risk_evidence_refs == ["proof://accepted-risk/evidence-1"]
     assert receipt.metadata["dispatch_allowed"] is True
+    assert receipt.metadata["runtime_owns_time_truth"] is True
+    assert receipt.metadata["receipt_is_not_terminal_closure"] is True
     assert receipt.metadata["source_receipts_checked"] is True
     assert receipt.terminal_closure_required is True
 
@@ -109,6 +113,30 @@ def test_accepted_risk_expiry_blocks_wrong_scope_missing_evidence_and_sources() 
     assert "source_terminal_closure_required_for_high_risk" in receipt.blocked_reasons
     assert receipt.metadata["dispatch_allowed"] is False
     assert receipt.metadata["source_receipts_checked"] is False
+
+
+def test_accepted_risk_expiry_blocks_revoked_and_closed_records() -> None:
+    for disposition in ("revoked", "closed"):
+        receipt = TemporalAcceptedRiskExpiry(FixedClock()).evaluate(
+            _request(accepted_risk=replace(_risk(), disposition=disposition))
+        )
+        errors = _validate_schema_instance(_load_schema(SCHEMA_PATH), asdict(receipt))
+
+        assert errors == []
+        assert receipt.status == "blocked"
+        assert receipt.risk_state == disposition
+        assert f"accepted_risk_{disposition}" in receipt.blocked_reasons
+        assert "accepted_risk_dispatch_block" in receipt.required_controls
+        assert receipt.metadata["dispatch_allowed"] is False
+
+
+def test_accepted_risk_grant_requires_review_obligation() -> None:
+    with pytest.raises(ValueError) as exc_info:
+        replace(_risk(), review_obligation_id=" ")
+
+    assert str(exc_info.value) == "review_obligation_id_required"
+    assert "review_obligation_id" in str(exc_info.value)
+    assert _risk().review_obligation_id == "review-obligation-1"
 
 
 def test_accepted_risk_expiry_blocks_future_or_stale_accepted_risk() -> None:
