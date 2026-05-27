@@ -456,6 +456,11 @@ class TestCapabilityPolicy:
         assert proofs[0]["admitted_capability_count"] == 2
         assert proofs[0]["manifest_gated"] is True
         assert proofs[0]["registered_agent_count"] == 1
+        assert proofs[0]["total_plan_count"] == 0
+        assert proofs[0]["active_plan_count"] == 0
+        assert proofs[0]["active_proposal_count"] == 0
+        assert proofs[0]["manifest_binding_proof_count_before"] == 0
+        assert proofs[0]["manifest_binding_proof_count_after"] == 1
         assert "search" not in repr(proofs[0])
         assert "deploy" not in repr(proofs[0])
 
@@ -1299,6 +1304,11 @@ class TestHandoffs:
         assert binding_proofs[0]["raw_capability_count"] == 1
         assert binding_proofs[0]["admitted_capability_count"] == 1
         assert binding_proofs[0]["registered_agent_count"] == 1
+        assert binding_proofs[0]["total_plan_count"] == 0
+        assert binding_proofs[0]["active_plan_count"] == 0
+        assert binding_proofs[0]["active_proposal_count"] == 0
+        assert binding_proofs[0]["manifest_binding_proof_count_before"] == 0
+        assert binding_proofs[0]["manifest_binding_proof_count_after"] == 1
         assert "search" not in repr(binding_proofs[0])
         assert orch.find_capable_agents(("deploy",)) == []
         proofs = orch.capability_discovery_proofs()
@@ -1323,6 +1333,11 @@ class TestHandoffs:
         assert proofs[0]["admitted_capability_count"] == 0
         assert proofs[0]["manifest_gated"] is False
         assert proofs[0]["registered_agent_count"] == 1
+        assert proofs[0]["total_plan_count"] == 0
+        assert proofs[0]["active_plan_count"] == 0
+        assert proofs[0]["active_proposal_count"] == 0
+        assert proofs[0]["manifest_binding_proof_count_before"] == 0
+        assert proofs[0]["manifest_binding_proof_count_after"] == 1
 
 
 class TestSummary:
