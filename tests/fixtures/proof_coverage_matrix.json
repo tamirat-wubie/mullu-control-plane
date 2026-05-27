@@ -7457,6 +7457,32 @@
         "TemporalEvidenceFreshnessReceipt"
       ],
       "request_proof": "request_proof",
+      "runtime_witness_anchor_aliases": {
+        "evidence_age_computed_from_runtime_clock": [
+          "evidence_freshness_allows_fresh_required_schema_receipt"
+        ],
+        "expiring_evidence_warns_before_dispatch": [
+          "evidence_freshness_warns_when_evidence_is_expiring_soon"
+        ],
+        "freshness_window_required_for_dispatch": [
+          "freshness_window_required_for_dispatch"
+        ],
+        "missing_required_evidence_blocks_dispatch": [
+          "evidence_freshness_blocks_missing_required_evidence"
+        ],
+        "receipt_not_terminal_closure": [
+          "evidence_freshness_allows_fresh_required_schema_receipt"
+        ],
+        "revoked_or_unverified_high_risk_evidence_blocks": [
+          "evidence_freshness_blocks_revoked_unverified_or_wrong_tenant_evidence"
+        ],
+        "stale_required_evidence_triggers_refresh": [
+          "evidence_freshness_requires_refresh_for_stale_required_type"
+        ],
+        "temporal_evidence_freshness_receipt_schema_valid": [
+          "evidence_freshness_allows_fresh_required_schema_receipt"
+        ]
+      },
       "runtime_witnesses": [
         "evidence_age_computed_from_runtime_clock",
         "freshness_window_required_for_dispatch",
@@ -8863,7 +8889,7 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 1061,
+    "exact_test_anchor_count": 1069,
     "runtime_witness_count": 1112,
     "surfaces": [
       {
@@ -14914,21 +14940,61 @@
         "unanchored_witnesses": []
       },
       {
-        "anchored_witnesses": [],
-        "exact_test_anchor_count": 0,
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_evidence_freshness.py::test_evidence_freshness_allows_fresh_required_schema_receipt"
+            ],
+            "witness": "evidence_age_computed_from_runtime_clock"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_evidence_freshness.py::test_freshness_window_required_for_dispatch"
+            ],
+            "witness": "freshness_window_required_for_dispatch"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_evidence_freshness.py::test_evidence_freshness_requires_refresh_for_stale_required_type"
+            ],
+            "witness": "stale_required_evidence_triggers_refresh"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_evidence_freshness.py::test_evidence_freshness_blocks_missing_required_evidence"
+            ],
+            "witness": "missing_required_evidence_blocks_dispatch"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_evidence_freshness.py::test_evidence_freshness_blocks_revoked_unverified_or_wrong_tenant_evidence"
+            ],
+            "witness": "revoked_or_unverified_high_risk_evidence_blocks"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_evidence_freshness.py::test_evidence_freshness_warns_when_evidence_is_expiring_soon"
+            ],
+            "witness": "expiring_evidence_warns_before_dispatch"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_evidence_freshness.py::test_evidence_freshness_allows_fresh_required_schema_receipt"
+            ],
+            "witness": "temporal_evidence_freshness_receipt_schema_valid"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_evidence_freshness.py::test_evidence_freshness_allows_fresh_required_schema_receipt"
+            ],
+            "witness": "receipt_not_terminal_closure"
+          }
+        ],
+        "exact_test_anchor_count": 8,
         "runtime_witness_count": 8,
         "surface_id": "temporal_evidence_freshness",
-        "unanchored_witness_count": 8,
-        "unanchored_witnesses": [
-          "evidence_age_computed_from_runtime_clock",
-          "freshness_window_required_for_dispatch",
-          "stale_required_evidence_triggers_refresh",
-          "missing_required_evidence_blocks_dispatch",
-          "revoked_or_unverified_high_risk_evidence_blocks",
-          "expiring_evidence_warns_before_dispatch",
-          "temporal_evidence_freshness_receipt_schema_valid",
-          "receipt_not_terminal_closure"
-        ]
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
       },
       {
         "anchored_witnesses": [
@@ -16603,6 +16669,6 @@
         "unanchored_witnesses": []
       }
     ],
-    "unanchored_witness_count": 51
+    "unanchored_witness_count": 43
   }
 }

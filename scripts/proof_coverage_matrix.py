@@ -4630,6 +4630,32 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "temporal_evidence_freshness_receipt_schema_valid",
                 "receipt_not_terminal_closure",
             ],
+            runtime_witness_anchor_aliases={
+                "evidence_age_computed_from_runtime_clock": [
+                    "evidence_freshness_allows_fresh_required_schema_receipt"
+                ],
+                "freshness_window_required_for_dispatch": [
+                    "freshness_window_required_for_dispatch"
+                ],
+                "stale_required_evidence_triggers_refresh": [
+                    "evidence_freshness_requires_refresh_for_stale_required_type"
+                ],
+                "missing_required_evidence_blocks_dispatch": [
+                    "evidence_freshness_blocks_missing_required_evidence"
+                ],
+                "revoked_or_unverified_high_risk_evidence_blocks": [
+                    "evidence_freshness_blocks_revoked_unverified_or_wrong_tenant_evidence"
+                ],
+                "expiring_evidence_warns_before_dispatch": [
+                    "evidence_freshness_warns_when_evidence_is_expiring_soon"
+                ],
+                "temporal_evidence_freshness_receipt_schema_valid": [
+                    "evidence_freshness_allows_fresh_required_schema_receipt"
+                ],
+                "receipt_not_terminal_closure": [
+                    "evidence_freshness_allows_fresh_required_schema_receipt"
+                ],
+            },
         ),
         _surface(
             "temporal_resolution",

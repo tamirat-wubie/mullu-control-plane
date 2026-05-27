@@ -187,6 +187,8 @@ def test_witness_integrity_report_tracks_exact_test_anchors() -> None:
     assert surfaces["workflow_mining"]["unanchored_witness_count"] == 0
     assert surfaces["policy_prover"]["exact_test_anchor_count"] == 7
     assert surfaces["policy_prover"]["unanchored_witness_count"] == 0
+    assert surfaces["temporal_evidence_freshness"]["exact_test_anchor_count"] == 8
+    assert surfaces["temporal_evidence_freshness"]["unanchored_witness_count"] == 0
     assert surfaces["code_intelligence_operator_read_model"]["exact_test_anchor_count"] >= 5
     assert surfaces["code_intelligence_operator_read_model"]["unanchored_witness_count"] == 0
     assert surfaces["data_export_lifecycle"]["exact_test_anchor_count"] >= 4
@@ -3253,8 +3255,13 @@ def test_temporal_kernel_surface_owns_runtime_time_truth() -> None:
 def test_temporal_evidence_freshness_surface_rechecks_required_evidence() -> None:
     matrix = _load_fixture()
     surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    witness_surfaces = {
+        surface["surface_id"]: surface
+        for surface in matrix["witness_integrity"]["surfaces"]
+    }
     closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
     evidence_surface = surfaces["temporal_evidence_freshness"]
+    evidence_witness_surface = witness_surfaces["temporal_evidence_freshness"]
     witnesses = set(evidence_surface["runtime_witnesses"])
 
     assert evidence_surface["coverage_state"] == "witnessed"
@@ -3273,6 +3280,9 @@ def test_temporal_evidence_freshness_surface_rechecks_required_evidence() -> Non
     assert "revoked_or_unverified_high_risk_evidence_blocks" in witnesses
     assert "expiring_evidence_warns_before_dispatch" in witnesses
     assert "temporal_evidence_freshness_receipt_schema_valid" in witnesses
+    assert "receipt_not_terminal_closure" in witnesses
+    assert evidence_witness_surface["exact_test_anchor_count"] == 8
+    assert evidence_witness_surface["unanchored_witness_count"] == 0
     assert closure_actions["publish_temporal_evidence_freshness_receipt_contract"]["status"] == "closed"
 
 

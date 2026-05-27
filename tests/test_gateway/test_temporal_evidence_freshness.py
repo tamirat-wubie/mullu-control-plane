@@ -50,7 +50,24 @@ def test_evidence_freshness_allows_fresh_required_schema_receipt() -> None:
     assert receipt.earliest_fresh_until == "2026-05-05T13:45:00+00:00"
     assert receipt.recheck_due_at == "2026-05-05T13:45:00+00:00"
     assert receipt.metadata["evidence_fresh_for_dispatch"] is True
+    assert receipt.evidence_states[0].age_seconds == 1800
+    assert receipt.metadata["receipt_is_not_terminal_closure"] is True
     assert receipt.terminal_closure_required is True
+
+
+def test_freshness_window_required_for_dispatch() -> None:
+    receipt = TemporalEvidenceFreshness(FixedClock()).evaluate(
+        _request(
+            evidence_claims=[
+                _approval_claim(),
+                replace(_price_claim(), fresh_until="", freshness_seconds=0),
+            ]
+        )
+    )
+
+    assert receipt.status == "blocked"
+    assert "price-check:quote-1:freshness_window_required" in receipt.blocked_reasons
+    assert "dispatch_block" in receipt.required_controls
 
 
 def test_evidence_freshness_requires_refresh_for_stale_required_type() -> None:
