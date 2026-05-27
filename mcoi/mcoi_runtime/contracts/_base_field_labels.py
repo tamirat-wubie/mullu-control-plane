@@ -1865,6 +1865,7 @@ verdict
 verdict_id
 verification_difficulty
 verification_id
+verification_ids
 verification_method
 verified_at
 verified_by
