@@ -830,7 +830,9 @@ class AgentOrchestrator:
             agent_capabilities=agent_capabilities,
             admitted_capabilities=admitted_capabilities,
             manifest_read_model_available=manifest_read_model is not None,
-            manifest_raw_capability_count=len(admitted_capabilities or ()),
+            manifest_raw_capability_count=_raw_capability_id_count_from_manifest_read_model(
+                manifest_read_model,
+            ),
             manifest_binding_action="from_manifest_read_model",
         )
 
@@ -2346,6 +2348,15 @@ def _capability_ids_from_manifest_read_model(read_model: Mapping[str, Any] | Non
     if not isinstance(raw_ids, (tuple, list)):
         return ()
     return tuple(str(capability_id).strip() for capability_id in raw_ids if str(capability_id).strip())
+
+
+def _raw_capability_id_count_from_manifest_read_model(read_model: Mapping[str, Any] | None) -> int:
+    if read_model is None:
+        return 0
+    raw_ids = read_model.get("capability_ids", ())
+    if not isinstance(raw_ids, (tuple, list)):
+        return 0
+    return len(raw_ids)
 
 
 def _sanitize_executor_result(raw_result: Mapping[str, Any]) -> SanitizedExecutorResult:

@@ -1315,6 +1315,28 @@ class TestHandoffs:
         assert proofs[0]["decision"] == "blocked"
         assert proofs[0]["manifest_admitted"] is False
 
+    def test_manifest_read_model_binding_proof_counts_raw_capability_surface(self):
+        orch = AgentOrchestrator.from_manifest_read_model(
+            clock=_clock,
+            agent_capabilities={"agent-a": ("search", "deploy")},
+            manifest_read_model={
+                "capability_ids": (" search ", "", "deploy", "search"),
+                "manifest_count": 4,
+            },
+        )
+
+        summary = orch.summary()
+        binding_proof = orch.manifest_binding_proofs()[0]
+
+        assert orch.manifest_gated is True
+        assert summary["admitted_capability_count"] == 2
+        assert binding_proof["raw_capability_count"] == 4
+        assert binding_proof["admitted_capability_count"] == 2
+        assert binding_proof["manifest_read_model_available"] is True
+        assert binding_proof["manifest_gated"] is True
+        assert "search" not in repr(binding_proof)
+        assert "deploy" not in repr(binding_proof)
+
     def test_manifest_read_model_none_records_ungated_binding(self):
         orch = AgentOrchestrator.from_manifest_read_model(
             clock=_clock,
