@@ -32,6 +32,7 @@ from mcoi_runtime.core.skill_promotion import (
     evaluate_skill_promotion,
     promote_skill_with_evidence,
 )
+from mcoi_runtime.core.invariants import RuntimeCoreInvariantError
 from mcoi_runtime.core.skills import SkillRegistry
 
 
@@ -217,3 +218,22 @@ def test_promotion_decision_contract_requires_evidence_for_approved_state() -> N
             reason="successful_execution_evidence",
             evidence=None,
         )
+
+
+def test_receipt_writer_failure_prevents_lifecycle_transition() -> None:
+    registry = _registry_with_skill()
+
+    def reject_receipt(_evidence: SkillPromotionEvidence) -> None:
+        raise RuntimeCoreInvariantError("durable receipt rejected")
+
+    with pytest.raises(RuntimeCoreInvariantError, match="durable receipt rejected"):
+        promote_skill_with_evidence(
+            registry,
+            skill_id="skill.promote",
+            target_lifecycle=SkillLifecycle.PROVISIONAL,
+            execution_records=(_record(),),
+            created_at=FIXED_CLOCK,
+            receipt_writer=reject_receipt,
+        )
+
+    assert registry.get("skill.promote").lifecycle is SkillLifecycle.CANDIDATE

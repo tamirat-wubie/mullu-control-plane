@@ -10,7 +10,7 @@ Invariants:
 
 from __future__ import annotations
 
-from collections.abc import Iterable
+from collections.abc import Callable, Iterable
 
 from mcoi_runtime.contracts.skill import (
     SkillExecutionRecord,
@@ -40,6 +40,7 @@ def promote_skill_with_evidence(
     target_lifecycle: SkillLifecycle,
     execution_records: tuple[SkillExecutionRecord, ...],
     created_at: str,
+    receipt_writer: Callable[[SkillPromotionEvidence], object] | None = None,
 ) -> SkillPromotionDecision:
     """Evaluate evidence and apply one registry lifecycle transition when approved."""
     decision = evaluate_skill_promotion(
@@ -50,6 +51,8 @@ def promote_skill_with_evidence(
         created_at=created_at,
     )
     if decision.approved:
+        if receipt_writer is not None and decision.evidence is not None:
+            receipt_writer(decision.evidence)
         registry.transition(skill_id, target_lifecycle)
     return decision
 
