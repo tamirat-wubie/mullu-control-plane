@@ -29,8 +29,11 @@ from mcoi_runtime.adapters.multi_provider import (
     InferenceNetBackend,
     InfomaniakBackend,
     KatalepticBackend,
+    LMStudioBackend,
     LLMAIBackend,
+    LocalAIBackend,
     LlamaAPIBackend,
+    LlamaCppBackend,
     MixlayerBackend,
     ModelMaxBackend,
     MoonshotBackend,
@@ -46,10 +49,13 @@ from mcoi_runtime.adapters.multi_provider import (
     QuickSilverBackend,
     RequestyBackend,
     RidvayBackend,
+    SGLangBackend,
     SambaNovaBackend,
     ScalewayBackend,
     SiliconFlowBackend,
+    TGIBackend,
     TogetherBackend,
+    VLLMBackend,
     VeniceBackend,
     WaveSpeedBackend,
     ZAIBackend,
@@ -138,6 +144,18 @@ LLM_ENV_KEYS = (
     "INFOMANIAK_PRODUCT_ID",
     "INFOMANIAK_BASE_URL",
     "KATALEPTIC_API_KEY",
+    "VLLM_BASE_URL",
+    "VLLM_API_KEY",
+    "SGLANG_BASE_URL",
+    "SGLANG_API_KEY",
+    "TGI_BASE_URL",
+    "TGI_API_KEY",
+    "LLAMACPP_BASE_URL",
+    "LLAMACPP_API_KEY",
+    "LOCALAI_BASE_URL",
+    "LOCALAI_API_KEY",
+    "LMSTUDIO_BASE_URL",
+    "LMSTUDIO_API_KEY",
     "XAI_API_KEY",
     "MISTRAL_API_KEY",
     "OPENROUTER_API_KEY",
@@ -373,6 +391,36 @@ class TestLLMConfig:
         assert config.kataleptic_api_key == "kataleptic-key"
         assert config.infomaniak_api_key == ""
 
+    def test_from_env_self_hosted_model_providers_detected(self, monkeypatch):
+        for key in LLM_ENV_KEYS:
+            monkeypatch.delenv(key, raising=False)
+        monkeypatch.setenv("VLLM_BASE_URL", "http://vllm.local/v1")
+        monkeypatch.setenv("VLLM_API_KEY", "vllm-key")
+
+        config = LLMConfig.from_env()
+
+        assert config.default_backend == "vllm"
+        assert config.vllm_base_url == "http://vllm.local/v1"
+        assert config.vllm_api_key == "vllm-key"
+        assert config.sglang_base_url == ""
+
+        monkeypatch.delenv("VLLM_BASE_URL", raising=False)
+        monkeypatch.delenv("VLLM_API_KEY", raising=False)
+        monkeypatch.setenv("SGLANG_BASE_URL", "http://sglang.local/v1")
+        config = LLMConfig.from_env()
+
+        assert config.default_backend == "sglang"
+        assert config.sglang_base_url == "http://sglang.local/v1"
+        assert config.vllm_base_url == ""
+
+        monkeypatch.delenv("SGLANG_BASE_URL", raising=False)
+        monkeypatch.setenv("LMSTUDIO_BASE_URL", "http://localhost:1234/v1")
+        config = LLMConfig.from_env()
+
+        assert config.default_backend == "lmstudio"
+        assert config.lmstudio_base_url == "http://localhost:1234/v1"
+        assert config.localai_base_url == ""
+
     def test_from_env_cloudflare_requires_account_id(self, monkeypatch):
         monkeypatch.delenv("MULLU_ENV", raising=False)
         for key in LLM_ENV_KEYS:
@@ -570,6 +618,18 @@ class TestBootstrapLLM:
             infomaniak_api_key="info",
             infomaniak_product_id="product-123",
             kataleptic_api_key="kt",
+            vllm_base_url="http://vllm.local/v1",
+            vllm_api_key="vl",
+            sglang_base_url="http://sglang.local/v1",
+            sglang_api_key="sg",
+            tgi_base_url="http://tgi.local/v1",
+            tgi_api_key="tgi",
+            llamacpp_base_url="http://llamacpp.local/v1",
+            llamacpp_api_key="lc",
+            localai_base_url="http://localai.local/v1",
+            localai_api_key="lai",
+            lmstudio_base_url="http://lmstudio.local/v1",
+            lmstudio_api_key="ls",
             grok_api_key="xai",
             mistral_api_key="ms",
             openrouter_api_key="or",
@@ -635,6 +695,12 @@ class TestBootstrapLLM:
             "aimlapi",
             "infomaniak",
             "kataleptic",
+            "vllm",
+            "sglang",
+            "tgi",
+            "llamacpp",
+            "localai",
+            "lmstudio",
             "grok",
             "mistral",
             "openrouter",
@@ -689,6 +755,12 @@ class TestBootstrapLLM:
         assert isinstance(result.backends["aimlapi"], AIMLAPIBackend)
         assert isinstance(result.backends["infomaniak"], InfomaniakBackend)
         assert isinstance(result.backends["kataleptic"], KatalepticBackend)
+        assert isinstance(result.backends["vllm"], VLLMBackend)
+        assert isinstance(result.backends["sglang"], SGLangBackend)
+        assert isinstance(result.backends["tgi"], TGIBackend)
+        assert isinstance(result.backends["llamacpp"], LlamaCppBackend)
+        assert isinstance(result.backends["localai"], LocalAIBackend)
+        assert isinstance(result.backends["lmstudio"], LMStudioBackend)
         assert "llm-groq" in result.registered_providers
         assert "llm-deepseek" in result.registered_providers
         assert "llm-together" in result.registered_providers
@@ -736,6 +808,12 @@ class TestBootstrapLLM:
         assert "llm-aimlapi" in result.registered_providers
         assert "llm-infomaniak" in result.registered_providers
         assert "llm-kataleptic" in result.registered_providers
+        assert "llm-vllm" in result.registered_providers
+        assert "llm-sglang" in result.registered_providers
+        assert "llm-tgi" in result.registered_providers
+        assert "llm-llamacpp" in result.registered_providers
+        assert "llm-localai" in result.registered_providers
+        assert "llm-lmstudio" in result.registered_providers
         assert "llm-openrouter" in result.registered_providers
         assert "meta-llama/llama-4-scout-17b-16e-instruct" in result.registered_models
         assert "deepseek-v4-flash" in result.registered_models
@@ -788,6 +866,12 @@ class TestBootstrapLLM:
         assert "aimlapi/nvidia/nemotron-3-nano-30b-a3b" in result.registered_models
         assert "infomaniak/google/gemma-4-31B-it" in result.registered_models
         assert "kataleptic/gemma3-27b" in result.registered_models
+        assert "vllm/Qwen/Qwen3-0.6B" in result.registered_models
+        assert "sglang/Qwen/Qwen3-0.6B" in result.registered_models
+        assert "tgi/default" in result.registered_models
+        assert "llamacpp/local-model" in result.registered_models
+        assert "localai/local-model" in result.registered_models
+        assert "lmstudio/model-identifier" in result.registered_models
         assert "mistral-small-2506" in result.registered_models
         assert "grok-3-mini" in result.registered_models
         assert "meta-llama/llama-4-scout" in result.registered_models

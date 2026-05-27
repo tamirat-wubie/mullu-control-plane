@@ -57,8 +57,11 @@ from mcoi_runtime.adapters.multi_provider import (
     InferenceNetBackend,
     InfomaniakBackend,
     KatalepticBackend,
+    LMStudioBackend,
     LLMAIBackend,
+    LocalAIBackend,
     LlamaAPIBackend,
+    LlamaCppBackend,
     MixlayerBackend,
     MistralBackend,
     ModelMaxBackend,
@@ -75,10 +78,13 @@ from mcoi_runtime.adapters.multi_provider import (
     QuickSilverBackend,
     RequestyBackend,
     RidvayBackend,
+    SGLangBackend,
     SambaNovaBackend,
     ScalewayBackend,
     SiliconFlowBackend,
+    TGIBackend,
     TogetherBackend,
+    VLLMBackend,
     VeniceBackend,
     WaveSpeedBackend,
     ZAIBackend,
@@ -161,6 +167,18 @@ class LLMConfig:
     infomaniak_product_id: str = ""
     infomaniak_base_url: str = ""
     kataleptic_api_key: str = ""
+    vllm_base_url: str = ""
+    vllm_api_key: str = ""
+    sglang_base_url: str = ""
+    sglang_api_key: str = ""
+    tgi_base_url: str = ""
+    tgi_api_key: str = ""
+    llamacpp_base_url: str = ""
+    llamacpp_api_key: str = ""
+    localai_base_url: str = ""
+    localai_api_key: str = ""
+    lmstudio_base_url: str = ""
+    lmstudio_api_key: str = ""
     grok_api_key: str = ""
     mistral_api_key: str = ""
     openrouter_api_key: str = ""
@@ -234,6 +252,18 @@ class LLMConfig:
         infomaniak_product_id = os.environ.get("INFOMANIAK_PRODUCT_ID", "")
         infomaniak_base_url = os.environ.get("INFOMANIAK_BASE_URL", "")
         kataleptic_key = os.environ.get("KATALEPTIC_API_KEY", "")
+        vllm_base_url = os.environ.get("VLLM_BASE_URL", "")
+        vllm_key = os.environ.get("VLLM_API_KEY", "")
+        sglang_base_url = os.environ.get("SGLANG_BASE_URL", "")
+        sglang_key = os.environ.get("SGLANG_API_KEY", "")
+        tgi_base_url = os.environ.get("TGI_BASE_URL", "")
+        tgi_key = os.environ.get("TGI_API_KEY", "")
+        llamacpp_base_url = os.environ.get("LLAMACPP_BASE_URL", "")
+        llamacpp_key = os.environ.get("LLAMACPP_API_KEY", "")
+        localai_base_url = os.environ.get("LOCALAI_BASE_URL", "")
+        localai_key = os.environ.get("LOCALAI_API_KEY", "")
+        lmstudio_base_url = os.environ.get("LMSTUDIO_BASE_URL", "")
+        lmstudio_key = os.environ.get("LMSTUDIO_API_KEY", "")
         grok_key = os.environ.get("XAI_API_KEY", "")
         mistral_key = os.environ.get("MISTRAL_API_KEY", "")
         openrouter_key = os.environ.get("OPENROUTER_API_KEY", "")
@@ -351,6 +381,18 @@ class LLMConfig:
                 default_backend = "infomaniak"
             elif kataleptic_key:
                 default_backend = "kataleptic"
+            elif vllm_base_url:
+                default_backend = "vllm"
+            elif sglang_base_url:
+                default_backend = "sglang"
+            elif tgi_base_url:
+                default_backend = "tgi"
+            elif llamacpp_base_url:
+                default_backend = "llamacpp"
+            elif localai_base_url:
+                default_backend = "localai"
+            elif lmstudio_base_url:
+                default_backend = "lmstudio"
             elif mistral_key:
                 default_backend = "mistral"
             elif grok_key:
@@ -393,7 +435,9 @@ class LLMConfig:
                 "OVH_AI_ENDPOINTS_ACCESS_TOKEN, AI_ENDPOINT_API_KEY, "
                 "AIMLAPI_API_KEY, AIML_API_KEY, INFOMANIAK_API_KEY "
                 "with INFOMANIAK_PRODUCT_ID or INFOMANIAK_BASE_URL, "
-                "KATALEPTIC_API_KEY, "
+                "KATALEPTIC_API_KEY, VLLM_BASE_URL, SGLANG_BASE_URL, "
+                "TGI_BASE_URL, LLAMACPP_BASE_URL, LOCALAI_BASE_URL, "
+                "LMSTUDIO_BASE_URL, "
                 "XAI_API_KEY, MISTRAL_API_KEY, "
                 "OPENROUTER_API_KEY) "
                 "or OLLAMA_BASE_URL."
@@ -458,6 +502,18 @@ class LLMConfig:
             infomaniak_product_id=infomaniak_product_id,
             infomaniak_base_url=infomaniak_base_url,
             kataleptic_api_key=kataleptic_key,
+            vllm_base_url=vllm_base_url,
+            vllm_api_key=vllm_key,
+            sglang_base_url=sglang_base_url,
+            sglang_api_key=sglang_key,
+            tgi_base_url=tgi_base_url,
+            tgi_api_key=tgi_key,
+            llamacpp_base_url=llamacpp_base_url,
+            llamacpp_api_key=llamacpp_key,
+            localai_base_url=localai_base_url,
+            localai_api_key=localai_key,
+            lmstudio_base_url=lmstudio_base_url,
+            lmstudio_api_key=lmstudio_key,
             grok_api_key=grok_key,
             mistral_api_key=mistral_key,
             openrouter_api_key=openrouter_key,
@@ -496,6 +552,13 @@ def _select_provider_default_model(default_model: str, markers: tuple[str, ...],
     """Select a default model only when it belongs to the target provider."""
     normalized = default_model.lower()
     if any(marker in normalized for marker in markers):
+        return default_model
+    return fallback
+
+
+def _select_self_hosted_default_model(default_backend: str, backend_name: str, default_model: str, fallback: str) -> str:
+    """Use an explicit configured model for the selected private backend."""
+    if default_backend == backend_name and default_model != "claude-sonnet-4-20250514":
         return default_model
     return fallback
 
@@ -1115,6 +1178,84 @@ def bootstrap_llm(
         )
         backends["kataleptic"] = kataleptic
 
+    if llm_config.vllm_base_url or llm_config.default_backend == "vllm":
+        vllm = VLLMBackend(
+            api_key=llm_config.vllm_api_key,
+            base_url=llm_config.vllm_base_url,
+            model=_select_self_hosted_default_model(
+                llm_config.default_backend,
+                "vllm",
+                llm_config.default_model,
+                VLLMBackend.DEFAULT_MODEL,
+            ),
+        )
+        backends["vllm"] = vllm
+
+    if llm_config.sglang_base_url or llm_config.default_backend == "sglang":
+        sglang = SGLangBackend(
+            api_key=llm_config.sglang_api_key,
+            base_url=llm_config.sglang_base_url,
+            model=_select_self_hosted_default_model(
+                llm_config.default_backend,
+                "sglang",
+                llm_config.default_model,
+                SGLangBackend.DEFAULT_MODEL,
+            ),
+        )
+        backends["sglang"] = sglang
+
+    if llm_config.tgi_base_url or llm_config.default_backend == "tgi":
+        tgi = TGIBackend(
+            api_key=llm_config.tgi_api_key,
+            base_url=llm_config.tgi_base_url,
+            model=_select_self_hosted_default_model(
+                llm_config.default_backend,
+                "tgi",
+                llm_config.default_model,
+                TGIBackend.DEFAULT_MODEL,
+            ),
+        )
+        backends["tgi"] = tgi
+
+    if llm_config.llamacpp_base_url or llm_config.default_backend == "llamacpp":
+        llamacpp = LlamaCppBackend(
+            api_key=llm_config.llamacpp_api_key,
+            base_url=llm_config.llamacpp_base_url,
+            model=_select_self_hosted_default_model(
+                llm_config.default_backend,
+                "llamacpp",
+                llm_config.default_model,
+                LlamaCppBackend.DEFAULT_MODEL,
+            ),
+        )
+        backends["llamacpp"] = llamacpp
+
+    if llm_config.localai_base_url or llm_config.default_backend == "localai":
+        localai = LocalAIBackend(
+            api_key=llm_config.localai_api_key,
+            base_url=llm_config.localai_base_url,
+            model=_select_self_hosted_default_model(
+                llm_config.default_backend,
+                "localai",
+                llm_config.default_model,
+                LocalAIBackend.DEFAULT_MODEL,
+            ),
+        )
+        backends["localai"] = localai
+
+    if llm_config.lmstudio_base_url or llm_config.default_backend == "lmstudio":
+        lmstudio = LMStudioBackend(
+            api_key=llm_config.lmstudio_api_key,
+            base_url=llm_config.lmstudio_base_url,
+            model=_select_self_hosted_default_model(
+                llm_config.default_backend,
+                "lmstudio",
+                llm_config.default_model,
+                LMStudioBackend.DEFAULT_MODEL,
+            ),
+        )
+        backends["lmstudio"] = lmstudio
+
     if llm_config.grok_api_key:
         grok = GrokBackend(
             api_key=llm_config.grok_api_key,
@@ -1543,6 +1684,42 @@ def _register_providers(
             "rate_limit": 120,
             "cost_limit": 0.25,
         },
+        "vllm": {
+            "name": "vLLM",
+            "base_url": config.vllm_base_url or VLLMBackend.DEFAULT_BASE_URL,
+            "rate_limit": 1000,
+            "cost_limit": 0.01,
+        },
+        "sglang": {
+            "name": "SGLang",
+            "base_url": config.sglang_base_url or SGLangBackend.DEFAULT_BASE_URL,
+            "rate_limit": 1000,
+            "cost_limit": 0.01,
+        },
+        "tgi": {
+            "name": "Hugging Face TGI",
+            "base_url": config.tgi_base_url or TGIBackend.DEFAULT_BASE_URL,
+            "rate_limit": 1000,
+            "cost_limit": 0.01,
+        },
+        "llamacpp": {
+            "name": "llama.cpp",
+            "base_url": config.llamacpp_base_url or LlamaCppBackend.DEFAULT_BASE_URL,
+            "rate_limit": 1000,
+            "cost_limit": 0.01,
+        },
+        "localai": {
+            "name": "LocalAI",
+            "base_url": config.localai_base_url or LocalAIBackend.DEFAULT_BASE_URL,
+            "rate_limit": 1000,
+            "cost_limit": 0.01,
+        },
+        "lmstudio": {
+            "name": "LM Studio",
+            "base_url": config.lmstudio_base_url or LMStudioBackend.DEFAULT_BASE_URL,
+            "rate_limit": 1000,
+            "cost_limit": 0.01,
+        },
         "grok": {
             "name": "xAI Grok",
             "base_url": "https://api.x.ai/v1",
@@ -1700,6 +1877,12 @@ def _register_models(
         (AIMLAPIBackend.ROUTING_MODEL, "Nemotron 3 Nano 30B A3B via AIMLAPI", "aimlapi", 0.065, 0.26),
         (InfomaniakBackend.ROUTING_MODEL, "Gemma 4 31B via Infomaniak", "infomaniak", 0.20, 0.40),
         (KatalepticBackend.ROUTING_MODEL, "Gemma 3 27B via Kataleptic", "kataleptic", 0.15, 0.20),
+        (VLLMBackend.ROUTING_MODEL, "Qwen3 0.6B via vLLM", "vllm", 0.0, 0.0),
+        (SGLangBackend.ROUTING_MODEL, "Qwen3 0.6B via SGLang", "sglang", 0.0, 0.0),
+        (TGIBackend.ROUTING_MODEL, "TGI Default Model", "tgi", 0.0, 0.0),
+        (LlamaCppBackend.ROUTING_MODEL, "llama.cpp Local Model", "llamacpp", 0.0, 0.0),
+        (LocalAIBackend.ROUTING_MODEL, "LocalAI Local Model", "localai", 0.0, 0.0),
+        (LMStudioBackend.ROUTING_MODEL, "LM Studio Loaded Model", "lmstudio", 0.0, 0.0),
         ("mistral-small-2506", "Mistral Small 2506", "mistral", 0.10, 0.30),
         ("mistral-small-2603", "Mistral Small 2603", "mistral", 0.15, 0.60),
         ("grok-3-mini", "Grok 3 Mini", "grok", 0.30, 0.50),

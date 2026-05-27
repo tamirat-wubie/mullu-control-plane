@@ -109,7 +109,7 @@ Variables are grouped by purpose. Every row marks whether the variable is **requ
 
 | Variable | Required | Default | Notes |
 |---|---|---|---|
-| `MULLU_LLM_BACKEND` | optional | auto-detect | `anthropic`/`openai`/`gemini`/`ollama`/`stub`. When unset, picks the first provider with a configured API key (Tier 1 priority: anthropic → openai → gemini → ollama). Setting `stub` in pilot/production raises a hard error. |
+| `MULLU_LLM_BACKEND` | optional | auto-detect | Supports hosted providers plus `ollama`, `vllm`, `sglang`, `tgi`, `llamacpp`, `localai`, `lmstudio`, and `stub`. When unset, picks the first provider with a configured key or local base URL. Setting `stub` in pilot/production raises a hard error. |
 | `MULLU_LLM_MODEL` | optional | `claude-sonnet-4-20250514` | Default model name for the chosen backend. |
 | `MULLU_LLM_BUDGET_MAX_COST` | optional | `100.0` | Default per-tenant cost budget (USD). Atomic budget enforcement from v4.27. F2. |
 | `MULLU_LLM_BUDGET_MAX_CALLS` | optional | `10000` | Default per-tenant call cap. |
@@ -118,6 +118,12 @@ Variables are grouped by purpose. Every row marks whether the variable is **requ
 | `OPENAI_API_KEY` | " | unset | |
 | `GEMINI_API_KEY` | " | unset | |
 | `OLLAMA_BASE_URL` | " | unset | Local Ollama endpoint. |
+| `VLLM_BASE_URL` / `VLLM_API_KEY` | " | unset | Private vLLM OpenAI-compatible endpoint; API key is optional unless the server enforces one. |
+| `SGLANG_BASE_URL` / `SGLANG_API_KEY` | " | unset | Private SGLang OpenAI-compatible endpoint; API key is optional unless the server enforces one. |
+| `TGI_BASE_URL` / `TGI_API_KEY` | " | unset | Hugging Face TGI Messages API endpoint; API key is optional for local servers. |
+| `LLAMACPP_BASE_URL` / `LLAMACPP_API_KEY` | " | unset | llama.cpp OpenAI-compatible endpoint. |
+| `LOCALAI_BASE_URL` / `LOCALAI_API_KEY` | " | unset | LocalAI OpenAI-compatible endpoint. |
+| `LMSTUDIO_BASE_URL` / `LMSTUDIO_API_KEY` | " | unset | LM Studio local server endpoint. |
 
 ### Background workers / certification
 
@@ -306,7 +312,7 @@ Every audit-grade rejection has a deterministic, bounded error string. Watch for
 | `RuntimeError: postgres schema migration N failed (...)` | One of the 4 governance migrations failed. | Check PG user has `CREATE TABLE` privilege; check schema isn't already partially-applied. |
 | `RuntimeError: RS* algorithms require the 'cryptography' package` | JWT config says RS256/RS384/RS512 but cryptography extra not installed. | `pip install mcoi-runtime[encryption]`. |
 | `ValueError: jwks_url must use HTTPS` | F33 v4.33. `jwks_url=http://...` rejected at config. | Use HTTPS. If you really need HTTP (in-cluster sidecar), set `require_https_jwks=False`. |
-| `MULLU_LLM_BACKEND='stub' is forbidden in 'production'` | Stub model backend in non-dev env. | Pick a real provider. |
+| `MULLU_LLM_BACKEND='stub' is forbidden in 'production'` | Stub LLM in non-dev env. | Pick a real provider. |
 
 ### Startup-time warnings (don't block boot, fix soon)
 

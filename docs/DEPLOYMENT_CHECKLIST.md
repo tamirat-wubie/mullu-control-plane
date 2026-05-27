@@ -32,6 +32,12 @@
 | `OPENAI_API_KEY` | OpenAI (GPT) |
 | `GROQ_API_KEY` | Groq |
 | `GOOGLE_API_KEY` | Google (Gemini) |
+| `VLLM_BASE_URL` | vLLM private endpoint |
+| `SGLANG_BASE_URL` | SGLang private endpoint |
+| `TGI_BASE_URL` | Hugging Face TGI private endpoint |
+| `LLAMACPP_BASE_URL` | llama.cpp private endpoint |
+| `LOCALAI_BASE_URL` | LocalAI private endpoint |
+| `LMSTUDIO_BASE_URL` | LM Studio local endpoint |
 
 ## Environment Variables (Gateway Channels — optional)
 

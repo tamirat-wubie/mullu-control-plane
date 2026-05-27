@@ -153,6 +153,141 @@ def _params_to_messages(params: LLMInvocationParams) -> list[dict[str, str]]:
     ]
 
 
+class _SelfHostedOpenAICompatibleBackend:
+    """Base adapter for private OpenAI-compatible model servers."""
+
+    provider = LLMProvider.STUB
+    DEFAULT_MODEL = "local-model"
+    ROUTING_MODEL = "selfhosted/local-model"
+    MODEL_ALIASES: Mapping[str, str] = {}
+    DEFAULT_BASE_URL = "http://localhost:8000/v1"
+    API_KEY_ENV = ""
+    BASE_URL_ENV = ""
+    API_KEY_FALLBACK = "local"
+
+    def __init__(
+        self,
+        *,
+        model: str = "",
+        base_url: str = "",
+        api_key: str | None = None,
+        api_key_env: str = "",
+        base_url_env: str = "",
+    ) -> None:
+        self._model = model or self.DEFAULT_MODEL
+        self._default_model = self._model
+        self._base_url = base_url.rstrip("/") if base_url else ""
+        self._api_key = api_key or ""
+        self._api_key_env = api_key_env or self.API_KEY_ENV
+        self._base_url_env = base_url_env or self.BASE_URL_ENV
+        self._call_count = 0
+
+    def _resolved_base_url(self) -> str:
+        configured_base_url = self._base_url or os.environ.get(self._base_url_env, "")
+        return (configured_base_url or self.DEFAULT_BASE_URL).rstrip("/")
+
+    def _resolved_api_key(self) -> str:
+        return self._api_key or os.environ.get(self._api_key_env, "") or self.API_KEY_FALLBACK
+
+    def call(self, params: LLMInvocationParams) -> LLMResult:
+        self._call_count += 1
+        requested_model = params.model_name or self._model
+        model = self.MODEL_ALIASES.get(requested_model, requested_model)
+        return _openai_compatible_call(
+            base_url=self._resolved_base_url(),
+            api_key=self._resolved_api_key(),
+            model=model,
+            messages=_params_to_messages(params),
+            max_tokens=params.max_tokens,
+            temperature=0.0,
+            provider=self.provider,
+            cost_per_1m_input=0.0,
+            cost_per_1m_output=0.0,
+        )
+
+    @property
+    def call_count(self) -> int:
+        return self._call_count
+
+
+class VLLMBackend(_SelfHostedOpenAICompatibleBackend):
+    """vLLM private OpenAI-compatible server for open-weight models."""
+
+    provider = LLMProvider.VLLM
+    DEFAULT_MODEL = "Qwen/Qwen3-0.6B"
+    ROUTING_MODEL = "vllm/Qwen/Qwen3-0.6B"
+    MODEL_ALIASES = {ROUTING_MODEL: DEFAULT_MODEL}
+    DEFAULT_BASE_URL = "http://localhost:8000/v1"
+    API_KEY_ENV = "VLLM_API_KEY"
+    BASE_URL_ENV = "VLLM_BASE_URL"
+    API_KEY_FALLBACK = "vllm"
+
+
+class SGLangBackend(_SelfHostedOpenAICompatibleBackend):
+    """SGLang private OpenAI-compatible server for open-weight models."""
+
+    provider = LLMProvider.SGLANG
+    DEFAULT_MODEL = "Qwen/Qwen3-0.6B"
+    ROUTING_MODEL = "sglang/Qwen/Qwen3-0.6B"
+    MODEL_ALIASES = {ROUTING_MODEL: DEFAULT_MODEL}
+    DEFAULT_BASE_URL = "http://localhost:30000/v1"
+    API_KEY_ENV = "SGLANG_API_KEY"
+    BASE_URL_ENV = "SGLANG_BASE_URL"
+    API_KEY_FALLBACK = "sglang"
+
+
+class TGIBackend(_SelfHostedOpenAICompatibleBackend):
+    """Hugging Face TGI Messages API server."""
+
+    provider = LLMProvider.TGI
+    DEFAULT_MODEL = "tgi"
+    ROUTING_MODEL = "tgi/default"
+    MODEL_ALIASES = {ROUTING_MODEL: DEFAULT_MODEL}
+    DEFAULT_BASE_URL = "http://localhost:3000/v1"
+    API_KEY_ENV = "TGI_API_KEY"
+    BASE_URL_ENV = "TGI_BASE_URL"
+    API_KEY_FALLBACK = "-"
+
+
+class LlamaCppBackend(_SelfHostedOpenAICompatibleBackend):
+    """llama.cpp llama-server OpenAI-compatible endpoint."""
+
+    provider = LLMProvider.LLAMACPP
+    DEFAULT_MODEL = "local-model"
+    ROUTING_MODEL = "llamacpp/local-model"
+    MODEL_ALIASES = {ROUTING_MODEL: DEFAULT_MODEL}
+    DEFAULT_BASE_URL = "http://localhost:8080/v1"
+    API_KEY_ENV = "LLAMACPP_API_KEY"
+    BASE_URL_ENV = "LLAMACPP_BASE_URL"
+    API_KEY_FALLBACK = "llamacpp"
+
+
+class LocalAIBackend(_SelfHostedOpenAICompatibleBackend):
+    """LocalAI OpenAI-compatible endpoint for private model servers."""
+
+    provider = LLMProvider.LOCALAI
+    DEFAULT_MODEL = "local-model"
+    ROUTING_MODEL = "localai/local-model"
+    MODEL_ALIASES = {ROUTING_MODEL: DEFAULT_MODEL}
+    DEFAULT_BASE_URL = "http://localhost:8080/v1"
+    API_KEY_ENV = "LOCALAI_API_KEY"
+    BASE_URL_ENV = "LOCALAI_BASE_URL"
+    API_KEY_FALLBACK = "localai"
+
+
+class LMStudioBackend(_SelfHostedOpenAICompatibleBackend):
+    """LM Studio local OpenAI-compatible endpoint for loaded models."""
+
+    provider = LLMProvider.LMSTUDIO
+    DEFAULT_MODEL = "model-identifier"
+    ROUTING_MODEL = "lmstudio/model-identifier"
+    MODEL_ALIASES = {ROUTING_MODEL: DEFAULT_MODEL}
+    DEFAULT_BASE_URL = "http://localhost:1234/v1"
+    API_KEY_ENV = "LMSTUDIO_API_KEY"
+    BASE_URL_ENV = "LMSTUDIO_BASE_URL"
+    API_KEY_FALLBACK = "lm-studio"
+
+
 # Groq (Llama 4, free tier)
 class GroqBackend:
     """Groq - hardware-accelerated inference for open-weight models.

@@ -129,7 +129,7 @@ Every message flows through the full governance pipeline. No bypass path.
 | **Field Encryption** | AES-256-GCM on audit store detail fields |
 | **RBAC** | 9 roles (admin → financial_admin) + permission rules |
 
-### 10 Model Providers
+### Model Providers
 
 | Provider | Free Tier | Best For |
 |---|---|---|
@@ -142,6 +142,8 @@ Every message flows through the full governance pipeline. No bypass path.
 | Mistral | Limited | Cheapest ($0.02/M) |
 | OpenRouter | Community | Multi-provider routing |
 | Ollama | Self-hosted | Local/private |
+| vLLM / SGLang / TGI | Self-hosted | Private open-weight serving |
+| llama.cpp / LocalAI / LM Studio | Self-hosted | Local workstation models |
 | Stub | Always | Testing |
 
 **Adaptive reasoning** routes simple queries to free providers, complex tasks to premium models.
@@ -229,7 +231,7 @@ mullu-control-plane/
 │   │   ├── migration/      # MUSIA: bulk proof v1→v2 migration runner
 │   │   ├── core/           # 380+ engines (governance, model routing, coordination)
 │   │   ├── contracts/      # 160+ frozen dataclass types
-│   │   ├── adapters/       # 10 model backends, shell, browser, HTTP
+│   │   ├── adapters/       # multi-provider LLM backends, shell, browser, HTTP
 │   │   ├── persistence/    # PostgreSQL + SQLite + memory stores
 │   │   ├── mcp/            # MCP server (tool provider for external agents)
 │   │   └── pilot/          # Deployment profiles
