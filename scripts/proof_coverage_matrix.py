@@ -2477,6 +2477,33 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "planning_projection_requires_admitted_matching_decision",
                 "software_learning_errors_are_bounded",
             ],
+            runtime_witness_anchor_aliases={
+                "software_learning_schema_default_enabled": [
+                    "happy_path_returns_solved_payload",
+                    "learning_admission_persists_when_store_configured",
+                ],
+                "passed_gates_yield_procedural_memory": [
+                    "derives_sanitized_procedural_and_risk_candidates",
+                    "learning_decision_admits_and_projects_to_planning_knowledge",
+                    "happy_path_returns_solved_payload",
+                ],
+                "failed_gates_yield_hashed_risk_memory": [
+                    "derives_sanitized_procedural_and_risk_candidates",
+                ],
+                "raw_logs_rejected_before_planning_use": [
+                    "raw_log_candidate_is_rejected_before_planning_use",
+                    "happy_path_returns_solved_payload",
+                ],
+                "rollback_failure_defers_learning": [
+                    "rollback_failure_defers_learning_admission",
+                ],
+                "planning_projection_requires_admitted_matching_decision": [
+                    "planning_projection_requires_matching_admission",
+                ],
+                "software_learning_errors_are_bounded": [
+                    "file_software_learning_store_rejects_nonfinite_json_constants",
+                ],
+            },
         ),
         _surface(
             "gateway_webhook_ingress",

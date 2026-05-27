@@ -5268,6 +5268,33 @@
         "planning_knowledge_from_software_candidate"
       ],
       "request_proof": "request_proof",
+      "runtime_witness_anchor_aliases": {
+        "failed_gates_yield_hashed_risk_memory": [
+          "derives_sanitized_procedural_and_risk_candidates"
+        ],
+        "passed_gates_yield_procedural_memory": [
+          "derives_sanitized_procedural_and_risk_candidates",
+          "learning_decision_admits_and_projects_to_planning_knowledge",
+          "happy_path_returns_solved_payload"
+        ],
+        "planning_projection_requires_admitted_matching_decision": [
+          "planning_projection_requires_matching_admission"
+        ],
+        "raw_logs_rejected_before_planning_use": [
+          "raw_log_candidate_is_rejected_before_planning_use",
+          "happy_path_returns_solved_payload"
+        ],
+        "rollback_failure_defers_learning": [
+          "rollback_failure_defers_learning_admission"
+        ],
+        "software_learning_errors_are_bounded": [
+          "file_software_learning_store_rejects_nonfinite_json_constants"
+        ],
+        "software_learning_schema_default_enabled": [
+          "happy_path_returns_solved_payload",
+          "learning_admission_persists_when_store_configured"
+        ]
+      },
       "runtime_witnesses": [
         "software_learning_schema_default_enabled",
         "passed_gates_yield_procedural_memory",
@@ -8585,7 +8612,7 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 987,
+    "exact_test_anchor_count": 994,
     "runtime_witness_count": 1109,
     "surfaces": [
       {
@@ -11740,20 +11767,59 @@
         "unanchored_witnesses": []
       },
       {
-        "anchored_witnesses": [],
-        "exact_test_anchor_count": 0,
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "mcoi/tests/test_mcp_software_change.py::test_happy_path_returns_solved_payload",
+              "mcoi/tests/test_mcp_software_change.py::test_learning_admission_persists_when_store_configured"
+            ],
+            "witness": "software_learning_schema_default_enabled"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_software_learning.py::test_derives_sanitized_procedural_and_risk_candidates",
+              "mcoi/tests/test_software_learning.py::test_learning_decision_admits_and_projects_to_planning_knowledge",
+              "mcoi/tests/test_mcp_software_change.py::test_happy_path_returns_solved_payload"
+            ],
+            "witness": "passed_gates_yield_procedural_memory"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_software_learning.py::test_derives_sanitized_procedural_and_risk_candidates"
+            ],
+            "witness": "failed_gates_yield_hashed_risk_memory"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_software_learning.py::test_raw_log_candidate_is_rejected_before_planning_use",
+              "mcoi/tests/test_mcp_software_change.py::test_happy_path_returns_solved_payload"
+            ],
+            "witness": "raw_logs_rejected_before_planning_use"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_software_learning.py::test_rollback_failure_defers_learning_admission"
+            ],
+            "witness": "rollback_failure_defers_learning"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_software_learning.py::test_planning_projection_requires_matching_admission"
+            ],
+            "witness": "planning_projection_requires_admitted_matching_decision"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_software_learning.py::test_file_software_learning_store_rejects_nonfinite_json_constants"
+            ],
+            "witness": "software_learning_errors_are_bounded"
+          }
+        ],
+        "exact_test_anchor_count": 7,
         "runtime_witness_count": 7,
         "surface_id": "software_outcome_learning",
-        "unanchored_witness_count": 7,
-        "unanchored_witnesses": [
-          "software_learning_schema_default_enabled",
-          "passed_gates_yield_procedural_memory",
-          "failed_gates_yield_hashed_risk_memory",
-          "raw_logs_rejected_before_planning_use",
-          "rollback_failure_defers_learning",
-          "planning_projection_requires_admitted_matching_decision",
-          "software_learning_errors_are_bounded"
-        ]
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
       },
       {
         "anchored_witnesses": [
@@ -15921,6 +15987,6 @@
         "unanchored_witnesses": []
       }
     ],
-    "unanchored_witness_count": 122
+    "unanchored_witness_count": 115
   }
 }
