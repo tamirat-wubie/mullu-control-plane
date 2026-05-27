@@ -2074,6 +2074,45 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "orchestration_quorum_required",
                 "orchestration_executor_errors_sanitized",
             ],
+            runtime_witness_anchor_aliases={
+                "orchestration_summary_bounded": [
+                    "summary",
+                    "orchestration_summary_endpoint_bounded",
+                ],
+                "orchestration_plan_created_for_registered_agent": [
+                    "create_plan",
+                    "orchestration_plan_endpoint_creates_registered_agent_plan",
+                ],
+                "orchestration_unknown_initiator_bounded": [
+                    "create_plan_unknown_agent",
+                    "orchestration_unknown_initiator_returns_governed_error",
+                ],
+                "orchestration_missing_plan_bounded": [
+                    "missing_orchestration_plan_returns_governed_not_found",
+                    "get_plan_records_lookup_proofs",
+                ],
+                "orchestration_handoff_capability_checked": [
+                    "successful_handoff",
+                    "handoff_missing_capability",
+                    "orchestration_handoff_returns_proof_id",
+                ],
+                "orchestration_handoff_errors_sanitized": [
+                    "handoff_missing_capability",
+                    "handoff_unknown_source",
+                    "handoff_unknown_target",
+                    "handoff_blocks_unmanifested_required_capability",
+                ],
+                "orchestration_quorum_required": [
+                    "quorum_reached",
+                    "quorum_not_reached",
+                    "execute_with_quorum",
+                    "execute_without_quorum_fails",
+                ],
+                "orchestration_executor_errors_sanitized": [
+                    "execute_with_failing_executor",
+                    "execute_suppresses_executor_reserved_result_keys",
+                ],
+            },
         ),
         _surface(
             "workflow_execution_lifecycle",
