@@ -183,6 +183,9 @@ Pass condition:
 {
   "ready": true,
   "outcome": "SolvedVerified",
+  "next_ledger_sequence": 1,
+  "expected_remote_submission_payload_hash": "<hash remote must echo>",
+  "expected_remote_idempotency_key": "<same hash sent as Idempotency-Key>",
   "metadata": {
     "preflight_only": true,
     "remote_submit_executed": false,

@@ -3767,6 +3767,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "package_orgos_anchor_export_rejects_missing_terminal_artifact",
                 "package_orgos_anchor_export_cli_emits_verifiable_package",
                 "trust_ledger_remote_submission_preflight_accepts_ready_export",
+                "trust_ledger_remote_submission_preflight_projects_final_submit_payload_hash",
                 "trust_ledger_remote_submission_preflight_blocks_missing_remote_token",
                 "trust_ledger_remote_submission_preflight_blocks_tampered_package",
                 "trust_ledger_remote_submission_preflight_cli_writes_schema_checked_receipt",

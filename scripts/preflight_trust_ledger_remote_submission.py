@@ -33,8 +33,12 @@ if str(REPO_ROOT) not in sys.path:
 
 from scripts.submit_trust_ledger_anchor_export import (  # noqa: E402
     MAX_REMOTE_TIMEOUT_SECONDS,
+    ZERO_HASH,
     _authority_ref_allowed,
+    _build_remote_submission_payload,
+    _first_read_error,
     _operator_id_allowed,
+    _read_json_object,
     _stable_hash,
     _validate_remote_submit_url,
     verify_submission_ledger,
@@ -79,6 +83,10 @@ class TrustLedgerRemoteSubmissionPreflightReport:
     submission_secret_present: bool
     signature_key_id_present: bool
     ledger_path: str
+    next_ledger_sequence: int
+    previous_submission_hash: str
+    expected_remote_submission_payload_hash: str
+    expected_remote_idempotency_key: str
     step_count: int
     steps: tuple[TrustLedgerRemoteSubmissionPreflightStep, ...]
     blockers: tuple[str, ...]
@@ -105,6 +113,10 @@ class TrustLedgerRemoteSubmissionPreflightReport:
             "submission_secret_present": self.submission_secret_present,
             "signature_key_id_present": self.signature_key_id_present,
             "ledger_path": self.ledger_path,
+            "next_ledger_sequence": self.next_ledger_sequence,
+            "previous_submission_hash": self.previous_submission_hash,
+            "expected_remote_submission_payload_hash": self.expected_remote_submission_payload_hash,
+            "expected_remote_idempotency_key": self.expected_remote_idempotency_key,
             "step_count": self.step_count,
             "steps": [step.as_dict() for step in self.steps],
             "blockers": list(self.blockers),
@@ -254,6 +266,27 @@ def preflight_trust_ledger_remote_submission(
         hard_block=True,
     )
 
+    projection = _project_remote_payload_identity(
+        anchor_ready=anchor_ready,
+        ledger_ready=ledger_ready,
+        operator_valid=operator_valid,
+        authority_valid=authority_valid,
+        submitted_at_valid=submitted_at_valid,
+        receipt_path=receipt_path,
+        package_path=package_path,
+        anchor_verification=anchor_verification,
+        ledger_state=ledger_state,
+        operator_id=operator_id,
+        authority_ref=authority_ref,
+        submitted_at=submitted_at,
+    )
+    add_step(
+        "remote_payload_projection",
+        bool(projection["passed"]),
+        str(projection["detail"]),
+        hard_block=bool(projection["hard_block"]),
+    )
+
     blockers = tuple(step.name for step in steps if not step.passed)
     ready = not blockers
     outcome = _outcome(ready=ready, hard_blockers=tuple(hard_blockers))
@@ -275,6 +308,9 @@ def preflight_trust_ledger_remote_submission(
         "remote_submit_host": remote_submit_host,
         "remote_timeout_seconds": remote_timeout_seconds,
         "ledger_path": str(ledger_path),
+        "next_ledger_sequence": int(projection["next_ledger_sequence"]),
+        "previous_submission_hash": str(projection["previous_submission_hash"]),
+        "expected_remote_submission_payload_hash": str(projection["expected_remote_submission_payload_hash"]),
         "blockers": list(blockers),
         "hard_blockers": list(hard_blockers),
         "anchor_verification_reason": str(anchor_verification.get("reason", "")),
@@ -297,6 +333,10 @@ def preflight_trust_ledger_remote_submission(
         submission_secret_present=submission_secret_present,
         signature_key_id_present=signature_key_id_present,
         ledger_path=str(ledger_path),
+        next_ledger_sequence=int(projection["next_ledger_sequence"]),
+        previous_submission_hash=str(projection["previous_submission_hash"]),
+        expected_remote_submission_payload_hash=str(projection["expected_remote_submission_payload_hash"]),
+        expected_remote_idempotency_key=str(projection["expected_remote_idempotency_key"]),
         step_count=len(steps),
         steps=tuple(steps),
         blockers=blockers,
@@ -305,6 +345,70 @@ def preflight_trust_ledger_remote_submission(
         ledger_state=ledger_state,
         metadata=metadata,
     )
+
+
+def _project_remote_payload_identity(
+    *,
+    anchor_ready: bool,
+    ledger_ready: bool,
+    operator_valid: bool,
+    authority_valid: bool,
+    submitted_at_valid: bool,
+    receipt_path: Path,
+    package_path: Path,
+    anchor_verification: dict[str, Any],
+    ledger_state: dict[str, Any],
+    operator_id: str,
+    authority_ref: str,
+    submitted_at: str,
+) -> dict[str, Any]:
+    if not anchor_ready or not ledger_ready or not operator_valid or not authority_valid or not submitted_at_valid:
+        return {
+            "passed": False,
+            "detail": "remote_payload_projection_waiting_for_prior_checks",
+            "hard_block": False,
+            "next_ledger_sequence": 0,
+            "previous_submission_hash": "",
+            "expected_remote_submission_payload_hash": "",
+            "expected_remote_idempotency_key": "",
+        }
+
+    receipt_payload = _read_json_object(receipt_path, "anchor_receipt")
+    package_payload = _read_json_object(package_path, "package")
+    read_error = _first_read_error(receipt_payload, package_payload)
+    if read_error:
+        return {
+            "passed": False,
+            "detail": f"remote_payload_projection_failed:{read_error['reason']}",
+            "hard_block": True,
+            "next_ledger_sequence": 0,
+            "previous_submission_hash": "",
+            "expected_remote_submission_payload_hash": "",
+            "expected_remote_idempotency_key": "",
+        }
+
+    next_ledger_sequence = int(ledger_state.get("submission_count", 0)) + 1
+    previous_submission_hash = str(ledger_state.get("latest_submission_hash", ZERO_HASH))
+    remote_payload = _build_remote_submission_payload(
+        verification=anchor_verification,
+        anchor_receipt=receipt_payload["payload"],
+        package=package_payload["payload"],
+        operator_id=operator_id,
+        authority_ref=authority_ref,
+        submitted_at=submitted_at,
+        ledger_sequence=next_ledger_sequence,
+        previous_submission_hash=previous_submission_hash,
+    )
+    payload_hash = str(remote_payload["submission_payload_hash"])
+    return {
+        "passed": True,
+        "detail": f"remote_payload_projection_ready payload_hash={payload_hash}",
+        "hard_block": False,
+        "next_ledger_sequence": next_ledger_sequence,
+        "previous_submission_hash": previous_submission_hash,
+        "expected_remote_submission_payload_hash": payload_hash,
+        "expected_remote_idempotency_key": payload_hash,
+    }
 
 
 def write_trust_ledger_remote_submission_preflight_report(

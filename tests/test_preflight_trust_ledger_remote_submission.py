@@ -27,6 +27,7 @@ from scripts.preflight_trust_ledger_remote_submission import (
     preflight_trust_ledger_remote_submission,
     write_trust_ledger_remote_submission_preflight_report,
 )
+from scripts.submit_trust_ledger_anchor_export import submit_trust_ledger_anchor_export
 from scripts.validate_schemas import _load_schema, _validate_schema_instance
 
 
@@ -56,14 +57,65 @@ def test_trust_ledger_remote_submission_preflight_accepts_ready_export(tmp_path:
     assert report.outcome == "SolvedVerified"
     assert report.blockers == ()
     assert report.hard_blockers == ()
-    assert report.step_count == 11
+    assert report.step_count == 12
     assert report.anchor_verification["valid"] is True
     assert report.ledger_state["valid"] is True
     assert report.remote_submit_host == "transparency.example"
+    assert report.next_ledger_sequence == 1
+    assert report.previous_submission_hash == "0" * 64
+    assert len(report.expected_remote_submission_payload_hash) == 64
+    assert report.expected_remote_idempotency_key == report.expected_remote_submission_payload_hash
     assert payload["metadata"]["remote_submit_executed"] is False
     assert payload["metadata"]["ledger_append_executed"] is False
     assert not ledger_path.exists()
     assert _validate_schema_instance(_load_schema(PREFLIGHT_SCHEMA_PATH), payload) == []
+
+
+def test_trust_ledger_remote_submission_preflight_projects_final_submit_payload_hash(tmp_path: Path) -> None:
+    export_paths = _write_anchor_export(tmp_path)
+    ledger_path = tmp_path / "submissions.jsonl"
+    preflight = preflight_trust_ledger_remote_submission(
+        bundle_path=export_paths["bundle"],
+        receipt_path=export_paths["anchor_receipt"],
+        artifacts_path=export_paths["artifacts"],
+        package_path=export_paths["package"],
+        ledger_path=ledger_path,
+        operator_id="operator-1",
+        authority_ref="proof://approval-submit-anchor-1",
+        submitted_at="2026-05-05T12:20:00+00:00",
+        verification_secret="anchor-secret",
+        submission_secret="submission-secret",
+        signature_key_id="submission-key",
+        remote_submit_url="https://transparency.example/anchors",
+        remote_api_token="remote-token",
+    )
+    transport = FakeTransparencyLogTransport()
+
+    submission = submit_trust_ledger_anchor_export(
+        bundle_path=export_paths["bundle"],
+        receipt_path=export_paths["anchor_receipt"],
+        artifacts_path=export_paths["artifacts"],
+        package_path=export_paths["package"],
+        ledger_path=ledger_path,
+        operator_id="operator-1",
+        authority_ref="proof://approval-submit-anchor-1",
+        submitted_at="2026-05-05T12:20:00+00:00",
+        verification_secret="anchor-secret",
+        submission_secret="submission-secret",
+        signature_key_id="submission-key",
+        confirm_submit=True,
+        remote_submit_url="https://transparency.example/anchors",
+        allow_remote_submit=True,
+        remote_api_token="remote-token",
+        urlopen=transport,
+    )
+
+    assert preflight.ready is True
+    assert submission["valid"] is True
+    assert preflight.next_ledger_sequence == submission["ledger_sequence"]
+    assert preflight.previous_submission_hash == submission["previous_submission_hash"]
+    assert preflight.expected_remote_submission_payload_hash == submission["remote_submission"]["submission_payload_hash"]
+    assert preflight.expected_remote_idempotency_key == transport.request.get_header("Idempotency-key")
 
 
 def test_trust_ledger_remote_submission_preflight_blocks_missing_remote_token(tmp_path: Path) -> None:
@@ -93,6 +145,8 @@ def test_trust_ledger_remote_submission_preflight_blocks_missing_remote_token(tm
     assert report.remote_api_token_present is False
     assert report.anchor_verification["valid"] is True
     assert report.ledger_state["valid"] is True
+    assert report.next_ledger_sequence == 1
+    assert len(report.expected_remote_submission_payload_hash) == 64
     assert not ledger_path.exists()
 
 
@@ -122,9 +176,11 @@ def test_trust_ledger_remote_submission_preflight_blocks_tampered_package(tmp_pa
     assert report.ready is False
     assert report.outcome == "GovernanceBlocked"
     assert "anchor_export_verification" in report.blockers
+    assert "remote_payload_projection" in report.blockers
     assert "anchor_export_verification" in report.hard_blockers
     assert report.anchor_verification["valid"] is False
     assert report.anchor_verification["reason"] == "package_hash_mismatch"
+    assert report.expected_remote_submission_payload_hash == ""
     assert not ledger_path.exists()
 
 
@@ -176,6 +232,7 @@ def test_trust_ledger_remote_submission_preflight_cli_writes_schema_checked_rece
     assert written_payload == stdout_payload
     assert written_payload["outcome"] == "AwaitingEvidence"
     assert written_payload["blockers"] == ["remote_api_token"]
+    assert len(written_payload["expected_remote_submission_payload_hash"]) == 64
     assert _validate_schema_instance(_load_schema(PREFLIGHT_SCHEMA_PATH), written_payload) == []
     assert not ledger_path.exists()
 
@@ -205,6 +262,8 @@ def test_trust_ledger_remote_submission_preflight_writer_validates_schema(tmp_pa
     assert written == output_path
     assert payload["ready"] is True
     assert payload["receipt_id"].startswith("trust-ledger-remote-submission-preflight-")
+    assert payload["next_ledger_sequence"] == 1
+    assert payload["expected_remote_idempotency_key"] == payload["expected_remote_submission_payload_hash"]
     assert _validate_schema_instance(_load_schema(PREFLIGHT_SCHEMA_PATH), payload) == []
 
 
@@ -242,6 +301,40 @@ def _write_anchor_export(tmp_path: Path) -> dict[str, Path]:
     )
     paths["package"].write_text(json.dumps(package.to_json_dict()), encoding="utf-8")
     return paths
+
+
+class FakeTransparencyLogTransport:
+    def __init__(self) -> None:
+        self.request: Any | None = None
+        self.payload: dict[str, Any] = {}
+
+    def __call__(self, request: Any, *, timeout: float) -> "FakeHttpResponse":
+        self.request = request
+        self.payload = json.loads(request.data.decode("utf-8"))
+        return FakeHttpResponse(
+            status=201,
+            payload={
+                "external_anchor_ref": "https://transparency.example/entries/1",
+                "observed_submission_payload_hash": self.payload["submission_payload_hash"],
+                "remote_receipt_hash": _hash("remote-receipt-1"),
+            },
+        )
+
+
+class FakeHttpResponse:
+    def __init__(self, *, status: int, payload: dict[str, Any]) -> None:
+        self.status = status
+        self._payload = payload
+
+    def __enter__(self) -> "FakeHttpResponse":
+        return self
+
+    def __exit__(self, *exc_info: object) -> None:
+        return None
+
+    def read(self, size: int = -1) -> bytes:
+        encoded = json.dumps(self._payload).encode("utf-8")
+        return encoded if size < 0 else encoded[:size]
 
 
 def _bundle() -> TrustLedgerBundle:

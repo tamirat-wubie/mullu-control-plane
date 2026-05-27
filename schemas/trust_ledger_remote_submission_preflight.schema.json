@@ -20,6 +20,10 @@
     "submission_secret_present",
     "signature_key_id_present",
     "ledger_path",
+    "next_ledger_sequence",
+    "previous_submission_hash",
+    "expected_remote_submission_payload_hash",
+    "expected_remote_idempotency_key",
     "step_count",
     "steps",
     "blockers",
@@ -50,11 +54,24 @@
     "submission_secret_present": {"type": "boolean"},
     "signature_key_id_present": {"type": "boolean"},
     "ledger_path": {"type": "string", "minLength": 1},
-    "step_count": {"type": "integer", "minimum": 11, "maximum": 11},
+    "next_ledger_sequence": {"type": "integer", "minimum": 0},
+    "previous_submission_hash": {
+      "type": "string",
+      "pattern": "^([0-9a-f]{64})?$"
+    },
+    "expected_remote_submission_payload_hash": {
+      "type": "string",
+      "pattern": "^([0-9a-f]{64})?$"
+    },
+    "expected_remote_idempotency_key": {
+      "type": "string",
+      "pattern": "^([0-9a-f]{64})?$"
+    },
+    "step_count": {"type": "integer", "minimum": 12, "maximum": 12},
     "steps": {
       "type": "array",
-      "minItems": 11,
-      "maxItems": 11,
+      "minItems": 12,
+      "maxItems": 12,
       "items": {"$ref": "#/$defs/preflight_step"}
     },
     "blockers": {
@@ -103,7 +120,8 @@
             "submission_secret",
             "signature_key_id",
             "anchor_export_verification",
-            "submission_ledger_replay"
+            "submission_ledger_replay",
+            "remote_payload_projection"
           ]
         },
         "passed": {"type": "boolean"},
