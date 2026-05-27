@@ -36,6 +36,7 @@ from mcoi_runtime.contracts.organization_kernel import (
     OrganizationTerminalClosure,
     PlanStep,
     PlanStepGateDecision,
+    PlanStepGatePreview,
     PlanStepGateStatus,
 )
 from mcoi_runtime.contracts.terminal_closure import TerminalClosureDisposition
@@ -79,6 +80,18 @@ class LatestPlanStepGateDecisionRef:
         object.__setattr__(self, "case_id", ensure_non_empty_text("case_id", self.case_id))
         object.__setattr__(self, "step_id", ensure_non_empty_text("step_id", self.step_id))
         object.__setattr__(self, "decision_id", ensure_non_empty_text("decision_id", self.decision_id))
+
+
+@dataclass(frozen=True, slots=True)
+class _PlanStepGateAssessment:
+    """Pure assessment result shared by mutating gate decisions and dry-run previews."""
+
+    status: PlanStepGateStatus
+    reason: str
+    authority_rule_ids: tuple[str, ...]
+    evidence_refs: tuple[str, ...]
+    approval_refs: tuple[str, ...]
+    missing_preconditions: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True, slots=True)
@@ -328,99 +341,56 @@ class OrganizationKernel:
         organization_case = self._require_case(case_id)
         plan = self._require_case_plan(case_id)
         step = self._require_plan_step(plan, step_id)
-        checked = frozenset(checked_preconditions)
-
-        missing_preconditions = tuple(
-            precondition for precondition in step.preconditions if precondition not in checked
-        )
-        if missing_preconditions:
-            return self._store_gate_decision(
-                organization_case,
-                step,
-                PlanStepGateStatus.BLOCKED,
-                "preconditions_missing",
-                (),
-                (),
-                (),
-            )
-
-        capability = self._capabilities.get(step.capability_id)
-        if capability is None or not capability.certified:
-            return self._store_gate_decision(
-                organization_case,
-                step,
-                PlanStepGateStatus.BLOCKED,
-                "capability_not_certified",
-                (),
-                (),
-                (),
-            )
-        if not _risk_allows(capability.risk_ceiling, organization_case.risk):
-            return self._store_gate_decision(
-                organization_case,
-                step,
-                PlanStepGateStatus.BLOCKED,
-                "capability_risk_exceeded",
-                (),
-                (),
-                (),
-            )
-
-        authority_rules = self._matching_authority_rules(organization_case, step)
-        if not authority_rules:
-            return self._store_gate_decision(
-                organization_case,
-                step,
-                PlanStepGateStatus.BLOCKED,
-                "authority_missing",
-                (),
-                (),
-                (),
-            )
-
-        evidence_refs = self._evidence_refs_for_step(organization_case.case_id, step)
-        if len(evidence_refs) < len(step.evidence_required):
-            return self._store_gate_decision(
-                organization_case,
-                step,
-                PlanStepGateStatus.BLOCKED,
-                "evidence_missing",
-                tuple(rule.rule_id for rule in authority_rules),
-                evidence_refs,
-                (),
-            )
-
-        approval_refs = self._approval_refs_for_step(organization_case.case_id, step)
-        if len(approval_refs) < len(step.approvals_required):
-            return self._store_gate_decision(
-                organization_case,
-                step,
-                PlanStepGateStatus.BLOCKED,
-                "approval_missing",
-                tuple(rule.rule_id for rule in authority_rules),
-                evidence_refs,
-                approval_refs,
-            )
-        if any(rule.requires_dual_control for rule in authority_rules):
-            if not self._has_dual_control_approval(organization_case.case_id, step, authority_rules):
-                return self._store_gate_decision(
-                    organization_case,
-                    step,
-                    PlanStepGateStatus.BLOCKED,
-                    "dual_control_missing",
-                    tuple(rule.rule_id for rule in authority_rules),
-                    evidence_refs,
-                    approval_refs,
-                )
-
+        assessment = self._assess_plan_step_gate(organization_case, step, checked_preconditions)
         return self._store_gate_decision(
             organization_case,
             step,
-            PlanStepGateStatus.ALLOWED,
-            "allowed",
-            tuple(rule.rule_id for rule in authority_rules),
-            evidence_refs,
-            approval_refs,
+            assessment.status,
+            assessment.reason,
+            assessment.authority_rule_ids,
+            assessment.evidence_refs,
+            assessment.approval_refs,
+        )
+
+    def preview_plan_step(
+        self,
+        *,
+        case_id: str,
+        step_id: str,
+        checked_preconditions: tuple[str, ...],
+    ) -> PlanStepGatePreview:
+        organization_case = self._require_case(case_id)
+        plan = self._require_case_plan(case_id)
+        step = self._require_plan_step(plan, step_id)
+        normalized_preconditions = tuple(checked_preconditions)
+        assessment = self._assess_plan_step_gate(organization_case, step, normalized_preconditions)
+        previewed_at = self._clock()
+        return PlanStepGatePreview(
+            preview_id=stable_identifier(
+                "org-step-gate-preview",
+                {
+                    "case_id": organization_case.case_id,
+                    "step_id": step.step_id,
+                    "status": assessment.status.value,
+                    "reason": assessment.reason,
+                    "checked_preconditions": list(normalized_preconditions),
+                    "authority_rule_ids": list(assessment.authority_rule_ids),
+                    "evidence_refs": list(assessment.evidence_refs),
+                    "approval_refs": list(assessment.approval_refs),
+                    "previewed_at": previewed_at,
+                },
+            ),
+            case_id=organization_case.case_id,
+            step_id=step.step_id,
+            status=assessment.status,
+            reason=assessment.reason,
+            checked_preconditions=normalized_preconditions,
+            missing_preconditions=assessment.missing_preconditions,
+            authority_rule_ids=assessment.authority_rule_ids,
+            evidence_refs=assessment.evidence_refs,
+            approval_refs=assessment.approval_refs,
+            previewed_at=previewed_at,
+            metadata={"mutates_state": False},
         )
 
     def close_case(
@@ -799,6 +769,92 @@ class OrganizationKernel:
                 raise RuntimeCoreInvariantError("plan step evidence requirement unavailable")
             if requirement.department_id != step.department_id or requirement.case_type != organization_case.case_type:
                 raise RuntimeCoreInvariantError("plan step evidence requirement mismatch")
+
+    def _assess_plan_step_gate(
+        self,
+        organization_case: OrganizationCase,
+        step: PlanStep,
+        checked_preconditions: tuple[str, ...],
+    ) -> _PlanStepGateAssessment:
+        checked = frozenset(checked_preconditions)
+        missing_preconditions = tuple(
+            precondition for precondition in step.preconditions if precondition not in checked
+        )
+        if missing_preconditions:
+            return _PlanStepGateAssessment(
+                status=PlanStepGateStatus.BLOCKED,
+                reason="preconditions_missing",
+                authority_rule_ids=(),
+                evidence_refs=(),
+                approval_refs=(),
+                missing_preconditions=missing_preconditions,
+            )
+
+        capability = self._capabilities.get(step.capability_id)
+        if capability is None or not capability.certified:
+            return _PlanStepGateAssessment(
+                status=PlanStepGateStatus.BLOCKED,
+                reason="capability_not_certified",
+                authority_rule_ids=(),
+                evidence_refs=(),
+                approval_refs=(),
+            )
+        if not _risk_allows(capability.risk_ceiling, organization_case.risk):
+            return _PlanStepGateAssessment(
+                status=PlanStepGateStatus.BLOCKED,
+                reason="capability_risk_exceeded",
+                authority_rule_ids=(),
+                evidence_refs=(),
+                approval_refs=(),
+            )
+
+        authority_rules = self._matching_authority_rules(organization_case, step)
+        authority_rule_ids = tuple(rule.rule_id for rule in authority_rules)
+        if not authority_rules:
+            return _PlanStepGateAssessment(
+                status=PlanStepGateStatus.BLOCKED,
+                reason="authority_missing",
+                authority_rule_ids=(),
+                evidence_refs=(),
+                approval_refs=(),
+            )
+
+        evidence_refs = self._evidence_refs_for_step(organization_case.case_id, step)
+        if len(evidence_refs) < len(step.evidence_required):
+            return _PlanStepGateAssessment(
+                status=PlanStepGateStatus.BLOCKED,
+                reason="evidence_missing",
+                authority_rule_ids=authority_rule_ids,
+                evidence_refs=evidence_refs,
+                approval_refs=(),
+            )
+
+        approval_refs = self._approval_refs_for_step(organization_case.case_id, step)
+        if len(approval_refs) < len(step.approvals_required):
+            return _PlanStepGateAssessment(
+                status=PlanStepGateStatus.BLOCKED,
+                reason="approval_missing",
+                authority_rule_ids=authority_rule_ids,
+                evidence_refs=evidence_refs,
+                approval_refs=approval_refs,
+            )
+        if any(rule.requires_dual_control for rule in authority_rules):
+            if not self._has_dual_control_approval(organization_case.case_id, step, authority_rules):
+                return _PlanStepGateAssessment(
+                    status=PlanStepGateStatus.BLOCKED,
+                    reason="dual_control_missing",
+                    authority_rule_ids=authority_rule_ids,
+                    evidence_refs=evidence_refs,
+                    approval_refs=approval_refs,
+                )
+
+        return _PlanStepGateAssessment(
+            status=PlanStepGateStatus.ALLOWED,
+            reason="allowed",
+            authority_rule_ids=authority_rule_ids,
+            evidence_refs=evidence_refs,
+            approval_refs=approval_refs,
+        )
 
     def _matching_authority_rules(
         self,

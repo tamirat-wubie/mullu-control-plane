@@ -476,6 +476,45 @@ class PlanStepGateDecision(ContractRecord):
 
 
 @dataclass(frozen=True, slots=True)
+class PlanStepGatePreview(ContractRecord):
+    """Non-mutating admission preview for one case plan step."""
+
+    preview_id: str
+    case_id: str
+    step_id: str
+    status: PlanStepGateStatus
+    reason: str
+    checked_preconditions: tuple[str, ...]
+    missing_preconditions: tuple[str, ...]
+    authority_rule_ids: tuple[str, ...]
+    evidence_refs: tuple[str, ...]
+    approval_refs: tuple[str, ...]
+    previewed_at: str
+    metadata: Mapping[str, Any] = field(default_factory=dict)
+
+    def __post_init__(self) -> None:
+        for field_name in ("preview_id", "case_id", "step_id", "reason"):
+            object.__setattr__(self, field_name, require_non_empty_text(getattr(self, field_name), field_name))
+        if not isinstance(self.status, PlanStepGateStatus):
+            raise ValueError("status must be a PlanStepGateStatus value")
+        for field_name in (
+            "checked_preconditions",
+            "missing_preconditions",
+            "authority_rule_ids",
+            "evidence_refs",
+            "approval_refs",
+        ):
+            object.__setattr__(self, field_name, _freeze_text_array(getattr(self, field_name), field_name))
+        object.__setattr__(self, "previewed_at", require_datetime_text(self.previewed_at, "previewed_at"))
+        if self.status is PlanStepGateStatus.ALLOWED:
+            if not self.authority_rule_ids:
+                raise ValueError("allowed step gate previews require authority_rule_ids")
+            if not self.evidence_refs:
+                raise ValueError("allowed step gate previews require evidence_refs")
+        object.__setattr__(self, "metadata", freeze_value(self.metadata))
+
+
+@dataclass(frozen=True, slots=True)
 class OrganizationEffectReconciliation(ContractRecord):
     """Case-level expected-versus-observed effect reconciliation."""
 

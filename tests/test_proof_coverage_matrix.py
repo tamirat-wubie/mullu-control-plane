@@ -543,6 +543,8 @@ def test_orgos_case_governance_lifecycle_surface_is_witnessed() -> None:
     assert "orgos_api_runs_launch_gateway_case_control_loop" in witnesses
     assert "orgos_api_replays_projection_from_jsonl_event_log" in witnesses
     assert "launch_gateway_pilot_collects_deployment_witness_and_allows_engineering_gate" in witnesses
+    assert "launch_gateway_pilot_gate_preview_is_non_mutating" in witnesses
+    assert "launch_gateway_pilot_gate_preview_allows_without_writing_decisions" in witnesses
     assert "launch_gateway_pilot_readiness_read_model_reports_missing_evidence" in witnesses
     assert "launch_gateway_pilot_readiness_packet_closes_after_verified_witness" in witnesses
     assert "launch_gateway_pilot_readiness_packet_blocks_without_engineering_witness" in witnesses
@@ -550,6 +552,10 @@ def test_orgos_case_governance_lifecycle_surface_is_witnessed() -> None:
     assert route_records["/api/v1/cases"]["surface_id"] == "orgos_case_governance_lifecycle"
     assert (
         route_records["/api/v1/cases/{case_id}/launch-gateway-pilot/deployment-witness"]["surface_id"]
+        == "orgos_case_governance_lifecycle"
+    )
+    assert (
+        route_records["/api/v1/cases/{case_id}/launch-gateway-pilot/gate-preview"]["surface_id"]
         == "orgos_case_governance_lifecycle"
     )
     assert (
@@ -561,7 +567,7 @@ def test_orgos_case_governance_lifecycle_surface_is_witnessed() -> None:
         == "orgos_case_governance_lifecycle"
     )
     assert route_records["/api/v1/orgos/read-model"]["coverage_state"] == "witnessed"
-    assert witness_records["orgos_case_governance_lifecycle"]["exact_test_anchor_count"] == 16
+    assert witness_records["orgos_case_governance_lifecycle"]["exact_test_anchor_count"] == 18
 
 
 def test_webhooks_proof_surface_is_witnessed() -> None:

@@ -866,9 +866,9 @@
     "by_coverage_state": {
       "proven": 12,
       "unproven": 0,
-      "witnessed": 349
+      "witnessed": 350
     },
-    "route_count": 361,
+    "route_count": 362,
     "routes": [
       {
         "coverage_state": "witnessed",
@@ -1053,6 +1053,11 @@
       {
         "coverage_state": "witnessed",
         "route": "/api/v1/cases/{case_id}/launch-gateway-pilot/deployment-witness",
+        "surface_id": "orgos_case_governance_lifecycle"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/cases/{case_id}/launch-gateway-pilot/gate-preview",
         "surface_id": "orgos_case_governance_lifecycle"
       },
       {
@@ -5586,6 +5591,7 @@
         "/api/v1/cases/{case_id}/evidence",
         "/api/v1/cases/{case_id}/learning-admissions",
         "/api/v1/cases/{case_id}/launch-gateway-pilot/deployment-witness",
+        "/api/v1/cases/{case_id}/launch-gateway-pilot/gate-preview",
         "/api/v1/cases/{case_id}/launch-gateway-pilot/readiness",
         "/api/v1/cases/{case_id}/launch-gateway-pilot/readiness-closure",
         "/api/v1/cases/{case_id}/plan",
@@ -5608,6 +5614,8 @@
         "case_closure_requires_effect_reconciliation_match_for_committed",
         "learning_binding_requires_closed_case_and_admission_decision",
         "launch_gateway_pilot_collects_deployment_witness_and_allows_engineering_gate",
+        "launch_gateway_pilot_gate_preview_is_non_mutating",
+        "launch_gateway_pilot_gate_preview_allows_without_writing_decisions",
         "launch_gateway_pilot_readiness_read_model_reports_missing_evidence",
         "launch_gateway_pilot_readiness_packet_closes_after_verified_witness",
         "launch_gateway_pilot_readiness_packet_blocks_without_engineering_witness",
@@ -8647,8 +8655,8 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 1002,
-    "runtime_witness_count": 1112,
+    "exact_test_anchor_count": 1004,
+    "runtime_witness_count": 1114,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -12152,6 +12160,18 @@
           },
           {
             "anchors": [
+              "mcoi/tests/test_organization_kernel_router.py::test_launch_gateway_pilot_gate_preview_is_non_mutating"
+            ],
+            "witness": "launch_gateway_pilot_gate_preview_is_non_mutating"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_organization_kernel_router.py::test_launch_gateway_pilot_gate_preview_allows_without_writing_decisions"
+            ],
+            "witness": "launch_gateway_pilot_gate_preview_allows_without_writing_decisions"
+          },
+          {
+            "anchors": [
               "mcoi/tests/test_organization_kernel_router.py::test_launch_gateway_pilot_readiness_read_model_reports_missing_evidence"
             ],
             "witness": "launch_gateway_pilot_readiness_read_model_reports_missing_evidence"
@@ -12175,8 +12195,8 @@
             "witness": "jsonl_case_event_log_preserves_hash_chain"
           }
         ],
-        "exact_test_anchor_count": 16,
-        "runtime_witness_count": 16,
+        "exact_test_anchor_count": 18,
+        "runtime_witness_count": 18,
         "surface_id": "orgos_case_governance_lifecycle",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []
