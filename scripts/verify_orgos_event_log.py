@@ -211,6 +211,13 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument("--strict", action="store_true", help="Return all schema errors")
     parser.add_argument("--json", action="store_true", help="Print JSON report")
+    parser.add_argument("--report-out", type=Path, help="Write the verifier report JSON to this path")
+    parser.add_argument("--artifact-out", type=Path, help="Write the latest OrgOS receipt trust-ledger artifact")
+    parser.add_argument(
+        "--artifacts-out",
+        type=Path,
+        help="Write a trust_ledger_evidence_artifacts-compatible array containing the OrgOS artifact",
+    )
     args = parser.parse_args(argv)
 
     report = verify_orgos_event_log_file(
@@ -219,6 +226,14 @@ def main(argv: list[str] | None = None) -> int:
         signature_key_id=args.signature_key_id,
         strict=args.strict,
     )
+    if args.report_out is not None:
+        _write_json(args.report_out, report)
+    if report["valid"] and isinstance(report.get("trust_ledger_artifact"), dict):
+        artifact = report["trust_ledger_artifact"]
+        if args.artifact_out is not None:
+            _write_json(args.artifact_out, artifact)
+        if args.artifacts_out is not None:
+            _write_json(args.artifacts_out, [artifact])
     if args.json:
         print(json.dumps(report, indent=2, sort_keys=True))
     else:
@@ -229,6 +244,11 @@ def main(argv: list[str] | None = None) -> int:
         if report.get("latest_receipt_id"):
             print(f"latest_receipt_id: {report['latest_receipt_id']}")
     return 0 if report["valid"] else 1
+
+
+def _write_json(path: Path, payload: Any) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
 
 if __name__ == "__main__":

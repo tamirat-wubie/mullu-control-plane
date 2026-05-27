@@ -23,6 +23,7 @@ from scripts.verify_orgos_event_log import main, verify_orgos_event_log_file
 
 NOW = "2026-05-05T12:00:00+00:00"
 REPORT_SCHEMA_PATH = Path("schemas/orgos_case_event_log_verification_report.schema.json")
+ARTIFACTS_SCHEMA_PATH = Path("schemas/trust_ledger_evidence_artifacts.schema.json")
 
 
 def test_verify_orgos_event_log_file_accepts_valid_log(tmp_path: Path) -> None:
@@ -124,6 +125,39 @@ def test_verify_orgos_event_log_cli_reports_valid_json(tmp_path: Path, capsys: A
     assert output["latest_event_id"] == "orgos-event-2"
     assert output["trust_ledger_artifact"]["metadata"]["event_receipt_is_not_terminal_closure"] is True
     _assert_report_schema(output)
+
+
+def test_verify_orgos_event_log_cli_exports_anchor_artifacts(tmp_path: Path) -> None:
+    event_log_path = _write_event_log(tmp_path)
+    report_path = tmp_path / "export" / "orgos_report.json"
+    artifact_path = tmp_path / "export" / "orgos_artifact.json"
+    artifacts_path = tmp_path / "export" / "orgos_artifacts.json"
+
+    exit_code = main([
+        "--event-log",
+        str(event_log_path),
+        "--signing-secret",
+        "orgos-secret",
+        "--report-out",
+        str(report_path),
+        "--artifact-out",
+        str(artifact_path),
+        "--artifacts-out",
+        str(artifacts_path),
+    ])
+    report = json.loads(report_path.read_text(encoding="utf-8"))
+    artifact = json.loads(artifact_path.read_text(encoding="utf-8"))
+    artifacts = json.loads(artifacts_path.read_text(encoding="utf-8"))
+
+    assert exit_code == 0
+    assert report["valid"] is True
+    assert artifact["artifact_type"] == "orgos_event_receipt"
+    assert artifact["metadata"]["event_receipt_is_not_terminal_closure"] is True
+    assert artifacts == [artifact]
+    assert artifact["required"] is False
+    assert artifact["evidence_ref"] == "proof://orgos/case-events/orgos-event-2"
+    _assert_report_schema(report)
+    assert _validate_schema_instance(_load_schema(ARTIFACTS_SCHEMA_PATH), artifacts) == []
 
 
 def _write_event_log(tmp_path: Path) -> Path:
