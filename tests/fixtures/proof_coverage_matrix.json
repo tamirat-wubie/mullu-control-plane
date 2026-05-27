@@ -5487,6 +5487,28 @@
         "JobEngine.restore_job"
       ],
       "request_proof": "request_proof",
+      "runtime_witness_anchor_aliases": {
+        "job_create_mutation_receipt_emitted": [
+          "lifecycle_records_bounded_mutation_receipts",
+          "job_receipts_convert_to_effect_records",
+          "job_mutation_receipt_closes_effect_assurance"
+        ],
+        "job_pause_resume_mutation_receipts_emitted": [
+          "pause_resume_failure_and_cancel_receipts_are_bounded"
+        ],
+        "job_restore_mutation_receipt_emitted": [
+          "restore_job_registers_exact_descriptor_and_state"
+        ],
+        "job_start_mutation_receipt_emitted": [
+          "lifecycle_records_bounded_mutation_receipts",
+          "pause_resume_failure_and_cancel_receipts_are_bounded"
+        ],
+        "job_terminal_mutation_receipts_emitted": [
+          "lifecycle_records_bounded_mutation_receipts",
+          "pause_resume_failure_and_cancel_receipts_are_bounded",
+          "cancel_from_created"
+        ]
+      },
       "runtime_witnesses": [
         "job_create_mutation_receipt_emitted",
         "job_start_mutation_receipt_emitted",
@@ -8647,7 +8669,7 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 1002,
+    "exact_test_anchor_count": 1007,
     "runtime_witness_count": 1112,
     "surfaces": [
       {
@@ -12031,22 +12053,51 @@
         "anchored_witnesses": [
           {
             "anchors": [
+              "mcoi/tests/test_job_core.py::test_lifecycle_records_bounded_mutation_receipts",
+              "mcoi/tests/test_job_core.py::test_job_receipts_convert_to_effect_records",
+              "mcoi/tests/test_job_core.py::test_job_mutation_receipt_closes_effect_assurance"
+            ],
+            "witness": "job_create_mutation_receipt_emitted"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_job_core.py::test_lifecycle_records_bounded_mutation_receipts",
+              "mcoi/tests/test_job_core.py::test_pause_resume_failure_and_cancel_receipts_are_bounded"
+            ],
+            "witness": "job_start_mutation_receipt_emitted"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_job_core.py::test_pause_resume_failure_and_cancel_receipts_are_bounded"
+            ],
+            "witness": "job_pause_resume_mutation_receipts_emitted"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_job_core.py::test_lifecycle_records_bounded_mutation_receipts",
+              "mcoi/tests/test_job_core.py::test_pause_resume_failure_and_cancel_receipts_are_bounded",
+              "mcoi/tests/test_job_core.py::test_cancel_from_created"
+            ],
+            "witness": "job_terminal_mutation_receipts_emitted"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_job_core.py::test_restore_job_registers_exact_descriptor_and_state"
+            ],
+            "witness": "job_restore_mutation_receipt_emitted"
+          },
+          {
+            "anchors": [
               "mcoi/tests/test_job_core.py::test_job_mutation_receipt_closes_effect_assurance"
             ],
             "witness": "job_mutation_receipt_closes_effect_assurance"
           }
         ],
-        "exact_test_anchor_count": 1,
+        "exact_test_anchor_count": 6,
         "runtime_witness_count": 6,
         "surface_id": "job_engine_lifecycle",
-        "unanchored_witness_count": 5,
-        "unanchored_witnesses": [
-          "job_create_mutation_receipt_emitted",
-          "job_start_mutation_receipt_emitted",
-          "job_pause_resume_mutation_receipts_emitted",
-          "job_terminal_mutation_receipts_emitted",
-          "job_restore_mutation_receipt_emitted"
-        ]
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
       },
       {
         "anchored_witnesses": [],
@@ -16067,6 +16118,6 @@
         "unanchored_witnesses": []
       }
     ],
-    "unanchored_witness_count": 110
+    "unanchored_witness_count": 105
   }
 }
