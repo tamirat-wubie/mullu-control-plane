@@ -2894,6 +2894,7 @@ def test_trust_ledger_surface_signs_terminal_evidence_bundles() -> None:
     assert "docs/65_trust_ledger_offline_verification.md" in trust_surface["evidence_files"]
     assert "gateway/trust_ledger.py" in trust_surface["evidence_files"]
     assert "scripts/verify_anchor_receipt.py" in trust_surface["evidence_files"]
+    assert "scripts/package_orgos_anchor_export.py" in trust_surface["evidence_files"]
     assert "schemas/trust_ledger_anchor_receipt.schema.json" in trust_surface["evidence_files"]
     assert "schemas/trust_ledger_anchor_verification_report.schema.json" in trust_surface["evidence_files"]
     assert "schemas/trust_ledger_bundle.schema.json" in trust_surface["evidence_files"]
@@ -2904,6 +2905,7 @@ def test_trust_ledger_surface_signs_terminal_evidence_bundles() -> None:
     assert "tests/test_gateway/test_trust_ledger_anchor_receipt.py" in trust_surface["evidence_files"]
     assert "tests/test_gateway/test_trust_ledger.py" in trust_surface["evidence_files"]
     assert "tests/test_verify_anchor_receipt.py" in trust_surface["evidence_files"]
+    assert "tests/test_package_orgos_anchor_export.py" in trust_surface["evidence_files"]
     expected_witnesses = {
         "terminal_command_exports_signed_evidence_bundle",
         "evidence_bundle_endpoint_rejects_non_terminal_command",
@@ -2925,6 +2927,10 @@ def test_trust_ledger_surface_signs_terminal_evidence_bundles() -> None:
         "verify_anchor_receipt_files_detects_package_bundle_hash_mismatch",
         "verify_anchor_receipt_files_rejects_schema_invalid_package",
         "verify_anchor_receipt_report_contract_allows_missing_secret_report",
+        "package_orgos_anchor_export_merges_optional_orgos_artifact",
+        "package_orgos_anchor_export_rejects_required_orgos_artifact",
+        "package_orgos_anchor_export_rejects_missing_terminal_artifact",
+        "package_orgos_anchor_export_cli_emits_verifiable_package",
     }
     assert expected_witnesses <= witnesses
     assert closure_actions["publish_trust_ledger_bundle_contract"]["status"] == "closed"

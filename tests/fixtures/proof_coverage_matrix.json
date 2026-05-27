@@ -6461,6 +6461,7 @@
         "gateway/trust_ledger.py",
         "scripts/verify_evidence_bundle.py",
         "scripts/verify_anchor_receipt.py",
+        "scripts/package_orgos_anchor_export.py",
         "schemas/trust_ledger_anchor_receipt.schema.json",
         "schemas/trust_ledger_anchor_verification_report.schema.json",
         "schemas/trust_ledger_bundle.schema.json",
@@ -6470,9 +6471,10 @@
         "tests/test_gateway/test_evidence_bundle_endpoint.py",
         "tests/test_gateway/test_trust_ledger_anchor_receipt.py",
         "tests/test_gateway/test_trust_ledger.py",
-        "tests/test_verify_anchor_receipt.py"
+        "tests/test_verify_anchor_receipt.py",
+        "tests/test_package_orgos_anchor_export.py"
       ],
-      "notes": "Trust ledger signs terminal-closure evidence bundles, exposes operator bundle export, verifies exported bundle and anchor receipt files offline, emits external anchor receipts, and packages verifier inputs with content hashes for portable audit review.",
+      "notes": "Trust ledger signs terminal-closure evidence bundles, exposes operator bundle export, verifies exported bundle and anchor receipt files offline, emits external anchor receipts, packages verifier inputs with content hashes for portable audit review, and can merge verified optional OrgOS event receipts into terminal anchor exports without replacing closure.",
       "representative_paths": [
         "TrustLedger.issue",
         "TrustLedger.verify",
@@ -6482,6 +6484,7 @@
         "GET /evidence/bundles/{command_id}",
         "scripts/verify_evidence_bundle.py",
         "scripts/verify_anchor_receipt.py",
+        "scripts/package_orgos_anchor_export.py",
         "TrustLedger.package_anchor_export",
         "TrustLedgerBundle",
         "ExternalProofAnchorReceipt",
@@ -6519,7 +6522,11 @@
         "verify_anchor_receipt_files_rejects_schema_invalid_package",
         "verify_anchor_receipt_files_rejects_package_hash_mismatch",
         "verify_anchor_receipt_cli_reports_valid_export",
-        "verify_anchor_receipt_report_contract_allows_missing_secret_report"
+        "verify_anchor_receipt_report_contract_allows_missing_secret_report",
+        "package_orgos_anchor_export_merges_optional_orgos_artifact",
+        "package_orgos_anchor_export_rejects_required_orgos_artifact",
+        "package_orgos_anchor_export_rejects_missing_terminal_artifact",
+        "package_orgos_anchor_export_cli_emits_verifiable_package"
       ],
       "surface_id": "trust_ledger"
     },
@@ -8029,8 +8036,8 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 843,
-    "runtime_witness_count": 1070,
+    "exact_test_anchor_count": 847,
+    "runtime_witness_count": 1074,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -12616,10 +12623,34 @@
               "tests/test_verify_anchor_receipt.py::test_verify_anchor_receipt_report_contract_allows_missing_secret_report"
             ],
             "witness": "verify_anchor_receipt_report_contract_allows_missing_secret_report"
+          },
+          {
+            "anchors": [
+              "tests/test_package_orgos_anchor_export.py::test_package_orgos_anchor_export_merges_optional_orgos_artifact"
+            ],
+            "witness": "package_orgos_anchor_export_merges_optional_orgos_artifact"
+          },
+          {
+            "anchors": [
+              "tests/test_package_orgos_anchor_export.py::test_package_orgos_anchor_export_rejects_required_orgos_artifact"
+            ],
+            "witness": "package_orgos_anchor_export_rejects_required_orgos_artifact"
+          },
+          {
+            "anchors": [
+              "tests/test_package_orgos_anchor_export.py::test_package_orgos_anchor_export_rejects_missing_terminal_artifact"
+            ],
+            "witness": "package_orgos_anchor_export_rejects_missing_terminal_artifact"
+          },
+          {
+            "anchors": [
+              "tests/test_package_orgos_anchor_export.py::test_package_orgos_anchor_export_cli_emits_verifiable_package"
+            ],
+            "witness": "package_orgos_anchor_export_cli_emits_verifiable_package"
           }
         ],
-        "exact_test_anchor_count": 31,
-        "runtime_witness_count": 31,
+        "exact_test_anchor_count": 35,
+        "runtime_witness_count": 35,
         "surface_id": "trust_ledger",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []
