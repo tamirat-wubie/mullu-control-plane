@@ -27,6 +27,7 @@ from mcoi_runtime.contracts.skill import (
     VerificationStrength,
 )
 from mcoi_runtime.core.invariants import RuntimeCoreInvariantError
+from mcoi_runtime.persistence.skill_promotion_store import SkillPromotionStore
 
 
 FIXED_CLOCK = "2025-01-15T10:00:00+00:00"
@@ -36,6 +37,15 @@ def _make_loop(*, install_default_skills: bool = True):
     runtime = bootstrap_runtime(
         clock=lambda: FIXED_CLOCK,
         install_default_skills=install_default_skills,
+    )
+    return OperatorLoop(runtime=runtime)
+
+
+def _make_loop_with_skill_promotion_store(store: SkillPromotionStore):
+    runtime = bootstrap_runtime(
+        clock=lambda: FIXED_CLOCK,
+        install_default_skills=True,
+        skill_promotion_store=store,
     )
     return OperatorLoop(runtime=runtime)
 
@@ -289,6 +299,51 @@ class TestSkillRuntimeEdgeCases:
         assert view.lifecycle_transition_warning == report.lifecycle_transition_warning
         assert "lifecycle_warning:" in rendered
         assert "secret lifecycle transition detail" not in rendered
+
+    def test_successful_candidate_promotion_writes_durable_receipt(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """Successful candidate promotion records promotion evidence when a store is configured."""
+        store = SkillPromotionStore()
+        loop = _make_loop_with_skill_promotion_store(store)
+        _register_skill(loop, "sk-persisted-promotion", name="shell_command", confidence=0.5)
+
+        def execute_success(skill, **_kwargs):
+            return SkillExecutionRecord(
+                record_id="record-persisted-promotion",
+                skill_id=skill.skill_id,
+                outcome=SkillOutcome(
+                    skill_id=skill.skill_id,
+                    status=SkillOutcomeStatus.SUCCEEDED,
+                    step_outcomes=(
+                        SkillStepOutcome(
+                            step_id="step-persisted-promotion",
+                            status=SkillOutcomeStatus.SUCCEEDED,
+                            execution_id="execution-persisted-promotion",
+                        ),
+                    ),
+                ),
+                started_at=FIXED_CLOCK,
+                finished_at=FIXED_CLOCK,
+            )
+
+        monkeypatch.setattr(loop.runtime.skill_executor, "execute", execute_success)
+
+        report = loop.run_skill(SkillRequest(
+            request_id="req-persisted-promotion",
+            subject_id="operator-1",
+            goal_id="goal-persisted-promotion",
+            skill_id="sk-persisted-promotion",
+        ))
+        receipts = store.list_receipts(skill_id="sk-persisted-promotion")
+        updated = loop.runtime.skill_registry.get("sk-persisted-promotion")
+
+        assert report.succeeded is True
+        assert report.lifecycle_transition_warning == ""
+        assert updated.lifecycle is SkillLifecycle.PROVISIONAL
+        assert len(receipts) == 1
+        assert receipts[0].evidence_refs == ("execution-persisted-promotion",)
 
 
 def _make_loop_with_autonomy(mode: str):

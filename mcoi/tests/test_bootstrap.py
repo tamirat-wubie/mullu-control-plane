@@ -20,6 +20,7 @@ from mcoi_runtime.app.bootstrap import bootstrap_runtime, build_policy_decision
 from mcoi_runtime.app.config import AppConfig
 from mcoi_runtime.contracts.job import JobDescriptor, JobPriority, JobStatus
 from mcoi_runtime.contracts.policy import PolicyDecisionStatus
+from mcoi_runtime.contracts.skill import SkillLifecycle, SkillPromotionEvidence
 from mcoi_runtime.core.event_spine import EventSpineEngine
 from mcoi_runtime.core.invariants import RuntimeCoreInvariantError
 from mcoi_runtime.core.memory import EpisodicMemory, MemoryEntry, MemoryTier, WorkingMemory
@@ -31,6 +32,7 @@ from mcoi_runtime.core.verification_engine import VerificationEngine
 from mcoi_runtime.persistence.goal_store import GoalStore
 from mcoi_runtime.persistence.job_store import JobStore
 from mcoi_runtime.persistence.memory_store import MemoryStore
+from mcoi_runtime.persistence.skill_promotion_store import SkillPromotionStore
 from mcoi_runtime.persistence.team_queue_store import TeamQueueStore
 from mcoi_runtime.persistence.work_queue_store import WorkQueueStore
 from mcoi_runtime.persistence.workforce_store import WorkforceStore
@@ -707,3 +709,47 @@ def test_bootstrap_runtime_restores_workforce_only_when_explicit(tmp_path: Path)
 def test_bootstrap_runtime_rejects_workforce_restore_without_store() -> None:
     with pytest.raises(RuntimeCoreInvariantError, match="workforce_store"):
         bootstrap_runtime(restore_workforce=True)
+
+
+def _default_skill_promotion_receipt() -> SkillPromotionEvidence:
+    return SkillPromotionEvidence(
+        evidence_id="promotion-evidence-default-skill",
+        skill_id="finance.approval_packet.v1",
+        target_lifecycle=SkillLifecycle.PROVISIONAL,
+        execution_record_ids=("execution-record-default-skill",),
+        evidence_refs=("execution-default-skill",),
+        created_at="2026-03-18T12:00:00+00:00",
+        reason="successful_execution_evidence",
+    )
+
+
+def test_bootstrap_runtime_does_not_restore_skill_promotions_implicitly() -> None:
+    skill_promotion_store = SkillPromotionStore()
+    skill_promotion_store.append_receipt(_default_skill_promotion_receipt())
+
+    runtime = bootstrap_runtime(skill_promotion_store=skill_promotion_store)
+    descriptor = runtime.skill_registry.get("finance.approval_packet.v1")
+
+    assert runtime.skill_promotion_store is skill_promotion_store
+    assert descriptor is not None
+    assert descriptor.lifecycle is SkillLifecycle.CANDIDATE
+
+
+def test_bootstrap_runtime_restores_skill_promotions_only_when_explicit() -> None:
+    skill_promotion_store = SkillPromotionStore()
+    skill_promotion_store.append_receipt(_default_skill_promotion_receipt())
+
+    runtime = bootstrap_runtime(
+        skill_promotion_store=skill_promotion_store,
+        restore_skill_promotions=True,
+    )
+    descriptor = runtime.skill_registry.get("finance.approval_packet.v1")
+
+    assert runtime.skill_promotion_store is skill_promotion_store
+    assert descriptor is not None
+    assert descriptor.lifecycle is SkillLifecycle.PROVISIONAL
+
+
+def test_bootstrap_runtime_rejects_skill_promotion_restore_without_store() -> None:
+    with pytest.raises(RuntimeCoreInvariantError, match="skill_promotion_store"):
+        bootstrap_runtime(restore_skill_promotions=True)

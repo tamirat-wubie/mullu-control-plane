@@ -4,7 +4,7 @@ Dependencies: execution-slice adapters, runtime-core boundaries, and local app c
 Invariants:
   - bootstrap constructs deterministic wiring only.
   - bootstrap never executes commands or observes the live machine.
-  - persisted memory, goal, workflow, job, workforce, and queue restore are explicit and read-only during bootstrap.
+  - persisted memory, goal, workflow, job, workforce, queue, and skill-promotion restore are explicit and read-only during bootstrap.
 """
 
 from __future__ import annotations
@@ -57,6 +57,7 @@ from mcoi_runtime.persistence.goal_store import GoalStore
 from mcoi_runtime.persistence.job_store import JobStore
 from mcoi_runtime.persistence.memory_store import MemoryStore
 from mcoi_runtime.persistence.mil_audit_store import MILAuditStore
+from mcoi_runtime.persistence.skill_promotion_store import SkillPromotionStore
 from mcoi_runtime.persistence.team_queue_store import TeamQueueStore
 from mcoi_runtime.persistence.trace_store import TraceStore
 from mcoi_runtime.persistence.work_queue_store import WorkQueueStore
@@ -119,6 +120,7 @@ class BootstrappedRuntime:
     job_store: JobStore | None
     goal_store: GoalStore | None
     workflow_store: WorkflowStore | None
+    skill_promotion_store: SkillPromotionStore | None
     work_queue: WorkQueue
     work_queue_store: WorkQueueStore | None
     team_registry: WorkerRegistry
@@ -174,6 +176,7 @@ def bootstrap_runtime(
     goal_store: GoalStore | None = None,
     job_store: JobStore | None = None,
     workflow_store: WorkflowStore | None = None,
+    skill_promotion_store: SkillPromotionStore | None = None,
     work_queue_store: WorkQueueStore | None = None,
     team_queue_store: TeamQueueStore | None = None,
     workforce_store: WorkforceStore | None = None,
@@ -187,6 +190,7 @@ def bootstrap_runtime(
     restore_work_queue: bool = False,
     restore_team_queue: bool = False,
     restore_workforce: bool = False,
+    restore_skill_promotions: bool = False,
     install_default_skills: bool = True,
 ) -> BootstrappedRuntime:
     app_config = config or AppConfig()
@@ -206,6 +210,8 @@ def bootstrap_runtime(
         raise RuntimeCoreInvariantError("restore_team_queue requires a team_queue_store")
     if restore_workforce and workforce_store is None:
         raise RuntimeCoreInvariantError("restore_workforce requires a workforce_store")
+    if restore_skill_promotions and skill_promotion_store is None:
+        raise RuntimeCoreInvariantError("restore_skill_promotions requires a skill_promotion_store")
 
     registry_store: RegistryStore[TemplateReference] = RegistryStore()
     registry_index: RegistryIndex[TemplateReference] = RegistryIndex()
@@ -341,6 +347,9 @@ def bootstrap_runtime(
     if restore_workforce and workforce_store is not None:
         workforce_store.restore_state(workforce_engine)
 
+    if restore_skill_promotions and skill_promotion_store is not None:
+        skill_promotion_store.restore_registry_state(skill_registry)
+
     return BootstrappedRuntime(
         config=app_config,
         clock=runtime_clock,
@@ -368,6 +377,7 @@ def bootstrap_runtime(
         job_store=job_store,
         goal_store=goal_store,
         workflow_store=workflow_store,
+        skill_promotion_store=skill_promotion_store,
         work_queue=work_queue,
         work_queue_store=work_queue_store,
         team_registry=team_registry,

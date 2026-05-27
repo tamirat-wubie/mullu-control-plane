@@ -27,6 +27,11 @@ from .mil_audit_store import (
 from .registry_backend import RegistryBackend
 from .replay_store import ReplayStore
 from .skill_store import SkillStore
+from .skill_promotion_store import (
+    FileSkillPromotionStore,
+    SkillPromotionRuntimeState,
+    SkillPromotionStore,
+)
 from .snapshot_store import SnapshotMetadata, SnapshotStore
 from .software_change_receipt_store import (
     FileSoftwareChangeReceiptStore,
@@ -69,6 +74,9 @@ __all__ = [
     "ReplayStore",
     "SnapshotMetadata",
     "SkillStore",
+    "FileSkillPromotionStore",
+    "SkillPromotionRuntimeState",
+    "SkillPromotionStore",
     "SnapshotNotFoundError",
     "SnapshotStore",
     "FileSoftwareChangeReceiptStore",

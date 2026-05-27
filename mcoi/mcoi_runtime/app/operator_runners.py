@@ -57,6 +57,9 @@ from .operator_models import (
     JobReconcileRequest,
     SkillRequest,
     SkillRunReport,
+    SkillPromotionReceiptReadReport,
+    SkillPromotionReceiptReadRequest,
+    SkillPromotionReceiptSummary,
     TeamQueueReconcileReport,
     TeamQueueReconcileRequest,
     WorkQueueReconcileReport,
@@ -229,6 +232,11 @@ def run_skill(loop: OperatorLoop, request: SkillRequest) -> SkillRunReport:
                 target_lifecycle=SkillLifecycle.PROVISIONAL,
                 execution_records=(record,),
                 created_at=loop.runtime.clock(),
+                receipt_writer=(
+                    loop.runtime.skill_promotion_store.append_receipt
+                    if loop.runtime.skill_promotion_store is not None
+                    else None
+                ),
             )
             if not promotion_decision.approved:
                 lifecycle_transition_warning = _bounded_lifecycle_promotion_skip(
@@ -246,6 +254,62 @@ def run_skill(loop: OperatorLoop, request: SkillRequest) -> SkillRunReport:
         status=record.outcome.status,
         completed=succeeded,
         lifecycle_transition_warning=lifecycle_transition_warning,
+    )
+
+
+def read_skill_promotion_receipts(
+    loop: OperatorLoop,
+    request: SkillPromotionReceiptReadRequest,
+) -> SkillPromotionReceiptReadReport:
+    """Read persisted skill promotion receipts without mutating runtime state."""
+    store = loop.runtime.skill_promotion_store
+    if store is None:
+        return SkillPromotionReceiptReadReport(
+            request_id=request.request_id,
+            store_configured=False,
+            receipt_count=0,
+            receipts=(),
+            skill_id_filter=request.skill_id,
+            target_lifecycle_filter=request.target_lifecycle,
+            errors=(
+                execution_error(
+                    error_code="skill_promotion_store_missing",
+                    message="skill promotion receipt store is not configured",
+                    recoverability=Recoverability.FATAL_FOR_RUN,
+                ),
+            ),
+        )
+    try:
+        receipts = store.list_receipts(
+            skill_id=request.skill_id,
+            target_lifecycle=request.target_lifecycle,
+            limit=request.limit,
+        )
+    except PersistenceError as exc:
+        return SkillPromotionReceiptReadReport(
+            request_id=request.request_id,
+            store_configured=True,
+            receipt_count=0,
+            receipts=(),
+            skill_id_filter=request.skill_id,
+            target_lifecycle_filter=request.target_lifecycle,
+            errors=(
+                execution_error(
+                    error_code="skill_promotion_receipt_read_failed",
+                    message="skill promotion receipt read failed",
+                    recoverability=Recoverability.RETRYABLE,
+                    context={"error_type": type(exc).__name__},
+                ),
+            ),
+        )
+    summaries = tuple(SkillPromotionReceiptSummary.from_evidence(receipt) for receipt in receipts)
+    return SkillPromotionReceiptReadReport(
+        request_id=request.request_id,
+        store_configured=True,
+        receipt_count=len(summaries),
+        receipts=summaries,
+        skill_id_filter=request.skill_id,
+        target_lifecycle_filter=request.target_lifecycle,
     )
 
 
