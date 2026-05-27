@@ -4135,6 +4135,29 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "unknown_property_fails_closed",
                 "policy_proof_report_schema_valid",
             ],
+            runtime_witness_anchor_aliases={
+                "payment_requires_approval_counterexample": [
+                    "payment_requires_approval_counterexample"
+                ],
+                "tenant_isolation_counterexample": [
+                    "tenant_isolation_counterexample"
+                ],
+                "shell_requires_sandbox_counterexample": [
+                    "shell_requires_sandbox_counterexample"
+                ],
+                "provider_url_approved_counterexample": [
+                    "provider_url_approved_counterexample"
+                ],
+                "memory_requires_admission_counterexample": [
+                    "memory_requires_admission_counterexample"
+                ],
+                "unknown_property_fails_closed": [
+                    "unknown_property_fails_closed"
+                ],
+                "policy_proof_report_schema_valid": [
+                    "policy_proof_report_schema_valid"
+                ],
+            },
         ),
         _surface(
             "shell_execution_adapter",
@@ -4230,6 +4253,28 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "risky_pattern_requires_approval_rules",
                 "workflow_mining_report_schema_valid",
             ],
+            runtime_witness_anchor_aliases={
+                "repeated_trace_pattern_required": [
+                    "workflow_mining_detects_repeated_invoice_pattern",
+                    "workflow_mining_ignores_singletons_and_other_tenants",
+                ],
+                "workflow_draft_activation_blocked": [
+                    "workflow_mining_detects_repeated_invoice_pattern",
+                    "workflow_draft_rejects_unblocked_activation",
+                ],
+                "operator_review_required": [
+                    "workflow_mining_detects_repeated_invoice_pattern",
+                ],
+                "sandbox_replay_required": [
+                    "workflow_mining_detects_repeated_invoice_pattern",
+                ],
+                "risky_pattern_requires_approval_rules": [
+                    "workflow_mining_projects_governance_for_payment_pattern",
+                ],
+                "workflow_mining_report_schema_valid": [
+                    "workflow_mining_schema_exposes_draft_contract",
+                ],
+            },
         ),
         _surface(
             "trust_ledger",

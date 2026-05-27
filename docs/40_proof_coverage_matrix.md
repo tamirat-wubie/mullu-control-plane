@@ -151,8 +151,8 @@ Witness integrity audit:
 | Metric | Count |
 |---|---:|
 | Runtime witness labels | 1112 |
-| Exact test anchors | 1048 |
-| Unanchored witness labels | 64 |
+| Exact test anchors | 1061 |
+| Unanchored witness labels | 51 |
 
 Evidence quality gaps:
 none
@@ -161,8 +161,6 @@ Witness integrity gaps:
 
 | Surface | Exact anchors | Unanchored | Unanchored labels |
 |---|---:|---:|---|
-| `policy_prover` | 0 | 7 | payment_requires_approval_counterexample, tenant_isolation_counterexample, shell_requires_sandbox_counterexample, provider_url_approved_counterexample, memory_requires_admission_counterexample, unknown_property_fails_closed, policy_proof_report_schema_valid |
-| `workflow_mining` | 0 | 6 | repeated_trace_pattern_required, workflow_draft_activation_blocked, operator_review_required, sandbox_replay_required, risky_pattern_requires_approval_rules, workflow_mining_report_schema_valid |
 | `temporal_evidence_freshness` | 0 | 8 | evidence_age_computed_from_runtime_clock, freshness_window_required_for_dispatch, stale_required_evidence_triggers_refresh, missing_required_evidence_blocks_dispatch, revoked_or_unverified_high_risk_evidence_blocks, expiring_evidence_warns_before_dispatch, temporal_evidence_freshness_receipt_schema_valid, receipt_not_terminal_closure |
 | `temporal_reapproval` | 0 | 8 | runtime_clock_owns_reapproval_time, high_risk_approval_roles_required, expired_approval_requires_reapproval, revoked_or_out_of_scope_approval_blocks_dispatch, missing_approval_role_requires_reapproval, low_risk_action_does_not_require_reapproval, temporal_reapproval_receipt_schema_valid, receipt_not_terminal_closure |
 | `temporal_monotonic_duration` | 0 | 8 | runtime_monotonic_clock_owns_duration_truth, wall_clock_not_used_for_duration, duration_limit_exceeded_blocks_dispatch, cooldown_lower_bound_defers_dispatch, monotonic_clock_regression_blocks_dispatch, high_risk_source_receipts_bound, temporal_monotonic_duration_receipt_schema_valid, receipt_not_terminal_closure |
@@ -294,5 +292,5 @@ none
 STATUS:
   Completeness: 100%
   Invariants verified: route declarations, route-level coverage classification, coverage levels, coverage states, closure action mapping, schema contract validation, deployment orchestration receipt schema contract
-  Open issues: 64 runtime-witness labels lack exact test-function anchors
+  Open issues: 51 runtime-witness labels lack exact test-function anchors
   Next action: bind unanchored runtime-witness labels to exact test-function anchors

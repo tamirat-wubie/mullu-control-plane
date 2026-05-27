@@ -183,6 +183,10 @@ def test_witness_integrity_report_tracks_exact_test_anchors() -> None:
     assert surfaces["claim_verification"]["unanchored_witness_count"] == 0
     assert surfaces["connector_self_healing"]["exact_test_anchor_count"] == 6
     assert surfaces["connector_self_healing"]["unanchored_witness_count"] == 0
+    assert surfaces["workflow_mining"]["exact_test_anchor_count"] == 6
+    assert surfaces["workflow_mining"]["unanchored_witness_count"] == 0
+    assert surfaces["policy_prover"]["exact_test_anchor_count"] == 7
+    assert surfaces["policy_prover"]["unanchored_witness_count"] == 0
     assert surfaces["code_intelligence_operator_read_model"]["exact_test_anchor_count"] >= 5
     assert surfaces["code_intelligence_operator_read_model"]["unanchored_witness_count"] == 0
     assert surfaces["data_export_lifecycle"]["exact_test_anchor_count"] >= 4
@@ -2887,8 +2891,13 @@ def test_capability_maturity_surface_is_evidence_derived() -> None:
 def test_policy_prover_surface_reports_counterexamples() -> None:
     matrix = _load_fixture()
     surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    witness_surfaces = {
+        surface["surface_id"]: surface
+        for surface in matrix["witness_integrity"]["surfaces"]
+    }
     closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
     prover_surface = surfaces["policy_prover"]
+    prover_witness_surface = witness_surfaces["policy_prover"]
     witnesses = set(prover_surface["runtime_witnesses"])
 
     assert prover_surface["coverage_state"] == "witnessed"
@@ -2898,8 +2907,14 @@ def test_policy_prover_surface_reports_counterexamples() -> None:
     assert "schemas/policy_proof_report.schema.json" in prover_surface["evidence_files"]
     assert "tests/test_gateway/test_policy_prover.py" in prover_surface["evidence_files"]
     assert "payment_requires_approval_counterexample" in witnesses
+    assert "tenant_isolation_counterexample" in witnesses
     assert "shell_requires_sandbox_counterexample" in witnesses
+    assert "provider_url_approved_counterexample" in witnesses
+    assert "memory_requires_admission_counterexample" in witnesses
     assert "unknown_property_fails_closed" in witnesses
+    assert "policy_proof_report_schema_valid" in witnesses
+    assert prover_witness_surface["exact_test_anchor_count"] == 7
+    assert prover_witness_surface["unanchored_witness_count"] == 0
     assert closure_actions["publish_policy_prover_counterexample_contract"]["status"] == "closed"
 
 
@@ -2949,8 +2964,13 @@ def test_memory_lattice_surface_gates_planning_and_execution() -> None:
 def test_workflow_mining_surface_emits_blocked_drafts() -> None:
     matrix = _load_fixture()
     surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    witness_surfaces = {
+        surface["surface_id"]: surface
+        for surface in matrix["witness_integrity"]["surfaces"]
+    }
     closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
     mining_surface = surfaces["workflow_mining"]
+    mining_witness_surface = witness_surfaces["workflow_mining"]
     witnesses = set(mining_surface["runtime_witnesses"])
 
     assert mining_surface["coverage_state"] == "witnessed"
@@ -2962,6 +2982,8 @@ def test_workflow_mining_surface_emits_blocked_drafts() -> None:
     assert "workflow_draft_activation_blocked" in witnesses
     assert "operator_review_required" in witnesses
     assert "risky_pattern_requires_approval_rules" in witnesses
+    assert mining_witness_surface["exact_test_anchor_count"] == 6
+    assert mining_witness_surface["unanchored_witness_count"] == 0
     assert closure_actions["publish_workflow_mining_draft_contract"]["status"] == "closed"
 
 
