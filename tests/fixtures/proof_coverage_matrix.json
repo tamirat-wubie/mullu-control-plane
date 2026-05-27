@@ -4596,6 +4596,29 @@
         "/api/v1/memory/summary"
       ],
       "request_proof": "request_proof",
+      "runtime_witness_anchor_aliases": {
+        "agent_memory_capacity_eviction": [
+          "capacity_eviction"
+        ],
+        "agent_memory_forget_removes_entry": [
+          "forget"
+        ],
+        "agent_memory_search_relevance_scored": [
+          "search",
+          "memory_search_endpoint_relevance_scored"
+        ],
+        "agent_memory_store_bounded": [
+          "store",
+          "memory_store_endpoint_bounded"
+        ],
+        "agent_memory_summary_bounded": [
+          "summary",
+          "memory_summary_endpoint_bounded"
+        ],
+        "agent_memory_tenant_isolation": [
+          "tenant_isolation"
+        ]
+      },
       "runtime_witnesses": [
         "agent_memory_store_bounded",
         "agent_memory_search_relevance_scored",
@@ -8366,7 +8389,7 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 931,
+    "exact_test_anchor_count": 937,
     "runtime_witness_count": 1108,
     "surfaces": [
       {
@@ -10682,19 +10705,52 @@
         "unanchored_witnesses": []
       },
       {
-        "anchored_witnesses": [],
-        "exact_test_anchor_count": 0,
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "mcoi/tests/test_agent_memory.py::test_store",
+              "mcoi/tests/test_agent_memory.py::test_memory_store_endpoint_bounded"
+            ],
+            "witness": "agent_memory_store_bounded"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_agent_memory.py::test_search",
+              "mcoi/tests/test_agent_memory.py::test_memory_search_endpoint_relevance_scored"
+            ],
+            "witness": "agent_memory_search_relevance_scored"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_agent_memory.py::test_tenant_isolation"
+            ],
+            "witness": "agent_memory_tenant_isolation"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_agent_memory.py::test_capacity_eviction"
+            ],
+            "witness": "agent_memory_capacity_eviction"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_agent_memory.py::test_summary",
+              "mcoi/tests/test_agent_memory.py::test_memory_summary_endpoint_bounded"
+            ],
+            "witness": "agent_memory_summary_bounded"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_agent_memory.py::test_forget"
+            ],
+            "witness": "agent_memory_forget_removes_entry"
+          }
+        ],
+        "exact_test_anchor_count": 6,
         "runtime_witness_count": 6,
         "surface_id": "agent_memory_lifecycle",
-        "unanchored_witness_count": 6,
-        "unanchored_witnesses": [
-          "agent_memory_store_bounded",
-          "agent_memory_search_relevance_scored",
-          "agent_memory_tenant_isolation",
-          "agent_memory_capacity_eviction",
-          "agent_memory_summary_bounded",
-          "agent_memory_forget_removes_entry"
-        ]
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
       },
       {
         "anchored_witnesses": [
@@ -15388,6 +15444,6 @@
         "unanchored_witnesses": []
       }
     ],
-    "unanchored_witness_count": 177
+    "unanchored_witness_count": 171
   }
 }
