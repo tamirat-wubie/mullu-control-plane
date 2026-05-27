@@ -36,6 +36,7 @@ from .operational_math_receipt_store import (
     FileOperationalMathReceiptStore,
     OperationalMathReceiptStore,
 )
+from .organization_kernel_store import FileOrganizationKernelStore
 from .team_registry_store import TeamRegistryState, TeamRegistryStore
 from .team_queue_store import TeamQueueStore
 from .temporal_scheduler_store import (
@@ -73,6 +74,7 @@ __all__ = [
     "SnapshotStore",
     "FileSoftwareChangeReceiptStore",
     "FileOperationalMathReceiptStore",
+    "FileOrganizationKernelStore",
     "FileTemporalSchedulerStore",
     "OperationalMathReceiptStore",
     "SoftwareChangeReceiptStore",

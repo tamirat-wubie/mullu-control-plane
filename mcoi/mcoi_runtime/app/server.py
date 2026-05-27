@@ -65,10 +65,12 @@ from mcoi_runtime.persistence.finance_approval_store import (
     FileFinanceApprovalPacketStore,
     FinanceApprovalPacketStore,
 )
+from mcoi_runtime.persistence.organization_kernel_store import FileOrganizationKernelStore
 from mcoi_runtime.persistence.temporal_scheduler_store import (
     FileTemporalSchedulerStore,
     TemporalSchedulerStore,
 )
+from mcoi_runtime.core.organization_kernel import OrganizationKernel
 
 def _init_field_encryption_from_env() -> tuple[Any | None, dict[str, Any]]:
     """Build optional field encryption and expose explicit startup posture."""
@@ -297,6 +299,19 @@ finance_approval_store = (
     else FinanceApprovalPacketStore()
 )
 deps.set("finance_approval_store", finance_approval_store)
+
+_organization_kernel_store_path = os.environ.get("MULLU_ORGANIZATION_KERNEL_STORE_PATH")
+organization_kernel = OrganizationKernel(clock=_clock)
+organization_kernel_store = (
+    FileOrganizationKernelStore(Path(_organization_kernel_store_path))
+    if _organization_kernel_store_path
+    else None
+)
+if organization_kernel_store is not None:
+    organization_kernel_store.restore_kernel(organization_kernel)
+deps.set("organization_kernel", organization_kernel)
+if organization_kernel_store is not None:
+    deps.set("organization_kernel_store", organization_kernel_store)
 
 _artifact_lineage_store_path = os.environ.get("MULLU_ARTIFACT_LINEAGE_STORE_PATH")
 artifact_lineage_store = (
