@@ -1,4 +1,10 @@
-"""Phase 216A — Agent memory tests."""
+"""Phase 216A - Agent memory tests.
+
+Purpose: verify tenant-scoped agent memory core behavior and HTTP routes.
+Governance scope: memory lifecycle tests only.
+Dependencies: AgentMemoryStore and FastAPI test client.
+Invariants: storage is bounded, search is relevance-scored, and summaries stay bounded.
+"""
 
 import pytest
 from mcoi_runtime.core.agent_memory import AgentMemoryStore
@@ -58,3 +64,80 @@ class TestAgentMemory:
         s = store.summary()
         assert s["total"] == 2
         assert s["by_category"]["fact"] == 1
+
+
+@pytest.fixture
+def client():
+    from fastapi.testclient import TestClient
+    from mcoi_runtime.app.server import app
+
+    return TestClient(app)
+
+
+def test_memory_store_endpoint_bounded(client) -> None:
+    response = client.post(
+        "/api/v1/memory/store",
+        json={
+            "agent_id": "memory-http-agent-store",
+            "tenant_id": "tenant-memory-http",
+            "category": "fact",
+            "content": "Endpoint memory store proof",
+            "keywords": ["endpoint", "memory"],
+            "confidence": 0.8,
+        },
+    )
+
+    body = response.json()
+    assert response.status_code == 200
+    assert body["memory_id"].startswith("mem-")
+    assert body["agent_id"] == "memory-http-agent-store"
+    assert body["category"] == "fact"
+
+
+def test_memory_search_endpoint_relevance_scored(client) -> None:
+    client.post(
+        "/api/v1/memory/store",
+        json={
+            "agent_id": "memory-http-agent-search",
+            "tenant_id": "tenant-memory-http",
+            "category": "fact",
+            "content": "Python programming preference",
+            "keywords": ["python", "programming"],
+            "confidence": 0.9,
+        },
+    )
+    response = client.post(
+        "/api/v1/memory/search",
+        json={
+            "agent_id": "memory-http-agent-search",
+            "tenant_id": "tenant-memory-http",
+            "query": "python programming",
+            "limit": 2,
+        },
+    )
+
+    body = response.json()
+    assert response.status_code == 200
+    assert body["count"] >= 1
+    assert body["results"][0]["content"] == "Python programming preference"
+    assert body["results"][0]["relevance"] > 0
+
+
+def test_memory_summary_endpoint_bounded(client) -> None:
+    client.post(
+        "/api/v1/memory/store",
+        json={
+            "agent_id": "memory-http-agent-summary",
+            "tenant_id": "tenant-memory-http",
+            "category": "preference",
+            "content": "Summary endpoint memory proof",
+            "confidence": 1.0,
+        },
+    )
+    response = client.get("/api/v1/memory/summary")
+
+    body = response.json()
+    assert response.status_code == 200
+    assert body["total"] >= 1
+    assert body["agents"] >= 1
+    assert body["by_category"]["preference"] >= 1
