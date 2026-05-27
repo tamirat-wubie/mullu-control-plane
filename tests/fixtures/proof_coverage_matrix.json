@@ -5599,6 +5599,31 @@
         "/authority/obligations/escalate-overdue"
       ],
       "request_proof": "request_proof",
+      "runtime_witness_anchor_aliases": {
+        "approval_expiration_witness": [
+          "expire_overdue_authority_approval_chains_records_transition",
+          "overdue_approval_chain_expires_and_emits_escalation_event"
+        ],
+        "obligation_satisfaction_escalation_witness": [
+          "authority_obligation_and_escalation_read_models",
+          "authority_obligation_satisfaction_rejects_missing_obligation",
+          "escalate_overdue_authority_obligations_records_transition",
+          "satisfy_obligation_requires_evidence_and_active_status"
+        ],
+        "operator_access_guard": [
+          "authority_operator_secret_required_in_production",
+          "authority_operator_identity_role_allowed_in_production",
+          "authority_operator_identity_role_denied_in_production"
+        ],
+        "operator_audit_events": [
+          "authority_operator_audit_read_model",
+          "authority_operator_secret_required_in_production"
+        ],
+        "ownership_policy_read_models": [
+          "authority_ownership_read_model_filters_owner_records",
+          "authority_policy_read_model_filters_approval_and_escalation_policies"
+        ]
+      },
       "runtime_witnesses": [
         "operator_access_guard",
         "operator_audit_events",
@@ -6200,6 +6225,29 @@
         "MaturityProjectingCapabilityAdmissionGate.read_model"
       ],
       "request_proof": "request_proof",
+      "runtime_witness_anchor_aliases": {
+        "autonomy_requires_C7_controls": [
+          "autonomy_controls_assess_to_c7_when_production_ready",
+          "autonomy_controls_do_not_override_production_blockers",
+          "autonomy_requires_c7"
+        ],
+        "certification_evidence_synthesizes_maturity_extension": [
+          "certification_bundle_generates_maturity_extension_without_manual_flags",
+          "registry_projection_synthesizes_maturity_from_certification_extension",
+          "certification_evidence_synthesizer_bounds_mismatch_and_incomplete_claims"
+        ],
+        "default_pack_C6_examples_projected": [
+          "capability_fabric_env_loader_installs_checked_in_default_packs",
+          "default_read_model_projects_governed_capability_records"
+        ],
+        "effect_bearing_production_requires_live_write": [
+          "effect_bearing_capability_requires_live_write_for_production",
+          "effect_bearing_c6_requires_live_write"
+        ],
+        "registry_read_model_exposes_maturity": [
+          "read_model_projection_attaches_maturity_to_capabilities_and_records"
+        ]
+      },
       "runtime_witnesses": [
         "certification_evidence_synthesizes_maturity_extension",
         "maturity_derived_from_evidence",
@@ -8701,7 +8749,7 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 1014,
+    "exact_test_anchor_count": 1025,
     "runtime_witness_count": 1114,
     "surfaces": [
       {
@@ -12178,18 +12226,51 @@
         "unanchored_witnesses": []
       },
       {
-        "anchored_witnesses": [],
-        "exact_test_anchor_count": 0,
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "tests/test_gateway/test_webhooks.py::test_authority_operator_secret_required_in_production",
+              "tests/test_gateway/test_webhooks.py::test_authority_operator_identity_role_allowed_in_production",
+              "tests/test_gateway/test_webhooks.py::test_authority_operator_identity_role_denied_in_production"
+            ],
+            "witness": "operator_access_guard"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_webhooks.py::test_authority_operator_audit_read_model",
+              "tests/test_gateway/test_webhooks.py::test_authority_operator_secret_required_in_production"
+            ],
+            "witness": "operator_audit_events"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_webhooks.py::test_authority_ownership_read_model_filters_owner_records",
+              "tests/test_gateway/test_webhooks.py::test_authority_policy_read_model_filters_approval_and_escalation_policies"
+            ],
+            "witness": "ownership_policy_read_models"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_webhooks.py::test_expire_overdue_authority_approval_chains_records_transition",
+              "tests/test_gateway/test_authority_obligation_mesh.py::test_overdue_approval_chain_expires_and_emits_escalation_event"
+            ],
+            "witness": "approval_expiration_witness"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_webhooks.py::test_authority_obligation_and_escalation_read_models",
+              "tests/test_gateway/test_webhooks.py::test_authority_obligation_satisfaction_rejects_missing_obligation",
+              "tests/test_gateway/test_webhooks.py::test_escalate_overdue_authority_obligations_records_transition",
+              "tests/test_gateway/test_authority_obligation_mesh.py::test_satisfy_obligation_requires_evidence_and_active_status"
+            ],
+            "witness": "obligation_satisfaction_escalation_witness"
+          }
+        ],
+        "exact_test_anchor_count": 5,
         "runtime_witness_count": 5,
         "surface_id": "authority_operator_controls",
-        "unanchored_witness_count": 5,
-        "unanchored_witnesses": [
-          "operator_access_guard",
-          "operator_audit_events",
-          "ownership_policy_read_models",
-          "approval_expiration_witness",
-          "obligation_satisfaction_escalation_witness"
-        ]
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
       },
       {
         "anchored_witnesses": [
@@ -13007,9 +13088,51 @@
         "anchored_witnesses": [
           {
             "anchors": [
+              "tests/test_gateway/test_capability_maturity.py::test_certification_bundle_generates_maturity_extension_without_manual_flags",
+              "tests/test_gateway/test_capability_maturity.py::test_registry_projection_synthesizes_maturity_from_certification_extension",
+              "tests/test_gateway/test_capability_maturity.py::test_certification_evidence_synthesizer_bounds_mismatch_and_incomplete_claims"
+            ],
+            "witness": "certification_evidence_synthesizes_maturity_extension"
+          },
+          {
+            "anchors": [
               "tests/test_gateway/test_capability_maturity.py::test_maturity_derived_from_evidence"
             ],
             "witness": "maturity_derived_from_evidence"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_capability_maturity.py::test_read_model_projection_attaches_maturity_to_capabilities_and_records"
+            ],
+            "witness": "registry_read_model_exposes_maturity"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_capability_fabric.py::test_capability_fabric_env_loader_installs_checked_in_default_packs",
+              "tests/test_gateway/test_capability_fabric.py::test_default_read_model_projects_governed_capability_records"
+            ],
+            "witness": "default_pack_C6_examples_projected"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_capability_maturity.py::test_effect_bearing_capability_requires_live_write_for_production",
+              "tests/test_gateway/test_capability_maturity.py::test_effect_bearing_c6_requires_live_write"
+            ],
+            "witness": "effect_bearing_production_requires_live_write"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_capability_maturity.py::test_production_requires_worker_deployment_recovery"
+            ],
+            "witness": "production_requires_worker_deployment_recovery"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_capability_maturity.py::test_autonomy_controls_assess_to_c7_when_production_ready",
+              "tests/test_gateway/test_capability_maturity.py::test_autonomy_controls_do_not_override_production_blockers",
+              "tests/test_gateway/test_capability_maturity.py::test_autonomy_requires_c7"
+            ],
+            "witness": "autonomy_requires_C7_controls"
           },
           {
             "anchors": [
@@ -13024,18 +13147,11 @@
             "witness": "capability_maturity_schema_valid"
           }
         ],
-        "exact_test_anchor_count": 3,
+        "exact_test_anchor_count": 9,
         "runtime_witness_count": 9,
         "surface_id": "capability_maturity_assessment",
-        "unanchored_witness_count": 6,
-        "unanchored_witnesses": [
-          "certification_evidence_synthesizes_maturity_extension",
-          "registry_read_model_exposes_maturity",
-          "default_pack_C6_examples_projected",
-          "effect_bearing_production_requires_live_write",
-          "production_requires_worker_deployment_recovery",
-          "autonomy_requires_C7_controls"
-        ]
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
       },
       {
         "anchored_witnesses": [
@@ -16194,6 +16310,6 @@
         "unanchored_witnesses": []
       }
     ],
-    "unanchored_witness_count": 100
+    "unanchored_witness_count": 89
   }
 }

@@ -2782,6 +2782,31 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "approval_expiration_witness",
                 "obligation_satisfaction_escalation_witness",
             ],
+            runtime_witness_anchor_aliases={
+                "operator_access_guard": [
+                    "authority_operator_secret_required_in_production",
+                    "authority_operator_identity_role_allowed_in_production",
+                    "authority_operator_identity_role_denied_in_production",
+                ],
+                "operator_audit_events": [
+                    "authority_operator_audit_read_model",
+                    "authority_operator_secret_required_in_production",
+                ],
+                "ownership_policy_read_models": [
+                    "authority_ownership_read_model_filters_owner_records",
+                    "authority_policy_read_model_filters_approval_and_escalation_policies",
+                ],
+                "approval_expiration_witness": [
+                    "expire_overdue_authority_approval_chains_records_transition",
+                    "overdue_approval_chain_expires_and_emits_escalation_event",
+                ],
+                "obligation_satisfaction_escalation_witness": [
+                    "authority_obligation_and_escalation_read_models",
+                    "authority_obligation_satisfaction_rejects_missing_obligation",
+                    "escalate_overdue_authority_obligations_records_transition",
+                    "satisfy_obligation_requires_evidence_and_active_status",
+                ],
+            },
         ),
         _surface(
             "orgos_case_governance_lifecycle",
@@ -3375,6 +3400,29 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "operator_console_links_capability_improvement_portfolio",
                 "capability_maturity_schema_valid",
             ],
+            runtime_witness_anchor_aliases={
+                "certification_evidence_synthesizes_maturity_extension": [
+                    "certification_bundle_generates_maturity_extension_without_manual_flags",
+                    "registry_projection_synthesizes_maturity_from_certification_extension",
+                    "certification_evidence_synthesizer_bounds_mismatch_and_incomplete_claims",
+                ],
+                "registry_read_model_exposes_maturity": [
+                    "read_model_projection_attaches_maturity_to_capabilities_and_records",
+                ],
+                "default_pack_C6_examples_projected": [
+                    "capability_fabric_env_loader_installs_checked_in_default_packs",
+                    "default_read_model_projects_governed_capability_records",
+                ],
+                "effect_bearing_production_requires_live_write": [
+                    "effect_bearing_capability_requires_live_write_for_production",
+                    "effect_bearing_c6_requires_live_write",
+                ],
+                "autonomy_requires_C7_controls": [
+                    "autonomy_controls_assess_to_c7_when_production_ready",
+                    "autonomy_controls_do_not_override_production_blockers",
+                    "autonomy_requires_c7",
+                ],
+            },
         ),
         _surface(
             "capability_manifest_registry",
