@@ -147,6 +147,8 @@ def test_witness_integrity_report_tracks_exact_test_anchors() -> None:
     assert surfaces["api_key_lifecycle"]["unanchored_witness_count"] == 0
     assert surfaces["ops_proof_surface"]["exact_test_anchor_count"] == 6
     assert surfaces["ops_proof_surface"]["unanchored_witness_count"] == 0
+    assert surfaces["trace_observability_read_models"]["exact_test_anchor_count"] == 6
+    assert surfaces["trace_observability_read_models"]["unanchored_witness_count"] == 0
     assert surfaces["code_intelligence_operator_read_model"]["exact_test_anchor_count"] >= 5
     assert surfaces["code_intelligence_operator_read_model"]["unanchored_witness_count"] == 0
     assert surfaces["data_export_lifecycle"]["exact_test_anchor_count"] >= 4

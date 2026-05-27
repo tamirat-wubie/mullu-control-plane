@@ -57,9 +57,6 @@ from .operator_models import (
     JobReconcileRequest,
     SkillRequest,
     SkillRunReport,
-    SkillPromotionReceiptReadReport,
-    SkillPromotionReceiptReadRequest,
-    SkillPromotionReceiptSummary,
     TeamQueueReconcileReport,
     TeamQueueReconcileRequest,
     WorkQueueReconcileReport,
@@ -68,6 +65,11 @@ from .operator_models import (
     WorkforceReconcileRequest,
     WorkflowResumeRequest,
     WorkflowRunReport,
+)
+from .skill_promotion_read_models import (
+    SkillPromotionReceiptReadReport,
+    SkillPromotionReceiptReadRequest,
+    SkillPromotionReceiptSummary,
 )
 
 if TYPE_CHECKING:

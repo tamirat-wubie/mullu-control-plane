@@ -5,7 +5,15 @@ Governance scope: validate trace context propagation, span lifecycle,
 """
 from __future__ import annotations
 
+import os
+from collections.abc import Iterator
+
 import pytest
+
+try:
+    from fastapi.testclient import TestClient
+except ImportError:  # pragma: no cover - optional runtime dependency guard
+    TestClient = None  # type: ignore[assignment]
 
 from mcoi_runtime.core.request_tracing import (
     RequestTracer,
@@ -151,3 +159,72 @@ class TestRequestTracer:
     def test_get_nonexistent_trace(self):
         tracer = RequestTracer()
         assert tracer.get_trace("nonexistent") == []
+
+
+@pytest.fixture
+def client() -> Iterator[TestClient]:
+    if TestClient is None:
+        pytest.skip("FastAPI test client is unavailable")
+
+    os.environ["MULLU_ENV"] = "local_dev"
+    os.environ["MULLU_DB_BACKEND"] = "memory"
+    os.environ["MULLU_CERT_INTERVAL"] = "0"
+
+    from mcoi_runtime.app.server import app
+
+    with TestClient(app) as test_client:
+        yield test_client
+
+
+class TestTraceObservabilityEndpoints:
+    def test_trace_summary_route_bounded(self, client: TestClient):
+        response = client.get("/api/v1/traces")
+
+        assert response.status_code == 200
+        body = response.json()
+        assert body["governed"] is True
+        assert "active_traces" in body["tracing"]
+        assert "total_spans" in body["tracing"]
+
+    def test_trace_lookup_route_bounded(self, client: TestClient):
+        from mcoi_runtime.app.routers.deps import deps
+
+        trace_context = TraceContext.new()
+        span = deps.request_tracer.start_span(trace_context, "trace_lookup_route_bounded")
+        deps.request_tracer.finish_span(span)
+
+        response = client.get(f"/api/v1/traces/{trace_context.trace_id}")
+
+        assert response.status_code == 200
+        body = response.json()
+        assert body["governed"] is True
+        assert body["trace_id"] == trace_context.trace_id
+        assert body["spans"][0]["operation"] == "trace_lookup_route_bounded"
+
+    def test_trace_lookup_missing_route_governed_404(self, client: TestClient):
+        response = client.get("/api/v1/traces/missing-trace")
+
+        assert response.status_code == 404
+        detail = response.json()["detail"]
+        assert detail["governed"] is True
+        assert detail["error_code"] == "trace_not_found"
+        assert detail["error"] == "trace not found"
+
+    def test_slow_trace_route_bounded(self, client: TestClient):
+        response = client.get("/api/v1/traces/slow")
+
+        assert response.status_code == 200
+        body = response.json()
+        assert body["governed"] is True
+        assert "slow_traces" in body
+        assert isinstance(body["slow_traces"], list)
+
+    def test_otel_trace_summary_route_bounded(self, client: TestClient):
+        response = client.get("/api/v1/traces/summary")
+
+        assert response.status_code == 200
+        body = response.json()
+        assert body["governed"] is True
+        assert "traces" in body
+        assert "service_name" in body["traces"]
+        assert "failed_exports" in body["traces"]

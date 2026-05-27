@@ -1758,6 +1758,30 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "otel_trace_summary_bounded",
                 "trace_context_roundtrip_tested",
             ],
+            runtime_witness_anchor_aliases={
+                "request_trace_summary_bounded": [
+                    "trace_summary_route_bounded",
+                    "summary",
+                ],
+                "request_trace_lookup_bounded": [
+                    "trace_lookup_route_bounded",
+                    "multiple_spans_same_trace",
+                ],
+                "missing_trace_returns_governed_404": [
+                    "trace_lookup_missing_route_governed_404",
+                    "get_nonexistent_trace",
+                ],
+                "slow_trace_projection_bounded": [
+                    "slow_trace_route_bounded",
+                    "slow_traces_empty",
+                ],
+                "otel_trace_summary_bounded": [
+                    "otel_trace_summary_route_bounded",
+                ],
+                "trace_context_roundtrip_tested": [
+                    "roundtrip_headers",
+                ],
+            },
         ),
         _surface(
             "agent_memory_lifecycle",

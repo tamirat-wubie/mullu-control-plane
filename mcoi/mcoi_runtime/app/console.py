@@ -19,6 +19,7 @@ from .view_models import (
     RunbookSummaryView,
     RunSummaryView,
     SimulationSummaryView,
+    SkillPromotionReceiptReadView,
     SkillSummaryView,
     TeamSummaryView,
     TemporalTaskView,
@@ -206,6 +207,36 @@ def render_skill_summary(view: SkillSummaryView) -> str:
         lines.append(f"  errors ({len(view.structured_errors)}):")
         for err in view.structured_errors:
             lines.append(f"    [{err.family}] {err.error_code}: {err.message}")
+    return "\n".join(lines)
+
+
+def render_skill_promotion_receipts(view: SkillPromotionReceiptReadView) -> str:
+    """Render skill promotion evidence receipts as text."""
+    lines = [
+        "=== Skill Promotion Receipts ===",
+        f"  request_id:       {view.request_id}",
+        f"  store_configured: {view.store_configured}",
+        f"  receipt_count:    {view.receipt_count}",
+    ]
+    if view.skill_id_filter:
+        lines.append(f"  skill_id_filter:  {view.skill_id_filter}")
+    if view.target_lifecycle_filter:
+        lines.append(f"  lifecycle_filter: {view.target_lifecycle_filter}")
+    if view.structured_errors:
+        lines.append(f"  errors ({len(view.structured_errors)}):")
+        for err in view.structured_errors:
+            lines.append(f"    [{err.family}] {err.error_code}: {err.message}")
+    if view.receipts:
+        lines.append("  receipts:")
+        for receipt in view.receipts:
+            lines.append(
+                "    "
+                f"{receipt.evidence_id} skill={receipt.skill_id} "
+                f"target={receipt.target_lifecycle} "
+                f"records={receipt.execution_record_count} "
+                f"evidence_refs={receipt.evidence_ref_count} "
+                f"verifications={receipt.verification_count}"
+            )
     return "\n".join(lines)
 
 

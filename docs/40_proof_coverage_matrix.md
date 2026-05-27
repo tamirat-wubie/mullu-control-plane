@@ -151,8 +151,8 @@ Witness integrity audit:
 | Metric | Count |
 |---|---:|
 | Runtime witness labels | 1108 |
-| Exact test anchors | 881 |
-| Unanchored witness labels | 227 |
+| Exact test anchors | 887 |
+| Unanchored witness labels | 221 |
 
 Evidence quality gaps:
 none
@@ -161,7 +161,6 @@ Witness integrity gaps:
 
 | Surface | Exact anchors | Unanchored | Unanchored labels |
 |---|---:|---:|---|
-| `trace_observability_read_models` | 0 | 6 | request_trace_summary_bounded, request_trace_lookup_bounded, missing_trace_returns_governed_404, slow_trace_projection_bounded, otel_trace_summary_bounded, trace_context_roundtrip_tested |
 | `agent_memory_lifecycle` | 0 | 6 | agent_memory_store_bounded, agent_memory_search_relevance_scored, agent_memory_tenant_isolation, agent_memory_capacity_eviction, agent_memory_summary_bounded, agent_memory_forget_removes_entry |
 | `governance_explanation_lifecycle` | 1 | 6 | explain_action_guard_chain_path_reported, explain_audit_entry_allowed_and_denied, explain_audit_entry_goal_context_preserved, explanation_cache_bounded, explain_action_endpoint_governed, explain_summary_endpoint_governed |
 | `structured_output_validation` | 0 | 7 | structured_output_parse_valid_json, structured_output_parse_invalid_json, structured_output_parse_unknown_schema_bounded, structured_output_parse_markdown_json, structured_output_schema_registration_validated, structured_output_endpoint_parse_valid_and_invalid, structured_output_schema_list_bounded |
@@ -318,5 +317,5 @@ none
 STATUS:
   Completeness: 100%
   Invariants verified: route declarations, route-level coverage classification, coverage levels, coverage states, closure action mapping, schema contract validation, deployment orchestration receipt schema contract
-  Open issues: 227 runtime-witness labels lack exact test-function anchors
+  Open issues: 221 runtime-witness labels lack exact test-function anchors
   Next action: bind unanchored runtime-witness labels to exact test-function anchors

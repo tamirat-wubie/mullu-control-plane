@@ -4511,6 +4511,30 @@
         "/api/v1/traces/{trace_id}"
       ],
       "request_proof": "read_model",
+      "runtime_witness_anchor_aliases": {
+        "missing_trace_returns_governed_404": [
+          "trace_lookup_missing_route_governed_404",
+          "get_nonexistent_trace"
+        ],
+        "otel_trace_summary_bounded": [
+          "otel_trace_summary_route_bounded"
+        ],
+        "request_trace_lookup_bounded": [
+          "trace_lookup_route_bounded",
+          "multiple_spans_same_trace"
+        ],
+        "request_trace_summary_bounded": [
+          "trace_summary_route_bounded",
+          "summary"
+        ],
+        "slow_trace_projection_bounded": [
+          "slow_trace_route_bounded",
+          "slow_traces_empty"
+        ],
+        "trace_context_roundtrip_tested": [
+          "roundtrip_headers"
+        ]
+      },
       "runtime_witnesses": [
         "request_trace_summary_bounded",
         "request_trace_lookup_bounded",
@@ -8093,7 +8117,7 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 881,
+    "exact_test_anchor_count": 887,
     "runtime_witness_count": 1108,
     "surfaces": [
       {
@@ -10360,19 +10384,53 @@
         "unanchored_witnesses": []
       },
       {
-        "anchored_witnesses": [],
-        "exact_test_anchor_count": 0,
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "mcoi/tests/test_request_tracing.py::test_trace_summary_route_bounded",
+              "mcoi/tests/test_request_tracing.py::test_summary"
+            ],
+            "witness": "request_trace_summary_bounded"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_request_tracing.py::test_trace_lookup_route_bounded",
+              "mcoi/tests/test_request_tracing.py::test_multiple_spans_same_trace"
+            ],
+            "witness": "request_trace_lookup_bounded"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_request_tracing.py::test_trace_lookup_missing_route_governed_404",
+              "mcoi/tests/test_request_tracing.py::test_get_nonexistent_trace"
+            ],
+            "witness": "missing_trace_returns_governed_404"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_request_tracing.py::test_slow_trace_route_bounded",
+              "mcoi/tests/test_request_tracing.py::test_slow_traces_empty"
+            ],
+            "witness": "slow_trace_projection_bounded"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_request_tracing.py::test_otel_trace_summary_route_bounded"
+            ],
+            "witness": "otel_trace_summary_bounded"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_request_tracing.py::test_roundtrip_headers"
+            ],
+            "witness": "trace_context_roundtrip_tested"
+          }
+        ],
+        "exact_test_anchor_count": 6,
         "runtime_witness_count": 6,
         "surface_id": "trace_observability_read_models",
-        "unanchored_witness_count": 6,
-        "unanchored_witnesses": [
-          "request_trace_summary_bounded",
-          "request_trace_lookup_bounded",
-          "missing_trace_returns_governed_404",
-          "slow_trace_projection_bounded",
-          "otel_trace_summary_bounded",
-          "trace_context_roundtrip_tested"
-        ]
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
       },
       {
         "anchored_witnesses": [],
@@ -14801,6 +14859,6 @@
         "unanchored_witnesses": []
       }
     ],
-    "unanchored_witness_count": 227
+    "unanchored_witness_count": 221
   }
 }

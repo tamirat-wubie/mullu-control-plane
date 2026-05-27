@@ -65,8 +65,13 @@ from .operator_models import (
     WorkflowResumeRequest,
     WorkflowRunReport,
 )
+from .skill_promotion_read_models import (
+    SkillPromotionReceiptReadReport,
+    SkillPromotionReceiptReadRequest,
+)
 from .operator_runners import (
     recover_coordination_state,
+    read_skill_promotion_receipts,
     reconcile_goals,
     reconcile_jobs,
     reconcile_work_queue,
@@ -410,6 +415,12 @@ class OperatorLoop:
 
     def run_skill(self, request: SkillRequest) -> SkillRunReport:
         return run_skill(self, request)
+
+    def read_skill_promotion_receipts(
+        self,
+        request: SkillPromotionReceiptReadRequest,
+    ) -> SkillPromotionReceiptReadReport:
+        return read_skill_promotion_receipts(self, request)
 
     def run_workflow(
         self,
