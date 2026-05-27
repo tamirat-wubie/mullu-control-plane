@@ -8741,7 +8741,7 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 1023,
+    "exact_test_anchor_count": 1024,
     "runtime_witness_count": 1112,
     "surfaces": [
       {
@@ -13391,14 +13391,20 @@
         "unanchored_witnesses": []
       },
       {
-        "anchored_witnesses": [],
-        "exact_test_anchor_count": 0,
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "tests/test_gateway/test_agent_identity.py::test_capability_scope_conflict_denied"
+            ],
+            "witness": "capability_scope_conflict_denied"
+          }
+        ],
+        "exact_test_anchor_count": 1,
         "runtime_witness_count": 8,
         "surface_id": "agent_identity",
-        "unanchored_witness_count": 8,
+        "unanchored_witness_count": 7,
         "unanchored_witnesses": [
           "owner_tenant_identity_required",
-          "capability_scope_conflict_denied",
           "self_approval_forbidden",
           "policy_mutation_forbidden",
           "delegation_requires_lease",
@@ -16290,6 +16296,6 @@
         "unanchored_witnesses": []
       }
     ],
-    "unanchored_witness_count": 89
+    "unanchored_witness_count": 88
   }
 }

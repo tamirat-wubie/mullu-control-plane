@@ -151,8 +151,8 @@ Witness integrity audit:
 | Metric | Count |
 |---|---:|
 | Runtime witness labels | 1112 |
-| Exact test anchors | 1023 |
-| Unanchored witness labels | 89 |
+| Exact test anchors | 1024 |
+| Unanchored witness labels | 88 |
 
 Evidence quality gaps:
 none
@@ -161,7 +161,7 @@ Witness integrity gaps:
 
 | Surface | Exact anchors | Unanchored | Unanchored labels |
 |---|---:|---:|---|
-| `agent_identity` | 0 | 8 | owner_tenant_identity_required, capability_scope_conflict_denied, self_approval_forbidden, policy_mutation_forbidden, delegation_requires_lease, agent_budget_enforced, reputation_update_requires_evidence, agent_identity_schema_valid |
+| `agent_identity` | 1 | 7 | owner_tenant_identity_required, self_approval_forbidden, policy_mutation_forbidden, delegation_requires_lease, agent_budget_enforced, reputation_update_requires_evidence, agent_identity_schema_valid |
 | `claim_verification` | 0 | 6 | claim_type_declared, source_evidence_required, contradictions_block_execution, stale_claims_block_execution, high_risk_requires_independent_support, claim_verification_schema_valid |
 | `connector_self_healing` | 0 | 6 | provider_success_not_assumed, write_failures_require_operator_review, missing_receipt_revokes_capability, fallback_provider_requires_certification, read_only_degradation_bounded, connector_self_healing_schema_valid |
 | `policy_prover` | 0 | 7 | payment_requires_approval_counterexample, tenant_isolation_counterexample, shell_requires_sandbox_counterexample, provider_url_approved_counterexample, memory_requires_admission_counterexample, unknown_property_fails_closed, policy_proof_report_schema_valid |
@@ -298,5 +298,5 @@ none
 STATUS:
   Completeness: 100%
   Invariants verified: route declarations, route-level coverage classification, coverage levels, coverage states, closure action mapping, schema contract validation, deployment orchestration receipt schema contract
-  Open issues: 89 runtime-witness labels lack exact test-function anchors
+  Open issues: 88 runtime-witness labels lack exact test-function anchors
   Next action: bind unanchored runtime-witness labels to exact test-function anchors

@@ -177,6 +177,8 @@ def test_witness_integrity_report_tracks_exact_test_anchors() -> None:
     assert surfaces["authority_obligation_mesh"]["unanchored_witness_count"] == 0
     assert surfaces["authority_operator_controls"]["exact_test_anchor_count"] == 5
     assert surfaces["authority_operator_controls"]["unanchored_witness_count"] == 0
+    assert surfaces["agent_identity"]["exact_test_anchor_count"] == 8
+    assert surfaces["agent_identity"]["unanchored_witness_count"] == 0
     assert surfaces["code_intelligence_operator_read_model"]["exact_test_anchor_count"] >= 5
     assert surfaces["code_intelligence_operator_read_model"]["unanchored_witness_count"] == 0
     assert surfaces["data_export_lifecycle"]["exact_test_anchor_count"] >= 4
@@ -261,6 +263,8 @@ def test_witness_integrity_report_tracks_exact_test_anchors() -> None:
     assert surfaces["domain_operating_pack"]["exact_test_anchor_count"] == 5
     assert surfaces["collaboration_cases"]["unanchored_witness_count"] == 0
     assert surfaces["collaboration_cases"]["exact_test_anchor_count"] == 5
+    assert surfaces["memory_lattice"]["unanchored_witness_count"] == 0
+    assert surfaces["memory_lattice"]["exact_test_anchor_count"] == 6
     assert surfaces["coordination_checkpoint_lifecycle"]["unanchored_witness_count"] == 0
     assert surfaces["coordination_checkpoint_lifecycle"]["exact_test_anchor_count"] == 10
     assert surfaces["production_evidence_plane"]["unanchored_witness_count"] == 0
@@ -2037,8 +2041,13 @@ def test_software_dev_capability_pack_surface_requires_explicit_admission() -> N
 def test_agent_identity_surface_binds_owner_tenant_and_scope() -> None:
     matrix = _load_fixture()
     surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    witness_surfaces = {
+        surface["surface_id"]: surface
+        for surface in matrix["witness_integrity"]["surfaces"]
+    }
     closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
     identity_surface = surfaces["agent_identity"]
+    identity_witness_surface = witness_surfaces["agent_identity"]
     witnesses = set(identity_surface["runtime_witnesses"])
 
     assert identity_surface["coverage_state"] == "witnessed"
@@ -2055,6 +2064,8 @@ def test_agent_identity_surface_binds_owner_tenant_and_scope() -> None:
     assert "delegation_requires_lease" in witnesses
     assert "agent_budget_enforced" in witnesses
     assert "agent_identity_schema_valid" in witnesses
+    assert identity_witness_surface["exact_test_anchor_count"] == 8
+    assert identity_witness_surface["unanchored_witness_count"] == 0
     assert closure_actions["publish_agent_identity_contract"]["status"] == "closed"
 
 
