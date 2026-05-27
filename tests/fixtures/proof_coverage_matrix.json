@@ -8595,24 +8595,28 @@
         "anchored_witnesses": [
           {
             "anchors": [
+              "tests/test_assistant_kernel.py::test_assistant_profiles_read_model_bounded",
               "mcoi/tests/test_assistant_router.py::test_assistant_profiles_read_model_exposes_finance_ops_profile"
             ],
             "witness": "assistant_profiles_read_model_bounded"
           },
           {
             "anchors": [
+              "tests/test_assistant_kernel.py::test_finance_ops_plan_requires_active_consent",
               "mcoi/tests/test_assistant_router.py::test_finance_ops_plan_blocks_without_active_payment_consent"
             ],
             "witness": "finance_ops_plan_requires_active_consent"
           },
           {
             "anchors": [
+              "tests/test_assistant_kernel.py::test_finance_ops_plan_projects_operator_queue",
               "mcoi/tests/test_assistant_router.py::test_finance_ops_plan_with_consent_projects_dispatch_ready_controls"
             ],
             "witness": "finance_ops_plan_projects_operator_queue"
           },
           {
             "anchors": [
+              "tests/test_assistant_kernel.py::test_assistant_plan_never_grants_execution_authority",
               "mcoi/tests/test_assistant_router.py::test_finance_ops_plan_with_consent_projects_dispatch_ready_controls",
               "mcoi/tests/test_assistant_router.py::test_finance_ops_plan_blocks_without_active_payment_consent"
             ],
@@ -8620,6 +8624,7 @@
           },
           {
             "anchors": [
+              "tests/test_assistant_kernel.py::test_assistant_plan_errors_sanitized",
               "mcoi/tests/test_assistant_router.py::test_finance_ops_plan_error_detail_is_bounded"
             ],
             "witness": "assistant_plan_errors_sanitized"
