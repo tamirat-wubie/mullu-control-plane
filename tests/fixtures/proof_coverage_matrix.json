@@ -4645,6 +4645,29 @@
         "/api/v1/explain/summary"
       ],
       "request_proof": "request_proof",
+      "runtime_witness_anchor_aliases": {
+        "explain_action_endpoint_governed": [
+          "explain_action_endpoint"
+        ],
+        "explain_action_guard_chain_path_reported": [
+          "explain_action_endpoint",
+          "explain_action_no_guard_chain"
+        ],
+        "explain_audit_entry_allowed_and_denied": [
+          "explain_audit_entry_success",
+          "explain_audit_entry_denied",
+          "explain_audit_endpoint_governed_and_missing_entry"
+        ],
+        "explain_audit_entry_goal_context_preserved": [
+          "explain_audit_entry_with_goal_hierarchy"
+        ],
+        "explain_summary_endpoint_governed": [
+          "explain_summary_endpoint"
+        ],
+        "explanation_cache_bounded": [
+          "cache_bounded"
+        ]
+      },
       "runtime_witnesses": [
         "explain_action_guard_chain_path_reported",
         "explain_action_returns_explanation_id",
@@ -7264,6 +7287,37 @@
         "TemporalDispatchWindowReceipt"
       ],
       "request_proof": "request_proof",
+      "runtime_witness_anchor_aliases": {
+        "active_blackout_defers_dispatch": [
+          "dispatch_window_defers_active_blackout_inside_allowed_window"
+        ],
+        "allowed_window_required_for_high_risk_dispatch": [
+          "dispatch_window_blocks_invalid_high_risk_policy_state",
+          "dispatch_window_marks_low_risk_action_not_required"
+        ],
+        "holiday_closure_defers_dispatch": [
+          "dispatch_window_defers_holiday_to_next_business_window"
+        ],
+        "outside_allowed_window_defers_dispatch": [
+          "dispatch_window_defers_outside_allowed_window_to_next_business_window"
+        ],
+        "receipt_not_terminal_closure": [
+          "dispatch_window_allows_high_risk_action_inside_allowed_window"
+        ],
+        "runtime_clock_owns_dispatch_window_time": [
+          "dispatch_window_allows_high_risk_action_inside_allowed_window"
+        ],
+        "source_reapproval_bound_for_high_risk_dispatch": [
+          "dispatch_window_allows_high_risk_action_inside_allowed_window",
+          "dispatch_window_blocks_invalid_high_risk_policy_state"
+        ],
+        "temporal_dispatch_window_receipt_schema_valid": [
+          "dispatch_window_allows_high_risk_action_inside_allowed_window"
+        ],
+        "tenant_timezone_resolved": [
+          "dispatch_window_allows_high_risk_action_inside_allowed_window"
+        ]
+      },
       "runtime_witnesses": [
         "runtime_clock_owns_dispatch_window_time",
         "tenant_timezone_resolved",
@@ -7293,6 +7347,38 @@
         "TemporalBudgetWindowReceipt"
       ],
       "request_proof": "request_proof",
+      "runtime_witness_anchor_aliases": {
+        "daily_weekly_monthly_budget_resets_computed": [
+          "budget_window_allows_high_risk_action_inside_daily_remaining_budget",
+          "budget_window_preserves_weekly_tenant_local_reset_window"
+        ],
+        "future_budget_window_defers_dispatch": [
+          "budget_window_defers_future_custom_period"
+        ],
+        "projected_spend_blocks_over_limit_dispatch": [
+          "budget_window_blocks_when_projected_spend_exceeds_active_limit"
+        ],
+        "receipt_not_terminal_closure": [
+          "budget_window_allows_high_risk_action_inside_daily_remaining_budget"
+        ],
+        "runtime_clock_owns_budget_window_time": [
+          "budget_window_allows_high_risk_action_inside_daily_remaining_budget"
+        ],
+        "source_reapproval_bound_for_high_risk_budget_window": [
+          "budget_window_allows_high_risk_action_inside_daily_remaining_budget",
+          "budget_window_blocks_mismatched_snapshot_and_missing_sources"
+        ],
+        "spend_snapshot_period_matches_active_window": [
+          "budget_window_blocks_mismatched_snapshot_and_missing_sources"
+        ],
+        "temporal_budget_window_receipt_schema_valid": [
+          "budget_window_allows_high_risk_action_inside_daily_remaining_budget"
+        ],
+        "tenant_timezone_resolves_budget_period": [
+          "budget_window_allows_high_risk_action_inside_daily_remaining_budget",
+          "budget_window_preserves_weekly_tenant_local_reset_window"
+        ]
+      },
       "runtime_witnesses": [
         "runtime_clock_owns_budget_window_time",
         "tenant_timezone_resolves_budget_period",
@@ -7322,6 +7408,37 @@
         "TemporalCausalOrderReceipt"
       ],
       "request_proof": "request_proof",
+      "runtime_witness_anchor_aliases": {
+        "future_events_block_dispatch": [
+          "causal_order_blocks_invalid_scope_future_event_predecessor_and_missing_sources"
+        ],
+        "high_risk_source_receipts_bound": [
+          "causal_order_allows_high_risk_dispatch_when_required_events_are_ordered",
+          "causal_order_blocks_invalid_scope_future_event_predecessor_and_missing_sources"
+        ],
+        "out_of_order_events_block_dispatch": [
+          "causal_order_blocks_out_of_order_runtime_timestamps"
+        ],
+        "predecessor_edges_checked": [
+          "causal_order_blocks_invalid_scope_future_event_predecessor_and_missing_sources",
+          "causal_order_blocks_out_of_order_runtime_timestamps"
+        ],
+        "receipt_not_terminal_closure": [
+          "causal_order_allows_high_risk_dispatch_when_required_events_are_ordered"
+        ],
+        "required_events_must_be_present": [
+          "causal_order_blocks_missing_required_event_type"
+        ],
+        "runtime_clock_owns_causal_order_time": [
+          "causal_order_allows_high_risk_dispatch_when_required_events_are_ordered"
+        ],
+        "temporal_causal_order_receipt_schema_valid": [
+          "causal_order_allows_high_risk_dispatch_when_required_events_are_ordered"
+        ],
+        "tenant_and_command_scope_checked": [
+          "causal_order_blocks_invalid_scope_future_event_predecessor_and_missing_sources"
+        ]
+      },
       "runtime_witnesses": [
         "runtime_clock_owns_causal_order_time",
         "required_events_must_be_present",
@@ -8389,7 +8506,7 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 937,
+    "exact_test_anchor_count": 970,
     "runtime_witness_count": 1108,
     "surfaces": [
       {
@@ -10756,23 +10873,55 @@
         "anchored_witnesses": [
           {
             "anchors": [
+              "mcoi/tests/test_explanation_engine.py::test_explain_action_endpoint",
+              "mcoi/tests/test_explanation_engine.py::test_explain_action_no_guard_chain"
+            ],
+            "witness": "explain_action_guard_chain_path_reported"
+          },
+          {
+            "anchors": [
               "mcoi/tests/test_explanation_engine.py::test_explain_action_returns_explanation_id"
             ],
             "witness": "explain_action_returns_explanation_id"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_explanation_engine.py::test_explain_audit_entry_success",
+              "mcoi/tests/test_explanation_engine.py::test_explain_audit_entry_denied",
+              "mcoi/tests/test_explanation_engine.py::test_explain_audit_endpoint_governed_and_missing_entry"
+            ],
+            "witness": "explain_audit_entry_allowed_and_denied"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_explanation_engine.py::test_explain_audit_entry_with_goal_hierarchy"
+            ],
+            "witness": "explain_audit_entry_goal_context_preserved"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_explanation_engine.py::test_cache_bounded"
+            ],
+            "witness": "explanation_cache_bounded"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_explanation_engine.py::test_explain_action_endpoint"
+            ],
+            "witness": "explain_action_endpoint_governed"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_explanation_engine.py::test_explain_summary_endpoint"
+            ],
+            "witness": "explain_summary_endpoint_governed"
           }
         ],
-        "exact_test_anchor_count": 1,
+        "exact_test_anchor_count": 7,
         "runtime_witness_count": 7,
         "surface_id": "governance_explanation_lifecycle",
-        "unanchored_witness_count": 6,
-        "unanchored_witnesses": [
-          "explain_action_guard_chain_path_reported",
-          "explain_audit_entry_allowed_and_denied",
-          "explain_audit_entry_goal_context_preserved",
-          "explanation_cache_bounded",
-          "explain_action_endpoint_governed",
-          "explain_summary_endpoint_governed"
-        ]
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
       },
       {
         "anchored_witnesses": [
@@ -14069,58 +14218,200 @@
         ]
       },
       {
-        "anchored_witnesses": [],
-        "exact_test_anchor_count": 0,
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_dispatch_window.py::test_dispatch_window_allows_high_risk_action_inside_allowed_window"
+            ],
+            "witness": "runtime_clock_owns_dispatch_window_time"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_dispatch_window.py::test_dispatch_window_allows_high_risk_action_inside_allowed_window"
+            ],
+            "witness": "tenant_timezone_resolved"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_dispatch_window.py::test_dispatch_window_blocks_invalid_high_risk_policy_state",
+              "tests/test_gateway/test_temporal_dispatch_window.py::test_dispatch_window_marks_low_risk_action_not_required"
+            ],
+            "witness": "allowed_window_required_for_high_risk_dispatch"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_dispatch_window.py::test_dispatch_window_defers_outside_allowed_window_to_next_business_window"
+            ],
+            "witness": "outside_allowed_window_defers_dispatch"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_dispatch_window.py::test_dispatch_window_defers_active_blackout_inside_allowed_window"
+            ],
+            "witness": "active_blackout_defers_dispatch"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_dispatch_window.py::test_dispatch_window_defers_holiday_to_next_business_window"
+            ],
+            "witness": "holiday_closure_defers_dispatch"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_dispatch_window.py::test_dispatch_window_allows_high_risk_action_inside_allowed_window",
+              "tests/test_gateway/test_temporal_dispatch_window.py::test_dispatch_window_blocks_invalid_high_risk_policy_state"
+            ],
+            "witness": "source_reapproval_bound_for_high_risk_dispatch"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_dispatch_window.py::test_dispatch_window_allows_high_risk_action_inside_allowed_window"
+            ],
+            "witness": "temporal_dispatch_window_receipt_schema_valid"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_dispatch_window.py::test_dispatch_window_allows_high_risk_action_inside_allowed_window"
+            ],
+            "witness": "receipt_not_terminal_closure"
+          }
+        ],
+        "exact_test_anchor_count": 9,
         "runtime_witness_count": 9,
         "surface_id": "temporal_dispatch_window",
-        "unanchored_witness_count": 9,
-        "unanchored_witnesses": [
-          "runtime_clock_owns_dispatch_window_time",
-          "tenant_timezone_resolved",
-          "allowed_window_required_for_high_risk_dispatch",
-          "outside_allowed_window_defers_dispatch",
-          "active_blackout_defers_dispatch",
-          "holiday_closure_defers_dispatch",
-          "source_reapproval_bound_for_high_risk_dispatch",
-          "temporal_dispatch_window_receipt_schema_valid",
-          "receipt_not_terminal_closure"
-        ]
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
       },
       {
-        "anchored_witnesses": [],
-        "exact_test_anchor_count": 0,
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_budget_window.py::test_budget_window_allows_high_risk_action_inside_daily_remaining_budget"
+            ],
+            "witness": "runtime_clock_owns_budget_window_time"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_budget_window.py::test_budget_window_allows_high_risk_action_inside_daily_remaining_budget",
+              "tests/test_gateway/test_temporal_budget_window.py::test_budget_window_preserves_weekly_tenant_local_reset_window"
+            ],
+            "witness": "tenant_timezone_resolves_budget_period"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_budget_window.py::test_budget_window_allows_high_risk_action_inside_daily_remaining_budget",
+              "tests/test_gateway/test_temporal_budget_window.py::test_budget_window_preserves_weekly_tenant_local_reset_window"
+            ],
+            "witness": "daily_weekly_monthly_budget_resets_computed"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_budget_window.py::test_budget_window_blocks_mismatched_snapshot_and_missing_sources"
+            ],
+            "witness": "spend_snapshot_period_matches_active_window"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_budget_window.py::test_budget_window_blocks_when_projected_spend_exceeds_active_limit"
+            ],
+            "witness": "projected_spend_blocks_over_limit_dispatch"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_budget_window.py::test_budget_window_defers_future_custom_period"
+            ],
+            "witness": "future_budget_window_defers_dispatch"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_budget_window.py::test_budget_window_allows_high_risk_action_inside_daily_remaining_budget",
+              "tests/test_gateway/test_temporal_budget_window.py::test_budget_window_blocks_mismatched_snapshot_and_missing_sources"
+            ],
+            "witness": "source_reapproval_bound_for_high_risk_budget_window"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_budget_window.py::test_budget_window_allows_high_risk_action_inside_daily_remaining_budget"
+            ],
+            "witness": "temporal_budget_window_receipt_schema_valid"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_budget_window.py::test_budget_window_allows_high_risk_action_inside_daily_remaining_budget"
+            ],
+            "witness": "receipt_not_terminal_closure"
+          }
+        ],
+        "exact_test_anchor_count": 9,
         "runtime_witness_count": 9,
         "surface_id": "temporal_budget_window",
-        "unanchored_witness_count": 9,
-        "unanchored_witnesses": [
-          "runtime_clock_owns_budget_window_time",
-          "tenant_timezone_resolves_budget_period",
-          "daily_weekly_monthly_budget_resets_computed",
-          "spend_snapshot_period_matches_active_window",
-          "projected_spend_blocks_over_limit_dispatch",
-          "future_budget_window_defers_dispatch",
-          "source_reapproval_bound_for_high_risk_budget_window",
-          "temporal_budget_window_receipt_schema_valid",
-          "receipt_not_terminal_closure"
-        ]
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
       },
       {
-        "anchored_witnesses": [],
-        "exact_test_anchor_count": 0,
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_causal_order.py::test_causal_order_allows_high_risk_dispatch_when_required_events_are_ordered"
+            ],
+            "witness": "runtime_clock_owns_causal_order_time"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_causal_order.py::test_causal_order_blocks_missing_required_event_type"
+            ],
+            "witness": "required_events_must_be_present"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_causal_order.py::test_causal_order_blocks_invalid_scope_future_event_predecessor_and_missing_sources"
+            ],
+            "witness": "tenant_and_command_scope_checked"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_causal_order.py::test_causal_order_blocks_invalid_scope_future_event_predecessor_and_missing_sources",
+              "tests/test_gateway/test_temporal_causal_order.py::test_causal_order_blocks_out_of_order_runtime_timestamps"
+            ],
+            "witness": "predecessor_edges_checked"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_causal_order.py::test_causal_order_blocks_out_of_order_runtime_timestamps"
+            ],
+            "witness": "out_of_order_events_block_dispatch"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_causal_order.py::test_causal_order_blocks_invalid_scope_future_event_predecessor_and_missing_sources"
+            ],
+            "witness": "future_events_block_dispatch"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_causal_order.py::test_causal_order_allows_high_risk_dispatch_when_required_events_are_ordered",
+              "tests/test_gateway/test_temporal_causal_order.py::test_causal_order_blocks_invalid_scope_future_event_predecessor_and_missing_sources"
+            ],
+            "witness": "high_risk_source_receipts_bound"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_causal_order.py::test_causal_order_allows_high_risk_dispatch_when_required_events_are_ordered"
+            ],
+            "witness": "temporal_causal_order_receipt_schema_valid"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_causal_order.py::test_causal_order_allows_high_risk_dispatch_when_required_events_are_ordered"
+            ],
+            "witness": "receipt_not_terminal_closure"
+          }
+        ],
+        "exact_test_anchor_count": 9,
         "runtime_witness_count": 9,
         "surface_id": "temporal_causal_order",
-        "unanchored_witness_count": 9,
-        "unanchored_witnesses": [
-          "runtime_clock_owns_causal_order_time",
-          "required_events_must_be_present",
-          "tenant_and_command_scope_checked",
-          "predecessor_edges_checked",
-          "out_of_order_events_block_dispatch",
-          "future_events_block_dispatch",
-          "high_risk_source_receipts_bound",
-          "temporal_causal_order_receipt_schema_valid",
-          "receipt_not_terminal_closure"
-        ]
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
       },
       {
         "anchored_witnesses": [],
@@ -15444,6 +15735,6 @@
         "unanchored_witnesses": []
       }
     ],
-    "unanchored_witness_count": 171
+    "unanchored_witness_count": 138
   }
 }

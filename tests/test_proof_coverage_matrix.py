@@ -161,6 +161,8 @@ def test_witness_integrity_report_tracks_exact_test_anchors() -> None:
     assert surfaces["governed_background_scheduler"]["unanchored_witness_count"] == 0
     assert surfaces["agent_memory_lifecycle"]["exact_test_anchor_count"] == 6
     assert surfaces["agent_memory_lifecycle"]["unanchored_witness_count"] == 0
+    assert surfaces["governance_explanation_lifecycle"]["exact_test_anchor_count"] == 7
+    assert surfaces["governance_explanation_lifecycle"]["unanchored_witness_count"] == 0
     assert surfaces["code_intelligence_operator_read_model"]["exact_test_anchor_count"] >= 5
     assert surfaces["code_intelligence_operator_read_model"]["unanchored_witness_count"] == 0
     assert surfaces["data_export_lifecycle"]["exact_test_anchor_count"] >= 4
@@ -211,6 +213,12 @@ def test_witness_integrity_report_tracks_exact_test_anchors() -> None:
     assert surfaces["runbook_learning_lifecycle"]["exact_test_anchor_count"] == 11
     assert surfaces["temporal_accepted_risk_expiry"]["unanchored_witness_count"] == 0
     assert surfaces["temporal_accepted_risk_expiry"]["exact_test_anchor_count"] == 9
+    assert surfaces["temporal_dispatch_window"]["unanchored_witness_count"] == 0
+    assert surfaces["temporal_dispatch_window"]["exact_test_anchor_count"] == 9
+    assert surfaces["temporal_budget_window"]["unanchored_witness_count"] == 0
+    assert surfaces["temporal_budget_window"]["exact_test_anchor_count"] == 9
+    assert surfaces["temporal_causal_order"]["unanchored_witness_count"] == 0
+    assert surfaces["temporal_causal_order"]["exact_test_anchor_count"] == 9
     assert surfaces["temporal_credential_expiry"]["unanchored_witness_count"] == 0
     assert surfaces["temporal_credential_expiry"]["exact_test_anchor_count"] == 11
     assert surfaces["temporal_retention_window"]["unanchored_witness_count"] == 0
