@@ -40,6 +40,9 @@ _POLICY_PRECONDITION_DESCRIPTIONS = {
     "deployment": "deployment workflow policy permits descriptor selection",
     "browser": "adapter evidence workflow policy permits descriptor selection",
     "enterprise": "enterprise workflow policy permits descriptor selection",
+    "incident": "incident rollback workflow policy permits descriptor selection",
+    "release": "release handoff workflow policy permits descriptor selection",
+    "telemetry": "telemetry monitoring workflow policy permits descriptor selection",
 }
 _CAPABILITY_PRECONDITION_DESCRIPTIONS = {
     "financial": "financial capability family is admitted in the governed registry",
@@ -48,6 +51,9 @@ _CAPABILITY_PRECONDITION_DESCRIPTIONS = {
     "deployment": "deployment capability family is admitted in the governed registry",
     "browser": "browser, document, and voice capability families are admitted in the governed registry",
     "enterprise": "enterprise and creative capability families are admitted in the governed registry",
+    "incident": "incident response and recovery capability family is admitted in the governed registry",
+    "release": "release management capability family is admitted in the governed registry",
+    "telemetry": "telemetry and monitoring capability family is admitted in the governed registry",
 }
 
 
@@ -60,6 +66,9 @@ def default_skill_descriptors() -> tuple[SkillDescriptor, ...]:
         _deployment_witness_publication_skill(),
         _adapter_evidence_closure_skill(),
         _workflow_governed_composition_skill(),
+        _incident_rollback_recovery_skill(),
+        _release_handoff_pr_closure_skill(),
+        _telemetry_monitoring_triage_skill(),
     )
 
 
@@ -450,4 +459,179 @@ def _workflow_governed_composition_skill() -> SkillDescriptor:
         ),
         confidence=0.25,
         metadata={**_NO_NEW_AUTHORITY, "risk_floor": "medium", "approval_expected": True},
+    )
+
+
+def _incident_rollback_recovery_skill() -> SkillDescriptor:
+    skill_id = "incident.rollback_recovery.v1"
+    return SkillDescriptor(
+        skill_id=skill_id,
+        name="Incident rollback recovery",
+        skill_class=SkillClass.COMPOSITE,
+        effect_class=EffectClass.EXTERNAL_WRITE,
+        determinism_class=DeterminismClass.INPUT_BOUNDED,
+        trust_class=TrustClass.TRUSTED_INTERNAL,
+        verification_strength=VerificationStrength.MANDATORY,
+        lifecycle=SkillLifecycle.CANDIDATE,
+        preconditions=_policy_and_capability_preconditions(domain="incident"),
+        postconditions=_verification_postcondition(skill_id=skill_id),
+        steps=(
+            SkillStep(
+                step_id="collect_incident_evidence",
+                name="Collect incident evidence",
+                action_type="incident.evidence.collect",
+                output_keys=("incident_record_ref", "causal_event_ref", "effect_surface"),
+                provider_class_required="incident_response_plane",
+            ),
+            SkillStep(
+                step_id="plan_recovery",
+                name="Plan rollback or compensation",
+                action_type="incident.recovery_plan.build",
+                depends_on=("collect_incident_evidence",),
+                input_bindings={
+                    "incident_record_ref": "collect_incident_evidence.incident_record_ref",
+                    "causal_event_ref": "collect_incident_evidence.causal_event_ref",
+                },
+                output_keys=("recovery_plan_ref", "safety_floor_ref", "approval_required"),
+                provider_class_required="incident_response_plane",
+            ),
+            SkillStep(
+                step_id="execute_recovery_with_approval",
+                name="Execute approved recovery action",
+                action_type="incident.recovery.execute.with_approval",
+                depends_on=("plan_recovery",),
+                input_bindings={"recovery_plan_ref": "plan_recovery.recovery_plan_ref"},
+                output_keys=("recovery_receipt_ref", "rollback_effect_ref", "recovery_snapshot_ref"),
+                provider_class_required="incident_response_plane",
+            ),
+            SkillStep(
+                step_id="validate_replay",
+                name="Validate recovery replay",
+                action_type="incident.replay.validate",
+                depends_on=("execute_recovery_with_approval",),
+                input_bindings={
+                    "recovery_snapshot_ref": "execute_recovery_with_approval.recovery_snapshot_ref"
+                },
+                output_keys=("replay_bundle_ref", "terminal_observation_ref", "residual_risk"),
+                provider_class_required="incident_response_plane",
+            ),
+        ),
+        provider_requirements=("incident_response_plane",),
+        description=(
+            "Composes incident evidence collection, recovery planning, approval-bound "
+            "rollback execution, and replay validation."
+        ),
+        confidence=0.25,
+        metadata={**_NO_NEW_AUTHORITY, "risk_floor": "critical", "approval_expected": True},
+    )
+
+
+def _release_handoff_pr_closure_skill() -> SkillDescriptor:
+    skill_id = "release.pr_handoff_closure.v1"
+    return SkillDescriptor(
+        skill_id=skill_id,
+        name="Release PR handoff closure",
+        skill_class=SkillClass.COMPOSITE,
+        effect_class=EffectClass.EXTERNAL_WRITE,
+        determinism_class=DeterminismClass.INPUT_BOUNDED,
+        trust_class=TrustClass.TRUSTED_INTERNAL,
+        verification_strength=VerificationStrength.MANDATORY,
+        lifecycle=SkillLifecycle.CANDIDATE,
+        preconditions=_policy_and_capability_preconditions(domain="release"),
+        postconditions=_verification_postcondition(skill_id=skill_id),
+        steps=(
+            SkillStep(
+                step_id="read_commit_boundary",
+                name="Read commit boundary",
+                action_type="release.commit_boundary.read",
+                output_keys=("commit_boundary_ref", "changed_files_ref", "release_target"),
+                provider_class_required="release_management_plane",
+            ),
+            SkillStep(
+                step_id="build_release_inventory",
+                name="Build release import inventory",
+                action_type="release.import_inventory.build",
+                depends_on=("read_commit_boundary",),
+                input_bindings={"commit_boundary_ref": "read_commit_boundary.commit_boundary_ref"},
+                output_keys=("import_inventory_ref", "risk_register_ref"),
+                provider_class_required="release_management_plane",
+            ),
+            SkillStep(
+                step_id="validate_release_packet",
+                name="Validate release packet",
+                action_type="release.packet.validate",
+                depends_on=("build_release_inventory",),
+                input_bindings={"import_inventory_ref": "build_release_inventory.import_inventory_ref"},
+                output_keys=("readiness_ref", "release_manifest_ref", "validation_summary"),
+                provider_class_required="release_management_plane",
+            ),
+            SkillStep(
+                step_id="prepare_pr_handoff",
+                name="Prepare PR handoff with approval",
+                action_type="release.pr_handoff.prepare.with_approval",
+                depends_on=("validate_release_packet",),
+                input_bindings={"release_manifest_ref": "validate_release_packet.release_manifest_ref"},
+                output_keys=("pr_summary_ref", "handoff_packet_ref", "publication_receipt_ref"),
+                provider_class_required="release_management_plane",
+            ),
+        ),
+        provider_requirements=("release_management_plane",),
+        description=(
+            "Composes commit-boundary evidence, release inventory, readiness "
+            "validation, and approval-bound PR handoff preparation."
+        ),
+        confidence=0.25,
+        metadata={**_NO_NEW_AUTHORITY, "risk_floor": "high", "approval_expected": True},
+    )
+
+
+def _telemetry_monitoring_triage_skill() -> SkillDescriptor:
+    skill_id = "telemetry.monitoring_triage.v1"
+    return SkillDescriptor(
+        skill_id=skill_id,
+        name="Telemetry monitoring triage",
+        skill_class=SkillClass.COMPOSITE,
+        effect_class=EffectClass.EXTERNAL_READ,
+        determinism_class=DeterminismClass.INPUT_BOUNDED,
+        trust_class=TrustClass.TRUSTED_INTERNAL,
+        verification_strength=VerificationStrength.MANDATORY,
+        lifecycle=SkillLifecycle.CANDIDATE,
+        preconditions=_policy_and_capability_preconditions(domain="telemetry"),
+        postconditions=_verification_postcondition(skill_id=skill_id),
+        steps=(
+            SkillStep(
+                step_id="collect_telemetry_window",
+                name="Collect telemetry window",
+                action_type="telemetry.window.collect",
+                output_keys=("telemetry_ref", "time_window", "component_boundary"),
+                provider_class_required="telemetry_observer",
+            ),
+            SkillStep(
+                step_id="evaluate_thresholds",
+                name="Evaluate controller thresholds",
+                action_type="telemetry.thresholds.evaluate",
+                depends_on=("collect_telemetry_window",),
+                input_bindings={"telemetry_ref": "collect_telemetry_window.telemetry_ref"},
+                output_keys=("threshold_evaluation_ref", "degradation_class", "unknowns"),
+                provider_class_required="telemetry_observer",
+            ),
+            SkillStep(
+                step_id="build_triage_decision",
+                name="Build triage decision",
+                action_type="telemetry.triage_decision.build",
+                depends_on=("evaluate_thresholds",),
+                input_bindings={
+                    "threshold_evaluation_ref": "evaluate_thresholds.threshold_evaluation_ref"
+                },
+                output_keys=("triage_decision_ref", "remediation_plan_ref", "residual_risk"),
+                provider_class_required="telemetry_observer",
+            ),
+        ),
+        provider_requirements=("telemetry_observer",),
+        description=(
+            "Composes telemetry collection, threshold evaluation, and read-only "
+            "runtime health triage."
+        ),
+        confidence=0.25,
+        metadata={**_NO_NEW_AUTHORITY, "risk_floor": "medium"},
     )
