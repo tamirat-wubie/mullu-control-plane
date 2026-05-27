@@ -80,6 +80,12 @@ Persist a dashboard-safe projection for operator visibility:
 python -m mcoi_runtime.app.operational_math_cli --projection-path ../.tmp/operational-math-loop-projection.json
 ```
 
+Persist a store-backed dashboard projection with receipt lineage counts:
+
+```powershell
+python -m mcoi_runtime.app.operational_math_cli --store-path ../.tmp/operational-math-receipts.json --projection-path ../.tmp/operational-math-store-projection.json
+```
+
 Projection behavior:
 
 | Receipt state | Operator signal |

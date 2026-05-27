@@ -120,6 +120,32 @@ def test_operational_math_cli_writes_dashboard_projection(tmp_path) -> None:
     assert projection["unresolved_principle_count"] == 0
 
 
+def test_operational_math_cli_writes_store_backed_projection(tmp_path) -> None:
+    store_path = tmp_path / "operational-math-receipts.json"
+    projection_path = tmp_path / "operational-math-store-projection.json"
+
+    exit_code, stdout_text, stderr_text = _run_cli(
+        "--timestamp",
+        FIXED_TS,
+        "--store-path",
+        str(store_path),
+        "--projection-path",
+        str(projection_path),
+    )
+    receipt = json.loads(stdout_text)
+    projection = json.loads(projection_path.read_text(encoding="utf-8"))
+
+    assert exit_code == 0
+    assert stderr_text == ""
+    assert receipt["status"] == "passed"
+    assert projection["source"] == "operational_math"
+    assert projection["total_receipts"] == 1
+    assert projection["latest_receipt_id"] == receipt["receipt_id"]
+    assert projection["passed_receipt_count"] == 1
+    assert projection["requires_operator_review"] is False
+    assert projection["governed"] is True
+
+
 def test_operational_math_cli_rejects_invalid_receipt_suffix(tmp_path) -> None:
     exit_code, stdout_text, stderr_text = _run_cli(
         "--timestamp",
