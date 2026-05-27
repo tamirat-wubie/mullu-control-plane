@@ -415,6 +415,17 @@ def test_protocol_manifest_indexes_trust_ledger_export_package() -> None:
     assert trust_entry["surface"] == "evidence"
 
 
+def test_protocol_manifest_indexes_trust_ledger_anchor_submission_receipt() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    trust_entry = entries["trust-ledger-anchor-submission-receipt"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert trust_entry["path"] == "schemas/trust_ledger_anchor_submission_receipt.schema.json"
+    assert trust_entry["urn"] == "urn:mullusi:schema:trust-ledger-anchor-submission-receipt:1"
+    assert trust_entry["surface"] == "evidence"
+
+
 def test_protocol_manifest_indexes_memory_lattice_admission() -> None:
     manifest = load_manifest()
     entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}

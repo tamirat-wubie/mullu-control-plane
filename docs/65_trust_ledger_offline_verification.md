@@ -16,9 +16,11 @@ Dependencies:
 
 - `scripts/verify_evidence_bundle.py`
 - `scripts/verify_anchor_receipt.py`
+- `scripts/submit_trust_ledger_anchor_export.py`
 - `schemas/trust_ledger_bundle.schema.json`
 - `schemas/trust_ledger_bundle_verification_report.schema.json`
 - `schemas/trust_ledger_anchor_receipt.schema.json`
+- `schemas/trust_ledger_anchor_submission_receipt.schema.json`
 - `schemas/trust_ledger_evidence_artifacts.schema.json`
 - `schemas/trust_ledger_export_package.schema.json`
 - `schemas/trust_ledger_anchor_verification_report.schema.json`
@@ -31,6 +33,7 @@ Invariants:
 - Anchor verification binds the receipt to the bundle id, bundle hash, artifact root, receipt id, receipt hash, and HMAC signature.
 - Anchor verifier JSON output validates against `trust_ledger_anchor_verification_report.schema.json` for both valid and fail-closed reports.
 - Anchor receipts do not replace terminal closure certificates.
+- Anchor submission requires explicit operator authority, prior package verification, and a signed hash-chained ledger receipt.
 - Missing signing secrets fail closed.
 
 ## Export Inputs
@@ -41,6 +44,7 @@ Invariants:
 | `anchor_receipt.json` | `trust_ledger_anchor_receipt.schema.json` | Signed external anchor receipt |
 | `artifacts.json` | `trust_ledger_evidence_artifacts.schema.json` | Typed evidence artifact list used to recompute the artifact root |
 | `package.json` | `trust_ledger_export_package.schema.json` | Portable manifest binding expected file names, content hashes, bundle id, receipt id, and artifact root |
+| `submission_receipt.json` | `trust_ledger_anchor_submission_receipt.schema.json` | Signed operator submission receipt after package verification |
 
 Required artifact classes for external anchoring:
 
@@ -145,6 +149,49 @@ Fail-closed reasons include:
 4. Confirm `package.json` file hashes match the exported file contents before moving the package across trust boundaries.
 5. Compare `command_id`, `terminal_certificate_id`, `bundle_id`, and `anchor_receipt_id` in the JSON reports.
 6. Treat any invalid report as `GovernanceBlocked` until the source export is regenerated or the tamper source is identified.
+
+## Governed Submission
+
+Command:
+
+```bash
+python scripts/submit_trust_ledger_anchor_export.py \
+  --bundle bundle.json \
+  --receipt anchor_receipt.json \
+  --artifacts artifacts.json \
+  --package package.json \
+  --ledger-path external_anchor_submissions.jsonl \
+  --receipt-out submission_receipt.json \
+  --operator-id "$MULLU_OPERATOR_ID" \
+  --authority-ref "proof://approval/anchor-submit" \
+  --submitted-at "2026-05-05T12:20:00+00:00" \
+  --verification-secret "$MULLU_TRUST_LEDGER_ANCHOR_SECRET" \
+  --submission-secret "$MULLU_TRUST_LEDGER_SUBMISSION_SECRET" \
+  --signature-key-id "$MULLU_TRUST_LEDGER_SUBMISSION_KEY_ID" \
+  --confirm-submit \
+  --json
+```
+
+Pass condition:
+
+```json
+{
+  "valid": true,
+  "reason": "anchor_submission_recorded",
+  "submitted": true
+}
+```
+
+Submission fail-closed reasons include:
+
+| Reason | Meaning |
+| --- | --- |
+| `operator_confirmation_required` | The operator did not pass `--confirm-submit`; no ledger append occurred |
+| `authority_ref_invalid` | The operator authority reference is missing or not a bounded `proof://` or `authority://` reference |
+| `submission_secret_required` | No submission HMAC secret was provided |
+| `anchor_verification_failed:*` | Offline anchor/package verification failed before submission |
+| `submission_ledger_invalid:*` | Existing ledger replay failed before append |
+| `submission_receipt_schema_validation_failed` | The generated submission receipt violated the public schema |
 
 ## Resolution Stamp
 
