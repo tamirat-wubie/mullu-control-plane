@@ -11,11 +11,18 @@ Invariants:
 
 from __future__ import annotations
 
+import os
 from datetime import datetime, timezone
 from typing import Any
+from urllib.parse import urlparse
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
+
+from scripts.collect_deployment_witness import (
+    DeploymentWitness,
+    collect_deployment_witness,
+)
 
 from mcoi_runtime.app.routers.deps import deps
 from mcoi_runtime.contracts.effect_assurance import ReconciliationStatus
@@ -35,6 +42,7 @@ from mcoi_runtime.contracts.organization_kernel import (
 from mcoi_runtime.contracts.terminal_closure import TerminalClosureDisposition
 from mcoi_runtime.core.invariants import RuntimeCoreInvariantError
 from mcoi_runtime.core.organization_kernel import (
+    LAUNCH_GATEWAY_PILOT_CASE_TYPE,
     OrganizationKernel,
     bootstrap_minimum_organization,
     open_launch_gateway_pilot,
@@ -153,6 +161,16 @@ class LearningAdmissionRequest(BaseModel):
     metadata: dict[str, Any] = Field(default_factory=dict)
 
 
+class LaunchGatewayPilotEvidenceCollectionRequest(BaseModel):
+    gateway_url: str
+    expected_environment: str = "pilot"
+    require_production_evidence: bool = False
+    submitted_by: str = "operator"
+    auto_gate_engineering_step: bool = True
+    checked_preconditions: list[str] = Field(default_factory=lambda: ["launch_boundary_defined"])
+    metadata: dict[str, Any] = Field(default_factory=dict)
+
+
 def _default_clock() -> str:
     return datetime.now(timezone.utc).isoformat()
 
@@ -213,6 +231,19 @@ def _case_or_404(kernel: OrganizationKernel, case_id: str) -> OrganizationCase:
     return organization_case
 
 
+def _require_launch_gateway_pilot_case(kernel: OrganizationKernel, case_id: str) -> OrganizationCase:
+    organization_case = _case_or_404(kernel, case_id)
+    if organization_case.case_type != LAUNCH_GATEWAY_PILOT_CASE_TYPE:
+        raise HTTPException(
+            400,
+            detail=_error_detail(
+                "case is not a launch gateway pilot",
+                "case_not_launch_gateway_pilot",
+            ),
+        )
+    return organization_case
+
+
 def _body(record: Any) -> dict[str, Any]:
     return record.to_json_dict()
 
@@ -234,6 +265,124 @@ def _state_case_bundle(kernel: OrganizationKernel, case_id: str) -> dict[str, An
         "events": [_body(item) for item in kernel.list_case_events(case_id)],
         "governed": True,
     }
+
+
+def _validate_gateway_base_url(gateway_url: str) -> str:
+    parsed = urlparse(gateway_url.strip())
+    if parsed.scheme not in {"http", "https"} or not parsed.netloc:
+        raise HTTPException(
+            400,
+            detail=_error_detail("gateway URL must be absolute http(s)", "invalid_gateway_url"),
+        )
+    if parsed.username or parsed.password:
+        raise HTTPException(
+            400,
+            detail=_error_detail("gateway URL must not contain credentials", "gateway_url_credentials_rejected"),
+        )
+    if parsed.path not in {"", "/"} or parsed.params or parsed.query or parsed.fragment:
+        raise HTTPException(
+            400,
+            detail=_error_detail("gateway URL must be an origin without path/query/fragment", "gateway_url_scope_rejected"),
+        )
+    return f"{parsed.scheme}://{parsed.netloc}"
+
+
+def _witness_step_passed(witness: DeploymentWitness, name: str) -> bool:
+    return any(step.name == name and step.passed for step in witness.steps)
+
+
+def _launch_gateway_evidence_bindings(
+    witness: DeploymentWitness,
+    *,
+    expected_environment: str,
+) -> tuple[tuple[str, dict[str, Any]], ...]:
+    environment_ok = not expected_environment or _witness_step_passed(witness, "runtime environment")
+    bindings: list[tuple[str, dict[str, Any]]] = []
+
+    if _witness_step_passed(witness, "gateway health"):
+        bindings.append((
+            "engineering_health_endpoint",
+            {
+                "public_health_endpoint": witness.public_health_endpoint,
+                "health_http_status": witness.health_http_status,
+                "health_response_digest": witness.health_response_digest,
+                "health_status": witness.health_status,
+            },
+        ))
+    if (
+        environment_ok
+        and _witness_step_passed(witness, "gateway runtime witness")
+        and _witness_step_passed(witness, "runtime witness signature")
+    ):
+        bindings.append((
+            "engineering_gateway_witness",
+            {
+                "runtime_witness_id": witness.runtime_witness_id,
+                "runtime_witness_status": witness.runtime_witness_status,
+                "runtime_signature_key_id": witness.runtime_signature_key_id,
+                "signature_status": witness.signature_status,
+                "runtime_environment": witness.runtime_environment,
+                "latest_command_event_hash": witness.latest_command_event_hash,
+                "latest_terminal_certificate_id": witness.latest_terminal_certificate_id,
+            },
+        ))
+    if (
+        environment_ok
+        and _witness_step_passed(witness, "runtime conformance certificate")
+        and _witness_step_passed(witness, "runtime conformance signature")
+    ):
+        bindings.append((
+            "engineering_runtime_conformance",
+            {
+                "latest_conformance_certificate_id": witness.latest_conformance_certificate_id,
+                "conformance_status": witness.conformance_status,
+                "conformance_signature_status": witness.conformance_signature_status,
+                "authority_responsibility_debt_clear": witness.authority_responsibility_debt_clear,
+                "authority_open_obligation_count": witness.authority_open_obligation_count,
+                "authority_overdue_obligation_count": witness.authority_overdue_obligation_count,
+                "authority_escalated_obligation_count": witness.authority_escalated_obligation_count,
+                "authority_unowned_high_risk_capability_count": (
+                    witness.authority_unowned_high_risk_capability_count
+                ),
+            },
+        ))
+    return tuple(bindings)
+
+
+def _admit_launch_gateway_witness_evidence(
+    kernel: OrganizationKernel,
+    *,
+    case_id: str,
+    witness: DeploymentWitness,
+    submitted_by: str,
+    expected_environment: str,
+    request_metadata: dict[str, Any],
+) -> tuple[CaseEvidence, ...]:
+    admitted: list[CaseEvidence] = []
+    for requirement_id, evidence_metadata in _launch_gateway_evidence_bindings(
+        witness,
+        expected_environment=expected_environment,
+    ):
+        evidence = kernel.admit_case_evidence(
+            CaseEvidence(
+                evidence_ref=f"evidence:{case_id}:{requirement_id}:{witness.witness_id}",
+                case_id=case_id,
+                requirement_id=requirement_id,
+                submitted_by=submitted_by,
+                submitted_at=_clock_now(),
+                metadata={
+                    "source": "deployment_witness_collection",
+                    "witness_id": witness.witness_id,
+                    "gateway_url": witness.gateway_url,
+                    "deployment_claim": witness.deployment_claim,
+                    "collected_at": witness.collected_at,
+                    "request": request_metadata,
+                    **evidence_metadata,
+                },
+            )
+        )
+        admitted.append(evidence)
+    return tuple(admitted)
 
 
 @router.post("/api/v1/orgs")
@@ -354,6 +503,55 @@ def create_launch_gateway_pilot(req: LaunchGatewayPilotRequest):
         ) from exc
     _persist_kernel(kernel)
     return {"case": _body(organization_case), "plan": _body(plan), "governed": True}
+
+
+@router.post("/api/v1/cases/{case_id}/launch-gateway-pilot/deployment-witness")
+def collect_launch_gateway_pilot_deployment_witness(
+    case_id: str,
+    req: LaunchGatewayPilotEvidenceCollectionRequest,
+):
+    """Collect deployment witness evidence and bind verified engineering proof."""
+    _inc_metric("requests_governed")
+    kernel = _kernel()
+    _require_launch_gateway_pilot_case(kernel, case_id)
+    gateway_url = _validate_gateway_base_url(req.gateway_url)
+    try:
+        witness = collect_deployment_witness(
+            gateway_url=gateway_url,
+            witness_secret=os.environ.get("MULLU_RUNTIME_WITNESS_SECRET", ""),
+            conformance_secret=os.environ.get("MULLU_RUNTIME_CONFORMANCE_SECRET", ""),
+            deployment_witness_secret=os.environ.get("MULLU_DEPLOYMENT_WITNESS_SECRET", ""),
+            expected_environment=req.expected_environment,
+            require_production_evidence=req.require_production_evidence,
+            clock=_clock_now,
+        )
+        admitted = _admit_launch_gateway_witness_evidence(
+            kernel,
+            case_id=case_id,
+            witness=witness,
+            submitted_by=req.submitted_by,
+            expected_environment=req.expected_environment,
+            request_metadata=req.metadata,
+        )
+        decision = None
+        if req.auto_gate_engineering_step:
+            decision = kernel.evaluate_plan_step(
+                case_id=case_id,
+                step_id="engineering_runtime_witness",
+                checked_preconditions=tuple(req.checked_preconditions),
+            )
+    except (RuntimeCoreInvariantError, ValueError) as exc:
+        raise HTTPException(
+            400,
+            detail=_error_detail("deployment witness binding rejected", "deployment_witness_binding_rejected"),
+        ) from exc
+    _persist_kernel(kernel)
+    return {
+        "deployment_witness": witness.to_json_dict(),
+        "admitted_evidence": [_body(evidence) for evidence in admitted],
+        "gate_decision": _body(decision) if decision is not None else None,
+        "governed": True,
+    }
 
 
 @router.post("/api/v1/cases")

@@ -534,10 +534,15 @@ def test_orgos_case_governance_lifecycle_surface_is_witnessed() -> None:
     assert "tests/test_gateway/test_orgos_api.py" in surface["evidence_files"]
     assert "orgos_api_runs_launch_gateway_case_control_loop" in witnesses
     assert "orgos_api_replays_projection_from_jsonl_event_log" in witnesses
+    assert "launch_gateway_pilot_collects_deployment_witness_and_allows_engineering_gate" in witnesses
     assert "case_closure_requires_effect_reconciliation_match_for_committed" in witnesses
     assert route_records["/api/v1/cases"]["surface_id"] == "orgos_case_governance_lifecycle"
+    assert (
+        route_records["/api/v1/cases/{case_id}/launch-gateway-pilot/deployment-witness"]["surface_id"]
+        == "orgos_case_governance_lifecycle"
+    )
     assert route_records["/api/v1/orgos/read-model"]["coverage_state"] == "witnessed"
-    assert witness_records["orgos_case_governance_lifecycle"]["exact_test_anchor_count"] == 12
+    assert witness_records["orgos_case_governance_lifecycle"]["exact_test_anchor_count"] == 13
 
 
 def test_webhooks_proof_surface_is_witnessed() -> None:
