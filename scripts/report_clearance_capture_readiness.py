@@ -1,4 +1,4 @@
-"""Report missing Mullu clearance capture files.
+"""Report missing Mullu Govern clearance capture files.
 
 Purpose: derive the current file-level intake state from capture requirements.
 Governance scope: remaining naming clearance gates and evidence file presence.
@@ -69,6 +69,7 @@ def build_capture_readiness(requirements_path: Path = REQUIREMENTS_PATH) -> dict
     status = "capture_ready_for_review" if total_missing == 0 else "blocked"
     return {
         "product_name": requirements["product_name"],
+        "suite_family": requirements["suite_family"],
         "company_brand": requirements["company_brand"],
         "evidence_root": requirements["evidence_root"],
         "public_paid_launch_allowed": requirements["public_paid_launch_allowed"],
@@ -88,9 +89,10 @@ def _resolve_evidence_root(raw_evidence_root: object) -> Path:
 
 
 def print_capture_readiness(report: dict[str, Any]) -> None:
-    print("Mullu Clearance Capture Readiness")
-    print("=================================")
+    print("Mullu Govern Clearance Capture Readiness")
+    print("========================================")
     print(f"Product: {report['product_name']}")
+    print(f"Suite/family: {report['suite_family']}")
     print(f"Company: {report['company_brand']}")
     print(f"Evidence root: {report['evidence_root']}")
     print(f"Paid public launch allowed: {report['public_paid_launch_allowed']}")
@@ -114,7 +116,7 @@ def print_capture_readiness(report: dict[str, Any]) -> None:
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description="Report Mullu clearance capture readiness.")
+    parser = argparse.ArgumentParser(description="Report Mullu Govern clearance capture readiness.")
     parser.add_argument("--json", action="store_true", help="Emit a machine-readable readiness report.")
     parser.add_argument("--receipt-path", type=Path, help="Write the machine-readable report to this path.")
     parser.add_argument("--strict", action="store_true", help="Exit nonzero when capture evidence is still blocked.")

@@ -1,13 +1,14 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "urn:mullusi:schema:mullu-clearance-capture-requirements:1",
-  "title": "Mullu Clearance Capture Requirements",
+  "title": "Mullu Govern Clearance Capture Requirements",
   "type": "object",
   "additionalProperties": false,
   "required": [
     "schema_version",
     "requirements_id",
     "product_name",
+    "suite_family",
     "company_brand",
     "evidence_root",
     "public_paid_launch_allowed",
@@ -24,6 +25,10 @@
       "minLength": 1
     },
     "product_name": {
+      "type": "string",
+      "const": "Mullu Govern"
+    },
+    "suite_family": {
       "type": "string",
       "const": "Mullu"
     },

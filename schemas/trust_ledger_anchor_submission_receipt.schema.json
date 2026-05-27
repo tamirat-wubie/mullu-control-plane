@@ -1,0 +1,71 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:trust-ledger-anchor-submission-receipt:1",
+  "title": "Trust Ledger Anchor Submission Receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "submission_id",
+    "bundle_id",
+    "anchor_receipt_id",
+    "package_id",
+    "tenant_id",
+    "command_id",
+    "terminal_certificate_id",
+    "anchor_target",
+    "external_anchor_ref",
+    "external_anchor_status",
+    "operator_id",
+    "authority_ref",
+    "submitted_at",
+    "ledger_path",
+    "ledger_sequence",
+    "previous_submission_hash",
+    "package_hash",
+    "anchor_receipt_hash",
+    "anchor_verification_reason",
+    "submission_hash",
+    "signature_key_id",
+    "signature",
+    "metadata"
+  ],
+  "properties": {
+    "schema_version": {"type": "integer", "const": 1},
+    "submission_id": {"type": "string", "pattern": "^trust-anchor-submission-[0-9a-f]{16}$"},
+    "bundle_id": {"type": "string", "pattern": "^trust-bundle-[0-9a-f]{16}$"},
+    "anchor_receipt_id": {"type": "string", "pattern": "^trust-anchor-receipt-[0-9a-f]{16}$"},
+    "package_id": {"type": "string", "pattern": "^trust-export-[0-9a-f]{16}$"},
+    "tenant_id": {"type": "string", "minLength": 1},
+    "command_id": {"type": "string", "minLength": 1},
+    "terminal_certificate_id": {"type": "string", "minLength": 1},
+    "anchor_target": {
+      "type": "string",
+      "enum": ["audit_chain", "transparency_log", "external_ledger", "regulatory_archive"]
+    },
+    "external_anchor_ref": {"type": "string", "pattern": "^(ledger|https)://[^\\s]+$"},
+    "external_anchor_status": {"type": "string", "const": "submitted"},
+    "operator_id": {"type": "string", "minLength": 1},
+    "authority_ref": {"type": "string", "pattern": "^(proof|authority)://[^\\s]+$"},
+    "submitted_at": {"type": "string", "format": "date-time"},
+    "ledger_path": {"type": "string", "minLength": 1},
+    "ledger_sequence": {"type": "integer", "minimum": 1},
+    "previous_submission_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "package_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "anchor_receipt_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "anchor_verification_reason": {"type": "string", "const": "anchor_verified"},
+    "submission_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "signature_key_id": {"type": "string", "minLength": 1},
+    "signature": {"type": "string", "pattern": "^hmac-sha256:[0-9a-f]{64}$"},
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["submission_is_not_terminal_closure", "requires_operator_confirmation"],
+      "properties": {
+        "submission_is_not_terminal_closure": {"type": "boolean", "const": true},
+        "requires_operator_confirmation": {"type": "boolean", "const": true},
+        "source_package_created_at": {"type": "string"}
+      }
+    }
+  }
+}

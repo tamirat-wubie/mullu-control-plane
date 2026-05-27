@@ -24,7 +24,8 @@
           "effect_reconciliation",
           "terminal_certificate",
           "learning_decision",
-          "deployment_witness"
+          "deployment_witness",
+          "orgos_event_receipt"
         ]
       },
       "artifact_id": {

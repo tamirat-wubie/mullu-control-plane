@@ -1,11 +1,12 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "urn:mullusi:schema:mullu-clearance-capture-readiness-report:1",
-  "title": "Mullu Clearance Capture Readiness Report",
+  "title": "Mullu Govern Clearance Capture Readiness Report",
   "type": "object",
   "additionalProperties": false,
   "required": [
     "product_name",
+    "suite_family",
     "company_brand",
     "evidence_root",
     "public_paid_launch_allowed",
@@ -17,6 +18,10 @@
   ],
   "properties": {
     "product_name": {
+      "type": "string",
+      "const": "Mullu Govern"
+    },
+    "suite_family": {
       "type": "string",
       "const": "Mullu"
     },

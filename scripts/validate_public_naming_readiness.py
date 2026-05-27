@@ -27,12 +27,13 @@ PRODUCT_ROUTE_DEPLOYMENT_HANDOFF_PATH = REPO_ROOT / "docs" / "PRODUCT_ROUTE_DEPL
 TSDR_EVIDENCE_TEMPLATE_PATH = REPO_ROOT / "docs" / "TSDR_EVIDENCE_TEMPLATE.md"
 WEBSITE_DEPLOYMENT_EVIDENCE_TEMPLATE_PATH = REPO_ROOT / "docs" / "WEBSITE_DEPLOYMENT_EVIDENCE_TEMPLATE.md"
 WEBSITE_DEPLOYMENT_EVIDENCE_LOG_PATH = REPO_ROOT / "docs" / "WEBSITE_DEPLOYMENT_EVIDENCE_2026-05-07.md"
+WEBSITE_LOCAL_BROWSER_VERIFICATION_PATH = REPO_ROOT / "docs" / "WEBSITE_LOCAL_BROWSER_VERIFICATION_2026-05-25.md"
 WEBSITE_RECHECK_LOG_PATH = REPO_ROOT / "docs" / "WEBSITE_RECHECK_LOG.md"
 DOMAIN_ACQUISITION_PLAN_PATH = REPO_ROOT / "docs" / "DOMAIN_ACQUISITION_PLAN.md"
 PUBLIC_NAMING_REVIEW_PACKET_PATH = REPO_ROOT / "docs" / "PUBLIC_NAMING_REVIEW_PACKET.md"
 PUBLIC_NAMING_ARTIFACT_MANIFEST_PATH = REPO_ROOT / "docs" / "PUBLIC_NAMING_ARTIFACT_MANIFEST.md"
-PUBLIC_NAMING_DECISION_PATH = REPO_ROOT / "docs" / "PUBLIC_NAMING_DECISION_2026-05-20.md"
-PUBLIC_NAMING_DECISION_WITNESS_PATH = REPO_ROOT / "docs" / "public-naming-decision-2026-05-20.json"
+PUBLIC_NAMING_DECISION_PATH = REPO_ROOT / "docs" / "PUBLIC_NAMING_DECISION_2026-05-25.md"
+PUBLIC_NAMING_DECISION_WITNESS_PATH = REPO_ROOT / "docs" / "public-naming-decision-2026-05-25.json"
 OFFICIAL_CLEARANCE_ACCESS_LOG_PATH = REPO_ROOT / "docs" / "OFFICIAL_CLEARANCE_ACCESS_LOG_2026-05-15.md"
 SDK_API_STABILITY_REVIEW_PATH = REPO_ROOT / "docs" / "SDK_API_STABILITY_REVIEW_2026-05-15.md"
 HOMEPAGE_UPDATE_EVIDENCE_PATH = REPO_ROOT / "docs" / "HOMEPAGE_UPDATE_EVIDENCE_2026-05-15.md"
@@ -138,6 +139,7 @@ REQUIRED_EVIDENCE_DOCS = {
     "docs/WEBSITE_DEPLOYMENT_EVIDENCE_TEMPLATE.md",
     "docs/WEBSITE_DEPLOYMENT_EVIDENCE_2026-05-07.md",
     "docs/WEBSITE_DEPLOYMENT_EVIDENCE_2026-05-15.md",
+    "docs/WEBSITE_LOCAL_BROWSER_VERIFICATION_2026-05-25.md",
     "docs/WEBSITE_RECHECK_LOG.md",
     "docs/PUBLIC_NAMING_STATE_TRANSITION.md",
     "docs/PUBLIC_NAMING_HANDOFF.md",
@@ -146,6 +148,8 @@ REQUIRED_EVIDENCE_DOCS = {
     "docs/PUBLIC_NAMING_ARTIFACT_MANIFEST.md",
     "docs/PUBLIC_NAMING_DECISION_2026-05-20.md",
     "docs/public-naming-decision-2026-05-20.json",
+    "docs/PUBLIC_NAMING_DECISION_2026-05-25.md",
+    "docs/public-naming-decision-2026-05-25.json",
     "docs/CLEARANCE_PACKET_TEMPLATE.md",
     "docs/DOMAIN_OWNERSHIP_RECORD_TEMPLATE.md",
     "docs/mullu-name-clearance-draft.json",
@@ -198,9 +202,13 @@ REQUIRED_OFFICIAL_SEARCHES = {
     "USPTO Trademark Search": {
         "url": "https://tmsearch.uspto.gov",
         "queries": {
+            "Mullu Govern",
             "MULLU",
             "MULLUSI",
+            "Mullu Govern by Mullusi",
             "Mullu by Mullusi",
+            "Mullu Proof",
+            "Mullu Ledger",
             "Mullu Inspect",
             "Mullu CLI",
             "Mullu Code",
@@ -211,11 +219,11 @@ REQUIRED_OFFICIAL_SEARCHES = {
     },
     "WIPO Global Brand Database": {
         "url": "https://branddb.wipo.int",
-        "queries": {"MULLU", "MULLUSI", "Mullu by Mullusi"},
+        "queries": {"Mullu Govern", "MULLU", "MULLUSI", "Mullu Govern by Mullusi", "Mullu by Mullusi"},
     },
     "EUIPO eSearch plus and TMview": {
         "url": "https://www.euipo.europa.eu/en/search-ip",
-        "queries": {"MULLU", "MULLUSI", "Mullu by Mullusi"},
+        "queries": {"Mullu Govern", "MULLU", "MULLUSI", "Mullu Govern by Mullusi", "Mullu by Mullusi"},
     },
 }
 
@@ -256,7 +264,7 @@ def _display_path(path: Path) -> str:
 def validate_public_launch_copy(copy_path: Path = PUBLIC_LAUNCH_COPY_PATH) -> None:
     copy_text = copy_path.read_text(encoding="utf-8")
     validate_no_forbidden_terminology(_display_path(copy_path), copy_text)
-    _require("Mullu, by Mullusi" in copy_text, "public launch copy must include first-reference form")
+    _require("Mullu Govern, by Mullusi" in copy_text, "public launch copy must include first-reference form")
     _require("Do not use:" in copy_text, "public launch copy must identify blocked names")
 
     public_copy_before_blocked_section = copy_text.split("Do not use:", maxsplit=1)[0]
@@ -272,11 +280,15 @@ def validate_product_route_draft(route_path: Path = PRODUCT_ROUTE_DRAFT_PATH) ->
     _require(not leaked_names, f"blocked public names leaked into product route draft: {leaked_names}")
 
     required_literals = (
-        "<title>Mullu, by Mullusi",
-        "Mullu, by Mullusi",
+        "<title>Mullu Govern, by Mullusi",
+        "Mullu Govern, by Mullusi",
+        "Govern every symbolic action before it runs.",
         "Symbols are atomic. Meaning is relational. Traversal is governed. Judgment is earned.",
         "private beta",
         "Request access",
+        "Mullu Govern",
+        "Mullu Proof",
+        "Mullu Ledger",
         "Mullu Inspect",
         "Mullu CLI",
         "Mullu Code",
@@ -313,6 +325,9 @@ def validate_product_route_deployment_handoff(
         "closed as redundant",
         "mullusi.github.io",
         "Mullu, by Mullusi",
+        "Mullu Govern, by Mullusi",
+        "WEBSITE_LOCAL_BROWSER_VERIFICATION_2026-05-25.md",
+        "Current governed source first reference",
         "private beta",
         "HTTP 200",
         "live route verified",
@@ -612,6 +627,30 @@ def validate_website_recheck_log(log_path: Path = WEBSITE_RECHECK_LOG_PATH) -> N
     )
 
 
+def validate_website_local_browser_verification(
+    evidence_path: Path = WEBSITE_LOCAL_BROWSER_VERIFICATION_PATH,
+) -> None:
+    evidence_text = evidence_path.read_text(encoding="utf-8")
+    validate_no_forbidden_terminology(_display_path(evidence_path), evidence_text)
+
+    required_literals = (
+        "Local pre-deployment browser evidence only",
+        "local browser verification does not close live deployment",
+        "paid public launch remains blocked",
+        "`http://127.0.0.1:8765/mullu/`",
+        "`http://127.0.0.1:8765/proof/?v=mobile-table-fix-label`",
+        "`Surfaces` in the top navigation",
+        "`Suite surfaces` in the structure map",
+        "`Public products: Mullu Govern, Mullu Proof, Mullu Ledger`",
+        "`Internal/admin: Mullu Control Plane`",
+        "`mailto:hello@mullusi.com?subject=Mullu%20Govern%20private%20beta%20access`",
+        "local browser state only",
+        "not launch evidence",
+    )
+    missing_literals = sorted(literal for literal in required_literals if literal not in evidence_text)
+    _require(not missing_literals, f"website local browser verification missing literals: {missing_literals}")
+
+
 def validate_domain_acquisition_plan(plan_path: Path = DOMAIN_ACQUISITION_PLAN_PATH) -> None:
     plan_text = plan_path.read_text(encoding="utf-8")
     validate_no_forbidden_terminology(_display_path(plan_path), plan_text)
@@ -748,11 +787,14 @@ def validate_public_naming_decision(
     decision_text = decision_path.read_text(encoding="utf-8")
     validate_no_forbidden_terminology(_display_path(decision_path), decision_text)
     required_literals = (
-        "Use `Mullu` as the flagship product name.",
-        "Use `Mullu, by Mullusi` on first public reference.",
+        "Use `Mullu Govern` as the public product name.",
+        "Use `Mullu Govern, by Mullusi` on first public reference.",
+        "Keep `Mullu` as the suite/family name.",
+        "Keep `Mullu Control Plane` as the internal/admin technical surface.",
         "Keep `Mullusi` as the company, ecosystem, and governance authority.",
+        "Use `mullu-govern` as the public repository rename target",
         "| Paid public launch | Blocked |",
-        "Required files missing: 26",
+        "Required files missing: 34",
         "public_paid_launch_allowed",
         "cleared_for_public_launch",
         "Mullusi Handler",
@@ -765,17 +807,20 @@ def validate_public_naming_decision(
 
     witness = json.loads(witness_path.read_text(encoding="utf-8"))
     _validate_top_level_required(witness, PUBLIC_NAMING_DECISION_SCHEMA_PATH)
-    _require(witness.get("product_name") == "Mullu", "public naming decision product mismatch")
+    _require(witness.get("product_name") == "Mullu Govern", "public naming decision product mismatch")
+    _require(witness.get("suite_family") == "Mullu", "public naming decision suite mismatch")
     _require(witness.get("company_brand") == "Mullusi", "public naming decision company mismatch")
-    _require(witness.get("first_reference") == "Mullu, by Mullusi", "public naming decision first reference mismatch")
+    _require(witness.get("first_reference") == "Mullu Govern, by Mullusi", "public naming decision first reference mismatch")
     _require(witness.get("platform_term") == "Mullu Platform", "public naming decision platform term mismatch")
+    _require(witness.get("admin_surface") == "Mullu Control Plane", "public naming decision admin surface mismatch")
+    _require(witness.get("repository_name") == "mullu-govern", "public naming decision repository mismatch")
     _require(witness.get("decision") == "proceed_internal_private_beta", "public naming decision status mismatch")
     _require(witness.get("public_paid_launch_allowed") is False, "public naming decision must block paid launch")
     _require(REQUIRED_OPEN_GATES <= set(witness.get("open_gates", [])), "public naming decision missing open gates")
     _require("paid_public_launch" in witness.get("blocked_scopes", []), "public naming decision must block paid public launch")
     capture_readiness = witness.get("capture_readiness", {})
     _require(isinstance(capture_readiness, dict), "public naming decision capture_readiness must be an object")
-    _require(capture_readiness.get("required_files_missing") == 26, "public naming decision missing-file count mismatch")
+    _require(capture_readiness.get("required_files_missing") == 34, "public naming decision missing-file count mismatch")
     _require(capture_readiness.get("status") == "blocked", "public naming decision capture readiness must be blocked")
 
 
@@ -784,9 +829,12 @@ def validate_public_naming_decision_witness(
 ) -> None:
     decision_witness = json.loads(witness_path.read_text(encoding="utf-8"))
     _validate_top_level_required(decision_witness, PUBLIC_NAMING_DECISION_SCHEMA_PATH)
-    _require(decision_witness.get("product_name") == "Mullu", "decision witness product mismatch")
+    _require(decision_witness.get("product_name") == "Mullu Govern", "decision witness product mismatch")
+    _require(decision_witness.get("suite_family") == "Mullu", "decision witness suite mismatch")
     _require(decision_witness.get("company_brand") == "Mullusi", "decision witness company mismatch")
-    _require(decision_witness.get("first_reference") == "Mullu, by Mullusi", "decision witness first reference mismatch")
+    _require(decision_witness.get("first_reference") == "Mullu Govern, by Mullusi", "decision witness first reference mismatch")
+    _require(decision_witness.get("admin_surface") == "Mullu Control Plane", "decision witness admin surface mismatch")
+    _require(decision_witness.get("repository_name") == "mullu-govern", "decision witness repository mismatch")
     _require(decision_witness.get("decision") == "proceed_internal_private_beta", "decision witness decision mismatch")
     _require(decision_witness.get("public_paid_launch_allowed") is False, "decision witness must block paid launch")
     approved_scopes = set(decision_witness.get("approved_scopes", []))
@@ -806,15 +854,16 @@ def validate_public_naming_decision_witness(
     capture_readiness = decision_witness.get("capture_readiness", {})
     _require(isinstance(capture_readiness, dict), "decision witness capture_readiness must be an object")
     _require(capture_readiness.get("required_files_present") == 6, "decision witness present file count mismatch")
-    _require(capture_readiness.get("required_files_total") == 32, "decision witness total file count mismatch")
-    _require(capture_readiness.get("required_files_missing") == 26, "decision witness missing file count mismatch")
+    _require(capture_readiness.get("required_files_total") == 40, "decision witness total file count mismatch")
+    _require(capture_readiness.get("required_files_missing") == 34, "decision witness missing file count mismatch")
     _require(capture_readiness.get("status") == "blocked", "decision witness capture status must remain blocked")
 
 
 def validate_capture_requirements(requirements_path: Path = CAPTURE_REQUIREMENTS_PATH) -> None:
     requirements = json.loads(requirements_path.read_text(encoding="utf-8"))
     _validate_top_level_required(requirements, CAPTURE_REQUIREMENTS_SCHEMA_PATH)
-    _require(requirements.get("product_name") == "Mullu", "capture requirements product mismatch")
+    _require(requirements.get("product_name") == "Mullu Govern", "capture requirements product mismatch")
+    _require(requirements.get("suite_family") == "Mullu", "capture requirements suite mismatch")
     _require(requirements.get("company_brand") == "Mullusi", "capture requirements company mismatch")
     _require(requirements.get("public_paid_launch_allowed") is False, "capture requirements must block public launch")
     _require(
@@ -836,25 +885,33 @@ def validate_capture_requirements(requirements_path: Path = CAPTURE_REQUIREMENTS
     }
     required_files_by_gate = {
         "uspto_search": {
+            "uspto-search-mullu-govern.pdf",
             "uspto-search-mullu.pdf",
             "uspto-search-mullusi.pdf",
+            "uspto-search-mullu-govern-by-mullusi.pdf",
             "uspto-search-mullu-by-mullusi.pdf",
             "uspto-search-mullu-surfaces.pdf",
             "uspto-search-mulu.pdf",
             "decision.md",
         },
         "wipo_search": {
+            "wipo-search-mullu-govern.pdf",
             "wipo-search-mullu.pdf",
             "wipo-search-mullusi.pdf",
+            "wipo-search-mullu-govern-by-mullusi.pdf",
             "wipo-search-mullu-by-mullusi.pdf",
             "decision.md",
         },
         "euipo_tmview_search": {
+            "euipo-search-mullu-govern.pdf",
             "euipo-search-mullu.pdf",
             "euipo-search-mullusi.pdf",
+            "euipo-search-mullu-govern-by-mullusi.pdf",
             "euipo-search-mullu-by-mullusi.pdf",
+            "tmview-search-mullu-govern.pdf",
             "tmview-search-mullu.pdf",
             "tmview-search-mullusi.pdf",
+            "tmview-search-mullu-govern-by-mullusi.pdf",
             "tmview-search-mullu-by-mullusi.pdf",
             "decision.md",
         },
@@ -924,6 +981,7 @@ def validate_public_naming_readiness(witness_path: Path = WITNESS_PATH) -> None:
     validate_website_deployment_evidence_template()
     validate_website_deployment_evidence_log()
     validate_website_recheck_log()
+    validate_website_local_browser_verification()
     validate_domain_acquisition_plan()
     validate_public_naming_review_packet()
     validate_official_clearance_access_log()
@@ -936,11 +994,13 @@ def validate_public_naming_readiness(witness_path: Path = WITNESS_PATH) -> None:
     validate_public_naming_decision_witness()
     validate_public_naming_artifact_manifest()
 
-    _require(witness.get("product_name") == "Mullu", "product_name must be Mullu")
+    _require(witness.get("product_name") == "Mullu Govern", "product_name must be Mullu Govern")
+    _require(witness.get("suite_family") == "Mullu", "suite_family must be Mullu")
     _require(witness.get("company_brand") == "Mullusi", "company_brand must be Mullusi")
-    _require(witness.get("first_reference") == "Mullu, by Mullusi", "first reference mismatch")
+    _require(witness.get("first_reference") == "Mullu Govern, by Mullusi", "first reference mismatch")
     _require(witness.get("platform_term") == "Mullu Platform", "platform term mismatch")
     _require(witness.get("admin_surface") == "Mullu Control Plane", "admin surface mismatch")
+    _require(witness.get("repository_name") == "mullu-govern", "repository name mismatch")
     _require(witness.get("public_paid_launch_allowed") is False, "public launch must remain blocked")
 
     closed_gates = set(witness.get("closed_gates", []))
@@ -970,8 +1030,10 @@ def validate_public_naming_readiness(witness_path: Path = WITNESS_PATH) -> None:
     validate_clearance_domain_candidates(clearance_draft)
     validate_clearance_official_searches(clearance_draft)
     validate_clearance_gate_closure_requirements(clearance_draft)
-    _require(clearance_draft.get("candidate_name") == "Mullu", "clearance draft candidate mismatch")
+    _require(clearance_draft.get("candidate_name") == "Mullu Govern", "clearance draft candidate mismatch")
+    _require(clearance_draft.get("suite_family") == "Mullu", "clearance draft suite mismatch")
     _require(clearance_draft.get("company_brand") == "Mullusi", "clearance draft company mismatch")
+    _require(clearance_draft.get("first_reference") == "Mullu Govern, by Mullusi", "clearance draft first reference mismatch")
     _require(clearance_draft.get("public_paid_launch_allowed") is False, "clearance draft must block public launch")
     _require(clearance_draft.get("final_decision") == "pending", "clearance draft decision must remain pending")
 

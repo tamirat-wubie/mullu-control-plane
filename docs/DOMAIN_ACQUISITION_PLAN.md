@@ -1,9 +1,9 @@
 # Domain Acquisition Plan
 
-Purpose: define the domain acquisition and routing plan for `Mullu` as the flagship product.
+Purpose: define the domain acquisition and routing plan for `Mullu Govern` as the public product and `Mullu` as the suite/family.
 Governance scope: domain availability, canonical product URL, fallback hierarchy, DNS ownership evidence, and public launch routing.
 Dependencies: `docs/PRODUCT_IDENTITY.md`, `docs/PUBLIC_NAMING_READINESS.md`, `docs/PUBLIC_LAUNCH_COPY.md`.
-Invariants: no public paid launch under `Mullu` until at least one suitable product domain or subdomain is controlled.
+Invariants: no public paid launch under `Mullu Govern` until at least one suitable product domain or subdomain is controlled.
 
 ## Domain Priority
 
@@ -15,12 +15,15 @@ Invariants: no public paid launch under `Mullu` until at least one suitable prod
 | 4 | `getmullu.com` | Marketing fallback | Acquire if clean primary domains are unavailable |
 | 5 | `mullu.mullusi.com` | Controlled subdomain fallback | Use if external product domains are unavailable |
 | 6 | `mullusi.com/mullu` | Company-site fallback | Use for earliest public page before standalone domain |
+| 7 | `govern.mullusi.com` | Mullu Govern product subdomain | Use after route ownership and product-copy review |
+| 8 | `mullusi.com/govern` | Mullu Govern route fallback | Use if `/mullu` remains suite-family route |
 
 ## Recommended Routing
 
 | Surface | Preferred route | Fallback route |
 | --- | --- | --- |
-| Product homepage | `mullu.ai` | `mullusi.com/mullu` |
+| Mullu Govern homepage | `govern.mullusi.com` or `mullu.ai/govern` | `mullusi.com/govern` or `mullusi.com/mullu` |
+| Mullu suite homepage | `mullu.ai` | `mullusi.com/mullu` |
 | Web app | `app.mullu.ai` | `mullu.mullusi.com` |
 | Inspect surface | `inspect.mullu.ai` | `mullusi.com/mullu/inspect` |
 | CLI install | `cli.mullu.ai` | `docs.mullusi.com/mullu/cli` |

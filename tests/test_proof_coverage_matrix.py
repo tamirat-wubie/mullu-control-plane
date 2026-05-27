@@ -304,6 +304,9 @@ def test_representative_routes_are_not_unclassified() -> None:
     assert classified_routes["/api/v1/quotas/{tenant_id}"]["surface_id"] == "tenant_governance_lifecycle"
     assert classified_routes["/authority/operator"]["surface_id"] == "authority_operator_controls"
     assert classified_routes["/authority/ownership"]["surface_id"] == "authority_operator_controls"
+    assert classified_routes["/api/v1/orgs"]["surface_id"] == "orgos_case_governance_lifecycle"
+    assert classified_routes["/api/v1/cases/{case_id}/plan"]["surface_id"] == "orgos_case_governance_lifecycle"
+    assert classified_routes["/api/v1/orgos/replay"]["surface_id"] == "orgos_case_governance_lifecycle"
     assert classified_routes["/api/v1/temporal/schedules"]["surface_id"] == "temporal_kernel"
     assert classified_routes["/api/v1/temporal/worker/tick"]["surface_id"] == "temporal_kernel"
     assert classified_routes["/api/v1/knowledge/entities"]["surface_id"] == "governed_operational_intelligence"
@@ -480,6 +483,37 @@ def test_runtime_config_management_surface_is_witnessed() -> None:
     assert route_records["/api/v1/config/drift"]["coverage_state"] == "witnessed"
     assert route_records["/api/v1/config/drift"]["surface_id"] == "runtime_config_management"
     assert closure_actions["classify_runtime_config_management_routes"]["status"] == "closed"
+
+
+def test_orgos_case_governance_lifecycle_surface_is_witnessed() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    route_records = {
+        record["route"]: record
+        for record in matrix["route_coverage"]["routes"]
+    }
+    witness_records = {
+        record["surface_id"]: record
+        for record in matrix["witness_integrity"]["surfaces"]
+    }
+    surface = surfaces["orgos_case_governance_lifecycle"]
+    witnesses = set(surface["runtime_witnesses"])
+
+    assert surface["coverage_state"] == "witnessed"
+    assert surface["request_proof"] == "request_proof"
+    assert surface["action_proof"] == "action_proof"
+    assert surface["audit"] == "audit_chain"
+    assert "/api/v1/orgs" in surface["representative_paths"]
+    assert "/api/v1/cases/{case_id}/close" in surface["representative_paths"]
+    assert "/api/v1/orgos/replay" in surface["representative_paths"]
+    assert "gateway/orgos_kernel.py" in surface["evidence_files"]
+    assert "tests/test_gateway/test_orgos_api.py" in surface["evidence_files"]
+    assert "orgos_api_runs_launch_gateway_case_control_loop" in witnesses
+    assert "orgos_api_replays_projection_from_jsonl_event_log" in witnesses
+    assert "case_closure_requires_effect_reconciliation_match_for_committed" in witnesses
+    assert route_records["/api/v1/cases"]["surface_id"] == "orgos_case_governance_lifecycle"
+    assert route_records["/api/v1/orgos/read-model"]["coverage_state"] == "witnessed"
+    assert witness_records["orgos_case_governance_lifecycle"]["exact_test_anchor_count"] == 12
 
 
 def test_webhooks_proof_surface_is_witnessed() -> None:
@@ -2860,7 +2894,10 @@ def test_trust_ledger_surface_signs_terminal_evidence_bundles() -> None:
     assert "docs/65_trust_ledger_offline_verification.md" in trust_surface["evidence_files"]
     assert "gateway/trust_ledger.py" in trust_surface["evidence_files"]
     assert "scripts/verify_anchor_receipt.py" in trust_surface["evidence_files"]
+    assert "scripts/package_orgos_anchor_export.py" in trust_surface["evidence_files"]
+    assert "scripts/submit_trust_ledger_anchor_export.py" in trust_surface["evidence_files"]
     assert "schemas/trust_ledger_anchor_receipt.schema.json" in trust_surface["evidence_files"]
+    assert "schemas/trust_ledger_anchor_submission_receipt.schema.json" in trust_surface["evidence_files"]
     assert "schemas/trust_ledger_anchor_verification_report.schema.json" in trust_surface["evidence_files"]
     assert "schemas/trust_ledger_bundle.schema.json" in trust_surface["evidence_files"]
     assert "schemas/trust_ledger_bundle_verification_report.schema.json" in trust_surface["evidence_files"]
@@ -2870,6 +2907,8 @@ def test_trust_ledger_surface_signs_terminal_evidence_bundles() -> None:
     assert "tests/test_gateway/test_trust_ledger_anchor_receipt.py" in trust_surface["evidence_files"]
     assert "tests/test_gateway/test_trust_ledger.py" in trust_surface["evidence_files"]
     assert "tests/test_verify_anchor_receipt.py" in trust_surface["evidence_files"]
+    assert "tests/test_package_orgos_anchor_export.py" in trust_surface["evidence_files"]
+    assert "tests/test_submit_trust_ledger_anchor_export.py" in trust_surface["evidence_files"]
     expected_witnesses = {
         "terminal_command_exports_signed_evidence_bundle",
         "evidence_bundle_endpoint_rejects_non_terminal_command",
@@ -2891,10 +2930,23 @@ def test_trust_ledger_surface_signs_terminal_evidence_bundles() -> None:
         "verify_anchor_receipt_files_detects_package_bundle_hash_mismatch",
         "verify_anchor_receipt_files_rejects_schema_invalid_package",
         "verify_anchor_receipt_report_contract_allows_missing_secret_report",
+        "package_orgos_anchor_export_merges_optional_orgos_artifact",
+        "package_orgos_anchor_export_rejects_required_orgos_artifact",
+        "package_orgos_anchor_export_rejects_missing_terminal_artifact",
+        "package_orgos_anchor_export_cli_emits_verifiable_package",
+        "submit_trust_ledger_anchor_export_records_signed_submission",
+        "submit_trust_ledger_anchor_export_blocks_without_confirmation",
+        "submit_trust_ledger_anchor_export_blocks_tampered_package",
+        "submit_trust_ledger_anchor_export_posts_remote_transparency_log",
+        "submit_trust_ledger_anchor_export_blocks_remote_without_confirmation",
+        "submit_trust_ledger_anchor_export_blocks_remote_hash_mismatch",
+        "verify_submission_ledger_detects_hash_drift",
+        "submit_trust_ledger_anchor_export_cli_emits_submission_receipt",
     }
     assert expected_witnesses <= witnesses
     assert closure_actions["publish_trust_ledger_bundle_contract"]["status"] == "closed"
     assert closure_actions["publish_trust_ledger_anchor_receipt_contract"]["status"] == "closed"
+    assert closure_actions["publish_trust_ledger_anchor_submission_receipt_contract"]["status"] == "closed"
 
 
 def test_domain_operating_pack_surface_requires_certification_evidence() -> None:

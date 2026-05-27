@@ -1,13 +1,14 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "urn:mullusi:schema:mullu-name-clearance-draft:1",
-  "title": "Mullu Name Clearance Draft",
+  "title": "Mullu Govern Name Clearance Draft",
   "type": "object",
   "additionalProperties": false,
   "required": [
     "schema_version",
     "packet_id",
     "candidate_name",
+    "suite_family",
     "company_brand",
     "first_reference",
     "prepared_date",
@@ -34,6 +35,10 @@
     },
     "candidate_name": {
       "type": "string",
+      "const": "Mullu Govern"
+    },
+    "suite_family": {
+      "type": "string",
       "const": "Mullu"
     },
     "company_brand": {
@@ -42,7 +47,7 @@
     },
     "first_reference": {
       "type": "string",
-      "const": "Mullu, by Mullusi"
+      "const": "Mullu Govern, by Mullusi"
     },
     "prepared_date": {
       "type": "string",

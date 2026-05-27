@@ -142,7 +142,7 @@ def test_product_boundary_names_product_and_launch_constraints() -> None:
     )
 
     assert errors == []
-    assert "Mullu is the flagship product" in content
+    assert "Mullu Govern is the public product" in content
     assert "Mullu Control Plane" in content
     assert "Launch Constraint" in content
 

@@ -1,17 +1,18 @@
 # Public Naming Review Packet
 
-Purpose: provide the reviewer-facing packet for deciding whether `Mullu` can move from internal alignment to public launch.
+Purpose: provide the reviewer-facing packet for deciding whether `Mullu Govern` can move from internal alignment to public launch.
 Governance scope: trademark evidence, domain evidence, website evidence, legal decision, launch-state mutation, and reviewer signoff.
 Dependencies: `docs/public-naming-readiness.json`, `docs/mullu-name-clearance-draft.json`, `docs/TSDR_EVIDENCE_TEMPLATE.md`, `docs/WEBSITE_DEPLOYMENT_EVIDENCE_TEMPLATE.md`, `docs/DOMAIN_OWNERSHIP_RECORD_TEMPLATE.md`.
-Invariants: `Mullu` remains internally aligned only; paid public launch remains blocked until all open gates close with evidence.
+Invariants: `Mullu Govern` remains internally aligned only; `Mullu` remains the suite/family; paid public launch remains blocked until all open gates close with evidence.
 
 ## Current Decision
 
 | Field | Value |
 | --- | --- |
-| Product name | Mullu |
+| Product name | Mullu Govern |
+| Suite / family | Mullu |
 | Company / governance authority | Mullusi |
-| First public reference | Mullu, by Mullusi |
+| First public reference | Mullu Govern, by Mullusi |
 | Current state | internal_alignment_only |
 | Paid public launch allowed | false |
 | Final clearance decision | pending |
@@ -21,7 +22,7 @@ Invariants: `Mullu` remains internally aligned only; paid public launch remains 
 | Input | Required reviewer action |
 | --- | --- |
 | `docs/mullu-name-clearance-draft.json` | Fill official search outcomes, final legal decision, and launch effect |
-| `docs/APP_TITLE_UPDATE_EVIDENCE_2026-05-15.md` | Confirm user-facing app title surfaces already use `Mullu` |
+| `docs/APP_TITLE_UPDATE_EVIDENCE_2026-05-15.md` | Confirm historical app title evidence and identify product-facing updates needed for `Mullu Govern` |
 | `docs/CLEARANCE_EVIDENCE_CAPTURE_PLAN_2026-05-15.md` | Populate the required evidence directory layout for the six remaining gates |
 | `docs/HOMEPAGE_UPDATE_EVIDENCE_2026-05-15.md` | Confirm the private-beta product landing page already satisfies the page-update gate |
 | `docs/OFFICIAL_CLEARANCE_ACCESS_LOG_2026-05-15.md` | Review blocked official API/RDAP access attempts and required replacement evidence |
@@ -48,8 +49,8 @@ Invariants: `Mullu` remains internally aligned only; paid public launch remains 
 
 | Gate | Evidence recorded |
 | --- | --- |
-| `website_deployment_verification` | `https://mullusi.com/mullu` returned HTTP 200 on 2026-05-15 and contained `Mullu, by Mullusi`, `Mullu CLI`, and `Mullu Control Plane` |
-| `app_title_update` | `docs/APP_TITLE_UPDATE_EVIDENCE_2026-05-15.md` records user-facing app titles using `Mullu` |
+| `website_deployment_verification` | `https://mullusi.com/mullu` returned HTTP 200 on 2026-05-15 and contained `Mullu, by Mullusi`, `Mullu CLI`, and `Mullu Control Plane`; future public copy should promote `Mullu Govern` |
+| `app_title_update` | `docs/APP_TITLE_UPDATE_EVIDENCE_2026-05-15.md` records historical user-facing app titles using `Mullu`; product-facing titles should move to `Mullu Govern` in the next copy update |
 | `homepage_update` | `docs/HOMEPAGE_UPDATE_EVIDENCE_2026-05-15.md` records the live private-beta product landing page |
 | `sdk_api_stability_review` | `docs/SDK_API_STABILITY_REVIEW_2026-05-15.md` records OpenAPI/SDK contract stability for `Mullu Platform` |
 

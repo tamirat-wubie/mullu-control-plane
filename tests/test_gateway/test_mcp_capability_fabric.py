@@ -47,7 +47,7 @@ def _clock() -> str:
 
 
 class StubPlatform:
-    """Minimal platform stub; MCP router tests should not call fallback LLM."""
+    """Minimal platform stub; MCP router tests should not call fallback model."""
 
     def connect(self, *, identity_id: str, tenant_id: str):
         return StubSession()

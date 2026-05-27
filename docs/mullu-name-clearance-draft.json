@@ -1,9 +1,10 @@
 {
   "schema_version": "1",
   "packet_id": "mullu-name-clearance-draft-2026-05-06",
-  "candidate_name": "Mullu",
+  "candidate_name": "Mullu Govern",
+  "suite_family": "Mullu",
   "company_brand": "Mullusi",
-  "first_reference": "Mullu, by Mullusi",
+  "first_reference": "Mullu Govern, by Mullusi",
   "prepared_date": "2026-05-06",
   "timezone": "America/New_York",
   "review_status": "draft",
@@ -71,9 +72,13 @@
       "url": "https://tmsearch.uspto.gov",
       "status": "open",
       "required_queries": [
+        "Mullu Govern",
         "MULLU",
         "MULLUSI",
+        "Mullu Govern by Mullusi",
         "Mullu by Mullusi",
+        "Mullu Proof",
+        "Mullu Ledger",
         "Mullu Inspect",
         "Mullu CLI",
         "Mullu Code",
@@ -99,8 +104,10 @@
       "url": "https://branddb.wipo.int",
       "status": "open",
       "required_queries": [
+        "Mullu Govern",
         "MULLU",
         "MULLUSI",
+        "Mullu Govern by Mullusi",
         "Mullu by Mullusi"
       ]
     },
@@ -109,8 +116,10 @@
       "url": "https://www.euipo.europa.eu/en/search-ip",
       "status": "open",
       "required_queries": [
+        "Mullu Govern",
         "MULLU",
         "MULLUSI",
+        "Mullu Govern by Mullusi",
         "Mullu by Mullusi"
       ]
     }
@@ -158,7 +167,7 @@
       "status": "open",
       "required_evidence": [
         "official USPTO Trademark Search result export or screenshot set",
-        "queries for MULLU, MULLUSI, Mullu by Mullusi, Mullu surfaces, and MULU",
+        "queries for Mullu Govern, MULLU, MULLUSI, Mullu Govern by Mullusi, Mullu by Mullusi, Mullu surfaces, and MULU",
         "Nice Class 9, 35, 38, 41, 42, and 45 review notes"
       ],
       "closure_authority": "product owner plus qualified trademark reviewer",
@@ -168,7 +177,7 @@
       "status": "open",
       "required_evidence": [
         "official WIPO Global Brand Database result export or screenshot set",
-        "queries for MULLU, MULLUSI, and Mullu by Mullusi",
+        "queries for Mullu Govern, MULLU, MULLUSI, Mullu Govern by Mullusi, and Mullu by Mullusi",
         "Madrid and participating office review notes"
       ],
       "closure_authority": "product owner plus qualified trademark reviewer",
@@ -179,7 +188,7 @@
       "required_evidence": [
         "official EUIPO eSearch plus result export or screenshot set",
         "official TMview result export or screenshot set",
-        "queries for MULLU, MULLUSI, and Mullu by Mullusi"
+        "queries for Mullu Govern, MULLU, MULLUSI, Mullu Govern by Mullusi, and Mullu by Mullusi"
       ],
       "closure_authority": "product owner plus qualified trademark reviewer",
       "closure_blocker": "no official EUIPO/TMview evidence attached"

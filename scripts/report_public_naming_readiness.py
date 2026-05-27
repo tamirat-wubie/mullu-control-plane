@@ -1,4 +1,4 @@
-"""Report the Mullu public naming readiness state.
+"""Report the Mullu Govern public naming readiness state.
 
 Purpose: print a concise operator-readable summary of the public naming gate.
 Governance scope: product naming, launch allowance, open clearance gates,
@@ -50,11 +50,14 @@ def main() -> int:
     readiness = _read_json(READINESS_PATH)
     clearance = _read_json(CLEARANCE_PATH)
 
-    print("Mullu Public Naming Readiness")
-    print("=============================")
+    print("Mullu Govern Public Naming Readiness")
+    print("====================================")
     print(f"Product: {readiness['product_name']}")
+    print(f"Suite/family: {readiness['suite_family']}")
     print(f"Company: {readiness['company_brand']}")
     print(f"First reference: {readiness['first_reference']}")
+    print(f"Technical surface: {readiness['admin_surface']}")
+    print(f"Repository target: {readiness['repository_name']}")
     print(f"Status: {readiness['status']}")
     print(f"Paid public launch allowed: {readiness['public_paid_launch_allowed']}")
     print(f"Final clearance decision: {clearance['final_decision']}")

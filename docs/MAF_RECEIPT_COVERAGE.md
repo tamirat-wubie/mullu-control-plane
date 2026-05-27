@@ -117,7 +117,7 @@ Four router modules emit receipts in their handlers and return them in
 the response body:
 
 - `routers/data.py` — data-governance actions
-- `routers/llm.py` — LLM completion actions
+- `routers/llm.py` — model completion actions
 - `routers/tenant.py` — tenant lifecycle actions
 - `routers/workflow.py` — workflow execution actions
 

@@ -795,6 +795,13 @@
       "surfaces": [
         "trust_ledger"
       ]
+    },
+    {
+      "action_id": "publish_trust_ledger_anchor_submission_receipt_contract",
+      "status": "closed",
+      "surfaces": [
+        "trust_ledger"
+      ]
     }
   ],
   "coverage_levels": [
@@ -811,7 +818,7 @@
   ],
   "coverage_summary": {
     "by_action_proof": {
-      "action_proof": 99,
+      "action_proof": 100,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 16,
@@ -819,7 +826,7 @@
     },
     "by_audit": {
       "action_proof": 0,
-      "audit_chain": 113,
+      "audit_chain": 114,
       "gap": 0,
       "read_model": 4,
       "request_proof": 0
@@ -827,21 +834,21 @@
     "by_coverage_state": {
       "proven": 1,
       "unproven": 0,
-      "witnessed": 116
+      "witnessed": 117
     },
     "by_request_proof": {
       "action_proof": 1,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 18,
-      "request_proof": 98
+      "request_proof": 99
     },
-    "surface_count": 117
+    "surface_count": 118
   },
   "evidence_quality": {
     "by_strength": {
       "classified_with_quality_gaps": 0,
-      "strong": 117,
+      "strong": 118,
       "unproven": 0
     },
     "quality_gap_count": 0,
@@ -852,9 +859,9 @@
     "by_coverage_state": {
       "proven": 12,
       "unproven": 0,
-      "witnessed": 330
+      "witnessed": 339
     },
-    "route_count": 342,
+    "route_count": 351,
     "routes": [
       {
         "coverage_state": "witnessed",
@@ -1000,6 +1007,31 @@
         "coverage_state": "witnessed",
         "route": "/api/v1/capabilities",
         "surface_id": "operational_health_read_models"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/cases",
+        "surface_id": "orgos_case_governance_lifecycle"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/cases/{case_id}",
+        "surface_id": "orgos_case_governance_lifecycle"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/cases/{case_id}/close",
+        "surface_id": "orgos_case_governance_lifecycle"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/cases/{case_id}/events",
+        "surface_id": "orgos_case_governance_lifecycle"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/cases/{case_id}/plan",
+        "surface_id": "orgos_case_governance_lifecycle"
       },
       {
         "coverage_state": "witnessed",
@@ -1315,6 +1347,11 @@
         "coverage_state": "witnessed",
         "route": "/api/v1/dedup/summary",
         "surface_id": "operational_health_read_models"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/departments",
+        "surface_id": "orgos_case_governance_lifecycle"
       },
       {
         "coverage_state": "witnessed",
@@ -1740,6 +1777,21 @@
         "coverage_state": "witnessed",
         "route": "/api/v1/orchestration/plans/{plan_id}",
         "surface_id": "agent_orchestration_lifecycle"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/orgos/read-model",
+        "surface_id": "orgos_case_governance_lifecycle"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/orgos/replay",
+        "surface_id": "orgos_case_governance_lifecycle"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/orgs",
+        "surface_id": "orgos_case_governance_lifecycle"
       },
       {
         "coverage_state": "witnessed",
@@ -3050,7 +3102,7 @@
         "mcoi/tests/test_sla_router.py",
         "tests/test_gateway/test_webhooks.py"
       ],
-      "notes": "Operational platform read-model routes aggregate bounded bootstrap, LLM history, dependency, feature-flag, metric, rate-limit, SLA, and gateway status state without mutation authority.",
+      "notes": "Operational platform read-model routes aggregate bounded bootstrap, model history, dependency, feature-flag, metric, rate-limit, SLA, and gateway status state without mutation authority.",
       "representative_paths": [
         "/api/v1/bootstrap",
         "/api/v1/circuit-breaker",
@@ -3308,7 +3360,7 @@
         "mcoi/tests/test_server_phase209.py",
         "mcoi/tests/test_prompt_template_lifecycle.py"
       ],
-      "notes": "Prompt template routes list bounded template metadata, render declared variables, and sanitize optional execution failures behind the LLM circuit breaker.",
+      "notes": "Prompt template routes list bounded template metadata, render declared variables, and sanitize optional execution failures behind the model circuit breaker.",
       "representative_paths": [
         "/api/v1/prompts",
         "/api/v1/prompts/render"
@@ -4526,7 +4578,7 @@
         "mcoi/tests/test_tool_use.py",
         "mcoi/tests/test_tool_registry_read_models.py"
       ],
-      "notes": "Tool registry read-model routes expose registered tool metadata, bounded invocation history, and LLM-compatible schemas while invocation remains governed by the tool_invocation action-proof surface.",
+      "notes": "Tool registry read-model routes expose registered tool metadata, bounded invocation history, and model-compatible schemas while invocation remains governed by the tool_invocation action-proof surface.",
       "representative_paths": [
         "/api/v1/tools",
         "/api/v1/tools/history",
@@ -4742,7 +4794,7 @@
         "mcoi/tests/test_server_phase215.py",
         "mcoi/tests/test_agent_chain_execution_lifecycle.py"
       ],
-      "notes": "Agent chain routes execute ordered multi-step LLM chains, propagate prior outputs through templates, publish bounded completion events, sanitize failure details, and expose bounded execution history.",
+      "notes": "Agent chain routes execute ordered multi-step model chains, propagate prior outputs through templates, publish bounded completion events, sanitize failure details, and expose bounded execution history.",
       "representative_paths": [
         "/api/v1/chain/execute",
         "/api/v1/chain/history"
@@ -5195,6 +5247,45 @@
         "obligation_satisfaction_escalation_witness"
       ],
       "surface_id": "authority_operator_controls"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "gateway/server.py",
+        "gateway/orgos_kernel.py",
+        "tests/test_gateway/test_orgos_api.py",
+        "tests/test_gateway/test_orgos_kernel.py"
+      ],
+      "notes": "OrgOS lifecycle routes register organization authority, departments, governed cases, evidence events, plan gates, closure decisions, and replayed read models without worker dispatch authority.",
+      "representative_paths": [
+        "/api/v1/orgs",
+        "/api/v1/departments",
+        "/api/v1/cases",
+        "/api/v1/cases/{case_id}",
+        "/api/v1/cases/{case_id}/events",
+        "/api/v1/cases/{case_id}/plan",
+        "/api/v1/cases/{case_id}/close",
+        "/api/v1/orgos/read-model",
+        "/api/v1/orgos/replay"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "orgos_api_runs_launch_gateway_case_control_loop",
+        "orgos_api_denies_unbound_authority_gate",
+        "orgos_api_org_registration_rolls_back_invalid_authority_bundle",
+        "orgos_api_replays_projection_from_jsonl_event_log",
+        "orgos_kernel_bootstraps_five_departments_and_launch_gateway_case",
+        "orgos_kernel_rejects_ownerless_authority_and_tenant_mismatch",
+        "plan_step_gate_denies_missing_authority_capability_evidence_and_world_refs",
+        "plan_step_gate_denies_cross_tenant_or_unbound_authority",
+        "plan_step_gate_allows_certified_authorized_gateway_step",
+        "case_closure_requires_effect_reconciliation_match_for_committed",
+        "learning_binding_requires_closed_case_and_admission_decision",
+        "jsonl_case_event_log_preserves_hash_chain"
+      ],
+      "surface_id": "orgos_case_governance_lifecycle"
     },
     {
       "action_proof": "read_model",
@@ -6377,7 +6468,10 @@
         "gateway/trust_ledger.py",
         "scripts/verify_evidence_bundle.py",
         "scripts/verify_anchor_receipt.py",
+        "scripts/package_orgos_anchor_export.py",
+        "scripts/submit_trust_ledger_anchor_export.py",
         "schemas/trust_ledger_anchor_receipt.schema.json",
+        "schemas/trust_ledger_anchor_submission_receipt.schema.json",
         "schemas/trust_ledger_anchor_verification_report.schema.json",
         "schemas/trust_ledger_bundle.schema.json",
         "schemas/trust_ledger_bundle_verification_report.schema.json",
@@ -6386,9 +6480,11 @@
         "tests/test_gateway/test_evidence_bundle_endpoint.py",
         "tests/test_gateway/test_trust_ledger_anchor_receipt.py",
         "tests/test_gateway/test_trust_ledger.py",
-        "tests/test_verify_anchor_receipt.py"
+        "tests/test_verify_anchor_receipt.py",
+        "tests/test_package_orgos_anchor_export.py",
+        "tests/test_submit_trust_ledger_anchor_export.py"
       ],
-      "notes": "Trust ledger signs terminal-closure evidence bundles, exposes operator bundle export, verifies exported bundle and anchor receipt files offline, emits external anchor receipts, and packages verifier inputs with content hashes for portable audit review.",
+      "notes": "Trust ledger signs terminal-closure evidence bundles, exposes operator bundle export, verifies exported bundle and anchor receipt files offline, emits external anchor receipts, packages verifier inputs with content hashes for portable audit review, can merge verified optional OrgOS event receipts into terminal anchor exports without replacing closure, and records operator-confirmed external anchor submissions in a signed hash-chained ledger after optional HTTPS transparency-log submission echoes the payload hash.",
       "representative_paths": [
         "TrustLedger.issue",
         "TrustLedger.verify",
@@ -6398,6 +6494,8 @@
         "GET /evidence/bundles/{command_id}",
         "scripts/verify_evidence_bundle.py",
         "scripts/verify_anchor_receipt.py",
+        "scripts/package_orgos_anchor_export.py",
+        "scripts/submit_trust_ledger_anchor_export.py",
         "TrustLedger.package_anchor_export",
         "TrustLedgerBundle",
         "ExternalProofAnchorReceipt",
@@ -6435,7 +6533,19 @@
         "verify_anchor_receipt_files_rejects_schema_invalid_package",
         "verify_anchor_receipt_files_rejects_package_hash_mismatch",
         "verify_anchor_receipt_cli_reports_valid_export",
-        "verify_anchor_receipt_report_contract_allows_missing_secret_report"
+        "verify_anchor_receipt_report_contract_allows_missing_secret_report",
+        "package_orgos_anchor_export_merges_optional_orgos_artifact",
+        "package_orgos_anchor_export_rejects_required_orgos_artifact",
+        "package_orgos_anchor_export_rejects_missing_terminal_artifact",
+        "package_orgos_anchor_export_cli_emits_verifiable_package",
+        "submit_trust_ledger_anchor_export_records_signed_submission",
+        "submit_trust_ledger_anchor_export_blocks_without_confirmation",
+        "submit_trust_ledger_anchor_export_blocks_tampered_package",
+        "submit_trust_ledger_anchor_export_posts_remote_transparency_log",
+        "submit_trust_ledger_anchor_export_blocks_remote_without_confirmation",
+        "submit_trust_ledger_anchor_export_blocks_remote_hash_mismatch",
+        "verify_submission_ledger_detects_hash_drift",
+        "submit_trust_ledger_anchor_export_cli_emits_submission_receipt"
       ],
       "surface_id": "trust_ledger"
     },
@@ -7945,8 +8055,8 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 831,
-    "runtime_witness_count": 1058,
+    "exact_test_anchor_count": 855,
+    "runtime_witness_count": 1082,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -11014,6 +11124,87 @@
         "anchored_witnesses": [
           {
             "anchors": [
+              "tests/test_gateway/test_orgos_api.py::test_orgos_api_runs_launch_gateway_case_control_loop"
+            ],
+            "witness": "orgos_api_runs_launch_gateway_case_control_loop"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_orgos_api.py::test_orgos_api_denies_unbound_authority_gate"
+            ],
+            "witness": "orgos_api_denies_unbound_authority_gate"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_orgos_api.py::test_orgos_api_org_registration_rolls_back_invalid_authority_bundle"
+            ],
+            "witness": "orgos_api_org_registration_rolls_back_invalid_authority_bundle"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_orgos_api.py::test_orgos_api_replays_projection_from_jsonl_event_log"
+            ],
+            "witness": "orgos_api_replays_projection_from_jsonl_event_log"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_orgos_kernel.py::test_orgos_kernel_bootstraps_five_departments_and_launch_gateway_case"
+            ],
+            "witness": "orgos_kernel_bootstraps_five_departments_and_launch_gateway_case"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_orgos_kernel.py::test_orgos_kernel_rejects_ownerless_authority_and_tenant_mismatch"
+            ],
+            "witness": "orgos_kernel_rejects_ownerless_authority_and_tenant_mismatch"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_orgos_kernel.py::test_plan_step_gate_denies_missing_authority_capability_evidence_and_world_refs"
+            ],
+            "witness": "plan_step_gate_denies_missing_authority_capability_evidence_and_world_refs"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_orgos_kernel.py::test_plan_step_gate_denies_cross_tenant_or_unbound_authority"
+            ],
+            "witness": "plan_step_gate_denies_cross_tenant_or_unbound_authority"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_orgos_kernel.py::test_plan_step_gate_allows_certified_authorized_gateway_step"
+            ],
+            "witness": "plan_step_gate_allows_certified_authorized_gateway_step"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_orgos_kernel.py::test_case_closure_requires_effect_reconciliation_match_for_committed"
+            ],
+            "witness": "case_closure_requires_effect_reconciliation_match_for_committed"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_orgos_kernel.py::test_learning_binding_requires_closed_case_and_admission_decision"
+            ],
+            "witness": "learning_binding_requires_closed_case_and_admission_decision"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_orgos_kernel.py::test_jsonl_case_event_log_preserves_hash_chain"
+            ],
+            "witness": "jsonl_case_event_log_preserves_hash_chain"
+          }
+        ],
+        "exact_test_anchor_count": 12,
+        "runtime_witness_count": 12,
+        "surface_id": "orgos_case_governance_lifecycle",
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
+      },
+      {
+        "anchored_witnesses": [
+          {
+            "anchors": [
               "tests/test_gateway/test_webhooks.py::test_gateway_witness"
             ],
             "witness": "gateway_witness"
@@ -12451,10 +12642,82 @@
               "tests/test_verify_anchor_receipt.py::test_verify_anchor_receipt_report_contract_allows_missing_secret_report"
             ],
             "witness": "verify_anchor_receipt_report_contract_allows_missing_secret_report"
+          },
+          {
+            "anchors": [
+              "tests/test_package_orgos_anchor_export.py::test_package_orgos_anchor_export_merges_optional_orgos_artifact"
+            ],
+            "witness": "package_orgos_anchor_export_merges_optional_orgos_artifact"
+          },
+          {
+            "anchors": [
+              "tests/test_package_orgos_anchor_export.py::test_package_orgos_anchor_export_rejects_required_orgos_artifact"
+            ],
+            "witness": "package_orgos_anchor_export_rejects_required_orgos_artifact"
+          },
+          {
+            "anchors": [
+              "tests/test_package_orgos_anchor_export.py::test_package_orgos_anchor_export_rejects_missing_terminal_artifact"
+            ],
+            "witness": "package_orgos_anchor_export_rejects_missing_terminal_artifact"
+          },
+          {
+            "anchors": [
+              "tests/test_package_orgos_anchor_export.py::test_package_orgos_anchor_export_cli_emits_verifiable_package"
+            ],
+            "witness": "package_orgos_anchor_export_cli_emits_verifiable_package"
+          },
+          {
+            "anchors": [
+              "tests/test_submit_trust_ledger_anchor_export.py::test_submit_trust_ledger_anchor_export_records_signed_submission"
+            ],
+            "witness": "submit_trust_ledger_anchor_export_records_signed_submission"
+          },
+          {
+            "anchors": [
+              "tests/test_submit_trust_ledger_anchor_export.py::test_submit_trust_ledger_anchor_export_blocks_without_confirmation"
+            ],
+            "witness": "submit_trust_ledger_anchor_export_blocks_without_confirmation"
+          },
+          {
+            "anchors": [
+              "tests/test_submit_trust_ledger_anchor_export.py::test_submit_trust_ledger_anchor_export_blocks_tampered_package"
+            ],
+            "witness": "submit_trust_ledger_anchor_export_blocks_tampered_package"
+          },
+          {
+            "anchors": [
+              "tests/test_submit_trust_ledger_anchor_export.py::test_submit_trust_ledger_anchor_export_posts_remote_transparency_log"
+            ],
+            "witness": "submit_trust_ledger_anchor_export_posts_remote_transparency_log"
+          },
+          {
+            "anchors": [
+              "tests/test_submit_trust_ledger_anchor_export.py::test_submit_trust_ledger_anchor_export_blocks_remote_without_confirmation"
+            ],
+            "witness": "submit_trust_ledger_anchor_export_blocks_remote_without_confirmation"
+          },
+          {
+            "anchors": [
+              "tests/test_submit_trust_ledger_anchor_export.py::test_submit_trust_ledger_anchor_export_blocks_remote_hash_mismatch"
+            ],
+            "witness": "submit_trust_ledger_anchor_export_blocks_remote_hash_mismatch"
+          },
+          {
+            "anchors": [
+              "tests/test_submit_trust_ledger_anchor_export.py::test_verify_submission_ledger_detects_hash_drift"
+            ],
+            "witness": "verify_submission_ledger_detects_hash_drift"
+          },
+          {
+            "anchors": [
+              "tests/test_submit_trust_ledger_anchor_export.py::test_submit_trust_ledger_anchor_export_cli_emits_submission_receipt"
+            ],
+            "witness": "submit_trust_ledger_anchor_export_cli_emits_submission_receipt"
           }
         ],
-        "exact_test_anchor_count": 31,
-        "runtime_witness_count": 31,
+        "exact_test_anchor_count": 43,
+        "runtime_witness_count": 43,
         "surface_id": "trust_ledger",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []

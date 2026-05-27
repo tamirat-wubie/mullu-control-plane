@@ -1,4 +1,4 @@
-"""Tests for the Mullu public naming readiness witness.
+"""Tests for the Mullu Govern public naming readiness witness.
 
 Purpose: lock the product naming launch gate into the Python test suite.
 Governance scope: machine-readable naming witness, blocked public names,
@@ -48,6 +48,7 @@ from scripts.validate_public_naming_readiness import (  # noqa: E402
     READINESS_SCHEMA_PATH,
     SDK_API_STABILITY_REVIEW_PATH,
     WEBSITE_DEPLOYMENT_EVIDENCE_LOG_PATH,
+    WEBSITE_LOCAL_BROWSER_VERIFICATION_PATH,
     WEBSITE_RECHECK_LOG_PATH,
     WITNESS_PATH,
     validate_no_forbidden_terminology,
@@ -73,6 +74,7 @@ from scripts.validate_public_naming_readiness import (  # noqa: E402
     validate_tsdr_evidence_template,
     validate_website_deployment_evidence_log,
     validate_website_deployment_evidence_template,
+    validate_website_local_browser_verification,
     validate_website_recheck_log,
 )
 from scripts.report_public_naming_readiness import main as report_public_naming_readiness  # noqa: E402
@@ -103,7 +105,8 @@ def _write_witness(tmp_path: Path, witness: dict[str, object]) -> Path:
 def test_public_naming_readiness_witness_passes() -> None:
     witness = _load_witness()
 
-    assert witness["product_name"] == "Mullu"
+    assert witness["product_name"] == "Mullu Govern"
+    assert witness["suite_family"] == "Mullu"
     assert witness["company_brand"] == "Mullusi"
     assert witness["public_paid_launch_allowed"] is False
     validate_public_naming_readiness()
@@ -155,7 +158,8 @@ def test_public_naming_readiness_rejects_missing_evidence_doc(tmp_path: Path) ->
 def test_clearance_draft_blocks_paid_public_launch() -> None:
     clearance_draft = json.loads(CLEARANCE_DRAFT_PATH.read_text(encoding="utf-8"))
 
-    assert clearance_draft["candidate_name"] == "Mullu"
+    assert clearance_draft["candidate_name"] == "Mullu Govern"
+    assert clearance_draft["suite_family"] == "Mullu"
     assert clearance_draft["company_brand"] == "Mullusi"
     assert clearance_draft["final_decision"] == "pending"
     assert clearance_draft["public_paid_launch_allowed"] is False
@@ -174,9 +178,12 @@ def test_naming_witnesses_include_schema_required_fields() -> None:
     assert set(readiness_schema["required"]) <= set(witness)
     assert set(clearance_schema["required"]) <= set(clearance_draft)
     assert set(capture_requirements_schema["required"]) <= set(capture_requirements)
-    assert readiness_schema["properties"]["product_name"]["const"] == "Mullu"
-    assert clearance_schema["properties"]["candidate_name"]["const"] == "Mullu"
-    assert capture_requirements_schema["properties"]["product_name"]["const"] == "Mullu"
+    assert readiness_schema["properties"]["product_name"]["const"] == "Mullu Govern"
+    assert readiness_schema["properties"]["suite_family"]["const"] == "Mullu"
+    assert clearance_schema["properties"]["candidate_name"]["const"] == "Mullu Govern"
+    assert clearance_schema["properties"]["suite_family"]["const"] == "Mullu"
+    assert capture_requirements_schema["properties"]["product_name"]["const"] == "Mullu Govern"
+    assert capture_requirements_schema["properties"]["suite_family"]["const"] == "Mullu"
 
 
 def test_capture_requirements_preserve_gate_intake_contract() -> None:
@@ -188,7 +195,7 @@ def test_capture_requirements_reject_missing_gate_file(tmp_path: Path) -> None:
     requirements = json.loads(CAPTURE_REQUIREMENTS_PATH.read_text(encoding="utf-8"))
     for gate in requirements["gates"]:
         if gate["gate"] == "uspto_search":
-            gate["required_files"].remove("uspto-search-mullu.pdf")
+            gate["required_files"].remove("uspto-search-mullu-govern.pdf")
             break
     requirements_path.write_text(json.dumps(requirements, indent=2), encoding="utf-8")
 
@@ -201,7 +208,7 @@ def test_public_naming_readiness_rejects_wrong_product_name(tmp_path: Path) -> N
     witness["product_name"] = "Mullu Platform"
     witness_path = _write_witness(tmp_path, witness)
 
-    with pytest.raises(AssertionError, match="product_name must be Mullu|schema validation failed"):
+    with pytest.raises(AssertionError, match="product_name must be Mullu Govern|schema validation failed"):
         validate_public_naming_readiness(witness_path)
 
 
@@ -240,7 +247,7 @@ def test_public_naming_readiness_report_outputs_blocked_status(capsys: pytest.Ca
     output = capsys.readouterr().out
 
     assert exit_code == 0
-    assert "Mullu Public Naming Readiness" in output
+    assert "Mullu Govern Public Naming Readiness" in output
     assert "Paid public launch allowed: False" in output
     assert "Final clearance decision: pending" in output
     assert "Closed gate count:" in output
@@ -253,9 +260,11 @@ def test_clearance_capture_readiness_report_outputs_missing_files(capsys: pytest
     output = capsys.readouterr().out
 
     assert exit_code == 0
-    assert "Mullu Clearance Capture Readiness" in output
+    assert "Mullu Govern Clearance Capture Readiness" in output
+    assert "Suite/family: Mullu" in output
     assert "Paid public launch allowed: False" in output
     assert "uspto_search:" in output
+    assert "uspto-search-mullu-govern.pdf" in output
     assert "uspto-search-mullu.pdf" in output
     assert "Required files missing:" in output
     assert "STATUS: blocked" in output
@@ -268,7 +277,7 @@ def test_clearance_capture_readiness_strict_blocks_missing_files(
     output = capsys.readouterr().out
 
     assert exit_code == 1
-    assert "Mullu Clearance Capture Readiness" in output
+    assert "Mullu Govern Clearance Capture Readiness" in output
     assert "STATUS: blocked" in output
 
 
@@ -278,7 +287,8 @@ def test_clearance_capture_readiness_report_outputs_json(capsys: pytest.CaptureF
 
     assert exit_code == 0
     _validate_capture_readiness_report(payload)
-    assert payload["product_name"] == "Mullu"
+    assert payload["product_name"] == "Mullu Govern"
+    assert payload["suite_family"] == "Mullu"
     assert payload["company_brand"] == "Mullusi"
     assert payload["public_paid_launch_allowed"] is False
     assert payload["required_files_missing"] > 0
@@ -293,7 +303,8 @@ def test_clearance_capture_readiness_writes_receipt(tmp_path: Path) -> None:
     assert exit_code == 0
     assert receipt_path.exists()
     _validate_capture_readiness_report(payload)
-    assert payload["product_name"] == "Mullu"
+    assert payload["product_name"] == "Mullu Govern"
+    assert payload["suite_family"] == "Mullu"
     assert payload["public_paid_launch_allowed"] is False
     assert payload["status"] == "blocked"
 
@@ -338,7 +349,7 @@ def test_public_naming_transition_plan_outputs_remaining_actions(capsys: pytest.
     output = capsys.readouterr().out
 
     assert exit_code == 0
-    assert "Mullu Public Naming Transition Plan" in output
+    assert "Mullu Govern Public Naming Transition Plan" in output
     assert "Closed gate count:" in output
     assert "Evidence artifact count:" in output
     assert "uspto_search" in output
@@ -390,6 +401,18 @@ def test_product_route_deployment_handoff_rejects_missing_target(tmp_path: Path)
         validate_product_route_deployment_handoff(handoff_path)
 
 
+def test_product_route_deployment_handoff_rejects_missing_current_source_boundary(tmp_path: Path) -> None:
+    handoff_path = tmp_path / "PRODUCT_ROUTE_DEPLOYMENT_HANDOFF.md"
+    handoff_text = PRODUCT_ROUTE_DEPLOYMENT_HANDOFF_PATH.read_text(encoding="utf-8").replace(
+        "Mullu Govern, by Mullusi",
+        "Mullu, by Mullusi",
+    )
+    handoff_path.write_text(handoff_text, encoding="utf-8")
+
+    with pytest.raises(AssertionError, match="deployment handoff missing literals"):
+        validate_product_route_deployment_handoff(handoff_path)
+
+
 def test_public_launch_copy_rejects_blocked_name_before_boundary(tmp_path: Path) -> None:
     launch_copy = tmp_path / "PUBLIC_LAUNCH_COPY.md"
     launch_copy.write_text(
@@ -397,7 +420,7 @@ def test_public_launch_copy_rejects_blocked_name_before_boundary(tmp_path: Path)
             [
                 "# Public Launch Copy",
                 "",
-                "Mullu, by Mullusi",
+                "Mullu Govern, by Mullusi",
                 "",
                 "Mullusi Work helps teams deploy governed workflows.",
                 "",
@@ -475,6 +498,22 @@ def test_website_recheck_log_rejects_missing_live_probe_handoff(tmp_path: Path) 
 
     with pytest.raises(AssertionError, match="authoritative live-route probe"):
         validate_website_recheck_log(log_path)
+
+
+def test_website_local_browser_verification_preserves_non_launch_boundary() -> None:
+    validate_website_local_browser_verification()
+
+
+def test_website_local_browser_verification_rejects_launch_evidence_claim(tmp_path: Path) -> None:
+    evidence_path = tmp_path / "WEBSITE_LOCAL_BROWSER_VERIFICATION_2026-05-25.md"
+    evidence_text = WEBSITE_LOCAL_BROWSER_VERIFICATION_PATH.read_text(encoding="utf-8").replace(
+        "not launch evidence",
+        "launch evidence",
+    )
+    evidence_path.write_text(evidence_text, encoding="utf-8")
+
+    with pytest.raises(AssertionError, match="local browser verification missing literals"):
+        validate_website_local_browser_verification(evidence_path)
 
 
 def test_website_deployment_template_rejects_missing_route(tmp_path: Path) -> None:
@@ -600,14 +639,17 @@ def test_public_naming_decision_witness_is_schema_valid() -> None:
     Draft202012Validator.check_schema(schema)
     Draft202012Validator(schema).validate(witness)
 
-    assert witness["product_name"] == "Mullu"
+    assert witness["product_name"] == "Mullu Govern"
+    assert witness["suite_family"] == "Mullu"
     assert witness["company_brand"] == "Mullusi"
+    assert witness["admin_surface"] == "Mullu Control Plane"
+    assert witness["repository_name"] == "mullu-govern"
     assert witness["public_paid_launch_allowed"] is False
     assert witness["capture_readiness"]["status"] == "blocked"
 
 
 def test_public_naming_decision_rejects_paid_launch_unblock(tmp_path: Path) -> None:
-    decision_path = tmp_path / "PUBLIC_NAMING_DECISION_2026-05-20.md"
+    decision_path = tmp_path / "PUBLIC_NAMING_DECISION_2026-05-25.md"
     decision_text = PUBLIC_NAMING_DECISION_PATH.read_text(encoding="utf-8").replace(
         "| Paid public launch | Blocked |",
         "| Paid public launch | Approved |",
@@ -705,9 +747,13 @@ def test_clearance_evidence_scaffold_rejects_missing_decision(tmp_path: Path) ->
     (evidence_root / "CAPTURE_INDEX.md").write_text(
         "\n".join(
             [
+                "uspto-search-mullu-govern.pdf",
                 "uspto-search-mullu.pdf",
+                "wipo-search-mullu-govern.pdf",
                 "wipo-search-mullu.pdf",
+                "euipo-search-mullu-govern.pdf",
                 "euipo-search-mullu.pdf",
+                "tmview-search-mullu-govern.pdf",
                 "tmview-search-mullu.pdf",
                 "tsdr-99518598.pdf",
                 "registrar-ownership.pdf",

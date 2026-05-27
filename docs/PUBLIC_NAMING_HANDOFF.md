@@ -1,32 +1,39 @@
 # Public Naming Handoff
 
-Purpose: summarize the Mullu public naming decision, current launch status, and verification commands for reviewers.
+Purpose: summarize the Mullu Govern public naming decision, current launch status, and verification commands for reviewers.
 Governance scope: product identity, evidence artifacts, machine-readable witnesses, CI gates, tests, and open real-world clearance work.
 Dependencies: `docs/PRODUCT_IDENTITY.md`, `docs/PUBLIC_NAMING_READINESS.md`, `docs/public-naming-readiness.json`, `scripts/validate_public_naming_readiness.py`.
-Invariants: Mullu is the flagship product; Mullusi is the company and governance authority; paid public launch remains blocked until official clearance closes.
+Invariants: Mullu Govern is the public product; Mullu is the suite/family; Mullusi is the company and governance authority; paid public launch remains blocked until official clearance closes.
 
 ## Decision
 
 | Boundary | Decision |
 | --- | --- |
 | Company / ecosystem | Mullusi |
-| Flagship product | Mullu |
-| First public reference | Mullu, by Mullusi |
+| Suite / family | Mullu |
+| Public product | Mullu Govern |
+| First public reference | Mullu Govern, by Mullusi |
 | Developer / architecture term | Mullu Platform |
-| Admin / governance / deployment surface | Mullu Control Plane |
+| Internal/admin governance/deployment surface | Mullu Control Plane |
+| Public repository target | mullu-govern |
 | Public paid launch state | Blocked |
 
 ## Why This Name
 
-Mullu preserves the existing product-family pattern and keeps the public product
-distinct from the company brand. It supports shipped and future surfaces:
+Mullu Govern names the repo's real value: governed execution through approvals,
+budgets, traces, audit, lineage, deployment controls, policy enforcement, skill
+boundaries, and proof-backed actions. It keeps the public product distinct from
+the company brand and the internal/admin control surface. The Mullu family
+supports shipped and future surfaces:
 
-1. Mullu
-2. Mullu Inspect
-3. Mullu CLI
-4. Mullu Code
-5. Mullu Desk
-6. Mullu Control Plane
+1. Mullu Govern
+2. Mullu Proof
+3. Mullu Ledger
+4. Mullu Inspect
+5. Mullu CLI
+6. Mullu Code
+7. Mullu Desk
+8. Mullu Control Plane
 
 ## Current State
 
@@ -73,7 +80,7 @@ The name is approved for internal alignment and product planning only.
 | Domain ownership | Acquire or verify product domain/subdomain and DNS ownership |
 | Legal review | Record qualified trademark/legal decision |
 | Homepage update | Apply approved copy only after clearance or mark private beta/waitlist |
-| App title update | Use `Mullu` after authorization |
+| App title update | Use `Mullu Govern` after authorization where the surface is product-facing |
 | SDK/API stability review | Preserve `Mullu Platform` where technical contracts require it |
 
 ## Verification Commands
@@ -91,10 +98,20 @@ python .\scripts\validate_release_status.py
 
 ```text
 validate_public_naming_readiness.py: passed
-test_public_naming_readiness.py: passed
-validate_schemas.py: passed
+proof_coverage_matrix.py --check: passed
+test_proof_coverage_matrix.py: 113 passed
+focused naming/release test lane: 270 passed
 validate_release_status.py: passed
+run_workspace_governance_checks.py: passed
+git diff --check: passed with Windows line-ending warnings only
 ```
+
+## Review Boundary
+
+The OrgOS gateway and kernel files are a separate worktree boundary. This
+handoff only depends on the proof-matrix compatibility update that classifies
+the declared OrgOS routes under `orgos_case_governance_lifecycle`; it does not
+make an independent product-name decision for OrgOS.
 
 ## Reviewer Rule
 
@@ -108,5 +125,6 @@ Do not approve a paid public launch PR if:
 
 ## Resolution
 
-The naming system is structurally complete and governed. The remaining work is
-external clearance evidence, not architecture or product naming.
+The naming system is structurally complete and governed around `Mullu Govern`.
+The remaining work is external clearance evidence, not architecture or product
+naming.

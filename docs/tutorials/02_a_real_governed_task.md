@@ -1,9 +1,9 @@
 # Tutorial 2 — Watch Mullu Govern Real Money
 
-> **In one box:** In [Tutorial 1](01_first_governed_task.md) you got Mullu
+> **In one box:** In [Tutorial 1](01_first_governed_task.md) you got Mullu Govern
 > running and saw that powerful features are off until turned on. Now you'll
 > turn on one real governed workflow — a **finance approval** — and watch the
-> safety machinery work with your own eyes: first Mullu **refuses** a payment
+> safety machinery work with your own eyes: first Mullu Govern **refuses** a payment
 > that breaks a spending limit, then **approves** a valid one and hands you a
 > tamper-evident **proof**. About 25 minutes, hands-on. Do Tutorial 1 first.
 >
@@ -24,7 +24,7 @@ URLs with `curl`.
 
 ## Step 1 — Start the server with a finance store
 
-**What we're doing:** starting Mullu like in Tutorial 1, but pointing the
+**What we're doing:** starting Mullu Govern like in Tutorial 1, but pointing the
 finance pilot at a file so the packets and decisions are saved and you can
 inspect them. The path is yours to choose; it's created on first write.
 
@@ -45,8 +45,8 @@ the same server, so any failure here is a setup issue covered there.
 
 ## Step 2 — Try to overspend (watch the gate STOP it)
 
-**What we're doing:** asking Mullu to prepare a $12,000 invoice payment when the
-requesting actor's limit is only $5,000. A naive AI would just do it. Mullu must
+**What we're doing:** asking Mullu Govern to prepare a $12,000 invoice payment when the
+requesting actor's limit is only $5,000. An ungoverned runtime might just do it. Mullu Govern must
 refuse. (Money is in *minor units* — cents — so 1200000 = $12,000.)
 
 In the **second** window:
@@ -139,7 +139,7 @@ Invoke-RestMethod -Method Post `
 **What you should see:** confirmation that the packet is approved and closed,
 with an `email_handoff_created` effect receipt. Per the spec this is a *handoff*
 receipt — proof the governed step happened, **not** proof an email was actually
-delivered. Mullu is careful to claim only what it can prove.
+delivered. Mullu Govern is careful to claim only what it can prove.
 
 ---
 
@@ -165,7 +165,7 @@ to an auditor.
 ## Step 6 — See it from the operator's chair
 
 **What we're doing:** viewing the bounded operator summary — what someone
-running Mullu would actually watch.
+running Mullu Govern would actually watch.
 
 ```powershell
 Invoke-RestMethod -Method Get `
@@ -210,7 +210,7 @@ mailbox — this pilot prepares and proves; it does not settle payments.
 | Understand every rule precisely | [04_policy_and_verification.md](../04_policy_and_verification.md), [01_shared_invariants.md](../01_shared_invariants.md) |
 | The full finance pilot spec | [63_finance_approval_packet_pilot.md](../63_finance_approval_packet_pilot.md) |
 | More end-to-end worked flows | [Pilot Workflows](../../PILOT_WORKFLOWS_v0.1.md) |
-| Run Mullu for real | [Operator Guide](../../OPERATOR_GUIDE_v0.1.md), [Deployment Matrix](../../DEPLOYMENT.md) |
+| Run Mullu Govern for real | [Operator Guide](../../OPERATOR_GUIDE_v0.1.md), [Deployment Matrix](../../DEPLOYMENT.md) |
 | The whole doc map | [Start Here](../START_HERE.md) |
 
 If a step misbehaved, compare it against the authoritative spec

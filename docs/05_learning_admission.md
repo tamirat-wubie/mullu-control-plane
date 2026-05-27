@@ -2,7 +2,7 @@
 
 > **In one box:** The rule that the system can't just believe whatever it
 > learns — new knowledge must be explicitly *admitted* before it is allowed to
-> influence planning. This is what stops the AI from acting on unvetted
+> influence planning. This is what stops the symbolic intelligence runtime from acting on unvetted
 > information. Unknown word? → [Glossary](GLOSSARY.md). *(Doc type: Reference.)*
 
 Learning admission controls what knowledge may enter planning.

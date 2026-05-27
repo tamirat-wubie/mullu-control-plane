@@ -44,6 +44,10 @@ from mcoi_runtime.core.reflex import (
     verify_reflex_deployment_witness,
 )
 from mcoi_runtime.app.governed_execution import universal_command_proof_view
+from mcoi_runtime.contracts.terminal_closure import (
+    TerminalClosureCertificate,
+    TerminalClosureDisposition,
+)
 
 from gateway.channels.discord import DiscordAdapter
 from gateway.channels.phone import PhoneAdapter
@@ -73,6 +77,7 @@ from gateway.code_intelligence_read_model import (
 )
 from gateway.command_spine import build_command_ledger_from_env
 from gateway.conformance import issue_conformance_certificate
+from gateway.enterprise_authority import AuthorityDecision
 from gateway.evidence_bundle import build_command_trust_bundle
 from gateway.event_log import WebhookEventLog
 from gateway.federated_control import FederatedControlPlane, federated_control_snapshot_to_json_dict
@@ -83,6 +88,19 @@ from gateway.mcp_operator_read_model import build_mcp_operator_read_model
 from gateway.operator_capability_console import (
     build_operator_capability_read_model,
     render_operator_capability_console,
+)
+from gateway.orgos_kernel import (
+    AuthorityRule,
+    DepartmentPack,
+    EffectClosureBinding,
+    OrgCase,
+    Organization,
+    OrganizationKernel,
+    OrgPlanStep,
+    Role,
+    build_orgos_case_event_log_from_env,
+    default_mullu_orgos_departments,
+    replay_orgos_kernel_from_events,
 )
 from gateway.plan_ledger import build_capability_plan_ledger_from_env
 from gateway.router import GatewayRouter
@@ -533,6 +551,13 @@ def create_gateway_app(
     install_gateway_receipt_middleware(app, platform)
 
     event_log = WebhookEventLog(clock=_clock)
+    orgos_case_event_log = build_orgos_case_event_log_from_env(clock=_clock)
+    orgos_replay_page = orgos_case_event_log.list(limit=10000)
+    orgos_kernel = (
+        replay_orgos_kernel_from_events(orgos_replay_page.events)
+        if orgos_replay_page.total
+        else OrganizationKernel(departments=default_mullu_orgos_departments())
+    )
     verifier = WebhookVerifier()
     capability_admission_gate = (
         capability_admission_gate_override
@@ -2115,6 +2140,250 @@ def create_gateway_app(
             ],
         }
 
+    @app.post("/api/v1/orgs")
+    async def orgos_register_organization(request: Request):
+        _require_authority_operator(request)
+        try:
+            payload = await _request_json_mapping(request)
+            roles: list[Role] = []
+            owner_role_payload = payload.get("owner_role")
+            if isinstance(owner_role_payload, Mapping):
+                roles.append(_orgos_role_from_payload(owner_role_payload))
+            raw_roles = payload.get("roles", ())
+            if isinstance(raw_roles, str) or not isinstance(raw_roles, (list, tuple)):
+                raise ValueError("roles_must_be_array")
+            for raw_role in raw_roles:
+                roles.append(_orgos_role_from_payload(_mapping_item(raw_role, "roles")))
+            authority_rules: list[AuthorityRule] = []
+            raw_rules = payload.get("authority_rules", ())
+            if isinstance(raw_rules, str) or not isinstance(raw_rules, (list, tuple)):
+                raise ValueError("authority_rules_must_be_array")
+            for raw_rule in raw_rules:
+                authority_rules.append(
+                    _orgos_authority_rule_from_payload(_mapping_item(raw_rule, "authority_rules"))
+                )
+            organization, registered_roles, registered_rules = orgos_kernel.register_organization_surface(
+                _orgos_organization_from_payload(payload),
+                roles=roles,
+                authority_rules=authority_rules,
+            )
+            event = orgos_case_event_log.record(
+                case_id=f"org:{organization.org_id}",
+                tenant_id=organization.tenant_id,
+                event_type="organization_registered",
+                actor_id=organization.owner_role_id,
+                payload={
+                    "organization": organization.to_json_dict(),
+                    "roles": [role.to_json_dict() for role in registered_roles],
+                    "authority_rules": [rule.to_json_dict() for rule in registered_rules],
+                },
+                evidence_refs=organization.evidence_refs,
+            )
+        except ValueError as exc:
+            raise HTTPException(400, detail=str(exc)) from exc
+        return {"organization": organization.to_json_dict(), "event": event.to_json_dict()}
+
+    @app.post("/api/v1/departments")
+    async def orgos_register_department(request: Request):
+        _require_authority_operator(request)
+        try:
+            payload = await _request_json_mapping(request)
+            department = orgos_kernel.register_department(_orgos_department_from_payload(payload))
+            event = orgos_case_event_log.record(
+                case_id=f"department:{department.department_id}",
+                tenant_id=_optional_text(payload, "tenant_id", default="tenant:*"),
+                event_type="department_registered",
+                actor_id=_optional_text(payload, "actor_id", default="orgos_operator"),
+                payload=department.to_json_dict(),
+                evidence_refs=department.required_evidence,
+            )
+        except ValueError as exc:
+            raise HTTPException(400, detail=str(exc)) from exc
+        return {"department": department.to_json_dict(), "event": event.to_json_dict()}
+
+    @app.post("/api/v1/cases")
+    async def orgos_open_case(request: Request):
+        _require_authority_operator(request)
+        try:
+            payload = await _request_json_mapping(request)
+            work_case = orgos_kernel.open_case(_orgos_case_from_payload(payload))
+            event = orgos_case_event_log.record(
+                case_id=work_case.case_id,
+                tenant_id=work_case.tenant_id,
+                event_type="case_opened",
+                actor_id=work_case.owner_role_id,
+                payload=work_case.to_json_dict(),
+                evidence_refs=work_case.evidence_refs,
+            )
+        except ValueError as exc:
+            raise HTTPException(400, detail=str(exc)) from exc
+        return {"case": work_case.to_json_dict(), "event": event.to_json_dict()}
+
+    @app.get("/api/v1/cases/{case_id}")
+    def orgos_get_case(
+        request: Request,
+        case_id: str,
+        limit: int = 100,
+        offset: int = 0,
+    ):
+        _require_authority_operator(request)
+        try:
+            work_case = orgos_kernel.get_case(case_id)
+            events = orgos_case_event_log.list(
+                case_id=case_id,
+                limit=_bounded_read_model_limit(limit),
+                offset=_bounded_read_model_offset(offset),
+            )
+        except ValueError as exc:
+            raise HTTPException(404, detail=str(exc)) from exc
+        return {"case": work_case.to_json_dict(), "events": events.to_json_dict()}
+
+    @app.post("/api/v1/cases/{case_id}/events")
+    async def orgos_append_case_event(request: Request, case_id: str):
+        _require_authority_operator(request)
+        try:
+            work_case = orgos_kernel.get_case(case_id)
+            payload = await _request_json_mapping(request)
+            event_payload = payload.get("payload", {})
+            if not isinstance(event_payload, Mapping):
+                raise ValueError("payload_must_be_object")
+            event = orgos_case_event_log.record(
+                case_id=case_id,
+                tenant_id=work_case.tenant_id,
+                event_type=_optional_text(payload, "event_type", default="operator_note"),
+                actor_id=_required_text(payload, "actor_id"),
+                payload=event_payload,
+                evidence_refs=_payload_text_tuple(payload, "evidence_refs"),
+            )
+        except ValueError as exc:
+            raise HTTPException(400, detail=str(exc)) from exc
+        return {"event": event.to_json_dict()}
+
+    @app.post("/api/v1/cases/{case_id}/plan")
+    async def orgos_add_case_plan_step(request: Request, case_id: str):
+        _require_authority_operator(request)
+        try:
+            payload = await _request_json_mapping(request)
+            step_payload = dict(_required_mapping(payload, "step"))
+            step_payload["case_id"] = case_id
+            step = orgos_kernel.add_plan_step(_orgos_plan_step_from_payload(step_payload))
+            event = orgos_case_event_log.record(
+                case_id=case_id,
+                tenant_id=orgos_kernel.get_case(case_id).tenant_id,
+                event_type="plan_step_added",
+                actor_id=_optional_text(payload, "actor_id", default=step.department_id),
+                payload=step.to_json_dict(),
+                evidence_refs=step.evidence_required,
+            )
+            gate_decision = None
+            gate_payload = payload.get("gate")
+            if isinstance(gate_payload, Mapping):
+                gate_decision = orgos_kernel.evaluate_plan_step(
+                    step.step_id,
+                    authority_decision=_authority_decision_from_payload(
+                        _required_mapping(gate_payload, "authority_decision")
+                    ),
+                    policy_allowed=_payload_bool(gate_payload, "policy_allowed", default=False),
+                    world_refs=_payload_text_tuple(gate_payload, "world_refs", allow_empty=True),
+                    certified_capabilities=_payload_text_tuple(
+                        gate_payload,
+                        "certified_capabilities",
+                        allow_empty=True,
+                    ),
+                    evidence_refs=_payload_text_tuple(gate_payload, "evidence_refs", allow_empty=True),
+                    approval_refs=_payload_text_tuple(gate_payload, "approval_refs", allow_empty=True),
+                )
+                orgos_case_event_log.record(
+                    case_id=case_id,
+                    tenant_id=orgos_kernel.get_case(case_id).tenant_id,
+                    event_type="authority_decision_recorded",
+                    actor_id=_optional_text(payload, "actor_id", default=step.department_id),
+                    payload=gate_decision.to_json_dict(),
+                    evidence_refs=gate_decision.evidence_refs,
+                )
+        except ValueError as exc:
+            raise HTTPException(400, detail=str(exc)) from exc
+        return {
+            "step": step.to_json_dict(),
+            "event": event.to_json_dict(),
+            "gate_decision": gate_decision.to_json_dict() if gate_decision is not None else None,
+        }
+
+    @app.post("/api/v1/cases/{case_id}/close")
+    async def orgos_close_case(request: Request, case_id: str):
+        _require_authority_operator(request)
+        try:
+            payload = await _request_json_mapping(request)
+            closure_payload = dict(_required_mapping(payload, "closure"))
+            closure_payload["case_id"] = case_id
+            terminal_payload = payload.get("terminal_certificate")
+            terminal_certificate = (
+                _terminal_certificate_from_payload(terminal_payload)
+                if isinstance(terminal_payload, Mapping)
+                else None
+            )
+            closure = _orgos_effect_closure_from_payload(closure_payload)
+            closure_event_payload = closure.to_json_dict()
+            if terminal_certificate is not None and not closure_event_payload.get("terminal_certificate_ref"):
+                closure_event_payload["terminal_certificate_ref"] = terminal_certificate.certificate_id
+            attempt_event = orgos_case_event_log.record(
+                case_id=case_id,
+                tenant_id=orgos_kernel.get_case(case_id).tenant_id,
+                event_type="closure_attempted",
+                actor_id=_optional_text(payload, "actor_id", default="orgos_operator"),
+                payload=closure_event_payload,
+                evidence_refs=closure.evidence_refs,
+            )
+            decision = orgos_kernel.close_case(closure, terminal_certificate=terminal_certificate)
+            decision_event = orgos_case_event_log.record(
+                case_id=case_id,
+                tenant_id=orgos_kernel.get_case(case_id).tenant_id,
+                event_type="closure_decided",
+                actor_id=_optional_text(payload, "actor_id", default="orgos_operator"),
+                payload=decision.to_json_dict(),
+                evidence_refs=decision.evidence_refs,
+            )
+        except ValueError as exc:
+            raise HTTPException(400, detail=str(exc)) from exc
+        return {
+            "closure_decision": decision.to_json_dict(),
+            "attempt_event": attempt_event.to_json_dict(),
+            "decision_event": decision_event.to_json_dict(),
+        }
+
+    @app.get("/api/v1/orgos/read-model")
+    def orgos_read_model(
+        request: Request,
+        limit: int = 100,
+        offset: int = 0,
+    ):
+        _require_authority_operator(request)
+        events = orgos_case_event_log.list(
+            limit=_bounded_read_model_limit(limit),
+            offset=_bounded_read_model_offset(offset),
+        )
+        return {
+            "orgos": orgos_kernel.read_model(),
+            "events": events.to_json_dict(),
+        }
+
+    @app.post("/api/v1/orgos/replay")
+    def orgos_replay_projection(request: Request):
+        nonlocal orgos_kernel
+        _require_authority_operator(request)
+        try:
+            events = orgos_case_event_log.list(limit=10000).events
+            replayed = replay_orgos_kernel_from_events(events)
+            orgos_kernel = replayed
+            app.state.orgos_kernel = replayed
+        except ValueError as exc:
+            raise HTTPException(409, detail=str(exc)) from exc
+        return {
+            "replayed": True,
+            "event_count": len(events),
+            "orgos": replayed.read_model(),
+        }
+
     @app.get("/cases/read-model")
     def operational_cases_read_model(
         request: Request,
@@ -2764,6 +3033,8 @@ def create_gateway_app(
     app.state.physical_capability_promotion_receipt_store = physical_capability_promotion_receipt_store
     app.state.session_mgr = session_mgr
     app.state.event_log = event_log
+    app.state.orgos_kernel = orgos_kernel
+    app.state.orgos_case_event_log = orgos_case_event_log
     app.state.capability_admission_gate = capability_admission_gate
     app.state.mcp_capability_entries = mcp_capability_entries
     app.state.mcp_executor = mcp_executor
@@ -2890,6 +3161,182 @@ def _payload_bool(payload: Mapping[str, Any], field_name: str, *, default: bool)
     if not isinstance(value, bool):
         raise ValueError(f"{field_name}_must_be_boolean")
     return value
+
+
+async def _request_json_mapping(request: Request) -> Mapping[str, Any]:
+    payload = await request.json()
+    if not isinstance(payload, Mapping):
+        raise ValueError("request_body_must_be_object")
+    return payload
+
+
+def _payload_text_tuple(
+    payload: Mapping[str, Any],
+    field_name: str,
+    *,
+    allow_empty: bool = False,
+) -> tuple[str, ...]:
+    value = payload.get(field_name, ())
+    if isinstance(value, str) or not isinstance(value, (list, tuple)):
+        raise ValueError(f"{field_name}_must_be_array")
+    normalized = tuple(str(item).strip() for item in value)
+    if not allow_empty and not normalized:
+        raise ValueError(f"{field_name}_required")
+    if any(not item for item in normalized):
+        raise ValueError(f"{field_name}_items_required")
+    if len(set(normalized)) != len(normalized):
+        raise ValueError(f"{field_name}_duplicates_forbidden")
+    return normalized
+
+
+def _optional_mapping(payload: Mapping[str, Any], field_name: str) -> Mapping[str, Any]:
+    value = payload.get(field_name, {})
+    if not isinstance(value, Mapping):
+        raise ValueError(f"{field_name}_must_be_object")
+    return value
+
+
+def _orgos_organization_from_payload(payload: Mapping[str, Any]) -> Organization:
+    return Organization(
+        org_id=_required_text(payload, "org_id"),
+        tenant_id=_required_text(payload, "tenant_id"),
+        name=_required_text(payload, "name"),
+        owner_role_id=_required_text(payload, "owner_role_id"),
+        evidence_refs=_payload_text_tuple(payload, "evidence_refs"),
+        metadata=dict(_optional_mapping(payload, "metadata")),
+    )
+
+
+def _orgos_department_from_payload(payload: Mapping[str, Any]) -> DepartmentPack:
+    return DepartmentPack(
+        department_id=_required_text(payload, "department_id"),
+        name=_required_text(payload, "name"),
+        mission=_required_text(payload, "mission"),
+        owns=_payload_text_tuple(payload, "owns"),
+        allowed_case_types=_payload_text_tuple(payload, "allowed_case_types"),
+        allowed_capabilities=_payload_text_tuple(payload, "allowed_capabilities"),
+        required_evidence=_payload_text_tuple(payload, "required_evidence"),
+        approval_roles=_payload_text_tuple(payload, "approval_roles", allow_empty=True),
+        escalation_departments=_payload_text_tuple(payload, "escalation_departments", allow_empty=True),
+        metrics=_payload_text_tuple(payload, "metrics"),
+        failure_modes=_payload_text_tuple(payload, "failure_modes"),
+        metadata=dict(_optional_mapping(payload, "metadata")),
+    )
+
+
+def _orgos_role_from_payload(payload: Mapping[str, Any]) -> Role:
+    return Role(
+        role_id=_required_text(payload, "role_id"),
+        department_id=_required_text(payload, "department_id"),
+        permissions=_payload_text_tuple(payload, "permissions"),
+        approval_limit_risk=_required_text(payload, "approval_limit_risk"),
+        evidence_refs=_payload_text_tuple(payload, "evidence_refs"),
+        metadata=dict(_optional_mapping(payload, "metadata")),
+    )
+
+
+def _orgos_authority_rule_from_payload(payload: Mapping[str, Any]) -> AuthorityRule:
+    return AuthorityRule(
+        rule_id=_required_text(payload, "rule_id"),
+        role_id=_required_text(payload, "role_id"),
+        action=_required_text(payload, "action"),
+        resource_type=_required_text(payload, "resource_type"),
+        max_risk=_required_text(payload, "max_risk"),
+        requires_dual_control=_payload_bool(payload, "requires_dual_control", default=False),
+        separation_of_duty=_payload_text_tuple(payload, "separation_of_duty", allow_empty=True),
+        evidence_refs=_payload_text_tuple(payload, "evidence_refs"),
+        metadata=dict(_optional_mapping(payload, "metadata")),
+    )
+
+
+def _orgos_case_from_payload(payload: Mapping[str, Any]) -> OrgCase:
+    return OrgCase(
+        case_id=_required_text(payload, "case_id"),
+        org_id=_required_text(payload, "org_id"),
+        tenant_id=_required_text(payload, "tenant_id"),
+        department_id=_required_text(payload, "department_id"),
+        case_type=_required_text(payload, "case_type"),
+        goal=_required_text(payload, "goal"),
+        risk_tier=_required_text(payload, "risk_tier"),
+        owner_role_id=_required_text(payload, "owner_role_id"),
+        status=_optional_text(payload, "status", default="open"),
+        evidence_refs=_payload_text_tuple(payload, "evidence_refs"),
+        authority_decision_refs=_payload_text_tuple(payload, "authority_decision_refs", allow_empty=True),
+        plan_certificate_ref=_optional_text(payload, "plan_certificate_ref"),
+        closure_certificate_ref=_optional_text(payload, "closure_certificate_ref"),
+        learning_admission_ref=_optional_text(payload, "learning_admission_ref"),
+        metadata=dict(_optional_mapping(payload, "metadata")),
+    )
+
+
+def _orgos_plan_step_from_payload(payload: Mapping[str, Any]) -> OrgPlanStep:
+    return OrgPlanStep(
+        step_id=_required_text(payload, "step_id"),
+        case_id=_required_text(payload, "case_id"),
+        department_id=_required_text(payload, "department_id"),
+        capability_id=_required_text(payload, "capability_id"),
+        risk_tier=_required_text(payload, "risk_tier"),
+        preconditions=_payload_text_tuple(payload, "preconditions"),
+        postconditions=_payload_text_tuple(payload, "postconditions"),
+        evidence_required=_payload_text_tuple(payload, "evidence_required"),
+        approvals_required=_payload_text_tuple(payload, "approvals_required", allow_empty=True),
+        expected_effects=_payload_text_tuple(payload, "expected_effects"),
+        forbidden_effects=_payload_text_tuple(payload, "forbidden_effects"),
+        rollback_plan_id=_optional_text(payload, "rollback_plan_id") or None,
+        metadata=dict(_optional_mapping(payload, "metadata")),
+    )
+
+
+def _orgos_effect_closure_from_payload(payload: Mapping[str, Any]) -> EffectClosureBinding:
+    return EffectClosureBinding(
+        case_id=_required_text(payload, "case_id"),
+        expected_effects=_payload_text_tuple(payload, "expected_effects"),
+        observed_effects=_payload_text_tuple(payload, "observed_effects"),
+        forbidden_effects_checked=_payload_bool(payload, "forbidden_effects_checked", default=False),
+        evidence_refs=_payload_text_tuple(payload, "evidence_refs"),
+        effect_reconciliation_ref=_required_text(payload, "effect_reconciliation_ref"),
+        terminal_disposition=_required_text(payload, "terminal_disposition"),
+        terminal_certificate_ref=_optional_text(payload, "terminal_certificate_ref"),
+        compensation_ref=_optional_text(payload, "compensation_ref"),
+        accepted_risk_ref=_optional_text(payload, "accepted_risk_ref"),
+        review_case_ref=_optional_text(payload, "review_case_ref"),
+        metadata=dict(_optional_mapping(payload, "metadata")),
+    )
+
+
+def _authority_decision_from_payload(payload: Mapping[str, Any]) -> AuthorityDecision:
+    return AuthorityDecision(
+        decision_id=_required_text(payload, "decision_id"),
+        request_id=_required_text(payload, "request_id"),
+        actor_id=_required_text(payload, "actor_id"),
+        tenant_id=_required_text(payload, "tenant_id"),
+        verdict=_required_text(payload, "verdict"),
+        reason=_required_text(payload, "reason"),
+        required_controls=_payload_text_tuple(payload, "required_controls", allow_empty=True),
+        matched_grant_ids=_payload_text_tuple(payload, "matched_grant_ids", allow_empty=True),
+        evidence_refs=_payload_text_tuple(payload, "evidence_refs"),
+        metadata=dict(_optional_mapping(payload, "metadata")),
+    )
+
+
+def _terminal_certificate_from_payload(payload: Mapping[str, Any]) -> TerminalClosureCertificate:
+    return TerminalClosureCertificate(
+        certificate_id=_required_text(payload, "certificate_id"),
+        command_id=_required_text(payload, "command_id"),
+        execution_id=_required_text(payload, "execution_id"),
+        disposition=TerminalClosureDisposition(_required_text(payload, "disposition")),
+        verification_result_id=_required_text(payload, "verification_result_id"),
+        effect_reconciliation_id=_required_text(payload, "effect_reconciliation_id"),
+        evidence_refs=_payload_text_tuple(payload, "evidence_refs"),
+        closed_at=_required_text(payload, "closed_at"),
+        response_closure_ref=_optional_text(payload, "response_closure_ref") or None,
+        memory_entry_id=_optional_text(payload, "memory_entry_id") or None,
+        compensation_outcome_id=_optional_text(payload, "compensation_outcome_id") or None,
+        accepted_risk_id=_optional_text(payload, "accepted_risk_id") or None,
+        case_id=_optional_text(payload, "case_id") or None,
+        graph_refs=_payload_text_tuple(payload, "graph_refs", allow_empty=True),
+        metadata=dict(_optional_mapping(payload, "metadata")),
+    )
 
 
 def _authority_operator_console_html(

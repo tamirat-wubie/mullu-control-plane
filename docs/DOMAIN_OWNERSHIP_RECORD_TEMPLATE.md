@@ -1,6 +1,6 @@
 # Domain Ownership Record Template
 
-Purpose: record registrar and DNS ownership evidence for Mullu product domains.
+Purpose: record registrar and DNS ownership evidence for Mullu Govern product domains and Mullu suite domains.
 Governance scope: domain control, renewal ownership, DNS routing, security controls, and launch readiness.
 Dependencies: `docs/DOMAIN_ACQUISITION_PLAN.md`, `docs/PUBLIC_NAMING_READINESS.md`.
 Invariants: a domain is not launch-ready until registrar ownership, DNS control, renewal responsibility, and security controls are recorded.

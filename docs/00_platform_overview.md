@@ -2,28 +2,30 @@
 
 > **In one box:** This is the map. It says which parts of the code count as the
 > [control plane](GLOSSARY.md#control-plane) (the decide / check / record layer)
-> and which names mean what (Mullu vs Mullu Platform vs Mullu Control Plane).
+> and which names mean what (Mullu Govern vs Mullu vs Mullu Platform vs Mullu Control Plane).
 > Read it when you're unsure *where a responsibility lives*. Brand new? Read the
 > jargon-free [Plain-English Overview](explain/PLAIN_ENGLISH.md) first.
 > *(Doc type: Reference.)*
 
-Purpose: define the repository boundary for the Mullu Control Plane.
+Purpose: define the repository boundary for Mullu Govern and the Mullu Control Plane.
 Governance scope: Milestone 0 shared foundation.
 Dependencies: `docs/PRODUCT_BOUNDARY.md`, `docs/01_shared_invariants.md`, `docs/02_shared_contracts.md`.
-Invariants: shared meaning is defined once; MAF Core and MCOI Runtime remain split; Mullu remains the flagship product name; Mullu Platform remains a developer and architecture term; Mullu Control Plane remains the admin/governance/deployment surface.
+Invariants: shared meaning is defined once; MAF Core and MCOI Runtime remain split; Mullu Govern remains the public product name; Mullu remains the suite/family name; Mullu Platform remains a developer and architecture term; Mullu Control Plane remains the admin/governance/deployment surface.
 
 ## Product Identity
 
-Mullu is the flagship product by Mullusi. Mullu Platform is reserved for
-developer, SDK, API, deployment, and architecture contexts. This repository
-defines the Mullu Control Plane surface for admin, governance, approval, trace,
-budget, lineage, and deployment operation.
+Mullu Govern is the public governed-execution product by Mullusi. Mullu is the
+suite/family name. Mullu Platform is reserved for developer, SDK, API,
+deployment, and architecture contexts. This repository defines the Mullu Control
+Plane surface for admin, governance, approval, trace, budget, lineage, and
+deployment operation.
 
 ## Structure
 
 - `Shared Contracts` define invariants, contract meaning, trace semantics, policy semantics, verification semantics, and learning admission semantics.
 - `MAF Core` owns the general substrate, kernel-facing interfaces, and shared runtime primitives.
 - `MCOI Runtime` owns computer-operation-specific observation and execution runtime surfaces.
+- `Mullu Govern` remains product-facing and explains governed execution to users and buyers.
 - `Mullu Control Plane` remains operator-facing and consumes traces, approvals, and status from the shared foundation.
 
 ## Current repository boundary

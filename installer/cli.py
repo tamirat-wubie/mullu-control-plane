@@ -5,7 +5,7 @@ Usage: python -m installer.cli init
        python -m installer.cli start
 
 Flow:
-  1. Choose LLM provider -> enter API key
+  1. Choose model provider -> enter API key
   2. Choose channels -> enter credentials
   3. Configure first tenant
   4. Generate .env + mullusi.yml
@@ -190,10 +190,10 @@ def _prompt_yn(message: str, default: bool = True) -> bool:
 
 
 def setup_llm(config: MulluConfig) -> None:
-    """Step 1: Choose LLM provider and enter API key."""
-    _print_step("Step 1: LLM Provider")
+    """Step 1: Choose model provider and enter API key."""
+    _print_step("Step 1: Model Provider")
     provider = _prompt_choice(
-        "Which LLM provider?",
+        "Which model provider?",
         ["anthropic", "openai", "stub (testing only)"],
         default="anthropic",
     )
@@ -318,7 +318,7 @@ def validate_config(config: MulluConfig) -> list[str]:
     """Validate configuration. Returns list of warnings."""
     warnings: list[str] = []
     if config.llm_provider != "stub" and not config.llm_api_key:
-        warnings.append("No LLM API key - LLM calls will fail")
+        warnings.append("No model provider API key - model calls will fail")
     if config.db_backend == "memory":
         warnings.append("Using in-memory database - data lost on restart")
     if not config.channels:
@@ -396,7 +396,7 @@ def cmd_status(args: argparse.Namespace) -> int:
             for line in env_path.read_text().strip().split("\n")
             if "=" in line and not line.startswith("#")
         )
-        print(f"  LLM provider:       {env_vars.get('MULLU_LLM_BACKEND', 'not set')}")
+        print(f"  Model provider:     {env_vars.get('MULLU_LLM_BACKEND', 'not set')}")
         print(f"  Database:           {env_vars.get('MULLU_DB_BACKEND', 'not set')}")
         print(
             "  API auth required:  "

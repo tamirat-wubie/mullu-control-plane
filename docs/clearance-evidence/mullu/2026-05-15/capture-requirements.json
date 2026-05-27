@@ -1,7 +1,8 @@
 {
   "schema_version": "1",
   "requirements_id": "mullu-clearance-capture-requirements-2026-05-15",
-  "product_name": "Mullu",
+  "product_name": "Mullu Govern",
+  "suite_family": "Mullu",
   "company_brand": "Mullusi",
   "evidence_root": "docs/clearance-evidence/mullu/2026-05-15/",
   "public_paid_launch_allowed": false,
@@ -11,8 +12,10 @@
       "directory": "01-uspto/",
       "authority": "product owner plus qualified trademark reviewer",
       "required_files": [
+        "uspto-search-mullu-govern.pdf",
         "uspto-search-mullu.pdf",
         "uspto-search-mullusi.pdf",
+        "uspto-search-mullu-govern-by-mullusi.pdf",
         "uspto-search-mullu-by-mullusi.pdf",
         "uspto-search-mullu-surfaces.pdf",
         "uspto-search-mulu.pdf",
@@ -34,8 +37,10 @@
       "directory": "02-wipo/",
       "authority": "product owner plus qualified trademark reviewer",
       "required_files": [
+        "wipo-search-mullu-govern.pdf",
         "wipo-search-mullu.pdf",
         "wipo-search-mullusi.pdf",
+        "wipo-search-mullu-govern-by-mullusi.pdf",
         "wipo-search-mullu-by-mullusi.pdf",
         "decision.md"
       ],
@@ -55,11 +60,15 @@
       "directory": "03-euipo-tmview/",
       "authority": "product owner plus qualified trademark reviewer",
       "required_files": [
+        "euipo-search-mullu-govern.pdf",
         "euipo-search-mullu.pdf",
         "euipo-search-mullusi.pdf",
+        "euipo-search-mullu-govern-by-mullusi.pdf",
         "euipo-search-mullu-by-mullusi.pdf",
+        "tmview-search-mullu-govern.pdf",
         "tmview-search-mullu.pdf",
         "tmview-search-mullusi.pdf",
+        "tmview-search-mullu-govern-by-mullusi.pdf",
         "tmview-search-mullu-by-mullusi.pdf",
         "decision.md"
       ],

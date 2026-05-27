@@ -1,6 +1,6 @@
 # Website Deployment Evidence Template
 
-Purpose: provide the deployment verification format for `mullusi.com` and Mullu public product routes.
+Purpose: provide the deployment verification format for `mullusi.com`, Mullu suite routes, and Mullu Govern public product routes.
 Governance scope: live website state, route ownership, copy correctness, HTTPS, DNS, launch gating, and site-not-found prevention.
 Dependencies: `docs/WEBSITE_UPDATE_CHECKLIST.md`, `docs/DOMAIN_OWNERSHIP_RECORD_TEMPLATE.md`, `docs/PUBLIC_NAMING_READINESS.md`, `docs/DOMAIN_ACQUISITION_PLAN.md`.
 Invariants: website deployment evidence does not clear trademark or legal gates; no paid public launch route is valid until domain ownership and deployment verification are both recorded.
@@ -28,6 +28,8 @@ preview output alone.
 | --- | --- | --- |
 | `https://mullusi.com` | Company homepage | Yes |
 | `https://mullusi.com/mullu` | Company-site product fallback | Yes if standalone product domain is not controlled |
+| `https://mullusi.com/govern` | Company-site Mullu Govern fallback | Yes if selected as product route |
+| `https://govern.mullusi.com` | Controlled Mullu Govern product subdomain fallback | Yes if used as product route |
 | `https://mullu.mullusi.com` | Controlled product subdomain fallback | Yes if used as app/product route |
 | `https://docs.mullusi.com` | Documentation landing | Yes if referenced by launch copy |
 | `https://dashboard.mullusi.com` | Control Plane/admin route | Yes if referenced by enterprise copy |
@@ -40,7 +42,7 @@ preview output alone.
 | Route | Public URL |
 | Surface | company_homepage, product_landing, app, docs, dashboard, api, or fallback |
 | Expected owner | Mullusi |
-| Expected product reference | `Mullu, by Mullusi` where product-facing |
+| Expected product reference | `Mullu Govern, by Mullusi` where product-facing |
 | HTTP status | 200, 3xx, 4xx, 5xx, or blocked |
 | Final URL | Final URL after redirects |
 | Page title | Browser/document title |
@@ -58,9 +60,10 @@ preview output alone.
 
 | Requirement | Evidence |
 | --- | --- |
-| First product reference is `Mullu, by Mullusi` |  |
+| First product reference is `Mullu Govern, by Mullusi` |  |
 | Company reference uses `Mullusi` |  |
-| Product name uses `Mullu` |  |
+| Product name uses `Mullu Govern` |  |
+| Suite/family name uses `Mullu` only where appropriate |  |
 | Technical architecture uses `Mullu Platform` only where appropriate |  |
 | Admin surface uses `Mullu Control Plane` |  |
 | Blocked names are absent: `Mullusi Handler`, `Mullusi Work`, `Mullusi Operator`, `Mullu Generic` |  |
@@ -142,7 +145,7 @@ The `website_deployment_verification` gate may close only when:
 
 1. The selected launch route returns an intentional page, not a site-not-found or parked-domain page.
 2. The selected route uses valid HTTPS.
-3. The selected route preserves the `Mullu, by Mullusi` boundary.
+3. The selected route preserves the `Mullu Govern, by Mullusi` boundary.
 4. Blocked public names are absent.
 5. Any page visible before legal clearance is clearly waitlist, request-access, or private beta.
 6. Domain ownership evidence exists for the selected route.

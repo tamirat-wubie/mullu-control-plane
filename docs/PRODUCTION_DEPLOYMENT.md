@@ -105,7 +105,7 @@ Variables are grouped by purpose. Every row marks whether the variable is **requ
 |---|---|---|---|
 | `MULLU_SHELL_EXECUTION_ENABLED` | optional | `false` (effective) | When truthy AND `MULLU_ENV` is `pilot`/`production`, shell execution uses `PILOT_PROD` policy. When unset/false, uses `PILOT_PROD_DISABLED` (shell off). Unknown environments always fall to `SANDBOXED`. |
 
-### LLM provider configuration
+### Model provider configuration
 
 | Variable | Required | Default | Notes |
 |---|---|---|---|
@@ -306,7 +306,7 @@ Every audit-grade rejection has a deterministic, bounded error string. Watch for
 | `RuntimeError: postgres schema migration N failed (...)` | One of the 4 governance migrations failed. | Check PG user has `CREATE TABLE` privilege; check schema isn't already partially-applied. |
 | `RuntimeError: RS* algorithms require the 'cryptography' package` | JWT config says RS256/RS384/RS512 but cryptography extra not installed. | `pip install mcoi-runtime[encryption]`. |
 | `ValueError: jwks_url must use HTTPS` | F33 v4.33. `jwks_url=http://...` rejected at config. | Use HTTPS. If you really need HTTP (in-cluster sidecar), set `require_https_jwks=False`. |
-| `MULLU_LLM_BACKEND='stub' is forbidden in 'production'` | Stub LLM in non-dev env. | Pick a real provider. |
+| `MULLU_LLM_BACKEND='stub' is forbidden in 'production'` | Stub model backend in non-dev env. | Pick a real provider. |
 
 ### Startup-time warnings (don't block boot, fix soon)
 

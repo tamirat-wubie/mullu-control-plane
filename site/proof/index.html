@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Mullusi Proof Boundary</title>
-  <meta name="description" content="Public proof and claim boundary for Mullusi and the Mullu governed symbolic intelligence product family.">
+  <meta name="description" content="Public proof and claim boundary for Mullusi, Mullu Govern, and the Mullu product family.">
   <style>
     :root {
       color-scheme: dark;
@@ -181,6 +181,7 @@
     .status-table {
       width: 100%;
       border-collapse: collapse;
+      table-layout: fixed;
       overflow: hidden;
     }
 
@@ -191,6 +192,7 @@
       text-align: left;
       vertical-align: top;
       font-size: 14px;
+      overflow-wrap: anywhere;
     }
 
     .status-table th {
@@ -227,6 +229,39 @@
       footer {
         flex-direction: column;
       }
+
+      .status-table,
+      .status-table thead,
+      .status-table tbody,
+      .status-table tr,
+      .status-table th,
+      .status-table td {
+        display: block;
+        width: 100%;
+      }
+
+      .status-table thead {
+        display: none;
+      }
+
+      .status-table tr {
+        border-bottom: 1px solid var(--line);
+      }
+
+      .status-table td {
+        border-bottom: 0;
+        padding: 12px 16px;
+      }
+
+      .status-table td::before {
+        display: block;
+        margin-bottom: 4px;
+        color: var(--gold);
+        content: attr(data-label);
+        font-size: 12px;
+        font-weight: 720;
+        text-transform: uppercase;
+      }
     }
   </style>
 </head>
@@ -235,7 +270,7 @@
     <div class="nav-inner">
       <a class="brand" href="/">Mullusi</a>
       <div class="nav-links">
-        <a href="/mullu/">Mullu</a>
+        <a href="/mullu/">Mullu Govern</a>
         <a href="#verified">Verified</a>
         <a href="#pending">Pending</a>
         <a href="#blocked">Blocked</a>
@@ -247,13 +282,14 @@
     <div class="eyebrow">Proof boundary</div>
     <h1>Public claims stay tied to visible evidence.</h1>
     <p class="lede">
-      Mullusi is the umbrella company and governance authority. Mullu is the
-      private beta product family. This page separates what is verified now,
-      what is designed but pending runtime evidence, and what remains blocked
-      before paid public launch.
+      Mullusi is the umbrella company and governance authority. Mullu Govern is
+      the private beta governed-execution product, and Mullu is the product
+      family. This page separates what is verified now, what is designed but
+      pending runtime evidence, and what remains blocked before paid public
+      launch.
     </p>
     <div class="actions">
-      <a class="button primary" href="/mullu/">View Mullu</a>
+      <a class="button primary" href="/mullu/">View Mullu Govern</a>
       <a class="button" href="https://github.com/tamirat-wubie/mullu-control-plane">Review repository</a>
     </div>
   </header>
@@ -266,17 +302,17 @@
       </div>
       <div class="grid">
         <article class="card">
-          <h3>Mullu route</h3>
+          <h3>Mullu Govern route</h3>
           <p>
-            `https://mullusi.com/mullu` is live and returns intentional Mullu
-            private beta product copy, including `Mullu, by Mullusi`.
+            `https://mullusi.com/mullu` is live as the current fallback route.
+            The current product-copy target is `Mullu Govern, by Mullusi`.
           </p>
         </article>
         <article class="card">
           <h3>Product boundary</h3>
           <p>
-            Mullusi is the company and governance umbrella. Mullu is the
-            governed symbolic intelligence product family.
+            Mullusi is the company and governance umbrella. Mullu Govern is the
+            public product, and Mullu is the product family.
           </p>
         </article>
         <article class="card">
@@ -304,19 +340,19 @@
         </thead>
         <tbody>
           <tr>
-            <td>Gateway health</td>
-            <td><span class="state-pending">Pending live witness</span></td>
-            <td>Reachable `/health` endpoint bound to declared runtime environment.</td>
+            <td data-label="Claim surface">Gateway health</td>
+            <td data-label="Current state"><span class="state-pending">Pending live witness</span></td>
+            <td data-label="Required evidence">Reachable `/health` endpoint bound to declared runtime environment.</td>
           </tr>
           <tr>
-            <td>Governance witness</td>
-            <td><span class="state-pending">Pending live witness</span></td>
-            <td>Reachable `/gateway/witness` endpoint with signed or bounded evidence payload.</td>
+            <td data-label="Claim surface">Governance witness</td>
+            <td data-label="Current state"><span class="state-pending">Pending live witness</span></td>
+            <td data-label="Required evidence">Reachable `/gateway/witness` endpoint with signed or bounded evidence payload.</td>
           </tr>
           <tr>
-            <td>Runtime conformance</td>
-            <td><span class="state-pending">Pending live witness</span></td>
-            <td>Reachable `/runtime/conformance` endpoint with runtime conformance certificate.</td>
+            <td data-label="Claim surface">Runtime conformance</td>
+            <td data-label="Current state"><span class="state-pending">Pending live witness</span></td>
+            <td data-label="Required evidence">Reachable `/runtime/conformance` endpoint with runtime conformance certificate.</td>
           </tr>
         </tbody>
       </table>

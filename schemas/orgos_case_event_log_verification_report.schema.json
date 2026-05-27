@@ -1,0 +1,148 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:orgos-case-event-log-verification-report:1",
+  "title": "OrgOS Case Event Log Verification Report",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "valid",
+    "reason",
+    "schema_valid",
+    "schema_errors",
+    "verification_errors",
+    "event_count",
+    "first_event_id",
+    "latest_event_id",
+    "latest_event_hash",
+    "latest_receipt_id",
+    "signature_key_ids",
+    "anchor_statuses",
+    "trust_ledger_artifact"
+  ],
+  "properties": {
+    "valid": {
+      "type": "boolean"
+    },
+    "reason": {
+      "type": "string",
+      "minLength": 1
+    },
+    "schema_valid": {
+      "type": "boolean"
+    },
+    "schema_errors": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "verification_errors": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "event_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "first_event_id": {
+      "type": "string"
+    },
+    "latest_event_id": {
+      "type": "string"
+    },
+    "latest_event_hash": {
+      "type": "string"
+    },
+    "latest_receipt_id": {
+      "type": "string"
+    },
+    "signature_key_ids": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true
+    },
+    "anchor_statuses": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": ["not_requested", "pending", "anchored", "failed"]
+      },
+      "uniqueItems": true
+    },
+    "trust_ledger_artifact": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "artifact_type",
+            "artifact_id",
+            "artifact_hash",
+            "evidence_ref",
+            "required",
+            "metadata"
+          ],
+          "properties": {
+            "artifact_type": {
+              "const": "orgos_event_receipt"
+            },
+            "artifact_id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "artifact_hash": {
+              "type": "string",
+              "pattern": "^sha256:[0-9a-f]{64}$"
+            },
+            "evidence_ref": {
+              "type": "string",
+              "pattern": "^proof://[A-Za-z0-9._~:/?#[\\]@!$&'()*+,;=%-]+$"
+            },
+            "required": {
+              "type": "boolean"
+            },
+            "metadata": {
+              "type": "object",
+              "additionalProperties": true
+            }
+          }
+        }
+      ]
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "valid": {
+            "const": true
+          }
+        },
+        "required": ["valid"]
+      },
+      "then": {
+        "properties": {
+          "reason": {
+            "const": "verified"
+          },
+          "schema_valid": {
+            "const": true
+          },
+          "trust_ledger_artifact": {
+            "type": "object"
+          }
+        }
+      }
+    }
+  ]
+}

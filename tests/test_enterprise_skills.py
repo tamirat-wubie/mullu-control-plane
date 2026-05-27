@@ -65,7 +65,7 @@ class TestKnowledgeBaseRetrieval:
 
     def test_query_relevance_ordering(self):
         kb = KnowledgeBase()
-        kb.ingest(tenant_id="t1", title="Python", content="Python is great for machine learning and AI development.")
+        kb.ingest(tenant_id="t1", title="Python", content="Python is great for machine learning and symbolic intelligence development.")
         kb.ingest(tenant_id="t1", title="Cooking", content="The best recipe for chocolate cake requires butter and eggs.")
         result = kb.query("t1", "machine learning")
         assert len(result.scores) >= 1

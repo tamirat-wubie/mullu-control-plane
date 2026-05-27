@@ -109,7 +109,7 @@ STATUS_REQUIRED_LITERALS = (
 )
 PRODUCT_BOUNDARY_REQUIRED_LITERALS = (
     "Product Boundary",
-    "Mullu is the flagship product",
+    "Mullu Govern is the public product",
     "Mullu Control Plane",
     "Mullu Platform",
     "Mullusi",

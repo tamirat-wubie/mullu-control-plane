@@ -48,7 +48,7 @@ class TestApprovalInRouter:
         router.register_tenant_mapping(TenantMapping(
             channel="web", sender_id="u1", tenant_id="t1", identity_id="u1",
         ))
-        # "what is 2+2" is low-risk → auto-approve → LLM response
+        # "what is 2+2" is low-risk -> auto-approve -> model response
         resp = router.handle_message(GatewayMessage(
             message_id="m1", channel="web", sender_id="u1", body="what is 2+2?",
         ))

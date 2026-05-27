@@ -1,4 +1,4 @@
-# Mullu -- Governed Symbolic Work Platform
+# Mullu Govern -- Governed Symbolic Work Product
 
 **Every governed action is auditable, budget-controlled, policy-enforced, and approval-gated.**
 
@@ -9,17 +9,19 @@
 > [Plain-English Overview](docs/explain/PLAIN_ENGLISH.md); every special word in
 > the docs is defined in one sentence in the [Glossary](docs/GLOSSARY.md).
 
-Mullu is the flagship product by Mullusi: governed symbolic intelligence for
-personal, team, enterprise, and deployment work. This repository provides the
-Mullu Control Plane: gateway, approvals, status, traces, budgets, lineage, and
-deployment controls.
+Mullu Govern is the public product by Mullusi for governed symbolic execution:
+approvals, budgets, traces, audit, lineage, deployment controls, policy
+enforcement, skill boundaries, and proof-backed actions. This repository
+provides the Mullu Control Plane, the internal/admin technical surface behind
+Mullu Govern.
 
-Mullu is a proprietary invention of Tamirat Wubie for use under the Mullusi
-company boundary. This repository and its generated artifacts are not free for
-public use; see [LICENSE](LICENSE) for the governing authorization terms.
+Mullu Govern is a proprietary invention of Tamirat Wubie for use under the
+Mullusi company boundary. This repository and its generated artifacts are not
+free for public use; see [LICENSE](LICENSE) for the governing authorization
+terms.
 
 Users interact through messaging channels (WhatsApp, Telegram, Slack, Discord,
-Web). Mullu executes bounded real-world tasks -- email, payments, document
+Web). Mullu Govern executes bounded real-world tasks -- email, payments, document
 generation, data analysis -- under deterministic governance: 8-guard chain,
 hash-chain audit trails, financial spend budgets, and skill boundary
 enforcement.
@@ -28,10 +30,12 @@ Product naming boundaries are recorded in [`docs/PRODUCT_BOUNDARY.md`](docs/PROD
 
 ## Public Naming Gate
 
-Mullu is internally aligned as the flagship product name, but paid public launch
-remains blocked until trademark, domain, and legal clearance close. Review the
-current naming state in [`docs/PUBLIC_NAMING_HANDOFF.md`](docs/PUBLIC_NAMING_HANDOFF.md)
-and [`docs/PUBLIC_NAMING_READINESS.md`](docs/PUBLIC_NAMING_READINESS.md).
+Mullu Govern is internally aligned as the public product name, with Mullu kept
+as the suite/family name and Mullu Control Plane kept as the internal/admin
+technical surface. Paid public launch remains blocked until trademark, domain,
+and legal clearance close. Review the current naming state in
+[`docs/PUBLIC_NAMING_HANDOFF.md`](docs/PUBLIC_NAMING_HANDOFF.md) and
+[`docs/PUBLIC_NAMING_READINESS.md`](docs/PUBLIC_NAMING_READINESS.md).
 Use [`docs/PUBLIC_NAMING_REVIEW_PACKET.md`](docs/PUBLIC_NAMING_REVIEW_PACKET.md)
 for reviewer signoff and [`docs/PUBLIC_NAMING_ARTIFACT_MANIFEST.md`](docs/PUBLIC_NAMING_ARTIFACT_MANIFEST.md)
 for the complete naming-package inventory.
@@ -105,7 +109,7 @@ curl http://localhost:8000/health
 User (WhatsApp/Telegram/Slack/Discord/Web)
   → Channel Adapter (normalize + verify signature)
   → Gateway Router (resolve tenant + risk classify + approval gate)
-  → GovernedSession (RBAC → content safety → budget → LLM → PII redaction → audit → proof)
+  → GovernedSession (RBAC → content safety → budget → model provider → PII redaction → audit → proof)
   → Response
 ```
 
@@ -125,7 +129,7 @@ Every message flows through the full governance pipeline. No bypass path.
 | **Field Encryption** | AES-256-GCM on audit store detail fields |
 | **RBAC** | 9 roles (admin → financial_admin) + permission rules |
 
-### 10 LLM Providers
+### 10 Model Providers
 
 | Provider | Free Tier | Best For |
 |---|---|---|
@@ -169,7 +173,7 @@ Plus: approval routing (LOW/MEDIUM/HIGH risk), session manager with TTL, skill d
 
 | Skill | What |
 |---|---|
-| Document Generation | Invoice, memo, receipt, summary templates + LLM wrapping |
+| Document Generation | Invoice, memo, receipt, summary templates + model wrapping |
 | Data Analysis | CSV stats, insights, numeric/text detection |
 | Image Generation | DALL-E integration with content safety + cost tracking |
 | Translation | 20 languages including Amharic, Swahili, Yoruba |
@@ -179,7 +183,7 @@ Plus: approval routing (LOW/MEDIUM/HIGH risk), session manager with TTL, skill d
 
 | Skill | What |
 |---|---|
-| **RAG Knowledge Base** | Tenant-scoped document ingestion → chunking → embedding → retrieval → LLM prompt injection |
+| **RAG Knowledge Base** | Tenant-scoped document ingestion → chunking → embedding → retrieval → governed prompt assembly |
 | **Notification System** | Slack/email/webhook alerts on governance events (approval, budget, payment, security) |
 | **Task Scheduler** | Cron-based governed execution with concurrency prevention + failure tracking |
 
@@ -223,9 +227,9 @@ mullu-control-plane/
 │   │   ├── ucja/           # MUSIA: L0–L9 execution pipeline
 │   │   ├── domain_adapters/ # MUSIA: 6 domain adapters (software_dev, business_process, scientific_research, manufacturing, healthcare, education)
 │   │   ├── migration/      # MUSIA: bulk proof v1→v2 migration runner
-│   │   ├── core/           # 380+ engines (governance, LLM, coordination)
+│   │   ├── core/           # 380+ engines (governance, model routing, coordination)
 │   │   ├── contracts/      # 160+ frozen dataclass types
-│   │   ├── adapters/       # 10 LLM backends, shell, browser, HTTP
+│   │   ├── adapters/       # 10 model backends, shell, browser, HTTP
 │   │   ├── persistence/    # PostgreSQL + SQLite + memory stores
 │   │   ├── mcp/            # MCP server (tool provider for external agents)
 │   │   └── pilot/          # Deployment profiles

@@ -1,11 +1,11 @@
 # Model Orchestration Plane (MMOI)
 
-> **In one box:** How and when the system calls AI models — which model, with
+> **In one box:** How and when the system calls governed inference models — which model, with
 > what limits — kept inside governance like everything else. New here? →
 > [Plain-English Overview](explain/PLAIN_ENGLISH.md); unknown word? →
 > [Glossary](GLOSSARY.md). *(Doc type: Reference.)*
 
-Scope: all Mullu Platform modules that invoke LLMs or other inference models.
+Scope: all Mullu Platform modules that invoke governed inference models.
 
 The Model Orchestration Plane selects, invokes, and governs model providers. Model outputs are bounded external inferences. They are never trusted directly and MUST pass through admission or validation before influencing planning or world state.
 

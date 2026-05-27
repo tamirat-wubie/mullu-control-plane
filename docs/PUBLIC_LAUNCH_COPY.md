@@ -1,54 +1,55 @@
 # Public Launch Copy
 
-Purpose: provide first-pass public copy for Mullu as the flagship product by Mullusi.
+Purpose: provide first-pass public copy for Mullu Govern as the governed execution product by Mullusi.
 Governance scope: homepage hero, first-reference wording, product surfaces, trust language, and launch constraints.
 Dependencies: `docs/PRODUCT_IDENTITY.md`, `docs/NAMING_MIGRATION_PLAN.md`, `docs/NAME_CLEARANCE_PRELIMINARY.md`.
-Invariants: use `Mullu` as the product name; use `Mullusi` as the company and governance authority; avoid generic product names; public launch remains blocked until clearance gates close.
+Invariants: use `Mullu Govern` as the public product name; use `Mullu` as the suite/family name; use `Mullusi` as the company and governance authority; avoid generic product names; public launch remains blocked until clearance gates close.
 
 ## Hero
 
 ```text
-Mullu, by Mullusi
+Mullu Govern, by Mullusi
 
 Symbols are atomic. Meaning is relational.
 Traversal is governed. Judgment is earned.
 
-Governed symbolic intelligence for real work:
-personal operations, enterprise workflows, deployment, research, code,
-documents, communication, and proof-backed execution.
+Govern every symbolic action before it runs.
+
+Governed symbolic execution for workflows, approvals, budgets, audit trails,
+lineage, deployment controls, and proof-backed actions.
 ```
 
 ## Short Product Description
 
 ```text
-Mullu helps people and organizations turn goals into governed work.
-It plans, executes, verifies, records, and improves operational workflows
-through explicit authority, policy gates, audit receipts, and bounded capability
-surfaces.
+Mullu Govern helps people and organizations turn goals into governed work. It
+routes symbolic workflows through explicit authority, policy gates, budgets,
+audit receipts, and bounded capability surfaces before execution.
 ```
 
 ## Longer Product Description
 
 ```text
-Mullu is the flagship product by Mullusi: a governed symbolic intelligence for
-personal, team, enterprise, and deployment work. It combines conversational work
-handling, connector execution, browser and terminal surfaces, policy enforcement,
-budget control, audit trails, and proof-backed closure.
+Mullu Govern is the governed execution product by Mullusi for symbolic
+workflows, approvals, budgets, audit trails, lineage, deployment controls,
+policy enforcement, skill boundaries, and proof-backed actions.
 
-Mullu is not loose automation. Every meaningful effect passes through authority,
-constraint, verification, and memory admission.
+Mullu Govern is not loose automation. Every meaningful effect passes through
+authority, constraint, verification, and memory admission.
 ```
 
 ## Surface Copy
 
 | Surface | Public copy |
 | --- | --- |
-| Mullu | Governed work across files, research, workflows, deployment, connectors, and memory |
+| Mullu Govern | Governed execution across symbolic workflows, approvals, budgets, traces, audit, lineage, deployment controls, and proof-backed actions |
+| Mullu Proof | Evidence, receipts, proof stamps, lineage packages, and compliance exports |
+| Mullu Ledger | Budgets, spend limits, payment states, settlements, and financial audit evidence |
 | Mullu Inspect | Symbolic browser inspection and evidence capture |
 | Mullu CLI | Terminal-native governed execution |
 | Mullu Code | Repository work, code authoring, review, tests, and release support |
 | Mullu Desk | Computer-use workflows across documents, local apps, and workspace actions |
-| Mullu Control Plane | Enterprise governance, approval, audit, budgets, lineage, and deployment controls |
+| Mullu Control Plane | Internal/admin governance, approval, audit, budgets, lineage, and deployment controls |
 
 ## Trust Copy
 
@@ -58,9 +59,9 @@ approval-gated when risk requires it.
 ```
 
 ```text
-Mullu preserves the causal chain behind work: who asked, what changed, which
-constraints applied, what evidence closed the task, and what memory was admitted
-afterward.
+Mullu Govern preserves the causal chain behind work: who asked, what changed,
+which constraints applied, what evidence closed the task, and what memory was
+admitted afterward.
 ```
 
 ## First-Reference Rule
@@ -68,13 +69,13 @@ afterward.
 Use this once per public surface:
 
 ```text
-Mullu, by Mullusi
+Mullu Govern, by Mullusi
 ```
 
 Then use:
 
 ```text
-Mullu
+Mullu Govern
 ```
 
 Do not use:

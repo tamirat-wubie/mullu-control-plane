@@ -185,7 +185,7 @@ understated in the README.
 5. Rate Limit                (conditional on engine present)
 6. Content Safety (input)    (conditional on engine present)
 7. Budget                    (conditional on engine present)
-8. LLM call
+8. Model provider call
 9. Content Safety (output)   (conditional on engine present, NOT in HTTP chain)
 10. PII redaction            (conditional on scanner present, NOT in HTTP chain)
 11. Audit record
@@ -302,7 +302,7 @@ explicit post-dispatch mutating checkpoints.
 
 Passing the chain means the operation was admitted to the governed
 plane. It does not mean the operation completed correctly. Failures
-during dispatch (LLM errors, network faults, downstream service
+during dispatch (model provider errors, network faults, downstream service
 denials) are recorded in the audit trail and the transition receipt
 but are not chain failures.
 

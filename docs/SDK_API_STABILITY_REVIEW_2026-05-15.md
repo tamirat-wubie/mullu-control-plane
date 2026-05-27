@@ -7,7 +7,7 @@ Invariants: technical contract surfaces remain stable unless a versioned compati
 
 ## Decision Boundary
 
-Mullu is the proprietary product name. Mullu Platform remains the `platform_term` where existing SDK/API contracts, schema references, OpenAPI metadata, generated client expectations, or integration documentation require a stable technical name.
+Mullu Govern is the public product name. Mullu Platform remains the `platform_term` where existing SDK/API contracts, schema references, OpenAPI metadata, generated client expectations, or integration documentation require a stable technical name.
 
 Do not rename technical contract surfaces solely for public naming cleanup.
 
@@ -38,6 +38,6 @@ This review records the technical boundary only. It does not close trademark, do
 
 STATUS:
   Completeness: 100%
-  Invariants verified: [Mullu product name boundary, Mullu Platform technical contract boundary, versioned compatibility migration rule, paid public launch remains blocked]
+  Invariants verified: [Mullu Govern public product boundary, Mullu Platform technical contract boundary, versioned compatibility migration rule, paid public launch remains blocked]
   Open issues: [official trademark searches, domain ownership evidence, legal review, homepage update, app title update]
   Next action: keep SDK/API contract names stable until a versioned compatibility migration is explicitly approved

@@ -1,0 +1,753 @@
+"""Submit a verified trust-ledger anchor export to an external anchor ledger.
+
+Purpose: convert a previously verified trust-ledger anchor export into a
+signed, append-only submission receipt.
+Governance scope: operator-authorized anchor submission, receipt replay,
+tamper-evident ledger chaining, and fail-closed verification.
+Dependencies: scripts.verify_anchor_receipt and trust-ledger submission schema.
+Invariants:
+  - Submission is blocked unless the operator supplies an explicit authority ref
+    and confirmation flag.
+  - Bundle, anchor receipt, artifact, and package files are verified before any
+    ledger append occurs.
+  - The submission ledger is hash-chained and verified before append.
+  - Submission receipts do not replace terminal closure certificates.
+"""
+
+from __future__ import annotations
+
+import argparse
+import hashlib
+import hmac
+import json
+import os
+import sys
+import urllib.error
+import urllib.parse
+import urllib.request
+from pathlib import Path
+from typing import Any, Callable
+
+ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from scripts.validate_schemas import _load_schema, _validate_schema_instance  # noqa: E402
+from scripts.verify_anchor_receipt import verify_anchor_receipt_files  # noqa: E402
+
+
+SUBMISSION_RECEIPT_SCHEMA_PATH = ROOT / "schemas" / "trust_ledger_anchor_submission_receipt.schema.json"
+ZERO_HASH = "0" * 64
+SUBMISSION_STATUS = "submitted"
+MAX_REMOTE_RESPONSE_BYTES = 65_536
+MAX_REMOTE_TIMEOUT_SECONDS = 30.0
+UrlOpen = Callable[..., Any]
+
+
+def submit_trust_ledger_anchor_export(
+    *,
+    bundle_path: Path,
+    receipt_path: Path,
+    artifacts_path: Path,
+    package_path: Path,
+    ledger_path: Path,
+    operator_id: str,
+    authority_ref: str,
+    submitted_at: str,
+    verification_secret: str,
+    submission_secret: str,
+    signature_key_id: str,
+    confirm_submit: bool,
+    receipt_out: Path | None = None,
+    remote_submit_url: str = "",
+    allow_remote_submit: bool = False,
+    remote_api_token: str = "",
+    remote_timeout_seconds: float = 10.0,
+    urlopen: UrlOpen | None = None,
+    strict: bool = False,
+) -> dict[str, Any]:
+    """Verify one anchor export and append a signed submission receipt."""
+    if not confirm_submit:
+        return _report(valid=False, reason="operator_confirmation_required")
+    if not operator_id:
+        return _report(valid=False, reason="operator_id_required")
+    if not _authority_ref_allowed(authority_ref):
+        return _report(valid=False, reason="authority_ref_invalid")
+    if not submitted_at:
+        return _report(valid=False, reason="submitted_at_required")
+    if not submission_secret:
+        return _report(valid=False, reason="submission_secret_required")
+    if not signature_key_id:
+        return _report(valid=False, reason="signature_key_id_required")
+    if remote_submit_url and not allow_remote_submit:
+        return _report(valid=False, reason="remote_submission_confirmation_required")
+    if allow_remote_submit and not remote_submit_url:
+        return _report(valid=False, reason="remote_submit_url_required")
+    if allow_remote_submit and not remote_api_token:
+        return _report(valid=False, reason="remote_api_token_required")
+    remote_url_error = _validate_remote_submit_url(remote_submit_url) if remote_submit_url else ""
+    if remote_url_error:
+        return _report(valid=False, reason=remote_url_error)
+    if (remote_submit_url or allow_remote_submit) and (
+        remote_timeout_seconds <= 0 or remote_timeout_seconds > MAX_REMOTE_TIMEOUT_SECONDS
+    ):
+        return _report(valid=False, reason="remote_timeout_seconds_invalid")
+
+    verification = verify_anchor_receipt_files(
+        bundle_path=bundle_path,
+        receipt_path=receipt_path,
+        artifacts_path=artifacts_path,
+        package_path=package_path,
+        signing_secret=verification_secret,
+        strict=strict,
+    )
+    if verification["valid"] is not True:
+        return _report(
+            valid=False,
+            reason=f"anchor_verification_failed:{verification['reason']}",
+            anchor_verification=verification,
+        )
+    if verification["package_present"] is not True or verification["package_valid"] is not True:
+        return _report(
+            valid=False,
+            reason="package_verification_required",
+            anchor_verification=verification,
+        )
+
+    receipt_payload = _read_json_object(receipt_path, "anchor_receipt")
+    package_payload = _read_json_object(package_path, "package")
+    read_error = _first_read_error(receipt_payload, package_payload)
+    if read_error:
+        return _report(valid=False, **read_error, anchor_verification=verification)
+
+    ledger_state = verify_submission_ledger(ledger_path=ledger_path, signing_secret=submission_secret)
+    if ledger_state["valid"] is not True:
+        return _report(
+            valid=False,
+            reason=f"submission_ledger_invalid:{ledger_state['reason']}",
+            anchor_verification=verification,
+            ledger_state=ledger_state,
+        )
+
+    ledger_sequence = int(ledger_state["submission_count"]) + 1
+    previous_submission_hash = str(ledger_state["latest_submission_hash"])
+    remote_submission = _remote_submission_report(valid=True, reason="remote_submission_not_requested")
+    external_anchor_ref = f"ledger://trust-ledger-anchor-submissions/{ledger_sequence}/{verification['anchor_receipt_id']}"
+    metadata_extra: dict[str, Any] = {}
+    if allow_remote_submit:
+        remote_payload = _build_remote_submission_payload(
+            verification=verification,
+            anchor_receipt=receipt_payload["payload"],
+            package=package_payload["payload"],
+            operator_id=operator_id,
+            authority_ref=authority_ref,
+            submitted_at=submitted_at,
+            ledger_sequence=ledger_sequence,
+            previous_submission_hash=previous_submission_hash,
+        )
+        remote_submission = _submit_remote_transparency_log(
+            submit_url=remote_submit_url,
+            api_token=remote_api_token,
+            timeout_seconds=remote_timeout_seconds,
+            payload=remote_payload,
+            urlopen=urlopen or urllib.request.urlopen,
+        )
+        if remote_submission["valid"] is not True:
+            return _report(
+                valid=False,
+                reason=f"remote_submission_failed:{remote_submission['reason']}",
+                anchor_verification=verification,
+                ledger_state=ledger_state,
+                remote_submission=remote_submission,
+            )
+        external_anchor_ref = str(remote_submission["external_anchor_ref"])
+        metadata_extra = {
+            "remote_submission_url": remote_submit_url,
+            "remote_submission_payload_hash": remote_submission["submission_payload_hash"],
+            "remote_response_hash": remote_submission["remote_response_hash"],
+            "remote_receipt_hash": remote_submission["remote_receipt_hash"],
+            "remote_status_code": remote_submission["status_code"],
+        }
+
+    submission_receipt = _build_submission_receipt(
+        verification=verification,
+        anchor_receipt=receipt_payload["payload"],
+        package=package_payload["payload"],
+        ledger_path=ledger_path,
+        ledger_sequence=ledger_sequence,
+        previous_submission_hash=previous_submission_hash,
+        external_anchor_ref=external_anchor_ref,
+        operator_id=operator_id,
+        authority_ref=authority_ref,
+        submitted_at=submitted_at,
+        signing_secret=submission_secret,
+        signature_key_id=signature_key_id,
+        metadata_extra=metadata_extra,
+    )
+    schema_errors = _validate_schema_instance(_load_schema(SUBMISSION_RECEIPT_SCHEMA_PATH), submission_receipt)
+    if schema_errors:
+        return _report(
+            valid=False,
+            reason="submission_receipt_schema_validation_failed",
+            schema_valid=False,
+            schema_errors=schema_errors if strict else schema_errors[:10],
+            anchor_verification=verification,
+            ledger_state=ledger_state,
+            remote_submission=remote_submission,
+        )
+
+    _append_jsonl(ledger_path, submission_receipt)
+    output_files = {"ledger": str(ledger_path)}
+    if receipt_out is not None:
+        _write_json(receipt_out, submission_receipt)
+        output_files["submission_receipt"] = str(receipt_out)
+
+    return _report(
+        valid=True,
+        reason="anchor_submission_recorded",
+        submitted=True,
+        schema_valid=True,
+        schema_errors=[],
+        anchor_verification=verification,
+        ledger_state=ledger_state,
+        remote_submission=remote_submission,
+        submission_receipt=submission_receipt,
+        output_files=output_files,
+    )
+
+
+def verify_submission_ledger(*, ledger_path: Path, signing_secret: str = "") -> dict[str, Any]:
+    """Replay the submission ledger hash chain and optional HMAC signatures."""
+    if not ledger_path.exists():
+        return _ledger_report(valid=True, reason="ledger_empty")
+
+    latest_submission_hash = ZERO_HASH
+    latest_submission_id = ""
+    submission_count = 0
+    schema = _load_schema(SUBMISSION_RECEIPT_SCHEMA_PATH)
+    try:
+        lines = ledger_path.read_text(encoding="utf-8").splitlines()
+    except (OSError, UnicodeDecodeError) as exc:
+        return _ledger_report(valid=False, reason="ledger_read_failed", schema_errors=[type(exc).__name__])
+
+    for line_number, line in enumerate(lines, 1):
+        if not line:
+            return _ledger_report(
+                valid=False,
+                reason="ledger_blank_line",
+                latest_submission_hash=latest_submission_hash,
+                latest_submission_id=latest_submission_id,
+                submission_count=submission_count,
+            )
+        try:
+            payload = json.loads(line)
+        except json.JSONDecodeError:
+            return _ledger_report(
+                valid=False,
+                reason="ledger_json_invalid",
+                latest_submission_hash=latest_submission_hash,
+                latest_submission_id=latest_submission_id,
+                submission_count=submission_count,
+            )
+        if not isinstance(payload, dict):
+            return _ledger_report(
+                valid=False,
+                reason="ledger_record_must_be_object",
+                latest_submission_hash=latest_submission_hash,
+                latest_submission_id=latest_submission_id,
+                submission_count=submission_count,
+            )
+        schema_errors = _validate_schema_instance(schema, payload)
+        if schema_errors:
+            return _ledger_report(
+                valid=False,
+                reason="ledger_record_schema_validation_failed",
+                schema_valid=False,
+                schema_errors=schema_errors[:10],
+                latest_submission_hash=latest_submission_hash,
+                latest_submission_id=latest_submission_id,
+                submission_count=submission_count,
+            )
+        if int(payload["ledger_sequence"]) != line_number:
+            return _ledger_report(
+                valid=False,
+                reason="ledger_sequence_mismatch",
+                latest_submission_hash=latest_submission_hash,
+                latest_submission_id=latest_submission_id,
+                submission_count=submission_count,
+            )
+        if str(payload["previous_submission_hash"]) != latest_submission_hash:
+            return _ledger_report(
+                valid=False,
+                reason="ledger_previous_hash_mismatch",
+                latest_submission_hash=latest_submission_hash,
+                latest_submission_id=latest_submission_id,
+                submission_count=submission_count,
+            )
+        expected_hash = _submission_hash(payload)
+        if not hmac.compare_digest(expected_hash, str(payload["submission_hash"])):
+            return _ledger_report(
+                valid=False,
+                reason="ledger_submission_hash_mismatch",
+                latest_submission_hash=latest_submission_hash,
+                latest_submission_id=latest_submission_id,
+                submission_count=submission_count,
+            )
+        if signing_secret:
+            expected_signature = _submission_signature(payload, signing_secret=signing_secret)
+            if not hmac.compare_digest(expected_signature, str(payload["signature"])):
+                return _ledger_report(
+                    valid=False,
+                    reason="ledger_submission_signature_mismatch",
+                    latest_submission_hash=latest_submission_hash,
+                    latest_submission_id=latest_submission_id,
+                    submission_count=submission_count,
+                )
+        latest_submission_hash = str(payload["submission_hash"])
+        latest_submission_id = str(payload["submission_id"])
+        submission_count += 1
+
+    return _ledger_report(
+        valid=True,
+        reason="ledger_verified",
+        latest_submission_hash=latest_submission_hash,
+        latest_submission_id=latest_submission_id,
+        submission_count=submission_count,
+    )
+
+
+def _build_submission_receipt(
+    *,
+    verification: dict[str, Any],
+    anchor_receipt: dict[str, Any],
+    package: dict[str, Any],
+    ledger_path: Path,
+    ledger_sequence: int,
+    previous_submission_hash: str,
+    external_anchor_ref: str,
+    operator_id: str,
+    authority_ref: str,
+    submitted_at: str,
+    signing_secret: str,
+    signature_key_id: str,
+    metadata_extra: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    anchor_receipt_id = str(verification["anchor_receipt_id"])
+    payload: dict[str, Any] = {
+        "schema_version": 1,
+        "submission_id": "trust-anchor-submission-pending",
+        "bundle_id": str(verification["bundle_id"]),
+        "anchor_receipt_id": anchor_receipt_id,
+        "package_id": str(verification["package_id"]),
+        "tenant_id": str(package["tenant_id"]),
+        "command_id": str(verification["command_id"]),
+        "terminal_certificate_id": str(verification["terminal_certificate_id"]),
+        "anchor_target": str(anchor_receipt["anchor_target"]),
+        "external_anchor_ref": external_anchor_ref,
+        "external_anchor_status": SUBMISSION_STATUS,
+        "operator_id": operator_id,
+        "authority_ref": authority_ref,
+        "submitted_at": submitted_at,
+        "ledger_path": str(ledger_path),
+        "ledger_sequence": ledger_sequence,
+        "previous_submission_hash": previous_submission_hash,
+        "package_hash": str(verification["package_hash"]),
+        "anchor_receipt_hash": str(anchor_receipt["anchor_receipt_hash"]),
+        "anchor_verification_reason": str(verification["reason"]),
+        "submission_hash": ZERO_HASH,
+        "signature_key_id": signature_key_id,
+        "signature": "hmac-sha256:unsigned",
+        "metadata": {
+            "submission_is_not_terminal_closure": True,
+            "requires_operator_confirmation": True,
+            "source_package_created_at": str(package["created_at"]),
+            **(metadata_extra or {}),
+        },
+    }
+    submission_hash = _submission_hash(payload)
+    payload["submission_id"] = f"trust-anchor-submission-{submission_hash[:16]}"
+    payload["submission_hash"] = submission_hash
+    payload["signature"] = _submission_signature(payload, signing_secret=signing_secret)
+    return payload
+
+
+def _build_remote_submission_payload(
+    *,
+    verification: dict[str, Any],
+    anchor_receipt: dict[str, Any],
+    package: dict[str, Any],
+    operator_id: str,
+    authority_ref: str,
+    submitted_at: str,
+    ledger_sequence: int,
+    previous_submission_hash: str,
+) -> dict[str, Any]:
+    payload = {
+        "schema_version": 1,
+        "bundle_id": str(verification["bundle_id"]),
+        "anchor_receipt_id": str(verification["anchor_receipt_id"]),
+        "package_id": str(verification["package_id"]),
+        "tenant_id": str(package["tenant_id"]),
+        "command_id": str(verification["command_id"]),
+        "terminal_certificate_id": str(verification["terminal_certificate_id"]),
+        "anchor_target": str(anchor_receipt["anchor_target"]),
+        "operator_id": operator_id,
+        "authority_ref": authority_ref,
+        "submitted_at": submitted_at,
+        "ledger_sequence": ledger_sequence,
+        "previous_submission_hash": previous_submission_hash,
+        "package_hash": str(verification["package_hash"]),
+        "anchor_receipt_hash": str(anchor_receipt["anchor_receipt_hash"]),
+        "anchor_verification_reason": str(verification["reason"]),
+    }
+    return {**payload, "submission_payload_hash": _stable_hash(payload)}
+
+
+def _submit_remote_transparency_log(
+    *,
+    submit_url: str,
+    api_token: str,
+    timeout_seconds: float,
+    payload: dict[str, Any],
+    urlopen: UrlOpen,
+) -> dict[str, Any]:
+    submission_payload_hash = str(payload["submission_payload_hash"])
+    request_body = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    request = urllib.request.Request(
+        submit_url,
+        data=request_body,
+        method="POST",
+        headers={
+            "Authorization": f"Bearer {api_token}",
+            "Content-Type": "application/json",
+            "Idempotency-Key": submission_payload_hash,
+            "X-Mullu-Anchor-Submission-Hash": submission_payload_hash,
+        },
+    )
+    try:
+        with urlopen(request, timeout=timeout_seconds) as response:
+            status_code = int(getattr(response, "status", getattr(response, "code", 0)) or 0)
+            body = response.read(MAX_REMOTE_RESPONSE_BYTES + 1)
+    except urllib.error.HTTPError as exc:
+        return _remote_submission_report(
+            valid=False,
+            reason="remote_http_error",
+            status_code=int(exc.code),
+            submission_payload_hash=submission_payload_hash,
+        )
+    except (TimeoutError, OSError, ValueError, urllib.error.URLError) as exc:
+        return _remote_submission_report(
+            valid=False,
+            reason=f"remote_transport_error:{type(exc).__name__}",
+            submission_payload_hash=submission_payload_hash,
+        )
+    if len(body) > MAX_REMOTE_RESPONSE_BYTES:
+        return _remote_submission_report(
+            valid=False,
+            reason="remote_response_too_large",
+            status_code=status_code,
+            submission_payload_hash=submission_payload_hash,
+        )
+    if status_code < 200 or status_code >= 300:
+        return _remote_submission_report(
+            valid=False,
+            reason="remote_status_not_accepted",
+            status_code=status_code,
+            submission_payload_hash=submission_payload_hash,
+        )
+    try:
+        remote_payload = json.loads(body.decode("utf-8"))
+    except (json.JSONDecodeError, UnicodeDecodeError):
+        return _remote_submission_report(
+            valid=False,
+            reason="remote_response_json_invalid",
+            status_code=status_code,
+            submission_payload_hash=submission_payload_hash,
+        )
+    if not isinstance(remote_payload, dict):
+        return _remote_submission_report(
+            valid=False,
+            reason="remote_response_must_be_object",
+            status_code=status_code,
+            submission_payload_hash=submission_payload_hash,
+        )
+    observed_hash = str(remote_payload.get("observed_submission_payload_hash", ""))
+    if observed_hash != submission_payload_hash:
+        return _remote_submission_report(
+            valid=False,
+            reason="remote_submission_payload_hash_mismatch",
+            status_code=status_code,
+            submission_payload_hash=submission_payload_hash,
+            observed_submission_payload_hash=observed_hash,
+            remote_response_hash=_stable_hash(remote_payload),
+        )
+    external_anchor_ref = str(remote_payload.get("external_anchor_ref", ""))
+    if _external_anchor_ref_allowed(external_anchor_ref) is not True:
+        return _remote_submission_report(
+            valid=False,
+            reason="remote_external_anchor_ref_invalid",
+            status_code=status_code,
+            submission_payload_hash=submission_payload_hash,
+            observed_submission_payload_hash=observed_hash,
+            remote_response_hash=_stable_hash(remote_payload),
+        )
+    return _remote_submission_report(
+        valid=True,
+        reason="remote_submission_accepted",
+        status_code=status_code,
+        external_anchor_ref=external_anchor_ref,
+        submission_payload_hash=submission_payload_hash,
+        observed_submission_payload_hash=observed_hash,
+        remote_receipt_hash=str(remote_payload.get("remote_receipt_hash", "")),
+        remote_response_hash=_stable_hash(remote_payload),
+    )
+
+
+def _read_json_object(path: Path, label: str) -> dict[str, Any]:
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError, UnicodeDecodeError) as exc:
+        return {
+            "reason": f"{label}_read_failed",
+            "schema_valid": False,
+            "schema_errors": [type(exc).__name__],
+        }
+    if not isinstance(payload, dict):
+        return {
+            "reason": f"{label}_json_must_be_object",
+            "schema_valid": False,
+            "schema_errors": [f"{label} JSON must be an object"],
+        }
+    return {"reason": "", "payload": payload}
+
+
+def _first_read_error(*loaded_payloads: dict[str, Any]) -> dict[str, Any] | None:
+    for loaded in loaded_payloads:
+        if loaded.get("reason"):
+            return {
+                "reason": str(loaded["reason"]),
+                "schema_valid": bool(loaded.get("schema_valid", False)),
+                "schema_errors": list(loaded.get("schema_errors", [])),
+            }
+    return None
+
+
+def _authority_ref_allowed(value: str) -> bool:
+    if not value or value.strip() != value or len(value) > 256:
+        return False
+    if any(character.isspace() or ord(character) < 32 for character in value):
+        return False
+    return value.startswith(("proof://", "authority://"))
+
+
+def _validate_remote_submit_url(value: str) -> str:
+    try:
+        parsed = urllib.parse.urlparse(value)
+    except ValueError:
+        return "remote_submit_url_invalid"
+    if parsed.scheme != "https":
+        return "remote_submit_url_must_be_https"
+    if not parsed.netloc or not parsed.hostname:
+        return "remote_submit_url_host_required"
+    if parsed.username or parsed.password:
+        return "remote_submit_url_credentials_forbidden"
+    if parsed.query or parsed.fragment:
+        return "remote_submit_url_query_fragment_forbidden"
+    return ""
+
+
+def _external_anchor_ref_allowed(value: str) -> bool:
+    if not value or value.strip() != value or len(value) > 512:
+        return False
+    if any(character.isspace() or ord(character) < 32 for character in value):
+        return False
+    parsed = urllib.parse.urlparse(value)
+    return parsed.scheme in {"https", "ledger"} and bool(parsed.netloc)
+
+
+def _append_jsonl(path: Path, payload: dict[str, Any]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("a", encoding="utf-8", newline="\n") as handle:
+        handle.write(json.dumps(payload, sort_keys=True, separators=(",", ":")) + "\n")
+
+
+def _write_json(path: Path, payload: Any) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
+
+def _submission_hash(payload: dict[str, Any]) -> str:
+    hashed_payload = dict(payload)
+    hashed_payload["submission_id"] = ""
+    hashed_payload["submission_hash"] = ""
+    hashed_payload["signature"] = ""
+    return _stable_hash(hashed_payload)
+
+
+def _submission_signature(payload: dict[str, Any], *, signing_secret: str) -> str:
+    signed_payload = dict(payload)
+    signed_payload["signature"] = ""
+    encoded = json.dumps(signed_payload, sort_keys=True, separators=(",", ":"), default=str).encode("utf-8")
+    digest = hmac.new(signing_secret.encode("utf-8"), encoded, hashlib.sha256).hexdigest()
+    return f"hmac-sha256:{digest}"
+
+
+def _stable_hash(payload: Any) -> str:
+    encoded = json.dumps(payload, sort_keys=True, separators=(",", ":"), default=str).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
+
+
+def _report(
+    *,
+    valid: bool,
+    reason: str,
+    submitted: bool = False,
+    schema_valid: bool = True,
+    schema_errors: list[str] | None = None,
+    anchor_verification: dict[str, Any] | None = None,
+    ledger_state: dict[str, Any] | None = None,
+    remote_submission: dict[str, Any] | None = None,
+    submission_receipt: dict[str, Any] | None = None,
+    output_files: dict[str, str] | None = None,
+) -> dict[str, Any]:
+    receipt = submission_receipt or {}
+    verification = anchor_verification or {}
+    return {
+        "valid": valid,
+        "reason": reason,
+        "submitted": submitted,
+        "schema_valid": schema_valid,
+        "schema_errors": schema_errors or [],
+        "bundle_id": str(receipt.get("bundle_id", verification.get("bundle_id", ""))),
+        "anchor_receipt_id": str(receipt.get("anchor_receipt_id", verification.get("anchor_receipt_id", ""))),
+        "package_id": str(receipt.get("package_id", verification.get("package_id", ""))),
+        "submission_id": str(receipt.get("submission_id", "")),
+        "ledger_path": str(receipt.get("ledger_path", "")),
+        "ledger_sequence": int(receipt.get("ledger_sequence", 0) or 0),
+        "previous_submission_hash": str(receipt.get("previous_submission_hash", "")),
+        "submission_hash": str(receipt.get("submission_hash", "")),
+        "signature_key_id": str(receipt.get("signature_key_id", "")),
+        "anchor_verification": verification,
+        "ledger_state": ledger_state or {},
+        "remote_submission": remote_submission or {},
+        "submission_receipt": receipt,
+        "output_files": output_files or {},
+    }
+
+
+def _ledger_report(
+    *,
+    valid: bool,
+    reason: str,
+    schema_valid: bool = True,
+    schema_errors: list[str] | None = None,
+    latest_submission_hash: str = ZERO_HASH,
+    latest_submission_id: str = "",
+    submission_count: int = 0,
+) -> dict[str, Any]:
+    return {
+        "valid": valid,
+        "reason": reason,
+        "schema_valid": schema_valid,
+        "schema_errors": schema_errors or [],
+        "latest_submission_hash": latest_submission_hash,
+        "latest_submission_id": latest_submission_id,
+        "submission_count": submission_count,
+    }
+
+
+def _remote_submission_report(
+    *,
+    valid: bool,
+    reason: str,
+    status_code: int = 0,
+    external_anchor_ref: str = "",
+    submission_payload_hash: str = "",
+    observed_submission_payload_hash: str = "",
+    remote_receipt_hash: str = "",
+    remote_response_hash: str = "",
+) -> dict[str, Any]:
+    return {
+        "valid": valid,
+        "reason": reason,
+        "status_code": status_code,
+        "external_anchor_ref": external_anchor_ref,
+        "submission_payload_hash": submission_payload_hash,
+        "observed_submission_payload_hash": observed_submission_payload_hash,
+        "remote_receipt_hash": remote_receipt_hash,
+        "remote_response_hash": remote_response_hash,
+    }
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description="Submit a verified trust-ledger anchor export")
+    parser.add_argument("--bundle", required=True, type=Path, help="Path to trust-ledger bundle JSON")
+    parser.add_argument("--receipt", required=True, type=Path, help="Path to external anchor receipt JSON")
+    parser.add_argument("--artifacts", required=True, type=Path, help="Path to evidence artifact array JSON")
+    parser.add_argument("--package", required=True, type=Path, help="Path to trust-ledger export package JSON")
+    parser.add_argument("--ledger-path", required=True, type=Path, help="Append-only external anchor ledger JSONL path")
+    parser.add_argument("--receipt-out", type=Path, help="Optional path for the signed submission receipt JSON")
+    parser.add_argument("--operator-id", required=True, help="Operator identity authorizing the submission")
+    parser.add_argument("--authority-ref", required=True, help="proof:// or authority:// reference for operator authority")
+    parser.add_argument("--submitted-at", required=True, help="Submission timestamp as an RFC3339 date-time")
+    parser.add_argument(
+        "--verification-secret",
+        default=os.environ.get("MULLU_TRUST_LEDGER_ANCHOR_SECRET", ""),
+        help="Anchor HMAC secret; defaults to MULLU_TRUST_LEDGER_ANCHOR_SECRET",
+    )
+    parser.add_argument(
+        "--submission-secret",
+        default=os.environ.get("MULLU_TRUST_LEDGER_SUBMISSION_SECRET", ""),
+        help="Submission HMAC secret; defaults to MULLU_TRUST_LEDGER_SUBMISSION_SECRET",
+    )
+    parser.add_argument(
+        "--signature-key-id",
+        default=os.environ.get("MULLU_TRUST_LEDGER_SUBMISSION_KEY_ID", "anchor-submission-key"),
+    )
+    parser.add_argument("--remote-submit-url", default="", help="Optional HTTPS transparency-log submission endpoint")
+    parser.add_argument("--allow-remote-submit", action="store_true", help="Explicitly authorize remote HTTPS submit")
+    parser.add_argument(
+        "--remote-api-token",
+        default=os.environ.get("MULLU_TRUST_LEDGER_REMOTE_SUBMISSION_TOKEN", ""),
+        help="Remote submission bearer token; defaults to MULLU_TRUST_LEDGER_REMOTE_SUBMISSION_TOKEN",
+    )
+    parser.add_argument("--remote-timeout-seconds", type=float, default=10.0)
+    parser.add_argument("--confirm-submit", action="store_true", help="Explicitly authorize ledger append")
+    parser.add_argument("--strict", action="store_true", help="Return all schema errors")
+    parser.add_argument("--json", action="store_true", help="Print JSON report")
+    args = parser.parse_args(argv)
+
+    report = submit_trust_ledger_anchor_export(
+        bundle_path=args.bundle,
+        receipt_path=args.receipt,
+        artifacts_path=args.artifacts,
+        package_path=args.package,
+        ledger_path=args.ledger_path,
+        operator_id=args.operator_id,
+        authority_ref=args.authority_ref,
+        submitted_at=args.submitted_at,
+        verification_secret=args.verification_secret,
+        submission_secret=args.submission_secret,
+        signature_key_id=args.signature_key_id,
+        confirm_submit=args.confirm_submit,
+        receipt_out=args.receipt_out,
+        remote_submit_url=args.remote_submit_url,
+        allow_remote_submit=args.allow_remote_submit,
+        remote_api_token=args.remote_api_token,
+        remote_timeout_seconds=args.remote_timeout_seconds,
+        strict=args.strict,
+    )
+    if args.json:
+        print(json.dumps(report, indent=2, sort_keys=True))
+    else:
+        status = "submitted" if report["valid"] else "blocked"
+        print(f"anchor export submission {status}: {report['reason']}")
+        if report.get("submission_id"):
+            print(f"submission_id: {report['submission_id']}")
+        if report.get("ledger_path"):
+            print(f"ledger_path: {report['ledger_path']}")
+    return 0 if report["valid"] else 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

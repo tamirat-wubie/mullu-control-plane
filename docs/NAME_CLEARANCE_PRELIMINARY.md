@@ -1,6 +1,6 @@
 # Mullu Name Clearance Preliminary
 
-Purpose: record the initial non-legal clearance sweep for the `Mullu` flagship product name.
+Purpose: record the initial non-legal clearance sweep for the `Mullu` suite name and the `Mullu Govern` public product name.
 Governance scope: public name collision review, domain signal review, trademark search boundary, and launch-blocking evidence.
 Dependencies: `docs/PRODUCT_IDENTITY.md`.
 Invariants: this document is not legal advice; launch naming remains blocked until formal trademark and registrar checks are complete.
@@ -9,11 +9,13 @@ Invariants: this document is not legal advice; launch naming remains blocked unt
 
 | Field | Value |
 | --- | --- |
-| Candidate | Mullu |
+| Candidate | Mullu Govern |
+| Suite / family | Mullu |
 | Owner brand | Mullusi |
-| First-reference form | Mullu, by Mullusi |
-| Product role | Flagship governed symbolic intelligence product |
+| First-reference form | Mullu Govern, by Mullusi |
+| Product role | Governed symbolic execution product |
 | Technical architecture term | Mullu Platform |
+| Internal/admin technical surface | Mullu Control Plane |
 
 ## Preliminary Public Search Findings
 
@@ -30,10 +32,10 @@ Invariants: this document is not legal advice; launch naming remains blocked unt
 | `MULU` by MULU Corp. | Live/pending U.S. trademark records reported by public trademark mirrors in Class 9, Class 35, and Class 42-adjacent software/business/technical services | Similar spelling and similar software/service classes; not exact `MULLU`, but close enough for legal review | High review item |
 | Prior `MULU` by Mulu, Inc. | Public trademark mirror reports an older U.S. Class 42 registration as dead/abandoned | Historic software/service-adjacent mark; may affect clearance history and search strategy | Medium review item |
 
-No exact `MULLU` enterprise software, SaaS governance, browser extension,
-developer-tool, or symbolic runtime product conflict surfaced in the preliminary
-public search. However, the close `MULU` software/service filings require
-qualified trademark review before any public paid launch decision.
+No exact `MULLU GOVERN` or `MULLU` enterprise software, SaaS governance, browser
+extension, developer-tool, or symbolic runtime product conflict surfaced in the
+preliminary public search. However, the close `MULU` software/service filings
+require qualified trademark review before any public paid launch decision.
 
 ## Mullusi.com Initial Website Signal
 
@@ -46,7 +48,7 @@ clearance issue:
 2. The earliest public page can live at `mullusi.com/mullu` if standalone
    product domains are unavailable.
 3. Any homepage update must preserve the company/product split:
-   `Mullu, by Mullusi`.
+   `Mullu Govern, by Mullusi`.
 
 This signal requires direct deployment verification before launch because public
 index mirrors can lag the live site.
@@ -63,10 +65,10 @@ index mirrors can lag the live site.
 | Public trademark mirrors for close variant `MULU` | Returned live/pending records connected to software, business consulting, and technical services | Escalate close-variant review from medium to high |
 | USPTO TSDR official access path | USPTO FAQ confirms TSDR status lookup by serial number and an API-style status URL pattern | Add serial-specific official verification to the trademark runbook |
 
-The `MULU` findings do not automatically reject `Mullu`, but they change the
-clearance posture: official USPTO/TSDR review by serial number and attorney
-confusion analysis are now mandatory before `public_paid_launch_allowed` can
-become true.
+The `MULU` findings do not automatically reject `Mullu Govern` or the `Mullu`
+suite boundary, but they change the clearance posture: official USPTO/TSDR
+review by serial number and attorney confusion analysis are now mandatory before
+`public_paid_launch_allowed` can become true.
 
 ## Public Web Update 2026-05-15
 
@@ -108,9 +110,9 @@ ownership clearance.
 
 Before public launch or paid-user rollout, complete:
 
-1. USPTO search for `Mullu` in software/SaaS classes, including Class 9 and Class 42.
-2. EUIPO eSearch plus and TMview searches for `Mullu` across EU and participating offices.
-3. WIPO Global Brand Database search for `Mullu`.
+1. USPTO search for `Mullu Govern` and `Mullu` in software/SaaS classes, including Class 9 and Class 42.
+2. EUIPO eSearch plus and TMview searches for `Mullu Govern` and `Mullu` across EU and participating offices.
+3. WIPO Global Brand Database search for `Mullu Govern` and `Mullu`.
 4. Registrar availability checks for `mullu.ai`, `mullu.app`, `mullu.dev`, and `getmullu.com`.
 5. Common-law search across GitHub, npm, PyPI, Chrome Web Store, Microsoft Edge Add-ons, Firefox Add-ons, Product Hunt, Crunchbase, LinkedIn, and major app stores.
 6. Confusion analysis against `Mullu TV`, `The Last Mullu`, and close-variant `MULU` marks.
@@ -120,16 +122,16 @@ Before public launch or paid-user rollout, complete:
 
 | Authority | Tool | Required query |
 | --- | --- | --- |
-| USPTO | `https://tmsearch.uspto.gov` | Exact `MULLU`, exact `MULLUSI`, contains `MULLU`, phonetic/similar variants |
+| USPTO | `https://tmsearch.uspto.gov` | Exact `MULLU GOVERN`, exact `MULLU`, exact `MULLUSI`, contains `MULLU`, phonetic/similar variants |
 | USPTO ID Manual | `https://idm-tmng.uspto.gov` | Goods/services language for software, SaaS, browser extension, governance, and enterprise workflow terms |
-| WIPO | `https://branddb.wipo.int` | Exact `MULLU`, exact `MULLUSI`, Madrid and participating national/regional marks |
-| EUIPO | `https://euipo.europa.eu/eSearch` | Exact `MULLU`, exact `MULLUSI`, owners, representatives, bulletins |
+| WIPO | `https://branddb.wipo.int` | Exact `MULLU GOVERN`, exact `MULLU`, exact `MULLUSI`, Madrid and participating national/regional marks |
+| EUIPO | `https://euipo.europa.eu/eSearch` | Exact `MULLU GOVERN`, exact `MULLU`, exact `MULLUSI`, owners, representatives, bulletins |
 | TMview | `https://www.tmdn.org/tmview` | Participating national, international, and EU-level trade marks |
 | TMclass | `https://tmclass.tmdn.org` | Classification language for software/SaaS descriptions |
 
 ## Class Review Matrix
 
-| Class | Why it matters for Mullu |
+| Class | Why it matters for Mullu Govern |
 | --- | --- |
 | Nice Class 9 | Downloadable software, browser extensions, developer tools, CLI tooling, local runtime packages |
 | Nice Class 35 | Business workflow operations, administrative process support, enterprise operations services |
@@ -142,19 +144,19 @@ Before public launch or paid-user rollout, complete:
 
 | Type | Terms |
 | --- | --- |
-| Exact | `MULLU`, `Mullu`, `mullu` |
-| Owner pair | `MULLUSI`, `Mullusi`, `Mullu by Mullusi` |
-| Surface family | `Mullu Inspect`, `Mullu CLI`, `Mullu Code`, `Mullu Desk`, `Mullu Control Plane` |
+| Exact | `MULLU GOVERN`, `Mullu Govern`, `MULLU`, `Mullu`, `mullu` |
+| Owner pair | `MULLUSI`, `Mullusi`, `Mullu Govern by Mullusi`, `Mullu by Mullusi` |
+| Surface family | `Mullu Govern`, `Mullu Proof`, `Mullu Ledger`, `Mullu Inspect`, `Mullu CLI`, `Mullu Code`, `Mullu Desk`, `Mullu Control Plane` |
 | Similar spelling | `Mulu`, `Mullu`, `Muluu`, `Mullus`, `Mullusi` |
 | Sound-alike | `Moolu`, `Mulu`, `Mulu Generic`, `Mullu Generic` |
 
 ## Provisional Decision
 
-Proceed internally with `Mullu` as the flagship product name while preserving
-the unresolved legal and domain gates.
+Proceed internally with `Mullu Govern` as the public product name and `Mullu`
+as the suite/family while preserving the unresolved legal and domain gates.
 
-Do not announce paid public availability under `Mullu` until trademark and
-registrar checks close.
+Do not announce paid public availability under `Mullu Govern` until trademark
+and registrar checks close.
 
 ## Resolution Status
 

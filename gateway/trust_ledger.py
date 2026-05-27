@@ -33,6 +33,7 @@ EVIDENCE_ARTIFACT_TYPES = (
     "terminal_certificate",
     "learning_decision",
     "deployment_witness",
+    "orgos_event_receipt",
 )
 EXTERNAL_ANCHOR_STATUSES = ("pending", "anchored", "failed")
 EXTERNAL_ANCHOR_TARGETS = ("audit_chain", "transparency_log", "external_ledger", "regulatory_archive")
