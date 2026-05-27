@@ -13,6 +13,7 @@ Invariants:
   - Plan lookup observations carry bounded proof records.
   - Plan lookup proofs carry bounded active-surface records.
   - Manifest binding bootstrap carries bounded proof records.
+  - Manifest binding proofs carry bounded active-surface records.
   - Capability admission policy changes carry bounded proof records.
   - Capability policy proofs carry bounded runtime impact counts.
   - Capability discovery observations carry bounded proof records.
@@ -647,6 +648,11 @@ class ManifestBindingProof:
     admitted_capability_count: int
     manifest_gated: bool
     registered_agent_count: int
+    total_plan_count: int
+    active_plan_count: int
+    active_proposal_count: int
+    manifest_binding_proof_count_before: int
+    manifest_binding_proof_count_after: int
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -660,6 +666,15 @@ class ManifestBindingProof:
             "admitted_capability_count": self.admitted_capability_count,
             "manifest_gated": self.manifest_gated,
             "registered_agent_count": self.registered_agent_count,
+            "total_plan_count": self.total_plan_count,
+            "active_plan_count": self.active_plan_count,
+            "active_proposal_count": self.active_proposal_count,
+            "manifest_binding_proof_count_before": (
+                self.manifest_binding_proof_count_before
+            ),
+            "manifest_binding_proof_count_after": (
+                self.manifest_binding_proof_count_after
+            ),
         }
 
 
@@ -2188,7 +2203,8 @@ class AgentOrchestrator:
             if self.manifest_gated
             else "manifest binding ungated"
         )
-        proof_index = len(self._manifest_binding_proofs) + 1
+        manifest_binding_proof_count_before = len(self._manifest_binding_proofs)
+        proof_index = manifest_binding_proof_count_before + 1
         return ManifestBindingProof(
             proof_id=f"manifest-binding:{proof_index}",
             action=action,
@@ -2200,6 +2216,11 @@ class AgentOrchestrator:
             admitted_capability_count=admitted_capability_count,
             manifest_gated=self.manifest_gated,
             registered_agent_count=self.agent_count,
+            total_plan_count=self._total_plans,
+            active_plan_count=self._active_plan_count(),
+            active_proposal_count=self._active_proposal_count(),
+            manifest_binding_proof_count_before=manifest_binding_proof_count_before,
+            manifest_binding_proof_count_after=manifest_binding_proof_count_before + 1,
         )
 
     def _handoff_admission_error(
