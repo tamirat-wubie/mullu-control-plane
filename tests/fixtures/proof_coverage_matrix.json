@@ -6842,6 +6842,26 @@
         "ConnectorHealingReceipt"
       ],
       "request_proof": "request_proof",
+      "runtime_witness_anchor_aliases": {
+        "connector_self_healing_schema_valid": [
+          "connector_self_healing_receipt_schema_validates"
+        ],
+        "fallback_provider_requires_certification": [
+          "fallback_provider_switch_requires_certification_and_fresh_receipt"
+        ],
+        "missing_receipt_revokes_capability": [
+          "missing_receipt_revokes_capability_until_proof_restored"
+        ],
+        "provider_success_not_assumed": [
+          "retryable_provider_failure_emits_retry_receipt_not_success"
+        ],
+        "read_only_degradation_bounded": [
+          "read_only_degradation_is_bounded_for_non_write_failure"
+        ],
+        "write_failures_require_operator_review": [
+          "write_operation_failure_requires_operator_review"
+        ]
+      },
       "runtime_witnesses": [
         "provider_success_not_assumed",
         "write_failures_require_operator_review",
@@ -8798,7 +8818,7 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 1042,
+    "exact_test_anchor_count": 1048,
     "runtime_witness_count": 1112,
     "surfaces": [
       {
@@ -13738,19 +13758,49 @@
         "unanchored_witnesses": []
       },
       {
-        "anchored_witnesses": [],
-        "exact_test_anchor_count": 0,
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "tests/test_gateway/test_connector_self_healing.py::test_retryable_provider_failure_emits_retry_receipt_not_success"
+            ],
+            "witness": "provider_success_not_assumed"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_connector_self_healing.py::test_write_operation_failure_requires_operator_review"
+            ],
+            "witness": "write_failures_require_operator_review"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_connector_self_healing.py::test_missing_receipt_revokes_capability_until_proof_restored"
+            ],
+            "witness": "missing_receipt_revokes_capability"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_connector_self_healing.py::test_fallback_provider_switch_requires_certification_and_fresh_receipt"
+            ],
+            "witness": "fallback_provider_requires_certification"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_connector_self_healing.py::test_read_only_degradation_is_bounded_for_non_write_failure"
+            ],
+            "witness": "read_only_degradation_bounded"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_connector_self_healing.py::test_connector_self_healing_receipt_schema_validates"
+            ],
+            "witness": "connector_self_healing_schema_valid"
+          }
+        ],
+        "exact_test_anchor_count": 6,
         "runtime_witness_count": 6,
         "surface_id": "connector_self_healing",
-        "unanchored_witness_count": 6,
-        "unanchored_witnesses": [
-          "provider_success_not_assumed",
-          "write_failures_require_operator_review",
-          "missing_receipt_revokes_capability",
-          "fallback_provider_requires_certification",
-          "read_only_degradation_bounded",
-          "connector_self_healing_schema_valid"
-        ]
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
       },
       {
         "anchored_witnesses": [
@@ -16441,6 +16491,6 @@
         "unanchored_witnesses": []
       }
     ],
-    "unanchored_witness_count": 70
+    "unanchored_witness_count": 64
   }
 }

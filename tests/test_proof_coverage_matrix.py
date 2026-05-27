@@ -181,6 +181,8 @@ def test_witness_integrity_report_tracks_exact_test_anchors() -> None:
     assert surfaces["agent_identity"]["unanchored_witness_count"] == 0
     assert surfaces["claim_verification"]["exact_test_anchor_count"] == 6
     assert surfaces["claim_verification"]["unanchored_witness_count"] == 0
+    assert surfaces["connector_self_healing"]["exact_test_anchor_count"] == 6
+    assert surfaces["connector_self_healing"]["unanchored_witness_count"] == 0
     assert surfaces["code_intelligence_operator_read_model"]["exact_test_anchor_count"] >= 5
     assert surfaces["code_intelligence_operator_read_model"]["unanchored_witness_count"] == 0
     assert surfaces["data_export_lifecycle"]["exact_test_anchor_count"] >= 4
@@ -2813,8 +2815,13 @@ def test_runtime_state_persistence_lifecycle_surface_tracks_save_load_and_list()
 def test_connector_self_healing_surface_emits_bounded_recovery_receipts() -> None:
     matrix = _load_fixture()
     surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    witness_surfaces = {
+        surface["surface_id"]: surface
+        for surface in matrix["witness_integrity"]["surfaces"]
+    }
     closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
     healing_surface = surfaces["connector_self_healing"]
+    healing_witness_surface = witness_surfaces["connector_self_healing"]
     witnesses = set(healing_surface["runtime_witnesses"])
 
     assert healing_surface["coverage_state"] == "witnessed"
@@ -2828,6 +2835,8 @@ def test_connector_self_healing_surface_emits_bounded_recovery_receipts() -> Non
     assert "write_failures_require_operator_review" in witnesses
     assert "missing_receipt_revokes_capability" in witnesses
     assert "connector_self_healing_schema_valid" in witnesses
+    assert healing_witness_surface["exact_test_anchor_count"] == 6
+    assert healing_witness_surface["unanchored_witness_count"] == 0
     assert closure_actions["publish_connector_self_healing_receipt_contract"]["status"] == "closed"
 
 

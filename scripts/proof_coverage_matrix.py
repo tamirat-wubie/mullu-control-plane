@@ -4017,6 +4017,26 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "read_only_degradation_bounded",
                 "connector_self_healing_schema_valid",
             ],
+            runtime_witness_anchor_aliases={
+                "provider_success_not_assumed": [
+                    "retryable_provider_failure_emits_retry_receipt_not_success"
+                ],
+                "write_failures_require_operator_review": [
+                    "write_operation_failure_requires_operator_review"
+                ],
+                "missing_receipt_revokes_capability": [
+                    "missing_receipt_revokes_capability_until_proof_restored"
+                ],
+                "fallback_provider_requires_certification": [
+                    "fallback_provider_switch_requires_certification_and_fresh_receipt"
+                ],
+                "read_only_degradation_bounded": [
+                    "read_only_degradation_is_bounded_for_non_write_failure"
+                ],
+                "connector_self_healing_schema_valid": [
+                    "connector_self_healing_receipt_schema_validates"
+                ],
+            },
         ),
         _surface(
             "collaboration_cases",
