@@ -54,6 +54,8 @@ from .operator_models import (
     ObservationReport,
     OperatorRequest,
     OperatorRunReport,
+    SkillPromotionReceiptReadReport,
+    SkillPromotionReceiptReadRequest,
     SkillRequest,
     SkillRunReport,
     TeamQueueReconcileReport,

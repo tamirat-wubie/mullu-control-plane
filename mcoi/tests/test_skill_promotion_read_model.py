@@ -15,7 +15,7 @@ from __future__ import annotations
 from mcoi_runtime.app.bootstrap import bootstrap_runtime
 from mcoi_runtime.app.console import render_skill_promotion_receipts
 from mcoi_runtime.app.operator_loop import OperatorLoop
-from mcoi_runtime.app.skill_promotion_read_models import SkillPromotionReceiptReadRequest
+from mcoi_runtime.app.operator_models import SkillPromotionReceiptReadRequest
 from mcoi_runtime.app.view_models import SkillPromotionReceiptReadView
 from mcoi_runtime.contracts.skill import SkillLifecycle, SkillPromotionEvidence
 from mcoi_runtime.persistence.skill_promotion_store import SkillPromotionStore

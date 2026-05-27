@@ -211,17 +211,15 @@ def render_skill_summary(view: SkillSummaryView) -> str:
 
 
 def render_skill_promotion_receipts(view: SkillPromotionReceiptReadView) -> str:
-    """Render skill promotion evidence receipts as text."""
+    """Render skill promotion receipt evidence as text."""
     lines = [
         "=== Skill Promotion Receipts ===",
-        f"  request_id:       {view.request_id}",
-        f"  store_configured: {view.store_configured}",
-        f"  receipt_count:    {view.receipt_count}",
+        f"  request_id:         {view.request_id}",
+        f"  store_configured:   {view.store_configured}",
+        f"  receipt_count:      {view.receipt_count}",
+        f"  skill_id_filter:    {view.skill_id_filter or '(none)'}",
+        f"  lifecycle_filter:   {view.target_lifecycle_filter or '(none)'}",
     ]
-    if view.skill_id_filter:
-        lines.append(f"  skill_id_filter:  {view.skill_id_filter}")
-    if view.target_lifecycle_filter:
-        lines.append(f"  lifecycle_filter: {view.target_lifecycle_filter}")
     if view.structured_errors:
         lines.append(f"  errors ({len(view.structured_errors)}):")
         for err in view.structured_errors:
@@ -234,7 +232,7 @@ def render_skill_promotion_receipts(view: SkillPromotionReceiptReadView) -> str:
                 f"{receipt.evidence_id} skill={receipt.skill_id} "
                 f"target={receipt.target_lifecycle} "
                 f"records={receipt.execution_record_count} "
-                f"evidence_refs={receipt.evidence_ref_count} "
+                f"refs={receipt.evidence_ref_count} "
                 f"verifications={receipt.verification_count}"
             )
     return "\n".join(lines)
