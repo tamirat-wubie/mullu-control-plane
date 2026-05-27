@@ -16,9 +16,19 @@ from __future__ import annotations
 from dataclasses import replace
 from pathlib import Path
 
+from fastapi import HTTPException
+
+from mcoi_runtime.app.routers.assistant import (
+    FinanceOpsAssistantPlanRequest,
+    _operator_queue_item,
+    compile_finance_ops_assistant_plan,
+)
 from mcoi_runtime.assistant_kernel import (
+    AssistantExecutionPlan,
+    AssistantGoal,
     AssistantKernel,
     AssistantMemoryCandidate,
+    AssistantProfile,
     AssistantScheduleRequest,
     ConsentGrant,
     ConsentLedger,
@@ -43,6 +53,59 @@ from mcoi_runtime.assistant_kernel.goals import FINANCE_OPS_PAYMENT_CLOSURE_PRED
 ROOT = Path(__file__).resolve().parent.parent
 
 
+def _finance_ops_profile_and_goal(
+    invoice_ref: str = "invoice:1001",
+) -> tuple[AssistantProfile, AssistantGoal]:
+    profile = finance_ops_default_profile()
+    goal = finance_ops_invoice_payment_goal(
+        tenant_id="tenant-finance",
+        owner_id="finance-owner",
+        profile_id=profile.assistant_id,
+        invoice_ref=invoice_ref,
+        vendor_ref="vendor:acme",
+        created_at="2026-05-13T10:00:00+00:00",
+    )
+    return profile, goal
+
+
+def _active_finance_ops_consent_ledger(goal: AssistantGoal) -> ConsentLedger:
+    ledger = ConsentLedger()
+    ledger.grant(
+        ConsentGrant(
+            consent_id=consent_grant_id(
+                tenant_id=goal.tenant_id,
+                owner_id=goal.owner_id,
+                capability_id="payment.execute.with_approval",
+                scope="invoice_payment",
+                granted_at="2026-05-13T10:00:00+00:00",
+            ),
+            tenant_id=goal.tenant_id,
+            owner_id=goal.owner_id,
+            capability_id="payment.execute.with_approval",
+            scope="invoice_payment",
+            granted_by="finance-owner",
+            granted_at="2026-05-13T10:00:00+00:00",
+            expires_at="2026-05-13T12:00:00+00:00",
+            evidence_refs=("approval:finance-owner",),
+        )
+    )
+    return ledger
+
+
+def _compile_finance_ops_plan(
+    consent_ledger: ConsentLedger | None = None,
+) -> tuple[AssistantGoal, AssistantExecutionPlan]:
+    profile, goal = _finance_ops_profile_and_goal()
+    plan = AssistantKernel().compile_plan(
+        profile=profile,
+        goal=goal,
+        closure_contract=finance_ops_payment_closure_contract(goal.goal_id),
+        consent_ledger=consent_ledger,
+        now="2026-05-13T10:30:00+00:00",
+    )
+    return goal, plan
+
+
 def test_builtin_finance_ops_profile_preserves_skill_capability_boundary() -> None:
     profiles = builtin_assistant_profiles()
     finance_profile = finance_ops_default_profile()
@@ -62,6 +125,21 @@ def test_builtin_finance_ops_profile_preserves_skill_capability_boundary() -> No
     assert "signed_evidence_bundle" in finance_profile.evidence_required
     assert binding.binding_hash
     assert binding.metadata["skill_capability_boundary_enforced"] is True
+
+
+def test_assistant_profiles_read_model_bounded() -> None:
+    profile_models = tuple(profile.to_dict() for profile in builtin_assistant_profiles())
+    finance_profile = next(
+        profile for profile in profile_models if profile["assistant_id"] == "finance_ops.default"
+    )
+    exposed_fields = {field for profile in profile_models for field in profile}
+
+    assert len(profile_models) == 6
+    assert "payment.execute.with_approval" in finance_profile["allowed_capabilities"]
+    assert "payment.execute" in finance_profile["forbidden_capabilities"]
+    assert "signed_evidence_bundle" in finance_profile["evidence_required"]
+    assert "execution_authority_granted" not in exposed_fields
+    assert all(profile["owner_scope"] for profile in profile_models)
 
 
 def test_assistant_kernel_compiles_finance_ops_plan_with_consent_and_controls() -> None:
@@ -113,6 +191,94 @@ def test_assistant_kernel_compiles_finance_ops_plan_with_consent_and_controls() 
     assert "effect_reconciliation" in plan.required_controls
     assert plan.metadata["plan_is_not_execution"] is True
     assert plan.plan_hash
+
+
+def test_finance_ops_plan_requires_active_consent() -> None:
+    _, plan = _compile_finance_ops_plan()
+
+    assert plan.blocked is True
+    assert plan.steps == ()
+    assert "active_consent_required:payment.execute.with_approval" in plan.blocked_reasons
+    assert "terminal_closure" in plan.required_controls
+    assert plan.metadata["plan_is_not_execution"] is True
+    assert plan.plan_hash
+
+
+def test_finance_ops_plan_projects_operator_queue() -> None:
+    profile, goal = _finance_ops_profile_and_goal()
+    plan = AssistantKernel().compile_plan(
+        profile=profile,
+        goal=goal,
+        closure_contract=finance_ops_payment_closure_contract(goal.goal_id),
+        consent_ledger=_active_finance_ops_consent_ledger(goal),
+        now="2026-05-13T10:30:00+00:00",
+    )
+    queue_item = _operator_queue_item(
+        plan=plan,
+        tenant_id=goal.tenant_id,
+        owner_id=goal.owner_id,
+    )
+
+    assert plan.blocked is False
+    assert queue_item["state"] == "ready_for_governed_dispatch"
+    assert queue_item["plan_id"] == plan.plan_id
+    assert queue_item["step_count"] == len(plan.steps)
+    assert queue_item["required_controls"] == list(plan.required_controls)
+    assert queue_item["execution_authority_granted"] is False
+
+
+def test_assistant_plan_never_grants_execution_authority() -> None:
+    blocked_goal, blocked_plan = _compile_finance_ops_plan()
+    ready_profile, ready_goal = _finance_ops_profile_and_goal()
+    ready_plan = AssistantKernel().compile_plan(
+        profile=ready_profile,
+        goal=ready_goal,
+        closure_contract=finance_ops_payment_closure_contract(ready_goal.goal_id),
+        consent_ledger=_active_finance_ops_consent_ledger(ready_goal),
+        now="2026-05-13T10:30:00+00:00",
+    )
+    blocked_queue_item = _operator_queue_item(
+        plan=blocked_plan,
+        tenant_id=blocked_goal.tenant_id,
+        owner_id=blocked_goal.owner_id,
+    )
+    ready_queue_item = _operator_queue_item(
+        plan=ready_plan,
+        tenant_id=ready_goal.tenant_id,
+        owner_id=ready_goal.owner_id,
+    )
+
+    assert blocked_queue_item["execution_authority_granted"] is False
+    assert ready_queue_item["execution_authority_granted"] is False
+    assert blocked_queue_item["state"] == "blocked"
+    assert ready_queue_item["state"] == "ready_for_governed_dispatch"
+    assert blocked_plan.metadata["plan_is_not_execution"] is True
+    assert ready_plan.metadata["plan_is_not_execution"] is True
+
+
+def test_assistant_plan_errors_sanitized() -> None:
+    try:
+        compile_finance_ops_assistant_plan(
+            FinanceOpsAssistantPlanRequest(
+                tenant_id="tenant-finance",
+                owner_id="finance-owner",
+                invoice_ref="",
+                vendor_ref="vendor:acme",
+                created_at="2026-05-13T10:00:00+00:00",
+            )
+        )
+    except HTTPException as exc:
+        detail = exc.detail
+    else:  # pragma: no cover - the invariant above must fail closed.
+        raise AssertionError("invalid assistant plan was accepted")
+
+    assert detail == {
+        "error": "invalid assistant plan",
+        "error_code": "invalid_assistant_plan",
+        "governed": True,
+    }
+    assert "invoice:1001" not in str(detail)
+    assert "vendor:acme" not in str(detail)
 
 
 def test_assistant_kernel_blocks_missing_capability_before_execution() -> None:
