@@ -10,7 +10,8 @@ Invariants:
     and confirmation flag.
   - Bundle, anchor receipt, artifact, and package files are verified before any
     ledger append occurs.
-  - The submission ledger is hash-chained and verified before append.
+  - The submission ledger replay, optional remote submit, and append run under
+    one cross-process lock.
   - Submission receipts do not replace terminal closure certificates.
 """
 
@@ -20,8 +21,10 @@ import argparse
 import hashlib
 import hmac
 import json
+import math
 import os
 import sys
+import time
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -42,6 +45,10 @@ ZERO_HASH = "0" * 64
 SUBMISSION_STATUS = "submitted"
 MAX_REMOTE_RESPONSE_BYTES = 65_536
 MAX_REMOTE_TIMEOUT_SECONDS = 30.0
+MAX_SUBMISSION_LEDGER_LOCK_TIMEOUT_SECONDS = 30.0
+DEFAULT_SUBMISSION_LEDGER_LOCK_TIMEOUT_SECONDS = 10.0
+DEFAULT_SUBMISSION_LEDGER_STALE_LOCK_SECONDS = 120.0
+_SUBMISSION_LEDGER_LOCK_HELD = object()
 UrlOpen = Callable[..., Any]
 
 
@@ -65,8 +72,11 @@ def submit_trust_ledger_anchor_export(
     remote_preflight_receipt_path: Path | None = None,
     remote_api_token: str = "",
     remote_timeout_seconds: float = 10.0,
+    ledger_lock_timeout_seconds: float = DEFAULT_SUBMISSION_LEDGER_LOCK_TIMEOUT_SECONDS,
+    ledger_stale_lock_seconds: float = DEFAULT_SUBMISSION_LEDGER_STALE_LOCK_SECONDS,
     urlopen: UrlOpen | None = None,
     strict: bool = False,
+    _ledger_lock_acquired: object | None = None,
 ) -> dict[str, Any]:
     """Verify one anchor export and append a signed submission receipt."""
     if not confirm_submit:
@@ -96,6 +106,46 @@ def submit_trust_ledger_anchor_export(
         remote_timeout_seconds <= 0 or remote_timeout_seconds > MAX_REMOTE_TIMEOUT_SECONDS
     ):
         return _report(valid=False, reason="remote_timeout_seconds_invalid")
+    lock_config_error = _validate_submission_ledger_lock_config(
+        timeout_seconds=ledger_lock_timeout_seconds,
+        stale_lock_seconds=ledger_stale_lock_seconds,
+    )
+    if lock_config_error:
+        return _report(valid=False, reason=lock_config_error)
+    if _ledger_lock_acquired is not _SUBMISSION_LEDGER_LOCK_HELD:
+        try:
+            with _SubmissionLedgerFileLock(
+                ledger_path,
+                timeout_seconds=ledger_lock_timeout_seconds,
+                stale_lock_seconds=ledger_stale_lock_seconds,
+            ):
+                return submit_trust_ledger_anchor_export(
+                    bundle_path=bundle_path,
+                    receipt_path=receipt_path,
+                    artifacts_path=artifacts_path,
+                    package_path=package_path,
+                    ledger_path=ledger_path,
+                    operator_id=operator_id,
+                    authority_ref=authority_ref,
+                    submitted_at=submitted_at,
+                    verification_secret=verification_secret,
+                    submission_secret=submission_secret,
+                    signature_key_id=signature_key_id,
+                    confirm_submit=confirm_submit,
+                    receipt_out=receipt_out,
+                    remote_submit_url=remote_submit_url,
+                    allow_remote_submit=allow_remote_submit,
+                    remote_preflight_receipt_path=remote_preflight_receipt_path,
+                    remote_api_token=remote_api_token,
+                    remote_timeout_seconds=remote_timeout_seconds,
+                    ledger_lock_timeout_seconds=ledger_lock_timeout_seconds,
+                    ledger_stale_lock_seconds=ledger_stale_lock_seconds,
+                    urlopen=urlopen,
+                    strict=strict,
+                    _ledger_lock_acquired=_SUBMISSION_LEDGER_LOCK_HELD,
+                )
+        except TimeoutError as exc:
+            return _report(valid=False, reason=str(exc))
 
     verification = verify_anchor_receipt_files(
         bundle_path=bundle_path,
@@ -738,6 +788,18 @@ def _validate_remote_submit_url(value: str) -> str:
     return ""
 
 
+def _validate_submission_ledger_lock_config(*, timeout_seconds: float, stale_lock_seconds: float) -> str:
+    if (
+        not math.isfinite(timeout_seconds)
+        or timeout_seconds <= 0
+        or timeout_seconds > MAX_SUBMISSION_LEDGER_LOCK_TIMEOUT_SECONDS
+    ):
+        return "submission_ledger_lock_timeout_seconds_invalid"
+    if not math.isfinite(stale_lock_seconds) or stale_lock_seconds <= 0:
+        return "submission_ledger_stale_lock_seconds_invalid"
+    return ""
+
+
 def _remote_submit_host(value: str) -> str:
     try:
         return urllib.parse.urlparse(value).hostname or ""
@@ -758,6 +820,51 @@ def _append_jsonl(path: Path, payload: dict[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("a", encoding="utf-8", newline="\n") as handle:
         handle.write(json.dumps(payload, sort_keys=True, separators=(",", ":")) + "\n")
+
+
+class _SubmissionLedgerFileLock:
+    """Cross-process lock for trust-ledger submission replay and append."""
+
+    def __init__(self, path: Path, *, timeout_seconds: float, stale_lock_seconds: float) -> None:
+        self._lock_path = Path(f"{path}.lock")
+        self._timeout_seconds = timeout_seconds
+        self._stale_lock_seconds = stale_lock_seconds
+        self._acquired = False
+
+    def __enter__(self) -> "_SubmissionLedgerFileLock":
+        self._lock_path.parent.mkdir(parents=True, exist_ok=True)
+        deadline = time.monotonic() + self._timeout_seconds
+        while True:
+            try:
+                descriptor = os.open(str(self._lock_path), os.O_CREAT | os.O_EXCL | os.O_WRONLY)
+            except FileExistsError as exc:
+                if self._lock_is_stale():
+                    self._lock_path.unlink(missing_ok=True)
+                    continue
+                if time.monotonic() >= deadline:
+                    raise TimeoutError("submission_ledger_lock_timeout") from exc
+                time.sleep(min(0.05, self._timeout_seconds))
+                continue
+            with os.fdopen(descriptor, "w", encoding="utf-8") as handle:
+                handle.write(json.dumps({
+                    "pid": os.getpid(),
+                    "lock_path": str(self._lock_path),
+                    "created_unix": time.time(),
+                }, sort_keys=True))
+            self._acquired = True
+            return self
+
+    def __exit__(self, exc_type: object, exc: object, traceback: object) -> None:
+        if self._acquired:
+            self._lock_path.unlink(missing_ok=True)
+            self._acquired = False
+
+    def _lock_is_stale(self) -> bool:
+        try:
+            lock_age_seconds = time.time() - self._lock_path.stat().st_mtime
+        except FileNotFoundError:
+            return False
+        return lock_age_seconds > self._stale_lock_seconds
 
 
 def _write_json(path: Path, payload: Any) -> None:
@@ -984,6 +1091,18 @@ def main(argv: list[str] | None = None) -> int:
         help="Remote submission bearer token; defaults to MULLU_TRUST_LEDGER_REMOTE_SUBMISSION_TOKEN",
     )
     parser.add_argument("--remote-timeout-seconds", type=float, default=10.0)
+    parser.add_argument(
+        "--ledger-lock-timeout-seconds",
+        type=float,
+        default=DEFAULT_SUBMISSION_LEDGER_LOCK_TIMEOUT_SECONDS,
+        help="Maximum seconds to wait for the submission-ledger replay/append lock",
+    )
+    parser.add_argument(
+        "--ledger-stale-lock-seconds",
+        type=float,
+        default=DEFAULT_SUBMISSION_LEDGER_STALE_LOCK_SECONDS,
+        help="Age after which a submission-ledger lock witness may be treated as stale",
+    )
     parser.add_argument("--confirm-submit", action="store_true", help="Explicitly authorize ledger append")
     parser.add_argument("--strict", action="store_true", help="Return all schema errors")
     parser.add_argument("--json", action="store_true", help="Print JSON report")
@@ -1008,6 +1127,8 @@ def main(argv: list[str] | None = None) -> int:
         remote_preflight_receipt_path=args.remote_preflight_receipt,
         remote_api_token=args.remote_api_token,
         remote_timeout_seconds=args.remote_timeout_seconds,
+        ledger_lock_timeout_seconds=args.ledger_lock_timeout_seconds,
+        ledger_stale_lock_seconds=args.ledger_stale_lock_seconds,
         strict=args.strict,
     )
     if args.json:

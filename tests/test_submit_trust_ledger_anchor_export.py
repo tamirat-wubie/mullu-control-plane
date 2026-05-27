@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import json
 import hashlib
+import os
 from pathlib import Path
 from typing import Any
 
@@ -92,6 +93,142 @@ def test_submit_trust_ledger_anchor_export_blocks_without_confirmation(tmp_path:
     assert report["reason"] == "operator_confirmation_required"
     assert report["submitted"] is False
     assert report["submission_receipt"] == {}
+    assert not ledger_path.exists()
+
+
+def test_submit_trust_ledger_anchor_export_blocks_when_submission_ledger_locked(tmp_path: Path) -> None:
+    export_paths = _write_anchor_export(tmp_path)
+    ledger_path = tmp_path / "submissions.jsonl"
+    lock_path = Path(f"{ledger_path}.lock")
+    lock_path.write_text(json.dumps({"pid": 999_999}), encoding="utf-8")
+
+    report = submit_trust_ledger_anchor_export(
+        bundle_path=export_paths["bundle"],
+        receipt_path=export_paths["anchor_receipt"],
+        artifacts_path=export_paths["artifacts"],
+        package_path=export_paths["package"],
+        ledger_path=ledger_path,
+        operator_id="operator-1",
+        authority_ref="proof://approval-submit-anchor-1",
+        submitted_at="2026-05-05T12:20:00+00:00",
+        verification_secret="anchor-secret",
+        submission_secret="submission-secret",
+        signature_key_id="submission-key",
+        confirm_submit=True,
+        ledger_lock_timeout_seconds=0.01,
+        ledger_stale_lock_seconds=60.0,
+    )
+
+    assert report["valid"] is False
+    assert report["reason"] == "submission_ledger_lock_timeout"
+    assert report["submitted"] is False
+    assert report["submission_receipt"] == {}
+    assert lock_path.exists()
+    assert not ledger_path.exists()
+
+
+def test_submit_trust_ledger_anchor_export_does_not_accept_boolean_lock_bypass(tmp_path: Path) -> None:
+    export_paths = _write_anchor_export(tmp_path)
+    ledger_path = tmp_path / "submissions.jsonl"
+    lock_path = Path(f"{ledger_path}.lock")
+    lock_path.write_text(json.dumps({"pid": 999_999}), encoding="utf-8")
+
+    report = submit_trust_ledger_anchor_export(
+        bundle_path=export_paths["bundle"],
+        receipt_path=export_paths["anchor_receipt"],
+        artifacts_path=export_paths["artifacts"],
+        package_path=export_paths["package"],
+        ledger_path=ledger_path,
+        operator_id="operator-1",
+        authority_ref="proof://approval-submit-anchor-1",
+        submitted_at="2026-05-05T12:20:00+00:00",
+        verification_secret="anchor-secret",
+        submission_secret="submission-secret",
+        signature_key_id="submission-key",
+        confirm_submit=True,
+        ledger_lock_timeout_seconds=0.01,
+        ledger_stale_lock_seconds=60.0,
+        _ledger_lock_acquired=True,
+    )
+
+    assert report["valid"] is False
+    assert report["reason"] == "submission_ledger_lock_timeout"
+    assert lock_path.exists()
+    assert not ledger_path.exists()
+
+
+def test_submit_trust_ledger_anchor_export_removes_stale_submission_ledger_lock(tmp_path: Path) -> None:
+    export_paths = _write_anchor_export(tmp_path)
+    ledger_path = tmp_path / "submissions.jsonl"
+    lock_path = Path(f"{ledger_path}.lock")
+    lock_path.write_text(json.dumps({"pid": 999_999}), encoding="utf-8")
+    os.utime(lock_path, (1, 1))
+
+    report = submit_trust_ledger_anchor_export(
+        bundle_path=export_paths["bundle"],
+        receipt_path=export_paths["anchor_receipt"],
+        artifacts_path=export_paths["artifacts"],
+        package_path=export_paths["package"],
+        ledger_path=ledger_path,
+        operator_id="operator-1",
+        authority_ref="proof://approval-submit-anchor-1",
+        submitted_at="2026-05-05T12:20:00+00:00",
+        verification_secret="anchor-secret",
+        submission_secret="submission-secret",
+        signature_key_id="submission-key",
+        confirm_submit=True,
+        ledger_lock_timeout_seconds=1.0,
+        ledger_stale_lock_seconds=0.01,
+    )
+    ledger_state = verify_submission_ledger(ledger_path=ledger_path, signing_secret="submission-secret")
+
+    assert report["valid"] is True
+    assert report["reason"] == "anchor_submission_recorded"
+    assert report["ledger_sequence"] == 1
+    assert ledger_state["valid"] is True
+    assert ledger_state["submission_count"] == 1
+    assert not lock_path.exists()
+
+
+def test_submit_trust_ledger_anchor_export_blocks_invalid_submission_ledger_lock_config(tmp_path: Path) -> None:
+    export_paths = _write_anchor_export(tmp_path)
+    ledger_path = tmp_path / "submissions.jsonl"
+
+    timeout_report = submit_trust_ledger_anchor_export(
+        bundle_path=export_paths["bundle"],
+        receipt_path=export_paths["anchor_receipt"],
+        artifacts_path=export_paths["artifacts"],
+        package_path=export_paths["package"],
+        ledger_path=ledger_path,
+        operator_id="operator-1",
+        authority_ref="proof://approval-submit-anchor-1",
+        submitted_at="2026-05-05T12:20:00+00:00",
+        verification_secret="anchor-secret",
+        submission_secret="submission-secret",
+        signature_key_id="submission-key",
+        confirm_submit=True,
+        ledger_lock_timeout_seconds=float("nan"),
+    )
+    stale_report = submit_trust_ledger_anchor_export(
+        bundle_path=export_paths["bundle"],
+        receipt_path=export_paths["anchor_receipt"],
+        artifacts_path=export_paths["artifacts"],
+        package_path=export_paths["package"],
+        ledger_path=ledger_path,
+        operator_id="operator-1",
+        authority_ref="proof://approval-submit-anchor-1",
+        submitted_at="2026-05-05T12:20:00+00:00",
+        verification_secret="anchor-secret",
+        submission_secret="submission-secret",
+        signature_key_id="submission-key",
+        confirm_submit=True,
+        ledger_stale_lock_seconds=float("inf"),
+    )
+
+    assert timeout_report["valid"] is False
+    assert timeout_report["reason"] == "submission_ledger_lock_timeout_seconds_invalid"
+    assert stale_report["valid"] is False
+    assert stale_report["reason"] == "submission_ledger_stale_lock_seconds_invalid"
     assert not ledger_path.exists()
 
 
@@ -257,6 +394,46 @@ def test_submit_trust_ledger_anchor_export_requires_remote_preflight_receipt(tmp
     assert report["submitted"] is False
     assert report["remote_preflight"] == {}
     assert transport.request is None
+    assert not ledger_path.exists()
+
+
+def test_submit_trust_ledger_anchor_export_blocks_remote_transport_when_submission_ledger_locked(
+    tmp_path: Path,
+) -> None:
+    export_paths = _write_anchor_export(tmp_path)
+    ledger_path = tmp_path / "submissions.jsonl"
+    preflight_path = _write_remote_preflight(tmp_path=tmp_path, export_paths=export_paths, ledger_path=ledger_path)
+    lock_path = Path(f"{ledger_path}.lock")
+    lock_path.write_text(json.dumps({"pid": 999_999}), encoding="utf-8")
+    transport = FakeTransparencyLogTransport()
+
+    report = submit_trust_ledger_anchor_export(
+        bundle_path=export_paths["bundle"],
+        receipt_path=export_paths["anchor_receipt"],
+        artifacts_path=export_paths["artifacts"],
+        package_path=export_paths["package"],
+        ledger_path=ledger_path,
+        operator_id="operator-1",
+        authority_ref="proof://approval-submit-anchor-1",
+        submitted_at="2026-05-05T12:20:00+00:00",
+        verification_secret="anchor-secret",
+        submission_secret="submission-secret",
+        signature_key_id="submission-key",
+        confirm_submit=True,
+        remote_submit_url="https://transparency.example/anchors",
+        allow_remote_submit=True,
+        remote_preflight_receipt_path=preflight_path,
+        remote_api_token="remote-token",
+        ledger_lock_timeout_seconds=0.01,
+        ledger_stale_lock_seconds=60.0,
+        urlopen=transport,
+    )
+
+    assert report["valid"] is False
+    assert report["reason"] == "submission_ledger_lock_timeout"
+    assert transport.request is None
+    assert report["submission_receipt"] == {}
+    assert lock_path.exists()
     assert not ledger_path.exists()
 
 
