@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import os
 import sys
 import urllib.parse
@@ -41,6 +42,7 @@ from scripts.submit_trust_ledger_anchor_export import (  # noqa: E402
     _read_json_object,
     _remote_preflight_receipt_id,
     _validate_remote_submit_url,
+    _validate_remote_timeout_seconds,
     verify_submission_ledger,
 )
 from scripts.validate_schemas import _load_schema, _validate_schema_instance  # noqa: E402
@@ -194,14 +196,16 @@ def preflight_trust_ledger_remote_submission(
         "remote_api_token_present=true" if remote_token_present else "remote_api_token_required",
     )
 
-    timeout_valid = 0 < remote_timeout_seconds <= MAX_REMOTE_TIMEOUT_SECONDS
+    timeout_error = _validate_remote_timeout_seconds(remote_timeout_seconds)
+    timeout_valid = timeout_error == ""
+    receipt_remote_timeout_seconds = remote_timeout_seconds if math.isfinite(remote_timeout_seconds) else 0.0
     add_step(
         "remote_timeout_seconds",
         timeout_valid,
         (
             f"remote_timeout_seconds={remote_timeout_seconds}"
             if timeout_valid
-            else f"remote_timeout_seconds_invalid max={MAX_REMOTE_TIMEOUT_SECONDS}"
+            else f"{timeout_error} max={MAX_REMOTE_TIMEOUT_SECONDS}"
         ),
         hard_block=True,
     )
@@ -306,7 +310,7 @@ def preflight_trust_ledger_remote_submission(
         "authority_ref": authority_ref,
         "remote_submit_url": remote_submit_url,
         "remote_submit_host": remote_submit_host,
-        "remote_timeout_seconds": remote_timeout_seconds,
+        "remote_timeout_seconds": receipt_remote_timeout_seconds,
         "remote_api_token_present": remote_token_present,
         "verification_secret_present": verification_secret_present,
         "submission_secret_present": submission_secret_present,
@@ -336,7 +340,7 @@ def preflight_trust_ledger_remote_submission(
         authority_ref=authority_ref,
         remote_submit_url=remote_submit_url,
         remote_submit_host=remote_submit_host,
-        remote_timeout_seconds=remote_timeout_seconds,
+        remote_timeout_seconds=receipt_remote_timeout_seconds,
         remote_api_token_present=remote_token_present,
         verification_secret_present=verification_secret_present,
         submission_secret_present=submission_secret_present,
@@ -433,7 +437,10 @@ def write_trust_ledger_remote_submission_preflight_report(
             + ";".join(schema_errors[:10])
         )
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    output_path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    output_path.write_text(
+        json.dumps(payload, indent=2, sort_keys=True, allow_nan=False) + "\n",
+        encoding="utf-8",
+    )
     return output_path
 
 

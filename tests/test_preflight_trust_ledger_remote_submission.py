@@ -153,6 +153,44 @@ def test_trust_ledger_remote_submission_preflight_blocks_missing_remote_token(tm
     assert not ledger_path.exists()
 
 
+def test_trust_ledger_remote_submission_preflight_blocks_nonfinite_remote_timeout(
+    tmp_path: Path,
+) -> None:
+    export_paths = _write_anchor_export(tmp_path)
+    ledger_path = tmp_path / "submissions.jsonl"
+    output_path = tmp_path / "remote_preflight.json"
+
+    report = preflight_trust_ledger_remote_submission(
+        bundle_path=export_paths["bundle"],
+        receipt_path=export_paths["anchor_receipt"],
+        artifacts_path=export_paths["artifacts"],
+        package_path=export_paths["package"],
+        ledger_path=ledger_path,
+        operator_id="operator-1",
+        authority_ref="proof://approval-submit-anchor-1",
+        submitted_at="2026-05-05T12:20:00+00:00",
+        verification_secret="anchor-secret",
+        submission_secret="submission-secret",
+        signature_key_id="submission-key",
+        remote_submit_url="https://transparency.example/anchors",
+        remote_api_token="remote-token",
+        remote_timeout_seconds=float("nan"),
+    )
+    write_trust_ledger_remote_submission_preflight_report(report, output_path)
+    raw_receipt = output_path.read_text(encoding="utf-8")
+    written_payload = json.loads(raw_receipt)
+
+    assert report.ready is False
+    assert report.outcome == "GovernanceBlocked"
+    assert "remote_timeout_seconds" in report.blockers
+    assert "remote_timeout_seconds" in report.hard_blockers
+    assert report.remote_timeout_seconds == 0.0
+    assert written_payload["remote_timeout_seconds"] == 0.0
+    assert "NaN" not in raw_receipt
+    assert "Infinity" not in raw_receipt
+    assert not ledger_path.exists()
+
+
 def test_trust_ledger_remote_submission_preflight_blocks_tampered_package(tmp_path: Path) -> None:
     export_paths = _write_anchor_export(tmp_path)
     ledger_path = tmp_path / "submissions.jsonl"

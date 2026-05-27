@@ -102,10 +102,9 @@ def submit_trust_ledger_anchor_export(
     remote_url_error = _validate_remote_submit_url(remote_submit_url) if remote_submit_url else ""
     if remote_url_error:
         return _report(valid=False, reason=remote_url_error)
-    if (remote_submit_url or allow_remote_submit) and (
-        remote_timeout_seconds <= 0 or remote_timeout_seconds > MAX_REMOTE_TIMEOUT_SECONDS
-    ):
-        return _report(valid=False, reason="remote_timeout_seconds_invalid")
+    remote_timeout_error = _validate_remote_timeout_seconds(remote_timeout_seconds)
+    if (remote_submit_url or allow_remote_submit) and remote_timeout_error:
+        return _report(valid=False, reason=remote_timeout_error)
     lock_config_error = _validate_submission_ledger_lock_config(
         timeout_seconds=ledger_lock_timeout_seconds,
         stale_lock_seconds=ledger_stale_lock_seconds,
@@ -627,6 +626,18 @@ def _verify_remote_preflight_receipt(
             receipt_path=str(preflight_path),
         )
 
+    preflight_timeout_seconds = float(preflight["remote_timeout_seconds"])
+    timeout_error = _validate_remote_timeout_seconds(preflight_timeout_seconds)
+    if timeout_error:
+        return _remote_preflight_report(
+            valid=False,
+            reason=timeout_error,
+            schema_valid=True,
+            receipt_path=str(preflight_path),
+            receipt_id=str(preflight["receipt_id"]),
+            checked_at=str(preflight["checked_at"]),
+        )
+
     expected_hash = str(preflight["expected_remote_submission_payload_hash"])
     actual_hash = str(payload["submission_payload_hash"])
     canonical_receipt_id = _remote_preflight_receipt_id(preflight)
@@ -653,7 +664,7 @@ def _verify_remote_preflight_receipt(
         ("authority_ref", preflight["authority_ref"], authority_ref),
         ("remote_submit_url", preflight["remote_submit_url"], remote_submit_url),
         ("remote_submit_host", preflight["remote_submit_host"], expected_host),
-        ("remote_timeout_seconds", float(preflight["remote_timeout_seconds"]), float(remote_timeout_seconds)),
+        ("remote_timeout_seconds", preflight_timeout_seconds, float(remote_timeout_seconds)),
         ("remote_api_token_present", preflight["remote_api_token_present"], True),
         ("verification_secret_present", preflight["verification_secret_present"], True),
         ("submission_secret_present", preflight["submission_secret_present"], True),
@@ -785,6 +796,12 @@ def _validate_remote_submit_url(value: str) -> str:
         return "remote_submit_url_credentials_forbidden"
     if parsed.query or parsed.fragment:
         return "remote_submit_url_query_fragment_forbidden"
+    return ""
+
+
+def _validate_remote_timeout_seconds(value: float) -> str:
+    if not math.isfinite(value) or value <= 0 or value > MAX_REMOTE_TIMEOUT_SECONDS:
+        return "remote_timeout_seconds_invalid"
     return ""
 
 

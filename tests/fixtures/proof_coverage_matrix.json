@@ -6556,6 +6556,7 @@
         "trust_ledger_remote_submission_preflight_accepts_ready_export",
         "trust_ledger_remote_submission_preflight_projects_final_submit_payload_hash",
         "trust_ledger_remote_submission_preflight_blocks_missing_remote_token",
+        "trust_ledger_remote_submission_preflight_blocks_nonfinite_remote_timeout",
         "trust_ledger_remote_submission_preflight_blocks_tampered_package",
         "trust_ledger_remote_submission_preflight_cli_writes_schema_checked_receipt",
         "trust_ledger_remote_submission_preflight_writer_validates_schema",
@@ -6571,9 +6572,11 @@
         "submit_trust_ledger_anchor_export_blocks_remote_without_confirmation",
         "submit_trust_ledger_anchor_export_blocks_remote_transport_when_submission_ledger_locked",
         "submit_trust_ledger_anchor_export_requires_remote_preflight_receipt",
+        "submit_trust_ledger_anchor_export_blocks_invalid_remote_timeout_before_transport",
         "submit_trust_ledger_anchor_export_blocks_remote_preflight_hash_mismatch",
         "submit_trust_ledger_anchor_export_blocks_remote_preflight_receipt_id_mismatch",
         "submit_trust_ledger_anchor_export_blocks_remote_preflight_checked_at_drift",
+        "submit_trust_ledger_anchor_export_blocks_nonfinite_remote_preflight_timeout",
         "submit_trust_ledger_anchor_export_blocks_remote_hash_mismatch",
         "verify_submission_ledger_detects_hash_drift",
         "submit_trust_ledger_anchor_export_cli_emits_submission_receipt"
@@ -8086,8 +8089,8 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 874,
-    "runtime_witness_count": 1101,
+    "exact_test_anchor_count": 877,
+    "runtime_witness_count": 1104,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -12736,6 +12739,12 @@
           },
           {
             "anchors": [
+              "tests/test_preflight_trust_ledger_remote_submission.py::test_trust_ledger_remote_submission_preflight_blocks_nonfinite_remote_timeout"
+            ],
+            "witness": "trust_ledger_remote_submission_preflight_blocks_nonfinite_remote_timeout"
+          },
+          {
+            "anchors": [
               "tests/test_preflight_trust_ledger_remote_submission.py::test_trust_ledger_remote_submission_preflight_blocks_tampered_package"
             ],
             "witness": "trust_ledger_remote_submission_preflight_blocks_tampered_package"
@@ -12826,6 +12835,12 @@
           },
           {
             "anchors": [
+              "tests/test_submit_trust_ledger_anchor_export.py::test_submit_trust_ledger_anchor_export_blocks_invalid_remote_timeout_before_transport"
+            ],
+            "witness": "submit_trust_ledger_anchor_export_blocks_invalid_remote_timeout_before_transport"
+          },
+          {
+            "anchors": [
               "tests/test_submit_trust_ledger_anchor_export.py::test_submit_trust_ledger_anchor_export_blocks_remote_preflight_hash_mismatch"
             ],
             "witness": "submit_trust_ledger_anchor_export_blocks_remote_preflight_hash_mismatch"
@@ -12841,6 +12856,12 @@
               "tests/test_submit_trust_ledger_anchor_export.py::test_submit_trust_ledger_anchor_export_blocks_remote_preflight_checked_at_drift"
             ],
             "witness": "submit_trust_ledger_anchor_export_blocks_remote_preflight_checked_at_drift"
+          },
+          {
+            "anchors": [
+              "tests/test_submit_trust_ledger_anchor_export.py::test_submit_trust_ledger_anchor_export_blocks_nonfinite_remote_preflight_timeout"
+            ],
+            "witness": "submit_trust_ledger_anchor_export_blocks_nonfinite_remote_preflight_timeout"
           },
           {
             "anchors": [
@@ -12861,8 +12882,8 @@
             "witness": "submit_trust_ledger_anchor_export_cli_emits_submission_receipt"
           }
         ],
-        "exact_test_anchor_count": 62,
-        "runtime_witness_count": 62,
+        "exact_test_anchor_count": 65,
+        "runtime_witness_count": 65,
         "surface_id": "trust_ledger",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []

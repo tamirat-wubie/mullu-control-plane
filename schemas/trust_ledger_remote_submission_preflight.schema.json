@@ -48,7 +48,7 @@
     "authority_ref": {"type": "string"},
     "remote_submit_url": {"type": "string"},
     "remote_submit_host": {"type": "string"},
-    "remote_timeout_seconds": {"type": "number"},
+    "remote_timeout_seconds": {"type": "number", "minimum": 0, "maximum": 30},
     "remote_api_token_present": {"type": "boolean"},
     "verification_secret_present": {"type": "boolean"},
     "submission_secret_present": {"type": "boolean"},

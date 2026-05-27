@@ -219,7 +219,7 @@ Blocked conditions:
 | Outcome | Meaning |
 | --- | --- |
 | `AwaitingEvidence` | Required operator input, secret presence, or remote token evidence is missing |
-| `GovernanceBlocked` | Authority, URL, submitted timestamp, anchor export replay, or existing submission ledger replay failed |
+| `GovernanceBlocked` | Authority, URL, timeout, submitted timestamp, anchor export replay, or existing submission ledger replay failed |
 
 ## Governed Submission
 
@@ -310,6 +310,7 @@ Submission fail-closed reasons include:
 | `submission_ledger_stale_lock_seconds_invalid` | The requested stale-lock window is out of bounds |
 | `remote_submission_confirmation_required` | A remote URL was provided without `--allow-remote-submit` |
 | `remote_submit_url_must_be_https` | Remote submission endpoint was not HTTPS |
+| `remote_timeout_seconds_invalid` | Remote submission timeout was non-finite, zero, negative, or above the maximum |
 | `remote_api_token_required` | Remote submission was requested without a bearer token |
 | `remote_preflight_receipt_required` | Remote submission was requested without a preflight receipt |
 | `remote_preflight_receipt_failed:*` | The preflight receipt was unreadable, schema-invalid, blocked, stale, or mismatched the final payload |
