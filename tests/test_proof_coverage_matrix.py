@@ -153,6 +153,8 @@ def test_witness_integrity_report_tracks_exact_test_anchors() -> None:
     assert surfaces["structured_output_validation"]["unanchored_witness_count"] == 0
     assert surfaces["runtime_state_persistence_lifecycle"]["exact_test_anchor_count"] == 8
     assert surfaces["runtime_state_persistence_lifecycle"]["unanchored_witness_count"] == 0
+    assert surfaces["multi_agent_coordination_runtime"]["exact_test_anchor_count"] == 8
+    assert surfaces["multi_agent_coordination_runtime"]["unanchored_witness_count"] == 0
     assert surfaces["code_intelligence_operator_read_model"]["exact_test_anchor_count"] >= 5
     assert surfaces["code_intelligence_operator_read_model"]["unanchored_witness_count"] == 0
     assert surfaces["data_export_lifecycle"]["exact_test_anchor_count"] >= 4

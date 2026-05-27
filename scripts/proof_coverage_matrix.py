@@ -3564,6 +3564,47 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "multi_agent_summary_bounded",
                 "multi_agent_errors_sanitized",
             ],
+            runtime_witness_anchor_aliases={
+                "multi_agent_delegation_tracked": [
+                    "delegate_work",
+                    "full_cooperation_flow",
+                ],
+                "multi_agent_delegation_resolution_validated": [
+                    "resolve_delegation",
+                    "invalid_delegation_status_detail_is_bounded",
+                    "invalid_resolution_status_is_bounded",
+                    "missing_delegation_resolution_has_bounded_failure_class",
+                    "full_cooperation_flow",
+                ],
+                "multi_agent_handoff_preserves_context": [
+                    "record_handoff",
+                    "full_cooperation_flow",
+                ],
+                "multi_agent_merge_outcome_typed": [
+                    "record_merge",
+                    "invalid_merge_outcome_detail_is_bounded",
+                    "invalid_merge_outcome_is_bounded",
+                    "full_cooperation_flow",
+                ],
+                "multi_agent_conflict_strategy_typed": [
+                    "record_conflict",
+                    "invalid_conflict_strategy_detail_is_bounded",
+                    "invalid_conflict_strategy_is_bounded",
+                ],
+                "multi_agent_unresolved_conflicts_bounded": [
+                    "unresolved_conflicts",
+                ],
+                "multi_agent_summary_bounded": [
+                    "multi_agent_summary",
+                ],
+                "multi_agent_errors_sanitized": [
+                    "delegate_error_detail_is_bounded",
+                    "invalid_delegation_status_detail_is_bounded",
+                    "invalid_merge_outcome_detail_is_bounded",
+                    "invalid_conflict_strategy_detail_is_bounded",
+                    "missing_delegation_resolution_has_bounded_failure_class",
+                ],
+            },
         ),
         _surface(
             "connector_self_healing",

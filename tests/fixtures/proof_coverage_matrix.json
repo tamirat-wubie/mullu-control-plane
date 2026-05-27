@@ -6337,6 +6337,47 @@
         "/api/v1/multi-agent/summary"
       ],
       "request_proof": "request_proof",
+      "runtime_witness_anchor_aliases": {
+        "multi_agent_conflict_strategy_typed": [
+          "record_conflict",
+          "invalid_conflict_strategy_detail_is_bounded",
+          "invalid_conflict_strategy_is_bounded"
+        ],
+        "multi_agent_delegation_resolution_validated": [
+          "resolve_delegation",
+          "invalid_delegation_status_detail_is_bounded",
+          "invalid_resolution_status_is_bounded",
+          "missing_delegation_resolution_has_bounded_failure_class",
+          "full_cooperation_flow"
+        ],
+        "multi_agent_delegation_tracked": [
+          "delegate_work",
+          "full_cooperation_flow"
+        ],
+        "multi_agent_errors_sanitized": [
+          "delegate_error_detail_is_bounded",
+          "invalid_delegation_status_detail_is_bounded",
+          "invalid_merge_outcome_detail_is_bounded",
+          "invalid_conflict_strategy_detail_is_bounded",
+          "missing_delegation_resolution_has_bounded_failure_class"
+        ],
+        "multi_agent_handoff_preserves_context": [
+          "record_handoff",
+          "full_cooperation_flow"
+        ],
+        "multi_agent_merge_outcome_typed": [
+          "record_merge",
+          "invalid_merge_outcome_detail_is_bounded",
+          "invalid_merge_outcome_is_bounded",
+          "full_cooperation_flow"
+        ],
+        "multi_agent_summary_bounded": [
+          "multi_agent_summary"
+        ],
+        "multi_agent_unresolved_conflicts_bounded": [
+          "unresolved_conflicts"
+        ]
+      },
       "runtime_witnesses": [
         "multi_agent_delegation_tracked",
         "multi_agent_delegation_resolution_validated",
@@ -8180,7 +8221,7 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 902,
+    "exact_test_anchor_count": 910,
     "runtime_witness_count": 1108,
     "surfaces": [
       {
@@ -12507,21 +12548,76 @@
         ]
       },
       {
-        "anchored_witnesses": [],
-        "exact_test_anchor_count": 0,
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "mcoi/tests/test_multi_agent_runtime.py::test_delegate_work",
+              "mcoi/tests/test_multi_agent_runtime.py::test_full_cooperation_flow"
+            ],
+            "witness": "multi_agent_delegation_tracked"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_multi_agent_runtime.py::test_resolve_delegation",
+              "mcoi/tests/test_multi_agent_runtime.py::test_invalid_delegation_status_detail_is_bounded",
+              "mcoi/tests/test_server_phase217.py::test_invalid_resolution_status_is_bounded",
+              "mcoi/tests/test_server_phase217.py::test_missing_delegation_resolution_has_bounded_failure_class",
+              "mcoi/tests/test_multi_agent_runtime.py::test_full_cooperation_flow"
+            ],
+            "witness": "multi_agent_delegation_resolution_validated"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_multi_agent_runtime.py::test_record_handoff",
+              "mcoi/tests/test_multi_agent_runtime.py::test_full_cooperation_flow"
+            ],
+            "witness": "multi_agent_handoff_preserves_context"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_multi_agent_runtime.py::test_record_merge",
+              "mcoi/tests/test_multi_agent_runtime.py::test_invalid_merge_outcome_detail_is_bounded",
+              "mcoi/tests/test_server_phase217.py::test_invalid_merge_outcome_is_bounded",
+              "mcoi/tests/test_multi_agent_runtime.py::test_full_cooperation_flow"
+            ],
+            "witness": "multi_agent_merge_outcome_typed"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_multi_agent_runtime.py::test_record_conflict",
+              "mcoi/tests/test_multi_agent_runtime.py::test_invalid_conflict_strategy_detail_is_bounded",
+              "mcoi/tests/test_server_phase217.py::test_invalid_conflict_strategy_is_bounded"
+            ],
+            "witness": "multi_agent_conflict_strategy_typed"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_multi_agent_runtime.py::test_unresolved_conflicts"
+            ],
+            "witness": "multi_agent_unresolved_conflicts_bounded"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_multi_agent_runtime.py::test_multi_agent_summary"
+            ],
+            "witness": "multi_agent_summary_bounded"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_multi_agent_runtime.py::test_delegate_error_detail_is_bounded",
+              "mcoi/tests/test_multi_agent_runtime.py::test_invalid_delegation_status_detail_is_bounded",
+              "mcoi/tests/test_multi_agent_runtime.py::test_invalid_merge_outcome_detail_is_bounded",
+              "mcoi/tests/test_multi_agent_runtime.py::test_invalid_conflict_strategy_detail_is_bounded",
+              "mcoi/tests/test_server_phase217.py::test_missing_delegation_resolution_has_bounded_failure_class"
+            ],
+            "witness": "multi_agent_errors_sanitized"
+          }
+        ],
+        "exact_test_anchor_count": 8,
         "runtime_witness_count": 8,
         "surface_id": "multi_agent_coordination_runtime",
-        "unanchored_witness_count": 8,
-        "unanchored_witnesses": [
-          "multi_agent_delegation_tracked",
-          "multi_agent_delegation_resolution_validated",
-          "multi_agent_handoff_preserves_context",
-          "multi_agent_merge_outcome_typed",
-          "multi_agent_conflict_strategy_typed",
-          "multi_agent_unresolved_conflicts_bounded",
-          "multi_agent_summary_bounded",
-          "multi_agent_errors_sanitized"
-        ]
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
       },
       {
         "anchored_witnesses": [],
@@ -15015,6 +15111,6 @@
         "unanchored_witnesses": []
       }
     ],
-    "unanchored_witness_count": 206
+    "unanchored_witness_count": 198
   }
 }

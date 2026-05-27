@@ -151,8 +151,8 @@ Witness integrity audit:
 | Metric | Count |
 |---|---:|
 | Runtime witness labels | 1108 |
-| Exact test anchors | 902 |
-| Unanchored witness labels | 206 |
+| Exact test anchors | 910 |
+| Unanchored witness labels | 198 |
 
 Evidence quality gaps:
 none
@@ -175,7 +175,6 @@ Witness integrity gaps:
 | `claim_verification` | 0 | 6 | claim_type_declared, source_evidence_required, contradictions_block_execution, stale_claims_block_execution, high_risk_requires_independent_support, claim_verification_schema_valid |
 | `governed_connector_framework` | 0 | 6 | connector_registration_typed, connector_invocation_guard_chain_checked, connector_lifecycle_disable_enable_bounded, connector_history_summary_bounded, connector_errors_sanitized, connector_invocation_audited |
 | `governed_background_scheduler` | 0 | 6 | scheduler_job_registration_typed, scheduler_execute_guard_chain_checked, scheduler_lifecycle_controls_bounded, scheduler_history_summary_bounded, scheduler_errors_sanitized, scheduler_execution_audited |
-| `multi_agent_coordination_runtime` | 0 | 8 | multi_agent_delegation_tracked, multi_agent_delegation_resolution_validated, multi_agent_handoff_preserves_context, multi_agent_merge_outcome_typed, multi_agent_conflict_strategy_typed, multi_agent_unresolved_conflicts_bounded, multi_agent_summary_bounded, multi_agent_errors_sanitized |
 | `connector_self_healing` | 0 | 6 | provider_success_not_assumed, write_failures_require_operator_review, missing_receipt_revokes_capability, fallback_provider_requires_certification, read_only_degradation_bounded, connector_self_healing_schema_valid |
 | `policy_prover` | 0 | 7 | payment_requires_approval_counterexample, tenant_isolation_counterexample, shell_requires_sandbox_counterexample, provider_url_approved_counterexample, memory_requires_admission_counterexample, unknown_property_fails_closed, policy_proof_report_schema_valid |
 | `memory_lattice` | 1 | 5 | raw_event_memory_not_directly_admitted, semantic_memory_requires_learning_admission, policy_memory_requires_authority_ref, preference_memory_tenant_owner_scoped, memory_lattice_schema_valid |
@@ -315,5 +314,5 @@ none
 STATUS:
   Completeness: 100%
   Invariants verified: route declarations, route-level coverage classification, coverage levels, coverage states, closure action mapping, schema contract validation, deployment orchestration receipt schema contract
-  Open issues: 206 runtime-witness labels lack exact test-function anchors
+  Open issues: 198 runtime-witness labels lack exact test-function anchors
   Next action: bind unanchored runtime-witness labels to exact test-function anchors
