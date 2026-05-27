@@ -37,6 +37,7 @@ from mcoi_runtime.core.errors import (
     validation_error,
 )
 from mcoi_runtime.core.invariants import RuntimeCoreInvariantError, stable_identifier
+from mcoi_runtime.core.skill_promotion import promote_skill_with_evidence
 from mcoi_runtime.governance.policy.engine import PolicyInput
 
 from .bootstrap import build_policy_decision
@@ -73,6 +74,11 @@ if TYPE_CHECKING:
 def _bounded_lifecycle_transition_warning(exc: RuntimeCoreInvariantError) -> str:
     """Return a stable lifecycle warning without exposing registry details."""
     return f"skill lifecycle transition failed ({type(exc).__name__})"
+
+
+def _bounded_lifecycle_promotion_skip(reason: str) -> str:
+    """Return a stable promotion skip warning without exposing evidence details."""
+    return f"skill lifecycle promotion skipped ({reason})"
 
 
 def run_skill(loop: OperatorLoop, request: SkillRequest) -> SkillRunReport:
@@ -217,7 +223,17 @@ def run_skill(loop: OperatorLoop, request: SkillRequest) -> SkillRunReport:
     lifecycle_transition_warning = ""
     if succeeded and skill.lifecycle is SkillLifecycle.CANDIDATE:
         try:
-            registry.transition(skill.skill_id, SkillLifecycle.PROVISIONAL)
+            promotion_decision = promote_skill_with_evidence(
+                registry,
+                skill_id=skill.skill_id,
+                target_lifecycle=SkillLifecycle.PROVISIONAL,
+                execution_records=(record,),
+                created_at=loop.runtime.clock(),
+            )
+            if not promotion_decision.approved:
+                lifecycle_transition_warning = _bounded_lifecycle_promotion_skip(
+                    promotion_decision.reason
+                )
         except RuntimeCoreInvariantError as exc:
             lifecycle_transition_warning = _bounded_lifecycle_transition_warning(exc)
 

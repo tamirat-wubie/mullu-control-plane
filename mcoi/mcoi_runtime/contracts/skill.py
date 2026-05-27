@@ -14,7 +14,14 @@ from dataclasses import dataclass, field
 from enum import StrEnum
 from typing import Any, Mapping, TypeVar, cast
 
-from ._base import ContractRecord, freeze_value, require_non_empty_text, require_unit_float
+from ._base import (
+    ContractRecord,
+    freeze_value,
+    require_datetime_text,
+    require_non_empty_text,
+    require_non_empty_tuple,
+    require_unit_float,
+)
 from ._shared_enums import EffectClass, TrustClass
 
 TContract = TypeVar("TContract", bound=ContractRecord)
@@ -348,3 +355,73 @@ class SkillExecutionRecord(ContractRecord):
         object.__setattr__(self, "skill_id", require_non_empty_text(self.skill_id, "skill_id"))
         if not isinstance(self.outcome, SkillOutcome):
             raise ValueError("outcome must be a SkillOutcome instance")
+
+
+@dataclass(frozen=True, slots=True)
+class SkillPromotionEvidence(ContractRecord):
+    """Evidence packet authorizing one governed skill lifecycle promotion."""
+
+    evidence_id: str
+    skill_id: str
+    target_lifecycle: SkillLifecycle
+    execution_record_ids: tuple[str, ...]
+    evidence_refs: tuple[str, ...]
+    created_at: str
+    verification_ids: tuple[str, ...] = ()
+    reason: str = ""
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "evidence_id", require_non_empty_text(self.evidence_id, "evidence_id"))
+        object.__setattr__(self, "skill_id", require_non_empty_text(self.skill_id, "skill_id"))
+        if not isinstance(self.target_lifecycle, SkillLifecycle):
+            raise ValueError("target_lifecycle must be a SkillLifecycle value")
+        object.__setattr__(
+            self,
+            "execution_record_ids",
+            _freeze_text_array(
+                require_non_empty_tuple(self.execution_record_ids, "execution_record_ids"),
+                "execution_record_ids",
+            ),
+        )
+        object.__setattr__(
+            self,
+            "evidence_refs",
+            _freeze_text_array(
+                require_non_empty_tuple(self.evidence_refs, "evidence_refs"),
+                "evidence_refs",
+            ),
+        )
+        object.__setattr__(self, "verification_ids", _freeze_text_array(self.verification_ids, "verification_ids"))
+        object.__setattr__(self, "created_at", require_datetime_text(self.created_at, "created_at"))
+        object.__setattr__(self, "reason", require_non_empty_text(self.reason, "reason"))
+
+
+@dataclass(frozen=True, slots=True)
+class SkillPromotionDecision(ContractRecord):
+    """Promotion judgment returned by the skill promotion gate."""
+
+    skill_id: str
+    from_lifecycle: SkillLifecycle
+    target_lifecycle: SkillLifecycle
+    approved: bool
+    reason: str
+    evidence: SkillPromotionEvidence | None = None
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "skill_id", require_non_empty_text(self.skill_id, "skill_id"))
+        if not isinstance(self.from_lifecycle, SkillLifecycle):
+            raise ValueError("from_lifecycle must be a SkillLifecycle value")
+        if not isinstance(self.target_lifecycle, SkillLifecycle):
+            raise ValueError("target_lifecycle must be a SkillLifecycle value")
+        if not isinstance(self.approved, bool):
+            raise ValueError("approved must be a bool")
+        object.__setattr__(self, "reason", require_non_empty_text(self.reason, "reason"))
+        if self.evidence is not None and not isinstance(self.evidence, SkillPromotionEvidence):
+            raise ValueError("evidence must be a SkillPromotionEvidence instance")
+        if self.approved and self.evidence is None:
+            raise ValueError("approved promotion decisions must include evidence")
+        if self.evidence is not None:
+            if self.evidence.skill_id != self.skill_id:
+                raise ValueError("promotion evidence skill_id must match decision skill_id")
+            if self.evidence.target_lifecycle is not self.target_lifecycle:
+                raise ValueError("promotion evidence target_lifecycle must match decision target_lifecycle")
