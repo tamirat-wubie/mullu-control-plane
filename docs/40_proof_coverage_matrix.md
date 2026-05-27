@@ -151,8 +151,8 @@ Witness integrity audit:
 | Metric | Count |
 |---|---:|
 | Runtime witness labels | 1108 |
-| Exact test anchors | 887 |
-| Unanchored witness labels | 221 |
+| Exact test anchors | 894 |
+| Unanchored witness labels | 214 |
 
 Evidence quality gaps:
 none
@@ -163,7 +163,6 @@ Witness integrity gaps:
 |---|---:|---:|---|
 | `agent_memory_lifecycle` | 0 | 6 | agent_memory_store_bounded, agent_memory_search_relevance_scored, agent_memory_tenant_isolation, agent_memory_capacity_eviction, agent_memory_summary_bounded, agent_memory_forget_removes_entry |
 | `governance_explanation_lifecycle` | 1 | 6 | explain_action_guard_chain_path_reported, explain_audit_entry_allowed_and_denied, explain_audit_entry_goal_context_preserved, explanation_cache_bounded, explain_action_endpoint_governed, explain_summary_endpoint_governed |
-| `structured_output_validation` | 0 | 7 | structured_output_parse_valid_json, structured_output_parse_invalid_json, structured_output_parse_unknown_schema_bounded, structured_output_parse_markdown_json, structured_output_schema_registration_validated, structured_output_endpoint_parse_valid_and_invalid, structured_output_schema_list_bounded |
 | `agent_orchestration_lifecycle` | 0 | 8 | orchestration_summary_bounded, orchestration_plan_created_for_registered_agent, orchestration_unknown_initiator_bounded, orchestration_missing_plan_bounded, orchestration_handoff_capability_checked, orchestration_handoff_errors_sanitized, orchestration_quorum_required, orchestration_executor_errors_sanitized |
 | `live_path_certification_lifecycle` | 0 | 8 | certification_run_emits_action_proof, certification_run_returns_chain_hash, certification_run_records_five_steps, certification_steps_named, certification_history_bounded, certification_chain_hash_deterministic, certification_failures_bounded, certification_partial_failure_recorded |
 | `runtime_state_persistence_lifecycle` | 0 | 8 | state_save_returns_hash_bound_snapshot, state_load_roundtrip, state_load_missing_bounded, state_list_summary_bounded, state_save_rejects_path_traversal, state_load_rejects_path_traversal, state_hash_mismatch_rejected, state_atomic_write_verified |
@@ -317,5 +316,5 @@ none
 STATUS:
   Completeness: 100%
   Invariants verified: route declarations, route-level coverage classification, coverage levels, coverage states, closure action mapping, schema contract validation, deployment orchestration receipt schema contract
-  Open issues: 221 runtime-witness labels lack exact test-function anchors
+  Open issues: 214 runtime-witness labels lack exact test-function anchors
   Next action: bind unanchored runtime-witness labels to exact test-function anchors

@@ -1890,6 +1890,36 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "structured_output_endpoint_parse_valid_and_invalid",
                 "structured_output_schema_list_bounded",
             ],
+            runtime_witness_anchor_aliases={
+                "structured_output_parse_valid_json": [
+                    "parse_valid_json",
+                    "parse_valid",
+                ],
+                "structured_output_parse_invalid_json": [
+                    "parse_no_json",
+                    "parse_invalid",
+                ],
+                "structured_output_parse_unknown_schema_bounded": [
+                    "unknown_schema",
+                ],
+                "structured_output_parse_markdown_json": [
+                    "parse_markdown_json",
+                ],
+                "structured_output_schema_registration_validated": [
+                    "register_rejects_unsupported_field_type",
+                    "register_rejects_required_field_missing_from_schema",
+                    "duplicate_register_is_bounded",
+                ],
+                "structured_output_endpoint_parse_valid_and_invalid": [
+                    "parse_valid",
+                    "parse_invalid",
+                ],
+                "structured_output_schema_list_bounded": [
+                    "list_output_schemas",
+                    "list_schemas",
+                    "summary",
+                ],
+            },
         ),
         _surface(
             "operational_health_read_models",

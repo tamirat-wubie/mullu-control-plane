@@ -35,6 +35,12 @@ from mcoi_runtime.core.evidence_merger import (
 from mcoi_runtime.core.invariants import RuntimeCoreInvariantError
 from mcoi_runtime.core.planning_boundary import PlanningBoundaryResult, PlanningKnowledge
 
+from .skill_promotion_read_models import (
+    SkillPromotionReceiptReadReport,
+    SkillPromotionReceiptReadRequest,
+    SkillPromotionReceiptSummary,
+)
+
 
 ObservationRequestT = FilesystemObservationRequest | ProcessObservationRequest
 
@@ -562,6 +568,9 @@ __all__ = [
     "ObservationRequestT",
     "OperatorRequest",
     "OperatorRunReport",
+    "SkillPromotionReceiptReadReport",
+    "SkillPromotionReceiptReadRequest",
+    "SkillPromotionReceiptSummary",
     "SkillRequest",
     "SkillRunReport",
     "TeamQueueReconcileReport",
