@@ -32,8 +32,11 @@ from mcoi_runtime.core.invariants import RuntimeCoreInvariantError
 FIXED_CLOCK = "2025-01-15T10:00:00+00:00"
 
 
-def _make_loop():
-    runtime = bootstrap_runtime(clock=lambda: FIXED_CLOCK)
+def _make_loop(*, install_default_skills: bool = True):
+    runtime = bootstrap_runtime(
+        clock=lambda: FIXED_CLOCK,
+        install_default_skills=install_default_skills,
+    )
     return OperatorLoop(runtime=runtime)
 
 
@@ -193,7 +196,7 @@ class TestSkillRuntimeGoldenScenarios:
 class TestSkillRuntimeEdgeCases:
     def test_no_skills_registered_returns_no_skill_available(self):
         """Selection with empty registry returns structured error."""
-        loop = _make_loop()
+        loop = _make_loop(install_default_skills=False)
 
         report = loop.run_skill(SkillRequest(
             request_id="req-e1",
