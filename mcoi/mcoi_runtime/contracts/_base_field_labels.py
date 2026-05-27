@@ -89,6 +89,7 @@ application_id
 applied_at
 approval_id
 approvals
+approved
 approved_at
 approved_by
 approver_id
@@ -499,6 +500,7 @@ evidence
 evidence_count
 evidence_id
 evidence_ref
+evidence_refs
 evidence_type
 example_id
 exception_id
@@ -506,6 +508,7 @@ exceptions_active
 executed_at
 executed_by
 execution_id
+execution_record_ids
 execution_ms
 exit_code
 exited_at
@@ -582,6 +585,7 @@ from_account
 from_environment
 from_identity_id
 from_initiative_id
+from_lifecycle
 from_memory_id
 from_node
 from_node_id
@@ -1405,6 +1409,7 @@ target_file
 target_id
 target_identity_id
 target_input_key
+target_lifecycle
 target_minutes
 target_node_id
 target_node_ref
@@ -1860,6 +1865,7 @@ verdict
 verdict_id
 verification_difficulty
 verification_id
+verification_ids
 verification_method
 verified_at
 verified_by

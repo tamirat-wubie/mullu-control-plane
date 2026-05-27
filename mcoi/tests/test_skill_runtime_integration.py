@@ -258,6 +258,7 @@ class TestSkillRuntimeEdgeCases:
                         SkillStepOutcome(
                             step_id="step-transition-warning",
                             status=SkillOutcomeStatus.SUCCEEDED,
+                            execution_id="execution-transition-warning",
                         ),
                     ),
                 ),

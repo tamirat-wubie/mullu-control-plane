@@ -15,6 +15,8 @@ from mcoi_runtime.contracts.skill import (
     SkillOutcomeStatus,
     SkillPostcondition,
     SkillPrecondition,
+    SkillPromotionDecision,
+    SkillPromotionEvidence,
     SkillSelectionDecision,
     SkillStep,
     SkillStepOutcome,
@@ -293,3 +295,63 @@ class TestSkillExecutionRecord:
     def test_invalid_outcome_type(self):
         with pytest.raises(ValueError, match="outcome must be"):
             SkillExecutionRecord(record_id="rec-001", skill_id="sk-1", outcome="bad")
+
+
+# --- SkillPromotionDecision ---
+
+
+class TestSkillPromotionDecision:
+    def test_approved_decision_requires_matching_evidence(self):
+        evidence = SkillPromotionEvidence(
+            evidence_id="evidence-001",
+            skill_id="sk-1",
+            target_lifecycle=SkillLifecycle.PROVISIONAL,
+            execution_record_ids=("record-001",),
+            evidence_refs=("execution-001",),
+            created_at="2026-05-27T00:00:00+00:00",
+            reason="successful_execution_evidence",
+        )
+
+        decision = SkillPromotionDecision(
+            skill_id="sk-1",
+            from_lifecycle=SkillLifecycle.CANDIDATE,
+            target_lifecycle=SkillLifecycle.PROVISIONAL,
+            approved=True,
+            reason="successful_execution_evidence",
+            evidence=evidence,
+        )
+
+        assert decision.approved is True
+        assert decision.evidence is evidence
+        assert decision.evidence.execution_record_ids == ("record-001",)
+
+    def test_approved_decision_without_evidence_rejected(self):
+        with pytest.raises(ValueError, match="approved promotion decisions must include evidence"):
+            SkillPromotionDecision(
+                skill_id="sk-1",
+                from_lifecycle=SkillLifecycle.CANDIDATE,
+                target_lifecycle=SkillLifecycle.PROVISIONAL,
+                approved=True,
+                reason="successful_execution_evidence",
+            )
+
+    def test_mismatched_evidence_rejected(self):
+        evidence = SkillPromotionEvidence(
+            evidence_id="evidence-001",
+            skill_id="other-skill",
+            target_lifecycle=SkillLifecycle.PROVISIONAL,
+            execution_record_ids=("record-001",),
+            evidence_refs=("execution-001",),
+            created_at="2026-05-27T00:00:00+00:00",
+            reason="successful_execution_evidence",
+        )
+
+        with pytest.raises(ValueError, match="promotion evidence skill_id must match"):
+            SkillPromotionDecision(
+                skill_id="sk-1",
+                from_lifecycle=SkillLifecycle.CANDIDATE,
+                target_lifecycle=SkillLifecycle.PROVISIONAL,
+                approved=True,
+                reason="successful_execution_evidence",
+                evidence=evidence,
+            )
