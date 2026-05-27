@@ -19,6 +19,7 @@ import json
 from pathlib import Path
 from typing import Any
 
+import scripts.package_orgos_anchor_export as package_script
 from gateway.orgos_kernel import JsonlOrgCaseEventLog, OrgCaseEventReceiptConfig
 from gateway.trust_ledger import TrustLedger, TrustLedgerBundle, TrustLedgerBundleDraft, TrustLedgerEvidenceArtifact
 from scripts.package_orgos_anchor_export import main, package_orgos_anchor_export
@@ -126,6 +127,117 @@ def test_package_orgos_anchor_export_rejects_missing_terminal_artifact(tmp_path:
     assert report["reason"] == "anchor_required_artifacts_missing:terminal_certificate"
     assert report["schema_valid"] is True
     assert report["schema_errors"] == []
+
+
+def test_package_orgos_anchor_export_blocks_invalid_generated_package_before_publish(
+    tmp_path: Path,
+) -> None:
+    inputs = _write_inputs(tmp_path)
+    output_dir = tmp_path / "anchor-export"
+
+    report = package_orgos_anchor_export(
+        bundle_path=inputs["bundle"],
+        base_artifacts_path=inputs["base_artifacts"],
+        orgos_artifacts_path=inputs["orgos_artifacts"],
+        output_dir=output_dir,
+        anchor_target="transparency_log",
+        external_anchor_ref="",
+        external_anchor_status="pending",
+        anchored_at="2026-05-05T12:10:00+00:00",
+        signing_secret="anchor-secret",
+        signature_key_id="anchor-key",
+        created_at="not-a-date-time",
+    )
+
+    assert report["valid"] is False
+    assert report["reason"] == "package_schema_validation_failed"
+    assert report["output_files"] == {}
+    assert not (output_dir / "bundle.json").exists()
+    assert not (output_dir / "anchor_receipt.json").exists()
+    assert not (output_dir / "artifacts.json").exists()
+    assert not (output_dir / "package.json").exists()
+
+
+def test_package_orgos_anchor_export_rolls_back_partial_publish_failure(
+    tmp_path: Path,
+    monkeypatch: Any,
+) -> None:
+    inputs = _write_inputs(tmp_path)
+    output_dir = tmp_path / "anchor-export"
+    original_replace = package_script.os.replace
+
+    def fail_on_anchor_receipt_replace(source: str, destination: str) -> None:
+        if Path(source).suffix == ".tmp" and Path(destination).name == "anchor_receipt.json":
+            raise OSError("simulated replace failure")
+        original_replace(source, destination)
+
+    monkeypatch.setattr(package_script.os, "replace", fail_on_anchor_receipt_replace)
+
+    report = package_orgos_anchor_export(
+        bundle_path=inputs["bundle"],
+        base_artifacts_path=inputs["base_artifacts"],
+        orgos_artifacts_path=inputs["orgos_artifacts"],
+        output_dir=output_dir,
+        anchor_target="transparency_log",
+        external_anchor_ref="",
+        external_anchor_status="pending",
+        anchored_at="2026-05-05T12:10:00+00:00",
+        signing_secret="anchor-secret",
+        signature_key_id="anchor-key",
+        created_at="2026-05-05T12:11:00+00:00",
+    )
+
+    assert report["valid"] is False
+    assert report["reason"] == "anchor_export_publish_failed:OSError"
+    assert report["output_files"] == {}
+    assert output_dir.exists()
+    assert list(output_dir.iterdir()) == []
+
+
+def test_package_orgos_anchor_export_restores_existing_files_on_publish_failure(
+    tmp_path: Path,
+    monkeypatch: Any,
+) -> None:
+    inputs = _write_inputs(tmp_path)
+    output_dir = tmp_path / "anchor-export"
+    output_dir.mkdir()
+    existing_payloads = {
+        "bundle.json": {"existing": "bundle"},
+        "anchor_receipt.json": {"existing": "receipt"},
+        "artifacts.json": [{"existing": "artifact"}],
+        "package.json": {"existing": "package"},
+    }
+    for file_name, payload in existing_payloads.items():
+        (output_dir / file_name).write_text(json.dumps(payload), encoding="utf-8")
+    original_replace = package_script.os.replace
+
+    def fail_on_anchor_receipt_replace(source: str, destination: str) -> None:
+        if Path(source).suffix == ".tmp" and Path(destination).name == "anchor_receipt.json":
+            raise OSError("simulated replace failure")
+        original_replace(source, destination)
+
+    monkeypatch.setattr(package_script.os, "replace", fail_on_anchor_receipt_replace)
+
+    report = package_orgos_anchor_export(
+        bundle_path=inputs["bundle"],
+        base_artifacts_path=inputs["base_artifacts"],
+        orgos_artifacts_path=inputs["orgos_artifacts"],
+        output_dir=output_dir,
+        anchor_target="transparency_log",
+        external_anchor_ref="",
+        external_anchor_status="pending",
+        anchored_at="2026-05-05T12:10:00+00:00",
+        signing_secret="anchor-secret",
+        signature_key_id="anchor-key",
+        created_at="2026-05-05T12:11:00+00:00",
+    )
+
+    assert report["valid"] is False
+    assert report["reason"] == "anchor_export_publish_failed:OSError"
+    assert report["output_files"] == {}
+    assert sorted(path.name for path in output_dir.iterdir()) == sorted(existing_payloads)
+    for file_name, payload in existing_payloads.items():
+        assert json.loads((output_dir / file_name).read_text(encoding="utf-8")) == payload
 
 
 def test_package_orgos_anchor_export_cli_emits_verifiable_package(tmp_path: Path, capsys: Any) -> None:

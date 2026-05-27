@@ -6549,6 +6549,9 @@
         "package_orgos_anchor_export_merges_optional_orgos_artifact",
         "package_orgos_anchor_export_rejects_required_orgos_artifact",
         "package_orgos_anchor_export_rejects_missing_terminal_artifact",
+        "package_orgos_anchor_export_blocks_invalid_generated_package_before_publish",
+        "package_orgos_anchor_export_rolls_back_partial_publish_failure",
+        "package_orgos_anchor_export_restores_existing_files_on_publish_failure",
         "package_orgos_anchor_export_cli_emits_verifiable_package",
         "trust_ledger_remote_submission_preflight_accepts_ready_export",
         "trust_ledger_remote_submission_preflight_projects_final_submit_payload_hash",
@@ -8083,8 +8086,8 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 871,
-    "runtime_witness_count": 1098,
+    "exact_test_anchor_count": 874,
+    "runtime_witness_count": 1101,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -12691,6 +12694,24 @@
           },
           {
             "anchors": [
+              "tests/test_package_orgos_anchor_export.py::test_package_orgos_anchor_export_blocks_invalid_generated_package_before_publish"
+            ],
+            "witness": "package_orgos_anchor_export_blocks_invalid_generated_package_before_publish"
+          },
+          {
+            "anchors": [
+              "tests/test_package_orgos_anchor_export.py::test_package_orgos_anchor_export_rolls_back_partial_publish_failure"
+            ],
+            "witness": "package_orgos_anchor_export_rolls_back_partial_publish_failure"
+          },
+          {
+            "anchors": [
+              "tests/test_package_orgos_anchor_export.py::test_package_orgos_anchor_export_restores_existing_files_on_publish_failure"
+            ],
+            "witness": "package_orgos_anchor_export_restores_existing_files_on_publish_failure"
+          },
+          {
+            "anchors": [
               "tests/test_package_orgos_anchor_export.py::test_package_orgos_anchor_export_cli_emits_verifiable_package"
             ],
             "witness": "package_orgos_anchor_export_cli_emits_verifiable_package"
@@ -12840,8 +12861,8 @@
             "witness": "submit_trust_ledger_anchor_export_cli_emits_submission_receipt"
           }
         ],
-        "exact_test_anchor_count": 59,
-        "runtime_witness_count": 59,
+        "exact_test_anchor_count": 62,
+        "runtime_witness_count": 62,
         "surface_id": "trust_ledger",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []
