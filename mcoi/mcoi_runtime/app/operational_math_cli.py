@@ -138,12 +138,19 @@ def main(argv: list[str] | None = None) -> int:
         )
         result = engine.apply_all(target)
         receipt = build_operational_math_receipt(result, event_count=event_spine.event_count)
+        receipt_store = None
         if args.store_path is not None:
-            FileOperationalMathReceiptStore(args.store_path).append(receipt)
+            receipt_store = FileOperationalMathReceiptStore(args.store_path)
+            receipt_store.append(receipt)
         if args.receipt_path is not None:
             _write_json_document(receipt, args.receipt_path)
         if args.projection_path is not None:
-            _write_json_document(summarize_operational_math_receipt(receipt), args.projection_path)
+            projection = (
+                receipt_store.summary()
+                if receipt_store is not None
+                else summarize_operational_math_receipt(receipt)
+            )
+            _write_json_document(projection, args.projection_path)
     except (OSError, PersistenceError, ValueError) as exc:
         sys.stderr.write(f"STATUS: failed\nerror: {exc}\n")
         return 1
