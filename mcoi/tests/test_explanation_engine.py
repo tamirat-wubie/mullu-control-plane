@@ -128,6 +128,33 @@ def test_explain_action_endpoint(client) -> None:
     assert "guard_chain_path" in data
 
 
+def test_explain_audit_endpoint_governed_and_missing_entry(client) -> None:
+    from mcoi_runtime.app.routers.deps import deps
+
+    deps.audit_trail.record(
+        action="explain.audit.test",
+        actor_id="agent-explain-test",
+        tenant_id="tenant-explain-test",
+        target="audit-entry",
+        outcome="success",
+        detail={"mission_id": "mission-explain-test", "goal_id": "goal-explain-test"},
+    )
+
+    entry_index = len(deps.audit_trail.query(limit=500_000)) - 1
+    response = client.get(f"/api/v1/explain/audit/{entry_index}")
+    missing = client.get("/api/v1/explain/audit/999999")
+    body = response.json()
+    missing_body = missing.json()
+
+    assert response.status_code == 200
+    assert body["governed"] is True
+    assert body["decision"] == "allowed"
+    assert body["action"]
+    assert "policy_context" in body
+    assert missing.status_code == 404
+    assert missing_body["detail"]["governed"] is True
+
+
 def test_explain_summary_endpoint(client) -> None:
     resp = client.get("/api/v1/explain/summary")
     assert resp.status_code == 200
