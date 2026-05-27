@@ -318,6 +318,31 @@ def test_effect_bearing_c6_requires_live_write() -> None:
     assert assessment.metadata["effect_bearing"] is True
 
 
+def test_production_requires_worker_deployment_recovery() -> None:
+    assessment = CapabilityMaturityAssessor().assess(
+        CapabilityMaturityEvidence(
+            capability_id="payments.send",
+            schema_valid=True,
+            policy_bound=True,
+            mock_eval_passed=True,
+            sandbox_receipt_valid=True,
+            live_read_receipt_valid=True,
+            live_write_receipt_valid=True,
+            worker_deployment_bound=False,
+            recovery_evidence_present=False,
+            autonomy_controls_bounded=False,
+            effect_bearing=True,
+            evidence_refs=("proof://capabilities/payments.send/live-write",),
+        ),
+    )
+
+    assert assessment.maturity_level == "C5"
+    assert assessment.production_ready is False
+    assert assessment.autonomy_ready is False
+    assert "worker_deployment_evidence_missing" in assessment.blockers
+    assert "recovery_evidence_missing" in assessment.blockers
+
+
 def test_production_requires_c6_or_c7() -> None:
     c6_assessment = CapabilityMaturityAssessor().assess(
         _evidence(effect_bearing=True, live_write_receipt_valid=True),

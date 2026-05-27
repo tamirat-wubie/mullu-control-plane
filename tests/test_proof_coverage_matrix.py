@@ -175,6 +175,8 @@ def test_witness_integrity_report_tracks_exact_test_anchors() -> None:
     assert surfaces["job_engine_lifecycle"]["unanchored_witness_count"] == 0
     assert surfaces["authority_obligation_mesh"]["exact_test_anchor_count"] == 5
     assert surfaces["authority_obligation_mesh"]["unanchored_witness_count"] == 0
+    assert surfaces["authority_operator_controls"]["exact_test_anchor_count"] == 5
+    assert surfaces["authority_operator_controls"]["unanchored_witness_count"] == 0
     assert surfaces["code_intelligence_operator_read_model"]["exact_test_anchor_count"] >= 5
     assert surfaces["code_intelligence_operator_read_model"]["unanchored_witness_count"] == 0
     assert surfaces["data_export_lifecycle"]["exact_test_anchor_count"] >= 4
@@ -251,6 +253,8 @@ def test_witness_integrity_report_tracks_exact_test_anchors() -> None:
     assert surfaces["temporal_memory"]["exact_test_anchor_count"] == 9
     assert surfaces["capability_forge"]["unanchored_witness_count"] == 0
     assert surfaces["capability_forge"]["exact_test_anchor_count"] == 10
+    assert surfaces["capability_maturity_assessment"]["unanchored_witness_count"] == 0
+    assert surfaces["capability_maturity_assessment"]["exact_test_anchor_count"] == 9
     assert surfaces["capability_maturity"]["unanchored_witness_count"] == 0
     assert surfaces["capability_maturity"]["exact_test_anchor_count"] == 5
     assert surfaces["domain_operating_pack"]["unanchored_witness_count"] == 0
