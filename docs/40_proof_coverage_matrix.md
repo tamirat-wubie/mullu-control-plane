@@ -151,8 +151,8 @@ Witness integrity audit:
 | Metric | Count |
 |---|---:|
 | Runtime witness labels | 1108 |
-| Exact test anchors | 937 |
-| Unanchored witness labels | 171 |
+| Exact test anchors | 970 |
+| Unanchored witness labels | 138 |
 
 Evidence quality gaps:
 none
@@ -161,7 +161,6 @@ Witness integrity gaps:
 
 | Surface | Exact anchors | Unanchored | Unanchored labels |
 |---|---:|---:|---|
-| `governance_explanation_lifecycle` | 1 | 6 | explain_action_guard_chain_path_reported, explain_audit_entry_allowed_and_denied, explain_audit_entry_goal_context_preserved, explanation_cache_bounded, explain_action_endpoint_governed, explain_summary_endpoint_governed |
 | `agent_orchestration_lifecycle` | 0 | 8 | orchestration_summary_bounded, orchestration_plan_created_for_registered_agent, orchestration_unknown_initiator_bounded, orchestration_missing_plan_bounded, orchestration_handoff_capability_checked, orchestration_handoff_errors_sanitized, orchestration_quorum_required, orchestration_executor_errors_sanitized |
 | `live_path_certification_lifecycle` | 0 | 8 | certification_run_emits_action_proof, certification_run_returns_chain_hash, certification_run_records_five_steps, certification_steps_named, certification_history_bounded, certification_chain_hash_deterministic, certification_failures_bounded, certification_partial_failure_recorded |
 | `software_outcome_learning` | 0 | 7 | software_learning_schema_default_enabled, passed_gates_yield_procedural_memory, failed_gates_yield_hashed_risk_memory, raw_logs_rejected_before_planning_use, rollback_failure_defers_learning, planning_projection_requires_admitted_matching_decision, software_learning_errors_are_bounded |
@@ -178,9 +177,6 @@ Witness integrity gaps:
 | `workflow_mining` | 0 | 6 | repeated_trace_pattern_required, workflow_draft_activation_blocked, operator_review_required, sandbox_replay_required, risky_pattern_requires_approval_rules, workflow_mining_report_schema_valid |
 | `temporal_evidence_freshness` | 0 | 8 | evidence_age_computed_from_runtime_clock, freshness_window_required_for_dispatch, stale_required_evidence_triggers_refresh, missing_required_evidence_blocks_dispatch, revoked_or_unverified_high_risk_evidence_blocks, expiring_evidence_warns_before_dispatch, temporal_evidence_freshness_receipt_schema_valid, receipt_not_terminal_closure |
 | `temporal_reapproval` | 0 | 8 | runtime_clock_owns_reapproval_time, high_risk_approval_roles_required, expired_approval_requires_reapproval, revoked_or_out_of_scope_approval_blocks_dispatch, missing_approval_role_requires_reapproval, low_risk_action_does_not_require_reapproval, temporal_reapproval_receipt_schema_valid, receipt_not_terminal_closure |
-| `temporal_dispatch_window` | 0 | 9 | runtime_clock_owns_dispatch_window_time, tenant_timezone_resolved, allowed_window_required_for_high_risk_dispatch, outside_allowed_window_defers_dispatch, active_blackout_defers_dispatch, holiday_closure_defers_dispatch, source_reapproval_bound_for_high_risk_dispatch, temporal_dispatch_window_receipt_schema_valid, receipt_not_terminal_closure |
-| `temporal_budget_window` | 0 | 9 | runtime_clock_owns_budget_window_time, tenant_timezone_resolves_budget_period, daily_weekly_monthly_budget_resets_computed, spend_snapshot_period_matches_active_window, projected_spend_blocks_over_limit_dispatch, future_budget_window_defers_dispatch, source_reapproval_bound_for_high_risk_budget_window, temporal_budget_window_receipt_schema_valid, receipt_not_terminal_closure |
-| `temporal_causal_order` | 0 | 9 | runtime_clock_owns_causal_order_time, required_events_must_be_present, tenant_and_command_scope_checked, predecessor_edges_checked, out_of_order_events_block_dispatch, future_events_block_dispatch, high_risk_source_receipts_bound, temporal_causal_order_receipt_schema_valid, receipt_not_terminal_closure |
 | `temporal_monotonic_duration` | 0 | 8 | runtime_monotonic_clock_owns_duration_truth, wall_clock_not_used_for_duration, duration_limit_exceeded_blocks_dispatch, cooldown_lower_bound_defers_dispatch, monotonic_clock_regression_blocks_dispatch, high_risk_source_receipts_bound, temporal_monotonic_duration_receipt_schema_valid, receipt_not_terminal_closure |
 | `temporal_missed_run` | 2 | 7 | runtime_clock_owns_missed_run_time, late_within_grace_preserves_dispatch_eligibility, recovery_due_requires_review_actions, tenant_command_action_scope_checked, high_risk_source_receipts_bound, temporal_missed_run_receipt_schema_valid, receipt_not_terminal_closure |
 | `temporal_recurrence_window` | 2 | 8 | runtime_clock_owns_recurrence_window_time, tenant_timezone_preserved_across_dst, candidate_must_match_next_occurrence, future_candidate_defers_dispatch, completed_series_blocks_dispatch, monthly_end_of_month_clamped, temporal_recurrence_window_receipt_schema_valid, receipt_not_terminal_closure |
@@ -310,5 +306,5 @@ none
 STATUS:
   Completeness: 100%
   Invariants verified: route declarations, route-level coverage classification, coverage levels, coverage states, closure action mapping, schema contract validation, deployment orchestration receipt schema contract
-  Open issues: 171 runtime-witness labels lack exact test-function anchors
+  Open issues: 138 runtime-witness labels lack exact test-function anchors
   Next action: bind unanchored runtime-witness labels to exact test-function anchors

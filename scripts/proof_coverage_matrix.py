@@ -1858,6 +1858,29 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "explain_action_endpoint_governed",
                 "explain_summary_endpoint_governed",
             ],
+            runtime_witness_anchor_aliases={
+                "explain_action_guard_chain_path_reported": [
+                    "explain_action_endpoint",
+                    "explain_action_no_guard_chain",
+                ],
+                "explain_audit_entry_allowed_and_denied": [
+                    "explain_audit_entry_success",
+                    "explain_audit_entry_denied",
+                    "explain_audit_endpoint_governed_and_missing_entry",
+                ],
+                "explain_audit_entry_goal_context_preserved": [
+                    "explain_audit_entry_with_goal_hierarchy",
+                ],
+                "explanation_cache_bounded": [
+                    "cache_bounded",
+                ],
+                "explain_action_endpoint_governed": [
+                    "explain_action_endpoint",
+                ],
+                "explain_summary_endpoint_governed": [
+                    "explain_summary_endpoint",
+                ],
+            },
         ),
         _surface(
             "tool_registry_read_models",
@@ -4453,6 +4476,37 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "temporal_dispatch_window_receipt_schema_valid",
                 "receipt_not_terminal_closure",
             ],
+            runtime_witness_anchor_aliases={
+                "runtime_clock_owns_dispatch_window_time": [
+                    "dispatch_window_allows_high_risk_action_inside_allowed_window"
+                ],
+                "tenant_timezone_resolved": [
+                    "dispatch_window_allows_high_risk_action_inside_allowed_window"
+                ],
+                "allowed_window_required_for_high_risk_dispatch": [
+                    "dispatch_window_blocks_invalid_high_risk_policy_state",
+                    "dispatch_window_marks_low_risk_action_not_required",
+                ],
+                "outside_allowed_window_defers_dispatch": [
+                    "dispatch_window_defers_outside_allowed_window_to_next_business_window"
+                ],
+                "active_blackout_defers_dispatch": [
+                    "dispatch_window_defers_active_blackout_inside_allowed_window"
+                ],
+                "holiday_closure_defers_dispatch": [
+                    "dispatch_window_defers_holiday_to_next_business_window"
+                ],
+                "source_reapproval_bound_for_high_risk_dispatch": [
+                    "dispatch_window_allows_high_risk_action_inside_allowed_window",
+                    "dispatch_window_blocks_invalid_high_risk_policy_state",
+                ],
+                "temporal_dispatch_window_receipt_schema_valid": [
+                    "dispatch_window_allows_high_risk_action_inside_allowed_window"
+                ],
+                "receipt_not_terminal_closure": [
+                    "dispatch_window_allows_high_risk_action_inside_allowed_window"
+                ],
+            },
         ),
         _surface(
             "temporal_budget_window",
@@ -4482,6 +4536,38 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "temporal_budget_window_receipt_schema_valid",
                 "receipt_not_terminal_closure",
             ],
+            runtime_witness_anchor_aliases={
+                "runtime_clock_owns_budget_window_time": [
+                    "budget_window_allows_high_risk_action_inside_daily_remaining_budget"
+                ],
+                "tenant_timezone_resolves_budget_period": [
+                    "budget_window_allows_high_risk_action_inside_daily_remaining_budget",
+                    "budget_window_preserves_weekly_tenant_local_reset_window",
+                ],
+                "daily_weekly_monthly_budget_resets_computed": [
+                    "budget_window_allows_high_risk_action_inside_daily_remaining_budget",
+                    "budget_window_preserves_weekly_tenant_local_reset_window",
+                ],
+                "spend_snapshot_period_matches_active_window": [
+                    "budget_window_blocks_mismatched_snapshot_and_missing_sources"
+                ],
+                "projected_spend_blocks_over_limit_dispatch": [
+                    "budget_window_blocks_when_projected_spend_exceeds_active_limit"
+                ],
+                "future_budget_window_defers_dispatch": [
+                    "budget_window_defers_future_custom_period"
+                ],
+                "source_reapproval_bound_for_high_risk_budget_window": [
+                    "budget_window_allows_high_risk_action_inside_daily_remaining_budget",
+                    "budget_window_blocks_mismatched_snapshot_and_missing_sources",
+                ],
+                "temporal_budget_window_receipt_schema_valid": [
+                    "budget_window_allows_high_risk_action_inside_daily_remaining_budget"
+                ],
+                "receipt_not_terminal_closure": [
+                    "budget_window_allows_high_risk_action_inside_daily_remaining_budget"
+                ],
+            },
         ),
         _surface(
             "temporal_causal_order",
@@ -4511,6 +4597,37 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "temporal_causal_order_receipt_schema_valid",
                 "receipt_not_terminal_closure",
             ],
+            runtime_witness_anchor_aliases={
+                "runtime_clock_owns_causal_order_time": [
+                    "causal_order_allows_high_risk_dispatch_when_required_events_are_ordered"
+                ],
+                "required_events_must_be_present": [
+                    "causal_order_blocks_missing_required_event_type"
+                ],
+                "tenant_and_command_scope_checked": [
+                    "causal_order_blocks_invalid_scope_future_event_predecessor_and_missing_sources"
+                ],
+                "predecessor_edges_checked": [
+                    "causal_order_blocks_invalid_scope_future_event_predecessor_and_missing_sources",
+                    "causal_order_blocks_out_of_order_runtime_timestamps",
+                ],
+                "out_of_order_events_block_dispatch": [
+                    "causal_order_blocks_out_of_order_runtime_timestamps"
+                ],
+                "future_events_block_dispatch": [
+                    "causal_order_blocks_invalid_scope_future_event_predecessor_and_missing_sources"
+                ],
+                "high_risk_source_receipts_bound": [
+                    "causal_order_allows_high_risk_dispatch_when_required_events_are_ordered",
+                    "causal_order_blocks_invalid_scope_future_event_predecessor_and_missing_sources",
+                ],
+                "temporal_causal_order_receipt_schema_valid": [
+                    "causal_order_allows_high_risk_dispatch_when_required_events_are_ordered"
+                ],
+                "receipt_not_terminal_closure": [
+                    "causal_order_allows_high_risk_dispatch_when_required_events_are_ordered"
+                ],
+            },
         ),
         _surface(
             "temporal_monotonic_duration",
