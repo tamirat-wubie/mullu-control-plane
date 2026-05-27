@@ -2574,6 +2574,26 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "approval_override_mutation_receipt_emitted",
                 "approval_mutation_receipt_closes_effect_assurance",
             ],
+            runtime_witness_anchor_aliases={
+                "approval_request_mutation_receipt_emitted": [
+                    "request_submission_records_bounded_receipt",
+                    "approval_receipts_convert_to_effect_records",
+                    "approval_mutation_receipt_closes_effect_assurance",
+                ],
+                "approval_decision_mutation_receipt_emitted": [
+                    "decision_consumption_revocation_and_override_record_receipts",
+                    "expired_decision_records_decision_receipt",
+                ],
+                "approval_consumption_mutation_receipt_emitted": [
+                    "decision_consumption_revocation_and_override_record_receipts",
+                ],
+                "approval_revocation_mutation_receipt_emitted": [
+                    "decision_consumption_revocation_and_override_record_receipts",
+                ],
+                "approval_override_mutation_receipt_emitted": [
+                    "decision_consumption_revocation_and_override_record_receipts",
+                ],
+            },
         ),
         _surface(
             "effect_assurance_graph_commit",

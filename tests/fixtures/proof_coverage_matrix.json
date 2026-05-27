@@ -5378,6 +5378,26 @@
         "ApprovalEngine.record_override"
       ],
       "request_proof": "request_proof",
+      "runtime_witness_anchor_aliases": {
+        "approval_consumption_mutation_receipt_emitted": [
+          "decision_consumption_revocation_and_override_record_receipts"
+        ],
+        "approval_decision_mutation_receipt_emitted": [
+          "decision_consumption_revocation_and_override_record_receipts",
+          "expired_decision_records_decision_receipt"
+        ],
+        "approval_override_mutation_receipt_emitted": [
+          "decision_consumption_revocation_and_override_record_receipts"
+        ],
+        "approval_request_mutation_receipt_emitted": [
+          "request_submission_records_bounded_receipt",
+          "approval_receipts_convert_to_effect_records",
+          "approval_mutation_receipt_closes_effect_assurance"
+        ],
+        "approval_revocation_mutation_receipt_emitted": [
+          "decision_consumption_revocation_and_override_record_receipts"
+        ]
+      },
       "runtime_witnesses": [
         "approval_request_mutation_receipt_emitted",
         "approval_decision_mutation_receipt_emitted",
@@ -8620,7 +8640,7 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 996,
+    "exact_test_anchor_count": 1001,
     "runtime_witness_count": 1111,
     "surfaces": [
       {
@@ -11911,22 +11931,49 @@
         "anchored_witnesses": [
           {
             "anchors": [
+              "mcoi/tests/test_approval.py::test_request_submission_records_bounded_receipt",
+              "mcoi/tests/test_approval.py::test_approval_receipts_convert_to_effect_records",
+              "mcoi/tests/test_approval.py::test_approval_mutation_receipt_closes_effect_assurance"
+            ],
+            "witness": "approval_request_mutation_receipt_emitted"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_approval.py::test_decision_consumption_revocation_and_override_record_receipts",
+              "mcoi/tests/test_approval.py::test_expired_decision_records_decision_receipt"
+            ],
+            "witness": "approval_decision_mutation_receipt_emitted"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_approval.py::test_decision_consumption_revocation_and_override_record_receipts"
+            ],
+            "witness": "approval_consumption_mutation_receipt_emitted"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_approval.py::test_decision_consumption_revocation_and_override_record_receipts"
+            ],
+            "witness": "approval_revocation_mutation_receipt_emitted"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_approval.py::test_decision_consumption_revocation_and_override_record_receipts"
+            ],
+            "witness": "approval_override_mutation_receipt_emitted"
+          },
+          {
+            "anchors": [
               "mcoi/tests/test_approval.py::test_approval_mutation_receipt_closes_effect_assurance"
             ],
             "witness": "approval_mutation_receipt_closes_effect_assurance"
           }
         ],
-        "exact_test_anchor_count": 1,
+        "exact_test_anchor_count": 6,
         "runtime_witness_count": 6,
         "surface_id": "approval_engine_lifecycle",
-        "unanchored_witness_count": 5,
-        "unanchored_witnesses": [
-          "approval_request_mutation_receipt_emitted",
-          "approval_decision_mutation_receipt_emitted",
-          "approval_consumption_mutation_receipt_emitted",
-          "approval_revocation_mutation_receipt_emitted",
-          "approval_override_mutation_receipt_emitted"
-        ]
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
       },
       {
         "anchored_witnesses": [
@@ -16007,6 +16054,6 @@
         "unanchored_witnesses": []
       }
     ],
-    "unanchored_witness_count": 115
+    "unanchored_witness_count": 110
   }
 }
