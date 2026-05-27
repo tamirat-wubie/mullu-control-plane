@@ -3767,6 +3767,23 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "high_risk_requires_independent_support",
                 "claim_verification_schema_valid",
             ],
+            runtime_witness_anchor_aliases={
+                "claim_type_declared": [
+                    "claim_verification_report_schema_validates"
+                ],
+                "contradictions_block_execution": [
+                    "contradicted_claim_blocks_planning_and_execution"
+                ],
+                "stale_claims_block_execution": [
+                    "stale_claim_blocks_execution"
+                ],
+                "high_risk_requires_independent_support": [
+                    "high_risk_claim_requires_independent_support_sources"
+                ],
+                "claim_verification_schema_valid": [
+                    "claim_verification_report_schema_validates"
+                ],
+            },
         ),
         _surface(
             "governed_connector_framework",

@@ -151,8 +151,8 @@ Witness integrity audit:
 | Metric | Count |
 |---|---:|
 | Runtime witness labels | 1112 |
-| Exact test anchors | 1024 |
-| Unanchored witness labels | 88 |
+| Exact test anchors | 1036 |
+| Unanchored witness labels | 76 |
 
 Evidence quality gaps:
 none
@@ -161,11 +161,9 @@ Witness integrity gaps:
 
 | Surface | Exact anchors | Unanchored | Unanchored labels |
 |---|---:|---:|---|
-| `agent_identity` | 1 | 7 | owner_tenant_identity_required, self_approval_forbidden, policy_mutation_forbidden, delegation_requires_lease, agent_budget_enforced, reputation_update_requires_evidence, agent_identity_schema_valid |
 | `claim_verification` | 0 | 6 | claim_type_declared, source_evidence_required, contradictions_block_execution, stale_claims_block_execution, high_risk_requires_independent_support, claim_verification_schema_valid |
 | `connector_self_healing` | 0 | 6 | provider_success_not_assumed, write_failures_require_operator_review, missing_receipt_revokes_capability, fallback_provider_requires_certification, read_only_degradation_bounded, connector_self_healing_schema_valid |
 | `policy_prover` | 0 | 7 | payment_requires_approval_counterexample, tenant_isolation_counterexample, shell_requires_sandbox_counterexample, provider_url_approved_counterexample, memory_requires_admission_counterexample, unknown_property_fails_closed, policy_proof_report_schema_valid |
-| `memory_lattice` | 1 | 5 | raw_event_memory_not_directly_admitted, semantic_memory_requires_learning_admission, policy_memory_requires_authority_ref, preference_memory_tenant_owner_scoped, memory_lattice_schema_valid |
 | `workflow_mining` | 0 | 6 | repeated_trace_pattern_required, workflow_draft_activation_blocked, operator_review_required, sandbox_replay_required, risky_pattern_requires_approval_rules, workflow_mining_report_schema_valid |
 | `temporal_evidence_freshness` | 0 | 8 | evidence_age_computed_from_runtime_clock, freshness_window_required_for_dispatch, stale_required_evidence_triggers_refresh, missing_required_evidence_blocks_dispatch, revoked_or_unverified_high_risk_evidence_blocks, expiring_evidence_warns_before_dispatch, temporal_evidence_freshness_receipt_schema_valid, receipt_not_terminal_closure |
 | `temporal_reapproval` | 0 | 8 | runtime_clock_owns_reapproval_time, high_risk_approval_roles_required, expired_approval_requires_reapproval, revoked_or_out_of_scope_approval_blocks_dispatch, missing_approval_role_requires_reapproval, low_risk_action_does_not_require_reapproval, temporal_reapproval_receipt_schema_valid, receipt_not_terminal_closure |
@@ -298,5 +296,5 @@ none
 STATUS:
   Completeness: 100%
   Invariants verified: route declarations, route-level coverage classification, coverage levels, coverage states, closure action mapping, schema contract validation, deployment orchestration receipt schema contract
-  Open issues: 88 runtime-witness labels lack exact test-function anchors
+  Open issues: 76 runtime-witness labels lack exact test-function anchors
   Next action: bind unanchored runtime-witness labels to exact test-function anchors
