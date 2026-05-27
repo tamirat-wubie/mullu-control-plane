@@ -50,7 +50,10 @@ def test_temporal_reapproval_approves_valid_high_risk_grants_schema_receipt() ->
     assert receipt.approved_role_count == 2
     assert receipt.missing_approver_roles == []
     assert receipt.earliest_approval_expiry_at == "2026-05-05T14:00:00+00:00"
+    assert receipt.runtime_now_utc == NOW
+    assert receipt.approval_states[0].age_seconds == 2400
     assert receipt.metadata["dispatch_allowed"] is True
+    assert receipt.metadata["receipt_is_not_terminal_closure"] is True
     assert receipt.terminal_closure_required is True
 
 

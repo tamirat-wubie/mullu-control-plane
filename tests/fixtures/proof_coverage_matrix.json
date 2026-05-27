@@ -7642,6 +7642,32 @@
         "TemporalReapprovalReceipt"
       ],
       "request_proof": "request_proof",
+      "runtime_witness_anchor_aliases": {
+        "expired_approval_requires_reapproval": [
+          "temporal_reapproval_requires_fresh_approval_when_grant_expired"
+        ],
+        "high_risk_approval_roles_required": [
+          "temporal_reapproval_requires_missing_role_coverage"
+        ],
+        "low_risk_action_does_not_require_reapproval": [
+          "temporal_reapproval_marks_low_risk_action_not_required"
+        ],
+        "missing_approval_role_requires_reapproval": [
+          "temporal_reapproval_requires_missing_role_coverage"
+        ],
+        "receipt_not_terminal_closure": [
+          "temporal_reapproval_approves_valid_high_risk_grants_schema_receipt"
+        ],
+        "revoked_or_out_of_scope_approval_blocks_dispatch": [
+          "temporal_reapproval_blocks_invalid_or_unsafe_grants"
+        ],
+        "runtime_clock_owns_reapproval_time": [
+          "temporal_reapproval_approves_valid_high_risk_grants_schema_receipt"
+        ],
+        "temporal_reapproval_receipt_schema_valid": [
+          "temporal_reapproval_approves_valid_high_risk_grants_schema_receipt"
+        ]
+      },
       "runtime_witnesses": [
         "runtime_clock_owns_reapproval_time",
         "high_risk_approval_roles_required",
@@ -8889,7 +8915,7 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 1069,
+    "exact_test_anchor_count": 1077,
     "runtime_witness_count": 1112,
     "surfaces": [
       {
@@ -15135,21 +15161,61 @@
         "unanchored_witnesses": []
       },
       {
-        "anchored_witnesses": [],
-        "exact_test_anchor_count": 0,
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_reapproval.py::test_temporal_reapproval_approves_valid_high_risk_grants_schema_receipt"
+            ],
+            "witness": "runtime_clock_owns_reapproval_time"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_reapproval.py::test_temporal_reapproval_requires_missing_role_coverage"
+            ],
+            "witness": "high_risk_approval_roles_required"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_reapproval.py::test_temporal_reapproval_requires_fresh_approval_when_grant_expired"
+            ],
+            "witness": "expired_approval_requires_reapproval"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_reapproval.py::test_temporal_reapproval_blocks_invalid_or_unsafe_grants"
+            ],
+            "witness": "revoked_or_out_of_scope_approval_blocks_dispatch"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_reapproval.py::test_temporal_reapproval_requires_missing_role_coverage"
+            ],
+            "witness": "missing_approval_role_requires_reapproval"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_reapproval.py::test_temporal_reapproval_marks_low_risk_action_not_required"
+            ],
+            "witness": "low_risk_action_does_not_require_reapproval"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_reapproval.py::test_temporal_reapproval_approves_valid_high_risk_grants_schema_receipt"
+            ],
+            "witness": "temporal_reapproval_receipt_schema_valid"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_temporal_reapproval.py::test_temporal_reapproval_approves_valid_high_risk_grants_schema_receipt"
+            ],
+            "witness": "receipt_not_terminal_closure"
+          }
+        ],
+        "exact_test_anchor_count": 8,
         "runtime_witness_count": 8,
         "surface_id": "temporal_reapproval",
-        "unanchored_witness_count": 8,
-        "unanchored_witnesses": [
-          "runtime_clock_owns_reapproval_time",
-          "high_risk_approval_roles_required",
-          "expired_approval_requires_reapproval",
-          "revoked_or_out_of_scope_approval_blocks_dispatch",
-          "missing_approval_role_requires_reapproval",
-          "low_risk_action_does_not_require_reapproval",
-          "temporal_reapproval_receipt_schema_valid",
-          "receipt_not_terminal_closure"
-        ]
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
       },
       {
         "anchored_witnesses": [
@@ -16669,6 +16735,6 @@
         "unanchored_witnesses": []
       }
     ],
-    "unanchored_witness_count": 43
+    "unanchored_witness_count": 35
   }
 }

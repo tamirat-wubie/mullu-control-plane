@@ -3352,8 +3352,13 @@ def test_temporal_sla_surface_classifies_sla_read_models_and_receipts() -> None:
 def test_temporal_reapproval_surface_rechecks_execution_time_approval_grants() -> None:
     matrix = _load_fixture()
     surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    witness_surfaces = {
+        surface["surface_id"]: surface
+        for surface in matrix["witness_integrity"]["surfaces"]
+    }
     closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
     reapproval_surface = surfaces["temporal_reapproval"]
+    reapproval_witness_surface = witness_surfaces["temporal_reapproval"]
     witnesses = set(reapproval_surface["runtime_witnesses"])
 
     assert reapproval_surface["coverage_state"] == "witnessed"
@@ -3372,6 +3377,9 @@ def test_temporal_reapproval_surface_rechecks_execution_time_approval_grants() -
     assert "missing_approval_role_requires_reapproval" in witnesses
     assert "low_risk_action_does_not_require_reapproval" in witnesses
     assert "temporal_reapproval_receipt_schema_valid" in witnesses
+    assert "receipt_not_terminal_closure" in witnesses
+    assert reapproval_witness_surface["exact_test_anchor_count"] == 8
+    assert reapproval_witness_surface["unanchored_witness_count"] == 0
     assert closure_actions["publish_temporal_reapproval_receipt_contract"]["status"] == "closed"
 
 

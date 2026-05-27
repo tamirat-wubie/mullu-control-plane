@@ -4815,6 +4815,32 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "temporal_reapproval_receipt_schema_valid",
                 "receipt_not_terminal_closure",
             ],
+            runtime_witness_anchor_aliases={
+                "runtime_clock_owns_reapproval_time": [
+                    "temporal_reapproval_approves_valid_high_risk_grants_schema_receipt",
+                ],
+                "high_risk_approval_roles_required": [
+                    "temporal_reapproval_requires_missing_role_coverage",
+                ],
+                "expired_approval_requires_reapproval": [
+                    "temporal_reapproval_requires_fresh_approval_when_grant_expired",
+                ],
+                "revoked_or_out_of_scope_approval_blocks_dispatch": [
+                    "temporal_reapproval_blocks_invalid_or_unsafe_grants",
+                ],
+                "missing_approval_role_requires_reapproval": [
+                    "temporal_reapproval_requires_missing_role_coverage",
+                ],
+                "low_risk_action_does_not_require_reapproval": [
+                    "temporal_reapproval_marks_low_risk_action_not_required",
+                ],
+                "temporal_reapproval_receipt_schema_valid": [
+                    "temporal_reapproval_approves_valid_high_risk_grants_schema_receipt",
+                ],
+                "receipt_not_terminal_closure": [
+                    "temporal_reapproval_approves_valid_high_risk_grants_schema_receipt",
+                ],
+            },
         ),
         _surface(
             "temporal_dispatch_window",
