@@ -39,7 +39,7 @@ from scripts.submit_trust_ledger_anchor_export import (  # noqa: E402
     _first_read_error,
     _operator_id_allowed,
     _read_json_object,
-    _stable_hash,
+    _remote_preflight_receipt_id,
     _validate_remote_submit_url,
     verify_submission_ledger,
 )
@@ -297,7 +297,7 @@ def preflight_trust_ledger_remote_submission(
         "ledger_append_executed": False,
         "requires_operator_confirmation_for_submit": True,
     }
-    unsigned_report = {
+    report_seed = {
         "schema_version": 1,
         "checked_at": checked_at,
         "ready": ready,
@@ -307,16 +307,25 @@ def preflight_trust_ledger_remote_submission(
         "remote_submit_url": remote_submit_url,
         "remote_submit_host": remote_submit_host,
         "remote_timeout_seconds": remote_timeout_seconds,
+        "remote_api_token_present": remote_token_present,
+        "verification_secret_present": verification_secret_present,
+        "submission_secret_present": submission_secret_present,
+        "signature_key_id_present": signature_key_id_present,
         "ledger_path": str(ledger_path),
         "next_ledger_sequence": int(projection["next_ledger_sequence"]),
         "previous_submission_hash": str(projection["previous_submission_hash"]),
         "expected_remote_submission_payload_hash": str(projection["expected_remote_submission_payload_hash"]),
+        "expected_remote_idempotency_key": str(projection["expected_remote_idempotency_key"]),
+        "steps": [step.as_dict() for step in steps],
         "blockers": list(blockers),
         "hard_blockers": list(hard_blockers),
+        "anchor_verification": anchor_verification,
+        "ledger_state": ledger_state,
         "anchor_verification_reason": str(anchor_verification.get("reason", "")),
         "ledger_state_reason": str(ledger_state.get("reason", "")),
+        "metadata": metadata,
     }
-    receipt_id = f"trust-ledger-remote-submission-preflight-{_stable_hash(unsigned_report)[:16]}"
+    receipt_id = _remote_preflight_receipt_id(report_seed)
     return TrustLedgerRemoteSubmissionPreflightReport(
         schema_version=1,
         receipt_id=receipt_id,

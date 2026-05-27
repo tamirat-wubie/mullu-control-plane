@@ -264,7 +264,8 @@ The remote POST is not attempted unless the preflight receipt validates against
 `trust_ledger_remote_submission_preflight.schema.json`, reports
 `outcome=SolvedVerified`, and matches the final operator id, authority ref,
 remote URL, timeout, ledger sequence, previous ledger hash, and projected remote
-payload hash.
+payload hash. The submitter also recomputes the canonical preflight receipt id
+and rejects receipt-id drift before any remote or ledger effect.
 
 Pass condition:
 

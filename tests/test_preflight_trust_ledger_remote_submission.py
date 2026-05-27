@@ -27,7 +27,7 @@ from scripts.preflight_trust_ledger_remote_submission import (
     preflight_trust_ledger_remote_submission,
     write_trust_ledger_remote_submission_preflight_report,
 )
-from scripts.submit_trust_ledger_anchor_export import submit_trust_ledger_anchor_export
+from scripts.submit_trust_ledger_anchor_export import _remote_preflight_receipt_id, submit_trust_ledger_anchor_export
 from scripts.validate_schemas import _load_schema, _validate_schema_instance
 
 
@@ -265,6 +265,7 @@ def test_trust_ledger_remote_submission_preflight_writer_validates_schema(tmp_pa
     assert written == output_path
     assert payload["ready"] is True
     assert payload["receipt_id"].startswith("trust-ledger-remote-submission-preflight-")
+    assert payload["receipt_id"] == _remote_preflight_receipt_id(payload)
     assert payload["next_ledger_sequence"] == 1
     assert payload["expected_remote_idempotency_key"] == payload["expected_remote_submission_payload_hash"]
     assert _validate_schema_instance(_load_schema(PREFLIGHT_SCHEMA_PATH), payload) == []
