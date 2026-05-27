@@ -871,6 +871,78 @@ def bootstrap_capability_services(
     )
     model_router.register(
         ModelProfile(
+            model_id="vllm/Qwen/Qwen3-0.6B",
+            name="Qwen3 0.6B via vLLM",
+            provider="vllm",
+            cost_per_1k_input=0.0,
+            cost_per_1k_output=0.0,
+            max_context=32768,
+            speed_tier="fast",
+            capability_tier="basic",
+        )
+    )
+    model_router.register(
+        ModelProfile(
+            model_id="sglang/Qwen/Qwen3-0.6B",
+            name="Qwen3 0.6B via SGLang",
+            provider="sglang",
+            cost_per_1k_input=0.0,
+            cost_per_1k_output=0.0,
+            max_context=32768,
+            speed_tier="fast",
+            capability_tier="basic",
+        )
+    )
+    model_router.register(
+        ModelProfile(
+            model_id="tgi/default",
+            name="TGI Default Model",
+            provider="tgi",
+            cost_per_1k_input=0.0,
+            cost_per_1k_output=0.0,
+            max_context=32768,
+            speed_tier="fast",
+            capability_tier="standard",
+        )
+    )
+    model_router.register(
+        ModelProfile(
+            model_id="llamacpp/local-model",
+            name="llama.cpp Local Model",
+            provider="llamacpp",
+            cost_per_1k_input=0.0,
+            cost_per_1k_output=0.0,
+            max_context=32768,
+            speed_tier="fast",
+            capability_tier="basic",
+        )
+    )
+    model_router.register(
+        ModelProfile(
+            model_id="localai/local-model",
+            name="LocalAI Local Model",
+            provider="localai",
+            cost_per_1k_input=0.0,
+            cost_per_1k_output=0.0,
+            max_context=32768,
+            speed_tier="fast",
+            capability_tier="standard",
+        )
+    )
+    model_router.register(
+        ModelProfile(
+            model_id="lmstudio/model-identifier",
+            name="LM Studio Loaded Model",
+            provider="lmstudio",
+            cost_per_1k_input=0.0,
+            cost_per_1k_output=0.0,
+            max_context=32768,
+            speed_tier="fast",
+            capability_tier="standard",
+        )
+    )
+    model_router.register(
+        ModelProfile(
             model_id="mistral-small-2603",
             name="Mistral Small 2603",
             provider="mistral",

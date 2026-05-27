@@ -363,7 +363,7 @@ points for operators:
 - Model providers follow a 3-tier stack:
   - **Tier 1 (certified):** Anthropic (`ANTHROPIC_API_KEY`), OpenAI (`OPENAI_API_KEY`)
   - **Tier 2 (hosted free-tier):** Gemini (`GEMINI_API_KEY`) — cheap bulk inference, dev/testing
-  - **Tier 3 (local/private):** Ollama (`OLLAMA_BASE_URL`, default `http://localhost:11434`) — offline fallback, private workloads
+  - **Tier 3 (local/private):** Ollama (`OLLAMA_BASE_URL`, default `http://localhost:11434`), vLLM (`VLLM_BASE_URL`, default `http://localhost:8000/v1`), SGLang (`SGLANG_BASE_URL`, default `http://localhost:30000/v1`), TGI (`TGI_BASE_URL`, default `http://localhost:3000/v1`), llama.cpp (`LLAMACPP_BASE_URL`, default `http://localhost:8080/v1`), LocalAI (`LOCALAI_BASE_URL`, default `http://localhost:8080/v1`), LM Studio (`LMSTUDIO_BASE_URL`, default `http://localhost:1234/v1`) — offline fallback, private workloads
   Set `MULLU_LLM_BACKEND` to select default provider (auto-detects from available keys).
 - Policy packs are enforced during evaluation through the runtime policy gate.
 - No web UI -- CLI only.
