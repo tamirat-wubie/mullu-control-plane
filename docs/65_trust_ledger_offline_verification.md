@@ -276,8 +276,9 @@ The remote endpoint must return JSON containing:
 ```
 
 The local receipt is not written if the remote endpoint fails, returns a non-2xx
-status, emits invalid JSON, omits a valid external anchor ref, or fails to echo
-the submitted payload hash.
+status, emits invalid JSON, omits a valid external anchor ref, omits a
+`sha256:<64 hex>` remote receipt hash, or fails to echo the submitted payload
+hash.
 
 The remote POST is not attempted unless the preflight receipt validates against
 `trust_ledger_remote_submission_preflight.schema.json`, reports
@@ -315,6 +316,7 @@ Submission fail-closed reasons include:
 | `remote_preflight_receipt_required` | Remote submission was requested without a preflight receipt |
 | `remote_preflight_receipt_failed:*` | The preflight receipt was unreadable, schema-invalid, blocked, stale, or mismatched the final payload |
 | `remote_submission_failed:*` | Remote transparency-log submission did not produce a matching payload-hash witness |
+| `remote_submission_failed:remote_receipt_hash_invalid` | Remote transparency-log submission omitted a valid `sha256:<64 hex>` receipt hash |
 | `submission_ledger_invalid:*` | Existing ledger replay failed before append |
 | `submission_receipt_schema_validation_failed` | The generated submission receipt violated the public schema |
 

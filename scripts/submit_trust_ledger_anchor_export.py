@@ -579,6 +579,17 @@ def _submit_remote_transparency_log(
             observed_submission_payload_hash=observed_hash,
             remote_response_hash=_stable_hash(remote_payload),
         )
+    remote_receipt_hash = str(remote_payload.get("remote_receipt_hash", ""))
+    if _remote_receipt_hash_allowed(remote_receipt_hash) is not True:
+        return _remote_submission_report(
+            valid=False,
+            reason="remote_receipt_hash_invalid",
+            status_code=status_code,
+            submission_payload_hash=submission_payload_hash,
+            observed_submission_payload_hash=observed_hash,
+            remote_receipt_hash=remote_receipt_hash,
+            remote_response_hash=_stable_hash(remote_payload),
+        )
     return _remote_submission_report(
         valid=True,
         reason="remote_submission_accepted",
@@ -586,7 +597,7 @@ def _submit_remote_transparency_log(
         external_anchor_ref=external_anchor_ref,
         submission_payload_hash=submission_payload_hash,
         observed_submission_payload_hash=observed_hash,
-        remote_receipt_hash=str(remote_payload.get("remote_receipt_hash", "")),
+        remote_receipt_hash=remote_receipt_hash,
         remote_response_hash=_stable_hash(remote_payload),
     )
 
@@ -831,6 +842,12 @@ def _external_anchor_ref_allowed(value: str) -> bool:
         return False
     parsed = urllib.parse.urlparse(value)
     return parsed.scheme in {"https", "ledger"} and bool(parsed.netloc)
+
+
+def _remote_receipt_hash_allowed(value: str) -> bool:
+    prefix = "sha256:"
+    digest = value.removeprefix(prefix)
+    return value.startswith(prefix) and len(digest) == 64 and all(character in "0123456789abcdef" for character in digest)
 
 
 def _append_jsonl(path: Path, payload: dict[str, Any]) -> None:
