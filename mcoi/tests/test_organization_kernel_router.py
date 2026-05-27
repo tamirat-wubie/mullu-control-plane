@@ -10,7 +10,11 @@ Invariants:
 
 from __future__ import annotations
 
+import hashlib
+import hmac
+import json
 from pathlib import Path
+from typing import Any
 
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
@@ -41,6 +45,23 @@ class FixedClock:
         return FIXED_CLOCK
 
 
+class StubHttpResponse:
+    """Context-managed urllib response fixture."""
+
+    def __init__(self, *, status: int, payload: dict[str, Any]) -> None:
+        self.status = status
+        self._body = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc, traceback):
+        return False
+
+    def read(self) -> bytes:
+        return self._body
+
+
 def _client(tmp_path: Path) -> tuple[TestClient, FileOrganizationKernelStore]:
     reset_organization_kernel_for_tests()
     clock = FixedClock()
@@ -68,6 +89,92 @@ def _bootstrap_and_open_pilot(client: TestClient) -> None:
     assert bootstrap.json()["department_count"] == 5
     assert pilot.status_code == 200
     assert pilot.json()["case"]["status"] == "planned"
+
+
+def _signed_runtime_witness(*, secret: str) -> dict[str, Any]:
+    payload = {
+        "witness_id": "runtime-witness-test",
+        "environment": "pilot",
+        "runtime_status": "healthy",
+        "gateway_status": "healthy",
+        "responsibility_debt_clear": True,
+        "latest_command_event_hash": "event-hash",
+        "latest_anchor_id": "anchor-1",
+        "latest_terminal_certificate_id": "terminal-1",
+        "open_case_count": 0,
+        "active_accepted_risk_count": 0,
+        "unresolved_reconciliation_count": 0,
+        "last_change_certificate_id": None,
+        "signed_at": "2026-05-27T12:00:00+00:00",
+        "signature_key_id": "runtime-witness-test",
+    }
+    return {**payload, "signature": _signature(secret, payload)}
+
+
+def _signed_conformance_certificate(*, secret: str) -> dict[str, Any]:
+    payload: dict[str, Any] = {
+        "certificate_id": "conf-0123456789abcdef",
+        "environment": "pilot",
+        "issued_at": "2026-05-27T12:00:00+00:00",
+        "expires_at": "2026-05-27T12:30:00+00:00",
+        "gateway_witness_valid": True,
+        "runtime_witness_valid": True,
+        "latest_anchor_valid": True,
+        "command_closure_canary_passed": True,
+        "capability_admission_canary_passed": True,
+        "dangerous_capability_isolation_canary_passed": True,
+        "streaming_budget_canary_passed": True,
+        "lineage_query_canary_passed": True,
+        "authority_obligation_canary_passed": True,
+        "authority_responsibility_debt_clear": True,
+        "authority_pending_approval_chain_count": 0,
+        "authority_overdue_approval_chain_count": 0,
+        "authority_open_obligation_count": 0,
+        "authority_overdue_obligation_count": 0,
+        "authority_escalated_obligation_count": 0,
+        "authority_unowned_high_risk_capability_count": 0,
+        "authority_directory_sync_receipt_valid": True,
+        "mcp_capability_manifest_configured": True,
+        "mcp_capability_manifest_valid": True,
+        "mcp_capability_manifest_capability_count": 1,
+        "capability_plan_bundle_canary_passed": True,
+        "capability_plan_bundle_count": 1,
+        "physical_worker_canary_passed": True,
+        "physical_worker_canary_id": "physical-worker-canary-0123456789abcdef",
+        "physical_worker_canary_artifact_hash": "1" * 64,
+        "physical_worker_canary_evidence_count": 3,
+        "capsule_registry_certified": True,
+        "proof_coverage_matrix_current": True,
+        "proof_coverage_declared_routes_classified": True,
+        "proof_coverage_declared_route_count": 301,
+        "proof_coverage_unclassified_route_count": 0,
+        "known_limitations_aligned": False,
+        "security_model_aligned": False,
+        "terminal_status": "conformant_with_gaps",
+        "open_conformance_gaps": ["known_limitations_documentation_drift"],
+        "evidence_refs": ["gateway_witness:test"],
+        "checks": [
+            {
+                "check_id": "gateway_witness_valid",
+                "passed": True,
+                "evidence_ref": "gateway_witness:test",
+                "detail": "verified",
+            }
+        ],
+        "signature_key_id": "runtime-conformance-test",
+    }
+    return {**payload, "signature": _signature(secret, payload)}
+
+
+def _signature(secret: str, payload: dict[str, Any]) -> str:
+    canonical = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    signature_payload = hashlib.sha256(canonical).hexdigest()
+    signature = hmac.new(
+        secret.encode("utf-8"),
+        signature_payload.encode("utf-8"),
+        hashlib.sha256,
+    ).hexdigest()
+    return f"hmac-sha256:{signature}"
 
 
 def _admit_all_pilot_evidence(client: TestClient) -> None:
@@ -180,6 +287,109 @@ def test_gateway_pilot_can_close_and_bind_learning(tmp_path: Path) -> None:
     assert fetched.json()["closure"]["terminal_certificate_id"] == "terminal:gateway-pilot"
 
 
+def test_launch_gateway_pilot_collects_deployment_witness_and_allows_engineering_gate(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    client, _store = _client(tmp_path)
+    _bootstrap_and_open_pilot(client)
+    monkeypatch.setenv("MULLU_RUNTIME_WITNESS_SECRET", "runtime-secret")
+    monkeypatch.setenv("MULLU_RUNTIME_CONFORMANCE_SECRET", "conformance-secret")
+    witness_payload = _signed_runtime_witness(secret="runtime-secret")
+    conformance_payload = _signed_conformance_certificate(secret="conformance-secret")
+
+    def fake_urlopen(url, timeout):
+        if str(url).endswith("/health"):
+            return StubHttpResponse(status=200, payload={"status": "healthy"})
+        if str(url).endswith("/gateway/witness"):
+            return StubHttpResponse(status=200, payload=witness_payload)
+        if str(url).endswith("/runtime/conformance"):
+            return StubHttpResponse(status=200, payload=conformance_payload)
+        raise AssertionError(f"unexpected URL {url}")
+
+    monkeypatch.setattr("urllib.request.urlopen", fake_urlopen)
+    response = client.post(
+        "/api/v1/cases/case.launch_gateway_pilot/launch-gateway-pilot/deployment-witness",
+        json={
+            "gateway_url": "https://gateway.example",
+            "expected_environment": "pilot",
+            "metadata": {"operator_action": "collect_gateway_pilot_evidence"},
+        },
+    )
+    fetched = client.get("/api/v1/cases/case.launch_gateway_pilot")
+
+    assert response.status_code == 200
+    assert response.json()["deployment_witness"]["deployment_claim"] == "published"
+    assert response.json()["gate_decision"]["status"] == "allowed"
+    assert {
+        item["requirement_id"]
+        for item in response.json()["admitted_evidence"]
+    } == {
+        "engineering_health_endpoint",
+        "engineering_gateway_witness",
+        "engineering_runtime_conformance",
+    }
+    assert len(fetched.json()["evidence"]) == 3
+    assert "runtime-secret" not in json.dumps(fetched.json(), sort_keys=True)
+    assert "conformance-secret" not in json.dumps(fetched.json(), sort_keys=True)
+
+
+def test_launch_gateway_pilot_deployment_witness_without_secrets_blocks_engineering_gate(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    client, _store = _client(tmp_path)
+    _bootstrap_and_open_pilot(client)
+    monkeypatch.delenv("MULLU_RUNTIME_WITNESS_SECRET", raising=False)
+    monkeypatch.delenv("MULLU_RUNTIME_CONFORMANCE_SECRET", raising=False)
+    witness_payload = _signed_runtime_witness(secret="runtime-secret")
+    conformance_payload = _signed_conformance_certificate(secret="conformance-secret")
+
+    def fake_urlopen(url, timeout):
+        if str(url).endswith("/health"):
+            return StubHttpResponse(status=200, payload={"status": "healthy"})
+        if str(url).endswith("/gateway/witness"):
+            return StubHttpResponse(status=200, payload=witness_payload)
+        if str(url).endswith("/runtime/conformance"):
+            return StubHttpResponse(status=200, payload=conformance_payload)
+        raise AssertionError(f"unexpected URL {url}")
+
+    monkeypatch.setattr("urllib.request.urlopen", fake_urlopen)
+    response = client.post(
+        "/api/v1/cases/case.launch_gateway_pilot/launch-gateway-pilot/deployment-witness",
+        json={"gateway_url": "https://gateway.example"},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["deployment_witness"]["deployment_claim"] == "not-published"
+    assert response.json()["gate_decision"]["status"] == "blocked"
+    assert response.json()["gate_decision"]["reason"] == "evidence_missing"
+    assert [
+        item["requirement_id"] for item in response.json()["admitted_evidence"]
+    ] == ["engineering_health_endpoint"]
+
+
+def test_launch_gateway_pilot_deployment_witness_rejects_scoped_gateway_url(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    client, _store = _client(tmp_path)
+    _bootstrap_and_open_pilot(client)
+
+    def fail_urlopen(url, timeout):
+        raise AssertionError(f"unexpected URL {url}")
+
+    monkeypatch.setattr("urllib.request.urlopen", fail_urlopen)
+    response = client.post(
+        "/api/v1/cases/case.launch_gateway_pilot/launch-gateway-pilot/deployment-witness",
+        json={"gateway_url": "https://gateway.example/private?token=hidden"},
+    )
+
+    assert response.status_code == 400
+    assert response.json()["detail"]["error_code"] == "gateway_url_scope_rejected"
+    assert response.json()["detail"]["governed"] is True
+
+
 def test_default_routers_include_organization_kernel_paths() -> None:
     app = FastAPI()
     include_default_routers(app)
@@ -187,4 +397,5 @@ def test_default_routers_include_organization_kernel_paths() -> None:
 
     assert "/api/v1/orgs" in paths
     assert "/api/v1/cases" in paths
+    assert "/api/v1/cases/{case_id}/launch-gateway-pilot/deployment-witness" in paths
     assert "/api/v1/cases/{case_id}/close" in paths

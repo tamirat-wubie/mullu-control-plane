@@ -866,9 +866,9 @@
     "by_coverage_state": {
       "proven": 12,
       "unproven": 0,
-      "witnessed": 346
+      "witnessed": 347
     },
-    "route_count": 358,
+    "route_count": 359,
     "routes": [
       {
         "coverage_state": "witnessed",
@@ -1048,6 +1048,11 @@
       {
         "coverage_state": "witnessed",
         "route": "/api/v1/cases/{case_id}/evidence",
+        "surface_id": "orgos_case_governance_lifecycle"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/cases/{case_id}/launch-gateway-pilot/deployment-witness",
         "surface_id": "orgos_case_governance_lifecycle"
       },
       {
@@ -5451,6 +5456,7 @@
         "/api/v1/cases/{case_id}/events",
         "/api/v1/cases/{case_id}/evidence",
         "/api/v1/cases/{case_id}/learning-admissions",
+        "/api/v1/cases/{case_id}/launch-gateway-pilot/deployment-witness",
         "/api/v1/cases/{case_id}/plan",
         "/api/v1/cases/{case_id}/plan-steps/{step_id}/gate",
         "/api/v1/cases/{case_id}/close",
@@ -5470,6 +5476,7 @@
         "plan_step_gate_allows_certified_authorized_gateway_step",
         "case_closure_requires_effect_reconciliation_match_for_committed",
         "learning_binding_requires_closed_case_and_admission_decision",
+        "launch_gateway_pilot_collects_deployment_witness_and_allows_engineering_gate",
         "jsonl_case_event_log_preserves_hash_chain"
       ],
       "surface_id": "orgos_case_governance_lifecycle"
@@ -8506,8 +8513,8 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 970,
-    "runtime_witness_count": 1108,
+    "exact_test_anchor_count": 971,
+    "runtime_witness_count": 1109,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -11838,13 +11845,19 @@
           },
           {
             "anchors": [
+              "mcoi/tests/test_organization_kernel_router.py::test_launch_gateway_pilot_collects_deployment_witness_and_allows_engineering_gate"
+            ],
+            "witness": "launch_gateway_pilot_collects_deployment_witness_and_allows_engineering_gate"
+          },
+          {
+            "anchors": [
               "tests/test_gateway/test_orgos_kernel.py::test_jsonl_case_event_log_preserves_hash_chain"
             ],
             "witness": "jsonl_case_event_log_preserves_hash_chain"
           }
         ],
-        "exact_test_anchor_count": 12,
-        "runtime_witness_count": 12,
+        "exact_test_anchor_count": 13,
+        "runtime_witness_count": 13,
         "surface_id": "orgos_case_governance_lifecycle",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []
