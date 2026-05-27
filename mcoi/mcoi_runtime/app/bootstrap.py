@@ -43,6 +43,7 @@ from mcoi_runtime.contracts.autonomy import AutonomyMode
 from mcoi_runtime.core.autonomy import AutonomyEngine
 from mcoi_runtime.core.goal_reasoning import GoalReasoningEngine
 from mcoi_runtime.core.jobs import JobEngine, WorkQueue
+from mcoi_runtime.core.default_skill_catalog import register_default_skill_descriptors
 from mcoi_runtime.core.skills import SkillExecutor, SkillRegistry, SkillSelector
 from mcoi_runtime.core.template_validator import TemplateValidator
 from mcoi_runtime.core.provider_registry import ProviderRegistry
@@ -186,6 +187,7 @@ def bootstrap_runtime(
     restore_work_queue: bool = False,
     restore_team_queue: bool = False,
     restore_workforce: bool = False,
+    install_default_skills: bool = True,
 ) -> BootstrappedRuntime:
     app_config = config or AppConfig()
     runtime_clock = clock or utc_now_text
@@ -262,6 +264,8 @@ def bootstrap_runtime(
     provider_registry = ProviderRegistry(clock=runtime_clock)
     provider_attribution_ledger = ProviderAttributionLedger(clock=runtime_clock)
     skill_registry = SkillRegistry()
+    if install_default_skills:
+        register_default_skill_descriptors(skill_registry)
     skill_selector = SkillSelector()
     skill_executor = SkillExecutor(clock=runtime_clock)
     autonomy = AutonomyEngine(mode=AutonomyMode(app_config.autonomy_mode))
