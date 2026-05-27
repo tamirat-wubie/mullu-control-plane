@@ -633,6 +633,81 @@ def test_submit_trust_ledger_anchor_export_blocks_remote_hash_mismatch(tmp_path:
     assert not ledger_path.exists()
 
 
+def test_submit_trust_ledger_anchor_export_blocks_missing_remote_receipt_hash(
+    tmp_path: Path,
+) -> None:
+    export_paths = _write_anchor_export(tmp_path)
+    ledger_path = tmp_path / "submissions.jsonl"
+    preflight_path = _write_remote_preflight(tmp_path=tmp_path, export_paths=export_paths, ledger_path=ledger_path)
+    transport = FakeTransparencyLogTransport(remote_receipt_hash="")
+
+    report = submit_trust_ledger_anchor_export(
+        bundle_path=export_paths["bundle"],
+        receipt_path=export_paths["anchor_receipt"],
+        artifacts_path=export_paths["artifacts"],
+        package_path=export_paths["package"],
+        ledger_path=ledger_path,
+        operator_id="operator-1",
+        authority_ref="proof://approval-submit-anchor-1",
+        submitted_at="2026-05-05T12:20:00+00:00",
+        verification_secret="anchor-secret",
+        submission_secret="submission-secret",
+        signature_key_id="submission-key",
+        confirm_submit=True,
+        remote_submit_url="https://transparency.example/anchors",
+        allow_remote_submit=True,
+        remote_preflight_receipt_path=preflight_path,
+        remote_api_token="remote-token",
+        urlopen=transport,
+    )
+
+    assert report["valid"] is False
+    assert report["reason"] == "remote_submission_failed:remote_receipt_hash_invalid"
+    assert report["remote_preflight"]["valid"] is True
+    assert report["remote_submission"]["valid"] is False
+    assert report["remote_submission"]["reason"] == "remote_receipt_hash_invalid"
+    assert report["remote_submission"]["remote_receipt_hash"] == ""
+    assert report["submission_receipt"] == {}
+    assert not ledger_path.exists()
+
+
+def test_submit_trust_ledger_anchor_export_blocks_malformed_remote_receipt_hash(
+    tmp_path: Path,
+) -> None:
+    export_paths = _write_anchor_export(tmp_path)
+    ledger_path = tmp_path / "submissions.jsonl"
+    preflight_path = _write_remote_preflight(tmp_path=tmp_path, export_paths=export_paths, ledger_path=ledger_path)
+    transport = FakeTransparencyLogTransport(remote_receipt_hash="sha256:not-a-hex-digest")
+
+    report = submit_trust_ledger_anchor_export(
+        bundle_path=export_paths["bundle"],
+        receipt_path=export_paths["anchor_receipt"],
+        artifacts_path=export_paths["artifacts"],
+        package_path=export_paths["package"],
+        ledger_path=ledger_path,
+        operator_id="operator-1",
+        authority_ref="proof://approval-submit-anchor-1",
+        submitted_at="2026-05-05T12:20:00+00:00",
+        verification_secret="anchor-secret",
+        submission_secret="submission-secret",
+        signature_key_id="submission-key",
+        confirm_submit=True,
+        remote_submit_url="https://transparency.example/anchors",
+        allow_remote_submit=True,
+        remote_preflight_receipt_path=preflight_path,
+        remote_api_token="remote-token",
+        urlopen=transport,
+    )
+
+    assert report["valid"] is False
+    assert report["reason"] == "remote_submission_failed:remote_receipt_hash_invalid"
+    assert report["remote_submission"]["valid"] is False
+    assert report["remote_submission"]["reason"] == "remote_receipt_hash_invalid"
+    assert report["remote_submission"]["remote_receipt_hash"] == "sha256:not-a-hex-digest"
+    assert report["submission_receipt"] == {}
+    assert not ledger_path.exists()
+
+
 def test_submit_trust_ledger_anchor_export_blocks_nonfinite_remote_preflight_timeout(
     tmp_path: Path,
 ) -> None:
@@ -822,8 +897,9 @@ def _write_remote_preflight(
 
 
 class FakeTransparencyLogTransport:
-    def __init__(self, *, observed_hash: str | None = None) -> None:
+    def __init__(self, *, observed_hash: str | None = None, remote_receipt_hash: str | None = None) -> None:
         self.observed_hash = observed_hash
+        self.remote_receipt_hash = remote_receipt_hash
         self.request: Any | None = None
         self.timeout: float | None = None
         self.payload: dict[str, Any] = {}
@@ -838,7 +914,9 @@ class FakeTransparencyLogTransport:
             payload={
                 "external_anchor_ref": "https://transparency.example/entries/1",
                 "observed_submission_payload_hash": observed_hash,
-                "remote_receipt_hash": _hash("remote-receipt-1"),
+                "remote_receipt_hash": (
+                    _hash("remote-receipt-1") if self.remote_receipt_hash is None else self.remote_receipt_hash
+                ),
             },
         )
 
