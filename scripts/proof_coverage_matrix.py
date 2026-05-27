@@ -3718,6 +3718,29 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "reputation_update_requires_evidence",
                 "agent_identity_schema_valid",
             ],
+            runtime_witness_anchor_aliases={
+                "owner_tenant_identity_required": [
+                    "agent_identity_registers_schema_valid_accountable_record"
+                ],
+                "self_approval_forbidden": [
+                    "agent_identity_denies_self_approval_and_policy_mutation"
+                ],
+                "policy_mutation_forbidden": [
+                    "agent_identity_denies_self_approval_and_policy_mutation"
+                ],
+                "delegation_requires_lease": [
+                    "agent_identity_delegation_requires_lease_scope"
+                ],
+                "agent_budget_enforced": [
+                    "agent_identity_enforces_memory_and_budget_scope"
+                ],
+                "reputation_update_requires_evidence": [
+                    "agent_reputation_update_requires_evidence_and_stays_bounded"
+                ],
+                "agent_identity_schema_valid": [
+                    "agent_identity_registers_schema_valid_accountable_record"
+                ],
+            },
         ),
         _surface(
             "claim_verification",
@@ -4126,6 +4149,23 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "contradiction_and_stale_memory_block_execution",
                 "memory_lattice_schema_valid",
             ],
+            runtime_witness_anchor_aliases={
+                "raw_event_memory_not_directly_admitted": [
+                    "raw_event_memory_is_never_directly_admitted",
+                ],
+                "semantic_memory_requires_learning_admission": [
+                    "semantic_memory_requires_admitted_learning_decision",
+                ],
+                "policy_memory_requires_authority_ref": [
+                    "policy_memory_requires_policy_authority_ref",
+                ],
+                "preference_memory_tenant_owner_scoped": [
+                    "preference_memory_is_tenant_owner_scoped_and_not_execution_authority",
+                ],
+                "memory_lattice_schema_valid": [
+                    "memory_lattice_schema_exposes_admission_claim",
+                ],
+            },
         ),
         _surface(
             "workflow_mining",
