@@ -218,6 +218,67 @@ def _allow_all_plan_steps(client: TestClient) -> None:
         assert response.json()["decision"]["status"] == "allowed"
 
 
+def _readiness_closure_payload() -> dict[str, Any]:
+    return {
+        "submitted_by": "operator",
+        "executive_objective": {
+            "evidence_ref": "evidence:readiness:executive-objective",
+            "metadata": {"objective_ref": "objective:gateway-pilot"},
+        },
+        "product_launch_boundary": {
+            "evidence_ref": "evidence:readiness:product-launch-boundary",
+            "metadata": {"launch_boundary_ref": "launch-boundary:pilot"},
+        },
+        "security_public_claim_boundary": {
+            "evidence_ref": "evidence:readiness:security-public-claim",
+            "metadata": {"claim_boundary_ref": "security:public-claim-boundary"},
+        },
+        "security_approval": {
+            "evidence_ref": "evidence:readiness:security-approval",
+            "metadata": {"approval_receipt_ref": "approval:security-dual-control"},
+        },
+        "finance_budget_check": {
+            "evidence_ref": "evidence:readiness:finance-budget",
+            "metadata": {"budget_ref": "budget:gateway-pilot"},
+        },
+        "approval_id": "approval:security-dual-control",
+        "approved_by": "human-executive",
+        "expected_effect": "gateway_pilot_ready",
+        "observed_effect": "gateway_pilot_ready",
+        "closure_evidence_refs": ["evidence:closure:gateway-pilot-readiness"],
+        "terminal_certificate_id": "terminal:gateway-pilot-readiness",
+    }
+
+
+def _bind_verified_deployment_witness(client: TestClient, monkeypatch) -> None:
+    monkeypatch.setenv("MULLU_RUNTIME_WITNESS_SECRET", "runtime-secret")
+    monkeypatch.setenv("MULLU_RUNTIME_CONFORMANCE_SECRET", "conformance-secret")
+    witness_payload = _signed_runtime_witness(secret="runtime-secret")
+    conformance_payload = _signed_conformance_certificate(secret="conformance-secret")
+
+    def fake_urlopen(url, timeout):
+        if str(url).endswith("/health"):
+            return StubHttpResponse(status=200, payload={"status": "healthy"})
+        if str(url).endswith("/gateway/witness"):
+            return StubHttpResponse(status=200, payload=witness_payload)
+        if str(url).endswith("/runtime/conformance"):
+            return StubHttpResponse(status=200, payload=conformance_payload)
+        raise AssertionError(f"unexpected URL {url}")
+
+    monkeypatch.setattr("urllib.request.urlopen", fake_urlopen)
+    response = client.post(
+        "/api/v1/cases/case.launch_gateway_pilot/launch-gateway-pilot/deployment-witness",
+        json={
+            "gateway_url": "https://gateway.example",
+            "expected_environment": "pilot",
+            "metadata": {"operator_action": "collect_gateway_pilot_evidence"},
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.json()["gate_decision"]["status"] == "allowed"
+
+
 def test_bootstrap_open_pilot_read_model_and_persistence(tmp_path: Path) -> None:
     client, store = _client(tmp_path)
 
@@ -390,6 +451,81 @@ def test_launch_gateway_pilot_deployment_witness_rejects_scoped_gateway_url(
     assert response.json()["detail"]["governed"] is True
 
 
+def test_launch_gateway_pilot_readiness_packet_closes_after_verified_witness(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    client, _store = _client(tmp_path)
+    _bootstrap_and_open_pilot(client)
+    _bind_verified_deployment_witness(client, monkeypatch)
+
+    response = client.post(
+        "/api/v1/cases/case.launch_gateway_pilot/launch-gateway-pilot/readiness-closure",
+        json=_readiness_closure_payload(),
+    )
+    fetched = client.get("/api/v1/cases/case.launch_gateway_pilot")
+
+    assert response.status_code == 200
+    assert response.json()["closure_status"] == "closed"
+    assert response.json()["closure"]["terminal_disposition"] == "committed"
+    assert response.json()["blocked_gate_decisions"] == []
+    assert len(response.json()["admitted_evidence"]) == 5
+    assert {item["status"] for item in response.json()["gate_decisions"]} == {"allowed"}
+    assert "approval:security-dual-control" in response.json()["closure"]["evidence_refs"]
+    assert fetched.json()["case"]["status"] == "closed"
+    assert fetched.json()["closure"]["terminal_certificate_id"] == "terminal:gateway-pilot-readiness"
+
+
+def test_launch_gateway_pilot_readiness_packet_blocks_without_engineering_witness(
+    tmp_path: Path,
+) -> None:
+    client, _store = _client(tmp_path)
+    _bootstrap_and_open_pilot(client)
+
+    response = client.post(
+        "/api/v1/cases/case.launch_gateway_pilot/launch-gateway-pilot/readiness-closure",
+        json=_readiness_closure_payload(),
+    )
+    fetched = client.get("/api/v1/cases/case.launch_gateway_pilot")
+    blocked = {
+        item["step_id"]: item["reason"]
+        for item in response.json()["blocked_gate_decisions"]
+    }
+
+    assert response.status_code == 200
+    assert response.json()["closure_status"] == "blocked_by_gate"
+    assert response.json()["closure"] is None
+    assert blocked["engineering_runtime_witness"] == "evidence_missing"
+    assert blocked["security_claim_boundary"] == "preconditions_missing"
+    assert blocked["finance_budget_check"] == "preconditions_missing"
+    assert fetched.json()["case"]["status"] == "planned"
+    assert fetched.json()["closure"] is None
+
+
+def test_launch_gateway_pilot_readiness_packet_rejects_duplicate_evidence_refs(
+    tmp_path: Path,
+) -> None:
+    client, _store = _client(tmp_path)
+    _bootstrap_and_open_pilot(client)
+    payload = _readiness_closure_payload()
+    payload["finance_budget_check"] = {
+        "evidence_ref": payload["executive_objective"]["evidence_ref"],
+        "metadata": {"budget_ref": "budget:duplicate"},
+    }
+
+    response = client.post(
+        "/api/v1/cases/case.launch_gateway_pilot/launch-gateway-pilot/readiness-closure",
+        json=payload,
+    )
+    fetched = client.get("/api/v1/cases/case.launch_gateway_pilot")
+
+    assert response.status_code == 400
+    assert response.json()["detail"]["error_code"] == "launch_gateway_pilot_readiness_closure_rejected"
+    assert fetched.json()["case"]["status"] == "planned"
+    assert fetched.json()["evidence"] == []
+    assert fetched.json()["approvals"] == []
+
+
 def test_default_routers_include_organization_kernel_paths() -> None:
     app = FastAPI()
     include_default_routers(app)
@@ -398,4 +534,5 @@ def test_default_routers_include_organization_kernel_paths() -> None:
     assert "/api/v1/orgs" in paths
     assert "/api/v1/cases" in paths
     assert "/api/v1/cases/{case_id}/launch-gateway-pilot/deployment-witness" in paths
+    assert "/api/v1/cases/{case_id}/launch-gateway-pilot/readiness-closure" in paths
     assert "/api/v1/cases/{case_id}/close" in paths

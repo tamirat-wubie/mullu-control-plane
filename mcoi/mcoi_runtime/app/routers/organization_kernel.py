@@ -38,6 +38,7 @@ from mcoi_runtime.contracts.organization_kernel import (
     OrganizationProfile,
     OrganizationRisk,
     PlanStep,
+    PlanStepGateStatus,
 )
 from mcoi_runtime.contracts.terminal_closure import TerminalClosureDisposition
 from mcoi_runtime.core.invariants import RuntimeCoreInvariantError
@@ -168,6 +169,32 @@ class LaunchGatewayPilotEvidenceCollectionRequest(BaseModel):
     submitted_by: str = "operator"
     auto_gate_engineering_step: bool = True
     checked_preconditions: list[str] = Field(default_factory=lambda: ["launch_boundary_defined"])
+    metadata: dict[str, Any] = Field(default_factory=dict)
+
+
+class LaunchGatewayPilotEvidencePacketItem(BaseModel):
+    evidence_ref: str
+    metadata: dict[str, Any] = Field(default_factory=dict)
+
+
+class LaunchGatewayPilotReadinessClosureRequest(BaseModel):
+    submitted_by: str = "operator"
+    executive_objective: LaunchGatewayPilotEvidencePacketItem
+    product_launch_boundary: LaunchGatewayPilotEvidencePacketItem
+    security_public_claim_boundary: LaunchGatewayPilotEvidencePacketItem
+    security_approval: LaunchGatewayPilotEvidencePacketItem
+    finance_budget_check: LaunchGatewayPilotEvidencePacketItem
+    approval_id: str = "approval:security-dual-control"
+    approved_by: str
+    expected_effect: str = "gateway_pilot_ready"
+    observed_effect: str
+    reconciliation_id: str = "reconciliation:gateway-pilot-readiness"
+    reconciliation_status: str = ReconciliationStatus.MATCH.value
+    forbidden_effects_checked: bool = True
+    closure_evidence_refs: list[str] = Field(default_factory=list)
+    terminal_disposition: str = TerminalClosureDisposition.COMMITTED.value
+    terminal_certificate_id: str
+    learning_admission_id: str | None = None
     metadata: dict[str, Any] = Field(default_factory=dict)
 
 
@@ -385,6 +412,96 @@ def _admit_launch_gateway_witness_evidence(
     return tuple(admitted)
 
 
+def _launch_gateway_readiness_packet_items(
+    req: LaunchGatewayPilotReadinessClosureRequest,
+) -> tuple[tuple[str, LaunchGatewayPilotEvidencePacketItem], ...]:
+    return (
+        ("executive_objective", req.executive_objective),
+        ("product_launch_boundary", req.product_launch_boundary),
+        ("security_public_claim_boundary", req.security_public_claim_boundary),
+        ("security_approval", req.security_approval),
+        ("finance_budget_check", req.finance_budget_check),
+    )
+
+
+def _launch_gateway_readiness_gate_checks() -> tuple[tuple[str, tuple[str, ...], str | None], ...]:
+    return (
+        ("executive_objective_freeze", ("objective_received",), None),
+        ("product_launch_boundary", ("objective_frozen",), "executive_objective_freeze"),
+        ("engineering_runtime_witness", ("launch_boundary_defined",), "product_launch_boundary"),
+        ("security_claim_boundary", ("runtime_witness_collected",), "engineering_runtime_witness"),
+        ("finance_budget_check", ("runtime_witness_collected",), "engineering_runtime_witness"),
+    )
+
+
+def _admit_launch_gateway_readiness_packet(
+    kernel: OrganizationKernel,
+    *,
+    case_id: str,
+    req: LaunchGatewayPilotReadinessClosureRequest,
+) -> tuple[CaseEvidence, ...]:
+    refs = [item.evidence_ref for _requirement_id, item in _launch_gateway_readiness_packet_items(req)]
+    if len(set(refs)) != len(refs):
+        raise RuntimeCoreInvariantError("readiness packet evidence refs must be unique")
+    state = kernel.snapshot_state()
+    existing_evidence_refs = {
+        evidence.evidence_ref for evidence in state.case_evidence
+        if evidence.case_id == case_id
+    }
+    if any(ref in existing_evidence_refs for ref in refs):
+        raise RuntimeCoreInvariantError("readiness packet evidence already admitted")
+    if any(approval.approval_id == req.approval_id for approval in state.approvals):
+        raise RuntimeCoreInvariantError("readiness packet approval already recorded")
+
+    admitted: list[CaseEvidence] = []
+    for requirement_id, item in _launch_gateway_readiness_packet_items(req):
+        evidence = kernel.admit_case_evidence(
+            CaseEvidence(
+                evidence_ref=item.evidence_ref,
+                case_id=case_id,
+                requirement_id=requirement_id,
+                submitted_by=req.submitted_by,
+                submitted_at=_clock_now(),
+                metadata={
+                    "source": "launch_gateway_pilot_readiness_packet",
+                    "request": req.metadata,
+                    **item.metadata,
+                },
+            )
+        )
+        admitted.append(evidence)
+    return tuple(admitted)
+
+
+def _launch_gateway_closure_evidence_refs(
+    req: LaunchGatewayPilotReadinessClosureRequest,
+    gate_decisions: tuple[Any, ...],
+) -> tuple[str, ...]:
+    refs: list[str] = []
+    for decision in gate_decisions:
+        refs.extend(decision.evidence_refs)
+        refs.extend(decision.approval_refs)
+    refs.extend(req.closure_evidence_refs)
+    deduped: list[str] = []
+    for ref in refs:
+        if ref not in deduped:
+            deduped.append(ref)
+    return tuple(deduped)
+
+
+def _validate_launch_gateway_closure_request(req: LaunchGatewayPilotReadinessClosureRequest) -> None:
+    reconciliation_status = ReconciliationStatus(req.reconciliation_status)
+    terminal_disposition = TerminalClosureDisposition(req.terminal_disposition)
+    if terminal_disposition is not TerminalClosureDisposition.COMMITTED:
+        return
+    if reconciliation_status is not ReconciliationStatus.MATCH:
+        raise RuntimeCoreInvariantError("committed readiness closure requires reconciliation match")
+    if req.expected_effect != req.observed_effect:
+        raise RuntimeCoreInvariantError("committed readiness closure requires matched observed effect")
+    if not req.forbidden_effects_checked:
+        raise RuntimeCoreInvariantError("committed readiness closure requires forbidden effect check")
+
+
 @router.post("/api/v1/orgs")
 def create_organization(req: OrganizationCreateRequest):
     """Create an organization profile in the Organization Kernel."""
@@ -550,6 +667,99 @@ def collect_launch_gateway_pilot_deployment_witness(
         "deployment_witness": witness.to_json_dict(),
         "admitted_evidence": [_body(evidence) for evidence in admitted],
         "gate_decision": _body(decision) if decision is not None else None,
+        "governed": True,
+    }
+
+
+@router.post("/api/v1/cases/{case_id}/launch-gateway-pilot/readiness-closure")
+def close_launch_gateway_pilot_readiness(
+    case_id: str,
+    req: LaunchGatewayPilotReadinessClosureRequest,
+):
+    """Bind a five-department readiness packet and close only after all gates pass."""
+    _inc_metric("requests_governed")
+    kernel = _kernel()
+    _require_launch_gateway_pilot_case(kernel, case_id)
+    try:
+        _validate_launch_gateway_closure_request(req)
+        admitted = _admit_launch_gateway_readiness_packet(kernel, case_id=case_id, req=req)
+        approval = kernel.record_approval(
+            ApprovalRecord(
+                approval_id=req.approval_id,
+                case_id=case_id,
+                role_id="executive.owner",
+                approval_scope="security_approval",
+                approved_by=req.approved_by,
+                approved_at=_clock_now(),
+                metadata={
+                    "source": "launch_gateway_pilot_readiness_packet",
+                    "request": req.metadata,
+                    "security_approval_evidence_ref": req.security_approval.evidence_ref,
+                },
+            )
+        )
+        gate_decision_list = []
+        gate_status_by_step: dict[str, bool] = {}
+        for step_id, checked_preconditions, predecessor_step_id in _launch_gateway_readiness_gate_checks():
+            predecessor_allowed = (
+                predecessor_step_id is None
+                or gate_status_by_step.get(predecessor_step_id, False)
+            )
+            decision = kernel.evaluate_plan_step(
+                case_id=case_id,
+                step_id=step_id,
+                checked_preconditions=checked_preconditions if predecessor_allowed else (),
+            )
+            gate_decision_list.append(decision)
+            gate_status_by_step[step_id] = decision.status is PlanStepGateStatus.ALLOWED
+        gate_decisions = tuple(gate_decision_list)
+        blocked_decisions = tuple(
+            decision for decision in gate_decisions
+            if decision.status is not PlanStepGateStatus.ALLOWED
+        )
+        closure = None
+        closure_status = "blocked_by_gate"
+        if not blocked_decisions:
+            closure = kernel.close_case(
+                reconciliation=OrganizationEffectReconciliation(
+                    reconciliation_id=req.reconciliation_id,
+                    case_id=case_id,
+                    expected_effect=req.expected_effect,
+                    observed_effect=req.observed_effect,
+                    status=ReconciliationStatus(req.reconciliation_status),
+                    forbidden_effects_checked=req.forbidden_effects_checked,
+                    evidence_refs=_launch_gateway_closure_evidence_refs(req, gate_decisions),
+                    reconciled_at=_clock_now(),
+                    metadata={
+                        "source": "launch_gateway_pilot_readiness_packet",
+                        "request": req.metadata,
+                    },
+                ),
+                terminal_disposition=TerminalClosureDisposition(req.terminal_disposition),
+                terminal_certificate_id=req.terminal_certificate_id,
+                learning_admission_id=req.learning_admission_id,
+            )
+            closure_status = (
+                "closed"
+                if TerminalClosureDisposition(req.terminal_disposition) is TerminalClosureDisposition.COMMITTED
+                else req.terminal_disposition
+            )
+    except (RuntimeCoreInvariantError, ValueError) as exc:
+        raise HTTPException(
+            400,
+            detail=_error_detail(
+                "launch gateway pilot readiness closure rejected",
+                "launch_gateway_pilot_readiness_closure_rejected",
+            ),
+        ) from exc
+    _persist_kernel(kernel)
+    return {
+        "admitted_evidence": [_body(evidence) for evidence in admitted],
+        "approval": _body(approval),
+        "gate_decisions": [_body(decision) for decision in gate_decisions],
+        "blocked_gate_decisions": [_body(decision) for decision in blocked_decisions],
+        "closure_status": closure_status,
+        "closure": _body(closure) if closure is not None else None,
         "governed": True,
     }
 
