@@ -4950,6 +4950,39 @@
         "/api/v1/state/{state_type}"
       ],
       "request_proof": "request_proof",
+      "runtime_witness_anchor_aliases": {
+        "state_atomic_write_verified": [
+          "atomic_write"
+        ],
+        "state_hash_mismatch_rejected": [
+          "load_rejects_hash_mismatch"
+        ],
+        "state_list_summary_bounded": [
+          "list_states",
+          "summary"
+        ],
+        "state_load_missing_bounded": [
+          "load_missing",
+          "load_missing_state_returns_governed_not_found"
+        ],
+        "state_load_rejects_path_traversal": [
+          "load_rejects_path_traversal",
+          "load_rejects_invalid_state_type"
+        ],
+        "state_load_roundtrip": [
+          "save_and_load",
+          "complex_data"
+        ],
+        "state_save_rejects_path_traversal": [
+          "save_rejects_path_traversal",
+          "save_rejects_invalid_state_type"
+        ],
+        "state_save_returns_hash_bound_snapshot": [
+          "save",
+          "save_and_load",
+          "state_hash_changes"
+        ]
+      },
       "runtime_witnesses": [
         "state_save_returns_hash_bound_snapshot",
         "state_load_roundtrip",
@@ -8147,7 +8180,7 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 894,
+    "exact_test_anchor_count": 902,
     "runtime_witness_count": 1108,
     "surfaces": [
       {
@@ -10980,21 +11013,72 @@
         ]
       },
       {
-        "anchored_witnesses": [],
-        "exact_test_anchor_count": 0,
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "mcoi/tests/test_state_persistence.py::test_save",
+              "mcoi/tests/test_state_persistence.py::test_save_and_load",
+              "mcoi/tests/test_server_phase212.py::test_save_and_load",
+              "mcoi/tests/test_state_persistence.py::test_state_hash_changes"
+            ],
+            "witness": "state_save_returns_hash_bound_snapshot"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_state_persistence.py::test_save_and_load",
+              "mcoi/tests/test_server_phase212.py::test_save_and_load",
+              "mcoi/tests/test_state_persistence.py::test_complex_data"
+            ],
+            "witness": "state_load_roundtrip"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_state_persistence.py::test_load_missing",
+              "mcoi/tests/test_server_phase212.py::test_load_missing",
+              "mcoi/tests/test_server_phase216.py::test_load_missing_state_returns_governed_not_found"
+            ],
+            "witness": "state_load_missing_bounded"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_state_persistence.py::test_list_states",
+              "mcoi/tests/test_server_phase212.py::test_list_states",
+              "mcoi/tests/test_state_persistence.py::test_summary"
+            ],
+            "witness": "state_list_summary_bounded"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_state_persistence.py::test_save_rejects_path_traversal",
+              "mcoi/tests/test_server_phase212.py::test_save_rejects_invalid_state_type"
+            ],
+            "witness": "state_save_rejects_path_traversal"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_state_persistence.py::test_load_rejects_path_traversal",
+              "mcoi/tests/test_server_phase212.py::test_load_rejects_invalid_state_type"
+            ],
+            "witness": "state_load_rejects_path_traversal"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_state_persistence.py::test_load_rejects_hash_mismatch"
+            ],
+            "witness": "state_hash_mismatch_rejected"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_state_persistence.py::test_atomic_write"
+            ],
+            "witness": "state_atomic_write_verified"
+          }
+        ],
+        "exact_test_anchor_count": 8,
         "runtime_witness_count": 8,
         "surface_id": "runtime_state_persistence_lifecycle",
-        "unanchored_witness_count": 8,
-        "unanchored_witnesses": [
-          "state_save_returns_hash_bound_snapshot",
-          "state_load_roundtrip",
-          "state_load_missing_bounded",
-          "state_list_summary_bounded",
-          "state_save_rejects_path_traversal",
-          "state_load_rejects_path_traversal",
-          "state_hash_mismatch_rejected",
-          "state_atomic_write_verified"
-        ]
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
       },
       {
         "anchored_witnesses": [
@@ -14931,6 +15015,6 @@
         "unanchored_witnesses": []
       }
     ],
-    "unanchored_witness_count": 214
+    "unanchored_witness_count": 206
   }
 }

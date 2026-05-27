@@ -2199,6 +2199,40 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "state_hash_mismatch_rejected",
                 "state_atomic_write_verified",
             ],
+            runtime_witness_anchor_aliases={
+                "state_save_returns_hash_bound_snapshot": [
+                    "save",
+                    "save_and_load",
+                    "state_hash_changes",
+                ],
+                "state_load_roundtrip": [
+                    "save_and_load",
+                    "complex_data",
+                    "save_and_load",
+                ],
+                "state_load_missing_bounded": [
+                    "load_missing",
+                    "load_missing_state_returns_governed_not_found",
+                ],
+                "state_list_summary_bounded": [
+                    "list_states",
+                    "summary",
+                ],
+                "state_save_rejects_path_traversal": [
+                    "save_rejects_path_traversal",
+                    "save_rejects_invalid_state_type",
+                ],
+                "state_load_rejects_path_traversal": [
+                    "load_rejects_path_traversal",
+                    "load_rejects_invalid_state_type",
+                ],
+                "state_hash_mismatch_rejected": [
+                    "load_rejects_hash_mismatch",
+                ],
+                "state_atomic_write_verified": [
+                    "atomic_write",
+                ],
+            },
         ),
         _surface(
             "runbook_learning_lifecycle",
