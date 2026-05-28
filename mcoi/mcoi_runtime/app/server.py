@@ -34,6 +34,12 @@ from mcoi_runtime.app.operational_math_integration import (
 from mcoi_runtime.app.organization_kernel_integration import (
     bootstrap_organization_kernel,
 )
+from mcoi_runtime.app.software_receipt_integration import (
+    select_software_receipt_store,
+)
+from mcoi_runtime.app.finance_approval_integration import (
+    select_finance_approval_store,
+)
 from mcoi_runtime.app.server_lifecycle import bootstrap_server_lifecycle
 from mcoi_runtime.app.server_registry import bootstrap_dependency_registry
 from mcoi_runtime.app.server_runtime_stack import bootstrap_server_runtime_stack
@@ -60,14 +66,6 @@ from mcoi_runtime.core.temporal_runtime import TemporalRuntimeEngine
 from mcoi_runtime.core.temporal_scheduler_background import TemporalSchedulerBackgroundLoop
 from mcoi_runtime.core.temporal_scheduler import TemporalSchedulerEngine
 from mcoi_runtime.core.temporal_scheduler_worker import TemporalSchedulerWorker
-from mcoi_runtime.persistence.software_change_receipt_store import (
-    FileSoftwareChangeReceiptStore,
-    SoftwareChangeReceiptStore,
-)
-from mcoi_runtime.persistence.finance_approval_store import (
-    FileFinanceApprovalPacketStore,
-    FinanceApprovalPacketStore,
-)
 from mcoi_runtime.persistence.temporal_scheduler_store import (
     FileTemporalSchedulerStore,
     TemporalSchedulerStore,
@@ -221,12 +219,8 @@ _dependency_bootstrap = bootstrap_dependency_registry(
 )
 platform = _dependency_bootstrap.platform
 
-_software_receipt_store_path = os.environ.get("MULLU_SOFTWARE_RECEIPT_STORE_PATH")
-software_receipt_store = (
-    FileSoftwareChangeReceiptStore(Path(_software_receipt_store_path))
-    if _software_receipt_store_path
-    else SoftwareChangeReceiptStore()
-)
+_software_receipt_bootstrap = select_software_receipt_store(os.environ)
+software_receipt_store = _software_receipt_bootstrap.store
 review_engine = ReviewEngine(clock=_clock)
 software_receipt_review_queue = SoftwareReceiptReviewQueue(
     review_engine=review_engine,
@@ -289,12 +283,8 @@ engineering_puzzle_control = EngineeringPuzzleControlSurface(engineering_puzzle_
 deps.set("engineering_puzzle_event_spine", engineering_puzzle_event_spine)
 deps.set("engineering_puzzle_control", engineering_puzzle_control)
 
-_finance_approval_store_path = os.environ.get("MULLU_FINANCE_APPROVAL_STORE_PATH")
-finance_approval_store = (
-    FileFinanceApprovalPacketStore(Path(_finance_approval_store_path))
-    if _finance_approval_store_path
-    else FinanceApprovalPacketStore()
-)
+_finance_approval_bootstrap = select_finance_approval_store(os.environ)
+finance_approval_store = _finance_approval_bootstrap.store
 deps.set("finance_approval_store", finance_approval_store)
 
 _organization_kernel_bootstrap = bootstrap_organization_kernel(os.environ, clock=_clock)
