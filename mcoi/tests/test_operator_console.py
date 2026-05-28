@@ -10,6 +10,21 @@ import pytest
 from fastapi.testclient import TestClient
 
 
+def _console_working_note(**overrides: object) -> dict[str, object]:
+    value: dict[str, object] = {
+        "kind": "WorkingNote",
+        "scope": "task",
+        "content_summary": "operator console parser note",
+        "source_ref": "test:operator-console",
+        "proof_state": "Pass",
+        "trust_zone": "workspace",
+        "expires_at": "2026-06-02T00:00:00+00:00",
+        "evidence_refs": ["test_operator_console"],
+    }
+    value.update(overrides)
+    return value
+
+
 @pytest.fixture
 def client():
     from mcoi_runtime.app.server import app
@@ -89,6 +104,91 @@ def test_console_scheduler(client: TestClient) -> None:
     assert "recent_executions" in data
 
 
+def test_console_note_memory_disabled(client: TestClient) -> None:
+    resp = client.get("/api/v1/console/note-memory")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["governed"] is True
+    assert data["status"] in {"disabled", "unregistered"}
+    assert data["summary"]["event_count"] == 0
+    assert data["summary"]["index_proof_state"] == "Unknown"
+    assert data["recent_notes"] == []
+
+
+def test_console_note_memory_enabled_read_model(client: TestClient, tmp_path) -> None:
+    from mcoi_runtime.app.note_memory_integration import NoteMemoryBootstrap
+    from mcoi_runtime.app.routers.deps import deps
+    from mcoi_runtime.core.note_memory_api import NoteMemoryRuntime
+
+    previous_bootstrap = deps.get("note_memory_bootstrap")
+    note_store = tmp_path / "notes"
+    runtime = NoteMemoryRuntime.from_path(note_store)
+    captured = runtime.capture_note(_console_working_note()).to_dict()
+    source_note_id = captured["payload"]["event"]["note_id"]
+    runtime.record_rejected_delta(
+        {
+            "summary": "Rejected unsafe console note promotion",
+            "source_ref": "test:operator-console-rejected",
+            "evidence_refs": ["blocked"],
+        }
+    )
+    runtime.queue_promotion({"note_id": source_note_id})
+
+    deps.set(
+        "note_memory_bootstrap",
+        NoteMemoryBootstrap(
+            enabled=True,
+            mounted=True,
+            store_path=str(note_store),
+            reason="mounted",
+        ),
+    )
+    try:
+        resp = client.get("/api/v1/console/note-memory?limit=5")
+    finally:
+        deps.set("note_memory_bootstrap", previous_bootstrap)
+
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["governed"] is True
+    assert data["status"] == "ready"
+    assert data["extension"]["mounted"] is True
+    assert data["summary"]["event_count"] == 2
+    assert data["summary"]["active_note_count"] == 1
+    assert data["summary"]["pending_promotion_count"] == 1
+    assert data["summary"]["rejected_delta_count"] == 1
+    assert data["recent_notes"][0]["kind"] == "WorkingNote"
+    assert data["pending_promotions"][0]["source_note_id"] == source_note_id
+
+
+def test_console_note_memory_mounted_without_store_path_fails_closed(client: TestClient) -> None:
+    from mcoi_runtime.app.note_memory_integration import NoteMemoryBootstrap
+    from mcoi_runtime.app.routers.deps import deps
+
+    previous_bootstrap = deps.get("note_memory_bootstrap")
+    deps.set(
+        "note_memory_bootstrap",
+        NoteMemoryBootstrap(
+            enabled=True,
+            mounted=True,
+            store_path="",
+            reason="mounted",
+        ),
+    )
+    try:
+        resp = client.get("/api/v1/console/note-memory")
+    finally:
+        deps.set("note_memory_bootstrap", previous_bootstrap)
+
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["governed"] is True
+    assert data["status"] == "mounted_unconfigured"
+    assert data["extension"]["mounted"] is False
+    assert data["extension"]["store_configured"] is False
+    assert data["summary"]["event_count"] == 0
+
+
 def test_full_console(client: TestClient) -> None:
     resp = client.get("/api/v1/console")
     assert resp.status_code == 200
@@ -98,3 +198,4 @@ def test_full_console(client: TestClient) -> None:
     assert "checkpoints" in data
     assert "providers" in data
     assert "scheduler" in data
+    assert "note_memory" in data

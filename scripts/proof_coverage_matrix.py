@@ -1001,6 +1001,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "/api/v1/console/checkpoints",
                 "/api/v1/console/providers",
                 "/api/v1/console/scheduler",
+                "/api/v1/console/note-memory",
             ],
             "read_model",
             "read_model",
@@ -1013,13 +1014,15 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "mcoi/tests/test_operator_console.py",
                 "mcoi/tests/test_console.py",
             ],
-            "Operator console routes expose bounded read-only runtime, audit, checkpoint, provider, scheduler, and aggregate views with governed response witnesses.",
+            "Operator console routes expose bounded read-only runtime, audit, checkpoint, provider, scheduler, note-memory, and aggregate views with governed response witnesses.",
             [
                 "console_home_returns_governed_runtime_vitals",
                 "console_runs_bounds_recent_audit_entries",
                 "console_audit_exposes_chain_intact_read_model",
                 "console_checkpoints_expose_persisted_state_summary",
                 "console_provider_and_scheduler_views_are_read_only",
+                "console_note_memory_returns_read_only_lifecycle_summary",
+                "console_note_memory_fails_closed_without_store_path",
             ],
             runtime_witness_anchor_aliases={
                 "console_home_returns_governed_runtime_vitals": ["console_home"],
@@ -1029,6 +1032,12 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "console_provider_and_scheduler_views_are_read_only": [
                     "console_providers",
                     "console_scheduler",
+                ],
+                "console_note_memory_returns_read_only_lifecycle_summary": [
+                    "console_note_memory_enabled_read_model",
+                ],
+                "console_note_memory_fails_closed_without_store_path": [
+                    "console_note_memory_mounted_without_store_path_fails_closed",
                 ],
             },
         ),

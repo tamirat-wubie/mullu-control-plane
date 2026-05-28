@@ -151,6 +151,17 @@ class NoteMemoryRuntime:
         except (OSError, RuntimeCoreInvariantError) as exc:
             return _rejected(exc)
 
+    def dashboard_snapshot(self, request_body: Mapping[str, Any] | None = None) -> NoteMemoryEnvelope:
+        """Return a read-only operator dashboard snapshot for note memory."""
+
+        try:
+            body = request_body or {}
+            limit = int(body.get("limit", 25))
+            now = str(body["now"]) if body.get("now") else None
+            return _ok("dashboard_snapshot", self.mesh.dashboard_snapshot(now=now, limit=limit))
+        except (OSError, KeyError, TypeError, ValueError, RuntimeCoreInvariantError) as exc:
+            return _rejected(exc)
+
 
 def _draft_from_mapping(value: Mapping[str, Any]) -> NoteMemoryDraft:
     return NoteMemoryDraft(

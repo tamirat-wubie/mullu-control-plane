@@ -1,13 +1,15 @@
 """Operator Console — unified operational views for operations teams.
 
 Aggregates runtime state into structured dashboard views that any
-frontend can consume. Five views cover the core operational needs:
+frontend can consume. Seven views cover the core operational needs:
 
 - Home: active/blocked/failed runs, provider health, budget burn
 - Runs: current state, ledger links, verification, restore eligibility
 - Audit: searchable event history by tenant/provider/policy/actor
 - Checkpoints: saved coordination state, resumable/expired/blocked
 - Providers: Anthropic/OpenAI/Gemini/Ollama status, latency, cost
+- Scheduler: jobs, execution history, health
+- Note Memory: governed note lifecycle summaries and promotion queues
 """
 from __future__ import annotations
 
@@ -234,6 +236,118 @@ def console_scheduler():
 # ═══ Full Console ═══
 
 
+# Note Memory View
+
+
+def _note_memory_extension_read_model() -> dict[str, object]:
+    """Return optional note-memory posture without exposing filesystem paths."""
+
+    try:
+        bootstrap = deps.get("note_memory_bootstrap")
+    except RuntimeError:
+        return {
+            "registered": False,
+            "enabled": False,
+            "mounted": False,
+            "store_configured": False,
+            "state": "unregistered",
+            "reason": "dependency_not_registered",
+        }
+    enabled = bool(getattr(bootstrap, "enabled", False))
+    raw_mounted = bool(getattr(bootstrap, "mounted", False))
+    store_path = str(getattr(bootstrap, "store_path", "") or "").strip()
+    store_configured = bool(store_path)
+    mounted = raw_mounted and store_configured
+    if mounted:
+        state = "mounted"
+    elif raw_mounted and not store_configured:
+        state = "mounted_unconfigured"
+    elif enabled:
+        state = "enabled_unmounted"
+    else:
+        state = "disabled"
+    return {
+        "registered": True,
+        "enabled": enabled,
+        "mounted": mounted,
+        "store_configured": store_configured,
+        "state": state,
+        "reason": str(getattr(bootstrap, "reason", "") or "unknown"),
+    }
+
+
+def _empty_note_memory_payload(extension: dict[str, object]) -> dict[str, object]:
+    """Return the stable disabled-state note-memory dashboard shape."""
+
+    return {
+        "governed": True,
+        "status": str(extension["state"]),
+        "extension": extension,
+        "summary": {
+            "event_count": 0,
+            "active_note_count": 0,
+            "rejected_delta_count": 0,
+            "expiring_note_count": 0,
+            "pending_promotion_count": 0,
+            "memory_anchor_count": 0,
+            "contradiction_count": 0,
+            "index_proof_state": "Unknown",
+        },
+        "recent_notes": [],
+        "rejected_deltas": [],
+        "expiring_notes": [],
+        "pending_promotions": [],
+        "memory_anchors": [],
+        "contradictions": [],
+        "audit_events": [],
+        "index": {
+            "valid_events": 0,
+            "rejected_lines": 0,
+            "checksum_failures": 0,
+            "proof_state": "Unknown",
+        },
+        "error": "",
+    }
+
+
+@router.get("/api/v1/console/note-memory")
+def console_note_memory(limit: int = 25):
+    """Operator note-memory view with read-only governed lifecycle summaries."""
+
+    deps.metrics.inc("requests_governed")
+    extension = _note_memory_extension_read_model()
+    if extension["state"] != "mounted":
+        return _empty_note_memory_payload(extension)
+
+    try:
+        bootstrap = deps.get("note_memory_bootstrap")
+        from mcoi_runtime.core.note_memory_api import NoteMemoryRuntime
+
+        bounded_limit = max(1, min(int(limit), 100))
+        runtime = NoteMemoryRuntime.from_path(str(getattr(bootstrap, "store_path", "")))
+        envelope = runtime.dashboard_snapshot({"limit": bounded_limit}).to_dict()
+    except (RuntimeError, TypeError, ValueError) as exc:
+        payload = _empty_note_memory_payload(extension)
+        payload["status"] = "rejected"
+        payload["error"] = str(exc)
+        return payload
+
+    if not envelope["ok"]:
+        payload = _empty_note_memory_payload(extension)
+        payload["status"] = envelope["status"]
+        payload["error"] = envelope["error"]
+        return payload
+
+    snapshot = dict(envelope["payload"])
+    return {
+        "governed": True,
+        "status": str(snapshot.get("status", "ready")),
+        "extension": extension,
+        **snapshot,
+        "error": "",
+    }
+
+
 @router.get("/api/v1/console")
 def full_console():
     """Complete operator console — all views in one call."""
@@ -243,5 +357,6 @@ def full_console():
         "checkpoints": console_checkpoints(),
         "providers": console_providers(),
         "scheduler": console_scheduler(),
+        "note_memory": console_note_memory(),
         "governed": True,
     }

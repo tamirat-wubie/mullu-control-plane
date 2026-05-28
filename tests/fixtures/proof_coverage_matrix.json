@@ -866,9 +866,9 @@
     "by_coverage_state": {
       "proven": 12,
       "unproven": 0,
-      "witnessed": 351
+      "witnessed": 352
     },
-    "route_count": 363,
+    "route_count": 364,
     "routes": [
       {
         "coverage_state": "witnessed",
@@ -1258,6 +1258,11 @@
       {
         "coverage_state": "witnessed",
         "route": "/api/v1/console/home",
+        "surface_id": "operator_console_read_models"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/console/note-memory",
         "surface_id": "operator_console_read_models"
       },
       {
@@ -3767,7 +3772,7 @@
         "mcoi/tests/test_operator_console.py",
         "mcoi/tests/test_console.py"
       ],
-      "notes": "Operator console routes expose bounded read-only runtime, audit, checkpoint, provider, scheduler, and aggregate views with governed response witnesses.",
+      "notes": "Operator console routes expose bounded read-only runtime, audit, checkpoint, provider, scheduler, note-memory, and aggregate views with governed response witnesses.",
       "representative_paths": [
         "/api/v1/console",
         "/api/v1/console/home",
@@ -3775,7 +3780,8 @@
         "/api/v1/console/audit",
         "/api/v1/console/checkpoints",
         "/api/v1/console/providers",
-        "/api/v1/console/scheduler"
+        "/api/v1/console/scheduler",
+        "/api/v1/console/note-memory"
       ],
       "request_proof": "read_model",
       "runtime_witness_anchor_aliases": {
@@ -3787,6 +3793,12 @@
         ],
         "console_home_returns_governed_runtime_vitals": [
           "console_home"
+        ],
+        "console_note_memory_fails_closed_without_store_path": [
+          "console_note_memory_mounted_without_store_path_fails_closed"
+        ],
+        "console_note_memory_returns_read_only_lifecycle_summary": [
+          "console_note_memory_enabled_read_model"
         ],
         "console_provider_and_scheduler_views_are_read_only": [
           "console_providers",
@@ -3801,7 +3813,9 @@
         "console_runs_bounds_recent_audit_entries",
         "console_audit_exposes_chain_intact_read_model",
         "console_checkpoints_expose_persisted_state_summary",
-        "console_provider_and_scheduler_views_are_read_only"
+        "console_provider_and_scheduler_views_are_read_only",
+        "console_note_memory_returns_read_only_lifecycle_summary",
+        "console_note_memory_fails_closed_without_store_path"
       ],
       "surface_id": "operator_console_read_models"
     },
@@ -9068,8 +9082,8 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 1115,
-    "runtime_witness_count": 1115,
+    "exact_test_anchor_count": 1117,
+    "runtime_witness_count": 1117,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -10516,10 +10530,22 @@
               "mcoi/tests/test_operator_console.py::test_console_scheduler"
             ],
             "witness": "console_provider_and_scheduler_views_are_read_only"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_operator_console.py::test_console_note_memory_enabled_read_model"
+            ],
+            "witness": "console_note_memory_returns_read_only_lifecycle_summary"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_operator_console.py::test_console_note_memory_mounted_without_store_path_fails_closed"
+            ],
+            "witness": "console_note_memory_fails_closed_without_store_path"
           }
         ],
-        "exact_test_anchor_count": 5,
-        "runtime_witness_count": 5,
+        "exact_test_anchor_count": 7,
+        "runtime_witness_count": 7,
         "surface_id": "operator_console_read_models",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []

@@ -88,6 +88,14 @@ class PhiGovStatus(StrEnum):
 _TEMPORARY_KINDS = {NoteKind.EPHEMERAL_SCRATCH, NoteKind.WORKING_NOTE}
 _PROMOTABLE_KINDS = {NoteKind.WORKING_NOTE, NoteKind.DECISION_RECORD}
 _DURABLE_NON_PROMOTABLE_KINDS = {NoteKind.EXECUTION_TRACE, NoteKind.REJECTED_DELTA}
+_DASHBOARD_ACTIVE_KINDS = {
+    NoteKind.EPHEMERAL_SCRATCH,
+    NoteKind.WORKING_NOTE,
+    NoteKind.EXECUTION_TRACE,
+    NoteKind.DECISION_RECORD,
+    NoteKind.MEMORY_ANCHOR,
+}
+_DASHBOARD_TERMINAL_ACTIONS = {NoteAction.REJECT, NoteAction.CONTRADICT, NoteAction.EXPIRE}
 _REDACTION_PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
     ("private_key", re.compile(r"-----BEGIN [A-Z ]*PRIVATE KEY-----.*?-----END [A-Z ]*PRIVATE KEY-----", re.DOTALL)),
     ("jwt", re.compile(r"\beyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\b")),
@@ -152,6 +160,31 @@ def _validate_symbol_identifier(value: str, field_name: str) -> str:
         raise RuntimeCoreInvariantError(f"{field_name} must be non-empty")
     if ".." in text or not _SYMBOL_IDENTIFIER_PATTERN.fullmatch(text):
         raise RuntimeCoreInvariantError(f"{field_name} must be a bounded symbolic identifier")
+    return text
+
+
+def _required_promotion_text(entry: Mapping[str, object], field_name: str) -> str:
+    raw_value = entry.get(field_name)
+    text = str(raw_value or "").strip()
+    if not text:
+        raise RuntimeCoreInvariantError(f"promotion queue entry missing {field_name}")
+    return text
+
+
+def _required_promotion_int(entry: Mapping[str, object], field_name: str) -> int:
+    text = _required_promotion_text(entry, field_name)
+    try:
+        value = int(text)
+    except ValueError as exc:
+        raise RuntimeCoreInvariantError(f"promotion queue entry {field_name} must be an integer") from exc
+    if value < 1:
+        raise RuntimeCoreInvariantError(f"promotion queue entry {field_name} must be positive")
+    return value
+
+
+def _required_iso_promotion_text(entry: Mapping[str, object], field_name: str) -> str:
+    text = _required_promotion_text(entry, field_name)
+    _parse_iso(text)
     return text
 
 
@@ -682,6 +715,122 @@ class NoteMemoryMesh:
         """Return the number of valid persisted note events."""
 
         return len(self.list_events(skip_invalid=False))
+
+    def dashboard_snapshot(self, *, now: str | None = None, limit: int = 25) -> dict[str, object]:
+        """Return a read-only operator snapshot for the note memory control surface."""
+
+        if limit < 1 or limit > 100:
+            raise RuntimeCoreInvariantError("dashboard limit must be between 1 and 100")
+        current = _parse_iso(now or self._clock())
+        events = self.list_events(skip_invalid=False)
+        materialized = self._materialize(events)
+        active_notes: list[NoteMemoryEvent] = []
+        expiring_notes: list[NoteMemoryEvent] = []
+        for note_state in materialized.values():
+            event = note_state.latest
+            time_expired = event.expires_at is not None and _parse_iso(event.expires_at) <= current
+            if note_state.expired or note_state.superseded or note_state.contradicted or time_expired:
+                continue
+            if event.kind not in _DASHBOARD_ACTIVE_KINDS or event.action in _DASHBOARD_TERMINAL_ACTIONS:
+                continue
+            active_notes.append(event)
+            if event.kind in _TEMPORARY_KINDS and event.expires_at is not None:
+                expiring_notes.append(event)
+
+        recent_events = sorted(events, key=lambda event: event.event_seq, reverse=True)
+        rejected_deltas = [
+            event
+            for event in recent_events
+            if event.kind == NoteKind.REJECTED_DELTA or event.action == NoteAction.REJECT
+        ]
+        contradictions = [event for event in recent_events if event.action == NoteAction.CONTRADICT]
+        memory_anchors = [event for event in recent_events if event.kind == NoteKind.MEMORY_ANCHOR]
+        pending_promotions = sorted(
+            self._pending_promotions(),
+            key=lambda entry: str(entry.get("queued_at", "")),
+            reverse=True,
+        )
+        index_report = self.rebuild_index_from_events()
+        return {
+            "status": "ready",
+            "summary": {
+                "event_count": len(events),
+                "active_note_count": len(active_notes),
+                "rejected_delta_count": len(rejected_deltas),
+                "expiring_note_count": len(expiring_notes),
+                "pending_promotion_count": len(pending_promotions),
+                "memory_anchor_count": len(memory_anchors),
+                "contradiction_count": len(contradictions),
+                "index_proof_state": index_report.proof_state.value,
+            },
+            "recent_notes": [
+                self._event_dashboard_row(event)
+                for event in sorted(active_notes, key=lambda item: item.event_seq, reverse=True)[:limit]
+            ],
+            "rejected_deltas": [self._event_dashboard_row(event) for event in rejected_deltas[:limit]],
+            "expiring_notes": [
+                self._event_dashboard_row(event)
+                for event in sorted(expiring_notes, key=lambda item: str(item.expires_at or ""))[:limit]
+            ],
+            "pending_promotions": [
+                self._promotion_dashboard_row(entry)
+                for entry in pending_promotions[:limit]
+            ],
+            "memory_anchors": [self._event_dashboard_row(event) for event in memory_anchors[:limit]],
+            "contradictions": [self._event_dashboard_row(event) for event in contradictions[:limit]],
+            "audit_events": [self._event_dashboard_row(event) for event in recent_events[:limit]],
+            "index": {
+                "valid_events": index_report.valid_events,
+                "rejected_lines": index_report.rejected_lines,
+                "checksum_failures": index_report.checksum_failures,
+                "proof_state": index_report.proof_state.value,
+            },
+        }
+
+    def _event_dashboard_row(self, event: NoteMemoryEvent) -> dict[str, object]:
+        """Return a bounded operator row for one note event."""
+
+        return {
+            "event_seq": event.event_seq,
+            "event_id": event.event_id,
+            "note_id": event.note_id,
+            "kind": event.kind.value,
+            "action": event.action.value,
+            "scope": event.scope.value,
+            "content_summary": event.content_summary,
+            "source_ref": event.source_ref,
+            "proof_state": event.proof_state.value,
+            "trust_zone": event.trust_zone.value,
+            "created_at": event.created_at,
+            "expires_at": event.expires_at,
+            "evidence_refs": list(event.evidence_refs),
+            "relation_refs": list(event.relation_refs),
+        }
+
+    def _promotion_dashboard_row(self, entry: Mapping[str, object]) -> dict[str, object]:
+        """Return a bounded operator row for one pending promotion entry."""
+
+        promotion_id = _validate_symbol_identifier(
+            _required_promotion_text(entry, "promotion_id"),
+            "promotion_id",
+        )
+        source_note_id = _validate_symbol_identifier(
+            _required_promotion_text(entry, "source_note_id"),
+            "source_note_id",
+        )
+        source_event_seq = _required_promotion_int(entry, "source_event_seq")
+        source_event_id = _validate_symbol_identifier(
+            _required_promotion_text(entry, "source_event_id"),
+            "source_event_id",
+        )
+        queued_at = _required_iso_promotion_text(entry, "queued_at")
+        return {
+            "promotion_id": promotion_id,
+            "source_note_id": source_note_id,
+            "source_event_seq": source_event_seq,
+            "source_event_id": source_event_id,
+            "queued_at": queued_at,
+        }
 
     def _draft_to_event(self, draft: NoteMemoryDraft) -> NoteMemoryEvent:
         created_at = self._clock()
