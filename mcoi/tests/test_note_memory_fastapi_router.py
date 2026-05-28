@@ -78,6 +78,8 @@ def test_note_memory_fastapi_adapter_dashboard_snapshot_is_read_only(tmp_path) -
 
     assert dashboard["governed"] is True
     assert dashboard["status"] == "dashboard_snapshot"
+    assert dashboard["payload"]["snapshot_id"].startswith("note-memory-dashboard-")
+    assert len(dashboard["payload"]["snapshot_hash"]) == 64
     assert dashboard["payload"]["summary"]["event_count"] == 1
     assert dashboard["payload"]["recent_notes"][0]["note_id"] == captured["payload"]["event"]["note_id"]
     assert listed["payload"]["count"] == 1
@@ -98,6 +100,8 @@ def test_created_note_memory_fastapi_router_exposes_dashboard_route(tmp_path) ->
 
     assert dashboard.status_code == 200
     assert dashboard.json()["status"] == "dashboard_snapshot"
+    assert dashboard.json()["payload"]["snapshot_id"].startswith("note-memory-dashboard-")
+    assert len(dashboard.json()["payload"]["snapshot_hash"]) == 64
     assert dashboard.json()["payload"]["summary"]["event_count"] == 1
     assert dashboard.json()["payload"]["recent_notes"][0]["note_id"] == captured["payload"]["event"]["note_id"]
     assert events.json()["payload"]["count"] == 1

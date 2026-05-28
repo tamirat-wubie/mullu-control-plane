@@ -98,10 +98,16 @@ def test_runtime_dashboard_snapshot_reports_operator_memory_state(tmp_path) -> N
     runtime.queue_promotion({"note_id": source_note_id})
 
     snapshot = runtime.dashboard_snapshot({"limit": 5, "now": "2026-05-28T00:00:00+00:00"}).to_dict()
+    repeated_snapshot = runtime.dashboard_snapshot({"limit": 5, "now": "2026-05-28T00:00:00+00:00"}).to_dict()
 
     assert snapshot["governed"] is True
     assert snapshot["ok"] is True
     assert snapshot["status"] == "dashboard_snapshot"
+    assert snapshot["payload"]["assessed_at"] == "2026-05-28T00:00:00+00:00"
+    assert snapshot["payload"]["snapshot_id"].startswith("note-memory-dashboard-")
+    assert len(snapshot["payload"]["snapshot_hash"]) == 64
+    assert repeated_snapshot["payload"]["snapshot_id"] == snapshot["payload"]["snapshot_id"]
+    assert repeated_snapshot["payload"]["snapshot_hash"] == snapshot["payload"]["snapshot_hash"]
     assert snapshot["payload"]["summary"]["event_count"] == 2
     assert snapshot["payload"]["summary"]["active_note_count"] == 1
     assert snapshot["payload"]["summary"]["episode_capsule_count"] == 0

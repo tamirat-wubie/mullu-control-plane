@@ -860,8 +860,10 @@ class NoteMemoryMesh:
             reverse=True,
         )
         index_report = self.rebuild_index_from_events()
-        return {
+        assessed_at = current.isoformat()
+        snapshot_body: dict[str, object] = {
             "status": "ready",
+            "assessed_at": assessed_at,
             "summary": {
                 "event_count": len(events),
                 "active_note_count": len(active_notes),
@@ -896,6 +898,12 @@ class NoteMemoryMesh:
                 "checksum_failures": index_report.checksum_failures,
                 "proof_state": index_report.proof_state.value,
             },
+        }
+        snapshot_hash = _checksum_for_payload(snapshot_body)
+        return {
+            "snapshot_id": stable_identifier("note-memory-dashboard", {"snapshot_hash": snapshot_hash}),
+            "snapshot_hash": snapshot_hash,
+            **snapshot_body,
         }
 
     def _event_dashboard_row(self, event: NoteMemoryEvent) -> dict[str, object]:

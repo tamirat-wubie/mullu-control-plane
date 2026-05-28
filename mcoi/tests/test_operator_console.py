@@ -165,6 +165,8 @@ def test_console_note_memory_enabled_read_model(client: TestClient, tmp_path) ->
     assert data["governed"] is True
     assert data["status"] == "ready"
     assert data["extension"]["mounted"] is True
+    assert data["snapshot_id"].startswith("note-memory-dashboard-")
+    assert len(data["snapshot_hash"]) == 64
     assert data["summary"]["event_count"] == 2
     assert data["summary"]["active_note_count"] == 1
     assert data["summary"]["episode_capsule_count"] == 0

@@ -43,6 +43,10 @@ GET  /api/v1/console/note-memory/view
 
 The `/api/v1/notes/dashboard`, `/api/v1/console/note-memory`, and CLI
 `dashboard` surfaces are read-only projections over the same runtime snapshot.
+Mounted dashboard snapshots carry `snapshot_id`, `snapshot_hash`, and
+`assessed_at` witness fields so downstream dashboards can correlate the exact
+bounded read model they rendered without reading the append-only store
+directly.
 The operator console route returns the same stable summary shape when note
 memory is disabled, unregistered, unmounted, or mounted without a configured
 store path. Rejected deltas, pending promotions, memory anchors,
@@ -102,6 +106,6 @@ python -m pytest tests/test_note_memory_control_plane_integration.py
 
 STATUS:
   Completeness: 100%
-  Invariants verified: feature flag boundary, store path requirement, append-only note events, explicit claim contradiction evidence, episode capsule evidence gate, promotion receipt gate, dashboard contract projection, CLI dashboard projection, optional FastAPI dashboard projection, text renderer projection, escaped browser view projection, episode capsule counter projection
+  Invariants verified: feature flag boundary, store path requirement, append-only note events, explicit claim contradiction evidence, episode capsule evidence gate, promotion receipt gate, dashboard snapshot witness, dashboard contract projection, CLI dashboard projection, optional FastAPI dashboard projection, text renderer projection, escaped browser view projection, episode capsule counter projection
   Open issues: none
   Next action: keep the note-memory surface in mullu-control-plane and render DashboardSnapshot.note_memory in any future browser dashboard shell
