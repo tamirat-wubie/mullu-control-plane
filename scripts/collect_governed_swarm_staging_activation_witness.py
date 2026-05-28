@@ -4,7 +4,7 @@
 Purpose: probe a staging control-plane governed swarm route and emit a
 schema-valid activation witness only when runtime, route, audit, and rollback
 evidence are present.
-Governance scope: release pin, feature flag, route probe, audit persistence,
+Governance scope: bundled runtime witness, feature flag, route probe, audit persistence,
 rollback preservation, and witness validation.
 Dependencies: standard-library HTTP client and
 schemas/governed_swarm_staging_activation_witness.schema.json.
@@ -35,11 +35,10 @@ from scripts.validate_governed_swarm_staging_activation_witness import validate_
 
 
 CONTROL_PLANE_REPO = "tamirat-wubie/mullu-control-plane"
-RUNTIME_REPO = "tamirat-wubie/mullu-governed-swarm"
-RUNTIME_RELEASE_TAG = "v0.1.0-governed-swarm"
-RUNTIME_COMMIT = "5882c5f24ca35fd5a133357b55b5411ebdc99dfb"
+RUNTIME_REPO = "tamirat-wubie/mullu-control-plane"
+RUNTIME_RELEASE_TAG = "control-plane-bundled-runtime"
 DEFAULT_OUTPUT_PATH = Path(".change_assurance") / "governed_swarm_staging_activation_witness.json"
-DEFAULT_RUNTIME_PATH = "/opt/mullu/mullu-governed-swarm/mcoi"
+DEFAULT_RUNTIME_PATH = "/opt/mullu/mullu-control-plane/mcoi"
 DEFAULT_AUDIT_STORE_PATH = "/var/lib/mullu/governed-swarm/swarm-runs.jsonl"
 
 
@@ -142,7 +141,7 @@ def collect_activation_witness(
         "control_plane_commit": control_plane_commit,
         "runtime_repo": RUNTIME_REPO,
         "runtime_release_tag": RUNTIME_RELEASE_TAG,
-        "runtime_commit": RUNTIME_COMMIT,
+        "runtime_commit": control_plane_commit,
         "runtime_path": runtime_path,
         "feature_flags": {
             "MULLU_GOVERNED_SWARM_ENABLED": "true",

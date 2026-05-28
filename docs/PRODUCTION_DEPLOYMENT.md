@@ -139,7 +139,7 @@ Variables are grouped by purpose. Every row marks whether the variable is **requ
 |---|---|---|---|
 | `MULLU_GOVERNED_SWARM_ENABLED` | optional | unset / disabled | Optional governed swarm route mount. The route surface is disabled by default and mounts only when explicitly truthy. |
 | `MULLU_GOVERNED_SWARM_AUDIT_STORE_PATH` | yes, if enabled | unset | Append-only JSONL audit store for governed swarm run receipts. Use persistent storage in pilot and production. |
-| `MULLU_GOVERNED_SWARM_RUNTIME_PATH` | optional | unset | External runtime bridge. Set to a runtime root containing `mcoi_runtime/swarm`, such as the `mcoi` directory from `mullu-governed-swarm`. |
+| `MULLU_GOVERNED_SWARM_RUNTIME_PATH` | optional | unset | Runtime bridge for non-standard checkouts. Set to this repository's `mcoi` directory only when the installed package cannot import bundled `mcoi_runtime/swarm`. |
 
 Enabled routes:
 
@@ -153,17 +153,17 @@ Operational rule:
 
 ```text
 No audit store path, no governed swarm mount.
-No runtime path containing mcoi_runtime/swarm, no external runtime bridge.
+No runtime path containing mcoi_runtime/swarm, no optional runtime bridge.
 ```
 
 Use `examples/governed_swarm_control_plane.env.example` as the redacted
 operator template for this feature.
 
-Current runtime release pin:
+Current runtime witness:
 
 ```text
-Repository: tamirat-wubie/mullu-governed-swarm
-Tag: v0.1.0-governed-swarm
+Repository: tamirat-wubie/mullu-control-plane
+Runtime label: control-plane-bundled-runtime
 Runtime path after checkout: <checkout>/mcoi
 ```
 

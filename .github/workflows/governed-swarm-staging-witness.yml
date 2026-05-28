@@ -14,7 +14,7 @@ on:
       runtime_path:
         description: "Runtime checkout path containing mcoi_runtime/swarm"
         required: true
-        default: "/opt/mullu/mullu-governed-swarm/mcoi"
+        default: "/opt/mullu/mullu-control-plane/mcoi"
         type: string
       audit_store_path:
         description: "Local JSONL audit store path visible to the selected runner"

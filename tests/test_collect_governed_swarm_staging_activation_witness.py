@@ -1,7 +1,7 @@
 """Tests for governed swarm staging activation witness collection.
 
 Purpose: verify the staging collector emits proof-carrying activation evidence.
-Governance scope: route probes, audit receipt closure, release pin, and fail-closed output.
+Governance scope: route probes, audit receipt closure, bundled runtime witness, and fail-closed output.
 Dependencies: scripts.collect_governed_swarm_staging_activation_witness.
 Invariants: successful collection validates against the public schema; missing audit closure is not SolvedVerified.
 """
@@ -30,7 +30,7 @@ def test_collect_governed_swarm_staging_activation_witness_passes(tmp_path: Path
     witness = collect_activation_witness(
         staging_url="https://staging.example",
         control_plane_commit=CONTROL_PLANE_COMMIT,
-        runtime_path="/opt/mullu/mullu-governed-swarm/mcoi",
+        runtime_path="/opt/mullu/mullu-control-plane/mcoi",
         audit_store_path=str(audit_store),
         run_id="swarm-run-staging-001",
         opener=_successful_opener,
@@ -39,7 +39,8 @@ def test_collect_governed_swarm_staging_activation_witness_passes(tmp_path: Path
 
     assert validate_witness_payload(witness) == []
     assert witness["outcome"] == "SolvedVerified"
-    assert witness["runtime_release_tag"] == "v0.1.0-governed-swarm"
+    assert witness["runtime_release_tag"] == "control-plane-bundled-runtime"
+    assert witness["runtime_commit"] == CONTROL_PLANE_COMMIT
     assert witness["invoice_smoke"]["run_id"] == "swarm-run-staging-001"
     assert witness["audit_store"]["latest_receipt_has_closure"] is True
 
@@ -53,7 +54,7 @@ def test_collect_governed_swarm_staging_activation_witness_blocks_without_audit_
     witness = collect_activation_witness(
         staging_url="https://staging.example",
         control_plane_commit=CONTROL_PLANE_COMMIT,
-        runtime_path="/opt/mullu/mullu-governed-swarm/mcoi",
+        runtime_path="/opt/mullu/mullu-control-plane/mcoi",
         audit_store_path=str(audit_store),
         run_id="swarm-run-staging-001",
         opener=_successful_opener,
@@ -85,7 +86,7 @@ def test_collect_governed_swarm_staging_activation_witness_cli_writes_valid_witn
             "--control-plane-commit",
             CONTROL_PLANE_COMMIT,
             "--runtime-path",
-            "/opt/mullu/mullu-governed-swarm/mcoi",
+            "/opt/mullu/mullu-control-plane/mcoi",
             "--audit-store-path",
             str(audit_store),
             "--output",

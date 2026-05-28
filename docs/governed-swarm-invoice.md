@@ -100,7 +100,7 @@ In the larger control-plane app, the router is mounted only when explicitly enab
 
 ```powershell
 $env:MULLU_GOVERNED_SWARM_ENABLED='true'
-$env:MULLU_GOVERNED_SWARM_AUDIT_STORE_PATH='C:\tmp\mullu-governed-swarm\swarm-runs.jsonl'
+$env:MULLU_GOVERNED_SWARM_AUDIT_STORE_PATH='C:\tmp\mullu-control-plane\swarm-runs.jsonl'
 $env:MULLU_GOVERNED_SWARM_RUNTIME_PATH='C:\Users\tmrtl\Projects\Agentic framwork and computer uses inteligence\mcoi'
 ```
 

@@ -59,8 +59,10 @@ MULLU_GOVERNED_SWARM_AUDIT_STORE_PATH=<persistent-jsonl-path>
 MULLU_GOVERNED_SWARM_RUNTIME_PATH=<runtime-root-containing-mcoi_runtime/swarm>
 ```
 
-Use runtime release `v0.1.0-governed-swarm` from
-`tamirat-wubie/mullu-governed-swarm` for the current control-plane integration.
+The governed swarm runtime is bundled in `tamirat-wubie/mullu-control-plane`.
+`MULLU_GOVERNED_SWARM_RUNTIME_PATH` is only needed when the runtime package is
+loaded from a non-standard checkout; the path must point at this repository's
+`mcoi` directory.
 
 When enabled, the first route family is the governed invoice swarm:
 
