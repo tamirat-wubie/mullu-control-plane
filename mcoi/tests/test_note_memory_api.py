@@ -44,6 +44,11 @@ def test_runtime_capture_retrieve_and_list_events_preserve_governed_envelopes(tm
     assert captured["status"] == "captured"
     assert "sk-runtime-secret" not in captured["payload"]["event"]["content_summary"]
     assert retrieved["payload"]["count"] == 1
+    assert retrieved["payload"]["receipt"]["receipt_id"].startswith("note-retrieval-")
+    assert len(retrieved["payload"]["receipt"]["snapshot_hash"]) == 64
+    assert retrieved["payload"]["receipt"]["query_terms"] == ["parser"]
+    assert retrieved["payload"]["receipt"]["returned_count"] == 1
+    assert retrieved["payload"]["receipt"]["returned_note_ids"] == [captured["payload"]["event"]["note_id"]]
     assert listed["payload"]["count"] == 1
     assert listed["payload"]["events"][0]["note_id"] == captured["payload"]["event"]["note_id"]
     assert listed["payload"]["events"][0]["claim_key"] == "runtime.parser.state"

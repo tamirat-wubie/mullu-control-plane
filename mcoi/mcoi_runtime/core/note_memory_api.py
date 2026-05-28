@@ -3,8 +3,8 @@
 Purpose: expose note memory mesh operations through JSON-compatible request
 and response envelopes for CLIs, HTTP adapters, and local control-plane wiring.
 Governance scope: typed boundary validation, append-only note persistence,
-retrieval guard enforcement, expiry, rejected-delta evidence, and Phi_gov
-promotion receipt checks.
+retrieval guard enforcement, retrieval receipts, expiry, rejected-delta
+evidence, and Phi_gov promotion receipt checks.
 Dependencies: dataclasses, pathlib, runtime invariant helpers, and note memory
 mesh primitives.
 Invariants: every rejected request returns an explicit governed envelope,
@@ -106,8 +106,15 @@ class NoteMemoryRuntime:
 
         try:
             query = _required_text(request_body, "query")
-            notes = self.mesh.retrieve_notes(query, _retrieval_guard_from_mapping(request_body))
-            return _ok("retrieved", {"count": len(notes), "notes": [_jsonable(note) for note in notes]})
+            result = self.mesh.retrieve_notes_with_receipt(query, _retrieval_guard_from_mapping(request_body))
+            return _ok(
+                "retrieved",
+                {
+                    "count": len(result.notes),
+                    "notes": [_jsonable(note) for note in result.notes],
+                    "receipt": _jsonable(result.receipt),
+                },
+            )
         except (KeyError, TypeError, ValueError, RuntimeCoreInvariantError) as exc:
             return _rejected(exc)
 

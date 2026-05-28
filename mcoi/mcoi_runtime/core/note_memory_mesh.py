@@ -102,6 +102,7 @@ _DASHBOARD_TERMINAL_ACTIONS = {NoteAction.REJECT, NoteAction.CONTRADICT, NoteAct
 _CONTRADICTION_DETECTION_ACTIONS = {NoteAction.CREATE, NoteAction.APPEND, NoteAction.SUPERSEDE}
 _MAX_EPISODE_FIELD_LENGTH = 512
 _MAX_EPISODE_ITEMS = 50
+_MAX_RETRIEVAL_QUERY_LENGTH = 256
 _REDACTION_PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
     ("private_key", re.compile(r"-----BEGIN [A-Z ]*PRIVATE KEY-----.*?-----END [A-Z ]*PRIVATE KEY-----", re.DOTALL)),
     ("jwt", re.compile(r"\beyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\b")),
@@ -206,6 +207,13 @@ def _validate_optional_claim(claim_key: str, claim_value: str) -> tuple[str, str
         raise RuntimeCoreInvariantError("claim_key and claim_value must be supplied together")
     _validate_symbol_identifier(key, "claim_key")
     return key, _bounded_text(value, "claim_value", max_length=256)
+
+
+def _retrieval_query(query: str) -> tuple[str, tuple[str, ...]]:
+    text = redact_sensitive_text(str(query).strip())
+    if len(text) > _MAX_RETRIEVAL_QUERY_LENGTH:
+        raise RuntimeCoreInvariantError(f"query exceeds {_MAX_RETRIEVAL_QUERY_LENGTH} characters")
+    return text, tuple(term for term in text.lower().split() if term)
 
 
 def _required_promotion_text(entry: Mapping[str, object], field_name: str) -> str:
@@ -482,6 +490,35 @@ class RetrievedNote:
 
 
 @dataclass(frozen=True)
+class RetrievalReceipt:
+    """Deterministic read-only witness for one note retrieval operation."""
+
+    receipt_id: str
+    query: str
+    query_terms: tuple[str, ...]
+    guard_scope: str
+    allowed_trust_zones: tuple[str, ...]
+    allowed_proof_states: tuple[str, ...]
+    include_hypotheses: bool
+    assessed_at: str
+    event_count: int
+    materialized_note_count: int
+    returned_count: int
+    returned_note_ids: tuple[str, ...]
+    returned_event_ids: tuple[str, ...]
+    snapshot_hash: str
+    proof_state: ProofState
+
+
+@dataclass(frozen=True)
+class RetrievalResult:
+    """Guard-approved notes plus their read-only retrieval receipt."""
+
+    notes: tuple[RetrievedNote, ...]
+    receipt: RetrievalReceipt
+
+
+@dataclass(frozen=True)
 class RetrievalGuard:
     """Policy checks that must pass before a note can influence execution."""
 
@@ -639,10 +676,16 @@ class NoteMemoryMesh:
     def retrieve_notes(self, query: str, guard: RetrievalGuard | None = None) -> tuple[RetrievedNote, ...]:
         """Return guard-approved notes ranked by deterministic influence score."""
 
+        return self.retrieve_notes_with_receipt(query, guard).notes
+
+    def retrieve_notes_with_receipt(self, query: str, guard: RetrievalGuard | None = None) -> RetrievalResult:
+        """Return guard-approved notes with a deterministic read-only receipt."""
+
         active_guard = guard or RetrievalGuard()
         now = _parse_iso(active_guard.now or self._clock())
-        query_terms = tuple(term for term in query.lower().split() if term)
-        materialized = self._materialize(self.list_events(skip_invalid=False))
+        query_text, query_terms = _retrieval_query(query)
+        events = self.list_events(skip_invalid=False)
+        materialized = self._materialize(events)
         retrieved: list[RetrievedNote] = []
         for note_state in materialized.values():
             allowed, reasons = self._guard_note(note_state, active_guard, now)
@@ -658,7 +701,19 @@ class NoteMemoryMesh:
                     guard_reasons=tuple(reasons),
                 )
             )
-        return tuple(sorted(retrieved, key=lambda item: (-item.score, item.event.event_seq)))
+        notes = tuple(sorted(retrieved, key=lambda item: (-item.score, item.event.event_seq)))
+        return RetrievalResult(
+            notes=notes,
+            receipt=self._retrieval_receipt(
+                query=query_text,
+                query_terms=query_terms,
+                guard=active_guard,
+                assessed_at=now.isoformat(),
+                event_count=len(events),
+                materialized_note_count=len(materialized),
+                notes=notes,
+            ),
+        )
 
     def queue_promotion(self, note_id: str) -> str:
         """Queue a promotable note for later Phi_gov review."""
@@ -929,6 +984,51 @@ class NoteMemoryMesh:
             row["claim_key"] = event.claim_key
             row["claim_value"] = event.claim_value
         return row
+
+    def _retrieval_receipt(
+        self,
+        *,
+        query: str,
+        query_terms: tuple[str, ...],
+        guard: RetrievalGuard,
+        assessed_at: str,
+        event_count: int,
+        materialized_note_count: int,
+        notes: Sequence[RetrievedNote],
+    ) -> RetrievalReceipt:
+        receipt_body = {
+            "query": query,
+            "query_terms": list(query_terms),
+            "guard_scope": guard.scope.value if guard.scope is not None else "",
+            "allowed_trust_zones": [zone.value for zone in guard.allowed_trust_zones],
+            "allowed_proof_states": [state.value for state in guard.allowed_proof_states],
+            "include_hypotheses": guard.include_hypotheses,
+            "assessed_at": assessed_at,
+            "event_count": event_count,
+            "materialized_note_count": materialized_note_count,
+            "returned_count": len(notes),
+            "returned_note_ids": [note.event.note_id for note in notes],
+            "returned_event_ids": [note.event.event_id for note in notes],
+            "proof_state": ProofState.PASS.value,
+        }
+        snapshot_hash = _checksum_for_payload(receipt_body)
+        return RetrievalReceipt(
+            receipt_id=stable_identifier("note-retrieval", {"snapshot_hash": snapshot_hash}),
+            query=query,
+            query_terms=query_terms,
+            guard_scope=guard.scope.value if guard.scope is not None else "",
+            allowed_trust_zones=tuple(zone.value for zone in guard.allowed_trust_zones),
+            allowed_proof_states=tuple(state.value for state in guard.allowed_proof_states),
+            include_hypotheses=guard.include_hypotheses,
+            assessed_at=assessed_at,
+            event_count=event_count,
+            materialized_note_count=materialized_note_count,
+            returned_count=len(notes),
+            returned_note_ids=tuple(note.event.note_id for note in notes),
+            returned_event_ids=tuple(note.event.event_id for note in notes),
+            snapshot_hash=snapshot_hash,
+            proof_state=ProofState.PASS,
+        )
 
     def _capture_note_locked(self, draft: NoteMemoryDraft) -> NoteMemoryEvent:
         event = self._draft_to_event(draft)
