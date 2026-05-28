@@ -74,6 +74,10 @@ GET  /api/v1/swarm/runs/{run_id}
 GET  /api/v1/swarm/runs
 ```
 
+Operator posture is visible through `GET /api/v1/health/extensions`. The read
+model reports whether governed swarm and note memory are registered, enabled,
+mounted, and path-configured without exposing raw filesystem paths.
+
 Use [`examples/governed_swarm_control_plane.env.example`](examples/governed_swarm_control_plane.env.example)
 for the deployment template.
 

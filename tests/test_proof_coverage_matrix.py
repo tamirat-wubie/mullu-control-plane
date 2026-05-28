@@ -433,6 +433,7 @@ def test_representative_routes_are_not_unclassified() -> None:
     assert classified_routes["/api/v1/traces/summary"]["surface_id"] == "trace_observability_read_models"
     assert classified_routes["/api/v1/health/deep"]["surface_id"] == "operational_health_read_models"
     assert classified_routes["/api/v1/health/score"]["surface_id"] == "operational_health_read_models"
+    assert classified_routes["/api/v1/health/extensions"]["surface_id"] == "operational_health_read_models"
     assert classified_routes["/api/v1/health/v3"]["surface_id"] == "operational_health_read_models"
     assert classified_routes["/api/v1/readiness"]["surface_id"] == "operational_health_read_models"
     assert classified_routes["/api/v1/deploy/readiness"]["surface_id"] == "operational_health_read_models"
@@ -2568,6 +2569,7 @@ def test_operational_health_surface_exposes_bounded_read_models() -> None:
     assert health_surface["action_proof"] == "read_model"
     assert "/api/v1/health/deep" in health_surface["representative_paths"]
     assert "/api/v1/health/score" in health_surface["representative_paths"]
+    assert "/api/v1/health/extensions" in health_surface["representative_paths"]
     assert "/api/v1/health/v2" in health_surface["representative_paths"]
     assert "/api/v1/health/v3" in health_surface["representative_paths"]
     assert "/api/v1/readiness" in health_surface["representative_paths"]
@@ -2590,6 +2592,7 @@ def test_operational_health_surface_exposes_bounded_read_models() -> None:
     assert "mcoi/tests/test_phase232.py" in health_surface["evidence_files"]
     assert "deep_health_components_bounded" in witnesses
     assert "health_score_range_bounded" in witnesses
+    assert "extension_health_read_model_bounded" in witnesses
     assert "health_v2_degraded_state_supported" in witnesses
     assert "health_v2_exception_sanitized" in witnesses
     assert "health_v3_recovery_tracking" in witnesses
@@ -2599,6 +2602,7 @@ def test_operational_health_surface_exposes_bounded_read_models() -> None:
     assert "system_snapshot_read_model_bounded" in witnesses
     assert route_records["/api/v1/health/deep"]["coverage_state"] == "witnessed"
     assert route_records["/api/v1/health/deep"]["surface_id"] == "operational_health_read_models"
+    assert route_records["/api/v1/health/extensions"]["surface_id"] == "operational_health_read_models"
     assert route_records["/api/v1/health/v3"]["coverage_state"] == "witnessed"
     assert route_records["/api/v1/health/v3"]["surface_id"] == "operational_health_read_models"
     assert route_records["/api/v1/readiness"]["surface_id"] == "operational_health_read_models"

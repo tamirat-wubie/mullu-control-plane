@@ -1972,6 +1972,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
             [
                 "/api/v1/health/deep",
                 "/api/v1/health/score",
+                "/api/v1/health/extensions",
                 "/api/v1/health/v2",
                 "/api/v1/health/v3",
                 "/api/v1/dashboard",
@@ -2024,11 +2025,12 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "mcoi/tests/test_server_phase205.py",
                 "mcoi/tests/test_server_phase210.py",
             ],
-            "Operational health routes expose bounded read models for deep component diagnostics, weighted health score, degraded-state checks, and v3 recovery tracking without mutation authority.",
+            "Operational health routes expose bounded read models for deep component diagnostics, weighted health score, optional extension posture, degraded-state checks, and v3 recovery tracking without mutation authority.",
             [
                 "deep_health_components_bounded",
                 "health_score_range_bounded",
                 "health_score_components_weighted",
+                "extension_health_read_model_bounded",
                 "health_v2_degraded_state_supported",
                 "health_v2_exception_sanitized",
                 "health_v3_weighted_aggregation",

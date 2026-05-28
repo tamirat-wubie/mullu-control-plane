@@ -46,6 +46,9 @@ def test_deployment_docs_reference_governed_swarm_feature_flag_boundary() -> Non
         assert "absolute" in lowered
         assert ".jsonl" in lowered
         assert "writable" in lowered
+        assert "/api/v1/health/extensions" in text
+        assert "raw" in lowered
+        assert "filesystem paths" in lowered
     for text in (deployment, production):
         assert "control-plane-bundled-runtime" in text
         assert "tamirat-wubie/mullu-control-plane" in text
