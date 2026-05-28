@@ -76,7 +76,7 @@ def build_invoice_goal(request: InvoiceSwarmRequest) -> SwarmGoal:
     return SwarmGoal(
         goal_id=request.goal_id,
         tenant_id=request.tenant_id,
-        description=f"Governed invoice handling for {request.invoice_ref}",
+        description="Governed invoice handling",
         max_cost_usd=Decimal("1.00"),
         task_specs=(
             _task_spec("task_document_extract", "document_analysis", "invoice.read", request.invoice_ref, "invoice_fields"),
