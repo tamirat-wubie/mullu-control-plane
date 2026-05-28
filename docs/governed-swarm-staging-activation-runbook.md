@@ -1,20 +1,20 @@
 # Governed Swarm Staging Activation Runbook
 
 Purpose: activate and prove the governed swarm invoice route in a staging control-plane environment.
-Governance scope: feature flag, runtime release pin, audit persistence, invoice-route smoke test, rollback.
-Dependencies: `mullu-control-plane`, `tamirat-wubie/mullu-governed-swarm`, persistent staging storage, deployment operator access.
-Invariants: disabled by default; no audit store path means no swarm mount; no runtime path containing `mcoi_runtime/swarm` means no external runtime bridge; no activation claim without a staging activation witness.
+Governance scope: feature flag, bundled runtime witness, audit persistence, invoice-route smoke test, rollback.
+Dependencies: `mullu-control-plane`, persistent staging storage, deployment operator access.
+Invariants: disabled by default; no audit store path means no swarm mount; no runtime path containing `mcoi_runtime/swarm` means no optional runtime bridge; no activation claim without a staging activation witness.
 
 ## Boundary
 
 This runbook activates the governed swarm surface only for staging. It does not declare public production availability.
 
-Runtime release:
+Runtime witness:
 
 ```text
-Repository: tamirat-wubie/mullu-governed-swarm
-Tag: v0.1.0-governed-swarm
-Runtime path after checkout: /opt/mullu/mullu-governed-swarm/mcoi
+Repository: tamirat-wubie/mullu-control-plane
+Runtime label: control-plane-bundled-runtime
+Runtime path after checkout: /opt/mullu/mullu-control-plane/mcoi
 ```
 
 Control-plane environment:
@@ -23,18 +23,18 @@ Control-plane environment:
 MULLU_ENV=pilot
 MULLU_GOVERNED_SWARM_ENABLED=true
 MULLU_GOVERNED_SWARM_AUDIT_STORE_PATH=/var/lib/mullu/governed-swarm/swarm-runs.jsonl
-MULLU_GOVERNED_SWARM_RUNTIME_PATH=/opt/mullu/mullu-governed-swarm/mcoi
+MULLU_GOVERNED_SWARM_RUNTIME_PATH=/opt/mullu/mullu-control-plane/mcoi
 ```
 
-## Install Runtime
+## Verify Runtime
 
 ```bash
 mkdir -p /opt/mullu
 cd /opt/mullu
-git clone https://github.com/tamirat-wubie/mullu-governed-swarm.git
-cd mullu-governed-swarm
-git checkout v0.1.0-governed-swarm
-test -d /opt/mullu/mullu-governed-swarm/mcoi/mcoi_runtime/swarm
+git clone https://github.com/tamirat-wubie/mullu-control-plane.git
+cd mullu-control-plane
+git checkout <deployed-control-plane-commit>
+test -d /opt/mullu/mullu-control-plane/mcoi/mcoi_runtime/swarm
 ```
 
 ## Configure Control Plane
@@ -43,7 +43,7 @@ test -d /opt/mullu/mullu-governed-swarm/mcoi/mcoi_runtime/swarm
 export MULLU_ENV=pilot
 export MULLU_GOVERNED_SWARM_ENABLED=true
 export MULLU_GOVERNED_SWARM_AUDIT_STORE_PATH=/var/lib/mullu/governed-swarm/swarm-runs.jsonl
-export MULLU_GOVERNED_SWARM_RUNTIME_PATH=/opt/mullu/mullu-governed-swarm/mcoi
+export MULLU_GOVERNED_SWARM_RUNTIME_PATH=/opt/mullu/mullu-control-plane/mcoi
 ```
 
 Create the audit directory before restart:
@@ -118,7 +118,7 @@ Collect a live staging witness:
 python scripts/collect_governed_swarm_staging_activation_witness.py \
   --staging-url "$MULLU_STAGING_URL" \
   --control-plane-commit "<deployed-control-plane-commit>" \
-  --runtime-path "/opt/mullu/mullu-governed-swarm/mcoi" \
+  --runtime-path "/opt/mullu/mullu-control-plane/mcoi" \
   --audit-store-path "/var/lib/mullu/governed-swarm/swarm-runs.jsonl" \
   --output ".change_assurance/governed_swarm_staging_activation_witness.json"
 ```
@@ -137,7 +137,7 @@ Before dispatching the workflow, verify the selected runner has the required loc
 python scripts/preflight_governed_swarm_staging_runner.py \
   --staging-url "$MULLU_STAGING_URL" \
   --control-plane-commit "<deployed-control-plane-commit>" \
-  --runtime-path "/opt/mullu/mullu-governed-swarm/mcoi" \
+  --runtime-path "/opt/mullu/mullu-control-plane/mcoi" \
   --audit-store-path "/var/lib/mullu/governed-swarm/swarm-runs.jsonl" \
   --output ".change_assurance/governed_swarm_staging_runner_preflight.json"
 curl -sS "$MULLU_STAGING_URL/api/v1/swarm/runs" >/tmp/governed-swarm-route-preflight.json
@@ -228,6 +228,6 @@ Do not delete `MULLU_GOVERNED_SWARM_AUDIT_STORE_PATH` during rollback. The audit
 
 STATUS:
   Completeness: 100%
-  Invariants verified: [release pin named, feature flags named, smoke route named, audit receipt required, runner preflight bound, staging evidence bundle bound, pilot promotion readiness bound, rollback preserves audit evidence]
+  Invariants verified: [bundled runtime witness named, feature flags named, smoke route named, audit receipt required, runner preflight bound, staging evidence bundle bound, pilot promotion readiness bound, rollback preserves audit evidence]
   Open issues: [real staging endpoint must provide the collected witness]
   Next action: execute this runbook in staging and validate the collected witness.

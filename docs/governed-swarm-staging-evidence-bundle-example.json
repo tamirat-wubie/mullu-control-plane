@@ -21,7 +21,7 @@
       "passed": true
     },
     {
-      "detail": "/opt/mullu/mullu-governed-swarm/mcoi == /opt/mullu/mullu-governed-swarm/mcoi",
+      "detail": "/opt/mullu/mullu-control-plane/mcoi == /opt/mullu/mullu-control-plane/mcoi",
       "name": "runtime_path_match",
       "passed": true
     },
@@ -56,7 +56,7 @@
   "outcome": "SolvedVerified",
   "runner_preflight_ref": "docs/governed-swarm-staging-runner-preflight-example.json",
   "runner_ready": true,
-  "runtime_path": "/opt/mullu/mullu-governed-swarm/mcoi",
+  "runtime_path": "/opt/mullu/mullu-control-plane/mcoi",
   "staging_url": "https://staging-api.example.com",
   "validated_at": "2026-05-17T08:20:00Z"
 }

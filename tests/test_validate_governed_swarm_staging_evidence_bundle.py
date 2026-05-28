@@ -57,6 +57,7 @@ def test_staging_evidence_bundle_rejects_commit_mismatch() -> None:
     runner = _load(RUNNER_PREFLIGHT_PATH)
     witness = _load(ACTIVATION_WITNESS_PATH)
     witness["control_plane_commit"] = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    witness["runtime_commit"] = witness["control_plane_commit"]
 
     bundle = build_staging_evidence_bundle_payload(
         runner,

@@ -13,7 +13,7 @@
       "passed": true
     },
     {
-      "detail": "/opt/mullu/mullu-governed-swarm/mcoi/mcoi_runtime/swarm",
+      "detail": "/opt/mullu/mullu-control-plane/mcoi/mcoi_runtime/swarm",
       "name": "runtime_bridge",
       "passed": true
     },
@@ -32,6 +32,6 @@
   "outcome": "SolvedVerified",
   "ready": true,
   "receipt_id": "governed-swarm-runner-preflight-0123456789abcdef",
-  "runtime_path": "/opt/mullu/mullu-governed-swarm/mcoi",
+  "runtime_path": "/opt/mullu/mullu-control-plane/mcoi",
   "staging_url": "https://staging-api.example.com"
 }

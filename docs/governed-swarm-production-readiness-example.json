@@ -73,6 +73,6 @@
   "readiness_id": "governed-swarm-production-0123456789abcdef",
   "readiness_level": "production-ready",
   "ready": true,
-  "runtime_path": "/opt/mullu/mullu-governed-swarm/mcoi",
+  "runtime_path": "/opt/mullu/mullu-control-plane/mcoi",
   "target_environment": "production"
 }

@@ -45,15 +45,15 @@
     },
     "runtime_repo": {
       "type": "string",
-      "const": "tamirat-wubie/mullu-governed-swarm"
+      "const": "tamirat-wubie/mullu-control-plane"
     },
     "runtime_release_tag": {
       "type": "string",
-      "const": "v0.1.0-governed-swarm"
+      "const": "control-plane-bundled-runtime"
     },
     "runtime_commit": {
       "type": "string",
-      "const": "5882c5f24ca35fd5a133357b55b5411ebdc99dfb"
+      "pattern": "^[0-9a-f]{40}$"
     },
     "runtime_path": {
       "type": "string",

@@ -39,7 +39,7 @@
   "readiness_id": "governed-swarm-promotion-895a5da68b298905",
   "readiness_level": "pilot-ready",
   "ready": true,
-  "runtime_path": "/opt/mullu/mullu-governed-swarm/mcoi",
+  "runtime_path": "/opt/mullu/mullu-control-plane/mcoi",
   "staging_evidence_bundle_ref": "docs/governed-swarm-staging-evidence-bundle-example.json",
   "staging_url": "https://staging-api.example.com",
   "target_environment": "pilot"

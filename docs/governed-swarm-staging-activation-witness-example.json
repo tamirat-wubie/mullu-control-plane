@@ -4,14 +4,14 @@
   "environment": "staging",
   "control_plane_repo": "tamirat-wubie/mullu-control-plane",
   "control_plane_commit": "dffe0f68289147e09a84ab6cbbeb2b5230ca2bd8",
-  "runtime_repo": "tamirat-wubie/mullu-governed-swarm",
-  "runtime_release_tag": "v0.1.0-governed-swarm",
-  "runtime_commit": "5882c5f24ca35fd5a133357b55b5411ebdc99dfb",
-  "runtime_path": "/opt/mullu/mullu-governed-swarm/mcoi",
+  "runtime_repo": "tamirat-wubie/mullu-control-plane",
+  "runtime_release_tag": "control-plane-bundled-runtime",
+  "runtime_commit": "dffe0f68289147e09a84ab6cbbeb2b5230ca2bd8",
+  "runtime_path": "/opt/mullu/mullu-control-plane/mcoi",
   "feature_flags": {
     "MULLU_GOVERNED_SWARM_ENABLED": "true",
     "MULLU_GOVERNED_SWARM_AUDIT_STORE_PATH": "/var/lib/mullu/governed-swarm/swarm-runs.jsonl",
-    "MULLU_GOVERNED_SWARM_RUNTIME_PATH": "/opt/mullu/mullu-governed-swarm/mcoi"
+    "MULLU_GOVERNED_SWARM_RUNTIME_PATH": "/opt/mullu/mullu-control-plane/mcoi"
   },
   "route_probes": [
     {

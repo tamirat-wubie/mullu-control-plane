@@ -66,12 +66,12 @@
 | `MULLU_CAPABILITY_WORKER_TIMEOUT_SECONDS` | `10.0` | HTTP timeout for restricted capability worker calls |
 | `MULLU_GOVERNED_SWARM_ENABLED` | `false` | Optional governed swarm route mount. The swarm surface is disabled by default and mounts only when this flag is truthy. |
 | `MULLU_GOVERNED_SWARM_AUDIT_STORE_PATH` | unset | Required when governed swarm is enabled. Use a persistent JSONL audit path for `/api/v1/swarm/*` run receipts. |
-| `MULLU_GOVERNED_SWARM_RUNTIME_PATH` | unset | Optional external runtime bridge. Set to the governed swarm runtime root containing `mcoi_runtime/swarm`, for example the `mcoi` directory from `mullu-governed-swarm`. |
+| `MULLU_GOVERNED_SWARM_RUNTIME_PATH` | unset | Optional runtime bridge for non-standard checkouts. Set to this repository's `mcoi` directory only when the installed package cannot import bundled `mcoi_runtime/swarm`. |
 
 ### Governed Swarm Route Mount
 
 The governed swarm route surface is disabled by default. When enabled, the
-control plane mounts the external governed swarm runtime behind the existing
+control plane mounts the bundled governed swarm runtime behind the existing
 FastAPI governance boundary:
 
 ```text
@@ -85,14 +85,14 @@ Minimum local activation:
 ```powershell
 $env:MULLU_GOVERNED_SWARM_ENABLED="true"
 $env:MULLU_GOVERNED_SWARM_AUDIT_STORE_PATH="C:\tmp\mullu-swarm-runs.jsonl"
-$env:MULLU_GOVERNED_SWARM_RUNTIME_PATH="C:\tmp\governed-swarm-parent-repo\mcoi"
+$env:MULLU_GOVERNED_SWARM_RUNTIME_PATH="C:\tmp\mullu-control-plane\mcoi"
 ```
 
-Runtime release pin:
+Runtime witness:
 
 ```text
-Repository: tamirat-wubie/mullu-governed-swarm
-Tag: v0.1.0-governed-swarm
+Repository: tamirat-wubie/mullu-control-plane
+Runtime label: control-plane-bundled-runtime
 Runtime path after checkout: <checkout>\mcoi
 ```
 

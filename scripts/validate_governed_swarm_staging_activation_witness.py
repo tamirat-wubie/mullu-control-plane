@@ -1,9 +1,9 @@
 """Validate governed swarm staging activation evidence.
 
 Purpose: fail closed when a governed swarm staging activation witness is incomplete.
-Governance scope: release pin, feature flag, route smoke, audit persistence, rollback.
+Governance scope: bundled runtime witness, feature flag, route smoke, audit persistence, rollback.
 Dependencies: schemas/governed_swarm_staging_activation_witness.schema.json and jsonschema.
-Invariants: staging activation cannot be claimed without runtime pin, enabled flag, audit receipt, and rollback evidence.
+Invariants: staging activation cannot be claimed without bundled runtime witness, enabled flag, audit receipt, and rollback evidence.
 """
 
 from __future__ import annotations
@@ -37,6 +37,8 @@ def validate_witness_payload(payload: dict[str, Any]) -> list[str]:
         return errors
 
     feature_flags = payload["feature_flags"]
+    if payload["runtime_commit"] != payload["control_plane_commit"]:
+        errors.append("$.runtime_commit must equal $.control_plane_commit for bundled control-plane runtime")
     if feature_flags["MULLU_GOVERNED_SWARM_RUNTIME_PATH"] != payload["runtime_path"]:
         errors.append("$.feature_flags.MULLU_GOVERNED_SWARM_RUNTIME_PATH must equal $.runtime_path")
     if feature_flags["MULLU_GOVERNED_SWARM_AUDIT_STORE_PATH"] != payload["audit_store"]["path"]:

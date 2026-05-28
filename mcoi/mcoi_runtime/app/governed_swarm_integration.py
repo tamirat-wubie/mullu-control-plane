@@ -2,12 +2,12 @@
 
 Purpose: mount the governed invoice swarm router only when explicitly enabled
 by environment configuration.
-Governance scope: feature flag boundary, audit-store requirement, and fail-
-closed optional dependency loading.
-Dependencies: app router mounting and optional mcoi_runtime.swarm package path.
+Governance scope: feature flag boundary, audit-store requirement, bundled
+runtime loading, and fail-closed optional dependency loading.
+Dependencies: app router mounting and bundled mcoi_runtime.swarm package path.
 Invariants: disabled means no route mount; enabled requires an audit store path
-and a loadable governed swarm runtime/router factory. External runtime package
-paths must be explicit and must contain mcoi_runtime/swarm.
+and a loadable governed swarm runtime/router factory. Optional external runtime
+package paths must be explicit and must contain mcoi_runtime/swarm.
 """
 
 from __future__ import annotations

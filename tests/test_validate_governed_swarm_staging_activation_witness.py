@@ -1,9 +1,9 @@
 """Tests for governed swarm staging activation witness validation.
 
-Purpose: keep staging activation evidence proof-carrying and release-pinned.
-Governance scope: release pin, route probes, audit persistence, rollback proof.
+Purpose: keep staging activation evidence proof-carrying and bundled-runtime-bound.
+Governance scope: bundled runtime witness, route probes, audit persistence, rollback proof.
 Dependencies: governed swarm staging witness schema, example witness, and validator script.
-Invariants: malformed release tags, missing routes, and missing audit closure fail closed.
+Invariants: malformed runtime labels, missing routes, and missing audit closure fail closed.
 """
 
 from __future__ import annotations
@@ -38,7 +38,18 @@ def test_governed_swarm_staging_witness_rejects_wrong_runtime_tag() -> None:
 
     assert len(errors) == 1
     assert "$.runtime_release_tag" in errors[0]
-    assert "v0.1.0-governed-swarm" in errors[0]
+    assert "control-plane-bundled-runtime" in errors[0]
+
+
+def test_governed_swarm_staging_witness_rejects_runtime_commit_mismatch() -> None:
+    payload = _example_payload()
+    payload["runtime_commit"] = "0" * 40
+
+    errors = validate_witness_payload(payload)
+
+    assert len(errors) == 1
+    assert "$.runtime_commit" in errors[0]
+    assert "$.control_plane_commit" in errors[0]
 
 
 def test_governed_swarm_staging_witness_rejects_missing_route_probe() -> None:

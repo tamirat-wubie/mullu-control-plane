@@ -65,7 +65,7 @@ def test_runner_preflight_rejects_not_ready_solved() -> None:
 
 def test_runner_preflight_rejects_runtime_bridge_detail_mismatch() -> None:
     payload = _example_payload()
-    payload["checks"][2]["detail"] = "/opt/mullu/mullu-governed-swarm/mcoi"
+    payload["checks"][2]["detail"] = "/opt/mullu/mullu-control-plane/mcoi"
 
     errors = validate_runner_preflight_payload(payload)
 
