@@ -80,6 +80,61 @@ def test_runtime_rejected_delta_expiry_and_rebuild_emit_receipts(tmp_path) -> No
     assert rebuilt["payload"]["report"]["valid_events"] == 3
 
 
+def test_runtime_dashboard_snapshot_reports_operator_memory_state(tmp_path) -> None:
+    runtime = NoteMemoryRuntime.from_path(tmp_path / "notes")
+    captured = runtime.capture_note(_working_note(content_summary="dashboard parser note")).to_dict()
+    source_note_id = captured["payload"]["event"]["note_id"]
+    runtime.record_rejected_delta(
+        {
+            "summary": "Rejected unsafe note promotion",
+            "source_ref": "test:dashboard-rejected",
+            "evidence_refs": ["blocked"],
+        }
+    )
+    runtime.queue_promotion({"note_id": source_note_id})
+
+    snapshot = runtime.dashboard_snapshot({"limit": 5, "now": "2026-05-28T00:00:00+00:00"}).to_dict()
+
+    assert snapshot["governed"] is True
+    assert snapshot["ok"] is True
+    assert snapshot["status"] == "dashboard_snapshot"
+    assert snapshot["payload"]["summary"]["event_count"] == 2
+    assert snapshot["payload"]["summary"]["active_note_count"] == 1
+    assert snapshot["payload"]["summary"]["rejected_delta_count"] == 1
+    assert snapshot["payload"]["summary"]["pending_promotion_count"] == 1
+    assert snapshot["payload"]["summary"]["index_proof_state"] == "Pass"
+    assert snapshot["payload"]["recent_notes"][0]["kind"] == "WorkingNote"
+    assert snapshot["payload"]["rejected_deltas"][0]["kind"] == "RejectedDelta"
+    assert snapshot["payload"]["pending_promotions"][0]["source_note_id"] == source_note_id
+
+
+def test_runtime_dashboard_snapshot_rejects_invalid_limits(tmp_path) -> None:
+    runtime = NoteMemoryRuntime.from_path(tmp_path / "notes")
+
+    snapshot = runtime.dashboard_snapshot({"limit": 0}).to_dict()
+
+    assert snapshot["governed"] is True
+    assert snapshot["ok"] is False
+    assert snapshot["status"] == "rejected"
+    assert "dashboard limit" in snapshot["error"]
+
+
+def test_runtime_dashboard_snapshot_rejects_corrupt_promotion_queue(tmp_path) -> None:
+    runtime = NoteMemoryRuntime.from_path(tmp_path / "notes")
+    captured = runtime.capture_note(_working_note(content_summary="dashboard parser note")).to_dict()
+    source_note_id = captured["payload"]["event"]["note_id"]
+    runtime.queue_promotion({"note_id": source_note_id})
+    promotion_path = tmp_path / "notes" / "promotions" / "pending.jsonl"
+    promotion_path.write_text('{"promotion_id": ""}\n', encoding="utf-8")
+
+    snapshot = runtime.dashboard_snapshot({"limit": 5}).to_dict()
+
+    assert snapshot["governed"] is True
+    assert snapshot["ok"] is False
+    assert snapshot["status"] == "rejected"
+    assert "promotion queue entry missing promotion_id" in snapshot["error"]
+
+
 def test_runtime_queue_and_promote_memory_anchor_with_receipt(tmp_path) -> None:
     runtime = NoteMemoryRuntime.from_path(tmp_path / "notes")
     captured = runtime.capture_note(_working_note(scope="repository")).to_dict()

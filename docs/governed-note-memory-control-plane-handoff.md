@@ -33,12 +33,19 @@ POST /api/v1/notes/promotions
 POST /api/v1/notes/anchors
 POST /api/v1/notes/index/rebuild
 GET  /api/v1/notes/events
+GET  /api/v1/console/note-memory
 ```
+
+The operator console route is read-only. It returns the same stable summary
+shape when note memory is disabled, unregistered, unmounted, or mounted without
+a configured store path. Rejected deltas, pending promotions, memory anchors,
+contradictions, and audit events are separated so rejected evidence is not
+counted as active note influence.
 
 ## Verification
 
 ```text
-python -m pytest mcoi/tests/test_note_memory_mesh.py mcoi/tests/test_note_memory_api.py mcoi/tests/test_note_memory_cli.py mcoi/tests/test_note_memory_fastapi_router.py
+python -m pytest mcoi/tests/test_note_memory_mesh.py mcoi/tests/test_note_memory_api.py mcoi/tests/test_note_memory_cli.py mcoi/tests/test_note_memory_fastapi_router.py mcoi/tests/test_operator_console.py
 python -m pytest tests/test_note_memory_control_plane_integration.py
 ```
 
