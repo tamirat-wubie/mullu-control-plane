@@ -23,6 +23,7 @@ are reformatted into this folder, here is where to find each task:
 | Run it as an operator (pilot) | [OPERATOR_GUIDE_v0.1.md](../../OPERATOR_GUIDE_v0.1.md) |
 | Turn on the governed swarm surface | [README → Governed Swarm Runtime](../../README.md) |
 | Activate staging safely | [governed-swarm-staging-activation-runbook.md](../governed-swarm-staging-activation-runbook.md) |
+| Add a new env-driven persistence subsystem (developer) | [add-an-env-driven-subsystem.md](add-an-env-driven-subsystem.md) |
 
 ## Adding a new how-to
 
