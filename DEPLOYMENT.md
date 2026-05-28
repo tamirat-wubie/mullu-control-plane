@@ -80,6 +80,16 @@ GET  /api/v1/swarm/runs/{run_id}
 GET  /api/v1/swarm/runs
 ```
 
+Operator posture:
+
+```text
+GET /api/v1/health/extensions
+```
+
+This health read model reports governed swarm and note-memory registration,
+enablement, mount state, and path-configuration booleans. It does not expose raw
+filesystem paths for audit-store or note-memory storage.
+
 Minimum local activation:
 
 ```powershell

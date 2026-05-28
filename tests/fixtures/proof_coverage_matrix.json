@@ -866,9 +866,9 @@
     "by_coverage_state": {
       "proven": 12,
       "unproven": 0,
-      "witnessed": 350
+      "witnessed": 351
     },
-    "route_count": 362,
+    "route_count": 363,
     "routes": [
       {
         "coverage_state": "witnessed",
@@ -1603,6 +1603,11 @@
       {
         "coverage_state": "witnessed",
         "route": "/api/v1/health/deep",
+        "surface_id": "operational_health_read_models"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/health/extensions",
         "surface_id": "operational_health_read_models"
       },
       {
@@ -4805,10 +4810,11 @@
         "mcoi/tests/test_server_phase205.py",
         "mcoi/tests/test_server_phase210.py"
       ],
-      "notes": "Operational health routes expose bounded read models for deep component diagnostics, weighted health score, degraded-state checks, and v3 recovery tracking without mutation authority.",
+      "notes": "Operational health routes expose bounded read models for deep component diagnostics, weighted health score, optional extension posture, degraded-state checks, and v3 recovery tracking without mutation authority.",
       "representative_paths": [
         "/api/v1/health/deep",
         "/api/v1/health/score",
+        "/api/v1/health/extensions",
         "/api/v1/health/v2",
         "/api/v1/health/v3",
         "/api/v1/dashboard",
@@ -4845,6 +4851,7 @@
         "deep_health_components_bounded",
         "health_score_range_bounded",
         "health_score_components_weighted",
+        "extension_health_read_model_bounded",
         "health_v2_degraded_state_supported",
         "health_v2_exception_sanitized",
         "health_v3_weighted_aggregation",
@@ -9061,8 +9068,8 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 1114,
-    "runtime_witness_count": 1114,
+    "exact_test_anchor_count": 1115,
+    "runtime_witness_count": 1115,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -11603,6 +11610,12 @@
           },
           {
             "anchors": [
+              "mcoi/tests/test_operational_health_read_models.py::test_extension_health_read_model_bounded"
+            ],
+            "witness": "extension_health_read_model_bounded"
+          },
+          {
+            "anchors": [
               "mcoi/tests/test_operational_health_read_models.py::test_health_v2_degraded_state_supported"
             ],
             "witness": "health_v2_degraded_state_supported"
@@ -11686,8 +11699,8 @@
             "witness": "system_snapshot_read_model_bounded"
           }
         ],
-        "exact_test_anchor_count": 17,
-        "runtime_witness_count": 17,
+        "exact_test_anchor_count": 18,
+        "runtime_witness_count": 18,
         "surface_id": "operational_health_read_models",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []

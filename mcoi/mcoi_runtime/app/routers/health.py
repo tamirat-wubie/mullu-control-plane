@@ -63,6 +63,75 @@ def health_score():
     }
 
 
+# ── Optional extension health ────────────────────────────────────────────
+
+
+def _extension_state(*, registered: bool, enabled: bool, mounted: bool) -> str:
+    """Return the bounded startup state for an optional route extension."""
+
+    if not registered:
+        return "unregistered"
+    if mounted:
+        return "mounted"
+    if enabled:
+        return "enabled_unmounted"
+    return "disabled"
+
+
+def _extension_bootstrap_read_model(
+    dependency_name: str,
+    *,
+    path_attribute: str,
+    path_configured_key: str,
+) -> dict[str, object]:
+    """Return an operator-safe optional extension bootstrap read model."""
+
+    try:
+        bootstrap = deps.get(dependency_name)
+    except RuntimeError:
+        return {
+            "registered": False,
+            "enabled": False,
+            "mounted": False,
+            "state": _extension_state(registered=False, enabled=False, mounted=False),
+            "reason": "dependency_not_registered",
+            path_configured_key: False,
+        }
+
+    enabled = bool(getattr(bootstrap, "enabled", False))
+    mounted = bool(getattr(bootstrap, "mounted", False))
+    configured_path = str(getattr(bootstrap, path_attribute, "") or "").strip()
+    return {
+        "registered": True,
+        "enabled": enabled,
+        "mounted": mounted,
+        "state": _extension_state(registered=True, enabled=enabled, mounted=mounted),
+        "reason": str(getattr(bootstrap, "reason", "") or "unknown"),
+        path_configured_key: bool(configured_path),
+    }
+
+
+@router.get("/api/v1/health/extensions")
+def extension_health():
+    """Optional extension posture without exposing host filesystem paths."""
+
+    return {
+        "governed": True,
+        "extensions": {
+            "governed_swarm": _extension_bootstrap_read_model(
+                "governed_swarm_bootstrap",
+                path_attribute="audit_store_path",
+                path_configured_key="audit_store_configured",
+            ),
+            "note_memory": _extension_bootstrap_read_model(
+                "note_memory_bootstrap",
+                path_attribute="store_path",
+                path_configured_key="store_configured",
+            ),
+        },
+    }
+
+
 # ── Versioned health checks ──────────────────────────────────────────────
 
 

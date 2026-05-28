@@ -121,13 +121,61 @@ def test_health_v3_recovery_tracking() -> None:
 
 
 def test_health_routes_return_read_models(client: TestClient) -> None:
-    paths = ("/api/v1/health/deep", "/api/v1/health/score", "/api/v1/health/v2", "/api/v1/health/v3")
+    paths = (
+        "/api/v1/health/deep",
+        "/api/v1/health/score",
+        "/api/v1/health/extensions",
+        "/api/v1/health/v2",
+        "/api/v1/health/v3",
+    )
 
     responses = [client.get(path) for path in paths]
 
-    assert [response.status_code for response in responses] == [200, 200, 200, 200]
+    assert [response.status_code for response in responses] == [200, 200, 200, 200, 200]
     assert all(isinstance(response.json(), dict) for response in responses)
     assert all("action_proof" not in response.json() for response in responses)
+
+
+def test_extension_health_read_model_bounded(client: TestClient) -> None:
+    response = client.get("/api/v1/health/extensions")
+    payload = response.json()
+    extensions = payload["extensions"]
+
+    assert response.status_code == 200
+    assert payload["governed"] is True
+    assert set(extensions) == {"governed_swarm", "note_memory"}
+    assert set(extensions["governed_swarm"]) == {
+        "registered",
+        "enabled",
+        "mounted",
+        "state",
+        "reason",
+        "audit_store_configured",
+    }
+    assert set(extensions["note_memory"]) == {
+        "registered",
+        "enabled",
+        "mounted",
+        "state",
+        "reason",
+        "store_configured",
+    }
+    assert extensions["governed_swarm"]["state"] in {
+        "unregistered",
+        "disabled",
+        "enabled_unmounted",
+        "mounted",
+    }
+    assert extensions["note_memory"]["state"] in {
+        "unregistered",
+        "disabled",
+        "enabled_unmounted",
+        "mounted",
+    }
+    assert isinstance(extensions["governed_swarm"]["audit_store_configured"], bool)
+    assert isinstance(extensions["note_memory"]["store_configured"], bool)
+    assert "audit_store_path" not in extensions["governed_swarm"]
+    assert "store_path" not in extensions["note_memory"]
 
 
 def test_ops_dashboard_read_model_bounded(client: TestClient) -> None:
