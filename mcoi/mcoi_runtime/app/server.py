@@ -43,6 +43,11 @@ from mcoi_runtime.app.finance_approval_integration import (
 from mcoi_runtime.app.artifact_lineage_integration import (
     bootstrap_artifact_lineage,
 )
+from mcoi_runtime.app.temporal_scheduler_integration import (
+    bootstrap_temporal_scheduler,
+    maybe_start_temporal_worker,
+    select_temporal_scheduler_store,
+)
 from mcoi_runtime.app.server_lifecycle import bootstrap_server_lifecycle
 from mcoi_runtime.app.server_registry import bootstrap_dependency_registry
 from mcoi_runtime.app.server_runtime_stack import bootstrap_server_runtime_stack
@@ -64,14 +69,6 @@ from mcoi_runtime.app.software_receipt_review_queue import SoftwareReceiptReview
 from mcoi_runtime.core.review import ReviewEngine
 from mcoi_runtime.core.structured_logging import LogLevel
 from mcoi_runtime.core.event_spine import EventSpineEngine
-from mcoi_runtime.core.temporal_runtime import TemporalRuntimeEngine
-from mcoi_runtime.core.temporal_scheduler_background import TemporalSchedulerBackgroundLoop
-from mcoi_runtime.core.temporal_scheduler import TemporalSchedulerEngine
-from mcoi_runtime.core.temporal_scheduler_worker import TemporalSchedulerWorker
-from mcoi_runtime.persistence.temporal_scheduler_store import (
-    FileTemporalSchedulerStore,
-    TemporalSchedulerStore,
-)
 
 def _init_field_encryption_from_env() -> tuple[Any | None, dict[str, Any]]:
     """Build optional field encryption and expose explicit startup posture."""
@@ -244,34 +241,27 @@ register_operational_math_observability(
     receipt_store=operational_math_receipt_store,
 )
 
-_temporal_scheduler_store_path = os.environ.get("MULLU_TEMPORAL_SCHEDULER_STORE_PATH")
-temporal_scheduler_store = (
-    FileTemporalSchedulerStore(Path(_temporal_scheduler_store_path))
-    if _temporal_scheduler_store_path
-    else TemporalSchedulerStore()
+_temporal_store_bootstrap = select_temporal_scheduler_store(os.environ)
+temporal_scheduler_store = _temporal_store_bootstrap.store
+_temporal_bootstrap = bootstrap_temporal_scheduler(temporal_scheduler_store, clock=_clock)
+temporal_event_spine = _temporal_bootstrap.event_spine
+temporal_runtime = _temporal_bootstrap.runtime
+temporal_scheduler = _temporal_bootstrap.scheduler
+temporal_action_handlers = _temporal_bootstrap.action_handlers
+_temporal_worker_bootstrap = maybe_start_temporal_worker(
+    os.environ,
+    scheduler=temporal_scheduler,
+    store=temporal_scheduler_store,
+    action_handlers=temporal_action_handlers,
+    proof_bridge=proof_bridge,
 )
-temporal_event_spine = EventSpineEngine()
-temporal_runtime = TemporalRuntimeEngine(temporal_event_spine, clock=_clock)
-temporal_scheduler = TemporalSchedulerEngine(temporal_runtime, clock=_clock)
-temporal_scheduler.restore(temporal_scheduler_store.list_actions())
-temporal_action_handlers: dict[str, Any] = {}
-temporal_scheduler_background = None
-if _env_flag(os.environ.get("MULLU_TEMPORAL_WORKER_ENABLED")):
-    temporal_worker = TemporalSchedulerWorker(
-        scheduler=temporal_scheduler,
-        store=temporal_scheduler_store,
-        worker_id=os.environ.get("MULLU_TEMPORAL_WORKER_ID", "temporal-worker"),
-        handlers=temporal_action_handlers,
-        proof_bridge=proof_bridge,
-        lease_seconds=int(os.environ.get("MULLU_TEMPORAL_WORKER_LEASE_SECONDS", "60")),
+temporal_scheduler_background = _temporal_worker_bootstrap.background
+if temporal_scheduler_background is not None:
+    shutdown_mgr.register(
+        "stop_temporal_scheduler",
+        temporal_scheduler_background.stop,
+        priority=95,
     )
-    temporal_scheduler_background = TemporalSchedulerBackgroundLoop(
-        worker=temporal_worker,
-        interval_seconds=float(os.environ.get("MULLU_TEMPORAL_WORKER_INTERVAL_SECONDS", "30")),
-        limit=int(os.environ.get("MULLU_TEMPORAL_WORKER_LIMIT", "10")),
-    )
-    temporal_scheduler_background.start()
-    shutdown_mgr.register("stop_temporal_scheduler", temporal_scheduler_background.stop, priority=95)
 deps.set("temporal_event_spine", temporal_event_spine)
 deps.set("temporal_runtime", temporal_runtime)
 deps.set("temporal_scheduler", temporal_scheduler)
