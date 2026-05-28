@@ -134,6 +134,56 @@ def test_retrieval_guard_blocks_expired_contradicted_and_disallowed_notes(tmp_pa
     assert retrieved[0].score > 0
 
 
+def test_retrieval_receipt_is_deterministic_and_read_only(tmp_path) -> None:
+    clock = MutableClock("2026-05-01T00:00:00+00:00")
+    mesh = _mesh(tmp_path, clock)
+    allowed = mesh.capture_note(
+        NoteMemoryDraft(
+            kind=NoteKind.WORKING_NOTE,
+            scope=NoteScope.TASK,
+            content_summary="retrieval receipt parser note should guide execution",
+            source_ref="test:retrieval-receipt",
+            proof_state=ProofState.PASS,
+            trust_zone=TrustZone.WORKSPACE,
+            expires_at="2026-05-03T00:00:00+00:00",
+            evidence_refs=("test_retrieval_receipt_is_deterministic_and_read_only",),
+        )
+    )
+
+    result = mesh.retrieve_notes_with_receipt(
+        "retrieval receipt",
+        RetrievalGuard(scope=NoteScope.TASK, now="2026-05-01T00:00:00+00:00"),
+    )
+    repeated = mesh.retrieve_notes_with_receipt(
+        "retrieval receipt",
+        RetrievalGuard(scope=NoteScope.TASK, now="2026-05-01T00:00:00+00:00"),
+    )
+
+    assert mesh.event_count == 1
+    assert result.notes[0].event.note_id == allowed.note_id
+    assert result.receipt.receipt_id.startswith("note-retrieval-")
+    assert result.receipt.snapshot_hash == repeated.receipt.snapshot_hash
+    assert result.receipt.receipt_id == repeated.receipt.receipt_id
+    assert result.receipt.query_terms == ("retrieval", "receipt")
+    assert result.receipt.guard_scope == "task"
+    assert result.receipt.event_count == 1
+    assert result.receipt.materialized_note_count == 1
+    assert result.receipt.returned_count == 1
+    assert result.receipt.returned_note_ids == (allowed.note_id,)
+    assert result.receipt.returned_event_ids == (allowed.event_id,)
+    assert result.receipt.proof_state == ProofState.PASS
+
+
+def test_retrieval_receipt_bounds_query_text(tmp_path) -> None:
+    clock = MutableClock("2026-05-01T00:00:00+00:00")
+    mesh = _mesh(tmp_path, clock)
+
+    with pytest.raises(RuntimeCoreInvariantError, match="query exceeds"):
+        mesh.retrieve_notes_with_receipt("x" * 257, RetrievalGuard(scope=NoteScope.TASK))
+
+    assert mesh.event_count == 0
+
+
 def test_event_id_relation_refs_block_retrieval_and_promotion_queue(tmp_path) -> None:
     clock = MutableClock("2026-05-01T00:00:00+00:00")
     mesh = _mesh(tmp_path, clock)

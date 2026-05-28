@@ -7,8 +7,9 @@ Governance scope: command-line boundary only; redaction, ProofState gates,
 append-only persistence, retrieval guards, and Phi_gov receipt checks remain
 owned by note_memory_mesh.py.
 Dependencies: argparse, dataclasses, json, pathlib, and note memory mesh.
-Invariants: commands do not bypass note governance and rejected operations
-return nonzero status with explicit causal context.
+Invariants: commands do not bypass note governance, retrievals emit read-only
+receipts, and rejected operations return nonzero status with explicit causal
+context.
 """
 
 from __future__ import annotations
@@ -126,8 +127,16 @@ def main(argv: Sequence[str] | None = None) -> int:
         )
         envelope = _envelope(True, "rejected_delta_recorded", {"event": event.to_dict()})
     elif args.command == "retrieve":
-        notes = mesh.retrieve_notes(args.query, _retrieval_guard_from_args(args))
-        envelope = _envelope(True, "retrieved", {"count": len(notes), "notes": [_jsonable(note) for note in notes]})
+        result = mesh.retrieve_notes_with_receipt(args.query, _retrieval_guard_from_args(args))
+        envelope = _envelope(
+            True,
+            "retrieved",
+            {
+                "count": len(result.notes),
+                "notes": [_jsonable(note) for note in result.notes],
+                "receipt": _jsonable(result.receipt),
+            },
+        )
     elif args.command == "expire":
         report = mesh.expire_temporary_notes(args.now)
         envelope = _envelope(True, "expired", {"report": _jsonable(report)})

@@ -59,6 +59,9 @@ def test_cli_capture_retrieve_dashboard_and_list_events_redacts_before_write(tmp
     assert capture_envelope["ok"] is True
     assert retrieve_code == 0
     assert retrieve_envelope["payload"]["count"] == 1
+    assert retrieve_envelope["payload"]["receipt"]["receipt_id"].startswith("note-retrieval-")
+    assert len(retrieve_envelope["payload"]["receipt"]["snapshot_hash"]) == 64
+    assert retrieve_envelope["payload"]["receipt"]["returned_count"] == 1
     assert "sk-cli-secret" not in json.dumps(retrieve_envelope)
     assert dashboard_code == 0
     assert dashboard_envelope["status"] == "dashboard_snapshot"

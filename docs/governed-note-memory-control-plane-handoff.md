@@ -3,8 +3,8 @@
 Purpose: bind temporary execution notes and durable memory anchors to the
 canonical `mullu-control-plane` repository.
 Governance scope: note capture, episode capsules, deterministic claim
-contradiction evidence, retrieval guards, rejected-delta evidence, promotion
-receipts, and optional HTTP route mounting.
+contradiction evidence, retrieval guards, retrieval receipts, rejected-delta
+evidence, promotion receipts, and optional HTTP route mounting.
 Dependencies: `mcoi_runtime.core.note_memory_*` modules and
 `mcoi_runtime.app.note_memory_integration`.
 Invariants: temporary notes require expiry, episode capsules require evidence,
@@ -56,6 +56,12 @@ checked only against prior active notes with the same claim key. A conflicting
 value emits a governed `DecisionRecord` with action `contradict`; prose is not
 interpreted as a claim.
 
+Retrieval surfaces are read-only but return a deterministic `receipt` with
+`receipt_id`, `snapshot_hash`, query terms, guard fields, returned note IDs,
+returned event IDs, and event/materialized counts. The receipt lets downstream
+actions prove which notes influenced a decision without writing a retrieval
+event into the append-only store.
+
 Episode capsules write a structured sidecar under the configured note-memory
 store and append one `EpisodeCapsule` lineage event. Capsules with
 `ProofState.Pass` require verification references, and every capsule requires
@@ -106,6 +112,6 @@ python -m pytest tests/test_note_memory_control_plane_integration.py
 
 STATUS:
   Completeness: 100%
-  Invariants verified: feature flag boundary, store path requirement, append-only note events, explicit claim contradiction evidence, episode capsule evidence gate, promotion receipt gate, dashboard snapshot witness, dashboard contract projection, CLI dashboard projection, optional FastAPI dashboard projection, text renderer projection, escaped browser view projection, episode capsule counter projection
+  Invariants verified: feature flag boundary, store path requirement, append-only note events, explicit claim contradiction evidence, episode capsule evidence gate, retrieval receipt witness, promotion receipt gate, dashboard snapshot witness, dashboard contract projection, CLI dashboard projection, optional FastAPI dashboard projection, text renderer projection, escaped browser view projection, episode capsule counter projection
   Open issues: none
   Next action: keep the note-memory surface in mullu-control-plane and render DashboardSnapshot.note_memory in any future browser dashboard shell

@@ -64,6 +64,8 @@ def test_note_memory_fastapi_adapter_handlers_preserve_runtime_envelopes(tmp_pat
     assert captured["governed"] is True
     assert captured["ok"] is True
     assert retrieved["payload"]["count"] == 1
+    assert retrieved["payload"]["receipt"]["receipt_id"].startswith("note-retrieval-")
+    assert len(retrieved["payload"]["receipt"]["snapshot_hash"]) == 64
     assert listed["payload"]["count"] == 1
     assert listed["payload"]["events"][0]["note_id"] == captured["payload"]["event"]["note_id"]
 
