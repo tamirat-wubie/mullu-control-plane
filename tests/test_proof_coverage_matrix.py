@@ -552,7 +552,7 @@ def test_runtime_config_management_surface_is_witnessed() -> None:
     assert closure_actions["classify_runtime_config_management_routes"]["status"] == "closed"
 
 
-def test_orgos_case_governance_lifecycle_surface_is_witnessed() -> None:
+def test_orgos_case_governance_lifecycle_surface_is_proven() -> None:
     matrix = _load_fixture()
     surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
     route_records = {
@@ -566,7 +566,7 @@ def test_orgos_case_governance_lifecycle_surface_is_witnessed() -> None:
     surface = surfaces["orgos_case_governance_lifecycle"]
     witnesses = set(surface["runtime_witnesses"])
 
-    assert surface["coverage_state"] == "witnessed"
+    assert surface["coverage_state"] == "proven"
     assert surface["request_proof"] == "request_proof"
     assert surface["action_proof"] == "action_proof"
     assert surface["audit"] == "audit_chain"
@@ -601,7 +601,7 @@ def test_orgos_case_governance_lifecycle_surface_is_witnessed() -> None:
         route_records["/api/v1/cases/{case_id}/launch-gateway-pilot/readiness-closure"]["surface_id"]
         == "orgos_case_governance_lifecycle"
     )
-    assert route_records["/api/v1/orgos/read-model"]["coverage_state"] == "witnessed"
+    assert route_records["/api/v1/orgos/read-model"]["coverage_state"] == "proven"
     assert witness_records["orgos_case_governance_lifecycle"]["exact_test_anchor_count"] == 18
 
 
@@ -845,14 +845,14 @@ def test_remaining_declared_route_groups_are_witnessed() -> None:
         assert all(route_records[route]["coverage_state"] == "witnessed" for route in routes)
 
 
-def test_finance_approval_packet_surface_is_witnessed() -> None:
+def test_finance_approval_packet_surface_is_proven() -> None:
     matrix = _load_fixture()
     surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
     closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
     finance_surface = surfaces["finance_approval_packets"]
     witnesses = set(finance_surface["runtime_witnesses"])
 
-    assert finance_surface["coverage_state"] == "witnessed"
+    assert finance_surface["coverage_state"] == "proven"
     assert finance_surface["request_proof"] == "request_proof"
     assert finance_surface["action_proof"] == "action_proof"
     assert "/api/v1/finance/approval-packets" in finance_surface["representative_paths"]
@@ -1048,14 +1048,14 @@ def test_restricted_adapter_worker_boundary_surface_is_witnessed() -> None:
     }.issubset(witnesses)
 
 
-def test_data_governance_controls_surface_is_witnessed() -> None:
+def test_data_governance_controls_surface_is_proven() -> None:
     matrix = _load_fixture()
     surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
     closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
     data_surface = surfaces["data_governance_controls"]
     witnesses = set(data_surface["runtime_witnesses"])
 
-    assert data_surface["coverage_state"] == "witnessed"
+    assert data_surface["coverage_state"] == "proven"
     assert data_surface["request_proof"] == "request_proof"
     assert data_surface["action_proof"] == "action_proof"
     assert "/api/v1/data-governance/classify" in data_surface["representative_paths"]
@@ -1069,14 +1069,14 @@ def test_data_governance_controls_surface_is_witnessed() -> None:
     assert closure_actions["classify_data_governance_routes"]["status"] == "closed"
 
 
-def test_compliance_evidence_exports_surface_is_witnessed() -> None:
+def test_compliance_evidence_exports_surface_is_proven() -> None:
     matrix = _load_fixture()
     surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
     closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
     compliance_surface = surfaces["compliance_evidence_exports"]
     witnesses = set(compliance_surface["runtime_witnesses"])
 
-    assert compliance_surface["coverage_state"] == "witnessed"
+    assert compliance_surface["coverage_state"] == "proven"
     assert compliance_surface["request_proof"] == "request_proof"
     assert compliance_surface["action_proof"] == "action_proof"
     assert "/api/v1/compliance/audit-package" in compliance_surface["representative_paths"]
@@ -1090,14 +1090,14 @@ def test_compliance_evidence_exports_surface_is_witnessed() -> None:
     assert closure_actions["classify_compliance_evidence_exports"]["status"] == "closed"
 
 
-def test_tenant_governance_lifecycle_surface_is_witnessed() -> None:
+def test_tenant_governance_lifecycle_surface_is_proven() -> None:
     matrix = _load_fixture()
     surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
     closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
     tenant_surface = surfaces["tenant_governance_lifecycle"]
     witnesses = set(tenant_surface["runtime_witnesses"])
 
-    assert tenant_surface["coverage_state"] == "witnessed"
+    assert tenant_surface["coverage_state"] == "proven"
     assert tenant_surface["request_proof"] == "request_proof"
     assert tenant_surface["action_proof"] == "action_proof"
     assert "/api/v1/tenant/budget" in tenant_surface["representative_paths"]
@@ -1145,14 +1145,14 @@ def test_tenant_governance_lifecycle_surface_is_witnessed() -> None:
     assert closure_actions["classify_tenant_governance_lifecycle_routes"]["status"] == "closed"
 
 
-def test_runbook_learning_lifecycle_surface_is_witnessed() -> None:
+def test_runbook_learning_lifecycle_surface_is_proven() -> None:
     matrix = _load_fixture()
     surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
     closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
     runbook_surface = surfaces["runbook_learning_lifecycle"]
     witnesses = set(runbook_surface["runtime_witnesses"])
 
-    assert runbook_surface["coverage_state"] == "witnessed"
+    assert runbook_surface["coverage_state"] == "proven"
     assert runbook_surface["request_proof"] == "request_proof"
     assert runbook_surface["action_proof"] == "action_proof"
     assert "/api/v1/runbooks" in runbook_surface["representative_paths"]
@@ -2211,7 +2211,7 @@ def test_multi_agent_coordination_runtime_surface_tracks_cooperation_lifecycle()
         for record in matrix["route_coverage"]["routes"]
     }
 
-    assert multi_agent_surface["coverage_state"] == "witnessed"
+    assert multi_agent_surface["coverage_state"] == "proven"
     assert multi_agent_surface["request_proof"] == "request_proof"
     assert multi_agent_surface["action_proof"] == "action_proof"
     assert "/api/v1/multi-agent/delegate" in multi_agent_surface["representative_paths"]
@@ -2226,9 +2226,9 @@ def test_multi_agent_coordination_runtime_surface_tracks_cooperation_lifecycle()
     assert "multi_agent_handoff_preserves_context" in witnesses
     assert "multi_agent_conflict_strategy_typed" in witnesses
     assert "multi_agent_errors_sanitized" in witnesses
-    assert route_records["/api/v1/multi-agent/delegate"]["coverage_state"] == "witnessed"
+    assert route_records["/api/v1/multi-agent/delegate"]["coverage_state"] == "proven"
     assert route_records["/api/v1/multi-agent/delegate"]["surface_id"] == "multi_agent_coordination_runtime"
-    assert route_records["/api/v1/multi-agent/summary"]["coverage_state"] == "witnessed"
+    assert route_records["/api/v1/multi-agent/summary"]["coverage_state"] == "proven"
     assert route_records["/api/v1/multi-agent/summary"]["surface_id"] == "multi_agent_coordination_runtime"
     assert closure_actions["classify_multi_agent_coordination_routes"]["status"] == "closed"
 
@@ -2377,7 +2377,7 @@ def test_tool_registry_read_model_surface_keeps_invocation_separate() -> None:
         for record in matrix["route_coverage"]["routes"]
     }
 
-    assert tool_surface["coverage_state"] == "witnessed"
+    assert tool_surface["coverage_state"] == "proven"
     assert tool_surface["request_proof"] == "read_model"
     assert tool_surface["action_proof"] == "read_model"
     assert "/api/v1/tools" in tool_surface["representative_paths"]
@@ -2395,7 +2395,7 @@ def test_tool_registry_read_model_surface_keeps_invocation_separate() -> None:
     assert "tool_invocation_history_limit_applied" in witnesses
     assert "tool_invoke_separate_action_proof_surface" in witnesses
     assert route_records["/api/v1/tools"]["surface_id"] == "tool_registry_read_models"
-    assert route_records["/api/v1/tools/history"]["coverage_state"] == "witnessed"
+    assert route_records["/api/v1/tools/history"]["coverage_state"] == "proven"
     assert route_records["/api/v1/tools/llm-format"]["surface_id"] == "tool_registry_read_models"
     assert route_records["/api/v1/tools/invoke"]["surface_id"] == "tool_invocation"
     assert closure_actions["classify_tool_registry_read_model_routes"]["status"] == "closed"
@@ -3239,7 +3239,7 @@ def test_temporal_kernel_surface_owns_runtime_time_truth() -> None:
     temporal_surface = surfaces["temporal_kernel"]
     witnesses = set(temporal_surface["runtime_witnesses"])
 
-    assert temporal_surface["coverage_state"] == "witnessed"
+    assert temporal_surface["coverage_state"] == "proven"
     assert temporal_surface["request_proof"] == "request_proof"
     assert temporal_surface["action_proof"] == "action_proof"
     assert "/api/v1/temporal/schedules" in temporal_surface["representative_paths"]
@@ -3272,6 +3272,57 @@ def test_temporal_kernel_surface_owns_runtime_time_truth() -> None:
     assert "temporal_receipt_schema_valid" in witnesses
     assert closure_actions["publish_temporal_operation_receipt_contract"]["status"] == "closed"
     assert closure_actions["classify_temporal_scheduler_routes"]["status"] == "closed"
+
+
+def test_policy_version_registry_surface_is_proven() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    policy_surface = surfaces["policy_version_registry"]
+    witnesses = set(policy_surface["runtime_witnesses"])
+    route_records = {
+        record["route"]: record
+        for record in matrix["route_coverage"]["routes"]
+    }
+
+    assert policy_surface["coverage_state"] == "proven"
+    assert policy_surface["request_proof"] == "request_proof"
+    assert policy_surface["action_proof"] == "action_proof"
+    assert "/api/v1/policies/{policy_id}/versions" in policy_surface["representative_paths"]
+    assert "/api/v1/policies/{policy_id}/versions/{version}/promote" in policy_surface["representative_paths"]
+    assert "mcoi/tests/test_policy_version_endpoints.py" in policy_surface["evidence_files"]
+    assert "policy_version_register_and_fetch" in witnesses
+    assert "policy_version_promote_diff_shadow_and_rollback" in witnesses
+    assert "policy_version_routes_fail_closed" in witnesses
+    assert route_records["/api/v1/policies/{policy_id}/versions"]["coverage_state"] == "proven"
+    assert route_records["/api/v1/policies/{policy_id}/versions"]["surface_id"] == "policy_version_registry"
+    assert route_records["/api/v1/policies/{policy_id}/versions/{version}"]["coverage_state"] == "proven"
+    assert route_records["/api/v1/policies/{policy_id}/versions/{version}"]["surface_id"] == "policy_version_registry"
+
+
+def test_pilot_provisioning_surface_is_proven() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    pilot_surface = surfaces["pilot_provisioning"]
+    witnesses = set(pilot_surface["runtime_witnesses"])
+    route_records = {
+        record["route"]: record
+        for record in matrix["route_coverage"]["routes"]
+    }
+
+    assert pilot_surface["coverage_state"] == "proven"
+    assert pilot_surface["request_proof"] == "request_proof"
+    assert pilot_surface["action_proof"] == "action_proof"
+    assert "/api/v1/pilots/provision" in pilot_surface["representative_paths"]
+    assert "/api/v1/pilots/provisions" in pilot_surface["representative_paths"]
+    assert "/api/v1/pilots/provisions/{pilot_id}" in pilot_surface["representative_paths"]
+    assert "mcoi/tests/test_pilot_init.py" in pilot_surface["evidence_files"]
+    assert "initialize_pilot_writes_complete_artifact_set" in witnesses
+    assert "pilot_provision_registry_persists_bounded_records" in witnesses
+    assert "initialize_pilot_fails_closed_on_existing_files" in witnesses
+    assert route_records["/api/v1/pilots/provision"]["coverage_state"] == "proven"
+    assert route_records["/api/v1/pilots/provision"]["surface_id"] == "pilot_provisioning"
+    assert route_records["/api/v1/pilots/provisions"]["coverage_state"] == "proven"
+    assert route_records["/api/v1/pilots/provisions"]["surface_id"] == "pilot_provisioning"
 
 
 def test_temporal_evidence_freshness_surface_rechecks_required_evidence() -> None:
