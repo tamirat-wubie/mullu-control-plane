@@ -18,10 +18,10 @@ summary as a plain mapping.
 from __future__ import annotations
 
 from dataclasses import dataclass
-import os
 from pathlib import Path
 from typing import Any, Callable, Mapping
 
+from mcoi_runtime.app._integration_paths import validate_hosted_store_path
 from mcoi_runtime.core.artifact_lineage_dag import (
     ArtifactLineageDAG,
     JsonArtifactLineageStore,
@@ -88,35 +88,9 @@ def bootstrap_artifact_lineage(
 def validate_artifact_lineage_store_path(store_path: str | Path) -> Path:
     """Validate the hosted artifact-lineage snapshot path before use."""
 
-    path = Path(store_path).expanduser()
-    if not path.is_absolute():
-        raise RuntimeError(
-            f"{ARTIFACT_LINEAGE_STORE_PATH_ENV} must be an absolute file path"
-        )
-    if path.exists() and path.is_dir():
-        raise RuntimeError(
-            f"{ARTIFACT_LINEAGE_STORE_PATH_ENV} must point to a JSON file, not a directory"
-        )
-    if path.suffix.lower() != ".json":
-        raise RuntimeError(
-            f"{ARTIFACT_LINEAGE_STORE_PATH_ENV} must use a .json file extension"
-        )
-    parent = path.parent
-    if not parent.exists():
-        raise RuntimeError(
-            f"{ARTIFACT_LINEAGE_STORE_PATH_ENV} parent directory must already exist"
-        )
-    if not parent.is_dir():
-        raise RuntimeError(
-            f"{ARTIFACT_LINEAGE_STORE_PATH_ENV} parent must be a directory"
-        )
-    if path.exists() and not path.is_file():
-        raise RuntimeError(
-            f"{ARTIFACT_LINEAGE_STORE_PATH_ENV} must point to a regular file"
-        )
-    writable_target = path if path.exists() else parent
-    if not os.access(writable_target, os.W_OK):
-        raise RuntimeError(
-            f"{ARTIFACT_LINEAGE_STORE_PATH_ENV} must be writable by the control-plane process"
-        )
-    return path
+    return validate_hosted_store_path(
+        store_path,
+        env_name=ARTIFACT_LINEAGE_STORE_PATH_ENV,
+        kind="file",
+        required_suffix=".json",
+    )

@@ -14,10 +14,10 @@ and the parent directory must already exist and be writable.
 from __future__ import annotations
 
 from dataclasses import dataclass
-import os
 from pathlib import Path
 from typing import Mapping
 
+from mcoi_runtime.app._integration_paths import validate_hosted_store_path
 from mcoi_runtime.persistence.software_change_receipt_store import (
     FileSoftwareChangeReceiptStore,
     SoftwareChangeReceiptStore,
@@ -65,35 +65,9 @@ def select_software_receipt_store(
 def validate_software_receipt_store_path(store_path: str | Path) -> Path:
     """Validate the hosted software-change receipt-store path before use."""
 
-    path = Path(store_path).expanduser()
-    if not path.is_absolute():
-        raise RuntimeError(
-            f"{SOFTWARE_RECEIPT_STORE_PATH_ENV} must be an absolute file path"
-        )
-    if path.exists() and path.is_dir():
-        raise RuntimeError(
-            f"{SOFTWARE_RECEIPT_STORE_PATH_ENV} must point to a JSON file, not a directory"
-        )
-    if path.suffix.lower() != ".json":
-        raise RuntimeError(
-            f"{SOFTWARE_RECEIPT_STORE_PATH_ENV} must use a .json file extension"
-        )
-    parent = path.parent
-    if not parent.exists():
-        raise RuntimeError(
-            f"{SOFTWARE_RECEIPT_STORE_PATH_ENV} parent directory must already exist"
-        )
-    if not parent.is_dir():
-        raise RuntimeError(
-            f"{SOFTWARE_RECEIPT_STORE_PATH_ENV} parent must be a directory"
-        )
-    if path.exists() and not path.is_file():
-        raise RuntimeError(
-            f"{SOFTWARE_RECEIPT_STORE_PATH_ENV} must point to a regular file"
-        )
-    writable_target = path if path.exists() else parent
-    if not os.access(writable_target, os.W_OK):
-        raise RuntimeError(
-            f"{SOFTWARE_RECEIPT_STORE_PATH_ENV} must be writable by the control-plane process"
-        )
-    return path
+    return validate_hosted_store_path(
+        store_path,
+        env_name=SOFTWARE_RECEIPT_STORE_PATH_ENV,
+        kind="file",
+        required_suffix=".json",
+    )

@@ -16,10 +16,10 @@ extension, and the parent directory must already exist and be writable;
 from __future__ import annotations
 
 from dataclasses import dataclass
-import os
 from pathlib import Path
 from typing import Callable, Mapping
 
+from mcoi_runtime.app._integration_paths import validate_hosted_store_path
 from mcoi_runtime.core.organization_kernel import OrganizationKernel
 from mcoi_runtime.persistence.organization_kernel_store import (
     FileOrganizationKernelStore,
@@ -71,35 +71,9 @@ def bootstrap_organization_kernel(
 def validate_organization_kernel_store_path(store_path: str | Path) -> Path:
     """Validate the hosted organization kernel store path before use."""
 
-    path = Path(store_path).expanduser()
-    if not path.is_absolute():
-        raise RuntimeError(
-            f"{ORGANIZATION_KERNEL_STORE_PATH_ENV} must be an absolute file path"
-        )
-    if path.exists() and path.is_dir():
-        raise RuntimeError(
-            f"{ORGANIZATION_KERNEL_STORE_PATH_ENV} must point to a JSON file, not a directory"
-        )
-    if path.suffix.lower() != ".json":
-        raise RuntimeError(
-            f"{ORGANIZATION_KERNEL_STORE_PATH_ENV} must use a .json file extension"
-        )
-    parent = path.parent
-    if not parent.exists():
-        raise RuntimeError(
-            f"{ORGANIZATION_KERNEL_STORE_PATH_ENV} parent directory must already exist"
-        )
-    if not parent.is_dir():
-        raise RuntimeError(
-            f"{ORGANIZATION_KERNEL_STORE_PATH_ENV} parent must be a directory"
-        )
-    if path.exists() and not path.is_file():
-        raise RuntimeError(
-            f"{ORGANIZATION_KERNEL_STORE_PATH_ENV} must point to a regular file"
-        )
-    writable_target = path if path.exists() else parent
-    if not os.access(writable_target, os.W_OK):
-        raise RuntimeError(
-            f"{ORGANIZATION_KERNEL_STORE_PATH_ENV} must be writable by the control-plane process"
-        )
-    return path
+    return validate_hosted_store_path(
+        store_path,
+        env_name=ORGANIZATION_KERNEL_STORE_PATH_ENV,
+        kind="file",
+        required_suffix=".json",
+    )
