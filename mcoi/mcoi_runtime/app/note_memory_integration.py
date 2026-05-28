@@ -13,9 +13,10 @@ and loadable note-memory runtime/router factories.
 from __future__ import annotations
 
 from dataclasses import dataclass
-import os
 from pathlib import Path
 from typing import Any, Callable, Mapping
+
+from mcoi_runtime.app._integration_paths import env_flag, validate_hosted_store_path
 
 
 @dataclass(frozen=True)
@@ -26,12 +27,6 @@ class NoteMemoryBootstrap:
     mounted: bool
     store_path: str
     reason: str
-
-
-def env_flag(value: str | None) -> bool:
-    """Return whether an environment flag is enabled."""
-
-    return str(value or "").strip().lower() in {"1", "true", "yes", "on", "enabled"}
 
 
 def mount_note_memory_router_from_env(
@@ -89,19 +84,8 @@ def validate_note_memory_store_path(store_path: str | Path) -> Path:
     its parent must already exist and the target location must be writable.
     """
 
-    path = Path(store_path).expanduser()
-    if not path.is_absolute():
-        raise RuntimeError("MULLU_NOTE_MEMORY_STORE_PATH must be an absolute directory path")
-    if path.exists() and path.is_file():
-        raise RuntimeError("MULLU_NOTE_MEMORY_STORE_PATH must point to a directory, not a regular file")
-    parent = path.parent
-    if not parent.exists():
-        raise RuntimeError("MULLU_NOTE_MEMORY_STORE_PATH parent directory must already exist")
-    if not parent.is_dir():
-        raise RuntimeError("MULLU_NOTE_MEMORY_STORE_PATH parent must be a directory")
-    if path.exists() and not path.is_dir():
-        raise RuntimeError("MULLU_NOTE_MEMORY_STORE_PATH must point to a directory")
-    writable_target = path if path.exists() else parent
-    if not os.access(writable_target, os.W_OK):
-        raise RuntimeError("MULLU_NOTE_MEMORY_STORE_PATH must be writable by the control-plane process")
-    return path
+    return validate_hosted_store_path(
+        store_path,
+        env_name="MULLU_NOTE_MEMORY_STORE_PATH",
+        kind="directory",
+    )
