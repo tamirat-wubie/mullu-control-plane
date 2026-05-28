@@ -28,6 +28,11 @@
       "method": "GET",
       "path": "/api/v1/swarm/runs",
       "expected_http_status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/health/extensions",
+      "expected_http_status": 200
     }
   ],
   "invoice_smoke": {
@@ -37,6 +42,26 @@
     "run_id": "swarm-run-staging-001",
     "governed": true,
     "terminal_status": "closed"
+  },
+  "extension_health": {
+    "http_status": 200,
+    "governed": true,
+    "governed_swarm": {
+      "registered": true,
+      "enabled": true,
+      "mounted": true,
+      "state": "mounted",
+      "reason": "mounted",
+      "audit_store_configured": true
+    },
+    "note_memory": {
+      "registered": true,
+      "enabled": false,
+      "mounted": false,
+      "state": "disabled",
+      "reason": "disabled",
+      "store_configured": false
+    }
   },
   "audit_store": {
     "path": "/var/lib/mullu/governed-swarm/swarm-runs.jsonl",

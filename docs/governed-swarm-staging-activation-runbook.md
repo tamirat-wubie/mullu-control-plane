@@ -92,6 +92,23 @@ curl -sS "$MULLU_STAGING_URL/api/v1/swarm/runs/<run_id>"
 curl -sS "$MULLU_STAGING_URL/api/v1/swarm/runs"
 ```
 
+Verify the operator posture read model reports the extension as mounted without
+exposing filesystem paths:
+
+```bash
+curl -sS "$MULLU_STAGING_URL/api/v1/health/extensions"
+```
+
+Required posture:
+
+```text
+extensions.governed_swarm.registered=true
+extensions.governed_swarm.enabled=true
+extensions.governed_swarm.mounted=true
+extensions.governed_swarm.state=mounted
+extensions.governed_swarm.audit_store_configured=true
+```
+
 Verify audit persistence on the staging host or persistent volume:
 
 ```bash
@@ -149,9 +166,11 @@ python scripts/preflight_governed_swarm_staging_runner.py \
   --audit-store-path "/var/lib/mullu/governed-swarm/swarm-runs.jsonl" \
   --output ".change_assurance/governed_swarm_staging_runner_preflight.json"
 curl -sS "$MULLU_STAGING_URL/api/v1/swarm/runs" >/tmp/governed-swarm-route-preflight.json
+curl -sS "$MULLU_STAGING_URL/api/v1/health/extensions" >/tmp/governed-swarm-extension-health-preflight.json
 ```
 
 The workflow repeats the runner preflight and uploads `governed-swarm-staging-runner-preflight` before collecting the witness. If any preflight check fails, do not treat the failure as a route failure; fix runner placement, runtime checkout, audit mount, or staging network access first.
+The activation witness also probes `/api/v1/health/extensions`; pilot promotion remains blocked unless the read model reports the governed swarm extension as registered, enabled, mounted, and audit-store-configured.
 
 Validate a saved runner preflight receipt:
 
@@ -236,6 +255,6 @@ Do not delete `MULLU_GOVERNED_SWARM_AUDIT_STORE_PATH` during rollback. The audit
 
 STATUS:
   Completeness: 100%
-  Invariants verified: [bundled runtime witness named, feature flags named, smoke route named, audit receipt required, runner preflight bound, staging evidence bundle bound, pilot promotion readiness bound, rollback preserves audit evidence]
+  Invariants verified: [bundled runtime witness named, feature flags named, smoke route named, extension-health posture bound, audit receipt required, runner preflight bound, staging evidence bundle bound, pilot promotion readiness bound, rollback preserves audit evidence]
   Open issues: [real staging endpoint must provide the collected witness]
   Next action: execute this runbook in staging and validate the collected witness.

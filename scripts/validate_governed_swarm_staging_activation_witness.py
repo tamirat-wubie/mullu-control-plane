@@ -26,6 +26,7 @@ REQUIRED_ROUTES = {
     ("POST", "/api/v1/swarm/invoice-runs"),
     ("GET", "/api/v1/swarm/runs/{run_id}"),
     ("GET", "/api/v1/swarm/runs"),
+    ("GET", "/api/v1/health/extensions"),
 }
 
 
@@ -53,8 +54,25 @@ def validate_witness_payload(payload: dict[str, Any]) -> list[str]:
         errors.append("$.errors must be empty when outcome is SolvedVerified")
     if payload["outcome"] == "SolvedVerified" and payload["invoice_smoke"]["terminal_status"] != "closed":
         errors.append("$.invoice_smoke.terminal_status must be closed when outcome is SolvedVerified")
+    if payload["outcome"] == "SolvedVerified" and not _extension_health_bound(payload["extension_health"]):
+        errors.append(
+            "$.extension_health.governed_swarm must report registered, enabled, mounted, state=mounted, and audit_store_configured"
+        )
 
     return errors
+
+
+def _extension_health_bound(extension_health: dict[str, Any]) -> bool:
+    governed_swarm = extension_health.get("governed_swarm", {})
+    return (
+        extension_health.get("http_status") == 200
+        and extension_health.get("governed") is True
+        and governed_swarm.get("registered") is True
+        and governed_swarm.get("enabled") is True
+        and governed_swarm.get("mounted") is True
+        and governed_swarm.get("state") == "mounted"
+        and governed_swarm.get("audit_store_configured") is True
+    )
 
 
 def validate_witness_file(witness_path: Path) -> list[str]:

@@ -68,6 +68,9 @@ def test_staging_activation_runbook_binds_witness_and_rollback() -> None:
     assert '"run_id": "run_staging_invoice_001"' in text
     assert '"invoice_amount_usd": "125.50"' in text
     assert "/api/v1/swarm/invoice-runs" in text
+    assert "/api/v1/health/extensions" in text
+    assert "extensions.governed_swarm.mounted=true" in text
+    assert "governed-swarm-extension-health-preflight.json" in text
     assert "scripts/collect_governed_swarm_staging_activation_witness.py" in text
     assert ".github/workflows/governed-swarm-staging-witness.yml" in text
     assert "self-hosted" in text

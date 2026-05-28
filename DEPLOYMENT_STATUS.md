@@ -9,7 +9,7 @@ Invariants: Absence of live deployment evidence is explicit; no production healt
 
 # Deployment Status Witness
 
-**Last audited:** 2026-05-24
+**Last audited:** 2026-05-28
 **Deployment witness state:** `not-published`
 **Public production health endpoint:** `not-declared`
 **Gateway health endpoint:** `/health`
@@ -83,6 +83,7 @@ Invariants: Absence of live deployment evidence is explicit; no production healt
 | Deployment capability capsule | `capsules/deployment.json` and `capabilities/deployment/capability_pack.json` govern `deployment.witness.collect` and `deployment.witness.publish.with_approval` | Reflected |
 | General-agent promotion validator | `scripts/validate_general_agent_promotion.py --strict` blocks production general-agent claims until governed capability records, real browser/document/voice adapters, sandbox runner evidence, MCP import governance, deployment witness publication, and public health evidence all pass | Reflected |
 | Governed runtime promotion validator | `scripts/validate_governed_runtime_promotion.py --strict` provides the domain-neutral terminal validator while preserving the existing promotion readiness evidence contract | Reflected |
+| Governed swarm extension-health pilot gate | `scripts/collect_governed_swarm_staging_activation_witness.py` now probes `/api/v1/health/extensions`; staging evidence bundles and pilot promotion readiness require the governed swarm extension to be registered, enabled, mounted, and audit-store-configured without exposing raw filesystem paths | Reflected |
 | Public production health | No governed production endpoint is declared in this repository | Not reflected |
 | Deployment badge | No GitHub-visible deployment badge is declared | Not reflected |
 

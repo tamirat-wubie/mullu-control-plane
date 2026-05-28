@@ -24,6 +24,11 @@
       "passed": true
     },
     {
+      "detail": "http_status=200 governed=True swarm_registered=True swarm_enabled=True swarm_mounted=True swarm_state=mounted audit_store_configured=True",
+      "name": "extension_health_bound",
+      "passed": true
+    },
+    {
       "detail": "target_environment=pilot",
       "name": "target_environment_allowed",
       "passed": true
@@ -35,6 +40,26 @@
     }
   ],
   "control_plane_commit": "dffe0f68289147e09a84ab6cbbeb2b5230ca2bd8",
+  "extension_health": {
+    "http_status": 200,
+    "governed": true,
+    "governed_swarm": {
+      "registered": true,
+      "enabled": true,
+      "mounted": true,
+      "state": "mounted",
+      "reason": "mounted",
+      "audit_store_configured": true
+    },
+    "note_memory": {
+      "registered": true,
+      "enabled": false,
+      "mounted": false,
+      "state": "disabled",
+      "reason": "disabled",
+      "store_configured": false
+    }
+  },
   "outcome": "SolvedVerified",
   "readiness_id": "governed-swarm-promotion-895a5da68b298905",
   "readiness_level": "pilot-ready",

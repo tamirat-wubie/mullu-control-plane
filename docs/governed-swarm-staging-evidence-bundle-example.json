@@ -41,6 +41,11 @@
       "passed": true
     },
     {
+      "detail": "http_status=200 governed=True swarm_registered=True swarm_enabled=True swarm_mounted=True swarm_state=mounted audit_store_configured=True",
+      "name": "extension_health_bound",
+      "passed": true
+    },
+    {
       "detail": "environment=staging",
       "name": "environment_bound",
       "passed": true
@@ -58,5 +63,25 @@
   "runner_ready": true,
   "runtime_path": "/opt/mullu/mullu-control-plane/mcoi",
   "staging_url": "https://staging-api.example.com",
+  "extension_health": {
+    "http_status": 200,
+    "governed": true,
+    "governed_swarm": {
+      "registered": true,
+      "enabled": true,
+      "mounted": true,
+      "state": "mounted",
+      "reason": "mounted",
+      "audit_store_configured": true
+    },
+    "note_memory": {
+      "registered": true,
+      "enabled": false,
+      "mounted": false,
+      "state": "disabled",
+      "reason": "disabled",
+      "store_configured": false
+    }
+  },
   "validated_at": "2026-05-17T08:20:00Z"
 }
