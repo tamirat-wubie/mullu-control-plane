@@ -708,6 +708,8 @@ def test_verifier_verify_all_composes_every_method():
     assert report.replay.fully_replayed is True
     assert report.certificate_hash.fully_verified is True
     assert report.certificate_hash.hash_matches is True
+    assert report.evidence_records.fully_verified is True
+    assert report.evidence_records.record_count > 0
     assert report.anchor is not None and report.anchor.failures == ()
     assert report.bundle is not None and report.bundle.fully_verified is True
 
@@ -904,3 +906,118 @@ def test_verifier_certificate_hash_unrecoverable_closure_does_not_double_report(
     assert "certificate_hash_mismatch" not in verification.failures
     assert verification.recomputed_certificate_id == ""
     assert verification.hash_matches is False
+
+
+# ─── Evidence-record verification + approval-chain tenant slice ──────
+
+
+def test_verifier_evidence_records_pass_canonical_lifecycle():
+    # The canonical lifecycle records evidence via
+    # promote_provider_receipts_to_graph and close_success_response_evidence.
+    # Each record's evidence_id must derive from its ref_hash and bind to
+    # the correct command_id; non-provider records' ref_hash must
+    # recompute from {command_id, evidence_type, ref}.
+    ledger, command_id = _ledger_through_terminal_closure()
+    verification = AuditTraceVerifier(ledger).verify_evidence_records(command_id)
+    assert verification.command_present is True
+    assert verification.record_count > 0
+    assert verification.failures == ()
+    assert verification.fully_verified is True
+
+
+def test_verifier_evidence_records_detects_evidence_id_tamper():
+    # Flip an evidence record's evidence_id to a value that does not
+    # derive from its ref_hash. The verifier must report
+    # evidence_id_derivation_mismatch.
+    ledger, command_id = _ledger_through_terminal_closure()
+    records = ledger._evidence_records[command_id]
+    assert records, "fixture must seed at least one evidence record"
+    target = records[0]
+    tampered = replace(target, evidence_id="evidence-forged0000000000")
+    records[0] = tampered
+
+    verification = AuditTraceVerifier(ledger).verify_evidence_records(command_id)
+    assert "evidence_id_derivation_mismatch" in verification.failures
+    assert "evidence-forged0000000000" in verification.evidence_id_mismatches
+
+
+def test_verifier_evidence_records_detects_command_id_tamper():
+    # Flip an evidence record's command_id while leaving the verifier
+    # call asking about the original command. The verifier must report
+    # evidence_command_id_mismatch.
+    ledger, command_id = _ledger_through_terminal_closure()
+    records = ledger._evidence_records[command_id]
+    assert records
+    target = records[0]
+    tampered = replace(target, command_id="cmd-forged")
+    records[0] = tampered
+
+    verification = AuditTraceVerifier(ledger).verify_evidence_records(command_id)
+    assert "evidence_command_id_mismatch" in verification.failures
+    assert target.evidence_id in verification.command_id_mismatches
+
+
+def test_verifier_evidence_records_detects_hash_recompute_mismatch():
+    # For non-provider-receipt evidence (ref + command_id + evidence_type
+    # are the full hash inputs), tampering the ref while leaving ref_hash
+    # unchanged surfaces evidence_hash_recompute_mismatch.
+    ledger, command_id = _ledger_through_terminal_closure()
+    records = ledger._evidence_records[command_id]
+    target_index = next(
+        (i for i, r in enumerate(records) if r.evidence_type != "provider_receipt"),
+        None,
+    )
+    assert target_index is not None, "fixture must include a non-provider record"
+    target = records[target_index]
+    tampered = replace(target, ref="forged-ref")
+    records[target_index] = tampered
+
+    verification = AuditTraceVerifier(ledger).verify_evidence_records(command_id)
+    assert "evidence_hash_recompute_mismatch" in verification.failures
+    assert target.evidence_id in verification.hash_recompute_mismatches
+
+
+def test_verifier_evidence_records_reports_missing_command():
+    ledger = CommandLedger(
+        clock=lambda: "2026-04-24T12:00:00+00:00",
+        store=InMemoryCommandLedgerStore(),
+    )
+    verification = AuditTraceVerifier(ledger).verify_evidence_records("cmd-missing")
+    assert verification.command_present is False
+    assert verification.failures == ("command_not_found",)
+
+
+def test_verifier_tenant_isolation_detects_approval_chain_tenant_mismatch():
+    # New optional obligation_mesh param: a chain whose tenant_id differs
+    # from the command's tenant_id is a real tenant-boundary violation
+    # that the ledger-only checks cannot see.
+    ledger = CommandLedger(
+        clock=lambda: "2026-04-24T12:00:00+00:00",
+        store=InMemoryCommandLedgerStore(),
+    )
+    command = _payment_command_for_chain_tests(ledger)
+    mesh = AuthorityObligationMesh(commands=ledger, clock=ledger._clock)
+    _register_payment_owner(mesh)
+    mesh.prepare_authority(command.command_id)
+    chain = mesh.approval_chain_for(command.command_id)
+    assert chain is not None
+    # Tamper: write the chain back with a different tenant_id.
+    tampered = replace(chain, tenant_id="tenant-other")
+    mesh._store.save_approval_chain(tampered)
+
+    verification = AuditTraceVerifier(ledger).verify_tenant_isolation(
+        command.command_id, obligation_mesh=mesh,
+    )
+    assert verification.approval_chain_tenant_mismatch is True
+    assert "approval_chain_tenant_mismatch" in verification.failures
+    assert verification.fully_isolated is False
+
+
+def test_verifier_tenant_isolation_without_mesh_is_backward_compatible():
+    # Existing callers (no obligation_mesh) must still see the same
+    # behavior — the approval_chain check is opt-in via the new kwarg.
+    ledger, command_id = _ledger_through_terminal_closure()
+    verification = AuditTraceVerifier(ledger).verify_tenant_isolation(command_id)
+    assert verification.approval_chain_tenant_mismatch is False
+    assert verification.fully_isolated is True
+    assert verification.failures == ()
