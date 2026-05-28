@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from mcoi_runtime.contracts.dashboard import MetaReasoningSummary
+from mcoi_runtime.contracts.dashboard import MetaReasoningSummary, NoteMemorySummary
 from mcoi_runtime.contracts.decision_learning import (
     AdjustmentType,
     DecisionAdjustment,
@@ -96,6 +96,26 @@ def _make_routing_outcome(
         success=success,
         recorded_at="2026-03-20T00:00:01Z",
     )
+
+
+def _note_memory_snapshot(**summary_overrides: object) -> dict[str, object]:
+    summary: dict[str, object] = {
+        "event_count": 4,
+        "active_note_count": 2,
+        "rejected_delta_count": 1,
+        "expiring_note_count": 1,
+        "pending_promotion_count": 1,
+        "memory_anchor_count": 0,
+        "episode_capsule_count": 1,
+        "contradiction_count": 0,
+        "index_proof_state": "Pass",
+    }
+    summary.update(summary_overrides)
+    return {
+        "status": "ready",
+        "extension": {"state": "mounted"},
+        "summary": summary,
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -289,6 +309,34 @@ class TestSnapshot:
 
 
 # ---------------------------------------------------------------------------
+# build_note_memory_summary
+# ---------------------------------------------------------------------------
+
+
+class TestBuildNoteMemorySummary:
+    def test_builds_governed_note_memory_projection(self):
+        engine = _make_engine()
+        summary = engine.build_note_memory_summary(_note_memory_snapshot())
+
+        assert isinstance(summary, NoteMemorySummary)
+        assert summary.status == "ready"
+        assert summary.extension_state == "mounted"
+        assert summary.event_count == 4
+        assert summary.episode_capsule_count == 1
+        assert summary.index_proof_state == "Pass"
+
+    def test_rejects_negative_count(self):
+        engine = _make_engine()
+        try:
+            engine.build_note_memory_summary(_note_memory_snapshot(event_count=-1))
+        except ValueError as exc:
+            assert "event_count" in str(exc)
+            assert "non-negative integer" in str(exc)
+        else:
+            raise AssertionError("negative note-memory counts must be rejected")
+
+
+# ---------------------------------------------------------------------------
 # Golden scenario
 # ---------------------------------------------------------------------------
 
@@ -341,6 +389,24 @@ class TestAuditHardening:
             total_routing_decisions=0,
         )
         assert snap.provider_summaries[0].context_type == "aggregate"
+
+    def test_snapshot_includes_note_memory_summary(self):
+        engine = _make_engine()
+        snap = engine.snapshot(
+            outcomes=(),
+            adjustments=(),
+            routing_outcomes=(),
+            preferences={},
+            provider_ids=(),
+            health_scores={},
+            learned_adjustments={},
+            total_decisions=0,
+            total_routing_decisions=0,
+            note_memory_snapshot=_note_memory_snapshot(pending_promotion_count=2),
+        )
+        assert snap.note_memory is not None
+        assert snap.note_memory.pending_promotion_count == 2
+        assert snap.note_memory.extension_state == "mounted"
 
 
 # ---------------------------------------------------------------------------

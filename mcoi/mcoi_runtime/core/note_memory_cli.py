@@ -1,8 +1,8 @@
 """CLI adapter for governed note memory mesh operations.
 
-Purpose: expose note capture, retrieval, expiry, rejected-delta recording,
-promotion queueing, MemoryAnchor promotion, event listing, and index rebuild
-over governed JSON envelopes.
+Purpose: expose note capture, episode capsule capture, retrieval, expiry,
+rejected-delta recording, promotion queueing, MemoryAnchor promotion, event
+listing, dashboard snapshots, and index rebuild over governed JSON envelopes.
 Governance scope: command-line boundary only; redaction, ProofState gates,
 append-only persistence, retrieval guards, and Phi_gov receipt checks remain
 owned by note_memory_mesh.py.
@@ -22,6 +22,7 @@ from typing import Any, Mapping, Sequence
 
 from mcoi_runtime.core.invariants import RuntimeCoreInvariantError
 from mcoi_runtime.core.note_memory_mesh import (
+    EpisodeCapsuleDraft,
     NoteAction,
     NoteKind,
     NoteMemoryDraft,
@@ -54,6 +55,22 @@ def build_parser() -> argparse.ArgumentParser:
     capture_parser.add_argument("--action", choices=[action.value for action in NoteAction], default=NoteAction.CREATE.value)
     capture_parser.add_argument("--evidence-ref", action="append", help="Evidence reference")
     capture_parser.add_argument("--relation-ref", action="append", help="Related note id or event id")
+    capture_parser.add_argument("--claim-key", default="", help="Optional deterministic contradiction claim key")
+    capture_parser.add_argument("--claim-value", default="", help="Optional deterministic contradiction claim value")
+
+    episode_parser = subparsers.add_parser("capture-episode", help="Capture one structured post-episode capsule")
+    episode_parser.add_argument("--goal", required=True, help="Episode goal summary")
+    episode_parser.add_argument("--scope", required=True, choices=[scope.value for scope in NoteScope])
+    episode_parser.add_argument("--proof-state", required=True, choices=[state.value for state in ProofState])
+    episode_parser.add_argument("--trust-zone", required=True, choices=[zone.value for zone in TrustZone])
+    episode_parser.add_argument("--episode-id", default="", help="Optional bounded episode id")
+    episode_parser.add_argument("--constraint", action="append", help="Bounded episode constraint")
+    episode_parser.add_argument("--decision", action="append", help="Bounded episode decision")
+    episode_parser.add_argument("--changed-file", action="append", help="Changed file witness")
+    episode_parser.add_argument("--verification-ref", action="append", help="Verification command or witness")
+    episode_parser.add_argument("--open-risk", action="append", help="Open risk witness")
+    episode_parser.add_argument("--evidence-ref", action="append", help="Evidence reference")
+    episode_parser.add_argument("--relation-ref", action="append", help="Related note id or event id")
 
     reject_parser = subparsers.add_parser("record-rejected-delta", help="Record durable negative evidence")
     reject_parser.add_argument("--summary", required=True, help="Rejected delta summary")
@@ -79,6 +96,10 @@ def build_parser() -> argparse.ArgumentParser:
     promote_parser.add_argument("--note-id", required=True, help="Source note id")
     promote_parser.add_argument("--receipt", required=True, help="Inline receipt JSON object or path")
 
+    dashboard_parser = subparsers.add_parser("dashboard", help="Return a read-only operator dashboard snapshot")
+    dashboard_parser.add_argument("--limit", type=int, default=25, help="Maximum rows per dashboard section")
+    dashboard_parser.add_argument("--now", help="Override dashboard clock timestamp")
+
     subparsers.add_parser("rebuild-index", help="Validate note event logs and rebuild projection fitness")
     subparsers.add_parser("list-events", help="List persisted note memory events")
     return parser
@@ -93,6 +114,9 @@ def main(argv: Sequence[str] | None = None) -> int:
     if args.command == "capture":
         event = mesh.capture_note(_draft_from_args(args))
         envelope = _envelope(True, "captured", {"event": event.to_dict()})
+    elif args.command == "capture-episode":
+        event = mesh.capture_episode_capsule(_episode_draft_from_args(args))
+        envelope = _envelope(True, "episode_capsule_captured", {"event": event.to_dict()})
     elif args.command == "record-rejected-delta":
         event = mesh.record_rejected_delta(
             content_summary=args.summary,
@@ -114,6 +138,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         receipt = _promotion_receipt_from_mapping(_load_json_object(args.receipt))
         event = mesh.promote_memory_anchor(args.note_id, receipt)
         envelope = _envelope(True, "promoted", {"event": event.to_dict(), "receipt": receipt.to_dict()})
+    elif args.command == "dashboard":
+        envelope = _envelope(True, "dashboard_snapshot", mesh.dashboard_snapshot(now=args.now, limit=args.limit))
     elif args.command == "rebuild-index":
         envelope = _envelope(True, "rebuilt", {"report": _jsonable(mesh.rebuild_index_from_events())})
     elif args.command == "list-events":
@@ -148,6 +174,25 @@ def _draft_from_args(args: argparse.Namespace) -> NoteMemoryDraft:
         note_id=args.note_id,
         evidence_refs=tuple(args.evidence_ref or ()),
         relation_refs=tuple(args.relation_ref or ()),
+        claim_key=args.claim_key,
+        claim_value=args.claim_value,
+    )
+
+
+def _episode_draft_from_args(args: argparse.Namespace) -> EpisodeCapsuleDraft:
+    return EpisodeCapsuleDraft(
+        goal=args.goal,
+        scope=NoteScope(args.scope),
+        proof_state=ProofState(args.proof_state),
+        trust_zone=TrustZone(args.trust_zone),
+        constraints=tuple(args.constraint or ()),
+        decisions=tuple(args.decision or ()),
+        changed_files=tuple(args.changed_file or ()),
+        verification_refs=tuple(args.verification_ref or ()),
+        open_risks=tuple(args.open_risk or ()),
+        evidence_refs=tuple(args.evidence_ref or ()),
+        relation_refs=tuple(args.relation_ref or ()),
+        episode_id=args.episode_id,
     )
 
 

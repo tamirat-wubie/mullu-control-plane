@@ -12,6 +12,8 @@ Invariants:
 
 from __future__ import annotations
 
+from typing import Any, Mapping
+
 from mcoi_runtime.contracts.dashboard import DashboardSnapshot, WorldStateSummary
 from mcoi_runtime.contracts.meta_reasoning import MetaReasoningSnapshot
 from .dashboard import DashboardEngine
@@ -40,6 +42,7 @@ class DashboardBridge:
         *,
         meta_snapshot: MetaReasoningSnapshot | None = None,
         world_state_summary: WorldStateSummary | None = None,
+        note_memory_snapshot: Mapping[str, Any] | None = None,
     ) -> DashboardSnapshot:
         """Generate a complete dashboard snapshot from live engine state.
 
@@ -83,4 +86,5 @@ class DashboardBridge:
             context_type=context_type,
             meta_snapshot=meta_snapshot,
             world_state_summary=world_state_summary,
+            note_memory_snapshot=note_memory_snapshot,
         )

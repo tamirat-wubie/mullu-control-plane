@@ -13,11 +13,13 @@ from mcoi_runtime.app.config import AppConfig
 from mcoi_runtime.app.console import (
     render_coordination_summary,
     render_execution_summary,
+    render_note_memory_summary,
     render_replay_summary,
     render_run_summary,
     render_runbook_summary,
     render_temporal_task,
 )
+from mcoi_runtime.contracts.dashboard import NoteMemorySummary
 from mcoi_runtime.app.operator_loop import OperatorLoop, OperatorRequest
 from mcoi_runtime.app.view_models import (
     CoordinationSummaryView,
@@ -283,3 +285,30 @@ def test_runbook_summary_rejected() -> None:
 
     output = render_runbook_summary(view)
     assert "rejected" in output
+
+
+def test_note_memory_summary_renders_operator_counts() -> None:
+    view = NoteMemorySummary(
+        summary_id="note-summary-1",
+        status="ready",
+        extension_state="mounted",
+        event_count=4,
+        active_note_count=2,
+        rejected_delta_count=1,
+        expiring_note_count=1,
+        pending_promotion_count=1,
+        memory_anchor_count=0,
+        episode_capsule_count=1,
+        contradiction_count=0,
+        index_proof_state="Pass",
+        assessed_at=_CLOCK,
+    )
+
+    output = render_note_memory_summary(view)
+
+    assert "Note Memory Summary" in output
+    assert "status:                 ready" in output
+    assert "extension_state:        mounted" in output
+    assert "pending_promotions:     1" in output
+    assert "episode_capsules:       1" in output
+    assert "index_proof_state:      Pass" in output

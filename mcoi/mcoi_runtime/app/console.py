@@ -9,6 +9,8 @@ Invariants:
 
 from __future__ import annotations
 
+from mcoi_runtime.contracts.dashboard import NoteMemorySummary
+
 from .view_models import (
     CoordinationSummaryView,
     ExecutionSummaryView,
@@ -321,5 +323,25 @@ def render_simulation_summary(view: SimulationSummaryView) -> str:
         f"  verdict_type:           {view.verdict_type}",
         f"  confidence:             {view.confidence:.2f}",
         f"  top_risk_level:         {view.top_risk_level}",
+    ]
+    return "\n".join(lines)
+
+
+def render_note_memory_summary(view: NoteMemorySummary) -> str:
+    """Render note-memory lifecycle posture as text."""
+    lines = [
+        "=== Note Memory Summary ===",
+        f"  status:                 {view.status}",
+        f"  extension_state:        {view.extension_state}",
+        f"  events:                 {view.event_count}",
+        f"  active_notes:           {view.active_note_count}",
+        f"  rejected_deltas:        {view.rejected_delta_count}",
+        f"  expiring_notes:         {view.expiring_note_count}",
+        f"  pending_promotions:     {view.pending_promotion_count}",
+        f"  memory_anchors:         {view.memory_anchor_count}",
+        f"  episode_capsules:       {view.episode_capsule_count}",
+        f"  contradictions:         {view.contradiction_count}",
+        f"  index_proof_state:      {view.index_proof_state}",
+        f"  assessed_at:            {view.assessed_at}",
     ]
     return "\n".join(lines)

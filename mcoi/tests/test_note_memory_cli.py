@@ -1,7 +1,7 @@
 """Tests for the governed note memory CLI.
 
-Purpose: verify executable capture, retrieval, expiry, rejected-delta, and
-promotion commands for the note memory mesh.
+Purpose: verify executable capture, episode-capsule capture, retrieval, expiry,
+rejected-delta, contradiction, and promotion commands for the note memory mesh.
 Governance scope: CLI envelopes must not bypass redaction, append-only
 persistence, ProofState gates, or Phi_gov promotion receipts.
 Dependencies: mcoi_runtime.core.note_memory_cli.
@@ -21,7 +21,7 @@ def _last_json(capsys) -> dict[str, object]:
     return json.loads(captured.out.strip().splitlines()[-1])
 
 
-def test_cli_capture_retrieve_and_list_events_redacts_before_write(tmp_path, capsys) -> None:
+def test_cli_capture_retrieve_dashboard_and_list_events_redacts_before_write(tmp_path, capsys) -> None:
     note_store = tmp_path / "notes"
 
     capture_code = guarded_main(
@@ -50,6 +50,8 @@ def test_cli_capture_retrieve_and_list_events_redacts_before_write(tmp_path, cap
     capture_envelope = _last_json(capsys)
     retrieve_code = guarded_main(["--note-store", str(note_store), "retrieve", "parser", "--scope", "task"])
     retrieve_envelope = _last_json(capsys)
+    dashboard_code = guarded_main(["--note-store", str(note_store), "dashboard", "--limit", "5"])
+    dashboard_envelope = _last_json(capsys)
     list_code = guarded_main(["--note-store", str(note_store), "list-events"])
     list_envelope = _last_json(capsys)
 
@@ -58,9 +60,138 @@ def test_cli_capture_retrieve_and_list_events_redacts_before_write(tmp_path, cap
     assert retrieve_code == 0
     assert retrieve_envelope["payload"]["count"] == 1
     assert "sk-cli-secret" not in json.dumps(retrieve_envelope)
+    assert dashboard_code == 0
+    assert dashboard_envelope["status"] == "dashboard_snapshot"
+    assert dashboard_envelope["payload"]["summary"]["event_count"] == 1
+    assert dashboard_envelope["payload"]["recent_notes"][0]["note_id"] == capture_envelope["payload"]["event"]["note_id"]
     assert list_code == 0
     assert list_envelope["payload"]["count"] == 1
     assert "[REDACTED:" in list_envelope["payload"]["events"][0]["content_summary"]
+
+
+def test_cli_dashboard_rejects_unbounded_limit(tmp_path, capsys) -> None:
+    note_store = tmp_path / "notes"
+
+    dashboard_code = guarded_main(["--note-store", str(note_store), "dashboard", "--limit", "101"])
+    dashboard_envelope = _last_json(capsys)
+
+    assert dashboard_code == 1
+    assert dashboard_envelope["ok"] is False
+    assert dashboard_envelope["status"] == "rejected"
+    assert "dashboard limit" in dashboard_envelope["error"]
+
+
+def test_cli_claim_contradiction_records_decision_evidence(tmp_path, capsys) -> None:
+    note_store = tmp_path / "notes"
+
+    first_code = guarded_main(
+        [
+            "--note-store",
+            str(note_store),
+            "capture",
+            "--kind",
+            "DecisionRecord",
+            "--scope",
+            "repository",
+            "--summary",
+            "note memory console disabled",
+            "--source-ref",
+            "test:cli-claim-prior",
+            "--proof-state",
+            "Pass",
+            "--trust-zone",
+            "workspace",
+            "--evidence-ref",
+            "prior-claim",
+            "--claim-key",
+            "note_memory.console.state",
+            "--claim-value",
+            "disabled",
+        ]
+    )
+    first_envelope = _last_json(capsys)
+    second_code = guarded_main(
+        [
+            "--note-store",
+            str(note_store),
+            "capture",
+            "--kind",
+            "DecisionRecord",
+            "--scope",
+            "repository",
+            "--summary",
+            "note memory console mounted",
+            "--source-ref",
+            "test:cli-claim-current",
+            "--proof-state",
+            "Pass",
+            "--trust-zone",
+            "workspace",
+            "--evidence-ref",
+            "current-claim",
+            "--claim-key",
+            "note_memory.console.state",
+            "--claim-value",
+            "mounted",
+        ]
+    )
+    second_envelope = _last_json(capsys)
+    list_code = guarded_main(["--note-store", str(note_store), "list-events"])
+    list_envelope = _last_json(capsys)
+
+    assert first_code == 0
+    assert second_code == 0
+    assert first_envelope["payload"]["event"]["claim_value"] == "disabled"
+    assert second_envelope["payload"]["event"]["claim_value"] == "mounted"
+    assert list_code == 0
+    assert list_envelope["payload"]["count"] == 3
+    contradiction = list_envelope["payload"]["events"][2]
+    assert contradiction["action"] == "contradict"
+    assert contradiction["claim_key"] == "note_memory.console.state"
+    assert contradiction["relation_refs"] == [first_envelope["payload"]["event"]["event_id"]]
+
+
+def test_cli_capture_episode_writes_structured_sidecar(tmp_path, capsys) -> None:
+    note_store = tmp_path / "notes"
+
+    capture_code = guarded_main(
+        [
+            "--note-store",
+            str(note_store),
+            "capture-episode",
+            "--episode-id",
+            "episode-cli-note-memory",
+            "--goal",
+            "Close governed note memory CLI capsule support",
+            "--scope",
+            "repository",
+            "--proof-state",
+            "Pass",
+            "--trust-zone",
+            "workspace",
+            "--constraint",
+            "Append-only event lineage remains intact",
+            "--decision",
+            "Expose capture-episode as a dedicated CLI command",
+            "--changed-file",
+            "mcoi/mcoi_runtime/core/note_memory_cli.py",
+            "--verification-ref",
+            "python -m pytest mcoi/tests/test_note_memory_cli.py",
+            "--evidence-ref",
+            "test_cli_capture_episode_writes_structured_sidecar",
+        ]
+    )
+    capture_envelope = _last_json(capsys)
+
+    capsule_path = note_store / "episodes" / "episode-cli-note-memory.json"
+    capsule = json.loads(capsule_path.read_text(encoding="utf-8"))
+
+    assert capture_code == 0
+    assert capture_envelope["status"] == "episode_capsule_captured"
+    assert capture_envelope["payload"]["event"]["kind"] == "EpisodeCapsule"
+    assert capsule["episode_id"] == "episode-cli-note-memory"
+    assert capsule["event_id"] == capture_envelope["payload"]["event"]["event_id"]
+    assert capsule["verification_refs"] == ["python -m pytest mcoi/tests/test_note_memory_cli.py"]
 
 
 def test_cli_blocks_direct_memory_anchor_and_records_rejected_delta(tmp_path, capsys) -> None:

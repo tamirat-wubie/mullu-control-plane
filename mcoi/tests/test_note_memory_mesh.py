@@ -18,6 +18,7 @@ import pytest
 
 from mcoi_runtime.core.invariants import RuntimeCoreInvariantError, stable_identifier
 from mcoi_runtime.core.note_memory_mesh import (
+    EpisodeCapsuleDraft,
     NoteAction,
     NoteKind,
     NoteMemoryDraft,
@@ -169,6 +170,153 @@ def test_event_id_relation_refs_block_retrieval_and_promotion_queue(tmp_path) ->
     assert source.note_id not in retrieved_ids
     assert blocker.note_id in retrieved_ids
     assert blocker.relation_refs == (source.event_id,)
+
+
+def test_claim_contradiction_detection_blocks_prior_active_note(tmp_path) -> None:
+    clock = MutableClock("2026-05-01T00:00:00+00:00")
+    mesh = _mesh(tmp_path, clock)
+    prior = mesh.capture_note(
+        NoteMemoryDraft(
+            kind=NoteKind.DECISION_RECORD,
+            scope=NoteScope.TASK,
+            content_summary="pilot extension health claim says note memory is disabled",
+            source_ref="test:claim-prior",
+            proof_state=ProofState.PASS,
+            trust_zone=TrustZone.WORKSPACE,
+            evidence_refs=("test_claim_prior",),
+            claim_key="note-memory.extension.state",
+            claim_value="disabled",
+        )
+    )
+    current = mesh.capture_note(
+        NoteMemoryDraft(
+            kind=NoteKind.DECISION_RECORD,
+            scope=NoteScope.TASK,
+            content_summary="pilot extension health claim says note memory is mounted",
+            source_ref="test:claim-current",
+            proof_state=ProofState.PASS,
+            trust_zone=TrustZone.WORKSPACE,
+            evidence_refs=("test_claim_current",),
+            claim_key="note-memory.extension.state",
+            claim_value="mounted",
+        )
+    )
+
+    retrieved_ids = {note.event.note_id for note in mesh.retrieve_notes("pilot extension", RetrievalGuard(scope=NoteScope.TASK))}
+    snapshot = mesh.dashboard_snapshot(now="2026-05-01T00:00:00+00:00")
+
+    assert mesh.event_count == 3
+    assert prior.note_id not in retrieved_ids
+    assert current.note_id in retrieved_ids
+    assert snapshot["summary"]["contradiction_count"] == 1
+    assert snapshot["summary"]["active_note_count"] == 1
+    assert snapshot["contradictions"][0]["relation_refs"] == [prior.event_id]
+    assert snapshot["audit_events"][0]["action"] == "contradict"
+
+
+def test_claim_detection_requires_key_and_value_pair(tmp_path) -> None:
+    clock = MutableClock("2026-05-01T00:00:00+00:00")
+    mesh = _mesh(tmp_path, clock)
+
+    with pytest.raises(RuntimeCoreInvariantError, match="claim_key and claim_value"):
+        mesh.capture_note(
+            NoteMemoryDraft(
+                kind=NoteKind.DECISION_RECORD,
+                scope=NoteScope.TASK,
+                content_summary="incomplete claim key",
+                source_ref="test:claim-missing-value",
+                proof_state=ProofState.PASS,
+                trust_zone=TrustZone.WORKSPACE,
+                evidence_refs=("test_claim_detection_requires_key_and_value_pair",),
+                claim_key="note-memory.extension.state",
+            )
+        )
+    with pytest.raises(RuntimeCoreInvariantError, match="claim_key and claim_value"):
+        mesh.capture_note(
+            NoteMemoryDraft(
+                kind=NoteKind.DECISION_RECORD,
+                scope=NoteScope.TASK,
+                content_summary="incomplete claim value",
+                source_ref="test:claim-missing-key",
+                proof_state=ProofState.PASS,
+                trust_zone=TrustZone.WORKSPACE,
+                evidence_refs=("test_claim_detection_requires_key_and_value_pair",),
+                claim_value="mounted",
+            )
+        )
+
+    assert mesh.event_count == 0
+
+
+def test_episode_capsule_writes_structured_sidecar_and_can_queue_promotion(tmp_path) -> None:
+    clock = MutableClock("2026-05-01T00:00:00+00:00")
+    mesh = _mesh(tmp_path, clock)
+
+    capsule = mesh.capture_episode_capsule(
+        EpisodeCapsuleDraft(
+            episode_id="episode-note-memory-console",
+            goal="Add note-memory console read model",
+            scope=NoteScope.REPOSITORY,
+            proof_state=ProofState.PASS,
+            trust_zone=TrustZone.WORKSPACE,
+            constraints=("fail closed when store path is missing",),
+            decisions=("surface note-memory through read-only console route",),
+            changed_files=("mcoi/mcoi_runtime/app/routers/console.py",),
+            verification_refs=("python -m pytest mcoi/tests/test_operator_console.py",),
+            open_risks=("live endpoint evidence not collected",),
+            evidence_refs=("test_episode_capsule_writes_structured_sidecar",),
+            relation_refs=("note-memory-console-route",),
+        )
+    )
+    promotion_id = mesh.queue_promotion(capsule.note_id)
+    capsule_path = tmp_path / "notes" / "episodes" / "episode-note-memory-console.json"
+    persisted = json.loads(capsule_path.read_text(encoding="utf-8"))
+    snapshot = mesh.dashboard_snapshot(now="2026-05-01T00:00:00+00:00")
+
+    assert capsule.kind == NoteKind.EPISODE_CAPSULE
+    assert capsule.action == NoteAction.CREATE
+    assert capsule.note_id == "episode-note-memory-console"
+    assert persisted["goal"] == "Add note-memory console read model"
+    assert persisted["event_id"] == capsule.event_id
+    assert persisted["verification_refs"] == ["python -m pytest mcoi/tests/test_operator_console.py"]
+    assert "checksum" in persisted
+    assert promotion_id.startswith("note-promotion-")
+    assert snapshot["summary"]["episode_capsule_count"] == 1
+    assert snapshot["episode_capsules"][0]["kind"] == "EpisodeCapsule"
+
+
+def test_episode_capsule_requires_evidence_refs(tmp_path) -> None:
+    clock = MutableClock("2026-05-01T00:00:00+00:00")
+    mesh = _mesh(tmp_path, clock)
+
+    with pytest.raises(RuntimeCoreInvariantError, match="requires evidence_refs"):
+        mesh.capture_episode_capsule(
+            EpisodeCapsuleDraft(
+                goal="Evidence-free capsule",
+                scope=NoteScope.TASK,
+                proof_state=ProofState.UNKNOWN,
+                trust_zone=TrustZone.WORKSPACE,
+            )
+        )
+
+    assert mesh.event_count == 0
+
+
+def test_episode_capsule_pass_requires_verification_refs(tmp_path) -> None:
+    clock = MutableClock("2026-05-01T00:00:00+00:00")
+    mesh = _mesh(tmp_path, clock)
+
+    with pytest.raises(RuntimeCoreInvariantError, match="verification_refs"):
+        mesh.capture_episode_capsule(
+            EpisodeCapsuleDraft(
+                goal="Unverified capsule",
+                scope=NoteScope.TASK,
+                proof_state=ProofState.PASS,
+                trust_zone=TrustZone.WORKSPACE,
+                evidence_refs=("test_episode_capsule_pass_requires_verification_refs",),
+            )
+        )
+    assert mesh.event_count == 0
 
 
 def test_expire_temporary_notes_blocks_stale_working_note(tmp_path) -> None:

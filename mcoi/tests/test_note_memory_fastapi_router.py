@@ -37,15 +37,17 @@ def _working_note(**overrides: object) -> dict[str, object]:
 def test_note_memory_fastapi_adapter_route_specs_are_stable() -> None:
     specs = NoteMemoryFastAPIAdapter.route_specs()
 
-    assert len(specs) == 8
+    assert len(specs) == 10
     assert [(spec.method, spec.path, spec.handler_name) for spec in specs] == [
         ("POST", "/api/v1/notes/events", "capture_note"),
         ("POST", "/api/v1/notes/rejected-deltas", "record_rejected_delta"),
+        ("POST", "/api/v1/notes/episodes", "capture_episode_capsule"),
         ("POST", "/api/v1/notes/retrieve", "retrieve_notes"),
         ("POST", "/api/v1/notes/expire", "expire_temporary_notes"),
         ("POST", "/api/v1/notes/promotions", "queue_promotion"),
         ("POST", "/api/v1/notes/anchors", "promote_memory_anchor"),
         ("POST", "/api/v1/notes/index/rebuild", "rebuild_index"),
+        ("GET", "/api/v1/notes/dashboard", "dashboard_snapshot"),
         ("GET", "/api/v1/notes/events", "list_events"),
     ]
     assert all(spec.purpose for spec in specs)
@@ -64,6 +66,65 @@ def test_note_memory_fastapi_adapter_handlers_preserve_runtime_envelopes(tmp_pat
     assert retrieved["payload"]["count"] == 1
     assert listed["payload"]["count"] == 1
     assert listed["payload"]["events"][0]["note_id"] == captured["payload"]["event"]["note_id"]
+
+
+def test_note_memory_fastapi_adapter_dashboard_snapshot_is_read_only(tmp_path) -> None:
+    runtime = NoteMemoryRuntime.from_path(tmp_path / "notes")
+    adapter = NoteMemoryFastAPIAdapter(runtime)
+    captured = adapter.capture_note(_working_note(content_summary="dashboard parser note"))
+
+    dashboard = adapter.dashboard_snapshot({"limit": 5})
+    listed = adapter.list_events()
+
+    assert dashboard["governed"] is True
+    assert dashboard["status"] == "dashboard_snapshot"
+    assert dashboard["payload"]["summary"]["event_count"] == 1
+    assert dashboard["payload"]["recent_notes"][0]["note_id"] == captured["payload"]["event"]["note_id"]
+    assert listed["payload"]["count"] == 1
+
+
+def test_created_note_memory_fastapi_router_exposes_dashboard_route(tmp_path) -> None:
+    from fastapi import FastAPI
+    from fastapi.testclient import TestClient
+
+    runtime = NoteMemoryRuntime.from_path(tmp_path / "notes")
+    captured = runtime.capture_note(_working_note(content_summary="router dashboard note")).to_dict()
+    app = FastAPI()
+    app.include_router(create_note_memory_fastapi_router(runtime))
+    client = TestClient(app)
+
+    dashboard = client.get("/api/v1/notes/dashboard?limit=5")
+    events = client.get("/api/v1/notes/events")
+
+    assert dashboard.status_code == 200
+    assert dashboard.json()["status"] == "dashboard_snapshot"
+    assert dashboard.json()["payload"]["summary"]["event_count"] == 1
+    assert dashboard.json()["payload"]["recent_notes"][0]["note_id"] == captured["payload"]["event"]["note_id"]
+    assert events.json()["payload"]["count"] == 1
+
+
+def test_note_memory_fastapi_adapter_captures_episode_capsule(tmp_path) -> None:
+    runtime = NoteMemoryRuntime.from_path(tmp_path / "notes")
+    adapter = NoteMemoryFastAPIAdapter(runtime)
+
+    envelope = adapter.capture_episode_capsule(
+        {
+            "episode_id": "episode-http-note-memory",
+            "goal": "Expose episode capsule route",
+            "scope": "repository",
+            "proof_state": "Pass",
+            "trust_zone": "workspace",
+            "decisions": ["keep episode capture behind runtime envelopes"],
+            "verification_refs": ["python -m pytest mcoi/tests/test_note_memory_fastapi_router.py"],
+            "evidence_refs": ["test_note_memory_fastapi_adapter_captures_episode_capsule"],
+        }
+    )
+
+    assert envelope["governed"] is True
+    assert envelope["ok"] is True
+    assert envelope["status"] == "episode_capsule_captured"
+    assert envelope["payload"]["event"]["kind"] == "EpisodeCapsule"
+    assert (tmp_path / "notes" / "episodes" / "episode-http-note-memory.json").exists()
 
 
 def test_note_memory_fastapi_adapter_rejections_do_not_persist(tmp_path) -> None:

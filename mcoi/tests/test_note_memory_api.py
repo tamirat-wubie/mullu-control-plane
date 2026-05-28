@@ -33,7 +33,9 @@ def _working_note(**overrides: object) -> dict[str, object]:
 def test_runtime_capture_retrieve_and_list_events_preserve_governed_envelopes(tmp_path) -> None:
     runtime = NoteMemoryRuntime.from_path(tmp_path / "notes")
 
-    captured = runtime.capture_note(_working_note()).to_dict()
+    captured = runtime.capture_note(
+        _working_note(claim_key="runtime.parser.state", claim_value="ready")
+    ).to_dict()
     retrieved = runtime.retrieve_notes({"query": "parser", "scope": "task"}).to_dict()
     listed = runtime.list_events().to_dict()
 
@@ -44,6 +46,8 @@ def test_runtime_capture_retrieve_and_list_events_preserve_governed_envelopes(tm
     assert retrieved["payload"]["count"] == 1
     assert listed["payload"]["count"] == 1
     assert listed["payload"]["events"][0]["note_id"] == captured["payload"]["event"]["note_id"]
+    assert listed["payload"]["events"][0]["claim_key"] == "runtime.parser.state"
+    assert listed["payload"]["events"][0]["claim_value"] == "ready"
 
 
 def test_runtime_rejects_invalid_capture_without_persisting(tmp_path) -> None:
@@ -100,6 +104,7 @@ def test_runtime_dashboard_snapshot_reports_operator_memory_state(tmp_path) -> N
     assert snapshot["status"] == "dashboard_snapshot"
     assert snapshot["payload"]["summary"]["event_count"] == 2
     assert snapshot["payload"]["summary"]["active_note_count"] == 1
+    assert snapshot["payload"]["summary"]["episode_capsule_count"] == 0
     assert snapshot["payload"]["summary"]["rejected_delta_count"] == 1
     assert snapshot["payload"]["summary"]["pending_promotion_count"] == 1
     assert snapshot["payload"]["summary"]["index_proof_state"] == "Pass"
@@ -133,6 +138,55 @@ def test_runtime_dashboard_snapshot_rejects_corrupt_promotion_queue(tmp_path) ->
     assert snapshot["ok"] is False
     assert snapshot["status"] == "rejected"
     assert "promotion queue entry missing promotion_id" in snapshot["error"]
+
+
+def test_runtime_episode_capsule_and_claim_contradiction_envelopes(tmp_path) -> None:
+    runtime = NoteMemoryRuntime.from_path(tmp_path / "notes")
+
+    prior = runtime.capture_note(
+        _working_note(
+            kind="DecisionRecord",
+            expires_at=None,
+            content_summary="runtime claim says note memory is disabled",
+            claim_key="runtime.note-memory.state",
+            claim_value="disabled",
+        )
+    ).to_dict()
+    current = runtime.capture_note(
+        _working_note(
+            kind="DecisionRecord",
+            expires_at=None,
+            content_summary="runtime claim says note memory is mounted",
+            claim_key="runtime.note-memory.state",
+            claim_value="mounted",
+        )
+    ).to_dict()
+    episode = runtime.capture_episode_capsule(
+        {
+            "episode_id": "episode-runtime-note-memory",
+            "goal": "Wire note-memory episode capsules",
+            "scope": "repository",
+            "proof_state": "Pass",
+            "trust_zone": "workspace",
+            "constraints": ["append-only note lineage"],
+            "decisions": ["use explicit claim metadata for contradiction detection"],
+            "changed_files": ["mcoi/mcoi_runtime/core/note_memory_mesh.py"],
+            "verification_refs": ["python -m pytest mcoi/tests/test_note_memory_api.py"],
+            "open_risks": [],
+            "evidence_refs": ["test_runtime_episode_capsule_and_claim_contradiction_envelopes"],
+            "relation_refs": [current["payload"]["event"]["event_id"]],
+        }
+    ).to_dict()
+    snapshot = runtime.dashboard_snapshot({"limit": 10}).to_dict()
+
+    assert prior["ok"] is True
+    assert current["ok"] is True
+    assert episode["status"] == "episode_capsule_captured"
+    assert episode["payload"]["event"]["kind"] == "EpisodeCapsule"
+    assert snapshot["payload"]["summary"]["event_count"] == 4
+    assert snapshot["payload"]["summary"]["contradiction_count"] == 1
+    assert snapshot["payload"]["summary"]["episode_capsule_count"] == 1
+    assert snapshot["payload"]["episode_capsules"][0]["note_id"] == "episode-runtime-note-memory"
 
 
 def test_runtime_queue_and_promote_memory_anchor_with_receipt(tmp_path) -> None:

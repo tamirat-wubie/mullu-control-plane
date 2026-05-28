@@ -1,9 +1,10 @@
 """Governed note and memory mesh.
 
-Purpose: capture temporary notes, execution traces, decisions, rejected deltas,
-and promoted memory anchors as bounded symbolic evidence.
+Purpose: capture temporary notes, execution traces, decisions, episode capsules,
+rejected deltas, and promoted memory anchors as bounded symbolic evidence.
 Governance scope: Phi_gov promotion gating, ProofState discipline, secret
-redaction, append-only lineage, retrieval guard checks, and Mfidel atomicity.
+redaction, append-only lineage, retrieval guard checks, deterministic
+claim-contradiction detection, and Mfidel atomicity.
 Dependencies: standard-library JSONL persistence, file locking, and runtime
 invariant helpers.
 Invariants: durable writes are append-only, secrets are redacted before
@@ -40,6 +41,7 @@ class NoteKind(StrEnum):
 
     EPHEMERAL_SCRATCH = "EphemeralScratch"
     WORKING_NOTE = "WorkingNote"
+    EPISODE_CAPSULE = "EpisodeCapsule"
     EXECUTION_TRACE = "ExecutionTrace"
     DECISION_RECORD = "DecisionRecord"
     REJECTED_DELTA = "RejectedDelta"
@@ -86,16 +88,20 @@ class PhiGovStatus(StrEnum):
 
 
 _TEMPORARY_KINDS = {NoteKind.EPHEMERAL_SCRATCH, NoteKind.WORKING_NOTE}
-_PROMOTABLE_KINDS = {NoteKind.WORKING_NOTE, NoteKind.DECISION_RECORD}
+_PROMOTABLE_KINDS = {NoteKind.WORKING_NOTE, NoteKind.EPISODE_CAPSULE, NoteKind.DECISION_RECORD}
 _DURABLE_NON_PROMOTABLE_KINDS = {NoteKind.EXECUTION_TRACE, NoteKind.REJECTED_DELTA}
 _DASHBOARD_ACTIVE_KINDS = {
     NoteKind.EPHEMERAL_SCRATCH,
     NoteKind.WORKING_NOTE,
+    NoteKind.EPISODE_CAPSULE,
     NoteKind.EXECUTION_TRACE,
     NoteKind.DECISION_RECORD,
     NoteKind.MEMORY_ANCHOR,
 }
 _DASHBOARD_TERMINAL_ACTIONS = {NoteAction.REJECT, NoteAction.CONTRADICT, NoteAction.EXPIRE}
+_CONTRADICTION_DETECTION_ACTIONS = {NoteAction.CREATE, NoteAction.APPEND, NoteAction.SUPERSEDE}
+_MAX_EPISODE_FIELD_LENGTH = 512
+_MAX_EPISODE_ITEMS = 50
 _REDACTION_PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
     ("private_key", re.compile(r"-----BEGIN [A-Z ]*PRIVATE KEY-----.*?-----END [A-Z ]*PRIVATE KEY-----", re.DOTALL)),
     ("jwt", re.compile(r"\beyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\b")),
@@ -154,6 +160,34 @@ def _tuple_text(values: Sequence[str] | None) -> tuple[str, ...]:
     return result
 
 
+def _bounded_text(value: str, field_name: str, *, max_length: int = _MAX_EPISODE_FIELD_LENGTH) -> str:
+    text = str(value).strip()
+    if not text:
+        raise RuntimeCoreInvariantError(f"{field_name} must be non-empty")
+    if len(text) > max_length:
+        raise RuntimeCoreInvariantError(f"{field_name} exceeds {max_length} characters")
+    return redact_sensitive_text(text)
+
+
+def _bounded_text_tuple(values: Sequence[str] | None, field_name: str) -> tuple[str, ...]:
+    if values is None:
+        return ()
+    if len(values) > _MAX_EPISODE_ITEMS:
+        raise RuntimeCoreInvariantError(f"{field_name} exceeds {_MAX_EPISODE_ITEMS} entries")
+    return tuple(_bounded_text(value, field_name) for value in values if str(value).strip())
+
+
+def _unique_text_tuple(values: Iterable[str]) -> tuple[str, ...]:
+    result: list[str] = []
+    seen: set[str] = set()
+    for value in values:
+        text = str(value).strip()
+        if text and text not in seen:
+            seen.add(text)
+            result.append(text)
+    return tuple(result)
+
+
 def _validate_symbol_identifier(value: str, field_name: str) -> str:
     text = value.strip()
     if not text:
@@ -161,6 +195,17 @@ def _validate_symbol_identifier(value: str, field_name: str) -> str:
     if ".." in text or not _SYMBOL_IDENTIFIER_PATTERN.fullmatch(text):
         raise RuntimeCoreInvariantError(f"{field_name} must be a bounded symbolic identifier")
     return text
+
+
+def _validate_optional_claim(claim_key: str, claim_value: str) -> tuple[str, str]:
+    key = str(claim_key or "").strip()
+    value = str(claim_value or "").strip()
+    if not key and not value:
+        return "", ""
+    if not key or not value:
+        raise RuntimeCoreInvariantError("claim_key and claim_value must be supplied together")
+    _validate_symbol_identifier(key, "claim_key")
+    return key, _bounded_text(value, "claim_value", max_length=256)
 
 
 def _required_promotion_text(entry: Mapping[str, object], field_name: str) -> str:
@@ -292,6 +337,8 @@ class NoteMemoryEvent:
     expires_at: str | None = None
     evidence_refs: tuple[str, ...] = ()
     relation_refs: tuple[str, ...] = ()
+    claim_key: str = ""
+    claim_value: str = ""
     checksum: str = ""
 
     def __post_init__(self) -> None:
@@ -315,6 +362,9 @@ class NoteMemoryEvent:
             raise RuntimeCoreInvariantError("promote action requires ProofState Pass")
         if self.action in {NoteAction.SUPERSEDE, NoteAction.CONTRADICT} and not self.relation_refs:
             raise RuntimeCoreInvariantError(f"{self.action.value} action requires relation_refs")
+        claim_key, claim_value = _validate_optional_claim(self.claim_key, self.claim_value)
+        object.__setattr__(self, "claim_key", claim_key)
+        object.__setattr__(self, "claim_value", claim_value)
         if _mfidel_violation_detected(self.content_summary, self.kind):
             raise RuntimeCoreInvariantError("Mfidel atomicity violation detected in note summary")
         if self.checksum and self.checksum != self.expected_checksum():
@@ -339,6 +389,9 @@ class NoteMemoryEvent:
             "evidence_refs": list(self.evidence_refs),
             "relation_refs": list(self.relation_refs),
         }
+        if self.claim_key and self.claim_value:
+            value["claim_key"] = self.claim_key
+            value["claim_value"] = self.claim_value
         if include_checksum:
             value["checksum"] = self.checksum
         return value
@@ -376,6 +429,8 @@ class NoteMemoryEvent:
             expires_at=str(value["expires_at"]) if value.get("expires_at") else None,
             evidence_refs=_tuple_text(value.get("evidence_refs") if isinstance(value.get("evidence_refs"), list) else ()),
             relation_refs=_tuple_text(value.get("relation_refs") if isinstance(value.get("relation_refs"), list) else ()),
+            claim_key=str(value.get("claim_key", "")),
+            claim_value=str(value.get("claim_value", "")),
             checksum=str(value.get("checksum", "")),
         )
 
@@ -394,7 +449,27 @@ class NoteMemoryDraft:
     note_id: str = ""
     evidence_refs: tuple[str, ...] = ()
     relation_refs: tuple[str, ...] = ()
+    claim_key: str = ""
+    claim_value: str = ""
     action: NoteAction = NoteAction.CREATE
+
+
+@dataclass(frozen=True)
+class EpisodeCapsuleDraft:
+    """Structured post-episode note summary for governed memory routing."""
+
+    goal: str
+    scope: NoteScope
+    proof_state: ProofState
+    trust_zone: TrustZone
+    constraints: tuple[str, ...] = ()
+    decisions: tuple[str, ...] = ()
+    changed_files: tuple[str, ...] = ()
+    verification_refs: tuple[str, ...] = ()
+    open_risks: tuple[str, ...] = ()
+    evidence_refs: tuple[str, ...] = ()
+    relation_refs: tuple[str, ...] = ()
+    episode_id: str = ""
 
 
 @dataclass(frozen=True)
@@ -502,8 +577,41 @@ class NoteMemoryMesh:
 
         if draft.kind == NoteKind.MEMORY_ANCHOR:
             raise RuntimeCoreInvariantError("MemoryAnchor writes must use promote_memory_anchor")
-        event = self._draft_to_event(draft)
-        return self._append_event(event)
+        with _WriteLock(self.root_path / "write.lock", clock=self._clock):
+            return self._capture_note_locked(draft)
+
+    def capture_episode_capsule(self, draft: EpisodeCapsuleDraft) -> NoteMemoryEvent:
+        """Capture one structured post-episode capsule and append its witness event."""
+
+        with _WriteLock(self.root_path / "write.lock", clock=self._clock):
+            capsule_payload = self._episode_capsule_payload(draft)
+            capsule_event = self._draft_to_event(
+                NoteMemoryDraft(
+                    kind=NoteKind.EPISODE_CAPSULE,
+                    scope=draft.scope,
+                    content_summary=self._episode_capsule_summary(capsule_payload),
+                    source_ref=f"episode:{capsule_payload['episode_id']}",
+                    proof_state=draft.proof_state,
+                    trust_zone=draft.trust_zone,
+                    note_id=str(capsule_payload["episode_id"]),
+                    evidence_refs=tuple(str(item) for item in capsule_payload["evidence_refs"]),
+                    relation_refs=tuple(str(item) for item in capsule_payload["relation_refs"]),
+                )
+            )
+            sequenced = self._sequence_event_locked(capsule_event)
+            persisted_payload = {
+                **capsule_payload,
+                "event_id": sequenced.event_id,
+                "event_seq": sequenced.event_seq,
+                "created_at": sequenced.created_at,
+            }
+            capsule_path = self._write_episode_capsule_locked(persisted_payload)
+            try:
+                self._write_event_locked(sequenced)
+            except OSError:
+                capsule_path.unlink(missing_ok=True)
+                raise
+            return sequenced
 
     def record_rejected_delta(
         self,
@@ -745,6 +853,7 @@ class NoteMemoryMesh:
         ]
         contradictions = [event for event in recent_events if event.action == NoteAction.CONTRADICT]
         memory_anchors = [event for event in recent_events if event.kind == NoteKind.MEMORY_ANCHOR]
+        episode_capsules = [event for event in recent_events if event.kind == NoteKind.EPISODE_CAPSULE]
         pending_promotions = sorted(
             self._pending_promotions(),
             key=lambda entry: str(entry.get("queued_at", "")),
@@ -760,6 +869,7 @@ class NoteMemoryMesh:
                 "expiring_note_count": len(expiring_notes),
                 "pending_promotion_count": len(pending_promotions),
                 "memory_anchor_count": len(memory_anchors),
+                "episode_capsule_count": len(episode_capsules),
                 "contradiction_count": len(contradictions),
                 "index_proof_state": index_report.proof_state.value,
             },
@@ -777,6 +887,7 @@ class NoteMemoryMesh:
                 for entry in pending_promotions[:limit]
             ],
             "memory_anchors": [self._event_dashboard_row(event) for event in memory_anchors[:limit]],
+            "episode_capsules": [self._event_dashboard_row(event) for event in episode_capsules[:limit]],
             "contradictions": [self._event_dashboard_row(event) for event in contradictions[:limit]],
             "audit_events": [self._event_dashboard_row(event) for event in recent_events[:limit]],
             "index": {
@@ -790,7 +901,7 @@ class NoteMemoryMesh:
     def _event_dashboard_row(self, event: NoteMemoryEvent) -> dict[str, object]:
         """Return a bounded operator row for one note event."""
 
-        return {
+        row: dict[str, object] = {
             "event_seq": event.event_seq,
             "event_id": event.event_id,
             "note_id": event.note_id,
@@ -806,6 +917,145 @@ class NoteMemoryMesh:
             "evidence_refs": list(event.evidence_refs),
             "relation_refs": list(event.relation_refs),
         }
+        if event.claim_key and event.claim_value:
+            row["claim_key"] = event.claim_key
+            row["claim_value"] = event.claim_value
+        return row
+
+    def _capture_note_locked(self, draft: NoteMemoryDraft) -> NoteMemoryEvent:
+        event = self._draft_to_event(draft)
+        prior_events = self.list_events(skip_invalid=False)
+        sequenced = self._sequence_event_locked(event)
+        self._write_event_locked(sequenced)
+        for contradiction_event in self._claim_contradiction_events(sequenced, prior_events):
+            self._write_event_locked(self._sequence_event_locked(contradiction_event))
+        return sequenced
+
+    def _claim_contradiction_events(
+        self,
+        event: NoteMemoryEvent,
+        prior_events: Sequence[NoteMemoryEvent],
+    ) -> tuple[NoteMemoryEvent, ...]:
+        if (
+            not event.claim_key
+            or not event.claim_value
+            or event.action not in _CONTRADICTION_DETECTION_ACTIONS
+            or event.kind == NoteKind.REJECTED_DELTA
+        ):
+            return ()
+        current = _parse_iso(event.created_at)
+        materialized = self._materialize(prior_events)
+        conflicts: list[NoteMemoryEvent] = []
+        for note_state in materialized.values():
+            prior = note_state.latest
+            if prior.claim_key != event.claim_key or prior.claim_value == event.claim_value:
+                continue
+            if note_state.expired or note_state.superseded or note_state.contradicted:
+                continue
+            if prior.expires_at is not None and _parse_iso(prior.expires_at) <= current:
+                continue
+            if prior.kind == NoteKind.REJECTED_DELTA or prior.action in _DASHBOARD_TERMINAL_ACTIONS:
+                continue
+            conflicts.append(prior)
+        if not conflicts:
+            return ()
+        conflict_refs = tuple(conflict.event_id for conflict in sorted(conflicts, key=lambda item: item.event_seq))
+        contradiction_note_id = stable_identifier(
+            "note-claim-contradiction",
+            {
+                "claim_key": event.claim_key,
+                "event_id": event.event_id,
+                "conflicts": ",".join(conflict_refs),
+            },
+        )
+        evidence_refs = _unique_text_tuple(tuple(event.evidence_refs) + (event.event_id,))
+        return (
+            self._draft_to_event(
+                NoteMemoryDraft(
+                    kind=NoteKind.DECISION_RECORD,
+                    action=NoteAction.CONTRADICT,
+                    scope=event.scope,
+                    content_summary=(
+                        f"Detected contradiction for claim {event.claim_key}: "
+                        f"new value {event.claim_value} conflicts with prior active note"
+                    ),
+                    source_ref=f"claim-contradiction:{event.event_id}",
+                    proof_state=event.proof_state,
+                    trust_zone=event.trust_zone,
+                    note_id=contradiction_note_id,
+                    evidence_refs=evidence_refs,
+                    relation_refs=conflict_refs,
+                    claim_key=event.claim_key,
+                    claim_value=event.claim_value,
+                )
+            ),
+        )
+
+    def _episode_capsule_payload(self, draft: EpisodeCapsuleDraft) -> dict[str, object]:
+        goal = _bounded_text(draft.goal, "goal")
+        constraints = _bounded_text_tuple(draft.constraints, "constraints")
+        decisions = _bounded_text_tuple(draft.decisions, "decisions")
+        changed_files = _bounded_text_tuple(draft.changed_files, "changed_files")
+        verification_refs = _bounded_text_tuple(draft.verification_refs, "verification_refs")
+        open_risks = _bounded_text_tuple(draft.open_risks, "open_risks")
+        evidence_refs = _bounded_text_tuple(draft.evidence_refs, "evidence_refs")
+        relation_refs = _bounded_text_tuple(draft.relation_refs, "relation_refs")
+        if draft.proof_state == ProofState.PASS and not verification_refs:
+            raise RuntimeCoreInvariantError("EpisodeCapsule with ProofState Pass requires verification_refs")
+        if not evidence_refs:
+            raise RuntimeCoreInvariantError("EpisodeCapsule requires evidence_refs")
+        episode_id = (
+            _validate_symbol_identifier(draft.episode_id, "episode_id")
+            if draft.episode_id.strip()
+            else stable_identifier(
+                "episode-capsule",
+                {
+                    "goal": goal,
+                    "evidence_refs": ",".join(evidence_refs),
+                    "verification_refs": ",".join(verification_refs),
+                    "created_at": self._clock(),
+                },
+            )
+        )
+        return {
+            "episode_id": episode_id,
+            "goal": goal,
+            "scope": draft.scope.value,
+            "proof_state": draft.proof_state.value,
+            "trust_zone": draft.trust_zone.value,
+            "constraints": list(constraints),
+            "decisions": list(decisions),
+            "changed_files": list(changed_files),
+            "verification_refs": list(verification_refs),
+            "open_risks": list(open_risks),
+            "evidence_refs": list(evidence_refs),
+            "relation_refs": list(relation_refs),
+        }
+
+    def _episode_capsule_summary(self, payload: Mapping[str, object]) -> str:
+        decisions = payload.get("decisions", [])
+        verifications = payload.get("verification_refs", [])
+        risks = payload.get("open_risks", [])
+        return (
+            f"Episode capsule {payload['episode_id']}: goal={payload['goal']}; "
+            f"decisions={len(decisions) if isinstance(decisions, list) else 0}; "
+            f"verification_refs={len(verifications) if isinstance(verifications, list) else 0}; "
+            f"open_risks={len(risks) if isinstance(risks, list) else 0}"
+        )
+
+    def _write_episode_capsule_locked(self, payload: Mapping[str, object]) -> Path:
+        episode_id = _validate_symbol_identifier(str(payload["episode_id"]), "episode_id")
+        capsule_path = self.root_path / "episodes" / f"{episode_id}.json"
+        capsule_path.parent.mkdir(parents=True, exist_ok=True)
+        stored_payload = dict(payload)
+        stored_payload["checksum"] = _checksum_for_payload(stored_payload)
+        try:
+            with capsule_path.open("x", encoding="utf-8") as handle:
+                handle.write(_canonical_json(stored_payload))
+                handle.write("\n")
+        except FileExistsError as exc:
+            raise RuntimeCoreInvariantError(f"episode capsule already exists: {episode_id}") from exc
+        return capsule_path
 
     def _promotion_dashboard_row(self, entry: Mapping[str, object]) -> dict[str, object]:
         """Return a bounded operator row for one pending promotion entry."""
@@ -837,6 +1087,7 @@ class NoteMemoryMesh:
         redacted_summary = redact_sensitive_text(draft.content_summary.strip())
         redacted_source = redact_sensitive_text(draft.source_ref.strip())
         redacted_evidence = _redact_sequence(draft.evidence_refs)
+        claim_key, claim_value = _validate_optional_claim(draft.claim_key, draft.claim_value)
         note_id = _validate_symbol_identifier(draft.note_id, "note_id") if draft.note_id.strip() else stable_identifier(
             "note",
             {
@@ -862,6 +1113,8 @@ class NoteMemoryMesh:
             expires_at=draft.expires_at,
             evidence_refs=redacted_evidence,
             relation_refs=_tuple_text(draft.relation_refs),
+            claim_key=claim_key,
+            claim_value=claim_value,
         )
 
     def _append_event(self, event: NoteMemoryEvent) -> NoteMemoryEvent:
