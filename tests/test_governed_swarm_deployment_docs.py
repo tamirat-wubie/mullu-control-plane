@@ -26,6 +26,8 @@ def test_governed_swarm_env_example_lists_required_activation_contract() -> None
     assert "MULLU_GOVERNED_SWARM_RUNTIME_PATH=" in text
     assert "mcoi_runtime/swarm" in text
     assert "audit store required when enabled" in text
+    assert "absolute persistent .jsonl file path" in text
+    assert "parent directory must already exist and be writable" in text
     assert "control-plane-bundled-runtime" in text
     assert "mullu-control-plane" in text
 
@@ -36,10 +38,14 @@ def test_deployment_docs_reference_governed_swarm_feature_flag_boundary() -> Non
     readme = _read("README.md")
 
     for text in (deployment, production, readme):
+        lowered = text.lower()
         assert "MULLU_GOVERNED_SWARM_ENABLED" in text
         assert "MULLU_GOVERNED_SWARM_AUDIT_STORE_PATH" in text
         assert "MULLU_GOVERNED_SWARM_RUNTIME_PATH" in text
         assert "mcoi_runtime/swarm" in text
+        assert "absolute" in lowered
+        assert ".jsonl" in lowered
+        assert "writable" in lowered
     for text in (deployment, production):
         assert "control-plane-bundled-runtime" in text
         assert "tamirat-wubie/mullu-control-plane" in text
@@ -55,6 +61,9 @@ def test_staging_activation_runbook_binds_witness_and_rollback() -> None:
     assert "tamirat-wubie/mullu-control-plane" in text
     assert "MULLU_GOVERNED_SWARM_ENABLED=true" in text
     assert "MULLU_GOVERNED_SWARM_AUDIT_STORE_PATH" in text
+    assert "no absolute audit store file path with an existing writable parent means no swarm mount" in text
+    assert '"run_id": "run_staging_invoice_001"' in text
+    assert '"invoice_amount_usd": "125.50"' in text
     assert "/api/v1/swarm/invoice-runs" in text
     assert "scripts/collect_governed_swarm_staging_activation_witness.py" in text
     assert ".github/workflows/governed-swarm-staging-witness.yml" in text

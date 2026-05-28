@@ -55,14 +55,16 @@ configured. It is disabled by default and requires an append-only audit store:
 
 ```text
 MULLU_GOVERNED_SWARM_ENABLED=true
-MULLU_GOVERNED_SWARM_AUDIT_STORE_PATH=<persistent-jsonl-path>
+MULLU_GOVERNED_SWARM_AUDIT_STORE_PATH=<absolute-persistent-jsonl-file>
 MULLU_GOVERNED_SWARM_RUNTIME_PATH=<runtime-root-containing-mcoi_runtime/swarm>
 ```
 
 The governed swarm runtime is bundled in `tamirat-wubie/mullu-control-plane`.
 `MULLU_GOVERNED_SWARM_RUNTIME_PATH` is only needed when the runtime package is
 loaded from a non-standard checkout; the path must point at this repository's
-`mcoi` directory.
+`mcoi` directory. The audit store path must be absolute, must point to a file,
+must use a `.jsonl` extension, and its parent directory must already exist and
+be writable before startup.
 
 When enabled, the first route family is the governed invoice swarm:
 

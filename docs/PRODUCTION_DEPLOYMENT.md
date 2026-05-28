@@ -138,7 +138,7 @@ Variables are grouped by purpose. Every row marks whether the variable is **requ
 | Variable | Required | Default | Notes |
 |---|---|---|---|
 | `MULLU_GOVERNED_SWARM_ENABLED` | optional | unset / disabled | Optional governed swarm route mount. The route surface is disabled by default and mounts only when explicitly truthy. |
-| `MULLU_GOVERNED_SWARM_AUDIT_STORE_PATH` | yes, if enabled | unset | Append-only JSONL audit store for governed swarm run receipts. Use persistent storage in pilot and production. |
+| `MULLU_GOVERNED_SWARM_AUDIT_STORE_PATH` | yes, if enabled | unset | Absolute append-only `.jsonl` audit file path for governed swarm run receipts. Use persistent storage in pilot and production. The parent directory must already exist and be writable before startup. |
 | `MULLU_GOVERNED_SWARM_RUNTIME_PATH` | optional | unset | Runtime bridge for non-standard checkouts. Set to this repository's `mcoi` directory only when the installed package cannot import bundled `mcoi_runtime/swarm`. |
 
 Enabled routes:
@@ -153,6 +153,9 @@ Operational rule:
 
 ```text
 No audit store path, no governed swarm mount.
+Relative audit store path, no governed swarm mount.
+Audit store path without .jsonl extension, no governed swarm mount.
+Audit store parent missing or not writable, no governed swarm mount.
 No runtime path containing mcoi_runtime/swarm, no optional runtime bridge.
 ```
 
