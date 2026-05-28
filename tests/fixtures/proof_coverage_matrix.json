@@ -839,9 +839,9 @@
       "request_proof": 0
     },
     "by_coverage_state": {
-      "proven": 11,
+      "proven": 16,
       "unproven": 0,
-      "witnessed": 107
+      "witnessed": 102
     },
     "by_request_proof": {
       "action_proof": 1,
@@ -864,9 +864,9 @@
   "generated_by": "scripts/proof_coverage_matrix.py",
   "route_coverage": {
     "by_coverage_state": {
-      "proven": 32,
+      "proven": 37,
       "unproven": 0,
-      "witnessed": 333
+      "witnessed": 328
     },
     "route_count": 365,
     "routes": [
@@ -1491,7 +1491,7 @@
         "surface_id": "data_export_lifecycle"
       },
       {
-        "coverage_state": "witnessed",
+        "coverage_state": "proven",
         "route": "/api/v1/federation/summary",
         "surface_id": "federated_control_plane"
       },
@@ -2526,7 +2526,7 @@
         "surface_id": "capability_plan_evidence_bundle"
       },
       {
-        "coverage_state": "witnessed",
+        "coverage_state": "proven",
         "route": "/capability/execute",
         "surface_id": "capability_worker_execution"
       },
@@ -2561,7 +2561,7 @@
         "surface_id": "restricted_adapter_worker_boundaries"
       },
       {
-        "coverage_state": "witnessed",
+        "coverage_state": "proven",
         "route": "/evidence/bundles/{command_id}",
         "surface_id": "trust_ledger"
       },
@@ -2586,12 +2586,12 @@
         "surface_id": "restricted_adapter_worker_boundaries"
       },
       {
-        "coverage_state": "witnessed",
+        "coverage_state": "proven",
         "route": "/runtime/conformance",
         "surface_id": "runtime_conformance_attestation"
       },
       {
-        "coverage_state": "witnessed",
+        "coverage_state": "proven",
         "route": "/runtime/self/capability-improvement-portfolio",
         "surface_id": "autonomous_capability_upgrade"
       },
@@ -2791,7 +2791,7 @@
     {
       "action_proof": "action_proof",
       "audit": "audit_chain",
-      "coverage_state": "witnessed",
+      "coverage_state": "proven",
       "evidence_files": [
         "gateway/capability_worker.py",
         "gateway/capability_isolation.py",
@@ -4066,7 +4066,7 @@
     {
       "action_proof": "read_model",
       "audit": "read_model",
-      "coverage_state": "witnessed",
+      "coverage_state": "proven",
       "evidence_files": [
         "gateway/federated_control.py",
         "gateway/server.py",
@@ -5832,7 +5832,7 @@
     {
       "action_proof": "read_model",
       "audit": "audit_chain",
-      "coverage_state": "witnessed",
+      "coverage_state": "proven",
       "evidence_files": [
         "gateway/server.py",
         "gateway/conformance.py",
@@ -7153,7 +7153,7 @@
     {
       "action_proof": "action_proof",
       "audit": "audit_chain",
-      "coverage_state": "witnessed",
+      "coverage_state": "proven",
       "evidence_files": [
         "docs/62_governed_operational_intelligence.md",
         "docs/65_trust_ledger_offline_verification.md",
@@ -8749,7 +8749,7 @@
     {
       "action_proof": "action_proof",
       "audit": "audit_chain",
-      "coverage_state": "witnessed",
+      "coverage_state": "proven",
       "evidence_files": [
         "gateway/autonomous_capability_upgrade.py",
         "schemas/capability_improvement_portfolio.schema.json",

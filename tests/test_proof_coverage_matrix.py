@@ -933,7 +933,7 @@ def test_federated_control_plane_surface_is_witnessed() -> None:
     federation_surface = surfaces["federated_control_plane"]
     witnesses = set(federation_surface["runtime_witnesses"])
 
-    assert federation_surface["coverage_state"] == "witnessed"
+    assert federation_surface["coverage_state"] == "proven"
     assert federation_surface["request_proof"] == "read_model"
     assert federation_surface["action_proof"] == "read_model"
     assert "/api/v1/federation/summary" in federation_surface["representative_paths"]
@@ -1001,7 +1001,7 @@ def test_capability_worker_execution_surface_is_witnessed() -> None:
     worker_surface = surfaces["capability_worker_execution"]
     witnesses = set(worker_surface["runtime_witnesses"])
 
-    assert worker_surface["coverage_state"] == "witnessed"
+    assert worker_surface["coverage_state"] == "proven"
     assert worker_surface["request_proof"] == "request_proof"
     assert worker_surface["action_proof"] == "action_proof"
     assert worker_surface["audit"] == "audit_chain"
@@ -3026,7 +3026,7 @@ def test_trust_ledger_surface_signs_terminal_evidence_bundles() -> None:
     trust_surface = surfaces["trust_ledger"]
     witnesses = set(trust_surface["runtime_witnesses"])
 
-    assert trust_surface["coverage_state"] == "witnessed"
+    assert trust_surface["coverage_state"] == "proven"
     assert trust_surface["request_proof"] == "request_proof"
     assert trust_surface["action_proof"] == "action_proof"
     assert "/evidence/bundles/{command_id}" in trust_surface["representative_paths"]
@@ -3918,7 +3918,7 @@ def test_autonomous_capability_upgrade_surface_keeps_plans_activation_blocked() 
     upgrade_surface = surfaces["autonomous_capability_upgrade"]
     witnesses = set(upgrade_surface["runtime_witnesses"])
 
-    assert upgrade_surface["coverage_state"] == "witnessed"
+    assert upgrade_surface["coverage_state"] == "proven"
     assert upgrade_surface["request_proof"] == "request_proof"
     assert upgrade_surface["action_proof"] == "action_proof"
     assert "gateway/autonomous_capability_upgrade.py" in upgrade_surface["evidence_files"]

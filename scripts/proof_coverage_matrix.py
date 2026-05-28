@@ -152,7 +152,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
             "request_proof",
             "action_proof",
             "audit_chain",
-            "witnessed",
+            "proven",
             [
                 "gateway/capability_worker.py",
                 "gateway/capability_isolation.py",
@@ -1252,7 +1252,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
             "read_model",
             "read_model",
             "read_model",
-            "witnessed",
+            "proven",
             [
                 "gateway/federated_control.py",
                 "gateway/server.py",
@@ -2991,7 +2991,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
             "read_model",
             "read_model",
             "audit_chain",
-            "witnessed",
+            "proven",
             [
                 "gateway/server.py",
                 "gateway/conformance.py",
@@ -4319,7 +4319,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
             "request_proof",
             "action_proof",
             "audit_chain",
-            "witnessed",
+            "proven",
             [
                 "docs/62_governed_operational_intelligence.md",
                 "docs/65_trust_ledger_offline_verification.md",
@@ -5901,7 +5901,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
             "request_proof",
             "action_proof",
             "audit_chain",
-            "witnessed",
+            "proven",
             [
                 "gateway/autonomous_capability_upgrade.py",
                 "schemas/capability_improvement_portfolio.schema.json",
