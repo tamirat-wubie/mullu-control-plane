@@ -281,6 +281,9 @@ def test_episode_capsule_writes_structured_sidecar_and_can_queue_promotion(tmp_p
     assert persisted["verification_refs"] == ["python -m pytest mcoi/tests/test_operator_console.py"]
     assert "checksum" in persisted
     assert promotion_id.startswith("note-promotion-")
+    assert snapshot["snapshot_id"].startswith("note-memory-dashboard-")
+    assert len(snapshot["snapshot_hash"]) == 64
+    assert snapshot["assessed_at"] == "2026-05-01T00:00:00+00:00"
     assert snapshot["summary"]["episode_capsule_count"] == 1
     assert snapshot["episode_capsules"][0]["kind"] == "EpisodeCapsule"
 
