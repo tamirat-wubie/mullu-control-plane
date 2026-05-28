@@ -13,7 +13,10 @@ frontend can consume. Seven views cover the core operational needs:
 """
 from __future__ import annotations
 
+from html import escape
+
 from fastapi import APIRouter
+from fastapi.responses import HTMLResponse
 
 from mcoi_runtime.app.routers.deps import deps
 
@@ -290,6 +293,7 @@ def _empty_note_memory_payload(extension: dict[str, object]) -> dict[str, object
             "expiring_note_count": 0,
             "pending_promotion_count": 0,
             "memory_anchor_count": 0,
+            "episode_capsule_count": 0,
             "contradiction_count": 0,
             "index_proof_state": "Unknown",
         },
@@ -298,6 +302,7 @@ def _empty_note_memory_payload(extension: dict[str, object]) -> dict[str, object
         "expiring_notes": [],
         "pending_promotions": [],
         "memory_anchors": [],
+        "episode_capsules": [],
         "contradictions": [],
         "audit_events": [],
         "index": {
@@ -346,6 +351,143 @@ def console_note_memory(limit: int = 25):
         **snapshot,
         "error": "",
     }
+
+
+@router.get("/api/v1/console/note-memory/view", response_class=HTMLResponse)
+def console_note_memory_view(limit: int = 25):
+    """Browser-facing read-only note-memory operator view."""
+
+    payload = console_note_memory(limit=limit)
+    return HTMLResponse(_render_note_memory_console_html(payload))
+
+
+def _render_note_memory_console_html(payload: dict[str, object]) -> str:
+    """Render the note-memory read model as a compact escaped HTML console."""
+
+    summary = _mapping_value(payload, "summary")
+    extension = _mapping_value(payload, "extension")
+    status = escape(str(payload.get("status", "")))
+    extension_state = escape(str(extension.get("state", "")))
+    error = escape(str(payload.get("error", "")))
+    metrics = [
+        ("Events", summary.get("event_count", 0)),
+        ("Active Notes", summary.get("active_note_count", 0)),
+        ("Rejected Deltas", summary.get("rejected_delta_count", 0)),
+        ("Expiring Notes", summary.get("expiring_note_count", 0)),
+        ("Pending Promotions", summary.get("pending_promotion_count", 0)),
+        ("Memory Anchors", summary.get("memory_anchor_count", 0)),
+        ("Episode Capsules", summary.get("episode_capsule_count", 0)),
+        ("Contradictions", summary.get("contradiction_count", 0)),
+        ("Index Proof", summary.get("index_proof_state", "Unknown")),
+    ]
+    metric_items = "\n".join(
+        "<li>"
+        f"<span>{escape(label)}</span>"
+        f"<strong>{escape(str(value))}</strong>"
+        "</li>"
+        for label, value in metrics
+    )
+    error_block = f"<p class=\"error\">{error}</p>" if error else ""
+    return f"""<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Mullu Note Memory Console</title>
+  <style>
+    body {{ font-family: system-ui, sans-serif; margin: 24px; color: #17202a; background: #fafbfc; }}
+    header {{ margin-bottom: 20px; }}
+    nav {{ display: flex; gap: 14px; margin: 12px 0 18px; }}
+    a {{ color: #0f766e; }}
+    .metrics {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; padding: 0; }}
+    .metrics li {{ list-style: none; border: 1px solid #d8dee4; border-radius: 6px; padding: 10px; background: #ffffff; }}
+    .metrics span {{ display: block; color: #57606a; font-size: 12px; }}
+    .metrics strong {{ display: block; margin-top: 4px; font-size: 18px; }}
+    table {{ border-collapse: collapse; width: 100%; margin: 12px 0 28px; background: #ffffff; }}
+    th, td {{ border: 1px solid #d8dee4; padding: 8px; text-align: left; font-size: 14px; vertical-align: top; }}
+    th {{ background: #f6f8fa; }}
+    .error {{ color: #9f1239; font-weight: 600; }}
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Mullu Note Memory Console</h1>
+    <nav>
+      <a href="/api/v1/console/note-memory">json read model</a>
+      <a href="/api/v1/console">full console json</a>
+    </nav>
+    <p>Status: <strong>{status}</strong> | Extension: <strong>{extension_state}</strong></p>
+    {error_block}
+    <ul class="metrics">
+      {metric_items}
+    </ul>
+  </header>
+  {_note_memory_event_table("Recent Notes", payload.get("recent_notes", ()))}
+  {_note_memory_event_table("Rejected Deltas", payload.get("rejected_deltas", ()))}
+  {_note_memory_event_table("Episode Capsules", payload.get("episode_capsules", ()))}
+  {_note_memory_promotion_table(payload.get("pending_promotions", ()))}
+  {_note_memory_event_table("Audit Events", payload.get("audit_events", ()))}
+</body>
+</html>"""
+
+
+def _note_memory_event_table(title: str, raw_rows: object) -> str:
+    rows = _sequence_of_mappings(raw_rows)
+    body = "\n".join(
+        "<tr>"
+        f"<td>{escape(str(row.get('event_seq', '')))}</td>"
+        f"<td>{escape(str(row.get('kind', '')))}</td>"
+        f"<td>{escape(str(row.get('action', '')))}</td>"
+        f"<td>{escape(str(row.get('scope', '')))}</td>"
+        f"<td>{escape(str(row.get('proof_state', '')))}</td>"
+        f"<td>{escape(str(row.get('content_summary', '')))}</td>"
+        f"<td>{escape(str(row.get('source_ref', '')))}</td>"
+        "</tr>"
+        for row in rows
+    )
+    if not body:
+        body = "<tr><td colspan=\"7\">No records</td></tr>"
+    return f"""
+  <section>
+    <h2>{escape(title)}</h2>
+    <table>
+      <thead><tr><th>Seq</th><th>Kind</th><th>Action</th><th>Scope</th><th>Proof</th><th>Summary</th><th>Source</th></tr></thead>
+      <tbody>{body}</tbody>
+    </table>
+  </section>"""
+
+
+def _note_memory_promotion_table(raw_rows: object) -> str:
+    rows = _sequence_of_mappings(raw_rows)
+    body = "\n".join(
+        "<tr>"
+        f"<td>{escape(str(row.get('promotion_id', '')))}</td>"
+        f"<td>{escape(str(row.get('source_note_id', '')))}</td>"
+        f"<td>{escape(str(row.get('source_event_seq', '')))}</td>"
+        f"<td>{escape(str(row.get('queued_at', '')))}</td>"
+        "</tr>"
+        for row in rows
+    )
+    if not body:
+        body = "<tr><td colspan=\"4\">No pending promotions</td></tr>"
+    return f"""
+  <section>
+    <h2>Pending Promotions</h2>
+    <table>
+      <thead><tr><th>Promotion</th><th>Source Note</th><th>Source Seq</th><th>Queued</th></tr></thead>
+      <tbody>{body}</tbody>
+    </table>
+  </section>"""
+
+
+def _mapping_value(value: dict[str, object], key: str) -> dict[str, object]:
+    child = value.get(key)
+    return dict(child) if isinstance(child, dict) else {}
+
+
+def _sequence_of_mappings(value: object) -> list[dict[str, object]]:
+    if not isinstance(value, list):
+        return []
+    return [dict(item) for item in value if isinstance(item, dict)]
 
 
 @router.get("/api/v1/console")

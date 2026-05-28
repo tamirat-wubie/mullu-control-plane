@@ -39,6 +39,7 @@ active_holds
 active_initiatives
 active_leases
 active_listings
+active_note_count
 active_objectives
 active_offerings
 active_plans
@@ -495,6 +496,9 @@ event_b_ref
 event_count
 event_id
 event_type
+episode_capsule_count
+expiring_note_count
+extension_state
 events_polled
 evidence
 evidence_count
@@ -642,6 +646,7 @@ impacted_count
 import_id
 imported_count
 improvement_rate
+index_proof_state
 incentive_id
 incentive_ref
 incident_id
@@ -797,6 +802,7 @@ member_count
 member_id
 members
 memory_id
+memory_anchor_count
 memory_type
 merged_count
 message
@@ -849,6 +855,7 @@ nominal
 normalized_deadline
 normalized_owner
 normalized_text
+note_memory
 notes
 notice_id
 object_count
@@ -958,6 +965,7 @@ penalty_id
 pending_approval_count
 pending_event_count
 pending_events
+pending_promotion_count
 pending_queue_items
 pending_rate
 pending_scenarios
@@ -1112,6 +1120,7 @@ registered_at
 regression_id
 regret_score
 rejected_option_ids entry
+rejected_delta_count
 rejected_requests
 rejections
 relation

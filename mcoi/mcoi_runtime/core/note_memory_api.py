@@ -21,6 +21,7 @@ from typing import Any, Mapping, Sequence
 
 from mcoi_runtime.core.invariants import RuntimeCoreInvariantError
 from mcoi_runtime.core.note_memory_mesh import (
+    EpisodeCapsuleDraft,
     NoteAction,
     NoteKind,
     NoteMemoryDraft,
@@ -88,6 +89,15 @@ class NoteMemoryRuntime:
                 evidence_refs=_text_tuple(request_body.get("evidence_refs")),
             )
             return _ok("rejected_delta_recorded", {"event": event.to_dict()})
+        except (KeyError, TypeError, ValueError, RuntimeCoreInvariantError) as exc:
+            return _rejected(exc)
+
+    def capture_episode_capsule(self, request_body: Mapping[str, Any]) -> NoteMemoryEnvelope:
+        """Capture one structured post-episode capsule."""
+
+        try:
+            event = self.mesh.capture_episode_capsule(_episode_capsule_from_mapping(request_body))
+            return _ok("episode_capsule_captured", {"event": event.to_dict()})
         except (KeyError, TypeError, ValueError, RuntimeCoreInvariantError) as exc:
             return _rejected(exc)
 
@@ -176,6 +186,25 @@ def _draft_from_mapping(value: Mapping[str, Any]) -> NoteMemoryDraft:
         note_id=str(value.get("note_id", "")),
         evidence_refs=_text_tuple(value.get("evidence_refs")),
         relation_refs=_text_tuple(value.get("relation_refs")),
+        claim_key=str(value.get("claim_key", "")),
+        claim_value=str(value.get("claim_value", "")),
+    )
+
+
+def _episode_capsule_from_mapping(value: Mapping[str, Any]) -> EpisodeCapsuleDraft:
+    return EpisodeCapsuleDraft(
+        goal=_required_text(value, "goal"),
+        scope=NoteScope(_required_text(value, "scope")),
+        proof_state=ProofState(_required_text(value, "proof_state")),
+        trust_zone=TrustZone(_required_text(value, "trust_zone")),
+        constraints=_text_tuple(value.get("constraints")),
+        decisions=_text_tuple(value.get("decisions")),
+        changed_files=_text_tuple(value.get("changed_files")),
+        verification_refs=_text_tuple(value.get("verification_refs")),
+        open_risks=_text_tuple(value.get("open_risks")),
+        evidence_refs=_text_tuple(value.get("evidence_refs")),
+        relation_refs=_text_tuple(value.get("relation_refs")),
+        episode_id=str(value.get("episode_id", "")),
     )
 
 

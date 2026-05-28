@@ -9,6 +9,7 @@ from mcoi_runtime.contracts.dashboard import (
     DecisionSummary,
     LearningInsight,
     MetaReasoningSummary,
+    NoteMemorySummary,
     ProviderRoutingSummary,
     ReliabilityPillarSummary,
 )
@@ -192,6 +193,71 @@ class TestLearningInsight:
             explanation="no change",
         )
         assert i.direction == "stable"
+
+
+# ---------------------------------------------------------------------------
+# NoteMemorySummary
+# ---------------------------------------------------------------------------
+
+
+def _note_summary(
+    *,
+    summary_id: str = "note-summary-1",
+    status: str = "ready",
+    extension_state: str = "mounted",
+    event_count: int = 3,
+    active_note_count: int = 1,
+    rejected_delta_count: int = 1,
+    expiring_note_count: int = 1,
+    pending_promotion_count: int = 1,
+    memory_anchor_count: int = 0,
+    episode_capsule_count: int = 0,
+    contradiction_count: int = 0,
+    index_proof_state: str = "Pass",
+    assessed_at: str = "2026-03-20T00:00:00Z",
+) -> NoteMemorySummary:
+    return NoteMemorySummary(
+        summary_id=summary_id,
+        status=status,
+        extension_state=extension_state,
+        event_count=event_count,
+        active_note_count=active_note_count,
+        rejected_delta_count=rejected_delta_count,
+        expiring_note_count=expiring_note_count,
+        pending_promotion_count=pending_promotion_count,
+        memory_anchor_count=memory_anchor_count,
+        episode_capsule_count=episode_capsule_count,
+        contradiction_count=contradiction_count,
+        index_proof_state=index_proof_state,
+        assessed_at=assessed_at,
+    )
+
+
+class TestNoteMemorySummary:
+    def test_valid_summary(self) -> None:
+        summary = _note_summary()
+
+        assert summary.status == "ready"
+        assert summary.extension_state == "mounted"
+        assert summary.event_count == 3
+        assert summary.pending_promotion_count == 1
+        assert summary.episode_capsule_count == 0
+
+    def test_empty_status_raises(self) -> None:
+        with pytest.raises(ValueError, match="status"):
+            _note_summary(status="")
+
+    def test_negative_pending_promotion_count_raises(self) -> None:
+        with pytest.raises(ValueError, match="pending_promotion_count"):
+            _note_summary(pending_promotion_count=-1)
+
+    def test_negative_episode_capsule_count_raises(self) -> None:
+        with pytest.raises(ValueError, match="episode_capsule_count"):
+            _note_summary(episode_capsule_count=-1)
+
+    def test_invalid_assessed_at_raises(self) -> None:
+        with pytest.raises(ValueError, match="assessed_at"):
+            _note_summary(assessed_at="not-a-date")
 
 
 # ---------------------------------------------------------------------------
@@ -589,4 +655,50 @@ class TestDashboardSnapshotMetaReasoning:
                 provider_summaries=(),
                 learning_insights=(),
                 meta_reasoning="not-a-summary",  # type: ignore[arg-type]
+            )
+
+
+# ---------------------------------------------------------------------------
+# DashboardSnapshot with note_memory
+# ---------------------------------------------------------------------------
+
+
+class TestDashboardSnapshotNoteMemory:
+    def test_default_none(self) -> None:
+        snap = DashboardSnapshot(
+            snapshot_id="snap-no-note",
+            captured_at=_TS,
+            total_decisions=0,
+            total_routing_decisions=0,
+            recent_decisions=(),
+            provider_summaries=(),
+            learning_insights=(),
+        )
+        assert snap.note_memory is None
+
+    def test_with_note_memory(self) -> None:
+        snap = DashboardSnapshot(
+            snapshot_id="snap-note",
+            captured_at=_TS,
+            total_decisions=0,
+            total_routing_decisions=0,
+            recent_decisions=(),
+            provider_summaries=(),
+            learning_insights=(),
+            note_memory=_note_summary(),
+        )
+        assert snap.note_memory is not None
+        assert snap.note_memory.index_proof_state == "Pass"
+
+    def test_invalid_note_memory_type_raises(self) -> None:
+        with pytest.raises(ValueError, match="note_memory"):
+            DashboardSnapshot(
+                snapshot_id="snap-bad-note",
+                captured_at=_TS,
+                total_decisions=0,
+                total_routing_decisions=0,
+                recent_decisions=(),
+                provider_summaries=(),
+                learning_insights=(),
+                note_memory="not-a-summary",  # type: ignore[arg-type]
             )

@@ -18,13 +18,14 @@ Invariants:
 
 from __future__ import annotations
 
-from typing import Callable
+from typing import Any, Callable, Mapping
 
 from mcoi_runtime.contracts.dashboard import (
     DashboardSnapshot,
     DecisionSummary,
     LearningInsight,
     MetaReasoningSummary,
+    NoteMemorySummary,
     ProviderRoutingSummary,
     ReliabilityPillarSummary,
     WorldStateSummary,
@@ -335,6 +336,42 @@ class DashboardEngine:
         )
 
     # ------------------------------------------------------------------
+    # Note-memory summary
+    # ------------------------------------------------------------------
+
+    def build_note_memory_summary(self, note_snapshot: Mapping[str, Any]) -> NoteMemorySummary:
+        """Build a dashboard-ready note-memory summary from a console snapshot."""
+
+        summary = _mapping_at(note_snapshot, "summary")
+        extension = _optional_mapping_at(note_snapshot, "extension")
+        status = _non_empty_text_at(note_snapshot, "status", default="unknown")
+        extension_state = _non_empty_text_at(extension, "state", default="mounted")
+        index_proof_state = _non_empty_text_at(summary, "index_proof_state", default="Unknown")
+        now = self._clock()
+        summary_id = stable_identifier("dash-note-memory", {
+            "status": status,
+            "extension_state": extension_state,
+            "event_count": str(_non_negative_int_at(summary, "event_count")),
+            "generated_at": now,
+        })
+
+        return NoteMemorySummary(
+            summary_id=summary_id,
+            status=status,
+            extension_state=extension_state,
+            event_count=_non_negative_int_at(summary, "event_count"),
+            active_note_count=_non_negative_int_at(summary, "active_note_count"),
+            rejected_delta_count=_non_negative_int_at(summary, "rejected_delta_count"),
+            expiring_note_count=_non_negative_int_at(summary, "expiring_note_count"),
+            pending_promotion_count=_non_negative_int_at(summary, "pending_promotion_count"),
+            memory_anchor_count=_non_negative_int_at(summary, "memory_anchor_count"),
+            episode_capsule_count=_non_negative_int_at(summary, "episode_capsule_count"),
+            contradiction_count=_non_negative_int_at(summary, "contradiction_count"),
+            index_proof_state=index_proof_state,
+            assessed_at=now,
+        )
+
+    # ------------------------------------------------------------------
     # Full snapshot
     # ------------------------------------------------------------------
 
@@ -353,6 +390,7 @@ class DashboardEngine:
         context_type: str = "aggregate",
         meta_snapshot: MetaReasoningSnapshot | None = None,
         world_state_summary: WorldStateSummary | None = None,
+        note_memory_snapshot: Mapping[str, Any] | None = None,
     ) -> DashboardSnapshot:
         """Assemble a complete dashboard snapshot from subsystem data.
 
@@ -371,6 +409,10 @@ class DashboardEngine:
         if meta_snapshot is not None:
             meta_summary = self.build_meta_reasoning_summary(meta_snapshot)
 
+        note_summary: NoteMemorySummary | None = None
+        if note_memory_snapshot is not None:
+            note_summary = self.build_note_memory_summary(note_memory_snapshot)
+
         now = self._clock()
         snapshot_id = stable_identifier("dash-snap", {
             "total_decisions": total_decisions,
@@ -388,4 +430,36 @@ class DashboardEngine:
             learning_insights=learning_insights,
             meta_reasoning=meta_summary,
             world_state=world_state_summary,
+            note_memory=note_summary,
         )
+
+
+def _mapping_at(value: Mapping[str, Any], key: str) -> Mapping[str, Any]:
+    child = value.get(key)
+    if not isinstance(child, Mapping):
+        raise ValueError(f"{key} must be an object")
+    return child
+
+
+def _optional_mapping_at(value: Mapping[str, Any], key: str) -> Mapping[str, Any]:
+    child = value.get(key)
+    if child is None:
+        return {}
+    if not isinstance(child, Mapping):
+        raise ValueError(f"{key} must be an object")
+    return child
+
+
+def _non_empty_text_at(value: Mapping[str, Any], key: str, *, default: str | None = None) -> str:
+    raw_value = value.get(key, default)
+    text = str(raw_value or "").strip()
+    if not text:
+        raise ValueError(f"{key} must be a non-empty string")
+    return text
+
+
+def _non_negative_int_at(value: Mapping[str, Any], key: str) -> int:
+    raw_value = value.get(key, 0)
+    if not isinstance(raw_value, int) or isinstance(raw_value, bool) or raw_value < 0:
+        raise ValueError(f"{key} must be a non-negative integer")
+    return raw_value

@@ -101,6 +101,24 @@ def _make_tradeoff() -> TradeoffRecord:
     )
 
 
+def _note_memory_snapshot() -> dict[str, object]:
+    return {
+        "status": "ready",
+        "extension": {"state": "mounted"},
+        "summary": {
+            "event_count": 2,
+            "active_note_count": 1,
+            "rejected_delta_count": 1,
+            "expiring_note_count": 1,
+            "pending_promotion_count": 1,
+            "memory_anchor_count": 0,
+            "episode_capsule_count": 1,
+            "contradiction_count": 0,
+            "index_proof_state": "Pass",
+        },
+    }
+
+
 # ---------------------------------------------------------------------------
 # Tests
 # ---------------------------------------------------------------------------
@@ -203,6 +221,29 @@ class TestDashboardBridgeWithData:
         # At least one provider should have routing_count > 0
         total_routes = sum(ps.routing_count for ps in snap.provider_summaries)
         assert total_routes == 1
+
+    def test_snapshot_accepts_note_memory_read_model(self):
+        _reset()
+        dashboard = DashboardEngine(clock=_clock)
+        decision_engine = DecisionLearningEngine(clock=_clock)
+        router = ProviderCostRouter(clock=_clock)
+        registry = _make_registry()
+
+        snap = DashboardBridge.full_snapshot(
+            dashboard=dashboard,
+            decision_engine=decision_engine,
+            router=router,
+            registry=registry,
+            provider_ids=("prov-a",),
+            context_type="model",
+            note_memory_snapshot=_note_memory_snapshot(),
+        )
+
+        assert snap.note_memory is not None
+        assert snap.note_memory.status == "ready"
+        assert snap.note_memory.event_count == 2
+        assert snap.note_memory.episode_capsule_count == 1
+        assert snap.note_memory.pending_promotion_count == 1
 
 
 class TestGoldenScenario:

@@ -1,8 +1,9 @@
 """Optional FastAPI router adapter for governed note memory operations.
 
-Purpose: expose note memory capture, retrieval, expiry, rejected-delta,
-promotion, rebuild, and event-listing handlers for host FastAPI applications
-without making FastAPI a core runtime dependency.
+Purpose: expose note memory capture, episode capsule, retrieval, expiry,
+rejected-delta, promotion, dashboard snapshot, rebuild, and event-listing
+handlers for host FastAPI applications without making FastAPI a core runtime
+dependency.
 Governance scope: HTTP adapter boundary only; NoteMemoryRuntime owns request
 validation, append-only persistence, guard checks, and rejection envelopes.
 Dependencies: note memory runtime API, dataclasses, and optional FastAPI at
@@ -45,6 +46,11 @@ class NoteMemoryFastAPIAdapter:
 
         return self.runtime.record_rejected_delta(request_body).to_dict()
 
+    def capture_episode_capsule(self, request_body: Mapping[str, Any]) -> dict[str, Any]:
+        """Handle POST /episodes."""
+
+        return self.runtime.capture_episode_capsule(request_body).to_dict()
+
     def retrieve_notes(self, request_body: Mapping[str, Any]) -> dict[str, Any]:
         """Handle POST /retrieve."""
 
@@ -70,6 +76,11 @@ class NoteMemoryFastAPIAdapter:
 
         return self.runtime.rebuild_index().to_dict()
 
+    def dashboard_snapshot(self, request_body: Mapping[str, Any] | None = None) -> dict[str, Any]:
+        """Handle GET /dashboard."""
+
+        return self.runtime.dashboard_snapshot(request_body).to_dict()
+
     def list_events(self) -> dict[str, Any]:
         """Handle GET /events."""
 
@@ -92,6 +103,12 @@ class NoteMemoryFastAPIAdapter:
                 path=f"{normalized}/rejected-deltas",
                 handler_name="record_rejected_delta",
                 purpose="record durable negative evidence for a blocked delta",
+            ),
+            NoteMemoryRouteSpec(
+                method="POST",
+                path=f"{normalized}/episodes",
+                handler_name="capture_episode_capsule",
+                purpose="capture one structured post-episode capsule",
             ),
             NoteMemoryRouteSpec(
                 method="POST",
@@ -125,6 +142,12 @@ class NoteMemoryFastAPIAdapter:
             ),
             NoteMemoryRouteSpec(
                 method="GET",
+                path=f"{normalized}/dashboard",
+                handler_name="dashboard_snapshot",
+                purpose="return a read-only operator dashboard snapshot",
+            ),
+            NoteMemoryRouteSpec(
+                method="GET",
                 path=f"{normalized}/events",
                 handler_name="list_events",
                 purpose="list persisted note memory events",
@@ -155,6 +178,10 @@ def create_note_memory_fastapi_router(runtime: NoteMemoryRuntime, prefix: str = 
     def record_rejected_delta(request_body: dict[str, Any] = Body(...)):
         return adapter.record_rejected_delta(request_body)
 
+    @router.post("/episodes")
+    def capture_episode_capsule(request_body: dict[str, Any] = Body(...)):
+        return adapter.capture_episode_capsule(request_body)
+
     @router.post("/retrieve")
     def retrieve_notes(request_body: dict[str, Any] = Body(...)):
         return adapter.retrieve_notes(request_body)
@@ -174,6 +201,10 @@ def create_note_memory_fastapi_router(runtime: NoteMemoryRuntime, prefix: str = 
     @router.post("/index/rebuild")
     def rebuild_index():
         return adapter.rebuild_index()
+
+    @router.get("/dashboard")
+    def dashboard_snapshot(limit: int = 25, now: str | None = None):
+        return adapter.dashboard_snapshot({"limit": limit, "now": now} if now else {"limit": limit})
 
     @router.get("/events")
     def list_events():

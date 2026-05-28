@@ -233,6 +233,76 @@ class WorldStateSummary(ContractRecord):
 
 
 @dataclass(frozen=True, slots=True)
+class NoteMemorySummary(ContractRecord):
+    """Note-memory lifecycle summary for operator dashboard display."""
+
+    summary_id: str
+    status: str
+    extension_state: str
+    event_count: int
+    active_note_count: int
+    rejected_delta_count: int
+    expiring_note_count: int
+    pending_promotion_count: int
+    memory_anchor_count: int
+    episode_capsule_count: int
+    contradiction_count: int
+    index_proof_state: str
+    assessed_at: str
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "summary_id", require_non_empty_text(self.summary_id, "summary_id"))
+        object.__setattr__(self, "status", require_non_empty_text(self.status, "status"))
+        object.__setattr__(
+            self,
+            "extension_state",
+            require_non_empty_text(self.extension_state, "extension_state"),
+        )
+        object.__setattr__(self, "event_count", require_non_negative_int(self.event_count, "event_count"))
+        object.__setattr__(
+            self,
+            "active_note_count",
+            require_non_negative_int(self.active_note_count, "active_note_count"),
+        )
+        object.__setattr__(
+            self,
+            "rejected_delta_count",
+            require_non_negative_int(self.rejected_delta_count, "rejected_delta_count"),
+        )
+        object.__setattr__(
+            self,
+            "expiring_note_count",
+            require_non_negative_int(self.expiring_note_count, "expiring_note_count"),
+        )
+        object.__setattr__(
+            self,
+            "pending_promotion_count",
+            require_non_negative_int(self.pending_promotion_count, "pending_promotion_count"),
+        )
+        object.__setattr__(
+            self,
+            "memory_anchor_count",
+            require_non_negative_int(self.memory_anchor_count, "memory_anchor_count"),
+        )
+        object.__setattr__(
+            self,
+            "episode_capsule_count",
+            require_non_negative_int(self.episode_capsule_count, "episode_capsule_count"),
+        )
+        object.__setattr__(
+            self,
+            "contradiction_count",
+            require_non_negative_int(self.contradiction_count, "contradiction_count"),
+        )
+        object.__setattr__(
+            self,
+            "index_proof_state",
+            require_non_empty_text(self.index_proof_state, "index_proof_state"),
+        )
+        object.__setattr__(self, "assessed_at", require_datetime_text(self.assessed_at, "assessed_at"))
+
+
+@dataclass(frozen=True, slots=True)
 class DashboardSnapshot(ContractRecord):
     """Full dashboard snapshot for operator visibility."""
 
@@ -245,6 +315,7 @@ class DashboardSnapshot(ContractRecord):
     learning_insights: tuple[LearningInsight, ...]
     meta_reasoning: MetaReasoningSummary | None = None
     world_state: WorldStateSummary | None = None
+    note_memory: NoteMemorySummary | None = None
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "snapshot_id", require_non_empty_text(self.snapshot_id, "snapshot_id"))
@@ -270,3 +341,5 @@ class DashboardSnapshot(ContractRecord):
             raise ValueError("meta_reasoning must be a MetaReasoningSummary instance or None")
         if self.world_state is not None and not isinstance(self.world_state, WorldStateSummary):
             raise ValueError("world_state must be a WorldStateSummary instance or None")
+        if self.note_memory is not None and not isinstance(self.note_memory, NoteMemorySummary):
+            raise ValueError("note_memory must be a NoteMemorySummary instance or None")
