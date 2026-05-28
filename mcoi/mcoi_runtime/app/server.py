@@ -28,6 +28,9 @@ from mcoi_runtime.app.server_app import create_governed_app
 from mcoi_runtime.app.server_context import bootstrap_server_context, resolve_env
 from mcoi_runtime.app.governed_swarm_integration import mount_governed_swarm_router_from_env
 from mcoi_runtime.app.note_memory_integration import mount_note_memory_router_from_env
+from mcoi_runtime.app.nested_mind_integration import (
+    mount_nested_mind_connector_from_env,
+)
 from mcoi_runtime.app.operational_math_integration import (
     select_operational_math_receipt_store,
 )
@@ -311,6 +314,14 @@ note_memory_bootstrap = mount_note_memory_router_from_env(
 )
 deps.set("note_memory_bootstrap", note_memory_bootstrap)
 
+nested_mind_bootstrap = mount_nested_mind_connector_from_env(
+    runtime_env=os.environ,
+    clock=_clock,
+)
+deps.set("nested_mind_bootstrap", nested_mind_bootstrap)
+if nested_mind_bootstrap.connector is not None:
+    deps.set("nested_mind_connector", nested_mind_bootstrap.connector)
+
 from mcoi_runtime.core.god_mode_integration import install_god_mode  # noqa: E402
 
 god_mode_engine = install_god_mode(deps, audit_trail=audit_trail)
@@ -345,4 +356,3 @@ _flush_state_on_shutdown = _lifecycle_bootstrap.flush_state_on_shutdown
 _restore_state_on_startup = _lifecycle_bootstrap.restore_state_on_startup
 _close_governance_stores = _lifecycle_bootstrap.close_governance_stores
 _startup_restored = _lifecycle_bootstrap.startup_restored
-
