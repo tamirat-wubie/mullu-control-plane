@@ -839,9 +839,9 @@
       "request_proof": 0
     },
     "by_coverage_state": {
-      "proven": 16,
+      "proven": 26,
       "unproven": 0,
-      "witnessed": 102
+      "witnessed": 92
     },
     "by_request_proof": {
       "action_proof": 1,
@@ -864,9 +864,9 @@
   "generated_by": "scripts/proof_coverage_matrix.py",
   "route_coverage": {
     "by_coverage_state": {
-      "proven": 37,
+      "proven": 127,
       "unproven": 0,
-      "witnessed": 328
+      "witnessed": 238
     },
     "route_count": 365,
     "routes": [
@@ -986,7 +986,7 @@
         "surface_id": "audit_chain_api"
       },
       {
-        "coverage_state": "witnessed",
+        "coverage_state": "proven",
         "route": "/api/v1/backpressure",
         "surface_id": "operational_health_read_models"
       },
@@ -1001,17 +1001,17 @@
         "surface_id": "cost_budget_read_models"
       },
       {
-        "coverage_state": "witnessed",
+        "coverage_state": "proven",
         "route": "/api/v1/cache/stats",
         "surface_id": "operational_health_read_models"
       },
       {
-        "coverage_state": "witnessed",
+        "coverage_state": "proven",
         "route": "/api/v1/canary",
         "surface_id": "operational_health_read_models"
       },
       {
-        "coverage_state": "witnessed",
+        "coverage_state": "proven",
         "route": "/api/v1/capabilities",
         "surface_id": "operational_health_read_models"
       },
@@ -1131,7 +1131,7 @@
         "surface_id": "operational_platform_read_models"
       },
       {
-        "coverage_state": "witnessed",
+        "coverage_state": "proven",
         "route": "/api/v1/circuits/dashboard",
         "surface_id": "operational_health_read_models"
       },
@@ -1171,7 +1171,7 @@
         "surface_id": "compliance_evidence_exports"
       },
       {
-        "coverage_state": "witnessed",
+        "coverage_state": "proven",
         "route": "/api/v1/compression/summary",
         "surface_id": "operational_health_read_models"
       },
@@ -1206,37 +1206,37 @@
         "surface_id": "runtime_config_management"
       },
       {
-        "coverage_state": "witnessed",
+        "coverage_state": "proven",
         "route": "/api/v1/connectors",
         "surface_id": "governed_connector_framework"
       },
       {
-        "coverage_state": "witnessed",
+        "coverage_state": "proven",
         "route": "/api/v1/connectors/history",
         "surface_id": "governed_connector_framework"
       },
       {
-        "coverage_state": "witnessed",
+        "coverage_state": "proven",
         "route": "/api/v1/connectors/invoke",
         "surface_id": "governed_connector_framework"
       },
       {
-        "coverage_state": "witnessed",
+        "coverage_state": "proven",
         "route": "/api/v1/connectors/register",
         "surface_id": "governed_connector_framework"
       },
       {
-        "coverage_state": "witnessed",
+        "coverage_state": "proven",
         "route": "/api/v1/connectors/summary",
         "surface_id": "governed_connector_framework"
       },
       {
-        "coverage_state": "witnessed",
+        "coverage_state": "proven",
         "route": "/api/v1/connectors/{connector_id}/disable",
         "surface_id": "governed_connector_framework"
       },
       {
-        "coverage_state": "witnessed",
+        "coverage_state": "proven",
         "route": "/api/v1/connectors/{connector_id}/enable",
         "surface_id": "governed_connector_framework"
       },
@@ -1286,7 +1286,7 @@
         "surface_id": "operator_console_read_models"
       },
       {
-        "coverage_state": "witnessed",
+        "coverage_state": "proven",
         "route": "/api/v1/context/summary",
         "surface_id": "operational_health_read_models"
       },
@@ -1316,7 +1316,7 @@
         "surface_id": "coordination_checkpoint_lifecycle"
       },
       {
-        "coverage_state": "witnessed",
+        "coverage_state": "proven",
         "route": "/api/v1/correlation/active",
         "surface_id": "operational_health_read_models"
       },
@@ -1346,22 +1346,22 @@
         "surface_id": "cost_budget_read_models"
       },
       {
-        "coverage_state": "witnessed",
+        "coverage_state": "proven",
         "route": "/api/v1/daemon/force",
         "surface_id": "certification_daemon_lifecycle"
       },
       {
-        "coverage_state": "witnessed",
+        "coverage_state": "proven",
         "route": "/api/v1/daemon/status",
         "surface_id": "certification_daemon_lifecycle"
       },
       {
-        "coverage_state": "witnessed",
+        "coverage_state": "proven",
         "route": "/api/v1/daemon/tick",
         "surface_id": "certification_daemon_lifecycle"
       },
       {
-        "coverage_state": "witnessed",
+        "coverage_state": "proven",
         "route": "/api/v1/dashboard",
         "surface_id": "operational_health_read_models"
       },
@@ -1406,7 +1406,7 @@
         "surface_id": "data_governance_controls"
       },
       {
-        "coverage_state": "witnessed",
+        "coverage_state": "proven",
         "route": "/api/v1/dedup/summary",
         "surface_id": "operational_health_read_models"
       },
@@ -1426,7 +1426,7 @@
         "surface_id": "operational_platform_read_models"
       },
       {
-        "coverage_state": "witnessed",
+        "coverage_state": "proven",
         "route": "/api/v1/deploy/readiness",
         "surface_id": "operational_health_read_models"
       },
@@ -1441,27 +1441,27 @@
         "surface_id": "engineering_puzzle_governance"
       },
       {
-        "coverage_state": "witnessed",
+        "coverage_state": "proven",
         "route": "/api/v1/events",
         "surface_id": "event_bus_operations"
       },
       {
-        "coverage_state": "witnessed",
+        "coverage_state": "proven",
         "route": "/api/v1/events/publish",
         "surface_id": "event_bus_operations"
       },
       {
-        "coverage_state": "witnessed",
+        "coverage_state": "proven",
         "route": "/api/v1/events/store/summary",
         "surface_id": "event_bus_operations"
       },
       {
-        "coverage_state": "witnessed",
+        "coverage_state": "proven",
         "route": "/api/v1/events/summary",
         "surface_id": "event_bus_operations"
       },
       {
-        "coverage_state": "witnessed",
+        "coverage_state": "proven",
         "route": "/api/v1/execute",
         "surface_id": "workflow_execution_lifecycle"
       },
@@ -1531,72 +1531,72 @@
         "surface_id": "operational_platform_read_models"
       },
       {
-        "coverage_state": "witnessed",
+        "coverage_state": "proven",
         "route": "/api/v1/god-mode/agreements/{agreement_id}/withdraw",
         "surface_id": "god_mode_lifecycle"
       },
       {
-        "coverage_state": "witnessed",
+        "coverage_state": "proven",
         "route": "/api/v1/god-mode/capabilities",
         "surface_id": "god_mode_lifecycle"
       },
       {
-        "coverage_state": "witnessed",
+        "coverage_state": "proven",
         "route": "/api/v1/god-mode/capabilities/{module}/{name}",
         "surface_id": "god_mode_lifecycle"
       },
       {
-        "coverage_state": "witnessed",
+        "coverage_state": "proven",
         "route": "/api/v1/god-mode/capabilities/{module}/{name}/agree-to-register",
         "surface_id": "god_mode_lifecycle"
       },
       {
-        "coverage_state": "witnessed",
+        "coverage_state": "proven",
         "route": "/api/v1/god-mode/capabilities/{module}/{name}/issue-ticket",
         "surface_id": "god_mode_lifecycle"
       },
       {
-        "coverage_state": "witnessed",
+        "coverage_state": "proven",
         "route": "/api/v1/god-mode/capabilities/{module}/{name}/resume",
         "surface_id": "god_mode_lifecycle"
       },
       {
-        "coverage_state": "witnessed",
+        "coverage_state": "proven",
         "route": "/api/v1/god-mode/capabilities/{module}/{name}/suspend",
         "surface_id": "god_mode_lifecycle"
       },
       {
-        "coverage_state": "witnessed",
+        "coverage_state": "proven",
         "route": "/api/v1/god-mode/health",
         "surface_id": "god_mode_lifecycle"
       },
       {
-        "coverage_state": "witnessed",
+        "coverage_state": "proven",
         "route": "/api/v1/god-mode/modules",
         "surface_id": "god_mode_lifecycle"
       },
       {
-        "coverage_state": "witnessed",
+        "coverage_state": "proven",
         "route": "/api/v1/god-mode/receipts",
         "surface_id": "god_mode_lifecycle"
       },
       {
-        "coverage_state": "witnessed",
+        "coverage_state": "proven",
         "route": "/api/v1/god-mode/tickets",
         "surface_id": "god_mode_lifecycle"
       },
       {
-        "coverage_state": "witnessed",
+        "coverage_state": "proven",
         "route": "/api/v1/god-mode/tickets/{ticket_id}",
         "surface_id": "god_mode_lifecycle"
       },
       {
-        "coverage_state": "witnessed",
+        "coverage_state": "proven",
         "route": "/api/v1/god-mode/tickets/{ticket_id}/consume",
         "surface_id": "god_mode_lifecycle"
       },
       {
-        "coverage_state": "witnessed",
+        "coverage_state": "proven",
         "route": "/api/v1/god-mode/tickets/{ticket_id}/revoke",
         "surface_id": "god_mode_lifecycle"
       },
@@ -1606,37 +1606,37 @@
         "surface_id": "operational_platform_read_models"
       },
       {
-        "coverage_state": "witnessed",
+        "coverage_state": "proven",
         "route": "/api/v1/guards",
         "surface_id": "operational_health_read_models"
       },
       {
-        "coverage_state": "witnessed",
+        "coverage_state": "proven",
         "route": "/api/v1/health/deep",
         "surface_id": "operational_health_read_models"
       },
       {
-        "coverage_state": "witnessed",
+        "coverage_state": "proven",
         "route": "/api/v1/health/extensions",
         "surface_id": "operational_health_read_models"
       },
       {
-        "coverage_state": "witnessed",
+        "coverage_state": "proven",
         "route": "/api/v1/health/score",
         "surface_id": "operational_health_read_models"
       },
       {
-        "coverage_state": "witnessed",
+        "coverage_state": "proven",
         "route": "/api/v1/health/v2",
         "surface_id": "operational_health_read_models"
       },
       {
-        "coverage_state": "witnessed",
+        "coverage_state": "proven",
         "route": "/api/v1/health/v3",
         "surface_id": "operational_health_read_models"
       },
       {
-        "coverage_state": "witnessed",
+        "coverage_state": "proven",
         "route": "/api/v1/idempotency/summary",
         "surface_id": "operational_health_read_models"
       },
@@ -1681,32 +1681,32 @@
         "surface_id": "governed_operational_intelligence"
       },
       {
-        "coverage_state": "witnessed",
+        "coverage_state": "proven",
         "route": "/api/v1/ledger",
         "surface_id": "workflow_execution_lifecycle"
       },
       {
-        "coverage_state": "witnessed",
+        "coverage_state": "proven",
         "route": "/api/v1/lineage/artifact/{artifact_id}",
         "surface_id": "lineage_query_api"
       },
       {
-        "coverage_state": "witnessed",
+        "coverage_state": "proven",
         "route": "/api/v1/lineage/command/{command_id}",
         "surface_id": "lineage_query_api"
       },
       {
-        "coverage_state": "witnessed",
+        "coverage_state": "proven",
         "route": "/api/v1/lineage/output/{output_id}",
         "surface_id": "lineage_query_api"
       },
       {
-        "coverage_state": "witnessed",
+        "coverage_state": "proven",
         "route": "/api/v1/lineage/resolve",
         "surface_id": "lineage_query_api"
       },
       {
-        "coverage_state": "witnessed",
+        "coverage_state": "proven",
         "route": "/api/v1/lineage/{trace_id}",
         "surface_id": "lineage_query_api"
       },
@@ -1721,17 +1721,17 @@
         "surface_id": "audit_chain_api"
       },
       {
-        "coverage_state": "witnessed",
+        "coverage_state": "proven",
         "route": "/api/v1/memory/search",
         "surface_id": "agent_memory_lifecycle"
       },
       {
-        "coverage_state": "witnessed",
+        "coverage_state": "proven",
         "route": "/api/v1/memory/store",
         "surface_id": "agent_memory_lifecycle"
       },
       {
-        "coverage_state": "witnessed",
+        "coverage_state": "proven",
         "route": "/api/v1/memory/summary",
         "surface_id": "agent_memory_lifecycle"
       },
@@ -1741,7 +1741,7 @@
         "surface_id": "operational_platform_read_models"
       },
       {
-        "coverage_state": "witnessed",
+        "coverage_state": "proven",
         "route": "/api/v1/migrations/summary",
         "surface_id": "operational_health_read_models"
       },
@@ -1766,7 +1766,7 @@
         "surface_id": "model_experiment_control"
       },
       {
-        "coverage_state": "witnessed",
+        "coverage_state": "proven",
         "route": "/api/v1/monitor",
         "surface_id": "operational_health_read_models"
       },
@@ -1806,7 +1806,7 @@
         "surface_id": "multi_agent_coordination_runtime"
       },
       {
-        "coverage_state": "witnessed",
+        "coverage_state": "proven",
         "route": "/api/v1/notifications/summary",
         "surface_id": "operational_health_read_models"
       },
@@ -1901,17 +1901,17 @@
         "surface_id": "pilot_provisioning"
       },
       {
-        "coverage_state": "witnessed",
+        "coverage_state": "proven",
         "route": "/api/v1/pipeline/execute",
         "surface_id": "workflow_execution_lifecycle"
       },
       {
-        "coverage_state": "witnessed",
+        "coverage_state": "proven",
         "route": "/api/v1/pipeline/history",
         "surface_id": "workflow_execution_lifecycle"
       },
       {
-        "coverage_state": "witnessed",
+        "coverage_state": "proven",
         "route": "/api/v1/plugins",
         "surface_id": "operational_health_read_models"
       },
@@ -1996,42 +1996,42 @@
         "surface_id": "operational_platform_read_models"
       },
       {
-        "coverage_state": "witnessed",
+        "coverage_state": "proven",
         "route": "/api/v1/rbac/bindings",
         "surface_id": "rbac_access_governance"
       },
       {
-        "coverage_state": "witnessed",
+        "coverage_state": "proven",
         "route": "/api/v1/rbac/identities",
         "surface_id": "rbac_access_governance"
       },
       {
-        "coverage_state": "witnessed",
+        "coverage_state": "proven",
         "route": "/api/v1/rbac/roles",
         "surface_id": "rbac_access_governance"
       },
       {
-        "coverage_state": "witnessed",
+        "coverage_state": "proven",
         "route": "/api/v1/rbac/summary",
         "surface_id": "rbac_access_governance"
       },
       {
-        "coverage_state": "witnessed",
+        "coverage_state": "proven",
         "route": "/api/v1/readiness",
         "surface_id": "operational_health_read_models"
       },
       {
-        "coverage_state": "witnessed",
+        "coverage_state": "proven",
         "route": "/api/v1/regions",
         "surface_id": "operational_health_read_models"
       },
       {
-        "coverage_state": "witnessed",
+        "coverage_state": "proven",
         "route": "/api/v1/release",
         "surface_id": "operational_health_read_models"
       },
       {
-        "coverage_state": "witnessed",
+        "coverage_state": "proven",
         "route": "/api/v1/release/latest",
         "surface_id": "operational_health_read_models"
       },
@@ -2046,7 +2046,7 @@
         "surface_id": "replay_determinism"
       },
       {
-        "coverage_state": "witnessed",
+        "coverage_state": "proven",
         "route": "/api/v1/retries/summary",
         "surface_id": "operational_health_read_models"
       },
@@ -2111,37 +2111,37 @@
         "surface_id": "hosted_demo_sandbox"
       },
       {
-        "coverage_state": "witnessed",
+        "coverage_state": "proven",
         "route": "/api/v1/scheduler/execute",
         "surface_id": "governed_background_scheduler"
       },
       {
-        "coverage_state": "witnessed",
+        "coverage_state": "proven",
         "route": "/api/v1/scheduler/history",
         "surface_id": "governed_background_scheduler"
       },
       {
-        "coverage_state": "witnessed",
+        "coverage_state": "proven",
         "route": "/api/v1/scheduler/jobs",
         "surface_id": "governed_background_scheduler"
       },
       {
-        "coverage_state": "witnessed",
+        "coverage_state": "proven",
         "route": "/api/v1/scheduler/jobs/{job_id}",
         "surface_id": "governed_background_scheduler"
       },
       {
-        "coverage_state": "witnessed",
+        "coverage_state": "proven",
         "route": "/api/v1/scheduler/jobs/{job_id}/disable",
         "surface_id": "governed_background_scheduler"
       },
       {
-        "coverage_state": "witnessed",
+        "coverage_state": "proven",
         "route": "/api/v1/scheduler/jobs/{job_id}/enable",
         "surface_id": "governed_background_scheduler"
       },
       {
-        "coverage_state": "witnessed",
+        "coverage_state": "proven",
         "route": "/api/v1/scheduler/summary",
         "surface_id": "governed_background_scheduler"
       },
@@ -2166,17 +2166,17 @@
         "surface_id": "semantic_search_read_models"
       },
       {
-        "coverage_state": "witnessed",
+        "coverage_state": "proven",
         "route": "/api/v1/secrets/summary",
         "surface_id": "operational_health_read_models"
       },
       {
-        "coverage_state": "witnessed",
+        "coverage_state": "proven",
         "route": "/api/v1/session",
         "surface_id": "workflow_execution_lifecycle"
       },
       {
-        "coverage_state": "witnessed",
+        "coverage_state": "proven",
         "route": "/api/v1/shutdown/info",
         "surface_id": "operational_health_read_models"
       },
@@ -2206,12 +2206,12 @@
         "surface_id": "operational_platform_read_models"
       },
       {
-        "coverage_state": "witnessed",
+        "coverage_state": "proven",
         "route": "/api/v1/snapshot",
         "surface_id": "operational_health_read_models"
       },
       {
-        "coverage_state": "witnessed",
+        "coverage_state": "proven",
         "route": "/api/v1/snapshots",
         "surface_id": "operational_health_read_models"
       },
@@ -2236,12 +2236,12 @@
         "surface_id": "llm_streaming"
       },
       {
-        "coverage_state": "witnessed",
+        "coverage_state": "proven",
         "route": "/api/v1/templates",
         "surface_id": "workflow_execution_lifecycle"
       },
       {
-        "coverage_state": "witnessed",
+        "coverage_state": "proven",
         "route": "/api/v1/templates/execute",
         "surface_id": "workflow_execution_lifecycle"
       },
@@ -2371,12 +2371,12 @@
         "surface_id": "tenant_governance_lifecycle"
       },
       {
-        "coverage_state": "witnessed",
+        "coverage_state": "proven",
         "route": "/api/v1/validation/schemas",
         "surface_id": "operational_health_read_models"
       },
       {
-        "coverage_state": "witnessed",
+        "coverage_state": "proven",
         "route": "/api/v1/version",
         "surface_id": "operational_health_read_models"
       },
@@ -2406,12 +2406,12 @@
         "surface_id": "webhooks_proof_surface"
       },
       {
-        "coverage_state": "witnessed",
+        "coverage_state": "proven",
         "route": "/api/v1/workflow/execute",
         "surface_id": "workflow_execution_lifecycle"
       },
       {
-        "coverage_state": "witnessed",
+        "coverage_state": "proven",
         "route": "/api/v1/workflow/history",
         "surface_id": "workflow_execution_lifecycle"
       },
@@ -2421,7 +2421,7 @@
         "surface_id": "tool_invocation"
       },
       {
-        "coverage_state": "witnessed",
+        "coverage_state": "proven",
         "route": "/api/v1/workflow/traced",
         "surface_id": "workflow_execution_lifecycle"
       },
@@ -3629,7 +3629,7 @@
     {
       "action_proof": "action_proof",
       "audit": "audit_chain",
-      "coverage_state": "witnessed",
+      "coverage_state": "proven",
       "evidence_files": [
         "mcoi/mcoi_runtime/app/routers/rbac.py",
         "mcoi/mcoi_runtime/core/access_runtime_integration.py",
@@ -4371,7 +4371,7 @@
     {
       "action_proof": "action_proof",
       "audit": "audit_chain",
-      "coverage_state": "witnessed",
+      "coverage_state": "proven",
       "evidence_files": [
         "mcoi/mcoi_runtime/app/routers/audit.py",
         "mcoi/tests/test_server_phase206.py",
@@ -4633,7 +4633,7 @@
     {
       "action_proof": "action_proof",
       "audit": "audit_chain",
-      "coverage_state": "witnessed",
+      "coverage_state": "proven",
       "evidence_files": [
         "mcoi/mcoi_runtime/app/routers/agent.py",
         "mcoi/mcoi_runtime/core/agent_memory.py",
@@ -4817,7 +4817,7 @@
     {
       "action_proof": "read_model",
       "audit": "audit_chain",
-      "coverage_state": "witnessed",
+      "coverage_state": "proven",
       "evidence_files": [
         "mcoi/mcoi_runtime/app/routers/health.py",
         "mcoi/mcoi_runtime/core/deep_health.py",
@@ -4966,7 +4966,7 @@
     {
       "action_proof": "action_proof",
       "audit": "audit_chain",
-      "coverage_state": "witnessed",
+      "coverage_state": "proven",
       "evidence_files": [
         "gateway/workflow_orchestration.py",
         "mcoi/mcoi_runtime/app/routers/workflow.py",
@@ -5048,7 +5048,7 @@
     {
       "action_proof": "action_proof",
       "audit": "audit_chain",
-      "coverage_state": "witnessed",
+      "coverage_state": "proven",
       "evidence_files": [
         "mcoi/mcoi_runtime/app/routers/data/daemon.py",
         "mcoi/mcoi_runtime/core/certification_daemon.py",
@@ -6662,7 +6662,7 @@
     {
       "action_proof": "action_proof",
       "audit": "audit_chain",
-      "coverage_state": "witnessed",
+      "coverage_state": "proven",
       "evidence_files": [
         "mcoi/mcoi_runtime/app/routers/connectors.py",
         "mcoi/mcoi_runtime/core/connector_framework.py",
@@ -6726,7 +6726,7 @@
     {
       "action_proof": "action_proof",
       "audit": "audit_chain",
-      "coverage_state": "witnessed",
+      "coverage_state": "proven",
       "evidence_files": [
         "mcoi/mcoi_runtime/app/routers/scheduler.py",
         "mcoi/mcoi_runtime/core/scheduler.py",
@@ -8964,7 +8964,7 @@
     {
       "action_proof": "read_model",
       "audit": "read_model",
-      "coverage_state": "witnessed",
+      "coverage_state": "proven",
       "evidence_files": [
         "mcoi/mcoi_runtime/app/routers/lineage.py",
         "mcoi/mcoi_runtime/core/lineage_query.py",
@@ -8997,7 +8997,7 @@
     {
       "action_proof": "action_proof",
       "audit": "audit_chain",
-      "coverage_state": "witnessed",
+      "coverage_state": "proven",
       "evidence_files": [
         "mcoi/mcoi_runtime/contracts/god_mode.py",
         "mcoi/mcoi_runtime/core/god_mode_registry.py",
