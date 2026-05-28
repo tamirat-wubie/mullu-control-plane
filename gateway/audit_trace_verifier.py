@@ -154,28 +154,40 @@ class AuditTraceVerifier:
         # Closure-binding: if the certificate carries a closure id, the
         # reconstructed closure must hash to it.
         closure_binding_valid = True
+        closure_unrecoverable = False
         if certificate.response_evidence_closure_id:
             if closure_dict is None:
                 closure_binding_valid = False
+                closure_unrecoverable = True
                 failures.append("certificate_closure_unrecoverable")
             elif canonical_hash(closure_dict) != certificate.response_evidence_closure_id:
                 closure_binding_valid = False
                 failures.append("certificate_closure_binding_mismatch")
 
-        recomputed = canonical_hash({
-            "command_id": certificate.command_id,
-            "disposition": certificate.disposition.value,
-            "evidence_refs": certificate.evidence_refs,
-            "response_evidence_closure": closure_dict,
-            "case_id": certificate.case_id,
-            "accepted_risk_id": certificate.accepted_risk_id,
-            "compensation_outcome_id": certificate.compensation_outcome_id,
-            "metadata": certificate.metadata,
-        })
-        recomputed_certificate_id = f"terminal-closure-{recomputed[:16]}"
-        hash_matches = recomputed_certificate_id == certificate.certificate_id
-        if not hash_matches:
-            failures.append("certificate_hash_mismatch")
+        # Short-circuit hash recomputation when the closure is
+        # unrecoverable. Without the closure dict, the seed below is
+        # missing the response_evidence_closure field and the recomputed
+        # id is guaranteed not to match — reporting that as a separate
+        # certificate_hash_mismatch duplicates the root cause already
+        # surfaced by certificate_closure_unrecoverable.
+        if closure_unrecoverable:
+            recomputed_certificate_id = ""
+            hash_matches = False
+        else:
+            recomputed = canonical_hash({
+                "command_id": certificate.command_id,
+                "disposition": certificate.disposition.value,
+                "evidence_refs": certificate.evidence_refs,
+                "response_evidence_closure": closure_dict,
+                "case_id": certificate.case_id,
+                "accepted_risk_id": certificate.accepted_risk_id,
+                "compensation_outcome_id": certificate.compensation_outcome_id,
+                "metadata": certificate.metadata,
+            })
+            recomputed_certificate_id = f"terminal-closure-{recomputed[:16]}"
+            hash_matches = recomputed_certificate_id == certificate.certificate_id
+            if not hash_matches:
+                failures.append("certificate_hash_mismatch")
 
         return CertificateHashVerification(
             command_id=command_id,
@@ -253,6 +265,16 @@ class AuditTraceVerifier:
         events_in_range = self._events_for_anchor(anchor)
         if len(events_in_range) != anchor.event_count:
             failures.append("anchor_event_count_mismatch")
+        # Recompute every event hash within the anchored range. The merkle
+        # root below is computed over the stored event_hash values, so a
+        # tampered event payload whose stored hash is left intact would
+        # leave the merkle root matching while the underlying event is
+        # corrupt. Recomputation catches that scenario inside verify_anchor
+        # alone, so an auditor running only this method (e.g. when
+        # validating a specific anchor's scope) is not silently misled.
+        for event in events_in_range:
+            if _recompute_event_hash(event) != event.event_hash:
+                failures.append(f"anchored_event_hash_mismatch:{event.event_id}")
         recomputed_root = _compute_merkle_root([event.event_hash for event in events_in_range])
         merkle_valid = recomputed_root == anchor.merkle_root
         if not merkle_valid:
@@ -445,12 +467,18 @@ class AuditTraceVerifier:
         )
 
     def verify_tenant_isolation(self, command_id: str) -> "TenantIsolationVerification":
-        """Verify the command's tenant_id is consistent across every artifact.
+        """Verify the command's tenant_id is consistent across its events.
 
-        Catches tenant-leak scenarios: an event, approval chain, or terminal
-        certificate carrying a tenant_id that does not match the command's.
-        Pure read; uses obligation_mesh only via constructor argument when
-        verify_all is the entry point.
+        Catches tenant-leak scenarios where an event for this command
+        carries a tenant_id that does not match the command's. The terminal
+        certificate is bound by command_id (no tenant_id field), so this
+        method also reports certificate_command_id_mismatch if it diverges.
+
+        Approval-chain tenant verification is NOT covered here — the chain
+        lives in AuthorityObligationMesh state (not the ledger), and the
+        mesh is not part of this method's parameter set. verify_all could
+        cross-reference if the chain is fetched there, but is not required
+        by this method's contract.
         """
         command = self._ledger.get(command_id)
         if command is None:
@@ -552,7 +580,17 @@ class AuditTraceVerifier:
         except StopIteration:
             return []
         try:
-            end = next(index for index, event in enumerate(events) if event.event_hash == anchor.to_event_hash)
+            # Search for end starting AT start, not from index 0. Anchors
+            # are append-ordered (to_event_hash always > from_event_hash in
+            # append order), so a to_event_hash appearing at index < start
+            # is either a hash collision (sha256: impossible) or a forged
+            # anchor pointing backwards. Refusing to slice backward avoids
+            # silently over-claiming the range.
+            end = next(
+                start + offset
+                for offset, event in enumerate(events[start:])
+                if event.event_hash == anchor.to_event_hash
+            )
         except StopIteration:
             return events[start:]
         return events[start : end + 1]

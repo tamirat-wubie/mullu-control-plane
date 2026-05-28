@@ -769,3 +769,138 @@ def test_verifier_end_to_end_canonical_lifecycle_passes_every_method():
     assert approval_check.fully_verified is True
     assert approval_check.chain_present is False
     assert approval_check.certificate_disposition is ClosureDisposition.COMMITTED
+
+
+# ─── Refinement regression tests ─────────────────────────────────────
+
+
+def test_verifier_global_chain_empty_ledger_is_intact():
+    # An empty ledger has zero events; the chain is trivially intact.
+    # This is an edge case that surfaces only under fresh-deployment or
+    # full-rotation conditions; verify it reports cleanly instead of
+    # tripping a false negative.
+    ledger = CommandLedger(
+        clock=lambda: "2026-04-24T12:00:00+00:00",
+        store=InMemoryCommandLedgerStore(),
+    )
+    verification = AuditTraceVerifier(ledger).verify_global_event_chain()
+    assert verification.event_count == 0
+    assert verification.chain_intact is True
+    assert verification.failures == ()
+
+
+def test_verifier_anchor_detects_tampered_event_within_range():
+    # Pre-refinement: verify_anchor computed the merkle root from stored
+    # event.event_hash values. A tampered event payload whose stored hash
+    # was left intact would leave the merkle root matching, and the
+    # anchor would verify clean — even though the underlying event is
+    # corrupt. Post-refinement: verify_anchor recomputes every event hash
+    # within the anchored range and reports anchored_event_hash_mismatch.
+    ledger, _ = _ledger_through_terminal_closure()
+    anchor = ledger.anchor_unanchored_events(signing_secret="anchor-secret")
+    assert anchor is not None
+    # Tamper an event payload (here: the trace_id) while leaving the
+    # stored event_hash untouched. _recompute_event_hash will derive a
+    # different hash from the tampered fields, exposing the corruption.
+    target_index = 1
+    tampered = replace(ledger._events[target_index], trace_id="forged-trace")
+    ledger._events[target_index] = tampered
+
+    verification = AuditTraceVerifier(ledger).verify_anchor(
+        anchor.anchor_id, signing_secret="anchor-secret",
+    )
+    # Merkle root still valid (computed from STORED event_hash values,
+    # which were not changed), but the per-event recomputation catches it.
+    assert verification.merkle_root_valid is True
+    assert any(
+        failure.startswith("anchored_event_hash_mismatch:")
+        for failure in verification.failures
+    )
+
+
+def test_verifier_anchor_end_search_refuses_backward_to_event_hash():
+    # Pre-refinement: if a tampered/forged anchor pointed to_event_hash
+    # at an index strictly earlier than from_event_hash's index,
+    # _events_for_anchor scanned enumerate(events) from index 0 and
+    # returned a backward slice that fell through to events[start:] —
+    # silently over-claiming the range. Post-refinement: the end search
+    # starts at `start`, so a backward to_event_hash is treated as
+    # not-found and the verifier returns events[start:], which then
+    # produces an event_count_mismatch and merkle_root_mismatch.
+    ledger, _ = _ledger_through_terminal_closure()
+    anchor = ledger.anchor_unanchored_events(signing_secret="anchor-secret")
+    assert anchor is not None
+    # Swap from/to to point backward — this is a forged anchor that
+    # would have silently over-claimed under the pre-refinement code.
+    forged = replace(
+        anchor,
+        from_event_hash=anchor.to_event_hash,
+        to_event_hash=anchor.from_event_hash,
+    )
+    ledger._store._anchors[-1] = forged
+
+    verification = AuditTraceVerifier(ledger).verify_anchor(
+        forged.anchor_id, signing_secret="anchor-secret",
+    )
+    # The forged anchor's signature was computed for the original
+    # payload, so the signature also fails — but the structural check
+    # is what we care about: event_count_mismatch is present because
+    # the recovered range is no longer the full original span.
+    assert "anchor_event_count_mismatch" in verification.failures
+
+
+def test_verifier_anchor_single_event_anchor_merkle_root_matches():
+    # Edge case: an anchor over exactly one event has merkle_root equal
+    # to that single event's hash (the _compute_merkle_root bypass).
+    # Confirm the verifier handles this cleanly.
+    ledger = CommandLedger(
+        clock=lambda: "2026-04-24T12:00:00+00:00",
+        store=InMemoryCommandLedgerStore(),
+    )
+    ledger.create_command(
+        tenant_id="tenant-1",
+        actor_id="identity-1",
+        source="web",
+        conversation_id="conv-single",
+        idempotency_key="idem-single",
+        intent="llm_completion",
+        payload={"body": "single"},
+    )
+    anchor = ledger.anchor_unanchored_events(signing_secret="anchor-secret")
+    assert anchor is not None
+    assert anchor.event_count == 1
+
+    verification = AuditTraceVerifier(ledger).verify_anchor(
+        anchor.anchor_id, signing_secret="anchor-secret",
+    )
+    assert verification.merkle_root_valid is True
+    assert verification.signature_valid is True
+    assert verification.failures == ()
+
+
+def test_verifier_certificate_hash_unrecoverable_closure_does_not_double_report():
+    # Pre-refinement: when the closure event was missing but the
+    # certificate carried a non-empty response_evidence_closure_id, the
+    # verifier reported BOTH certificate_closure_unrecoverable AND
+    # certificate_hash_mismatch — the second was mechanical (recompute
+    # with None can't match) and duplicated the root cause. Post-
+    # refinement: closure_unrecoverable short-circuits the hash check.
+    ledger, command_id = _ledger_through_terminal_closure()
+    # Drop the response_evidence_closed event payload so the closure
+    # cannot be reconstructed, while leaving the certificate intact.
+    for index, event in enumerate(ledger._events):
+        if event.command_id != command_id:
+            continue
+        detail = dict(event.detail)
+        closure = detail.pop("response_evidence_closure", None)
+        if closure is not None:
+            ledger._events[index] = replace(event, detail=detail)
+
+    verification = AuditTraceVerifier(ledger).verify_certificate_hash(command_id)
+
+    assert "certificate_closure_unrecoverable" in verification.failures
+    # Critical: the hash-mismatch reason is NOT also reported, because
+    # the unrecoverable closure makes the recomputation meaningless.
+    assert "certificate_hash_mismatch" not in verification.failures
+    assert verification.recomputed_certificate_id == ""
+    assert verification.hash_matches is False
