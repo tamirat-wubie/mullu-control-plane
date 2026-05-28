@@ -13,6 +13,7 @@ package paths must be explicit and must contain mcoi_runtime/swarm.
 from __future__ import annotations
 
 from dataclasses import dataclass
+import os
 from pathlib import Path
 import sys
 from typing import Any, Callable, Mapping
@@ -52,9 +53,10 @@ def mount_governed_swarm_router_from_env(
             reason="disabled",
         )
 
-    audit_store_path = str(runtime_env.get("MULLU_GOVERNED_SWARM_AUDIT_STORE_PATH", "")).strip()
-    if not audit_store_path:
+    audit_store_path_text = str(runtime_env.get("MULLU_GOVERNED_SWARM_AUDIT_STORE_PATH", "")).strip()
+    if not audit_store_path_text:
         raise RuntimeError("MULLU_GOVERNED_SWARM_AUDIT_STORE_PATH is required when governed swarm is enabled")
+    audit_store_path = validate_governed_swarm_audit_store_path(audit_store_path_text)
 
     if runtime_factory is None or router_factory is None:
         runtime_package_path = str(runtime_env.get("MULLU_GOVERNED_SWARM_RUNTIME_PATH", "")).strip()
@@ -67,7 +69,7 @@ def mount_governed_swarm_router_from_env(
         runtime_factory = runtime_factory or InvoiceSwarmRuntime.from_path
         router_factory = router_factory or create_fastapi_router
 
-    runtime = runtime_factory(Path(audit_store_path))
+    runtime = runtime_factory(audit_store_path)
     router = router_factory(runtime)
     if include_router_fn is None:
         app.include_router(router)
@@ -76,9 +78,32 @@ def mount_governed_swarm_router_from_env(
     return GovernedSwarmBootstrap(
         enabled=True,
         mounted=True,
-        audit_store_path=audit_store_path,
+        audit_store_path=str(audit_store_path),
         reason="mounted",
     )
+
+
+def validate_governed_swarm_audit_store_path(audit_store_path: str | Path) -> Path:
+    """Validate the hosted governed swarm audit-store path before mounting."""
+
+    path = Path(audit_store_path).expanduser()
+    if not path.is_absolute():
+        raise RuntimeError("MULLU_GOVERNED_SWARM_AUDIT_STORE_PATH must be an absolute file path")
+    if path.exists() and path.is_dir():
+        raise RuntimeError("MULLU_GOVERNED_SWARM_AUDIT_STORE_PATH must point to a JSONL file, not a directory")
+    if path.suffix.lower() != ".jsonl":
+        raise RuntimeError("MULLU_GOVERNED_SWARM_AUDIT_STORE_PATH must use a .jsonl file extension")
+    parent = path.parent
+    if not parent.exists():
+        raise RuntimeError("MULLU_GOVERNED_SWARM_AUDIT_STORE_PATH parent directory must already exist")
+    if not parent.is_dir():
+        raise RuntimeError("MULLU_GOVERNED_SWARM_AUDIT_STORE_PATH parent must be a directory")
+    if path.exists() and not path.is_file():
+        raise RuntimeError("MULLU_GOVERNED_SWARM_AUDIT_STORE_PATH must point to a regular file")
+    writable_target = path if path.exists() else parent
+    if not os.access(writable_target, os.W_OK):
+        raise RuntimeError("MULLU_GOVERNED_SWARM_AUDIT_STORE_PATH must be writable by the control-plane process")
+    return path
 
 
 def extend_runtime_package_path(runtime_path: str | Path) -> Path:

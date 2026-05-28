@@ -3,7 +3,7 @@
 Purpose: activate and prove the governed swarm invoice route in a staging control-plane environment.
 Governance scope: feature flag, bundled runtime witness, audit persistence, invoice-route smoke test, rollback.
 Dependencies: `mullu-control-plane`, persistent staging storage, deployment operator access.
-Invariants: disabled by default; no audit store path means no swarm mount; no runtime path containing `mcoi_runtime/swarm` means no optional runtime bridge; no activation claim without a staging activation witness.
+Invariants: disabled by default; no absolute audit store file path with an existing writable parent means no swarm mount; no runtime path containing `mcoi_runtime/swarm` means no optional runtime bridge; no activation claim without a staging activation witness.
 
 ## Boundary
 
@@ -51,6 +51,9 @@ Create the audit directory before restart:
 ```bash
 mkdir -p /var/lib/mullu/governed-swarm
 touch /var/lib/mullu/governed-swarm/swarm-runs.jsonl
+test -d /var/lib/mullu/governed-swarm
+test -w /var/lib/mullu/governed-swarm
+test ! -d /var/lib/mullu/governed-swarm/swarm-runs.jsonl
 ```
 
 Restart the control plane through the staging deployment mechanism. Do not enable this flag in production until the staging witness validates.
@@ -69,11 +72,16 @@ Create an invoice swarm run:
 curl -sS -X POST "$MULLU_STAGING_URL/api/v1/swarm/invoice-runs" \
   -H "Content-Type: application/json" \
   -d '{
-    "invoice_id": "staging-invoice-001",
-    "vendor_id": "vendor-staging-001",
-    "amount": 125.50,
-    "currency": "USD",
-    "submitted_by": "staging.operator@mullusi.com"
+    "run_id": "run_staging_invoice_001",
+    "goal_id": "goal_staging_invoice_001",
+    "tenant_id": "tenant_staging",
+    "invoice_ref": "staging-invoice-001",
+    "invoice_amount_usd": "125.50",
+    "vendor_verified": true,
+    "duplicate_found": false,
+    "budget_available": true,
+    "policy_requires_approval": true,
+    "human_approved": true
   }'
 ```
 

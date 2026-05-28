@@ -21,6 +21,7 @@ from mcoi_runtime.app.governed_swarm_integration import (
     env_flag,
     extend_runtime_package_path,
     mount_governed_swarm_router_from_env,
+    validate_governed_swarm_audit_store_path,
 )
 
 
@@ -95,6 +96,34 @@ def test_governed_swarm_integration_requires_audit_store_when_enabled() -> None:
         )
 
     assert app.routers == []
+
+
+def test_governed_swarm_audit_store_path_must_be_absolute() -> None:
+    with pytest.raises(RuntimeError, match="absolute file path"):
+        validate_governed_swarm_audit_store_path("relative/swarm-runs.jsonl")
+
+
+def test_governed_swarm_audit_store_path_requires_existing_parent(tmp_path: Path) -> None:
+    missing_parent = tmp_path / "missing" / "swarm-runs.jsonl"
+
+    with pytest.raises(RuntimeError, match="parent directory must already exist"):
+        validate_governed_swarm_audit_store_path(missing_parent)
+
+    assert not missing_parent.parent.exists()
+
+
+def test_governed_swarm_audit_store_path_requires_jsonl_extension(tmp_path: Path) -> None:
+    with pytest.raises(RuntimeError, match=".jsonl file extension"):
+        validate_governed_swarm_audit_store_path(tmp_path / "swarm-runs.log")
+
+    assert not (tmp_path / "swarm-runs.log").exists()
+
+
+def test_governed_swarm_audit_store_path_rejects_directory(tmp_path: Path) -> None:
+    with pytest.raises(RuntimeError, match="not a directory"):
+        validate_governed_swarm_audit_store_path(tmp_path)
+
+    assert tmp_path.is_dir()
 
 
 def test_governed_swarm_integration_mounts_supplied_router_factory(tmp_path: Path) -> None:
