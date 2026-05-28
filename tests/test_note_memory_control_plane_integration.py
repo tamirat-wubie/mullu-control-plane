@@ -19,6 +19,7 @@ from mcoi_runtime.app.note_memory_integration import (
     NoteMemoryBootstrap,
     env_flag,
     mount_note_memory_router_from_env,
+    validate_note_memory_store_path,
 )
 
 
@@ -67,6 +68,56 @@ def test_note_memory_integration_requires_store_path_when_enabled() -> None:
         mount_note_memory_router_from_env(
             app=app,
             runtime_env={"MULLU_NOTE_MEMORY_ENABLED": "true"},
+        )
+
+    assert app.routers == []
+
+
+def test_note_memory_store_path_must_be_absolute() -> None:
+    with pytest.raises(RuntimeError, match="absolute directory path"):
+        validate_note_memory_store_path("relative/notes")
+
+
+def test_note_memory_store_path_requires_existing_parent(tmp_path: Path) -> None:
+    missing_parent = tmp_path / "missing" / "notes"
+
+    with pytest.raises(RuntimeError, match="parent directory must already exist"):
+        validate_note_memory_store_path(missing_parent)
+
+    assert not missing_parent.parent.exists()
+
+
+def test_note_memory_store_path_rejects_regular_file(tmp_path: Path) -> None:
+    target_file = tmp_path / "notes.txt"
+    target_file.write_text("not a store root", encoding="utf-8")
+
+    with pytest.raises(RuntimeError, match="not a regular file"):
+        validate_note_memory_store_path(target_file)
+
+    assert target_file.is_file()
+
+
+def test_note_memory_store_path_accepts_nonexistent_dir_under_existing_parent(
+    tmp_path: Path,
+) -> None:
+    target_dir = tmp_path / "notes"
+
+    resolved = validate_note_memory_store_path(target_dir)
+
+    assert resolved == target_dir.expanduser()
+    assert not target_dir.exists()
+
+
+def test_note_memory_integration_rejects_relative_store_path_at_mount() -> None:
+    app = FakeApp()
+
+    with pytest.raises(RuntimeError, match="absolute directory path"):
+        mount_note_memory_router_from_env(
+            app=app,
+            runtime_env={
+                "MULLU_NOTE_MEMORY_ENABLED": "true",
+                "MULLU_NOTE_MEMORY_STORE_PATH": "relative/notes",
+            },
         )
 
     assert app.routers == []

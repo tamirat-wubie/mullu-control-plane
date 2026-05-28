@@ -28,6 +28,12 @@ from mcoi_runtime.app.server_app import create_governed_app
 from mcoi_runtime.app.server_context import bootstrap_server_context, resolve_env
 from mcoi_runtime.app.governed_swarm_integration import mount_governed_swarm_router_from_env
 from mcoi_runtime.app.note_memory_integration import mount_note_memory_router_from_env
+from mcoi_runtime.app.operational_math_integration import (
+    select_operational_math_receipt_store,
+)
+from mcoi_runtime.app.organization_kernel_integration import (
+    bootstrap_organization_kernel,
+)
 from mcoi_runtime.app.server_lifecycle import bootstrap_server_lifecycle
 from mcoi_runtime.app.server_registry import bootstrap_dependency_registry
 from mcoi_runtime.app.server_runtime_stack import bootstrap_server_runtime_stack
@@ -58,20 +64,14 @@ from mcoi_runtime.persistence.software_change_receipt_store import (
     FileSoftwareChangeReceiptStore,
     SoftwareChangeReceiptStore,
 )
-from mcoi_runtime.persistence.operational_math_receipt_store import (
-    FileOperationalMathReceiptStore,
-    OperationalMathReceiptStore,
-)
 from mcoi_runtime.persistence.finance_approval_store import (
     FileFinanceApprovalPacketStore,
     FinanceApprovalPacketStore,
 )
-from mcoi_runtime.persistence.organization_kernel_store import FileOrganizationKernelStore
 from mcoi_runtime.persistence.temporal_scheduler_store import (
     FileTemporalSchedulerStore,
     TemporalSchedulerStore,
 )
-from mcoi_runtime.core.organization_kernel import OrganizationKernel
 
 def _init_field_encryption_from_env() -> tuple[Any | None, dict[str, Any]]:
     """Build optional field encryption and expose explicit startup posture."""
@@ -240,12 +240,8 @@ register_software_receipt_observability(
     receipt_store=software_receipt_store,
 )
 
-_operational_math_receipt_store_path = os.environ.get("MULLU_OPERATIONAL_MATH_RECEIPT_STORE_PATH")
-operational_math_receipt_store = (
-    FileOperationalMathReceiptStore(Path(_operational_math_receipt_store_path))
-    if _operational_math_receipt_store_path
-    else OperationalMathReceiptStore()
-)
+_operational_math_bootstrap = select_operational_math_receipt_store(os.environ)
+operational_math_receipt_store = _operational_math_bootstrap.store
 deps.set("operational_math_receipt_store", operational_math_receipt_store)
 register_operational_math_observability(
     observability=observability,
@@ -301,15 +297,9 @@ finance_approval_store = (
 )
 deps.set("finance_approval_store", finance_approval_store)
 
-_organization_kernel_store_path = os.environ.get("MULLU_ORGANIZATION_KERNEL_STORE_PATH")
-organization_kernel = OrganizationKernel(clock=_clock)
-organization_kernel_store = (
-    FileOrganizationKernelStore(Path(_organization_kernel_store_path))
-    if _organization_kernel_store_path
-    else None
-)
-if organization_kernel_store is not None:
-    organization_kernel_store.restore_kernel(organization_kernel)
+_organization_kernel_bootstrap = bootstrap_organization_kernel(os.environ, clock=_clock)
+organization_kernel = _organization_kernel_bootstrap.kernel
+organization_kernel_store = _organization_kernel_bootstrap.store
 deps.set("organization_kernel", organization_kernel)
 if organization_kernel_store is not None:
     deps.set("organization_kernel_store", organization_kernel_store)
