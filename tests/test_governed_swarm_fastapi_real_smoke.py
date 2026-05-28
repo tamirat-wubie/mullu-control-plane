@@ -19,9 +19,6 @@ import pytest
 fastapi = pytest.importorskip("fastapi")
 testclient_module = pytest.importorskip("fastapi.testclient")
 
-from mcoi_runtime.app.governed_swarm_integration import extend_runtime_package_path  # noqa: E402  # noqa: E402
-
-
 def _payload() -> dict[str, object]:
     return {
         "run_id": "run_real_fastapi_invoice_001",
@@ -38,8 +35,6 @@ def _payload() -> dict[str, object]:
 
 
 def test_real_fastapi_router_serves_governed_invoice_run(tmp_path: Path) -> None:
-    runtime_root = Path(__file__).resolve().parents[1].parent / "mcoi"
-    extend_runtime_package_path(runtime_root)
     from mcoi_runtime.swarm import InvoiceSwarmRuntime, create_fastapi_router
 
     app = fastapi.FastAPI()
