@@ -200,6 +200,66 @@ class AuditTraceVerifier:
             failures=tuple(failures),
         )
 
+    def verify_certificate_evidence_refs(
+        self,
+        command_id: str,
+    ) -> "CertificateEvidenceRefsVerification":
+        """Verify every evidence_ref on the terminal certificate resolves.
+
+        verify_command_trace only confirms the certificate's evidence_refs
+        tuple is non-empty; verify_certificate_hash confirms the cert's
+        own hash is intact. Neither catches a certificate that carries
+        evidence_refs pointing at evidence_ids that do not exist in the
+        ledger's R_evidence — a tampered cert could swap real refs for
+        fabricated ones whose hash inputs happen to roll up correctly,
+        leaving callers (downstream Ψ, trust bundles, etc.) with an
+        un-grounded proof. This method checks reachability per ref.
+        """
+        command = self._ledger.get(command_id)
+        if command is None:
+            return CertificateEvidenceRefsVerification(
+                command_id=command_id,
+                command_present=False,
+                certificate_present=False,
+                evidence_ref_count=0,
+                unresolved_evidence_refs=(),
+                failures=("command_not_found",),
+            )
+        certificate = self._ledger.terminal_certificate_for(command_id)
+        if certificate is None:
+            # Absence of a certificate is informational — most commands
+            # are verified before terminal closure.
+            return CertificateEvidenceRefsVerification(
+                command_id=command_id,
+                command_present=True,
+                certificate_present=False,
+                evidence_ref_count=0,
+                unresolved_evidence_refs=(),
+                failures=(),
+            )
+
+        known_evidence_ids = {
+            record.evidence_id
+            for record in self._ledger.evidence_for(command_id)
+        }
+        unresolved: list[str] = []
+        for evidence_ref in certificate.evidence_refs:
+            if evidence_ref not in known_evidence_ids:
+                unresolved.append(evidence_ref)
+
+        failures: list[str] = []
+        if unresolved:
+            failures.append("certificate_evidence_ref_unresolved")
+
+        return CertificateEvidenceRefsVerification(
+            command_id=command_id,
+            command_present=True,
+            certificate_present=True,
+            evidence_ref_count=len(certificate.evidence_refs),
+            unresolved_evidence_refs=tuple(unresolved),
+            failures=tuple(failures),
+        )
+
     def _reconstruct_response_evidence_closure(self, command_id: str):
         # The full ResponseEvidenceClosure is stored as a dict in the
         # response_evidence_closed transition-event detail. Return the most
@@ -627,6 +687,7 @@ class AuditTraceVerifier:
         )
         replay = self.verify_replay_state_consistency(command_id)
         certificate_hash = self.verify_certificate_hash(command_id)
+        certificate_evidence_refs = self.verify_certificate_evidence_refs(command_id)
         evidence_records = self.verify_evidence_records(command_id)
         anchor: AnchorVerification | None = None
         if anchor_id:
@@ -645,6 +706,7 @@ class AuditTraceVerifier:
         all_failures.extend(tenant.failures)
         all_failures.extend(replay.failures)
         all_failures.extend(certificate_hash.failures)
+        all_failures.extend(certificate_evidence_refs.failures)
         all_failures.extend(evidence_records.failures)
         if anchor is not None:
             all_failures.extend(anchor.failures)
@@ -658,6 +720,7 @@ class AuditTraceVerifier:
             tenant=tenant,
             replay=replay,
             certificate_hash=certificate_hash,
+            certificate_evidence_refs=certificate_evidence_refs,
             evidence_records=evidence_records,
             anchor=anchor,
             bundle=bundle_check,
@@ -717,6 +780,23 @@ class CertificateHashVerification:
     recomputed_certificate_id: str
     hash_matches: bool
     closure_binding_valid: bool
+    failures: tuple[str, ...]
+
+    @property
+    def fully_verified(self) -> bool:
+        """True iff zero structured failures."""
+        return not self.failures
+
+
+@dataclass(frozen=True, slots=True)
+class CertificateEvidenceRefsVerification:
+    """Bounded outcome of evidence-ref reachability for a terminal certificate."""
+
+    command_id: str
+    command_present: bool
+    certificate_present: bool
+    evidence_ref_count: int
+    unresolved_evidence_refs: tuple[str, ...]
     failures: tuple[str, ...]
 
     @property
@@ -791,6 +871,7 @@ class FullVerification:
     tenant: "TenantIsolationVerification"
     replay: "ReplayStateVerification"
     certificate_hash: "CertificateHashVerification"
+    certificate_evidence_refs: "CertificateEvidenceRefsVerification"
     evidence_records: "EvidenceRecordsVerification"
     anchor: "AnchorVerification | None"
     bundle: "TrustBundleVerification | None"

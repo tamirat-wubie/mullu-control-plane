@@ -708,6 +708,8 @@ def test_verifier_verify_all_composes_every_method():
     assert report.replay.fully_replayed is True
     assert report.certificate_hash.fully_verified is True
     assert report.certificate_hash.hash_matches is True
+    assert report.certificate_evidence_refs.fully_verified is True
+    assert report.certificate_evidence_refs.unresolved_evidence_refs == ()
     assert report.evidence_records.fully_verified is True
     assert report.evidence_records.record_count > 0
     assert report.anchor is not None and report.anchor.failures == ()
@@ -908,6 +910,22 @@ def test_verifier_certificate_hash_unrecoverable_closure_does_not_double_report(
     assert verification.hash_matches is False
 
 
+# ─── Certificate-evidence-ref reachability slice ─────────────────────
+
+
+def test_verifier_certificate_evidence_refs_pass_canonical_lifecycle():
+    # Every evidence_ref on the certificate must resolve to a real
+    # EvidenceRecord in the ledger's R_evidence for this command.
+    ledger, command_id = _ledger_through_terminal_closure()
+    verification = AuditTraceVerifier(ledger).verify_certificate_evidence_refs(command_id)
+    assert verification.command_present is True
+    assert verification.certificate_present is True
+    assert verification.evidence_ref_count > 0
+    assert verification.unresolved_evidence_refs == ()
+    assert verification.failures == ()
+    assert verification.fully_verified is True
+
+
 # ─── Evidence-record verification + approval-chain tenant slice ──────
 
 
@@ -923,6 +941,28 @@ def test_verifier_evidence_records_pass_canonical_lifecycle():
     assert verification.record_count > 0
     assert verification.failures == ()
     assert verification.fully_verified is True
+
+
+def test_verifier_certificate_evidence_refs_detects_unresolved_ref():
+    # Tamper: drop one of the certificate's referenced evidence records
+    # from R_evidence. The certificate still carries the evidence_id but
+    # the ledger no longer holds the record — a tampered or rotated cert
+    # whose refs no longer ground anywhere.
+    ledger, command_id = _ledger_through_terminal_closure()
+    certificate = ledger.terminal_certificate_for(command_id)
+    assert certificate is not None
+    target_ref = certificate.evidence_refs[0]
+    # Remove that evidence record from the per-command list.
+    ledger._evidence_records[command_id] = [
+        record
+        for record in ledger._evidence_records[command_id]
+        if record.evidence_id != target_ref
+    ]
+
+    verification = AuditTraceVerifier(ledger).verify_certificate_evidence_refs(command_id)
+    assert "certificate_evidence_ref_unresolved" in verification.failures
+    assert target_ref in verification.unresolved_evidence_refs
+    assert verification.fully_verified is False
 
 
 def test_verifier_evidence_records_detects_evidence_id_tamper():
@@ -977,6 +1017,16 @@ def test_verifier_evidence_records_detects_hash_recompute_mismatch():
     assert target.evidence_id in verification.hash_recompute_mismatches
 
 
+def test_verifier_certificate_evidence_refs_reports_missing_command():
+    ledger = CommandLedger(
+        clock=lambda: "2026-04-24T12:00:00+00:00",
+        store=InMemoryCommandLedgerStore(),
+    )
+    verification = AuditTraceVerifier(ledger).verify_certificate_evidence_refs("cmd-missing")
+    assert verification.command_present is False
+    assert verification.failures == ("command_not_found",)
+
+
 def test_verifier_evidence_records_reports_missing_command():
     ledger = CommandLedger(
         clock=lambda: "2026-04-24T12:00:00+00:00",
@@ -985,6 +1035,30 @@ def test_verifier_evidence_records_reports_missing_command():
     verification = AuditTraceVerifier(ledger).verify_evidence_records("cmd-missing")
     assert verification.command_present is False
     assert verification.failures == ("command_not_found",)
+
+
+def test_verifier_certificate_evidence_refs_no_certificate_is_informational():
+    # A command without a terminal certificate has nothing to verify;
+    # absence of a certificate is informational, not a failure.
+    ledger = CommandLedger(
+        clock=lambda: "2026-04-24T12:00:00+00:00",
+        store=InMemoryCommandLedgerStore(),
+    )
+    command = ledger.create_command(
+        tenant_id="tenant-1",
+        actor_id="identity-1",
+        source="web",
+        conversation_id="conv-no-cert",
+        idempotency_key="idem-no-cert-refs",
+        intent="llm_completion",
+        payload={"body": "no cert"},
+    )
+
+    verification = AuditTraceVerifier(ledger).verify_certificate_evidence_refs(command.command_id)
+    assert verification.certificate_present is False
+    assert verification.evidence_ref_count == 0
+    assert verification.failures == ()
+    assert verification.fully_verified is True
 
 
 def test_verifier_tenant_isolation_detects_approval_chain_tenant_mismatch():
