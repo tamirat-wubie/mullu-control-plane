@@ -51,6 +51,7 @@ def test_build_governed_swarm_staging_evidence_bundle_from_examples_passes() -> 
     assert errors == []
     assert bundle["outcome"] == "SolvedVerified"
     assert all(check["passed"] is True for check in bundle["cross_checks"])
+    assert bundle["extension_health"]["governed_swarm"]["state"] == "mounted"
 
 
 def test_staging_evidence_bundle_rejects_commit_mismatch() -> None:
@@ -104,6 +105,27 @@ def test_staging_evidence_bundle_blocks_invalid_solved_bundle() -> None:
     assert len(errors) == 1
     assert "$.outcome cannot be SolvedVerified" in errors[0]
     assert "runner_preflight_valid" in errors[0]
+
+
+def test_staging_evidence_bundle_blocks_unmounted_extension_health() -> None:
+    runner = _load(RUNNER_PREFLIGHT_PATH)
+    witness = _load(ACTIVATION_WITNESS_PATH)
+    witness["extension_health"]["governed_swarm"]["mounted"] = False
+    witness["extension_health"]["governed_swarm"]["state"] = "enabled_unmounted"
+
+    bundle = build_staging_evidence_bundle_payload(
+        runner,
+        witness,
+        runner_preflight_ref="runner.json",
+        activation_witness_ref="witness.json",
+        validated_at="2026-05-17T08:20:00Z",
+    )
+
+    errors = validate_staging_evidence_bundle_payload(bundle)
+
+    assert errors == []
+    assert bundle["outcome"] == "AwaitingEvidence"
+    assert any("extension_health_bound" in error for error in bundle["errors"])
 
 
 def _load(path: Path) -> dict[str, Any]:

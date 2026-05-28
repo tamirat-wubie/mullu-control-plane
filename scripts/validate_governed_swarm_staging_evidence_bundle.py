@@ -43,6 +43,7 @@ REQUIRED_CHECKS = {
     "audit_store_path_match",
     "runner_ready",
     "activation_solved",
+    "extension_health_bound",
     "environment_bound",
     "staging_url_bound",
 }
@@ -97,6 +98,11 @@ def build_staging_evidence_bundle_payload(
             f"activation outcome={activation_witness.get('outcome')}",
         ),
         (
+            "extension_health_bound",
+            _extension_health_bound(activation_witness.get("extension_health", {})),
+            _extension_health_detail(activation_witness.get("extension_health", {})),
+        ),
+        (
             "environment_bound",
             activation_witness.get("environment") in {"staging", "pilot"},
             f"environment={activation_witness.get('environment')}",
@@ -133,6 +139,7 @@ def build_staging_evidence_bundle_payload(
         "runtime_path": activation_witness.get("runtime_path"),
         "audit_store_path": activation_witness.get("audit_store", {}).get("path"),
         "staging_url": runner_preflight.get("staging_url"),
+        "extension_health": activation_witness.get("extension_health"),
         "runner_ready": runner_preflight.get("ready"),
         "activation_outcome": activation_witness.get("outcome"),
         "cross_checks": cross_checks,
@@ -174,6 +181,33 @@ def validate_staging_evidence_bundle_file(bundle_path: Path) -> list[str]:
 
     payload = _load_json_object(bundle_path)
     return validate_staging_evidence_bundle_payload(payload)
+
+
+def _extension_health_bound(extension_health: dict[str, Any]) -> bool:
+    governed_swarm = extension_health.get("governed_swarm", {}) if isinstance(extension_health, dict) else {}
+    return (
+        isinstance(extension_health, dict)
+        and extension_health.get("http_status") == 200
+        and extension_health.get("governed") is True
+        and governed_swarm.get("registered") is True
+        and governed_swarm.get("enabled") is True
+        and governed_swarm.get("mounted") is True
+        and governed_swarm.get("state") == "mounted"
+        and governed_swarm.get("audit_store_configured") is True
+    )
+
+
+def _extension_health_detail(extension_health: dict[str, Any]) -> str:
+    governed_swarm = extension_health.get("governed_swarm", {}) if isinstance(extension_health, dict) else {}
+    return (
+        f"http_status={extension_health.get('http_status') if isinstance(extension_health, dict) else None} "
+        f"governed={extension_health.get('governed') if isinstance(extension_health, dict) else None} "
+        f"swarm_registered={governed_swarm.get('registered')} "
+        f"swarm_enabled={governed_swarm.get('enabled')} "
+        f"swarm_mounted={governed_swarm.get('mounted')} "
+        f"swarm_state={governed_swarm.get('state')} "
+        f"audit_store_configured={governed_swarm.get('audit_store_configured')}"
+    )
 
 
 def _load_json_object(path: Path) -> dict[str, Any]:

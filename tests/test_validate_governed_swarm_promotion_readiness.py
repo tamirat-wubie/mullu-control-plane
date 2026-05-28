@@ -48,6 +48,7 @@ def test_pilot_promotion_readiness_from_solved_staging_bundle_passes() -> None:
     assert errors == []
     assert readiness["ready"] is True
     assert readiness["readiness_level"] == "pilot-ready"
+    assert readiness["extension_health"]["governed_swarm"]["state"] == "mounted"
 
 
 def test_promotion_readiness_blocks_unsolved_staging_bundle() -> None:
@@ -84,6 +85,25 @@ def test_promotion_readiness_blocks_production_overclaim() -> None:
     assert readiness["ready"] is False
     assert readiness["outcome"] == "GovernanceBlocked"
     assert "production_witness_required" in readiness["blockers"]
+
+
+def test_promotion_readiness_blocks_unmounted_extension_health() -> None:
+    bundle = _load(STAGING_BUNDLE_PATH)
+    bundle["extension_health"]["governed_swarm"]["mounted"] = False
+    bundle["extension_health"]["governed_swarm"]["state"] = "enabled_unmounted"
+
+    readiness = build_governed_swarm_promotion_readiness_payload(
+        bundle,
+        staging_evidence_bundle_ref="bundle.json",
+        target_environment="pilot",
+        checked_at="2026-05-17T08:25:00Z",
+    )
+
+    errors = validate_governed_swarm_promotion_readiness_payload(readiness)
+
+    assert errors == []
+    assert readiness["ready"] is False
+    assert "extension_health_bound" in readiness["blockers"]
 
 
 def test_governed_swarm_promotion_cli_strict_blocks_production(tmp_path: Path, capsys) -> None:

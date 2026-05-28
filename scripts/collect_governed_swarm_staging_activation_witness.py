@@ -2,10 +2,11 @@
 """Collect governed swarm staging activation evidence.
 
 Purpose: probe a staging control-plane governed swarm route and emit a
-schema-valid activation witness only when runtime, route, audit, and rollback
-evidence are present.
-Governance scope: bundled runtime witness, feature flag, route probe, audit persistence,
-rollback preservation, and witness validation.
+schema-valid activation witness only when runtime, route, extension-health,
+audit, and rollback evidence are present.
+Governance scope: bundled runtime witness, feature flag, route probe,
+extension-health posture, audit persistence, rollback preservation, and witness
+validation.
 Dependencies: standard-library HTTP client and
 schemas/governed_swarm_staging_activation_witness.schema.json.
 Invariants: no route probe success means no SolvedVerified witness; no audit
@@ -107,16 +108,37 @@ def collect_activation_witness(
         f"{normalized_url}/api/v1/swarm/runs",
         timeout_seconds,
     )
+    extension_health_result = http_open(
+        f"{normalized_url}/api/v1/health/extensions",
+        timeout_seconds,
+    )
 
     for label, result in (
         ("create invoice swarm run", create_result),
         ("read invoice swarm run", read_result),
         ("list invoice swarm runs", list_result),
+        ("read extension health", extension_health_result),
     ):
         if result.error:
             errors.append(f"{label}: {result.error}")
         if result.status != 200:
             errors.append(f"{label}: expected status 200 got {result.status}")
+
+    extension_health = _extension_health_from_result(extension_health_result)
+    governed_swarm_extension = extension_health["governed_swarm"]
+    if extension_health["governed"] is not True:
+        errors.append("extension health response is not governed")
+    if governed_swarm_extension["registered"] is not True:
+        errors.append("governed swarm extension is not registered")
+    if governed_swarm_extension["enabled"] is not True:
+        errors.append("governed swarm extension is not enabled")
+    if governed_swarm_extension["mounted"] is not True:
+        errors.append("governed swarm extension is not mounted")
+    if governed_swarm_extension["state"] != "mounted":
+        observed_state = governed_swarm_extension["state"] or "<missing>"
+        errors.append(f"governed swarm extension state is not mounted: {observed_state}")
+    if governed_swarm_extension["audit_store_configured"] is not True:
+        errors.append("governed swarm extension audit store is not configured")
 
     audit_store = _inspect_audit_store(Path(audit_store_path))
     if not audit_store["exists"]:
@@ -164,6 +186,11 @@ def collect_activation_witness(
                 "path": "/api/v1/swarm/runs",
                 "expected_http_status": 200,
             },
+            {
+                "method": "GET",
+                "path": "/api/v1/health/extensions",
+                "expected_http_status": 200,
+            },
         ],
         "invoice_smoke": {
             "create_http_status": create_result.status,
@@ -173,6 +200,7 @@ def collect_activation_witness(
             "governed": governed,
             "terminal_status": terminal_status,
         },
+        "extension_health": extension_health,
         "audit_store": audit_store,
         "rollback": {
             "disable_flag": "MULLU_GOVERNED_SWARM_ENABLED=false",
@@ -238,6 +266,38 @@ def _receipt_has_closure(receipt: dict[str, Any]) -> bool:
     if isinstance(payload, dict):
         return bool(payload.get("closure_certificate") or payload.get("closure"))
     return False
+
+
+def _extension_health_from_result(result: HttpResult) -> dict[str, Any]:
+    extensions = result.payload.get("extensions")
+    if not isinstance(extensions, dict):
+        extensions = {}
+    governed_swarm = extensions.get("governed_swarm")
+    if not isinstance(governed_swarm, dict):
+        governed_swarm = {}
+    note_memory = extensions.get("note_memory")
+    if not isinstance(note_memory, dict):
+        note_memory = {}
+    return {
+        "http_status": result.status,
+        "governed": result.payload.get("governed") is True,
+        "governed_swarm": {
+            "registered": bool(governed_swarm.get("registered")),
+            "enabled": bool(governed_swarm.get("enabled")),
+            "mounted": bool(governed_swarm.get("mounted")),
+            "state": str(governed_swarm.get("state") or ""),
+            "reason": str(governed_swarm.get("reason") or "unknown"),
+            "audit_store_configured": bool(governed_swarm.get("audit_store_configured")),
+        },
+        "note_memory": {
+            "registered": bool(note_memory.get("registered")),
+            "enabled": bool(note_memory.get("enabled")),
+            "mounted": bool(note_memory.get("mounted")),
+            "state": str(note_memory.get("state") or ""),
+            "reason": str(note_memory.get("reason") or "unknown"),
+            "store_configured": bool(note_memory.get("store_configured")),
+        },
+    }
 
 
 def _json_request(url: str, *, method: str, payload: dict[str, object]) -> urllib.request.Request:

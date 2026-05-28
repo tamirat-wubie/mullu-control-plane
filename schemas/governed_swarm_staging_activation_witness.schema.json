@@ -17,6 +17,7 @@
     "feature_flags",
     "route_probes",
     "invoice_smoke",
+    "extension_health",
     "audit_store",
     "rollback",
     "outcome",
@@ -84,7 +85,7 @@
     },
     "route_probes": {
       "type": "array",
-      "minItems": 3,
+      "minItems": 4,
       "items": {
         "$ref": "#/$defs/route_probe"
       }
@@ -124,6 +125,32 @@
         "terminal_status": {
           "type": "string",
           "enum": ["closed", "requires_approval", "review_required"]
+        }
+      }
+    },
+    "extension_health": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "http_status",
+        "governed",
+        "governed_swarm",
+        "note_memory"
+      ],
+      "properties": {
+        "http_status": {
+          "type": "integer",
+          "const": 200
+        },
+        "governed": {
+          "type": "boolean",
+          "const": true
+        },
+        "governed_swarm": {
+          "$ref": "#/$defs/governed_swarm_extension"
+        },
+        "note_memory": {
+          "$ref": "#/$defs/note_memory_extension"
         }
       }
     },
@@ -204,12 +231,81 @@
           "enum": [
             "/api/v1/swarm/invoice-runs",
             "/api/v1/swarm/runs/{run_id}",
-            "/api/v1/swarm/runs"
+            "/api/v1/swarm/runs",
+            "/api/v1/health/extensions"
           ]
         },
         "expected_http_status": {
           "type": "integer",
           "const": 200
+        }
+      }
+    },
+    "governed_swarm_extension": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "registered",
+        "enabled",
+        "mounted",
+        "state",
+        "reason",
+        "audit_store_configured"
+      ],
+      "properties": {
+        "registered": {
+          "type": "boolean"
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "mounted": {
+          "type": "boolean"
+        },
+        "state": {
+          "type": "string",
+          "enum": ["unregistered", "disabled", "enabled_unmounted", "mounted"]
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1
+        },
+        "audit_store_configured": {
+          "type": "boolean"
+        }
+      }
+    },
+    "note_memory_extension": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "registered",
+        "enabled",
+        "mounted",
+        "state",
+        "reason",
+        "store_configured"
+      ],
+      "properties": {
+        "registered": {
+          "type": "boolean"
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "mounted": {
+          "type": "boolean"
+        },
+        "state": {
+          "type": "string",
+          "enum": ["unregistered", "disabled", "enabled_unmounted", "mounted"]
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1
+        },
+        "store_configured": {
+          "type": "boolean"
         }
       }
     }

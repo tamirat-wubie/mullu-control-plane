@@ -42,6 +42,8 @@ def test_collect_governed_swarm_staging_activation_witness_passes(tmp_path: Path
     assert witness["runtime_release_tag"] == "control-plane-bundled-runtime"
     assert witness["runtime_commit"] == CONTROL_PLANE_COMMIT
     assert witness["invoice_smoke"]["run_id"] == "swarm-run-staging-001"
+    assert witness["extension_health"]["governed_swarm"]["mounted"] is True
+    assert witness["extension_health"]["governed_swarm"]["audit_store_configured"] is True
     assert witness["audit_store"]["latest_receipt_has_closure"] is True
 
 
@@ -124,4 +126,29 @@ def _successful_opener(request: Any, timeout_seconds: float) -> HttpResult:
         )
     if url.endswith("/api/v1/swarm/runs"):
         return HttpResult(status=200, payload={"payload": {"count": 1}})
+    if url.endswith("/api/v1/health/extensions"):
+        return HttpResult(
+            status=200,
+            payload={
+                "governed": True,
+                "extensions": {
+                    "governed_swarm": {
+                        "registered": True,
+                        "enabled": True,
+                        "mounted": True,
+                        "state": "mounted",
+                        "reason": "mounted",
+                        "audit_store_configured": True,
+                    },
+                    "note_memory": {
+                        "registered": True,
+                        "enabled": False,
+                        "mounted": False,
+                        "state": "disabled",
+                        "reason": "disabled",
+                        "store_configured": False,
+                    },
+                },
+            },
+        )
     raise AssertionError(f"unexpected URL {url}")

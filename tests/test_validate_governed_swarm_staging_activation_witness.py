@@ -63,6 +63,18 @@ def test_governed_swarm_staging_witness_rejects_missing_route_probe() -> None:
     assert "/api/v1/swarm/runs" in errors[0]
 
 
+def test_governed_swarm_staging_witness_rejects_unmounted_extension_health() -> None:
+    payload = _example_payload()
+    payload["extension_health"]["governed_swarm"]["mounted"] = False
+    payload["extension_health"]["governed_swarm"]["state"] = "enabled_unmounted"
+
+    errors = validate_witness_payload(payload)
+
+    assert len(errors) == 1
+    assert "$.extension_health.governed_swarm" in errors[0]
+    assert "mounted" in errors[0]
+
+
 def test_governed_swarm_staging_witness_rejects_audit_path_mismatch() -> None:
     payload = _example_payload()
     payload["audit_store"]["path"] = "/tmp/not-the-configured-audit.jsonl"
