@@ -27,6 +27,7 @@ from mcoi_runtime.app.routers.deps import deps
 from mcoi_runtime.app.server_app import create_governed_app
 from mcoi_runtime.app.server_context import bootstrap_server_context, resolve_env
 from mcoi_runtime.app.governed_swarm_integration import mount_governed_swarm_router_from_env
+from mcoi_runtime.app.note_memory_integration import mount_note_memory_router_from_env
 from mcoi_runtime.app.server_lifecycle import bootstrap_server_lifecycle
 from mcoi_runtime.app.server_registry import bootstrap_dependency_registry
 from mcoi_runtime.app.server_runtime_stack import bootstrap_server_runtime_stack
@@ -343,6 +344,12 @@ governed_swarm_bootstrap = mount_governed_swarm_router_from_env(
     runtime_env=os.environ,
 )
 deps.set("governed_swarm_bootstrap", governed_swarm_bootstrap)
+
+note_memory_bootstrap = mount_note_memory_router_from_env(
+    app=app,
+    runtime_env=os.environ,
+)
+deps.set("note_memory_bootstrap", note_memory_bootstrap)
 
 from mcoi_runtime.core.god_mode_integration import install_god_mode  # noqa: E402
 

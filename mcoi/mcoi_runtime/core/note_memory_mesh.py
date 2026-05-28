@@ -1,0 +1,925 @@
+"""Governed note and memory mesh.
+
+Purpose: capture temporary notes, execution traces, decisions, rejected deltas,
+and promoted memory anchors as bounded symbolic evidence.
+Governance scope: Phi_gov promotion gating, ProofState discipline, secret
+redaction, append-only lineage, retrieval guard checks, and Mfidel atomicity.
+Dependencies: standard-library JSONL persistence, file locking, and runtime
+invariant helpers.
+Invariants: durable writes are append-only, secrets are redacted before
+persistence, MemoryAnchor writes require accepted governance receipts, and
+temporary notes cannot influence execution after expiry or contradiction.
+"""
+
+from __future__ import annotations
+
+from dataclasses import dataclass, replace
+from datetime import datetime, timedelta, timezone
+from enum import StrEnum
+from hashlib import sha256
+import json
+import os
+from pathlib import Path
+import re
+from typing import Callable, Iterable, Mapping, Sequence
+
+from mcoi_runtime.core.invariants import RuntimeCoreInvariantError, stable_identifier
+
+
+class ProofState(StrEnum):
+    """Allowed note proof states."""
+
+    PASS = "Pass"
+    FAIL = "Fail"
+    UNKNOWN = "Unknown"
+    BUDGET_UNKNOWN = "BudgetUnknown"
+
+
+class NoteKind(StrEnum):
+    """Governed note kinds."""
+
+    EPHEMERAL_SCRATCH = "EphemeralScratch"
+    WORKING_NOTE = "WorkingNote"
+    EXECUTION_TRACE = "ExecutionTrace"
+    DECISION_RECORD = "DecisionRecord"
+    REJECTED_DELTA = "RejectedDelta"
+    MEMORY_ANCHOR = "MemoryAnchor"
+
+
+class NoteAction(StrEnum):
+    """Append-only event actions for note lifecycle transitions."""
+
+    CREATE = "create"
+    APPEND = "append"
+    SUPERSEDE = "supersede"
+    CONTRADICT = "contradict"
+    EXPIRE = "expire"
+    PROMOTE = "promote"
+    REJECT = "reject"
+
+
+class NoteScope(StrEnum):
+    """Allowed note influence scopes."""
+
+    TASK = "task"
+    MODULE = "module"
+    REPOSITORY = "repository"
+    PLATFORM = "platform"
+
+
+class TrustZone(StrEnum):
+    """Trust boundaries for note source and retrieval."""
+
+    LOCAL = "local"
+    WORKSPACE = "workspace"
+    EXTERNAL = "external"
+    SENSITIVE = "sensitive"
+
+
+class PhiGovStatus(StrEnum):
+    """Governance status for promotion receipts."""
+
+    NOT_REQUIRED = "not_required"
+    PENDING = "pending"
+    ACCEPTED = "accepted"
+    REJECTED = "rejected"
+
+
+_TEMPORARY_KINDS = {NoteKind.EPHEMERAL_SCRATCH, NoteKind.WORKING_NOTE}
+_PROMOTABLE_KINDS = {NoteKind.WORKING_NOTE, NoteKind.DECISION_RECORD}
+_DURABLE_NON_PROMOTABLE_KINDS = {NoteKind.EXECUTION_TRACE, NoteKind.REJECTED_DELTA}
+_REDACTION_PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
+    ("private_key", re.compile(r"-----BEGIN [A-Z ]*PRIVATE KEY-----.*?-----END [A-Z ]*PRIVATE KEY-----", re.DOTALL)),
+    ("jwt", re.compile(r"\beyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\b")),
+    ("slack_token", re.compile(r"\bxox[baprs]-[A-Za-z0-9-]{10,}\b")),
+    ("openai_key", re.compile(r"\bsk-[A-Za-z0-9_-]{16,}\b")),
+    (
+        "credential_url",
+        re.compile(r"\b[a-z][a-z0-9+.-]*://[^/\s:@]+:[^@\s]+@[^/\s]+[^\s]*", re.IGNORECASE),
+    ),
+    (
+        "api_key",
+        re.compile(
+            r"\b(api[_-]?key|token|oauth[_-]?token|secret|password|passwd|pwd)\s*[:=]\s*['\"]?[^'\"\s,;]+",
+            re.IGNORECASE,
+        ),
+    ),
+    (
+        "verification_link",
+        re.compile(r"https?://[^\s]+(?:verify|verification|reset|recovery)[^\s]+", re.IGNORECASE),
+    ),
+    (
+        "recovery_code",
+        re.compile(r"\b(recovery[_ -]?code|backup[_ -]?code)\s*[:=]\s*['\"]?[A-Za-z0-9-]{6,}", re.IGNORECASE),
+    ),
+)
+_MFIDEL_BLOCK_PATTERNS = (
+    "split fidel",
+    "decompose fidel",
+    "decompose amharic",
+    "consonant + vowel",
+    "consonant-vowel",
+    "root letter",
+    "unicode decomposition",
+    "unicode normalization",
+    "normalize amharic",
+)
+_MFIDEL_REJECTION_CONTEXT = ("reject", "rejected", "block", "blocked", "no ", "never ", "violation")
+_SYMBOL_IDENTIFIER_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$")
+
+
+def _utc_now_iso() -> str:
+    return datetime.now(timezone.utc).isoformat()
+
+
+def _parse_iso(value: str) -> datetime:
+    try:
+        return datetime.fromisoformat(value.replace("Z", "+00:00")).astimezone(timezone.utc)
+    except ValueError as exc:
+        raise RuntimeCoreInvariantError(f"invalid iso timestamp: {value}") from exc
+
+
+def _tuple_text(values: Sequence[str] | None) -> tuple[str, ...]:
+    if values is None:
+        return ()
+    result = tuple(str(value).strip() for value in values if str(value).strip())
+    return result
+
+
+def _validate_symbol_identifier(value: str, field_name: str) -> str:
+    text = value.strip()
+    if not text:
+        raise RuntimeCoreInvariantError(f"{field_name} must be non-empty")
+    if ".." in text or not _SYMBOL_IDENTIFIER_PATTERN.fullmatch(text):
+        raise RuntimeCoreInvariantError(f"{field_name} must be a bounded symbolic identifier")
+    return text
+
+
+def _canonical_json(value: Mapping[str, object]) -> str:
+    return json.dumps(dict(value), sort_keys=True, separators=(",", ":"), default=str)
+
+
+def _checksum_for_payload(payload: Mapping[str, object]) -> str:
+    return sha256(_canonical_json(payload).encode("utf-8")).hexdigest()
+
+
+def redact_sensitive_text(value: str) -> str:
+    """Return text with known durable-secret patterns replaced by hash witnesses."""
+
+    redacted = value
+    for secret_kind, pattern in _REDACTION_PATTERNS:
+        redacted = pattern.sub(lambda match: _redaction_marker(secret_kind, match.group(0)), redacted)
+    return redacted
+
+
+def _redaction_marker(secret_kind: str, secret_value: str) -> str:
+    digest = sha256(secret_value.encode("utf-8")).hexdigest()[:12]
+    return f"[REDACTED:{secret_kind}:{digest}]"
+
+
+def _redact_sequence(values: Iterable[str]) -> tuple[str, ...]:
+    return tuple(redact_sensitive_text(value) for value in values)
+
+
+def _mfidel_violation_detected(content_summary: str, kind: NoteKind) -> bool:
+    lower_summary = content_summary.lower()
+    if not any(pattern in lower_summary for pattern in _MFIDEL_BLOCK_PATTERNS):
+        return False
+    if kind == NoteKind.REJECTED_DELTA:
+        return False
+    return not any(marker in lower_summary for marker in _MFIDEL_REJECTION_CONTEXT)
+
+
+@dataclass(frozen=True)
+class PromotionReceipt:
+    """Phi_gov receipt required before a note can become a MemoryAnchor."""
+
+    promotion_id: str
+    source_note_id: str
+    anchor_id: str
+    proof_state: ProofState
+    evidence_refs: tuple[str, ...]
+    contradiction_scan: ProofState
+    phi_gov_status: PhiGovStatus
+    accepted_at: str
+    accepted_by: str
+    lineage_event_seq: int
+
+    def __post_init__(self) -> None:
+        if self.proof_state != ProofState.PASS:
+            raise RuntimeCoreInvariantError("promotion receipt proof_state must be Pass")
+        if self.contradiction_scan != ProofState.PASS:
+            raise RuntimeCoreInvariantError("promotion receipt contradiction_scan must be Pass")
+        if self.phi_gov_status != PhiGovStatus.ACCEPTED:
+            raise RuntimeCoreInvariantError("promotion receipt phi_gov_status must be accepted")
+        if not self.evidence_refs:
+            raise RuntimeCoreInvariantError("promotion receipt requires evidence_refs")
+        for field_name in ("promotion_id", "source_note_id", "anchor_id", "accepted_at", "accepted_by"):
+            if not str(getattr(self, field_name)).strip():
+                raise RuntimeCoreInvariantError(f"{field_name} must be non-empty")
+        if self.lineage_event_seq < 0:
+            raise RuntimeCoreInvariantError("lineage_event_seq must be non-negative")
+        _validate_symbol_identifier(self.promotion_id, "promotion_id")
+        _validate_symbol_identifier(self.source_note_id, "source_note_id")
+        _validate_symbol_identifier(self.anchor_id, "anchor_id")
+        _parse_iso(self.accepted_at)
+
+    def to_dict(self) -> dict[str, object]:
+        """Return a deterministic JSON-compatible receipt."""
+
+        return {
+            "promotion_id": self.promotion_id,
+            "source_note_id": self.source_note_id,
+            "anchor_id": self.anchor_id,
+            "proof_state": self.proof_state.value,
+            "evidence_refs": list(self.evidence_refs),
+            "contradiction_scan": self.contradiction_scan.value,
+            "phi_gov_status": self.phi_gov_status.value,
+            "accepted_at": self.accepted_at,
+            "accepted_by": self.accepted_by,
+            "lineage_event_seq": self.lineage_event_seq,
+        }
+
+
+@dataclass(frozen=True)
+class NoteMemoryEvent:
+    """One append-only note memory event."""
+
+    event_seq: int
+    event_id: str
+    note_id: str
+    kind: NoteKind
+    action: NoteAction
+    scope: NoteScope
+    content_summary: str
+    source_ref: str
+    proof_state: ProofState
+    trust_zone: TrustZone
+    created_at: str
+    expires_at: str | None = None
+    evidence_refs: tuple[str, ...] = ()
+    relation_refs: tuple[str, ...] = ()
+    checksum: str = ""
+
+    def __post_init__(self) -> None:
+        if self.event_seq < 0:
+            raise RuntimeCoreInvariantError("event_seq must be non-negative")
+        for field_name in ("event_id", "note_id", "content_summary", "source_ref", "created_at"):
+            if not str(getattr(self, field_name)).strip():
+                raise RuntimeCoreInvariantError(f"{field_name} must be non-empty")
+        _validate_symbol_identifier(self.event_id, "event_id")
+        _validate_symbol_identifier(self.note_id, "note_id")
+        _parse_iso(self.created_at)
+        if self.expires_at is not None:
+            expires_at = _parse_iso(self.expires_at)
+            if expires_at <= _parse_iso(self.created_at):
+                raise RuntimeCoreInvariantError("expires_at must be after created_at")
+        if self.kind in _TEMPORARY_KINDS and self.expires_at is None:
+            raise RuntimeCoreInvariantError(f"{self.kind.value} requires expires_at")
+        if self.kind == NoteKind.MEMORY_ANCHOR and self.action != NoteAction.PROMOTE:
+            raise RuntimeCoreInvariantError("MemoryAnchor can only be emitted through promote action")
+        if self.action == NoteAction.PROMOTE and self.proof_state != ProofState.PASS:
+            raise RuntimeCoreInvariantError("promote action requires ProofState Pass")
+        if self.action in {NoteAction.SUPERSEDE, NoteAction.CONTRADICT} and not self.relation_refs:
+            raise RuntimeCoreInvariantError(f"{self.action.value} action requires relation_refs")
+        if _mfidel_violation_detected(self.content_summary, self.kind):
+            raise RuntimeCoreInvariantError("Mfidel atomicity violation detected in note summary")
+        if self.checksum and self.checksum != self.expected_checksum():
+            raise RuntimeCoreInvariantError("note event checksum mismatch")
+
+    def to_dict(self, *, include_checksum: bool = True) -> dict[str, object]:
+        """Return a deterministic JSON-compatible event."""
+
+        value: dict[str, object] = {
+            "event_seq": self.event_seq,
+            "event_id": self.event_id,
+            "note_id": self.note_id,
+            "kind": self.kind.value,
+            "action": self.action.value,
+            "scope": self.scope.value,
+            "content_summary": self.content_summary,
+            "source_ref": self.source_ref,
+            "proof_state": self.proof_state.value,
+            "trust_zone": self.trust_zone.value,
+            "created_at": self.created_at,
+            "expires_at": self.expires_at,
+            "evidence_refs": list(self.evidence_refs),
+            "relation_refs": list(self.relation_refs),
+        }
+        if include_checksum:
+            value["checksum"] = self.checksum
+        return value
+
+    def expected_checksum(self) -> str:
+        """Return the expected checksum for the event excluding checksum itself."""
+
+        return _checksum_for_payload(self.to_dict(include_checksum=False))
+
+    def with_integrity(self) -> "NoteMemoryEvent":
+        """Return the event with deterministic event id and checksum populated."""
+
+        event_id = self.event_id
+        if event_id == "pending":
+            event_id = stable_identifier("note-event", self.to_dict(include_checksum=False))
+        event = replace(self, event_id=event_id, checksum="")
+        return replace(event, checksum=event.expected_checksum())
+
+    @classmethod
+    def from_dict(cls, value: Mapping[str, object]) -> "NoteMemoryEvent":
+        """Rehydrate a note event from JSON-compatible data."""
+
+        return cls(
+            event_seq=int(value["event_seq"]),
+            event_id=str(value["event_id"]),
+            note_id=str(value["note_id"]),
+            kind=NoteKind(str(value["kind"])),
+            action=NoteAction(str(value["action"])),
+            scope=NoteScope(str(value["scope"])),
+            content_summary=str(value["content_summary"]),
+            source_ref=str(value["source_ref"]),
+            proof_state=ProofState(str(value["proof_state"])),
+            trust_zone=TrustZone(str(value["trust_zone"])),
+            created_at=str(value["created_at"]),
+            expires_at=str(value["expires_at"]) if value.get("expires_at") else None,
+            evidence_refs=_tuple_text(value.get("evidence_refs") if isinstance(value.get("evidence_refs"), list) else ()),
+            relation_refs=_tuple_text(value.get("relation_refs") if isinstance(value.get("relation_refs"), list) else ()),
+            checksum=str(value.get("checksum", "")),
+        )
+
+
+@dataclass(frozen=True)
+class NoteMemoryDraft:
+    """Input contract for creating a note memory event."""
+
+    kind: NoteKind
+    scope: NoteScope
+    content_summary: str
+    source_ref: str
+    proof_state: ProofState
+    trust_zone: TrustZone
+    expires_at: str | None = None
+    note_id: str = ""
+    evidence_refs: tuple[str, ...] = ()
+    relation_refs: tuple[str, ...] = ()
+    action: NoteAction = NoteAction.CREATE
+
+
+@dataclass(frozen=True)
+class RetrievedNote:
+    """Guard-approved note projection with influence score."""
+
+    event: NoteMemoryEvent
+    score: float
+    guard_reasons: tuple[str, ...]
+
+
+@dataclass(frozen=True)
+class RetrievalGuard:
+    """Policy checks that must pass before a note can influence execution."""
+
+    allowed_trust_zones: tuple[TrustZone, ...] = (TrustZone.LOCAL, TrustZone.WORKSPACE)
+    allowed_proof_states: tuple[ProofState, ...] = (ProofState.PASS,)
+    scope: NoteScope | None = None
+    now: str | None = None
+    include_hypotheses: bool = False
+
+
+@dataclass(frozen=True)
+class IndexRebuildReport:
+    """Receipt for rebuilding the materialized note index."""
+
+    valid_events: int
+    rejected_lines: int
+    checksum_failures: int
+    proof_state: ProofState
+
+
+@dataclass(frozen=True)
+class ExpiryReport:
+    """Receipt for temporary-note expiry processing."""
+
+    expired_count: int
+    emitted_event_ids: tuple[str, ...]
+    proof_state: ProofState
+
+
+@dataclass(frozen=True)
+class _MaterializedNote:
+    latest: NoteMemoryEvent
+    superseded: bool = False
+    contradicted: bool = False
+    expired: bool = False
+
+
+class _WriteLock:
+    """Small cross-process lock using an atomic lock file."""
+
+    def __init__(self, lock_path: Path, *, clock: Callable[[], str], ttl_seconds: int = 30) -> None:
+        self._lock_path = lock_path
+        self._clock = clock
+        self._ttl_seconds = ttl_seconds
+        self._fd: int | None = None
+
+    def __enter__(self) -> "_WriteLock":
+        self._lock_path.parent.mkdir(parents=True, exist_ok=True)
+        self._clear_expired_lock()
+        try:
+            self._fd = os.open(str(self._lock_path), os.O_CREAT | os.O_EXCL | os.O_WRONLY)
+            payload = {
+                "pid": os.getpid(),
+                "created_at": self._clock(),
+                "expires_at": (_parse_iso(self._clock()) + timedelta(seconds=self._ttl_seconds)).isoformat(),
+            }
+            os.write(self._fd, _canonical_json(payload).encode("utf-8"))
+            os.fsync(self._fd)
+        except FileExistsError as exc:
+            raise RuntimeCoreInvariantError(f"note memory write lock conflict: {self._lock_path}") from exc
+        return self
+
+    def __exit__(self, exc_type: object, exc_value: object, traceback: object) -> None:
+        if self._fd is not None:
+            os.close(self._fd)
+            self._fd = None
+        try:
+            self._lock_path.unlink()
+        except FileNotFoundError:
+            return
+
+    def _clear_expired_lock(self) -> None:
+        if not self._lock_path.exists():
+            return
+        try:
+            payload = json.loads(self._lock_path.read_text(encoding="utf-8"))
+            expires_at = _parse_iso(str(payload["expires_at"]))
+        except (OSError, KeyError, TypeError, json.JSONDecodeError, RuntimeCoreInvariantError):
+            return
+        if expires_at < _parse_iso(self._clock()):
+            self._lock_path.unlink(missing_ok=True)
+
+
+class NoteMemoryMesh:
+    """Dependency-free governed note memory store backed by append-only JSONL."""
+
+    def __init__(self, root_path: str | Path, *, clock: Callable[[], str] | None = None) -> None:
+        self.root_path = Path(root_path)
+        self._clock = clock or _utc_now_iso
+
+    def capture_note(self, draft: NoteMemoryDraft) -> NoteMemoryEvent:
+        """Capture one redacted note event and append it to the lineage."""
+
+        if draft.kind == NoteKind.MEMORY_ANCHOR:
+            raise RuntimeCoreInvariantError("MemoryAnchor writes must use promote_memory_anchor")
+        event = self._draft_to_event(draft)
+        return self._append_event(event)
+
+    def record_rejected_delta(
+        self,
+        *,
+        content_summary: str,
+        source_ref: str,
+        scope: NoteScope = NoteScope.TASK,
+        evidence_refs: Sequence[str] | None = None,
+    ) -> NoteMemoryEvent:
+        """Record durable negative evidence for a rejected state transition."""
+
+        return self.capture_note(
+            NoteMemoryDraft(
+                kind=NoteKind.REJECTED_DELTA,
+                action=NoteAction.REJECT,
+                scope=scope,
+                content_summary=content_summary,
+                source_ref=source_ref,
+                proof_state=ProofState.FAIL,
+                trust_zone=TrustZone.WORKSPACE,
+                evidence_refs=_tuple_text(evidence_refs),
+            )
+        )
+
+    def retrieve_notes(self, query: str, guard: RetrievalGuard | None = None) -> tuple[RetrievedNote, ...]:
+        """Return guard-approved notes ranked by deterministic influence score."""
+
+        active_guard = guard or RetrievalGuard()
+        now = _parse_iso(active_guard.now or self._clock())
+        query_terms = tuple(term for term in query.lower().split() if term)
+        materialized = self._materialize(self.list_events(skip_invalid=False))
+        retrieved: list[RetrievedNote] = []
+        for note_state in materialized.values():
+            allowed, reasons = self._guard_note(note_state, active_guard, now)
+            if not allowed:
+                continue
+            event = note_state.latest
+            if query_terms and not all(term in event.content_summary.lower() for term in query_terms):
+                continue
+            retrieved.append(
+                RetrievedNote(
+                    event=event,
+                    score=self._score_note(event, active_guard, now),
+                    guard_reasons=tuple(reasons),
+                )
+            )
+        return tuple(sorted(retrieved, key=lambda item: (-item.score, item.event.event_seq)))
+
+    def queue_promotion(self, note_id: str) -> str:
+        """Queue a promotable note for later Phi_gov review."""
+
+        with _WriteLock(self.root_path / "write.lock", clock=self._clock):
+            note_state = self._note_state(note_id)
+            event = note_state.latest
+            if self._source_is_blocked_for_promotion(note_state):
+                raise RuntimeCoreInvariantError("promotion queue source is blocked by materialized state")
+            if event.kind not in _PROMOTABLE_KINDS:
+                raise RuntimeCoreInvariantError(f"{event.kind.value} cannot be promoted")
+            if event.proof_state != ProofState.PASS:
+                raise RuntimeCoreInvariantError("promotion queue requires source ProofState Pass")
+            if not event.evidence_refs:
+                raise RuntimeCoreInvariantError("promotion queue requires evidence_refs")
+            promotion_id = stable_identifier("note-promotion", {"note_id": note_id, "event_seq": event.event_seq})
+            if not self._promotion_is_queued(promotion_id, note_id, event.event_seq):
+                self._append_promotion(
+                    {
+                        "promotion_id": promotion_id,
+                        "source_note_id": note_id,
+                        "source_event_seq": event.event_seq,
+                        "source_event_id": event.event_id,
+                        "queued_at": self._clock(),
+                    }
+                )
+            return promotion_id
+
+    def promote_memory_anchor(self, note_id: str, receipt: PromotionReceipt) -> NoteMemoryEvent:
+        """Promote a validated note into a MemoryAnchor after receipt checks."""
+
+        with _WriteLock(self.root_path / "write.lock", clock=self._clock):
+            source_state = self._note_state(note_id)
+            source = source_state.latest
+            if receipt.source_note_id != note_id:
+                raise RuntimeCoreInvariantError("promotion receipt source_note_id mismatch")
+            expected_promotion_id = stable_identifier("note-promotion", {"note_id": note_id, "event_seq": source.event_seq})
+            if receipt.promotion_id != expected_promotion_id:
+                raise RuntimeCoreInvariantError("promotion receipt id does not match source event")
+            if receipt.lineage_event_seq != source.event_seq:
+                raise RuntimeCoreInvariantError("promotion receipt lineage_event_seq mismatch")
+            if not self._promotion_is_queued(receipt.promotion_id, note_id, source.event_seq):
+                raise RuntimeCoreInvariantError("promotion receipt requires queued promotion")
+            if source.kind not in _PROMOTABLE_KINDS:
+                raise RuntimeCoreInvariantError(f"{source.kind.value} cannot be promoted")
+            if source.proof_state != ProofState.PASS:
+                raise RuntimeCoreInvariantError("memory anchor promotion requires source ProofState Pass")
+            if not source.evidence_refs:
+                raise RuntimeCoreInvariantError("memory anchor promotion requires source evidence_refs")
+            if self._source_is_blocked_for_promotion(source_state):
+                raise RuntimeCoreInvariantError("memory anchor promotion source is blocked by materialized state")
+            anchor_path = self.root_path / "anchors" / f"{receipt.anchor_id}.json"
+            if anchor_path.exists():
+                raise RuntimeCoreInvariantError(f"memory anchor already exists: {receipt.anchor_id}")
+            event = self._draft_to_event(
+                NoteMemoryDraft(
+                    kind=NoteKind.MEMORY_ANCHOR,
+                    action=NoteAction.PROMOTE,
+                    scope=source.scope,
+                    content_summary=source.content_summary,
+                    source_ref=f"promotion:{receipt.promotion_id}",
+                    proof_state=ProofState.PASS,
+                    trust_zone=source.trust_zone,
+                    note_id=receipt.anchor_id,
+                    evidence_refs=receipt.evidence_refs,
+                    relation_refs=(note_id,),
+                )
+            )
+            promoted = self._sequence_event_locked(event)
+            self._write_anchor_receipt(promoted, receipt)
+            try:
+                self._write_event_locked(promoted)
+            except OSError:
+                anchor_path.unlink(missing_ok=True)
+                raise
+        return promoted
+
+    def expire_temporary_notes(self, now: str | None = None) -> ExpiryReport:
+        """Emit expiry events for unexpired temporary notes past their TTL."""
+
+        current = _parse_iso(now or self._clock())
+        emitted: list[str] = []
+        materialized = self._materialize(self.list_events(skip_invalid=False))
+        for note_state in materialized.values():
+            event = note_state.latest
+            if note_state.expired or event.kind not in _TEMPORARY_KINDS or event.expires_at is None:
+                continue
+            if _parse_iso(event.expires_at) <= current:
+                expiry_event = self._draft_to_event(
+                    NoteMemoryDraft(
+                        kind=event.kind,
+                        action=NoteAction.EXPIRE,
+                        scope=event.scope,
+                        content_summary=f"Expired temporary note {event.note_id}",
+                        source_ref=f"expiry:{event.note_id}",
+                        proof_state=ProofState.PASS,
+                        trust_zone=event.trust_zone,
+                        note_id=event.note_id,
+                        expires_at=(current + timedelta(seconds=1)).isoformat(),
+                        relation_refs=(event.event_id,),
+                    )
+                )
+                emitted.append(self._append_event(expiry_event).event_id)
+        return ExpiryReport(
+            expired_count=len(emitted),
+            emitted_event_ids=tuple(emitted),
+            proof_state=ProofState.PASS,
+        )
+
+    def rebuild_index_from_events(self) -> IndexRebuildReport:
+        """Validate event files and report rebuild fitness without mutating lineage."""
+
+        valid_events = 0
+        rejected_lines = 0
+        checksum_failures = 0
+        for event_path in self._event_paths():
+            with event_path.open("r", encoding="utf-8") as handle:
+                for line in handle:
+                    stripped = line.strip()
+                    if not stripped:
+                        continue
+                    try:
+                        payload = json.loads(stripped)
+                        expected_checksum = str(payload.get("checksum", ""))
+                        unchecked_payload = dict(payload)
+                        unchecked_payload["checksum"] = ""
+                        event = NoteMemoryEvent.from_dict(unchecked_payload)
+                        if expected_checksum != event.expected_checksum():
+                            checksum_failures += 1
+                            continue
+                        valid_events += 1
+                    except (KeyError, TypeError, ValueError, json.JSONDecodeError, RuntimeCoreInvariantError):
+                        rejected_lines += 1
+        proof_state = ProofState.PASS if rejected_lines == 0 and checksum_failures == 0 else ProofState.FAIL
+        return IndexRebuildReport(
+            valid_events=valid_events,
+            rejected_lines=rejected_lines,
+            checksum_failures=checksum_failures,
+            proof_state=proof_state,
+        )
+
+    def list_events(self, *, skip_invalid: bool = False) -> tuple[NoteMemoryEvent, ...]:
+        """Return persisted events in monotonic order."""
+
+        events: list[NoteMemoryEvent] = []
+        for event_path in self._event_paths():
+            with event_path.open("r", encoding="utf-8") as handle:
+                for line_number, line in enumerate(handle, start=1):
+                    stripped = line.strip()
+                    if not stripped:
+                        continue
+                    try:
+                        events.append(NoteMemoryEvent.from_dict(json.loads(stripped)))
+                    except (KeyError, TypeError, ValueError, json.JSONDecodeError, RuntimeCoreInvariantError) as exc:
+                        if skip_invalid:
+                            continue
+                        raise RuntimeCoreInvariantError(f"invalid note event at {event_path}:{line_number}") from exc
+        return tuple(sorted(events, key=lambda event: event.event_seq))
+
+    @property
+    def event_count(self) -> int:
+        """Return the number of valid persisted note events."""
+
+        return len(self.list_events(skip_invalid=False))
+
+    def _draft_to_event(self, draft: NoteMemoryDraft) -> NoteMemoryEvent:
+        created_at = self._clock()
+        redacted_summary = redact_sensitive_text(draft.content_summary.strip())
+        redacted_source = redact_sensitive_text(draft.source_ref.strip())
+        redacted_evidence = _redact_sequence(draft.evidence_refs)
+        note_id = _validate_symbol_identifier(draft.note_id, "note_id") if draft.note_id.strip() else stable_identifier(
+            "note",
+            {
+                "kind": draft.kind.value,
+                "scope": draft.scope.value,
+                "content_summary": redacted_summary,
+                "source_ref": redacted_source,
+                "created_at": created_at,
+            },
+        )
+        return NoteMemoryEvent(
+            event_seq=0,
+            event_id="pending",
+            note_id=note_id,
+            kind=draft.kind,
+            action=draft.action,
+            scope=draft.scope,
+            content_summary=redacted_summary,
+            source_ref=redacted_source,
+            proof_state=draft.proof_state,
+            trust_zone=draft.trust_zone,
+            created_at=created_at,
+            expires_at=draft.expires_at,
+            evidence_refs=redacted_evidence,
+            relation_refs=_tuple_text(draft.relation_refs),
+        )
+
+    def _append_event(self, event: NoteMemoryEvent) -> NoteMemoryEvent:
+        with _WriteLock(self.root_path / "write.lock", clock=self._clock):
+            return self._append_event_locked(event)
+
+    def _append_event_locked(self, event: NoteMemoryEvent) -> NoteMemoryEvent:
+        sequenced = self._sequence_event_locked(event)
+        self._write_event_locked(sequenced)
+        return sequenced
+
+    def _sequence_event_locked(self, event: NoteMemoryEvent) -> NoteMemoryEvent:
+        event_seq = self._next_event_seq()
+        return replace(event, event_seq=event_seq).with_integrity()
+
+    def _write_event_locked(self, sequenced: NoteMemoryEvent) -> None:
+        self._event_path_for(sequenced.created_at).parent.mkdir(parents=True, exist_ok=True)
+        event_path = self._event_path_for(sequenced.created_at)
+        with event_path.open("a", encoding="utf-8") as handle:
+            handle.write(_canonical_json(sequenced.to_dict()))
+            handle.write("\n")
+        if sequenced.kind == NoteKind.REJECTED_DELTA:
+            self._append_rejected_delta(sequenced)
+
+    def _next_event_seq(self) -> int:
+        events = self.list_events(skip_invalid=False)
+        if not events:
+            return 1
+        return max(event.event_seq for event in events) + 1
+
+    def _latest_note(self, note_id: str) -> NoteMemoryEvent:
+        return self._note_state(note_id).latest
+
+    def _note_state(self, note_id: str) -> _MaterializedNote:
+        materialized = self._materialize(self.list_events(skip_invalid=False))
+        note_state = materialized.get(note_id)
+        if note_state is None:
+            raise RuntimeCoreInvariantError(f"unknown note_id: {note_id}")
+        return note_state
+
+    def _materialize(self, events: Sequence[NoteMemoryEvent]) -> dict[str, _MaterializedNote]:
+        notes: dict[str, _MaterializedNote] = {}
+        event_to_note_id = {event.event_id: event.note_id for event in events}
+        for event in events:
+            prior = notes.get(event.note_id)
+            current = _MaterializedNote(
+                latest=event,
+                superseded=prior.superseded if prior else False,
+                contradicted=prior.contradicted if prior else False,
+                expired=prior.expired if prior else False,
+            )
+            if event.action == NoteAction.EXPIRE:
+                current = replace(current, expired=True)
+            notes[event.note_id] = current
+            if event.action == NoteAction.SUPERSEDE:
+                for relation_ref in event.relation_refs:
+                    self._mark_relation(notes, event_to_note_id, relation_ref, superseded=True)
+            if event.action == NoteAction.CONTRADICT:
+                for relation_ref in event.relation_refs:
+                    self._mark_relation(notes, event_to_note_id, relation_ref, contradicted=True)
+        return notes
+
+    def _mark_relation(
+        self,
+        notes: dict[str, _MaterializedNote],
+        event_to_note_id: Mapping[str, str],
+        relation_ref: str,
+        *,
+        superseded: bool = False,
+        contradicted: bool = False,
+    ) -> None:
+        related_note_id = relation_ref if relation_ref in notes else event_to_note_id.get(relation_ref)
+        if related_note_id is None:
+            return
+        related = notes.get(related_note_id)
+        if related is None:
+            return
+        notes[related_note_id] = replace(
+            related,
+            superseded=related.superseded or superseded,
+            contradicted=related.contradicted or contradicted,
+        )
+
+    def _guard_note(
+        self,
+        note_state: _MaterializedNote,
+        guard: RetrievalGuard,
+        now: datetime,
+    ) -> tuple[bool, list[str]]:
+        event = note_state.latest
+        reasons: list[str] = []
+        if note_state.expired or (event.expires_at is not None and _parse_iso(event.expires_at) <= now):
+            return False, ("expired",)
+        if note_state.superseded:
+            return False, ("superseded",)
+        if note_state.contradicted:
+            return False, ("contradicted",)
+        if event.trust_zone not in guard.allowed_trust_zones:
+            return False, ("trust_zone_blocked",)
+        allowed_proof_states = set(guard.allowed_proof_states)
+        if guard.include_hypotheses:
+            allowed_proof_states.add(ProofState.UNKNOWN)
+        if event.proof_state not in allowed_proof_states:
+            return False, ("proof_state_blocked",)
+        if guard.scope is not None and event.scope != guard.scope:
+            return False, ("scope_mismatch",)
+        reasons.append("retrieval_guard_passed")
+        return True, reasons
+
+    def _score_note(self, event: NoteMemoryEvent, guard: RetrievalGuard, now: datetime) -> float:
+        proof_weight = {
+            ProofState.PASS: 1.0,
+            ProofState.UNKNOWN: 0.45,
+            ProofState.BUDGET_UNKNOWN: 0.1,
+            ProofState.FAIL: 0.0,
+        }[event.proof_state]
+        age_seconds = max((now - _parse_iso(event.created_at)).total_seconds(), 0.0)
+        freshness_weight = max(0.0, 1.0 - min(age_seconds / (7 * 24 * 60 * 60), 1.0))
+        scope_match = 1.0 if guard.scope is None or guard.scope == event.scope else 0.0
+        source_trust = {
+            TrustZone.LOCAL: 1.0,
+            TrustZone.WORKSPACE: 0.85,
+            TrustZone.EXTERNAL: 0.4,
+            TrustZone.SENSITIVE: 0.2,
+        }[event.trust_zone]
+        relation_density = min((len(event.evidence_refs) + len(event.relation_refs)) / 5.0, 1.0)
+        return (
+            0.35 * proof_weight
+            + 0.25 * freshness_weight
+            + 0.20 * scope_match
+            + 0.10 * source_trust
+            + 0.10 * relation_density
+        )
+
+    def _source_is_blocked_for_promotion(self, note_state: _MaterializedNote) -> bool:
+        event = note_state.latest
+        is_time_expired = event.expires_at is not None and _parse_iso(event.expires_at) <= _parse_iso(self._clock())
+        return note_state.contradicted or note_state.superseded or note_state.expired or is_time_expired
+
+    def _promotion_is_queued(self, promotion_id: str, source_note_id: str, source_event_seq: int) -> bool:
+        for entry in self._pending_promotions():
+            try:
+                entry_source_event_seq = int(entry.get("source_event_seq", -1))
+            except (TypeError, ValueError) as exc:
+                raise RuntimeCoreInvariantError("invalid promotion queue source_event_seq") from exc
+            if (
+                entry.get("promotion_id") == promotion_id
+                and entry.get("source_note_id") == source_note_id
+                and entry_source_event_seq == source_event_seq
+            ):
+                return True
+        return False
+
+    def _pending_promotions(self) -> tuple[Mapping[str, object], ...]:
+        promotion_path = self.root_path / "promotions" / "pending.jsonl"
+        if not promotion_path.exists():
+            return ()
+        entries: list[Mapping[str, object]] = []
+        with promotion_path.open("r", encoding="utf-8") as handle:
+            for line_number, line in enumerate(handle, start=1):
+                stripped = line.strip()
+                if not stripped:
+                    continue
+                try:
+                    payload = json.loads(stripped)
+                except json.JSONDecodeError as exc:
+                    raise RuntimeCoreInvariantError(
+                        f"invalid promotion queue entry at {promotion_path}:{line_number}"
+                    ) from exc
+                if not isinstance(payload, dict):
+                    raise RuntimeCoreInvariantError(f"invalid promotion queue entry at {promotion_path}:{line_number}")
+                entries.append(payload)
+        return tuple(entries)
+
+    def _append_promotion(self, payload: Mapping[str, object]) -> None:
+        promotion_path = self.root_path / "promotions" / "pending.jsonl"
+        promotion_path.parent.mkdir(parents=True, exist_ok=True)
+        with promotion_path.open("a", encoding="utf-8") as handle:
+            handle.write(_canonical_json(payload))
+            handle.write("\n")
+
+    def _write_anchor_receipt(self, event: NoteMemoryEvent, receipt: PromotionReceipt) -> None:
+        anchor_path = self.root_path / "anchors" / f"{event.note_id}.json"
+        anchor_path.parent.mkdir(parents=True, exist_ok=True)
+        payload = {"anchor_event": event.to_dict(), "promotion_receipt": receipt.to_dict()}
+        try:
+            with anchor_path.open("x", encoding="utf-8") as handle:
+                handle.write(_canonical_json(payload))
+                handle.write("\n")
+        except FileExistsError as exc:
+            raise RuntimeCoreInvariantError(f"memory anchor already exists: {event.note_id}") from exc
+
+    def _append_rejected_delta(self, event: NoteMemoryEvent) -> None:
+        rejected_path = self.root_path / "rejected-deltas" / self._daily_filename(event.created_at)
+        rejected_path.parent.mkdir(parents=True, exist_ok=True)
+        with rejected_path.open("a", encoding="utf-8") as handle:
+            handle.write(_canonical_json(event.to_dict()))
+            handle.write("\n")
+
+    def _event_paths(self) -> tuple[Path, ...]:
+        event_root = self.root_path / "events"
+        if not event_root.exists():
+            return ()
+        return tuple(sorted(path for path in event_root.glob("*.jsonl") if path.is_file()))
+
+    def _event_path_for(self, created_at: str) -> Path:
+        return self.root_path / "events" / self._daily_filename(created_at)
+
+    def _daily_filename(self, created_at: str) -> str:
+        return f"{_parse_iso(created_at).date().isoformat()}.jsonl"

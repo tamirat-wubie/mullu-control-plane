@@ -1,0 +1,12 @@
+{
+  "run_id": "run_invoice_closed_001",
+  "goal_id": "goal_invoice_closed_001",
+  "tenant_id": "tenant_a",
+  "invoice_ref": "invoice_001",
+  "invoice_amount_usd": "1250.00",
+  "vendor_verified": true,
+  "duplicate_found": false,
+  "budget_available": true,
+  "policy_requires_approval": true,
+  "human_approved": true
+}

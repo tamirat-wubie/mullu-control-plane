@@ -126,19 +126,21 @@ def test_governed_swarm_integration_mounts_supplied_router_factory(tmp_path: Pat
     assert app.routers == [{"runtime_path": mounted_runtime["runtime"].path}]
 
 
-def test_governed_swarm_integration_reports_missing_runtime_dependency(tmp_path: Path) -> None:
+def test_governed_swarm_integration_mounts_bundled_runtime_without_external_path(tmp_path: Path) -> None:
     app = FakeApp()
 
-    with pytest.raises(RuntimeError, match="governed swarm package is required"):
-        mount_governed_swarm_router_from_env(
-            app=app,
-            runtime_env={
-                "MULLU_GOVERNED_SWARM_ENABLED": "true",
-                "MULLU_GOVERNED_SWARM_AUDIT_STORE_PATH": str(tmp_path / "swarm-runs.jsonl"),
-            },
-        )
+    bootstrap = mount_governed_swarm_router_from_env(
+        app=app,
+        runtime_env={
+            "MULLU_GOVERNED_SWARM_ENABLED": "true",
+            "MULLU_GOVERNED_SWARM_AUDIT_STORE_PATH": str(tmp_path / "swarm-runs.jsonl"),
+        },
+    )
 
-    assert app.routers == []
+    assert bootstrap.enabled is True
+    assert bootstrap.mounted is True
+    assert bootstrap.reason == "mounted"
+    assert len(app.routers) == 1
 
 
 def test_runtime_path_extension_requires_swarm_package(tmp_path: Path) -> None:
@@ -163,7 +165,7 @@ def test_runtime_path_extension_adds_external_swarm_package(tmp_path: Path) -> N
     assert str(tmp_path) in __import__("sys").path
 
 
-def test_enabled_integration_mounts_external_swarm_router_with_fake_fastapi(
+def test_enabled_integration_mounts_bundled_swarm_router_with_fake_fastapi(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -172,14 +174,12 @@ def test_enabled_integration_mounts_external_swarm_router_with_fake_fastapi(
     fake_fastapi.Body = lambda default: default
     monkeypatch.setitem(sys.modules, "fastapi", fake_fastapi)
     app = FakeApp()
-    runtime_root = Path(__file__).resolve().parents[1].parent / "mcoi"
 
     bootstrap = mount_governed_swarm_router_from_env(
         app=app,
         runtime_env={
             "MULLU_GOVERNED_SWARM_ENABLED": "true",
             "MULLU_GOVERNED_SWARM_AUDIT_STORE_PATH": str(tmp_path / "swarm-runs.jsonl"),
-            "MULLU_GOVERNED_SWARM_RUNTIME_PATH": str(runtime_root),
         },
     )
 
