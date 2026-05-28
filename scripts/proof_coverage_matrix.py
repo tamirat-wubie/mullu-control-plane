@@ -247,7 +247,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
             "request_proof",
             "action_proof",
             "audit_chain",
-            "witnessed",
+            "proven",
             [
                 "mcoi/mcoi_runtime/app/routers/llm/completion.py",
                 "mcoi/mcoi_runtime/app/routers/llm/chat.py",
@@ -423,7 +423,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
             "request_proof",
             "action_proof",
             "audit_chain",
-            "witnessed",
+            "proven",
             [
                 "mcoi/mcoi_runtime/app/routers/assistant.py",
                 "mcoi/mcoi_runtime/assistant_kernel/planner.py",
@@ -579,7 +579,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
             "request_proof",
             "action_proof",
             "audit_chain",
-            "witnessed",
+            "proven",
             [
                 "mcoi/mcoi_runtime/app/routers/ops/coordination.py",
                 "mcoi/mcoi_runtime/core/coordination.py",
@@ -673,7 +673,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
             "request_proof",
             "action_proof",
             "audit_chain",
-            "witnessed",
+            "proven",
             [
                 "mcoi/mcoi_runtime/app/routers/data/export.py",
                 "mcoi/mcoi_runtime/core/data_export.py",
@@ -697,7 +697,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
             "request_proof",
             "action_proof",
             "audit_chain",
-            "witnessed",
+            "proven",
             [
                 "mcoi/mcoi_runtime/app/routers/data/prompts.py",
                 "mcoi/mcoi_runtime/core/prompt_template_engine.py",
@@ -744,7 +744,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
             "request_proof",
             "action_proof",
             "audit_chain",
-            "witnessed",
+            "proven",
             [
                 "mcoi/mcoi_runtime/app/routers/data/schemas.py",
                 "mcoi/mcoi_runtime/core/schema_validator.py",
@@ -1934,7 +1934,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
             "request_proof",
             "action_proof",
             "audit_chain",
-            "witnessed",
+            "proven",
             [
                 "mcoi/mcoi_runtime/app/routers/data/output.py",
                 "mcoi/mcoi_runtime/core/structured_output.py",
@@ -2193,7 +2193,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
             "request_proof",
             "action_proof",
             "audit_chain",
-            "witnessed",
+            "proven",
             [
                 "mcoi/mcoi_runtime/app/routers/agent.py",
                 "mcoi/mcoi_runtime/core/agent_chain.py",
@@ -2252,7 +2252,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
             "request_proof",
             "action_proof",
             "audit_chain",
-            "witnessed",
+            "proven",
             [
                 "mcoi/mcoi_runtime/app/routers/data/certify.py",
                 "mcoi/mcoi_runtime/core/live_path_certification.py",
@@ -6007,7 +6007,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
             "request_proof",
             "action_proof",
             "audit_chain",
-            "witnessed",
+            "proven",
             [
                 "mcoi/mcoi_runtime/app/routers/data/tools.py",
                 "mcoi/mcoi_runtime/app/routers/workflow.py",

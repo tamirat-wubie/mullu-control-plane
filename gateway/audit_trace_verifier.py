@@ -29,6 +29,7 @@ from gateway.command_spine import (
     CommandEvent,
     CommandLedger,
     CommandState,
+    EvidenceRecord,
     _anchor_signature_payload,
     _compute_merkle_root,
     canonical_hash,
@@ -466,19 +467,24 @@ class AuditTraceVerifier:
             failures=tuple(failures),
         )
 
-    def verify_tenant_isolation(self, command_id: str) -> "TenantIsolationVerification":
-        """Verify the command's tenant_id is consistent across its events.
+    def verify_tenant_isolation(
+        self,
+        command_id: str,
+        *,
+        obligation_mesh: AuthorityObligationMesh | None = None,
+    ) -> "TenantIsolationVerification":
+        """Verify the command's tenant_id is consistent across its artifacts.
 
         Catches tenant-leak scenarios where an event for this command
         carries a tenant_id that does not match the command's. The terminal
         certificate is bound by command_id (no tenant_id field), so this
         method also reports certificate_command_id_mismatch if it diverges.
 
-        Approval-chain tenant verification is NOT covered here — the chain
-        lives in AuthorityObligationMesh state (not the ledger), and the
-        mesh is not part of this method's parameter set. verify_all could
-        cross-reference if the chain is fetched there, but is not required
-        by this method's contract.
+        If an obligation_mesh is provided, the approval chain's tenant_id is
+        cross-referenced against the command's tenant_id and any divergence
+        is reported as approval_chain_tenant_mismatch. The mesh argument is
+        optional and defaults to None for backward compatibility with
+        callers that only have ledger state.
         """
         command = self._ledger.get(command_id)
         if command is None:
@@ -488,6 +494,7 @@ class AuditTraceVerifier:
                 expected_tenant_id="",
                 event_tenant_mismatches=(),
                 certificate_tenant_mismatch=False,
+                approval_chain_tenant_mismatch=False,
                 failures=("command_not_found",),
             )
         expected = command.tenant_id
@@ -508,12 +515,91 @@ class AuditTraceVerifier:
             cert_mismatch = True
             failures.append("certificate_command_id_mismatch")
 
+        # If an obligation_mesh was passed, also cross-reference the
+        # approval chain's tenant_id. The chain is a separate state store
+        # outside the ledger; a chain whose tenant_id disagrees with the
+        # command's is a real tenant-boundary violation that the prior
+        # ledger-only checks cannot catch.
+        approval_chain_tenant_mismatch = False
+        if obligation_mesh is not None:
+            chain = obligation_mesh.approval_chain_for(command_id)
+            if chain is not None and chain.tenant_id != expected:
+                approval_chain_tenant_mismatch = True
+                failures.append("approval_chain_tenant_mismatch")
+
         return TenantIsolationVerification(
             command_id=command_id,
             command_present=True,
             expected_tenant_id=expected,
             event_tenant_mismatches=tuple(event_mismatches),
             certificate_tenant_mismatch=cert_mismatch,
+            approval_chain_tenant_mismatch=approval_chain_tenant_mismatch,
+            failures=tuple(failures),
+        )
+
+    def verify_evidence_records(self, command_id: str) -> "EvidenceRecordsVerification":
+        """Verify per-evidence-record structural integrity.
+
+        For each evidence record bound to this command, check:
+        - evidence_id derives from ref_hash (the canonical binding:
+          evidence_id == "evidence-" + ref_hash[:16]); catches a tampered
+          evidence_id or ref_hash where the structural relationship was
+          left inconsistent.
+        - record.command_id matches the command we are verifying; catches
+          an evidence record that was rebound to the wrong command.
+        - For non-provider-receipt evidence (the only type whose hash
+          inputs are fully observable from the record fields), recompute
+          ref_hash from {command_id, evidence_type, ref} and confirm it
+          matches; provider-receipt records carry intermediate refs that
+          are not on the record, so only the structural checks apply.
+        """
+        command = self._ledger.get(command_id)
+        if command is None:
+            return EvidenceRecordsVerification(
+                command_id=command_id,
+                command_present=False,
+                record_count=0,
+                evidence_id_mismatches=(),
+                command_id_mismatches=(),
+                hash_recompute_mismatches=(),
+                failures=("command_not_found",),
+            )
+
+        records = self._ledger.evidence_for(command_id)
+        evidence_id_mismatches: list[str] = []
+        command_id_mismatches: list[str] = []
+        hash_recompute_mismatches: list[str] = []
+        failures: list[str] = []
+
+        for record in records:
+            expected_id = f"evidence-{record.ref_hash[:16]}"
+            if record.evidence_id != expected_id:
+                evidence_id_mismatches.append(record.evidence_id)
+            if record.command_id != command_id:
+                command_id_mismatches.append(record.evidence_id)
+            if record.evidence_type != "provider_receipt":
+                recomputed = canonical_hash({
+                    "command_id": record.command_id,
+                    "evidence_type": record.evidence_type,
+                    "ref": record.ref,
+                })
+                if recomputed != record.ref_hash:
+                    hash_recompute_mismatches.append(record.evidence_id)
+
+        if evidence_id_mismatches:
+            failures.append("evidence_id_derivation_mismatch")
+        if command_id_mismatches:
+            failures.append("evidence_command_id_mismatch")
+        if hash_recompute_mismatches:
+            failures.append("evidence_hash_recompute_mismatch")
+
+        return EvidenceRecordsVerification(
+            command_id=command_id,
+            command_present=True,
+            record_count=len(records),
+            evidence_id_mismatches=tuple(evidence_id_mismatches),
+            command_id_mismatches=tuple(command_id_mismatches),
+            hash_recompute_mismatches=tuple(hash_recompute_mismatches),
             failures=tuple(failures),
         )
 
@@ -536,9 +622,12 @@ class AuditTraceVerifier:
         trace = self.verify_command_trace(command_id)
         global_chain = self.verify_global_event_chain()
         approval = self.verify_approval_chain(command_id, obligation_mesh=obligation_mesh)
-        tenant = self.verify_tenant_isolation(command_id)
+        tenant = self.verify_tenant_isolation(
+            command_id, obligation_mesh=obligation_mesh,
+        )
         replay = self.verify_replay_state_consistency(command_id)
         certificate_hash = self.verify_certificate_hash(command_id)
+        evidence_records = self.verify_evidence_records(command_id)
         anchor: AnchorVerification | None = None
         if anchor_id:
             if not anchor_signing_secret:
@@ -556,6 +645,7 @@ class AuditTraceVerifier:
         all_failures.extend(tenant.failures)
         all_failures.extend(replay.failures)
         all_failures.extend(certificate_hash.failures)
+        all_failures.extend(evidence_records.failures)
         if anchor is not None:
             all_failures.extend(anchor.failures)
         if bundle_check is not None:
@@ -568,6 +658,7 @@ class AuditTraceVerifier:
             tenant=tenant,
             replay=replay,
             certificate_hash=certificate_hash,
+            evidence_records=evidence_records,
             anchor=anchor,
             bundle=bundle_check,
             failures=tuple(all_failures),
@@ -662,10 +753,29 @@ class TenantIsolationVerification:
     expected_tenant_id: str
     event_tenant_mismatches: tuple[str, ...]
     certificate_tenant_mismatch: bool
+    approval_chain_tenant_mismatch: bool
     failures: tuple[str, ...]
 
     @property
     def fully_isolated(self) -> bool:
+        """True iff zero structured failures."""
+        return not self.failures
+
+
+@dataclass(frozen=True, slots=True)
+class EvidenceRecordsVerification:
+    """Bounded outcome of one command's evidence-record integrity check."""
+
+    command_id: str
+    command_present: bool
+    record_count: int
+    evidence_id_mismatches: tuple[str, ...]
+    command_id_mismatches: tuple[str, ...]
+    hash_recompute_mismatches: tuple[str, ...]
+    failures: tuple[str, ...]
+
+    @property
+    def fully_verified(self) -> bool:
         """True iff zero structured failures."""
         return not self.failures
 
@@ -681,6 +791,7 @@ class FullVerification:
     tenant: "TenantIsolationVerification"
     replay: "ReplayStateVerification"
     certificate_hash: "CertificateHashVerification"
+    evidence_records: "EvidenceRecordsVerification"
     anchor: "AnchorVerification | None"
     bundle: "TrustBundleVerification | None"
     failures: tuple[str, ...]

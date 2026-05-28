@@ -13,10 +13,11 @@ package paths must be explicit and must contain mcoi_runtime/swarm.
 from __future__ import annotations
 
 from dataclasses import dataclass
-import os
 from pathlib import Path
 import sys
 from typing import Any, Callable, Mapping
+
+from mcoi_runtime.app._integration_paths import env_flag, validate_hosted_store_path
 
 
 @dataclass(frozen=True)
@@ -27,12 +28,6 @@ class GovernedSwarmBootstrap:
     mounted: bool
     audit_store_path: str
     reason: str
-
-
-def env_flag(value: str | None) -> bool:
-    """Return whether an environment flag is enabled."""
-
-    return str(value or "").strip().lower() in {"1", "true", "yes", "on", "enabled"}
 
 
 def mount_governed_swarm_router_from_env(
@@ -86,24 +81,12 @@ def mount_governed_swarm_router_from_env(
 def validate_governed_swarm_audit_store_path(audit_store_path: str | Path) -> Path:
     """Validate the hosted governed swarm audit-store path before mounting."""
 
-    path = Path(audit_store_path).expanduser()
-    if not path.is_absolute():
-        raise RuntimeError("MULLU_GOVERNED_SWARM_AUDIT_STORE_PATH must be an absolute file path")
-    if path.exists() and path.is_dir():
-        raise RuntimeError("MULLU_GOVERNED_SWARM_AUDIT_STORE_PATH must point to a JSONL file, not a directory")
-    if path.suffix.lower() != ".jsonl":
-        raise RuntimeError("MULLU_GOVERNED_SWARM_AUDIT_STORE_PATH must use a .jsonl file extension")
-    parent = path.parent
-    if not parent.exists():
-        raise RuntimeError("MULLU_GOVERNED_SWARM_AUDIT_STORE_PATH parent directory must already exist")
-    if not parent.is_dir():
-        raise RuntimeError("MULLU_GOVERNED_SWARM_AUDIT_STORE_PATH parent must be a directory")
-    if path.exists() and not path.is_file():
-        raise RuntimeError("MULLU_GOVERNED_SWARM_AUDIT_STORE_PATH must point to a regular file")
-    writable_target = path if path.exists() else parent
-    if not os.access(writable_target, os.W_OK):
-        raise RuntimeError("MULLU_GOVERNED_SWARM_AUDIT_STORE_PATH must be writable by the control-plane process")
-    return path
+    return validate_hosted_store_path(
+        audit_store_path,
+        env_name="MULLU_GOVERNED_SWARM_AUDIT_STORE_PATH",
+        kind="file",
+        required_suffix=".jsonl",
+    )
 
 
 def extend_runtime_package_path(runtime_path: str | Path) -> Path:
