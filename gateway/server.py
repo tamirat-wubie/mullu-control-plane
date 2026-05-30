@@ -134,6 +134,20 @@ REQUIRED_PHYSICAL_LIVE_SAFETY_FIELDS = (
 )
 
 
+def _explicit_dev_or_test_env(raw_env: str) -> bool:
+    """Whether the authority dev/test bypass is permitted for this MULLU_ENV.
+
+    The approval-webhook / authority-operator / deployment-authority routes
+    skip their secret/identity check only in ``local_dev``/``test``. That
+    bypass MUST require an EXPLICIT ``MULLU_ENV`` of ``local_dev`` or ``test``.
+    An unset or blank value must NOT grant it: a forgotten ``MULLU_ENV`` in a
+    production deployment previously defaulted to ``local_dev`` and opened
+    every authority route with no secret. Mirrors the musia_auth "F16" rule —
+    production must opt into dev mode, not fall into it.
+    """
+    return raw_env.strip().lower() in {"local_dev", "test"}
+
+
 def create_gateway_app(
     platform: Any = None,
     *,
@@ -165,7 +179,11 @@ def create_gateway_app(
         except ValueError:
             return default
 
-    gateway_env = (os.environ.get("MULLU_ENV", "local_dev") or "local_dev").strip().lower()
+    _raw_gateway_env = os.environ.get("MULLU_ENV", "").strip().lower()
+    gateway_env = _raw_gateway_env or "local_dev"
+    # Security: the authority bypass below requires an EXPLICIT dev/test env.
+    # An unset MULLU_ENV must fail closed (see _explicit_dev_or_test_env).
+    _dev_authority_bypass = _explicit_dev_or_test_env(_raw_gateway_env)
     approval_secret = os.environ.get("MULLU_GATEWAY_APPROVAL_SECRET", "")
     authority_operator_secret = os.environ.get("MULLU_AUTHORITY_OPERATOR_SECRET", "")
     authority_operator_roles = tuple(
@@ -202,7 +220,7 @@ def create_gateway_app(
 
     def _approval_webhook_authorized(request: Request) -> bool:
         """Fail closed outside local and test unless an explicit approval secret matches."""
-        if gateway_env in {"local_dev", "test"}:
+        if _dev_authority_bypass:
             return True
         provided = request.headers.get("X-Mullu-Approval-Secret", "")
         if not approval_secret:
@@ -211,7 +229,7 @@ def create_gateway_app(
 
     def _authority_operator_authorized(request: Request) -> bool:
         """Fail closed outside local and test unless operator identity or secret matches."""
-        if gateway_env in {"local_dev", "test"}:
+        if _dev_authority_bypass:
             return True
         provided = request.headers.get("X-Mullu-Authority-Secret", "")
         if authority_operator_secret and hmac.compare_digest(provided, authority_operator_secret):
@@ -237,7 +255,7 @@ def create_gateway_app(
 
     def _deployment_authority_authorized(request: Request) -> bool:
         """Fail closed outside local and test unless deployment authority is explicit."""
-        if gateway_env in {"local_dev", "test"}:
+        if _dev_authority_bypass:
             return True
         provided = request.headers.get("X-Mullu-Deployment-Secret", "")
         if deployment_authority_secret and hmac.compare_digest(provided, deployment_authority_secret):
