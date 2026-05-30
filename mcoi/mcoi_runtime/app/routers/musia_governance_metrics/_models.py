@@ -83,6 +83,9 @@ class GovernanceMetricsSnapshot:
     # counters above; never included in total_runs/total_denials.
     phi_gov_decisions: dict[str, int] = field(default_factory=dict)
     phi_gov_denials_by_category: dict[str, int] = field(default_factory=dict)
+    # Φ_gov cascade coverage: "ran"|"skipped" -> count. Surfaces whether the
+    # per-type invariant validators (Phase 3) actually cover each write.
+    phi_gov_cascade_coverage: dict[str, int] = field(default_factory=dict)
 
     def total_runs(self) -> int:
         return sum(self.runs_by_surface_verdict.values())
@@ -199,6 +202,7 @@ class GovernanceMetricsSnapshot:
             "total_denials": self.total_denials(),
             "phi_gov_decisions": dict(self.phi_gov_decisions),
             "phi_gov_denials_by_category": dict(self.phi_gov_denials_by_category),
+            "phi_gov_cascade_coverage": dict(self.phi_gov_cascade_coverage),
             "latency_by_surface": {
                 surface: {
                     "upper_bounds": list(hist.upper_bounds),

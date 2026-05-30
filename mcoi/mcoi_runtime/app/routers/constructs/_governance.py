@@ -130,6 +130,13 @@ def _governed_write(
     # Observability: record the overall Φ_gov verdict (incl. A1 signals) into
     # the dedicated phi_gov decision counters, separate from the chain metrics.
     _record_phi_gov_decision(result.judgment)
+    # Coverage: Phase 3 (the dependency cascade / per-type invariant validators)
+    # appends a summary only when it actually runs — which it does not for a
+    # create, whose construct is not yet in the graph. Recording ran-vs-skipped
+    # surfaces that the validators do not cover the create path today.
+    _METRICS.record_phi_gov_cascade_coverage(
+        ran=bool(result.judgment.cascade_summaries)
+    )
     if result.judgment.state == ProofState.PASS:
         state.graph.register(construct, depends_on=depends_on)
         # Consume a rate-limit slot only on successful registration.

@@ -155,6 +155,19 @@ def _snapshot_to_prometheus(
             for c, n in sorted(snap.phi_gov_denials_by_category.items())
         ],
     ))
+    families.append(_format_metric_family(
+        name=f"{prefix}_phi_gov_cascade_coverage_total",
+        help_text=(
+            "Phi_gov writes by whether the dependency cascade (per-type "
+            "invariant validators) ran or was skipped. A high skipped ratio "
+            "means validators are not covering the write path."
+        ),
+        metric_type="counter",
+        samples=[
+            ({"outcome": o}, n)
+            for o, n in sorted(snap.phi_gov_cascade_coverage.items())
+        ],
+    ))
 
     # Latency histograms by surface (v4.21.0+).
     # Prometheus convention: <metric_base>_bucket{le="<upper>"} for
