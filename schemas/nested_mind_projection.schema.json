@@ -1,0 +1,78 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:nested-mind-projection:1",
+  "title": "Nested Mind Projection Envelope",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "mind_id",
+    "scope",
+    "sequence",
+    "commit_hash",
+    "state_hash",
+    "lawbook_hash",
+    "history_hash",
+    "projected_at",
+    "state"
+  ],
+  "properties": {
+    "mind_id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"
+    },
+    "scope": {
+      "type": "string",
+      "enum": [
+        "public",
+        "summary",
+        "internal"
+      ]
+    },
+    "sequence": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "commit_hash": {
+      "type": "string",
+      "minLength": 1
+    },
+    "state_hash": {
+      "type": "string",
+      "minLength": 1
+    },
+    "lawbook_hash": {
+      "type": "string",
+      "minLength": 1
+    },
+    "history_hash": {
+      "type": "string",
+      "minLength": 1
+    },
+    "projected_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "state": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  },
+  "not": {
+    "anyOf": [
+      { "required": ["proposal"] },
+      { "required": ["proposals"] },
+      { "required": ["patch"] },
+      { "required": ["patches"] },
+      { "required": ["ops"] },
+      { "required": ["operation"] },
+      { "required": ["lawbook_migration"] },
+      { "required": ["lawbook_migrations"] },
+      { "required": ["child_mind_create"] },
+      { "required": ["commit_write"] }
+    ]
+  }
+}
