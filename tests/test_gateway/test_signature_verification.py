@@ -120,3 +120,75 @@ def test_verified_and_skipped_requests_do_not_create_reject_reasons() -> None:
     assert status["total_skipped"] == 1
     assert status["reject_reasons"] == {}
     assert status["skip_reasons"] == {"channel_not_configured": 1}
+
+
+def test_default_mode_preserves_fail_open_skip() -> None:
+    # Documents the default opt-in-security behavior that strict mode overrides.
+    verifier = WebhookVerifier()  # strict defaults to False
+
+    result = verifier.verify_hmac(channel="unknown", body="payload", signature="anything")
+
+    assert result.verified is True
+    assert result.skip_reason == "channel_not_configured"
+    assert result.reject_reason == ""
+
+
+def test_strict_mode_fails_closed_on_unconfigured_channel() -> None:
+    verifier = WebhookVerifier(strict=True)
+
+    result = verifier.verify_hmac(channel="unknown", body="payload", signature="anything")
+    status = verifier.status()
+
+    assert result.verified is False
+    assert result.reject_reason == "channel_not_configured"
+    assert result.skip_reason == ""
+    assert status["total_skipped"] == 0
+    assert status["total_rejected"] == 1
+    assert status["reject_reasons"] == {"channel_not_configured": 1}
+
+
+def test_strict_mode_fails_closed_on_unconfigured_secret() -> None:
+    verifier = WebhookVerifier(strict=True)
+    verifier.register(
+        "slack",
+        ChannelVerifierConfig(
+            channel="slack",
+            method=VerificationMethod.HMAC_SHA256,
+            secret="",
+        ),
+    )
+
+    result = verifier.verify_hmac(channel="slack", body="payload", signature="anything")
+
+    assert result.verified is False
+    assert result.reject_reason == "secret_not_configured"
+
+
+def test_strict_mode_rejects_unconfigured_via_dispatch_and_token() -> None:
+    verifier = WebhookVerifier(strict=True)
+
+    dispatched = verifier.verify(channel="unknown", body="payload", signature="x")
+    token = verifier.verify_token(channel="unknown", provided_token="x")
+
+    assert dispatched.verified is False
+    assert dispatched.reject_reason == "channel_not_configured"
+    assert token.verified is False
+    assert token.reject_reason == "channel_not_configured"
+
+
+def test_strict_mode_still_verifies_valid_signature() -> None:
+    verifier = WebhookVerifier(strict=True)
+    verifier.register(
+        "slack",
+        ChannelVerifierConfig(
+            channel="slack",
+            method=VerificationMethod.HMAC_SHA256,
+            secret="secret",
+        ),
+    )
+    signature = _hmac_signature("secret", "payload")
+
+    result = verifier.verify_hmac(channel="slack", body="payload", signature=signature)
+
+    assert result.verified is True
+    assert result.reject_reason == ""
