@@ -4,9 +4,10 @@ from __future__ import annotations
 
 from typing import NoReturn
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, Field
 
+from mcoi_runtime.app.routers._tenant_scope import enforce_tenant_scope
 from mcoi_runtime.app.routers.data._common import (
     _certify_action_proof,
     _data_error_detail,
@@ -251,9 +252,10 @@ def data_governance_summary(tenant_id: str | None = None):
 
 
 @router.post("/api/v1/data-governance/classify")
-def classify_data_record(req: DataClassifyRequest):
+def classify_data_record(req: DataClassifyRequest, request: Request):
     """Classify a data record under tenant, privacy, and residency scope."""
     deps.metrics.inc("requests_governed")
+    enforce_tenant_scope(request, req.tenant_id)
     try:
         record = deps.data_governance.classify_data(
             req.data_id,
@@ -281,9 +283,10 @@ def classify_data_record(req: DataClassifyRequest):
 
 
 @router.post("/api/v1/data-governance/policies")
-def register_data_policy(req: DataPolicyRequest):
+def register_data_policy(req: DataPolicyRequest, request: Request):
     """Register a tenant data handling policy."""
     deps.metrics.inc("requests_governed")
+    enforce_tenant_scope(request, req.tenant_id)
     try:
         policy = deps.data_governance.register_policy(
             req.policy_id,
@@ -311,9 +314,10 @@ def register_data_policy(req: DataPolicyRequest):
 
 
 @router.post("/api/v1/data-governance/residency-constraints")
-def register_residency_constraint(req: ResidencyConstraintRequest):
+def register_residency_constraint(req: ResidencyConstraintRequest, request: Request):
     """Register allowed and denied residency regions for a tenant."""
     deps.metrics.inc("requests_governed")
+    enforce_tenant_scope(request, req.tenant_id)
     try:
         constraint = deps.data_governance.register_residency_constraint(
             req.constraint_id,
@@ -338,9 +342,10 @@ def register_residency_constraint(req: ResidencyConstraintRequest):
 
 
 @router.post("/api/v1/data-governance/privacy-rules")
-def register_privacy_rule(req: PrivacyRuleRequest):
+def register_privacy_rule(req: PrivacyRuleRequest, request: Request):
     """Register a tenant privacy-basis rule."""
     deps.metrics.inc("requests_governed")
+    enforce_tenant_scope(request, req.tenant_id)
     try:
         rule = deps.data_governance.register_privacy_rule(
             req.rule_id,
@@ -367,9 +372,10 @@ def register_privacy_rule(req: PrivacyRuleRequest):
 
 
 @router.post("/api/v1/data-governance/redaction-rules")
-def register_redaction_rule(req: RedactionRuleRequest):
+def register_redaction_rule(req: RedactionRuleRequest, request: Request):
     """Register a tenant redaction rule."""
     deps.metrics.inc("requests_governed")
+    enforce_tenant_scope(request, req.tenant_id)
     try:
         rule = deps.data_governance.register_redaction_rule(
             req.rule_id,
@@ -396,9 +402,10 @@ def register_redaction_rule(req: RedactionRuleRequest):
 
 
 @router.post("/api/v1/data-governance/retention-rules")
-def register_retention_rule(req: RetentionRuleRequest):
+def register_retention_rule(req: RetentionRuleRequest, request: Request):
     """Register a tenant retention rule."""
     deps.metrics.inc("requests_governed")
+    enforce_tenant_scope(request, req.tenant_id)
     try:
         rule = deps.data_governance.register_retention_rule(
             req.rule_id,
