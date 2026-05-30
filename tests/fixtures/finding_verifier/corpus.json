@@ -1,13 +1,13 @@
 {
-  "description": "Calibration corpus for scripts/verify_findings.py. Known verdicts the verifier MUST reproduce. REJECTED cases are real confabulations (claims whose evidence does not reproduce); VERIFIED cases are genuine. If the verifier mislabels any case it is itself untrusted.",
+  "description": "Calibration corpus for scripts/verify_findings.py. Known verdicts the verifier MUST reproduce. REJECTED cases are real confabulations (claims whose evidence does not reproduce); VERIFIED cases are genuine. If the verifier mislabels any case it is itself untrusted. reproducible_command is an argv array (no shell string), per the argv-only verifier contract.",
   "calibration": [
     {
       "expected_verdict": "REJECTED",
-      "note": "Claimed a dead placeholder test ending in `assert False` exists. It does not.",
+      "note": "Claimed a dead placeholder test ending in `assert False` exists. It does not (the fixture deliberately avoids that literal, so the count is 0, not 1).",
       "finding": {
         "id": "fab-dead-placeholder",
         "claim": "test file contains a dead placeholder ending in `assert False`",
-        "reproducible_command": "python -c \"import pathlib,sys; t=pathlib.Path('fixtures/real_test_file.py').read_text(); sys.stdout.write(str(t.count('assert False')))\"",
+        "reproducible_command": ["python", "-c", "import pathlib,sys; t=pathlib.Path('fixtures/real_test_file.py').read_text(); sys.stdout.write(str(t.count('assert ' + 'False')))"],
         "expect": {"mode": "stdout_contains", "value": "1"},
         "severity": "medium"
       }
@@ -18,7 +18,7 @@
       "finding": {
         "id": "fab-duplicate-deftest",
         "claim": "file has a duplicate test_config_loads function",
-        "reproducible_command": "python -c \"import pathlib,sys; t=pathlib.Path('fixtures/real_test_file.py').read_text(); sys.stdout.write(str(t.count('def test_config_loads')))\"",
+        "reproducible_command": ["python", "-c", "import pathlib,sys; t=pathlib.Path('fixtures/real_test_file.py').read_text(); sys.stdout.write(str(t.count('def test_config_loads')))"],
         "expect": {"mode": "stdout_contains", "value": "2"},
         "severity": "medium"
       }
@@ -29,7 +29,7 @@
       "finding": {
         "id": "fab-wrong-sha",
         "claim": "branch tip is 9582c1d8",
-        "reproducible_command": "python -c \"import pathlib,sys; sys.stdout.write(pathlib.Path('fixtures/branch_tip.txt').read_text())\"",
+        "reproducible_command": ["python", "-c", "import pathlib,sys; sys.stdout.write(pathlib.Path('fixtures/branch_tip.txt').read_text())"],
         "expect": {"mode": "stdout_contains", "value": "9582c1d8"},
         "severity": "low"
       }
@@ -40,7 +40,7 @@
       "finding": {
         "id": "real-test-present",
         "claim": "test_config_loads is defined exactly once",
-        "reproducible_command": "python -c \"import pathlib,sys; t=pathlib.Path('fixtures/real_test_file.py').read_text(); sys.stdout.write(str(t.count('def test_config_loads')))\"",
+        "reproducible_command": ["python", "-c", "import pathlib,sys; t=pathlib.Path('fixtures/real_test_file.py').read_text(); sys.stdout.write(str(t.count('def test_config_loads')))"],
         "expect": {"mode": "stdout_contains", "value": "1"},
         "severity": "info"
       }
@@ -51,7 +51,7 @@
       "finding": {
         "id": "real-sha-present",
         "claim": "branch tip is 2601b04f",
-        "reproducible_command": "python -c \"import pathlib,sys; sys.stdout.write(pathlib.Path('fixtures/branch_tip.txt').read_text())\"",
+        "reproducible_command": ["python", "-c", "import pathlib,sys; sys.stdout.write(pathlib.Path('fixtures/branch_tip.txt').read_text())"],
         "expect": {"mode": "stdout_contains", "value": "2601b04f"},
         "severity": "info"
       }
@@ -62,7 +62,7 @@
       "finding": {
         "id": "real-test-parses",
         "claim": "fixture test file is valid python",
-        "reproducible_command": "python -c \"import ast,pathlib; ast.parse(pathlib.Path('fixtures/real_test_file.py').read_text()); print('parsed-ok')\"",
+        "reproducible_command": ["python", "-c", "import ast,pathlib; ast.parse(pathlib.Path('fixtures/real_test_file.py').read_text()); print('parsed-ok')"],
         "expect": {"mode": "stdout_contains", "value": "parsed-ok"},
         "severity": "info"
       }

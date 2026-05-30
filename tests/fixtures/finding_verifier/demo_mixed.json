@@ -1,10 +1,10 @@
 {
-  "description": "A mixed batch: one genuine finding, one confabulated. --strict must FAIL because a dropped finding is a confabulation signal.",
+  "description": "A mixed batch: one genuine finding, one confabulated. --strict must FAIL because a dropped finding is a confabulation signal. reproducible_command is an argv array (no shell string), per the argv-only verifier contract.",
   "findings": [
     {
       "id": "real-001",
       "claim": "test_config_loads is defined exactly once in the fixture",
-      "reproducible_command": "python -c \"import pathlib,sys; t=pathlib.Path('fixtures/real_test_file.py').read_text(); sys.stdout.write(str(t.count('def test_config_loads')))\"",
+      "reproducible_command": ["python", "-c", "import pathlib,sys; t=pathlib.Path('fixtures/real_test_file.py').read_text(); sys.stdout.write(str(t.count('def test_config_loads')))"],
       "expect": {"mode": "stdout_contains", "value": "1"},
       "file": "fixtures/real_test_file.py",
       "severity": "info",
@@ -13,7 +13,7 @@
     {
       "id": "fab-002",
       "claim": "fixture contains a dead placeholder ending in `assert False` that should be deleted",
-      "reproducible_command": "python -c \"import pathlib,sys; t=pathlib.Path('fixtures/real_test_file.py').read_text(); sys.stdout.write(str(t.count('assert False')))\"",
+      "reproducible_command": ["python", "-c", "import pathlib,sys; t=pathlib.Path('fixtures/real_test_file.py').read_text(); sys.stdout.write(str(t.count('assert ' + 'False')))"],
       "expect": {"mode": "stdout_contains", "value": "1"},
       "file": "fixtures/real_test_file.py",
       "severity": "medium",

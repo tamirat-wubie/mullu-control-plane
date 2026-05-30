@@ -9,7 +9,7 @@
   "properties": {
     "id": {"type": "string", "description": "stable identifier for the finding"},
     "claim": {"type": "string", "description": "human-readable assertion being made"},
-    "reproducible_command": {"type": "string", "description": "shell command an independent verifier re-runs"},
+    "reproducible_command": {"type": "array", "items": {"type": "string"}, "minItems": 1, "description": "argv array (executable + args) an independent verifier re-runs without a shell"},
     "expect": {
       "type": "object",
       "required": ["mode"],
