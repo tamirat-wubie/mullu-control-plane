@@ -313,6 +313,55 @@ class TestRequiredApprovalTier:
         router = GatewayRouter(platform=StubPlatform())
         assert router._required_approval_tier("does.not.exist") is None
 
+    def test_unparseable_approval_tier_fails_safe_to_high(self):
+        """A declared approval requirement whose severity string is unknown
+        to this build (e.g. a future ``approval:critical_risk``) must NOT
+        silently evaporate. The presence of the token means approval is
+        required; unknown severity floors to HIGH, never falls open."""
+        from gateway.approval import RiskTier
+
+        class _StubPassport:
+            requires = ("tenant_bound", "approval:critical_risk", "idempotency_key")
+
+        router = GatewayRouter(platform=StubPlatform())
+        router._commands.capability_passport_for_intent = lambda intent: _StubPassport()
+        assert router._required_approval_tier("some.future.capability") == RiskTier.HIGH
+
+    def test_unparseable_alongside_known_tier_still_floors_high(self):
+        """If one approval token parses (medium) and another does not
+        (unknown), the unknown one could be more severe — floor to HIGH,
+        not the parsed medium."""
+        from gateway.approval import RiskTier
+
+        class _StubPassport:
+            requires = ("approval:medium_risk", "approval:catastrophic_risk")
+
+        router = GatewayRouter(platform=StubPlatform())
+        router._commands.capability_passport_for_intent = lambda intent: _StubPassport()
+        assert router._required_approval_tier("mixed.capability") == RiskTier.HIGH
+
+    def test_approval_token_without_risk_suffix_parses(self):
+        """Both ``approval:high_risk`` and the bare ``approval:high`` forms
+        resolve to the tier — regression guard for the suffix stripping."""
+        from gateway.approval import RiskTier
+
+        class _StubPassport:
+            requires = ("approval:high",)
+
+        router = GatewayRouter(platform=StubPlatform())
+        router._commands.capability_passport_for_intent = lambda intent: _StubPassport()
+        assert router._required_approval_tier("bare.tier.capability") == RiskTier.HIGH
+
+    def test_non_approval_requires_tokens_yield_no_floor(self):
+        """A passport with only non-approval requires (the isolation-gated
+        case) yields None — no approval floor imposed."""
+        class _StubPassport:
+            requires = ("tenant_bound", "signed_worker_receipt", "idempotency_key")
+
+        router = GatewayRouter(platform=StubPlatform())
+        router._commands.capability_passport_for_intent = lambda intent: _StubPassport()
+        assert router._required_approval_tier("isolation.gated") is None
+
 
 class TestTenantResolution:
     def test_resolve_known_tenant(self):
