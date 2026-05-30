@@ -57,6 +57,14 @@ class GovernanceMetricsRegistry:
         # metric families.
         self._phi_gov_decisions: dict[str, int] = {}        # verdict -> count
         self._phi_gov_denials_by_category: dict[str, int] = {}  # category -> count
+        # Φ_gov cascade-coverage counter. Records, per construct write, whether
+        # Phase 3 (the dependency cascade — the per-type invariant validators)
+        # actually RAN or was SKIPPED. Phase 3 is skipped when the delta's
+        # target is not yet in the graph (e.g. a create, whose construct is
+        # registered only after a PASS). This surfaces the otherwise-silent fact
+        # that validators do not cover the create path. Dedicated field; never
+        # enters the chain aggregates. See docs/GOVERNANCE_GATE_COVERAGE_AUDIT.md
+        self._phi_gov_cascade_coverage: dict[str, int] = {}  # "ran"|"skipped" -> count
 
     def _observe_latency_locked(
         self, surface: str, duration_seconds: float
@@ -190,6 +198,21 @@ class GovernanceMetricsRegistry:
                     self._phi_gov_denials_by_category.get(cat, 0) + 1
                 )
 
+    def record_phi_gov_cascade_coverage(self, *, ran: bool) -> None:
+        """Record whether the Φ_gov dependency cascade (Phase 3 — the per-type
+        invariant validators) actually ran for one construct write.
+
+        ``ran=True`` when Phase 3 evaluated at least one cascade; ``ran=False``
+        when it was skipped (delta target not yet in the graph, e.g. a create).
+        A persistently high ``skipped`` ratio is the signal that the validators
+        are not covering the live write path.
+        """
+        key = "ran" if ran else "skipped"
+        with self._lock:
+            self._phi_gov_cascade_coverage[key] = (
+                self._phi_gov_cascade_coverage.get(key, 0) + 1
+            )
+
     def snapshot(self) -> GovernanceMetricsSnapshot:
         with self._lock:
             latency_by_surface: dict[str, LatencyHistogram] = {}
@@ -213,6 +236,7 @@ class GovernanceMetricsRegistry:
                 phi_gov_denials_by_category=dict(
                     self._phi_gov_denials_by_category
                 ),
+                phi_gov_cascade_coverage=dict(self._phi_gov_cascade_coverage),
             )
 
     def reset(self) -> None:
@@ -226,6 +250,7 @@ class GovernanceMetricsRegistry:
             self._latency_state.clear()
             self._phi_gov_decisions.clear()
             self._phi_gov_denials_by_category.clear()
+            self._phi_gov_cascade_coverage.clear()
 
 
 REGISTRY = GovernanceMetricsRegistry()
