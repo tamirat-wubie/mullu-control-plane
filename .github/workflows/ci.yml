@@ -221,6 +221,9 @@ jobs:
       - name: Validate shipped artifacts
         run: python scripts/validate_artifacts.py
 
+      - name: Validate doc/code consistency (anti-fabrication gate)
+        run: python scripts/validate_doc_code_consistency.py
+
       - name: Validate public repository surface
         run: python scripts/validate_public_repository_surface.py
         env:
