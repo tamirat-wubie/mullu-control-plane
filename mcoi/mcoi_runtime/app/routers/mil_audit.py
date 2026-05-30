@@ -11,6 +11,8 @@ Invariants:
 from __future__ import annotations
 
 import json
+import os
+import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -86,9 +88,45 @@ def _bounded_http_error(summary: str, exc: Exception) -> dict[str, str | bool]:
     return {"error": summary, "type": type(exc).__name__, "governed": True}
 
 
+def _mil_audit_store_root() -> Path:
+    """Permitted root for caller-supplied MIL-audit store paths.
+
+    The MIL-audit endpoints accept explicit store paths in the request. Without
+    confinement a caller can point them at any host directory and read, list, or
+    write ``.json`` files anywhere the process can reach. Confine every
+    caller-supplied path to this root. Deployments should set
+    ``MULLU_MIL_AUDIT_STORE_ROOT``; absent that, fall back to the system temp
+    directory, which still removes the arbitrary-filesystem reach.
+    """
+    configured = os.environ.get("MULLU_MIL_AUDIT_STORE_ROOT", "").strip()
+    return Path(configured or tempfile.gettempdir()).resolve()
+
+
+def _confined_store_path(value: str) -> Path:
+    """Resolve a caller-supplied store path, confined to the permitted root."""
+    root = _mil_audit_store_root()
+    try:
+        candidate = Path(value).resolve()
+    except (OSError, ValueError, RuntimeError) as exc:
+        raise HTTPException(
+            status_code=400,
+            detail=_bounded_http_error("invalid MIL audit store path", exc),
+        ) from exc
+    if candidate != root and not candidate.is_relative_to(root):
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "error": "MIL audit store path is outside the permitted root",
+                "type": "StorePathForbidden",
+                "governed": True,
+            },
+        )
+    return candidate
+
+
 def _existing_store_path(value: str) -> Path:
-    """Resolve an existing MIL audit store path."""
-    path = Path(value)
+    """Resolve an existing, root-confined MIL audit store path."""
+    path = _confined_store_path(value)
     if not path.exists():
         raise FileNotFoundError("MIL audit store path not found")
     return path
@@ -120,8 +158,8 @@ def _admit_mil_audit_runbook(
 ) -> tuple[MILAuditReplayPersistence, RunbookAdmissionResult, bool]:
     """Persist a MIL audit replay bundle and admit it through the runbook library."""
     audit_store = MILAuditStore(_existing_store_path(req.mil_audit_store_path))
-    trace_store = TraceStore(Path(req.trace_store_path))
-    replay_store = ReplayStore(Path(req.replay_store_path))
+    trace_store = TraceStore(_confined_store_path(req.trace_store_path))
+    replay_store = ReplayStore(_confined_store_path(req.replay_store_path))
     bundle = audit_store.persist_replay_bundle(
         req.record_id,
         trace_store=trace_store,
@@ -168,7 +206,7 @@ def _admit_mil_audit_runbook(
     )
     runbook_persisted = False
     if req.runbook_store_path is not None and admission.entry is not None:
-        runbook_persisted = RunbookStore(Path(req.runbook_store_path)).save(admission.entry)
+        runbook_persisted = RunbookStore(_confined_store_path(req.runbook_store_path)).save(admission.entry)
     return bundle, admission, runbook_persisted
 
 
@@ -219,7 +257,7 @@ def admit_mil_audit_runbook(req: MILAuditAdmitRunbookRequest) -> MILAuditRunbook
 def list_mil_audit_runbooks(runbook_store_path: str) -> MILAuditStoredRunbookEnvelope:
     """List persisted MIL-derived runbooks from an explicit runbook store."""
     try:
-        entries = RunbookStore(Path(runbook_store_path)).load_all()
+        entries = RunbookStore(_confined_store_path(runbook_store_path)).load_all()
     except (PersistenceError, RuntimeCoreInvariantError, ValueError) as exc:
         raise HTTPException(
             status_code=400,
@@ -241,7 +279,7 @@ def list_mil_audit_runbooks(runbook_store_path: str) -> MILAuditStoredRunbookEnv
 def get_mil_audit_runbook(runbook_id: str, runbook_store_path: str) -> MILAuditStoredRunbookEnvelope:
     """Fetch one persisted MIL-derived runbook from an explicit runbook store."""
     try:
-        entry = RunbookStore(Path(runbook_store_path)).load(runbook_id)
+        entry = RunbookStore(_confined_store_path(runbook_store_path)).load(runbook_id)
     except PersistenceError as exc:
         raise HTTPException(
             status_code=404,
