@@ -267,6 +267,16 @@ winner**. Only the graph-match detector beats the baseline on F1 and is selected
 This is the loop demonstrating "Promote narrowly": a high-recall result is not a
 winner unless it also clears the primary metric.
 
+A second benchmark, `task_scheduling_with_deadlines.v1` (`engineering_puzzle`),
+makes the same point in a different domain. A naive in-order baseline, an
+earliest-deadline-first scheduler, and a "longest-first" anti-pattern are
+compared on real single-worker scheduling with dependencies. The primary metric
+is on-time rate, so earliest-deadline-first wins (it meets every deadline) while
+the longest-first heuristic runs, is recorded, and is refused for missing more
+deadlines than the baseline. This benchmark also exercises the `search_planner`,
+`constraint_solver`, and `optimization_solver` capsules that the duplicate-invoice
+benchmark does not.
+
 ## Running the lab (CLI)
 
 `gateway/solver_forge_cli.py` is the read-and-experiment entrypoint. It has no
@@ -320,6 +330,7 @@ candidate ledger to a JSON file. `forge-input` previews the
 | `tests/test_gateway/test_method_registry.py` | 12 | Register / duplicate-rejection, family + domain queries, signature admissibility (allow / forbid / risk-ceiling), composer construction, no-promotion-surface, starter-catalog integrity. |
 | `tests/test_gateway/test_solver_forge_benchmarks.py` | 11 | Detector ground truth (precision / recall), deterministic evaluator, unknown-capsule skip, end-to-end winner selection, recall-only-trap refusal, winner crosses the bridge, ledger winners match the report. |
 | `tests/test_gateway/test_solver_forge_cli.py` | 9 | No-promotion subcommand surface, list capsules / benchmarks (incl. domain + family filters), text + JSON run output, unknown-benchmark error, ledger-file write, read-only forge-input preview. |
+| `tests/test_gateway/test_solver_forge_scheduling_benchmark.py` | 6 | Scheduler ground truth (on-time rate), deterministic evaluator, unknown-capsule skip, EDF wins / longest-first anti-pattern refused, winner crosses the bridge, two-benchmark catalog. |
 
 ## Open questions deferred to follow-on work
 
