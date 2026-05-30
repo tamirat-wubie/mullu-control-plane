@@ -152,6 +152,22 @@ def _as_tuple(values: Sequence[str] | None, field_name: str) -> tuple[str, ...]:
     return tuple(str(value) for value in values)
 
 
+def _payload_int(value: Any, field_name: str) -> int:
+    if isinstance(value, bool):
+        raise ValueError(f"{field_name} must be an integer")
+    if isinstance(value, int):
+        return require_non_negative_int(value, field_name)
+    if isinstance(value, str) and value.strip().isdigit():
+        return require_non_negative_int(int(value.strip()), field_name)
+    raise ValueError(f"{field_name} must be an integer")
+
+
+def _payload_bool(value: Any, field_name: str) -> bool:
+    if not isinstance(value, bool):
+        raise ValueError(f"{field_name} must be a boolean")
+    return value
+
+
 def _sensitive_paths(value: Any, prefix: str = "state") -> tuple[str, ...]:
     paths: list[str] = []
     if isinstance(value, Mapping):
@@ -292,7 +308,7 @@ def parse_nested_mind_projection_payload(payload: Mapping[str, Any]) -> NestedMi
     return NestedMindProjectionEnvelope(
         mind_id=str(mind_id),
         scope=NestedMindProjectionScope(str(payload.get("scope", NestedMindProjectionScope.PUBLIC.value))),
-        sequence=int(payload.get("sequence", 0)),
+        sequence=_payload_int(payload.get("sequence", 0), "sequence"),
         commit_hash=str(payload.get("commit_hash", "")),
         state_hash=str(payload.get("state_hash", "")),
         lawbook_hash=str(payload.get("lawbook_hash", "")),
@@ -316,10 +332,10 @@ def parse_nested_mind_history_payload(
     return NestedMindHistoryEnvelope(
         mind_id=str(mind_id),
         surface=NestedMindHistorySurface(str(surface)),
-        verified=bool(payload.get("verified", False)),
+        verified=_payload_bool(payload.get("verified", False), "verified"),
         history_hash=str(payload.get("history_hash", payload.get("event_chain_hash", ""))),
         checked_at=str(payload.get("checked_at", payload.get("projected_at", ""))),
-        sequence=int(payload.get("sequence", 0)),
+        sequence=_payload_int(payload.get("sequence", 0), "sequence"),
         failures=_as_tuple(payload.get("failures", ()), "failures"),
         metadata=_as_mapping(payload.get("metadata", {}), "metadata"),
     )
