@@ -92,6 +92,56 @@ def _hash(value: Any) -> str:
     return hashlib.sha256(payload.encode("utf-8")).hexdigest()
 
 
+def _proposal_hash_content(
+    *,
+    evidence_id: str,
+    mind_id: str,
+    proposal_kind: NestedMindProposalKind,
+    actor_id: str,
+    reason: str,
+    effect_class: EffectClass,
+    mullu_receipt: "NestedMindReceiptRef",
+    authority_receipt_hash: str,
+    requested_at: str,
+    effect_receipt_hashes: Sequence[str],
+    metadata: Mapping[str, Any],
+) -> Mapping[str, Any]:
+    return {
+        "evidence_id": evidence_id,
+        "mind_id": mind_id,
+        "proposal_kind": proposal_kind,
+        "actor_id": actor_id,
+        "reason": reason,
+        "effect_class": effect_class,
+        "mullu_receipt": mullu_receipt,
+        "authority_receipt_hash": authority_receipt_hash,
+        "requested_at": requested_at,
+        "effect_receipt_hashes": tuple(effect_receipt_hashes),
+        "metadata": dict(metadata),
+    }
+
+
+def _bridge_hash_content(
+    *,
+    report_id: str,
+    proposal_evidence_id: str,
+    commit_witness_id: str,
+    status: NestedMindBridgeStatus,
+    bridged_at: str,
+    blockers: Sequence[str],
+    metadata: Mapping[str, Any],
+) -> Mapping[str, Any]:
+    return {
+        "report_id": report_id,
+        "proposal_evidence_id": proposal_evidence_id,
+        "commit_witness_id": commit_witness_id,
+        "status": status,
+        "bridged_at": bridged_at,
+        "blockers": tuple(blockers),
+        "metadata": dict(metadata),
+    }
+
+
 @dataclass(frozen=True, slots=True)
 class NestedMindReceiptRef(ContractRecord):
     receipt_id: str
@@ -143,8 +193,7 @@ class NestedMindProposalEvidence(ContractRecord):
         object.__setattr__(self, "effect_receipt_hashes", freeze_value(_text_tuple(self.effect_receipt_hashes, "effect_receipt_hashes")))
         object.__setattr__(self, "metadata", freeze_value(dict(self.metadata)))
         object.__setattr__(self, "evidence_hash", require_non_empty_text(self.evidence_hash, "evidence_hash"))
-        expected = proposal_evidence_hash(self)
-        if self.evidence_hash != expected:
+        if self.evidence_hash != proposal_evidence_hash(self):
             raise ValueError("evidence_hash does not match proposal evidence content")
 
 
@@ -222,19 +271,19 @@ def receipt_ref_from_transition_receipt(receipt: TransitionReceipt) -> NestedMin
 
 def proposal_evidence_hash(evidence: NestedMindProposalEvidence) -> str:
     return _hash(
-        {
-            "evidence_id": evidence.evidence_id,
-            "mind_id": evidence.mind_id,
-            "proposal_kind": evidence.proposal_kind,
-            "actor_id": evidence.actor_id,
-            "reason": evidence.reason,
-            "effect_class": evidence.effect_class,
-            "mullu_receipt": evidence.mullu_receipt,
-            "authority_receipt_hash": evidence.authority_receipt_hash,
-            "requested_at": evidence.requested_at,
-            "effect_receipt_hashes": evidence.effect_receipt_hashes,
-            "metadata": evidence.metadata,
-        }
+        _proposal_hash_content(
+            evidence_id=evidence.evidence_id,
+            mind_id=evidence.mind_id,
+            proposal_kind=evidence.proposal_kind,
+            actor_id=evidence.actor_id,
+            reason=evidence.reason,
+            effect_class=evidence.effect_class,
+            mullu_receipt=evidence.mullu_receipt,
+            authority_receipt_hash=evidence.authority_receipt_hash,
+            requested_at=evidence.requested_at,
+            effect_receipt_hashes=evidence.effect_receipt_hashes,
+            metadata=evidence.metadata,
+        )
     )
 
 
@@ -252,21 +301,37 @@ def build_proposal_evidence(
     metadata: Mapping[str, Any] | None = None,
 ) -> NestedMindProposalEvidence:
     receipt_ref = receipt_ref_from_transition_receipt(transition_receipt)
-    shell = NestedMindProposalEvidence(
+    clean_mind_id = _mind_id(mind_id)
+    clean_effect = _effect(effect_class)
+    clean_effect_hashes = _text_tuple(effect_receipt_hashes, "effect_receipt_hashes")
+    clean_metadata = dict(metadata or {})
+    payload = _proposal_hash_content(
         evidence_id=evidence_id,
-        mind_id=mind_id,
+        mind_id=clean_mind_id,
         proposal_kind=NestedMindProposalKind.RECORD_OBSERVATION,
         actor_id=actor_id,
         reason=reason,
-        effect_class=effect_class,
+        effect_class=clean_effect,
         mullu_receipt=receipt_ref,
         authority_receipt_hash=authority_receipt_hash,
         requested_at=requested_at,
-        effect_receipt_hashes=effect_receipt_hashes,
-        evidence_hash="pending",
-        metadata=metadata or {},
+        effect_receipt_hashes=clean_effect_hashes,
+        metadata=clean_metadata,
     )
-    return NestedMindProposalEvidence(**{**shell.to_dict(), "evidence_hash": proposal_evidence_hash(shell)})
+    return NestedMindProposalEvidence(
+        evidence_id=evidence_id,
+        mind_id=clean_mind_id,
+        proposal_kind=NestedMindProposalKind.RECORD_OBSERVATION,
+        actor_id=actor_id,
+        reason=reason,
+        effect_class=clean_effect,
+        mullu_receipt=receipt_ref,
+        authority_receipt_hash=authority_receipt_hash,
+        requested_at=requested_at,
+        effect_receipt_hashes=clean_effect_hashes,
+        evidence_hash=_hash(payload),
+        metadata=clean_metadata,
+    )
 
 
 def build_commit_witness(
@@ -296,15 +361,15 @@ def build_commit_witness(
 
 def bridge_report_hash(report: NestedMindReceiptBridgeReport) -> str:
     return _hash(
-        {
-            "report_id": report.report_id,
-            "proposal_evidence_id": report.proposal_evidence_id,
-            "commit_witness_id": report.commit_witness_id,
-            "status": report.status,
-            "bridged_at": report.bridged_at,
-            "blockers": report.blockers,
-            "metadata": report.metadata,
-        }
+        _bridge_hash_content(
+            report_id=report.report_id,
+            proposal_evidence_id=report.proposal_evidence_id,
+            commit_witness_id=report.commit_witness_id,
+            status=report.status,
+            bridged_at=report.bridged_at,
+            blockers=report.blockers,
+            metadata=report.metadata,
+        )
     )
 
 
@@ -325,14 +390,24 @@ def build_bridge_report(
         blockers.append("mullu_receipt_hash_mismatch")
     if witness.status is NestedMindCommitWitnessStatus.REJECTED:
         blockers.extend(f"nested_mind_rejected:{failure}" for failure in witness.failures)
-    shell = NestedMindReceiptBridgeReport(
+    status = NestedMindBridgeStatus.BLOCKED if blockers else NestedMindBridgeStatus.BRIDGED
+    clean_metadata = dict(metadata or {})
+    payload = _bridge_hash_content(
         report_id=report_id,
         proposal_evidence_id=evidence.evidence_id,
         commit_witness_id=witness.witness_id,
-        status=NestedMindBridgeStatus.BLOCKED if blockers else NestedMindBridgeStatus.BRIDGED,
+        status=status,
         bridged_at=bridged_at,
         blockers=tuple(blockers),
-        bridge_hash="pending",
-        metadata=metadata or {},
+        metadata=clean_metadata,
     )
-    return NestedMindReceiptBridgeReport(**{**shell.to_dict(), "bridge_hash": bridge_report_hash(shell)})
+    return NestedMindReceiptBridgeReport(
+        report_id=report_id,
+        proposal_evidence_id=evidence.evidence_id,
+        commit_witness_id=witness.witness_id,
+        status=status,
+        bridged_at=bridged_at,
+        blockers=tuple(blockers),
+        bridge_hash=_hash(payload),
+        metadata=clean_metadata,
+    )
