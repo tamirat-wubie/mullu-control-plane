@@ -1,0 +1,75 @@
+{
+  "description": "Calibration corpus for scripts/gate_merge.py. Known merge-gate decisions the gate MUST reproduce. The BLOCK cases are the real near-misses observed 2026-05-30 (premature green; branch moved under the operator; declaring merge while CI ran). If the gate mislabels any case it is itself untrusted.",
+  "calibration": [
+    {
+      "id": "allow-fully-settled-green",
+      "expected_decision": "ALLOW",
+      "note": "The real PR #862 final state: OPEN, MERGEABLE, head==remote==expected, 72 green, 0 pending/failing.",
+      "state": {
+        "pr_state": "OPEN", "mergeable": "MERGEABLE",
+        "pr_head": "c4ed7f86", "remote_tip": "c4ed7f86", "expected_head": "c4ed7f86",
+        "checks": [{"name": "Schema Validation", "state": "SUCCESS"}, {"name": "MCOI shard pu", "state": "SUCCESS"}, {"name": "Rust Tests", "state": "SUCCESS"}]
+      }
+    },
+    {
+      "id": "block-premature-green-ci-running",
+      "expected_decision": "BLOCK",
+      "note": "The 'premature green' mistake: I asserted green while CI was still IN_PROGRESS (40 in-progress, 0 failed yet).",
+      "state": {
+        "pr_state": "OPEN", "mergeable": "MERGEABLE",
+        "pr_head": "65909d93", "remote_tip": "65909d93", "expected_head": "65909d93",
+        "checks": [{"name": "Schema Validation", "state": "IN_PROGRESS"}, {"name": "MCOI shard pu", "state": "SUCCESS"}, {"name": "Rust Tests", "state": "QUEUED"}]
+      }
+    },
+    {
+      "id": "block-branch-moved-under-operator",
+      "expected_decision": "BLOCK",
+      "note": "The 'branch moved' near-miss: an external push (65909d93) advanced the branch past the commit I had verified (389d964f).",
+      "state": {
+        "pr_state": "OPEN", "mergeable": "MERGEABLE",
+        "pr_head": "65909d93", "remote_tip": "65909d93", "expected_head": "389d964f",
+        "checks": [{"name": "Schema Validation", "state": "SUCCESS"}, {"name": "MCOI shard pu", "state": "SUCCESS"}]
+      }
+    },
+    {
+      "id": "block-ci-has-failures",
+      "expected_decision": "BLOCK",
+      "note": "The original red-CI state: my unregistered-schema break failed Schema Validation + shards.",
+      "state": {
+        "pr_state": "OPEN", "mergeable": "MERGEABLE",
+        "pr_head": "3b2a7543", "remote_tip": "3b2a7543", "expected_head": "3b2a7543",
+        "checks": [{"name": "Schema Validation", "state": "FAILURE"}, {"name": "MCOI shard pr", "state": "FAILURE"}, {"name": "Rust Tests", "state": "SUCCESS"}]
+      }
+    },
+    {
+      "id": "block-already-merged",
+      "expected_decision": "BLOCK",
+      "note": "Guard against double-merge: PR already MERGED must not merge again.",
+      "state": {
+        "pr_state": "MERGED", "mergeable": "UNKNOWN",
+        "pr_head": "8034ad15", "remote_tip": "8034ad15", "expected_head": "8034ad15",
+        "checks": [{"name": "Schema Validation", "state": "SUCCESS"}]
+      }
+    },
+    {
+      "id": "block-zero-checks",
+      "expected_decision": "BLOCK",
+      "note": "A PR with no CI signal at all must not be merged on faith.",
+      "state": {
+        "pr_state": "OPEN", "mergeable": "MERGEABLE",
+        "pr_head": "deadbeef", "remote_tip": "deadbeef", "expected_head": "deadbeef",
+        "checks": []
+      }
+    },
+    {
+      "id": "block-conflicting",
+      "expected_decision": "BLOCK",
+      "note": "GitHub reports CONFLICTING (not mergeable) even though checks are green.",
+      "state": {
+        "pr_state": "OPEN", "mergeable": "CONFLICTING",
+        "pr_head": "aabbccdd", "remote_tip": "aabbccdd", "expected_head": "aabbccdd",
+        "checks": [{"name": "Schema Validation", "state": "SUCCESS"}]
+      }
+    }
+  ]
+}
