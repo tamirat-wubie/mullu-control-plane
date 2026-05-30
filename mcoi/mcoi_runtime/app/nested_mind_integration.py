@@ -1,29 +1,41 @@
 """Nested-mind service integration for the control-plane app.
 
-Purpose: select and mount the optional nested-mind read-only connector from
-runtime environment.
+Purpose: select and mount optional nested-mind integration helpers from runtime
+environment.
 Governance scope: default-off external read boundary, HTTPS-only base URL
-validation, optional credential binding, and fail-closed misconfiguration.
-Dependencies: shared env flag helper and nested_mind adapter.
+validation, optional credential binding, and default-off observation proposal
+planning.
+Dependencies: shared env flag helper, nested_mind adapter, and nested-mind
+contract helpers.
 Invariants:
-  - unset/false flag means no connector and no runtime behavior change.
-  - enabled flag requires an HTTPS base URL with no credentials/query/fragment.
+  - unset/false read flag means no connector and no runtime behavior change.
+  - enabled read flag requires an HTTPS base URL with no credentials/query/fragment.
   - bearer token presence is reported as posture only; the token value is not
     stored in the bootstrap record.
+  - observation bridge helper constructs plans only; it never executes connector
+    calls or submits nested-mind proposals.
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Callable, Mapping
+from typing import Any, Callable, Mapping
 from urllib.parse import urlparse
 
 from mcoi_runtime.adapters.nested_mind import NestedMindConnector
 from mcoi_runtime.app._integration_paths import env_flag
+from mcoi_runtime.contracts.nested_mind_observation_bridge import (
+    NestedMindObservationProposalPlan,
+    build_observation_proposal_plan,
+    stable_json_hash,
+)
+from mcoi_runtime.contracts.nested_mind_receipts import NestedMindProposalEvidence
+from mcoi_runtime.core.invariants import stable_identifier
 
 NESTED_MIND_ENABLED_ENV = "MULLU_NESTED_MIND_ENABLED"
 NESTED_MIND_BASE_URL_ENV = "MULLU_NESTED_MIND_BASE_URL"
 NESTED_MIND_BEARER_TOKEN_ENV = "MULLU_NESTED_MIND_BEARER_TOKEN"
+NESTED_MIND_OBSERVATION_BRIDGE_ENABLED_ENV = "MULLU_NESTED_MIND_OBSERVATION_BRIDGE_ENABLED"
 
 
 @dataclass(frozen=True)
@@ -34,6 +46,72 @@ class NestedMindConnectorBootstrap:
     enabled: bool
     base_url: str
     credential_configured: bool
+
+
+@dataclass(frozen=True)
+class NestedMindObservationBridgeBootstrap:
+    """Startup posture for the nested-mind observation proposal planner."""
+
+    planner: object
+    enabled: bool
+
+
+class NestedMindObservationBridgePlanner:
+    """Runtime helper that builds observation proposal plans without execution."""
+
+    def __init__(self, *, enabled: bool, clock: Callable[[], str]) -> None:
+        if not isinstance(enabled, bool):
+            raise ValueError("enabled must be a boolean")
+        self._enabled = enabled
+        self._clock = clock
+
+    @property
+    def enabled(self) -> bool:
+        """Whether generated plans should be marked planned instead of disabled."""
+
+        return self._enabled
+
+    def plan_observation(
+        self,
+        evidence: NestedMindProposalEvidence,
+        *,
+        observation_id: str,
+        observation: Mapping[str, Any],
+        observed_at: str | None = None,
+        metadata: Mapping[str, Any] | None = None,
+    ) -> NestedMindObservationProposalPlan:
+        """Build a fixed-shape record_observation proposal plan.
+
+        This method deliberately does not call ``NestedMindConnector`` and does
+        not submit the proposal. It only creates the hash-bound plan consumed by
+        the next reviewed layer.
+        """
+
+        if not isinstance(evidence, NestedMindProposalEvidence):
+            raise ValueError("evidence must be NestedMindProposalEvidence")
+        effective_observed_at = observed_at or self._clock()
+        created_at = self._clock()
+        plan_id = stable_identifier(
+            "nested-mind-observation-plan",
+            {
+                "evidence_id": evidence.evidence_id,
+                "mind_id": evidence.mind_id,
+                "observation_id": observation_id,
+                "observation_hash": stable_json_hash(dict(observation)),
+                "observed_at": effective_observed_at,
+                "bridge_enabled": self._enabled,
+            },
+        )
+        return build_observation_proposal_plan(
+            evidence,
+            plan_id=plan_id,
+            observation_id=observation_id,
+            observation=observation,
+            observed_at=effective_observed_at,
+            created_at=created_at,
+            bridge_enabled=self._enabled,
+            metadata=metadata or {},
+        )
 
 
 def mount_nested_mind_connector_from_env(
@@ -72,6 +150,21 @@ def mount_nested_mind_connector_from_env(
         enabled=True,
         base_url=base_url,
         credential_configured=token is not None,
+    )
+
+
+def mount_nested_mind_observation_bridge_from_env(
+    *,
+    runtime_env: Mapping[str, str],
+    clock: Callable[[], str],
+    planner_cls: type[NestedMindObservationBridgePlanner] = NestedMindObservationBridgePlanner,
+) -> NestedMindObservationBridgeBootstrap:
+    """Build the default-off observation proposal planner from env posture."""
+
+    enabled = env_flag(runtime_env.get(NESTED_MIND_OBSERVATION_BRIDGE_ENABLED_ENV))
+    return NestedMindObservationBridgeBootstrap(
+        planner=planner_cls(enabled=enabled, clock=clock),
+        enabled=enabled,
     )
 
 
