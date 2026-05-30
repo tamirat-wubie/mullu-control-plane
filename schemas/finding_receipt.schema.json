@@ -1,5 +1,6 @@
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:finding-receipt:1",
   "title": "Finding Receipt",
   "description": "A self-audit finding. Admitted only if reproducible_command re-runs and satisfies expect. No reproducible evidence -> not a finding.",
   "type": "object",

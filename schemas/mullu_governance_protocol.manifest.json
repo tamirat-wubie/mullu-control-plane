@@ -945,6 +945,12 @@
       "path": "schemas/mullu_name_clearance_draft.schema.json",
       "urn": "urn:mullusi:schema:mullu-name-clearance-draft:1",
       "surface": "release"
+    },
+    {
+      "schema_id": "finding-receipt",
+      "path": "schemas/finding_receipt.schema.json",
+      "urn": "urn:mullusi:schema:finding-receipt:1",
+      "surface": "governance"
     }
   ],
   "uri_schemes": [
