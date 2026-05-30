@@ -7,7 +7,7 @@ from typing import NoReturn
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, Field
 
-from mcoi_runtime.app.routers._tenant_scope import enforce_tenant_scope
+from mcoi_runtime.app.routers._tenant_scope import enforce_tenant_scope, scoped_listing_tenant
 from mcoi_runtime.app.routers.data._common import (
     _certify_action_proof,
     _data_error_detail,
@@ -222,10 +222,14 @@ def _violation_response(violation: DataViolation) -> dict[str, object]:
 
 
 @router.get("/api/v1/data-governance/summary")
-def data_governance_summary(tenant_id: str | None = None):
+def data_governance_summary(request: Request, tenant_id: str | None = None):
     """Return data governance posture and optional tenant-scoped records."""
     deps.metrics.inc("requests_governed")
     engine = deps.data_governance
+    # Cross-tenant read guard: an authenticated, non-operator caller is forced to
+    # its own tenant; tenant_id=None no longer widens the tenant-scoped block to
+    # another tenant's records. Global aggregate counts below are non-tenant.
+    tenant_id = scoped_listing_tenant(request, tenant_id)
     records = engine.records_for_tenant(tenant_id) if tenant_id else ()
     violations = engine.violations_for_tenant(tenant_id) if tenant_id else ()
     return {
@@ -432,7 +436,7 @@ def register_retention_rule(req: RetentionRuleRequest, request: Request):
 
 
 @router.post("/api/v1/data-governance/evaluate")
-def evaluate_data_handling(req: DataHandlingEvaluationRequest):
+def evaluate_data_handling(req: DataHandlingEvaluationRequest, request: Request):
     """Evaluate a data handling operation against policy and residency rules."""
     deps.metrics.inc("requests_governed")
     try:
@@ -443,6 +447,10 @@ def evaluate_data_handling(req: DataHandlingEvaluationRequest):
         )
     except RuntimeCoreInvariantError as exc:
         _raise_data_governance_error(exc)
+    # Cross-tenant guard: the request carries no tenant_id (the engine resolves
+    # the owning tenant from data_id), so enforce against the record's true
+    # tenant. An authenticated tenant-A caller cannot read tenant-B's decision.
+    enforce_tenant_scope(request, decision.tenant_id)
     succeeded = decision.decision in {
         GovernanceDecision.ALLOWED,
         GovernanceDecision.REDACTED,
