@@ -44,6 +44,7 @@
     "security_model_aligned",
     "open_conformance_gaps",
     "terminal_status",
+    "conformance_class",
     "evidence_refs",
     "checks",
     "signature_key_id",
@@ -192,6 +193,14 @@
         "conformant_with_gaps",
         "degraded",
         "non_conformant"
+      ]
+    },
+    "conformance_class": {
+      "type": "string",
+      "enum": [
+        "class_a",
+        "class_b",
+        "class_c"
       ]
     },
     "evidence_refs": {
