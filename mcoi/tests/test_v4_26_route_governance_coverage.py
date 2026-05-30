@@ -228,3 +228,28 @@ def test_auth_dependency_names_includes_known_factories():
     expected = {"require_read", "require_write", "require_admin", "resolve_musia_auth"}
     missing = expected - _AUTH_DEPENDENCY_NAMES
     assert not missing, f"missing standard auth dep names: {missing}"
+
+
+def test_no_duplicate_route_registrations():
+    """No two routes may register the same ``(method, path)`` pair.
+
+    Walks the assembled app's ``APIRoute`` list directly (via
+    ``_gather_routes``), NOT the generated OpenAPI spec: FastAPI collapses
+    two same-``(method, path)`` registrations into a single
+    ``paths[path][method]`` entry, so a spec walk is blind to a genuine
+    double-registration. The route list keeps both physical registrations.
+
+    Regression guard for ``GET /api/v1/traces/summary``, which was defined
+    in both ``routers/agent.py`` (load-bearing -- must register before the
+    sibling ``/api/v1/traces/{trace_id}`` param route, else "summary" is
+    captured as a trace_id) and ``routers/ops/summaries.py`` (dead
+    duplicate, removed). The duplicate raised a FastAPI "Duplicate
+    Operation ID" warning at OpenAPI generation.
+    """
+    seen: dict[tuple[str, str], int] = {}
+    for route in _gather_routes():
+        for method in route.methods - {"HEAD", "OPTIONS"}:
+            key = (method, route.path)
+            seen[key] = seen.get(key, 0) + 1
+    duplicates = sorted(pair for pair, count in seen.items() if count > 1)
+    assert not duplicates, f"Duplicate route registration(s): {duplicates}"
