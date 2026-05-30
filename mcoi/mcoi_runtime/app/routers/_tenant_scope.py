@@ -45,3 +45,32 @@ def enforce_tenant_scope(request: Request, claimed_tenant: str) -> None:
                 "governed": True,
             },
         )
+
+
+def scoped_listing_tenant(request: Request, claimed_tenant: str | None) -> str | None:
+    """Resolve the tenant filter for a listing/query endpoint.
+
+    Authenticated, non-operator requests are forced to their own tenant: a
+    ``None`` or different ``claimed_tenant`` cannot widen the result to other
+    tenants (the ``tenant_id=None`` "return everything" default is the IDOR).
+    Operators (``*`` scope) and unauthenticated (dev) requests keep the claimed
+    filter unchanged, so existing suites are not affected.
+    """
+    context: dict[str, Any] = getattr(request.state, "governance_context", None) or {}
+    authenticated_tenant = str(context.get("authenticated_tenant_id") or "").strip()
+    if not authenticated_tenant:
+        return claimed_tenant
+    scopes = context.get("jwt_scopes") or frozenset()
+    if "*" in scopes:
+        return claimed_tenant
+    claimed = str(claimed_tenant or "").strip()
+    if claimed and claimed != authenticated_tenant:
+        raise HTTPException(
+            status_code=403,
+            detail={
+                "error": "requested tenant does not match the authenticated tenant",
+                "code": "cross_tenant_denied",
+                "governed": True,
+            },
+        )
+    return authenticated_tenant

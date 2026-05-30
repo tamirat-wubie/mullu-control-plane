@@ -7,10 +7,11 @@ from __future__ import annotations
 
 from typing import Any
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Request
 from pydantic import BaseModel, Field
 
 from mcoi_runtime.app.routers.deps import deps
+from mcoi_runtime.app.routers._tenant_scope import scoped_listing_tenant
 from mcoi_runtime.core.structured_logging import LogLevel
 
 router = APIRouter()
@@ -21,6 +22,7 @@ router = APIRouter()
 
 @router.get("/api/v1/audit")
 def get_audit_trail(
+    request: Request,
     tenant_id: str | None = None,
     action: str | None = None,
     outcome: str | None = None,
@@ -29,7 +31,7 @@ def get_audit_trail(
     """Query the audit trail with optional filters."""
     deps.metrics.inc("requests_governed")
     entries = deps.audit_trail.query(
-        tenant_id=tenant_id, action=action, outcome=outcome, limit=limit,
+        tenant_id=scoped_listing_tenant(request, tenant_id), action=action, outcome=outcome, limit=limit,
     )
     return {
         "entries": [

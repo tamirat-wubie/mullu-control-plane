@@ -9,7 +9,10 @@ and is a no-op for unauthenticated (dev / no-auth) requests.
 import pytest
 from fastapi import HTTPException
 
-from mcoi_runtime.app.routers._tenant_scope import enforce_tenant_scope
+from mcoi_runtime.app.routers._tenant_scope import (
+    enforce_tenant_scope,
+    scoped_listing_tenant,
+)
 
 
 class _State:
@@ -53,3 +56,27 @@ def test_missing_governance_context_attr_is_safe():
             self.state = _BareState()
 
     enforce_tenant_scope(_BareReq(), "tenant-b")
+
+
+def test_scoped_listing_forces_authenticated_tenant_when_none():
+    # The tenant_id=None "return all tenants" IDOR: authenticated requests are
+    # forced to their own tenant.
+    assert scoped_listing_tenant(_Req({"authenticated_tenant_id": "tenant-a"}), None) == "tenant-a"
+
+
+def test_scoped_listing_denies_other_tenant():
+    with pytest.raises(HTTPException) as exc_info:
+        scoped_listing_tenant(_Req({"authenticated_tenant_id": "tenant-a"}), "tenant-b")
+    assert exc_info.value.status_code == 403
+
+
+def test_scoped_listing_passthrough_when_unauthenticated():
+    # Dev / no-auth: claimed filter is unchanged (incl. None -> all), suite unaffected.
+    assert scoped_listing_tenant(_Req({}), None) is None
+    assert scoped_listing_tenant(_Req({}), "tenant-b") == "tenant-b"
+
+
+def test_scoped_listing_operator_keeps_claimed_filter():
+    req = _Req({"authenticated_tenant_id": "tenant-a", "jwt_scopes": frozenset({"*"})})
+    assert scoped_listing_tenant(req, None) is None
+    assert scoped_listing_tenant(req, "tenant-b") == "tenant-b"
