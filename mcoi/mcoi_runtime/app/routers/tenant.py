@@ -7,12 +7,13 @@ from __future__ import annotations
 
 from typing import Any
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel
 
 from mcoi_runtime.governance.guards.budget import TenantBudgetPolicy, TenantBudgetReport
 from mcoi_runtime.governance.guards.tenant_gating import TenantGatingError, TenantStatus
 from mcoi_runtime.app.routers.deps import deps
+from mcoi_runtime.app.routers._tenant_scope import enforce_tenant_scope
 
 router = APIRouter()
 
@@ -112,8 +113,9 @@ def create_tenant_budget(req: TenantBudgetRequest):
 
 
 @router.get("/api/v1/tenant/{tenant_id}/budget")
-def get_tenant_budget(tenant_id: str):
+def get_tenant_budget(tenant_id: str, request: Request):
     """Get a tenant's budget report."""
+    enforce_tenant_scope(request, tenant_id)
     deps.metrics.inc("requests_governed")
     return _budget_report(deps.tenant_budget_mgr.report(tenant_id))
 
@@ -122,8 +124,9 @@ def get_tenant_budget(tenant_id: str):
 
 
 @router.get("/api/v1/tenant/{tenant_id}/ledger")
-def get_tenant_ledger(tenant_id: str, entry_type: str | None = None, limit: int = 50):
+def get_tenant_ledger(tenant_id: str, request: Request, entry_type: str | None = None, limit: int = 50):
     """Get a tenant's scoped ledger entries."""
+    enforce_tenant_scope(request, tenant_id)
     deps.metrics.inc("requests_governed")
     entries = deps.tenant_ledger.query(tenant_id, entry_type=entry_type, limit=limit)
     return {
@@ -135,8 +138,9 @@ def get_tenant_ledger(tenant_id: str, entry_type: str | None = None, limit: int 
 
 
 @router.get("/api/v1/tenant/{tenant_id}/summary")
-def get_tenant_summary(tenant_id: str):
+def get_tenant_summary(tenant_id: str, request: Request):
     """Get a tenant's ledger summary."""
+    enforce_tenant_scope(request, tenant_id)
     deps.metrics.inc("requests_governed")
     summary = deps.tenant_ledger.summary(tenant_id)
     return {
@@ -165,8 +169,9 @@ def list_tenants():
 
 
 @router.get("/api/v1/usage/{tenant_id}")
-def tenant_usage(tenant_id: str):
+def tenant_usage(tenant_id: str, request: Request):
     """Per-tenant usage report."""
+    enforce_tenant_scope(request, tenant_id)
     report = deps.usage_reporter.generate(tenant_id)
     return {
         "tenant_id": report.tenant_id,
@@ -180,8 +185,9 @@ def tenant_usage(tenant_id: str):
 
 
 @router.get("/api/v1/analytics/{tenant_id}")
-def tenant_analytics_endpoint(tenant_id: str):
+def tenant_analytics_endpoint(tenant_id: str, request: Request):
     """Per-tenant analytics dashboard."""
+    enforce_tenant_scope(request, tenant_id)
     analytics = deps.tenant_analytics.compute(tenant_id)
     return {
         "tenant_id": analytics.tenant_id,
@@ -252,8 +258,9 @@ def get_quotas_summary():
 
 
 @router.get("/api/v1/quotas/{tenant_id}")
-def get_tenant_quota_usage(tenant_id: str):
+def get_tenant_quota_usage(tenant_id: str, request: Request):
     """Return quota usage for a specific tenant."""
+    enforce_tenant_scope(request, tenant_id)
     deps.metrics.inc("requests_governed")
     return {"tenant_id": tenant_id, "usage": deps.tenant_quota.get_usage(tenant_id), "governed": True}
 
@@ -323,8 +330,9 @@ def register_tenant(req: TenantRegisterRequest):
 
 
 @router.patch("/api/v1/tenant/{tenant_id}/status")
-def update_tenant_status(tenant_id: str, req: TenantStatusUpdateRequest):
+def update_tenant_status(tenant_id: str, request: Request, req: TenantStatusUpdateRequest):
     """Update tenant lifecycle status (suspend, terminate, reactivate)."""
+    enforce_tenant_scope(request, tenant_id)
     gating = _require_gating()
     try:
         new_status = TenantStatus(req.status)
@@ -359,8 +367,9 @@ def update_tenant_status(tenant_id: str, req: TenantStatusUpdateRequest):
 
 
 @router.get("/api/v1/tenant/{tenant_id}/gate")
-def get_tenant_gate(tenant_id: str):
+def get_tenant_gate(tenant_id: str, request: Request):
     """Get tenant lifecycle gating status."""
+    enforce_tenant_scope(request, tenant_id)
     gating = _require_gating()
     gate = gating.get_status(tenant_id)
     if gate is None:
