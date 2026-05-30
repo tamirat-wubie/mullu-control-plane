@@ -39,7 +39,7 @@ from mcoi_runtime.intent_substrate.adapters.service_catalog import (
     RequestStatusClosureAdapter,
 )
 
-from .conftest import MutableState
+from .conftest import FakeClock, MutableState
 
 _OWNER = "alice"
 _REQUESTER = "bob"
@@ -199,17 +199,30 @@ def test_substrate_cancels_request_on_precondition_failure() -> None:
 
 
 def test_substrate_two_confirm_rejects_flapping_world() -> None:
-    """Verify a hash change prevents premature request fulfillment."""
+    """A hash change between candidate and a *ripe* confirm rejects fulfillment.
+
+    Uses a deterministic FakeClock so the confirm window genuinely
+    elapses — the candidate becomes ripe and `tick()` actually reaches
+    the version-advance check. (A real clock with a long window would
+    pass trivially because the candidate never ripens, which exercises
+    nothing.) After rejection the candidate is consumed (pending == 0)
+    but the intent stays registered, so a later stable confirm can
+    still succeed — proving the guard rejects flapping without
+    permanently wedging the intent.
+    """
     spine, catalog = _catalog_with_entitled_request()
     world = MutableState()
     world.set("provisioning:vm-1", {"done": True})
 
+    clock = FakeClock()
+    confirm_window = 0.25
     resolver = IntentResolver(
         state_view=world,
         closure=RequestStatusClosureAdapter(catalog),
         spine=spine,
-        confirm_window_s=10.0,
+        confirm_window_s=confirm_window,
         debounce_window_s=0.0,
+        clock=clock,
     )
     resolver.register_intent(
         "req-1",
@@ -217,11 +230,37 @@ def test_substrate_two_confirm_rejects_flapping_world() -> None:
         success=(EntityAttributeEq("provisioning:vm-1", "done", True),),
     )
 
+    # First evaluation records a candidate against the success state.
     resolver.evaluate("req-1")
     assert resolver.pending_count() == 1
+    assert catalog.get_request("req-1").status == RequestStatus.ENTITLED
 
+    # Ripen the confirm window, then mutate the watched entity so its
+    # hash advances (success still holds: done stays True). The ripe
+    # candidate must now be REJECTED by the version-advance guard.
+    clock.advance(confirm_window + 0.01)
     world.update("provisioning:vm-1", touched="x")
     resolver.tick()
 
-    assert catalog.get_request("req-1").status == RequestStatus.ENTITLED
+    assert catalog.get_request("req-1").status == RequestStatus.ENTITLED, (
+        "flapping evidence must NOT fulfill the request"
+    )
+    assert resolver.pending_count() == 0, (
+        "rejected candidate is consumed, not re-parked"
+    )
+    assert resolver.is_registered("req-1"), (
+        "rejection is not terminal — the intent stays registered"
+    )
+
+    # Stable confirm: re-evaluate (new candidate), ripen the window with
+    # NO further mutation, and the request now fulfills. This proves the
+    # rejection above was caused by the hash advance, not by the guard
+    # refusing everything.
+    resolver.evaluate("req-1")
     assert resolver.pending_count() == 1
+    clock.advance(confirm_window + 0.01)
+    resolver.tick()
+
+    assert catalog.get_request("req-1").status == RequestStatus.FULFILLED, (
+        "stable evidence across the confirm window must fulfill"
+    )
