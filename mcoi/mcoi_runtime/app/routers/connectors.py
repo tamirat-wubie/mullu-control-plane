@@ -3,10 +3,11 @@ from __future__ import annotations
 
 from typing import Any
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, Field
 
 from mcoi_runtime.app.routers.deps import deps
+from mcoi_runtime.app.routers._tenant_scope import enforce_tenant_scope
 
 router = APIRouter()
 
@@ -38,10 +39,11 @@ class InvokeConnectorRequest(BaseModel):
 
 
 @router.post("/api/v1/connectors/register")
-def register_connector(req: RegisterConnectorRequest):
+def register_connector(req: RegisterConnectorRequest, request: Request):
     """Register a governed external connector."""
     from mcoi_runtime.core.connector_framework import ConnectorDefinition, ConnectorType
     deps.metrics.inc("requests_governed")
+    enforce_tenant_scope(request, req.tenant_id)
     try:
         ctype = ConnectorType(req.connector_type)
     except ValueError:
@@ -72,9 +74,10 @@ def register_connector(req: RegisterConnectorRequest):
 
 
 @router.post("/api/v1/connectors/invoke")
-def invoke_connector(req: InvokeConnectorRequest):
+def invoke_connector(req: InvokeConnectorRequest, request: Request):
     """Invoke a connector action through the governed pipeline."""
     deps.metrics.inc("requests_governed")
+    enforce_tenant_scope(request, req.tenant_id)
     invocation = deps.connector_framework.invoke(
         req.connector_id,
         req.action,

@@ -1,10 +1,11 @@
 """API key management endpoints."""
 from __future__ import annotations
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel
 
 from mcoi_runtime.app.routers.data._common import _data_error_detail, deps
+from mcoi_runtime.app.routers._tenant_scope import enforce_tenant_scope, scoped_listing_tenant
 
 router = APIRouter()
 
@@ -17,9 +18,10 @@ class CreateAPIKeyRequest(BaseModel):
 
 
 @router.post("/api/v1/api-keys")
-def create_api_key(req: CreateAPIKeyRequest):
+def create_api_key(req: CreateAPIKeyRequest, request: Request):
     """Create a new API key."""
     deps.metrics.inc("requests_governed")
+    enforce_tenant_scope(request, req.tenant_id)
     if "*" in req.scopes and not deps.api_key_mgr.allow_wildcard_keys:
         raise HTTPException(
             400,
@@ -51,10 +53,10 @@ def create_api_key(req: CreateAPIKeyRequest):
 
 
 @router.get("/api/v1/api-keys")
-def list_api_keys(tenant_id: str | None = None):
+def list_api_keys(request: Request, tenant_id: str | None = None):
     """List API keys."""
     deps.metrics.inc("requests_governed")
-    keys = deps.api_key_mgr.list_keys(tenant_id=tenant_id)
+    keys = deps.api_key_mgr.list_keys(tenant_id=scoped_listing_tenant(request, tenant_id))
     return {"keys": [k.to_dict() for k in keys], "governed": True}
 
 
