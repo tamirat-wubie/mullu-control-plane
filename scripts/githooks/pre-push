@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+# Mullu pre-push gate hook.
+#
+# Runs the SAME aggregate gate CI runs (scripts/validate_release_status.py),
+# locally, before a push leaves the machine. This catches the consistency
+# couplings that otherwise only fail after a full CI cycle -- e.g. a new schema
+# not registered in the protocol manifest, or a stale "protocol manifest ok: N
+# schemas" doc literal (both real misses observed 2026-05-30 on PR #862).
+#
+# It adds NO new checks: it is a thin local trigger for the existing gate.
+#
+# Opt-in: installed only by `python scripts/install_git_hooks.py`. Bypass a
+# single push with `git push --no-verify` or `MULLU_SKIP_PREPUSH=1 git push`.
+set -euo pipefail
+
+if [ "${MULLU_SKIP_PREPUSH:-}" = "1" ]; then
+  echo "[pre-push] skipped (MULLU_SKIP_PREPUSH=1)"
+  exit 0
+fi
+
+repo_root="$(git rev-parse --show-toplevel)"
+gate="$repo_root/scripts/validate_release_status.py"
+
+if [ ! -f "$gate" ]; then
+  echo "[pre-push] gate not found ($gate); skipping (nothing to enforce)"
+  exit 0
+fi
+
+python="${PYTHON:-python}"
+echo "[pre-push] running aggregate gate: scripts/validate_release_status.py"
+if ! "$python" "$gate"; then
+  echo ""
+  echo "[pre-push] BLOCKED: release-status gate failed. Fix the reported issues,"
+  echo "           or bypass intentionally with: git push --no-verify"
+  exit 1
+fi
+echo "[pre-push] gate passed."
+exit 0
