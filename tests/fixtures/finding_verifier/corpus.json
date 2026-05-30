@@ -1,0 +1,71 @@
+{
+  "description": "Calibration corpus for scripts/verify_findings.py. Known verdicts the verifier MUST reproduce. REJECTED cases are real confabulations (claims whose evidence does not reproduce); VERIFIED cases are genuine. If the verifier mislabels any case it is itself untrusted. reproducible_command is an argv array (no shell string), per the argv-only verifier contract.",
+  "calibration": [
+    {
+      "expected_verdict": "REJECTED",
+      "note": "Claimed a dead placeholder test ending in `assert False` exists. It does not (the fixture deliberately avoids that literal, so the count is 0, not 1).",
+      "finding": {
+        "id": "fab-dead-placeholder",
+        "claim": "test file contains a dead placeholder ending in `assert False`",
+        "reproducible_command": ["python", "-c", "import pathlib,sys; t=pathlib.Path('fixtures/real_test_file.py').read_text(); sys.stdout.write(str(t.count('assert ' + 'False')))"],
+        "expect": {"mode": "stdout_contains", "value": "1"},
+        "severity": "medium"
+      }
+    },
+    {
+      "expected_verdict": "REJECTED",
+      "note": "Asserts a duplicate test definition (shadowed twin). The file defines it exactly once; a detector that flags a clean baseline is wrong.",
+      "finding": {
+        "id": "fab-duplicate-deftest",
+        "claim": "file has a duplicate test_config_loads function",
+        "reproducible_command": ["python", "-c", "import pathlib,sys; t=pathlib.Path('fixtures/real_test_file.py').read_text(); sys.stdout.write(str(t.count('def test_config_loads')))"],
+        "expect": {"mode": "stdout_contains", "value": "2"},
+        "severity": "medium"
+      }
+    },
+    {
+      "expected_verdict": "REJECTED",
+      "note": "Asserted a fabricated commit hash. The fixture records the real tip; the fabricated value is absent.",
+      "finding": {
+        "id": "fab-wrong-sha",
+        "claim": "branch tip is 9582c1d8",
+        "reproducible_command": ["python", "-c", "import pathlib,sys; sys.stdout.write(pathlib.Path('fixtures/branch_tip.txt').read_text())"],
+        "expect": {"mode": "stdout_contains", "value": "9582c1d8"},
+        "severity": "low"
+      }
+    },
+    {
+      "expected_verdict": "VERIFIED",
+      "note": "Genuine: the real test function is defined exactly once.",
+      "finding": {
+        "id": "real-test-present",
+        "claim": "test_config_loads is defined exactly once",
+        "reproducible_command": ["python", "-c", "import pathlib,sys; t=pathlib.Path('fixtures/real_test_file.py').read_text(); sys.stdout.write(str(t.count('def test_config_loads')))"],
+        "expect": {"mode": "stdout_contains", "value": "1"},
+        "severity": "info"
+      }
+    },
+    {
+      "expected_verdict": "VERIFIED",
+      "note": "Genuine: the real branch tip matches recorded ground truth.",
+      "finding": {
+        "id": "real-sha-present",
+        "claim": "branch tip is 2601b04f",
+        "reproducible_command": ["python", "-c", "import pathlib,sys; sys.stdout.write(pathlib.Path('fixtures/branch_tip.txt').read_text())"],
+        "expect": {"mode": "stdout_contains", "value": "2601b04f"},
+        "severity": "info"
+      }
+    },
+    {
+      "expected_verdict": "VERIFIED",
+      "note": "Genuine: the fixture test file parses (real, runnable evidence).",
+      "finding": {
+        "id": "real-test-parses",
+        "claim": "fixture test file is valid python",
+        "reproducible_command": ["python", "-c", "import ast,pathlib; ast.parse(pathlib.Path('fixtures/real_test_file.py').read_text()); print('parsed-ok')"],
+        "expect": {"mode": "stdout_contains", "value": "parsed-ok"},
+        "severity": "info"
+      }
+    }
+  ]
+}
