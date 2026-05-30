@@ -459,10 +459,10 @@ def _stable_hash(payload: dict) -> str:
     return hashlib.sha256(canonical).hexdigest()
 
 
-def _issue_test_conformance(*, repo_root: Path, authority_obligation_mesh=None, plan_ledger=None):
+def _issue_test_conformance(*, repo_root: Path, authority_obligation_mesh=None, plan_ledger=None, command_ledger=None):
     return issue_conformance_certificate(
         router=StubRouter(),
-        command_ledger=StubCommandLedger(),
+        command_ledger=command_ledger or StubCommandLedger(),
         authority_obligation_mesh=authority_obligation_mesh or StubAuthorityObligationMesh(),
         capability_admission_gate=StubCapabilityAdmissionGate(),
         environment="test",
@@ -474,3 +474,78 @@ def _issue_test_conformance(*, repo_root: Path, authority_obligation_mesh=None, 
         repo_root=repo_root,
         clock=lambda: "2026-04-29T12:00:00+00:00",
     )
+
+
+def _real_command_ledger():
+    from gateway.command_spine import (
+        CommandLedger,
+        CommandState,
+        InMemoryCommandLedgerStore,
+    )
+
+    ledger = CommandLedger(
+        clock=lambda: "2026-04-29T12:00:00+00:00",
+        store=InMemoryCommandLedgerStore(),
+    )
+    command = ledger.create_command(
+        tenant_id="tenant-1",
+        actor_id="identity-1",
+        source="web",
+        conversation_id="conv-conformance",
+        idempotency_key="idem-conformance",
+        intent="llm_completion",
+        payload={"body": "hello"},
+    )
+    ledger.transition(command.command_id, CommandState.ALLOWED, risk_tier="low")
+    return ledger
+
+
+def test_audit_trace_verifier_canary_passes_with_intact_real_ledger(tmp_path) -> None:
+    # A real ledger with an intact event chain produces a passing
+    # audit_trace_verifier_canary check that reports the event count.
+    ledger = _real_command_ledger()
+    certificate = _issue_test_conformance(repo_root=tmp_path, command_ledger=ledger)
+    payload = certificate.to_json_dict()
+
+    check = next(
+        c for c in payload["checks"] if c["check_id"] == "audit_trace_verifier_canary"
+    )
+    assert check["passed"] is True
+    assert "global_event_chain_intact" in check["detail"]
+    assert "audit_trace_verifier_event_chain_broken" not in payload["open_conformance_gaps"]
+
+
+def test_audit_trace_verifier_canary_surfaces_tampered_chain_as_gap(tmp_path) -> None:
+    # Tamper the ledger's event chain (break a prev_event_hash link). The
+    # canary must fail, surface a named gap, and force a non-conformant-grade
+    # terminal status — the verifier is now load-bearing in the cert.
+    from dataclasses import replace as dc_replace
+
+    ledger = _real_command_ledger()
+    # Break the global chain at the second event.
+    ledger._events[1] = dc_replace(ledger._events[1], prev_event_hash="0" * 64)
+
+    certificate = _issue_test_conformance(repo_root=tmp_path, command_ledger=ledger)
+    payload = certificate.to_json_dict()
+
+    check = next(
+        c for c in payload["checks"] if c["check_id"] == "audit_trace_verifier_canary"
+    )
+    assert check["passed"] is False
+    assert "global_event_chain_broken" in check["detail"]
+    assert "audit_trace_verifier_event_chain_broken" in payload["open_conformance_gaps"]
+    # A broken audit chain is a core-canary failure -> degraded (or worse).
+    assert payload["terminal_status"] in {"degraded", "non_conformant"}
+
+
+def test_audit_trace_verifier_canary_not_applicable_for_summary_only_ledger(tmp_path) -> None:
+    # The summary-only stub ledger lacks the event-chain surface; the canary
+    # reports not_applicable and passes, preserving backward compatibility.
+    certificate = _issue_test_conformance(repo_root=tmp_path)
+    payload = certificate.to_json_dict()
+
+    check = next(
+        c for c in payload["checks"] if c["check_id"] == "audit_trace_verifier_canary"
+    )
+    assert check["passed"] is True
+    assert "not_applicable" in check["detail"]

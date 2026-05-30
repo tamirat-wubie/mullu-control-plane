@@ -28,6 +28,7 @@ from pathlib import Path
 from typing import Any, Callable
 
 from mcoi_runtime.core.lineage_query import parse_lineage_uri
+from gateway.audit_trace_verifier import AuditTraceVerifier
 from gateway.physical_worker_canary import run_physical_worker_canary
 from scripts.validate_mcp_capability_manifest import validate_mcp_capability_manifest
 from scripts.validate_schemas import _load_schema, _validate_schema_instance
@@ -191,6 +192,16 @@ def issue_conformance_certificate(
         "terminal certificate, closure memory, and learning admission are present",
     ))
 
+    audit_trace_verifier_canary_passed, audit_trace_verifier_detail = _audit_trace_verifier_canary(
+        command_ledger,
+    )
+    checks.append(_check(
+        "audit_trace_verifier_canary",
+        audit_trace_verifier_canary_passed,
+        "audit_trace_verifier:global_event_chain",
+        audit_trace_verifier_detail,
+    ))
+
     fabric_read_model = _fabric_read_model(capability_admission_gate)
     capability_admission_canary_passed = bool(
         fabric_read_model.get("enabled")
@@ -351,6 +362,7 @@ def issue_conformance_certificate(
         runtime_witness_valid=runtime_witness_valid,
         core_canaries=(
             command_closure_canary_passed,
+            audit_trace_verifier_canary_passed,
             capability_admission_canary_passed,
             dangerous_capability_isolation_canary_passed,
             streaming_budget_canary_passed,
@@ -470,6 +482,37 @@ def _command_closure_canary(command_ledger: Any, runtime_witness: dict[str, Any]
         and int(summary.get("terminal_certificates", 0)) > 0
         and int(summary.get("closure_memory_entries", 0)) > 0
         and int(summary.get("closure_learning_decisions", 0)) > 0
+    )
+
+
+def _audit_trace_verifier_canary(command_ledger: Any) -> tuple[bool, str]:
+    """Run the audit-trace verifier's global event-chain check over the ledger.
+
+    Returns (passed, detail). The verifier requires the ledger's event-chain
+    surface (events with hash links). A ledger that does not expose that
+    surface (e.g. a summary-only fixture or a degraded read model) yields a
+    bounded "not_applicable" pass rather than a false failure — the canary
+    asserts integrity when the surface exists, and is silent when it cannot.
+    An empty but well-formed ledger is intact (zero events, chain holds).
+    """
+    # Defensive: the verifier consumes _events / events_for. If the ledger
+    # does not expose them, the verifier cannot run; report not_applicable.
+    if not hasattr(command_ledger, "_events") or not hasattr(command_ledger, "events_for"):
+        return True, "audit_trace_verifier:not_applicable (ledger lacks event-chain surface)"
+    try:
+        verification = AuditTraceVerifier(command_ledger).verify_global_event_chain()
+    except Exception as exc:  # defensive: a verifier crash must not crash the cert
+        return False, f"audit_trace_verifier:error ({type(exc).__name__})"
+    if verification.chain_intact:
+        return True, (
+            "audit_trace_verifier:global_event_chain_intact "
+            f"event_count={verification.event_count}"
+        )
+    # Surface the first few structured failure reasons without unbounded growth.
+    sample = ",".join(verification.failures[:5])
+    return False, (
+        "audit_trace_verifier:global_event_chain_broken "
+        f"event_count={verification.event_count} failures={sample}"
     )
 
 
@@ -767,6 +810,7 @@ def _collect_gaps(checks: list[ConformanceCheck], *, repository_root: Path) -> l
     gap_by_check = {
         "latest_anchor_valid": "latest_anchor_not_published",
         "command_closure_canary": "command_closure_canary_missing_terminal_success",
+        "audit_trace_verifier_canary": "audit_trace_verifier_event_chain_broken",
         "capability_admission_canary": "capability_fabric_admission_not_live",
         "capsule_registry_certified": "capsule_registry_certification_not_witnessed",
         "dangerous_capability_isolation_canary": "dangerous_capability_isolation_not_live",
