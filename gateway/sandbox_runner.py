@@ -13,6 +13,10 @@ Invariants:
   - Docker --mount source paths cannot contain option delimiters.
   - Host root and Docker socket mounts are rejected before subprocess launch.
   - Commands are argv-only and executable allowlisted.
+  - All Linux capabilities are dropped (--cap-drop ALL); profiles that do
+    not drop all capabilities are rejected before launch.
+  - A pinned seccomp profile and no-new-privileges are always applied; an
+    empty profile seccomp path resolves to the bundled default profile.
   - Workspace mutations are witnessed as hash-only changed-file refs.
 """
 
@@ -30,6 +34,10 @@ from gateway.command_spine import canonical_hash
 
 Runner = Callable[..., subprocess.CompletedProcess[str]]
 
+# Bundled seccomp profile applied when a profile does not pin its own. It is
+# layered on top of --cap-drop ALL and no-new-privileges as defense-in-depth.
+_DEFAULT_SECCOMP_PROFILE = str(Path(__file__).resolve().with_name("sandbox_seccomp.json"))
+
 
 @dataclass(frozen=True, slots=True)
 class SandboxRunnerProfile:
@@ -40,6 +48,8 @@ class SandboxRunnerProfile:
     user: str = "nonroot"
     network: str = "none"
     read_only_rootfs: bool = True
+    drop_all_capabilities: bool = True
+    seccomp_profile: str = ""
     workspace_mount: str = "/workspace"
     max_cpu: str = "1"
     max_memory: str = "1g"
@@ -79,6 +89,12 @@ class SandboxRunnerProfile:
             raise ValueError("sandbox network must be none")
         if self.read_only_rootfs is not True:
             raise ValueError("sandbox root filesystem must be read-only")
+        if self.drop_all_capabilities is not True:
+            raise ValueError("sandbox must drop all capabilities")
+        if not isinstance(self.seccomp_profile, str):
+            raise ValueError("seccomp_profile must be a string")
+        if self.seccomp_profile and any(ord(character) < 32 for character in self.seccomp_profile):
+            raise ValueError("seccomp_profile contains forbidden characters")
         if self.workspace_mount != "/workspace":
             raise ValueError("workspace mount must be /workspace")
         _require_text(self.max_cpu, "max_cpu")
@@ -136,6 +152,8 @@ class SandboxExecutionReceipt:
     returncode: int | None
     network_disabled: bool
     read_only_rootfs: bool
+    capabilities_dropped: bool
+    seccomp_profile_applied: str
     workspace_mount: str
     forbidden_effects_observed: bool
     verification_status: str
@@ -283,6 +301,10 @@ class DockerRootlessSandboxRunner:
             return "forbidden mount requested"
         return None
 
+    def _seccomp_profile(self) -> str:
+        """Resolve the seccomp profile path, falling back to the bundled default."""
+        return self._profile.seccomp_profile or _DEFAULT_SECCOMP_PROFILE
+
     def _docker_args(self, request: SandboxCommandRequest) -> tuple[str, ...]:
         mount_arg = f"type=bind,src={self._host_workspace_root},dst=/workspace,rw"
         args = [
@@ -298,11 +320,17 @@ class DockerRootlessSandboxRunner:
             self._profile.max_cpu,
             "--memory",
             self._profile.max_memory,
+        ]
+        if self._profile.drop_all_capabilities:
+            args.extend(["--cap-drop", "ALL"])
+        args.extend(["--security-opt", "no-new-privileges"])
+        args.extend(["--security-opt", f"seccomp={self._seccomp_profile()}"])
+        args.extend([
             "--mount",
             mount_arg,
             "--workdir",
             request.cwd,
-        ]
+        ])
         for key in sorted(request.environment):
             args.extend(["--env", f"{key}={request.environment[key]}"])
         args.append(self._profile.image)
@@ -329,6 +357,8 @@ class DockerRootlessSandboxRunner:
         docker_args_hash = canonical_hash(docker_args)
         stdout_hash = _sha256(stdout)
         stderr_hash = _sha256(stderr)
+        capabilities_dropped = self._profile.drop_all_capabilities
+        seccomp_profile_applied = self._seccomp_profile()
         receipt_hash = canonical_hash({
             "request_id": request.request_id,
             "command_hash": command_hash,
@@ -337,6 +367,8 @@ class DockerRootlessSandboxRunner:
             "stderr_hash": stderr_hash,
             "returncode": returncode,
             "verification_status": verification_status,
+            "capabilities_dropped": capabilities_dropped,
+            "seccomp_profile_applied": seccomp_profile_applied,
             "changed_file_refs": changed_file_refs,
         })
         return SandboxExecutionReceipt(
@@ -353,6 +385,8 @@ class DockerRootlessSandboxRunner:
             returncode=returncode,
             network_disabled=self._profile.network == "none",
             read_only_rootfs=self._profile.read_only_rootfs,
+            capabilities_dropped=capabilities_dropped,
+            seccomp_profile_applied=seccomp_profile_applied,
             workspace_mount=self._profile.workspace_mount,
             forbidden_effects_observed=forbidden_effects_observed,
             verification_status=verification_status,
