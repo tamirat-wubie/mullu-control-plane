@@ -168,6 +168,40 @@ def test_teams_chat_send_uses_graph_chat_messages_endpoint() -> None:
     assert transport.calls[0]["authorization"] == "Bearer teams-token"
 
 
+def test_teams_thread_read_uses_thread_id_without_recipients() -> None:
+    # Canonical thread-read input: thread_id set, recipients empty (worker policy
+    # requires thread_id, not recipients). Regression guard for the precedence
+    # trap that dropped thread_id and emitted /v1.0/chats//messages.
+    transport = FakeTransport(response_body={"value": [{"id": "msg-1"}]})
+    adapter = HttpMessagingAdapter(
+        credentials={
+            "teams": MessagingConnectorCredential(
+                connector_id="teams",
+                access_token="teams-token",
+                base_url="https://graph.example",
+                scope_id="scope:teams",
+            )
+        },
+        urlopen=transport,
+    )
+
+    observation = adapter.perform(_request(
+        request_id="teams-thread-read",
+        capability_id="messaging.thread.read",
+        action="messaging.thread.read",
+        connector_id="teams",
+        recipients=(),
+        thread_id="19:abcd@thread.v2",
+    ))
+
+    assert observation.succeeded is True
+    assert observation.external_send is False
+    assert observation.provider_operation == "teams.chats.messages.list"
+    assert transport.calls[0]["method"] == "GET"
+    assert transport.calls[0]["url"].endswith("/v1.0/chats/19%3Aabcd%40thread.v2/messages")
+    assert "/chats//messages" not in transport.calls[0]["url"]
+
+
 def test_missing_credential_fails_closed_before_transport() -> None:
     transport = FakeTransport(response_body={})
     adapter = HttpMessagingAdapter(credentials={}, urlopen=transport)
