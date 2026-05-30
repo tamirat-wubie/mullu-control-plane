@@ -591,7 +591,7 @@ On startup, the platform:
 8. Publishes signed runtime witness state at `/gateway/witness` and `/runtime/witness`
 9. Restores state from file snapshots (if `MULLU_STATE_DIR` has previous snapshots)
 10. Registers all subsystems into the dependency container
-11. Mounts 8 router modules (health, llm, tenant, audit, workflow, agent, data, ops)
+11. Mounts the HTTP router modules registered in `app/server_http.py` (~40 top-level routers, including health, llm, tenant, audit, workflow, agent, data, and ops)
 12. Applies profile-aware API auth defaults to `/api/*` routes
 
 On shutdown:
