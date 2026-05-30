@@ -58,6 +58,17 @@ all `/api/*` routes. By default, `local_dev` and `test` remain permissive for
 developer workflow compatibility, while `pilot` and `production` require auth
 unless explicitly overridden.
 
+### Command-Event and Runtime Witness Signing
+
+Governed command events are tamper-evidenced with HMAC signatures. The
+`gateway.worker` signs command-event anchors with `MULLU_COMMAND_ANCHOR_SECRET`,
+and `MULLU_REQUIRE_COMMAND_ANCHOR` defaults to true in `pilot` and `production`,
+so startup fails closed when anchor signing material is absent. Runtime and
+gateway witness state published at `/gateway/witness` and `/runtime/witness` is
+HMAC-signed with `MULLU_RUNTIME_WITNESS_SECRET`. These signatures provide
+tamper-evidence for the command-event and witness surfaces; they are
+shared-secret HMACs, not external immutable-store anchoring (see below).
+
 ## What Is NOT Implemented
 
 This is an internal alpha. The following security capabilities are still absent
@@ -82,13 +93,15 @@ mcoi-runtime[encryption]`). Without it, encrypt/decrypt operations raise
 replay records) still write JSON to the filesystem without field-level
 encryption unless explicitly configured.
 
-### No External Audit Log Signing
+### No Immutable-Store Anchoring of Persisted Snapshots
 
 The in-memory audit trail is hash-chained and supports integrity verification,
-but persisted JSON snapshots and replay exports are not externally signed or
-anchored in an immutable store. An attacker with filesystem write access can
-still replace persisted files unless the host environment provides stronger
-storage guarantees.
+and command-event anchors and runtime witness objects are HMAC-signed (see
+"Command-Event and Runtime Witness Signing" above). However, persisted JSON
+snapshots and replay exports are not externally signed or anchored in an
+immutable store. An attacker with filesystem write access can still replace
+persisted snapshot files unless the host environment provides stronger storage
+guarantees.
 
 ### Shell Executor Permissions
 
