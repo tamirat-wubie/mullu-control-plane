@@ -1,0 +1,65 @@
+{
+  "description": "Calibration corpus for scripts/verify_claims.py. Known verdicts the verifier MUST reproduce. UNSUPPORTED cases are the real false status assertions made 2026-05-30 (premature green, fabricated SHA, count that did not match). SUPPORTED cases are the genuine values. capture_command is argv-only and reads offline fixtures so calibration is deterministic and network-free.",
+  "calibration": [
+    {
+      "expected_verdict": "UNSUPPORTED",
+      "note": "PREMATURE GREEN: asserted 'all checks SUCCESS' while CI still had IN_PROGRESS/QUEUED checks.",
+      "claim": {
+        "id": "fab-premature-green",
+        "assertion": "all CI checks are SUCCESS",
+        "capture_command": ["python", "-c", "import pathlib,sys; sys.stdout.write(pathlib.Path('fixtures/checks_running.json').read_text())"],
+        "check": {"mode": "state_all", "field": "state", "value": "SUCCESS"}
+      }
+    },
+    {
+      "expected_verdict": "UNSUPPORTED",
+      "note": "FABRICATED SHA: asserted head 8d9f9da9, a SHA that was never real; the captured tip is c4ed7f86.",
+      "claim": {
+        "id": "fab-wrong-head-sha",
+        "assertion": "branch head is 8d9f9da9",
+        "capture_command": ["python", "-c", "import pathlib,sys; sys.stdout.write(pathlib.Path('fixtures/head.txt').read_text())"],
+        "check": {"mode": "sha_equals", "value": "8d9f9da9"}
+      }
+    },
+    {
+      "expected_verdict": "UNSUPPORTED",
+      "note": "WRONG COUNT: asserted 65 checks (the fabricated '65/65'); the captured list has 3.",
+      "claim": {
+        "id": "fab-wrong-count",
+        "assertion": "there are 65 checks and all passed",
+        "capture_command": ["python", "-c", "import json,pathlib,sys; sys.stdout.write(json.dumps({'total': len(json.loads(pathlib.Path('fixtures/checks_green.json').read_text()))}))"],
+        "check": {"mode": "count_from_json", "path": "total", "value": "65"}
+      }
+    },
+    {
+      "expected_verdict": "SUPPORTED",
+      "note": "GENUINE: all checks in the green fixture really are SUCCESS.",
+      "claim": {
+        "id": "real-all-green",
+        "assertion": "all CI checks are SUCCESS",
+        "capture_command": ["python", "-c", "import pathlib,sys; sys.stdout.write(pathlib.Path('fixtures/checks_green.json').read_text())"],
+        "check": {"mode": "state_all", "field": "state", "value": "SUCCESS"}
+      }
+    },
+    {
+      "expected_verdict": "SUPPORTED",
+      "note": "GENUINE: the captured branch tip really is c4ed7f86 (8-char assertion prefix-matches the 40-char tip).",
+      "claim": {
+        "id": "real-head-sha",
+        "assertion": "branch head is c4ed7f86",
+        "capture_command": ["python", "-c", "import pathlib,sys; sys.stdout.write(pathlib.Path('fixtures/head.txt').read_text())"],
+        "check": {"mode": "sha_equals", "value": "c4ed7f86"}
+      }
+    },
+    {
+      "expected_verdict": "SUPPORTED",
+      "note": "GENUINE: the green fixture really has 3 checks.",
+      "claim": {
+        "id": "real-count",
+        "assertion": "there are 3 checks",
+        "capture_command": ["python", "-c", "import json,pathlib,sys; sys.stdout.write(json.dumps({'total': len(json.loads(pathlib.Path('fixtures/checks_green.json').read_text()))}))"],
+        "check": {"mode": "count_from_json", "path": "total", "value": "3"}
+      }
+    }
+  ]
+}
