@@ -1,0 +1,48 @@
+# Tenant-Scope Coverage Baseline
+#
+# Handlers that take a tenant from the path/body but do NOT yet call a
+# tenant-scope helper (enforce_tenant_scope / scoped_listing_tenant). Recorded
+# when the validate_tenant_scope_coverage.py gate was introduced, so the gate
+# blocks NEW unscoped tenant routes while this inherited set is retired
+# incrementally. Each line is "relpath::handler".
+#
+# These were NOT introduced here — the linter surfaced them; the prior manual
+# audit only reached tenant.py / api_keys / audit / conversations / governance /
+# connectors. Prioritize the cross-tenant *data read/export* handlers (compliance
+# exports, llm/costs, agent memory, workflow) over operator/bootstrap routes
+# (organization_kernel, pilot, rbac.create_identity, tenant.register/budget)
+# whose intended access model (operator-only vs tenant-self) should be confirmed
+# before scoping.
+#
+mcoi/mcoi_runtime/app/routers/adapter.py::request_action
+mcoi/mcoi_runtime/app/routers/agent.py::execute_chain
+mcoi/mcoi_runtime/app/routers/agent.py::queue_submit
+mcoi/mcoi_runtime/app/routers/agent.py::search_memory
+mcoi/mcoi_runtime/app/routers/agent.py::store_memory
+mcoi/mcoi_runtime/app/routers/agent.py::webhook_subscribe
+mcoi/mcoi_runtime/app/routers/assistant.py::compile_finance_ops_assistant_plan
+mcoi/mcoi_runtime/app/routers/audit.py::publish_event
+mcoi/mcoi_runtime/app/routers/compliance.py::export_audit_package
+mcoi/mcoi_runtime/app/routers/compliance.py::export_compliance_mapping
+mcoi/mcoi_runtime/app/routers/compliance.py::export_incident_package
+mcoi/mcoi_runtime/app/routers/data/prompts.py::render_prompt
+mcoi/mcoi_runtime/app/routers/data/tools.py::invoke_tool
+mcoi/mcoi_runtime/app/routers/explain.py::explain_action
+mcoi/mcoi_runtime/app/routers/finance_approval.py::create_finance_approval_packet
+mcoi/mcoi_runtime/app/routers/god_mode.py::issue_ticket
+mcoi/mcoi_runtime/app/routers/llm/costs.py::cost_projection
+mcoi/mcoi_runtime/app/routers/llm/costs.py::tenant_costs
+mcoi/mcoi_runtime/app/routers/organization_kernel.py::bootstrap_minimum_org
+mcoi/mcoi_runtime/app/routers/organization_kernel.py::create_organization
+mcoi/mcoi_runtime/app/routers/pilot.py::provision_pilot
+mcoi/mcoi_runtime/app/routers/rbac.py::create_identity
+mcoi/mcoi_runtime/app/routers/scheduler.py::schedule_job
+mcoi/mcoi_runtime/app/routers/temporal_scheduler.py::create_temporal_schedule
+mcoi/mcoi_runtime/app/routers/tenant.py::create_tenant_budget
+mcoi/mcoi_runtime/app/routers/tenant.py::register_tenant
+mcoi/mcoi_runtime/app/routers/workflow.py::execute
+mcoi/mcoi_runtime/app/routers/workflow.py::execute_pipeline
+mcoi/mcoi_runtime/app/routers/workflow.py::execute_traced_workflow
+mcoi/mcoi_runtime/app/routers/workflow.py::execute_workflow
+mcoi/mcoi_runtime/app/routers/workflow.py::execute_workflow_template
+mcoi/mcoi_runtime/app/routers/workflow.py::tool_augmented_workflow
