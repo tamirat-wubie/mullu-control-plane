@@ -68,6 +68,9 @@ ProblemSignature
 | `gateway/candidate_composer.py` | `CandidateComposer`, `MethodCapsule`, `CandidatePipeline`, `CandidateEvaluation`, `AdversarialReviewResult`, `CandidateComparisonReport` | Composes pipelines from registered capsules, runs each under a deterministic per-pipeline seed, applies both gates, and records every result. |
 | `gateway/solver_forge_bridge.py` | `forge_input_for_winner`, `build_provenance`, `extract_provenance`, `SolverForgeProvenance`, `is_winner` | Carries a winning ledger record into a `CapabilityForgeInput` with full provenance stamped under the reserved `solver_forge.*` metadata key. Refuses non-winners and findings-bearing runs. |
 | `gateway/solver_forge_red_team_adapter.py` | `RedTeamPlatformReviewer` | Production `AdversarialReviewCallback` backed by `RedTeamHarness`. Caches the report per instance by default. Findings derive from the harness category summary; evidence ref is the harness `report_hash`. |
+| `gateway/method_registry.py` | `MethodRegistry`, `STARTER_CAPSULES`, `default_registry` | Typed catalog of method capsules. Selects the capsules a signature admits and builds a composer; declaration-only, with no promotion surface. Ships a conservative starter catalog. |
+| `gateway/solver_forge_benchmarks.py` | `reference_evaluator`, `run_benchmark`, `BENCHMARKS`, `DUPLICATE_INVOICE_SIGNATURE` | Worked duplicate-invoice benchmark over a labeled fixture with three real detectors. Deterministic; primary metric is F1 so a recall-only trap cannot win. |
+| `gateway/solver_forge_cli.py` | `main`, `build_parser` | Read-and-experiment CLI: list capsules/benchmarks, run a benchmark, preview a forge input. No promote / install / deploy subcommand. |
 
 ## Problem signatures
 
@@ -229,6 +232,61 @@ Method families are open-ended strings; the registry is just whichever capsules 
 4. If the family represents elevated risk, set `risk_ceiling` appropriately.
 5. Optionally add the family to `allowed_method_families` on problem signatures where it should compete.
 
+## Method registry and starter catalog
+
+`gateway/method_registry.py` is the "Method Registry" box of the loop: a typed
+catalog of `MethodCapsule` declarations the composer can draw on. It owns no
+implementation and no promotion path — `composer_for(signature, ledger)` returns
+a `CandidateComposer` seeded with the capsules whose method family the signature
+admits, and the composer reports any risk-ceiling skips transparently.
+
+`default_registry()` ships a conservative `STARTER_CAPSULES` catalog spanning the
+first three problem domains (`document_verification`, `workflow_automation`,
+`engineering_puzzle`) plus general-purpose families (`llm_planner`,
+`llm_reviewer`, `multi_agent_debate`, `human_review_gate`). These are starter
+DEFAULTS: every capsule is tagged `metadata["provenance"] = "starter_default"`,
+and capsule/adapter owners should review and replace the `risk_ceiling`,
+`cost_class`, and `explainability` claims with measured values before those
+claims inform a promotion decision.
+
+## Reference benchmark
+
+`gateway/solver_forge_benchmarks.py` is a worked, runnable benchmark that
+exercises the whole loop on real computation. `invoice_duplicate_detection.v1`
+embeds a labeled invoice fixture and three genuine detectors:
+
+- `rule_based` exact field match (the baseline): high precision, low recall.
+- `graph_match` normalized vendor + amount proximity: catches variations.
+- `statistical_anomaly` same-vendor overflag: a recall-only trap.
+
+The evaluator is deterministic and measures precision/recall/F1 on the fixture
+rather than declaring scores. The signature's primary metric is **F1, not
+recall**, so the overflag trap — which has perfect recall but low precision —
+runs, is recorded as a passed candidate, and is correctly **refused as a
+winner**. Only the graph-match detector beats the baseline on F1 and is selected.
+This is the loop demonstrating "Promote narrowly": a high-recall result is not a
+winner unless it also clears the primary metric.
+
+## Running the lab (CLI)
+
+`gateway/solver_forge_cli.py` is the read-and-experiment entrypoint. It has no
+promote / install / certify / deploy subcommand by construction; acting on a
+winner stays a deliberate, downstream step through the C0-C7 maturity ladder.
+
+```text
+python -m gateway.solver_forge_cli list-capsules [--domain D] [--family F]
+python -m gateway.solver_forge_cli list-benchmarks
+python -m gateway.solver_forge_cli run <benchmark_id> [--json] [--ledger-out FILE]
+python -m gateway.solver_forge_cli forge-input <benchmark_id> \
+    --capability-id <id> --owner-team <team>   # PREVIEW only; creates nothing
+```
+
+`run` prints the winners, passed-non-winners (with their negative
+`baseline_delta`), negatives, and skipped capsules, and can persist the full
+candidate ledger to a JSON file. `forge-input` previews the
+`CapabilityForgeInput` a winner would produce — including the stamped
+`solver_forge.*` provenance — but never calls `CapabilityForge.create_candidate`.
+
 ## Relationship to existing infrastructure
 
 | Pre-existing module | Relationship |
@@ -259,6 +317,9 @@ Method families are open-ended strings; the registry is just whichever capsules 
 | `tests/test_gateway/test_solver_forge_bridge.py` | 20 | Winner classification, provenance round-trip, non-winner refusal, signature-hash mismatch, domain/risk laundering refusal, high-risk approval enforcement, reserved-key protection, end-to-end round-trip through `CapabilityForge.create_candidate`. |
 | `tests/test_gateway/test_solver_forge_adversarial.py` | 12 | Review-result shape invariants, reviewer-on-passing-only semantics, finding preservation, candidate exclusion despite beating baseline, baseline-compromise zeroing winners, ledger filtering, bridge refusal, double-gate end-to-end. |
 | `tests/test_gateway/test_solver_forge_red_team_adapter.py` | 14 | Default-platform clean path, injected failing case → findings + report_hash evidence ref, multi-category finding derivation (sorted + deduped), malformed/inconsistent report defenses, severity_threshold tolerance, cache hit + opt-out + `reset_cache()` + `latest_report()` immutability, end-to-end composer integration with both clean and failing platform. |
+| `tests/test_gateway/test_method_registry.py` | 12 | Register / duplicate-rejection, family + domain queries, signature admissibility (allow / forbid / risk-ceiling), composer construction, no-promotion-surface, starter-catalog integrity. |
+| `tests/test_gateway/test_solver_forge_benchmarks.py` | 11 | Detector ground truth (precision / recall), deterministic evaluator, unknown-capsule skip, end-to-end winner selection, recall-only-trap refusal, winner crosses the bridge, ledger winners match the report. |
+| `tests/test_gateway/test_solver_forge_cli.py` | 9 | No-promotion subcommand surface, list capsules / benchmarks (incl. domain + family filters), text + JSON run output, unknown-benchmark error, ledger-file write, read-only forge-input preview. |
 
 ## Open questions deferred to follow-on work
 
