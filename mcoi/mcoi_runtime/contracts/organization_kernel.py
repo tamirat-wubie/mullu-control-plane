@@ -620,3 +620,52 @@ class OrganizationCaseEvent(ContractRecord):
             object.__setattr__(self, field_name, require_non_empty_text(getattr(self, field_name), field_name))
         object.__setattr__(self, "emitted_at", require_datetime_text(self.emitted_at, "emitted_at"))
         object.__setattr__(self, "payload", freeze_value(self.payload))
+
+
+@dataclass(frozen=True, slots=True)
+class PlanStepWorkerReceiptBinding(ContractRecord):
+    """Bounded worker dispatch receipt admitted as evidence for one plan step.
+
+    The binding records that a worker-mesh dispatch receipt satisfied one of a
+    plan step's declared evidence requirements. It does NOT grant dispatch
+    authority: the receipt is produced by the governed worker mesh under its own
+    lease, budget, and sandbox controls, and is admitted here only as case
+    evidence. A worker receipt is never a terminal closure.
+    """
+
+    binding_id: str
+    case_id: str
+    step_id: str
+    requirement_id: str
+    worker_lease_id: str
+    dispatch_request_id: str
+    dispatch_receipt_id: str
+    worker_output_hash: str
+    receipt_evidence_refs: tuple[str, ...]
+    admitted_evidence_ref: str
+    bound_at: str
+    metadata: Mapping[str, Any] = field(default_factory=dict)
+
+    def __post_init__(self) -> None:
+        for field_name in (
+            "binding_id",
+            "case_id",
+            "step_id",
+            "requirement_id",
+            "worker_lease_id",
+            "dispatch_request_id",
+            "dispatch_receipt_id",
+            "worker_output_hash",
+            "admitted_evidence_ref",
+        ):
+            object.__setattr__(self, field_name, require_non_empty_text(getattr(self, field_name), field_name))
+        object.__setattr__(
+            self,
+            "receipt_evidence_refs",
+            _freeze_text_array(
+                require_non_empty_tuple(self.receipt_evidence_refs, "receipt_evidence_refs"),
+                "receipt_evidence_refs",
+            ),
+        )
+        object.__setattr__(self, "bound_at", require_datetime_text(self.bound_at, "bound_at"))
+        object.__setattr__(self, "metadata", freeze_value(self.metadata))

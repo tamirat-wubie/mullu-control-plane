@@ -38,6 +38,7 @@ from mcoi_runtime.contracts.organization_kernel import (
     PlanStepGateDecision,
     PlanStepGatePreview,
     PlanStepGateStatus,
+    PlanStepWorkerReceiptBinding,
 )
 from mcoi_runtime.contracts.terminal_closure import TerminalClosureDisposition
 from .invariants import RuntimeCoreInvariantError, ensure_non_empty_text, stable_identifier
@@ -113,6 +114,7 @@ class OrganizationKernelState:
     reconciliations: tuple[OrganizationEffectReconciliation, ...] = ()
     closures: tuple[OrganizationTerminalClosure, ...] = ()
     learning_bindings: tuple[LearningAdmissionBinding, ...] = ()
+    worker_receipt_bindings: tuple[PlanStepWorkerReceiptBinding, ...] = ()
     events: tuple[OrganizationCaseEvent, ...] = ()
     event_sequence: int = 0
 
@@ -133,6 +135,7 @@ class OrganizationKernelState:
             "reconciliations",
             "closures",
             "learning_bindings",
+            "worker_receipt_bindings",
             "events",
         ):
             value = getattr(self, field_name)
@@ -175,6 +178,7 @@ class OrganizationKernel:
         self._reconciliations: dict[str, OrganizationEffectReconciliation] = {}
         self._closures: dict[str, OrganizationTerminalClosure] = {}
         self._learning_bindings: dict[str, LearningAdmissionBinding] = {}
+        self._worker_receipt_bindings: dict[str, PlanStepWorkerReceiptBinding] = {}
         self._events: list[OrganizationCaseEvent] = []
         self._event_sequence = 0
 
@@ -466,6 +470,55 @@ class OrganizationKernel:
         self._emit(binding.case_id, "learning_admission_bound", {"binding_id": binding.binding_id})
         return binding
 
+    def bind_worker_receipt_evidence(
+        self,
+        binding: PlanStepWorkerReceiptBinding,
+    ) -> PlanStepWorkerReceiptBinding:
+        """Admit a bounded worker dispatch receipt as plan-step case evidence.
+
+        This consumes a receipt produced by the governed worker mesh; it does
+        not dispatch work or grant dispatch authority. The receipt must carry
+        its own evidence refs, must satisfy a requirement declared by the plan
+        step, and is never treated as a terminal closure.
+        """
+        if binding.binding_id in self._worker_receipt_bindings:
+            raise RuntimeCoreInvariantError("worker receipt binding already admitted")
+        plan = self._require_case_plan(binding.case_id)
+        step = self._require_plan_step(plan, binding.step_id)
+        if binding.requirement_id not in step.evidence_required:
+            raise RuntimeCoreInvariantError("worker receipt requirement outside plan step evidence")
+        if not binding.receipt_evidence_refs:
+            raise RuntimeCoreInvariantError("worker receipt requires evidence refs")
+        evidence = self.admit_case_evidence(
+            CaseEvidence(
+                evidence_ref=binding.admitted_evidence_ref,
+                case_id=binding.case_id,
+                requirement_id=binding.requirement_id,
+                submitted_by=f"worker_mesh:{binding.worker_lease_id}",
+                submitted_at=binding.bound_at,
+                metadata={
+                    "source": "worker_dispatch_receipt",
+                    "dispatch_request_id": binding.dispatch_request_id,
+                    "dispatch_receipt_id": binding.dispatch_receipt_id,
+                    "worker_output_hash": binding.worker_output_hash,
+                    "receipt_evidence_refs": binding.receipt_evidence_refs,
+                    "worker_receipt_is_terminal_closure": False,
+                },
+            )
+        )
+        self._worker_receipt_bindings[binding.binding_id] = binding
+        self._emit(
+            binding.case_id,
+            "plan_step_worker_receipt_bound",
+            {
+                "step_id": binding.step_id,
+                "requirement_id": binding.requirement_id,
+                "dispatch_receipt_id": binding.dispatch_receipt_id,
+                "evidence_ref": evidence.evidence_ref,
+            },
+        )
+        return binding
+
     def get_case(self, case_id: str) -> OrganizationCase | None:
         ensure_non_empty_text("case_id", case_id)
         return self._cases.get(case_id)
@@ -516,6 +569,9 @@ class OrganizationKernel:
             reconciliations=tuple(self._reconciliations[key] for key in sorted(self._reconciliations)),
             closures=tuple(self._closures[key] for key in sorted(self._closures)),
             learning_bindings=tuple(self._learning_bindings[key] for key in sorted(self._learning_bindings)),
+            worker_receipt_bindings=tuple(
+                self._worker_receipt_bindings[key] for key in sorted(self._worker_receipt_bindings)
+            ),
             events=tuple(self._events),
             event_sequence=self._event_sequence,
         )
@@ -552,6 +608,11 @@ class OrganizationKernel:
         )
         candidate._closures = candidate._keyed(state.closures, "closure_id", "terminal closure")
         candidate._learning_bindings = candidate._keyed(state.learning_bindings, "binding_id", "learning binding")
+        candidate._worker_receipt_bindings = candidate._keyed(
+            state.worker_receipt_bindings,
+            "binding_id",
+            "worker receipt binding",
+        )
         candidate._events = list(state.events)
         candidate._event_sequence = state.event_sequence
         candidate._validate_restored_state()
@@ -572,6 +633,7 @@ class OrganizationKernel:
         self._reconciliations = candidate._reconciliations
         self._closures = candidate._closures
         self._learning_bindings = candidate._learning_bindings
+        self._worker_receipt_bindings = candidate._worker_receipt_bindings
         self._events = candidate._events
         self._event_sequence = candidate._event_sequence
         return state
@@ -593,6 +655,7 @@ class OrganizationKernel:
                 self._reconciliations,
                 self._closures,
                 self._learning_bindings,
+                self._worker_receipt_bindings,
                 self._events,
             )
         )
@@ -690,6 +753,19 @@ class OrganizationKernel:
             closure = self._closures.get(binding.closure_id)
             if closure is None or closure.case_id != binding.case_id:
                 raise RuntimeCoreInvariantError("restored learning binding closure mismatch")
+        for receipt_binding in self._worker_receipt_bindings.values():
+            organization_case = self._cases.get(receipt_binding.case_id)
+            plan_id = self._plan_by_case.get(receipt_binding.case_id)
+            if organization_case is None or plan_id is None:
+                raise RuntimeCoreInvariantError("restored worker receipt binding case unavailable")
+            step = next(
+                (candidate for candidate in self._plans[plan_id].steps if candidate.step_id == receipt_binding.step_id),
+                None,
+            )
+            if step is None or receipt_binding.requirement_id not in step.evidence_required:
+                raise RuntimeCoreInvariantError("restored worker receipt binding step mismatch")
+            if receipt_binding.admitted_evidence_ref not in self._case_evidence:
+                raise RuntimeCoreInvariantError("restored worker receipt evidence unavailable")
         if self._event_sequence < len(self._events):
             raise RuntimeCoreInvariantError("restored event sequence is behind event count")
         for event in self._events:
