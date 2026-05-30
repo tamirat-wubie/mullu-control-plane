@@ -61,9 +61,12 @@ def list_api_keys(request: Request, tenant_id: str | None = None):
 
 
 @router.delete("/api/v1/api-keys/{key_id}")
-def revoke_api_key(key_id: str):
+def revoke_api_key(key_id: str, request: Request):
     """Revoke an API key."""
     deps.metrics.inc("requests_governed")
+    key = deps.api_key_mgr.get_key(key_id)
+    if key is not None:
+        enforce_tenant_scope(request, key.tenant_id)
     if not deps.api_key_mgr.revoke(key_id):
         raise HTTPException(404, detail=_data_error_detail("api key not found", "api_key_not_found"))
     return {"revoked": True, "key_id": key_id, "governed": True}

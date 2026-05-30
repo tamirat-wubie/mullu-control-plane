@@ -122,9 +122,12 @@ def list_connectors():
 
 
 @router.post("/api/v1/connectors/{connector_id}/disable")
-def disable_connector(connector_id: str):
+def disable_connector(connector_id: str, request: Request):
     """Disable a connector."""
     deps.metrics.inc("requests_governed")
+    state = deps.connector_framework.get_connector(connector_id)
+    if state is not None:
+        enforce_tenant_scope(request, state.definition.tenant_id)
     if not deps.connector_framework.disable(connector_id):
         raise HTTPException(404, detail={
             "error": "connector not found",
@@ -135,9 +138,12 @@ def disable_connector(connector_id: str):
 
 
 @router.post("/api/v1/connectors/{connector_id}/enable")
-def enable_connector(connector_id: str):
+def enable_connector(connector_id: str, request: Request):
     """Enable a disabled connector."""
     deps.metrics.inc("requests_governed")
+    state = deps.connector_framework.get_connector(connector_id)
+    if state is not None:
+        enforce_tenant_scope(request, state.definition.tenant_id)
     if not deps.connector_framework.enable(connector_id):
         raise HTTPException(404, detail={
             "error": "connector not found",
