@@ -358,6 +358,16 @@ class GatewayRouter:
         floor here — their gate is the isolation-worker receipt, not human
         approval.
 
+        Fail-safe on unrecognized severity: the *presence* of any
+        ``approval:*`` token is the capability author's statement that the
+        action needs approval. The tier is only the severity. If a token's
+        tier string does not parse (e.g. a future ``approval:critical_risk``
+        when RiskTier only knows low/medium/high), the requirement must not
+        silently evaporate — we floor to HIGH, the most conservative gate,
+        rather than fall through to keyword-only classification. Failing
+        open on the highest-severity-looking tokens would be the worst
+        possible direction.
+
         Defensive: any failure to resolve the passport returns None, so
         approval falls back to keyword classification alone — a lookup
         failure never blocks a request.
@@ -367,6 +377,7 @@ class GatewayRouter:
         except Exception:  # noqa: BLE001 — passport lookup must never break approval
             return None
         declared: list[RiskTier] = []
+        saw_unparsed_approval = False
         for requirement in getattr(passport, "requires", ()) or ():
             if not isinstance(requirement, str) or not requirement.startswith("approval:"):
                 continue
@@ -375,7 +386,12 @@ class GatewayRouter:
             try:
                 declared.append(RiskTier(tier_name))
             except ValueError:
-                continue
+                # An approval requirement WAS declared, but its severity is
+                # unknown to this build. Treat as the highest gate — never
+                # drop a declared approval requirement.
+                saw_unparsed_approval = True
+        if saw_unparsed_approval:
+            return _max_risk(RiskTier.HIGH, *declared)
         if not declared:
             return None
         return _max_risk(*declared)
