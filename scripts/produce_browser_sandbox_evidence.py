@@ -113,6 +113,8 @@ def produce_browser_sandbox_evidence(
             "image": resolved_runner.profile.image,
             "network": resolved_runner.profile.network,
             "read_only_rootfs": resolved_runner.profile.read_only_rootfs,
+            "drop_all_capabilities": resolved_runner.profile.drop_all_capabilities,
+            "seccomp_profile": resolved_runner.profile.seccomp_profile,
             "workspace_mount": resolved_runner.profile.workspace_mount,
             "timeout_seconds": resolved_runner.profile.timeout_seconds,
             "kill_process_tree": resolved_runner.profile.kill_process_tree,
