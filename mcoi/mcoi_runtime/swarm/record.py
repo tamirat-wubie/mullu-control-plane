@@ -75,20 +75,20 @@ class SwarmAuditRecord:
         """Rehydrate an audit record from JSON-compatible data."""
 
         return cls(
-            run_id=str(value["run_id"]),
-            goal_id=str(value["goal_id"]),
-            tenant_id=str(value["tenant_id"]),
-            decision_verdict=str(value["decision_verdict"]),
-            decision_reason=str(value["decision_reason"]),
-            verification_passed=bool(value["verification_passed"]),
-            verification_reason=str(value["verification_reason"]),
-            mil_verification_passed=bool(value["mil_verification_passed"]),
-            mil_verification_reason=str(value["mil_verification_reason"]),
-            closure_status=str(value["closure_status"]),
-            closure_certificate_id=str(value["closure_certificate_id"]),
-            proof_stamp=str(value["proof_stamp"]),
-            payload=dict(value["payload"]),
-            created_at=str(value["created_at"]),
+            run_id=_required_text(value, "run_id"),
+            goal_id=_required_text(value, "goal_id"),
+            tenant_id=_required_text(value, "tenant_id"),
+            decision_verdict=_required_text(value, "decision_verdict"),
+            decision_reason=_required_text(value, "decision_reason"),
+            verification_passed=_required_bool(value, "verification_passed"),
+            verification_reason=_required_text(value, "verification_reason"),
+            mil_verification_passed=_required_bool(value, "mil_verification_passed"),
+            mil_verification_reason=_required_text(value, "mil_verification_reason"),
+            closure_status=_required_text(value, "closure_status"),
+            closure_certificate_id=_required_text(value, "closure_certificate_id", allow_empty=True),
+            proof_stamp=_required_text(value, "proof_stamp", allow_empty=True),
+            payload=_required_mapping(value, "payload"),
+            created_at=_required_text(value, "created_at"),
         )
 
 
@@ -173,3 +173,33 @@ def _json_value(value: Any) -> Any:
             for field_name in value.__dataclass_fields__
         }
     return value
+
+
+def _required_text(value: Mapping[str, Any], field_name: str, *, allow_empty: bool = False) -> str:
+    """Return a required persisted text field without type coercion."""
+
+    raw_value = value[field_name]
+    if not isinstance(raw_value, str):
+        raise SwarmInvariantViolation(f"{field_name} must be a string")
+    text = raw_value.strip()
+    if not allow_empty and not text:
+        raise SwarmInvariantViolation(f"{field_name} must be non-empty")
+    return text
+
+
+def _required_bool(value: Mapping[str, Any], field_name: str) -> bool:
+    """Return a required persisted boolean field without truthiness coercion."""
+
+    raw_value = value[field_name]
+    if not isinstance(raw_value, bool):
+        raise SwarmInvariantViolation(f"{field_name} must be boolean")
+    return raw_value
+
+
+def _required_mapping(value: Mapping[str, Any], field_name: str) -> Mapping[str, Any]:
+    """Return a required persisted object field without sequence coercion."""
+
+    raw_value = value[field_name]
+    if not isinstance(raw_value, Mapping):
+        raise SwarmInvariantViolation(f"{field_name} must be an object")
+    return dict(raw_value)

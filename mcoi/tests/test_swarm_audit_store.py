@@ -10,6 +10,7 @@ closure, and duplicate run ids are rejected.
 
 from __future__ import annotations
 
+import json
 from decimal import Decimal
 
 import pytest
@@ -90,3 +91,66 @@ def test_audit_record_preserves_escalated_not_closed_state(tmp_path) -> None:
     assert loaded.proof_stamp == ""
     assert loaded.mil_verification_passed is False
     assert loaded.decision_verdict == "escalate"
+
+
+def test_audit_store_rejects_non_text_persisted_symbolic_fields(tmp_path) -> None:
+    result = run_invoice_swarm(_request())
+    record = invoice_result_to_audit_record(
+        run_id="run_invoice_corrupt_text",
+        tenant_id="tenant_a",
+        result=result,
+        created_at="2026-05-05T12:00:00Z",
+    ).to_dict()
+    record["run_id"] = 1001
+    store_path = tmp_path / "swarm-runs.jsonl"
+    store_path.write_text(json.dumps(record, sort_keys=True) + "\n", encoding="utf-8")
+    store = SwarmAuditStore(store_path)
+
+    with pytest.raises(SwarmInvariantViolation, match="invalid audit record at line 1"):
+        store.list_records()
+    with pytest.raises(SwarmInvariantViolation, match="invalid audit record at line 1"):
+        store.get("1001")
+    with pytest.raises(SwarmInvariantViolation, match="invalid audit record at line 1"):
+        _ = store.count
+
+
+def test_audit_store_rejects_non_boolean_persisted_proof_flags(tmp_path) -> None:
+    result = run_invoice_swarm(_request())
+    record = invoice_result_to_audit_record(
+        run_id="run_invoice_corrupt_bool",
+        tenant_id="tenant_a",
+        result=result,
+        created_at="2026-05-05T12:00:00Z",
+    ).to_dict()
+    record["verification_passed"] = "false"
+    store_path = tmp_path / "swarm-runs.jsonl"
+    store_path.write_text(json.dumps(record, sort_keys=True) + "\n", encoding="utf-8")
+    store = SwarmAuditStore(store_path)
+
+    with pytest.raises(SwarmInvariantViolation, match="invalid audit record at line 1"):
+        store.list_records()
+    with pytest.raises(SwarmInvariantViolation, match="invalid audit record at line 1"):
+        store.get("run_invoice_corrupt_bool")
+    with pytest.raises(SwarmInvariantViolation, match="invalid audit record at line 1"):
+        _ = store.count
+
+
+def test_audit_store_rejects_non_object_persisted_payload(tmp_path) -> None:
+    result = run_invoice_swarm(_request())
+    record = invoice_result_to_audit_record(
+        run_id="run_invoice_corrupt_payload",
+        tenant_id="tenant_a",
+        result=result,
+        created_at="2026-05-05T12:00:00Z",
+    ).to_dict()
+    record["payload"] = ["not", "an", "object"]
+    store_path = tmp_path / "swarm-runs.jsonl"
+    store_path.write_text(json.dumps(record, sort_keys=True) + "\n", encoding="utf-8")
+    store = SwarmAuditStore(store_path)
+
+    with pytest.raises(SwarmInvariantViolation, match="invalid audit record at line 1"):
+        store.list_records()
+    with pytest.raises(SwarmInvariantViolation, match="invalid audit record at line 1"):
+        store.get("run_invoice_corrupt_payload")
+    with pytest.raises(SwarmInvariantViolation, match="invalid audit record at line 1"):
+        _ = store.count
