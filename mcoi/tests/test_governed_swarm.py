@@ -216,6 +216,37 @@ def test_task_decomposition_rejects_loose_spec_field_types() -> None:
             decomposer.decompose(goal)
 
 
+def test_swarm_goal_rejects_malformed_task_spec_shape() -> None:
+    base_spec = {
+        "required_role": "document_analysis",
+        "expected_output": "invoice_fields",
+    }
+
+    with pytest.raises(SwarmInvariantViolation, match="task_specs must be a tuple of task spec mappings"):
+        SwarmGoal(
+            goal_id="goal_list_specs",
+            tenant_id="tenant_a",
+            description="Malformed task spec container",
+            task_specs=[base_spec],
+        )
+
+    with pytest.raises(SwarmInvariantViolation, match="task_specs\\[0\\] must be a mapping"):
+        SwarmGoal(
+            goal_id="goal_string_spec",
+            tenant_id="tenant_a",
+            description="Malformed task spec item",
+            task_specs=("not_a_mapping",),
+        )
+
+    with pytest.raises(SwarmInvariantViolation, match="task_specs\\[0\\] must be a mapping"):
+        SwarmGoal(
+            goal_id="goal_sequence_spec",
+            tenant_id="tenant_a",
+            description="Malformed task spec item",
+            task_specs=(("required_role", "document_analysis"),),
+        )
+
+
 def test_task_decomposition_rejects_unsupported_fields_and_invalid_risk() -> None:
     decomposer = TaskDecomposer()
     base_spec = {
