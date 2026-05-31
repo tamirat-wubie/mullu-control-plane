@@ -15,6 +15,8 @@ import json
 import tomllib
 from pathlib import Path
 
+import pytest
+
 from mcoi_runtime.core.invariants import RuntimeCoreInvariantError
 from mcoi_runtime.core.simple_cli import guarded_main
 from mcoi_runtime.core.simple_platform import (
@@ -188,6 +190,55 @@ def test_simple_platform_onboarding_guide_rejects_execution_authority() -> None:
         assert "simple onboarding guide cannot allow execution" in str(exc)
     else:
         raise AssertionError("onboarding guide must reject execution authority")
+
+
+def test_simple_platform_rejects_loose_action_target() -> None:
+    with pytest.raises(RuntimeCoreInvariantError, match="target must be text"):
+        SimplePlatform().check_action(
+            {
+                "goal": "Review docs",
+                "action": "view",
+                "target": 7,
+                "allowed_area": "docs/**",
+                "actor_id": "simple-test",
+            }
+        )
+
+
+def test_simple_platform_rejects_loose_action_actor() -> None:
+    with pytest.raises(RuntimeCoreInvariantError, match="actor_id must be text"):
+        SimplePlatform().check_action(
+            {
+                "goal": "Review docs",
+                "action": "view",
+                "target": "docs/README.md",
+                "allowed_area": "docs/**",
+                "actor_id": 7,
+            }
+        )
+
+
+def test_simple_platform_rejects_loose_task_goal() -> None:
+    with pytest.raises(RuntimeCoreInvariantError, match="goal must be text"):
+        SimplePlatform().check_task(
+            {
+                "task": "review_docs",
+                "target": "docs/README.md",
+                "goal": 7,
+                "actor_id": "simple-task-test",
+            }
+        )
+
+
+def test_simple_platform_rejects_loose_workflow_actor() -> None:
+    with pytest.raises(RuntimeCoreInvariantError, match="actor_id must be text"):
+        SimplePlatform().check_workflow(
+            {
+                "workflow": "docs_update",
+                "target": "docs/README.md",
+                "actor_id": 7,
+            }
+        )
 
 
 def test_simple_cli_outputs_readable_ready_result(capsys) -> None:
