@@ -2,6 +2,13 @@
 
 Purpose: package the governed swarm work fabric and simple Mullusi platform facade for control-plane integration.
 
+Workspace boundary: this root package is a compact support/runtime surface, not
+the canonical Mullusi control-plane platform. Full API server wiring, router
+orchestration, nested-mind integration, and release authority live in the
+canonical control-plane repository. Do not mirror canonical control-plane files
+back into this package unless a governed import plan names the exact module
+contract and rollback path.
+
 Governance scope: this package exposes symbolic intelligence workers and plain-language action checks as bounded runtime components. It does not grant universal authority, direct side-effect execution, or memory admission outside governed runtime contracts.
 
 Dependencies: Python 3.12+, setuptools build backend, optional FastAPI gateway adapter.
