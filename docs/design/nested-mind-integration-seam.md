@@ -135,6 +135,8 @@ fields. The report command is read-only and summarizes typed evidence counts,
 verified record identifiers, readiness blockers, and the next operator action.
 It exits with `0` only when the readiness validator reports `ready`; blocked
 reports exit with `1` so automation cannot silently advance P3.
+Malformed or corrupted evidence stores raise a typed persistence error and do
+not emit a normal blocked readiness JSON object.
 
 ## What changes after this lands?
 
