@@ -203,8 +203,17 @@ def create_note_memory_fastapi_router(runtime: NoteMemoryRuntime, prefix: str = 
         return adapter.rebuild_index()
 
     @router.get("/dashboard")
-    def dashboard_snapshot(limit: int = 25, now: str | None = None):
-        return adapter.dashboard_snapshot({"limit": limit, "now": now} if now else {"limit": limit})
+    def dashboard_snapshot(
+        limit: int = 25,
+        now: str | None = None,
+        retrieval_receipt_ref: str | None = None,
+    ):
+        request_body: dict[str, Any] = {"limit": limit}
+        if now:
+            request_body["now"] = now
+        if retrieval_receipt_ref:
+            request_body["retrieval_receipt_ref"] = retrieval_receipt_ref
+        return adapter.dashboard_snapshot(request_body)
 
     @router.get("/events")
     def list_events():

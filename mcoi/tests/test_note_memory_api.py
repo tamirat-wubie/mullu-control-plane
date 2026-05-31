@@ -48,6 +48,12 @@ def test_runtime_capture_retrieve_and_list_events_preserve_governed_envelopes(tm
     ).to_dict()
     listed = runtime.list_events().to_dict()
     snapshot = runtime.dashboard_snapshot({"limit": 5, "now": "2026-05-28T00:00:00+00:00"}).to_dict()
+    filtered_snapshot = runtime.dashboard_snapshot(
+        {
+            "limit": 5,
+            "retrieval_receipt_ref": retrieved["payload"]["receipt"]["receipt_id"],
+        }
+    ).to_dict()
 
     assert captured["governed"] is True
     assert captured["ok"] is True
@@ -69,6 +75,9 @@ def test_runtime_capture_retrieve_and_list_events_preserve_governed_envelopes(tm
     assert snapshot["payload"]["summary"]["retrieval_influence_count"] == 1
     assert snapshot["payload"]["retrieval_influence"][0]["receipt_id"] == retrieved["payload"]["receipt"]["receipt_id"]
     assert snapshot["payload"]["retrieval_influence"][0]["citing_note_id"] == decision["payload"]["event"]["note_id"]
+    assert filtered_snapshot["payload"]["filters"]["retrieval_receipt_ref"] == retrieved["payload"]["receipt"]["receipt_id"]
+    assert filtered_snapshot["payload"]["summary"]["retrieval_influence_count"] == 1
+    assert filtered_snapshot["payload"]["retrieval_influence"][0]["citing_note_id"] == decision["payload"]["event"]["note_id"]
 
 
 def test_runtime_rejects_invalid_capture_without_persisting(tmp_path) -> None:
@@ -103,6 +112,17 @@ def test_runtime_rejects_malformed_retrieval_receipt_refs(tmp_path) -> None:
     assert rejected["status"] == "rejected"
     assert "retrieval_receipt_ref must reference a note retrieval receipt" in rejected["error"]
     assert listed["payload"]["count"] == 0
+
+
+def test_runtime_rejects_malformed_retrieval_influence_filter(tmp_path) -> None:
+    runtime = NoteMemoryRuntime.from_path(tmp_path / "notes")
+
+    rejected = runtime.dashboard_snapshot({"retrieval_receipt_ref": "manual-note-ref"}).to_dict()
+
+    assert rejected["governed"] is True
+    assert rejected["ok"] is False
+    assert rejected["status"] == "rejected"
+    assert "retrieval_receipt_ref must reference a note retrieval receipt" in rejected["error"]
 
 
 def test_runtime_rejected_delta_expiry_and_rebuild_emit_receipts(tmp_path) -> None:

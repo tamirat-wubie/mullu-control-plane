@@ -175,7 +175,11 @@ class NoteMemoryRuntime:
             body = request_body or {}
             limit = int(body.get("limit", 25))
             now = str(body["now"]) if body.get("now") else None
-            return _ok("dashboard_snapshot", self.mesh.dashboard_snapshot(now=now, limit=limit))
+            retrieval_receipt_ref = str(body["retrieval_receipt_ref"]) if body.get("retrieval_receipt_ref") else None
+            return _ok(
+                "dashboard_snapshot",
+                self.mesh.dashboard_snapshot(now=now, limit=limit, retrieval_receipt_ref=retrieval_receipt_ref),
+            )
         except (OSError, KeyError, TypeError, ValueError, RuntimeCoreInvariantError) as exc:
             return _rejected(exc)
 
