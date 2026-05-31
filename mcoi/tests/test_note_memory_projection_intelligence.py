@@ -49,7 +49,12 @@ from mcoi_runtime.core.operational_dashboard_intelligence import (
     build_operational_dashboard_state,
 )
 from mcoi_runtime.core.outcome_learning_bridge import build_outcome_learning_record
-from mcoi_runtime.core.simple_platform import SimpleActionRequest, SimplePlatform, SimpleWorkflowRequest
+from mcoi_runtime.core.simple_platform import (
+    SimpleActionRequest,
+    SimpleOnboardingStep,
+    SimplePlatform,
+    SimpleWorkflowRequest,
+)
 
 
 class MutableClock:
@@ -560,6 +565,24 @@ def test_dashboard_simple_start_guide_rejects_execution_authority() -> None:
             recommended_commands=("mullu workflows",),
             outcomes=("Ready",),
             execution_allowed=True,
+        )
+
+
+def test_simple_onboarding_step_rejects_blank_and_untrimmed_text() -> None:
+    with pytest.raises(RuntimeCoreInvariantError, match="command must be non-empty text"):
+        SimpleOnboardingStep(
+            step="choose",
+            title="Choose a workflow",
+            command="   ",
+            purpose="Show workflows.",
+        )
+
+    with pytest.raises(RuntimeCoreInvariantError, match="purpose must be trimmed text"):
+        SimpleOnboardingStep(
+            step="choose",
+            title="Choose a workflow",
+            command="mullu workflows",
+            purpose=" Show workflows. ",
         )
 
 
