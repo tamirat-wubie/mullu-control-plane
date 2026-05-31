@@ -173,6 +173,62 @@ def test_plan_rejects_payload_hash_mismatch() -> None:
         NestedMindObservationProposalPlan(**{**plan.to_dict(), "payload_hash": "wrong-hash"})
 
 
+def test_plan_rejects_non_string_payload_metadata_hashes() -> None:
+    evidence = _evidence()
+    plan = build_observation_proposal_plan(
+        evidence,
+        plan_id="plan-1",
+        observation_id="obs-1",
+        observation={"kind": "note"},
+        observed_at="2026-05-30T00:00:02+00:00",
+        created_at="2026-05-30T00:00:03+00:00",
+        bridge_enabled=True,
+    )
+    payload = plan.to_dict()["proposal_payload"]
+    payload["metadata"]["mullu_receipt_hash"] = 12345
+
+    with pytest.raises(ValueError, match="mullu_receipt_hash must be a non-empty string"):
+        NestedMindObservationProposalPlan(
+            **{**plan.to_dict(), "proposal_payload": payload, "payload_hash": stable_json_hash(payload)}
+        )
+
+
+def test_plan_rejects_missing_payload_metadata_hashes() -> None:
+    evidence = _evidence()
+    plan = build_observation_proposal_plan(
+        evidence,
+        plan_id="plan-1",
+        observation_id="obs-1",
+        observation={"kind": "note"},
+        observed_at="2026-05-30T00:00:02+00:00",
+        created_at="2026-05-30T00:00:03+00:00",
+        bridge_enabled=True,
+    )
+    payload = plan.to_dict()["proposal_payload"]
+    del payload["metadata"]["authority_receipt_hash"]
+
+    with pytest.raises(ValueError, match="authority_receipt_hash must be a non-empty string"):
+        NestedMindObservationProposalPlan(
+            **{**plan.to_dict(), "proposal_payload": payload, "payload_hash": stable_json_hash(payload)}
+        )
+
+
+def test_plan_rejects_non_string_blockers() -> None:
+    evidence = _evidence()
+    plan = build_observation_proposal_plan(
+        evidence,
+        plan_id="plan-1",
+        observation_id="obs-1",
+        observation={"kind": "note"},
+        observed_at="2026-05-30T00:00:02+00:00",
+        created_at="2026-05-30T00:00:03+00:00",
+        bridge_enabled=False,
+    )
+
+    with pytest.raises(ValueError, match="blockers"):
+        NestedMindObservationProposalPlan(**{**plan.to_dict(), "blockers": [12345]})
+
+
 def test_observation_id_cannot_change_route_shape() -> None:
     evidence = _evidence()
 
