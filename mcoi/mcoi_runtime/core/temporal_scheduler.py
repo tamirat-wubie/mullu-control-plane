@@ -58,6 +58,7 @@ def _resolve_relative_phrase(now: datetime, amount: int, unit: str) -> tuple[str
         "minuta",
         "minuty",
         "minutu",
+        "perc",
     }
     hour_units = {
         "hour",
@@ -77,6 +78,8 @@ def _resolve_relative_phrase(now: datetime, amount: int, unit: str) -> tuple[str
         "hodinu",
         "hodiny",
         "hodin",
+        "ora",
+        "ore",
     }
     day_units = {
         "day",
@@ -92,6 +95,9 @@ def _resolve_relative_phrase(now: datetime, amount: int, unit: str) -> tuple[str
         "dni",
         "den",
         "dny",
+        "nap",
+        "zi",
+        "zile",
     }
     if unit in minute_units:
         delta = timedelta(minutes=amount)
@@ -208,6 +214,30 @@ def _slovak_weekdays() -> dict[str, int]:
     return {"pondelok": 0, "utorok": 1, "streda": 2, "stvrtok": 3, "piatok": 4, "sobota": 5, "nedela": 6}
 
 
+def _hungarian_weekdays() -> dict[str, int]:
+    return {
+        "hetfo": 0,
+        "kedd": 1,
+        "szerda": 2,
+        "csutortok": 3,
+        "pentek": 4,
+        "szombat": 5,
+        "vasarnap": 6,
+    }
+
+
+def _romanian_weekdays() -> dict[str, int]:
+    return {
+        "luni": 0,
+        "marti": 1,
+        "miercuri": 2,
+        "joi": 3,
+        "vineri": 4,
+        "sambata": 5,
+        "duminica": 6,
+    }
+
+
 def _resolve_bounded_temporal_phrase(
     phrase: str,
     *,
@@ -236,6 +266,10 @@ def _resolve_bounded_temporal_phrase(
         return _resolve_czech_temporal_phrase(normalized, now_dt, original_timezone)
     if locale_key in {"sk", "sk-sk"}:
         return _resolve_slovak_temporal_phrase(normalized, now_dt, original_timezone)
+    if locale_key in {"hu", "hu-hu"}:
+        return _resolve_hungarian_temporal_phrase(normalized, now_dt, original_timezone)
+    if locale_key in {"ro", "ro-ro", "ro-md"}:
+        return _resolve_romanian_temporal_phrase(normalized, now_dt, original_timezone)
     return "unsupported", "temporal_phrase_locale_not_supported", ""
 
 
@@ -598,6 +632,97 @@ def _resolve_slovak_temporal_phrase(
     if normalized in {"dnes", "zajtra", "dnes vecer", "neskor", "coskoro", "buduci tyzden", "buduci mesiac", "buduci rok"}:
         return "ambiguous", "temporal_phrase_ambiguous", ""
     if re.fullmatch(r"buduci (pondelok|utorok|streda|stvrtok|piatok|sobota|nedela)", normalized):
+        return "ambiguous", "temporal_phrase_ambiguous", ""
+    return "unsupported", "temporal_phrase_unsupported", ""
+
+
+def _resolve_hungarian_temporal_phrase(
+    normalized: str,
+    now: datetime,
+    original_timezone: str,
+) -> tuple[str, str, str]:
+    relative = re.fullmatch(r"([1-9][0-9]*) (perc|ora|nap) mulva", normalized)
+    if relative is not None:
+        resolved, reason = _resolve_relative_phrase(now, int(relative.group(1)), relative.group(2))
+        return ("exact" if resolved else "unsupported"), reason, resolved
+    wall_time = re.fullmatch(r"(ma|holnap) ([0-9]{1,2}):([0-9]{2}) ?(utc|z|local)", normalized)
+    if wall_time is not None:
+        resolved, reason = _resolve_relative_wall_time(
+            now,
+            original_timezone=original_timezone,
+            day_offset=1 if wall_time.group(1) == "holnap" else 0,
+            hour=int(wall_time.group(2)),
+            minute=int(wall_time.group(3)),
+            mode=wall_time.group(4),
+        )
+        return ("exact" if resolved else "unsupported"), reason, resolved
+    next_weekday = re.fullmatch(
+        r"kovetkezo (hetfo|kedd|szerda|csutortok|pentek|szombat|vasarnap) ([0-9]{1,2}):([0-9]{2}) ?(utc|z|local)",
+        normalized,
+    )
+    if next_weekday is not None:
+        resolved, reason = _resolve_next_weekday_wall_time(
+            now,
+            original_timezone=original_timezone,
+            weekday=_hungarian_weekdays()[next_weekday.group(1)],
+            hour=int(next_weekday.group(2)),
+            minute=int(next_weekday.group(3)),
+            mode=next_weekday.group(4),
+        )
+        return ("exact" if resolved else "unsupported"), reason, resolved
+    if normalized in {"ma", "holnap", "ma este", "kesobb", "hamarosan", "jovo het", "jovo honap", "jovo ev"}:
+        return "ambiguous", "temporal_phrase_ambiguous", ""
+    if re.fullmatch(r"kovetkezo (hetfo|kedd|szerda|csutortok|pentek|szombat|vasarnap)", normalized):
+        return "ambiguous", "temporal_phrase_ambiguous", ""
+    return "unsupported", "temporal_phrase_unsupported", ""
+
+
+def _resolve_romanian_temporal_phrase(
+    normalized: str,
+    now: datetime,
+    original_timezone: str,
+) -> tuple[str, str, str]:
+    relative = re.fullmatch(r"peste ([1-9][0-9]*) (minut|minute|ora|ore|zi|zile)", normalized)
+    if relative is not None:
+        resolved, reason = _resolve_relative_phrase(now, int(relative.group(1)), relative.group(2))
+        return ("exact" if resolved else "unsupported"), reason, resolved
+    wall_time = re.fullmatch(r"(azi|maine) la ([0-9]{1,2}):([0-9]{2}) ?(utc|z|local)", normalized)
+    if wall_time is not None:
+        resolved, reason = _resolve_relative_wall_time(
+            now,
+            original_timezone=original_timezone,
+            day_offset=1 if wall_time.group(1) == "maine" else 0,
+            hour=int(wall_time.group(2)),
+            minute=int(wall_time.group(3)),
+            mode=wall_time.group(4),
+        )
+        return ("exact" if resolved else "unsupported"), reason, resolved
+    next_weekday = re.fullmatch(
+        r"urmatoarea (luni|marti|miercuri|joi|vineri|sambata|duminica) la ([0-9]{1,2}):([0-9]{2}) ?(utc|z|local)",
+        normalized,
+    )
+    if next_weekday is not None:
+        resolved, reason = _resolve_next_weekday_wall_time(
+            now,
+            original_timezone=original_timezone,
+            weekday=_romanian_weekdays()[next_weekday.group(1)],
+            hour=int(next_weekday.group(2)),
+            minute=int(next_weekday.group(3)),
+            mode=next_weekday.group(4),
+        )
+        return ("exact" if resolved else "unsupported"), reason, resolved
+    if normalized in {
+        "azi",
+        "maine",
+        "diseara",
+        "mai tarziu",
+        "curand",
+        "saptamana viitoare",
+        "luna viitoare",
+        "anul viitor",
+    }:
+        return "ambiguous", "temporal_phrase_ambiguous", ""
+    if re.fullmatch(r"urmatoarea (luni|marti|miercuri|joi|vineri|sambata|duminica)", normalized):
         return "ambiguous", "temporal_phrase_ambiguous", ""
     return "unsupported", "temporal_phrase_unsupported", ""
 
