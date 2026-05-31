@@ -48,6 +48,10 @@ mullu check --goal "Notify support" --action send --target support@mullusi.com -
   - `POST /api/v1/simple/tasks/check`
   - `POST /api/v1/simple/workflows/check`
 - `build_operational_dashboard_state(..., simple_action_checks=...)` projects checks into `simple_action_summaries`, `simple_ready_action_refs`, `simple_review_action_refs`, and `simple_blocked_action_refs` for dashboard rendering without granting execution authority.
+- `build_operational_dashboard_state(..., simple_workflow_plans=...,
+  simple_start_guide=...)` projects simple workflows and the start guide into
+  `simple_workflow_summaries` and `simple_start_guide` for dashboard onboarding
+  without granting execution authority.
 
 ## Command Surface
 

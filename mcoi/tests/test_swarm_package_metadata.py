@@ -65,3 +65,5 @@ def test_package_readme_documents_simple_platform_surface() -> None:
     assert "POST /api/v1/simple/workflows/check" in text
     assert "mullu workflow docs-update" in text
     assert "simple_action_summaries" in text
+    assert "simple_workflow_summaries" in text
+    assert "simple_start_guide" in text
