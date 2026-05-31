@@ -7,7 +7,6 @@ Dependencies: fastapi, production_surface, llm_bootstrap, streaming, certificati
 Run: uvicorn mcoi_runtime.app.server:app --host 0.0.0.0 --port 8000
 """
 from __future__ import annotations
-from pathlib import Path
 from typing import Any
 
 from mcoi_runtime.core.safe_arithmetic import evaluate_expression
