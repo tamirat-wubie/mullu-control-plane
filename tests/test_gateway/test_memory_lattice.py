@@ -29,10 +29,12 @@ from gateway.memory_lattice import (
     build_p3_memory_topology_map,
     build_p3_memory_topology_read_model,
 )
+from scripts.validate_schemas import _load_schema, _validate_schema_instance
 
 
 ROOT = Path(__file__).resolve().parents[2]
 SCHEMA_PATH = ROOT / "schemas" / "memory_lattice.schema.json"
+P3_TOPOLOGY_READ_MODEL_SCHEMA_PATH = ROOT / "schemas" / "p3_memory_topology_read_model.schema.json"
 NOW = "2026-05-04T16:00:00Z"
 
 
@@ -415,6 +417,7 @@ def test_p3_topology_read_model_projects_bounded_operator_surface() -> None:
     assert read_model["edge_kind_counts"]["supported_by"] == 4
     assert all("metadata" not in node for node in read_model["nodes"])
     assert all("metadata" not in edge for edge in read_model["edges"])
+    assert _validate_schema_instance(_load_schema(P3_TOPOLOGY_READ_MODEL_SCHEMA_PATH), read_model) == []
 
 
 def test_blocked_p3_topology_read_model_exposes_blockers_without_graph_surface() -> None:
@@ -435,6 +438,7 @@ def test_blocked_p3_topology_read_model_exposes_blockers_without_graph_surface()
     assert read_model["edges"] == []
     assert read_model["read_model_only"] is True
     assert read_model["execution_authority_granted"] is False
+    assert _validate_schema_instance(_load_schema(P3_TOPOLOGY_READ_MODEL_SCHEMA_PATH), read_model) == []
 
 
 def test_p3_topology_read_model_rejects_invalid_limits_and_clamps_large_pages() -> None:

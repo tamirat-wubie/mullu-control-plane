@@ -1,0 +1,142 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:p3-memory-topology-read-model:1",
+  "title": "P3 Memory Topology Read Model",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "surface",
+    "read_model_only",
+    "operator_projection",
+    "raw_topology_metadata_exposed",
+    "raw_memory_metadata_exposed",
+    "live_write_enabled",
+    "execution_authority_granted",
+    "topology_id",
+    "contract_id",
+    "status",
+    "mind_id",
+    "topology_hash",
+    "blocked_reasons",
+    "node_count",
+    "edge_count",
+    "node_kind_counts",
+    "edge_kind_counts",
+    "node_page",
+    "edge_page",
+    "nodes",
+    "edges"
+  ],
+  "properties": {
+    "surface": {"type": "string", "const": "p3_memory_topology"},
+    "read_model_only": {"type": "boolean", "const": true},
+    "operator_projection": {"type": "boolean", "const": true},
+    "raw_topology_metadata_exposed": {"type": "boolean", "const": false},
+    "raw_memory_metadata_exposed": {"type": "boolean", "const": false},
+    "live_write_enabled": {"type": "boolean", "const": false},
+    "execution_authority_granted": {"type": "boolean", "const": false},
+    "topology_id": {"type": "string", "minLength": 1},
+    "contract_id": {"type": "string", "minLength": 1},
+    "status": {"type": "string", "enum": ["blocked", "ready"]},
+    "mind_id": {"type": "string"},
+    "topology_hash": {"type": "string", "minLength": 1},
+    "blocked_reasons": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1}
+    },
+    "node_count": {"type": "integer", "minimum": 0},
+    "edge_count": {"type": "integer", "minimum": 0},
+    "node_kind_counts": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "nested_mind": {"type": "integer", "minimum": 0},
+        "memory": {"type": "integer", "minimum": 0},
+        "world_ref": {"type": "integer", "minimum": 0},
+        "evidence": {"type": "integer", "minimum": 0}
+      }
+    },
+    "edge_kind_counts": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "contains": {"type": "integer", "minimum": 0},
+        "admits": {"type": "integer", "minimum": 0},
+        "observes": {"type": "integer", "minimum": 0},
+        "supported_by": {"type": "integer", "minimum": 0}
+      }
+    },
+    "node_page": {"$ref": "#/$defs/page"},
+    "edge_page": {"$ref": "#/$defs/page"},
+    "nodes": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/node"}
+    },
+    "edges": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/edge"}
+    }
+  },
+  "$defs": {
+    "page": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["limit", "returned", "omitted"],
+      "properties": {
+        "limit": {"type": "integer", "minimum": 0, "maximum": 250},
+        "returned": {"type": "integer", "minimum": 0},
+        "omitted": {"type": "integer", "minimum": 0}
+      }
+    },
+    "node": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["node_id", "node_kind", "ref_id"],
+      "properties": {
+        "node_id": {"type": "string", "minLength": 1},
+        "node_kind": {"type": "string", "enum": ["nested_mind", "memory", "world_ref", "evidence"]},
+        "ref_id": {"type": "string", "minLength": 1}
+      }
+    },
+    "edge": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["edge_id", "from_node_id", "to_node_id", "edge_kind", "evidence_refs"],
+      "properties": {
+        "edge_id": {"type": "string", "minLength": 1},
+        "from_node_id": {"type": "string", "minLength": 1},
+        "to_node_id": {"type": "string", "minLength": 1},
+        "edge_kind": {"type": "string", "enum": ["contains", "admits", "observes", "supported_by"]},
+        "evidence_refs": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1}
+        }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"status": {"const": "ready"}}, "required": ["status"]},
+      "then": {
+        "properties": {
+          "blocked_reasons": {"maxItems": 0},
+          "mind_id": {"minLength": 1},
+          "node_count": {"minimum": 1},
+          "edge_count": {"minimum": 1}
+        }
+      }
+    },
+    {
+      "if": {"properties": {"status": {"const": "blocked"}}, "required": ["status"]},
+      "then": {
+        "properties": {
+          "blocked_reasons": {"minItems": 1},
+          "node_count": {"const": 0},
+          "edge_count": {"const": 0},
+          "nodes": {"maxItems": 0},
+          "edges": {"maxItems": 0}
+        }
+      }
+    }
+  ]
+}
