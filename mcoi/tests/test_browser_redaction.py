@@ -22,6 +22,7 @@ from mcoi_runtime.core.browser_redaction import (
     DEFAULT_SENSITIVITY_POLICY,
     SensitivityPolicy,
     is_sensitive_selector,
+    redact_metadata,
     redact_page,
     redact_selector_match,
     scrub_text,
@@ -62,7 +63,7 @@ def _make_engine(*, redaction_policy=DEFAULT_SENSITIVITY_POLICY):
             SimulatedElement("css", "#otp-code", "input", "", "778211"),
             SimulatedElement("css", "#submit", "button", "Login"),
         ],
-        text_content="Card on file 4111 1111 1111 1111 — SSN 123-45-6789.",
+        text_content="Card on file 4111 1111 1111 1111 - SSN 123-45-6789.",
     ))
     engine = BrowserEngine(
         clock=lambda: T0, backend=backend, redaction_policy=redaction_policy,
@@ -99,6 +100,12 @@ class TestSensitiveSelector:
 
     def test_description_triggers_match(self):
         assert is_sensitive_selector("css", "#field-3", "Credit Card Number")
+
+    @pytest.mark.parametrize("value", [
+        "Authorization", "session_cookie", "user-credential", "bearer_token",
+    ])
+    def test_sensitive_metadata_keys(self, value):
+        assert is_sensitive_selector("metadata", value)
 
     def test_empty_selector_not_sensitive(self):
         assert not is_sensitive_selector(None, None, None)
@@ -179,6 +186,48 @@ class TestRedactPage:
         by_sel = {e.selector.selector_value: e for e in redacted.elements}
         assert by_sel["#password"].element_value == MASK
         assert by_sel["#name"].element_value == "bob"
+
+    def test_page_metadata_redacted_in_serialized_observation(self):
+        page = PageDescriptor(
+            url="https://x.com", title="T",
+            metadata={
+                "auth_token": "raw-token",
+                "headers": {"Authorization": "Bearer raw-secret"},
+                "cookies": ["session-secret"],
+                "profile": {"name": "alice"},
+            },
+        )
+        metadata = redact_page(page).to_dict()["metadata"]
+        assert metadata["auth_token"] == MASK
+        assert metadata["headers"]["Authorization"] == MASK
+        assert metadata["cookies"] == [MASK]
+        assert metadata["profile"]["name"] == "alice"
+        assert "raw-token" not in str(metadata)
+        assert "raw-secret" not in str(metadata)
+        assert "session-secret" not in str(metadata)
+
+
+# --- Metadata redaction ---
+
+
+class TestRedactMetadata:
+    def test_sensitive_metadata_value_masked(self):
+        redacted = redact_metadata({"authorization": "Bearer abc123"})
+        assert redacted["authorization"] == MASK
+        assert "abc123" not in str(redacted)
+
+    def test_nested_sensitive_metadata_value_masked(self):
+        redacted = redact_metadata({
+            "headers": {"set-cookie": "sid=secret"},
+            "tags": ["public"],
+        })
+        assert redacted["headers"]["set-cookie"] == MASK
+        assert redacted["tags"] == ["public"]
+
+    def test_metadata_text_patterns_scrubbed_without_masking_key(self):
+        redacted = redact_metadata({"note": "card 4111 1111 1111 1111"})
+        assert "4111" not in redacted["note"]
+        assert redacted["note"] == f"card {MASK}"
 
 
 # --- Engine integration ---
