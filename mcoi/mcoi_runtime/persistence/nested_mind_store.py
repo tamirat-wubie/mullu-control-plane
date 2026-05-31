@@ -18,14 +18,19 @@ from typing import Any, Mapping
 from mcoi_runtime.contracts._base import ContractRecord
 from mcoi_runtime.contracts.nested_mind_observation_reconciliation import (
     NestedMindObservationReconciliationReport,
+    NestedMindObservationReconciliationStatus,
 )
 from mcoi_runtime.contracts.nested_mind_observation_submission import (
     NestedMindObservationProposalPlan,
+    NestedMindObservationProposalPlanStatus,
     NestedMindObservationSubmissionReport,
+    NestedMindObservationSubmissionStatus,
 )
 from mcoi_runtime.contracts.nested_mind_receipts import (
     NestedMindCommitWitness,
+    NestedMindCommitWitnessStatus,
     NestedMindReceiptBridgeReport,
+    NestedMindReceiptBridgeStatus,
 )
 
 from ._serialization import loads_strict_json
@@ -218,13 +223,43 @@ def _entry_from_raw(raw: Mapping[str, Any]) -> NestedMindEvidenceEntry:
         raise CorruptedDataError("nested-mind evidence mind_id payload mismatch")
     if payload.get("mullu_receipt_hash") != mullu_receipt_hash:
         raise CorruptedDataError("nested-mind evidence mullu_receipt_hash payload mismatch")
+    validated_payload = _validate_payload_contract(str(record_type), payload)
     return NestedMindEvidenceEntry(
         record_type=record_type,
         record_id=record_id,
         mind_id=mind_id,
         mullu_receipt_hash=mullu_receipt_hash,
-        payload=dict(payload),
+        payload=validated_payload,
     )
+
+
+def _validate_payload_contract(record_type: str, payload: Mapping[str, Any]) -> Mapping[str, Any]:
+    try:
+        payload_dict = dict(payload)
+        if record_type == "plan":
+            payload_dict["status"] = NestedMindObservationProposalPlanStatus(
+                str(payload_dict["status"])
+            )
+            return NestedMindObservationProposalPlan(**payload_dict).to_json_dict()
+        if record_type == "submission_report":
+            payload_dict["status"] = NestedMindObservationSubmissionStatus(
+                str(payload_dict["status"])
+            )
+            return NestedMindObservationSubmissionReport(**payload_dict).to_json_dict()
+        if record_type == "commit_witness":
+            payload_dict["status"] = NestedMindCommitWitnessStatus(str(payload_dict["status"]))
+            return NestedMindCommitWitness(**payload_dict).to_json_dict()
+        if record_type == "bridge_report":
+            payload_dict["status"] = NestedMindReceiptBridgeStatus(str(payload_dict["status"]))
+            return NestedMindReceiptBridgeReport(**payload_dict).to_json_dict()
+        if record_type == "reconciliation_report":
+            payload_dict["status"] = NestedMindObservationReconciliationStatus(
+                str(payload_dict["status"])
+            )
+            return NestedMindObservationReconciliationReport(**payload_dict).to_json_dict()
+    except (KeyError, TypeError, ValueError) as exc:
+        raise CorruptedDataError("nested-mind evidence payload contract invalid") from exc
+    raise CorruptedDataError("unsupported nested-mind evidence record type")
 
 
 def _reject_forbidden_payload(value: Any) -> None:

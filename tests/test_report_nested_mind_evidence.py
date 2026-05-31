@@ -173,6 +173,20 @@ def test_report_cli_rejects_unsupported_record_type(tmp_path, capsys) -> None:
     assert capsys.readouterr().out == ""
 
 
+def test_report_cli_rejects_invalid_payload_contract(tmp_path, capsys) -> None:
+    module = _module()
+    store_path = tmp_path / "nested-mind.jsonl"
+    store = NestedMindEvidenceStore(store_path)
+    store.record_submission_report(_submission())
+    entry = json.loads(store_path.read_text(encoding="utf-8"))
+    entry["payload"]["unexpected_payload_field"] = "ignored"
+    store_path.write_text(json.dumps(entry, sort_keys=True) + "\n", encoding="utf-8")
+
+    with pytest.raises(CorruptedDataError, match="payload contract invalid"):
+        module.main(["--store", str(store_path)])
+    assert capsys.readouterr().out == ""
+
+
 def test_report_cli_rejects_record_id_payload_mismatch(tmp_path, capsys) -> None:
     module = _module()
     store_path = tmp_path / "nested-mind.jsonl"
