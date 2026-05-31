@@ -247,6 +247,7 @@ class NoteMemorySummary(ContractRecord):
     memory_anchor_count: int
     episode_capsule_count: int
     contradiction_count: int
+    retrieval_filter_active: bool
     retrieval_influence_count: int
     retrieval_influence_total_count: int
     retrieval_receipt_count: int
@@ -298,6 +299,8 @@ class NoteMemorySummary(ContractRecord):
             "contradiction_count",
             require_non_negative_int(self.contradiction_count, "contradiction_count"),
         )
+        if not isinstance(self.retrieval_filter_active, bool):
+            raise ValueError("retrieval_filter_active must be a boolean")
         object.__setattr__(
             self,
             "retrieval_influence_count",

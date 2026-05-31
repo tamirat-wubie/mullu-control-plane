@@ -366,6 +366,7 @@ def test_dashboard_snapshot_filters_retrieval_influence_by_receipt(tmp_path) -> 
     assert snapshot["filters"]["retrieval_receipt_ref"] == first_receipt
     assert snapshot["filters"]["retrieval_citing_note_ref"] == ""
     assert snapshot["summary"]["event_count"] == 2
+    assert snapshot["summary"]["retrieval_filter_active"] is True
     assert snapshot["summary"]["retrieval_influence_count"] == 1
     assert snapshot["summary"]["retrieval_influence_total_count"] == 2
     assert snapshot["summary"]["retrieval_receipt_count"] == 1
@@ -417,6 +418,7 @@ def test_dashboard_snapshot_filters_retrieval_influence_by_citing_note(tmp_path)
     assert snapshot["filters"]["retrieval_receipt_ref"] == ""
     assert snapshot["filters"]["retrieval_citing_note_ref"] == second.note_id
     assert snapshot["summary"]["event_count"] == 2
+    assert snapshot["summary"]["retrieval_filter_active"] is True
     assert snapshot["summary"]["retrieval_influence_count"] == 2
     assert snapshot["summary"]["retrieval_influence_total_count"] == 3
     assert snapshot["summary"]["retrieval_receipt_count"] == 2

@@ -75,7 +75,10 @@ snapshots report `retrieval_influence_count` for the current view and
 `retrieval_influence_total_count` for the full unfiltered graph. They also
 derive a bounded `retrieval_receipts` summary grouped by receipt ID, with
 citation counts, distinct citing-note counts, latest citation witnesses, and
-sample citing note IDs for operator navigation.
+sample citing note IDs for operator navigation. The summary exposes
+`retrieval_filter_active` so downstream dashboards can distinguish a narrowed
+read model from the full note-memory retrieval graph without reinterpreting
+raw filter fields.
 
 Snapshots also accept a read-only `retrieval_citing_note_ref` filter so
 operators can inspect the retrieval witnesses cited by a specific note or
@@ -109,6 +112,7 @@ pending_promotion_count
 memory_anchor_count
 episode_capsule_count
 contradiction_count
+retrieval_filter_active
 retrieval_influence_count
 retrieval_influence_total_count
 retrieval_receipt_count
