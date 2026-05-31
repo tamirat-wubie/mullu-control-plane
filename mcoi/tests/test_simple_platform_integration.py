@@ -18,6 +18,7 @@ from mcoi_runtime.app.simple_platform_integration import (
     mount_simple_platform_router_from_env,
 )
 from mcoi_runtime.core.simple_platform_api import SimplePlatformRuntime
+from mcoi_runtime.core.simple_platform_fastapi_router import SimplePlatformFastAPIAdapter
 
 
 class FakeApp:
@@ -109,3 +110,18 @@ def test_simple_platform_integration_uses_default_prefix() -> None:
     assert result.mounted is True
     assert result.prefix == "/api/v1/simple"
     assert app.routers == [{"prefix": "/api/v1/simple"}]
+
+
+def test_simple_platform_start_route_contract_returns_non_executing_guide() -> None:
+    adapter = SimplePlatformFastAPIAdapter(SimplePlatformRuntime())
+    route_specs = SimplePlatformFastAPIAdapter.route_specs("/simple")
+    route_by_handler = {route.handler_name: route for route in route_specs}
+    payload = adapter.start_guide()
+    guide = payload["payload"]["guide"]
+
+    assert route_by_handler["start_guide"].method == "GET"
+    assert route_by_handler["start_guide"].path == "/simple/start"
+    assert payload["governed"] is True
+    assert payload["status"] == "listed"
+    assert guide["execution_allowed"] is False
+    assert guide["recommended_path"][0]["command"] == "mullu workflows"
