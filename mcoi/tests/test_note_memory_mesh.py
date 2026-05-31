@@ -215,8 +215,12 @@ def test_captured_decision_can_cite_retrieval_receipt_without_mutating_read(tmp_
     assert decision.retrieval_receipt_refs == (result.receipt.receipt_id,)
     assert mesh.event_count == 2
     assert snapshot["summary"]["event_count"] == 2
+    assert snapshot["summary"]["retrieval_influence_count"] == 1
     assert snapshot["recent_notes"][0]["note_id"] == decision.note_id
     assert snapshot["recent_notes"][0]["retrieval_receipt_refs"] == [result.receipt.receipt_id]
+    assert snapshot["retrieval_influence"][0]["receipt_id"] == result.receipt.receipt_id
+    assert snapshot["retrieval_influence"][0]["citing_note_id"] == decision.note_id
+    assert snapshot["retrieval_influence"][0]["citing_kind"] == "DecisionRecord"
 
 
 def test_capture_rejects_malformed_retrieval_receipt_refs_without_persisting(tmp_path) -> None:
@@ -276,6 +280,46 @@ def test_capture_deduplicates_retrieval_receipt_refs(tmp_path) -> None:
     assert result.receipt.returned_note_ids == (source.note_id,)
     assert decision.retrieval_receipt_refs == (result.receipt.receipt_id,)
     assert mesh.event_count == 2
+
+
+def test_dashboard_snapshot_limits_retrieval_influence_rows(tmp_path) -> None:
+    clock = MutableClock("2026-05-01T00:00:00+00:00")
+    mesh = _mesh(tmp_path, clock)
+    first_receipt = "note-retrieval-111111111111"
+    second_receipt = "note-retrieval-222222222222"
+    first = mesh.capture_note(
+        NoteMemoryDraft(
+            kind=NoteKind.DECISION_RECORD,
+            scope=NoteScope.TASK,
+            content_summary="First decision cites retrieval influence",
+            source_ref="test:first-retrieval-influence",
+            proof_state=ProofState.PASS,
+            trust_zone=TrustZone.WORKSPACE,
+            evidence_refs=("test_dashboard_snapshot_limits_retrieval_influence_rows",),
+            retrieval_receipt_refs=(first_receipt,),
+        )
+    )
+    clock.set("2026-05-01T00:01:00+00:00")
+    second = mesh.capture_note(
+        NoteMemoryDraft(
+            kind=NoteKind.DECISION_RECORD,
+            scope=NoteScope.TASK,
+            content_summary="Second decision cites retrieval influence",
+            source_ref="test:second-retrieval-influence",
+            proof_state=ProofState.PASS,
+            trust_zone=TrustZone.WORKSPACE,
+            evidence_refs=("test_dashboard_snapshot_limits_retrieval_influence_rows",),
+            retrieval_receipt_refs=(second_receipt,),
+        )
+    )
+
+    snapshot = mesh.dashboard_snapshot(now="2026-05-01T00:02:00+00:00", limit=1)
+
+    assert snapshot["summary"]["retrieval_influence_count"] == 2
+    assert len(snapshot["retrieval_influence"]) == 1
+    assert snapshot["retrieval_influence"][0]["receipt_id"] == second_receipt
+    assert snapshot["retrieval_influence"][0]["citing_note_id"] == second.note_id
+    assert snapshot["retrieval_influence"][0]["citing_note_id"] != first.note_id
 
 
 def test_retrieval_receipt_bounds_query_text(tmp_path) -> None:

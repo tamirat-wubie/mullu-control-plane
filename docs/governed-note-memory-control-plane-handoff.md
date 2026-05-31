@@ -64,7 +64,10 @@ event into the append-only store. Later captured notes can cite those witnesses
 through `retrieval_receipt_refs`, preserving the difference between read-only
 retrieval and append-only decision capture. Retrieval receipt references are
 validated as bounded `note-retrieval-*` identifiers; arbitrary text is rejected
-before persistence.
+before persistence. Dashboard and console snapshots derive a read-only
+`retrieval_influence` graph from captured events so operators can see which
+note event cited which retrieval receipt without adding retrieval events to the
+append-only log.
 
 Episode capsules write a structured sidecar under the configured note-memory
 store and append one `EpisodeCapsule` lineage event. Capsules with
@@ -93,6 +96,7 @@ pending_promotion_count
 memory_anchor_count
 episode_capsule_count
 contradiction_count
+retrieval_influence_count
 index_proof_state
 assessed_at
 ```

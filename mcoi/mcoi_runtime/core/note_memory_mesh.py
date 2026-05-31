@@ -935,6 +935,7 @@ class NoteMemoryMesh:
         contradictions = [event for event in recent_events if event.action == NoteAction.CONTRADICT]
         memory_anchors = [event for event in recent_events if event.kind == NoteKind.MEMORY_ANCHOR]
         episode_capsules = [event for event in recent_events if event.kind == NoteKind.EPISODE_CAPSULE]
+        retrieval_influence = self._retrieval_influence_rows(recent_events)
         pending_promotions = sorted(
             self._pending_promotions(),
             key=lambda entry: str(entry.get("queued_at", "")),
@@ -954,6 +955,7 @@ class NoteMemoryMesh:
                 "memory_anchor_count": len(memory_anchors),
                 "episode_capsule_count": len(episode_capsules),
                 "contradiction_count": len(contradictions),
+                "retrieval_influence_count": len(retrieval_influence),
                 "index_proof_state": index_report.proof_state.value,
             },
             "recent_notes": [
@@ -972,6 +974,7 @@ class NoteMemoryMesh:
             "memory_anchors": [self._event_dashboard_row(event) for event in memory_anchors[:limit]],
             "episode_capsules": [self._event_dashboard_row(event) for event in episode_capsules[:limit]],
             "contradictions": [self._event_dashboard_row(event) for event in contradictions[:limit]],
+            "retrieval_influence": retrieval_influence[:limit],
             "audit_events": [self._event_dashboard_row(event) for event in recent_events[:limit]],
             "index": {
                 "valid_events": index_report.valid_events,
@@ -1012,6 +1015,28 @@ class NoteMemoryMesh:
             row["claim_key"] = event.claim_key
             row["claim_value"] = event.claim_value
         return row
+
+    def _retrieval_influence_rows(self, events: Sequence[NoteMemoryEvent]) -> list[dict[str, object]]:
+        """Return receipt-to-note influence rows derived from append-only events."""
+
+        rows: list[dict[str, object]] = []
+        for event in events:
+            for receipt_id in event.retrieval_receipt_refs:
+                rows.append(
+                    {
+                        "receipt_id": receipt_id,
+                        "citing_event_seq": event.event_seq,
+                        "citing_event_id": event.event_id,
+                        "citing_note_id": event.note_id,
+                        "citing_kind": event.kind.value,
+                        "citing_action": event.action.value,
+                        "citing_scope": event.scope.value,
+                        "citing_proof_state": event.proof_state.value,
+                        "cited_at": event.created_at,
+                        "source_ref": event.source_ref,
+                    }
+                )
+        return rows
 
     def _retrieval_receipt(
         self,

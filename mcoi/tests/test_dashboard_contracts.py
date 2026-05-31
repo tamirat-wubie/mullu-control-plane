@@ -213,6 +213,7 @@ def _note_summary(
     memory_anchor_count: int = 0,
     episode_capsule_count: int = 0,
     contradiction_count: int = 0,
+    retrieval_influence_count: int = 0,
     index_proof_state: str = "Pass",
     assessed_at: str = "2026-03-20T00:00:00Z",
 ) -> NoteMemorySummary:
@@ -228,6 +229,7 @@ def _note_summary(
         memory_anchor_count=memory_anchor_count,
         episode_capsule_count=episode_capsule_count,
         contradiction_count=contradiction_count,
+        retrieval_influence_count=retrieval_influence_count,
         index_proof_state=index_proof_state,
         assessed_at=assessed_at,
     )
@@ -242,6 +244,7 @@ class TestNoteMemorySummary:
         assert summary.event_count == 3
         assert summary.pending_promotion_count == 1
         assert summary.episode_capsule_count == 0
+        assert summary.retrieval_influence_count == 0
 
     def test_empty_status_raises(self) -> None:
         with pytest.raises(ValueError, match="status"):
@@ -254,6 +257,10 @@ class TestNoteMemorySummary:
     def test_negative_episode_capsule_count_raises(self) -> None:
         with pytest.raises(ValueError, match="episode_capsule_count"):
             _note_summary(episode_capsule_count=-1)
+
+    def test_negative_retrieval_influence_count_raises(self) -> None:
+        with pytest.raises(ValueError, match="retrieval_influence_count"):
+            _note_summary(retrieval_influence_count=-1)
 
     def test_invalid_assessed_at_raises(self) -> None:
         with pytest.raises(ValueError, match="assessed_at"):

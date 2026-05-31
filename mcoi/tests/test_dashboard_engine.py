@@ -108,6 +108,7 @@ def _note_memory_snapshot(**summary_overrides: object) -> dict[str, object]:
         "memory_anchor_count": 0,
         "episode_capsule_count": 1,
         "contradiction_count": 0,
+        "retrieval_influence_count": 0,
         "index_proof_state": "Pass",
     }
     summary.update(summary_overrides)
@@ -323,6 +324,7 @@ class TestBuildNoteMemorySummary:
         assert summary.extension_state == "mounted"
         assert summary.event_count == 4
         assert summary.episode_capsule_count == 1
+        assert summary.retrieval_influence_count == 0
         assert summary.index_proof_state == "Pass"
 
     def test_rejects_negative_count(self):
