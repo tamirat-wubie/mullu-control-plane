@@ -269,6 +269,82 @@ class SimpleOnboardingGuide:
         }
 
 
+@dataclass(frozen=True)
+class SimpleHomeChoice:
+    """One plain choice for the simple platform home surface."""
+
+    choice_ref: str
+    label: str
+    command: str
+    purpose: str
+    execution_allowed: bool = False
+
+    def __post_init__(self) -> None:
+        if self.execution_allowed:
+            raise RuntimeCoreInvariantError("simple home choice cannot allow execution")
+        for field_name, field_value in {
+            "choice_ref": self.choice_ref,
+            "label": self.label,
+            "command": self.command,
+            "purpose": self.purpose,
+        }.items():
+            _require_text(field_value, f"simple home choice {field_name}")
+            if field_value.strip() != field_value:
+                raise RuntimeCoreInvariantError(f"simple home choice {field_name} must be trimmed")
+
+    def to_dict(self) -> dict[str, object]:
+        """Return a JSON-compatible home choice."""
+
+        return {
+            "choice_ref": self.choice_ref,
+            "label": self.label,
+            "command": self.command,
+            "purpose": self.purpose,
+            "execution_allowed": self.execution_allowed,
+        }
+
+
+@dataclass(frozen=True)
+class SimpleHomeSummary:
+    """Compact first-screen summary for non-technical users."""
+
+    title: str
+    message: str
+    primary_command: str
+    next_action: str
+    choices: tuple[SimpleHomeChoice, ...]
+    execution_allowed: bool = False
+
+    def __post_init__(self) -> None:
+        if self.execution_allowed:
+            raise RuntimeCoreInvariantError("simple home summary cannot allow execution")
+        if len(self.choices) > 3:
+            raise RuntimeCoreInvariantError("simple home choices must be three or fewer")
+        if any(choice.execution_allowed for choice in self.choices):
+            raise RuntimeCoreInvariantError("simple home choices cannot allow execution")
+        for field_name, field_value in {
+            "title": self.title,
+            "message": self.message,
+            "primary_command": self.primary_command,
+            "next_action": self.next_action,
+        }.items():
+            _require_text(field_value, f"simple home {field_name}")
+            if field_value.strip() != field_value:
+                raise RuntimeCoreInvariantError(f"simple home {field_name} must be trimmed")
+
+    def to_dict(self) -> dict[str, object]:
+        """Return a JSON-compatible simple home summary."""
+
+        return {
+            "title": self.title,
+            "message": self.message,
+            "primary_command": self.primary_command,
+            "next_action": self.next_action,
+            "choices": [choice.to_dict() for choice in self.choices],
+            "execution_allowed": self.execution_allowed,
+        }
+
+
 class SimplePlatform:
     """Small governed facade for user-oriented action checks."""
 
@@ -372,6 +448,28 @@ class SimplePlatform:
                 ),
             ),
             outcomes=("Ready", "Needs review", "Blocked"),
+        )
+
+    @staticmethod
+    def simple_home() -> SimpleHomeSummary:
+        """Return the compact first-screen summary for simple platform users."""
+
+        guide = SimplePlatform.onboarding_guide()
+        choices = tuple(
+            SimpleHomeChoice(
+                choice_ref=step.step,
+                label=step.title,
+                command=step.command,
+                purpose=step.purpose,
+            )
+            for step in guide.recommended_path[:3]
+        )
+        return SimpleHomeSummary(
+            title="Start simple",
+            message="Choose one guided workflow and check it before continuing.",
+            primary_command=choices[0].command if choices else "mullu workflows",
+            next_action="Open the workflow list and choose the work you want to do.",
+            choices=choices,
         )
 
 
