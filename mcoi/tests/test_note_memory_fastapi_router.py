@@ -87,9 +87,11 @@ def test_note_memory_fastapi_adapter_handlers_preserve_runtime_envelopes(tmp_pat
     assert listed["payload"]["events"][0]["note_id"] == captured["payload"]["event"]["note_id"]
     assert listed["payload"]["events"][1]["note_id"] == decision["payload"]["event"]["note_id"]
     assert dashboard["payload"]["summary"]["retrieval_influence_count"] == 1
+    assert dashboard["payload"]["summary"]["retrieval_influence_total_count"] == 1
     assert dashboard["payload"]["retrieval_influence"][0]["citing_note_id"] == decision["payload"]["event"]["note_id"]
     assert filtered_dashboard["payload"]["filters"]["retrieval_receipt_ref"] == retrieved["payload"]["receipt"]["receipt_id"]
     assert filtered_dashboard["payload"]["summary"]["retrieval_influence_count"] == 1
+    assert filtered_dashboard["payload"]["summary"]["retrieval_influence_total_count"] == 1
     assert filtered_dashboard["payload"]["retrieval_influence"][0]["citing_note_id"] == decision["payload"]["event"]["note_id"]
 
 
@@ -142,6 +144,7 @@ def test_created_note_memory_fastapi_router_exposes_dashboard_route(tmp_path) ->
     assert dashboard.json()["payload"]["summary"]["event_count"] == 2
     assert dashboard.json()["payload"]["filters"]["retrieval_receipt_ref"] == retrieved["payload"]["receipt"]["receipt_id"]
     assert dashboard.json()["payload"]["summary"]["retrieval_influence_count"] == 1
+    assert dashboard.json()["payload"]["summary"]["retrieval_influence_total_count"] == 1
     assert dashboard.json()["payload"]["retrieval_influence"][0]["citing_note_id"] == decision["payload"]["event"]["note_id"]
     assert dashboard.json()["payload"]["recent_notes"][0]["note_id"] == decision["payload"]["event"]["note_id"]
     assert dashboard.json()["payload"]["recent_notes"][1]["note_id"] == captured["payload"]["event"]["note_id"]

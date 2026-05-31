@@ -347,6 +347,12 @@ class DashboardEngine:
         status = _non_empty_text_at(note_snapshot, "status", default="unknown")
         extension_state = _non_empty_text_at(extension, "state", default="mounted")
         index_proof_state = _non_empty_text_at(summary, "index_proof_state", default="Unknown")
+        retrieval_influence_count = _non_negative_int_at(summary, "retrieval_influence_count")
+        retrieval_influence_total_count = (
+            _non_negative_int_at(summary, "retrieval_influence_total_count")
+            if "retrieval_influence_total_count" in summary
+            else retrieval_influence_count
+        )
         now = self._clock()
         summary_id = stable_identifier("dash-note-memory", {
             "status": status,
@@ -367,7 +373,8 @@ class DashboardEngine:
             memory_anchor_count=_non_negative_int_at(summary, "memory_anchor_count"),
             episode_capsule_count=_non_negative_int_at(summary, "episode_capsule_count"),
             contradiction_count=_non_negative_int_at(summary, "contradiction_count"),
-            retrieval_influence_count=_non_negative_int_at(summary, "retrieval_influence_count"),
+            retrieval_influence_count=retrieval_influence_count,
+            retrieval_influence_total_count=retrieval_influence_total_count,
             index_proof_state=index_proof_state,
             assessed_at=now,
         )

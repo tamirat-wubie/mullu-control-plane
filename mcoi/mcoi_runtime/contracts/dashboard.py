@@ -248,6 +248,7 @@ class NoteMemorySummary(ContractRecord):
     episode_capsule_count: int
     contradiction_count: int
     retrieval_influence_count: int
+    retrieval_influence_total_count: int
     index_proof_state: str
     assessed_at: str
 
@@ -300,6 +301,13 @@ class NoteMemorySummary(ContractRecord):
             "retrieval_influence_count",
             require_non_negative_int(self.retrieval_influence_count, "retrieval_influence_count"),
         )
+        object.__setattr__(
+            self,
+            "retrieval_influence_total_count",
+            require_non_negative_int(self.retrieval_influence_total_count, "retrieval_influence_total_count"),
+        )
+        if self.retrieval_influence_total_count < self.retrieval_influence_count:
+            raise ValueError("retrieval_influence_total_count must be greater than or equal to retrieval_influence_count")
         object.__setattr__(
             self,
             "index_proof_state",
