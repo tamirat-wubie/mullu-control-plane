@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import json
 import sys
+import urllib.error
 from pathlib import Path
 from typing import Any
 
@@ -163,8 +164,48 @@ def test_gateway_runtime_smoke_exception_detail_is_bounded(monkeypatch) -> None:
 
     assert len(results) == 4
     assert all(result.passed is False for result in results)
-    assert all(result.detail == "unhandled_probe_error" for result in results)
+    assert all(result.detail == "probe_unexpected_error" for result in results)
     assert "secret-runtime-url-token" not in serialized_results
+    assert "secret-gateway-path" not in serialized_results
+
+
+def test_gateway_runtime_smoke_transport_exception_detail_is_bounded(monkeypatch) -> None:
+    def fake_urlopen(request, timeout):
+        raise urllib.error.URLError("secret-transport-token")
+
+    monkeypatch.setattr("urllib.request.urlopen", fake_urlopen)
+
+    results = run_probe(
+        gateway_url="http://localhost:8001/secret-gateway-path",
+        worker_url="http://localhost:8010/capability/execute",
+        worker_secret="worker-secret",
+    )
+    serialized_results = json.dumps([result.detail for result in results], sort_keys=True)
+
+    assert len(results) == 4
+    assert all(result.passed is False for result in results)
+    assert all(result.detail == "probe_transport_error" for result in results)
+    assert "secret-transport-token" not in serialized_results
+    assert "secret-gateway-path" not in serialized_results
+
+
+def test_gateway_runtime_smoke_timeout_exception_detail_is_bounded(monkeypatch) -> None:
+    def fake_urlopen(request, timeout):
+        raise TimeoutError("secret-timeout-token")
+
+    monkeypatch.setattr("urllib.request.urlopen", fake_urlopen)
+
+    results = run_probe(
+        gateway_url="http://localhost:8001/secret-gateway-path",
+        worker_url="http://localhost:8010/capability/execute",
+        worker_secret="worker-secret",
+    )
+    serialized_results = json.dumps([result.detail for result in results], sort_keys=True)
+
+    assert len(results) == 4
+    assert all(result.passed is False for result in results)
+    assert all(result.detail == "probe_timeout" for result in results)
+    assert "secret-timeout-token" not in serialized_results
     assert "secret-gateway-path" not in serialized_results
 
 

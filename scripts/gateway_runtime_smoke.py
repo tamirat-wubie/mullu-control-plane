@@ -17,6 +17,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import socket
 import sys
 import time
 import urllib.error
@@ -64,9 +65,9 @@ def run_probe(
         started = time.monotonic()
         try:
             passed, detail = fn()
-        except Exception:
+        except Exception as exc:  # noqa: BLE001 - public smoke output must stay bounded.
             passed = False
-            detail = "unhandled_probe_error"
+            detail = _bounded_probe_error(exc)
         results.append(
             SmokeProbeResult(
                 step=name,
@@ -204,6 +205,17 @@ def _loads_json(raw: bytes) -> dict[str, Any]:
     except (UnicodeDecodeError, json.JSONDecodeError):
         return {}
     return parsed if isinstance(parsed, dict) else {}
+
+
+def _bounded_probe_error(exc: Exception) -> str:
+    """Return a non-reflective public probe error class."""
+    if isinstance(exc, (TimeoutError, socket.timeout)):
+        return "probe_timeout"
+    if isinstance(exc, urllib.error.URLError):
+        return "probe_transport_error"
+    if isinstance(exc, OSError):
+        return "probe_os_error"
+    return "probe_unexpected_error"
 
 
 def _header_value(headers: dict[str, str], name: str) -> str:
