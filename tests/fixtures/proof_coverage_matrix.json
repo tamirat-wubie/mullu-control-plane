@@ -580,6 +580,13 @@
       ]
     },
     {
+      "action_id": "publish_p3_memory_topology_read_model_contract",
+      "status": "closed",
+      "surfaces": [
+        "memory_lattice"
+      ]
+    },
+    {
       "action_id": "publish_workflow_mining_draft_contract",
       "status": "closed",
       "surfaces": [
@@ -7097,17 +7104,31 @@
         "docs/62_governed_operational_intelligence.md",
         "gateway/memory_lattice.py",
         "schemas/memory_lattice.schema.json",
+        "schemas/p3_memory_topology_read_model.schema.json",
         "tests/test_gateway/test_memory_lattice.py"
       ],
-      "notes": "Memory lattice admission derives planning and execution use from evidence, learning admission, policy authority, freshness, scope, and contradiction state.",
+      "notes": "Memory lattice admission derives planning and execution use from evidence, learning admission, policy authority, freshness, scope, contradiction state, and bounded P3 topology projections.",
       "representative_paths": [
         "MemoryLatticeGate.assess",
-        "MemoryLatticeAdmission"
+        "MemoryLatticeAdmission",
+        "P3MemoryTopologyMap",
+        "build_p3_memory_topology_read_model"
       ],
       "request_proof": "request_proof",
       "runtime_witness_anchor_aliases": {
         "memory_lattice_schema_valid": [
           "memory_lattice_schema_exposes_admission_claim"
+        ],
+        "p3_memory_topology_binds_refs": [
+          "p3_topology_map_binds_mind_memory_world_and_evidence_refs"
+        ],
+        "p3_memory_topology_read_model_blocks_authority": [
+          "p3_topology_read_model_projects_bounded_operator_surface",
+          "blocked_p3_topology_read_model_exposes_blockers_without_graph_surface"
+        ],
+        "p3_memory_topology_read_model_schema_valid": [
+          "p3_topology_read_model_projects_bounded_operator_surface",
+          "blocked_p3_topology_read_model_exposes_blockers_without_graph_surface"
         ],
         "policy_memory_requires_authority_ref": [
           "policy_memory_requires_policy_authority_ref"
@@ -7128,7 +7149,10 @@
         "policy_memory_requires_authority_ref",
         "preference_memory_tenant_owner_scoped",
         "contradiction_and_stale_memory_block_execution",
-        "memory_lattice_schema_valid"
+        "memory_lattice_schema_valid",
+        "p3_memory_topology_binds_refs",
+        "p3_memory_topology_read_model_schema_valid",
+        "p3_memory_topology_read_model_blocks_authority"
       ],
       "surface_id": "memory_lattice"
     },
@@ -9124,8 +9148,8 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 1123,
-    "runtime_witness_count": 1123,
+    "exact_test_anchor_count": 1126,
+    "runtime_witness_count": 1126,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -14385,10 +14409,30 @@
               "tests/test_gateway/test_memory_lattice.py::test_memory_lattice_schema_exposes_admission_claim"
             ],
             "witness": "memory_lattice_schema_valid"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_memory_lattice.py::test_p3_topology_map_binds_mind_memory_world_and_evidence_refs"
+            ],
+            "witness": "p3_memory_topology_binds_refs"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_memory_lattice.py::test_p3_topology_read_model_projects_bounded_operator_surface",
+              "tests/test_gateway/test_memory_lattice.py::test_blocked_p3_topology_read_model_exposes_blockers_without_graph_surface"
+            ],
+            "witness": "p3_memory_topology_read_model_schema_valid"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_memory_lattice.py::test_p3_topology_read_model_projects_bounded_operator_surface",
+              "tests/test_gateway/test_memory_lattice.py::test_blocked_p3_topology_read_model_exposes_blockers_without_graph_surface"
+            ],
+            "witness": "p3_memory_topology_read_model_blocks_authority"
           }
         ],
-        "exact_test_anchor_count": 6,
-        "runtime_witness_count": 6,
+        "exact_test_anchor_count": 9,
+        "runtime_witness_count": 9,
         "surface_id": "memory_lattice",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []

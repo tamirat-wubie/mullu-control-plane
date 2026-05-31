@@ -3021,13 +3021,20 @@ def test_memory_lattice_surface_gates_planning_and_execution() -> None:
     assert lattice_surface["coverage_state"] == "witnessed"
     assert lattice_surface["request_proof"] == "request_proof"
     assert lattice_surface["action_proof"] == "action_proof"
+    assert "P3MemoryTopologyMap" in lattice_surface["representative_paths"]
+    assert "build_p3_memory_topology_read_model" in lattice_surface["representative_paths"]
     assert "gateway/memory_lattice.py" in lattice_surface["evidence_files"]
     assert "schemas/memory_lattice.schema.json" in lattice_surface["evidence_files"]
+    assert "schemas/p3_memory_topology_read_model.schema.json" in lattice_surface["evidence_files"]
     assert "tests/test_gateway/test_memory_lattice.py" in lattice_surface["evidence_files"]
     assert "raw_event_memory_not_directly_admitted" in witnesses
     assert "semantic_memory_requires_learning_admission" in witnesses
     assert "contradiction_and_stale_memory_block_execution" in witnesses
+    assert "p3_memory_topology_binds_refs" in witnesses
+    assert "p3_memory_topology_read_model_schema_valid" in witnesses
+    assert "p3_memory_topology_read_model_blocks_authority" in witnesses
     assert closure_actions["publish_memory_lattice_admission_contract"]["status"] == "closed"
+    assert closure_actions["publish_p3_memory_topology_read_model_contract"]["status"] == "closed"
 
 
 def test_workflow_mining_surface_emits_blocked_drafts() -> None:
