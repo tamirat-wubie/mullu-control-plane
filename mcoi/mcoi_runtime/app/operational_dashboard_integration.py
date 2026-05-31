@@ -18,12 +18,13 @@ from dataclasses import dataclass
 import os
 from typing import Any, Callable, Mapping
 
-from mcoi_runtime.app._integration_paths import validate_route_prefix
+from mcoi_runtime.app._integration_paths import route_prefix_or_default, validate_route_prefix
 from mcoi_runtime.core.operational_dashboard_api import OperationalDashboardRuntime
 from mcoi_runtime.core.operational_dashboard_fastapi_router import create_operational_dashboard_fastapi_router
 
 
 OperationalDashboardRouterFactory = Callable[[OperationalDashboardRuntime, str], Any]
+_DEFAULT_OPERATIONAL_DASHBOARD_PREFIX = "/api/v1/dashboard"
 
 
 @dataclass(frozen=True)
@@ -56,18 +57,22 @@ def mount_operational_dashboard_router_from_env(
     """Mount dashboard routes when enabled by environment policy."""
 
     runtime_env = os.environ if env is None else env
-    prefix = validate_route_prefix(
-        runtime_env.get("MULLU_DASHBOARD_PREFIX"),
-        default="/api/v1/dashboard",
-        env_name="MULLU_DASHBOARD_PREFIX",
-    )
     if not _env_flag(runtime_env.get("MULLU_DASHBOARD_ENABLED")):
         return OperationalDashboardMountResult(
             enabled=False,
             mounted=False,
-            prefix=prefix,
+            prefix=route_prefix_or_default(
+                runtime_env.get("MULLU_DASHBOARD_PREFIX"),
+                default=_DEFAULT_OPERATIONAL_DASHBOARD_PREFIX,
+                env_name="MULLU_DASHBOARD_PREFIX",
+            ),
             reason="disabled_by_env",
         )
+    prefix = validate_route_prefix(
+        runtime_env.get("MULLU_DASHBOARD_PREFIX"),
+        default=_DEFAULT_OPERATIONAL_DASHBOARD_PREFIX,
+        env_name="MULLU_DASHBOARD_PREFIX",
+    )
     if runtime is None:
         return OperationalDashboardMountResult(
             enabled=True,

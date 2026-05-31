@@ -80,6 +80,21 @@ def test_simple_platform_integration_does_not_mount_when_disabled() -> None:
     assert app.routers == []
 
 
+def test_simple_platform_integration_ignores_malformed_prefix_when_disabled() -> None:
+    app = FakeApp()
+
+    result = mount_simple_platform_router_from_env(
+        app,
+        {"MULLU_SIMPLE_PLATFORM_ENABLED": "0", "MULLU_SIMPLE_PLATFORM_PREFIX": "simple"},
+    )
+
+    assert result.enabled is False
+    assert result.mounted is False
+    assert result.prefix == "/api/v1/simple"
+    assert result.reason == "disabled_by_env"
+    assert app.routers == []
+
+
 def test_simple_platform_integration_defaults_to_disabled_without_env_flag(monkeypatch) -> None:
     app = FakeApp()
     monkeypatch.setenv("MULLU_SIMPLE_PLATFORM_ENABLED", "1")
