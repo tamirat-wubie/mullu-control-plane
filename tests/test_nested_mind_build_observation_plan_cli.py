@@ -104,6 +104,37 @@ def test_builder_rejects_sensitive_observation_fields(tmp_path) -> None:
         )
 
 
+def test_builder_rejects_non_finite_observation_json_before_output(tmp_path, capsys) -> None:
+    module = _module()
+    observation_path = tmp_path / "observation.json"
+    observation_path.write_text('{"observation_id": "obs-1", "score": NaN}', encoding="utf-8")
+
+    with pytest.raises(RuntimeError, match="failed to parse strict JSON"):
+        module.main(
+            [
+                "--mind-id",
+                "root",
+                "--observation-id",
+                "obs-1",
+                "--observation",
+                str(observation_path),
+                "--mullu-receipt-hash",
+                "mullu-receipt-hash-1",
+                "--authority-receipt-hash",
+                "authority-receipt-hash-1",
+                "--plan-out",
+                str(tmp_path / "plan.json"),
+                "--evidence-out",
+                str(tmp_path / "evidence.json"),
+                "--planned-at",
+                "2026-05-31T00:00:00+00:00",
+            ]
+        )
+    assert capsys.readouterr().out == ""
+    assert not (tmp_path / "plan.json").exists()
+    assert not (tmp_path / "evidence.json").exists()
+
+
 def test_builder_fixed_timestamp_produces_stable_plan_id(tmp_path, capsys) -> None:
     module = _module()
     observation_path = tmp_path / "observation.json"
