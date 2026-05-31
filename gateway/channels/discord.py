@@ -8,9 +8,30 @@ Requires: DISCORD_BOT_TOKEN, DISCORD_PUBLIC_KEY (for interaction verification)
 
 from __future__ import annotations
 
+import time
 from typing import Any
 
 from gateway.router import GatewayMessage
+
+# Reject interactions whose signed timestamp is older (or further in the future)
+# than this many seconds, to bound replay of captured valid interactions. The
+# timestamp is part of the Ed25519-signed message, so it cannot be forged
+# without the private key; the freshness window closes the replay gap that a
+# signature check alone leaves open. Mirrors the Slack adapter's 5-minute window.
+_INTERACTION_REPLAY_WINDOW_SECONDS = 300
+
+
+def _timestamp_within_replay_window(
+    timestamp: str,
+    *,
+    window_seconds: int = _INTERACTION_REPLAY_WINDOW_SECONDS,
+) -> bool:
+    """Return True when ``timestamp`` (unix seconds) is within the replay window."""
+    try:
+        age = abs(time.time() - int(timestamp))
+    except (ValueError, TypeError):
+        return False
+    return age <= window_seconds
 
 
 class DiscordAdapter:
@@ -45,6 +66,8 @@ class DiscordAdapter:
             return True  # No key configured — skip verification
         if not signature or not timestamp:
             return False
+        if not _timestamp_within_replay_window(timestamp):
+            return False  # Stale or malformed timestamp - bound replay window
 
         try:
             from nacl.signing import VerifyKey
