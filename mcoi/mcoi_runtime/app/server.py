@@ -27,6 +27,7 @@ from mcoi_runtime.app.server_app import create_governed_app
 from mcoi_runtime.app.server_context import bootstrap_server_context, resolve_env
 from mcoi_runtime.app.governed_swarm_integration import mount_governed_swarm_router_from_env
 from mcoi_runtime.app.note_memory_integration import mount_note_memory_router_from_env
+from mcoi_runtime.app.public_route_integration import mount_public_runtime_routes_from_env
 from mcoi_runtime.app.nested_mind_integration import (
     mount_nested_mind_connector_from_env,
     mount_nested_mind_observation_bridge_from_env,
@@ -308,6 +309,18 @@ if _artifact_lineage_bootstrap.save_on_shutdown is not None:
         _artifact_lineage_bootstrap.save_on_shutdown,
         priority=80,
     )
+
+public_runtime_route_bootstrap = mount_public_runtime_routes_from_env(
+    app=app,
+    runtime_env=os.environ,
+    clock=_clock,
+)
+deps.set("public_runtime_route_bootstrap", public_runtime_route_bootstrap)
+deps.set("simple_platform_bootstrap", public_runtime_route_bootstrap.simple_platform)
+deps.set(
+    "operational_dashboard_bootstrap",
+    public_runtime_route_bootstrap.operational_dashboard,
+)
 
 governed_swarm_bootstrap = mount_governed_swarm_router_from_env(
     app=app,
