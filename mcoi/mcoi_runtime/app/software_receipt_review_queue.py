@@ -208,6 +208,8 @@ def _metadata_required_text(metadata: dict[str, Any], field_name: str) -> str:
     value = metadata.get(field_name)
     if not isinstance(value, str) or not value.strip():
         raise ValueError(f"{field_name} must be a non-empty string")
+    if value.strip() != value:
+        raise ValueError(f"{field_name} must be trimmed text")
     return value
 
 
@@ -224,6 +226,8 @@ def _metadata_text_tuple(
     for index, item in enumerate(value):
         if not isinstance(item, str) or not item.strip():
             raise ValueError(f"{field_name}[{index}] must be a non-empty string")
+        if item.strip() != item:
+            raise ValueError(f"{field_name}[{index}] must be trimmed text")
         normalized.append(item)
     if not normalized:
         raise ValueError(f"{field_name} must contain at least one item")
