@@ -19,6 +19,7 @@ Invariants:
 
 ```powershell
 mullu start
+mullu start --json
 mullu actions
 mullu workflows
 mullu workflow docs-update --target docs/README.md

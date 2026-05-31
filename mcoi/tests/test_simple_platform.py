@@ -458,10 +458,23 @@ def test_simple_cli_start_outputs_onboarding_path(capsys) -> None:
     output = capsys.readouterr().out
 
     assert exit_code == 0
-    assert "Mullu simple mode" in output
+    assert "Start simple" in output
+    assert "Next: Open the workflow list and choose the work you want to do." in output
     assert "Recommended path:" in output
     assert "mullu workflows" in output
     assert "mullu workflow docs-update --target docs/README.md" in output
+
+
+def test_simple_cli_start_outputs_home_json(capsys) -> None:
+    exit_code = guarded_main(["start", "--json"])
+    envelope = json.loads(capsys.readouterr().out)
+
+    assert exit_code == 0
+    assert envelope["governed"] is True
+    assert envelope["ok"] is True
+    assert envelope["status"] == "ready"
+    assert envelope["payload"]["home"]["title"] == "Start simple"
+    assert envelope["payload"]["home"]["choices"][0]["command"] == "mullu workflows"
 
 
 def test_simple_platform_api_projects_ready_check() -> None:
