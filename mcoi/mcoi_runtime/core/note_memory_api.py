@@ -193,6 +193,7 @@ def _draft_from_mapping(value: Mapping[str, Any]) -> NoteMemoryDraft:
         note_id=str(value.get("note_id", "")),
         evidence_refs=_text_tuple(value.get("evidence_refs")),
         relation_refs=_text_tuple(value.get("relation_refs")),
+        retrieval_receipt_refs=_text_tuple(value.get("retrieval_receipt_refs")),
         claim_key=str(value.get("claim_key", "")),
         claim_value=str(value.get("claim_value", "")),
     )

@@ -9,5 +9,8 @@ modifying that engine's source.
 Available:
   service_catalog
     ServiceCatalogStateView — exposes ServiceCatalogEngine tasks and
-    requests as queryable entities for predicate evaluation.
+    requests as queryable entities for predicate evaluation (observation).
+    RequestStatusClosureAdapter — opt-in IntentClosure that drives a
+    ServiceCatalogEngine request to FULFILLED on success / CANCELLED on
+    precondition failure (action).
 """

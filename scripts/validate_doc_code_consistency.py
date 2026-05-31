@@ -124,7 +124,7 @@ def check_flags(doc_files: list[Path], code_text: str) -> list[str]:
         for flag in flags_in_doc:
             if not re.search(rf"\b{re.escape(flag)}\b", code_text):
                 failures.append(
-                    f"FLAG: {doc.relative_to(REPO_ROOT)} references unwired flag '{flag}'"
+                    f"FLAG: {doc.relative_to(REPO_ROOT).as_posix()} references unwired flag '{flag}'"
                 )
     return failures
 
@@ -158,7 +158,7 @@ def check_module_paths(doc_files: list[Path]) -> list[str]:
                     break
             if not resolved:
                 failures.append(
-                    f"PATH: {doc.relative_to(REPO_ROOT)} references nonexistent module '{path_str}'"
+                    f"PATH: {doc.relative_to(REPO_ROOT).as_posix()} references nonexistent module '{path_str}'"
                 )
     return failures
 
@@ -182,7 +182,7 @@ def check_constructs(doc_files: list[Path], code_text: str) -> list[str]:
             if re.search(rf"`{name}`", text):
                 if not construct_class_pattern[name].search(code_text):
                     failures.append(
-                        f"CONSTRUCT: {doc.relative_to(REPO_ROOT)} "
+                        f"CONSTRUCT: {doc.relative_to(REPO_ROOT).as_posix()} "
                         f"references '{name}' but no `class {name}` in code"
                     )
     return failures

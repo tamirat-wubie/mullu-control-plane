@@ -3,10 +3,11 @@ from __future__ import annotations
 
 from typing import Any
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, Field
 
 from mcoi_runtime.app.routers.deps import deps
+from mcoi_runtime.app.routers._tenant_scope import enforce_tenant_scope
 
 router = APIRouter()
 
@@ -38,10 +39,11 @@ class InvokeConnectorRequest(BaseModel):
 
 
 @router.post("/api/v1/connectors/register")
-def register_connector(req: RegisterConnectorRequest):
+def register_connector(req: RegisterConnectorRequest, request: Request):
     """Register a governed external connector."""
     from mcoi_runtime.core.connector_framework import ConnectorDefinition, ConnectorType
     deps.metrics.inc("requests_governed")
+    enforce_tenant_scope(request, req.tenant_id)
     try:
         ctype = ConnectorType(req.connector_type)
     except ValueError:
@@ -72,9 +74,10 @@ def register_connector(req: RegisterConnectorRequest):
 
 
 @router.post("/api/v1/connectors/invoke")
-def invoke_connector(req: InvokeConnectorRequest):
+def invoke_connector(req: InvokeConnectorRequest, request: Request):
     """Invoke a connector action through the governed pipeline."""
     deps.metrics.inc("requests_governed")
+    enforce_tenant_scope(request, req.tenant_id)
     invocation = deps.connector_framework.invoke(
         req.connector_id,
         req.action,
@@ -119,9 +122,12 @@ def list_connectors():
 
 
 @router.post("/api/v1/connectors/{connector_id}/disable")
-def disable_connector(connector_id: str):
+def disable_connector(connector_id: str, request: Request):
     """Disable a connector."""
     deps.metrics.inc("requests_governed")
+    state = deps.connector_framework.get_connector(connector_id)
+    if state is not None:
+        enforce_tenant_scope(request, state.definition.tenant_id)
     if not deps.connector_framework.disable(connector_id):
         raise HTTPException(404, detail={
             "error": "connector not found",
@@ -132,9 +138,12 @@ def disable_connector(connector_id: str):
 
 
 @router.post("/api/v1/connectors/{connector_id}/enable")
-def enable_connector(connector_id: str):
+def enable_connector(connector_id: str, request: Request):
     """Enable a disabled connector."""
     deps.metrics.inc("requests_governed")
+    state = deps.connector_framework.get_connector(connector_id)
+    if state is not None:
+        enforce_tenant_scope(request, state.definition.tenant_id)
     if not deps.connector_framework.enable(connector_id):
         raise HTTPException(404, detail={
             "error": "connector not found",

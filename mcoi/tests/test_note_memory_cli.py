@@ -50,6 +50,30 @@ def test_cli_capture_retrieve_dashboard_and_list_events_redacts_before_write(tmp
     capture_envelope = _last_json(capsys)
     retrieve_code = guarded_main(["--note-store", str(note_store), "retrieve", "parser", "--scope", "task"])
     retrieve_envelope = _last_json(capsys)
+    decision_capture_code = guarded_main(
+        [
+            "--note-store",
+            str(note_store),
+            "capture",
+            "--kind",
+            "DecisionRecord",
+            "--scope",
+            "task",
+            "--summary",
+            "CLI decision cites parser retrieval receipt",
+            "--source-ref",
+            "test:cli-decision",
+            "--proof-state",
+            "Pass",
+            "--trust-zone",
+            "workspace",
+            "--evidence-ref",
+            "test_cli_capture",
+            "--retrieval-receipt-ref",
+            retrieve_envelope["payload"]["receipt"]["receipt_id"],
+        ]
+    )
+    decision_capture_envelope = _last_json(capsys)
     dashboard_code = guarded_main(["--note-store", str(note_store), "dashboard", "--limit", "5"])
     dashboard_envelope = _last_json(capsys)
     list_code = guarded_main(["--note-store", str(note_store), "list-events"])
@@ -63,15 +87,25 @@ def test_cli_capture_retrieve_dashboard_and_list_events_redacts_before_write(tmp
     assert len(retrieve_envelope["payload"]["receipt"]["snapshot_hash"]) == 64
     assert retrieve_envelope["payload"]["receipt"]["returned_count"] == 1
     assert "sk-cli-secret" not in json.dumps(retrieve_envelope)
+    assert decision_capture_code == 0
+    assert decision_capture_envelope["payload"]["event"]["retrieval_receipt_refs"] == [
+        retrieve_envelope["payload"]["receipt"]["receipt_id"]
+    ]
     assert dashboard_code == 0
     assert dashboard_envelope["status"] == "dashboard_snapshot"
     assert dashboard_envelope["payload"]["snapshot_id"].startswith("note-memory-dashboard-")
     assert len(dashboard_envelope["payload"]["snapshot_hash"]) == 64
-    assert dashboard_envelope["payload"]["summary"]["event_count"] == 1
-    assert dashboard_envelope["payload"]["recent_notes"][0]["note_id"] == capture_envelope["payload"]["event"]["note_id"]
+    assert dashboard_envelope["payload"]["summary"]["event_count"] == 2
+    assert dashboard_envelope["payload"]["recent_notes"][0]["note_id"] == decision_capture_envelope["payload"]["event"]["note_id"]
+    assert dashboard_envelope["payload"]["recent_notes"][0]["retrieval_receipt_refs"] == [
+        retrieve_envelope["payload"]["receipt"]["receipt_id"]
+    ]
     assert list_code == 0
-    assert list_envelope["payload"]["count"] == 1
+    assert list_envelope["payload"]["count"] == 2
     assert "[REDACTED:" in list_envelope["payload"]["events"][0]["content_summary"]
+    assert list_envelope["payload"]["events"][1]["retrieval_receipt_refs"] == [
+        retrieve_envelope["payload"]["receipt"]["receipt_id"]
+    ]
 
 
 def test_cli_dashboard_rejects_unbounded_limit(tmp_path, capsys) -> None:
@@ -84,6 +118,43 @@ def test_cli_dashboard_rejects_unbounded_limit(tmp_path, capsys) -> None:
     assert dashboard_envelope["ok"] is False
     assert dashboard_envelope["status"] == "rejected"
     assert "dashboard limit" in dashboard_envelope["error"]
+
+
+def test_cli_rejects_malformed_retrieval_receipt_ref(tmp_path, capsys) -> None:
+    note_store = tmp_path / "notes"
+
+    capture_code = guarded_main(
+        [
+            "--note-store",
+            str(note_store),
+            "capture",
+            "--kind",
+            "DecisionRecord",
+            "--scope",
+            "task",
+            "--summary",
+            "CLI decision rejects arbitrary retrieval refs",
+            "--source-ref",
+            "test:cli-bad-retrieval-ref",
+            "--proof-state",
+            "Pass",
+            "--trust-zone",
+            "workspace",
+            "--evidence-ref",
+            "test_cli_rejects_malformed_retrieval_receipt_ref",
+            "--retrieval-receipt-ref",
+            "manual-note-ref",
+        ]
+    )
+    capture_envelope = _last_json(capsys)
+    list_code = guarded_main(["--note-store", str(note_store), "list-events"])
+    list_envelope = _last_json(capsys)
+
+    assert capture_code == 1
+    assert capture_envelope["status"] == "rejected"
+    assert "retrieval_receipt_ref must reference a note retrieval receipt" in capture_envelope["error"]
+    assert list_code == 0
+    assert list_envelope["payload"]["count"] == 0
 
 
 def test_cli_claim_contradiction_records_decision_evidence(tmp_path, capsys) -> None:

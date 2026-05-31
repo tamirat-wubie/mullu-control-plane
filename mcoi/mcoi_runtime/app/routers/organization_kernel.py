@@ -39,6 +39,7 @@ from mcoi_runtime.contracts.organization_kernel import (
     OrganizationRisk,
     PlanStep,
     PlanStepGateStatus,
+    PlanStepWorkerReceiptBinding,
 )
 from mcoi_runtime.contracts.terminal_closure import TerminalClosureDisposition
 from mcoi_runtime.core.invariants import RuntimeCoreInvariantError
@@ -63,6 +64,18 @@ class OrganizationCreateRequest(BaseModel):
 class OrganizationBootstrapRequest(BaseModel):
     tenant_id: str
     name: str
+    metadata: dict[str, Any] = Field(default_factory=dict)
+
+
+class WorkerReceiptBindRequest(BaseModel):
+    binding_id: str
+    requirement_id: str
+    worker_lease_id: str
+    dispatch_request_id: str
+    dispatch_receipt_id: str
+    worker_output_hash: str
+    receipt_evidence_refs: list[str]
+    admitted_evidence_ref: str
     metadata: dict[str, Any] = Field(default_factory=dict)
 
 
@@ -1071,6 +1084,42 @@ def evaluate_case_plan_step(case_id: str, step_id: str, req: PlanStepGateRequest
         raise HTTPException(400, detail=_error_detail("plan step gate rejected", "plan_step_gate_rejected")) from exc
     _persist_kernel(kernel)
     return {"decision": _body(decision), "governed": True}
+
+
+@router.post("/api/v1/cases/{case_id}/plan-steps/{step_id}/worker-receipt")
+def bind_plan_step_worker_receipt(case_id: str, step_id: str, req: WorkerReceiptBindRequest):
+    """Admit a bounded worker dispatch receipt as evidence for a plan step.
+
+    The receipt is produced by the governed worker mesh under its own lease and
+    budget controls; this endpoint only admits it as case evidence and never
+    grants dispatch authority or terminal closure.
+    """
+    _inc_metric("requests_governed")
+    kernel = _kernel()
+    try:
+        binding = kernel.bind_worker_receipt_evidence(
+            PlanStepWorkerReceiptBinding(
+                binding_id=req.binding_id,
+                case_id=case_id,
+                step_id=step_id,
+                requirement_id=req.requirement_id,
+                worker_lease_id=req.worker_lease_id,
+                dispatch_request_id=req.dispatch_request_id,
+                dispatch_receipt_id=req.dispatch_receipt_id,
+                worker_output_hash=req.worker_output_hash,
+                receipt_evidence_refs=tuple(req.receipt_evidence_refs),
+                admitted_evidence_ref=req.admitted_evidence_ref,
+                bound_at=_clock_now(),
+                metadata=req.metadata,
+            )
+        )
+    except (RuntimeCoreInvariantError, ValueError) as exc:
+        raise HTTPException(
+            400,
+            detail=_error_detail("worker receipt binding rejected", "worker_receipt_binding_rejected"),
+        ) from exc
+    _persist_kernel(kernel)
+    return {"worker_receipt_binding": _body(binding), "governed": True}
 
 
 @router.post("/api/v1/cases/{case_id}/close")

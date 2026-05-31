@@ -13,6 +13,7 @@ import subprocess
 import pytest
 
 from gateway.sandbox_runner import (
+    _DEFAULT_SECCOMP_PROFILE,
     DockerRootlessSandboxRunner,
     SandboxCommandRequest,
     SandboxRunnerProfile,
@@ -53,6 +54,12 @@ def test_sandbox_runner_builds_no_network_readonly_docker_command(tmp_path: Path
     assert docker_argv[:4] == ["docker", "run", "--rm", "--network"]
     assert "none" in docker_argv
     assert "--read-only" in docker_argv
+    assert "--cap-drop" in docker_argv
+    assert docker_argv[docker_argv.index("--cap-drop") + 1] == "ALL"
+    assert "no-new-privileges" in docker_argv
+    assert docker_argv[docker_argv.index("no-new-privileges") - 1] == "--security-opt"
+    assert f"seccomp={_DEFAULT_SECCOMP_PROFILE}" in docker_argv
+    assert docker_argv[docker_argv.index(f"seccomp={_DEFAULT_SECCOMP_PROFILE}") - 1] == "--security-opt"
     assert "--mount" in docker_argv
     assert f"type=bind,src={tmp_path.resolve()},dst=/workspace,rw" in docker_argv
     assert "--env" in docker_argv
@@ -61,6 +68,8 @@ def test_sandbox_runner_builds_no_network_readonly_docker_command(tmp_path: Path
     receipt = result.receipt
     assert receipt.network_disabled is True
     assert receipt.read_only_rootfs is True
+    assert receipt.capabilities_dropped is True
+    assert receipt.seccomp_profile_applied == _DEFAULT_SECCOMP_PROFILE
     assert receipt.workspace_mount == "/workspace"
     assert receipt.forbidden_effects_observed is False
     assert receipt.verification_status == "passed"
@@ -228,6 +237,68 @@ def test_sandbox_runner_timeout_receipt_witnesses_workspace_changes(tmp_path: Pa
 def test_sandbox_runner_rejects_networked_profile() -> None:
     with pytest.raises(ValueError, match="^sandbox network must be none$"):
         SandboxRunnerProfile(network="bridge")
+
+
+def test_sandbox_runner_rejects_profile_that_keeps_capabilities() -> None:
+    with pytest.raises(ValueError, match="^sandbox must drop all capabilities$"):
+        SandboxRunnerProfile(drop_all_capabilities=False)
+
+
+def test_sandbox_runner_rejects_seccomp_profile_with_control_characters() -> None:
+    with pytest.raises(ValueError, match="^seccomp_profile contains forbidden characters$"):
+        SandboxRunnerProfile(seccomp_profile="/etc/seccomp\nmalicious.json")
+
+
+def test_sandbox_runner_applies_pinned_seccomp_profile(tmp_path: Path) -> None:
+    captured: dict[str, object] = {}
+
+    def fake_runner(*args: object, **kwargs: object) -> subprocess.CompletedProcess[str]:
+        captured["argv"] = args[0]
+        return subprocess.CompletedProcess(args[0], 0, stdout="ok", stderr="")
+
+    runner = DockerRootlessSandboxRunner(
+        host_workspace_root=str(tmp_path),
+        profile=SandboxRunnerProfile(seccomp_profile="/profiles/strict.json"),
+        runner=fake_runner,
+        platform_system=lambda: "Linux",
+    )
+
+    result = runner.execute(
+        SandboxCommandRequest(
+            request_id="sandbox-request-seccomp",
+            tenant_id="tenant-1",
+            capability_id="computer.command.run",
+            argv=("python", "--version"),
+        )
+    )
+
+    docker_argv = captured["argv"]
+    assert "--cap-drop" in docker_argv
+    assert docker_argv[docker_argv.index("--cap-drop") + 1] == "ALL"
+    assert "seccomp=/profiles/strict.json" in docker_argv
+    assert f"seccomp={_DEFAULT_SECCOMP_PROFILE}" not in docker_argv
+    assert result.receipt.capabilities_dropped is True
+    assert result.receipt.seccomp_profile_applied == "/profiles/strict.json"
+
+
+def test_sandbox_runner_blocked_receipt_still_witnesses_hardening(tmp_path: Path) -> None:
+    runner = DockerRootlessSandboxRunner(
+        host_workspace_root=str(tmp_path),
+        platform_system=lambda: "Linux",
+    )
+
+    result = runner.execute(
+        SandboxCommandRequest(
+            request_id="sandbox-request-blocked-harden",
+            tenant_id="tenant-1",
+            capability_id="computer.command.run",
+            argv=("bash", "-lc", "echo unsafe"),
+        )
+    )
+
+    assert result.status == "blocked"
+    assert result.receipt.capabilities_dropped is True
+    assert result.receipt.seccomp_profile_applied == _DEFAULT_SECCOMP_PROFILE
 
 
 def test_sandbox_runner_rejects_host_root_workspace() -> None:

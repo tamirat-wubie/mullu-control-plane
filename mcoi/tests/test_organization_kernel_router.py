@@ -661,3 +661,52 @@ def test_default_routers_include_organization_kernel_paths() -> None:
     assert "/api/v1/cases/{case_id}/launch-gateway-pilot/readiness" in paths
     assert "/api/v1/cases/{case_id}/launch-gateway-pilot/readiness-closure" in paths
     assert "/api/v1/cases/{case_id}/close" in paths
+    assert "/api/v1/cases/{case_id}/plan-steps/{step_id}/worker-receipt" in paths
+
+
+def test_worker_receipt_endpoint_admits_evidence_for_plan_step(tmp_path: Path) -> None:
+    client, store = _client(tmp_path)
+    _bootstrap_and_open_pilot(client)
+
+    response = client.post(
+        "/api/v1/cases/case.launch_gateway_pilot/plan-steps/engineering_runtime_witness/worker-receipt",
+        json={
+            "binding_id": "binding.eng.health",
+            "requirement_id": "engineering_health_endpoint",
+            "worker_lease_id": "lease.eng.gateway",
+            "dispatch_request_id": "req.eng.health",
+            "dispatch_receipt_id": "receipt.eng.health",
+            "worker_output_hash": "hash-health",
+            "receipt_evidence_refs": ["worker-evidence:/health"],
+            "admitted_evidence_ref": "evidence:engineering_health_endpoint",
+        },
+    )
+    events = client.get("/api/v1/cases/case.launch_gateway_pilot/events").json()["events"]
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["governed"] is True
+    assert body["worker_receipt_binding"]["requirement_id"] == "engineering_health_endpoint"
+    assert any(event["event_type"] == "plan_step_worker_receipt_bound" for event in events)
+    assert store.exists()
+
+
+def test_worker_receipt_endpoint_rejects_requirement_outside_plan_step(tmp_path: Path) -> None:
+    client, _store = _client(tmp_path)
+    _bootstrap_and_open_pilot(client)
+
+    response = client.post(
+        "/api/v1/cases/case.launch_gateway_pilot/plan-steps/engineering_runtime_witness/worker-receipt",
+        json={
+            "binding_id": "binding.bad",
+            "requirement_id": "finance_budget_check",
+            "worker_lease_id": "lease.x",
+            "dispatch_request_id": "req.x",
+            "dispatch_receipt_id": "receipt.x",
+            "worker_output_hash": "hash-x",
+            "receipt_evidence_refs": ["worker-evidence:budget"],
+            "admitted_evidence_ref": "evidence:finance_budget_check",
+        },
+    )
+
+    assert response.status_code == 400

@@ -25,9 +25,12 @@ runtime does not yet behave as intended by the architecture specification.
 
 ## Integration Adapters
 
-- **No real SMTP testing in CI:** SMTP connector logic is unit-tested with mocks.
-  Sending actual email requires a live SMTP server (e.g. containerized MailHog),
-  which is not part of the CI environment.
+- **SMTP testing runs nightly, not per-PR:** SMTP connector logic is unit-tested
+  with mocks in the per-commit pipeline. Real email sending is exercised in CI by
+  the scheduled "Nightly Infrastructure Certification" workflow
+  (`.github/workflows/nightly.yml`), which runs the `infra_smtp` certification
+  tests against a containerized MailHog service. SMTP regressions therefore
+  surface on the nightly cadence rather than on every commit.
 - **Governed capability fabric is present, but live production evidence remains
   the promotion boundary:** Browser, document, voice, email/calendar, connector,
   sandboxed computer, operator capability UI, multi-agent delegation, and

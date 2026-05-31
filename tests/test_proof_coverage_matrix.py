@@ -602,7 +602,7 @@ def test_orgos_case_governance_lifecycle_surface_is_proven() -> None:
         == "orgos_case_governance_lifecycle"
     )
     assert route_records["/api/v1/orgos/read-model"]["coverage_state"] == "proven"
-    assert witness_records["orgos_case_governance_lifecycle"]["exact_test_anchor_count"] == 18
+    assert witness_records["orgos_case_governance_lifecycle"]["exact_test_anchor_count"] == 19
 
 
 def test_webhooks_proof_surface_is_witnessed() -> None:

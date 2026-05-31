@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:finding-receipt:1",
+  "title": "Finding Receipt",
+  "description": "A self-audit finding. Admitted only if reproducible_command re-runs and satisfies expect. No reproducible evidence -> not a finding.",
+  "type": "object",
+  "required": ["id", "claim", "reproducible_command", "expect", "severity"],
+  "additionalProperties": false,
+  "properties": {
+    "id": {"type": "string", "description": "stable identifier for the finding"},
+    "claim": {"type": "string", "description": "human-readable assertion being made"},
+    "reproducible_command": {"type": "array", "items": {"type": "string"}, "minItems": 1, "description": "argv array (executable + args) an independent verifier re-runs without a shell"},
+    "expect": {
+      "type": "object",
+      "required": ["mode"],
+      "additionalProperties": false,
+      "properties": {
+        "mode": {
+          "type": "string",
+          "enum": ["exit_zero", "exit_nonzero", "stdout_contains", "stdout_not_contains", "stdout_sha256"]
+        },
+        "value": {"type": "string", "description": "comparison operand (substring or sha256); omit for exit_* modes"}
+      }
+    },
+    "file": {"type": "string", "description": "file:line locus of the finding, if applicable"},
+    "severity": {"type": "string", "enum": ["info", "low", "medium", "high", "block"]},
+    "proposed_fix": {"type": "string", "description": "what the enhancer would change"}
+  }
+}

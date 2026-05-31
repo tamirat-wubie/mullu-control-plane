@@ -25,6 +25,7 @@ from mcoi_runtime.contracts.organization_kernel import (
     PlanStep,
     PlanStepGateDecision,
     PlanStepGateStatus,
+    PlanStepWorkerReceiptBinding,
 )
 from mcoi_runtime.contracts.terminal_closure import TerminalClosureDisposition
 from mcoi_runtime.core.invariants import RuntimeCoreInvariantError
@@ -334,3 +335,127 @@ def test_allowed_step_gate_contract_requires_authority_and_evidence() -> None:
         )
     assert PlanStepGateStatus.ALLOWED.value == "allowed"
     assert PlanStepGateStatus.BLOCKED.value == "blocked"
+
+
+_ENGINEERING_WITNESS_REQUIREMENTS = (
+    ("engineering_health_endpoint", "/health"),
+    ("engineering_gateway_witness", "/gateway/witness"),
+    ("engineering_runtime_conformance", "/runtime/conformance"),
+)
+
+
+def _bind_engineering_worker_receipts(kernel: OrganizationKernel, case_id: str) -> None:
+    for requirement_id, route in _ENGINEERING_WITNESS_REQUIREMENTS:
+        kernel.bind_worker_receipt_evidence(
+            PlanStepWorkerReceiptBinding(
+                binding_id=f"binding.{requirement_id}",
+                case_id=case_id,
+                step_id="engineering_runtime_witness",
+                requirement_id=requirement_id,
+                worker_lease_id="lease.eng.gateway",
+                dispatch_request_id=f"req.{requirement_id}",
+                dispatch_receipt_id=f"receipt.{requirement_id}",
+                worker_output_hash=f"hash-{requirement_id}",
+                receipt_evidence_refs=(f"worker-evidence:{route}",),
+                admitted_evidence_ref=f"evidence:{requirement_id}",
+                bound_at="2026-05-27T17:03:00+00:00",
+            )
+        )
+
+
+def test_worker_receipts_satisfy_engineering_gate_evidence() -> None:
+    kernel, plan = _pilot()
+    _bind_engineering_worker_receipts(kernel, plan.case_id)
+
+    decision = kernel.evaluate_plan_step(
+        case_id=plan.case_id,
+        step_id="engineering_runtime_witness",
+        checked_preconditions=("launch_boundary_defined",),
+    )
+
+    assert decision.status is PlanStepGateStatus.ALLOWED
+    assert decision.reason == "allowed"
+    assert set(decision.evidence_refs) == {
+        "evidence:engineering_health_endpoint",
+        "evidence:engineering_gateway_witness",
+        "evidence:engineering_runtime_conformance",
+    }
+
+
+def test_worker_receipt_admitted_as_case_evidence_with_provenance() -> None:
+    kernel, plan = _pilot()
+    binding = kernel.bind_worker_receipt_evidence(
+        PlanStepWorkerReceiptBinding(
+            binding_id="binding.eng.health",
+            case_id=plan.case_id,
+            step_id="engineering_runtime_witness",
+            requirement_id="engineering_health_endpoint",
+            worker_lease_id="lease.eng.gateway",
+            dispatch_request_id="req.eng.health",
+            dispatch_receipt_id="receipt.eng.health",
+            worker_output_hash="hash-health",
+            receipt_evidence_refs=("worker-evidence:/health",),
+            admitted_evidence_ref="evidence:engineering_health_endpoint",
+            bound_at="2026-05-27T17:03:00+00:00",
+        )
+    )
+
+    state = kernel.snapshot_state()
+    assert binding in state.worker_receipt_bindings
+    admitted = [e for e in state.case_evidence if e.evidence_ref == "evidence:engineering_health_endpoint"]
+    assert len(admitted) == 1
+    assert admitted[0].requirement_id == "engineering_health_endpoint"
+    assert admitted[0].submitted_by == "worker_mesh:lease.eng.gateway"
+    assert admitted[0].metadata["source"] == "worker_dispatch_receipt"
+    assert admitted[0].metadata["dispatch_receipt_id"] == "receipt.eng.health"
+    assert admitted[0].metadata["worker_receipt_is_terminal_closure"] is False
+    bound_events = [e for e in kernel.list_case_events(plan.case_id) if e.event_type == "plan_step_worker_receipt_bound"]
+    assert len(bound_events) == 1
+
+
+def test_worker_receipt_contract_requires_receipt_evidence_refs() -> None:
+    with pytest.raises(ValueError, match="at least one item"):
+        PlanStepWorkerReceiptBinding(
+            binding_id="binding.empty",
+            case_id="case.launch_gateway_pilot",
+            step_id="engineering_runtime_witness",
+            requirement_id="engineering_health_endpoint",
+            worker_lease_id="lease.x",
+            dispatch_request_id="req.x",
+            dispatch_receipt_id="receipt.x",
+            worker_output_hash="hash-x",
+            receipt_evidence_refs=(),
+            admitted_evidence_ref="evidence:engineering_health_endpoint",
+            bound_at="2026-05-27T17:03:00+00:00",
+        )
+
+
+def test_worker_receipt_rejects_requirement_outside_plan_step() -> None:
+    kernel, plan = _pilot()
+    with pytest.raises(RuntimeCoreInvariantError):
+        kernel.bind_worker_receipt_evidence(
+            PlanStepWorkerReceiptBinding(
+                binding_id="binding.cross",
+                case_id=plan.case_id,
+                step_id="engineering_runtime_witness",
+                requirement_id="finance_budget_check",
+                worker_lease_id="lease.x",
+                dispatch_request_id="req.x",
+                dispatch_receipt_id="receipt.x",
+                worker_output_hash="hash-x",
+                receipt_evidence_refs=("worker-evidence:budget",),
+                admitted_evidence_ref="evidence:finance_budget_check",
+                bound_at="2026-05-27T17:03:00+00:00",
+            )
+        )
+
+
+def test_worker_receipt_binding_survives_state_round_trip() -> None:
+    kernel, plan = _pilot()
+    _bind_engineering_worker_receipts(kernel, plan.case_id)
+    state = kernel.snapshot_state()
+
+    restored = OrganizationKernel(clock=_clock())
+    restored.restore_state(state)
+
+    assert restored.snapshot_state() == state

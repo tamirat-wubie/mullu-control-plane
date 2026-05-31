@@ -2845,6 +2845,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "/api/v1/cases/{case_id}/launch-gateway-pilot/readiness-closure",
                 "/api/v1/cases/{case_id}/plan",
                 "/api/v1/cases/{case_id}/plan-steps/{step_id}/gate",
+                "/api/v1/cases/{case_id}/plan-steps/{step_id}/worker-receipt",
                 "/api/v1/cases/{case_id}/close",
                 "/api/v1/orgos/read-model",
                 "/api/v1/orgos/replay",
@@ -2861,10 +2862,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "mcoi/mcoi_runtime/persistence/organization_kernel_store.py",
                 "tests/test_gateway/test_orgos_api.py",
                 "tests/test_gateway/test_orgos_kernel.py",
+                "mcoi/tests/test_organization_kernel.py",
                 "mcoi/tests/test_organization_kernel_router.py",
                 "mcoi/tests/test_organization_kernel_store.py",
             ],
-            "OrgOS lifecycle routes register organization authority, departments, governed cases, evidence events, plan gates, closure decisions, and replayed read models without worker dispatch authority.",
+            "OrgOS lifecycle routes register organization authority, departments, governed cases, evidence events, plan gates, closure decisions, replayed read models, and admit bounded worker dispatch receipts as plan-step evidence without holding worker dispatch authority.",
             [
                 "orgos_api_runs_launch_gateway_case_control_loop",
                 "orgos_api_denies_unbound_authority_gate",
@@ -2884,6 +2886,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "launch_gateway_pilot_readiness_packet_closes_after_verified_witness",
                 "launch_gateway_pilot_readiness_packet_blocks_without_engineering_witness",
                 "jsonl_case_event_log_preserves_hash_chain",
+                "worker_receipts_satisfy_engineering_gate_evidence",
             ],
         ),
         _surface(

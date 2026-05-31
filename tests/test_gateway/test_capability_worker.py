@@ -115,6 +115,8 @@ class StubSandboxRunner:
             returncode=0,
             network_disabled=True,
             read_only_rootfs=True,
+            capabilities_dropped=True,
+            seccomp_profile_applied="bundled-default",
             workspace_mount="/workspace",
             forbidden_effects_observed=False,
             changed_file_count=0,

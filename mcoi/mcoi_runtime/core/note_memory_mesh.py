@@ -198,6 +198,17 @@ def _validate_symbol_identifier(value: str, field_name: str) -> str:
     return text
 
 
+def _validate_retrieval_receipt_id(value: str, field_name: str = "retrieval_receipt_ref") -> str:
+    text = _validate_symbol_identifier(str(value), field_name)
+    if not text.startswith("note-retrieval-"):
+        raise RuntimeCoreInvariantError(f"{field_name} must reference a note retrieval receipt")
+    return text
+
+
+def _validate_retrieval_receipt_refs(values: Iterable[str]) -> tuple[str, ...]:
+    return _unique_text_tuple(_validate_retrieval_receipt_id(value) for value in values)
+
+
 def _validate_optional_claim(claim_key: str, claim_value: str) -> tuple[str, str]:
     key = str(claim_key or "").strip()
     value = str(claim_value or "").strip()
@@ -345,6 +356,7 @@ class NoteMemoryEvent:
     expires_at: str | None = None
     evidence_refs: tuple[str, ...] = ()
     relation_refs: tuple[str, ...] = ()
+    retrieval_receipt_refs: tuple[str, ...] = ()
     claim_key: str = ""
     claim_value: str = ""
     checksum: str = ""
@@ -370,6 +382,11 @@ class NoteMemoryEvent:
             raise RuntimeCoreInvariantError("promote action requires ProofState Pass")
         if self.action in {NoteAction.SUPERSEDE, NoteAction.CONTRADICT} and not self.relation_refs:
             raise RuntimeCoreInvariantError(f"{self.action.value} action requires relation_refs")
+        object.__setattr__(
+            self,
+            "retrieval_receipt_refs",
+            _validate_retrieval_receipt_refs(self.retrieval_receipt_refs),
+        )
         claim_key, claim_value = _validate_optional_claim(self.claim_key, self.claim_value)
         object.__setattr__(self, "claim_key", claim_key)
         object.__setattr__(self, "claim_value", claim_value)
@@ -397,6 +414,8 @@ class NoteMemoryEvent:
             "evidence_refs": list(self.evidence_refs),
             "relation_refs": list(self.relation_refs),
         }
+        if self.retrieval_receipt_refs:
+            value["retrieval_receipt_refs"] = list(self.retrieval_receipt_refs)
         if self.claim_key and self.claim_value:
             value["claim_key"] = self.claim_key
             value["claim_value"] = self.claim_value
@@ -437,6 +456,9 @@ class NoteMemoryEvent:
             expires_at=str(value["expires_at"]) if value.get("expires_at") else None,
             evidence_refs=_tuple_text(value.get("evidence_refs") if isinstance(value.get("evidence_refs"), list) else ()),
             relation_refs=_tuple_text(value.get("relation_refs") if isinstance(value.get("relation_refs"), list) else ()),
+            retrieval_receipt_refs=_tuple_text(
+                value.get("retrieval_receipt_refs") if isinstance(value.get("retrieval_receipt_refs"), list) else ()
+            ),
             claim_key=str(value.get("claim_key", "")),
             claim_value=str(value.get("claim_value", "")),
             checksum=str(value.get("checksum", "")),
@@ -457,6 +479,7 @@ class NoteMemoryDraft:
     note_id: str = ""
     evidence_refs: tuple[str, ...] = ()
     relation_refs: tuple[str, ...] = ()
+    retrieval_receipt_refs: tuple[str, ...] = ()
     claim_key: str = ""
     claim_value: str = ""
     action: NoteAction = NoteAction.CREATE
@@ -508,6 +531,9 @@ class RetrievalReceipt:
     returned_event_ids: tuple[str, ...]
     snapshot_hash: str
     proof_state: ProofState
+
+    def __post_init__(self) -> None:
+        _validate_retrieval_receipt_id(self.receipt_id, "receipt_id")
 
 
 @dataclass(frozen=True)
@@ -980,6 +1006,8 @@ class NoteMemoryMesh:
             "evidence_refs": list(event.evidence_refs),
             "relation_refs": list(event.relation_refs),
         }
+        if event.retrieval_receipt_refs:
+            row["retrieval_receipt_refs"] = list(event.retrieval_receipt_refs)
         if event.claim_key and event.claim_value:
             row["claim_key"] = event.claim_key
             row["claim_value"] = event.claim_value
@@ -1195,6 +1223,7 @@ class NoteMemoryMesh:
         redacted_summary = redact_sensitive_text(draft.content_summary.strip())
         redacted_source = redact_sensitive_text(draft.source_ref.strip())
         redacted_evidence = _redact_sequence(draft.evidence_refs)
+        redacted_retrieval_receipts = _redact_sequence(draft.retrieval_receipt_refs)
         claim_key, claim_value = _validate_optional_claim(draft.claim_key, draft.claim_value)
         note_id = _validate_symbol_identifier(draft.note_id, "note_id") if draft.note_id.strip() else stable_identifier(
             "note",
@@ -1221,6 +1250,7 @@ class NoteMemoryMesh:
             expires_at=draft.expires_at,
             evidence_refs=redacted_evidence,
             relation_refs=_tuple_text(draft.relation_refs),
+            retrieval_receipt_refs=redacted_retrieval_receipts,
             claim_key=claim_key,
             claim_value=claim_value,
         )

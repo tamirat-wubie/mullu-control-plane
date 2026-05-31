@@ -9,7 +9,10 @@ Invariants:
   - Timing-safe comparison on all paths (no timing side-channels).
   - Replay protection with configurable timestamp window.
   - Fail-closed: verification fails if secret is configured but missing.
-  - Fail-open only when no secret is configured (opt-in security).
+  - Fail-open only when no secret is configured (opt-in security). Construct
+    with ``strict=True`` to fail closed on unconfigured channels/secrets, so a
+    caller that only inspects ``verified`` cannot be bypassed by a missing
+    channel registration or secret.
   - Thread-safe — concurrent webhook threads are safe.
 """
 
@@ -80,9 +83,11 @@ class WebhookVerifier:
         self,
         *,
         clock: Callable[[], float] | None = None,
+        strict: bool = False,
     ) -> None:
         self._configs: dict[str, ChannelVerifierConfig] = {}
         self._clock = clock or time.time
+        self._strict = strict
         self._lock = threading.Lock()
         self._verified_count = 0
         self._rejected_count = 0
@@ -99,6 +104,28 @@ class WebhookVerifier:
         """Record a bounded verification rejection reason for audit summaries."""
         self._rejected_count += 1
         self._reject_reasons[reason_code] = self._reject_reasons.get(reason_code, 0) + 1
+
+    def _skip_or_reject(self, channel: str, reason: str) -> VerificationResult:
+        """Resolve an unconfigured/unsupported channel verification.
+
+        Default mode is opt-in security: return a pass that carries
+        ``skip_reason`` so a caller inspecting it can distinguish a skipped
+        check from a real verification. Strict mode fails closed — an
+        unconfigured verification becomes a rejection, so a caller that only
+        reads ``verified`` cannot be bypassed by a missing channel
+        registration, secret, or unsupported method.
+        """
+        if self._strict:
+            self._record_reject(reason)
+            return VerificationResult(
+                verified=False, channel=channel,
+                error=f"verification not configured: {reason}",
+                reject_reason=reason,
+            )
+        self._record_skip(reason)
+        return VerificationResult(
+            verified=True, channel=channel, skip_reason=reason,
+        )
 
     def register(self, channel: str, config: ChannelVerifierConfig) -> None:
         """Register a channel's verification configuration."""
@@ -157,16 +184,10 @@ class WebhookVerifier:
         """
         config = self._configs.get(channel)
         if config is None:
-            self._record_skip("channel_not_configured")
-            return VerificationResult(
-                verified=True, channel=channel, skip_reason="channel_not_configured",
-            )  # Not configured — pass
+            return self._skip_or_reject(channel, "channel_not_configured")
 
         if not config.secret:
-            self._record_skip("secret_not_configured")
-            return VerificationResult(
-                verified=True, channel=channel, skip_reason="secret_not_configured",
-            )  # No secret — pass
+            return self._skip_or_reject(channel, "secret_not_configured")
 
         if not signature:
             self._record_reject("missing_signature")
@@ -243,16 +264,10 @@ class WebhookVerifier:
         """
         config = self._configs.get(channel)
         if config is None:
-            self._record_skip("channel_not_configured")
-            return VerificationResult(
-                verified=True, channel=channel, skip_reason="channel_not_configured",
-            )
+            return self._skip_or_reject(channel, "channel_not_configured")
 
         if not config.secret:
-            self._record_skip("secret_not_configured")
-            return VerificationResult(
-                verified=True, channel=channel, skip_reason="secret_not_configured",
-            )
+            return self._skip_or_reject(channel, "secret_not_configured")
 
         if not signature:
             self._record_reject("missing_signature")
@@ -302,16 +317,10 @@ class WebhookVerifier:
         """
         config = self._configs.get(channel)
         if config is None:
-            self._record_skip("channel_not_configured")
-            return VerificationResult(
-                verified=True, channel=channel, skip_reason="channel_not_configured",
-            )
+            return self._skip_or_reject(channel, "channel_not_configured")
 
         if not config.secret:
-            self._record_skip("secret_not_configured")
-            return VerificationResult(
-                verified=True, channel=channel, skip_reason="secret_not_configured",
-            )
+            return self._skip_or_reject(channel, "secret_not_configured")
 
         if not provided_token:
             self._record_reject("missing_token")
@@ -350,10 +359,7 @@ class WebhookVerifier:
         """Auto-dispatch to the correct verification method based on channel config."""
         config = self._configs.get(channel)
         if config is None:
-            self._record_skip("channel_not_configured")
-            return VerificationResult(
-                verified=True, channel=channel, skip_reason="channel_not_configured",
-            )
+            return self._skip_or_reject(channel, "channel_not_configured")
 
         if config.method == VerificationMethod.HMAC_SHA256:
             return self.verify_hmac(
@@ -369,10 +375,7 @@ class WebhookVerifier:
         elif config.method == VerificationMethod.TOKEN_COMPARE:
             return self.verify_token(channel=channel, provided_token=token)
 
-        self._record_skip("method_not_supported")
-        return VerificationResult(
-            verified=True, channel=channel, skip_reason="method_not_supported",
-        )
+        return self._skip_or_reject(channel, "method_not_supported")
 
     @property
     def verified_count(self) -> int:

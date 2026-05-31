@@ -60,7 +60,11 @@ Retrieval surfaces are read-only but return a deterministic `receipt` with
 `receipt_id`, `snapshot_hash`, query terms, guard fields, returned note IDs,
 returned event IDs, and event/materialized counts. The receipt lets downstream
 actions prove which notes influenced a decision without writing a retrieval
-event into the append-only store.
+event into the append-only store. Later captured notes can cite those witnesses
+through `retrieval_receipt_refs`, preserving the difference between read-only
+retrieval and append-only decision capture. Retrieval receipt references are
+validated as bounded `note-retrieval-*` identifiers; arbitrary text is rejected
+before persistence.
 
 Episode capsules write a structured sidecar under the configured note-memory
 store and append one `EpisodeCapsule` lineage event. Capsules with

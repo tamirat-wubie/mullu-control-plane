@@ -46,6 +46,27 @@ class ConformanceStatus(StrEnum):
     NON_CONFORMANT = "non_conformant"
 
 
+class ConformanceClass(StrEnum):
+    """Declared conformance class for a runtime certificate (I-PRED-34).
+
+    The class is DERIVED from the certificate's own evidence, never hand-set,
+    so a deployment cannot claim a class its canaries do not support:
+
+      - CLASS_A (full): every core canary passes AND zero conformance gaps.
+        The deployment asserts full runtime conformance.
+      - CLASS_B (partial): every core canary passes BUT one or more gaps are
+        open. Runtime governance is live; some non-core surfaces are not yet
+        witnessed.
+      - CLASS_C (reference): a core canary failed, or a witness is invalid.
+        The certificate is a reference/diagnostic artifact only and does not
+        assert runtime conformance.
+    """
+
+    CLASS_A = "class_a"
+    CLASS_B = "class_b"
+    CLASS_C = "class_c"
+
+
 @dataclass(frozen=True, slots=True)
 class ConformanceCheck:
     """Single witnessed conformance check result."""
@@ -113,6 +134,7 @@ class RuntimeConformanceCertificate:
     security_model_aligned: bool
     open_conformance_gaps: tuple[str, ...]
     terminal_status: ConformanceStatus
+    conformance_class: ConformanceClass
     evidence_refs: tuple[str, ...]
     checks: tuple[ConformanceCheck, ...] = field(default_factory=tuple)
     signature_key_id: str = "runtime-conformance-v1"
@@ -122,6 +144,7 @@ class RuntimeConformanceCertificate:
         """Return a JSON-serializable certificate payload."""
         payload = asdict(self)
         payload["terminal_status"] = self.terminal_status.value
+        payload["conformance_class"] = self.conformance_class.value
         payload["open_conformance_gaps"] = list(self.open_conformance_gaps)
         payload["evidence_refs"] = list(self.evidence_refs)
         payload["checks"] = [asdict(check) for check in self.checks]
@@ -375,6 +398,7 @@ def issue_conformance_certificate(
             proof_coverage_declared_routes_classified,
         ),
     )
+    conformance_class = _decide_class(status)
     unsigned = RuntimeConformanceCertificate(
         certificate_id="",
         environment=environment,
@@ -415,6 +439,7 @@ def issue_conformance_certificate(
         security_model_aligned=security_model_aligned,
         open_conformance_gaps=tuple(gaps),
         terminal_status=status,
+        conformance_class=conformance_class,
         evidence_refs=tuple(check.evidence_ref for check in checks if check.evidence_ref),
         checks=tuple(checks),
         signature_key_id=signature_key_id,
@@ -426,6 +451,7 @@ def issue_conformance_certificate(
                 **unsigned.to_json_dict(),
                 "certificate_id": certificate_id,
                 "terminal_status": status,
+                "conformance_class": conformance_class,
                 "checks": tuple(checks),
                 "open_conformance_gaps": tuple(gaps),
                 "evidence_refs": tuple(check.evidence_ref for check in checks if check.evidence_ref),
@@ -859,6 +885,22 @@ def _decide_status(
     return ConformanceStatus.CONFORMANT
 
 
+def _decide_class(status: ConformanceStatus) -> ConformanceClass:
+    """Derive the declared conformance class from the terminal status.
+
+    The class is a strict function of status so it can never over-claim:
+      conformant            -> CLASS_A (full)
+      conformant_with_gaps  -> CLASS_B (partial; core canaries pass, gaps open)
+      degraded              -> CLASS_C (reference; a core canary failed)
+      non_conformant        -> CLASS_C (reference; a witness is invalid)
+    """
+    if status is ConformanceStatus.CONFORMANT:
+        return ConformanceClass.CLASS_A
+    if status is ConformanceStatus.CONFORMANT_WITH_GAPS:
+        return ConformanceClass.CLASS_B
+    return ConformanceClass.CLASS_C
+
+
 def _sign_certificate(
     certificate: RuntimeConformanceCertificate,
     *,
@@ -875,6 +917,7 @@ def _sign_certificate(
         **{
             **certificate.to_json_dict(),
             "terminal_status": certificate.terminal_status,
+            "conformance_class": certificate.conformance_class,
             "checks": certificate.checks,
             "open_conformance_gaps": certificate.open_conformance_gaps,
             "evidence_refs": certificate.evidence_refs,

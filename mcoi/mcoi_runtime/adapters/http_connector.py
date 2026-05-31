@@ -6,6 +6,7 @@ Invariants:
   - URL normalization before scope check.
   - DNS resolution checked against private IP ranges (anti-rebinding).
   - Redirect following disabled (anti-SSRF via redirect).
+  - Request JSON bodies are deterministic, bounded, and digest-only in receipts.
   - Response size limits.
   - Content-type checks.
   - Status-code mapping into typed results.
@@ -57,7 +58,7 @@ class HttpConnectorConfig:
     timeout_seconds: float = 30.0
     read_timeout_seconds: float = 60.0  # Max time for response body read
     max_response_bytes: int = 10 * 1024 * 1024  # 10MB
-    max_request_body_bytes: int = 64 * 1024  # 64KB
+    max_request_body_bytes: int = 1 * 1024 * 1024  # 1MB
     allowed_methods: tuple[str, ...] = ("GET",)
     allowed_content_types: tuple[str, ...] = ()  # empty = no restriction
     allowed_headers: tuple[str, ...] = ()  # headers to forward from request
@@ -238,23 +239,35 @@ def _sha256_text(text: str) -> str:
     return hashlib.sha256(text.encode("utf-8", errors="replace")).hexdigest()
 
 
-def _sha256_bytes(value: bytes) -> str:
-    return hashlib.sha256(value).hexdigest()
+def _encode_json_body(value: Any, *, max_bytes: int) -> tuple[bytes, str]:
+    """Encode a deterministic JSON request body and return bytes + digest."""
 
-
-def _json_request_bytes(json_body: object, max_request_body_bytes: int) -> bytes:
     try:
         encoded = json.dumps(
-            json_body,
-            ensure_ascii=False,
+            value,
             sort_keys=True,
+            ensure_ascii=True,
             separators=(",", ":"),
+            allow_nan=False,
         ).encode("utf-8")
     except (TypeError, ValueError) as exc:
-        raise ValueError(f"json_body_not_serializable:{type(exc).__name__}") from exc
-    if len(encoded) > max_request_body_bytes:
-        raise ValueError(f"request_body_too_large:{len(encoded)}")
-    return encoded
+        raise ValueError("json_body must be deterministic JSON") from exc
+    if len(encoded) > max_bytes:
+        raise ValueError(f"json_body_too_large:{len(encoded)}")
+    return encoded, hashlib.sha256(encoded).hexdigest()
+
+
+def _request_hash_payload(*, url: str, method: str, request: dict) -> dict[str, Any]:
+    headers = sorted((request.get("headers") or {}).keys()) if isinstance(request.get("headers"), dict) else ()
+    payload: dict[str, Any] = {
+        "url": url,
+        "method": method,
+        "headers": headers,
+    }
+    body_digest = request.get("body_digest")
+    if body_digest:
+        payload["body_digest"] = str(body_digest)
+    return payload
 
 
 def _build_connector_receipt(
@@ -271,12 +284,7 @@ def _build_connector_receipt(
     status_code: int | None = None,
     error_code: str | None = None,
 ) -> ConnectorInvocationReceipt:
-    request_hash = _sha256_text(str({
-        "url": url,
-        "method": method,
-        "headers": sorted((request.get("headers") or {}).keys()) if isinstance(request.get("headers"), dict) else (),
-        "json_body_digest": request.get("json_body_digest"),
-    }))
+    request_hash = _sha256_text(str(_request_hash_payload(url=url, method=method, request=request)))
     receipt_id = stable_identifier(
         "connector-invocation-receipt",
         {
@@ -337,7 +345,7 @@ class HttpConnector:
           - url: str (required)
           - method: str (optional, default GET, must be in allowed_methods)
           - headers: dict[str, str] (optional, filtered by allowed_headers)
-          - json_body: JSON-serializable object (optional, bounded, POST use)
+          - json_body: JSON-compatible value (optional, not allowed for GET/HEAD)
         """
         return self._invoke(connector, request, capture_body=False).connector_result
 
@@ -437,7 +445,8 @@ class HttpConnector:
         method = request.get("method", "GET").upper()
         request_headers = request.get("headers", {})
         request_body: bytes | None = None
-        request_body_digest: str | None = None
+        body_digest: str | None = None
+        receipt_request = request
 
         result_id = stable_identifier("http-result", {
             "connector_id": connector.connector_id,
@@ -470,38 +479,35 @@ class HttpConnector:
             self._policy.allowed_content_types if self._policy else self._config.allowed_content_types
         )
         if "json_body" in request:
-            content_type = "application/json"
-            if effective_content_types:
-                allowed_content_types = tuple(t.lower() for t in effective_content_types)
-                if content_type not in allowed_content_types:
-                    return self._raw_result(
-                        self._failure(
-                            result_id,
-                            connector,
-                            method,
-                            url,
-                            request,
-                            started_at,
-                            f"request_content_type_not_allowed:{content_type}",
-                        )
+            if method in {"GET", "HEAD"}:
+                return self._raw_result(
+                    self._failure(
+                        result_id,
+                        connector,
+                        method,
+                        url,
+                        request,
+                        started_at,
+                        f"json_body_not_allowed_for_method:{method}",
                     )
+                )
             try:
-                request_body = _json_request_bytes(
+                request_body, body_digest = _encode_json_body(
                     request["json_body"],
-                    self._config.max_request_body_bytes,
+                    max_bytes=self._config.max_request_body_bytes,
                 )
             except ValueError as exc:
                 return self._raw_result(
                     self._failure(result_id, connector, method, url, request, started_at, str(exc))
                 )
-            request_body_digest = _sha256_bytes(request_body)
+            receipt_request = {**request, "body_digest": body_digest}
 
         # URL normalization
         try:
             normalized_url = _normalize_url(url)
         except (ValueError, TypeError):
             return self._raw_result(
-                self._failure(result_id, connector, method, url, request, started_at, "malformed_url")
+                self._failure(result_id, connector, method, url, receipt_request, started_at, "malformed_url")
             )
 
         # SSRF protection: block private/loopback/metadata addresses
@@ -512,7 +518,7 @@ class HttpConnector:
         is_private, pinned_ip = _resolve_and_check(normalized_url)
         if is_private or pinned_ip is None:
             return self._raw_result(
-                self._failure(result_id, connector, method, normalized_url, request, started_at,
+                self._failure(result_id, connector, method, normalized_url, receipt_request, started_at,
                               "blocked_private_address")
             )
 
@@ -568,7 +574,7 @@ class HttpConnector:
                             connector=connector,
                             method=method,
                             url=normalized_url,
-                            request=self._sanitized_receipt_request(request, request_body_digest),
+                            request=self._sanitized_receipt_request(request, body_digest),
                             response_digest="none",
                             status=ConnectorStatus.TIMEOUT,
                             started_at=started_at,
@@ -608,7 +614,7 @@ class HttpConnector:
                     connector=connector,
                     method=method,
                     url=normalized_url,
-                    request=self._sanitized_receipt_request(request, request_body_digest),
+                    request=self._sanitized_receipt_request(request, body_digest),
                     response_digest=digest,
                     status=status,
                     started_at=started_at,
@@ -631,6 +637,7 @@ class HttpConnector:
                             "status_code": response.status,
                             "content_type": content_type,
                             "content_length": len(body),
+                            "request_body_digest": body_digest,
                             "connector_receipt": receipt.to_json_dict(),
                         },
                     ),
@@ -653,7 +660,7 @@ class HttpConnector:
                 connector=connector,
                 method=method,
                 url=url,
-                request=self._sanitized_receipt_request(request, request_body_digest),
+                request=self._sanitized_receipt_request(request, body_digest),
                 response_digest="none",
                 status=ConnectorStatus.TIMEOUT,
                 started_at=started_at,
@@ -691,13 +698,13 @@ class HttpConnector:
     def _sanitized_receipt_request(
         self,
         request: dict,
-        json_body_digest: str | None,
+        body_digest: str | None,
     ) -> dict:
         sanitized = {
             "headers": request.get("headers") if isinstance(request.get("headers"), dict) else {},
         }
-        if json_body_digest is not None:
-            sanitized["json_body_digest"] = json_body_digest
+        if body_digest is not None:
+            sanitized["body_digest"] = body_digest
         return sanitized
 
     def _failure(

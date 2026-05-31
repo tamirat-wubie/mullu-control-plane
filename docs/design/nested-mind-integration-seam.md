@@ -151,6 +151,33 @@ Fracture delta intentionally avoided:
 - No nested-mind mutation route.
 - No raw external response storage in Phase 1.
 
+## Phase 2 typed projection import boundary
+
+Phase 2 may import nested-mind projection content only through typed envelopes.
+It is still a read-only boundary:
+
+```text
+Nested-mind Γ response
+  → NestedMindProjectionEnvelope / NestedMindHistoryEnvelope
+  → NestedMindProjectionImportReceipt
+  → bounded Mullu read model
+```
+
+Phase 2 invariants:
+
+- projection payloads must include `mind_id`, `scope`, `sequence`, `commit_hash`,
+  `state_hash`, `lawbook_hash`, `history_hash`, `projected_at`, and `state`.
+- `scope` must be `public`, `summary`, or `internal`.
+- public and summary projections reject sensitive state-key names such as token,
+  password, secret, credential, or private key.
+- mutation-shaped payload keys such as `proposal`, `patch`, `ops`,
+  `lawbook_migration`, `child_mind_create`, or `commit_write` are rejected.
+- imports bind to a succeeded governed connector result through
+  `NestedMindProjectionImportReceipt`.
+- typed projection import does not admit content into semantic/procedural memory.
+
+This is an information-flow boundary, not a write bridge.
+
 ## Current limitation
 
 The existing governed HTTP connector returns a digest and receipt, not a raw
