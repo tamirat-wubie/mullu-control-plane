@@ -18,7 +18,12 @@ from pathlib import Path
 import pytest
 
 from mcoi_runtime.core.invariants import RuntimeCoreInvariantError
-from mcoi_runtime.core.simple_cli import _readable_actions, guarded_main
+from mcoi_runtime.core.simple_cli import (
+    _readable_actions,
+    _readable_tasks,
+    _readable_workflows,
+    guarded_main,
+)
 from mcoi_runtime.core.simple_platform import (
     SimpleActionRequest,
     SimpleHomeChoice,
@@ -383,6 +388,43 @@ def test_simple_cli_lists_task_templates_as_json(capsys) -> None:
     assert envelope["payload"]["tasks"][2]["default_target"] == "support@mullusi.com"
 
 
+@pytest.mark.parametrize(
+    ("templates", "message"),
+    (
+        ([{"label": "Review docs"}], "simple task catalog item task must be text"),
+        (
+            [
+                {
+                    "task": " review_docs ",
+                    "label": "Review docs",
+                    "default_goal": "Review documentation",
+                    "action": "view",
+                    "allowed_area": "docs/**",
+                    "default_target": "",
+                }
+            ],
+            "simple task catalog item task must be trimmed text",
+        ),
+        (
+            [
+                {
+                    "task": "review_docs",
+                    "label": 7,
+                    "default_goal": "Review documentation",
+                    "action": "view",
+                    "allowed_area": "docs/**",
+                    "default_target": "",
+                }
+            ],
+            "simple task catalog item label must be text",
+        ),
+    ),
+)
+def test_simple_cli_rejects_loose_task_catalog_entries(templates: object, message: str) -> None:
+    with pytest.raises(RuntimeCoreInvariantError, match=message):
+        _readable_tasks(templates)
+
+
 def test_simple_cli_lists_actions_as_readable_catalog(capsys) -> None:
     exit_code = guarded_main(["actions"])
     output = capsys.readouterr().out
@@ -413,6 +455,17 @@ def test_simple_cli_lists_actions_as_json(capsys) -> None:
         ([{"action": " view ", "label": "View", "purpose": "Read."}], "simple action menu item action must be trimmed text"),
         ([{"action": "view", "label": 7, "purpose": "Read."}], "simple action menu item label must be text"),
         ([{"action": "view", "label": "View", "purpose": ""}], "simple action menu item purpose must be non-empty text"),
+        (
+            [{"action": "delete", "label": "Delete", "purpose": "Remove."}],
+            "simple action menu item action is outside the governed vocabulary",
+        ),
+        (
+            [
+                {"action": "view", "label": "View", "purpose": "Read."},
+                {"action": "view", "label": "View again", "purpose": "Read again."},
+            ],
+            "simple action menu item action must be unique",
+        ),
     ),
 )
 def test_simple_cli_rejects_loose_action_catalog_entries(actions: object, message: str) -> None:
@@ -451,6 +504,56 @@ def test_simple_cli_lists_workflow_templates_as_readable_catalog(capsys) -> None
     assert "docs-update" in output
     assert "mullu workflow docs-update --target <target>" in output
     assert "support-notice" in output
+
+
+@pytest.mark.parametrize(
+    ("templates", "message"),
+    (
+        ([{"label": "Update docs"}], "simple workflow catalog item workflow must be text"),
+        (
+            [
+                {
+                    "workflow": "docs_update",
+                    "label": "Update docs",
+                    "default_goal": "Review, update, and verify documentation",
+                    "tasks": "review_docs",
+                    "target_required": True,
+                    "default_target": "",
+                }
+            ],
+            "simple workflow catalog item tasks must be a list",
+        ),
+        (
+            [
+                {
+                    "workflow": "docs_update",
+                    "label": "Update docs",
+                    "default_goal": "Review, update, and verify documentation",
+                    "tasks": [" review_docs "],
+                    "target_required": True,
+                    "default_target": "",
+                }
+            ],
+            "simple workflow catalog item tasks item must be trimmed text",
+        ),
+        (
+            [
+                {
+                    "workflow": "docs_update",
+                    "label": "Update docs",
+                    "default_goal": "Review, update, and verify documentation",
+                    "tasks": ["review_docs"],
+                    "target_required": "yes",
+                    "default_target": "",
+                }
+            ],
+            "simple workflow catalog item target_required must be boolean",
+        ),
+    ),
+)
+def test_simple_cli_rejects_loose_workflow_catalog_entries(templates: object, message: str) -> None:
+    with pytest.raises(RuntimeCoreInvariantError, match=message):
+        _readable_workflows(templates)
 
 
 def test_simple_cli_start_outputs_onboarding_path(capsys) -> None:
