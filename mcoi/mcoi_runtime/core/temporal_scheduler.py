@@ -64,6 +64,7 @@ def _resolve_relative_phrase(now: datetime, amount: int, unit: str) -> tuple[str
         "minit",
         "phut",
         "minuto",
+        "minutu",
     }
     hour_units = {
         "hour",
@@ -90,6 +91,9 @@ def _resolve_relative_phrase(now: datetime, amount: int, unit: str) -> tuple[str
         "gio",
         "oras",
         "saa",
+        "ure",
+        "sat",
+        "sata",
     }
     day_units = {
         "day",
@@ -113,6 +117,9 @@ def _resolve_relative_phrase(now: datetime, amount: int, unit: str) -> tuple[str
         "ngay",
         "araw",
         "siku",
+        "dae",
+        "dan",
+        "dana",
     }
     if unit in minute_units:
         delta = timedelta(minutes=amount)
@@ -325,6 +332,30 @@ def _swahili_weekdays() -> dict[str, int]:
     }
 
 
+def _afrikaans_weekdays() -> dict[str, int]:
+    return {
+        "maandag": 0,
+        "dinsdag": 1,
+        "woensdag": 2,
+        "donderdag": 3,
+        "vrydag": 4,
+        "saterdag": 5,
+        "sondag": 6,
+    }
+
+
+def _croatian_weekdays() -> dict[str, int]:
+    return {
+        "ponedjeljak": 0,
+        "utorak": 1,
+        "srijeda": 2,
+        "cetvrtak": 3,
+        "petak": 4,
+        "subota": 5,
+        "nedjelja": 6,
+    }
+
+
 def _resolve_bounded_temporal_phrase(
     phrase: str,
     *,
@@ -369,6 +400,10 @@ def _resolve_bounded_temporal_phrase(
         return _resolve_filipino_temporal_phrase(normalized, now_dt, original_timezone)
     if locale_key in {"sw", "sw-ke", "sw-tz", "sw-ug"}:
         return _resolve_swahili_temporal_phrase(normalized, now_dt, original_timezone)
+    if locale_key in {"af", "af-za"}:
+        return _resolve_afrikaans_temporal_phrase(normalized, now_dt, original_timezone)
+    if locale_key in {"hr", "hr-hr"}:
+        return _resolve_croatian_temporal_phrase(normalized, now_dt, original_timezone)
     return "unsupported", "temporal_phrase_locale_not_supported", ""
 
 
@@ -1086,6 +1121,106 @@ def _resolve_swahili_temporal_phrase(
     }:
         return "ambiguous", "temporal_phrase_ambiguous", ""
     if re.fullmatch(r"(jumatatu|jumanne|jumatano|alhamisi|ijumaa|jumamosi|jumapili) ijayo", normalized):
+        return "ambiguous", "temporal_phrase_ambiguous", ""
+    return "unsupported", "temporal_phrase_unsupported", ""
+
+
+def _resolve_afrikaans_temporal_phrase(
+    normalized: str,
+    now: datetime,
+    original_timezone: str,
+) -> tuple[str, str, str]:
+    relative = re.fullmatch(r"oor ([1-9][0-9]*) (minuut|minute|uur|ure|dag|dae)", normalized)
+    if relative is not None:
+        resolved, reason = _resolve_relative_phrase(now, int(relative.group(1)), relative.group(2))
+        return ("exact" if resolved else "unsupported"), reason, resolved
+    wall_time = re.fullmatch(r"(vandag|more) om ([0-9]{1,2}):([0-9]{2}) ?(utc|z|local)", normalized)
+    if wall_time is not None:
+        resolved, reason = _resolve_relative_wall_time(
+            now,
+            original_timezone=original_timezone,
+            day_offset=1 if wall_time.group(1) == "more" else 0,
+            hour=int(wall_time.group(2)),
+            minute=int(wall_time.group(3)),
+            mode=wall_time.group(4),
+        )
+        return ("exact" if resolved else "unsupported"), reason, resolved
+    next_weekday = re.fullmatch(
+        r"volgende (maandag|dinsdag|woensdag|donderdag|vrydag|saterdag|sondag) om ([0-9]{1,2}):([0-9]{2}) ?(utc|z|local)",
+        normalized,
+    )
+    if next_weekday is not None:
+        resolved, reason = _resolve_next_weekday_wall_time(
+            now,
+            original_timezone=original_timezone,
+            weekday=_afrikaans_weekdays()[next_weekday.group(1)],
+            hour=int(next_weekday.group(2)),
+            minute=int(next_weekday.group(3)),
+            mode=next_weekday.group(4),
+        )
+        return ("exact" if resolved else "unsupported"), reason, resolved
+    if normalized in {
+        "vandag",
+        "more",
+        "vanaand",
+        "later",
+        "binnekort",
+        "volgende week",
+        "volgende maand",
+        "volgende jaar",
+    }:
+        return "ambiguous", "temporal_phrase_ambiguous", ""
+    if re.fullmatch(r"volgende (maandag|dinsdag|woensdag|donderdag|vrydag|saterdag|sondag)", normalized):
+        return "ambiguous", "temporal_phrase_ambiguous", ""
+    return "unsupported", "temporal_phrase_unsupported", ""
+
+
+def _resolve_croatian_temporal_phrase(
+    normalized: str,
+    now: datetime,
+    original_timezone: str,
+) -> tuple[str, str, str]:
+    relative = re.fullmatch(r"za ([1-9][0-9]*) (minutu|minute|sat|sata|dan|dana)", normalized)
+    if relative is not None:
+        resolved, reason = _resolve_relative_phrase(now, int(relative.group(1)), relative.group(2))
+        return ("exact" if resolved else "unsupported"), reason, resolved
+    wall_time = re.fullmatch(r"(danas|sutra) u ([0-9]{1,2}):([0-9]{2}) ?(utc|z|local)", normalized)
+    if wall_time is not None:
+        resolved, reason = _resolve_relative_wall_time(
+            now,
+            original_timezone=original_timezone,
+            day_offset=1 if wall_time.group(1) == "sutra" else 0,
+            hour=int(wall_time.group(2)),
+            minute=int(wall_time.group(3)),
+            mode=wall_time.group(4),
+        )
+        return ("exact" if resolved else "unsupported"), reason, resolved
+    next_weekday = re.fullmatch(
+        r"sljedeci (ponedjeljak|utorak|srijeda|cetvrtak|petak|subota|nedjelja) u ([0-9]{1,2}):([0-9]{2}) ?(utc|z|local)",
+        normalized,
+    )
+    if next_weekday is not None:
+        resolved, reason = _resolve_next_weekday_wall_time(
+            now,
+            original_timezone=original_timezone,
+            weekday=_croatian_weekdays()[next_weekday.group(1)],
+            hour=int(next_weekday.group(2)),
+            minute=int(next_weekday.group(3)),
+            mode=next_weekday.group(4),
+        )
+        return ("exact" if resolved else "unsupported"), reason, resolved
+    if normalized in {
+        "danas",
+        "sutra",
+        "veceras",
+        "kasnije",
+        "uskoro",
+        "sljedeci tjedan",
+        "sljedeci mjesec",
+        "sljedeca godina",
+    }:
+        return "ambiguous", "temporal_phrase_ambiguous", ""
+    if re.fullmatch(r"sljedeci (ponedjeljak|utorak|srijeda|cetvrtak|petak|subota|nedjelja)", normalized):
         return "ambiguous", "temporal_phrase_ambiguous", ""
     return "unsupported", "temporal_phrase_unsupported", ""
 
