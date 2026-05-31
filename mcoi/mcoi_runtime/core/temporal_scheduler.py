@@ -86,6 +86,7 @@ def _resolve_relative_phrase(now: datetime, amount: int, unit: str) -> tuple[str
         "minuts",
         "minutoj",
         "minutum",
+        "minutas",
     }
     hour_units = {
         "hour",
@@ -198,6 +199,8 @@ def _resolve_relative_phrase(now: datetime, amount: int, unit: str) -> tuple[str
         "tago",
         "tagoj",
         "diem",
+        "jorn",
+        "jorns",
     }
     if unit in minute_units:
         delta = timedelta(minutes=amount)
@@ -686,6 +689,18 @@ def _interlingua_weekdays() -> dict[str, int]:
     }
 
 
+def _occitan_weekdays() -> dict[str, int]:
+    return {
+        "diluns": 0,
+        "dimars": 1,
+        "dimecres": 2,
+        "dijous": 3,
+        "divendres": 4,
+        "dissabte": 5,
+        "dimenge": 6,
+    }
+
+
 def _resolve_bounded_temporal_phrase(
     phrase: str,
     *,
@@ -776,6 +791,8 @@ def _resolve_bounded_temporal_phrase(
         return _resolve_latin_temporal_phrase(normalized, now_dt, original_timezone)
     if locale_key in {"ia", "ia-001"}:
         return _resolve_interlingua_temporal_phrase(normalized, now_dt, original_timezone)
+    if locale_key in {"oc", "oc-fr", "oc-es"}:
+        return _resolve_occitan_temporal_phrase(normalized, now_dt, original_timezone)
     return "unsupported", "temporal_phrase_locale_not_supported", ""
 
 
@@ -2670,6 +2687,56 @@ def _resolve_interlingua_temporal_phrase(
     }:
         return "ambiguous", "temporal_phrase_ambiguous", ""
     if re.fullmatch(r"proxime (lunedi|martedi|mercuridi|jovedi|venerdi|sabbato|dominica)", normalized):
+        return "ambiguous", "temporal_phrase_ambiguous", ""
+    return "unsupported", "temporal_phrase_unsupported", ""
+
+
+def _resolve_occitan_temporal_phrase(
+    normalized: str,
+    now: datetime,
+    original_timezone: str,
+) -> tuple[str, str, str]:
+    relative = re.fullmatch(r"daqui ([1-9][0-9]*) (minuta|minutas|ora|oras|jorn|jorns)", normalized)
+    if relative is not None:
+        resolved, reason = _resolve_relative_phrase(now, int(relative.group(1)), relative.group(2))
+        return ("exact" if resolved else "unsupported"), reason, resolved
+    wall_time = re.fullmatch(r"(uei|deman) ([0-9]{1,2}):([0-9]{2}) ?(utc|z|local)", normalized)
+    if wall_time is not None:
+        resolved, reason = _resolve_relative_wall_time(
+            now,
+            original_timezone=original_timezone,
+            day_offset=1 if wall_time.group(1) == "deman" else 0,
+            hour=int(wall_time.group(2)),
+            minute=int(wall_time.group(3)),
+            mode=wall_time.group(4),
+        )
+        return ("exact" if resolved else "unsupported"), reason, resolved
+    next_weekday = re.fullmatch(
+        r"prochain (diluns|dimars|dimecres|dijous|divendres|dissabte|dimenge) ([0-9]{1,2}):([0-9]{2}) ?(utc|z|local)",
+        normalized,
+    )
+    if next_weekday is not None:
+        resolved, reason = _resolve_next_weekday_wall_time(
+            now,
+            original_timezone=original_timezone,
+            weekday=_occitan_weekdays()[next_weekday.group(1)],
+            hour=int(next_weekday.group(2)),
+            minute=int(next_weekday.group(3)),
+            mode=next_weekday.group(4),
+        )
+        return ("exact" if resolved else "unsupported"), reason, resolved
+    if normalized in {
+        "uei",
+        "deman",
+        "aquesta nuoch",
+        "pus tard",
+        "leu",
+        "prochaine setmana",
+        "prochain mes",
+        "prochain an",
+    }:
+        return "ambiguous", "temporal_phrase_ambiguous", ""
+    if re.fullmatch(r"prochain (diluns|dimars|dimecres|dijous|divendres|dissabte|dimenge)", normalized):
         return "ambiguous", "temporal_phrase_ambiguous", ""
     return "unsupported", "temporal_phrase_unsupported", ""
 
