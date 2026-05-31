@@ -415,6 +415,45 @@ def test_p3_topology_map_blocks_missing_admitted_entry() -> None:
     assert topology.topology_hash
 
 
+def test_p3_topology_map_rejects_loose_world_ref_metadata() -> None:
+    invalid_cases = (
+        ({"world_ref": None}, "world_ref_must_be_non_empty_text"),
+        ({"world_refs": (" world:runtime-target ",)}, "world_refs[0]_must_be_trimmed_text"),
+        ({"world_refs": ("world:runtime-target", None)}, "world_refs[1]_must_be_non_empty_text"),
+        ({"world_refs": {"world:runtime-target"}}, "world_refs_must_be_array"),
+    )
+    errors: list[str] = []
+
+    for metadata, expected_error in invalid_cases:
+        entry = _entry(
+            "semantic_fact_memory",
+            "trusted",
+            learning_admission_status="admit",
+            metadata=metadata,
+        )
+        admission = MemoryLatticeGate().assess(entry, now=NOW)
+        contract = build_p3_memory_lattice_contract(
+            _ready_readiness(),
+            (admission,),
+            contract_id=f"p3-contract-world-ref-{len(errors)}",
+        )
+        try:
+            build_p3_memory_topology_map(contract, (entry,), topology_id=f"topology-world-ref-{len(errors)}")
+        except ValueError as exc:
+            errors.append(str(exc))
+        else:
+            raise AssertionError(f"{expected_error} was not raised")
+
+    assert errors == [
+        "world_ref_must_be_non_empty_text",
+        "world_refs[0]_must_be_trimmed_text",
+        "world_refs[1]_must_be_non_empty_text",
+        "world_refs_must_be_array",
+    ]
+    assert len(errors) == len(invalid_cases)
+    assert all(error.startswith("world_ref") for error in errors)
+
+
 def test_p3_topology_map_rejects_dangling_edge_endpoint() -> None:
     try:
         P3MemoryTopologyMap(
