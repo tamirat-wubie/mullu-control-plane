@@ -257,6 +257,7 @@ def test_temporal_phrase_swedish_next_weekday_local_resolves_before_registration
         ("eftir 2 klukkustundir", "is-IS"),
         ("fi 2 sieghat", "mt-MT"),
         ("an 2 stonnen", "lb-LU"),
+        ("en 2 horas", "gl-ES"),
     ),
 )
 def test_temporal_phrase_extended_locale_relative_resolves_before_registration(
@@ -287,6 +288,8 @@ def test_temporal_phrase_extended_locale_relative_resolves_before_registration(
         ("fi 2 minuti", "mt-MT", "2026-05-04T13:02:00+00:00"),
         ("an 2 minutten", "lb-LU", "2026-05-04T13:02:00+00:00"),
         ("an 2 deeg", "lb", "2026-05-06T13:00:00+00:00"),
+        ("en 2 minutos", "gl-ES", "2026-05-04T13:02:00+00:00"),
+        ("en 2 dias", "gl", "2026-05-06T13:00:00+00:00"),
     ),
 )
 def test_temporal_phrase_new_locale_relative_unit_variants_resolve_before_registration(
@@ -344,6 +347,7 @@ def test_temporal_phrase_new_locale_relative_unit_variants_resolve_before_regist
         ("a morgun 09:30 UTC", "is"),
         ("ghada 09:30 UTC", "mt"),
         ("muer 09:30 UTC", "lb"),
+        ("mana 09:30 UTC", "gl"),
     ),
 )
 def test_temporal_phrase_extended_locale_tomorrow_wall_time_resolves_before_registration(
@@ -400,6 +404,7 @@ def test_temporal_phrase_extended_locale_tomorrow_wall_time_resolves_before_regi
         ("naesta manudag 08:15 local", "is-IS"),
         ("it-tnejn li gej 08:15 local", "mt-MT"),
         ("naechste meindeg 08:15 local", "lb-LU"),
+        ("proximo luns 08:15 local", "gl-ES"),
     ),
 )
 def test_temporal_phrase_extended_locale_next_weekday_local_resolves_before_registration(

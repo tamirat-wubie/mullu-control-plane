@@ -64,6 +64,7 @@ def _resolve_relative_phrase(now: datetime, amount: int, unit: str) -> tuple[str
         "minit",
         "phut",
         "minuto",
+        "minutos",
         "minutu",
         "minuta",
         "minuti",
@@ -101,6 +102,8 @@ def _resolve_relative_phrase(now: datetime, amount: int, unit: str) -> tuple[str
         "hodin",
         "ora",
         "ore",
+        "hora",
+        "horas",
         "saat",
         "jam",
         "gio",
@@ -146,6 +149,8 @@ def _resolve_relative_phrase(now: datetime, amount: int, unit: str) -> tuple[str
         "dni",
         "den",
         "dny",
+        "dia",
+        "dias",
         "nap",
         "zi",
         "zile",
@@ -595,6 +600,18 @@ def _luxembourgish_weekdays() -> dict[str, int]:
     }
 
 
+def _galician_weekdays() -> dict[str, int]:
+    return {
+        "luns": 0,
+        "martes": 1,
+        "mercores": 2,
+        "xoves": 3,
+        "venres": 4,
+        "sabado": 5,
+        "domingo": 6,
+    }
+
+
 def _resolve_bounded_temporal_phrase(
     phrase: str,
     *,
@@ -673,6 +690,8 @@ def _resolve_bounded_temporal_phrase(
         return _resolve_maltese_temporal_phrase(normalized, now_dt, original_timezone)
     if locale_key in {"lb", "lb-lu"}:
         return _resolve_luxembourgish_temporal_phrase(normalized, now_dt, original_timezone)
+    if locale_key in {"gl", "gl-es"}:
+        return _resolve_galician_temporal_phrase(normalized, now_dt, original_timezone)
     return "unsupported", "temporal_phrase_locale_not_supported", ""
 
 
@@ -2261,6 +2280,56 @@ def _resolve_luxembourgish_temporal_phrase(
         r"naechste (meindeg|denscheg|mettwoch|donneschdeg|freideg|samschdeg|sonndeg)",
         normalized,
     ):
+        return "ambiguous", "temporal_phrase_ambiguous", ""
+    return "unsupported", "temporal_phrase_unsupported", ""
+
+
+def _resolve_galician_temporal_phrase(
+    normalized: str,
+    now: datetime,
+    original_timezone: str,
+) -> tuple[str, str, str]:
+    relative = re.fullmatch(r"en ([1-9][0-9]*) (minuto|minutos|hora|horas|dia|dias)", normalized)
+    if relative is not None:
+        resolved, reason = _resolve_relative_phrase(now, int(relative.group(1)), relative.group(2))
+        return ("exact" if resolved else "unsupported"), reason, resolved
+    wall_time = re.fullmatch(r"(hoxe|mana) ([0-9]{1,2}):([0-9]{2}) ?(utc|z|local)", normalized)
+    if wall_time is not None:
+        resolved, reason = _resolve_relative_wall_time(
+            now,
+            original_timezone=original_timezone,
+            day_offset=1 if wall_time.group(1) == "mana" else 0,
+            hour=int(wall_time.group(2)),
+            minute=int(wall_time.group(3)),
+            mode=wall_time.group(4),
+        )
+        return ("exact" if resolved else "unsupported"), reason, resolved
+    next_weekday = re.fullmatch(
+        r"proximo (luns|martes|mercores|xoves|venres|sabado|domingo) ([0-9]{1,2}):([0-9]{2}) ?(utc|z|local)",
+        normalized,
+    )
+    if next_weekday is not None:
+        resolved, reason = _resolve_next_weekday_wall_time(
+            now,
+            original_timezone=original_timezone,
+            weekday=_galician_weekdays()[next_weekday.group(1)],
+            hour=int(next_weekday.group(2)),
+            minute=int(next_weekday.group(3)),
+            mode=next_weekday.group(4),
+        )
+        return ("exact" if resolved else "unsupported"), reason, resolved
+    if normalized in {
+        "hoxe",
+        "mana",
+        "esta noite",
+        "mais tarde",
+        "axina",
+        "proxima semana",
+        "proximo mes",
+        "proximo ano",
+    }:
+        return "ambiguous", "temporal_phrase_ambiguous", ""
+    if re.fullmatch(r"proximo (luns|martes|mercores|xoves|venres|sabado|domingo)", normalized):
         return "ambiguous", "temporal_phrase_ambiguous", ""
     return "unsupported", "temporal_phrase_unsupported", ""
 
