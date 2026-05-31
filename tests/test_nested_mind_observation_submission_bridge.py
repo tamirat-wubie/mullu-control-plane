@@ -11,13 +11,11 @@ from __future__ import annotations
 
 from dataclasses import replace
 
-from mcoi_runtime.contracts.nested_mind_observation_submission import (
-    NestedMindObservationSubmissionReport,
-    NestedMindObservationSubmissionStatus,
-)
-from mcoi_runtime.contracts.nested_mind_receipts import (
+from mcoi_runtime.contracts import (
     NestedMindCommitWitness,
     NestedMindCommitWitnessStatus,
+    NestedMindObservationSubmissionReport,
+    NestedMindObservationSubmissionStatus,
     NestedMindReceiptBridgeStatus,
     build_verified_observation_bridge_report,
 )

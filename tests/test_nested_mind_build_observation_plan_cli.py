@@ -15,7 +15,7 @@ from pathlib import Path
 
 import pytest
 
-from mcoi_runtime.contracts.nested_mind_observation_submission import (
+from mcoi_runtime.contracts import (
     NestedMindObservationProposalPlan,
     NestedMindObservationProposalPlanStatus,
     NestedMindProposalEvidence,

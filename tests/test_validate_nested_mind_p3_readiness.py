@@ -13,19 +13,15 @@ from __future__ import annotations
 import importlib.util
 from pathlib import Path
 
-from mcoi_runtime.contracts.nested_mind_observation_reconciliation import (
+from mcoi_runtime.contracts import (
+    NestedMindCommitWitness,
+    NestedMindCommitWitnessStatus,
     NestedMindObservationReconciliationReport,
     NestedMindObservationReconciliationStatus,
-)
-from mcoi_runtime.contracts.nested_mind_observation_submission import (
     NestedMindObservationSubmissionReport,
     NestedMindObservationSubmissionStatus,
 )
-from mcoi_runtime.contracts.nested_mind_receipts import (
-    NestedMindCommitWitness,
-    NestedMindCommitWitnessStatus,
-)
-from mcoi_runtime.persistence.nested_mind_store import NestedMindEvidenceStore
+from mcoi_runtime.persistence import NestedMindEvidenceStore
 
 SCRIPT_PATH = Path(__file__).resolve().parents[1] / "scripts" / "validate_nested_mind_p3_readiness.py"
 

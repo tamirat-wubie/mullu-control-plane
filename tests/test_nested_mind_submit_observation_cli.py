@@ -15,7 +15,9 @@ from pathlib import Path
 
 import pytest
 
-from mcoi_runtime.contracts.nested_mind_observation_submission import (
+from mcoi_runtime.contracts import (
+    NestedMindCommitWitness,
+    NestedMindCommitWitnessStatus,
     NestedMindObservationProposalPlan,
     NestedMindObservationProposalPlanStatus,
     NestedMindObservationSubmissionReport,
@@ -23,11 +25,7 @@ from mcoi_runtime.contracts.nested_mind_observation_submission import (
     NestedMindProposalEvidence,
     stable_json_hash,
 )
-from mcoi_runtime.contracts.nested_mind_receipts import (
-    NestedMindCommitWitness,
-    NestedMindCommitWitnessStatus,
-)
-from mcoi_runtime.persistence.nested_mind_store import NestedMindEvidenceStore
+from mcoi_runtime.persistence import NestedMindEvidenceStore
 
 SCRIPT_PATH = Path(__file__).resolve().parents[1] / "scripts" / "nested_mind_submit_observation.py"
 

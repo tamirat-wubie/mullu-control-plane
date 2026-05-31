@@ -1,7 +1,7 @@
 """Tests for the nested-mind read-only connector.
 
 Purpose: verify route construction and governance classification for the
-optional nested-mind Γ bridge.
+optional nested-mind Gamma bridge.
 Governance scope: read-only connector descriptor, route path safety, and
 credential header forwarding boundary.
 Dependencies: nested_mind adapter and canonical connector result contract.
@@ -11,7 +11,7 @@ identifiers cannot alter route shape, and no mutation method is exposed.
 
 from __future__ import annotations
 
-from mcoi_runtime.adapters.nested_mind import (
+from mcoi_runtime.adapters import (
     NESTED_MIND_CONNECTOR_ID,
     NestedMindConnector,
 )

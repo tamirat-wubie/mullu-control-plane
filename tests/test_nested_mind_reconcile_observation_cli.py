@@ -13,13 +13,13 @@ import importlib.util
 import json
 from pathlib import Path
 
-from mcoi_runtime.adapters.http_connector import JsonConnectorOutcome
+from mcoi_runtime.adapters import JsonConnectorOutcome
 from mcoi_runtime.contracts.integration import ConnectorResult, ConnectorStatus
-from mcoi_runtime.contracts.nested_mind_receipts import (
+from mcoi_runtime.contracts import (
     NestedMindCommitWitness,
     NestedMindCommitWitnessStatus,
 )
-from mcoi_runtime.persistence.nested_mind_store import NestedMindEvidenceStore
+from mcoi_runtime.persistence import NestedMindEvidenceStore
 
 SCRIPT_PATH = Path(__file__).resolve().parents[1] / "scripts" / "nested_mind_reconcile_observation.py"
 

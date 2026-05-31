@@ -11,13 +11,14 @@ raw response bodies are never persisted.
 
 from __future__ import annotations
 
-from mcoi_runtime.adapters.http_connector import JsonConnectorOutcome
-from mcoi_runtime.adapters.nested_mind_observation_submitter import (
+from mcoi_runtime.adapters import (
+    JsonConnectorOutcome,
     NESTED_MIND_OBSERVATION_SUBMIT_CONNECTOR_ID,
     NestedMindObservationSubmitter,
 )
 from mcoi_runtime.contracts.integration import ConnectorResult, ConnectorStatus
-from mcoi_runtime.contracts.nested_mind_observation_submission import (
+from mcoi_runtime.contracts import (
+    NestedMindCommitWitnessStatus,
     NestedMindProposalEvidence,
     NestedMindObservationProposalPlan,
     NestedMindObservationProposalPlanStatus,
@@ -26,7 +27,6 @@ from mcoi_runtime.contracts.nested_mind_observation_submission import (
     nested_mind_observation_idempotency_key,
     stable_json_hash,
 )
-from mcoi_runtime.contracts.nested_mind_receipts import NestedMindCommitWitnessStatus
 
 
 def _clock() -> str:

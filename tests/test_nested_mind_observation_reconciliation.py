@@ -10,17 +10,15 @@ typed; verified reports explicitly state no memory admission.
 
 from __future__ import annotations
 
-from mcoi_runtime.adapters.http_connector import JsonConnectorOutcome
-from mcoi_runtime.adapters.nested_mind_observation_reconciler import (
+from mcoi_runtime.adapters import (
+    JsonConnectorOutcome,
     NestedMindObservationReconciler,
 )
 from mcoi_runtime.contracts.integration import ConnectorResult, ConnectorStatus
-from mcoi_runtime.contracts.nested_mind_observation_reconciliation import (
-    NestedMindObservationReconciliationStatus,
-)
-from mcoi_runtime.contracts.nested_mind_receipts import (
+from mcoi_runtime.contracts import (
     NestedMindCommitWitness,
     NestedMindCommitWitnessStatus,
+    NestedMindObservationReconciliationStatus,
 )
 
 
