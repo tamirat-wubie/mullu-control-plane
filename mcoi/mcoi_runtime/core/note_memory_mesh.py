@@ -166,12 +166,52 @@ def _required_text_value(value: object, field_name: str) -> str:
 def _tuple_text(values: Sequence[str] | None, field_name: str = "text list") -> tuple[str, ...]:
     if values is None:
         return ()
-    if isinstance(values, (str, bytes)):
+    if not isinstance(values, Sequence) or isinstance(values, (str, bytes)):
         raise RuntimeCoreInvariantError(f"{field_name} must be a string list")
     result: list[str] = []
     for value in values:
         result.append(_required_text_value(value, field_name))
     return tuple(result)
+
+
+def _required_mapping_text(value: Mapping[str, object], field_name: str) -> str:
+    if field_name not in value:
+        raise RuntimeCoreInvariantError(f"{field_name} must be present")
+    return _required_text_value(value[field_name], field_name)
+
+
+def _optional_mapping_text(value: Mapping[str, object], field_name: str) -> str | None:
+    raw_value = value.get(field_name)
+    if raw_value is None:
+        return None
+    return _required_text_value(raw_value, field_name)
+
+
+def _optional_mapping_text_or_empty(value: Mapping[str, object], field_name: str) -> str:
+    raw_value = value.get(field_name)
+    if raw_value is None:
+        return ""
+    if not isinstance(raw_value, str):
+        raise RuntimeCoreInvariantError(f"{field_name} must be a string")
+    return raw_value.strip()
+
+
+def _required_mapping_int(value: Mapping[str, object], field_name: str) -> int:
+    if field_name not in value:
+        raise RuntimeCoreInvariantError(f"{field_name} must be present")
+    raw_value = value[field_name]
+    if not isinstance(raw_value, int) or isinstance(raw_value, bool):
+        raise RuntimeCoreInvariantError(f"{field_name} must be an integer")
+    return raw_value
+
+
+def _mapping_text_tuple(value: Mapping[str, object], field_name: str) -> tuple[str, ...]:
+    raw_value = value.get(field_name)
+    if raw_value is None:
+        return ()
+    if not isinstance(raw_value, list):
+        raise RuntimeCoreInvariantError(f"{field_name} must be a string list")
+    return _tuple_text(raw_value, field_name)
 
 
 def _bounded_text(value: str, field_name: str, *, max_length: int = _MAX_EPISODE_FIELD_LENGTH) -> str:
@@ -475,26 +515,24 @@ class NoteMemoryEvent:
         """Rehydrate a note event from JSON-compatible data."""
 
         return cls(
-            event_seq=int(value["event_seq"]),
-            event_id=str(value["event_id"]),
-            note_id=str(value["note_id"]),
-            kind=NoteKind(str(value["kind"])),
-            action=NoteAction(str(value["action"])),
-            scope=NoteScope(str(value["scope"])),
-            content_summary=str(value["content_summary"]),
-            source_ref=str(value["source_ref"]),
-            proof_state=ProofState(str(value["proof_state"])),
-            trust_zone=TrustZone(str(value["trust_zone"])),
-            created_at=str(value["created_at"]),
-            expires_at=str(value["expires_at"]) if value.get("expires_at") else None,
-            evidence_refs=_tuple_text(value.get("evidence_refs") if isinstance(value.get("evidence_refs"), list) else ()),
-            relation_refs=_tuple_text(value.get("relation_refs") if isinstance(value.get("relation_refs"), list) else ()),
-            retrieval_receipt_refs=_tuple_text(
-                value.get("retrieval_receipt_refs") if isinstance(value.get("retrieval_receipt_refs"), list) else ()
-            ),
-            claim_key=str(value.get("claim_key", "")),
-            claim_value=str(value.get("claim_value", "")),
-            checksum=str(value.get("checksum", "")),
+            event_seq=_required_mapping_int(value, "event_seq"),
+            event_id=_required_mapping_text(value, "event_id"),
+            note_id=_required_mapping_text(value, "note_id"),
+            kind=NoteKind(_required_mapping_text(value, "kind")),
+            action=NoteAction(_required_mapping_text(value, "action")),
+            scope=NoteScope(_required_mapping_text(value, "scope")),
+            content_summary=_required_mapping_text(value, "content_summary"),
+            source_ref=_required_mapping_text(value, "source_ref"),
+            proof_state=ProofState(_required_mapping_text(value, "proof_state")),
+            trust_zone=TrustZone(_required_mapping_text(value, "trust_zone")),
+            created_at=_required_mapping_text(value, "created_at"),
+            expires_at=_optional_mapping_text(value, "expires_at"),
+            evidence_refs=_mapping_text_tuple(value, "evidence_refs"),
+            relation_refs=_mapping_text_tuple(value, "relation_refs"),
+            retrieval_receipt_refs=_mapping_text_tuple(value, "retrieval_receipt_refs"),
+            claim_key=_optional_mapping_text(value, "claim_key") or "",
+            claim_value=_optional_mapping_text(value, "claim_value") or "",
+            checksum=_optional_mapping_text_or_empty(value, "checksum"),
         )
 
 
