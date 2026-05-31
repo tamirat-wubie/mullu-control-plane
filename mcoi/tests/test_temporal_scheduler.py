@@ -260,6 +260,7 @@ def test_temporal_phrase_swedish_next_weekday_local_resolves_before_registration
         ("hemendik 2 ordura", "eu-ES"),
         ("en 2 hores", "ca-ES"),
         ("en 2 horas", "gl-ES"),
+        ("post 2 horoj", "eo-001"),
     ),
 )
 def test_temporal_phrase_extended_locale_relative_resolves_before_registration(
@@ -348,6 +349,7 @@ def test_temporal_phrase_new_locale_relative_unit_variants_resolve_before_regist
         ("bihar 09:30 UTC", "eu"),
         ("dema 09:30 UTC", "ca"),
         ("mana 09:30 UTC", "gl"),
+        ("morgau 09:30 UTC", "eo"),
     ),
 )
 def test_temporal_phrase_extended_locale_tomorrow_wall_time_resolves_before_registration(
@@ -407,6 +409,7 @@ def test_temporal_phrase_extended_locale_tomorrow_wall_time_resolves_before_regi
         ("hurrengo astelehena 08:15 local", "eu-ES"),
         ("dilluns vinent 08:15 local", "ca-AD"),
         ("proximo luns 08:15 local", "gl-ES"),
+        ("venonta lundo 08:15 local", "eo-001"),
     ),
 )
 def test_temporal_phrase_extended_locale_next_weekday_local_resolves_before_registration(
@@ -443,6 +446,34 @@ def test_temporal_phrase_ambiguous_blocks_before_registration() -> None:
         scheduler.register("sched-1", action)
     assert scheduler.action_count == 0
     assert scheduler.receipt_count == 0
+
+
+@pytest.mark.parametrize(
+    ("phrase", "locale"),
+    (
+        ("axina", "gl"),
+        ("baldau", "eo"),
+    ),
+)
+def test_temporal_phrase_extended_ascii_ambiguous_blocks_before_registration(
+    phrase: str,
+    locale: str,
+) -> None:
+    clock = MutableClock("2026-05-04T13:00:00+00:00")
+    scheduler = _engine(clock)
+    action = _action(
+        execute_at="",
+        temporal_phrase=phrase,
+        temporal_phrase_locale=locale,
+        temporal_phrase_policy="require_exact",
+    )
+
+    with pytest.raises(RuntimeCoreInvariantError, match="temporal_phrase_ambiguous"):
+        scheduler.register("sched-1", action)
+    assert scheduler.action_count == 0
+    assert scheduler.receipt_count == 0
+    with pytest.raises(RuntimeCoreInvariantError, match="Unknown schedule_id"):
+        scheduler.get("sched-1")
 
 
 def test_temporal_phrase_mismatch_blocks_before_registration() -> None:
