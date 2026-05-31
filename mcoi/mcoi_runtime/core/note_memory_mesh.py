@@ -154,17 +154,28 @@ def _parse_iso(value: str) -> datetime:
         raise RuntimeCoreInvariantError(f"invalid iso timestamp: {value}") from exc
 
 
-def _tuple_text(values: Sequence[str] | None) -> tuple[str, ...]:
+def _required_text_value(value: object, field_name: str) -> str:
+    if not isinstance(value, str):
+        raise RuntimeCoreInvariantError(f"{field_name} must be a string")
+    text = value.strip()
+    if not text:
+        raise RuntimeCoreInvariantError(f"{field_name} must be non-empty")
+    return text
+
+
+def _tuple_text(values: Sequence[str] | None, field_name: str = "text list") -> tuple[str, ...]:
     if values is None:
         return ()
-    result = tuple(str(value).strip() for value in values if str(value).strip())
-    return result
+    if isinstance(values, (str, bytes)):
+        raise RuntimeCoreInvariantError(f"{field_name} must be a string list")
+    result: list[str] = []
+    for value in values:
+        result.append(_required_text_value(value, field_name))
+    return tuple(result)
 
 
 def _bounded_text(value: str, field_name: str, *, max_length: int = _MAX_EPISODE_FIELD_LENGTH) -> str:
-    text = str(value).strip()
-    if not text:
-        raise RuntimeCoreInvariantError(f"{field_name} must be non-empty")
+    text = _required_text_value(value, field_name)
     if len(text) > max_length:
         raise RuntimeCoreInvariantError(f"{field_name} exceeds {max_length} characters")
     return redact_sensitive_text(text)
@@ -175,31 +186,29 @@ def _bounded_text_tuple(values: Sequence[str] | None, field_name: str) -> tuple[
         return ()
     if len(values) > _MAX_EPISODE_ITEMS:
         raise RuntimeCoreInvariantError(f"{field_name} exceeds {_MAX_EPISODE_ITEMS} entries")
-    return tuple(_bounded_text(value, field_name) for value in values if str(value).strip())
+    return tuple(_bounded_text(value, field_name) for value in values)
 
 
 def _unique_text_tuple(values: Iterable[str]) -> tuple[str, ...]:
     result: list[str] = []
     seen: set[str] = set()
     for value in values:
-        text = str(value).strip()
-        if text and text not in seen:
+        text = _required_text_value(value, "text list")
+        if text not in seen:
             seen.add(text)
             result.append(text)
     return tuple(result)
 
 
 def _validate_symbol_identifier(value: str, field_name: str) -> str:
-    text = value.strip()
-    if not text:
-        raise RuntimeCoreInvariantError(f"{field_name} must be non-empty")
+    text = _required_text_value(value, field_name)
     if ".." in text or not _SYMBOL_IDENTIFIER_PATTERN.fullmatch(text):
         raise RuntimeCoreInvariantError(f"{field_name} must be a bounded symbolic identifier")
     return text
 
 
 def _validate_retrieval_receipt_id(value: str, field_name: str = "retrieval_receipt_ref") -> str:
-    text = _validate_symbol_identifier(str(value), field_name)
+    text = _validate_symbol_identifier(value, field_name)
     if not text.startswith("note-retrieval-"):
         raise RuntimeCoreInvariantError(f"{field_name} must reference a note retrieval receipt")
     return text
@@ -220,8 +229,12 @@ def _retrieval_filter_mode(*, retrieval_receipt_filter: str, retrieval_citing_no
 
 
 def _validate_optional_claim(claim_key: str, claim_value: str) -> tuple[str, str]:
-    key = str(claim_key or "").strip()
-    value = str(claim_value or "").strip()
+    if not isinstance(claim_key, str):
+        raise RuntimeCoreInvariantError("claim_key must be a string")
+    if not isinstance(claim_value, str):
+        raise RuntimeCoreInvariantError("claim_value must be a string")
+    key = claim_key.strip()
+    value = claim_value.strip()
     if not key and not value:
         return "", ""
     if not key or not value:
@@ -231,7 +244,7 @@ def _validate_optional_claim(claim_key: str, claim_value: str) -> tuple[str, str
 
 
 def _retrieval_query(query: str) -> tuple[str, tuple[str, ...]]:
-    text = redact_sensitive_text(str(query).strip())
+    text = redact_sensitive_text(_required_text_value(query, "query"))
     if len(text) > _MAX_RETRIEVAL_QUERY_LENGTH:
         raise RuntimeCoreInvariantError(f"query exceeds {_MAX_RETRIEVAL_QUERY_LENGTH} characters")
     return text, tuple(term for term in text.lower().split() if term)
@@ -313,6 +326,7 @@ class PromotionReceipt:
     lineage_event_seq: int
 
     def __post_init__(self) -> None:
+        object.__setattr__(self, "evidence_refs", _tuple_text(self.evidence_refs, "evidence_refs"))
         if self.proof_state != ProofState.PASS:
             raise RuntimeCoreInvariantError("promotion receipt proof_state must be Pass")
         if self.contradiction_scan != ProofState.PASS:
@@ -322,8 +336,9 @@ class PromotionReceipt:
         if not self.evidence_refs:
             raise RuntimeCoreInvariantError("promotion receipt requires evidence_refs")
         for field_name in ("promotion_id", "source_note_id", "anchor_id", "accepted_at", "accepted_by"):
-            if not str(getattr(self, field_name)).strip():
-                raise RuntimeCoreInvariantError(f"{field_name} must be non-empty")
+            _required_text_value(getattr(self, field_name), field_name)
+        if not isinstance(self.lineage_event_seq, int) or isinstance(self.lineage_event_seq, bool):
+            raise RuntimeCoreInvariantError("lineage_event_seq must be an integer")
         if self.lineage_event_seq < 0:
             raise RuntimeCoreInvariantError("lineage_event_seq must be non-negative")
         _validate_symbol_identifier(self.promotion_id, "promotion_id")
@@ -372,11 +387,19 @@ class NoteMemoryEvent:
     checksum: str = ""
 
     def __post_init__(self) -> None:
+        if not isinstance(self.event_seq, int) or isinstance(self.event_seq, bool):
+            raise RuntimeCoreInvariantError("event_seq must be an integer")
         if self.event_seq < 0:
             raise RuntimeCoreInvariantError("event_seq must be non-negative")
         for field_name in ("event_id", "note_id", "content_summary", "source_ref", "created_at"):
-            if not str(getattr(self, field_name)).strip():
-                raise RuntimeCoreInvariantError(f"{field_name} must be non-empty")
+            _required_text_value(getattr(self, field_name), field_name)
+        object.__setattr__(self, "evidence_refs", _tuple_text(self.evidence_refs, "evidence_refs"))
+        object.__setattr__(self, "relation_refs", _tuple_text(self.relation_refs, "relation_refs"))
+        object.__setattr__(
+            self,
+            "retrieval_receipt_refs",
+            _tuple_text(self.retrieval_receipt_refs, "retrieval_receipt_refs"),
+        )
         _validate_symbol_identifier(self.event_id, "event_id")
         _validate_symbol_identifier(self.note_id, "note_id")
         _parse_iso(self.created_at)
@@ -666,9 +689,9 @@ class NoteMemoryMesh:
                     source_ref=f"episode:{capsule_payload['episode_id']}",
                     proof_state=draft.proof_state,
                     trust_zone=draft.trust_zone,
-                    note_id=str(capsule_payload["episode_id"]),
-                    evidence_refs=tuple(str(item) for item in capsule_payload["evidence_refs"]),
-                    relation_refs=tuple(str(item) for item in capsule_payload["relation_refs"]),
+                    note_id=_validate_symbol_identifier(capsule_payload["episode_id"], "episode_id"),
+                    evidence_refs=_tuple_text(capsule_payload["evidence_refs"], "evidence_refs"),
+                    relation_refs=_tuple_text(capsule_payload["relation_refs"], "relation_refs"),
                 )
             )
             sequenced = self._sequence_event_locked(capsule_event)
@@ -925,6 +948,8 @@ class NoteMemoryMesh:
     ) -> dict[str, object]:
         """Return a read-only operator snapshot for the note memory control surface."""
 
+        if not isinstance(limit, int) or isinstance(limit, bool):
+            raise RuntimeCoreInvariantError("dashboard limit must be an integer")
         if limit < 1 or limit > 100:
             raise RuntimeCoreInvariantError("dashboard limit must be between 1 and 100")
         retrieval_receipt_filter = (
@@ -933,7 +958,7 @@ class NoteMemoryMesh:
             else ""
         )
         retrieval_citing_note_filter = (
-            _validate_symbol_identifier(str(retrieval_citing_note_ref), "retrieval_citing_note_ref")
+            _validate_symbol_identifier(retrieval_citing_note_ref, "retrieval_citing_note_ref")
             if retrieval_citing_note_ref
             else ""
         )
@@ -941,7 +966,7 @@ class NoteMemoryMesh:
             retrieval_receipt_filter=retrieval_receipt_filter,
             retrieval_citing_note_filter=retrieval_citing_note_filter,
         )
-        current = _parse_iso(now or self._clock())
+        current = _parse_iso(_required_text_value(now, "now") if now is not None else self._clock())
         events = self.list_events(skip_invalid=False)
         materialized = self._materialize(events)
         active_notes: list[NoteMemoryEvent] = []
@@ -1257,6 +1282,8 @@ class NoteMemoryMesh:
             raise RuntimeCoreInvariantError("EpisodeCapsule with ProofState Pass requires verification_refs")
         if not evidence_refs:
             raise RuntimeCoreInvariantError("EpisodeCapsule requires evidence_refs")
+        if not isinstance(draft.episode_id, str):
+            raise RuntimeCoreInvariantError("episode_id must be a string")
         episode_id = (
             _validate_symbol_identifier(draft.episode_id, "episode_id")
             if draft.episode_id.strip()
@@ -1297,7 +1324,7 @@ class NoteMemoryMesh:
         )
 
     def _write_episode_capsule_locked(self, payload: Mapping[str, object]) -> Path:
-        episode_id = _validate_symbol_identifier(str(payload["episode_id"]), "episode_id")
+        episode_id = _validate_symbol_identifier(payload["episode_id"], "episode_id")
         capsule_path = self.root_path / "episodes" / f"{episode_id}.json"
         capsule_path.parent.mkdir(parents=True, exist_ok=True)
         stored_payload = dict(payload)
@@ -1337,11 +1364,15 @@ class NoteMemoryMesh:
 
     def _draft_to_event(self, draft: NoteMemoryDraft) -> NoteMemoryEvent:
         created_at = self._clock()
-        redacted_summary = redact_sensitive_text(draft.content_summary.strip())
-        redacted_source = redact_sensitive_text(draft.source_ref.strip())
-        redacted_evidence = _redact_sequence(draft.evidence_refs)
-        redacted_retrieval_receipts = _redact_sequence(draft.retrieval_receipt_refs)
+        redacted_summary = redact_sensitive_text(_required_text_value(draft.content_summary, "content_summary"))
+        redacted_source = redact_sensitive_text(_required_text_value(draft.source_ref, "source_ref"))
+        redacted_evidence = _redact_sequence(_tuple_text(draft.evidence_refs, "evidence_refs"))
+        redacted_retrieval_receipts = _redact_sequence(
+            _tuple_text(draft.retrieval_receipt_refs, "retrieval_receipt_refs")
+        )
         claim_key, claim_value = _validate_optional_claim(draft.claim_key, draft.claim_value)
+        if not isinstance(draft.note_id, str):
+            raise RuntimeCoreInvariantError("note_id must be a string")
         note_id = _validate_symbol_identifier(draft.note_id, "note_id") if draft.note_id.strip() else stable_identifier(
             "note",
             {
