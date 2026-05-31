@@ -51,6 +51,7 @@ def test_package_readme_documents_simple_platform_surface() -> None:
 
     assert "Governance scope" in text
     assert "mullu check" in text
+    assert "mullu start --json" in text
     assert "mullu actions" in text
     assert "mullu task review-docs" in text
     assert "Ready" in text

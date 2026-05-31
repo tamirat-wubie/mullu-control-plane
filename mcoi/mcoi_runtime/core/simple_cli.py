@@ -73,7 +73,8 @@ def build_parser() -> argparse.ArgumentParser:
     workflows_parser = subparsers.add_parser("workflows", help="List common workflow templates")
     workflows_parser.add_argument("--json", action="store_true", help="Emit JSON instead of readable text")
 
-    subparsers.add_parser("start", help="Show the simple platform task menu")
+    start_parser = subparsers.add_parser("start", help="Show the simple platform home screen")
+    start_parser.add_argument("--json", action="store_true", help="Emit JSON instead of readable text")
     return parser
 
 
@@ -83,7 +84,11 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
     if args.command == "start":
-        print(_start_text())
+        home = SimplePlatform.simple_home().to_dict()
+        if args.json:
+            print(json.dumps(_envelope(True, "ready", {"home": home}), sort_keys=True, separators=(",", ":")))
+        else:
+            print(_start_text(home))
         return 0
     if args.command == "check":
         check = SimplePlatform().check_action(
@@ -270,16 +275,16 @@ def _readable_workflows(templates: list[dict[str, object]]) -> str:
     return "\n".join(lines)
 
 
-def _start_text() -> str:
-    guide = SimplePlatform.onboarding_guide().to_dict()
+def _start_text(home: dict[str, object]) -> str:
     lines = [
-        str(guide["title"]),
-        str(guide["message"]),
+        str(home["title"]),
+        str(home["message"]),
+        f"Next: {home['next_action']}",
         "Recommended path:",
     ]
-    for step in guide["recommended_path"]:
-        if isinstance(step, dict):
-            lines.append(f"- {step['title']}: {step['command']}")
+    for choice in home["choices"]:
+        if isinstance(choice, dict):
+            lines.append(f"- {choice['label']}: {choice['command']}")
     lines.extend(
         (
             "Common tasks: review-docs, update-docs, notify-support, verify-artifact",
