@@ -837,6 +837,10 @@ def validate_public_naming_artifact_manifest(
         "python .\\scripts\\report_clearance_capture_readiness.py" in manifest_text,
         "manifest missing clearance capture reporter command",
     )
+    _require(
+        "python .\\scripts\\report_clearance_capture_readiness.py --capture-manifest" in manifest_text,
+        "manifest missing clearance capture manifest command",
+    )
     _require("python .\\scripts\\validate_release_status.py" in manifest_text, "manifest missing release validator command")
 
 
