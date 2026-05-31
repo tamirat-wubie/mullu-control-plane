@@ -141,6 +141,38 @@ class DashboardSimpleStartGuideSummary:
 
 
 @dataclass(frozen=True)
+class DashboardSimpleHomeSummary:
+    """Compact dashboard home projection for non-technical users."""
+
+    title: str
+    message: str
+    primary_command: str
+    ready_workflow_count: int
+    review_workflow_count: int
+    blocked_workflow_count: int
+    execution_allowed: bool = False
+
+    def __post_init__(self) -> None:
+        if self.execution_allowed:
+            raise RuntimeCoreInvariantError("dashboard simple home cannot allow execution")
+        if min(self.ready_workflow_count, self.review_workflow_count, self.blocked_workflow_count) < 0:
+            raise RuntimeCoreInvariantError("dashboard simple home counts cannot be negative")
+
+    def to_dict(self) -> dict[str, object]:
+        """Return a JSON-compatible simple dashboard home summary."""
+
+        return {
+            "title": self.title,
+            "message": self.message,
+            "primary_command": self.primary_command,
+            "ready_workflow_count": self.ready_workflow_count,
+            "review_workflow_count": self.review_workflow_count,
+            "blocked_workflow_count": self.blocked_workflow_count,
+            "execution_allowed": self.execution_allowed,
+        }
+
+
+@dataclass(frozen=True)
 class OperationalDashboardState:
     """Read-only operational dashboard model."""
 
@@ -163,6 +195,7 @@ class OperationalDashboardState:
     simple_action_summaries: tuple[DashboardSimpleActionSummary, ...] = ()
     simple_workflow_summaries: tuple[DashboardSimpleWorkflowSummary, ...] = ()
     simple_start_guide: DashboardSimpleStartGuideSummary | None = None
+    simple_home_summary: DashboardSimpleHomeSummary | None = None
     simple_ready_action_refs: tuple[str, ...] = ()
     simple_review_action_refs: tuple[str, ...] = ()
     simple_blocked_action_refs: tuple[str, ...] = ()
@@ -200,6 +233,7 @@ class OperationalDashboardState:
             "simple_action_summaries": [summary.to_dict() for summary in self.simple_action_summaries],
             "simple_workflow_summaries": [summary.to_dict() for summary in self.simple_workflow_summaries],
             "simple_start_guide": self.simple_start_guide.to_dict() if self.simple_start_guide else None,
+            "simple_home_summary": self.simple_home_summary.to_dict() if self.simple_home_summary else None,
             "simple_ready_action_refs": list(self.simple_ready_action_refs),
             "simple_review_action_refs": list(self.simple_review_action_refs),
             "simple_blocked_action_refs": list(self.simple_blocked_action_refs),
@@ -246,6 +280,10 @@ def build_operational_dashboard_state(
     simple_action_summaries = tuple(_simple_action_summary(check) for check in simple_action_checks)
     simple_workflow_summaries = tuple(_simple_workflow_summary(plan) for plan in simple_workflow_plans)
     simple_start_guide_summary = _simple_start_guide_summary(simple_start_guide) if simple_start_guide else None
+    simple_home_summary = _simple_home_summary(
+        simple_workflow_summaries=simple_workflow_summaries,
+        simple_start_guide=simple_start_guide_summary,
+    )
     workflow_health = _workflow_health(projection, repair_items, blocked_action_ids)
     readiness = _execution_readiness(workflow_health, ready_action_ids, blocked_action_ids)
     dashboard_id = stable_identifier(
@@ -258,6 +296,7 @@ def build_operational_dashboard_state(
             "simple_action_refs": tuple(summary.action_ref for summary in simple_action_summaries),
             "simple_workflow_refs": tuple(summary.workflow_ref for summary in simple_workflow_summaries),
             "simple_start_guide": simple_start_guide_summary.to_dict() if simple_start_guide_summary else None,
+            "simple_home_summary": simple_home_summary.to_dict() if simple_home_summary else None,
         },
     )
     return OperationalDashboardState(
@@ -284,6 +323,7 @@ def build_operational_dashboard_state(
         simple_action_summaries=simple_action_summaries,
         simple_workflow_summaries=simple_workflow_summaries,
         simple_start_guide=simple_start_guide_summary,
+        simple_home_summary=simple_home_summary,
         simple_ready_action_refs=tuple(
             summary.action_ref for summary in simple_action_summaries if summary.outcome == "ready"
         ),
@@ -356,6 +396,51 @@ def _simple_start_guide_summary(guide: SimpleOnboardingGuide) -> DashboardSimple
         message=guide.message,
         recommended_commands=tuple(step.command for step in guide.recommended_path),
         outcomes=guide.outcomes,
+    )
+
+
+def _simple_home_summary(
+    *,
+    simple_workflow_summaries: Sequence[DashboardSimpleWorkflowSummary],
+    simple_start_guide: DashboardSimpleStartGuideSummary | None,
+) -> DashboardSimpleHomeSummary | None:
+    """Build a compact dashboard home summary from simple projections."""
+
+    if not simple_workflow_summaries and simple_start_guide is None:
+        return None
+    ready_count = sum(1 for summary in simple_workflow_summaries if summary.outcome == "ready")
+    review_count = sum(1 for summary in simple_workflow_summaries if summary.outcome == "needs_review")
+    blocked_count = sum(1 for summary in simple_workflow_summaries if summary.outcome == "blocked")
+    primary_command = (
+        simple_start_guide.recommended_commands[0]
+        if simple_start_guide and simple_start_guide.recommended_commands
+        else "mullu start"
+    )
+    if blocked_count:
+        return DashboardSimpleHomeSummary(
+            title="Blocked",
+            message="Some workflows need a narrower target before users continue.",
+            primary_command=primary_command,
+            ready_workflow_count=ready_count,
+            review_workflow_count=review_count,
+            blocked_workflow_count=blocked_count,
+        )
+    if review_count:
+        return DashboardSimpleHomeSummary(
+            title="Needs review",
+            message="Some workflows need approval before users continue.",
+            primary_command=primary_command,
+            ready_workflow_count=ready_count,
+            review_workflow_count=review_count,
+            blocked_workflow_count=blocked_count,
+        )
+    return DashboardSimpleHomeSummary(
+        title="Ready",
+        message="Users can start with the recommended simple workflow path.",
+        primary_command=primary_command,
+        ready_workflow_count=ready_count,
+        review_workflow_count=review_count,
+        blocked_workflow_count=blocked_count,
     )
 
 

@@ -67,3 +67,7 @@ def test_package_readme_documents_simple_platform_surface() -> None:
     assert "simple_action_summaries" in text
     assert "simple_workflow_summaries" in text
     assert "simple_start_guide" in text
+    assert "simple_home_summary" in text
+    assert "OperationalDashboardRuntime" in text
+    assert "GET /api/v1/dashboard/home" in text
+    assert "GET /api/v1/dashboard/state" in text
