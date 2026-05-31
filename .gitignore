@@ -50,6 +50,15 @@ maf/rust/Cargo.lock
 # Virtual environments and notebooks
 .ipynb_checkpoints/
 
+mullu-control-plane/
+mullu-control-plane-govern-*/
+mullu-control-plane-inceptadive-*/
+mullu-control-plane-retrieval-*/
+mullu-control-plane-temporal-*/
+mullu-control-plane-org-kernel/
+mullu-platform/
+mullu-platform-clean-pr/
+
 # Logs and local state
 *.log
 *.tmp

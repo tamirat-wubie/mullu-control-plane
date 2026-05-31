@@ -13,6 +13,7 @@ dependencies = []
 [project.scripts]
 mcoi = "mcoi_runtime.app.cli:main"
 mcoi-migrate-proofs = "mcoi_runtime.migration.runner:main"
+mullu = "mcoi_runtime.core.simple_cli:guarded_main"
 mcoi-swarm = "mcoi_runtime.swarm.cli:guarded_main"
 mcoi-notes = "mcoi_runtime.core.note_memory_cli:guarded_main"
 
