@@ -27,7 +27,6 @@ from typing import Any
 import pytest
 
 from gateway.candidate_composer import (
-    AdversarialReviewResult,
     CandidateComposer,
     CandidateEvaluation,
     CandidatePipeline,
