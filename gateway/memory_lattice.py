@@ -19,7 +19,7 @@ import hashlib
 import json
 from dataclasses import asdict, dataclass, field, replace
 from datetime import datetime
-from typing import Any
+from typing import Any, Mapping
 
 
 MEMORY_CLASSES = (
@@ -34,6 +34,7 @@ MEMORY_CLASSES = (
     "supersession_memory",
 )
 TRUST_CLASSES = ("untrusted", "observed", "admitted", "trusted", "authority", "revoked")
+P3_LATTICE_CONTRACT_STATUSES = ("blocked", "ready")
 
 
 @dataclass(frozen=True, slots=True)
@@ -175,6 +176,55 @@ class MemoryLatticeStoreStatus:
     store_hash: str = ""
 
 
+@dataclass(frozen=True, slots=True)
+class P3MemoryLatticeContract:
+    """P3 topology claim bound to a verified nested-mind observation chain."""
+
+    contract_id: str
+    status: str
+    mind_id: str
+    plan_id: str
+    commit_witness_id: str
+    reconciliation_report_id: str
+    admitted_memory_ids: tuple[str, ...]
+    evidence_refs: tuple[str, ...]
+    blocked_reasons: tuple[str, ...] = ()
+    contract_hash: str = ""
+    metadata: dict[str, Any] = field(default_factory=dict)
+
+    def __post_init__(self) -> None:
+        if not self.contract_id:
+            raise ValueError("contract_id_required")
+        if self.status not in P3_LATTICE_CONTRACT_STATUSES:
+            raise ValueError("p3_lattice_contract_status_invalid")
+        object.__setattr__(self, "admitted_memory_ids", tuple(self.admitted_memory_ids))
+        object.__setattr__(self, "evidence_refs", tuple(self.evidence_refs))
+        object.__setattr__(self, "blocked_reasons", tuple(self.blocked_reasons))
+        object.__setattr__(self, "metadata", dict(self.metadata))
+        _reject_duplicate_refs(self.admitted_memory_ids, "admitted_memory_ids")
+        _reject_duplicate_refs(self.evidence_refs, "evidence_refs")
+        if self.status == "ready":
+            _require_p3_ready_ref(self.mind_id, "mind_id")
+            _require_p3_ready_ref(self.plan_id, "plan_id")
+            _require_p3_ready_ref(self.commit_witness_id, "commit_witness_id")
+            _require_p3_ready_ref(self.reconciliation_report_id, "reconciliation_report_id")
+            if not self.admitted_memory_ids:
+                raise ValueError("admitted_memory_ids_required")
+            if not self.evidence_refs:
+                raise ValueError("evidence_refs_required")
+            if self.blocked_reasons:
+                raise ValueError("ready_contract_cannot_have_blocked_reasons")
+            required_refs = {
+                self.plan_id,
+                self.commit_witness_id,
+                self.reconciliation_report_id,
+            }
+            if not required_refs.issubset(set(self.evidence_refs)):
+                raise ValueError("ready_contract_missing_causal_evidence_ref")
+        elif not self.blocked_reasons:
+            raise ValueError("blocked_reasons_required")
+
+
 class InMemoryMemoryLatticeStore:
     """Tenant-scoped memory lattice store with governed projections."""
 
@@ -236,6 +286,68 @@ class InMemoryMemoryLatticeStore:
             supersession_count=sum(record.entry.memory_class == "supersession_memory" for record in records),
         )
         return _stamp_store_status(status)
+
+
+def build_p3_memory_lattice_contract(
+    readiness: Mapping[str, Any],
+    admissions: tuple[MemoryLatticeAdmission, ...],
+    *,
+    contract_id: str,
+) -> P3MemoryLatticeContract:
+    """Build the P3 memory-lattice contract from readiness and admission claims."""
+    if readiness.get("status") != "ready":
+        blockers = tuple(str(reason) for reason in readiness.get("blockers", ())) or ("p3_readiness_not_ready",)
+        return _stamp_p3_contract(
+            P3MemoryLatticeContract(
+                contract_id=contract_id,
+                status="blocked",
+                mind_id=str(readiness.get("mind_id", "")),
+                plan_id=str(readiness.get("plan_id", "")),
+                commit_witness_id=str(readiness.get("commit_witness_id", "")),
+                reconciliation_report_id=str(readiness.get("reconciliation_report_id", "")),
+                admitted_memory_ids=(),
+                evidence_refs=(),
+                blocked_reasons=blockers,
+            )
+        )
+
+    admitted_memory_ids = tuple(
+        sorted(
+            admission.memory_id
+            for admission in admissions
+            if admission.allowed_for_planning or admission.allowed_for_execution
+        )
+    )
+    plan_id = _readiness_required_text(readiness, "plan_id")
+    mind_id = _readiness_required_text(readiness, "mind_id")
+    commit_witness_id = _readiness_required_text(readiness, "commit_witness_id")
+    reconciliation_report_id = _readiness_required_text(readiness, "reconciliation_report_id")
+    evidence_refs = tuple(
+        sorted(
+            {
+                plan_id,
+                commit_witness_id,
+                reconciliation_report_id,
+                *(
+                    evidence_ref
+                    for admission in admissions
+                    for evidence_ref in admission.evidence_refs
+                ),
+            }
+        )
+    )
+    return _stamp_p3_contract(
+        P3MemoryLatticeContract(
+            contract_id=contract_id,
+            status="ready",
+            mind_id=mind_id,
+            plan_id=plan_id,
+            commit_witness_id=commit_witness_id,
+            reconciliation_report_id=reconciliation_report_id,
+            admitted_memory_ids=admitted_memory_ids,
+            evidence_refs=evidence_refs,
+        )
+    )
 
 
 def _class_admission(
@@ -306,3 +418,28 @@ def _stamp_store_status(status: MemoryLatticeStoreStatus) -> MemoryLatticeStoreS
     payload = asdict(replace(status, store_hash=""))
     encoded = json.dumps(payload, sort_keys=True, separators=(",", ":"), default=str).encode("utf-8")
     return replace(status, store_hash=hashlib.sha256(encoded).hexdigest())
+
+
+def _stamp_p3_contract(contract: P3MemoryLatticeContract) -> P3MemoryLatticeContract:
+    payload = asdict(replace(contract, contract_hash=""))
+    encoded = json.dumps(payload, sort_keys=True, separators=(",", ":"), default=str).encode("utf-8")
+    return replace(contract, contract_hash=hashlib.sha256(encoded).hexdigest())
+
+
+def _require_p3_ready_ref(value: str, field_name: str) -> None:
+    if not value:
+        raise ValueError(f"{field_name}_required")
+
+
+def _readiness_required_text(readiness: Mapping[str, Any], field_name: str) -> str:
+    value = str(readiness.get(field_name, ""))
+    if not value:
+        raise ValueError(f"p3_readiness_{field_name}_required")
+    return value
+
+
+def _reject_duplicate_refs(values: tuple[str, ...], field_name: str) -> None:
+    if len(values) != len(set(values)):
+        raise ValueError(f"{field_name}_duplicate")
+    if any(not value for value in values):
+        raise ValueError(f"{field_name}_empty")
