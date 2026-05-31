@@ -478,6 +478,99 @@ def test_cli_queue_and_promote_memory_anchor_with_receipt(tmp_path, capsys) -> N
     assert (note_store / "anchors" / "anchor-cli-note-contract.json").exists()
 
 
+def _queued_cli_promotion(tmp_path, capsys) -> tuple[object, str, int, str]:
+    note_store = tmp_path / "notes"
+    guarded_main(
+        [
+            "--note-store",
+            str(note_store),
+            "capture",
+            "--kind",
+            "WorkingNote",
+            "--scope",
+            "repository",
+            "--summary",
+            "note CLI promotion receipt boundary has strict validation",
+            "--source-ref",
+            "test:cli-promotion-boundary",
+            "--proof-state",
+            "Pass",
+            "--trust-zone",
+            "workspace",
+            "--expires-at",
+            "2026-06-04T00:00:00+00:00",
+            "--evidence-ref",
+            "test_note_memory_cli.py::boundary",
+        ]
+    )
+    capture_envelope = _last_json(capsys)
+    source_note_id = capture_envelope["payload"]["event"]["note_id"]
+    source_event_seq = capture_envelope["payload"]["event"]["event_seq"]
+    guarded_main(["--note-store", str(note_store), "queue-promotion", source_note_id])
+    queue_envelope = _last_json(capsys)
+    return note_store, source_note_id, source_event_seq, queue_envelope["payload"]["promotion_id"]
+
+
+def _valid_cli_promotion_receipt(promotion_id: str, source_note_id: str, source_event_seq: int) -> dict[str, object]:
+    return {
+        "promotion_id": promotion_id,
+        "source_note_id": source_note_id,
+        "anchor_id": "anchor-cli-note-contract",
+        "proof_state": "Pass",
+        "evidence_refs": ["test_note_memory_cli.py::boundary"],
+        "contradiction_scan": "Pass",
+        "phi_gov_status": "accepted",
+        "accepted_at": "2026-05-01T00:05:00+00:00",
+        "accepted_by": "test-governance",
+        "lineage_event_seq": source_event_seq,
+    }
+
+
+def test_cli_rejects_non_string_promotion_receipt_id(tmp_path, capsys) -> None:
+    note_store, source_note_id, source_event_seq, promotion_id = _queued_cli_promotion(tmp_path, capsys)
+    receipt = _valid_cli_promotion_receipt(promotion_id, source_note_id, source_event_seq)
+    receipt["promotion_id"] = 42
+
+    promote_code = guarded_main(
+        ["--note-store", str(note_store), "promote", "--note-id", source_note_id, "--receipt", json.dumps(receipt)]
+    )
+    promote_envelope = _last_json(capsys)
+
+    assert promote_code == 1
+    assert promote_envelope["ok"] is False
+    assert "promotion_id must be a string" in promote_envelope["error"]
+
+
+def test_cli_rejects_non_string_promotion_evidence_ref(tmp_path, capsys) -> None:
+    note_store, source_note_id, source_event_seq, promotion_id = _queued_cli_promotion(tmp_path, capsys)
+    receipt = _valid_cli_promotion_receipt(promotion_id, source_note_id, source_event_seq)
+    receipt["evidence_refs"] = ["test_note_memory_cli.py::boundary", 42]
+
+    promote_code = guarded_main(
+        ["--note-store", str(note_store), "promote", "--note-id", source_note_id, "--receipt", json.dumps(receipt)]
+    )
+    promote_envelope = _last_json(capsys)
+
+    assert promote_code == 1
+    assert promote_envelope["ok"] is False
+    assert "expected a string list" in promote_envelope["error"]
+
+
+def test_cli_rejects_string_promotion_lineage_event_seq(tmp_path, capsys) -> None:
+    note_store, source_note_id, source_event_seq, promotion_id = _queued_cli_promotion(tmp_path, capsys)
+    receipt = _valid_cli_promotion_receipt(promotion_id, source_note_id, source_event_seq)
+    receipt["lineage_event_seq"] = str(source_event_seq)
+
+    promote_code = guarded_main(
+        ["--note-store", str(note_store), "promote", "--note-id", source_note_id, "--receipt", json.dumps(receipt)]
+    )
+    promote_envelope = _last_json(capsys)
+
+    assert promote_code == 1
+    assert promote_envelope["ok"] is False
+    assert "lineage_event_seq must be an integer" in promote_envelope["error"]
+
+
 def test_cli_expire_and_rebuild_report_governed_receipts(tmp_path, capsys) -> None:
     note_store = tmp_path / "notes"
     guarded_main(
