@@ -80,7 +80,7 @@
         "terminal_evidence_reconciliation ready_for_terminal_certificate_minting=false",
         "general_agent_promotion_terminal_minting_gate.json schema_valid=true",
         "terminal_minting_gate ready_for_terminal_certificate_minting=false",
-        "approval_required_action_count=9",
+        "approval_required_action_count=10",
         "source_plan_type includes adapter, deployment, and portfolio",
         "closure_chain status=passed_blocked",
         "closure_chain artifact_valid=true"
