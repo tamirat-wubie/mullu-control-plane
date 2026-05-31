@@ -27,6 +27,12 @@ from mcoi_runtime.contracts.browser import (
     SelectorMatchResult,
     SelectorMatchStatus,
 )
+from .browser_redaction import (
+    DEFAULT_SENSITIVITY_POLICY,
+    SensitivityPolicy,
+    redact_page,
+    redact_selector_match,
+)
 from .invariants import ensure_non_empty_text, stable_identifier
 
 
@@ -58,12 +64,29 @@ class BrowserEngine:
     - Verification compares expected state against actual
     """
 
-    def __init__(self, *, clock: Callable[[], str], backend: BrowserBackend) -> None:
+    def __init__(
+        self,
+        *,
+        clock: Callable[[], str],
+        backend: BrowserBackend,
+        redaction_policy: SensitivityPolicy | None = DEFAULT_SENSITIVITY_POLICY,
+    ) -> None:
         self._clock = clock
         self._backend = backend
+        self._redaction_policy = redaction_policy
         self._session: BrowserSession | None = None
         self._observations: list[BrowserObservation] = []
         self._action_results: list[BrowserActionResult] = []
+
+    def _redact_page(self, page: PageDescriptor) -> PageDescriptor:
+        if self._redaction_policy is None:
+            return page
+        return redact_page(page, policy=self._redaction_policy)
+
+    def _redact_match(self, match: SelectorMatchResult) -> SelectorMatchResult:
+        if self._redaction_policy is None:
+            return match
+        return redact_selector_match(match, policy=self._redaction_policy)
 
     @property
     def session(self) -> BrowserSession | None:
@@ -115,7 +138,7 @@ class BrowserEngine:
         if self._session is None or not self._session.is_active:
             return None
 
-        page = self._backend.get_current_page()
+        page = self._redact_page(self._backend.get_current_page())
         obs_id = stable_identifier("browser-obs", {
             "session_id": self._session.session_id,
             "obs_count": len(self._observations),
@@ -160,7 +183,8 @@ class BrowserEngine:
                     created_at=self._session.created_at,
                 )
                 result = BrowserActionResult(
-                    action_id=action.action_id, succeeded=True, page_after=page,
+                    action_id=action.action_id, succeeded=True,
+                    page_after=self._redact_page(page),
                 )
             except Exception as exc:
                 result = BrowserActionResult(
@@ -177,11 +201,11 @@ class BrowserEngine:
                 result = BrowserActionResult(
                     action_id=action.action_id,
                     succeeded=match.found,
-                    selector_match=match,
+                    selector_match=self._redact_match(match),
                     error_message=None if match.found else f"selector not found: {action.selector.selector_value}",
                 )
             else:
-                page = self._backend.get_current_page()
+                page = self._redact_page(self._backend.get_current_page())
                 result = BrowserActionResult(
                     action_id=action.action_id, succeeded=True, page_after=page,
                 )
@@ -224,10 +248,10 @@ class BrowserEngine:
             self._action_results.append(result)
             return result
 
-        page_after = self._backend.get_current_page() if ok else None
+        page_after = self._redact_page(self._backend.get_current_page()) if ok else None
         result = BrowserActionResult(
             action_id=action.action_id, succeeded=ok,
-            selector_match=match, page_after=page_after,
+            selector_match=self._redact_match(match), page_after=page_after,
             error_message=None if ok else f"{action.action_type.value} failed",
         )
         self._action_results.append(result)
