@@ -871,11 +871,11 @@
   "generated_by": "scripts/proof_coverage_matrix.py",
   "route_coverage": {
     "by_coverage_state": {
-      "proven": 219,
+      "proven": 220,
       "unproven": 0,
       "witnessed": 149
     },
-    "route_count": 368,
+    "route_count": 369,
     "routes": [
       {
         "coverage_state": "witnessed",
@@ -1095,6 +1095,11 @@
       {
         "coverage_state": "proven",
         "route": "/api/v1/cases/{case_id}/plan-steps/{step_id}/worker-receipt",
+        "surface_id": "orgos_case_governance_lifecycle"
+      },
+      {
+        "coverage_state": "proven",
+        "route": "/api/v1/cases/{case_id}/proof-timeline",
         "surface_id": "orgos_case_governance_lifecycle"
       },
       {
@@ -5716,7 +5721,7 @@
         "mcoi/tests/test_organization_kernel_router.py",
         "mcoi/tests/test_organization_kernel_store.py"
       ],
-      "notes": "OrgOS lifecycle routes register organization authority, departments, governed cases, evidence events, plan gates, closure decisions, replayed read models, and admit bounded worker dispatch receipts as plan-step evidence without holding worker dispatch authority.",
+      "notes": "OrgOS lifecycle routes register organization authority, departments, governed cases, evidence events, plan gates, closure decisions, replayed read models, proof timelines, and bounded worker dispatch receipts as plan-step evidence without holding worker dispatch authority.",
       "representative_paths": [
         "/api/v1/orgs",
         "/api/v1/orgs/{org_id}/bootstrap-minimum",
@@ -5729,6 +5734,7 @@
         "/api/v1/cases/{case_id}/events",
         "/api/v1/cases/{case_id}/evidence",
         "/api/v1/cases/{case_id}/learning-admissions",
+        "/api/v1/cases/{case_id}/proof-timeline",
         "/api/v1/cases/{case_id}/launch-gateway-pilot/deployment-witness",
         "/api/v1/cases/{case_id}/launch-gateway-pilot/gate-preview",
         "/api/v1/cases/{case_id}/launch-gateway-pilot/readiness",
@@ -5752,6 +5758,8 @@
         "plan_step_gate_denies_cross_tenant_or_unbound_authority",
         "plan_step_gate_allows_certified_authorized_gateway_step",
         "case_closure_requires_effect_reconciliation_match_for_committed",
+        "case_proof_timeline_reports_open_case_without_closure",
+        "case_proof_timeline_reports_closure_certificate_and_learning",
         "learning_binding_requires_closed_case_and_admission_decision",
         "launch_gateway_pilot_collects_deployment_witness_and_allows_engineering_gate",
         "launch_gateway_pilot_gate_preview_is_non_mutating",
@@ -9148,8 +9156,8 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 1126,
-    "runtime_witness_count": 1126,
+    "exact_test_anchor_count": 1128,
+    "runtime_witness_count": 1128,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -12784,6 +12792,18 @@
           },
           {
             "anchors": [
+              "mcoi/tests/test_organization_kernel_router.py::test_case_proof_timeline_reports_open_case_without_closure"
+            ],
+            "witness": "case_proof_timeline_reports_open_case_without_closure"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_organization_kernel_router.py::test_case_proof_timeline_reports_closure_certificate_and_learning"
+            ],
+            "witness": "case_proof_timeline_reports_closure_certificate_and_learning"
+          },
+          {
+            "anchors": [
               "tests/test_gateway/test_orgos_kernel.py::test_learning_binding_requires_closed_case_and_admission_decision"
             ],
             "witness": "learning_binding_requires_closed_case_and_admission_decision"
@@ -12837,8 +12857,8 @@
             "witness": "worker_receipts_satisfy_engineering_gate_evidence"
           }
         ],
-        "exact_test_anchor_count": 19,
-        "runtime_witness_count": 19,
+        "exact_test_anchor_count": 21,
+        "runtime_witness_count": 21,
         "surface_id": "orgos_case_governance_lifecycle",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []
