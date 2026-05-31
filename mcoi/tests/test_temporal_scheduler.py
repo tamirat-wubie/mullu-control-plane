@@ -259,6 +259,7 @@ def test_temporal_phrase_swedish_next_weekday_local_resolves_before_registration
         ("an 2 stonnen", "lb-LU"),
         ("hemendik 2 ordura", "eu-ES"),
         ("en 2 hores", "ca-ES"),
+        ("en 2 horas", "gl-ES"),
     ),
 )
 def test_temporal_phrase_extended_locale_relative_resolves_before_registration(
@@ -346,6 +347,7 @@ def test_temporal_phrase_new_locale_relative_unit_variants_resolve_before_regist
         ("muer 09:30 UTC", "lb"),
         ("bihar 09:30 UTC", "eu"),
         ("dema 09:30 UTC", "ca"),
+        ("mana 09:30 UTC", "gl"),
     ),
 )
 def test_temporal_phrase_extended_locale_tomorrow_wall_time_resolves_before_registration(
@@ -404,6 +406,7 @@ def test_temporal_phrase_extended_locale_tomorrow_wall_time_resolves_before_regi
         ("naechste meindeg 08:15 local", "lb-LU"),
         ("hurrengo astelehena 08:15 local", "eu-ES"),
         ("dilluns vinent 08:15 local", "ca-AD"),
+        ("proximo luns 08:15 local", "gl-ES"),
     ),
 )
 def test_temporal_phrase_extended_locale_next_weekday_local_resolves_before_registration(
