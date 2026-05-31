@@ -87,6 +87,8 @@ def _resolve_relative_phrase(now: datetime, amount: int, unit: str) -> tuple[str
         "minutoj",
         "minutum",
         "minutas",
+        "munut",
+        "munutenn",
     }
     hour_units = {
         "hour",
@@ -144,6 +146,8 @@ def _resolve_relative_phrase(now: datetime, amount: int, unit: str) -> tuple[str
         "horas",
         "horo",
         "horoj",
+        "eur",
+        "eurvezh",
     }
     day_units = {
         "day",
@@ -201,6 +205,8 @@ def _resolve_relative_phrase(now: datetime, amount: int, unit: str) -> tuple[str
         "diem",
         "jorn",
         "jorns",
+        "deiz",
+        "deiziou",
     }
     if unit in minute_units:
         delta = timedelta(minutes=amount)
@@ -701,6 +707,18 @@ def _occitan_weekdays() -> dict[str, int]:
     }
 
 
+def _breton_weekdays() -> dict[str, int]:
+    return {
+        "dilun": 0,
+        "dimeurzh": 1,
+        "dimercher": 2,
+        "diriaou": 3,
+        "digwener": 4,
+        "disadorn": 5,
+        "disul": 6,
+    }
+
+
 def _resolve_bounded_temporal_phrase(
     phrase: str,
     *,
@@ -793,6 +811,8 @@ def _resolve_bounded_temporal_phrase(
         return _resolve_interlingua_temporal_phrase(normalized, now_dt, original_timezone)
     if locale_key in {"oc", "oc-fr", "oc-es"}:
         return _resolve_occitan_temporal_phrase(normalized, now_dt, original_timezone)
+    if locale_key in {"br", "br-fr"}:
+        return _resolve_breton_temporal_phrase(normalized, now_dt, original_timezone)
     return "unsupported", "temporal_phrase_locale_not_supported", ""
 
 
@@ -2737,6 +2757,56 @@ def _resolve_occitan_temporal_phrase(
     }:
         return "ambiguous", "temporal_phrase_ambiguous", ""
     if re.fullmatch(r"prochain (diluns|dimars|dimecres|dijous|divendres|dissabte|dimenge)", normalized):
+        return "ambiguous", "temporal_phrase_ambiguous", ""
+    return "unsupported", "temporal_phrase_unsupported", ""
+
+
+def _resolve_breton_temporal_phrase(
+    normalized: str,
+    now: datetime,
+    original_timezone: str,
+) -> tuple[str, str, str]:
+    relative = re.fullmatch(r"a-benn ([1-9][0-9]*) (munut|munutenn|eur|eurvezh|deiz|deiziou)", normalized)
+    if relative is not None:
+        resolved, reason = _resolve_relative_phrase(now, int(relative.group(1)), relative.group(2))
+        return ("exact" if resolved else "unsupported"), reason, resolved
+    wall_time = re.fullmatch(r"(hiziv|warc hoazh) ([0-9]{1,2}):([0-9]{2}) ?(utc|z|local)", normalized)
+    if wall_time is not None:
+        resolved, reason = _resolve_relative_wall_time(
+            now,
+            original_timezone=original_timezone,
+            day_offset=1 if wall_time.group(1) == "warc hoazh" else 0,
+            hour=int(wall_time.group(2)),
+            minute=int(wall_time.group(3)),
+            mode=wall_time.group(4),
+        )
+        return ("exact" if resolved else "unsupported"), reason, resolved
+    next_weekday = re.fullmatch(
+        r"(dilun|dimeurzh|dimercher|diriaou|digwener|disadorn|disul) a zeu ([0-9]{1,2}):([0-9]{2}) ?(utc|z|local)",
+        normalized,
+    )
+    if next_weekday is not None:
+        resolved, reason = _resolve_next_weekday_wall_time(
+            now,
+            original_timezone=original_timezone,
+            weekday=_breton_weekdays()[next_weekday.group(1)],
+            hour=int(next_weekday.group(2)),
+            minute=int(next_weekday.group(3)),
+            mode=next_weekday.group(4),
+        )
+        return ("exact" if resolved else "unsupported"), reason, resolved
+    if normalized in {
+        "hiziv",
+        "warc hoazh",
+        "fenoz",
+        "diwezhatoc",
+        "buan",
+        "ar sizhun a zeu",
+        "ar miz a zeu",
+        "ar bloaz a zeu",
+    }:
+        return "ambiguous", "temporal_phrase_ambiguous", ""
+    if re.fullmatch(r"(dilun|dimeurzh|dimercher|diriaou|digwener|disadorn|disul) a zeu", normalized):
         return "ambiguous", "temporal_phrase_ambiguous", ""
     return "unsupported", "temporal_phrase_unsupported", ""
 
