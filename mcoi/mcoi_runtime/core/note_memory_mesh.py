@@ -954,7 +954,7 @@ class NoteMemoryMesh:
                         continue
                     try:
                         payload = json.loads(stripped)
-                        expected_checksum = str(payload.get("checksum", ""))
+                        expected_checksum = _optional_mapping_text_or_empty(payload, "checksum")
                         unchecked_payload = dict(payload)
                         unchecked_payload["checksum"] = ""
                         event = NoteMemoryEvent.from_dict(unchecked_payload)
