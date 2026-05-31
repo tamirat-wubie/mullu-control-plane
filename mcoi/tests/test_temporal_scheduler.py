@@ -262,6 +262,7 @@ def test_temporal_phrase_swedish_next_weekday_local_resolves_before_registration
         ("en 2 horas", "gl-ES"),
         ("post 2 horoj", "eo-001"),
         ("post 2 horas", "la-VA"),
+        ("post 2 horas", "ia-001"),
     ),
 )
 def test_temporal_phrase_extended_locale_relative_resolves_before_registration(
@@ -352,6 +353,7 @@ def test_temporal_phrase_new_locale_relative_unit_variants_resolve_before_regist
         ("mana 09:30 UTC", "gl"),
         ("morgau 09:30 UTC", "eo"),
         ("cras 09:30 UTC", "la"),
+        ("deman 09:30 UTC", "ia"),
     ),
 )
 def test_temporal_phrase_extended_locale_tomorrow_wall_time_resolves_before_registration(
@@ -413,6 +415,7 @@ def test_temporal_phrase_extended_locale_tomorrow_wall_time_resolves_before_regi
         ("proximo luns 08:15 local", "gl-ES"),
         ("venonta lundo 08:15 local", "eo-001"),
         ("proximo lunae 08:15 local", "la-VA"),
+        ("proxime lunedi 08:15 local", "ia-001"),
     ),
 )
 def test_temporal_phrase_extended_locale_next_weekday_local_resolves_before_registration(
@@ -457,6 +460,7 @@ def test_temporal_phrase_ambiguous_blocks_before_registration() -> None:
         ("axina", "gl"),
         ("baldau", "eo"),
         ("mox", "la"),
+        ("tosto", "ia"),
     ),
 )
 def test_temporal_phrase_extended_ascii_ambiguous_blocks_before_registration(
