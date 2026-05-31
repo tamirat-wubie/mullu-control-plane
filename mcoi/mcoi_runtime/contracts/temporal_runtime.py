@@ -437,6 +437,9 @@ class TemporalActionRequest(ContractRecord):
     risk: TemporalRiskLevel = TemporalRiskLevel.LOW
     requested_at: str = ""
     execute_at: str = ""
+    temporal_phrase: str = ""
+    temporal_phrase_locale: str = "en"
+    temporal_phrase_policy: str = "ignore"
     not_before: str = ""
     expires_at: str = ""
     approval_expires_at: str = ""
@@ -466,6 +469,13 @@ class TemporalActionRequest(ContractRecord):
             value = getattr(self, field_name)
             if value:
                 require_datetime_text(value, field_name)
+        if not isinstance(self.temporal_phrase, str):
+            raise ValueError("temporal_phrase must be a string")
+        object.__setattr__(self, "temporal_phrase", self.temporal_phrase.strip())
+        object.__setattr__(self, "temporal_phrase_locale", require_non_empty_text(self.temporal_phrase_locale, "temporal_phrase_locale").strip())
+        object.__setattr__(self, "temporal_phrase_policy", require_non_empty_text(self.temporal_phrase_policy, "temporal_phrase_policy").strip())
+        if self.temporal_phrase_policy not in {"ignore", "require_exact", "operator_review"}:
+            raise ValueError("temporal_phrase_policy must be ignore, require_exact, or operator_review")
         object.__setattr__(self, "max_attempts", require_non_negative_int(self.max_attempts, "max_attempts"))
         object.__setattr__(self, "attempt_count", require_non_negative_int(self.attempt_count, "attempt_count"))
         if self.skill_plan is not None and not isinstance(self.skill_plan, TemporalSkillPlan):

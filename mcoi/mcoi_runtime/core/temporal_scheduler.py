@@ -12,10 +12,12 @@ Invariants:
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import datetime, timedelta, timezone
 from enum import StrEnum
+import re
 from typing import Any, Mapping
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from mcoi_runtime.contracts.temporal_runtime import (
     TemporalActionDecision,
@@ -35,6 +37,225 @@ def _parse_iso(value: str) -> datetime:
 
 def _iso(value: datetime) -> str:
     return value.astimezone(timezone.utc).isoformat()
+
+
+def _normalize_temporal_phrase(value: str) -> str:
+    return " ".join(value.strip().lower().split())
+
+
+def _resolve_relative_phrase(now: datetime, amount: int, unit: str) -> tuple[str, str]:
+    minute_units = {"minute", "minutes", "minuut", "minuten", "minut", "minuter"}
+    hour_units = {"hour", "hours", "uur", "uren", "timme", "timmar"}
+    day_units = {"day", "days", "dag", "dagen", "dagar"}
+    if unit in minute_units:
+        delta = timedelta(minutes=amount)
+    elif unit in hour_units:
+        delta = timedelta(hours=amount)
+    elif unit in day_units:
+        delta = timedelta(days=amount)
+    else:
+        return "", "temporal_phrase_unsupported"
+    return _iso(now + delta), "temporal_phrase_exact_relative"
+
+
+def _timezone_for_mode(mode: str, original_timezone: str) -> timezone | ZoneInfo:
+    if mode in {"utc", "z"}:
+        return timezone.utc
+    if not original_timezone:
+        return timezone.utc
+    try:
+        return ZoneInfo(original_timezone)
+    except ZoneInfoNotFoundError as exc:
+        raise RuntimeCoreInvariantError("temporal_phrase_original_timezone_invalid") from exc
+
+
+def _resolve_relative_wall_time(
+    now: datetime,
+    *,
+    original_timezone: str,
+    day_offset: int,
+    hour: int,
+    minute: int,
+    mode: str,
+) -> tuple[str, str]:
+    if hour > 23 or minute > 59:
+        return "", "temporal_phrase_invalid_wall_time"
+    zone = _timezone_for_mode(mode, original_timezone)
+    local_now = now.astimezone(zone)
+    target_date = local_now.date() + timedelta(days=day_offset)
+    target = datetime(target_date.year, target_date.month, target_date.day, hour, minute, tzinfo=zone)
+    reason = "temporal_phrase_exact_local_wall_time" if mode == "local" else "temporal_phrase_exact_utc_wall_time"
+    return _iso(target), reason
+
+
+def _resolve_next_weekday_wall_time(
+    now: datetime,
+    *,
+    original_timezone: str,
+    weekday: int,
+    hour: int,
+    minute: int,
+    mode: str,
+) -> tuple[str, str]:
+    if hour > 23 or minute > 59:
+        return "", "temporal_phrase_invalid_wall_time"
+    zone = _timezone_for_mode(mode, original_timezone)
+    local_now = now.astimezone(zone)
+    days_ahead = (weekday - local_now.weekday()) % 7
+    if days_ahead == 0:
+        days_ahead = 7
+    target_date = local_now.date() + timedelta(days=days_ahead)
+    target = datetime(target_date.year, target_date.month, target_date.day, hour, minute, tzinfo=zone)
+    reason = "temporal_phrase_exact_local_weekday_wall_time" if mode == "local" else "temporal_phrase_exact_utc_weekday_wall_time"
+    return _iso(target), reason
+
+
+def _english_weekdays() -> dict[str, int]:
+    return {"monday": 0, "tuesday": 1, "wednesday": 2, "thursday": 3, "friday": 4, "saturday": 5, "sunday": 6}
+
+
+def _dutch_weekdays() -> dict[str, int]:
+    return {"maandag": 0, "dinsdag": 1, "woensdag": 2, "donderdag": 3, "vrijdag": 4, "zaterdag": 5, "zondag": 6}
+
+
+def _swedish_weekdays() -> dict[str, int]:
+    return {"mandag": 0, "tisdag": 1, "onsdag": 2, "torsdag": 3, "fredag": 4, "lordag": 5, "sondag": 6}
+
+
+def _resolve_bounded_temporal_phrase(
+    phrase: str,
+    *,
+    locale: str,
+    now: str,
+    original_timezone: str,
+) -> tuple[str, str, str]:
+    normalized = _normalize_temporal_phrase(phrase)
+    now_dt = _parse_iso(now)
+    locale_key = locale.strip().lower()
+    if locale_key in {"en", "en-us", "en-gb"}:
+        return _resolve_english_temporal_phrase(normalized, now_dt, original_timezone)
+    if locale_key in {"nl", "nl-nl", "nl-be"}:
+        return _resolve_dutch_temporal_phrase(normalized, now_dt, original_timezone)
+    if locale_key in {"sv", "sv-se", "sv-fi"}:
+        return _resolve_swedish_temporal_phrase(normalized, now_dt, original_timezone)
+    return "unsupported", "temporal_phrase_locale_not_supported", ""
+
+
+def _resolve_english_temporal_phrase(
+    normalized: str,
+    now: datetime,
+    original_timezone: str,
+) -> tuple[str, str, str]:
+    relative = re.fullmatch(r"in ([1-9][0-9]*) (minute|minutes|hour|hours|day|days)", normalized)
+    if relative is not None:
+        resolved, reason = _resolve_relative_phrase(now, int(relative.group(1)), relative.group(2))
+        return ("exact" if resolved else "unsupported"), reason, resolved
+    wall_time = re.fullmatch(r"(today|tomorrow) at ([0-9]{1,2}):([0-9]{2}) ?(utc|z|local)", normalized)
+    if wall_time is not None:
+        resolved, reason = _resolve_relative_wall_time(
+            now,
+            original_timezone=original_timezone,
+            day_offset=1 if wall_time.group(1) == "tomorrow" else 0,
+            hour=int(wall_time.group(2)),
+            minute=int(wall_time.group(3)),
+            mode=wall_time.group(4),
+        )
+        return ("exact" if resolved else "unsupported"), reason, resolved
+    next_weekday = re.fullmatch(
+        r"next (monday|tuesday|wednesday|thursday|friday|saturday|sunday) at ([0-9]{1,2}):([0-9]{2}) ?(utc|z|local)",
+        normalized,
+    )
+    if next_weekday is not None:
+        resolved, reason = _resolve_next_weekday_wall_time(
+            now,
+            original_timezone=original_timezone,
+            weekday=_english_weekdays()[next_weekday.group(1)],
+            hour=int(next_weekday.group(2)),
+            minute=int(next_weekday.group(3)),
+            mode=next_weekday.group(4),
+        )
+        return ("exact" if resolved else "unsupported"), reason, resolved
+    if normalized in {"today", "tomorrow", "tonight", "later", "soon", "next week", "next month", "next year"}:
+        return "ambiguous", "temporal_phrase_ambiguous", ""
+    return "unsupported", "temporal_phrase_unsupported", ""
+
+
+def _resolve_dutch_temporal_phrase(
+    normalized: str,
+    now: datetime,
+    original_timezone: str,
+) -> tuple[str, str, str]:
+    relative = re.fullmatch(r"over ([1-9][0-9]*) (minuut|minuten|uur|uren|dag|dagen)", normalized)
+    if relative is not None:
+        resolved, reason = _resolve_relative_phrase(now, int(relative.group(1)), relative.group(2))
+        return ("exact" if resolved else "unsupported"), reason, resolved
+    wall_time = re.fullmatch(r"(vandaag|morgen) om ([0-9]{1,2}):([0-9]{2}) ?(utc|z|local)", normalized)
+    if wall_time is not None:
+        resolved, reason = _resolve_relative_wall_time(
+            now,
+            original_timezone=original_timezone,
+            day_offset=1 if wall_time.group(1) == "morgen" else 0,
+            hour=int(wall_time.group(2)),
+            minute=int(wall_time.group(3)),
+            mode=wall_time.group(4),
+        )
+        return ("exact" if resolved else "unsupported"), reason, resolved
+    next_weekday = re.fullmatch(
+        r"volgende (maandag|dinsdag|woensdag|donderdag|vrijdag|zaterdag|zondag) om ([0-9]{1,2}):([0-9]{2}) ?(utc|z|local)",
+        normalized,
+    )
+    if next_weekday is not None:
+        resolved, reason = _resolve_next_weekday_wall_time(
+            now,
+            original_timezone=original_timezone,
+            weekday=_dutch_weekdays()[next_weekday.group(1)],
+            hour=int(next_weekday.group(2)),
+            minute=int(next_weekday.group(3)),
+            mode=next_weekday.group(4),
+        )
+        return ("exact" if resolved else "unsupported"), reason, resolved
+    if normalized in {"vandaag", "morgen", "vanavond", "later", "binnenkort", "volgende week", "volgende maand", "volgend jaar"}:
+        return "ambiguous", "temporal_phrase_ambiguous", ""
+    return "unsupported", "temporal_phrase_unsupported", ""
+
+
+def _resolve_swedish_temporal_phrase(
+    normalized: str,
+    now: datetime,
+    original_timezone: str,
+) -> tuple[str, str, str]:
+    relative = re.fullmatch(r"om ([1-9][0-9]*) (minut|minuter|timme|timmar|dag|dagar)", normalized)
+    if relative is not None:
+        resolved, reason = _resolve_relative_phrase(now, int(relative.group(1)), relative.group(2))
+        return ("exact" if resolved else "unsupported"), reason, resolved
+    wall_time = re.fullmatch(r"(idag|imorgon) klockan ([0-9]{1,2}):([0-9]{2}) ?(utc|z|local)", normalized)
+    if wall_time is not None:
+        resolved, reason = _resolve_relative_wall_time(
+            now,
+            original_timezone=original_timezone,
+            day_offset=1 if wall_time.group(1) == "imorgon" else 0,
+            hour=int(wall_time.group(2)),
+            minute=int(wall_time.group(3)),
+            mode=wall_time.group(4),
+        )
+        return ("exact" if resolved else "unsupported"), reason, resolved
+    next_weekday = re.fullmatch(
+        r"nasta (mandag|tisdag|onsdag|torsdag|fredag|lordag|sondag) klockan ([0-9]{1,2}):([0-9]{2}) ?(utc|z|local)",
+        normalized,
+    )
+    if next_weekday is not None:
+        resolved, reason = _resolve_next_weekday_wall_time(
+            now,
+            original_timezone=original_timezone,
+            weekday=_swedish_weekdays()[next_weekday.group(1)],
+            hour=int(next_weekday.group(2)),
+            minute=int(next_weekday.group(3)),
+            mode=next_weekday.group(4),
+        )
+        return ("exact" if resolved else "unsupported"), reason, resolved
+    if normalized in {"idag", "imorgon", "ikvall", "senare", "snart", "nasta vecka", "nasta manad", "nasta ar"}:
+        return "ambiguous", "temporal_phrase_ambiguous", ""
+    return "unsupported", "temporal_phrase_unsupported", ""
 
 
 class ScheduledActionState(StrEnum):
@@ -148,10 +369,11 @@ class TemporalSchedulerEngine:
             raise RuntimeCoreInvariantError("Duplicate schedule_id")
         if not isinstance(action, TemporalActionRequest):
             raise RuntimeCoreInvariantError("action must be a TemporalActionRequest")
+        now = self._clock()
+        action = self._admit_temporal_phrase(action, now)
         if not action.execute_at:
             raise RuntimeCoreInvariantError("execute_at is required")
 
-        now = self._clock()
         scheduled = ScheduledTemporalAction(
             schedule_id=schedule_id,
             tenant_id=action.tenant_id,
@@ -164,6 +386,31 @@ class TemporalSchedulerEngine:
         )
         self._actions[schedule_id] = scheduled
         return scheduled
+
+    def _admit_temporal_phrase(self, action: TemporalActionRequest, now: str) -> TemporalActionRequest:
+        if not action.temporal_phrase:
+            return action
+        verdict, reason, resolved_execute_at = _resolve_bounded_temporal_phrase(
+            action.temporal_phrase,
+            locale=action.temporal_phrase_locale,
+            now=now,
+            original_timezone=str(action.metadata.get("original_timezone", "")),
+        )
+        if verdict != "exact":
+            if action.temporal_phrase_policy == "operator_review":
+                raise RuntimeCoreInvariantError("temporal_phrase_operator_review_required")
+            if action.temporal_phrase_policy == "require_exact":
+                raise RuntimeCoreInvariantError(reason)
+            return action
+        metadata = {
+            **dict(action.metadata),
+            "temporal_phrase_admission_verdict": verdict,
+            "temporal_phrase_admission_reason": reason,
+            "temporal_phrase_resolved_execute_at": resolved_execute_at,
+        }
+        if action.execute_at and _iso(_parse_iso(action.execute_at)) != resolved_execute_at:
+            raise RuntimeCoreInvariantError("temporal_phrase_execute_at_mismatch")
+        return replace(action, execute_at=resolved_execute_at, metadata=metadata)
 
     def get(self, schedule_id: str) -> ScheduledTemporalAction:
         """Return a scheduled action by id."""

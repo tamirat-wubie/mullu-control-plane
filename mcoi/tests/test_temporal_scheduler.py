@@ -49,6 +49,10 @@ def _engine(clock: MutableClock, *, skill_stage_provider: object | None = None) 
 def _action(
     *,
     execute_at: str = "2026-05-04T14:00:00+00:00",
+    temporal_phrase: str = "",
+    temporal_phrase_locale: str = "en",
+    temporal_phrase_policy: str = "ignore",
+    metadata: dict[str, object] | None = None,
     expires_at: str = "",
     approval_expires_at: str = "",
     evidence_fresh_until: str = "",
@@ -64,6 +68,9 @@ def _action(
         action_type="reminder",
         requested_at="2026-05-04T13:00:00+00:00",
         execute_at=execute_at,
+        temporal_phrase=temporal_phrase,
+        temporal_phrase_locale=temporal_phrase_locale,
+        temporal_phrase_policy=temporal_phrase_policy,
         expires_at=expires_at,
         approval_expires_at=approval_expires_at,
         evidence_fresh_until=evidence_fresh_until,
@@ -71,6 +78,7 @@ def _action(
         max_attempts=max_attempts,
         attempt_count=attempt_count,
         skill_plan=skill_plan,
+        metadata=metadata or {},
     )
 
 
@@ -128,6 +136,87 @@ def test_register_requires_execute_at() -> None:
     action = _action(execute_at="")
 
     with pytest.raises(RuntimeCoreInvariantError, match="execute_at is required"):
+        scheduler.register("sched-1", action)
+    assert scheduler.action_count == 0
+    assert scheduler.receipt_count == 0
+
+
+def test_temporal_phrase_english_relative_resolves_before_registration() -> None:
+    clock = MutableClock("2026-05-04T13:00:00+00:00")
+    scheduler = _engine(clock)
+    action = _action(
+        execute_at="",
+        temporal_phrase="in 2 hours",
+        temporal_phrase_policy="require_exact",
+    )
+
+    scheduled = scheduler.register("sched-1", action)
+
+    assert scheduled.execute_at == "2026-05-04T15:00:00+00:00"
+    assert scheduled.action.metadata["temporal_phrase_admission_verdict"] == "exact"
+    assert scheduled.action.metadata["temporal_phrase_resolved_execute_at"] == "2026-05-04T15:00:00+00:00"
+
+
+def test_temporal_phrase_dutch_wall_time_resolves_before_registration() -> None:
+    clock = MutableClock("2026-05-04T13:00:00+00:00")
+    scheduler = _engine(clock)
+    action = _action(
+        execute_at="",
+        temporal_phrase="morgen om 09:30 UTC",
+        temporal_phrase_locale="nl-BE",
+        temporal_phrase_policy="require_exact",
+    )
+
+    scheduled = scheduler.register("sched-1", action)
+
+    assert scheduled.execute_at == "2026-05-05T09:30:00+00:00"
+    assert scheduled.action.metadata["temporal_phrase_admission_verdict"] == "exact"
+    assert scheduled.action.metadata["temporal_phrase_admission_reason"] == "temporal_phrase_exact_utc_wall_time"
+
+
+def test_temporal_phrase_swedish_next_weekday_local_resolves_before_registration() -> None:
+    clock = MutableClock("2026-05-04T13:00:00+00:00")
+    scheduler = _engine(clock)
+    action = _action(
+        execute_at="",
+        temporal_phrase="nasta mandag klockan 08:15 local",
+        temporal_phrase_locale="sv",
+        temporal_phrase_policy="require_exact",
+        metadata={"original_timezone": "America/New_York"},
+    )
+
+    scheduled = scheduler.register("sched-1", action)
+
+    assert scheduled.execute_at == "2026-05-11T12:15:00+00:00"
+    assert scheduled.action.metadata["temporal_phrase_admission_verdict"] == "exact"
+    assert scheduled.action.metadata["temporal_phrase_admission_reason"] == "temporal_phrase_exact_local_weekday_wall_time"
+
+
+def test_temporal_phrase_ambiguous_blocks_before_registration() -> None:
+    clock = MutableClock("2026-05-04T13:00:00+00:00")
+    scheduler = _engine(clock)
+    action = _action(
+        execute_at="",
+        temporal_phrase="tomorrow",
+        temporal_phrase_policy="require_exact",
+    )
+
+    with pytest.raises(RuntimeCoreInvariantError, match="temporal_phrase_ambiguous"):
+        scheduler.register("sched-1", action)
+    assert scheduler.action_count == 0
+    assert scheduler.receipt_count == 0
+
+
+def test_temporal_phrase_mismatch_blocks_before_registration() -> None:
+    clock = MutableClock("2026-05-04T13:00:00+00:00")
+    scheduler = _engine(clock)
+    action = _action(
+        execute_at="2026-05-04T16:00:00+00:00",
+        temporal_phrase="in 2 hours",
+        temporal_phrase_policy="require_exact",
+    )
+
+    with pytest.raises(RuntimeCoreInvariantError, match="temporal_phrase_execute_at_mismatch"):
         scheduler.register("sched-1", action)
     assert scheduler.action_count == 0
     assert scheduler.receipt_count == 0
