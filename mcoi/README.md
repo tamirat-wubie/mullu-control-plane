@@ -19,6 +19,8 @@ Invariants:
 
 ```powershell
 mullu start
+mullu workflows
+mullu workflow docs-update --target docs/README.md
 mullu task review-docs --target docs/README.md
 mullu task update-docs --target docs/README.md
 mullu task notify-support
@@ -43,6 +45,7 @@ mullu check --goal "Notify support" --action send --target support@mullusi.com -
   - `GET /api/v1/simple/actions`
   - `POST /api/v1/simple/actions/check`
   - `POST /api/v1/simple/tasks/check`
+  - `POST /api/v1/simple/workflows/check`
 - `build_operational_dashboard_state(..., simple_action_checks=...)` projects checks into `simple_action_summaries`, `simple_ready_action_refs`, `simple_review_action_refs`, and `simple_blocked_action_refs` for dashboard rendering without granting execution authority.
 
 ## Command Surface

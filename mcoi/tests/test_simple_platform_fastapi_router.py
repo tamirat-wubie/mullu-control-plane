@@ -33,11 +33,12 @@ def _request(**overrides: object) -> dict[str, object]:
 def test_simple_platform_fastapi_adapter_route_specs_are_stable() -> None:
     specs = SimplePlatformFastAPIAdapter.route_specs()
 
-    assert len(specs) == 3
+    assert len(specs) == 4
     assert [(spec.method, spec.path, spec.handler_name) for spec in specs] == [
         ("GET", "/api/v1/simple/actions", "action_menu"),
         ("POST", "/api/v1/simple/actions/check", "check_action"),
         ("POST", "/api/v1/simple/tasks/check", "check_task"),
+        ("POST", "/api/v1/simple/workflows/check", "check_workflow"),
     ]
     assert all(spec.purpose for spec in specs)
 
@@ -54,6 +55,11 @@ def test_simple_platform_runtime_menu_is_plain_and_governed() -> None:
         "update_docs",
         "notify_support",
         "verify_artifact",
+    ]
+    assert [item["workflow"] for item in envelope["payload"]["workflows"]] == [
+        "docs_update",
+        "support_notice",
+        "artifact_review",
     ]
     assert [item["outcome"] for item in envelope["payload"]["outcomes"]] == [
         "ready",
@@ -87,6 +93,23 @@ def test_simple_platform_fastapi_adapter_returns_task_envelope() -> None:
     assert envelope["ok"] is True
     assert envelope["status"] == "ready"
     assert envelope["payload"]["check"]["title"] == "Ready"
+
+
+def test_simple_platform_fastapi_adapter_returns_workflow_envelope() -> None:
+    adapter = SimplePlatformFastAPIAdapter(SimplePlatformRuntime())
+    envelope = adapter.check_workflow(
+        {
+            "workflow": "docs_update",
+            "target": "docs/README.md",
+            "actor_id": "simple-http-test",
+        }
+    )
+
+    assert envelope["governed"] is True
+    assert envelope["ok"] is True
+    assert envelope["status"] == "ready"
+    assert envelope["payload"]["workflow"]["ready_count"] == 3
+    assert envelope["payload"]["workflow"]["checks"][0]["title"] == "Ready"
 
 
 def test_simple_platform_fastapi_adapter_returns_review_envelope() -> None:
@@ -126,6 +149,17 @@ def test_simple_platform_fastapi_adapter_rejects_invalid_task() -> None:
     assert envelope["ok"] is False
     assert envelope["status"] == "rejected"
     assert "task must be one of" in envelope["error"]
+    assert envelope["payload"] == {}
+
+
+def test_simple_platform_fastapi_adapter_rejects_invalid_workflow() -> None:
+    adapter = SimplePlatformFastAPIAdapter(SimplePlatformRuntime())
+    envelope = adapter.check_workflow({"workflow": "unknown-workflow", "target": "docs/README.md"})
+
+    assert envelope["governed"] is True
+    assert envelope["ok"] is False
+    assert envelope["status"] == "rejected"
+    assert "workflow must be one of" in envelope["error"]
     assert envelope["payload"] == {}
 
 

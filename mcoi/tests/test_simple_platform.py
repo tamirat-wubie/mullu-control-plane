@@ -16,7 +16,12 @@ import tomllib
 from pathlib import Path
 
 from mcoi_runtime.core.simple_cli import guarded_main
-from mcoi_runtime.core.simple_platform import SimpleActionRequest, SimplePlatform, SimpleTaskRequest
+from mcoi_runtime.core.simple_platform import (
+    SimpleActionRequest,
+    SimplePlatform,
+    SimpleTaskRequest,
+    SimpleWorkflowRequest,
+)
 from mcoi_runtime.core.simple_platform_api import SimplePlatformRuntime
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -113,6 +118,50 @@ def test_simple_platform_task_template_uses_default_target_for_support_notice() 
     assert check.review_reasons == ("External changes require approval.",)
 
 
+def test_simple_platform_workflow_projects_ready_docs_update_plan() -> None:
+    plan = SimplePlatform().check_workflow(
+        SimpleWorkflowRequest(
+            workflow="docs_update",
+            target="docs/README.md",
+            actor_id="simple-workflow-test",
+        )
+    )
+
+    assert plan.outcome == "ready"
+    assert plan.ok_to_continue is True
+    assert plan.ready_count == 3
+    assert plan.review_count == 0
+    assert plan.blocked_count == 0
+    assert [check.outcome for check in plan.checks] == ["ready", "ready", "ready"]
+
+
+def test_simple_platform_workflow_blocks_docs_update_outside_docs() -> None:
+    plan = SimplePlatform().check_workflow(
+        {
+            "workflow": "docs-update",
+            "target": "deploy/config.json",
+            "actor_id": "simple-workflow-test",
+        }
+    )
+
+    assert plan.outcome == "blocked"
+    assert plan.ok_to_continue is False
+    assert plan.ready_count == 1
+    assert plan.blocked_count == 2
+    assert "One or more steps cannot continue" in plan.message
+    assert plan.checks[0].blocked_reasons == ("The target is outside the allowed area.",)
+
+
+def test_simple_platform_workflow_projects_support_notice_review() -> None:
+    plan = SimplePlatform().check_workflow({"workflow": "support-notice", "actor_id": "simple-workflow-test"})
+
+    assert plan.outcome == "needs_review"
+    assert plan.ok_to_continue is False
+    assert plan.review_count == 1
+    assert plan.blocked_count == 0
+    assert plan.checks[0].review_reasons == ("External changes require approval.",)
+
+
 def test_simple_cli_outputs_readable_ready_result(capsys) -> None:
     exit_code = guarded_main(
         [
@@ -206,6 +255,39 @@ def test_simple_cli_lists_task_templates_as_json(capsys) -> None:
     assert envelope["payload"]["tasks"][2]["default_target"] == "support@mullusi.com"
 
 
+def test_simple_cli_workflow_outputs_ready_result(capsys) -> None:
+    exit_code = guarded_main(
+        [
+            "workflow",
+            "docs-update",
+            "--target",
+            "docs/README.md",
+            "--actor-id",
+            "simple-cli-test",
+            "--json",
+        ]
+    )
+    envelope = json.loads(capsys.readouterr().out)
+
+    assert exit_code == 0
+    assert envelope["governed"] is True
+    assert envelope["ok"] is True
+    assert envelope["status"] == "ready"
+    assert envelope["payload"]["workflow"] == "docs_update"
+    assert envelope["payload"]["ready_count"] == 3
+
+
+def test_simple_cli_lists_workflow_templates_as_readable_catalog(capsys) -> None:
+    exit_code = guarded_main(["workflows"])
+    output = capsys.readouterr().out
+
+    assert exit_code == 0
+    assert "Common workflows:" in output
+    assert "docs-update" in output
+    assert "mullu workflow docs-update --target <target>" in output
+    assert "support-notice" in output
+
+
 def test_simple_platform_api_projects_ready_check() -> None:
     envelope = SimplePlatformRuntime().check_action(
         {
@@ -241,6 +323,34 @@ def test_simple_platform_api_projects_template_backed_task() -> None:
     assert payload["payload"]["check"]["outcome"] == "ready"
 
 
+def test_simple_platform_api_projects_template_backed_workflow() -> None:
+    envelope = SimplePlatformRuntime().check_workflow(
+        {
+            "workflow": "docs_update",
+            "target": "docs/README.md",
+            "actor_id": "simple-api-test",
+        }
+    )
+    payload = envelope.to_dict()
+
+    assert payload["governed"] is True
+    assert payload["ok"] is True
+    assert payload["status"] == "ready"
+    assert payload["payload"]["workflow"]["outcome"] == "ready"
+    assert payload["payload"]["workflow"]["ready_count"] == 3
+
+
+def test_simple_platform_api_rejects_invalid_workflow() -> None:
+    envelope = SimplePlatformRuntime().check_workflow({"workflow": "unknown-workflow", "target": "docs/README.md"})
+    payload = envelope.to_dict()
+
+    assert payload["governed"] is True
+    assert payload["ok"] is False
+    assert payload["status"] == "rejected"
+    assert payload["payload"] == {}
+    assert "workflow must be one of" in payload["error"]
+
+
 def test_simple_platform_api_rejects_invalid_request() -> None:
     envelope = SimplePlatformRuntime().check_action({"goal": "", "action": "view"})
     payload = envelope.to_dict()
@@ -262,6 +372,7 @@ def test_simple_platform_api_lists_action_menu() -> None:
     assert payload["payload"]["tasks"][0]["task"] == "review_docs"
     assert payload["payload"]["tasks"][2]["default_target"] == "support@mullusi.com"
     assert payload["payload"]["outcomes"][2]["label"] == "Blocked"
+    assert payload["payload"]["workflows"][0]["workflow"] == "docs_update"
 
 
 def test_simple_platform_console_entry_point_is_guarded() -> None:

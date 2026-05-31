@@ -88,6 +88,26 @@ class SimplePlatformRuntime:
                 error=str(exc),
             )
 
+    def check_workflow(self, request_body: Mapping[str, Any]) -> SimplePlatformEnvelope:
+        """Validate and check one template-backed workflow request."""
+
+        try:
+            plan = self.platform.check_workflow(request_body)
+            return SimplePlatformEnvelope(
+                governed=True,
+                ok=plan.ok_to_continue,
+                status=plan.outcome,
+                payload={"workflow": plan.to_dict()},
+            )
+        except (RuntimeCoreInvariantError, KeyError, TypeError, ValueError) as exc:
+            return SimplePlatformEnvelope(
+                governed=True,
+                ok=False,
+                status="rejected",
+                payload={},
+                error=str(exc),
+            )
+
     def action_menu(self) -> SimplePlatformEnvelope:
         """Return the stable simple action vocabulary."""
 
@@ -124,5 +144,6 @@ class SimplePlatformRuntime:
                     {"outcome": "needs_review", "label": "Needs review"},
                     {"outcome": "blocked", "label": "Blocked"},
                 ],
+                "workflows": [template.to_dict() for template in self.platform.workflow_templates()],
             },
         )

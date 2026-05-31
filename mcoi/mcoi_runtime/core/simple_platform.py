@@ -26,6 +26,7 @@ from .invariants import RuntimeCoreInvariantError
 SimpleActionKind = Literal["view", "change", "send", "verify"]
 SimpleOutcome = Literal["ready", "needs_review", "blocked"]
 SimpleTaskKind = Literal["review_docs", "update_docs", "notify_support", "verify_artifact"]
+SimpleWorkflowKind = Literal["docs_update", "support_notice", "artifact_review"]
 
 
 @dataclass(frozen=True)
@@ -53,6 +54,30 @@ class SimpleTaskTemplate:
 
 
 @dataclass(frozen=True)
+class SimpleWorkflowTemplate:
+    """Plain workflow template that groups common tasks for users."""
+
+    workflow: SimpleWorkflowKind
+    label: str
+    default_goal: str
+    tasks: tuple[SimpleTaskKind, ...]
+    target_required: bool
+    default_target: str = ""
+
+    def to_dict(self) -> dict[str, object]:
+        """Return a JSON-compatible workflow template."""
+
+        return {
+            "workflow": self.workflow,
+            "label": self.label,
+            "default_goal": self.default_goal,
+            "tasks": list(self.tasks),
+            "target_required": self.target_required,
+            "default_target": self.default_target,
+        }
+
+
+@dataclass(frozen=True)
 class SimpleTaskRequest:
     """Plain task request that can be converted into a governed action check."""
 
@@ -65,6 +90,22 @@ class SimpleTaskRequest:
         """Reject incomplete task requests before governance execution."""
 
         _require_text(self.task, "task")
+        _require_text(self.actor_id, "actor_id")
+
+
+@dataclass(frozen=True)
+class SimpleWorkflowRequest:
+    """Plain workflow request that expands into governed task checks."""
+
+    workflow: SimpleWorkflowKind
+    target: str = ""
+    goal: str = ""
+    actor_id: str = "local-user"
+
+    def validate(self) -> None:
+        """Reject incomplete workflow requests before governance execution."""
+
+        _require_text(self.workflow, "workflow")
         _require_text(self.actor_id, "actor_id")
 
 
@@ -128,6 +169,60 @@ class SimpleActionCheck:
         }
 
 
+@dataclass(frozen=True)
+class SimpleWorkflowPlan:
+    """Plain outcome for a workflow composed from governed task checks."""
+
+    workflow: SimpleWorkflowKind
+    label: str
+    outcome: SimpleOutcome
+    title: str
+    message: str
+    next_step: str
+    checks: tuple[SimpleActionCheck, ...]
+
+    @property
+    def ok_to_continue(self) -> bool:
+        """Return whether every workflow step can continue without review."""
+
+        return self.outcome == "ready"
+
+    @property
+    def ready_count(self) -> int:
+        """Return how many workflow steps are ready."""
+
+        return sum(1 for check in self.checks if check.outcome == "ready")
+
+    @property
+    def review_count(self) -> int:
+        """Return how many workflow steps need review."""
+
+        return sum(1 for check in self.checks if check.outcome == "needs_review")
+
+    @property
+    def blocked_count(self) -> int:
+        """Return how many workflow steps are blocked."""
+
+        return sum(1 for check in self.checks if check.outcome == "blocked")
+
+    def to_dict(self) -> dict[str, Any]:
+        """Return a JSON-compatible workflow projection."""
+
+        return {
+            "workflow": self.workflow,
+            "label": self.label,
+            "outcome": self.outcome,
+            "title": self.title,
+            "message": self.message,
+            "next_step": self.next_step,
+            "ok_to_continue": self.ok_to_continue,
+            "ready_count": self.ready_count,
+            "review_count": self.review_count,
+            "blocked_count": self.blocked_count,
+            "checks": [check.to_dict() for check in self.checks],
+        }
+
+
 class SimplePlatform:
     """Small governed facade for user-oriented action checks."""
 
@@ -169,11 +264,39 @@ class SimplePlatform:
         task_request.validate()
         return self.check_action(_action_request_from_task(task_request))
 
+    def check_workflow(self, request: SimpleWorkflowRequest | Mapping[str, object]) -> SimpleWorkflowPlan:
+        """Check a common user workflow as one plain outcome."""
+
+        workflow_request = _workflow_request_from_mapping(request) if isinstance(request, Mapping) else request
+        workflow_request.validate()
+        template = _workflow_template_for(workflow_request.workflow)
+        target = workflow_request.target.strip() or template.default_target
+        if template.target_required and not target:
+            raise RuntimeCoreInvariantError(f"target is required for workflow: {workflow_request.workflow}")
+        checks = tuple(
+            self.check_task(
+                SimpleTaskRequest(
+                    task=task,
+                    target=target,
+                    goal=workflow_request.goal.strip() or template.default_goal,
+                    actor_id=workflow_request.actor_id,
+                )
+            )
+            for task in template.tasks
+        )
+        return _project_workflow_plan(template=template, checks=checks)
+
     @staticmethod
     def task_templates() -> tuple[SimpleTaskTemplate, ...]:
         """Return supported simple task templates."""
 
         return _TASK_TEMPLATES
+
+    @staticmethod
+    def workflow_templates() -> tuple[SimpleWorkflowTemplate, ...]:
+        """Return supported simple workflow templates."""
+
+        return _WORKFLOW_TEMPLATES
 
 
 _TASK_TEMPLATES: tuple[SimpleTaskTemplate, ...] = (
@@ -205,6 +328,32 @@ _TASK_TEMPLATES: tuple[SimpleTaskTemplate, ...] = (
         default_goal="Verify an artifact",
         action="verify",
         allowed_area="**",
+    ),
+)
+
+
+_WORKFLOW_TEMPLATES: tuple[SimpleWorkflowTemplate, ...] = (
+    SimpleWorkflowTemplate(
+        workflow="docs_update",
+        label="Update docs",
+        default_goal="Review, update, and verify documentation",
+        tasks=("review_docs", "update_docs", "verify_artifact"),
+        target_required=True,
+    ),
+    SimpleWorkflowTemplate(
+        workflow="support_notice",
+        label="Notify support",
+        default_goal="Notify support",
+        tasks=("notify_support",),
+        target_required=False,
+        default_target="support@mullusi.com",
+    ),
+    SimpleWorkflowTemplate(
+        workflow="artifact_review",
+        label="Verify artifact",
+        default_goal="Verify an artifact",
+        tasks=("verify_artifact",),
+        target_required=True,
     ),
 )
 
@@ -291,6 +440,46 @@ def _project_check(
     raise RuntimeCoreInvariantError(f"unsupported governance decision: {raw_decision}")
 
 
+def _project_workflow_plan(
+    *,
+    template: SimpleWorkflowTemplate,
+    checks: tuple[SimpleActionCheck, ...],
+) -> SimpleWorkflowPlan:
+    """Translate task checks into one user-facing workflow plan."""
+
+    blocked = tuple(check for check in checks if check.outcome == "blocked")
+    review = tuple(check for check in checks if check.outcome == "needs_review")
+    if blocked:
+        return SimpleWorkflowPlan(
+            workflow=template.workflow,
+            label=template.label,
+            outcome="blocked",
+            title="Blocked",
+            message="One or more steps cannot continue as requested.",
+            next_step=blocked[0].next_step,
+            checks=checks,
+        )
+    if review:
+        return SimpleWorkflowPlan(
+            workflow=template.workflow,
+            label=template.label,
+            outcome="needs_review",
+            title="Needs review",
+            message="One or more steps need approval before the workflow can continue.",
+            next_step=review[0].next_step,
+            checks=checks,
+        )
+    return SimpleWorkflowPlan(
+        workflow=template.workflow,
+        label=template.label,
+        outcome="ready",
+        title="Ready",
+        message="All workflow steps are ready.",
+        next_step="Continue with the workflow.",
+        checks=checks,
+    )
+
+
 def _request_from_mapping(value: Mapping[str, object]) -> SimpleActionRequest:
     """Load a simple request from a JSON-like mapping."""
 
@@ -308,6 +497,17 @@ def _task_request_from_mapping(value: Mapping[str, object]) -> SimpleTaskRequest
 
     return SimpleTaskRequest(
         task=_task_kind(_required_text(value, "task")),
+        target=str(value.get("target", "")).strip(),
+        goal=str(value.get("goal", "")).strip(),
+        actor_id=str(value.get("actor_id", "local-user")).strip() or "local-user",
+    )
+
+
+def _workflow_request_from_mapping(value: Mapping[str, object]) -> SimpleWorkflowRequest:
+    """Load a simple workflow request from a JSON-like mapping."""
+
+    return SimpleWorkflowRequest(
+        workflow=_workflow_kind(_required_text(value, "workflow")),
         target=str(value.get("target", "")).strip(),
         goal=str(value.get("goal", "")).strip(),
         actor_id=str(value.get("actor_id", "local-user")).strip() or "local-user",
@@ -337,6 +537,13 @@ def _template_for(task: SimpleTaskKind) -> SimpleTaskTemplate:
     raise RuntimeCoreInvariantError(f"unsupported task: {task}")
 
 
+def _workflow_template_for(workflow: SimpleWorkflowKind) -> SimpleWorkflowTemplate:
+    for template in _WORKFLOW_TEMPLATES:
+        if template.workflow == workflow:
+            return template
+    raise RuntimeCoreInvariantError(f"unsupported workflow: {workflow}")
+
+
 def _plain_reason(reason: object) -> str:
     """Translate internal constraint ids into stable plain language."""
 
@@ -362,6 +569,13 @@ def _task_kind(value: str) -> SimpleTaskKind:
     if normalized in {"review_docs", "update_docs", "notify_support", "verify_artifact"}:
         return normalized  # type: ignore[return-value]
     raise RuntimeCoreInvariantError("task must be one of: review_docs, update_docs, notify_support, verify_artifact")
+
+
+def _workflow_kind(value: str) -> SimpleWorkflowKind:
+    normalized = value.strip().replace("-", "_")
+    if normalized in {"docs_update", "support_notice", "artifact_review"}:
+        return normalized  # type: ignore[return-value]
+    raise RuntimeCoreInvariantError("workflow must be one of: docs_update, support_notice, artifact_review")
 
 
 def _required_text(value: Mapping[str, object], field_name: str) -> str:
