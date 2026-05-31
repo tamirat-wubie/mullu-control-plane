@@ -1,0 +1,97 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mullusi.com/schemas/evidence_classification_manifest.schema.json",
+  "title": "Mullu Evidence Classification Manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "manifest_id",
+    "generated_at",
+    "artifacts"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "manifest_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "generated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "artifacts": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "artifact",
+          "class",
+          "purpose",
+          "may_support_public_claim",
+          "allowed_claims",
+          "blocked_claims",
+          "review_owner"
+        ],
+        "properties": {
+          "artifact": {
+            "type": "string",
+            "minLength": 1
+          },
+          "class": {
+            "type": "string",
+            "enum": [
+              "fixture",
+              "local",
+              "ci",
+              "staging",
+              "pilot",
+              "production",
+              "external",
+              "historical"
+            ]
+          },
+          "purpose": {
+            "type": "string",
+            "minLength": 1
+          },
+          "may_support_public_claim": {
+            "type": "boolean"
+          },
+          "allowed_claims": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "uniqueItems": true
+          },
+          "blocked_claims": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "uniqueItems": true
+          },
+          "review_owner": {
+            "type": "string",
+            "minLength": 1
+          },
+          "freshness_window_days": {
+            "type": ["integer", "null"],
+            "minimum": 0
+          },
+          "notes": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}
