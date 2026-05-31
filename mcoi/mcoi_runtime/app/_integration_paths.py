@@ -1,13 +1,14 @@
 """Shared helpers for env-driven integration modules.
 
 Purpose: provide a single auditable contract for hosted-store path validation
-and environment-flag parsing across the ``app/*_integration.py`` family.
+environment-flag parsing, and optional route-prefix validation across the
+``app/*_integration.py`` family.
 Governance scope: precondition-contract single source of truth for hosted
-persistence paths and feature-flag truthy parsing.
+persistence paths, feature-flag truthy parsing, and hosted route prefixes.
 Dependencies: standard library only.
 Invariants: validator preconditions and env-flag truthy set match the prior
-per-module implementations exactly; error messages keep the historical
-substrings so test assertions remain stable.
+per-module implementations exactly; route prefixes are absolute, non-root API
+paths with no whitespace or empty path segments.
 """
 
 from __future__ import annotations
@@ -24,6 +25,26 @@ def env_flag(value: str | None) -> bool:
     """Return whether an environment flag value is enabled."""
 
     return str(value or "").strip().lower() in _TRUTHY_VALUES
+
+
+def validate_route_prefix(
+    value: str | None,
+    *,
+    default: str,
+    env_name: str,
+) -> str:
+    """Return a bounded FastAPI route prefix from environment input."""
+
+    prefix = str(default if value is None else value).strip().rstrip("/") or default
+    if not prefix.startswith("/"):
+        raise RuntimeError(f"{env_name} must start with '/'")
+    if prefix == "/":
+        raise RuntimeError(f"{env_name} must not be the root path")
+    if any(character.isspace() for character in prefix):
+        raise RuntimeError(f"{env_name} must not contain whitespace")
+    if "//" in prefix:
+        raise RuntimeError(f"{env_name} must not contain empty path segments")
+    return prefix
 
 
 def validate_hosted_store_path(

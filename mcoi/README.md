@@ -51,6 +51,10 @@ mullu check --goal "Notify support" --action send --target support@mullusi.com -
 - `mount_simple_platform_router_from_env(app, env)` mounts the simple routes
   when `MULLU_SIMPLE_PLATFORM_ENABLED=1` and uses
   `MULLU_SIMPLE_PLATFORM_PREFIX` when provided.
+- `mount_public_runtime_routes_from_env(app=..., runtime_env=..., clock=...)`
+  is the server startup hook that wires the simple platform and read-only
+  dashboard routes together behind `MULLU_SIMPLE_PLATFORM_ENABLED` and
+  `MULLU_DASHBOARD_ENABLED`; both remain disabled by default.
 - `create_simple_platform_fastapi_router(runtime)` mounts stable routes:
   - `GET /api/v1/simple/home`
   - `GET /api/v1/simple/actions`

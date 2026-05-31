@@ -14,6 +14,8 @@ from __future__ import annotations
 
 from typing import Any
 
+import pytest
+
 from mcoi_runtime.app.operational_dashboard_integration import (
     OperationalDashboardMountResult,
     mount_operational_dashboard_router_from_env,
@@ -154,3 +156,16 @@ def test_operational_dashboard_integration_uses_default_prefix() -> None:
     assert result.prefix == "/api/v1/dashboard"
     assert result.reason == "mounted"
     assert app.routers == [{"prefix": "/api/v1/dashboard"}]
+
+
+def test_operational_dashboard_integration_rejects_malformed_prefix() -> None:
+    app = FakeApp()
+
+    with pytest.raises(RuntimeError, match="MULLU_DASHBOARD_PREFIX must start with '/'"):
+        mount_operational_dashboard_router_from_env(
+            app,
+            {"MULLU_DASHBOARD_ENABLED": "1", "MULLU_DASHBOARD_PREFIX": "dashboard"},
+            runtime=_dashboard_runtime(),
+        )
+
+    assert app.routers == []

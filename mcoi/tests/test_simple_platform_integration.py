@@ -13,6 +13,8 @@ from __future__ import annotations
 
 from typing import Any
 
+import pytest
+
 from mcoi_runtime.app.simple_platform_integration import (
     SimplePlatformMountResult,
     mount_simple_platform_router_from_env,
@@ -110,6 +112,18 @@ def test_simple_platform_integration_uses_default_prefix() -> None:
     assert result.mounted is True
     assert result.prefix == "/api/v1/simple"
     assert app.routers == [{"prefix": "/api/v1/simple"}]
+
+
+def test_simple_platform_integration_rejects_malformed_prefix() -> None:
+    app = FakeApp()
+
+    with pytest.raises(RuntimeError, match="MULLU_SIMPLE_PLATFORM_PREFIX must start with '/'"):
+        mount_simple_platform_router_from_env(
+            app,
+            {"MULLU_SIMPLE_PLATFORM_ENABLED": "1", "MULLU_SIMPLE_PLATFORM_PREFIX": "simple"},
+        )
+
+    assert app.routers == []
 
 
 def test_simple_platform_start_route_contract_returns_non_executing_guide() -> None:
