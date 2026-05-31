@@ -307,6 +307,14 @@ class TestNoteMemorySummary:
         with pytest.raises(ValueError, match="retrieval_filter_mode"):
             _note_summary(retrieval_filter_mode="all")
 
+    def test_inactive_filter_requires_unfiltered_mode(self) -> None:
+        with pytest.raises(ValueError, match="retrieval_filter_active"):
+            _note_summary(retrieval_filter_active=False, retrieval_filter_mode="receipt")
+
+    def test_active_filter_requires_narrowing_mode(self) -> None:
+        with pytest.raises(ValueError, match="retrieval_filter_active"):
+            _note_summary(retrieval_filter_active=True, retrieval_filter_mode="unfiltered")
+
     def test_negative_retrieval_receipt_count_raises(self) -> None:
         with pytest.raises(ValueError, match="retrieval_receipt_count"):
             _note_summary(retrieval_receipt_count=-1)
