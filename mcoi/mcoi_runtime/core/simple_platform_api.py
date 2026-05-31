@@ -1,0 +1,107 @@
+"""Framework-neutral API for simple governed platform actions.
+
+Purpose: expose simple action checks through JSON-compatible envelopes for
+dashboards, local services, and HTTP adapters.
+Governance scope: API boundary only; SimplePlatform owns the governance SDK
+call and MVK remains the action authority.
+Dependencies: dataclasses, typing, simple platform facade, and invariant
+helpers.
+Invariants: invalid requests fail closed with explicit causal context, valid
+responses preserve proof and witness references, and no API handler bypasses
+the simple platform facade.
+"""
+
+from __future__ import annotations
+
+from dataclasses import dataclass
+from typing import Any, Mapping
+
+from .invariants import RuntimeCoreInvariantError
+from .simple_platform import SimplePlatform
+
+
+@dataclass(frozen=True)
+class SimplePlatformEnvelope:
+    """JSON-compatible simple platform response envelope."""
+
+    governed: bool
+    ok: bool
+    status: str
+    payload: Mapping[str, Any]
+    error: str = ""
+
+    def to_dict(self) -> dict[str, Any]:
+        """Return a JSON-compatible response."""
+
+        return {
+            "governed": self.governed,
+            "ok": self.ok,
+            "status": self.status,
+            "payload": dict(self.payload),
+            "error": self.error,
+        }
+
+
+class SimplePlatformRuntime:
+    """Runtime facade for plain user action checks."""
+
+    def __init__(self, platform: SimplePlatform | None = None) -> None:
+        self.platform = platform or SimplePlatform()
+
+    def check_action(self, request_body: Mapping[str, Any]) -> SimplePlatformEnvelope:
+        """Validate and check one plain action request."""
+
+        try:
+            check = self.platform.check_action(request_body)
+            return SimplePlatformEnvelope(
+                governed=True,
+                ok=check.ok_to_continue,
+                status=check.outcome,
+                payload={"check": check.to_dict()},
+            )
+        except (RuntimeCoreInvariantError, KeyError, TypeError, ValueError) as exc:
+            return SimplePlatformEnvelope(
+                governed=True,
+                ok=False,
+                status="rejected",
+                payload={},
+                error=str(exc),
+            )
+
+    def action_menu(self) -> SimplePlatformEnvelope:
+        """Return the stable simple action vocabulary."""
+
+        return SimplePlatformEnvelope(
+            governed=True,
+            ok=True,
+            status="listed",
+            payload={
+                "actions": [
+                    {
+                        "action": "view",
+                        "label": "View",
+                        "purpose": "Read an allowed file or artifact.",
+                    },
+                    {
+                        "action": "change",
+                        "label": "Change",
+                        "purpose": "Modify an allowed local file or artifact.",
+                    },
+                    {
+                        "action": "send",
+                        "label": "Send",
+                        "purpose": "Prepare an external message or notification for review.",
+                    },
+                    {
+                        "action": "verify",
+                        "label": "Verify",
+                        "purpose": "Check an allowed artifact before continuing.",
+                    },
+                ],
+                "outcomes": [
+                    {"outcome": "ready", "label": "Ready"},
+                    {"outcome": "needs_review", "label": "Needs review"},
+                    {"outcome": "blocked", "label": "Blocked"},
+                ],
+            },
+        )
