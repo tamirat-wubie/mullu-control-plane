@@ -39,14 +39,18 @@ _DISABLED_BLOCKER = "nested_mind_observation_bridge_disabled"
 
 
 def _mind_id(value: str) -> str:
-    normalized = str(value or "").strip()
+    if not isinstance(value, str):
+        raise ValueError("mind_id must be a path-segment-safe identifier")
+    normalized = value.strip()
     if not _MIND_ID_RE.fullmatch(normalized):
         raise ValueError("mind_id must be a path-segment-safe identifier")
     return normalized
 
 
 def _observation_id(value: str) -> str:
-    normalized = str(value or "").strip()
+    if not isinstance(value, str):
+        raise ValueError("observation_id must be a path-segment-safe identifier")
+    normalized = value.strip()
     if not _OBSERVATION_ID_RE.fullmatch(normalized):
         raise ValueError("observation_id must be a path-segment-safe identifier")
     return normalized
@@ -57,7 +61,7 @@ def _text_tuple(values: Sequence[str] | None, field_name: str) -> tuple[str, ...
         return ()
     if isinstance(values, (str, bytes)) or not isinstance(values, (tuple, list)):
         raise ValueError(f"{field_name} must be an array")
-    return tuple(require_non_empty_text(str(item), field_name) for item in values)
+    return tuple(_required_text_value(item, field_name) for item in values)
 
 
 def _json_safe(value: Any) -> Any:
@@ -93,6 +97,18 @@ def _require_mapping(value: Any, field_name: str) -> Mapping[str, Any]:
     return value
 
 
+def _required_text_value(value: Any, field_name: str) -> str:
+    if not isinstance(value, str) or not value.strip():
+        raise ValueError(f"{field_name} must be a non-empty string")
+    return value
+
+
+def _required_payload_text(payload: Mapping[str, Any], field_name: str) -> str:
+    if field_name not in payload:
+        raise ValueError(f"{field_name} must be a non-empty string")
+    return _required_text_value(payload[field_name], field_name)
+
+
 def _validate_payload(payload: Mapping[str, Any], *, mind_id: str) -> None:
     if set(payload.keys()) != {"actor", "reason", "kind", "metadata", "ops"}:
         raise ValueError("observation proposal payload has unexpected keys")
@@ -100,7 +116,7 @@ def _validate_payload(payload: Mapping[str, Any], *, mind_id: str) -> None:
         raise ValueError("observation proposal payload kind must be record_observation")
     metadata = _require_mapping(payload.get("metadata"), "metadata")
     for key in ("mullu_receipt_hash", "authority_receipt_hash", "proposal_evidence_hash", "observation_hash", "observed_at"):
-        require_non_empty_text(str(metadata.get(key, "")), key)
+        _required_payload_text(metadata, key)
     ops = payload.get("ops")
     if not isinstance(ops, list) or len(ops) != 1:
         raise ValueError("observation proposal payload must contain exactly one op")
@@ -109,7 +125,7 @@ def _validate_payload(payload: Mapping[str, Any], *, mind_id: str) -> None:
         raise ValueError("observation proposal op has unexpected keys")
     if op.get("op") != "set":
         raise ValueError("observation proposal op must be set")
-    key = str(op.get("key", ""))
+    key = _required_payload_text(op, "key")
     if not key.startswith("observations/"):
         raise ValueError("observation proposal key must live under observations/")
     _observation_id(key.removeprefix("observations/"))
@@ -152,12 +168,13 @@ class NestedMindObservationProposalPlan(ContractRecord):
         _validate_payload(payload, mind_id=self.mind_id)
         if self.payload_hash != stable_json_hash(payload):
             raise ValueError("payload_hash does not match proposal payload")
-        payload_observation_hash = str(payload["metadata"]["observation_hash"])
+        payload_metadata = _require_mapping(payload["metadata"], "metadata")
+        payload_observation_hash = _required_payload_text(payload_metadata, "observation_hash")
         if self.observation_hash != payload_observation_hash:
             raise ValueError("observation_hash must match payload metadata")
-        if self.mullu_receipt_hash != str(payload["metadata"]["mullu_receipt_hash"]):
+        if self.mullu_receipt_hash != _required_payload_text(payload_metadata, "mullu_receipt_hash"):
             raise ValueError("mullu_receipt_hash must match payload metadata")
-        if self.authority_receipt_hash != str(payload["metadata"]["authority_receipt_hash"]):
+        if self.authority_receipt_hash != _required_payload_text(payload_metadata, "authority_receipt_hash"):
             raise ValueError("authority_receipt_hash must match payload metadata")
         blockers = _text_tuple(self.blockers, "blockers")
         if self.status is NestedMindObservationBridgeStatus.DISABLED and _DISABLED_BLOCKER not in blockers:
@@ -237,7 +254,7 @@ def build_observation_proposal_plan(
         target_route=f"/minds/{evidence.mind_id}/proposals",
         method="POST",
         payload_hash=stable_json_hash(payload),
-        observation_hash=str(payload["metadata"]["observation_hash"]),
+        observation_hash=_required_payload_text(payload["metadata"], "observation_hash"),
         created_at=created_at,
         status=status,
         proposal_payload=payload,
