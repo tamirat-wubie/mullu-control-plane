@@ -36,6 +36,9 @@ mullu check --goal "Notify support" --action send --target support@mullusi.com -
 ## Simple App Surface
 
 - `SimplePlatformRuntime` exposes the same outcomes in JSON envelopes.
+- `mount_simple_platform_router_from_env(app, env)` mounts the simple routes
+  when `MULLU_SIMPLE_PLATFORM_ENABLED=1` and uses
+  `MULLU_SIMPLE_PLATFORM_PREFIX` when provided.
 - `create_simple_platform_fastapi_router(runtime)` mounts stable routes:
   - `GET /api/v1/simple/actions`
   - `POST /api/v1/simple/actions/check`
