@@ -120,12 +120,17 @@ The live submitter does not enable:
 Operator CLI:
 
 ```powershell
+python scripts/nested_mind_build_observation_plan.py --mind-id root --observation-id obs-1 --observation path\to\observation.json --mullu-receipt-hash <hash> --authority-receipt-hash <hash> --plan-out path\to\plan.json --evidence-out path\to\evidence.json
 python scripts/nested_mind_submit_observation.py --plan path\to\plan.json --evidence path\to\evidence.json --dry-run
-python scripts/nested_mind_submit_observation.py --plan path\to\plan.json --evidence path\to\evidence.json --submit
+python scripts\nested_mind_submit_observation.py --plan path\to\plan.json --evidence path\to\evidence.json --submit --store .tmp\nested-mind-evidence.jsonl
+python scripts\nested_mind_reconcile_observation.py --store .tmp\nested-mind-evidence.jsonl --plan-id <plan_id> --witness-id <witness_id>
+python scripts\validate_nested_mind_p3_readiness.py --store .tmp\nested-mind-evidence.jsonl
 ```
 
-The default is dry-run. `--submit` requires all environment gates above and
-prints only a `NestedMindObservationSubmissionReport` JSON object.
+The default submit path is dry-run. `--submit` requires all environment gates
+above and prints only a `NestedMindObservationSubmissionReport` JSON object.
+The evidence store is append-only and rejects bearer-token or raw-response-body
+fields.
 
 ## What changes after this lands?
 
