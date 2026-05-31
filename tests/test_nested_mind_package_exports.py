@@ -4,6 +4,12 @@ Dependencies: mcoi_runtime contracts and persistence packages.
 Invariants: downstream code can use public package paths without private imports.
 """
 
+from mcoi_runtime.adapters import (
+    NestedMindConnector,
+    NestedMindObservationReconciler,
+    NestedMindObservationSubmissionOutcome,
+    NestedMindObservationSubmitter,
+)
 from mcoi_runtime.contracts import (
     NestedMindCommitWitness,
     NestedMindObservationProposalPlan,
@@ -34,3 +40,10 @@ def test_nested_mind_persistence_symbols_are_public_exports() -> None:
     assert NestedMindEvidenceStore.__name__ == "NestedMindEvidenceStore"
     assert hasattr(NestedMindEvidenceStore, "record_plan")
     assert hasattr(NestedMindEvidenceStore, "record_reconciliation_report")
+
+
+def test_nested_mind_adapters_are_public_exports() -> None:
+    assert NestedMindConnector.__name__ == "NestedMindConnector"
+    assert NestedMindObservationSubmitter.__name__ == "NestedMindObservationSubmitter"
+    assert NestedMindObservationSubmissionOutcome.__name__ == "NestedMindObservationSubmissionOutcome"
+    assert NestedMindObservationReconciler.__name__ == "NestedMindObservationReconciler"
