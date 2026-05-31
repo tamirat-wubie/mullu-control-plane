@@ -29,6 +29,7 @@ from mcoi_runtime.contracts import (  # noqa: E402
     NestedMindCommitWitness,
     NestedMindCommitWitnessStatus,
 )
+from mcoi_runtime.contracts._base import require_non_empty_text  # noqa: E402
 from mcoi_runtime.persistence import NestedMindEvidenceStore  # noqa: E402
 
 
@@ -40,13 +41,17 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--no-replay", action="store_true", help="Skip replay route; projection and audit still run")
     args = parser.parse_args(argv)
 
-    store = NestedMindEvidenceStore(Path(args.store))
-    witness = _load_witness(store, args.witness_id)
+    store_path = Path(_require_cli_text(args.store, "store"))
+    plan_id = _require_cli_text(args.plan_id, "plan_id")
+    witness_id = _require_cli_text(args.witness_id, "witness_id")
+
+    store = NestedMindEvidenceStore(store_path)
+    witness = _load_witness(store, witness_id)
     bootstrap = mount_nested_mind_connector_from_env(runtime_env=os.environ, clock=_utc_now)
     if bootstrap.connector is None:
         raise RuntimeError("nested-mind read connector was not mounted")
     reconciler = NestedMindObservationReconciler(clock=_utc_now, read_connector=bootstrap.connector)
-    report = reconciler.reconcile(plan_id=args.plan_id, witness=witness, replay=not args.no_replay)
+    report = reconciler.reconcile(plan_id=plan_id, witness=witness, replay=not args.no_replay)
     store.record_reconciliation_report(report)
     print(report.to_json())
     return 0 if report.status.value == "verified" else 1
@@ -57,6 +62,13 @@ def _load_witness(store: NestedMindEvidenceStore, witness_id: str) -> NestedMind
         if entry.record_type == "commit_witness" and entry.record_id == witness_id:
             return _witness_from_payload(entry.payload)
     raise RuntimeError("commit witness not found in nested-mind evidence store")
+
+
+def _require_cli_text(value: str, field_name: str) -> str:
+    try:
+        return require_non_empty_text(value, field_name)
+    except ValueError as exc:
+        raise RuntimeError(f"{field_name} is required") from exc
 
 
 def _witness_from_payload(payload: Mapping[str, Any]) -> NestedMindCommitWitness:

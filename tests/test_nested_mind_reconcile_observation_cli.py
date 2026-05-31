@@ -13,6 +13,8 @@ import importlib.util
 import json
 from pathlib import Path
 
+import pytest
+
 from mcoi_runtime.adapters import JsonConnectorOutcome
 from mcoi_runtime.contracts.integration import ConnectorResult, ConnectorStatus
 from mcoi_runtime.contracts import (
@@ -88,6 +90,59 @@ def test_reconcile_cli_appends_verified_reconciliation(tmp_path, monkeypatch, ca
     assert exit_code == 0
     assert output["status"] == "verified"
     assert [entry.record_type for entry in entries] == ["commit_witness", "reconciliation_report"]
+
+
+def test_reconcile_cli_rejects_empty_plan_id_before_connector_mount(tmp_path, monkeypatch, capsys) -> None:
+    module = _module()
+    store_path = tmp_path / "evidence.jsonl"
+    store = NestedMindEvidenceStore(store_path)
+    store.record_commit_witness(_witness())
+
+    def fail_mount(**_: object) -> object:
+        raise AssertionError("connector must not mount for invalid plan_id")
+
+    monkeypatch.setattr(module, "mount_nested_mind_connector_from_env", fail_mount)
+
+    with pytest.raises(RuntimeError, match="plan_id is required"):
+        module.main(
+            [
+                "--store",
+                str(store_path),
+                "--plan-id",
+                "",
+                "--witness-id",
+                "witness-1",
+            ]
+        )
+    entries = NestedMindEvidenceStore(store_path).list_by_mind_id("root")
+
+    assert capsys.readouterr().out == ""
+    assert [entry.record_type for entry in entries] == ["commit_witness"]
+
+
+def test_reconcile_cli_rejects_empty_witness_id_before_store_load(tmp_path, monkeypatch, capsys) -> None:
+    module = _module()
+    store_path = tmp_path / "missing-evidence.jsonl"
+
+    def fail_mount(**_: object) -> object:
+        raise AssertionError("connector must not mount for invalid witness_id")
+
+    monkeypatch.setattr(module, "mount_nested_mind_connector_from_env", fail_mount)
+
+    with pytest.raises(RuntimeError, match="witness_id is required"):
+        module.main(
+            [
+                "--store",
+                str(store_path),
+                "--plan-id",
+                "plan-1",
+                "--witness-id",
+                "",
+            ]
+        )
+
+    assert capsys.readouterr().out == ""
+    assert not store_path.exists()
 
 
 class FakeBootstrap:
