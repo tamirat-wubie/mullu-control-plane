@@ -147,6 +147,20 @@ def test_p3_readiness_cli_rejects_stored_sensitive_fields(tmp_path, capsys) -> N
     assert capsys.readouterr().out == ""
 
 
+def test_p3_readiness_cli_rejects_unexpected_top_level_fields(tmp_path, capsys) -> None:
+    module = _module()
+    store_path = tmp_path / "nested-mind.jsonl"
+    store = NestedMindEvidenceStore(store_path)
+    store.record_submission_report(_submission())
+    entry = store_path.read_text(encoding="utf-8").strip()
+    unsafe_entry = entry[:-1] + ',"authorization":"secret"}'
+    store_path.write_text(unsafe_entry + "\n", encoding="utf-8")
+
+    with pytest.raises(CorruptedDataError, match="unexpected fields"):
+        module.main(["--store", str(store_path)])
+    assert capsys.readouterr().out == ""
+
+
 def test_p3_readiness_passes_for_bound_verified_chain(tmp_path) -> None:
     module = _module()
     store_path = tmp_path / "nested-mind.jsonl"
