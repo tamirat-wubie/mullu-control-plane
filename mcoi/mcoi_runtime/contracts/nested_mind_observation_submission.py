@@ -47,7 +47,9 @@ _OBSERVATION_ID_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$")
 def validate_observation_id(observation_id: str) -> str:
     """Return a path-segment-safe nested-mind observation identifier."""
 
-    value = str(observation_id or "").strip()
+    if not isinstance(observation_id, str):
+        raise ValueError("observation_id must be a path-segment-safe identifier")
+    value = observation_id.strip()
     if not _OBSERVATION_ID_RE.fullmatch(value):
         raise ValueError("observation_id must be a path-segment-safe identifier")
     return value
