@@ -240,17 +240,54 @@ def _retrieval_guard_from_args(args: argparse.Namespace) -> RetrievalGuard:
 
 def _promotion_receipt_from_mapping(value: Mapping[str, Any]) -> PromotionReceipt:
     return PromotionReceipt(
-        promotion_id=str(value["promotion_id"]),
-        source_note_id=str(value["source_note_id"]),
-        anchor_id=str(value["anchor_id"]),
-        proof_state=ProofState(str(value["proof_state"])),
-        evidence_refs=tuple(str(item) for item in value["evidence_refs"]),
-        contradiction_scan=ProofState(str(value["contradiction_scan"])),
-        phi_gov_status=PhiGovStatus(str(value["phi_gov_status"])),
-        accepted_at=str(value["accepted_at"]),
-        accepted_by=str(value["accepted_by"]),
-        lineage_event_seq=int(value["lineage_event_seq"]),
+        promotion_id=_required_text(value, "promotion_id"),
+        source_note_id=_required_text(value, "source_note_id"),
+        anchor_id=_required_text(value, "anchor_id"),
+        proof_state=ProofState(_required_text(value, "proof_state")),
+        evidence_refs=_text_tuple(value.get("evidence_refs")),
+        contradiction_scan=ProofState(_required_text(value, "contradiction_scan")),
+        phi_gov_status=PhiGovStatus(_required_text(value, "phi_gov_status")),
+        accepted_at=_required_text(value, "accepted_at"),
+        accepted_by=_required_text(value, "accepted_by"),
+        lineage_event_seq=_required_int(value, "lineage_event_seq"),
     )
+
+
+def _required_text(value: Mapping[str, Any], field_name: str) -> str:
+    if field_name not in value:
+        raise KeyError(f"missing field: {field_name}")
+    raw_value = value[field_name]
+    if not isinstance(raw_value, str):
+        raise ValueError(f"{field_name} must be a string")
+    text = raw_value.strip()
+    if not text:
+        raise ValueError(f"{field_name} must be non-empty")
+    return text
+
+
+def _required_int(value: Mapping[str, Any], field_name: str) -> int:
+    if field_name not in value:
+        raise KeyError(f"missing field: {field_name}")
+    raw_value = value[field_name]
+    if not isinstance(raw_value, int) or isinstance(raw_value, bool):
+        raise ValueError(f"{field_name} must be an integer")
+    return raw_value
+
+
+def _text_tuple(value: Any) -> tuple[str, ...]:
+    if value is None:
+        return ()
+    if not isinstance(value, Sequence) or isinstance(value, (str, bytes)):
+        raise ValueError("expected a string list")
+    text_values: list[str] = []
+    for item in value:
+        if not isinstance(item, str):
+            raise ValueError("expected a string list")
+        text = item.strip()
+        if not text:
+            raise ValueError("expected a non-empty string list")
+        text_values.append(text)
+    return tuple(text_values)
 
 
 def _load_json_object(value: str) -> dict[str, Any]:
