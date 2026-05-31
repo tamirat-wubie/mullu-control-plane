@@ -70,6 +70,12 @@ def test_note_memory_fastapi_adapter_handlers_preserve_runtime_envelopes(tmp_pat
     )
     listed = adapter.list_events()
     dashboard = adapter.dashboard_snapshot({"limit": 5, "now": "2026-05-28T00:00:00+00:00"})
+    filtered_dashboard = adapter.dashboard_snapshot(
+        {
+            "limit": 5,
+            "retrieval_receipt_ref": retrieved["payload"]["receipt"]["receipt_id"],
+        }
+    )
 
     assert captured["governed"] is True
     assert captured["ok"] is True
@@ -82,6 +88,9 @@ def test_note_memory_fastapi_adapter_handlers_preserve_runtime_envelopes(tmp_pat
     assert listed["payload"]["events"][1]["note_id"] == decision["payload"]["event"]["note_id"]
     assert dashboard["payload"]["summary"]["retrieval_influence_count"] == 1
     assert dashboard["payload"]["retrieval_influence"][0]["citing_note_id"] == decision["payload"]["event"]["note_id"]
+    assert filtered_dashboard["payload"]["filters"]["retrieval_receipt_ref"] == retrieved["payload"]["receipt"]["receipt_id"]
+    assert filtered_dashboard["payload"]["summary"]["retrieval_influence_count"] == 1
+    assert filtered_dashboard["payload"]["retrieval_influence"][0]["citing_note_id"] == decision["payload"]["event"]["note_id"]
 
 
 def test_note_memory_fastapi_adapter_dashboard_snapshot_is_read_only(tmp_path) -> None:
@@ -107,20 +116,36 @@ def test_created_note_memory_fastapi_router_exposes_dashboard_route(tmp_path) ->
 
     runtime = NoteMemoryRuntime.from_path(tmp_path / "notes")
     captured = runtime.capture_note(_working_note(content_summary="router dashboard note")).to_dict()
+    retrieved = runtime.retrieve_notes({"query": "router", "scope": "task"}).to_dict()
+    decision = runtime.capture_note(
+        _working_note(
+            kind="DecisionRecord",
+            content_summary="router decision cites dashboard retrieval receipt",
+            source_ref="test:router-dashboard-decision",
+            expires_at=None,
+            retrieval_receipt_refs=[retrieved["payload"]["receipt"]["receipt_id"]],
+        )
+    ).to_dict()
     app = FastAPI()
     app.include_router(create_note_memory_fastapi_router(runtime))
     client = TestClient(app)
 
-    dashboard = client.get("/api/v1/notes/dashboard?limit=5")
+    dashboard = client.get(
+        f"/api/v1/notes/dashboard?limit=5&retrieval_receipt_ref={retrieved['payload']['receipt']['receipt_id']}"
+    )
     events = client.get("/api/v1/notes/events")
 
     assert dashboard.status_code == 200
     assert dashboard.json()["status"] == "dashboard_snapshot"
     assert dashboard.json()["payload"]["snapshot_id"].startswith("note-memory-dashboard-")
     assert len(dashboard.json()["payload"]["snapshot_hash"]) == 64
-    assert dashboard.json()["payload"]["summary"]["event_count"] == 1
-    assert dashboard.json()["payload"]["recent_notes"][0]["note_id"] == captured["payload"]["event"]["note_id"]
-    assert events.json()["payload"]["count"] == 1
+    assert dashboard.json()["payload"]["summary"]["event_count"] == 2
+    assert dashboard.json()["payload"]["filters"]["retrieval_receipt_ref"] == retrieved["payload"]["receipt"]["receipt_id"]
+    assert dashboard.json()["payload"]["summary"]["retrieval_influence_count"] == 1
+    assert dashboard.json()["payload"]["retrieval_influence"][0]["citing_note_id"] == decision["payload"]["event"]["note_id"]
+    assert dashboard.json()["payload"]["recent_notes"][0]["note_id"] == decision["payload"]["event"]["note_id"]
+    assert dashboard.json()["payload"]["recent_notes"][1]["note_id"] == captured["payload"]["event"]["note_id"]
+    assert events.json()["payload"]["count"] == 2
 
 
 def test_note_memory_fastapi_adapter_captures_episode_capsule(tmp_path) -> None:

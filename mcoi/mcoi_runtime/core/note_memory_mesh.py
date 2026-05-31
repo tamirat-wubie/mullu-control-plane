@@ -905,11 +905,22 @@ class NoteMemoryMesh:
 
         return len(self.list_events(skip_invalid=False))
 
-    def dashboard_snapshot(self, *, now: str | None = None, limit: int = 25) -> dict[str, object]:
+    def dashboard_snapshot(
+        self,
+        *,
+        now: str | None = None,
+        limit: int = 25,
+        retrieval_receipt_ref: str | None = None,
+    ) -> dict[str, object]:
         """Return a read-only operator snapshot for the note memory control surface."""
 
         if limit < 1 or limit > 100:
             raise RuntimeCoreInvariantError("dashboard limit must be between 1 and 100")
+        retrieval_receipt_filter = (
+            _validate_retrieval_receipt_id(retrieval_receipt_ref, "retrieval_receipt_ref")
+            if retrieval_receipt_ref
+            else ""
+        )
         current = _parse_iso(now or self._clock())
         events = self.list_events(skip_invalid=False)
         materialized = self._materialize(events)
@@ -935,7 +946,12 @@ class NoteMemoryMesh:
         contradictions = [event for event in recent_events if event.action == NoteAction.CONTRADICT]
         memory_anchors = [event for event in recent_events if event.kind == NoteKind.MEMORY_ANCHOR]
         episode_capsules = [event for event in recent_events if event.kind == NoteKind.EPISODE_CAPSULE]
-        retrieval_influence = self._retrieval_influence_rows(recent_events)
+        retrieval_influence_rows = self._retrieval_influence_rows(recent_events)
+        retrieval_influence = [
+            row
+            for row in retrieval_influence_rows
+            if not retrieval_receipt_filter or row["receipt_id"] == retrieval_receipt_filter
+        ]
         pending_promotions = sorted(
             self._pending_promotions(),
             key=lambda entry: str(entry.get("queued_at", "")),
@@ -946,6 +962,9 @@ class NoteMemoryMesh:
         snapshot_body: dict[str, object] = {
             "status": "ready",
             "assessed_at": assessed_at,
+            "filters": {
+                "retrieval_receipt_ref": retrieval_receipt_filter,
+            },
             "summary": {
                 "event_count": len(events),
                 "active_note_count": len(active_notes),

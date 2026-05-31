@@ -114,6 +114,7 @@ def test_console_note_memory_disabled(client: TestClient) -> None:
     assert data["summary"]["episode_capsule_count"] == 0
     assert data["summary"]["index_proof_state"] == "Unknown"
     assert data["summary"]["retrieval_influence_count"] == 0
+    assert data["filters"]["retrieval_receipt_ref"] == ""
     assert data["recent_notes"] == []
     assert data["retrieval_influence"] == []
 
@@ -168,7 +169,9 @@ def test_console_note_memory_enabled_read_model(client: TestClient, tmp_path) ->
         ),
     )
     try:
-        resp = client.get("/api/v1/console/note-memory?limit=5")
+        resp = client.get(
+            f"/api/v1/console/note-memory?limit=5&retrieval_receipt_ref={retrieved['payload']['receipt']['receipt_id']}"
+        )
     finally:
         deps.set("note_memory_bootstrap", previous_bootstrap)
 
@@ -184,6 +187,7 @@ def test_console_note_memory_enabled_read_model(client: TestClient, tmp_path) ->
     assert data["summary"]["episode_capsule_count"] == 0
     assert data["summary"]["pending_promotion_count"] == 1
     assert data["summary"]["rejected_delta_count"] == 1
+    assert data["filters"]["retrieval_receipt_ref"] == retrieved["payload"]["receipt"]["receipt_id"]
     assert data["summary"]["retrieval_influence_count"] == 1
     assert data["recent_notes"][0]["kind"] == "DecisionRecord"
     assert data["retrieval_influence"][0]["citing_note_id"] == decision["payload"]["event"]["note_id"]

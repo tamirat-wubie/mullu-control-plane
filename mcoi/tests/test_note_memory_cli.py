@@ -96,6 +96,7 @@ def test_cli_capture_retrieve_dashboard_and_list_events_redacts_before_write(tmp
     assert dashboard_envelope["payload"]["snapshot_id"].startswith("note-memory-dashboard-")
     assert len(dashboard_envelope["payload"]["snapshot_hash"]) == 64
     assert dashboard_envelope["payload"]["summary"]["event_count"] == 2
+    assert dashboard_envelope["payload"]["filters"]["retrieval_receipt_ref"] == ""
     assert dashboard_envelope["payload"]["summary"]["retrieval_influence_count"] == 1
     assert dashboard_envelope["payload"]["recent_notes"][0]["note_id"] == decision_capture_envelope["payload"]["event"]["note_id"]
     assert dashboard_envelope["payload"]["recent_notes"][0]["retrieval_receipt_refs"] == [
@@ -111,6 +112,28 @@ def test_cli_capture_retrieve_dashboard_and_list_events_redacts_before_write(tmp
         retrieve_envelope["payload"]["receipt"]["receipt_id"]
     ]
 
+    filtered_dashboard_code = guarded_main(
+        [
+            "--note-store",
+            str(note_store),
+            "dashboard",
+            "--limit",
+            "5",
+            "--retrieval-receipt-ref",
+            retrieve_envelope["payload"]["receipt"]["receipt_id"],
+        ]
+    )
+    filtered_dashboard_envelope = _last_json(capsys)
+    assert filtered_dashboard_code == 0
+    assert (
+        filtered_dashboard_envelope["payload"]["filters"]["retrieval_receipt_ref"]
+        == retrieve_envelope["payload"]["receipt"]["receipt_id"]
+    )
+    assert filtered_dashboard_envelope["payload"]["summary"]["retrieval_influence_count"] == 1
+    assert filtered_dashboard_envelope["payload"]["retrieval_influence"][0]["citing_note_id"] == decision_capture_envelope[
+        "payload"
+    ]["event"]["note_id"]
+
 
 def test_cli_dashboard_rejects_unbounded_limit(tmp_path, capsys) -> None:
     note_store = tmp_path / "notes"
@@ -122,6 +145,26 @@ def test_cli_dashboard_rejects_unbounded_limit(tmp_path, capsys) -> None:
     assert dashboard_envelope["ok"] is False
     assert dashboard_envelope["status"] == "rejected"
     assert "dashboard limit" in dashboard_envelope["error"]
+
+
+def test_cli_dashboard_rejects_malformed_retrieval_influence_filter(tmp_path, capsys) -> None:
+    note_store = tmp_path / "notes"
+
+    dashboard_code = guarded_main(
+        [
+            "--note-store",
+            str(note_store),
+            "dashboard",
+            "--retrieval-receipt-ref",
+            "manual-note-ref",
+        ]
+    )
+    dashboard_envelope = _last_json(capsys)
+
+    assert dashboard_code == 1
+    assert dashboard_envelope["ok"] is False
+    assert dashboard_envelope["status"] == "rejected"
+    assert "retrieval_receipt_ref must reference a note retrieval receipt" in dashboard_envelope["error"]
 
 
 def test_cli_rejects_malformed_retrieval_receipt_ref(tmp_path, capsys) -> None:

@@ -101,6 +101,7 @@ def build_parser() -> argparse.ArgumentParser:
     dashboard_parser = subparsers.add_parser("dashboard", help="Return a read-only operator dashboard snapshot")
     dashboard_parser.add_argument("--limit", type=int, default=25, help="Maximum rows per dashboard section")
     dashboard_parser.add_argument("--now", help="Override dashboard clock timestamp")
+    dashboard_parser.add_argument("--retrieval-receipt-ref", help="Filter retrieval influence by receipt id")
 
     subparsers.add_parser("rebuild-index", help="Validate note event logs and rebuild projection fitness")
     subparsers.add_parser("list-events", help="List persisted note memory events")
@@ -149,7 +150,15 @@ def main(argv: Sequence[str] | None = None) -> int:
         event = mesh.promote_memory_anchor(args.note_id, receipt)
         envelope = _envelope(True, "promoted", {"event": event.to_dict(), "receipt": receipt.to_dict()})
     elif args.command == "dashboard":
-        envelope = _envelope(True, "dashboard_snapshot", mesh.dashboard_snapshot(now=args.now, limit=args.limit))
+        envelope = _envelope(
+            True,
+            "dashboard_snapshot",
+            mesh.dashboard_snapshot(
+                now=args.now,
+                limit=args.limit,
+                retrieval_receipt_ref=args.retrieval_receipt_ref,
+            ),
+        )
     elif args.command == "rebuild-index":
         envelope = _envelope(True, "rebuilt", {"report": _jsonable(mesh.rebuild_index_from_events())})
     elif args.command == "list-events":

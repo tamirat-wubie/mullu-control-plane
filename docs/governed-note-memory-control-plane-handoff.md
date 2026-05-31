@@ -67,7 +67,10 @@ validated as bounded `note-retrieval-*` identifiers; arbitrary text is rejected
 before persistence. Dashboard and console snapshots derive a read-only
 `retrieval_influence` graph from captured events so operators can see which
 note event cited which retrieval receipt without adding retrieval events to the
-append-only log.
+append-only log. The dashboard, CLI dashboard, FastAPI dashboard, and operator
+console accept a read-only `retrieval_receipt_ref` filter for narrowing that
+graph to one retrieval witness. The filter uses the same bounded
+`note-retrieval-*` validation and does not mutate note memory.
 
 Episode capsules write a structured sidecar under the configured note-memory
 store and append one `EpisodeCapsule` lineage event. Capsules with
