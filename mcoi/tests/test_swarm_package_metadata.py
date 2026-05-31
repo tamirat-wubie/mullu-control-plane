@@ -79,5 +79,7 @@ def test_package_readme_documents_simple_platform_surface() -> None:
     assert "command_guidance" in text
     assert "start_here" in text
     assert "OperationalDashboardRuntime" in text
+    assert "mount_operational_dashboard_router_from_env" in text
+    assert "MULLU_DASHBOARD_ENABLED" in text
     assert "GET /api/v1/dashboard/home" in text
     assert "GET /api/v1/dashboard/state" in text
