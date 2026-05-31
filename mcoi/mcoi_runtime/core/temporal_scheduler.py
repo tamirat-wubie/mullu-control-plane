@@ -2181,6 +2181,8 @@ class TemporalSchedulerEngine:
     def _admit_temporal_phrase(self, action: TemporalActionRequest, now: str) -> TemporalActionRequest:
         if not action.temporal_phrase:
             return action
+        if action.temporal_phrase_policy == "ignore":
+            return action
         verdict, reason, resolved_execute_at = _resolve_bounded_temporal_phrase(
             action.temporal_phrase,
             locale=action.temporal_phrase_locale,
