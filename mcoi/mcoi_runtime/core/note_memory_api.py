@@ -242,7 +242,7 @@ def _retrieval_guard_from_mapping(value: Mapping[str, Any]) -> RetrievalGuard:
         allowed_proof_states=allowed_proof_states,
         scope=NoteScope(str(value["scope"])) if value.get("scope") else None,
         now=str(value["now"]) if value.get("now") else None,
-        include_hypotheses=bool(value.get("include_hypotheses", False)),
+        include_hypotheses=_optional_bool(value, "include_hypotheses", default=False),
     )
 
 
@@ -297,6 +297,13 @@ def _required_int(value: Mapping[str, Any], field_name: str) -> int:
     raw_value = value[field_name]
     if not isinstance(raw_value, int) or isinstance(raw_value, bool):
         raise ValueError(f"{field_name} must be an integer")
+    return raw_value
+
+
+def _optional_bool(value: Mapping[str, Any], field_name: str, *, default: bool) -> bool:
+    raw_value = value.get(field_name, default)
+    if not isinstance(raw_value, bool):
+        raise ValueError(f"{field_name} must be a boolean")
     return raw_value
 
 
