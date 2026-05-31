@@ -96,6 +96,27 @@ def test_operational_dashboard_integration_mounts_when_enabled() -> None:
     assert prefix_seen == ["/dashboard"]
 
 
+def test_operational_dashboard_integration_uses_shared_env_flag_parser() -> None:
+    app = FakeApp()
+    runtime = _dashboard_runtime()
+
+    def router_factory(dashboard_runtime: OperationalDashboardRuntime, prefix: str) -> dict[str, str]:
+        assert dashboard_runtime is runtime
+        return {"prefix": prefix}
+
+    result = mount_operational_dashboard_router_from_env(
+        app,
+        {"MULLU_DASHBOARD_ENABLED": " YES ", "MULLU_DASHBOARD_PREFIX": "/dashboard"},
+        runtime=runtime,
+        router_factory=router_factory,
+    )
+
+    assert result.enabled is True
+    assert result.mounted is True
+    assert result.prefix == "/dashboard"
+    assert app.routers == [{"prefix": "/dashboard"}]
+
+
 def test_operational_dashboard_integration_defaults_to_disabled_without_env_flag(monkeypatch) -> None:
     app = FakeApp()
     monkeypatch.setenv("MULLU_DASHBOARD_ENABLED", "1")
