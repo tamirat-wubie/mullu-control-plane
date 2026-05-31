@@ -102,6 +102,7 @@ def build_parser() -> argparse.ArgumentParser:
     dashboard_parser.add_argument("--limit", type=int, default=25, help="Maximum rows per dashboard section")
     dashboard_parser.add_argument("--now", help="Override dashboard clock timestamp")
     dashboard_parser.add_argument("--retrieval-receipt-ref", help="Filter retrieval influence by receipt id")
+    dashboard_parser.add_argument("--retrieval-citing-note-ref", help="Filter retrieval influence by citing note id")
 
     subparsers.add_parser("rebuild-index", help="Validate note event logs and rebuild projection fitness")
     subparsers.add_parser("list-events", help="List persisted note memory events")
@@ -157,6 +158,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                 now=args.now,
                 limit=args.limit,
                 retrieval_receipt_ref=args.retrieval_receipt_ref,
+                retrieval_citing_note_ref=args.retrieval_citing_note_ref,
             ),
         )
     elif args.command == "rebuild-index":

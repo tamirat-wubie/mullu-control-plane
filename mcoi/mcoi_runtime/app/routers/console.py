@@ -303,6 +303,7 @@ def _empty_note_memory_payload(extension: dict[str, object]) -> dict[str, object
         },
         "filters": {
             "retrieval_receipt_ref": "",
+            "retrieval_citing_note_ref": "",
         },
         "recent_notes": [],
         "rejected_deltas": [],
@@ -325,7 +326,7 @@ def _empty_note_memory_payload(extension: dict[str, object]) -> dict[str, object
 
 
 @router.get("/api/v1/console/note-memory")
-def console_note_memory(limit: int = 25, retrieval_receipt_ref: str = ""):
+def console_note_memory(limit: int = 25, retrieval_receipt_ref: str = "", retrieval_citing_note_ref: str = ""):
     """Operator note-memory view with read-only governed lifecycle summaries."""
 
     deps.metrics.inc("requests_governed")
@@ -342,6 +343,8 @@ def console_note_memory(limit: int = 25, retrieval_receipt_ref: str = ""):
         request_body = {"limit": bounded_limit}
         if retrieval_receipt_ref:
             request_body["retrieval_receipt_ref"] = retrieval_receipt_ref
+        if retrieval_citing_note_ref:
+            request_body["retrieval_citing_note_ref"] = retrieval_citing_note_ref
         envelope = runtime.dashboard_snapshot(request_body).to_dict()
     except (RuntimeError, TypeError, ValueError) as exc:
         payload = _empty_note_memory_payload(extension)
@@ -366,10 +369,14 @@ def console_note_memory(limit: int = 25, retrieval_receipt_ref: str = ""):
 
 
 @router.get("/api/v1/console/note-memory/view", response_class=HTMLResponse)
-def console_note_memory_view(limit: int = 25, retrieval_receipt_ref: str = ""):
+def console_note_memory_view(limit: int = 25, retrieval_receipt_ref: str = "", retrieval_citing_note_ref: str = ""):
     """Browser-facing read-only note-memory operator view."""
 
-    payload = console_note_memory(limit=limit, retrieval_receipt_ref=retrieval_receipt_ref)
+    payload = console_note_memory(
+        limit=limit,
+        retrieval_receipt_ref=retrieval_receipt_ref,
+        retrieval_citing_note_ref=retrieval_citing_note_ref,
+    )
     return HTMLResponse(_render_note_memory_console_html(payload))
 
 
@@ -383,7 +390,13 @@ def _render_note_memory_console_html(payload: dict[str, object]) -> str:
     error = escape(str(payload.get("error", "")))
     filters = _mapping_value(payload, "filters")
     retrieval_receipt_filter = escape(str(filters.get("retrieval_receipt_ref", "")))
-    filter_block = f"<p>Filter: <code>{retrieval_receipt_filter}</code></p>" if retrieval_receipt_filter else ""
+    retrieval_citing_note_filter = escape(str(filters.get("retrieval_citing_note_ref", "")))
+    filter_parts = []
+    if retrieval_receipt_filter:
+        filter_parts.append(f"receipt=<code>{retrieval_receipt_filter}</code>")
+    if retrieval_citing_note_filter:
+        filter_parts.append(f"citing_note=<code>{retrieval_citing_note_filter}</code>")
+    filter_block = f"<p>Filter: {' | '.join(filter_parts)}</p>" if filter_parts else ""
     metrics = [
         ("Events", summary.get("event_count", 0)),
         ("Active Notes", summary.get("active_note_count", 0)),

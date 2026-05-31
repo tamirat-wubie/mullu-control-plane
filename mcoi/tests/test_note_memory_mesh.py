@@ -364,6 +364,7 @@ def test_dashboard_snapshot_filters_retrieval_influence_by_receipt(tmp_path) -> 
     )
 
     assert snapshot["filters"]["retrieval_receipt_ref"] == first_receipt
+    assert snapshot["filters"]["retrieval_citing_note_ref"] == ""
     assert snapshot["summary"]["event_count"] == 2
     assert snapshot["summary"]["retrieval_influence_count"] == 1
     assert snapshot["summary"]["retrieval_influence_total_count"] == 2
@@ -376,11 +377,116 @@ def test_dashboard_snapshot_filters_retrieval_influence_by_receipt(tmp_path) -> 
     assert snapshot["retrieval_influence"][0]["citing_note_id"] != second.note_id
 
 
+def test_dashboard_snapshot_filters_retrieval_influence_by_citing_note(tmp_path) -> None:
+    clock = MutableClock("2026-05-01T00:00:00+00:00")
+    mesh = _mesh(tmp_path, clock)
+    first_receipt = "note-retrieval-111111111111"
+    second_receipt = "note-retrieval-222222222222"
+    first = mesh.capture_note(
+        NoteMemoryDraft(
+            kind=NoteKind.DECISION_RECORD,
+            scope=NoteScope.TASK,
+            content_summary="First decision cites retrieval influence for citing-note filtering",
+            source_ref="test:first-citing-note-filter",
+            proof_state=ProofState.PASS,
+            trust_zone=TrustZone.WORKSPACE,
+            evidence_refs=("test_dashboard_snapshot_filters_retrieval_influence_by_citing_note",),
+            retrieval_receipt_refs=(first_receipt,),
+        )
+    )
+    clock.set("2026-05-01T00:01:00+00:00")
+    second = mesh.capture_note(
+        NoteMemoryDraft(
+            kind=NoteKind.DECISION_RECORD,
+            scope=NoteScope.TASK,
+            content_summary="Second decision cites two retrieval receipts for citing-note filtering",
+            source_ref="test:second-citing-note-filter",
+            proof_state=ProofState.PASS,
+            trust_zone=TrustZone.WORKSPACE,
+            evidence_refs=("test_dashboard_snapshot_filters_retrieval_influence_by_citing_note",),
+            retrieval_receipt_refs=(first_receipt, second_receipt),
+        )
+    )
+
+    snapshot = mesh.dashboard_snapshot(
+        now="2026-05-01T00:02:00+00:00",
+        limit=5,
+        retrieval_citing_note_ref=second.note_id,
+    )
+
+    assert snapshot["filters"]["retrieval_receipt_ref"] == ""
+    assert snapshot["filters"]["retrieval_citing_note_ref"] == second.note_id
+    assert snapshot["summary"]["event_count"] == 2
+    assert snapshot["summary"]["retrieval_influence_count"] == 2
+    assert snapshot["summary"]["retrieval_influence_total_count"] == 3
+    assert snapshot["summary"]["retrieval_receipt_count"] == 2
+    assert snapshot["summary"]["retrieval_receipt_total_count"] == 2
+    assert {row["receipt_id"] for row in snapshot["retrieval_influence"]} == {first_receipt, second_receipt}
+    assert {row["citing_note_id"] for row in snapshot["retrieval_influence"]} == {second.note_id}
+    assert second.note_id != first.note_id
+
+
+def test_dashboard_snapshot_combines_receipt_and_citing_note_filters(tmp_path) -> None:
+    clock = MutableClock("2026-05-01T00:00:00+00:00")
+    mesh = _mesh(tmp_path, clock)
+    first_receipt = "note-retrieval-111111111111"
+    second_receipt = "note-retrieval-222222222222"
+    first = mesh.capture_note(
+        NoteMemoryDraft(
+            kind=NoteKind.DECISION_RECORD,
+            scope=NoteScope.TASK,
+            content_summary="First decision cites the first retrieval receipt",
+            source_ref="test:first-combined-filter",
+            proof_state=ProofState.PASS,
+            trust_zone=TrustZone.WORKSPACE,
+            evidence_refs=("test_dashboard_snapshot_combines_receipt_and_citing_note_filters",),
+            retrieval_receipt_refs=(first_receipt,),
+        )
+    )
+    clock.set("2026-05-01T00:01:00+00:00")
+    second = mesh.capture_note(
+        NoteMemoryDraft(
+            kind=NoteKind.DECISION_RECORD,
+            scope=NoteScope.TASK,
+            content_summary="Second decision cites the second retrieval receipt",
+            source_ref="test:second-combined-filter",
+            proof_state=ProofState.PASS,
+            trust_zone=TrustZone.WORKSPACE,
+            evidence_refs=("test_dashboard_snapshot_combines_receipt_and_citing_note_filters",),
+            retrieval_receipt_refs=(second_receipt,),
+        )
+    )
+
+    snapshot = mesh.dashboard_snapshot(
+        now="2026-05-01T00:02:00+00:00",
+        limit=5,
+        retrieval_receipt_ref=second_receipt,
+        retrieval_citing_note_ref=second.note_id,
+    )
+
+    assert snapshot["filters"]["retrieval_receipt_ref"] == second_receipt
+    assert snapshot["filters"]["retrieval_citing_note_ref"] == second.note_id
+    assert snapshot["summary"]["retrieval_influence_count"] == 1
+    assert snapshot["summary"]["retrieval_influence_total_count"] == 2
+    assert snapshot["retrieval_influence"][0]["receipt_id"] == second_receipt
+    assert snapshot["retrieval_influence"][0]["citing_note_id"] == second.note_id
+    assert snapshot["retrieval_influence"][0]["citing_note_id"] != first.note_id
+
+
 def test_dashboard_snapshot_rejects_malformed_retrieval_influence_filter(tmp_path) -> None:
     mesh = _mesh(tmp_path, MutableClock("2026-05-01T00:00:00+00:00"))
 
     with pytest.raises(RuntimeCoreInvariantError, match="retrieval_receipt_ref must reference a note retrieval receipt"):
         mesh.dashboard_snapshot(retrieval_receipt_ref="manual-note-ref")
+
+    assert mesh.event_count == 0
+
+
+def test_dashboard_snapshot_rejects_malformed_retrieval_citing_note_filter(tmp_path) -> None:
+    mesh = _mesh(tmp_path, MutableClock("2026-05-01T00:00:00+00:00"))
+
+    with pytest.raises(RuntimeCoreInvariantError, match="retrieval_citing_note_ref must be a bounded symbolic identifier"):
+        mesh.dashboard_snapshot(retrieval_citing_note_ref="../bad-note")
 
     assert mesh.event_count == 0
 

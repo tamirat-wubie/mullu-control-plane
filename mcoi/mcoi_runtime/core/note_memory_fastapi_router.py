@@ -207,12 +207,15 @@ def create_note_memory_fastapi_router(runtime: NoteMemoryRuntime, prefix: str = 
         limit: int = 25,
         now: str | None = None,
         retrieval_receipt_ref: str | None = None,
+        retrieval_citing_note_ref: str | None = None,
     ):
         request_body: dict[str, Any] = {"limit": limit}
         if now:
             request_body["now"] = now
         if retrieval_receipt_ref:
             request_body["retrieval_receipt_ref"] = retrieval_receipt_ref
+        if retrieval_citing_note_ref:
+            request_body["retrieval_citing_note_ref"] = retrieval_citing_note_ref
         return adapter.dashboard_snapshot(request_body)
 
     @router.get("/events")

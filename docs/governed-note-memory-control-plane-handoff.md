@@ -77,6 +77,11 @@ derive a bounded `retrieval_receipts` summary grouped by receipt ID, with
 citation counts, distinct citing-note counts, latest citation witnesses, and
 sample citing note IDs for operator navigation.
 
+Snapshots also accept a read-only `retrieval_citing_note_ref` filter so
+operators can inspect the retrieval witnesses cited by a specific note or
+decision. Receipt and citing-note filters are conjunctive, validated as bounded
+symbol identifiers, and never write retrieval events into append-only memory.
+
 Episode capsules write a structured sidecar under the configured note-memory
 store and append one `EpisodeCapsule` lineage event. Capsules with
 `ProofState.Pass` require verification references, and every capsule requires

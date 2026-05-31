@@ -76,6 +76,12 @@ def test_note_memory_fastapi_adapter_handlers_preserve_runtime_envelopes(tmp_pat
             "retrieval_receipt_ref": retrieved["payload"]["receipt"]["receipt_id"],
         }
     )
+    citing_note_dashboard = adapter.dashboard_snapshot(
+        {
+            "limit": 5,
+            "retrieval_citing_note_ref": decision["payload"]["event"]["note_id"],
+        }
+    )
 
     assert captured["governed"] is True
     assert captured["ok"] is True
@@ -98,6 +104,9 @@ def test_note_memory_fastapi_adapter_handlers_preserve_runtime_envelopes(tmp_pat
     assert filtered_dashboard["payload"]["summary"]["retrieval_receipt_count"] == 1
     assert filtered_dashboard["payload"]["summary"]["retrieval_receipt_total_count"] == 1
     assert filtered_dashboard["payload"]["retrieval_influence"][0]["citing_note_id"] == decision["payload"]["event"]["note_id"]
+    assert citing_note_dashboard["payload"]["filters"]["retrieval_citing_note_ref"] == decision["payload"]["event"]["note_id"]
+    assert citing_note_dashboard["payload"]["summary"]["retrieval_influence_count"] == 1
+    assert citing_note_dashboard["payload"]["retrieval_influence"][0]["receipt_id"] == retrieved["payload"]["receipt"]["receipt_id"]
 
 
 def test_note_memory_fastapi_adapter_dashboard_snapshot_is_read_only(tmp_path) -> None:
@@ -139,6 +148,7 @@ def test_created_note_memory_fastapi_router_exposes_dashboard_route(tmp_path) ->
 
     dashboard = client.get(
         f"/api/v1/notes/dashboard?limit=5&retrieval_receipt_ref={retrieved['payload']['receipt']['receipt_id']}"
+        f"&retrieval_citing_note_ref={decision['payload']['event']['note_id']}"
     )
     events = client.get("/api/v1/notes/events")
 
@@ -148,6 +158,7 @@ def test_created_note_memory_fastapi_router_exposes_dashboard_route(tmp_path) ->
     assert len(dashboard.json()["payload"]["snapshot_hash"]) == 64
     assert dashboard.json()["payload"]["summary"]["event_count"] == 2
     assert dashboard.json()["payload"]["filters"]["retrieval_receipt_ref"] == retrieved["payload"]["receipt"]["receipt_id"]
+    assert dashboard.json()["payload"]["filters"]["retrieval_citing_note_ref"] == decision["payload"]["event"]["note_id"]
     assert dashboard.json()["payload"]["summary"]["retrieval_influence_count"] == 1
     assert dashboard.json()["payload"]["summary"]["retrieval_influence_total_count"] == 1
     assert dashboard.json()["payload"]["summary"]["retrieval_receipt_count"] == 1
