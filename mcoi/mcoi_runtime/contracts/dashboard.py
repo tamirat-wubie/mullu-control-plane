@@ -311,6 +311,8 @@ class NoteMemorySummary(ContractRecord):
         )
         if self.retrieval_filter_mode not in {"unfiltered", "receipt", "citing_note", "receipt_and_citing_note"}:
             raise ValueError("retrieval_filter_mode must be a known retrieval filter mode")
+        if self.retrieval_filter_active != (self.retrieval_filter_mode != "unfiltered"):
+            raise ValueError("retrieval_filter_active must match retrieval_filter_mode")
         object.__setattr__(
             self,
             "retrieval_influence_count",
