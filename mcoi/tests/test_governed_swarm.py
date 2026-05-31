@@ -23,6 +23,8 @@ from mcoi_runtime.swarm import (
     SwarmGoal,
     SwarmInvariantViolation,
     SwarmTask,
+    SwarmTaskRisk,
+    TaskDecomposer,
     TaskLease,
     TaskLeaseManager,
     WHQRGate,
@@ -179,6 +181,71 @@ def test_task_decomposition_rejects_agent_side_effect_authority() -> None:
 
     with pytest.raises(SwarmInvariantViolation, match="cannot grant side effects"):
         supervisor.run_goal(goal)
+
+
+def test_task_decomposition_rejects_loose_spec_field_types() -> None:
+    decomposer = TaskDecomposer()
+    base_spec = {
+        "task_id": "task_document_extract",
+        "required_role": "document_analysis",
+        "required_capabilities": ("invoice.read",),
+        "input_refs": ("invoice_001",),
+        "expected_output": "invoice_fields",
+    }
+
+    for field_name, invalid_value, expected_reason in (
+        ("task_id", 101, "task_id must be a string"),
+        ("required_capabilities", "invoice.read", "required_capabilities must be a sequence of strings"),
+        ("input_refs", ("invoice_001", 9), "input_refs\\[1\\] must be a string"),
+        ("requires_receipt", "false", "requires_receipt must be a boolean"),
+    ):
+        goal = SwarmGoal(
+            goal_id=f"goal_bad_{field_name}",
+            tenant_id="tenant_a",
+            description="Malformed task spec",
+            task_specs=({**base_spec, field_name: invalid_value},),
+        )
+
+        with pytest.raises(SwarmInvariantViolation, match=expected_reason):
+            decomposer.decompose(goal)
+
+
+def test_task_decomposition_rejects_unsupported_fields_and_invalid_risk() -> None:
+    decomposer = TaskDecomposer()
+    base_spec = {
+        "task_id": "task_document_extract",
+        "required_role": "document_analysis",
+        "required_capabilities": ("invoice.read",),
+        "input_refs": ("invoice_001",),
+        "expected_output": "invoice_fields",
+    }
+    unsupported_goal = SwarmGoal(
+        goal_id="goal_unsupported_spec",
+        tenant_id="tenant_a",
+        description="Unsupported task spec",
+        task_specs=({**base_spec, "approval_override": "manager"},),
+    )
+    invalid_risk_goal = SwarmGoal(
+        goal_id="goal_invalid_risk",
+        tenant_id="tenant_a",
+        description="Invalid risk spec",
+        task_specs=({**base_spec, "risk": "critical"},),
+    )
+    enum_risk_goal = SwarmGoal(
+        goal_id="goal_enum_risk",
+        tenant_id="tenant_a",
+        description="Enum risk spec",
+        task_specs=({**base_spec, "risk": SwarmTaskRisk.MEDIUM},),
+    )
+
+    with pytest.raises(SwarmInvariantViolation, match="unsupported task spec field: approval_override"):
+        decomposer.decompose(unsupported_goal)
+    with pytest.raises(SwarmInvariantViolation, match="risk must be one of"):
+        decomposer.decompose(invalid_risk_goal)
+    tasks = decomposer.decompose(enum_risk_goal)
+    assert len(tasks) == 1
+    assert tasks[0].task_id == "task_document_extract"
+    assert tasks[0].risk is SwarmTaskRisk.MEDIUM
 
 
 def test_conflicting_claims_escalate_without_closure() -> None:
