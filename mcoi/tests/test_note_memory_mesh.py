@@ -615,6 +615,40 @@ def test_dashboard_snapshot_summarizes_retrieval_receipts_by_citation_count(tmp_
     assert snapshot["retrieval_receipts"][1]["receipt_id"] == first_receipt
 
 
+def test_retrieval_receipt_summary_rejects_loose_influence_sequence(tmp_path) -> None:
+    clock = MutableClock("2026-05-01T00:00:00+00:00")
+    mesh = _mesh(tmp_path, clock)
+
+    with pytest.raises(RuntimeCoreInvariantError, match="citing_event_seq must be an integer"):
+        mesh._retrieval_receipt_summary_rows(
+            [
+                {
+                    "receipt_id": "note-retrieval-test",
+                    "citing_event_seq": "1",
+                    "citing_note_id": "note-summary-test",
+                    "cited_at": "2026-05-01T00:00:00+00:00",
+                }
+            ]
+        )
+
+
+def test_retrieval_receipt_summary_rejects_loose_influence_timestamp(tmp_path) -> None:
+    clock = MutableClock("2026-05-01T00:00:00+00:00")
+    mesh = _mesh(tmp_path, clock)
+
+    with pytest.raises(RuntimeCoreInvariantError, match="cited_at must be a string"):
+        mesh._retrieval_receipt_summary_rows(
+            [
+                {
+                    "receipt_id": "note-retrieval-test",
+                    "citing_event_seq": 1,
+                    "citing_note_id": "note-summary-test",
+                    "cited_at": 7,
+                }
+            ]
+        )
+
+
 def test_retrieval_receipt_bounds_query_text(tmp_path) -> None:
     clock = MutableClock("2026-05-01T00:00:00+00:00")
     mesh = _mesh(tmp_path, clock)
