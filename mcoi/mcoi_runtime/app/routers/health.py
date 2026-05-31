@@ -111,6 +111,101 @@ def _extension_bootstrap_read_model(
     }
 
 
+def _nested_mind_connector_read_model() -> dict[str, object]:
+    """Return nested-mind connector posture without exposing URL or token values."""
+
+    try:
+        bootstrap = deps.get("nested_mind_bootstrap")
+    except RuntimeError:
+        return {
+            "registered": False,
+            "enabled": False,
+            "active": False,
+            "state": "unregistered",
+            "base_url_configured": False,
+            "credential_configured": False,
+        }
+
+    enabled = bool(getattr(bootstrap, "enabled", False))
+    active = getattr(bootstrap, "connector", None) is not None
+    base_url_configured = bool(str(getattr(bootstrap, "base_url", "") or "").strip())
+    return {
+        "registered": True,
+        "enabled": enabled,
+        "active": active,
+        "state": _optional_feature_state(registered=True, enabled=enabled, active=active),
+        "base_url_configured": base_url_configured,
+        "credential_configured": bool(getattr(bootstrap, "credential_configured", False)),
+    }
+
+
+def _nested_mind_observation_bridge_read_model() -> dict[str, object]:
+    """Return nested-mind observation proposal planner posture."""
+
+    try:
+        bootstrap = deps.get("nested_mind_observation_bridge_bootstrap")
+    except RuntimeError:
+        return {
+            "registered": False,
+            "enabled": False,
+            "active": False,
+            "state": "unregistered",
+            "planner_configured": False,
+        }
+
+    enabled = bool(getattr(bootstrap, "enabled", False))
+    active = getattr(bootstrap, "planner", None) is not None
+    return {
+        "registered": True,
+        "enabled": enabled,
+        "active": active,
+        "state": _optional_feature_state(registered=True, enabled=enabled, active=active),
+        "planner_configured": active,
+    }
+
+
+def _nested_mind_observation_submitter_read_model() -> dict[str, object]:
+    """Return nested-mind live observation submitter posture without secrets."""
+
+    try:
+        bootstrap = deps.get("nested_mind_observation_submitter_bootstrap")
+    except RuntimeError:
+        return {
+            "registered": False,
+            "enabled": False,
+            "active": False,
+            "state": "unregistered",
+            "base_url_configured": False,
+            "credential_configured": False,
+        }
+
+    enabled = bool(getattr(bootstrap, "enabled", False))
+    active = getattr(bootstrap, "submitter", None) is not None
+    base_url_configured = bool(str(getattr(bootstrap, "base_url", "") or "").strip())
+    return {
+        "registered": True,
+        "enabled": enabled,
+        "active": active,
+        "state": _optional_feature_state(registered=True, enabled=enabled, active=active),
+        "base_url_configured": base_url_configured,
+        "credential_configured": bool(getattr(bootstrap, "credential_configured", False)),
+    }
+
+
+def _optional_feature_state(*, registered: bool, enabled: bool, active: bool) -> str:
+    """Return a bounded state label for non-router optional features."""
+
+    if not registered:
+        return "unregistered"
+    if active and enabled:
+        return "active"
+    if active:
+        return "standby"
+    if enabled:
+        return "enabled_inactive"
+    return "disabled"
+
+
 @router.get("/api/v1/health/extensions")
 def extension_health():
     """Optional extension posture without exposing host filesystem paths."""
@@ -128,6 +223,9 @@ def extension_health():
                 path_attribute="store_path",
                 path_configured_key="store_configured",
             ),
+            "nested_mind": _nested_mind_connector_read_model(),
+            "nested_mind_observation_bridge": _nested_mind_observation_bridge_read_model(),
+            "nested_mind_observation_submitter": _nested_mind_observation_submitter_read_model(),
         },
     }
 

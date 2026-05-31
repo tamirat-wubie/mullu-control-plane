@@ -143,7 +143,13 @@ def test_extension_health_read_model_bounded(client: TestClient) -> None:
 
     assert response.status_code == 200
     assert payload["governed"] is True
-    assert set(extensions) == {"governed_swarm", "note_memory"}
+    assert set(extensions) == {
+        "governed_swarm",
+        "nested_mind",
+        "nested_mind_observation_bridge",
+        "nested_mind_observation_submitter",
+        "note_memory",
+    }
     assert set(extensions["governed_swarm"]) == {
         "registered",
         "enabled",
@@ -160,6 +166,29 @@ def test_extension_health_read_model_bounded(client: TestClient) -> None:
         "reason",
         "store_configured",
     }
+    assert set(extensions["nested_mind"]) == {
+        "registered",
+        "enabled",
+        "active",
+        "state",
+        "base_url_configured",
+        "credential_configured",
+    }
+    assert set(extensions["nested_mind_observation_bridge"]) == {
+        "registered",
+        "enabled",
+        "active",
+        "state",
+        "planner_configured",
+    }
+    assert set(extensions["nested_mind_observation_submitter"]) == {
+        "registered",
+        "enabled",
+        "active",
+        "state",
+        "base_url_configured",
+        "credential_configured",
+    }
     assert extensions["governed_swarm"]["state"] in {
         "unregistered",
         "disabled",
@@ -172,10 +201,40 @@ def test_extension_health_read_model_bounded(client: TestClient) -> None:
         "enabled_unmounted",
         "mounted",
     }
+    assert extensions["nested_mind"]["state"] in {
+        "unregistered",
+        "disabled",
+        "enabled_inactive",
+        "standby",
+        "active",
+    }
+    assert extensions["nested_mind_observation_bridge"]["state"] in {
+        "unregistered",
+        "disabled",
+        "enabled_inactive",
+        "standby",
+        "active",
+    }
+    assert extensions["nested_mind_observation_submitter"]["state"] in {
+        "unregistered",
+        "disabled",
+        "enabled_inactive",
+        "standby",
+        "active",
+    }
     assert isinstance(extensions["governed_swarm"]["audit_store_configured"], bool)
     assert isinstance(extensions["note_memory"]["store_configured"], bool)
+    assert isinstance(extensions["nested_mind"]["base_url_configured"], bool)
+    assert isinstance(extensions["nested_mind"]["credential_configured"], bool)
+    assert isinstance(extensions["nested_mind_observation_bridge"]["planner_configured"], bool)
+    assert isinstance(extensions["nested_mind_observation_submitter"]["base_url_configured"], bool)
+    assert isinstance(extensions["nested_mind_observation_submitter"]["credential_configured"], bool)
     assert "audit_store_path" not in extensions["governed_swarm"]
     assert "store_path" not in extensions["note_memory"]
+    assert "base_url" not in extensions["nested_mind"]
+    assert "token" not in extensions["nested_mind"]
+    assert "base_url" not in extensions["nested_mind_observation_submitter"]
+    assert "token" not in extensions["nested_mind_observation_submitter"]
 
 
 def test_ops_dashboard_read_model_bounded(client: TestClient) -> None:
