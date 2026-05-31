@@ -134,7 +134,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             print(_readable_tasks(templates))
         return 0
     if args.command == "actions":
-        actions = SimplePlatformRuntime().action_menu().to_dict()["payload"]["actions"]
+        actions = _validated_actions(SimplePlatformRuntime().action_menu().to_dict()["payload"]["actions"])
         if args.json:
             print(json.dumps(_envelope(True, "listed", {"actions": actions}), sort_keys=True, separators=(",", ":")))
         else:
@@ -211,14 +211,38 @@ def _readable_tasks(templates: list[dict[str, str]]) -> str:
 
 def _readable_actions(actions: object) -> str:
     lines = ["Plain actions:"]
-    if not isinstance(actions, list):
-        raise RuntimeCoreInvariantError("simple action menu must be a list")
-    for action in actions:
-        if not isinstance(action, dict):
-            raise RuntimeCoreInvariantError("simple action menu item must be an object")
+    for action in _validated_actions(actions):
         lines.append(f"- {action['action']}: {action['label']}")
         lines.append(f"  purpose: {action['purpose']}")
     return "\n".join(lines)
+
+
+def _validated_actions(actions: object) -> list[dict[str, str]]:
+    if not isinstance(actions, list):
+        raise RuntimeCoreInvariantError("simple action menu must be a list")
+    validated: list[dict[str, str]] = []
+    for action in actions:
+        if not isinstance(action, dict):
+            raise RuntimeCoreInvariantError("simple action menu item must be an object")
+        validated.append(
+            {
+                "action": _action_menu_text(action, "action"),
+                "label": _action_menu_text(action, "label"),
+                "purpose": _action_menu_text(action, "purpose"),
+            }
+        )
+    return validated
+
+
+def _action_menu_text(action: dict[object, object], field_name: str) -> str:
+    value = action.get(field_name)
+    if not isinstance(value, str):
+        raise RuntimeCoreInvariantError(f"simple action menu item {field_name} must be text")
+    if not value.strip():
+        raise RuntimeCoreInvariantError(f"simple action menu item {field_name} must be non-empty text")
+    if value != value.strip():
+        raise RuntimeCoreInvariantError(f"simple action menu item {field_name} must be trimmed text")
+    return value
 
 
 def _readable_workflow(value: dict[str, object]) -> str:
