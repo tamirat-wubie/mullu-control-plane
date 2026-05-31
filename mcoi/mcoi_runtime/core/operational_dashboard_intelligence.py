@@ -94,6 +94,14 @@ class DashboardSimpleWorkflowSummary:
             raise RuntimeCoreInvariantError("dashboard simple workflow cannot allow execution")
         if min(self.ready_count, self.review_count, self.blocked_count) < 0:
             raise RuntimeCoreInvariantError("dashboard simple workflow counts cannot be negative")
+        if self.ready_count + self.review_count + self.blocked_count != len(self.action_refs):
+            raise RuntimeCoreInvariantError("dashboard simple workflow counts must match action refs")
+        if self.outcome == "ready" and (self.review_count or self.blocked_count):
+            raise RuntimeCoreInvariantError("dashboard simple workflow ready outcome cannot carry review or blocked counts")
+        if self.outcome == "needs_review" and (self.review_count < 1 or self.blocked_count):
+            raise RuntimeCoreInvariantError("dashboard simple workflow review outcome must carry review counts only")
+        if self.outcome == "blocked" and self.blocked_count < 1:
+            raise RuntimeCoreInvariantError("dashboard simple workflow blocked outcome must carry blocked counts")
 
     def to_dict(self) -> dict[str, object]:
         """Return a JSON-compatible simple workflow summary."""

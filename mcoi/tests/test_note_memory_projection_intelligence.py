@@ -476,6 +476,40 @@ def test_dashboard_simple_workflow_summary_rejects_execution_authority() -> None
         )
 
 
+def test_dashboard_simple_workflow_summary_rejects_inconsistent_counts() -> None:
+    with pytest.raises(RuntimeCoreInvariantError, match="counts must match action refs"):
+        DashboardSimpleWorkflowSummary(
+            workflow_ref="dashboard-simple-workflow-test",
+            workflow="docs_update",
+            label="Update docs",
+            outcome="ready",
+            title="Ready",
+            message="Ready for display.",
+            next_step="Continue.",
+            ready_count=1,
+            review_count=0,
+            blocked_count=0,
+            action_refs=("gate-decision-test", "gate-decision-extra"),
+        )
+
+
+def test_dashboard_simple_workflow_summary_rejects_inconsistent_outcome() -> None:
+    with pytest.raises(RuntimeCoreInvariantError, match="ready outcome cannot carry review or blocked counts"):
+        DashboardSimpleWorkflowSummary(
+            workflow_ref="dashboard-simple-workflow-test",
+            workflow="docs_update",
+            label="Update docs",
+            outcome="ready",
+            title="Ready",
+            message="Ready for display.",
+            next_step="Continue.",
+            ready_count=1,
+            review_count=1,
+            blocked_count=0,
+            action_refs=("gate-decision-test", "gate-decision-review"),
+        )
+
+
 def test_dashboard_simple_start_guide_rejects_execution_authority() -> None:
     with pytest.raises(RuntimeCoreInvariantError, match="dashboard simple start guide cannot allow execution"):
         DashboardSimpleStartGuideSummary(
