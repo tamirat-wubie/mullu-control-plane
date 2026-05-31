@@ -38,6 +38,13 @@ _RECORD_TYPES = {
     "bridge_report",
     "reconciliation_report",
 }
+_ENTRY_FIELDS = {
+    "record_type",
+    "record_id",
+    "mind_id",
+    "mullu_receipt_hash",
+    "payload",
+}
 _FORBIDDEN_KEY_FRAGMENTS = (
     "bearer",
     "authorization",
@@ -180,6 +187,8 @@ def _entry_to_json(entry: NestedMindEvidenceEntry) -> str:
 
 
 def _entry_from_raw(raw: Mapping[str, Any]) -> NestedMindEvidenceEntry:
+    if set(raw) - _ENTRY_FIELDS:
+        raise CorruptedDataError("nested-mind evidence entry has unexpected fields")
     record_type = raw.get("record_type")
     record_id = raw.get("record_id")
     mind_id = raw.get("mind_id")

@@ -27,7 +27,7 @@ from mcoi_runtime.contracts import (
     NestedMindReceiptBridgeStatus,
     stable_json_hash,
 )
-from mcoi_runtime.persistence.errors import PersistenceWriteError
+from mcoi_runtime.persistence.errors import CorruptedDataError, PersistenceWriteError
 from mcoi_runtime.persistence import NestedMindEvidenceStore
 
 
@@ -177,3 +177,15 @@ def test_raw_response_body_not_accepted(tmp_path) -> None:
 
     with pytest.raises(PersistenceWriteError, match="forbidden sensitive field"):
         store.record_submission_report(unsafe_report)
+
+
+def test_existing_store_rejects_unexpected_top_level_fields(tmp_path) -> None:
+    store_path = tmp_path / "nested-mind.jsonl"
+    store = NestedMindEvidenceStore(store_path)
+    store.record_submission_report(_submission())
+    entry = store_path.read_text(encoding="utf-8").strip()
+    unsafe_entry = entry[:-1] + ',"authorization":"secret"}'
+    store_path.write_text(unsafe_entry + "\n", encoding="utf-8")
+
+    with pytest.raises(CorruptedDataError, match="unexpected fields"):
+        NestedMindEvidenceStore(store_path)
