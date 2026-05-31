@@ -1,6 +1,6 @@
 # Homepage Update Evidence 2026-05-15
 
-Purpose: record that the public product landing page requirement is satisfied through the live Mullu private-beta route.
+Purpose: record that the public product landing page requirement is satisfied through the live Mullu private-beta route and that the current governed source promotes `Mullu Govern`.
 Governance scope: homepage/product-page naming copy, private-beta launch posture, public first-reference form, and paid-launch boundary.
 Dependencies: `docs/WEBSITE_DEPLOYMENT_EVIDENCE_2026-05-15.md`, `docs/PUBLIC_LAUNCH_COPY.md`, `site/mullu/index.html`.
 Invariants: this evidence closes `homepage_update` only for private-beta product-page readiness; paid public launch remains blocked until official clearance gates close.
@@ -26,7 +26,8 @@ https://mullusi.com/mullu/
 | Evidence | Result |
 | --- | --- |
 | Live product route | `https://mullusi.com/mullu/` returns HTTP 200 |
-| Product first reference | Page contains `Mullu, by Mullusi` |
+| Historical live first reference | Page contained `Mullu, by Mullusi` during the 2026-05-15 live-route probe |
+| Current governed source first reference | `site/mullu/index.html` contains `Mullu Govern, by Mullusi` |
 | Launch posture | Page contains private beta / request access copy |
 | Canonical law | Page contains `Symbols are atomic. Meaning is relational. Traversal is governed. Judgment is earned.` |
 | Product family | Page names `Mullu CLI`, `Mullu Code`, `Mullu Desk`, and `Mullu Control Plane` |
@@ -44,14 +45,13 @@ The public page may remain private beta until these gates close:
 4. `close_variant_review`
 5. `domain_ownership`
 6. `legal_review`
-7. `app_title_update`
 
 ## Gate Decision
 
-`homepage_update` is closed because the product landing page is live, intentional, and private-beta bounded.
+`homepage_update` is closed because the product landing page is live, intentional, private-beta bounded, and aligned with the current `Mullu Govern` source title.
 
 STATUS:
   Completeness: 100%
-  Invariants verified: [product landing page live, first-reference copy present, private-beta posture preserved, paid public launch remains blocked]
-  Open issues: [official trademark searches, close-variant review, domain ownership evidence, legal review, app title update]
+  Invariants verified: [product landing page live, historical first-reference evidence preserved, current Mullu Govern first-reference source present, private-beta posture preserved, paid public launch remains blocked]
+  Open issues: [official trademark searches, close-variant review, domain ownership evidence, legal review]
   Next action: complete legal/domain clearance before publishing paid public launch copy

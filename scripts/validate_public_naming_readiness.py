@@ -412,6 +412,8 @@ def validate_homepage_update_evidence(evidence_path: Path = HOMEPAGE_UPDATE_EVID
         "https://mullusi.com/mullu/",
         "HTTP 200",
         "Mullu, by Mullusi",
+        "Current governed source first reference",
+        "Mullu Govern, by Mullusi",
         "private beta",
         "request access",
         "Symbols are atomic. Meaning is relational. Traversal is governed. Judgment is earned.",
@@ -437,7 +439,9 @@ def validate_app_title_update_evidence(evidence_path: Path = APP_TITLE_UPDATE_EV
     required_literals = (
         "2026-05-15",
         "app_title_update",
+        "<title>Mullu Govern, by Mullusi - Governed Symbolic Execution</title>",
         "<title>Mullu, by Mullusi - Governed Symbolic Systems</title>",
+        "Historical 2026-05-15 live route snapshot",
         "<title>Mullu Authority Operator Console</title>",
         "<title>Mullu Physical Promotion Receipts</title>",
         "<title>Mullu Universal Action Proofs</title>",

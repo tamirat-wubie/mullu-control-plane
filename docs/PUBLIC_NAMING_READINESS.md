@@ -3,7 +3,7 @@
 Purpose: define the release gate for exposing `Mullu Govern` as the public product name.
 Governance scope: brand clearance, domain ownership, website copy, SDK/API terminology, admin surfaces, and product launch evidence.
 Dependencies: `docs/PRODUCT_IDENTITY.md`, `docs/PUBLIC_LAUNCH_COPY.md`, `docs/NAME_CLEARANCE_PRELIMINARY.md`, `docs/APP_TITLE_UPDATE_EVIDENCE_2026-05-15.md`, `docs/HOMEPAGE_UPDATE_EVIDENCE_2026-05-15.md`, `docs/OFFICIAL_CLEARANCE_ACCESS_LOG_2026-05-15.md`, `docs/SDK_API_STABILITY_REVIEW_2026-05-15.md`, `docs/NAMING_MIGRATION_PLAN.md`, `docs/TRADEMARK_SEARCH_RUNBOOK.md`, `docs/DOMAIN_ACQUISITION_PLAN.md`, `docs/WEBSITE_UPDATE_CHECKLIST.md`, `docs/WEBSITE_RECHECK_LOG.md`, `docs/WEBSITE_LOCAL_BROWSER_VERIFICATION_2026-05-25.md`, `docs/WEBSITE_DEPLOYMENT_EVIDENCE_2026-05-24.md`, `docs/PUBLIC_NAMING_STATE_TRANSITION.md`, `docs/PUBLIC_NAMING_HANDOFF.md`, `docs/CLEARANCE_PACKET_TEMPLATE.md`, `docs/DOMAIN_OWNERSHIP_RECORD_TEMPLATE.md`, `docs/public-naming-readiness.json`.
-Invariants: `Mullu Govern` is the public product name only after clearance; `Mullu` remains the suite/family; `Mullusi` remains the company and governance authority; `Mullu Platform` remains valid for developer contracts and architecture surfaces; `Mullu Control Plane` remains the internal/admin technical surface.
+Invariants: `Mullu Govern` is the public product name for internal alignment and private beta; paid public launch remains blocked until clearance; `Mullu` remains the suite/family; `Mullusi` remains the company and governance authority; `Mullu Platform` remains valid for developer contracts and architecture surfaces; `Mullu Control Plane` remains the internal/admin technical surface.
 
 ## Readiness Gates
 
@@ -117,11 +117,12 @@ The current deployment handoff target is:
 ../mullusi_website/mullu/index.html
 ```
 
-This target is now verified live for the `/mullu` fallback route:
-`https://mullusi.com/mullu` returns HTTP 200 and contains intentional product
+This target is verified live for the historical `/mullu` fallback route:
+`https://mullusi.com/mullu` returned HTTP 200 and contained intentional product
 copy including `Mullu, by Mullusi`, `Mullu CLI`, and `Mullu Control Plane`.
-The next public-copy revision must promote `Mullu Govern` as the product name
-while preserving historical deployment evidence.
+The current governed source and local browser evidence now promote
+`Mullu Govern, by Mullusi` as the product first reference while preserving
+historical deployment evidence.
 This does not clear standalone product subdomain, legal, domain ownership,
 homepage, or app-title gates.
 

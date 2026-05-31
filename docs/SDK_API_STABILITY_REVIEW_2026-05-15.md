@@ -34,10 +34,10 @@ Any future rename of SDK/API-facing Mullu Platform identifiers requires a versio
 
 ## Gate Decision
 
-This review records the technical boundary only. It does not close trademark, domain, legal, homepage, or app-title gates. The paid public launch remains blocked.
+This review records the technical boundary only. It does not close trademark, domain, close-variant, or legal gates. Homepage and app-title gates are closed by their own evidence records. The paid public launch remains blocked.
 
 STATUS:
   Completeness: 100%
   Invariants verified: [Mullu Govern public product boundary, Mullu Platform technical contract boundary, versioned compatibility migration rule, paid public launch remains blocked]
-  Open issues: [official trademark searches, domain ownership evidence, legal review, homepage update, app title update]
+  Open issues: [official trademark searches, close-variant review, domain ownership evidence, legal review]
   Next action: keep SDK/API contract names stable until a versioned compatibility migration is explicitly approved
