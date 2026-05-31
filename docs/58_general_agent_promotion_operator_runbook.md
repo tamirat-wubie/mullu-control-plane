@@ -41,7 +41,7 @@ The current expected aggregate plan contains:
 | Measure | Value |
 | --- | ---: |
 | Total closure actions | 13 |
-| Approval-required actions | 9 |
+| Approval-required actions | 10 |
 | Source plan types | `adapter`, `deployment`, `portfolio` |
 | Current readiness level | `pilot-governed-core` |
 
@@ -59,7 +59,8 @@ The current expected aggregate plan contains:
 Secrets must be bound through the governed worker or deployment secret store. Do not print secret values in receipts, logs, status files, or closure plans.
 
 The deployment witness publication path requires all of these bound names before
-the handoff preflight can pass: `MULLU_GATEWAY_URL`,
+the handoff preflight can pass: `OPENAI_API_KEY`,
+`EMAIL_CALENDAR_CONNECTOR_TOKEN`, `MULLU_GATEWAY_URL`,
 `MULLU_GATEWAY_DNS_TARGET`, `MULLU_GATEWAY_DNS_RECORD_TYPE`,
 `MULLU_DNS_PROVIDER`,
 `MULLU_RUNTIME_WITNESS_SECRET`, `MULLU_RUNTIME_CONFORMANCE_SECRET`,
@@ -137,6 +138,7 @@ voice_dependency_missing:OPENAI_API_KEY
 email_calendar_dependency_missing:EMAIL_CALENDAR_CONNECTOR_TOKEN
 deployment_witness_not_published
 production_health_not_declared
+deployment_upstream_api_gate_not_ready
 ```
 
 12. Produce live adapter receipts:
