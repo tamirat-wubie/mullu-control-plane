@@ -67,6 +67,9 @@ def _resolve_relative_phrase(now: datetime, amount: int, unit: str) -> tuple[str
         "minutu",
         "minuta",
         "minuti",
+        "lepto",
+        "lepta",
+        "minutit",
     }
     hour_units = {
         "hour",
@@ -101,6 +104,9 @@ def _resolve_relative_phrase(now: datetime, amount: int, unit: str) -> tuple[str
         "chas",
         "chasa",
         "oresh",
+        "ores",
+        "tund",
+        "tundi",
     }
     day_units = {
         "day",
@@ -132,6 +138,10 @@ def _resolve_relative_phrase(now: datetime, amount: int, unit: str) -> tuple[str
         "denovi",
         "dite",
         "ditesh",
+        "mera",
+        "meres",
+        "paev",
+        "paeva",
     }
     if unit in minute_units:
         delta = timedelta(minutes=amount)
@@ -440,6 +450,30 @@ def _albanian_weekdays() -> dict[str, int]:
     }
 
 
+def _greek_weekdays() -> dict[str, int]:
+    return {
+        "deftera": 0,
+        "triti": 1,
+        "tetarti": 2,
+        "pempti": 3,
+        "paraskevi": 4,
+        "savvato": 5,
+        "kyriaki": 6,
+    }
+
+
+def _estonian_weekdays() -> dict[str, int]:
+    return {
+        "esmaspaeval": 0,
+        "teisipaeval": 1,
+        "kolmapaeval": 2,
+        "neljapaeval": 3,
+        "reedel": 4,
+        "laupaeval": 5,
+        "puhapaeval": 6,
+    }
+
+
 def _resolve_bounded_temporal_phrase(
     phrase: str,
     *,
@@ -500,6 +534,10 @@ def _resolve_bounded_temporal_phrase(
         return _resolve_macedonian_temporal_phrase(normalized, now_dt, original_timezone)
     if locale_key in {"sq", "sq-al", "sq-xk"}:
         return _resolve_albanian_temporal_phrase(normalized, now_dt, original_timezone)
+    if locale_key in {"el", "el-gr", "el-cy"}:
+        return _resolve_greek_temporal_phrase(normalized, now_dt, original_timezone)
+    if locale_key in {"et", "et-ee"}:
+        return _resolve_estonian_temporal_phrase(normalized, now_dt, original_timezone)
     return "unsupported", "temporal_phrase_locale_not_supported", ""
 
 
@@ -1618,6 +1656,109 @@ def _resolve_albanian_temporal_phrase(
         return "ambiguous", "temporal_phrase_ambiguous", ""
     if re.fullmatch(
         r"(te henen|te marten|te merkuren|te enjten|te premten|te shtunen|te dielen) e ardhshme",
+        normalized,
+    ):
+        return "ambiguous", "temporal_phrase_ambiguous", ""
+    return "unsupported", "temporal_phrase_unsupported", ""
+
+
+def _resolve_greek_temporal_phrase(
+    normalized: str,
+    now: datetime,
+    original_timezone: str,
+) -> tuple[str, str, str]:
+    relative = re.fullmatch(r"se ([1-9][0-9]*) (lepto|lepta|ora|ores|mera|meres)", normalized)
+    if relative is not None:
+        resolved, reason = _resolve_relative_phrase(now, int(relative.group(1)), relative.group(2))
+        return ("exact" if resolved else "unsupported"), reason, resolved
+    wall_time = re.fullmatch(r"(simera|avrio) stis ([0-9]{1,2}):([0-9]{2}) ?(utc|z|local)", normalized)
+    if wall_time is not None:
+        resolved, reason = _resolve_relative_wall_time(
+            now,
+            original_timezone=original_timezone,
+            day_offset=1 if wall_time.group(1) == "avrio" else 0,
+            hour=int(wall_time.group(2)),
+            minute=int(wall_time.group(3)),
+            mode=wall_time.group(4),
+        )
+        return ("exact" if resolved else "unsupported"), reason, resolved
+    next_weekday = re.fullmatch(
+        r"tin epomeni (deftera|triti|tetarti|pempti|paraskevi|savvato|kyriaki) stis ([0-9]{1,2}):([0-9]{2}) ?(utc|z|local)",
+        normalized,
+    )
+    if next_weekday is not None:
+        resolved, reason = _resolve_next_weekday_wall_time(
+            now,
+            original_timezone=original_timezone,
+            weekday=_greek_weekdays()[next_weekday.group(1)],
+            hour=int(next_weekday.group(2)),
+            minute=int(next_weekday.group(3)),
+            mode=next_weekday.group(4),
+        )
+        return ("exact" if resolved else "unsupported"), reason, resolved
+    if normalized in {
+        "simera",
+        "avrio",
+        "apopse",
+        "argotera",
+        "syntoma",
+        "tin epomeni evdomada",
+        "ton epomeno mina",
+        "ton epomeno chrono",
+    }:
+        return "ambiguous", "temporal_phrase_ambiguous", ""
+    if re.fullmatch(r"tin epomeni (deftera|triti|tetarti|pempti|paraskevi|savvato|kyriaki)", normalized):
+        return "ambiguous", "temporal_phrase_ambiguous", ""
+    return "unsupported", "temporal_phrase_unsupported", ""
+
+
+def _resolve_estonian_temporal_phrase(
+    normalized: str,
+    now: datetime,
+    original_timezone: str,
+) -> tuple[str, str, str]:
+    relative = re.fullmatch(r"([1-9][0-9]*) (minut|minutit|tund|tundi|paev|paeva) parast", normalized)
+    if relative is not None:
+        resolved, reason = _resolve_relative_phrase(now, int(relative.group(1)), relative.group(2))
+        return ("exact" if resolved else "unsupported"), reason, resolved
+    wall_time = re.fullmatch(r"(tana|homme) kell ([0-9]{1,2}):([0-9]{2}) ?(utc|z|local)", normalized)
+    if wall_time is not None:
+        resolved, reason = _resolve_relative_wall_time(
+            now,
+            original_timezone=original_timezone,
+            day_offset=1 if wall_time.group(1) == "homme" else 0,
+            hour=int(wall_time.group(2)),
+            minute=int(wall_time.group(3)),
+            mode=wall_time.group(4),
+        )
+        return ("exact" if resolved else "unsupported"), reason, resolved
+    next_weekday = re.fullmatch(
+        r"jargmisel (esmaspaeval|teisipaeval|kolmapaeval|neljapaeval|reedel|laupaeval|puhapaeval) kell ([0-9]{1,2}):([0-9]{2}) ?(utc|z|local)",
+        normalized,
+    )
+    if next_weekday is not None:
+        resolved, reason = _resolve_next_weekday_wall_time(
+            now,
+            original_timezone=original_timezone,
+            weekday=_estonian_weekdays()[next_weekday.group(1)],
+            hour=int(next_weekday.group(2)),
+            minute=int(next_weekday.group(3)),
+            mode=next_weekday.group(4),
+        )
+        return ("exact" if resolved else "unsupported"), reason, resolved
+    if normalized in {
+        "tana",
+        "homme",
+        "tana ohtul",
+        "hiljem",
+        "varsti",
+        "jargmisel nadalal",
+        "jargmisel kuul",
+        "jargmisel aastal",
+    }:
+        return "ambiguous", "temporal_phrase_ambiguous", ""
+    if re.fullmatch(
+        r"jargmisel (esmaspaeval|teisipaeval|kolmapaeval|neljapaeval|reedel|laupaeval|puhapaeval)",
         normalized,
     ):
         return "ambiguous", "temporal_phrase_ambiguous", ""
