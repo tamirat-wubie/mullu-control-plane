@@ -75,6 +75,9 @@ _STRICT_ACTIONS = {
 }
 
 _EXTERNAL_COMMUNICATIONS = {"send", "email", "notify", "post", "publish", "message", "contract"}
+_BENIGN_ACTION_OBJECTS = {
+    "release": frozenset({"note", "notes", "changelog", "changelogs", "docs", "documentation"}),
+}
 
 
 def decide_shadow_mode(
@@ -111,7 +114,7 @@ def decide_shadow_mode(
         triggers.append("continue_without_scope")
 
     strict_hits = sorted(tokens.intersection(_STRICT_ACTIONS))
-    deep_hits = sorted(tokens.intersection(_DEEP_ACTIONS))
+    deep_hits = _action_hits(text, tokens, _DEEP_ACTIONS)
     external_hits = sorted(tokens.intersection(_EXTERNAL_COMMUNICATIONS))
 
     if strict_hits:
@@ -188,6 +191,24 @@ def _has_ambiguous_reference(text: str, tokens: frozenset[str]) -> bool:
     if text in _AMBIGUOUS_REFERENCES:
         return True
     return bool(tokens.intersection(_AMBIGUOUS_REFERENCES))
+
+
+def _action_hits(text: str, tokens: frozenset[str], action_terms: set[str]) -> tuple[str, ...]:
+    return tuple(
+        term
+        for term in sorted(tokens.intersection(action_terms))
+        if not _all_action_occurrences_are_benign(text, term)
+    )
+
+
+def _all_action_occurrences_are_benign(text: str, action: str) -> bool:
+    benign_objects = _BENIGN_ACTION_OBJECTS.get(action)
+    if not benign_objects:
+        return False
+    matches = tuple(re.finditer(rf"\b{re.escape(action)}\b(?:\s+([a-z0-9_#.-]+))?", text))
+    if not matches:
+        return False
+    return all((match.group(1) or "") in benign_objects for match in matches)
 
 
 def _is_continue_without_scope(text: str, context: ShadowContext) -> bool:

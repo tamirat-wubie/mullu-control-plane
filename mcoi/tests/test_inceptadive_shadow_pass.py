@@ -49,6 +49,17 @@ def test_gate_routes_deploy_it_to_deep_shadow() -> None:
     assert decision.strict_fail_closed is False
 
 
+def test_gate_treats_release_notes_as_document_context() -> None:
+    context = _context("summarize release notes", explicit_target="release notes", scope="docs")
+
+    decision = decide_shadow_mode(context)
+
+    assert decision.mode == ShadowMode.LIGHT
+    assert decision.triggers == ("light_default",)
+    assert decision.strict_fail_closed is False
+    assert "deep_action:release" not in decision.triggers
+
+
 def test_gate_routes_delete_to_strict_preflight() -> None:
     context = _context("delete old logs", stage=ShadowStage.PREFLIGHT)
 
@@ -68,6 +79,17 @@ def test_light_pass_clear_for_safe_summary_request() -> None:
     assert result.mode == ShadowMode.LIGHT
     assert result.findings[0].kind == ShadowFindingKind.SAFE_CLEAR
     assert result.to_dict()["execution_authority"] is False
+
+
+def test_light_pass_does_not_treat_release_notes_as_release_action() -> None:
+    context = _context("summarize release notes", explicit_target="release notes", scope="docs")
+
+    result = run_light_shadow_pass(context)
+
+    assert result.verdict == ShadowVerdict.CLEAR
+    assert result.needs_repair is False
+    assert result.needs_deep_pass is False
+    assert result.findings[0].kind == ShadowFindingKind.SAFE_CLEAR
 
 
 def test_light_pass_requests_repair_for_continue_without_scope() -> None:
