@@ -55,6 +55,8 @@ def test_package_readme_documents_simple_platform_surface() -> None:
     assert "Ready" in text
     assert "Needs review" in text
     assert "Blocked" in text
+    assert "mount_simple_platform_router_from_env" in text
+    assert "MULLU_SIMPLE_PLATFORM_ENABLED" in text
     assert "SimplePlatformRuntime" in text
     assert "create_simple_platform_fastapi_router" in text
     assert "POST /api/v1/simple/actions/check" in text

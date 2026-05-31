@@ -183,6 +183,29 @@ def test_simple_cli_task_template_outputs_ready_result(capsys) -> None:
     assert envelope["payload"]["outcome"] == "ready"
 
 
+def test_simple_cli_lists_task_templates_as_readable_catalog(capsys) -> None:
+    exit_code = guarded_main(["tasks"])
+    output = capsys.readouterr().out
+
+    assert exit_code == 0
+    assert "Common tasks:" in output
+    assert "review-docs" in output
+    assert "mullu task review-docs --target <target>" in output
+    assert "notify-support" in output
+
+
+def test_simple_cli_lists_task_templates_as_json(capsys) -> None:
+    exit_code = guarded_main(["tasks", "--json"])
+    envelope = json.loads(capsys.readouterr().out)
+
+    assert exit_code == 0
+    assert envelope["governed"] is True
+    assert envelope["ok"] is True
+    assert envelope["status"] == "listed"
+    assert envelope["payload"]["tasks"][0]["task"] == "review_docs"
+    assert envelope["payload"]["tasks"][2]["default_target"] == "support@mullusi.com"
+
+
 def test_simple_platform_api_projects_ready_check() -> None:
     envelope = SimplePlatformRuntime().check_action(
         {
