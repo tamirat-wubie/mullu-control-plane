@@ -81,10 +81,15 @@ class CapabilityManifestRegistry:
     ) -> CapabilityManifestAdmission:
         """Parse, validate, and conditionally admit one manifest path."""
         source_path = path.resolve()
-        environment = str(environment).strip()
         errors: list[str] = []
         manifest: CapabilityManifest | None = None
         payload: Mapping[str, Any] | None = None
+
+        try:
+            environment = _require_manifest_text(environment, "environment").strip()
+        except ValueError as exc:
+            environment = ""
+            errors.append(f"manifest_parse_error:{exc}")
 
         try:
             _require_inside_repo(self._repo_root, source_path)
@@ -95,7 +100,7 @@ class CapabilityManifestRegistry:
 
         capability_id = ""
         if isinstance(payload, Mapping):
-            capability_id = str(payload.get("capability_id") or "")
+            capability_id = _optional_manifest_text(payload.get("capability_id"))
         if manifest is not None:
             capability_id = manifest.capability_id
             errors.extend(
@@ -258,6 +263,18 @@ def _expected_manifest_filename(capability_id: str) -> str:
     return capability_id.replace(".", "_") + ".capability.json"
 
 
+def _require_manifest_text(value: object, field_name: str) -> str:
+    if not isinstance(value, str) or not value.strip():
+        raise ValueError(f"{field_name} must be a non-empty string")
+    return value
+
+
+def _optional_manifest_text(value: object) -> str:
+    if isinstance(value, str) and value.strip():
+        return value
+    return ""
+
+
 def _has_test_or_proof_evidence(evidence_refs: tuple[str, ...]) -> bool:
     return any(
         ref.startswith(("tests/", "mcoi/tests/", "proof://"))
@@ -272,7 +289,12 @@ def _hot_reload_metadata_errors(manifest: CapabilityManifest, *, environment: st
     if isinstance(allowed_environments, (str, bytes)) or not isinstance(allowed_environments, (tuple, list)):
         errors.append("hot_reload_allowed_environments_required")
     else:
-        normalized_allowed = tuple(str(item).strip() for item in allowed_environments if str(item).strip())
+        normalized_allowed: list[str] = []
+        for index, item in enumerate(allowed_environments):
+            if not isinstance(item, str) or not item.strip():
+                errors.append(f"hot_reload_allowed_environments_invalid:{index}")
+                continue
+            normalized_allowed.append(item.strip())
         if not normalized_allowed:
             errors.append("hot_reload_allowed_environments_required")
         elif environment not in normalized_allowed:
