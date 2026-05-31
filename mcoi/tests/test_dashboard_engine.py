@@ -370,6 +370,8 @@ class TestBuildNoteMemorySummary:
     def test_builds_note_memory_summary_from_legacy_snapshot_without_filtered_out_counts(self):
         engine = _make_engine()
         snapshot = _note_memory_snapshot(
+            retrieval_filter_active=True,
+            retrieval_filter_mode="receipt",
             retrieval_influence_count=1,
             retrieval_influence_total_count=3,
             retrieval_receipt_count=1,

@@ -359,6 +359,10 @@ class NoteMemorySummary(ContractRecord):
         expected_receipt_filtered_out = self.retrieval_receipt_total_count - self.retrieval_receipt_count
         if self.retrieval_receipt_filtered_out_count != expected_receipt_filtered_out:
             raise ValueError("retrieval_receipt_filtered_out_count must equal total minus current count")
+        if self.retrieval_filter_mode == "unfiltered" and (
+            self.retrieval_influence_filtered_out_count or self.retrieval_receipt_filtered_out_count
+        ):
+            raise ValueError("unfiltered retrieval_filter_mode cannot report filtered-out retrieval counts")
         object.__setattr__(
             self,
             "index_proof_state",
