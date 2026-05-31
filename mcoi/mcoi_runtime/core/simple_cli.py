@@ -17,6 +17,7 @@ from typing import Sequence
 
 from .invariants import RuntimeCoreInvariantError
 from .simple_platform import SimpleActionRequest, SimplePlatform, SimpleTaskRequest, SimpleWorkflowRequest
+from .simple_platform_api import SimplePlatformRuntime
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -54,6 +55,9 @@ def build_parser() -> argparse.ArgumentParser:
 
     tasks_parser = subparsers.add_parser("tasks", help="List common task templates")
     tasks_parser.add_argument("--json", action="store_true", help="Emit JSON instead of readable text")
+
+    actions_parser = subparsers.add_parser("actions", help="List plain action types")
+    actions_parser.add_argument("--json", action="store_true", help="Emit JSON instead of readable text")
 
     workflow_parser = subparsers.add_parser("workflow", help="Check a common workflow")
     workflow_parser.add_argument(
@@ -129,6 +133,13 @@ def main(argv: Sequence[str] | None = None) -> int:
         else:
             print(_readable_tasks(templates))
         return 0
+    if args.command == "actions":
+        actions = _validated_actions(SimplePlatformRuntime().action_menu().to_dict()["payload"]["actions"])
+        if args.json:
+            print(json.dumps(_envelope(True, "listed", {"actions": actions}), sort_keys=True, separators=(",", ":")))
+        else:
+            print(_readable_actions(actions))
+        return 0
     if args.command == "workflow":
         plan = SimplePlatform().check_workflow(
             SimpleWorkflowRequest(
@@ -196,6 +207,42 @@ def _readable_tasks(templates: list[dict[str, str]]) -> str:
         lines.append(f"- {task_name}: {template['label']}")
         lines.append(f"  command: mullu task {task_name}{target_hint}")
     return "\n".join(lines)
+
+
+def _readable_actions(actions: object) -> str:
+    lines = ["Plain actions:"]
+    for action in _validated_actions(actions):
+        lines.append(f"- {action['action']}: {action['label']}")
+        lines.append(f"  purpose: {action['purpose']}")
+    return "\n".join(lines)
+
+
+def _validated_actions(actions: object) -> list[dict[str, str]]:
+    if not isinstance(actions, list):
+        raise RuntimeCoreInvariantError("simple action menu must be a list")
+    validated: list[dict[str, str]] = []
+    for action in actions:
+        if not isinstance(action, dict):
+            raise RuntimeCoreInvariantError("simple action menu item must be an object")
+        validated.append(
+            {
+                "action": _action_menu_text(action, "action"),
+                "label": _action_menu_text(action, "label"),
+                "purpose": _action_menu_text(action, "purpose"),
+            }
+        )
+    return validated
+
+
+def _action_menu_text(action: dict[object, object], field_name: str) -> str:
+    value = action.get(field_name)
+    if not isinstance(value, str):
+        raise RuntimeCoreInvariantError(f"simple action menu item {field_name} must be text")
+    if not value.strip():
+        raise RuntimeCoreInvariantError(f"simple action menu item {field_name} must be non-empty text")
+    if value != value.strip():
+        raise RuntimeCoreInvariantError(f"simple action menu item {field_name} must be trimmed text")
+    return value
 
 
 def _readable_workflow(value: dict[str, object]) -> str:

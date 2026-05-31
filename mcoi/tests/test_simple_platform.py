@@ -18,7 +18,7 @@ from pathlib import Path
 import pytest
 
 from mcoi_runtime.core.invariants import RuntimeCoreInvariantError
-from mcoi_runtime.core.simple_cli import guarded_main
+from mcoi_runtime.core.simple_cli import _readable_actions, guarded_main
 from mcoi_runtime.core.simple_platform import (
     SimpleActionRequest,
     SimpleHomeChoice,
@@ -381,6 +381,43 @@ def test_simple_cli_lists_task_templates_as_json(capsys) -> None:
     assert envelope["status"] == "listed"
     assert envelope["payload"]["tasks"][0]["task"] == "review_docs"
     assert envelope["payload"]["tasks"][2]["default_target"] == "support@mullusi.com"
+
+
+def test_simple_cli_lists_actions_as_readable_catalog(capsys) -> None:
+    exit_code = guarded_main(["actions"])
+    output = capsys.readouterr().out
+
+    assert exit_code == 0
+    assert "Plain actions:" in output
+    assert "- view: View" in output
+    assert "purpose: Read an allowed file or artifact." in output
+    assert "- send: Send" in output
+
+
+def test_simple_cli_lists_actions_as_json(capsys) -> None:
+    exit_code = guarded_main(["actions", "--json"])
+    envelope = json.loads(capsys.readouterr().out)
+
+    assert exit_code == 0
+    assert envelope["governed"] is True
+    assert envelope["ok"] is True
+    assert envelope["status"] == "listed"
+    assert envelope["payload"]["actions"][0]["action"] == "view"
+    assert envelope["payload"]["actions"][2]["label"] == "Send"
+
+
+@pytest.mark.parametrize(
+    ("actions", "message"),
+    (
+        ([{"label": "View", "purpose": "Read."}], "simple action menu item action must be text"),
+        ([{"action": " view ", "label": "View", "purpose": "Read."}], "simple action menu item action must be trimmed text"),
+        ([{"action": "view", "label": 7, "purpose": "Read."}], "simple action menu item label must be text"),
+        ([{"action": "view", "label": "View", "purpose": ""}], "simple action menu item purpose must be non-empty text"),
+    ),
+)
+def test_simple_cli_rejects_loose_action_catalog_entries(actions: object, message: str) -> None:
+    with pytest.raises(RuntimeCoreInvariantError, match=message):
+        _readable_actions(actions)
 
 
 def test_simple_cli_workflow_outputs_ready_result(capsys) -> None:
