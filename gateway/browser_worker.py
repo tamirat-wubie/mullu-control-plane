@@ -25,6 +25,8 @@ from dataclasses import asdict, dataclass, field
 from typing import Any, Protocol
 from urllib.parse import urlparse
 
+from gateway.browser_redaction import redact_observation
+
 try:
     from fastapi import FastAPI, HTTPException, Request
     from fastapi.responses import Response
@@ -276,7 +278,7 @@ def execute_browser_request(
             error=denial,
         )
 
-    observation = adapter.perform(request)
+    observation = redact_observation(adapter.perform(request))
     forbidden_observation = _observation_forbidden(observation, policy)
     missing_evidence = _missing_observation_evidence(observation)
     succeeded = observation.succeeded and not forbidden_observation and not missing_evidence
