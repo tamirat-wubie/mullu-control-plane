@@ -30,6 +30,8 @@ from mcoi_runtime.app.governed_swarm_integration import mount_governed_swarm_rou
 from mcoi_runtime.app.note_memory_integration import mount_note_memory_router_from_env
 from mcoi_runtime.app.nested_mind_integration import (
     mount_nested_mind_connector_from_env,
+    mount_nested_mind_observation_bridge_from_env,
+    mount_nested_mind_observation_submitter_from_env,
 )
 from mcoi_runtime.app.operational_math_integration import (
     select_operational_math_receipt_store,
@@ -321,6 +323,33 @@ nested_mind_bootstrap = mount_nested_mind_connector_from_env(
 deps.set("nested_mind_bootstrap", nested_mind_bootstrap)
 if nested_mind_bootstrap.connector is not None:
     deps.set("nested_mind_connector", nested_mind_bootstrap.connector)
+
+nested_mind_observation_bridge_bootstrap = mount_nested_mind_observation_bridge_from_env(
+    runtime_env=os.environ,
+    clock=_clock,
+)
+deps.set(
+    "nested_mind_observation_bridge_bootstrap",
+    nested_mind_observation_bridge_bootstrap,
+)
+deps.set(
+    "nested_mind_observation_bridge_planner",
+    nested_mind_observation_bridge_bootstrap.planner,
+)
+
+nested_mind_observation_submitter_bootstrap = mount_nested_mind_observation_submitter_from_env(
+    runtime_env=os.environ,
+    clock=_clock,
+)
+deps.set(
+    "nested_mind_observation_submitter_bootstrap",
+    nested_mind_observation_submitter_bootstrap,
+)
+if nested_mind_observation_submitter_bootstrap.submitter is not None:
+    deps.set(
+        "nested_mind_observation_submitter",
+        nested_mind_observation_submitter_bootstrap.submitter,
+    )
 
 from mcoi_runtime.core.god_mode_integration import install_god_mode  # noqa: E402
 
