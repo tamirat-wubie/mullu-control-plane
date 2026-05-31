@@ -682,20 +682,33 @@ def _reject_duplicate_refs(values: tuple[str, ...], field_name: str) -> None:
 def _entry_world_refs(entry: MemoryLatticeEntry) -> tuple[str, ...]:
     raw_refs = entry.metadata.get("world_refs", ())
     if "world_ref" in entry.metadata:
+        single_ref = _world_ref_text(entry.metadata["world_ref"], "world_ref")
         if isinstance(raw_refs, str):
-            raw_refs = (raw_refs, str(entry.metadata["world_ref"]))
+            raw_refs = (_world_ref_text(raw_refs, "world_refs[0]"), single_ref)
         elif isinstance(raw_refs, (list, tuple)):
-            raw_refs = (*tuple(raw_refs), str(entry.metadata["world_ref"]))
+            raw_refs = (*_world_ref_tuple(raw_refs), single_ref)
         else:
             raise ValueError("world_refs_must_be_array")
     if isinstance(raw_refs, str):
-        refs = (raw_refs,)
+        refs = (_world_ref_text(raw_refs, "world_refs[0]"),)
     elif isinstance(raw_refs, (list, tuple)):
-        refs = tuple(str(ref) for ref in raw_refs)
+        refs = _world_ref_tuple(raw_refs)
     else:
         raise ValueError("world_refs_must_be_array")
     _reject_duplicate_refs(refs, "world_refs")
     return refs
+
+
+def _world_ref_tuple(values: tuple[Any, ...] | list[Any]) -> tuple[str, ...]:
+    return tuple(_world_ref_text(value, f"world_refs[{index}]") for index, value in enumerate(values))
+
+
+def _world_ref_text(value: Any, field_name: str) -> str:
+    if not isinstance(value, str) or not value.strip():
+        raise ValueError(f"{field_name}_must_be_non_empty_text")
+    if value.strip() != value:
+        raise ValueError(f"{field_name}_must_be_trimmed_text")
+    return value
 
 
 def _dedupe_nodes(nodes: list[P3MemoryTopologyNode]) -> tuple[P3MemoryTopologyNode, ...]:
