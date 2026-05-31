@@ -213,6 +213,8 @@ def test_temporal_phrase_swedish_next_weekday_local_resolves_before_registration
         ("za 2 sata", "hr-HR"),
         ("cez 2 uri", "sl-SI"),
         ("za 2 sata", "sr-RS"),
+        ("sled 2 chasa", "bg"),
+        ("za 2 sata", "bs-BA"),
     ),
 )
 def test_temporal_phrase_extended_locale_relative_resolves_before_registration(
@@ -256,6 +258,8 @@ def test_temporal_phrase_extended_locale_relative_resolves_before_registration(
         ("sutra u 09:30 UTC", "hr"),
         ("jutri ob 09:30 UTC", "sl"),
         ("sutra u 09:30 UTC", "sr-BA"),
+        ("utre v 09:30 UTC", "bg-BG"),
+        ("sutra u 09:30 UTC", "bs"),
     ),
 )
 def test_temporal_phrase_extended_locale_tomorrow_wall_time_resolves_before_registration(
@@ -299,6 +303,8 @@ def test_temporal_phrase_extended_locale_tomorrow_wall_time_resolves_before_regi
         ("sljedeci ponedjeljak u 08:15 local", "hr-HR"),
         ("naslednji ponedeljek ob 08:15 local", "sl-SI"),
         ("sledeci ponedeljak u 08:15 local", "sr-Latn-RS"),
+        ("sledvasht ponedelnik v 08:15 local", "bg-BG"),
+        ("sljedeci ponedjeljak u 08:15 local", "bs-BA"),
     ),
 )
 def test_temporal_phrase_extended_locale_next_weekday_local_resolves_before_registration(

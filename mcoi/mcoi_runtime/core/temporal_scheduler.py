@@ -98,6 +98,8 @@ def _resolve_relative_phrase(now: datetime, amount: int, unit: str) -> tuple[str
         "sata",
         "uro",
         "uri",
+        "chas",
+        "chasa",
     }
     day_units = {
         "day",
@@ -385,6 +387,30 @@ def _serbian_weekdays() -> dict[str, int]:
     }
 
 
+def _bulgarian_weekdays() -> dict[str, int]:
+    return {
+        "ponedelnik": 0,
+        "vtornik": 1,
+        "sryada": 2,
+        "chetvartak": 3,
+        "petak": 4,
+        "sabota": 5,
+        "nedelya": 6,
+    }
+
+
+def _bosnian_weekdays() -> dict[str, int]:
+    return {
+        "ponedjeljak": 0,
+        "utorak": 1,
+        "srijeda": 2,
+        "cetvrtak": 3,
+        "petak": 4,
+        "subota": 5,
+        "nedjelja": 6,
+    }
+
+
 def _resolve_bounded_temporal_phrase(
     phrase: str,
     *,
@@ -437,6 +463,10 @@ def _resolve_bounded_temporal_phrase(
         return _resolve_slovenian_temporal_phrase(normalized, now_dt, original_timezone)
     if locale_key in {"sr", "sr-rs", "sr-ba", "sr-latn-rs"}:
         return _resolve_serbian_temporal_phrase(normalized, now_dt, original_timezone)
+    if locale_key in {"bg", "bg-bg"}:
+        return _resolve_bulgarian_temporal_phrase(normalized, now_dt, original_timezone)
+    if locale_key in {"bs", "bs-ba"}:
+        return _resolve_bosnian_temporal_phrase(normalized, now_dt, original_timezone)
     return "unsupported", "temporal_phrase_locale_not_supported", ""
 
 
@@ -1354,6 +1384,106 @@ def _resolve_serbian_temporal_phrase(
     }:
         return "ambiguous", "temporal_phrase_ambiguous", ""
     if re.fullmatch(r"sledeci (ponedeljak|utorak|sreda|cetvrtak|petak|subota|nedelja)", normalized):
+        return "ambiguous", "temporal_phrase_ambiguous", ""
+    return "unsupported", "temporal_phrase_unsupported", ""
+
+
+def _resolve_bulgarian_temporal_phrase(
+    normalized: str,
+    now: datetime,
+    original_timezone: str,
+) -> tuple[str, str, str]:
+    relative = re.fullmatch(r"sled ([1-9][0-9]*) (minuta|minuti|chas|chasa|den|dni)", normalized)
+    if relative is not None:
+        resolved, reason = _resolve_relative_phrase(now, int(relative.group(1)), relative.group(2))
+        return ("exact" if resolved else "unsupported"), reason, resolved
+    wall_time = re.fullmatch(r"(dnes|utre) v ([0-9]{1,2}):([0-9]{2}) ?(utc|z|local)", normalized)
+    if wall_time is not None:
+        resolved, reason = _resolve_relative_wall_time(
+            now,
+            original_timezone=original_timezone,
+            day_offset=1 if wall_time.group(1) == "utre" else 0,
+            hour=int(wall_time.group(2)),
+            minute=int(wall_time.group(3)),
+            mode=wall_time.group(4),
+        )
+        return ("exact" if resolved else "unsupported"), reason, resolved
+    next_weekday = re.fullmatch(
+        r"sledvasht (ponedelnik|vtornik|sryada|chetvartak|petak|sabota|nedelya) v ([0-9]{1,2}):([0-9]{2}) ?(utc|z|local)",
+        normalized,
+    )
+    if next_weekday is not None:
+        resolved, reason = _resolve_next_weekday_wall_time(
+            now,
+            original_timezone=original_timezone,
+            weekday=_bulgarian_weekdays()[next_weekday.group(1)],
+            hour=int(next_weekday.group(2)),
+            minute=int(next_weekday.group(3)),
+            mode=next_weekday.group(4),
+        )
+        return ("exact" if resolved else "unsupported"), reason, resolved
+    if normalized in {
+        "dnes",
+        "utre",
+        "tazi vecher",
+        "po-kasno",
+        "skoro",
+        "sledvashta sedmitsa",
+        "sledvasht mesets",
+        "sledvashta godina",
+    }:
+        return "ambiguous", "temporal_phrase_ambiguous", ""
+    if re.fullmatch(r"sledvasht (ponedelnik|vtornik|sryada|chetvartak|petak|sabota|nedelya)", normalized):
+        return "ambiguous", "temporal_phrase_ambiguous", ""
+    return "unsupported", "temporal_phrase_unsupported", ""
+
+
+def _resolve_bosnian_temporal_phrase(
+    normalized: str,
+    now: datetime,
+    original_timezone: str,
+) -> tuple[str, str, str]:
+    relative = re.fullmatch(r"za ([1-9][0-9]*) (minutu|minute|minuta|sat|sata|dan|dana)", normalized)
+    if relative is not None:
+        resolved, reason = _resolve_relative_phrase(now, int(relative.group(1)), relative.group(2))
+        return ("exact" if resolved else "unsupported"), reason, resolved
+    wall_time = re.fullmatch(r"(danas|sutra) u ([0-9]{1,2}):([0-9]{2}) ?(utc|z|local)", normalized)
+    if wall_time is not None:
+        resolved, reason = _resolve_relative_wall_time(
+            now,
+            original_timezone=original_timezone,
+            day_offset=1 if wall_time.group(1) == "sutra" else 0,
+            hour=int(wall_time.group(2)),
+            minute=int(wall_time.group(3)),
+            mode=wall_time.group(4),
+        )
+        return ("exact" if resolved else "unsupported"), reason, resolved
+    next_weekday = re.fullmatch(
+        r"sljedeci (ponedjeljak|utorak|srijeda|cetvrtak|petak|subota|nedjelja) u ([0-9]{1,2}):([0-9]{2}) ?(utc|z|local)",
+        normalized,
+    )
+    if next_weekday is not None:
+        resolved, reason = _resolve_next_weekday_wall_time(
+            now,
+            original_timezone=original_timezone,
+            weekday=_bosnian_weekdays()[next_weekday.group(1)],
+            hour=int(next_weekday.group(2)),
+            minute=int(next_weekday.group(3)),
+            mode=next_weekday.group(4),
+        )
+        return ("exact" if resolved else "unsupported"), reason, resolved
+    if normalized in {
+        "danas",
+        "sutra",
+        "veceras",
+        "kasnije",
+        "uskoro",
+        "sljedece sedmice",
+        "sljedeci mjesec",
+        "sljedeca godina",
+    }:
+        return "ambiguous", "temporal_phrase_ambiguous", ""
+    if re.fullmatch(r"sljedeci (ponedjeljak|utorak|srijeda|cetvrtak|petak|subota|nedjelja)", normalized):
         return "ambiguous", "temporal_phrase_ambiguous", ""
     return "unsupported", "temporal_phrase_unsupported", ""
 
