@@ -743,13 +743,23 @@ def _agentic_control_autonomous_operations_skill() -> SkillDescriptor:
                 provider_class_required="agentic_control_plane",
             ),
             SkillStep(
+                step_id="plan_release_handoff",
+                name="Plan release handoff",
+                action_type="agentic_control.release_handoff.plan",
+                depends_on=("plan_code_change",),
+                input_bindings={"code_change_plan_ref": "plan_code_change.code_change_plan_ref"},
+                output_keys=("release_handoff_plan_ref", "commit_boundary", "ci_gate_plan", "rollback_path"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
                 step_id="append_evidence",
                 name="Append evidence ledger",
                 action_type="agentic_control.evidence.append",
-                depends_on=("plan_code_change",),
+                depends_on=("plan_release_handoff",),
                 input_bindings={
                     "verification_plan_ref": "plan_verification.verification_plan_ref",
                     "code_change_plan_ref": "plan_code_change.code_change_plan_ref",
+                    "release_handoff_plan_ref": "plan_release_handoff.release_handoff_plan_ref",
                 },
                 output_keys=("ledger_record_id", "ledger_record_hash", "lineage_ref"),
                 provider_class_required="agentic_control_plane",
@@ -759,8 +769,8 @@ def _agentic_control_autonomous_operations_skill() -> SkillDescriptor:
         description=(
             "Composes mission control, prioritization, governance gating, resource "
             "bounds, algorithm review, threat modeling, swarm coordination, product "
-            "planning, verification planning, code-change planning, and evidence "
-            "ledger closure."
+            "planning, verification planning, code-change planning, release-handoff "
+            "planning, and evidence ledger closure."
         ),
         confidence=0.25,
         metadata={**_NO_NEW_AUTHORITY, "risk_floor": "high", "approval_expected": True},

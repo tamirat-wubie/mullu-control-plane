@@ -32,7 +32,7 @@ def test_manifest_records_current_promotion_readiness_stamp() -> None:
 
     assert "`pilot-governed-core`" in manifest_text
     assert "13 capsules" in manifest_text
-    assert "78 capabilities" in manifest_text
+    assert "79 capabilities" in manifest_text
     assert "deployment.witness.publish.with_approval" in manifest_text
     assert "Runtime Reflex Engine" in manifest_text
     assert "/runtime/self/witness" in manifest_text

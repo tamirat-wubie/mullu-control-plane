@@ -6624,7 +6624,7 @@
         "tests/test_gateway/test_capability_fabric.py",
         "mcoi/tests/test_default_skill_catalog.py"
       ],
-      "notes": "Agentic-control capability pack admits bounded autonomous mission control, prioritization, governance gating, resource bounding, algorithm review, threat modeling, swarm coordination, product planning, verification planning, interrogation, recursive refinement, memory-admission planning, incident-recovery planning, code-change planning, and evidence ledger append behind governed default-pack admission; the evidence append path is world-mutating, approval-gated, receipt-bound, and blocked from production readiness without live evidence.",
+      "notes": "Agentic-control capability pack admits bounded autonomous mission control, prioritization, governance gating, resource bounding, algorithm review, threat modeling, swarm coordination, product planning, verification planning, interrogation, recursive refinement, memory-admission planning, incident-recovery planning, code-change planning, release-handoff planning, and evidence ledger append behind governed default-pack admission; the evidence append path is world-mutating, approval-gated, receipt-bound, and blocked from production readiness without live evidence.",
       "representative_paths": [
         "agentic_control.mission.define",
         "agentic_control.priority.rank",
@@ -6640,6 +6640,7 @@
         "agentic_control.memory_admission.plan",
         "agentic_control.incident_recovery.plan",
         "agentic_control.code_change.plan",
+        "agentic_control.release_handoff.plan",
         "agentic_control.evidence.append",
         "agentic_control.autonomous_operations.v1"
       ],
