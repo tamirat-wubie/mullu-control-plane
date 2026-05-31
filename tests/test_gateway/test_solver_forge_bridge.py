@@ -46,7 +46,6 @@ from gateway.problem_signature import (
 )
 from gateway.solver_forge_bridge import (
     SOLVER_FORGE_PROVENANCE_KEY,
-    SolverForgeProvenance,
     build_provenance,
     extract_provenance,
     forge_input_for_winner,

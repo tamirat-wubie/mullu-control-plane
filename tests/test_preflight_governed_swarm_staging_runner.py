@@ -13,7 +13,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-from scripts.preflight_governed_swarm_staging_runner import preflight_runner, write_receipt
+from scripts.preflight_governed_swarm_staging_runner import preflight_runner
 
 
 ROOT = Path(__file__).resolve().parents[1]

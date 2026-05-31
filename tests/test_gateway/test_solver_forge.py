@@ -28,7 +28,6 @@ import pytest
 from gateway.candidate_composer import (
     CandidateComposer,
     CandidateEvaluation,
-    CandidatePipeline,
     MethodCapsule,
 )
 from gateway.candidate_ledger import (
