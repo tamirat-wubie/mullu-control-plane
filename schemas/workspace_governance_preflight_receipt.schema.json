@@ -1,0 +1,83 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:workspace-governance-preflight-receipt:1",
+  "title": "Workspace Governance Preflight Receipt",
+  "description": "Machine-readable receipt for one repository-local workspace governance preflight run.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "receipt_id",
+    "terminal_closure_required",
+    "receipt_is_not_terminal_closure",
+    "status",
+    "check_count",
+    "checks"
+  ],
+  "properties": {
+    "receipt_id": {
+      "type": "string",
+      "const": "workspace_governance_preflight_receipt"
+    },
+    "terminal_closure_required": {
+      "type": "boolean",
+      "const": true
+    },
+    "receipt_is_not_terminal_closure": {
+      "type": "boolean",
+      "const": true
+    },
+    "status": {
+      "type": "string",
+      "enum": ["passed", "failed"]
+    },
+    "check_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "checks": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/check_result"
+      }
+    }
+  },
+  "$defs": {
+    "check_result": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "args",
+        "return_code",
+        "passed",
+        "stdout",
+        "stderr"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "args": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "return_code": {
+          "type": "integer"
+        },
+        "passed": {
+          "type": "boolean"
+        },
+        "stdout": {
+          "type": "string"
+        },
+        "stderr": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}
