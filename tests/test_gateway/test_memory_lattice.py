@@ -21,6 +21,8 @@ from gateway.memory_lattice import (
     MemoryLatticeAdmission,
     MemoryLatticeEntry,
     MemoryLatticeGate,
+    P3MemoryLatticeContract,
+    build_p3_memory_lattice_contract,
 )
 
 
@@ -171,6 +173,102 @@ def test_memory_lattice_store_tracks_supersession_and_contradiction_refs() -> No
     assert store.contradictions_for("memory:bank:old")[0].memory_id == "memory:bank:contradiction"
     assert store.status(tenant_id="tenant-a").supersession_count == 1
     assert store.status(tenant_id="tenant-a").contradiction_count == 1
+
+
+def test_p3_memory_lattice_contract_binds_ready_chain_to_admitted_memory() -> None:
+    admission = MemoryLatticeGate().assess(
+        _entry("semantic_fact_memory", "trusted", learning_admission_status="admit"),
+        now=NOW,
+    )
+    readiness = {
+        "status": "ready",
+        "plan_id": "plan-1",
+        "mind_id": "root",
+        "commit_witness_id": "witness-1",
+        "reconciliation_report_id": "reconciliation-1",
+    }
+
+    contract = build_p3_memory_lattice_contract(
+        readiness,
+        (admission,),
+        contract_id="p3-contract-1",
+    )
+
+    assert contract.status == "ready"
+    assert contract.admitted_memory_ids == ("memory:semantic_fact_memory",)
+    assert {"plan-1", "witness-1", "reconciliation-1"}.issubset(set(contract.evidence_refs))
+    assert contract.contract_hash
+
+
+def test_p3_memory_lattice_contract_blocks_without_ready_evidence_chain() -> None:
+    contract = build_p3_memory_lattice_contract(
+        {
+            "status": "blocked",
+            "blockers": ("verified_reconciliation_missing",),
+            "mind_id": "root",
+        },
+        (),
+        contract_id="p3-contract-blocked",
+    )
+
+    assert contract.status == "blocked"
+    assert contract.admitted_memory_ids == ()
+    assert contract.blocked_reasons == ("verified_reconciliation_missing",)
+    assert contract.contract_hash
+
+
+def test_p3_ready_contract_rejects_unbound_causal_refs() -> None:
+    try:
+        P3MemoryLatticeContract(
+            contract_id="p3-contract-invalid",
+            status="ready",
+            mind_id="root",
+            plan_id="plan-1",
+            commit_witness_id="witness-1",
+            reconciliation_report_id="reconciliation-1",
+            admitted_memory_ids=("memory:semantic_fact_memory",),
+            evidence_refs=("plan-1", "witness-1"),
+        )
+    except ValueError as exc:
+        assert str(exc) == "ready_contract_missing_causal_evidence_ref"
+    else:
+        raise AssertionError("unbound P3 ready contract was accepted")
+
+
+def test_p3_ready_contract_rejects_duplicate_memory_ids() -> None:
+    try:
+        P3MemoryLatticeContract(
+            contract_id="p3-contract-duplicate",
+            status="ready",
+            mind_id="root",
+            plan_id="plan-1",
+            commit_witness_id="witness-1",
+            reconciliation_report_id="reconciliation-1",
+            admitted_memory_ids=("memory:semantic_fact_memory", "memory:semantic_fact_memory"),
+            evidence_refs=("plan-1", "witness-1", "reconciliation-1"),
+        )
+    except ValueError as exc:
+        assert str(exc) == "admitted_memory_ids_duplicate"
+    else:
+        raise AssertionError("duplicate P3 memory ids were accepted")
+
+
+def test_p3_contract_builder_rejects_incomplete_ready_readiness() -> None:
+    admission = MemoryLatticeGate().assess(
+        _entry("semantic_fact_memory", "trusted", learning_admission_status="admit"),
+        now=NOW,
+    )
+
+    try:
+        build_p3_memory_lattice_contract(
+            {"status": "ready", "plan_id": "plan-1", "mind_id": "root"},
+            (admission,),
+            contract_id="p3-contract-incomplete",
+        )
+    except ValueError as exc:
+        assert str(exc) == "p3_readiness_commit_witness_id_required"
+    else:
+        raise AssertionError("incomplete P3 readiness was accepted")
 
 
 def _entry(
