@@ -4,6 +4,7 @@ Dependencies: nested-mind observation contracts, submitter bootstrap, local JSON
 Invariants:
   - Default execution is dry-run and performs no network call.
   - Live submission requires --submit and all environment gates.
+  - Optional --store writes only typed plan/report/witness evidence.
   - Output is a submission report JSON object only; bearer tokens are never printed.
 """
 
@@ -35,12 +36,14 @@ from mcoi_runtime.contracts.nested_mind_observation_submission import (  # noqa:
     NestedMindProposalEvidence,
 )
 from mcoi_runtime.core.invariants import stable_identifier  # noqa: E402
+from mcoi_runtime.persistence.nested_mind_store import NestedMindEvidenceStore  # noqa: E402
 
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Submit a nested-mind record_observation plan.")
     parser.add_argument("--plan", required=True, help="Path to NestedMindObservationProposalPlan JSON")
     parser.add_argument("--evidence", required=True, help="Path to NestedMindProposalEvidence JSON")
+    parser.add_argument("--store", help="Optional append-only nested-mind evidence JSONL store")
     mode = parser.add_mutually_exclusive_group()
     mode.add_argument("--dry-run", action="store_true", help="Validate and print a dry-run report")
     mode.add_argument("--submit", action="store_true", help="Submit when environment gates are enabled")
@@ -65,7 +68,10 @@ def main(argv: list[str] | None = None) -> int:
     )
     if bootstrap.submitter is None:
         raise RuntimeError("nested-mind observation submitter was not mounted")
-    report = bootstrap.submitter.submit_observation_plan(plan, submit_enabled=True)
+    outcome = bootstrap.submitter.submit_observation_plan_with_witness(plan, submit_enabled=True)
+    report = outcome.report
+    if args.store:
+        _record_submit_evidence(Path(args.store), plan, report, outcome.commit_witness)
     print(report.to_json())
     return 0
 
@@ -145,6 +151,21 @@ def _dry_run_report(plan: NestedMindObservationProposalPlan, submitted_at: str) 
         submitted_at=submitted_at,
         blockers=("dry_run_no_network_call",),
     )
+
+
+def _record_submit_evidence(
+    store_path: Path,
+    plan: NestedMindObservationProposalPlan,
+    report: NestedMindObservationSubmissionReport,
+    commit_witness: object | None,
+) -> None:
+    store = NestedMindEvidenceStore(store_path)
+    store.record_plan(plan)
+    store.record_submission_report(report)
+    if report.status is NestedMindObservationSubmissionStatus.ACCEPTED:
+        if commit_witness is None:
+            raise RuntimeError("accepted submission cannot be stored without a commit witness")
+        store.record_commit_witness(commit_witness)
 
 
 def _utc_now() -> str:
