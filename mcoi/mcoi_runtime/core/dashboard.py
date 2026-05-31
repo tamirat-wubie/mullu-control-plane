@@ -367,6 +367,7 @@ class DashboardEngine:
             memory_anchor_count=_non_negative_int_at(summary, "memory_anchor_count"),
             episode_capsule_count=_non_negative_int_at(summary, "episode_capsule_count"),
             contradiction_count=_non_negative_int_at(summary, "contradiction_count"),
+            retrieval_influence_count=_non_negative_int_at(summary, "retrieval_influence_count"),
             index_proof_state=index_proof_state,
             assessed_at=now,
         )

@@ -113,7 +113,9 @@ def test_console_note_memory_disabled(client: TestClient) -> None:
     assert data["summary"]["event_count"] == 0
     assert data["summary"]["episode_capsule_count"] == 0
     assert data["summary"]["index_proof_state"] == "Unknown"
+    assert data["summary"]["retrieval_influence_count"] == 0
     assert data["recent_notes"] == []
+    assert data["retrieval_influence"] == []
 
 
 def test_console_note_memory_html_disabled(client: TestClient) -> None:
@@ -137,6 +139,16 @@ def test_console_note_memory_enabled_read_model(client: TestClient, tmp_path) ->
     runtime = NoteMemoryRuntime.from_path(note_store)
     captured = runtime.capture_note(_console_working_note()).to_dict()
     source_note_id = captured["payload"]["event"]["note_id"]
+    retrieved = runtime.retrieve_notes({"query": "parser", "scope": "task"}).to_dict()
+    decision = runtime.capture_note(
+        _console_working_note(
+            kind="DecisionRecord",
+            content_summary="operator console decision cites retrieval receipt",
+            source_ref="test:operator-console-decision",
+            expires_at=None,
+            retrieval_receipt_refs=[retrieved["payload"]["receipt"]["receipt_id"]],
+        )
+    ).to_dict()
     runtime.record_rejected_delta(
         {
             "summary": "Rejected unsafe console note promotion",
@@ -167,12 +179,14 @@ def test_console_note_memory_enabled_read_model(client: TestClient, tmp_path) ->
     assert data["extension"]["mounted"] is True
     assert data["snapshot_id"].startswith("note-memory-dashboard-")
     assert len(data["snapshot_hash"]) == 64
-    assert data["summary"]["event_count"] == 2
-    assert data["summary"]["active_note_count"] == 1
+    assert data["summary"]["event_count"] == 3
+    assert data["summary"]["active_note_count"] == 2
     assert data["summary"]["episode_capsule_count"] == 0
     assert data["summary"]["pending_promotion_count"] == 1
     assert data["summary"]["rejected_delta_count"] == 1
-    assert data["recent_notes"][0]["kind"] == "WorkingNote"
+    assert data["summary"]["retrieval_influence_count"] == 1
+    assert data["recent_notes"][0]["kind"] == "DecisionRecord"
+    assert data["retrieval_influence"][0]["citing_note_id"] == decision["payload"]["event"]["note_id"]
     assert data["pending_promotions"][0]["source_note_id"] == source_note_id
 
 
@@ -208,6 +222,7 @@ def test_console_note_memory_html_enabled_escapes_rows(client: TestClient, tmp_p
     assert "text/html" in resp.headers["content-type"]
     assert "Mullu Note Memory Console" in resp.text
     assert "Episode Capsules" in resp.text
+    assert "Retrieval Influence" in resp.text
     assert "Pending Promotions" in resp.text
     assert "operator console parser note" not in resp.text
     assert "<script>alert('note')</script>" not in resp.text

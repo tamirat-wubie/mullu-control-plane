@@ -69,6 +69,7 @@ def test_note_memory_fastapi_adapter_handlers_preserve_runtime_envelopes(tmp_pat
         )
     )
     listed = adapter.list_events()
+    dashboard = adapter.dashboard_snapshot({"limit": 5, "now": "2026-05-28T00:00:00+00:00"})
 
     assert captured["governed"] is True
     assert captured["ok"] is True
@@ -79,6 +80,8 @@ def test_note_memory_fastapi_adapter_handlers_preserve_runtime_envelopes(tmp_pat
     assert listed["payload"]["count"] == 2
     assert listed["payload"]["events"][0]["note_id"] == captured["payload"]["event"]["note_id"]
     assert listed["payload"]["events"][1]["note_id"] == decision["payload"]["event"]["note_id"]
+    assert dashboard["payload"]["summary"]["retrieval_influence_count"] == 1
+    assert dashboard["payload"]["retrieval_influence"][0]["citing_note_id"] == decision["payload"]["event"]["note_id"]
 
 
 def test_note_memory_fastapi_adapter_dashboard_snapshot_is_read_only(tmp_path) -> None:

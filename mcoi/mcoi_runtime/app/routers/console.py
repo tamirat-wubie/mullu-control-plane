@@ -295,6 +295,7 @@ def _empty_note_memory_payload(extension: dict[str, object]) -> dict[str, object
             "memory_anchor_count": 0,
             "episode_capsule_count": 0,
             "contradiction_count": 0,
+            "retrieval_influence_count": 0,
             "index_proof_state": "Unknown",
         },
         "recent_notes": [],
@@ -304,6 +305,7 @@ def _empty_note_memory_payload(extension: dict[str, object]) -> dict[str, object
         "memory_anchors": [],
         "episode_capsules": [],
         "contradictions": [],
+        "retrieval_influence": [],
         "audit_events": [],
         "index": {
             "valid_events": 0,
@@ -378,6 +380,7 @@ def _render_note_memory_console_html(payload: dict[str, object]) -> str:
         ("Memory Anchors", summary.get("memory_anchor_count", 0)),
         ("Episode Capsules", summary.get("episode_capsule_count", 0)),
         ("Contradictions", summary.get("contradiction_count", 0)),
+        ("Retrieval Influence", summary.get("retrieval_influence_count", 0)),
         ("Index Proof", summary.get("index_proof_state", "Unknown")),
     ]
     metric_items = "\n".join(
@@ -424,6 +427,7 @@ def _render_note_memory_console_html(payload: dict[str, object]) -> str:
   {_note_memory_event_table("Recent Notes", payload.get("recent_notes", ()))}
   {_note_memory_event_table("Rejected Deltas", payload.get("rejected_deltas", ()))}
   {_note_memory_event_table("Episode Capsules", payload.get("episode_capsules", ()))}
+  {_note_memory_retrieval_influence_table(payload.get("retrieval_influence", ()))}
   {_note_memory_promotion_table(payload.get("pending_promotions", ()))}
   {_note_memory_event_table("Audit Events", payload.get("audit_events", ()))}
 </body>
@@ -451,6 +455,31 @@ def _note_memory_event_table(title: str, raw_rows: object) -> str:
     <h2>{escape(title)}</h2>
     <table>
       <thead><tr><th>Seq</th><th>Kind</th><th>Action</th><th>Scope</th><th>Proof</th><th>Summary</th><th>Source</th></tr></thead>
+      <tbody>{body}</tbody>
+    </table>
+  </section>"""
+
+
+def _note_memory_retrieval_influence_table(raw_rows: object) -> str:
+    rows = _sequence_of_mappings(raw_rows)
+    body = "\n".join(
+        "<tr>"
+        f"<td>{escape(str(row.get('receipt_id', '')))}</td>"
+        f"<td>{escape(str(row.get('citing_event_seq', '')))}</td>"
+        f"<td>{escape(str(row.get('citing_kind', '')))}</td>"
+        f"<td>{escape(str(row.get('citing_action', '')))}</td>"
+        f"<td>{escape(str(row.get('citing_note_id', '')))}</td>"
+        f"<td>{escape(str(row.get('source_ref', '')))}</td>"
+        "</tr>"
+        for row in rows
+    )
+    if not body:
+        body = "<tr><td colspan=\"6\">No retrieval influence links</td></tr>"
+    return f"""
+  <section>
+    <h2>Retrieval Influence</h2>
+    <table>
+      <thead><tr><th>Receipt</th><th>Seq</th><th>Kind</th><th>Action</th><th>Citing Note</th><th>Source</th></tr></thead>
       <tbody>{body}</tbody>
     </table>
   </section>"""

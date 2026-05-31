@@ -47,6 +47,7 @@ def test_runtime_capture_retrieve_and_list_events_preserve_governed_envelopes(tm
         )
     ).to_dict()
     listed = runtime.list_events().to_dict()
+    snapshot = runtime.dashboard_snapshot({"limit": 5, "now": "2026-05-28T00:00:00+00:00"}).to_dict()
 
     assert captured["governed"] is True
     assert captured["ok"] is True
@@ -65,6 +66,9 @@ def test_runtime_capture_retrieve_and_list_events_preserve_governed_envelopes(tm
     assert listed["payload"]["events"][0]["claim_value"] == "ready"
     assert listed["payload"]["events"][1]["note_id"] == decision["payload"]["event"]["note_id"]
     assert listed["payload"]["events"][1]["retrieval_receipt_refs"] == [retrieved["payload"]["receipt"]["receipt_id"]]
+    assert snapshot["payload"]["summary"]["retrieval_influence_count"] == 1
+    assert snapshot["payload"]["retrieval_influence"][0]["receipt_id"] == retrieved["payload"]["receipt"]["receipt_id"]
+    assert snapshot["payload"]["retrieval_influence"][0]["citing_note_id"] == decision["payload"]["event"]["note_id"]
 
 
 def test_runtime_rejects_invalid_capture_without_persisting(tmp_path) -> None:
@@ -151,6 +155,7 @@ def test_runtime_dashboard_snapshot_reports_operator_memory_state(tmp_path) -> N
     assert snapshot["payload"]["summary"]["episode_capsule_count"] == 0
     assert snapshot["payload"]["summary"]["rejected_delta_count"] == 1
     assert snapshot["payload"]["summary"]["pending_promotion_count"] == 1
+    assert snapshot["payload"]["summary"]["retrieval_influence_count"] == 0
     assert snapshot["payload"]["summary"]["index_proof_state"] == "Pass"
     assert snapshot["payload"]["recent_notes"][0]["kind"] == "WorkingNote"
     assert snapshot["payload"]["rejected_deltas"][0]["kind"] == "RejectedDelta"

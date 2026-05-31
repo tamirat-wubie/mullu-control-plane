@@ -247,6 +247,7 @@ class NoteMemorySummary(ContractRecord):
     memory_anchor_count: int
     episode_capsule_count: int
     contradiction_count: int
+    retrieval_influence_count: int
     index_proof_state: str
     assessed_at: str
 
@@ -293,6 +294,11 @@ class NoteMemorySummary(ContractRecord):
             self,
             "contradiction_count",
             require_non_negative_int(self.contradiction_count, "contradiction_count"),
+        )
+        object.__setattr__(
+            self,
+            "retrieval_influence_count",
+            require_non_negative_int(self.retrieval_influence_count, "retrieval_influence_count"),
         )
         object.__setattr__(
             self,

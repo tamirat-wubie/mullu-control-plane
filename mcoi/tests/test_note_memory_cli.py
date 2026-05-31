@@ -96,10 +96,14 @@ def test_cli_capture_retrieve_dashboard_and_list_events_redacts_before_write(tmp
     assert dashboard_envelope["payload"]["snapshot_id"].startswith("note-memory-dashboard-")
     assert len(dashboard_envelope["payload"]["snapshot_hash"]) == 64
     assert dashboard_envelope["payload"]["summary"]["event_count"] == 2
+    assert dashboard_envelope["payload"]["summary"]["retrieval_influence_count"] == 1
     assert dashboard_envelope["payload"]["recent_notes"][0]["note_id"] == decision_capture_envelope["payload"]["event"]["note_id"]
     assert dashboard_envelope["payload"]["recent_notes"][0]["retrieval_receipt_refs"] == [
         retrieve_envelope["payload"]["receipt"]["receipt_id"]
     ]
+    assert dashboard_envelope["payload"]["retrieval_influence"][0]["citing_note_id"] == decision_capture_envelope[
+        "payload"
+    ]["event"]["note_id"]
     assert list_code == 0
     assert list_envelope["payload"]["count"] == 2
     assert "[REDACTED:" in list_envelope["payload"]["events"][0]["content_summary"]
