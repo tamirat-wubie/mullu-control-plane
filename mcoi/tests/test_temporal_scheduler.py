@@ -25,6 +25,7 @@ from mcoi_runtime.core.invariants import RuntimeCoreInvariantError
 from mcoi_runtime.core.temporal_runtime import TemporalRuntimeEngine
 from mcoi_runtime.core.temporal_scheduler import (
     ScheduleDecisionVerdict,
+    ScheduledTemporalAction,
     ScheduledActionState,
     TemporalSchedulerEngine,
 )
@@ -137,6 +138,41 @@ def test_register_requires_execute_at() -> None:
 
     with pytest.raises(RuntimeCoreInvariantError, match="execute_at is required"):
         scheduler.register("sched-1", action)
+    assert scheduler.action_count == 0
+    assert scheduler.receipt_count == 0
+
+
+def test_register_rejects_blank_and_untrimmed_schedule_identity() -> None:
+    clock = MutableClock("2026-05-04T13:00:00+00:00")
+    scheduler = _engine(clock)
+
+    with pytest.raises(RuntimeCoreInvariantError, match="schedule_id must be non-empty text"):
+        scheduler.register("   ", _action())
+
+    with pytest.raises(RuntimeCoreInvariantError, match="schedule_id must be trimmed text"):
+        scheduler.register(" sched-1 ", _action())
+
+    with pytest.raises(RuntimeCoreInvariantError, match="handler_name must be trimmed text"):
+        scheduler.register("sched-1", _action(), handler_name=" reminder ")
+
+    assert scheduler.action_count == 0
+    assert scheduler.receipt_count == 0
+
+
+def test_restore_rejects_malformed_schedule_identity() -> None:
+    clock = MutableClock("2026-05-04T13:00:00+00:00")
+    scheduler = _engine(clock)
+    action = _action()
+    malformed = ScheduledTemporalAction(
+        schedule_id="sched-1 ",
+        tenant_id=action.tenant_id,
+        action=action,
+        execute_at=action.execute_at,
+    )
+
+    with pytest.raises(RuntimeCoreInvariantError, match="schedule_id must be trimmed text"):
+        scheduler.restore((malformed,))
+
     assert scheduler.action_count == 0
     assert scheduler.receipt_count == 0
 

@@ -43,6 +43,22 @@ def _normalize_temporal_phrase(value: str) -> str:
     return " ".join(value.strip().lower().split())
 
 
+def _require_trimmed_temporal_text(value: str, field_name: str) -> str:
+    if not isinstance(value, str) or not value.strip():
+        raise RuntimeCoreInvariantError(f"{field_name} must be non-empty text")
+    if value.strip() != value:
+        raise RuntimeCoreInvariantError(f"{field_name} must be trimmed text")
+    return value
+
+
+def _optional_trimmed_temporal_text(value: str, field_name: str) -> str:
+    if not isinstance(value, str):
+        raise RuntimeCoreInvariantError(f"{field_name} must be text")
+    if value and value.strip() != value:
+        raise RuntimeCoreInvariantError(f"{field_name} must be trimmed text")
+    return value
+
+
 def _resolve_relative_phrase(now: datetime, amount: int, unit: str) -> tuple[str, str]:
     minute_units = {
         "minute",
@@ -2984,6 +3000,8 @@ class TemporalSchedulerEngine:
         metadata: Mapping[str, Any] | None = None,
     ) -> ScheduledTemporalAction:
         """Register a deferred temporal action."""
+        schedule_id = _require_trimmed_temporal_text(schedule_id, "schedule_id")
+        handler_name = _optional_trimmed_temporal_text(handler_name, "handler_name")
         if schedule_id in self._actions:
             raise RuntimeCoreInvariantError("Duplicate schedule_id")
         if not isinstance(action, TemporalActionRequest):
@@ -3047,6 +3065,8 @@ class TemporalSchedulerEngine:
         for action in actions:
             if not isinstance(action, ScheduledTemporalAction):
                 raise RuntimeCoreInvariantError("restore item must be a ScheduledTemporalAction")
+            _require_trimmed_temporal_text(action.schedule_id, "schedule_id")
+            _optional_trimmed_temporal_text(action.handler_name, "handler_name")
             if action.schedule_id in self._actions:
                 raise RuntimeCoreInvariantError("duplicate restored schedule_id")
             self._actions[action.schedule_id] = action
