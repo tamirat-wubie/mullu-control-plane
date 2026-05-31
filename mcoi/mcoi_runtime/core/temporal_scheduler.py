@@ -85,6 +85,7 @@ def _resolve_relative_phrase(now: datetime, amount: int, unit: str) -> tuple[str
         "minutura",
         "minuts",
         "minutoj",
+        "minutum",
     }
     hour_units = {
         "hour",
@@ -196,6 +197,7 @@ def _resolve_relative_phrase(now: datetime, amount: int, unit: str) -> tuple[str
         "dias",
         "tago",
         "tagoj",
+        "diem",
     }
     if unit in minute_units:
         delta = timedelta(minutes=amount)
@@ -660,6 +662,18 @@ def _esperanto_weekdays() -> dict[str, int]:
     }
 
 
+def _latin_weekdays() -> dict[str, int]:
+    return {
+        "lunae": 0,
+        "martis": 1,
+        "mercurii": 2,
+        "iovis": 3,
+        "veneris": 4,
+        "saturni": 5,
+        "solis": 6,
+    }
+
+
 def _resolve_bounded_temporal_phrase(
     phrase: str,
     *,
@@ -746,6 +760,8 @@ def _resolve_bounded_temporal_phrase(
         return _resolve_galician_temporal_phrase(normalized, now_dt, original_timezone)
     if locale_key in {"eo", "eo-001"}:
         return _resolve_esperanto_temporal_phrase(normalized, now_dt, original_timezone)
+    if locale_key in {"la", "la-va"}:
+        return _resolve_latin_temporal_phrase(normalized, now_dt, original_timezone)
     return "unsupported", "temporal_phrase_locale_not_supported", ""
 
 
@@ -2540,6 +2556,56 @@ def _resolve_esperanto_temporal_phrase(
     }:
         return "ambiguous", "temporal_phrase_ambiguous", ""
     if re.fullmatch(r"venonta (lundo|mardo|merkredo|jaudo|vendredo|sabato|dimanco)", normalized):
+        return "ambiguous", "temporal_phrase_ambiguous", ""
+    return "unsupported", "temporal_phrase_unsupported", ""
+
+
+def _resolve_latin_temporal_phrase(
+    normalized: str,
+    now: datetime,
+    original_timezone: str,
+) -> tuple[str, str, str]:
+    relative = re.fullmatch(r"post ([1-9][0-9]*) (minutum|minuta|hora|horas|diem|dies)", normalized)
+    if relative is not None:
+        resolved, reason = _resolve_relative_phrase(now, int(relative.group(1)), relative.group(2))
+        return ("exact" if resolved else "unsupported"), reason, resolved
+    wall_time = re.fullmatch(r"(hodie|cras) ([0-9]{1,2}):([0-9]{2}) ?(utc|z|local)", normalized)
+    if wall_time is not None:
+        resolved, reason = _resolve_relative_wall_time(
+            now,
+            original_timezone=original_timezone,
+            day_offset=1 if wall_time.group(1) == "cras" else 0,
+            hour=int(wall_time.group(2)),
+            minute=int(wall_time.group(3)),
+            mode=wall_time.group(4),
+        )
+        return ("exact" if resolved else "unsupported"), reason, resolved
+    next_weekday = re.fullmatch(
+        r"proximo (lunae|martis|mercurii|iovis|veneris|saturni|solis) ([0-9]{1,2}):([0-9]{2}) ?(utc|z|local)",
+        normalized,
+    )
+    if next_weekday is not None:
+        resolved, reason = _resolve_next_weekday_wall_time(
+            now,
+            original_timezone=original_timezone,
+            weekday=_latin_weekdays()[next_weekday.group(1)],
+            hour=int(next_weekday.group(2)),
+            minute=int(next_weekday.group(3)),
+            mode=next_weekday.group(4),
+        )
+        return ("exact" if resolved else "unsupported"), reason, resolved
+    if normalized in {
+        "hodie",
+        "cras",
+        "hac nocte",
+        "postea",
+        "mox",
+        "proxima septimana",
+        "proximus mensis",
+        "proximus annus",
+    }:
+        return "ambiguous", "temporal_phrase_ambiguous", ""
+    if re.fullmatch(r"proximo (lunae|martis|mercurii|iovis|veneris|saturni|solis)", normalized):
         return "ambiguous", "temporal_phrase_ambiguous", ""
     return "unsupported", "temporal_phrase_unsupported", ""
 
