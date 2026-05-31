@@ -54,6 +54,11 @@ class SimplePlatformFastAPIAdapter:
 
         return self.runtime.action_menu().to_dict()
 
+    def simple_home(self) -> dict[str, Any]:
+        """Handle GET /home."""
+
+        return self.runtime.simple_home().to_dict()
+
     def start_guide(self) -> dict[str, Any]:
         """Handle GET /start."""
 
@@ -65,6 +70,12 @@ class SimplePlatformFastAPIAdapter:
 
         normalized = prefix.rstrip("/")
         return (
+            SimplePlatformRouteSpec(
+                method="GET",
+                path=f"{normalized}/home",
+                handler_name="simple_home",
+                purpose="show the compact first-screen summary for simple mode",
+            ),
             SimplePlatformRouteSpec(
                 method="GET",
                 path=f"{normalized}/actions",
@@ -112,6 +123,10 @@ def create_simple_platform_fastapi_router(runtime: SimplePlatformRuntime, prefix
 
     adapter = SimplePlatformFastAPIAdapter(runtime)
     router = APIRouter(prefix=prefix.rstrip("/"), tags=["simple-platform"])
+
+    @router.get("/home")
+    def simple_home():
+        return adapter.simple_home()
 
     @router.get("/actions")
     def action_menu():

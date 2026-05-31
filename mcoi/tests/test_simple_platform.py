@@ -21,6 +21,8 @@ from mcoi_runtime.core.invariants import RuntimeCoreInvariantError
 from mcoi_runtime.core.simple_cli import guarded_main
 from mcoi_runtime.core.simple_platform import (
     SimpleActionRequest,
+    SimpleHomeChoice,
+    SimpleHomeSummary,
     SimpleOnboardingGuide,
     SimplePlatform,
     SimpleTaskRequest,
@@ -177,6 +179,20 @@ def test_simple_platform_onboarding_guide_is_plain_and_non_executing() -> None:
     assert payload["outcomes"] == ["Ready", "Needs review", "Blocked"]
 
 
+def test_simple_platform_home_is_plain_bounded_and_non_executing() -> None:
+    home = SimplePlatform.simple_home()
+    payload = home.to_dict()
+
+    assert home.execution_allowed is False
+    assert payload["title"] == "Start simple"
+    assert payload["primary_command"] == "mullu workflows"
+    assert payload["next_action"] == "Open the workflow list and choose the work you want to do."
+    assert len(payload["choices"]) == 3
+    assert payload["choices"][0]["label"] == "Choose a workflow"
+    assert payload["choices"][0]["command"] == "mullu workflows"
+    assert all(choice["execution_allowed"] is False for choice in payload["choices"])
+
+
 def test_simple_platform_onboarding_guide_rejects_execution_authority() -> None:
     try:
         SimpleOnboardingGuide(
@@ -190,6 +206,39 @@ def test_simple_platform_onboarding_guide_rejects_execution_authority() -> None:
         assert "simple onboarding guide cannot allow execution" in str(exc)
     else:
         raise AssertionError("onboarding guide must reject execution authority")
+
+
+def test_simple_platform_home_rejects_execution_authority() -> None:
+    with pytest.raises(RuntimeCoreInvariantError, match="simple home summary cannot allow execution"):
+        SimpleHomeSummary(
+            title="Unsafe",
+            message="Unsafe home.",
+            primary_command="mullu workflows",
+            next_action="Continue.",
+            choices=(),
+            execution_allowed=True,
+        )
+
+
+def test_simple_platform_home_rejects_too_many_choices() -> None:
+    choices = tuple(
+        SimpleHomeChoice(
+            choice_ref=f"choice-{index}",
+            label=f"Choice {index}",
+            command="mullu workflows",
+            purpose="Open a guided path.",
+        )
+        for index in range(4)
+    )
+
+    with pytest.raises(RuntimeCoreInvariantError, match="simple home choices must be three or fewer"):
+        SimpleHomeSummary(
+            title="Start simple",
+            message="Choose one guided workflow.",
+            primary_command="mullu workflows",
+            next_action="Choose a workflow.",
+            choices=choices,
+        )
 
 
 def test_simple_platform_rejects_loose_action_target() -> None:
@@ -449,6 +498,17 @@ def test_simple_platform_api_returns_start_guide() -> None:
     assert payload["status"] == "listed"
     assert payload["payload"]["guide"]["execution_allowed"] is False
     assert payload["payload"]["guide"]["recommended_path"][0]["step"] == "choose"
+
+
+def test_simple_platform_api_returns_simple_home() -> None:
+    payload = SimplePlatformRuntime().simple_home().to_dict()
+
+    assert payload["governed"] is True
+    assert payload["ok"] is True
+    assert payload["status"] == "ready"
+    assert payload["payload"]["home"]["title"] == "Start simple"
+    assert payload["payload"]["home"]["primary_command"] == "mullu workflows"
+    assert payload["payload"]["home"]["choices"][0]["execution_allowed"] is False
 
 
 def test_simple_platform_api_rejects_invalid_request() -> None:

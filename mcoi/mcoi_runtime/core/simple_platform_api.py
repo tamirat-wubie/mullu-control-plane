@@ -148,6 +148,16 @@ class SimplePlatformRuntime:
             },
         )
 
+    def simple_home(self) -> SimplePlatformEnvelope:
+        """Return the compact first-screen summary for simple platform users."""
+
+        return SimplePlatformEnvelope(
+            governed=True,
+            ok=True,
+            status="ready",
+            payload={"home": self.platform.simple_home().to_dict()},
+        )
+
     def start_guide(self) -> SimplePlatformEnvelope:
         """Return the plain onboarding guide for user-facing surfaces."""
 
