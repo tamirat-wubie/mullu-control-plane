@@ -76,6 +76,8 @@ def _resolve_relative_phrase(now: datetime, amount: int, unit: str) -> tuple[str
         "munudau",
         "mionaid",
         "mionaidean",
+        "minuta",
+        "minuti",
         "minutur",
     }
     hour_units = {
@@ -169,6 +171,7 @@ def _resolve_relative_phrase(now: datetime, amount: int, unit: str) -> tuple[str
         "diwrnodau",
         "latha",
         "laithean",
+        "dag",
         "daga",
         "jum",
         "jiem",
