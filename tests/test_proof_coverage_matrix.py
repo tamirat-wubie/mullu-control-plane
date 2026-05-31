@@ -585,6 +585,8 @@ def test_orgos_case_governance_lifecycle_surface_is_proven() -> None:
     assert "launch_gateway_pilot_readiness_read_model_reports_missing_evidence" in witnesses
     assert "launch_gateway_pilot_readiness_packet_closes_after_verified_witness" in witnesses
     assert "launch_gateway_pilot_readiness_packet_blocks_without_engineering_witness" in witnesses
+    assert "case_proof_timeline_reports_open_case_without_closure" in witnesses
+    assert "case_proof_timeline_reports_closure_certificate_and_learning" in witnesses
     assert "case_closure_requires_effect_reconciliation_match_for_committed" in witnesses
     assert route_records["/api/v1/cases"]["surface_id"] == "orgos_case_governance_lifecycle"
     assert (
@@ -603,8 +605,12 @@ def test_orgos_case_governance_lifecycle_surface_is_proven() -> None:
         route_records["/api/v1/cases/{case_id}/launch-gateway-pilot/readiness-closure"]["surface_id"]
         == "orgos_case_governance_lifecycle"
     )
+    assert (
+        route_records["/api/v1/cases/{case_id}/proof-timeline"]["surface_id"]
+        == "orgos_case_governance_lifecycle"
+    )
     assert route_records["/api/v1/orgos/read-model"]["coverage_state"] == "proven"
-    assert witness_records["orgos_case_governance_lifecycle"]["exact_test_anchor_count"] == 19
+    assert witness_records["orgos_case_governance_lifecycle"]["exact_test_anchor_count"] == 21
 
 
 def test_webhooks_proof_surface_is_witnessed() -> None:

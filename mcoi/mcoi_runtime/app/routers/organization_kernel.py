@@ -307,6 +307,227 @@ def _state_case_bundle(kernel: OrganizationKernel, case_id: str) -> dict[str, An
     }
 
 
+def _timeline_item(
+    *,
+    kind: str,
+    occurred_at: str,
+    ref: str,
+    status: str,
+    payload: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    return {
+        "kind": kind,
+        "occurred_at": occurred_at,
+        "ref": ref,
+        "status": status,
+        "payload": payload or {},
+    }
+
+
+def _case_proof_timeline(kernel: OrganizationKernel, case_id: str) -> dict[str, Any]:
+    organization_case = _case_or_404(kernel, case_id)
+    state = kernel.snapshot_state()
+    plan = next((item for item in state.plans if item.case_id == case_id), None)
+    closure = next((item for item in state.closures if item.case_id == case_id), None)
+    evidence = tuple(item for item in state.case_evidence if item.case_id == case_id)
+    approvals = tuple(item for item in state.approvals if item.case_id == case_id)
+    gate_decisions = tuple(item for item in state.gate_decisions if item.case_id == case_id)
+    worker_receipts = tuple(item for item in state.worker_receipt_bindings if item.case_id == case_id)
+    reconciliations = tuple(item for item in state.reconciliations if item.case_id == case_id)
+    learning_bindings = tuple(item for item in state.learning_bindings if item.case_id == case_id)
+    gate_by_id = {decision.decision_id: decision for decision in gate_decisions}
+    latest_gate_by_step = {
+        ref.step_id: gate_by_id[ref.decision_id]
+        for ref in state.latest_gate_decisions
+        if ref.case_id == case_id and ref.decision_id in gate_by_id
+    }
+    evidence_by_requirement: dict[str, list[str]] = {}
+    for item in evidence:
+        evidence_by_requirement.setdefault(item.requirement_id, []).append(item.evidence_ref)
+    worker_receipts_by_step: dict[str, list[dict[str, Any]]] = {}
+    for binding in worker_receipts:
+        worker_receipts_by_step.setdefault(binding.step_id, []).append(_body(binding))
+
+    plan_step_proof = []
+    if plan is not None:
+        for step in plan.steps:
+            evidence_refs = [
+                ref
+                for requirement_id in step.evidence_required
+                for ref in evidence_by_requirement.get(requirement_id, [])
+            ]
+            missing_evidence = [
+                requirement_id
+                for requirement_id in step.evidence_required
+                if requirement_id not in evidence_by_requirement
+            ]
+            latest_decision = latest_gate_by_step.get(step.step_id)
+            plan_step_proof.append({
+                "step_id": step.step_id,
+                "department_id": step.department_id,
+                "responsible_role_id": step.responsible_role_id,
+                "capability_id": step.capability_id,
+                "evidence_refs": evidence_refs,
+                "missing_evidence": missing_evidence,
+                "worker_receipt_bindings": worker_receipts_by_step.get(step.step_id, []),
+                "latest_gate_decision": _body(latest_decision) if latest_decision is not None else None,
+                "gate_status": latest_decision.status.value if latest_decision is not None else "not_evaluated",
+            })
+
+    proof_timeline = [
+        _timeline_item(
+            kind="case_event",
+            occurred_at=event.emitted_at,
+            ref=event.event_id,
+            status=event.event_type,
+            payload={"event_type": event.event_type, "payload": _body(event)["payload"]},
+        )
+        for event in kernel.list_case_events(case_id)
+    ]
+    proof_timeline.extend(
+        _timeline_item(
+            kind="evidence",
+            occurred_at=item.submitted_at,
+            ref=item.evidence_ref,
+            status="admitted",
+            payload={"requirement_id": item.requirement_id, "submitted_by": item.submitted_by},
+        )
+        for item in evidence
+    )
+    proof_timeline.extend(
+        _timeline_item(
+            kind="approval",
+            occurred_at=item.approved_at,
+            ref=item.approval_id,
+            status="recorded",
+            payload={"role_id": item.role_id, "approval_scope": item.approval_scope},
+        )
+        for item in approvals
+    )
+    proof_timeline.extend(
+        _timeline_item(
+            kind="worker_receipt_binding",
+            occurred_at=item.bound_at,
+            ref=item.binding_id,
+            status="bound",
+            payload={
+                "step_id": item.step_id,
+                "requirement_id": item.requirement_id,
+                "dispatch_receipt_id": item.dispatch_receipt_id,
+                "admitted_evidence_ref": item.admitted_evidence_ref,
+            },
+        )
+        for item in worker_receipts
+    )
+    proof_timeline.extend(
+        _timeline_item(
+            kind="gate_decision",
+            occurred_at=item.decided_at,
+            ref=item.decision_id,
+            status=item.status.value,
+            payload={"step_id": item.step_id, "reason": item.reason},
+        )
+        for item in gate_decisions
+    )
+    proof_timeline.extend(
+        _timeline_item(
+            kind="effect_reconciliation",
+            occurred_at=item.reconciled_at,
+            ref=item.reconciliation_id,
+            status=item.status.value,
+            payload={
+                "expected_effect": item.expected_effect,
+                "observed_effect": item.observed_effect,
+                "forbidden_effects_checked": item.forbidden_effects_checked,
+            },
+        )
+        for item in reconciliations
+    )
+    if closure is not None:
+        proof_timeline.append(
+            _timeline_item(
+                kind="terminal_closure",
+                occurred_at=closure.closed_at,
+                ref=closure.closure_id,
+                status=closure.terminal_disposition.value,
+                payload={"terminal_certificate_id": closure.terminal_certificate_id},
+            )
+        )
+    proof_timeline.extend(
+        _timeline_item(
+            kind="learning_admission",
+            occurred_at=item.created_at,
+            ref=item.binding_id,
+            status="admitted" if item.admitted else "rejected",
+            payload={"closure_id": item.closure_id, "decision_id": item.decision_id},
+        )
+        for item in learning_bindings
+    )
+    proof_timeline = sorted(
+        proof_timeline,
+        key=lambda item: (item["occurred_at"], item["kind"], item["ref"]),
+    )
+
+    blocked_steps = [
+        row["step_id"] for row in plan_step_proof
+        if row["gate_status"] != PlanStepGateStatus.ALLOWED.value
+    ]
+    closure_reconciliation = None
+    learning_for_closure: tuple[LearningAdmissionBinding, ...] = ()
+    if closure is not None:
+        closure_reconciliation = next(
+            (item for item in reconciliations if item.reconciliation_id == closure.reconciliation_id),
+            None,
+        )
+        learning_for_closure = tuple(item for item in learning_bindings if item.closure_id == closure.closure_id)
+    closure_certificate = None
+    if closure is not None:
+        effect_reconciled = False
+        if closure_reconciliation is not None:
+            effect_reconciled = True
+            if closure.terminal_disposition is TerminalClosureDisposition.COMMITTED:
+                effect_reconciled = (
+                    closure_reconciliation.status is ReconciliationStatus.MATCH
+                    and closure_reconciliation.expected_effect == closure_reconciliation.observed_effect
+                    and closure_reconciliation.forbidden_effects_checked
+                )
+        closure_certificate = {
+            "closure_id": closure.closure_id,
+            "terminal_certificate_id": closure.terminal_certificate_id,
+            "terminal_disposition": closure.terminal_disposition.value,
+            "closed_at": closure.closed_at,
+            "evidence_refs": list(closure.evidence_refs),
+            "reconciliation": _body(closure_reconciliation) if closure_reconciliation is not None else None,
+            "learning_admissions": [_body(item) for item in learning_for_closure],
+            "effect_reconciled": effect_reconciled,
+            "learning_admitted": any(item.admitted for item in learning_for_closure),
+        }
+
+    return {
+        "case_id": case_id,
+        "case": _body(organization_case),
+        "plan_id": plan.plan_id if plan is not None else None,
+        "summary": {
+            "case_status": organization_case.status.value,
+            "has_plan": plan is not None,
+            "evidence_count": len(evidence),
+            "approval_count": len(approvals),
+            "gate_decision_count": len(gate_decisions),
+            "worker_receipt_count": len(worker_receipts),
+            "reconciliation_count": len(reconciliations),
+            "has_terminal_closure": closure is not None,
+            "learning_binding_count": len(learning_bindings),
+            "blocked_steps": blocked_steps,
+            "all_plan_steps_allowed": plan is not None and not blocked_steps,
+            "terminal_status": organization_case.status.value,
+        },
+        "plan_step_proof": plan_step_proof,
+        "proof_timeline": proof_timeline,
+        "closure_certificate": closure_certificate,
+        "governed": True,
+    }
+
+
 def _validate_gateway_base_url(gateway_url: str) -> str:
     parsed = urlparse(gateway_url.strip())
     if parsed.scheme not in {"http", "https"} or not parsed.netloc:
@@ -980,6 +1201,13 @@ def get_case(case_id: str):
     """Return a case read model with plan, proof, and event surfaces."""
     _inc_metric("requests_governed")
     return _state_case_bundle(_kernel(), case_id)
+
+
+@router.get("/api/v1/cases/{case_id}/proof-timeline")
+def get_case_proof_timeline(case_id: str):
+    """Return a non-mutating proof timeline and closure certificate read model."""
+    _inc_metric("requests_governed")
+    return _case_proof_timeline(_kernel(), case_id)
 
 
 @router.post("/api/v1/cases/{case_id}/plan")

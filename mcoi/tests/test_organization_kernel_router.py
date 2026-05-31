@@ -309,6 +309,25 @@ def test_bootstrap_open_pilot_read_model_and_persistence(tmp_path: Path) -> None
     assert restored.get_case("case.launch_gateway_pilot") is not None
 
 
+def test_case_proof_timeline_reports_open_case_without_closure(tmp_path: Path) -> None:
+    client, _store = _client(tmp_path)
+    _bootstrap_and_open_pilot(client)
+
+    response = client.get("/api/v1/cases/case.launch_gateway_pilot/proof-timeline")
+    payload = response.json()
+
+    assert response.status_code == 200
+    assert payload["governed"] is True
+    assert payload["summary"]["case_status"] == "planned"
+    assert payload["summary"]["has_plan"] is True
+    assert payload["summary"]["has_terminal_closure"] is False
+    assert payload["summary"]["all_plan_steps_allowed"] is False
+    assert payload["closure_certificate"] is None
+    assert len(payload["plan_step_proof"]) == 5
+    assert {step["gate_status"] for step in payload["plan_step_proof"]} == {"not_evaluated"}
+    assert {item["kind"] for item in payload["proof_timeline"]} == {"case_event"}
+
+
 def test_gateway_pilot_can_close_and_bind_learning(tmp_path: Path) -> None:
     client, _store = _client(tmp_path)
     _bootstrap_and_open_pilot(client)
@@ -355,6 +374,71 @@ def test_gateway_pilot_can_close_and_bind_learning(tmp_path: Path) -> None:
     assert learning.json()["learning_admission"]["admitted"] is True
     assert fetched.json()["case"]["status"] == "closed"
     assert fetched.json()["closure"]["terminal_certificate_id"] == "terminal:gateway-pilot"
+
+
+def test_case_proof_timeline_reports_closure_certificate_and_learning(tmp_path: Path) -> None:
+    client, _store = _client(tmp_path)
+    _bootstrap_and_open_pilot(client)
+    _admit_all_pilot_evidence(client)
+    approval = client.post(
+        "/api/v1/cases/case.launch_gateway_pilot/approvals",
+        json={
+            "approval_id": "approval:security-dual-control",
+            "role_id": "executive.owner",
+            "approval_scope": "security_approval",
+            "approved_by": "human-executive",
+        },
+    )
+    _allow_all_plan_steps(client)
+    closure = client.post(
+        "/api/v1/cases/case.launch_gateway_pilot/close",
+        json={
+            "reconciliation_id": "reconciliation:gateway-pilot",
+            "expected_effect": "gateway_pilot_ready",
+            "observed_effect": "gateway_pilot_ready",
+            "reconciliation_status": "match",
+            "forbidden_effects_checked": True,
+            "evidence_refs": ["evidence:closure:gateway-pilot"],
+            "terminal_disposition": "committed",
+            "terminal_certificate_id": "terminal:gateway-pilot",
+        },
+    )
+    learning = client.post(
+        "/api/v1/cases/case.launch_gateway_pilot/learning-admissions",
+        json={
+            "binding_id": "learning:gateway-pilot",
+            "closure_id": closure.json()["closure"]["closure_id"],
+            "decision_id": "learning-admission:gateway-pilot",
+            "admitted": True,
+        },
+    )
+
+    response = client.get("/api/v1/cases/case.launch_gateway_pilot/proof-timeline")
+    payload = response.json()
+    timeline_kinds = {item["kind"] for item in payload["proof_timeline"]}
+
+    assert approval.status_code == 200
+    assert closure.status_code == 200
+    assert learning.status_code == 200
+    assert response.status_code == 200
+    assert payload["summary"]["case_status"] == "closed"
+    assert payload["summary"]["all_plan_steps_allowed"] is True
+    assert payload["summary"]["has_terminal_closure"] is True
+    assert payload["summary"]["learning_binding_count"] == 1
+    assert payload["closure_certificate"]["terminal_certificate_id"] == "terminal:gateway-pilot"
+    assert payload["closure_certificate"]["reconciliation"]["status"] == "match"
+    assert payload["closure_certificate"]["effect_reconciled"] is True
+    assert payload["closure_certificate"]["learning_admitted"] is True
+    assert {step["gate_status"] for step in payload["plan_step_proof"]} == {"allowed"}
+    assert {
+        "approval",
+        "case_event",
+        "effect_reconciliation",
+        "evidence",
+        "gate_decision",
+        "learning_admission",
+        "terminal_closure",
+    }.issubset(timeline_kinds)
 
 
 def test_launch_gateway_pilot_collects_deployment_witness_and_allows_engineering_gate(
@@ -656,6 +740,7 @@ def test_default_routers_include_organization_kernel_paths() -> None:
 
     assert "/api/v1/orgs" in paths
     assert "/api/v1/cases" in paths
+    assert "/api/v1/cases/{case_id}/proof-timeline" in paths
     assert "/api/v1/cases/{case_id}/launch-gateway-pilot/deployment-witness" in paths
     assert "/api/v1/cases/{case_id}/launch-gateway-pilot/gate-preview" in paths
     assert "/api/v1/cases/{case_id}/launch-gateway-pilot/readiness" in paths
