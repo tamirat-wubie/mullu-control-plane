@@ -133,7 +133,7 @@ def test_witness_integrity_report_tracks_exact_test_anchors() -> None:
     assert surfaces["cost_budget_read_models"]["unanchored_witness_count"] == 0
     assert surfaces["assistant_kernel_planning"]["exact_test_anchor_count"] == 5
     assert surfaces["assistant_kernel_planning"]["unanchored_witness_count"] == 0
-    assert surfaces["operator_console_read_models"]["exact_test_anchor_count"] == 8
+    assert surfaces["operator_console_read_models"]["exact_test_anchor_count"] == 9
     assert surfaces["operator_console_read_models"]["unanchored_witness_count"] == 0
     assert surfaces["model_experiment_control"]["exact_test_anchor_count"] == 7
     assert surfaces["model_experiment_control"]["unanchored_witness_count"] == 0
@@ -434,11 +434,13 @@ def test_representative_routes_are_not_unclassified() -> None:
     assert classified_routes["/api/v1/health/deep"]["surface_id"] == "operational_health_read_models"
     assert classified_routes["/api/v1/health/score"]["surface_id"] == "operational_health_read_models"
     assert classified_routes["/api/v1/health/extensions"]["surface_id"] == "operational_health_read_models"
+    assert classified_routes["/api/v1/health/shadow"]["surface_id"] == "operational_health_read_models"
     assert classified_routes["/api/v1/health/v3"]["surface_id"] == "operational_health_read_models"
     assert classified_routes["/api/v1/readiness"]["surface_id"] == "operational_health_read_models"
     assert classified_routes["/api/v1/deploy/readiness"]["surface_id"] == "operational_health_read_models"
     assert classified_routes["/api/v1/release/latest"]["surface_id"] == "operational_health_read_models"
     assert classified_routes["/api/v1/snapshot"]["surface_id"] == "operational_health_read_models"
+    assert classified_routes["/api/v1/console/shadow"]["surface_id"] == "operator_console_read_models"
     assert classified_routes["/api/v1/orchestration"]["surface_id"] == "agent_orchestration_lifecycle"
     assert classified_routes["/api/v1/orchestration/plans"]["surface_id"] == "agent_orchestration_lifecycle"
     assert (
@@ -2606,6 +2608,7 @@ def test_operational_health_surface_exposes_bounded_read_models() -> None:
     assert "/api/v1/health/deep" in health_surface["representative_paths"]
     assert "/api/v1/health/score" in health_surface["representative_paths"]
     assert "/api/v1/health/extensions" in health_surface["representative_paths"]
+    assert "/api/v1/health/shadow" in health_surface["representative_paths"]
     assert "/api/v1/health/v2" in health_surface["representative_paths"]
     assert "/api/v1/health/v3" in health_surface["representative_paths"]
     assert "/api/v1/readiness" in health_surface["representative_paths"]
@@ -2614,6 +2617,7 @@ def test_operational_health_surface_exposes_bounded_read_models() -> None:
     assert "/api/v1/snapshot" in health_surface["representative_paths"]
     assert "/api/v1/cache/stats" in health_surface["representative_paths"]
     assert "mcoi/mcoi_runtime/app/routers/health.py" in health_surface["evidence_files"]
+    assert "mcoi/mcoi_runtime/app/routers/shadow.py" in health_surface["evidence_files"]
     assert "mcoi/mcoi_runtime/app/routers/ops/summaries.py" in health_surface["evidence_files"]
     assert "mcoi/mcoi_runtime/app/routers/ops/release.py" in health_surface["evidence_files"]
     assert "mcoi/mcoi_runtime/app/routers/ops/snapshots.py" in health_surface["evidence_files"]
@@ -2624,11 +2628,15 @@ def test_operational_health_surface_exposes_bounded_read_models() -> None:
     assert "mcoi/tests/test_deep_health.py" in health_surface["evidence_files"]
     assert "mcoi/tests/test_health_aggregator.py" in health_surface["evidence_files"]
     assert "mcoi/tests/test_health_check_agg.py" in health_surface["evidence_files"]
+    assert "mcoi/tests/test_inceptadive_shadow_routes.py" in health_surface["evidence_files"]
     assert "mcoi/tests/test_operational_health_read_models.py" in health_surface["evidence_files"]
     assert "mcoi/tests/test_phase232.py" in health_surface["evidence_files"]
     assert "deep_health_components_bounded" in witnesses
     assert "health_score_range_bounded" in witnesses
     assert "extension_health_read_model_bounded" in witnesses
+    assert "shadow_health_route_returns_redacted_read_model" in witnesses
+    assert "shadow_routes_fallback_when_runtime_unregistered" in witnesses
+    assert "shadow_routes_respect_disabled_runtime_posture" in witnesses
     assert "health_v2_degraded_state_supported" in witnesses
     assert "health_v2_exception_sanitized" in witnesses
     assert "health_v3_recovery_tracking" in witnesses
@@ -2639,6 +2647,7 @@ def test_operational_health_surface_exposes_bounded_read_models() -> None:
     assert route_records["/api/v1/health/deep"]["coverage_state"] == "proven"
     assert route_records["/api/v1/health/deep"]["surface_id"] == "operational_health_read_models"
     assert route_records["/api/v1/health/extensions"]["surface_id"] == "operational_health_read_models"
+    assert route_records["/api/v1/health/shadow"]["surface_id"] == "operational_health_read_models"
     assert route_records["/api/v1/health/v3"]["coverage_state"] == "proven"
     assert route_records["/api/v1/health/v3"]["surface_id"] == "operational_health_read_models"
     assert route_records["/api/v1/readiness"]["surface_id"] == "operational_health_read_models"
