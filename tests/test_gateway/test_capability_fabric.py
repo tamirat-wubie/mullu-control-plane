@@ -78,9 +78,9 @@ def test_capability_fabric_env_loader_installs_checked_in_default_packs(
     assert gate is not None
     read_model = gate.read_model()
     assert read_model["capsule_count"] == 13
-    assert read_model["capability_count"] == 73
-    assert len(read_model["capability_maturity_assessments"]) == 73
-    assert read_model["capability_maturity_counts"]["C3"] == 71
+    assert read_model["capability_count"] == 75
+    assert len(read_model["capability_maturity_assessments"]) == 75
+    assert read_model["capability_maturity_counts"]["C3"] == 73
     assert read_model["capability_maturity_counts"]["C6"] == 2
     assert read_model["production_ready_count"] == 2
     assert read_model["autonomy_ready_count"] == 0
@@ -371,7 +371,7 @@ def test_default_read_model_projects_governed_capability_records() -> None:
         for plane in gate.read_model()["general_agent_planes"]
     }
 
-    assert len(records) == 73
+    assert len(records) == 75
     assert payment_capability["maturity_assessment"]["maturity_level"] == "C6"
     assert payment_capability["maturity_assessment"]["production_ready"] is True
     assert payment_capability["maturity_assessment"]["autonomy_ready"] is False
