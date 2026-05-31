@@ -17,6 +17,7 @@
     "agentic_control.self_audit.refine",
     "agentic_control.memory_admission.plan",
     "agentic_control.incident_recovery.plan",
+    "agentic_control.code_change.plan",
     "agentic_control.evidence.append"
   ],
   "policy_refs": ["policies/agentic_control/autonomous_ops.policy.json"],
@@ -29,7 +30,7 @@
   "owner_team": "platform-ops",
   "certification_status": "certified",
   "metadata": {
-    "purpose": "Certified control-plane capabilities for autonomous mission, governance, verification, resource, security, product, math, swarm, interrogation, refinement, memory-admission, incident-recovery, and evidence workflows"
+    "purpose": "Certified control-plane capabilities for autonomous mission, governance, verification, resource, security, product, math, swarm, interrogation, refinement, memory-admission, incident-recovery, code-change planning, and evidence workflows"
   },
   "extensions": {}
 }

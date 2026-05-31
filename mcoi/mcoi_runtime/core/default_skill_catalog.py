@@ -734,11 +734,23 @@ def _agentic_control_autonomous_operations_skill() -> SkillDescriptor:
                 provider_class_required="agentic_control_plane",
             ),
             SkillStep(
+                step_id="plan_code_change",
+                name="Plan code change boundary",
+                action_type="agentic_control.code_change.plan",
+                depends_on=("plan_verification",),
+                input_bindings={"verification_plan_ref": "plan_verification.verification_plan_ref"},
+                output_keys=("code_change_plan_ref", "change_boundary", "test_contract", "rollback_plan"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
                 step_id="append_evidence",
                 name="Append evidence ledger",
                 action_type="agentic_control.evidence.append",
-                depends_on=("plan_verification",),
-                input_bindings={"verification_plan_ref": "plan_verification.verification_plan_ref"},
+                depends_on=("plan_code_change",),
+                input_bindings={
+                    "verification_plan_ref": "plan_verification.verification_plan_ref",
+                    "code_change_plan_ref": "plan_code_change.code_change_plan_ref",
+                },
                 output_keys=("ledger_record_id", "ledger_record_hash", "lineage_ref"),
                 provider_class_required="agentic_control_plane",
             ),
@@ -747,7 +759,8 @@ def _agentic_control_autonomous_operations_skill() -> SkillDescriptor:
         description=(
             "Composes mission control, prioritization, governance gating, resource "
             "bounds, algorithm review, threat modeling, swarm coordination, product "
-            "planning, verification planning, and evidence ledger closure."
+            "planning, verification planning, code-change planning, and evidence "
+            "ledger closure."
         ),
         confidence=0.25,
         metadata={**_NO_NEW_AUTHORITY, "risk_floor": "high", "approval_expected": True},
