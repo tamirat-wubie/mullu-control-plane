@@ -321,6 +321,29 @@ def test_temporal_skill_plan_executes_through_provider_receipts() -> None:
     assert scheduler.get("sched-1").state == ScheduledActionState.COMPLETED
     assert scheduler.skill_plan_execution_count == 1
     assert scheduler.receipt_count == 1
+    assert scheduler.summary()["skill_plan_executions"] == 1
+
+
+def test_temporal_skill_plan_execution_is_idempotent_after_terminal_state() -> None:
+    clock = MutableClock("2026-05-04T14:00:00+00:00")
+    provider = RecordingSkillStageProvider(
+        {
+            "observe": {"observation": "ready"},
+            "approve": {"approval": "approved"},
+            "execute": {"final_receipt": "receipt-001"},
+        }
+    )
+    scheduler = _engine(clock, skill_stage_provider=provider)
+    scheduler.register("sched-1", _action(skill_plan=_valid_skill_plan()))
+    scheduler.acquire_lease("sched-1", "worker-a")
+
+    first = scheduler.execute_skill_plan("sched-1", worker_id="worker-a")
+    second = scheduler.execute_skill_plan("sched-1", worker_id="worker-a")
+
+    assert second == first
+    assert scheduler.get("sched-1").state == ScheduledActionState.COMPLETED
+    assert scheduler.receipt_count == 1
+    assert scheduler.skill_plan_execution_count == 1
 
 
 def test_temporal_skill_plan_execution_blocks_on_missing_stage_output() -> None:

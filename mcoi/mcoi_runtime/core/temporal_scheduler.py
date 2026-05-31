@@ -272,6 +272,8 @@ class TemporalSchedulerEngine:
     def execute_skill_plan(self, schedule_id: str, *, worker_id: str = "") -> TemporalSkillPlanExecution:
         """Execute a bound temporal skill plan through the configured provider."""
 
+        if schedule_id in self._skill_plan_executions:
+            return self._skill_plan_executions[schedule_id]
         action = self.get(schedule_id)
         if action.action.skill_plan is None:
             raise RuntimeCoreInvariantError("skill_plan is required")
@@ -279,8 +281,6 @@ class TemporalSchedulerEngine:
             raise RuntimeCoreInvariantError("schedule must be running before skill plan execution")
         if self._skill_stage_provider is None:
             raise RuntimeCoreInvariantError("skill_stage_provider is required")
-        if schedule_id in self._skill_plan_executions:
-            return self._skill_plan_executions[schedule_id]
         execution = TemporalSkillPlanExecutor(self._skill_stage_provider, clock=self._clock).execute(
             action.action.skill_plan,
             schedule_ref=schedule_id,
@@ -295,7 +295,13 @@ class TemporalSchedulerEngine:
         if execution.verdict is TemporalSkillExecutionVerdict.PASS:
             self._replace_action(action, ScheduledActionState.COMPLETED, metadata={**dict(action.metadata), **metadata})
             self._leases.pop(schedule_id, None)
-            self._record(self.get(schedule_id), ScheduleDecisionVerdict.COMPLETED, "skill_plan_executed", self._clock(), worker_id)
+            self._record(
+                self.get(schedule_id),
+                ScheduleDecisionVerdict.COMPLETED,
+                "skill_plan_executed",
+                self._clock(),
+                worker_id,
+            )
             return execution
         self._replace_action(action, ScheduledActionState.BLOCKED, metadata={**dict(action.metadata), **metadata})
         self._leases.pop(schedule_id, None)
@@ -352,6 +358,7 @@ class TemporalSchedulerEngine:
             "actions": len(self._actions),
             "receipts": len(self._receipts),
             "leases": len(self._leases),
+            "skill_plan_executions": len(self._skill_plan_executions),
             **counts,
         }
 
