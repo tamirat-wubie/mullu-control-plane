@@ -23,7 +23,11 @@ from starlette.requests import Request
 from starlette.responses import JSONResponse
 
 from mcoi_runtime.contracts.temporal_runtime import TemporalActionRequest, TemporalRiskLevel
-from mcoi_runtime.governance.guards.content_safety import ContentSafetyChain, create_input_safety_guard
+from mcoi_runtime.governance.guards.content_safety import (
+    CONTENT_SAFETY_TEXT_FIELDS,
+    ContentSafetyChain,
+    create_input_safety_guard,
+)
 from mcoi_runtime.governance.guards.chain import (
     GovernanceGuardChain,
     create_api_key_guard,
@@ -45,7 +49,13 @@ MAX_BODY_PARSE_SIZE = 1_048_576
 
 
 def _extract_content_safety_fields(body: bytes) -> dict[str, str]:
-    """Extract prompt/content fields for safety checks from a JSON body."""
+    """Extract governed free-text fields for safety checks from a JSON body.
+
+    Surfaces every field in ``CONTENT_SAFETY_TEXT_FIELDS`` (prompt, content,
+    query, goal, initial_input, message, system_prompt, text, proposed_goal)
+    so the input safety guard scans all user-controlled text the API accepts,
+    not just ``prompt``/``content``.
+    """
     if not body or len(body) > MAX_BODY_PARSE_SIZE:
         return {}
     try:
@@ -56,12 +66,10 @@ def _extract_content_safety_fields(body: bytes) -> dict[str, str]:
         return {}
 
     extracted: dict[str, str] = {}
-    prompt = parsed.get("prompt")
-    content = parsed.get("content")
-    if isinstance(prompt, str):
-        extracted["prompt"] = prompt
-    if isinstance(content, str):
-        extracted["content"] = content
+    for field_name in CONTENT_SAFETY_TEXT_FIELDS:
+        value = parsed.get(field_name)
+        if isinstance(value, str):
+            extracted[field_name] = value
     return extracted
 
 

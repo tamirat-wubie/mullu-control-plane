@@ -30,6 +30,41 @@ LAMBDA_INPUT_SAFETY = "Lambda_input_safety"
 LAMBDA_OUTPUT_SAFETY = "Lambda_output_safety"
 
 
+# Request-body fields that may carry user-controlled free text and therefore
+# must be scanned by the input/content safety guards. The HTTP middleware
+# extracts these from the JSON body into the guard context; the guards scan
+# every one of them. Keep this in sync with the free-text fields accepted by
+# the request models in mcoi_runtime/app/routers/*. Scanning only
+# ``prompt``/``content`` left an injection-bypass: a payload placed in
+# ``query``/``goal``/``initial_input``/``message``/``system_prompt`` reached the
+# runtime without first-line scanning.
+CONTENT_SAFETY_TEXT_FIELDS: tuple[str, ...] = (
+    "prompt",
+    "content",
+    "query",
+    "goal",
+    "initial_input",
+    "message",
+    "system_prompt",
+    "text",
+    "proposed_goal",
+)
+
+
+def collect_safety_scan_text(ctx: dict[str, Any]) -> str:
+    """Join every governed free-text field present in ``ctx`` for scanning.
+
+    Returns a newline-joined string of all non-empty string values found under
+    ``CONTENT_SAFETY_TEXT_FIELDS``. Empty string when none are present.
+    """
+    parts: list[str] = []
+    for field_name in CONTENT_SAFETY_TEXT_FIELDS:
+        value = ctx.get(field_name)
+        if isinstance(value, str) and value:
+            parts.append(value)
+    return "\n".join(parts)
+
+
 _ETHIOPIC_RANGES: tuple[tuple[int, int], ...] = (
     (0x1200, 0x137F),
     (0x1380, 0x139F),
@@ -388,13 +423,14 @@ def create_content_safety_guard(
 ) -> GovernanceGuard:
     """Create a content safety guard for the governance guard chain.
 
-    Scans the request body/prompt for unsafe content before processing.
-    Only activates when 'prompt' or 'content' is present in guard context.
+    Scans the request body for unsafe content before processing. Activates
+    when any governed free-text field (CONTENT_SAFETY_TEXT_FIELDS) is present
+    in the guard context.
     """
     from mcoi_runtime.governance.guards.chain import GovernanceGuard, GuardResult
 
     def check(ctx: dict[str, Any]) -> GuardResult:
-        content = ctx.get("prompt", "") or ctx.get("content", "")
+        content = collect_safety_scan_text(ctx)
         if not content:
             return GuardResult(allowed=True, guard_name="content_safety")
 
@@ -425,7 +461,7 @@ def create_input_safety_guard(
     from mcoi_runtime.governance.guards.chain import GovernanceGuard, GuardResult
 
     def check(ctx: dict[str, Any]) -> GuardResult:
-        content = ctx.get("prompt", "") or ctx.get("content", "")
+        content = collect_safety_scan_text(ctx)
         if not content:
             return GuardResult(allowed=True, guard_name=LAMBDA_INPUT_SAFETY)
 
