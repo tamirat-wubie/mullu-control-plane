@@ -19,6 +19,8 @@ from .invariants import RuntimeCoreInvariantError
 from .simple_platform import SimpleActionRequest, SimplePlatform, SimpleTaskRequest, SimpleWorkflowRequest
 from .simple_platform_api import SimplePlatformRuntime
 
+SIMPLE_ACTION_VOCABULARY = frozenset(("view", "change", "send", "verify"))
+
 
 def build_parser() -> argparse.ArgumentParser:
     """Build the simple platform parser."""
@@ -132,7 +134,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             print(_readable_check(check.to_dict()))
         return 0 if check.outcome == "ready" else 2
     if args.command == "tasks":
-        templates = [template.to_dict() for template in SimplePlatform.task_templates()]
+        templates = _validated_task_templates([template.to_dict() for template in SimplePlatform.task_templates()])
         if args.json:
             print(json.dumps(_envelope(True, "listed", {"tasks": templates}), sort_keys=True, separators=(",", ":")))
         else:
@@ -166,7 +168,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             print(_readable_workflow(plan.to_dict()))
         return 0 if plan.outcome == "ready" else 2
     if args.command == "workflows":
-        templates = [template.to_dict() for template in SimplePlatform.workflow_templates()]
+        templates = _validated_workflow_templates([template.to_dict() for template in SimplePlatform.workflow_templates()])
         if args.json:
             print(json.dumps(_envelope(True, "listed", {"workflows": templates}), sort_keys=True, separators=(",", ":")))
         else:
@@ -204,14 +206,34 @@ def _readable_check(value: dict[str, object]) -> str:
     return "\n".join(lines)
 
 
-def _readable_tasks(templates: list[dict[str, str]]) -> str:
+def _readable_tasks(templates: object) -> str:
     lines = ["Common tasks:"]
-    for template in templates:
+    for template in _validated_task_templates(templates):
         task_name = template["task"].replace("_", "-")
         target_hint = " --target <target>" if not template["default_target"] else ""
         lines.append(f"- {task_name}: {template['label']}")
         lines.append(f"  command: mullu task {task_name}{target_hint}")
     return "\n".join(lines)
+
+
+def _validated_task_templates(templates: object) -> list[dict[str, str]]:
+    if not isinstance(templates, list):
+        raise RuntimeCoreInvariantError("simple task catalog must be a list")
+    validated: list[dict[str, str]] = []
+    for template in templates:
+        if not isinstance(template, dict):
+            raise RuntimeCoreInvariantError("simple task catalog item must be an object")
+        validated.append(
+            {
+                "task": _catalog_text(template, "task catalog item", "task"),
+                "label": _catalog_text(template, "task catalog item", "label"),
+                "default_goal": _catalog_text(template, "task catalog item", "default_goal"),
+                "action": _catalog_text(template, "task catalog item", "action"),
+                "allowed_area": _catalog_text(template, "task catalog item", "allowed_area"),
+                "default_target": _catalog_text(template, "task catalog item", "default_target", allow_empty=True),
+            }
+        )
+    return validated
 
 
 def _readable_actions(actions: object) -> str:
@@ -226,12 +248,19 @@ def _validated_actions(actions: object) -> list[dict[str, str]]:
     if not isinstance(actions, list):
         raise RuntimeCoreInvariantError("simple action menu must be a list")
     validated: list[dict[str, str]] = []
+    seen_actions: set[str] = set()
     for action in actions:
         if not isinstance(action, dict):
             raise RuntimeCoreInvariantError("simple action menu item must be an object")
+        action_id = _action_menu_text(action, "action")
+        if action_id not in SIMPLE_ACTION_VOCABULARY:
+            raise RuntimeCoreInvariantError("simple action menu item action is outside the governed vocabulary")
+        if action_id in seen_actions:
+            raise RuntimeCoreInvariantError("simple action menu item action must be unique")
+        seen_actions.add(action_id)
         validated.append(
             {
-                "action": _action_menu_text(action, "action"),
+                "action": action_id,
                 "label": _action_menu_text(action, "label"),
                 "purpose": _action_menu_text(action, "purpose"),
             }
@@ -240,14 +269,7 @@ def _validated_actions(actions: object) -> list[dict[str, str]]:
 
 
 def _action_menu_text(action: dict[object, object], field_name: str) -> str:
-    value = action.get(field_name)
-    if not isinstance(value, str):
-        raise RuntimeCoreInvariantError(f"simple action menu item {field_name} must be text")
-    if not value.strip():
-        raise RuntimeCoreInvariantError(f"simple action menu item {field_name} must be non-empty text")
-    if value != value.strip():
-        raise RuntimeCoreInvariantError(f"simple action menu item {field_name} must be trimmed text")
-    return value
+    return _catalog_text(action, "action menu item", field_name)
 
 
 def _readable_workflow(value: dict[str, object]) -> str:
@@ -265,14 +287,74 @@ def _readable_workflow(value: dict[str, object]) -> str:
     return "\n".join(lines)
 
 
-def _readable_workflows(templates: list[dict[str, object]]) -> str:
+def _readable_workflows(templates: object) -> str:
     lines = ["Common workflows:"]
-    for template in templates:
-        workflow_name = str(template["workflow"]).replace("_", "-")
+    for template in _validated_workflow_templates(templates):
+        workflow_name = template["workflow"].replace("_", "-")
         target_hint = " --target <target>" if template["target_required"] else ""
         lines.append(f"- {workflow_name}: {template['label']}")
         lines.append(f"  command: mullu workflow {workflow_name}{target_hint}")
     return "\n".join(lines)
+
+
+def _validated_workflow_templates(templates: object) -> list[dict[str, object]]:
+    if not isinstance(templates, list):
+        raise RuntimeCoreInvariantError("simple workflow catalog must be a list")
+    validated: list[dict[str, object]] = []
+    for template in templates:
+        if not isinstance(template, dict):
+            raise RuntimeCoreInvariantError("simple workflow catalog item must be an object")
+        validated.append(
+            {
+                "workflow": _catalog_text(template, "workflow catalog item", "workflow"),
+                "label": _catalog_text(template, "workflow catalog item", "label"),
+                "default_goal": _catalog_text(template, "workflow catalog item", "default_goal"),
+                "tasks": _catalog_text_list(template, "workflow catalog item", "tasks"),
+                "target_required": _catalog_bool(template, "workflow catalog item", "target_required"),
+                "default_target": _catalog_text(template, "workflow catalog item", "default_target", allow_empty=True),
+            }
+        )
+    return validated
+
+
+def _catalog_text(
+    item: dict[object, object],
+    item_name: str,
+    field_name: str,
+    *,
+    allow_empty: bool = False,
+) -> str:
+    value = item.get(field_name)
+    if not isinstance(value, str):
+        raise RuntimeCoreInvariantError(f"simple {item_name} {field_name} must be text")
+    if not allow_empty and not value.strip():
+        raise RuntimeCoreInvariantError(f"simple {item_name} {field_name} must be non-empty text")
+    if value != value.strip():
+        raise RuntimeCoreInvariantError(f"simple {item_name} {field_name} must be trimmed text")
+    return value
+
+
+def _catalog_bool(item: dict[object, object], item_name: str, field_name: str) -> bool:
+    value = item.get(field_name)
+    if not isinstance(value, bool):
+        raise RuntimeCoreInvariantError(f"simple {item_name} {field_name} must be boolean")
+    return value
+
+
+def _catalog_text_list(item: dict[object, object], item_name: str, field_name: str) -> list[str]:
+    value = item.get(field_name)
+    if not isinstance(value, list):
+        raise RuntimeCoreInvariantError(f"simple {item_name} {field_name} must be a list")
+    values: list[str] = []
+    for member in value:
+        if not isinstance(member, str):
+            raise RuntimeCoreInvariantError(f"simple {item_name} {field_name} item must be text")
+        if not member.strip():
+            raise RuntimeCoreInvariantError(f"simple {item_name} {field_name} item must be non-empty text")
+        if member != member.strip():
+            raise RuntimeCoreInvariantError(f"simple {item_name} {field_name} item must be trimmed text")
+        values.append(member)
+    return values
 
 
 def _start_text(home: dict[str, object]) -> str:
