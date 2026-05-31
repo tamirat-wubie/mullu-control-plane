@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://mullusi.com/schemas/evidence_classification_manifest.schema.json",
+  "$id": "urn:mullusi:schema:evidence-classification-manifest:1",
   "title": "Mullu Evidence Classification Manifest",
   "type": "object",
   "additionalProperties": false,

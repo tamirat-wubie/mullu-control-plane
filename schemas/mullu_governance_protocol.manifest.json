@@ -293,6 +293,12 @@
       "surface": "environment"
     },
     {
+      "schema_id": "evidence-classification-manifest",
+      "path": "schemas/evidence_classification_manifest.schema.json",
+      "urn": "urn:mullusi:schema:evidence-classification-manifest:1",
+      "surface": "evidence"
+    },
+    {
       "schema_id": "enterprise-authority",
       "path": "schemas/enterprise_authority.schema.json",
       "urn": "urn:mullusi:schema:enterprise-authority:1",
