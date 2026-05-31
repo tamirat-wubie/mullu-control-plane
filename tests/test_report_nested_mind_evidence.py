@@ -12,6 +12,8 @@ import importlib.util
 import json
 from pathlib import Path
 
+import pytest
+
 from mcoi_runtime.contracts import (
     NestedMindCommitWitness,
     NestedMindCommitWitnessStatus,
@@ -20,7 +22,7 @@ from mcoi_runtime.contracts import (
     NestedMindObservationSubmissionReport,
     NestedMindObservationSubmissionStatus,
 )
-from mcoi_runtime.persistence import NestedMindEvidenceStore
+from mcoi_runtime.persistence import CorruptedDataError, NestedMindEvidenceStore
 
 SCRIPT_PATH = Path(__file__).resolve().parents[1] / "scripts" / "report_nested_mind_evidence.py"
 
@@ -95,6 +97,25 @@ def test_report_blocks_empty_store(tmp_path) -> None:
     assert report["record_counts"]["submission_report"] == 0
     assert "accepted_submission_missing" in report["readiness"]["blockers"]
     assert report["next_action"] == "collect_live_record_observation_submission_witness_and_reconciliation"
+
+
+def test_report_rejects_corrupted_evidence_store(tmp_path) -> None:
+    module = _module()
+    store_path = tmp_path / "nested-mind.jsonl"
+    store_path.write_text("{not-json}\n", encoding="utf-8")
+
+    with pytest.raises(CorruptedDataError, match="invalid nested-mind evidence entry"):
+        module.build_nested_mind_evidence_report(store_path)
+
+
+def test_report_cli_rejects_corrupted_evidence_store(tmp_path, capsys) -> None:
+    module = _module()
+    store_path = tmp_path / "nested-mind.jsonl"
+    store_path.write_text("{not-json}\n", encoding="utf-8")
+
+    with pytest.raises(CorruptedDataError, match="invalid nested-mind evidence entry"):
+        module.main(["--store", str(store_path)])
+    assert capsys.readouterr().out == ""
 
 
 def test_report_ready_for_bound_verified_chain(tmp_path) -> None:
