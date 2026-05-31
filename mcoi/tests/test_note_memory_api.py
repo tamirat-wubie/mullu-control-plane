@@ -197,6 +197,30 @@ def test_runtime_rejects_non_text_retrieval_citing_note_filter(tmp_path) -> None
     assert "retrieval_citing_note_ref must be a string" in rejected["error"]
 
 
+def test_runtime_rejects_string_retrieval_include_hypotheses(tmp_path) -> None:
+    runtime = NoteMemoryRuntime.from_path(tmp_path / "notes")
+
+    rejected = runtime.retrieve_notes(
+        {"query": "parser", "scope": "task", "include_hypotheses": "false"}
+    ).to_dict()
+
+    assert rejected["governed"] is True
+    assert rejected["ok"] is False
+    assert rejected["status"] == "rejected"
+    assert "include_hypotheses must be a boolean" in rejected["error"]
+
+
+def test_runtime_rejects_integer_retrieval_include_hypotheses(tmp_path) -> None:
+    runtime = NoteMemoryRuntime.from_path(tmp_path / "notes")
+
+    rejected = runtime.retrieve_notes({"query": "parser", "scope": "task", "include_hypotheses": 1}).to_dict()
+
+    assert rejected["governed"] is True
+    assert rejected["ok"] is False
+    assert rejected["status"] == "rejected"
+    assert "include_hypotheses must be a boolean" in rejected["error"]
+
+
 def test_runtime_rejected_delta_expiry_and_rebuild_emit_receipts(tmp_path) -> None:
     runtime = NoteMemoryRuntime.from_path(tmp_path / "notes")
     runtime.capture_note(_working_note(expires_at="2026-06-01T00:00:00+00:00"))
