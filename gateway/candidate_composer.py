@@ -264,6 +264,25 @@ class CandidateComposer:
             for capsule in admissible
         )
 
+    def _composer_skips(self, signature: ProblemSignature) -> dict[str, str]:
+        """Return ``{skipped_id: reason}`` for the comparison report.
+
+        For the default single-capsule strategy the keys are capsule ids:
+        every registered capsule that is not admissible (forbidden/absent
+        method family, or risk ceiling below the signature risk) is reported.
+        Subclasses with a different composition strategy MUST override this so
+        the report's ``skipped_capsule_ids`` / ``skipped_reasons`` describe
+        what that strategy actually skipped — otherwise the report would
+        narrate single-capsule admissibility that never ran.
+        """
+        skipped: dict[str, str] = {}
+        for capsule in self._capsules.values():
+            if not signature.admits_method_family(capsule.method_family):
+                skipped[capsule.capsule_id] = "method_family_not_admissible"
+            elif not _capsule_admits_risk(capsule, signature.risk):
+                skipped[capsule.capsule_id] = "risk_ceiling_below_signature_risk"
+        return skipped
+
     def run(
         self,
         signature: ProblemSignature,
@@ -273,16 +292,13 @@ class CandidateComposer:
         every result to the ledger, and return a comparison report.
         """
         primary_metric = _primary_success_metric(signature)
-        skipped: dict[str, str] = {}
 
-        for capsule in self._capsules.values():
-            if not signature.admits_method_family(capsule.method_family):
-                skipped[capsule.capsule_id] = "method_family_not_admissible"
-                continue
-            if not _capsule_admits_risk(capsule, signature.risk):
-                skipped[capsule.capsule_id] = "risk_ceiling_below_signature_risk"
-
+        # Compose first, then collect skip reasons. Ordering matters for
+        # subclasses whose _composer_skips() reads state populated during
+        # compose_pipelines(); for the base composer compose_pipelines() is
+        # pure, so the order is immaterial there.
         pipelines = self.compose_pipelines(signature)
+        skipped = self._composer_skips(signature)
 
         baseline_pipeline: CandidatePipeline | None = None
         candidate_pipelines: list[CandidatePipeline] = []
@@ -503,12 +519,46 @@ class DeclaredCompositionComposer(CandidateComposer):
         """Specs not composed in the most recent ``compose_pipelines`` call."""
         return tuple(self._skipped)
 
+    def _composer_skips(self, signature: ProblemSignature) -> dict[str, str]:
+        """Surface composition-level skips in the comparison report.
+
+        Keyed by the skipped composition's ``pipeline_id`` (the unit that was
+        skipped for this strategy), reason encodes the offending capsule when
+        there is one. This replaces the base composer's per-capsule skip view,
+        which is meaningless here because this composer never composes one
+        pipeline per capsule. Relies on ``compose_pipelines`` having populated
+        ``self._skipped`` first, which ``run()`` guarantees by composing before
+        collecting skips.
+        """
+        return {
+            skip.pipeline_id: (
+                f"{skip.reason}:{skip.offending_capsule_id}"
+                if skip.offending_capsule_id
+                else skip.reason
+            )
+            for skip in self._skipped
+        }
+
     def compose_pipelines(
         self, signature: ProblemSignature
     ) -> tuple[CandidatePipeline, ...]:
         self._skipped = []
         composed: list[CandidatePipeline] = []
+        seen_pipeline_ids: set[str] = set()
         for spec in self._compositions:
+            # A duplicate pipeline_id would derive the same run seed and the
+            # same ledger record hash as its twin, crashing mid-run with an
+            # opaque duplicate_record_hash after partial writes. Reject the
+            # later duplicate up front with an auditable reason instead.
+            if spec.pipeline_id in seen_pipeline_ids:
+                self._skipped.append(
+                    SkippedComposition(
+                        pipeline_id=spec.pipeline_id,
+                        reason="duplicate_pipeline_id",
+                    )
+                )
+                continue
+            seen_pipeline_ids.add(spec.pipeline_id)
             resolved: list[MethodCapsule] = []
             poisoned = False
             for capsule_id in spec.capsule_ids:
