@@ -1,33 +1,17 @@
 """Φ_gps Runtime Tests — Phases 0-12."""
 
-import pytest
 from mcoi_runtime.core.phi_gps import (
     AgentMode,
-    BeliefState,
-    DiscoveredLaw,
-    DiscoveredNorm,
-    DistinguishResult,
-    EpisodeModelSet,
+    ActionSet,
     FeasibilityResult,
-    FrameResult,
-    GoalConstructionResult,
     GoalStatus,
-    IgnoranceMap,
-    InvariantGrade,
     KnowledgeLevel,
-    LawDiscoveryResult,
-    LawType,
     ModelStatus,
     NormKind,
     ProfileVector,
-    ProofSketch,
     ProofState,
     ResourceLevel,
-    Symbol,
-    UtilityStructure,
     SolverOutcome,
-    SolverOutput,
-    Verification,
     build_proof_sketch,
     check_feasibility,
     compute_voi,
@@ -40,11 +24,6 @@ from mcoi_runtime.core.phi_gps import (
     freeze_models,
     select_strategies,
     verify_and_judge,
-    ActionSet,
-    DecompositionResult,
-    DiagnosisResult,
-    PolicyResult,
-    TransitionMap,
 )
 
 
@@ -428,7 +407,7 @@ class TestConstructGoal:
 class TestDiscoverLaws:
     def test_domain_law(self):
         result = discover_laws(domain="finance")
-        assert any(l.name == "domain_boundary" for l in result.laws)
+        assert any(law.name == "domain_boundary" for law in result.laws)
 
     def test_constraints_become_laws(self):
         result = discover_laws(constraints=["balance >= 0", "amount > 0"])
@@ -436,15 +415,15 @@ class TestDiscoverLaws:
 
     def test_universal_governance_laws(self):
         result = discover_laws()
-        names = {l.name for l in result.laws}
+        names = {law.name for law in result.laws}
         assert "identity_preservation" in names
         assert "audit_completeness" in names
 
     def test_hard_law_confidence(self):
         result = discover_laws()
-        for l in result.laws:
-            if l.name in ("identity_preservation", "audit_completeness"):
-                assert l.confidence == 1.0
+        for law in result.laws:
+            if law.name in ("identity_preservation", "audit_completeness"):
+                assert law.confidence == 1.0
 
     def test_permissions(self):
         result = discover_laws(permissions=["read data", "send email"])
@@ -852,16 +831,19 @@ class TestVerifyAndJudge:
 
         assert output.outcome == SolverOutcome.SOLVED_VERIFIED
         assert output.verification.all_pass is True
+        assert frame.profile.k_world == KnowledgeLevel.PARTIAL
+        assert symbols.symbol_count > 0
+        assert sketch.has_unknown is True
         assert trace.goal_reached is True
         assert model.is_frozen is True
 
 
 # ═══════════════════════════════════════════
-# PHASE STUBS — Structural Verification
+# PHASE SOLVER SURFACES — Structural Verification
 # ═══════════════════════════════════════════
 
 class TestPhase5Transitions:
-    """Verify Phase 5 (discover_transitions) structural stub."""
+    """Verify Phase 5 (discover_transitions) bounded transition contracts."""
 
     def test_returns_transition_map(self):
         from mcoi_runtime.core.phi_gps import discover_transitions, freeze_models, discover_laws
@@ -870,17 +852,34 @@ class TestPhase5Transitions:
         result = discover_transitions(model=model)
         assert isinstance(result.transitions, tuple)
         assert result.state_space_size == len(result.transitions)
+        assert {transition["origin"] for transition in result.transitions} == {"law"}
+        assert all(transition["action"].startswith("preserve_") for transition in result.transitions)
 
-    def test_model_transitions_match_laws(self):
+    def test_observation_transitions_are_preserved_and_bounded(self):
         from mcoi_runtime.core.phi_gps import discover_transitions, freeze_models, discover_laws
-        laws = discover_laws()
+        laws = discover_laws(constraints=["audit required"])
         model = freeze_models(laws=laws, belief=None, goal=None)
-        result = discover_transitions(model=model)
-        assert result.state_space_size == len(model.laws)
+        result = discover_transitions(
+            model=model,
+            observation_data=[
+                {
+                    "source": "queued",
+                    "action": "dispatch",
+                    "target": "running",
+                    "probability": 1.7,
+                    "evidence_ref": "trace:1",
+                }
+            ],
+        )
+        observed = result.transitions[0]
+        assert observed["origin"] == "observation"
+        assert observed["probability"] == 1.0
+        assert observed["evidence_ref"] == "trace:1"
+        assert result.state_space_size == len(model.laws) + 2
 
 
 class TestPhase6Actions:
-    """Verify Phase 6 (synthesize_actions) structural stub."""
+    """Verify Phase 6 (synthesize_actions) bounded action contracts."""
 
     def test_returns_action_set(self):
         from mcoi_runtime.core.phi_gps import synthesize_actions, freeze_models, discover_laws
@@ -889,6 +888,8 @@ class TestPhase6Actions:
         result = synthesize_actions(model=model)
         assert isinstance(result.actions, tuple)
         assert result.composite_count == 0
+        assert result.primitive_count == len(result.actions)
+        assert all("action" in action for action in result.actions)
 
     def test_with_transitions(self):
         from mcoi_runtime.core.phi_gps import (
@@ -899,23 +900,36 @@ class TestPhase6Actions:
         transitions = discover_transitions(model=model)
         result = synthesize_actions(model=model, transitions=transitions)
         assert isinstance(result, ActionSet)
+        assert result.primitive_count >= len(model.norms)
+        assert result.composite_count == 1
+        assert any(action["name"] == "complete_transition_sequence" for action in result.actions)
 
 
 class TestPhase8Decompose:
-    """Verify Phase 8 (decompose_problem) structural stub."""
+    """Verify Phase 8 (decompose_problem) bounded decomposition."""
 
-    def test_returns_monolithic(self):
-        from mcoi_runtime.core.phi_gps import decompose_problem, freeze_models, discover_laws
+    def test_returns_structured_subproblems(self):
+        from mcoi_runtime.core.phi_gps import (
+            build_proof_sketch, check_feasibility, construct_goal, decompose_problem, freeze_models, discover_laws,
+        )
         laws = discover_laws(constraints=["c1"])
-        model = freeze_models(laws=laws, belief=None, goal=None)
-        result = decompose_problem(model=model, feasibility=None)
-        assert len(result.subproblems) == 1
-        assert result.subproblems[0]["description"] == "monolithic (no decomposition)"
-        assert result.dependency_edges == ()
+        goal = construct_goal(
+            description="complete governed transfer",
+            safety_variables=["balance"],
+            satisfaction_criteria={"transferred": True},
+        )
+        model = freeze_models(laws=laws, belief=None, goal=goal)
+        feasibility = check_feasibility(model=model)
+        proof_sketch = build_proof_sketch(sub_goal="transfer", feasibility=feasibility, model=model)
+        result = decompose_problem(model=model, feasibility=feasibility, proof_sketch=proof_sketch)
+        kinds = {subproblem["kind"] for subproblem in result.subproblems}
+        assert {"safety", "norms", "goal", "evidence"}.issubset(kinds)
+        assert (0, 2) in result.dependency_edges
+        assert any(subproblem["description"] == "complete governed transfer" for subproblem in result.subproblems)
 
 
 class TestPhase9Policy:
-    """Verify Phase 9 (select_policy) structural stub."""
+    """Verify Phase 9 (select_policy) bounded policy selection."""
 
     def test_returns_safe_default(self):
         from mcoi_runtime.core.phi_gps import select_policy, freeze_models, discover_laws
@@ -926,9 +940,28 @@ class TestPhase9Policy:
         assert result.action_sequence == ()
         assert result.expected_cost == 0.0
 
+    def test_selects_composite_policy_when_actions_are_available(self):
+        from mcoi_runtime.core.phi_gps import (
+            check_feasibility, decompose_problem, discover_laws, discover_transitions,
+            freeze_models, select_policy, synthesize_actions,
+        )
+        laws = discover_laws(permissions=["may dispatch"])
+        model = freeze_models(laws=laws, belief=None, goal=None)
+        feasibility = check_feasibility(model=model)
+        transitions = discover_transitions(
+            model=model,
+            observation_data=[{"source": "ready", "action": "dispatch", "target": "done"}],
+        )
+        actions = synthesize_actions(model=model, transitions=transitions)
+        decomposition = decompose_problem(model=model, feasibility=feasibility)
+        result = select_policy(model=model, feasibility=feasibility, actions=actions, decomposition=decomposition)
+        assert result.strategy == "greedy"
+        assert result.action_sequence == ("complete_transition_sequence",)
+        assert result.expected_cost > 0.0
+
 
 class TestPhase11Diagnose:
-    """Verify Phase 11 (diagnose_failure) structural stub."""
+    """Verify Phase 11 (diagnose_failure) bounded failure diagnosis."""
 
     def test_diagnose_safety_violation(self):
         from mcoi_runtime.core.phi_gps import diagnose_failure, freeze_models, discover_laws
@@ -976,6 +1009,32 @@ class TestPhase11Diagnose:
         model = freeze_models(laws=laws, belief=None, goal=None)
         result = diagnose_failure(trace=FakeTrace(), model=model, feasibility=None)
         assert "unknown" in result.root_causes
+
+    def test_diagnose_budget_and_model_drift(self):
+        from mcoi_runtime.core.phi_gps import diagnose_failure, freeze_models, discover_laws, ExecutionStep
+        from dataclasses import dataclass
+
+        @dataclass
+        class FakeTrace:
+            safety_violations: int = 0
+            stall_count: int = 0
+            goal_reached: bool = False
+            steps: tuple[ExecutionStep, ...] = (
+                ExecutionStep(
+                    step_id=0,
+                    action="expensive_action",
+                    action_class="world",
+                    outcome="budget_exceeded",
+                    surprise=0.9,
+                ),
+            )
+
+        laws = discover_laws()
+        model = freeze_models(laws=laws, belief=None, goal=None)
+        result = diagnose_failure(trace=FakeTrace(), model=model, feasibility=None)
+        assert "budget_exhausted" in result.root_causes
+        assert "model_drift" in result.root_causes
+        assert result.model_drift_detected is True
 
 
 class TestExports:
