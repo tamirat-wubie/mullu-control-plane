@@ -1,16 +1,17 @@
 {
   "aggregate_closure_actions": 13,
-  "approval_required_actions": 9,
+  "approval_required_actions": 10,
   "approval_required_blockers": [
     "voice_dependency_missing:OPENAI_API_KEY",
     "email_calendar_dependency_missing:EMAIL_CALENDAR_CONNECTOR_TOKEN",
     "deployment_witness_not_published",
     "production_health_not_declared",
+    "deployment_upstream_api_gate_not_ready",
     "capability_improvement_required:financial.refund",
-    "capability_improvement_required:computer.command.run",
-    "capability_improvement_required:browser.submit",
-    "capability_improvement_required:connector.postgres.write.with_approval",
-    "capability_improvement_required:creative.data_analyze"
+    "capability_improvement_required:agentic_control.evidence.append",
+    "capability_improvement_required:agentic_control.governance_gate.evaluate",
+    "capability_improvement_required:agentic_control.math_algorithm.analyze",
+    "capability_improvement_required:agentic_control.mission.define"
   ],
   "capability_capsules": 10,
   "entry_points": {

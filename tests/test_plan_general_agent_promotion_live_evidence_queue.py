@@ -61,7 +61,7 @@ def test_live_evidence_queue_classifies_bindings_and_approvals(tmp_path: Path) -
 
 def test_live_evidence_queue_exposes_missing_receipt_and_uncontracted_bindings(tmp_path: Path) -> None:
     plan_path = _write_promotion_plan(tmp_path, include_voice_dependency=True)
-    contract_path = _write_environment_contract(tmp_path)
+    contract_path = _write_environment_contract(tmp_path, include_provider_credentials=False)
     missing_receipt_path = tmp_path / "missing-receipt.json"
 
     queue = plan_general_agent_promotion_live_evidence_queue(
@@ -172,6 +172,8 @@ def test_live_evidence_queue_cli_require_ready_blocks_non_runnable_queue(tmp_pat
 _CONTRACT_NAMES = (
     "MULLU_BROWSER_SANDBOX_EVIDENCE",
     "MULLU_VOICE_PROBE_AUDIO",
+    "OPENAI_API_KEY",
+    "EMAIL_CALENDAR_CONNECTOR_TOKEN",
     "MULLU_GATEWAY_URL",
     "MULLU_RUNTIME_WITNESS_SECRET",
     "MULLU_RUNTIME_CONFORMANCE_SECRET",
@@ -258,8 +260,13 @@ def _write_promotion_plan(tmp_path: Path, *, include_voice_dependency: bool = Fa
     return plan_path
 
 
-def _write_environment_contract(tmp_path: Path) -> Path:
+def _write_environment_contract(tmp_path: Path, *, include_provider_credentials: bool = True) -> Path:
     contract_path = tmp_path / "general_agent_promotion_environment_bindings.json"
+    contract_names = tuple(
+        name
+        for name in _CONTRACT_NAMES
+        if include_provider_credentials or name not in {"OPENAI_API_KEY", "EMAIL_CALENDAR_CONNECTOR_TOKEN"}
+    )
     contract_path.write_text(
         json.dumps(
             {
@@ -275,6 +282,8 @@ def _write_environment_contract(tmp_path: Path) -> Path:
                         "risk": _binding_risk(name),
                         "approval_required": name in {
                             "MULLU_VOICE_PROBE_AUDIO",
+                            "OPENAI_API_KEY",
+                            "EMAIL_CALENDAR_CONNECTOR_TOKEN",
                             "MULLU_RUNTIME_WITNESS_SECRET",
                             "MULLU_RUNTIME_CONFORMANCE_SECRET",
                             "MULLU_DEPLOYMENT_WITNESS_SECRET",
@@ -284,7 +293,7 @@ def _write_environment_contract(tmp_path: Path) -> Path:
                         "required_for": ["handoff_preflight"],
                         "receipt_projection": "name_and_presence_only",
                     }
-                    for name in _CONTRACT_NAMES
+                    for name in contract_names
                 ],
             }
         ),
@@ -315,6 +324,8 @@ def _write_environment_receipt(tmp_path: Path, *, present_names: tuple[str, ...]
                         "risk": _binding_risk(name),
                         "approval_required": name in {
                             "MULLU_VOICE_PROBE_AUDIO",
+                            "OPENAI_API_KEY",
+                            "EMAIL_CALENDAR_CONNECTOR_TOKEN",
                             "MULLU_RUNTIME_WITNESS_SECRET",
                             "MULLU_RUNTIME_CONFORMANCE_SECRET",
                             "MULLU_DEPLOYMENT_WITNESS_SECRET",

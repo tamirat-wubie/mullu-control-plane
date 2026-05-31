@@ -21,7 +21,7 @@ This packet is the operator entry point for the remaining promotion work. It bin
 | Capability capsules | 10 |
 | Governed capabilities | 52 |
 | Aggregate closure actions | 13 |
-| Approval-required actions | 9 |
+| Approval-required actions | 10 |
 | Closure plan schema validation | `ok=true` |
 | Closure plan drift validation | `ok=true` |
 | Production promotion | blocked |
@@ -79,10 +79,10 @@ email_calendar_adapter_not_closed
 deployment_witness_not_published
 production_health_not_declared
 capability_improvement_required:financial.refund
-capability_improvement_required:computer.command.run
-capability_improvement_required:browser.submit
-capability_improvement_required:connector.postgres.write.with_approval
-capability_improvement_required:creative.data_analyze
+capability_improvement_required:agentic_control.evidence.append
+capability_improvement_required:agentic_control.governance_gate.evaluate
+capability_improvement_required:agentic_control.math_algorithm.analyze
+capability_improvement_required:agentic_control.mission.define
 ```
 
 ## Approval-Required Actions
@@ -92,6 +92,12 @@ voice_dependency_missing:OPENAI_API_KEY
 email_calendar_dependency_missing:EMAIL_CALENDAR_CONNECTOR_TOKEN
 deployment_witness_not_published
 production_health_not_declared
+deployment_upstream_api_gate_not_ready
+capability_improvement_required:financial.refund
+capability_improvement_required:agentic_control.evidence.append
+capability_improvement_required:agentic_control.governance_gate.evaluate
+capability_improvement_required:agentic_control.math_algorithm.analyze
+capability_improvement_required:agentic_control.mission.define
 ```
 
 ## Operator Sequence

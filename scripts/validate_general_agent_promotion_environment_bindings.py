@@ -36,6 +36,8 @@ DEFAULT_SCHEMA = REPO_ROOT / "schemas" / "general_agent_promotion_environment_bi
 REQUIRED_BINDING_SPECS: dict[str, tuple[str, str, bool]] = {
     "MULLU_BROWSER_SANDBOX_EVIDENCE": ("artifact_path", "medium", False),
     "MULLU_VOICE_PROBE_AUDIO": ("audio_path", "high", True),
+    "OPENAI_API_KEY": ("secret", "critical", True),
+    "EMAIL_CALENDAR_CONNECTOR_TOKEN": ("secret", "critical", True),
     "MULLU_GATEWAY_URL": ("url", "high", False),
     "MULLU_RUNTIME_WITNESS_SECRET": ("secret", "critical", True),
     "MULLU_RUNTIME_CONFORMANCE_SECRET": ("secret", "critical", True),

@@ -19,9 +19,11 @@ def test_validate_environment_bindings_accepts_example() -> None:
 
     assert result.valid is True
     assert result.contract_id == "general-agent-promotion-environment-bindings-v1"
-    assert result.binding_count == 7
+    assert result.binding_count == 9
     assert "MULLU_GATEWAY_URL" in result.required_names
     assert "MULLU_DEPLOYMENT_WITNESS_SECRET" in result.required_names
+    assert "OPENAI_API_KEY" in result.required_names
+    assert "EMAIL_CALENDAR_CONNECTOR_TOKEN" in result.required_names
     assert result.errors == ()
 
 
@@ -36,7 +38,7 @@ def test_validate_environment_bindings_rejects_serialized_secret(tmp_path: Path)
     result = validate_general_agent_promotion_environment_bindings(contract_path=contract_path)
 
     assert result.valid is False
-    assert result.binding_count == 7
+    assert result.binding_count == 9
     assert any("may_serialize_value" in error for error in result.errors)
 
 
@@ -53,7 +55,7 @@ def test_validate_environment_bindings_rejects_checklist_drift(tmp_path: Path) -
     result = validate_general_agent_promotion_environment_bindings(checklist_path=checklist_path)
 
     assert result.valid is False
-    assert result.binding_count == 7
+    assert result.binding_count == 9
     assert any("binding names must match checklist" in error for error in result.errors)
 
 
@@ -64,9 +66,10 @@ def test_validate_environment_bindings_cli_outputs_json(capsys) -> None:
 
     assert exit_code == 0
     assert payload["valid"] is True
-    assert payload["binding_count"] == 7
+    assert payload["binding_count"] == 9
     assert "MULLU_AUTHORITY_OPERATOR_SECRET" in payload["required_names"]
     assert "MULLU_DEPLOYMENT_WITNESS_SECRET" in payload["required_names"]
+    assert "OPENAI_API_KEY" in payload["required_names"]
 
 
 def test_validate_environment_bindings_missing_file_error_is_bounded(tmp_path: Path) -> None:

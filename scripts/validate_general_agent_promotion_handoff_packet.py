@@ -49,11 +49,12 @@ REQUIRED_APPROVAL_BLOCKERS = frozenset(
         "email_calendar_dependency_missing:EMAIL_CALENDAR_CONNECTOR_TOKEN",
         "deployment_witness_not_published",
         "production_health_not_declared",
+        "deployment_upstream_api_gate_not_ready",
         "capability_improvement_required:financial.refund",
-        "capability_improvement_required:computer.command.run",
-        "capability_improvement_required:browser.submit",
-        "capability_improvement_required:connector.postgres.write.with_approval",
-        "capability_improvement_required:creative.data_analyze",
+        "capability_improvement_required:agentic_control.evidence.append",
+        "capability_improvement_required:agentic_control.governance_gate.evaluate",
+        "capability_improvement_required:agentic_control.math_algorithm.analyze",
+        "capability_improvement_required:agentic_control.mission.define",
     }
 )
 REQUIRED_ENTRY_POINTS = {
@@ -198,7 +199,7 @@ def _validate_scalar_fields(
         "readiness_level": "pilot-governed-core",
         "capability_capsules": 10,
         "governed_capabilities": 52,
-        "approval_required_actions": 9,
+        "approval_required_actions": 10,
         "production_promotion": "blocked",
     }
     if expected_closure_actions is not None:

@@ -23,6 +23,8 @@ DEFAULT_CHECKLIST = Path("examples") / "general_agent_promotion_operator_checkli
 REQUIRED_ENVIRONMENT_VARIABLES = frozenset({
     "MULLU_BROWSER_SANDBOX_EVIDENCE",
     "MULLU_VOICE_PROBE_AUDIO",
+    "OPENAI_API_KEY",
+    "EMAIL_CALENDAR_CONNECTOR_TOKEN",
     "MULLU_GATEWAY_URL",
     "MULLU_RUNTIME_WITNESS_SECRET",
     "MULLU_RUNTIME_CONFORMANCE_SECRET",
@@ -45,6 +47,7 @@ REQUIRED_APPROVAL_BLOCKERS = frozenset({
     "email_calendar_dependency_missing:EMAIL_CALENDAR_CONNECTOR_TOKEN",
     "deployment_witness_not_published",
     "production_health_not_declared",
+    "deployment_upstream_api_gate_not_ready",
 })
 REQUIRED_BLOCKING_GAPS = frozenset({
     "adapter_evidence_not_closed",
