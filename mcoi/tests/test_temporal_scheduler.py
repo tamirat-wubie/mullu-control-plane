@@ -13,7 +13,13 @@ from __future__ import annotations
 
 import pytest
 
-from mcoi_runtime.contracts.temporal_runtime import TemporalActionRequest, TemporalPolicyVerdict
+from mcoi_runtime.contracts.temporal_runtime import (
+    TemporalActionRequest,
+    TemporalPolicyVerdict,
+    TemporalSkillPlan,
+    TemporalSkillStage,
+    TemporalSkillStageType,
+)
 from mcoi_runtime.core.event_spine import EventSpineEngine
 from mcoi_runtime.core.invariants import RuntimeCoreInvariantError
 from mcoi_runtime.core.temporal_runtime import TemporalRuntimeEngine
@@ -35,9 +41,9 @@ class MutableClock:
         self.now = now
 
 
-def _engine(clock: MutableClock) -> TemporalSchedulerEngine:
+def _engine(clock: MutableClock, *, skill_stage_provider: object | None = None) -> TemporalSchedulerEngine:
     temporal = TemporalRuntimeEngine(EventSpineEngine(), clock=clock)
-    return TemporalSchedulerEngine(temporal, clock=clock)
+    return TemporalSchedulerEngine(temporal, clock=clock, skill_stage_provider=skill_stage_provider)
 
 
 def _action(
@@ -49,6 +55,7 @@ def _action(
     retry_after: str = "",
     max_attempts: int = 0,
     attempt_count: int = 0,
+    skill_plan: TemporalSkillPlan | None = None,
 ) -> TemporalActionRequest:
     return TemporalActionRequest(
         action_id="act-1",
@@ -63,7 +70,56 @@ def _action(
         retry_after=retry_after,
         max_attempts=max_attempts,
         attempt_count=attempt_count,
+        skill_plan=skill_plan,
     )
+
+
+def _valid_skill_plan() -> TemporalSkillPlan:
+    return TemporalSkillPlan(
+        plan_id="plan-1",
+        terminal_condition="final_receipt",
+        stages=(
+            TemporalSkillStage(
+                stage_id="observe",
+                stage_type=TemporalSkillStageType.OBSERVE,
+                output_keys=("observation",),
+            ),
+            TemporalSkillStage(
+                stage_id="approve",
+                stage_type=TemporalSkillStageType.APPROVAL,
+                predecessor_ids=("observe",),
+                input_bindings={"observation": "observe.observation"},
+                output_keys=("approval",),
+                requires_operator_approval=True,
+            ),
+            TemporalSkillStage(
+                stage_id="execute",
+                stage_type=TemporalSkillStageType.EFFECT,
+                predecessor_ids=("approve",),
+                input_bindings={"approval": "approve.approval"},
+                output_keys=("final_receipt",),
+                rollback_required=True,
+            ),
+        ),
+    )
+
+
+class RecordingSkillStageProvider:
+    """Deterministic test provider for temporal skill plan execution."""
+
+    def __init__(self, outputs_by_stage: dict[str, dict[str, object]]) -> None:
+        self.outputs_by_stage = outputs_by_stage
+        self.calls: list[tuple[str, dict[str, object]]] = []
+
+    def execute_stage(
+        self,
+        plan: TemporalSkillPlan,
+        stage: TemporalSkillStage,
+        input_values: dict[str, object],
+        executed_at: str,
+    ) -> dict[str, object]:
+        self.calls.append((stage.stage_id, dict(input_values)))
+        return dict(self.outputs_by_stage.get(stage.stage_id, {}))
 
 
 def test_register_requires_execute_at() -> None:
@@ -238,3 +294,172 @@ def test_missed_action_records_missed_run_receipt() -> None:
     assert receipt.reason == "missed_run"
     assert scheduler.get("sched-1").state == ScheduledActionState.MISSED
     assert scheduler.recent_receipts()[0].receipt_id == receipt.receipt_id
+
+
+def test_temporal_skill_plan_executes_through_provider_receipts() -> None:
+    clock = MutableClock("2026-05-04T14:00:00+00:00")
+    provider = RecordingSkillStageProvider(
+        {
+            "observe": {"observation": "ready"},
+            "approve": {"approval": "approved"},
+            "execute": {"final_receipt": "receipt-001"},
+        }
+    )
+    scheduler = _engine(clock, skill_stage_provider=provider)
+    scheduler.register("sched-1", _action(skill_plan=_valid_skill_plan()))
+    lease = scheduler.acquire_lease("sched-1", "worker-a")
+
+    execution = scheduler.execute_skill_plan("sched-1", worker_id="worker-a")
+
+    assert lease is not None
+    assert execution.verdict.value == "pass"
+    assert execution.reason == "skill_plan_executed"
+    assert execution.terminal_outputs["final_receipt"] == "receipt-001"
+    assert [call[0] for call in provider.calls] == ["observe", "approve", "execute"]
+    assert provider.calls[1][1] == {"observation": "ready"}
+    assert provider.calls[2][1] == {"approval": "approved"}
+    assert scheduler.get("sched-1").state == ScheduledActionState.COMPLETED
+    assert scheduler.skill_plan_execution_count == 1
+    assert scheduler.receipt_count == 1
+    assert scheduler.summary()["skill_plan_executions"] == 1
+
+
+def test_temporal_skill_plan_execution_is_idempotent_after_terminal_state() -> None:
+    clock = MutableClock("2026-05-04T14:00:00+00:00")
+    provider = RecordingSkillStageProvider(
+        {
+            "observe": {"observation": "ready"},
+            "approve": {"approval": "approved"},
+            "execute": {"final_receipt": "receipt-001"},
+        }
+    )
+    scheduler = _engine(clock, skill_stage_provider=provider)
+    scheduler.register("sched-1", _action(skill_plan=_valid_skill_plan()))
+    scheduler.acquire_lease("sched-1", "worker-a")
+
+    first = scheduler.execute_skill_plan("sched-1", worker_id="worker-a")
+    second = scheduler.execute_skill_plan("sched-1", worker_id="worker-a")
+
+    assert second == first
+    assert scheduler.get("sched-1").state == ScheduledActionState.COMPLETED
+    assert scheduler.receipt_count == 1
+    assert scheduler.skill_plan_execution_count == 1
+
+
+def test_temporal_skill_plan_execution_blocks_on_missing_stage_output() -> None:
+    clock = MutableClock("2026-05-04T14:00:00+00:00")
+    provider = RecordingSkillStageProvider(
+        {
+            "observe": {"observation": "ready"},
+            "approve": {},
+            "execute": {"final_receipt": "receipt-001"},
+        }
+    )
+    scheduler = _engine(clock, skill_stage_provider=provider)
+    scheduler.register("sched-1", _action(skill_plan=_valid_skill_plan()))
+    scheduler.acquire_lease("sched-1", "worker-a")
+
+    execution = scheduler.execute_skill_plan("sched-1", worker_id="worker-a")
+
+    assert execution.verdict.value == "fail"
+    assert execution.reason == "stage_output_missing"
+    assert execution.stage_receipts[-1].metadata["missing_output_keys"] == ("approval",)
+    assert [call[0] for call in provider.calls] == ["observe", "approve"]
+    assert scheduler.get("sched-1").state == ScheduledActionState.BLOCKED
+    assert scheduler.receipt_count == 1
+    assert scheduler.skill_plan_execution_count == 1
+
+
+def test_temporal_skill_plan_execution_accepts_simple_input_binding() -> None:
+    clock = MutableClock("2026-05-04T14:00:00+00:00")
+    provider = RecordingSkillStageProvider(
+        {
+            "observe": {"observation": "ready"},
+            "approve": {"approval": "approved"},
+        }
+    )
+    plan = TemporalSkillPlan(
+        plan_id="plan-1",
+        terminal_condition="approval",
+        stages=(
+            TemporalSkillStage(
+                stage_id="observe",
+                stage_type=TemporalSkillStageType.OBSERVE,
+                output_keys=("observation",),
+            ),
+            TemporalSkillStage(
+                stage_id="approve",
+                stage_type=TemporalSkillStageType.APPROVAL,
+                predecessor_ids=("observe",),
+                input_bindings={"evidence": "observation"},
+                output_keys=("approval",),
+            ),
+        ),
+    )
+    scheduler = _engine(clock, skill_stage_provider=provider)
+    scheduler.register("sched-1", _action(skill_plan=plan))
+    scheduler.acquire_lease("sched-1", "worker-a")
+
+    execution = scheduler.execute_skill_plan("sched-1", worker_id="worker-a")
+
+    assert execution.verdict.value == "pass"
+    assert execution.terminal_outputs["approval"] == "approved"
+    assert provider.calls[1][1] == {"evidence": "ready"}
+    assert scheduler.get("sched-1").state == ScheduledActionState.COMPLETED
+    assert scheduler.receipt_count == 1
+
+
+def test_temporal_skill_plan_execution_blocks_on_dangling_input_binding() -> None:
+    clock = MutableClock("2026-05-04T14:00:00+00:00")
+    provider = RecordingSkillStageProvider(
+        {
+            "observe": {"observation": "ready"},
+            "approve": {"approval": "approved"},
+        }
+    )
+    plan = TemporalSkillPlan(
+        plan_id="plan-1",
+        terminal_condition="approval",
+        stages=(
+            TemporalSkillStage(
+                stage_id="observe",
+                stage_type=TemporalSkillStageType.OBSERVE,
+                output_keys=("observation",),
+            ),
+            TemporalSkillStage(
+                stage_id="approve",
+                stage_type=TemporalSkillStageType.APPROVAL,
+                predecessor_ids=("observe",),
+                input_bindings={"evidence": "missing_output"},
+                output_keys=("approval",),
+            ),
+        ),
+    )
+    scheduler = _engine(clock, skill_stage_provider=provider)
+    scheduler.register("sched-1", _action(skill_plan=plan))
+    scheduler.acquire_lease("sched-1", "worker-a")
+
+    execution = scheduler.execute_skill_plan("sched-1", worker_id="worker-a")
+
+    assert execution.verdict.value == "fail"
+    assert execution.reason == "dangling_input_binding"
+    assert [call[0] for call in provider.calls] == ["observe"]
+    assert scheduler.get("sched-1").state == ScheduledActionState.BLOCKED
+    assert scheduler.receipt_count == 1
+
+
+def test_temporal_skill_plan_execution_requires_provider_and_running_state() -> None:
+    clock = MutableClock("2026-05-04T14:00:00+00:00")
+    scheduler = _engine(clock)
+    scheduler.register("sched-1", _action(skill_plan=_valid_skill_plan()))
+
+    with pytest.raises(RuntimeCoreInvariantError, match="schedule must be running"):
+        scheduler.execute_skill_plan("sched-1", worker_id="worker-a")
+
+    scheduler.acquire_lease("sched-1", "worker-a")
+    with pytest.raises(RuntimeCoreInvariantError, match="skill_stage_provider is required"):
+        scheduler.execute_skill_plan("sched-1", worker_id="worker-a")
+
+    assert scheduler.get("sched-1").state == ScheduledActionState.RUNNING
+    assert scheduler.receipt_count == 0
+    assert scheduler.skill_plan_execution_count == 0

@@ -20,6 +20,9 @@ from typing import Any, Iterable
 from mcoi_runtime.contracts.temporal_runtime import (
     TemporalActionRequest,
     TemporalRiskLevel,
+    TemporalSkillPlan,
+    TemporalSkillStage,
+    TemporalSkillStageType,
 )
 from mcoi_runtime.core.temporal_scheduler import (
     ScheduledActionState,
@@ -61,6 +64,70 @@ def _atomic_write(path: Path, content: str) -> None:
         ) from exc
 
 
+def _skill_stage_to_json(stage: TemporalSkillStage) -> dict[str, Any]:
+    return {
+        "stage_id": stage.stage_id,
+        "stage_type": stage.stage_type.value,
+        "predecessor_ids": list(stage.predecessor_ids),
+        "input_bindings": dict(stage.input_bindings),
+        "output_keys": list(stage.output_keys),
+        "requires_operator_approval": stage.requires_operator_approval,
+        "rollback_required": stage.rollback_required,
+        "verification_evidence_key": stage.verification_evidence_key,
+        "metadata": dict(stage.metadata),
+    }
+
+
+def _skill_stage_bool(raw: dict[str, Any], field_name: str) -> bool:
+    value = raw.get(field_name, False)
+    if not isinstance(value, bool):
+        raise ValueError(f"{field_name} must be a bool")
+    return value
+
+
+def _skill_stage_from_json(raw: dict[str, Any]) -> TemporalSkillStage:
+    if not isinstance(raw, dict):
+        raise ValueError("temporal skill stage must be an object")
+    return TemporalSkillStage(
+        stage_id=raw["stage_id"],
+        stage_type=TemporalSkillStageType(raw.get("stage_type", TemporalSkillStageType.OBSERVE.value)),
+        predecessor_ids=tuple(raw.get("predecessor_ids", ())),
+        input_bindings=raw.get("input_bindings", {}),
+        output_keys=tuple(raw.get("output_keys", ())),
+        requires_operator_approval=_skill_stage_bool(raw, "requires_operator_approval"),
+        rollback_required=_skill_stage_bool(raw, "rollback_required"),
+        verification_evidence_key=raw.get("verification_evidence_key", ""),
+        metadata=raw.get("metadata", {}),
+    )
+
+
+def _skill_plan_to_json(plan: TemporalSkillPlan | None) -> dict[str, Any] | None:
+    if plan is None:
+        return None
+    return {
+        "plan_id": plan.plan_id,
+        "stages": [_skill_stage_to_json(stage) for stage in plan.stages],
+        "terminal_condition": plan.terminal_condition,
+        "metadata": dict(plan.metadata),
+    }
+
+
+def _skill_plan_from_json(raw: Any) -> TemporalSkillPlan | None:
+    if raw is None:
+        return None
+    if not isinstance(raw, dict):
+        raise ValueError("temporal skill plan must be an object")
+    stages_raw = raw.get("stages", ())
+    if isinstance(stages_raw, (str, bytes)) or not isinstance(stages_raw, list):
+        raise ValueError("temporal skill plan stages must be an array")
+    return TemporalSkillPlan(
+        plan_id=raw["plan_id"],
+        stages=tuple(_skill_stage_from_json(stage) for stage in stages_raw),
+        terminal_condition=raw["terminal_condition"],
+        metadata=raw.get("metadata", {}),
+    )
+
+
 def _action_request_to_json(action: TemporalActionRequest) -> dict[str, Any]:
     return {
         "action_id": action.action_id,
@@ -77,6 +144,7 @@ def _action_request_to_json(action: TemporalActionRequest) -> dict[str, Any]:
         "retry_after": action.retry_after,
         "max_attempts": action.max_attempts,
         "attempt_count": action.attempt_count,
+        "skill_plan": _skill_plan_to_json(action.skill_plan),
         "metadata": dict(action.metadata),
     }
 
@@ -100,6 +168,7 @@ def _action_request_from_json(raw: dict[str, Any]) -> TemporalActionRequest:
             retry_after=raw.get("retry_after", ""),
             max_attempts=int(raw.get("max_attempts", 0)),
             attempt_count=int(raw.get("attempt_count", 0)),
+            skill_plan=_skill_plan_from_json(raw.get("skill_plan")),
             metadata=raw.get("metadata", {}),
         )
     except (KeyError, TypeError, ValueError) as exc:

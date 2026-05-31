@@ -1,7 +1,8 @@
 """Purpose: temporal reasoning runtime contracts.
 Governance scope: typed descriptors for temporal events, intervals, constraints,
     persistence records, sequences, decisions, assessments, violations,
-    snapshots, action policy decisions, clock samples, and closure reports.
+    snapshots, action policy decisions, clock samples, temporal skill plans,
+    temporal skill execution receipts, and closure reports.
 Dependencies: _base contract utilities.
 Invariants:
   - Intervals auto-derive disposition from start/end.
@@ -27,6 +28,70 @@ from ._base import (
     require_non_negative_int,
     require_unit_float,
 )
+
+
+# ---------------------------------------------------------------------------
+# Local validators
+# ---------------------------------------------------------------------------
+
+
+def _freeze_text_tuple(values: tuple[str, ...], field_name: str) -> tuple[str, ...]:
+    if isinstance(values, (str, bytes)) or not isinstance(values, (tuple, list)):
+        raise ValueError(f"{field_name} must be an array")
+    return tuple(
+        require_non_empty_text(value, f"{field_name}[{index}]")
+        for index, value in enumerate(values)
+    )
+
+
+def _freeze_text_mapping(values: Mapping[str, str], field_name: str) -> Mapping[str, str]:
+    if not isinstance(values, Mapping):
+        raise ValueError(f"{field_name} must be a mapping")
+    return freeze_value(
+        {
+            require_non_empty_text(key, f"{field_name}.key"): require_non_empty_text(
+                value,
+                f"{field_name}[{key}]",
+            )
+            for key, value in values.items()
+        }
+    )
+
+
+def _freeze_keyed_mapping(values: Mapping[str, Any], field_name: str) -> Mapping[str, Any]:
+    if not isinstance(values, Mapping):
+        raise ValueError(f"{field_name} must be a mapping")
+    return freeze_value(
+        {
+            require_non_empty_text(key, f"{field_name}.key"): value
+            for key, value in values.items()
+        }
+    )
+
+
+def _validate_temporal_skill_stage_graph(stages: tuple["TemporalSkillStage", ...]) -> None:
+    stage_ids = tuple(stage.stage_id for stage in stages)
+    if len(set(stage_ids)) != len(stage_ids):
+        raise ValueError("stages must use unique stage_id values")
+    stage_by_id = {stage.stage_id: stage for stage in stages}
+    visiting: set[str] = set()
+    visited: set[str] = set()
+
+    def visit(stage_id: str) -> None:
+        if stage_id in visiting:
+            raise ValueError("stages must be acyclic")
+        if stage_id in visited:
+            return
+        visiting.add(stage_id)
+        for predecessor_id in stage_by_id[stage_id].predecessor_ids:
+            if predecessor_id not in stage_by_id:
+                raise ValueError("predecessor_ids must reference stages in plan")
+            visit(predecessor_id)
+        visiting.remove(stage_id)
+        visited.add(stage_id)
+
+    for stage_id in stage_ids:
+        visit(stage_id)
 
 
 # ---------------------------------------------------------------------------
@@ -91,6 +156,21 @@ class TemporalPolicyVerdict(Enum):
     DENY = "deny"
     DEFER = "defer"
     ESCALATE = "escalate"
+
+
+class TemporalSkillStageType(Enum):
+    """Stage type for a governed temporal skill plan."""
+    OBSERVE = "observe"
+    APPROVAL = "approval"
+    EFFECT = "effect"
+    VERIFY = "verify"
+
+
+class TemporalSkillExecutionVerdict(Enum):
+    """Execution verdict for a temporal skill plan or stage."""
+    PASS = "pass"
+    FAIL = "fail"
+    BLOCKED = "blocked"
 
 
 # ---------------------------------------------------------------------------
@@ -227,6 +307,126 @@ class TemporalClockSample(ContractRecord):
 
 
 @dataclass(frozen=True, slots=True)
+class TemporalSkillStage(ContractRecord):
+    """One governed stage in a temporal skill plan."""
+
+    stage_id: str = ""
+    stage_type: TemporalSkillStageType = TemporalSkillStageType.OBSERVE
+    predecessor_ids: tuple[str, ...] = ()
+    input_bindings: Mapping[str, str] = field(default_factory=dict)
+    output_keys: tuple[str, ...] = ()
+    requires_operator_approval: bool = False
+    rollback_required: bool = False
+    verification_evidence_key: str = ""
+    metadata: Mapping[str, Any] = field(default_factory=dict)
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "stage_id", require_non_empty_text(self.stage_id, "stage_id"))
+        if not isinstance(self.stage_type, TemporalSkillStageType):
+            raise ValueError("stage_type must be a TemporalSkillStageType")
+        object.__setattr__(self, "predecessor_ids", _freeze_text_tuple(self.predecessor_ids, "predecessor_ids"))
+        object.__setattr__(self, "input_bindings", _freeze_text_mapping(self.input_bindings, "input_bindings"))
+        object.__setattr__(self, "output_keys", _freeze_text_tuple(self.output_keys, "output_keys"))
+        if not isinstance(self.requires_operator_approval, bool):
+            raise ValueError("requires_operator_approval must be a bool")
+        if not isinstance(self.rollback_required, bool):
+            raise ValueError("rollback_required must be a bool")
+        if self.verification_evidence_key:
+            object.__setattr__(
+                self,
+                "verification_evidence_key",
+                require_non_empty_text(self.verification_evidence_key, "verification_evidence_key"),
+            )
+        object.__setattr__(self, "metadata", freeze_value(dict(self.metadata)))
+
+
+@dataclass(frozen=True, slots=True)
+class TemporalSkillPlan(ContractRecord):
+    """Validated temporal skill workflow bound to a scheduled action."""
+
+    plan_id: str = ""
+    stages: tuple[TemporalSkillStage, ...] = ()
+    terminal_condition: str = ""
+    metadata: Mapping[str, Any] = field(default_factory=dict)
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "plan_id", require_non_empty_text(self.plan_id, "plan_id"))
+        stages = tuple(self.stages)
+        if not stages:
+            raise ValueError("stages must contain at least one item")
+        for stage in stages:
+            if not isinstance(stage, TemporalSkillStage):
+                raise ValueError("stages must contain TemporalSkillStage values")
+        _validate_temporal_skill_stage_graph(stages)
+        object.__setattr__(self, "stages", stages)
+        object.__setattr__(self, "terminal_condition", require_non_empty_text(self.terminal_condition, "terminal_condition"))
+        object.__setattr__(self, "metadata", freeze_value(dict(self.metadata)))
+
+
+@dataclass(frozen=True, slots=True)
+class TemporalSkillStageExecution(ContractRecord):
+    """Execution receipt for one temporal skill plan stage."""
+
+    execution_id: str = ""
+    plan_id: str = ""
+    stage_id: str = ""
+    stage_type: TemporalSkillStageType = TemporalSkillStageType.OBSERVE
+    verdict: TemporalSkillExecutionVerdict = TemporalSkillExecutionVerdict.BLOCKED
+    reason: str = ""
+    executed_at: str = ""
+    input_values: Mapping[str, Any] = field(default_factory=dict)
+    output_values: Mapping[str, Any] = field(default_factory=dict)
+    metadata: Mapping[str, Any] = field(default_factory=dict)
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "execution_id", require_non_empty_text(self.execution_id, "execution_id"))
+        object.__setattr__(self, "plan_id", require_non_empty_text(self.plan_id, "plan_id"))
+        object.__setattr__(self, "stage_id", require_non_empty_text(self.stage_id, "stage_id"))
+        if not isinstance(self.stage_type, TemporalSkillStageType):
+            raise ValueError("stage_type must be a TemporalSkillStageType")
+        if not isinstance(self.verdict, TemporalSkillExecutionVerdict):
+            raise ValueError("verdict must be a TemporalSkillExecutionVerdict")
+        object.__setattr__(self, "reason", require_non_empty_text(self.reason, "reason"))
+        require_datetime_text(self.executed_at, "executed_at")
+        object.__setattr__(self, "input_values", _freeze_keyed_mapping(self.input_values, "input_values"))
+        object.__setattr__(self, "output_values", _freeze_keyed_mapping(self.output_values, "output_values"))
+        object.__setattr__(self, "metadata", freeze_value(dict(self.metadata)))
+
+
+@dataclass(frozen=True, slots=True)
+class TemporalSkillPlanExecution(ContractRecord):
+    """Execution receipt for a temporal skill plan bound to one schedule."""
+
+    execution_id: str = ""
+    schedule_ref: str = ""
+    plan_id: str = ""
+    verdict: TemporalSkillExecutionVerdict = TemporalSkillExecutionVerdict.BLOCKED
+    reason: str = ""
+    started_at: str = ""
+    completed_at: str = ""
+    stage_receipts: tuple[TemporalSkillStageExecution, ...] = ()
+    terminal_outputs: Mapping[str, Any] = field(default_factory=dict)
+    metadata: Mapping[str, Any] = field(default_factory=dict)
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "execution_id", require_non_empty_text(self.execution_id, "execution_id"))
+        object.__setattr__(self, "schedule_ref", require_non_empty_text(self.schedule_ref, "schedule_ref"))
+        object.__setattr__(self, "plan_id", require_non_empty_text(self.plan_id, "plan_id"))
+        if not isinstance(self.verdict, TemporalSkillExecutionVerdict):
+            raise ValueError("verdict must be a TemporalSkillExecutionVerdict")
+        object.__setattr__(self, "reason", require_non_empty_text(self.reason, "reason"))
+        require_datetime_text(self.started_at, "started_at")
+        require_datetime_text(self.completed_at, "completed_at")
+        receipts = tuple(self.stage_receipts)
+        for receipt in receipts:
+            if not isinstance(receipt, TemporalSkillStageExecution):
+                raise ValueError("stage_receipts must contain TemporalSkillStageExecution values")
+        object.__setattr__(self, "stage_receipts", receipts)
+        object.__setattr__(self, "terminal_outputs", _freeze_keyed_mapping(self.terminal_outputs, "terminal_outputs"))
+        object.__setattr__(self, "metadata", freeze_value(dict(self.metadata)))
+
+
+@dataclass(frozen=True, slots=True)
 class TemporalActionRequest(ContractRecord):
     """Action request with explicit temporal authorization windows."""
 
@@ -244,6 +444,7 @@ class TemporalActionRequest(ContractRecord):
     retry_after: str = ""
     max_attempts: int = 0
     attempt_count: int = 0
+    skill_plan: TemporalSkillPlan | None = None
     metadata: Mapping[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
@@ -267,6 +468,8 @@ class TemporalActionRequest(ContractRecord):
                 require_datetime_text(value, field_name)
         object.__setattr__(self, "max_attempts", require_non_negative_int(self.max_attempts, "max_attempts"))
         object.__setattr__(self, "attempt_count", require_non_negative_int(self.attempt_count, "attempt_count"))
+        if self.skill_plan is not None and not isinstance(self.skill_plan, TemporalSkillPlan):
+            raise ValueError("skill_plan must be a TemporalSkillPlan")
         object.__setattr__(self, "metadata", freeze_value(dict(self.metadata)))
 
 
