@@ -232,6 +232,15 @@ class SimpleOnboardingStep:
     command: str
     purpose: str
 
+    def __post_init__(self) -> None:
+        for field_name, field_value in {
+            "step": self.step,
+            "title": self.title,
+            "command": self.command,
+            "purpose": self.purpose,
+        }.items():
+            _require_trimmed_text(field_value, field_name)
+
     def to_dict(self) -> dict[str, str]:
         """Return a JSON-compatible onboarding step."""
 
@@ -790,3 +799,9 @@ def _reject_unsupported_fields(value: Mapping[str, object], allowed_fields: froz
 def _require_text(value: str, field_name: str) -> None:
     if not isinstance(value, str) or not value.strip():
         raise RuntimeCoreInvariantError(f"{field_name} must be non-empty text")
+
+
+def _require_trimmed_text(value: str, field_name: str) -> None:
+    _require_text(value, field_name)
+    if value.strip() != value:
+        raise RuntimeCoreInvariantError(f"{field_name} must be trimmed text")
