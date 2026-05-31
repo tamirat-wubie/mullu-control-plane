@@ -3729,6 +3729,50 @@ def proof_coverage_matrix() -> dict[str, Any]:
             },
         ),
         _surface(
+            "agentic_control_capability_pack",
+            [
+                "agentic_control.mission.define",
+                "agentic_control.priority.rank",
+                "agentic_control.governance_gate.evaluate",
+                "agentic_control.resource_budget.bound",
+                "agentic_control.math_algorithm.analyze",
+                "agentic_control.security_threat_model.build",
+                "agentic_control.swarm.coordinate",
+                "agentic_control.product_management.plan",
+                "agentic_control.verification.plan",
+                "agentic_control.evidence.append",
+                "agentic_control.autonomous_operations.v1",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "capsules/agentic_control.json",
+                "capabilities/agentic_control/capability_pack.json",
+                "gateway/capability_fabric.py",
+                "mcoi/mcoi_runtime/core/default_skill_catalog.py",
+                "schemas/agentic_control/control_action.input.schema.json",
+                "schemas/agentic_control/control_action.output.schema.json",
+                "tests/test_gateway/test_agentic_control_capability_pack.py",
+                "tests/test_gateway/test_capability_fabric.py",
+                "mcoi/tests/test_default_skill_catalog.py",
+            ],
+            "Agentic-control capability pack admits bounded autonomous mission control, prioritization, governance gating, resource bounding, algorithm review, threat modeling, swarm coordination, product planning, verification planning, and evidence ledger append behind governed default-pack admission; the evidence append path is world-mutating, approval-gated, receipt-bound, and blocked from production readiness without live evidence.",
+            [
+                "agentic_control_capability_entries_schema_valid",
+                "agentic_control_pack_projects_governed_authority_records",
+                "agentic_control_schemas_accept_representative_contracts",
+                "agentic_control_schemas_reject_unbounded_or_unknown_payloads",
+                "agentic_control_production_gate_blocks_without_live_evidence",
+            ],
+            runtime_witness_anchor_aliases={
+                "agentic_control_capability_entries_schema_valid": [
+                    "agentic_control_capability_entries_are_schema_valid"
+                ],
+            },
+        ),
+        _surface(
             "agent_identity",
             [
                 "AgentIdentityRegistry.register",

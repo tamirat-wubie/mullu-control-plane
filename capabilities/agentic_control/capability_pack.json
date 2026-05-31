@@ -1,0 +1,599 @@
+{
+  "capabilities": [
+    {
+      "capability_id": "agentic_control.mission.define",
+      "domain": "agentic_control",
+      "version": "0.1.0",
+      "input_schema_ref": "schemas/agentic_control/control_action.input.schema.json",
+      "output_schema_ref": "schemas/agentic_control/control_action.output.schema.json",
+      "effect_model": {
+        "expected_effects": ["bounded_mission_contract_emitted"],
+        "forbidden_effects": ["workspace_file_written", "external_message_sent", "tool_executed_without_gate"],
+        "reconciliation_required": true
+      },
+      "evidence_model": {
+        "required_evidence": ["mission_contract_hash", "halt_conditions", "success_criteria"],
+        "terminal_certificate_required": true
+      },
+      "authority_policy": {
+        "required_roles": ["operator"],
+        "approval_chain": ["governance_approver"],
+        "separation_of_duty": true
+      },
+      "isolation_profile": {
+        "execution_plane": "gateway_process",
+        "network_allowlist": [],
+        "secret_scope": "none"
+      },
+      "recovery_plan": {
+        "rollback_capability": "",
+        "compensation_capability": "agentic_control.mission.define",
+        "review_required_on_failure": true
+      },
+      "cost_model": {
+        "budget_class": "standard",
+        "max_estimated_cost": 0.01
+      },
+      "obligation_model": {
+        "owner_team": "platform-ops",
+        "failure_due_seconds": 900,
+        "escalation_route": "support@mullusi.com"
+      },
+      "certification_status": "certified",
+      "metadata": {
+        "display_name": "Define bounded mission",
+        "risk_tier": "low"
+      },
+      "extensions": {
+        "governed_record": {
+          "read_only": true,
+          "world_mutating": false,
+          "requires_approval": false,
+          "requires_sandbox": false,
+          "allowed_roles": ["operator"],
+          "allowed_tools": ["agentic_control.mission.define"],
+          "allowed_networks": [],
+          "verification_required": true,
+          "receipt_required": true,
+          "rollback_or_compensation_required": false
+        }
+      }
+    },
+    {
+      "capability_id": "agentic_control.priority.rank",
+      "domain": "agentic_control",
+      "version": "0.1.0",
+      "input_schema_ref": "schemas/agentic_control/control_action.input.schema.json",
+      "output_schema_ref": "schemas/agentic_control/control_action.output.schema.json",
+      "effect_model": {
+        "expected_effects": ["priority_order_emitted"],
+        "forbidden_effects": ["task_executed", "external_message_sent", "workspace_file_written"],
+        "reconciliation_required": true
+      },
+      "evidence_model": {
+        "required_evidence": ["ranking_hash", "dependency_blockers", "risk_weights"],
+        "terminal_certificate_required": true
+      },
+      "authority_policy": {
+        "required_roles": ["operator"],
+        "approval_chain": [],
+        "separation_of_duty": false
+      },
+      "isolation_profile": {
+        "execution_plane": "gateway_process",
+        "network_allowlist": [],
+        "secret_scope": "none"
+      },
+      "recovery_plan": {
+        "rollback_capability": "",
+        "compensation_capability": "agentic_control.priority.rank",
+        "review_required_on_failure": true
+      },
+      "cost_model": {
+        "budget_class": "standard",
+        "max_estimated_cost": 0.01
+      },
+      "obligation_model": {
+        "owner_team": "platform-ops",
+        "failure_due_seconds": 900,
+        "escalation_route": "support@mullusi.com"
+      },
+      "certification_status": "certified",
+      "metadata": {
+        "display_name": "Rank autonomous work",
+        "risk_tier": "low"
+      },
+      "extensions": {
+        "governed_record": {
+          "read_only": true,
+          "world_mutating": false,
+          "requires_approval": false,
+          "requires_sandbox": false,
+          "allowed_roles": ["operator"],
+          "allowed_tools": ["agentic_control.priority.rank"],
+          "allowed_networks": [],
+          "verification_required": true,
+          "receipt_required": true,
+          "rollback_or_compensation_required": false
+        }
+      }
+    },
+    {
+      "capability_id": "agentic_control.governance_gate.evaluate",
+      "domain": "agentic_control",
+      "version": "0.1.0",
+      "input_schema_ref": "schemas/agentic_control/control_action.input.schema.json",
+      "output_schema_ref": "schemas/agentic_control/control_action.output.schema.json",
+      "effect_model": {
+        "expected_effects": ["action_gate_decision_emitted"],
+        "forbidden_effects": ["blocked_action_executed", "approval_forged", "policy_bypassed"],
+        "reconciliation_required": true
+      },
+      "evidence_model": {
+        "required_evidence": ["proof_state", "policy_refs", "blocked_actions"],
+        "terminal_certificate_required": true
+      },
+      "authority_policy": {
+        "required_roles": ["operator"],
+        "approval_chain": [],
+        "separation_of_duty": false
+      },
+      "isolation_profile": {
+        "execution_plane": "gateway_process",
+        "network_allowlist": [],
+        "secret_scope": "none"
+      },
+      "recovery_plan": {
+        "rollback_capability": "",
+        "compensation_capability": "agentic_control.governance_gate.evaluate",
+        "review_required_on_failure": true
+      },
+      "cost_model": {
+        "budget_class": "standard",
+        "max_estimated_cost": 0.01
+      },
+      "obligation_model": {
+        "owner_team": "platform-ops",
+        "failure_due_seconds": 300,
+        "escalation_route": "support@mullusi.com"
+      },
+      "certification_status": "certified",
+      "metadata": {
+        "display_name": "Evaluate governance gate",
+        "risk_tier": "medium"
+      },
+      "extensions": {
+        "governed_record": {
+          "read_only": true,
+          "world_mutating": false,
+          "requires_approval": false,
+          "requires_sandbox": false,
+          "allowed_roles": ["operator"],
+          "allowed_tools": ["agentic_control.governance_gate.evaluate"],
+          "allowed_networks": [],
+          "forbidden_effects": ["blocked_action_executed", "approval_forged", "policy_bypassed"],
+          "verification_required": true,
+          "receipt_required": true,
+          "rollback_or_compensation_required": false
+        }
+      }
+    },
+    {
+      "capability_id": "agentic_control.verification.plan",
+      "domain": "agentic_control",
+      "version": "0.1.0",
+      "input_schema_ref": "schemas/agentic_control/control_action.input.schema.json",
+      "output_schema_ref": "schemas/agentic_control/control_action.output.schema.json",
+      "effect_model": {
+        "expected_effects": ["verification_plan_emitted"],
+        "forbidden_effects": ["verification_fabricated", "quality_gate_executed", "workspace_file_written"],
+        "reconciliation_required": true
+      },
+      "evidence_model": {
+        "required_evidence": ["verification_plan_hash", "required_gates", "closure_rule"],
+        "terminal_certificate_required": true
+      },
+      "authority_policy": {
+        "required_roles": ["operator"],
+        "approval_chain": [],
+        "separation_of_duty": false
+      },
+      "isolation_profile": {
+        "execution_plane": "gateway_process",
+        "network_allowlist": [],
+        "secret_scope": "none"
+      },
+      "recovery_plan": {
+        "rollback_capability": "",
+        "compensation_capability": "agentic_control.verification.plan",
+        "review_required_on_failure": true
+      },
+      "cost_model": {
+        "budget_class": "standard",
+        "max_estimated_cost": 0.01
+      },
+      "obligation_model": {
+        "owner_team": "platform-ops",
+        "failure_due_seconds": 900,
+        "escalation_route": "support@mullusi.com"
+      },
+      "certification_status": "certified",
+      "metadata": {
+        "display_name": "Plan verification gates",
+        "risk_tier": "low"
+      },
+      "extensions": {
+        "governed_record": {
+          "read_only": true,
+          "world_mutating": false,
+          "requires_approval": false,
+          "requires_sandbox": false,
+          "allowed_roles": ["operator"],
+          "allowed_tools": ["agentic_control.verification.plan"],
+          "allowed_networks": [],
+          "verification_required": true,
+          "receipt_required": true,
+          "rollback_or_compensation_required": false
+        }
+      }
+    },
+    {
+      "capability_id": "agentic_control.resource_budget.bound",
+      "domain": "agentic_control",
+      "version": "0.1.0",
+      "input_schema_ref": "schemas/agentic_control/control_action.input.schema.json",
+      "output_schema_ref": "schemas/agentic_control/control_action.output.schema.json",
+      "effect_model": {
+        "expected_effects": ["resource_budget_envelope_emitted"],
+        "forbidden_effects": ["budget_limit_increased", "unbounded_loop_authorized", "paid_service_invoked"],
+        "reconciliation_required": true
+      },
+      "evidence_model": {
+        "required_evidence": ["budget_envelope_hash", "halt_thresholds", "resource_floor"],
+        "terminal_certificate_required": true
+      },
+      "authority_policy": {
+        "required_roles": ["operator"],
+        "approval_chain": [],
+        "separation_of_duty": false
+      },
+      "isolation_profile": {
+        "execution_plane": "gateway_process",
+        "network_allowlist": [],
+        "secret_scope": "none"
+      },
+      "recovery_plan": {
+        "rollback_capability": "",
+        "compensation_capability": "agentic_control.resource_budget.bound",
+        "review_required_on_failure": true
+      },
+      "cost_model": {
+        "budget_class": "standard",
+        "max_estimated_cost": 0.01
+      },
+      "obligation_model": {
+        "owner_team": "platform-ops",
+        "failure_due_seconds": 300,
+        "escalation_route": "support@mullusi.com"
+      },
+      "certification_status": "certified",
+      "metadata": {
+        "display_name": "Bound resource budget",
+        "risk_tier": "medium"
+      },
+      "extensions": {
+        "governed_record": {
+          "read_only": true,
+          "world_mutating": false,
+          "requires_approval": false,
+          "requires_sandbox": false,
+          "allowed_roles": ["operator"],
+          "allowed_tools": ["agentic_control.resource_budget.bound"],
+          "allowed_networks": [],
+          "forbidden_effects": ["budget_limit_increased", "unbounded_loop_authorized", "paid_service_invoked"],
+          "verification_required": true,
+          "receipt_required": true,
+          "rollback_or_compensation_required": false
+        }
+      }
+    },
+    {
+      "capability_id": "agentic_control.math_algorithm.analyze",
+      "domain": "agentic_control",
+      "version": "0.1.0",
+      "input_schema_ref": "schemas/agentic_control/control_action.input.schema.json",
+      "output_schema_ref": "schemas/agentic_control/control_action.output.schema.json",
+      "effect_model": {
+        "expected_effects": ["algorithm_analysis_emitted"],
+        "forbidden_effects": ["code_executed", "workspace_file_written", "unbounded_search_authorized"],
+        "reconciliation_required": true
+      },
+      "evidence_model": {
+        "required_evidence": ["complexity_bound", "invariant_refs", "failure_modes"],
+        "terminal_certificate_required": true
+      },
+      "authority_policy": {
+        "required_roles": ["developer"],
+        "approval_chain": [],
+        "separation_of_duty": false
+      },
+      "isolation_profile": {
+        "execution_plane": "gateway_process",
+        "network_allowlist": [],
+        "secret_scope": "none"
+      },
+      "recovery_plan": {
+        "rollback_capability": "",
+        "compensation_capability": "agentic_control.math_algorithm.analyze",
+        "review_required_on_failure": true
+      },
+      "cost_model": {
+        "budget_class": "standard",
+        "max_estimated_cost": 0.02
+      },
+      "obligation_model": {
+        "owner_team": "platform-ops",
+        "failure_due_seconds": 900,
+        "escalation_route": "support@mullusi.com"
+      },
+      "certification_status": "certified",
+      "metadata": {
+        "display_name": "Analyze math and algorithm",
+        "risk_tier": "low"
+      },
+      "extensions": {
+        "governed_record": {
+          "read_only": true,
+          "world_mutating": false,
+          "requires_approval": false,
+          "requires_sandbox": false,
+          "allowed_roles": ["developer"],
+          "allowed_tools": ["agentic_control.math_algorithm.analyze"],
+          "allowed_networks": [],
+          "verification_required": true,
+          "receipt_required": true,
+          "rollback_or_compensation_required": false
+        }
+      }
+    },
+    {
+      "capability_id": "agentic_control.security_threat_model.build",
+      "domain": "agentic_control",
+      "version": "0.1.0",
+      "input_schema_ref": "schemas/agentic_control/control_action.input.schema.json",
+      "output_schema_ref": "schemas/agentic_control/control_action.output.schema.json",
+      "effect_model": {
+        "expected_effects": ["threat_model_emitted"],
+        "forbidden_effects": ["secret_value_exposed", "exploit_executed", "policy_exception_granted"],
+        "reconciliation_required": true
+      },
+      "evidence_model": {
+        "required_evidence": ["threat_model_hash", "mitigation_refs", "residual_risk"],
+        "terminal_certificate_required": true
+      },
+      "authority_policy": {
+        "required_roles": ["security_reviewer"],
+        "approval_chain": [],
+        "separation_of_duty": false
+      },
+      "isolation_profile": {
+        "execution_plane": "gateway_process",
+        "network_allowlist": [],
+        "secret_scope": "none"
+      },
+      "recovery_plan": {
+        "rollback_capability": "",
+        "compensation_capability": "agentic_control.security_threat_model.build",
+        "review_required_on_failure": true
+      },
+      "cost_model": {
+        "budget_class": "standard",
+        "max_estimated_cost": 0.02
+      },
+      "obligation_model": {
+        "owner_team": "platform-ops",
+        "failure_due_seconds": 900,
+        "escalation_route": "support@mullusi.com"
+      },
+      "certification_status": "certified",
+      "metadata": {
+        "display_name": "Build threat model",
+        "risk_tier": "medium"
+      },
+      "extensions": {
+        "governed_record": {
+          "read_only": true,
+          "world_mutating": false,
+          "requires_approval": false,
+          "requires_sandbox": false,
+          "allowed_roles": ["security_reviewer"],
+          "allowed_tools": ["agentic_control.security_threat_model.build"],
+          "allowed_networks": [],
+          "forbidden_effects": ["secret_value_exposed", "exploit_executed", "policy_exception_granted"],
+          "verification_required": true,
+          "receipt_required": true,
+          "rollback_or_compensation_required": false
+        }
+      }
+    },
+    {
+      "capability_id": "agentic_control.swarm.coordinate",
+      "domain": "agentic_control",
+      "version": "0.1.0",
+      "input_schema_ref": "schemas/agentic_control/control_action.input.schema.json",
+      "output_schema_ref": "schemas/agentic_control/control_action.output.schema.json",
+      "effect_model": {
+        "expected_effects": ["swarm_coordination_plan_emitted"],
+        "forbidden_effects": ["subagent_spawned", "duplicate_work_authorized", "budget_limit_increased"],
+        "reconciliation_required": true
+      },
+      "evidence_model": {
+        "required_evidence": ["role_assignment_hash", "shard_boundaries", "consensus_rule"],
+        "terminal_certificate_required": true
+      },
+      "authority_policy": {
+        "required_roles": ["operator"],
+        "approval_chain": [],
+        "separation_of_duty": false
+      },
+      "isolation_profile": {
+        "execution_plane": "gateway_process",
+        "network_allowlist": [],
+        "secret_scope": "none"
+      },
+      "recovery_plan": {
+        "rollback_capability": "",
+        "compensation_capability": "agentic_control.swarm.coordinate",
+        "review_required_on_failure": true
+      },
+      "cost_model": {
+        "budget_class": "standard",
+        "max_estimated_cost": 0.02
+      },
+      "obligation_model": {
+        "owner_team": "platform-ops",
+        "failure_due_seconds": 900,
+        "escalation_route": "support@mullusi.com"
+      },
+      "certification_status": "certified",
+      "metadata": {
+        "display_name": "Coordinate agent swarm",
+        "risk_tier": "medium"
+      },
+      "extensions": {
+        "governed_record": {
+          "read_only": true,
+          "world_mutating": false,
+          "requires_approval": false,
+          "requires_sandbox": false,
+          "allowed_roles": ["operator"],
+          "allowed_tools": ["agentic_control.swarm.coordinate"],
+          "allowed_networks": [],
+          "forbidden_effects": ["subagent_spawned", "duplicate_work_authorized", "budget_limit_increased"],
+          "verification_required": true,
+          "receipt_required": true,
+          "rollback_or_compensation_required": false
+        }
+      }
+    },
+    {
+      "capability_id": "agentic_control.product_management.plan",
+      "domain": "agentic_control",
+      "version": "0.1.0",
+      "input_schema_ref": "schemas/agentic_control/control_action.input.schema.json",
+      "output_schema_ref": "schemas/agentic_control/control_action.output.schema.json",
+      "effect_model": {
+        "expected_effects": ["product_management_plan_emitted"],
+        "forbidden_effects": ["scope_expanded_without_mandate", "external_message_sent", "task_scheduled"],
+        "reconciliation_required": true
+      },
+      "evidence_model": {
+        "required_evidence": ["roadmap_hash", "success_metrics", "handoff_risks"],
+        "terminal_certificate_required": true
+      },
+      "authority_policy": {
+        "required_roles": ["operator"],
+        "approval_chain": [],
+        "separation_of_duty": false
+      },
+      "isolation_profile": {
+        "execution_plane": "gateway_process",
+        "network_allowlist": [],
+        "secret_scope": "none"
+      },
+      "recovery_plan": {
+        "rollback_capability": "",
+        "compensation_capability": "agentic_control.product_management.plan",
+        "review_required_on_failure": true
+      },
+      "cost_model": {
+        "budget_class": "standard",
+        "max_estimated_cost": 0.02
+      },
+      "obligation_model": {
+        "owner_team": "platform-ops",
+        "failure_due_seconds": 900,
+        "escalation_route": "support@mullusi.com"
+      },
+      "certification_status": "certified",
+      "metadata": {
+        "display_name": "Plan product management",
+        "risk_tier": "low"
+      },
+      "extensions": {
+        "governed_record": {
+          "read_only": true,
+          "world_mutating": false,
+          "requires_approval": false,
+          "requires_sandbox": false,
+          "allowed_roles": ["operator"],
+          "allowed_tools": ["agentic_control.product_management.plan"],
+          "allowed_networks": [],
+          "verification_required": true,
+          "receipt_required": true,
+          "rollback_or_compensation_required": false
+        }
+      }
+    },
+    {
+      "capability_id": "agentic_control.evidence.append",
+      "domain": "agentic_control",
+      "version": "0.1.0",
+      "input_schema_ref": "schemas/agentic_control/control_action.input.schema.json",
+      "output_schema_ref": "schemas/agentic_control/control_action.output.schema.json",
+      "effect_model": {
+        "expected_effects": ["evidence_ledger_record_appended"],
+        "forbidden_effects": ["ledger_record_deleted", "ledger_record_rewritten", "external_message_sent"],
+        "reconciliation_required": true
+      },
+      "evidence_model": {
+        "required_evidence": ["ledger_record_id", "ledger_record_hash", "lineage_ref"],
+        "terminal_certificate_required": true
+      },
+      "authority_policy": {
+        "required_roles": ["operator"],
+        "approval_chain": ["operator_approval"],
+        "separation_of_duty": true
+      },
+      "isolation_profile": {
+        "execution_plane": "gateway_process",
+        "network_allowlist": [],
+        "secret_scope": "none"
+      },
+      "recovery_plan": {
+        "rollback_capability": "",
+        "compensation_capability": "agentic_control.evidence.append",
+        "review_required_on_failure": true
+      },
+      "cost_model": {
+        "budget_class": "standard",
+        "max_estimated_cost": 0.01
+      },
+      "obligation_model": {
+        "owner_team": "platform-ops",
+        "failure_due_seconds": 300,
+        "escalation_route": "support@mullusi.com"
+      },
+      "certification_status": "certified",
+      "metadata": {
+        "display_name": "Append evidence ledger",
+        "risk_tier": "high"
+      },
+      "extensions": {
+        "governed_record": {
+          "read_only": false,
+          "world_mutating": true,
+          "requires_approval": true,
+          "requires_sandbox": false,
+          "allowed_roles": ["operator"],
+          "allowed_tools": ["agentic_control.evidence.append"],
+          "allowed_networks": [],
+          "forbidden_effects": ["ledger_record_deleted", "ledger_record_rewritten", "external_message_sent"],
+          "verification_required": true,
+          "receipt_required": true,
+          "rollback_or_compensation_required": true
+        }
+      }
+    }
+  ]
+}

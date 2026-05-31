@@ -36,6 +36,7 @@ EXPECTED_SKILL_IDS = (
     "incident.rollback_recovery.v1",
     "release.pr_handoff_closure.v1",
     "telemetry.monitoring_triage.v1",
+    "agentic_control.autonomous_operations.v1",
 )
 
 
@@ -71,6 +72,7 @@ def test_default_skill_effect_classes_match_strongest_workflow_effect() -> None:
     assert descriptors["incident.rollback_recovery.v1"].effect_class is EffectClass.EXTERNAL_WRITE
     assert descriptors["release.pr_handoff_closure.v1"].effect_class is EffectClass.EXTERNAL_WRITE
     assert descriptors["telemetry.monitoring_triage.v1"].effect_class is EffectClass.EXTERNAL_READ
+    assert descriptors["agentic_control.autonomous_operations.v1"].effect_class is EffectClass.EXTERNAL_WRITE
     assert all(
         descriptor.metadata["approval_expected"] is True
         for descriptor in descriptors.values()
@@ -198,3 +200,4 @@ def test_bootstrap_installs_default_skill_catalog() -> None:
     assert runtime.skill_registry.get("incident.rollback_recovery.v1").metadata["risk_floor"] == "critical"
     assert runtime.skill_registry.get("release.pr_handoff_closure.v1").metadata["approval_expected"] is True
     assert runtime.skill_registry.get("telemetry.monitoring_triage.v1").metadata["risk_floor"] == "medium"
+    assert runtime.skill_registry.get("agentic_control.autonomous_operations.v1").metadata["risk_floor"] == "high"

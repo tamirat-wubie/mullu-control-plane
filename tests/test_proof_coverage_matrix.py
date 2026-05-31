@@ -245,6 +245,8 @@ def test_witness_integrity_report_tracks_exact_test_anchors() -> None:
     assert surfaces["task_queue_lifecycle"]["exact_test_anchor_count"] == 11
     assert surfaces["software_dev_capability_pack"]["unanchored_witness_count"] == 0
     assert surfaces["software_dev_capability_pack"]["exact_test_anchor_count"] == 16
+    assert surfaces["agentic_control_capability_pack"]["unanchored_witness_count"] == 0
+    assert surfaces["agentic_control_capability_pack"]["exact_test_anchor_count"] == 5
     assert surfaces["governed_operational_intelligence"]["unanchored_witness_count"] == 0
     assert surfaces["governed_operational_intelligence"]["exact_test_anchor_count"] == 11
     assert surfaces["runbook_learning_lifecycle"]["unanchored_witness_count"] == 0
@@ -2109,6 +2111,29 @@ def test_software_dev_capability_pack_surface_requires_explicit_admission() -> N
     assert "software_dev_pr_candidate_local_commands_are_git_local_only" in witnesses
     assert "software_dev_production_ready_overclaim_rejected" in witnesses
     assert closure_actions["publish_software_dev_capability_pack_contract"]["status"] == "closed"
+
+
+def test_agentic_control_capability_pack_surface_binds_default_authority() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    agentic_surface = surfaces["agentic_control_capability_pack"]
+    witnesses = set(agentic_surface["runtime_witnesses"])
+
+    assert agentic_surface["coverage_state"] == "witnessed"
+    assert agentic_surface["request_proof"] == "request_proof"
+    assert agentic_surface["action_proof"] == "action_proof"
+    assert "agentic_control.mission.define" in agentic_surface["representative_paths"]
+    assert "agentic_control.evidence.append" in agentic_surface["representative_paths"]
+    assert "agentic_control.autonomous_operations.v1" in agentic_surface["representative_paths"]
+    assert "capsules/agentic_control.json" in agentic_surface["evidence_files"]
+    assert "capabilities/agentic_control/capability_pack.json" in agentic_surface["evidence_files"]
+    assert "schemas/agentic_control/control_action.input.schema.json" in agentic_surface["evidence_files"]
+    assert "schemas/agentic_control/control_action.output.schema.json" in agentic_surface["evidence_files"]
+    assert "tests/test_gateway/test_agentic_control_capability_pack.py" in agentic_surface["evidence_files"]
+    assert "agentic_control_capability_entries_schema_valid" in witnesses
+    assert "agentic_control_pack_projects_governed_authority_records" in witnesses
+    assert "agentic_control_schemas_reject_unbounded_or_unknown_payloads" in witnesses
+    assert "agentic_control_production_gate_blocks_without_live_evidence" in witnesses
 
 
 def test_agent_identity_surface_binds_owner_tenant_and_scope() -> None:
