@@ -273,6 +273,19 @@ def test_lawbook_and_child_mind_attempts_block_submission() -> None:
     assert fake.calls == []
 
 
+def test_nested_observation_path_blocks_submission() -> None:
+    payload = _payload(key="observations/obs-1/child")
+    fake = FakeJsonConnector()
+    report = _submitter(fake).submit_observation_plan(
+        _plan(proposal_payload=payload, payload_hash=stable_json_hash(payload)),
+        submit_enabled=True,
+    )
+
+    assert report.status is NestedMindObservationSubmissionStatus.BLOCKED
+    assert "op_key_must_not_shape_route" in report.blockers
+    assert fake.calls == []
+
+
 def test_successful_accepted_response_builds_verified_commit_witness() -> None:
     plan = _plan()
     fake = FakeJsonConnector(payload=_accepted_response(payload_hash=plan.payload_hash))
@@ -419,7 +432,7 @@ def test_observation_payload_builder_rejects_unsafe_observation_ids() -> None:
     )
     assert payload["ops"][0]["key"] == "observations/obs-1"
 
-    for observation_id in ("../x", "x/y", "x\\y", "x?y", "x#y", "%2e%2e"):
+    for observation_id in ("../x", "x/y", "x\\y", "x?y", "x#y", "%2e%2e", "obs-1/child"):
         with pytest.raises(ValueError, match="observation_id"):
             build_observation_proposal_payload(
                 evidence,
